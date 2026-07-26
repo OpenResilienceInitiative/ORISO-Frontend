@@ -13,7 +13,6 @@ import {
 import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
-import { NonPlainRoutesWrapper } from './NonPlainRoutesWrapper';
 import { Walkthrough } from '../walkthrough/Walkthrough';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -82,44 +81,42 @@ export const Routing = (props: RoutingProps) => {
 					<>
 						<Walkthrough />
 						<E2EEProvider>
-							<NonPlainRoutesWrapper logoutHandler={logout}>
-								<div
-									className={`app__wrapper ${
-										useEmbeddedNotificationsLayout
-											? 'app__wrapper--embeddedNotifications'
-											: ''
-									}`}
-								>
-									<NavigationBar
-										routerConfig={routerConfig}
-										onLogout={logout}
-									/>
-									<section className="contentWrapper">
-										<Header />
-										<div className="contentWrapper__content">
-											<Outlet />
-										</div>
-									</section>
-									{/* Privacy / data-protection overlay: askers only
-									    (incl. anonymous), not consultants */}
-									{hasUserAuthority(
-										AUTHORITIES.ASKER_DEFAULT,
-										userData
-									) && <TermsAndConditions />}
-									{hasUserAuthority(
-										AUTHORITIES.CONSULTANT_DEFAULT,
-										userData
-									) && <AbsenceHandler />}
-									{hasUserAuthority(
-										AUTHORITIES.CONSULTANT_DEFAULT,
-										userData
-									) && <ReleaseNote />}
-									{hasUserAuthority(
-										AUTHORITIES.CONSULTANT_DEFAULT,
-										userData
-									) && <TwoFactorNag />}
-								</div>
-							</NonPlainRoutesWrapper>
+							<div
+								className={`app__wrapper ${
+									useEmbeddedNotificationsLayout
+										? 'app__wrapper--embeddedNotifications'
+										: ''
+								}`}
+							>
+								<NavigationBar
+									routerConfig={routerConfig}
+									onLogout={logout}
+								/>
+								<section className="contentWrapper">
+									<Header />
+									<div className="contentWrapper__content">
+										<Outlet />
+									</div>
+								</section>
+								{/* Privacy / data-protection overlay: askers only
+								    (incl. anonymous), not consultants */}
+								{hasUserAuthority(
+									AUTHORITIES.ASKER_DEFAULT,
+									userData
+								) && <TermsAndConditions />}
+								{hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								) && <AbsenceHandler />}
+								{hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								) && <ReleaseNote />}
+								{hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								) && <TwoFactorNag />}
+							</div>
 						</E2EEProvider>
 					</>
 				}
@@ -158,7 +155,9 @@ export const Routing = (props: RoutingProps) => {
 							path={rel(path)}
 							element={
 								<div className="contentWrapper__booking">
-									<route.component type={route.type || null} />
+									<route.component
+										type={route.type || null}
+									/>
 								</div>
 							}
 						/>
@@ -172,7 +171,9 @@ export const Routing = (props: RoutingProps) => {
 							path={rel(path)}
 							element={
 								<div className="contentWrapper__tools">
-									<route.component type={route.type || null} />
+									<route.component
+										type={route.type || null}
+									/>
 								</div>
 							}
 						/>

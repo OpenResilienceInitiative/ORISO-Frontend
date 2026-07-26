@@ -11,6 +11,6 @@ export const apiPutSessionData = async (
 		url,
 		method: FETCH_METHODS.PUT,
 		bodyData: JSON.stringify(data),
-		rcValidation: true
+		sendChatUserHeaders: true
 	});
 };

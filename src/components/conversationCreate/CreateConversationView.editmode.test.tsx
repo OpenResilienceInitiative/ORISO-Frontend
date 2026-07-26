@@ -91,9 +91,9 @@ vi.mock('../../resources/img/illustrations/active-createGroup.svg', () => ({
 }));
 
 // Route params are controllable per test: edit route carries
-// /:rcGroupId/:sessionId, the create route carries none.
+// /:groupId/:sessionId, the create route carries none.
 const routerState = vi.hoisted(() => ({
-	params: { rcGroupId: 'rc-1', sessionId: '77' } as Record<string, string>
+	params: { groupId: 'group-1', sessionId: '77' } as Record<string, string>
 }));
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<any>('react-router-dom');
@@ -144,7 +144,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 	});
 
 	beforeEach(() => {
-		routerState.params = { rcGroupId: 'rc-1', sessionId: '77' };
+		routerState.params = { groupId: 'group-1', sessionId: '77' };
 	});
 
 	it('prefills the existing series and updates instead of creating', async () => {

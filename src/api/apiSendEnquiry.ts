@@ -22,7 +22,7 @@ export const apiSendEnquiry = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		bodyData: message,
 		responseHandling: [FETCH_SUCCESS.CONTENT]
 	});

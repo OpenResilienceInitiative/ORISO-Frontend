@@ -1792,7 +1792,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							sender.user === mine.user)
 				);
 			}
-			// For RocketChat sessions, use the standard check
+			// Standard check for sessions that have a group id
 			return isMyMessage(messageUserId);
 		},
 		[

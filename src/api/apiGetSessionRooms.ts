@@ -11,7 +11,7 @@ export const apiGetSessionRoomsByGroupIds = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL],
 		...(signal && { signal: signal })
 	});
@@ -26,7 +26,7 @@ export const apiGetSessionRoomBySessionId = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [
 			FETCH_ERRORS.EMPTY,
 			FETCH_ERRORS.FORBIDDEN,

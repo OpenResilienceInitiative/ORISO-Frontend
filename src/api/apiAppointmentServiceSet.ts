@@ -12,7 +12,7 @@ export const apiAppointmentServiceSet = async (
 	const url = endpoints.appointmentBaseNew(sessionId);
 	return fetchData({
 		url,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify(appointmentSuccessfullySetMessage)
 	});

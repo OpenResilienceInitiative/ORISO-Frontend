@@ -9,12 +9,9 @@ import { ReactComponent as CameraOnIcon } from '../../resources/img/icons/camera
 import { NotificationType, NotificationsContext } from '../../globalState';
 import { supportsE2EEncryptionVideoCall } from '../../utils/videoCallHelpers';
 import { decodeUsername } from '../../utils/encryptionHelpers';
-import { apiRejectVideoCall } from '../../api';
 import './incomingVideoCall.styles';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/x.svg';
 import { useTranslation } from 'react-i18next';
-import { useJoinVideoCall } from '../sessionHeader/GroupChatHeader/useJoinVideoCall';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 export interface VideoCallRequestProps {
@@ -54,7 +51,6 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	const navigate = useNavigate();
 
 	const { removeNotification } = useContext(NotificationsContext);
-	const { joinVideoCall } = useJoinVideoCall();
 	const { matrixClientService } = useMatrixClient();
 	const decodedUsername = decodeUsername(props.videoCall.initiatorUsername);
 
@@ -100,80 +96,27 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 
 	const handleAnswerVideoCall = React.useCallback(
 		(isVideoActivated: boolean = false) => {
-			// Check if this is a Matrix call (roomId starts with !)
-			const isMatrixCall = isMatrixRoom(props.videoCall.rcGroupId);
+			const callType = isVideoActivated ? 'video' : 'voice';
+			// `answer=true` tells the call view this is an incoming call being
+			// picked up rather than a new one being placed.
+			const callUrl = `${props.videoCall.videoCallUrl}/${callType}?answer=true`;
 
-			if (isMatrixCall) {
-				// For Matrix calls, open in new tab
-				const callType = isVideoActivated ? 'video' : 'voice';
-				// Add ?answer=true to indicate we're answering an incoming call
-				const callUrl = `${props.videoCall.videoCallUrl}/${callType}?answer=true`;
-
-				// console.log('📞 Accepting Matrix call, opening in new tab:', callUrl);
-				window.open(callUrl, '_blank');
-				removeIncomingVideoCallNotification();
-			} else {
-				// Legacy RocketChat call
-				joinVideoCall(props.videoCall.videoCallUrl, isVideoActivated);
-				removeIncomingVideoCallNotification();
-			}
+			window.open(callUrl, '_blank');
+			removeIncomingVideoCallNotification();
 		},
-		[
-			joinVideoCall,
-			props.videoCall.videoCallUrl,
-			props.videoCall.rcGroupId,
-			removeIncomingVideoCallNotification
-		]
+		[props.videoCall.videoCallUrl, removeIncomingVideoCallNotification]
 	);
 
 	const handleRejectVideoCall = React.useCallback(() => {
-		// Check if this is a Matrix call (roomId starts with !)
-		const isMatrixCall = isMatrixRoom(props.videoCall.rcGroupId);
+		const roomId = props.videoCall.rcGroupId;
+		const calls = matrixClientService?.getClient()?.callEventHandler?.calls;
 
-		if (isMatrixCall) {
-			// console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);
+		Array.from(calls?.values() ?? [])
+			.find((call: any) => call.roomId === roomId)
+			?.reject();
 
-			// Get Matrix client and find the active call
-			if (matrixClientService) {
-				const client = matrixClientService.getClient();
-				const calls = client?.callEventHandler?.calls;
-
-				if (calls) {
-					// Find call for this room
-					const roomId = props.videoCall.rcGroupId;
-					const activeCall = Array.from(calls.values()).find(
-						(call: any) => call.roomId === roomId
-					);
-
-					if (activeCall) {
-						// console.log('📞 Found Matrix call, rejecting...');
-						(activeCall as any).reject();
-						// console.log('✅ Matrix call rejected');
-					} else {
-						// console.warn('⚠️ No active Matrix call found for room:', roomId);
-					}
-				}
-			}
-
-			// Remove notification
-			removeIncomingVideoCallNotification();
-		} else {
-			// Legacy RocketChat reject
-			apiRejectVideoCall(
-				decodedUsername,
-				props.videoCall.rcGroupId,
-				props.videoCall.initiatorRcUserId
-			)
-				.then(() => {
-					removeIncomingVideoCallNotification();
-				})
-				.catch((err) => {
-					// console.log(err);
-				});
-		}
+		removeIncomingVideoCallNotification();
 	}, [
-		decodedUsername,
-		props.videoCall.initiatorRcUserId,
 		props.videoCall.rcGroupId,
 		removeIncomingVideoCallNotification,
 		matrixClientService

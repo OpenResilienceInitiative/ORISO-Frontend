@@ -12,7 +12,7 @@ interface E2EEContextProps {
 }
 
 /**
- * Legacy Rocket.Chat room E2EE is removed (Matrix-only app).
+ * Room encryption is handled entirely by Matrix (see ADR-004).
  * The context stays so chat components keep a single switch-off point;
  * Matrix room encryption is intentionally NOT enabled here (ADR-004).
  */

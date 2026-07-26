@@ -23,18 +23,16 @@ describe('splitOptionalParams', () => {
 
 	it('splits two trailing optional params into three variants', () => {
 		expect(
-			splitOptionalParams('/sessions/user/view/:rcGroupId?/:sessionId?')
+			splitOptionalParams('/sessions/user/view/:groupId?/:sessionId?')
 		).toEqual([
-			'/sessions/user/view/:rcGroupId/:sessionId',
-			'/sessions/user/view/:rcGroupId',
+			'/sessions/user/view/:groupId/:sessionId',
+			'/sessions/user/view/:groupId',
 			'/sessions/user/view'
 		]);
 	});
 
 	it('handles the topicSlug registration variant', () => {
-		expect(
-			splitOptionalParams('/:topicSlug/registration/:step?')
-		).toEqual([
+		expect(splitOptionalParams('/:topicSlug/registration/:step?')).toEqual([
 			'/:topicSlug/registration/:step',
 			'/:topicSlug/registration'
 		]);
@@ -118,12 +116,12 @@ describe('toV7Paths (full route-object translation)', () => {
 	it('expands a non-exact optional-param route into splatted variants', () => {
 		expect(
 			toV7Paths({
-				path: '/sessions/consultant/sessionPreview/:rcGroupId?/:sessionId?',
+				path: '/sessions/consultant/sessionPreview/:groupId?/:sessionId?',
 				exact: false
 			})
 		).toEqual([
-			'/sessions/consultant/sessionPreview/:rcGroupId/:sessionId/*',
-			'/sessions/consultant/sessionPreview/:rcGroupId/*',
+			'/sessions/consultant/sessionPreview/:groupId/:sessionId/*',
+			'/sessions/consultant/sessionPreview/:groupId/*',
 			'/sessions/consultant/sessionPreview/*'
 		]);
 	});
@@ -131,7 +129,10 @@ describe('toV7Paths (full route-object translation)', () => {
 	it('expands an array path into one entry per element', () => {
 		expect(
 			toV7Paths({
-				path: ['/registration/:step?', '/:topicSlug/registration/:step?']
+				path: [
+					'/registration/:step?',
+					'/:topicSlug/registration/:step?'
+				]
 			})
 		).toEqual([
 			'/registration/:step',

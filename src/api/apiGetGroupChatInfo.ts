@@ -22,6 +22,6 @@ export const apiGetGroupChatInfo = async (
 		url: url,
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.NO_MATCH],
-		rcValidation: true
+		sendChatUserHeaders: true
 	});
 };

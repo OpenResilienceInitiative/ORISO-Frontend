@@ -23,6 +23,6 @@ export const apiStartVideoCall = async (
 		method: FETCH_METHODS.POST,
 		bodyData: videoCallData,
 		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.CATCH_ALL],
-		rcValidation: true
+		sendChatUserHeaders: true
 	});
 };

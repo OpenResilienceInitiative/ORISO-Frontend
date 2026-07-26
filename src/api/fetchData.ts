@@ -99,7 +99,7 @@ interface FetchDataProps {
 	url: string;
 	method: string;
 	headersData?: object;
-	rcValidation?: boolean;
+	sendChatUserHeaders?: boolean;
 	bodyData?: string;
 	skipAuth?: boolean;
 	responseHandling?: string[];
@@ -112,7 +112,7 @@ export const fetchData = ({
 	url,
 	method,
 	headersData,
-	rcValidation,
+	sendChatUserHeaders,
 	bodyData,
 	skipAuth,
 	responseHandling,
@@ -133,9 +133,12 @@ export const fetchData = ({
 
 		const csrfToken = generateCsrfToken();
 
-		// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
-		// but no longer exists after Matrix migration. Send dummy token.
-		const rcHeaders = rcValidation
+		// `RCUserId` is still read by UserService: it becomes
+		// RocketChatCredentials.rocketChatUserId and drives the Matrix room
+		// lookup. `RCToken` is dead weight — UserService threads it through and
+		// drops it — but four endpoints demanded it, so a placeholder is sent.
+		// Once ORISO-UserService#751 is deployed the token can go entirely.
+		const rcHeaders = sendChatUserHeaders
 			? {
 					RCToken:
 						getValueFromCookie('rc_token') ||

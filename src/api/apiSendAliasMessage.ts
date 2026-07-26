@@ -47,7 +47,7 @@ export const apiSendAliasMessage = async ({
 		url,
 		headersData: { rcGroupId },
 		method: FETCH_METHODS.POST,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		bodyData: JSON.stringify({
 			messageType: type,
 			args: args

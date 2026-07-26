@@ -7,7 +7,7 @@ export const apiPostBanUser = ({ rcUserId, chatId }): Promise<any> => {
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: []
 	});
 };

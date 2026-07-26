@@ -25,7 +25,7 @@ const fetchListUrl = (
 	fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.EMPTY],
 		timeout: TIMEOUT,
 		...(signal && { signal: signal })

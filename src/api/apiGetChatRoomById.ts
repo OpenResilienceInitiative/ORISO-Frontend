@@ -11,7 +11,7 @@ export const apiGetChatRoomById = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.EMPTY],
 		...(signal && { signal: signal })
 	});
