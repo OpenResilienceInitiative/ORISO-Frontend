@@ -232,8 +232,18 @@ export class MatrixClientService {
 
 		this.refreshingToken = getMatrixAccessToken()
 			.then(async (loginData) => {
-				persistMatrixLoginData(loginData);
-				await this.initializeClient(loginData);
+				// getMatrixAccessToken only returns transport fields. A session's
+				// anonymity is stable across refreshes, so carry the existing flag
+				// forward — otherwise invisible crypto would re-apply verified-only
+				// isolation on the refreshed client and make an anonymous asker's
+				// messages undecryptable for the consultant again (#774).
+				const refreshedLoginData: MatrixLoginData = {
+					...loginData,
+					isAnonymous:
+						loginData.isAnonymous ?? this.loginData?.isAnonymous
+				};
+				persistMatrixLoginData(refreshedLoginData);
+				await this.initializeClient(refreshedLoginData);
 			})
 			.finally(() => {
 				this.refreshingToken = null;

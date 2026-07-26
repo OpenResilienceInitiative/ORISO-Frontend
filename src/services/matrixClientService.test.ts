@@ -140,6 +140,42 @@ describe('MatrixClientService', () => {
 		setAppConfig(null as any);
 	});
 
+	it('preserves the anonymous flag across a token refresh so decryption keeps working (#774)', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008',
+			isAnonymous: true
+		});
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+
+		// A token refresh returns only transport fields (no isAnonymous).
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'refreshed-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		await service.refreshMatrixToken();
+
+		// The refreshed client must still share to all devices, not fall back to
+		// verified-only isolation and re-break decryption.
+		const lastCall = mockedCrypto.setDeviceIsolationMode.mock.calls.at(-1);
+		expect(lastCall?.[0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+		setAppConfig(null as any);
+	});
+
 	it('surfaces Rust crypto failures without leaving a client running', async () => {
 		mockedMatrixClient.initRustCrypto.mockRejectedValueOnce(
 			new Error('crypto store unavailable')
