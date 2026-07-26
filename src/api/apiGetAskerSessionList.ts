@@ -17,7 +17,7 @@ export const apiGetAskerSessionList = async (): Promise<any> => {
 	previousProm = fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: false,
+		sendChatUserHeaders: false,
 		responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL]
 	})
 		.catch(() => ({ sessions: [] }))

@@ -138,7 +138,7 @@ describe('apiGetConsultantSessionList', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/users/sessions/consultants?status=2&count=10&filter=all&offset=30',
 			method: 'GET',
-			rcValidation: true,
+			sendChatUserHeaders: true,
 			responseHandling: ['EMPTY'],
 			timeout: TIMEOUT
 		});
@@ -157,7 +157,7 @@ describe('apiGetConsultantSessionList', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/conversations/consultants/mymessages/archive?count=5&offset=10',
 			method: 'GET',
-			rcValidation: true,
+			sendChatUserHeaders: true,
 			responseHandling: ['EMPTY'],
 			timeout: TIMEOUT
 		});

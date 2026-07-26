@@ -16,7 +16,7 @@ export const apiPatchMessage = async (
 		url: url,
 		method: FETCH_METHODS.PATCH,
 		bodyData: data,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST]
 	});
 };

@@ -8,7 +8,7 @@ export const apiPatchUserData = async (data): Promise<any> => {
 		url: url,
 		method: FETCH_METHODS.PATCH,
 		bodyData: JSON.stringify({ ...data }),
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		responseHandling: [
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FAILED_DEPENDENCY,

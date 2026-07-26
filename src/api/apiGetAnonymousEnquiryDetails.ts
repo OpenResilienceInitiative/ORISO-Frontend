@@ -23,7 +23,7 @@ export const apiGetAnonymousEnquiryDetails = (
 ): Promise<AnonymousEnquiryDetails> =>
 	fetchData({
 		url: endpoints.anonymousEnquiryDetails(sessionId),
-		rcValidation: false,
+		sendChatUserHeaders: false,
 		responseHandling: [
 			FETCH_ERRORS.CATCH_ALL,
 			FETCH_ERRORS.FORBIDDEN,

@@ -30,7 +30,7 @@ export const apiPostAdditionalEnquiry = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		rcValidation: true,
+		sendChatUserHeaders: true,
 		bodyData: data,
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,

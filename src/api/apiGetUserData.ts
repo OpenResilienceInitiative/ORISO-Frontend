@@ -9,7 +9,7 @@ export const apiGetUserData = async (
 
 	return fetchData({
 		url: url,
-		rcValidation: false,
+		sendChatUserHeaders: false,
 		responseHandling,
 		method: FETCH_METHODS.GET
 	});
