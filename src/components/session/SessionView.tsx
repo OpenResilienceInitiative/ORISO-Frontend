@@ -27,8 +27,8 @@ import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 
 export const SessionView = () => {
-	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ rcGroupId: string; sessionId: string }>();
+	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
+		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
 
 	// console.log('🔥 SessionView MOUNTED:', {

@@ -62,7 +62,7 @@ export const GroupChatInfo = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
 	const tenantData = useTenant();
-	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
+	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const featureGroupChatV2Enabled =
 		tenantData?.settings?.featureGroupChatV2Enabled;
 

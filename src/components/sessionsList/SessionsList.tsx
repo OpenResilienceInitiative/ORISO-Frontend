@@ -362,8 +362,8 @@ export const SessionsList = ({
 }: SessionsListProps) => {
 	const { t: translate } = useTranslation();
 
-	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ rcGroupId: string; sessionId: string }>();
+	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
+		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
 	const location = useLocation();
 
