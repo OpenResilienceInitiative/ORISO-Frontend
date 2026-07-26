@@ -42,7 +42,7 @@ import { ReactComponent as GroupChatIcon } from '../../resources/img/icons/speec
 import './groupChatInfo.styles';
 import { Text } from '../text/Text';
 import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Tag } from '../tag/Tag';
@@ -190,7 +190,7 @@ export const GroupChatInfo = () => {
 		canModerateGroupChat(activeSession, userData) ||
 		isUserModerator({
 			chatItem: activeSession.item,
-			rcUserId: getValueFromCookie('rc_uid')
+			matrixUserId: getCurrentMatrixUserId()
 		});
 
 	const preparedSettings: Array<{ label: string; value: string }> = [
@@ -251,7 +251,7 @@ export const GroupChatInfo = () => {
 				<div className="groupChatInfo__header">
 					<div className="groupChatInfo__header__wrapper">
 						<Link
-							to={`${listPath}/${activeSession.item.groupId}/${
+							to={`${listPath}/${activeSession.item.matrixRoomId}/${
 								activeSession.item.id
 							}${getSessionListTab()}`}
 							className="groupChatInfo__header__backButton"
@@ -395,7 +395,7 @@ export const GroupChatInfo = () => {
 								<Link
 									className="groupChatInfo__innerWrapper__editButton"
 									to={`${listPath}/${
-										activeSession.item.groupId
+										activeSession.item.matrixRoomId
 									}/${
 										activeSession.item.id
 									}/editGroupChat${getSessionListTab()}`}
@@ -489,7 +489,7 @@ const SubscriberList = ({
 												userName={decodeUsername(
 													subscriber.username
 												)}
-												rcUserId={subscriber._id}
+												matrixUserId={subscriber._id}
 												chatId={activeSession.item.id}
 												handleUserBan={(username) => {
 													setBannedUsers([

@@ -53,9 +53,6 @@ export const FETCH_SUCCESS = {
 	CONTENT: 'CONTENT'
 };
 
-const MATRIX_MIGRATION_DUMMY_RC_TOKEN = 'matrix-migration-dummy-token';
-const MATRIX_MIGRATION_DUMMY_RC_USER_ID = 'matrix-migration-dummy-user';
-
 const invalidateStaleAuthSession = () => {
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
@@ -99,7 +96,6 @@ interface FetchDataProps {
 	url: string;
 	method: string;
 	headersData?: object;
-	sendChatUserHeaders?: boolean;
 	bodyData?: string;
 	skipAuth?: boolean;
 	responseHandling?: string[];
@@ -112,7 +108,6 @@ export const fetchData = ({
 	url,
 	method,
 	headersData,
-	sendChatUserHeaders,
 	bodyData,
 	skipAuth,
 	responseHandling,
@@ -132,22 +127,6 @@ export const fetchData = ({
 				: null;
 
 		const csrfToken = generateCsrfToken();
-
-		// `RCUserId` is still read by UserService: it becomes
-		// RocketChatCredentials.rocketChatUserId and drives the Matrix room
-		// lookup. `RCToken` is dead weight — UserService threads it through and
-		// drops it — but four endpoints demanded it, so a placeholder is sent.
-		// Once ORISO-UserService#751 is deployed the token can go entirely.
-		const rcHeaders = sendChatUserHeaders
-			? {
-					RCToken:
-						getValueFromCookie('rc_token') ||
-						MATRIX_MIGRATION_DUMMY_RC_TOKEN,
-					RCUserId:
-						getValueFromCookie('rc_uid') ||
-						MATRIX_MIGRATION_DUMMY_RC_USER_ID
-				}
-			: null;
 
 		const localDevelopmentHeader = isLocalDevelopment
 			? {
@@ -178,7 +157,6 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
-			...rcHeaders,
 			...localDevelopmentHeader
 		};
 

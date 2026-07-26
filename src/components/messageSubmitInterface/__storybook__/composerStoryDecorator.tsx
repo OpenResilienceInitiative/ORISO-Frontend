@@ -105,8 +105,7 @@ export const buildMockActiveSession = (
 		item: {
 			id: 360,
 			agencyId: 101,
-			askerRcId: 'alice',
-			groupId: '',
+			askerMatrixUserId: 'alice',
 			matrixRoomId: '!storybook:oriso.org',
 			postcode: 10115,
 			registrationType: REGISTRATION_TYPE_REGISTERED,
@@ -143,7 +142,6 @@ export const buildMockGroupSession = () =>
 			assignedAgencies: [],
 			consultingType: 2,
 			duration: 60,
-			groupId: 'storybook-group-caritas',
 			matrixRoomId: '!storybook-group:oriso.org',
 			hintMessage: '',
 			messageDate: Date.now(),

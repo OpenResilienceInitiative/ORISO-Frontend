@@ -12,7 +12,7 @@ import {
 	apiCreateGroupChat,
 	apiUpdateGroupChat
 } from '../../api/apiGroupChatSettings';
-import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
@@ -72,7 +72,7 @@ vi.mock('../../api/apiGroupChatSettings', () => ({
 	apiUpdateGroupChat: vi.fn()
 }));
 vi.mock('../../api/apiGetSessionRooms', () => ({
-	apiGetSessionRoomsByGroupIds: vi.fn()
+	apiGetSessionRoomsByRoomIds: vi.fn()
 }));
 
 // Vitest has no SVGR transform, so `ReactComponent` named imports resolve to
@@ -154,8 +154,10 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			read: vi.fn(),
 			ready: true
 		});
-		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ groupId: 'rc-1' });
-		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.example'
+		});
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: []
 		} as any);
 
@@ -194,8 +196,10 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 				lastName: 'Co-Moderator'
 			}
 		] as any);
-		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ groupId: 'rc-1' });
-		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.example'
+		});
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: []
 		} as any);
 

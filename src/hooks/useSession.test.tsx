@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetSessionRoomBySessionId,
-	apiGetSessionRoomsByGroupIds
+	apiGetSessionRoomsByRoomIds
 } from '../api/apiGetSessionRooms';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
@@ -16,7 +16,7 @@ vi.mock('../api', () => ({
 
 vi.mock('../api/apiGetSessionRooms', () => ({
 	apiGetSessionRoomBySessionId: vi.fn(),
-	apiGetSessionRoomsByGroupIds: vi.fn()
+	apiGetSessionRoomsByRoomIds: vi.fn()
 }));
 
 vi.mock('../api/apiGetChatRoomById', () => ({
@@ -59,17 +59,17 @@ describe('useSession', () => {
 			expect.any(AbortSignal)
 		);
 		expect(result.current.session).toBe(extendedSession);
-		expect(apiGetSessionRoomsByGroupIds).not.toHaveBeenCalled();
+		expect(apiGetSessionRoomsByRoomIds).not.toHaveBeenCalled();
 		expect(apiGetChatRoomById).not.toHaveBeenCalled();
 		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
 	});
 
 	it('loads a routed group chat by room id when both route params exist', async () => {
 		const rawSession = {
-			chat: { id: 1, groupId: '!room:matrix.localhost' }
+			chat: { id: 1, matrixRoomId: '!room:matrix.localhost' }
 		};
 		const extendedSession = { item: rawSession.chat, isGroup: true };
-		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: [rawSession]
 		} as any);
 		vi.mocked(buildExtendedSession).mockReturnValue(extendedSession as any);
@@ -79,7 +79,7 @@ describe('useSession', () => {
 		);
 
 		await waitFor(() => expect(result.current.ready).toBe(true));
-		expect(apiGetSessionRoomsByGroupIds).toHaveBeenCalledWith(
+		expect(apiGetSessionRoomsByRoomIds).toHaveBeenCalledWith(
 			['!room:matrix.localhost'],
 			expect.any(AbortSignal)
 		);

@@ -37,10 +37,9 @@ export interface CallData {
 	matrixCall?: MatrixCall;
 	state: CallState;
 	/**
-	 * Optional: the dedicated Element Call room for group calls. For backwards
-	 * compatibility, this is usually the same as `roomId`, but we keep it
-	 * separate so we can continue to send signalling events in the original
-	 * session room while Element Call uses its own room.
+	 * Optional dedicated Element Call room for group calls. It stays separate
+	 * so signalling events can remain in the original session room while
+	 * Element Call uses its own room.
 	 */
 	elementCallRoomId?: string;
 	/**
@@ -656,7 +655,7 @@ class CallManager {
 	 */
 	public endCall(notifyRemote: boolean = true): void {
 		// Snapshot + clear first so nested hangup → state:ended → endCall()
-		// (and late oriso-call-ended messages) cannot read null.matrixCall.
+		// callbacks cannot read null.matrixCall.
 		const call = this.currentCall;
 		if (!call) {
 			return;

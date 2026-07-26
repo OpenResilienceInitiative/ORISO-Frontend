@@ -7,7 +7,6 @@ export const apiGetUserDataBySessionId = async (
 ): Promise<ConsultingSessionDataInterface> => {
 	return fetchData({
 		url: endpoints.userDataBySessionId(sessionId),
-		sendChatUserHeaders: true,
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.FORBIDDEN]
 	});

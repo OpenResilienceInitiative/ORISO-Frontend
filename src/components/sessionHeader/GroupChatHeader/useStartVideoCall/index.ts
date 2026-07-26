@@ -18,7 +18,8 @@ export const useStartVideoCall = () => {
 		try {
 			// Get Matrix room ID from active session
 			const roomId =
-				activeSession.item.matrixRoomId || activeSession.item.groupId;
+				activeSession.item.matrixRoomId ||
+				activeSession.item.matrixRoomId;
 
 			// console.log("Room ID:", roomId);
 
@@ -83,11 +84,7 @@ export const useStartVideoCall = () => {
 			);
 		}
 		// console.log("═══════════════════════════════════════════════");
-	}, [
-		activeSession.item.groupId,
-		activeSession.item.matrixRoomId,
-		matrixClientService
-	]);
+	}, [activeSession.item.matrixRoomId, matrixClientService]);
 
 	return {
 		url: '', // No longer used

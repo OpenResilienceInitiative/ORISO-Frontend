@@ -10,7 +10,6 @@ export const apiPutSessionData = async (
 	return fetchData({
 		url,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify(data),
-		sendChatUserHeaders: true
+		bodyData: JSON.stringify(data)
 	});
 };

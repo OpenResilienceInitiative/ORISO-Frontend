@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	apiGetSessionRoomBySessionId,
-	apiGetSessionRoomsByGroupIds
+	apiGetSessionRoomsByRoomIds
 } from '../api/apiGetSessionRooms';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
@@ -85,7 +85,7 @@ export const useSession = (
 				abortController.current.signal
 			);
 		} else if (rid) {
-			promise = apiGetSessionRoomsByGroupIds(
+			promise = apiGetSessionRoomsByRoomIds(
 				[rid],
 				abortController.current.signal
 			);

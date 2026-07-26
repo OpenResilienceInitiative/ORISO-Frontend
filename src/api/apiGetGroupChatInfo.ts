@@ -8,7 +8,7 @@ import {
 
 export interface groupChatInfoData {
 	active: boolean;
-	groupId: string;
+	matrixRoomId: string;
 	id: number;
 	bannedUsers?: string[];
 }
@@ -21,7 +21,6 @@ export const apiGetGroupChatInfo = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.NO_MATCH],
-		sendChatUserHeaders: true
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.NO_MATCH]
 	});
 };

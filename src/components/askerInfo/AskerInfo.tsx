@@ -62,7 +62,7 @@ export const AskerInfo = () => {
 					<div className="askerInfo__header__wrapper">
 						<Link
 							to={`${listPath}/${
-								activeSession.item.groupId
+								activeSession.item.matrixRoomId
 							}/${activeSession.item.id}${
 								sessionListTab
 									? `?sessionListTab=${sessionListTab}`

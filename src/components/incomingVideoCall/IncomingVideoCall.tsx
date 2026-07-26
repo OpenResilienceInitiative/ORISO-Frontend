@@ -15,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 export interface VideoCallRequestProps {
-	rcGroupId: string;
-	initiatorRcUserId: string;
+	matrixRoomId: string;
+	initiatorMatrixUserId: string;
 	initiatorUsername: string;
 	videoCallUrl: string;
 }
@@ -91,8 +91,11 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	};
 
 	const removeIncomingVideoCallNotification = React.useCallback(() => {
-		removeNotification(props.videoCall.rcGroupId, NOTIFICATION_TYPE_CALL);
-	}, [props.videoCall.rcGroupId, removeNotification]);
+		removeNotification(
+			props.videoCall.matrixRoomId,
+			NOTIFICATION_TYPE_CALL
+		);
+	}, [props.videoCall.matrixRoomId, removeNotification]);
 
 	const handleAnswerVideoCall = React.useCallback(
 		(isVideoActivated: boolean = false) => {
@@ -108,7 +111,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	);
 
 	const handleRejectVideoCall = React.useCallback(() => {
-		const roomId = props.videoCall.rcGroupId;
+		const roomId = props.videoCall.matrixRoomId;
 		const calls = matrixClientService?.getClient()?.callEventHandler?.calls;
 
 		Array.from(calls?.values() ?? [])
@@ -117,7 +120,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 
 		removeIncomingVideoCallNotification();
 	}, [
-		props.videoCall.rcGroupId,
+		props.videoCall.matrixRoomId,
 		removeIncomingVideoCallNotification,
 		matrixClientService
 	]);

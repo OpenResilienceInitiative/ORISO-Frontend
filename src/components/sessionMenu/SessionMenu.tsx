@@ -194,7 +194,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
 						navigate(
-							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
+							`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
 						);
 					} else {
 						mobileListView();
@@ -256,7 +256,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
 			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.groupId;
+			const sessionGroupId = activeSession.item.matrixRoomId;
 
 			apiPutArchive(sessionId)
 				.then(() => {
@@ -297,21 +297,21 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	// MATRIX MIGRATION: Handle sessions with and without groupId
-	const hasGroupId = !!activeSession.item.groupId;
+	const hasGroupId = !!activeSession.item.matrixRoomId;
 	const baseUrl = hasGroupId
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
 	const groupChatInfoLink = hasGroupId
 		? generatePath(baseUrl, {
-				groupId: activeSession.item.groupId,
+				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
 				subRoute: 'groupChatInfo'
 			})
 		: '';
 	const editGroupChatSettingsLink = hasGroupId
 		? generatePath(baseUrl, {
-				groupId: activeSession.item.groupId,
+				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
 				subRoute: 'editGroupChat'
 			})
@@ -319,7 +319,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// MATRIX MIGRATION: Generate userProfileLink based on whether groupId exists
 	const userProfileLink = hasGroupId
 		? generatePath(baseUrl, {
-				groupId: activeSession.item.groupId,
+				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
 				subRoute: 'userProfile'
 			})
@@ -420,12 +420,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			const roomId =
 				activeSession.rid ||
 				activeSession.item.matrixRoomId ||
-				activeSession.item.groupId;
+				activeSession.item.matrixRoomId;
 
 			// console.log("Room ID:", roomId);
 			// console.log("activeSession.rid:", activeSession.rid);
 			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
-			// console.log("activeSession.item.groupId:", activeSession.item.groupId);
+			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');

@@ -1,12 +1,13 @@
-import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import { hasUserAuthority, AUTHORITIES } from '../globalState';
 import {
 	ConsultingTypeBasicInterface,
 	UserDataInterface
 } from '../globalState/interfaces';
+import { getCurrentMatrixUserId } from './matrixSession';
 
-export const currentUserWasVideoCallInitiator = (initiatorRcUserId: string) =>
-	initiatorRcUserId === getValueFromCookie('rc_uid');
+export const currentUserWasVideoCallInitiator = (
+	initiatorMatrixUserId: string
+) => initiatorMatrixUserId === getCurrentMatrixUserId();
 
 /**
  * Checks if the browser supports WebRTC Encoded Transform, an alternative

@@ -69,7 +69,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { apiDeleteMessage } from '../../api/apiDeleteMessage';
 import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
@@ -250,7 +250,7 @@ const ChevronIcon = ({ className }: { className?: string }) => (
 
 export interface VideoCallMessageDTO {
 	eventType: 'IGNORED_CALL';
-	initiatorRcUserId: string;
+	initiatorMatrixUserId: string;
 	initiatorUserName: string;
 }
 
@@ -261,7 +261,7 @@ export interface MessageItem {
 	messageTime: string;
 	displayName: string;
 	username: string;
-	askerRcId?: string;
+	askerMatrixUserId?: string;
 	userId: string;
 	consultant?: {
 		username: string;
@@ -341,7 +341,7 @@ export const MessageItemComponent = ({
 	isMyMessage,
 	displayName,
 	username,
-	askerRcId,
+	askerMatrixUserId,
 	attachments,
 	file,
 	isNotRead,
@@ -400,16 +400,10 @@ export const MessageItemComponent = ({
 	);
 
 	const currentRecipientIdentifiers = useMemo(() => {
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		const merged = new Set<string>();
 		[
-			matrixUserIdFromCookie,
+			matrixUserIdFromSession,
 			userData?.userName,
 			userData?.displayName
 		].forEach((value) => {
@@ -1050,7 +1044,7 @@ export const MessageItemComponent = ({
 						.then(() => {
 							// WORKAROUND for an issue with reassignment and old users breaking the lastMessage for this session
 							apiSendAliasMessage({
-								rcGroupId: activeSession.rid,
+								matrixRoomId: activeSession.rid,
 								type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT_RESET_LAST_MESSAGE
 							});
 							reloadActiveSession();
@@ -1072,7 +1066,7 @@ export const MessageItemComponent = ({
 	};
 
 	const isUserMessage = () =>
-		userId === askerRcId ||
+		userId === askerMatrixUserId ||
 		(activeSession.isGroup &&
 			!activeSession.item.moderators?.includes(userId));
 
@@ -1652,7 +1646,9 @@ export const MessageItemComponent = ({
 							activeSession.consultant?.displayName ||
 							activeSession.consultant?.username
 						}
-						activeSessionAskerRcId={activeSession.item.askerRcId}
+						activeSessionAskerRcId={
+							activeSession.item.askerMatrixUserId
+						}
 					/>
 				);
 			case isDeleteMessage:
@@ -2648,12 +2644,12 @@ const MessageFlyoutMenu = ({
 
 	const currentUserIsModerator = isUserModerator({
 		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
+		matrixUserId: getCurrentMatrixUserId()
 	});
 
 	const subscriberIsModerator = isUserModerator({
 		chatItem: activeSession.item,
-		rcUserId: userId
+		matrixUserId: userId
 	});
 
 	return (
@@ -2664,7 +2660,7 @@ const MessageFlyoutMenu = ({
 					!isUserBanned && (
 						<BanUser
 							userName={username}
-							rcUserId={userId}
+							matrixUserId={userId}
 							chatId={activeSession.item.id}
 							handleUserBan={() => {
 								setIsUserBanOverlayOpen(true);

@@ -32,7 +32,7 @@ describe('apiDraftMessages', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/messages/draft',
 			method: 'POST',
-			headersData: { rcGroupId: 'room-123' },
+			headersData: { matrixRoomId: 'room-123' },
 			bodyData: JSON.stringify({ message: 'Draft body', t: 'E2EE' }),
 			responseHandling: ['CATCH_ALL']
 		});
@@ -55,7 +55,7 @@ describe('apiDraftMessages', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/messages/draft',
 			method: 'GET',
-			headersData: { rcGroupId: 99 },
+			headersData: { matrixRoomId: 99 },
 			responseHandling: ['EMPTY', 'CONTENT'],
 			signal: controller.signal
 		});

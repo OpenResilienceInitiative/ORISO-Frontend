@@ -4,14 +4,14 @@ export interface ConsultingSessionDataInterface {
 	age: number;
 	agencyId: number;
 	askerId: string;
-	askerRcId: string;
+	askerMatrixUserId: string;
 	askerUserName: string;
 	consultantId: string;
-	consultantRcId: string;
+	consultantMatrixUserId: string;
 	consultingType: number;
 	counsellingRelation: string;
 	gender: string;
-	groupId: string;
+	matrixRoomId: string;
 	id: number;
 	mainTopic: TopicsDataInterface;
 	postcode: string;

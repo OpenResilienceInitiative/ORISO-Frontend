@@ -47,8 +47,9 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
-	banUser: (rcUserId, chatId) =>
-		userServiceOrigin + `/service/users/${rcUserId}/chat/${chatId}/ban`,
+	banUser: (matrixUserId, chatId) =>
+		userServiceOrigin +
+		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
 		apiUrl + `/service/counselingtoolsservice/tools/${userId}`,
 	chatRoom: userServiceOrigin + '/service/users/chat/room',

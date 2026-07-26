@@ -668,7 +668,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const sessionView = getViewPathForType(type);
 	const userProfileLink = `/sessions/consultant/${sessionView}/${
-		activeSession.item.groupId
+		activeSession.item.matrixRoomId
 	}/${activeSession.item.id}/userProfile${getSessionListTab()}`;
 
 	const handleBackButton = () => {

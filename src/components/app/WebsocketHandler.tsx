@@ -183,7 +183,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	useEffect(() => {
 		if (newStompVideoCallRequest) {
 			addNotification({
-				id: newStompVideoCallRequest.rcGroupId,
+				id: newStompVideoCallRequest.matrixRoomId,
 				notificationType: NOTIFICATION_TYPE_CALL,
 				videoCall: newStompVideoCallRequest
 			});

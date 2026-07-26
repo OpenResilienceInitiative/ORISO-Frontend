@@ -18,7 +18,6 @@ export const apiAcceptAnonymousEnquiry = async (
 	return fetchData({
 		url,
 		method: FETCH_METHODS.PUT,
-		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.CONFLICT]
 	});
 };

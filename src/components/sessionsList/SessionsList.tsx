@@ -54,7 +54,7 @@ import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
-import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
@@ -132,7 +132,7 @@ const getSessionIdentityValues = (
 	const values = [
 		raw.session?.id,
 		raw.chat?.id,
-		raw.chat?.groupId,
+		raw.chat?.matrixRoomId,
 		(raw as any)?.session?.groupId,
 		item?.id,
 		item?.groupId,
@@ -300,7 +300,7 @@ function sessionMatchesToolbar(
 
 	const toolbarPersonId =
 		String(raw.session?.id || raw.chat?.id || '') ||
-		String(raw.chat?.groupId || '') ||
+		String(raw.chat?.matrixRoomId || '') ||
 		String(extended.item?.id || '');
 	if (selectedPersonIds.length > 0) {
 		if (!toolbarPersonId || !selectedPersonIds.includes(toolbarPersonId)) {
@@ -694,7 +694,8 @@ export const SessionsList = ({
 			const rids = (loadedSessions || [])
 				.map(
 					(session) =>
-						session?.chat?.groupId || session?.session?.groupId
+						session?.chat?.matrixRoomId ||
+						session?.session?.matrixRoomId
 				)
 				.filter(Boolean) as string[];
 
@@ -702,7 +703,7 @@ export const SessionsList = ({
 				return Promise.resolve();
 			}
 
-			return apiGetSessionRoomsByGroupIds(rids)
+			return apiGetSessionRoomsByRoomIds(rids)
 				.then(({ sessions }) => {
 					if (!sessions?.length) {
 						return;
@@ -781,7 +782,7 @@ export const SessionsList = ({
 					) {
 						const session = sessions[0];
 						const sessionId = session?.session?.id;
-						const groupId = session?.session?.groupId;
+						const groupId = session?.session?.matrixRoomId;
 						const isEmptyEnquiry =
 							session?.session?.status === STATUS_EMPTY;
 
@@ -898,13 +899,13 @@ export const SessionsList = ({
 			Promise.all(
 				rids.map((rid) => {
 					// Get session from api
-					return apiGetSessionRoomsByGroupIds([rid])
+					return apiGetSessionRoomsByRoomIds([rid])
 						.then(({ sessions }) => {
 							const session = sessions[0];
 
 							if (!session) {
 								const loadedSession = loadedSessions.find(
-									(s) => s?.chat?.groupId === rid
+									(s) => s?.chat?.matrixRoomId === rid
 								);
 								// If repetitive group chat reload it by id because groupId has changed
 								if (
@@ -938,7 +939,7 @@ export const SessionsList = ({
 						})
 						.catch(() => {
 							const loadedSession = loadedSessions.find(
-								(s) => s?.chat?.groupId === rid
+								(s) => s?.chat?.matrixRoomId === rid
 							);
 							// If repetitive group chat reload it by id because groupId has changed
 							if (
@@ -1009,8 +1010,8 @@ export const SessionsList = ({
 				.map(({ rid, timestamp }) => {
 					const existingSession = sessions.find(
 						(s) =>
-							s?.chat?.groupId === rid ||
-							s?.session?.groupId === rid ||
+							s?.chat?.matrixRoomId === rid ||
+							s?.session?.matrixRoomId === rid ||
 							(s?.session as { matrixRoomId?: string })
 								?.matrixRoomId === rid
 					);
@@ -1102,8 +1103,8 @@ export const SessionsList = ({
 			// this is fed by the Matrix sync stream.
 			const touchedSession = sessionsRef.current.find(
 				(s) =>
-					s?.chat?.groupId === roomId ||
-					s?.session?.groupId === roomId ||
+					s?.chat?.matrixRoomId === roomId ||
+					s?.session?.matrixRoomId === roomId ||
 					(s?.session as { matrixRoomId?: string })?.matrixRoomId ===
 						roomId
 			);
@@ -1414,8 +1415,9 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
-					? item.groupId
+				(typeof item.matrixRoomId === 'string' &&
+				isMatrixRoom(item.matrixRoomId)
+					? item.matrixRoomId
 					: null);
 			const matrixRoom = matrixRoomId
 				? matrixLiveEventBridge.getClient()?.getRoom(matrixRoomId)
@@ -1754,7 +1756,7 @@ export const SessionsList = ({
 				.map(({ raw, extended }) => {
 					const id =
 						String(raw.session?.id || raw.chat?.id || '') ||
-						String(raw.chat?.groupId || '') ||
+						String(raw.chat?.matrixRoomId || '') ||
 						String(extended.item?.id || '');
 					if (!id || seen.has(id)) {
 						return null;
@@ -2157,8 +2159,8 @@ const useGroupWatcher = (isLoading: boolean) => {
 			return;
 		}
 
-		return apiGetSessionRoomsByGroupIds(
-			inactiveGroupSessions.map((s) => s.chat.groupId)
+		return apiGetSessionRoomsByRoomIds(
+			inactiveGroupSessions.map((s) => s.chat.matrixRoomId)
 		)
 			.then(({ sessions }) => {
 				// Update sessions whose room still exists
@@ -2172,8 +2174,8 @@ const useGroupWatcher = (isLoading: boolean) => {
 					(inactiveGroupSession) =>
 						!sessions.find(
 							(s) =>
-								s.chat.groupId ===
-								inactiveGroupSession.chat.groupId
+								s.chat.matrixRoomId ===
+								inactiveGroupSession.chat.matrixRoomId
 						)
 				);
 				if (removedGroupSessions.length > 0) {
@@ -2183,7 +2185,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 							.filter(
 								(s) => getModality(s) !== Modality.SELF_HELP
 							)
-							.map((s) => s.chat.groupId)
+							.map((s) => s.chat.matrixRoomId)
 					});
 				}
 

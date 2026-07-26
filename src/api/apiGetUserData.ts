@@ -9,7 +9,6 @@ export const apiGetUserData = async (
 
 	return fetchData({
 		url: url,
-		sendChatUserHeaders: false,
 		responseHandling,
 		method: FETCH_METHODS.GET
 	});

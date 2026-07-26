@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -535,7 +536,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	// This loads the keys for current activeSession.rid which is already set:
-	// to groupChat.groupId on group chats
+	// to groupChat.matrixRoomId on group chats
 	// to session.groupId on session chats
 	const {
 		subscriptionKeyLost,
@@ -1151,7 +1152,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return () => window.clearTimeout(timeoutId);
 	}, [
-		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.id,
 		draftLoaded,
 		focusEditorInput,
@@ -1172,9 +1173,11 @@ export const MessageSubmitInterfaceComponent = ({
 				language
 			)
 				.then((response) =>
-					encryptRoom(setE2EEState, response.rcGroupId).then(() => {
-						onSendButton && onSendButton(response);
-					})
+					encryptRoom(setE2EEState, response.matrixRoomId).then(
+						() => {
+							onSendButton && onSendButton(response);
+						}
+					)
 				)
 				.then(async () => {
 					setEditorState(EditorState.createEmpty());
@@ -1685,7 +1688,7 @@ export const MessageSubmitInterfaceComponent = ({
 						setTimeout(() => {
 							if (window.innerWidth >= 900) {
 								navigate(
-									`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
+									`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
 								);
 							} else {
 								mobileListView();
@@ -1701,7 +1704,7 @@ export const MessageSubmitInterfaceComponent = ({
 			prepareAndSendMessage().then();
 		}
 	}, [
-		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.id,
 		getTypedMarkdownMessage,
 		navigate,
@@ -2191,15 +2194,9 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		[
-			matrixUserIdFromCookie,
+			matrixUserIdFromSession,
 			userData?.userName,
 			userData?.displayName
 		].forEach((rawValue) => {
@@ -2315,7 +2312,8 @@ export const MessageSubmitInterfaceComponent = ({
 				)
 			);
 		};
-		const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
+		const askerId =
+			`${activeSession?.item?.askerMatrixUserId || ''}`.trim();
 		addAudienceCandidate(askerId);
 		const askerUsername = `${activeSession?.user?.username || ''}`.trim();
 		addAudienceCandidate(askerUsername, askerUsername);
@@ -2398,7 +2396,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.username,
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
-		activeSession?.item?.askerRcId,
+		activeSession?.item?.askerMatrixUserId,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2678,13 +2676,14 @@ export const MessageSubmitInterfaceComponent = ({
 	const audienceGroupedSections = useMemo(() => {
 		const clientsComparable = new Set<string>();
 		const counsellorsComparable = new Set<string>();
-		[activeSession?.item?.askerRcId, activeSession?.user?.username].forEach(
-			(rawValue) => {
-				getComparableAudienceIds(rawValue).forEach((id) =>
-					clientsComparable.add(id)
-				);
-			}
-		);
+		[
+			activeSession?.item?.askerMatrixUserId,
+			activeSession?.user?.username
+		].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) =>
+				clientsComparable.add(id)
+			);
+		});
 		[
 			activeSession?.consultant?.id,
 			activeSession?.consultant?.username,
@@ -2753,7 +2752,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.consultant?.username,
-		activeSession?.item?.askerRcId,
+		activeSession?.item?.askerMatrixUserId,
 		activeSession?.user?.username,
 		audienceSelectableOptions,
 		audienceSelfComparableIds,

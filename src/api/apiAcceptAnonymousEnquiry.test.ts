@@ -22,7 +22,6 @@ describe('apiAcceptAnonymousEnquiry', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: '/service/conversations/askers/anonymous/103507/accept',
 			method: 'PUT',
-			sendChatUserHeaders: true,
 			responseHandling: ['CONFLICT']
 		});
 	});

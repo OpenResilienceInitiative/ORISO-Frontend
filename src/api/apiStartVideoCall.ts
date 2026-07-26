@@ -22,7 +22,6 @@ export const apiStartVideoCall = async (
 		url: url,
 		method: FETCH_METHODS.POST,
 		bodyData: videoCallData,
-		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.CATCH_ALL],
-		sendChatUserHeaders: true
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.CATCH_ALL]
 	});
 };

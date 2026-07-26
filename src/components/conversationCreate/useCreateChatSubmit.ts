@@ -6,7 +6,7 @@ import {
 	apiUpdateGroupChat,
 	groupChatSettings
 } from '../../api/apiGroupChatSettings';
-import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 
 /**
  * Shared submit path for both conversation formats. Creates the chat via
@@ -54,7 +54,7 @@ export const useCreateChatSubmit = () => {
 			request
 				.then((response) => {
 					onSuccess?.();
-					return apiGetSessionRoomsByGroupIds([response.groupId])
+					return apiGetSessionRoomsByRoomIds([response.matrixRoomId])
 						.then(({ sessions }) => {
 							dispatch({
 								type: UPDATE_SESSIONS,

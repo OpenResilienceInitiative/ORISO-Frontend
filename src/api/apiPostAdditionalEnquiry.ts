@@ -8,7 +8,7 @@ import {
 
 interface registrationResponse {
 	sessionId: number;
-	rcGroupId: string;
+	matrixRoomId: string;
 }
 
 export const apiPostAdditionalEnquiry = async (
@@ -30,7 +30,6 @@ export const apiPostAdditionalEnquiry = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		sendChatUserHeaders: true,
 		bodyData: data,
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,

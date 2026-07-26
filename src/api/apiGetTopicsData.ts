@@ -7,7 +7,6 @@ export const apiGetTopicsData = async (): Promise<TopicsDataInterface[]> => {
 
 	return fetchData({
 		url: url,
-		sendChatUserHeaders: false,
 		responseHandling: [FETCH_ERRORS.EMPTY],
 		method: FETCH_METHODS.GET
 	}).catch((error) => {

@@ -7,7 +7,6 @@ export const apiEnquiryAcceptance = async (sessionId: number): Promise<any> => {
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.PUT,
-		sendChatUserHeaders: true,
 		responseHandling: [FETCH_ERRORS.CONFLICT]
 	});
 };
