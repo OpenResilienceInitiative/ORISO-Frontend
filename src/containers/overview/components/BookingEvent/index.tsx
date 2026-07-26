@@ -1,5 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { generatePath } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { BookingEventsInterface } from '../../../../globalState/interfaces/BookingsInterface';
 import {
 	convertUTCDateToLocalDate,
@@ -9,18 +8,6 @@ import {
 } from '../../../../utils/dateHelpers';
 import { ReactComponent as CameraOnIcon } from '../../../../resources/img/icons/camera-on.svg';
 import './booking-event.styles.scss';
-import { uiUrl } from '../../../../resources/scripts/config';
-import {
-	AUTHORITIES,
-	hasUserAuthority,
-	UserDataContext
-} from '../../../../globalState';
-import { useAppConfig } from '../../../../hooks/useAppConfig';
-import {
-	Button,
-	ButtonItem,
-	BUTTON_TYPES
-} from '../../../../components/button/Button';
 import { useTranslation } from 'react-i18next';
 
 interface BookingEventProps {
@@ -30,9 +17,7 @@ interface BookingEventProps {
 const COUNTDOWN_START = 5 * 60 * 1000;
 
 export const BookingEvent = ({ booking }: BookingEventProps) => {
-	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
-	const { userData } = useContext(UserDataContext);
 
 	const startTime = new Date(
 		convertUTCDateToLocalDate(new Date(booking.startTime))
@@ -43,49 +28,12 @@ export const BookingEvent = ({ booking }: BookingEventProps) => {
 	const showCountDown = startTime.getTime() - Date.now() < COUNTDOWN_START;
 	const [countdown, setCountdown] = useState(showCountDown && Date.now());
 
-	const isConsultant = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	);
-
 	useEffect(() => {
 		if (showCountDown) {
 			const rel = setInterval(() => setCountdown(Date.now()), 5000);
 			return () => clearInterval(rel);
 		}
 	}, [showCountDown]);
-
-	const getLink = useCallback(
-		(videoAppointmentId: string) => {
-			return `${uiUrl}${generatePath(
-				isConsultant
-					? settings.urls.consultantVideoConference
-					: settings.urls.videoConference,
-				{
-					type: 'app',
-					appointmentId: videoAppointmentId
-				}
-			)}`;
-		},
-		[
-			isConsultant,
-			settings.urls.consultantVideoConference,
-			settings.urls.videoConference
-		]
-	);
-
-	const handleVideoLink = useCallback(
-		(videoAppointmentId: string) => {
-			window.open(getLink(videoAppointmentId));
-		},
-		[getLink]
-	);
-
-	const startVideoCallButton: ButtonItem = {
-		label: translate('overview.start'),
-		type: BUTTON_TYPES.PRIMARY,
-		smallIconBackgroundColor: 'secondary'
-	};
 
 	const prettyDate =
 		!showCountDown &&
@@ -113,13 +61,11 @@ export const BookingEvent = ({ booking }: BookingEventProps) => {
 								true
 							)}
 						</div>
-						<Button
-							className="bookingEvent__start"
-							buttonHandle={() =>
-								handleVideoLink(booking.videoAppointmentId)
-							}
-							item={startVideoCallButton}
-						/>
+						<div className="bookingEvent__start">
+							{translate(
+								'legacyVideoAppointment.unavailable.message'
+							)}
+						</div>
 					</>
 				)}
 

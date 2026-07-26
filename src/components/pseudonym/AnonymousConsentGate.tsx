@@ -92,16 +92,13 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 						<PrivacyShieldIcon />
 					</span>
 					<h2 className="anonymousConsentGate__title">
-						{t(
-							'videoConference.waitingroom.dataProtection.headline',
-							'Herzlich Willkommen'
-						)}
+						{t('anonymousConsent.headline', 'Herzlich Willkommen')}
 					</h2>
 				</div>
 
 				<p className="anonymousConsentGate__body">
 					{t(
-						'videoConference.waitingroom.dataProtection.description',
+						'anonymousConsent.description',
 						'Bitte bestätigen sie unsere Datenschutzbestimmungen. Erst danach dürfen unsere Berater_innen einen Chat mit ihnen starten.'
 					)}
 				</p>

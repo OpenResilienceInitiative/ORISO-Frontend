@@ -85,7 +85,6 @@ export const consultingTypes = [
 ] as any;
 
 export const storybookSettings = {
-	disableVideoAppointments: true,
 	useOverviewPage: false
 } as any;
 

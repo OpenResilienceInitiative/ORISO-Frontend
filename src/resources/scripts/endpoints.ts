@@ -40,7 +40,6 @@ export const endpoints = {
 		`/service/appointservice/consultants/${userId}/meetingSlug`,
 	counselorToken:
 		agencyServiceOrigin + `/service/appointservice/consultants/token`,
-	appointmentsServiceBase: apiUrl + '/service/appointments',
 	appointmentsServiceBookingEventsByUserId: (userId: string) =>
 		agencyServiceOrigin +
 		`/service/appointservice/askers/${userId}/bookings`,
@@ -161,5 +160,5 @@ export const endpoints = {
 	},
 	setAppointmentSuccessMessage:
 		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	videocallServiceBase: apiUrl + '/service/videocalls'
+	groupChatJoin: apiUrl + '/service/videocalls/join'
 };

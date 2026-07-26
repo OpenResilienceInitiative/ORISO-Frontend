@@ -906,7 +906,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!(isAnonymousAskerExperience && pseudonymConfirmed);
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
-			translate('videoConference.waitingroom.dataProtection.label.text', {
+			translate('anonymousConsent.label.text', {
 				interpolation: { escapeValue: false },
 				legal_links: renderToString(
 					<LegalLinks

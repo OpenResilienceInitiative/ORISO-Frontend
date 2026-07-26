@@ -8,7 +8,7 @@ import {
 
 export const apiJoinGroupChat = async (roomId: string): Promise<any> =>
 	fetchData({
-		url: endpoints.videocallServiceBase + '/join/' + roomId,
+		url: endpoints.groupChatJoin + '/' + roomId,
 		method: FETCH_METHODS.POST,
 		responseHandling: [
 			FETCH_ERRORS.CONFLICT,
