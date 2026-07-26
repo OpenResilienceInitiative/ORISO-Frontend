@@ -6,18 +6,15 @@ $iconSize: 24px;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	padding: 10px 14px 6px;
+
+	// Figma 8641-34699: 16px inset from the chat card edges (matches composer).
+	padding: 16px 16px 6px;
 	min-height: 75px;
 	background-color: #fff;
 	box-sizing: border-box;
 
-	@media (width >= 768px) {
-		margin-left: 40px;
-		margin-right: 40px;
-	}
-
 	@include breakpoint($fromMedium) {
-		padding: 10px 18px 6px;
+		padding: 16px 16px 6px;
 	}
 
 	@include breakpoint($fromLarge) {
@@ -546,6 +543,12 @@ $iconSize: 24px;
 		flex: 0 0 auto;
 	}
 
+	// FE#513: a 1:1 conversation must not borrow the group facepile look —
+	// the single avatar stands free of the type pill instead of overlapping it.
+	&__memberStack--single &__memberBubble {
+		margin-left: 6px;
+	}
+
 	// Figma #430: collapsed "+N people" badge shown for groups with >4 members.
 	&__memberCount {
 		display: inline-flex;
@@ -628,6 +631,12 @@ $iconSize: 24px;
 				box-shadow: 0 0 0 2px #fff;
 			}
 		}
+	}
+
+	// FE#513: house rule "disable, don't hide" — light-grey, honest tooltip.
+	&__add--disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
 	}
 
 	&__addContent {

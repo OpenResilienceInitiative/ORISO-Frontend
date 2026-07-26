@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
 	DEFAULT_NOTIFICATION_SETTINGS,
+	isDoNotDisturbActive,
 	isNotificationSuppressed,
 	mergeNotificationSettings,
 	parseLocalDeviceSettings,
@@ -50,15 +51,15 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 	it('merges deep-partial updates immutably', () => {
 		const merged = mergeNotificationSettings(
 			DEFAULT_NOTIFICATION_SETTINGS,
-			{ families: { calls: false }, sounds: { enabled: false } }
+			{ families: { calls: false }, sounds: { message: 'none' } }
 		);
 		expect(merged.families.calls).toBe(false);
 		expect(merged.families.messages).toBe(true);
-		expect(merged.sounds.enabled).toBe(false);
+		expect(merged.sounds.message).toBe('none');
 		expect(DEFAULT_NOTIFICATION_SETTINGS.families.calls).toBe(true);
 	});
 
-	it('suppression gate: global mute OR device silence OR family off', () => {
+	it('suppression gate: mute/device/system toggle; drafts always; channels else', () => {
 		const on = DEFAULT_NOTIFICATION_SETTINGS;
 		const dev = { silenced: false };
 		expect(isNotificationSuppressed(on, dev, 'messages')).toBe(false);
@@ -72,13 +73,24 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 		expect(
 			isNotificationSuppressed(on, { silenced: true }, 'messages')
 		).toBe(true);
+		// Harmonised model: drafts never notify …
+		expect(isNotificationSuppressed(on, dev, 'drafts')).toBe(true);
+		// … system keeps its single toggle …
+		expect(
+			isNotificationSuppressed(
+				mergeNotificationSettings(on, { families: { system: false } }),
+				dev,
+				'system'
+			)
+		).toBe(true);
+		// … and other family toggles no longer suppress (channels decide).
 		expect(
 			isNotificationSuppressed(
 				mergeNotificationSettings(on, { families: { calls: false } }),
 				dev,
 				'calls'
 			)
-		).toBe(true);
+		).toBe(false);
 	});
 
 	it('parses device-scoped settings tolerantly', () => {
@@ -210,14 +222,100 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 
 	it('works without a client (mirror/defaults) and mirrors to localStorage', () => {
 		notificationSettingsStore.updateSettings({
-			sounds: { enabled: false }
+			sounds: { message: 'none' }
 		});
 		expect(
-			notificationSettingsStore.getState().settings.sounds.enabled
-		).toBe(false);
+			notificationSettingsStore.getState().settings.sounds.message
+		).toBe('none');
 		const mirrored = JSON.parse(
 			localStorage.getItem('ORISO_NOTIFICATION_SETTINGS') || '{}'
 		);
-		expect(mirrored.sounds.enabled).toBe(false);
+		expect(mirrored.sounds.message).toBe('none');
+	});
+});
+
+describe('notification sound slots (two global slots)', () => {
+	it('parse defaults to chime for messages and default for mentions', () => {
+		const parsed = parseNotificationSettings({});
+		expect(parsed.sounds.message).toBe('chime');
+		expect(parsed.sounds.mention).toBe('default');
+	});
+
+	it('parse keeps a valid stored SoundId per slot', () => {
+		const parsed = parseNotificationSettings({
+			sounds: { message: 'ding', mention: 'none' }
+		});
+		expect(parsed.sounds.message).toBe('ding');
+		expect(parsed.sounds.mention).toBe('none');
+	});
+
+	it('parse falls back to the default for an unknown SoundId', () => {
+		const parsed = parseNotificationSettings({
+			sounds: { message: 'wobble', mention: 42 }
+		});
+		expect(parsed.sounds.message).toBe('chime');
+		expect(parsed.sounds.mention).toBe('default');
+	});
+
+	it('merge updates a single slot immutably', () => {
+		const merged = mergeNotificationSettings(
+			DEFAULT_NOTIFICATION_SETTINGS,
+			{
+				sounds: { message: 'soft' }
+			}
+		);
+		expect(merged.sounds.message).toBe('soft');
+		expect(merged.sounds.mention).toBe(
+			DEFAULT_NOTIFICATION_SETTINGS.sounds.mention
+		);
+	});
+});
+
+describe('global do-not-disturb', () => {
+	it('isDoNotDisturbActive is true while dndUntil is in the future', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		expect(isDoNotDisturbActive('2026-07-18T11:00:00Z', now)).toBe(true);
+	});
+
+	it('isDoNotDisturbActive auto-reverts once dndUntil has passed', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		expect(isDoNotDisturbActive('2026-07-18T09:00:00Z', now)).toBe(false);
+	});
+
+	it('isDoNotDisturbActive is false for null/empty', () => {
+		expect(isDoNotDisturbActive(null, new Date())).toBe(false);
+		expect(isDoNotDisturbActive('', new Date())).toBe(false);
+	});
+
+	it('suppresses every family while DND is active, even with mute off and family on', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			dndUntil: '2026-07-18T11:00:00Z'
+		};
+		expect(
+			isNotificationSuppressed(
+				settings,
+				{ silenced: false },
+				'messages',
+				now
+			)
+		).toBe(true);
+	});
+
+	it('does not suppress once DND has expired (family still on)', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			dndUntil: '2026-07-18T09:00:00Z'
+		};
+		expect(
+			isNotificationSuppressed(
+				settings,
+				{ silenced: false },
+				'messages',
+				now
+			)
+		).toBe(false);
 	});
 });

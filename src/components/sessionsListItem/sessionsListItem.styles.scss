@@ -8,8 +8,10 @@ $session-card-hover-bg: #f0e7e7;
 // unchanged — this only makes them the single canonical source.
 $session-card-selected-bg: #f6f3f3;
 $session-light-border: #fff;
-$session-selected-border: #ffb4aa;
-$session-active-border: #cc1e1c;
+
+// #597: selected ring uses M3 primary (was #ffb4aa / 1px)
+$session-selected-border: var(--m3-primary, #a5000a);
+$session-active-border: var(--m3-primary-container, #cc1e1c);
 $session-focus-ring: #ffdad5;
 $session-topic-chip-bg: #ffb4aa;
 $session-topic-chip-color: #410001;
@@ -33,7 +35,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 0px;
+
+	// Every card is a standalone tile: 6px gap + full 24px radius always.
+	margin: 0 0 6px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -47,9 +51,6 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&:first-of-type {
-		margin-top: 0px;
-	}
 	&:last-child {
 		margin-bottom: 15px;
 	}
@@ -74,8 +75,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
-			border: 1px solid $session-selected-border !important;
-			border-radius: 24px !important;
+
+			// #597: 2px solid --m3-primary (overrides resting 1px border)
+			@include list-item-selected-border($important: true);
 			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 			transition:
 				background-color 160ms ease,
@@ -86,7 +88,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
-				border-color: $session-selected-border !important;
+				border-color: $list-item-selected-border-color !important;
 			}
 		}
 
@@ -122,6 +124,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
 			color: #da5248 !important;
 		}
+
+		.sessionsListItem__consultingTypeIcon--internalLabel,
+		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+			color: #da5248 !important;
+		}
 	}
 
 	// Read state: muted gray background for sessions the counselor has already read
@@ -150,11 +157,16 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	&--menuOpen {
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-			border: 2px solid $session-active-border !important;
+
+			@include list-item-active-menu-border($important: true);
 		}
 
+		// Flyout open: vertical pill (height > width) + 2px primary-container
 		.sessionsListItem__menuIcon {
-			border-color: $session-active-border;
+			width: 32px;
+			height: 48px;
+
+			@include list-item-active-menu-border;
 			color: $session-active-border;
 		}
 
@@ -165,16 +177,23 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__content {
-		width: calc(100% - 18px);
-		max-width: calc(100% - 18px);
+		// Cards fill the 12px column gutter (set on .sessionsList__scrollContainer)
+		// instead of adding their own side margin.
+		width: 100%;
+		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
-		min-height: 112px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+
+		// 160px card height; every card keeps a full 24px radius.
+		min-height: 160px;
 		padding: 0;
-		margin: 0 9px;
+		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 0px;
+		border-radius: 24px;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -236,29 +255,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
-	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-	}
-
-	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--beforeActive .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--afterActive .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-		border-top: 1px solid $session-light-border;
-	}
-
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		border: 2px solid $session-active-border !important;
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
@@ -270,7 +269,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		&:first-child {
 			justify-content: space-between;
-			padding: 12px 16px;
+			padding: 18px 16px 0;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
@@ -284,7 +283,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			min-height: 36px;
+			padding: 0 16px 14px 24px;
+
+			// Figma 8609-31260: 48px-high bottom action row.
+			min-height: 48px;
 		}
 
 		&:not(:last-child) {
@@ -375,6 +377,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		color: #1e1e1e;
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+		transition:
+			width 160ms ease,
+			height 160ms ease,
+			border-color 160ms ease,
+			background-color 160ms ease;
 
 		svg {
 			width: 24px;
@@ -397,7 +404,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		background: white !important;
 		width: 301px;
 		max-width: calc(100vw - 32px);
-		border: 1px solid var(--m3-primary-container, #cc1e1c);
+
+		@include list-item-active-menu-border;
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		overflow: auto;
@@ -752,7 +760,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__subject {
-		padding: 8px 16px;
+		// padding: 8px 16px;
 		font-size: 14px;
 		line-height: 20px;
 		letter-spacing: 0.25px;
@@ -797,10 +805,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__consultingTypeIcon {
-		padding: 8px 16px 8px 8px;
 		margin-left: auto;
 		display: flex;
-		align-items: center;
+		align-items: end;
 		justify-content: center;
 		flex-shrink: 0;
 		margin-right: 0;
@@ -880,63 +887,242 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			line-height: 20px;
 			letter-spacing: 0;
 		}
+
+		&--internal,
+		&--selfHelp {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			height: 38px;
+			white-space: nowrap;
+		}
+
+		&--internalIcon,
+		&--selfHelpIcon {
+			width: 24px !important;
+			height: 24px !important;
+			flex-shrink: 0;
+		}
+
+		&--internalLabel,
+		&--selfHelpLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--m3-secondary, #4b515a);
+			line-height: 20px;
+			letter-spacing: 0;
+		}
 	}
 
 	.tag {
 		margin-left: $grid-base;
 	}
 
-	&__caseHandoverButton {
+	// Case-handover split button — M3 "split button" (Figma node 115-27170):
+	// two segments separated by a 2px gap, outer corners 20px, inner corners
+	// 4px. The per-state background colour is set once on the container as a
+	// CSS custom property and inherited by both segments.
+	&__handoverAction {
+		position: relative;
+		display: inline-flex;
+		align-items: stretch;
+		gap: 2px;
+		margin: 8px 16px 8px 8px;
+		background: transparent;
+		color: var(--m3-on-primary, #ffffff);
+		flex-shrink: 0;
+
+		--handover-segment-bg: var(--m3-secondary, #4b515a);
+		--handover-segment-fg: var(--m3-on-primary, #ffffff);
+
+		&--active,
+		&--selected {
+			--handover-segment-bg: var(--m3-primary, #a5000a);
+			--handover-segment-fg: var(--m3-on-primary, #ffffff);
+		}
+
+		&--status {
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-on-surface-variant, #5c6167);
+		}
+
+		&--denied {
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-primary, #a5000a);
+		}
+
+		&--disabled {
+			--handover-segment-bg: var(--m3-surface-variant, #e7e8ea);
+			--handover-segment-fg: var(--m3-outline, #9ca1a6);
+		}
+	}
+
+	&__handoverActionPrimary {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		min-width: 142px;
-		min-height: 38px;
-		margin: 8px 16px 8px 8px;
-		padding: 0 14px;
+		min-height: 40px;
+		min-width: 116px;
+		padding: 0 12px 0 16px;
 		border: 0;
-		border-radius: 18px;
-		background: $case-handover-action;
-		color: #ffffff;
+		border-radius: 20px 4px 4px 20px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
 		font-family: $font-family-sans-serif;
 		font-size: 13px;
 		font-weight: 700;
 		line-height: 1;
 		cursor: pointer;
-		flex-shrink: 0;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
 
 		&:disabled {
-			background: $case-handover-action-disabled;
-			color: $case-handover-status-muted;
-			cursor: not-allowed;
+			cursor: default;
 		}
 
-		&--pending {
-			background: $case-handover-status-muted;
+		// Pressed feedback: a gentle darken of the segment colour (M3 state
+		// layer) — never a hard black overlay/ring.
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
 		}
 
-		&--denied {
-			background: $case-handover-denied-bg;
-			color: $case-handover-denied-text;
-		}
-
-		&--selected {
-			background: $case-handover-action-hover;
+		// Focus ring uses the segment foreground so it reads white on the red
+		// button and dark on the muted/status button — never a black circle.
+		&:focus-visible {
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
+			outline-offset: -2px;
 		}
 	}
 
-	&__caseHandoverCheckbox {
-		width: 14px;
-		height: 14px;
+	&__handoverActionLabel {
+		white-space: nowrap;
+	}
+
+	&__handoverActionToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 48px;
+		border: 0;
+		border-radius: 4px 20px 20px 4px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionCheckbox {
+		width: 15px;
+		height: 15px;
 		border: 2px solid currentcolor;
 		border-radius: 3px;
 		background: transparent;
+		flex-shrink: 0;
+		position: relative;
 
 		&--selected {
-			background: currentcolor;
-			box-shadow: inset 0 0 0 3px $case-handover-action-hover;
+			background: var(--m3-surface, #ffffff);
+			border-color: var(--m3-on-primary, #ffffff);
+
+			&::after {
+				content: '';
+				position: absolute;
+				left: 3px;
+				top: 0;
+				width: 4px;
+				height: 7px;
+				border: solid var(--m3-primary, #a5000a);
+				border-width: 0 2px 2px 0;
+				transform: rotate(45deg);
+			}
 		}
+	}
+
+	&__handoverActionMenu {
+		position: absolute;
+		top: calc(100% + 6px);
+		right: 0;
+		z-index: 40;
+		min-width: 236px;
+		padding: 6px;
+		border-radius: 14px;
+		border: 1px solid var(--m3-primary, #a5000a);
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+	}
+
+	&__handoverActionMenuItem {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: 12px;
+		width: 100%;
+		padding: 10px 12px;
+		border: 0;
+		border-radius: 10px;
+		background: transparent;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container-low, #f5f2f3);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionMenuItemIcon {
+		flex-shrink: 0;
+		display: inline-flex;
+		margin-top: 1px;
+		color: var(--m3-on-surface, #1b1b1c);
+
+		svg {
+			display: block;
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__handoverActionMenuItemText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	&__handoverActionMenuItemTitle {
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__handoverActionMenuItemDescription {
+		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #5c6167);
 	}
 }
 

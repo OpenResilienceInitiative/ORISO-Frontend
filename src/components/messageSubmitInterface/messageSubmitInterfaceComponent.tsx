@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -27,6 +28,7 @@ import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
+import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -56,7 +58,8 @@ import {
 } from './MessageSubmitInfo';
 import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
-	getAttachmentSizeMBForKB
+	getAttachmentSizeMBForKB,
+	isSupportedAttachment
 } from './attachmentHelpers';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
@@ -65,7 +68,10 @@ import {
 	INPUT_MAX_LENGTH,
 	normalizeHighlightColor
 } from './richtextHelpers';
-import { resolveComposerMessageSnapshot } from './composerMessageSnapshot';
+import {
+	resolveComposerMessageSnapshot,
+	shouldPreserveComposerAfterRetry
+} from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -78,8 +84,7 @@ import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
-	buildVisibleToPrefix,
-	buildThreadPrefix
+	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
@@ -94,7 +99,9 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
+import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { isMyMessage } from '../session/sessionHelpers';
 import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
@@ -166,6 +173,20 @@ export interface MessageSubmitInterfaceComponentProps {
 	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
+	/**
+	 * Relations foundation (#435): direct-reply context. When set, the next
+	 * send carries an m.in_reply_to relation to this event and the composer
+	 * shows a cancelable quote preview.
+	 */
+	replyTo?: { eventId: string; author: string; text: string } | null;
+	onCancelReply?: () => void;
+	/**
+	 * Editing (m.replace, #435): when set, the composer prefills this
+	 * message's text and the next send edits it in place instead of sending
+	 * a new message.
+	 */
+	editingMessage?: { eventId: string; text: string } | null;
+	onCancelEdit?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
 	onMobileNavigateBack?: () => void;
@@ -179,6 +200,34 @@ export interface MessageSubmitInterfaceComponentProps {
 	onLocalMessageEdit?: (messageId: string, newText: string) => void;
 	/** Prefer Matrix-aware ownership from SessionItem when provided. */
 	isOwnMessage?: (userId: string) => boolean;
+	/**
+	 * Called when a send attempt fails (the message never reached the server /
+	 * encryption broke). The parent surfaces a "Sending message failed"
+	 * notification in the timeline. The composer keeps the typed text so the
+	 * user can simply resend.
+	 */
+	onSendError?: (
+		message: string,
+		ts: number,
+		retryOfId?: string,
+		threadRootId?: string | null,
+		transportMessage?: string,
+		isAside?: boolean,
+		replyToEventId?: string | null,
+		mentionedUserIds?: string[]
+	) => void;
+	/** A user-triggered retry. One request id is handled at most once. */
+	retryRequest?: {
+		requestId: string;
+		failedSendId: string;
+		message: string;
+		threadRootId?: string | null;
+		transportMessage: string;
+		isAside: boolean;
+		replyToEventId?: string | null;
+		mentionedUserIds: string[];
+	} | null;
+	onRetrySettled?: (requestId: string) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -195,6 +244,10 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
+	replyTo,
+	onCancelReply,
+	editingMessage,
+	onCancelEdit,
 	mobileUnreadCount = 0,
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
@@ -203,7 +256,10 @@ export const MessageSubmitInterfaceComponent = ({
 	messages,
 	onCloseThread,
 	onLocalMessageEdit,
-	isOwnMessage
+	isOwnMessage,
+	onSendError,
+	retryRequest,
+	onRetrySettled
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -579,6 +635,20 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[normalizeInitialAlignment]
 	);
+
+	// Editing (#435): prefill the composer with the message being edited.
+	// Depend on the specific fields (not the object identity) so a new
+	// editingMessage reference with the same content doesn't re-run the effect.
+	const editingMessageEventId = editingMessage?.eventId;
+	const editingMessageText = editingMessage?.text;
+	useEffect(() => {
+		if (editingMessageText === undefined) {
+			return;
+		}
+		setComposerText(editingMessageText);
+		composerRef.current?.setText(editingMessageText);
+		composerRef.current?.focus();
+	}, [editingMessageEventId, editingMessageText]);
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
@@ -1136,54 +1206,71 @@ export const MessageSubmitInterfaceComponent = ({
 		]
 	);
 
-	const handleMessageSendSuccess = useCallback(() => {
-		reloadSessionAfterSendIfNeeded(
-			{
-				isMatrixSession: resolvedChatSession.isMatrixSession,
-				clientRoomId: resolvedChatSession.matrixRoomId
-			},
-			reloadActiveSession
-		);
-		onMessageSendSuccess?.();
-		setEditorState(EditorState.createEmpty());
-		setComposerText('');
-		composerRef.current?.clear();
-		setSelectedAudienceValues(
-			audienceOptions.some((option) => option.value === '__all__')
-				? ['__all__']
-				: audienceOptions[0]?.value
-					? [audienceOptions[0].value]
-					: ['__all__']
-		);
-		setIsAudienceMenuOpen(false);
-		clearDraftMessage();
-		setActiveInfo('');
-		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
-		setTimeout(() => {
-			resizeTextarea();
-		}, 0);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 50);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 100);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 200);
-		setTimeout(() => setIsRequestInProgress(false), 1200);
-	}, [
-		audienceOptions,
-		clearDraftMessage,
-		onMessageSendSuccess,
-		reloadActiveSession,
-		resolvedChatSession.isMatrixSession,
-		resolvedChatSession.matrixRoomId,
-		resizeTextarea
-	]);
+	const handleMessageSendSuccess = useCallback(
+		(preserveComposer = false) => {
+			reloadSessionAfterSendIfNeeded(
+				{
+					isMatrixSession: resolvedChatSession.isMatrixSession,
+					clientRoomId: resolvedChatSession.matrixRoomId
+				},
+				reloadActiveSession
+			);
+			onMessageSendSuccess?.();
+			if (preserveComposer) {
+				setIsRequestInProgress(false);
+				return;
+			}
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+			setSelectedAudienceValues(
+				audienceOptions.some((option) => option.value === '__all__')
+					? ['__all__']
+					: audienceOptions[0]?.value
+						? [audienceOptions[0].value]
+						: ['__all__']
+			);
+			setIsAudienceMenuOpen(false);
+			clearDraftMessage();
+			setActiveInfo('');
+			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
+			setTimeout(() => {
+				resizeTextarea();
+			}, 0);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 50);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 100);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 200);
+			setTimeout(() => setIsRequestInProgress(false), 1200);
+		},
+		[
+			audienceOptions,
+			clearDraftMessage,
+			onMessageSendSuccess,
+			reloadActiveSession,
+			resolvedChatSession.isMatrixSession,
+			resolvedChatSession.matrixRoomId,
+			resizeTextarea
+		]
+	);
 
 	const sendMessage = useCallback(
-		async (message, attachment: File, isEncrypted, isAside = false) => {
+		async (
+			message,
+			attachment: File,
+			isEncrypted,
+			isAside = false,
+			retryOfId?: string,
+			rawMessage?: string,
+			preserveComposerOnSuccess = false,
+			retryReplyToEventId?: string | null,
+			retryMentionedUserIds?: string[]
+		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
@@ -1216,6 +1303,44 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
+
+			// Editing (m.replace, #435): replaces the target event's content;
+			// no attachments, prefixes, or reply/thread relations apply.
+			if (editingMessage && !retryOfId) {
+				if (!matrixRoomId) {
+					setIsRequestInProgress(false);
+					apiPostError({
+						name: 'MatrixMessageEditError',
+						message:
+							'Cannot edit message: session has no Matrix room',
+						level: ERROR_LEVEL_WARN
+					}).then();
+					return;
+				}
+				await chatTransportService
+					.editTextMessage({
+						matrixRoomId,
+						targetEventId: editingMessage.eventId,
+						message
+					})
+					.then(() => {
+						onSendButton && onSendButton();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
+						onCancelEdit && onCancelEdit();
+					})
+					.catch((error) => {
+						setIsRequestInProgress(false);
+						apiPostError({
+							name: error?.name || 'MatrixMessageEditError',
+							message:
+								error?.message ||
+								'Failed to edit Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
+					});
+				return;
+			}
 
 			if (attachment) {
 				// Matrix attachments stay on the SDK media path.
@@ -1277,11 +1402,19 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// For Matrix: if we uploaded an attachment, the message was already sent with it
 			// Only send a separate text message if there's text and no attachment
-			const hasTextContent = hasMessageContent(getTypedMarkdownMessage());
+			// Retry requests carry the preserved original explicitly. Do not depend
+			// on the editor state having committed before deciding whether to send.
+			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
 				hasTextContent && (!attachment || !matrixSessionId);
 
 			if (shouldSendTextMessage) {
+				// Intentional mentions (#435): read from the composer's own
+				// HTML (mention pills carry data-mention-matrix-id there)
+				// before it is cleared by handleMessageSendSuccess.
+				const mentionedUserIds = retryOfId
+					? retryMentionedUserIds || []
+					: extractMentionedUserIds(composerRef.current?.getHTML());
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
@@ -1296,16 +1429,39 @@ export const MessageSubmitInterfaceComponent = ({
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
-					matrixClientService
+					matrixClientService,
+					retryOfId
+						? retryReplyToEventId || null
+						: replyTo?.eventId || null,
+					mentionedUserIds
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
 						onSendButton && onSendButton();
-						handleMessageSendSuccess();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
 						cleanupAttachment();
+						// Reply context is consumed by the send (#435).
+						if (!retryOfId) {
+							onCancelReply && onCancelReply();
+						}
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						// Surface the failure in the timeline ("Sending message
+						// failed"); the composer keeps the text so the user can
+						// resend without retyping.
+						onSendError?.(
+							rawMessage ?? message,
+							Date.now(),
+							retryOfId,
+							threadRootId || null,
+							message,
+							Boolean(isAside),
+							retryOfId
+								? retryReplyToEventId || null
+								: replyTo?.eventId || null,
+							mentionedUserIds
+						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
 							message:
@@ -1327,17 +1483,21 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession,
 			cleanupAttachment,
 			encryptRoom,
-			getTypedMarkdownMessage,
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
+			onSendError,
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
 			threadRootId,
+			replyTo?.eventId,
+			onCancelReply,
+			editingMessage,
+			onCancelEdit,
 			userData?.displayName,
 			userData?.firstName,
 			userData?.lastName,
@@ -1345,108 +1505,158 @@ export const MessageSubmitInterfaceComponent = ({
 		]
 	);
 
-	const prepareAndSendMessage = useCallback(async () => {
-		const attachmentInput: any = attachmentInputRef.current;
-		const selectedFile = attachmentInput && attachmentInput.files[0];
-		const attachment = preselectedFile || selectedFile;
-
-		const currentTypedMessage = getTypedMarkdownMessage();
-		if (
-			getPlainTextFromComposerValue(currentTypedMessage).length >
-			INPUT_MAX_LENGTH
-		) {
-			return null;
-		}
-
-		if (hasMessageContent(currentTypedMessage) || attachment) {
-			setIsRequestInProgress(true);
-		} else {
-			return null;
-		}
-
-		let message = encodeAlignmentForTransport(
-			encodeHighlightColorsForTransport(currentTypedMessage)
-		).trim();
-		const prefixParts: string[] = [];
-		if (threadRootId) {
-			prefixParts.push(buildThreadPrefix(threadRootId));
-		}
-		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
-		// (ADR-008) and only exists when the audience selector is actually shown —
-		// i.e. there is more than one human counterpart (group / supervision). In a
-		// 1:1 conversation the selector is hidden, so a reply must never carry a
-		// VISIBLE_TO prefix, regardless of any stale selection state.
-		const humanTargetCount = audienceOptions.filter(
-			(option) => option.value !== '__all__'
-		).length;
-		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
-		);
-		const hasExplicitAudience =
-			humanTargetCount > 1 && explicitAudience.length > 0;
-		if (hasExplicitAudience) {
-			prefixParts.push(buildVisibleToPrefix(explicitAudience));
-		}
-		if (isSupervisor) {
-			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
-		}
-		// ADR-008: any message carrying an aside (supervisor feedback OR an
-		// explicit VISIBLE_TO audience) must be routed to the supervision side
-		// room, never the client-facing room.
-		const isAside = Boolean(isSupervisor) || hasExplicitAudience;
-		if (prefixParts.length && message.length > 0) {
-			message = `${prefixParts.join(' ')} ${message}`;
-		}
-		// Legacy Rocket.Chat client-side message encryption is removed;
-		// Matrix messages go through the SDK path unencrypted (ADR-004).
-		const isEncrypted = false;
-
-		if (isAskerEnquiry) {
-			await sendEnquiry(message, isEncrypted);
-			return;
-		}
-
-		// Shortcut: edit an existing message via Matrix m.replace
-		if (editingMessageId) {
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (matrixRoomId && matrixClientService) {
-				try {
-					await matrixClientService.editMessage(
-						matrixRoomId,
-						editingMessageId,
-						getPlainTextFromComposerValue(message) || message
+	const prepareAndSendMessage = useCallback(
+		async (
+			messageOverride?: string,
+			retryOfId?: string,
+			retryContext?: {
+				transportMessage: string;
+				isAside: boolean;
+				replyToEventId?: string | null;
+				mentionedUserIds: string[];
+			}
+		) => {
+			const attachmentInput: any = attachmentInputRef.current;
+			const selectedFile = attachmentInput && attachmentInput.files[0];
+			const attachment = retryOfId
+				? null
+				: resolveAttachmentForSend(
+						preselectedFile,
+						selectedFile,
+						attachmentSelected
 					);
-					onLocalMessageEdit?.(editingMessageId, message);
-				} catch {
-					// Editing failed silently — fall through to clear state
+
+			const composerMessageBeforeSend = getTypedMarkdownMessage();
+			const currentTypedMessage =
+				messageOverride ?? composerMessageBeforeSend;
+			const preserveComposerOnSuccess = Boolean(
+				retryOfId &&
+					messageOverride !== undefined &&
+					shouldPreserveComposerAfterRetry(
+						composerMessageBeforeSend,
+						messageOverride
+					)
+			);
+			if (
+				getPlainTextFromComposerValue(currentTypedMessage).length >
+				INPUT_MAX_LENGTH
+			) {
+				return null;
+			}
+
+			if (hasMessageContent(currentTypedMessage) || attachment) {
+				setIsRequestInProgress(true);
+			} else {
+				return null;
+			}
+
+			let message = retryContext
+				? retryContext.transportMessage
+				: encodeAlignmentForTransport(
+						encodeHighlightColorsForTransport(currentTypedMessage)
+					).trim();
+			let isAside = retryContext?.isAside || false;
+			const prefixParts: string[] = [];
+			// Relations foundation (#435): thread membership travels as the
+			// MSC3440 m.thread relation on the event (see chatTransportService),
+			// not as a [THREAD:...] text prefix anymore. Old messages with the
+			// prefix keep rendering via the legacy parse fallback.
+			// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+			// (ADR-008) and only exists when the audience selector is actually shown —
+			// i.e. there is more than one human counterpart (group / supervision). In a
+			// 1:1 conversation the selector is hidden, so a reply must never carry a
+			// VISIBLE_TO prefix, regardless of any stale selection state.
+			if (!retryContext) {
+				const humanTargetCount = audienceOptions.filter(
+					(option) => option.value !== '__all__'
+				).length;
+				const explicitAudience = selectedAudienceValues.filter(
+					(value) => value !== '__all__'
+				);
+				const hasExplicitAudience =
+					humanTargetCount > 1 && explicitAudience.length > 0;
+				if (hasExplicitAudience) {
+					prefixParts.push(buildVisibleToPrefix(explicitAudience));
+				}
+				if (isSupervisor) {
+					prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
+				}
+				// ADR-008: any message carrying an aside (supervisor feedback OR an
+				// explicit VISIBLE_TO audience) must be routed to the supervision side
+				// room, never the client-facing room.
+				isAside = Boolean(isSupervisor) || hasExplicitAudience;
+				if (prefixParts.length && message.length > 0) {
+					message = `${prefixParts.join(' ')} ${message}`;
 				}
 			}
-			setEditingMessageId(null);
-			setIsRequestInProgress(false);
-			composerRef.current?.clear();
-			setComposerText('');
-			return;
-		}
+			// Legacy Rocket.Chat client-side message encryption is removed. This
+			// `isEncrypted` flag is the vestigial remnant of that path and no
+			// longer controls Matrix encryption: with Rust crypto initialized
+			// unconditionally (matrixClientService.initRustCrypto) and rooms
+			// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+			// automatically (ADR-004, durable since the ADR-005 homeserver
+			// rebuild). The flag is a no-op pass-through kept only for the
+			// chatTransportService signature.
+			const isEncrypted = false;
 
-		await sendMessage(message, attachment, isEncrypted, isAside);
-	}, [
-		editingMessageId,
-		encodeAlignmentForTransport,
-		encodeHighlightColorsForTransport,
-		getTypedMarkdownMessage,
-		hasMessageContent,
-		isAskerEnquiry,
-		matrixClientService,
-		onLocalMessageEdit,
-		preselectedFile,
-		resolvedChatSession,
-		sendEnquiry,
-		sendMessage,
-		selectedAudienceValues,
-		audienceOptions,
-		isSupervisor,
-		threadRootId
-	]);
+			if (isAskerEnquiry) {
+				await sendEnquiry(message, isEncrypted);
+				return;
+			}
+
+			// Shortcut: edit an existing message via Matrix m.replace
+			if (editingMessageId && !retryOfId) {
+				const matrixRoomId = resolvedChatSession.matrixRoomId;
+				if (matrixRoomId && matrixClientService) {
+					try {
+						await matrixClientService.editMessage(
+							matrixRoomId,
+							editingMessageId,
+							getPlainTextFromComposerValue(message) || message
+						);
+						onLocalMessageEdit?.(editingMessageId, message);
+					} catch {
+						// Editing failed silently — fall through to clear state
+					}
+				}
+				setEditingMessageId(null);
+				setIsRequestInProgress(false);
+				composerRef.current?.clear();
+				setComposerText('');
+				return;
+			}
+
+			await sendMessage(
+				message,
+				attachment,
+				isEncrypted,
+				isAside,
+				retryOfId,
+				currentTypedMessage,
+				preserveComposerOnSuccess,
+				retryContext?.replyToEventId || null,
+				retryContext?.mentionedUserIds || []
+			);
+		},
+		[
+			attachmentSelected,
+			audienceOptions,
+			editingMessageId,
+			encodeAlignmentForTransport,
+			encodeHighlightColorsForTransport,
+			getTypedMarkdownMessage,
+			hasMessageContent,
+			isAskerEnquiry,
+			isSupervisor,
+			matrixClientService,
+			onLocalMessageEdit,
+			preselectedFile,
+			resolvedChatSession,
+			selectedAudienceValues,
+			sendEnquiry,
+			sendMessage
+		]
+	);
 
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
@@ -1514,6 +1724,37 @@ export const MessageSubmitInterfaceComponent = ({
 		[handleButtonClick]
 	);
 
+	const handledRetryRequestRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (
+			!retryRequest ||
+			handledRetryRequestRef.current === retryRequest.requestId ||
+			isRequestInProgress ||
+			uploadProgress
+		) {
+			return;
+		}
+
+		handledRetryRequestRef.current = retryRequest.requestId;
+		prepareAndSendMessage(retryRequest.message, retryRequest.failedSendId, {
+			transportMessage: retryRequest.transportMessage,
+			isAside: retryRequest.isAside,
+			replyToEventId: retryRequest.replyToEventId,
+			mentionedUserIds: retryRequest.mentionedUserIds
+		})
+			.catch(() => {
+				// Send failures are surfaced through onSendError. This catch only
+				// prevents an unexpected rejected promise from going unhandled.
+			})
+			.finally(() => onRetrySettled?.(retryRequest.requestId));
+	}, [
+		isRequestInProgress,
+		onRetrySettled,
+		prepareAndSendMessage,
+		retryRequest,
+		uploadProgress
+	]);
+
 	const handleAttachmentSelect = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		attachmentInput.click();
@@ -1533,22 +1774,67 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo(INFO_TYPES.ATTACHMENT_SIZE_ERROR);
 	}, [removeSelectedAttachment]);
 
+	const handleUnsupportedAttachments = useCallback(() => {
+		removeSelectedAttachment();
+		setActiveInfo(INFO_TYPES.ATTACHMENT_FORMAT_ERROR);
+	}, [removeSelectedAttachment]);
+
 	const handleAttachmentChange = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const attachment = attachmentInput.files[0];
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments
+	]);
+
+	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
+	const handleComposerFilesSelected = useCallback(
+		(files: File[]) => {
+			const attachment = files[0];
+			if (!attachment) {
+				return;
+			}
+			if (!isSupportedAttachment(attachment)) {
+				handleUnsupportedAttachments();
+				return;
+			}
+			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
+			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
+				? handleLargeAttachments()
+				: displayAttachmentToUpload(attachment);
+		},
+		[
+			displayAttachmentToUpload,
+			handleLargeAttachments,
+			handleUnsupportedAttachments
+		]
+	);
 
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments, preselectedFile]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments,
+		preselectedFile
+	]);
 
 	useEffect(() => {
 		if (!preselectedFile) return;
@@ -1560,6 +1846,11 @@ export const MessageSubmitInterfaceComponent = ({
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
+	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
+	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
+	const attachmentPreviewUrl = useImagePreviewUrl(attachmentSelected);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
@@ -1642,8 +1933,6 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const hasUploadFunctionality =
-		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -1652,6 +1941,9 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const hasUploadFunctionality =
+		!isAskerEnquiry &&
+		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
@@ -2975,6 +3267,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		inRoomValues: new Set<string>(),
+		matrixUserIdByComparableId: new Map<string, string>(),
 		selfId: userData?.userId as string | undefined
 	});
 	mentionDataRef.current = {
@@ -2987,6 +3280,31 @@ export const MessageSubmitInterfaceComponent = ({
 					...Array.from(getComparableAudienceIds(option.label))
 				])
 		),
+		// Intentional mentions (#435): audienceOptions already resolves room
+		// members to their real Matrix user id (option.value is member.userId
+		// for room members — see the audience-options effect above). Reusing
+		// that instead of a second room-member fetch keeps this a single
+		// source of truth, and only ever a *resolved* member id ends up here.
+		matrixUserIdByComparableId: new Map(
+			audienceOptions
+				.filter(
+					(option) =>
+						option.value !== '__all__' &&
+						/^@[^:@\s]+:.+$/.test(option.value)
+				)
+				.flatMap((option) =>
+					Array.from(
+						new Set([
+							...Array.from(
+								getComparableAudienceIds(option.value)
+							),
+							...Array.from(
+								getComparableAudienceIds(option.label)
+							)
+						])
+					).map((id): [string, string] => [id, option.value])
+				)
+		),
 		selfId: userData?.userId
 	};
 
@@ -2998,16 +3316,26 @@ export const MessageSubmitInterfaceComponent = ({
 				'nicht im Chat'
 			),
 			getCandidates: () => {
-				const { directory, inRoomValues } = mentionDataRef.current;
+				const { directory, inRoomValues, matrixUserIdByComparableId } =
+					mentionDataRef.current;
 				return Array.from(directory.entries()).map(
-					([consultantId, info]) => ({
-						id: consultantId,
-						displayName: info.displayName,
-						username: info.username,
-						isInRoom: Array.from(
-							getComparableAudienceIds(info.username)
-						).some((id) => inRoomValues.has(id))
-					})
+					([consultantId, info]) => {
+						const comparableIds = getComparableAudienceIds(
+							info.username
+						);
+						const matrixUserId = Array.from(comparableIds)
+							.map((id) => matrixUserIdByComparableId.get(id))
+							.find(Boolean);
+						return {
+							id: consultantId,
+							displayName: info.displayName,
+							username: info.username,
+							matrixUserId,
+							isInRoom: Array.from(comparableIds).some((id) =>
+								inRoomValues.has(id)
+							)
+						};
+					}
 				);
 			}
 		}),
@@ -3185,6 +3513,58 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
+				{/* Relations foundation (#435): cancelable reply-quote preview,
+				    docked inside the composer box above the input. */}
+				{replyTo && (
+					<div className="messageSubmit__replyPreview" role="status">
+						<div className="messageSubmit__replyPreviewContent">
+							<span className="messageSubmit__replyPreviewLabel">
+								{translate(
+									'message.reply.previewLabel',
+									'Antwort an'
+								)}{' '}
+								<strong>{replyTo.author}</strong>
+							</span>
+							<span className="messageSubmit__replyPreviewText">
+								{replyTo.text}
+							</span>
+						</div>
+						<button
+							type="button"
+							className="messageSubmit__replyPreviewCancel"
+							onClick={() => onCancelReply && onCancelReply()}
+							aria-label={translate(
+								'message.reply.cancel',
+								'Antwort verwerfen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
+				    same dock as the reply preview. */}
+				{editingMessage && (
+					<div className="messageSubmit__editPreview" role="status">
+						<span className="messageSubmit__editPreviewLabel">
+							{translate(
+								'message.edit.previewLabel',
+								'Nachricht bearbeiten'
+							)}
+						</span>
+						<button
+							type="button"
+							className="messageSubmit__editPreviewCancel"
+							onClick={() => onCancelEdit && onCancelEdit()}
+							aria-label={translate(
+								'message.edit.cancel',
+								'Bearbeiten abbrechen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -3720,11 +4100,21 @@ export const MessageSubmitInterfaceComponent = ({
 								{attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
-											<span className="textarea__attachmentModeIcon">
-												{getAttachmentIcon(
-													attachmentSelected.type
-												)}
-											</span>
+											{attachmentPreviewUrl ? (
+												<img
+													className="textarea__attachmentModeThumb"
+													src={attachmentPreviewUrl}
+													alt={
+														attachmentSelected.name
+													}
+												/>
+											) : (
+												<span className="textarea__attachmentModeIcon">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+												</span>
+											)}
 											<div className="textarea__attachmentModeInfo">
 												<p className="textarea__attachmentModeName">
 													{attachmentSelected.name}
@@ -3881,6 +4271,11 @@ export const MessageSubmitInterfaceComponent = ({
 											onEditLast={handleEditLast}
 											onCancel={handleCancelEdit}
 											onUpload={handleUpload}
+											onFilesSelected={
+												hasUploadFunctionality
+													? handleComposerFilesSelected
+													: undefined
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&

@@ -7,18 +7,26 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState
 } from 'react';
 import * as React from 'react';
 import { AgencyDataInterface, TopicsDataInterface } from '../interfaces';
+import { ConsultingTypeInterface } from '../interfaces/ConsultingTypeInterface';
 import { UrlParamsContext } from './UrlParamsProvider';
 import { getUrlParameter } from '../../utils/getUrlParameter';
 import { apiGetTopicById } from '../../api/apiGetTopicId';
-import { apiGetAgencyById } from '../../api';
+import { apiGetAgencyById, apiGetConsultingType } from '../../api';
 import { TopicSelection } from '../../components/registration/topicSelection/TopicSelection';
 import { ZipcodeInput } from '../../components/registration/zipcodeInput/ZipcodeInput';
 import { AgencySelection } from '../../components/registration/agencySelection/AgencySelection';
 import { AccountData } from '../../components/registration/accountData/AccountData';
+import {
+	mergeRegistrationSteps,
+	RegistrationStep,
+	filterRegistrationStepsForDirectLink,
+	getConsultantDirectLinkTopicIds
+} from '../../components/registration/registrationSteps';
 
 export const RegistrationContext = createContext<RegistrationContextInterface>(
 	{}
@@ -32,6 +40,8 @@ interface SessionStorageData {
 	topicGroupId?: number;
 	topicId?: number;
 	zipcode: string;
+	age?: string;
+	state?: string;
 }
 
 export interface RegistrationData extends SessionStorageData {
@@ -45,13 +55,8 @@ interface RegistrationContextInterface {
 	setDisabledNextButton?: Dispatch<SetStateAction<boolean>>;
 	registrationData?: RegistrationData;
 	updateRegistrationData?: (data: Partial<RegistrationData>) => void;
-	availableSteps?: {
-		component: any;
-		name: string;
-		//urlSuffix?: string;
-		mandatoryFields?: string[];
-		urlParams?: string[];
-	}[];
+	registrationConsultingType?: ConsultingTypeInterface | null;
+	availableSteps?: RegistrationStep[];
 	hasConsultantError?: boolean;
 	hasAgencyError?: boolean;
 	hasTopicError?: boolean;
@@ -79,6 +84,9 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		useState<boolean>(false);
 	const [registrationData, setRegistrationData] =
 		useState<RegistrationData>();
+	const [registrationConsultingType, setRegistrationConsultingType] =
+		useState<ConsultingTypeInterface | null>(null);
+	const previousAgencyIdRef = useRef<number | undefined>(undefined);
 
 	const preselectedTopicId = getUrlParameter('tid');
 	const preselectedAgencyId = getUrlParameter('aid');
@@ -108,7 +116,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 	// Step URLs are now derived from the route `:step` param in Registration.tsx
 	// (react-router v7 removed useRouteMatch), so steps no longer carry a `route`.
-	const defaultSteps = useMemo(
+	const defaultSteps = useMemo<RegistrationStep[]>(
 		() => [
 			{
 				component: TopicSelection,
@@ -136,7 +144,35 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		],
 		[]
 	);
+	const [preselectedSteps, setPreselectedSteps] = useState(defaultSteps);
 	const [availableSteps, setAvailableSteps] = useState(defaultSteps);
+
+	useEffect(() => {
+		const consultingTypeId = registrationData?.agency?.consultingType;
+
+		if (!consultingTypeId) {
+			setRegistrationConsultingType(null);
+			return;
+		}
+
+		let cancelled = false;
+
+		apiGetConsultingType({ consultingTypeId }).then((consultingType) => {
+			if (!cancelled) {
+				setRegistrationConsultingType(consultingType);
+			}
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [registrationData?.agency?.consultingType]);
+
+	useEffect(() => {
+		setAvailableSteps(
+			mergeRegistrationSteps(preselectedSteps, registrationConsultingType)
+		);
+	}, [preselectedSteps, registrationConsultingType]);
 
 	// Init already stored data from session storage
 	useEffect(() => {
@@ -176,7 +212,10 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	);
 
 	useEffect(() => {
-		const { topic, mainTopic, agency, ...sessionStorageData } =
+		// The password stays in memory only — with free stepper navigation the
+		// account step's values are committed on back-navigation too, and a
+		// plaintext password must never be written to sessionStorage.
+		const { topic, mainTopic, agency, password, ...sessionStorageData } =
 			registrationData || {};
 
 		setSessionStorageData({
@@ -202,7 +241,10 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		setHasAgencyError(hasAgencyError);
 
 		const directLinkAgency =
-			preselectedAgency || getDirectLinkAgency(preselectedTopic);
+			preselectedAgency ||
+			getDirectLinkAgency(
+				registrationData?.mainTopic || preselectedTopic
+			);
 		const directLinkZipcode =
 			preselectedZipcode ||
 			(directLinkAgency || preselectedConsultant
@@ -215,15 +257,14 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			...(preselectedTopic ? { mainTopic: preselectedTopic } : {})
 		});
 
-		setAvailableSteps(
-			defaultSteps.filter(
-				(step) =>
-					!step.condition?.({
-						agency: directLinkAgency,
-						topic: preselectedTopic,
-						zipcode: directLinkZipcode
-					})
-			)
+		setPreselectedSteps(
+			filterRegistrationStepsForDirectLink(defaultSteps, {
+				preselectedConsultantId,
+				preselectedConsultant,
+				preselectedTopic,
+				directLinkAgency,
+				directLinkZipcode
+			})
 		);
 	}, [
 		updateRegistrationData,
@@ -235,27 +276,67 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		preselectedAgency,
 		preselectedZipcode,
 		preselectedConsultant,
-		getDirectLinkAgency
+		getDirectLinkAgency,
+		registrationData?.mainTopic,
+		registrationData?.agency
 	]);
 
 	useEffect(() => {
-		if (!preselectedConsultant) {
+		const agencyId = registrationData?.agency?.id;
+
+		if (
+			previousAgencyIdRef.current !== undefined &&
+			previousAgencyIdRef.current !== agencyId &&
+			(registrationData?.age !== undefined ||
+				registrationData?.state !== undefined)
+		) {
+			updateRegistrationData({
+				age: undefined,
+				state: undefined
+			});
+		}
+
+		previousAgencyIdRef.current = agencyId;
+	}, [
+		registrationData?.agency?.id,
+		registrationData?.age,
+		registrationData?.state,
+		updateRegistrationData
+	]);
+
+	useEffect(() => {
+		if (!preselectedConsultant || preselectedTopic) {
 			return;
 		}
 
-		const agency = getDirectLinkAgency(registrationData?.mainTopic);
-		if (agency && agency.id !== registrationData?.agency?.id) {
-			updateRegistrationData({
-				agency,
-				zipcode: registrationData?.zipcode || DIRECT_LINK_POSTCODE
-			});
+		const topicIds = getConsultantDirectLinkTopicIds(
+			preselectedConsultant,
+			registrationData?.agency
+		);
+		if (topicIds.length !== 1) {
+			return;
 		}
+
+		if (registrationData?.mainTopic?.id === topicIds[0]) {
+			return;
+		}
+
+		let cancelled = false;
+
+		apiGetTopicById(topicIds[0]).then((mainTopic) => {
+			if (!cancelled && mainTopic) {
+				updateRegistrationData({ mainTopic });
+			}
+		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [
-		getDirectLinkAgency,
 		preselectedConsultant,
-		registrationData?.agency?.id,
-		registrationData?.mainTopic,
-		registrationData?.zipcode,
+		preselectedTopic,
+		registrationData?.agency,
+		registrationData?.mainTopic?.id,
 		updateRegistrationData
 	]);
 
@@ -265,6 +346,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			setDisabledNextButton,
 			registrationData,
 			updateRegistrationData: updateRegistrationData,
+			registrationConsultingType,
 			availableSteps,
 			hasConsultantError,
 			hasAgencyError,
@@ -276,6 +358,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			hasAgencyError,
 			hasConsultantError,
 			hasTopicError,
+			registrationConsultingType,
 			registrationData,
 			updateRegistrationData
 		]

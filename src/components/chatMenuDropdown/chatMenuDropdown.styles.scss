@@ -3,7 +3,8 @@
 	background: #ffffff;
 	width: 301px;
 	max-width: calc(100vw - 24px);
-	border: 1px solid var(--m3-primary, #a5000a);
+
+	@include list-item-active-menu-border;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 	overflow: auto;

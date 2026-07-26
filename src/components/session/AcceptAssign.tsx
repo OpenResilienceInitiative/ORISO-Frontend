@@ -15,9 +15,11 @@ import { useSearchParam } from '../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from './sessionHelpers';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiEnquiryAcceptance, FETCH_ERRORS } from '../../api';
+import { apiAcceptAnonymousEnquiry } from '../../api/apiAcceptAnonymousEnquiry';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { useWatcher } from '../../hooks/useWatcher';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
+import { getModality, Modality } from './getModality';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -171,7 +173,14 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 		}
 		setIsRequestInProgress(true);
 
-		apiEnquiryAcceptance(sessionId)
+		// Live chats assign through the dedicated cross-tenant anonymous path;
+		// registered enquiries keep the existing accept endpoint (#774).
+		const acceptRequest =
+			getModality(activeSession) === Modality.LIVE_CHAT
+				? apiAcceptAnonymousEnquiry(sessionId)
+				: apiEnquiryAcceptance(sessionId);
+
+		acceptRequest
 			.then(() => fetchSessionRoutingAfterAccept(sessionId))
 			.then((routing) =>
 				encryptRoom(setE2EEState, routing.roomRouteId).then(

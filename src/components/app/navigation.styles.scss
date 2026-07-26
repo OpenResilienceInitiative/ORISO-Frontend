@@ -12,6 +12,65 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		z-index: 1;
 
 		&--figma-consultant {
+			/* Mobile/tablet: roomy items + gap; scroll when the row overflows */
+			.navigation__itemContainer {
+				display: flex;
+				flex-direction: row;
+				align-items: flex-end;
+				justify-content: flex-start;
+				gap: 12px;
+				overflow-x: auto;
+				overflow-y: hidden;
+				-webkit-overflow-scrolling: touch;
+				scroll-behavior: smooth;
+				scrollbar-width: none;
+
+				&::-webkit-scrollbar {
+					display: none;
+				}
+
+				@include breakpoint($fromMedium) {
+					gap: 16px;
+				}
+			}
+
+			.navigation__item__top {
+				flex: 0 0 auto;
+				overflow: visible;
+				display: flex;
+				flex-direction: row;
+				align-items: flex-end;
+				justify-content: flex-start;
+				gap: 12px;
+
+				@include breakpoint($fromMedium) {
+					gap: 16px;
+				}
+			}
+
+			.navigation__item__bottom {
+				flex: 0 0 auto;
+				flex-shrink: 0;
+				display: flex;
+				flex-direction: row;
+				align-items: flex-end;
+				gap: 12px;
+				margin-left: 0;
+				padding-left: 8px;
+
+				@include breakpoint($fromMedium) {
+					gap: 16px;
+					padding-left: 12px;
+				}
+			}
+
+			.navigation__item__bottom--consultant {
+				display: flex;
+				flex-direction: row;
+				align-items: flex-end;
+				flex-shrink: 0;
+			}
+
 			@include breakpoint($fromLarge) {
 				border-right: 2px solid #fff;
 				background-color: #eae7e8;
@@ -22,7 +81,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				flex-direction: column;
 				min-height: 0;
 				overflow-x: visible;
-				overflow-y: auto;
+				overflow-y: hidden;
 
 				.navigation__itemContainer {
 					align-items: center;
@@ -30,18 +89,28 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					padding: 0;
 					flex: 1 1 auto;
 					min-height: 0;
-					overflow-x: visible;
-					overflow-y: auto;
+					overflow: hidden;
 					max-height: none;
 					padding: 14px 6px;
+					flex-direction: column;
+					justify-content: space-between;
+					gap: 0;
 				}
 
 				.navigation__item__top {
 					width: 100%;
 					gap: 9px;
 					align-items: center;
-					flex: 0 1 auto;
-					min-height: auto;
+					flex: 1 1 auto;
+					min-height: 0;
+					min-width: 0;
+					padding: 6px 0;
+					box-sizing: border-box;
+					overflow-x: hidden;
+					overflow-y: auto;
+					flex-direction: column;
+					justify-content: flex-start;
+					scrollbar-width: thin;
 				}
 
 				.navigation__item__bottom {
@@ -49,8 +118,17 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					gap: 9px;
 					align-items: center;
 					margin-top: auto;
+					margin-left: 0;
+					padding-left: 0;
 					padding-top: 10px;
 					flex: 0 0 auto;
+					overflow: visible;
+					flex-direction: column;
+				}
+
+				.navigation__item__bottom--consultant {
+					flex-direction: column;
+					align-items: center;
 				}
 
 				/* Full-width click area; badges are absolute so they don’t affect layout */
@@ -449,34 +527,35 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			padding: 0;
 		}
 
-		&:focus {
-			outline: $focus-outline;
-			outline-offset: 4px;
-			border-radius: 12px;
-			transition: all 0.3s ease;
-		}
-
-		&:focus:not(:focus-visible) {
+		/* Keyboard-only ring scoped to the icon slot so the ring centers on
+		   the squircle, not the whole item (slot + label column). */
+		&:focus,
+		&:focus-visible {
 			outline: none;
 		}
 
-		/* Live-chat toggle is a <button> — the default shared focus halo
-		   (2px offset:4px black outline) boxes the whole cell after each
-		   click on Chrome/Firefox. Suppress it; the grey↔black slot itself
-		   conveys the state, and keyboard users still get a softer ring
-		   scoped to the slot on :focus-visible. */
+		&:focus-visible .navigation__icon-slot {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		/* Legacy icon-only items (no Figma slot): keep a cell-level ring. */
+		&:focus-visible:not(:has(.navigation__icon-slot)) {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 4px;
+			border-radius: 12px;
+		}
+
+		/* Live-chat toggle: grey↔black slot conveys state; softer slot ring
+		   for keyboard users instead of the shared M3 outline. */
 		&--liveChatToggle {
 			background: transparent;
 			border: none;
 			padding: 0;
 			-webkit-tap-highlight-color: transparent;
 
-			&:focus,
-			&:focus-visible {
-				outline: none;
-			}
-
 			&:focus-visible .navigation__icon-slot--live {
+				outline: none;
 				box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
 			}
 		}
@@ -691,6 +770,11 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 }
 
+/* Mobile-first M3 navigation bar (Figma Design-System-M3_ORISO 61212:3707 /
+   61212:3732 / 61216:2651): bottom bar with 56×32 pill icon containers,
+   always-visible labels below the icon, count badge in error color and the
+   live-chat availability pill. Desktop rail values are restored inside the
+   $fromLarge blocks — the rail design itself is unchanged. */
 .app__wrapper .navigation__wrapper.navigation__wrapper--figma-consultant {
 	--oriso-nav-background: var(--m3-surface-container-high, #eae7e8);
 	--oriso-nav-surface: var(--m3-surface-container-highest, #e4e2e2);
@@ -705,61 +789,148 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	--oriso-nav-on-dark: var(--m3-surface, #fcf9f9);
 	--oriso-nav-live-background: var(--oriso-on-primary-fixed, #410001);
 
+	/* M3 nav bar tokens (mobile bottom bar only) */
+	--oriso-nav-bar-background: var(--m3-surface-container, #f0edee);
+	--oriso-nav-bar-pill: var(--m3-secondary, #4c555f);
+	--oriso-nav-bar-on-pill: var(--m3-on-secondary, #ffffff);
+	--oriso-nav-bar-label: var(--m3-on-surface-variant, #444748);
+	--oriso-nav-bar-active-label: var(--oriso-on-primary-fixed, #410001);
+	--oriso-nav-bar-badge: var(--m3-error, #b1005e);
+	--oriso-nav-bar-on-badge: var(--m3-on-error, #ffffff);
+	--oriso-nav-bar-on-live: var(--m3-on-primary-container, #ffe2de);
+
 	width: 100%;
-	height: 76px;
-	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	height: auto;
+	border-top: 0;
 	border-right: 0;
-	background-color: var(--oriso-nav-background);
+	background-color: var(--oriso-nav-bar-background);
+	padding-bottom: env(safe-area-inset-bottom, 0);
 
 	@include breakpoint($fromLarge) {
-		flex: 0 0 73px !important;
-		width: 73px !important;
-		min-width: 73px !important;
-		max-width: 73px !important;
 		height: 100%;
 		border-top: 0;
 		border-right: 0;
+		background-color: var(--oriso-nav-background);
+		padding-bottom: 0;
 	}
 
 	.navigation__itemContainer {
 		display: flex;
 		flex-direction: row;
 		align-items: flex-end;
-		justify-content: center;
-		gap: 16px;
+		justify-content: flex-start;
+		gap: 12px;
 		width: 100%;
 		max-width: none;
 		height: 100%;
-		padding: 2px 6px 6px;
+		padding: 2px 12px 6px;
 		overflow-x: auto;
 		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scroll-behavior: smooth;
+		scrollbar-width: none;
 
-		@media screen and (width <= 380px) {
-			gap: 13px;
+		&::-webkit-scrollbar {
+			display: none;
+		}
+
+		@include breakpoint($fromMedium) {
+			gap: 16px;
+			padding: 2px 16px 8px;
 		}
 
 		@include breakpoint($fromLarge) {
 			flex-direction: column;
 			align-items: center;
-			justify-content: space-between;
+			justify-content: flex-start;
 			gap: 0;
 			padding: 24px 12px;
-			overflow: visible;
+			overflow: hidden;
+			scroll-behavior: auto;
+
+			&::-webkit-scrollbar {
+				display: block;
+			}
 		}
 	}
 
+	.navigation__item__bottom--consultant {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		flex-shrink: 0;
+
+		@include breakpoint($fromLarge) {
+			flex-direction: column;
+			align-items: center;
+		}
+	}
+
+	/* Language + live chat stay in the scrollable mobile bar */
 	.navigation__item.navigation__item__language {
-		display: none;
+		display: flex !important;
+	}
+
+	.navigation__item--liveChatToggle {
+		display: flex !important;
+	}
+
+	.navigation__item__top {
+		flex: 0 0 auto;
+		overflow: visible;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		justify-content: flex-start;
+		gap: 12px;
+
+		@include breakpoint($fromMedium) {
+			gap: 16px;
+		}
 
 		@include breakpoint($fromLarge) {
-			display: flex !important;
+			flex: 1 1 auto;
+			min-height: 0;
+			min-width: 0;
+			padding: 6px 0;
+			box-sizing: border-box;
+			overflow-y: auto;
+			overflow-x: hidden;
+			scrollbar-width: thin;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 12px;
+			width: 100%;
+
+			&::-webkit-scrollbar {
+				display: block;
+				width: 4px;
+			}
 		}
 	}
 
-	.navigation__item__top,
 	.navigation__item__bottom {
+		flex: 0 0 auto;
+		flex-shrink: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		gap: 12px;
+		padding-left: 8px;
+		margin-left: 0;
+
+		@include breakpoint($fromMedium) {
+			gap: 16px;
+			padding-left: 12px;
+		}
+
 		@include breakpoint($fromLarge) {
-			display: flex;
+			flex: 0 0 auto;
+			margin-top: auto !important;
+			margin-left: 0;
+			padding-left: 0;
+			padding-top: 12px;
 			flex-direction: column;
 			align-items: center;
 			gap: 12px;
@@ -767,45 +938,51 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 	}
 
-	.navigation__item__top {
-		@include breakpoint($fromLarge) {
-			flex: 0 1 auto;
-		}
-	}
-
-	.navigation__item__bottom {
-		@include breakpoint($fromLarge) {
-			flex: 0 0 auto;
-			margin-top: auto !important;
-			padding-top: 12px;
-		}
-	}
-
 	.navigation__item {
-		width: 48px;
-		min-width: 48px;
+		box-sizing: border-box;
+		flex: 0 0 72px;
+		width: 72px;
+		min-width: 72px;
+		max-width: 72px;
 		height: 70px;
 		min-height: 70px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 4px;
+		gap: 2px;
 		margin: 0;
-		padding: 0;
+		padding: 6px 0;
 		border: 0;
-		border-radius: 12px;
+		border-radius: 0;
 		background: transparent !important;
 		color: var(--oriso-nav-foreground);
-		overflow: visible;
+		overflow: hidden;
 		text-decoration: none;
+		align-self: center;
+
+		@include breakpoint($fromMedium) {
+			flex-basis: 80px;
+			width: 80px;
+			min-width: 80px;
+			max-width: 80px;
+			align-self: center;
+		}
 
 		@include breakpoint($fromLarge) {
-			width: 49px;
-			min-width: 49px;
+			/* Full rail click target; 49px was narrower than the 48px slot +
+			   56px label, so flex auto-margins collapsed and children sat left. */
+			flex: 0 0 auto;
+			width: 100%;
+			min-width: 0;
+			max-width: 100%;
 			height: auto;
 			min-height: 0;
+			padding: 0;
 			justify-content: flex-start;
+			overflow: visible;
+			gap: 4px;
+			align-self: stretch;
 		}
 
 		&:hover {
@@ -814,39 +991,121 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 	}
 
+	/* Mobile/tablet bottom bar: fixed-size items + gaps so Live Chat / language
+	   stay readable; row scrolls when it overflows. Logout stays sticky-right. */
+	@media screen and (width < 900px) {
+		.navigation__itemContainer {
+			justify-content: flex-start;
+			gap: 12px;
+			overflow-x: auto;
+			overflow-y: hidden;
+			-webkit-overflow-scrolling: touch;
+			scroll-behavior: smooth;
+			scrollbar-width: none;
+
+			&::-webkit-scrollbar {
+				height: 0;
+			}
+		}
+
+		.navigation__item__top,
+		.navigation__item__bottom {
+			gap: 12px;
+		}
+
+		.navigation__item {
+			flex: 0 0 72px;
+			width: 72px;
+			min-width: 72px;
+			max-width: 72px;
+		}
+
+		.navigation__item.navigation__item__language,
+		.navigation__item--liveChatToggle {
+			display: flex !important;
+		}
+
+		.navigation__item--nav-language {
+			position: sticky;
+			right: 72px;
+			z-index: 2;
+			background: var(--oriso-nav-bar-background, #f0edee) !important;
+		}
+
+		.navigation__item--nav-logout {
+			position: sticky;
+			right: 0;
+			z-index: 2;
+			flex: 0 0 72px;
+
+			/* Beat `.navigation__item { background: transparent !important }` so
+			   items sliding under sticky Logout stay masked by the bar fill. */
+			background: var(--oriso-nav-bar-background, #f0edee) !important;
+			box-shadow: -12px 0 0 var(--oriso-nav-bar-background, #f0edee);
+		}
+	}
+
+	@media screen and (width >= 600px) and (width < 900px) {
+		.navigation__itemContainer,
+		.navigation__item__top,
+		.navigation__item__bottom {
+			gap: 16px;
+		}
+
+		.navigation__item,
+		.navigation__item--nav-logout,
+		.navigation__item--nav-language {
+			flex-basis: 80px;
+			width: 80px;
+			min-width: 80px;
+			max-width: 80px;
+		}
+
+		.navigation__item--nav-language {
+			right: 80px;
+		}
+	}
+
 	.navigation__title--figma {
-		order: -1;
+		order: 2;
 		display: block !important;
-		width: 56px;
-		max-width: 56px;
-		min-height: 16px;
+		box-sizing: border-box;
+		width: 100%;
+		max-width: 100%;
+		min-height: 14px;
 		margin: 0;
-		padding: 0;
-		overflow: visible;
-		color: var(--oriso-nav-active-border);
+		padding: 0 1px;
+		overflow: hidden;
+		color: var(--oriso-nav-foreground);
 		font-family: $font-family-sans-serif;
-		font-size: 11px;
+		font-size: 10px;
 		font-weight: 500;
-		line-height: 16px;
+		line-height: 14px;
 		letter-spacing: 0;
 		text-align: center;
-		white-space: pre-line;
-		opacity: 0;
-		visibility: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		opacity: 1;
+		visibility: visible;
 
 		@include breakpoint($fromLarge) {
 			order: 2;
+			width: 100%;
+			max-width: 100%;
+			min-height: 16px;
+			padding: 0;
+			overflow: hidden;
+			font-size: 11px;
+			line-height: 16px;
+			text-overflow: ellipsis;
+			white-space: pre-line;
 			color: var(--oriso-nav-foreground);
-			opacity: 1;
-			visibility: visible;
 		}
 	}
 
 	.navigation__item--active .navigation__title--figma {
 		color: var(--oriso-nav-active-border);
-		font-weight: 500;
-		opacity: 1;
-		visibility: visible;
+		font-weight: 600;
 
 		@include breakpoint($fromLarge) {
 			color: var(--oriso-nav-active-foreground);
@@ -856,6 +1115,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 	.navigation__item--liveChatToggle.navigation__item--active
 		.navigation__title--figma {
+		/* Mobile keeps the active label color (Figma 61216:2651); the desktop
+		   rail keeps its neutral label for the stateful switch. */
 		@include breakpoint($fromLarge) {
 			color: var(--oriso-nav-foreground);
 			font-weight: 500;
@@ -864,72 +1125,121 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 	.navigation__icon-slot {
 		order: 1;
-		width: 48px !important;
-		height: 48px !important;
-		min-width: 48px !important;
-		min-height: 48px !important;
-		max-width: 48px !important;
-		max-height: 48px !important;
+		position: relative;
+		width: 56px !important;
+		height: 32px !important;
+		min-width: 56px !important;
+		min-height: 32px !important;
+		max-width: 56px !important;
+		max-height: 32px !important;
 		align-self: center;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin: 0 auto;
-		padding: 8px;
+
+		/* Flex parent centers on the cross-axis; auto margins collapse when
+		   the item is tighter than the slot/label and shove content left. */
+		margin: 0;
+		padding: 0;
 		border: 1px solid transparent;
-		border-radius: 12px;
+		border-radius: 16px;
 		box-sizing: border-box;
-		background: var(--oriso-nav-surface);
-		color: var(--oriso-nav-foreground);
+		background: transparent;
+		color: var(--oriso-nav-bar-label);
 		overflow: visible;
 		pointer-events: none;
+
+		@include breakpoint($fromLarge) {
+			width: 48px !important;
+			height: 48px !important;
+			min-width: 48px !important;
+			min-height: 48px !important;
+			max-width: 48px !important;
+			max-height: 48px !important;
+			padding: 8px;
+			border-radius: 12px;
+			background: var(--oriso-nav-surface);
+			color: var(--oriso-nav-foreground);
+		}
 	}
 
 	.navigation__item:hover
 		.navigation__icon-slot:not(.navigation__icon-slot--active) {
-		background: var(--oriso-nav-surface-hover);
+		@include breakpoint($fromLarge) {
+			background: var(--oriso-nav-surface-hover);
+		}
 	}
 
 	.navigation__icon-slot--active,
 	.navigation__item--active .navigation__icon-slot {
-		background: var(--oriso-nav-active-background);
-		border-color: var(--oriso-nav-active-border);
-		color: var(--oriso-nav-active-foreground);
+		background: var(--oriso-nav-bar-pill);
+		border-color: transparent;
+		color: var(--oriso-nav-bar-on-pill);
+
+		@include breakpoint($fromLarge) {
+			background: var(--oriso-nav-active-background);
+			border-color: var(--oriso-nav-active-border);
+			color: var(--oriso-nav-active-foreground);
+		}
 	}
 
 	.navigation__icon-slot--live.navigation__icon-slot--active {
 		background: var(--oriso-nav-live-background);
 		border-color: var(--oriso-nav-live-background);
-		color: var(--oriso-nav-on-dark);
+		color: var(--oriso-nav-bar-on-live);
+
+		@include breakpoint($fromLarge) {
+			color: var(--oriso-nav-on-dark);
+		}
 	}
 
 	.navigation__icon-slot__inner {
-		width: 32px;
-		height: 32px;
+		width: 24px;
+		height: 24px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+
+		@include breakpoint($fromLarge) {
+			width: 32px;
+			height: 32px;
+		}
 	}
 
 	.navigation__icon__single,
 	.navigation__globe-svg,
 	.navigation__liveChatToggleIcon {
-		width: 32px !important;
-		height: 32px !important;
+		width: 24px !important;
+		height: 24px !important;
 		display: block;
 		color: currentcolor;
 		fill: currentcolor;
 		flex-shrink: 0;
+
+		@include breakpoint($fromLarge) {
+			width: 32px !important;
+			height: 32px !important;
+		}
 	}
 
 	.navigation__liveChatToggleIcon {
-		width: 29px !important;
-		height: 26px !important;
+		width: 24px !important;
+		height: 22px !important;
+
+		@include breakpoint($fromLarge) {
+			width: 29px !important;
+			height: 26px !important;
+		}
 	}
 
 	.navigation__icon__single--profile-figma {
-		width: 28px !important;
-		height: 28px !important;
+		width: 24px !important;
+		height: 24px !important;
+
+		@include breakpoint($fromLarge) {
+			width: 28px !important;
+			height: 28px !important;
+		}
 	}
 
 	.navigation__icon-slot--language .localeSwitch,
@@ -958,9 +1268,75 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		stroke: var(--oriso-nav-on-dark);
 	}
 
+	/* M3 count badge: error container pinned to the pill's top-right
+	   (Figma: left 28px / top 2px inside the 56px state layer). */
 	.navigation__item__count--figma {
-		color: var(--oriso-nav-active-border);
-		border-color: var(--oriso-nav-active-border);
+		left: 28px;
+		right: auto;
+		top: 2px;
+		transform: none;
+		min-width: 16px;
+		max-width: 34px;
+		height: 16px;
+		padding: 0 4px;
+		border: 0;
+		border-radius: 100px;
 		outline: none;
+		box-shadow: none;
+		background-color: var(--oriso-nav-bar-badge);
+		color: var(--oriso-nav-bar-on-badge);
+		font-family: $font-family-sans-serif;
+		font-size: 0;
+		font-weight: 500;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2;
+
+		@include breakpoint($fromLarge) {
+			left: auto;
+			right: -5px;
+			top: -5px;
+			min-width: 18px;
+			max-width: none;
+			height: 18px;
+			padding: 0;
+			border: 2px solid var(--oriso-nav-active-border);
+			background-color: #fff;
+			color: var(--oriso-nav-active-border);
+			font-weight: 700;
+		}
+	}
+
+	.navigation__item__count--figma.navigation__item__count--double {
+		@include breakpoint($fromLarge) {
+			min-width: 22px;
+			height: 18px;
+			padding: 0 4px;
+		}
+	}
+
+	.navigation__item__count__sup {
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+
+		@include breakpoint($fromLarge) {
+			font-size: 10px;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+	}
+}
+
+// #576: global notification-status rail button (opt-in via settings page)
+.navigation__notifStatusIcon {
+	width: 24px;
+	height: 24px;
+	color: var(--oriso-nav-foreground, #4c555f);
+
+	&--muted {
+		color: var(--oriso-nav-active-foreground, var(--m3-primary, #a5000a));
 	}
 }

@@ -46,12 +46,20 @@ import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
+import {
+	NavigationStoryProviders,
+	storybookSettings as navigationStorybookSettings
+} from './navigationStoryHelpers';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
+import '../session/session.styles.scss';
+import '../sessionMenu/sessionMenu.styles.scss';
+import '../chatMenuDropdown/chatMenuDropdown.styles.scss';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -832,35 +840,13 @@ class ComposerBoundary extends React.Component<
 }
 
 function RuntimeSidebar() {
-	useEffect(() => {
-		let previousLiveChatAvailability: string | null = null;
-		try {
-			previousLiveChatAvailability = localStorage.getItem(
-				'caritas_liveChatAvailability'
-			);
-			localStorage.removeItem('caritas_liveChatAvailability');
-		} catch {
-			/* Storybook determinism only. */
-		}
-		return () => {
-			try {
-				if (previousLiveChatAvailability == null) {
-					localStorage.removeItem('caritas_liveChatAvailability');
-				} else {
-					localStorage.setItem(
-						'caritas_liveChatAvailability',
-						previousLiveChatAvailability
-					);
-				}
-			} catch {
-				/* Storybook cleanup only. */
-			}
-		};
+	const routerConfig = useMemo(() => {
+		return RouterConfigConsultant({
+			...config,
+			...navigationStorybookSettings
+		});
 	}, []);
 
-	const routerConfig = useMemo(() => {
-		return RouterConfigConsultant(appOrisoRouterSettings);
-	}, []);
 	return (
 		<div className="appOrisoRuntimeRail" style={styles.navigationRail}>
 			<style>
@@ -871,12 +857,12 @@ function RuntimeSidebar() {
 					}
 				`}
 			</style>
-			<AppOrisoRuntimeProviders>
+			<NavigationStoryProviders role="consultant">
 				<NavigationBar
 					routerConfig={routerConfig}
 					onLogout={() => {}}
 				/>
-			</AppOrisoRuntimeProviders>
+			</NavigationStoryProviders>
 		</div>
 	);
 }
@@ -935,12 +921,26 @@ function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 	);
 }
 
+/** Matches SessionsList neighbour-corner wiring for the stacked card group. */
+const STORY_ACTIVE_SESSION_ID = 3363;
+
+function isRuntimeSessionActive(session: ListItemInterface) {
+	return (
+		session.session?.id === STORY_ACTIVE_SESSION_ID ||
+		session.chat?.id === STORY_ACTIVE_SESSION_ID
+	);
+}
+
 function RealSessionListItem({
 	session,
-	index
+	index,
+	isBeforeActive = false,
+	isAfterActive = false
 }: {
 	session: ListItemInterface;
 	index: number;
+	isBeforeActive?: boolean;
+	isAfterActive?: boolean;
 }) {
 	const activeSession = buildExtendedSession(session, '');
 
@@ -956,6 +956,8 @@ function RealSessionListItem({
 				defaultLanguage="de"
 				handleKeyDownLisItemContent={() => {}}
 				index={index}
+				isBeforeActive={isBeforeActive}
+				isAfterActive={isAfterActive}
 			/>
 		</ActiveSessionContext.Provider>
 	);
@@ -969,45 +971,66 @@ function SessionListPanel() {
 	return (
 		<aside style={styles.listPanel}>
 			<AppOrisoRuntimeProviders>
-				<SessionsListToolbar
-					translate={translate}
-					searchValue={search}
-					onSearchChange={setSearch}
-					searchPeopleResults={searchPeopleResults}
-					selectedPersonIds={selectedPeople}
-					onSelectedPersonIdsChange={setSelectedPeople}
-					activeChip={chip}
-					onChipToggle={(nextChip) =>
-						setChip((previousChip) =>
-							previousChip === nextChip ? null : nextChip
-						)
-					}
-					showConsultantActions
-					showCreateGroupChatAction
-					showSupervisionChip
-					showLiveChatChip
-					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
-					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
-					archiveTabActive={false}
-					createGroupChatActive={false}
-					chipCounts={{
-						unread: 4,
-						drafts: 2,
-						groups: 3,
-						liveChat: 1,
-						supervision: 1
-					}}
-				/>
-				<div style={styles.listScroll}>
-					{runtimeSessions.map((session, index) => (
-						<RealSessionListItem
-							key={
-								session.session?.id ?? session.chat?.id ?? index
-							}
-							session={session}
-							index={index}
-						/>
-					))}
+				<div className="sessionsList__innerWrapper">
+					<SessionsListToolbar
+						translate={translate}
+						searchValue={search}
+						onSearchChange={setSearch}
+						searchPeopleResults={searchPeopleResults}
+						selectedPersonIds={selectedPeople}
+						onSelectedPersonIdsChange={setSelectedPeople}
+						activeChip={chip}
+						onChipToggle={(nextChip) =>
+							setChip((previousChip) =>
+								previousChip === nextChip ? null : nextChip
+							)
+						}
+						showConsultantActions
+						showCreateGroupChatAction
+						showSupervisionChip
+						showLiveChatChip
+						createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+						archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+						archiveTabActive={false}
+						createGroupChatActive={false}
+						chipCounts={{
+							unread: 4,
+							drafts: 2,
+							groups: 3,
+							liveChat: 1,
+							supervision: 1
+						}}
+					/>
+					<div className="sessionsList__scrollArea">
+						<div
+							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+							style={styles.listScroll}
+						>
+							{runtimeSessions.map((session, index) => (
+								<RealSessionListItem
+									key={
+										session.session?.id ??
+										session.chat?.id ??
+										index
+									}
+									session={session}
+									index={index}
+									isBeforeActive={
+										!!runtimeSessions[index + 1] &&
+										isRuntimeSessionActive(
+											runtimeSessions[index + 1]
+										)
+									}
+									isAfterActive={
+										!!runtimeSessions[index - 1] &&
+										isRuntimeSessionActive(
+											runtimeSessions[index - 1]
+										)
+									}
+								/>
+							))}
+						</div>
+					</div>
 				</div>
 			</AppOrisoRuntimeProviders>
 		</aside>
@@ -1097,8 +1120,16 @@ function ComposerPreview() {
 }
 
 function ChatPanel() {
+	const [menuExpanded, setMenuExpanded] = useState(false);
+
 	return (
-		<section style={styles.chatPanel}>
+		<section
+			className="session"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+			style={styles.chatPanel}
+			aria-label="Chatraum"
+		>
 			<header style={styles.chatHeader}>
 				<div style={styles.chatTitleCluster}>
 					<UserAvatar
@@ -1147,12 +1178,11 @@ function ChatPanel() {
 					</button>
 					<button
 						type="button"
-						aria-label="More actions preview"
-						disabled
-						style={{
-							...styles.headerAction,
-							...styles.previewAction
-						}}
+						className="sessionMenu__icon sessionMenu__icon--desktop"
+						aria-label="More actions"
+						aria-expanded={menuExpanded}
+						onClick={() => setMenuExpanded((open) => !open)}
+						style={styles.headerMenuTrigger}
 					>
 						<MenuVerticalIcon />
 					</button>
@@ -1287,7 +1317,12 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Storybook MCP target for the App.Oriso consultant chat frame. The composite story keeps the Figma frame inspectable with real ORISO subcomponents; the runtime shell story mounts the real Routing/SessionsZone path with deterministic session fixtures so product-code drift is visible.'
+					'Storybook MCP target for the App.Oriso consultant chat frame. ' +
+					'Uses production SCSS for #597 focus rings: session list selected (`2px --m3-primary`), ' +
+					'chat panel `.session` active border on chrome focus (not composer selected), ' +
+					'session menu trigger shape on `aria-expanded`, and composer/send styles from ' +
+					'`messageSubmitInterface` / `sendButton`. The runtime shell mounts Routing/SessionsZone ' +
+					'with deterministic fixtures so product-code drift stays visible.'
 			}
 		}
 	}
@@ -1387,14 +1422,15 @@ const styles = {
 	} satisfies React.CSSProperties,
 	listPanel: {
 		background: '#EAE7E8',
-		padding: '16px 0 0',
-		overflow: 'hidden'
+		overflow: 'hidden',
+		minHeight: 0,
+		display: 'flex',
+		flexDirection: 'column'
 	} satisfies React.CSSProperties,
+	// Height only — gutters/radius come from sessionsList__scrollContainer.
 	listScroll: {
 		height: 'calc(100% - 118px)',
-		overflow: 'hidden auto',
-		padding: '0',
-		scrollbarWidth: 'none'
+		minHeight: 0
 	} satisfies React.CSSProperties,
 	consultingTypeLabel: {
 		marginLeft: 4,
@@ -1406,12 +1442,11 @@ const styles = {
 	chatPanel: {
 		display: 'grid',
 		gridTemplateRows: '58px auto minmax(0, 1fr) auto',
+		// Layout only — resting/active borders come from `.session` (#597)
 		margin: '16px 8px 16px 0',
-		background: '#FFFFFF',
-		border: '1px solid #FFB4AA',
-		borderRadius: 28,
-		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		minHeight: 0,
+		height: '100%'
 	} satisfies React.CSSProperties,
 	chatHeader: {
 		display: 'flex',
@@ -1436,6 +1471,11 @@ const styles = {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8
+	} satisfies React.CSSProperties,
+	headerMenuTrigger: {
+		// Force visible in Storybook; production toggles via breakpoint
+		display: 'inline-flex',
+		marginLeft: 0
 	} satisfies React.CSSProperties,
 	headerAction: {
 		width: 32,
@@ -1564,7 +1604,8 @@ const styles = {
 		borderRadius: 22,
 		border: 0,
 		padding: '0 18px',
-		background: '#CC1E1C',
+		// #597: resting send matches production empty state
+		background: 'var(--m3-primary-fixed-dim, #ffb4aa)',
 		color: '#FFFFFF',
 		fontWeight: 700,
 		display: 'inline-flex',

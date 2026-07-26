@@ -70,7 +70,7 @@
 			width: 18px;
 			height: 18px;
 
-			@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+			@media (resolution >= 1.5dppx), (width >= 1920px) {
 				width: 22px;
 				height: 22px;
 			}
@@ -86,7 +86,7 @@
 			width: 24px;
 			height: 23px;
 
-			@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+			@media (resolution >= 1.5dppx), (width >= 1920px) {
 				width: 28px;
 				height: 27px;
 			}

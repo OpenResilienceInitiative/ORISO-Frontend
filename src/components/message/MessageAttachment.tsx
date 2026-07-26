@@ -16,12 +16,22 @@ import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { getIconForAttachmentType } from './messageHelpers';
 
+/**
+ * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
+ * `unchecked` keeps images unloaded until explicitly revealed, `blocked`
+ * never renders or links the file, and `safe` renders normally.
+ */
+export type MediaCheckState = 'unchecked' | 'safe' | 'blocked';
+
 interface MessageAttachmentProps {
 	attachment: MessageService.Schemas.AttachmentDTO;
 	file: MessageService.Schemas.FileDTO;
 	hasRenderedMessage: boolean;
 	rid: string;
 	t?: string;
+	mediaCheckState?: MediaCheckState;
+	/** featureMediaInlineDisplay* for the chat type: off = plain file card, no preview. */
+	inlineDisplayEnabled?: boolean;
 }
 
 const NOT_ENCRYPTED = 'not_encrypted';
@@ -146,6 +156,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		if (link.startsWith('http://') || link.startsWith('https://')) {
 			return link;
 		}
+		// Self-contained sources (object URLs, inline data) must pass through.
+		if (link.startsWith('blob:') || link.startsWith('data:')) {
+			return link;
+		}
 		// Otherwise, prepend apiUrl
 		return apiUrl + link;
 	}, []);
@@ -156,6 +170,41 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.attachment.type === 'image';
 	const isAudio = props.file.type?.startsWith('audio/');
 	const imageUrl = isImage ? buildUrl(props.attachment.title_link) : null;
+
+	const [revealed, setRevealed] = React.useState(false);
+	const mediaCheckState = props.mediaCheckState ?? 'safe';
+	const inlineDisplayEnabled = props.inlineDisplayEnabled ?? true;
+	const effectiveMediaState: MediaCheckState =
+		mediaCheckState === 'unchecked' && revealed ? 'safe' : mediaCheckState;
+	const showImagePreview = isImage && inlineDisplayEnabled;
+	const isAwaitingReveal =
+		isImage && effectiveMediaState === 'unchecked' && !revealed;
+	const attachmentDimensions = props.attachment as unknown as {
+		image_w?: number;
+		image_h?: number;
+	};
+
+	const revealUncheckedImage = () => {
+		setRevealed(true);
+		if (isEncryptedAttachment && attachmentStatus === ENCRYPTED) {
+			void decryptFile(buildUrl(props.attachment.title_link));
+		}
+	};
+
+	const renderImagePreview = (src: string) => (
+		<div
+			className="messageItem__message__attachment__preview"
+			style={
+				attachmentDimensions.image_w && attachmentDimensions.image_h
+					? {
+							aspectRatio: `${attachmentDimensions.image_w} / ${attachmentDimensions.image_h}`
+						}
+					: undefined
+			}
+		>
+			<img src={src} alt={props.attachment.title} />
+		</div>
+	);
 
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = buildUrl(props.attachment.title_link);
@@ -292,6 +341,44 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		]
 	);
 
+	if (effectiveMediaState === 'blocked') {
+		// Fail-closed: blocked media is neither rendered nor linked (ADR-014).
+		return (
+			<div className="messageItem__message__attachment messageItem__message__attachment--blocked">
+				<div className="messageItem__message__attachment__info">
+					<span className="messageItem__message__attachment__icon">
+						{getAttachmentIcon(props.file.type)}
+					</span>
+					<span className="messageItem__message__attachment__title">
+						<p className="messageItem__message__attachment__filename">
+							{props.attachment.title}
+						</p>
+						<p className="messageItem__message__attachment__meta">
+							{translate('attachments.mediaCheck.blocked')}
+						</p>
+					</span>
+				</div>
+			</div>
+		);
+	}
+
+	if (isAwaitingReveal) {
+		return (
+			<div className="messageItem__message__attachment messageItem__message__attachment--unchecked">
+				<div className="messageItem__message__attachment__preview messageItem__message__attachment__preview--blurred">
+					<p>{translate('attachments.mediaCheck.unchecked')}</p>
+					<button
+						type="button"
+						className="messageItem__message__attachment__reveal"
+						onClick={revealUncheckedImage}
+					>
+						{translate('attachments.mediaCheck.reveal')}
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<>
 			{!isEncryptedAttachment ? (
@@ -310,19 +397,15 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						}}
 					>
 						{/* Show image preview for image files */}
-						{isImage && imageUrl && (
-							<div className="messageItem__message__attachment__preview">
-								<img
-									src={imageUrl}
-									alt={props.attachment.title}
-								/>
-							</div>
-						)}
+						{showImagePreview &&
+							imageUrl &&
+							renderImagePreview(imageUrl)}
 
 						{/* File info BELOW image */}
 						<div className="messageItem__message__attachment__info">
 							<span className="messageItem__message__attachment__icon">
-								{!isImage && getAttachmentIcon(props.file.type)}
+								{!showImagePreview &&
+									getAttachmentIcon(props.file.type)}
 							</span>
 							<span className="messageItem__message__attachment__title">
 								<p className="messageItem__message__attachment__filename">
@@ -368,18 +451,12 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 							cursor: 'pointer'
 						}}
 					>
-						{isImage && (
-							<div className="messageItem__message__attachment__preview">
-								<img
-									src={encryptedFile}
-									alt={props.attachment.title}
-								/>
-							</div>
-						)}
+						{showImagePreview && renderImagePreview(encryptedFile)}
 
 						<div className="messageItem__message__attachment__info">
 							<span className="messageItem__message__attachment__icon">
-								{!isImage && getAttachmentIcon(props.file.type)}
+								{!showImagePreview &&
+									getAttachmentIcon(props.file.type)}
 							</span>
 							<span className="messageItem__message__attachment__title">
 								<p className="messageItem__message__attachment__filename">

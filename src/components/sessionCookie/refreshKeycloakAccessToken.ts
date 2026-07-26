@@ -14,8 +14,7 @@ export const refreshKeycloakAccessToken = (): Promise<LoginData> =>
 		const req = new Request(url, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'cache-control': 'no-cache'
+				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			body: data
 		});

@@ -65,6 +65,7 @@ export type EventIconId =
 	| 'appointmentCancelled'
 	| 'appointmentBriefing'
 	| 'waitingRoom'
+	| 'teamDiscussion'
 	| 'system';
 
 /**
@@ -87,6 +88,8 @@ export interface EventActionParams {
 	forcedScopeKey?: string | null;
 	/** Thread root id for thread-scoped message events. */
 	threadRootId?: string | null;
+	/** Whether the recipient was @-mentioned (drives the mention sound slot, #576). */
+	mentioned?: boolean | null;
 	/** Live-call room id for `join` targets (Slice 5). */
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */

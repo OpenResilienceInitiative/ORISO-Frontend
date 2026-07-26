@@ -5,6 +5,7 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useRef,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -21,6 +22,14 @@ import {
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
+import {
+	installAudioUnlock,
+	playNotificationSound,
+	selectEventToAnnounce
+} from '../../utils/notificationSettings/soundPlayback';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -124,6 +133,38 @@ export function NotificationsProvider(props) {
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	// #576: id of the newest event slot we already reconciled, so a feed refresh
+	// only announces a genuinely newer event (not every poll, and never on the
+	// backlog surfaced when an event above it is read).
+	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+
+	// #576: play the configured sound for a genuinely new, unread top event —
+	// decoupled from the OS popup, so it also sounds with the tab focused. The
+	// sound routes through the single suppression gate (DND, per-conversation
+	// level, mute, family-off) inside playNotificationSound.
+	const maybePlaySoundForNewEvent = useCallback(
+		(feed: NotificationFeedItem[]) => {
+			const { announce, nextMarker } = selectEventToAnnounce(
+				feed,
+				lastAnnouncedEventIdRef.current
+			);
+			lastAnnouncedEventIdRef.current = nextMarker;
+			if (!announce) {
+				return;
+			}
+			const { settings, device } = notificationSettingsStore.getState();
+			const family = getEventDescriptor(announce.eventType).family;
+			const isMention = announce.params?.mentioned === true;
+			playNotificationSound(
+				settings,
+				device,
+				family,
+				announce.eventType,
+				isMention
+			);
+		},
+		[]
+	);
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
@@ -161,6 +202,7 @@ export function NotificationsProvider(props) {
 				params: parseEventActionParams(item.params),
 				category: item.category === 'message' ? 'message' : 'system'
 			}));
+			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
@@ -168,7 +210,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, []);
+	}, [maybePlaySoundForNewEvent]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();
@@ -178,6 +220,30 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe]);
+
+	// Safari: programmatic audio.play() is only allowed on an element that was
+	// played from a user gesture — prime one on the first pointer/keydown.
+	useEffect(() => installAudioUnlock(), []);
+
+	// Real-time backbone: the backend fires a `directMessage` live event to the
+	// recipient whenever a notification is persisted (ORISO-UserService
+	// EventNotificationService), and WebsocketHandler re-emits it on
+	// messageEventEmitter. Refresh the feed on that signal instead of waiting for
+	// the 15s fallback poll above. Debounced so a burst of events (e.g. one live
+	// message fanning out to several notifications) collapses into a single
+	// refetch.
+	useEffect(() => {
+		let debounceTimer: number | undefined;
+		const onLiveEvent = () => {
+			window.clearTimeout(debounceTimer);
+			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
+		};
+		messageEventEmitter.on(onLiveEvent);
+		return () => {
+			messageEventEmitter.off(onLiveEvent);
+			window.clearTimeout(debounceTimer);
+		};
 	}, [refreshNotificationFeedSafe]);
 
 	const hasNotification = useCallback(

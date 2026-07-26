@@ -9,6 +9,7 @@ import { ConsultantStatistics } from './ConsultantStatistics';
 import { AbsenceFormular } from './AbsenceFormular';
 import { LiveChatAvailability } from './LiveChatAvailability';
 import { EnableWalkthrough } from './EnableWalkthrough';
+import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { COLUMN_LEFT, COLUMN_RIGHT, TabsType } from '../../utils/tabsHelper';
 import { isDesktop } from 'react-device-detect';
 import { OverviewBookings } from './OverviewMobile/Bookings';
@@ -105,6 +106,15 @@ const profileRoutes = (
 									userData
 								) && settings.enableWalkthrough,
 							component: EnableWalkthrough,
+							column: COLUMN_RIGHT
+						},
+						{
+							condition: (userData) =>
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								) && settings.enableWalkthrough,
+							component: TourOverviewSection,
 							column: COLUMN_RIGHT
 						},
 						{

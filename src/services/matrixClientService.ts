@@ -7,9 +7,21 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
+import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+import { startDeviceDehydration } from './matrixDeviceDehydration';
+import { matrixRoomHistoryKeyTransfer } from './matrixRoomHistoryKeyTransfer';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
+import {
+	TextMessageContentOptions,
+	buildTextMessageContent,
+	buildEditContent,
+	buildReactionContent
+} from '../utils/messageRelations';
+
+import { getImageDimensions } from '../utils/imageDimensions';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -32,9 +44,10 @@ const getMatrixFileMessageType = (file: File): string => {
 	return 'm.file';
 };
 
-const buildMatrixFileMessageContent = (
+export const buildMatrixFileMessageContent = (
 	file: File,
-	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file']
+	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
+	dimensions?: { w: number; h: number } | null
 ): Record<string, unknown> => ({
 	body: file.name,
 	filename: file.name,
@@ -42,7 +55,10 @@ const buildMatrixFileMessageContent = (
 	file: encryptedFile,
 	info: {
 		mimetype: file.type || 'application/octet-stream',
-		size: file.size
+		size: file.size,
+		// m.image only: intrinsic pixel size so receivers can reserve a
+		// correctly-scaled thumbnail box before decrypting (WP-4).
+		...(dimensions ? { w: dimensions.w, h: dimensions.h } : {})
 	}
 });
 
@@ -76,8 +92,13 @@ export const isMatrixExpiredTokenError = (error: unknown): boolean => {
 	const message = typeof rawMessage === 'string' ? rawMessage : '';
 	const httpStatus = matrixError?.httpStatus || matrixError?.statusCode;
 
+	// Synapse rejects an invalidated token (hard TTL hit, or a newer login
+	// re-used the same device_id) with M_UNKNOWN_TOKEN and "Invalid access
+	// token passed." — recoverable by re-fetching a token from the backend.
 	return (
 		message.includes('Access token has expired') ||
+		matrixError?.errcode === 'M_UNKNOWN_TOKEN' ||
+		matrixError?.data?.errcode === 'M_UNKNOWN_TOKEN' ||
 		(httpStatus === 401 &&
 			(message.toLowerCase().includes('expired') ||
 				matrixError?.errcode === 'M_UNKNOWN' ||
@@ -93,6 +114,9 @@ export class MatrixClientService {
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
+	private clientChangeListeners = new Set<
+		(client: MatrixClient | null) => void
+	>();
 
 	// Initialize client with login data
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
@@ -103,6 +127,9 @@ export class MatrixClientService {
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
 		this.scheduleTokenRefresh(loginData);
+		// Announce the replacement client before sync starts so consumers
+		// (e.g. SessionStream room listeners) re-attach without missing events.
+		this.notifyClientChangeListeners();
 
 		// CRITICAL: Start client with sync configuration (EXACTLY like Element does!)
 		// NOTE: TURN/STUN servers are fetched automatically from Matrix homeserver
@@ -118,9 +145,19 @@ export class MatrixClientService {
 				)
 			});
 		} catch (error) {
-			this.stopCurrentClient();
+			// The failed client was already announced above, so tear down via
+			// the notifying path to hand subscribers the resulting null.
+			this.stopAndCleanup();
 			throw error;
 		}
+
+		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
+		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Best-effort — never breaks client startup.
+		applyDeviceIsolationMode(
+			client,
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+		);
 
 		(client as any).on(
 			'sync',
@@ -168,6 +205,21 @@ export class MatrixClientService {
 		};
 	}
 
+	/**
+	 * Subscribe to client instance swaps. A token refresh replaces the
+	 * matrix-js-sdk client (the old one gets removeAllListeners()), so
+	 * consumers holding room listeners must re-attach on every change.
+	 */
+	public onClientChange(
+		listener: (client: MatrixClient | null) => void
+	): () => void {
+		this.clientChangeListeners.add(listener);
+
+		return () => {
+			this.clientChangeListeners.delete(listener);
+		};
+	}
+
 	public async refreshMatrixToken(): Promise<void> {
 		if (this.refreshingToken) {
 			return this.refreshingToken;
@@ -199,13 +251,16 @@ export class MatrixClientService {
 	}
 
 	// Send message to a room
-	public async sendMessage(roomId: string, message: string): Promise<any> {
+	public async sendMessage(
+		roomId: string,
+		message: string,
+		options?: TextMessageContentOptions
+	): Promise<any> {
 		await this.ensureFreshToken();
 
-		const content = {
-			msgtype: 'm.text',
-			body: message
-		} as any;
+		// Relations foundation (#435): a reply/thread is the spec relation on the
+		// content (m.relates_to / m.in_reply_to / m.thread), built by the pure helper.
+		const content = buildTextMessageContent(message, options) as any;
 		const sendToRoom = async () => {
 			const client = this.client;
 			if (!client) {
@@ -214,7 +269,37 @@ export class MatrixClientService {
 			if (!client.getRoom(roomId)) {
 				await client.joinRoom(roomId);
 			}
-			return client.sendMessage(roomId, content);
+			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
+			// keeps deliberately minimal test doubles and adapters compatible.
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content, txnId)
+					: client.sendMessage(roomId, content));
+			} catch (error) {
+				// matrix-js-sdk keeps a rejected send as a NOT_SENT local echo.
+				// The ORISO timeline owns failed-message presentation and retry,
+				// so retaining the SDK echo as well would reveal two copies after
+				// the user successfully retries with a fresh transaction.
+				const room = client.getRoom(roomId);
+				const errorEvent = (error as { event?: MatrixEvent })?.event;
+				const failedLocalEcho = txnId
+					? errorEvent?.getTxnId?.() === txnId
+						? errorEvent
+						: room?.timeline?.find(
+								(event) => event.getTxnId?.() === txnId
+							)
+					: undefined;
+				if (failedLocalEcho) {
+					try {
+						client.cancelPendingEvent(failedLocalEcho);
+					} catch {
+						// Preserve the original transport error. A status race must not
+						// turn failed-send recovery into a second exception.
+					}
+				}
+				throw error;
+			}
 		};
 
 		try {
@@ -229,20 +314,79 @@ export class MatrixClientService {
 		}
 	}
 
+	// Edit a previously sent message (m.replace)
 	public async editMessage(
 		roomId: string,
-		eventId: string,
+		targetEventId: string,
 		message: string
 	): Promise<any> {
 		await this.ensureFreshToken();
-		if (!this.client) throw new Error('Matrix client not initialized');
-		const content = {
-			'msgtype': 'm.text',
-			'body': `* ${message}`,
-			'm.new_content': { msgtype: 'm.text', body: message },
-			'm.relates_to': { rel_type: 'm.replace', event_id: eventId }
-		};
-		return this.client.sendMessage(roomId, content as any);
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildEditContent(message, targetEventId) as any;
+
+		try {
+			return await this.client.sendMessage(roomId, content);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendMessage(roomId, content);
+		}
+	}
+
+	// React to a message (m.annotation)
+	public async sendReaction(
+		roomId: string,
+		targetEventId: string,
+		key: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildReactionContent(targetEventId, key) as any;
+
+		try {
+			return await this.client.sendEvent(
+				roomId,
+				'm.reaction' as any,
+				content
+			);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendEvent(roomId, 'm.reaction' as any, content);
+		}
+	}
+
+	// Redact an event (used to remove a reaction)
+	public async redactEvent(roomId: string, eventId: string): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		return this.client.redactEvent(roomId, eventId);
 	}
 
 	public async sendFileMessage(
@@ -383,7 +527,17 @@ export class MatrixClientService {
 
 		matrixCallService.initialize(client);
 		matrixLiveEventBridge.initialize(client);
+		matrixRoomHistoryKeyTransfer.initialize(client);
 		this.initializedServicesClient = client;
+
+		// #439 MSC3814: rehydrate the parked device (reads Megolm keys sent
+		// during the login gap) and re-park a fresh one. Fire-and-forget and
+		// best-effort — no-ops unless the toggle is on, the server supports
+		// MSC3814, and secret storage (#437) is set up. Never blocks startup.
+		void startDeviceDehydration(
+			client,
+			appConfig?.releaseToggles?.enableDeviceDehydration === true
+		);
 	}
 
 	private scheduleTokenRefresh(loginData: MatrixLoginData): void {
@@ -414,12 +568,22 @@ export class MatrixClientService {
 		}
 	}
 
+	// Teardown on the re-initialization path: the replacement client is
+	// announced by initializeClient itself, so skip the null notification.
 	private stopCurrentClient(): void {
-		this.stopAndCleanup();
+		this.teardownClient();
 	}
 
 	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
 	public stopAndCleanup(): void {
+		const hadClient = this.client !== null;
+		this.teardownClient();
+		if (hadClient) {
+			this.notifyClientChangeListeners();
+		}
+	}
+
+	private teardownClient(): void {
 		this.clearRefreshTimer();
 
 		if (this.client) {
@@ -433,6 +597,7 @@ export class MatrixClientService {
 		this.initializedServicesClient = null;
 		matrixLiveEventBridge.detach();
 		matrixCallService.detach();
+		matrixRoomHistoryKeyTransfer.detach();
 		this.notifySyncStateListeners();
 	}
 
@@ -448,6 +613,7 @@ export class MatrixClientService {
 			throw new Error('Matrix client not initialized');
 		}
 
+		const dimensions = await getImageDimensions(file);
 		const encryptedAttachment = await encryptMatrixAttachment(file);
 		const uploadResponse = await this.client.uploadContent(
 			encryptedAttachment.encryptedBlob,
@@ -468,10 +634,14 @@ export class MatrixClientService {
 
 		options.uploadProgress?.(100);
 
-		return buildMatrixFileMessageContent(file, {
-			...encryptedAttachment.file,
-			url: uploadResponse.content_uri
-		});
+		return buildMatrixFileMessageContent(
+			file,
+			{
+				...encryptedAttachment.file,
+				url: uploadResponse.content_uri
+			},
+			dimensions
+		);
 	}
 
 	private getStoredTokenExpiresAt(): number | null {
@@ -484,6 +654,12 @@ export class MatrixClientService {
 	private notifySyncStateListeners(): void {
 		this.syncStateListeners.forEach((listener) => {
 			listener(this.syncState);
+		});
+	}
+
+	private notifyClientChangeListeners(): void {
+		this.clientChangeListeners.forEach((listener) => {
+			listener(this.client);
 		});
 	}
 }

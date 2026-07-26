@@ -97,6 +97,54 @@ const pickValue = (...keys: string[]): string | undefined => {
 const stripTrailingSlashes = (value: string): string =>
 	value.replace(/\/+$/, '');
 
+const DEFAULT_OTEL_EXPORT_INTERVAL_MS = 60000;
+
+const parsePositiveInterval = (value?: string): number => {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) && parsed >= 10000
+		? parsed
+		: DEFAULT_OTEL_EXPORT_INTERVAL_MS;
+};
+
+const validHttpUrl = (value?: string): string => {
+	const candidate = String(value || '').trim();
+	if (!candidate) {
+		return '';
+	}
+
+	try {
+		const url = new URL(candidate);
+		return url.protocol === 'http:' || url.protocol === 'https:'
+			? candidate
+			: '';
+	} catch {
+		return '';
+	}
+};
+
+export interface ObservabilityRuntimeConfig {
+	enabled: boolean;
+	metricsUrl: string;
+	exportIntervalMillis: number;
+}
+
+export const getObservabilityConfig = (): ObservabilityRuntimeConfig => ({
+	enabled:
+		pickValue(
+			'REACT_APP_OBSERVABILITY_ENABLED',
+			'VITE_OBSERVABILITY_ENABLED'
+		)?.toLowerCase() === 'true',
+	metricsUrl: validHttpUrl(
+		pickValue('REACT_APP_OTEL_METRICS_URL', 'VITE_OTEL_METRICS_URL')
+	),
+	exportIntervalMillis: parsePositiveInterval(
+		pickValue(
+			'REACT_APP_OTEL_EXPORT_INTERVAL_MS',
+			'VITE_OTEL_EXPORT_INTERVAL_MS'
+		)
+	)
+});
+
 /**
  * Ensure an http(s) URL. Bare hostnames are upgraded to https.
  */

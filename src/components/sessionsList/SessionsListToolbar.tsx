@@ -15,8 +15,19 @@ import {
 	UnreadFilterIcon
 } from './SessionToolbarFilterIcons';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+import {
+	SessionSearchPanel,
+	SessionSearchTab,
+	SessionSearchTopicOption,
+	SessionSearchTypeOption
+} from './SessionSearchPanel';
 
 export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+export type {
+	SessionSearchTab,
+	SessionSearchTopicOption,
+	SessionSearchTypeOption
+} from './SessionSearchPanel';
 
 interface SessionsListToolbarProps {
 	translate: (key: string) => string;
@@ -25,6 +36,19 @@ interface SessionsListToolbarProps {
 	searchPeopleResults?: SessionSearchPersonResult[];
 	selectedPersonIds?: string[];
 	onSelectedPersonIdsChange?: (ids: string[]) => void;
+	/** Topic options for the "Counselling centre" tab (radio single-select). */
+	searchTopicResults?: SessionSearchTopicOption[];
+	selectedTopicId?: string | null;
+	onSelectedTopicIdChange?: (id: string | null) => void;
+	/** Chat-type options for the "By type" tab (radio single-select). */
+	searchTypeResults?: SessionSearchTypeOption[];
+	selectedTypeId?: string | null;
+	onSelectedTypeIdChange?: (id: string | null) => void;
+	/** "Archive only" toggle in the search panel tab row. */
+	searchArchiveOnly?: boolean;
+	onSearchArchiveOnlyChange?: (archiveOnly: boolean) => void;
+	/** Confirm the current search selection (checkmark button / Enter). */
+	onSearchConfirm?: () => void;
 	activeChip: SessionToolbarChipFilter | null;
 	onChipToggle: (chip: SessionToolbarChipFilter) => void;
 	showConsultantActions: boolean;
@@ -32,6 +56,9 @@ interface SessionsListToolbarProps {
 	showSupervisionChip: boolean;
 	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
 	showLiveChatChip?: boolean;
+	/** Show group-session filters only when their tenant modules are enabled. */
+	showGroupChip?: boolean;
+	showInternalGroupChip?: boolean;
 	/** Show create/archive route chips. This is intentionally limited to Gespräch. */
 	createGroupChatPath: string;
 	archiveTabPath: string;
@@ -91,47 +118,11 @@ export const IconClose = () => (
 	</svg>
 );
 
-const IconPeople = ({ active }: { active: boolean }) => (
+export const IconCheck = () => (
 	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
 		<path
-			d="M5.85 17.1C6.7 16.45 7.65 15.9375 8.7 15.5625C9.75 15.1875 10.85 15 12 15C13.15 15 14.25 15.1875 15.3 15.5625C16.35 15.9375 17.3 16.45 18.15 17.1C18.7333 16.4167 19.1875 15.6417 19.5125 14.775C19.8375 13.9083 20 12.9833 20 12C20 9.78333 19.2208 7.89583 17.6625 6.3375C16.1042 4.77917 14.2167 4 12 4C9.78333 4 7.89583 4.77917 6.3375 6.3375C4.77917 7.89583 4 9.78333 4 12C4 12.9833 4.1625 13.9083 4.4875 14.775C4.8125 15.6417 5.26667 16.4167 5.85 17.1ZM12 13C11.0167 13 10.1875 12.6625 9.5125 11.9875C8.8375 11.3125 8.5 10.4833 8.5 9.5C8.5 8.51667 8.8375 7.6875 9.5125 7.0125C10.1875 6.3375 11.0167 6 12 6C12.9833 6 13.8125 6.3375 14.4875 7.0125C15.1625 7.6875 15.5 8.51667 15.5 9.5C15.5 10.4833 15.1625 11.3125 14.4875 11.9875C13.8125 12.6625 12.9833 13 12 13ZM12 22C10.6167 22 9.31667 21.7375 8.1 21.2125C6.88333 20.6875 5.825 19.975 4.925 19.075C4.025 18.175 3.3125 17.1167 2.7875 15.9C2.2625 14.6833 2 13.3833 2 12C2 10.6167 2.2625 9.31667 2.7875 8.1C3.3125 6.88333 4.025 5.825 4.925 4.925C5.825 4.025 6.88333 3.3125 8.1 2.7875C9.31667 2.2625 10.6167 2 12 2C13.3833 2 14.6833 2.2625 15.9 2.7875C17.1167 3.3125 18.175 4.025 19.075 4.925C19.975 5.825 20.6875 6.88333 21.2125 8.1C21.7375 9.31667 22 10.6167 22 12C22 13.3833 21.7375 14.6833 21.2125 15.9C20.6875 17.1167 19.975 18.175 19.075 19.075C18.175 19.975 17.1167 20.6875 15.9 21.2125C14.6833 21.7375 13.3833 22 12 22Z"
-			fill={active ? '#A5000A' : '#444748'}
-		/>
-	</svg>
-);
-
-const IconType = ({ active }: { active: boolean }) => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M6 14H18V12H6V14ZM6 11H18V9H6V11ZM6 8H18V6H6V8ZM22 22L18 18H4C3.45 18 2.97917 17.8042 2.5875 17.4125C2.19583 17.0208 2 16.55 2 16V4C2 3.45 2.19583 2.97917 2.5875 2.5875C2.97917 2.19583 3.45 2 4 2H20C20.55 2 21.0208 2.19583 21.4125 2.5875C21.8042 2.97917 22 3.45 22 4V22ZM4 16H18.85L20 17.125V4H4V16Z"
-			fill={active ? '#A5000A' : '#444748'}
-		/>
-	</svg>
-);
-
-const IconScheduled = ({ active }: { active: boolean }) => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M12.0001 22C10.7501 22 9.57927 21.7625 8.4876 21.2875C7.39593 20.8125 6.44593 20.1708 5.6376 19.3625C4.82926 18.5541 4.1876 17.6041 3.7126 16.5125C3.2376 15.4208 3.0001 14.25 3.0001 13C3.0001 11.75 3.2376 10.5791 3.7126 9.48748C4.1876 8.39581 4.82926 7.44581 5.6376 6.63748C6.44593 5.82914 7.39593 5.18748 8.4876 4.71248C9.57927 4.23748 10.7501 3.99998 12.0001 3.99998C13.2501 3.99998 14.4209 4.23748 15.5126 4.71248C16.6043 5.18748 17.5543 5.82914 18.3626 6.63748C19.1709 7.44581 19.8126 8.39581 20.2876 9.48748C20.7626 10.5791 21.0001 11.75 21.0001 13C21.0001 14.25 20.7626 15.4208 20.2876 16.5125C19.8126 17.6041 19.1709 18.5541 18.3626 19.3625C17.5543 20.1708 16.6043 20.8125 15.5126 21.2875C14.4209 21.7625 13.2501 22 12.0001 22ZM14.8001 17.2L16.2001 15.8L13.0001 12.6V7.99998H11.0001V13.4L14.8001 17.2ZM5.6001 2.34998L7.0001 3.74998L2.7501 7.99998L1.3501 6.59998L5.6001 2.34998ZM18.4001 2.34998L22.6501 6.59998L21.2501 7.99998L17.0001 3.74998L18.4001 2.34998ZM12.0001 20C13.9501 20 15.6043 19.3208 16.9626 17.9625C18.3209 16.6041 19.0001 14.95 19.0001 13C19.0001 11.05 18.3209 9.39581 16.9626 8.03748C15.6043 6.67914 13.9501 5.99998 12.0001 5.99998C10.0501 5.99998 8.39593 6.67914 7.0376 8.03748C5.67926 9.39581 5.0001 11.05 5.0001 13C5.0001 14.95 5.67926 16.6041 7.0376 17.9625C8.39593 19.3208 10.0501 20 12.0001 20Z"
-			fill={active ? '#A5000A' : '#444748'}
-		/>
-	</svg>
-);
-
-const IconPinned = ({ active }: { active: boolean }) => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M5 21V5C5 4.45 5.19583 3.97917 5.5875 3.5875C5.97917 3.19583 6.45 3 7 3H17C17.55 3 18.0208 3.19583 18.4125 3.5875C18.8042 3.97917 19 4.45 19 5V21L12 18L5 21ZM7 17.95L12 15.8L17 17.95V5H7V17.95Z"
-			fill={active ? '#A5000A' : '#444748'}
-		/>
-	</svg>
-);
-
-const IconArchivedTab = ({ active }: { active: boolean }) => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M12 18L16 14L14.6 12.6L13 14.2V10H11V14.2L9.4 12.6L8 14L12 18ZM5 8V19H19V8H5ZM5 21C4.45 21 3.975 20.8083 3.575 20.425C3.19167 20.025 3 19.55 3 19V6.525C3 6.29167 3.03333 6.06667 3.1 5.85C3.18333 5.63333 3.3 5.43333 3.45 5.25L4.7 3.725C4.88333 3.49167 5.10833 3.31667 5.375 3.2C5.65833 3.06667 5.95 3 6.25 3H17.75C18.05 3 18.3333 3.06667 18.6 3.2C18.8833 3.31667 19.1167 3.49167 19.3 3.725L20.55 5.25C20.7 5.43333 20.8083 5.63333 20.875 5.85C20.9583 6.06667 21 6.29167 21 6.525V19C21 19.55 20.8 20.025 20.4 20.425C20.0167 20.8083 19.55 21 19 21H5ZM5.4 6H18.6L17.75 5H6.25L5.4 6Z"
-			fill={active ? '#A5000A' : '#444748'}
+			d="M9.55 18L3.85 12.3L5.275 10.875L9.55 15.15L18.725 5.975L20.15 7.4L9.55 18Z"
+			fill="#ffffff"
 		/>
 	</svg>
 );
@@ -259,12 +250,23 @@ export const SessionsListToolbar = ({
 	searchPeopleResults = [],
 	selectedPersonIds = [],
 	onSelectedPersonIdsChange,
+	searchTopicResults = [],
+	selectedTopicId = null,
+	onSelectedTopicIdChange,
+	searchTypeResults = [],
+	selectedTypeId = null,
+	onSelectedTypeIdChange,
+	searchArchiveOnly = false,
+	onSearchArchiveOnlyChange,
+	onSearchConfirm,
 	activeChip,
 	onChipToggle,
 	showConsultantActions,
 	showCreateGroupChatAction,
 	showSupervisionChip,
 	showLiveChatChip = false,
+	showGroupChip = false,
+	showInternalGroupChip = false,
 	createGroupChatPath,
 	archiveTabPath,
 	archiveTabActive,
@@ -275,9 +277,8 @@ export const SessionsListToolbar = ({
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 	const [isSearchViewOpen, setIsSearchViewOpen] = React.useState(false);
-	const [searchTab, setSearchTab] = React.useState<
-		'people' | 'type' | 'scheduled' | 'pinned' | 'archived'
-	>('people');
+	const [searchTab, setSearchTab] =
+		React.useState<SessionSearchTab>('people');
 	const setSelectedPersonIds = React.useCallback(
 		(updater: string[] | ((prev: string[]) => string[])) => {
 			if (!onSelectedPersonIdsChange) {
@@ -326,8 +327,34 @@ export const SessionsListToolbar = ({
 		[selectedPersonIds, searchPeopleResults]
 	);
 
+	const filteredTopics = React.useMemo(() => {
+		const needle = searchValue.trim().toLowerCase();
+		if (!needle) {
+			return searchTopicResults;
+		}
+		return searchTopicResults.filter((topic) =>
+			`${topic.label} ${topic.subtitle || ''}`
+				.toLowerCase()
+				.includes(needle)
+		);
+	}, [searchTopicResults, searchValue]);
+
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const hasSelectedPeople = selectedPersonIds.length > 0;
+	const hasSearchSelection =
+		hasSelectedPeople ||
+		Boolean(selectedTopicId) ||
+		Boolean(selectedTypeId) ||
+		searchArchiveOnly;
+	/** Figma Section 07: checkmark hidden while nothing was typed/selected. */
+	const canConfirmSearch = hasTypedQuery || hasSearchSelection;
+	const confirmSearch = React.useCallback(() => {
+		if (!canConfirmSearch) {
+			return;
+		}
+		onSearchConfirm?.();
+		setIsSearchViewOpen(false);
+	}, [canConfirmSearch, onSearchConfirm]);
 	const showSearchDropdown = isSearchViewOpen;
 	const reopenSearchIfActive = React.useCallback(() => {
 		setIsSearchViewOpen(true);
@@ -362,9 +389,20 @@ export const SessionsListToolbar = ({
 				if (chip.id === 'supervision') {
 					return showSupervisionChip;
 				}
+				if (chip.id === 'groups') {
+					return showGroupChip;
+				}
+				if (chip.id === 'internalGroup') {
+					return showInternalGroupChip;
+				}
 				return true;
 			}),
-		[showLiveChatChip, showSupervisionChip]
+		[
+			showGroupChip,
+			showInternalGroupChip,
+			showLiveChatChip,
+			showSupervisionChip
+		]
 	);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
@@ -399,13 +437,20 @@ export const SessionsListToolbar = ({
 					<button
 						type="button"
 						className="sessionsListToolbar__iconButton"
-						aria-label={tr(
-							'sessionList.toolbar.search.toggle',
-							'Open or close search results'
-						)}
+						aria-label={
+							showSearchDropdown
+								? tr(
+										'sessionList.toolbar.search.close',
+										'Close search'
+									)
+								: tr(
+										'sessionList.toolbar.search.toggle',
+										'Open or close search results'
+									)
+						}
 						onClick={() => setIsSearchViewOpen((prev) => !prev)}
 					>
-						<IconMenuDots />
+						{showSearchDropdown ? <IconClose /> : <IconMenuDots />}
 					</button>
 					<div className="sessionsListToolbar__searchFieldWrap">
 						{selectedPeople.length > 0 && (
@@ -457,18 +502,39 @@ export const SessionsListToolbar = ({
 							onChange={(e) => onSearchChange(e.target.value)}
 							onFocus={() => setIsSearchViewOpen(true)}
 							onClick={reopenSearchIfActive}
+							onKeyDown={(event) => {
+								if (event.key === 'Enter') {
+									event.preventDefault();
+									confirmSearch();
+								}
+							}}
 							autoComplete="off"
 							data-cy="sessions-list-search"
 							ref={searchInputRef}
 						/>
 					</div>
-					{hasTypedQuery || hasSelectedPeople ? (
+					{showSearchDropdown && canConfirmSearch ? (
+						<button
+							type="button"
+							className="sessionsListToolbar__searchConfirmButton"
+							onClick={confirmSearch}
+							aria-label={tr(
+								'sessionList.toolbar.search.confirm',
+								'Confirm selection'
+							)}
+							data-cy="sessions-list-search-confirm"
+						>
+							<IconCheck />
+						</button>
+					) : hasTypedQuery || hasSelectedPeople ? (
 						<button
 							type="button"
 							className="sessionsListToolbar__searchActionButton"
 							onClick={() => {
 								onSearchChange('');
 								setSelectedPersonIds([]);
+								onSelectedTopicIdChange?.(null);
+								onSelectedTypeIdChange?.(null);
 								setIsSearchViewOpen(false);
 							}}
 							aria-label={tr(
@@ -488,154 +554,68 @@ export const SessionsListToolbar = ({
 					)}
 				</div>
 				{showSearchDropdown && (
-					<div className="sessionsListToolbar__searchModal">
-						<div className="sessionsListToolbar__searchModalTabs">
-							{[
-								['people', 'People'],
-								['type', 'Type'],
-								['scheduled', 'Scheduled'],
-								['pinned', 'Pinned'],
-								['archived', 'Archived']
-							].map(([id, label]) => {
-								const isActive = searchTab === id;
-								return (
-									<button
-										type="button"
-										key={id}
-										className={clsx(
-											'sessionsListToolbar__searchModalTab',
-											searchTab === id &&
-												'sessionsListToolbar__searchModalTab--active'
-										)}
-										onClick={() =>
-											setSearchTab(
-												id as
-													| 'people'
-													| 'type'
-													| 'scheduled'
-													| 'pinned'
-													| 'archived'
-											)
-										}
-									>
-										<span className="sessionsListToolbar__searchModalTabIcon">
-											{id === 'people' && (
-												<IconPeople active={isActive} />
-											)}
-											{id === 'type' && (
-												<IconType active={isActive} />
-											)}
-											{id === 'scheduled' && (
-												<span className="sessionsListToolbar__searchModalTabIconWithDot">
-													<IconScheduled
-														active={isActive}
-													/>
-													<span className="sessionsListToolbar__searchModalTabDot" />
-												</span>
-											)}
-											{id === 'pinned' && (
-												<IconPinned active={isActive} />
-											)}
-											{id === 'archived' && (
-												<IconArchivedTab
-													active={isActive}
-												/>
-											)}
-										</span>
-										<span className="sessionsListToolbar__searchModalTabLabel">
-											{tr(
-												`sessionList.toolbar.search.tabs.${id}`,
-												label
-											)}
-										</span>
-									</button>
-								);
-							})}
-						</div>
-						<div className="sessionsListToolbar__searchModalBody">
-							{searchTab === 'people' ? (
-								filteredPeople.length > 0 ? (
-									filteredPeople.map((person) => {
-										const isSelected =
-											selectedPersonIds.includes(
-												person.id
-											);
-										return (
-											<button
-												type="button"
-												key={person.id}
-												className="sessionsListToolbar__personRow"
-												onClick={() => {
-													setSelectedPersonIds(
-														(prev) =>
-															prev.includes(
-																person.id
-															)
-																? prev.filter(
-																		(id) =>
-																			id !==
-																			person.id
-																	)
-																: [
-																		...prev,
-																		person.id
-																	]
-													);
-													onSearchChange('');
-													setIsSearchViewOpen(true);
-													requestAnimationFrame(() =>
-														searchInputRef.current?.focus()
-													);
-												}}
-											>
-												<div className="sessionsListToolbar__personAvatar">
-													{person.name
-														.split(' ')
-														.map((part) =>
-															part
-																.trim()
-																.charAt(0)
-														)
-														.join('')
-														.slice(0, 2)
-														.toUpperCase() || 'U'}
-												</div>
-												<div className="sessionsListToolbar__personMeta">
-													<div className="sessionsListToolbar__personName">
-														{person.name}
-													</div>
-													<div className="sessionsListToolbar__personSubtitle">
-														{person.subtitle}
-													</div>
-												</div>
-												<div
-													className={clsx(
-														'sessionsListToolbar__personCheckbox',
-														isSelected &&
-															'sessionsListToolbar__personCheckbox--selected'
-													)}
-												/>
-											</button>
-										);
-									})
-								) : (
-									<div className="sessionsListToolbar__searchEmpty">
-										{tr(
-											'sessionList.toolbar.search.emptyPeople',
-											'No matching people found.'
-										)}
-									</div>
-								)
-							) : (
-								<div className="sessionsListToolbar__searchEmpty">
-									{tr(
-										'sessionList.toolbar.search.emptyTab',
-										'No results for this tab yet.'
-									)}
-								</div>
-							)}
-						</div>
-					</div>
+					<SessionSearchPanel
+						labels={{
+							refineHint: tr(
+								'sessionList.toolbar.search.refineHint',
+								'Refine your search further using filters'
+							),
+							tabPeople: tr(
+								'sessionList.toolbar.search.tabs.people',
+								'People'
+							),
+							tabType: tr(
+								'sessionList.toolbar.search.tabs.type',
+								'By type'
+							),
+							tabCentre: tr(
+								'sessionList.toolbar.search.tabs.centre',
+								'Counseling center'
+							),
+							tabArchiveOnly: tr(
+								'sessionList.toolbar.search.tabs.archiveOnly',
+								'Archive only'
+							),
+							emptyPeople: tr(
+								'sessionList.toolbar.search.emptyPeople',
+								'No matching people found.'
+							),
+							emptyTypes: tr(
+								'sessionList.toolbar.search.emptyTypes',
+								'No chat types available.'
+							),
+							emptyTopics: tr(
+								'sessionList.toolbar.search.emptyTopics',
+								'No topics found for your counseling centers.'
+							)
+						}}
+						activeTab={searchTab}
+						onTabChange={setSearchTab}
+						archiveOnly={searchArchiveOnly}
+						onArchiveOnlyChange={(next) =>
+							onSearchArchiveOnlyChange?.(next)
+						}
+						people={filteredPeople}
+						selectedPersonIds={selectedPersonIds}
+						onPersonToggle={(personId) => {
+							setSelectedPersonIds((prev) =>
+								prev.includes(personId)
+									? prev.filter((id) => id !== personId)
+									: [...prev, personId]
+							);
+							onSearchChange('');
+							setIsSearchViewOpen(true);
+							requestAnimationFrame(() =>
+								searchInputRef.current?.focus()
+							);
+						}}
+						types={searchTypeResults}
+						selectedTypeId={selectedTypeId}
+						onTypeSelect={(id) => onSelectedTypeIdChange?.(id)}
+						topics={filteredTopics}
+						selectedTopicId={selectedTopicId}
+						onTopicSelect={(id) => onSelectedTopicIdChange?.(id)}
+					/>
 				)}
 			</div>
 
@@ -648,8 +628,6 @@ export const SessionsListToolbar = ({
 					{showCreateGroupChatAction && (
 						<Link
 							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--iconOnly':
-									!createGroupChatActive,
 								'sessionsListToolbar__chip--active':
 									createGroupChatActive
 							})}
@@ -663,10 +641,7 @@ export const SessionsListToolbar = ({
 							data-cy="sessions-list-chip-create"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span
-								className="sessionsListToolbar__chipLabel"
-								aria-hidden={!createGroupChatActive}
-							>
+							<span className="sessionsListToolbar__chipLabel">
 								{tr(
 									'sessionList.toolbar.chips.create',
 									'Create'
@@ -677,16 +652,13 @@ export const SessionsListToolbar = ({
 					{filterChipsBeforeArchive.map(renderFilterChip)}
 					{showConsultantActions && (
 						<Link
-							className={clsx(
-								'sessionsListToolbar__chip',
-								'walkthrough_step_4',
-								{
-									'sessionsListToolbar__chip--iconOnly':
-										!archiveTabActive,
-									'sessionsListToolbar__chip--active':
-										archiveTabActive
-								}
-							)}
+							className={clsx('sessionsListToolbar__chip', {
+								'sessionsListToolbar__chip--iconOnly':
+									!archiveTabActive,
+								'sessionsListToolbar__chip--active':
+									archiveTabActive
+							})}
+							data-tour-target="sessions-archive-tab"
 							to={archiveTabPath}
 							aria-label={translate(
 								'sessionList.view.archive.tab'

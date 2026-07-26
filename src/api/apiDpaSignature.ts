@@ -31,6 +31,33 @@ export interface DpaSignatureResponse {
 	signedAt?: string;
 }
 
+export interface DpaSignPreviewResponse {
+	tenantName: string;
+	dpaVersion: string;
+	content: string;
+	expiresAt: string;
+}
+
+export const apiGetDpaSignPreview = async (
+	token: string
+): Promise<DpaSignPreviewResponse> => {
+	const response = await fetch(endpoints.dpaSignaturePreview(token), {
+		method: 'GET',
+		headers: { Accept: 'application/json' },
+		credentials: 'include'
+	});
+
+	if (!response.ok) {
+		if (response.status === 404 || response.status === 410) {
+			throw new Error(DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN);
+		}
+
+		throw new Error(DPA_SIGN_ERRORS.FAILED);
+	}
+
+	return response.json();
+};
+
 export const apiConfirmDpaSignature = async (
 	token: string,
 	request: DpaSignatureRequest

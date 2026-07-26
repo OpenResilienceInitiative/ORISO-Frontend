@@ -10,6 +10,7 @@ import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { createClient } from 'matrix-js-sdk';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -59,6 +60,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
+	vi.unstubAllEnvs();
 	localStorage.clear();
 });
 
@@ -96,6 +98,14 @@ describe('persistMatrixLoginData', () => {
 });
 
 describe('getMatrixAccessToken', () => {
+	it('skips the API call when local live websocket bootstrap is disabled', async () => {
+		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
+
+		await expect(getMatrixAccessToken()).rejects.toThrow('MATRIX_DISABLED');
+
+		expect(fetchData).not.toHaveBeenCalled();
+	});
+
 	it('loads Matrix credentials from the API and uses the response device id', async () => {
 		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
 		vi.mocked(fetchData).mockResolvedValue({
@@ -215,7 +225,10 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
 			fallbackICEServerAllowed: true,
-			logger: getMatrixClientLogger()
+			logger: getMatrixClientLogger(),
+			cryptoCallbacks: {
+				getSecretStorageKey: secretStorageKeyCallback
+			}
 		});
 		expect(client).toEqual({
 			config: {
@@ -224,7 +237,10 @@ describe('getMatrixAccessToken', () => {
 				userId: '@consultant:matrix.example.test',
 				deviceId: 'ORISO_WEB_TEST_DEVICE',
 				fallbackICEServerAllowed: true,
-				logger: getMatrixClientLogger()
+				logger: getMatrixClientLogger(),
+				cryptoCallbacks: {
+					getSecretStorageKey: secretStorageKeyCallback
+				}
 			}
 		});
 	});

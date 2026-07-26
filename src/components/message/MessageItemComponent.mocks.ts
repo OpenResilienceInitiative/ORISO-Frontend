@@ -11,6 +11,7 @@ import {
 } from '../session/sessionHelpers';
 import { buildVisibleToPrefix } from './messageConstants';
 import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import type { AggregatedReaction } from '../../utils/messageRelations';
 
 export const MOCK_ASKER_RC_ID = '@sanftes.alpaka:oriso.invalid';
 export const MOCK_CONSULTANT_RC_ID = '@karina.p:oriso.invalid';
@@ -218,6 +219,52 @@ export function mockMessageItemComponentProps(
 	};
 }
 
+export function mockReactions(
+	overrides: Partial<AggregatedReaction>[] = []
+): AggregatedReaction[] {
+	const base: AggregatedReaction[] = [
+		{
+			key: '👍',
+			count: 2,
+			senderIds: [MOCK_ASKER_RC_ID, MOCK_CONSULTANT_RC_ID],
+			ownEventId: '$own-reaction-1'
+		},
+		{
+			key: '❤️',
+			count: 1,
+			senderIds: [MOCK_ASKER_RC_ID],
+			ownEventId: null
+		},
+		{
+			key: '😂',
+			count: 3,
+			senderIds: [
+				MOCK_ASKER_RC_ID,
+				MOCK_CONSULTANT_RC_ID,
+				MOCK_GROUP_MODERATOR_RC_ID
+			],
+			ownEventId: null
+		}
+	];
+	return overrides.length
+		? overrides.map((override, index) => ({
+				...base[index % base.length],
+				...override
+			}))
+		: base;
+}
+
+export function mockManyReactions(): AggregatedReaction[] {
+	return ['👍', '❤️', '😂', '😮', '😢', '🙏', '🎉', '🔥', '💡', '✅'].map(
+		(key, index) => ({
+			key,
+			count: ((index * 7) % 12) + 1,
+			senderIds: [MOCK_ASKER_RC_ID],
+			ownEventId: index === 3 ? '$own-reaction-many' : null
+		})
+	);
+}
+
 export const mockAppointmentAliasContent = JSON.stringify({
 	title: 'Erstgespräch Suchtberatung',
 	user: 'sanftes.alpaka.kala',
@@ -243,5 +290,17 @@ export const mockSystemNotificationMessage = `[SYSTEM_NOTIFICATION]${JSON.string
 		title: 'Systemhinweis',
 		description: 'Ihr Beratungstermin wurde aktualisiert.',
 		type: 'INFO'
+	}
+)}`;
+
+export const mockCaseHandoverGrantedMessage = `[SYSTEM_NOTIFICATION]${JSON.stringify(
+	{
+		type: 'CASE_HANDOVER_GRANTED',
+		username: 'Kim G.',
+		description:
+			'Deine bisherige Berater:in ist leider erkrankt. Damit du nicht warten musst, hat Kim G. deinen Fall übernommen.',
+		reasonLabel: 'Counsellor is ill',
+		explanation:
+			'My colleague is ill, so I decided it is better if I take care of this client.'
 	}
 )}`;

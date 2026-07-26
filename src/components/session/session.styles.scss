@@ -16,12 +16,26 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	min-width: 0;
 	background-color: var(--m3-surface-container-lowest, #ffffff);
 	overflow: hidden;
+	box-sizing: border-box;
+	transition: border-color 160ms ease;
 
 	@include breakpoint($fromLarge) {
 		margin: 24px;
 		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 		border-radius: 28px;
-		box-sizing: border-box;
+	}
+
+	// Border is the active indicator — suppress the default focus outline.
+	&:focus {
+		outline: none;
+	}
+
+	// #597: active border when the session/chat chrome is focused/clicked,
+	// but not when the composer text area is selected.
+	&:focus-within:not(:has(.textarea__wrapper-send-message--selected)) {
+		@include breakpoint($fromLarge) {
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
+		}
 	}
 
 	.messageSubmit__wrapper {
@@ -53,7 +67,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex: 0 0 auto; /* Header stays fixed height */
 	}
 
-	& > div:nth-child(2) {
+	// Keep the timeline in normal flex flow regardless of optional siblings
+	// such as the thread-list toolbar. An nth-child selector made the timeline
+	// absolute whenever that toolbar preceded it, allowing message controls to
+	// cover and intercept clicks on the session header.
+	& > .session__content {
 		flex: 1; /* Content takes remaining space */
 		min-height: 0;
 		position: relative;
@@ -123,6 +141,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			border: 0;
 			border-radius: 0;
 		}
+
+		&:focus-within:not(:has(.textarea__wrapper-send-message--selected)),
+		&:has(.textarea__wrapper-send-message--selected) {
+			@include breakpoint($fromLarge) {
+				border: 0;
+			}
+		}
 	}
 
 	&__emptyState {
@@ -142,11 +167,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
-		padding: $grid-base-three $grid-base-two 240px;
+
+		// Figma 8641-34699: 16px inset inside the chat card (sides + top).
+		// Large bottom padding keeps the last message above the absolute composer.
+		padding: 16px 16px 240px;
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
 		@include breakpoint($fromMedium) {
-			padding: $grid-base-three $grid-base-three 240px;
+			padding: 16px 16px 240px;
 		}
 
 		@media screen and (width <= 1366px) {
@@ -156,7 +184,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		@media screen and (width <= 899px) {
 			// Leave extra scrollable space so the latest message "Reply" stays above composer.
-			padding-bottom: calc(340px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
 		}
 	}
 
@@ -992,6 +1020,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: relative;
 		width: 100%;
 		border-top: 1px solid rgba(0, 0, 0, 0.06);
+	}
+
+	&__anonymousEnquiryClosedNote {
+		padding: 16px 24px;
+		text-align: center;
+		font-size: 15px;
+		line-height: 1.4;
+		color: #4c555f;
+		background-color: #f4f6f9;
 	}
 
 	&__content--consentGate {
@@ -2562,6 +2599,102 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	.session__threadClose {
 		display: none;
 	}
+}
+
+/* Thread-panel-UX (#435): per-room list of all threads. */
+.session__threadListBar {
+	position: relative;
+	padding: 4px 16px;
+}
+
+.session__threadListToggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 12px;
+	border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
+	border-radius: 999px;
+	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	font-size: 13px;
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible,
+	&--active {
+		background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.1));
+	}
+}
+
+.session__threadListUnreadBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-radius: 999px;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #fff);
+	font-size: 11px;
+	line-height: 1;
+}
+
+.session__threadListPanel {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 16px;
+	width: min(360px, calc(100% - 32px));
+	max-height: 320px;
+	overflow-y: auto;
+	border-radius: 8px;
+	background: var(--m3-surface-container-high, #fff);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+	z-index: 100;
+}
+
+.session__threadListEntry {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 12px;
+	border: none;
+	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.08));
+	background: none;
+	text-align: left;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: none;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	}
+}
+
+.session__threadListUnreadDot {
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+}
+
+.session__threadListEntryPreview {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+}
+
+.session__threadListEntryMeta {
+	flex-shrink: 0;
+	color: var(--m3-on-surface-variant, #4c555f);
+	font-size: 12px;
 }
 
 /* Target the specific scrollable containers (like your list and chat detail) */

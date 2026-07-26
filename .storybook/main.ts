@@ -24,7 +24,11 @@ const config: StorybookConfig = {
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],
-	addons: ['@storybook/addon-mcp', '@storybook/addon-designs'],
+	addons: [
+		'@storybook/addon-mcp',
+		'@storybook/addon-designs',
+		'@storybook/addon-a11y'
+	],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
@@ -136,6 +140,19 @@ const config: StorybookConfig = {
 						]
 					}
 				}
+			},
+			// Avoid Vite/MUI circular prebundle races that crash the preview with
+			// "styled_default is not a function" (blank canvas for every story).
+			optimizeDeps: {
+				include: [
+					'@emotion/react',
+					'@emotion/styled',
+					'@mui/material',
+					'@mui/material/styles',
+					'@mui/material/styles/styled',
+					'@mui/system',
+					'@mui/icons-material'
+				]
 			}
 		});
 	}

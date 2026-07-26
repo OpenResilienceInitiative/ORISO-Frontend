@@ -6,13 +6,22 @@ import { Text } from '../../text/Text';
 import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
-import { ALL_FAMILIES } from '../../../utils/notificationSettings/model';
-import { familyLabelKey } from '../../notificationsCenter/eventDescriptors';
+import { DoNotDisturbControl } from './DoNotDisturbControl';
+import { NotificationConfigView } from './NotificationConfigDialog';
+import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
+import {
+	NotificationArea,
+	setKindField
+} from '../../../utils/notificationSettings/notificationConfig';
+import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
+import { useNotifStatusViaSidebar } from '../../../utils/notificationStatusToggle';
 import {
 	PERMISSION_GRANTED,
 	hasPermissions,
-	isSupported
+	isSupported,
+	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
+import './notificationSettingsPanel.styles.scss';
 
 /**
  * WP-06 Slice 6b — cross-device notification settings panel.
@@ -31,6 +40,9 @@ export const NotificationSettingsPanel = () => {
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
+	const [activeArea, setActiveArea] = useState<NotificationArea>('requests');
+	const [notifStatusViaSidebar, setNotifStatusViaSidebar] =
+		useNotifStatusViaSidebar();
 	const [permission, setPermission] = useState<NotificationPermission>(
 		isSupported() ? Notification.permission : 'denied'
 	);
@@ -45,7 +57,9 @@ export const NotificationSettingsPanel = () => {
 				updateSettings({ browserNotifications: { enabled: true } });
 				return;
 			}
-			Notification.requestPermission().then((result) => {
+			// Safe wrapper: resolves in promise AND legacy-callback browsers
+			// (old Safari) and never throws.
+			requestNotificationPermissionSafe().then((result) => {
 				setPermission(result);
 				updateSettings({
 					browserNotifications: {
@@ -76,6 +90,10 @@ export const NotificationSettingsPanel = () => {
 					className="tertiary"
 				/>
 			</div>
+			<DoNotDisturbControl
+				dndUntil={settings.dndUntil}
+				onChange={(dndUntil) => updateSettings({ dndUntil })}
+			/>
 
 			<Switch
 				titleKey="profile.notificationSettings.globalMute"
@@ -87,6 +105,14 @@ export const NotificationSettingsPanel = () => {
 				descriptionKey="profile.notificationSettings.deviceSilence.description"
 				checked={deviceSilenced}
 				onChange={setDeviceSilenced}
+			/>
+			{/* Opt-in: global status button in the navigation rail (like the
+			    Live Chat rail toggle) — flips the account-wide mute. */}
+			<Switch
+				titleKey="profile.notifications.config.statusButton.sidebarToggle"
+				descriptionKey="profile.notifications.config.statusButton.sidebarToggleDescription"
+				checked={notifStatusViaSidebar}
+				onChange={setNotifStatusViaSidebar}
 			/>
 
 			<hr />
@@ -113,43 +139,40 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 			/>
-			<Switch
-				titleKey="profile.notificationSettings.sounds"
-				checked={settings.sounds.enabled}
-				onChange={(checked) =>
-					updateSettings({ sounds: { enabled: checked } })
+			<hr />
+
+			{/* Harmonised model (2026-07-22): the config tabs live INLINE here
+			    and replace the old flat per-family toggle list. Changes save
+			    immediately, like every other switch on this page. The dialog
+			    wrapper stays as the quick access from a conversation's menu. */}
+			<NotificationConfigView
+				config={settings.notificationConfig}
+				activeArea={activeArea}
+				onAreaChange={setActiveArea}
+				onChange={(area, kind, field, value) =>
+					updateSettings({
+						notificationConfig: setKindField(
+							settings.notificationConfig,
+							area,
+							kind,
+							field,
+							value as never
+						)
+					})
 				}
+				onPreview={previewNotificationSound}
 			/>
 
 			<hr />
 
-			<div className="profile__content__title">
-				<Headline
-					text={t(
-						'profile.notificationSettings.families.title',
-						'Benachrichtigen bei'
-					)}
-					semanticLevel="5"
-				/>
-				<Text
-					text={t(
-						'profile.notificationSettings.families.description',
-						'Wählen Sie, welche Ereignis-Familien Benachrichtigungen auslösen dürfen.'
-					)}
-					type="standard"
-					className="tertiary"
-				/>
-			</div>
-			{ALL_FAMILIES.map((family) => (
-				<Switch
-					key={family}
-					titleKey={familyLabelKey(family)}
-					checked={settings.families[family]}
-					onChange={(checked) =>
-						updateSettings({ families: { [family]: checked } })
-					}
-				/>
-			))}
+			{/* System notifications stay a single global switch, outside the tabs. */}
+			<Switch
+				titleKey={familyLabelKey('system')}
+				checked={settings.families.system}
+				onChange={(checked) =>
+					updateSettings({ families: { system: checked } })
+				}
+			/>
 		</div>
 	);
 };

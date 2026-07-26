@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionsListToolbar } from './SessionsListToolbar';
+
+afterEach(cleanup);
 
 vi.mock('./SessionToolbarFilterIcons', () => {
 	const Icon = () => <span aria-hidden />;
@@ -20,7 +22,13 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 	};
 });
 
-const renderToolbar = (showCreateGroupChatAction: boolean) =>
+const renderToolbar = (
+	showCreateGroupChatAction: boolean,
+	{
+		showGroupChip = true,
+		showInternalGroupChip = true
+	}: { showGroupChip?: boolean; showInternalGroupChip?: boolean } = {}
+) =>
 	render(
 		<MemoryRouter>
 			<SessionsListToolbar
@@ -32,6 +40,8 @@ const renderToolbar = (showCreateGroupChatAction: boolean) =>
 				showConsultantActions
 				showCreateGroupChatAction={showCreateGroupChatAction}
 				showSupervisionChip={false}
+				showGroupChip={showGroupChip}
+				showInternalGroupChip={showInternalGroupChip}
 				createGroupChatPath="/sessions/create"
 				archiveTabPath="/sessions/archive"
 				archiveTabActive={false}
@@ -59,9 +69,57 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 	it('shows Create when the tenant enables the feature', () => {
 		renderToolbar(true);
 
+		const createLink = screen.getByRole('link', {
+			name: 'sessionList.createChat.buttonTitle'
+		});
+
+		expect(createLink).toBeTruthy();
+		expect(createLink.classList).not.toContain(
+			'sessionsListToolbar__chip--iconOnly'
+		);
 		expect(
-			screen.getByRole('link', {
-				name: 'sessionList.createChat.buttonTitle'
+			createLink.querySelector('.sessionsListToolbar__chipLabel')
+				?.textContent
+		).toBe('Create');
+		expect(
+			createLink
+				.querySelector('.sessionsListToolbar__chipLabel')
+				?.hasAttribute('aria-hidden')
+		).toBe(false);
+	});
+
+	it('hides group filters when their tenant modules are disabled', () => {
+		renderToolbar(false, {
+			showGroupChip: false,
+			showInternalGroupChip: false
+		});
+
+		expect(
+			screen.queryByRole('button', {
+				name: 'Conversation circle'
+			})
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'Internal group chat'
+			})
+		).toBeNull();
+	});
+
+	it('shows group filters when their tenant modules are enabled', () => {
+		renderToolbar(true, {
+			showGroupChip: true,
+			showInternalGroupChip: true
+		});
+
+		expect(
+			screen.getByRole('button', {
+				name: 'Conversation circle'
+			})
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', {
+				name: 'Internal group chat'
 			})
 		).toBeTruthy();
 	});

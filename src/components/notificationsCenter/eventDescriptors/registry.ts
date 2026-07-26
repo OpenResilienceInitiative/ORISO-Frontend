@@ -141,6 +141,15 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'threadReplyNew',
 		resolveActionTarget: conversationTarget
 	}),
+	// FE#514 / ADR-016: a post in an enquiry's team-only discussion room. The
+	// server-emitted actionPath deep-links into the discussion panel.
+	descriptor('team.discussion.new', {
+		family: 'messages',
+		category: 'message',
+		icon: 'teamDiscussion',
+		i18nKey: 'teamDiscussionNew',
+		resolveActionTarget: conversationTarget
+	}),
 	descriptor('supervisor.added', {
 		family: 'system',
 		category: 'system',

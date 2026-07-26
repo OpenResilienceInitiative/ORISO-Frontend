@@ -50,6 +50,7 @@ import {
 	type Pseudonym
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
+import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
@@ -57,23 +58,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
-
-const toRegistrationUsername = (displayName: string) => {
-	const normalized = displayName
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
-		.replace(/ß/g, 'ss')
-		.replace(/[^a-z0-9]+/g, '_')
-		.replace(/^_+|_+$/g, '')
-		.replace(/_{2,}/g, '_');
-	const safeBase = normalized || 'oriso';
-	const suffix = Math.floor(100 + Math.random() * 900);
-	const suffixText = `_${suffix}`;
-	const maxBaseLength = 48 - suffixText.length;
-
-	return `${safeBase.slice(0, maxBaseLength)}${suffixText}`;
-};
+import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
 	({
@@ -131,17 +116,28 @@ export const AccountData: FC<{
 	const legalLinks = useContext(LegalLinksContext);
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
-	const [identity, setIdentity] = useState<Pseudonym>(() =>
-		generatePseudonym(locale)
+	/* Restore the in-memory draft (if any) so navigating away and back in the
+	   stepper keeps everything typed — identity, username, passwords and the
+	   privacy checkbox. The draft never touches session/localStorage. */
+	const [restoredDraft] = useState(() => getAccountDataDraft());
+	const [identity, setIdentity] = useState<Pseudonym>(
+		() => restoredDraft?.identity ?? generatePseudonym(locale)
 	);
-	const [password, setPassword] = useState<string>('');
-	const [repeatPassword, setRepeatPassword] = useState<string>('');
+	const [password, setPassword] = useState<string>(
+		restoredDraft?.password ?? ''
+	);
+	const [repeatPassword, setRepeatPassword] = useState<string>(
+		restoredDraft?.repeatPassword ?? ''
+	);
 	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-	const [dataProtectionChecked, setDataProtectionChecked] =
-		useState<boolean>(false);
+	const [dataProtectionChecked, setDataProtectionChecked] = useState<boolean>(
+		restoredDraft?.dataProtectionChecked ?? false
+	);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
-	const [username, setUsername] = useState<string>('');
+	const [username, setUsername] = useState<string>(
+		restoredDraft?.username ?? ''
+	);
 	const [isUsernameAvailable, setIsUsernameAvailable] =
 		useState<boolean>(true);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
@@ -163,18 +159,33 @@ export const AccountData: FC<{
 	const applyGeneratedUsername = useCallback(
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
-			setUsername(toRegistrationUsername(nextIdentity.displayName));
+			setUsername(toRegistrationUsername(nextIdentity));
 			resetUsernameAvailability();
 		},
 		[resetUsernameAvailability]
 	);
 
 	useEffect(() => {
-		applyGeneratedUsername(identity);
 		// Run once so first entry shows the same generated identity until the
-		// user intentionally changes it.
+		// user intentionally changes it. When a draft was restored the user's
+		// previous identity/username must NOT be overwritten by a fresh one —
+		// the debounced availability effect below re-checks it anyway.
+		if (!restoredDraft) {
+			applyGeneratedUsername(identity);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	/* Keep the draft current on every change so stepper navigation is lossless. */
+	useEffect(() => {
+		setAccountDataDraft({
+			identity,
+			username,
+			password,
+			repeatPassword,
+			dataProtectionChecked
+		});
+	}, [identity, username, password, repeatPassword, dataProtectionChecked]);
 
 	const isUsernameLongEnough =
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
@@ -249,15 +260,16 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const { hasError: usernameHasError, helperTextKey: usernameHelperTextKey } =
-		getUsernameFeedback({
-			wasBlurred: usernameWasBlurred,
-			isLongEnough: isUsernameLongEnough,
-			isAvailable: isUsernameAvailable,
-			availabilityChecked: usernameAvailabilityChecked,
-			availabilityCheckFailed: usernameAvailabilityFailed
-		});
-	const usernameHelperText = t(usernameHelperTextKey);
+	const { hasError: usernameHasError, helperTextKey } = getUsernameFeedback({
+		wasBlurred: usernameWasBlurred,
+		isLongEnough: isUsernameLongEnough,
+		isAvailable: isUsernameAvailable,
+		availabilityChecked: usernameAvailabilityChecked,
+		availabilityCheckFailed: usernameAvailabilityFailed
+	});
+
+	const usernameHelperText = t(helperTextKey);
+
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {

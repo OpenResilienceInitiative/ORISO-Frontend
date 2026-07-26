@@ -5,7 +5,11 @@ import './mentionList.styles.scss';
 
 export interface MentionListProps {
 	items: MentionCandidate[];
-	command: (item: { id: string; label: string }) => void;
+	command: (item: {
+		id: string;
+		label: string;
+		matrixUserId: string | null;
+	}) => void;
 	notInChatLabel: string;
 }
 
@@ -27,7 +31,11 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 		const selectItem = (index: number) => {
 			const item = items[index];
 			if (item) {
-				command({ id: item.id, label: item.displayName });
+				command({
+					id: item.id,
+					label: item.displayName,
+					matrixUserId: item.matrixUserId || null
+				});
 			}
 		};
 

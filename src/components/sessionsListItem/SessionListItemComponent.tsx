@@ -13,6 +13,8 @@ import {
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
@@ -28,6 +30,8 @@ import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/ch
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
 import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
+import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -53,6 +57,7 @@ import './sessionsListItem.styles';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
+import { TeamDiscussionBadge } from '../teamDiscussion/TeamDiscussionBadge';
 import {
 	decryptText,
 	MissingKeyError,
@@ -85,6 +90,10 @@ import {
 	isCaseHandoverDenied,
 	isCaseHandoverPending
 } from '../session/caseHandoverHelpers';
+import {
+	CaseHandoverActionButton,
+	CaseHandoverActionState
+} from './CaseHandoverActionButton';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -95,6 +104,9 @@ interface SessionListItemProps {
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
+	onCaseHandoverBatchStart?: () => void;
+	onCaseHandoverBatchConfirm?: () => void;
+	onCaseHandoverBatchClose?: () => void;
 }
 
 export const SessionListItemComponent = ({
@@ -106,7 +118,10 @@ export const SessionListItemComponent = ({
 	isAfterActive = false,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
-	onCaseHandoverSelect
+	onCaseHandoverSelect,
+	onCaseHandoverBatchStart,
+	onCaseHandoverBatchConfirm,
+	onCaseHandoverBatchClose
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
 	const location = useLocation();
@@ -322,18 +337,14 @@ export const SessionListItemComponent = ({
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
-	const caseHandoverListLabel = (() => {
-		if (caseHandoverStatus?.canViewContent) {
-			return translate('caseHandover.list.accessGranted');
-		}
-		if (isCaseHandoverPending(caseHandoverStatus?.status)) {
-			return translate('caseHandover.list.awaitingApproval');
-		}
-		if (isCaseHandoverDenied(caseHandoverStatus?.status)) {
-			return translate('caseHandover.list.accessDenied');
-		}
-		return translate('caseHandover.list.requestAccess');
-	})();
+	const caseHandoverActionState: CaseHandoverActionState =
+		caseHandoverStatus?.canViewContent
+			? 'accessGranted'
+			: isCaseHandoverPending(caseHandoverStatus?.status)
+				? 'awaitingApproval'
+				: isCaseHandoverDenied(caseHandoverStatus?.status)
+					? 'accessDenied'
+					: 'requestAccess';
 	const canBatchSelectCaseHandover =
 		caseHandoverBatchMode &&
 		caseHandoverCandidate &&
@@ -343,7 +354,8 @@ export const SessionListItemComponent = ({
 	const canShowCaseHandoverAction =
 		caseHandoverCandidate &&
 		!caseHandoverStatusLoading &&
-		!caseHandoverStatus?.canViewContent;
+		(!caseHandoverStatus?.canViewContent ||
+			Boolean(caseHandoverStatus?.requestId));
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -493,7 +505,11 @@ export const SessionListItemComponent = ({
 						marginBottom: '8px'
 					}}
 				>
-					🔔 {activeSession.user?.username || 'Unknown User'}
+					🔔{' '}
+					{formatMessagePersonName(
+						undefined,
+						activeSession.user?.username
+					) || translate('sessionList.user.unknown')}
 				</div>
 				<div style={{ fontSize: '12px', color: '#666' }}>
 					Session ID: {activeSession.item.id} | Postcode:{' '}
@@ -532,21 +548,12 @@ export const SessionListItemComponent = ({
 					isGroup: activeSession.isGroup,
 					isAsker,
 					isEmptyEnquiry: activeSession.isEmptyEnquiry,
+					isLiveChat:
+						getModality(activeSession) === Modality.LIVE_CHAT,
 					tabSuffix: getSessionListTab()
 				})
 			);
 		}
-	};
-
-	const handleCaseHandoverActionClick = (
-		event: React.MouseEvent<HTMLButtonElement>
-	) => {
-		event.stopPropagation();
-		if (canBatchSelectCaseHandover && onCaseHandoverSelect) {
-			onCaseHandoverSelect(activeSession.item.id);
-			return;
-		}
-		handleOnClick();
 	};
 
 	const isMenuInteractionTarget = (target: EventTarget | null) =>
@@ -696,44 +703,9 @@ export const SessionListItemComponent = ({
 	// 	return null;
 	// }
 
-	// MATRIX MIGRATION: Render fallback if consulting type is missing
-	if (!consultingType && !activeSession.isGroup) {
-		return (
-			<div
-				onClick={() =>
-					navigate(
-						`${listPath}/sessionView/${activeSession.item.id}${getSessionListTab()}`
-					)
-				}
-				className="sessionsListItem"
-				data-cy="session-list-item"
-			>
-				<div className="sessionsListItem__content">
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__consultingType">
-							{activeSession.item.postcode || 'N/A'}
-						</div>
-						<div className="sessionsListItem__date">
-							{new Date(
-								activeSession.item.createDate
-							).toLocaleDateString('de-DE')}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__icon">📋</div>
-						<div className="sessionsListItem__username">
-							{activeSession.user?.username || 'Unknown User'}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__subject">
-							Agency: {activeSession.item.agencyId} • Status: NEW
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
+	// MATRIX MIGRATION: the `if (!consultingType)` early return above already
+	// handles the missing-consulting-type case, so the previous fallback block
+	// here was unreachable and has been removed.
 
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
@@ -742,6 +714,7 @@ export const SessionListItemComponent = ({
 		const defaultSubjectText = isMyChat()
 			? translate('groupChat.listItem.subjectEmpty.self')
 			: translate('groupChat.listItem.subjectEmpty.other');
+		const groupModality = getModality(activeSession);
 		return (
 			<div
 				onClick={handleOnClick}
@@ -832,13 +805,62 @@ export const SessionListItemComponent = ({
 								attachment={activeSession.item.attachment}
 							/>
 						)}
-						<div className="sessionsListItem__consultingTypeIcon">
-							<img
-								src={teamImage}
-								alt="Team Beratung"
-								className="sessionsListItem__consultingTypeIcon--team"
-							/>
-						</div>
+						{groupModality === Modality.INTERNAL_GROUP && (
+							<div
+								className={clsx(
+									'sessionsListItem__consultingTypeIcon',
+									'sessionsListItem__consultingTypeIcon--internal'
+								)}
+							>
+								<img
+									src={internalConversationIcon}
+									alt={translate(
+										'sessionList.item.sessionType.internal',
+										'Interna'
+									)}
+									className="sessionsListItem__consultingTypeIcon--internalIcon"
+								/>
+								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+									{translate(
+										'sessionList.item.sessionType.internal',
+										'Interna'
+									)}
+								</span>
+							</div>
+						)}
+						{groupModality === Modality.SELF_HELP && (
+							<div
+								className={clsx(
+									'sessionsListItem__consultingTypeIcon',
+									'sessionsListItem__consultingTypeIcon--selfHelp'
+								)}
+							>
+								<img
+									src={selfHelpIcon}
+									alt={translate(
+										'sessionList.item.sessionType.selfHelp',
+										'Gesprächskreis'
+									)}
+									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+								/>
+								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+									{translate(
+										'sessionList.item.sessionType.selfHelp',
+										'Gesprächskreis'
+									)}
+								</span>
+							</div>
+						)}
+						{groupModality !== Modality.INTERNAL_GROUP &&
+							groupModality !== Modality.SELF_HELP && (
+								<div className="sessionsListItem__consultingTypeIcon">
+									<img
+										src={teamImage}
+										alt="Team Beratung"
+										className="sessionsListItem__consultingTypeIcon--team"
+									/>
+								</div>
+							)}
 					</div>
 				</div>
 			</div>
@@ -848,23 +870,29 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
+	// Card title: never surface raw technical usernames
+	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
+	// same name pipeline the chat messages use.
 	if (isAsker) {
 		if (hasConsultantData) {
-			sessionTopic =
-				activeSession.consultant.displayName ||
-				activeSession.consultant.username;
+			sessionTopic = formatMessagePersonName(
+				activeSession.consultant.displayName,
+				activeSession.consultant.username
+			);
 		} else if (activeSession.isEmptyEnquiry) {
 			sessionTopic = translate('sessionList.user.writeEnquiry');
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic =
-			resolveAnonymousChatDisplayName(activeSession.user) ||
-			activeSession.user.username;
+		sessionTopic = formatMessagePersonName(
+			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
+			activeSession.user?.username
+		);
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
+	const modality = getModality(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
@@ -1387,21 +1415,30 @@ export const SessionListItemComponent = ({
 							</div>
 						) : isAsker && !hasConsultantData ? (
 							<ConsultantSearchLoader size="32px" />
+						) : !isAsker ? (
+							// Restored username+icon linkage: the asker card
+							// shows the SAME animal avatar the chat derives
+							// from the rc user id (generateAvatarForUser).
+							<MessageAvatar
+								isGroup={!!activeSession.isGroup}
+								isSystemNotification={false}
+								userId={
+									activeSession.item.askerRcId ||
+									activeSession.user?.username ||
+									'unknown'
+								}
+								username={activeSession.user?.username || ''}
+								displayName={sessionTopic}
+								size={32}
+							/>
 						) : (
 							<UserAvatar
 								username={
-									activeSession.user?.username ||
-									activeSession.consultant?.username ||
-									'User'
+									activeSession.consultant?.username || 'User'
 								}
-								displayName={
-									activeSession.user?.username ||
-									activeSession.consultant?.displayName
-								}
+								displayName={sessionTopic}
 								userId={
-									activeSession.user?.username ||
-									activeSession.consultant?.id ||
-									'unknown'
+									activeSession.consultant?.id || 'unknown'
 								}
 								size="32px"
 							/>
@@ -1427,25 +1464,33 @@ export const SessionListItemComponent = ({
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
-					<SessionListItemLastMessage
-						lastMessage={
-							caseHandoverContentLocked
-								? translate('caseHandover.list.hiddenPreview')
-								: displayLastMessage
-						}
-						lastMessageType={
-							caseHandoverContentLocked
-								? null
-								: activeSession.item.lastMessageType
-						}
-						language={language}
-						showLanguage={
-							language &&
-							activeSession.isEnquiry &&
-							!activeSession.isEmptyEnquiry
-						}
-						showSpan={activeSession.isEmptyEnquiry}
-					/>
+					{/* Figma nodes 115/1139/312: when the case-handover action
+					    button is shown it takes the place of the last-message
+					    preview (the text sits "under" the button). Without a
+					    button the normal last message is shown. */}
+					{!canShowCaseHandoverAction && (
+						<SessionListItemLastMessage
+							lastMessage={
+								caseHandoverContentLocked
+									? translate(
+											'caseHandover.list.hiddenPreview'
+										)
+									: displayLastMessage
+							}
+							lastMessageType={
+								caseHandoverContentLocked
+									? null
+									: activeSession.item.lastMessageType
+							}
+							language={language}
+							showLanguage={
+								language &&
+								activeSession.isEnquiry &&
+								!activeSession.isEmptyEnquiry
+							}
+							showSpan={activeSession.isEmptyEnquiry}
+						/>
+					)}
 					{!caseHandoverContentLocked &&
 						activeSession.item.attachment && (
 							<SessionListItemAttachment
@@ -1465,88 +1510,95 @@ export const SessionListItemComponent = ({
 								listItemAskerRcId={activeSession.item.askerRcId}
 							/>
 						)}
-					{canShowCaseHandoverAction ? (
-						<button
-							type="button"
-							className={clsx(
-								'sessionsListItem__caseHandoverButton',
-								isCaseHandoverPending(
-									caseHandoverStatus?.status
-								) &&
-									'sessionsListItem__caseHandoverButton--pending',
-								isCaseHandoverDenied(
-									caseHandoverStatus?.status
-								) &&
-									'sessionsListItem__caseHandoverButton--denied',
-								caseHandoverSelected &&
-									'sessionsListItem__caseHandoverButton--selected'
-							)}
-							onClick={handleCaseHandoverActionClick}
-							onKeyDown={(event) => {
-								if (
-									event.key === 'Enter' ||
-									event.key === ' '
-								) {
-									event.stopPropagation();
-								}
+					{canShowCaseHandoverAction && (
+						<CaseHandoverActionButton
+							labels={{
+								requestAccess: translate(
+									'caseHandover.list.requestAccess'
+								),
+								awaitingApproval: translate(
+									'caseHandover.list.awaitingApproval'
+								),
+								accessGranted: translate(
+									'caseHandover.list.accessGranted'
+								),
+								accessDenied: translate(
+									'caseHandover.list.accessDenied'
+								),
+								selectCase: translate(
+									'caseHandover.batch.selectCase'
+								),
+								menuLabel: translate('caseHandover.menu.label'),
+								selectMultipleTitle: translate(
+									'caseHandover.menu.selectMultiple.title'
+								),
+								selectMultipleDescription: translate(
+									'caseHandover.menu.selectMultiple.description'
+								),
+								confirmSelectionTitle: translate(
+									'caseHandover.menu.confirmSelection.title'
+								),
+								confirmSelectionDescription: translate(
+									'caseHandover.menu.confirmSelection.description'
+								),
+								deselectTitle: translate(
+									'caseHandover.menu.deselect.title'
+								),
+								deselectDescription: translate(
+									'caseHandover.menu.deselect.description'
+								)
 							}}
+							state={caseHandoverActionState}
+							active={isChatActive}
+							batchMode={caseHandoverBatchMode}
+							selected={caseHandoverSelected}
 							disabled={
 								caseHandoverBatchMode &&
 								!canBatchSelectCaseHandover
 							}
-							aria-pressed={
-								caseHandoverBatchMode
-									? caseHandoverSelected
-									: undefined
+							onRequestAccess={handleOnClick}
+							onToggleSelect={() =>
+								onCaseHandoverSelect?.(activeSession.item.id)
 							}
-						>
-							{caseHandoverBatchMode && (
-								<span
+							onSelectMultiple={onCaseHandoverBatchStart}
+							onConfirmSelection={onCaseHandoverBatchConfirm}
+							onDeselectAndClose={onCaseHandoverBatchClose}
+						/>
+					)}
+					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					    / Gesprächskreis) — always shown, including alongside the
+					    case-handover action button (Figma node 115). */}
+					{
+						<>
+							{modality === Modality.LIVE_CHAT && (
+								<div
 									className={clsx(
-										'sessionsListItem__caseHandoverCheckbox',
-										caseHandoverSelected &&
-											'sessionsListItem__caseHandoverCheckbox--selected'
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--liveChat'
 									)}
-									aria-hidden
-								/>
-							)}
-							{caseHandoverBatchMode
-								? translate('caseHandover.batch.selectCase')
-								: caseHandoverListLabel}
-						</button>
-					) : (
-						(() => {
-							if (isAnonymousChat) {
-								return (
-									<div
-										className={clsx(
-											'sessionsListItem__consultingTypeIcon',
-											'sessionsListItem__consultingTypeIcon--liveChat'
-										)}
+								>
+									<svg
+										width="22"
+										height="19"
+										viewBox="0 0 22 19"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+										aria-hidden="true"
 									>
-										<svg
-											width="22"
-											height="19"
-											viewBox="0 0 22 19"
-											fill="none"
-											xmlns="http://www.w3.org/2000/svg"
-											aria-hidden="true"
-										>
-											<path
-												d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
-												fill="#4B515A"
-											/>
-										</svg>
-										<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
-											{translate(
-												'sessionList.item.sessionType.liveChat',
-												'Live Chat'
-											)}
-										</span>
-									</div>
-								);
-							}
-							return (
+										<path
+											d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
+											fill="#4B515A"
+										/>
+									</svg>
+									<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
+										{translate(
+											'sessionList.item.sessionType.liveChat',
+											'Live Chat'
+										)}
+									</span>
+								</div>
+							)}
+							{modality === Modality.AGENCY_COUNSELLING && (
 								<div
 									className={clsx(
 										'sessionsListItem__consultingTypeIcon',
@@ -1568,9 +1620,65 @@ export const SessionListItemComponent = ({
 										)}
 									</span>
 								</div>
-							);
-						})()
-					)}
+							)}
+							{modality === Modality.INTERNAL_GROUP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--internal'
+									)}
+								>
+									<img
+										src={internalConversationIcon}
+										alt={translate(
+											'sessionList.item.sessionType.internal',
+											'Interna'
+										)}
+										className="sessionsListItem__consultingTypeIcon--internalIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+										{translate(
+											'sessionList.item.sessionType.internal',
+											'Interna'
+										)}
+									</span>
+								</div>
+							)}
+							{/* FE#514: team-only discussion exists on this
+							    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+									/>
+								)}
+							{modality === Modality.SELF_HELP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--selfHelp'
+									)}
+								>
+									<img
+										src={selfHelpIcon}
+										alt={translate(
+											'sessionList.item.sessionType.selfHelp',
+											'Gesprächskreis'
+										)}
+										className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+										{translate(
+											'sessionList.item.sessionType.selfHelp',
+											'Gesprächskreis'
+										)}
+									</span>
+								</div>
+							)}
+						</>
+					}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (

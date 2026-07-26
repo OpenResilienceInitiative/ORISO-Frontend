@@ -33,8 +33,9 @@ import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { FALLBACK_LNG } from '../../i18n';
-import { getWaitingAreaTime } from './groupChatWaitingArea';
 import { WaitingAreaRules } from './WaitingAreaRules';
+import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
+import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { translateWithFallback } from '../../utils/translationFallback';
@@ -68,7 +69,6 @@ export const JoinGroupChatView = ({
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-	const [now, setNow] = useState(() => new Date());
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
@@ -315,19 +315,6 @@ export const JoinGroupChatView = ({
 	);
 	const groupChatRules = authorContent.rules;
 	const plannedStart = getGroupChatPlannedStart(activeSession.item);
-	const plannedStartMillis = plannedStart?.getTime();
-
-	useEffect(() => {
-		if (plannedStartMillis === undefined) {
-			return;
-		}
-		const timer = window.setInterval(() => setNow(new Date()), 1000);
-		return () => window.clearInterval(timer);
-	}, [plannedStartMillis]);
-
-	const waitingTime = plannedStart
-		? getWaitingAreaTime(now, plannedStart)
-		: null;
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -341,46 +328,35 @@ export const JoinGroupChatView = ({
 				bannedUsers={bannedUsers}
 			/>
 			<div className="joinChat__content session__content">
-				<Headline
-					text={translate('groupChat.join.content.headline')}
-					semanticLevel="4"
-				/>
-				{!!authorContent.hintMessage && (
+				{/* The scheduled-chat countdown carries its own headline
+				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
+				    above it just repeats the frame. Only show the standalone
+				    "Spielregeln"-headline in the no-countdown (hint message) view. */}
+				{!plannedStart && (
+					<Headline
+						text={translate('groupChat.join.content.headline')}
+						semanticLevel="4"
+					/>
+				)}
+				{!!authorContent.hintMessage && !plannedStart && (
 					<Text text={authorContent.hintMessage} type="standard" />
 				)}
-				{waitingTime && (
-					<div className="joinChat__countdown">
-						<span
-							className="joinChat__countdownValue"
-							aria-label={`${waitingTime.label} ${tr(
-								`groupChat.join.waitingArea.discomfort.${waitingTime.discomfortLabel}`,
-								waitingTime.discomfortLabel
-							)}`}
-						>
-							{waitingTime.label}{' '}
-							<span aria-hidden="true">
-								{waitingTime.discomfortEmoji}
-							</span>
-						</span>
-						<div
-							className="joinChat__timePills"
-							tabIndex={0}
-							role="list"
-							aria-label={tr(
-								'groupChat.join.timeConversions',
-								'Playful time conversions'
-							)}
-						>
-							{waitingTime.pills.map((pill) => (
-								<span key={pill.kind} role="listitem">
-									{tr(
-										`groupChat.join.waitingArea.${pill.kind}Minutes`,
-										`${pill.value} ${pill.kind} minutes`,
-										{ value: pill.value }
-									)}
-								</span>
-							))}
-						</div>
+				{plannedStart && (
+					<div className="joinChat__waitingBox">
+						<WaitingAreaCountdown
+							plannedStart={plannedStart}
+							welcomeText={authorContent.hintMessage || undefined}
+							rules={groupChatRules}
+							calendarSlot={
+								<GroupChatCalendarMenu
+									start={plannedStart}
+									durationMinutes={
+										activeSession.item.duration
+									}
+									eventId={activeSession.item.id}
+								/>
+							}
+						/>
 					</div>
 				)}
 				<WaitingAreaRules

@@ -1,4 +1,13 @@
-// AUTO-GENERATED from Storypapst/anonymous-name-generator (do not edit by hand).
+// Originally scaffolded from Storypapst/anonymous-name-generator, but the word
+// tables (esp. the localized labels) have since been curated IN-REPO and now
+// diverge from upstream — upstream ships only the SVGs, not these lists. Treat
+// THIS file as the source of truth and edit it directly; do not blindly
+// regenerate from upstream, which would drop the curated labels.
+//
+// The German set intentionally offers every available animal (all 62 SVGs) for
+// maximum variation; animals are grouped by grammatical gender so the adjective
+// agreement in `displayName` stays correct (group 0 = feminine "-e", group 1 =
+// the rest "-es").
 // Word tables for all six languages of the shared name generator.
 export interface NickAnimal {
 	label: string;
@@ -110,6 +119,14 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Lerche',
 						svg: 'lark.svg'
+					},
+					{
+						label: 'Ente',
+						svg: 'duck.svg'
+					},
+					{
+						label: 'Robbe',
+						svg: 'seal.svg'
 					}
 				]
 			},
@@ -227,6 +244,106 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Yak',
 						svg: 'yak.svg'
+					},
+					{
+						label: 'Bär',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Käfer',
+						svg: 'beetle.svg'
+					},
+					{
+						label: 'Schmetterling',
+						svg: 'butterfly.svg'
+					},
+					{
+						label: 'Kranich',
+						svg: 'crane.svg'
+					},
+					{
+						label: 'Hund',
+						svg: 'dog.svg'
+					},
+					{
+						label: 'Delfin',
+						svg: 'dolphin.svg'
+					},
+					{
+						label: 'Adler',
+						svg: 'eagle.svg'
+					},
+					{
+						label: 'Fisch',
+						svg: 'fish.svg'
+					},
+					{
+						label: 'Fuchs',
+						svg: 'fox.svg'
+					},
+					{
+						label: 'Frosch',
+						svg: 'frog.svg'
+					},
+					{
+						label: 'Hase',
+						svg: 'hare.svg'
+					},
+					{
+						label: 'Falke',
+						svg: 'hawk.svg'
+					},
+					{
+						label: 'Igel',
+						svg: 'hedgehog.svg'
+					},
+					{
+						label: 'Kolibri',
+						svg: 'hummingbird.svg'
+					},
+					{
+						label: 'Koala',
+						svg: 'koala.svg'
+					},
+					{
+						label: 'Marienkäfer',
+						svg: 'ladybird.svg'
+					},
+					{
+						label: 'Löwe',
+						svg: 'lion.svg'
+					},
+					{
+						label: 'Otter',
+						svg: 'otter.svg'
+					},
+					{
+						label: 'Papagei',
+						svg: 'parrot.svg'
+					},
+					{
+						label: 'Pinguin',
+						svg: 'penguin.svg'
+					},
+					{
+						label: 'Rabe',
+						svg: 'raven.svg'
+					},
+					{
+						label: 'Spatz',
+						svg: 'sparrow.svg'
+					},
+					{
+						label: 'Storch',
+						svg: 'stork.svg'
+					},
+					{
+						label: 'Schwan',
+						svg: 'swan.svg'
+					},
+					{
+						label: 'Wolf',
+						svg: 'wolf.svg'
 					}
 				]
 			}
@@ -596,6 +713,22 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Frog',
 						svg: 'frog.svg'
+					},
+					{
+						label: 'Bear',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Coral',
+						svg: 'coral.svg'
+					},
+					{
+						label: 'Crane',
+						svg: 'crane.svg'
+					},
+					{
+						label: 'Lion',
+						svg: 'lion.svg'
 					}
 				]
 			}
@@ -885,6 +1018,38 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Cheval',
 						svg: 'horse.svg'
+					},
+					{
+						label: 'Ours',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Papillon',
+						svg: 'butterfly.svg'
+					},
+					{
+						label: 'Poisson',
+						svg: 'fish.svg'
+					},
+					{
+						label: 'Cobaye',
+						svg: 'guinea-pig.svg'
+					},
+					{
+						label: 'Lion',
+						svg: 'lion.svg'
+					},
+					{
+						label: 'Pingouin',
+						svg: 'penguin.svg'
+					},
+					{
+						label: 'Lapin',
+						svg: 'rabbit.svg'
+					},
+					{
+						label: 'Écureuil',
+						svg: 'squirrel.svg'
 					}
 				]
 			},
@@ -1002,6 +1167,10 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Grenouille',
 						svg: 'frog.svg'
+					},
+					{
+						label: 'Grue',
+						svg: 'crane.svg'
 					}
 				]
 			}
@@ -1253,6 +1422,34 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Ruiseñor',
 						svg: 'Nightingale.svg'
+					},
+					{
+						label: 'Antílope',
+						svg: 'antelope.svg'
+					},
+					{
+						label: 'Oso',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Halcón',
+						svg: 'hawk.svg'
+					},
+					{
+						label: 'León',
+						svg: 'lion.svg'
+					},
+					{
+						label: 'Ratón',
+						svg: 'mouse.svg'
+					},
+					{
+						label: 'Caballito de mar',
+						svg: 'seahorse.svg'
+					},
+					{
+						label: 'Gorrión',
+						svg: 'sparrow.svg'
 					}
 				]
 			},
@@ -1378,6 +1575,14 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Corala',
 						svg: 'coral.svg'
+					},
+					{
+						label: 'Grulla',
+						svg: 'crane.svg'
+					},
+					{
+						label: 'Águila',
+						svg: 'eagle.svg'
 					}
 				]
 			}
@@ -1542,10 +1747,6 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 						svg: 'trout.svg'
 					},
 					{
-						label: 'Жирафа',
-						svg: 'giraffe.svg'
-					},
-					{
 						label: 'Сорока',
 						svg: 'magpie.svg'
 					},
@@ -1576,6 +1777,30 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Божья коровка',
 						svg: 'ladybird.svg'
+					},
+					{
+						label: 'Собака',
+						svg: 'dog.svg'
+					},
+					{
+						label: 'Утка',
+						svg: 'duck.svg'
+					},
+					{
+						label: 'Рыба',
+						svg: 'fish.svg'
+					},
+					{
+						label: 'Лиса',
+						svg: 'fox.svg'
+					},
+					{
+						label: 'Морская свинка',
+						svg: 'guinea-pig.svg'
+					},
+					{
+						label: 'Панда',
+						svg: 'panda.svg'
 					}
 				]
 			},
@@ -1680,6 +1905,82 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Жаворонок',
 						svg: 'lark.svg'
+					},
+					{
+						label: 'Соловей',
+						svg: 'Nightingale.svg'
+					},
+					{
+						label: 'Муравей',
+						svg: 'ant.svg'
+					},
+					{
+						label: 'Медведь',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Коралл',
+						svg: 'coral.svg'
+					},
+					{
+						label: 'Журавль',
+						svg: 'crane.svg'
+					},
+					{
+						label: 'Орёл',
+						svg: 'eagle.svg'
+					},
+					{
+						label: 'Светлячок',
+						svg: 'firefly.svg'
+					},
+					{
+						label: 'Заяц',
+						svg: 'hare.svg'
+					},
+					{
+						label: 'Ястреб',
+						svg: 'hawk.svg'
+					},
+					{
+						label: 'Колибри',
+						svg: 'hummingbird.svg'
+					},
+					{
+						label: 'Кенгуру',
+						svg: 'kangaroo.svg'
+					},
+					{
+						label: 'Ягнёнок',
+						svg: 'lamb.svg'
+					},
+					{
+						label: 'Лев',
+						svg: 'lion.svg'
+					},
+					{
+						label: 'Ворон',
+						svg: 'raven.svg'
+					},
+					{
+						label: 'Морской конёк',
+						svg: 'seahorse.svg'
+					},
+					{
+						label: 'Воробей',
+						svg: 'sparrow.svg'
+					},
+					{
+						label: 'Лебедь',
+						svg: 'swan.svg'
+					},
+					{
+						label: 'Волк',
+						svg: 'wolf.svg'
+					},
+					{
+						label: 'Жираф',
+						svg: 'giraffe.svg'
 					}
 				]
 			}
@@ -1845,10 +2146,6 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 						svg: 'swallow.svg'
 					},
 					{
-						label: 'Кобила',
-						svg: 'horse.svg'
-					},
-					{
 						label: 'Зебра',
 						svg: 'zebra.svg'
 					},
@@ -1867,6 +2164,30 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Корівка',
 						svg: 'ladybird.svg'
+					},
+					{
+						label: 'Собака',
+						svg: 'dog.svg'
+					},
+					{
+						label: 'Качка',
+						svg: 'duck.svg'
+					},
+					{
+						label: 'Риба',
+						svg: 'fish.svg'
+					},
+					{
+						label: 'Лисиця',
+						svg: 'fox.svg'
+					},
+					{
+						label: 'Морська свинка',
+						svg: 'guinea-pig.svg'
+					},
+					{
+						label: 'Панда',
+						svg: 'panda.svg'
 					}
 				]
 			},
@@ -1983,6 +2304,70 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Заєць',
 						svg: 'hare.svg'
+					},
+					{
+						label: 'Ведмідь',
+						svg: 'bear.svg'
+					},
+					{
+						label: 'Корал',
+						svg: 'coral.svg'
+					},
+					{
+						label: 'Журавель',
+						svg: 'crane.svg'
+					},
+					{
+						label: 'Орел',
+						svg: 'eagle.svg'
+					},
+					{
+						label: 'Світлячок',
+						svg: 'firefly.svg'
+					},
+					{
+						label: 'Яструб',
+						svg: 'hawk.svg'
+					},
+					{
+						label: 'Кенгуру',
+						svg: 'kangaroo.svg'
+					},
+					{
+						label: 'Ягня',
+						svg: 'lamb.svg'
+					},
+					{
+						label: 'Лев',
+						svg: 'lion.svg'
+					},
+					{
+						label: 'Цуценя',
+						svg: 'puppy.svg'
+					},
+					{
+						label: 'Ворон',
+						svg: 'raven.svg'
+					},
+					{
+						label: 'Морський коник',
+						svg: 'seahorse.svg'
+					},
+					{
+						label: 'Горобець',
+						svg: 'sparrow.svg'
+					},
+					{
+						label: 'Лебідь',
+						svg: 'swan.svg'
+					},
+					{
+						label: 'Вовк',
+						svg: 'wolf.svg'
+					},
+					{
+						label: 'Кінь',
+						svg: 'horse.svg'
 					}
 				]
 			}

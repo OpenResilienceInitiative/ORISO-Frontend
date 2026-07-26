@@ -9,6 +9,13 @@ describe('groupChatCallCapabilities', () => {
 		});
 	});
 
+	it('keeps both call controls available for internal chats whose backend modality defaults to TEXT', () => {
+		expect(groupChatCallCapabilities('TEXT', true)).toEqual({
+			audio: true,
+			video: true
+		});
+	});
+
 	it.each([
 		['TEXT', false, false],
 		['AUDIO', true, false],

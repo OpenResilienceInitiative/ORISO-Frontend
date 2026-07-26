@@ -212,6 +212,65 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	&__caseHandoverWizardOverlay {
+		position: fixed;
+		inset: 0;
+		z-index: 120;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		background: rgba(27, 27, 28, 0.4);
+	}
+
+	&__caseHandoverWizardShell {
+		width: min(720px, 100%);
+		max-height: min(86vh, 780px);
+		display: flex;
+		flex-direction: column;
+		border-radius: 24px;
+		overflow: hidden auto;
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+
+		.caseHandoverCurtain {
+			padding: 0;
+			background: transparent;
+		}
+
+		.caseHandoverCurtain__card {
+			box-shadow: none;
+			border-radius: 0;
+		}
+	}
+
+	&__caseHandoverWizardBar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 20px 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+
+		span {
+			color: var(--m3-on-surface-variant, #6d747d);
+		}
+	}
+
+	&__caseHandoverWizardClose {
+		margin-left: auto;
+		border: 0;
+		background: transparent;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 700;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
 	&__caseHandoverBatchSummary {
 		margin-top: 10px;
 		color: $caseHandoverTextMuted;
@@ -239,10 +298,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		flex: 1;
 		padding-right: 0;
 		scrollbar-width: none; // Firefox: hide native scrollbar
+		// Mobile: 6px gutter left/right of the chat cards (Frank feedback
+		// 2026-07-19); desktop widens to the 12px Figma gutter below.
+		margin-left: 6px;
+		margin-right: 6px;
 
 		@include breakpoint($fromLarge) {
 			margin-top: 0;
 			padding-top: 0;
+			margin-left: 12px;
+			margin-right: 12px;
 		}
 
 		// WebKit: hide native scrollbar (we render a custom one)
@@ -258,8 +323,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		&--hasToolbar {
 			padding-top: 0;
 			margin-top: 0;
-			margin-left: 25px;
-			margin-right: 25px;
 		}
 	}
 
@@ -316,7 +379,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandle {
 		position: absolute;
-		right: 0;
+		right: -12px;
 		top: 0;
 		bottom: 0;
 		width: 24px;
@@ -341,6 +404,39 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: #ffffff;
 		transform: translateY(-50%);
 		transition: box-shadow 140ms ease;
+	}
+
+	&__resizeToggle {
+		position: absolute;
+		right: -14px;
+		top: 18px;
+		z-index: 3;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: 1px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 999px;
+		background: var(--m3-surface-container-highest, #e1dddf);
+		color: var(--m3-on-surface, #1d1b1c);
+		font-size: 22px;
+		line-height: 24px;
+		cursor: pointer;
+		display: none;
+		align-items: center;
+		justify-content: center;
+
+		@include breakpoint($fromLarge) {
+			display: flex;
+		}
+
+		&:hover {
+			background: var(--m3-secondary-container, #ffdad5);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
@@ -487,6 +583,25 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// Empty state (Figma node 7108-45494): stacked cards each carry a 1px white
+	// frame, which reads as a continuous white hairline down the left and right
+	// column edges. With no cards those hairlines disappear, so the empty state
+	// re-draws them itself and stretches to fill the column height.
+	&__emptyState {
+		flex: 1 1 auto;
+		align-self: stretch;
+		box-sizing: border-box;
+
+		// Align the hairlines with the card gutter: 6px on mobile, 12px on
+		// desktop (matches the scrollContainer margins above).
+		margin: 0 6px;
+		border-right: 1px solid #fff;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 12px;
+		}
+	}
+
 	&__reloadWrapper {
 		margin: $grid-base-three auto;
 
@@ -497,6 +612,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			line-height: $grid-base-three;
 		}
 	}
+}
+
+// Issue #564: white list↔chat separator pill is only for the empty
+// (no conversation) layout. SessionsZone adds --smallInactive on the list
+// column when a session detail route is active — hide the pill then.
+// Resize hit-target stays; only the decorative white pill is suppressed.
+.contentWrapper__list--smallInactive .sessionsList__resizeHandlePill {
+	opacity: 0;
 }
 
 .sessionsList {
@@ -656,12 +779,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
-	padding: $grid-base-three $grid-base-three 0;
+
+	// Mobile: 6px outer gutter around the search bar (Frank feedback
+	// 2026-07-19). Desktop widens to the 12px Figma gutter below the rail.
+	padding: 6px 6px 0;
 	background-color: $sessionShellSurface;
 	z-index: 5;
 
 	@include breakpoint($fromLarge) {
-		padding: 0 $grid-base-three 0;
+		padding: 0 12px 0;
 	}
 
 	/* Enquiry tab gets a compact chip row (Chats + Live Chat) — no search,
@@ -1167,7 +1293,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__searchModalTab {
 		border: none;
 		background: transparent;
-		padding: 10px 12px 6px;
+		flex: 1 1 0;
+		min-width: 0;
+		padding: 10px 8px 6px;
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
@@ -1200,6 +1328,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	&__searchModalTabIconWithDot {
@@ -1278,13 +1410,13 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		width: 18px;
 		height: 18px;
 		border-radius: 3px;
-		border: 2px solid #444748;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
 	}
 
 	&__personCheckbox--selected {
-		background: #a5000a;
-		border-color: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		border-color: var(--m3-primary, #a5000a);
 		position: relative;
 
 		&::after {
@@ -1297,6 +1429,58 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			border: solid #fff;
 			border-width: 0 2px 2px 0;
 			transform: rotate(45deg);
+		}
+	}
+
+	&__personRadio {
+		width: 20px;
+		height: 20px;
+		border-radius: 999px;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
+		flex-shrink: 0;
+		position: relative;
+	}
+
+	&__personRadio--selected {
+		border-color: var(--m3-primary, #a5000a);
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 3px;
+			border-radius: 999px;
+			background: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__searchRefineHint {
+		padding: 10px 16px 8px;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--m3-on-surface-variant, #444748);
+		background: var(--m3-surface-container-low, #f5f2f3);
+		border-bottom: 1px solid var(--m3-outline-variant, #d9d6d7);
+	}
+
+	&__searchConfirmButton {
+		width: 40px;
+		height: 40px;
+		border: none;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline-offset: 2px;
+		}
+
+		svg path {
+			fill: var(--m3-on-primary, #ffffff);
 		}
 	}
 

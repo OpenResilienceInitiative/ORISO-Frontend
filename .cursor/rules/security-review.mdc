@@ -1,0 +1,12 @@
+---
+description: Scope-limited security review policy for changes touching auth, input handling, storage, network, uploads, or Matrix/chat privacy boundaries
+alwaysApply: false
+---
+
+# Security Review
+
+- Review only the touched scope; do not audit unrelated files.
+- Trigger a security pass (via the `security-auditor` subagent) when a change touches: authentication or authorization, user input handling, secrets or tokens, network requests to new endpoints, file uploads, localStorage/sessionStorage of sensitive data, or Matrix/chat/draft privacy boundaries.
+- ORISO-specific invariant: plaintext message previews and draft contents must never move into server-visible state.
+- Classify findings by severity (critical/high/medium/low) and prefer the least disruptive safe fix.
+- Record the outcome in the task folder as `05-security-review.md`, even if the result is "no findings".

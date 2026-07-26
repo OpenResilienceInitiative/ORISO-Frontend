@@ -11,7 +11,7 @@ import {
 import { AskerInfo } from '../askerInfo/AskerInfo';
 import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
-import { CreateGroupChatView } from '../groupChat/CreateChatView';
+import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
 import { Appointments } from '../appointment/Appointments';
 import VideoConference from '../videoConference/VideoConference';
@@ -32,9 +32,6 @@ import {
 	NavActivityIcon,
 	NavActivityIconHover,
 	NavActivityIconFilled,
-	NavDraftsIcon,
-	NavDraftsIconHover,
-	NavDraftsIconFilled,
 	NavProfileIcon,
 	NavProfileIconHover,
 	NavProfileIconFilled
@@ -293,16 +290,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 					large: 'navigation.activity'
 				}
 			},
-			{
-				to: '/drafts',
-				icon: NavDraftsIcon,
-				iconHover: NavDraftsIconHover,
-				iconFilled: NavDraftsIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
-				}
-			},
+			// Drafts moved into the individual sections — it is no longer a
+			// top-level rail item (Frank feedback 2026-07-19). The `/drafts`
+			// route + DraftsCenter page below remain reachable from sections.
 			{
 				to: '/profile',
 				icon: NavProfileIcon,
@@ -394,12 +384,12 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			},
 			{
 				path: '/sessions/consultant/sessionView/createGroupChat/',
-				component: CreateGroupChatView,
+				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
 				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/editGroupChat',
-				component: CreateGroupChatView,
+				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],

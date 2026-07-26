@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { StrictMode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
@@ -9,6 +10,8 @@ import {
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
+import '../session/session.styles.scss';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -24,7 +27,11 @@ const shellStyle: React.CSSProperties = {
 	boxSizing: 'border-box',
 	display: 'flex',
 	flexDirection: 'column',
-	justifyContent: 'flex-end'
+	justifyContent: 'flex-end',
+	// Story layout only — `.session` supplies resting/active borders (#597)
+	margin: 0,
+	borderRadius: 28,
+	overflow: 'hidden'
 };
 
 function ComposerShell({
@@ -36,7 +43,12 @@ function ComposerShell({
 	roomMembers?: Array<{ userId: string; name: string }>;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
-		<div className="session" style={shellStyle}>
+		<div
+			className="session"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+			style={shellStyle}
+		>
 			<ComposerStoryDecorator
 				activeSession={activeSession}
 				roomMembers={roomMembers}
@@ -85,6 +97,32 @@ export const Default: Story = {
 	render: () => <ComposerShell />
 };
 
+/** #597: focus the editor so `--selected` applies (2px primary-container + send styles). */
+export const Selected: Story = {
+	name: 'Selected (composer focused)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+
+		await userEvent.click(editor);
+
+		await waitFor(async () => {
+			const selected = canvasElement.querySelector(
+				'.textarea__wrapper-send-message--selected'
+			);
+			await expect(selected).toBeTruthy();
+		});
+	}
+};
+
 export const ReadyToSend: Story = {
 	name: 'Ready to send (typed)',
 	render: () => <ComposerShell />,
@@ -110,6 +148,84 @@ export const ReadyToSend: Story = {
 			await expect(sendButton).toBeEnabled();
 		});
 	}
+};
+
+/** WP-4: pasting an image into the editor routes into the attachment flow
+ *  and the pre-send card shows a real thumbnail instead of a file icon. */
+export const ImageAttachmentPreview: Story = {
+	name: 'Image attachment preview (pasted)',
+	// Wrapped in StrictMode: the pre-send thumbnail must survive the
+	// mount → cleanup → mount object-URL cycle (the 1146 KB broken-thumb fix).
+	render: () => (
+		<StrictMode>
+			<ComposerShell />
+		</StrictMode>
+	),
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+
+		const pngBytes = Uint8Array.from(
+			atob(
+				'iVBORw0KGgoAAAANSUhEUgAAAHgAAABICAYAAAA9HjF/AAAAwElEQVR4nO3RsQkAIBDAwK/dfwXn1DGEeMX1gcyedeia1wEYjMEY/CmD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjuAl4Hs8nHnWSXAAAAAElFTkSuQmCC'
+			),
+			(char) => char.charCodeAt(0)
+		);
+		const clipboardData = new DataTransfer();
+		clipboardData.items.add(
+			new File([pngBytes], 'pasted.png', { type: 'image/png' })
+		);
+		editor.dispatchEvent(
+			new ClipboardEvent('paste', {
+				clipboardData,
+				bubbles: true,
+				cancelable: true
+			})
+		);
+
+		await waitFor(() => {
+			const thumb = canvasElement.querySelector(
+				'.textarea__attachmentModeThumb'
+			);
+			if (!thumb) {
+				throw new Error('attachment thumbnail not rendered yet');
+			}
+		});
+	}
+};
+
+export const ReplyingToMessage: Story = {
+	name: 'Replying (m.in_reply_to preview)',
+	render: () => (
+		<ComposerShell
+			replyTo={{
+				eventId: '$orig:matrix.oriso.org',
+				author: 'Maria K.',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	)
+};
+
+export const EditingMessage: Story = {
+	name: 'Editing (m.replace preview)',
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelEdit={() => {}}
+		/>
+	)
 };
 
 export const GroupChat: Story = {

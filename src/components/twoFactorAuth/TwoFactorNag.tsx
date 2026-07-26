@@ -7,11 +7,7 @@ import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import './twoFactorNag.styles';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import {
-	STORAGE_KEY_2FA,
-	STORAGE_KEY_DISABLE_2FA_DUTY,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
+import { STORAGE_KEY_2FA, useDevToolbar } from '../devToolbar/DevToolbar';
 import { OVERLAY_TWO_FACTOR_NAG } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 
 interface TwoFactorNagProps {}
@@ -43,13 +39,16 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 			todaysDate >= settings.twofactor.startObligatoryHint &&
 			getDevToolbarOption(STORAGE_KEY_2FA) === '1'
 		) {
+			if (todaysDate >= settings.twofactor.dateTwoFactorObligatory) {
+				setForceHideTwoFactorNag(true);
+				setIsShownTwoFactorNag(false);
+				openTwoFactorSettings();
+				return;
+			}
+
 			setIsShownTwoFactorNag(true);
-			todaysDate >= settings.twofactor.dateTwoFactorObligatory &&
-			(process.env.NODE_ENV !== 'production'
-				? getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY)
-				: '0') === '0'
-				? setMessage(settings.twofactor.messages[1])
-				: setMessage(settings.twofactor.messages[0]);
+			const configuredMessage = settings.twofactor.messages[0];
+			setMessage({ ...configuredMessage, showClose: true });
 		} else {
 			setIsShownTwoFactorNag(false);
 		}
@@ -60,26 +59,13 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 		settings.twofactor.dateTwoFactorObligatory,
 		settings.twofactor.messages,
 		getDevToolbarOption,
-		location
+		location,
+		openTwoFactorSettings
 	]);
 
-	// Prevent hiding 2fa nag if it has a duty
-	const handleTwoFactorNag = useCallback(
-		(val) => {
-			let todaysDate = new Date(Date.now());
-			if (
-				todaysDate >= settings.twofactor.dateTwoFactorObligatory &&
-				(process.env.NODE_ENV !== 'production'
-					? getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY)
-					: '0') === '0'
-			) {
-				setForceHideTwoFactorNag(false);
-				return;
-			}
-			setForceHideTwoFactorNag(val);
-		},
-		[getDevToolbarOption, settings.twofactor.dateTwoFactorObligatory]
-	);
+	const handleTwoFactorNag = useCallback((val) => {
+		setForceHideTwoFactorNag(val);
+	}, []);
 
 	const closeTwoFactorNag = async () => {
 		handleTwoFactorNag(true);

@@ -25,7 +25,9 @@
 
 	&__warning-message {
 		max-width: $grid-base * 56;
-		color: $light-grey;
+
+		// AA contrast on the app background ($light-grey fails 4.5:1).
+		color: var(--m3-on-surface-variant, $tertiary);
 		font-family: $font-family-divider;
 		font-size: $font-size-secondary;
 		line-height: $line-height-secondary;
@@ -40,33 +42,15 @@
 		}
 	}
 
-	&__countdown {
-		width: min(100%, $grid-base * 56);
-		text-align: center;
+	// The ORISO Design waiting box (variant 4a/4b) hosts the clock-made-of-clocks
+	// countdown (WaitingAreaCountdown). It is a transparent spacing wrapper only —
+	// the surrounding room container already supplies the white surface and the
+	// #ffb4aa outline, so drawing our own card here would double the frame.
+	&__waitingBox {
+		width: min(100%, $grid-base * 96);
 		margin: $grid-base-two 0;
-	}
-
-	&__countdownValue {
-		display: block;
-		font-size: clamp(2.5rem, 10vw, 5rem);
-		font-variant-numeric: tabular-nums;
-		line-height: 1;
-	}
-
-	&__timePills {
-		display: flex;
-		gap: $grid-base;
-		overflow-x: auto;
 		padding: $grid-base-two 0;
-		scroll-snap-type: x proximity;
-
-		span {
-			flex: 0 0 auto;
-			padding: $grid-base $grid-base-two;
-			border-radius: 999px;
-			background: var(--m3-secondary-container, #e0e7ef);
-			scroll-snap-align: start;
-		}
+		box-sizing: border-box;
 	}
 
 	// Netiquette rules: one spotlighted at a time, cross-fading every ~4s

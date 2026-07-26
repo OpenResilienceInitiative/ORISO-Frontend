@@ -1,5 +1,6 @@
 import { apiKeycloakLogout } from '../../api/apiLogoutKeycloak';
 import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
+import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
@@ -39,7 +40,14 @@ export const logout = async (
 
 	/* Drop live-chat availability while the access token is still valid, so the
 	 * anonymous availability count decreases immediately on logout. */
-	await apiSetLiveChatAvailability(false);
+	try {
+		await apiSetLiveChatAvailability(false);
+	} catch {
+		// Logout must continue even when the availability store is unavailable.
+	} finally {
+		// Prevent this or another tab from continuing to present/refresh stale state.
+		clearLiveChatAvailabilityPreference();
+	}
 
 	Promise.all([
 		apiKeycloakLogout(),

@@ -23,6 +23,7 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
+import { getModality, Modality } from '../../session/getModality';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -290,7 +291,8 @@ export const GroupChatHeader = ({
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 	const modalityCalls = groupChatCallCapabilities(
-		activeSession.item.modality
+		activeSession.item.modality,
+		getModality(activeSession) === Modality.INTERNAL_GROUP
 	);
 	const isAudioCallsEnabled =
 		isCallsEnabled &&

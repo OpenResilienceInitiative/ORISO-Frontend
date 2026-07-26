@@ -10,7 +10,7 @@ import {
 import { MessageItem } from '../message/MessageItemComponent';
 import {
 	formatToDDMMYYYY,
-	getPrettyDateFromMessageDate
+	getChatMessageDateDivider
 } from '../../utils/dateHelpers';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -187,7 +187,8 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 
 			if (lastDate !== dateFormated) {
 				lastDate = dateFormated;
-				lastDateStr = getPrettyDateFromMessageDate(date / 1000);
+				// Explicit dates → localized long form ("7. Juli 2026"); relative → message.today etc.
+				lastDateStr = getChatMessageDateDivider(date / 1000);
 			}
 
 			return {
@@ -204,7 +205,11 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				file: message.file,
 				t: message.t,
 				rid: message.rid,
-				isVideoActive: i === lastVideoCallIndex
+				isVideoActive: i === lastVideoCallIndex,
+				// Relations foundation (#435): relations survive the mapping.
+				replyToEventId: message.replyToEventId || null,
+				threadRootEventId: message.threadRootEventId || null,
+				isEdited: !!message.isEdited
 			};
 		})
 		.filter((item) => {
