@@ -41,7 +41,6 @@ describe('Sessions', () => {
 			cy.get('[data-cy=session-list-item]').first().click();
 			// Could take some time because of slow editor load
 			cy.wait('@draftMessages', { timeout: 10000 });
-			cy.wait('@messages');
 			cy.wait('@sessionRooms');
 
 			cy.get('#iconH').click();

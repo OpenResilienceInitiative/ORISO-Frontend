@@ -8,7 +8,7 @@ import { ReactComponent as Check } from '../../resources/img/illustrations/check
 import './banUser.styles.scss';
 
 interface BanUserProps {
-	rcUserId: string;
+	matrixUserId: string;
 	userName: string;
 	chatId: number;
 	handleUserBan?: (username: string) => void;
@@ -21,7 +21,7 @@ interface BanUserOverlayProps {
 }
 
 export const BanUser: React.FC<BanUserProps> = ({
-	rcUserId,
+	matrixUserId,
 	chatId,
 	userName,
 	handleUserBan
@@ -29,7 +29,7 @@ export const BanUser: React.FC<BanUserProps> = ({
 	const { t: translate } = useTranslation();
 
 	const banUser = () => {
-		apiPostBanUser({ rcUserId, chatId }).then(() => {
+		apiPostBanUser({ matrixUserId, chatId }).then(() => {
 			if (handleUserBan) handleUserBan(userName);
 		});
 	};

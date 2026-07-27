@@ -4,35 +4,26 @@ import {
 	AUTHORITIES,
 	SessionTypeContext,
 	UserDataContext,
-	getContact,
 	hasUserAuthority,
-	useConsultingType,
 	ActiveSessionContext
 } from '../../../globalState';
 import { useSearchParam } from '../../../hooks/useSearchParams';
-import {
-	SESSION_LIST_TAB,
-	SESSION_LIST_TYPES,
-	getViewPathForType,
-	isUserModerator
-} from '../../session/sessionHelpers';
-import { isMobile } from 'react-device-detect';
+import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
 import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
+import { ReactComponent as PeopleIcon } from '../../../resources/img/icons/persons-two.svg';
 import { useTranslation } from 'react-i18next';
-import { getGroupChatDate } from '../../session/sessionDateHelpers';
-import { getValueFromCookie } from '../../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
-import { FlyoutMenu } from '../../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../../banUser/BanUser';
-import { Tag } from '../../tag/Tag';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
-import { useAppConfig } from '../../../hooks/useAppConfig';
-import { SessionItemInterface } from '../../../globalState/interfaces';
-import { matrixClientService } from '../../../services/matrixClientService';
+import { useMatrixClient } from '../../../globalState/context/MatrixClientContext';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
+import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
+import { groupChatCallCapabilities } from './groupChatCallCapabilities';
+import { SessionMenu } from '../../sessionMenu/SessionMenu';
+import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
+import { getModality, Modality } from '../../session/getModality';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -45,19 +36,16 @@ export const GroupChatHeader = ({
 	isJoinGroupChatView,
 	bannedUsers
 }: GroupChatHeaderProps) => {
-	const { releaseToggles } = useAppConfig();
-
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { matrixClientService } = useMatrixClient();
 
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
 	const matrixRoomId =
-		activeSession.item.matrixRoomId || activeSession.item.groupId;
+		activeSession.item.matrixRoomId || activeSession.item.matrixRoomId;
 
 	useEffect(() => {
 		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
@@ -70,21 +58,12 @@ export const GroupChatHeader = ({
 			return;
 		}
 
-		// Try to get Matrix client (from global window or imported service)
-		const getClient = () => {
-			const globalService = (window as any).matrixClientService;
-			if (globalService && globalService.getClient()) {
-				return globalService.getClient();
-			}
-			return matrixClientService.getClient();
-		};
-
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
 		const maxRetries = 20;
 
 		const tryLoadMembers = () => {
-			const client = getClient();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				retryCount++;
@@ -155,7 +134,7 @@ export const GroupChatHeader = ({
 
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
-				const client = getClient();
+				const client = matrixClientService?.getClient?.();
 				if (client) {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {
@@ -182,12 +161,9 @@ export const GroupChatHeader = ({
 				delete (window as any).__groupChatHeaderInterval;
 			}
 		};
-	}, [matrixRoomId, matrixMembers.length]);
-	const { type, path: listPath } = useContext(SessionTypeContext);
+	}, [matrixRoomId, matrixMembers.length, matrixClientService]);
+	const { path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
-	const sessionView = getViewPathForType(type);
-	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const [flyoutOpenId, setFlyoutOpenId] = useState('');
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -201,7 +177,8 @@ export const GroupChatHeader = ({
 
 		try {
 			const roomId =
-				activeSession.item.matrixRoomId || activeSession.item.groupId;
+				activeSession.item.matrixRoomId ||
+				activeSession.item.matrixRoomId;
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
@@ -289,30 +266,6 @@ export const GroupChatHeader = ({
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
 
-	const isCurrentUserModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
-	});
-
-	const userSessionData = getContact(activeSession)?.sessionData || {};
-	const isAskerInfoAvailable = () =>
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-		consultingType?.showAskerProfile &&
-		activeSession.isSession &&
-		((type === SESSION_LIST_TYPES.ENQUIRY &&
-			Object.entries(userSessionData).length !== 0) ||
-			SESSION_LIST_TYPES.ENQUIRY !== type);
-
-	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
-
-	const handleFlyout = (e) => {
-		if (!isSubscriberFlyoutOpen) {
-			setIsSubscriberFlyoutOpen(true);
-		} else if (e.target.id === 'subscriberButton') {
-			setIsSubscriberFlyoutOpen(false);
-		}
-	};
-
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
@@ -338,12 +291,18 @@ export const GroupChatHeader = ({
 	} = getTenantSettings();
 
 	const isCallsEnabled = featureCallsEnabled !== false;
+	const modalityCalls = groupChatCallCapabilities(
+		activeSession.item.modality,
+		getModality(activeSession) === Modality.INTERNAL_GROUP
+	);
 	const isAudioCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.audio &&
 		featureAudioCallsEnabled !== false &&
 		featureAudioCallsGroupChatsEnabled !== false;
 	const isVideoCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.video &&
 		featureVideoCallsEnabled !== false &&
 		featureVideoCallsGroupChatsEnabled !== false;
 
@@ -352,10 +311,8 @@ export const GroupChatHeader = ({
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
 	const baseUrl = `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 	const groupChatInfoLink = generatePath(baseUrl, {
-		...(activeSession.item as Omit<
-			SessionItemInterface,
-			'attachment' | 'topic' | 'e2eLastMessage' | 'videoCallMessageDTO'
-		>),
+		groupId: activeSession.item.matrixRoomId,
+		id: String(activeSession.item.id),
 		subRoute: 'groupChatInfo'
 	});
 	const visibleMembers = matrixMembers.filter((member) => {
@@ -364,7 +321,10 @@ export const GroupChatHeader = ({
 			!userId.includes('@system') && !userId.includes('@caritas.local')
 		);
 	});
-	const stackedMembers = visibleMembers.slice(0, 3);
+	// Figma #430: up to 4 members render every avatar; beyond that we collapse
+	// the stack into a single "+N people" count badge instead of avatars.
+	const showMemberCountBadge = visibleMembers.length > 4;
+	const stackedMembers = showMemberCountBadge ? [] : visibleMembers;
 
 	return (
 		<div className="sessionInfo">
@@ -379,8 +339,18 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__memberStack">
-							{/* No supervisor "+" on group chats — supervision
-							    is only offered for 1-on-1 chats. */}
+							<ChatroomMainInteractionIcon
+								type="internal"
+								showAddIcon={isActive && !isJoinGroupChatView}
+							/>
+							{showMemberCountBadge && (
+								<div className="sessionInfo__memberCount">
+									<span className="sessionInfo__memberCountNumber">
+										+{visibleMembers.length}
+									</span>
+									<PeopleIcon className="sessionInfo__memberCountIcon" />
+								</div>
+							)}
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
 								const parsedUsername =
@@ -484,132 +454,20 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
+				{shouldShowGroupChatMenu({
+					isActive,
+					isJoinGroupChatView
+				}) && (
+					<SessionMenu
+						hasUserInitiatedStopOrLeaveRequest={
+							hasUserInitiatedStopOrLeaveRequest
+						}
+						isAskerInfoAvailable={false}
+						isJoinGroupChatView={isJoinGroupChatView}
+						bannedUsers={bannedUsers}
+					/>
+				)}
 			</div>
-			{/* <div className="sessionInfo__metaInfo">
-			{activeSession.item.active &&
-				activeSession.item.subscribed &&
-				!isJoinGroupChatView && (
-						<div
-							className="sessionInfo__metaInfo__content sessionInfo__metaInfo__content--clickable"
-							id="subscriberButton"
-							onClick={(e) => handleFlyout(e)}
-						>
-							{t('groupChat.active.sessionInfo.subscriber')}
-							{isSubscriberFlyoutOpen && (
-								<div className="sessionInfo__metaInfo__flyout">
-									<ul>
-										{users.map((subscriber, index) => (
-											<li
-												className={
-													isCurrentUserModerator &&
-													!bannedUsers.includes(
-														subscriber.username
-													) &&
-													!moderators.includes(
-														subscriber._id
-													)
-														? 'has-flyout'
-														: ''
-												}
-												key={`subscriber-${subscriber._id}`}
-												onClick={() => {
-													if (
-														!bannedUsers.includes(
-															subscriber.username
-														)
-													) {
-														setFlyoutOpenId(
-															subscriber._id
-														);
-													}
-												}}
-											>
-												<span>
-													{decodeUsername(
-														subscriber.displayName ||
-															subscriber.username
-													)}
-												</span>
-												{isCurrentUserModerator &&
-													!moderators.includes(
-														subscriber._id
-													) && (
-														<>
-															<FlyoutMenu
-																isHidden={bannedUsers.includes(
-																	subscriber.username
-																)}
-																position={
-																	window.innerWidth <=
-																	520
-																		? 'left'
-																		: 'right'
-																}
-																isOpen={
-																	flyoutOpenId ===
-																	subscriber._id
-																}
-																handleClose={() =>
-																	setFlyoutOpenId(
-																		null
-																	)
-																}
-															>
-																<BanUser
-																	userName={decodeUsername(
-																		subscriber.username
-																	)}
-																	rcUserId={
-																		subscriber._id
-																	}
-																	chatId={
-																		activeSession
-																			.item
-																			.id
-																	}
-																	handleUserBan={() => {
-																		setIsUserBanOverlayOpen(
-																			true
-																		);
-																	}}
-																/>
-															</FlyoutMenu>{' '}
-															<BanUserOverlay
-																overlayActive={
-																	isUserBanOverlayOpen
-																}
-																userName={decodeUsername(
-																	subscriber.username
-																)}
-																handleOverlay={() => {
-																	setIsUserBanOverlayOpen(
-																		false
-																	);
-																}}
-															></BanUserOverlay>
-														</>
-													)}
-												{isCurrentUserModerator &&
-													bannedUsers.includes(
-														subscriber.username
-													) && (
-														<Tag
-															className="bannedUserTag"
-															color="red"
-															text={t(
-																'banUser.is.banned'
-															)}
-														/>
-													)}
-											</li>
-										))}
-									</ul>
-								</div>
-							)}
-						</div>
-					)}
-			</div> */}
 		</div>
 	);
 };

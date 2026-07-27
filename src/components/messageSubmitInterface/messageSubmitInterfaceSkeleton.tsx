@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { SendMessageButton } from './SendMessageButton';
+import { SendButton } from './inputField/SendButton';
 import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-positive.svg';
 import { ReactComponent as RichtextToggleIcon } from '../../resources/img/icons/richtext-toggle.svg';
 import './messageSubmitInterface.styles';
@@ -85,11 +85,7 @@ export const MessageSubmitInterfaceSkeleton = ({
 							</div>
 						</span>
 						<div className="textarea__buttons">
-							<SendMessageButton
-								handleSendButton={() => null}
-								clicked={false}
-								deactivated={false}
-							/>
+							<SendButton state="empty" type="button" />
 						</div>
 					</div>
 				</div>

@@ -1,14 +1,8 @@
 import * as React from 'react';
-import {
-	createContext,
-	useState,
-	useEffect,
-	useCallback,
-	useContext
-} from 'react';
-import { importRSAKey } from '../../utils/encryptionHelpers';
-import { RocketChatPublicSettingsContext } from './RocketChatPublicSettingsProvider';
-import { SETTING_E2E_ENABLE } from '../../api/apiRocketChatSettingsPublic';
+import { createContext } from 'react';
+import { STORAGE_KEY_E2EE_DISABLED } from '../../utils/e2eeSettings';
+
+export { STORAGE_KEY_E2EE_DISABLED };
 
 interface E2EEContextProps {
 	key: string;
@@ -17,53 +11,23 @@ interface E2EEContextProps {
 	e2EEReady: boolean;
 }
 
-export const E2EEContext = createContext<E2EEContextProps>(null);
-export const STORAGE_KEY_E2EE_DISABLED = 'e2ee_disabled';
+/**
+ * Room encryption is handled entirely by Matrix (see ADR-004).
+ * The context stays so chat components keep a single switch-off point;
+ * Matrix room encryption is intentionally NOT enabled here (ADR-004).
+ */
+const E2EE_CONTEXT_VALUE: E2EEContextProps = {
+	key: null,
+	reloadPrivateKey: () => {},
+	isE2eeEnabled: false,
+	e2EEReady: true
+};
+
+export const E2EEContext = createContext<E2EEContextProps>(E2EE_CONTEXT_VALUE);
 
 export function E2EEProvider(props) {
-	const [key, setKey] = useState(null);
-	const [isE2eeEnabled, setIsE2eeEnabled] = useState(false);
-
-	const [e2EEReady, setE2EEReady] = useState(false);
-	const { settingsReady, getSetting } = useContext(
-		RocketChatPublicSettingsContext
-	);
-
-	const reloadPrivateKey = useCallback(() => {
-		const privateKey = sessionStorage.getItem('private_key');
-		if (!privateKey) {
-			return;
-		}
-		importRSAKey(JSON.parse(privateKey), ['decrypt']).then(setKey);
-	}, []);
-
-	useEffect(() => {
-		reloadPrivateKey();
-	}, [reloadPrivateKey]);
-
-	useEffect(() => {
-		if (!settingsReady) {
-			return;
-		}
-
-		// For testing perpose -> should be moved to dev toolbar
-		const e2eeDisabled = parseInt(
-			localStorage.getItem(STORAGE_KEY_E2EE_DISABLED) || '0'
-		);
-
-		// MATRIX MIGRATION: Keep frontend custom E2EE enabled
-		// Matrix rooms are NOT using Matrix native E2EE (to avoid conflicts with frontend encryption)
-		// The frontend uses its own custom encryption (enc. prefix) which Element displays as plaintext
-		setIsE2eeEnabled(
-			e2eeDisabled === 1 ? false : !!getSetting(SETTING_E2E_ENABLE)?.value
-		);
-		setE2EEReady(true);
-	}, [getSetting, settingsReady]);
-
 	return (
-		<E2EEContext.Provider
-			value={{ key, reloadPrivateKey, isE2eeEnabled, e2EEReady }}
-		>
+		<E2EEContext.Provider value={E2EE_CONTEXT_VALUE}>
 			{props.children}
 		</E2EEContext.Provider>
 	);

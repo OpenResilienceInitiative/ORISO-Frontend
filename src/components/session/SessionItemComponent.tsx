@@ -12,15 +12,36 @@ import {
 import { ResizeObserver } from '@juggle/resize-observer';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
+import { getModality, Modality } from './getModality';
 import { formatToHHMM } from '../../utils/dateHelpers';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
 	isMatrixRoomIdHeuristic
 } from '../../utils/matrixRoomUtils';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
+import { MessageSendFailed } from '../message/MessageSendFailed';
+import {
+	FailedSend,
+	FailedSendTimelineEntry
+} from '../message/FailedSendTimelineEntry';
+import {
+	ReactionEvent,
+	AggregatedReaction,
+	aggregateReactions
+} from '../../utils/messageRelations';
+import { chatTransportService } from '../../services/chatTransportService';
+import { computeThreadSummaries } from '../../utils/threadSummaries';
+import {
+	getThreadLastReadTs,
+	markThreadRead,
+	isThreadUnread
+} from '../../utils/threadUnread';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import {
@@ -32,42 +53,41 @@ import {
 	UserDataContext,
 	SessionTypeContext,
 	useTenant,
-	ActiveSessionContext
+	ActiveSessionContext,
+	LocaleContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY
 } from '../../globalState/interfaces/SessionsDataInterface';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
+import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
-import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/person-circle.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as WelcomeIllustration } from '../../resources/img/illustrations/welcome.svg';
 import breathLevelEmojiSprite from '../../resources/img/icons/breath-level-emojis.svg';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
-import { WaitingRoomContent } from '../videoConference/WaitingRoomContent';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
-import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import {
-	bindAnonymousChatUnloadCleanup,
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
@@ -107,7 +127,6 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -117,6 +136,8 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 interface SessionItemProps {
 	isTyping?: Function;
 	messages?: MessageItem[];
+	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
+	reactionEvents?: ReactionEvent[];
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -150,7 +171,6 @@ type BreathTiming = {
 	exhale: number;
 };
 type BreathPresetId = 'starter334' | 'standard446' | 'deep556';
-const DEFAULT_BREATH_PHASE_SECONDS = 4;
 const BREATHING_PRESETS: Array<{
 	id: BreathPresetId;
 	label: string;
@@ -393,22 +413,30 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
 
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, reloadActiveSession } =
+		useContext(ActiveSessionContext);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
+	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const { matrixClientService } = useMatrixClient();
 	const location = useLocation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	// ADR-008: per-session supervision side room id (shared by all supervisor
+	// entries). Aside sends are routed here so the client never receives them.
+	const [supervisionRoomId, setSupervisionRoomId] = useState<
+		string | undefined
+	>(undefined);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
 	const [phaseMsLeft, setPhaseMsLeft] = useState(0);
-	const [breathCycles, setBreathCycles] = useState(0);
+	const [, setBreathCycles] = useState(0);
 	const [breathProgress, setBreathProgress] = useState(0.2);
 	const [selectedPresetId, setSelectedPresetId] =
 		useState<BreathPresetId>('standard446');
@@ -462,15 +490,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [bubbleTypedLen, setBubbleTypedLen] = useState(0);
 	const [briefingTypedText, setBriefingTypedText] = useState('');
 	const [briefingTypewriterBusy, setBriefingTypewriterBusy] = useState(false);
-	const [gameStatusTypedText, setGameStatusTypedText] = useState('');
-	const [gameStatusTypewriterBusy, setGameStatusTypewriterBusy] =
-		useState(false);
-	const [levelBadgeTypedText, setLevelBadgeTypedText] = useState('');
-	const [levelBadgeTypewriterBusy, setLevelBadgeTypewriterBusy] =
-		useState(false);
-	const [centerStageTypedText, setCenterStageTypedText] = useState('');
-	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] =
-		useState(false);
+	const [, setGameStatusTypedText] = useState('');
+	const [, setGameStatusTypewriterBusy] = useState(false);
+	const [, setLevelBadgeTypedText] = useState('');
+	const [, setLevelBadgeTypewriterBusy] = useState(false);
+	const [, setCenterStageTypedText] = useState('');
+	const [, setCenterStageTypewriterBusy] = useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
 	/**
 	 * Initial values for the consent/pseudonym gates are read synchronously
@@ -508,6 +533,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		null
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	/**
+	 * The anonymous enquiry was finished server-side (asker logout, backend
+	 * expiry workflow, admin cleanup) while this tab was still on the
+	 * waiting screen. Waiting longer is pointless — no consultant can see
+	 * a finished enquiry — so the queue UI switches to a closed notice.
+	 */
+	const [enquiryClosed, setEnquiryClosed] = useState(false);
 	/**
 	 * Live count of consultants currently available for this anonymous
 	 * enquiry, fed by the `apiGetAnonymousEnquiryDetails` poll. `null` while
@@ -562,11 +594,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
-		generatePseudonym()
+		generatePseudonym(locale)
 	);
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev));
-	}, []);
+		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 	const timerRef = useRef<number | null>(null);
@@ -596,12 +628,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		featureThreadsSupervisionChatsEnabled = true
 	} = getTenantSettings();
 	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -668,6 +695,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const liveChatClosedModalOpen =
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
+		!enquiryClosed &&
 		numAvailableConsultants === 0 &&
 		!liveChatClosedDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
@@ -734,7 +762,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			userData?.displayName,
 			userData?.userName,
 			activeSession.user?.username,
-			activeSession.item.askerRcId
+			activeSession.item.askerMatrixUserId
 		]
 			.map((value) => decodeUsername((value || '').toString()).trim())
 			.filter((value) => value.length > 0);
@@ -750,8 +778,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		return resolved;
 	}, [
-		activeSession.item.askerRcId,
-		activeSession.item.id,
+		activeSession.item.askerMatrixUserId,
 		activeSession.user?.username,
 		contact?.displayName,
 		contact?.username,
@@ -880,7 +907,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!(isAnonymousAskerExperience && pseudonymConfirmed);
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
-			translate('videoConference.waitingroom.dataProtection.label.text', {
+			translate('anonymousConsent.label.text', {
 				interpolation: { escapeValue: false },
 				legal_links: renderToString(
 					<LegalLinks
@@ -1282,7 +1309,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setCurrentLevel(nextLevel);
 		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
 		startPhase('inhale');
-	}, [breathPhase, currentLevel, startPhase, translate, waitingGameStage]);
+	}, [breathPhase, currentLevel, startPhase, waitingGameStage]);
 
 	/**
 	 * Keep the Carimat bubble text in sync with the current breath phase
@@ -1598,6 +1625,58 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
 	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
+	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
+		? activeSession.rid
+		: activeSession.item?.matrixRoomId || activeSession.rid;
+	// "Encryption broke" delivery status: event ids in this room whose Megolm
+	// decryption permanently failed, so the affected message can show the red
+	// cross (Figma 7086-57415). Keyed by event id === message._id.
+	const decryptionFailures =
+		useMatrixDecryptionFailures(resolvedMatrixRoomId);
+	// Reactions (m.annotation, #435).
+	const reactionEvents = useMemo(
+		() => props.reactionEvents || [],
+		[props.reactionEvents]
+	);
+	const ownMatrixUserId = matrixClientService?.getClient?.()?.getUserId?.();
+	const getReactionsFor = useCallback(
+		(messageId: string): AggregatedReaction[] =>
+			aggregateReactions(
+				reactionEvents,
+				messageId,
+				ownMatrixUserId || ''
+			),
+		[reactionEvents, ownMatrixUserId]
+	);
+	const handleReact = useCallback(
+		(messageId: string, key: string) => {
+			if (!resolvedMatrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.sendReaction({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: messageId,
+					key
+				})
+				.catch(() => undefined);
+		},
+		[resolvedMatrixRoomId]
+	);
+	const handleUnreact = useCallback(
+		(reactionEventId: string) => {
+			if (!resolvedMatrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.removeReaction({
+					matrixRoomId: resolvedMatrixRoomId,
+					reactionEventId
+				})
+				.catch(() => undefined);
+		},
+		[resolvedMatrixRoomId]
+	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
@@ -1617,29 +1696,50 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [activeThreadRootMessage, setActiveThreadRootMessage] =
 		useState<MessageItem | null>(null);
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
+	// Thread-panel-UX (#435): pure summary computation (unit-tested).
+	const threadSummariesRaw = useMemo(
+		() => computeThreadSummaries(messages || []),
+		[messages]
+	);
 	const threadSummaries = useMemo(() => {
 		const map = new Map<
 			string,
 			{ replyCount: number; lastReplyText: string }
 		>();
-		if (!messages) {
-			return map;
-		}
-		messages.forEach((message) => {
-			const parsed = parseMessagePrefixes(message.message);
-			if (parsed.isThreadMessage && parsed.threadRootId) {
-				const existing = map.get(parsed.threadRootId) || {
-					replyCount: 0,
-					lastReplyText: ''
-				};
-				existing.replyCount += 1;
-				existing.lastReplyText =
-					'Last reply at ' + formatToHHMM(message.messageTime);
-				map.set(parsed.threadRootId, existing);
-			}
+		threadSummariesRaw.forEach((summary, rootId) => {
+			map.set(rootId, {
+				replyCount: summary.replyCount,
+				lastReplyText:
+					'Last reply at ' +
+					formatToHHMM(new Date(summary.lastReplyTs).toString())
+			});
 		});
 		return map;
-	}, [messages]);
+	}, [threadSummariesRaw]);
+	// Per-thread unread (#435): device-local approximation, bumped whenever
+	// a thread is opened (markThreadRead) so the derived map recomputes.
+	const [threadReadVersion, setThreadReadVersion] = useState(0);
+	const threadUnreadByRoot = useMemo(() => {
+		const map = new Map<string, boolean>();
+		if (!resolvedMatrixRoomId) {
+			return map;
+		}
+		threadSummariesRaw.forEach((summary, rootId) => {
+			const lastReadTs = getThreadLastReadTs(
+				resolvedMatrixRoomId,
+				rootId
+			);
+			map.set(rootId, isThreadUnread(summary.lastReplyTs, lastReadTs));
+		});
+		return map;
+		// threadReadVersion is a change signal only (localStorage isn't reactive).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [threadSummariesRaw, resolvedMatrixRoomId, threadReadVersion]);
+	const [isThreadListOpen, setIsThreadListOpen] = useState(false);
+	const unreadThreadCount = useMemo(
+		() => Array.from(threadUnreadByRoot.values()).filter(Boolean).length,
+		[threadUnreadByRoot]
+	);
 	const [headerRef, headerBounds] = useMeasure({ polyfill: ResizeObserver });
 	const { ready, key, keyID, encrypted, subscriptionKeyLost } = useE2EE(
 		activeSession.rid
@@ -1670,17 +1770,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 
 			if (isMatrixSession) {
-				const matrixClientUserId = (window as any).matrixClientService
+				const matrixClientUserId = matrixClientService
 					?.getClient?.()
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
-					localStorage.getItem('matrix_user_id') ||
-					(typeof document !== 'undefined' &&
-						document.cookie
-							.split('; ')
-							.find((row) => row.startsWith('rc_uid='))
-							?.split('=')[1]) ||
+					getCurrentMatrixUserId() ||
 					userData?.userName;
 
 				const mine = normalizeMatrixId(myMatrixUserId);
@@ -1694,13 +1789,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							sender.user === mine.user)
 				);
 			}
-			// For RocketChat sessions, use the standard check
+			// Standard check for sessions that have a group id
 			return isMyMessage(messageUserId);
 		},
 		[
 			activeSession.rid,
 			activeSession.item?.matrixRoomId,
-			userData?.userName
+			userData?.userName,
+			matrixClientService
 		]
 	);
 
@@ -1709,6 +1805,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 			return;
 		}
 		if (
@@ -1725,15 +1822,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						(s) => s.supervisorConsultantId === userData.userId
 					);
 					setSupervisionReason(currentSupervisor?.notes || null);
+					// ADR-008: all supervisor entries share the one per-session
+					// supervision side room id — take it from any entry.
+					const sideRoomId = supervisors.find(
+						(s) => s.matrixRoomId
+					)?.matrixRoomId;
+					setSupervisionRoomId(sideRoomId || undefined);
 				})
 				.catch((error) => {
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
+					setSupervisionRoomId(undefined);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
@@ -1834,19 +1939,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
 	/**
-	 * Confirm the chosen pseudonym. Updates ONLY the display name
-	 * via apiPatchUserData — the Matrix username stays "Anonymous-<ts>"
-	 * so the room membership and key chain stay intact.
+	 * Confirm the chosen pseudonym for this live-chat session. The Matrix
+	 * username stays "Anonymous-<ts>" so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
 		if (pseudonymSaving) return;
 		setPseudonymSaving(true);
-		apiPatchUserData({ displayName: currentPseudonym.displayName })
+		apiPutSessionData(activeSession.item.id, {
+			displayName: currentPseudonym.displayName
+		})
+			.then(() =>
+				apiPatchUserData({ displayName: currentPseudonym.displayName })
+			)
 			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
 			.then(() => {
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
+					sessionStorage.setItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`,
+						currentPseudonym.displayName
+					);
 				} catch {
 					/* ignore storage errors */
 				}
@@ -1855,7 +1968,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				/* keep card visible on failure so user can retry */
 			})
 			.finally(() => setPseudonymSaving(false));
-	}, [currentPseudonym, pseudonymSaving, pseudonymStorageKey, setUserData]);
+	}, [
+		activeSession.item.id,
+		currentPseudonym,
+		pseudonymSaving,
+		pseudonymStorageKey,
+		setUserData
+	]);
 
 	/**
 	 * Poll the live anonymous-enquiry details while the asker is in the
@@ -1864,17 +1983,34 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * enquiries queued ahead for the same consulting type.
 	 */
 	useEffect(() => {
-		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+		if (
+			!isInAnonymousWaitingQueuePhase ||
+			!activeSession.item?.id ||
+			enquiryClosed
+		) {
 			return;
 		}
 
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
+		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
 
 		const refresh = () => {
 			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
 					if (cancelled) return;
+					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
+					   Consultants can never see or accept it — stop polling
+					   and show the closed notice instead of queue position
+					   and availability, which would suggest it is still
+					   waiting. */
+					if (
+						details?.status === 'DONE' ||
+						details?.status === 'IN_ARCHIVE'
+					) {
+						setEnquiryClosed(true);
+						return;
+					}
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
@@ -1883,15 +2019,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							? details.numAvailableConsultants
 							: null
 					);
-					/* Anything other than INITIAL/NEW means a consultant has
-					   started handling this enquiry — flip the action bar to
-					   the "Start chat now" prompt. */
-					if (
-						details?.status &&
-						details.status !== 'INITIAL' &&
-						details.status !== 'NEW'
-					) {
+					/* Only IN_PROGRESS means a consultant is handling this
+					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
+					   finished session would otherwise show "Start chat
+					   now" over a chat that can never connect. */
+					if (details?.status === 'IN_PROGRESS') {
 						setConsultantAccepted(true);
+						/* Accepting provisions the Matrix room server-side,
+						   but the session in memory was loaded before that
+						   and still has no matrixRoomId — without it the
+						   chat never connects. Reload the session on every
+						   poll tick until the room id arrives (acceptance
+						   can race the room creation by a moment). */
+						if (!hasMatrixRoom) {
+							reloadActiveSession?.();
+						}
 					}
 				})
 				.catch(() => {
@@ -1907,11 +2049,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			cancelled = true;
 			window.clearInterval(poll);
 		};
-	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+	}, [
+		isInAnonymousWaitingQueuePhase,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession,
+		enquiryClosed
+	]);
 
 	/**
-	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
-	 * session immediately so the waiting queue count drops for everyone else.
+	 * When an anonymous asker logs out, finish the session so the waiting
+	 * queue count drops for everyone else.
+	 *
+	 * Deliberately NOT bound to pagehide/unload: pagehide also fires on a
+	 * plain page refresh or navigation, and finishing there sets the session
+	 * to DONE and deactivates the anonymous Keycloak user — permanently
+	 * removing the enquiry from the consultant queue while the asker is
+	 * still waiting. Abandoned sessions are expired server-side by the
+	 * anonymous deactivate workflow instead.
 	 */
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
@@ -1929,8 +2084,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: activeSession.item?.matrixRoomId,
 			userData?.userName
 		);
-
-		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
 	}, [
 		isAnonymousAskerExperience,
 		activeSession.item?.id,
@@ -2004,10 +2157,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
+		/* Safety net: if the accepted session still lacks its Matrix room
+		   id (reload raced the room provisioning), fetch it again now so
+		   the unlocked composer can actually send. */
+		if (!activeSession.item?.matrixRoomId) {
+			reloadActiveSession?.();
+		}
 		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
 			.then(() => setWaitingGateDismissed(true))
 			.catch(() => setWaitingGateDismissed(true));
-	}, []);
+	}, [
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession,
+		setWaitingGateDismissed
+	]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -2183,6 +2346,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setCurrentLevel(nextLevel);
 		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
 		window.setTimeout(() => startPhase('inhale'), 0);
+		// translate is deliberately omitted: a language switch must not
+		// re-run this effect, which advances the breathing game state.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		breathPhase,
 		clearBreathTimer,
@@ -2528,6 +2694,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (messages && messages.length > 0 && !initialScrollCompleted) {
 			enableInitialScroll();
 		}
+		// enableInitialScroll is a plain function re-created every render;
+		// including it would run this effect on each render instead of on
+		// message/scroll-state changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [messages, initialScrollCompleted]);
 
 	useEffect(() => {
@@ -2553,11 +2723,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (knownMessageIdsRef.current.has(message._id)) {
 				return false;
 			}
-			const parsed = parseMessagePrefixes(message.message);
-			if (!parsed.isThreadMessage || !parsed.threadRootId) {
+			// ADR-017 hard cut: thread identity is the m.thread relation only.
+			const rootId = message.threadRootEventId;
+			if (!rootId) {
 				return false;
 			}
-			if (activeThreadRootId === parsed.threadRootId) {
+			if (activeThreadRootId === rootId) {
 				return false;
 			}
 			if (isMyMessageMatrix(message.userId)) {
@@ -2568,9 +2739,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		newThreadReplies.forEach((message) => {
 			const parsed = parseMessagePrefixes(message.message);
+			const rootId = message.threadRootEventId;
 			const params = new URLSearchParams(location.search);
-			if (parsed.threadRootId) {
-				params.set('threadRootId', parsed.threadRootId);
+			if (rootId) {
+				params.set('threadRootId', rootId);
 			}
 			params.set('threadMessageId', message._id);
 			const actionPath = `${location.pathname}?${params.toString()}`;
@@ -2835,8 +3007,182 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		onDragLeave();
 	};
 
-	const handleMessageSendSuccess = () => {
+	// "Sending message failed" notifications (Figma 7086-57415): a send that
+	// never reached the server surfaces a card at the bottom of the timeline.
+	// They are cleared once a later send succeeds. A user-triggered retry is
+	// routed through the same composer send pipeline and never loops by itself.
+	const [failedSends, setFailedSends] = useState<FailedSend[]>([]);
+	const failedSendSequenceRef = useRef(0);
+	const activeSessionIdentity = `${activeSession?.rid || 'no-room'}:${
+		activeSession?.item?.id || 'no-session'
+	}`;
+	const activeSessionIdentityRef = useRef(activeSessionIdentity);
+	activeSessionIdentityRef.current = activeSessionIdentity;
+	const [retryRequest, setRetryRequest] = useState<{
+		requestId: string;
+		failedSendId: string;
+		message: string;
+		threadRootId?: string | null;
+		sessionIdentity: string;
+		transportMessage: string;
+		isAside: boolean;
+		replyToEventId?: string | null;
+		mentionedUserIds: string[];
+	} | null>(null);
+	// Read the live retry request inside the (non-memoised) success handler,
+	// which the composer may invoke from a closure captured a render earlier.
+	const retryRequestRef = useRef(retryRequest);
+	retryRequestRef.current = retryRequest;
+	const handleSendError = useCallback(
+		(
+			message: string,
+			ts: number,
+			retryOfId?: string,
+			threadRootId?: string | null,
+			sessionIdentity?: string,
+			transportMessage = message,
+			isAside = false,
+			replyToEventId?: string | null,
+			mentionedUserIds: string[] = []
+		) => {
+			if (
+				sessionIdentity &&
+				sessionIdentity !== activeSessionIdentityRef.current
+			) {
+				return;
+			}
+			failedSendSequenceRef.current += 1;
+			const nextFailureId = `send-failed-${ts}-${failedSendSequenceRef.current}`;
+			setFailedSends((previous) => {
+				if (retryOfId) {
+					const retryTargetExists = previous.some(
+						(failed) => failed.id === retryOfId
+					);
+					if (retryTargetExists) {
+						return previous.map((failed) =>
+							failed.id === retryOfId
+								? {
+										...failed,
+										message,
+										ts,
+										transportMessage,
+										isAside,
+										replyToEventId,
+										mentionedUserIds
+									}
+								: failed
+						);
+					}
+				}
+				return [
+					...previous,
+					{
+						id: nextFailureId,
+						message,
+						ts,
+						threadRootId: threadRootId || null,
+						transportMessage,
+						isAside,
+						replyToEventId: replyToEventId || null,
+						mentionedUserIds
+					}
+				];
+			});
+		},
+		[]
+	);
+	const handleRetryFailedSend = useCallback(
+		(failedSendId: string) => {
+			setRetryRequest((current) => {
+				if (current) {
+					return current;
+				}
+				const failed = failedSends.find(
+					(entry) => entry.id === failedSendId
+				);
+				return failed
+					? {
+							requestId: `retry-${failedSendId}-${Date.now()}`,
+							failedSendId,
+							message: failed.message,
+							threadRootId: failed.threadRootId || null,
+							sessionIdentity: activeSessionIdentityRef.current,
+							transportMessage: failed.transportMessage,
+							isAside: failed.isAside,
+							replyToEventId: failed.replyToEventId || null,
+							mentionedUserIds: failed.mentionedUserIds
+						}
+					: null;
+			});
+		},
+		[failedSends]
+	);
+	const handleRetrySettled = useCallback(
+		(requestId: string, sessionIdentity: string) => {
+			if (sessionIdentity !== activeSessionIdentityRef.current) {
+				return;
+			}
+			setRetryRequest((current) =>
+				current?.requestId === requestId ? null : current
+			);
+		},
+		[]
+	);
+	const handleComposerSendError = useCallback(
+		(
+			message: string,
+			ts: number,
+			retryOfId?: string,
+			threadRootId?: string | null,
+			transportMessage?: string,
+			isAside?: boolean,
+			replyToEventId?: string | null,
+			mentionedUserIds?: string[]
+		) =>
+			handleSendError(
+				message,
+				ts,
+				retryOfId,
+				threadRootId,
+				activeSessionIdentity,
+				transportMessage,
+				isAside,
+				replyToEventId,
+				mentionedUserIds
+			),
+		[activeSessionIdentity, handleSendError]
+	);
+	const handleComposerRetrySettled = useCallback(
+		(requestId: string) =>
+			handleRetrySettled(requestId, activeSessionIdentity),
+		[activeSessionIdentity, handleRetrySettled]
+	);
+
+	// Drop stale failure cards when the conversation changes.
+	useEffect(() => {
+		setFailedSends([]);
+		setRetryRequest(null);
+	}, [activeSessionIdentity]);
+
+	const handleMessageSendSuccess = (
+		sessionIdentity = activeSessionIdentity
+	) => {
+		if (sessionIdentity !== activeSessionIdentityRef.current) {
+			return;
+		}
 		setDraggedFile(null);
+		// A retry that succeeded resolves only its own card; a fresh successful
+		// send must leave any other preserved failure cards intact — each holds
+		// the sole copy of an un-sent message the user may still want to retry.
+		const resolvedRetry = retryRequestRef.current;
+		if (resolvedRetry) {
+			setFailedSends((previous) =>
+				previous.filter(
+					(failed) => failed.id !== resolvedRetry.failedSendId
+				)
+			);
+		}
+		setRetryRequest(null);
 
 		if (props.refreshMessages) {
 			setTimeout(() => {
@@ -2845,15 +3191,104 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	};
 
-	const handleOpenThread = useCallback((message: MessageItem) => {
-		setActiveThreadRootId(message._id);
-		setActiveThreadRootMessage(message);
-	}, []);
+	const handleOpenThread = useCallback(
+		(message: MessageItem) => {
+			setActiveThreadRootId(message._id);
+			setActiveThreadRootMessage(message);
+			setIsThreadListOpen(false);
+			// Per-thread unread (#435): opening a thread marks it read up to
+			// its current last reply.
+			const summary = threadSummariesRaw.get(message._id);
+			if (resolvedMatrixRoomId && summary) {
+				markThreadRead(
+					resolvedMatrixRoomId,
+					message._id,
+					summary.lastReplyTs
+				);
+				setThreadReadVersion((version) => version + 1);
+			}
+		},
+		[threadSummariesRaw, resolvedMatrixRoomId]
+	);
 
 	const handleCloseThread = useCallback(() => {
 		setActiveThreadRootId(null);
 		setActiveThreadRootMessage(null);
 	}, []);
+
+	const getMessageById = useCallback(
+		(id: string): MessageItem | null =>
+			(messages || []).find((candidate) => candidate._id === id) || null,
+		[messages]
+	);
+
+	// Relations foundation (#435): direct-reply context for the composer.
+	const [replyTo, setReplyTo] = useState<{
+		eventId: string;
+		author: string;
+		text: string;
+	} | null>(null);
+
+	const handleReplyDirect = useCallback((message: MessageItem) => {
+		setReplyTo({
+			eventId: message._id,
+			author: message.displayName || message.username,
+			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
+				/<[^>]*>/g,
+				''
+			)
+		});
+	}, []);
+
+	const handleCancelReply = useCallback(() => setReplyTo(null), []);
+
+	// Editing (m.replace, #435): edit-in-progress context for the composer.
+	const [editingMessage, setEditingMessage] = useState<{
+		eventId: string;
+		text: string;
+	} | null>(null);
+
+	const handleEditDirect = useCallback((message: MessageItem) => {
+		setEditingMessage({
+			eventId: message._id,
+			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
+				/<[^>]*>/g,
+				''
+			)
+		});
+	}, []);
+
+	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
+
+	// A reply or edit context never survives a conversation switch.
+	useEffect(() => {
+		setReplyTo(null);
+		setEditingMessage(null);
+	}, [activeSession?.rid]);
+
+	// Resolve the quote of a replied-to message from the loaded timeline; a
+	// reply whose target is outside the loaded window degrades to a generic
+	// quote label inside the item.
+	const resolveReplyQuote = useCallback(
+		(replyToEventId?: string | null) => {
+			if (!replyToEventId) {
+				return null;
+			}
+			const target = (messages || []).find(
+				(candidate: MessageItem) => candidate._id === replyToEventId
+			);
+			if (!target) {
+				return null;
+			}
+			return {
+				author: target.displayName || target.username,
+				text: parseMessagePrefixes(target.message)
+					.cleanedMessage.replace(/<[^>]*>/g, '')
+					.slice(0, 200)
+			};
+		},
+		[messages]
+	);
 
 	// If threads become disabled while a thread panel is open, close it immediately.
 	useEffect(() => {
@@ -2861,6 +3296,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			handleCloseThread();
 		}
 	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
+
+	// Register the session's Matrix room with the backend event listener
+	// (fire-and-forget, deduped per app lifetime). The listener syncs as its
+	// technical admin and only sees rooms it has joined — the backend heals
+	// that membership on registration, which is what makes message
+	// notifications work for this session at all.
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (!sessionId || activeSession.isGroup) {
+			return;
+		}
+		apiRegisterMatrixRoomForSync(sessionId);
+	}, [activeSession.item?.id, activeSession.isGroup]);
 
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
@@ -2971,6 +3419,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				'session',
 				shouldFadeSessionChrome && 'session--gameFocus'
 			)}
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
 		>
 			<div
 				ref={headerRef}
@@ -2995,6 +3445,88 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				)}
 			</div>
+
+			{/* Thread-panel-UX (#435): per-room list of all threads. */}
+			{!isEmbeddedNotificationsView &&
+				isThreadsEnabled &&
+				threadSummariesRaw.size > 0 && (
+					<div className="session__threadListBar">
+						<button
+							type="button"
+							className={clsx(
+								'session__threadListToggle',
+								isThreadListOpen &&
+									'session__threadListToggle--active'
+							)}
+							onClick={() => setIsThreadListOpen((open) => !open)}
+						>
+							{translate('message.thread.listToggle', 'Threads')}
+							{' ('}
+							{threadSummariesRaw.size}
+							{')'}
+							{unreadThreadCount > 0 && (
+								<span className="session__threadListUnreadBadge">
+									{unreadThreadCount}
+								</span>
+							)}
+						</button>
+						{isThreadListOpen && (
+							<div
+								className="session__threadListPanel"
+								role="menu"
+							>
+								{Array.from(threadSummariesRaw.values())
+									.sort(
+										(a, b) => b.lastReplyTs - a.lastReplyTs
+									)
+									.map((summary) => (
+										<button
+											key={summary.rootId}
+											type="button"
+											role="menuitem"
+											className="session__threadListEntry"
+											onClick={() => {
+												const rootMessage =
+													getMessageById(
+														summary.rootId
+													);
+												if (rootMessage) {
+													handleOpenThread(
+														rootMessage
+													);
+												}
+											}}
+										>
+											{threadUnreadByRoot.get(
+												summary.rootId
+											) && (
+												<span
+													className="session__threadListUnreadDot"
+													aria-hidden
+												/>
+											)}
+											<span className="session__threadListEntryPreview">
+												{summary.rootPreview ||
+													translate(
+														'message.thread.unknownRoot',
+														'Frühere Nachricht'
+													)}
+											</span>
+											<span className="session__threadListEntryMeta">
+												{translate(
+													'message.thread.replies',
+													'{{count}} replies',
+													{
+														count: summary.replyCount
+													}
+												)}
+											</span>
+										</button>
+									))}
+							</div>
+						)}
+					</div>
+				)}
 
 			<div
 				id="session-scroll-container"
@@ -3307,7 +3839,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											   top (inhale) row only. */
 											const min = 1;
 											const max = 7;
-											const center = 4;
 											const value = Math.min(
 												max,
 												Math.max(
@@ -4285,7 +4816,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														onClick={(event) => {
 															event.preventDefault();
 															event.stopPropagation();
-															history.push(
+															navigate(
 																'/registration'
 															);
 														}}
@@ -4331,7 +4862,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												'sessionList.user.consultantUnknown'
 											)
 										}
-										askerRcId={
+										askerMatrixUserId={
 											!activeSession.rid &&
 											message.userId &&
 											!message.userId.includes(
@@ -4339,7 +4870,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													?.username || ''
 											)
 												? message.userId
-												: activeSession.item.askerRcId
+												: activeSession.item
+														.askerMatrixUserId
 										}
 										isOnlyEnquiry={isOnlyEnquiry}
 										isMyMessage={isMyMessageMatrix(
@@ -4373,9 +4905,93 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														)
 												: undefined
 										}
+										replyQuote={resolveReplyQuote(
+											message.replyToEventId
+										)}
+										onReplyDirect={() =>
+											handleReplyDirect(message)
+										}
+										onEditDirect={
+											isMyMessageMatrix(message.userId)
+												? () =>
+														handleEditDirect(
+															message
+														)
+												: undefined
+										}
+										reactions={getReactionsFor(message._id)}
+										onReact={(key: string) =>
+											handleReact(message._id, key)
+										}
+										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										(!isThreadsEnabled ||
+											!message.threadRootEventId) && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
+							))}
+						{/* "Sending message failed" cards for sends that never
+						    reached the server (Figma 7086-57415). */}
+						{failedSends
+							.filter((failed) => !failed.threadRootId)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName:
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											),
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams: {
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										},
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: resolvedMatrixRoomId || ''
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
 							))}
 						{shouldShowInlineTypingIndicator && (
 							<div className="messageItem session__inlineTypingIndicator">
@@ -4457,14 +5073,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										'sessionList.user.consultantUnknown'
 									)
 								}
-								askerRcId={
+								askerMatrixUserId={
 									!activeSession.rid &&
 									activeThreadRootMessage.userId &&
 									!activeThreadRootMessage.userId.includes(
 										activeSession.consultant?.username || ''
 									)
 										? activeThreadRootMessage.userId
-										: activeSession.item.askerRcId
+										: activeSession.item.askerMatrixUserId
 								}
 								isOnlyEnquiry={isOnlyEnquiry}
 								isMyMessage={isMyMessageMatrix(
@@ -4487,8 +5103,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								threadsEnabled={true}
 								forceShow={true}
 								{...activeThreadRootMessage}
+								encryptionBroke={decryptionFailures.has(
+									activeThreadRootMessage._id
+								)}
 							/>
 						)}
+						{activeThreadRootMessage &&
+							decryptionFailures.has(
+								activeThreadRootMessage._id
+							) && (
+								<MessageSendFailed
+									messageTime={
+										activeThreadRootMessage.messageTime
+									}
+									isDecryptionFailure
+								/>
+							)}
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (
@@ -4503,7 +5133,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												'sessionList.user.consultantUnknown'
 											)
 										}
-										askerRcId={
+										askerMatrixUserId={
 											!activeSession.rid &&
 											message.userId &&
 											!message.userId.includes(
@@ -4511,7 +5141,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													?.username || ''
 											)
 												? message.userId
-												: activeSession.item.askerRcId
+												: activeSession.item
+														.askerMatrixUserId
 										}
 										isOnlyEnquiry={isOnlyEnquiry}
 										isMyMessage={isMyMessageMatrix(
@@ -4535,9 +5166,81 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										renderMode="thread"
 										threadsEnabled={true}
 										threadRootId={activeThreadRootId}
+										reactions={getReactionsFor(message._id)}
+										onReact={(key: string) =>
+											handleReact(message._id, key)
+										}
+										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										message.threadRootEventId ===
+											activeThreadRootId && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
+							))}
+						{failedSends
+							.filter(
+								(failed) =>
+									failed.threadRootId === activeThreadRootId
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName:
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											),
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams: {
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										},
+										renderMode: 'thread',
+										threadsEnabled: false,
+										threadRootId: activeThreadRootId,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: resolvedMatrixRoomId || ''
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
 							))}
 					</div>
 					<div className="session__threadInput">
@@ -4550,7 +5253,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest?.threadRootId ===
+								activeThreadRootId
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
 							isSupervisor={isSupervisor}
+							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
@@ -4568,6 +5280,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onMobileNavigateBottom={
 								handleScrollToBottomButtonClick
 							}
+							messages={messages}
+							onCloseThread={handleCloseThread}
+							isOwnMessage={isMyMessageMatrix}
 						/>
 					</div>
 				</div>
@@ -4589,8 +5304,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			)}
 
+			{shouldShowPseudonymGate && pseudonymConfirmed && enquiryClosed && (
+				<div className="session__pseudonymActionBarSlot">
+					<div
+						className="session__anonymousEnquiryClosedNote"
+						role="status"
+					>
+						{translate(
+							'anonymousChat.enquiryClosed',
+							'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
+						)}
+					</div>
+				</div>
+			)}
+
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				!consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<WaitingQueueActionBar
@@ -4602,6 +5332,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<ConsultantAcceptedActionBar
@@ -4670,7 +5401,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									handleMessageSendSuccess={
 										handleMessageSendSuccess
 									}
+									onSendError={handleComposerSendError}
+									retryRequest={
+										retryRequest?.threadRootId
+											? null
+											: retryRequest
+									}
+									onRetrySettled={handleComposerRetrySettled}
 									isSupervisor={isSupervisor}
+									supervisionRoomId={supervisionRoomId}
+									replyTo={replyTo}
+									onCancelReply={handleCancelReply}
+									editingMessage={editingMessage}
+									onCancelEdit={handleCancelEdit}
 									mobileUnreadCount={newMessages}
 									mobileIsScrolledToBottom={
 										isScrolledToBottom
@@ -4684,13 +5427,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									onMobileNavigateBottom={
 										handleScrollToBottomButtonClick
 									}
+									messages={messages}
+									onCloseThread={handleCloseThread}
+									isOwnMessage={isMyMessageMatrix}
 								/>
 							</MessageSubmitErrorBoundary>
 						</Suspense>
 					)}
 					{areRobotMessagesComplete &&
-						!tenantData?.settings
-							?.featureAttachmentUploadDisabled && (
+						hasMediaUploadFeature(
+							tenantData?.settings,
+							chatType
+						) && (
 							<DragAndDropArea
 								onFileDragged={onFileDragged}
 								isDragging={isDragging}
@@ -4873,7 +5621,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => history.push('/registration')}
+						onClick={() => navigate('/registration')}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',
@@ -4907,7 +5655,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<MuiButton
 							fullWidth
 							variant="outlined"
-							onClick={() => history.goBack()}
+							onClick={() => navigate(-1)}
 							startIcon={<ArrowBackIcon />}
 							sx={{
 								borderRadius: '24px',

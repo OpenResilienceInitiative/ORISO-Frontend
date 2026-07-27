@@ -1,17 +1,24 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useHistory } from 'react-router-dom';
-import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
+import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
+import { getModality, Modality } from '../session/getModality';
 import {
 	convertISO8601ToMSSinceEpoch,
 	getPrettyDateFromMessageDate,
 	MILLISECONDS_PER_SECOND
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
+import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
@@ -20,7 +27,12 @@ import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
-import oneOnOneImage from '../../resources/img/illustrations/one-on-one.svg';
+import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
+import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
+import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
+import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
+import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -39,18 +51,14 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import {
-	TopicSessionInterface,
-	STATUS_ENQUIRY
-} from '../../globalState/interfaces';
-import { getGroupChatDate } from '../session/sessionDateHelpers';
+import { TopicSessionInterface } from '../../globalState/interfaces';
 import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
 import './sessionsListItem.styles';
-import { Tag } from '../tag/Tag';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
+import { TeamDiscussionBadge } from '../teamDiscussion/TeamDiscussionBadge';
 import {
 	decryptText,
 	MissingKeyError,
@@ -60,18 +68,33 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
+import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../hooks/useAppConfig';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
-import { RoomMember } from 'matrix-js-sdk';
-import { apiPutArchive, apiPutDearchive } from '../../api';
-import DeleteSession from '../session/DeleteSession';
+import {
+	apiGetCaseHandoverStatus,
+	apiPutArchive,
+	apiPutDearchive,
+	CaseHandoverStatus,
+	FETCH_ERRORS
+} from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
 import { mobileListView } from '../app/navigationHandler';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
+import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import {
+	isCaseHandoverAccessControlled,
+	isCaseHandoverCandidate,
+	isCaseHandoverDenied,
+	isCaseHandoverPending
+} from '../session/caseHandoverHelpers';
+import {
+	CaseHandoverActionButton,
+	CaseHandoverActionState
+} from './CaseHandoverActionButton';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -79,6 +102,12 @@ interface SessionListItemProps {
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	caseHandoverBatchMode?: boolean;
+	caseHandoverSelected?: boolean;
+	onCaseHandoverSelect?: (sessionId: number) => void;
+	onCaseHandoverBatchStart?: () => void;
+	onCaseHandoverBatchConfirm?: () => void;
+	onCaseHandoverBatchClose?: () => void;
 }
 
 export const SessionListItemComponent = ({
@@ -87,17 +116,20 @@ export const SessionListItemComponent = ({
 	handleKeyDownLisItemContent,
 	index,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	caseHandoverBatchMode = false,
+	caseHandoverSelected = false,
+	onCaseHandoverSelect,
+	onCaseHandoverBatchStart,
+	onCaseHandoverBatchConfirm,
+	onCaseHandoverBatchClose
 }: SessionListItemProps) => {
-	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const { t: translate } = useTranslation(['common']);
-	const settings = useAppConfig();
-	const { sessionId, rcGroupId: groupIdFromParam } = useParams<{
-		rcGroupId: string;
-		sessionId: string;
-	}>();
-	const sessionIdFromParam = sessionId ? parseInt(sessionId) : null;
-	const history = useHistory();
+	const location = useLocation();
+	// WP-06 Slice 0b: route-derived single source of truth for the active item
+	// (replaces the per-component rid/sessionId comparison below).
+	const { isActive } = useActiveListItem();
+	const navigate = useNavigate();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -105,68 +137,113 @@ export const SessionListItemComponent = ({
 	const { userData } = useContext(UserDataContext);
 	const { path: listPath, type } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
-	const { activeSession, reloadActiveSession } =
-		useContext(ActiveSessionContext);
+	const activeSessionContext = useContext(ActiveSessionContext);
+	const activeSession = activeSessionContext?.activeSession;
+	const GroupModalityIcon =
+		activeSession?.item?.modality === 'VIDEO'
+			? VideoModalityIcon
+			: activeSession?.item?.modality === 'AUDIO'
+				? AudioModalityIcon
+				: TextModalityIcon;
+	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
+	const sessionItem = activeSession?.item;
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
-	// MATRIX MIGRATION: RocketChat users context may be null for Matrix rooms
-	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
 	const legalLinks = useContext(LegalLinksContext);
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
-	const menuIconRef = React.useRef<HTMLDivElement>(null);
+	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
 	const [dropdownPosition, setDropdownPosition] = useState({
 		top: 0,
 		left: 0
 	});
+	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
+	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [overlayActive, setOverlayActive] = useState(false);
+	const [legalModal, setLegalModal] = useState<{
+		title: string;
+		url: string;
+	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const [caseHandoverStatus, setCaseHandoverStatus] =
+		useState<CaseHandoverStatus | null>(null);
+	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
+		useState(false);
+
+	useEffect(() => {
+		setFlyoutOpen(false);
+	}, [sessionItem?.id, location.pathname, location.search]);
 
 	// Is List Item active
-	const isChatActive =
-		activeSession.rid === groupIdFromParam ||
-		activeSession.item.id === sessionIdFromParam;
+	const isChatActive = activeSession
+		? isActive({
+				groupId: sessionItem?.matrixRoomId,
+				rid: activeSession.rid,
+				sessionId: sessionItem?.id
+			})
+		: false;
 
-	const language = activeSession.item.language || defaultLanguage;
-	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const topicId =
-		(activeSession.item.topic as TopicSessionInterface)?.id || null;
+	const language = sessionItem?.language || defaultLanguage;
+	const consultingType = useConsultingType(sessionItem?.consultingType);
+	const topicId = (sessionItem?.topic as TopicSessionInterface)?.id || null;
 	const topic = useTopic(topicId);
+	const autoSelectPostcode =
+		consultingType?.registration?.autoSelectPostcode ??
+		config.registration.consultingTypeDefaults.autoSelectPostcode;
 
 	const { key, keyID, encrypted, ready } = useE2EE(
-		activeSession.item.groupId,
-		activeSession.item.lastMessageType ===
-			ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
+		sessionItem?.matrixRoomId || null,
+		sessionItem?.lastMessageType === ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 	);
+	const isMatrixBackedSession =
+		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId) ||
+		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
-
-	// Member count for group chats (used for "+N" avatar). For non-group chats this stays 0.
-	const memberCount = activeSession.isGroup ? rcUsersContext?.total || 0 : 0;
-	const additionalMembers = Math.max(0, memberCount - 2); // Subtract 2 for the visible avatars
-
-	const { autoSelectPostcode } =
-		consultingType?.registration ||
-		settings.registration.consultingTypeDefaults;
+	const caseHandoverAccessControlled = isCaseHandoverAccessControlled({
+		activeSession,
+		userData,
+		type
+	});
+	const caseHandoverCandidate = isCaseHandoverCandidate({
+		activeSession,
+		userData,
+		type,
+		sessionListTab
+	});
+	const caseHandoverContentLocked =
+		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
 
 	useEffect(() => {
-		setMatrixMembers(new Array(3) as unknown as RoomMember[]);
-	}, []);
+		if (caseHandoverContentLocked) {
+			setPlainTextLastMessage(
+				translate('caseHandover.list.hiddenPreview')
+			);
+			return;
+		}
 
-	useEffect(() => {
+		if (isMatrixBackedSession) {
+			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			return;
+		}
+
 		if (!ready) {
 			return;
 		}
 
+		if (!sessionItem) {
+			return;
+		}
+
 		if (isE2eeEnabled) {
-			if (!activeSession.item.e2eLastMessage) return;
+			if (!sessionItem.e2eLastMessage) return;
 			decryptText(
-				activeSession.item.e2eLastMessage.msg,
+				sessionItem.e2eLastMessage.msg,
 				keyID,
 				key,
 				encrypted,
-				activeSession.item.e2eLastMessage.t === 'e2e'
+				sessionItem.e2eLastMessage.t === 'e2e'
 			)
 				.catch((e): string =>
 					translate(
@@ -184,15 +261,15 @@ export const SessionListItemComponent = ({
 				});
 		} else {
 			if (
-				activeSession.item.e2eLastMessage &&
-				activeSession.item.e2eLastMessage.t === 'e2e'
+				sessionItem.e2eLastMessage &&
+				sessionItem.e2eLastMessage.t === 'e2e'
 			) {
 				setPlainTextLastMessage(
 					translate('e2ee.message.encryption.text')
 				);
 			} else {
 				const rawMessageObject = markdownToDraft(
-					activeSession.item.lastMessage
+					sessionItem.lastMessage
 				);
 				const contentStateMessage = convertFromRaw(rawMessageObject);
 				setPlainTextLastMessage(contentStateMessage.getPlainText());
@@ -203,18 +280,83 @@ export const SessionListItemComponent = ({
 		key,
 		keyID,
 		encrypted,
-		activeSession.item.groupId,
-		activeSession.item.e2eLastMessage,
-		activeSession.item.lastMessage,
+		sessionItem,
+		isMatrixBackedSession,
+		caseHandoverContentLocked,
 		translate,
 		ready
 	]);
+
+	useEffect(() => {
+		let cancelled = false;
+		if (!caseHandoverAccessControlled || !activeSession?.item?.id) {
+			setCaseHandoverStatus(null);
+			setCaseHandoverStatusLoading(false);
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		setCaseHandoverStatusLoading(true);
+		apiGetCaseHandoverStatus(activeSession.item.id)
+			.then((status) => {
+				if (!cancelled) {
+					setCaseHandoverStatus(status);
+				}
+			})
+			.catch((error) => {
+				if (cancelled) {
+					return;
+				}
+
+				if (error?.message === FETCH_ERRORS.FORBIDDEN) {
+					setCaseHandoverStatus({
+						sessionId: activeSession.item.id,
+						status: 'DENIED',
+						canViewContent: false,
+						clientConsentRequired: false,
+						auditOutcome: 'ACCESS_DENIED'
+					});
+					return;
+				}
+
+				setCaseHandoverStatus(null);
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setCaseHandoverStatusLoading(false);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession?.item?.id, caseHandoverAccessControlled]);
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	const isSupervisorView =
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
+	const caseHandoverActionState: CaseHandoverActionState =
+		caseHandoverStatus?.canViewContent
+			? 'accessGranted'
+			: isCaseHandoverPending(caseHandoverStatus?.status)
+				? 'awaitingApproval'
+				: isCaseHandoverDenied(caseHandoverStatus?.status)
+					? 'accessDenied'
+					: 'requestAccess';
+	const canBatchSelectCaseHandover =
+		caseHandoverBatchMode &&
+		caseHandoverCandidate &&
+		!caseHandoverStatusLoading &&
+		!caseHandoverStatus?.canViewContent &&
+		!isCaseHandoverPending(caseHandoverStatus?.status);
+	const canShowCaseHandoverAction =
+		caseHandoverCandidate &&
+		!caseHandoverStatusLoading &&
+		(!caseHandoverStatus?.canViewContent ||
+			Boolean(caseHandoverStatus?.requestId));
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -230,20 +372,9 @@ export const SessionListItemComponent = ({
 			}
 			return [compact, `@${compact}`];
 		};
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		const currentUserIds = new Set<string>([
-			...normalizeIds(matrixUserIdFromStorage),
-			...normalizeIds(matrixUserIdFromCookie),
+			...normalizeIds(matrixUserIdFromSession),
 			...normalizeIds(userData?.userName)
 		]);
 		if (parsed.visibleToUserIds?.length) {
@@ -278,16 +409,53 @@ export const SessionListItemComponent = ({
 		};
 	}, [flyoutOpen]);
 
+	useEffect(() => {
+		if (!flyoutOpen) {
+			return undefined;
+		}
+
+		const animationFrame = window.requestAnimationFrame(() => {
+			const firstFocusable = dropdownRef.current?.querySelector<
+				HTMLButtonElement | HTMLAnchorElement
+			>(
+				'button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])'
+			);
+			firstFocusable?.focus();
+		});
+
+		const handleMenuDocumentKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				setFlyoutOpen(false);
+				menuIconRef.current?.focus();
+			}
+
+			if (
+				e.key === 'Tab' &&
+				e.target instanceof Node &&
+				dropdownRef.current?.contains(e.target)
+			) {
+				e.preventDefault();
+				setFlyoutOpen(false);
+				menuIconRef.current?.focus();
+			}
+		};
+
+		document.addEventListener('keydown', handleMenuDocumentKeyDown);
+		return () => {
+			window.cancelAnimationFrame(animationFrame);
+			document.removeEventListener('keydown', handleMenuDocumentKeyDown);
+		};
+	}, [flyoutOpen]);
+
 	// Recalculate dropdown position when it's open and window resizes/scrolls
 	useEffect(() => {
 		if (flyoutOpen && menuIconRef.current) {
 			const updatePosition = () => {
 				if (menuIconRef.current) {
 					const rect = menuIconRef.current.getBoundingClientRect();
-					setDropdownPosition({
-						top: rect.bottom + 8,
-						left: rect.right - 280 // Position dropdown to the left of menu icon
-					});
+					setDropdownPosition(
+						getSessionDropdownPosition(rect, window.innerWidth)
+					);
 				}
 			};
 
@@ -311,7 +479,7 @@ export const SessionListItemComponent = ({
 		return (
 			<div
 				onClick={() =>
-					history.push(
+					navigate(
 						`/sessions/consultant/sessionView/${activeSession.item.id}`
 					)
 				}
@@ -332,7 +500,11 @@ export const SessionListItemComponent = ({
 						marginBottom: '8px'
 					}}
 				>
-					🔔 {activeSession.user?.username || 'Unknown User'}
+					🔔{' '}
+					{formatMessagePersonName(
+						undefined,
+						activeSession.user?.username
+					) || translate('sessionList.user.unknown')}
 				</div>
 				<div style={{ fontSize: '12px', color: '#666' }}>
 					Session ID: {activeSession.item.id} | Postcode:{' '}
@@ -354,45 +526,47 @@ export const SessionListItemComponent = ({
 	const handleOnClick = () => {
 		// console.log('🖱️ CARD CLICKED:', {
 		// sessionId: activeSession.item.id,
-		// groupId: activeSession.item.groupId,
+		// groupId: activeSession.item.matrixRoomId,
 		// isGroup: activeSession.isGroup,
 		// listPath,
 		// isEmptyEnquiry: activeSession.isEmptyEnquiry,
 		// isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 		// });
 
-		// For sessions without groupId (Matrix migration), navigate by session ID
 		if (activeSession.item.id !== undefined) {
-			// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-			const isMatrixRoomId = isMatrixRoomIdHeuristic(
-				activeSession.item.groupId
+			navigate(
+				getSessionNavigationPath({
+					listPath,
+					sessionId: activeSession.item.id,
+					groupId: activeSession.item.matrixRoomId,
+					rid: activeSession.rid,
+					isGroup: activeSession.isGroup,
+					isAsker,
+					isEmptyEnquiry: activeSession.isEmptyEnquiry,
+					isLiveChat:
+						getModality(activeSession) === Modality.LIVE_CHAT,
+					tabSuffix: getSessionListTab()
+				})
 			);
-
-			if (activeSession.item.groupId && !isMatrixRoomId) {
-				// Original RocketChat behavior: navigate with groupId
-				const targetPath = `${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`;
-				// console.log('🚀 Navigating with RocketChat groupId:', targetPath);
-				history.push(targetPath);
-			} else if (
-				hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-				activeSession.isEmptyEnquiry
-			) {
-				// Empty enquiry: go to write view
-				const targetPath = `/sessions/user/view/write/${activeSession.item.id}`;
-				// console.log('🚀 Navigating to write view:', targetPath);
-				history.push(targetPath);
-			} else {
-				// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
-				const targetPath = `${listPath}/session/${activeSession.item.id}${getSessionListTab()}`;
-				// console.log('🚀 Navigating by session ID (Matrix or no groupId):', targetPath);
-				history.push(targetPath);
-			}
 		}
 	};
 
-	const handleKeyDownListItem = (e) => {
-		handleKeyDownLisItemContent(e);
+	const isMenuInteractionTarget = (target: EventTarget | null) =>
+		target instanceof HTMLElement &&
+		Boolean(
+			target.closest(
+				'.sessionsListItem__menuIcon, .sessionsListItem__dropdown'
+			)
+		);
+
+	const handleKeyDownListItem = (e: React.KeyboardEvent<HTMLElement>) => {
+		if (isMenuInteractionTarget(e.target)) {
+			return;
+		}
+
+		handleKeyDownLisItemContent?.(e);
 		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
 			handleOnClick();
 		}
 	};
@@ -404,12 +578,38 @@ export const SessionListItemComponent = ({
 		if (newState && menuIconRef.current) {
 			// Calculate position when opening - use getBoundingClientRect for viewport coordinates
 			const rect = menuIconRef.current.getBoundingClientRect();
-			setDropdownPosition({
-				top: rect.bottom + 8,
-				left: rect.right - 280 // Position dropdown to the left of menu icon (dropdown width is 280px)
-			});
+			setDropdownPosition(
+				getSessionDropdownPosition(rect, window.innerWidth)
+			);
 		}
 		setFlyoutOpen(newState);
+	};
+
+	const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+		e.stopPropagation();
+
+		if (e.key === 'Escape' && flyoutOpen) {
+			setFlyoutOpen(false);
+			e.currentTarget.focus();
+		}
+	};
+
+	const closeFlyoutAndReturnFocus = () => {
+		setFlyoutOpen(false);
+		menuIconRef.current?.focus();
+	};
+
+	const handleDropdownKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			e.stopPropagation();
+			closeFlyoutAndReturnFocus();
+		}
+
+		if (e.key === 'Escape') {
+			e.stopPropagation();
+			closeFlyoutAndReturnFocus();
+		}
 	};
 
 	const handleArchiveSession = () => {
@@ -422,15 +622,15 @@ export const SessionListItemComponent = ({
 		setFlyoutOpen(false);
 		apiPutDearchive(activeSession.item.id)
 			.then(() => {
-				reloadActiveSession();
+				reloadActiveSession?.();
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
-						history.push(
-							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`
+						navigate(
+							`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}${getSessionListTab()}`
 						);
 					} else {
 						mobileListView();
-						history.push(listPath);
+						navigate(listPath);
 					}
 				}, 1000);
 			})
@@ -450,7 +650,7 @@ export const SessionListItemComponent = ({
 			setIsRequestInProgress(false);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
 			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.groupId;
+			const sessionGroupId = activeSession.item.matrixRoomId;
 
 			apiPutArchive(sessionId)
 				.then(() => {
@@ -460,7 +660,7 @@ export const SessionListItemComponent = ({
 					});
 
 					mobileListView();
-					history.push(listPath);
+					navigate(listPath);
 				})
 				.catch((error) => {
 					// console.error(error);
@@ -473,38 +673,6 @@ export const SessionListItemComponent = ({
 				});
 		}
 	};
-
-	const onSuccessDeleteSession = () => {
-		mobileListView();
-		history.push(listPath);
-	};
-
-	const iconVariant = () => {
-		if (activeSession.isGroup) {
-			return {
-				variant: LIST_ICONS.IS_GROUP_CHAT,
-				title: translate('message.groupChat')
-			};
-		} else if (activeSession.isEmptyEnquiry) {
-			return {
-				variant: LIST_ICONS.IS_NEW_ENQUIRY,
-				title: translate('message.newEnquiry')
-			};
-		} else if (activeSession.item.messagesRead) {
-			return {
-				variant: LIST_ICONS.IS_READ,
-				title: translate('message.read')
-			};
-		} else {
-			return {
-				variant: LIST_ICONS.IS_UNREAD,
-				title: translate('message.unread')
-			};
-		}
-	};
-
-	const Icon = getSessionsListItemIcon(iconVariant().variant);
-	const iconTitle = iconVariant().title;
 
 	const prettyPrintDate = (
 		messageDate: number, // seconds since epoch
@@ -523,52 +691,6 @@ export const SessionListItemComponent = ({
 		return prettyDate.str ? translate(prettyDate.str) : prettyDate.date;
 	};
 
-	// Hide sessions if consultingType has been switched to group chat.
-	// ToDo: What is with vice versa?
-	// DISABLED FOR MATRIX MIGRATION - This was hiding sessions without groupId
-	// if (activeSession.isSession && consultingType?.groupChat?.isGroupChat) {
-	// 	return null;
-	// }
-
-	// MATRIX MIGRATION: Render fallback if consulting type is missing
-	if (!consultingType && !activeSession.isGroup) {
-		return (
-			<div
-				onClick={() =>
-					history.push(
-						`${listPath}/sessionView/${activeSession.item.id}${getSessionListTab()}`
-					)
-				}
-				className="sessionsListItem"
-				data-cy="session-list-item"
-			>
-				<div className="sessionsListItem__content">
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__consultingType">
-							{activeSession.item.postcode || 'N/A'}
-						</div>
-						<div className="sessionsListItem__date">
-							{new Date(
-								activeSession.item.createDate
-							).toLocaleDateString('de-DE')}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__icon">📋</div>
-						<div className="sessionsListItem__username">
-							{activeSession.user?.username || 'Unknown User'}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__subject">
-							Agency: {activeSession.item.agencyId} • Status: NEW
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
 			activeSession.consultant &&
@@ -576,6 +698,7 @@ export const SessionListItemComponent = ({
 		const defaultSubjectText = isMyChat()
 			? translate('groupChat.listItem.subjectEmpty.self')
 			: translate('groupChat.listItem.subjectEmpty.other');
+		const groupModality = getModality(activeSession);
 		return (
 			<div
 				onClick={handleOnClick}
@@ -584,6 +707,9 @@ export const SessionListItemComponent = ({
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
 					flyoutOpen && 'sessionsListItem--menuOpen',
+					!isChatActive &&
+						activeSession.item.messagesRead &&
+						'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -609,245 +735,7 @@ export const SessionListItemComponent = ({
 								</div>
 							)}
 						</div>
-						<div className="sessionsListItem__rowRight">
-							{!activeSession.isGroup && (
-								<div
-									className="sessionsListItem__menuIcon"
-									onClick={handleMenuClick}
-								>
-									<MenuVerticalIcon />
-								</div>
-							)}
-							{flyoutOpen && (
-								<div className="sessionsListItem__dropdown">
-									<div className="sessionsListItem__dropdownHeader">
-										<p className="sessionsListItem__dropdownSubtitle">
-											Jeder Raum individuell anpassbar
-										</p>
-										<h1 className="sessionsListItem__dropdownTitle">
-											Chatraum Einstellungen
-										</h1>
-									</div>
-									<div className="sessionsListItem__dropdownDivider" />
-									<div className="sessionsListItem__dropdownContent">
-										{!hasUserAuthority(
-											AUTHORITIES.ASKER_DEFAULT,
-											userData
-										) &&
-											type !==
-												SESSION_LIST_TYPES.ENQUIRY &&
-											activeSession.isSession && (
-												<>
-													{sessionListTab !==
-													SESSION_LIST_TAB_ARCHIVE ? (
-														<button
-															onClick={
-																handleArchiveSession
-															}
-															className="sessionsListItem__dropdownOption"
-															type="button"
-														>
-															<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle">
-																		{translate(
-																			'chatFlyout.archive'
-																		) ||
-																			'Archiviere Chat'}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧A
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription">
-																	{translate(
-																		'chatFlyout.archive.description'
-																	) ||
-																		'Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht.'}
-																</p>
-															</div>
-														</button>
-													) : (
-														<button
-															onClick={
-																handleDearchiveSession
-															}
-															className="sessionsListItem__dropdownOption"
-															type="button"
-														>
-															<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle">
-																		{translate(
-																			'chatFlyout.dearchive'
-																		) ||
-																			'Dearchivieren'}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧A
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription">
-																	{translate(
-																		'chatFlyout.dearchive.description'
-																	) ||
-																		'Chat aus dem Archiv wiederherstellen.'}
-																</p>
-															</div>
-														</button>
-													)}
-												</>
-											)}
-										<button
-											className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-											type="button"
-											disabled
-										>
-											<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-											<div className="sessionsListItem__dropdownOptionCenter">
-												<div className="sessionsListItem__dropdownOptionTitleRow">
-													<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-														Stummschalten
-													</span>
-													<kbd className="sessionsListItem__dropdownOptionShortcut">
-														⇧Ö
-													</kbd>
-												</div>
-												<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-													Deaktiviere
-													Benachrichtigungen für
-													diesen Chat.
-												</p>
-											</div>
-										</button>
-										<button
-											className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-											type="button"
-											disabled
-										>
-											<HelpIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-											<div className="sessionsListItem__dropdownOptionCenter">
-												<div className="sessionsListItem__dropdownOptionTitleRow">
-													<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-														Hilfe Anfragen
-													</span>
-													<kbd className="sessionsListItem__dropdownOptionShortcut">
-														⇧Ä
-													</kbd>
-												</div>
-												<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-													Eskaliere den Fall intern
-													oder extern ohne den
-													Datenschutz zu
-													vernachlässigen.
-												</p>
-											</div>
-										</button>
-									</div>
-									<div className="sessionsListItem__dropdownDivider" />
-									<div className="sessionsListItem__dropdownContent">
-										<button
-											className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-											type="button"
-											disabled
-										>
-											<PlusIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-											<div className="sessionsListItem__dropdownOptionCenter">
-												<div className="sessionsListItem__dropdownOptionTitleRow">
-													<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-														Weitere Personen
-														einladen
-													</span>
-													<kbd className="sessionsListItem__dropdownOptionShortcut">
-														⇧I
-													</kbd>
-												</div>
-												<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-													Wer eingeladen werden kann,
-													hängt von den
-													Admin-Einstellungen ab.
-												</p>
-											</div>
-										</button>
-										<button
-											className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-											type="button"
-											disabled
-										>
-											<PackageIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-											<div className="sessionsListItem__dropdownOptionCenter">
-												<div className="sessionsListItem__dropdownOptionTitleRow">
-													<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-														Chat Zusammenfassen
-													</span>
-													<kbd className="sessionsListItem__dropdownOptionShortcut">
-														⇧Ü
-													</kbd>
-												</div>
-												<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-													Spare Zeit, mit Hilfe
-													unseres vollends
-													Datenschutzkonformen KI
-													Workflows.
-												</p>
-											</div>
-										</button>
-										{hasUserAuthority(
-											AUTHORITIES.CONSULTANT_DEFAULT,
-											userData
-										) &&
-											type !==
-												SESSION_LIST_TYPES.ENQUIRY &&
-											activeSession.isSession && (
-												<DeleteSession
-													chatId={
-														activeSession.item.id
-													}
-													onSuccess={
-														onSuccessDeleteSession
-													}
-												>
-													{(onClick) => (
-														<button
-															onClick={() => {
-																setFlyoutOpen(
-																	false
-																);
-																onClick();
-															}}
-															className="sessionsListItem__dropdownOption"
-															type="button"
-														>
-															<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle">
-																		{translate(
-																			'chatFlyout.remove'
-																		) ||
-																			'Löschen'}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧D
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription">
-																	{translate(
-																		'chatFlyout.remove.description'
-																	) ||
-																		'Chat dauerhaft löschen.'}
-																</p>
-															</div>
-														</button>
-													)}
-												</DeleteSession>
-											)}
-									</div>
-								</div>
-							)}
-						</div>
+						<div className="sessionsListItem__rowRight"></div>
 					</div>
 					<div className="sessionsListItem__row">
 						<div className="sessionInfo__groupIcon">
@@ -901,13 +789,62 @@ export const SessionListItemComponent = ({
 								attachment={activeSession.item.attachment}
 							/>
 						)}
-						<div className="sessionsListItem__consultingTypeIcon">
-							<img
-								src={teamImage}
-								alt="Team Beratung"
-								className="sessionsListItem__consultingTypeIcon--team"
-							/>
-						</div>
+						{groupModality === Modality.INTERNAL_GROUP && (
+							<div
+								className={clsx(
+									'sessionsListItem__consultingTypeIcon',
+									'sessionsListItem__consultingTypeIcon--internal'
+								)}
+							>
+								<img
+									src={internalConversationIcon}
+									alt={translate(
+										'sessionList.item.sessionType.internal',
+										'Interna'
+									)}
+									className="sessionsListItem__consultingTypeIcon--internalIcon"
+								/>
+								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+									{translate(
+										'sessionList.item.sessionType.internal',
+										'Interna'
+									)}
+								</span>
+							</div>
+						)}
+						{groupModality === Modality.SELF_HELP && (
+							<div
+								className={clsx(
+									'sessionsListItem__consultingTypeIcon',
+									'sessionsListItem__consultingTypeIcon--selfHelp'
+								)}
+							>
+								<img
+									src={selfHelpIcon}
+									alt={translate(
+										'sessionList.item.sessionType.selfHelp',
+										'Gesprächskreis'
+									)}
+									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+								/>
+								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+									{translate(
+										'sessionList.item.sessionType.selfHelp',
+										'Gesprächskreis'
+									)}
+								</span>
+							</div>
+						)}
+						{groupModality !== Modality.INTERNAL_GROUP &&
+							groupModality !== Modality.SELF_HELP && (
+								<div className="sessionsListItem__consultingTypeIcon">
+									<img
+										src={teamImage}
+										alt="Team Beratung"
+										className="sessionsListItem__consultingTypeIcon--team"
+									/>
+								</div>
+							)}
 					</div>
 				</div>
 			</div>
@@ -917,27 +854,35 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
+	// Card title: never surface raw technical usernames
+	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
+	// same name pipeline the chat messages use.
 	if (isAsker) {
 		if (hasConsultantData) {
-			sessionTopic =
-				activeSession.consultant.displayName ||
-				activeSession.consultant.username;
+			sessionTopic = formatMessagePersonName(
+				activeSession.consultant.displayName,
+				activeSession.consultant.username
+			);
 		} else if (activeSession.isEmptyEnquiry) {
 			sessionTopic = translate('sessionList.user.writeEnquiry');
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic = activeSession.user.username;
+		sessionTopic = formatMessagePersonName(
+			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
+			activeSession.user?.username
+		);
 	}
 
-	// Check if this is an anonymous chat (postcode 00000 or registrationType ANONYMOUS)
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		activeSession.user?.username?.startsWith('Anonymous-') ||
-		activeSession.item.status === STATUS_ENQUIRY;
+	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
+	const modality = getModality(activeSession);
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
+	const shouldShowPostcode =
+		!isAsker &&
+		!autoSelectPostcode &&
+		!isAnonymousChat &&
+		Boolean(postcodeLabel);
 
 	return (
 		<div
@@ -947,10 +892,15 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
+				!isChatActive &&
+					activeSession.item.messagesRead &&
+					'sessionsListItem--read',
+				caseHandoverContentLocked &&
+					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'
 			)}
-			data-group-id={activeSession.item.groupId}
+			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
 		>
 			<div
@@ -978,13 +928,13 @@ export const SessionListItemComponent = ({
 								</div>
 								<div className="sessionsListItem__consultingType" />
 							</>
-						) : !isAsker && !autoSelectPostcode && topic?.name ? (
+						) : shouldShowPostcode && topic?.name ? (
 							<div className="sessionsListItem__topicPostcodeGroup">
 								<div className="sessionsListItem__topic">
 									{topic.name}
 								</div>
 								<div className="sessionsListItem__postcode">
-									{activeSession.item.postcode}
+									{postcodeLabel}
 								</div>
 							</div>
 						) : (
@@ -995,14 +945,14 @@ export const SessionListItemComponent = ({
 									</div>
 								)}
 								<div className="sessionsListItem__consultingType">
-									{!isAsker && !autoSelectPostcode ? (
+									{shouldShowPostcode ? (
 										<div
 											className={clsx(
 												'sessionsListItem__postcode',
 												'sessionsListItem__postcode--standalone'
 											)}
 										>
-											{activeSession.item.postcode}
+											{postcodeLabel}
 										</div>
 									) : null}
 								</div>
@@ -1018,17 +968,30 @@ export const SessionListItemComponent = ({
 						</div>
 						{!activeSession.isGroup && (
 							<>
-								<div
+								<button
+									type="button"
 									ref={menuIconRef}
 									className="sessionsListItem__menuIcon"
 									onClick={handleMenuClick}
+									onKeyDown={handleMenuKeyDown}
+									aria-label={dropdownLabel}
+									aria-haspopup="dialog"
+									aria-expanded={flyoutOpen}
+									aria-controls={
+										flyoutOpen ? dropdownId : undefined
+									}
 								>
 									<MenuVerticalIcon />
-								</div>
+								</button>
 								{flyoutOpen &&
 									createPortal(
 										<div
+											id={dropdownId}
+											ref={dropdownRef}
 											className="sessionsListItem__dropdown"
+											onKeyDown={handleDropdownKeyDown}
+											role="dialog"
+											aria-label={dropdownLabel}
 											style={{
 												top:
 													dropdownPosition.top > 0
@@ -1115,11 +1078,22 @@ export const SessionListItemComponent = ({
 															}
 														>
 															{(_, url) => (
-																<a
-																	href={url}
-																	target="_blank"
-																	rel="noreferrer"
+																<button
+																	type="button"
 																	className="sessionsListItem__dropdownOption"
+																	onClick={() => {
+																		setFlyoutOpen(
+																			false
+																		);
+																		setLegalModal(
+																			{
+																				title: translate(
+																					'chatFlyout.privacyPolicy'
+																				),
+																				url
+																			}
+																		);
+																	}}
 																>
 																	<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
@@ -1139,7 +1113,7 @@ export const SessionListItemComponent = ({
 																			)}
 																		</p>
 																	</div>
-																</a>
+																</button>
 															)}
 														</LegalLinks>
 														<LegalLinks
@@ -1156,11 +1130,22 @@ export const SessionListItemComponent = ({
 															}
 														>
 															{(_, url) => (
-																<a
-																	href={url}
-																	target="_blank"
-																	rel="noreferrer"
+																<button
+																	type="button"
 																	className="sessionsListItem__dropdownOption"
+																	onClick={() => {
+																		setFlyoutOpen(
+																			false
+																		);
+																		setLegalModal(
+																			{
+																				title: translate(
+																					'chatFlyout.imprint'
+																				),
+																				url
+																			}
+																		);
+																	}}
 																>
 																	<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
@@ -1175,7 +1160,7 @@ export const SessionListItemComponent = ({
 																			</kbd>
 																		</div>
 																	</div>
-																</a>
+																</button>
 															)}
 														</LegalLinks>
 													</div>
@@ -1414,21 +1399,30 @@ export const SessionListItemComponent = ({
 							</div>
 						) : isAsker && !hasConsultantData ? (
 							<ConsultantSearchLoader size="32px" />
+						) : !isAsker ? (
+							// Restored username+icon linkage: the asker card
+							// shows the SAME animal avatar the chat derives
+							// from the rc user id (generateAvatarForUser).
+							<MessageAvatar
+								isGroup={!!activeSession.isGroup}
+								isSystemNotification={false}
+								userId={
+									activeSession.item.askerMatrixUserId ||
+									activeSession.user?.username ||
+									'unknown'
+								}
+								username={activeSession.user?.username || ''}
+								displayName={sessionTopic}
+								size={32}
+							/>
 						) : (
 							<UserAvatar
 								username={
-									activeSession.user?.username ||
-									activeSession.consultant?.username ||
-									'User'
+									activeSession.consultant?.username || 'User'
 								}
-								displayName={
-									activeSession.user?.username ||
-									activeSession.consultant?.displayName
-								}
+								displayName={sessionTopic}
 								userId={
-									activeSession.user?.username ||
-									activeSession.consultant?.id ||
-									'unknown'
+									activeSession.consultant?.id || 'unknown'
 								}
 								size="32px"
 							/>
@@ -1441,49 +1435,128 @@ export const SessionListItemComponent = ({
 								'sessionsListItem__username--readLabel'
 						)}
 					>
+						{activeSession.isGroup &&
+							activeSession.item.modality && (
+								<GroupModalityIcon
+									className="sessionsListItem__groupModalityIcon"
+									aria-label={translate(
+										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
+									)}
+								/>
+							)}
 						{sessionTopic}
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
-					<SessionListItemLastMessage
-						lastMessage={displayLastMessage}
-						lastMessageType={activeSession.item.lastMessageType}
-						language={language}
-						showLanguage={
-							language &&
-							activeSession.isEnquiry &&
-							!activeSession.isEmptyEnquiry
-						}
-						showSpan={activeSession.isEmptyEnquiry}
-					/>
-					{activeSession.item.attachment && (
-						<SessionListItemAttachment
-							attachment={activeSession.item.attachment}
+					{/* Figma nodes 115/1139/312: when the case-handover action
+					    button is shown it takes the place of the last-message
+					    preview (the text sits "under" the button). Without a
+					    button the normal last message is shown. */}
+					{!canShowCaseHandoverAction && (
+						<SessionListItemLastMessage
+							lastMessage={
+								caseHandoverContentLocked
+									? translate(
+											'caseHandover.list.hiddenPreview'
+										)
+									: displayLastMessage
+							}
+							lastMessageType={
+								caseHandoverContentLocked
+									? null
+									: activeSession.item.lastMessageType
+							}
+							language={language}
+							showLanguage={
+								language &&
+								activeSession.isEnquiry &&
+								!activeSession.isEmptyEnquiry
+							}
+							showSpan={activeSession.isEmptyEnquiry}
 						/>
 					)}
-					{activeSession.item.videoCallMessageDTO && (
-						<SessionListItemVideoCall
-							videoCallMessage={
-								activeSession.item.videoCallMessageDTO
+					{!caseHandoverContentLocked &&
+						activeSession.item.attachment && (
+							<SessionListItemAttachment
+								attachment={activeSession.item.attachment}
+							/>
+						)}
+					{!caseHandoverContentLocked &&
+						activeSession.item.videoCallMessageDTO && (
+							<SessionListItemVideoCall
+								videoCallMessage={
+									activeSession.item.videoCallMessageDTO
+								}
+								listItemUsername={
+									activeSession.user?.username ||
+									activeSession.consultant?.username
+								}
+								listItemAskerRcId={
+									activeSession.item.askerMatrixUserId
+								}
+							/>
+						)}
+					{canShowCaseHandoverAction && (
+						<CaseHandoverActionButton
+							labels={{
+								requestAccess: translate(
+									'caseHandover.list.requestAccess'
+								),
+								awaitingApproval: translate(
+									'caseHandover.list.awaitingApproval'
+								),
+								accessGranted: translate(
+									'caseHandover.list.accessGranted'
+								),
+								accessDenied: translate(
+									'caseHandover.list.accessDenied'
+								),
+								selectCase: translate(
+									'caseHandover.batch.selectCase'
+								),
+								menuLabel: translate('caseHandover.menu.label'),
+								selectMultipleTitle: translate(
+									'caseHandover.menu.selectMultiple.title'
+								),
+								selectMultipleDescription: translate(
+									'caseHandover.menu.selectMultiple.description'
+								),
+								confirmSelectionTitle: translate(
+									'caseHandover.menu.confirmSelection.title'
+								),
+								confirmSelectionDescription: translate(
+									'caseHandover.menu.confirmSelection.description'
+								),
+								deselectTitle: translate(
+									'caseHandover.menu.deselect.title'
+								),
+								deselectDescription: translate(
+									'caseHandover.menu.deselect.description'
+								)
+							}}
+							state={caseHandoverActionState}
+							active={isChatActive}
+							batchMode={caseHandoverBatchMode}
+							selected={caseHandoverSelected}
+							disabled={
+								caseHandoverBatchMode &&
+								!canBatchSelectCaseHandover
 							}
-							listItemUsername={
-								activeSession.user?.username ||
-								activeSession.consultant?.username
+							onRequestAccess={handleOnClick}
+							onToggleSelect={() =>
+								onCaseHandoverSelect?.(activeSession.item.id)
 							}
-							listItemAskerRcId={activeSession.item.askerRcId}
+							onSelectMultiple={onCaseHandoverBatchStart}
+							onConfirmSelection={onCaseHandoverBatchConfirm}
+							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
 					)}
-					{(() => {
-						/* Sessions with status ENQUIRY (Live-Chat queue)
-						   render with the dedicated Live Chat headset-wave
-						   icon + label instead of the 1-1 Beratung combined
-						   mark. The --liveChat modifier sits on the OUTER
-						   container so its CSS can override the base -12px
-						   right margin that would clip the text. */
-						const isLiveChatSession =
-							activeSession.item.status === STATUS_ENQUIRY;
-						if (isLiveChatSession) {
-							return (
+					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					    / Gesprächskreis) — always shown, including alongside the
+					    case-handover action button (Figma node 115). */}
+					{
+						<>
+							{modality === Modality.LIVE_CHAT && (
 								<div
 									className={clsx(
 										'sessionsListItem__consultingTypeIcon',
@@ -1510,36 +1583,101 @@ export const SessionListItemComponent = ({
 										)}
 									</span>
 								</div>
-							);
-						}
-						return (
-							<div className="sessionsListItem__consultingTypeIcon">
-								<img
-									src={
-										activeSession.isGroup
-											? teamImage
-											: oneOnOneImage
-									}
-									alt={
-										activeSession.isGroup
-											? 'Team Beratung'
-											: '1-1 Beratung'
-									}
-									className={
-										activeSession.isGroup
-											? 'sessionsListItem__consultingTypeIcon--team'
-											: 'sessionsListItem__consultingTypeIcon--oneOnOne'
-									}
-								/>
-							</div>
-						);
-					})()}
+							)}
+							{modality === Modality.AGENCY_COUNSELLING && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--nearby'
+									)}
+								>
+									<img
+										src={nearbyConversationIcon}
+										alt={translate(
+											'sessionList.toolbar.chips.nearby',
+											'Nähe'
+										)}
+										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+										{translate(
+											'sessionList.toolbar.chips.nearby',
+											'Nähe'
+										)}
+									</span>
+								</div>
+							)}
+							{modality === Modality.INTERNAL_GROUP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--internal'
+									)}
+								>
+									<img
+										src={internalConversationIcon}
+										alt={translate(
+											'sessionList.item.sessionType.internal',
+											'Interna'
+										)}
+										className="sessionsListItem__consultingTypeIcon--internalIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+										{translate(
+											'sessionList.item.sessionType.internal',
+											'Interna'
+										)}
+									</span>
+								</div>
+							)}
+							{/* FE#514: team-only discussion exists on this
+							    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+									/>
+								)}
+							{modality === Modality.SELF_HELP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--selfHelp'
+									)}
+								>
+									<img
+										src={selfHelpIcon}
+										alt={translate(
+											'sessionList.item.sessionType.selfHelp',
+											'Gesprächskreis'
+										)}
+										className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+										{translate(
+											'sessionList.item.sessionType.selfHelp',
+											'Gesprächskreis'
+										)}
+									</span>
+								</div>
+							)}
+						</>
+					}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (
 				<Overlay
 					item={overlayItem}
 					handleOverlay={handleOverlayAction}
+				/>
+			)}
+			{legalModal && (
+				<LegalLinkModal
+					title={legalModal.title}
+					url={legalModal.url}
+					onClose={() => setLegalModal(null)}
 				/>
 			)}
 		</div>

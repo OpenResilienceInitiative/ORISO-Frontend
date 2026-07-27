@@ -1,30 +1,7 @@
-import CryptoJS from 'crypto-js';
-
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
-import { getRocketchatAccessToken } from '../sessionCookie/getRocketchatAccessToken';
-import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
-import { generateCsrfToken } from '../../utils/generateCsrfToken';
-import {
-	createAndStoreKeys,
-	decryptPrivateKey,
-	deriveMasterKeyFromPassword,
-	encodeUsername,
-	encryptForParticipant,
-	encryptPrivateKey,
-	getTmpMasterKey,
-	importRawEncryptionKey,
-	storeKeys,
-	readMasterKeyFromLocalStorage,
-	writeMasterKeyToLocalStorage
-} from '../../utils/encryptionHelpers';
+import { encodeUsername } from '../../utils/encryptionHelpers';
 import { setTokens } from '../auth/auth';
-import { apiUpdateUserE2EKeys, FETCH_ERRORS } from '../../api';
-import { apiRocketChatFetchMyKeys } from '../../api/apiRocketChatFetchMyKeys';
-import { apiRocketChatSetUserKeys } from '../../api/apiRocketChatSetUserKeys';
-import { apiRocketChatSubscriptionsGet } from '../../api/apiRocketChatSubscriptionsGet';
-import { apiRocketChatRoomsGet } from '../../api/apiRocketChatRoomsGet';
-import { apiRocketChatUpdateGroupKey } from '../../api/apiRocketChatUpdateGroupKey';
-import { apiRocketChatResetE2EKey } from '../../api/apiRocketChatResetE2EKey';
+import { FETCH_ERRORS } from '../../api';
 import { getBudibaseAccessToken } from '../sessionCookie/getBudibaseAccessToken';
 import {
 	TenantDataInterface,
@@ -32,7 +9,11 @@ import {
 } from '../../globalState/interfaces';
 import { appConfig } from '../../utils/appConfig';
 import { parseJwt } from '../../utils/parseJWT';
-import { removeRocketChatMasterKeyFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 
 export interface LoginData {
 	data: {
@@ -79,25 +60,6 @@ const loginKeycloak = async (
 	return keycloakRes;
 };
 
-const loginRocketChat = async (userHash: string, password: string) => {
-	const { data } = await getRocketchatAccessToken(userHash, password);
-
-	if (data.authToken) {
-		setValueInCookie('rc_token', data.authToken);
-	}
-	if (data.userId) {
-		setValueInCookie('rc_uid', data.userId);
-	}
-
-	//generate new csrf token for current session
-	generateCsrfToken(true);
-
-	// e2ee
-	await handleE2EESetup(password, data.userId, () =>
-		loginRocketChat(userHash, password)
-	);
-};
-
 export const autoLogin = async ({
 	password,
 	...autoLoginProps
@@ -107,62 +69,64 @@ export const autoLogin = async ({
 	const tenantSettings = (autoLoginProps?.tenantData?.settings ||
 		{}) as TenantDataSettingsInterface;
 
-	let userHash = encodeUsername(autoLoginProps.username);
-	let username = userHash;
+	let userHash = autoLoginProps.username;
+	let username = encodeURIComponent(userHash);
 	let keycloakRes;
 
-	// console.log("🔐 DEBUG: autoLogin - encoded username:", username);
+	const legacyEncodedUsername = encodeUsername(autoLoginProps.username);
 
-	// Login with enc username and fallback to unencrypted username
+	// Prefer the entered username for current Keycloak users. Older accounts may
+	// still require the legacy encoded username, so keep that as the fallback.
 	try {
-		// console.log("🔐 DEBUG: autoLogin - attempting Keycloak login with encoded username");
+		// console.log("🔐 DEBUG: autoLogin - attempting Keycloak login with entered username");
 		keycloakRes = await loginKeycloak(
 			username,
 			password,
 			autoLoginProps.otp
 		);
-		// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with encoded username");
+		// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with entered username");
 	} catch (e: any) {
-		// console.log("🔐 DEBUG: autoLogin - Keycloak login failed with encoded username:", e.message);
+		// console.log("🔐 DEBUG: autoLogin - Keycloak login failed with entered username:", e.message);
 		if (e.message === FETCH_ERRORS.UNAUTHORIZED) {
-			userHash = autoLoginProps.username;
-			username = encodeURIComponent(userHash);
-			// console.log("🔐 DEBUG: autoLogin - retrying with unencoded username:", username);
+			userHash = legacyEncodedUsername;
+			username = legacyEncodedUsername;
+			// console.log("🔐 DEBUG: autoLogin - retrying with legacy encoded username:", username);
 			keycloakRes = await loginKeycloak(
 				username,
 				password,
 				autoLoginProps.otp
 			);
-			// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with unencoded username");
+			// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with legacy encoded username");
 		} else {
 			throw e;
 		}
+	}
+
+	const tokenPayload = parseJwt(keycloakRes.access_token);
+
+	if (
+		appConfig.blockConsultantAppLogin &&
+		isConsultantAccessToken(keycloakRes.access_token)
+	) {
+		clearAuthSession();
+		throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 	}
 
 	if (
 		appConfig.useTenantService &&
 		!appConfig.multitenancyWithSingleDomainEnabled
 	) {
-		const { tenantId } = parseJwt(keycloakRes.access_token);
+		const { tenantId } = tokenPayload;
 		if (tenantId !== autoLoginProps.tenantData.id) {
 			throw new Error(FETCH_ERRORS.UNAUTHORIZED);
 		}
 	}
 
-	// Skip RocketChat integration for now due to configuration issues
-	// console.warn('Skipping RocketChat integration due to configuration issues');
-
-	// MATRIX MIGRATION: Initialize Matrix client for calls and real-time sync
-	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT STARTING 🔷🔷🔷');
-	// console.log('🔷 Username for Matrix:', autoLoginProps.username);
-	// console.log('🔷 Password available:', !!password);
-
+	// Matrix is the only chat backend: fetch and persist the Matrix login
+	// data. The Matrix client itself is created once by AuthenticatedApp.
 	try {
 		const { getMatrixAccessToken, persistMatrixLoginData } = await import(
 			'../sessionCookie/getMatrixAccessToken'
-		);
-		const { MatrixClientService } = await import(
-			'../../services/matrixClientService'
 		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
@@ -171,189 +135,37 @@ export const autoLogin = async ({
 			password
 		);
 
-		// console.log('🔷 Matrix login successful! Data:', matrixLoginData);
-		// console.log('🔷 Matrix User ID:', matrixLoginData.userId);
-		// console.log('🔷 Matrix Access Token:', matrixLoginData.accessToken ? 'exists' : 'missing');
-
+		// Only persist the Matrix login data here. The actual Matrix client is
+		// created and registered exactly once by AuthenticatedApp on the
+		// authenticated load, so autoLogin must NOT spin up its own unregistered
+		// client (that produced a second orphan sync loop that was never torn
+		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-
-		const matrixClientService = new MatrixClientService();
-		// console.log('🔷 Initializing Matrix client...');
-		matrixClientService.initializeClient(matrixLoginData);
-
-		// Store Matrix client globally for call functionality
-		(window as any).matrixClientService = matrixClientService;
-
-		// console.log('✅✅✅ Matrix client initialized successfully! ✅✅✅');
-		// console.log('✅ Matrix client available at: window.matrixClientService');
 	} catch (error) {
-		// console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
-		// console.error('❌ Error:', error);
-		// console.error('❌ Error message:', (error as Error).message);
-		// console.error('❌ Error stack:', (error as Error).stack);
-		// Continue without Matrix client - chat will still work via REST API
+		// Continue without Matrix login data - the app boots and shows the
+		// session list; chat features recover on the next successful login.
 	}
-
-	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT COMPLETE 🔷🔷🔷');
 
 	if (tenantSettings?.featureToolsEnabled) {
 		await getBudibaseAccessToken(username, password, tenantSettings);
 	}
 };
 
+// Set in sessionStorage right before the post-registration redirect. The app
+// bootstrap (AuthenticatedApp) reads it once to play the welcome loading animation
+// that bridges the user-data/Matrix load, instead of the bare spinner, then clears it.
+export const POST_REGISTRATION_LOADER_KEY =
+	'onlineBeratung_postRegistrationLoader';
+
+export const getPostRegistrationGroupChatId = (search: string) => {
+	const value = new URLSearchParams(search).get('gcid')?.trim();
+	return value || undefined;
+};
+
 export const redirectToApp = (gcid?: string) => {
-	const params = gcid ? `?gcid=${gcid}` : '';
+	const value = gcid?.trim();
+	const params = value
+		? `?${new URLSearchParams({ gcid: value }).toString()}`
+		: '';
 	window.location.href = appConfig.urls.redirectToApp + params;
-};
-
-export const handleE2EESetup = (
-	password: string,
-	rcUserId: string,
-	reloginCallback?: () => Promise<any>,
-	skipUpdateSubscriptions?: boolean
-): Promise<any> => {
-	return new Promise(async (resolve, reject) => {
-		let masterKey = await deriveMasterKeyFromPassword(rcUserId, password);
-
-		let privateKey;
-		let publicKey;
-
-		// get key pair from rc
-		const {
-			private_key: encryptedPrivateKey,
-			public_key: storedPublicKey
-		} = await apiRocketChatFetchMyKeys();
-
-		// use stored public key if available
-		if (storedPublicKey) publicKey = storedPublicKey;
-
-		// try to decrypt the private key
-		if (encryptedPrivateKey) {
-			try {
-				privateKey = await decryptPrivateKey(
-					encryptedPrivateKey,
-					masterKey
-				);
-				storeKeys(privateKey, publicKey);
-				await writeMasterKeyToLocalStorage(masterKey, rcUserId);
-			} catch (error) {
-				const persistedArrayBuffer =
-					readMasterKeyFromLocalStorage(rcUserId);
-
-				if (!persistedArrayBuffer) {
-					// console.error('master key not persisted - reset e2e key');
-					await apiRocketChatResetE2EKey();
-					if (!reloginCallback) {
-						// console.error('could not re-login after e2e key reset');
-					} else {
-						await writeMasterKeyToLocalStorage(masterKey, rcUserId);
-						await reloginCallback().then(resolve).catch(reject);
-						return;
-					}
-				} else {
-					const persistedMasterKey =
-						await importRawEncryptionKey(persistedArrayBuffer);
-
-					privateKey = await decryptPrivateKey(
-						encryptedPrivateKey,
-						persistedMasterKey
-					).catch(() => {
-						// if decryption fails, remove master key from local storage and try again
-						removeRocketChatMasterKeyFromLocalStorage();
-						return handleE2EESetup(
-							password,
-							rcUserId,
-							reloginCallback,
-							skipUpdateSubscriptions
-						);
-					});
-					storeKeys(privateKey, publicKey);
-
-					try {
-						await apiRocketChatSetUserKeys(
-							publicKey,
-							await encryptPrivateKey(privateKey, masterKey)
-						);
-
-						await writeMasterKeyToLocalStorage(masterKey, rcUserId);
-					} catch {
-						// console.error('Error saving keys in rocket chat.');
-					}
-				}
-			}
-		}
-
-		// no key pair
-		if (!encryptedPrivateKey) {
-			// create a new key pair
-			const { publicKey: pub, privateKey: priv } =
-				await createAndStoreKeys();
-			publicKey = pub;
-			privateKey = priv;
-			// store with rocket chat and in session
-			try {
-				await apiRocketChatSetUserKeys(
-					publicKey,
-					await encryptPrivateKey(privateKey, masterKey)
-				);
-			} catch {
-				// console.error('Error saving keys in rocket chat.');
-			}
-		}
-
-		// update all existing subscriptions via backend logic
-		if (!skipUpdateSubscriptions) {
-			try {
-				// BE call
-				const keyString = JSON.parse(publicKey).n;
-				await apiUpdateUserE2EKeys(keyString);
-			} catch (e) {
-				// console.log('Update E2E Keys in BE failed, trying FE');
-				// FE Fallback
-				await updateUserE2EKeysFallback(rcUserId);
-			}
-		}
-
-		resolve(undefined);
-	});
-};
-
-const updateUserE2EKeysFallback = async (rcUserId) => {
-	const { update: subscriptions } = await apiRocketChatSubscriptionsGet();
-	const { update: rooms } = await apiRocketChatRoomsGet();
-	await Promise.all(
-		subscriptions.map(async (subscription) => {
-			const room = rooms.find((r) => r._id === subscription.rid);
-
-			if (
-				!room?.e2eKeyId ||
-				!subscription?.E2EKey ||
-				subscription.E2EKey.indexOf('tmp.') !== 0
-			) {
-				return null;
-			}
-
-			// Little fix for broken dev chats
-			let sub = 16;
-			if (subscription.E2EKey.substring(4, 8) === 'null') {
-				sub = 8;
-			}
-
-			// Substring(16) because of 'tmp.' prefix
-			const roomKeyEncrypted = subscription.E2EKey.substring(sub);
-			const bytes = CryptoJS.AES.decrypt(
-				roomKeyEncrypted,
-				await getTmpMasterKey(rcUserId)
-			);
-			const roomKey = bytes.toString(CryptoJS.enc.Utf8);
-
-			return encryptForParticipant(
-				sessionStorage.getItem('public_key'),
-				room.e2eKeyId,
-				roomKey
-			).then((userKey) => {
-				return apiRocketChatUpdateGroupKey(rcUserId, room._id, userKey);
-			});
-		})
-	);
 };

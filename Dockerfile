@@ -1,7 +1,9 @@
-ARG NODE_VERSION=18.16.1
+ARG NODE_VERSION=22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
 ARG PORT=80
 
-FROM node:$NODE_VERSION AS proxyBuild
+FROM node:$NODE_VERSION AS proxybuild
+
+ARG PORT
 
 USER node
 WORKDIR /app
@@ -37,7 +39,7 @@ ARG PORT=80
 USER node
 WORKDIR /app
 EXPOSE $PORT
-COPY --from=proxyBuild /app ./
+COPY --from=proxybuild /app ./
 COPY --chown=node:node build /app/build
 COPY --chown=node:node scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
 

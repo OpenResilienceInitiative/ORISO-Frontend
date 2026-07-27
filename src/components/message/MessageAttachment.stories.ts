@@ -15,7 +15,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'MessageAttachment component for displaying file attachments in chat messages. Supports image previews for images and document icons for PDFs and other files.'
+				component:
+					'MessageAttachment component for displaying file attachments in chat messages. Supports image previews for images and document icons for PDFs and other files.'
 			}
 		}
 	},
@@ -38,16 +39,15 @@ export const ImageAttachment: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			title_link_download: true,
+			downloadUrl:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			image_type: 'image/jpeg',
-			image_size: 99045
+			mediaType: 'image/jpeg',
+			size: 99045
 		},
 		file: {
-			_id: 'file123',
+			id: 'file123',
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
@@ -62,16 +62,14 @@ export const DocumentAttachment: Story = {
 	args: {
 		attachment: {
 			title: 'ORISO (Repository Guide).pdf',
-			title_link: '/example.pdf',
-			title_link_download: true,
+			downloadUrl: '/example.pdf',
 			type: 'file',
 			description: 'PDF document',
-			image_url: '',
-			image_type: '',
-			image_size: 70000 // in bytes (70 KB)
+			mediaType: '',
+			size: 70000 // in bytes (70 KB)
 		},
 		file: {
-			_id: 'file456',
+			id: 'file456',
 			name: 'ORISO (Repository Guide).pdf',
 			type: 'application/pdf'
 		},
@@ -86,21 +84,72 @@ export const WithRenderedMessage: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			title_link_download: true,
+			downloadUrl:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			image_type: 'image/jpeg',
-			image_size: 99045
+			mediaType: 'image/jpeg',
+			size: 99045
 		},
 		file: {
-			_id: 'file789',
+			id: 'file789',
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
 		hasRenderedMessage: true,
 		rid: 'room123',
 		t: undefined
+	}
+};
+
+// --- WP-4 media check states (epic ORISO-Admin#366) ------------------------
+// Shared state model with the admin editor uploader: uploading / unchecked /
+// safe / blocked / error. `safe` is the plain ImageAttachment story above.
+
+const PNG_DATA_URL =
+	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAABICAYAAAA9HjF/AAAAwElEQVR4nO3RsQkAIBDAwK/dfwXn1DGEeMX1gcyedeia1wEYjMEY/CmD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjuAl4Hs8nHnWSXAAAAAElFTkSuQmCC';
+
+const uncheckedImageArgs = {
+	attachment: {
+		title: 'gast-bild.png',
+		downloadUrl: PNG_DATA_URL,
+		type: 'image',
+		mediaType: 'image/png',
+		size: 1,
+		width: 120,
+		height: 72
+	} as never,
+	file: {
+		_id: 'file-guest',
+		name: 'gast-bild.png',
+		type: 'image/png'
+	} as never,
+	hasRenderedMessage: false,
+	rid: 'room123',
+	t: undefined
+};
+
+/** Image from an anonymous live-chat guest: unloaded until the counsellor reveals it. */
+export const UncheckedBlurred: Story = {
+	args: {
+		...uncheckedImageArgs,
+		mediaCheckState: 'unchecked'
+	}
+};
+
+/** The content scanner (or a policy) blocked the file: never rendered, never linked. */
+export const Blocked: Story = {
+	args: {
+		...uncheckedImageArgs,
+		mediaCheckState: 'blocked'
+	}
+};
+
+/** featureMediaInlineDisplay* off for this chat type: plain file card, no preview. */
+export const FileOnlyInlineDisplayOff: Story = {
+	args: {
+		...uncheckedImageArgs,
+		mediaCheckState: 'safe',
+		inlineDisplayEnabled: false
 	}
 };

@@ -3,41 +3,36 @@ import {
 	ATTACHMENT_TRANSLATE_FOR_TYPE,
 	getAttachmentSizeMBForKB
 } from '../messageSubmitInterface/attachmentHelpers';
-import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
 import { useCallback, useRef } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-import { generateCsrfToken } from '../../utils/generateCsrfToken';
-import {
-	decryptAttachment,
-	ENCRYPTION_VERSION_ACTIVE,
-	KEY_ID_LENGTH,
-	MAX_PREFIX_LENGTH,
-	VECTOR_LENGTH,
-	VERSION_SEPERATOR
-} from '../../utils/encryptionHelpers';
-import { useE2EE } from '../../hooks/useE2EE';
-import {
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
+import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_ERROR
 } from '../../globalState';
 import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
-import clsx from 'clsx';
 import { getIconForAttachmentType } from './messageHelpers';
+import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
+
+/**
+ * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
+ * `unchecked` keeps images unloaded until explicitly revealed, `blocked`
+ * never renders or links the file, and `safe` renders normally.
+ */
+export type MediaCheckState = 'unchecked' | 'safe' | 'blocked';
 
 interface MessageAttachmentProps {
-	attachment: MessageService.Schemas.AttachmentDTO;
-	file: MessageService.Schemas.FileDTO;
+	attachment: ChatAttachment;
+	file: ChatFile;
 	hasRenderedMessage: boolean;
 	rid: string;
 	t?: string;
+	mediaCheckState?: MediaCheckState;
+	/** featureMediaInlineDisplay* for the chat type: off = plain file card, no preview. */
+	inlineDisplayEnabled?: boolean;
 }
 
 const NOT_ENCRYPTED = 'not_encrypted';
@@ -48,17 +43,21 @@ const DECRYPTION_FINISHED = 'decryption_finished';
 
 export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const { t: translate } = useTranslation();
-	const { key, keyID, encrypted } = useE2EE(props.rid);
-	const { getDevToolbarOption } = useDevToolbar();
 	const { addNotification } = React.useContext(NotificationsContext);
+	const matrixEncryptedFile = props.attachment.encryptedFile;
+	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
+	const isEncryptedAttachment =
+		props.t === 'e2e' || isMatrixEncryptedAttachment;
 
 	const [encryptedFile, setEncryptedFile] = React.useState(null);
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
-		props.t === 'e2e' ? ENCRYPTED : NOT_ENCRYPTED
+		isEncryptedAttachment ? ENCRYPTED : NOT_ENCRYPTED
 	);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
-	const [audioDurationSec, setAudioDurationSec] = React.useState<number | null>(null);
+	const [audioDurationSec, setAudioDurationSec] = React.useState<
+		number | null
+	>(null);
 	const [audioCurrentTimeSec, setAudioCurrentTimeSec] = React.useState(0);
 
 	const decryptFile = useCallback(
@@ -68,9 +67,14 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				attachmentStatus === DECRYPTION_ERROR
 			)
 				return;
-			const isAttachmentEncryptionEnabledDevTools = parseInt(
-				getDevToolbarOption(STORAGE_KEY_ATTACHMENT_ENCRYPTION)
-			);
+
+			// Attachments are encrypted by Matrix media handling; those
+			// attachments (old pre-migration data) cannot be decrypted.
+			if (isEncryptedAttachment && !isMatrixEncryptedAttachment) {
+				setAttachmentStatus(DECRYPTION_ERROR);
+				return;
+			}
+
 			setAttachmentStatus(IS_DECRYPTING);
 
 			const data = await fetchData({
@@ -82,25 +86,17 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				}
 			});
 
-			const shouldDecrypt =
-				encrypted &&
-				props.t === 'e2e' &&
-				isAttachmentEncryptionEnabledDevTools;
-			const skipDecryption = !shouldDecrypt;
+			const skipDecryption = !isMatrixEncryptedAttachment;
 			let blobUrl;
 
 			if (skipDecryption) {
 				// not encrypted
 				const blob = await data.blob();
 				blobUrl = window.URL.createObjectURL(blob);
-			} else {
-				// encrypted
-				const text = await data.text();
-				const encryptedData = await decryptAttachment(
-					text,
-					props.attachment.title,
-					keyID,
-					key
+			} else if (isMatrixEncryptedAttachment) {
+				const decryptedBuffer = await decryptMatrixAttachment(
+					await data.arrayBuffer(),
+					matrixEncryptedFile
 				).catch((error) => {
 					setAttachmentStatus(DECRYPTION_ERROR);
 
@@ -122,14 +118,14 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					return null;
 				});
 
-				if (!encryptedData) {
+				if (!decryptedBuffer) {
 					return;
 				}
 
-				const blobData = new Blob([encryptedData], {
+				const blob = new Blob([decryptedBuffer], {
 					type: props.file.type
 				});
-				blobUrl = window.URL.createObjectURL(blobData);
+				blobUrl = window.URL.createObjectURL(blob);
 			}
 
 			setEncryptedFile(blobUrl);
@@ -137,13 +133,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		},
 		[
 			attachmentStatus,
-			encrypted,
-			key,
-			keyID,
-			props.attachment.title,
-			props.t,
+			isEncryptedAttachment,
+			isMatrixEncryptedAttachment,
+			matrixEncryptedFile,
 			props.file.type,
-			getDevToolbarOption,
 			addNotification,
 			translate
 		]
@@ -157,11 +150,15 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		return null;
 	}, []);
 
-	// Helper to build URL - if title_link is already a full URL, use it as-is
+	// Helper to build URL - if downloadUrl is already a full URL, use it as-is
 	const buildUrl = useCallback((link: string) => {
 		if (!link) return '';
 		// If link already starts with http:// or https://, it's a full URL
 		if (link.startsWith('http://') || link.startsWith('https://')) {
+			return link;
+		}
+		// Self-contained sources (object URLs, inline data) must pass through.
+		if (link.startsWith('blob:') || link.startsWith('data:')) {
 			return link;
 		}
 		// Otherwise, prepend apiUrl
@@ -169,12 +166,46 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	}, []);
 
 	// Check if it's an image to display preview
-	const isImage = props.file.type?.startsWith('image/') || props.attachment.type === 'image';
+	const isImage =
+		props.file.type?.startsWith('image/') ||
+		props.attachment.type === 'image';
 	const isAudio = props.file.type?.startsWith('audio/');
-	const imageUrl = isImage ? buildUrl(props.attachment.title_link) : null;
+	const imageUrl = isImage ? buildUrl(props.attachment.downloadUrl) : null;
+
+	const [revealed, setRevealed] = React.useState(false);
+	const mediaCheckState = props.mediaCheckState ?? 'safe';
+	const inlineDisplayEnabled = props.inlineDisplayEnabled ?? true;
+	const effectiveMediaState: MediaCheckState =
+		mediaCheckState === 'unchecked' && revealed ? 'safe' : mediaCheckState;
+	const showImagePreview = isImage && inlineDisplayEnabled;
+	const isAwaitingReveal =
+		isImage && effectiveMediaState === 'unchecked' && !revealed;
+	const attachmentDimensions = props.attachment;
+
+	const revealUncheckedImage = () => {
+		setRevealed(true);
+		if (isEncryptedAttachment && attachmentStatus === ENCRYPTED) {
+			void decryptFile(buildUrl(props.attachment.downloadUrl));
+		}
+	};
+
+	const renderImagePreview = (src: string) => (
+		<div
+			className="messageItem__message__attachment__preview"
+			style={
+				attachmentDimensions.width && attachmentDimensions.height
+					? {
+							aspectRatio: `${attachmentDimensions.width} / ${attachmentDimensions.height}`
+						}
+					: undefined
+			}
+		>
+			<img src={src} alt={props.attachment.title} />
+		</div>
+	);
 
 	// For non-encrypted files, wrap in download link
-	const downloadUrl = buildUrl(props.attachment.title_link);
+	const downloadUrl = buildUrl(props.attachment.downloadUrl);
 
 	const formatAudioDuration = useCallback((duration: number | null) => {
 		if (
@@ -219,7 +250,13 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const resolvedDurationSec = durationFromFileName ?? audioDurationSec;
 	const playbackProgress =
 		resolvedDurationSec && resolvedDurationSec > 0
-			? Math.min(100, Math.max(0, (audioCurrentTimeSec / resolvedDurationSec) * 100))
+			? Math.min(
+					100,
+					Math.max(
+						0,
+						(audioCurrentTimeSec / resolvedDurationSec) * 100
+					)
+				)
 			: 0;
 
 	const renderVoiceAttachment = useCallback(
@@ -265,7 +302,9 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						setAudioCurrentTimeSec(0);
 					}}
 					onTimeUpdate={() => {
-						setAudioCurrentTimeSec(audioRef.current?.currentTime || 0);
+						setAudioCurrentTimeSec(
+							audioRef.current?.currentTime || 0
+						);
 					}}
 					onLoadedMetadata={() => {
 						if (durationFromFileName != null) {
@@ -280,7 +319,9 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 							) {
 								setAudioDurationSec(duration);
 							} else {
-								setAudioDurationSec(getVoiceDurationFromFileName());
+								setAudioDurationSec(
+									getVoiceDurationFromFileName()
+								);
 							}
 						}
 						setAudioCurrentTimeSec(0);
@@ -297,129 +338,182 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			getVoiceDurationFromFileName
 		]
 	);
-	
+
+	if (effectiveMediaState === 'blocked') {
+		// Fail-closed: blocked media is neither rendered nor linked (ADR-014).
+		return (
+			<div className="messageItem__message__attachment messageItem__message__attachment--blocked">
+				<div className="messageItem__message__attachment__info">
+					<span className="messageItem__message__attachment__icon">
+						{getAttachmentIcon(props.file.type)}
+					</span>
+					<span className="messageItem__message__attachment__title">
+						<p className="messageItem__message__attachment__filename">
+							{props.attachment.title}
+						</p>
+						<p className="messageItem__message__attachment__meta">
+							{translate('attachments.mediaCheck.blocked')}
+						</p>
+					</span>
+				</div>
+			</div>
+		);
+	}
+
+	if (isAwaitingReveal) {
+		return (
+			<div className="messageItem__message__attachment messageItem__message__attachment--unchecked">
+				<div className="messageItem__message__attachment__preview messageItem__message__attachment__preview--blurred">
+					<p>{translate('attachments.mediaCheck.unchecked')}</p>
+					<button
+						type="button"
+						className="messageItem__message__attachment__reveal"
+						onClick={revealUncheckedImage}
+					>
+						{translate('attachments.mediaCheck.reveal')}
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<>
-			{props.t !== 'e2e' ? (
+			{!isEncryptedAttachment ? (
 				isAudio ? (
 					renderVoiceAttachment(downloadUrl)
 				) : (
-				<a
-					href={downloadUrl}
-					download={props.file.name}
-					rel="noopener noreferrer"
-					className="messageItem__message__attachment"
-					style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
-				>
-					{/* Show image preview for image files */}
-					{isImage && imageUrl && (
-						<div className="messageItem__message__attachment__preview">
-							<img 
-								src={imageUrl} 
-								alt={props.attachment.title}
-							/>
-						</div>
-					)}
-					
-					{/* File info BELOW image */}
-					<div className="messageItem__message__attachment__info">
-						<span className="messageItem__message__attachment__icon">
-							{!isImage && getAttachmentIcon(props.file.type)}
-						</span>
-						<span className="messageItem__message__attachment__title">
-							<p className="messageItem__message__attachment__filename">{props.attachment.title}</p>
-							<p className="messageItem__message__attachment__meta">
-								{translate(
-									ATTACHMENT_TRANSLATE_FOR_TYPE[props.file.type]
-								)}{' '}
-								{props.attachment.image_size
-									? `| ${
-											(
-												getAttachmentSizeMBForKB(
-													props.attachment.image_size * 1000
-												) / 1000
-											).toFixed(2) +
-											translate('attachments.type.label.mb')
-										}`
-									: null}
-							</p>
-						</span>
-					</div>
-				</a>
-				)
-			) : (
-				// Encrypted file - clickable to decrypt/download
-				encryptedFile && attachmentStatus === DECRYPTION_FINISHED ? (
-					isAudio ? (
-						renderVoiceAttachment(encryptedFile)
-					) : (
 					<a
-						href={encryptedFile}
+						href={downloadUrl}
 						download={props.file.name}
 						rel="noopener noreferrer"
 						className="messageItem__message__attachment"
-						style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+						style={{
+							textDecoration: 'none',
+							color: 'inherit',
+							cursor: 'pointer'
+						}}
 					>
-						{isImage && (
-							<div className="messageItem__message__attachment__preview">
-								<img src={encryptedFile} alt={props.attachment.title} />
-							</div>
-						)}
-						
+						{/* Show image preview for image files */}
+						{showImagePreview &&
+							imageUrl &&
+							renderImagePreview(imageUrl)}
+
+						{/* File info BELOW image */}
 						<div className="messageItem__message__attachment__info">
 							<span className="messageItem__message__attachment__icon">
-								{!isImage && getAttachmentIcon(props.file.type)}
+								{!showImagePreview &&
+									getAttachmentIcon(props.file.type)}
 							</span>
 							<span className="messageItem__message__attachment__title">
-								<p className="messageItem__message__attachment__filename">{props.attachment.title}</p>
+								<p className="messageItem__message__attachment__filename">
+									{props.attachment.title}
+								</p>
 								<p className="messageItem__message__attachment__meta">
-									{translate(ATTACHMENT_TRANSLATE_FOR_TYPE[props.file.type])}{' '}
-									{props.attachment.image_size
+									{translate(
+										ATTACHMENT_TRANSLATE_FOR_TYPE[
+											props.file.type
+										]
+									)}{' '}
+									{props.attachment.size
 										? `| ${
 												(
 													getAttachmentSizeMBForKB(
-														Math.floor(
-															(props.attachment.image_size -
-																KEY_ID_LENGTH -
-																MAX_PREFIX_LENGTH -
-																VERSION_SEPERATOR.length -
-																ENCRYPTION_VERSION_ACTIVE.length -
-																100) /
-																2 -
-																VECTOR_LENGTH * 2
-														) * 1000
+														props.attachment.size *
+															1000
 													) / 1000
-												).toFixed(2) + translate('attachments.type.label.mb')
+												).toFixed(2) +
+												translate(
+													'attachments.type.label.mb'
+												)
 											}`
 										: null}
 								</p>
 							</span>
 						</div>
 					</a>
-					)
+				)
+			) : // Encrypted file - clickable to decrypt/download
+			encryptedFile && attachmentStatus === DECRYPTION_FINISHED ? (
+				isAudio ? (
+					renderVoiceAttachment(encryptedFile)
 				) : (
-					<div 
+					<a
+						href={encryptedFile}
+						download={props.file.name}
+						rel="noopener noreferrer"
 						className="messageItem__message__attachment"
-						onClick={() => attachmentStatus === ENCRYPTED && decryptFile(buildUrl(props.attachment.title_link))}
-						style={{ cursor: attachmentStatus === ENCRYPTED ? 'pointer' : 'default' }}
+						style={{
+							textDecoration: 'none',
+							color: 'inherit',
+							cursor: 'pointer'
+						}}
 					>
+						{showImagePreview && renderImagePreview(encryptedFile)}
+
 						<div className="messageItem__message__attachment__info">
 							<span className="messageItem__message__attachment__icon">
-								{attachmentStatus === IS_DECRYPTING ? (
-									<LoadingSpinner />
-								) : (
-									getAttachmentIcon(props.file.type)
-								)}
+								{!showImagePreview &&
+									getAttachmentIcon(props.file.type)}
 							</span>
 							<span className="messageItem__message__attachment__title">
-								<p className="messageItem__message__attachment__filename">{props.attachment.title}</p>
+								<p className="messageItem__message__attachment__filename">
+									{props.attachment.title}
+								</p>
 								<p className="messageItem__message__attachment__meta">
-									{translate(`e2ee.attachment.${attachmentStatus}`)}
+									{translate(
+										ATTACHMENT_TRANSLATE_FOR_TYPE[
+											props.file.type
+										]
+									)}{' '}
+									{props.attachment.size
+										? `| ${(
+												getAttachmentSizeMBForKB(
+													props.attachment.size * 1000
+												) / 1000
+											).toFixed(2)}${translate(
+												'attachments.type.label.mb'
+											)}`
+										: null}
 								</p>
 							</span>
 						</div>
-					</div>
+					</a>
 				)
+			) : (
+				<div
+					className="messageItem__message__attachment"
+					onClick={() =>
+						attachmentStatus === ENCRYPTED &&
+						decryptFile(buildUrl(props.attachment.downloadUrl))
+					}
+					style={{
+						cursor:
+							attachmentStatus === ENCRYPTED
+								? 'pointer'
+								: 'default'
+					}}
+				>
+					<div className="messageItem__message__attachment__info">
+						<span className="messageItem__message__attachment__icon">
+							{attachmentStatus === IS_DECRYPTING ? (
+								<LoadingSpinner />
+							) : (
+								getAttachmentIcon(props.file.type)
+							)}
+						</span>
+						<span className="messageItem__message__attachment__title">
+							<p className="messageItem__message__attachment__filename">
+								{props.attachment.title}
+							</p>
+							<p className="messageItem__message__attachment__meta">
+								{translate(
+									`e2ee.attachment.${attachmentStatus}`
+								)}
+							</p>
+						</span>
+					</div>
+				</div>
 			)}
 		</>
 	);

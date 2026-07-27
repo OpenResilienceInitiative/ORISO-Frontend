@@ -1,6 +1,5 @@
 /// <reference types="cypress" />
 import { LoginArgs } from './commands/mockApi';
-import { AppointmentsDataInterface } from '../../src/globalState/interfaces';
 import * as Bluebird from 'cypress/types/bluebird';
 
 declare global {
@@ -10,11 +9,6 @@ declare global {
 
 			fastLogin(args?: LoginArgs): Chainable<Element>;
 
-			appointments(
-				args?: Partial<AppointmentsDataInterface>,
-				index?: number
-			): Bluebird<unknown>;
-
 			askerSession(
 				args?: { [key: string]: any },
 				index?: number
@@ -22,11 +16,6 @@ declare global {
 
 			consultantSession(
 				args?: { [key: string]: any },
-				index?: number
-			): Bluebird<unknown>;
-
-			addMessage(
-				props?: { [key: string]: any },
 				index?: number
 			): Bluebird<unknown>;
 
@@ -40,8 +29,6 @@ declare global {
 			willReturn(name: string): Chainable<any>;
 
 			emitDirectMessage(index?: number): Chainable<Element>;
-
-			emitVideoCallRequest(): Chainable<Element>;
 
 			waitForSubscriptions(events: string[]): Chainable<Element>;
 		}

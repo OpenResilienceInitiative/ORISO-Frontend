@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - pre-dev
 
 env:
   REGISTRY: ghcr.io
@@ -17,6 +18,9 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
       packages: write
 
     steps:
@@ -26,11 +30,32 @@ jobs:
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
-          node_version: '18'
+          node_version: '22'
 
       - name: Publish frontend Docker image
+        id: image
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: true
           image_name: oriso-frontend
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reject fixable high or critical image vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend@${{ steps.image.outputs.digest }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Sign and publish the image provenance attestation
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Record immutable release digest
+        run: echo '${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend@${{ steps.image.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
