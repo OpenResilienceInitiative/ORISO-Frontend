@@ -54,11 +54,11 @@
 	}
 
 	&--success &__icon {
-		background: $form-success;
+		background: var(--m3-success, $form-success);
 	}
 
 	&--error &__icon {
-		background: $form-error;
+		background: var(--m3-error, $form-error);
 	}
 
 	&--warning &__icon {

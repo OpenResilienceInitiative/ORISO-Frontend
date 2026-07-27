@@ -9,9 +9,6 @@ export interface RedeemInviteLinkSessionResponse {
 	refreshToken: string;
 	expiresIn: number;
 	refreshExpiresIn: number;
-	rcUserId: string;
-	rcToken: string;
-	rcGroupId: string;
 }
 
 /** Legacy agency-based redeem payload (older backend / agency invite links). */

@@ -3,6 +3,7 @@ name: Reusable Node validation and build steps
 inputs:
   node_version:
     required: true
+    type: string
 
 runs:
   using: 'composite'
@@ -20,6 +21,12 @@ runs:
   - name: Lint scripts and type-check
     shell: bash
     run: npm run lint:scripts
+
+  - name: Run unit tests
+    shell: bash
+    # Runs before the Docker image is built/published so a red test blocks
+    # the (previously untested) :dev image on pushes to dev/main.
+    run: npm run test:unit
 
   - name: Build app
     shell: bash

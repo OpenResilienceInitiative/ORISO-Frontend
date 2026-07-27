@@ -17,7 +17,7 @@ export const VideoCallMessage = (props: VideoCallMessageProps) => {
 			icon={ICON_CALL_OFF}
 			subject={
 				currentUserWasVideoCallInitiator(
-					props.videoCallMessage.initiatorRcUserId
+					props.videoCallMessage.initiatorMatrixUserId
 				) ? (
 					<>
 						{translate('videoCall.incomingCall.rejected.prefix')}{' '}

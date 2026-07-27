@@ -9,13 +9,32 @@ export interface groupChatSettings {
 	duration: number;
 	agencyId: number;
 	hintMessage: string;
+	sourceLanguage?: string;
+	hintMessageTranslations?: Record<string, string>;
+	groupChatRulesTranslations?: Record<string, string[]>;
 	repetitive: boolean;
+	repeatCount?: number;
+	chatInterval?:
+		| 'DAILY'
+		| 'WEEKLY'
+		| 'BIWEEKLY'
+		| 'MONTHLY'
+		| 'QUARTERLY'
+		| 'YEARLY';
+	modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+	timezone?: string;
+	consultantIds?: string[];
 	featureGroupChatV2Enabled?: boolean;
 }
 
 export interface chatLinkData {
-	groupId: string;
+	matrixRoomId: string;
 }
+
+const groupChatPayload = ({
+	featureGroupChatV2Enabled: _clientRoutingFlag,
+	...payload
+}: groupChatSettings) => payload;
 
 export const apiCreateGroupChat = async (
 	createChatItem: groupChatSettings
@@ -25,7 +44,7 @@ export const apiCreateGroupChat = async (
 		(createChatItem.featureGroupChatV2Enabled
 			? GROUP_CHAT_API.CREATEV2
 			: GROUP_CHAT_API.CREATE);
-	const chatData = JSON.stringify({ ...createChatItem });
+	const chatData = JSON.stringify(groupChatPayload(createChatItem));
 
 	return fetchData({
 		url: url,
@@ -40,7 +59,7 @@ export const apiUpdateGroupChat = async (
 	createChatItem: groupChatSettings
 ): Promise<chatLinkData> => {
 	const url = endpoints.groupChatBase + groupChatId + GROUP_CHAT_API.UPDATE;
-	const chatData = JSON.stringify({ ...createChatItem });
+	const chatData = JSON.stringify(groupChatPayload(createChatItem));
 
 	return fetchData({
 		url: url,

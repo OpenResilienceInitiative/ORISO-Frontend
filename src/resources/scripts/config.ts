@@ -47,12 +47,11 @@ export const config: AppConfigInterface = {
 	calcomUrl: '',
 	calendarAppUrl: '',
 	enableWalkthrough: false, // Feature flag to enable walkthrough (false by default here & true in the theme repo)
-	disableVideoAppointments: false, // Feature flag to enable Video-Termine page
 	multitenancyWithSingleDomainEnabled: false, // Feature flag to enable the multi tenancy with a single domain ex: lands
 	useTenantService: true,
 	useApiClusterSettings: true, // Feature flag to enable the cluster use the cluster settings instead of the config file
 	mainTenantSubdomainForSingleDomainMultitenancy: 'app',
-	attachmentEncryption: true, // Feature flag for attachment end to end encryption - e2e must also be enabled in rocket.chat
+	blockConsultantAppLogin: false, // Block consultant-role app logins (PR #273). Off until an activation-state check exists — the bare role matches every counsellor.
 
 	requestCollector: {
 		limit: 10,
@@ -64,8 +63,6 @@ export const config: AppConfigInterface = {
 	},
 	urls: {
 		chatScheduleUrl: uiUrl + '/registration',
-		consultantVideoConference:
-			'/consultant/videoberatung/:type/:appointmentId',
 		error401: uiUrl + '/error.401.html',
 		error404: uiUrl + '/error.404.html',
 		error500: uiUrl + '/error.500.html',
@@ -77,8 +74,7 @@ export const config: AppConfigInterface = {
 		toEntry: uiUrl + '/login',
 		toLogin: uiUrl + '/login',
 		toRegistration: uiUrl + '/registration',
-		videoCall: '/videoanruf/:roomId/:type', // MATRIX MIGRATION: Changed from Jitsi to Matrix calls
-		videoConference: '/videoberatung/:type/:appointmentId'
+		videoCall: '/videoanruf/:roomId/:type'
 	},
 	groupChat: {
 		info: {
@@ -87,21 +83,6 @@ export const config: AppConfigInterface = {
 		}
 	},
 	postcodeFallbackUrl: '{url}{postcode}/',
-	jitsi: {
-		/**
-		 * Enable WebRTC Encoded Transform as an alternative to insertable streams.
-		 * NOTE: Currently the only browser supporting this is Safari / WebKit, behind a flag.
-		 * This must be enabled in jitsi too. (Config value is named equal)
-		 * https://github.com/jitsi/lib-jitsi-meet/blob/afc006e99a42439c305c20faab50a1f786254676/modules/browser/BrowserCapabilities.js#L259
-		 */
-		enableEncodedTransformSupport: true,
-		/**
-		 * Enable the e2ee banner outside the jitsi iframe. Set this to true when video-backend is on the latest develop
-		 * where the e2ee banner is removed inside jitsi and need to be rendered inside the frontend
-		 */
-		showE2EEBanner: true,
-		showLogo: true
-	},
 	legalLinks: [
 		{
 			url: legalImprintUrl,
@@ -124,6 +105,10 @@ export const config: AppConfigInterface = {
 		}
 	},
 	registration: {
+		// FE#245: fallback consulting type for the public agency search when
+		// none is selected. 1 = historic default; override per deployment
+		// when agencies use a different modality.
+		defaultConsultingTypeId: 1,
 		consultingTypeDefaults: {
 			autoSelectPostcode: false,
 			autoSelectAgency: false

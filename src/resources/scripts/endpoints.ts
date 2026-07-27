@@ -1,143 +1,162 @@
 import { getApiBaseUrl } from './getApiBaseUrl';
-import { getKeycloakAuthPath } from './runtimeConfig';
+import {
+	getAgencyServiceOrigin,
+	getConsultingTypeServiceOrigin,
+	getKeycloakAuthPath,
+	getKeycloakOrigin,
+	getTenantServiceOrigin,
+	getUserServiceOrigin
+} from './runtimeConfig';
 
 export const apiUrl = getApiBaseUrl();
+const userServiceOrigin = getUserServiceOrigin(apiUrl);
+export const tenantServiceOrigin = getTenantServiceOrigin(apiUrl);
+const agencyServiceOrigin = getAgencyServiceOrigin(apiUrl);
+const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
+const keycloakOrigin = getKeycloakOrigin(apiUrl);
 
 export const endpoints = {
-	agencyConsultants: apiUrl + '/service/users/consultants',
-	agencyServiceBase: apiUrl + '/service/agencies',
-	agencyTopics: apiUrl + '/service/agencies/topics',
-	agenciesByTenant: apiUrl + '/service/agencies/by-tenant',
-	additionalEnquiry: apiUrl + '/service/users/askers/session/new',
+	agencyConsultants: userServiceOrigin + '/service/users/consultants',
+	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
+	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
+		agencyServiceOrigin +
+		`/service/agencies/${agencyId}/topics/${topicId}/legal`,
+	agencyTopics: agencyServiceOrigin + '/service/agencies/topics',
+	agenciesByTenant: agencyServiceOrigin + '/service/agencies/by-tenant',
+	additionalEnquiry: userServiceOrigin + '/service/users/askers/session/new',
 	appointmentBase: apiUrl + '/service/appointments/sessions',
 	appointmentBaseNew: (sessionId: number) =>
 		apiUrl + `/service/appointments/sessions/${sessionId}/enquiry/new`,
 	appointmentServiceBase: apiUrl + '/service/agency/',
-	appointmentServiceCalDav: apiUrl + '/service/appointservice/caldav',
+	appointmentServiceCalDav:
+		agencyServiceOrigin + '/service/appointservice/caldav',
 	appointmentServiceCalDavAccount:
-		apiUrl + '/service/appointservice/caldav/hasAccount',
+		agencyServiceOrigin + '/service/appointservice/caldav/hasAccount',
 	appointmentServiceMeetingLink: (agencyId: number) =>
-		apiUrl +
+		agencyServiceOrigin +
 		`/service/appointservice/agencies/${agencyId}/initialMeetingSlug`,
 	counselorAppointmentLink: (userId: string) =>
-		apiUrl + `/service/appointservice/consultants/${userId}/meetingSlug`,
-	counselorToken: apiUrl + `/service/appointservice/consultants/token`,
-	appointmentsServiceBase: apiUrl + '/service/appointments',
+		agencyServiceOrigin +
+		`/service/appointservice/consultants/${userId}/meetingSlug`,
+	counselorToken:
+		agencyServiceOrigin + `/service/appointservice/consultants/token`,
 	appointmentsServiceBookingEventsByUserId: (userId: string) =>
-		apiUrl + `/service/appointservice/askers/${userId}/bookings`,
+		agencyServiceOrigin +
+		`/service/appointservice/askers/${userId}/bookings`,
 	appointmentsServiceConsultantBookings: (userId: string, status: string) =>
-		apiUrl +
+		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
-	askerSessions: apiUrl + '/service/users/sessions/askers',
-	attachmentUpload: apiUrl + '/service/uploads/new/',
-	banUser: (rcUserId, chatId) =>
-		apiUrl + `/service/users/${rcUserId}/chat/${chatId}/ban`,
+	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
+	banUser: (matrixUserId, chatId) =>
+		userServiceOrigin +
+		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
 		apiUrl + `/service/counselingtoolsservice/tools/${userId}`,
-	chatRoom: apiUrl + '/service/users/chat/room',
+	chatRoom: userServiceOrigin + '/service/users/chat/room',
 	anonymousEnquiryDetails: (sessionId: number | string) =>
-		apiUrl + `/service/conversations/anonymous/${sessionId}`,
+		userServiceOrigin + `/service/conversations/anonymous/${sessionId}`,
+	acceptAnonymousEnquiry: (sessionId: number | string) =>
+		userServiceOrigin +
+		`/service/conversations/askers/anonymous/${sessionId}/accept`,
 	finishAnonymousConversation: (sessionId: number | string) =>
-		apiUrl + `/service/conversations/anonymous/${sessionId}/finish`,
+		userServiceOrigin +
+		`/service/conversations/anonymous/${sessionId}/finish`,
 	anonymousConsultantAvailability:
-		apiUrl + '/service/conversations/anonymous/availability',
+		userServiceOrigin + '/service/conversations/anonymous/availability',
 	consultantEnquiriesBase:
-		apiUrl + '/service/conversations/consultants/enquiries/',
+		userServiceOrigin + '/service/conversations/consultants/enquiries/',
 	consultantLiveChatAvailability:
-		apiUrl + '/service/conversations/consultants/availability',
+		userServiceOrigin + '/service/conversations/consultants/availability',
+	consultantLiveChatAvailabilityHeartbeat:
+		userServiceOrigin +
+		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
-		apiUrl + '/service/users/sessions/consultants?status=2&',
-	consultantStatistics: apiUrl + '/service/statistics/consultant',
-	consultantsLanguages: apiUrl + '/service/users/consultants/languages',
-	consultingTypeServiceBase: apiUrl + '/service/consultingtypes',
-	deleteAskerAccount: apiUrl + '/service/users/account',
-	draftMessages: apiUrl + '/service/messages/draft',
-	userDrafts: apiUrl + '/service/users/drafts',
-	email: apiUrl + '/service/users/email',
-	error: apiUrl + '/service/logstash',
-	groupChatBase: apiUrl + '/service/users/chat/',
+		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	consultantStatistics:
+		userServiceOrigin + '/service/users/statistics/consultant',
+	consultantsLanguages:
+		userServiceOrigin + '/service/users/consultants/languages',
+	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
+	caseHandoverCandidates:
+		userServiceOrigin + '/service/users/case-handover/candidates',
+	caseHandoverReasons:
+		userServiceOrigin + '/service/users/case-handover/reasons',
+	consultingTypeServiceBase:
+		consultingTypeServiceOrigin + '/service/consultingtypes',
+	deleteAskerAccount: userServiceOrigin + '/service/users/account',
+	draftMessages: userServiceOrigin + '/service/messages/draft',
+	userDrafts: userServiceOrigin + '/service/users/drafts',
+	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
+	email: userServiceOrigin + '/service/users/email',
+	// logstash intake was retired; client crash reports now go to UserService's
+	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
+	error: userServiceOrigin + '/service/error-reports',
+	groupChatBase: userServiceOrigin + '/service/users/chat/',
+	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	keycloakAccessToken:
-		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/token'),
+		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:
-		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/logout'),
+		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/logout'),
 	liveservice: apiUrl + '/service/live',
-	loginResetPasswordLink: getKeycloakAuthPath(
-		'/login-actions/reset-credentials?client_id=account'
-	),
-	magicLinkRequest: apiUrl + '/service/users/magic-link/request',
-	magicLinkConsume: apiUrl + '/service/users/magic-link/consume',
-	messageRead: apiUrl + '/api/v1/subscriptions.read',
+	loginResetPasswordLink:
+		keycloakOrigin +
+		getKeycloakAuthPath(
+			'/login-actions/reset-credentials?client_id=account'
+		),
+	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
+	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
+	passwordResetRequest:
+		userServiceOrigin + '/service/users/password-reset/request',
+	passwordResetConfirm:
+		userServiceOrigin + '/service/users/password-reset/confirm',
+	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
+	matrixSyncRegister: (sessionId: number) =>
+		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {
-		get: apiUrl + '/service/messages',
-		delete: apiUrl + '/service/messages/:messageId'
+		get: userServiceOrigin + '/service/messages',
+		delete: userServiceOrigin + '/service/messages/:messageId'
 	},
-	myMessagesBase: apiUrl + '/service/conversations/consultants/mymessages/',
-	passwordReset: apiUrl + '/service/users/password/change',
-	rc: {
-		accessToken: apiUrl + '/api/v1/login',
-		e2ee: {
-			fetchMyKeys: apiUrl + '/api/v1/e2e.fetchMyKeys',
-			getUsersOfRoomWithoutKey:
-				apiUrl + '/api/v1/e2e.getUsersOfRoomWithoutKey',
-			setRoomKeyID: apiUrl + '/api/v1/e2e.setRoomKeyID',
-			setUserPublicAndPrivateKeys:
-				apiUrl + '/api/v1/e2e.setUserPublicAndPrivateKeys',
-			updateGroupKey: apiUrl + '/api/v1/e2e.updateGroupKey'
-		},
-		groups: {
-			members: apiUrl + '/api/v1/groups.members'
-		},
-		logout: apiUrl + '/api/v1/logout',
-		rooms: {
-			get: apiUrl + '/api/v1/rooms.get',
-			info: apiUrl + '/api/v1/rooms.info'
-		},
-		settings: {
-			public: apiUrl + '/api/v1/settings.public'
-		},
-		subscriptions: {
-			get: apiUrl + '/api/v1/subscriptions.get',
-			read: apiUrl + '/api/v1/subscriptions.read',
-			getOne: apiUrl + '/api/v1/subscriptions.getOne'
-		},
-		users: {
-			getStatus: apiUrl + '/api/v1/users.getStatus',
-			info: apiUrl + '/api/v1/users.info',
-			resetE2EKey: apiUrl + '/api/v1/users.resetE2EKey'
-		}
-	},
-	registerAsker: apiUrl + '/service/users/askers/new',
-	baseUserService: apiUrl + '/service/users',
+	myMessagesBase:
+		userServiceOrigin + '/service/conversations/consultants/mymessages/',
+	passwordReset: userServiceOrigin + '/service/users/password/change',
+	registerAsker: userServiceOrigin + '/service/users/askers/new',
+	baseUserService: userServiceOrigin + '/service/users',
 	//todo delete?
 	registerAskerNewConsultingType:
-		apiUrl + '/service/users/askers/consultingType/new',
-	rejectVideoCall: apiUrl + '/service/videocalls/reject',
-	rocketchatAccessToken: apiUrl + '/api/v1/login',
-	rocketchatLogout: apiUrl + '/api/v1/logout',
-	sendAliasMessage: apiUrl + '/service/messages/aliasonly/new',
-	sendMessage: apiUrl + '/service/messages/new',
-	sessionBase: apiUrl + '/service/users/sessions',
-	sessionRooms: apiUrl + '/service/users/sessions/room',
-	setAbsence: apiUrl + '/service/users/consultants/absences',
-	startVideoCall: apiUrl + '/service/videocalls/new',
-	tenantServiceBase: apiUrl + '/service/tenant',
-	topicGroups: apiUrl + '/service/consultingtypes/groups',
-	topicsData: apiUrl + '/service/topic/public/',
-	twoFactorAuth: apiUrl + '/service/users/2fa',
-	twoFactorAuthApp: apiUrl + '/service/users/2fa/app',
-	twoFactorAuthEmail: apiUrl + '/service/users/2fa/email',
-	updateMessage: apiUrl + '/service/messages/',
-	userData: apiUrl + '/service/users/data',
-	eventNotifications: apiUrl + '/service/users/event-notifications',
+		userServiceOrigin + '/service/users/askers/consultingType/new',
+	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
+	sendMessage: userServiceOrigin + '/service/messages/new',
+	sessionBase: userServiceOrigin + '/service/users/sessions',
+	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
+	teamDiscussion: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/team-discussion`,
+	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
+	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
+	dpaSignatureConfirm: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
+	dpaSignaturePreview: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
+	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',
+	topicsData: consultingTypeServiceOrigin + '/service/topic/public',
+	twoFactorAuth: userServiceOrigin + '/service/users/2fa',
+	twoFactorAuthApp: userServiceOrigin + '/service/users/2fa/app',
+	twoFactorAuthEmail: userServiceOrigin + '/service/users/2fa/email',
+	updateMessage: userServiceOrigin + '/service/messages/',
+	userData: userServiceOrigin + '/service/users/data',
+	eventNotifications:
+		userServiceOrigin + '/service/users/event-notifications',
+	doNotDisturb:
+		userServiceOrigin + '/service/users/notifications/do-not-disturb',
 	userDataBySessionId: (sessionId: number) =>
-		apiUrl + `/service/users/consultants/sessions/${sessionId}`,
+		userServiceOrigin + `/service/users/consultants/sessions/${sessionId}`,
 	userSessionsListView: '/sessions/user/view',
-	serviceSettings: apiUrl + '/service/settings',
+	serviceSettings: consultingTypeServiceOrigin + '/service/settings',
 	frontend: {
 		settings: '/p/api/settings'
 	},
 	setAppointmentSuccessMessage:
-		apiUrl + '/service/messages/aliasWithContent/new',
-	userUpdateE2EKey: apiUrl + '/service/users/chat/e2e',
-	videocallServiceBase: apiUrl + '/service/videocalls'
+		userServiceOrigin + '/service/messages/aliasWithContent/new'
 };

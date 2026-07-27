@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
-import Switch from 'react-switch';
+import { Switch } from '../Switch';
 import { UserDataContext } from '../../globalState';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 
@@ -64,7 +64,9 @@ export const MagicLinksLoginFeature = () => {
 			</div>
 			{!hasEmail && (
 				<Text
-					text={translate('profile.functions.magicLinks.emailRequired')}
+					text={translate(
+						'profile.functions.magicLinks.emailRequired'
+					)}
 					type="infoSmall"
 					className="tertiary"
 				/>
@@ -76,21 +78,25 @@ export const MagicLinksLoginFeature = () => {
 					onChange={handleToggle}
 					checked={isEnabled}
 					disabled={!hasEmail || isSaving}
-					uncheckedIcon={false}
-					checkedIcon={false}
-					width={48}
-					height={26}
-					onColor="#0A882F"
-					offColor="#8C878C"
-					boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-					handleDiameter={27}
-					activeBoxShadow="none"
+					aria-label={
+						isEnabled
+							? translate(
+									'profile.functions.magicLinks.toggle.enabled'
+								)
+							: translate(
+									'profile.functions.magicLinks.toggle.disabled'
+								)
+					}
 				/>
 				<Text
 					text={
 						isEnabled
-							? translate('profile.functions.magicLinks.toggle.enabled')
-							: translate('profile.functions.magicLinks.toggle.disabled')
+							? translate(
+									'profile.functions.magicLinks.toggle.enabled'
+								)
+							: translate(
+									'profile.functions.magicLinks.toggle.disabled'
+								)
 					}
 					type="standard"
 				/>
@@ -98,5 +104,3 @@ export const MagicLinksLoginFeature = () => {
 		</div>
 	);
 };
-
-

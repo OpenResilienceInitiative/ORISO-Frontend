@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
 	AUTHORITIES,
-	E2EEContext,
 	hasUserAuthority,
 	SessionTypeContext,
 	useConsultingType,
@@ -22,27 +21,24 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { logout } from '../logout/logout';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 import './joinChat.styles';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
-import { useE2EE } from '../../hooks/useE2EE';
-import { encryptForParticipant } from '../../utils/encryptionHelpers';
-import { apiRocketChatUpdateGroupKey } from '../../api/apiRocketChatUpdateGroupKey';
-import { apiRocketChatSetRoomKeyID } from '../../api/apiRocketChatSetRoomKeyID';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-import {
-	ALIAS_MESSAGE_TYPES,
-	apiSendAliasMessage
-} from '../../api/apiSendAliasMessage';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { FALLBACK_LNG } from '../../i18n';
+import { WaitingAreaRules } from './WaitingAreaRules';
+import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
+import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
+import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
+import { getGroupChatPlannedStart } from './groupChatDate';
+import { translateWithFallback } from '../../utils/translationFallback';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -53,7 +49,15 @@ export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
-	const { t: translate } = useTranslation(['common', 'consultingTypes']);
+	const { t: translate, i18n } = useTranslation([
+		'common',
+		'consultingTypes'
+	]);
+	const tr = useCallback(
+		(key: string, fallback: string, options?: Record<string, unknown>) =>
+			translateWithFallback(translate, key, fallback, options),
+		[translate]
+	);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -69,11 +73,7 @@ export const JoinGroupChatView = ({
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
 
-	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { path: listPath } = useContext(SessionTypeContext);
-	const { keyID, sessionKeyExportedString, encrypted, ready } = useE2EE(
-		activeSession.rid
-	);
 
 	const { visible: requestOverlayVisible, overlay: requestOverlay } =
 		useTimeoutOverlay(
@@ -151,43 +151,6 @@ export const JoinGroupChatView = ({
 		[translate]
 	);
 
-	const handleEncryptRoom = useCallback(async () => {
-		if (!isE2eeEnabled || encrypted || activeSession?.item?.active) {
-			return;
-		}
-
-		const rcUserId = getValueFromCookie('rc_uid');
-
-		const userKey = await encryptForParticipant(
-			sessionStorage.getItem('public_key'),
-			keyID,
-			sessionKeyExportedString
-		);
-
-		await apiRocketChatUpdateGroupKey(rcUserId, activeSession.rid, userKey);
-
-		// Set Room Key ID at the very end because if something failed before it will still be repairable
-		// After room key is set the room is encrypted and the room key could not be set again.
-		try {
-			await apiRocketChatSetRoomKeyID(activeSession.rid, keyID);
-			await apiSendAliasMessage({
-				rcGroupId: activeSession.rid,
-				type: ALIAS_MESSAGE_TYPES.E2EE_ACTIVATED
-			});
-		} catch (e) {
-			// console.error(e);
-			return;
-		}
-	}, [
-		isE2eeEnabled,
-		encrypted,
-		activeSession?.item?.active,
-		activeSession.rid,
-		keyID,
-		sessionKeyExportedString
-	]);
-	/* E2EE END */
-
 	const updateGroupChatInfo = useCallback(() => {
 		return apiGetGroupChatInfo(activeSession.item.id)
 			.then((res) => {
@@ -248,11 +211,10 @@ export const JoinGroupChatView = ({
 		) {
 			setIsButtonDisabled(
 				!activeSession.item.active ||
-					bannedUsers.includes(userData.userName) ||
-					!ready
+					bannedUsers.includes(userData.userName)
 			);
 		}
-	}, [activeSession.item.active, bannedUsers, ready, userData]);
+	}, [activeSession.item.active, bannedUsers, userData]);
 
 	const handleOverlayClose = () => {
 		setOverlayActive(false);
@@ -274,11 +236,6 @@ export const JoinGroupChatView = ({
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
-			.then(
-				() =>
-					groupChatApiCall === GROUP_CHAT_API.START &&
-					handleEncryptRoom()
-			)
 			.then(() => reloadActiveSession())
 			.catch(() => {
 				setOverlayItem(startJoinGroupChatErrorOverlay);
@@ -308,7 +265,7 @@ export const JoinGroupChatView = ({
 		}
 	}, [forceBannedOverlay, bannedUserOverlay]);
 
-	const groupChatRules = useMemo(() => {
+	const legacyGroupChatRules = useMemo(() => {
 		const transKeys = [
 			`consultingType.${topic?.id ?? 'noConsultingType'}.groupChatRules`,
 			`consultingType.fallback.groupChatRules`
@@ -334,9 +291,34 @@ export const JoinGroupChatView = ({
 		);
 	}, [consultingType?.groupChat?.groupChatRules, topic?.id, translate]);
 
+	const authorContent = useMemo(
+		() =>
+			resolveGroupChatAuthorContent({
+				language: i18n.resolvedLanguage || i18n.language,
+				sourceLanguage: activeSession.item.sourceLanguage,
+				hintMessageTranslations:
+					activeSession.item.hintMessageTranslations,
+				groupChatRulesTranslations:
+					activeSession.item.groupChatRulesTranslations,
+				legacyHintMessage: activeSession.item.hintMessage,
+				legacyRules: legacyGroupChatRules
+			}),
+		[
+			activeSession.item.groupChatRulesTranslations,
+			activeSession.item.hintMessage,
+			activeSession.item.hintMessageTranslations,
+			activeSession.item.sourceLanguage,
+			i18n.language,
+			i18n.resolvedLanguage,
+			legacyGroupChatRules
+		]
+	);
+	const groupChatRules = authorContent.rules;
+	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+
 	if (redirectToSessionsList) {
 		mobileListView();
-		return <Redirect to={listPath + getSessionListTab()} />;
+		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
 	return (
@@ -346,13 +328,44 @@ export const JoinGroupChatView = ({
 				bannedUsers={bannedUsers}
 			/>
 			<div className="joinChat__content session__content">
-				<Headline
-					text={translate('groupChat.join.content.headline')}
-					semanticLevel="4"
+				{/* The scheduled-chat countdown carries its own headline
+				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
+				    above it just repeats the frame. Only show the standalone
+				    "Spielregeln"-headline in the no-countdown (hint message) view. */}
+				{!plannedStart && (
+					<Headline
+						text={translate('groupChat.join.content.headline')}
+						semanticLevel="4"
+					/>
+				)}
+				{!!authorContent.hintMessage && !plannedStart && (
+					<Text text={authorContent.hintMessage} type="standard" />
+				)}
+				{plannedStart && (
+					<div className="joinChat__waitingBox">
+						<WaitingAreaCountdown
+							plannedStart={plannedStart}
+							welcomeText={authorContent.hintMessage || undefined}
+							rules={groupChatRules}
+							calendarSlot={
+								<GroupChatCalendarMenu
+									start={plannedStart}
+									durationMinutes={
+										activeSession.item.duration
+									}
+									eventId={activeSession.item.id}
+								/>
+							}
+						/>
+					</div>
+				)}
+				<WaitingAreaRules
+					rules={groupChatRules}
+					ariaLabel={tr(
+						'groupChat.join.waitingArea.rulesLabel',
+						'Chat rules'
+					)}
 				/>
-				{groupChatRules.map((groupChatRuleText, i) => (
-					<Text text={groupChatRuleText} type="standard" key={i} />
-				))}
 			</div>
 			<div className="joinChat__button-container">
 				{!hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&

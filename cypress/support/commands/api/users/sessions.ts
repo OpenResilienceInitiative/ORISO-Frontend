@@ -3,18 +3,20 @@ import { sessionsReply } from '../../../sessions';
 
 const usersSessionsApi = (cy, getWillReturn, setWillReturn) => {
 	cy.intercept('GET', `${endpoints.sessionRooms}*`, (req) => {
-		const rcGroupId = new URL(req.url).searchParams.get('rcGroupIds');
+		const matrixRoomIds = (
+			new URL(req.url).searchParams.get('roomIds[]') || ''
+		).split(',');
 		const askerSessions = getWillReturn('askerSessions');
 		let foundSession = null;
-		askerSessions.forEach((session, index) => {
-			if (session.session.groupId === rcGroupId) {
+		askerSessions.forEach((session) => {
+			if (matrixRoomIds.includes(session.session.matrixRoomId)) {
 				foundSession = session.session;
 			}
 		});
 
 		const consultantSessions = getWillReturn('consultantSessions');
-		consultantSessions.forEach((session, index) => {
-			if (session.session.groupId === rcGroupId) {
+		consultantSessions.forEach((session) => {
+			if (matrixRoomIds.includes(session.session.matrixRoomId)) {
 				foundSession = session.session;
 			}
 		});

@@ -49,7 +49,30 @@
 		margin-top: $grid-base-six;
 	}
 
-	ol {
+	&__callStack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $grid-base;
+		margin-top: $grid-base-two;
+		padding: 0;
+		list-style: none;
+
+		li {
+			display: inline-flex;
+			align-items: center;
+			min-height: $grid-base-four;
+			margin-left: 0;
+			padding: 0 $grid-base-two;
+			border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
+			border-radius: $grid-base-two;
+			background-color: var(--oriso-primary-fixed, #ffdad5);
+			color: var(--oriso-on-primary-fixed-variant, #930008);
+			font-weight: $font-weight-medium;
+		}
+	}
+
+	ol,
+	ul:not(.help__callStack) {
 		margin-left: 0;
 		padding: 0;
 
@@ -67,7 +90,7 @@
 
 	&__copyLink {
 		display: block;
-		color: $primary;
+		color: var(--m3-primary, $primary);
 		width: max-content;
 
 		&:focus {

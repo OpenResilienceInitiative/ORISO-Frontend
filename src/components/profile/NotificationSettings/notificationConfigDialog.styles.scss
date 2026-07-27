@@ -1,0 +1,270 @@
+.notifConfig {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+
+	&__intro {
+		margin: 0;
+		font-size: 15px;
+		color: #1a1a1a;
+	}
+
+	&__emailNote {
+		margin: 0 0 8px;
+		font-size: 13px;
+		color: #6b7280;
+	}
+
+	&__tabs {
+		display: flex;
+		gap: 24px;
+		border-bottom: 1px solid #e5e7eb;
+		margin-bottom: 16px;
+	}
+
+	&__tab {
+		background: none;
+		border: none;
+		padding: 8px 2px;
+		font-size: 15px;
+		color: #6b7280;
+		cursor: pointer;
+		border-bottom: 2px solid transparent;
+
+		&--active {
+			color: var(--m3-primary, #a5000a);
+			border-bottom-color: var(--m3-primary, #a5000a);
+			font-weight: 600;
+		}
+
+		&--disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+	}
+
+	&__rows {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	&__row {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__label {
+		font-size: 12px;
+		color: #6b7280;
+		padding-left: 4px;
+	}
+
+	&__rowControls {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	&__volume {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		flex: 0 0 auto;
+	}
+
+	// Bare up/down arrows (Frank's keyboard_arrow icons); hover turns black
+	// so it is obvious they are pressable.
+	&__volumeBtn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		border: none;
+		background: transparent;
+		color: #4c555f;
+		padding: 0;
+		cursor: pointer;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		&:hover:not(:disabled) {
+			color: #000;
+		}
+
+		&:disabled {
+			opacity: 0.35;
+			cursor: not-allowed;
+		}
+	}
+
+	&__selectWrap {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		border: 1px solid #cfd4da;
+		border-radius: 8px;
+		padding: 0 12px;
+		height: 48px;
+		flex: 1;
+	}
+
+	// State icon INSIDE the field (left), per the Figma.
+	&__fieldIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		width: 24px;
+		height: 24px;
+		padding: 0;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		// A tone is chosen → a plain play button to preview it.
+		&--play {
+			border: none;
+			background: transparent;
+			color: var(--m3-primary, #a5000a);
+			cursor: pointer;
+		}
+
+		// No tone → the crossed-out (muted) icon, not interactive.
+		&--mute {
+			color: #9aa1a9;
+		}
+	}
+
+	&__select {
+		flex: 1;
+		border: none;
+		background: transparent;
+		font-size: 15px;
+		height: 100%;
+		outline: none;
+		color: #1a1a1a;
+	}
+
+	// Channel row: banner mode select + M3 email checkbox
+	&__channels {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+
+	&__banner {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		color: #1a1a1a;
+	}
+
+	&__bannerSelect {
+		border: 1px solid #cfd4da;
+		border-radius: 6px;
+		background: #fff;
+		font-size: 13px;
+		padding: 4px 8px;
+		color: #1a1a1a;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
+	}
+
+	// Feature-signal micro-survey card (FE#590 dummy)
+	&__signalCard {
+		margin-top: 20px;
+		padding: 14px 16px;
+		border: 1px dashed #cfd4da;
+		border-radius: 10px;
+		background: #fafafa;
+	}
+
+	&__signalTitle {
+		display: block;
+		font-size: 14px;
+		color: #1a1a1a;
+		margin-bottom: 4px;
+	}
+
+	&__signalText {
+		margin: 0 0 10px;
+		font-size: 13px;
+		color: #4c555f;
+	}
+
+	&__signalThanks {
+		margin: 0;
+		font-size: 13px;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
+
+	&__signalVotes {
+		display: flex;
+		gap: 10px;
+	}
+
+	&__signalVote {
+		border: 1px solid #cfd4da;
+		border-radius: 8px;
+		background: #fff;
+		padding: 8px 14px;
+		font-size: 13px;
+		cursor: pointer;
+
+		&:hover {
+			background: #f4f5f6;
+		}
+	}
+
+	&__footer {
+		display: flex;
+		gap: 12px;
+		margin-top: 24px;
+		align-items: center;
+	}
+
+	&__cancel {
+		width: 48px;
+		height: 44px;
+		border-radius: 8px;
+		border: none;
+		background: #cfd4da;
+		color: #fff;
+		font-size: 16px;
+		cursor: pointer;
+	}
+
+	&__confirm {
+		flex: 1;
+		height: 44px;
+		border-radius: 8px;
+		border: none;
+		background: var(--m3-secondary, #4c555f);
+		color: #fff;
+		font-size: 15px;
+		cursor: pointer;
+	}
+}
+
+// Mobile: footer buttons keep the row layout from the Figma mobile mockup.
+@media (width <= 575px) {
+	.notifConfig__tabs {
+		gap: 16px;
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"moduleResolution": "bundler",
+		"types": ["node", "react", "react-dom"],
+		"jsx": "react-jsx"
+	},
+	"include": [
+		"src/react-app-env.d.ts",
+		"src/generated/**/*.d.ts",
+		".storybook/**/*.ts",
+		".storybook/**/*.tsx",
+		"src/**/*.stories.ts",
+		"src/**/*.stories.tsx"
+	],
+	"exclude": ["node_modules"]
+}

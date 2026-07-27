@@ -3,16 +3,23 @@ import React, {
 	useEffect,
 	useImperativeHandle,
 	useMemo,
+	useRef,
 	useState
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { JSONContent, Mark } from '@tiptap/core';
+import { Mark } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import {
+	createMentionExtension,
+	MentionProvider
+} from './inputField/extensions/createMentionExtension';
 import {
 	FormatBold,
 	FormatListBulleted,
@@ -21,7 +28,17 @@ import {
 	Redo,
 	ChevronRight
 } from '@mui/icons-material';
+import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
+import {
+	filesFromDataTransfer,
+	hasComposerFiles
+} from './composerFileDropPaste';
 import './TipTapComposer.styles.scss';
+
+const isMentionSuggestionOpen = (): boolean =>
+	!!document.querySelector(
+		'.mentionList__popup .mentionList, .mentionList[role="listbox"]'
+	);
 
 export interface HighlightSnippetPayload {
 	text: string;
@@ -35,6 +52,8 @@ export interface TipTapComposerRef {
 	setText: (value: string) => void;
 	getHTML: () => string;
 	insertText: (value: string) => void;
+	/** Inserts '@' so the mention suggestion reliably opens. */
+	insertMentionTrigger: () => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 	isActionActive: (action: string) => boolean;
@@ -45,164 +64,75 @@ interface TipTapComposerProps {
 	placeholder: string;
 	showToolbar: boolean;
 	readOnly: boolean;
+	maxLength?: number;
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
+	/** Editor gained/lost focus — drives the Figma "Selected" container state. */
+	onFocusChange?: (focused: boolean) => void;
+	/** Enables Slack-like @-mentions for agency consultants when provided. */
+	mentionProvider?: MentionProvider;
+	/** Shortcut: edit the last own message (returns true if handled). */
+	onEditLast?: () => boolean;
+	/** Shortcut: cancel the current reply/edit (returns true if handled). */
+	onCancel?: () => boolean;
+	/** Shortcut: open the file attachment picker (returns true if handled). */
+	onUpload?: () => boolean;
+	/** Shortcut: open the emoji picker (returns true if handled). */
+	onOpenEmoji?: () => boolean;
+	/** True when the composer has no text and no attachment. */
+	isComposerEmpty?: boolean;
+	/**
+	 * Files dropped or pasted into the editor (WP-4): routed into the
+	 * existing attachment flow by the parent. Absent = files fall through
+	 * to the browser default.
+	 */
+	onFilesSelected?: (files: File[]) => void;
 }
 
-const escapeMarkdownText = (value: string): string =>
-	value.replace(/([\\`*_~\[\]()])/g, '\\$1');
+const getEditorPlainTextLength = (editorLike: any): number =>
+	(editorLike?.state?.doc?.textContent || '').length;
 
-const applyTextMarks = (
-	text: string,
-	marks: Array<{ type: string; attrs?: Record<string, any> }> = []
-): string => {
-	if (!text) {
-		return '';
-	}
+const isEditorReady = (editorLike: any): boolean =>
+	Boolean(editorLike && !editorLike.isDestroyed);
 
-	let result = text;
-	const linkMark = marks.find((mark) => mark.type === 'link');
-	const codeMark = marks.some((mark) => mark.type === 'code');
-	const boldMark = marks.some((mark) => mark.type === 'bold');
-	const italicMark = marks.some((mark) => mark.type === 'italic');
-	const strikeMark = marks.some((mark) => mark.type === 'strike');
-	const underlineMark = marks.some((mark) => mark.type === 'underline');
-	const highlightMark = marks.some((mark) => mark.type === 'highlight');
+const getSelectionTextLength = (
+	editorLike: any,
+	from: number,
+	to: number
+): number => (editorLike?.state?.doc?.textBetween(from, to, '') || '').length;
 
-	if (codeMark) {
-		result = `\`${result}\``;
-	}
-	if (boldMark) {
-		result = `**${result}**`;
-	}
-	if (italicMark) {
-		result = `*${result}*`;
-	}
-	if (strikeMark) {
-		result = `~~${result}~~`;
-	}
-	if (underlineMark) {
-		result = `<u>${result}</u>`;
-	}
-	if (highlightMark) {
-		result = `<mark>${result}</mark>`;
-	}
-	if (linkMark?.attrs?.href) {
-		result = `[${result}](${linkMark.attrs.href})`;
+const getAvailableInputLength = (
+	editorLike: any,
+	from: number,
+	to: number,
+	maxLength?: number
+): number | null => {
+	if (!maxLength) {
+		return null;
 	}
 
-	return result;
+	const currentLength = getEditorPlainTextLength(editorLike);
+	const selectedLength = getSelectionTextLength(editorLike, from, to);
+	return maxLength - (currentLength - selectedLength);
 };
 
-const serializeInlineNodes = (nodes: JSONContent[] = []): string =>
-	nodes
-		.map((node) => {
-			if (node.type === 'text') {
-				return applyTextMarks(
-					escapeMarkdownText(node.text || ''),
-					(node.marks as Array<{
-						type: string;
-						attrs?: Record<string, any>;
-					}>) || []
-				);
-			}
-			if (node.type === 'hardBreak') {
-				return '\n';
-			}
-			if (node.content?.length) {
-				return serializeInlineNodes(node.content);
-			}
-			return '';
-		})
-		.join('');
-
-const serializeBlocks = (node?: JSONContent): string => {
-	if (!node) {
-		return '';
+const enforceEditorMaxLength = (
+	editorLike: any,
+	maxLength?: number
+): boolean => {
+	if (!maxLength || !isEditorReady(editorLike)) {
+		return false;
 	}
 
-	if (node.type === 'doc') {
-		return (node.content || [])
-			.map((child) => serializeBlocks(child).trimEnd())
-			.filter(Boolean)
-			.join('\n\n');
+	const plainText = editorLike?.state?.doc?.textContent || '';
+	if (plainText.length <= maxLength) {
+		return false;
 	}
 
-	if (node.type === 'paragraph') {
-		return serializeInlineNodes(node.content || []);
-	}
-
-	if (node.type === 'heading') {
-		const level = Math.min(Math.max(node.attrs?.level || 1, 1), 6);
-		return `${'#'.repeat(level)} ${serializeInlineNodes(node.content || [])}`;
-	}
-
-	if (node.type === 'blockquote') {
-		const quoted = (node.content || [])
-			.map((child) => serializeBlocks(child))
-			.filter(Boolean)
-			.join('\n')
-			.split('\n')
-			.map((line) => `> ${line}`)
-			.join('\n');
-		return quoted;
-	}
-
-	if (node.type === 'bulletList') {
-		return (node.content || [])
-			.map((item) => {
-				const text = (item.content || [])
-					.map((child) => serializeBlocks(child))
-					.join('\n')
-					.trim();
-				return `- ${text}`;
-			})
-			.join('\n');
-	}
-
-	if (node.type === 'orderedList') {
-		return (node.content || [])
-			.map((item, index) => {
-				const text = (item.content || [])
-					.map((child) => serializeBlocks(child))
-					.join('\n')
-					.trim();
-				return `${index + 1}. ${text}`;
-			})
-			.join('\n');
-	}
-
-	if (node.type === 'listItem') {
-		return (node.content || [])
-			.map((child) => serializeBlocks(child))
-			.join('\n');
-	}
-
-	if (node.type === 'codeBlock') {
-		const text = serializeInlineNodes(node.content || []);
-		return `\`\`\`\n${text}\n\`\`\``;
-	}
-
-	if (node.type === 'text') {
-		return applyTextMarks(
-			escapeMarkdownText(node.text || ''),
-			(node.marks as Array<{
-				type: string;
-				attrs?: Record<string, any>;
-			}>) || []
-		);
-	}
-
-	if (node.content?.length) {
-		return node.content.map((child) => serializeBlocks(child)).join('\n');
-	}
-
-	return '';
+	editorLike.commands.setContent(plainText.slice(0, maxLength));
+	return true;
 };
-
-const serializeEditorToMarkdown = (doc?: JSONContent): string =>
-	serializeBlocks(doc).trim();
 
 const Superscript = Mark.create({
 	name: 'superscript',
@@ -234,13 +164,37 @@ export const TipTapComposer = forwardRef<
 			placeholder,
 			showToolbar,
 			readOnly,
+			maxLength,
 			onChange,
 			onSubmitShortcut,
-			onSelectionSnippet
+			onSelectionSnippet,
+			onFocusChange,
+			mentionProvider,
+			onEditLast,
+			onCancel,
+			onUpload,
+			onOpenEmoji,
+			isComposerEmpty,
+			onFilesSelected
 		},
 		ref
 	) => {
 		const [isSyncingFromValue, setIsSyncingFromValue] = useState(false);
+
+		const { handleComposerKeyDown } = useChatComposerShortcuts({
+			onSend: onSubmitShortcut,
+			disabled: readOnly,
+			hasOpenSuggestions: false,
+			onEditLast,
+			onCancel,
+			onUpload,
+			onOpenEmoji,
+			isComposerEmpty
+		});
+		const shortcutHandlerRef = useRef(handleComposerKeyDown);
+		shortcutHandlerRef.current = handleComposerKeyDown;
+		const onFilesSelectedRef = useRef(onFilesSelected);
+		onFilesSelectedRef.current = onFilesSelected;
 
 		const editor = useEditor({
 			extensions: useMemo(
@@ -263,33 +217,129 @@ export const TipTapComposer = forwardRef<
 					}),
 					Placeholder.configure({
 						placeholder
-					})
+					}),
+					TaskList,
+					TaskItem.configure({ nested: true }),
+					...(mentionProvider
+						? [createMentionExtension(mentionProvider)]
+						: [])
 				],
+				// mentionProvider is captured once on mount — the provider reads
+				// live data via its closures, so it need not be a dep.
+				// eslint-disable-next-line react-hooks/exhaustive-deps
 				[placeholder]
 			),
 			content: value || '',
 			editable: !readOnly,
 			editorProps: {
-				handleKeyDown: (_, event) => {
+				handleTextInput: (view, from, to, text) => {
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
 					if (
-						event.key === 'Enter' &&
-						(event.ctrlKey || event.metaKey)
+						availableLength === null ||
+						text.length <= availableLength
 					) {
-						event.preventDefault();
-						onSubmitShortcut();
+						return false;
+					}
+					if (availableLength <= 0) {
 						return true;
 					}
-					return false;
+					view.dispatch(
+						view.state.tr.insertText(
+							text.slice(0, availableLength),
+							from,
+							to
+						)
+					);
+					return true;
+				},
+				handleDrop: (_view, event, _slice, moved) => {
+					if (moved || !onFilesSelectedRef.current) {
+						return false;
+					}
+					if (!hasComposerFiles(event.dataTransfer)) {
+						return false;
+					}
+					event.preventDefault();
+					onFilesSelectedRef.current(
+						filesFromDataTransfer(event.dataTransfer)
+					);
+					return true;
+				},
+				handlePaste: (view, event) => {
+					// Files first (e.g. a pasted screenshot): route into the
+					// attachment flow instead of inserting anything.
+					if (
+						onFilesSelectedRef.current &&
+						hasComposerFiles(event.clipboardData)
+					) {
+						event.preventDefault();
+						onFilesSelectedRef.current(
+							filesFromDataTransfer(event.clipboardData)
+						);
+						return true;
+					}
+					const pastedText =
+						event.clipboardData?.getData('text/plain') || '';
+					if (!pastedText) {
+						return false;
+					}
+
+					const { from, to } = view.state.selection;
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
+					if (
+						availableLength === null ||
+						pastedText.length <= availableLength
+					) {
+						return false;
+					}
+
+					event.preventDefault();
+					if (availableLength > 0) {
+						view.dispatch(
+							view.state.tr.insertText(
+								pastedText.slice(0, availableLength),
+								from,
+								to
+							)
+						);
+					}
+					return true;
+				},
+				handleKeyDown: (_, event) => {
+					if (isMentionSuggestionOpen()) {
+						return false;
+					}
+					return shortcutHandlerRef.current(event);
 				}
 			},
+			onFocus: () => {
+				onFocusChange?.(true);
+			},
+			onBlur: () => {
+				onFocusChange?.(false);
+			},
 			onUpdate: ({ editor: currentEditor }) => {
-				if (isSyncingFromValue) {
+				if (isSyncingFromValue || !isEditorReady(currentEditor)) {
+					return;
+				}
+				if (enforceEditorMaxLength(currentEditor, maxLength)) {
+					onChange(currentEditor.getHTML());
 					return;
 				}
 				onChange(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
-				if (!onSelectionSnippet) {
+				if (!onSelectionSnippet || !isEditorReady(currentEditor)) {
 					return;
 				}
 				const { from, to } = currentEditor.state.selection;
@@ -309,14 +359,14 @@ export const TipTapComposer = forwardRef<
 		});
 
 		useEffect(() => {
-			if (!editor) {
+			if (!isEditorReady(editor)) {
 				return;
 			}
 			editor.setEditable(!readOnly);
 		}, [editor, readOnly]);
 
 		useEffect(() => {
-			if (!editor) {
+			if (!isEditorReady(editor)) {
 				return;
 			}
 			const normalizedValue = (value || '')
@@ -337,6 +387,9 @@ export const TipTapComposer = forwardRef<
 			try {
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
+				if (enforceEditorMaxLength(editor, maxLength)) {
+					onChange(editor.getHTML());
+				}
 			} catch {
 				try {
 					editor.commands.clearContent();
@@ -345,32 +398,59 @@ export const TipTapComposer = forwardRef<
 				}
 			}
 			setTimeout(() => setIsSyncingFromValue(false), 0);
-		}, [editor, value]);
+		}, [editor, maxLength, onChange, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
-				editor?.commands.clearContent();
+				if (isEditorReady(editor)) {
+					editor.commands.clearContent();
+				}
 			},
 			focus: () => {
-				editor?.commands.focus();
+				if (isEditorReady(editor)) {
+					editor.commands.focus();
+				}
 			},
 			setText: (nextValue: string) => {
-				editor?.commands.setContent(nextValue || '');
+				if (isEditorReady(editor)) {
+					editor.commands.setContent(nextValue || '');
+				}
 			},
 			getHTML: () => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return '';
 				}
 				return editor.getHTML();
 			},
 			insertText: (nextValue: string) => {
-				if (!editor || !nextValue) {
+				if (!isEditorReady(editor) || !nextValue) {
 					return;
 				}
 				editor.chain().focus().insertContent(nextValue).run();
 			},
+			insertMentionTrigger: () => {
+				if (!isEditorReady(editor)) {
+					return;
+				}
+				// The mention suggestion only fires on '@' at a line start or
+				// after whitespace — a bare '@' pasted right behind text would
+				// silently do nothing, so pad it when needed.
+				const { $from } = editor.state.selection;
+				const textBefore = $from.parent.textBetween(
+					0,
+					$from.parentOffset,
+					undefined,
+					'￼'
+				);
+				const needsSpace = /\S$/.test(textBefore);
+				editor
+					.chain()
+					.focus()
+					.insertContent(needsSpace ? ' @' : '@')
+					.run();
+			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
-				if (!editor || !payload?.text) {
+				if (!isEditorReady(editor) || !payload?.text) {
 					return;
 				}
 				const anchorMeta = payload.anchorId
@@ -386,7 +466,7 @@ export const TipTapComposer = forwardRef<
 					.run();
 			},
 			runAction: (action: string) => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return;
 				}
 
@@ -423,6 +503,16 @@ export const TipTapComposer = forwardRef<
 							.focus()
 							.toggleHeading({ level: 3 })
 							.run();
+						return;
+					case 'heading4':
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 4 })
+							.run();
+						return;
+					case 'taskList':
+						editor.chain().focus().toggleTaskList().run();
 						return;
 					case 'alignLeft':
 						editor.chain().focus().setTextAlign('left').run();
@@ -582,7 +672,7 @@ export const TipTapComposer = forwardRef<
 				}
 			},
 			isActionActive: (action: string) => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return false;
 				}
 				const activeTextAlign = editor.isActive('heading')
@@ -599,6 +689,10 @@ export const TipTapComposer = forwardRef<
 						return editor.isActive('heading', { level: 2 });
 					case 'heading3':
 						return editor.isActive('heading', { level: 3 });
+					case 'heading4':
+						return editor.isActive('heading', { level: 4 });
+					case 'taskList':
+						return editor.isActive('taskList');
 					case 'alignLeft':
 						return (
 							activeTextAlign !== 'center' &&
@@ -638,7 +732,7 @@ export const TipTapComposer = forwardRef<
 			}
 		}));
 
-		if (!editor) {
+		if (!isEditorReady(editor)) {
 			return <div className="tiptap-composer__loading" />;
 		}
 

@@ -9,7 +9,7 @@ $select-menu-before-display: block !default;
 
 		.warning {
 			margin-top: 10px;
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 
@@ -26,6 +26,10 @@ $select-menu-before-display: block !default;
 			outline-offset: 4px;
 			border-radius: 4px;
 			transition: all 0.6s ease;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
 		}
 
 		&__menu {
@@ -134,7 +138,7 @@ $select-menu-before-display: block !default;
 			cursor: pointer;
 
 			&:hover {
-				color: var(--skin-color-default, $primary);
+				color: var(--m3-primary, $primary);
 				background-color: $hover-select;
 			}
 		}

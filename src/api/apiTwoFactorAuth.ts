@@ -11,7 +11,7 @@ export const apiPutTwoFactorAuthApp = async (body: {
 		url: url,
 		method: FETCH_METHODS.PUT,
 		bodyData: JSON.stringify(body),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST]
+		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.CONFLICT]
 	});
 };
 
@@ -24,6 +24,7 @@ export const apiPutTwoFactorAuthEmail = async (email: string): Promise<any> => {
 		bodyData: JSON.stringify({ email }),
 		responseHandling: [
 			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.CONFLICT,
 			FETCH_ERRORS.PRECONDITION_FAILED
 		]
 	});
@@ -50,7 +51,11 @@ export const apiPostTwoFactorAuthEmailWithCode = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST]
+		responseHandling: [
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.PRECONDITION_FAILED,
+			FETCH_ERRORS.TOO_MANY_REQUESTS
+		]
 	});
 };
 

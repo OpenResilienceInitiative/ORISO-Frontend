@@ -10,6 +10,11 @@
 /coverage
 /cypress/screenshots
 /cypress/videos
+/playwright-report
+/test-results
+/playwright/.cache
+/.playwright-cli/
+/output/playwright/
 
 # production
 /build
@@ -18,6 +23,7 @@
 # misc
 .DS_Store
 .vscode/*
+ROUTER_V7_MIGRATION_PLAN.md
 .env
 .env.local
 .env.development.local
@@ -37,3 +43,15 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.idea/
+
+# dev scratch / proof files
+tmp*/
+.tmp-proof/
+graphify-out/*
+
+# chromatic build log
+build-storybook.log
+docs/*
+!docs/storybook/
+!docs/storybook/**
+*.pem

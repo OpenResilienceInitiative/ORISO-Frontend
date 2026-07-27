@@ -1,75 +1,97 @@
-import { Steps } from 'intro.js-react';
 import * as React from 'react';
-import { useContext, useCallback, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
-
-import 'intro.js/introjs.css';
-import './walkthrough.styles.scss';
+import { useCallback, useContext } from 'react';
+import { useAtom } from 'jotai';
 import { UserDataContext } from '../../globalState';
-import { apiPatchConsultantData } from '../../api';
-import steps from './steps';
-import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { apiPatchConsultantData } from '../../api';
+import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
+import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
+import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
+import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
+import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
+import type { TourEvent, TourProgress, TourStep } from '../productTour/types';
 
+/**
+ * Consultant walkthrough host. Runs either through the legacy auto-start
+ * gate (app-config flag + the user's walkthrough switch) or on demand from
+ * the profile tutorial carousel. Progress is persisted through the versioned
+ * UserService API; the legacy boolean is kept in sync so the auto-start
+ * behavior stays unchanged.
+ */
 export const Walkthrough = () => {
-	const { t: translate } = useTranslation();
-
-	const ref = useRef<any>(null);
 	const settings = useAppConfig();
 	const { userData, reloadUserData } = useContext(UserDataContext);
-	const history = useHistory();
+	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 
-	const onChangeStep = useCallback(() => {
-		ref.current.props.steps.forEach((step, key) => {
-			if (step.element) {
-				ref.current.introJs._introItems[key].element =
-					document.querySelector(step.element);
-				ref.current.introJs._introItems[key].position = step.position
-					? step.position
-					: 'bottom';
+	const isLaunchRequested =
+		launchRequest?.tourId === consultantWalkthroughTour.id;
+	const isAutoRun = !!userData.isWalkThroughEnabled;
+
+	const lastStepId =
+		consultantWalkthroughTour.steps[
+			consultantWalkthroughTour.steps.length - 1
+		].id;
+
+	const persistStepProgress = useCallback(
+		(event: TourEvent, step?: TourStep) => {
+			if (event === 'step_completed' && step && step.id !== lastStepId) {
+				// Fire-and-forget: step progress powers the carousel's
+				// continue state but must never block the tour.
+				versionedTourProgressRepository
+					.saveProgress({
+						tourId: consultantWalkthroughTour.id,
+						tourVersion: consultantWalkthroughTour.version,
+						status: 'in_progress',
+						currentStepId: step.id
+					})
+					.catch(() => {});
 			}
-		});
-	}, [ref]);
+			if (event === 'tour_started' && launchRequest?.mode === 'restart') {
+				// A restart of a terminal tour re-opens the versioned scope.
+				versionedTourProgressRepository
+					.saveProgress({
+						tourId: consultantWalkthroughTour.id,
+						tourVersion: consultantWalkthroughTour.version,
+						status: 'in_progress'
+					})
+					.catch(() => {});
+			}
+		},
+		[lastStepId, launchRequest?.mode]
+	);
 
-	const stepsData = steps();
-	// Sometimes when not even showing the modal the steps are triggering the on exist callback so it was causing
-	// to enable the WalkThrough and this way prevents from render
-	if (!userData.isWalkThroughEnabled || !settings.enableWalkthrough) {
+	const handleTerminalStatus = useCallback(
+		async (progress: TourProgress) => {
+			try {
+				await versionedTourProgressRepository.saveProgress(progress);
+			} finally {
+				if (userData.isWalkThroughEnabled) {
+					// Keep the legacy auto-start boolean in sync so the tour
+					// does not re-open on the next app view.
+					await apiPatchConsultantData({
+						walkThroughEnabled: false
+					}).catch(() => {});
+					reloadUserData();
+				}
+				setLaunchRequest(null);
+			}
+		},
+		[reloadUserData, setLaunchRequest, userData.isWalkThroughEnabled]
+	);
+
+	if (!settings.enableWalkthrough || (!isAutoRun && !isLaunchRequested)) {
 		return null;
 	}
 
 	return (
-		<Steps
-			ref={ref}
-			enabled={!userData.twoFactorAuth.isShown}
-			onExit={() => {
-				apiPatchConsultantData({
-					walkThroughEnabled: !userData.isWalkThroughEnabled
-				})
-					.then(reloadUserData)
-					.catch((error) => { /* console.log(error); */ });
-			}}
-			steps={stepsData.map((step) => ({
-				...step,
-				title: translate(step.title),
-				intro: translate(step.intro)
-			}))}
-			initialStep={0}
-			options={{
-				hidePrev: true,
-				nextLabel: translate('walkthrough.step.next'),
-				prevLabel: translate('walkthrough.step.prev'),
-				doneLabel: translate('walkthrough.step.done'),
-				showProgress: false,
-				showBullets: true,
-				showStepNumbers: false
-			}}
-			onBeforeChange={(nextStepIndex) => {
-				if (stepsData[nextStepIndex]?.path) {
-					history.push(stepsData[nextStepIndex].path);
-					onChangeStep();
-				}
-			}}
+		<ProductTourAdapter
+			key={launchRequest?.requestedAt ?? 'auto'}
+			tour={consultantWalkthroughTour}
+			active={true}
+			paused={!!userData.twoFactorAuth?.isShown}
+			tooltipComponent={ProductTourTooltip}
+			onEvent={persistStepProgress}
+			onTerminalStatus={handleTerminalStatus}
 		/>
 	);
 };

@@ -77,7 +77,7 @@ export const TypewriterText: React.FC<{
 					}
 					return next;
 				});
-				timer = window.setTimeout(tick, 45 + 55 * Math.random());
+				timer = window.setTimeout(tick, 24 + 28 * Math.random());
 			};
 			tick();
 		}, startDelayMs);
