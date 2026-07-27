@@ -9,7 +9,7 @@
 	"main": "index.ts",
 	"bin": "cli.js",
 	"engines": {
-		"node": ">=18.16.1"
+		"node": ">=22 <23"
 	},
 	"dependencies": {
 		"@calcom/embed-snippet": "^1.0.1",

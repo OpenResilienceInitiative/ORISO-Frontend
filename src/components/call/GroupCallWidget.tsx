@@ -87,7 +87,6 @@ export const GroupCallWidget: React.FC = () => {
 	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const setupInProgressRef = useRef(false);
 
 	// React compares ref callbacks by function identity, not by DOM node: an
 	// inline callback is a new function on every render, so React would detach
@@ -135,7 +134,6 @@ export const GroupCallWidget: React.FC = () => {
 	// Subscribe to CallManager
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
-			// console.log('📡 GroupCallWidget: CallManager update:', newCallData);
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
@@ -143,7 +141,6 @@ export const GroupCallWidget: React.FC = () => {
 			}
 			if (!newCallData) {
 				setElementCallUrl('');
-				setupInProgressRef.current = false;
 			}
 		});
 		const currentCall = callManager.getCurrentCall();
@@ -207,7 +204,6 @@ export const GroupCallWidget: React.FC = () => {
 			return;
 		}
 		if (widget.url && elementCallUrl !== widget.url) {
-			setupInProgressRef.current = true;
 			setElementCallUrl(widget.url);
 		}
 	}, [
@@ -219,74 +215,17 @@ export const GroupCallWidget: React.FC = () => {
 		widget.url
 	]);
 
-	// Handle incoming call answer: once the call is moving past "ringing",
-	// automatically join the Element Call room for the receiver.
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || !callData.isIncoming)
-			return;
-		if (elementCallUrl) return; // Already joined
-		if (callState !== 'connecting' && callState !== 'in_call') return;
-
-		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
-		void setupElementCall();
-		// setupElementCall is re-created every render; including it would make
-		// this effect run on each render instead of on call-state changes.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [callState, callData, elementCallUrl, matrixClientService]);
-
-	// Handle outgoing call
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || callData.isIncoming)
-			return;
-		if (elementCallUrl) return; // Already set up
-
-		// console.log('📞 Starting outgoing call, setting up Element Call...');
-		void setupElementCall();
-		// setupElementCall is re-created every render and elementCallUrl is only
-		// used as an "already set up" guard; adding them would re-run this
-		// effect on every render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [callData, matrixClientService]);
-
-	const setupElementCall = async () => {
-		if (!callData || setupInProgressRef.current) return;
-
-		// The URL is derived declaratively by the Widget API hook. There is no
-		// iframe login step because the iframe has no Matrix session.
-		if (widget.error) {
-			alert(`Failed to start call: ${widget.error.message}`);
-			callManager.endCall();
-			return;
-		}
-		if (widget.url) {
-			setupInProgressRef.current = true;
-			setElementCallUrl(widget.url);
-		}
-	};
-
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		// console.log('✅ User clicked Answer');
-		// Tell Matrix/CallManager that we are accepting the call
 		callManager.answerCall();
-
-		// Proactively start/join the Element Call room so the user lands
-		// directly in the call UI without any extra "Join" step.
-		if (!elementCallUrl) {
-			// console.log('📞 Answer clicked, setting up Element Call immediately for receiver...');
-			void setupElementCall();
-		}
 	};
 
 	const handleDecline = () => {
-		// console.log('❌ User declined call');
 		setIsDismissed(true);
 		callManager.endCall();
 	};
 
 	const handleEndCall = () => {
-		// console.log('📴 Ending call');
-
 		void widget.hangup().catch(() => {
 			/* local teardown still completes if the iframe already closed */
 		});
@@ -566,6 +505,7 @@ export const GroupCallWidget: React.FC = () => {
 						<iframe
 							ref={setIframeNode}
 							src={elementCallUrl}
+							referrerPolicy="no-referrer"
 							className="element-call-iframe"
 							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write"
 							allowFullScreen

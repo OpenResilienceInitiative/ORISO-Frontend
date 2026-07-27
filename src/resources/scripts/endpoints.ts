@@ -158,6 +158,5 @@ export const endpoints = {
 		settings: '/p/api/settings'
 	},
 	setAppointmentSuccessMessage:
-		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	groupChatJoin: apiUrl + '/service/videocalls/join'
+		userServiceOrigin + '/service/messages/aliasWithContent/new'
 };

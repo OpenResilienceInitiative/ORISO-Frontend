@@ -18,6 +18,8 @@ const createClient = (overrides: Partial<MatrixClient> = {}) =>
 		queueToDevice: vi.fn().mockResolvedValue(undefined),
 		encryptAndSendToDevice: vi.fn().mockResolvedValue(undefined),
 		getCrypto: vi.fn().mockReturnValue({}),
+		getUserId: vi.fn().mockReturnValue('@user:oriso.example'),
+		getDeviceId: vi.fn().mockReturnValue('ORISO_WEB_test'),
 		getRoom: vi.fn().mockReturnValue(null),
 		...overrides
 	}) as unknown as MatrixClient;
@@ -208,16 +210,16 @@ describe('OrisoWidgetDriver', () => {
 		it('grants what Element Call needs and drops the rest', async () => {
 			const granted = await driver.validateCapabilities(
 				new Set([
-					'm.always_on_screen',
-					'org.matrix.msc3819.send.to_device:m.call.encryption_keys',
+					'org.matrix.msc4157.send.delayed_event',
+					'org.matrix.msc3819.send.to_device:io.element.call.encryption_keys',
 					'org.matrix.msc2762.send.event:m.room.message'
 				])
 			);
 
 			expect(granted).toEqual(
 				new Set([
-					'm.always_on_screen',
-					'org.matrix.msc3819.send.to_device:m.call.encryption_keys'
+					'org.matrix.msc4157.send.delayed_event',
+					'org.matrix.msc3819.send.to_device:io.element.call.encryption_keys'
 				])
 			);
 		});
@@ -225,7 +227,7 @@ describe('OrisoWidgetDriver', () => {
 
 	describe('to-device sending', () => {
 		it('encrypts media keys through the host crypto stack', async () => {
-			await driver.sendToDevice('m.call.encryption_keys', true, {
+			await driver.sendToDevice('io.element.call.encryption_keys', true, {
 				'@asker:oriso.example': { DEV1: { key: 'a' } },
 				'@counsellor:oriso.example': { DEV2: { key: 'a' } }
 			});
@@ -233,7 +235,7 @@ describe('OrisoWidgetDriver', () => {
 			// Same payload for both devices, so one encrypted send covers both.
 			expect(client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 			expect(client.encryptAndSendToDevice).toHaveBeenCalledWith(
-				'm.call.encryption_keys',
+				'io.element.call.encryption_keys',
 				[
 					{ userId: '@asker:oriso.example', deviceId: 'DEV1' },
 					{ userId: '@counsellor:oriso.example', deviceId: 'DEV2' }
@@ -244,7 +246,7 @@ describe('OrisoWidgetDriver', () => {
 		});
 
 		it('sends one encrypted batch per distinct payload', async () => {
-			await driver.sendToDevice('m.call.encryption_keys', true, {
+			await driver.sendToDevice('io.element.call.encryption_keys', true, {
 				'@asker:oriso.example': {
 					DEV1: { key: 'a' },
 					DEV2: { key: 'b' }
@@ -263,7 +265,7 @@ describe('OrisoWidgetDriver', () => {
 			);
 
 			await expect(
-				driver.sendToDevice('m.call.encryption_keys', true, {
+				driver.sendToDevice('io.element.call.encryption_keys', true, {
 					'@asker:oriso.example': { DEV1: { key: 'a' } }
 				})
 			).rejects.toThrow(/no crypto/);
@@ -274,7 +276,7 @@ describe('OrisoWidgetDriver', () => {
 			// false for a key-bearing type, the media keys the whole call rests
 			// on would go out in plaintext.
 			await expect(
-				driver.sendToDevice('m.call.encryption_keys', false, {
+				driver.sendToDevice('io.element.call.encryption_keys', false, {
 					'@asker:oriso.example': { DEV1: { key: 'a' } }
 				})
 			).rejects.toThrow(/never travel in plaintext/);
@@ -287,21 +289,15 @@ describe('OrisoWidgetDriver', () => {
 			).rejects.toThrow(/never travel in plaintext/);
 		});
 
-		it('uses the plain queue only when encryption was not requested', async () => {
-			await driver.sendToDevice('m.call.hangup', false, {
-				'@asker:oriso.example': { DEV1: { reason: 'user_hangup' } }
-			});
-
-			expect(client.queueToDevice).toHaveBeenCalledWith({
-				eventType: 'm.call.hangup',
-				batch: [
-					{
-						userId: '@asker:oriso.example',
-						deviceId: 'DEV1',
-						payload: { reason: 'user_hangup' }
+		it('rejects every non-key to-device event', async () => {
+			await expect(
+				driver.sendToDevice('m.call.hangup', false, {
+					'@asker:oriso.example': {
+						DEV1: { reason: 'user_hangup' }
 					}
-				]
-			});
+				})
+			).rejects.toThrow(/may not send/);
+			expect(client.queueToDevice).not.toHaveBeenCalled();
 			expect(client.encryptAndSendToDevice).not.toHaveBeenCalled();
 		});
 	});
@@ -323,7 +319,7 @@ describe('OrisoWidgetDriver', () => {
 				null,
 				'org.matrix.msc3401.call.member',
 				{ memberships: [] },
-				'@a:oriso.example_DEV1_m.call'
+				'@user:oriso.example_ORISO_WEB_test_m.call'
 			);
 
 			expect(res).toEqual({ roomId: CALL_ROOM, delayId: 'delay-1' });
@@ -431,14 +427,14 @@ describe('OrisoWidgetDriver', () => {
 			await driver.sendEvent(
 				'org.matrix.msc3401.call.member',
 				{ memberships: [] },
-				'@a:oriso.example_DEV1_m.call'
+				'@user:oriso.example_ORISO_WEB_test_m.call'
 			);
 
 			expect(client.sendStateEvent).toHaveBeenCalledWith(
 				CALL_ROOM,
 				'org.matrix.msc3401.call.member',
 				{ memberships: [] },
-				'@a:oriso.example_DEV1_m.call'
+				'@user:oriso.example_ORISO_WEB_test_m.call'
 			);
 			expect(client.sendEvent).not.toHaveBeenCalled();
 		});

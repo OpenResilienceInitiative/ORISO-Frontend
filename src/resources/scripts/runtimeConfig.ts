@@ -266,6 +266,9 @@ export const getElementCallBaseUrl = (): string =>
 		)
 	);
 
+export const getMatrixRtcMembershipReaderUserId = (): string =>
+	pickValue('REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID') || '';
+
 /**
  * LiveKit signalling websocket URL (wss).
  */

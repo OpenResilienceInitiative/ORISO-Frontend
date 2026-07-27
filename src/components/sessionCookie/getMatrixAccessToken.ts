@@ -4,6 +4,12 @@ import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
+import {
+	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_USER_ID_STORAGE_KEY
+} from '../../utils/matrixStorageKeys';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -13,7 +19,6 @@ export interface MatrixLoginData {
 	expiresInMs?: number;
 }
 
-const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
 const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
 
@@ -112,8 +117,11 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
-	localStorage.setItem('matrix_access_token', loginData.accessToken);
-	localStorage.setItem('matrix_user_id', loginData.userId);
+	localStorage.setItem(
+		MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+		loginData.accessToken
+	);
+	localStorage.setItem(MATRIX_USER_ID_STORAGE_KEY, loginData.userId);
 	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
 	localStorage.setItem(
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
@@ -121,7 +129,7 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	);
 	if (loginData.expiresInMs) {
 		localStorage.setItem(
-			'matrix_token_expires_at',
+			MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 			(Date.now() + loginData.expiresInMs).toString()
 		);
 	}

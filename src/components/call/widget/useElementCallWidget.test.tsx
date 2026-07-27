@@ -145,11 +145,18 @@ describe('useElementCallWidget', () => {
 
 		const url = new URL(result.current.url!);
 		expect(url.origin).toBe('https://call.oriso.example');
-		expect(url.searchParams.get('roomId')).toBe(CALL_ROOM);
-		expect(url.searchParams.get('deviceId')).toBe('ORISO_WEB_123');
+		expect(url.search).toBe('');
+		const fragment = new URLSearchParams(url.hash.slice(2));
+		expect(fragment.get('roomId')).toBe(CALL_ROOM);
+		expect(fragment.get('deviceId')).toBe('ORISO_WEB_123');
+		expect(fragment.get('userId')).toBe('@user:oriso.example');
+		expect(fragment.get('baseUrl')).toBe('https://matrix.oriso.example');
+		expect(fragment.get('widgetId')).toMatch(/^oriso-call-[a-f0-9]{64}$/);
 		expect(url.searchParams.has('accessToken')).toBe(false);
-		expect(url.searchParams.has('enableE2EE')).toBe(false);
-		expect(url.searchParams.get('perParticipantE2EE')).toBe('true');
+		expect(fragment.has('accessToken')).toBe(false);
+		expect(fragment.has('password')).toBe(false);
+		expect(fragment.has('enableE2EE')).toBe(false);
+		expect(fragment.get('perParticipantE2EE')).toBe('true');
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
@@ -168,6 +175,32 @@ describe('useElementCallWidget', () => {
 		);
 		expect(result.current.url).toBeNull();
 		expect(widgetApiMocks.apiInstances).toHaveLength(0);
+	});
+
+	it('uses a different opaque widget id for each mounted call surface', async () => {
+		const first = renderHook(() =>
+			useElementCallWidget(createClient(), {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		const second = renderHook(() =>
+			useElementCallWidget(createClient(), {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => {
+			expect(first.result.current.url).not.toBeNull();
+			expect(second.result.current.url).not.toBeNull();
+		});
+
+		const widgetId = (url: string): string | null =>
+			new URLSearchParams(new URL(url).hash.slice(2)).get('widgetId');
+
+		expect(widgetId(first.result.current.url!)).not.toBe(
+			widgetId(second.result.current.url!)
+		);
 	});
 
 	it('rejects an iframe from any origin other than the configured Element Call origin', async () => {
@@ -202,9 +235,9 @@ describe('useElementCallWidget', () => {
 		iframe.src = result.current.url!;
 		act(() => result.current.attachIframe(iframe));
 
-		const widgetId = new URL(result.current.url!).searchParams.get(
-			'widgetId'
-		);
+		const widgetId = new URLSearchParams(
+			new URL(result.current.url!).hash.slice(2)
+		).get('widgetId');
 		const spoofedMessage = new MessageEvent('message', {
 			data: { widgetId },
 			origin: 'https://attacker.example',
@@ -323,23 +356,50 @@ describe('useElementCallWidget', () => {
 			type: 'io.element.call.encryption_keys',
 			content: { key: 'test-key' }
 		};
-		const event = {
+		const roomEvent = {
 			getRoomId: () => CALL_ROOM,
 			getEffectiveEvent: () => rawEvent,
 			getType: () => 'io.element.call.encryption_keys',
 			getWireType: () => 'm.room.encrypted'
 		};
+		const stateEvent = {
+			...roomEvent,
+			getEffectiveEvent: () => ({
+				type: 'org.matrix.msc3401.call.member',
+				state_key: '@user:oriso.example',
+				content: {}
+			}),
+			getType: () => 'org.matrix.msc3401.call.member'
+		};
+		const forbiddenEvent = {
+			...roomEvent,
+			getEffectiveEvent: () => ({
+				type: 'm.room.message',
+				content: { body: 'private counselling message' }
+			}),
+			getType: () => 'm.room.message'
+		};
 
 		act(() => {
-			client.emitTest('Room.localEchoUpdated', event);
-			client.emitTest('RoomState.events', event, {
+			client.emitTest('Room.localEchoUpdated', roomEvent);
+			client.emitTest('Room.localEchoUpdated', forbiddenEvent);
+			client.emitTest('RoomState.events', stateEvent, {
 				roomId: CALL_ROOM
 			});
-			client.emitTest('toDeviceEvent', event);
+			client.emitTest('RoomState.events', forbiddenEvent, {
+				roomId: CALL_ROOM
+			});
+			client.emitTest('toDeviceEvent', roomEvent);
+			client.emitTest('toDeviceEvent', forbiddenEvent);
 		});
 
 		expect(api.feedEvent).toHaveBeenCalledWith(rawEvent, CALL_ROOM);
-		expect(api.feedStateUpdate).toHaveBeenCalledWith(rawEvent);
+		expect(api.feedEvent).toHaveBeenCalledTimes(1);
+		expect(api.feedStateUpdate).toHaveBeenCalledWith(
+			stateEvent.getEffectiveEvent()
+		);
+		expect(api.feedStateUpdate).toHaveBeenCalledTimes(1);
 		expect(api.feedToDevice).toHaveBeenCalledWith(rawEvent, true);
+		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
 	});
 });
