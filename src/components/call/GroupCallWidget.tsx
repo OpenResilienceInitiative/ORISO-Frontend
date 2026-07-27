@@ -4,12 +4,14 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import {
 	getElementCallBaseUrl,
-	getMatrixHomeserverUrl
+	getMatrixHomeserverUrl,
+	isElementCallWidgetModeEnabled
 } from '../../resources/scripts/runtimeConfig';
+import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getElementCallAccessToken } from '../sessionCookie/getMatrixAccessToken';
 import {
@@ -33,6 +35,21 @@ export const GroupCallWidget: React.FC = () => {
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
+
+	// Widget mode keeps the Matrix session in this app: the call iframe gets no
+	// access token and registers no device of its own, and asks us to send and
+	// read events for it instead. Off by default until validated on Pre-Dev.
+	const widgetModeEnabled = isElementCallWidgetModeEnabled();
+	const callRoomId = callData
+		? ((callData as any).elementCallRoomId ?? callData.roomId)
+		: null;
+	const widget = useElementCallWidget(
+		widgetModeEnabled ? (matrixClientService?.getClient() ?? null) : null,
+		{
+			roomId: widgetModeEnabled ? callRoomId : null,
+			isVideo: callData?.isVideo ?? true
+		}
+	);
 
 	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
@@ -63,6 +80,26 @@ export const GroupCallWidget: React.FC = () => {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const setupInProgressRef = useRef(false);
+
+	// React compares ref callbacks by function identity, not by DOM node: an
+	// inline callback is a new function on every render, so React would detach
+	// (call it with `null`) and re-attach on every drag or resize frame — tearing
+	// down and rebuilding the widget's postMessage channel mid-call. Keep it
+	// stable and let it change only when the widget itself does.
+	const setIframeNode = useCallback(
+		(node: HTMLIFrameElement | null) => {
+			// The ref is shared: the drag/close logic needs the element, and
+			// widget mode additionally opens the postMessage channel against it.
+			(
+				iframeRef as React.MutableRefObject<HTMLIFrameElement | null>
+			).current = node;
+			if (widgetModeEnabled) {
+				widget.attachIframe(node);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widgetModeEnabled, widget.attachIframe]
+	);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const getGroupBounds = () => ({
@@ -200,6 +237,22 @@ export const GroupCallWidget: React.FC = () => {
 
 	const setupElementCall = async () => {
 		if (!callData || setupInProgressRef.current) return;
+
+		// In widget mode the URL is derived declaratively by the hook — there is
+		// no login step to perform here, because there is no separate session.
+		if (widgetModeEnabled) {
+			if (widget.error) {
+				alert(`Failed to start call: ${widget.error.message}`);
+				callManager.endCall();
+				return;
+			}
+			if (widget.url) {
+				setupInProgressRef.current = true;
+				setElementCallUrl(widget.url);
+			}
+			return;
+		}
+
 		setupInProgressRef.current = true;
 
 		try {
@@ -627,7 +680,7 @@ export const GroupCallWidget: React.FC = () => {
 									: '⤢'}
 						</button>
 						<iframe
-							ref={iframeRef}
+							ref={setIframeNode}
 							src={elementCallUrl}
 							className="element-call-iframe"
 							allow="camera; microphone; display-capture; autoplay; fullscreen"
