@@ -2,7 +2,8 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { webcrypto } from 'node:crypto';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useElementCallWidget } from './useElementCallWidget';
 
@@ -116,8 +117,13 @@ const createClient = ({
 
 describe('useElementCallWidget', () => {
 	beforeEach(() => {
+		vi.stubGlobal('crypto', webcrypto as unknown as Crypto);
 		widgetApiMocks.widgetDefinitions.length = 0;
 		widgetApiMocks.apiInstances.length = 0;
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
 	});
 
 	it('waits for room join and never puts credentials or premature E2EE flags in the URL', async () => {
