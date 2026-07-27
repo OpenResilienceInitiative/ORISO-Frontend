@@ -4,7 +4,7 @@ import { setTenantSettings } from '../../utils/tenantSettingsHelper';
 import { TenantDataInterface } from '../interfaces';
 
 export const TenantContext = createContext<{
-	tenant: TenantDataInterface;
+	tenant: TenantDataInterface | undefined;
 	setTenant(tenant: TenantDataInterface): void;
 }>(null);
 
@@ -25,4 +25,12 @@ export function TenantProvider(props) {
 
 export function useTenant() {
 	return useContext(TenantContext)?.tenant || null;
+}
+
+export function useTenantState() {
+	const context = useContext(TenantContext);
+	return {
+		tenant: context?.tenant || null,
+		isLoading: context !== null && context.tenant === undefined
+	};
 }

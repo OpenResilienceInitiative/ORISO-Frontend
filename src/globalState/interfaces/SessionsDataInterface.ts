@@ -61,12 +61,16 @@ export interface TopicSessionInterface {
 }
 
 export interface SessionItemInterface {
+	conversationType?:
+		| 'AGENCY_COUNSELLING'
+		| 'LIVE_CHAT'
+		| 'INTERNAL_GROUP'
+		| 'SELF_HELP';
 	agencyId: number;
-	askerRcId: string;
+	askerMatrixUserId: string;
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
-	groupId: string;
-	matrixRoomId?: string; // MATRIX MIGRATION: Added Matrix room ID
+	matrixRoomId: string;
 	id: number;
 	e2eLastMessage: {
 		t: string;
@@ -80,6 +84,7 @@ export interface SessionItemInterface {
 	messageTime?: number;
 	postcode: number;
 	registrationType: registrationTypeRegistered;
+	teamSession?: boolean;
 	status:
 		| statusEmpty
 		| statusEnquiry
@@ -92,13 +97,21 @@ export interface SessionItemInterface {
 }
 
 export interface GroupChatItemInterface {
+	conversationType?:
+		| 'AGENCY_COUNSELLING'
+		| 'LIVE_CHAT'
+		| 'INTERNAL_GROUP'
+		| 'SELF_HELP';
 	active: boolean;
 	assignedAgencies: AgencyService.Schemas.AgencyResponseDTO[];
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
 	duration: number;
-	groupId: string;
+	matrixRoomId: string;
 	hintMessage: string;
+	sourceLanguage?: string;
+	hintMessageTranslations?: Record<string, string>;
+	groupChatRulesTranslations?: Record<string, string[]>;
 	id: number;
 	lastMessage: string;
 	lastMessageType?: string;
@@ -109,9 +122,16 @@ export interface GroupChatItemInterface {
 	messageDate: number;
 	messagesRead: boolean;
 	moderators: string[];
+	participants?: UserService.Schemas.GroupChatParticipantDTO[];
 	repetitive: boolean;
+	repeatCount?: number;
+	currentOccurrenceIndex?: number;
+	chatInterval?: UserService.Schemas.UserChatDTO['chatInterval'];
+	modality?: UserService.Schemas.UserChatDTO['modality'];
+	timezone?: string;
 	startDate: string;
 	startTime: string;
+	startDateWithTime?: string;
 	subscribed: boolean;
 	topic: string;
 	createdAt: string;
@@ -119,6 +139,7 @@ export interface GroupChatItemInterface {
 
 export interface SessionUserInterface {
 	username: string;
+	displayName?: string;
 	sessionData: SessionUserDataInterface;
 }
 

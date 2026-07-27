@@ -1,0 +1,27 @@
+.legalContentRenderer {
+	&__notice {
+		background-color: var(--m3-surface-container, #f3f0ef);
+		border-left: 3px solid var(--m3-primary, $primary);
+		border-radius: 4px;
+		color: var(--m3-on-surface-variant, $secondary);
+		font-size: $font-size-secondary;
+		margin: 0 0 $grid-base-two;
+		padding: $grid-base $grid-base-two;
+	}
+
+	&__noticeAction {
+		background: none;
+		border: 0;
+		color: var(--m3-primary, $primary);
+		cursor: pointer;
+		font-size: inherit;
+		font-weight: $font-weight-bold;
+		padding: 0;
+		text-decoration: underline;
+
+		&:hover,
+		&:focus-visible {
+			text-decoration: none;
+		}
+	}
+}

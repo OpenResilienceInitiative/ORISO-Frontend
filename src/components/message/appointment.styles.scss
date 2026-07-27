@@ -70,8 +70,25 @@
 			width: 18px;
 			height: 18px;
 
+			@media (resolution >= 1.5dppx), (width >= 1920px) {
+				width: 22px;
+				height: 22px;
+			}
+
 			path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
+			}
+		}
+	}
+
+	&__titleIcon {
+		svg {
+			width: 24px;
+			height: 23px;
+
+			@media (resolution >= 1.5dppx), (width >= 1920px) {
+				width: 28px;
+				height: 27px;
 			}
 		}
 	}
@@ -86,6 +103,6 @@
 	}
 
 	&--primary {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 }

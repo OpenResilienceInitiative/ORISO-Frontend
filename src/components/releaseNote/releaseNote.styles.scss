@@ -82,7 +82,7 @@
 			margin-top: $grid-base-three;
 			margin-bottom: 0;
 
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 		}
 
 		strong,
@@ -96,7 +96,7 @@
 			margin-bottom: 0;
 
 			padding: 0 0 0 $grid-base-two;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 		}
 
 		li {

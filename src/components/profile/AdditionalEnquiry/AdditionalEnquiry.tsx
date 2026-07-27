@@ -1,13 +1,10 @@
 import * as React from 'react';
 import { useContext, useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { UserDataContext } from '../../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../../button/Button';
-import {
-	SelectDropdown,
-	SelectDropdownItem,
-	SelectOption
-} from '../../select/SelectDropdown';
+import { OrisoSelect, OrisoSelectOption } from '../../form/OrisoSelect';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../../overlay/Overlay';
 import { logout } from '../../logout/logout';
 import { mobileListView } from '../../app/navigationHandler';
@@ -27,7 +24,7 @@ import {
 
 export const AdditionalEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation(['common', 'consultingTypes']);
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { reloadUserData } = useContext(UserDataContext);
 	const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -42,8 +39,7 @@ export const AdditionalEnquiry: React.FC = () => {
 	const [tenantAgenciesTopics, setTenantAgenciesTopics] = useState<
 		TenantAgenciesTopicsInterface[]
 	>([]);
-	const [currentSelectOption, setCurrentSelectOption] =
-		useState<SelectOption[]>(null);
+	const [currentSelectOption, setCurrentSelectOption] = useState('');
 
 	const buttonSetRegistration: ButtonItem = {
 		label: translate('profile.data.register.button.label'),
@@ -107,34 +103,20 @@ export const AdditionalEnquiry: React.FC = () => {
 		}
 	}, [selectedAgency]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	const handleConsultingTypeSelect = (selectedOption) => {
-		setSelectedTopicId(parseInt(selectedOption.value));
-		setCurrentSelectOption(
-			prepareSelectableTopics().filter(
-				(option) => option.value === selectedOption.value
-			)
-		);
+	const handleConsultingTypeSelect = (event: SelectChangeEvent<string>) => {
+		const topicId = event.target.value;
+		setSelectedTopicId(parseInt(topicId));
+		setCurrentSelectOption(topicId);
 	};
 
-	const prepareSelectableTopics = (): Array<SelectOption> => {
+	const prepareSelectableTopics = (): Array<OrisoSelectOption> => {
 		return tenantAgenciesTopics.map((option) => ({
 			value: option.id.toString(),
 			label: option.name
 		}));
 	};
 
-	const topicsDropdown: SelectDropdownItem = {
-		id: 'topicSelect',
-		selectedOptions: prepareSelectableTopics(),
-		handleDropdownSelect: handleConsultingTypeSelect,
-		selectInputLabel: translate(
-			'profile.data.register.consultingTypeSelect.label'
-		),
-		useIconOption: false,
-		isSearchable: false,
-		menuPlacement: 'bottom',
-		defaultValue: currentSelectOption
-	};
+	const topicOptions = prepareSelectableTopics();
 
 	const handleRegistration = () => {
 		if (isRequestInProgress) {
@@ -188,7 +170,7 @@ export const AdditionalEnquiry: React.FC = () => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			mobileListView();
 			if (!sessionId) {
-				history.push({
+				navigate({
 					pathname: `/sessions/user/view`
 				});
 				return;
@@ -199,7 +181,7 @@ export const AdditionalEnquiry: React.FC = () => {
 			   the asker lands in a regular chat surface with the message
 			   composer, matching the behaviour of an enquiry picked from
 			   the list. */
-			history.push({
+			navigate({
 				pathname: `/sessions/user/view/session/${sessionId}`
 			});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
@@ -221,7 +203,15 @@ export const AdditionalEnquiry: React.FC = () => {
 			</div>
 			{
 				<div className="additionalEnquiry__consultingTypeWrapper">
-					<SelectDropdown {...topicsDropdown} />
+					<OrisoSelect
+						id="topicSelect"
+						label={translate(
+							'profile.data.register.consultingTypeSelect.label'
+						)}
+						options={topicOptions}
+						value={currentSelectOption}
+						onChange={handleConsultingTypeSelect}
+					/>
 				</div>
 			}
 			{selectedTopicId !== null && (

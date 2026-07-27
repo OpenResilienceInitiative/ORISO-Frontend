@@ -39,7 +39,10 @@ export const Stage = ({
 
 	const legalLinks = useContext(LegalLinksContext);
 
-	const rootNodeRef = useRef(null);
+	const rootNodeRef = useRef<HTMLDivElement>(null);
+	const glowTargetRef = useRef({ x: 32, y: 24 });
+	const glowPositionRef = useRef({ x: 32, y: 24 });
+	const glowAnimationFrameRef = useRef<number | null>(null);
 
 	const [isOpen, setIsOpen] = useState(!hasAnimation);
 	const [hasAnimationFinished, setHasAnimationFinished] = useState(false);
@@ -54,11 +57,80 @@ export const Stage = ({
 		};
 
 		const rootNode = rootNodeRef.current;
+		if (!rootNode) {
+			return;
+		}
+
 		rootNode.addEventListener('transitionend', onTransitionEnd);
 		return () => {
 			rootNode.removeEventListener('transitionend', onTransitionEnd);
 		};
 	}, [hasAnimation, isReady]);
+
+	const animateStageGlow = useCallback(() => {
+		const rootNode = rootNodeRef.current;
+		if (!rootNode) {
+			glowAnimationFrameRef.current = null;
+			return;
+		}
+
+		const current = glowPositionRef.current;
+		const target = glowTargetRef.current;
+		const deltaX = target.x - current.x;
+		const deltaY = target.y - current.y;
+
+		current.x += deltaX * 0.06;
+		current.y += deltaY * 0.06;
+		const glowOpacity = Math.max(
+			0.08,
+			Math.min(0.42, 0.42 - current.y * 0.0028)
+		);
+
+		rootNode.style.setProperty('--stage-mx', `${current.x.toFixed(2)}%`);
+		rootNode.style.setProperty('--stage-my', `${current.y.toFixed(2)}%`);
+		rootNode.style.setProperty(
+			'--stage-glow-opacity',
+			glowOpacity.toFixed(3)
+		);
+
+		if (Math.abs(deltaX) > 0.02 || Math.abs(deltaY) > 0.02) {
+			glowAnimationFrameRef.current =
+				requestAnimationFrame(animateStageGlow);
+			return;
+		}
+
+		glowAnimationFrameRef.current = null;
+	}, []);
+
+	useEffect(
+		() => () => {
+			if (glowAnimationFrameRef.current !== null) {
+				cancelAnimationFrame(glowAnimationFrameRef.current);
+			}
+		},
+		[]
+	);
+
+	const handleStageMouseMove = useCallback(
+		(e: MouseEvent<HTMLDivElement>) => {
+			const rootNode = rootNodeRef.current;
+			if (!rootNode) {
+				return;
+			}
+
+			const rect = rootNode.getBoundingClientRect();
+			glowTargetRef.current = {
+				x: ((e.clientX - rect.left) / rect.width) * 100,
+				y: ((e.clientY - rect.top) / rect.height) * 100
+			};
+
+			if (glowAnimationFrameRef.current === null) {
+				glowAnimationFrameRef.current =
+					requestAnimationFrame(animateStageGlow);
+			}
+		},
+		[animateStageGlow]
+	);
 
 	const [ieBanner, setIeBanner] = useState(true);
 	const closeIeBanner = useCallback((e: MouseEvent<HTMLButtonElement>) => {
@@ -69,6 +141,7 @@ export const Stage = ({
 	return (
 		<div
 			ref={rootNodeRef}
+			onMouseMove={handleStageMouseMove}
 			className={clsx(className, 'stage', {
 				'stage--no-animation': !hasAnimation,
 				'stage--open': isOpen || !hasAnimation,

@@ -135,7 +135,7 @@ $overlay-illustration-height-large: 100%;
 		margin: 0 auto 36px;
 
 		.text {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			text-transform: uppercase;
 			display: none;
 
@@ -170,7 +170,7 @@ $overlay-illustration-height-large: 100%;
 		svg {
 			width: $overlay-icon-size-xs;
 			height: $overlay-icon-size-xs;
-			fill: var(--skin-color-primary, $primary);
+			fill: var(--m3-primary, $primary);
 		}
 
 		.text {
@@ -182,7 +182,7 @@ $overlay-illustration-height-large: 100%;
 
 		&--active {
 			.overlay__stepIcon {
-				background-color: var(--skin-color-primary, $primary);
+				background-color: var(--m3-primary, $primary);
 			}
 
 			svg {
@@ -208,7 +208,7 @@ $overlay-illustration-height-large: 100%;
 	&__stepIcon {
 		width: calc(#{$overlay-icon-size-xs} * 2);
 		height: calc(#{$overlay-icon-size-xs} * 2);
-		border: 1px solid var(--skin-color-primary, $primary);
+		border: 1px solid var(--m3-primary, $primary);
 		border-radius: $overlay-icon-size-xs;
 		display: flex;
 		justify-content: center;

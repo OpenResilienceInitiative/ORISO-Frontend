@@ -31,7 +31,7 @@ Primary targets:
 
 Desired direction:
 
-- keep Matrix and Rocket.Chat crossover behavior behind clear service and API boundaries
+- keep Matrix transport behavior behind clear service and API boundaries
 - reduce transport-specific leakage into feature UI
 - make future migration cleanup possible without touching many screens
 

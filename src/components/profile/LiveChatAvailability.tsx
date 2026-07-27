@@ -1,27 +1,40 @@
 import * as React from 'react';
 import { useCallback } from 'react';
-import Switch from 'react-switch';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Headline } from '../headline/Headline';
+import { Switch } from '../Switch';
 import { Text } from '../text/Text';
-import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { Checkbox } from '../checkbox/Checkbox';
+import {
+	useLiveChatAvailable,
+	useLiveChatViaSidebar
+} from '../../utils/liveChatToggle';
 
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
-	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
+	const navigate = useNavigate();
+	const [
+		liveChatAvailable,
+		setLiveChatAvailable,
+		{ loading, pending, error }
+	] = useLiveChatAvailable();
+	const [liveChatViaSidebar, setLiveChatViaSidebar] = useLiveChatViaSidebar();
 
 	const handleToggle = useCallback(
-		(checked: boolean) => {
-			setLiveChatAvailable(checked);
-			if (checked) {
-				history.push(
-					'/sessions/consultant/sessionPreview?chip=liveChat'
-				);
+		async (checked: boolean) => {
+			try {
+				await setLiveChatAvailable(checked);
+				if (checked) {
+					navigate(
+						'/sessions/consultant/sessionPreview?chip=liveChat'
+					);
+				}
+			} catch {
+				// Keep the backend-acknowledged state; the message below is localized.
 			}
 		},
-		[history, setLiveChatAvailable]
+		[navigate, setLiveChatAvailable]
 	);
 
 	return (
@@ -37,26 +50,52 @@ export const LiveChatAvailability = () => {
 					text={translate('profile.functions.liveChat.description')}
 					type="infoLargeAlternative"
 				/>
+				{/* Original 1.0 availability toggle. When the consultant chooses
+				    to control availability from the navigation rail (checkbox
+				    below), this toggle is disabled — it then only mirrors the
+				    current state, and the rail becomes the control. */}
 				<div className="flex">
 					<Switch
 						className="mr--1"
 						onChange={handleToggle}
 						checked={liveChatAvailable}
-						uncheckedIcon={false}
-						checkedIcon={false}
-						width={48}
-						height={26}
-						onColor="#0A882F"
-						offColor="#8C878C"
-						boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-						handleDiameter={27}
-						activeBoxShadow="none"
+						disabled={liveChatViaSidebar || loading || pending}
+						aria-label={translate(
+							'profile.functions.liveChat.toggleLabel'
+						)}
 					/>
 					<Text
 						text={translate(
 							'profile.functions.liveChat.toggleLabel'
 						)}
 						type="standard"
+					/>
+					{error && (
+						<Text
+							text={translate(
+								'error.statusCodes.500.description'
+							)}
+							type="standard"
+						/>
+					)}
+				</div>
+				{/* New preference: move the availability control into the nav
+				    rail. See the description text for the exact behaviour. */}
+				<div style={{ marginTop: '16px' }}>
+					<Checkbox
+						inputId="liveChatViaSidebar"
+						name="liveChatViaSidebar"
+						labelId="liveChatViaSidebarLabel"
+						label={translate(
+							'profile.functions.liveChat.viaSidebar.label'
+						)}
+						description={translate(
+							'profile.functions.liveChat.viaSidebar.description'
+						)}
+						checked={liveChatViaSidebar}
+						checkboxHandle={() =>
+							setLiveChatViaSidebar(!liveChatViaSidebar)
+						}
 					/>
 				</div>
 			</div>

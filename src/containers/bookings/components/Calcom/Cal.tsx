@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 import React, { useEffect, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useEmbed from './useEmbed';
 import './cal.styles';
 
@@ -15,7 +15,7 @@ export default function Cal({
 	config?: any;
 	embedJsUrl?: string;
 }) {
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	if (!calLink) {
 		throw new Error('calLink is required');
@@ -52,7 +52,7 @@ export default function Cal({
 		Cal('on', {
 			action: 'bookingSuccessful',
 			callback: () => {
-				history.push({
+				navigate({
 					pathname: `/sessions/user/view`
 				});
 			}
