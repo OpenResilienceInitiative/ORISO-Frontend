@@ -128,7 +128,7 @@ export const AuthenticatedApp = ({
 							}
 							return userProfileData;
 						})
-						.then(async () => {
+						.then(async (userProfileData) => {
 							const matrixBootstrapActive = { current: true };
 							try {
 								await withTimeout(
@@ -152,7 +152,12 @@ export const AuthenticatedApp = ({
 														matrixLoginData.accessToken,
 													deviceId:
 														matrixLoginData.deviceId,
-													homeserverUrl
+													homeserverUrl,
+													isAnonymous:
+														hasUserAuthority(
+															AUTHORITIES.ANONYMOUS_DEFAULT,
+															userProfileData
+														)
 												}
 											);
 											if (

@@ -17,6 +17,11 @@ export interface MatrixLoginData {
 	deviceId: string;
 	homeserverUrl: string;
 	expiresInMs?: number;
+	// Anonymous live-chat users can never cross-sign a consultant's device, so
+	// their client must share Megolm keys to all devices; invisible crypto
+	// (verified-only) would silently make their messages undecryptable for the
+	// consultant. See matrixClientService.initializeClient.
+	isAnonymous?: boolean;
 }
 
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
