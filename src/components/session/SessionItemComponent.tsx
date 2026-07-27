@@ -19,6 +19,7 @@ import {
 	isMatrixRoom,
 	isMatrixRoomIdHeuristic
 } from '../../utils/matrixRoomUtils';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import {
 	MessageItem,
 	MessageItemComponent
@@ -761,7 +762,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			userData?.displayName,
 			userData?.userName,
 			activeSession.user?.username,
-			activeSession.item.askerRcId
+			activeSession.item.askerMatrixUserId
 		]
 			.map((value) => decodeUsername((value || '').toString()).trim())
 			.filter((value) => value.length > 0);
@@ -777,7 +778,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		return resolved;
 	}, [
-		activeSession.item.askerRcId,
+		activeSession.item.askerMatrixUserId,
 		activeSession.user?.username,
 		contact?.displayName,
 		contact?.username,
@@ -906,7 +907,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!(isAnonymousAskerExperience && pseudonymConfirmed);
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
-			translate('videoConference.waitingroom.dataProtection.label.text', {
+			translate('anonymousConsent.label.text', {
 				interpolation: { escapeValue: false },
 				legal_links: renderToString(
 					<LegalLinks
@@ -1774,11 +1775,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
-					(typeof document !== 'undefined' &&
-						document.cookie
-							.split('; ')
-							.find((row) => row.startsWith('rc_uid='))
-							?.split('=')[1]) ||
+					getCurrentMatrixUserId() ||
 					userData?.userName;
 
 				const mine = normalizeMatrixId(myMatrixUserId);
@@ -1792,7 +1789,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							sender.user === mine.user)
 				);
 			}
-			// For RocketChat sessions, use the standard check
+			// Standard check for sessions that have a group id
 			return isMyMessage(messageUserId);
 		},
 		[
@@ -4865,7 +4862,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												'sessionList.user.consultantUnknown'
 											)
 										}
-										askerRcId={
+										askerMatrixUserId={
 											!activeSession.rid &&
 											message.userId &&
 											!message.userId.includes(
@@ -4873,7 +4870,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													?.username || ''
 											)
 												? message.userId
-												: activeSession.item.askerRcId
+												: activeSession.item
+														.askerMatrixUserId
 										}
 										isOnlyEnquiry={isOnlyEnquiry}
 										isMyMessage={isMyMessageMatrix(
@@ -5075,14 +5073,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										'sessionList.user.consultantUnknown'
 									)
 								}
-								askerRcId={
+								askerMatrixUserId={
 									!activeSession.rid &&
 									activeThreadRootMessage.userId &&
 									!activeThreadRootMessage.userId.includes(
 										activeSession.consultant?.username || ''
 									)
 										? activeThreadRootMessage.userId
-										: activeSession.item.askerRcId
+										: activeSession.item.askerMatrixUserId
 								}
 								isOnlyEnquiry={isOnlyEnquiry}
 								isMyMessage={isMyMessageMatrix(
@@ -5135,7 +5133,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												'sessionList.user.consultantUnknown'
 											)
 										}
-										askerRcId={
+										askerMatrixUserId={
 											!activeSession.rid &&
 											message.userId &&
 											!message.userId.includes(
@@ -5143,7 +5141,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													?.username || ''
 											)
 												? message.userId
-												: activeSession.item.askerRcId
+												: activeSession.item
+														.askerMatrixUserId
 										}
 										isOnlyEnquiry={isOnlyEnquiry}
 										isMyMessage={isMyMessageMatrix(

@@ -24,7 +24,6 @@ export interface ChatTransportSession {
 
 export interface ResolvedChatTransportSession {
 	isMatrixSession: boolean;
-	legacyRoomId?: string | number | null;
 	matrixRoomId?: string | null;
 	sessionId?: string | number | null;
 }
@@ -113,7 +112,6 @@ class ChatTransportService {
 			isMatrixSession: Boolean(
 				matrixRoomId || ((!rid || isMatrixRoom(rid)) && sessionId)
 			),
-			legacyRoomId: rid || sessionId,
 			matrixRoomId,
 			sessionId
 		};
@@ -141,7 +139,7 @@ class ChatTransportService {
 
 		// Matrix is the only chat transport. Sessions without a Matrix room
 		// (stale pre-migration data) fail gracefully instead of falling back
-		// to the removed Rocket.Chat REST path.
+		// to the removed REST path.
 		if (!resolvedMatrixRoomId) {
 			return Promise.reject(
 				new Error('Cannot send message: session has no Matrix room')
@@ -367,7 +365,7 @@ class ChatTransportService {
 	 * Watch room-lifecycle signals that end the user's participation in a
 	 * room: own-membership changes to leave/ban (kick, ban or a room purge
 	 * via the Synapse admin API) and m.room.tombstone state events (room
-	 * shut down / replaced). This replaces the legacy Rocket.Chat
+	 * shut down / replaced). This replaces the legacy
 	 * `subscriptions-changed` "removed" notify stream.
 	 */
 	public onMatrixRoomLifecycle(

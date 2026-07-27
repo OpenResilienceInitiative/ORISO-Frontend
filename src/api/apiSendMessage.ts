@@ -3,7 +3,7 @@ import { chatTransportService } from '../services/chatTransportService';
 
 export const apiSendMessage = (
 	messageData: string,
-	rcGroupIdOrSessionId: string | number,
+	roomIdOrSessionId: string | number,
 	sendMailNotification: boolean,
 	isEncrypted: boolean,
 	sessionId?: number,
@@ -16,7 +16,7 @@ export const apiSendMessage = (
 	mentionedUserIds?: string[]
 ): Promise<any> =>
 	chatTransportService.sendTextMessage({
-		roomIdOrSessionId: rcGroupIdOrSessionId,
+		roomIdOrSessionId: roomIdOrSessionId,
 		message: messageData,
 		sendMailNotification,
 		isEncrypted,

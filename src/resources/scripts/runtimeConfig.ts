@@ -266,19 +266,8 @@ export const getElementCallBaseUrl = (): string =>
 		)
 	);
 
-/**
- * Embed Element Call as a Matrix widget instead of a standalone app.
- *
- * In widget mode the call has no Matrix session of its own: it asks the ORISO
- * client to send and read events on its behalf, so no access token is handed to
- * the iframe and no second device is registered per browser.
- *
- * Off by default until the widget path has been validated on Pre-Dev — the
- * standalone path still works and is device-bound, so this is a safe default
- * rather than a permanent one.
- */
-export const isElementCallWidgetModeEnabled = (): boolean =>
-	pickValue('REACT_APP_ELEMENT_CALL_WIDGET_MODE')?.toLowerCase() === 'true';
+export const getMatrixRtcMembershipReaderUserId = (): string =>
+	pickValue('REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID') || '';
 
 /**
  * LiveKit signalling websocket URL (wss).

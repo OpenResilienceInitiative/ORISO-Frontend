@@ -7,18 +7,27 @@
  * the previous token-in-the-URL embedding.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClientWidgetApi, MatrixWidgetType, Widget } from 'matrix-widget-api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	ClientWidgetApi,
+	type IWidgetApiRequest,
+	MatrixWidgetType,
+	Widget
+} from 'matrix-widget-api';
 import {
 	ClientEvent,
-	EventTimeline,
 	MatrixClient,
 	MatrixEvent,
-	RoomEvent
+	RoomEvent,
+	RoomStateEvent
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
-import { ALLOWED_TO_DEVICE_EVENT_TYPES } from './orisoWidgetCapabilities';
+import {
+	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
+	ALLOWED_ROOM_EVENT_TYPES,
+	ALLOWED_TO_DEVICE_EVENT_TYPES
+} from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 
 export interface ElementCallWidgetOptions {
@@ -28,6 +37,10 @@ export interface ElementCallWidgetOptions {
 	isVideo: boolean;
 	/** Skip the lobby and join immediately (we already asked the user). */
 	skipLobby?: boolean;
+	/** Called when Element Call asks the host to close or reports a hangup. */
+	onClose?: () => void;
+	/** Keeps the floating host surface visible when Element Call requests it. */
+	onAlwaysOnScreenChange?: (alwaysOnScreen: boolean) => void;
 }
 
 export interface ElementCallWidget {
@@ -35,77 +48,116 @@ export interface ElementCallWidget {
 	url: string | null;
 	/** Ref callback for the iframe. Pass `null` on unmount to tear down. */
 	attachIframe: (iframe: HTMLIFrameElement | null) => void;
+	/** Requests a clean MatrixRTC leave through the widget protocol. */
+	hangup: () => Promise<void>;
 	/** Set when the call cannot be embedded at all; surface it, do not swallow. */
 	error: Error | null;
 }
 
-/**
- * Widget ids only need to be unique per host, and Element Call echoes ours back
- * on every message. Deriving it from the room keeps it stable across re-renders
- * so a remount does not orphan the previous messaging channel.
- */
-const widgetIdForRoom = (roomId: string): string =>
-	// Encode rather than strip: dropping every non-alphanumeric made
-	// `!abc:foo.com` and `!abcfoo:com` collide on the same widget id, which
-	// would let one call's channel answer for another.
-	`oriso-call-${encodeURIComponent(roomId).replace(/%/g, '_')}`;
+const widgetIdForRoom = async (
+	roomId: string,
+	instanceNonce: string
+): Promise<string> => {
+	const digest = await globalThis.crypto.subtle.digest(
+		'SHA-256',
+		new TextEncoder().encode(`${roomId}\u0000${instanceNonce}`)
+	);
+	return `oriso-call-${Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('')}`;
+};
+
+const fragmentParams = (url: string): URLSearchParams => {
+	const hash = new URL(url).hash;
+	const queryStart = hash.indexOf('?');
+	return new URLSearchParams(queryStart === -1 ? '' : hash.slice(queryStart));
+};
 
 export const useElementCallWidget = (
 	client: MatrixClient | null,
-	{ roomId, isVideo, skipLobby = true }: ElementCallWidgetOptions
+	{
+		roomId,
+		isVideo,
+		skipLobby = true,
+		onClose,
+		onAlwaysOnScreenChange
+	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
+	const [url, setUrl] = useState<string | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
+	const instanceNonceRef = useRef(globalThis.crypto.randomUUID());
+	const messageGuardRef = useRef<
+		((event: MessageEvent<unknown>) => void) | null
+	>(null);
 
-	const url = useMemo(() => {
-		if (!client || !roomId) return null;
+	// A widget client cannot join rooms. Gate iframe creation on the host's
+	// membership so Element Call never starts against an invited/unknown room.
+	useEffect(() => {
+		let cancelled = false;
+		setUrl(null);
+		setError(null);
 
-		try {
-			const origin = getElementCallBaseUrl();
-			if (!origin) {
-				throw new Error(
-					'REACT_APP_ELEMENT_CALL_BASE_URL is not set — cannot embed the call.'
+		if (!client || !roomId) return undefined;
+
+		const prepare = async () => {
+			try {
+				const configuredBaseUrl = getElementCallBaseUrl();
+				if (!configuredBaseUrl) {
+					throw new Error(
+						'REACT_APP_ELEMENT_CALL_BASE_URL is not set — cannot embed the call.'
+					);
+				}
+
+				const elementCallUrl = new URL(
+					'/room',
+					new URL(configuredBaseUrl)
 				);
-			}
+				const userId = client.getUserId();
+				const deviceId = client.getDeviceId();
+				const baseUrl = client.getHomeserverUrl();
+				if (!userId || !deviceId || !baseUrl) {
+					throw new Error(
+						'Matrix session incomplete — cannot embed the call.'
+					);
+				}
 
-			const userId = client.getUserId();
-			const deviceId = client.getDeviceId();
-			const baseUrl = client.getHomeserverUrl();
-			if (!userId || !deviceId || !baseUrl) {
-				throw new Error(
-					'Matrix session incomplete — cannot embed the call.'
+				if (client.getRoom(roomId)?.getMyMembership() !== 'join') {
+					await client.joinRoom(roomId);
+				}
+				if (cancelled) return;
+
+				const widgetId = await widgetIdForRoom(
+					roomId,
+					instanceNonceRef.current
 				);
+				if (cancelled) return;
+				elementCallUrl.hash = `?${new URLSearchParams({
+					widgetId,
+					parentUrl: window.location.origin,
+					roomId,
+					userId,
+					deviceId,
+					baseUrl,
+					confineToRoom: 'true',
+					header: 'none',
+					skipLobby: String(skipLobby),
+					perParticipantE2EE: 'true',
+					intent: 'start_call',
+					callIntent: isVideo ? 'video' : 'audio'
+				}).toString()}`;
+
+				setUrl(elementCallUrl.toString());
+			} catch (err) {
+				if (!cancelled) setError(err as Error);
 			}
+		};
 
-			// Widget mode reads its configuration from query params (SPA mode uses
-			// the fragment). Note what is *absent*: no access token. The widget
-			// never receives our credentials; it asks us to act on its behalf.
-			const params = new URLSearchParams({
-				widgetId: widgetIdForRoom(roomId),
-				parentUrl: window.location.origin,
-				roomId,
-				userId,
-				deviceId,
-				baseUrl,
-				// Media encryption. Element Call derives per-participant keys and
-				// distributes them over encrypted to-device messages, which only
-				// works because the host client does the crypto (ADR-004).
-				enableE2EE: 'true',
-				perParticipantE2EE: 'true',
-				confineToRoom: 'true',
-				header: 'none',
-				skipLobby: String(skipLobby),
-				intent: 'start_call',
-				callIntent: isVideo ? 'video' : 'audio'
-			});
-
-			setError(null);
-			return `${origin}/room?${params.toString()}`;
-		} catch (err) {
-			setError(err as Error);
-			return null;
-		}
+		void prepare();
+		return () => {
+			cancelled = true;
+		};
 	}, [client, roomId, isVideo, skipLobby]);
 
 	const attachIframe = useCallback(
@@ -117,26 +169,110 @@ export const useElementCallWidget = (
 				apiRef.current = null;
 				driverRef.current = null;
 			}
+			if (messageGuardRef.current) {
+				window.removeEventListener(
+					'message',
+					messageGuardRef.current,
+					true
+				);
+				messageGuardRef.current = null;
+			}
 
 			if (!iframe || !client || !roomId || !url) return;
 
 			const userId = client.getUserId();
 			if (!userId) return;
 
+			const expectedOrigin = new URL(url).origin;
+			if (
+				new URL(iframe.src, window.location.href).origin !==
+				expectedOrigin
+			) {
+				setError(
+					new Error(
+						'Element Call iframe origin does not match the configured widget origin.'
+					)
+				);
+				return;
+			}
+
+			const widgetId = fragmentParams(url).get('widgetId');
+			if (!widgetId) {
+				setError(new Error('Element Call widget id is missing.'));
+				return;
+			}
+			const iframeWindow = iframe.contentWindow;
+			const guardWidgetChannel = (event: MessageEvent<unknown>) => {
+				const message = event.data as { widgetId?: unknown } | null;
+				if (!message || message.widgetId !== widgetId) return;
+				if (
+					event.origin !== expectedOrigin ||
+					event.source !== iframeWindow
+				) {
+					event.stopImmediatePropagation();
+				}
+			};
+			// matrix-widget-api 1.13's strictOriginCheck compares with the host
+			// origin and therefore rejects a legitimate cross-origin widget. A
+			// capture-phase guard gives this channel the correct two-part
+			// boundary: configured origin plus the mounted iframe window.
+			window.addEventListener('message', guardWidgetChannel, true);
+			messageGuardRef.current = guardWidgetChannel;
+
 			const driver = new OrisoWidgetDriver(client, roomId);
 			const widget = new Widget({
-				id: widgetIdForRoom(roomId),
+				id: widgetId,
 				creatorUserId: userId,
 				type: MatrixWidgetType.Custom,
-				url
+				url,
+				waitForIframeLoad: false
 			});
 
 			driverRef.current = driver;
-			apiRef.current = new ClientWidgetApi(widget, iframe, driver);
-			apiRef.current.setViewedRoomId(roomId);
+			const api = new ClientWidgetApi(widget, iframe, driver);
+			apiRef.current = api;
+			api.setViewedRoomId(roomId);
+
+			api.on('ready', () => {
+				void api.updateTheme({ name: 'light' }).catch(() => {
+					/* the widget may have closed during capability negotiation */
+				});
+			});
+
+			const handleClose = (
+				event: CustomEvent<IWidgetApiRequest>
+			): void => {
+				event.preventDefault();
+				api.transport.reply(event.detail, {});
+				onClose?.();
+			};
+			api.on('action:im.vector.hangup', handleClose);
+			api.on('action:io.element.close', handleClose);
+
+			api.on(
+				'action:io.element.device_mute',
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					api.transport.reply(event.detail, event.detail.data);
+				}
+			);
+			api.on(
+				'action:set_always_on_screen',
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const value = event.detail.data.value === true;
+					onAlwaysOnScreenChange?.(value);
+					api.transport.reply(event.detail, { success: true });
+				}
+			);
 		},
-		[client, roomId, url]
+		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
+
+	const hangup = useCallback(async (): Promise<void> => {
+		if (!apiRef.current) return;
+		await apiRef.current.transport.send('im.vector.hangup', {});
+	}, []);
 
 	// Push room and to-device traffic into the widget. The widget API only
 	// *answers* requests; anything the widget needs to observe has to be fed.
@@ -150,10 +286,34 @@ export const useElementCallWidget = (
 		) => {
 			if (toStartOfTimeline) return; // backfill, not live
 			if (event.getRoomId() !== roomId) return;
+			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedEvent(event.getEffectiveEvent() as never, roomId)
 				.catch(() => {
 					/* the widget may have gone away mid-call */
+				});
+		};
+
+		const onLocalEchoUpdated = (event: MatrixEvent) => {
+			if (event.getRoomId() !== roomId) return;
+			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
+			apiRef.current
+				?.feedEvent(event.getEffectiveEvent() as never, roomId)
+				.catch(() => {
+					/* the widget may have gone away mid-call */
+				});
+		};
+
+		const onStateEvent = (
+			event: MatrixEvent,
+			state: { roomId: string }
+		) => {
+			if (state.roomId !== roomId) return;
+			if (!ALLOWED_RECEIVE_STATE_EVENT_TYPES.has(event.getType())) return;
+			apiRef.current
+				?.feedStateUpdate(event.getEffectiveEvent() as never)
+				.catch(() => {
+					/* see above */
 				});
 		};
 
@@ -173,40 +333,33 @@ export const useElementCallWidget = (
 		};
 
 		client.on(RoomEvent.Timeline, onTimeline);
+		client.on(RoomEvent.LocalEchoUpdated, onLocalEchoUpdated);
+		client.on(RoomStateEvent.Events, onStateEvent);
 		client.on(ClientEvent.ToDeviceEvent, onToDevice);
 
 		return () => {
 			client.off(RoomEvent.Timeline, onTimeline);
+			client.off(RoomEvent.LocalEchoUpdated, onLocalEchoUpdated);
+			client.off(RoomStateEvent.Events, onStateEvent);
 			client.off(ClientEvent.ToDeviceEvent, onToDevice);
 		};
 	}, [client, roomId]);
-
-	// Replay the current call membership so a widget that mounts mid-call sees
-	// who is already there instead of an empty room.
-	useEffect(() => {
-		if (!client || !roomId || !apiRef.current) return;
-		const state = client
-			.getRoom(roomId)
-			?.getLiveTimeline()
-			.getState(EventTimeline.FORWARDS);
-		state
-			?.getStateEvents('org.matrix.msc3401.call.member')
-			.forEach((event) => {
-				apiRef.current
-					?.feedEvent(event.getEffectiveEvent() as never, roomId)
-					.catch(() => {
-						/* best effort */
-					});
-			});
-	}, [client, roomId, url]);
 
 	useEffect(
 		() => () => {
 			apiRef.current?.stop();
 			apiRef.current = null;
+			if (messageGuardRef.current) {
+				window.removeEventListener(
+					'message',
+					messageGuardRef.current,
+					true
+				);
+				messageGuardRef.current = null;
+			}
 		},
 		[]
 	);
 
-	return { url, attachIframe, error };
+	return { url, attachIframe, hangup, error };
 };

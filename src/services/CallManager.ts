@@ -13,6 +13,7 @@ import {
 	assertMatrixRoomEncrypted,
 	buildMatrixRoomEncryptionInitialState
 } from '../utils/matrixRoomEncryption';
+import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 
 export type CallState =
 	| 'idle'
@@ -37,10 +38,9 @@ export interface CallData {
 	matrixCall?: MatrixCall;
 	state: CallState;
 	/**
-	 * Optional: the dedicated Element Call room for group calls. For backwards
-	 * compatibility, this is usually the same as `roomId`, but we keep it
-	 * separate so we can continue to send signalling events in the original
-	 * session room while Element Call uses its own room.
+	 * Optional dedicated Element Call room for group calls. It stays separate
+	 * so signalling events can remain in the original session room while
+	 * Element Call uses its own room.
 	 */
 	elementCallRoomId?: string;
 	/**
@@ -363,12 +363,17 @@ class CallManager {
 			);
 		}
 
-		// console.log(
-		// "✅ Created Element Call room",
-		// result.room_id,
-		// "for session room",
-		// sourceRoomId,
-		// );
+		const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
+		if (
+			!membershipReaderUserId ||
+			!membershipReaderUserId.startsWith('@') ||
+			!membershipReaderUserId.includes(':')
+		) {
+			throw new Error(
+				'MatrixRTC membership reader user is not configured'
+			);
+		}
+		await client.invite(result.room_id, membershipReaderUserId);
 
 		return result.room_id;
 	}
@@ -385,12 +390,10 @@ class CallManager {
 	): Promise<void> {
 		let failedInvites = 0;
 		const ownUserId = client.getUserId();
-		const members =
-			client
-				.getRoom(sourceRoomId)
-				?.getMembersWithMembership('join' as any)
-				?.map((member) => member.userId)
-				.filter((userId) => userId !== ownUserId) ?? [];
+		const { joined } = await client.getJoinedRoomMembers(sourceRoomId);
+		const members = Object.keys(joined).filter(
+			(userId) => userId !== ownUserId
+		);
 
 		await Promise.all(
 			members.map((userId) =>
@@ -405,9 +408,8 @@ class CallManager {
 		);
 
 		if (failedInvites > 0) {
-			// A count is enough to notice a broken fallback without naming anyone.
-			console.warn(
-				`[call] ${failedInvites} of ${members.length} participants could not be invited to the call room`
+			throw new Error(
+				`Could not invite ${failedInvites} of ${members.length} participants to the call room`
 			);
 		}
 	}
@@ -656,7 +658,7 @@ class CallManager {
 	 */
 	public endCall(notifyRemote: boolean = true): void {
 		// Snapshot + clear first so nested hangup → state:ended → endCall()
-		// (and late oriso-call-ended messages) cannot read null.matrixCall.
+		// callbacks cannot read null.matrixCall.
 		const call = this.currentCall;
 		if (!call) {
 			return;

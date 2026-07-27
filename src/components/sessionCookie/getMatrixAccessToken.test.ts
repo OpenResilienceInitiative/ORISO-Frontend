@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createMatrixClient,
-	getElementCallAccessToken,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from './getMatrixAccessToken';
@@ -243,35 +242,5 @@ describe('getMatrixAccessToken', () => {
 				}
 			}
 		});
-	});
-});
-
-describe('getElementCallAccessToken', () => {
-	it('uses a dedicated stable device instead of the ORISO app device', async () => {
-		localStorage.setItem('matrix_device_id', 'ORISO_WEB_MAIN_DEVICE');
-		Object.defineProperty(globalThis, 'crypto', {
-			value: { randomUUID: () => '12345678-90ab-cdef-1234-567890abcdef' },
-			configurable: true
-		});
-		vi.mocked(fetchData).mockResolvedValue({
-			accessToken: 'element-call-token',
-			deviceId: 'ORISO_CALL_1234567890ABCDEF12345678',
-			userId: '@user:matrix.example.test'
-		});
-
-		const result = await getElementCallAccessToken();
-
-		expect(result.deviceId).toBe('ORISO_CALL_1234567890ABCDEF12345678');
-		expect(fetchData).toHaveBeenCalledWith(
-			expect.objectContaining({
-				url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_CALL_1234567890ABCDEF12345678'
-			})
-		);
-		expect(localStorage.getItem('matrix_device_id')).toBe(
-			'ORISO_WEB_MAIN_DEVICE'
-		);
-		expect(localStorage.getItem('matrix_call_device_id')).toBe(
-			'ORISO_CALL_1234567890ABCDEF12345678'
-		);
 	});
 });

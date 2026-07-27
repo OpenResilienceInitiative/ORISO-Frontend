@@ -28,7 +28,7 @@ export interface groupChatSettings {
 }
 
 export interface chatLinkData {
-	groupId: string;
+	matrixRoomId: string;
 }
 
 const groupChatPayload = ({

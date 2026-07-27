@@ -12,9 +12,6 @@ vi.mock('../../globalState', () => ({
 	},
 	hasUserAuthority: vi.fn(() => false)
 }));
-vi.mock('../../utils/videoCallHelpers', () => ({
-	hasVideoCallFeature: vi.fn(() => false)
-}));
 vi.mock('../sessionsList/SessionsListWrapper', () => ({
 	SessionsListWrapper: Stub
 }));
@@ -25,8 +22,6 @@ vi.mock('../conversationCreate/CreateConversationView', () => ({
 	CreateConversationView: Stub
 }));
 vi.mock('../groupChat/GroupChatInfo', () => ({ GroupChatInfo: Stub }));
-vi.mock('../appointment/Appointments', () => ({ Appointments: Stub }));
-vi.mock('../videoConference/VideoConference', () => ({ default: Stub }));
 vi.mock('../tools/ToolsList', () => ({ ToolsList: Stub }));
 vi.mock('../../containers/overview/overview', () => ({ OverviewPage: Stub }));
 vi.mock('../../containers/bookings/components/Booking/booking', () => ({
@@ -83,10 +78,7 @@ const { RouterConfigConsultant } = await import('./RouterConfig');
 
 const settings = {
 	useOverviewPage: false,
-	disableVideoAppointments: true,
-	urls: {
-		consultantVideoConference: '/video'
-	}
+	urls: {}
 } as any;
 
 describe('RouterConfigConsultant navigation', () => {

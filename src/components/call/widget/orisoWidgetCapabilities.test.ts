@@ -2,15 +2,23 @@ import { describe, expect, it } from 'vitest';
 
 import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
 
+const allowed = (capability: string) =>
+	isAllowedWidgetCapability(capability, '@a:hs', 'ORISO_WEB_test');
+
 describe('isAllowedWidgetCapability', () => {
 	it('grants the call membership state events Element Call needs to join', () => {
 		expect(
-			isAllowedWidgetCapability(
+			allowed(
 				'org.matrix.msc2762.send.state_event:org.matrix.msc3401.call.member#@a:hs_DEVICE_m.call'
+			)
+		).toBe(false);
+		expect(
+			allowed(
+				'org.matrix.msc2762.send.state_event:org.matrix.msc3401.call.member#@a:hs_ORISO_WEB_test_m.call'
 			)
 		).toBe(true);
 		expect(
-			isAllowedWidgetCapability(
+			allowed(
 				'org.matrix.msc2762.receive.state_event:org.matrix.msc3401.call.member'
 			)
 		).toBe(true);
@@ -18,13 +26,13 @@ describe('isAllowedWidgetCapability', () => {
 
 	it('grants encrypted to-device traffic, which is how media keys travel', () => {
 		expect(
-			isAllowedWidgetCapability(
+			allowed(
 				'org.matrix.msc3819.send.to_device:io.element.call.encryption_keys'
 			)
 		).toBe(true);
 		expect(
-			isAllowedWidgetCapability(
-				'org.matrix.msc3819.receive.to_device:m.call.encryption_keys'
+			allowed(
+				'org.matrix.msc3819.receive.to_device:io.element.call.encryption_keys'
 			)
 		).toBe(true);
 	});
@@ -33,63 +41,39 @@ describe('isAllowedWidgetCapability', () => {
 		// The whole point of the allow-list: an iframe that could send
 		// `m.room.message` could write into a counselling session under the
 		// counsellor's name.
-		expect(
-			isAllowedWidgetCapability(
-				'org.matrix.msc2762.send.event:m.room.message'
-			)
-		).toBe(false);
-		expect(
-			isAllowedWidgetCapability(
-				'org.matrix.msc2762.receive.event:m.room.message'
-			)
-		).toBe(false);
+		expect(allowed('org.matrix.msc2762.send.event:m.room.message')).toBe(
+			false
+		);
+		expect(allowed('org.matrix.msc2762.receive.event:m.room.message')).toBe(
+			false
+		);
 	});
 
-	it('lets the widget read room metadata but never write it', () => {
-		// The widget needs to *see* membership and encryption state to render a
-		// call. It has no reason to change either, and granting write would let
-		// the iframe alter who is in a counselling room as the logged-in user.
-		(
-			[
-				'm.room.member',
-				'm.room.name',
-				'm.room.create',
-				'm.room.encryption'
-			] as const
-		).forEach((type) => {
+	it('lets the widget read encryption state, but no member or room metadata', () => {
+		expect(
+			allowed('org.matrix.msc2762.receive.state_event:m.room.encryption')
+		).toBe(true);
+		for (const type of ['m.room.member', 'm.room.name', 'm.room.create']) {
 			expect(
-				isAllowedWidgetCapability(
-					`org.matrix.msc2762.receive.state_event:${type}`
-				),
-				`${type} must be readable`
-			).toBe(true);
-			expect(
-				isAllowedWidgetCapability(
-					`org.matrix.msc2762.send.state_event:${type}`
-				),
-				`${type} must NOT be writable`
+				allowed(`org.matrix.msc2762.receive.state_event:${type}`)
 			).toBe(false);
-		});
+		}
 	});
 
-	it('still lets the widget write its own call membership', () => {
+	it('does not let the widget write another device membership', () => {
 		expect(
-			isAllowedWidgetCapability(
+			allowed(
 				'org.matrix.msc2762.send.state_event:org.matrix.msc3401.call.member#@a:hs_DEVICE_m.call'
 			)
-		).toBe(true);
+		).toBe(false);
 	});
 
 	it('refuses to let the call widget change who may enter a room', () => {
 		expect(
-			isAllowedWidgetCapability(
-				'org.matrix.msc2762.send.state_event:m.room.power_levels#'
-			)
+			allowed('org.matrix.msc2762.send.state_event:m.room.power_levels#')
 		).toBe(false);
 		expect(
-			isAllowedWidgetCapability(
-				'org.matrix.msc2762.send.state_event:m.room.join_rules#'
-			)
+			allowed('org.matrix.msc2762.send.state_event:m.room.join_rules#')
 		).toBe(false);
 	});
 
@@ -97,24 +81,32 @@ describe('isAllowedWidgetCapability', () => {
 		// Everything after `#` is the state key. A widget must not be able to
 		// smuggle an allowed type in there.
 		expect(
-			isAllowedWidgetCapability(
+			allowed(
 				'org.matrix.msc2762.send.state_event:m.room.power_levels#org.matrix.msc3401.call.member'
 			)
 		).toBe(false);
 	});
 
 	it('denies anything it does not recognise', () => {
-		expect(isAllowedWidgetCapability('m.send.event')).toBe(false);
-		expect(isAllowedWidgetCapability('')).toBe(false);
-		expect(
-			isAllowedWidgetCapability('org.matrix.msc2762.send.event:')
-		).toBe(false);
+		expect(allowed('m.send.event')).toBe(false);
+		expect(allowed('')).toBe(false);
+		expect(allowed('org.matrix.msc2762.send.event:')).toBe(false);
 	});
 
-	it('grants the plain capabilities a call needs to stay on screen', () => {
-		expect(isAllowedWidgetCapability('m.always_on_screen')).toBe(true);
-		expect(
-			isAllowedWidgetCapability('org.matrix.msc4157.send.delayed_event')
-		).toBe(true);
+	it('grants delayed membership maintenance but no broad plain capability', () => {
+		expect(allowed('org.matrix.msc4157.send.delayed_event')).toBe(true);
+		expect(allowed('m.always_on_screen')).toBe(false);
+		expect(allowed('org.matrix.msc2931.navigate')).toBe(false);
+	});
+
+	it('rejects the former broad signalling and redaction surface', () => {
+		for (const capability of [
+			'org.matrix.msc2762.send.event:m.room.redaction',
+			'org.matrix.msc3819.send.to_device:m.call.invite',
+			'org.matrix.msc3819.send.to_device:m.call.hangup',
+			'org.matrix.msc2762.receive.state_event:m.room.member'
+		]) {
+			expect(allowed(capability)).toBe(false);
+		}
 	});
 });

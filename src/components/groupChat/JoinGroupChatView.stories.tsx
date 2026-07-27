@@ -135,7 +135,6 @@ const buildWaitingSession = (
 				attachment: null,
 				consultingType: 1,
 				duration: 90,
-				groupId: 'sb-waiting-room-9001',
 				matrixRoomId: 'sb-waiting-room-9001',
 				hintMessage: WELCOME,
 				sourceLanguage: 'de',

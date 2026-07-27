@@ -10,7 +10,7 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 /**
  * Routing smoke for the v7 session view. Renders the REAL SessionsZone with a
  * synthetic routerConfig whose paths mirror the real RouterConfig (Matrix-only
- * `session/:id` + RocketChat `:rcGroupId/:id` variants, optional-param list
+ * `session/:id` + `:groupId/:id` variants, optional-param list
  * routes, empty view) but with stub components, so we can assert v7 best-match
  * routing without pulling the whole component graph.
  *
@@ -23,7 +23,7 @@ const stub = (testId: string) => () => <div data-testid={testId} />;
 const consultantConfig = {
 	listRoutes: [
 		{
-			path: '/sessions/consultant/sessionView/:rcGroupId?/:sessionId?',
+			path: '/sessions/consultant/sessionView/:groupId?/:sessionId?',
 			exact: false,
 			component: stub('list'),
 			type: SESSION_LIST_TYPES.MY_SESSION
@@ -36,7 +36,7 @@ const consultantConfig = {
 			type: SESSION_LIST_TYPES.MY_SESSION
 		},
 		{
-			path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/userProfile',
+			path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 			component: stub('askerInfo'),
 			type: SESSION_LIST_TYPES.MY_SESSION
 		}
@@ -48,7 +48,7 @@ const consultantConfig = {
 			type: SESSION_LIST_TYPES.MY_SESSION
 		},
 		{
-			path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/',
+			path: '/sessions/consultant/sessionView/:groupId/:sessionId/',
 			component: stub('sessionView'),
 			type: SESSION_LIST_TYPES.MY_SESSION
 		},
@@ -112,7 +112,7 @@ describe('SessionsZone v7 routing — consultant', () => {
 		expect(screen.queryByTestId('empty')).toBeNull();
 	});
 
-	it('matches the RocketChat detail route (:rcGroupId/:id)', () => {
+	it('matches the detail route (:groupId/:id)', () => {
 		renderAt('/sessions/consultant/sessionView/GRP1/42');
 		expect(screen.getByTestId('sessionView')).toBeDefined();
 	});
@@ -163,7 +163,7 @@ const userConfig = {
 			component: stub('list')
 		},
 		{
-			path: '/sessions/user/view/:rcGroupId?/:sessionId?',
+			path: '/sessions/user/view/:groupId?/:sessionId?',
 			exact: false,
 			component: stub('list')
 		}
@@ -179,7 +179,7 @@ const userConfig = {
 			component: stub('sessionView')
 		},
 		{
-			path: '/sessions/user/view/:rcGroupId/:sessionId',
+			path: '/sessions/user/view/:groupId/:sessionId',
 			component: stub('sessionView')
 		},
 		{ path: '/sessions/user/view/', component: stub('empty') }
@@ -217,7 +217,7 @@ describe('SessionsZone v7 routing — asker (user)', () => {
 		expect(screen.getByTestId('sessionView')).toBeDefined();
 	});
 
-	it('matches the RocketChat asker session route (:rcGroupId/:id)', () => {
+	it('matches the asker session route (:groupId/:id)', () => {
 		renderUserAt('/sessions/user/view/GRP1/42');
 		expect(screen.getByTestId('sessionView')).toBeDefined();
 	});

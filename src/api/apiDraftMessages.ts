@@ -7,7 +7,7 @@ import {
 } from './fetchData';
 
 export const apiPostDraftMessage = async (
-	rcGroupIdOrSessionId: string | number,
+	roomIdOrSessionId: string | number,
 	messageData: string,
 	encryptType: string
 ): Promise<void> => {
@@ -19,7 +19,7 @@ export const apiPostDraftMessage = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
-		headersData: { rcGroupId: rcGroupIdOrSessionId },
+		headersData: { matrixRoomId: roomIdOrSessionId },
 		bodyData: message,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	});
@@ -31,14 +31,14 @@ export interface IDraftMessage {
 }
 
 export const apiGetDraftMessage = async (
-	rcGroupIdOrSessionId: string | number,
+	roomIdOrSessionId: string | number,
 	signal?: AbortSignal
 ): Promise<IDraftMessage> => {
 	const url = endpoints.draftMessages;
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		headersData: { rcGroupId: rcGroupIdOrSessionId },
+		headersData: { matrixRoomId: roomIdOrSessionId },
 		responseHandling: [FETCH_ERRORS.EMPTY, FETCH_SUCCESS.CONTENT],
 		...(signal && { signal: signal })
 	});

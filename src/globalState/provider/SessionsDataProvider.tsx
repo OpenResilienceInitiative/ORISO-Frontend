@@ -93,7 +93,7 @@ function reducer(
 			(ids ?? []).forEach((id) => {
 				const index = newSessions.findIndex((s) => {
 					const chatItem = getChatItemForSession(s);
-					return chatItem.id === id || chatItem.groupId === id;
+					return chatItem.id === id || chatItem.matrixRoomId === id;
 				});
 
 				if (index >= 0) {

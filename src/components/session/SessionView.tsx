@@ -18,7 +18,6 @@ import { JoinGroupChatView } from '../groupChat/JoinGroupChatView';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import './session.styles';
-import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useSession } from '../../hooks/useSession';
 import { SessionStream } from './SessionStream';
@@ -27,17 +26,9 @@ import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 
 export const SessionView = () => {
-	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ rcGroupId: string; sessionId: string }>();
+	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
+		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
-
-	// console.log('🔥 SessionView MOUNTED:', {
-	// groupIdFromParam,
-	// sessionIdFromParam
-	// });
-
-	const currentGroupId = useUpdatingRef(groupIdFromParam);
-	const currentSessionId = useUpdatingRef(sessionIdFromParam);
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -57,14 +48,6 @@ export const SessionView = () => {
 		groupIdFromParam,
 		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
 	);
-
-	// console.log('🔥 SessionView STATE:', {
-	// loading,
-	// rcReady,
-	// activeSessionReady,
-	// hasActiveSession: !!activeSession,
-	// sessionId: activeSession?.item?.id
-	// });
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
@@ -112,14 +95,7 @@ export const SessionView = () => {
 	}, [checkMutedUserForThisSession]);
 
 	useEffect(() => {
-		// console.log('🔥 SessionView useEffect:', {
-		// activeSessionReady,
-		// hasActiveSession: !!activeSession,
-		// sessionId: activeSession?.item?.id
-		// });
-
 		if (activeSessionReady && !activeSession) {
-			// console.log('🔥 No active session - redirecting to list');
 			navigate(
 				listPath +
 					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
@@ -127,23 +103,6 @@ export const SessionView = () => {
 			);
 			return;
 		} else if (activeSessionReady) {
-			// console.log('🔥 Active session ready - setting loading false');
-
-			// MATRIX MIGRATION: Skip RocketChat-specific redirect
-			// if (
-			// 	activeSession.rid !== currentGroupId.current &&
-			// 	activeSession.item.id.toString() === currentSessionId.current
-			// ) {
-			// 	navigate(
-			// 		`${listPath}/${activeSession.rid}/${activeSession.item.id}${
-			// 			sessionListTab
-			// 				? `?sessionListTab=${sessionListTab}`
-			// 				: ''
-			// 		}`
-			// 	);
-			// 	return;
-			// }
-
 			if (type !== SESSION_LIST_TYPES.ENQUIRY) {
 				setReadonly(false);
 			}
@@ -160,9 +119,6 @@ export const SessionView = () => {
 		activeSession,
 		sessionListTab,
 		type,
-		// bannedUsers, // REMOVED: This was causing infinite re-renders
-		currentSessionId,
-		currentGroupId,
 		listPath,
 		navigate
 	]);
@@ -189,21 +145,9 @@ export const SessionView = () => {
 		};
 	}, [activeSession?.item?.agencyId, setAgencyLogo]);
 
-	// console.log('🔥 SessionView RENDER CHECK:', {
-	// loading,
-	// hasActiveSession: !!activeSession,
-	// willShowLoading: loading || !activeSession
-	// });
-
 	if (loading || !activeSession) {
-		// console.log('🔥 Showing loading spinner');
 		return <Loading />;
 	}
-
-	// console.log('🔥 SessionView RENDERING SESSION:', {
-	// sessionId: activeSession.item.id,
-	// isGroup: activeSession.isGroup
-	// });
 
 	if (
 		shouldShowGroupChatJoinView({
@@ -213,7 +157,6 @@ export const SessionView = () => {
 			isBanned: bannedUsers.includes(userData.userName)
 		})
 	) {
-		// console.log('🔥 Showing JoinGroupChatView');
 		return (
 			<ActiveSessionProvider
 				activeSession={activeSession}
@@ -226,8 +169,6 @@ export const SessionView = () => {
 			</ActiveSessionProvider>
 		);
 	}
-
-	// console.log('🔥 Rendering SessionStream!');
 
 	return (
 		<ActiveSessionProvider

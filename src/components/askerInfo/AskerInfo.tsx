@@ -20,7 +20,7 @@ import { AskerInfoContent } from './AskerInfoContent';
 
 export const AskerInfo = () => {
 	const { t: translate } = useTranslation();
-	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
+	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const navigate = useNavigate();
 
 	const { path: listPath } = useContext(SessionTypeContext);
@@ -62,7 +62,7 @@ export const AskerInfo = () => {
 					<div className="askerInfo__header__wrapper">
 						<Link
 							to={`${listPath}/${
-								activeSession.item.groupId
+								activeSession.item.matrixRoomId
 							}/${activeSession.item.id}${
 								sessionListTab
 									? `?sessionListTab=${sessionListTab}`
