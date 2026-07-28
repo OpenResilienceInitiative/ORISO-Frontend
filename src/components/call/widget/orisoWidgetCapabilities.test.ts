@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
 
 const allowed = (capability: string) =>
-	isAllowedWidgetCapability(capability, '@a:hs', 'ORISO_WEB_test');
+	isAllowedWidgetCapability(
+		capability,
+		'@a:hs',
+		'ORISO_WEB_test',
+		'!call:hs'
+	);
 
 describe('isAllowedWidgetCapability', () => {
 	it('grants the call membership state events Element Call needs to join', () => {
@@ -49,15 +54,23 @@ describe('isAllowedWidgetCapability', () => {
 		);
 	});
 
-	it('lets the widget read encryption state, but no member or room metadata', () => {
-		expect(
-			allowed('org.matrix.msc2762.receive.state_event:m.room.encryption')
-		).toBe(true);
-		for (const type of ['m.room.member', 'm.room.name', 'm.room.create']) {
+	it('lets the room-confined widget read the state required to boot', () => {
+		for (const type of [
+			'm.room.create',
+			'm.room.name',
+			'm.room.member',
+			'm.room.encryption'
+		]) {
 			expect(
 				allowed(`org.matrix.msc2762.receive.state_event:${type}`)
-			).toBe(false);
+			).toBe(true);
 		}
+	});
+
+	it('grants timeline access only to the active call room', () => {
+		expect(allowed('org.matrix.msc2762.timeline:!call:hs')).toBe(true);
+		expect(allowed('org.matrix.msc2762.timeline:!other:hs')).toBe(false);
+		expect(allowed('org.matrix.msc2762.timeline:*')).toBe(false);
 	});
 
 	it('does not let the widget write another device membership', () => {
@@ -103,8 +116,7 @@ describe('isAllowedWidgetCapability', () => {
 		for (const capability of [
 			'org.matrix.msc2762.send.event:m.room.redaction',
 			'org.matrix.msc3819.send.to_device:m.call.invite',
-			'org.matrix.msc3819.send.to_device:m.call.hangup',
-			'org.matrix.msc2762.receive.state_event:m.room.member'
+			'org.matrix.msc3819.send.to_device:m.call.hangup'
 		]) {
 			expect(allowed(capability)).toBe(false);
 		}

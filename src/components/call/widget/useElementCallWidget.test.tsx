@@ -340,6 +340,26 @@ describe('useElementCallWidget', () => {
 		});
 		expect(onAlwaysOnScreenChange).toHaveBeenCalledWith(true);
 
+		for (const action of [
+			'io.element.join',
+			'io.element.tile_layout',
+			'io.element.spotlight_layout'
+		]) {
+			const request = {
+				action,
+				requestId: `${action}-1`,
+				widgetId: 'widget',
+				data: {}
+			};
+			const event = new CustomEvent(action, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${action}`, event));
+			expect(event.defaultPrevented).toBe(true);
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {});
+		}
+
 		await act(() => result.current.hangup());
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
 	});
@@ -385,10 +405,40 @@ describe('useElementCallWidget', () => {
 			}),
 			getType: () => 'm.room.message'
 		};
+		let encryptedType = 'm.room.encrypted';
+		const decryptionListeners = new Set<
+			(event: unknown, error?: Error) => void
+		>();
+		const decryptedRawEvent = {
+			type: 'io.element.call.reaction',
+			content: { emoji: '👍' }
+		};
+		const encryptedEvent = {
+			...roomEvent,
+			getType: () => encryptedType,
+			getEffectiveEvent: () => decryptedRawEvent,
+			on: (
+				eventName: string,
+				listener: (event: unknown, error?: Error) => void
+			) => {
+				if (eventName === 'Event.decrypted') {
+					decryptionListeners.add(listener);
+				}
+			},
+			off: (
+				eventName: string,
+				listener: (event: unknown, error?: Error) => void
+			) => {
+				if (eventName === 'Event.decrypted') {
+					decryptionListeners.delete(listener);
+				}
+			}
+		};
 
 		act(() => {
 			client.emitTest('Room.localEchoUpdated', roomEvent);
 			client.emitTest('Room.localEchoUpdated', forbiddenEvent);
+			client.emitTest('Room.timeline', encryptedEvent, {}, false);
 			client.emitTest('RoomState.events', stateEvent, {
 				roomId: CALL_ROOM
 			});
@@ -401,6 +451,18 @@ describe('useElementCallWidget', () => {
 
 		expect(api.feedEvent).toHaveBeenCalledWith(rawEvent, CALL_ROOM);
 		expect(api.feedEvent).toHaveBeenCalledTimes(1);
+		expect(decryptionListeners).toHaveLength(1);
+
+		act(() => {
+			encryptedType = 'io.element.call.reaction';
+			decryptionListeners.forEach((listener) => listener(encryptedEvent));
+		});
+		expect(api.feedEvent).toHaveBeenCalledWith(
+			decryptedRawEvent,
+			CALL_ROOM
+		);
+		expect(api.feedEvent).toHaveBeenCalledTimes(2);
+		expect(decryptionListeners).toHaveLength(0);
 		expect(api.feedStateUpdate).toHaveBeenCalledWith(
 			stateEvent.getEffectiveEvent()
 		);
