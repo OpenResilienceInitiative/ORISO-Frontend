@@ -97,6 +97,16 @@ assignIfPresent(
 	'REACT_APP_OTEL_EXPORT_INTERVAL_MS',
 	'VITE_OTEL_EXPORT_INTERVAL_MS'
 );
+assignIfPresent(
+	'REACT_APP_PLATFORM_VERSION',
+	'REACT_APP_PLATFORM_VERSION',
+	'VITE_PLATFORM_VERSION'
+);
+assignIfPresent(
+	'VITE_PLATFORM_VERSION',
+	'VITE_PLATFORM_VERSION',
+	'REACT_APP_PLATFORM_VERSION'
+);
 
 const target = process.env.RUNTIME_CONFIG_FILE;
 fs.mkdirSync(path.dirname(target), { recursive: true });
