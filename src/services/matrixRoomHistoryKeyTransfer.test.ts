@@ -401,7 +401,8 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			attemptDecryption: vi.fn()
 		};
 		(harness.room as any).getLiveTimeline = vi.fn(() => ({
-			getEvents: () => [failedEvent, decryptedEvent]
+			getEvents: () => [failedEvent, decryptedEvent],
+			getNeighbouringTimeline: () => null
 		}));
 		const imported = vi.fn();
 		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
@@ -432,6 +433,45 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
+	it('retries failed events in backfilled scrollback timelines too (FE#811)', async () => {
+		const harness = buildHarness();
+		const liveFailed = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption: vi.fn().mockResolvedValue(undefined)
+		};
+		const scrollbackFailed = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption: vi.fn().mockResolvedValue(undefined)
+		};
+		const olderTimeline = {
+			getEvents: () => [scrollbackFailed],
+			getNeighbouringTimeline: () => null
+		};
+		(harness.room as any).getLiveTimeline = vi.fn(() => ({
+			getEvents: () => [liveFailed],
+			getNeighbouringTimeline: () => olderTimeline
+		}));
+		const imported = vi.fn();
+		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
+			once: true
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'request-1',
+				keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
+			})
+		);
+
+		await vi.waitFor(() => expect(imported).toHaveBeenCalledOnce());
+		expect(liveFailed.attemptDecryption).toHaveBeenCalledOnce();
+		expect(scrollbackFailed.attemptDecryption).toHaveBeenCalledOnce();
+	});
+
 	it('a failing decryption retry never blocks the import announcement (FE#811)', async () => {
 		const harness = buildHarness();
 		const failedEvent = {
@@ -442,7 +482,8 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				.mockRejectedValue(new Error('still no session'))
 		};
 		(harness.room as any).getLiveTimeline = vi.fn(() => ({
-			getEvents: () => [failedEvent]
+			getEvents: () => [failedEvent],
+			getNeighbouringTimeline: () => null
 		}));
 		const imported = vi.fn();
 		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
