@@ -66,9 +66,10 @@ const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	path: params.actionPath ?? null
 });
 
-// Slice 5: the consumer wires `join` to `callManager.startCall(callRoomId,
-// isVideo, true)` (LiveKit/ElementCall) — NOT the legacy `useJoinVideoCall`
-// (`/videoanruf`) native-WebRTC path. Here we only produce the pure descriptor.
+// The consumer routes native ORISO calls through
+// `callManager.startCall(callRoomId, isVideo, true)`. This factory only
+// describes the action; provider-specific video integrations must use their
+// own adapter and must not be introduced as an implicit fallback here.
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'join',
 	callRoomId: params.callRoomId ?? params.roomRef ?? null,

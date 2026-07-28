@@ -38,7 +38,7 @@ interface AcceptAssignProps {
 
 export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 	const { t: translate } = useTranslation();
-	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
+	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const navigate = useNavigate();
 
 	const { activeSession, reloadActiveSession } =

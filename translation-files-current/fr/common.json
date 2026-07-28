@@ -879,12 +879,6 @@
 			}
 		}
 	},
-	"jitsi": {
-		"btn": {
-			"copied": "Le lien vidéo a été copié dans le presse-papiers",
-			"default": "Copier le lien vidéo"
-		}
-	},
 	"languages": {
 		"aa": "Afar",
 		"ab": "Abkhaze",
@@ -2560,44 +2554,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Confirmer",
-				"description": "Ensuite, nos conseillers peuvent commencer un appel vidéo avec vous.",
-				"headline": "Bienvenue !",
-				"label": {
-					"and": "et",
-					"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
-				},
-				"subline": "Veuillez confirmer notre politique de confidentialité."
-			},
-			"errorImageTitle": "Échec",
-			"errorPage": {
-				"button": "Recharger",
-				"consultant": {
-					"description": "Nous ne pouvons pas trouver d'appel vidéo pour votre lien, car l'appel vidéo a été soit supprimé, soit déjà terminé."
-				},
-				"description": "Nous ne pouvons pas trouver d'appel vidéo pour votre lien car l'appel vidéo a été soit supprimé soit déjà terminé. Si vous avez encore des problèmes, veuillez demander à votre conseiller.",
-				"headline": "L'appel vidéo n'a pas été trouvé",
-				"rejected": {
-					"description": "Malheureusement, vous ne pouvez pas participer à ce vidéo-call car votre conseiller(ère) vous a refusé.",
-					"headline": "Vous n'avez pas été admis"
-				}
-			},
-			"headline": "Veuillez patienter un peu",
-			"paused": {
-				"headline": "L'appel vidéo est terminé",
-				"subline": "L'appel vidéo est terminé. Si votre conseiller(ère) est absent(e), vous serez redirigé(e) vers l'appel vidéo dès que votre conseiller(ère) reprendra l'appel vidéo."
-			},
-			"subline": "L'appel vidéo n'a pas encore commencé. Vous serez transféré(e) dès que votre conseiller(ère) lancera l'appel vidéo.",
-			"title": {
-				"start": "Salle d'attente"
-			},
-			"waitingImageTitle": "Personne qui attend avec du café",
-			"welcomeImageTitle": "Bienvenue sur"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2719,6 +2675,21 @@
 			"remove": {
 				"confirm": "Êtes-vous sûr de vouloir supprimer ce superviseur ?"
 			}
+		}
+	},
+	"anonymousConsent": {
+		"button": "Confirmer",
+		"description": "Ensuite, nos conseillers peuvent commencer un appel vidéo avec vous.",
+		"headline": "Bienvenue !",
+		"label": {
+			"and": "et",
+			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
+		},
+		"subline": "Veuillez confirmer notre politique de confidentialité."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Les rendez-vous vidéo ne sont actuellement pas disponibles."
 		}
 	}
 }

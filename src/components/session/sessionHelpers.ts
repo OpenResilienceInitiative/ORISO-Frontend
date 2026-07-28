@@ -12,7 +12,7 @@ import {
 	formatToDDMMYYYY,
 	getChatMessageDateDivider
 } from '../../utils/dateHelpers';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import {
 	parseMessagePrefixes,
@@ -72,7 +72,7 @@ export const getChatTypeForListItem = (
 export const isSessionChat = (
 	chatItem: SessionItemInterface | GroupChatItemInterface
 ): chatItem is SessionItemInterface => {
-	return chatItem && 'askerRcId' in chatItem;
+	return chatItem && 'askerMatrixUserId' in chatItem;
 };
 
 export const isGroupChat = (
@@ -237,9 +237,9 @@ export const selectDisplayName = (userObject) => {
 };
 
 export const isMyMessage = (id: string): boolean =>
-	id === getValueFromCookie('rc_uid');
+	id === getCurrentMatrixUserId();
 
-export const isUserModerator = ({ chatItem, rcUserId }) =>
+export const isUserModerator = ({ chatItem, matrixUserId }) =>
 	isGroupChat(chatItem) &&
 	chatItem.moderators &&
-	chatItem.moderators.includes(rcUserId);
+	chatItem.moderators.includes(matrixUserId);

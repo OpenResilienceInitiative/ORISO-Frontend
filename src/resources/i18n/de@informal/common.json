@@ -1466,29 +1466,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Dir starten.",
-				"subline": "Bitte bestätige unsere Datenschutzbestimmungen."
-			},
-			"errorPage": {
-				"consultant": {
-					"description": "Zu Deinem Link können wir keinen Video-Call finden, da der Video-Call entweder gelöscht oder bereits beendet wurde."
-				},
-				"description": "Zu Deinem Link können wir keinen Video-Call finden da der Video-Call entweder gelöscht oder bereits beendet wurde. Solltest Du weiterhin Probleme haben frage bitte Deinen Beraterin oder Dein Berater.",
-				"rejected": {
-					"description": "Leider kannst Du an diesem Video-Call nicht teilnehmen, da Deine Beraterin oder Dein Berater Dich abgelehnt hat.",
-					"headline": "Du wurdest nicht zugelassen"
-				}
-			},
-			"headline": "Bitte habe etwas Geduld",
-			"paused": {
-				"subline": "Der Video-Call wurde beendet. Sollte Deine Beraterin oder Dein Berater nur abwesend sein wirst Du in den Video-Call weitergeleitet sobald Deine Beraterin oder Dein Berater den Video-Call fortsetzt."
-			},
-			"subline": "Der Video-Call hat noch nicht begonnen. Sie werden weitergeleitet sobald Deine Beraterin oder Dein Berater den Video-Call startet."
-		}
-	},
 	"walkthrough": {
 		"close": "Rundgang schließen",
 		"overview": {
@@ -1811,6 +1788,15 @@
 		"error": {
 			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
+		}
+	},
+	"anonymousConsent": {
+		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Dir starten.",
+		"subline": "Bitte bestätige unsere Datenschutzbestimmungen."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video-Termine sind derzeit nicht verfügbar."
 		}
 	}
 }

@@ -49,7 +49,9 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
 
-	const { addNewUsersToEncryptedRoom } = useE2EE(activeSession.item.groupId);
+	const { addNewUsersToEncryptedRoom } = useE2EE(
+		activeSession.item.matrixRoomId
+	);
 
 	useEffect(() => {
 		const agencyId = activeSession.item.agencyId.toString();
@@ -179,7 +181,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 				break;
 			case OVERLAY_FUNCTIONS.REASSIGN:
 				apiSendAliasMessage({
-					rcGroupId: activeSession.rid,
+					matrixRoomId: activeSession.rid,
 					type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT,
 					args: reassignmentParams
 				});
@@ -187,7 +189,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 				setOverlayActive(false);
 
 				navigate(
-					`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
+					`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
 				);
 				break;
 			case OVERLAY_FUNCTIONS.CLOSE:

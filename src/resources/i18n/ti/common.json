@@ -942,12 +942,6 @@
 			}
 		}
 	},
-	"jitsi": {
-		"btn": {
-			"copied": "ቪድዮ ሊንክ ናብ ክሊፕቦርድ ተቐዲሑ ኣሎ።",
-			"default": "ቪድዮ ሊንክ ቅዳሕ"
-		}
-	},
 	"languages": {
 		"aa": "ዓፋር",
 		"ab": "ኣብካዝያዊ",
@@ -2847,44 +2841,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "ኣረጋግፅ",
-				"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ናይ ቪድዮ ጻውዒት ክጅምሩ ይኽእሉ።",
-				"headline": "እንኳዕ ደሓን መፁ!",
-				"label": {
-					"and": "እና",
-					"text": "ኣነ ድማ ነቲ {{legal_links}} ኣስተብሂለሉ ኣለኹ። እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም። ነዚ ይሰማማዕ እየ።"
-				},
-				"subline": "በጃኹም ፖሊሲ ውልቃዊ ሓበሬታና ኣረጋግጹ።"
-			},
-			"errorImageTitle": "ወዲቑ",
-			"errorPage": {
-				"button": "ዳግማይ ጽዕነት",
-				"consultant": {
-					"description": "እቲ ቪድዮ ጻውዒት ወይ ተደምሲሱ ወይ ድሮ ስለ ዝተዛዘመ ንሊንክኩም ዝኸውን ቪድዮ ጻውዒት ክንረክብ ኣይከኣልናን።"
-				},
-				"description": "እቲ ቪድዮ ጻውዒት ወይ ተደምሲሱ ወይ ድሮ ስለ ዝተዛዘመ ንሊንክኩም ዝኸውን ቪድዮ ጻውዒት ክንረክብ ኣይከኣልናን። ጸገም እንተቐጺሉካ ንኣማኻሪኻ ሕተቶ።",
-				"headline": "እቲ ናይ ቪድዮ ጻውዒት ኣይተረኽበን።",
-				"rejected": {
-					"description": "እቲ ዘሕዝን ግን ኣማኻሪኻ ስለ ዝነጸገካ ኣብዚ ቪድዮ ጻውዒት ክትሳተፍ ኣይትኽእልን ኢኻ።",
-					"headline": "ኣይተኣተዉን።"
-				}
-			},
-			"headline": "በጃኹም ተዓገሱ",
-			"paused": {
-				"headline": "እቲ ናይ ቪድዮ ጻውዒት ተዛዘመ",
-				"subline": "እቲ ናይ ቪድዮ ጻውዒት ተዛዘመ። ኣማኻሪኻ እንተዘይሃልዩ፡ ኣማኻሪኻ ነቲ ቪድዮ ጻውዒት ምስ ቀጸለ ብኡንብኡ ናብቲ ናይ ቪድዮ ጻውዒት ክትቅይር ኢኻ።"
-			},
-			"subline": "እቲ ቪድዮ ጻውዒት ክሳብ ሕጂ ኣይተጀመረን። ኣማኻሪኻ ነቲ ናይ ቪድዮ ጻውዒት ምስ ጀመረ ብቕልጡፍ ኣንፈትካ ክትቅይር ኢኻ።",
-			"title": {
-				"start": "መጸበዪ ክፍሊ"
-			},
-			"waitingImageTitle": "ቡን ሒዙ ዝጽበ ሰብ",
-			"welcomeImageTitle": "እንኳዕ ደሓን መፁ"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -3116,6 +3072,21 @@
 			"option": "Option",
 			"ctrl": "Ctrl",
 			"cmd": "Cmd"
+		}
+	},
+	"anonymousConsent": {
+		"button": "ኣረጋግፅ",
+		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ናይ ቪድዮ ጻውዒት ክጅምሩ ይኽእሉ።",
+		"headline": "እንኳዕ ደሓን መፁ!",
+		"label": {
+			"and": "እና",
+			"text": "ኣነ ድማ ነቲ {{legal_links}} ኣስተብሂለሉ ኣለኹ። እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም። ነዚ ይሰማማዕ እየ።"
+		},
+		"subline": "በጃኹም ፖሊሲ ውልቃዊ ሓበሬታና ኣረጋግጹ።"
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video appointments are currently unavailable."
 		}
 	}
 }

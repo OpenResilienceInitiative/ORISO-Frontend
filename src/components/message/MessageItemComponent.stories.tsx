@@ -13,9 +13,9 @@ import { ServerSettingsContext } from '../../globalState/provider/ServerSettings
 import type { UserDataInterface } from '../../globalState/interfaces';
 import { MessageItemComponent } from './MessageItemComponent';
 import {
-	MOCK_ASKER_RC_ID,
-	MOCK_CONSULTANT_RC_ID,
-	MOCK_GROUP_MODERATOR_RC_ID,
+	MOCK_ASKER_MATRIX_ID,
+	MOCK_CONSULTANT_MATRIX_ID,
+	MOCK_GROUP_MODERATOR_MATRIX_ID,
 	mockActiveSession1on1,
 	mockActiveSessionGroup,
 	mockAppointmentAliasContent,
@@ -145,8 +145,8 @@ export const ClientIn1on1Incoming: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			displayName: 'Sanftes Alpaka Kala',
 			username: 'sanftes.alpaka.kala@oriso.invalid'
 		}),
@@ -163,7 +163,7 @@ export const ClientIn1on1Outgoing: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			message:
@@ -197,8 +197,8 @@ export const AndroidCompactKebabTouchZone: Story = {
 			<MessageItemComponent
 				{...mockMessageItemComponentProps({
 					isMyMessage: false,
-					userId: MOCK_ASKER_RC_ID,
-					askerRcId: MOCK_ASKER_RC_ID,
+					userId: MOCK_ASKER_MATRIX_ID,
+					askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 					displayName: 'Sanftes Alpaka Kala',
 					username: 'sanftes.alpaka.kala@oriso.invalid',
 					message: 'Okay. Ich bin gerade zuhause und kann schreiben.'
@@ -208,7 +208,7 @@ export const AndroidCompactKebabTouchZone: Story = {
 			<MessageItemComponent
 				{...mockMessageItemComponentProps({
 					isMyMessage: true,
-					userId: MOCK_CONSULTANT_RC_ID,
+					userId: MOCK_CONSULTANT_MATRIX_ID,
 					displayName: 'Beratende Person Kim G.',
 					username: 'kim.g@oriso.invalid',
 					message:
@@ -248,7 +248,7 @@ export const GroupIncoming: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_GROUP_MODERATOR_RC_ID,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
 			rid: mockActiveSessionGroup().rid,
 			displayName: 'Angela K',
 			username: 'angela.k@oriso.invalid',
@@ -268,7 +268,7 @@ export const GroupOutgoing: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			rid: mockActiveSessionGroup().rid,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
@@ -288,8 +288,8 @@ export const NormalMessage: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID
 		}),
 		...baseHandlers
 	}
@@ -340,7 +340,7 @@ export const AppointmentSet: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			message: '',
@@ -362,8 +362,8 @@ export const DeletedMessage: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			t: 'rm',
 			message: 'Diese Nachricht wurde gelöscht.'
 		}),
@@ -380,8 +380,8 @@ export const LongMessage: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			message: mockLongGermanMessage
 		}),
 		...baseHandlers
@@ -397,8 +397,8 @@ export const IncomingWithReactions: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			displayName: 'Sanftes Alpaka Kala',
 			username: 'sanftes.alpaka.kala@oriso.invalid'
 		}),
@@ -418,7 +418,7 @@ export const OutgoingWithReactions: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			isNotRead: true,
@@ -477,7 +477,7 @@ export const OutgoingWithManyReactions: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			isNotRead: true,
@@ -508,8 +508,8 @@ export const IncomingWithManyReactions: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			displayName: 'Sanftes Alpaka Kala',
 			username: 'sanftes.alpaka.kala@oriso.invalid'
 		}),
@@ -532,7 +532,7 @@ export const OutgoingDelivered: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			isNotRead: true,
@@ -552,7 +552,7 @@ export const OutgoingRead: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			isNotRead: false,
@@ -572,7 +572,7 @@ export const OutgoingSendFailed: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			isNotRead: true,
@@ -593,7 +593,7 @@ export const IncomingEncryptionBroke: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Leila Pavlov',
 			username: 'leila.p@oriso.invalid',
 			isNotRead: true,
@@ -617,8 +617,8 @@ export const WideLongMessageDesktop: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: false,
-			userId: MOCK_ASKER_RC_ID,
-			askerRcId: MOCK_ASKER_RC_ID,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			message:
 				'Hier ist das folgende Problem mit der Länge der Chatnachrichten: Oft sind die natürlich wie in einem Chat nicht so lang, weil sie eine direkte Unterhaltung sind. Manchmal sind das aber riesige Textbrocken, und da wäre auf dem Desktop besser, wenn die eher die breite Variante nutzen, damit die Zeilen nicht endlos umbrechen und der Text gut lesbar bleibt.'
 		}),
@@ -635,7 +635,7 @@ export const OutgoingWithVisibility: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			isMyMessage: true,
-			userId: MOCK_CONSULTANT_RC_ID,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			message: mockVisibilityMessage

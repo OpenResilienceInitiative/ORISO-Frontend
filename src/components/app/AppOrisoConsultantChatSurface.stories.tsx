@@ -105,8 +105,7 @@ const mockActiveSession = {
 	item: {
 		id: 0,
 		agencyId: undefined,
-		askerRcId: 'alice',
-		groupId: '',
+		askerMatrixUserId: 'alice',
 		matrixRoomId: '!storybook:oriso.org',
 		postcode: 10115,
 		registrationType: REGISTRATION_TYPE_REGISTERED,
@@ -163,7 +162,6 @@ const mockUserData = {
 
 const appOrisoRouterSettings = {
 	...config,
-	disableVideoAppointments: true,
 	useOverviewPage: false
 } as any;
 
@@ -289,10 +287,10 @@ const runtimeSessions: ListItemInterface[] = [
 		session: {
 			id: 3361,
 			agencyId: 101,
-			askerRcId: 'asker-3361',
+			askerMatrixUserId: 'asker-3361',
 			attachment: null,
 			consultingType: 1,
-			groupId: 'storybook-room-3361',
+			matrixRoomId: 'storybook-room-3361',
 			e2eLastMessage: null,
 			lastMessage: 'Das soll aber einzigartig',
 			messageDate: 1773830100,
@@ -316,10 +314,10 @@ const runtimeSessions: ListItemInterface[] = [
 		session: {
 			id: 3362,
 			agencyId: 101,
-			askerRcId: 'asker-3362',
+			askerMatrixUserId: 'asker-3362',
 			attachment: null,
 			consultingType: 1,
-			groupId: 'storybook-room-3362',
+			matrixRoomId: 'storybook-room-3362',
 			e2eLastMessage: null,
 			lastMessage: 'Ja das ist schön das sie das...',
 			messageDate: 1773826500,
@@ -343,10 +341,10 @@ const runtimeSessions: ListItemInterface[] = [
 		session: {
 			id: 3363,
 			agencyId: 101,
-			askerRcId: 'asker-3363',
+			askerMatrixUserId: 'asker-3363',
 			attachment: null,
 			consultingType: 1,
-			groupId: 'storybook-room-3363',
+			matrixRoomId: 'storybook-room-3363',
 			e2eLastMessage: null,
 			lastMessage: 'Anfrage gesendet',
 			messageDate: 1773822900,
@@ -374,7 +372,7 @@ const runtimeSessions: ListItemInterface[] = [
 			attachment: null,
 			consultingType: 2,
 			duration: 60,
-			groupId: 'storybook-group-caritas',
+			matrixRoomId: 'storybook-group-caritas',
 			hintMessage: '',
 			lastMessage: 'Mario K: Das ist schon komisch mit d...',
 			messageDate: 1773740100,
@@ -495,14 +493,14 @@ const installAppOrisoRoutingFetchMocks = () => {
 		}
 
 		if (pathname === '/service/users/sessions/room') {
-			const ids = (parsed.searchParams.get('rcGroupIds') || '')
+			const ids = (parsed.searchParams.get('roomIds[]') || '')
 				.split(',')
 				.filter(Boolean);
 			const sessions = ids.length
 				? runtimeSessions.filter((session) =>
 						ids.includes(
-							session.session?.groupId ||
-								session.chat?.groupId ||
+							session.session?.matrixRoomId ||
+								session.chat?.matrixRoomId ||
 								''
 						)
 					)
@@ -549,7 +547,7 @@ const installAppOrisoRoutingFetchMocks = () => {
 		if (pathname === '/service/users/chat/3363') {
 			return storybookJsonResponse({
 				active: true,
-				groupId: 'storybook-room-3363',
+				matrixRoomId: 'storybook-room-3363',
 				id: 3363,
 				bannedUsers: []
 			});
@@ -593,14 +591,14 @@ function RuntimeSessionsDataProvider({
 						const nextId =
 							nextSession.session?.id ??
 							nextSession.chat?.id ??
-							nextSession.session?.groupId ??
-							nextSession.chat?.groupId;
+							nextSession.session?.matrixRoomId ??
+							nextSession.chat?.matrixRoomId;
 						const index = sessions.findIndex(
 							(session) =>
 								(session.session?.id ??
 									session.chat?.id ??
-									session.session?.groupId ??
-									session.chat?.groupId) === nextId
+									session.session?.matrixRoomId ??
+									session.chat?.matrixRoomId) === nextId
 						);
 						if (index >= 0) {
 							sessions.splice(index, 1, nextSession);
@@ -621,8 +619,8 @@ function RuntimeSessionsDataProvider({
 						const ids = [
 							session.session?.id,
 							session.chat?.id,
-							session.session?.groupId,
-							session.chat?.groupId
+							session.session?.matrixRoomId,
+							session.chat?.matrixRoomId
 						].filter(Boolean);
 						return !ids.some((id) => action.ids?.includes(id));
 					})

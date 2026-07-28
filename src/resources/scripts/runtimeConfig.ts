@@ -145,6 +145,9 @@ export const getObservabilityConfig = (): ObservabilityRuntimeConfig => ({
 	)
 });
 
+export const getPlatformVersion = (): string =>
+	pickValue('REACT_APP_PLATFORM_VERSION', 'VITE_PLATFORM_VERSION') || '';
+
 /**
  * Ensure an http(s) URL. Bare hostnames are upgraded to https.
  */
@@ -265,6 +268,9 @@ export const getElementCallBaseUrl = (): string =>
 			)
 		)
 	);
+
+export const getMatrixRtcMembershipReaderUserId = (): string =>
+	pickValue('REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID') || '';
 
 /**
  * LiveKit signalling websocket URL (wss).

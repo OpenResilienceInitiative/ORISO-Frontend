@@ -88,13 +88,15 @@ const CreateConversationFlow = () => {
 		useCreateChatSubmit();
 
 	// Edit mode is driven by the route params: the create route has none, the
-	// edit route (RouterConfig) carries /:rcGroupId/:sessionId/editGroupChat.
-	const { rcGroupId: editRcGroupId, sessionId: editSessionIdParam } =
-		useParams<{ rcGroupId: string; sessionId: string }>();
+	// edit route (RouterConfig) carries /:groupId/:sessionId/editGroupChat.
+	const { groupId: editRoomId, sessionId: editSessionIdParam } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
 	const isEditMode = Boolean(editSessionIdParam);
 	const editChatId = editSessionIdParam ? Number(editSessionIdParam) : null;
 	const { session: editSession } = useSession(
-		isEditMode ? (editRcGroupId ?? null) : null,
+		isEditMode ? (editRoomId ?? null) : null,
 		editChatId ?? undefined
 	);
 

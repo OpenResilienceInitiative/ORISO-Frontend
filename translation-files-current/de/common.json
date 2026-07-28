@@ -885,12 +885,6 @@
 			}
 		}
 	},
-	"jitsi": {
-		"btn": {
-			"copied": "Video-Link wurde in die Zwischenablage kopiert",
-			"default": "Video-Link kopieren"
-		}
-	},
 	"languages": {
 		"aa": "Afar",
 		"ab": "Abchasisch",
@@ -2643,44 +2637,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Bestätigen",
-				"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Ihnen starten.",
-				"headline": "Herzlich Willkommen!",
-				"label": {
-					"and": "und",
-					"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."
-				},
-				"subline": "Bitte bestätigen Sie unsere Datenschutzbestimmungen."
-			},
-			"errorImageTitle": "Fehlgeschlagen",
-			"errorPage": {
-				"button": "Neu laden",
-				"consultant": {
-					"description": "Zu Ihrem Link können wir keinen Video-Call finden, da der Video-Call entweder gelöscht oder bereits beendet wurde."
-				},
-				"description": "Zu Ihrem Link können wir keinen Video-Call finden da der Video-Call entweder gelöscht oder bereits beendet wurde. Sollten Sie weiterhin Probleme haben fragen Sie bitte Ihre Beraterin oder Ihren Berater.",
-				"headline": "Der Video-Call wurde nicht gefunden",
-				"rejected": {
-					"description": "Leider können Sie an diesem Video-Call nicht teilnehmen, da Ihre Beraterin oder Ihr Berater Sie abgelehnt hat.",
-					"headline": "Sie wurden nicht zugelassen"
-				}
-			},
-			"headline": "Bitte haben Sie etwas Geduld",
-			"paused": {
-				"headline": "Der Video-Call wurde beendet",
-				"subline": "Der Video-Call wurde beendet. Sollten Ihre Beraterin oder Ihr Berater nur abwesend sein werden Sie in den Video-Call weitergeleitet sobald Ihre Beraterin oder Ihr Berater den Video-Call fortsetzt."
-			},
-			"subline": "Der Video-Call hat noch nicht begonnen. Sie werden weitergeleitet sobald Ihre Beraterin oder Ihr Berater den Video-Call startet.",
-			"title": {
-				"start": "Warteraum"
-			},
-			"waitingImageTitle": "Wartende Person mit Kaffee",
-			"welcomeImageTitle": "Willkommen"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2825,6 +2781,21 @@
 			"remove": {
 				"confirm": "Möchten Sie diesen Supervisor wirklich entfernen?"
 			}
+		}
+	},
+	"anonymousConsent": {
+		"button": "Bestätigen",
+		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Ihnen starten.",
+		"headline": "Herzlich Willkommen!",
+		"label": {
+			"and": "und",
+			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."
+		},
+		"subline": "Bitte bestätigen Sie unsere Datenschutzbestimmungen."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video-Termine sind derzeit nicht verfügbar."
 		}
 	}
 }

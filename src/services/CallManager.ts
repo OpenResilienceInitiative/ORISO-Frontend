@@ -7,11 +7,13 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import type { MatrixClient } from 'matrix-js-sdk';
 import { getMatrixClientService } from './matrixClientRegistry';
 import {
 	assertMatrixRoomEncrypted,
 	buildMatrixRoomEncryptionInitialState
 } from '../utils/matrixRoomEncryption';
+import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 
 export type CallState =
 	| 'idle'
@@ -36,10 +38,9 @@ export interface CallData {
 	matrixCall?: MatrixCall;
 	state: CallState;
 	/**
-	 * Optional: the dedicated Element Call room for group calls. For backwards
-	 * compatibility, this is usually the same as `roomId`, but we keep it
-	 * separate so we can continue to send signalling events in the original
-	 * session room while Element Call uses its own room.
+	 * Optional dedicated Element Call room for group calls. It stays separate
+	 * so signalling events can remain in the original session room while
+	 * Element Call uses its own room.
 	 */
 	elementCallRoomId?: string;
 	/**
@@ -258,27 +259,72 @@ class CallManager {
 
 		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
 
-		const result = await client.createRoom({
-			// Not publicly listed, but we want easy joins via ID
+		// The call room used to be created with `preset: 'public_chat'`, which
+		// sets `join_rule: public` — anyone who learned the room id could join a
+		// counselling call. Room ids are not secrets: they travel in the call
+		// invite event, in logs and in support tickets.
+		//
+		// `restricted` gives us the access rule we actually meant: whoever is a
+		// member of the counselling session may join its call, and nobody else.
+		// It needs room version 9+ (Synapse defaults to 10), so we fall back to
+		// invite-only below rather than let a call fail outright.
+		const restrictedJoinRule = {
+			type: 'm.room.join_rules',
+			state_key: '',
+			content: {
+				join_rule: 'restricted',
+				allow: [
+					{
+						type: 'm.room_membership',
+						room_id: sourceRoomId
+					}
+				]
+			}
+		};
+
+		const baseOptions = {
+			// Not publicly listed.
 			visibility: 'private',
-			// Same as Element Call: a room suitable for group chats
-			preset: 'public_chat',
+			// Private preset: invite-only by default, then relaxed to
+			// "members of the session room" by the join rule below.
+			preset: 'private_chat',
 			name,
-			initial_state: [buildMatrixRoomEncryptionInitialState()],
+			initial_state: [
+				buildMatrixRoomEncryptionInitialState(),
+				{
+					type: 'm.room.history_visibility',
+					state_key: '',
+					content: { history_visibility: 'joined' }
+				},
+				{
+					type: 'm.room.guest_access',
+					state_key: '',
+					content: { guest_access: 'forbidden' }
+				}
+			],
 			power_level_content_override: {
 				invite: 100,
 				kick: 100,
 				ban: 100,
 				redact: 50,
-				state_default: 0,
+				// `state_default: 0` used to let ANY joined participant rewrite
+				// `m.room.join_rules` back to `public` — which would have undone
+				// the restricted rule set above from inside the call. State
+				// changes now need the creator's level; the single exception is
+				// the call membership event, granted explicitly below.
+				state_default: 100,
 				events_default: 0,
 				users_default: 0,
 				events: {
 					'm.room.power_levels': 100,
+					'm.room.join_rules': 100,
+					'm.room.guest_access': 100,
 					'm.room.history_visibility': 100,
+					'm.room.canonical_alias': 100,
+					'm.room.server_acl': 100,
 					'm.room.tombstone': 100,
 					'm.room.encryption': 100,
-					'm.room.name': 50,
+					'm.room.name': 100,
 					'm.room.message': 0,
 					'm.room.encrypted': 50,
 					'm.sticker': 50,
@@ -290,17 +336,84 @@ class CallManager {
 					[client.getUserId()!]: 100
 				}
 			}
-		} as any);
+		};
 
-		// console.log(
-		// "✅ Created Element Call room",
-		// result.room_id,
-		// "for session room",
-		// sourceRoomId,
-		// );
+		let result: { room_id: string };
+		try {
+			result = await client.createRoom({
+				...baseOptions,
+				initial_state: [
+					...baseOptions.initial_state,
+					restrictedJoinRule
+				]
+			} as any);
+		} catch (err) {
+			// Homeserver too old for restricted joins, or the parent room is not
+			// a valid allow target. Stay closed rather than falling back to a
+			// public room, and invite the session members explicitly.
+			console.warn(
+				'[call] restricted join rule rejected, falling back to invite-only',
+				err
+			);
+			result = await client.createRoom(baseOptions as any);
+			await this.inviteSessionMembers(
+				client,
+				sourceRoomId,
+				result.room_id
+			);
+		}
+
+		const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
+		if (
+			!membershipReaderUserId ||
+			!membershipReaderUserId.startsWith('@') ||
+			!membershipReaderUserId.includes(':')
+		) {
+			throw new Error(
+				'MatrixRTC membership reader user is not configured'
+			);
+		}
+		await client.invite(result.room_id, membershipReaderUserId);
 
 		return result.room_id;
 	}
+
+	/**
+	 * Invite everyone who is joined to the counselling session into the call
+	 * room. Only used on the invite-only fallback path — with a restricted join
+	 * rule the membership check happens server-side and no invites are needed.
+	 */
+	private async inviteSessionMembers(
+		client: MatrixClient,
+		sourceRoomId: string,
+		callRoomId: string
+	): Promise<void> {
+		let failedInvites = 0;
+		const ownUserId = client.getUserId();
+		const { joined } = await client.getJoinedRoomMembers(sourceRoomId);
+		const members = Object.keys(joined).filter(
+			(userId) => userId !== ownUserId
+		);
+
+		await Promise.all(
+			members.map((userId) =>
+				client.invite(callRoomId, userId).catch(() => {
+					// One failed invite must not sink the whole call. The user id
+					// and the raw error are deliberately not logged: this runs in
+					// production browsers and a Matrix id identifies a person in a
+					// counselling context.
+					failedInvites += 1;
+				})
+			)
+		);
+
+		if (failedInvites > 0) {
+			throw new Error(
+				`Could not invite ${failedInvites} of ${members.length} participants to the call room`
+			);
+		}
+	}
+
 	/**
 	 * Ensure the Matrix room's power levels allow Element Call to send
 	 * `org.matrix.msc3401.call.member` state events from normal participants.
@@ -545,7 +658,7 @@ class CallManager {
 	 */
 	public endCall(notifyRemote: boolean = true): void {
 		// Snapshot + clear first so nested hangup → state:ended → endCall()
-		// (and late oriso-call-ended messages) cannot read null.matrixCall.
+		// callbacks cannot read null.matrixCall.
 		const call = this.currentCall;
 		if (!call) {
 			return;

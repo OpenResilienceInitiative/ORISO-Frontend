@@ -394,7 +394,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			})
 		).rejects.toThrow('Cannot send message: session has no Matrix room');
 
-		// The removed Rocket.Chat fallback must not be reached: no send, no
+		// The removed REST fallback must not be reached: no send, no
 		// metadata notification.
 		expect(sendMessage).not.toHaveBeenCalled();
 		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
