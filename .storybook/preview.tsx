@@ -429,15 +429,6 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(config);
 	}
 
-	if (url.pathname === '/api/v1/settings.public') {
-		return storybookJsonResponse({
-			count: 0,
-			offset: 0,
-			total: 0,
-			settings: []
-		});
-	}
-
 	if (url.pathname.startsWith('/service/users/event-notifications')) {
 		return method === 'GET'
 			? storybookJsonResponse(storybookEventNotificationFeed)
@@ -554,75 +545,7 @@ class StorybookWebSocketMock extends EventTarget {
 		this.dispatchEvent(event);
 	}
 
-	send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
-		const payload = this.storybookRocketChatPayload(data);
-		if (!payload) {
-			return;
-		}
-		window.setTimeout(() => this.emitMessage(payload), 0);
-	}
-
-	private emitMessage(payload: unknown) {
-		if (this.readyState !== StorybookWebSocketMock.OPEN) {
-			return;
-		}
-		const event = new MessageEvent('message', {
-			data: JSON.stringify(payload)
-		});
-		this.onmessage?.(event);
-		this.dispatchEvent(event);
-	}
-
-	private storybookRocketChatPayload(
-		data: string | ArrayBufferLike | Blob | ArrayBufferView
-	): Record<string, unknown> | null {
-		if (typeof data !== 'string') {
-			return null;
-		}
-
-		try {
-			const message = JSON.parse(data);
-			if (message.msg === 'connect') {
-				return { msg: 'connected', session: 'storybook' };
-			}
-			if (message.msg === 'ping') {
-				return { msg: 'pong' };
-			}
-			if (message.msg === 'method') {
-				return {
-					msg: 'result',
-					id: message.id,
-					result: this.storybookRocketChatMethodResult(message.method)
-				};
-			}
-			if (message.msg === 'sub') {
-				return { msg: 'ready', subs: [message.id] };
-			}
-		} catch {
-			return null;
-		}
-
-		return null;
-	}
-
-	private storybookRocketChatMethodResult(method: string): unknown {
-		switch (method) {
-			case 'login':
-				return {
-					id: 'storybook-rocket-user',
-					token: 'storybook-rocket-token'
-				};
-			case 'rooms/get':
-			case 'subscriptions/get':
-				return [];
-			case 'public-settings/get':
-				return [];
-			case 'getUsersOfRoom':
-				return { total: 0, records: [] };
-			default:
-				return {};
-		}
-	}
+	send(_data: string | ArrayBufferLike | Blob | ArrayBufferView) {}
 }
 
 const shouldMockRealtimeUrl = (url: string | URL): boolean => {
