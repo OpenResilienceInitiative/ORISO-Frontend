@@ -247,12 +247,8 @@ const LOCAL_STORAGE_SWITCHES: (TLocalStorageSwitches | null)[] = [
 ];
 
 const getVisibleLocalStorageSwitches = () =>
-	LOCAL_STORAGE_SWITCHES.filter(Boolean).filter(
-		(localStorageSwitch) =>
-			!(
-				DEV_ONLY_SWITCH_KEYS.has(localStorageSwitch.key) &&
-				process.env.NODE_ENV !== 'development'
-			)
+	LOCAL_STORAGE_SWITCHES.filter(Boolean).filter((localStorageSwitch) =>
+		canUseStoredValue(localStorageSwitch.key)
 	);
 
 export const useDevToolbar = () => {
