@@ -292,12 +292,21 @@ export const useElementCallWidget = (
 	useEffect(() => {
 		if (!client || !roomId) return undefined;
 
-		const onTimeline = (
-			event: MatrixEvent,
-			_room: unknown,
-			toStartOfTimeline: boolean | undefined
-		) => {
-			if (toStartOfTimeline) return; // backfill, not live
+		const pendingDecryptions = new Map<
+			MatrixEvent,
+			{
+				listener: (event: MatrixEvent, error?: Error) => void;
+				timeout: ReturnType<typeof setTimeout>;
+			}
+		>();
+		const clearPendingDecryption = (event: MatrixEvent) => {
+			const pending = pendingDecryptions.get(event);
+			if (!pending) return;
+			clearTimeout(pending.timeout);
+			event.off('Event.decrypted' as any, pending.listener as any);
+			pendingDecryptions.delete(event);
+		};
+		const feedAllowedRoomEvent = (event: MatrixEvent) => {
 			if (event.getRoomId() !== roomId) return;
 			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
@@ -306,15 +315,47 @@ export const useElementCallWidget = (
 					/* the widget may have gone away mid-call */
 				});
 		};
+		const waitForSuccessfulDecryption = (event: MatrixEvent) => {
+			if (pendingDecryptions.has(event)) return;
+
+			const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
+				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					return;
+				}
+				clearPendingDecryption(event);
+				feedAllowedRoomEvent(decryptedEvent);
+			};
+			const timeout = setTimeout(
+				() => clearPendingDecryption(event),
+				5 * 60 * 1000
+			);
+			pendingDecryptions.set(event, { listener, timeout });
+			event.on('Event.decrypted' as any, listener as any);
+
+			// Close the race where Rust Crypto finishes between the initial type
+			// check and listener registration.
+			if (event.getType() !== 'm.room.encrypted') listener(event);
+		};
+		const feedOrWaitForDecryption = (event: MatrixEvent) => {
+			if (event.getRoomId() !== roomId) return;
+			if (event.getType() === 'm.room.encrypted') {
+				waitForSuccessfulDecryption(event);
+				return;
+			}
+			feedAllowedRoomEvent(event);
+		};
+
+		const onTimeline = (
+			event: MatrixEvent,
+			_room: unknown,
+			toStartOfTimeline: boolean | undefined
+		) => {
+			if (toStartOfTimeline) return; // backfill, not live
+			feedOrWaitForDecryption(event);
+		};
 
 		const onLocalEchoUpdated = (event: MatrixEvent) => {
-			if (event.getRoomId() !== roomId) return;
-			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
-			apiRef.current
-				?.feedEvent(event.getEffectiveEvent() as never, roomId)
-				.catch(() => {
-					/* the widget may have gone away mid-call */
-				});
+			feedOrWaitForDecryption(event);
 		};
 
 		const onStateEvent = (
@@ -355,6 +396,9 @@ export const useElementCallWidget = (
 			client.off(RoomEvent.LocalEchoUpdated, onLocalEchoUpdated);
 			client.off(RoomStateEvent.Events, onStateEvent);
 			client.off(ClientEvent.ToDeviceEvent, onToDevice);
+			Array.from(pendingDecryptions.keys()).forEach(
+				clearPendingDecryption
+			);
 		};
 	}, [client, roomId]);
 
