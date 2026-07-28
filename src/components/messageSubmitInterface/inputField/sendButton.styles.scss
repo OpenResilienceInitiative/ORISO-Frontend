@@ -17,6 +17,7 @@
 	appearance: none;
 	cursor: pointer;
 	overflow: hidden;
+
 	// #597: resting / not-selected composer — #FFB4AA
 	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
 	transition: background-color 250ms cubic-bezier(0.2, 0, 0, 1);
