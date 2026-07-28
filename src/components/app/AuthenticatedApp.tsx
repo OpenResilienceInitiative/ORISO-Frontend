@@ -30,6 +30,7 @@ import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	clearAuthSession,
@@ -252,6 +253,7 @@ export const AuthenticatedApp = ({
 	const handlePostRegLoaderFinish = useCallback(() => {
 		setShowPostRegLoader(false);
 	}, []);
+	const platformVersion = getPlatformVersion();
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
@@ -271,6 +273,11 @@ export const AuthenticatedApp = ({
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
 				<Routing logout={handleLogout} />
+				{platformVersion && (
+					<div className="app__platformVersion">
+						{platformVersion}
+					</div>
+				)}
 			</>
 		);
 	} else if (loading) {

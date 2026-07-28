@@ -145,6 +145,9 @@ export const getObservabilityConfig = (): ObservabilityRuntimeConfig => ({
 	)
 });
 
+export const getPlatformVersion = (): string =>
+	pickValue('REACT_APP_PLATFORM_VERSION', 'VITE_PLATFORM_VERSION') || '';
+
 /**
  * Ensure an http(s) URL. Bare hostnames are upgraded to https.
  */
