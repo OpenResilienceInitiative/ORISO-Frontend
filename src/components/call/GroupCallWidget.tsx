@@ -4,22 +4,68 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
+import { useElementCallWidget } from './widget/useElementCallWidget';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
-	getElementCallBaseUrl,
-	getMatrixHomeserverUrl
-} from '../../resources/scripts/runtimeConfig';
+	getAutoFitStageSize,
+	RESIZE_EDGES,
+	resizeCursorForEdge,
+	resizeStageFromPointer,
+	type ResizeEdge,
+	type Size
+} from '../../utils/videoTileSizing';
 import './GroupCallWidget.scss';
 
+const GROUP_DEFAULT_WIDTH = 520;
+const GROUP_DEFAULT_HEIGHT = 320;
+const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
+const GROUP_MIN = { width: 280, height: 180 };
+
 export const GroupCallWidget: React.FC = () => {
+	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
 
-	// Dragging state
+	const closeCallSurface = useCallback(() => {
+		setElementCallUrl('');
+		setCallData(null);
+		setCallState(null);
+		setIsDismissed(true);
+		if (callManager.hasActiveCall()) {
+			callManager.endCall();
+		}
+	}, []);
+
+	// The host owns Matrix I/O and crypto. The iframe receives no access token,
+	// creates no second Matrix device and has no SPA compatibility path.
+	const callRoomId = callData
+		? (callData.elementCallRoomId ?? callData.roomId)
+		: null;
+	const shouldPrepareWidget =
+		!!callData &&
+		(!callData.isIncoming ||
+			callState === 'connecting' ||
+			callState === 'in_call');
+	const widget = useElementCallWidget(
+		matrixClientService?.getClient() ?? null,
+		{
+			roomId: shouldPrepareWidget ? callRoomId : null,
+			isVideo: callData?.isVideo ?? true,
+			onClose: closeCallSurface
+		}
+	);
+
+	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
+	const [isResizing, setIsResizing] = useState(false);
+	const [stageSize, setStageSize] = useState<Size>({
+		width: GROUP_DEFAULT_WIDTH,
+		height: GROUP_DEFAULT_HEIGHT
+	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
 	const [isMobileView, setIsMobileView] = useState(false);
 	const [isMobileCompact, setIsMobileCompact] = useState(false);
@@ -29,14 +75,65 @@ export const GroupCallWidget: React.FC = () => {
 		elemX: number;
 		elemY: number;
 	} | null>(null);
+	const resizeStartRef = useRef<{
+		edge: ResizeEdge;
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		posX: number;
+		posY: number;
+	} | null>(null);
+	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
+
+	// React compares ref callbacks by function identity, not by DOM node: an
+	// inline callback is a new function on every render, so React would detach
+	// (call it with `null`) and re-attach on every drag or resize frame — tearing
+	// down and rebuilding the widget's postMessage channel mid-call. Keep it
+	// stable and let it change only when the widget itself does.
+	const setIframeNode = useCallback(
+		(node: HTMLIFrameElement | null) => {
+			// The ref is shared by the drag/close logic and Widget API channel.
+			(
+				iframeRef as React.MutableRefObject<HTMLIFrameElement | null>
+			).current = node;
+			widget.attachIframe(node);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget.attachIframe]
+	);
 	const [isFullscreen, setIsFullscreen] = useState(false);
+
+	const getGroupBounds = () => ({
+		minWidth: GROUP_MIN.width,
+		minHeight: GROUP_MIN.height,
+		maxWidth: Math.max(GROUP_MIN.width, window.innerWidth - 32),
+		maxHeight: Math.max(GROUP_MIN.height, window.innerHeight - 32)
+	});
+
+	const applyAutoFit = () => {
+		const bounds = getGroupBounds();
+		const next = getAutoFitStageSize({
+			aspectRatio: GROUP_ASPECT,
+			maxWidth: bounds.maxWidth,
+			maxHeight: bounds.maxHeight,
+			preferredWidth: GROUP_DEFAULT_WIDTH,
+			preferredHeight: GROUP_DEFAULT_HEIGHT,
+			minWidth: bounds.minWidth,
+			minHeight: bounds.minHeight
+		});
+		setStageSize(next);
+		setPosition({
+			x: Math.max(16, (window.innerWidth - next.width) / 2),
+			y: Math.max(16, (window.innerHeight - next.height) / 2)
+		});
+	};
 
 	// Subscribe to CallManager
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
-			// console.log('📡 GroupCallWidget: CallManager update:', newCallData);
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
@@ -70,21 +167,15 @@ export const GroupCallWidget: React.FC = () => {
 	useEffect(() => {
 		if (!callData || !callData.usesElementCall) return;
 
-		const padding = 16;
-		const maxWidth = 520;
-		const maxHeight = 320;
-		const width = Math.min(maxWidth, window.innerWidth - padding * 2);
-		const height = Math.min(maxHeight, window.innerHeight - padding * 2);
-
 		if (window.innerWidth <= 640) {
 			setPosition({ x: 0, y: 0 });
 			return;
 		}
 
-		setPosition({
-			x: Math.max(padding, (window.innerWidth - width) / 2),
-			y: Math.max(padding, (window.innerHeight - height) / 2)
-		});
+		applyAutoFit();
+		// Re-center only when a new call starts or the url changes; the full
+		// callData object gets a new identity on every call-state update.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callData?.callId, callData?.usesElementCall, elementCallUrl]);
 
 	useEffect(() => {
@@ -100,249 +191,49 @@ export const GroupCallWidget: React.FC = () => {
 			);
 	}, []);
 
+	// Room joining and URL construction are asynchronous. Mount
+	// only after the host client is joined; unlike the legacy SPA path there is
+	// no second client inside the iframe that could repair missing membership.
 	useEffect(() => {
-		const handleMessage = (event: MessageEvent) => {
-			const data = event.data;
-			if (!data || typeof data !== 'object') return;
-			if (data.type !== 'oriso-call-ended') return;
-			// console.log('📴 Element Call ended (message from iframe)');
-			setElementCallUrl('');
-			setCallData(null);
-			setCallState(null);
-			setIsDismissed(true);
-			callManager.endCall();
-		};
-		window.addEventListener('message', handleMessage);
-		return () => window.removeEventListener('message', handleMessage);
-	}, []);
-
-	// Handle incoming call answer: once the call is moving past "ringing",
-	// automatically join the Element Call room for the receiver.
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || !callData.isIncoming)
+		if (!callData?.usesElementCall || !shouldPrepareWidget) {
 			return;
-		if (elementCallUrl) return; // Already joined
-		if (callState !== 'connecting' && callState !== 'in_call') return;
-
-		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
-		setupElementCall();
-	}, [callState, callData, elementCallUrl]);
-
-	// Handle outgoing call
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || callData.isIncoming)
+		}
+		if (widget.error) {
+			alert(`Failed to start call: ${widget.error.message}`);
+			closeCallSurface();
 			return;
-		if (elementCallUrl) return; // Already set up
-
-		// console.log('📞 Starting outgoing call, setting up Element Call...');
-		setupElementCall();
-	}, [callData]);
-
-	const setupElementCall = () => {
-		if (!callData) return;
-
-		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
-			if (!client) throw new Error('Matrix client not initialized');
-
-			// For group calls we use the dedicated Element Call room if present.
-			const roomId =
-				(callData as any).elementCallRoomId || callData.roomId;
-			const homeserverUrl =
-				client.getHomeserverUrl() || getMatrixHomeserverUrl();
-			if (!homeserverUrl) {
-				throw new Error(
-					'Matrix homeserver URL is missing. Set REACT_APP_MATRIX_HOMESERVER_URL or ensure the client reports a homeserver URL.'
-				);
-			}
-
-			// Get Matrix credentials
-			const accessToken =
-				(client as any).accessToken ||
-				localStorage.getItem('matrix_access_token');
-			const userId =
-				client.getUserId() || localStorage.getItem('matrix_user_id');
-			const deviceId =
-				(client as any).deviceId ||
-				localStorage.getItem('matrix_device_id');
-
-			if (!accessToken || !userId) {
-				throw new Error('Matrix authentication not available');
-			}
-
-			// Element Call - open the specific Matrix room directly.
-			// We mirror Element Call's own `getRelativeRoomUrl` format:
-			//   /room/#?roomId=...&perParticipantE2EE=...
-			// We also pass Matrix credentials via URL so our auto-auth script can log in.
-			const elementCallOrigin = getElementCallBaseUrl();
-			if (!elementCallOrigin) {
-				throw new Error('REACT_APP_ELEMENT_CALL_BASE_URL is not set');
-			}
-			const elementCallBaseUrl = `${elementCallOrigin}/room`;
-
-			const params = new URLSearchParams();
-			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case.
-			params.set('intent', 'start_call');
-			params.set('callIntent', callData.isVideo ? 'video' : 'audio');
-			params.set('homeserver', homeserverUrl);
-			params.set('accessToken', accessToken);
-			params.set('userId', userId);
-			if (deviceId) params.set('deviceId', deviceId);
-			// Skip lobby and go straight into the call UI
-			params.set('skipLobby', 'true');
-			// Keep embedded users inside the current room flow (no home navigation).
-			params.set('confineToRoom', 'true');
-			// Use Element Call without top app bar in embedded popup mode.
-			// This removes the duplicate left collapse control and room title.
-			params.set('header', 'none');
-
-			const url = `${elementCallBaseUrl}/#?${params.toString()}`;
-
-			// console.log('🔗 Element Call URL:', url);
-			// console.log('🔑 Passing Matrix credentials for auto-authentication');
-			setElementCallUrl(url);
-
-			// Send credentials via postMessage immediately when iframe loads
-			const sendCredentials = () => {
-				if (iframeRef.current?.contentWindow) {
-					// console.log('📤 Sending Matrix credentials to Element Call via postMessage');
-
-					// Send credentials in multiple formats Element Call might accept
-					iframeRef.current.contentWindow.postMessage(
-						{
-							type: 'matrix-credentials',
-							accessToken: accessToken,
-							userId: userId,
-							deviceId: deviceId,
-							homeserverUrl: homeserverUrl
-						},
-						elementCallBaseUrl
-					);
-
-					iframeRef.current.contentWindow.postMessage(
-						{
-							type: 'auth',
-							accessToken: accessToken,
-							userId: userId,
-							deviceId: deviceId,
-							baseUrl: homeserverUrl
-						},
-						elementCallBaseUrl
-					);
-				}
-			};
-
-			// Send immediately and also when iframe loads
-			setTimeout(sendCredentials, 500);
-			if (iframeRef.current) {
-				iframeRef.current.onload = sendCredentials;
-			}
-		} catch (err) {
-			// console.error('❌ Failed to setup Element Call:', err);
-			alert(`Failed to start call: ${(err as Error).message}`);
-			callManager.endCall();
 		}
-	};
-
-	// Handle Element Call widget API actions
-	const handleWidgetAction = async (
-		action: string,
-		requestId: string,
-		data: any,
-		client: any,
-		source: Window
-	) => {
-		try {
-			// console.log(`📞 Element Call widget action: ${action}`, data);
-
-			// Element Call requests Matrix operations via widget API
-			// We proxy these to our authenticated Matrix client
-			let response: any = { success: false };
-
-			switch (action) {
-				case 'm.sticker':
-				case 'm.room.message':
-					// Element Call wants to send a message - not needed for calls
-					response = { success: true };
-					break;
-
-				case 'io.element.join':
-					// Element Call ready to join - already handled by URL params
-					response = { success: true };
-					break;
-
-				default:
-					// console.log(`ℹ️  Unhandled widget action: ${action}`);
-					response = { success: true };
-			}
-
-			// Send response back to Element Call
-			source.postMessage(
-				{
-					api: 'toWidget',
-					action: action,
-					requestId: requestId,
-					response: response
-				},
-				'*'
-			);
-		} catch (err) {
-			// console.error('❌ Error handling widget action:', err);
+		if (widget.url && elementCallUrl !== widget.url) {
+			setElementCallUrl(widget.url);
 		}
-	};
+	}, [
+		callData?.usesElementCall,
+		closeCallSurface,
+		elementCallUrl,
+		shouldPrepareWidget,
+		widget.error,
+		widget.url
+	]);
 
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		// console.log('✅ User clicked Answer');
-		// Tell Matrix/CallManager that we are accepting the call
 		callManager.answerCall();
-
-		// Proactively start/join the Element Call room so the user lands
-		// directly in the call UI without any extra "Join" step.
-		if (!elementCallUrl) {
-			// console.log('📞 Answer clicked, setting up Element Call immediately for receiver...');
-			setupElementCall();
-		}
 	};
 
 	const handleDecline = () => {
-		// console.log('❌ User declined call');
 		setIsDismissed(true);
 		callManager.endCall();
 	};
 
 	const handleEndCall = () => {
-		// console.log('📴 Ending call');
-
-		// Cleanup widget message handler
-		if (
-			iframeRef.current &&
-			(iframeRef.current as any).__widgetMessageHandler
-		) {
-			window.removeEventListener(
-				'message',
-				(iframeRef.current as any).__widgetMessageHandler
-			);
-			delete (iframeRef.current as any).__widgetMessageHandler;
-		}
-
-		if (iframeRef.current?.contentWindow) {
-			iframeRef.current.contentWindow.postMessage(
-				{ type: 'oriso-call-action', action: 'hangup' },
-				'*'
-			);
-		}
+		void widget.hangup().catch(() => {
+			/* local teardown still completes if the iframe already closed */
+		});
 
 		if (iframeRef.current) {
 			iframeRef.current.src = 'about:blank';
 		}
-		setElementCallUrl('');
-		setCallData(null);
-		setCallState(null);
-		setIsDismissed(true);
-		callManager.endCall();
+		closeCallSurface();
 	};
 
 	const handleToggleFullscreen = () => {
@@ -364,13 +255,13 @@ export const GroupCallWidget: React.FC = () => {
 
 	// Dragging handlers (mouse + touch)
 	const handleMouseDown = (e: React.MouseEvent) => {
-		if (isMobileView) return;
+		if (isMobileView || isResizing) return;
 		const target = e.target as HTMLElement;
 		const isDragHandle = !!target.closest('.element-call-drag-handle');
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close'
+				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -384,13 +275,13 @@ export const GroupCallWidget: React.FC = () => {
 	};
 
 	const handleTouchStart = (e: React.TouchEvent) => {
-		if (isMobileView) return;
+		if (isMobileView || isResizing) return;
 		const target = e.target as HTMLElement;
 		const isDragHandle = !!target.closest('.element-call-drag-handle');
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close'
+				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -404,7 +295,45 @@ export const GroupCallWidget: React.FC = () => {
 		};
 	};
 
-	const handleMouseMove = (e: MouseEvent) => {
+	const handleResizePointerDown = (
+		e: React.PointerEvent,
+		edge: ResizeEdge
+	) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		e.stopPropagation();
+		if (isMobileView || isFullscreen || isMobileCompact) return;
+		(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+		setIsResizing(true);
+		setResizeCursor(resizeCursorForEdge(edge));
+		resizeStartRef.current = {
+			edge,
+			x: e.clientX,
+			y: e.clientY,
+			width: stageSize.width,
+			height: stageSize.height,
+			posX: position.x,
+			posY: position.y
+		};
+	};
+
+	const handlePointerMove = (e: PointerEvent) => {
+		if (isResizing && resizeStartRef.current) {
+			const start = resizeStartRef.current;
+			const widgetAspect = start.width / start.height || GROUP_ASPECT;
+			const next = resizeStageFromPointer({
+				edge: start.edge,
+				startSize: { width: start.width, height: start.height },
+				startPosition: { x: start.posX, y: start.posY },
+				dx: e.clientX - start.x,
+				dy: e.clientY - start.y,
+				aspectRatio: widgetAspect,
+				bounds: getGroupBounds()
+			});
+			setStageSize(next.size);
+			setPosition(next.position);
+			return;
+		}
 		if (!isDragging || !dragRef.current) return;
 		const dx = e.clientX - dragRef.current.startX;
 		const dy = e.clientY - dragRef.current.startY;
@@ -425,9 +354,11 @@ export const GroupCallWidget: React.FC = () => {
 		});
 	};
 
-	const handleMouseUp = () => {
+	const handlePointerUp = () => {
 		setIsDragging(false);
+		setIsResizing(false);
 		dragRef.current = null;
+		resizeStartRef.current = null;
 	};
 
 	const handleTouchEnd = () => {
@@ -436,19 +367,26 @@ export const GroupCallWidget: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (isDragging) {
-			window.addEventListener('mousemove', handleMouseMove);
-			window.addEventListener('mouseup', handleMouseUp);
+		if (isDragging || isResizing) {
+			window.addEventListener('pointermove', handlePointerMove);
+			window.addEventListener('pointerup', handlePointerUp);
+			window.addEventListener('pointercancel', handlePointerUp);
 			window.addEventListener('touchmove', handleTouchMove);
 			window.addEventListener('touchend', handleTouchEnd);
+			document.body.style.userSelect = 'none';
 			return () => {
-				window.removeEventListener('mousemove', handleMouseMove);
-				window.removeEventListener('mouseup', handleMouseUp);
+				window.removeEventListener('pointermove', handlePointerMove);
+				window.removeEventListener('pointerup', handlePointerUp);
+				window.removeEventListener('pointercancel', handlePointerUp);
 				window.removeEventListener('touchmove', handleTouchMove);
 				window.removeEventListener('touchend', handleTouchEnd);
+				document.body.style.userSelect = '';
 			};
 		}
-	}, [isDragging]);
+		// The drag handlers are re-created every render; subscribing on
+		// isDragging / isResizing transitions only is intentional.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isDragging, isResizing]);
 
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;
@@ -459,8 +397,12 @@ export const GroupCallWidget: React.FC = () => {
 				<div className="call-modal-backdrop" aria-hidden="true" />
 			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
-				style={{ left: `${position.x}px`, top: `${position.y}px` }}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				style={{
+					left: `${position.x}px`,
+					top: `${position.y}px`,
+					...(isResizing ? { cursor: resizeCursor } : {})
+				}}
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
@@ -496,7 +438,18 @@ export const GroupCallWidget: React.FC = () => {
 					</div>
 				) : elementCallUrl ? (
 					/* Active call - show Element Call iframe */
-					<div className="element-call-container" ref={containerRef}>
+					<div
+						className="element-call-container"
+						ref={containerRef}
+						style={
+							isMobileView || isFullscreen
+								? undefined
+								: {
+										width: `${stageSize.width}px`,
+										height: `${stageSize.height}px`
+									}
+						}
+					>
 						<div className="element-call-drag-handle" />
 						<button
 							className="element-call-close"
@@ -505,6 +458,20 @@ export const GroupCallWidget: React.FC = () => {
 						>
 							×
 						</button>
+						{!isMobileView && !isFullscreen && (
+							<button
+								type="button"
+								className="element-call-autofit"
+								onClick={(e) => {
+									e.stopPropagation();
+									applyAutoFit();
+								}}
+								aria-label="Auto-fit call window"
+								title="Auto-fit"
+							>
+								⛶
+							</button>
+						)}
 						<button
 							className="element-call-fullscreen"
 							onClick={handleToggleFullscreen}
@@ -536,13 +503,32 @@ export const GroupCallWidget: React.FC = () => {
 									: '⤢'}
 						</button>
 						<iframe
-							ref={iframeRef}
+							ref={setIframeNode}
 							src={elementCallUrl}
+							referrerPolicy="no-referrer"
 							className="element-call-iframe"
-							allow="camera; microphone; display-capture; autoplay; fullscreen"
+							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write; screen-wake-lock"
 							allowFullScreen
 							title="Group video call"
 						/>
+						{!isMobileView &&
+							!isFullscreen &&
+							RESIZE_EDGES.map((edge) => (
+								<div
+									key={edge}
+									className={`call-resize-handle call-resize-handle--${edge}`}
+									role="separator"
+									aria-orientation={
+										edge === 'n' || edge === 's'
+											? 'horizontal'
+											: 'vertical'
+									}
+									aria-label={`Resize video call window (${edge})`}
+									onPointerDown={(e) =>
+										handleResizePointerDown(e, edge)
+									}
+								/>
+							))}
 					</div>
 				) : (
 					/* Connecting state */

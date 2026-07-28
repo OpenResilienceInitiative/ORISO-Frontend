@@ -49,7 +49,6 @@ type Story = StoryObj;
  * - SessionTypeContext
  * - LanguagesContext
  * - SessionsDataContext
- * - RocketChatContext
  *
  * See the main application for a working example.
  */

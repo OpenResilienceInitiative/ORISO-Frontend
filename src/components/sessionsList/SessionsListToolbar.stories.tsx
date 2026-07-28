@@ -1,15 +1,19 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { userEvent, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
+import { SessionsListToolbar } from './SessionsListToolbar';
+import type { SessionSearchPersonResult } from './SessionsListToolbar';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import {
-	SessionsListToolbar,
-	type SessionToolbarChipFilter
-} from './SessionsListToolbar';
+	APP_ORISO_CHAT_FIGMA_URL,
+	ORISO_M3_FIGMA_URL
+} from '../storybookDesignLinks';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	padding: 16,
 	maxWidth: 520,
 	margin: '0 auto'
@@ -21,19 +25,52 @@ type ToolbarDemoProps = {
 	initialChip?: SessionToolbarChipFilter | null;
 	archiveTabActive?: boolean;
 	createGroupChatActive?: boolean;
+	initialSearch?: string;
+	initialSelectedPersonIds?: string[];
 };
+
+const searchPeopleResults: SessionSearchPersonResult[] = [
+	{
+		id: 'sanftes-alpaka-kala',
+		name: 'Sanftes Alpaka Kala',
+		subtitle: 'Suchtprobleme'
+	},
+	{
+		id: 'ratsuchender-r3',
+		name: 'Ratsuchender R3',
+		subtitle: '1-1 Beratung'
+	},
+	{
+		id: 'ruhiges-yak-kim',
+		name: 'ruhiges Yak Kim',
+		subtitle: 'Familienberatung'
+	},
+	{
+		id: 'traeger-admins-caritas',
+		name: 'Träger Admins Caritas',
+		subtitle: 'Team Intern'
+	}
+];
 
 function SessionsListToolbarPlayground({
 	showConsultantActions = true,
 	showSupervisionChip = true,
 	initialChip = null,
 	archiveTabActive = false,
-	createGroupChatActive = false
+	createGroupChatActive = false,
+	initialSearch = '',
+	initialSelectedPersonIds = []
 }: ToolbarDemoProps) {
 	const { t } = useTranslation();
-	const [search, setSearch] = useState('');
+	const [search, setSearch] = useState(initialSearch);
 	const [activeChip, setActiveChip] =
 		useState<SessionToolbarChipFilter | null>(initialChip);
+	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
+		initialSelectedPersonIds
+	);
+	const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+	const [archiveOnly, setArchiveOnly] = useState(false);
 
 	return (
 		<div style={shell}>
@@ -41,35 +78,83 @@ function SessionsListToolbarPlayground({
 				translate={t}
 				searchValue={search}
 				onSearchChange={setSearch}
+				searchPeopleResults={searchPeopleResults}
+				selectedPersonIds={selectedPersonIds}
+				onSelectedPersonIdsChange={setSelectedPersonIds}
+				searchTopicResults={[
+					{
+						id: 'schulden',
+						label: 'Schulden',
+						subtitle: 'Mainz 30232'
+					},
+					{
+						id: 'suchtberatung',
+						label: 'Suchtberatung',
+						subtitle: 'Mainz 30232'
+					}
+				]}
+				selectedTopicId={selectedTopicId}
+				onSelectedTopicIdChange={setSelectedTopicId}
+				searchTypeResults={[
+					{ id: 'oneToOne', label: '1-1 Beratung' },
+					{ id: 'liveChat', label: 'Live Chat' },
+					{ id: 'nearby', label: 'Nähe' }
+				]}
+				selectedTypeId={selectedTypeId}
+				onSelectedTypeIdChange={setSelectedTypeId}
+				searchArchiveOnly={archiveOnly}
+				onSearchArchiveOnlyChange={setArchiveOnly}
+				onSearchConfirm={() => {}}
 				activeChip={activeChip}
 				onChipToggle={(chip) =>
 					setActiveChip((prev) => (prev === chip ? null : chip))
 				}
 				showConsultantActions={showConsultantActions}
+				showCreateGroupChatAction={showConsultantActions}
 				showSupervisionChip={showSupervisionChip}
+				showLiveChatChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 				archiveTabActive={archiveTabActive}
 				createGroupChatActive={createGroupChatActive}
+				chipCounts={{
+					unread: 4,
+					drafts: 2,
+					liveChat: 1,
+					supervision: 1,
+					groups: 3
+				}}
 			/>
 		</div>
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/SessionsListToolbar',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'gray' },
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant chat',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:
-					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, calendar, groups icon, text filters, supervision). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
+					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, unread, drafts, internal group chat, supervision, conversation circle). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -94,6 +179,7 @@ function ToolbarWithSearchPreset() {
 					setActiveChip((p) => (p === chip ? null : chip))
 				}
 				showConsultantActions
+				showCreateGroupChatAction
 				showSupervisionChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
@@ -108,16 +194,61 @@ export const WithSearchText: Story = {
 	render: () => <ToolbarWithSearchPreset />
 };
 
+export const SearchPanelOpen: Story = {
+	render: () => <SessionsListToolbarPlayground initialSearch="Ratsuch" />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('searchbox'));
+	}
+};
+
+export const SearchWithSelectedPeople: Story = {
+	render: () => (
+		<SessionsListToolbarPlayground
+			initialSelectedPersonIds={[
+				'sanftes-alpaka-kala',
+				'ruhiges-yak-kim'
+			]}
+		/>
+	)
+};
+
+export const DraftsFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="drafts" />
+};
+
 export const UnreadFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="neu" />
+	render: () => <SessionsListToolbarPlayground initialChip="unread" />
 };
 
 export const OneToOneFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="oneToOne" />
+	render: () => <SessionsListToolbarPlayground initialChip="nearby" />
 };
 
 export const GroupsFilterActive: Story = {
 	render: () => <SessionsListToolbarPlayground initialChip="groups" />
+};
+
+export const InternalGroupFilterActive: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story: 'Shows the toolbar with the internal group chat filter chip selected.'
+			}
+		}
+	},
+	render: () => <SessionsListToolbarPlayground initialChip="internalGroup" />
+};
+
+export const SupervisionFilterActive: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story: 'Shows the toolbar with the supervision filter chip selected.'
+			}
+		}
+	},
+	render: () => <SessionsListToolbarPlayground initialChip="supervision" />
 };
 
 export const ArchiveRouteActive: Story = {

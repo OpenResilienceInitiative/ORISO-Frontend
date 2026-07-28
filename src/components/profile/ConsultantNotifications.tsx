@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useContext } from 'react';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
-import Switch from 'react-switch';
+import { Switch } from '../Switch';
 import { UserDataContext } from '../../globalState';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +28,9 @@ export const ConsultantNotifications = () => {
 			emailToggles
 		})
 			.then(reloadUserData)
-			.catch((error) => { /* console.log(error); */ });
+			.catch((error) => {
+				/* console.log(error); */
+			});
 	};
 
 	return (
@@ -55,15 +57,7 @@ export const ConsultantNotifications = () => {
 									toggle.name === notification.types[0]
 							)?.state ?? false
 						}
-						uncheckedIcon={false}
-						checkedIcon={false}
-						width={48}
-						height={26}
-						onColor="#0A882F"
-						offColor="#8C878C"
-						boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-						handleDiameter={27}
-						activeBoxShadow="none"
+						aria-label={translate(notification.label)}
 					/>
 					<Text
 						text={translate(notification.label)}

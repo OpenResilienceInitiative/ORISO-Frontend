@@ -3,18 +3,28 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
+	width: 100%;
+
+	&__textField {
+		width: 100%;
+	}
 
 	&__input {
 		appearance: none;
 		-moz-appearance: textfield;
-		height: $input-field-height;
+		height: 56px;
 		min-width: 0;
-		padding: 12px $grid-base-three 0 $grid-base-six;
+		padding: 16px $grid-base-three;
 		flex: 1;
-		color: $text-high-emphasis;
-		border: 1px solid $border-default;
-		border-radius: $input-field-border-radius;
+		color: var(--m3-on-surface, #1b1b1c);
+		background-color: var(--m3-surface, #fcf9f9);
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
 		outline: 0;
+		font-size: 16px;
+		font-weight: 400;
+		line-height: 24px;
+		letter-spacing: 0.5px;
 
 		&--password {
 			overflow-x: auto;
@@ -23,11 +33,12 @@
 		}
 
 		&:hover {
-			border: 1px solid $border-hover;
+			border-color: var(--m3-outline, #747878);
 		}
 
 		&:focus {
-			border: 2px solid $border-active;
+			border: 3px solid var(--m3-primary, #a5000a);
+			padding: 14px calc(#{$grid-base-three} - 2px);
 		}
 
 		&::-webkit-inner-spin-button {
@@ -49,54 +60,71 @@
 		&:focus + label,
 		&:not(:placeholder-shown) + label {
 			font-size: 12px;
-			top: 3px;
+			top: -8px;
 			transition:
 				font-size 0.5s,
 				top 0.5s;
-			color: $text-low-emphasis;
+			color: var(--m3-on-surface-variant, #444748);
+			background: var(--m3-surface, #fcf9f9);
+			padding: 0 4px;
+			line-height: 16px;
+			letter-spacing: 0.4px;
+		}
+
+		&:focus + label {
+			color: var(--m3-primary, #a5000a);
 		}
 
 		&[disabled] {
-			background-color: $white;
-			border: 1px solid $form-input-border;
+			background-color: var(--m3-surface-container-low, #f7f4f4);
+			border: 1px solid var(--m3-outline, #747878);
+			color: var(--m3-on-surface-variant, #444748);
 
 			+ label {
-				color: $form-input-border;
+				color: var(--m3-on-surface-variant, #444748);
 				cursor: not-allowed;
 			}
 		}
 
 		&[readonly] {
-			border: 1px solid $form-disabled;
-			color: $form-disabled;
+			border: 1px solid var(--m3-outline, #747878);
+			color: var(--m3-on-surface-variant, #444748);
 
 			&:hover,
 			&:focus {
 				cursor: not-allowed;
-				border: 1px solid $form-disabled !important;
+				border: 1px solid var(--m3-outline, #747878) !important;
 			}
 		}
 
 		&--invalid {
-			border: 2px solid $form-error !important;
+			border: 3px solid var(--m3-error, #b1005e) !important;
+
+			+ label {
+				color: var(--m3-error, #b1005e);
+			}
 		}
 
 		&--valid {
-			border: 2px solid $form-success !important;
+			border: 3px solid var(--m3-primary, #a5000a) !important;
+
+			+ label {
+				color: var(--m3-primary, #a5000a);
+			}
 		}
 
 		/* TODO: check if --error state still needed (class added in warningLabels.ts) */
 		&--error {
-			border-color: $form-error !important;
-			color: $form-error;
-			border-width: 2px;
+			border-color: var(--m3-error, #b1005e) !important;
+			color: var(--m3-error, #b1005e);
+			border-width: 3px;
 
 			&.inputField__input--valid {
-				border-color: $form-error !important;
-				color: $form-error !important;
+				border-color: var(--m3-error, #b1005e) !important;
+				color: var(--m3-error, #b1005e) !important;
 
 				& + label {
-					color: $form-primary;
+					color: var(--m3-error, #b1005e);
 				}
 			}
 		}
@@ -104,23 +132,30 @@
 
 	&__label {
 		position: absolute;
-		top: 15px;
-		left: $grid-base-three;
+		top: 16px;
+		left: 12px;
 		transition:
 			font-size 0.5s,
 			top 0.5s;
-		color: $text-low-emphasis;
-		line-height: 18px;
+		color: var(--m3-on-surface-variant, #444748);
+		line-height: 24px;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		pointer-events: none;
 	}
 
 	&__infoText {
 		width: 100%;
-		margin: $grid-base $grid-base-three 0;
+		margin: 4px 16px 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+		letter-spacing: 0.4px;
 	}
 
 	&__passwordToggle {
 		z-index: 15;
-		position: absolute;
+		position: absolute !important;
 		top: 50%;
 		right: $grid-base-two;
 		transform: translateY(-50%);

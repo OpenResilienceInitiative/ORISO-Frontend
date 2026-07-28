@@ -39,10 +39,7 @@ export const ConsultantAgencies = () => {
 							{translate([`agency.${item.id}.name`, item.name], {
 								ns: 'agencies'
 							})}
-							{/* TEMPORARILY HIDDEN — per-agency QR code + "Copy link"
-							    actions on the consulting-centers card. Restore by
-							    uncommenting the block below. */}
-							{/* <div className="flex flex--fd-row mt--1 flex-l--fd-column mt-l--0 ml-l--2 flex--ai-c flex-l--ai-fs">
+							<div className="flex flex--fd-row mt--1 flex-l--fd-column mt-l--0 ml-l--2 flex--ai-c flex-l--ai-fs">
 								<div>
 									<GenerateQrCode
 										url={`${settings.urls.registration}?aid=${item.id}`}
@@ -61,7 +58,7 @@ export const ConsultantAgencies = () => {
 								<div className="ml--2 mt-l--1 ml-l--0">
 									<AgencyRegistrationLink agency={item} />
 								</div>
-							</div> */}
+							</div>
 						</div>
 					);
 				})}

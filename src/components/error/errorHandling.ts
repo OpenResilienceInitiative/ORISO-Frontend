@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { isPublicAuthRoute } from '../auth/auth';
+import { isInviteRoute, isPublicAuthRoute } from '../auth/auth';
 import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
 import { apiPostError, ERROR_LEVEL_ERROR } from '../../api/apiPostError';
@@ -26,6 +26,13 @@ export const getErrorCaseForStatus = (status: number) => {
 };
 
 export const redirectToErrorPage = (error: number) => {
+	// The invite landing page owns its redemption lifecycle and renders its
+	// errors inline. Unrelated bootstrap requests must not replace it with a
+	// generic error page before the redeem request can complete.
+	if (isInviteRoute()) {
+		return;
+	}
+
 	if (error === ERROR_TYPES.UNAUTHORIZED && isPublicAuthRoute()) {
 		return;
 	}

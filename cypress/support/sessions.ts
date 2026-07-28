@@ -20,7 +20,7 @@ export const generateConsultantSession = ({
 	}
 
 	const sessionId = Math.random();
-	const rcGroupId = uuid();
+	const matrixRoomId = `!${uuid()}:matrix.example`;
 
 	const sessionData: SessionUserDataInterface = {
 		addictiveDrugs: null,
@@ -41,8 +41,8 @@ export const generateConsultantSession = ({
 			},
 			status,
 			postcode: 12345,
-			groupId: rcGroupId,
-			askerRcId: 'askerRcId',
+			matrixRoomId,
+			askerMatrixUserId: '@asker:matrix.example',
 			lastMessage: 'lastMessage',
 			messageDate: 1606900238,
 			messagesRead: messagesRead === undefined ? true : messagesRead,
@@ -54,8 +54,8 @@ export const generateConsultantSession = ({
 			},
 			createDate: '2024-03-28',
 			videoCallMessageDTO: {
-				eventType: '',
-				initiatorRcUserId: '',
+				eventType: 'IGNORED_CALL',
+				initiatorMatrixUserId: '@consultant:matrix.example',
 				initiatorUserName: ''
 			}
 		},
@@ -89,7 +89,7 @@ export const generateAskerSession = ({
 	messagesRead?: boolean;
 } = {}): ListItemInterface => {
 	const sessionId = Math.random();
-	const rcGroupId = uuid();
+	const matrixRoomId = `!${uuid()}:matrix.example`;
 
 	return {
 		session: {
@@ -103,8 +103,8 @@ export const generateAskerSession = ({
 			},
 			status: 2,
 			postcode: 12345,
-			groupId: rcGroupId,
-			askerRcId: 'askerRcId1',
+			matrixRoomId,
+			askerMatrixUserId: '@asker:matrix.example',
 			lastMessage: null,
 			messageDate: null,
 			messagesRead: messagesRead === undefined ? true : messagesRead,
@@ -116,8 +116,8 @@ export const generateAskerSession = ({
 			},
 			createDate: '2024-03-28',
 			videoCallMessageDTO: {
-				eventType: '',
-				initiatorRcUserId: '',
+				eventType: 'IGNORED_CALL',
+				initiatorMatrixUserId: '@consultant:matrix.example',
 				initiatorUserName: ''
 			}
 		},
@@ -164,57 +164,5 @@ export const sessionsReply = ({
 		offset: _offset,
 		count: _count,
 		total: total || sessions.length
-	};
-};
-
-export const generateMessage = ({
-	rcGroupId,
-	unread
-}: {
-	rcGroupId?: string;
-	unread?: boolean;
-} = {}): MessageService.Schemas.MessagesDTO => {
-	const id = uuid();
-	return {
-		_id: id,
-		alias: null,
-		rid: rcGroupId,
-		msg: `message id ${id}`,
-		ts: new Date().toISOString(),
-		u: {
-			_id: 'consultant',
-			username: 'consultant',
-			name: null
-		},
-		unread: unread === undefined ? true : unread,
-		_updatedAt: new Date().toISOString(),
-		attachments: [],
-		file: null,
-		mentions: [],
-		channels: []
-	};
-};
-
-export const generateMultipleMessages = (
-	amount: number
-): MessageService.Schemas.MessagesDTO[] => {
-	const messages: MessageService.Schemas.MessagesDTO[] = [];
-	for (let i = 0; i < amount; i++) {
-		messages.push(generateMessage());
-	}
-
-	return messages;
-};
-
-export const generateMessagesReply = (
-	messages: MessageService.Schemas.MessagesDTO[]
-): MessageService.Schemas.MessageStreamDTO => {
-	return {
-		messages,
-		count: messages.length,
-		offset: 0,
-		total: messages.length,
-		success: true,
-		cleaned: null
 	};
 };

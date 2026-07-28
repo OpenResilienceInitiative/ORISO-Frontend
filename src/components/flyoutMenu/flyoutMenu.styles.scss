@@ -4,10 +4,10 @@
 		border: none;
 		padding: 0;
 		cursor: pointer;
-		color: $secondary;
+		color: var(--m3-on-surface, $secondary);
 
 		&:hover {
-			color: $hover-primary;
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 
 		svg {
@@ -52,12 +52,12 @@
 			cursor: pointer;
 			background-color: #fff;
 			transition: all 0.3s ease;
-			color: $secondary;
+			color: var(--m3-on-surface, $secondary);
 			white-space: nowrap;
 
 			&:hover {
 				background-color: $hover-select;
-				color: $hover-primary;
+				color: var(--m3-primary-hover, $hover-primary);
 			}
 		}
 	}
@@ -86,7 +86,7 @@
 .has-flyout {
 	&:hover {
 		.flyoutMenu__trigger {
-			color: $hover-primary;
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 }

@@ -2,13 +2,14 @@ import { Meta, StoryObj } from '@storybook/react';
 import { LoadingSpinner } from './LoadingSpinner';
 
 const meta = {
-	title: 'FEEDBACK/LoadingSpinner',
+	title: 'Atoms/LoadingSpinner',
 	component: LoadingSpinner,
 	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			description: {
-				component: 'LoadingSpinner component for displaying loading states.'
+				component:
+					'LoadingSpinner component for displaying loading states.'
 			}
 		}
 	}
