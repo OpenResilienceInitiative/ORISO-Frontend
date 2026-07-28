@@ -334,11 +334,55 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 		await crypto.importRoomKeys(roomKeys);
+		// FE#811: importRoomKeys only fills the key store — it never re-decrypts
+		// events that already failed. (The SDK's automatic retry hooks onto keys
+		// arriving via sync `m.room_key`, not onto manual imports; and
+		// `decryptEventIfNeeded` is a no-op for failed events because their
+		// clearEvent is set to the m.bad.encrypted placeholder.) Without this
+		// retry the counsellor keeps staring at "Unable to decrypt" although the
+		// key is already on their device — so retry first, then announce.
+		await this.retryFailedDecryptions(content.room_id);
 		window.dispatchEvent(
 			new CustomEvent(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, {
 				detail: { roomId: content.room_id, imported: roomKeys.length }
 			})
 		);
+	}
+
+	private async retryFailedDecryptions(roomId: string): Promise<void> {
+		const client = this.client;
+		const crypto = client?.getCrypto();
+		const room = client?.getRoom(roomId);
+		if (!client || !crypto || !room) {
+			return;
+		}
+		const failedEvents = (
+			room.getLiveTimeline?.()?.getEvents?.() || []
+		).filter(
+			(timelineEvent) =>
+				timelineEvent.isEncrypted?.() &&
+				timelineEvent.isDecryptionFailure?.()
+		);
+		if (failedEvents.length === 0) {
+			return;
+		}
+		// CryptoApi and CryptoBackend are the same rust-crypto object at runtime;
+		// the SDK only exposes the narrower type via getCrypto().
+		const cryptoBackend = crypto as unknown as Parameters<
+			MatrixEvent['attemptDecryption']
+		>[0];
+		const results = await Promise.allSettled(
+			failedEvents.map((timelineEvent) =>
+				timelineEvent.attemptDecryption(cryptoBackend, {
+					isRetry: true
+				})
+			)
+		);
+		emitDiagnostic('retry-decryption', {
+			roomId,
+			attempted: failedEvents.length,
+			rejected: results.filter((r) => r.status === 'rejected').length
+		});
 	}
 }
 
