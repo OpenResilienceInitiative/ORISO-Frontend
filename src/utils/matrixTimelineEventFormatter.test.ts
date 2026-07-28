@@ -156,8 +156,8 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 
 		expect(message.attachments[0]).toMatchObject({
 			type: 'image',
-			image_w: 120,
-			image_h: 72
+			width: 120,
+			height: 72
 		});
 	});
 
@@ -173,8 +173,8 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 			'encrypted'
 		);
 
-		expect(message.attachments[0]).not.toHaveProperty('image_w');
-		expect(message.attachments[0]).not.toHaveProperty('image_h');
+		expect(message.attachments[0]).not.toHaveProperty('width');
+		expect(message.attachments[0]).not.toHaveProperty('height');
 	});
 
 	it('threads through only a blocked media-check verdict', () => {
@@ -205,9 +205,9 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 			'encrypted'
 		);
 
-		expect(blocked.attachments[0].media_check_state).toBe('blocked');
+		expect(blocked.attachments[0].mediaCheckState).toBe('blocked');
 		expect(selfAssertedSafe.attachments[0]).not.toHaveProperty(
-			'media_check_state'
+			'mediaCheckState'
 		);
 	});
 });

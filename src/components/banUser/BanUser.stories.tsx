@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		rcUserId: 'rc-user-123',
+		matrixUserId: 'rc-user-123',
 		userName: 'Anonymous-User',
 		chatId: 1,
 		handleUserBan: () => {}

@@ -38,6 +38,7 @@ import { CallProvider } from '../../globalState/provider/CallProvider';
 import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
+import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 
 const Login = lazy(() =>
 	import('../login/Login').then((m) => ({ default: m.Login }))
@@ -66,9 +67,6 @@ const SetNewPassword = lazy(() =>
 	}))
 );
 
-const VideoConference = lazy(
-	() => import('../videoConference/VideoConference')
-);
 const VideoCall = lazy(() => import('../videoCall/VideoCall'));
 
 type TExtraRoute = {
@@ -226,10 +224,15 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 										</UrlParamsProvider>
 									}
 								/>
-								<Route
-									path={settings.urls.videoConference}
-									element={<VideoConference />}
-								/>
+								{legacyVideoAppointmentRoutes.map(
+									({ path, element }) => (
+										<Route
+											key={path}
+											path={path}
+											element={element}
+										/>
+									)
+								)}
 								<Route
 									path={settings.urls.videoCall}
 									element={<VideoCall />}

@@ -40,7 +40,7 @@ describe('Message event notification privacy', () => {
 	});
 
 	it('keeps bounded previews only for explicit non-Matrix legacy payloads', () => {
-		const longPreview = 'legacy Rocket.Chat message '.repeat(8);
+		const longPreview = 'legacy imported message '.repeat(8);
 		const payload = buildMessageEventNotificationBody({
 			roomId: 'legacy-room',
 			matrixRoom: false,

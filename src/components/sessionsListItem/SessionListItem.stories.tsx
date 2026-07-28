@@ -123,10 +123,10 @@ const runtimeSession: ListItemInterface = {
 	session: {
 		id: 4401,
 		agencyId: 101,
-		askerRcId: 'asker-4401',
+		askerMatrixUserId: 'asker-4401',
 		attachment: null,
 		consultingType: 1,
-		groupId: 'storybook-runtime-room-4401',
+		matrixRoomId: 'storybook-runtime-room-4401',
 		e2eLastMessage: null,
 		lastMessage: 'Anfrage gesendet',
 		messageDate: 1773822900,

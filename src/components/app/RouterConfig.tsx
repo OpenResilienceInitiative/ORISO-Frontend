@@ -13,8 +13,6 @@ import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
-import { Appointments } from '../appointment/Appointments';
-import VideoConference from '../videoConference/VideoConference';
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
@@ -42,7 +40,6 @@ import { Booking } from '../../containers/bookings/components/Booking/booking';
 import { BookingCancellation } from '../../containers/bookings/components/BookingCancellation/bookingCancellation';
 import { BookingEvents } from '../../containers/bookings/components/BookingEvents/bookingEvents';
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
-import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 
@@ -64,13 +61,6 @@ const showAppointmentsMenuItem = (userData, hasAssignedConsultant) => {
 
 const showToolsMenuItem = (userData, consultingTypes, sessionsData, hasTools) =>
 	hasTools;
-
-const isVideoAppointmentsEnabled = (
-	userData,
-	consultingTypes,
-	disableVideoAppointments
-) =>
-	!disableVideoAppointments && hasVideoCallFeature(userData, consultingTypes);
 
 const appointmentRoutes = [
 	{
@@ -190,7 +180,7 @@ export const RouterConfigUser = (
 				]
 			},
 			{
-				path: '/sessions/user/view/:rcGroupId?/:sessionId?',
+				path: '/sessions/user/view/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				exact: false,
 				sessionTypes: [
@@ -207,15 +197,15 @@ export const RouterConfigUser = (
 				component: WriteEnquiry,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
-			// MATRIX MIGRATION: Route for sessions without rcGroupId
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/user/view/session/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat route
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/user/view/:rcGroupId/:sessionId',
+				path: '/sessions/user/view/:groupId/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -249,14 +239,7 @@ export const RouterConfigUser = (
 
 export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 	return {
-		plainRoutes: [
-			{
-				condition: hasVideoCallFeature,
-				path: settings.urls.consultantVideoConference,
-				exact: true,
-				component: VideoConference
-			}
-		],
+		plainRoutes: [],
 		navigation: [
 			overviewRoute(settings),
 			{
@@ -304,21 +287,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				}
 			},
 			{
-				condition: (userData, consultingTypes) =>
-					isVideoAppointmentsEnabled(
-						userData,
-						consultingTypes,
-						settings.disableVideoAppointments
-					),
-				to: '/termine',
-				icon: CalendarIconOutline,
-				iconFilled: CalendarIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.appointments'
-				}
-			},
-			{
 				condition: showAppointmentsMenuItem,
 				to: '/booking/events',
 				icon: CalendarIconOutline,
@@ -331,14 +299,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 		],
 		listRoutes: [
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId?/:sessionId?',
+				path: '/sessions/consultant/sessionPreview/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				sessionTypes: [SESSION_TYPE_ENQUIRY],
 				type: SESSION_LIST_TYPES.ENQUIRY,
 				exact: false
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId?/:sessionId?',
+				path: '/sessions/consultant/sessionView/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				sessionTypes: [
 					SESSION_TYPE_SESSION,
@@ -350,7 +318,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			}
 		],
 		detailRoutes: [
-			// MATRIX MIGRATION: Routes for sessions without rcGroupId (Matrix-only sessions)
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/consultant/sessionPreview/session/:sessionId',
 				component: SessionView,
@@ -361,14 +329,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat routes (with rcGroupId)
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId',
+				path: '/sessions/consultant/sessionPreview/:groupId/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -388,13 +356,13 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/editGroupChat',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat',
 				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],
 		userProfileRoutes: [
-			// MATRIX MIGRATION: Routes for sessions without rcGroupId
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
 				component: AskerInfo,
@@ -405,19 +373,19 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat routes
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId/userProfile',
+				path: '/sessions/consultant/sessionPreview/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/userProfile',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/groupChatInfo',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
@@ -441,17 +409,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/profile',
 				exact: false,
 				component: Profile
-			},
-			{
-				condition: (userData, consultingTypes) =>
-					isVideoAppointmentsEnabled(
-						userData,
-						consultingTypes,
-						settings.disableVideoAppointments
-					),
-				path: '/termine',
-				exact: false,
-				component: Appointments
 			}
 		],
 		appointmentRoutes,

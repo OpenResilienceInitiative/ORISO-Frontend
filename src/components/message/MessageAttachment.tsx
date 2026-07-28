@@ -15,6 +15,7 @@ import {
 import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { getIconForAttachmentType } from './messageHelpers';
+import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 
 /**
  * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
@@ -24,8 +25,8 @@ import { getIconForAttachmentType } from './messageHelpers';
 export type MediaCheckState = 'unchecked' | 'safe' | 'blocked';
 
 interface MessageAttachmentProps {
-	attachment: MessageService.Schemas.AttachmentDTO;
-	file: MessageService.Schemas.FileDTO;
+	attachment: ChatAttachment;
+	file: ChatFile;
 	hasRenderedMessage: boolean;
 	rid: string;
 	t?: string;
@@ -43,7 +44,7 @@ const DECRYPTION_FINISHED = 'decryption_finished';
 export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const { t: translate } = useTranslation();
 	const { addNotification } = React.useContext(NotificationsContext);
-	const matrixEncryptedFile = (props.attachment as any).matrix_encrypted_file;
+	const matrixEncryptedFile = props.attachment.encryptedFile;
 	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
 	const isEncryptedAttachment =
 		props.t === 'e2e' || isMatrixEncryptedAttachment;
@@ -67,7 +68,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			)
 				return;
 
-			// Legacy Rocket.Chat attachment encryption is removed; those
+			// Attachments are encrypted by Matrix media handling; those
 			// attachments (old pre-migration data) cannot be decrypted.
 			if (isEncryptedAttachment && !isMatrixEncryptedAttachment) {
 				setAttachmentStatus(DECRYPTION_ERROR);
@@ -149,7 +150,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		return null;
 	}, []);
 
-	// Helper to build URL - if title_link is already a full URL, use it as-is
+	// Helper to build URL - if downloadUrl is already a full URL, use it as-is
 	const buildUrl = useCallback((link: string) => {
 		if (!link) return '';
 		// If link already starts with http:// or https://, it's a full URL
@@ -169,7 +170,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.file.type?.startsWith('image/') ||
 		props.attachment.type === 'image';
 	const isAudio = props.file.type?.startsWith('audio/');
-	const imageUrl = isImage ? buildUrl(props.attachment.title_link) : null;
+	const imageUrl = isImage ? buildUrl(props.attachment.downloadUrl) : null;
 
 	const [revealed, setRevealed] = React.useState(false);
 	const mediaCheckState = props.mediaCheckState ?? 'safe';
@@ -179,15 +180,12 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const showImagePreview = isImage && inlineDisplayEnabled;
 	const isAwaitingReveal =
 		isImage && effectiveMediaState === 'unchecked' && !revealed;
-	const attachmentDimensions = props.attachment as unknown as {
-		image_w?: number;
-		image_h?: number;
-	};
+	const attachmentDimensions = props.attachment;
 
 	const revealUncheckedImage = () => {
 		setRevealed(true);
 		if (isEncryptedAttachment && attachmentStatus === ENCRYPTED) {
-			void decryptFile(buildUrl(props.attachment.title_link));
+			void decryptFile(buildUrl(props.attachment.downloadUrl));
 		}
 	};
 
@@ -195,9 +193,9 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		<div
 			className="messageItem__message__attachment__preview"
 			style={
-				attachmentDimensions.image_w && attachmentDimensions.image_h
+				attachmentDimensions.width && attachmentDimensions.height
 					? {
-							aspectRatio: `${attachmentDimensions.image_w} / ${attachmentDimensions.image_h}`
+							aspectRatio: `${attachmentDimensions.width} / ${attachmentDimensions.height}`
 						}
 					: undefined
 			}
@@ -207,7 +205,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	);
 
 	// For non-encrypted files, wrap in download link
-	const downloadUrl = buildUrl(props.attachment.title_link);
+	const downloadUrl = buildUrl(props.attachment.downloadUrl);
 
 	const formatAudioDuration = useCallback((duration: number | null) => {
 		if (
@@ -417,12 +415,12 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 											props.file.type
 										]
 									)}{' '}
-									{props.attachment.image_size
+									{props.attachment.size
 										? `| ${
 												(
 													getAttachmentSizeMBForKB(
-														props.attachment
-															.image_size * 1000
+														props.attachment.size *
+															1000
 													) / 1000
 												).toFixed(2) +
 												translate(
@@ -468,11 +466,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 											props.file.type
 										]
 									)}{' '}
-									{props.attachment.image_size
+									{props.attachment.size
 										? `| ${(
 												getAttachmentSizeMBForKB(
-													props.attachment
-														.image_size * 1000
+													props.attachment.size * 1000
 												) / 1000
 											).toFixed(2)}${translate(
 												'attachments.type.label.mb'
@@ -488,7 +485,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					className="messageItem__message__attachment"
 					onClick={() =>
 						attachmentStatus === ENCRYPTED &&
-						decryptFile(buildUrl(props.attachment.title_link))
+						decryptFile(buildUrl(props.attachment.downloadUrl))
 					}
 					style={{
 						cursor:

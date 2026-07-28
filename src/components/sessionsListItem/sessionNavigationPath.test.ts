@@ -45,6 +45,61 @@ describe('getSessionNavigationPath', () => {
 		).toBe('/sessions/user/view/session/4');
 	});
 
+	it('opens a consultant live chat through the Matrix room-id route (#774)', () => {
+		// A consultant opening an answered live chat must use the same room-id
+		// route the accept flow uses; the /session/:id route resolves through a
+		// different backend lookup that returns nothing for answered live chats.
+		expect(
+			getSessionNavigationPath({
+				listPath: '/sessions/consultant/sessionView',
+				sessionId: 42,
+				groupId: '!livechat:matrix.localhost',
+				isGroup: false,
+				isAsker: false,
+				isEmptyEnquiry: false,
+				isLiveChat: true,
+				tabSuffix: ''
+			})
+		).toBe(
+			'/sessions/consultant/sessionView/!livechat%3Amatrix.localhost/42'
+		);
+	});
+
+	it('falls back to the resolved room id for a consultant live chat', () => {
+		expect(
+			getSessionNavigationPath({
+				listPath: '/sessions/consultant/sessionView',
+				sessionId: 43,
+				groupId: undefined,
+				rid: '!livechat-rid:matrix.localhost',
+				isGroup: false,
+				isAsker: false,
+				isEmptyEnquiry: false,
+				isLiveChat: true,
+				tabSuffix: '?sessionListTab=all'
+			})
+		).toBe(
+			'/sessions/consultant/sessionView/!livechat-rid%3Amatrix.localhost/43?sessionListTab=all'
+		);
+	});
+
+	it('keeps an asker live chat on the session-id route', () => {
+		// Only the consultant open path is affected by #774; the asker keeps its
+		// existing routing.
+		expect(
+			getSessionNavigationPath({
+				listPath: '/sessions/user/view',
+				sessionId: 44,
+				groupId: '!livechat:matrix.localhost',
+				isGroup: false,
+				isAsker: true,
+				isEmptyEnquiry: false,
+				isLiveChat: true,
+				tabSuffix: ''
+			})
+		).toBe('/sessions/user/view/session/44');
+	});
+
 	it('keeps an empty enquiry on its current list route and tab', () => {
 		expect(
 			getSessionNavigationPath({

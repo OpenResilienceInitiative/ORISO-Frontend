@@ -33,7 +33,7 @@ export const ServerSettingsContext =
 /**
  * Chat-related server settings (message size, deletability, ...).
  * Resolved from the backend server settings with static fallbacks —
- * no Rocket.Chat involved.
+ * Matrix is the only chat backend.
  */
 export const ServerSettingsProvider = (props) => {
 	const [settings, setSettings] = useState<TSetting[]>([]);

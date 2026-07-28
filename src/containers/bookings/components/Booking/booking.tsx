@@ -63,8 +63,6 @@ export const Booking = () => {
 							!session.consultant ||
 							session.session.status === STATUS_EMPTY,
 						'metadata[sessionId]': session.session.id,
-						'metadata[rcToken]': getValueFromCookie('rc_token'),
-						'metadata[rcUserId]': getValueFromCookie('rc_uid'),
 						'metadata[userToken]': getValueFromCookie('keycloak')
 					}}
 					embedJsUrl={`${settings.calcomUrl}/embed/embed.js`}

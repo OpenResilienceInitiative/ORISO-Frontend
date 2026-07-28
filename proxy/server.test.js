@@ -203,14 +203,16 @@ test('POST with invalid body returns 400', async () => {
 	assert.equal(response.status, 400);
 });
 
-test('collectRoomIdentifiers includes matrix and legacy group ids', () => {
+test('collectRoomIdentifiers accepts only Matrix room ids', () => {
 	const identifiers = collectRoomIdentifiers([
 		{ session: { matrixRoomId: '!room:example.org', groupId: 'group-1' } },
-		{ chat: { matrixRoomId: '!chat:example.org', groupId: 'group-2' } }
+		{ chat: { matrixRoomId: '!chat:example.org', groupId: 'group-2' } },
+		{ session: { matrixRoomId: 'legacy-room-id' } }
 	]);
 
 	assert.equal(identifiers.has('!room:example.org'), true);
-	assert.equal(identifiers.has('group-1'), true);
 	assert.equal(identifiers.has('!chat:example.org'), true);
-	assert.equal(identifiers.has('group-2'), true);
+	assert.equal(identifiers.has('group-1'), false);
+	assert.equal(identifiers.has('group-2'), false);
+	assert.equal(identifiers.has('legacy-room-id'), false);
 });
