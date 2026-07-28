@@ -36,6 +36,21 @@ FROM node:$NODE_VERSION
 
 ARG PORT=80
 
+# The node base image bundles an npm whose vendored dependencies (tar,
+# sigstore, picomatch, brace-expansion) carry fixable HIGH/CRITICAL CVEs
+# flagged by the Trivy publish gate. Upgrade npm to a release that ships
+# fixed versions and patch its vendored brace-expansion to 5.0.8
+# (CVE-2026-14257 fix), which no npm release bundles yet.
+RUN npm install -g npm@11.18.0 \
+	&& cd /tmp \
+	&& npm pack brace-expansion@5.0.8 \
+	&& mkdir -p /tmp/brace-expansion-patch \
+	&& tar -xzf brace-expansion-5.0.8.tgz -C /tmp/brace-expansion-patch \
+	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
+	&& mv /tmp/brace-expansion-patch/package /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
+	&& rm -rf /tmp/brace-expansion-patch /tmp/brace-expansion-5.0.8.tgz \
+	&& npm cache clean --force
+
 USER node
 WORKDIR /app
 EXPOSE $PORT
