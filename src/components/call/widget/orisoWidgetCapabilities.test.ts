@@ -49,14 +49,16 @@ describe('isAllowedWidgetCapability', () => {
 		);
 	});
 
-	it('lets the widget read encryption state, but no member or room metadata', () => {
-		expect(
-			allowed('org.matrix.msc2762.receive.state_event:m.room.encryption')
-		).toBe(true);
-		for (const type of ['m.room.member', 'm.room.name', 'm.room.create']) {
+	it('lets the room-confined widget read the state required to boot', () => {
+		for (const type of [
+			'm.room.create',
+			'm.room.name',
+			'm.room.member',
+			'm.room.encryption'
+		]) {
 			expect(
 				allowed(`org.matrix.msc2762.receive.state_event:${type}`)
-			).toBe(false);
+			).toBe(true);
 		}
 	});
 
@@ -103,8 +105,7 @@ describe('isAllowedWidgetCapability', () => {
 		for (const capability of [
 			'org.matrix.msc2762.send.event:m.room.redaction',
 			'org.matrix.msc3819.send.to_device:m.call.invite',
-			'org.matrix.msc3819.send.to_device:m.call.hangup',
-			'org.matrix.msc2762.receive.state_event:m.room.member'
+			'org.matrix.msc3819.send.to_device:m.call.hangup'
 		]) {
 			expect(allowed(capability)).toBe(false);
 		}

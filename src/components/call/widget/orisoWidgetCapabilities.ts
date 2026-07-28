@@ -15,8 +15,13 @@ export const ALLOWED_SEND_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'org.matrix.msc3401.call.member'
 ]);
 
+// create/name/member are read-only boot metadata for createRoomWidgetClient.
+// OrisoWidgetDriver still confines every state read to its single call room.
 export const ALLOWED_RECEIVE_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	...ALLOWED_SEND_STATE_EVENT_TYPES,
+	'm.room.create',
+	'm.room.name',
+	'm.room.member',
 	'm.room.encryption'
 ]);
 
