@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
 
 const allowed = (capability: string) =>
-	isAllowedWidgetCapability(capability, '@a:hs', 'ORISO_WEB_test');
+	isAllowedWidgetCapability(
+		capability,
+		'@a:hs',
+		'ORISO_WEB_test',
+		'!call:hs'
+	);
 
 describe('isAllowedWidgetCapability', () => {
 	it('grants the call membership state events Element Call needs to join', () => {
@@ -60,6 +65,12 @@ describe('isAllowedWidgetCapability', () => {
 				allowed(`org.matrix.msc2762.receive.state_event:${type}`)
 			).toBe(true);
 		}
+	});
+
+	it('grants timeline access only to the active call room', () => {
+		expect(allowed('org.matrix.msc2762.timeline:!call:hs')).toBe(true);
+		expect(allowed('org.matrix.msc2762.timeline:!other:hs')).toBe(false);
+		expect(allowed('org.matrix.msc2762.timeline:*')).toBe(false);
 	});
 
 	it('does not let the widget write another device membership', () => {

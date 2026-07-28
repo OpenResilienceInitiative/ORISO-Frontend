@@ -507,7 +507,7 @@ export const GroupCallWidget: React.FC = () => {
 							src={elementCallUrl}
 							referrerPolicy="no-referrer"
 							className="element-call-iframe"
-							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write"
+							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write; screen-wake-lock"
 							allowFullScreen
 							title="Group video call"
 						/>

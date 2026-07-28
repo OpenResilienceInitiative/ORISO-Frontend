@@ -108,7 +108,14 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		const deviceId = this.client.getDeviceId();
 		if (!userId || !deviceId) return granted;
 		requested.forEach((capability) => {
-			if (isAllowedWidgetCapability(capability, userId, deviceId)) {
+			if (
+				isAllowedWidgetCapability(
+					capability,
+					userId,
+					deviceId,
+					this.roomId
+				)
+			) {
 				granted.add(capability);
 			} else {
 				// eslint-disable-next-line no-console

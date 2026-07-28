@@ -36,9 +36,9 @@ const ALLOWED_PLAIN_CAPABILITIES: ReadonlySet<string> = new Set([
 
 const ROOM_EVENT_PREFIXES = [
 	'org.matrix.msc2762.send.event:',
-	'org.matrix.msc2762.receive.event:',
-	'org.matrix.msc2762.timeline:'
+	'org.matrix.msc2762.receive.event:'
 ];
+const ROOM_TIMELINE_PREFIX = 'org.matrix.msc2762.timeline:';
 const SEND_STATE_EVENT_PREFIX = 'org.matrix.msc2762.send.state_event:';
 const RECEIVE_STATE_EVENT_PREFIX = 'org.matrix.msc2762.receive.state_event:';
 const TO_DEVICE_PREFIXES = [
@@ -84,9 +84,13 @@ const matchPrefix = (
 export const isAllowedWidgetCapability = (
 	capability: string,
 	userId: string,
-	deviceId: string
+	deviceId: string,
+	roomId: string
 ): boolean => {
 	if (ALLOWED_PLAIN_CAPABILITIES.has(capability)) return true;
+	if (capability.startsWith(ROOM_TIMELINE_PREFIX)) {
+		return capability === `${ROOM_TIMELINE_PREFIX}${roomId}`;
+	}
 
 	const roomPrefix = matchPrefix(capability, ROOM_EVENT_PREFIXES);
 	if (roomPrefix) {

@@ -340,6 +340,26 @@ describe('useElementCallWidget', () => {
 		});
 		expect(onAlwaysOnScreenChange).toHaveBeenCalledWith(true);
 
+		for (const action of [
+			'io.element.join',
+			'io.element.tile_layout',
+			'io.element.spotlight_layout'
+		]) {
+			const request = {
+				action,
+				requestId: `${action}-1`,
+				widgetId: 'widget',
+				data: {}
+			};
+			const event = new CustomEvent(action, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${action}`, event));
+			expect(event.defaultPrevented).toBe(true);
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {});
+		}
+
 		await act(() => result.current.hangup());
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
 	});

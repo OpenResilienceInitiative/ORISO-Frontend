@@ -265,6 +265,19 @@ export const useElementCallWidget = (
 					api.transport.reply(event.detail, { success: true });
 				}
 			);
+			const acknowledgeLifecycleAction = (
+				event: CustomEvent<IWidgetApiRequest>
+			): void => {
+				event.preventDefault();
+				api.transport.reply(event.detail, {});
+			};
+			for (const action of [
+				'io.element.join',
+				'io.element.tile_layout',
+				'io.element.spotlight_layout'
+			]) {
+				api.on(`action:${action}`, acknowledgeLifecycleAction);
+			}
 		},
 		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
