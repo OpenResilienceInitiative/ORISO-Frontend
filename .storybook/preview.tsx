@@ -31,6 +31,10 @@ import {
 	SessionTypeContext
 } from '../src/globalState';
 import { Buffer } from 'buffer';
+import {
+	shouldMockStorybookRealtimeUrl,
+	StorybookWebSocketMock
+} from './storybookRealtimeMocks';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -504,60 +508,6 @@ const installStorybookFetchMocks = () => {
 
 installStorybookFetchMocks();
 
-class StorybookWebSocketMock extends EventTarget {
-	static CONNECTING = 0;
-	static OPEN = 1;
-	static CLOSING = 2;
-	static CLOSED = 3;
-
-	binaryType: BinaryType = 'blob';
-	bufferedAmount = 0;
-	extensions = '';
-	onclose: ((event: CloseEvent) => void) | null = null;
-	onerror: ((event: Event) => void) | null = null;
-	onmessage: ((event: MessageEvent) => void) | null = null;
-	onopen: ((event: Event) => void) | null = null;
-	protocol = '';
-	readyState = StorybookWebSocketMock.CONNECTING;
-	url: string;
-
-	constructor(url: string | URL) {
-		super();
-		this.url = String(url);
-		window.setTimeout(() => {
-			if (this.readyState !== StorybookWebSocketMock.CONNECTING) {
-				return;
-			}
-			this.readyState = StorybookWebSocketMock.OPEN;
-			const event = new Event('open');
-			this.onopen?.(event);
-			this.dispatchEvent(event);
-		}, 0);
-	}
-
-	close() {
-		if (this.readyState === StorybookWebSocketMock.CLOSED) {
-			return;
-		}
-		this.readyState = StorybookWebSocketMock.CLOSED;
-		const event = new CloseEvent('close', { code: 1000 });
-		this.onclose?.(event);
-		this.dispatchEvent(event);
-	}
-
-	send(_data: string | ArrayBufferLike | Blob | ArrayBufferView) {}
-}
-
-const shouldMockRealtimeUrl = (url: string | URL): boolean => {
-	try {
-		return isStorybookServiceUrl(
-			new URL(String(url), window.location.href)
-		);
-	} catch {
-		return false;
-	}
-};
-
 const installStorybookRealtimeMocks = () => {
 	const marker = '__orisoStorybookRealtimeMocksInstalled';
 	if ((globalThis as any)[marker]) {
@@ -571,7 +521,7 @@ const installStorybookRealtimeMocks = () => {
 		url: string | URL,
 		protocols?: string | string[]
 	) {
-		if (shouldMockRealtimeUrl(url)) {
+		if (shouldMockStorybookRealtimeUrl(url, window.location.href)) {
 			return new StorybookWebSocketMock(url);
 		}
 		return new OriginalWebSocket(url, protocols as any);
@@ -590,7 +540,7 @@ const installStorybookRealtimeMocks = () => {
 			url: string | URL,
 			eventSourceInitDict?: EventSourceInit
 		) {
-			if (!shouldMockRealtimeUrl(url)) {
+			if (!shouldMockStorybookRealtimeUrl(url, window.location.href)) {
 				return new OriginalEventSource(url, eventSourceInitDict);
 			}
 			const target = new EventTarget() as EventSource;

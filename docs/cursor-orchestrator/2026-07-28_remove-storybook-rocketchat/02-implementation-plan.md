@@ -8,17 +8,20 @@ generic LiveService realtime mock.
 ## Impacted files
 
 - `.storybook/preview.tsx`
+- `.storybook/storybookRealtimeMocks.ts`
 - `.storybook/preview.tsx.sb7.bak`
 - `.storybook/README.md`
 - `src/matrixOnlyLegacyArtifacts.test.ts`
+- `src/storybookRealtimeMocks.test.ts`
 
 ## Subtasks
 
-| #   | Subtask                                                     | Files                                                                              | Verify with                                                  | Status |
-| --- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ |
-| 1   | Add the Storybook Matrix-only regression contract           | `src/matrixOnlyLegacyArtifacts.test.ts`                                            | `npm run test:unit -- src/matrixOnlyLegacyArtifacts.test.ts` | done   |
-| 2   | Remove DDP behavior, obsolete endpoint, backup, and wording | `.storybook/preview.tsx`, `.storybook/preview.tsx.sb7.bak`, `.storybook/README.md` | targeted Vitest and `npm run build-storybook`                | done   |
-| 3   | Run the complete frontend hard gate                         | touched scope                                                                      | unit, script lint, style lint, build                         | done   |
+| #   | Subtask                                                     | Files                                                                                                                      | Verify with                                                  | Status |
+| --- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ |
+| 1   | Add the Storybook Matrix-only regression contract           | `src/matrixOnlyLegacyArtifacts.test.ts`                                                                                    | `npm run test:unit -- src/matrixOnlyLegacyArtifacts.test.ts` | done   |
+| 2   | Remove DDP behavior, obsolete endpoint, backup, and wording | `.storybook/preview.tsx`, `.storybook/storybookRealtimeMocks.ts`, `.storybook/preview.tsx.sb7.bak`, `.storybook/README.md` | targeted Vitest and `npm run build-storybook`                | done   |
+| 3   | Run the complete frontend hard gate                         | touched scope                                                                                                              | unit, script lint, style lint, build                         | done   |
+| 4   | Exercise the preserved LiveService mock behavior            | `.storybook/storybookRealtimeMocks.ts`, `src/storybookRealtimeMocks.test.ts`                                               | focused Vitest and Storybook build                           | done   |
 
 ## Verification checklist
 

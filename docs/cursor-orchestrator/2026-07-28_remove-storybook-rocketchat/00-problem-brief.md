@@ -20,6 +20,8 @@
 - **Constraints / non-goals:** Preserve the generic LiveService realtime mock;
   no product UI change, deployment, merge, or deployed-runtime claim.
 - **Affected area:** `.storybook/preview.tsx`,
+  `.storybook/storybookRealtimeMocks.ts`,
   `.storybook/preview.tsx.sb7.bak`,
-  `src/matrixOnlyLegacyArtifacts.test.ts`.
+  `src/matrixOnlyLegacyArtifacts.test.ts`,
+  `src/storybookRealtimeMocks.test.ts`.
 - **Open questions:** None.

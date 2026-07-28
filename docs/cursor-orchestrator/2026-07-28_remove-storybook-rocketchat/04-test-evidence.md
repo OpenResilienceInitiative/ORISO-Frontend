@@ -9,7 +9,7 @@
 
 ## Required repository gate
 
-- `npm run test:unit` — passed: 215 files, 1,398 tests.
+- `npm run test:unit` — passed after review fixes: 216 files, 1,399 tests.
 - `npm run lint:scripts` — passed, including TypeScript compilation.
 - `npm run lint:style` — passed.
 - `npm run build` — passed with existing CRA, Autoprefixer, and bundle-size
@@ -18,6 +18,12 @@
 - `git diff --check` — passed.
 - Local CodeRabbit review — one valid guard-coverage finding fixed by scanning
   nested Storybook text artifacts and explicit DDP markers.
+- GitHub CodeRabbit review — four findings fixed: precise documentation,
+  Markdown heading levels, case-insensitive identifier variants, and behavioral
+  LiveService mock coverage.
+- Final local CodeRabbit review — filename scanning and case-insensitive
+  extension coverage fixed; its test-total finding was already satisfied by the
+  current 216 / 1,399 evidence.
 
 ## Environment
 

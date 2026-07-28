@@ -10,6 +10,8 @@
   architecture.
 - Extends the Matrix-only regression contract to scan Storybook and tracked
   backup files.
+- Exercises the preserved `/service/live` WebSocket mock lifecycle and proves
+  that `send` remains protocol-neutral.
 
 ## Why
 
@@ -19,7 +21,7 @@ must not remain as providers, fallbacks, or dormant repository contracts.
 
 ## Verification
 
-- 215 unit-test files / 1,398 tests passed.
+- 216 unit-test files / 1,399 tests passed.
 - Script lint, TypeScript, style lint, production build, and Storybook build
   passed.
 - The regression test was observed failing before the cleanup and passing
