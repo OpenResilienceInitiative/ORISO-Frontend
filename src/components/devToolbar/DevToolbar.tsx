@@ -13,6 +13,13 @@ import {
 	setValueInCookie
 } from '../sessionCookie/accessSessionCookie';
 import { STORAGE_KEY_E2EE_DISABLED } from '../../globalState/provider/E2EEProvider';
+import {
+	canUseStoredValue,
+	DEV_ONLY_SWITCH_KEYS,
+	STORAGE_KEY_2FA,
+	STORAGE_KEY_DISABLE_2FA_DUTY,
+	STORAGE_KEY_LOCALE
+} from './devToolbarKeys';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -22,22 +29,23 @@ import {
 	RequestLog
 } from '../../utils/requestCollector';
 
-export const STORAGE_KEY_LOCALE = 'locale';
 export const STORAGE_KEY_API = 'devProxy';
 export const STORAGE_KEY_DEV_TOOLBAR = 'showDevTools';
 export const STORAGE_KEY_POSITION = 'positionDevTools';
 export const STORAGE_KEY_HIDDEN = 'hiddenDevTools';
 
-export const STORAGE_KEY_2FA = '2fa';
-export const STORAGE_KEY_DISABLE_2FA_DUTY = 'disable 2fa_duty';
 export const STORAGE_KEY_RELEASE_NOTES = 'release_notes';
 export const STORAGE_KEY_ERROR_BOUNDARY = 'error_boundary';
 export { STORAGE_KEY_E2EE_DISABLED };
+export {
+	STORAGE_KEY_LOCALE,
+	STORAGE_KEY_2FA,
+	STORAGE_KEY_DISABLE_2FA_DUTY,
+	DEV_ONLY_SWITCH_KEYS
+};
 export const STORAGE_KEY_TRANSLATION_DISABLE_CACHE =
 	'translation_disable_cache';
 export const STORAGE_KEY_ENABLE_TRANSLATION_CHECK = 'enable_translation_check';
-
-const DEV_ONLY_SWITCH_KEYS = new Set([STORAGE_KEY_E2EE_DISABLED]);
 
 const DEVTOOLBAR_EVENT = 'devToolbar';
 
@@ -265,8 +273,13 @@ export const useDevToolbar = () => {
 
 	const getDevToolbarOption = useCallback(
 		(key) => {
+			// A dev-only switch must fall back to its default outside development,
+			// even when someone set the localStorage key by hand (FE-M10).
+			const storedValue = canUseStoredValue(key)
+				? localStorage.getItem(key)
+				: null;
 			const value =
-				localStorage.getItem(key) ??
+				storedValue ??
 				LOCAL_STORAGE_SWITCHES.filter(Boolean).find(
 					(localStorageSwitch) => localStorageSwitch.key === key
 				)?.value;
