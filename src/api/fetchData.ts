@@ -38,6 +38,7 @@ export const FETCH_ERRORS = {
 	TIMEOUT: 'TIMEOUT',
 	UNAUTHORIZED: 'UNAUTHORIZED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
+	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 	X_REASON: 'X-Reason'
 };
 
@@ -57,6 +58,28 @@ const invalidateStaleAuthSession = () => {
 	removeTokenExpiryFromLocalStorage();
 };
 
+// Guards against repeated reloads when several requests 401 on a public auth
+// route within the same page load. At most one self-healing reload is triggered.
+let staleAuthRecoveryTriggered = false;
+
+// A 401 on a public auth route (login / registration / error pages) means any
+// token we presented is stale or expired. Clear it so the next request is
+// anonymous -- the public endpoints then answer 200 instead of 401. If a stale
+// token was actually sent, reload once to re-bootstrap the app cleanly instead
+// of leaving the user stranded on a blank, crashed page (the uncaught
+// UNAUTHORIZED rejection otherwise prevents the login screen from rendering).
+const recoverFromStaleAuthOnPublicRoute = (
+	hadAuthorization: boolean,
+	reject: (reason?: Error) => void
+) => {
+	invalidateStaleAuthSession();
+	reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+	if (hadAuthorization && !staleAuthRecoveryTriggered) {
+		staleAuthRecoveryTriggered = true;
+		window.location.reload();
+	}
+};
+
 export class FetchErrorWithOptions extends Error {
 	options = {};
 
@@ -73,24 +96,24 @@ interface FetchDataProps {
 	url: string;
 	method: string;
 	headersData?: object;
-	rcValidation?: boolean;
 	bodyData?: string;
 	skipAuth?: boolean;
 	responseHandling?: string[];
 	timeout?: number;
 	signal?: AbortSignal;
+	recoverOnPublicAuthRoute?: boolean;
 }
 
 export const fetchData = ({
 	url,
 	method,
 	headersData,
-	rcValidation,
 	bodyData,
 	skipAuth,
 	responseHandling,
 	timeout,
-	signal
+	signal,
+	recoverOnPublicAuthRoute = true
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
 		const reqLog = new RequestLog(url, method, timeout);
@@ -105,31 +128,20 @@ export const fetchData = ({
 
 		const csrfToken = generateCsrfToken();
 
-		// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
-		// but no longer exists after Matrix migration. Send dummy token.
-		const rcHeaders = rcValidation
+		const localDevelopmentHeader = isLocalDevelopment
 			? {
-					rcToken:
-						getValueFromCookie('rc_token') ||
-						'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && {
-						RCUserId: getValueFromCookie('rc_uid')
-					})
+					'X-WHITELIST-HEADER': csrfToken,
+					...(process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY &&
+					process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY !==
+						'X-WHITELIST-HEADER'
+						? {
+								[process.env
+									.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+									csrfToken
+							}
+						: {})
 				}
 			: null;
-
-		const localDevelopmentHeader =
-			isLocalDevelopment &&
-			process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
-				? {
-						[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
-							csrfToken
-					}
-				: isLocalDevelopment
-					? {
-							'X-WHITELIST-HEADER': csrfToken
-						}
-					: null;
 
 		const controller = new AbortController();
 		const timeoutMs = timeout ?? 30_000;
@@ -145,7 +157,6 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
-			...rcHeaders,
 			...localDevelopmentHeader
 		};
 
@@ -252,6 +263,13 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.PRECONDITION_FAILED));
 					} else if (
+						response.status === 429 &&
+						responseHandling.includes(
+							FETCH_ERRORS.TOO_MANY_REQUESTS
+						)
+					) {
+						reject(new Error(FETCH_ERRORS.TOO_MANY_REQUESTS));
+					} else if (
 						response.status === 500 &&
 						responseHandling.includes(FETCH_ERRORS.ABORTED)
 					) {
@@ -262,21 +280,27 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.GATEWAY_TIMEOUT));
 					} else if (response.status === 401) {
-						if (isPublicAuthRoute()) {
-							if (!authorization) {
-								invalidateStaleAuthSession();
-							}
-							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+						if (isPublicAuthRoute() && recoverOnPublicAuthRoute) {
+							recoverFromStaleAuthOnPublicRoute(
+								Boolean(authorization),
+								reject
+							);
 						} else {
 							logout(true, appConfig.urls.toLogin);
 							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 						}
+					} else {
+						reject(new Error(FETCH_ERRORS.CATCH_ALL));
 					}
-				} else if (response.status === 401 && isPublicAuthRoute()) {
-					if (!authorization) {
-						invalidateStaleAuthSession();
-					}
-					reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+				} else if (
+					response.status === 401 &&
+					isPublicAuthRoute() &&
+					recoverOnPublicAuthRoute
+				) {
+					recoverFromStaleAuthOnPublicRoute(
+						Boolean(authorization),
+						reject
+					);
 				} else {
 					const error = getErrorCaseForStatus(response.status);
 					redirectToErrorPage(error);

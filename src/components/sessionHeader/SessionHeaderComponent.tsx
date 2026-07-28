@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
@@ -44,6 +43,7 @@ import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
 	finishAnonymousChatErrorOverlayItem,
@@ -57,9 +57,9 @@ import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
-	convertUserDataObjectToArray,
-	getUserDataTranslateBase
-} from '../profile/profileHelpers';
+	isAnonymousMatrixUsername,
+	resolveAnonymousChatDisplayName
+} from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
@@ -70,17 +70,31 @@ import { GroupChatHeader } from './GroupChatHeader';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTopic } from '../../globalState';
-import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
+import { SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
+import { OrisoSelect } from '../form/OrisoSelect';
+import { OrisoTextarea } from '../form/OrisoTextarea';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	ChatroomConversationIconType,
+	ChatroomMainInteractionIcon
+} from './ChatroomMainInteractionIcon';
+import { getSupervisorAddState } from './getSupervisorAddState';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
 	isJoinGroupChatView?: boolean;
 	bannedUsers: string[];
+	/**
+	 * Controls the header "+" add button. When omitted the button follows the
+	 * legacy behavior (shown only outside enquiry states). Provide an explicit
+	 * value to force the button on/off per state (Figma #430).
+	 */
+	showAddButton?: boolean;
 }
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
@@ -94,7 +108,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
-	const history = useHistory();
+	const { matrixClientService } = useMatrixClient();
+	const navigate = useNavigate();
+	const location = useLocation();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
 		(activeSession.item.topic as TopicSessionInterface).id
@@ -127,11 +143,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 
 	// Check if this is an anonymous chat
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
 		(isAnonymousChat
@@ -170,13 +182,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 
-	// Prepare SelectDropdown for consultant selection
+	const getConsultantSelectLabel = (consultant: Consultant) =>
+		[consultant.firstName, consultant.lastName].filter(Boolean).join(' ') ||
+		consultant.displayName ||
+		consultant.username ||
+		consultant.consultantId;
+
 	const consultantSelectDropdown = React.useMemo<SelectDropdownItem>(
 		() => ({
 			id: 'supervisor-consultant-select',
 			selectedOptions: availableConsultants.map((consultant) => ({
-				value: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`
+				value: consultant.consultantId.toString(),
+				label: getConsultantSelectLabel(consultant)
 			})),
 			defaultValue: selectedConsultantId
 				? {
@@ -184,7 +201,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						label: availableConsultants.find(
 							(c) => c.consultantId === selectedConsultantId
 						)
-							? `${availableConsultants.find((c) => c.consultantId === selectedConsultantId).firstName} ${availableConsultants.find((c) => c.consultantId === selectedConsultantId).lastName}`
+							? getConsultantSelectLabel(
+									availableConsultants.find(
+										(c) =>
+											c.consultantId ===
+											selectedConsultantId
+									)
+								)
 							: ''
 					}
 				: null,
@@ -213,6 +236,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		[availableConsultants, selectedConsultantId, translate]
 	);
 
+	const handleSupervisorConsultantSelect = (
+		event: SelectChangeEvent<string>
+	) => {
+		const selectedOption = consultantSelectDropdown.selectedOptions.find(
+			(option) => option.value.toString() === event.target.value
+		);
+
+		consultantSelectDropdown.handleDropdownSelect(selectedOption);
+	};
+
 	// Prepare Button for add supervisor
 	const addSupervisorButton: ButtonItem = React.useMemo(
 		() => ({
@@ -232,19 +265,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		[selectedConsultantId, isAddingSupervisor, translate]
 	);
 
-	const preparedUserSessionData =
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		userSessionData
-			? convertUserDataObjectToArray(userSessionData)
-			: null;
-	const translateBase = getUserDataTranslateBase(
-		activeSession.item.consultingType
-	);
-
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+	// Activity events point at the conversation, not a transient thread/embedded
+	// view — strip ephemeral query params from the saved action path.
+	const getCanonicalConversationActionPath = () => {
+		const params = new URLSearchParams(location.search);
+		params.delete('threadRootId');
+		params.delete('threadMessageId');
+		params.delete('embeddedNotifications');
+		const query = params.toString();
+		return `${location.pathname}${query ? `?${query}` : ''}`;
+	};
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
 	useEffect(() => {
@@ -285,12 +319,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				// console.warn('Cannot load consultants: No agency ID in session');
 			}
 		}
+		// loadAvailableConsultants is re-created every render; the modal-open
+		// and agency deps below are the intended triggers.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isSupervisorModalOpen,
 		activeSession.agency?.id,
 		activeSession.item?.agencyId,
 		isSupervisionEnabledForCurrentChat
-	]); // eslint-disable-line react-hooks/exhaustive-deps
+	]);
 
 	const loadSupervisors = async () => {
 		if (!isSupervisionEnabledForCurrentChat) {
@@ -429,7 +466,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			const matrixClientService = (window as any).matrixClientService;
 			const client = matrixClientService?.getClient?.();
 			if (client) {
 				await (client as any).sendMessage(matrixRoomId, {
@@ -447,8 +483,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				matrixRoomId,
 				null,
 				true,
-				'system',
-				null
+				'system'
 			);
 		} catch (_error) {
 			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.
@@ -520,7 +555,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.add.text',
 					'Der Supervisor wurde erfolgreich hinzugefügt.'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -603,7 +638,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.remove.text',
 					'Der Supervisor wurde erfolgreich entfernt.'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -633,7 +668,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const sessionView = getViewPathForType(type);
 	const userProfileLink = `/sessions/consultant/${sessionView}/${
-		activeSession.item.groupId
+		activeSession.item.matrixRoomId
 	}/${activeSession.item.id}/userProfile${getSessionListTab()}`;
 
 	const handleBackButton = () => {
@@ -660,6 +695,77 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		activeSession.isSession &&
 		!isChatFinished;
 
+	const headerContactName = (() => {
+		if (isAnonymousAsker) {
+			let storedPseudonym: string | null = null;
+			try {
+				storedPseudonym =
+					sessionStorage.getItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`
+					) || null;
+			} catch {
+				storedPseudonym = null;
+			}
+			const ownPseudonym = resolveAnonymousChatDisplayName(
+				{
+					username: userData?.userName,
+					displayName: userData?.displayName || storedPseudonym
+				},
+				userData?.displayName || storedPseudonym || undefined
+			);
+			if (ownPseudonym) {
+				return ownPseudonym;
+			}
+			const consultantName = resolveAnonymousChatDisplayName(
+				activeSession.consultant
+			);
+			if (consultantName) {
+				return consultantName;
+			}
+			return null;
+		}
+
+		if (isConsultantUser && isAnonymousChat) {
+			return (
+				resolveAnonymousChatDisplayName(activeSession.user) ||
+				resolveAnonymousChatDisplayName(contact)
+			);
+		}
+
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			return (
+				contact?.displayName ||
+				(!isAnonymousMatrixUsername(contact?.username)
+					? contact?.username
+					: null)
+			);
+		}
+
+		return (
+			resolveAnonymousChatDisplayName(contact) ||
+			(!isAnonymousMatrixUsername(contact?.username)
+				? contact?.username
+				: null)
+		);
+	})();
+
+	const headerFallbackLabel = translate('sessionList.user.consultantUnknown');
+	const headerTitle = headerContactName || headerFallbackLabel;
+	const headerAvatarDisplayName =
+		headerContactName ||
+		contact?.displayName ||
+		(!isAnonymousMatrixUsername(contact?.username)
+			? contact?.username
+			: undefined);
+	const sessionHeaderConversationIconType: ChatroomConversationIconType =
+		activeSession.isEmptyEnquiry
+			? 'waiting'
+			: activeSession.isEnquiry
+				? 'inquiry'
+				: isAnonymousChat
+					? 'live'
+					: 'nearby';
+
 	const handleRequestEndAnonymousChat = () => {
 		if (isFinishingChat || isChatFinished) {
 			return;
@@ -683,7 +789,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setIsEndChatOverlayActive(false);
 			setEndChatOverlayItem(null);
 			if (isConsultantUser && isAnonymousChat) {
-				history.push('/sessions/consultant/sessionView');
+				navigate(listPath + getSessionListTab());
 			} else {
 				window.location.href = appConfig.urls.toEntry;
 			}
@@ -795,7 +901,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				category: 'system'
 			});
 			setTimeout(() => {
-				history.push(listPath + getSessionListTab());
+				navigate(listPath + getSessionListTab());
 			}, 2000);
 		} catch (error) {
 			setIsDeletingAccount(false);
@@ -869,54 +975,50 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					})}
 				>
 					{(() => {
-						/* Just the "+" on the avatar stack is the supervisor
-						   "add / manage" trigger for 1-on-1 chats (normal +
-						   anonymous). The avatar itself is NOT clickable —
-						   only the plus. Visibility conditions mirror the
-						   old Supervision On/Off pill: feature flag on for
-						   this chat type, caller is a consultant, session is
-						   1-on-1, not enquiry, not viewed by a supervisor.
-						   Mobile keeps the existing session-menu entry;
-						   this wires only the desktop plus. */
-						const canOpenSupervisorModal =
-							isSupervisionEnabledForCurrentChat &&
-							hasUserAuthority(
+						/* The Figma pill always carries the conversation
+						   type. When supervision management is available,
+						   the plus part remains the only clickable area.
+						   FE#513: when it cannot act, the plus renders as a
+						   disabled button with an honest label — for every
+						   role, including askers (grey out, never hide). */
+						const supervisorAddState = getSupervisorAddState({
+							isAsker: hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							),
+							isConsultant: hasUserAuthority(
 								AUTHORITIES.CONSULTANT_DEFAULT,
 								userData
-							) &&
-							!activeSession.isGroup &&
-							!isSupervisor &&
-							!activeSession.isEnquiry &&
-							!untilL;
+							),
+							isSupervisionEnabled:
+								isSupervisionEnabledForCurrentChat &&
+								!activeSession.isGroup &&
+								!activeSession.isEnquiry,
+							isSupervisor,
+							isMobile: untilL
+						});
+						const canOpenSupervisorModal =
+							supervisorAddState.mode === 'interactive';
 						return (
-							<div className="sessionInfo__memberStack">
-								{canOpenSupervisorModal && (
-									<button
-										type="button"
-										className="sessionInfo__memberStackPlus sessionInfo__memberStackPlus--interactive"
-										aria-label={translate(
-											'sessionHeader.supervisor.modal.title',
-											'Supervisor hinzufügen'
-										)}
-										onClick={() =>
-											setIsSupervisorModalOpen(true)
-										}
-									>
-										<svg
-											width="32"
-											height="32"
-											viewBox="0 0 32 32"
-											fill="none"
-											aria-hidden="true"
-										>
-											<path
-												d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z"
-												fill="#CC1E1C"
-												fillOpacity="0.6"
-											/>
-										</svg>
-									</button>
-								)}
+							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
+								<ChatroomMainInteractionIcon
+									type={sessionHeaderConversationIconType}
+									showAddIcon={
+										props.showAddButton ??
+										!activeSession.isEnquiry
+									}
+									addLabel={translate(
+										supervisorAddState.labelKey
+									)}
+									onAddClick={
+										canOpenSupervisorModal
+											? () =>
+													setIsSupervisorModalOpen(
+														true
+													)
+											: undefined
+									}
+								/>
 								<div className="sessionInfo__memberBubble">
 									{hasUserAuthority(
 										AUTHORITIES.ASKER_DEFAULT,
@@ -928,7 +1030,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											username={
 												contact?.username || 'User'
 											}
-											displayName={contact?.displayName}
+											displayName={
+												headerAvatarDisplayName
+											}
 											userId={
 												contact?.username || 'unknown'
 											}
@@ -940,11 +1044,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						);
 					})()}
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<h3>
-							{contact?.displayName ||
-								contact?.username ||
-								translate('sessionList.user.consultantUnknown')}
-						</h3>
+						<h3 title={headerTitle}>{headerTitle}</h3>
 					)}
 					{hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
@@ -952,111 +1052,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					) ? (
 						isAskerInfoAvailable() ? (
 							<Link to={userProfileLink}>
-								<h3>
-									{contact?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)}
-								</h3>
+								<h3 title={headerTitle}>{headerTitle}</h3>
 							</Link>
 						) : (
-							<h3>
-								{contact?.username ||
-									translate(
-										'sessionList.user.consultantUnknown'
-									)}
-							</h3>
+							<h3 title={headerTitle}>{headerTitle}</h3>
 						)
 					) : null}
 				</div>
-				{/* End Chat for anonymous askers (waiting room or active chat) */}
-				{showEndAnonymousChatButton && (
-					<button
-						type="button"
-						onClick={handleRequestEndAnonymousChat}
-						disabled={isFinishingChat}
-						className="sessionInfo__endChatButton"
-						data-cy="session-header-end-anonymous-chat"
-					>
-						{isFinishingChat
-							? translate(
-									'sessionHeader.anonymous.endChat.ending',
-									'Ending…'
-								)
-							: translate(
-									'sessionHeader.anonymous.endChat.label',
-									'End chat'
-								)}
-					</button>
-				)}
-				{/* End Chat for consultants in anonymous live chat */}
-				{showConsultantEndAnonymousChatButton && !untilL && (
-					<button
-						type="button"
-						onClick={handleRequestEndAnonymousChat}
-						disabled={isFinishingChat}
-						className="sessionInfo__endChatButton"
-						data-cy="session-header-end-anonymous-chat-consultant"
-					>
-						{isFinishingChat
-							? translate(
-									'sessionHeader.anonymous.endChat.ending',
-									'Ending…'
-								)
-							: translate(
-									'sessionHeader.anonymous.endChat.consultant.label',
-									'End chat'
-								)}
-					</button>
-				)}
-				{/* Delete Account Button for Consultants viewing Anonymous Chats (not supervisors, not during enquiry) */}
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-					isAnonymousChat &&
-					!isSupervisor &&
-					!activeSession.isEnquiry &&
-					!untilL && (
-						<button
-							onClick={handleDeleteAnonymousAccount}
-							disabled={isAccountDeleted || isDeletingAccount}
-							style={{
-								padding: '8px 16px',
-								marginRight: '20px',
-								borderRadius: '20px', // Oval button
-								border: 'none',
-								backgroundColor: isAccountDeleted
-									? '#9e9e9e'
-									: '#c62828',
-								color: 'white',
-								fontSize: '14px',
-								fontWeight: '500',
-								cursor:
-									isAccountDeleted || isDeletingAccount
-										? 'not-allowed'
-										: 'pointer',
-								opacity:
-									isAccountDeleted || isDeletingAccount
-										? 0.6
-										: 1,
-								transition: 'all 0.3s ease',
-								marginLeft: '12px'
-							}}
-						>
-							{isAccountDeleted
-								? translate(
-										'sessionHeader.anonymous.deleteAccount.deleted',
-										'Gelöscht'
-									)
-								: isDeletingAccount
-									? translate(
-											'sessionHeader.anonymous.deleteAccount.deleting',
-											'Löschen...'
-										)
-									: translate(
-											'sessionHeader.anonymous.deleteAccount.label',
-											'Konto löschen'
-										)}
-						</button>
-					)}
+				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
 				    `false` preserves the original markup for reference without
@@ -1126,7 +1129,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						setIsSupervisorModalOpen(true)
 					}
 					showMobileDeleteAnonymousAccountAction={
-						untilL &&
 						hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData
@@ -1289,7 +1291,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										)}
 									</div>
 								) : (
-									<div>
+									<div
+										style={{
+											display: 'flex',
+											flexDirection: 'column',
+											gap: '20px',
+											width: '100%'
+										}}
+									>
 										{supervisors.map((supervisor) => (
 											<div
 												key={supervisor.id}
@@ -1420,26 +1429,32 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								) : (
 									<div>
 										<div style={{ width: '100%' }}>
-											<SelectDropdown
-												{...consultantSelectDropdown}
+											<OrisoSelect
+												id="supervisor-consultant-select"
+												label={
+													consultantSelectDropdown.selectInputLabel
+												}
+												options={
+													consultantSelectDropdown.selectedOptions
+												}
+												value={
+													selectedConsultantId || ''
+												}
+												onChange={
+													handleSupervisorConsultantSelect
+												}
 											/>
 										</div>
-										<div style={{ marginTop: '12px' }}>
-											<label
-												style={{
-													display: 'block',
-													marginBottom: '8px',
-													fontSize: '14px',
-													fontWeight: '500',
-													color: '#3F373F'
-												}}
-											>
+										<div style={{ width: '100%' }}>
+											<span style={{ display: 'none' }}>
 												{translate(
 													'sessionHeader.supervisor.modal.reasonLabel',
 													'Grund für die Supervision'
 												)}
-											</label>
-											<textarea
+											</span>
+											<OrisoTextarea
+												fullWidth
+												minRows={5}
 												value={supervisionReason}
 												onChange={(e) => {
 													setSupervisionReason(
@@ -1454,22 +1469,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														);
 													}
 												}}
+												label={translate(
+													'sessionHeader.supervisor.modal.reasonLabel',
+													'Grund für die Supervision'
+												)}
 												placeholder={translate(
 													'sessionHeader.supervisor.modal.reasonPlaceholder',
 													'Bitte geben Sie den Grund für die Supervision an...'
 												)}
-												style={{
-													width: '100%',
-													minHeight: '80px',
-													padding: '8px',
-													border: supervisionReasonError
-														? '1px solid #c62828'
-														: '1px solid #ddd',
-													borderRadius: '4px',
-													fontSize: '14px',
-													fontFamily: 'inherit',
-													resize: 'vertical'
-												}}
+												error={supervisionReasonError}
+												sx={{ mt: 0 }}
 											/>
 											{supervisionReasonError && (
 												<div

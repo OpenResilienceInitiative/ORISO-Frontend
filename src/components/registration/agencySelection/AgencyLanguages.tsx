@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiAgencyLanguages } from '../../../api/apiAgencyLanguages';
 import { LanguagesContext } from '../../../globalState/provider/LanguagesProvider';
+import { registrationMd3 } from '../registrationDesign/registrationDesign';
 
 interface AgencyLanguagesProps {
 	agencyId?: number;
@@ -40,7 +41,10 @@ export const AgencyLanguages = ({ agencyId }: AgencyLanguagesProps) => {
 	}, [agencyId, fixedLanguages, t]);
 
 	return (
-		<Typography variant="body2" sx={{ color: 'info.light' }}>
+		<Typography
+			variant="body2"
+			sx={{ color: registrationMd3.onSurfaceVariant }}
+		>
 			{languagesString}
 		</Typography>
 	);

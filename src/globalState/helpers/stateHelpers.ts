@@ -41,10 +41,10 @@ export const buildExtendedSession = (
 	sessionGroupId?: string
 ): ExtendedSessionInterface => {
 	const { chat: groupChat, session: sessionChat, ...sessionProps } = session;
-	let rid = sessionChat?.groupId ?? null;
+	let rid = sessionChat?.matrixRoomId ?? null;
 
 	if (groupChat) {
-		rid = groupChat.groupId;
+		rid = groupChat.matrixRoomId;
 	}
 	return {
 		...sessionProps,
@@ -73,7 +73,8 @@ export const getExtendedSession = (
 	const session: ListItemInterface = sessions.find((sessionItem) => {
 		const chatItem = getChatItemForSession(sessionItem);
 		return (
-			(chatItem.groupId && chatItem.groupId === sessionGroupId) ||
+			(chatItem.matrixRoomId &&
+				chatItem.matrixRoomId === sessionGroupId) ||
 			chatItem?.id?.toString() === sessionGroupId
 		);
 	});

@@ -60,7 +60,6 @@ This file is orchestration-heavy and should stay focused on composition rather t
 - locale and informal-language setup
 - notification reset and permission flow
 - Matrix bootstrap
-- Rocket.Chat compatibility providers
 - group chat join behavior
 
 This is one of the highest-coupling areas in the repo.
@@ -81,7 +80,7 @@ The current provider graph includes concerns such as:
 - modal state
 - agency-specific state
 - websocket-related state
-- Rocket.Chat global settings
+- chat-related server settings
 
 This architecture favors React context over a single external store.
 
@@ -147,23 +146,27 @@ Important npm scripts from `package.json`:
 The frontend currently integrates with:
 
 - backend REST APIs
-- Matrix
-- Rocket.Chat compatibility paths still present during migration
+- Matrix (the only chat transport; Rocket.Chat is removed)
 - Keycloak-style token and session handling
-- Jitsi and LiveKit-related dependencies
+- Element Call in Matrix widget mode and LiveKit media
 - Cal.com embedding
 - browser notifications
 
 ## Known Architectural Risks
 
-### Matrix And Rocket.Chat Crossover
+### Element Call Widget Contract
 
-The repo still contains migration-era compatibility behavior. For example, `src/api/fetchData.ts` still supports Rocket.Chat-compatible headers for backend compatibility.
+Element Call is a first-party iframe, but it drives Matrix operations with the
+logged-in user's authority. The exact capability allowlist, room confinement,
+origin/source checks, and encrypted media-key requirements are security
+boundaries documented in
+`docs/architecture/adr-018-element-call-matryoshka.md`.
 
 Guidance:
 
-- keep migration shims near APIs and services
-- do not spread transport-specific compatibility logic across UI files
+- update the host allowlist and Element Call contract together
+- never add access tokens or a second Matrix session to the iframe
+- deny new capabilities until their event and room scope has been reviewed
 
 ### Heavy Startup Coupling
 

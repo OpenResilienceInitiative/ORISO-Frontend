@@ -20,6 +20,14 @@
 		opacity: 0.9;
 	}
 
+	&.resizing {
+		opacity: 1;
+
+		.element-call-iframe {
+			pointer-events: none;
+		}
+	}
+
 	&.group-call-widget--mobile {
 		left: 0 !important;
 		top: 0 !important;
@@ -115,6 +123,109 @@
 
 	&:hover {
 		background: rgba(0, 0, 0, 0.8);
+	}
+}
+
+.element-call-autofit {
+	position: absolute;
+	top: 10px;
+	right: 90px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 14px;
+	cursor: pointer;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&:hover {
+		background: rgba(0, 0, 0, 0.8);
+	}
+}
+
+.element-call-container .call-resize-handle {
+	position: absolute;
+	z-index: 6;
+	touch-action: none;
+
+	&--n,
+	&--s {
+		left: 12px;
+		right: 12px;
+		height: 10px;
+		cursor: ns-resize;
+	}
+
+	&--n {
+		top: 0;
+	}
+
+	&--s {
+		bottom: 0;
+	}
+
+	&--e,
+	&--w {
+		top: 12px;
+		bottom: 12px;
+		width: 10px;
+		cursor: ew-resize;
+	}
+
+	&--e {
+		right: 0;
+	}
+
+	&--w {
+		left: 0;
+	}
+
+	&--ne,
+	&--nw,
+	&--se,
+	&--sw {
+		width: 16px;
+		height: 16px;
+	}
+
+	&--ne {
+		top: 0;
+		right: 0;
+		cursor: nesw-resize;
+	}
+
+	&--nw {
+		top: 0;
+		left: 0;
+		cursor: nwse-resize;
+	}
+
+	&--se {
+		right: 0;
+		bottom: 0;
+		cursor: nwse-resize;
+
+		&::after {
+			content: '';
+			position: absolute;
+			right: 4px;
+			bottom: 4px;
+			width: 10px;
+			height: 10px;
+			border-right: 2px solid rgba(255, 255, 255, 0.65);
+			border-bottom: 2px solid rgba(255, 255, 255, 0.65);
+		}
+	}
+
+	&--sw {
+		left: 0;
+		bottom: 0;
+		cursor: nesw-resize;
 	}
 }
 
@@ -220,7 +331,7 @@
 	}
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
 	.group-call-widget {
 		border-radius: 12px;
 	}
@@ -391,7 +502,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.livekit-room-container,
 	.element-call-container {
 		width: 95vw;
@@ -399,7 +510,7 @@
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.livekit-room-container,
 	.element-call-container {
 		width: 100vw;

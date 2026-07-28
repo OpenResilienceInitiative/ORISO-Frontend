@@ -1,4 +1,3 @@
-import { deepMerge } from '../../helpers';
 import { LoginArgs, USER_ASKER } from '../mockApi';
 
 const loginCommand = (getWillReturn, setWillReturn) =>
@@ -16,18 +15,6 @@ const loginCommand = (getWillReturn, setWillReturn) =>
 				setWillReturn('userData', userData, true);
 				cy.setCookie('cy_username', userData.userName);
 				cy.setCookie('cy_userId', userData.userId);
-
-				cy.fixture('api.v1.login').then((rcUserData) => {
-					setWillReturn(
-						'rcLogin',
-						deepMerge(rcUserData, {
-							data: {
-								userId: userData.userId,
-								userName: userData.userName
-							}
-						})
-					);
-				});
 
 				cy.visit('/login');
 				cy.get('.loginForm');

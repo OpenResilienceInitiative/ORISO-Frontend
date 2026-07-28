@@ -10,6 +10,7 @@ export interface EventNotificationFeedItem {
 	actionPath?: string;
 	actionLabel?: string;
 	sourceSessionId?: number;
+	params?: string | Record<string, unknown>;
 	createdAt: string | null;
 	readAt: string | null;
 }
@@ -49,4 +50,3 @@ export const apiClearEventNotifications = async (): Promise<any> =>
 		url: endpoints.eventNotifications,
 		method: FETCH_METHODS.DELETE
 	});
-

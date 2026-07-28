@@ -44,7 +44,7 @@
 		font-weight: $text-divider-font-weight;
 		text-transform: $text-divider-text-transform;
 		line-height: $line-height-secondary;
-		color: var(--skin-color-secondary-contrast-safe, $text-low-emphasis);
+		color: var(--m3-secondary, $text-low-emphasis);
 		letter-spacing: $text-divider-letter-spacing;
 		padding: 4px;
 		padding-left: 10px;
@@ -61,7 +61,7 @@
 		}
 
 		&--notice {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 		}
 	}
 

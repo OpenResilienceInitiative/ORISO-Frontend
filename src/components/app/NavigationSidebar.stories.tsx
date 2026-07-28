@@ -1,65 +1,305 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import { useMemo, useState } from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent } from 'storybook/test';
+import { NavigationBar } from './NavigationBar';
+import { RouterConfigConsultant, RouterConfigUser } from './RouterConfig';
+import { config } from '../../resources/scripts/config';
+import {
+	NavigationStoryProviders,
+	storybookSettings
+} from './navigationStoryHelpers';
+import './navigation.styles.scss';
+import './authenticatedApp.styles.scss';
 
-/**
- * NavigationSidebar Component
- * 
- * Icon-only navigation sidebar with modern rounded rectangular button design.
- * Inspired by Element chat application with hover effects and active states.
- * 
- * **Features:**
- * - 48x48px rounded rectangular containers (12px border-radius)
- * - Semi-transparent white backgrounds on red sidebar
- * - Hover effects (brightness increase)
- * - Vertical spacing (4px between items)
- * - Horizontally centered icons
- * - 5 navigation items: Initial inquiries, My consultations, Profile, Language, Log out
- * 
- * **Implementation:** `src/components/app/NavigationBar.tsx`
- * **Styles:** `src/components/app/navigation.styles.scss`
- */
-const meta: Meta = {
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
+const M3_NAV_BAR_CLIENT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61212-3707&m=dev';
+const M3_NAV_BAR_CONSULTANT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61212-3732&m=dev';
+const M3_NAV_BAR_LIVE_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61216-2651&m=dev';
+
+function RuntimeNavigationRail({
+	role,
+	layout = 'desktop',
+	railHeightPx
+}: {
+	role: 'consultant' | 'asker';
+	layout?: 'desktop' | 'mobile';
+	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
+	railHeightPx?: number;
+}) {
+	const [logoutClicked, setLogoutClicked] = useState(false);
+	const isDesktop = layout === 'desktop';
+	const desktopHeight = railHeightPx ?? 860;
+
+	const routerConfig = useMemo(() => {
+		const settings = { ...config, ...storybookSettings };
+		return role === 'consultant'
+			? RouterConfigConsultant(settings)
+			: RouterConfigUser(settings, false);
+	}, [role]);
+
+	const shellStyle = isDesktop
+		? {
+				width: '85px',
+				height: `${desktopHeight}px`,
+				minHeight: railHeightPx ? `${railHeightPx}px` : '720px',
+				background: '#eae7e8',
+				overflow: 'hidden'
+			}
+		: {
+				width: '100%',
+				maxWidth: '375px',
+				height: '76px',
+				background: '#eae7e8',
+				overflow: 'hidden'
+			};
+
+	return (
+		<NavigationStoryProviders role={role}>
+			{/*
+			  app__wrapper is required so production shell + figma nav rules
+			  (authenticatedApp + app-scoped navigation styles) apply in Storybook.
+			*/}
+			<div
+				className="app__wrapper navigationSidebarStory"
+				data-logout-clicked={logoutClicked}
+				style={shellStyle}
+			>
+				<style>
+					{`
+						.navigationSidebarStory.app__wrapper {
+							display: flex;
+							flex-direction: ${isDesktop ? 'row' : 'column'};
+						}
+
+						.navigationSidebarStory .navigation__wrapper {
+							width: ${isDesktop ? '85px' : '100%'};
+							height: 100%;
+						}
+					`}
+				</style>
+				<NavigationBar
+					routerConfig={routerConfig}
+					onLogout={() => setLogoutClicked(true)}
+				/>
+			</div>
+		</NavigationStoryProviders>
+	);
+}
+
+const meta = {
 	title: 'Components/Layout/NavigationSidebar',
+	component: RuntimeNavigationRail,
 	tags: ['autodocs'],
+	args: {
+		role: 'consultant' as const,
+		layout: 'desktop' as const
+	},
 	parameters: {
+		layout: 'fullscreen',
+		backgrounds: { default: 'gray' },
+		router: {
+			initialPath: '/sessions/consultant/sessionView/session/3363'
+		},
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant rail',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (client)',
+				url: M3_NAV_BAR_CLIENT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (consultant)',
+				url: M3_NAV_BAR_CONSULTANT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (live chat)',
+				url: M3_NAV_BAR_LIVE_CHAT_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
-				component: 'Icon-only navigation sidebar with modern rounded rectangular button design. Inspired by Element chat application with hover effects and active states.'
+				component:
+					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
 			}
+		}
+	}
+} satisfies Meta<typeof RuntimeNavigationRail>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const RuntimeConsultantRail: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'desktop'
+	},
+	play: async ({ canvasElement }) => {
+		const storyShell = canvasElement.querySelector(
+			'.navigationSidebarStory'
+		);
+		const activeSessionsLink = canvasElement.querySelector(
+			'a[href="/sessions/consultant/sessionView"]'
+		);
+		await expect(activeSessionsLink).not.toBeNull();
+		await expect(activeSessionsLink).toHaveClass(
+			'navigation__item--active'
+		);
+
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		await expect(logoutAction).not.toBeNull();
+
+		const navigationRail = canvasElement.querySelector(
+			'.navigation__wrapper--figma-consultant'
+		);
+		await expect(navigationRail).not.toBeNull();
+
+		const bottomActions = canvasElement.querySelector(
+			'.navigation__item__bottom'
+		);
+		await expect(bottomActions).not.toBeNull();
+
+		await expect(
+			getComputedStyle(bottomActions as Element).flexDirection
+		).toBe('column');
+
+		const railBounds = (navigationRail as Element).getBoundingClientRect();
+		const logoutBounds = (
+			logoutAction as HTMLElement
+		).getBoundingClientRect();
+		await expect(logoutBounds.left).toBeGreaterThanOrEqual(railBounds.left);
+		await expect(logoutBounds.right).toBeLessThanOrEqual(railBounds.right);
+
+		await userEvent.click(logoutAction as HTMLElement);
+		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+export const RuntimeConsultantRailShort: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		railHeightPx: 420
+	},
+	play: async ({ canvasElement }) => {
+		const topGroup = canvasElement.querySelector('.navigation__item__top');
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		await expect(topGroup).not.toBeNull();
+		await expect(logoutAction).not.toBeNull();
+
+		const topStyles = window.getComputedStyle(topGroup as Element);
+		await expect(topStyles.overflowY).toBe('auto');
+
+		const logoutRect = (
+			logoutAction as HTMLElement
+		).getBoundingClientRect();
+		const shell = canvasElement.querySelector(
+			'.navigationSidebarStory'
+		) as HTMLElement;
+		const shellRect = shell.getBoundingClientRect();
+		// Logout stays inside the visible shell (pinned), not scrolled away.
+		await expect(logoutRect.bottom).toBeLessThanOrEqual(
+			shellRect.bottom + 1
+		);
+		await expect(logoutRect.top).toBeGreaterThanOrEqual(shellRect.top - 1);
+	}
+};
+
+export const RuntimeAskerRail: Story = {
+	args: {
+		role: 'asker',
+		layout: 'desktop'
+	},
+	parameters: {
+		router: {
+			initialPath: '/sessions/user/view/session/123'
 		}
 	}
 };
 
-export default meta;
-type Story = StoryObj;
+export const RuntimeConsultantMobile: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'mobile'
+	},
+	parameters: {
+		viewport: {
+			defaultViewport: 'mobile1'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const itemContainer = canvasElement.querySelector(
+			'.navigation__itemContainer'
+		);
+		const bottomGroup = canvasElement.querySelector(
+			'.navigation__item__bottom'
+		);
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		const liveChat = canvasElement.querySelector(
+			'.navigation__item--liveChatToggle'
+		);
+		const language = canvasElement.querySelector(
+			'.navigation__item__language'
+		);
 
-/**
- * Documentation only - Component requires router and context providers
- * 
- * The NavigationSidebar component is integrated into the main application
- * and requires React Router and context providers.
- * 
- * **Visual Design:**
- * - Red sidebar background (#C41E3A or similar)
- * - White/semi-transparent icon containers
- * - Rounded rectangles (12px border-radius)
- * - 24px icons
- */
-export const Documentation: Story = {
-	render: () => (
-		<div style={{ padding: '20px' }}>
-			<h3>NavigationSidebar Component</h3>
-			<p>Icon-only navigation sidebar with modern design:</p>
-			<ul>
-				<li>48x48px rounded rectangular containers</li>
-				<li>Semi-transparent white backgrounds</li>
-				<li>Hover effects and active states</li>
-				<li>5 navigation buttons (Initial inquiries, My consultations, Profile, Language, Log out)</li>
-				<li>24px icons, 4px vertical spacing</li>
-			</ul>
-			<p><strong>Implementation:</strong> `src/components/app/NavigationBar.tsx`</p>
-			<p><strong>Styles:</strong> `src/components/app/navigation.styles.scss`</p>
-		</div>
-	)
+		await expect(itemContainer).not.toBeNull();
+		await expect(bottomGroup).not.toBeNull();
+		await expect(logoutAction).not.toBeNull();
+		await expect(liveChat).not.toBeNull();
+		await expect(language).not.toBeNull();
+
+		const containerStyles = window.getComputedStyle(
+			itemContainer as Element
+		);
+		await expect(containerStyles.overflowX).toBe('auto');
+
+		const liveStyles = window.getComputedStyle(liveChat as Element);
+		const languageStyles = window.getComputedStyle(language as Element);
+		await expect(liveStyles.display).not.toBe('none');
+		await expect(languageStyles.display).not.toBe('none');
+
+		// Whole row (routes + actions + logout) scrolls as one strip.
+		const container = itemContainer as HTMLElement;
+		await expect(container.scrollWidth).toBeGreaterThan(
+			container.clientWidth
+		);
+	}
 };
 
+export const RuntimeAskerMobile: Story = {
+	args: {
+		role: 'asker',
+		layout: 'mobile'
+	},
+	parameters: {
+		viewport: {
+			defaultViewport: 'mobile1'
+		},
+		router: {
+			initialPath: '/sessions/user/view/session/123'
+		}
+	}
+};

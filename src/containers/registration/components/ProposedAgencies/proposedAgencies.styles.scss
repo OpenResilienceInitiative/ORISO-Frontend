@@ -72,10 +72,7 @@ $infoIconSize: 16px;
 		text-align: left;
 
 		h3 {
-			color: var(
-				--skin-color-secondary-contrast-safe,
-				$text-high-emphasis
-			);
+			color: var(--m3-secondary, $text-high-emphasis);
 			font-size: $font-size-primary;
 			line-height: $line-height-primary;
 			text-align: left;
