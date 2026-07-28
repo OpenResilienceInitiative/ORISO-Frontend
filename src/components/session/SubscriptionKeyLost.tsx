@@ -19,11 +19,13 @@ export const SubscriptionKeyLost = () => {
 
 	const handleButton = useCallback(() => {
 		apiSendAliasMessage({
-			rcGroupId: activeSession.rid,
+			matrixRoomId: activeSession.rid,
 			type: ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 		})
 			.then(reloadActiveSession)
-			.catch((e) => { /* console.error(e); */ });
+			.catch((e) => {
+				/* console.error(e); */
+			});
 	}, [activeSession.rid, reloadActiveSession]);
 
 	return (

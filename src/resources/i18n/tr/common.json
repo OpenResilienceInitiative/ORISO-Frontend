@@ -174,6 +174,11 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
+			"reveal": "Görseli göster",
+			"blocked": "Güvenlik kontrolü tarafından engellendi"
 		}
 	},
 	"banner": {
@@ -680,7 +685,8 @@
 			}
 		},
 		"edit": {
-			"title": "Sohbet ayarları"
+			"title": "Sohbet ayarları",
+			"subtitle": "Bu serinin programını ve içeriğini değiştirin"
 		},
 		"info": {
 			"headline": "Sohbet bilgileri",
@@ -708,6 +714,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "1 gün içinde",
+					"etaDays": "{{count}} gün içinde",
+					"etaHour": "1 saat içinde",
+					"etaHours": "{{count}} saat içinde",
+					"etaMinute": "1 dakika içinde",
+					"etaMinutes": "{{count}} dakika içinde",
+					"etaSoon": "birazdan",
+					"flipAria": "{{label}}: {{value}}. Okumak için çevirin.",
+					"flipHint": "çevirmek için tıklayın",
+					"greetingLabel": "Danışmanınızdan karşılama mesajı",
+					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
+					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
+					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
+					"overdueHeadline": "Birazdan sizinleyiz.",
+					"overdueSubtitle": "Danışmanınız odayı birazdan açacak — lütfen biraz daha bekleyin.",
+					"subtitle": "Bir sayıya tıklayın — arkasında karşılama mesajı ve sohbet kuralları sizi bekliyor.",
+					"timerAriaFuture": "Başlangıca kadar — gün: {{days}}, saat: {{hours}}, dakika: {{minutes}}, saniye: {{seconds}}",
+					"timerAriaOverdue": "Planlanan başlangıçtan bu yana — dakika: {{minutes}}, saniye: {{seconds}}",
+					"toggleLabel": "Animasyonu kapatın",
+					"unitDays": "Gün",
+					"unitHours": "Saat",
+					"unitMinutes": "Dakika",
+					"unitSeconds": "Saniye"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Katılmak",
@@ -856,6 +889,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "WebRTC ve LiveKit ile Element Call",
+				"stepsHeadline": "Görüntülü arama nasıl çalışır",
+				"troubleshootingHeadline": "Bir şey çalışmazsa",
+				"asker": {
+					"headline": "Görüntülü arama",
+					"intro": "Görüntülü aramalar artık doğrudan Element Call üzerinden çalışır. Element Call, WebRTC ve LiveKit kullanır; bu nedenle tarayıcı değiştirmeniz veya ek bir şey yüklemeniz gerekmez.",
+					"steps": {
+						"open": "Çevrimiçi danışmanlığı her zamanki gibi açın.",
+						"permissions": "Tarayıcınız istediğinde kamera ve mikrofon erişimine izin verin.",
+						"call": "Danışmanınız başlattığında görüntülü aramayı kabul edin.",
+						"copyLink": "Giriş bağlantısını başka bir cihazda açmak isterseniz buradan kopyalayın:"
+					}
+				},
+				"consultant": {
+					"headline": "Görüntülü arama",
+					"intro": "Görüntülü aramalar artık doğrudan Element Call üzerinden çalışır. Element Call, WebRTC ve LiveKit kullanır; bu nedenle tarayıcı değiştirmeniz veya ek bir şey yüklemeniz gerekmez.",
+					"steps": {
+						"open": "Danışmanlığı ORISO'da her zamanki gibi açın.",
+						"permissions": "Tarayıcınız istediğinde kamera ve mikrofon erişimine izin verin.",
+						"call": "Görüntülü aramayı sohbette başlatın. Element Call aramayı otomatik olarak açar.",
+						"copyLink": "Giriş bağlantısını başka bir cihazda açmak isterseniz buradan kopyalayın:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Tarayıcıda kamera ve mikrofon izninin verildiğini kontrol edin.",
+					"device": "Doğru mikrofon, kamera ve hoparlörün seçili olduğunu kontrol edin.",
+					"connection": "Görüntü veya ses kesilirse sayfayı yenileyin ya da kararlı bir Wi-Fi bağlantısına geçin."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Bağlantı panoya kopyalandı!",
@@ -877,12 +940,6 @@
 				"text1": "Tarayıcılardan birini indirin.",
 				"text2": "Şimdi desteklenen tarayıcılardan biriyle çevrimiçi danışmanlık bağlantınızı açın."
 			}
-		}
-	},
-	"jitsi": {
-		"btn": {
-			"copied": "Video bağlantısı panoya kopyalandı",
-			"default": "Video bağlantısını kopyala"
 		}
 	},
 	"languages": {
@@ -1131,6 +1188,30 @@
 		"resetPasswort": {
 			"label": "Şifrenizi mi unuttunuz?"
 		},
+		"resetPassword": {
+			"request": {
+				"headline": "Şifrenizi mi unuttunuz?",
+				"text": "E-posta adresinizi belirttiyseniz şifrenizi sıfırlayabilirsiniz. E-posta adresinizi girin ve gönder'e basın. Ardından şifrenizi sıfırlamak için kullanabileceğiniz bir bağlantı göndereceğiz.",
+				"usernameLabel": "E-posta",
+				"submitLabel": "Gönder",
+				"usernameRequired": "Lütfen önce e-postanızı girin.",
+				"notEnabled": "Bu hesap için şifre sıfırlama şu anda mümkün değil."
+			},
+			"sent": {
+				"headline": "Size daha fazla talimat içeren bir e-posta gönderildi.",
+				"text": "Kısa süre içinde daha fazla talimat içeren bir e-posta almanız gerekir."
+			},
+			"backToLogin": "Girişe geri dön",
+			"setNew": {
+				"headline": "Yeni bir şifre belirleyin",
+				"text": "Lütfen yeni şifrenizi girin.",
+				"newLabel": "Yeni şifre",
+				"confirmLabel": "Yeni şifreyi onaylayın",
+				"submitLabel": "Şifreyi kaydet",
+				"success": "Şifreniz başarıyla değiştirildi. Artık giriş yapabilirsiniz.",
+				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin."
+			}
+		},
 		"seperator": "veya",
 		"user": {
 			"label": "Kullanıcı adı/e-posta"
@@ -1207,6 +1288,13 @@
 			"title": "Not"
 		},
 		"read": "Okuyun",
+		"sendFailed": {
+			"body": "Mesaj gönderilirken muhtemelen şifreleme veya aktarım hatasından kaynaklanan bir sorun oluştu. Tekrar denemek için “Yeniden gönder” seçeneğini kullanın. Durumu kontrol edin: bir onay işareti gönderildi, iki onay işareti okundu, çarpı ise mesajın sunucuya ulaşmadığı anlamına gelir.",
+			"retry": "Yeniden gönder",
+			"status": "teslim edilmedi",
+			"subtitle": "Mesajınızı yeniden gönderin",
+			"title": "Mesaj gönderilemedi"
+		},
 		"sent": "teslim edildi",
 		"submit": {
 			"booking": {
@@ -1262,7 +1350,7 @@
 				"small": "Haberler"
 			}
 		},
-		"activity": "Etkinlik",
+		"activity": "Zaman çizelgesi",
 		"language": "Dil",
 		"drafts": "Taslaklar",
 		"liveChat": "Canlı sohbet",
@@ -1601,7 +1689,8 @@
 					"changePassword": "Şifre değiştirme",
 					"title": "Güvenlik"
 				},
-				"title": "Ayarlar"
+				"title": "Ayarlar",
+				"keyboardShortcuts": "Klavye Kısayolları"
 			}
 		},
 		"spokenLanguages": {
@@ -1697,6 +1786,9 @@
 				}
 			}
 		},
+		"selectedLabel": "Seçildi",
+		"noneSelected": "Devam etmek için lütfen bir konu seçin.",
+		"topicInstruction": "Bir konu seçin.",
 		"age": {
 			"dropdown": "Yaş seçin*",
 			"headline": "Yaş belirtiniz"
@@ -1706,6 +1798,16 @@
 			"preselected": {
 				"prefix": "Önceden seçtiğiniz danışma merkeziniz: "
 			},
+			"consultantheadline": "Danışma merkeziniz",
+			"infoOverlay": {
+				"backButtonLabel": "Başka bir danışma merkezi seçin",
+				"nextButtonLabel": "Danışma merkezini seçin ve devam edin"
+			},
+			"noresult": {
+				"headline": "Çevrimiçi danışma merkezi bulunamadı",
+				"label": "Danışma merkezi aramasına git",
+				"subline": "Şu anda yakınınızda çevrimiçi bir danışma merkezi bulunmuyor. Web sitemizde konunuzla ilgili yerel danışma merkezlerini bulabilirsiniz."
+			},
 			"result": {
 				"external": {
 					"headline": "Bulunan danışma merkezi tavsiye için farklı bir uygulama kullanıyor",
@@ -1714,6 +1816,18 @@
 				},
 				"headline": "Posta koduna göre danışmanlık merkezleri",
 				"languages": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:"
+			},
+			"details": {
+				"aboutLabel": "Bu danışma merkezi hakkında",
+				"addressLabel": "Adres",
+				"hoursLabel": "Çalışma saatleri",
+				"languagesLabel": "Diller",
+				"less": "Daha az",
+				"more": "Daha fazla",
+				"navigate": "Navigasyonu başlat",
+				"openInMaps": "Haritada aç",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Web sitesi"
 			},
 			"search": "Bir posta kodu arayın",
 			"summary": "Danışma merkeziniz:"
@@ -1796,6 +1910,15 @@
 			"title": "Kaydı tamamlayın"
 		},
 		"headline": "Kayıt",
+		"md3": {
+			"stepNames": {
+				"focus": "Odak seç",
+				"postcode": "Posta kodu",
+				"agency": "Danışma merkezi",
+				"register": "Kayıt ol",
+				"request": "Talep gönder"
+			}
+		},
 		"login": {
 			"helper": "Zaten kayıtlı mısınız?",
 			"label": "Giriş yap"
@@ -1818,6 +1941,7 @@
 			},
 			"criteria": {
 				"fulfilled": "Gerçekleştirildi",
+				"open": "Açık",
 				"length": "en az 9 karakter",
 				"number": "en az bir sayı",
 				"specialChar": "en az bir özel karakter",
@@ -1856,6 +1980,11 @@
 				"16": "Thüringen"
 			}
 		},
+		"loader": {
+			"headline": "Hoş geldiniz.",
+			"copy": "Güvenli görüşme alanınızı hazırlıyoruz, birkaç saniye sürebilir …",
+			"ready": "Güvenli görüşme alanınız hazır. Başlayabilirsiniz."
+		},
 		"stepbar": {
 			"of": "itibaren",
 			"step": "Adım"
@@ -1877,31 +2006,54 @@
 			"summary": "Senin konun:"
 		},
 		"account": {
+			"autoSuggest": "Bilgileri otomatik öner",
 			"headline": "Oturum açma verilerini girin",
 			"password": {
-				"criteria1": "en az 9 karakter",
-				"criteria2": "en az bir sayı",
-				"criteria3": "Büyük/küçük harf",
-				"criteria4": "en az bir özel karakter",
-				"label": "şifre"
+				"criteria1": "en az 16 karakter",
+				"criteria2": "1 sayı",
+				"criteria3": "1 büyük harf",
+				"criteria4": "1 küçük harf",
+				"criteria5": "1 özel karakter",
+				"criteriaLabel": "Şifre gereksinimleri",
+				"label": "Şifre"
 			},
 			"repeatPassword": {
 				"error": "Şifreniz aynı değil.",
 				"label": "Şifreyi tekrarla",
 				"success": "Şifreniz aynı."
 			},
+			"suggest": {
+				"all": "Üçünü birlikte",
+				"allShort": "Üçü",
+				"avatar": "Avatar",
+				"password": "Şifre",
+				"username": "Kullanıcı adı"
+			},
 			"subline": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı tavsiye ederiz.",
 			"username": {
 				"error": {
-					"available": "Kullanıcı adınız çok kısa.",
-					"unavailable": "Bu kullanıcı adı zaten alınmış."
+					"tooShort": "Kullanıcı adınız çok kısa.",
+					"unavailable": "Bu kullanıcı adı zaten alınmış.",
+					"retry": "Bu kullanıcı adını şu anda kontrol edemedik. Lütfen tekrar deneyin."
 				},
-				"hint": "5 veya daha fazla karakter",
+				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
+				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"label": "Kullanıcı adı",
 				"success": "Kullanıcı adınız uygun."
 			}
 		},
 		"back": "Geri",
+		"consultantlink": "Danışmanınız sizi çevrimiçi danışmanlığa davet etti. Danışmanınızla iletişime geçmek için lütfen kayıt olun.",
+		"consultantlinkAbsent": "Bu danışman şu anda yok. Talebinizi yine de danışma merkezine gönderebilirsiniz.",
+		"errors": {
+			"ups": {
+				"title": "Hata!",
+				"text": "Üzgünüz, bir şeyler ters gitti. Lütfen sayfayı yenileyin ve tekrar deneyin."
+			},
+			"aid": "Seçtiğiniz danışma merkezi maalesef bulunamadı. Lütfen kayıt sırasında yeniden bir danışma merkezi seçin.",
+			"cid": "Danışmanınız maalesef bulunamadı. Lütfen yeni bir bağlantı almak için danışmanınızla iletişime geçin veya istediğiniz danışma merkezine buradan kayıt olun.",
+			"tid": "Seçtiğiniz konu maalesef bulunamadı. Lütfen kayıt sırasında yeniden uygun bir konu seçin."
+		},
 		"next": "Daha ileri",
 		"register": "Kayıt Olun",
 		"title": {
@@ -1993,8 +2145,8 @@
 			"decreaseExhale": "Nefes verme süresini azalt",
 			"increaseExhale": "Nefes verme süresini artır",
 			"robotUsernameFallback": "Danisan_9",
-			"robotCard1Title": "Lutfen biraz sabredin",
-			"robotCard1Body": "Su anda tum danismanlar gorusmede. Mumkun olan en kisa surede sizinle olacagiz.",
+			"robotCard1Title": "Bir dakika lütfen",
+			"robotCard1Body": "Tüm danışmanlarımız şu anda canlı görüşmeler yapıyor. Lütfen sohbet odasında kısa bir süre daha burada bekleyin. Aşağıda sırada önünüzde kaç kişi olduğunu görebilirsiniz.",
 			"robotCard2TitlePrefix": "Kullanici adiniz:",
 			"robotCard2Body": "Anonimliginizi korumak icin, sohbet bittikten en gec 48 saat sonra mesajlarinizi siliyoruz.",
 			"robotCard3Title": "Hemen bir cevaba ihtiyaciniz yok mu? Ve bos bir sohbet beklemek istemiyor musunuz?",
@@ -2130,6 +2282,7 @@
 			"restrictions": "{{attachment_filesize}}.jpg, .png, .pdf, .docx, .xlsx maksimum MB'a kadar"
 		},
 		"empty": "Lütfen bir mesaj seçin",
+		"emptyAllCaughtUp": "Kısa bir nefes alın.\nHer şey tamam.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderatör - "
@@ -2254,12 +2407,20 @@
 			},
 			"chips": {
 				"neu": "Okunmamış",
+				"unread": "Okunmamış",
+				"drafts": "Taslaklar",
+				"nearby": "Yakın",
+				"create": "Oluştur",
+				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",
-				"groups": "Gruplar",
-				"supervision": "Süpervizyon"
+				"internalGroup": "Dahili grup sohbeti",
+				"groups": "Sohbet çevresi",
+				"supervision": "Süpervizyon",
+				"chats": "Yakın"
 			},
-			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok."
+			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
+			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."
 		},
 		"anonymous": {
 			"tag": "Anonim"
@@ -2710,44 +2871,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Onaylayın",
-				"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
-				"headline": "Sıcak bir karşılama!",
-				"label": {
-					"and": "ve",
-					"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
-				},
-				"subline": "Lütfen gizlilik politikamızı onaylayın."
-			},
-			"errorImageTitle": "Başarısız",
-			"errorPage": {
-				"button": "Yeniden Yükle",
-				"consultant": {
-					"description": "Bağlantınız için bir video araması bulamıyoruz çünkü video araması ya silinmiş ya da çoktan sona ermiştir."
-				},
-				"description": "Bağlantınız için bir video görüşmesi bulamıyoruz çünkü video görüşmesi ya silinmiş ya da çoktan sona ermiştir. Sorun yaşamaya devam ederseniz lütfen danışmanınıza danışın.",
-				"headline": "Görüntülü arama bulunamadı",
-				"rejected": {
-					"description": "Danışmanınız sizi reddettiği için maalesef bu video görüşmesine katılamazsınız.",
-					"headline": "Yetkili değillerdi"
-				}
-			},
-			"headline": "Lütfen sabırlı olun",
-			"paused": {
-				"headline": "Görüntülü arama sona erdi",
-				"subline": "Video görüşmesi sona ermiştir. Danışmanınız sadece devamsızlık yapıyorsa, danışmanınız video görüşmesine devam eder etmez video görüşmesine yönlendirileceksiniz."
-			},
-			"subline": "Video görüşmesi henüz başlamadı. Danışmanınız video görüşmesini başlatır başlatmaz yönlendirileceksiniz.",
-			"title": {
-				"start": "Bekleme odası"
-			},
-			"waitingImageTitle": "Kahve ile bekleyen kişi",
-			"welcomeImageTitle": "Hoş geldiniz"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2874,6 +2997,126 @@
 			"remove": {
 				"confirm": "Bu süpervizörü kaldırmak istediğinizden emin misiniz?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Klavye Kısayolları",
+		"description": "Sohbet kısayollarını özelleştirin. Değişiklikler hemen uygulanır ve bu cihazda kaydedilir.",
+		"automaticallyConfigured": "otomatik yapılandırıldı",
+		"disableShortcut": "Devre dışı",
+		"restoreDefaults": "Varsayılanları Geri Yükle",
+		"restoreDefaultsSuccess": "Varsayılan kısayollar geri yüklendi.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Klavye kısayolları",
+			"close": "Kapat"
+		},
+		"palette": {
+			"title": "Komut Paleti",
+			"close": "Kapat",
+			"searchPlaceholder": "Komut ara…",
+			"allShortcuts": "Tüm kısayollar"
+		},
+		"editingBanner": "Mesaj düzenleniyor",
+		"editingCancel": "İptal",
+		"categories": {
+			"messaging": "Mesajlaşma",
+			"navigation": "Gezinme",
+			"attachments": "Ekler",
+			"emoji": "Emoji ve Tepkiler",
+			"application": "Uygulama"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Mesaj Gönder",
+				"description": "Geçerli sohbet mesajını gönderir."
+			},
+			"insertNewLine": {
+				"label": "Yeni Satır Ekle",
+				"description": "Yeni satır ekler. Gönderme kısayolundan türetilir."
+			},
+			"showShortcutHelp": {
+				"label": "Klavye Kısayollarını Göster",
+				"description": "Klavye kısayolları yardımını açar."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Bu kısayol zaten atanmış.",
+			"reserved": "Bu kısayol tarayıcı tarafından ayrılmıştır.",
+			"browserConflict": "Bu kısayol yaygın tarayıcı kısayollarıyla çakışır.",
+			"sendNewline": "Mesaj Gönder ve Yeni Satır aynı kısayolu kullanamaz.",
+			"unsupported": "Bu kısayol seçeneği desteklenmiyor.",
+			"cannotDisable": "Bu kısayol devre dışı bırakılamaz.",
+			"unsafePlainKey": "Bu tuş yazarken kısayol olarak kullanılamaz."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Enter mesaj gönderirken Shift+Enter olarak kilitlenir.",
+		"resetAction": "Sıfırla",
+		"restoreDefaultsConfirm": "Tüm kısayollar varsayılana döndürülsün mü?",
+		"restoreDefaultsConfirmYes": "Geri yükle",
+		"restoreDefaultsConfirmNo": "İptal",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
+		}
+	},
+	"anonymousConsent": {
+		"button": "Onaylayın",
+		"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
+		"headline": "Sıcak bir karşılama!",
+		"label": {
+			"and": "ve",
+			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+		},
+		"subline": "Lütfen gizlilik politikamızı onaylayın."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video appointments are currently unavailable."
 		}
 	}
 }

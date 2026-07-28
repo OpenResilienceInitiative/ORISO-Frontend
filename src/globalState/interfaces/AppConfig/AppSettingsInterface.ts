@@ -9,8 +9,6 @@ export interface AppSettingsInterface {
 	calcomUrl?: string;
 	/** Feature flag to enable walkthrough (false by default here & true in the theme repo) */
 	enableWalkthrough?: boolean;
-	/** Feature flag to enable Video-Termine page */
-	disableVideoAppointments?: boolean;
 	/** Feature flag to enable the multi tenancy with a single domain ex: lands */
 	multitenancyWithSingleDomainEnabled?: boolean;
 	/** Feature flag to enable request to retrieve settings from the tenant service */
@@ -23,6 +21,4 @@ export interface AppSettingsInterface {
 	useOverviewPage?: boolean;
 	/** feature flag for the documentation  */
 	documentationEnabled?: boolean;
-	/** when enabled and e2ee is active (see rocket.chat) attachments will be e2e encrypted */
-	attachmentEncryption?: boolean;
 }

@@ -37,6 +37,9 @@ npm run storybook
 
 Copy `.env.example` to `.env` and provide the environment values required by your local or deployment target.
 
+For the mixed local setup where only UserService runs locally, see
+[Local Development](./docs/local-development.md).
+
 ## Documentation
 
 Use these docs as the canonical references:

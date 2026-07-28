@@ -7,7 +7,8 @@ import {
 	RadioGroup,
 	Box,
 	Button,
-	Link
+	Link,
+	Avatar
 } from '@mui/material';
 import {
 	Dispatch,
@@ -16,18 +17,21 @@ import {
 	useEffect,
 	useState
 } from 'react';
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
-import NoResultsIllustration from '../../../resources/img/illustrations/no-results.svg';
 import ConsultantIllustration from '../../../resources/img/illustrations/consultant-found.svg';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useTranslation } from 'react-i18next';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
 import { AgencyLanguages } from './AgencyLanguages';
-import { MetaInfo } from '../metaInfo/MetaInfo';
+import { AgencyDetailsPanel } from './AgencyDetailsPanel';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { getOrganizationHomeUrl } from '../../../resources/scripts/runtimeConfig';
+import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
+import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import { SearchEmptyStateAnimation } from '../../emptyState/SearchEmptyStateAnimation';
+import '../../emptyState/emptyState.styles';
 
 interface AgencySelectionResultsProps {
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -43,9 +47,7 @@ export const AgencySelectionResults = ({
 	onChange,
 	zipcode,
 	results,
-	nextStepUrl,
-	fallbackUrl,
-	onNextClick
+	fallbackUrl
 }: AgencySelectionResultsProps) => {
 	const { t } = useTranslation();
 	const { setDisabledNextButton, registrationData } =
@@ -54,10 +56,18 @@ export const AgencySelectionResults = ({
 	const [selectedAgency, setSelectedAgency] = useState<AgencyDataInterface>(
 		registrationData?.agency
 	);
+	const [openAgencyDetailsId, setOpenAgencyDetailsId] = useState<
+		number | null
+	>(null);
 
 	const onlyExternalAgencies = results?.every((agency) => agency.external);
 	const isSingleResultAndNotOnlyExternal =
 		results?.length === 1 && !onlyExternalAgencies;
+	const selectAgency = (agency: AgencyDataInterface) => {
+		setDisabledNextButton(false);
+		setSelectedAgency(agency);
+		onChange({ agency });
+	};
 
 	useEffect(() => {
 		if (
@@ -104,10 +114,139 @@ export const AgencySelectionResults = ({
 		}
 	}, [selectedAgency, results, onChange, setDisabledNextButton, zipcode]);
 
+	const renderAgencyLabel = (agency: AgencyDataInterface) => {
+		const detailsOpen = openAgencyDetailsId === agency.id;
+		const detailsLabel = detailsOpen
+			? t('registration.agency.details.less', 'Weniger')
+			: t('registration.agency.details.more', 'Mehr');
+
+		return (
+			<Box
+				sx={{
+					width: '100%',
+					minWidth: 0,
+					py: 1.75,
+					pl: { xs: 2, sm: 2.5 },
+					pr: { xs: 7, sm: 7.5 }
+				}}
+			>
+				<Box
+					sx={{
+						display: 'grid',
+						gridTemplateColumns: {
+							xs: 'auto minmax(0, 1fr)',
+							sm: 'auto minmax(0, 1fr) auto'
+						},
+						columnGap: { xs: 1.25, sm: 1.75 },
+						rowGap: { xs: 1, sm: 0 },
+						alignItems: 'flex-start'
+					}}
+				>
+					<Avatar
+						sx={{
+							width: { xs: 40, sm: 48 },
+							height: { xs: 40, sm: 48 },
+							bgcolor: registrationMd3.surfaceContainer,
+							color: registrationMd3.primary
+						}}
+					>
+						<ApartmentRoundedIcon />
+					</Avatar>
+					<Box sx={{ minWidth: 0 }}>
+						<Typography
+							variant="subtitle1"
+							sx={{
+								fontWeight: 700,
+								color: registrationMd3.onSurface,
+								wordBreak: 'normal',
+								overflowWrap: 'normal',
+								hyphens: 'none'
+							}}
+						>
+							{agency.name}
+						</Typography>
+						<Typography
+							variant="body2"
+							sx={{
+								color: registrationMd3.onSurfaceVariant,
+								mt: '8px'
+							}}
+						>
+							{t('registration.agency.result.languages')}
+						</Typography>
+						<AgencyLanguages agencyId={agency.id} />
+					</Box>
+					<Button
+						type="button"
+						aria-expanded={detailsOpen}
+						aria-label={`${detailsLabel}: ${agency.name}`}
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							setOpenAgencyDetailsId((currentId) =>
+								currentId === agency.id ? null : agency.id
+							);
+						}}
+						endIcon={
+							<ExpandMoreRoundedIcon
+								sx={{
+									transform: detailsOpen
+										? 'rotate(180deg)'
+										: 'none',
+									transition: 'transform 160ms ease'
+								}}
+							/>
+						}
+						sx={{
+							'alignSelf': 'flex-start',
+							'gridColumn': { xs: '2 / 3', sm: 'auto' },
+							'justifySelf': { xs: 'start', sm: 'auto' },
+							'color': registrationMd3.onSurfaceVariant,
+							'fontWeight': 700,
+							'fontSize': 14,
+							'textTransform': 'none',
+							'minWidth': { xs: 44, sm: 'auto' },
+							'mt': { xs: 0, sm: 0.5 },
+							'px': { xs: 1, sm: 1.25 },
+							'whiteSpace': 'nowrap',
+							'&:hover': {
+								backgroundColor: registrationMd3.hoverLayer
+							},
+							'&:focus-visible': {
+								outline: `2px solid ${registrationMd3.focus}`,
+								outlineOffset: 2
+							},
+							'& .MuiButton-endIcon': {
+								ml: { xs: 0, sm: 0.5 },
+								mr: { xs: 0, sm: -0.25 }
+							}
+						}}
+					>
+						<Box
+							component="span"
+							sx={{ display: { xs: 'none', sm: 'inline' } }}
+						>
+							{detailsLabel}
+						</Box>
+					</Button>
+				</Box>
+				<AgencyDetailsPanel agency={agency} open={detailsOpen} />
+			</Box>
+		);
+	};
+
 	return (
 		<>
 			{!!results && !preselectedConsultant && (
-				<Typography variant="h5" sx={{ mt: '40px', fontWeight: '600' }}>
+				<Typography
+					variant="body1"
+					sx={{
+						mt: '24px',
+						mb: '16px',
+						fontWeight: '700',
+						color: registrationMd3.onSurface
+					}}
+				>
 					{t('registration.agency.result.headline') + ' ' + zipcode}:
 				</Typography>
 			)}
@@ -152,15 +291,16 @@ export const AgencySelectionResults = ({
 						</Button>
 					</Box>
 					<Box
-						component="img"
-						src={NoResultsIllustration}
 						sx={{
-							height: '156px',
-							width: '156px',
-							mx: 'auto',
-							mb: { xs: '24px', md: '0' }
+							'--empty-state-animation-size': '176px',
+							'--empty-state-lottie-scale': '0.86',
+							'mx': 'auto',
+							'mb': { xs: '24px', md: '0' },
+							'flexShrink': 0
 						}}
-					/>
+					>
+						<SearchEmptyStateAnimation />
+					</Box>
 				</Box>
 			)}
 
@@ -216,80 +356,77 @@ export const AgencySelectionResults = ({
 
 			{/* one Result */}
 			{isSingleResultAndNotOnlyExternal && (
-				<FormControl sx={{ width: '100%' }}>
+				<FormControl
+					sx={{
+						width: '100%',
+						border: `1px solid ${registrationMd3.outlineVariant}`,
+						borderRadius: '16px',
+						overflow: 'hidden',
+						bgcolor: registrationMd3.surface
+					}}
+				>
 					<RadioGroup
 						data-cy="agency-selection-radio-group"
 						aria-label="agency-selection-radio-group"
 						name="agency-selection-radio-group"
-						defaultValue={results?.[0].name || ''}
+						value={
+							selectedAgency?.id?.toString() ||
+							results?.[0].id.toString() ||
+							''
+						}
+						onChange={(event) => {
+							const agency = results?.find(
+								(item) =>
+									item.id.toString() === event.target.value
+							);
+							if (!agency) {
+								return;
+							}
+							selectAgency(agency);
+						}}
 					>
 						<Box
 							sx={{
 								display: 'flex',
 								justifyContent: 'space-between',
 								width: '100%',
-								mt: '16px'
+								backgroundColor: registrationMd3.selectedLayer
 							}}
 						>
 							<FormControlLabel
 								data-cy={`agency-selection-radio-${results?.[0].id}`}
-								disabled
-								sx={{ alignItems: 'flex-start' }}
-								value={results?.[0].name || ''}
+								labelPlacement="start"
+								sx={{
+									'alignItems': 'stretch',
+									'm': 0,
+									'width': '100%',
+									'justifyContent': 'space-between',
+									'position': 'relative',
+									'& .MuiFormControlLabel-label': {
+										width: '100%',
+										minWidth: 0
+									},
+									'& .MuiRadio-root': {
+										position: 'absolute',
+										top: '18px',
+										right: { xs: 12, sm: 16 },
+										m: 0
+									}
+								}}
+								value={results?.[0].id.toString() || ''}
 								control={
 									<Radio
-										color="default"
-										checkedIcon={
-											<TaskAltIcon color="info" />
-										}
-										icon={<TaskAltIcon />}
+										sx={{
+											'color': registrationMd3.outline,
+											'&.Mui-checked': {
+												color: registrationMd3.primary
+											}
+										}}
+										checked
 									/>
 								}
-								label={
-									<Box sx={{ mt: '10px', ml: '10px' }}>
-										<Typography variant="body1">
-											{results?.[0].name || ''}
-										</Typography>
-										<Typography
-											variant="body2"
-											sx={{
-												color: 'info.light',
-												mt: '8px'
-											}}
-										>
-											{t(
-												'registration.agency.result.languages'
-											)}
-										</Typography>
-										<AgencyLanguages
-											agencyId={results?.[0].id}
-										/>
-									</Box>
-								}
+								label={renderAgencyLabel(results![0])}
 							/>
-							{results?.[0].description && (
-								<MetaInfo
-									headline={results?.[0].name}
-									description={results?.[0].description}
-									onOverlayClose={() =>
-										setSelectedAgency(undefined)
-									}
-									backButtonLabel={t(
-										'registration.agency.infoOverlay.backButtonLabel'
-									)}
-									nextButtonLabel={t(
-										'registration.agency.infoOverlay.nextButtonLabel'
-									)}
-									nextStepUrl={nextStepUrl}
-									onNextClick={onNextClick}
-									onOverlayOpen={() => {
-										onChange({
-											agency: results?.[0]
-										});
-										setSelectedAgency(results?.[0]);
-									}}
-								/>
-							)}
 						</Box>
 					</RadioGroup>
 				</FormControl>
@@ -297,11 +434,29 @@ export const AgencySelectionResults = ({
 
 			{/* more Results */}
 			{results?.length > 1 && !onlyExternalAgencies && (
-				<FormControl sx={{ width: '100%' }}>
+				<FormControl
+					sx={{
+						width: '100%',
+						border: `1px solid ${registrationMd3.outlineVariant}`,
+						borderRadius: '16px',
+						overflow: 'hidden',
+						bgcolor: registrationMd3.surface
+					}}
+				>
 					<RadioGroup
 						data-cy="agency-selection-radio-group"
 						aria-label="agency-selection-radio-group"
 						name="agency-selection-radio-group"
+						value={selectedAgency?.id?.toString() || ''}
+						onChange={(event) => {
+							const agency = results?.find(
+								(item) =>
+									item.id.toString() === event.target.value
+							);
+							if (agency) {
+								selectAgency(agency);
+							}
+						}}
 					>
 						{results
 							?.filter((agency) => !agency.external)
@@ -312,77 +467,64 @@ export const AgencySelectionResults = ({
 										display: 'flex',
 										justifyContent: 'space-between',
 										width: '100%',
-										mt: index === 0 ? '16px' : '32px'
+										borderTop:
+											index === 0
+												? 'none'
+												: `1px solid ${registrationMd3.outlineVariant}`,
+										backgroundColor:
+											selectedAgency?.id === agency.id
+												? registrationMd3.selectedLayer
+												: registrationMd3.surface
 									}}
 								>
 									<FormControlLabel
 										data-cy={`agency-selection-radio-${agency.id}`}
-										onClick={(e) => {
-											setDisabledNextButton(false);
-											setSelectedAgency(agency);
-											onChange({ agency });
+										onClick={() => {
+											selectAgency(agency);
 										}}
+										labelPlacement="start"
 										sx={{
-											alignItems: 'flex-start'
+											'alignItems': 'stretch',
+											'm': 0,
+											'width': '100%',
+											'justifyContent': 'space-between',
+											'position': 'relative',
+											'&:hover': {
+												backgroundColor:
+													selectedAgency?.id ===
+													agency.id
+														? registrationMd3.selectedLayer
+														: registrationMd3.hoverLayer
+											},
+											'& .MuiFormControlLabel-label': {
+												width: '100%',
+												minWidth: 0
+											},
+											'& .MuiRadio-root': {
+												position: 'absolute',
+												top: '18px',
+												right: { xs: 12, sm: 16 },
+												m: 0
+											}
 										}}
-										value={agency.id}
+										value={agency.id.toString()}
 										control={
 											<Radio
 												checked={
 													selectedAgency?.id ===
 													agency.id
 												}
+												sx={{
+													'color':
+														registrationMd3.outline,
+													'&.Mui-checked': {
+														color: registrationMd3.primary
+													}
+												}}
 											/>
 										}
-										label={
-											<Box
-												sx={{
-													mt: '10px',
-													ml: '10px'
-												}}
-											>
-												<Typography variant="body1">
-													{agency.name}
-												</Typography>
-												<Typography
-													variant="body2"
-													sx={{
-														color: 'info.light',
-														mt: '8px'
-													}}
-												>
-													{t(
-														'registration.agency.result.languages'
-													)}
-												</Typography>
-
-												<AgencyLanguages
-													agencyId={agency.id}
-												/>
-											</Box>
-										}
+										label={renderAgencyLabel(agency)}
 									/>
-									{agency.description && (
-										<MetaInfo
-											headline={agency.name}
-											description={agency.description}
-											onOverlayClose={() =>
-												setSelectedAgency(undefined)
-											}
-											backButtonLabel={t(
-												'registration.agency.infoOverlay.backButtonLabel'
-											)}
-											nextButtonLabel={t(
-												'registration.agency.infoOverlay.nextButtonLabel'
-											)}
-											nextStepUrl={nextStepUrl}
-											onNextClick={onNextClick}
-											onOverlayOpen={() => {
-												onChange({ agency });
-												setSelectedAgency(agency);
-											}}
-										/>
-									)}
 								</Box>
 							))}
 					</RadioGroup>

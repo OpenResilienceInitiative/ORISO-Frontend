@@ -15,12 +15,10 @@ reviews:
   auto_review:
     enabled: true
     auto_incremental_review: true
-    drafts: true
+    drafts: false
+    labels: []
     base_branches:
       - "dev"
-      - "main"
-      - "release/.*"
-      - "hotfix/.*"
 
   path_filters:
     - "!node_modules/**"
@@ -32,7 +30,7 @@ reviews:
     - "config/**"
     - "scripts/**"
     - ".github/**"
-    - "*.md"
+    - "**/*.md"
 
   path_instructions:
     - path: "src/**/*.{ts,tsx,js,jsx}"

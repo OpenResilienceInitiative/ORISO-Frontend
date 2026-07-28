@@ -7,7 +7,7 @@ import {
 	lazy,
 	Suspense
 } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -23,6 +23,7 @@ import {
 import { ReactComponent as EnvelopeCheckIcon } from '../../resources/img/illustrations/envelope-check.svg';
 import { ReactComponent as WelcomeIcon } from '../../resources/img/illustrations/welcome.svg';
 import './enquiry.styles';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { EnquiryLanguageSelection } from './EnquiryLanguageSelection';
@@ -34,7 +35,7 @@ import { useSession } from '../../hooks/useSession';
 import { apiGetAskerSessionList } from '../../api';
 import { useTranslation } from 'react-i18next';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -46,7 +47,7 @@ export const WriteEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation();
 	const { sessionId } = useParams<{ sessionId: string }>();
 	const sessionIdFromParam = sessionId ? parseInt(sessionId) : null;
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 
@@ -107,8 +108,11 @@ export const WriteEnquiry: React.FC = () => {
 	const handleOverlayAction = (buttonFunction: string): void => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			activateListView();
-			history.push({
-				pathname: `${endpoints.userSessionsListView}/${redirectGroupId}/${redirectSessionId}`
+			const pathname = isMatrixRoomIdHeuristic(redirectGroupId)
+				? `${endpoints.userSessionsListView}/session/${redirectSessionId}`
+				: `${endpoints.userSessionsListView}/${redirectGroupId}/${redirectSessionId}`;
+			navigate({
+				pathname
 			});
 		}
 	};
@@ -168,7 +172,7 @@ export const WriteEnquiry: React.FC = () => {
 
 	const handleSendButton = useCallback(async (response) => {
 		setRedirectSessionId(response.sessionId);
-		setRedirectGroupId(response.rcGroupId);
+		setRedirectGroupId(response.matrixRoomId);
 		setOverlayActive(true);
 	}, []);
 
@@ -179,7 +183,11 @@ export const WriteEnquiry: React.FC = () => {
 	const isUnassignedSession = activeSession && !activeSession?.consultant;
 
 	return (
-		<div className="enquiry__wrapper">
+		<div
+			className="enquiry__wrapper"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+		>
 			<div className="enquiry__contentWrapper">
 				<div className="enquiry__infoWrapper">
 					<div className="enquiry__text">
@@ -220,25 +228,23 @@ export const WriteEnquiry: React.FC = () => {
 				)}
 			</div>
 			<ActiveSessionProvider activeSession={activeSession}>
-				<RocketChatUsersOfRoomProvider>
-					<Suspense
-						fallback={
-							<MessageSubmitInterfaceSkeleton
-								placeholder={translate(
-									'enquiry.write.input.placeholder.asker'
-								)}
-							/>
-						}
-					>
-						<MessageSubmitInterfaceComponent
-							onSendButton={handleSendButton}
+				<Suspense
+					fallback={
+						<MessageSubmitInterfaceSkeleton
 							placeholder={translate(
 								'enquiry.write.input.placeholder.asker'
 							)}
-							language={selectedLanguage}
 						/>
-					</Suspense>
-				</RocketChatUsersOfRoomProvider>
+					}
+				>
+					<MessageSubmitInterfaceComponent
+						onSendButton={handleSendButton}
+						placeholder={translate(
+							'enquiry.write.input.placeholder.asker'
+						)}
+						language={selectedLanguage}
+					/>
+				</Suspense>
 			</ActiveSessionProvider>
 			{overlayActive && (
 				<Overlay

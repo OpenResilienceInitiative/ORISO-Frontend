@@ -8,10 +8,12 @@ import {
 } from '../../utils/tabsHelper';
 import { PasswordReset } from '../passwordReset/PasswordReset';
 import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
+import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
+import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -36,6 +38,13 @@ export const profileRoutesSettings = (
 				component: TwoFactorAuth,
 				column: COLUMN_LEFT,
 				order: 3
+			},
+			// #437 key backup + recovery: encryption settings (recovery key
+			// setup / restore / reset). Self-handles the no-crypto case.
+			{
+				component: EncryptionSettingsPanel,
+				column: COLUMN_RIGHT,
+				order: 1
 			}
 		]
 	},
@@ -62,6 +71,17 @@ export const profileRoutesSettings = (
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,
+				column: COLUMN_RIGHT,
+				order: 1
+			}
+		]
+	},
+	{
+		title: 'profile.routes.settings.keyboardShortcuts',
+		url: '/tastatur',
+		elements: [
+			{
+				component: KeyboardShortcutsSettings,
 				column: COLUMN_RIGHT,
 				order: 1
 			}

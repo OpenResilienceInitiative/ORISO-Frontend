@@ -10,10 +10,11 @@
 	position: absolute;
 	width: $grid-base-three;
 	height: $grid-base-three;
-	border: 3px solid $secondary;
+	border: 3px solid var(--m3-on-surface, $secondary);
 	border-radius: 50%;
 	animation: loadingSpinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-	border-color: $secondary transparent transparent transparent;
+	border-color: var(--m3-on-surface, $secondary) transparent transparent
+		transparent;
 }
 .loadingSpinner div:nth-child(1) {
 	animation-delay: -0.45s;

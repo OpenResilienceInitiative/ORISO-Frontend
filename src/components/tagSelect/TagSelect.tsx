@@ -8,7 +8,23 @@ export interface TagItem {
 	value: number;
 }
 
-export const TagSelect = (props) => {
+export interface TagSelectProps extends TagItem {
+	checked?: boolean;
+	defaultChecked?: boolean;
+	handleTagSelectClick?: React.MouseEventHandler<HTMLInputElement>;
+	onChange?: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export const TagSelect = (props: TagSelectProps) => {
+	// An input must be either controlled (`checked`) or uncontrolled
+	// (`defaultChecked`) — passing both makes React warn. Prefer the
+	// controlled value when the caller supplies it, otherwise fall back
+	// to the uncontrolled default.
+	const checkedProps =
+		props.checked !== undefined
+			? { checked: props.checked }
+			: { defaultChecked: props.defaultChecked };
+
 	return (
 		<div className="tagSelect">
 			<input
@@ -16,8 +32,10 @@ export const TagSelect = (props) => {
 				id={props.id}
 				name={props.name}
 				value={props.value}
+				{...checkedProps}
 				className="tagSelect__input"
 				onClick={props.handleTagSelectClick}
+				onChange={props.onChange}
 			/>
 			<label htmlFor={props.id} className="tagSelect__label">
 				{props.label}
