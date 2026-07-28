@@ -69,5 +69,9 @@ runs:
       sbom: true
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
-      cache-from: type=gha
-      cache-to: type=gha,mode=max
+      # Scope the GHA cache per image so images built from this shared action
+      # (here oriso-frontend and oriso-storybook) can't collide on one cache
+      # namespace and restore each other's layers — root cause of
+      # OpenResilienceInitiative/ORISO-Admin#424.
+      cache-from: type=gha,scope=${{ inputs.image_name }}
+      cache-to: type=gha,mode=max,scope=${{ inputs.image_name }}
