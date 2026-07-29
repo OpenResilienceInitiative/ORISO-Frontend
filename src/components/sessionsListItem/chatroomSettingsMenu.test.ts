@@ -244,6 +244,22 @@ describe('withTeamDiscussionParam', () => {
 		);
 	});
 
+	it('keeps a fragment as a fragment instead of encoding it into a param', () => {
+		expect(
+			withTeamDiscussionParam(
+				'/sessions/x/42?sessionListTab=archive#details'
+			)
+		).toBe(
+			'/sessions/x/42?sessionListTab=archive&teamDiscussion=1#details'
+		);
+	});
+
+	it('puts the query before the fragment when the path has no query yet', () => {
+		expect(withTeamDiscussionParam('/sessions/x/42#details')).toBe(
+			'/sessions/x/42?teamDiscussion=1#details'
+		);
+	});
+
 	it('preserves other params while setting the flag', () => {
 		const result = withTeamDiscussionParam(
 			'/sessions/x/42?sessionListTab=archive&teamDiscussion=0'

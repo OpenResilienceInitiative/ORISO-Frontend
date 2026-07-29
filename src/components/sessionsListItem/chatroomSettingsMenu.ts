@@ -90,8 +90,22 @@ export const getChatroomSettingsMenuVisibility = ({
  * introducing a second way to open the panel.
  */
 export const withTeamDiscussionParam = (path: string): string => {
-	const [pathname, query = ''] = path.split('?');
+	// Split the fragment off first: it always trails the query, so parsing the
+	// other way round would either encode `#x` into a param value or emit a
+	// query *after* the fragment, where it stops being a query at all.
+	const fragmentAt = path.indexOf('#');
+	const fragment = fragmentAt === -1 ? '' : path.substring(fragmentAt);
+	const withoutFragment =
+		fragmentAt === -1 ? path : path.substring(0, fragmentAt);
+
+	const queryAt = withoutFragment.indexOf('?');
+	const pathname =
+		queryAt === -1
+			? withoutFragment
+			: withoutFragment.substring(0, queryAt);
+	const query = queryAt === -1 ? '' : withoutFragment.substring(queryAt + 1);
+
 	const params = new URLSearchParams(query);
 	params.set('teamDiscussion', '1');
-	return `${pathname}?${params.toString()}`;
+	return `${pathname}?${params.toString()}${fragment}`;
 };
