@@ -28,21 +28,6 @@ import { soundSettingForEvent } from './notificationConfig';
 import { onFirstUserGesture } from '../onFirstUserGesture';
 
 /**
- * The SoundId to play for one event: the mention slot for @-mentions (with
- * 'default' inheriting the message slot), otherwise the message slot.
- */
-export const resolveEventSound = (
-	settings: OrisoNotificationSettings,
-	isMention: boolean
-): SoundId => {
-	if (isMention) {
-		const mention = settings.sounds.mention;
-		return mention === 'default' ? settings.sounds.message : mention;
-	}
-	return settings.sounds.message;
-};
-
-/**
  * Maps a SoundId to an audio asset URL, or null for silence. Assets are
  * placeholders for now (only two exist) — swap the map when a curated library
  * lands; the choice model and UI already carry the distinct ids.
@@ -78,18 +63,6 @@ export const soundAssetFor = (soundId: SoundId): string | null => {
 		default:
 			return null;
 	}
-};
-
-/** The audio asset for a whole family (calls get their own sound, Slack-style). */
-export const assetForEvent = (
-	settings: OrisoNotificationSettings,
-	family: EventFamily,
-	isMention: boolean
-): string | null => {
-	if (family === 'calls') {
-		return incomingCall;
-	}
-	return soundAssetFor(resolveEventSound(settings, isMention));
 };
 
 /** Minimal shape the announce selector needs from a feed item. */
@@ -146,7 +119,26 @@ export const createSoundThrottle = (minGapMs: number) => {
 	};
 };
 
-const throttle = createSoundThrottle(2000);
+/**
+ * One throttle bucket PER FAMILY. A single global gap let a message tone
+ * swallow an incoming-call ring that arrived within the same 2s window —
+ * the most time-critical sound we have was the easiest to lose (#586 review).
+ */
+const SOUND_GAP_MS = 2000;
+const throttles = new Map<string, (now: number) => boolean>();
+const throttleFor = (family: EventFamily): ((now: number) => boolean) => {
+	let bucket = throttles.get(family);
+	if (!bucket) {
+		bucket = createSoundThrottle(SOUND_GAP_MS);
+		throttles.set(family, bucket);
+	}
+	return bucket;
+};
+
+/** Test-only: drop all throttle buckets so specs stay order-independent. */
+export const __resetSoundThrottlesForTests = (): void => {
+	throttles.clear();
+};
 
 /* ------------------------------------------------------------------ *
  * Safari audio unlock. Safari's autoplay policy rejects play() calls
@@ -234,12 +226,16 @@ export const playNotificationSound = (
 	if (!asset || !('Audio' in window)) {
 		return;
 	}
-	if (!throttle(now)) {
+	if (!throttleFor(family)(now)) {
 		return;
 	}
-	// Reuse the gesture-primed element when we have one (Safari), else a
-	// fresh element (fine in Chromium/Firefox).
-	const audio = sharedAudio ?? new Audio();
+	// Reuse the gesture-primed element when we have one (Safari) — but never
+	// while it is still playing: assigning .src would cut off an in-flight
+	// sound (e.g. a message tone killing the call ring). A fresh element is
+	// fine in Chromium/Firefox, and in Safari the ring keeps playing, which
+	// is the better failure mode.
+	const busy = sharedAudio && !sharedAudio.paused && !sharedAudio.ended;
+	const audio = sharedAudio && !busy ? sharedAudio : new Audio();
 	audio.src = asset;
 	audio.muted = false;
 	audio.volume = Math.max(0, Math.min(1, volume));

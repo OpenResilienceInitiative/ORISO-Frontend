@@ -2064,22 +2064,6 @@
 					"tomorrow": "Bis morgen früh"
 				}
 			},
-			"sounds": {
-				"title": "Benachrichtigungstöne",
-				"intro": "Wählen Sie Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",
-				"preview": "Vorhören",
-				"slot": {
-					"message": "Neue Nachrichten",
-					"mention": "Erwähnungen"
-				},
-				"choice": {
-					"none": "Kein Ton",
-					"chime": "Chime",
-					"ding": "Ding",
-					"soft": "Sanft",
-					"default": "Wie Nachrichten"
-				}
-			},
 			"config": {
 				"title": "Benachrichtigungen einstellen",
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
