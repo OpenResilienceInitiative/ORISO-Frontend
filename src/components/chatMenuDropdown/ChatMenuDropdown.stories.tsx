@@ -5,6 +5,7 @@ import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-of
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
+import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import {
 	ChatMenuDropdown,
 	ChatMenuDropdownDivider,
@@ -89,12 +90,53 @@ const FigmaMenuItems = ({ activeFirst = false }: { activeFirst?: boolean }) => (
 	</ChatMenuDropdown>
 );
 
+/**
+ * The Figma frame as drawn, including the items that are still parked. Kept as
+ * the design reference only — FE#781: Mute / Invite / Summarize have no shipped
+ * feature behind them, so the real session-list menu omits them entirely rather
+ * than rendering them disabled. See `ShippedSessionListMenu` for what users get.
+ */
 export const FigmaReference: Story = {
 	render: () => <FigmaMenuItems />
 };
 
 export const ActiveState: Story = {
 	render: () => <FigmaMenuItems activeFirst />
+};
+
+/**
+ * FE#781 — the Chatroom Settings menu as it actually ships on a consultant's
+ * active session: every entry resolves to a real handler. "Hilfe Anfragen"
+ * opens the Team-Besprechung side room (ADR-016) and is shown on open enquiries
+ * (or on accepted sessions that already have a discussion to re-read).
+ */
+export const ShippedSessionListMenu: Story = {
+	render: () => (
+		<ChatMenuDropdown ariaLabel="Chatraum Einstellungen">
+			<ChatMenuDropdownHeader
+				subtitle="Jeder Raum individuell anpassbar"
+				title="Chatraum Einstellungen"
+			/>
+			<ChatMenuDropdownDivider />
+			<ChatMenuDropdownSection>
+				<ChatMenuDropdownItem
+					icon={<ArchiveIcon />}
+					title="Archivieren"
+					description="Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht."
+				/>
+				<ChatMenuDropdownItem
+					icon={<TrashIcon />}
+					title="Löschen"
+					description="Chat unwiderruflich löschen."
+				/>
+				<ChatMenuDropdownItem
+					icon={<HelpIcon />}
+					title="Hilfe Anfragen"
+					description="Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen."
+				/>
+			</ChatMenuDropdownSection>
+		</ChatMenuDropdown>
+	)
 };
 
 export const LegalLinksMenu: Story = {
