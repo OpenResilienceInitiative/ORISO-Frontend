@@ -1,8 +1,25 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const source = (relativePath: string) =>
 	readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+
+const productionSource = (): string =>
+	readdirSync(resolve(process.cwd(), 'src'), {
+		recursive: true,
+		withFileTypes: true
+	})
+		.filter(
+			(entry) =>
+				entry.isFile() &&
+				/\.(?:ts|tsx)$/.test(entry.name) &&
+				!/\.(?:test|stories)\.(?:ts|tsx)$/.test(entry.name)
+		)
+		.map((entry) =>
+			readFileSync(resolve(entry.parentPath, entry.name), 'utf8')
+		)
+		.join('\n');
 
 describe('Matrix credential boundary', () => {
 	it('does not mirror Matrix credentials into Rocket.Chat cookies', () => {
@@ -30,13 +47,8 @@ describe('Matrix credential boundary', () => {
 	});
 
 	it('has no credential-bearing Element Call SPA fallback', () => {
-		expect(source('./components/call/GroupCallWidget.tsx')).not.toMatch(
-			/getElementCallAccessToken|accessToken|oriso-call-(?:ended|action)|widgetModeEnabled/
-		);
-		expect(
-			source('./components/sessionCookie/getMatrixAccessToken.ts')
-		).not.toMatch(
-			/ORISO_CALL|getElementCallAccessToken|matrix_call_device_id/
+		expect(productionSource()).not.toMatch(
+			/ORISO_CALL_|getElementCallAccessToken|matrix_call_device_id|oriso-call-(?:ended|action)|widgetModeEnabled/
 		);
 	});
 });

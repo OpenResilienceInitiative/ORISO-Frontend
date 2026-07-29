@@ -6,6 +6,13 @@ import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getValueFromCookie } from './accessSessionCookie';
 import { parseJwt } from '../../utils/parseJWT';
+import {
+	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_SESSION_SUBJECT_STORAGE_KEY,
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_USER_ID_STORAGE_KEY
+} from '../../utils/matrixStorageKeys';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -13,10 +20,13 @@ export interface MatrixLoginData {
 	deviceId: string;
 	homeserverUrl: string;
 	expiresInMs?: number;
+	// Anonymous live-chat users can never cross-sign a consultant's device, so
+	// their client must share Megolm keys to all devices; invisible crypto
+	// (verified-only) would silently make their messages undecryptable for the
+	// consultant. See matrixClientService.initializeClient.
+	isAnonymous?: boolean;
 }
 
-const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
-const MATRIX_SESSION_SUBJECT_STORAGE_KEY = 'matrix_session_subject';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
 const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
 const MATRIX_TOKEN_REUSE_BUFFER_MS = 2 * 60 * 1000;
@@ -112,14 +122,14 @@ const getCurrentAuthSubject = (): string | null => {
 };
 
 const getPersistedMatrixLoginData = (): MatrixLoginData | null => {
-	const accessToken = localStorage.getItem('matrix_access_token');
-	const userId = localStorage.getItem('matrix_user_id');
+	const accessToken = localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY);
+	const userId = localStorage.getItem(MATRIX_USER_ID_STORAGE_KEY);
 	const deviceId = localStorage.getItem(MATRIX_DEVICE_ID_STORAGE_KEY);
 	const sessionSubject = localStorage.getItem(
 		MATRIX_SESSION_SUBJECT_STORAGE_KEY
 	);
 	const currentAuthSubject = getCurrentAuthSubject();
-	const rawExpiresAt = localStorage.getItem('matrix_token_expires_at');
+	const rawExpiresAt = localStorage.getItem(MATRIX_TOKEN_EXPIRY_STORAGE_KEY);
 	const expiresAt = rawExpiresAt ? Number(rawExpiresAt) : NaN;
 	const remainingLifetimeMs = expiresAt - Date.now();
 	const homeserverUrl = getMatrixHomeserverUrl();
@@ -224,8 +234,11 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
-	localStorage.setItem('matrix_access_token', loginData.accessToken);
-	localStorage.setItem('matrix_user_id', loginData.userId);
+	localStorage.setItem(
+		MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+		loginData.accessToken
+	);
+	localStorage.setItem(MATRIX_USER_ID_STORAGE_KEY, loginData.userId);
 	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
 	localStorage.setItem(
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
@@ -242,7 +255,7 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	}
 	if (loginData.expiresInMs) {
 		localStorage.setItem(
-			'matrix_token_expires_at',
+			MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 			(Date.now() + loginData.expiresInMs).toString()
 		);
 	}

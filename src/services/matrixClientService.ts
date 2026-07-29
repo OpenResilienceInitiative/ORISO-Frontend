@@ -153,10 +153,15 @@ export class MatrixClientService {
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Anonymous live-chat users are exempt: they can never cross-sign the
+		// consultant's device, so verified-only isolation would leave the
+		// consultant seeing only undecryptable noise. They always share to all
+		// devices so the accepted consultant can read the conversation (#774).
 		// Best-effort — never breaks client startup.
 		applyDeviceIsolationMode(
 			client,
-			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
+				loginData.isAnonymous !== true
 		);
 
 		(client as any).on(
@@ -229,8 +234,18 @@ export class MatrixClientService {
 			forceRefresh: true
 		})
 			.then(async (loginData) => {
-				persistMatrixLoginData(loginData);
-				await this.initializeClient(loginData);
+				// getMatrixAccessToken only returns transport fields. A session's
+				// anonymity is stable across refreshes, so carry the existing flag
+				// forward — otherwise invisible crypto would re-apply verified-only
+				// isolation on the refreshed client and make an anonymous asker's
+				// messages undecryptable for the consultant again (#774).
+				const refreshedLoginData: MatrixLoginData = {
+					...loginData,
+					isAnonymous:
+						loginData.isAnonymous ?? this.loginData?.isAnonymous
+				};
+				persistMatrixLoginData(refreshedLoginData);
+				await this.initializeClient(refreshedLoginData);
 			})
 			.finally(() => {
 				this.refreshingToken = null;

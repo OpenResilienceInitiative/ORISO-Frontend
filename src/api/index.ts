@@ -30,7 +30,6 @@ export * from './apiPostAdditionalEnquiry';
 export * from './apiPostRegistration';
 export * from './apiPutArchive';
 export * from './apiPutDearchive';
-export * from './apiJoinGroupChat';
 export * from './apiPutGroupChat';
 export * from './apiPatchConsultantData';
 export * from './apiPutConsultantData';

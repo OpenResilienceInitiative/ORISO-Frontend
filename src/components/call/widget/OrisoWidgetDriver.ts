@@ -43,18 +43,18 @@ import {
 } from 'matrix-widget-api';
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 
-import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
+import {
+	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
+	ALLOWED_ROOM_EVENT_TYPES,
+	ALLOWED_SEND_STATE_EVENT_TYPES,
+	ALLOWED_TO_DEVICE_EVENT_TYPES,
+	isAllowedWidgetCapability
+} from './orisoWidgetCapabilities';
 
 /**
  * To-device events that carry per-participant media keys. These may only ever
  * be sent through Olm, never through the plaintext queue.
  */
-const KEY_BEARING_TO_DEVICE_TYPES: ReadonlySet<string> = new Set([
-	'io.element.call.encryption_keys',
-	'm.call.encryption_keys',
-	'org.matrix.msc3401.call.encryption_keys'
-]);
-
 /** Matrix events carry more than the widget spec's shape; narrow it here. */
 const toWidgetEvent = (event: MatrixEvent): IRoomEvent =>
 	event.getEffectiveEvent() as unknown as IRoomEvent;
@@ -104,8 +104,18 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		requested: Set<Capability>
 	): Promise<Set<Capability>> {
 		const granted = new Set<Capability>();
+		const userId = this.client.getUserId();
+		const deviceId = this.client.getDeviceId();
+		if (!userId || !deviceId) return granted;
 		requested.forEach((capability) => {
-			if (isAllowedWidgetCapability(capability)) {
+			if (
+				isAllowedWidgetCapability(
+					capability,
+					userId,
+					deviceId,
+					this.roomId
+				)
+			) {
 				granted.add(capability);
 			} else {
 				// eslint-disable-next-line no-console
@@ -141,6 +151,27 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		roomId: string | null = null
 	): Promise<ISendEventDetails> {
 		const targetRoom = this.assertRoom(roomId);
+		const allowedTypes =
+			stateKey === null
+				? ALLOWED_ROOM_EVENT_TYPES
+				: ALLOWED_SEND_STATE_EVENT_TYPES;
+		if (!allowedTypes.has(eventType)) {
+			throw new Error(`Call widget may not send ${eventType}`);
+		}
+		if (stateKey !== null) {
+			const userId = this.client.getUserId();
+			const deviceId = this.client.getDeviceId();
+			const allowedStateKeys = new Set([
+				userId,
+				`_${userId}_${deviceId}_m.call`,
+				`${userId}_${deviceId}_m.call`
+			]);
+			if (!userId || !deviceId || !allowedStateKeys.has(stateKey)) {
+				throw new Error(
+					'Call widget may only update its own MatrixRTC membership'
+				);
+			}
+		}
 
 		const response =
 			stateKey === null
@@ -173,6 +204,27 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		roomId: string | null = null
 	): Promise<ISendDelayedEventDetails> {
 		const targetRoom = this.assertRoom(roomId);
+		const allowedTypes =
+			stateKey === null
+				? ALLOWED_ROOM_EVENT_TYPES
+				: ALLOWED_SEND_STATE_EVENT_TYPES;
+		if (!allowedTypes.has(eventType)) {
+			throw new Error(`Call widget may not delay ${eventType}`);
+		}
+		if (stateKey !== null) {
+			const userId = this.client.getUserId();
+			const deviceId = this.client.getDeviceId();
+			const allowedStateKeys = new Set([
+				userId,
+				`_${userId}_${deviceId}_m.call`,
+				`${userId}_${deviceId}_m.call`
+			]);
+			if (!userId || !deviceId || !allowedStateKeys.has(stateKey)) {
+				throw new Error(
+					'Call widget may only delay its own MatrixRTC membership'
+				);
+			}
+		}
 		const delayOpts =
 			delay !== null
 				? { delay }
@@ -216,29 +268,14 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		encrypted: boolean,
 		contentMap: { [userId: string]: { [deviceId: string]: object } }
 	): Promise<void> {
-		// The media keys are the secret the whole call rests on. Whether they
-		// travel encrypted must not depend on a flag the iframe sets: a widget
-		// asking to send them in the clear is refused outright.
-		if (!encrypted && KEY_BEARING_TO_DEVICE_TYPES.has(eventType)) {
+		if (!ALLOWED_TO_DEVICE_EVENT_TYPES.has(eventType)) {
+			throw new Error(`Call widget may not send ${eventType} to devices`);
+		}
+		if (!encrypted) {
 			throw new Error(
 				`Refusing to send ${eventType} unencrypted: call keys must never ` +
 					'travel in plaintext.'
 			);
-		}
-
-		if (!encrypted) {
-			await this.client.queueToDevice({
-				eventType,
-				batch: Object.entries(contentMap).flatMap(
-					([userId, byDevice]) =>
-						Object.entries(byDevice).map(([deviceId, payload]) => ({
-							userId,
-							deviceId,
-							payload
-						}))
-				)
-			});
-			return;
 		}
 
 		const crypto = this.client.getCrypto();
@@ -289,6 +326,7 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		since?: string
 	): Promise<IRoomEvent[]> {
 		const targetRoom = this.assertRoom(roomIds?.[0] ?? null);
+		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
 		return this.readRoomTimeline(
 			targetRoom,
 			eventType,
@@ -307,7 +345,9 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		limit: number,
 		since: string | undefined
 	): Promise<IRoomEvent[]> {
-		const room = this.client.getRoom(this.assertRoom(roomId));
+		const targetRoom = this.assertRoom(roomId);
+		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
+		const room = this.client.getRoom(targetRoom);
 		if (!room) return [];
 
 		const events = room
@@ -340,11 +380,11 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		limit: number,
 		roomIds: string[] | null = null
 	): Promise<IRoomEvent[]> {
-		return this.readRoomState(
-			this.assertRoom(roomIds?.[0] ?? null),
-			eventType,
-			stateKey
-		).then((events) => (limit > 0 ? events.slice(0, limit) : events));
+		this.assertRoom(roomIds?.[0] ?? null);
+		if (!ALLOWED_RECEIVE_STATE_EVENT_TYPES.has(eventType)) return [];
+		return this.readRoomState(this.roomId, eventType, stateKey).then(
+			(events) => (limit > 0 ? events.slice(0, limit) : events)
+		);
 	}
 
 	public async readRoomState(
@@ -352,7 +392,9 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		eventType: string,
 		stateKey: string | undefined
 	): Promise<IRoomEvent[]> {
-		const room = this.client.getRoom(this.assertRoom(roomId));
+		const targetRoom = this.assertRoom(roomId);
+		if (!ALLOWED_RECEIVE_STATE_EVENT_TYPES.has(eventType)) return [];
+		const room = this.client.getRoom(targetRoom);
 		if (!room) return [];
 
 		const currentState = room

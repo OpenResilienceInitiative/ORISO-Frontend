@@ -1,4 +1,6 @@
+import { MATRIX_USER_ID_STORAGE_KEY } from './matrixStorageKeys';
+
 export const getCurrentMatrixUserId = (): string =>
 	typeof localStorage === 'undefined'
 		? ''
-		: localStorage.getItem('matrix_user_id') || '';
+		: localStorage.getItem(MATRIX_USER_ID_STORAGE_KEY) || '';

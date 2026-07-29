@@ -12,12 +12,20 @@ import {
 	getMatrixClientService,
 	setMatrixClientServiceRef
 } from '../../services/matrixClientRegistry';
+import {
+	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_SESSION_SUBJECT_STORAGE_KEY,
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_USER_ID_STORAGE_KEY
+} from '../../utils/matrixStorageKeys';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
-	'matrix_user_id',
-	'matrix_access_token',
-	'matrix_token_expires_at',
-	'matrix_session_subject'
+	MATRIX_USER_ID_STORAGE_KEY,
+	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_SESSION_SUBJECT_STORAGE_KEY
 ] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';

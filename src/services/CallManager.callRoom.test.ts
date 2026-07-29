@@ -5,7 +5,7 @@
  * session room, so its join rule is the only thing standing between a call and
  * anyone who has seen its room id.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callManager } from './CallManager';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
@@ -13,6 +13,7 @@ import { setMatrixClientServiceRef } from './matrixClientRegistry';
 const SESSION_ROOM = '!counselling:oriso.example';
 const CALL_ROOM = '!call:oriso.example';
 const OWN_USER = '@counsellor:oriso.example';
+const MEMBERSHIP_READER = '@matrixrtc-auth:oriso.example';
 
 type CreateRoomOptions = {
 	preset?: string;
@@ -43,15 +44,24 @@ describe('createElementCallRoom', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
 		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		vi.stubEnv(
+			'REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID',
+			MEMBERSHIP_READER
+		);
+	});
+
+	afterEach(() => {
+		vi.unstubAllEnvs();
 	});
 
 	it('restricts the call to members of the counselling session', async () => {
 		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
+		const invite = vi.fn().mockResolvedValue(undefined);
 		installClient({
 			createRoom,
 			getUserId: () => OWN_USER,
 			getRoom: () => null,
-			invite: vi.fn()
+			invite
 		});
 
 		await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
@@ -65,6 +75,7 @@ describe('createElementCallRoom', () => {
 			join_rule: 'restricted',
 			allow: [{ type: 'm.room_membership', room_id: SESSION_ROOM }]
 		});
+		expect(invite).toHaveBeenCalledWith(CALL_ROOM, MEMBERSHIP_READER);
 	});
 
 	it('creates the call room encrypted, with history closed to non-members', async () => {
@@ -122,11 +133,11 @@ describe('createElementCallRoom', () => {
 			createRoom,
 			invite,
 			getUserId: () => OWN_USER,
-			getRoom: () => ({
-				getMembersWithMembership: () => [
-					{ userId: OWN_USER },
-					{ userId: '@asker:oriso.example' }
-				]
+			getJoinedRoomMembers: vi.fn().mockResolvedValue({
+				joined: {
+					[OWN_USER]: {},
+					'@asker:oriso.example': {}
+				}
 			})
 		});
 
@@ -136,11 +147,12 @@ describe('createElementCallRoom', () => {
 		expect(fallback.preset).toBe('private_chat');
 		expect(stateContent(fallback, 'm.room.join_rules')).toBeUndefined();
 		// The asker is invited; we do not invite ourselves.
-		expect(invite).toHaveBeenCalledTimes(1);
+		expect(invite).toHaveBeenCalledTimes(2);
 		expect(invite).toHaveBeenCalledWith(CALL_ROOM, '@asker:oriso.example');
+		expect(invite).toHaveBeenCalledWith(CALL_ROOM, MEMBERSHIP_READER);
 	});
 
-	it('still returns the room when a single invite fails', async () => {
+	it('fails closed when a participant cannot be invited', async () => {
 		const createRoom = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('nope'))
@@ -149,13 +161,15 @@ describe('createElementCallRoom', () => {
 			createRoom,
 			invite: vi.fn().mockRejectedValue(new Error('M_FORBIDDEN')),
 			getUserId: () => OWN_USER,
-			getRoom: () => ({
-				getMembersWithMembership: () => [
-					{ userId: '@asker:oriso.example' }
-				]
+			getJoinedRoomMembers: vi.fn().mockResolvedValue({
+				joined: {
+					'@asker:oriso.example': {}
+				}
 			})
 		});
 
-		await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
+		await expect(createCallRoom()).rejects.toThrow(
+			/Could not invite 1 of 1/
+		);
 	});
 });

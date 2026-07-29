@@ -23,7 +23,11 @@ import {
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
-import { ALLOWED_TO_DEVICE_EVENT_TYPES } from './orisoWidgetCapabilities';
+import {
+	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
+	ALLOWED_ROOM_EVENT_TYPES,
+	ALLOWED_TO_DEVICE_EVENT_TYPES
+} from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 
 export interface ElementCallWidgetOptions {
@@ -50,16 +54,24 @@ export interface ElementCallWidget {
 	error: Error | null;
 }
 
-/**
- * Widget ids only need to be unique per host, and Element Call echoes ours back
- * on every message. Deriving it from the room keeps it stable across re-renders
- * so a remount does not orphan the previous messaging channel.
- */
-const widgetIdForRoom = (roomId: string): string =>
-	// Encode rather than strip: dropping every non-alphanumeric made
-	// `!abc:foo.com` and `!abcfoo:com` collide on the same widget id, which
-	// would let one call's channel answer for another.
-	`oriso-call-${encodeURIComponent(roomId).replace(/%/g, '_')}`;
+const widgetIdForRoom = async (
+	roomId: string,
+	instanceNonce: string
+): Promise<string> => {
+	const digest = await globalThis.crypto.subtle.digest(
+		'SHA-256',
+		new TextEncoder().encode(`${roomId}\u0000${instanceNonce}`)
+	);
+	return `oriso-call-${Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('')}`;
+};
+
+const fragmentParams = (url: string): URLSearchParams => {
+	const hash = new URL(url).hash;
+	const queryStart = hash.indexOf('?');
+	return new URLSearchParams(queryStart === -1 ? '' : hash.slice(queryStart));
+};
 
 export const useElementCallWidget = (
 	client: MatrixClient | null,
@@ -75,6 +87,7 @@ export const useElementCallWidget = (
 	const [url, setUrl] = useState<string | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
+	const instanceNonceRef = useRef(globalThis.crypto.randomUUID());
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
 	>(null);
@@ -115,12 +128,13 @@ export const useElementCallWidget = (
 				}
 				if (cancelled) return;
 
-				// Widget mode reads its configuration from query params. The
-				// widget never receives an access token or a second Matrix
-				// session. The legacy SPA path is gone, so every participant
-				// uses host-backed per-participant media encryption.
-				elementCallUrl.search = new URLSearchParams({
-					widgetId: widgetIdForRoom(roomId),
+				const widgetId = await widgetIdForRoom(
+					roomId,
+					instanceNonceRef.current
+				);
+				if (cancelled) return;
+				elementCallUrl.hash = `?${new URLSearchParams({
+					widgetId,
 					parentUrl: window.location.origin,
 					roomId,
 					userId,
@@ -132,7 +146,7 @@ export const useElementCallWidget = (
 					perParticipantE2EE: 'true',
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
-				}).toString();
+				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
 			} catch (err) {
@@ -182,7 +196,11 @@ export const useElementCallWidget = (
 				return;
 			}
 
-			const widgetId = widgetIdForRoom(roomId);
+			const widgetId = fragmentParams(url).get('widgetId');
+			if (!widgetId) {
+				setError(new Error('Element Call widget id is missing.'));
+				return;
+			}
 			const iframeWindow = iframe.contentWindow;
 			const guardWidgetChannel = (event: MessageEvent<unknown>) => {
 				const message = event.data as { widgetId?: unknown } | null;
@@ -247,6 +265,19 @@ export const useElementCallWidget = (
 					api.transport.reply(event.detail, { success: true });
 				}
 			);
+			const acknowledgeLifecycleAction = (
+				event: CustomEvent<IWidgetApiRequest>
+			): void => {
+				event.preventDefault();
+				api.transport.reply(event.detail, {});
+			};
+			for (const action of [
+				'io.element.join',
+				'io.element.tile_layout',
+				'io.element.spotlight_layout'
+			]) {
+				api.on(`action:${action}`, acknowledgeLifecycleAction);
+			}
 		},
 		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
@@ -261,27 +292,70 @@ export const useElementCallWidget = (
 	useEffect(() => {
 		if (!client || !roomId) return undefined;
 
-		const onTimeline = (
-			event: MatrixEvent,
-			_room: unknown,
-			toStartOfTimeline: boolean | undefined
-		) => {
-			if (toStartOfTimeline) return; // backfill, not live
+		const pendingDecryptions = new Map<
+			MatrixEvent,
+			{
+				listener: (event: MatrixEvent, error?: Error) => void;
+				timeout: ReturnType<typeof setTimeout>;
+			}
+		>();
+		const clearPendingDecryption = (event: MatrixEvent) => {
+			const pending = pendingDecryptions.get(event);
+			if (!pending) return;
+			clearTimeout(pending.timeout);
+			event.off('Event.decrypted' as any, pending.listener as any);
+			pendingDecryptions.delete(event);
+		};
+		const feedAllowedRoomEvent = (event: MatrixEvent) => {
 			if (event.getRoomId() !== roomId) return;
+			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedEvent(event.getEffectiveEvent() as never, roomId)
 				.catch(() => {
 					/* the widget may have gone away mid-call */
 				});
 		};
+		const waitForSuccessfulDecryption = (event: MatrixEvent) => {
+			if (pendingDecryptions.has(event)) return;
+
+			const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
+				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					return;
+				}
+				clearPendingDecryption(event);
+				feedAllowedRoomEvent(decryptedEvent);
+			};
+			const timeout = setTimeout(
+				() => clearPendingDecryption(event),
+				5 * 60 * 1000
+			);
+			pendingDecryptions.set(event, { listener, timeout });
+			event.on('Event.decrypted' as any, listener as any);
+
+			// Close the race where Rust Crypto finishes between the initial type
+			// check and listener registration.
+			if (event.getType() !== 'm.room.encrypted') listener(event);
+		};
+		const feedOrWaitForDecryption = (event: MatrixEvent) => {
+			if (event.getRoomId() !== roomId) return;
+			if (event.getType() === 'm.room.encrypted') {
+				waitForSuccessfulDecryption(event);
+				return;
+			}
+			feedAllowedRoomEvent(event);
+		};
+
+		const onTimeline = (
+			event: MatrixEvent,
+			_room: unknown,
+			toStartOfTimeline: boolean | undefined
+		) => {
+			if (toStartOfTimeline) return; // backfill, not live
+			feedOrWaitForDecryption(event);
+		};
 
 		const onLocalEchoUpdated = (event: MatrixEvent) => {
-			if (event.getRoomId() !== roomId) return;
-			apiRef.current
-				?.feedEvent(event.getEffectiveEvent() as never, roomId)
-				.catch(() => {
-					/* the widget may have gone away mid-call */
-				});
+			feedOrWaitForDecryption(event);
 		};
 
 		const onStateEvent = (
@@ -289,6 +363,7 @@ export const useElementCallWidget = (
 			state: { roomId: string }
 		) => {
 			if (state.roomId !== roomId) return;
+			if (!ALLOWED_RECEIVE_STATE_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedStateUpdate(event.getEffectiveEvent() as never)
 				.catch(() => {
@@ -321,6 +396,9 @@ export const useElementCallWidget = (
 			client.off(RoomEvent.LocalEchoUpdated, onLocalEchoUpdated);
 			client.off(RoomStateEvent.Events, onStateEvent);
 			client.off(ClientEvent.ToDeviceEvent, onToDevice);
+			Array.from(pendingDecryptions.keys()).forEach(
+				clearPendingDecryption
+			);
 		};
 	}, [client, roomId]);
 
