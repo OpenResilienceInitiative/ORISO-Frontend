@@ -48,13 +48,17 @@ export const getChatroomSettingsMenuVisibility = ({
 	teamDiscussionFeatureEnabled,
 	hasExistingTeamDiscussion
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
-	const isOwnActiveSession =
-		!isAsker && listType !== SESSION_LIST_TYPES.ENQUIRY && isSession;
+	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
+	// stay in lockstep. A supervisor only observes a colleague's session, so it
+	// is neither theirs to archive (SessionMenu gates archive on
+	// `!props.isSupervisor` too) nor to delete.
+	const isOwnEditableSession =
+		!isAsker &&
+		listType !== SESSION_LIST_TYPES.ENQUIRY &&
+		isSession &&
+		!isSupervisorView;
 
-	// Mirrors the header menu's delete gate in SessionMenu.tsx so both entry
-	// points stay in lockstep; a supervisor observing someone else's session
-	// must not be able to delete it.
-	const showDelete = isOwnActiveSession && isConsultant && !isSupervisorView;
+	const showDelete = isOwnEditableSession && isConsultant;
 
 	// ADR-016: the Team-Besprechung is an agency-counselling, consultant-only
 	// side room. Creating one is only possible while the enquiry is open; after
@@ -65,14 +69,16 @@ export const getChatroomSettingsMenuVisibility = ({
 			isConsultant: isConsultant && !isAsker,
 			isEnquiry,
 			isGroup,
-			isAnonymous: !isAgencyCounselling,
+			// Anonymous modalities are already excluded by the guard above —
+			// agency counselling is never anonymous.
+			isAnonymous: false,
 			featureEnabled: teamDiscussionFeatureEnabled,
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
 	return {
-		showArchive: isOwnActiveSession && !isArchiveTab,
-		showDearchive: isOwnActiveSession && isArchiveTab,
+		showArchive: isOwnEditableSession && !isArchiveTab,
+		showDearchive: isOwnEditableSession && isArchiveTab,
 		showDelete,
 		showRequestHelp
 	};
@@ -84,8 +90,8 @@ export const getChatroomSettingsMenuVisibility = ({
  * introducing a second way to open the panel.
  */
 export const withTeamDiscussionParam = (path: string): string => {
-	if (/[?&]teamDiscussion=1(&|$)/.test(path)) {
-		return path;
-	}
-	return `${path}${path.includes('?') ? '&' : '?'}teamDiscussion=1`;
+	const [pathname, query = ''] = path.split('?');
+	const params = new URLSearchParams(query);
+	params.set('teamDiscussion', '1');
+	return `${pathname}?${params.toString()}`;
 };

@@ -109,6 +109,10 @@ export const ActiveState: Story = {
  * active session: every entry resolves to a real handler. "Hilfe Anfragen"
  * opens the Team-Besprechung side room (ADR-016) and is shown on open enquiries
  * (or on accepted sessions that already have a discussion to re-read).
+ *
+ * Copy is transcribed verbatim from the `chatFlyout.*` de bundle that the real
+ * menu renders, so drift is visible in review. (The bundle's "Hilfe Anfragen"
+ * capitalisation is a product-copy question, not a Storybook one.)
  */
 export const ShippedSessionListMenu: Story = {
 	render: () => (
@@ -127,7 +131,7 @@ export const ShippedSessionListMenu: Story = {
 				<ChatMenuDropdownItem
 					icon={<TrashIcon />}
 					title="Löschen"
-					description="Chat unwiderruflich löschen."
+					description="Chat dauerhaft löschen."
 				/>
 				<ChatMenuDropdownItem
 					icon={<HelpIcon />}

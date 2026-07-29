@@ -163,6 +163,11 @@ export const SessionListItemComponent = ({
 		top: 0,
 		left: 0
 	});
+	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
+	// therefore mounted at the component root, not inside the flyout — clicking
+	// the confirm overlay counts as an outside click and closes the flyout, so
+	// anything rendered inside it would unmount mid-confirmation.
+	const openDeleteConfirmRef = React.useRef<(() => void) | null>(null);
 	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -389,6 +394,9 @@ export const SessionListItemComponent = ({
 		!!sessionItem?.id;
 
 	useEffect(() => {
+		// Reset first: list items are reused across sessions, and a stale `true`
+		// would offer a Team-Besprechung that this session does not have.
+		setHasExistingTeamDiscussion(false);
 		if (!needsTeamDiscussionLookup) {
 			return;
 		}
@@ -588,31 +596,24 @@ export const SessionListItemComponent = ({
 		);
 	}
 
-	const handleOnClick = () => {
-		// console.log('🖱️ CARD CLICKED:', {
-		// sessionId: activeSession.item.id,
-		// groupId: activeSession.item.matrixRoomId,
-		// isGroup: activeSession.isGroup,
-		// listPath,
-		// isEmptyEnquiry: activeSession.isEmptyEnquiry,
-		// isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
-		// });
+	// Single source of truth for this item's route — the card click and the
+	// menu's Request Help entry must never drift apart.
+	const getSessionPath = () =>
+		getSessionNavigationPath({
+			listPath,
+			sessionId: activeSession.item.id,
+			groupId: activeSession.item.matrixRoomId,
+			rid: activeSession.rid,
+			isGroup: activeSession.isGroup,
+			isAsker,
+			isEmptyEnquiry: activeSession.isEmptyEnquiry,
+			isLiveChat: getModality(activeSession) === Modality.LIVE_CHAT,
+			tabSuffix: getSessionListTab()
+		});
 
+	const handleOnClick = () => {
 		if (activeSession.item.id !== undefined) {
-			navigate(
-				getSessionNavigationPath({
-					listPath,
-					sessionId: activeSession.item.id,
-					groupId: activeSession.item.matrixRoomId,
-					rid: activeSession.rid,
-					isGroup: activeSession.isGroup,
-					isAsker,
-					isEmptyEnquiry: activeSession.isEmptyEnquiry,
-					isLiveChat:
-						getModality(activeSession) === Modality.LIVE_CHAT,
-					tabSuffix: getSessionListTab()
-				})
-			);
+			navigate(getSessionPath());
 		}
 	};
 
@@ -704,6 +705,12 @@ export const SessionListItemComponent = ({
 			});
 	};
 
+	// Closes the menu first, then opens the confirmation that lives outside it.
+	const handleDeleteSession = () => {
+		setFlyoutOpen(false);
+		openDeleteConfirmRef.current?.();
+	};
+
 	// FE#781: mirrors the header menu's post-delete behaviour (SessionMenu's
 	// onSuccessDeleteSession) — the deleted chat leaves the list and the user
 	// lands back on the list instead of a dangling detail route.
@@ -723,22 +730,7 @@ export const SessionListItemComponent = ({
 	// the list menu opens the very same Team-Besprechung panel, expanded.
 	const handleRequestHelp = () => {
 		setFlyoutOpen(false);
-		navigate(
-			withTeamDiscussionParam(
-				getSessionNavigationPath({
-					listPath,
-					sessionId: activeSession.item.id,
-					groupId: activeSession.item.matrixRoomId,
-					rid: activeSession.rid,
-					isGroup: activeSession.isGroup,
-					isAsker,
-					isEmptyEnquiry: activeSession.isEmptyEnquiry,
-					isLiveChat:
-						getModality(activeSession) === Modality.LIVE_CHAT,
-					tabSuffix: getSessionListTab()
-				})
-			)
-		);
+		navigate(withTeamDiscussionParam(getSessionPath()));
 	};
 
 	const handleOverlayAction = (buttonFunction: string) => {
@@ -1284,45 +1276,30 @@ export const SessionListItemComponent = ({
 																</button>
 															)}
 															{chatroomSettingsMenu.showDelete && (
-																<DeleteSession
-																	chatId={
-																		activeSession
-																			.item
-																			.id
+																<button
+																	onClick={
+																		handleDeleteSession
 																	}
-																	onSuccess={
-																		handleDeleteSessionSuccess
-																	}
+																	className="sessionsListItem__dropdownOption"
+																	type="button"
+																	data-cy="session-list-menu-delete"
 																>
-																	{(
-																		onClick
-																	) => (
-																		<button
-																			onClick={
-																				onClick
-																			}
-																			className="sessionsListItem__dropdownOption"
-																			type="button"
-																			data-cy="session-list-menu-delete"
-																		>
-																			<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
-																			<div className="sessionsListItem__dropdownOptionCenter">
-																				<div className="sessionsListItem__dropdownOptionTitleRow">
-																					<span className="sessionsListItem__dropdownOptionTitle">
-																						{translate(
-																							'chatFlyout.remove'
-																						)}
-																					</span>
-																				</div>
-																				<p className="sessionsListItem__dropdownOptionDescription">
-																					{translate(
-																						'chatFlyout.removeDescription'
-																					)}
-																				</p>
-																			</div>
-																		</button>
-																	)}
-																</DeleteSession>
+																	<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle">
+																				{translate(
+																					'chatFlyout.remove'
+																				)}
+																			</span>
+																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription">
+																			{translate(
+																				'chatFlyout.removeDescription'
+																			)}
+																		</p>
+																	</div>
+																</button>
 															)}
 															{chatroomSettingsMenu.showRequestHelp && (
 																<button
@@ -1664,6 +1641,20 @@ export const SessionListItemComponent = ({
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
 				/>
+			)}
+			{/* FE#781: mounted outside the flyout so the confirmation overlay
+			    survives the menu closing. Renders nothing itself — it only
+			    hands the menu item its opener. */}
+			{chatroomSettingsMenu.showDelete && (
+				<DeleteSession
+					chatId={activeSession.item.id}
+					onSuccess={handleDeleteSessionSuccess}
+				>
+					{(openConfirm) => {
+						openDeleteConfirmRef.current = openConfirm;
+						return null;
+					}}
+				</DeleteSession>
 			)}
 		</div>
 	);

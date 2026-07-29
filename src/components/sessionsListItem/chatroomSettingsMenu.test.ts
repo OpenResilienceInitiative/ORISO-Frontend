@@ -73,6 +73,25 @@ describe('getChatroomSettingsMenuVisibility', () => {
 			expect(showArchive).toBe(false);
 			expect(showDearchive).toBe(false);
 		});
+
+		// SessionMenu.tsx gates archive on `!props.isSupervisor`; a read-only
+		// observer must not be able to archive a colleague's session here either.
+		it('offers neither to a supervisor observing someone else’s session', () => {
+			const active = getChatroomSettingsMenuVisibility(
+				consultantSession({ isSupervisorView: true })
+			);
+			expect(active.showArchive).toBe(false);
+			expect(active.showDearchive).toBe(false);
+
+			const archived = getChatroomSettingsMenuVisibility(
+				consultantSession({
+					isSupervisorView: true,
+					isArchiveTab: true
+				})
+			);
+			expect(archived.showArchive).toBe(false);
+			expect(archived.showDearchive).toBe(false);
+		});
 	});
 
 	describe('delete — must mirror the session header menu (SessionMenu.tsx)', () => {
@@ -217,5 +236,20 @@ describe('withTeamDiscussionParam', () => {
 		expect(withTeamDiscussionParam('/sessions/x/42?teamDiscussion=1')).toBe(
 			'/sessions/x/42?teamDiscussion=1'
 		);
+	});
+
+	it('overwrites a conflicting value instead of appending a second entry', () => {
+		expect(withTeamDiscussionParam('/sessions/x/42?teamDiscussion=0')).toBe(
+			'/sessions/x/42?teamDiscussion=1'
+		);
+	});
+
+	it('preserves other params while setting the flag', () => {
+		const result = withTeamDiscussionParam(
+			'/sessions/x/42?sessionListTab=archive&teamDiscussion=0'
+		);
+		const params = new URLSearchParams(result.split('?')[1]);
+		expect(params.get('sessionListTab')).toBe('archive');
+		expect(params.getAll('teamDiscussion')).toEqual(['1']);
 	});
 });
