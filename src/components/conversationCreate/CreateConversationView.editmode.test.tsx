@@ -89,6 +89,18 @@ vi.mock('../../resources/img/illustrations/active-createGroup.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
+vi.mock('../../resources/img/icons/keyboard_arrow_up.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/check.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/close.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
 
 // Route params are controllable per test: edit route carries
 // /:groupId/:sessionId, the create route carries none.

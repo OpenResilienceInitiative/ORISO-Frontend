@@ -172,3 +172,59 @@ const PersonMenuDemo = () => {
 export const PersonMenu: Story = {
 	render: () => <PersonMenuDemo />
 };
+
+/**
+ * The card clips its own content to keep its rounded corners, so the menu is
+ * portalled to the body and anchored to the split button: it floats on top of
+ * the card instead of being cut off inside it.
+ */
+const CardMenuOverlayDemo = () => {
+	const splitButtonRef = useRef<HTMLDivElement | null>(null);
+	const [open, setOpen] = useState(true);
+	const [selected, setSelected] = useState<string[]>([PEOPLE[0].id]);
+	return (
+		<FormatCard
+			title="Interna besprechen"
+			subtitle="mit Ihren Kolleg:innen"
+			avatar={<Avatar />}
+			media={<Media />}
+		>
+			<p style={{ margin: 0 }}>
+				Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab.
+			</p>
+			<M3SplitButton
+				ref={splitButtonRef}
+				label={`${selected.length} Personen hinzugefügt`}
+				selected={selected.length > 0}
+				open={open}
+				onLeadingClick={() => setOpen((prev) => !prev)}
+				onTrailingClick={() => setOpen((prev) => !prev)}
+				trailingAriaLabel="Personenliste öffnen oder schließen"
+			/>
+			{open && (
+				<PersonSelectMenu
+					options={PEOPLE.slice(0, 6).map((person) => ({
+						...person,
+						selected: selected.includes(person.id)
+					}))}
+					onToggle={(id) =>
+						setSelected((prev) =>
+							prev.includes(id)
+								? prev.filter((selectedId) => selectedId !== id)
+								: [...prev, id]
+						)
+					}
+					anchorRef={splitButtonRef}
+					onClose={() => setOpen(false)}
+					toggleLabel={(label, isSelected) =>
+						isSelected ? `${label} entfernen` : `${label} auswählen`
+					}
+				/>
+			)}
+		</FormatCard>
+	);
+};
+
+export const CardMenuOverlay: Story = {
+	render: () => <CardMenuOverlayDemo />
+};

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ReactComponent as KeyboardArrowUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
 
 /**
  * M3 split button (Figma "Split button", node 8460:23252): a leading action
@@ -27,25 +28,19 @@ interface M3SplitButtonProps {
 	leadingOpensMenu?: boolean;
 }
 
+/**
+ * The keyboard_arrow icon from the ORISO icon set, as the composer's split
+ * button uses it. A stroke-only chevron must not be inlined here: sanitize.css
+ * sets `svg { fill: currentColor }` app-wide, which fills an open chevron path
+ * into a solid wedge.
+ */
 const ChevronIcon = ({ up }: { up: boolean }) => (
-	<svg
-		width="26"
-		height="26"
-		viewBox="0 0 24 24"
-		fill="none"
+	<KeyboardArrowUpIcon
 		aria-hidden
 		className={`m3SplitButton__chevron${
-			up ? ' m3SplitButton__chevron--up' : ''
+			up ? '' : ' m3SplitButton__chevron--down'
 		}`}
-	>
-		<path
-			d="M7 10L12 15L17 10"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
+	/>
 );
 
 export const M3SplitButton = React.forwardRef<

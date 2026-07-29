@@ -127,13 +127,16 @@ $cc-motion-easing: var(
 		border-radius: 28px;
 		box-shadow: $cc-elevation-1;
 		list-style: none;
-		margin: 8px 0 0;
+		margin: 0;
 		max-height: 320px;
 		overflow-y: auto;
 		padding: 8px 0;
-		position: absolute;
-		width: 100%;
-		z-index: 20;
+
+		/* Portalled to the body and anchored with fixed coordinates so the
+		   card's `overflow: hidden` cannot clip it (Figma annotation "menu
+		   must show on top not inside the card"). */
+		position: fixed;
+		z-index: 1200;
 
 		button {
 			background: none;
@@ -347,9 +350,11 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__chevron {
+		/* keyboard_arrow_up points up while the menu is open; the closed
+		   state flips it down. */
 		transition: transform $cc-motion-duration $cc-motion-easing;
 
-		&--up {
+		&--down {
 			transform: rotate(180deg);
 		}
 	}
@@ -453,19 +458,12 @@ body.conversationCreate--active .navigation__wrapper {
 	box-shadow: $cc-elevation-1;
 	display: flex;
 	flex-direction: column;
-	left: 0;
 	overflow-y: auto;
-	position: absolute;
-	right: 0;
-	z-index: 30;
 
-	&--down {
-		top: calc(100% + 8px);
-	}
-
-	&--up {
-		bottom: calc(100% + 8px);
-	}
+	/* Portalled to the body and anchored with fixed coordinates — see
+	   __topicMenu above. */
+	position: fixed;
+	z-index: 1200;
 
 	&__row {
 		align-items: center;

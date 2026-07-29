@@ -51,6 +51,7 @@ import {
 	resolveInitialStep
 } from './formatAvailability';
 import { resolveListboxKey } from './listboxKeyboard';
+import { MenuPortal, useAnchoredMenuLayout } from './anchoredMenu';
 import { FormatCard } from './FormatCard';
 import { M3SplitButton } from './M3SplitButton';
 import {
@@ -73,6 +74,9 @@ import './conversationCreate.styles.scss';
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
+
+/** Natural height of the topic listbox, mirrored by its `max-height`. */
+const TOPIC_MENU_HEIGHT = 320;
 
 const CreateConversationFlow = () => {
 	const { t: translate, i18n } = useTranslation();
@@ -382,6 +386,11 @@ const CreateConversationFlow = () => {
 	// focus to the trigger.
 	const topicMenuRef = useRef<HTMLUListElement | null>(null);
 	const pickerSplitButtonRef = useRef<HTMLDivElement | null>(null);
+	const topicMenuLayout = useAnchoredMenuLayout(
+		pickerSplitButtonRef,
+		TOPIC_MENU_HEIGHT,
+		`${pickerTopicMenuOpen}:${topicOptions.length}`
+	);
 
 	const topicOptionButtons = () =>
 		Array.from(
@@ -404,6 +413,30 @@ const CreateConversationFlow = () => {
 				?.focus();
 		}
 	};
+
+	// The menu floats above the card in a portal, so a click on the card no
+	// longer counts as a click "inside" it — close it like any other popup.
+	useEffect(() => {
+		if (!pickerTopicMenuOpen) {
+			return;
+		}
+		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
+			const target = event.target as Node | null;
+			if (
+				target &&
+				!topicMenuRef.current?.contains(target) &&
+				!pickerSplitButtonRef.current?.contains(target)
+			) {
+				setPickerTopicMenuOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleOutsidePointer);
+		document.addEventListener('touchstart', handleOutsidePointer);
+		return () => {
+			document.removeEventListener('mousedown', handleOutsidePointer);
+			document.removeEventListener('touchstart', handleOutsidePointer);
+		};
+	}, [pickerTopicMenuOpen]);
 
 	const handleTopicMenuKeyDown = (
 		event: React.KeyboardEvent<HTMLUListElement>
@@ -520,46 +553,58 @@ const CreateConversationFlow = () => {
 										)}
 									/>
 									{pickerTopicMenuOpen && (
-										<ul
-											ref={topicMenuRef}
-											className="conversationCreate__topicMenu"
-											role="listbox"
-											onKeyDown={handleTopicMenuKeyDown}
-										>
-											{(topicOptions.length
-												? topicOptions
-												: [
-														{
-															value: '',
-															label: translate(
-																'groupChat.circle.noTopics'
-															)
+										<MenuPortal>
+											<ul
+												ref={topicMenuRef}
+												className={`conversationCreate__topicMenu conversationCreate__topicMenu--${topicMenuLayout.direction}`}
+												style={topicMenuLayout.style}
+												role="listbox"
+												onKeyDown={
+													handleTopicMenuKeyDown
+												}
+											>
+												{(topicOptions.length
+													? topicOptions
+													: [
+															{
+																value: '',
+																label: translate(
+																	'groupChat.circle.noTopics'
+																)
+															}
+														]
+												).map((topic) => (
+													<li
+														key={
+															topic.value ||
+															'none'
 														}
-													]
-											).map((topic) => (
-												<li key={topic.value || 'none'}>
-													<button
-														type="button"
-														role="option"
-														aria-selected={
-															pickerTopic ===
-															topic.value
-														}
-														disabled={!topic.value}
-														onClick={() => {
-															setPickerTopic(
-																topic.value
-															);
-															closeTopicMenu(
-																true
-															);
-														}}
 													>
-														{topic.label}
-													</button>
-												</li>
-											))}
-										</ul>
+														<button
+															type="button"
+															role="option"
+															aria-selected={
+																pickerTopic ===
+																topic.value
+															}
+															disabled={
+																!topic.value
+															}
+															onClick={() => {
+																setPickerTopic(
+																	topic.value
+																);
+																closeTopicMenu(
+																	true
+																);
+															}}
+														>
+															{topic.label}
+														</button>
+													</li>
+												))}
+											</ul>
+										</MenuPortal>
 									)}
 								</>
 							)}
