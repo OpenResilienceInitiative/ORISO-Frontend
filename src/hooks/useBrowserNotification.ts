@@ -28,6 +28,10 @@ export const useBrowserNotification = () => {
 				isBrowserNotificationTypeEnabled('initialEnquiry')
 			) {
 				sendNotification(t('notifications.initialRequest.new'), {
+					// A new enquiry belongs to Anfrage → Neue Anfrage, not to
+					// the conversations fallback row (#586 audit).
+					family: 'requests',
+					eventType: 'request.new',
 					showAlways: true,
 					onclick: () => {
 						navigate(`/sessions/consultant/sessionPreview`);
