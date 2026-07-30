@@ -727,7 +727,13 @@
 				"removeRule": "Remove",
 				"translate": "Translate into active languages",
 				"translating": "Translating…",
-				"translationError": "Translation failed. Your text was kept; please try again."
+				"translationError": "Translation failed. Your text was kept; please try again.",
+				"defaultRule1": "Speak about yourself, not about others.",
+				"defaultRule2": "What is shared here stays here.",
+				"ruleEditorLabel": "Edit rule",
+				"editRule": "Edit rule {{index}}",
+				"deleteRule": "Delete rule {{index}}",
+				"ruleChip": "Rule no. {{index}}"
 			},
 			"listItem": {
 				"label": "New chat"
@@ -749,7 +755,10 @@
 			"back": "Back",
 			"headerTitle": "Create new conversation",
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
-			"title": "Choose conversation format"
+			"title": "Choose conversation format",
+			"panelTitle": "Create new conversation",
+			"panelMenu": "More options",
+			"cardMenu": "Options for this conversation format"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -784,7 +793,21 @@
 			"title": "Conversation circle",
 			"toggleModeratorList": "Open or close the co-moderator list",
 			"toggleTopicList": "Open or close the topic list",
-			"topicLabel": "Topic / subject area"
+			"topicLabel": "Topic / subject area",
+			"rows": {
+				"dateLabel": "Choose date",
+				"timeLabel": "Start time",
+				"durationLabel": "Set duration",
+				"repeatLabel": "Repetitions",
+				"mediumLabel": "Choose primary medium",
+				"languageLabel": "Circle language",
+				"increase": "Increase {{field}}",
+				"decrease": "Decrease {{field}}",
+				"openList": "Choose {{field}}",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} time",
+				"repeatValue_other": "{{count}} times"
+			}
 		},
 		"createError": {
 			"overlay": {

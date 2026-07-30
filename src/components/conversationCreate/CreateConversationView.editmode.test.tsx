@@ -89,6 +89,73 @@ vi.mock('../../resources/img/illustrations/active-createGroup.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
+vi.mock('../../resources/img/icons/keyboard_arrow_down.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/plus-mui.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/stack-vertical.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/category-search.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/diversity-2.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/self-help-group.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/internal-conversation.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/calendar.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/clock.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/reload.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/language_outline.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock(
+	'../../resources/img/illustrations/conversation/internal-team.png',
+	() => ({
+		default: 'internal-team.png'
+	})
+);
+vi.mock('../../resources/img/topics', () => ({
+	getTopicCardImage: () => 'topic.png',
+	hasTopicCardImage: () => false,
+	topicSlug: (value: string) => value
+}));
+vi.mock('../../resources/img/icons/keyboard_arrow_up.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/check.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/close.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
 
 // Route params are controllable per test: edit route carries
 // /:groupId/:sessionId, the create route carries none.
@@ -163,8 +230,8 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 
 		renderInUserContext();
 
-		// The persisted topic is prefilled into the form.
-		expect(await screen.findByDisplayValue('Existing circle')).toBeTruthy();
+		// The persisted topic is prefilled and shown on the topic row.
+		expect(await screen.findByText('Existing circle')).toBeTruthy();
 
 		// Save routes to the update endpoint for the routed chat id (77), never
 		// to create (which is what the pre-fix route did, duplicating the chat).

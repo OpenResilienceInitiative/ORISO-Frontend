@@ -739,7 +739,13 @@
 				"removeRule": "Entfernen",
 				"translate": "In aktive Sprachen übersetzen",
 				"translating": "Wird übersetzt…",
-				"translationError": "Übersetzung fehlgeschlagen. Der Text wurde beibehalten; bitte erneut versuchen."
+				"translationError": "Übersetzung fehlgeschlagen. Der Text wurde beibehalten; bitte erneut versuchen.",
+				"defaultRule1": "Sprechen Sie von sich selbst, nicht über andere.",
+				"defaultRule2": "Was hier geteilt wird, bleibt hier.",
+				"ruleEditorLabel": "Regel bearbeiten",
+				"editRule": "Regel {{index}} bearbeiten",
+				"deleteRule": "Regel {{index}} löschen",
+				"ruleChip": "Regel Nr. {{index}}"
 			},
 			"listItem": {
 				"label": "Neuer Chat"
@@ -761,7 +767,10 @@
 			"back": "Zurück",
 			"headerTitle": "Neue Unterhaltung erstellen",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
-			"title": "Gesprächsformat wählen"
+			"title": "Gesprächsformat wählen",
+			"panelTitle": "Neue Unterhaltung erstellen",
+			"panelMenu": "Weitere Optionen",
+			"cardMenu": "Optionen für dieses Gesprächsformat"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -796,7 +805,21 @@
 			"title": "Gesprächskreis",
 			"toggleModeratorList": "Liste der Co-Moderator:innen öffnen oder schließen",
 			"toggleTopicList": "Themenliste öffnen oder schließen",
-			"topicLabel": "Thema / Fachbereich"
+			"topicLabel": "Thema / Fachbereich",
+			"rows": {
+				"dateLabel": "Datum wählen",
+				"timeLabel": "Startzeitpunkt",
+				"durationLabel": "Dauer einstellen",
+				"repeatLabel": "Wiederholungen",
+				"mediumLabel": "Primäres Medium wählen",
+				"languageLabel": "Sprache Gesprächskreis",
+				"increase": "{{field}} erhöhen",
+				"decrease": "{{field}} verringern",
+				"openList": "{{field}} auswählen",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} mal",
+				"repeatValue_other": "{{count}} mal"
+			}
 		},
 		"createError": {
 			"overlay": {

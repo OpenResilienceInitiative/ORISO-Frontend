@@ -670,6 +670,15 @@
 					"long": "እቲ ኣርእስቲ ኣዝዩ ነዊሕ እዩ።",
 					"short": "እቲ ኣርእስቲ ኣዝዩ ሓጺር እዩ።"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "ብዛዕባ ርእስኻ ተዛረብ፡ ብዛዕባ ካልኦት ኣይትዛረብ።",
+				"defaultRule2": "እቲ ኣብዚ ዝካፈል ኣብዚ ይተርፍ።",
+				"ruleEditorLabel": "ሕጊ ኣተዓራርይ",
+				"editRule": "ሕጊ {{index}} ኣተዓራርይ",
+				"deleteRule": "ሕጊ {{index}} ሰርዝ",
+				"addRule": "ሕጊ ወስኽ",
+				"ruleChip": "ሕጊ ቁ. {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +837,28 @@
 			"overlay": {
 				"button1Label": "ዕፁው",
 				"headline": "ለውጥታትካ ብዓወት ተዓቂቡ ኣሎ።"
+			}
+		},
+		"format": {
+			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
+			"panelMenu": "ተወሳኺ ኣማራጺታት",
+			"back": "ተመለስ",
+			"cardMenu": "ኣማራጺታት ናይዚ ዓይነት ዝርርብ"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "ዕለት ምረጽ",
+				"timeLabel": "መጀመሪ ሰዓት",
+				"durationLabel": "ግዜ ኣዳልው",
+				"repeatLabel": "ተደጋጋሚነት",
+				"mediumLabel": "ቀንዲ መራኸቢ ምረጽ",
+				"languageLabel": "ቋንቋ ናይቲ ክቢ",
+				"increase": "{{field}} ወስኽ",
+				"decrease": "{{field}} ኣጉድል",
+				"openList": "{{field}} ምረጽ",
+				"durationValue": "{{count}} ሰዓት",
+				"repeatValue_one": "{{count}} ግዜ",
+				"repeatValue_other": "{{count}} ግዜ"
 			}
 		}
 	},

@@ -1,0 +1,179 @@
+/**
+ * M3 split button atom — geometry and variants ported 1:1 from the Admin panel
+ * (`splitButton.module.scss`) so both apps render the same control.
+ */
+
+$sb-primary: var(--m3-primary, #a5000a);
+$sb-on-primary: var(--m3-on-primary, #ffffff);
+$sb-outline-variant: var(--m3-outline-variant, #c4c7c8);
+$sb-on-surface: var(--m3-on-surface, #1b1b1c);
+$sb-on-surface-variant: var(--m3-on-surface-variant, #444748);
+$sb-surface-container-low: var(--m3-surface-container-low, #f6f3f3);
+$sb-secondary: var(--m3-secondary, #4c555f);
+
+.splitButton {
+	align-items: stretch;
+	display: inline-flex;
+	gap: 2px;
+	max-width: 100%;
+
+	&--fullWidth {
+		display: flex;
+		width: 100%;
+	}
+
+	&__segment {
+		align-items: center;
+		appearance: none;
+		background: transparent;
+		border: 1px solid $sb-outline-variant;
+		box-sizing: border-box;
+		color: $sb-on-surface-variant;
+		cursor: pointer;
+		display: inline-flex;
+		font-family: inherit;
+		height: 56px;
+		justify-content: center;
+		padding: 0;
+		position: relative;
+		transition:
+			background-color 150ms ease,
+			border-color 150ms ease,
+			box-shadow 150ms ease,
+			color 150ms ease;
+	}
+
+	&:not(.splitButton--disabled) &__segment:not(:disabled):hover {
+		background: rgba(27, 27, 28, 0.08);
+	}
+
+	&__segment:disabled {
+		cursor: not-allowed;
+		opacity: 0.38;
+	}
+
+	&__segment:focus-visible {
+		/* Lift the focused segment so the ring is never clipped by a sibling. */
+		outline: 3px solid $sb-primary;
+		outline-offset: 2px;
+		z-index: 1;
+	}
+
+	&__main {
+		border-radius: 28px 4px 4px 28px;
+		font-size: 16px;
+		font-weight: 500;
+		gap: 8px;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		padding: 16px 24px;
+		white-space: nowrap;
+	}
+
+	&--fullWidth &__main {
+		flex: 1;
+		min-width: 0;
+	}
+
+	/* Menu selections become the label; long names truncate, never wrap. */
+	&__label {
+		max-width: 240px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&--fullWidth &__label {
+		max-width: none;
+	}
+
+	&__trailing {
+		border-radius: 4px 28px 28px 4px;
+		flex-shrink: 0;
+		width: 56px;
+	}
+
+	&__step {
+		border-radius: 4px;
+		flex-shrink: 0;
+		width: 56px;
+
+		&--up {
+			border-radius: 4px 28px 28px 4px;
+		}
+	}
+
+	&__icon {
+		align-items: center;
+		display: inline-flex;
+		flex-shrink: 0;
+		line-height: 1;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+
+		/* Legacy icon assets carry hard-coded fills; the segment colour wins. */
+		svg,
+		svg path {
+			fill: currentcolor;
+		}
+	}
+
+	&__chevron {
+		height: 24px;
+		transition: transform 200ms ease;
+		width: 24px;
+	}
+
+	&--open &__trailing &__chevron,
+	&--open &__trailing .splitButton__chevron {
+		transform: rotate(180deg);
+	}
+
+	/* Tonal — a value the counsellor has chosen ("Selected / chosen items use
+	   the tonal coloring option"). */
+	&--tonal &__segment {
+		background: $sb-secondary;
+		border-color: transparent;
+		color: $sb-on-primary;
+	}
+
+	&--tonal:not(.splitButton--disabled) &__segment:not(:disabled):hover {
+		background: color-mix(in srgb, #ffffff 8%, $sb-secondary);
+	}
+
+	/* Elevated — this row currently owns an open menu ("elements that are
+	   pressed and a menu is opened use the elevated state"). */
+	&--elevated &__segment {
+		background: var(--m3-surface, #fcf9f9);
+		border-color: transparent;
+		box-shadow:
+			0 1px 2px 0 rgba(0, 0, 0, 0.3),
+			0 1px 3px 1px rgba(0, 0, 0, 0.15);
+		color: $sb-primary;
+	}
+
+	/* Primary — the action is ready to fire. */
+	&--primary &__segment {
+		background: $sb-primary;
+		border-color: transparent;
+		color: $sb-on-primary;
+	}
+
+	&--primary:not(.splitButton--disabled) &__segment:not(:disabled):hover {
+		background: var(--m3-primary-container, #cc1e1c);
+	}
+
+	&--disabled &__segment {
+		cursor: not-allowed;
+		opacity: 0.38;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.splitButton__chevron,
+	.splitButton__segment {
+		transition: none !important;
+	}
+}

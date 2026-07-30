@@ -670,6 +670,15 @@
 					"long": "Le sujet est trop long",
 					"short": "Le sujet est trop court"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Parlez de vous, pas des autres.",
+				"defaultRule2": "Ce qui est partagé ici reste ici.",
+				"ruleEditorLabel": "Modifier la règle",
+				"editRule": "Modifier la règle {{index}}",
+				"deleteRule": "Supprimer la règle {{index}}",
+				"addRule": "Ajouter une règle",
+				"ruleChip": "Règle n° {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +837,28 @@
 			"overlay": {
 				"button1Label": "Fermer",
 				"headline": "Vos modifications ont été enregistrées avec succès."
+			}
+		},
+		"format": {
+			"panelTitle": "Créer une nouvelle conversation",
+			"panelMenu": "Plus d’options",
+			"back": "Retour",
+			"cardMenu": "Options pour ce format de conversation"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Choisir la date",
+				"timeLabel": "Heure de début",
+				"durationLabel": "Définir la durée",
+				"repeatLabel": "Répétitions",
+				"mediumLabel": "Choisir le média principal",
+				"languageLabel": "Langue du cercle",
+				"increase": "Augmenter {{field}}",
+				"decrease": "Diminuer {{field}}",
+				"openList": "Choisir {{field}}",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} fois",
+				"repeatValue_other": "{{count}} fois"
 			}
 		}
 	},
