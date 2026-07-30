@@ -530,7 +530,11 @@ const CreateConversationFlow = () => {
 	);
 
 	const renderPicker = () => (
-		<div className="conversationCreate__picker">
+		<div
+			className={`conversationCreate__picker${
+				fromL ? '' : ' conversationCreate__picker--compact'
+			}`}
+		>
 			<ScreenIntro
 				title={translate('groupChat.format.title')}
 				subtitle={translate('groupChat.format.subtitle')}
@@ -614,7 +618,11 @@ const CreateConversationFlow = () => {
 					/>
 				)
 			) : step === 'internal' ? (
-				<div className="conversationCreate__single">
+				<div
+					className={`conversationCreate__single${
+						fromL ? '' : ' conversationCreate__single--compact'
+					}`}
+				>
 					{renderInternalCard()}
 				</div>
 			) : (

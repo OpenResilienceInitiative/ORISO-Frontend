@@ -77,7 +77,7 @@ const DesktopShell = ({ children }: { children: React.ReactNode }) => (
 				background: '#fcf9f9',
 				borderRadius: 28,
 				margin: '0 auto',
-				maxWidth: 900,
+				maxWidth: 1100,
 				overflow: 'hidden'
 			}}
 		>
@@ -202,7 +202,11 @@ const FormatPicker = ({
 				title={t('groupChat.format.panelTitle')}
 				menuLabel={t('groupChat.format.panelMenu')}
 			/>
-			<div className="conversationCreate__picker">
+			<div
+				className={`conversationCreate__picker${
+					compact ? ' conversationCreate__picker--compact' : ''
+				}`}
+			>
 				<ScreenIntro
 					title={t('groupChat.format.title')}
 					subtitle={t('groupChat.format.subtitle')}

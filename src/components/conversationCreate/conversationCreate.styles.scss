@@ -29,43 +29,62 @@ $cc-motion-easing: var(
 .conversationCreate {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 12px;
 	height: 100%;
 	overflow-y: auto;
-	padding: 16px 24px 32px;
+	padding: 16px;
 
 	&__intro {
-		max-width: 640px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		width: 100%;
 	}
 
+	/* M3 headline/large */
 	&__title {
-		color: $cc-on-surface;
-		font-size: 24px;
+		color: $cc-secondary;
+		flex: 1;
+		font-size: 32px;
 		font-weight: 400;
-		line-height: 32px;
-		margin: 0 0 8px;
+		line-height: 40px;
+		margin: 0;
+		min-width: 0;
 	}
 
+	/* M3 body/large */
 	&__subtitle {
-		color: $cc-on-surface-variant;
-		font-size: 14px;
-		letter-spacing: 0.25px;
-		line-height: 20px;
+		color: #241c15;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
 		margin: 0;
+	}
+
+	/* Figma "Chatroom Actions": 24px stack inside a 128px side inset. */
+	&__picker,
+	&__single {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+
+		/* Figma inset is 128px; it yields before the two 360px cards would be
+		   squeezed into a wrap on a narrow chat column. */
+		padding-inline: clamp(0px, calc((100% - 760px) / 2), 128px);
+	}
+
+	&__picker--compact,
+	&__single--compact {
+		padding-inline: 0;
 	}
 
 	&__cards {
 		/* Stretch so both formats end up the same height whatever their copy,
-		   centred in the panel (Figma 8482-30551). */
+		   centred in the panel (Figma 8482-30555). */
 		align-items: stretch;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 24px;
-		justify-content: center;
-	}
-
-	&__single {
-		display: flex;
+		gap: 33px;
 		justify-content: center;
 	}
 
@@ -424,6 +443,7 @@ body.conversationCreate--active .navigation__wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+	padding-inline: clamp(0px, calc((100% - 760px) / 2), 128px);
 
 	&__title {
 		color: $cc-on-surface;
@@ -579,53 +599,58 @@ body.conversationCreate--active .navigation__wrapper {
 .conversationCreate {
 	&__panelHeader {
 		align-items: center;
-		border-bottom: 1px solid $cc-outline-variant;
+		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
 		display: flex;
-		gap: 16px;
-		padding: 12px 16px 16px;
+		padding: 4px;
 	}
 
 	&__panelBadge {
 		align-items: center;
 		background: $cc-secondary;
-		border-radius: 50%;
+		border-radius: 20px;
 		color: var(--m3-on-primary, #ffffff);
 		display: flex;
 		flex-shrink: 0;
-		height: 48px;
+		height: 40px;
 		justify-content: center;
-		width: 48px;
+		width: 58px;
 
 		svg {
-			height: 20px;
-			width: 20px;
+			height: 24px;
+			width: 24px;
 		}
 	}
 
 	&__panelTitle {
-		color: $cc-on-surface;
+		align-items: center;
+		align-self: stretch;
+		color: $cc-secondary;
+		display: flex;
 		flex: 1;
-		font-size: 20px;
-		font-weight: 400;
-		line-height: 28px;
+		font-size: 18px;
+		font-weight: 500;
+		line-height: 24px;
 		margin: 0;
+		min-height: 48px;
 		min-width: 0;
 		overflow: hidden;
+		padding: 8px 24px;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	&__panelMenu {
 		align-items: center;
-		background: none;
-		border: 1px solid $cc-primary;
-		border-radius: 28px;
+		background: var(--m3-surface, #ffffff);
+		border: 1px solid #ffd1d1;
+		border-radius: 32px;
 		color: $cc-on-surface-variant;
 		cursor: pointer;
 		display: flex;
 		flex-shrink: 0;
-		height: 40px;
+		height: 32px;
 		justify-content: center;
+		margin-right: 12px;
 		width: 56px;
 
 		&:hover:not(:disabled) {
@@ -649,18 +674,22 @@ body.conversationCreate--active .navigation__wrapper {
 		align-items: center;
 		display: flex;
 		gap: 16px;
+		width: 100%;
 	}
 
+	/* conversation_type_select_200: a 100px glyph column left of the title. */
 	&__introGlyph {
 		align-items: center;
-		color: $cc-on-surface;
+		color: $cc-secondary;
 		display: flex;
 		flex-shrink: 0;
+		height: 100px;
 		justify-content: center;
+		width: 100px;
 
 		svg {
-			height: 40px;
-			width: 40px;
+			height: 84px;
+			width: 84px;
 		}
 	}
 
@@ -876,6 +905,8 @@ body.conversationCreate--active .navigation__wrapper {
 
 /* Mobile settings screen: one tightly stacked, scrolling column. */
 .circleSettings--compact {
+	padding-inline: 0;
+
 	.circleSettings__columns {
 		flex-direction: column;
 		gap: 0;
