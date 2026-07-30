@@ -9,6 +9,8 @@ import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vert
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
+import { GroupChatAuthorContentDraft } from '../groupChat/groupChatAuthorContent';
+import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
@@ -309,28 +311,29 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 	const { t } = useTranslation();
 	const [topic, setTopic] = useState('Schulden');
 	const topicRef = useRef<HTMLDivElement | null>(null);
-	const [series, setSeries] = useState({
+	const [series, setSeries] = useState<GroupChatSeriesFieldsValue>({
 		startDate: '2026-08-23',
 		startTime: '19:00',
 		duration: 240,
 		repeatCount: 34,
-		interval: 'WEEKLY' as const,
-		modality: 'VIDEO' as const
+		interval: 'WEEKLY',
+		modality: 'VIDEO'
 	});
-	const [authorContent, setAuthorContent] = useState({
-		sourceLanguage: 'de',
-		hintMessageTranslations: { de: '', en: '' },
-		groupChatRulesTranslations: {
-			de: [
-				'Sprich von dir selbst, nicht über andere.',
-				'Was hier geteilt wird, bleibt hier.'
-			],
-			en: [
-				'Speak about yourself, not about others.',
-				'What is shared here stays here.'
-			]
-		}
-	});
+	const [authorContent, setAuthorContent] =
+		useState<GroupChatAuthorContentDraft>({
+			sourceLanguage: 'de',
+			hintMessageTranslations: { de: '', en: '' },
+			groupChatRulesTranslations: {
+				de: [
+					'Sprich von dir selbst, nicht über andere.',
+					'Was hier geteilt wird, bleibt hier.'
+				],
+				en: [
+					'Speak about yourself, not about others.',
+					'What is shared here stays here.'
+				]
+			}
+		});
 
 	const rows = (
 		<ScheduleRows

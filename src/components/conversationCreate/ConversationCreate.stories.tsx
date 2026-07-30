@@ -5,6 +5,7 @@ import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-hel
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
+import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { RuleChipsEditor } from '../groupChat/RuleChipsEditor';
 import { SplitButton } from '../splitButton/SplitButton';
 import { FormatCard } from './FormatCard';
@@ -272,13 +273,13 @@ export const CompactRowsMobile: Story = {
 };
 
 const ScheduleRowsDemo = () => {
-	const [value, setValue] = useState({
+	const [value, setValue] = useState<GroupChatSeriesFieldsValue>({
 		startDate: '2026-08-23',
 		startTime: '19:00',
 		duration: 240,
 		repeatCount: 34,
-		interval: 'WEEKLY' as const,
-		modality: 'VIDEO' as const
+		interval: 'WEEKLY',
+		modality: 'VIDEO'
 	});
 	const [language, setLanguage] = useState('de');
 	return (
