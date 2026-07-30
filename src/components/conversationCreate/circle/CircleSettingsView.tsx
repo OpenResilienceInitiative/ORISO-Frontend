@@ -275,7 +275,9 @@ export const CircleSettingsView = ({
 				fullWidth
 				icon={<CategorySearchIcon />}
 				label={topic || translate('groupChat.circle.topicLabel')}
-				variant={topic ? 'tonal' : 'outlined'}
+				variant={
+					topicMenuOpen ? 'elevated' : topic ? 'tonal' : 'outlined'
+				}
 				open={topicMenuOpen}
 				onClick={() => setTopicMenuOpen((current) => !current)}
 				onToggleMenu={() => setTopicMenuOpen((current) => !current)}
@@ -384,9 +386,11 @@ export const CircleSettingsView = ({
 											)
 								}
 								variant={
-									consultantIds.length > 0
-										? 'primary'
-										: 'outlined'
+									moderatorMenuOpen
+										? 'elevated'
+										: consultantIds.length > 0
+											? 'primary'
+											: 'outlined'
 								}
 								open={moderatorMenuOpen}
 								onClick={() =>

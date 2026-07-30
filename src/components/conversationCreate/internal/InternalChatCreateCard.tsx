@@ -215,7 +215,13 @@ export const InternalChatCreateCard = ({
 						id="internalChatPersonButton"
 						label={splitButtonLabel}
 						icon={<PersonAddIcon />}
-						variant={selectedCount > 0 ? 'primary' : 'outlined'}
+						variant={
+							menuOpen
+								? 'elevated'
+								: selectedCount > 0
+									? 'primary'
+									: 'outlined'
+						}
 						fullWidth
 						open={menuOpen}
 						onClick={() => setMenuOpen((prev) => !prev)}

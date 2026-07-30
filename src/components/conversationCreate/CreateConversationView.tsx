@@ -53,8 +53,8 @@ import {
 	isGroupChatTranslationAvailable,
 	resolveInitialStep
 } from './formatAvailability';
-import { resolveListboxKey } from './listboxKeyboard';
-import { MenuPortal, useAnchoredMenuLayout } from './anchoredMenu';
+import { filterTopicsForAgencies } from './agencyTopics';
+import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
 import { PanelHeader } from './PanelHeader';
 import { ScreenIntro } from './ScreenIntro';
@@ -82,9 +82,6 @@ import './conversationCreate.styles.scss';
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
-
-/** Natural height of the topic listbox, mirrored by its `max-height`. */
-const TOPIC_MENU_HEIGHT = 320;
 
 const CreateConversationFlow = () => {
 	const { t: translate, i18n } = useTranslation();
@@ -339,13 +336,16 @@ const CreateConversationFlow = () => {
 		[availableConsultants]
 	);
 
+	// Only the topics this counselling centre offers (see agencyTopics).
 	const topicOptions = useMemo(
 		() =>
-			topics.map((topic) => ({
-				value: topic.name,
-				label: topic.name
-			})),
-		[topics]
+			filterTopicsForAgencies(topics, agencies, selectedAgency).map(
+				(topic) => ({
+					value: topic.name,
+					label: topic.name
+				})
+			),
+		[agencies, selectedAgency, topics]
 	);
 
 	const handleBackButton = useCallback(() => {
@@ -392,26 +392,7 @@ const CreateConversationFlow = () => {
 	// Topic listbox keyboard contract (WCAG combobox/listbox): focus moves into
 	// the popup on open, Arrow/Home/End roam the options and Escape returns
 	// focus to the trigger.
-	const topicMenuRef = useRef<HTMLUListElement | null>(null);
 	const pickerSplitButtonRef = useRef<HTMLDivElement | null>(null);
-	const topicMenuLayout = useAnchoredMenuLayout(
-		pickerSplitButtonRef,
-		TOPIC_MENU_HEIGHT,
-		`${pickerTopicMenuOpen}:${topicOptions.length}`
-	);
-
-	const topicOptionButtons = () =>
-		Array.from(
-			topicMenuRef.current?.querySelectorAll<HTMLButtonElement>(
-				'button[role="option"]:not([disabled])'
-			) ?? []
-		);
-
-	useEffect(() => {
-		if (pickerTopicMenuOpen) {
-			topicOptionButtons()[0]?.focus();
-		}
-	}, [pickerTopicMenuOpen]);
 
 	const closeTopicMenu = (returnFocus: boolean) => {
 		setPickerTopicMenuOpen(false);
@@ -420,53 +401,6 @@ const CreateConversationFlow = () => {
 				?.querySelector<HTMLButtonElement>('button')
 				?.focus();
 		}
-	};
-
-	// The menu floats above the card in a portal, so a click on the card no
-	// longer counts as a click "inside" it — close it like any other popup.
-	useEffect(() => {
-		if (!pickerTopicMenuOpen) {
-			return;
-		}
-		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
-			const target = event.target as Node | null;
-			if (
-				target &&
-				!topicMenuRef.current?.contains(target) &&
-				!pickerSplitButtonRef.current?.contains(target)
-			) {
-				setPickerTopicMenuOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleOutsidePointer);
-		document.addEventListener('touchstart', handleOutsidePointer);
-		return () => {
-			document.removeEventListener('mousedown', handleOutsidePointer);
-			document.removeEventListener('touchstart', handleOutsidePointer);
-		};
-	}, [pickerTopicMenuOpen]);
-
-	const handleTopicMenuKeyDown = (
-		event: React.KeyboardEvent<HTMLUListElement>
-	) => {
-		const buttons = topicOptionButtons();
-		const currentIndex = buttons.findIndex(
-			(button) => button === document.activeElement
-		);
-		const result = resolveListboxKey(
-			event.key,
-			currentIndex,
-			buttons.length
-		);
-		if (result === null) {
-			return;
-		}
-		event.preventDefault();
-		if (result === 'close') {
-			closeTopicMenu(true);
-			return;
-		}
-		buttons[result]?.focus();
 	};
 
 	const renderInternalCard = () => (
@@ -538,7 +472,14 @@ const CreateConversationFlow = () => {
 								pickerTopic ||
 								translate('groupChat.circle.topicLabel')
 							}
-							variant={pickerTopic ? 'primary' : 'outlined'}
+							id="pickerTopicButton"
+							variant={
+								pickerTopicMenuOpen
+									? 'elevated'
+									: pickerTopic
+										? 'primary'
+										: 'outlined'
+							}
 							open={pickerTopicMenuOpen}
 							mainOpensMenu={!pickerTopic}
 							onClick={() => {
@@ -556,15 +497,9 @@ const CreateConversationFlow = () => {
 							)}
 						/>
 						{pickerTopicMenuOpen && (
-							<MenuPortal>
-								<ul
-									ref={topicMenuRef}
-									className={`conversationCreate__topicMenu conversationCreate__topicMenu--${topicMenuLayout.direction}`}
-									style={topicMenuLayout.style}
-									role="listbox"
-									onKeyDown={handleTopicMenuKeyDown}
-								>
-									{(topicOptions.length
+							<RowMenu
+								options={
+									topicOptions.length
 										? topicOptions
 										: [
 												{
@@ -574,26 +509,19 @@ const CreateConversationFlow = () => {
 													)
 												}
 											]
-									).map((topic) => (
-										<li key={topic.value || 'none'}>
-											<button
-												type="button"
-												role="option"
-												aria-selected={
-													pickerTopic === topic.value
-												}
-												disabled={!topic.value}
-												onClick={() => {
-													setPickerTopic(topic.value);
-													closeTopicMenu(true);
-												}}
-											>
-												{topic.label}
-											</button>
-										</li>
-									))}
-								</ul>
-							</MenuPortal>
+								}
+								value={pickerTopic}
+								onSelect={(next) => {
+									if (!next) {
+										return;
+									}
+									setPickerTopic(next);
+									closeTopicMenu(true);
+								}}
+								anchorRef={pickerSplitButtonRef}
+								onClose={() => closeTopicMenu(false)}
+								labelledBy="pickerTopicButton"
+							/>
 						)}
 					</>
 				)}

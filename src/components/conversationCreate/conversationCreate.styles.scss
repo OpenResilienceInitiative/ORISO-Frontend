@@ -84,57 +84,6 @@ $cc-motion-easing: var(
 		width: 100%;
 	}
 
-	&__topicMenu {
-		background: var(--m3-surface, #fcf9f9);
-		border: 2px solid $cc-primary;
-		border-radius: 28px;
-		box-shadow: $cc-elevation-1;
-		list-style: none;
-		margin: 0;
-		max-height: 320px;
-		overflow-y: auto;
-		padding: 8px 0;
-
-		/* Portalled to the body and anchored with fixed coordinates so the
-		   card's `overflow: hidden` cannot clip it (Figma annotation "menu
-		   must show on top not inside the card"). */
-		position: fixed;
-		z-index: 1200;
-
-		button {
-			background: none;
-			border: none;
-			color: $cc-secondary;
-			cursor: pointer;
-			display: block;
-			font-size: 14px;
-			font-weight: 500;
-			letter-spacing: 0.25px;
-			line-height: 20px;
-			min-height: 48px;
-			padding: 14px 16px;
-			text-align: center;
-			width: 100%;
-
-			&:hover:not(:disabled) {
-				background-color: rgba(27, 27, 28, 0.04);
-			}
-
-			&[aria-selected='true'] {
-				/* Weight + inset border so the selection reads without colour
-				   perception (WCAG 1.4.1). */
-				box-shadow: inset 3px 0 0 0 $cc-primary;
-				color: $cc-primary;
-				font-weight: 700;
-			}
-
-			&:disabled {
-				color: $cc-outline-variant;
-				cursor: default;
-			}
-		}
-	}
-
 	&__error {
 		align-items: center;
 		background: var(--m3-error-container, #ffdad6);
@@ -338,8 +287,8 @@ body.conversationCreate--active .navigation__wrapper {
 	flex-direction: column;
 	overflow-y: auto;
 
-	/* Portalled to the body and anchored with fixed coordinates — see
-	   __topicMenu above. */
+	/* Portalled to the body and anchored with fixed coordinates so the card's
+	   `overflow: hidden` cannot clip it. */
 	position: fixed;
 	z-index: 1200;
 
@@ -888,7 +837,7 @@ body.conversationCreate--active .navigation__wrapper {
 	overflow-y: auto;
 	padding: 8px 0;
 
-	/* Portalled to the body — see __topicMenu. */
+	/* Portalled to the body and anchored to its row. */
 	position: fixed;
 	z-index: 1200;
 

@@ -14,6 +14,7 @@ import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
 import { FormatCard } from './FormatCard';
 import { PanelHeader } from './PanelHeader';
+import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
 import { TopicMedia } from './TopicMedia';
 import { ScheduleRows } from './circle/ScheduleRows';
@@ -115,10 +116,11 @@ const CardOverflow = () => {
 	);
 };
 
-const CircleCard = () => {
+const CircleCard = ({ menuOpen = false }: { menuOpen?: boolean }) => {
 	const { t } = useTranslation();
 	const anchorRef = useRef<HTMLDivElement | null>(null);
-	const [topic, setTopic] = useState('Schulden');
+	const [topic, setTopic] = useState('');
+	const [open, setOpen] = useState(menuOpen);
 	return (
 		<FormatCard
 			className="conversationCreate__formatCard"
@@ -138,14 +140,30 @@ const CircleCard = () => {
 			<div className="conversationCreate__cardActions">
 				<SplitButton
 					ref={anchorRef}
+					id="storyTopicButton"
 					fullWidth
 					icon={<CategorySearchIcon />}
 					label={topic || t('groupChat.circle.topicLabel')}
-					variant={topic ? 'primary' : 'outlined'}
-					onClick={() => setTopic(topic ? '' : 'Schulden')}
-					onToggleMenu={() => setTopic(topic ? '' : 'Schulden')}
+					variant={open ? 'elevated' : topic ? 'primary' : 'outlined'}
+					open={open}
+					mainOpensMenu={!topic}
+					onClick={() => setOpen((prev) => !prev)}
+					onToggleMenu={() => setOpen((prev) => !prev)}
 					menuLabel={t('groupChat.circle.toggleTopicList')}
 				/>
+				{open && (
+					<RowMenu
+						options={TOPICS}
+						value={topic}
+						onSelect={(next) => {
+							setTopic(next);
+							setOpen(false);
+						}}
+						anchorRef={anchorRef}
+						onClose={() => setOpen(false)}
+						labelledBy="storyTopicButton"
+					/>
+				)}
 			</div>
 		</FormatCard>
 	);
@@ -170,7 +188,13 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 	);
 };
 
-const FormatPicker = ({ compact }: { compact: boolean }) => {
+const FormatPicker = ({
+	compact,
+	menuOpen = false
+}: {
+	compact: boolean;
+	menuOpen?: boolean;
+}) => {
 	const { t } = useTranslation();
 	return (
 		<div className="conversationCreate">
@@ -207,7 +231,7 @@ const FormatPicker = ({ compact }: { compact: boolean }) => {
 						</div>
 					) : (
 						<div className="conversationCreate__cards">
-							<CircleCard />
+							<CircleCard menuOpen={menuOpen} />
 							<InternaCard preset="empty" />
 						</div>
 					)}
@@ -227,6 +251,21 @@ export const FormatPickerDesktop: Story = {
 	render: () => (
 		<DesktopShell>
 			<FormatPicker compact={false} />
+		</DesktopShell>
+	)
+};
+
+export const FormatPickerDesktopTopicMenu: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story: 'The topic list floats above the card exactly like the person list on the right, and the split button switches to the elevated state while its menu is open. Both use the same RowMenu / SplitButton components.'
+			}
+		}
+	},
+	render: () => (
+		<DesktopShell>
+			<FormatPicker compact={false} menuOpen />
 		</DesktopShell>
 	)
 };
