@@ -17,7 +17,7 @@ export const SessionListItemVideoCall = (
 	return (
 		<div className="sessionsListItem__subject">
 			{currentUserWasVideoCallInitiator(
-				props.videoCallMessage.initiatorRcUserId
+				props.videoCallMessage.initiatorMatrixUserId
 			) ? (
 				<>
 					{translate('videoCall.incomingCall.rejected.prefix')}{' '}

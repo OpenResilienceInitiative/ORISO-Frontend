@@ -38,12 +38,23 @@ const removeAuthStorageValue = (name: string) => {
 	}
 };
 
+/**
+ * Session cookies are written by the frontend, so they cannot be HttpOnly (FE-H01).
+ * SameSite=Strict and, on https, the secure flag are the part we can enforce here:
+ * they keep the cookie out of cross-site requests and off plaintext connections.
+ * The secure flag is omitted on http so local development keeps working.
+ */
+const getCookieSecurityAttributes = () => {
+	const secure = window.location.protocol === 'https:' ? '; secure' : '';
+	return `SameSite=Strict${secure}`;
+};
+
 export const setValueInCookie = (
 	name: string,
 	value: string,
 	path: string = '/'
 ) => {
-	document.cookie = `${name}=${value};path=${path};`;
+	document.cookie = `${name}=${value};path=${path};${getCookieSecurityAttributes()}`;
 	setAuthStorageValue(name, value);
 };
 

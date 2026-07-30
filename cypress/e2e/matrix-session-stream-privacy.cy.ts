@@ -144,12 +144,11 @@ describe('Matrix session stream privacy', () => {
 		});
 		expect(message.attachments[0]).to.deep.include({
 			title: 'case-note.txt',
-			title_link: '/_matrix/media/r0/download/oriso.org/file',
+			downloadUrl: '/_matrix/media/r0/download/oriso.org/file',
 			type: 'file',
-			image_type: 'text/plain',
-			image_size: 22,
-			matrix_encrypted_file: encryptedFile
+			mediaType: 'text/plain',
+			size: 22,
+			encryptedFile
 		});
-		expect(message.attachments[0]).not.to.have.property('image_url');
 	});
 });

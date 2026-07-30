@@ -145,6 +145,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 				isBrowserNotificationTypeEnabled('newMessage')
 			) {
 				sendNotification(translate('notifications.message.new'), {
+					// Route the banner to its config row (#576 harmonised
+					// model): Gespräch → Standard-Benachrichtigung.
+					family: 'messages',
+					eventType: 'message.new',
 					onclick: () => {
 						navigate(`/sessions/consultant/sessionView`);
 					}
@@ -183,7 +187,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	useEffect(() => {
 		if (newStompVideoCallRequest) {
 			addNotification({
-				id: newStompVideoCallRequest.rcGroupId,
+				id: newStompVideoCallRequest.matrixRoomId,
 				notificationType: NOTIFICATION_TYPE_CALL,
 				videoCall: newStompVideoCallRequest
 			});

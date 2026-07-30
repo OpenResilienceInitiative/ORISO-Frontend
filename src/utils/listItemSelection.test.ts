@@ -43,7 +43,7 @@ describe('WP-06 list-item selection controller', () => {
 			).toEqual({ groupId: null, sessionId: '55' });
 		});
 
-		it('derives groupId + sessionId from a RocketChat route', () => {
+		it('derives groupId + sessionId from a group-id route', () => {
 			expect(
 				deriveActiveSelection(
 					'/sessions/consultant/sessionView/AbCdGroup/123'

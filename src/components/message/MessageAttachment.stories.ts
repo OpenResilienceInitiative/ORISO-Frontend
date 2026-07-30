@@ -39,18 +39,15 @@ export const ImageAttachment: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link:
+			downloadUrl:
 				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			title_link_download: true,
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url:
-				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			image_type: 'image/jpeg',
-			image_size: 99045
+			mediaType: 'image/jpeg',
+			size: 99045
 		},
 		file: {
-			_id: 'file123',
+			id: 'file123',
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
@@ -65,16 +62,14 @@ export const DocumentAttachment: Story = {
 	args: {
 		attachment: {
 			title: 'ORISO (Repository Guide).pdf',
-			title_link: '/example.pdf',
-			title_link_download: true,
+			downloadUrl: '/example.pdf',
 			type: 'file',
 			description: 'PDF document',
-			image_url: '',
-			image_type: '',
-			image_size: 70000 // in bytes (70 KB)
+			mediaType: '',
+			size: 70000 // in bytes (70 KB)
 		},
 		file: {
-			_id: 'file456',
+			id: 'file456',
 			name: 'ORISO (Repository Guide).pdf',
 			type: 'application/pdf'
 		},
@@ -89,18 +84,15 @@ export const WithRenderedMessage: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link:
+			downloadUrl:
 				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			title_link_download: true,
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url:
-				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
-			image_type: 'image/jpeg',
-			image_size: 99045
+			mediaType: 'image/jpeg',
+			size: 99045
 		},
 		file: {
-			_id: 'file789',
+			id: 'file789',
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
@@ -120,13 +112,12 @@ const PNG_DATA_URL =
 const uncheckedImageArgs = {
 	attachment: {
 		title: 'gast-bild.png',
-		title_link: PNG_DATA_URL,
+		downloadUrl: PNG_DATA_URL,
 		type: 'image',
-		image_url: PNG_DATA_URL,
-		image_type: 'image/png',
-		image_size: 1,
-		image_w: 120,
-		image_h: 72
+		mediaType: 'image/png',
+		size: 1,
+		width: 120,
+		height: 72
 	} as never,
 	file: {
 		_id: 'file-guest',

@@ -11,6 +11,7 @@ import {
 	MILLISECONDS_PER_SECOND
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -178,7 +179,7 @@ export const SessionListItemComponent = ({
 	// Is List Item active
 	const isChatActive = activeSession
 		? isActive({
-				groupId: sessionItem?.groupId,
+				groupId: sessionItem?.matrixRoomId,
 				rid: activeSession.rid,
 				sessionId: sessionItem?.id
 			})
@@ -193,11 +194,11 @@ export const SessionListItemComponent = ({
 		config.registration.consultingTypeDefaults.autoSelectPostcode;
 
 	const { key, keyID, encrypted, ready } = useE2EE(
-		sessionItem?.groupId || null,
+		sessionItem?.matrixRoomId || null,
 		sessionItem?.lastMessageType === ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 	);
 	const isMatrixBackedSession =
-		isMatrixRoomIdHeuristic(sessionItem?.groupId) ||
+		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId) ||
 		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
 	const caseHandoverAccessControlled = isCaseHandoverAccessControlled({
@@ -371,15 +372,9 @@ export const SessionListItemComponent = ({
 			}
 			return [compact, `@${compact}`];
 		};
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		const currentUserIds = new Set<string>([
-			...normalizeIds(matrixUserIdFromCookie),
+			...normalizeIds(matrixUserIdFromSession),
 			...normalizeIds(userData?.userName)
 		]);
 		if (parsed.visibleToUserIds?.length) {
@@ -531,7 +526,7 @@ export const SessionListItemComponent = ({
 	const handleOnClick = () => {
 		// console.log('🖱️ CARD CLICKED:', {
 		// sessionId: activeSession.item.id,
-		// groupId: activeSession.item.groupId,
+		// groupId: activeSession.item.matrixRoomId,
 		// isGroup: activeSession.isGroup,
 		// listPath,
 		// isEmptyEnquiry: activeSession.isEmptyEnquiry,
@@ -543,7 +538,7 @@ export const SessionListItemComponent = ({
 				getSessionNavigationPath({
 					listPath,
 					sessionId: activeSession.item.id,
-					groupId: activeSession.item.groupId,
+					groupId: activeSession.item.matrixRoomId,
 					rid: activeSession.rid,
 					isGroup: activeSession.isGroup,
 					isAsker,
@@ -631,7 +626,7 @@ export const SessionListItemComponent = ({
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
 						navigate(
-							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`
+							`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}${getSessionListTab()}`
 						);
 					} else {
 						mobileListView();
@@ -655,7 +650,7 @@ export const SessionListItemComponent = ({
 			setIsRequestInProgress(false);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
 			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.groupId;
+			const sessionGroupId = activeSession.item.matrixRoomId;
 
 			apiPutArchive(sessionId)
 				.then(() => {
@@ -695,17 +690,6 @@ export const SessionListItemComponent = ({
 
 		return prettyDate.str ? translate(prettyDate.str) : prettyDate.date;
 	};
-
-	// Hide sessions if consultingType has been switched to group chat.
-	// ToDo: What is with vice versa?
-	// DISABLED FOR MATRIX MIGRATION - This was hiding sessions without groupId
-	// if (activeSession.isSession && consultingType?.groupChat?.isGroupChat) {
-	// 	return null;
-	// }
-
-	// MATRIX MIGRATION: the `if (!consultingType)` early return above already
-	// handles the missing-consulting-type case, so the previous fallback block
-	// here was unreachable and has been removed.
 
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
@@ -916,7 +900,7 @@ export const SessionListItemComponent = ({
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'
 			)}
-			data-group-id={activeSession.item.groupId}
+			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
 		>
 			<div
@@ -1423,7 +1407,7 @@ export const SessionListItemComponent = ({
 								isGroup={!!activeSession.isGroup}
 								isSystemNotification={false}
 								userId={
-									activeSession.item.askerRcId ||
+									activeSession.item.askerMatrixUserId ||
 									activeSession.user?.username ||
 									'unknown'
 								}
@@ -1507,7 +1491,9 @@ export const SessionListItemComponent = ({
 									activeSession.user?.username ||
 									activeSession.consultant?.username
 								}
-								listItemAskerRcId={activeSession.item.askerRcId}
+								listItemAskerRcId={
+									activeSession.item.askerMatrixUserId
+								}
 							/>
 						)}
 					{canShowCaseHandoverAction && (

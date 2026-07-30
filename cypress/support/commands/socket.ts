@@ -28,35 +28,14 @@ Cypress.Commands.add('waitForSubscriptions', (events: string[]) => {
 Cypress.Commands.add('emitDirectMessage', (index?: number) => {
 	new Cypress.Promise((resolve) => {
 		cy.askerSession({ session: { messagesRead: false } }, index || 0);
-		cy.addMessage({}, index || 0);
-
 		cy.get<() => Server>('@mockSocketServer').then((mockSocketServer) => {
-			// Rocket.Chat is gone (Matrix-only migration): only the
-			// LiveService STOMP event remains for direct messages.
+			// The LiveService STOMP event refreshes the Matrix-backed list.
 			mockSocketServer()
 				.clients()
 				.forEach((client: ExtendedClient) => {
 					if (client.type === 'Stomp') {
 						client.send(
 							`a["MESSAGE\\ndestination:/user/events\\ncontent-type:application/json\\nsubscription:sub-0\\nmessage-id:${uuid()}\\ncontent-length:29\\n\\n{\\"eventType\\":\\"directMessage\\"}\\u0000"]`
-						);
-					}
-				});
-
-			resolve();
-		});
-	});
-});
-
-Cypress.Commands.add('emitVideoCallRequest', () => {
-	new Cypress.Promise((resolve) => {
-		cy.get<() => Server>('@mockSocketServer').then((mockSocketServer) => {
-			mockSocketServer()
-				.clients()
-				.forEach((client: ExtendedClient) => {
-					if (client.type === 'Stomp') {
-						client.send(
-							`a["MESSAGE\\ndestination:/user/events\\ncontent-type:application/json\\nsubscription:sub-0\\nmessage-id::${uuid()}\\ncontent-length:260\\n\\n{\\"eventType\\":\\"videoCallRequest\\",\\"eventContent\\":{\\"videoCallUrl\\":\\"https://localhost:8443/5db43632-8283-445b-9f20-4d69954727bf\\",\\"initiatorUsername\\":\\"enc.ouzdk3lbnfxa....\\",\\"initiatorRcUserId\\":\\"WXR5RAwbotmd4NPer\\",\\"rcGroupId\\":\\"${uuid()}\\"}}\\u0000"]`
 						);
 					}
 				});

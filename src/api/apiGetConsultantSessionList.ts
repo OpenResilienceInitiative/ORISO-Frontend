@@ -25,7 +25,6 @@ const fetchListUrl = (
 	fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		rcValidation: true,
 		responseHandling: [FETCH_ERRORS.EMPTY],
 		timeout: TIMEOUT,
 		...(signal && { signal: signal })

@@ -1,6 +1,6 @@
 /**
  * Video Call Component (Matrix Migration)
- * Now uses Matrix native WebRTC calls instead of Jitsi/VideoService
+ * Uses Matrix native WebRTC calls.
  */
 
 import React from 'react';

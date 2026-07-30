@@ -1064,12 +1064,6 @@
 			}
 		}
 	},
-	"jitsi": {
-		"btn": {
-			"copied": "Video link has been copied to the clipboard",
-			"default": "Copy video link"
-		}
-	},
 	"languages": {
 		"aa": "Afar",
 		"ab": "Abkhaz",
@@ -2030,22 +2024,6 @@
 					"1h": "1 hour",
 					"8h": "8 hours",
 					"tomorrow": "Until tomorrow morning"
-				}
-			},
-			"sounds": {
-				"title": "Notification sounds",
-				"intro": "Choose sounds for new messages and for mentions. Sounds apply on all your devices.",
-				"preview": "Preview",
-				"slot": {
-					"message": "New messages",
-					"mention": "Mentions"
-				},
-				"choice": {
-					"none": "No sound",
-					"chime": "Chime",
-					"ding": "Ding",
-					"soft": "Soft",
-					"default": "Same as messages"
 				}
 			},
 			"config": {
@@ -3523,44 +3501,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Confirm",
-				"description": "After that, our consultants may start a video call with you.",
-				"headline": "A warm welcome",
-				"label": {
-					"and": "and",
-					"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this."
-				},
-				"subline": "Please confirm our privacy policy."
-			},
-			"errorImageTitle": "Faile",
-			"errorPage": {
-				"button": "Reload",
-				"consultant": {
-					"description": "We cannot find a video call for your link because the video call has either been deleted or already terminated."
-				},
-				"description": "We cannot find a video call for your link because the video call has either been deleted or already terminated. If you still have problems, please ask your consultant.",
-				"headline": "The video call was not found",
-				"rejected": {
-					"description": "You have not been admitted. Unfortunately, you cannot participate in this video call because your advisor has not approved you.",
-					"headline": "You were not admitted"
-				}
-			},
-			"headline": "Please be patient",
-			"paused": {
-				"headline": "The video call was ended",
-				"subline": "The video call has ended. If your consultant is only absent, you will be forwarded to the video call as soon as your consultant resumes the video call."
-			},
-			"subline": "The video call has not yet started. You will be forwarded as soon as your consultant starts the video call.",
-			"title": {
-				"start": "Waiting room"
-			},
-			"waitingImageTitle": "Waiting person with coffee",
-			"welcomeImageTitle": "Welcome"
-		}
-	},
 	"walkthrough": {
 		"close": "Close tour",
 		"overview": {
@@ -3881,6 +3821,21 @@
 		"error": {
 			"open": "The team discussion could not be opened.",
 			"send": "The message could not be sent."
+		}
+	},
+	"anonymousConsent": {
+		"button": "Confirm",
+		"description": "After that, our consultants may start a video call with you.",
+		"headline": "A warm welcome",
+		"label": {
+			"and": "and",
+			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this."
+		},
+		"subline": "Please confirm our privacy policy."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video appointments are currently unavailable."
 		}
 	}
 }

@@ -39,15 +39,15 @@ export interface ListItemIdentity {
 
 /**
  * Session routes that carry an active conversation, most specific first. The
- * `write/` and `session/` literals must precede the generic `:rcGroupId`
+ * `write/` and `session/` literals must precede the generic `:groupId`
  * patterns so those literal segments are never mistaken for a group id.
  * Covers consultant (`sessionView` / `sessionPreview`) and asker (`view`).
  */
 const SESSION_ROUTE_PATTERNS: ReadonlyArray<string> = [
 	'/sessions/:userType/:listType/write/:sessionId',
 	'/sessions/:userType/:listType/session/:sessionId',
-	'/sessions/:userType/:listType/:rcGroupId/:sessionId',
-	'/sessions/:userType/:listType/:rcGroupId'
+	'/sessions/:userType/:listType/:groupId/:sessionId',
+	'/sessions/:userType/:listType/:groupId'
 ];
 
 const EMPTY_SELECTION: ActiveListSelection = { groupId: null, sessionId: null };
@@ -74,11 +74,11 @@ export const deriveActiveSelection = (
 		const match = matchPath({ path, end: false }, pathname);
 		if (match) {
 			const params = match.params as {
-				rcGroupId?: string;
+				groupId?: string;
 				sessionId?: string;
 			};
 			return {
-				groupId: norm(params.rcGroupId),
+				groupId: norm(params.groupId),
 				sessionId: norm(params.sessionId)
 			};
 		}

@@ -78,4 +78,68 @@ describe('accessSessionCookie', () => {
 		expect(window.localStorage.getItem('auth.keycloak')).toBeNull();
 		expect(window.localStorage.getItem('auth.refreshToken')).toBeNull();
 	});
+
+	describe('cookie attributes (FE-H01)', () => {
+		const captureCookieWrite = (value: string) => {
+			const writes: string[] = [];
+			const original = Object.getOwnPropertyDescriptor(
+				Document.prototype,
+				'cookie'
+			);
+			Object.defineProperty(document, 'cookie', {
+				configurable: true,
+				get: () => '',
+				set: (written: string) => writes.push(written)
+			});
+			try {
+				setValueInCookie('keycloak', value);
+			} finally {
+				if (original) {
+					Object.defineProperty(document, 'cookie', original);
+				}
+			}
+			return writes[0] ?? '';
+		};
+
+		const withProtocol = (protocol: string, run: () => string) => {
+			const original = window.location;
+			Object.defineProperty(window, 'location', {
+				configurable: true,
+				value: { ...original, protocol }
+			});
+			try {
+				return run();
+			} finally {
+				Object.defineProperty(window, 'location', {
+					configurable: true,
+					value: original
+				});
+			}
+		};
+
+		it('restricts session cookies to same-site requests', () => {
+			const written = withProtocol('https:', () =>
+				captureCookieWrite('access-token')
+			);
+
+			expect(written).toContain('SameSite=Strict');
+		});
+
+		it('marks session cookies secure when served over https', () => {
+			const written = withProtocol('https:', () =>
+				captureCookieWrite('access-token')
+			);
+
+			expect(written).toContain('; secure');
+		});
+
+		it('omits the secure flag on plain http so local development keeps working', () => {
+			const written = withProtocol('http:', () =>
+				captureCookieWrite('access-token')
+			);
+
+			expect(written).not.toContain('secure');
+			expect(written).toContain('SameSite=Strict');
+		});
+	});
 });

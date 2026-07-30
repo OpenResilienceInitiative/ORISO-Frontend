@@ -1,4 +1,3 @@
-import { AppConfigJitsiInterface } from './AppConfigJitsiInterface';
 import { AppConfigNotificationsInterface } from './AppConfigNotificationsInterface';
 import { AppConfigTwoFactorInterface } from './AppConfigTwoFactorInterface';
 import { AppConfigUrlsInterface } from './AppConfigUrlsInterface';
@@ -15,7 +14,6 @@ export interface AppConfigInterface extends AppSettingsInterface {
 	legalLinks: LegalLinkInterface[];
 	postcodeFallbackUrl: string;
 	spokenLanguages: string[];
-	jitsi: AppConfigJitsiInterface;
 	emails: AppConfigNotificationsInterface;
 	twofactor: AppConfigTwoFactorInterface;
 	i18n: InitOptions;

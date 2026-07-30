@@ -28,6 +28,7 @@ import { registrationMotion } from '../registration/registrationDesign/registrat
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
+import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 
 interface StageLayoutProps {
 	className?: string;
@@ -69,6 +70,7 @@ export const StageLayout = ({
 		registrationUrl || settings.urls.toRegistration;
 	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
+	const platformVersion = getPlatformVersion();
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -321,6 +323,13 @@ export const StageLayout = ({
 								)}
 							</LegalLinks>
 						</div>
+						{platformVersion && (
+							<Text
+								className="stageLayout__platformVersion"
+								type="infoSmall"
+								text={platformVersion}
+							/>
+						)}
 					</div>
 				)}
 			</Box>

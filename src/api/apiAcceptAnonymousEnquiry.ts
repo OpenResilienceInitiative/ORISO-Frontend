@@ -18,7 +18,6 @@ export const apiAcceptAnonymousEnquiry = async (
 	return fetchData({
 		url,
 		method: FETCH_METHODS.PUT,
-		rcValidation: true,
 		responseHandling: [FETCH_ERRORS.CONFLICT]
 	});
 };

@@ -372,7 +372,7 @@ export const SessionStream = ({
 			}
 
 			// Sessions without a Matrix room (stale pre-migration data) render
-			// an empty history instead of pulling legacy Rocket.Chat messages.
+			// an empty history instead of pulling messages from a removed backend.
 			setMessagesItem({ messages: [] });
 			setLoading(false);
 			return Promise.resolve(true);
@@ -670,7 +670,7 @@ export const SessionStream = ({
 		[translate]
 	);
 
-	// Restores the legacy Rocket.Chat "subscriptions-changed removed" UX on
+	// Restores the "subscription removed" UX on
 	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
 	// room purge; m.room.tombstone when a room is shut down/replaced):
 	// - group chat ended: "group chat stopped" overlay, unless this user

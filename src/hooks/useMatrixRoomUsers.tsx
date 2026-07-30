@@ -23,7 +23,7 @@ const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
 
 /**
  * Members of the active session's Matrix room, in the shape the legacy
- * Rocket.Chat users-of-room context used to provide. Sessions without a
+ * the room-members context provides. Sessions without a
  * Matrix room yield an empty list (graceful degradation).
  *
  * The Matrix client syncs with lazyLoadMembers, so the local member cache
