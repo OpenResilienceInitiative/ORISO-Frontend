@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ReactComponent as CircleIcon } from '../../resources/img/icons/diversity-2.svg';
-import { ReactComponent as InternalIcon } from '../../resources/img/icons/family-group.svg';
+import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
+import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import { RuleChipsEditor } from '../groupChat/RuleChipsEditor';

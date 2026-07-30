@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as CircleIcon } from '../../../resources/img/icons/diversity-2.svg';
+import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
 import { ReactComponent as MoreIcon } from '../../../resources/img/icons/stack-vertical.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';

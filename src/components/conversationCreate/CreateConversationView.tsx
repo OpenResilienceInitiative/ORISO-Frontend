@@ -22,8 +22,8 @@ import {
 import { UserDataContext, useTenant, useTenantState } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
-import { ReactComponent as CircleIcon } from '../../resources/img/icons/diversity-2.svg';
-import { ReactComponent as InternalIcon } from '../../resources/img/icons/family-group.svg';
+import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
+import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
 import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vertical.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';

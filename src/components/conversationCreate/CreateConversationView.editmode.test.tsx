@@ -109,7 +109,11 @@ vi.mock('../../resources/img/icons/diversity-2.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-vi.mock('../../resources/img/icons/family-group.svg', () => ({
+vi.mock('../../resources/img/icons/self-help-group.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/internal-conversation.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
