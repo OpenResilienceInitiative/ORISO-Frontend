@@ -291,7 +291,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archivieren",
-		"archiveDescription": "Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht.",
+		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
 		"askerProfil": "Ratsuchendenprofil",
 		"dataProtection": "Datenschutz",
 		"dearchive": "Dearchivieren",
@@ -305,7 +305,7 @@
 		"activateNotification": "Benachrichtigungen aktivieren",
 		"privacyPolicy": "Datenschutzerklärung",
 		"privacyPolicyDescription": "Lese wie diese Beratungsstelle deine Daten verarbeitet.",
-		"help": "Hilfe Anfragen",
+		"help": "Hilfe anfragen",
 		"helpDescription": "Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen.",
 		"invite": "Weitere Personen einladen",
 		"inviteDescription": "Wer eingeladen werden kann, hängt von den Admin-Einstellungen ab.",
@@ -2062,22 +2062,6 @@
 					"1h": "1 Stunde",
 					"8h": "8 Stunden",
 					"tomorrow": "Bis morgen früh"
-				}
-			},
-			"sounds": {
-				"title": "Benachrichtigungstöne",
-				"intro": "Wählen Sie Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",
-				"preview": "Vorhören",
-				"slot": {
-					"message": "Neue Nachrichten",
-					"mention": "Erwähnungen"
-				},
-				"choice": {
-					"none": "Kein Ton",
-					"chime": "Chime",
-					"ding": "Ding",
-					"soft": "Sanft",
-					"default": "Wie Nachrichten"
 				}
 			},
 			"config": {

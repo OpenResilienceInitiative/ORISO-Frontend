@@ -38,12 +38,6 @@ export interface OrisoNotificationSettings {
 		 */
 		showMessagePreview: boolean;
 	};
-	sounds: {
-		/** Sound played for new messages. */
-		message: SoundId;
-		/** Sound played for @-mentions ('default' = same as messages). */
-		mention: SoundId;
-	};
 	/**
 	 * Global do-not-disturb: ISO timestamp until which all announcements
 	 * (toast/sound/push) are silenced, or null. Authoritative copy lives in
@@ -113,12 +107,6 @@ export const NOTIFICATION_TONE_IDS: ReadonlyArray<SoundId> = [
 	'ton-12'
 ];
 
-const asSoundId = (value: unknown, fallback: SoundId): SoundId =>
-	typeof value === 'string' &&
-	(SOUND_IDS as ReadonlyArray<string>).includes(value)
-		? (value as SoundId)
-		: fallback;
-
 export const ALL_FAMILIES: ReadonlyArray<EventFamily> = [
 	'requests',
 	'messages',
@@ -142,10 +130,6 @@ export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 	browserNotifications: {
 		enabled: false,
 		showMessagePreview: false
-	},
-	sounds: {
-		message: 'chime',
-		mention: 'default'
 	},
 	notificationConfig: DEFAULT_NOTIFICATION_CONFIG
 };
@@ -198,16 +182,6 @@ export const parseNotificationSettings = (
 					.showMessagePreview
 			)
 		},
-		sounds: {
-			message: asSoundId(
-				source.sounds?.message,
-				DEFAULT_NOTIFICATION_SETTINGS.sounds.message
-			),
-			mention: asSoundId(
-				source.sounds?.mention,
-				DEFAULT_NOTIFICATION_SETTINGS.sounds.mention
-			)
-		},
 		dndUntil: typeof source.dndUntil === 'string' ? source.dndUntil : null,
 		notificationConfig: parseNotificationConfig(source.notificationConfig)
 	};
@@ -229,7 +203,6 @@ export type NotificationSettingsUpdate = {
 	browserNotifications?: Partial<
 		OrisoNotificationSettings['browserNotifications']
 	>;
-	sounds?: Partial<OrisoNotificationSettings['sounds']>;
 	dndUntil?: string | null;
 	notificationConfig?: NotificationConfig;
 };
@@ -245,7 +218,6 @@ export const mergeNotificationSettings = (
 		...current.browserNotifications,
 		...(update.browserNotifications || {})
 	},
-	sounds: { ...current.sounds, ...(update.sounds || {}) },
 	dndUntil:
 		update.dndUntil !== undefined ? update.dndUntil : current.dndUntil,
 	notificationConfig:

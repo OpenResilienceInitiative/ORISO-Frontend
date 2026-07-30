@@ -387,6 +387,122 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(imported).toHaveBeenCalledOnce();
 	});
 
+	it('retries failed timeline decryptions after a key import (FE#811)', async () => {
+		const harness = buildHarness();
+		const attemptDecryption = vi.fn().mockResolvedValue(undefined);
+		const failedEvent = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption
+		};
+		const decryptedEvent = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false,
+			attemptDecryption: vi.fn()
+		};
+		(harness.room as any).getLiveTimeline = vi.fn(() => ({
+			getEvents: () => [failedEvent, decryptedEvent],
+			getNeighbouringTimeline: () => null
+		}));
+		const imported = vi.fn();
+		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
+			once: true
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'request-1',
+				keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
+			})
+		);
+
+		await vi.waitFor(() => expect(imported).toHaveBeenCalledOnce());
+
+		// Only the failed event is retried, with the imported keys available,
+		// and the retry completes BEFORE the imported event is announced (the
+		// UI refetches on that event and must see plaintext, not the stale
+		// m.bad.encrypted placeholder).
+		expect(attemptDecryption).toHaveBeenCalledWith(harness.crypto, {
+			isRetry: true
+		});
+		expect(decryptedEvent.attemptDecryption).not.toHaveBeenCalled();
+		expect(attemptDecryption.mock.invocationCallOrder[0]).toBeLessThan(
+			imported.mock.invocationCallOrder[0]
+		);
+	});
+
+	it('retries failed events in backfilled scrollback timelines too (FE#811)', async () => {
+		const harness = buildHarness();
+		const liveFailed = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption: vi.fn().mockResolvedValue(undefined)
+		};
+		const scrollbackFailed = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption: vi.fn().mockResolvedValue(undefined)
+		};
+		const olderTimeline = {
+			getEvents: () => [scrollbackFailed],
+			getNeighbouringTimeline: () => null
+		};
+		(harness.room as any).getLiveTimeline = vi.fn(() => ({
+			getEvents: () => [liveFailed],
+			getNeighbouringTimeline: () => olderTimeline
+		}));
+		const imported = vi.fn();
+		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
+			once: true
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'request-1',
+				keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
+			})
+		);
+
+		await vi.waitFor(() => expect(imported).toHaveBeenCalledOnce());
+		expect(liveFailed.attemptDecryption).toHaveBeenCalledOnce();
+		expect(scrollbackFailed.attemptDecryption).toHaveBeenCalledOnce();
+	});
+
+	it('a failing decryption retry never blocks the import announcement (FE#811)', async () => {
+		const harness = buildHarness();
+		const failedEvent = {
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true,
+			attemptDecryption: vi
+				.fn()
+				.mockRejectedValue(new Error('still no session'))
+		};
+		(harness.room as any).getLiveTimeline = vi.fn(() => ({
+			getEvents: () => [failedEvent],
+			getNeighbouringTimeline: () => null
+		}));
+		const imported = vi.fn();
+		window.addEventListener(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, imported, {
+			once: true
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'request-1',
+				keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
+			})
+		);
+
+		await vi.waitFor(() => expect(imported).toHaveBeenCalledOnce());
+		expect(failedEvent.attemptDecryption).toHaveBeenCalled();
+	});
+
 	it('rejects oversized key bundles before import', async () => {
 		const harness = buildHarness();
 		const service = new MatrixRoomHistoryKeyTransfer();

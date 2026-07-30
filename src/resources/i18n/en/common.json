@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archive",
-		"archiveDescription": "Archived notifications are inactive. The chat will be deleted in 12 months.",
+		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",
 		"askerProfil": "Advice seeker profile",
 		"dataProtection": "Data protection",
 		"dearchive": "Dearchive",
@@ -2024,22 +2024,6 @@
 					"1h": "1 hour",
 					"8h": "8 hours",
 					"tomorrow": "Until tomorrow morning"
-				}
-			},
-			"sounds": {
-				"title": "Notification sounds",
-				"intro": "Choose sounds for new messages and for mentions. Sounds apply on all your devices.",
-				"preview": "Preview",
-				"slot": {
-					"message": "New messages",
-					"mention": "Mentions"
-				},
-				"choice": {
-					"none": "No sound",
-					"chime": "Chime",
-					"ding": "Ding",
-					"soft": "Soft",
-					"default": "Same as messages"
 				}
 			},
 			"config": {
