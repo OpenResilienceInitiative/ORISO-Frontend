@@ -18,6 +18,24 @@ const collectFiles = (root: string): string[] => {
 	});
 };
 
+const collectTextFiles = (root: string): string[] => {
+	if (!fs.existsSync(root)) {
+		return [];
+	}
+
+	return fs.readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+		const entryPath = path.join(root, entry.name);
+		if (entry.isDirectory()) {
+			return collectTextFiles(entryPath);
+		}
+		return /\.(?:bak|css|html|js|json|jsx|md|ts|tsx|ya?ml)$/i.test(
+			entry.name
+		)
+			? [entryPath]
+			: [];
+	});
+};
+
 describe('Matrix-only active frontend artifacts', () => {
 	it('publishes immutable multi-platform images with supply-chain evidence', () => {
 		const buildAction = fs.readFileSync(
@@ -113,6 +131,24 @@ describe('Matrix-only active frontend artifacts', () => {
 		);
 
 		expect(findings).toEqual([]);
+	});
+
+	it('does not keep Rocket.Chat, DDP, or Jitsi artifacts in Storybook', () => {
+		const storybookRoot = path.join(repoRoot, '.storybook');
+		const forbidden =
+			/rocket[._-]?chat|storybookRocketChat|\bddp(?:[._-]?client)?\b|api\/v1\/settings\.public|rooms\/get|subscriptions\/get|ji[t]si/i;
+		const findings = collectTextFiles(storybookRoot).flatMap((file) => {
+			const relativePath = path.relative(repoRoot, file);
+			const source = fs.readFileSync(file, 'utf8');
+			return forbidden.test(relativePath) || forbidden.test(source)
+				? [relativePath]
+				: [];
+		});
+
+		expect(findings).toEqual([]);
+		expect(
+			fs.existsSync(path.join(storybookRoot, 'preview.tsx.sb7.bak'))
+		).toBe(false);
 	});
 
 	it('does not export dormant server-side video-call endpoints', () => {

@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-07-28 — cutover guards must scan auxiliary frontend surfaces
+
+- Context: `docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat/`
+- Lesson: Provider-removal contracts must include Storybook, fixtures, and tracked backup files; production-source scans alone can leave retired runtime assumptions behind.
+
 ## 2026-07-14 — orchestration docs must match git-workflow base
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)
