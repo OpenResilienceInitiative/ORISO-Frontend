@@ -213,10 +213,12 @@ const FormatPicker = ({ compact }: { compact: boolean }) => {
 					)}
 				</div>
 			</div>
-			<BackPill
-				label={t('groupChat.format.back')}
-				onClick={() => undefined}
-			/>
+			{compact && (
+				<BackPill
+					label={t('groupChat.format.back')}
+					onClick={() => undefined}
+				/>
+			)}
 		</div>
 	);
 };
@@ -375,10 +377,12 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 					</div>
 				</div>
 			</div>
-			<BackPill
-				label={t('groupChat.format.back')}
-				onClick={() => undefined}
-			/>
+			{compact && (
+				<BackPill
+					label={t('groupChat.format.back')}
+					onClick={() => undefined}
+				/>
+			)}
 		</div>
 	);
 };

@@ -692,10 +692,13 @@ const CreateConversationFlow = () => {
 			) : (
 				renderPicker()
 			)}
-			<BackPill
-				label={translate('groupChat.format.back')}
-				onClick={handleBackButton}
-			/>
+			{/* Figma: the back control is a mobile-only affordance. */}
+			{!fromL && (
+				<BackPill
+					label={translate('groupChat.format.back')}
+					onClick={handleBackButton}
+				/>
+			)}
 		</div>
 	);
 };
