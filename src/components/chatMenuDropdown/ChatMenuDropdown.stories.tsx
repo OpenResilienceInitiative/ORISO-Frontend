@@ -64,7 +64,7 @@ const FigmaMenuItems = ({ activeFirst = false }: { activeFirst?: boolean }) => (
 			/>
 			<ChatMenuDropdownItem
 				icon={<HelpIcon />}
-				title="Hilfe Anfragen"
+				title="Hilfe anfragen"
 				description="Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen."
 				shortcut="⇧Ä"
 				disabled
@@ -95,6 +95,10 @@ const FigmaMenuItems = ({ activeFirst = false }: { activeFirst?: boolean }) => (
  * the design reference only — FE#781: Mute / Invite / Summarize have no shipped
  * feature behind them, so the real session-list menu omits them entirely rather
  * than rendering them disabled. See `ShippedSessionListMenu` for what users get.
+ *
+ * Copy note: the Figma frame still reads "Hilfe Anfragen"; the string bundle was
+ * corrected to "Hilfe anfragen" (German verbs are lowercase), and this story
+ * follows the bundle. The Figma source needs the same correction.
  */
 export const FigmaReference: Story = {
 	render: () => <FigmaMenuItems />
@@ -106,13 +110,12 @@ export const ActiveState: Story = {
 
 /**
  * FE#781 — the Chatroom Settings menu as it actually ships on a consultant's
- * active session: every entry resolves to a real handler. "Hilfe Anfragen"
+ * active session: every entry resolves to a real handler. "Hilfe anfragen"
  * opens the Team-Besprechung side room (ADR-016) and is shown on open enquiries
  * (or on accepted sessions that already have a discussion to re-read).
  *
  * Copy is transcribed verbatim from the `chatFlyout.*` de bundle that the real
- * menu renders, so drift is visible in review. (The bundle's "Hilfe Anfragen"
- * capitalisation is a product-copy question, not a Storybook one.)
+ * menu renders, so drift is visible in review.
  */
 export const ShippedSessionListMenu: Story = {
 	render: () => (
@@ -126,7 +129,7 @@ export const ShippedSessionListMenu: Story = {
 				<ChatMenuDropdownItem
 					icon={<ArchiveIcon />}
 					title="Archivieren"
-					description="Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht."
+					description="Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht."
 				/>
 				<ChatMenuDropdownItem
 					icon={<TrashIcon />}
@@ -135,7 +138,7 @@ export const ShippedSessionListMenu: Story = {
 				/>
 				<ChatMenuDropdownItem
 					icon={<HelpIcon />}
-					title="Hilfe Anfragen"
+					title="Hilfe anfragen"
 					description="Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen."
 				/>
 			</ChatMenuDropdownSection>

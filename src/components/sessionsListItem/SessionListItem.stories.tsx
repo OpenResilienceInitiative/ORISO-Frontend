@@ -304,7 +304,7 @@ function SessionMenuMock({ onClose }: { onClose: () => void }) {
 				<DropdownOptionMock
 					Icon={ArchiveIcon}
 					title="Archiviere Chat"
-					description="Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht."
+					description="Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht."
 					shortcut="⇧A"
 				/>
 				<DropdownOptionMock
