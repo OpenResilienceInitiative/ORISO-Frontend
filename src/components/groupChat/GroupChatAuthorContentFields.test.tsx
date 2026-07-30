@@ -10,6 +10,15 @@ vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
 
+// Vitest has no SVGR transform: stub the icons the rule editor renders.
+vi.mock('../../resources/img/icons/close.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/plus-mui.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
 vi.mock('../../api/apiGroupChatAuthorTranslation', () => ({
 	apiTranslateGroupChatAuthorContent: vi.fn()
 }));

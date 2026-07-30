@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as PersonsIcon } from '../../../resources/img/icons/persons.svg';
-import { ReactComponent as GroupIllustration } from '../../../resources/img/illustrations/active-createGroup.svg';
+import { ReactComponent as CircleIcon } from '../../../resources/img/icons/diversity-2.svg';
+import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
+import { ReactComponent as MoreIcon } from '../../../resources/img/icons/stack-vertical.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { OrisoTextField } from '../../form/OrisoTextField';
-import {
-	GroupChatSeriesFields,
-	GroupChatSeriesFieldsValue
-} from '../../groupChat/GroupChatSeriesFields';
+import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
 import {
 	GroupChatAuthorContentDraft,
@@ -22,7 +20,11 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
-import { M3SplitButton } from '../M3SplitButton';
+import { ScreenIntro } from '../ScreenIntro';
+import { TopicMedia } from '../TopicMedia';
+import { RowMenu } from '../RowMenu';
+import { ScheduleRows } from './ScheduleRows';
+import { SplitButton } from '../../splitButton/SplitButton';
 import { InternalChatPerson } from '../internal/InternalChatCreateCard';
 import { PersonChipGrid } from '../internal/PersonChipGrid';
 import { PersonOption, PersonSelectMenu } from '../internal/PersonSelectMenu';
@@ -73,6 +75,12 @@ interface CircleSettingsViewProps {
 	 * prefill built, so the useState initializers below hydrate every field.
 	 */
 	editChatId?: number | null;
+	/**
+	 * Mobile rendering: the same card, tightly stacked into one scrolling
+	 * column, and carrying the topic row plus the artwork and the name field
+	 * that desktop already collected on screen 1.
+	 */
+	compact?: boolean;
 }
 
 const buildSeriesDefaults = (
@@ -98,7 +106,8 @@ export const CircleSettingsView = ({
 	prefill,
 	topicOptions,
 	people = [],
-	editChatId
+	editChatId,
+	compact = false
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
 	const { submit, isSubmitting, hasError, clearError } =
@@ -126,6 +135,8 @@ export const CircleSettingsView = ({
 	);
 	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
 	const moderatorButtonRef = useRef<HTMLDivElement | null>(null);
+	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
+	const topicButtonRef = useRef<HTMLDivElement | null>(null);
 	const peopleById = useMemo(
 		() => new Map(people.map((person) => [person.id, person])),
 		[people]
@@ -238,42 +249,100 @@ export const CircleSettingsView = ({
 		);
 	};
 
+	const scheduleRows = (
+		<ScheduleRows
+			value={seriesFields}
+			onChange={setSeriesFields}
+			language={authorContent.sourceLanguage}
+			onLanguageChange={(language) =>
+				setAuthorContent((current) => ({
+					...current,
+					sourceLanguage: language
+				}))
+			}
+			languageOptions={activeLanguages.map((language) => ({
+				value: language,
+				label: language.toUpperCase()
+			}))}
+		/>
+	);
+
+	const topicRow = topicOptions?.length ? (
+		<>
+			<SplitButton
+				ref={topicButtonRef}
+				id="circleTopicRow"
+				fullWidth
+				icon={<CategorySearchIcon />}
+				label={topic || translate('groupChat.circle.topicLabel')}
+				variant={topic ? 'tonal' : 'outlined'}
+				open={topicMenuOpen}
+				onClick={() => setTopicMenuOpen((current) => !current)}
+				onToggleMenu={() => setTopicMenuOpen((current) => !current)}
+				menuLabel={translate('groupChat.circle.toggleTopicList')}
+			/>
+			{topicMenuOpen && (
+				<RowMenu
+					options={topicOptions}
+					value={topic}
+					onSelect={(next) => {
+						setTopic(next);
+						setTopicMenuOpen(false);
+					}}
+					anchorRef={topicButtonRef}
+					onClose={() => setTopicMenuOpen(false)}
+					labelledBy="circleTopicRow"
+				/>
+			)}
+		</>
+	) : (
+		<OrisoTextField
+			id="circleTopic"
+			label={translate('groupChat.circle.topicLabel')}
+			value={topic}
+			fullWidth
+			inputProps={{ maxLength: TOPIC_LENGTHS.MAX }}
+			onChange={(event) => setTopic(event.target.value)}
+		/>
+	);
+
 	return (
-		<div className="circleSettings">
-			<div className="circleSettings__intro">
-				<h2 className="circleSettings__title">
-					{translate('groupChat.circle.settingsTitle')}
-				</h2>
-				<p className="circleSettings__subtitle">
-					{translate('groupChat.circle.settingsSubtitle')}
-				</p>
-			</div>
+		<div
+			className={`circleSettings${
+				compact ? ' circleSettings--compact' : ''
+			}`}
+		>
+			<ScreenIntro
+				title={translate('groupChat.circle.settingsTitle')}
+				subtitle={translate('groupChat.circle.settingsSubtitle')}
+			/>
 			<div className="circleSettings__columns">
 				<FormatCard
 					className="circleSettings__card"
 					title={translate('groupChat.circle.title')}
 					subtitle={translate('groupChat.circle.subtitle')}
-					avatar={<PersonsIcon />}
-					media={<GroupIllustration />}
+					avatar={<CircleIcon />}
+					media={
+						compact ? (
+							<TopicMedia
+								topic={topic}
+								alt={translate('groupChat.circle.title')}
+							/>
+						) : undefined
+					}
+					headerAction={
+						<button
+							type="button"
+							className="formatCard__menuButton"
+							aria-label={translate('groupChat.format.cardMenu')}
+							disabled
+						>
+							<MoreIcon aria-hidden />
+						</button>
+					}
 				>
-					{topicOptions?.length ? (
-						<OrisoSelect
-							id="circleTopic"
-							label={translate('groupChat.circle.topicLabel')}
-							options={topicOptions}
-							value={topic}
-							onChange={(event) => setTopic(event.target.value)}
-						/>
-					) : (
-						<OrisoTextField
-							id="circleTopic"
-							label={translate('groupChat.circle.topicLabel')}
-							value={topic}
-							fullWidth
-							inputProps={{ maxLength: TOPIC_LENGTHS.MAX }}
-							onChange={(event) => setTopic(event.target.value)}
-						/>
-					)}
+					{compact && topicRow}
+					{!compact && !topicOptions?.length && topicRow}
 					{agencyOptions.length > 1 && (
 						<OrisoSelect
 							id="circleAgency"
@@ -287,10 +356,7 @@ export const CircleSettingsView = ({
 							}
 						/>
 					)}
-					<GroupChatSeriesFields
-						value={seriesFields}
-						onChange={setSeriesFields}
-					/>
+					{scheduleRows}
 					<div className="circleSettings__moderators">
 						<p>{translate('groupChat.circle.moderatorsLabel')}</p>
 						<PersonChipGrid
@@ -303,9 +369,10 @@ export const CircleSettingsView = ({
 							}
 						/>
 						<div className="circleSettings__moderatorPicker">
-							<M3SplitButton
+							<SplitButton
 								ref={moderatorButtonRef}
 								id="circleModeratorButton"
+								fullWidth
 								label={
 									consultantIds.length > 0
 										? translate(
@@ -316,15 +383,19 @@ export const CircleSettingsView = ({
 												'groupChat.circle.addModerator'
 											)
 								}
-								selected={consultantIds.length > 0}
+								variant={
+									consultantIds.length > 0
+										? 'primary'
+										: 'outlined'
+								}
 								open={moderatorMenuOpen}
-								onLeadingClick={() =>
+								onClick={() =>
 									setModeratorMenuOpen((current) => !current)
 								}
-								onTrailingClick={() =>
+								onToggleMenu={() =>
 									setModeratorMenuOpen((current) => !current)
 								}
-								trailingAriaLabel={translate(
+								menuLabel={translate(
 									'groupChat.circle.toggleModeratorList'
 								)}
 							/>

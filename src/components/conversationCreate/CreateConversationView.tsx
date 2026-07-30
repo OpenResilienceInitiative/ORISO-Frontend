@@ -22,9 +22,12 @@ import {
 import { UserDataContext, useTenant, useTenantState } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
-import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
-import { ReactComponent as GroupIllustration } from '../../resources/img/illustrations/active-createGroup.svg';
+import { ReactComponent as CircleIcon } from '../../resources/img/icons/diversity-2.svg';
+import { ReactComponent as InternalIcon } from '../../resources/img/icons/family-group.svg';
+import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
+import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vertical.svg';
+import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
+import { getTopicCardImage } from '../../resources/img/topics';
 import {
 	apiGetTenantConsultantList,
 	Consultant
@@ -53,7 +56,12 @@ import {
 import { resolveListboxKey } from './listboxKeyboard';
 import { MenuPortal, useAnchoredMenuLayout } from './anchoredMenu';
 import { FormatCard } from './FormatCard';
-import { M3SplitButton } from './M3SplitButton';
+import { PanelHeader } from './PanelHeader';
+import { ScreenIntro } from './ScreenIntro';
+import { BackPill } from './BackPill';
+import { TopicMedia } from './TopicMedia';
+import { CompactFormatRow } from './CompactFormatRow';
+import { SplitButton } from '../splitButton/SplitButton';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
@@ -484,153 +492,168 @@ const CreateConversationFlow = () => {
 		</>
 	);
 
+	const circleCard = (
+		<FormatCard
+			className="conversationCreate__formatCard"
+			title={translate('groupChat.circle.title')}
+			subtitle={translate('groupChat.circle.subtitle')}
+			avatar={<CircleIcon />}
+			media={
+				<TopicMedia
+					topic={pickerTopic}
+					alt={translate('groupChat.circle.title')}
+				/>
+			}
+			headerAction={
+				<button
+					type="button"
+					className="formatCard__menuButton"
+					aria-label={translate('groupChat.format.cardMenu')}
+					disabled
+				>
+					<MoreIcon aria-hidden />
+				</button>
+			}
+		>
+			<p className="conversationCreate__cardText">
+				<strong>{translate('groupChat.circle.cardHeadline')}</strong>
+				<br />
+				{translate('groupChat.circle.cardText')}
+			</p>
+			<div className="conversationCreate__cardActions">
+				{topicsLoadFailed ? (
+					<p role="alert" className="conversationCreate__error">
+						{translate('groupChat.loadError.topics')}
+						<button type="button" onClick={loadTopics}>
+							{translate('groupChat.loadError.retry')}
+						</button>
+					</p>
+				) : (
+					<>
+						<SplitButton
+							ref={pickerSplitButtonRef}
+							fullWidth
+							icon={<CategorySearchIcon />}
+							label={
+								pickerTopic ||
+								translate('groupChat.circle.topicLabel')
+							}
+							variant={pickerTopic ? 'primary' : 'outlined'}
+							open={pickerTopicMenuOpen}
+							mainOpensMenu={!pickerTopic}
+							onClick={() => {
+								if (pickerTopic) {
+									openCircleSettings();
+								} else {
+									setPickerTopicMenuOpen((prev) => !prev);
+								}
+							}}
+							onToggleMenu={() =>
+								setPickerTopicMenuOpen((prev) => !prev)
+							}
+							menuLabel={translate(
+								'groupChat.circle.toggleTopicList'
+							)}
+						/>
+						{pickerTopicMenuOpen && (
+							<MenuPortal>
+								<ul
+									ref={topicMenuRef}
+									className={`conversationCreate__topicMenu conversationCreate__topicMenu--${topicMenuLayout.direction}`}
+									style={topicMenuLayout.style}
+									role="listbox"
+									onKeyDown={handleTopicMenuKeyDown}
+								>
+									{(topicOptions.length
+										? topicOptions
+										: [
+												{
+													value: '',
+													label: translate(
+														'groupChat.circle.noTopics'
+													)
+												}
+											]
+									).map((topic) => (
+										<li key={topic.value || 'none'}>
+											<button
+												type="button"
+												role="option"
+												aria-selected={
+													pickerTopic === topic.value
+												}
+												disabled={!topic.value}
+												onClick={() => {
+													setPickerTopic(topic.value);
+													closeTopicMenu(true);
+												}}
+											>
+												{topic.label}
+											</button>
+										</li>
+									))}
+								</ul>
+							</MenuPortal>
+						)}
+					</>
+				)}
+			</div>
+		</FormatCard>
+	);
+
 	const renderPicker = () => (
 		<div className="conversationCreate__picker">
-			<div className="conversationCreate__intro">
-				<h2 className="conversationCreate__title">
-					{translate('groupChat.format.title')}
-				</h2>
-				<p className="conversationCreate__subtitle">
-					{translate('groupChat.format.subtitle')}
-				</p>
-			</div>
-			<div className="conversationCreate__cards">
-				{availability.circle && (
-					<FormatCard
-						className="conversationCreate__formatCard"
-						title={translate('groupChat.circle.title')}
-						subtitle={translate('groupChat.circle.subtitle')}
-						avatar={<PersonsIcon />}
-						media={<GroupIllustration />}
-					>
-						<p className="conversationCreate__cardText">
-							<strong>
-								{translate('groupChat.circle.cardHeadline')}
-							</strong>
-							<br />
-							{translate('groupChat.circle.cardText')}
-						</p>
-						<div className="conversationCreate__cardActions">
-							{topicsLoadFailed ? (
-								<p
-									role="alert"
-									className="conversationCreate__error"
-								>
-									{translate('groupChat.loadError.topics')}
-									<button type="button" onClick={loadTopics}>
-										{translate('groupChat.loadError.retry')}
-									</button>
-								</p>
-							) : (
-								<>
-									<M3SplitButton
-										ref={pickerSplitButtonRef}
-										label={
-											pickerTopic ||
-											translate(
-												'groupChat.circle.topicLabel'
-											)
-										}
-										selected={!!pickerTopic}
-										open={pickerTopicMenuOpen}
-										leadingOpensMenu={!pickerTopic}
-										onLeadingClick={() => {
-											if (pickerTopic) {
-												openCircleSettings();
-											} else {
-												setPickerTopicMenuOpen(
-													(prev) => !prev
-												);
-											}
-										}}
-										onTrailingClick={() =>
-											setPickerTopicMenuOpen(
-												(prev) => !prev
-											)
-										}
-										trailingAriaLabel={translate(
-											'groupChat.circle.toggleTopicList'
-										)}
-									/>
-									{pickerTopicMenuOpen && (
-										<MenuPortal>
-											<ul
-												ref={topicMenuRef}
-												className={`conversationCreate__topicMenu conversationCreate__topicMenu--${topicMenuLayout.direction}`}
-												style={topicMenuLayout.style}
-												role="listbox"
-												onKeyDown={
-													handleTopicMenuKeyDown
-												}
-											>
-												{(topicOptions.length
-													? topicOptions
-													: [
-															{
-																value: '',
-																label: translate(
-																	'groupChat.circle.noTopics'
-																)
-															}
-														]
-												).map((topic) => (
-													<li
-														key={
-															topic.value ||
-															'none'
-														}
-													>
-														<button
-															type="button"
-															role="option"
-															aria-selected={
-																pickerTopic ===
-																topic.value
-															}
-															disabled={
-																!topic.value
-															}
-															onClick={() => {
-																setPickerTopic(
-																	topic.value
-																);
-																closeTopicMenu(
-																	true
-																);
-															}}
-														>
-															{topic.label}
-														</button>
-													</li>
-												))}
-											</ul>
-										</MenuPortal>
-									)}
-								</>
-							)}
-						</div>
-					</FormatCard>
+			<ScreenIntro
+				title={translate('groupChat.format.title')}
+				subtitle={translate('groupChat.format.subtitle')}
+			/>
+			<div
+				className={`conversationCreate__selection${
+					fromL ? '' : ' conversationCreate__selection--rows'
+				}`}
+			>
+				{fromL ? (
+					<div className="conversationCreate__cards">
+						{availability.circle && circleCard}
+						{availability.internal && renderInternalCard()}
+					</div>
+				) : (
+					<div className="conversationCreate__rows">
+						{availability.internal && (
+							<CompactFormatRow
+								icon={<InternalIcon />}
+								title={translate('groupChat.internal.title')}
+								subtitle={translate(
+									'groupChat.internal.subtitle'
+								)}
+								image={internalTeamImage}
+								onSelect={() => setStep('internal')}
+							/>
+						)}
+						{availability.circle && (
+							<CompactFormatRow
+								icon={<CircleIcon />}
+								title={translate('groupChat.circle.title')}
+								subtitle={translate(
+									'groupChat.circle.subtitle'
+								)}
+								image={getTopicCardImage(null)}
+								onSelect={() => setStep('circle')}
+							/>
+						)}
+					</div>
 				)}
-				{availability.internal && renderInternalCard()}
 			</div>
 		</div>
 	);
 
 	return (
 		<div className="conversationCreate">
-			<div className="conversationCreate__header">
-				<button
-					type="button"
-					onClick={handleBackButton}
-					className="conversationCreate__backButton"
-					aria-label={translate('groupChat.format.back')}
-				>
-					<BackIcon />
-				</button>
-				<h3 className="conversationCreate__headerTitle">
-					{translate('groupChat.format.headerTitle')}
-				</h3>
-			</div>
+			<PanelHeader
+				title={translate('groupChat.format.panelTitle')}
+				menuLabel={translate('groupChat.format.panelMenu')}
+				menuDisabled
+			/>
 			{hasError && step !== 'circle' && (
 				<p role="alert" className="conversationCreate__error">
 					{translate('groupChat.createError.overlay.headline')}
@@ -659,6 +682,7 @@ const CreateConversationFlow = () => {
 						}
 						editChatId={editChatId}
 						people={people}
+						compact={!fromL}
 					/>
 				)
 			) : step === 'internal' ? (
@@ -668,6 +692,10 @@ const CreateConversationFlow = () => {
 			) : (
 				renderPicker()
 			)}
+			<BackPill
+				label={translate('groupChat.format.back')}
+				onClick={handleBackButton}
+			/>
 		</div>
 	);
 };

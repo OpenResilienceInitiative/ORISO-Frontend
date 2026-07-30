@@ -89,6 +89,57 @@ vi.mock('../../resources/img/illustrations/active-createGroup.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
+vi.mock('../../resources/img/icons/keyboard_arrow_down.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/plus-mui.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/stack-vertical.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/category-search.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/diversity-2.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/family-group.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/calendar.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/clock.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/reload.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/language_outline.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock(
+	'../../resources/img/illustrations/conversation/internal-team.png',
+	() => ({
+		default: 'internal-team.png'
+	})
+);
+vi.mock('../../resources/img/topics', () => ({
+	getTopicCardImage: () => 'topic.png',
+	hasTopicCardImage: () => false,
+	topicSlug: (value: string) => value
+}));
 vi.mock('../../resources/img/icons/keyboard_arrow_up.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null

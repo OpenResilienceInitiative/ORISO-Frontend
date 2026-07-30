@@ -37,6 +37,12 @@ export interface OrisoTimePickerProps {
 	okLabel?: string;
 	placeholder?: string;
 	id?: string;
+	/**
+	 * Render a custom trigger instead of the text field and keep the dial
+	 * dialog as-is — used by the create-conversation settings rows, whose
+	 * trigger is a split button rather than an input.
+	 */
+	renderTrigger?: (openDialog: () => void) => React.ReactNode;
 }
 
 const DIAL_SIZE = 256;
@@ -316,7 +322,8 @@ export const OrisoTimePicker = ({
 	cancelLabel = 'Cancel',
 	okLabel = 'OK',
 	placeholder,
-	id
+	id,
+	renderTrigger
 }: OrisoTimePickerProps) => {
 	const displayFormat = ampm ? 'hh:mm A' : 'HH:mm';
 	const parseFormats = ampm
@@ -419,40 +426,44 @@ export const OrisoTimePicker = ({
 
 	return (
 		<>
-			<OrisoTextField
-				id={id}
-				label={label}
-				value={inputText}
-				placeholder={placeholder ?? displayFormat}
-				helperText={helperText}
-				error={error}
-				disabled={disabled}
-				fullWidth={fullWidth}
-				onChange={(event) => setInputText(event.target.value)}
-				onBlur={(event) => commitInput(event.target.value)}
-				onKeyDown={(event) => {
-					if (event.key === 'Enter') {
-						commitInput(inputText);
-					}
-				}}
-				InputProps={{
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								aria-label="Open time picker"
-								edge="end"
-								disabled={disabled}
-								onClick={openDialog}
-								sx={{
-									color: orisoDateTimeColors.onSurfaceVariant
-								}}
-							>
-								<ScheduleIcon />
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-			/>
+			{renderTrigger ? (
+				renderTrigger(openDialog)
+			) : (
+				<OrisoTextField
+					id={id}
+					label={label}
+					value={inputText}
+					placeholder={placeholder ?? displayFormat}
+					helperText={helperText}
+					error={error}
+					disabled={disabled}
+					fullWidth={fullWidth}
+					onChange={(event) => setInputText(event.target.value)}
+					onBlur={(event) => commitInput(event.target.value)}
+					onKeyDown={(event) => {
+						if (event.key === 'Enter') {
+							commitInput(inputText);
+						}
+					}}
+					InputProps={{
+						endAdornment: (
+							<InputAdornment position="end">
+								<IconButton
+									aria-label="Open time picker"
+									edge="end"
+									disabled={disabled}
+									onClick={openDialog}
+									sx={{
+										color: orisoDateTimeColors.onSurfaceVariant
+									}}
+								>
+									<ScheduleIcon />
+								</IconButton>
+							</InputAdornment>
+						)
+					}}
+				/>
+			)}
 			<Dialog
 				open={open}
 				onClose={() => setOpen(false)}

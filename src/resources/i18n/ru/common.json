@@ -670,6 +670,15 @@
 					"long": "Тема слишком длинная",
 					"short": "Тема слишком короткая"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Говорите о себе, а не о других.",
+				"defaultRule2": "Всё, чем здесь делятся, остаётся здесь.",
+				"ruleEditorLabel": "Редактировать правило",
+				"editRule": "Редактировать правило {{index}}",
+				"deleteRule": "Удалить правило {{index}}",
+				"addRule": "Добавить правило",
+				"ruleChip": "Правило № {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +837,28 @@
 			"overlay": {
 				"button1Label": "Закрыть",
 				"headline": "Ваши изменения были успешно сохранены."
+			}
+		},
+		"format": {
+			"panelTitle": "Создать новый разговор",
+			"panelMenu": "Дополнительные параметры",
+			"back": "Назад",
+			"cardMenu": "Параметры этого формата разговора"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Выбрать дату",
+				"timeLabel": "Время начала",
+				"durationLabel": "Задать продолжительность",
+				"repeatLabel": "Повторения",
+				"mediumLabel": "Выбрать основной формат",
+				"languageLabel": "Язык круга",
+				"increase": "Увеличить: {{field}}",
+				"decrease": "Уменьшить: {{field}}",
+				"openList": "Выбрать: {{field}}",
+				"durationValue": "{{count}} ч",
+				"repeatValue_one": "{{count}} раз",
+				"repeatValue_other": "{{count}} раз"
 			}
 		}
 	},

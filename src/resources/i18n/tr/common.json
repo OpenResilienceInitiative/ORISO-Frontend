@@ -670,6 +670,15 @@
 					"long": "Konu çok uzun",
 					"short": "Konu çok kısa"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Başkaları hakkında değil, kendiniz hakkında konuşun.",
+				"defaultRule2": "Burada paylaşılanlar burada kalır.",
+				"ruleEditorLabel": "Kuralı düzenle",
+				"editRule": "{{index}}. kuralı düzenle",
+				"deleteRule": "{{index}}. kuralı sil",
+				"addRule": "Kural ekle",
+				"ruleChip": "Kural No. {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +837,28 @@
 			"overlay": {
 				"button1Label": "Kapat",
 				"headline": "Değişiklikleriniz başarıyla kaydedildi."
+			}
+		},
+		"format": {
+			"panelTitle": "Yeni görüşme oluştur",
+			"panelMenu": "Diğer seçenekler",
+			"back": "Geri",
+			"cardMenu": "Bu görüşme biçimi için seçenekler"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Tarih seç",
+				"timeLabel": "Başlangıç saati",
+				"durationLabel": "Süreyi ayarla",
+				"repeatLabel": "Tekrarlar",
+				"mediumLabel": "Birincil ortamı seç",
+				"languageLabel": "Görüşme çemberi dili",
+				"increase": "{{field}} artır",
+				"decrease": "{{field}} azalt",
+				"openList": "{{field}} seç",
+				"durationValue": "{{count}} sa",
+				"repeatValue_one": "{{count}} kez",
+				"repeatValue_other": "{{count}} kez"
 			}
 		}
 	},

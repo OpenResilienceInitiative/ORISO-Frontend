@@ -8,6 +8,7 @@ import {
 	GroupChatAuthorContentDraft,
 	normalizeGroupChatLanguages
 } from './groupChatAuthorContent';
+import { RuleChipsEditor } from './RuleChipsEditor';
 import '../button/button.styles.scss';
 
 interface GroupChatAuthorContentFieldsProps {
@@ -151,24 +152,6 @@ export const GroupChatAuthorContentFields = ({
 			</div>
 			<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
 				<label>
-					{t('groupChat.create.authorContent.sourceLanguage')}
-					<select
-						value={value.sourceLanguage}
-						onChange={(event) =>
-							onChange({
-								...value,
-								sourceLanguage: event.target.value
-							})
-						}
-					>
-						{languages.map((language) => (
-							<option key={language} value={language}>
-								{language.toUpperCase()}
-							</option>
-						))}
-					</select>
-				</label>
-				<label>
 					{t('groupChat.create.authorContent.welcome')}
 					<textarea
 						maxLength={120}
@@ -181,49 +164,11 @@ export const GroupChatAuthorContentFields = ({
 				</label>
 				<div className="createChat__rules">
 					<span>{t('groupChat.create.authorContent.rules')}</span>
-					{rules.map((rule, index) => (
-						<div key={`${selectedLanguage}-rule-${index}`}>
-							<textarea
-								aria-label={`${t(
-									'groupChat.create.authorContent.rule'
-								)} ${index + 1}`}
-								maxLength={120}
-								value={rule}
-								onChange={(event) =>
-									updateRules(
-										rules.map((current, ruleIndex) =>
-											ruleIndex === index
-												? event.target.value
-												: current
-										)
-									)
-								}
-							/>
-							<button
-								type="button"
-								className="button__item button__tertiary createChat__editorButton"
-								onClick={() =>
-									updateRules(
-										rules.filter(
-											(_, ruleIndex) =>
-												ruleIndex !== index
-										)
-									)
-								}
-							>
-								{t('groupChat.create.authorContent.removeRule')}
-							</button>
-						</div>
-					))}
-					{rules.length < 10 && (
-						<button
-							type="button"
-							className="button__item button__tertiary createChat__editorButton"
-							onClick={() => updateRules([...rules, ''])}
-						>
-							{t('groupChat.create.authorContent.addRule')}
-						</button>
-					)}
+					<RuleChipsEditor
+						rules={rules.filter((rule) => rule.trim().length > 0)}
+						onChange={updateRules}
+						resetKey={selectedLanguage}
+					/>
 				</div>
 			</div>
 			{translationAvailable && (
