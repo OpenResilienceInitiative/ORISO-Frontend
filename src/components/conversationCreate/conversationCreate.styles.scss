@@ -55,10 +55,13 @@ $cc-motion-easing: var(
 	}
 
 	&__cards {
-		align-items: flex-start;
+		/* Stretch so both formats end up the same height whatever their copy,
+		   centred in the panel (Figma 8482-30551). */
+		align-items: stretch;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 24px;
+		justify-content: center;
 	}
 
 	&__single {
@@ -80,6 +83,8 @@ $cc-motion-easing: var(
 	}
 
 	&__cardActions {
+		/* Pins the action to the bottom edge of an equal-height card. */
+		margin-top: auto;
 		position: relative;
 		width: 100%;
 	}
@@ -211,6 +216,7 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__content {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
 		gap: 12px;
 		padding: 12px;
@@ -375,6 +381,7 @@ body.conversationCreate--active .navigation__wrapper {
 		align-items: flex-start;
 		display: flex;
 		gap: 4px;
+		margin-top: auto;
 	}
 
 	&__splitButtonWrap {
@@ -658,13 +665,8 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__selection {
-		border: 1px solid $cc-outline-variant;
-		border-radius: 28px;
-		padding: 16px;
-	}
-
-	&__selection--rows {
-		padding: 8px;
+		display: flex;
+		flex-direction: column;
 	}
 
 	&__rows {

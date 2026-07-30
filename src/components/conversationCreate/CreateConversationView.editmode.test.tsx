@@ -226,8 +226,8 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 
 		renderInUserContext();
 
-		// The persisted topic is prefilled into the form.
-		expect(await screen.findByDisplayValue('Existing circle')).toBeTruthy();
+		// The persisted topic is prefilled and shown on the topic row.
+		expect(await screen.findByText('Existing circle')).toBeTruthy();
 
 		// Save routes to the update endpoint for the routed chat id (77), never
 		// to create (which is what the pre-fix route did, duplicating the chat).

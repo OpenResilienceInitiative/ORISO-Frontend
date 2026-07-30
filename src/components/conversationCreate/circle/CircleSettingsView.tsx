@@ -5,7 +5,6 @@ import { ReactComponent as CircleIcon } from '../../../resources/img/icons/diver
 import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
 import { ReactComponent as MoreIcon } from '../../../resources/img/icons/stack-vertical.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';
-import { OrisoTextField } from '../../form/OrisoTextField';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
 import {
@@ -16,8 +15,7 @@ import {
 	buildGroupChatSeriesRequest,
 	getValidDateFormatForSelectedDate,
 	getValidTimeFormatForSelectedTime,
-	isGroupChatTopicLengthValid,
-	TOPIC_LENGTHS
+	isGroupChatTopicLengthValid
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
 import { ScreenIntro } from '../ScreenIntro';
@@ -267,7 +265,9 @@ export const CircleSettingsView = ({
 		/>
 	);
 
-	const topicRow = topicOptions?.length ? (
+	// Every agency runs at least one topic, so the row is always the picker;
+	// an empty list can only mean the request has not answered yet.
+	const topicRow = (
 		<>
 			<SplitButton
 				ref={topicButtonRef}
@@ -285,9 +285,23 @@ export const CircleSettingsView = ({
 			/>
 			{topicMenuOpen && (
 				<RowMenu
-					options={topicOptions}
+					options={
+						topicOptions?.length
+							? topicOptions
+							: [
+									{
+										value: '',
+										label: translate(
+											'groupChat.circle.noTopics'
+										)
+									}
+								]
+					}
 					value={topic}
 					onSelect={(next) => {
+						if (!next) {
+							return;
+						}
 						setTopic(next);
 						setTopicMenuOpen(false);
 					}}
@@ -297,15 +311,6 @@ export const CircleSettingsView = ({
 				/>
 			)}
 		</>
-	) : (
-		<OrisoTextField
-			id="circleTopic"
-			label={translate('groupChat.circle.topicLabel')}
-			value={topic}
-			fullWidth
-			inputProps={{ maxLength: TOPIC_LENGTHS.MAX }}
-			onChange={(event) => setTopic(event.target.value)}
-		/>
 	);
 
 	return (
@@ -343,8 +348,9 @@ export const CircleSettingsView = ({
 						</button>
 					}
 				>
-					{compact && topicRow}
-					{!compact && !topicOptions?.length && topicRow}
+					{/* Desktop picks the topic on screen 1; edit mode enters here
+					    directly, so the row must be reachable then too. */}
+					{(compact || isEditMode) && topicRow}
 					{agencyOptions.length > 1 && (
 						<OrisoSelect
 							id="circleAgency"
