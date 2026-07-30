@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archive",
-		"archiveDescription": "Archived notifications are inactive. The chat will be deleted in 12 months.",
+		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",
 		"askerProfil": "Advice seeker profile",
 		"dataProtection": "Data protection",
 		"dearchive": "Dearchive",
