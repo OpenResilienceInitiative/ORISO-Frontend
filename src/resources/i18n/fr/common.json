@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archiver",
-		"archiveDescription": "Les notifications archivées sont inactives. Le chat sera supprimé dans 12 mois.",
+		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
 		"askerProfil": "Profil de la conseillère",
 		"dataProtection": "Protection des données",
 		"dearchive": "Désarchiver",

@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Архив",
-		"archiveDescription": "Архивные уведомления неактивны. Чат будет удален через 12 месяцев.",
+		"archiveDescription": "Для архивных чатов уведомления отключены. Чат будет удален через 12 месяцев.",
 		"askerProfil": "Профиль консультанта",
 		"dataProtection": "Защита данных",
 		"dearchive": "Dearchive",

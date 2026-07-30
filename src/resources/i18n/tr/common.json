@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Arşiv",
-		"archiveDescription": "Arşivlenen bildirimler pasiftir. Sohbet 12 ay içinde silinecek.",
+		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
 		"askerProfil": "Danışman profili",
 		"dataProtection": "Veri koruma",
 		"dearchive": "Dearchive",
