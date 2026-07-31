@@ -470,4 +470,83 @@ describe('useElementCallWidget', () => {
 		expect(api.feedToDevice).toHaveBeenCalledWith(rawEvent, true);
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
 	});
+
+	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
+		vi.useFakeTimers();
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		try {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await vi.waitFor(() => expect(result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = result.current.url!;
+			act(() => result.current.attachIframe(iframe));
+			const api =
+				widgetApiMocks.apiInstances[
+					widgetApiMocks.apiInstances.length - 1
+				];
+
+			const decryptionListeners = new Set<
+				(event: unknown, error?: Error) => void
+			>();
+			const stuckEvent = {
+				getRoomId: () => CALL_ROOM,
+				getId: () => '$stuck-key-event',
+				getType: () => 'm.room.encrypted',
+				getWireType: () => 'm.room.encrypted',
+				getEffectiveEvent: () => ({ type: 'm.room.encrypted' }),
+				on: (name: string, l: (e: unknown, err?: Error) => void) => {
+					if (name === 'Event.decrypted') decryptionListeners.add(l);
+				},
+				off: (name: string, l: (e: unknown, err?: Error) => void) => {
+					if (name === 'Event.decrypted')
+						decryptionListeners.delete(l);
+				}
+			};
+
+			act(() => {
+				client.emitTest('Room.timeline', stuckEvent, {}, false);
+			});
+			expect(decryptionListeners.size).toBe(1);
+
+			// A failed decryption must NOT drop the listener: Megolm keys often
+			// arrive later and the SDK retries. It must be reported, though.
+			act(() => {
+				decryptionListeners.forEach((l) =>
+					l(stuckEvent, new Error('The sender key is unknown'))
+				);
+			});
+			expect(decryptionListeners.size).toBe(1);
+			expect(api.feedEvent).not.toHaveBeenCalled();
+			expect(warn).toHaveBeenCalledWith(
+				'[call] call event still undecrypted, waiting for the key:',
+				'$stuck-key-event',
+				'The sender key is unknown'
+			);
+
+			// Only after the timeout is the event truly lost — and that loss is
+			// what makes a connected call silent, so it must be loud.
+			act(() => {
+				vi.advanceTimersByTime(5 * 60 * 1000);
+			});
+			expect(decryptionListeners.size).toBe(0);
+			expect(error).toHaveBeenCalledWith(
+				'[call] dropping call event that never decrypted:',
+				'$stuck-key-event',
+				'in',
+				CALL_ROOM,
+				'— media keys carried by this event are lost'
+			);
+		} finally {
+			warn.mockRestore();
+			error.mockRestore();
+			vi.useRealTimers();
+		}
+	});
 });
