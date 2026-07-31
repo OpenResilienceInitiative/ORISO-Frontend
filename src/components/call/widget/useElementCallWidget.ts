@@ -29,6 +29,7 @@ import {
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
+import { appConfig } from '../../../utils/appConfig';
 
 export interface ElementCallWidgetOptions {
 	/** The Matrix room the call takes place in. */
@@ -143,7 +144,12 @@ export const useElementCallWidget = (
 					confineToRoom: 'true',
 					header: 'none',
 					skipLobby: String(skipLobby),
-					perParticipantE2EE: 'true',
+					// See releaseToggles.enableCallMediaE2EE: Element Call only
+					// encrypts media when the host asks for it, because the host
+					// owns the crypto stack that distributes the media keys.
+					...(appConfig?.releaseToggles?.enableCallMediaE2EE === true
+						? { perParticipantE2EE: 'true' }
+						: {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;

@@ -162,7 +162,10 @@ describe('useElementCallWidget', () => {
 		expect(fragment.has('accessToken')).toBe(false);
 		expect(fragment.has('password')).toBe(false);
 		expect(fragment.has('enableE2EE')).toBe(false);
-		expect(fragment.get('perParticipantE2EE')).toBe('true');
+		// Media E2EE is opt-in per environment: the media keys ride the MatrixRTC
+		// to-device transport, so a gap in the host's Olm path would connect the
+		// call with no audio and no error (ORISO-ElementCall#35).
+		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
