@@ -850,15 +850,16 @@
 				"dateLabel": "Выбрать дату",
 				"timeLabel": "Время начала",
 				"durationLabel": "Задать продолжительность",
-				"repeatLabel": "Повторения",
+				"repeatLabel": "Количество встреч",
 				"mediumLabel": "Выбрать основной формат",
 				"languageLabel": "Язык круга",
 				"increase": "Увеличить: {{field}}",
 				"decrease": "Уменьшить: {{field}}",
 				"openList": "Выбрать: {{field}}",
 				"durationValue": "{{count}} ч",
-				"repeatValue_one": "{{count}} раз",
-				"repeatValue_other": "{{count}} раз"
+				"repeatValue_one": "{{count}} встреча",
+				"repeatValue_other": "{{count}} встреч",
+				"intervalLabel": "Ритм повторения"
 			}
 		}
 	},

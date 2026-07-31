@@ -117,19 +117,27 @@ vi.mock('../../resources/img/icons/internal-conversation.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-vi.mock('../../resources/img/icons/calendar.svg', () => ({
+vi.mock('../../resources/img/icons/schedule-date.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-vi.mock('../../resources/img/icons/clock.svg', () => ({
+vi.mock('../../resources/img/icons/schedule-start.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-vi.mock('../../resources/img/icons/reload.svg', () => ({
+vi.mock('../../resources/img/icons/schedule-duration.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-vi.mock('../../resources/img/icons/language_outline.svg', () => ({
+vi.mock('../../resources/img/icons/schedule-repeat.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/schedule-medium.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/schedule-language.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));

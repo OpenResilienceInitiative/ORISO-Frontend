@@ -462,8 +462,10 @@ body.conversationCreate--active .navigation__wrapper {
 		max-width: 640px;
 	}
 
+	/* Desktop: card and author column are the same height (Figma annotation
+	   "Höhe der Karte muss auf Desktop gleich sein"). */
 	&__columns {
-		align-items: flex-start;
+		align-items: stretch;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 24px;

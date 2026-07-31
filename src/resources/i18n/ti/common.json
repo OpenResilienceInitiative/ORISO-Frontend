@@ -850,15 +850,16 @@
 				"dateLabel": "ዕለት ምረጽ",
 				"timeLabel": "መጀመሪ ሰዓት",
 				"durationLabel": "ግዜ ኣዳልው",
-				"repeatLabel": "ተደጋጋሚነት",
+				"repeatLabel": "ቁጽሪ ቆጸራታት",
 				"mediumLabel": "ቀንዲ መራኸቢ ምረጽ",
 				"languageLabel": "ቋንቋ ናይቲ ክቢ",
 				"increase": "{{field}} ወስኽ",
 				"decrease": "{{field}} ኣጉድል",
 				"openList": "{{field}} ምረጽ",
 				"durationValue": "{{count}} ሰዓት",
-				"repeatValue_one": "{{count}} ግዜ",
-				"repeatValue_other": "{{count}} ግዜ"
+				"repeatValue_one": "{{count}} ቆጸራ",
+				"repeatValue_other": "{{count}} ቆጸራታት",
+				"intervalLabel": "ናይ ተደጋጋሚ ምዕባለ"
 			}
 		}
 	},

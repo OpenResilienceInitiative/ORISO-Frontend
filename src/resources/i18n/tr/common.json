@@ -850,15 +850,16 @@
 				"dateLabel": "Tarih seç",
 				"timeLabel": "Başlangıç saati",
 				"durationLabel": "Süreyi ayarla",
-				"repeatLabel": "Tekrarlar",
+				"repeatLabel": "Randevu sayısı",
 				"mediumLabel": "Birincil ortamı seç",
 				"languageLabel": "Görüşme çemberi dili",
 				"increase": "{{field}} artır",
 				"decrease": "{{field}} azalt",
 				"openList": "{{field}} seç",
 				"durationValue": "{{count}} sa",
-				"repeatValue_one": "{{count}} kez",
-				"repeatValue_other": "{{count}} kez"
+				"repeatValue_one": "{{count}} randevu",
+				"repeatValue_other": "{{count}} randevu",
+				"intervalLabel": "Tekrar aralığı"
 			}
 		}
 	},

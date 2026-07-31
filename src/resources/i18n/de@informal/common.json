@@ -303,15 +303,16 @@
 				"dateLabel": "Datum wählen",
 				"timeLabel": "Startzeitpunkt",
 				"durationLabel": "Dauer einstellen",
-				"repeatLabel": "Wiederholungen",
+				"repeatLabel": "Anzahl der Termine",
 				"mediumLabel": "Primäres Medium wählen",
 				"languageLabel": "Sprache Gesprächskreis",
 				"increase": "{{field}} erhöhen",
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"repeatValue_one": "{{count}} Termin",
+				"repeatValue_other": "{{count}} Termine",
+				"intervalLabel": "Wiederholungsrhythmus"
 			}
 		},
 		"create": {

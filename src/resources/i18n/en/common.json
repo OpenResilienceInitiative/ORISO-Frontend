@@ -798,15 +798,16 @@
 				"dateLabel": "Choose date",
 				"timeLabel": "Start time",
 				"durationLabel": "Set duration",
-				"repeatLabel": "Repetitions",
+				"repeatLabel": "Number of dates",
 				"mediumLabel": "Choose primary medium",
 				"languageLabel": "Circle language",
 				"increase": "Increase {{field}}",
 				"decrease": "Decrease {{field}}",
 				"openList": "Choose {{field}}",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} time",
-				"repeatValue_other": "{{count}} times"
+				"repeatValue_one": "{{count}} date",
+				"repeatValue_other": "{{count}} dates",
+				"intervalLabel": "Repeat rhythm"
 			}
 		},
 		"createError": {

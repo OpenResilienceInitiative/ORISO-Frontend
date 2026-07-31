@@ -43,6 +43,11 @@ export interface OrisoTimePickerProps {
 	 * trigger is a split button rather than an input.
 	 */
 	renderTrigger?: (openDialog: () => void) => React.ReactNode;
+	/**
+	 * Fires when the dial dialog closes, so a custom trigger can drop its
+	 * elevated state again (create-conversation settings rows).
+	 */
+	onDialogClose?: () => void;
 }
 
 const DIAL_SIZE = 256;
@@ -323,7 +328,8 @@ export const OrisoTimePicker = ({
 	okLabel = 'OK',
 	placeholder,
 	id,
-	renderTrigger
+	renderTrigger,
+	onDialogClose
 }: OrisoTimePickerProps) => {
 	const displayFormat = ampm ? 'hh:mm A' : 'HH:mm';
 	const parseFormats = ampm
@@ -352,10 +358,15 @@ export const OrisoTimePicker = ({
 		setOpen(true);
 	};
 
+	const closeDialog = () => {
+		setOpen(false);
+		onDialogClose?.();
+	};
+
 	const handleOk = () => {
 		const base = value ?? dayjs();
 		onChange?.(base.hour(hour24).minute(minute).second(0));
-		setOpen(false);
+		closeDialog();
 	};
 
 	const commitInput = (text: string) => {
@@ -466,7 +477,7 @@ export const OrisoTimePicker = ({
 			)}
 			<Dialog
 				open={open}
-				onClose={() => setOpen(false)}
+				onClose={closeDialog}
 				sx={{ zIndex: 10001, ...orisoTimePickerDialogSx }}
 			>
 				<Typography
@@ -645,7 +656,7 @@ export const OrisoTimePicker = ({
 						)}
 					</IconButton>
 					<Box sx={{ flex: 1 }} />
-					<Button onClick={() => setOpen(false)} sx={actionButtonSx}>
+					<Button onClick={closeDialog} sx={actionButtonSx}>
 						{cancelLabel}
 					</Button>
 					<Button onClick={handleOk} sx={actionButtonSx}>

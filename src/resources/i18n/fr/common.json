@@ -850,15 +850,16 @@
 				"dateLabel": "Choisir la date",
 				"timeLabel": "Heure de début",
 				"durationLabel": "Définir la durée",
-				"repeatLabel": "Répétitions",
+				"repeatLabel": "Nombre de rendez-vous",
 				"mediumLabel": "Choisir le média principal",
 				"languageLabel": "Langue du cercle",
 				"increase": "Augmenter {{field}}",
 				"decrease": "Diminuer {{field}}",
 				"openList": "Choisir {{field}}",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} fois",
-				"repeatValue_other": "{{count}} fois"
+				"repeatValue_one": "{{count}} rendez-vous",
+				"repeatValue_other": "{{count}} rendez-vous",
+				"intervalLabel": "Rythme de répétition"
 			}
 		}
 	},
