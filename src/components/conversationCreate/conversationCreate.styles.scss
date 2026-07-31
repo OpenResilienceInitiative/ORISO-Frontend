@@ -475,12 +475,20 @@ body.conversationCreate--active .navigation__wrapper {
 		flex-shrink: 0;
 	}
 
+	/* The author column IS the M3 stacked card from the design system
+	   (Design-System-M3_ORISO 61260:30492): outlined surface, 28px radius,
+	   16px padding, and the create action lives inside it. */
 	&__authorColumn {
+		background: $cc-surface-container-low;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 28px;
+		box-sizing: border-box;
 		display: flex;
 		flex: 1;
 		flex-direction: column;
-		gap: 16px;
+		gap: 6px;
 		min-width: 280px;
+		padding: 16px;
 	}
 
 	&__moderators {
@@ -522,21 +530,31 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__createButton {
 		align-items: center;
-		align-self: flex-end;
 		background: rgba(27, 27, 28, 0.1);
 		border: none;
-		border-radius: 28px;
-		color: $cc-on-surface-variant;
+		border-radius: 100px;
+		color: $cc-on-surface;
 		cursor: default;
 		display: flex;
 		font-size: 16px;
 		font-weight: 500;
+		gap: 8px;
 		height: 56px;
 		justify-content: center;
 		letter-spacing: 0.15px;
-		min-width: 200px;
+		margin-top: auto;
 		opacity: 0.38;
-		padding: 16px 32px;
+		padding: 16px 24px;
+		width: 100%;
+
+		svg {
+			height: 24px;
+			width: 24px;
+
+			path {
+				fill: currentcolor;
+			}
+		}
 
 		&--primary {
 			background: $cc-primary;
@@ -931,6 +949,153 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 }
 
+/* ---------------------------------------------------------------------------
+   Author content card — greeting, rules and languages
+   (Design-System-M3_ORISO 61260:30492 "Stacked card / advanced_konfig").
+   Language and rule chips are M3 input chips, the fields are filled text
+   fields whose placeholder carries the label, and translating is an icon
+   button rather than a text action.
+--------------------------------------------------------------------------- */
+.authorCard {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 0;
+
+	&__topRow {
+		align-items: flex-start;
+		display: flex;
+		gap: 6px;
+	}
+
+	&__chips {
+		align-items: center;
+		display: flex;
+		flex: 1;
+		flex-wrap: wrap;
+		gap: 8px;
+		min-width: 0;
+		padding-block: 8px;
+	}
+
+	&__chip {
+		align-items: center;
+		background: none;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 8px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: inline-flex;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		height: 32px;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		padding: 6px 12px;
+
+		&:hover {
+			background: rgba(27, 27, 28, 0.08);
+		}
+
+		&[aria-selected='true'] {
+			background: var(--m3-secondary-container, #646d78);
+			border-color: transparent;
+			color: var(--m3-on-secondary-container, #e7effc);
+			padding-left: 8px;
+		}
+	}
+
+	&__chipIcon {
+		height: 18px;
+		width: 18px;
+
+		path {
+			fill: currentcolor;
+		}
+	}
+
+	/* 48px hit area around the 40x32 M3 icon button (WCAG 2.2 target size). */
+	&__iconButton {
+		align-items: center;
+		background: none;
+		border: none;
+		border-radius: 8px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: inline-flex;
+		flex-shrink: 0;
+		height: 48px;
+		justify-content: center;
+		padding: 8px 4px;
+		width: 48px;
+
+		svg {
+			height: 20px;
+			width: 20px;
+
+			path {
+				fill: currentcolor;
+			}
+		}
+
+		&:hover:not(:disabled) {
+			background: rgba(27, 27, 28, 0.08);
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		&--filled {
+			background: $cc-primary;
+			color: $cc-on-primary;
+
+			&:hover:not(:disabled) {
+				background: var(--m3-primary-container, #cc1e1c);
+			}
+		}
+	}
+
+	&__panel {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 16px;
+		min-height: 0;
+	}
+
+	&__field {
+		background: $cc-surface-container-low;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
+		box-sizing: border-box;
+		color: $cc-on-surface;
+		flex: 1;
+		font-family: inherit;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
+		min-height: 56px;
+		padding: 8px 16px;
+		resize: vertical;
+		width: 100%;
+
+		&::placeholder {
+			color: $cc-on-surface-variant;
+		}
+	}
+
+	&__error {
+		color: var(--m3-error, #b1005e);
+		font-size: 14px;
+		margin: 0;
+	}
+}
+
 /* Rule chips editor (48x48 add button = WCAG 2.2 target size). */
 .ruleChipsEditor {
 	display: flex;
@@ -938,13 +1103,17 @@ body.conversationCreate--active .navigation__wrapper {
 	gap: 8px;
 
 	&__input {
-		border: 1px solid $cc-outline-variant;
-		border-radius: 12px;
+		background: $cc-surface-container-low;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
+		box-sizing: border-box;
+		color: $cc-on-surface;
 		font-family: inherit;
-		font-size: 14px;
-		line-height: 20px;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
 		min-height: 96px;
-		padding: 12px 16px;
+		padding: 8px 16px;
 		resize: vertical;
 		width: 100%;
 

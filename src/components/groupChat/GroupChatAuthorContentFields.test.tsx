@@ -6,6 +6,14 @@ import { apiTranslateGroupChatAuthorContent } from '../../api/apiGroupChatAuthor
 import { GroupChatAuthorContentDraft } from './groupChatAuthorContent';
 import { GroupChatAuthorContentFields } from './GroupChatAuthorContentFields';
 
+vi.mock('../../resources/img/icons/schedule-language.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
+vi.mock('../../resources/img/icons/translate.svg', () => ({
+	ReactComponent: () => null,
+	default: () => null
+}));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));

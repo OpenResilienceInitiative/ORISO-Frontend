@@ -69,7 +69,7 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		gap: 8px;
 		letter-spacing: 0.15px;
 		line-height: 24px;
-		padding: 16px 24px;
+		padding: 16px;
 		white-space: nowrap;
 	}
 
@@ -109,7 +109,9 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		align-items: center;
 		display: inline-flex;
 		flex-shrink: 0;
+		height: 24px;
 		line-height: 1;
+		width: 24px;
 
 		svg {
 			height: 24px;

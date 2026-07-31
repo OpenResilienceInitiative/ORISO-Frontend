@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as GlobeIcon } from '../../resources/img/icons/schedule-language.svg';
+import { ReactComponent as TranslateIcon } from '../../resources/img/icons/translate.svg';
 import { apiTranslateGroupChatAuthorContent } from '../../api/apiGroupChatAuthorTranslation';
 import {
 	applyGroupChatAuthorTranslations,
@@ -131,63 +133,80 @@ export const GroupChatAuthorContentFields = ({
 	};
 
 	return (
-		<fieldset className="createChat__authorContent">
-			<legend>{t('groupChat.create.authorContent.title')}</legend>
-			<div className="createChat__languageTabs" role="tablist">
-				{languages.map((language, index) => (
+		<section className="authorCard">
+			<div className="authorCard__topRow">
+				<div className="authorCard__chips" role="tablist">
+					{languages.map((language, index) => (
+						<button
+							type="button"
+							role="tab"
+							className="authorCard__chip"
+							id={tabIdFor(language)}
+							aria-controls={panelIdFor(language)}
+							aria-selected={language === selectedLanguage}
+							tabIndex={language === selectedLanguage ? 0 : -1}
+							key={language}
+							onClick={() => setSelectedLanguage(language)}
+							onKeyDown={(event) =>
+								handleTabKeyDown(event, index)
+							}
+						>
+							{language === selectedLanguage && (
+								<GlobeIcon
+									className="authorCard__chipIcon"
+									aria-hidden
+								/>
+							)}
+							{language.toUpperCase()}
+						</button>
+					))}
+				</div>
+				{translationAvailable && (
 					<button
 						type="button"
-						role="tab"
-						id={tabIdFor(language)}
-						aria-controls={panelIdFor(language)}
-						aria-selected={language === selectedLanguage}
-						tabIndex={language === selectedLanguage ? 0 : -1}
-						key={language}
-						onClick={() => setSelectedLanguage(language)}
-						onKeyDown={(event) => handleTabKeyDown(event, index)}
-					>
-						{language.toUpperCase()}
-					</button>
-				))}
-			</div>
-			<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
-				<label>
-					{t('groupChat.create.authorContent.welcome')}
-					<textarea
-						maxLength={120}
-						value={
-							value.hintMessageTranslations?.[selectedLanguage] ||
-							''
+						className="authorCard__iconButton authorCard__iconButton--filled"
+						disabled={isTranslating}
+						onClick={translateContent}
+						title={t('groupChat.create.authorContent.translate')}
+						aria-label={
+							isTranslating
+								? t(
+										'groupChat.create.authorContent.translating'
+									)
+								: t('groupChat.create.authorContent.translate')
 						}
-						onChange={(event) => updateHint(event.target.value)}
-					/>
-				</label>
-				<div className="createChat__rules">
-					<span>{t('groupChat.create.authorContent.rules')}</span>
-					<RuleChipsEditor
-						rules={rules.filter((rule) => rule.trim().length > 0)}
-						onChange={updateRules}
-						resetKey={selectedLanguage}
-					/>
-				</div>
+					>
+						<TranslateIcon aria-hidden />
+					</button>
+				)}
 			</div>
-			{translationAvailable && (
-				<button
-					type="button"
-					className="button__item button__tertiary createChat__editorButton"
-					disabled={isTranslating}
-					onClick={translateContent}
-				>
-					{isTranslating
-						? t('groupChat.create.authorContent.translating')
-						: t('groupChat.create.authorContent.translate')}
-				</button>
-			)}
+			<div
+				className="authorCard__panel"
+				role="tabpanel"
+				id={panelId}
+				aria-labelledby={tabId}
+			>
+				<textarea
+					className="authorCard__field"
+					maxLength={120}
+					placeholder={t('groupChat.create.authorContent.welcome')}
+					aria-label={t('groupChat.create.authorContent.welcome')}
+					value={
+						value.hintMessageTranslations?.[selectedLanguage] || ''
+					}
+					onChange={(event) => updateHint(event.target.value)}
+				/>
+				<RuleChipsEditor
+					rules={rules.filter((rule) => rule.trim().length > 0)}
+					onChange={updateRules}
+					resetKey={selectedLanguage}
+				/>
+			</div>
 			{translationError && (
-				<p role="alert">
+				<p role="alert" className="authorCard__error">
 					{t('groupChat.create.authorContent.translationError')}
 				</p>
 			)}
-		</fieldset>
+		</section>
 	);
 };

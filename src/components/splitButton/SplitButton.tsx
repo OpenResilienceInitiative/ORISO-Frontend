@@ -101,11 +101,10 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 						hasMenu && mainOpensMenu ? 'listbox' : undefined
 					}
 				>
-					{icon && (
-						<span className="splitButton__icon" aria-hidden>
-							{icon}
-						</span>
-					)}
+					{/* Always reserve the slot so labels share one left edge. */}
+					<span className="splitButton__icon" aria-hidden>
+						{icon}
+					</span>
 					<span className="splitButton__label">{label}</span>
 				</button>
 				{isStepper && (

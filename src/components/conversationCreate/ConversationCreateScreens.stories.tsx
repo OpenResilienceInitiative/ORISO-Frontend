@@ -6,6 +6,7 @@ import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-hel
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
 import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vertical.svg';
+import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
@@ -418,6 +419,7 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 							type="button"
 							className="circleSettings__createButton circleSettings__createButton--primary"
 						>
+							<AddCircleIcon aria-hidden />
 							{t('groupChat.circle.createLabel')}
 						</button>
 					</div>
