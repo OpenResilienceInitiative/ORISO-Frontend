@@ -291,38 +291,40 @@ export const StageLayout = ({
 					{children}
 				</Box>
 
-				{showLegalLinks && (
+				{(showLegalLinks || platformVersion) && (
 					<div className="stageLayout__footer">
-						<div className={`stageLayout__legalLinks`}>
-							<LegalLinks
-								delimiter={
-									<Text
-										type="infoSmall"
-										className="stageLayout__legalLinksSeparator"
-										text=" | "
-									/>
-								}
-								params={{ aid: specificAgency?.id }}
-								legalLinks={legalLinks}
-							>
-								{(label, url) => (
-									<button
-										type="button"
-										className="button-as-link"
-										data-cy-link={url}
-										onClick={() =>
-											window.open(url, '_blank')
-										}
-									>
+						{showLegalLinks && (
+							<div className={`stageLayout__legalLinks`}>
+								<LegalLinks
+									delimiter={
 										<Text
-											className="stageLayout__legalLinksItem"
 											type="infoSmall"
-											text={label}
+											className="stageLayout__legalLinksSeparator"
+											text=" | "
 										/>
-									</button>
-								)}
-							</LegalLinks>
-						</div>
+									}
+									params={{ aid: specificAgency?.id }}
+									legalLinks={legalLinks}
+								>
+									{(label, url) => (
+										<button
+											type="button"
+											className="button-as-link"
+											data-cy-link={url}
+											onClick={() =>
+												window.open(url, '_blank')
+											}
+										>
+											<Text
+												className="stageLayout__legalLinksItem"
+												type="infoSmall"
+												text={label}
+											/>
+										</button>
+									)}
+								</LegalLinks>
+							</div>
+						)}
 						{platformVersion && (
 							<Text
 								className="stageLayout__platformVersion"
