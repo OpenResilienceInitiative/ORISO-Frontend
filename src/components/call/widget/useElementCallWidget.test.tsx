@@ -6,6 +6,7 @@ import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useElementCallWidget } from './useElementCallWidget';
+import { setAppConfig } from '../../../utils/appConfig';
 
 const widgetApiMocks = vi.hoisted(() => ({
 	widgetDefinitions: [] as Array<Record<string, unknown>>,
@@ -124,6 +125,7 @@ describe('useElementCallWidget', () => {
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		setAppConfig(null as never);
 	});
 
 	it('waits for room join and never puts credentials or premature E2EE flags in the URL', async () => {
@@ -166,6 +168,28 @@ describe('useElementCallWidget', () => {
 		// to-device transport, so a gap in the host's Olm path would connect the
 		// call with no audio and no error (ORISO-ElementCall#35).
 		expect(fragment.get('perParticipantE2EE')).toBeNull();
+	});
+
+	it('asks Element Call for media E2EE once the environment enables it', async () => {
+		// The off path alone would still pass if the parameter were dropped
+		// unconditionally, which would silently make the toggle unusable.
+		setAppConfig({
+			releaseToggles: { enableCallMediaE2EE: true }
+		} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const fragment = new URLSearchParams(
+			new URL(result.current.url!).hash.slice(2)
+		);
+		expect(fragment.get('perParticipantE2EE')).toBe('true');
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
