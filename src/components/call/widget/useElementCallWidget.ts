@@ -29,6 +29,7 @@ import {
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
+import { appConfig } from '../../../utils/appConfig';
 
 export interface ElementCallWidgetOptions {
 	/** The Matrix room the call takes place in. */
@@ -143,7 +144,12 @@ export const useElementCallWidget = (
 					confineToRoom: 'true',
 					header: 'none',
 					skipLobby: String(skipLobby),
-					perParticipantE2EE: 'true',
+					// See releaseToggles.enableCallMediaE2EE: Element Call only
+					// encrypts media when the host asks for it, because the host
+					// owns the crypto stack that distributes the media keys.
+					...(appConfig?.releaseToggles?.enableCallMediaE2EE === true
+						? { perParticipantE2EE: 'true' }
+						: {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;
@@ -320,13 +326,34 @@ export const useElementCallWidget = (
 
 			const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
 				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					// Keep waiting: Megolm keys frequently arrive after the event,
+					// and the SDK re-runs decryption when they do. Only report it,
+					// so a call that stays silent is not silent in the log too.
+					console.warn(
+						'[call] call event still undecrypted, waiting for the key:',
+						event.getId(),
+						error?.message ?? 'no decryption error reported'
+					);
 					return;
 				}
 				clearPendingDecryption(event);
 				feedAllowedRoomEvent(decryptedEvent);
 			};
 			const timeout = setTimeout(
-				() => clearPendingDecryption(event),
+				() => {
+					// The widget never received this event. For
+					// `io.element.call.encryption_keys` that means media stays
+					// undecodable — the participant is connected but silent, with
+					// nothing else in the UI to explain it (see ElementCall#35).
+					console.error(
+						'[call] dropping call event that never decrypted:',
+						event.getId(),
+						'in',
+						event.getRoomId(),
+						'— media keys carried by this event are lost'
+					);
+					clearPendingDecryption(event);
+				},
 				5 * 60 * 1000
 			);
 			pendingDecryptions.set(event, { listener, timeout });

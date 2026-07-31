@@ -78,6 +78,16 @@ interface ReleaseToggles {
 	 */
 	enableInvisibleCrypto?: boolean;
 	/**
+	 * Per-participant media E2EE for calls: when on, the LiveKit SFU only ever
+	 * sees ciphertext. Off by default because media keys ride the MatrixRTC
+	 * to-device transport, so any gap in the host's Olm path makes a call
+	 * connect with no audio in either direction and no error anywhere
+	 * (ORISO-ElementCall#35). Turn it on per environment once a two-browser
+	 * call has proven key distribution end to end; call signalling and room
+	 * events are encrypted by the host regardless of this toggle.
+	 */
+	enableCallMediaE2EE?: boolean;
+	/**
 	 * #439 MSC3814 "dehydrated devices": when on, park a sleeping device
 	 * server-side so Megolm keys sent during a login gap are delivered and the
 	 * gap becomes readable on next login. Hard-depends on the key-backup /

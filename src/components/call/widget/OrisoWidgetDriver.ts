@@ -268,10 +268,23 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		encrypted: boolean,
 		contentMap: { [userId: string]: { [deviceId: string]: object } }
 	): Promise<void> {
+		// These refusals are correct, but they abort media key distribution, and
+		// the widget surfaces nothing for it — the call connects and stays
+		// silent (ElementCall#35). Say so in the host log before throwing.
 		if (!ALLOWED_TO_DEVICE_EVENT_TYPES.has(eventType)) {
+			console.warn(
+				'[call] refusing to-device send of disallowed type:',
+				eventType
+			);
 			throw new Error(`Call widget may not send ${eventType} to devices`);
 		}
 		if (!encrypted) {
+			console.error(
+				'[call] refusing to send',
+				eventType,
+				'unencrypted — media keys are not distributed, so the call will',
+				'connect without audio or video'
+			);
 			throw new Error(
 				`Refusing to send ${eventType} unencrypted: call keys must never ` +
 					'travel in plaintext.'
@@ -280,6 +293,11 @@ export class OrisoWidgetDriver extends WidgetDriver {
 
 		const crypto = this.client.getCrypto();
 		if (!crypto) {
+			console.error(
+				'[call] refusing to send',
+				eventType,
+				'— host client has no crypto, so media keys cannot be distributed'
+			);
 			throw new Error(
 				'Refusing to send call keys: host client has no crypto. ' +
 					'Encrypted calls require an initialised crypto stack (ADR-004).'
