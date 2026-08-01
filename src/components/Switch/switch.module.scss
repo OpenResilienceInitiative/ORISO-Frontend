@@ -3,8 +3,8 @@
 }
 
 .switch {
-	--switch-primary: #a5000a;
-	--switch-primary-container: #cc1e1c;
+	--switch-primary: var(--m3-primary, #a5000a);
+	--switch-primary-container: var(--m3-primary-container, #cc1e1c);
 	--switch-on-primary: #ffffff;
 	--switch-on-primary-container: #ffe2de;
 	--switch-surface: #fcf9f9;
@@ -12,7 +12,7 @@
 	--switch-on-surface: #1b1b1c;
 	--switch-on-surface-variant: #444748;
 	--switch-outline: #747878;
-	--switch-focus: #4c555f;
+	--switch-focus: var(--m3-secondary, #4c555f);
 
 	align-items: center;
 	cursor: pointer;
@@ -156,6 +156,7 @@
 
 .switch:hover .input:not(:disabled):checked + .track .target {
 	background: rgba(165, 0, 10, 0.08);
+	background: color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent);
 }
 
 .switch:hover .input:not(:disabled):checked + .track .handle {
@@ -174,6 +175,7 @@
 
 .switch:active .input:not(:disabled):checked + .track .target {
 	background: rgba(165, 0, 10, 0.1);
+	background: color-mix(in srgb, var(--m3-primary, #a5000a) 10%, transparent);
 }
 
 .input:focus-visible + .track {

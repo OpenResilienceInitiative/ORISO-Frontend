@@ -1,22 +1,30 @@
+// #143: role colours read the runtime --m3-* tokens so tenant seeds reach the
+// form fields; the literal fallbacks keep today's rendering when no palette is
+// injected. `error` stays literal: the static --m3-error (#cc0000) would
+// override the intended magenta error role.
 export const orisoInputColors = {
-	onSurface: '#1b1b1c',
-	onSurfaceVariant: '#444748',
-	outline: '#747878',
-	outlineVariant: '#747878',
-	surface: '#fcf9f9',
-	surfaceContainerLowest: '#fcf9f9',
-	surfaceContainerLow: '#f7f4f4',
-	surfaceContainer: '#f1eeee',
-	surfaceContainerHigh: '#ebe8e8',
-	secondary: '#4c555f',
-	onSecondary: '#ffffff',
-	primary: '#a5000a',
-	onPrimary: '#ffffff',
-	primaryDark: '#7e0008',
+	onSurface: 'var(--m3-on-surface, #1b1b1c)',
+	onSurfaceVariant: 'var(--m3-on-surface-variant, #444748)',
+	outline: 'var(--m3-outline, #747878)',
+	// value-matched to --m3-outline on purpose: the fields use the darker
+	// outline tone for both states, --m3-outline-variant is far lighter.
+	outlineVariant: 'var(--m3-outline, #747878)',
+	surface: 'var(--m3-surface, #fcf9f9)',
+	surfaceContainerLowest: 'var(--m3-surface-container-lowest, #fcf9f9)',
+	surfaceContainerLow: 'var(--m3-surface-container-low, #f7f4f4)',
+	surfaceContainer: 'var(--m3-surface-container, #f1eeee)',
+	surfaceContainerHigh: 'var(--m3-surface-container-high, #ebe8e8)',
+	secondary: 'var(--m3-secondary, #4c555f)',
+	onSecondary: 'var(--m3-on-secondary, #ffffff)',
+	primary: 'var(--m3-primary, #a5000a)',
+	onPrimary: 'var(--m3-on-primary, #ffffff)',
+	primaryDark: 'var(--m3-primary-hover, #7e0008)',
 	error: '#b1005e',
-	focus: '#a5000a',
-	focusLayer: 'rgba(165, 0, 10, 0.08)',
-	selectedLayer: 'rgba(165, 0, 10, 0.08)',
+	focus: 'var(--m3-primary, #a5000a)',
+	focusLayer:
+		'color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent)',
+	selectedLayer:
+		'color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent)',
 	hoverLayer: 'rgba(27, 27, 28, 0.04)'
 } as const;
 

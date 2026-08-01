@@ -145,7 +145,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 
 		svg {
 			width: 20px;
@@ -224,7 +224,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 	}
 
 	// The selected notification pops out of the stack with vertical spacing
@@ -245,7 +245,7 @@
 	// Selecting a card grows it in subtly (same easing as the toolbar chips).
 	&__card--active {
 		background: #ffffff;
-		border: 2px solid #a5000a;
+		border: 2px solid var(--m3-primary, #a5000a);
 		border-radius: 28px;
 		padding: 15px 19px;
 		animation: notificationsCenterCardActivate 240ms
@@ -254,13 +254,13 @@
 
 		&:hover {
 			background: #ffffff;
-			border-color: #a5000a;
+			border-color: var(--m3-primary, #a5000a);
 		}
 
 		.notificationsCenter__cardIcon {
 			border: none;
 			border-radius: 50%;
-			background: #a5000a;
+			background: var(--m3-primary, #a5000a);
 			color: #ffffff;
 
 			svg {
@@ -273,7 +273,7 @@
 		}
 
 		.notificationsCenter__cardConnector {
-			border-left-color: #a5000a;
+			border-left-color: var(--m3-primary, #a5000a);
 			min-height: 35px;
 		}
 
@@ -287,7 +287,7 @@
 		}
 
 		.notificationsCenter__cardTime--footer {
-			color: #a5000a;
+			color: var(--m3-primary, #a5000a);
 			font-weight: 600;
 		}
 
@@ -313,7 +313,7 @@
 		appearance: none;
 		width: 44px;
 		height: 28px;
-		border: 1px solid #ffdad5;
+		border: 1px solid var(--m3-primary-fixed, #ffdad5);
 		border-radius: 999px;
 		background: #ffffff;
 		color: #444748;
@@ -328,7 +328,7 @@
 		}
 
 		&:hover {
-			background: #ffdad7;
+			background: var(--m3-primary-fixed, #ffdad7);
 		}
 
 		&:focus-visible {
@@ -344,7 +344,7 @@
 		width: 46px;
 		border: none;
 		border-radius: 23px;
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 		color: #ffffff;
 		display: inline-flex;
 		align-items: center;
@@ -360,7 +360,7 @@
 		&:hover,
 		&--open,
 		&--open:hover {
-			background: #7e0008;
+			background: var(--m3-primary-hover, #7e0008);
 		}
 
 		&:focus-visible {
@@ -386,7 +386,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		border: 1.5px solid #a5000a;
+		border: 1.5px solid var(--m3-primary, #a5000a);
 		border-radius: 32px;
 		background: #ffffff;
 		overflow: hidden;
@@ -465,7 +465,7 @@
 		padding: 0 32px;
 		border: none;
 		border-radius: 999px;
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 		color: #ffffff;
 		font-size: 16px;
 		font-weight: 600;
@@ -478,7 +478,7 @@
 		}
 
 		&:hover {
-			background: #7e0008;
+			background: var(--m3-primary-hover, #7e0008);
 		}
 
 		&:focus-visible {
@@ -492,7 +492,7 @@
 		border: 1px solid #c4c7c7;
 		border-radius: 999px;
 		background: #ffffff;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		font-size: 15px;
 		font-weight: 600;
 		cursor: pointer;
@@ -524,7 +524,7 @@
 		border: 1px solid #c4c7c7;
 		border-radius: 999px;
 		background: #ffffff;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		font-weight: 700;
 		cursor: pointer;
 
@@ -539,8 +539,8 @@
 	}
 
 	&__consentButton--approve {
-		border-color: #a5000a;
-		background: #a5000a;
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
 		color: #ffffff;
 	}
 

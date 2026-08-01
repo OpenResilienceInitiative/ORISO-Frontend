@@ -392,7 +392,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					.navigation__icon-slot--row
 					.navigation__icon__filled {
 					display: block;
-					color: #930008;
+					color: var(--m3-primary-outline, #930008);
 					fill: currentColor;
 				}
 
@@ -761,7 +761,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	&__item__count {
-		color: #930008;
+		color: var(--m3-primary-outline, #930008);
 		background-color: #ffffff;
 	}
 

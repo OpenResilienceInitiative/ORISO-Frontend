@@ -793,7 +793,7 @@ $message-avatar-overlap: -19px;
 
 		&--systemNotification {
 			background: #fffafa;
-			border: 1px solid #ffdad5;
+			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			border-radius: 12px;
 		}
 
@@ -832,6 +832,11 @@ $message-avatar-overlap: -19px;
 			padding: 4px 0 4px 10px;
 			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 6%,
+				transparent
+			);
 			border-radius: 0 6px 6px 0;
 		}
 
@@ -1029,7 +1034,7 @@ $message-avatar-overlap: -19px;
 				}
 
 				.messageItem__message__attachment__meta {
-					color: #a5000a;
+					color: var(--m3-primary, #a5000a);
 				}
 			}
 
@@ -1109,6 +1114,11 @@ $message-avatar-overlap: -19px;
 			blockquote {
 				border-left-color: var(--m3-primary, $primary);
 				background: rgba(165, 0, 10, 0.08);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 8%,
+					transparent
+				);
 			}
 		}
 	}

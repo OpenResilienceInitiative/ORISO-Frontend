@@ -451,6 +451,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		width: 100%;
 		height: 1px;
 		background-color: rgba(204, 30, 28, 0.15);
+		background-color: color-mix(
+			in srgb,
+			var(--m3-primary, #a5000a) 15%,
+			transparent
+		);
 		margin: 8px 0;
 	}
 
@@ -481,7 +486,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: #a5000a;
+				color: var(--m3-primary, #a5000a);
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -491,12 +496,14 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		&:focus-visible:not(:disabled) {
 			outline: 2px solid rgba(204, 30, 28, 0.42);
+			outline: 2px solid
+				color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent);
 			outline-offset: -2px;
 			background-color: #e7effc;
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: #a5000a;
+				color: var(--m3-primary, #a5000a);
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -543,7 +550,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	&__dropdownOptionTitle {
 		font-size: 16px;
 		font-weight: 500;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		line-height: 24px;
 		flex: 1;
 
@@ -558,7 +565,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		justify-content: flex-end;
 		font-size: 12px;
 		font-weight: 400;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		background: transparent;
 		border: none;
 		padding: 0;
@@ -568,7 +575,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__dropdownOptionDescription {
 		font-size: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 		line-height: 20px;
 		margin: 0;
 

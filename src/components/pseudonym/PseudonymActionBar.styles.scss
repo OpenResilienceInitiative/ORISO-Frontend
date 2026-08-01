@@ -63,7 +63,7 @@
 .pseudonymActionBar__btnContinue {
 	flex: 1 1 auto;
 	border-radius: 999px;
-	background: #a5000a;
+	background: var(--m3-primary, #a5000a);
 	color: #ffffff;
 
 	&:hover:not(:disabled) {
