@@ -198,7 +198,15 @@ export const useElementCallWidget = (
 			// stays lit after hanging up until the user reloads the page.
 			// Navigating it away destroys that document and releases the
 			// devices, whoever ended the call.
-			releaseIframeDevices(attachedIframeRef.current);
+			//
+			// Only when this iframe is really going away, though. React calls
+			// the previous ref callback with null and the new one with the same
+			// element whenever the callback's identity changes, so blanking
+			// unconditionally would tear the media out of a live call.
+			const previous = attachedIframeRef.current;
+			if (previous && previous !== iframe) {
+				releaseIframeDevices(previous);
+			}
 			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
 				window.removeEventListener(
