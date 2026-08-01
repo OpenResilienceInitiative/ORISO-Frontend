@@ -2,7 +2,10 @@ import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
-import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import {
+	createMatrixErrorAwareLogger,
+	getMatrixClientLogger
+} from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import {
 	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
@@ -140,17 +143,26 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	}
 };
 
+export const clearPersistedMatrixDeviceId = (userId: string): void => {
+	localStorage.removeItem(MATRIX_DEVICE_ID_STORAGE_KEY);
+	localStorage.removeItem(`${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`);
+};
+
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
-	loginData: MatrixLoginData
+	loginData: MatrixLoginData,
+	onSdkError?: (...messages: unknown[]) => void
 ): MatrixClient => {
+	const baseLogger = getMatrixClientLogger();
 	return createClient({
 		baseUrl: loginData.homeserverUrl,
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
 		deviceId: loginData.deviceId,
 		fallbackICEServerAllowed: true,
-		logger: getMatrixClientLogger(),
+		logger: onSdkError
+			? createMatrixErrorAwareLogger(baseLogger, onSdkError)
+			: baseLogger,
 		// #437 key backup + recovery: the SDK pulls the secret-storage key
 		// through this callback during setup/recovery flows (one-shot in-memory
 		// cache, never persisted).

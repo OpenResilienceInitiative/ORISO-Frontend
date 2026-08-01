@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
-import { getMatrixAccessToken } from '../components/sessionCookie/getMatrixAccessToken';
+import {
+	clearPersistedMatrixDeviceId,
+	createMatrixClient,
+	getMatrixAccessToken,
+	persistMatrixLoginData
+} from '../components/sessionCookie/getMatrixAccessToken';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import {
 	MatrixClientService,
@@ -24,6 +29,7 @@ const mockedMatrixClient = vi.hoisted(() => ({
 }));
 
 vi.mock('../components/sessionCookie/getMatrixAccessToken', () => ({
+	clearPersistedMatrixDeviceId: vi.fn(),
 	createMatrixClient: vi.fn(() => mockedMatrixClient),
 	getMatrixAccessToken: vi.fn(),
 	persistMatrixLoginData: vi.fn()
@@ -253,6 +259,46 @@ describe('MatrixClientService', () => {
 		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
 		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
+	it('recovers once with a fresh device when Rust crypto reports an OTK conflict', async () => {
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+
+		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledOnce();
+		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledWith(
+			'@alice:matrix.localhost'
+		);
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(persistMatrixLoginData).toHaveBeenCalledWith(
+			expect.objectContaining({ deviceId: 'DEVICE_TWO' })
+		);
+		expect(createMatrixClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ deviceId: 'DEVICE_TWO' }),
+			expect.any(Function)
+		);
 	});
 
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {
