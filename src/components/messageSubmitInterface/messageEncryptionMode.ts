@@ -5,7 +5,7 @@ interface AskerEnquirySubmissionInput {
 	sessionStatus?: number;
 	hasAskerAuthority: boolean;
 	isAnonymousLiveChat: boolean;
-	hasMatrixRoom?: boolean;
+	hasEnquiryMessage?: boolean;
 }
 
 export const isAskerEnquirySubmission = ({
@@ -13,9 +13,9 @@ export const isAskerEnquirySubmission = ({
 	sessionStatus,
 	hasAskerAuthority,
 	isAnonymousLiveChat,
-	hasMatrixRoom
+	hasEnquiryMessage
 }: AskerEnquirySubmissionInput): boolean =>
 	(isEnquiryListType || sessionStatus === STATUS_ENQUIRY) &&
 	hasAskerAuthority &&
 	!isAnonymousLiveChat &&
-	!hasMatrixRoom;
+	!hasEnquiryMessage;

@@ -651,7 +651,6 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
-	const hasMatrixRoom = Boolean(resolvedChatSession.matrixRoomId);
 	const isAskerEnquiry = isAskerEnquirySubmission({
 		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
 		sessionStatus: activeSession.item?.status,
@@ -660,7 +659,7 @@ export const MessageSubmitInterfaceComponent = ({
 			userData
 		),
 		isAnonymousLiveChat,
-		hasMatrixRoom
+		hasEnquiryMessage: Boolean(activeSession.item?.messageDate)
 	});
 
 	const {

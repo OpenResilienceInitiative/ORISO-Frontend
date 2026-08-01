@@ -36,14 +36,26 @@ describe('messageEncryptionMode', () => {
 		).toBe(false);
 	});
 
-	it('does not use the enquiry endpoint once the session has a Matrix room', () => {
+	it('uses the enquiry endpoint for the first message even when registration pre-created a Matrix room', () => {
 		expect(
 			isAskerEnquirySubmission({
 				isEnquiryListType: false,
 				sessionStatus: STATUS_ENQUIRY,
 				hasAskerAuthority: true,
 				isAnonymousLiveChat: false,
-				hasMatrixRoom: true
+				hasEnquiryMessage: false
+			})
+		).toBe(true);
+	});
+
+	it('sends follow-up messages through Matrix once the enquiry message is recorded', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: false,
+				sessionStatus: STATUS_ENQUIRY,
+				hasAskerAuthority: true,
+				isAnonymousLiveChat: false,
+				hasEnquiryMessage: true
 			})
 		).toBe(false);
 	});
