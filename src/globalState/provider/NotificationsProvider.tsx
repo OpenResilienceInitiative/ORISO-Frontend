@@ -226,13 +226,13 @@ export function NotificationsProvider(props) {
 	// played from a user gesture — prime one on the first pointer/keydown.
 	useEffect(() => installAudioUnlock(), []);
 
-	// Real-time backbone: the backend fires a `directMessage` live event to the
-	// recipient whenever a notification is persisted (ORISO-UserService
-	// EventNotificationService), and WebsocketHandler re-emits it on
-	// messageEventEmitter. Refresh the feed on that signal instead of waiting for
-	// the 15s fallback poll above. Debounced so a burst of events (e.g. one live
-	// message fanning out to several notifications) collapses into a single
-	// refetch.
+	// Refresh trigger (#845, corrected): there is NO backend live push — the
+	// LiveService transport is a 410 tombstone (ORISO-UserService
+	// DeprecatedLiveProxyController). `messageEventEmitter` is fed by the
+	// client's OWN Matrix sync (WebsocketHandler → matrixLiveEventBridge
+	// 'directMessage'), so this only fires early for rooms this client
+	// syncs; everything else arrives via the 15s poll above. Debounced so
+	// a burst of events collapses into a single refetch.
 	useEffect(() => {
 		let debounceTimer: number | undefined;
 		const onLiveEvent = () => {

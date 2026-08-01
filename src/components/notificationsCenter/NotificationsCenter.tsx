@@ -47,6 +47,12 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { getNextNotificationId } from './notificationQueue';
+import {
+	formatAbsoluteTime,
+	formatClockParts,
+	formatRelativeTime
+} from './timelineTime';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -66,25 +72,6 @@ const FAMILY_ICONS: Record<
 	calls: CallsFamilyIcon,
 	system: SystemFamilyIcon,
 	appointments: AppointmentsFamilyIcon
-};
-
-const formatRelativeTime = (createdAt: string, locale?: string) => {
-	const normalizedCreatedAt =
-		createdAt &&
-		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(createdAt) &&
-		!/Z|[+-]\d{2}:\d{2}$/.test(createdAt)
-			? `${createdAt}Z`
-			: createdAt;
-	const date = new Date(normalizedCreatedAt);
-	const diffMs = Date.now() - date.getTime();
-	const diffMin = Math.max(0, Math.floor(diffMs / (1000 * 60)));
-	if (diffMin < 1) return 'now';
-	if (diffMin < 60) return `${diffMin}m ago`;
-	const diffHours = Math.floor(diffMin / 60);
-	if (diffHours < 24) return `${diffHours}h ago`;
-	const diffDays = Math.floor(diffHours / 24);
-	if (diffDays < 7) return `${diffDays}d ago`;
-	return date.toLocaleString(locale || 'de-DE');
 };
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
@@ -340,6 +327,21 @@ export const NotificationsCenter = () => {
 				: 'system',
 		[selectedNotification]
 	);
+
+	// #845: on desktop the selected card is rendered in the detail pane —
+	// displayed means read (Slack semantics). This also covers the
+	// auto-selected first card, which previously stayed unread and made
+	// the Next button die on its first click. Skipped while the unread
+	// filter is on: marking read would drop the card from the filtered
+	// list and cascade-read the entire feed one selection at a time.
+	useEffect(() => {
+		if (untilL || unreadOnly) {
+			return;
+		}
+		if (selectedNotification && !selectedNotification.readAt) {
+			markNotificationAsRead(selectedNotification.id);
+		}
+	}, [untilL, unreadOnly, selectedNotification, markNotificationAsRead]);
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
@@ -412,32 +414,6 @@ export const NotificationsCenter = () => {
 		selectedThreadRootId
 	]);
 
-	const getNextNotificationId = (
-		fromId: string | null,
-		unreadOnly: boolean
-	): string | null => {
-		if (filteredFeed.length === 0) {
-			return null;
-		}
-		const startIndex = fromId
-			? filteredFeed.findIndex((item) => item.id === fromId)
-			: -1;
-		const matchesRule = (item: (typeof filteredFeed)[number]) =>
-			!unreadOnly || !item.readAt;
-
-		for (let i = startIndex + 1; i < filteredFeed.length; i++) {
-			if (matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		for (let i = 0; i <= startIndex; i++) {
-			if (i >= 0 && matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		return null;
-	};
-
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
 		if (untilL) {
@@ -455,6 +431,7 @@ export const NotificationsCenter = () => {
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotification.id,
 			true
 		);
@@ -472,10 +449,13 @@ export const NotificationsCenter = () => {
 
 	const handleNextNotification = () => {
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotificationId,
 			true
 		);
-		if (nextUnreadId) {
+		// #845: defensive self-guard — the queue already excludes the
+		// anchor, so a match is always a different card.
+		if (nextUnreadId && nextUnreadId !== selectedNotificationId) {
 			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
@@ -513,7 +493,11 @@ export const NotificationsCenter = () => {
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
-	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const nextUnreadId = getNextNotificationId(
+		filteredFeed,
+		selectedNotificationId,
+		true
+	);
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
@@ -918,6 +902,28 @@ export const NotificationsCenter = () => {
 							</div>
 							<p className="notificationsCenter__detailText">
 								{selectedDisplay?.text}
+							</p>
+							{/* #845: the pane never showed WHEN the event
+							    happened; waiting-room events phrase it as
+							    "waiting since" so the queue age is obvious. */}
+							<p className="notificationsCenter__detailTimestamp">
+								{selectedNotification?.eventType ===
+								'waiting_room.client.joined'
+									? translate(
+											'notifications.center.waitingSince',
+											{
+												defaultValue:
+													'Waiting since {{time}} ({{date}})',
+												...formatClockParts(
+													selectedNotification.createdAt,
+													i18n.language
+												)
+											}
+										)
+									: formatAbsoluteTime(
+											selectedNotification.createdAt,
+											i18n.language
+										)}
 							</p>
 							{selectedNotification?.eventType ===
 								'case.handover.consent.requested' && (

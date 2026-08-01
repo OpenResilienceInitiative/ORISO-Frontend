@@ -1409,7 +1409,11 @@
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
-			"open": "Ouvrir le chat"
+			"open": "Ouvrir le chat",
+			"next": "Notification suivante",
+			"cardMenu": "Actions de notification",
+			"markRead": "Marquer comme lu",
+			"waitingSince": "En attente depuis {{time}} ({{date}})"
 		}
 	},
 	"overlay": {

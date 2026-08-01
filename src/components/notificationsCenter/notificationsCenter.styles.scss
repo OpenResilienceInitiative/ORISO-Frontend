@@ -448,6 +448,14 @@
 		text-align: left;
 	}
 
+	&__detailTimestamp {
+		margin: 4px 0 0;
+		font-size: 13px;
+		line-height: 1.4;
+		color: var(--m3-secondary, #4c555f);
+		text-align: left;
+	}
+
 	&__detailActions {
 		display: flex;
 		gap: 12px;

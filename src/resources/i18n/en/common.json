@@ -1718,7 +1718,11 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"next": "Next notification",
+			"cardMenu": "Notification actions",
+			"markRead": "Mark as read",
+			"waitingSince": "Waiting since {{time}} ({{date}})"
 		},
 		"threadReply": {
 			"title": "New thread reply"
