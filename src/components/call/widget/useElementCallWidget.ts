@@ -74,6 +74,23 @@ const fragmentParams = (url: string): URLSearchParams => {
 	return new URLSearchParams(queryStart === -1 ? '' : hash.slice(queryStart));
 };
 
+/**
+ * Navigate a call iframe to a blank document so the browser releases the camera
+ * and microphone it holds.
+ *
+ * Removing the element from the DOM is not reliable enough on its own: the
+ * capture indicator can stay lit after a call ends, which on a counselling
+ * platform reads to the person on the other side as still being watched.
+ */
+const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
+	if (!iframe) return;
+	try {
+		iframe.src = 'about:blank';
+	} catch {
+		/* the iframe may already be detached; the devices go with it */
+	}
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
@@ -88,6 +105,7 @@ export const useElementCallWidget = (
 	const [url, setUrl] = useState<string | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
+	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
 	const instanceNonceRef = useRef(globalThis.crypto.randomUUID());
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
@@ -175,6 +193,13 @@ export const useElementCallWidget = (
 				apiRef.current = null;
 				driverRef.current = null;
 			}
+			// Stopping the channel does not stop the call: the iframe document
+			// keeps its camera and microphone tracks, so the capture indicator
+			// stays lit after hanging up until the user reloads the page.
+			// Navigating it away destroys that document and releases the
+			// devices, whoever ended the call.
+			releaseIframeDevices(attachedIframeRef.current);
+			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
 				window.removeEventListener(
 					'message',
@@ -235,6 +260,7 @@ export const useElementCallWidget = (
 			});
 
 			driverRef.current = driver;
+			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
 			api.setViewedRoomId(roomId);
@@ -433,6 +459,8 @@ export const useElementCallWidget = (
 		() => () => {
 			apiRef.current?.stop();
 			apiRef.current = null;
+			releaseIframeDevices(attachedIframeRef.current);
+			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
 				window.removeEventListener(
 					'message',
