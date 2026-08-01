@@ -576,4 +576,55 @@ describe('useElementCallWidget', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('releases camera and microphone when the call ends, however it ended', async () => {
+		const client = createClient();
+		const { result, unmount } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(result.current.url);
+
+		// Element Call hanging up on its own side unmounts the iframe, which
+		// calls the ref callback with null. Stopping the widget channel alone
+		// would leave the iframe document — and its capture — alive.
+		act(() => result.current.attachIframe(null));
+		expect(iframe.src).toBe('about:blank');
+
+		// And the same must hold when the surface simply unmounts.
+		const second = document.createElement('iframe');
+		second.src = result.current.url!;
+		act(() => result.current.attachIframe(second));
+		unmount();
+		expect(second.src).toBe('about:blank');
+	});
+
+	it('keeps a live call running when the same iframe is re-attached', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+
+		// React hands the same element to a new ref callback whenever that
+		// callback's identity changes. Releasing the devices here would kill
+		// the media of a call that is still running.
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(result.current.url);
+
+		// Swapping in a different iframe must still release the old one.
+		const replacement = document.createElement('iframe');
+		replacement.src = result.current.url!;
+		act(() => result.current.attachIframe(replacement));
+		expect(iframe.src).toBe('about:blank');
+		expect(replacement.src).toBe(result.current.url);
+	});
 });
