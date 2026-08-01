@@ -25,7 +25,11 @@ import {
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
 } from './inputField/composerResize';
-import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import {
+	createEnquirySubmissionGuard,
+	dispatchAskerMessageTransport,
+	resolveAskerMessageTransport
+} from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
@@ -404,6 +408,18 @@ export const MessageSubmitInterfaceComponent = ({
 		() => chatTransportService.resolveSession(activeSession),
 		[activeSession]
 	);
+	const enquirySubmissionGuardRef = useRef<ReturnType<
+		typeof createEnquirySubmissionGuard
+	> | null>(null);
+	const enquirySubmissionSessionIdRef = useRef(activeSession.item.id);
+	if (
+		!enquirySubmissionGuardRef.current ||
+		enquirySubmissionSessionIdRef.current !== activeSession.item.id
+	) {
+		enquirySubmissionGuardRef.current = createEnquirySubmissionGuard();
+		enquirySubmissionSessionIdRef.current = activeSession.item.id;
+	}
+	const enquirySubmissionGuard = enquirySubmissionGuardRef.current;
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
@@ -651,7 +667,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
-	const isAskerEnquiry = isAskerEnquirySubmission({
+	const askerMessageTransport = resolveAskerMessageTransport({
 		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
 		sessionStatus: activeSession.item?.status,
 		hasAskerAuthority: hasUserAuthority(
@@ -659,7 +675,9 @@ export const MessageSubmitInterfaceComponent = ({
 			userData
 		),
 		isAnonymousLiveChat,
-		hasEnquiryMessage: Boolean(activeSession.item?.messageDate)
+		hasEnquiryMessage: Boolean(activeSession.item?.messageDate),
+		isMatrixSession: resolvedChatSession.isMatrixSession,
+		matrixRoomId: resolvedChatSession.matrixRoomId
 	});
 
 	const {
@@ -1163,19 +1181,26 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const sendEnquiry = useCallback(
 		(message, isEncrypted) => {
+			if (!enquirySubmissionGuard.tryStart()) {
+				setIsRequestInProgress(false);
+				return Promise.resolve();
+			}
 			return apiSendEnquiry(
 				activeSession.item.id,
 				message,
 				isEncrypted,
 				language
 			)
-				.then((response) =>
-					encryptRoom(setE2EEState, response.matrixRoomId).then(
-						() => {
-							onSendButton && onSendButton(response);
-						}
-					)
-				)
+				.then((response) => {
+					enquirySubmissionGuard.markSucceeded();
+					reloadActiveSession?.();
+					return encryptRoom(
+						setE2EEState,
+						response.matrixRoomId
+					).then(() => {
+						onSendButton && onSendButton(response);
+					});
+				})
 				.then(async () => {
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
@@ -1185,6 +1210,7 @@ export const MessageSubmitInterfaceComponent = ({
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
+					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
 					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 					apiPostError({
@@ -1198,10 +1224,12 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			activeSession.item.id,
+			enquirySubmissionGuard,
 			encryptRoom,
 			language,
 			onSendButton,
 			clearDraftMessage,
+			reloadActiveSession,
 			setE2EEState
 		]
 	);
@@ -1598,11 +1626,6 @@ export const MessageSubmitInterfaceComponent = ({
 			// chatTransportService signature.
 			const isEncrypted = false;
 
-			if (isAskerEnquiry) {
-				await sendEnquiry(message, isEncrypted);
-				return;
-			}
-
 			// Shortcut: edit an existing message via Matrix m.replace
 			if (editingMessageId && !retryOfId) {
 				const matrixRoomId = resolvedChatSession.matrixRoomId;
@@ -1625,17 +1648,38 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 
-			await sendMessage(
-				message,
-				attachment,
-				isEncrypted,
-				isAside,
-				retryOfId,
-				currentTypedMessage,
-				preserveComposerOnSuccess,
-				retryContext?.replyToEventId || null,
-				retryContext?.mentionedUserIds || []
-			);
+			const sendCurrentMessage = () =>
+				sendMessage(
+					message,
+					attachment,
+					isEncrypted,
+					isAside,
+					retryOfId,
+					currentTypedMessage,
+					preserveComposerOnSuccess,
+					retryContext?.replyToEventId || null,
+					retryContext?.mentionedUserIds || []
+				);
+			const handledAskerTransport = await dispatchAskerMessageTransport({
+				transport: askerMessageTransport,
+				sendEnquiry: () => sendEnquiry(message, isEncrypted),
+				sendMatrix: sendCurrentMessage,
+				onBlocked: () => {
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					apiPostError({
+						name: 'MatrixRoomNotReadyForAskerFollowup',
+						message:
+							'Blocked an asker follow-up until its encrypted Matrix room is ready',
+						level: ERROR_LEVEL_WARN
+					}).then();
+				}
+			});
+			if (handledAskerTransport) {
+				return;
+			}
+
+			await sendCurrentMessage();
 		},
 		[
 			attachmentSelected,
@@ -1645,7 +1689,7 @@ export const MessageSubmitInterfaceComponent = ({
 			encodeHighlightColorsForTransport,
 			getTypedMarkdownMessage,
 			hasMessageContent,
-			isAskerEnquiry,
+			askerMessageTransport,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -1941,7 +1985,7 @@ export const MessageSubmitInterfaceComponent = ({
 					? 'anonymous'
 					: 'oneOnOne';
 	const hasUploadFunctionality =
-		!isAskerEnquiry &&
+		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,

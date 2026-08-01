@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import { describe, expect, it, vi } from 'vitest';
+import {
+	createEnquirySubmissionGuard,
+	dispatchAskerMessageTransport,
+	isAskerEnquirySubmission,
+	resolveAskerMessageTransport
+} from './messageEncryptionMode';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
 describe('messageEncryptionMode', () => {
@@ -36,7 +41,7 @@ describe('messageEncryptionMode', () => {
 		).toBe(false);
 	});
 
-	it('uses the enquiry endpoint for the first message even when registration pre-created a Matrix room', () => {
+	it('classifies the first message as an enquiry even when registration pre-created a Matrix room', () => {
 		expect(
 			isAskerEnquirySubmission({
 				isEnquiryListType: false,
@@ -48,7 +53,7 @@ describe('messageEncryptionMode', () => {
 		).toBe(true);
 	});
 
-	it('sends follow-up messages through Matrix once the enquiry message is recorded', () => {
+	it('classifies a recorded enquiry message as a follow-up', () => {
 		expect(
 			isAskerEnquirySubmission({
 				isEnquiryListType: false,
@@ -69,5 +74,99 @@ describe('messageEncryptionMode', () => {
 				isAnonymousLiveChat: false
 			})
 		).toBe(false);
+	});
+
+	it('dispatches the first message to the enquiry endpoint exactly once even with a Matrix room', async () => {
+		const sendEnquiry = vi.fn().mockResolvedValue(undefined);
+		const sendMatrix = vi.fn().mockResolvedValue(undefined);
+		const onBlocked = vi.fn();
+		const transport = resolveAskerMessageTransport({
+			isEnquiryListType: false,
+			sessionStatus: STATUS_ENQUIRY,
+			hasAskerAuthority: true,
+			isAnonymousLiveChat: false,
+			hasEnquiryMessage: false,
+			isMatrixSession: true,
+			matrixRoomId: '!precreated:example.org'
+		});
+
+		await dispatchAskerMessageTransport({
+			transport,
+			sendEnquiry,
+			sendMatrix,
+			onBlocked
+		});
+
+		expect(sendEnquiry).toHaveBeenCalledOnce();
+		expect(sendMatrix).not.toHaveBeenCalled();
+		expect(onBlocked).not.toHaveBeenCalled();
+	});
+
+	it('dispatches a recorded enquiry follow-up through Matrix', async () => {
+		const sendEnquiry = vi.fn().mockResolvedValue(undefined);
+		const sendMatrix = vi.fn().mockResolvedValue(undefined);
+		const onBlocked = vi.fn();
+		const transport = resolveAskerMessageTransport({
+			isEnquiryListType: false,
+			sessionStatus: STATUS_ENQUIRY,
+			hasAskerAuthority: true,
+			isAnonymousLiveChat: false,
+			hasEnquiryMessage: true,
+			isMatrixSession: true,
+			matrixRoomId: '!ready:example.org'
+		});
+
+		await dispatchAskerMessageTransport({
+			transport,
+			sendEnquiry,
+			sendMatrix,
+			onBlocked
+		});
+
+		expect(sendMatrix).toHaveBeenCalledOnce();
+		expect(sendEnquiry).not.toHaveBeenCalled();
+		expect(onBlocked).not.toHaveBeenCalled();
+	});
+
+	it('blocks a recorded enquiry follow-up until its Matrix room is ready', async () => {
+		const sendEnquiry = vi.fn().mockResolvedValue(undefined);
+		const sendMatrix = vi.fn().mockResolvedValue(undefined);
+		const onBlocked = vi.fn();
+		const transport = resolveAskerMessageTransport({
+			isEnquiryListType: false,
+			sessionStatus: STATUS_ENQUIRY,
+			hasAskerAuthority: true,
+			isAnonymousLiveChat: false,
+			hasEnquiryMessage: true,
+			isMatrixSession: false
+		});
+
+		await dispatchAskerMessageTransport({
+			transport,
+			sendEnquiry,
+			sendMatrix,
+			onBlocked
+		});
+
+		expect(onBlocked).toHaveBeenCalledOnce();
+		expect(sendEnquiry).not.toHaveBeenCalled();
+		expect(sendMatrix).not.toHaveBeenCalled();
+	});
+
+	it('keeps a successful one-shot enquiry locked until the session changes', () => {
+		const guard = createEnquirySubmissionGuard();
+
+		expect(guard.tryStart()).toBe(true);
+		expect(guard.tryStart()).toBe(false);
+		guard.markSucceeded();
+		expect(guard.tryStart()).toBe(false);
+	});
+
+	it('allows a retry when the one-shot enquiry request fails', () => {
+		const guard = createEnquirySubmissionGuard();
+
+		expect(guard.tryStart()).toBe(true);
+		guard.markFailed();
+		expect(guard.tryStart()).toBe(true);
 	});
 });
