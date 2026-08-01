@@ -199,6 +199,7 @@
 
 	&:hover:not(:disabled) {
 		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 	}
 }
 

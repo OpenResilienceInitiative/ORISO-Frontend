@@ -557,6 +557,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		&:hover:not(:disabled) {
 			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
 		}
 	}
 
@@ -599,6 +600,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		&:hover:not(:disabled) {
 			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
 		}
 
 		&:active:not(:disabled) {

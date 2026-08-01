@@ -281,7 +281,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		background: var(--m3-primary, #a5000a);
 		border: none;
 		border-radius: 28px;
-		color: white;
+		color: var(--m3-on-primary, #ffffff);
 		font-size: 15px;
 		font-weight: 600;
 		letter-spacing: 0.3px;

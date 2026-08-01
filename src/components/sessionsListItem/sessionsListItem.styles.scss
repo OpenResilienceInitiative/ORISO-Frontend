@@ -490,7 +490,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
-				color: #410001;
+				color: var(--m3-on-primary-fixed, #410001);
 			}
 		}
 
@@ -507,7 +507,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
-				color: #410001;
+				color: var(--m3-on-primary-fixed, #410001);
 			}
 		}
 

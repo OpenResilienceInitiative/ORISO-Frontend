@@ -261,7 +261,7 @@
 			border: none;
 			border-radius: 50%;
 			background: var(--m3-primary, #a5000a);
-			color: #ffffff;
+			color: var(--m3-on-primary, #ffffff);
 
 			svg {
 				fill: #ffffff;
@@ -345,7 +345,7 @@
 		border: none;
 		border-radius: 23px;
 		background: var(--m3-primary, #a5000a);
-		color: #ffffff;
+		color: var(--m3-on-primary, #ffffff);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -466,7 +466,7 @@
 		border: none;
 		border-radius: 999px;
 		background: var(--m3-primary, #a5000a);
-		color: #ffffff;
+		color: var(--m3-on-primary, #ffffff);
 		font-size: 16px;
 		font-weight: 600;
 		cursor: pointer;
@@ -541,7 +541,7 @@
 	&__consentButton--approve {
 		border-color: var(--m3-primary, #a5000a);
 		background: var(--m3-primary, #a5000a);
-		color: #ffffff;
+		color: var(--m3-on-primary, #ffffff);
 	}
 
 	&__embeddedSessionFrame {

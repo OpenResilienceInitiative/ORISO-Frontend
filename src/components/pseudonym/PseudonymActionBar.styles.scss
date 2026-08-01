@@ -64,7 +64,7 @@
 	flex: 1 1 auto;
 	border-radius: 999px;
 	background: var(--m3-primary, #a5000a);
-	color: #ffffff;
+	color: var(--m3-on-primary, #ffffff);
 
 	&:hover:not(:disabled) {
 		background: #8a0008;

@@ -5,8 +5,8 @@
 .switch {
 	--switch-primary: var(--m3-primary, #a5000a);
 	--switch-primary-container: var(--m3-primary-container, #cc1e1c);
-	--switch-on-primary: #ffffff;
-	--switch-on-primary-container: #ffe2de;
+	--switch-on-primary: var(--m3-on-primary, #ffffff);
+	--switch-on-primary-container: var(--m3-on-primary-container, #ffe2de);
 	--switch-surface: #fcf9f9;
 	--switch-surface-container-highest: #e4e2e2;
 	--switch-on-surface: #1b1b1c;

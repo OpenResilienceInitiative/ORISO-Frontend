@@ -21,10 +21,12 @@ export const orisoInputColors = {
 	primaryDark: 'var(--m3-primary-hover, #7e0008)',
 	error: '#b1005e',
 	focus: 'var(--m3-primary, #a5000a)',
-	focusLayer:
-		'color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent)',
-	selectedLayer:
-		'color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent)',
+	// State layers stay rgba literals: these are single CSS-in-JS values,
+	// so there is no second declaration to fall back to — an engine
+	// without color-mix() would drop the style entirely (CodeRabbit
+	// #848). The focus INDICATION itself is the themed border above.
+	focusLayer: 'rgba(165, 0, 10, 0.08)',
+	selectedLayer: 'rgba(165, 0, 10, 0.08)',
 	hoverLayer: 'rgba(27, 27, 28, 0.04)'
 } as const;
 
