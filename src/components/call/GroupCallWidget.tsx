@@ -31,6 +31,15 @@ export const GroupCallWidget: React.FC = () => {
 	const [isDismissed, setIsDismissed] = useState(false);
 
 	const closeCallSurface = useCallback(() => {
+		// Release camera and microphone while the iframe is still in the
+		// document. Clearing the state below unmounts it, and navigating an
+		// iframe that the browser has already detached does not load anything —
+		// the capture would stay alive until a reload. This is the path Element
+		// Call's own hangup button takes, so it has to release here rather than
+		// rely on the teardown in useElementCallWidget.
+		if (iframeRef.current) {
+			iframeRef.current.src = 'about:blank';
+		}
 		setElementCallUrl('');
 		setCallData(null);
 		setCallState(null);
