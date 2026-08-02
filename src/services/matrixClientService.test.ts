@@ -19,6 +19,7 @@ const mockedCrypto = vi.hoisted(() => ({
 const mockedMatrixClient = vi.hoisted(() => ({
 	initRustCrypto: vi.fn(),
 	on: vi.fn(),
+	off: vi.fn(),
 	removeAllListeners: vi.fn(),
 	getRoom: vi.fn(),
 	getCrypto: vi.fn(),
@@ -262,6 +263,14 @@ describe('MatrixClientService', () => {
 	});
 
 	it('recovers once with a fresh device when Rust crypto reports an OTK conflict', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
 			accessToken: 'fresh-token',
@@ -286,6 +295,7 @@ describe('MatrixClientService', () => {
 		await vi.waitFor(() => {
 			expect(createMatrixClient).toHaveBeenCalledTimes(2);
 		});
+		syncListeners.at(-1)?.('PREPARED', null);
 
 		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledOnce();
 		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledWith(
@@ -299,6 +309,45 @@ describe('MatrixClientService', () => {
 			expect.objectContaining({ deviceId: 'DEVICE_TWO' }),
 			expect.any(Function)
 		);
+	});
+
+	it('blocks outbound sends until the recovered client reaches PREPARED', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
+		mockedMatrixClient.sendMessage.mockResolvedValue({ event_id: '$sent' });
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		const send = service.sendMessage('!room:matrix.localhost', 'hello');
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+
+		expect(mockedMatrixClient.sendMessage).not.toHaveBeenCalled();
+		syncListeners.at(-1)?.('PREPARED', null);
+		await send;
+		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
 	});
 
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {
