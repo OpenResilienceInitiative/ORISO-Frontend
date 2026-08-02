@@ -19,9 +19,9 @@ import {
 	Tooltip,
 	Typography
 } from '@mui/material';
+import clsx from 'clsx';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
@@ -67,6 +67,9 @@ import { ReactComponent as VerificationIcon } from '../../resources/img/icons/tw
 import { ReactComponent as VerificationFilledIcon } from '../../resources/img/icons/two-factor/verification_filled.svg';
 import { ReactComponent as ConfirmIcon } from '../../resources/img/icons/two-factor/confirm_400.svg';
 import { ReactComponent as ConfirmFilledIcon } from '../../resources/img/icons/two-factor/confirm_filled.svg';
+// ORISO's own filled checkmark — no baked-in fill, so it takes the M3 role
+// colour from CSS instead of MUI's green success default.
+import { ReactComponent as SuccessCheckIcon } from '../../resources/img/icons/checkmark_filled.svg';
 import './twoFactorSetupDialog.styles.scss';
 
 type IconComponent = React.FunctionComponent<
@@ -713,7 +716,10 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderSuccess = () => (
 		<div className="twoFactorSetupDialog__success">
-			<CheckCircleRoundedIcon className="twoFactorSetupDialog__successIcon" />
+			<SuccessCheckIcon
+				aria-hidden="true"
+				className="twoFactorSetupDialog__successIcon"
+			/>
 			<Typography className="twoFactorSetupDialog__successTitle">
 				{translate(
 					isAppFlow
@@ -834,7 +840,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				)}
 			</Box>
 			{step !== 'decision' && (
-				<div className="twoFactorSetupDialog__actions">
+				<div
+					className={clsx('twoFactorSetupDialog__actions', {
+						// Success hides both icon buttons, so the remaining
+						// close action gets its own right-aligned single row.
+						'twoFactorSetupDialog__actions--single': isSuccess
+					})}
+				>
 					{canClose && !isSuccess && (
 						<Tooltip
 							title={translate(
