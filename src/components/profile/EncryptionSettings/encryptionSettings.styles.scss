@@ -31,19 +31,6 @@
 		gap: $grid-base;
 	}
 
-	&__confirm {
-		display: flex;
-		align-items: center;
-		gap: $grid-base;
-		cursor: pointer;
-
-		input[type='checkbox'] {
-			width: 18px;
-			height: 18px;
-			accent-color: var(--m3-primary, #6750a4);
-		}
-	}
-
 	&__status {
 		border-radius: 8px;
 		padding: $grid-base-two;

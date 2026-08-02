@@ -6,6 +6,7 @@ import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
+import { M3Checkbox } from '../../M3Checkbox';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -130,6 +131,7 @@ export const EncryptionSettingsPanel = ({
 				setUpRecovery
 			);
 			if (!encodedKey) {
+				setPhase('unavailable');
 				return;
 			}
 			setRecoveryKeyToShow(encodedKey);
@@ -189,6 +191,7 @@ export const EncryptionSettingsPanel = ({
 				(client) => recoverWithKey(client, recoveryInput)
 			);
 			if (!result) {
+				setPhase('unavailable');
 				return;
 			}
 			setRecoveredCount(result.imported);
@@ -364,21 +367,15 @@ export const EncryptionSettingsPanel = ({
 							buttonHandle={onCopyKey}
 						/>
 					</div>
-					<label className="encryptionSettings__confirm">
-						<input
-							type="checkbox"
-							checked={keyStoredConfirmed}
-							onChange={(event) =>
-								setKeyStoredConfirmed(event.target.checked)
-							}
-						/>
-						<span>
-							{t(
-								'profile.encryption.showKey.confirmLabel',
-								'Ich habe den Schlüssel sicher gespeichert.'
-							)}
-						</span>
-					</label>
+					<M3Checkbox
+						checked={keyStoredConfirmed}
+						onChange={setKeyStoredConfirmed}
+						label={t(
+							'profile.encryption.showKey.confirmLabel',
+							'Ich habe den Schlüssel sicher gespeichert.'
+						)}
+						dataCy="encryption-key-stored-confirmation"
+					/>
 					<Button
 						item={{
 							label: t(

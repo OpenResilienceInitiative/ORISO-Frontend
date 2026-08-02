@@ -105,6 +105,14 @@ describe('matrixKeyBackupService (#437)', () => {
 			);
 			expect(crypto.resetKeyBackup).toHaveBeenCalledOnce();
 			expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
+			expect(
+				crypto.bootstrapSecretStorage.mock.invocationCallOrder[0]
+			).toBeLessThan(crypto.resetKeyBackup.mock.invocationCallOrder[0]);
+			expect(
+				crypto.resetKeyBackup.mock.invocationCallOrder[0]
+			).toBeLessThan(
+				crypto.checkKeyBackupAndEnable.mock.invocationCallOrder[0]
+			);
 
 			// createSecretStorageKey hands the SDK the same generated key.
 			const opts = crypto.bootstrapSecretStorage.mock.calls[0][0];
