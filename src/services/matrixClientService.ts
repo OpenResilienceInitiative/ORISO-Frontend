@@ -25,6 +25,8 @@ import {
 import { getImageDimensions } from '../utils/imageDimensions';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
+const isPreparedSyncState = (state: string | null): boolean =>
+	state === 'PREPARED' || state === 'SYNCING';
 
 export interface MatrixFileMessageOptions {
 	abortController?: AbortController;
@@ -210,7 +212,7 @@ export class MatrixClientService {
 	}
 
 	public isReady(): boolean {
-		return this.syncState === 'PREPARED';
+		return isPreparedSyncState(this.syncState);
 	}
 
 	/**
@@ -352,7 +354,10 @@ export class MatrixClientService {
 		expectedClient: MatrixClient,
 		timeoutMs: number = 30_000
 	): Promise<void> {
-		if (this.client === expectedClient && this.syncState === 'PREPARED') {
+		if (
+			this.client === expectedClient &&
+			isPreparedSyncState(this.syncState)
+		) {
 			return Promise.resolve();
 		}
 
@@ -369,7 +374,7 @@ export class MatrixClientService {
 					return;
 				}
 
-				if (state !== 'PREPARED') {
+				if (!isPreparedSyncState(state)) {
 					return;
 				}
 

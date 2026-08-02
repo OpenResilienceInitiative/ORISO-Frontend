@@ -64,6 +64,10 @@ const setClient = (
 	(service as unknown as { client: Record<string, unknown> }).client = client;
 };
 
+const setSyncState = (service: MatrixClientService, state: string) => {
+	(service as unknown as { syncState: string }).syncState = state;
+};
+
 describe('MatrixClientService', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -454,6 +458,17 @@ describe('MatrixClientService', () => {
 		await expect(wait).rejects.toThrow(
 			'Recovered Matrix client was replaced before reaching PREPARED'
 		);
+	});
+
+	it('treats the steady SYNCING state as prepared after recovery (#839)', async () => {
+		const service = new MatrixClientService();
+		setClient(service, mockedMatrixClient);
+		setSyncState(service, 'SYNCING');
+
+		await expect(service.getReadyClient()).resolves.toBe(
+			mockedMatrixClient
+		);
+		expect(service.isReady()).toBe(true);
 	});
 
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {
