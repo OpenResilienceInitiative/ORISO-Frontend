@@ -37,11 +37,13 @@ import {
 } from '../../utils/messageRelations';
 import { chatTransportService } from '../../services/chatTransportService';
 import { computeThreadSummaries } from '../../utils/threadSummaries';
+import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
 	getThreadLastReadTs,
 	markThreadRead,
 	isThreadUnread
 } from '../../utils/threadUnread';
+import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import {
@@ -3471,59 +3473,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 						</button>
 						{isThreadListOpen && (
-							<div
-								className="session__threadListPanel"
-								role="menu"
-							>
-								{Array.from(threadSummariesRaw.values())
-									.sort(
-										(a, b) => b.lastReplyTs - a.lastReplyTs
+							<ThreadListPanel
+								summaries={Array.from(
+									threadSummariesRaw.values()
+								).sort((a, b) => b.lastReplyTs - a.lastReplyTs)}
+								unreadRootIds={
+									new Set(
+										Array.from(threadUnreadByRoot.entries())
+											.filter(([, unread]) => unread)
+											.map(([rootId]) => rootId)
 									)
-									.map((summary) => (
-										<button
-											key={summary.rootId}
-											type="button"
-											role="menuitem"
-											className="session__threadListEntry"
-											onClick={() => {
-												const rootMessage =
-													getMessageById(
-														summary.rootId
-													);
-												if (rootMessage) {
-													handleOpenThread(
-														rootMessage
-													);
-												}
-											}}
-										>
-											{threadUnreadByRoot.get(
-												summary.rootId
-											) && (
-												<span
-													className="session__threadListUnreadDot"
-													aria-hidden
-												/>
-											)}
-											<span className="session__threadListEntryPreview">
-												{summary.rootPreview ||
-													translate(
-														'message.thread.unknownRoot',
-														'Frühere Nachricht'
-													)}
-											</span>
-											<span className="session__threadListEntryMeta">
-												{translate(
-													'message.thread.replies',
-													'{{count}} replies',
-													{
-														count: summary.replyCount
-													}
-												)}
-											</span>
-										</button>
-									))}
-							</div>
+								}
+								unknownRootLabel={translate(
+									'message.thread.unknownRoot',
+									'Frühere Nachricht'
+								)}
+								repliesLabel={(count) =>
+									translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count }
+									)
+								}
+								onSelectRoot={(rootId) => {
+									const rootMessage = getMessageById(rootId);
+									if (rootMessage) {
+										handleOpenThread(rootMessage);
+									}
+								}}
+							/>
 						)}
 					</div>
 				)}
@@ -5266,9 +5244,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
-									? parseMessagePrefixes(
+									? toMessagePreviewText(
 											activeThreadRootMessage.message
-										).cleanedMessage
+										)
 									: null
 							}
 							mobileUnreadCount={newMessages}

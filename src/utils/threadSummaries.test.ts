@@ -87,4 +87,27 @@ describe('computeThreadSummaries', () => {
 			rootPreview: ''
 		});
 	});
+
+	it('stores a plain-text rootPreview for transport markup + HTML (#834)', () => {
+		const messages = [
+			{
+				_id: '$root:hs',
+				message: '[[align:left]]<p>hello testing</p>[[/align]]',
+				messageTime: '2026-07-14T09:00:00.000Z'
+			},
+			{
+				_id: '$reply:hs',
+				message: 'Antwort',
+				messageTime: '2026-07-14T09:01:00.000Z',
+				threadRootEventId: '$root:hs'
+			}
+		];
+
+		const summaries = computeThreadSummaries(messages);
+
+		expect(summaries.get('$root:hs')?.rootPreview).toBe('hello testing');
+		expect(summaries.get('$root:hs')?.rootPreview).not.toMatch(
+			/\[\[align:|<p>/i
+		);
+	});
 });
