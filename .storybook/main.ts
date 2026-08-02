@@ -20,7 +20,11 @@ const config: StorybookConfig = {
 		// stories included here, so keep real product surfaces (registration,
 		// session list, composer-adjacent pieces) in the catalog instead of only
 		// the first atomic proof batch.
-		'../src/components/**/*.stories.@(ts|tsx)'
+		'../src/components/**/*.stories.@(ts|tsx)',
+		// The transactional e-mail kit. Kept apart from the in-app component
+		// library on purpose — same design language, completely different
+		// rendering rules (tables, inline styles, no JS).
+		'../src/emails/**/*.stories.@(ts|tsx)'
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],

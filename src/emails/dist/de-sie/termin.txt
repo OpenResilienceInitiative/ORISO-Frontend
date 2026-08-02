@@ -1,0 +1,33 @@
+Ihr Termin ist bestätigt
+========================
+
+Wir haben Ihren Termin notiert. Sie brauchen nichts vorzubereiten – kommen Sie einfach, wie Sie sind.
+
+Datum: {{appointmentDate}}
+Uhrzeit: {{appointmentTime}} Uhr
+Art: {{appointmentType}}
+Ort: {{locationName}}, {{locationAddress}}
+
+Termin ansehen:
+{{appointmentUrl}}
+
+Adresse auf der Karte öffnen:
+{{mapUrl}}
+
+Sie erhalten 24 Stunden vorher eine Erinnerung. Absagen ist jederzeit möglich.
+
+----------------------------------------------------------------
+Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer Ihnen und Ihrer Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.
