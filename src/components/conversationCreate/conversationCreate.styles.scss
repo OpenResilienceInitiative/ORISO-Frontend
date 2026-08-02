@@ -29,77 +29,62 @@ $cc-motion-easing: var(
 .conversationCreate {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 12px;
 	height: 100%;
 	overflow-y: auto;
-	padding: 16px 24px 32px;
+	padding: 16px;
 
-	&__header {
-		align-items: center;
+	&__intro {
 		display: flex;
-		gap: 12px;
+		flex-direction: column;
+		gap: 16px;
+		width: 100%;
 	}
 
-	&__backButton {
-		align-items: center;
-		background: none;
-		border: none;
-		border-radius: 50%;
-		cursor: pointer;
-		display: flex;
-		height: 48px;
-		justify-content: center;
-		width: 48px;
-
-		&:hover {
-			background-color: rgba(27, 27, 28, 0.04);
-		}
-
-		svg {
-			fill: $cc-on-surface;
-			height: 24px;
-			width: 24px;
-		}
+	/* M3 headline/large */
+	&__title {
+		color: $cc-secondary;
+		flex: 1;
+		font-size: 32px;
+		font-weight: 400;
+		line-height: 40px;
+		margin: 0;
+		min-width: 0;
 	}
 
-	&__headerTitle {
-		color: $cc-on-surface;
+	/* M3 body/large */
+	&__subtitle {
+		color: #241c15;
 		font-size: 16px;
-		font-weight: 500;
-		letter-spacing: 0.15px;
+		letter-spacing: 0.5px;
 		line-height: 24px;
 		margin: 0;
 	}
 
-	&__intro {
-		max-width: 640px;
+	/* Figma "Chatroom Actions": 24px stack inside a 128px side inset. */
+	&__picker,
+	&__single {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+
+		/* Figma inset is 128px; it yields before the two 360px cards would be
+		   squeezed into a wrap on a narrow chat column. */
+		padding-inline: clamp(0px, calc((100% - 760px) / 2), 128px);
 	}
 
-	&__title {
-		color: $cc-on-surface;
-		font-size: 24px;
-		font-weight: 400;
-		line-height: 32px;
-		margin: 0 0 8px;
-	}
-
-	&__subtitle {
-		color: $cc-on-surface-variant;
-		font-size: 14px;
-		letter-spacing: 0.25px;
-		line-height: 20px;
-		margin: 0;
+	&__picker--compact,
+	&__single--compact {
+		padding-inline: 0;
 	}
 
 	&__cards {
-		align-items: flex-start;
+		/* Stretch so both formats end up the same height whatever their copy,
+		   centred in the panel (Figma 8482-30555). */
+		align-items: stretch;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 24px;
-	}
-
-	&__single {
-		display: flex;
+		gap: 33px;
 		justify-content: center;
 	}
 
@@ -117,56 +102,10 @@ $cc-motion-easing: var(
 	}
 
 	&__cardActions {
+		/* Pins the action to the bottom edge of an equal-height card. */
+		margin-top: auto;
 		position: relative;
 		width: 100%;
-	}
-
-	&__topicMenu {
-		background: var(--m3-surface, #fcf9f9);
-		border: 2px solid $cc-primary;
-		border-radius: 28px;
-		box-shadow: $cc-elevation-1;
-		list-style: none;
-		margin: 8px 0 0;
-		max-height: 320px;
-		overflow-y: auto;
-		padding: 8px 0;
-		position: absolute;
-		width: 100%;
-		z-index: 20;
-
-		button {
-			background: none;
-			border: none;
-			color: $cc-secondary;
-			cursor: pointer;
-			display: block;
-			font-size: 14px;
-			font-weight: 500;
-			letter-spacing: 0.25px;
-			line-height: 20px;
-			min-height: 48px;
-			padding: 14px 16px;
-			text-align: center;
-			width: 100%;
-
-			&:hover:not(:disabled) {
-				background-color: rgba(27, 27, 28, 0.04);
-			}
-
-			&[aria-selected='true'] {
-				/* Weight + inset border so the selection reads without colour
-				   perception (WCAG 1.4.1). */
-				box-shadow: inset 3px 0 0 0 $cc-primary;
-				color: $cc-primary;
-				font-weight: 700;
-			}
-
-			&:disabled {
-				color: $cc-outline-variant;
-				cursor: default;
-			}
-		}
 	}
 
 	&__error {
@@ -216,6 +155,7 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__avatar {
 		align-items: center;
+		color: $cc-primary;
 		display: flex;
 		flex-shrink: 0;
 		height: 40px;
@@ -295,93 +235,10 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__content {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
 		gap: 12px;
 		padding: 12px;
-	}
-}
-
-.m3SplitButton {
-	display: flex;
-	gap: 2px;
-	width: 100%;
-
-	&__leading {
-		align-items: center;
-		background: none;
-		border: 1px solid $cc-outline-variant;
-		border-radius: 28px 4px 4px 28px;
-		color: $cc-on-surface-variant;
-		cursor: pointer;
-		display: flex;
-		flex: 1;
-		gap: 8px;
-		height: 56px;
-		justify-content: center;
-		min-width: 0;
-		padding: 16px 24px;
-	}
-
-	&__trailing {
-		align-items: center;
-		background: none;
-		border: 1px solid $cc-outline-variant;
-		border-radius: 4px 28px 28px 4px;
-		color: $cc-on-surface-variant;
-		cursor: pointer;
-		display: flex;
-		flex-shrink: 0;
-		height: 56px;
-		justify-content: center;
-		width: 56px;
-	}
-
-	&__leading:hover:not(:disabled),
-	&__trailing:hover:not(:disabled) {
-		background-color: rgba(27, 27, 28, 0.04);
-	}
-
-	&__icon {
-		display: flex;
-		flex-shrink: 0;
-	}
-
-	&__chevron {
-		transition: transform $cc-motion-duration $cc-motion-easing;
-
-		&--up {
-			transform: rotate(180deg);
-		}
-	}
-
-	&__label {
-		font-size: 16px;
-		font-weight: 500;
-		letter-spacing: 0.15px;
-		line-height: 24px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	&--selected {
-		.m3SplitButton__leading,
-		.m3SplitButton__trailing {
-			background: $cc-primary;
-			border-color: $cc-primary;
-			color: $cc-on-primary;
-		}
-
-		.m3SplitButton__leading:hover:not(:disabled),
-		.m3SplitButton__trailing:hover:not(:disabled) {
-			background: var(--m3-primary-container, #cc1e1c);
-		}
-	}
-
-	&__leading:disabled,
-	&__trailing:disabled {
-		cursor: default;
-		opacity: 0.38;
 	}
 }
 
@@ -453,19 +310,12 @@ body.conversationCreate--active .navigation__wrapper {
 	box-shadow: $cc-elevation-1;
 	display: flex;
 	flex-direction: column;
-	left: 0;
 	overflow-y: auto;
-	position: absolute;
-	right: 0;
-	z-index: 30;
 
-	&--down {
-		top: calc(100% + 8px);
-	}
-
-	&--up {
-		bottom: calc(100% + 8px);
-	}
+	/* Portalled to the body and anchored with fixed coordinates so the card's
+	   `overflow: hidden` cannot clip it. */
+	position: fixed;
+	z-index: 1200;
 
 	&__row {
 		align-items: center;
@@ -550,6 +400,7 @@ body.conversationCreate--active .navigation__wrapper {
 		align-items: flex-start;
 		display: flex;
 		gap: 4px;
+		margin-top: auto;
 	}
 
 	&__splitButtonWrap {
@@ -592,6 +443,7 @@ body.conversationCreate--active .navigation__wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+	padding-inline: clamp(0px, calc((100% - 760px) / 2), 128px);
 
 	&__title {
 		color: $cc-on-surface;
@@ -699,7 +551,6 @@ body.conversationCreate--active .navigation__wrapper {
 
 /* Visible keyboard focus across the flow. */
 .conversationCreate button:focus-visible,
-.m3SplitButton button:focus-visible,
 .personSelectMenu__row:focus-visible,
 .personChipGrid__remove:focus-visible {
 	outline: 3px solid $cc-primary;
@@ -707,8 +558,7 @@ body.conversationCreate--active .navigation__wrapper {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.formatCard__mediaContent,
-	.m3SplitButton__chevron {
+	.formatCard__mediaContent {
 		transition: none !important;
 	}
 }
@@ -738,5 +588,455 @@ body.conversationCreate--active .navigation__wrapper {
 
 	.circleSettings__createButton {
 		align-self: stretch;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Panel header, screen intro, selection surface, mobile rows and back pill
+   (Figma 8482-30551 / 8482-30552).
+   --------------------------------------------------------------------------- */
+
+.conversationCreate {
+	&__panelHeader {
+		align-items: center;
+		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		display: flex;
+		padding: 4px;
+	}
+
+	&__panelBadge {
+		align-items: center;
+		background: $cc-secondary;
+		border-radius: 20px;
+		color: var(--m3-on-primary, #ffffff);
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 58px;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__panelTitle {
+		align-items: center;
+		align-self: stretch;
+		color: $cc-secondary;
+		display: flex;
+		flex: 1;
+		font-size: 18px;
+		font-weight: 500;
+		line-height: 24px;
+		margin: 0;
+		min-height: 48px;
+		min-width: 0;
+		overflow: hidden;
+		padding: 8px 24px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__panelMenu {
+		align-items: center;
+		background: var(--m3-surface, #ffffff);
+		border: 1px solid #ffd1d1;
+		border-radius: 32px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 32px;
+		justify-content: center;
+		margin-right: 12px;
+		width: 56px;
+
+		&:hover:not(:disabled) {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+
+		&:disabled {
+			border-color: $cc-outline-variant;
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		svg {
+			fill: currentcolor;
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__introHeading {
+		align-items: center;
+		display: flex;
+		gap: 16px;
+		width: 100%;
+	}
+
+	/* conversation_type_select_200: a 100px glyph column left of the title. */
+	&__introGlyph {
+		align-items: center;
+		color: $cc-secondary;
+		display: flex;
+		flex-shrink: 0;
+		height: 100px;
+		justify-content: center;
+		width: 100px;
+
+		svg {
+			height: 84px;
+			width: 84px;
+		}
+	}
+
+	&__selection {
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__rows {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	&__backPill {
+		align-items: center;
+		align-self: stretch;
+		background: var(--m3-primary-fixed, #ffdad6);
+		border: none;
+		border-radius: 28px;
+		color: $cc-primary;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 48px;
+		justify-content: center;
+		margin-top: auto;
+
+		&:hover {
+			background: color-mix(in srgb, $cc-primary 12%, #ffdad6);
+		}
+
+		svg {
+			fill: currentcolor;
+			height: 20px;
+			width: 20px;
+		}
+	}
+}
+
+.formatCard {
+	&__mediaImage {
+		display: block;
+		height: 100%;
+		object-fit: cover;
+		width: 100%;
+	}
+
+	&__menuButton {
+		align-items: center;
+		background: none;
+		border: none;
+		border-radius: 50%;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+
+		&:hover:not(:disabled) {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		svg {
+			fill: currentcolor;
+			height: 24px;
+			width: 24px;
+		}
+	}
+}
+
+/* Mobile format row — icon, text block, artwork thumbnail. */
+.compactFormatRow {
+	align-items: center;
+	background: $cc-surface-container-low;
+	border: 1px solid $cc-outline-variant;
+	border-radius: 16px;
+	cursor: pointer;
+	display: flex;
+	gap: 12px;
+	overflow: hidden;
+	padding: 0 0 0 12px;
+	text-align: left;
+	width: 100%;
+
+	&:hover {
+		background-color: rgba(27, 27, 28, 0.04);
+	}
+
+	&:focus-visible {
+		outline: 3px solid $cc-primary;
+		outline-offset: 2px;
+	}
+
+	&__icon {
+		align-items: center;
+		background: $cc-primary;
+		border-radius: 50%;
+		color: var(--m3-on-primary, #ffffff);
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+
+		svg {
+			fill: currentcolor;
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__text {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+		padding: 12px 0;
+	}
+
+	&__title {
+		color: $cc-on-surface;
+		font-size: 16px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__subtitle {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__thumb {
+		flex-shrink: 0;
+		height: 72px;
+		object-fit: cover;
+		width: 84px;
+	}
+
+	&--selected {
+		border-color: $cc-primary;
+	}
+}
+
+/* Settings rows and their option menus. */
+.scheduleRows {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.rowMenu {
+	background: var(--m3-surface, #fcf9f9);
+	border: 2px solid $cc-primary;
+	border-radius: 28px;
+	box-shadow: $cc-elevation-1;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	overflow-y: auto;
+	padding: 8px 0;
+
+	/* Portalled to the body and anchored to its row. */
+	position: fixed;
+	z-index: 1200;
+
+	&__option {
+		background: none;
+		border: none;
+		color: $cc-secondary;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		min-height: 48px;
+		padding: 14px 16px;
+		text-align: center;
+		width: 100%;
+
+		&:hover {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+
+		&[aria-selected='true'] {
+			box-shadow: inset 3px 0 0 0 $cc-primary;
+			color: $cc-primary;
+			font-weight: 700;
+		}
+
+		&:focus-visible {
+			outline: 3px solid $cc-primary;
+			outline-offset: -3px;
+		}
+	}
+}
+
+/* Mobile settings screen: one tightly stacked, scrolling column. */
+.circleSettings--compact {
+	padding-inline: 0;
+
+	.circleSettings__columns {
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.circleSettings__card {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		border-bottom-width: 0;
+		width: 100%;
+	}
+
+	.circleSettings__authorColumn {
+		background: $cc-surface-container-low;
+		border: 1px solid $cc-outline-variant;
+		border-bottom-left-radius: 28px;
+		border-bottom-right-radius: 28px;
+		border-top-width: 0;
+		padding: 12px;
+	}
+}
+
+/* Rule chips editor (48x48 add button = WCAG 2.2 target size). */
+.ruleChipsEditor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__input {
+		border: 1px solid $cc-outline-variant;
+		border-radius: 12px;
+		font-family: inherit;
+		font-size: 14px;
+		line-height: 20px;
+		min-height: 96px;
+		padding: 12px 16px;
+		resize: vertical;
+		width: 100%;
+
+		&:focus-visible {
+			border-color: $cc-primary;
+			outline: 2px solid $cc-primary;
+		}
+	}
+
+	&__row {
+		align-items: flex-start;
+		display: flex;
+		gap: 8px;
+	}
+
+	&__chips {
+		display: flex;
+		flex: 1;
+		flex-wrap: wrap;
+		gap: 8px;
+		list-style: none;
+		margin: 0;
+		min-width: 0;
+		padding: 0;
+	}
+
+	&__chip {
+		align-items: center;
+		background: $cc-surface-container-low;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 8px;
+		display: flex;
+		height: 32px;
+		overflow: hidden;
+
+		&--editing {
+			border-color: $cc-primary;
+			color: $cc-primary;
+		}
+	}
+
+	&__chipLabel {
+		background: none;
+		border: none;
+		color: inherit;
+		cursor: pointer;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		padding: 0 4px 0 12px;
+	}
+
+	&__chipRemove {
+		align-items: center;
+		background: none;
+		border: none;
+		color: inherit;
+		cursor: pointer;
+		display: flex;
+		height: 32px;
+		justify-content: center;
+		width: 32px;
+
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+	}
+
+	&__add {
+		align-items: center;
+		background: none;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 12px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 48px;
+		justify-content: center;
+		width: 48px;
+
+		&:hover:not(:disabled) {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		svg {
+			height: 20px;
+			width: 20px;
+		}
 	}
 }

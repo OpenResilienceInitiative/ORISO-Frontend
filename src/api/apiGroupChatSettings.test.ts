@@ -26,10 +26,10 @@ const groupChat = {
 
 describe('group chat API helpers', () => {
 	it('creates a v1 chat room and returns the backend link data', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-123' });
+		vi.mocked(fetchData).mockResolvedValue({ matrixRoomId: 'group-123' });
 
 		await expect(apiCreateGroupChat(groupChat)).resolves.toEqual({
-			groupId: 'group-123'
+			matrixRoomId: 'group-123'
 		});
 
 		expect(fetchData).toHaveBeenCalledWith({
@@ -41,14 +41,14 @@ describe('group chat API helpers', () => {
 	});
 
 	it('creates a v2 chat room when the feature flag is enabled', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-v2' });
+		vi.mocked(fetchData).mockResolvedValue({ matrixRoomId: 'group-v2' });
 
 		await expect(
 			apiCreateGroupChat({
 				...groupChat,
 				featureGroupChatV2Enabled: true
 			})
-		).resolves.toEqual({ groupId: 'group-v2' });
+		).resolves.toEqual({ matrixRoomId: 'group-v2' });
 
 		expect(fetchData).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -59,7 +59,9 @@ describe('group chat API helpers', () => {
 	});
 
 	it('sends finite Series settings without leaking the client feature flag', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-series' });
+		vi.mocked(fetchData).mockResolvedValue({
+			matrixRoomId: 'group-series'
+		});
 
 		await expect(
 			apiCreateGroupChat({
@@ -71,7 +73,7 @@ describe('group chat API helpers', () => {
 				timezone: 'Europe/Berlin',
 				consultantIds: ['co-mod-1']
 			})
-		).resolves.toEqual({ groupId: 'group-series' });
+		).resolves.toEqual({ matrixRoomId: 'group-series' });
 
 		expect(fetchData).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -91,7 +93,7 @@ describe('group chat API helpers', () => {
 	});
 
 	it('updates an existing chat room', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-123' });
+		vi.mocked(fetchData).mockResolvedValue({ matrixRoomId: 'group-123' });
 
 		await apiUpdateGroupChat(123, groupChat);
 

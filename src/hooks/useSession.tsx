@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	apiGetSessionRoomBySessionId,
-	apiGetSessionRoomsByGroupIds
+	apiGetSessionRoomsByRoomIds
 } from '../api/apiGetSessionRooms';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
@@ -85,7 +85,7 @@ export const useSession = (
 				abortController.current.signal
 			);
 		} else if (rid) {
-			promise = apiGetSessionRoomsByGroupIds(
+			promise = apiGetSessionRoomsByRoomIds(
 				[rid],
 				abortController.current.signal
 			);
@@ -154,7 +154,7 @@ export const useSession = (
 
 		if (!session.item.messagesRead) {
 			// Matrix read receipt on the latest room event. Sessions without
-			// a Matrix room are a safe no-op (no legacy read call).
+			// a Matrix room cannot publish a receipt and are a safe no-op.
 			const { matrixRoomId } =
 				chatTransportService.resolveSession(session);
 			if (matrixRoomId) {

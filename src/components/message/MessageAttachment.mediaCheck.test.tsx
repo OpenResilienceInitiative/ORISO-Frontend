@@ -32,13 +32,12 @@ vi.mock('../../globalState', () => {
 
 const imageAttachment = {
 	title: 'photo.png',
-	title_link: '/_matrix/media/r0/download/hs/media-1',
+	downloadUrl: '/_matrix/media/r0/download/hs/media-1',
 	type: 'image',
-	image_type: 'image/png',
-	image_size: 12,
-	image_url: '/_matrix/media/r0/download/hs/media-1',
-	image_w: 120,
-	image_h: 72
+	mediaType: 'image/png',
+	size: 12,
+	width: 120,
+	height: 72
 } as never;
 
 const imageFile = { name: 'photo.png', type: 'image/png' } as never;

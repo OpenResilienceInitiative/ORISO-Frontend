@@ -20,21 +20,26 @@ export interface CircleDefaults {
 
 const GENERAL_RULES: Record<string, [string, string]> = {
 	de: [
-		'Wir gehen respektvoll und wertschätzend miteinander um.',
-		'Alles, was hier besprochen wird, bleibt in der Gruppe.'
+		'Sprich von dir selbst, nicht über andere.',
+		'Was hier geteilt wird, bleibt hier.'
 	],
 	en: [
-		'We treat each other with respect and appreciation.',
-		'Everything shared here stays within the group.'
+		'Speak about yourself, not about others.',
+		'What is shared here stays here.'
 	],
 	fr: [
-		'Nous nous traitons avec respect et bienveillance.',
-		'Tout ce qui est partagé ici reste dans le groupe.'
+		'Parlez de vous, pas des autres.',
+		'Ce qui est partagé ici reste ici.'
+	],
+	ru: [
+		'Говорите о себе, а не о других.',
+		'Всё, чем здесь делятся, остаётся здесь.'
 	],
 	tr: [
-		'Birbirimize saygılı ve değer vererek davranırız.',
-		'Burada paylaşılan her şey grupta kalır.'
-	]
+		'Başkaları hakkında değil, kendiniz hakkında konuşun.',
+		'Burada paylaşılanlar burada kalır.'
+	],
+	ti: ['ብዛዕባ ርእስኻ ተዛረብ፡ ብዛዕባ ካልኦት ኣይትዛረብ።', 'እቲ ኣብዚ ዝካፈል ኣብዚ ይተርፍ።']
 };
 
 export const getGeneralRules = (language: string): string[] => {

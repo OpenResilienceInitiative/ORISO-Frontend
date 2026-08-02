@@ -67,11 +67,10 @@ export interface SessionItemInterface {
 		| 'INTERNAL_GROUP'
 		| 'SELF_HELP';
 	agencyId: number;
-	askerRcId: string;
+	askerMatrixUserId: string;
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
-	groupId: string;
-	matrixRoomId?: string; // MATRIX MIGRATION: Added Matrix room ID
+	matrixRoomId: string;
 	id: number;
 	e2eLastMessage: {
 		t: string;
@@ -108,7 +107,7 @@ export interface GroupChatItemInterface {
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
 	duration: number;
-	groupId: string;
+	matrixRoomId: string;
 	hintMessage: string;
 	sourceLanguage?: string;
 	hintMessageTranslations?: Record<string, string>;

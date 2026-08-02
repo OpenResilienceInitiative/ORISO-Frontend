@@ -16,6 +16,11 @@ Format:
 - Context: `docs/cursor-orchestrator/2026-08-02_camera-activation-bug/` (gitignored under `docs/*`)
 - Lesson: If SessionMenu/`getUserMedia` warms permissions for Element Call, stop tracks immediately. Do not leave `__preRequestedMediaStream` for FloatingCallWidget when `usesElementCall` is always true — that orphans live tracks and breaks re-join after leave/refresh.
 
+## 2026-07-28 — cutover guards must scan auxiliary frontend surfaces
+
+- Context: `docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat/`
+- Lesson: Provider-removal contracts must include Storybook, fixtures, and tracked backup files; production-source scans alone can leave retired runtime assumptions behind.
+
 ## 2026-07-14 — orchestration docs must match git-workflow base
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)

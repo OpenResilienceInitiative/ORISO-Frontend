@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { decideMenuPlacement, MenuPlacement } from '../menuDirection';
+import { useEffect, useRef } from 'react';
+import { ReactComponent as CheckIcon } from '../../../resources/img/icons/check.svg';
+import { ReactComponent as CloseIcon } from '../../../resources/img/icons/close.svg';
+import { MenuPortal, useAnchoredMenuLayout } from '../anchoredMenu';
 import { resolveListboxKey } from '../listboxKeyboard';
 
 /**
@@ -9,7 +11,8 @@ import { resolveListboxKey } from '../listboxKeyboard';
  * selected, tonal grey check when selectable, a disabled × for people who
  * have vacated the agency — those stay listed until they are deselected,
  * only then do they leave the list. The menu opens towards the side with
- * more space and scrolls internally when it cannot fit.
+ * more space and scrolls internally when it cannot fit, and floats above the
+ * card instead of being clipped by it.
  */
 
 export interface PersonOption {
@@ -40,26 +43,11 @@ export const PersonSelectMenu = ({
 	toggleLabel
 }: PersonSelectMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
-	const [placement, setPlacement] = useState<MenuPlacement>({
-		direction: 'down',
-		maxHeight: PREFERRED_MENU_HEIGHT
-	});
-
-	useLayoutEffect(() => {
-		const anchor = anchorRef.current;
-		if (!anchor) {
-			return;
-		}
-		const rect = anchor.getBoundingClientRect();
-		setPlacement(
-			decideMenuPlacement({
-				anchorTop: rect.top,
-				anchorBottom: rect.bottom,
-				viewportHeight: window.innerHeight,
-				menuHeight: PREFERRED_MENU_HEIGHT
-			})
-		);
-	}, [anchorRef, options.length]);
+	const { direction, style } = useAnchoredMenuLayout(
+		anchorRef,
+		PREFERRED_MENU_HEIGHT,
+		options.length
+	);
 
 	useEffect(() => {
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
@@ -122,69 +110,48 @@ export const PersonSelectMenu = ({
 	};
 
 	return (
-		<div
-			ref={menuRef}
-			className={`personSelectMenu personSelectMenu--${placement.direction}`}
-			style={{ maxHeight: placement.maxHeight }}
-			role="listbox"
-			aria-multiselectable
-			aria-labelledby={labelledBy}
-			onKeyDown={handleKeyDown}
-		>
-			{options.map((option) => {
-				const stateClass = option.vacated
-					? 'personSelectMenu__row--vacated'
-					: option.selected
-						? 'personSelectMenu__row--selected'
-						: '';
-				return (
-					<button
-						type="button"
-						key={option.id}
-						role="option"
-						aria-selected={option.selected}
-						className={`personSelectMenu__row ${stateClass}`}
-						onClick={() => onToggle(option.id)}
-						aria-label={toggleLabel(option.label, option.selected)}
-					>
-						<span className="personSelectMenu__name">
-							{option.label}
-						</span>
-						<span className="personSelectMenu__toggle" aria-hidden>
-							{option.vacated ? (
-								<svg
-									width="24"
-									height="24"
-									viewBox="0 0 24 24"
-									fill="none"
-								>
-									<path
-										d="M6 6L18 18M18 6L6 18"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-									/>
-								</svg>
-							) : (
-								<svg
-									width="24"
-									height="24"
-									viewBox="0 0 24 24"
-									fill="none"
-								>
-									<path
-										d="M5 12.5L10 17.5L19 7.5"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
+		<MenuPortal>
+			<div
+				ref={menuRef}
+				className={`personSelectMenu personSelectMenu--${direction}`}
+				style={style}
+				role="listbox"
+				aria-multiselectable
+				aria-labelledby={labelledBy}
+				onKeyDown={handleKeyDown}
+			>
+				{options.map((option) => {
+					const stateClass = option.vacated
+						? 'personSelectMenu__row--vacated'
+						: option.selected
+							? 'personSelectMenu__row--selected'
+							: '';
+					return (
+						<button
+							type="button"
+							key={option.id}
+							role="option"
+							aria-selected={option.selected}
+							className={`personSelectMenu__row ${stateClass}`}
+							onClick={() => onToggle(option.id)}
+							aria-label={toggleLabel(
+								option.label,
+								option.selected
 							)}
-						</span>
-					</button>
-				);
-			})}
-		</div>
+						>
+							<span className="personSelectMenu__name">
+								{option.label}
+							</span>
+							<span
+								className="personSelectMenu__toggle"
+								aria-hidden
+							>
+								{option.vacated ? <CloseIcon /> : <CheckIcon />}
+							</span>
+						</button>
+					);
+				})}
+			</div>
+		</MenuPortal>
 	);
 };

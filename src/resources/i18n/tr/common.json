@@ -279,7 +279,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Arşiv",
-		"archiveDescription": "Arşivlenen bildirimler pasiftir. Sohbet 12 ay içinde silinecek.",
+		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
 		"askerProfil": "Danışman profili",
 		"dataProtection": "Veri koruma",
 		"dearchive": "Dearchive",
@@ -670,6 +670,15 @@
 					"long": "Konu çok uzun",
 					"short": "Konu çok kısa"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Başkaları hakkında değil, kendiniz hakkında konuşun.",
+				"defaultRule2": "Burada paylaşılanlar burada kalır.",
+				"ruleEditorLabel": "Kuralı düzenle",
+				"editRule": "{{index}}. kuralı düzenle",
+				"deleteRule": "{{index}}. kuralı sil",
+				"addRule": "Kural ekle",
+				"ruleChip": "Kural No. {{index}}"
 			}
 		},
 		"createError": {
@@ -829,6 +838,28 @@
 				"button1Label": "Kapat",
 				"headline": "Değişiklikleriniz başarıyla kaydedildi."
 			}
+		},
+		"format": {
+			"panelTitle": "Yeni görüşme oluştur",
+			"panelMenu": "Diğer seçenekler",
+			"back": "Geri",
+			"cardMenu": "Bu görüşme biçimi için seçenekler"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Tarih seç",
+				"timeLabel": "Başlangıç saati",
+				"durationLabel": "Süreyi ayarla",
+				"repeatLabel": "Tekrarlar",
+				"mediumLabel": "Birincil ortamı seç",
+				"languageLabel": "Görüşme çemberi dili",
+				"increase": "{{field}} artır",
+				"decrease": "{{field}} azalt",
+				"openList": "{{field}} seç",
+				"durationValue": "{{count}} sa",
+				"repeatValue_one": "{{count}} kez",
+				"repeatValue_other": "{{count}} kez"
+			}
 		}
 	},
 	"help": {
@@ -940,12 +971,6 @@
 				"text1": "Tarayıcılardan birini indirin.",
 				"text2": "Şimdi desteklenen tarayıcılardan biriyle çevrimiçi danışmanlık bağlantınızı açın."
 			}
-		}
-	},
-	"jitsi": {
-		"btn": {
-			"copied": "Video bağlantısı panoya kopyalandı",
-			"default": "Video bağlantısını kopyala"
 		}
 	},
 	"languages": {
@@ -2877,44 +2902,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Onaylayın",
-				"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
-				"headline": "Sıcak bir karşılama!",
-				"label": {
-					"and": "ve",
-					"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
-				},
-				"subline": "Lütfen gizlilik politikamızı onaylayın."
-			},
-			"errorImageTitle": "Başarısız",
-			"errorPage": {
-				"button": "Yeniden Yükle",
-				"consultant": {
-					"description": "Bağlantınız için bir video araması bulamıyoruz çünkü video araması ya silinmiş ya da çoktan sona ermiştir."
-				},
-				"description": "Bağlantınız için bir video görüşmesi bulamıyoruz çünkü video görüşmesi ya silinmiş ya da çoktan sona ermiştir. Sorun yaşamaya devam ederseniz lütfen danışmanınıza danışın.",
-				"headline": "Görüntülü arama bulunamadı",
-				"rejected": {
-					"description": "Danışmanınız sizi reddettiği için maalesef bu video görüşmesine katılamazsınız.",
-					"headline": "Yetkili değillerdi"
-				}
-			},
-			"headline": "Lütfen sabırlı olun",
-			"paused": {
-				"headline": "Görüntülü arama sona erdi",
-				"subline": "Video görüşmesi sona ermiştir. Danışmanınız sadece devamsızlık yapıyorsa, danışmanınız video görüşmesine devam eder etmez video görüşmesine yönlendirileceksiniz."
-			},
-			"subline": "Video görüşmesi henüz başlamadı. Danışmanınız video görüşmesini başlatır başlatmaz yönlendirileceksiniz.",
-			"title": {
-				"start": "Bekleme odası"
-			},
-			"waitingImageTitle": "Kahve ile bekleyen kişi",
-			"welcomeImageTitle": "Hoş geldiniz"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -3146,6 +3133,21 @@
 			"option": "Option",
 			"ctrl": "Ctrl",
 			"cmd": "Cmd"
+		}
+	},
+	"anonymousConsent": {
+		"button": "Onaylayın",
+		"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
+		"headline": "Sıcak bir karşılama!",
+		"label": {
+			"and": "ve",
+			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+		},
+		"subline": "Lütfen gizlilik politikamızı onaylayın."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video appointments are currently unavailable."
 		}
 	}
 }

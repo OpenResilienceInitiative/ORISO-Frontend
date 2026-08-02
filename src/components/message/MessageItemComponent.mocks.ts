@@ -13,9 +13,9 @@ import { buildVisibleToPrefix } from './messageConstants';
 import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
 import type { AggregatedReaction } from '../../utils/messageRelations';
 
-export const MOCK_ASKER_RC_ID = '@sanftes.alpaka:oriso.invalid';
-export const MOCK_CONSULTANT_RC_ID = '@karina.p:oriso.invalid';
-export const MOCK_GROUP_MODERATOR_RC_ID = '@angela.k:oriso.invalid';
+export const MOCK_ASKER_MATRIX_ID = '@sanftes.alpaka:oriso.invalid';
+export const MOCK_CONSULTANT_MATRIX_ID = '@karina.p:oriso.invalid';
+export const MOCK_GROUP_MODERATOR_MATRIX_ID = '@angela.k:oriso.invalid';
 
 const MOCK_MATRIX_ROOM_1ON1 = '!storybook-1on1:oriso.org';
 const MOCK_MATRIX_ROOM_GROUP = '!storybook-internal-group:oriso.org';
@@ -31,8 +31,7 @@ export function mockActiveSession(
 		item: {
 			id: 3363,
 			agencyId: 101,
-			askerRcId: MOCK_ASKER_RC_ID,
-			groupId: MOCK_MATRIX_ROOM_1ON1,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			matrixRoomId: MOCK_MATRIX_ROOM_1ON1,
 			postcode: 10115,
 			registrationType: REGISTRATION_TYPE_REGISTERED,
@@ -88,14 +87,16 @@ export function mockActiveSessionGroup(
 		item: {
 			id: 4401,
 			agencyId: 101,
-			askerRcId: MOCK_ASKER_RC_ID,
-			groupId: MOCK_MATRIX_ROOM_GROUP,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
 			matrixRoomId: MOCK_MATRIX_ROOM_GROUP,
 			postcode: 10115,
 			registrationType: REGISTRATION_TYPE_REGISTERED,
 			status: STATUS_ACTIVE,
 			topic: 'Interner Gruppenchat',
-			moderators: [MOCK_CONSULTANT_RC_ID, MOCK_GROUP_MODERATOR_RC_ID],
+			moderators: [
+				MOCK_CONSULTANT_MATRIX_ID,
+				MOCK_GROUP_MODERATOR_MATRIX_ID
+			],
 			messageDate: Date.now(),
 			messagesRead: true,
 			active: true,
@@ -192,8 +193,8 @@ export function mockMessageItem(
 		messageTime: String(new Date('2026-07-10T09:18:00').getTime()),
 		displayName: 'Sanftes Alpaka Kala',
 		username: 'sanftes.alpaka.kala@oriso.invalid',
-		askerRcId: MOCK_ASKER_RC_ID,
-		userId: MOCK_ASKER_RC_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		userId: MOCK_ASKER_MATRIX_ID,
 		isNotRead: false,
 		t: null,
 		rid: MOCK_MATRIX_ROOM_1ON1,
@@ -226,22 +227,22 @@ export function mockReactions(
 		{
 			key: '👍',
 			count: 2,
-			senderIds: [MOCK_ASKER_RC_ID, MOCK_CONSULTANT_RC_ID],
+			senderIds: [MOCK_ASKER_MATRIX_ID, MOCK_CONSULTANT_MATRIX_ID],
 			ownEventId: '$own-reaction-1'
 		},
 		{
 			key: '❤️',
 			count: 1,
-			senderIds: [MOCK_ASKER_RC_ID],
+			senderIds: [MOCK_ASKER_MATRIX_ID],
 			ownEventId: null
 		},
 		{
 			key: '😂',
 			count: 3,
 			senderIds: [
-				MOCK_ASKER_RC_ID,
-				MOCK_CONSULTANT_RC_ID,
-				MOCK_GROUP_MODERATOR_RC_ID
+				MOCK_ASKER_MATRIX_ID,
+				MOCK_CONSULTANT_MATRIX_ID,
+				MOCK_GROUP_MODERATOR_MATRIX_ID
 			],
 			ownEventId: null
 		}
@@ -259,7 +260,7 @@ export function mockManyReactions(): AggregatedReaction[] {
 		(key, index) => ({
 			key,
 			count: ((index * 7) % 12) + 1,
-			senderIds: [MOCK_ASKER_RC_ID],
+			senderIds: [MOCK_ASKER_MATRIX_ID],
 			ownEventId: index === 3 ? '$own-reaction-many' : null
 		})
 	);

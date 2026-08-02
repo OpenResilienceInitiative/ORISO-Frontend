@@ -46,7 +46,7 @@ export const GroupChatHeader = ({
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
 	const matrixRoomId =
-		activeSession.item.matrixRoomId || activeSession.item.groupId;
+		activeSession.item.matrixRoomId || activeSession.item.matrixRoomId;
 
 	useEffect(() => {
 		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
@@ -178,7 +178,8 @@ export const GroupChatHeader = ({
 
 		try {
 			const roomId =
-				activeSession.item.matrixRoomId || activeSession.item.groupId;
+				activeSession.item.matrixRoomId ||
+				activeSession.item.matrixRoomId;
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
@@ -305,7 +306,7 @@ export const GroupChatHeader = ({
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
 	const baseUrl = `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 	const groupChatInfoLink = generatePath(baseUrl, {
-		groupId: activeSession.item.groupId,
+		groupId: activeSession.item.matrixRoomId,
 		id: String(activeSession.item.id),
 		subRoute: 'groupChatInfo'
 	});

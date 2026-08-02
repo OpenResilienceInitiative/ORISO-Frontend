@@ -7,39 +7,13 @@ import {
 import { setKindField } from './notificationConfig';
 import {
 	__resetSharedAudioForTests,
-	assetForEvent,
+	__resetSoundThrottlesForTests,
 	createSoundThrottle,
 	installAudioUnlock,
 	playNotificationSound,
-	resolveEventSound,
 	selectEventToAnnounce,
 	soundAssetFor
 } from './soundPlayback';
-
-const withSounds = (message: any, mention: any) => ({
-	...DEFAULT_NOTIFICATION_SETTINGS,
-	sounds: { message, mention }
-});
-
-describe('resolveEventSound', () => {
-	it('uses the message slot for non-mentions', () => {
-		expect(resolveEventSound(withSounds('ding', 'soft'), false)).toBe(
-			'ding'
-		);
-	});
-
-	it('uses the mention slot for mentions', () => {
-		expect(resolveEventSound(withSounds('ding', 'soft'), true)).toBe(
-			'soft'
-		);
-	});
-
-	it("mention 'default' inherits the message slot", () => {
-		expect(resolveEventSound(withSounds('chime', 'default'), true)).toBe(
-			'chime'
-		);
-	});
-});
 
 describe('soundAssetFor', () => {
 	it('none and default are silent', () => {
@@ -51,19 +25,6 @@ describe('soundAssetFor', () => {
 		expect(soundAssetFor('chime')).toBeTruthy();
 		expect(soundAssetFor('ding')).toBeTruthy();
 		expect(soundAssetFor('soft')).toBeTruthy();
-	});
-});
-
-describe('assetForEvent', () => {
-	it('calls family uses its own call sound regardless of the message slot', () => {
-		const asset = assetForEvent(withSounds('none', 'none'), 'calls', false);
-		expect(asset).toBeTruthy();
-	});
-
-	it('a muted message slot yields silence for message events', () => {
-		expect(
-			assetForEvent(withSounds('none', 'default'), 'messages', false)
-		).toBeNull();
 	});
 });
 
@@ -92,10 +53,14 @@ describe('playNotificationSound (config-driven)', () => {
 		src: string;
 		volume = 1;
 		muted = false;
+		// mirror the real element: idle until play(), which keeps it "busy"
+		paused = true;
+		ended = false;
 		constructor(src?: string) {
 			this.src = src ?? '';
 		}
 		play() {
+			this.paused = false;
 			played.push({ src: this.src, volume: this.volume });
 			return Promise.resolve();
 		}
@@ -109,6 +74,7 @@ describe('playNotificationSound (config-driven)', () => {
 		vi.unstubAllGlobals();
 		// keep specs order-independent: never leak the primed singleton
 		__resetSharedAudioForTests();
+		__resetSoundThrottlesForTests();
 	});
 
 	const settingsWith = (
@@ -199,6 +165,77 @@ describe('playNotificationSound (config-driven)', () => {
 		);
 		expect(played).toHaveLength(1);
 		expect(played[0].src).toContain('incomingCall');
+	});
+
+	// #586 audit: the ring is the most time-critical sound we have — neither a
+	// preceding message tone's throttle window nor its element reuse may eat it.
+	it('a message tone does NOT swallow a call ring in the same throttle window', () => {
+		const t0 = nextNow();
+		playNotificationSound(
+			settingsWith('conversations', 'standard', 'ton-3', 0.5),
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'message.new',
+			false,
+			t0
+		);
+		// 100ms later — well inside the 2s gap — an incoming call arrives
+		playNotificationSound(
+			DEFAULT_NOTIFICATION_SETTINGS,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'calls',
+			'call.started',
+			false,
+			t0 + 100
+		);
+		expect(played).toHaveLength(2);
+		expect(played[1].src).toContain('incomingCall');
+	});
+
+	it('still throttles a burst WITHIN one family', () => {
+		const t0 = nextNow();
+		const settings = settingsWith(
+			'conversations',
+			'standard',
+			'ton-3',
+			0.5
+		);
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'message.new',
+			false,
+			t0
+		);
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'message.new',
+			false,
+			t0 + 100
+		);
+		expect(played).toHaveLength(1);
+	});
+
+	it('never reassigns src on an element that is still playing', () => {
+		// prime the shared element, then leave it "playing"
+		const target = document.createElement('div');
+		installAudioUnlock(target);
+		target.dispatchEvent(new Event('pointerdown'));
+		const primed = played.length;
+		playNotificationSound(
+			settingsWith('conversations', 'standard', 'ton-3', 0.5),
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'message.new',
+			false,
+			nextNow()
+		);
+		// a fresh element was used, so the in-flight (primed) sound survives
+		expect(played).toHaveLength(primed + 1);
+		expect(played[primed].src).toContain('ton-3');
 	});
 
 	it('installAudioUnlock primes a shared element on the first gesture', () => {

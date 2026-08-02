@@ -3,21 +3,16 @@ import { generateAskerSession, generateConsultantSession } from '../sessions';
 import { endpoints } from '../../../src/resources/scripts/endpoints';
 import { setAskerSessions } from './helper/askerSessions';
 import { setConsultantSessions } from './helper/consultantSessions';
-import { setMessages } from './helper/messages';
 import { config } from '../../../src/resources/scripts/config';
 import usersConsultantsApi from './api/users/consultants';
 import usersDataApi from './api/users/data';
 import usersSessionsApi from './api/users/sessions';
 import apiAgencies from './api/agencies';
-import apiAppointments from './api/appointments';
 import apiConsultingTypes from './api/consultTypes';
-import apiMessages from './api/messages';
-import apiVideocalls from './api/videocalls';
 import loginCommand from './helper/login';
 import fastLoginCommand from './helper/fastLogin';
 import askerSessionsCommand from './helper/askerSessions';
 import consultantSessionsCommand from './helper/consultantSessions';
-import messagesCommand from './helper/messages';
 import apiTopics from './api/topic';
 
 let overrides = {};
@@ -54,7 +49,6 @@ const defaultReturns = {
 	'frontend.settings': config,
 	'agencyConsultants': [],
 	'agencyConsultantsLanguages': ['de'],
-	'messages': [],
 	'userDrafts': {
 		items: [],
 		page: 0,
@@ -97,12 +91,10 @@ loginCommand(getWillReturn, setWillReturn);
 fastLoginCommand(getWillReturn, setWillReturn);
 consultantSessionsCommand(getWillReturn, setWillReturn);
 askerSessionsCommand(getWillReturn, setWillReturn);
-messagesCommand(getWillReturn, setWillReturn);
 
 Cypress.Commands.add('mockApi', () => {
 	// Empty overrides
 	overrides = {};
-	defaultReturns['messages'] = [];
 
 	// Generate 1 default sessions
 	setAskerSessions([]);
@@ -113,11 +105,6 @@ Cypress.Commands.add('mockApi', () => {
 	cy.consultantSession(generateConsultantSession());
 	cy.consultantSession(generateConsultantSession());
 	cy.consultantSession(generateConsultantSession());
-
-	setMessages([]);
-	cy.addMessage({}, 0);
-	cy.addMessage({}, 1);
-	cy.addMessage({}, 2);
 
 	// ConsultingTypes
 	cy.fixture('service.consultingtypes.emigration.json').then(
@@ -229,18 +216,14 @@ Cypress.Commands.add('mockApi', () => {
 	usersDataApi(cy, getWillReturn, setWillReturn);
 	usersSessionsApi(cy, getWillReturn, setWillReturn);
 	apiAgencies(cy, getWillReturn, setWillReturn);
-	apiAppointments(cy);
 	apiConsultingTypes(cy, getWillReturn, setWillReturn);
-	apiMessages(cy, getWillReturn, setWillReturn);
 	apiTopics(cy, getWillReturn, setWillReturn);
-	apiVideocalls(cy);
 });
 
 export const USER_ASKER = 'asker';
 export const USER_CONSULTANT = 'consultant';
-export const USER_VIDEO = 'video';
 
 export interface LoginArgs {
-	userId?: typeof USER_ASKER | typeof USER_CONSULTANT | typeof USER_VIDEO;
+	userId?: typeof USER_ASKER | typeof USER_CONSULTANT;
 	auth?: { expires_in: number; refresh_expires_in: number };
 }

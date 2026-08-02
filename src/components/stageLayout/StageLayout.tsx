@@ -28,6 +28,7 @@ import { registrationMotion } from '../registration/registrationDesign/registrat
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
+import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 
 interface StageLayoutProps {
 	className?: string;
@@ -69,6 +70,7 @@ export const StageLayout = ({
 		registrationUrl || settings.urls.toRegistration;
 	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
+	const platformVersion = getPlatformVersion();
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -289,38 +291,47 @@ export const StageLayout = ({
 					{children}
 				</Box>
 
-				{showLegalLinks && (
+				{(showLegalLinks || platformVersion) && (
 					<div className="stageLayout__footer">
-						<div className={`stageLayout__legalLinks`}>
-							<LegalLinks
-								delimiter={
-									<Text
-										type="infoSmall"
-										className="stageLayout__legalLinksSeparator"
-										text=" | "
-									/>
-								}
-								params={{ aid: specificAgency?.id }}
-								legalLinks={legalLinks}
-							>
-								{(label, url) => (
-									<button
-										type="button"
-										className="button-as-link"
-										data-cy-link={url}
-										onClick={() =>
-											window.open(url, '_blank')
-										}
-									>
+						{showLegalLinks && (
+							<div className={`stageLayout__legalLinks`}>
+								<LegalLinks
+									delimiter={
 										<Text
-											className="stageLayout__legalLinksItem"
 											type="infoSmall"
-											text={label}
+											className="stageLayout__legalLinksSeparator"
+											text=" | "
 										/>
-									</button>
-								)}
-							</LegalLinks>
-						</div>
+									}
+									params={{ aid: specificAgency?.id }}
+									legalLinks={legalLinks}
+								>
+									{(label, url) => (
+										<button
+											type="button"
+											className="button-as-link"
+											data-cy-link={url}
+											onClick={() =>
+												window.open(url, '_blank')
+											}
+										>
+											<Text
+												className="stageLayout__legalLinksItem"
+												type="infoSmall"
+												text={label}
+											/>
+										</button>
+									)}
+								</LegalLinks>
+							</div>
+						)}
+						{platformVersion && (
+							<Text
+								className="stageLayout__platformVersion"
+								type="infoSmall"
+								text={platformVersion}
+							/>
+						)}
 					</div>
 				)}
 			</Box>

@@ -22,9 +22,9 @@ const stripOptionalMarker = (segment: string): string =>
  * variants, most-specific first.
  *
  *   '/registration/:step?'                       → ['/registration/:step', '/registration']
- *   '/sessions/user/view/:rcGroupId?/:sessionId?' →
- *       ['/sessions/user/view/:rcGroupId/:sessionId',
- *        '/sessions/user/view/:rcGroupId',
+ *   '/sessions/user/view/:groupId?/:sessionId?' →
+ *       ['/sessions/user/view/:groupId/:sessionId',
+ *        '/sessions/user/view/:groupId',
  *        '/sessions/user/view']
  *
  * Only trailing optional runs are supported — every ORISO optional param is

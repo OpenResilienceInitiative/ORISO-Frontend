@@ -107,6 +107,11 @@
 	}
 
 	&__footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: $grid-base-two;
+
 		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
 		@media screen and (width <= 899px) {
 			padding-bottom: 120px; // Account for 96px button bar + extra spacing
@@ -255,6 +260,11 @@
 		.text {
 			font-size: $font-size-tertiary;
 		}
+	}
+
+	&__platformVersion {
+		color: var(--m3-on-surface-variant, $tertiary);
+		white-space: nowrap;
 	}
 
 	&__legalLinksItem {

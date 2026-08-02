@@ -8,7 +8,7 @@ import {
 	apiUpdateGroupChat,
 	groupChatSettings
 } from '../../api/apiGroupChatSettings';
-import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { SessionsDataContext } from '../../globalState';
 import { useCreateChatSubmit } from './useCreateChatSubmit';
 
@@ -28,7 +28,7 @@ vi.mock('../../api/apiGroupChatSettings', () => ({
 	apiUpdateGroupChat: vi.fn()
 }));
 vi.mock('../../api/apiGetSessionRooms', () => ({
-	apiGetSessionRoomsByGroupIds: vi.fn()
+	apiGetSessionRoomsByRoomIds: vi.fn()
 }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -67,8 +67,8 @@ describe('useCreateChatSubmit', () => {
 	});
 
 	it('routes to the update endpoint when a groupChatId is passed', async () => {
-		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ groupId: 'g1' });
-		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ matrixRoomId: 'g1' });
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: []
 		} as any);
 		const { result } = renderHook(() => useCreateChatSubmit(), { wrapper });

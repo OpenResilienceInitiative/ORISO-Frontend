@@ -1,4 +1,3 @@
-import { AppConfigJitsiInterface } from './AppConfigJitsiInterface';
 import { AppConfigNotificationsInterface } from './AppConfigNotificationsInterface';
 import { AppConfigTwoFactorInterface } from './AppConfigTwoFactorInterface';
 import { AppConfigUrlsInterface } from './AppConfigUrlsInterface';
@@ -15,7 +14,6 @@ export interface AppConfigInterface extends AppSettingsInterface {
 	legalLinks: LegalLinkInterface[];
 	postcodeFallbackUrl: string;
 	spokenLanguages: string[];
-	jitsi: AppConfigJitsiInterface;
 	emails: AppConfigNotificationsInterface;
 	twofactor: AppConfigTwoFactorInterface;
 	i18n: InitOptions;
@@ -79,6 +77,16 @@ interface ReleaseToggles {
 	 * key-backup/recovery onboarding (#437) so legitimate users can verify.
 	 */
 	enableInvisibleCrypto?: boolean;
+	/**
+	 * Per-participant media E2EE for calls: when on, the LiveKit SFU only ever
+	 * sees ciphertext. Off by default because media keys ride the MatrixRTC
+	 * to-device transport, so any gap in the host's Olm path makes a call
+	 * connect with no audio in either direction and no error anywhere
+	 * (ORISO-ElementCall#35). Turn it on per environment once a two-browser
+	 * call has proven key distribution end to end; call signalling and room
+	 * events are encrypted by the host regardless of this toggle.
+	 */
+	enableCallMediaE2EE?: boolean;
 	/**
 	 * #439 MSC3814 "dehydrated devices": when on, park a sleeping device
 	 * server-side so Megolm keys sent during a login gap are delivered and the

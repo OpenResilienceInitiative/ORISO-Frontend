@@ -1,13 +1,13 @@
-import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import { hasUserAuthority, AUTHORITIES } from '../globalState';
 import {
 	ConsultingTypeBasicInterface,
 	UserDataInterface
 } from '../globalState/interfaces';
-import { appConfig } from './appConfig';
+import { getCurrentMatrixUserId } from './matrixSession';
 
-export const currentUserWasVideoCallInitiator = (initiatorRcUserId: string) =>
-	initiatorRcUserId === getValueFromCookie('rc_uid');
+export const currentUserWasVideoCallInitiator = (
+	initiatorMatrixUserId: string
+) => initiatorMatrixUserId === getCurrentMatrixUserId();
 
 /**
  * Checks if the browser supports WebRTC Encoded Transform, an alternative
@@ -29,7 +29,6 @@ const supportsEncodedTransform = () => {
 
 /**
  * Checks if the browser supports insertable streams or encoded transform, needed for E2EE.
- * See: https://github.com/jitsi/lib-jitsi-meet/blob/afc006e99a42439c305c20faab50a1f786254676/modules/browser/BrowserCapabilities.js#L259
  * @returns {boolean} {@code true} if the browser supports insertable streams or encoded transform (Safari).
  */
 export const supportsE2EEncryptionVideoCall = (
@@ -38,8 +37,7 @@ export const supportsE2EEncryptionVideoCall = (
 	return (
 		e2eEncryptionEnabled === false || // explicit false means deactivated
 		supportsInsertableStreams() ||
-		(appConfig.jitsi.enableEncodedTransformSupport &&
-			supportsEncodedTransform())
+		supportsEncodedTransform()
 	);
 };
 

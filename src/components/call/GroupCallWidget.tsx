@@ -4,14 +4,10 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
-import {
-	getElementCallBaseUrl,
-	getMatrixHomeserverUrl
-} from '../../resources/scripts/runtimeConfig';
+import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
-import { getElementCallAccessToken } from '../sessionCookie/getMatrixAccessToken';
 import {
 	getAutoFitStageSize,
 	RESIZE_EDGES,
@@ -34,6 +30,44 @@ export const GroupCallWidget: React.FC = () => {
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
+
+	const closeCallSurface = useCallback(() => {
+		// Release camera and microphone while the iframe is still in the
+		// document. Clearing the state below unmounts it, and navigating an
+		// iframe that the browser has already detached does not load anything —
+		// the capture would stay alive until a reload. This is the path Element
+		// Call's own hangup button takes, so it has to release here rather than
+		// rely on the teardown in useElementCallWidget.
+		if (iframeRef.current) {
+			iframeRef.current.src = 'about:blank';
+		}
+		setElementCallUrl('');
+		setCallData(null);
+		setCallState(null);
+		setIsDismissed(true);
+		if (callManager.hasActiveCall()) {
+			callManager.endCall();
+		}
+	}, []);
+
+	// The host owns Matrix I/O and crypto. The iframe receives no access token,
+	// creates no second Matrix device and has no SPA compatibility path.
+	const callRoomId = callData
+		? (callData.elementCallRoomId ?? callData.roomId)
+		: null;
+	const shouldPrepareWidget =
+		!!callData &&
+		(!callData.isIncoming ||
+			callState === 'connecting' ||
+			callState === 'in_call');
+	const widget = useElementCallWidget(
+		matrixClientService?.getClient() ?? null,
+		{
+			roomId: shouldPrepareWidget ? callRoomId : null,
+			isVideo: callData?.isVideo ?? true,
+			onClose: closeCallSurface
+		}
+	);
 
 	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
@@ -63,7 +97,23 @@ export const GroupCallWidget: React.FC = () => {
 	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const setupInProgressRef = useRef(false);
+
+	// React compares ref callbacks by function identity, not by DOM node: an
+	// inline callback is a new function on every render, so React would detach
+	// (call it with `null`) and re-attach on every drag or resize frame — tearing
+	// down and rebuilding the widget's postMessage channel mid-call. Keep it
+	// stable and let it change only when the widget itself does.
+	const setIframeNode = useCallback(
+		(node: HTMLIFrameElement | null) => {
+			// The ref is shared by the drag/close logic and Widget API channel.
+			(
+				iframeRef as React.MutableRefObject<HTMLIFrameElement | null>
+			).current = node;
+			widget.attachIframe(node);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget.attachIframe]
+	);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const getGroupBounds = () => ({
@@ -94,7 +144,6 @@ export const GroupCallWidget: React.FC = () => {
 	// Subscribe to CallManager
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
-			// console.log('📡 GroupCallWidget: CallManager update:', newCallData);
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
@@ -102,7 +151,6 @@ export const GroupCallWidget: React.FC = () => {
 			}
 			if (!newCallData) {
 				setElementCallUrl('');
-				setupInProgressRef.current = false;
 			}
 		});
 		const currentCall = callManager.getCurrentCall();
@@ -153,216 +201,52 @@ export const GroupCallWidget: React.FC = () => {
 			);
 	}, []);
 
+	// Room joining and URL construction are asynchronous. Mount
+	// only after the host client is joined; unlike the legacy SPA path there is
+	// no second client inside the iframe that could repair missing membership.
 	useEffect(() => {
-		const handleMessage = (event: MessageEvent) => {
-			const data = event.data;
-			if (!data || typeof data !== 'object') return;
-			if (data.type !== 'oriso-call-ended') return;
-			setElementCallUrl('');
-			setCallData(null);
-			setCallState(null);
-			setIsDismissed(true);
-			if (callManager.hasActiveCall()) {
-				callManager.endCall();
-			}
-		};
-		window.addEventListener('message', handleMessage);
-		return () => window.removeEventListener('message', handleMessage);
-	}, []);
-
-	// Handle incoming call answer: once the call is moving past "ringing",
-	// automatically join the Element Call room for the receiver.
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || !callData.isIncoming)
+		if (!callData?.usesElementCall || !shouldPrepareWidget) {
 			return;
-		if (elementCallUrl) return; // Already joined
-		if (callState !== 'connecting' && callState !== 'in_call') return;
-
-		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
-		void setupElementCall();
-		// setupElementCall is re-created every render; including it would make
-		// this effect run on each render instead of on call-state changes.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [callState, callData, elementCallUrl, matrixClientService]);
-
-	// Handle outgoing call
-	useEffect(() => {
-		if (!callData || !callData.usesElementCall || callData.isIncoming)
-			return;
-		if (elementCallUrl) return; // Already set up
-
-		// console.log('📞 Starting outgoing call, setting up Element Call...');
-		void setupElementCall();
-		// setupElementCall is re-created every render and elementCallUrl is only
-		// used as an "already set up" guard; adding them would re-run this
-		// effect on every render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [callData, matrixClientService]);
-
-	const setupElementCall = async () => {
-		if (!callData || setupInProgressRef.current) return;
-		setupInProgressRef.current = true;
-
-		try {
-			// Parent-page warm-up streams must not hold the camera while the
-			// Element Call iframe opens its own capture.
-			releaseWindowMediaStream('__preRequestedMediaStream');
-
-			const client = matrixClientService?.getClient();
-			if (!client) throw new Error('Matrix client not initialized');
-
-			// For group calls we use the dedicated Element Call room if present.
-			const roomId =
-				(callData as any).elementCallRoomId || callData.roomId;
-			const elementCallLogin = await getElementCallAccessToken();
-			const homeserverUrl =
-				elementCallLogin.homeserverUrl ||
-				client.getHomeserverUrl() ||
-				getMatrixHomeserverUrl();
-			if (!homeserverUrl) {
-				throw new Error(
-					'Matrix homeserver URL is missing. Set REACT_APP_MATRIX_HOMESERVER_URL or ensure the client reports a homeserver URL.'
-				);
-			}
-
-			// Element Call runs on a different origin and therefore must own a
-			// separate Matrix device/crypto store. Reusing the ORISO app device
-			// causes the two clients to overwrite each other's device keys.
-			const { accessToken, userId, deviceId } = elementCallLogin;
-
-			if (!accessToken || !userId || !deviceId) {
-				throw new Error('Matrix authentication not available');
-			}
-			if (client.getUserId() && client.getUserId() !== userId) {
-				throw new Error('Element Call Matrix identity mismatch');
-			}
-
-			// Element Call - open the specific Matrix room directly.
-			// We mirror Element Call's own `getRelativeRoomUrl` format:
-			//   /room/#?roomId=...&perParticipantE2EE=...
-			// We also pass Matrix credentials via URL so our auto-auth script can log in.
-			const elementCallOrigin = getElementCallBaseUrl();
-			if (!elementCallOrigin) {
-				throw new Error('REACT_APP_ELEMENT_CALL_BASE_URL is not set');
-			}
-			const elementCallBaseUrl = `${elementCallOrigin}/room`;
-
-			const params = new URLSearchParams();
-			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case.
-			params.set('intent', 'start_call');
-			params.set('callIntent', callData.isVideo ? 'video' : 'audio');
-			params.set('homeserver', homeserverUrl);
-			params.set('accessToken', accessToken);
-			params.set('userId', userId);
-			if (deviceId) params.set('deviceId', deviceId);
-			// Skip lobby and go straight into the call UI
-			params.set('skipLobby', 'true');
-			// Keep embedded users inside the current room flow (no home navigation).
-			params.set('confineToRoom', 'true');
-			// Use Element Call without top app bar in embedded popup mode.
-			// This removes the duplicate left collapse control and room title.
-			params.set('header', 'none');
-
-			const url = `${elementCallBaseUrl}/#?${params.toString()}`;
-
-			// console.log('🔗 Element Call URL:', url);
-			// console.log('🔑 Passing Matrix credentials for auto-authentication');
-			setElementCallUrl(url);
-
-			// Send credentials via postMessage immediately when iframe loads
-			const sendCredentials = () => {
-				if (iframeRef.current?.contentWindow) {
-					// console.log('📤 Sending Matrix credentials to Element Call via postMessage');
-
-					// Send credentials in multiple formats Element Call might accept
-					iframeRef.current.contentWindow.postMessage(
-						{
-							type: 'matrix-credentials',
-							accessToken: accessToken,
-							userId: userId,
-							deviceId: deviceId,
-							homeserverUrl: homeserverUrl
-						},
-						elementCallBaseUrl
-					);
-
-					iframeRef.current.contentWindow.postMessage(
-						{
-							type: 'auth',
-							accessToken: accessToken,
-							userId: userId,
-							deviceId: deviceId,
-							baseUrl: homeserverUrl
-						},
-						elementCallBaseUrl
-					);
-				}
-			};
-
-			// Send immediately and also when iframe loads
-			setTimeout(sendCredentials, 500);
-			if (iframeRef.current) {
-				iframeRef.current.onload = sendCredentials;
-			}
-		} catch (err) {
-			setupInProgressRef.current = false;
-			// console.error('❌ Failed to setup Element Call:', err);
-			alert(`Failed to start call: ${(err as Error).message}`);
-			callManager.endCall();
 		}
-	};
+		// Parent-page warm-up streams must not hold the camera while the
+		// Element Call iframe opens its own capture.
+		releaseWindowMediaStream('__preRequestedMediaStream');
+		if (widget.error) {
+			alert(`Failed to start call: ${widget.error.message}`);
+			closeCallSurface();
+			return;
+		}
+		if (widget.url && elementCallUrl !== widget.url) {
+			setElementCallUrl(widget.url);
+		}
+	}, [
+		callData?.usesElementCall,
+		closeCallSurface,
+		elementCallUrl,
+		shouldPrepareWidget,
+		widget.error,
+		widget.url
+	]);
 
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		// console.log('✅ User clicked Answer');
-		// Tell Matrix/CallManager that we are accepting the call
 		callManager.answerCall();
-
-		// Proactively start/join the Element Call room so the user lands
-		// directly in the call UI without any extra "Join" step.
-		if (!elementCallUrl) {
-			// console.log('📞 Answer clicked, setting up Element Call immediately for receiver...');
-			void setupElementCall();
-		}
 	};
 
 	const handleDecline = () => {
-		// console.log('❌ User declined call');
 		setIsDismissed(true);
 		callManager.endCall();
 	};
 
 	const handleEndCall = () => {
-		// console.log('📴 Ending call');
-
-		// Cleanup widget message handler
-		if (
-			iframeRef.current &&
-			(iframeRef.current as any).__widgetMessageHandler
-		) {
-			window.removeEventListener(
-				'message',
-				(iframeRef.current as any).__widgetMessageHandler
-			);
-			delete (iframeRef.current as any).__widgetMessageHandler;
-		}
-
-		if (iframeRef.current?.contentWindow) {
-			iframeRef.current.contentWindow.postMessage(
-				{ type: 'oriso-call-action', action: 'hangup' },
-				'*'
-			);
-		}
+		void widget.hangup().catch(() => {
+			/* local teardown still completes if the iframe already closed */
+		});
 
 		if (iframeRef.current) {
 			iframeRef.current.src = 'about:blank';
 		}
-		setElementCallUrl('');
-		setCallData(null);
-		setCallState(null);
-		setIsDismissed(true);
-		callManager.endCall();
+		closeCallSurface();
 	};
 
 	const handleToggleFullscreen = () => {
@@ -632,10 +516,11 @@ export const GroupCallWidget: React.FC = () => {
 									: '⤢'}
 						</button>
 						<iframe
-							ref={iframeRef}
+							ref={setIframeNode}
 							src={elementCallUrl}
+							referrerPolicy="no-referrer"
 							className="element-call-iframe"
-							allow="camera; microphone; display-capture; autoplay; fullscreen"
+							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write; screen-wake-lock"
 							allowFullScreen
 							title="Group video call"
 						/>

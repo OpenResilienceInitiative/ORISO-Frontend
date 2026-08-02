@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
 /**
- * Legacy Rocket.Chat room E2EE is removed (Matrix-only app).
+ * Room encryption is owned by Matrix (see ADR-004).
  *
  * This hook keeps the historical API shape so chat components compile and
- * behave as "unencrypted room, ready" without any Rocket.Chat key exchange.
+ * behave as "unencrypted room, ready" without any client-side key exchange.
  * Matrix room encryption is intentionally NOT enabled here (ADR-004: crypto
  * only after the homeserver rebuild).
  */

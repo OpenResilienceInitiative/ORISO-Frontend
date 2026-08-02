@@ -46,18 +46,22 @@ export const FormatCard = ({
 				<div className="formatCard__headerAction">{headerAction}</div>
 			)}
 		</header>
-		<div className="formatCard__media">
-			<div
-				className={`formatCard__mediaContent${
-					mediaDimmed ? ' formatCard__mediaContent--dimmed' : ''
-				}`}
-			>
-				{media}
+		{media && (
+			<div className="formatCard__media">
+				<div
+					className={`formatCard__mediaContent${
+						mediaDimmed ? ' formatCard__mediaContent--dimmed' : ''
+					}`}
+				>
+					{media}
+				</div>
+				{mediaOverlay && (
+					<div className="formatCard__mediaOverlay">
+						{mediaOverlay}
+					</div>
+				)}
 			</div>
-			{mediaOverlay && (
-				<div className="formatCard__mediaOverlay">{mediaOverlay}</div>
-			)}
-		</div>
+		)}
 		<div className="formatCard__content">{children}</div>
 	</section>
 );

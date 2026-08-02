@@ -1,16 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getMatrixAccessToken } from '../components/sessionCookie/getMatrixAccessToken';
+import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
+import {
+	clearPersistedMatrixDeviceId,
+	createMatrixClient,
+	getMatrixAccessToken,
+	persistMatrixLoginData
+} from '../components/sessionCookie/getMatrixAccessToken';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import {
 	MatrixClientService,
 	isMatrixExpiredTokenError
 } from './matrixClientService';
 
+const mockedCrypto = vi.hoisted(() => ({
+	setDeviceIsolationMode: vi.fn()
+}));
+
 const mockedMatrixClient = vi.hoisted(() => ({
 	initRustCrypto: vi.fn(),
 	on: vi.fn(),
+	off: vi.fn(),
 	removeAllListeners: vi.fn(),
 	getRoom: vi.fn(),
+	getCrypto: vi.fn(),
 	joinRoom: vi.fn(),
 	sendMessage: vi.fn(),
 	startClient: vi.fn(),
@@ -18,6 +30,7 @@ const mockedMatrixClient = vi.hoisted(() => ({
 }));
 
 vi.mock('../components/sessionCookie/getMatrixAccessToken', () => ({
+	clearPersistedMatrixDeviceId: vi.fn(),
 	createMatrixClient: vi.fn(() => mockedMatrixClient),
 	getMatrixAccessToken: vi.fn(),
 	persistMatrixLoginData: vi.fn()
@@ -55,6 +68,7 @@ describe('MatrixClientService', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockedMatrixClient.initRustCrypto.mockResolvedValue(undefined);
+		mockedMatrixClient.getCrypto.mockReturnValue(mockedCrypto);
 		vi.stubGlobal('localStorage', {
 			getItem: vi.fn(() => null)
 		});
@@ -88,6 +102,85 @@ describe('MatrixClientService', () => {
 				'DEVICE_ONE'
 			)
 		});
+	});
+
+	it('keeps invisible crypto (verified-only) for a non-anonymous user when the toggle is on', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@consultant:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+
+		expect(mockedCrypto.setDeviceIsolationMode).toHaveBeenCalledTimes(1);
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.OnlySignedDevicesIsolationMode
+		);
+		setAppConfig(null as any);
+	});
+
+	it('shares to all devices for an anonymous live-chat user even when invisible crypto is on (#774)', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008',
+			isAnonymous: true
+		});
+
+		expect(mockedCrypto.setDeviceIsolationMode).toHaveBeenCalledTimes(1);
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+		setAppConfig(null as any);
+	});
+
+	it('preserves the anonymous flag across a token refresh so decryption keeps working (#774)', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008',
+			isAnonymous: true
+		});
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+
+		// A token refresh returns only transport fields (no isAnonymous).
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'refreshed-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		await service.refreshMatrixToken();
+
+		// The refreshed client must still share to all devices, not fall back to
+		// verified-only isolation and re-break decryption.
+		const lastCall = mockedCrypto.setDeviceIsolationMode.mock.calls.at(-1);
+		expect(lastCall?.[0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+		setAppConfig(null as any);
 	});
 
 	it('surfaces Rust crypto failures without leaving a client running', async () => {
@@ -167,6 +260,125 @@ describe('MatrixClientService', () => {
 		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
 		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
+	it('recovers once with a fresh device when Rust crypto reports an OTK conflict', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+		syncListeners.at(-1)?.('PREPARED', null);
+
+		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledOnce();
+		expect(clearPersistedMatrixDeviceId).toHaveBeenCalledWith(
+			'@alice:matrix.localhost'
+		);
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(persistMatrixLoginData).toHaveBeenCalledWith(
+			expect.objectContaining({ deviceId: 'DEVICE_TWO' })
+		);
+		expect(createMatrixClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ deviceId: 'DEVICE_TWO' }),
+			expect.any(Function)
+		);
+	});
+
+	it('blocks outbound sends until the recovered client reaches PREPARED', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
+		mockedMatrixClient.sendMessage.mockResolvedValue({ event_id: '$sent' });
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		const send = service.sendMessage('!room:matrix.localhost', 'hello');
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+
+		expect(mockedMatrixClient.sendMessage).not.toHaveBeenCalled();
+		syncListeners.at(-1)?.('PREPARED', null);
+		await send;
+		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
+	});
+
+	it('fails a recovered-client readiness wait immediately when that client is replaced', async () => {
+		const service = new MatrixClientService();
+		const recoveredClient = {
+			...mockedMatrixClient
+		};
+		const replacementClient = {
+			...mockedMatrixClient
+		};
+		setClient(service, recoveredClient);
+
+		const wait = (
+			service as unknown as {
+				waitForClientPrepared: (
+					client: Record<string, unknown>,
+					timeoutMs: number
+				) => Promise<void>;
+			}
+		).waitForClientPrepared(recoveredClient, 30_000);
+
+		setClient(service, replacementClient);
+		(
+			service as unknown as {
+				notifySyncStateListeners: () => void;
+			}
+		).notifySyncStateListeners();
+
+		await expect(wait).rejects.toThrow(
+			'Recovered Matrix client was replaced before reaching PREPARED'
+		);
 	});
 
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {

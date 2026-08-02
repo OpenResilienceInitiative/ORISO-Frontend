@@ -40,7 +40,6 @@ export const endpoints = {
 		`/service/appointservice/consultants/${userId}/meetingSlug`,
 	counselorToken:
 		agencyServiceOrigin + `/service/appointservice/consultants/token`,
-	appointmentsServiceBase: apiUrl + '/service/appointments',
 	appointmentsServiceBookingEventsByUserId: (userId: string) =>
 		agencyServiceOrigin +
 		`/service/appointservice/askers/${userId}/bookings`,
@@ -48,13 +47,17 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
-	banUser: (rcUserId, chatId) =>
-		userServiceOrigin + `/service/users/${rcUserId}/chat/${chatId}/ban`,
+	banUser: (matrixUserId, chatId) =>
+		userServiceOrigin +
+		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
 		apiUrl + `/service/counselingtoolsservice/tools/${userId}`,
 	chatRoom: userServiceOrigin + '/service/users/chat/room',
 	anonymousEnquiryDetails: (sessionId: number | string) =>
 		userServiceOrigin + `/service/conversations/anonymous/${sessionId}`,
+	acceptAnonymousEnquiry: (sessionId: number | string) =>
+		userServiceOrigin +
+		`/service/conversations/askers/anonymous/${sessionId}/accept`,
 	finishAnonymousConversation: (sessionId: number | string) =>
 		userServiceOrigin +
 		`/service/conversations/anonymous/${sessionId}/finish`,
@@ -121,7 +124,6 @@ export const endpoints = {
 	//todo delete?
 	registerAskerNewConsultingType:
 		userServiceOrigin + '/service/users/askers/consultingType/new',
-	rejectVideoCall: apiUrl + '/service/videocalls/reject',
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
@@ -130,7 +132,6 @@ export const endpoints = {
 		userServiceOrigin +
 		`/service/users/sessions/${sessionId}/team-discussion`,
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
-	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
 	dpaSignatureConfirm: (token: string) =>
 		tenantServiceOrigin +
@@ -157,6 +158,5 @@ export const endpoints = {
 		settings: '/p/api/settings'
 	},
 	setAppointmentSuccessMessage:
-		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	videocallServiceBase: apiUrl + '/service/videocalls'
+		userServiceOrigin + '/service/messages/aliasWithContent/new'
 };

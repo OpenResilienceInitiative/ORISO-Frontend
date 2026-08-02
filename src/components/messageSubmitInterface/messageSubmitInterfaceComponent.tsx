@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -24,7 +25,11 @@ import {
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
 } from './inputField/composerResize';
-import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import {
+	createEnquirySubmissionGuard,
+	dispatchAskerMessageTransport,
+	resolveAskerMessageTransport
+} from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
@@ -403,6 +408,18 @@ export const MessageSubmitInterfaceComponent = ({
 		() => chatTransportService.resolveSession(activeSession),
 		[activeSession]
 	);
+	const enquirySubmissionGuardRef = useRef<ReturnType<
+		typeof createEnquirySubmissionGuard
+	> | null>(null);
+	const enquirySubmissionSessionIdRef = useRef(activeSession.item.id);
+	if (
+		!enquirySubmissionGuardRef.current ||
+		enquirySubmissionSessionIdRef.current !== activeSession.item.id
+	) {
+		enquirySubmissionGuardRef.current = createEnquirySubmissionGuard();
+		enquirySubmissionSessionIdRef.current = activeSession.item.id;
+	}
+	const enquirySubmissionGuard = enquirySubmissionGuardRef.current;
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
@@ -534,9 +551,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, []);
 
-	// This loads the keys for current activeSession.rid which is already set:
-	// to groupChat.groupId on group chats
-	// to session.groupId on session chats
+	// Load the keys for the current Matrix room.
 	const {
 		subscriptionKeyLost,
 		roomNotFound,
@@ -652,8 +667,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
-	const hasMatrixRoom = Boolean(resolvedChatSession.matrixRoomId);
-	const isAskerEnquiry = isAskerEnquirySubmission({
+	const askerMessageTransport = resolveAskerMessageTransport({
 		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
 		sessionStatus: activeSession.item?.status,
 		hasAskerAuthority: hasUserAuthority(
@@ -661,7 +675,9 @@ export const MessageSubmitInterfaceComponent = ({
 			userData
 		),
 		isAnonymousLiveChat,
-		hasMatrixRoom
+		hasEnquiryMessage: Boolean(activeSession.item?.messageDate),
+		isMatrixSession: resolvedChatSession.isMatrixSession,
+		matrixRoomId: resolvedChatSession.matrixRoomId
 	});
 
 	const {
@@ -1151,7 +1167,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return () => window.clearTimeout(timeoutId);
 	}, [
-		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.id,
 		draftLoaded,
 		focusEditorInput,
@@ -1165,17 +1181,26 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const sendEnquiry = useCallback(
 		(message, isEncrypted) => {
+			if (!enquirySubmissionGuard.tryStart()) {
+				setIsRequestInProgress(false);
+				return Promise.resolve();
+			}
 			return apiSendEnquiry(
 				activeSession.item.id,
 				message,
 				isEncrypted,
 				language
 			)
-				.then((response) =>
-					encryptRoom(setE2EEState, response.rcGroupId).then(() => {
+				.then((response) => {
+					enquirySubmissionGuard.markSucceeded();
+					reloadActiveSession?.();
+					return encryptRoom(
+						setE2EEState,
+						response.matrixRoomId
+					).then(() => {
 						onSendButton && onSendButton(response);
-					})
-				)
+					});
+				})
 				.then(async () => {
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
@@ -1185,6 +1210,7 @@ export const MessageSubmitInterfaceComponent = ({
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
+					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
 					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 					apiPostError({
@@ -1198,10 +1224,12 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			activeSession.item.id,
+			enquirySubmissionGuard,
 			encryptRoom,
 			language,
 			onSendButton,
 			clearDraftMessage,
+			reloadActiveSession,
 			setE2EEState
 		]
 	);
@@ -1392,7 +1420,7 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				} else {
 					// Sessions without a Matrix room cannot receive
-					// attachments anymore (legacy Rocket.Chat upload removed).
+					// attachments anymore; uploads go through Matrix media.
 					handleAttachmentUploadError(
 						INFO_TYPES.ATTACHMENT_OTHER_ERROR
 					);
@@ -1415,7 +1443,6 @@ export const MessageSubmitInterfaceComponent = ({
 				const mentionedUserIds = retryOfId
 					? retryMentionedUserIds || []
 					: extractMentionedUserIds(composerRef.current?.getHTML());
-				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1589,7 +1616,7 @@ export const MessageSubmitInterfaceComponent = ({
 					message = `${prefixParts.join(' ')} ${message}`;
 				}
 			}
-			// Legacy Rocket.Chat client-side message encryption is removed. This
+			// Message encryption is handled by Matrix, not here. This
 			// `isEncrypted` flag is the vestigial remnant of that path and no
 			// longer controls Matrix encryption: with Rust crypto initialized
 			// unconditionally (matrixClientService.initRustCrypto) and rooms
@@ -1598,11 +1625,6 @@ export const MessageSubmitInterfaceComponent = ({
 			// rebuild). The flag is a no-op pass-through kept only for the
 			// chatTransportService signature.
 			const isEncrypted = false;
-
-			if (isAskerEnquiry) {
-				await sendEnquiry(message, isEncrypted);
-				return;
-			}
 
 			// Shortcut: edit an existing message via Matrix m.replace
 			if (editingMessageId && !retryOfId) {
@@ -1626,17 +1648,38 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 
-			await sendMessage(
-				message,
-				attachment,
-				isEncrypted,
-				isAside,
-				retryOfId,
-				currentTypedMessage,
-				preserveComposerOnSuccess,
-				retryContext?.replyToEventId || null,
-				retryContext?.mentionedUserIds || []
-			);
+			const sendCurrentMessage = () =>
+				sendMessage(
+					message,
+					attachment,
+					isEncrypted,
+					isAside,
+					retryOfId,
+					currentTypedMessage,
+					preserveComposerOnSuccess,
+					retryContext?.replyToEventId || null,
+					retryContext?.mentionedUserIds || []
+				);
+			const handledAskerTransport = await dispatchAskerMessageTransport({
+				transport: askerMessageTransport,
+				sendEnquiry: () => sendEnquiry(message, isEncrypted),
+				sendMatrix: sendCurrentMessage,
+				onBlocked: () => {
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					apiPostError({
+						name: 'MatrixRoomNotReadyForAskerFollowup',
+						message:
+							'Blocked an asker follow-up until its encrypted Matrix room is ready',
+						level: ERROR_LEVEL_WARN
+					}).then();
+				}
+			});
+			if (handledAskerTransport) {
+				return;
+			}
+
+			await sendCurrentMessage();
 		},
 		[
 			attachmentSelected,
@@ -1646,7 +1689,7 @@ export const MessageSubmitInterfaceComponent = ({
 			encodeHighlightColorsForTransport,
 			getTypedMarkdownMessage,
 			hasMessageContent,
-			isAskerEnquiry,
+			askerMessageTransport,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -1685,7 +1728,7 @@ export const MessageSubmitInterfaceComponent = ({
 						setTimeout(() => {
 							if (window.innerWidth >= 900) {
 								navigate(
-									`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
+									`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
 								);
 							} else {
 								mobileListView();
@@ -1701,7 +1744,7 @@ export const MessageSubmitInterfaceComponent = ({
 			prepareAndSendMessage().then();
 		}
 	}, [
-		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.id,
 		getTypedMarkdownMessage,
 		navigate,
@@ -1942,7 +1985,7 @@ export const MessageSubmitInterfaceComponent = ({
 					? 'anonymous'
 					: 'oneOnOne';
 	const hasUploadFunctionality =
-		!isAskerEnquiry &&
+		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
@@ -2191,15 +2234,9 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		[
-			matrixUserIdFromCookie,
+			matrixUserIdFromSession,
 			userData?.userName,
 			userData?.displayName
 		].forEach((rawValue) => {
@@ -2315,7 +2352,8 @@ export const MessageSubmitInterfaceComponent = ({
 				)
 			);
 		};
-		const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
+		const askerId =
+			`${activeSession?.item?.askerMatrixUserId || ''}`.trim();
 		addAudienceCandidate(askerId);
 		const askerUsername = `${activeSession?.user?.username || ''}`.trim();
 		addAudienceCandidate(askerUsername, askerUsername);
@@ -2398,7 +2436,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.username,
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
-		activeSession?.item?.askerRcId,
+		activeSession?.item?.askerMatrixUserId,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2678,13 +2716,14 @@ export const MessageSubmitInterfaceComponent = ({
 	const audienceGroupedSections = useMemo(() => {
 		const clientsComparable = new Set<string>();
 		const counsellorsComparable = new Set<string>();
-		[activeSession?.item?.askerRcId, activeSession?.user?.username].forEach(
-			(rawValue) => {
-				getComparableAudienceIds(rawValue).forEach((id) =>
-					clientsComparable.add(id)
-				);
-			}
-		);
+		[
+			activeSession?.item?.askerMatrixUserId,
+			activeSession?.user?.username
+		].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) =>
+				clientsComparable.add(id)
+			);
+		});
 		[
 			activeSession?.consultant?.id,
 			activeSession?.consultant?.username,
@@ -2753,7 +2792,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.consultant?.username,
-		activeSession?.item?.askerRcId,
+		activeSession?.item?.askerMatrixUserId,
 		activeSession?.user?.username,
 		audienceSelectableOptions,
 		audienceSelfComparableIds,
@@ -3479,7 +3518,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
-	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
+	// Matrix rooms carry their own encryption state; no client-side gate here.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
 		return null;
 	}

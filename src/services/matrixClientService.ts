@@ -1,6 +1,7 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
+	clearPersistedMatrixDeviceId,
 	createMatrixClient,
 	getMatrixAccessToken,
 	persistMatrixLoginData
@@ -106,11 +107,22 @@ export const isMatrixExpiredTokenError = (error: unknown): boolean => {
 	);
 };
 
+export const isMatrixOneTimeKeyConflictLog = (messages: unknown[]): boolean => {
+	const message = messages.map(String).join(' ').toLowerCase();
+	return (
+		message.includes('failed to process outgoing request') &&
+		message.includes('m_unknown') &&
+		message.includes('one time key') &&
+		message.includes('already exists')
+	);
+};
+
 export class MatrixClientService {
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
 	private refreshTimer: number | null = null;
 	private refreshingToken: Promise<void> | null = null;
+	private staleDeviceRecovery: Promise<void> | null = null;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
@@ -122,7 +134,9 @@ export class MatrixClientService {
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
-		this.client = createMatrixClient(loginData);
+		this.client = createMatrixClient(loginData, (...messages) => {
+			this.handleMatrixSdkError(loginData.deviceId, messages);
+		});
 		this.syncState = null;
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
@@ -153,10 +167,15 @@ export class MatrixClientService {
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Anonymous live-chat users are exempt: they can never cross-sign the
+		// consultant's device, so verified-only isolation would leave the
+		// consultant seeing only undecryptable noise. They always share to all
+		// devices so the accepted consultant can read the conversation (#774).
 		// Best-effort — never breaks client startup.
 		applyDeviceIsolationMode(
 			client,
-			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
+				loginData.isAnonymous !== true
 		);
 
 		(client as any).on(
@@ -227,8 +246,18 @@ export class MatrixClientService {
 
 		this.refreshingToken = getMatrixAccessToken()
 			.then(async (loginData) => {
-				persistMatrixLoginData(loginData);
-				await this.initializeClient(loginData);
+				// getMatrixAccessToken only returns transport fields. A session's
+				// anonymity is stable across refreshes, so carry the existing flag
+				// forward — otherwise invisible crypto would re-apply verified-only
+				// isolation on the refreshed client and make an anonymous asker's
+				// messages undecryptable for the consultant again (#774).
+				const refreshedLoginData: MatrixLoginData = {
+					...loginData,
+					isAnonymous:
+						loginData.isAnonymous ?? this.loginData?.isAnonymous
+				};
+				persistMatrixLoginData(refreshedLoginData);
+				await this.initializeClient(refreshedLoginData);
 			})
 			.finally(() => {
 				this.refreshingToken = null;
@@ -241,7 +270,97 @@ export class MatrixClientService {
 		void this.refreshMatrixToken().catch(() => undefined);
 	}
 
+	private handleMatrixSdkError(deviceId: string, messages: unknown[]): void {
+		if (
+			this.loginData?.deviceId !== deviceId ||
+			!isMatrixOneTimeKeyConflictLog(messages)
+		) {
+			return;
+		}
+
+		void this.recoverFromStaleMatrixDevice().catch(() => undefined);
+	}
+
+	private recoverFromStaleMatrixDevice(): Promise<void> {
+		if (this.staleDeviceRecovery) {
+			return this.staleDeviceRecovery;
+		}
+
+		const staleLoginData = this.loginData;
+		if (!staleLoginData) {
+			return Promise.resolve();
+		}
+
+		clearPersistedMatrixDeviceId(staleLoginData.userId);
+		this.staleDeviceRecovery = getMatrixAccessToken()
+			.then(async (loginData) => {
+				const recoveredLoginData: MatrixLoginData = {
+					...loginData,
+					isAnonymous:
+						loginData.isAnonymous ?? staleLoginData.isAnonymous
+				};
+				persistMatrixLoginData(recoveredLoginData);
+				await this.initializeClient(recoveredLoginData);
+				const recoveredClient = this.client;
+				if (!recoveredClient) {
+					throw new Error(
+						'Recovered Matrix client was not initialized'
+					);
+				}
+				await this.waitForClientPrepared(recoveredClient);
+			})
+			.finally(() => {
+				this.staleDeviceRecovery = null;
+			});
+
+		return this.staleDeviceRecovery;
+	}
+
+	private waitForClientPrepared(
+		expectedClient: MatrixClient,
+		timeoutMs: number = 30_000
+	): Promise<void> {
+		if (this.client === expectedClient && this.syncState === 'PREPARED') {
+			return Promise.resolve();
+		}
+
+		return new Promise<void>((resolve, reject) => {
+			const listener = (state: string | null) => {
+				if (this.client !== expectedClient) {
+					window.clearTimeout(timeout);
+					this.syncStateListeners.delete(listener);
+					reject(
+						new Error(
+							'Recovered Matrix client was replaced before reaching PREPARED'
+						)
+					);
+					return;
+				}
+
+				if (state !== 'PREPARED') {
+					return;
+				}
+
+				window.clearTimeout(timeout);
+				this.syncStateListeners.delete(listener);
+				resolve();
+			};
+			const timeout = window.setTimeout(() => {
+				this.syncStateListeners.delete(listener);
+				reject(
+					new Error('Recovered Matrix client did not reach PREPARED')
+				);
+			}, timeoutMs);
+			this.syncStateListeners.add(listener);
+			listener(this.syncState);
+		});
+	}
+
 	public async ensureFreshToken(): Promise<void> {
+		if (this.staleDeviceRecovery) {
+			await this.staleDeviceRecovery;
+		}
+
 		const expiresAt = this.getStoredTokenExpiresAt();
 		if (!expiresAt || Date.now() + TOKEN_REFRESH_BUFFER_MS < expiresAt) {
 			return;

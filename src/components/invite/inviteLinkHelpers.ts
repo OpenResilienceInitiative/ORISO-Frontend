@@ -1,25 +1,11 @@
 import { setTokens } from '../auth/auth';
-import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import { RedeemInviteLinkSessionResponse } from '../../api/apiRedeemInviteLink';
-import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
-export const buildInviteSessionAppUrl = (
-	sessionId: number | string,
-	rcGroupId?: string | null
-): string => {
-	const basePath = '/sessions/user/view';
-	const groupId = rcGroupId?.trim();
-	const isMatrixRoomId = isMatrixRoomIdHeuristic(groupId);
+export const buildInviteSessionAppUrl = (sessionId: number | string): string =>
+	`${window.location.origin}/sessions/user/view/session/${sessionId}`;
 
-	if (groupId && !isMatrixRoomId) {
-		return `${window.location.origin}${basePath}/${encodeURIComponent(groupId)}/${sessionId}`;
-	}
-
-	return `${window.location.origin}${basePath}/session/${sessionId}`;
-};
-
-/** Apply Keycloak + Matrix/RC credentials returned by the new redeem endpoint. */
+/** Apply the identity credentials returned by the invite redeem endpoint. */
 export const applyRedeemSessionCredentials = (
 	data: RedeemInviteLinkSessionResponse
 ): void => {
@@ -29,16 +15,11 @@ export const applyRedeemSessionCredentials = (
 		data.refreshToken,
 		data.refreshExpiresIn
 	);
-	setValueInCookie('rc_uid', data.rcUserId);
-	setValueInCookie('rc_token', data.rcToken);
 	generateCsrfToken(true);
 };
 
 export const redirectToInviteSession = (
 	data: RedeemInviteLinkSessionResponse
 ): void => {
-	window.location.href = buildInviteSessionAppUrl(
-		data.sessionId,
-		data.rcGroupId
-	);
+	window.location.href = buildInviteSessionAppUrl(data.sessionId);
 };

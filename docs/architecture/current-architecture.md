@@ -148,23 +148,25 @@ The frontend currently integrates with:
 - backend REST APIs
 - Matrix (the only chat transport; Rocket.Chat is removed)
 - Keycloak-style token and session handling
-- Jitsi and LiveKit-related dependencies
+- Element Call in Matrix widget mode and LiveKit media
 - Cal.com embedding
 - browser notifications
 
 ## Known Architectural Risks
 
-### Legacy Chat-Credential Header Shim
+### Element Call Widget Contract
 
-Rocket.Chat itself is removed. One migration-era wire shim remains:
-`src/api/fetchData.ts` still sends `rcToken`/`rcUid` headers (filled with
-Matrix credentials from the `rc_token`/`rc_uid` cookies) because the
-backend API contract still expects those header names.
+Element Call is a first-party iframe, but it drives Matrix operations with the
+logged-in user's authority. The exact capability allowlist, room confinement,
+origin/source checks, and encrypted media-key requirements are security
+boundaries documented in
+`docs/architecture/adr-018-element-call-matryoshka.md`.
 
 Guidance:
 
-- keep this shim inside `src/api/fetchData.ts`
-- remove it together with the backend when the header contract changes
+- update the host allowlist and Element Call contract together
+- never add access tokens or a second Matrix session to the iframe
+- deny new capabilities until their event and room scope has been reviewed
 
 ### Heavy Startup Coupling
 

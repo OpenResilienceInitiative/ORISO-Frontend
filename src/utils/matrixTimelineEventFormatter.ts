@@ -6,6 +6,10 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import type {
+	ChatAttachment,
+	ChatFile
+} from '../components/message/chatAttachmentTypes';
 
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
@@ -84,16 +88,13 @@ export const formatMatrixTimelineEvent = (
 	if (mediaUrl && content?.msgtype !== 'm.text') {
 		const downloadPath = getMatrixMediaDownloadPath(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
-		const attachment: any = {
+		const attachment: ChatAttachment = {
 			title: content.body,
-			title_link: downloadPath,
+			downloadUrl: downloadPath,
 			type: content.msgtype === 'm.image' ? 'image' : 'file',
-			image_type: content.info?.mimetype,
-			image_size: content.info?.size
+			mediaType: content.info?.mimetype,
+			size: content.info?.size
 		};
-		if (content.msgtype === 'm.image' && !isEncryptedMedia) {
-			attachment.image_url = downloadPath;
-		}
 		// Intrinsic pixel size (sender-provided, WP-4): lets the renderer
 		// reserve a correctly-scaled thumbnail box before the image loads.
 		if (
@@ -101,21 +102,21 @@ export const formatMatrixTimelineEvent = (
 			typeof content.info?.w === 'number' &&
 			typeof content.info?.h === 'number'
 		) {
-			attachment.image_w = content.info.w;
-			attachment.image_h = content.info.h;
+			attachment.width = content.info.w;
+			attachment.height = content.info.h;
 		}
 		if (isEncryptedMedia) {
-			attachment.matrix_encrypted_file = content.file;
+			attachment.encryptedFile = content.file;
 		}
 		// Only a fail-closed verdict is accepted from event metadata. A sender
 		// cannot mark their own media safe and bypass the recipient-side gate.
 		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
-			attachment.media_check_state = 'blocked';
+			attachment.mediaCheckState = 'blocked';
 		}
 		baseMessage.file = {
 			name: content.body,
 			type: content.info?.mimetype || 'application/octet-stream'
-		};
+		} satisfies ChatFile;
 		if (isEncryptedMedia) {
 			baseMessage.t = 'matrix-e2e-file';
 		}

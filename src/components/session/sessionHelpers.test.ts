@@ -23,12 +23,6 @@ import {
 	STATUS_ARCHIVED,
 	STATUS_ENQUIRY
 } from '../../globalState/interfaces';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-
-vi.mock('../sessionCookie/accessSessionCookie', () => ({
-	getValueFromCookie: vi.fn()
-}));
-
 vi.mock('../../utils/encryptionHelpers', () => ({
 	decodeUsername: vi.fn((name: string) => `decoded:${name}`)
 }));
@@ -36,6 +30,7 @@ vi.mock('../../utils/encryptionHelpers', () => ({
 describe('sessionHelpers', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		localStorage.clear();
 	});
 
 	it('classifies enquiry, archived, normal, and group sessions', () => {
@@ -60,7 +55,7 @@ describe('sessionHelpers', () => {
 	});
 
 	it('resolves chat item and chat type from list items', () => {
-		const sessionItem = { session: { id: 1, askerRcId: 'user-1' } };
+		const sessionItem = { session: { id: 1, askerMatrixUserId: 'user-1' } };
 		const groupItem = { chat: { id: 2, moderators: ['mod-1'] } };
 
 		expect(getChatTypeForListItem(sessionItem as any)).toBe(
@@ -87,14 +82,17 @@ describe('sessionHelpers', () => {
 	});
 
 	it('marks the logged-in user message and group moderator', () => {
-		vi.mocked(getValueFromCookie).mockReturnValue('rc-user-id');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@matrix-user:matrix.example.test'
+		);
 
-		expect(isMyMessage('rc-user-id')).toBe(true);
+		expect(isMyMessage('@matrix-user:matrix.example.test')).toBe(true);
 		expect(isMyMessage('another-user')).toBe(false);
 		expect(
 			isUserModerator({
-				chatItem: { moderators: ['rc-user-id'] },
-				rcUserId: 'rc-user-id'
+				chatItem: { moderators: ['@moderator:matrix.example.test'] },
+				matrixUserId: '@moderator:matrix.example.test'
 			})
 		).toBe(true);
 	});

@@ -172,7 +172,7 @@ export const WriteEnquiry: React.FC = () => {
 
 	const handleSendButton = useCallback(async (response) => {
 		setRedirectSessionId(response.sessionId);
-		setRedirectGroupId(response.rcGroupId);
+		setRedirectGroupId(response.matrixRoomId);
 		setOverlayActive(true);
 	}, []);
 

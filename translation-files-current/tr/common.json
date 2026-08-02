@@ -879,12 +879,6 @@
 			}
 		}
 	},
-	"jitsi": {
-		"btn": {
-			"copied": "Video bağlantısı panoya kopyalandı",
-			"default": "Video bağlantısını kopyala"
-		}
-	},
 	"languages": {
 		"aa": "Afar",
 		"ab": "Abhazca",
@@ -2560,44 +2554,6 @@
 			}
 		}
 	},
-	"videoConference": {
-		"waitingroom": {
-			"dataProtection": {
-				"button": "Onaylayın",
-				"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
-				"headline": "Sıcak bir karşılama!",
-				"label": {
-					"and": "ve",
-					"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
-				},
-				"subline": "Lütfen gizlilik politikamızı onaylayın."
-			},
-			"errorImageTitle": "Başarısız",
-			"errorPage": {
-				"button": "Yeniden Yükle",
-				"consultant": {
-					"description": "Bağlantınız için bir video araması bulamıyoruz çünkü video araması ya silinmiş ya da çoktan sona ermiştir."
-				},
-				"description": "Bağlantınız için bir video görüşmesi bulamıyoruz çünkü video görüşmesi ya silinmiş ya da çoktan sona ermiştir. Sorun yaşamaya devam ederseniz lütfen danışmanınıza danışın.",
-				"headline": "Görüntülü arama bulunamadı",
-				"rejected": {
-					"description": "Danışmanınız sizi reddettiği için maalesef bu video görüşmesine katılamazsınız.",
-					"headline": "Yetkili değillerdi"
-				}
-			},
-			"headline": "Lütfen sabırlı olun",
-			"paused": {
-				"headline": "Görüntülü arama sona erdi",
-				"subline": "Video görüşmesi sona ermiştir. Danışmanınız sadece devamsızlık yapıyorsa, danışmanınız video görüşmesine devam eder etmez video görüşmesine yönlendirileceksiniz."
-			},
-			"subline": "Video görüşmesi henüz başlamadı. Danışmanınız video görüşmesini başlatır başlatmaz yönlendirileceksiniz.",
-			"title": {
-				"start": "Bekleme odası"
-			},
-			"waitingImageTitle": "Kahve ile bekleyen kişi",
-			"welcomeImageTitle": "Hoş geldiniz"
-		}
-	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2719,6 +2675,21 @@
 			"remove": {
 				"confirm": "Bu süpervizörü kaldırmak istediğinizden emin misiniz?"
 			}
+		}
+	},
+	"anonymousConsent": {
+		"button": "Onaylayın",
+		"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
+		"headline": "Sıcak bir karşılama!",
+		"label": {
+			"and": "ve",
+			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+		},
+		"subline": "Lütfen gizlilik politikamızı onaylayın."
+	},
+	"legacyVideoAppointment": {
+		"unavailable": {
+			"message": "Video appointments are currently unavailable."
 		}
 	}
 }

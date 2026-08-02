@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	clearPersistedMatrixDeviceId,
 	createMatrixClient,
-	getElementCallAccessToken,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from './getMatrixAccessToken';
@@ -94,6 +94,25 @@ describe('persistMatrixLoginData', () => {
 		expect(localStorage.getItem('matrix_token_expires_at')).toBe(
 			(Date.parse('2026-06-26T00:00:00.000Z') + 3_300_000).toString()
 		);
+	});
+});
+
+describe('clearPersistedMatrixDeviceId', () => {
+	it('removes both request and user-scoped ids before stale-device recovery', () => {
+		localStorage.setItem('matrix_device_id', 'STALE_DEVICE');
+		localStorage.setItem(
+			'matrix_device_id:@consultant:matrix.example.test',
+			'STALE_DEVICE'
+		);
+
+		clearPersistedMatrixDeviceId('@consultant:matrix.example.test');
+
+		expect(localStorage.getItem('matrix_device_id')).toBeNull();
+		expect(
+			localStorage.getItem(
+				'matrix_device_id:@consultant:matrix.example.test'
+			)
+		).toBeNull();
 	});
 });
 
@@ -243,35 +262,5 @@ describe('getMatrixAccessToken', () => {
 				}
 			}
 		});
-	});
-});
-
-describe('getElementCallAccessToken', () => {
-	it('uses a dedicated stable device instead of the ORISO app device', async () => {
-		localStorage.setItem('matrix_device_id', 'ORISO_WEB_MAIN_DEVICE');
-		Object.defineProperty(globalThis, 'crypto', {
-			value: { randomUUID: () => '12345678-90ab-cdef-1234-567890abcdef' },
-			configurable: true
-		});
-		vi.mocked(fetchData).mockResolvedValue({
-			accessToken: 'element-call-token',
-			deviceId: 'ORISO_CALL_1234567890ABCDEF12345678',
-			userId: '@user:matrix.example.test'
-		});
-
-		const result = await getElementCallAccessToken();
-
-		expect(result.deviceId).toBe('ORISO_CALL_1234567890ABCDEF12345678');
-		expect(fetchData).toHaveBeenCalledWith(
-			expect.objectContaining({
-				url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_CALL_1234567890ABCDEF12345678'
-			})
-		);
-		expect(localStorage.getItem('matrix_device_id')).toBe(
-			'ORISO_WEB_MAIN_DEVICE'
-		);
-		expect(localStorage.getItem('matrix_call_device_id')).toBe(
-			'ORISO_CALL_1234567890ABCDEF12345678'
-		);
 	});
 });

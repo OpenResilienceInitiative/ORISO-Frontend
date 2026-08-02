@@ -53,9 +53,6 @@ export const FETCH_SUCCESS = {
 	CONTENT: 'CONTENT'
 };
 
-const MATRIX_MIGRATION_DUMMY_RC_TOKEN = 'matrix-migration-dummy-token';
-const MATRIX_MIGRATION_DUMMY_RC_USER_ID = 'matrix-migration-dummy-user';
-
 const invalidateStaleAuthSession = () => {
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
@@ -99,7 +96,6 @@ interface FetchDataProps {
 	url: string;
 	method: string;
 	headersData?: object;
-	rcValidation?: boolean;
 	bodyData?: string;
 	skipAuth?: boolean;
 	responseHandling?: string[];
@@ -112,7 +108,6 @@ export const fetchData = ({
 	url,
 	method,
 	headersData,
-	rcValidation,
 	bodyData,
 	skipAuth,
 	responseHandling,
@@ -132,19 +127,6 @@ export const fetchData = ({
 				: null;
 
 		const csrfToken = generateCsrfToken();
-
-		// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
-		// but no longer exists after Matrix migration. Send dummy token.
-		const rcHeaders = rcValidation
-			? {
-					RCToken:
-						getValueFromCookie('rc_token') ||
-						MATRIX_MIGRATION_DUMMY_RC_TOKEN,
-					RCUserId:
-						getValueFromCookie('rc_uid') ||
-						MATRIX_MIGRATION_DUMMY_RC_USER_ID
-				}
-			: null;
 
 		const localDevelopmentHeader = isLocalDevelopment
 			? {
@@ -175,7 +157,6 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
-			...rcHeaders,
 			...localDevelopmentHeader
 		};
 

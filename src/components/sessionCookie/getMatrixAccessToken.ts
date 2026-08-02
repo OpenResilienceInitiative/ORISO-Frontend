@@ -2,8 +2,17 @@ import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
-import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import {
+	createMatrixErrorAwareLogger,
+	getMatrixClientLogger
+} from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
+import {
+	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_USER_ID_STORAGE_KEY
+} from '../../utils/matrixStorageKeys';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -11,12 +20,14 @@ export interface MatrixLoginData {
 	deviceId: string;
 	homeserverUrl: string;
 	expiresInMs?: number;
+	// Anonymous live-chat users can never cross-sign a consultant's device, so
+	// their client must share Megolm keys to all devices; invisible crypto
+	// (verified-only) would silently make their messages undecryptable for the
+	// consultant. See matrixClientService.initializeClient.
+	isAnonymous?: boolean;
 }
 
-const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
-const MATRIX_CALL_DEVICE_ID_STORAGE_KEY = 'matrix_call_device_id';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
-const MATRIX_CALL_DEVICE_ID_PREFIX = 'ORISO_CALL_';
 const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
 
 const isMatrixTokenBootstrapDisabled = (): boolean =>
@@ -56,62 +67,15 @@ const getOrCreateMatrixDeviceId = (
 	return deviceId;
 };
 
-const getOrCreateRequestedDeviceId = (
-	storageKey: string = MATRIX_DEVICE_ID_STORAGE_KEY,
-	prefix: string = MATRIX_DEVICE_ID_PREFIX
-): string => {
-	const storedDeviceId = localStorage.getItem(storageKey);
+const getOrCreateRequestedDeviceId = (): string => {
+	const storedDeviceId = localStorage.getItem(MATRIX_DEVICE_ID_STORAGE_KEY);
 	if (storedDeviceId) {
 		return storedDeviceId;
 	}
 
-	const deviceId = createBrowserDeviceId(prefix);
-	localStorage.setItem(storageKey, deviceId);
+	const deviceId = createBrowserDeviceId();
+	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, deviceId);
 	return deviceId;
-};
-
-export const getElementCallAccessToken = (): Promise<MatrixLoginData> => {
-	const requestedDeviceId = getOrCreateRequestedDeviceId(
-		MATRIX_CALL_DEVICE_ID_STORAGE_KEY,
-		MATRIX_CALL_DEVICE_ID_PREFIX
-	);
-	const querySeparator = endpoints.matrixAccessToken.includes('?')
-		? '&'
-		: '?';
-	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
-		requestedDeviceId
-	)}`;
-
-	return fetchData({
-		url: tokenUrl,
-		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL],
-		recoverOnPublicAuthRoute: false
-	}).then((response) => {
-		const homeserverUrl = getMatrixHomeserverUrl();
-		if (!homeserverUrl) {
-			throw new Error(
-				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
-			);
-		}
-		if (!response.accessToken || !response.userId || !response.deviceId) {
-			throw new Error(
-				'Element Call login did not return a device-bound access token'
-			);
-		}
-
-		localStorage.setItem(
-			MATRIX_CALL_DEVICE_ID_STORAGE_KEY,
-			response.deviceId
-		);
-		return {
-			accessToken: response.accessToken,
-			userId: response.userId,
-			deviceId: response.deviceId,
-			homeserverUrl,
-			expiresInMs: response.expiresInMs
-		};
-	});
 };
 
 export const getMatrixAccessToken = (
@@ -161,8 +125,11 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
-	localStorage.setItem('matrix_access_token', loginData.accessToken);
-	localStorage.setItem('matrix_user_id', loginData.userId);
+	localStorage.setItem(
+		MATRIX_ACCESS_TOKEN_STORAGE_KEY,
+		loginData.accessToken
+	);
+	localStorage.setItem(MATRIX_USER_ID_STORAGE_KEY, loginData.userId);
 	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
 	localStorage.setItem(
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
@@ -170,27 +137,32 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	);
 	if (loginData.expiresInMs) {
 		localStorage.setItem(
-			'matrix_token_expires_at',
+			MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 			(Date.now() + loginData.expiresInMs).toString()
 		);
 	}
+};
 
-	const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-	document.cookie = `rc_uid=${loginData.userId}; path=/; SameSite=Strict${secure}`;
-	document.cookie = `rc_token=${loginData.accessToken}; path=/; SameSite=Strict${secure}`;
+export const clearPersistedMatrixDeviceId = (userId: string): void => {
+	localStorage.removeItem(MATRIX_DEVICE_ID_STORAGE_KEY);
+	localStorage.removeItem(`${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`);
 };
 
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
-	loginData: MatrixLoginData
+	loginData: MatrixLoginData,
+	onSdkError?: (...messages: unknown[]) => void
 ): MatrixClient => {
+	const baseLogger = getMatrixClientLogger();
 	return createClient({
 		baseUrl: loginData.homeserverUrl,
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
 		deviceId: loginData.deviceId,
 		fallbackICEServerAllowed: true,
-		logger: getMatrixClientLogger(),
+		logger: onSdkError
+			? createMatrixErrorAwareLogger(baseLogger, onSdkError)
+			: baseLogger,
 		// #437 key backup + recovery: the SDK pulls the secret-storage key
 		// through this callback during setup/recovery flows (one-shot in-memory
 		// cache, never persisted).
