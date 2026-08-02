@@ -12,6 +12,7 @@ import {
 	assertMatrixRoomEncrypted,
 	buildMatrixRoomEncryptionInitialState
 } from '../utils/matrixRoomEncryption';
+import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 
 export type CallState =
 	| 'idle'
@@ -534,6 +535,9 @@ class CallManager {
 
 		this.currentCall = null;
 
+		// Warm-up / orphaned capture from the session click handler
+		releaseAllCallWarmupStreams();
+
 		// console.log("✅ Call rejected and cleared");
 		// console.log("═══════════════════════════════════════════════");
 
@@ -565,14 +569,10 @@ class CallManager {
 			}
 		}
 
-		// Stop local media streams
-		const stream = (window as any).__activeMediaStream;
-		if (stream) {
-			stream.getTracks().forEach((track: any) => {
-				track.stop();
-			});
-			delete (window as any).__activeMediaStream;
-		}
+		// Stop warm-up + active parent-page streams. Element Call owns its own
+		// media inside the iframe; this covers SessionMenu's getUserMedia
+		// warm-up which previously leaked on the Element Call path.
+		releaseAllCallWarmupStreams();
 
 		this.notifyListeners();
 	}

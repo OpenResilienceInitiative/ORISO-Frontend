@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-08-02 — Element Call warm-up must release parent MediaStream
+
+- Context: `docs/cursor-orchestrator/2026-08-02_camera-activation-bug/` (gitignored under `docs/*`)
+- Lesson: If SessionMenu/`getUserMedia` warms permissions for Element Call, stop tracks immediately. Do not leave `__preRequestedMediaStream` for FloatingCallWidget when `usesElementCall` is always true — that orphans live tracks and breaks re-join after leave/refresh.
+
 ## 2026-07-14 — orchestration docs must match git-workflow base
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)

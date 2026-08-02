@@ -20,6 +20,7 @@ import {
 	type ResizeEdge,
 	type Size
 } from '../../utils/videoTileSizing';
+import { releaseWindowMediaStream } from '../../utils/callMediaStreamCleanup';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -203,6 +204,10 @@ export const GroupCallWidget: React.FC = () => {
 		setupInProgressRef.current = true;
 
 		try {
+			// Parent-page warm-up streams must not hold the camera while the
+			// Element Call iframe opens its own capture.
+			releaseWindowMediaStream('__preRequestedMediaStream');
+
 			const client = matrixClientService?.getClient();
 			if (!client) throw new Error('Matrix client not initialized');
 
