@@ -29,6 +29,7 @@ export class InvalidRecoveryKeyError extends Error {
 export type RecoverySetupPhase =
 	| 'cross-signing'
 	| 'secret-storage'
+	| 'key-backup-creation'
 	| 'key-backup';
 
 export class RecoverySetupPhaseError extends Error {
@@ -149,10 +150,15 @@ export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 		try {
 			await crypto.bootstrapSecretStorage({
 				createSecretStorageKey: async () => generated,
-				setupNewKeyBackup: true
+				setupNewKeyBackup: false
 			});
 		} catch (error) {
 			throw new RecoverySetupPhaseError('secret-storage', error);
+		}
+		try {
+			await crypto.resetKeyBackup();
+		} catch (error) {
+			throw new RecoverySetupPhaseError('key-backup-creation', error);
 		}
 		try {
 			await crypto.checkKeyBackupAndEnable();

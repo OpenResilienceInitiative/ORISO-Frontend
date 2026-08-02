@@ -38,6 +38,7 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 	createRecoveryKeyFromPassphrase: vi.fn().mockResolvedValue(generatedKey),
 	bootstrapCrossSigning: vi.fn().mockResolvedValue(undefined),
 	bootstrapSecretStorage: vi.fn().mockResolvedValue(undefined),
+	resetKeyBackup: vi.fn().mockResolvedValue(undefined),
 	checkKeyBackupAndEnable: vi.fn().mockResolvedValue({ backupInfo: {} }),
 	loadSessionBackupPrivateKeyFromSecretStorage: vi
 		.fn()
@@ -100,8 +101,9 @@ describe('matrixKeyBackupService (#437)', () => {
 			expect(encoded).toBe(VALID_ENCODED_KEY);
 			expect(crypto.bootstrapCrossSigning).toHaveBeenCalled();
 			expect(crypto.bootstrapSecretStorage).toHaveBeenCalledWith(
-				expect.objectContaining({ setupNewKeyBackup: true })
+				expect.objectContaining({ setupNewKeyBackup: false })
 			);
+			expect(crypto.resetKeyBackup).toHaveBeenCalledOnce();
 			expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
 
 			// createSecretStorageKey hands the SDK the same generated key.
@@ -153,6 +155,21 @@ describe('matrixKeyBackupService (#437)', () => {
 					'm.cross_signing.master'
 				)
 			).resolves.toBeNull();
+		});
+
+		it('classifies key-backup creation separately from secret storage', async () => {
+			const crypto = buildCrypto({
+				resetKeyBackup: vi
+					.fn()
+					.mockRejectedValue(new Error('sensitive backup payload'))
+			});
+
+			const failure = await setUpRecovery(buildClient(crypto)).catch(
+				(error) => error
+			);
+			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
+			expect(failure.phase).toBe('key-backup-creation');
+			expect(failure.message).not.toContain('sensitive backup payload');
 		});
 	});
 

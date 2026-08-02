@@ -125,6 +125,7 @@ export class MatrixClientService {
 	private refreshTimer: number | null = null;
 	private refreshingToken: Promise<void> | null = null;
 	private staleDeviceRecovery: Promise<void> | null = null;
+	private staleDeviceRecoveryVersion = 0;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
@@ -213,6 +214,11 @@ export class MatrixClientService {
 
 	public isReady(): boolean {
 		return isPreparedSyncState(this.syncState);
+	}
+
+	/** Monotonic signal incremented only after stale-device recovery completes. */
+	public getStaleDeviceRecoveryVersion(): number {
+		return this.staleDeviceRecoveryVersion;
 	}
 
 	/**
@@ -342,6 +348,7 @@ export class MatrixClientService {
 					);
 				}
 				await this.waitForClientPrepared(recoveredClient);
+				this.staleDeviceRecoveryVersion += 1;
 			})
 			.finally(() => {
 				this.staleDeviceRecovery = null;

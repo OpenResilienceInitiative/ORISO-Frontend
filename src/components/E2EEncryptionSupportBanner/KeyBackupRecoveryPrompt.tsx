@@ -24,7 +24,9 @@ const SECURITY_SETTINGS_PATH = '/profile/einstellungen/sicherheit';
 export const KeyBackupRecoveryPrompt = () => {
 	const { t: translate } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
-	const [showBanner, setShowBanner] = useState(false);
+	const [bannerMode, setBannerMode] = useState<'setup' | 'recovery' | null>(
+		null
+	);
 	const probedRef = useRef(false);
 
 	useEffect(() => {
@@ -53,11 +55,10 @@ export const KeyBackupRecoveryPrompt = () => {
 							!status.serverBackupExists ||
 							!status.secretStorageReady ||
 							!status.crossSigningReady;
-						if (
-							!cancelled &&
-							(status.keyStorageOutOfSync || setupRequired)
-						) {
-							setShowBanner(true);
+						if (!cancelled && status.keyStorageOutOfSync) {
+							setBannerMode('recovery');
+						} else if (!cancelled && setupRequired) {
+							setBannerMode('setup');
 						}
 					})
 					.catch(() => {
@@ -73,11 +74,11 @@ export const KeyBackupRecoveryPrompt = () => {
 	}, [matrixClientService]);
 
 	useEffect(() => {
-		const fn = showBanner ? 'add' : 'remove';
+		const fn = bannerMode ? 'add' : 'remove';
 		document.body.classList[fn]('banner-open');
-	}, [showBanner]);
+	}, [bannerMode]);
 
-	if (!showBanner) {
+	if (!bannerMode) {
 		return null;
 	}
 
@@ -86,25 +87,35 @@ export const KeyBackupRecoveryPrompt = () => {
 			className="encryption-banner"
 			onClose={() => {
 				sessionStorage.setItem(DISMISS_KEY, 'true');
-				setShowBanner(false);
+				setBannerMode(null);
 			}}
 		>
 			<span className="keyBackupPrompt__text">
-				{translate(
-					'encryption.keyBackup.prompt.text',
-					'Ihr Gesprächsverlauf ist auf diesem Gerät noch nicht verfügbar. Geben Sie Ihren Wiederherstellungsschlüssel ein, um ihn hier weiterzulesen.'
-				)}{' '}
+				{bannerMode === 'setup'
+					? translate(
+							'encryption.keyBackup.setupPrompt.text',
+							'Richten Sie einen Wiederherstellungsschlüssel ein, damit Ihre verschlüsselten Gespräche auch auf einem neuen Gerät verfügbar bleiben.'
+						)
+					: translate(
+							'encryption.keyBackup.prompt.text',
+							'Ihr Gesprächsverlauf ist auf diesem Gerät noch nicht verfügbar. Geben Sie Ihren Wiederherstellungsschlüssel ein, um ihn hier weiterzulesen.'
+						)}{' '}
 				<Link
 					to={SECURITY_SETTINGS_PATH}
 					onClick={() => {
 						sessionStorage.setItem(DISMISS_KEY, 'true');
-						setShowBanner(false);
+						setBannerMode(null);
 					}}
 				>
-					{translate(
-						'encryption.keyBackup.prompt.cta',
-						'Verlauf wiederherstellen'
-					)}
+					{bannerMode === 'setup'
+						? translate(
+								'encryption.keyBackup.setupPrompt.cta',
+								'Wiederherstellung einrichten'
+							)
+						: translate(
+								'encryption.keyBackup.prompt.cta',
+								'Verlauf wiederherstellen'
+							)}
 				</Link>
 			</span>
 		</Banner>

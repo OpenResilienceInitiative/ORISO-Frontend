@@ -9,9 +9,13 @@ describe('resolveReadyEncryptionClient (#839)', () => {
 	it('uses the recovered PREPARED service client for product crypto actions', async () => {
 		const recoveredClient = { deviceId: 'DEVICE_TWO' };
 		const getReadyClient = vi.fn().mockResolvedValue(recoveredClient);
+		const getStaleDeviceRecoveryVersion = vi.fn().mockReturnValue(0);
 
 		await expect(
-			resolveReadyEncryptionClient(undefined, { getReadyClient } as any)
+			resolveReadyEncryptionClient(undefined, {
+				getReadyClient,
+				getStaleDeviceRecoveryVersion
+			} as any)
 		).resolves.toBe(recoveredClient);
 		expect(getReadyClient).toHaveBeenCalledOnce();
 	});
@@ -40,6 +44,10 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 			.fn()
 			.mockResolvedValueOnce(staleClient)
 			.mockResolvedValueOnce(recoveredClient);
+		const getStaleDeviceRecoveryVersion = vi
+			.fn()
+			.mockReturnValueOnce(0)
+			.mockReturnValueOnce(1);
 		const action = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('stale OTK queue'))
@@ -48,7 +56,7 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 		await expect(
 			executeWithReadyEncryptionClient(
 				undefined,
-				{ getReadyClient } as any,
+				{ getReadyClient, getStaleDeviceRecoveryVersion } as any,
 				action
 			)
 		).resolves.toBe('recovery-key');
@@ -59,13 +67,14 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 	it('preserves the original failure when the ready client was not replaced', async () => {
 		const client = { deviceId: 'DEVICE_ONE' };
 		const getReadyClient = vi.fn().mockResolvedValue(client);
+		const getStaleDeviceRecoveryVersion = vi.fn().mockReturnValue(0);
 		const failure = new Error('setup rejected');
 		const action = vi.fn().mockRejectedValue(failure);
 
 		await expect(
 			executeWithReadyEncryptionClient(
 				undefined,
-				{ getReadyClient } as any,
+				{ getReadyClient, getStaleDeviceRecoveryVersion } as any,
 				action
 			)
 		).rejects.toBe(failure);
@@ -79,15 +88,37 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 			.mockResolvedValueOnce(staleClient)
 			.mockRejectedValueOnce(new Error('sensitive sync details'));
 		const action = vi.fn().mockRejectedValue(new Error('stale action'));
+		const getStaleDeviceRecoveryVersion = vi.fn().mockReturnValue(0);
 
 		const failure = await executeWithReadyEncryptionClient(
 			undefined,
-			{ getReadyClient } as any,
+			{ getReadyClient, getStaleDeviceRecoveryVersion } as any,
 			action
 		).catch((error) => error);
 
 		expect(failure).toBeInstanceOf(EncryptionClientReadinessError);
 		expect(failure.stage).toBe('replacement-readiness');
 		expect(failure.message).not.toContain('sensitive sync details');
+	});
+
+	it('does not retry when an unrelated client replacement follows an action failure', async () => {
+		const initialClient = { deviceId: 'DEVICE_ONE' };
+		const unrelatedClient = { deviceId: 'DEVICE_OTHER' };
+		const getReadyClient = vi
+			.fn()
+			.mockResolvedValueOnce(initialClient)
+			.mockResolvedValueOnce(unrelatedClient);
+		const getStaleDeviceRecoveryVersion = vi.fn().mockReturnValue(0);
+		const failure = new Error('ordinary setup failure');
+		const action = vi.fn().mockRejectedValue(failure);
+
+		await expect(
+			executeWithReadyEncryptionClient(
+				undefined,
+				{ getReadyClient, getStaleDeviceRecoveryVersion } as any,
+				action
+			)
+		).rejects.toBe(failure);
+		expect(action).toHaveBeenCalledOnce();
 	});
 });

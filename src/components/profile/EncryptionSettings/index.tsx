@@ -94,12 +94,12 @@ export const EncryptionSettingsPanel = ({
 	};
 
 	const refreshStatus = useCallback(async () => {
-		const client = await getReadyClient();
-		if (!client) {
-			setPhase('unavailable');
-			return;
-		}
 		try {
+			const client = await getReadyClient();
+			if (!client) {
+				setPhase('unavailable');
+				return;
+			}
 			const nextStatus = await getEncryptionStatus(client);
 			setStatus(nextStatus);
 			setPhase(phaseForStatus(nextStatus));
@@ -184,6 +184,7 @@ export const EncryptionSettingsPanel = ({
 		}
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
 			const result = await executeWithReadyEncryptionClient(
 				clientOverride,
@@ -216,6 +217,7 @@ export const EncryptionSettingsPanel = ({
 	const onReset = useCallback(async () => {
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
 			await executeWithReadyEncryptionClient(
 				clientOverride,

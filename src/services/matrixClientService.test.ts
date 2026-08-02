@@ -358,11 +358,25 @@ describe('MatrixClientService', () => {
 		const syncListeners: Array<
 			(state: string, previous: string | null, error?: unknown) => void
 		> = [];
+		const recoveredClient = {
+			...mockedMatrixClient,
+			initRustCrypto: vi.fn().mockResolvedValue(undefined),
+			getCrypto: vi.fn().mockReturnValue(mockedCrypto),
+			on: vi.fn((event, listener) => {
+				if (event === 'sync') syncListeners.push(listener);
+			}),
+			removeAllListeners: vi.fn(),
+			startClient: vi.fn(),
+			stopClient: vi.fn()
+		};
 		mockedMatrixClient.on.mockImplementation((event, listener) => {
 			if (event === 'sync') {
 				syncListeners.push(listener);
 			}
 		});
+		vi.mocked(createMatrixClient)
+			.mockReturnValueOnce(mockedMatrixClient as any)
+			.mockReturnValueOnce(recoveredClient as any);
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
 			accessToken: 'fresh-token',
@@ -392,16 +406,31 @@ describe('MatrixClientService', () => {
 
 		expect(settled).toBe(false);
 		syncListeners.at(-1)?.('PREPARED', null);
-		await expect(readyClient).resolves.toBe(mockedMatrixClient);
+		await expect(readyClient).resolves.toBe(recoveredClient);
+		expect(service.getStaleDeviceRecoveryVersion()).toBe(1);
 	});
 
 	it('keeps waiting when stale-device recovery starts during the initial readiness wait (#839)', async () => {
 		const syncListeners: Array<
 			(state: string, previous: string | null, error?: unknown) => void
 		> = [];
+		const recoveredClient = {
+			...mockedMatrixClient,
+			initRustCrypto: vi.fn().mockResolvedValue(undefined),
+			getCrypto: vi.fn().mockReturnValue(mockedCrypto),
+			on: vi.fn((event, listener) => {
+				if (event === 'sync') syncListeners.push(listener);
+			}),
+			removeAllListeners: vi.fn(),
+			startClient: vi.fn(),
+			stopClient: vi.fn()
+		};
 		mockedMatrixClient.on.mockImplementation((event, listener) => {
 			if (event === 'sync') syncListeners.push(listener);
 		});
+		vi.mocked(createMatrixClient)
+			.mockReturnValueOnce(mockedMatrixClient as any)
+			.mockReturnValueOnce(recoveredClient as any);
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
 			accessToken: 'fresh-token',
@@ -426,7 +455,7 @@ describe('MatrixClientService', () => {
 		);
 		syncListeners.at(-1)?.('PREPARED', null);
 
-		await expect(readyClient).resolves.toBe(mockedMatrixClient);
+		await expect(readyClient).resolves.toBe(recoveredClient);
 	});
 
 	it('fails a recovered-client readiness wait immediately when that client is replaced', async () => {

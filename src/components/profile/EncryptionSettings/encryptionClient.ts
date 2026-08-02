@@ -1,7 +1,10 @@
 import type { MatrixClient } from 'matrix-js-sdk';
 import type { MatrixClientService } from '../../../services/matrixClientService';
 
-type ReadyMatrixClientService = Pick<MatrixClientService, 'getReadyClient'>;
+type ReadyMatrixClientService = Pick<
+	MatrixClientService,
+	'getReadyClient' | 'getStaleDeviceRecoveryVersion'
+>;
 
 export type EncryptionClientReadinessStage =
 	| 'initial-readiness'
@@ -52,6 +55,7 @@ export const executeWithReadyEncryptionClient = async <T>(
 	if (!initialClient) {
 		return null;
 	}
+	const recoveryVersion = service?.getStaleDeviceRecoveryVersion() ?? 0;
 
 	try {
 		return await action(initialClient);
@@ -70,6 +74,9 @@ export const executeWithReadyEncryptionClient = async <T>(
 			);
 		}
 		if (recoveredClient === initialClient) {
+			throw initialError;
+		}
+		if (service.getStaleDeviceRecoveryVersion() <= recoveryVersion) {
 			throw initialError;
 		}
 

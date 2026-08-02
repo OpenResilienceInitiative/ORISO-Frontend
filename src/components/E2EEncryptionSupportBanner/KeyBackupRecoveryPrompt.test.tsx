@@ -25,14 +25,6 @@ const outOfSync: EncryptionSetupStatus = {
 	keyStorageOutOfSync: true
 };
 
-const notSetUp: EncryptionSetupStatus = {
-	secretStorageReady: false,
-	crossSigningReady: false,
-	activeBackupVersion: null,
-	serverBackupExists: false,
-	keyStorageOutOfSync: false
-};
-
 const healthy: EncryptionSetupStatus = {
 	secretStorageReady: true,
 	crossSigningReady: true,
@@ -66,6 +58,7 @@ const renderPrompt = (service: unknown) =>
 	);
 
 const RECOVERY_TEXT = /noch nicht verfügbar/i;
+const SETUP_TEXT = /Wiederherstellungsschlüssel ein/i;
 
 describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 	beforeEach(() => {
@@ -91,18 +84,29 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		);
 	});
 
-	it('shows the setup prompt when no key backup exists after login (#839)', async () => {
-		getEncryptionStatus.mockResolvedValue(notSetUp);
+	it.each([
+		['server backup', { ...healthy, serverBackupExists: false }],
+		['secret storage', { ...healthy, secretStorageReady: false }],
+		['cross-signing', { ...healthy, crossSigningReady: false }]
+	])(
+		'shows setup-specific copy when %s is missing (#839)',
+		async (_prerequisite, status) => {
+			getEncryptionStatus.mockResolvedValue(status);
 
-		renderPrompt(buildService());
+			renderPrompt(buildService());
 
-		await waitFor(() =>
-			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
-		);
-		expect(screen.getByRole('link').getAttribute('href')).toContain(
-			'/profile/einstellungen/sicherheit'
-		);
-	});
+			await waitFor(() =>
+				expect(screen.queryByText(SETUP_TEXT)).toBeTruthy()
+			);
+			expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
+			expect(screen.getByRole('link').textContent).toMatch(
+				/Wiederherstellung einrichten/i
+			);
+			expect(screen.getByRole('link').getAttribute('href')).toContain(
+				'/profile/einstellungen/sicherheit'
+			);
+		}
+	);
 
 	it('stays hidden when encryption is healthy', async () => {
 		getEncryptionStatus.mockResolvedValue(healthy);
@@ -112,6 +116,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		// Give the probe time to resolve, then assert nothing rendered.
 		await waitFor(() => expect(getEncryptionStatus).toHaveBeenCalled());
 		expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
+		expect(screen.queryByText(SETUP_TEXT)).toBeNull();
 	});
 
 	it('does not probe until the client is PREPARED', async () => {
