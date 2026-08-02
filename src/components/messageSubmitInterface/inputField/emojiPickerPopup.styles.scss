@@ -1,18 +1,27 @@
 /*
- * Emoji picker popup — anchored above/below the emoji toolbar button,
- * themed to the M3 palette via emoji-picker-react CSS variables.
+ * Emoji picker popup — portalled to <body> and anchored with floating-ui
+ * (same pattern as ToolbarMenu) so `.session { overflow: hidden }` cannot
+ * clip a dark fragment over the docked toolbar (#835).
  */
 .emojiPickerPopup {
-	position: absolute;
-	left: 0;
-	z-index: 70;
+	z-index: 4600;
 
-	&--up {
-		bottom: calc(100% + 8px);
+	&--portalled {
+		position: fixed;
 	}
 
-	&--down {
-		top: calc(100% + 4px);
+	// Legacy absolute anchors kept for non-portalled story harnesses.
+	&:not(.emojiPickerPopup--portalled) {
+		position: absolute;
+		left: 0;
+
+		&.emojiPickerPopup--up {
+			bottom: calc(100% + 8px);
+		}
+
+		&.emojiPickerPopup--down {
+			top: calc(100% + 4px);
+		}
 	}
 
 	&__loading {
@@ -36,6 +45,7 @@
 		--epr-text-color: var(--m3-secondary, #4c555f);
 		--epr-search-border-color: var(--m3-primary-fixed-dim, #ffb4aa);
 		--epr-picker-border-radius: 12px;
+		--epr-bg-color: #fff;
 
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.08),

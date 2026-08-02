@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -453,6 +454,9 @@ export const MessageSubmitInterfaceComponent = ({
 		useState(0);
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
+	const figmaToolbarRef = useRef<HTMLDivElement | null>(null);
+	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
+		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
 		useState(true);
 	const [editingMessageId, setEditingMessageId] = useState<string | null>(
@@ -3172,6 +3176,19 @@ export const MessageSubmitInterfaceComponent = ({
 		return true;
 	}, [isEmojiStripOpen, openCompactActionStrip]);
 
+	// Resolve the emoji toggle inside this composer's toolbar so the portalled
+	// picker anchors correctly when multiple composers are mounted (#835).
+	useLayoutEffect(() => {
+		if (!isEmojiStripOpen) {
+			setEmojiPickerAnchorEl(null);
+			return;
+		}
+		const toggle = figmaToolbarRef.current?.querySelector<HTMLElement>(
+			'[data-emoji-picker-toggle]'
+		);
+		setEmojiPickerAnchorEl(toggle ?? null);
+	}, [isEmojiStripOpen, isCompactActionStripOpen]);
+
 	const { preferences: shortcutPreferences, platform: shortcutPlatform } =
 		useKeyboardShortcuts();
 
@@ -4209,6 +4226,7 @@ export const MessageSubmitInterfaceComponent = ({
 											</div>
 										)}
 										<div
+											ref={figmaToolbarRef}
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
@@ -4257,6 +4275,9 @@ export const MessageSubmitInterfaceComponent = ({
 														<EmojiPickerPopup
 															direction={
 																composerMenuDirection
+															}
+															anchorEl={
+																emojiPickerAnchorEl
 															}
 															onPick={
 																handleEmojiPick
