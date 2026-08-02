@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -20,10 +21,16 @@ import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
+	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
 } from './inputField/composerResize';
+import {
+	getExplicitAudienceValues,
+	shouldShowAudienceSelector
+} from './audienceSelectorVisibility';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
@@ -417,6 +424,9 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
+	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
+		null
+	);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -1478,11 +1488,26 @@ export const MessageSubmitInterfaceComponent = ({
 		const humanTargetCount = audienceOptions.filter(
 			(option) => option.value !== '__all__'
 		).length;
-		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
-		);
-		const hasExplicitAudience =
-			humanTargetCount > 1 && explicitAudience.length > 0;
+		const sendChatType = isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+		const sendIsClientUser =
+			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+		const explicitAudience = getExplicitAudienceValues({
+			chatType: sendChatType,
+			isClientUser: sendIsClientUser,
+			targetCount: humanTargetCount,
+			hasAllOption: audienceOptions.some(
+				(option) => option.value === '__all__'
+			),
+			selectedValues: selectedAudienceValues
+		});
+		const hasExplicitAudience = explicitAudience.length > 0;
 		if (hasExplicitAudience) {
 			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
@@ -1535,6 +1560,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		await sendMessage(message, attachment, isEncrypted, isAside);
 	}, [
+		activeSession.isGroup,
 		editingMessageId,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
@@ -1549,7 +1575,9 @@ export const MessageSubmitInterfaceComponent = ({
 		sendMessage,
 		selectedAudienceValues,
 		audienceOptions,
-		isSupervisor
+		isAnonymousChat,
+		isSupervisor,
+		userData
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -2433,14 +2461,29 @@ export const MessageSubmitInterfaceComponent = ({
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
 	const showAudienceSelector = useMemo(() => {
-		if (isClientUser) {
-			return false;
+		return shouldShowAudienceSelector({
+			chatType: currentChatType,
+			isClientUser,
+			targetCount: audienceTargetCount,
+			hasAllOption: audienceOptions.some(
+				(option) => option.value === '__all__'
+			)
+		});
+	}, [audienceOptions, audienceTargetCount, currentChatType, isClientUser]);
+	useEffect(() => {
+		if (showAudienceSelector) {
+			return;
 		}
-		if (audienceTargetCount <= 1) {
-			return false;
+		setIsAudienceMenuOpen(false);
+		setSelectedAudienceValues(['__all__']);
+		if (audienceSelectionStorageKey) {
+			try {
+				window.localStorage.removeItem(audienceSelectionStorageKey);
+			} catch {
+				// Storage may be disabled; in-memory reset still keeps routing safe.
+			}
 		}
-		return audienceOptions.some((option) => option.value === '__all__');
-	}, [audienceOptions, audienceTargetCount, isClientUser]);
+	}, [audienceSelectionStorageKey, showAudienceSelector]);
 	const selectedAudienceIcon = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
@@ -3231,6 +3274,64 @@ export const MessageSubmitInterfaceComponent = ({
 		[getComposerHeightBounds]
 	);
 
+	const composerMinHeight = getComposerHeightBounds().minHeight;
+	const effectiveComposerHeight = getEffectiveComposerHeight(
+		composerHeight,
+		autoComposerHeight,
+		composerMinHeight
+	);
+
+	// A dragged height belongs to one conversation only. Keeping the component
+	// mounted while routing between sessions must not carry that geometry over.
+	useEffect(() => {
+		setComposerHeight(null);
+		setAutoComposerHeight(null);
+	}, [activeSession?.item?.id, activeSession?.rid, threadRootId]);
+
+	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
+	// content up to fourteen lines. Beyond that the editor scrolls, while the
+	// drag handle can still explicitly make the composer taller.
+	useLayoutEffect(() => {
+		if (isExpandedComposer) {
+			return;
+		}
+		const input = textareaInputRef.current;
+		const editor = input?.querySelector<HTMLElement>('.ProseMirror');
+		const shell = input?.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!editor || !shell || typeof document === 'undefined') {
+			return;
+		}
+
+		const range = document.createRange();
+		range.selectNodeContents(editor);
+		const contentHeight = range.getBoundingClientRect().height;
+		const firstBlock = editor.firstElementChild as HTMLElement | null;
+		const lineHeight = Number.parseFloat(
+			window.getComputedStyle(firstBlock || editor).lineHeight
+		);
+		const composerChromeHeight =
+			shell.getBoundingClientRect().height -
+			editor.getBoundingClientRect().height;
+		const bounds = getComposerHeightBounds();
+		const nextHeight = calculateAutoComposerHeight({
+			contentHeight,
+			lineHeight: Number.isFinite(lineHeight) ? lineHeight : 20,
+			composerChromeHeight,
+			bounds
+		});
+		setAutoComposerHeight(
+			nextHeight > bounds.minHeight ? nextHeight : null
+		);
+	}, [
+		attachmentSelected,
+		composerText,
+		getComposerHeightBounds,
+		isExpandedComposer,
+		isMobileViewport
+	]);
+
 	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
 			if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -3243,7 +3344,7 @@ export const MessageSubmitInterfaceComponent = ({
 			) as HTMLElement | null;
 			const startHeight =
 				composerShell?.getBoundingClientRect().height ||
-				composerHeight ||
+				effectiveComposerHeight ||
 				getComposerHeightBounds().minHeight;
 
 			composerResizeStartRef.current = {
@@ -3293,7 +3394,7 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			clampComposerHeight,
-			composerHeight,
+			effectiveComposerHeight,
 			getComposerHeightBounds,
 			setComposerHeight
 		]
@@ -3303,7 +3404,7 @@ export const MessageSubmitInterfaceComponent = ({
 		(e: React.KeyboardEvent<HTMLButtonElement>) => {
 			const bounds = getComposerHeightBounds();
 			const nextHeight = stepComposerHeight(
-				composerHeight || bounds.minHeight,
+				effectiveComposerHeight || bounds.minHeight,
 				{ key: e.key, shiftKey: e.shiftKey },
 				bounds
 			);
@@ -3313,7 +3414,7 @@ export const MessageSubmitInterfaceComponent = ({
 			e.preventDefault();
 			setComposerHeight(nextHeight);
 		},
-		[composerHeight, getComposerHeightBounds, setComposerHeight]
+		[effectiveComposerHeight, getComposerHeightBounds, setComposerHeight]
 	);
 
 	const composerMenuDirection = getMenuDirection({
@@ -3429,9 +3530,9 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--resizing'
 						)}
 						style={
-							!isExpandedComposer && composerHeight
+							!isExpandedComposer && effectiveComposerHeight
 								? ({
-										'--composer-height': `${composerHeight}px`
+										'--composer-height': `${effectiveComposerHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}

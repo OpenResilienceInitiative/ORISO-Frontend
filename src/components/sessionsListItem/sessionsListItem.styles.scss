@@ -34,9 +34,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	display: flex;
 	color: $body-font-color;
 
-	// Figma 8609-31260: cards sit flush in a stacked group; ONLY the active
-	// card gets 6px breathing room (its Figma frame carries py-6).
-	margin-bottom: 0;
+	// Each populated session is its own rounded field. The continuous side
+	// hairlines belong exclusively to the empty state in sessionsList.styles.
+	margin-bottom: 6px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -50,12 +50,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	// Exclude the active card so its 6px boundary gap (see &--active) is not
-	// overridden by the higher-specificity :first-of-type / :last-child rules.
-	&:first-of-type:not(.sessionsListItem--active) {
+	&:first-of-type {
 		margin-top: 0px;
 	}
-	&:last-child:not(.sessionsListItem--active) {
+	&:last-child {
 		margin-bottom: 15px;
 	}
 
@@ -72,8 +70,6 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--active {
-		// 6px gap above and below the selected card only.
-		margin: 6px 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -184,14 +180,14 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		min-width: 0;
 		box-sizing: border-box;
 
-		// Figma 8609-31260: 160px card height; corners come from the stacked
-		// group (first/last/active rules below), flush cards stay square.
+		// Figma field contract: 160px minimum height and a complete 24px radius
+		// on every populated card, independent of selection or list position.
 		min-height: 160px;
 		padding: 0;
 		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 0;
+		border-radius: 24px;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -251,30 +247,6 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		.sessionsListItem__content {
 		background: #ffffff;
 		border-color: #ffd8d4;
-	}
-
-	// Stacked-group corners (Figma 8609-31260): the group opens and closes
-	// with 24px corners; the active card carries its own full radius and its
-	// neighbours close the group edges around it.
-	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-	}
-
-	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--beforeActive .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--afterActive .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-		border-top: 1px solid $session-light-border;
 	}
 
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {

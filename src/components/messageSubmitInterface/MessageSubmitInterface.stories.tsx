@@ -112,6 +112,87 @@ export const ReadyToSend: Story = {
 	}
 };
 
+export const LongMessageAutoGrow: Story = {
+	name: 'Long message (auto-grows to 14 lines)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) throw new Error('composer editor not mounted yet');
+			return node;
+		});
+		await userEvent.click(editor);
+		await userEvent.type(
+			editor,
+			Array.from({ length: 20 }, (_, index) => `Zeile ${index + 1}`).join(
+				'{Enter}'
+			)
+		);
+
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
+				436
+			);
+		});
+	}
+};
+
+function SessionHeightResetHarness() {
+	const [sessionId, setSessionId] = React.useState(360);
+	return (
+		<div style={{ position: 'relative' }}>
+			<button
+				type="button"
+				style={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}
+				onClick={() => setSessionId(361)}
+			>
+				Gespräch wechseln
+			</button>
+			<ComposerShell
+				activeSession={buildMockActiveSession({}, { id: sessionId })}
+			/>
+		</div>
+	);
+}
+
+export const SessionHeightReset: Story = {
+	name: 'Dragged height resets on conversation change',
+	render: () => <SessionHeightResetHarness />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const dragHandle = await canvas.findByRole('button', {
+			name: /drag to resize composer/i
+		});
+		dragHandle.focus();
+		await userEvent.keyboard('{End}');
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(shell?.getBoundingClientRect().height || 0).toBeGreaterThan(
+				196
+			);
+		});
+
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Gespräch wechseln' })
+		);
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
+				196
+			);
+		});
+	}
+};
+
 /** WP-4: pasting an image into the editor routes into the attachment flow
  *  and the pre-send card shows a real thumbnail instead of a file icon. */
 export const ImageAttachmentPreview: Story = {

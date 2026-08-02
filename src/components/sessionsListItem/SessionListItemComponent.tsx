@@ -85,6 +85,12 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
 import {
+	getLatestMatrixRoomPreview,
+	getPreviewLastMessageType,
+	MatrixRoomPreview
+} from './matrixRoomPreview';
+import { chatTransportService } from '../../services/chatTransportService';
+import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
@@ -199,7 +205,14 @@ export const SessionListItemComponent = ({
 	const isMatrixBackedSession =
 		isMatrixRoomIdHeuristic(sessionItem?.groupId) ||
 		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId);
-	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
+	const [plainTextLastMessage, setPlainTextLastMessage] = useState<
+		string | null
+	>(null);
+	const matrixRoomId = isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId)
+		? sessionItem?.matrixRoomId
+		: isMatrixRoomIdHeuristic(sessionItem?.groupId)
+			? sessionItem?.groupId
+			: null;
 	const caseHandoverAccessControlled = isCaseHandoverAccessControlled({
 		activeSession,
 		userData,
@@ -223,8 +236,42 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
-			return;
+			const formatPreview = (preview: MatrixRoomPreview | null) => {
+				if (!preview || preview.kind === 'encrypted') {
+					return translate('e2ee.message.encryption.text');
+				}
+				if (preview.kind === 'text') {
+					return preview.text || '';
+				}
+				return translate(
+					`sessionList.preview.${preview.kind}`,
+					preview.kind
+				);
+			};
+			const refreshMatrixPreview = () => {
+				if (!matrixRoomId) {
+					setPlainTextLastMessage(
+						translate('e2ee.message.encryption.text')
+					);
+					return;
+				}
+				const preview = getLatestMatrixRoomPreview(
+					chatTransportService.getMatrixRoomMessages(matrixRoomId, 50)
+				);
+				setPlainTextLastMessage(formatPreview(preview));
+			};
+
+			refreshMatrixPreview();
+			const retry = window.setTimeout(refreshMatrixPreview, 1000);
+			const unsubscribe = matrixRoomId
+				? chatTransportService.onMatrixTimeline(matrixRoomId, () =>
+						refreshMatrixPreview()
+					)
+				: null;
+			return () => {
+				window.clearTimeout(retry);
+				unsubscribe?.();
+			};
 		}
 
 		if (!ready) {
@@ -281,6 +328,7 @@ export const SessionListItemComponent = ({
 		encrypted,
 		sessionItem,
 		isMatrixBackedSession,
+		matrixRoomId,
 		caseHandoverContentLocked,
 		translate,
 		ready
@@ -1478,7 +1526,10 @@ export const SessionListItemComponent = ({
 							lastMessageType={
 								caseHandoverContentLocked
 									? null
-									: activeSession.item.lastMessageType
+									: getPreviewLastMessageType(
+											isMatrixBackedSession,
+											activeSession.item.lastMessageType
+										)
 							}
 							language={language}
 							showLanguage={

@@ -48,13 +48,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	.textarea {
 		z-index: 100;
 		background-color: transparent;
-		padding: 20px $grid-base-two;
+		padding: 0 $grid-base-two $grid-base-two;
 		width: 100%;
 		position: absolute;
 		bottom: 0;
 
 		@include breakpoint($fromMedium) {
-			padding: 20px $grid-base-three;
+			padding: 0 $grid-base-two $grid-base-two;
 		}
 
 		// On mobile, ensure no extra spacing and proper positioning
@@ -85,6 +85,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			align-items: center;
 			justify-content: center;
 			position: relative;
+			margin: 0;
 
 			@media screen and (width <= 899px) {
 				margin: 0;
