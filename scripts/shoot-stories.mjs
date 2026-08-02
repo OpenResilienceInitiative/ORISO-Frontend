@@ -11,7 +11,11 @@ const BASE = 'http://localhost:6017';
 
 const index = JSON.parse(fs.readFileSync(path.join(STATIC, 'index.json'), 'utf8'));
 const entries = Object.entries(index.entries)
-	.filter(([id]) => id.startsWith('components-carimat-') || id.startsWith('components-chat-'))
+	.filter(
+		([id]) =>
+			id.startsWith('components-chat-') ||
+			id.startsWith('components-dialog-')
+	)
 	.sort(([a], [b]) => a.localeCompare(b));
 
 const isMobile = (name) => /mobile|390|compact/i.test(name);

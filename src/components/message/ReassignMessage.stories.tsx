@@ -86,7 +86,7 @@ export const RequestMobile: Story = {
 	render: () => (
 		<ReassignRequestMessage
 			fromConsultantName="Karina P"
-			toConsultantName="außerordentlich nachdenkliches Schnabeltier Alexandra"
+			toConsultantName="absichtslose Schildkröte Andrea"
 			onClick={() => {}}
 		/>
 	),

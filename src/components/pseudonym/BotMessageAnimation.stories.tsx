@@ -24,7 +24,7 @@ import './PseudonymCard.styles.scss';
  * timing before wiring anything to a real message event.
  */
 const meta = {
-	title: 'Components/Carimat/BotMessageAnimation',
+	title: 'Components/Chat/CarimatAnimation',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'padded',

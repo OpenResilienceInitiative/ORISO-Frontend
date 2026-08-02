@@ -64,12 +64,10 @@ export const LongParticipantName: Story = {
 	name: 'Long participant name',
 	args: {
 		videoCallMessage: {
-			initiatorUserName:
-				'außerordentlich nachdenkliches Schnabeltier Alexandra',
+			initiatorUserName: 'absichtslose Schildkröte Andrea',
 			initiatorMatrixUserId: MOCK_CONSULTANT_MATRIX_ID
 		} as any,
-		activeSessionUsername:
-			'außerordentlich nachdenkliches Schnabeltier Alexandra'
+		activeSessionUsername: 'absichtslose Schildkröte Andrea'
 	},
 	parameters: {
 		docs: {

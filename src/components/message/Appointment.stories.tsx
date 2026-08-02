@@ -113,7 +113,7 @@ export const LongTitleAndNames: Story = {
 	args: {
 		data: appointment({
 			title: 'Ausführliches Erstgespräch zur Klärung der weiteren Begleitung',
-			user: 'außerordentlich nachdenkliches Schnabeltier Alexandra'
+			user: 'absichtslose Schildkröte Andrea'
 		}),
 		messageType: ALIAS_MESSAGE_TYPES.APPOINTMENT_SET
 	}
@@ -124,7 +124,7 @@ export const Mobile: Story = {
 	args: {
 		data: appointment({
 			note: 'Bitte bringen Sie, wenn möglich, Ihre Unterlagen mit.',
-			user: 'außerordentlich nachdenkliches Schnabeltier Alexandra'
+			user: 'absichtslose Schildkröte Andrea'
 		}),
 		messageType: ALIAS_MESSAGE_TYPES.APPOINTMENT_SET
 	},

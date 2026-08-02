@@ -112,7 +112,7 @@ export const LongName: Story = {
 	name: 'Long display name',
 	args: {
 		type: 'user',
-		displayName: 'außerordentlich nachdenkliches Schnabeltier Alexandra'
+		displayName: 'absichtslose Schildkröte Andrea'
 	},
 	parameters: {
 		docs: {
@@ -127,7 +127,7 @@ export const Mobile: Story = {
 	name: 'Mobile (390px) — long name',
 	args: {
 		type: 'user',
-		displayName: 'außerordentlich nachdenkliches Schnabeltier Alexandra'
+		displayName: 'absichtslose Schildkröte Andrea'
 	},
 	parameters: mobileParameters
 };

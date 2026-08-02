@@ -22,9 +22,12 @@ import {
  *
  * Two things it standardises, so individual story files do not re-invent them:
  *
- * 1. **Viewport width.** `compact` renders at 390px — the width used by the
- *    existing `AndroidCompactKebabTouchZone` story and the narrowest phone the
- *    app targets. Wide renders at 1000px, matching the desktop session view.
+ * 1. **Viewport width, taken from the stylesheet rather than guessed.** The
+ *    message layer switches layout at **900px**: `message.styles.scss` carries
+ *    nine `@media screen and (width <= 899px)` blocks against one
+ *    `(width >= 900px)`. The bubble itself caps at
+ *    `min(calc(100% - 41px), 834px)`, so a desktop frame only shows something
+ *    new up to roughly 900px — beyond that the bubble stops growing.
  *    Pair `compact` with `parameters.viewport.defaultViewport: 'mobile1'` so the
  *    toolbar and the shell agree.
  * 2. **The provider stack** a message row sits inside in production. Components
@@ -32,8 +35,32 @@ import {
  *    (read-status rules) render blank or throw without it.
  */
 
+/** Smallest phone still in use (iPhone SE / 8). Several layouts break here. */
+export const STORY_WIDTH_PHONE_SMALL = 375;
+/** Common phone width; the shell's `compact` default. */
 export const STORY_WIDTH_COMPACT = 390;
-export const STORY_WIDTH_WIDE = 1000;
+/** Last pixel of the narrow layout — `width <= 899px` in message.styles.scss. */
+export const STORY_WIDTH_NARROW_MAX = 899;
+/** First pixel of the desktop layout — `width >= 900px`. */
+export const STORY_WIDTH_WIDE = 900;
+/** The bubble's own cap: `min(calc(100% - 41px), 834px)`. */
+export const BUBBLE_MAX_WIDTH = 834;
+
+/**
+ * Realistic generated display names, computed from the shipped tables in
+ * `utils/anonName/data.ts` rather than invented.
+ *
+ * German worst case is **31 characters**: longest adjective (12, "absichtslose")
+ * + longest animal (11, "Schildkröte") + longest given name (6, "Andrea").
+ * Anything longer cannot occur, so testing wrapping with a 50-character name
+ * exercises a case the product never produces.
+ *
+ * Note this is the **display** name. The separate *login* name is capped at
+ * `USERNAME_MAX_LENGTH` (30) and drops the adjective — "katze_mika_1234".
+ */
+export const PSEUDONYM_TYPICAL = 'sanftes Alpaka Mika';
+export const PSEUDONYM_LONGEST = 'absichtslose Schildkröte Andrea';
+export const LOGIN_NAME_EXAMPLE = 'schildkroete_andrea_1234';
 
 export function MessageStoryShell({
 	children,
