@@ -31,6 +31,15 @@
 		gap: $grid-base;
 	}
 
+	&__fullWidthAction {
+		width: 100%;
+
+		.button__item {
+			width: 100%;
+			max-width: none;
+		}
+	}
+
 	&__status {
 		border-radius: 8px;
 		padding: $grid-base-two;

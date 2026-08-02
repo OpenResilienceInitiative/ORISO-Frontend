@@ -365,6 +365,7 @@ export const EncryptionSettingsPanel = ({
 								type: BUTTON_TYPES.SECONDARY
 							}}
 							buttonHandle={onCopyKey}
+							className="encryptionSettings__fullWidthAction"
 						/>
 					</div>
 					<M3Checkbox
@@ -386,6 +387,7 @@ export const EncryptionSettingsPanel = ({
 							disabled: !keyStoredConfirmed
 						}}
 						buttonHandle={onConfirmKeyStored}
+						className="encryptionSettings__fullWidthAction"
 					/>
 				</>
 			)}

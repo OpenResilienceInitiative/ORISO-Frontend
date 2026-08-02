@@ -66,6 +66,12 @@ describe('EncryptionSettingsPanel', () => {
 			name: 'Ich habe den Schlüssel sicher gespeichert.'
 		});
 		expect(checkbox.closest('label')?.classList).toContain('m3Checkbox');
+		for (const name of ['Schlüssel kopieren', 'Fertig']) {
+			expect(
+				screen.getByRole('button', { name }).closest('.button__wrapper')
+					?.classList
+			).toContain('encryptionSettings__fullWidthAction');
+		}
 
 		fireEvent.click(checkbox);
 		expect((checkbox as HTMLInputElement).checked).toBe(true);
