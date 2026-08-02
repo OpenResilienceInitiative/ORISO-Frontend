@@ -112,4 +112,19 @@ describe('AnimatedIllustration', () => {
 
 		expect(queryByTestId('email-sent-fallback')).toBeTruthy();
 	});
+
+	it('recolours the e-mail animation the same way as the check animation', () => {
+		stubReducedMotion(false);
+		const { container } = render(<EmailSentAnimation />);
+
+		const colors = JSON.parse(
+			container
+				.querySelector('[data-lottie="true"]')
+				?.getAttribute('data-colors') ?? '[]'
+		);
+
+		expect(colors).toContain('#a5000a');
+		expect(colors).toContain('#444748');
+		expect(colors).not.toContain('#33cccc');
+	});
 });
