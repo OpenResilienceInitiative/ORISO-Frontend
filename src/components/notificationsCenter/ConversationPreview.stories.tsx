@@ -37,10 +37,10 @@ const seedRegistry = (events: any[], roomExists = true) => {
 	setMatrixClientServiceRef({
 		getClient: () => ({
 			getUserId: () => '@marge:oriso',
+			getRoom: () => room,
 			on: () => undefined,
 			off: () => undefined
 		}),
-		getRoom: () => room,
 		getRoomMessages: () => events
 	} as any);
 };
