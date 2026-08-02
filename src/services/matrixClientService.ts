@@ -301,6 +301,13 @@ export class MatrixClientService {
 				};
 				persistMatrixLoginData(recoveredLoginData);
 				await this.initializeClient(recoveredLoginData);
+				const recoveredClient = this.client;
+				if (!recoveredClient) {
+					throw new Error(
+						'Recovered Matrix client was not initialized'
+					);
+				}
+				await this.waitForClientPrepared(recoveredClient);
 			})
 			.finally(() => {
 				this.staleDeviceRecovery = null;
@@ -309,7 +316,51 @@ export class MatrixClientService {
 		return this.staleDeviceRecovery;
 	}
 
+	private waitForClientPrepared(
+		expectedClient: MatrixClient,
+		timeoutMs: number = 30_000
+	): Promise<void> {
+		if (this.client === expectedClient && this.syncState === 'PREPARED') {
+			return Promise.resolve();
+		}
+
+		return new Promise<void>((resolve, reject) => {
+			const listener = (state: string | null) => {
+				if (this.client !== expectedClient) {
+					window.clearTimeout(timeout);
+					this.syncStateListeners.delete(listener);
+					reject(
+						new Error(
+							'Recovered Matrix client was replaced before reaching PREPARED'
+						)
+					);
+					return;
+				}
+
+				if (state !== 'PREPARED') {
+					return;
+				}
+
+				window.clearTimeout(timeout);
+				this.syncStateListeners.delete(listener);
+				resolve();
+			};
+			const timeout = window.setTimeout(() => {
+				this.syncStateListeners.delete(listener);
+				reject(
+					new Error('Recovered Matrix client did not reach PREPARED')
+				);
+			}, timeoutMs);
+			this.syncStateListeners.add(listener);
+			listener(this.syncState);
+		});
+	}
+
 	public async ensureFreshToken(): Promise<void> {
+		if (this.staleDeviceRecovery) {
+			await this.staleDeviceRecovery;
+		}
+
 		const expiresAt = this.getStoredTokenExpiresAt();
 		if (!expiresAt || Date.now() + TOKEN_REFRESH_BUFFER_MS < expiresAt) {
 			return;
