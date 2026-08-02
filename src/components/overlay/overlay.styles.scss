@@ -283,6 +283,19 @@ $overlay-illustration-height-large: 100%;
 			}
 		}
 
+		// The confirmation animations are self-contained badges: they bring
+		// their own ring, so they fill the disc instead of sitting on the
+		// tinted one the icon illustrations use.
+		&:has(> [data-animated-illustration]) {
+			background-color: transparent;
+
+			> [data-animated-illustration] {
+				width: 100%;
+				height: 100%;
+				align-self: center;
+			}
+		}
+
 		&--neutral {
 			background-color: $illustration-background-neutral;
 		}
@@ -300,7 +313,8 @@ $overlay-illustration-height-large: 100%;
 			height: $overlay-illustration-height-large;
 			width: $overlay-illustration-width-large;
 
-			& > svg {
+			& > svg,
+			& > .animatedIllustration {
 				width: $overlay-illustration-width-large;
 				height: $overlay-illustration-height-large;
 				align-self: center;
@@ -329,7 +343,8 @@ $overlay-illustration-height-large: 100%;
 			height: $overlay-illustration-height-large;
 			width: $overlay-illustration-width-large;
 
-			& > svg {
+			& > svg,
+			& > .animatedIllustration {
 				width: $overlay-illustration-width-large;
 				height: $overlay-illustration-height-large;
 				align-self: center;

@@ -1,5 +1,25 @@
 type LottieValue = Record<string, any> | any[];
 
+/**
+ * Lottie colours are baked into the JSON, so theming happens by rewriting the
+ * data — the animation cannot read a CSS custom property itself. This resolves
+ * the token once, per render, against the document root.
+ */
+export const readCssColor = (
+	cssVariableName: string,
+	fallbackColor: string
+) => {
+	if (typeof window === 'undefined') {
+		return fallbackColor;
+	}
+
+	const value = getComputedStyle(document.documentElement)
+		.getPropertyValue(cssVariableName)
+		.trim();
+
+	return /^#[0-9a-f]{6}$/i.test(value) ? value : fallbackColor;
+};
+
 const SOURCE_ACCENT_COLORS = new Set(['#33cccc', '#34cccc']);
 const SOURCE_SECONDARY_COLORS = new Set(['#000000']);
 const COLOR_PROPERTY_KEYS = new Set(['c', 'v']);

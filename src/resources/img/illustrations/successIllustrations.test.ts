@@ -8,29 +8,36 @@ const asset = (name: string) =>
 	fs.readFileSync(path.join(process.cwd(), DIR, name), 'utf8');
 
 /**
- * The success illustrations are inlined by SVGR, so their fills resolve against
- * the tenant scheme at runtime. They must not carry the old hard-coded green,
- * and they must keep a literal fallback for contexts where the M3 custom
- * properties are not on the element (e-mail previews, bare Storybook frames).
+ * These are the reduced-motion fallbacks for the success animations, inlined by
+ * SVGR so their fills resolve against the tenant scheme. They must carry no
+ * hard-coded accent, and must keep a literal fallback for contexts where the M3
+ * custom properties are absent.
  */
 describe('success illustrations follow the tenant scheme', () => {
 	it.each(['check.svg', 'envelope-check.svg'])(
-		'%s paints its accent with the brand role, not success green',
+		'%s paints its accent with the brand role, not a fixed colour',
 		(name) => {
 			const svg = asset(name);
 
 			expect(svg).toContain('fill="var(--m3-primary, #a5000a)"');
-			expect(svg).toContain('fill="var(--m3-on-primary, #ffffff)"');
+			expect(svg).toContain(
+				'fill="var(--m3-on-surface-variant, #444748)"'
+			);
+			// #80dd8a was the old green accent, #33cccc the source turquoise
+			// the fallbacks were exported with.
 			expect(svg.toLowerCase()).not.toContain('#80dd8a');
+			expect(svg.toLowerCase()).not.toContain('#33cccc');
 		}
 	);
 
-	it('check.svg no longer ships a generic cls-* stylesheet', () => {
+	it('ships no generic cls-* stylesheet', () => {
 		// Inlined SVG <style> blocks apply document-wide, so the Illustrator
 		// default class names leak across every illustration on the page.
-		const svg = asset('check.svg');
+		['check.svg', 'envelope-check.svg'].forEach((name) => {
+			const svg = asset(name);
 
-		expect(svg).not.toContain('<style>');
-		expect(svg).not.toContain('class="cls-');
+			expect(svg).not.toContain('<style>');
+			expect(svg).not.toContain('class="cls-');
+		});
 	});
 });
