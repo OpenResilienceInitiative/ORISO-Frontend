@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import clsx from 'clsx';
 import Lottie from 'lottie-react';
 import {
 	readCssColor,
@@ -32,6 +33,7 @@ interface AnimatedIllustrationProps extends IllustrationProps {
 
 export const AnimatedIllustration = ({
 	animationData,
+	className,
 	fallback: Fallback,
 	variant,
 	...svgProps
@@ -50,6 +52,7 @@ export const AnimatedIllustration = ({
 		return (
 			<Fallback
 				aria-hidden="true"
+				className={className}
 				data-animated-illustration={variant}
 				{...svgProps}
 			/>
@@ -59,7 +62,7 @@ export const AnimatedIllustration = ({
 	return (
 		<div
 			aria-hidden="true"
-			className="animatedIllustration"
+			className={clsx('animatedIllustration', className)}
 			data-accent-color={accentColor.toLowerCase()}
 			data-animated-illustration={variant}
 			data-base-color={baseColor.toLowerCase()}

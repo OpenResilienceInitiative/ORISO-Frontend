@@ -34,7 +34,7 @@ describe('two-factor setup dialog responsive layout', () => {
 });
 
 describe('two-factor setup dialog success step', () => {
-	it('paints the success checkmark with the M3 brand role, not success green', () => {
+	it('sizes the confirmation animation without repainting it green', () => {
 		const scss = dialogStyles();
 		const iconStart = scss.indexOf('&__successIcon');
 		const successIcon = scss.slice(
@@ -42,7 +42,9 @@ describe('two-factor setup dialog success step', () => {
 			scss.indexOf('}', iconStart) + 1
 		);
 
-		expect(successIcon).toContain('fill: var(--m3-primary, #a5000a);');
+		// The animation carries its own M3 roles; the dialog only boxes it.
+		expect(successIcon).toContain('width: 120px !important;');
+		expect(successIcon).toContain('height: 120px !important;');
 		expect(successIcon).not.toContain('--m3-success');
 		expect(successIcon).not.toContain('#0a882f');
 	});

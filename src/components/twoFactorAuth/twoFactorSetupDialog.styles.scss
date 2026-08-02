@@ -314,12 +314,13 @@
 		text-align: center;
 	}
 
+	// Sizes both branches of the shared confirmation animation: the Lottie
+	// wrapper div and, under reduced motion, the static illustration. Its
+	// colours come from the animation's own M3 roles, not from here.
 	&__successIcon {
 		width: 120px !important;
 		height: 120px !important;
-		// M3 brand role, not a traffic-light green: ORISO signals success with
-		// the scheme's primary colour (same rule as the voice-note player).
-		fill: var(--m3-primary, #a5000a);
+		flex: none;
 	}
 
 	&__successTitle {

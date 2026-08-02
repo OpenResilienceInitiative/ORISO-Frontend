@@ -208,8 +208,8 @@ vi.mock('../../resources/img/icons/two-factor/confirm_filled.svg', () => ({
 		<svg aria-hidden="true" {...props} />
 	)
 }));
-vi.mock('../../resources/img/icons/checkmark_filled.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
+vi.mock('../animatedIllustration/AnimatedIllustration', () => ({
+	CheckAnimation: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="success-checkmark" {...props} />
 	)
 }));
@@ -359,8 +359,8 @@ describe('TwoFactorSetupDialog', () => {
 			)
 		).toBeTruthy();
 
-		// Success uses ORISO's own checkmark (themable via CSS), and its lone
-		// close action switches the footer to the single-column row.
+		// Success plays the shared confirmation animation, and its lone close
+		// action switches the footer to the single-column row.
 		expect(screen.getByTestId('success-checkmark')).toBeTruthy();
 		const actions = document.querySelector(
 			'.twoFactorSetupDialog__actions'

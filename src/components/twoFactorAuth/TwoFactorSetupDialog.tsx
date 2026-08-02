@@ -67,9 +67,10 @@ import { ReactComponent as VerificationIcon } from '../../resources/img/icons/tw
 import { ReactComponent as VerificationFilledIcon } from '../../resources/img/icons/two-factor/verification_filled.svg';
 import { ReactComponent as ConfirmIcon } from '../../resources/img/icons/two-factor/confirm_400.svg';
 import { ReactComponent as ConfirmFilledIcon } from '../../resources/img/icons/two-factor/confirm_filled.svg';
-// ORISO's own filled checkmark — no baked-in fill, so it takes the M3 role
-// colour from CSS instead of MUI's green success default.
-import { ReactComponent as SuccessCheckIcon } from '../../resources/img/icons/checkmark_filled.svg';
+// The shared confirmation animation, so this success step reads like every
+// other one in the product. Falls back to a static illustration under
+// prefers-reduced-motion, both in the tenant's brand colour.
+import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './twoFactorSetupDialog.styles.scss';
 
 type IconComponent = React.FunctionComponent<
@@ -716,10 +717,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderSuccess = () => (
 		<div className="twoFactorSetupDialog__success">
-			<SuccessCheckIcon
-				aria-hidden="true"
-				className="twoFactorSetupDialog__successIcon"
-			/>
+			<CheckAnimation className="twoFactorSetupDialog__successIcon" />
 			<Typography className="twoFactorSetupDialog__successTitle">
 				{translate(
 					isAppFlow

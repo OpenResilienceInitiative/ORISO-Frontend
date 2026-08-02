@@ -30,6 +30,18 @@ describe('success illustrations follow the tenant scheme', () => {
 		}
 	);
 
+	it('backs the illustration disc with the light brand accent, not green', () => {
+		const settings = fs.readFileSync(
+			path.join(process.cwd(), 'src/resources/styles/settings.scss'),
+			'utf8'
+		);
+
+		expect(settings).toContain(
+			'$illustration-background-info: var(--m3-on-primary-container, #ffe2de);'
+		);
+		expect(settings).not.toContain('rgba(79, 204, 92, 0.12)');
+	});
+
 	it('ships no generic cls-* stylesheet', () => {
 		// Inlined SVG <style> blocks apply document-wide, so the Illustrator
 		// default class names leak across every illustration on the page.

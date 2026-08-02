@@ -272,7 +272,10 @@ $overlay-illustration-height-large: 100%;
 			width: $overlay-illustration-size-from-large;
 		}
 
-		& > svg {
+		// The animated confirmations render a wrapper div around their svg, so
+		// they need the same box the static illustrations get.
+		& > svg,
+		& > [data-animated-illustration] {
 			width: $overlay-icon-size;
 			height: $overlay-icon-size;
 			align-self: center;
@@ -280,19 +283,6 @@ $overlay-illustration-height-large: 100%;
 			@include breakpoint($fromLarge) {
 				width: $overlay-icon-size-large;
 				height: $overlay-icon-size-large;
-			}
-		}
-
-		// The confirmation animations are self-contained badges: they bring
-		// their own ring, so they fill the disc instead of sitting on the
-		// tinted one the icon illustrations use.
-		&:has(> [data-animated-illustration]) {
-			background-color: transparent;
-
-			> [data-animated-illustration] {
-				width: 100%;
-				height: 100%;
-				align-self: center;
 			}
 		}
 
@@ -314,7 +304,7 @@ $overlay-illustration-height-large: 100%;
 			width: $overlay-illustration-width-large;
 
 			& > svg,
-			& > .animatedIllustration {
+			& > [data-animated-illustration] {
 				width: $overlay-illustration-width-large;
 				height: $overlay-illustration-height-large;
 				align-self: center;
@@ -344,7 +334,7 @@ $overlay-illustration-height-large: 100%;
 			width: $overlay-illustration-width-large;
 
 			& > svg,
-			& > .animatedIllustration {
+			& > [data-animated-illustration] {
 				width: $overlay-illustration-width-large;
 				height: $overlay-illustration-height-large;
 				align-self: center;
