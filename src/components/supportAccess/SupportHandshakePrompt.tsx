@@ -190,6 +190,10 @@ export const SupportHandshakePrompt = () => {
 								disabled={submitting}
 								onClick={() => void terminate(session.id)}
 								data-cy="support-session-terminate"
+								// On a phone the label otherwise wraps mid-word into three
+								// lines; the one control that ends the access has to stay
+								// readable at that width.
+								sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
 							>
 								{t('supportAccess.terminate')}
 							</Button>
