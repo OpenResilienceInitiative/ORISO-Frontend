@@ -2581,6 +2581,8 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"title": "A counsellor requested access to this conversation",
+			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
 			"decline": "Decline access"
 		},

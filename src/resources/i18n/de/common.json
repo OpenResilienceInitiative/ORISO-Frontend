@@ -2641,6 +2641,8 @@
 			"title": "Mehrfach-Zugriffsanfrage"
 		},
 		"consent": {
+			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
+			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
 			"decline": "Zugriff ablehnen"
 		},
