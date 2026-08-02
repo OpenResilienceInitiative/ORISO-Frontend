@@ -3,6 +3,20 @@ import type { MatrixClientService } from '../../../services/matrixClientService'
 
 type ReadyMatrixClientService = Pick<MatrixClientService, 'getReadyClient'>;
 
+export type EncryptionClientReadinessStage =
+	| 'initial-readiness'
+	| 'replacement-readiness';
+
+export class EncryptionClientReadinessError extends Error {
+	constructor(
+		public readonly stage: EncryptionClientReadinessStage,
+		cause: unknown
+	) {
+		super(`Encryption client failed during ${stage}`, { cause });
+		this.name = 'EncryptionClientReadinessError';
+	}
+}
+
 export const resolveReadyEncryptionClient = async (
 	clientOverride: MatrixClient | null | undefined,
 	service: ReadyMatrixClientService | null
@@ -26,10 +40,15 @@ export const executeWithReadyEncryptionClient = async <T>(
 	service: ReadyMatrixClientService | null,
 	action: (client: MatrixClient) => Promise<T>
 ): Promise<T | null> => {
-	const initialClient = await resolveReadyEncryptionClient(
-		clientOverride,
-		service
-	);
+	let initialClient: MatrixClient | null;
+	try {
+		initialClient = await resolveReadyEncryptionClient(
+			clientOverride,
+			service
+		);
+	} catch (error) {
+		throw new EncryptionClientReadinessError('initial-readiness', error);
+	}
 	if (!initialClient) {
 		return null;
 	}
@@ -41,7 +60,15 @@ export const executeWithReadyEncryptionClient = async <T>(
 			throw initialError;
 		}
 
-		const recoveredClient = await service.getReadyClient();
+		let recoveredClient: MatrixClient;
+		try {
+			recoveredClient = await service.getReadyClient();
+		} catch (error) {
+			throw new EncryptionClientReadinessError(
+				'replacement-readiness',
+				error
+			);
+		}
 		if (recoveredClient === initialClient) {
 			throw initialError;
 		}

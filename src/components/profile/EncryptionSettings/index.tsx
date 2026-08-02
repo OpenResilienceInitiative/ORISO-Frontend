@@ -19,6 +19,7 @@ import {
 } from '../../../services/matrixKeyBackupService';
 import './encryptionSettings.styles.scss';
 import {
+	EncryptionClientReadinessError,
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
@@ -62,7 +63,11 @@ export const EncryptionSettingsPanel = ({
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [setupFailurePhase, setSetupFailurePhase] = useState<
-		RecoverySetupPhase | 'unknown' | null
+		| RecoverySetupPhase
+		| 'initial-readiness'
+		| 'replacement-readiness'
+		| 'unknown'
+		| null
 	>(null);
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
@@ -138,7 +143,9 @@ export const EncryptionSettingsPanel = ({
 			setSetupFailurePhase(
 				setupError instanceof RecoverySetupPhaseError
 					? setupError.phase
-					: 'unknown'
+					: setupError instanceof EncryptionClientReadinessError
+						? setupError.stage
+						: 'unknown'
 			);
 			setError(
 				t(

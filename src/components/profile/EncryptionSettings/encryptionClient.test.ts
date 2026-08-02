@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+	EncryptionClientReadinessError,
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
@@ -69,5 +70,24 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 			)
 		).rejects.toBe(failure);
 		expect(action).toHaveBeenCalledOnce();
+	});
+
+	it('classifies replacement readiness failures without exposing their details', async () => {
+		const staleClient = { deviceId: 'DEVICE_ONE' };
+		const getReadyClient = vi
+			.fn()
+			.mockResolvedValueOnce(staleClient)
+			.mockRejectedValueOnce(new Error('sensitive sync details'));
+		const action = vi.fn().mockRejectedValue(new Error('stale action'));
+
+		const failure = await executeWithReadyEncryptionClient(
+			undefined,
+			{ getReadyClient } as any,
+			action
+		).catch((error) => error);
+
+		expect(failure).toBeInstanceOf(EncryptionClientReadinessError);
+		expect(failure.stage).toBe('replacement-readiness');
+		expect(failure.message).not.toContain('sensitive sync details');
 	});
 });
