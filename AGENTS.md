@@ -3,8 +3,10 @@
 ## Parent Router First
 
 - This file is a repo-local supplement for `ORISO-Frontend`.
-- Before using these repo-specific rules, load the workspace parent map at `../AGENTS.md`. Resolve `PROJECT_ORISO_ROOT` as the parent directory of this repository (the ORISO multi-repo workspace root).
-- Keep durable cross-project ORISO rules in the parent `AGENTS.md`, `ARCHITECTURE.md`, and parent `.cursor/` skills/agents — not duplicated here.
+- In the ORISO multi-repo Cursor workspace, load the parent map at `../AGENTS.md` first.
+  `PROJECT_ORISO_ROOT` is that parent directory (sibling of this repo).
+- If this repository is cloned alone (no parent workspace), skip `../AGENTS.md` and use this file plus the commands below.
+- Keep durable cross-project ORISO rules in the parent workspace `AGENTS.md`, `ARCHITECTURE.md`, and parent `.cursor/` skills/agents — not duplicated here.
 
 ## Orchestration
 
@@ -35,7 +37,11 @@
     - `npm run lint:scripts`
     - `npm run lint:style`
     - `npm run build`
-- From workspace root: `REPO=ORISO-Frontend ../scripts/harness/verify-fast.sh` (or `verify-full.sh`).
+- From this repository root (multi-repo workspace only):
+  `REPO=ORISO-Frontend ../scripts/harness/verify-fast.sh` (or `verify-full.sh`).
+- From `PROJECT_ORISO_ROOT`:
+  `REPO=ORISO-Frontend ./scripts/harness/verify-fast.sh`.
+- Standalone Frontend clone: use the `npm run …` commands above (no workspace harness).
 - **Hard gate before opening a PR:** `npm run test:unit`, `npm run lint:scripts`, `npm run lint:style`, and `npm run build` must pass. A PR without this passing output is not done.
 - For changes that need a running backend, use the canonical repo integration tests plus any workspace e2e flow that actually exists — do not cite `make verify` unless a real Makefile is added.
 - The narrowest-relevant-command shortcut applies to intermediate iterations only. If the final gate is blocked by pre-existing unrelated failures, state the blocker precisely in the PR body.
