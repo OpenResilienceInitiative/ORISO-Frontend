@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveReadyEncryptionClient } from './encryptionClient';
+import {
+	executeWithReadyEncryptionClient,
+	resolveReadyEncryptionClient
+} from './encryptionClient';
 
 describe('resolveReadyEncryptionClient (#839)', () => {
 	it('uses the recovered PREPARED service client for product crypto actions', async () => {
@@ -25,5 +28,46 @@ describe('resolveReadyEncryptionClient (#839)', () => {
 			)
 		).resolves.toBe(override);
 		expect(getReadyClient).not.toHaveBeenCalled();
+	});
+});
+
+describe('executeWithReadyEncryptionClient (#839)', () => {
+	it('retries a failed crypto action once when stale-device recovery replaces the client', async () => {
+		const staleClient = { deviceId: 'DEVICE_ONE' };
+		const recoveredClient = { deviceId: 'DEVICE_TWO' };
+		const getReadyClient = vi
+			.fn()
+			.mockResolvedValueOnce(staleClient)
+			.mockResolvedValueOnce(recoveredClient);
+		const action = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('stale OTK queue'))
+			.mockResolvedValueOnce('recovery-key');
+
+		await expect(
+			executeWithReadyEncryptionClient(
+				undefined,
+				{ getReadyClient } as any,
+				action
+			)
+		).resolves.toBe('recovery-key');
+		expect(action).toHaveBeenNthCalledWith(1, staleClient);
+		expect(action).toHaveBeenNthCalledWith(2, recoveredClient);
+	});
+
+	it('preserves the original failure when the ready client was not replaced', async () => {
+		const client = { deviceId: 'DEVICE_ONE' };
+		const getReadyClient = vi.fn().mockResolvedValue(client);
+		const failure = new Error('setup rejected');
+		const action = vi.fn().mockRejectedValue(failure);
+
+		await expect(
+			executeWithReadyEncryptionClient(
+				undefined,
+				{ getReadyClient } as any,
+				action
+			)
+		).rejects.toBe(failure);
+		expect(action).toHaveBeenCalledOnce();
 	});
 });

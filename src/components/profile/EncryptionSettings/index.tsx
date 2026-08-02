@@ -16,7 +16,10 @@ import {
 	InvalidRecoveryKeyError
 } from '../../../services/matrixKeyBackupService';
 import './encryptionSettings.styles.scss';
-import { resolveReadyEncryptionClient } from './encryptionClient';
+import {
+	executeWithReadyEncryptionClient,
+	resolveReadyEncryptionClient
+} from './encryptionClient';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -107,11 +110,14 @@ export const EncryptionSettingsPanel = ({
 		setBusy(true);
 		setError(null);
 		try {
-			const client = await getReadyClient();
-			if (!client) {
+			const encodedKey = await executeWithReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService(),
+				setUpRecovery
+			);
+			if (!encodedKey) {
 				return;
 			}
-			const encodedKey = await setUpRecovery(client);
 			setRecoveryKeyToShow(encodedKey);
 			setKeyStoredConfirmed(false);
 			setCopied(false);
@@ -126,7 +132,7 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getReadyClient, t]);
+	}, [clientOverride, t]);
 
 	const onConfirmKeyStored = useCallback(() => {
 		// One-time display: drop the key from memory the moment the user
@@ -155,11 +161,14 @@ export const EncryptionSettingsPanel = ({
 		setBusy(true);
 		setError(null);
 		try {
-			const client = await getReadyClient();
-			if (!client) {
+			const result = await executeWithReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService(),
+				(client) => recoverWithKey(client, recoveryInput)
+			);
+			if (!result) {
 				return;
 			}
-			const result = await recoverWithKey(client, recoveryInput);
 			setRecoveredCount(result.imported);
 			setRecoveryInput('');
 			await refreshStatus();
@@ -178,17 +187,17 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getReadyClient, recoveryInput, refreshStatus, t]);
+	}, [clientOverride, recoveryInput, refreshStatus, t]);
 
 	const onReset = useCallback(async () => {
 		setBusy(true);
 		setError(null);
 		try {
-			const client = await getReadyClient();
-			if (!client) {
-				return;
-			}
-			await resetCryptoIdentity(client);
+			await executeWithReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService(),
+				resetCryptoIdentity
+			);
 			await refreshStatus();
 		} catch {
 			setError(
@@ -200,7 +209,7 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getReadyClient, refreshStatus, t]);
+	}, [clientOverride, refreshStatus, t]);
 
 	const recoveryInputItem: InputFieldItem = {
 		id: 'encryptionRecoveryKey',
