@@ -1,0 +1,5 @@
+# public/static — keep anon animal SVGs tracked
+*
+!.gitignore
+!anon-animals/
+!anon-animals/*.svg
