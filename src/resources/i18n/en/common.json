@@ -3830,6 +3830,42 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supportAccess": {
+		"navigation": "Support",
+		"title": "Temporary support access",
+		"subtitle": "Start a time-limited support session with one consultant. Both people must confirm with fresh credentials.",
+		"consultantId": "Consultant ID",
+		"password": "Current password",
+		"otp": "One-time password",
+		"start": "Request support access",
+		"waiting": "Waiting for the consultant to approve. The room will be provisioned only after approval.",
+		"roomReady": "The encrypted support room is ready.",
+		"active": "Temporary support access is active until {{expiry}}.",
+		"terminate": "End access",
+		"approve": "Approve support access",
+		"setup2fa": "Set up two-factor authentication",
+		"error": "The support operation failed. Check the credentials and two-factor setup, then try again.",
+		"request": {
+			"title": "Support access requested",
+			"description": "Confirm with your current password and one-time password — {{countdown}} left. Doing nothing changes nothing.",
+			"lapsed": "The request has expired. No access was set up."
+		},
+		"chat": {
+			"title": "Encrypted support conversation",
+			"connecting": "Connecting to the encrypted support room",
+			"empty": "No messages yet.",
+			"message": "Message",
+			"send": "Send",
+			"error": "The encrypted support room could not be reached. Try again shortly."
+		},
+		"none": "There is no support access right now. A request is raised in the Admin board.",
+		"ended": "The support access has ended. The room is no longer reachable.",
+		"provisioning": "The room is being set up. It does not exist until that finishes.",
+		"decline": "Decline",
+		"call": {
+			"start": "Start audio/video"
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team discussion",
 		"startHint": "Start discussion",

@@ -43,6 +43,9 @@ vi.mock('../notificationsCenter/NotificationsCenter', () => ({
 	NotificationsCenter: Stub
 }));
 vi.mock('../draftsCenter/DraftsCenter', () => ({ DraftsCenter: Stub }));
+vi.mock('../supportAccess/SupportAccessPage', () => ({
+	SupportAccessPage: Stub
+}));
 vi.mock('../../resources/img/icons/overview_outline.svg', () => ({
 	ReactComponent: Stub
 }));
@@ -74,7 +77,9 @@ vi.mock(
 	})
 );
 
-const { RouterConfigConsultant } = await import('./RouterConfig');
+const { RouterConfigConsultant, RouterConfigSupport } = await import(
+	'./RouterConfig'
+);
 
 const settings = {
 	useOverviewPage: false,
@@ -110,5 +115,23 @@ describe('RouterConfigConsultant navigation', () => {
 		);
 		expect(notificationIndex).toBeGreaterThanOrEqual(0);
 		expect(profileIndex).toBeGreaterThan(notificationIndex);
+	});
+});
+
+describe('RouterConfigSupport navigation', () => {
+	it('isolates Global Support Admins from consultant and advice-seeker sessions', () => {
+		const routerConfig = RouterConfigSupport();
+
+		expect(routerConfig.navigation.map((item) => item.to)).toEqual([
+			'/support',
+			'/profile'
+		]);
+		expect(routerConfig.profileRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ path: '/support', exact: true })
+			])
+		);
+		expect(routerConfig.listRoutes).toBeUndefined();
+		expect(routerConfig.detailRoutes).toBeUndefined();
 	});
 });

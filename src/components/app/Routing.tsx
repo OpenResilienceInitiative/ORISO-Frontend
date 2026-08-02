@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { useContext, useMemo } from 'react';
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
-import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
+import {
+	RouterConfigUser,
+	RouterConfigConsultant,
+	RouterConfigSupport
+} from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
 import {
 	UserDataContext,
@@ -21,6 +25,7 @@ import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import NotFound from '../notFound/NotFound';
 import { SessionsZone } from './SessionsZone';
 import { toV7Paths } from '../../utils/routeHelpers';
+import { SupportHandshakePrompt } from '../supportAccess/SupportHandshakePrompt';
 
 interface RoutingProps {
 	logout?: Function;
@@ -34,6 +39,9 @@ export const Routing = (props: RoutingProps) => {
 	const hasAssignedConsultant = useAskerHasAssignedConsultant();
 
 	const routerConfig = useMemo(() => {
+		if (hasUserAuthority(AUTHORITIES.GLOBAL_SUPPORT_ADMIN, userData)) {
+			return RouterConfigSupport();
+		}
 		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 			return RouterConfigConsultant(settings);
 		}
@@ -44,9 +52,14 @@ export const Routing = (props: RoutingProps) => {
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const defaultSessionsPath =
-		'/sessions/' +
-		(isConsultant ? 'consultant/sessionPreview' : 'user/view');
+	const isGlobalSupportAdmin = hasUserAuthority(
+		AUTHORITIES.GLOBAL_SUPPORT_ADMIN,
+		userData
+	);
+	const defaultSessionsPath = isGlobalSupportAdmin
+		? '/support'
+		: '/sessions/' +
+			(isConsultant ? 'consultant/sessionPreview' : 'user/view');
 
 	const useEmbeddedNotificationsLayout =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
@@ -96,6 +109,9 @@ export const Routing = (props: RoutingProps) => {
 									<Header />
 									<div className="contentWrapper__content">
 										<Outlet />
+										{isConsultant && (
+											<SupportHandshakePrompt />
+										)}
 									</div>
 								</section>
 								{/* Privacy / data-protection overlay: askers only
@@ -116,6 +132,7 @@ export const Routing = (props: RoutingProps) => {
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userData
 								) && <TwoFactorNag />}
+								{isConsultant && <SupportHandshakePrompt />}
 							</div>
 						</E2EEProvider>
 					</>

@@ -42,6 +42,7 @@ import { BookingEvents } from '../../containers/bookings/components/BookingEvent
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
+import { SupportAccessPage } from '../supportAccess/SupportAccessPage';
 
 const SessionView = lazy(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
@@ -415,3 +416,43 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 		toolsRoutes
 	};
 };
+
+export const RouterConfigSupport = (): any => ({
+	navigation: [
+		{
+			to: '/support',
+			icon: NavChatsIcon,
+			iconHover: NavChatsIconHover,
+			iconFilled: NavChatsIconFilled,
+			navSlot: 'row' as const,
+			titleKeys: {
+				large: 'supportAccess.navigation'
+			}
+		},
+		{
+			to: '/profile',
+			icon: NavProfileIcon,
+			iconHover: NavProfileIconHover,
+			iconFilled: NavProfileIconFilled,
+			navSlot: 'row' as const,
+			titleKeys: {
+				large: 'navigation.myProfile'
+			}
+		}
+	],
+	profileRoutes: [
+		{
+			path: '/support',
+			exact: true,
+			component: SupportAccessPage
+		},
+		{
+			path: '/profile',
+			exact: false,
+			component: Profile
+		}
+	],
+	plainRoutes: [],
+	appointmentRoutes: [],
+	toolsRoutes: []
+});

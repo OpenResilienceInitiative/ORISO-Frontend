@@ -3928,6 +3928,42 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supportAccess": {
+		"navigation": "Support",
+		"title": "Temporärer Support-Zugriff",
+		"subtitle": "Starten Sie eine zeitlich begrenzte Support-Sitzung mit einer Beratungsperson. Beide Personen bestätigen mit aktuellen Zugangsdaten.",
+		"consultantId": "Berater-ID",
+		"password": "Aktuelles Passwort",
+		"otp": "Einmalpasswort",
+		"start": "Support-Zugriff anfragen",
+		"waiting": "Die Zustimmung der Beratungsperson steht aus. Erst danach wird der Raum bereitgestellt.",
+		"roomReady": "Der verschlüsselte Support-Raum ist bereit.",
+		"active": "Der temporäre Support-Zugriff ist bis {{expiry}} aktiv.",
+		"terminate": "Zugriff beenden",
+		"approve": "Support-Zugriff freigeben",
+		"setup2fa": "Zwei-Faktor-Authentisierung einrichten",
+		"error": "Der Support-Vorgang ist fehlgeschlagen. Prüfen Sie Zugangsdaten und Zwei-Faktor-Einrichtung und versuchen Sie es erneut.",
+		"request": {
+			"title": "Support-Zugriff angefragt",
+			"description": "Bestätige mit deinem aktuellen Passwort und Einmalpasswort — noch {{countdown}}. Ohne Reaktion passiert nichts.",
+			"lapsed": "Die Anfrage ist abgelaufen. Es wurde kein Zugriff eingerichtet."
+		},
+		"chat": {
+			"title": "Verschlüsselte Support-Unterhaltung",
+			"connecting": "Verbindung zum verschlüsselten Support-Raum wird hergestellt",
+			"empty": "Noch keine Nachrichten.",
+			"message": "Nachricht",
+			"send": "Senden",
+			"error": "Der verschlüsselte Support-Raum ist gerade nicht erreichbar. Versuchen Sie es gleich erneut."
+		},
+		"none": "Aktuell besteht kein Supportzugriff. Eine Anfrage wird im Admin-Board gestellt.",
+		"ended": "Der Supportzugriff wurde beendet. Der Raum ist nicht mehr erreichbar.",
+		"provisioning": "Der Raum wird eingerichtet. Er existiert erst nach Abschluss.",
+		"decline": "Ablehnen",
+		"call": {
+			"start": "Audio/Video starten"
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",
