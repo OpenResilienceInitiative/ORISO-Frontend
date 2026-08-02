@@ -65,6 +65,11 @@ const SetNewPassword = lazy(() =>
 		default: m.SetNewPassword
 	}))
 );
+const AccountInviteAcceptance = lazy(() =>
+	import('../accountInvite/AccountInviteAcceptance').then((m) => ({
+		default: m.AccountInviteAcceptance
+	}))
+);
 
 const VideoConference = lazy(
 	() => import('../videoConference/VideoConference')
@@ -225,6 +230,10 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 											<SetNewPassword />
 										</UrlParamsProvider>
 									}
+								/>
+								<Route
+									path="/account-invite/:token"
+									element={<AccountInviteAcceptance />}
 								/>
 								<Route
 									path={settings.urls.videoConference}
