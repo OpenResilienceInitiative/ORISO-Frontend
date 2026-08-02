@@ -21,7 +21,10 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import { EventFamily } from './eventDescriptors/types';
-import { resolveNotificationActionPath } from './notificationActionTarget';
+import {
+	resolveNotificationActionPath,
+	toInterpolationValues
+} from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -111,7 +114,10 @@ const describeItem = (
 	const descriptor = getEventDescriptor(item?.eventType);
 	const { title, text } = renderEventStrings(descriptor, translate, {
 		fallbackTitle: item?.title,
-		fallbackText: item?.text
+		fallbackText: item?.text,
+		// #846: params metadata feeds template placeholders such as
+		// {{senderDisplayName}} — previously they rendered unresolved.
+		interpolation: toInterpolationValues(item?.params)
 	});
 	return { descriptor, title, text };
 };
@@ -379,12 +385,25 @@ export const NotificationsCenter = () => {
 				: '/sessions/user/view',
 		[userData]
 	);
+	// #846: request-origin events (request.new, waiting_room.client.joined)
+	// live in the consultant's enquiry list, not the sessions list.
+	const getDefaultRequestsPath = useCallback(
+		() =>
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? '/sessions/consultant/sessionPreview'
+				: '/sessions/user/view',
+		[userData]
+	);
 	const getNotificationActionPath = useCallback(
 		(item: (typeof notificationFeed)[number]) =>
 			toNonEmbeddedPath(
-				resolveNotificationActionPath(item, getDefaultSessionsPath())
+				resolveNotificationActionPath(
+					item,
+					getDefaultSessionsPath(),
+					getDefaultRequestsPath()
+				)
 			),
-		[getDefaultSessionsPath]
+		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
 	const embeddedChatPath = useMemo(() => {
 		if (!canShowChatPreview) {
