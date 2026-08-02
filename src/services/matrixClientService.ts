@@ -232,8 +232,10 @@ export class MatrixClientService {
 				return client;
 			} catch (error) {
 				const recovery = this.staleDeviceRecovery;
-				if (attempt === 0 && recovery) {
-					await recovery;
+				if (attempt === 0 && (recovery || this.client !== client)) {
+					if (recovery) {
+						await recovery;
+					}
 					continue;
 				}
 				throw error;
