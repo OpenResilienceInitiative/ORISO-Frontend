@@ -1,10 +1,19 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { FormatCard } from './FormatCard';
+import { userEvent, within } from 'storybook/test';
 import { M3SplitButton } from './M3SplitButton';
-import { PersonChipGrid } from './internal/PersonChipGrid';
 import { PersonSelectMenu } from './internal/PersonSelectMenu';
+import {
+	InternalChatCreateCard,
+	InternalChatDraft
+} from './internal/InternalChatCreateCard';
+import { CircleFormatCard } from './CircleFormatCard';
+import {
+	ConversationCreateFrame,
+	ConversationFormatIntro
+} from './ConversationPickerFrame';
+import { ReactComponent as TopicInterestsIcon } from '../../resources/img/icons/conversation-create/topic-interests.svg';
 import './conversationCreate.styles.scss';
 
 /**
@@ -41,29 +50,6 @@ const PEOPLE = [
 	'Lars Meier'
 ].map((label, index) => ({ id: `person-${index}`, label }));
 
-const Avatar = () => (
-	<svg width="32" height="32" viewBox="0 0 24 24" fill="#a5000a" aria-hidden>
-		<path d="M12 3L2 9V21H8V14H16V21H22V9L12 3Z" />
-	</svg>
-);
-
-const Media = () => (
-	<div
-		style={{
-			alignItems: 'center',
-			background:
-				'linear-gradient(135deg, #ffe2de 0%, #f6c9c4 60%, #eab1ad 100%)',
-			color: '#a5000a',
-			display: 'flex',
-			height: '100%',
-			justifyContent: 'center',
-			width: '100%'
-		}}
-	>
-		Media
-	</div>
-);
-
 const SplitButtonDemo = () => {
 	const [selected, setSelected] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -85,53 +71,202 @@ export const SplitButton: Story = {
 	render: () => <SplitButtonDemo />
 };
 
-export const StackedCardDefault: Story = {
-	render: () => (
-		<FormatCard
-			title="Interna besprechen"
-			subtitle="mit Ihren Kolleg:innen"
-			avatar={<Avatar />}
-			media={<Media />}
-		>
-			<p style={{ margin: 0 }}>
-				Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab.
-			</p>
-		</FormatCard>
-	)
-};
-
-const StackedCardWithChipsDemo = () => {
-	const [entries, setEntries] = useState(PEOPLE);
+const CircleCardState = ({ initialTopic = '' }: { initialTopic?: string }) => {
+	const [topic, setTopic] = useState(initialTopic);
 	return (
-		<FormatCard
-				title="Interna besprechen"
-				subtitle="mit Ihren Kolleg:innen"
-				avatar={<Avatar />}
-				media={<Media />}
-				mediaDimmed={entries.length > 0}
-				mediaOverlay={
-					<PersonChipGrid
-						entries={entries}
-						onRemove={(id) =>
-							setEntries((prev) =>
-								prev.filter((entry) => entry.id !== id)
-							)
-						}
-						removeLabel={(label) => `${label} entfernen`}
-					/>
-				}
-			>
-			<p style={{ margin: 0 }}>
-				Chips teilen die Reihen gleichmäßig, Namen werden gekürzt
-				statt umbrochen; eine ungerade Anzahl bekommt die volle
-				Breite für den letzten Chip.
-			</p>
-		</FormatCard>
+		<CircleFormatCard selectedTopic={topic}>
+			<div className="conversationCreate__cardActions">
+				<M3SplitButton
+					label={topic || 'Thema / Fachbereich'}
+					selected={Boolean(topic)}
+					leadingIcon={<TopicInterestsIcon />}
+					onLeadingClick={() =>
+						setTopic((current) => (current ? '' : 'Schulden'))
+					}
+					onTrailingClick={() =>
+						setTopic((current) => (current ? '' : 'Schulden'))
+					}
+					trailingAriaLabel="Themenbild umschalten"
+				/>
+			</div>
+		</CircleFormatCard>
 	);
 };
 
+export const CircleCardDefaultImage: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 8482:30552. Before a topic is selected the generic gruppenkreis illustration is shown.'
+			}
+		}
+	},
+	render: () => <CircleCardState />
+};
+
+export const CircleCardSelectedTopicFallback: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 7633:34734. A selected topic uses the debt illustration until the final per-topic image set is delivered.'
+			}
+		}
+	},
+	render: () => <CircleCardState initialTopic="Schulden" />
+};
+
+const FullPickerState = () => {
+	const [circleTopic, setCircleTopic] = useState('Schulden');
+	const [internalDraft, setInternalDraft] = useState<InternalChatDraft>({
+		name: '',
+		selectedIds: []
+	});
+
+	return (
+		<ConversationCreateFrame
+			headerTitle="Create New Conversation"
+			menuLabel="Weitere Optionen"
+		>
+			<div className="conversationCreate__picker">
+				<ConversationFormatIntro
+					title="Gesprächsformat wählen"
+					subtitle="Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und ihrem Beratungsstelle frei konfigurierbar."
+				/>
+				<div className="conversationCreate__cards">
+					<CircleFormatCard selectedTopic={circleTopic}>
+						<div className="conversationCreate__cardActions">
+							<M3SplitButton
+								label={circleTopic || 'Thema / Fachbereich'}
+								selected={Boolean(circleTopic)}
+								leadingIcon={<TopicInterestsIcon />}
+								onLeadingClick={() =>
+									setCircleTopic((topic) =>
+										topic ? '' : 'Schulden'
+									)
+								}
+								onTrailingClick={() =>
+									setCircleTopic((topic) =>
+										topic ? '' : 'Schulden'
+									)
+								}
+								trailingAriaLabel="Themenbild umschalten"
+							/>
+						</div>
+					</CircleFormatCard>
+					<InternalChatCreateCard
+						people={PEOPLE}
+						draft={internalDraft}
+						onDraftChange={setInternalDraft}
+						onCreate={() => undefined}
+					/>
+				</div>
+			</div>
+		</ConversationCreateFrame>
+	);
+};
+
+export const FullFormatPicker: Story = {
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story:
+					'Figma 7633:34734. Complete desktop picker reference with the shared production header, intro and both conversation cards.'
+			}
+		}
+	},
+	render: () => <FullPickerState />
+};
+
+interface InternalCardStoryProps {
+	initialName?: string;
+	initialSelectedIds?: string[];
+}
+
+const InternalCardState = ({
+	initialName = '',
+	initialSelectedIds = []
+}: InternalCardStoryProps) => {
+	const [draft, setDraft] = useState<InternalChatDraft>({
+		name: initialName,
+		selectedIds: initialSelectedIds
+	});
+
+	return (
+		<InternalChatCreateCard
+			people={PEOPLE}
+			draft={draft}
+			onDraftChange={setDraft}
+			onCreate={() => undefined}
+		/>
+	);
+};
+
+export const InternalCardDefault: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 8480:27906. Exact internal-conversation illustration, outlined name field, unselected split button and disabled create action.'
+			}
+		}
+	},
+	render: () => <InternalCardState />
+};
+
+const StackedCardWithChipsDemo = () => {
+	return <InternalCardState initialSelectedIds={PEOPLE.map(({ id }) => id)} />;
+};
+
 export const StackedCardWithChips: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 8480:27549. Many selected colleagues: image is dimmed, chip rows split evenly, labels truncate and overflow scrolls inside the media.'
+			}
+		}
+	},
 	render: () => <StackedCardWithChipsDemo />
+};
+
+export const InternalCardReadyToCreate: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 8480:27549. A valid name plus at least one selected colleague enables the primary create action.'
+			}
+		}
+	},
+	render: () => (
+		<InternalCardState
+			initialName="Wochenplanungsgruppe"
+			initialSelectedIds={[PEOPLE[0].id, PEOPLE[1].id]}
+		/>
+	)
+};
+
+export const InternalCardPersonMenuOpen: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Figma 8482:25911. The menu remains scrollable, shows current selections and keeps vacated entries disabled until they are deselected.'
+			}
+		}
+	},
+	render: () => <InternalCardState />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', {
+				name: 'Personenliste öffnen oder schließen'
+			})
+		);
+	}
 };
 
 const PersonMenuDemo = () => {

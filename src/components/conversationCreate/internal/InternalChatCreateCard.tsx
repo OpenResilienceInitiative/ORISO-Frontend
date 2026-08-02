@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as GroupChatAvatarIcon } from '../../../resources/img/icons/group-chat-avatar.svg';
-import { ReactComponent as TeamIllustration } from '../../../resources/img/illustrations/Team.svg';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { ReactComponent as InternalConversationIcon } from '../../../resources/img/icons/conversation-create/internal-conversation.svg';
+import internalConversationImage from '../../../resources/img/illustrations/internal-conversation.png';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import {
@@ -139,8 +140,23 @@ export const InternalChatCreateCard = ({
 			className="internalChatCreateCard"
 			title={translate('groupChat.internal.title')}
 			subtitle={translate('groupChat.internal.subtitle')}
-			avatar={<GroupChatAvatarIcon />}
-			media={<TeamIllustration />}
+			avatar={<InternalConversationIcon />}
+			headerAction={
+				<button
+					type="button"
+					className="formatCard__menuButton"
+					aria-label={translate('groupChat.format.cardMenu')}
+					disabled
+				>
+					<MoreVertRoundedIcon aria-hidden="true" />
+				</button>
+			}
+			media={
+				<img
+					src={internalConversationImage}
+					alt={translate('groupChat.internal.imageAlt')}
+				/>
+			}
 			mediaDimmed={selectedCount > 0}
 			mediaOverlay={
 				<PersonChipGrid

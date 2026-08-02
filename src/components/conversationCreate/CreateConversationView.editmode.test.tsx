@@ -14,6 +14,7 @@ import {
 } from '../../api/apiGroupChatSettings';
 import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
+import { apiGetTenantAgenciesTopics } from '../../api/apiGetTenantAgenciesTopics';
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
@@ -89,6 +90,27 @@ vi.mock('../../resources/img/illustrations/active-createGroup.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
+vi.mock(
+	'../../resources/img/icons/conversation-create/conversation-type-select.svg',
+	() => ({
+		ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
+			<svg {...props} />
+		),
+		default: () => null
+	})
+);
+vi.mock(
+	'../../resources/img/icons/conversation-create/conversation-circle.svg',
+	() => ({ ReactComponent: () => null, default: () => null })
+);
+vi.mock(
+	'../../resources/img/icons/conversation-create/internal-conversation.svg',
+	() => ({ ReactComponent: () => null, default: () => null })
+);
+vi.mock(
+	'../../resources/img/icons/conversation-create/topic-interests.svg',
+	() => ({ ReactComponent: () => null, default: () => null })
+);
 
 // Route params are controllable per test: edit route carries
 // /:rcGroupId/:sessionId, the create route carries none.
@@ -257,5 +279,75 @@ describe('CreateConversationView internal card (finding 2)', () => {
 			).toBeNull()
 		);
 		expect(screen.getByText('groupChat.internal.addPerson')).toBeTruthy();
+	});
+});
+
+describe('CreateConversationView Figma picker fidelity', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	beforeEach(() => {
+		routerState.params = {};
+		vi.mocked(useSession).mockReturnValue({
+			session: null as any,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: false
+		});
+		vi.mocked(apiGetTenantAgenciesTopics).mockResolvedValue([
+			{ id: 42, name: 'Familie' }
+		] as any);
+	});
+
+	it('renders the Figma room header and conversation-format intro', async () => {
+		renderInUserContext();
+
+		expect(
+			screen.getByRole('button', { name: 'groupChat.format.menu' })
+		).toHaveProperty('disabled', true);
+		expect(
+			document.querySelector('.conversationCreate__introIcon')
+		).not.toBeNull();
+		expect(
+			screen.getByRole('heading', {
+				name: 'groupChat.format.title',
+				level: 2
+			})
+		).toBeTruthy();
+	});
+
+	it('uses the generic circle image until a topic is selected, then the debt fallback for every topic', async () => {
+		renderInUserContext();
+
+		const circleImage = await screen.findByRole('img', {
+			name: 'groupChat.circle.imageAlt'
+		});
+		expect(circleImage.getAttribute('src')).toContain(
+			'group-circle-default.png'
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.circle.toggleTopicList'
+			})
+		);
+		fireEvent.click(await screen.findByRole('option', { name: 'Familie' }));
+
+		expect(circleImage.getAttribute('src')).toContain(
+			'group-circle-topic-fallback.png'
+		);
+	});
+
+	it('renders the Figma internal-conversation media instead of the legacy Team placeholder', () => {
+		renderInUserContext();
+
+		const internalImage = screen.getByRole('img', {
+			name: 'groupChat.internal.imageAlt'
+		});
+		expect(internalImage.getAttribute('src')).toContain(
+			'internal-conversation.png'
+		);
 	});
 });

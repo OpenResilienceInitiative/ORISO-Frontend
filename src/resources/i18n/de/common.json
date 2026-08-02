@@ -754,7 +754,9 @@
 		},
 		"format": {
 			"back": "Zurück",
+			"cardMenu": "Weitere Optionen für dieses Gesprächsformat",
 			"headerTitle": "Neue Unterhaltung erstellen",
+			"menu": "Weitere Optionen",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
 			"title": "Gesprächsformat wählen"
 		},
@@ -762,7 +764,8 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
-			"nameLabel": "Name des internen Chats",
+			"imageAlt": "Kolleginnen und Kollegen im internen Gespräch",
+			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"removePerson": "{{name}} entfernen",
@@ -773,9 +776,12 @@
 			"togglePersonList": "Personenliste öffnen oder schließen"
 		},
 		"circle": {
+			"cardDescription": "Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
 			"cardHeadline": "Anonyme Selbsthilfegruppen",
+			"cardSubheadline": "in Ihrem Fachbereich initiieren",
 			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
 			"createLabel": "Erstellen",
+			"imageAlt": "Illustration zum gewählten Thema des Gesprächskreises",
 			"noTopics": "Keine Themen verfügbar",
 			"saveLabel": "Speichern",
 			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",

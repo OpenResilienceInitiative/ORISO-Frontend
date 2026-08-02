@@ -23,8 +23,7 @@ import { UserDataContext, useTenant, useTenantState } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
-import { ReactComponent as GroupIllustration } from '../../resources/img/illustrations/active-createGroup.svg';
+import { ReactComponent as TopicInterestsIcon } from '../../resources/img/icons/conversation-create/topic-interests.svg';
 import {
 	apiGetTenantConsultantList,
 	Consultant
@@ -51,7 +50,11 @@ import {
 	resolveInitialStep
 } from './formatAvailability';
 import { resolveListboxKey } from './listboxKeyboard';
-import { FormatCard } from './FormatCard';
+import { CircleFormatCard } from './CircleFormatCard';
+import {
+	ConversationCreateFrame,
+	ConversationFormatIntro
+} from './ConversationPickerFrame';
 import { M3SplitButton } from './M3SplitButton';
 import {
 	InternalChatCreateCard,
@@ -444,30 +447,13 @@ const CreateConversationFlow = () => {
 
 	const renderPicker = () => (
 		<div className="conversationCreate__picker">
-			<div className="conversationCreate__intro">
-				<h2 className="conversationCreate__title">
-					{translate('groupChat.format.title')}
-				</h2>
-				<p className="conversationCreate__subtitle">
-					{translate('groupChat.format.subtitle')}
-				</p>
-			</div>
+			<ConversationFormatIntro
+				title={translate('groupChat.format.title')}
+				subtitle={translate('groupChat.format.subtitle')}
+			/>
 			<div className="conversationCreate__cards">
 				{availability.circle && (
-					<FormatCard
-						className="conversationCreate__formatCard"
-						title={translate('groupChat.circle.title')}
-						subtitle={translate('groupChat.circle.subtitle')}
-						avatar={<PersonsIcon />}
-						media={<GroupIllustration />}
-					>
-						<p className="conversationCreate__cardText">
-							<strong>
-								{translate('groupChat.circle.cardHeadline')}
-							</strong>
-							<br />
-							{translate('groupChat.circle.cardText')}
-						</p>
+					<CircleFormatCard selectedTopic={pickerTopic}>
 						<div className="conversationCreate__cardActions">
 							{topicsLoadFailed ? (
 								<p
@@ -490,6 +476,7 @@ const CreateConversationFlow = () => {
 											)
 										}
 										selected={!!pickerTopic}
+										leadingIcon={<TopicInterestsIcon />}
 										open={pickerTopicMenuOpen}
 										leadingOpensMenu={!pickerTopic}
 										onLeadingClick={() => {
@@ -555,7 +542,7 @@ const CreateConversationFlow = () => {
 								</>
 							)}
 						</div>
-					</FormatCard>
+					</CircleFormatCard>
 				)}
 				{availability.internal && renderInternalCard()}
 			</div>
@@ -563,20 +550,10 @@ const CreateConversationFlow = () => {
 	);
 
 	return (
-		<div className="conversationCreate">
-			<div className="conversationCreate__header">
-				<button
-					type="button"
-					onClick={handleBackButton}
-					className="conversationCreate__backButton"
-					aria-label={translate('groupChat.format.back')}
-				>
-					<BackIcon />
-				</button>
-				<h3 className="conversationCreate__headerTitle">
-					{translate('groupChat.format.headerTitle')}
-				</h3>
-			</div>
+		<ConversationCreateFrame
+			headerTitle={translate('groupChat.format.headerTitle')}
+			menuLabel={translate('groupChat.format.menu')}
+		>
 			{hasError && step !== 'circle' && (
 				<p role="alert" className="conversationCreate__error">
 					{translate('groupChat.createError.overlay.headline')}
@@ -613,7 +590,17 @@ const CreateConversationFlow = () => {
 			) : (
 				renderPicker()
 			)}
-		</div>
+			{!fromL && (
+				<button
+					type="button"
+					onClick={handleBackButton}
+					className="conversationCreate__backButton"
+					aria-label={translate('groupChat.format.back')}
+				>
+					<BackIcon />
+				</button>
+			)}
+		</ConversationCreateFrame>
 	);
 };
 

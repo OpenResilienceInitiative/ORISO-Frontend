@@ -742,7 +742,9 @@
 		},
 		"format": {
 			"back": "Back",
+			"cardMenu": "More options for this conversation format",
 			"headerTitle": "Create new conversation",
+			"menu": "More options",
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format"
 		},
@@ -750,6 +752,7 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
+			"imageAlt": "Colleagues in an internal conversation",
 			"nameLabel": "Internal chat name",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
@@ -761,9 +764,12 @@
 			"togglePersonList": "Open or close the person list"
 		},
 		"circle": {
+			"cardDescription": "One-off or recurring: choose the right medium and share the circle with the participants.",
 			"cardHeadline": "Anonymous self-help groups",
+			"cardSubheadline": "initiate in your subject area",
 			"cardText": "initiate in your subject area. One-off or recurring: choose the right medium and share the circle with the participants.",
 			"createLabel": "Create",
+			"imageAlt": "Illustration for the selected conversation-circle topic",
 			"noTopics": "No topics available",
 			"saveLabel": "Save",
 			"settingsSubtitle": "Now adjust the welcome text, format, rules, intervals and the language in which the circle will primarily take place.",
