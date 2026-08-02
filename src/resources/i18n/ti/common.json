@@ -2368,6 +2368,11 @@
 		},
 		"preview": {
 			"headline": "ናይ መጀመርታ ሕቶታት",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}

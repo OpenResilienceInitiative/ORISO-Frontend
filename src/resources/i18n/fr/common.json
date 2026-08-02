@@ -2371,6 +2371,11 @@
 		},
 		"preview": {
 			"headline": "Premières demandes",
+			"voice": "Message vocal",
+			"audio": "Message audio",
+			"image": "Image",
+			"video": "Vidéo",
+			"file": "Fichier",
 			"registered": {
 				"tab": "Premières demandes"
 			}
