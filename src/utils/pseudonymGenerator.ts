@@ -3,7 +3,9 @@ import { type Avatar, recolorSvg } from './anonName/engine';
 export * from './anonName/engine';
 
 const svgCache = new Map<string, string>();
-const baseUrl = `${process.env.PUBLIC_URL || ''}/assets/anon-animals`;
+// Serve under /static (not /assets): on the main host /assets is routed to the
+// Element Call Vite bundle, so /assets/anon-animals/* 404s (#840).
+const baseUrl = `${process.env.PUBLIC_URL || ''}/static/anon-animals`;
 
 function assertValidSvg(svgText: string, file: string): void {
 	const trimmedSvg = svgText.trim();
