@@ -14,6 +14,7 @@ import {
 	recoverWithKey,
 	resetCryptoIdentity,
 	InvalidRecoveryKeyError,
+	RecoverySetupPhase,
 	RecoverySetupPhaseError
 } from '../../../services/matrixKeyBackupService';
 import './encryptionSettings.styles.scss';
@@ -60,6 +61,9 @@ export const EncryptionSettingsPanel = ({
 	);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [setupFailurePhase, setSetupFailurePhase] = useState<
+		RecoverySetupPhase | 'unknown' | null
+	>(null);
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
 	);
@@ -116,6 +120,7 @@ export const EncryptionSettingsPanel = ({
 	const onSetUp = useCallback(async () => {
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
 			const encodedKey = await executeWithReadyEncryptionClient(
 				clientOverride,
@@ -129,7 +134,12 @@ export const EncryptionSettingsPanel = ({
 			setKeyStoredConfirmed(false);
 			setCopied(false);
 			setPhase('showKey');
-		} catch {
+		} catch (setupError) {
+			setSetupFailurePhase(
+				setupError instanceof RecoverySetupPhaseError
+					? setupError.phase
+					: 'unknown'
+			);
 			setError(
 				t(
 					'profile.encryption.setup.error',
@@ -283,7 +293,12 @@ export const EncryptionSettingsPanel = ({
 			{renderHeader()}
 
 			{error && (
-				<div className="encryptionSettings__error" role="alert">
+				<div
+					className="encryptionSettings__error"
+					role="alert"
+					data-cy="encryption-setup-error"
+					data-setup-phase={setupFailurePhase ?? undefined}
+				>
 					<Text text={error} type="standard" />
 				</div>
 			)}
