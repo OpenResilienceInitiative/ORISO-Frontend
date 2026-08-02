@@ -205,7 +205,27 @@ export const ConsentGateMobile: Story = {
 		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
-				story: '**Layout defect, reproducible here.** At 375px the two-button row breaks out of the card: the card starts at x≈68 while "Ich stimme nicht zu" starts at x≈36, and the confirm button runs to the viewport edge. The buttons should stack full-width below ~575px, per the house dialog rule. Tracked in ORISO-UserService#927.'
+				story: 'At 390px the two buttons still fit inside the card, but only just — there is no slack left. See the 375px story below, where they break out.'
+			}
+		}
+	}
+};
+
+export const ConsentGateIPhoneSE: Story = {
+	name: 'Consent gate — 375px (iPhone SE) — LAYOUT DEFECT',
+	render: () => (
+		<div style={{ maxWidth: 375 }}>
+			<AnonymousConsentGate
+				consentLabelHtml={consentLabelHtml}
+				onAccept={() => {}}
+			/>
+		</div>
+	),
+	parameters: {
+		viewport: { defaultViewport: 'mobile1' },
+		docs: {
+			description: {
+				story: '**Two layout defects at 375px** — the iPhone SE / iPhone 8 width, still a real device.\n\n1. **The button row breaks out of the card.** It starts left of the card edge instead of inside its padding. Per the house dialog rule the buttons should stack full-width below ~575px rather than staying side by side.\n2. **The headline breaks mid-word:** "Herzlich Willkomm|en!". The shield icon keeps its fixed width, leaving the headline column too narrow to fit "Willkommen".\n\n390px (previous story) still fits, so the breaking point sits between the two widths. Tracked in ORISO-UserService#927.'
 			}
 		}
 	}
