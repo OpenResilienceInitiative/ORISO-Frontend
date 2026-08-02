@@ -7,7 +7,8 @@ import {
 	resetCryptoIdentity,
 	secretStorageKeyCallback,
 	InvalidRecoveryKeyError,
-	CryptoUnavailableError
+	CryptoUnavailableError,
+	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
 
 /**
@@ -133,16 +134,19 @@ describe('matrixKeyBackupService (#437)', () => {
 			).resolves.toBeNull();
 		});
 
-		it('clears the cached key even when bootstrap fails', async () => {
+		it('classifies the failing phase without exposing SDK details and clears the cached key', async () => {
 			const crypto = buildCrypto({
 				bootstrapSecretStorage: vi
 					.fn()
-					.mockRejectedValue(new Error('boom'))
+					.mockRejectedValue(new Error('sensitive sdk payload'))
 			});
 
-			await expect(setUpRecovery(buildClient(crypto))).rejects.toThrow(
-				'boom'
+			const failure = await setUpRecovery(buildClient(crypto)).catch(
+				(error) => error
 			);
+			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
+			expect(failure.phase).toBe('secret-storage');
+			expect(failure.message).not.toContain('sensitive sdk payload');
 			await expect(
 				secretStorageKeyCallback(
 					{ keys: { 'key-id-1': {} } } as any,

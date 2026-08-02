@@ -13,7 +13,8 @@ import {
 	setUpRecovery,
 	recoverWithKey,
 	resetCryptoIdentity,
-	InvalidRecoveryKeyError
+	InvalidRecoveryKeyError,
+	RecoverySetupPhaseError
 } from '../../../services/matrixKeyBackupService';
 import './encryptionSettings.styles.scss';
 import {
@@ -93,7 +94,13 @@ export const EncryptionSettingsPanel = ({
 			const nextStatus = await getEncryptionStatus(client);
 			setStatus(nextStatus);
 			setPhase(phaseForStatus(nextStatus));
-		} catch {
+		} catch (setupError) {
+			console.warn(
+				'Matrix recovery setup failed at phase',
+				setupError instanceof RecoverySetupPhaseError
+					? setupError.phase
+					: 'unknown'
+			);
 			setPhase('unavailable');
 		}
 	}, [getReadyClient]);
