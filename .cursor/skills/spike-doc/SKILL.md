@@ -5,7 +5,7 @@ description: Analyze existing implementation and produce a concise spike documen
 
 # Spike Document
 
-Create `01-spike.md` in the current task folder under `docs/cursor-orchestrator/`.
+Create `01-spike.md` in the current task folder under `docs/agent-tasks/`.
 
 Before writing, analyze the existing implementation:
 
