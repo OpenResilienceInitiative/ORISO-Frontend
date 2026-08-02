@@ -121,9 +121,10 @@ export const toInterpolationValues = (
 		}
 	});
 	// The team-discussion template renders {{senderDisplayName}} — fall back
-	// to the plain sender label so older events don't render an empty name.
-	if (!values.senderDisplayName && values.senderName) {
-		values.senderDisplayName = values.senderName;
+	// to the plain sender label, and always define the key so a missing
+	// value renders empty instead of a raw "{{senderDisplayName}}".
+	if (!values.senderDisplayName) {
+		values.senderDisplayName = values.senderName ?? '';
 	}
 	return values;
 };
