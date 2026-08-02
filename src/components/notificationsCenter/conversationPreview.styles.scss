@@ -1,0 +1,80 @@
+// #847: read-only conversation preview inside the timeline detail pane.
+// Colours follow the M3 token contract (var + legacy fallback).
+.conversationPreview {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
+	padding: 16px;
+	box-sizing: border-box;
+	text-align: left;
+
+	&--empty {
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__notice {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--m3-on-surface-variant, #444748);
+		text-align: center;
+		max-width: 420px;
+	}
+
+	&__message {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		max-width: 78%;
+
+		&--own {
+			align-self: flex-end;
+			align-items: flex-end;
+
+			.conversationPreview__bubble {
+				background: var(--m3-primary-fixed, #ffdad5);
+				color: var(--m3-on-primary-fixed, #410001);
+			}
+		}
+	}
+
+	&__meta {
+		display: flex;
+		gap: 8px;
+		align-items: baseline;
+		margin-bottom: 2px;
+	}
+
+	&__sender {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--m3-secondary, #4c555f);
+	}
+
+	&__time {
+		font-size: 11px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__bubble {
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface, #1b1b1c);
+		border-radius: 12px;
+		padding: 8px 12px;
+		font-size: 14px;
+		line-height: 1.5;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	&__attachment {
+		display: block;
+		margin-top: 4px;
+		font-size: 13px;
+		color: var(--m3-secondary, #4c555f);
+	}
+}

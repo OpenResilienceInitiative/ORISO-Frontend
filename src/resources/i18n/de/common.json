@@ -1742,7 +1742,11 @@
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"

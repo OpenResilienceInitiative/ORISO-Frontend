@@ -1409,7 +1409,11 @@
 			"clearAll": "Tümünü temizle",
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
-			"open": "Sohbeti aç"
+			"open": "Sohbeti aç",
+			"preview": {
+				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
+				"empty": "Bu sohbette henüz mesaj yok."
+			}
 		}
 	},
 	"overlay": {

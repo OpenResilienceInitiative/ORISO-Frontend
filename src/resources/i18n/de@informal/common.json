@@ -519,7 +519,11 @@
 			"searchPlaceholder": "Aktivität durchsuchen…",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"events": {
 			"requestDenied": {
