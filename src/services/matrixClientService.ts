@@ -220,14 +220,27 @@ export class MatrixClientService {
 	 * cross-signing/key-backup setup fail on the old outgoing-request queue.
 	 */
 	public async getReadyClient(): Promise<MatrixClient> {
-		await this.ensureFreshToken();
-		const client = this.client;
-		if (!client) {
-			throw new Error('Matrix client not initialized');
+		for (let attempt = 0; attempt < 2; attempt += 1) {
+			await this.ensureFreshToken();
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			try {
+				await this.waitForClientPrepared(client);
+				return client;
+			} catch (error) {
+				const recovery = this.staleDeviceRecovery;
+				if (attempt === 0 && recovery) {
+					await recovery;
+					continue;
+				}
+				throw error;
+			}
 		}
 
-		await this.waitForClientPrepared(client);
-		return client;
+		throw new Error('Recovered Matrix client did not become ready');
 	}
 
 	public onSyncStateChange(
