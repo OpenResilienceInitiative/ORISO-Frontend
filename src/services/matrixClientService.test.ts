@@ -447,6 +447,7 @@ describe('MatrixClientService', () => {
 		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
 
 		const readyClient = service.getReadyClient();
+		await Promise.resolve();
 		errorObserver?.(
 			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
 		);

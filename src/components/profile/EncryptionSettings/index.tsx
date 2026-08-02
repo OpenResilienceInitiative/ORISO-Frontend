@@ -20,6 +20,7 @@ import {
 import './encryptionSettings.styles.scss';
 import {
 	EncryptionClientReadinessError,
+	EncryptionClientReadinessStage,
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
@@ -63,11 +64,7 @@ export const EncryptionSettingsPanel = ({
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [setupFailurePhase, setSetupFailurePhase] = useState<
-		| RecoverySetupPhase
-		| 'initial-readiness'
-		| 'replacement-readiness'
-		| 'unknown'
-		| null
+		RecoverySetupPhase | EncryptionClientReadinessStage | 'unknown' | null
 	>(null);
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null

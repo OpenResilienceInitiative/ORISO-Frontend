@@ -58,7 +58,7 @@ const renderPrompt = (service: unknown) =>
 	);
 
 const RECOVERY_TEXT = /noch nicht verfügbar/i;
-const SETUP_TEXT = /Wiederherstellungsschlüssel ein/i;
+const SETUP_TEXT = /Richten Sie einen Wiederherstellungsschlüssel ein/i;
 
 describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 	beforeEach(() => {
@@ -107,6 +107,27 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 			);
 		}
 	);
+
+	it('prioritizes recovery copy when key storage is out of sync', async () => {
+		getEncryptionStatus.mockResolvedValue({
+			...healthy,
+			serverBackupExists: false,
+			keyStorageOutOfSync: true
+		});
+
+		renderPrompt(buildService());
+
+		await waitFor(() =>
+			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
+		);
+		expect(screen.queryByText(SETUP_TEXT)).toBeNull();
+		expect(screen.getByRole('link').textContent).toMatch(
+			/Verlauf wiederherstellen/i
+		);
+		expect(screen.getByRole('link').getAttribute('href')).toContain(
+			'/profile/einstellungen/sicherheit'
+		);
+	});
 
 	it('stays hidden when encryption is healthy', async () => {
 		getEncryptionStatus.mockResolvedValue(healthy);

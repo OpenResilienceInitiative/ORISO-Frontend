@@ -34,9 +34,58 @@ describe('resolveReadyEncryptionClient (#839)', () => {
 		).resolves.toBe(override);
 		expect(getReadyClient).not.toHaveBeenCalled();
 	});
+
+	it('treats an explicit null override as intentionally unavailable', async () => {
+		const getReadyClient = vi.fn();
+
+		await expect(
+			resolveReadyEncryptionClient(null, {
+				getReadyClient,
+				getStaleDeviceRecoveryVersion: vi.fn()
+			} as any)
+		).resolves.toBeNull();
+		expect(getReadyClient).not.toHaveBeenCalled();
+	});
 });
 
 describe('executeWithReadyEncryptionClient (#839)', () => {
+	it('classifies an initial readiness failure', async () => {
+		const getReadyClient = vi
+			.fn()
+			.mockRejectedValue(new Error('sensitive readiness detail'));
+		const action = vi.fn();
+
+		const failure = await executeWithReadyEncryptionClient(
+			undefined,
+			{
+				getReadyClient,
+				getStaleDeviceRecoveryVersion: vi.fn()
+			} as any,
+			action
+		).catch((error) => error);
+
+		expect(failure).toBeInstanceOf(EncryptionClientReadinessError);
+		expect(failure.stage).toBe('initial-readiness');
+		expect(failure.message).not.toContain('sensitive readiness detail');
+		expect(action).not.toHaveBeenCalled();
+	});
+
+	it('returns null without running the action when no client is available', async () => {
+		const action = vi.fn();
+
+		await expect(
+			executeWithReadyEncryptionClient(
+				undefined,
+				{
+					getReadyClient: vi.fn().mockResolvedValue(null),
+					getStaleDeviceRecoveryVersion: vi.fn()
+				} as any,
+				action
+			)
+		).resolves.toBeNull();
+		expect(action).not.toHaveBeenCalled();
+	});
+
 	it('retries a failed crypto action once when stale-device recovery replaces the client', async () => {
 		const staleClient = { deviceId: 'DEVICE_ONE' };
 		const recoveredClient = { deviceId: 'DEVICE_TWO' };
