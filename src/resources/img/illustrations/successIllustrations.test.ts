@@ -30,14 +30,17 @@ describe('success illustrations follow the tenant scheme', () => {
 		}
 	);
 
-	it('backs the illustration disc with the light brand accent, not green', () => {
+	it('backs the illustration disc with white and a light accent ring, not green', () => {
 		const settings = fs.readFileSync(
 			path.join(process.cwd(), 'src/resources/styles/settings.scss'),
 			'utf8'
 		);
 
 		expect(settings).toContain(
-			'$illustration-background-info: var(--m3-on-primary-container, #ffe2de);'
+			'$illustration-background-info: var(--m3-on-primary, #ffffff);'
+		);
+		expect(settings).toContain(
+			'$illustration-border-accent: 1px solid var(--m3-on-primary-container, #ffe2de);'
 		);
 		expect(settings).not.toContain('rgba(79, 204, 92, 0.12)');
 	});

@@ -265,6 +265,7 @@ $overlay-illustration-height-large: 100%;
 		margin-left: auto;
 		margin-right: auto;
 		background-color: $illustration-background-info;
+		border: $illustration-border-accent;
 		border-radius: calc($overlay-illustration-size / 2);
 
 		@include breakpoint($fromLarge) {
@@ -286,20 +287,26 @@ $overlay-illustration-height-large: 100%;
 			}
 		}
 
+		// The tinted variants carry their own wash; the accent ring belongs to
+		// the plain white disc only.
 		&--neutral {
 			background-color: $illustration-background-neutral;
+			border-color: transparent;
 		}
 
 		&--error {
 			background-color: $illustration-background-error;
+			border-color: transparent;
 		}
 
 		&--info {
 			background-color: $illustration-background-info;
 		}
 
+		// Full-bleed illustration, not a disc — no ring.
 		&--large {
 			background-color: #fff;
+			border-color: transparent;
 			height: $overlay-illustration-height-large;
 			width: $overlay-illustration-width-large;
 
@@ -329,6 +336,7 @@ $overlay-illustration-height-large: 100%;
 
 		.overlay__illustration {
 			background-color: transparent;
+			border-color: transparent;
 			margin-top: $grid-base-six;
 			height: $overlay-illustration-height-large;
 			width: $overlay-illustration-width-large;
