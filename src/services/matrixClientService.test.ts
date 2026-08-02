@@ -350,6 +350,37 @@ describe('MatrixClientService', () => {
 		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
 	});
 
+	it('fails a recovered-client readiness wait immediately when that client is replaced', async () => {
+		const service = new MatrixClientService();
+		const recoveredClient = {
+			...mockedMatrixClient
+		};
+		const replacementClient = {
+			...mockedMatrixClient
+		};
+		setClient(service, recoveredClient);
+
+		const wait = (
+			service as unknown as {
+				waitForClientPrepared: (
+					client: Record<string, unknown>,
+					timeoutMs: number
+				) => Promise<void>;
+			}
+		).waitForClientPrepared(recoveredClient, 30_000);
+
+		setClient(service, replacementClient);
+		(
+			service as unknown as {
+				notifySyncStateListeners: () => void;
+			}
+		).notifySyncStateListeners();
+
+		await expect(wait).rejects.toThrow(
+			'Recovered Matrix client was replaced before reaching PREPARED'
+		);
+	});
+
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {
 		let syncListener:
 			| ((

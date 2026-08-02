@@ -326,7 +326,18 @@ export class MatrixClientService {
 
 		return new Promise<void>((resolve, reject) => {
 			const listener = (state: string | null) => {
-				if (this.client !== expectedClient || state !== 'PREPARED') {
+				if (this.client !== expectedClient) {
+					window.clearTimeout(timeout);
+					this.syncStateListeners.delete(listener);
+					reject(
+						new Error(
+							'Recovered Matrix client was replaced before reaching PREPARED'
+						)
+					);
+					return;
+				}
+
+				if (state !== 'PREPARED') {
 					return;
 				}
 
