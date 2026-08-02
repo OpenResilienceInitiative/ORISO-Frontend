@@ -42,6 +42,17 @@ export class RecoverySetupPhaseError extends Error {
 	}
 }
 
+const runRecoverySetupPhase = async <T>(
+	phase: RecoverySetupPhase,
+	operation: () => Promise<T>
+): Promise<T> => {
+	try {
+		return await operation();
+	} catch (error) {
+		throw new RecoverySetupPhaseError(phase, error);
+	}
+};
+
 export type EncryptionSetupStatus = {
 	/** 4S (secret storage) is set up and usable. */
 	secretStorageReady: boolean;
@@ -142,29 +153,21 @@ export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 	const generated = await crypto.createRecoveryKeyFromPassphrase();
 	setPendingKey(generated.privateKey);
 	try {
-		try {
-			await crypto.bootstrapCrossSigning({});
-		} catch (error) {
-			throw new RecoverySetupPhaseError('cross-signing', error);
-		}
-		try {
-			await crypto.bootstrapSecretStorage({
+		await runRecoverySetupPhase('cross-signing', () =>
+			crypto.bootstrapCrossSigning({})
+		);
+		await runRecoverySetupPhase('secret-storage', () =>
+			crypto.bootstrapSecretStorage({
 				createSecretStorageKey: async () => generated,
 				setupNewKeyBackup: false
-			});
-		} catch (error) {
-			throw new RecoverySetupPhaseError('secret-storage', error);
-		}
-		try {
-			await crypto.resetKeyBackup();
-		} catch (error) {
-			throw new RecoverySetupPhaseError('key-backup-creation', error);
-		}
-		try {
-			await crypto.checkKeyBackupAndEnable();
-		} catch (error) {
-			throw new RecoverySetupPhaseError('key-backup', error);
-		}
+			})
+		);
+		await runRecoverySetupPhase('key-backup-creation', () =>
+			crypto.resetKeyBackup()
+		);
+		await runRecoverySetupPhase('key-backup', () =>
+			crypto.checkKeyBackupAndEnable()
+		);
 	} finally {
 		setPendingKey(null);
 	}

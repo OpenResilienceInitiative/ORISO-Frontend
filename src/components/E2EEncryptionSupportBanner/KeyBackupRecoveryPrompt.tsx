@@ -76,6 +76,10 @@ export const KeyBackupRecoveryPrompt = () => {
 	useEffect(() => {
 		const fn = bannerMode ? 'add' : 'remove';
 		document.body.classList[fn]('banner-open');
+
+		return () => {
+			document.body.classList.remove('banner-open');
+		};
 	}, [bannerMode]);
 
 	if (!bannerMode) {

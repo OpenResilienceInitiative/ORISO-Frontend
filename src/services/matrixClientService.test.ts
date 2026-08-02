@@ -490,6 +490,23 @@ describe('MatrixClientService', () => {
 		);
 	});
 
+	it('propagates the second readiness failure after following a replacement client', async () => {
+		const service = new MatrixClientService();
+		const initialClient = { ...mockedMatrixClient };
+		const replacementClient = { ...mockedMatrixClient };
+		const secondFailure = new Error('replacement readiness failed');
+		setClient(service, initialClient);
+
+		vi.spyOn(service as any, 'waitForClientPrepared')
+			.mockImplementationOnce(async () => {
+				setClient(service, replacementClient);
+				throw new Error('initial client replaced');
+			})
+			.mockRejectedValueOnce(secondFailure);
+
+		await expect(service.getReadyClient()).rejects.toBe(secondFailure);
+	});
+
 	it('treats the steady SYNCING state as prepared after recovery (#839)', async () => {
 		const service = new MatrixClientService();
 		setClient(service, mockedMatrixClient);
