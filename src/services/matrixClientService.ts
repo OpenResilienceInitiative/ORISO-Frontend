@@ -213,6 +213,23 @@ export class MatrixClientService {
 		return this.syncState === 'PREPARED';
 	}
 
+	/**
+	 * Return the current Matrix client only after token/device recovery and the
+	 * replacement sync are complete. Crypto settings must use this boundary:
+	 * retaining the stale client while #551 rotates its device makes
+	 * cross-signing/key-backup setup fail on the old outgoing-request queue.
+	 */
+	public async getReadyClient(): Promise<MatrixClient> {
+		await this.ensureFreshToken();
+		const client = this.client;
+		if (!client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		await this.waitForClientPrepared(client);
+		return client;
+	}
+
 	public onSyncStateChange(
 		callback: (state: string | null) => void
 	): () => void {

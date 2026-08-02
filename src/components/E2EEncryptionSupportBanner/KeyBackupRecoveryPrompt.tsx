@@ -49,7 +49,14 @@ export const KeyBackupRecoveryPrompt = () => {
 				}
 				getEncryptionStatus(client)
 					.then((status) => {
-						if (!cancelled && status.keyStorageOutOfSync) {
+						const setupRequired =
+							!status.serverBackupExists ||
+							!status.secretStorageReady ||
+							!status.crossSigningReady;
+						if (
+							!cancelled &&
+							(status.keyStorageOutOfSync || setupRequired)
+						) {
 							setShowBanner(true);
 						}
 					})

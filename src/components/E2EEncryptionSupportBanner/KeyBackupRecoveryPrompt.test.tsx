@@ -25,6 +25,14 @@ const outOfSync: EncryptionSetupStatus = {
 	keyStorageOutOfSync: true
 };
 
+const notSetUp: EncryptionSetupStatus = {
+	secretStorageReady: false,
+	crossSigningReady: false,
+	activeBackupVersion: null,
+	serverBackupExists: false,
+	keyStorageOutOfSync: false
+};
+
 const healthy: EncryptionSetupStatus = {
 	secretStorageReady: true,
 	crossSigningReady: true,
@@ -79,6 +87,19 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		// Deep-links into the profile Sicherheit panel that holds the input.
 		const link = screen.getByRole('link');
 		expect(link.getAttribute('href')).toContain(
+			'/profile/einstellungen/sicherheit'
+		);
+	});
+
+	it('shows the setup prompt when no key backup exists after login (#839)', async () => {
+		getEncryptionStatus.mockResolvedValue(notSetUp);
+
+		renderPrompt(buildService());
+
+		await waitFor(() =>
+			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
+		);
+		expect(screen.getByRole('link').getAttribute('href')).toContain(
 			'/profile/einstellungen/sicherheit'
 		);
 	});

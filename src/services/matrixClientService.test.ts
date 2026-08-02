@@ -350,6 +350,47 @@ describe('MatrixClientService', () => {
 		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
 	});
 
+	it('exposes only the recovered PREPARED client to encryption setup (#839)', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		const readyClient = service.getReadyClient();
+		let settled = false;
+		void readyClient.finally(() => {
+			settled = true;
+		});
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+
+		expect(settled).toBe(false);
+		syncListeners.at(-1)?.('PREPARED', null);
+		await expect(readyClient).resolves.toBe(mockedMatrixClient);
+	});
+
 	it('fails a recovered-client readiness wait immediately when that client is replaced', async () => {
 		const service = new MatrixClientService();
 		const recoveredClient = {

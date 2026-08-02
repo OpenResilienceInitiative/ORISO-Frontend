@@ -16,6 +16,7 @@ import {
 	InvalidRecoveryKeyError
 } from '../../../services/matrixKeyBackupService';
 import './encryptionSettings.styles.scss';
+import { resolveReadyEncryptionClient } from './encryptionClient';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -63,11 +64,12 @@ export const EncryptionSettingsPanel = ({
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
 	const [copied, setCopied] = useState(false);
 
-	const getClient = useCallback(
-		(): MatrixClient | null =>
-			clientOverride !== undefined
-				? clientOverride
-				: (getMatrixClientService()?.getClient() ?? null),
+	const getReadyClient = useCallback(
+		(): Promise<MatrixClient | null> =>
+			resolveReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService()
+			),
 		[clientOverride]
 	);
 
@@ -79,7 +81,7 @@ export const EncryptionSettingsPanel = ({
 	};
 
 	const refreshStatus = useCallback(async () => {
-		const client = getClient();
+		const client = await getReadyClient();
 		if (!client) {
 			setPhase('unavailable');
 			return;
@@ -91,7 +93,7 @@ export const EncryptionSettingsPanel = ({
 		} catch {
 			setPhase('unavailable');
 		}
-	}, [getClient]);
+	}, [getReadyClient]);
 
 	useEffect(() => {
 		if (initialStatusOverride) {
@@ -102,13 +104,13 @@ export const EncryptionSettingsPanel = ({
 	}, [refreshStatus, initialStatusOverride]);
 
 	const onSetUp = useCallback(async () => {
-		const client = getClient();
-		if (!client) {
-			return;
-		}
 		setBusy(true);
 		setError(null);
 		try {
+			const client = await getReadyClient();
+			if (!client) {
+				return;
+			}
 			const encodedKey = await setUpRecovery(client);
 			setRecoveryKeyToShow(encodedKey);
 			setKeyStoredConfirmed(false);
@@ -124,7 +126,7 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, t]);
+	}, [getReadyClient, t]);
 
 	const onConfirmKeyStored = useCallback(() => {
 		// One-time display: drop the key from memory the moment the user
@@ -147,13 +149,16 @@ export const EncryptionSettingsPanel = ({
 	}, [recoveryKeyToShow]);
 
 	const onRecover = useCallback(async () => {
-		const client = getClient();
-		if (!client || !recoveryInput.trim()) {
+		if (!recoveryInput.trim()) {
 			return;
 		}
 		setBusy(true);
 		setError(null);
 		try {
+			const client = await getReadyClient();
+			if (!client) {
+				return;
+			}
 			const result = await recoverWithKey(client, recoveryInput);
 			setRecoveredCount(result.imported);
 			setRecoveryInput('');
@@ -173,16 +178,16 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, recoveryInput, refreshStatus, t]);
+	}, [getReadyClient, recoveryInput, refreshStatus, t]);
 
 	const onReset = useCallback(async () => {
-		const client = getClient();
-		if (!client) {
-			return;
-		}
 		setBusy(true);
 		setError(null);
 		try {
+			const client = await getReadyClient();
+			if (!client) {
+				return;
+			}
 			await resetCryptoIdentity(client);
 			await refreshStatus();
 		} catch {
@@ -195,7 +200,7 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, refreshStatus, t]);
+	}, [getReadyClient, refreshStatus, t]);
 
 	const recoveryInputItem: InputFieldItem = {
 		id: 'encryptionRecoveryKey',
