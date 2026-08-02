@@ -94,25 +94,23 @@ describe('matrixKeyBackupService (#437)', () => {
 	});
 
 	describe('setUpRecovery', () => {
-		it('bootstraps cross-signing + secret storage with a fresh key and returns it once for display', async () => {
+		it('creates key backup inside secret-storage bootstrap and verifies the durable state before displaying the key', async () => {
 			const crypto = buildCrypto();
 			const encoded = await setUpRecovery(buildClient(crypto));
 
 			expect(encoded).toBe(VALID_ENCODED_KEY);
 			expect(crypto.bootstrapCrossSigning).toHaveBeenCalled();
 			expect(crypto.bootstrapSecretStorage).toHaveBeenCalledWith(
-				expect.objectContaining({ setupNewKeyBackup: false })
+				expect.objectContaining({ setupNewKeyBackup: true })
 			);
-			expect(crypto.resetKeyBackup).toHaveBeenCalledOnce();
+			expect(crypto.resetKeyBackup).not.toHaveBeenCalled();
 			expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
 			expect(
 				crypto.bootstrapSecretStorage.mock.invocationCallOrder[0]
-			).toBeLessThan(crypto.resetKeyBackup.mock.invocationCallOrder[0]);
-			expect(
-				crypto.resetKeyBackup.mock.invocationCallOrder[0]
 			).toBeLessThan(
 				crypto.checkKeyBackupAndEnable.mock.invocationCallOrder[0]
 			);
+			expect(crypto.isSecretStorageReady).toHaveBeenCalled();
 
 			// createSecretStorageKey hands the SDK the same generated key.
 			const opts = crypto.bootstrapSecretStorage.mock.calls[0][0];
@@ -165,19 +163,16 @@ describe('matrixKeyBackupService (#437)', () => {
 			).resolves.toBeNull();
 		});
 
-		it('classifies key-backup creation separately from secret storage', async () => {
+		it('does not expose a recovery key when the new backup is not durably stored in secret storage', async () => {
 			const crypto = buildCrypto({
-				resetKeyBackup: vi
-					.fn()
-					.mockRejectedValue(new Error('sensitive backup payload'))
+				isSecretStorageReady: vi.fn().mockResolvedValue(false)
 			});
 
 			const failure = await setUpRecovery(buildClient(crypto)).catch(
 				(error) => error
 			);
 			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
-			expect(failure.phase).toBe('key-backup-creation');
-			expect(failure.message).not.toContain('sensitive backup payload');
+			expect(failure.phase).toBe('key-backup');
 		});
 	});
 

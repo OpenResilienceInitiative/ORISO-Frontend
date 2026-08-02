@@ -159,15 +159,22 @@ export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 		await runRecoverySetupPhase('secret-storage', () =>
 			crypto.bootstrapSecretStorage({
 				createSecretStorageKey: async () => generated,
-				setupNewKeyBackup: false
+				// Let the SDK create the backup while the new secret-storage
+				// key is still part of the same bootstrap transaction. Creating
+				// it afterwards can miss m.megolm_backup.v1 until the account
+				// data cache catches up, so the setup looks healthy only until
+				// the next reload.
+				setupNewKeyBackup: true
 			})
 		);
-		await runRecoverySetupPhase('key-backup-creation', () =>
-			crypto.resetKeyBackup()
-		);
-		await runRecoverySetupPhase('key-backup', () =>
-			crypto.checkKeyBackupAndEnable()
-		);
+		await runRecoverySetupPhase('key-backup', async () => {
+			await crypto.checkKeyBackupAndEnable();
+			if (!(await crypto.isSecretStorageReady())) {
+				throw new Error(
+					'Recovery setup did not persist the key backup secret'
+				);
+			}
+		});
 	} finally {
 		setPendingKey(null);
 	}
