@@ -62,6 +62,27 @@ export const configureMatrixLogging = (
 /** Logger instance passed to Matrix client construction. */
 export const getMatrixClientLogger = (): MatrixLogger => logger;
 
+/**
+ * Preserve the SDK's normal logging while observing errors from every child
+ * logger. Rust crypto reports outgoing-request failures only through its
+ * room-scoped logger, so observing the root logger alone misses them (#551).
+ */
+export const createMatrixErrorAwareLogger = (
+	baseLogger: Logger,
+	onError: (...messages: unknown[]) => void
+): Logger => ({
+	trace: (...messages: unknown[]) => baseLogger.trace(...messages),
+	debug: (...messages: unknown[]) => baseLogger.debug(...messages),
+	info: (...messages: unknown[]) => baseLogger.info(...messages),
+	warn: (...messages: unknown[]) => baseLogger.warn(...messages),
+	error: (...messages: unknown[]) => {
+		onError(...messages);
+		baseLogger.error(...messages);
+	},
+	getChild: (namespace: string) =>
+		createMatrixErrorAwareLogger(baseLogger.getChild(namespace), onError)
+});
+
 /** @internal test helper */
 export const resetMatrixLoggingForTests = (): void => {
 	configured = false;

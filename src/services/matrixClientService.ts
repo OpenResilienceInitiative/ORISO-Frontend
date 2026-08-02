@@ -1,6 +1,7 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
+	clearPersistedMatrixDeviceId,
 	createMatrixClient,
 	getMatrixAccessToken,
 	persistMatrixLoginData
@@ -106,11 +107,22 @@ export const isMatrixExpiredTokenError = (error: unknown): boolean => {
 	);
 };
 
+export const isMatrixOneTimeKeyConflictLog = (messages: unknown[]): boolean => {
+	const message = messages.map(String).join(' ').toLowerCase();
+	return (
+		message.includes('failed to process outgoing request') &&
+		message.includes('m_unknown') &&
+		message.includes('one time key') &&
+		message.includes('already exists')
+	);
+};
+
 export class MatrixClientService {
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
 	private refreshTimer: number | null = null;
 	private refreshingToken: Promise<void> | null = null;
+	private staleDeviceRecovery: Promise<void> | null = null;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
@@ -122,7 +134,9 @@ export class MatrixClientService {
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
-		this.client = createMatrixClient(loginData);
+		this.client = createMatrixClient(loginData, (...messages) => {
+			this.handleMatrixSdkError(loginData.deviceId, messages);
+		});
 		this.syncState = null;
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
@@ -254,6 +268,45 @@ export class MatrixClientService {
 
 	private refreshMatrixTokenSafely(): void {
 		void this.refreshMatrixToken().catch(() => undefined);
+	}
+
+	private handleMatrixSdkError(deviceId: string, messages: unknown[]): void {
+		if (
+			this.loginData?.deviceId !== deviceId ||
+			!isMatrixOneTimeKeyConflictLog(messages)
+		) {
+			return;
+		}
+
+		void this.recoverFromStaleMatrixDevice().catch(() => undefined);
+	}
+
+	private recoverFromStaleMatrixDevice(): Promise<void> {
+		if (this.staleDeviceRecovery) {
+			return this.staleDeviceRecovery;
+		}
+
+		const staleLoginData = this.loginData;
+		if (!staleLoginData) {
+			return Promise.resolve();
+		}
+
+		clearPersistedMatrixDeviceId(staleLoginData.userId);
+		this.staleDeviceRecovery = getMatrixAccessToken()
+			.then(async (loginData) => {
+				const recoveredLoginData: MatrixLoginData = {
+					...loginData,
+					isAnonymous:
+						loginData.isAnonymous ?? staleLoginData.isAnonymous
+				};
+				persistMatrixLoginData(recoveredLoginData);
+				await this.initializeClient(recoveredLoginData);
+			})
+			.finally(() => {
+				this.staleDeviceRecovery = null;
+			});
+
+		return this.staleDeviceRecovery;
 	}
 
 	public async ensureFreshToken(): Promise<void> {
