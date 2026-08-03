@@ -3,7 +3,8 @@ import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	isAskerEnquirySubmission,
-	resolveAskerMessageTransport
+	resolveAskerMessageTransport,
+	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
@@ -168,5 +169,68 @@ describe('messageEncryptionMode', () => {
 		expect(guard.tryStart()).toBe(true);
 		guard.markFailed();
 		expect(guard.tryStart()).toBe(true);
+	});
+
+	it('sends the initial enquiry through Matrix before finalizing only its event ID', async () => {
+		const values = new Map<string, string>();
+		const storage = {
+			getItem: (key: string) => values.get(key) || null,
+			setItem: (key: string, value: string) => values.set(key, value),
+			removeItem: (key: string) => values.delete(key)
+		};
+		const calls: string[] = [];
+		const sendEncryptedMatrixMessage = vi.fn(async () => {
+			calls.push('matrix');
+			return { event_id: '$encrypted' };
+		});
+		const finalizeEnquiry = vi.fn(async (eventId: string) => {
+			calls.push(`finalize:${eventId}`);
+			return { sessionId: 42 };
+		});
+
+		await sendEncryptedInitialEnquiry({
+			sessionId: 42,
+			sendEncryptedMatrixMessage,
+			finalizeEnquiry,
+			storage
+		});
+
+		expect(calls).toEqual(['matrix', 'finalize:$encrypted']);
+		expect(values.size).toBe(0);
+	});
+
+	it('retries finalization without sending a duplicate encrypted message', async () => {
+		const values = new Map<string, string>();
+		const storage = {
+			getItem: (key: string) => values.get(key) || null,
+			setItem: (key: string, value: string) => values.set(key, value),
+			removeItem: (key: string) => values.delete(key)
+		};
+		const sendEncryptedMatrixMessage = vi
+			.fn()
+			.mockResolvedValue({ event_id: '$encrypted' });
+		const finalizeEnquiry = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('temporary'))
+			.mockResolvedValueOnce({ sessionId: 42 });
+
+		await expect(
+			sendEncryptedInitialEnquiry({
+				sessionId: 42,
+				sendEncryptedMatrixMessage,
+				finalizeEnquiry,
+				storage
+			})
+		).rejects.toThrow('temporary');
+		await sendEncryptedInitialEnquiry({
+			sessionId: 42,
+			sendEncryptedMatrixMessage,
+			finalizeEnquiry,
+			storage
+		});
+
+		expect(sendEncryptedMatrixMessage).toHaveBeenCalledOnce();
+		expect(finalizeEnquiry).toHaveBeenCalledTimes(2);
+		expect(values.size).toBe(0);
 	});
 });

@@ -28,7 +28,8 @@ import {
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
-	resolveAskerMessageTransport
+	resolveAskerMessageTransport,
+	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
@@ -1180,17 +1181,29 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message, isEncrypted) => {
+		(message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
 				return Promise.resolve();
 			}
-			return apiSendEnquiry(
-				activeSession.item.id,
-				message,
-				isEncrypted,
-				language
-			)
+			const matrixRoomId = resolvedChatSession.matrixRoomId;
+			if (!matrixRoomId || !matrixClientService) {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				return Promise.resolve();
+			}
+			return sendEncryptedInitialEnquiry({
+				sessionId: activeSession.item.id,
+				sendEncryptedMatrixMessage: () =>
+					matrixClientService.sendMessage(matrixRoomId, message),
+				finalizeEnquiry: (matrixEventId) =>
+					apiSendEnquiry(
+						activeSession.item.id,
+						matrixEventId,
+						language
+					)
+			})
 				.then((response) => {
 					enquirySubmissionGuard.markSucceeded();
 					reloadActiveSession?.();
@@ -1227,9 +1240,11 @@ export const MessageSubmitInterfaceComponent = ({
 			enquirySubmissionGuard,
 			encryptRoom,
 			language,
+			matrixClientService,
 			onSendButton,
 			clearDraftMessage,
 			reloadActiveSession,
+			resolvedChatSession.matrixRoomId,
 			setE2EEState
 		]
 	);
@@ -1662,7 +1677,7 @@ export const MessageSubmitInterfaceComponent = ({
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
-				sendEnquiry: () => sendEnquiry(message, isEncrypted),
+				sendEnquiry: () => sendEnquiry(message),
 				sendMatrix: sendCurrentMessage,
 				onBlocked: () => {
 					setIsRequestInProgress(false);

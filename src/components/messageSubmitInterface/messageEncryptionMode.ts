@@ -28,6 +28,43 @@ export interface EnquirySubmissionGuard {
 	tryStart: () => boolean;
 }
 
+interface EncryptedInitialEnquiryInput {
+	sessionId: number;
+	sendEncryptedMatrixMessage: () => Promise<{
+		event_id?: string;
+		eventId?: string;
+	}>;
+	finalizeEnquiry: (matrixEventId: string) => Promise<any>;
+	storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+}
+
+const pendingEnquiryEventStorageKey = (sessionId: number) =>
+	`oriso.pendingEncryptedEnquiryEvent.${sessionId}`;
+
+export const sendEncryptedInitialEnquiry = async ({
+	sessionId,
+	sendEncryptedMatrixMessage,
+	finalizeEnquiry,
+	storage = window.localStorage
+}: EncryptedInitialEnquiryInput): Promise<any> => {
+	const storageKey = pendingEnquiryEventStorageKey(sessionId);
+	let matrixEventId = storage.getItem(storageKey) || '';
+	if (!matrixEventId) {
+		const response = await sendEncryptedMatrixMessage();
+		matrixEventId = response.event_id || response.eventId || '';
+		if (!matrixEventId) {
+			throw new Error(
+				'Encrypted Matrix enquiry send returned no event ID'
+			);
+		}
+		storage.setItem(storageKey, matrixEventId);
+	}
+
+	const response = await finalizeEnquiry(matrixEventId);
+	storage.removeItem(storageKey);
+	return response;
+};
+
 export const isAskerEnquirySubmission = ({
 	isEnquiryListType,
 	sessionStatus,
