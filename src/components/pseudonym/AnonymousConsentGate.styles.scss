@@ -226,3 +226,59 @@
 		font-size: 12px;
 	}
 }
+
+/*
+ * Narrow phones (iPhone SE / 8 and similar, 375px and below).
+ *
+ * Three separate problems appear here, all fixed together — see
+ * OpenResilienceInitiative/ORISO-Frontend#892:
+ *
+ * 1. The two action buttons stayed on one row and broke out of the card. The
+ *    house dialog rule stacks footer buttons full-width below ~575px, which is
+ *    what this block does. The `640px` block above only shrank their padding,
+ *    which was never going to be enough for two labelled buttons.
+ * 2. `sanitize.css` sets a global `word-break: break-word`, so the headline
+ *    split mid-word ("Herzlich Willkomm|en"). Restored to `normal` for the
+ *    title: a headline should wrap between words or not at all.
+ * 3. 24px outer plus 32px inner padding ate 112px of a 375px screen, leaving
+ *    the title column too narrow to hold "Willkommen" in the first place.
+ */
+@media screen and (width <= 575px) {
+	.anonymousConsentGate {
+		padding: 12px;
+	}
+
+	.anonymousConsentGate__card {
+		padding: 20px;
+		gap: 16px;
+	}
+
+	.anonymousConsentGate__icon {
+		width: 56px;
+		height: 56px;
+
+		svg {
+			width: 42px;
+			height: 47px;
+		}
+	}
+
+	.anonymousConsentGate__title {
+		font-size: 20px;
+		word-break: normal;
+		overflow-wrap: break-word;
+		hyphens: auto;
+	}
+
+	.anonymousConsentGate__actions {
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: stretch;
+		gap: 8px;
+	}
+
+	.anonymousConsentGate__btnReject,
+	.anonymousConsentGate__btnAccept {
+		width: 100%;
+	}
+}

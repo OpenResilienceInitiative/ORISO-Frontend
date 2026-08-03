@@ -3946,8 +3946,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Bestätigen",
-		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Ihnen starten.",
-		"headline": "Herzlich Willkommen!",
+		"description": "Danach kann eine beratende Person einen Chat mit Ihnen beginnen.",
+		"headline": "Herzlich Willkommen",
 		"label": {
 			"and": "und",
 			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."

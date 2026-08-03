@@ -686,20 +686,32 @@ export const MessageItemComponent = ({
 		},
 		[]
 	);
-	const visibilityGroups = useMemo(() => {
-		const selectedComparableLabels = new Set(
-			visibleAudienceLabels.map((entry) =>
-				makeComparableAudienceLabel(entry)
-			)
-		);
+	/**
+	 * Whether this message goes to *everyone* in the room.
+	 *
+	 * Lifted out of `visibilityGroups` so the render condition can read it too:
+	 * the visibility chip exists to mark a message only **some** participants
+	 * can see, so showing it with the label "Alle" states the opposite of what
+	 * the chip means.
+	 *
+	 * `__all__` is the explicit marker; an empty recipient list in a group is
+	 * the implicit one (nothing was restricted, so everyone is addressed).
+	 */
+	const isAllAudienceSelected = useMemo(() => {
 		const includesAllAudience = parsedMessage.visibleToUserIds.some(
 			(entry) => `${entry || ''}`.trim().toLowerCase() === '__all__'
 		);
 		const assumeAllAudienceByDefault =
 			parsedMessage.visibleToUserIds.length === 0 &&
 			!!activeSession?.isGroup;
-		const isAllAudienceSelected =
-			includesAllAudience || assumeAllAudienceByDefault;
+		return includesAllAudience || assumeAllAudienceByDefault;
+	}, [parsedMessage.visibleToUserIds, activeSession?.isGroup]);
+	const visibilityGroups = useMemo(() => {
+		const selectedComparableLabels = new Set(
+			visibleAudienceLabels.map((entry) =>
+				makeComparableAudienceLabel(entry)
+			)
+		);
 		const allCandidates = new Map<string, string>();
 		const addCandidate = (rawValue?: string | null) => {
 			const label = normalizeAudienceLabel(`${rawValue || ''}`);
@@ -797,7 +809,8 @@ export const MessageItemComponent = ({
 		matrixRoomUsersContext?.users,
 		activeSession?.isGroup,
 		senderComparableLabels,
-		visibleAudienceLabels
+		visibleAudienceLabels,
+		isAllAudienceSelected
 	]);
 	const visibleAudienceSummaryLabels = useMemo(() => {
 		const sourceLabels =
@@ -1385,6 +1398,10 @@ export const MessageItemComponent = ({
 	const isRoomSetReadOnly = t === 'room-set-read-only';
 	const showVisibleAudience =
 		visibleAudienceSummaryLabels.length > 0 &&
+		// A restriction chip must only appear when the message is actually
+		// restricted. Without this guard a normal group message renders
+		// "visible only to: Alle", which says the opposite of what it means.
+		!isAllAudienceSelected &&
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
