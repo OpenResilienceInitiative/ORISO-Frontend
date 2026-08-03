@@ -98,6 +98,8 @@ export const subscribeToLocalMatrixActivityEvent = (
 	if (!watchedRoom) {
 		watchedRoom = { events: new Map(), detachTimeline: null };
 		watchedRooms.set(roomRef, watchedRoom);
+	}
+	if (!watchedRoom.detachTimeline) {
 		watchedRoom.detachTimeline = chatTransportService.onMatrixTimelineRaw(
 			roomRef,
 			(event) => {

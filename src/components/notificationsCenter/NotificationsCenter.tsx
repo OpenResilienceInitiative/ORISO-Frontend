@@ -55,7 +55,10 @@ import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/fi
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
-import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
+import type {
+	MatrixActivityPreviewKind,
+	MatrixActivityPreviewLabels
+} from '../../utils/matrixActivityPreview';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -247,6 +250,31 @@ export const NotificationsCenter = () => {
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
 	const listAnchorRef = useRef<{ id: string; top: number } | null>(null);
+	const captureListAnchor = useCallback(() => {
+		const list = listScrollRef.current;
+		if (!list || list.scrollTop <= 0) {
+			listAnchorRef.current = null;
+			return;
+		}
+		const listTop = list.getBoundingClientRect().top;
+		const firstVisible = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		).find((row) => row.getBoundingClientRect().bottom > listTop);
+		listAnchorRef.current = firstVisible
+			? {
+					id: firstVisible.dataset.notificationId || '',
+					top: firstVisible.getBoundingClientRect().top
+				}
+			: null;
+	}, []);
+
+	useEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		list.addEventListener('scroll', captureListAnchor, { passive: true });
+		captureListAnchor();
+		return () => list.removeEventListener('scroll', captureListAnchor);
+	}, [captureListAnchor]);
 
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.
@@ -268,23 +296,8 @@ export const NotificationsCenter = () => {
 			}
 		}
 
-		return () => {
-			if (list.scrollTop <= 0) {
-				listAnchorRef.current = null;
-				return;
-			}
-			const listTop = list.getBoundingClientRect().top;
-			const firstVisible = rows.find(
-				(row) => row.getBoundingClientRect().bottom > listTop
-			);
-			listAnchorRef.current = firstVisible
-				? {
-						id: firstVisible.dataset.notificationId || '',
-						top: firstVisible.getBoundingClientRect().top
-					}
-				: null;
-		};
-	}, [notificationFeed]);
+		captureListAnchor();
+	}, [captureListAnchor, notificationFeed]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -312,6 +325,35 @@ export const NotificationsCenter = () => {
 		() => getFamiliesInFeed(notificationFeed),
 		[notificationFeed]
 	);
+	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
+		() => ({
+			image: translate('notifications.center.preview.image', 'Image'),
+			file: translate('notifications.center.preview.file', 'File'),
+			audio: translate(
+				'notifications.center.preview.audio',
+				'Audio message'
+			),
+			video: translate('notifications.center.preview.video', 'Video'),
+			notice: translate('notifications.center.preview.notice', 'Notice'),
+			unsupported: translate(
+				'notifications.center.preview.unsupported',
+				'Unsupported message'
+			),
+			pending: translate(
+				'notifications.center.preview.pending',
+				'Waiting for decryption'
+			),
+			roomUnavailable: translate(
+				'notifications.center.preview.roomUnavailable',
+				'Conversation unavailable on this device'
+			),
+			eventUnavailable: translate(
+				'notifications.center.preview.eventUnavailable',
+				'Message unavailable in local history'
+			)
+		}),
+		[translate]
+	);
 	const messagePreviewSources = useMemo(
 		() =>
 			notificationFeed.flatMap((item) => {
@@ -337,48 +379,11 @@ export const NotificationsCenter = () => {
 						matrixEventId,
 						senderName: item.params?.senderName,
 						fallbackText: describeItem(item, translate).text,
-						labels: {
-							image: translate(
-								'notifications.center.preview.image',
-								'Image'
-							),
-							file: translate(
-								'notifications.center.preview.file',
-								'File'
-							),
-							audio: translate(
-								'notifications.center.preview.audio',
-								'Audio message'
-							),
-							video: translate(
-								'notifications.center.preview.video',
-								'Video'
-							),
-							notice: translate(
-								'notifications.center.preview.notice',
-								'Notice'
-							),
-							unsupported: translate(
-								'notifications.center.preview.unsupported',
-								'Unsupported message'
-							),
-							pending: translate(
-								'notifications.center.preview.pending',
-								'Waiting for decryption'
-							),
-							roomUnavailable: translate(
-								'notifications.center.preview.roomUnavailable',
-								'Conversation unavailable on this device'
-							),
-							eventUnavailable: translate(
-								'notifications.center.preview.eventUnavailable',
-								'Message unavailable in local history'
-							)
-						}
+						labels: previewLabels
 					}
 				];
 			}),
-		[notificationFeed, sessions, translate]
+		[notificationFeed, previewLabels, sessions, translate]
 	);
 	const handlePreviewChange = useCallback(
 		(
@@ -854,9 +859,10 @@ export const NotificationsCenter = () => {
 							const hydratedPreview =
 								hydratedMessagePreviews[item.id];
 							const visibleText = hydratedPreview?.text || text;
-							const Icon =
-								MESSAGE_PREVIEW_ICONS[hydratedPreview?.kind] ||
-								getEventIcon(descriptor.icon);
+							const Icon = hydratedPreview?.kind
+								? MESSAGE_PREVIEW_ICONS[hydratedPreview.kind] ||
+									getEventIcon(descriptor.icon)
+								: getEventIcon(descriptor.icon);
 							return (
 								<div
 									key={item.id}
@@ -991,6 +997,7 @@ export const NotificationsCenter = () => {
 									</span>
 									<button
 										type="button"
+										disabled={isLoadingOlderNotifications}
 										onClick={() =>
 											void loadOlderNotifications()
 										}

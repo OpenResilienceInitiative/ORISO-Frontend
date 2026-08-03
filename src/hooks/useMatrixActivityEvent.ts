@@ -15,15 +15,22 @@ export const useMatrixActivityEvent = (
 	roomRef: string,
 	matrixEventId: string
 ): MatrixActivityEventResolution => {
-	const [resolution, setResolution] = useState<MatrixActivityEventResolution>(
-		() => resolveLocalMatrixActivityEvent(roomRef, matrixEventId)
-	);
+	const [state, setState] = useState(() => ({
+		roomRef,
+		matrixEventId,
+		resolution: resolveLocalMatrixActivityEvent(roomRef, matrixEventId)
+	}));
+	const resolution =
+		state.roomRef === roomRef && state.matrixEventId === matrixEventId
+			? state.resolution
+			: resolveLocalMatrixActivityEvent(roomRef, matrixEventId);
 
 	useEffect(() => {
 		return subscribeToLocalMatrixActivityEvent(
 			roomRef,
 			matrixEventId,
-			setResolution
+			(nextResolution) =>
+				setState({ roomRef, matrixEventId, resolution: nextResolution })
 		);
 	}, [roomRef, matrixEventId]);
 

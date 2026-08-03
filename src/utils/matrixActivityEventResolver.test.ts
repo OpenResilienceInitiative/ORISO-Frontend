@@ -100,4 +100,36 @@ describe('resolveLocalMatrixActivityEvent', () => {
 		unsubscribeSecond();
 		expect(detachRoom).toHaveBeenCalledTimes(1);
 	});
+
+	it('retries the shared raw listener when Matrix becomes ready later', () => {
+		const events = new Map([
+			['$first', matrixEvent('$first')],
+			['$second', matrixEvent('$second')]
+		]);
+		vi.spyOn(chatTransportService, 'getMatrixRoom').mockReturnValue({
+			findEventById: (eventId: string) => events.get(eventId)
+		} as any);
+		const detachRoom = vi.fn();
+		vi.spyOn(chatTransportService, 'onMatrixTimelineRaw')
+			.mockReturnValueOnce(null)
+			.mockReturnValueOnce(detachRoom);
+
+		const unsubscribeFirst = subscribeToLocalMatrixActivityEvent(
+			'!room:oriso',
+			'$first',
+			vi.fn()
+		);
+		const unsubscribeSecond = subscribeToLocalMatrixActivityEvent(
+			'!room:oriso',
+			'$second',
+			vi.fn()
+		);
+
+		expect(chatTransportService.onMatrixTimelineRaw).toHaveBeenCalledTimes(
+			2
+		);
+		unsubscribeFirst();
+		unsubscribeSecond();
+		expect(detachRoom).toHaveBeenCalledTimes(1);
+	});
 });

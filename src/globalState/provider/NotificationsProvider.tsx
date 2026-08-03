@@ -178,6 +178,7 @@ export function NotificationsProvider(props) {
 		useState(false);
 	const highestLoadedPageRef = useRef(0);
 	const loadingOlderRef = useRef(false);
+	const feedEpochRef = useRef(0);
 	// #576: id of the newest event slot we already reconciled, so a feed refresh
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
@@ -214,14 +215,19 @@ export function NotificationsProvider(props) {
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
 		if (!accessToken) {
+			feedEpochRef.current += 1;
+			loadingOlderRef.current = false;
 			// Do not hit protected endpoint before auth is available.
 			setNotificationFeed([]);
 			setUnreadNotificationCount(0);
 			setHasOlderNotifications(false);
+			setIsLoadingOlderNotifications(false);
+			setOlderNotificationsError(false);
 			highestLoadedPageRef.current = 0;
 			return;
 		}
 
+		const feedEpoch = feedEpochRef.current;
 		try {
 			const response = await apiGetEventNotifications(
 				0,
@@ -230,6 +236,7 @@ export function NotificationsProvider(props) {
 			const normalized: NotificationFeedItem[] = (
 				response?.items || []
 			).map(normalizeEventNotification);
+			if (feedEpoch !== feedEpochRef.current) return;
 			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed((existing) =>
 				mergeNotificationFeed(normalized, existing)
@@ -256,6 +263,7 @@ export function NotificationsProvider(props) {
 		setIsLoadingOlderNotifications(true);
 		setOlderNotificationsError(false);
 		const page = highestLoadedPageRef.current + 1;
+		const feedEpoch = feedEpochRef.current;
 		try {
 			const response = await apiGetEventNotifications(
 				page,
@@ -264,6 +272,7 @@ export function NotificationsProvider(props) {
 			const normalized = (response?.items || []).map(
 				normalizeEventNotification
 			);
+			if (feedEpoch !== feedEpochRef.current) return;
 			setNotificationFeed((existing) =>
 				mergeNotificationFeed(normalized, existing)
 			);
@@ -272,12 +281,15 @@ export function NotificationsProvider(props) {
 				normalized.length === NOTIFICATION_FEED_MAX_ITEMS
 			);
 		} catch (error) {
+			if (feedEpoch !== feedEpochRef.current) return;
 			setOlderNotificationsError(true);
 			// eslint-disable-next-line no-console
 			console.warn('Failed to load older notification feed', error);
 		} finally {
-			loadingOlderRef.current = false;
-			setIsLoadingOlderNotifications(false);
+			if (feedEpoch === feedEpochRef.current) {
+				loadingOlderRef.current = false;
+				setIsLoadingOlderNotifications(false);
+			}
 		}
 	}, [hasOlderNotifications]);
 
@@ -428,11 +440,14 @@ export function NotificationsProvider(props) {
 	}, []);
 
 	const clearNotificationFeed = useCallback(() => {
+		feedEpochRef.current += 1;
+		loadingOlderRef.current = false;
 		const accessToken = getValueFromCookie('keycloak');
 		if (!accessToken) {
 			setNotificationFeed([]);
 			setUnreadNotificationCount(0);
 			setHasOlderNotifications(false);
+			setIsLoadingOlderNotifications(false);
 			setOlderNotificationsError(false);
 			highestLoadedPageRef.current = 0;
 			return;
@@ -441,6 +456,7 @@ export function NotificationsProvider(props) {
 		setNotificationFeed([]);
 		setUnreadNotificationCount(0);
 		setHasOlderNotifications(false);
+		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
 		highestLoadedPageRef.current = 0;
 	}, []);

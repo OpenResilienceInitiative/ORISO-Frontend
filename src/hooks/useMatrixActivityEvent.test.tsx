@@ -118,4 +118,46 @@ describe('useMatrixActivityEvent', () => {
 		expect(result.current).toEqual({ status: 'resolved', event: target });
 		unmount();
 	});
+
+	it('never renders the previous event while switching reference keys', () => {
+		const events = {
+			$first: {
+				getId: () => '$first',
+				getType: () => 'm.room.message'
+			},
+			$second: {
+				getId: () => '$second',
+				getType: () => 'm.room.message'
+			}
+		};
+		vi.mocked(chatTransportService.getMatrixRoom).mockReturnValue({
+			findEventById: (eventId: keyof typeof events) => events[eventId]
+		} as any);
+		vi.mocked(chatTransportService.onMatrixTimelineRaw).mockReturnValue(
+			vi.fn()
+		);
+		const renderedEventIds: Array<string | undefined> = [];
+
+		const { rerender, unmount } = renderHook(
+			({ eventId }) => {
+				const resolution = useMatrixActivityEvent(
+					'!room:oriso',
+					eventId
+				);
+				renderedEventIds.push(
+					resolution.status === 'resolved'
+						? resolution.event.getId()
+						: undefined
+				);
+				return resolution;
+			},
+			{ initialProps: { eventId: '$first' } }
+		);
+		renderedEventIds.length = 0;
+
+		rerender({ eventId: '$second' });
+
+		expect(renderedEventIds[0]).toBe('$second');
+		unmount();
+	});
 });

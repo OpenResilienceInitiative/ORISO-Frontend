@@ -45,6 +45,7 @@ const PaginationProbe = () => {
 			<button onClick={() => void context.loadOlderNotifications()}>
 				load
 			</button>
+			<button onClick={context.clearNotificationFeed}>clear</button>
 		</>
 	);
 };
@@ -54,7 +55,7 @@ vi.mock('../../api/apiEventNotifications', () => ({
 		apiGetEventNotifications(...args),
 	apiMarkEventNotificationRead: vi.fn(),
 	apiMarkAllEventNotificationsRead: vi.fn(),
-	apiClearEventNotifications: vi.fn()
+	apiClearEventNotifications: vi.fn(() => Promise.resolve())
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
@@ -258,5 +259,44 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 		expect(ids[0]).toBe('999');
 		expect(ids).toContain('51');
 		expect(new Set(ids).size).toBe(ids.length);
+	});
+
+	it('does not restore cleared items from an older-page request still in flight', async () => {
+		const newestPage = Array.from({ length: 50 }, (_, index) =>
+			feedItem(index + 1, new Date(100 - index).toISOString())
+		);
+		let resolveOlder!: (value: unknown) => void;
+		apiGetEventNotifications
+			.mockResolvedValueOnce({ items: newestPage, unreadCount: 50 })
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolveOlder = resolve;
+					})
+			);
+		render(
+			<NotificationsProvider>
+				<PaginationProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('pagination-state').textContent).toBe(
+				'more'
+			)
+		);
+
+		fireEvent.click(screen.getByText('load'));
+		fireEvent.click(screen.getByText('clear'));
+		resolveOlder({
+			items: [feedItem(51, new Date(1).toISOString())],
+			unreadCount: 51
+		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('pagination-state').textContent).toBe(
+				'end'
+			)
+		);
+		expect(screen.getByTestId('ids').textContent).toBe('');
 	});
 });
