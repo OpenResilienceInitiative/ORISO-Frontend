@@ -55,4 +55,21 @@ describe('getLatestDecryptedMatrixMessage', () => {
 			])
 		).toBe('corrected text');
 	});
+
+	it.each(['', '   '])(
+		'falls back to the original body when the replacement is %j',
+		(replacementBody) => {
+			expect(
+				getLatestDecryptedMatrixMessage([
+					{
+						getType: () => 'm.room.message',
+						getContent: () => ({
+							body: '* original text',
+							'm.new_content': { body: replacementBody }
+						})
+					}
+				])
+			).toBe('* original text');
+		}
+	);
 });

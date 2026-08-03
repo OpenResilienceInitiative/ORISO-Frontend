@@ -23,7 +23,10 @@ export const getLatestDecryptedMatrixMessage = (
 			typeof replacement === 'object' && replacement !== null
 				? (replacement as Record<string, unknown>).body
 				: undefined;
-		const body = replacementBody ?? content.body;
+		const body =
+			typeof replacementBody === 'string' && replacementBody.trim()
+				? replacementBody
+				: content.body;
 		if (typeof body === 'string' && body.trim()) {
 			return body;
 		}
