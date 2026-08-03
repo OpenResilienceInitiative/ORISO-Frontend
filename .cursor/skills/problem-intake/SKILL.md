@@ -5,7 +5,7 @@ description: Normalize problem statements from tickets, GitHub issues, raw docs,
 
 # Problem Intake
 
-Create `docs/cursor-orchestrator/YYYY-MM-DD_short-feature-name/00-problem-brief.md`.
+Create `docs/agent-tasks/YYYY-MM-DD_short-feature-name/00-problem-brief.md`.
 
 Include only:
 
