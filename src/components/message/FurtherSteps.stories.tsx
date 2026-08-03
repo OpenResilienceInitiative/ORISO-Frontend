@@ -1,7 +1,7 @@
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { AUTHORITIES } from '../../globalState';
+import type { UserDataInterface } from '../../globalState/interfaces';
 import { FurtherSteps } from './FurtherSteps';
 import { mockUserData } from './MessageItemComponent.mocks';
 import {
@@ -64,7 +64,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const asker = (overrides = {}) =>
+const asker = (overrides: Partial<UserDataInterface> = {}) =>
 	mockUserData({
 		grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
 		userId: 'asker-storybook',
@@ -104,7 +104,7 @@ export const EmailAlreadyGiven: Story = {
 				secret: '',
 				qrCode: ''
 			}
-		} as any),
+		}),
 		docs: {
 			description: {
 				story: 'The e-mail block disappears the moment an address exists — regardless of *how* it was added. That retroactive "already done" behaviour is intentional (ADR-018 §4).'
@@ -140,7 +140,7 @@ export const NothingLeftToDo: Story = {
 				secret: '',
 				qrCode: ''
 			}
-		} as any),
+		}),
 		docs: {
 			description: {
 				story: 'Both offers satisfied. Worth pinning: the card must still read as a complete message, not as an empty shell with a dangling headline.'
@@ -173,7 +173,7 @@ export const NoEmailTrägerOptOut: Story = {
 				secret: '',
 				qrCode: ''
 			}
-		} as any),
+		}),
 		docs: {
 			description: {
 				story: 'Approximates what a Träger that forbids e-mail collection should see: no e-mail invitation, 2FA still offered. **Today this state is not reachable by configuration** — the e-mail block is gated only on "has none yet" (`FurtherSteps.tsx:159`). The switch that would produce it is ORISO-Admin#602.'

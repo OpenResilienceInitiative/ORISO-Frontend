@@ -9,7 +9,9 @@ const STATIC = path.join(ROOT, 'storybook-static');
 const OUT = path.join(STATIC, 'shots');
 const BASE = 'http://localhost:6017';
 
-const index = JSON.parse(fs.readFileSync(path.join(STATIC, 'index.json'), 'utf8'));
+const index = JSON.parse(
+	fs.readFileSync(path.join(STATIC, 'index.json'), 'utf8')
+);
 const entries = Object.entries(index.entries)
 	.filter(
 		([id]) =>
@@ -18,12 +20,19 @@ const entries = Object.entries(index.entries)
 	)
 	.sort(([a], [b]) => a.localeCompare(b));
 
-const isMobile = (name) => /mobile|390|compact/i.test(name);
+// One resolver for the viewport width, so a story that names a width actually
+// renders at it. The 375px consent-card story reproduces an overflow that does
+// not occur at 390px, so rendering it at 390 would have quietly hidden the very
+// thing it exists to show.
+const viewportWidth = (id, name) =>
+	/375/.test(id + name) ? 375 : /mobile|390|compact/i.test(name) ? 390 : 760;
 // Animated stories need time to settle; the typewriter runs char-by-char.
 const settleMs = (id, name) =>
-	/botmessageanimation|staged|typewriter|reveal/i.test(id + name) ? 6000
-	: /cards--(choose-display-name|privacy-notice)$/.test(id) ? 5000
-	: 900;
+	/botmessageanimation|staged|typewriter|reveal/i.test(id + name)
+		? 6000
+		: /cards--(choose-display-name|privacy-notice)$/.test(id)
+			? 5000
+			: 900;
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
@@ -33,12 +42,19 @@ const results = [];
 let n = 0;
 
 for (const [id, entry] of entries) {
-	const mob = isMobile(entry.name);
+	const width = viewportWidth(id, entry.name);
+	const mob = width <= 390;
 	const page = await browser.newPage({
-		viewport: { width: mob ? 390 : 760, height: 900 },
+		viewport: { width, height: 900 },
 		deviceScaleFactor: 2
 	});
 	let status = 'ok';
+	// A story can navigate and render yet still throw at runtime. Without this
+	// the run reports "0 problems" while the screenshot shows a broken card.
+	let pageError = null;
+	page.on('pageerror', (err) => {
+		pageError = err?.message?.split('\n')[0]?.slice(0, 90) ?? 'unknown';
+	});
 	try {
 		await page.goto(`${BASE}/iframe.html?id=${id}&viewMode=story`, {
 			waitUntil: 'load',
@@ -57,19 +73,36 @@ for (const [id, entry] of entries) {
 				textLen: t.length
 			};
 		});
-		if (info.needsData) status = 'needs-data';
+		if (pageError) status = 'PAGEERROR: ' + pageError;
+		else if (info.needsData) status = 'needs-data';
 		else if (info.empty) status = 'EMPTY';
 
 		await page.setViewportSize({
-			width: mob ? 390 : 760,
+			width,
 			height: Math.min(Math.max(info.height + 32, 80), 1400)
 		});
 		await page.waitForTimeout(120);
 		await page.screenshot({ path: path.join(OUT, `${id}.png`) });
-		results.push({ id, title: entry.title, name: entry.name, mob, status, h: info.height, textLen: info.textLen });
+		results.push({
+			id,
+			title: entry.title,
+			name: entry.name,
+			mob,
+			status,
+			h: info.height,
+			textLen: info.textLen
+		});
 	} catch (e) {
 		status = 'ERROR: ' + e.message.split('\n')[0].slice(0, 90);
-		results.push({ id, title: entry.title, name: entry.name, mob, status, h: 0, textLen: 0 });
+		results.push({
+			id,
+			title: entry.title,
+			name: entry.name,
+			mob,
+			status,
+			h: 0,
+			textLen: 0
+		});
 	}
 	await page.close();
 	n++;
@@ -77,7 +110,10 @@ for (const [id, entry] of entries) {
 }
 
 await browser.close();
-fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1));
+fs.writeFileSync(
+	path.join(OUT, 'results.json'),
+	JSON.stringify(results, null, 1)
+);
 
 const bad = results.filter((r) => r.status !== 'ok');
 console.log(`rendered ${results.length} stories`);
