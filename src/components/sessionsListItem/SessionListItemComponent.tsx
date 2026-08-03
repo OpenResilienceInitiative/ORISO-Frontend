@@ -98,6 +98,7 @@ import {
 	CaseHandoverActionButton,
 	CaseHandoverActionState
 } from './CaseHandoverActionButton';
+import { chatTransportService } from '../../services/chatTransportService';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -228,55 +229,22 @@ export const SessionListItemComponent = ({
 
 		if (isMatrixBackedSession) {
 			const roomId = sessionItem?.matrixRoomId;
-			const watchedEncryptedEvents = new Set<any>();
-			const fallback = () =>
-				setPlainTextLastMessage(
-					translate('e2ee.message.encryption.text')
-				);
-			const toPlainText = (message: string) => {
-				const rawMessageObject = markdownToDraft(message);
-				return convertFromRaw(rawMessageObject).getPlainText();
-			};
 			const updatePreview = () => {
-				const client = getMatrixClientService()?.getClient?.();
 				const events =
-					client
-						?.getRoom?.(roomId)
-						?.getLiveTimeline?.()
-						?.getEvents?.() || [];
-
-				events.forEach((event: any) => {
-					if (
-						event?.getType?.() === 'm.room.encrypted' &&
-						!watchedEncryptedEvents.has(event)
-					) {
-						watchedEncryptedEvents.add(event);
-						event.on?.('Event.decrypted', updatePreview);
-					}
-				});
-
+					chatTransportService.getMatrixRoomMessages(roomId, 50) ||
+					[];
 				const latest = getLatestDecryptedMatrixMessage(events);
-				if (latest) {
-					setPlainTextLastMessage(toPlainText(latest));
-				} else {
-					fallback();
-				}
-			};
-			const handleDirectMessage = (event: { roomId?: string }) => {
-				if (event?.roomId === roomId) {
-					updatePreview();
-				}
-			};
-
-			fallback();
-			updatePreview();
-			matrixLiveEventBridge.on('directMessage', handleDirectMessage);
-			return () => {
-				matrixLiveEventBridge.off('directMessage', handleDirectMessage);
-				watchedEncryptedEvents.forEach((event) =>
-					event.off?.('Event.decrypted', updatePreview)
+				setPlainTextLastMessage(
+					latest ?? translate('e2ee.message.encryption.text')
 				);
 			};
+
+			updatePreview();
+			const detach = chatTransportService.onMatrixTimeline(
+				roomId,
+				updatePreview
+			);
+			return () => detach?.();
 		}
 
 		if (!ready) {
