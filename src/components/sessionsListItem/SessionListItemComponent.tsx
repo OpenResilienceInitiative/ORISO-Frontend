@@ -85,6 +85,9 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
+import { getLatestDecryptedMatrixMessage } from '../../utils/matrixSessionPreview';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -224,8 +227,56 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
-			return;
+			const roomId = sessionItem?.matrixRoomId;
+			const watchedEncryptedEvents = new Set<any>();
+			const fallback = () =>
+				setPlainTextLastMessage(
+					translate('e2ee.message.encryption.text')
+				);
+			const toPlainText = (message: string) => {
+				const rawMessageObject = markdownToDraft(message);
+				return convertFromRaw(rawMessageObject).getPlainText();
+			};
+			const updatePreview = () => {
+				const client = getMatrixClientService()?.getClient?.();
+				const events =
+					client
+						?.getRoom?.(roomId)
+						?.getLiveTimeline?.()
+						?.getEvents?.() || [];
+
+				events.forEach((event: any) => {
+					if (
+						event?.getType?.() === 'm.room.encrypted' &&
+						!watchedEncryptedEvents.has(event)
+					) {
+						watchedEncryptedEvents.add(event);
+						event.on?.('Event.decrypted', updatePreview);
+					}
+				});
+
+				const latest = getLatestDecryptedMatrixMessage(events);
+				if (latest) {
+					setPlainTextLastMessage(toPlainText(latest));
+				} else {
+					fallback();
+				}
+			};
+			const handleDirectMessage = (event: { roomId?: string }) => {
+				if (event?.roomId === roomId) {
+					updatePreview();
+				}
+			};
+
+			fallback();
+			updatePreview();
+			matrixLiveEventBridge.on('directMessage', handleDirectMessage);
+			return () => {
+				matrixLiveEventBridge.off('directMessage', handleDirectMessage);
+				watchedEncryptedEvents.forEach((event) =>
+					event.off?.('Event.decrypted', updatePreview)
+				);
+			};
 		}
 
 		if (!ready) {
