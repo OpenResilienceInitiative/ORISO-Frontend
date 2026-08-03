@@ -3315,7 +3315,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
 		}
-		if (!isNotificationActiveViewRoute(location.pathname)) {
+		if (
+			!isNotificationActiveViewRoute(location.pathname, location.search)
+		) {
 			return;
 		}
 		const roomId =
@@ -3364,7 +3366,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeThreadRootId,
 		isAskerUser,
 		isConsultantUser,
-		location.pathname
+		location.pathname,
+		location.search
 	]);
 
 	// Track the decryption success because we have a short timing issue when

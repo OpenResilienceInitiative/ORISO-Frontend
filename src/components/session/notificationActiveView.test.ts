@@ -25,4 +25,13 @@ describe('isNotificationActiveViewRoute', () => {
 			expect(isNotificationActiveViewRoute(path)).toBe(false);
 		}
 	);
+
+	it('does not suppress notifications for the embedded conversation preview', () => {
+		expect(
+			isNotificationActiveViewRoute(
+				'/sessions/consultant/sessionView/!room:matrix.localhost/13',
+				'?embeddedNotifications=1'
+			)
+		).toBe(false);
+	});
 });
