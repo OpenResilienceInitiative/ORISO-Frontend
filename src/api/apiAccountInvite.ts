@@ -8,8 +8,8 @@ import {
 
 export interface AccountInviteDetails {
 	recipientEmail: string;
-	recipientFirstName: string;
-	recipientLastName: string;
+	firstName: string;
+	lastName: string;
 	targetRole: string;
 	tenantId: number;
 	agencyId: number;
@@ -29,7 +29,9 @@ export interface AcceptedAccountInvite {
 	provisionedUserId?: string;
 }
 
-export const getAccountInvite = (token: string): Promise<AccountInviteDetails> =>
+export const getAccountInvite = (
+	token: string
+): Promise<AccountInviteDetails> =>
 	fetchData({
 		url: endpoints.accountInvite(token),
 		method: FETCH_METHODS.GET,

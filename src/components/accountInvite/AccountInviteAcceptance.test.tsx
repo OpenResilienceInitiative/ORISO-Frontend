@@ -49,13 +49,14 @@ describe('AccountInviteAcceptance', () => {
 		vi.clearAllMocks();
 		vi.mocked(getAccountInvite).mockResolvedValue({
 			recipientEmail: 'lisa.simpson@oriso.org',
-			recipientFirstName: 'Lisa',
-			recipientLastName: 'Simpson',
+			firstName: 'Lisa',
+			lastName: 'Simpson',
 			targetRole: 'COUNSELLOR',
 			tenantId: 79,
 			agencyId: 275,
 			departmentId: 2,
-			expiresAt: '2026-07-25T12:00:00Z'
+			// Backend serializes LocalDateTime without a timezone offset
+			expiresAt: '2026-07-25T12:00:00'
 		});
 		vi.mocked(acceptAccountInvite).mockResolvedValue({
 			inviteStatus: 'ACCEPTED',
@@ -79,7 +80,9 @@ describe('AccountInviteAcceptance', () => {
 		fireEvent.change(screen.getByLabelText('Passwort wiederholen'), {
 			target: { value: 'Valid-Password-2026!' }
 		});
-		fireEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Konto erstellen' })
+		);
 
 		await waitFor(() =>
 			expect(acceptAccountInvite).toHaveBeenCalledWith('token-123', {
@@ -91,9 +94,8 @@ describe('AccountInviteAcceptance', () => {
 		expect(
 			await screen.findByText('Ihr Beratungskonto wurde erstellt.')
 		).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Zur Anmeldung' })).toHaveProperty(
-			'href',
-			expect.stringContaining('/login')
-		);
+		expect(
+			screen.getByRole('link', { name: 'Zur Anmeldung' })
+		).toHaveProperty('href', expect.stringContaining('/login'));
 	});
 });
