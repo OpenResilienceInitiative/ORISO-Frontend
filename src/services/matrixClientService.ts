@@ -417,7 +417,8 @@ export class MatrixClientService {
 	public async sendMessage(
 		roomId: string,
 		message: string,
-		options?: TextMessageContentOptions
+		options?: TextMessageContentOptions,
+		transactionId?: string
 	): Promise<any> {
 		await this.ensureFreshToken();
 
@@ -434,7 +435,7 @@ export class MatrixClientService {
 			}
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
-			const txnId = client.makeTxnId?.();
+			const txnId = transactionId || client.makeTxnId?.();
 			try {
 				return await (txnId
 					? client.sendMessage(roomId, content, txnId)
