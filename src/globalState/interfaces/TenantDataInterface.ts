@@ -78,4 +78,6 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
 	featureVoiceMessagesGroupChatsEnabled?: boolean;
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+	emailVisible?: boolean;
+	emailRequired?: boolean;
 }
