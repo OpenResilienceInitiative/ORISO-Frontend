@@ -1212,24 +1212,22 @@ $message-avatar-overlap: -19px;
 		border: 1px solid rgba(30, 136, 229, 0.35);
 	}
 
-	&__systemNotificationTag {
-		display: inline-flex;
-		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: #3b4044;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		margin-bottom: 8px;
-	}
+	/*
+	 * The chip and the 24px headline that used to sit inside the bubble are
+	 * gone: a system notice now uses the same two-line header as
+	 * MessageSendFailed (Figma App.Oriso 8607-28488), so the bubble carries
+	 * the body only. See ORISO-Frontend#892.
+	 */
 
-	&__systemNotificationTitle {
-		font-size: 24px;
-		font-weight: 700;
-		color: #1f1f1f;
-		line-height: 1.25;
-		margin-bottom: 8px;
+	/*
+	 * MessageSendFailed puts its avatar in a real side column, so its header
+	 * needs no indent. Here the avatar deliberately overlaps the content column
+	 * (see the 19px-overlap note above), which is why the name line carries
+	 * `padding-left: 20px`. The system-notice header sits in the same slot and
+	 * needs the same clearance — without it the title runs under the avatar.
+	 */
+	&__systemNotificationHeaderText {
+		padding-left: 20px;
 	}
 
 	&__systemNotificationDescription {
@@ -1251,7 +1249,6 @@ $message-avatar-overlap: -19px;
 			border-color: rgba(255, 255, 255, 0.4);
 		}
 
-		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}

@@ -1695,20 +1695,44 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								<MessageDisplayName
-									isMyMessage={isMyMessage}
-									isUser={isUserMessage()}
-									type={getUsernameType()}
-									userId={userId}
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
-									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-								/>
+								{isSystemNotification &&
+								!isCaseHandoverGrantedEvent ? (
+									/*
+									 * Title above, quiet qualifier below — the same
+									 * two-line header `MessageSendFailed` uses, per
+									 * Figma App.Oriso 8607-28488. Reusing its classes
+									 * on purpose: one system-notice presentation, not
+									 * two that drift apart.
+									 */
+									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
+										<div className="messageItem__sendFailedTitle">
+											{systemNotificationTitle}
+										</div>
+										<div className="messageItem__sendFailedSubtitle">
+											{translate(
+												'message.systemNotification',
+												'System Notification'
+											)}
+										</div>
+									</div>
+								) : (
+									<MessageDisplayName
+										isMyMessage={isMyMessage}
+										isUser={isUserMessage()}
+										type={getUsernameType()}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+									/>
+								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1802,24 +1826,20 @@ export const MessageItemComponent = ({
 										)}
 									</CaseHandoverSystemMessageCard>
 								)}
+							{/*
+							 * The bubble carries the body only. Title and the
+							 * "Systembenachrichtigung" qualifier live in the header,
+							 * matching the shipped `MessageSendFailed` pattern and
+							 * Figma App.Oriso 8607-28488. Previously all three sat
+							 * here — a chip, a headline and a description — so one
+							 * notice wore three labels. See ORISO-Frontend#892.
+							 */}
 							{isSystemNotification &&
-								!isCaseHandoverGrantedEvent && (
-									<>
-										<div className="messageItem__systemNotificationTag">
-											{translate(
-												'message.systemNotification',
-												'System Notification'
-											)}
-										</div>
-										<div className="messageItem__systemNotificationTitle">
-											{systemNotificationTitle}
-										</div>
-										{systemNotificationDescription && (
-											<div className="messageItem__systemNotificationDescription">
-												{systemNotificationDescription}
-											</div>
-										)}
-									</>
+								!isCaseHandoverGrantedEvent &&
+								systemNotificationDescription && (
+									<div className="messageItem__systemNotificationDescription">
+										{systemNotificationDescription}
+									</div>
 								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
