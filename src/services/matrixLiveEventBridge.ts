@@ -16,6 +16,11 @@ const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
 	return isVideoCallFromMatrixInviteContent(content);
 };
 
+const isElementOrGroupCallInvite = (
+	content: Record<string, unknown>
+): boolean =>
+	content.is_element_call === true || content.is_group_call === true;
+
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
  * This service listens to Matrix Room.timeline events and triggers appropriate
@@ -120,7 +125,10 @@ export class MatrixLiveEventBridge {
 						if (callId) {
 							hangups.set(
 								callId,
-								Math.max(hangups.get(callId) ?? 0, event.getTs())
+								Math.max(
+									hangups.get(callId) ?? 0,
+									event.getTs()
+								)
 							);
 						}
 					}
@@ -136,10 +144,11 @@ export class MatrixLiveEventBridge {
 						}
 						const content = event.getContent();
 						const callId = content.call_id;
-						const endedAt = callId ? hangups.get(callId) : undefined;
+						const endedAt = callId
+							? hangups.get(callId)
+							: undefined;
 						return (
-							(content.is_element_call === true ||
-								content.is_group_call === true) &&
+							isElementOrGroupCallInvite(content) &&
 							(!endedAt || endedAt < event.getTs())
 						);
 					})
@@ -152,6 +161,7 @@ export class MatrixLiveEventBridge {
 			const callRoomId = content.call_room_id || room.roomId;
 			if (
 				event.getSender() !== this.client.getUserId() &&
+				!this.processedCallInvites.has(content.call_id) &&
 				this.hasActiveMatrixRtcMembership(callRoomId)
 			) {
 				this.handleCallInvite(event, room);
@@ -289,7 +299,7 @@ export class MatrixLiveEventBridge {
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
 		const callRoomId = content.call_room_id || room.roomId;
 		const isGroupCall = content.is_group_call === true;
-		const isElementCall = content.is_element_call === true || isGroupCall;
+		const isElementCall = isElementOrGroupCallInvite(content);
 		const isVideo = isElementCall
 			? content.is_video !== false
 			: isVideoCallInvite(content);

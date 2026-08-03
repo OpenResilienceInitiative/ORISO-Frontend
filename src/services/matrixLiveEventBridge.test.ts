@@ -317,6 +317,76 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		membershipSpy.mockRestore();
 	});
 
+	it('stops active-call recovery after two sync scans without a candidate', () => {
+		const getRooms = vi.fn(() => []);
+		(client as any).getRooms = getRooms;
+
+		client.emit('sync', 'PREPARED', null);
+		client.emit('sync', 'SYNCING', 'PREPARED');
+		client.emit('sync', 'SYNCING', 'SYNCING');
+
+		expect(getRooms).toHaveBeenCalledTimes(2);
+		expect(receiveCall).not.toHaveBeenCalled();
+	});
+
+	it('recovers an older active invite when the newest candidate was already processed', () => {
+		const newestCallRoomId = '!newest-call:matrix.oriso.org';
+		const olderCallRoomId = '!older-call:matrix.oriso.org';
+		emitInvite({
+			content: {
+				call_id: 'already-processed',
+				is_element_call: true,
+				call_room_id: newestCallRoomId
+			},
+			ts: Date.now()
+		});
+		receiveCall.mockClear();
+
+		const newestInvite = makeEvent({
+			type: 'org.oriso.call.invite',
+			content: {
+				call_id: 'already-processed',
+				is_element_call: true,
+				call_room_id: newestCallRoomId
+			},
+			ts: Date.now()
+		});
+		const olderInvite = makeEvent({
+			type: 'org.oriso.call.invite',
+			content: {
+				call_id: 'recoverable-older',
+				is_element_call: true,
+				call_room_id: olderCallRoomId
+			},
+			ts: Date.now() - 60_000
+		});
+		(client as any).getRooms = vi.fn(() => [
+			{
+				roomId: ROOM_ID,
+				getLiveTimeline: () => ({
+					getEvents: () => [olderInvite, newestInvite]
+				})
+			}
+		]);
+		(client as any).getRoom = vi.fn((roomId: string) => ({ roomId }));
+		const membershipSpy = vi
+			.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+			.mockReturnValue([{} as any]);
+
+		client.emit('sync', 'PREPARED', null);
+
+		expect(receiveCall).toHaveBeenCalledWith(
+			olderCallRoomId,
+			true,
+			'recoverable-older',
+			OTHER_USER_ID,
+			false,
+			ROOM_ID,
+			true
+		);
+		membershipSpy.mockRestore();
+	});
+
 	it('ignores our own call invites', () => {
 		emitInvite({
 			content: { call_id: 'call-mine' },

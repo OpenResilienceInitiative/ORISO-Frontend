@@ -125,7 +125,8 @@ class CallManager {
 			this.currentCall.isGroup &&
 			this.currentCall.state === 'left' &&
 			forceIsGroup === true &&
-			(this.currentCall.signalRoomId || this.currentCall.roomId) === roomId
+			(this.currentCall.signalRoomId || this.currentCall.roomId) ===
+				roomId
 		) {
 			// Reopen the existing MatrixRTC room. Creating another dedicated room
 			// here would strand the participants who stayed in the active call.
@@ -590,6 +591,13 @@ class CallManager {
 		}
 		// console.log("   Is Video:", isVideo);
 		// console.log("   Caller:", callerUserId);
+
+		// A left group call is retained only so the same room can be reopened from
+		// its own conversation. It must not make the client busy for a different
+		// incoming call.
+		if (this.currentCall?.state === 'left') {
+			this.currentCall = null;
+		}
 
 		if (this.currentCall) {
 			// console.warn("⚠️  Already have an active call, ignoring incoming call");

@@ -70,6 +70,54 @@ describe('Element Call participant leave', () => {
 		expect(sendEvent).not.toHaveBeenCalled();
 	});
 
+	it('accepts a different incoming call after the participant left a group call', () => {
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+		callManager.leaveCall();
+
+		callManager.receiveCall(
+			'!other-call:oriso.example',
+			true,
+			'other-call',
+			'@jacqueline:oriso.example',
+			false,
+			'!other-signal:oriso.example',
+			true
+		);
+
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({
+				callId: 'other-call',
+				roomId: '!other-call:oriso.example',
+				state: 'ringing'
+			})
+		);
+	});
+
+	it('does not notify the room when a group Element Call is ended directly', () => {
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+
+		callManager.endCall();
+
+		expect(callManager.getCurrentCall()).toBeNull();
+		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
 	it('still notifies the remote participant when a one-to-one call is left', () => {
 		callManager.receiveCall(
 			CALL_ROOM,

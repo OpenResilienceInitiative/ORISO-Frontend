@@ -158,6 +158,7 @@ export const GroupCallWidget: React.FC = () => {
 		const currentCall = callManager.getCurrentCall();
 		setCallData(currentCall);
 		setCallState(currentCall?.state || null);
+		setIsDismissed(currentCall?.state === 'left');
 		return () => unsubscribe();
 	}, []);
 
