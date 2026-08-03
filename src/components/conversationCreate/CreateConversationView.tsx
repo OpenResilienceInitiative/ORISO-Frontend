@@ -263,7 +263,7 @@ const CreateConversationFlow = () => {
 	// user, deduplicated by consultantId.
 	const loadConsultants = useCallback(() => {
 		if (
-			!selectedAgency ||
+			selectedAgency === null ||
 			(!availability.internal && !availability.circle)
 		) {
 			setAvailableConsultants([]);
