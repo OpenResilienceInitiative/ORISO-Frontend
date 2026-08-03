@@ -31,16 +31,12 @@
 		gap: $grid-base;
 	}
 
-	&__confirm {
-		display: flex;
-		align-items: center;
-		gap: $grid-base;
-		cursor: pointer;
+	&__fullWidthAction {
+		width: 100%;
 
-		input[type='checkbox'] {
-			width: 18px;
-			height: 18px;
-			accent-color: var(--m3-primary, #6750a4);
+		.button__item {
+			width: 100%;
+			max-width: none;
 		}
 	}
 

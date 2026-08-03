@@ -25,6 +25,8 @@ import {
 import { getImageDimensions } from '../utils/imageDimensions';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
+const isPreparedSyncState = (state: string | null): boolean =>
+	state === 'PREPARED' || state === 'SYNCING';
 
 export interface MatrixFileMessageOptions {
 	abortController?: AbortController;
@@ -123,6 +125,7 @@ export class MatrixClientService {
 	private refreshTimer: number | null = null;
 	private refreshingToken: Promise<void> | null = null;
 	private staleDeviceRecovery: Promise<void> | null = null;
+	private staleDeviceRecoveryVersion = 0;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
@@ -210,7 +213,44 @@ export class MatrixClientService {
 	}
 
 	public isReady(): boolean {
-		return this.syncState === 'PREPARED';
+		return isPreparedSyncState(this.syncState);
+	}
+
+	/** Monotonic signal incremented only after stale-device recovery completes. */
+	public getStaleDeviceRecoveryVersion(): number {
+		return this.staleDeviceRecoveryVersion;
+	}
+
+	/**
+	 * Return the current Matrix client only after token/device recovery and the
+	 * replacement sync are complete. Crypto settings must use this boundary:
+	 * retaining the stale client while #551 rotates its device makes
+	 * cross-signing/key-backup setup fail on the old outgoing-request queue.
+	 */
+	public async getReadyClient(): Promise<MatrixClient> {
+		for (let attempt = 0; attempt < 2; attempt += 1) {
+			await this.ensureFreshToken();
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			try {
+				await this.waitForClientPrepared(client);
+				return client;
+			} catch (error) {
+				const recovery = this.staleDeviceRecovery;
+				if (attempt === 0 && (recovery || this.client !== client)) {
+					if (recovery) {
+						await recovery;
+					}
+					continue;
+				}
+				throw error;
+			}
+		}
+
+		throw new Error('Recovered Matrix client did not become ready');
 	}
 
 	public onSyncStateChange(
@@ -308,6 +348,7 @@ export class MatrixClientService {
 					);
 				}
 				await this.waitForClientPrepared(recoveredClient);
+				this.staleDeviceRecoveryVersion += 1;
 			})
 			.finally(() => {
 				this.staleDeviceRecovery = null;
@@ -320,7 +361,10 @@ export class MatrixClientService {
 		expectedClient: MatrixClient,
 		timeoutMs: number = 30_000
 	): Promise<void> {
-		if (this.client === expectedClient && this.syncState === 'PREPARED') {
+		if (
+			this.client === expectedClient &&
+			isPreparedSyncState(this.syncState)
+		) {
 			return Promise.resolve();
 		}
 
@@ -337,7 +381,7 @@ export class MatrixClientService {
 					return;
 				}
 
-				if (state !== 'PREPARED') {
+				if (!isPreparedSyncState(state)) {
 					return;
 				}
 
