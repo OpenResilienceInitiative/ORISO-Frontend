@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
@@ -8,13 +14,39 @@ import { MatrixClientContext } from '../../globalState/context/MatrixClientConte
 import type { EncryptionSetupStatus } from '../../services/matrixKeyBackupService';
 
 const getEncryptionStatus = vi.fn();
+const recoverWithKey = vi.fn();
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (_key: string, def?: string) => def ?? _key })
 }));
 
+vi.mock('../../resources/img/icons/recovery-safe.svg', () => ({
+	ReactComponent: () => <svg aria-label="Tresor" />
+}));
+
+vi.mock('../modal/OrisoDialog', () => ({
+	OrisoDialog: ({
+		children,
+		title,
+		onClose
+	}: {
+		children: React.ReactNode;
+		title: React.ReactNode;
+		onClose: () => void;
+	}) => (
+		<div role="dialog" aria-label={String(title)}>
+			<button type="button" onClick={onClose}>
+				Schliessen
+			</button>
+			{children}
+		</div>
+	)
+}));
+
 vi.mock('../../services/matrixKeyBackupService', () => ({
-	getEncryptionStatus: (...args: unknown[]) => getEncryptionStatus(...args)
+	getEncryptionStatus: (...args: unknown[]) => getEncryptionStatus(...args),
+	recoverWithKey: (...args: unknown[]) => recoverWithKey(...args),
+	InvalidRecoveryKeyError: class InvalidRecoveryKeyError extends Error {}
 }));
 
 const outOfSync: EncryptionSetupStatus = {
@@ -35,13 +67,18 @@ const healthy: EncryptionSetupStatus = {
 
 /** Fake MatrixClientService: immediately reports PREPARED to its listener. */
 const buildService = (ready = true) =>
-	({
-		getClient: () => ({}) as any,
-		onSyncStateChange: (cb: (state: string | null) => void) => {
-			cb(ready ? 'PREPARED' : 'SYNCING');
-			return () => undefined;
-		}
-	}) as any;
+	(() => {
+		const client = {} as any;
+		return {
+			getClient: () => client,
+			getReadyClient: async () => client,
+			getStaleDeviceRecoveryVersion: () => 0,
+			onSyncStateChange: (cb: (state: string | null) => void) => {
+				cb(ready ? 'PREPARED' : 'SYNCING');
+				return () => undefined;
+			}
+		} as any;
+	})();
 
 const renderPrompt = (service: unknown) =>
 	render(
@@ -57,7 +94,7 @@ const renderPrompt = (service: unknown) =>
 		</MatrixClientContext.Provider>
 	);
 
-const RECOVERY_TEXT = /noch nicht verfügbar/i;
+const RECOVERY_TEXT = /auf einem neuen Gerät angemeldet/i;
 const SETUP_TEXT = /Richten Sie einen Wiederherstellungsschlüssel ein/i;
 
 describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
@@ -65,6 +102,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		document.body.innerHTML = '<div id="banner"></div>';
 		sessionStorage.clear();
 		getEncryptionStatus.mockReset();
+		recoverWithKey.mockReset();
 	});
 
 	afterEach(() => cleanup());
@@ -77,11 +115,37 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		await waitFor(() =>
 			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
 		);
-		// Deep-links into the profile Sicherheit panel that holds the input.
-		const link = screen.getByRole('link');
-		expect(link.getAttribute('href')).toContain(
-			'/profile/einstellungen/sicherheit'
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		expect(
+			screen.getByRole('textbox', {
+				name: /Wiederherstellungsschlüssel/i
+			})
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', { name: /Tresor öffnen/i })
+		).toBeTruthy();
+	});
+
+	it('restores encrypted history directly from the new-device dialog', async () => {
+		getEncryptionStatus.mockResolvedValue(outOfSync);
+		recoverWithKey.mockResolvedValue({ imported: 21, total: 21 });
+
+		renderPrompt(buildService());
+
+		const input = await screen.findByRole('textbox', {
+			name: /Wiederherstellungsschlüssel/i
+		});
+		fireEvent.change(input, { target: { value: 'valid recovery key' } });
+		fireEvent.click(screen.getByRole('button', { name: /Tresor öffnen/i }));
+
+		await waitFor(() =>
+			expect(recoverWithKey).toHaveBeenCalledWith(
+				expect.anything(),
+				'valid recovery key'
+			)
 		);
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(sessionStorage.getItem('hideKeyBackupPrompt')).toBe('true');
 	});
 
 	it.each([
@@ -99,8 +163,9 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 				expect(screen.queryByText(SETUP_TEXT)).toBeTruthy()
 			);
 			expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
+			expect(screen.getByRole('dialog')).toBeTruthy();
 			expect(screen.getByRole('link').textContent).toMatch(
-				/Wiederherstellung einrichten/i
+				/Tresor einrichten/i
 			);
 			expect(screen.getByRole('link').getAttribute('href')).toContain(
 				'/profile/einstellungen/sicherheit'
@@ -121,12 +186,10 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
 		);
 		expect(screen.queryByText(SETUP_TEXT)).toBeNull();
-		expect(screen.getByRole('link').textContent).toMatch(
-			/Verlauf wiederherstellen/i
-		);
-		expect(screen.getByRole('link').getAttribute('href')).toContain(
-			'/profile/einstellungen/sicherheit'
-		);
+		expect(screen.getByRole('textbox')).toBeTruthy();
+		expect(
+			screen.getByRole('button', { name: /Tresor öffnen/i })
+		).toBeTruthy();
 	});
 
 	it('stays hidden when encryption is healthy', async () => {

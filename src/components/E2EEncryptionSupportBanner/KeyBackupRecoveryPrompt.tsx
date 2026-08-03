@@ -1,14 +1,180 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Banner } from '../banner/Banner';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
-import { getEncryptionStatus } from '../../services/matrixKeyBackupService';
+import {
+	getEncryptionStatus,
+	InvalidRecoveryKeyError,
+	recoverWithKey
+} from '../../services/matrixKeyBackupService';
+import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
+import { OrisoDialog } from '../modal/OrisoDialog';
+import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
 import './E2EEncryptionSupportBanner.styles.scss';
 
 const DISMISS_KEY = 'hideKeyBackupPrompt';
 const SECURITY_SETTINGS_PATH = '/profile/einstellungen/sicherheit';
+export type KeyBackupPromptMode = 'setup' | 'recovery';
+
+type KeyBackupRecoveryDialogProps = {
+	mode: KeyBackupPromptMode;
+	onClose: () => void;
+	onRecover: (recoveryKey: string) => Promise<number>;
+};
+
+export const KeyBackupRecoveryDialog = ({
+	mode,
+	onClose,
+	onRecover
+}: KeyBackupRecoveryDialogProps) => {
+	const { t: translate } = useTranslation();
+	const [recoveryKey, setRecoveryKey] = useState('');
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const submitRecovery = useCallback(async () => {
+		if (!recoveryKey.trim() || busy) {
+			return;
+		}
+		setBusy(true);
+		setError(null);
+		try {
+			await onRecover(recoveryKey);
+			onClose();
+		} catch (recoverError) {
+			setError(
+				recoverError instanceof InvalidRecoveryKeyError
+					? translate(
+							'encryption.keyBackup.dialog.invalidKey',
+							'Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
+						)
+					: translate(
+							'encryption.keyBackup.dialog.error',
+							'Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
+						)
+			);
+		} finally {
+			setBusy(false);
+		}
+	}, [busy, onClose, onRecover, recoveryKey, translate]);
+
+	return (
+		<OrisoDialog
+			open
+			onClose={onClose}
+			title={
+				mode === 'recovery'
+					? translate(
+							'encryption.keyBackup.dialog.recoveryTitle',
+							'Schön, dass Sie wieder da sind'
+						)
+					: translate(
+							'encryption.keyBackup.dialog.setupTitle',
+							'Ihre Nachrichten sicher aufbewahren'
+						)
+			}
+			icon={<RecoverySafeIcon />}
+			maxWidth="560px"
+			height="auto"
+			hideActions
+		>
+			<div
+				className="keyBackupDialog"
+				data-cy={`key-backup-${mode}-dialog`}
+			>
+				{mode === 'recovery' ? (
+					<>
+						<p>
+							{translate(
+								'encryption.keyBackup.dialog.recoveryCopy',
+								'Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.'
+							)}
+						</p>
+						<p>
+							{translate(
+								'encryption.keyBackup.dialog.recoveryInstruction',
+								'Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
+							)}
+						</p>
+						<label className="keyBackupDialog__field">
+							<span>
+								{translate(
+									'encryption.keyBackup.dialog.keyLabel',
+									'Wiederherstellungsschlüssel'
+								)}
+							</span>
+							<input
+								type="text"
+								value={recoveryKey}
+								onChange={(event) =>
+									setRecoveryKey(event.target.value)
+								}
+								autoComplete="off"
+								disabled={busy}
+							/>
+						</label>
+						{error && (
+							<p className="keyBackupDialog__error" role="alert">
+								{error}
+							</p>
+						)}
+					</>
+				) : (
+					<p>
+						{translate(
+							'encryption.keyBackup.dialog.setupCopy',
+							'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Richten Sie einen Wiederherstellungsschlüssel ein, damit Ihr Gesprächsverlauf auch auf einem neuen Gerät lesbar bleibt.'
+						)}
+					</p>
+				)}
+
+				<div className="keyBackupDialog__actions">
+					<button
+						type="button"
+						className="keyBackupDialog__later"
+						onClick={onClose}
+						disabled={busy}
+					>
+						{translate(
+							'encryption.keyBackup.dialog.later',
+							'Später'
+						)}
+					</button>
+					{mode === 'recovery' ? (
+						<button
+							type="button"
+							className="keyBackupDialog__primary"
+							onClick={() => void submitRecovery()}
+							disabled={!recoveryKey.trim() || busy}
+						>
+							{busy
+								? translate(
+										'encryption.keyBackup.dialog.restoring',
+										'Wird wiederhergestellt …'
+									)
+								: translate(
+										'encryption.keyBackup.dialog.openVault',
+										'Tresor öffnen'
+									)}
+						</button>
+					) : (
+						<Link
+							className="keyBackupDialog__primary"
+							to={SECURITY_SETTINGS_PATH}
+							onClick={onClose}
+						>
+							{translate(
+								'encryption.keyBackup.dialog.setup',
+								'Tresor einrichten'
+							)}
+						</Link>
+					)}
+				</div>
+			</div>
+		</OrisoDialog>
+	);
+};
 
 /**
  * #437 login-time recovery prompt. On a new device the user's key backup is
@@ -22,9 +188,8 @@ const SECURITY_SETTINGS_PATH = '/profile/einstellungen/sicherheit';
  * session-scoped so we do not nag on every navigation.
  */
 export const KeyBackupRecoveryPrompt = () => {
-	const { t: translate } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
-	const [bannerMode, setBannerMode] = useState<'setup' | 'recovery' | null>(
+	const [bannerMode, setBannerMode] = useState<KeyBackupPromptMode | null>(
 		null
 	);
 	const probedRef = useRef(false);
@@ -73,55 +238,30 @@ export const KeyBackupRecoveryPrompt = () => {
 		};
 	}, [matrixClientService]);
 
-	useEffect(() => {
-		const fn = bannerMode ? 'add' : 'remove';
-		document.body.classList[fn]('banner-open');
-
-		return () => {
-			document.body.classList.remove('banner-open');
-		};
-	}, [bannerMode]);
-
 	if (!bannerMode) {
 		return null;
 	}
 
+	const closePrompt = () => {
+		sessionStorage.setItem(DISMISS_KEY, 'true');
+		setBannerMode(null);
+	};
+
 	return (
-		<Banner
-			className="encryption-banner"
-			onClose={() => {
-				sessionStorage.setItem(DISMISS_KEY, 'true');
-				setBannerMode(null);
+		<KeyBackupRecoveryDialog
+			mode={bannerMode}
+			onClose={closePrompt}
+			onRecover={async (recoveryKey) => {
+				const result = await executeWithReadyEncryptionClient(
+					undefined,
+					matrixClientService,
+					(client) => recoverWithKey(client, recoveryKey)
+				);
+				if (!result) {
+					throw new Error('Matrix recovery client unavailable');
+				}
+				return result.imported;
 			}}
-		>
-			<span className="keyBackupPrompt__text">
-				{bannerMode === 'setup'
-					? translate(
-							'encryption.keyBackup.setupPrompt.text',
-							'Richten Sie einen Wiederherstellungsschlüssel ein, damit Ihre verschlüsselten Gespräche auch auf einem neuen Gerät verfügbar bleiben.'
-						)
-					: translate(
-							'encryption.keyBackup.prompt.text',
-							'Ihr Gesprächsverlauf ist auf diesem Gerät noch nicht verfügbar. Geben Sie Ihren Wiederherstellungsschlüssel ein, um ihn hier weiterzulesen.'
-						)}{' '}
-				<Link
-					to={SECURITY_SETTINGS_PATH}
-					onClick={() => {
-						sessionStorage.setItem(DISMISS_KEY, 'true');
-						setBannerMode(null);
-					}}
-				>
-					{bannerMode === 'setup'
-						? translate(
-								'encryption.keyBackup.setupPrompt.cta',
-								'Wiederherstellung einrichten'
-							)
-						: translate(
-								'encryption.keyBackup.prompt.cta',
-								'Verlauf wiederherstellen'
-							)}
-				</Link>
-			</span>
-		</Banner>
+		/>
 	);
 };
