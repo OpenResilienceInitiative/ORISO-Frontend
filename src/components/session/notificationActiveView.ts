@@ -1,0 +1,9 @@
+const SESSION_DETAIL_ROUTE =
+	/^\/sessions\/[^/]+\/(?:sessionView|sessionPreview|view)\/.+/;
+const NON_CONVERSATION_SUFFIX =
+	/(?:userProfile|editGroupChat|groupChatInfo)\/?$/;
+
+/** True only while the route visibly owns a conversation detail surface. */
+export const isNotificationActiveViewRoute = (pathname: string): boolean =>
+	SESSION_DETAIL_ROUTE.test(pathname) &&
+	!NON_CONVERSATION_SUFFIX.test(pathname);
