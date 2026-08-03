@@ -1416,7 +1416,10 @@
 				"audio": "Sesli mesaj",
 				"video": "Video",
 				"notice": "Bildirim",
-				"unsupported": "Desteklenmeyen mesaj"
+				"unsupported": "Desteklenmeyen mesaj",
+				"pending": "Şifre çözme bekleniyor",
+				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
 			}
 		}
 	},

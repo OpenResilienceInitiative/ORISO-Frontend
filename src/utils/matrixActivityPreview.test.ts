@@ -11,7 +11,10 @@ describe('buildMatrixActivityTextPreview', () => {
 		audio: 'Audio message',
 		video: 'Video',
 		notice: 'Notice',
-		unsupported: 'Unsupported message'
+		unsupported: 'Unsupported message',
+		pending: 'Waiting for decryption',
+		roomUnavailable: 'Conversation unavailable on this device',
+		eventUnavailable: 'Message unavailable in local history'
 	};
 	it('renders the sender and normalized plain-text body of the resolved event', () => {
 		const event = {
@@ -50,14 +53,24 @@ describe('buildMatrixActivityTextPreview', () => {
 		).toBe('Lisa: corrected text');
 	});
 
-	it('keeps the localized generic copy when no decrypted text is available', () => {
+	it.each([
+		['pending-decryption', 'Waiting for decryption'],
+		['room-unavailable', 'Conversation unavailable on this device'],
+		['event-unavailable', 'Message unavailable in local history']
+	])('uses an explicit localized %s fallback', (status, expected) => {
+		const resolution =
+			status === 'pending-decryption'
+				? { status, event: {} }
+				: { status };
+
 		expect(
 			buildMatrixActivityTextPreview(
-				{ status: 'pending-decryption', event: {} } as any,
+				resolution as any,
 				'Lisa',
-				'New message'
+				'New message',
+				labels
 			)
-		).toBe('New message');
+		).toBe(expected);
 	});
 
 	it.each([

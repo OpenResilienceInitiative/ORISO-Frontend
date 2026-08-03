@@ -526,7 +526,10 @@
 				"audio": "Audionachricht",
 				"video": "Video",
 				"notice": "Hinweis",
-				"unsupported": "Nicht unterstützte Nachricht"
+				"unsupported": "Nicht unterstützte Nachricht",
+				"pending": "Wird entschlüsselt",
+				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
 			}
 		},
 		"events": {

@@ -20,7 +20,17 @@ describe('Matrix Activity Timeline preview translations', () => {
 		const preview = common.notifications.center.preview;
 
 		expect(Object.keys(preview).sort()).toEqual(
-			['audio', 'file', 'image', 'notice', 'unsupported', 'video'].sort()
+			[
+				'audio',
+				'eventUnavailable',
+				'file',
+				'image',
+				'notice',
+				'pending',
+				'roomUnavailable',
+				'unsupported',
+				'video'
+			].sort()
 		);
 		Object.values(preview).forEach((label) => {
 			expect(label).toEqual(expect.any(String));

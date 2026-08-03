@@ -1416,7 +1416,10 @@
 				"audio": "መልእኽቲ ድምጺ",
 				"video": "ቪድዮ",
 				"notice": "ምልክታ",
-				"unsupported": "ዘይድገፍ መልእኽቲ"
+				"unsupported": "ዘይድገፍ መልእኽቲ",
+				"pending": "ምፍታሕ ምስጢር ይጽበ",
+				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
 			}
 		}
 	},

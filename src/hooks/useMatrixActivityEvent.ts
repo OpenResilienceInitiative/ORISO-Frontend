@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { MatrixEventEvent, type MatrixEvent } from 'matrix-js-sdk';
-import { chatTransportService } from '../services/chatTransportService';
 import {
 	MatrixActivityEventResolution,
-	resolveLocalMatrixActivityEvent
+	resolveLocalMatrixActivityEvent,
+	subscribeToLocalMatrixActivityEvent
 } from '../utils/matrixActivityEventResolver';
 
 /**
@@ -21,55 +20,11 @@ export const useMatrixActivityEvent = (
 	);
 
 	useEffect(() => {
-		let pendingEvent: MatrixEvent | null = null;
-		let detached = false;
-
-		const clearPendingEvent = () => {
-			pendingEvent?.off(
-				MatrixEventEvent.Decrypted,
-				handleDecrypted as any
-			);
-			pendingEvent = null;
-		};
-
-		const applyResolution = (next: MatrixActivityEventResolution) => {
-			if (detached) return;
-			setResolution(next);
-			if (next.status !== 'pending-decryption') {
-				clearPendingEvent();
-				return;
-			}
-			if (pendingEvent === next.event) return;
-			clearPendingEvent();
-			pendingEvent = next.event;
-			pendingEvent.on(MatrixEventEvent.Decrypted, handleDecrypted as any);
-		};
-
-		const refresh = () =>
-			applyResolution(
-				resolveLocalMatrixActivityEvent(roomRef, matrixEventId)
-			);
-
-		function handleDecrypted(event: MatrixEvent, error?: Error) {
-			if (error || event.getId() !== matrixEventId) return;
-			refresh();
-		}
-
-		refresh();
-		const detachTimeline = chatTransportService.onMatrixTimeline(
+		return subscribeToLocalMatrixActivityEvent(
 			roomRef,
-			(event) => {
-				if (event.getId() === matrixEventId) {
-					refresh();
-				}
-			}
+			matrixEventId,
+			setResolution
 		);
-
-		return () => {
-			detached = true;
-			detachTimeline?.();
-			clearPendingEvent();
-		};
 	}, [roomRef, matrixEventId]);
 
 	return resolution;

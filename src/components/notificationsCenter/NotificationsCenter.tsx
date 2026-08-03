@@ -317,6 +317,18 @@ export const NotificationsCenter = () => {
 							unsupported: translate(
 								'notifications.center.preview.unsupported',
 								'Unsupported message'
+							),
+							pending: translate(
+								'notifications.center.preview.pending',
+								'Waiting for decryption'
+							),
+							roomUnavailable: translate(
+								'notifications.center.preview.roomUnavailable',
+								'Conversation unavailable on this device'
+							),
+							eventUnavailable: translate(
+								'notifications.center.preview.eventUnavailable',
+								'Message unavailable in local history'
 							)
 						}
 					}

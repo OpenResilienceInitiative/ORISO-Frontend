@@ -11,6 +11,9 @@ export type MatrixActivityPreviewLabels = {
 	video: string;
 	notice: string;
 	unsupported: string;
+	pending: string;
+	roomUnavailable: string;
+	eventUnavailable: string;
 };
 
 export type MatrixActivityPreviewKind =
@@ -61,7 +64,12 @@ export const buildMatrixActivityTextPreview = (
 	labels?: MatrixActivityPreviewLabels
 ): string => {
 	if (resolution.status !== 'resolved') {
-		return fallbackText;
+		const fallbackByStatus = {
+			'pending-decryption': labels?.pending,
+			'room-unavailable': labels?.roomUnavailable,
+			'event-unavailable': labels?.eventUnavailable
+		};
+		return fallbackByStatus[resolution.status] || fallbackText;
 	}
 
 	const content = resolution.event.getContent?.() ?? {};

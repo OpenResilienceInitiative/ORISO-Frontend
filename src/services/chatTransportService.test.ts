@@ -91,6 +91,30 @@ describe('chatTransportService Matrix timeline', () => {
 		setMatrixClientServiceRef(null);
 	});
 
+	it('provides a raw room-scoped timeline subscription without decryption side effects', () => {
+		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimelineRaw(
+			ROOM_ID,
+			listener
+		);
+
+		fakeClient.emit(
+			'Room.timeline',
+			event,
+			{ roomId: OTHER_ROOM_ID },
+			false
+		);
+		fakeClient.emit('Room.timeline', event, { roomId: ROOM_ID }, true);
+		fakeClient.emit('Room.timeline', event, { roomId: ROOM_ID }, false);
+
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(decryptionListeners.size).toBe(0);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
+	});
+
 	it('notifies again when a live encrypted event decrypts after first delivery', () => {
 		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
 		const room = { roomId: ROOM_ID };

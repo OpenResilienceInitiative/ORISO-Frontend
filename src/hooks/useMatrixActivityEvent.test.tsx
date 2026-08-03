@@ -7,7 +7,7 @@ import { useMatrixActivityEvent } from './useMatrixActivityEvent';
 vi.mock('../services/chatTransportService', () => ({
 	chatTransportService: {
 		getMatrixRoom: vi.fn(),
-		onMatrixTimeline: vi.fn(),
+		onMatrixTimelineRaw: vi.fn(),
 		markRoomAsRead: vi.fn()
 	}
 }));
@@ -27,6 +27,11 @@ const encryptedEvent = (eventId: string) => {
 		decrypt: () => {
 			type = 'm.room.message';
 			listeners.forEach((listener) => listener(event));
+		},
+		failDecryption: () => {
+			listeners.forEach((listener) =>
+				listener(event, new Error('decryption unavailable'))
+			);
 		}
 	};
 	return event;
@@ -41,7 +46,7 @@ describe('useMatrixActivityEvent', () => {
 		vi.mocked(chatTransportService.getMatrixRoom).mockReturnValue({
 			findEventById: () => event
 		} as any);
-		vi.mocked(chatTransportService.onMatrixTimeline).mockReturnValue(
+		vi.mocked(chatTransportService.onMatrixTimelineRaw).mockReturnValue(
 			detachTimeline
 		);
 
@@ -62,6 +67,28 @@ describe('useMatrixActivityEvent', () => {
 		expect(event.off).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps one pending listener after a failed decryption attempt', () => {
+		const event = encryptedEvent('$target');
+		vi.mocked(chatTransportService.getMatrixRoom).mockReturnValue({
+			findEventById: () => event
+		} as any);
+		vi.mocked(chatTransportService.onMatrixTimelineRaw).mockReturnValue(
+			vi.fn()
+		);
+
+		const { result, unmount } = renderHook(() =>
+			useMatrixActivityEvent('!room:oriso', '$target')
+		);
+
+		act(() => event.failDecryption());
+
+		expect(result.current.status).toBe('pending-decryption');
+		expect(event.on).toHaveBeenCalledTimes(1);
+
+		unmount();
+		expect(event.off).toHaveBeenCalledTimes(1);
+	});
+
 	it('ignores timeline updates for other Matrix event ids', () => {
 		const target = {
 			getId: () => '$target',
@@ -71,13 +98,13 @@ describe('useMatrixActivityEvent', () => {
 			findEventById: () => target
 		} as any);
 		let timelineListener: ((event: any) => void) | undefined;
-		vi.mocked(chatTransportService.onMatrixTimeline).mockImplementation(
+		vi.mocked(chatTransportService.onMatrixTimelineRaw).mockImplementation(
 			(_roomId, listener) => {
 				timelineListener = listener;
 				return vi.fn();
 			}
 		);
-		const { result } = renderHook(() =>
+		const { result, unmount } = renderHook(() =>
 			useMatrixActivityEvent('!room:oriso', '$target')
 		);
 
@@ -89,5 +116,6 @@ describe('useMatrixActivityEvent', () => {
 		);
 
 		expect(result.current).toEqual({ status: 'resolved', event: target });
+		unmount();
 	});
 });

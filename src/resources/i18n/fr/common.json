@@ -1416,7 +1416,10 @@
 				"audio": "Message audio",
 				"video": "Vidéo",
 				"notice": "Avis",
-				"unsupported": "Message non pris en charge"
+				"unsupported": "Message non pris en charge",
+				"pending": "Déchiffrement en cours",
+				"roomUnavailable": "Conversation indisponible sur cet appareil",
+				"eventUnavailable": "Message indisponible dans l’historique local"
 			}
 		}
 	},

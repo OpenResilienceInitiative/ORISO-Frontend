@@ -1725,7 +1725,10 @@
 				"audio": "Audio message",
 				"video": "Video",
 				"notice": "Notice",
-				"unsupported": "Unsupported message"
+				"unsupported": "Unsupported message",
+				"pending": "Waiting for decryption",
+				"roomUnavailable": "Conversation unavailable on this device",
+				"eventUnavailable": "Message unavailable in local history"
 			}
 		},
 		"threadReply": {
