@@ -669,7 +669,12 @@ class CallManager {
 		}
 		this.currentCall = null;
 
-		if (notifyRemote && call.usesElementCall) {
+		// A MatrixRTC group call belongs to the room, not to the participant who
+		// originally invited everyone. Leaving it must clear only this browser's
+		// local call surface. Broadcasting the legacy ORISO hangup event here
+		// used to make every other participant tear down the same active call.
+		// One-to-one Element Call still needs the remote hangup notification.
+		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}
 
