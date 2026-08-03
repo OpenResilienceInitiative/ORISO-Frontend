@@ -6,8 +6,8 @@ Für ${tenantName!''} wurde ein Auftragsverarbeitungsvertrag erstellt.
 Bitte prüf den Vertrag und zeichne ihn digital.
 
 Träger: ${tenantName!''}
-Bereitgestellt von: ${senderName!''}
 Bereitgestellt am: ${dpaProvidedAt!''}
+Zu unterschreiben bis: ${dpaExpiresAt!''}
 
 Vertrag öffnen:
 ${dpaUrl!''}

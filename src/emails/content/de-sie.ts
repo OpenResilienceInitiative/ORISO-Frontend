@@ -400,8 +400,8 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
-			{ label: 'Bereitgestellt von', value: '{{senderName}}' },
-			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' }
+			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
+			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
 		],
 		cta: { label: 'Vertrag öffnen', href: '{{dpaUrl}}' },
 		footnote:
@@ -419,7 +419,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 			'Was das für Ihre Zuständigkeiten bedeutet, sehen Sie im Beratungsbereich.'
 		],
 		panel: [
-			{ label: 'Beratungsstelle', value: '{{agencyName}}' },
+			{ label: 'Vorgang', value: '{{caseReference}}' },
 			{ label: 'Geändert am', value: '{{teamChangedAt}}' }
 		],
 		cta: { label: 'Zum Beratungsbereich', href: '{{appUrl}}' },

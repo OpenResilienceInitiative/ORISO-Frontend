@@ -144,8 +144,8 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	inviteUrl: 'https://beratung.example.org/einladung?token=1c9d',
 	inviteExpiresAt: '10. August 2026, 23:59',
 	dpaUrl: 'https://beratung.example.org/avv/2026-0044',
-	senderName: 'ORISO Betrieb',
 	dpaProvidedAt: '3. August 2026',
+	dpaExpiresAt: '17. August 2026, 23:59',
 
 	// Team and platform operations.
 	teamChangeStatement:

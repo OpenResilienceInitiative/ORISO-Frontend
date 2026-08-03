@@ -604,8 +604,8 @@
       "unsubscribable": false,
       "placeholders": [
         "{{tenantName}}",
-        "{{senderName}}",
         "{{dpaProvidedAt}}",
+        "{{dpaExpiresAt}}",
         "{{dpaUrl}}",
         "{{privacyUrl}}",
         "{{imprintUrl}}"
@@ -634,7 +634,7 @@
       "unsubscribable": true,
       "placeholders": [
         "{{teamChangeStatement}}",
-        "{{agencyName}}",
+        "{{caseReference}}",
         "{{teamChangedAt}}",
         "{{appUrl}}",
         "{{settingsUrl}}",

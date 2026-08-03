@@ -46,8 +46,14 @@ export interface EmailContent {
 	 * `panel` in practice — a mail that carries a code carries nothing else.
 	 */
 	code?: EmailDataRow;
-	/** The single primary action. Every ORISO mail has exactly one. */
-	cta: EmailAction;
+	/**
+	 * The primary action. At most one — an ORISO mail never offers a choice.
+	 *
+	 * Optional because a one-time code has nothing to click: the recipient is
+	 * already in the window that asked for it, and a button back to the login
+	 * screen would compete with the flow they are halfway through.
+	 */
+	cta?: EmailAction;
 	/** Optional lower-weight action directly under the button. */
 	secondaryAction?: EmailAction;
 	/** The reassuring line under the actions. */
@@ -73,7 +79,7 @@ export const renderEmailHtml = (
 		emailProse(content.paragraphs) +
 		(content.panel ? emailDataPanel(content.panel) : '') +
 		(content.code ? emailCodePanel(content.code) : '') +
-		emailCallToAction(content.cta, brand) +
+		(content.cta ? emailCallToAction(content.cta, brand) : '') +
 		(content.secondaryAction
 			? emailSecondaryAction(content.secondaryAction, brand)
 			: '') +
@@ -125,7 +131,9 @@ export const renderEmailText = (
 		lines.push(`${content.code.label}: ${flatten(content.code.value)}`, '');
 	}
 
-	lines.push(`${content.cta.label}:`, content.cta.href, '');
+	if (content.cta) {
+		lines.push(`${content.cta.label}:`, content.cta.href, '');
+	}
 
 	if (content.secondaryAction) {
 		lines.push(

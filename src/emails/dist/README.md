@@ -40,8 +40,8 @@ dialect cannot disagree with what Storybook shows.
 | `email-geaendert` | asker | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einladung-traeger` | admin | `{{tenantName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einladung-fachkraft` | consultant | `{{agencyName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
-| `avv-unterschrift` | admin | `{{tenantName}}` `{{senderName}}` `{{dpaProvidedAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
-| `team-aenderung` | consultant | `{{teamChangeStatement}}` `{{agencyName}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `avv-unterschrift` | admin | `{{tenantName}}` `{{dpaProvidedAt}}` `{{dpaExpiresAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `team-aenderung` | consultant | `{{teamChangeStatement}}` `{{caseReference}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `smtp-test` | admin | `{{smtpHost}}` `{{smtpFrom}}` `{{sentAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,

@@ -5,7 +5,7 @@ ${teamChangeStatement!''}
 
 You can see what this means for your responsibilities in the counselling area.
 
-Counselling service: ${agencyName!''}
+Case: ${caseReference!''}
 Changed on: ${teamChangedAt!''}
 
 Go to counselling:

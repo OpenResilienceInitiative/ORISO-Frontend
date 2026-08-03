@@ -249,7 +249,8 @@
 		"typecheck:storybook": "tsc --noEmit --project tsconfig.storybook.json",
 		"prebuild-storybook": "npm run typecheck:storybook",
 		"build-storybook": "storybook build",
-		"emails:build": "vite-node src/emails/scripts/buildEmails.mts"
+		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
+		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts"
 	},
 	"eslintConfig": {
 		"extends": [

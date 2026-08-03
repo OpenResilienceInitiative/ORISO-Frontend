@@ -5,7 +5,7 @@ ${teamChangeStatement!''}
 
 Was das für Ihre Zuständigkeiten bedeutet, sehen Sie im Beratungsbereich.
 
-Beratungsstelle: ${agencyName!''}
+Vorgang: ${caseReference!''}
 Geändert am: ${teamChangedAt!''}
 
 Zum Beratungsbereich:

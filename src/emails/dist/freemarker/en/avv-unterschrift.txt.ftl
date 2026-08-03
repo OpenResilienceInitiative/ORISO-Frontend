@@ -6,8 +6,8 @@ A data processing agreement has been prepared for ${tenantName!''}.
 Please review the agreement and sign it digitally.
 
 Organisation: ${tenantName!''}
-Provided by: ${senderName!''}
 Provided on: ${dpaProvidedAt!''}
+To be signed by: ${dpaExpiresAt!''}
 
 Open agreement:
 ${dpaUrl!''}

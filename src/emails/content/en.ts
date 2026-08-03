@@ -384,8 +384,8 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
-			{ label: 'Provided by', value: '{{senderName}}' },
-			{ label: 'Provided on', value: '{{dpaProvidedAt}}' }
+			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
+			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
 		],
 		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
 		footnote:
@@ -403,7 +403,7 @@ export const en: Record<EmailId, EmailContent> = {
 			'You can see what this means for your responsibilities in the counselling area.'
 		],
 		panel: [
-			{ label: 'Counselling service', value: '{{agencyName}}' },
+			{ label: 'Case', value: '{{caseReference}}' },
 			{ label: 'Changed on', value: '{{teamChangedAt}}' }
 		],
 		cta: { label: 'Go to counselling', href: '{{appUrl}}' },
