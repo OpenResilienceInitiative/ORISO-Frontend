@@ -26,6 +26,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	background: #ffffff;
 	position: relative;
 	border: 0px solid rgba(220, 38, 38, 0.3);
+	border: 0px solid
+		color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 	border-radius: 20px;
 	animation: fadeIn 0.5s ease-out;
 	transition: transform 0.3s ease;
@@ -105,6 +107,12 @@ $link-hover-text-decoration: $link-text-decoration !default;
 				background: white;
 				outline: none;
 				box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.05);
+				box-shadow: 0 0 0 3px
+					color-mix(
+						in srgb,
+						var(--m3-primary, #a5000a) 5%,
+						transparent
+					);
 			}
 
 			&::placeholder {
@@ -163,6 +171,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			background: #ffffff;
 			color: #111827;
 			box-shadow: inset 0 -2px 0 rgba(216, 0, 3, 0.8);
+			box-shadow: inset 0 -2px 0
+				color-mix(in srgb, var(--m3-primary, #a5000a) 80%, transparent);
 		}
 	}
 
@@ -268,20 +278,28 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		max-width: 100%;
 		margin-top: 25px;
 		padding: 15px 24px;
-		background: rgba(216, 0, 3);
+		background: var(--m3-primary, #a5000a);
 		border: none;
 		border-radius: 28px;
-		color: white;
+		color: var(--m3-on-primary, #ffffff);
 		font-size: 15px;
 		font-weight: 600;
 		letter-spacing: 0.3px;
 		box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+		box-shadow: 0 4px 15px
+			color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 		transition: all 0.3s ease;
 		transform: $login-icon-transform;
 
 		&:hover:not(:disabled) {
-			background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+			background: linear-gradient(
+				135deg,
+				var(--m3-primary, #b91c1c) 0%,
+				var(--m3-primary-hover, #7f1d1d) 100%
+			);
 			box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+			box-shadow: 0 6px 20px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 40%, transparent);
 			transform: translateY(-2px);
 		}
 

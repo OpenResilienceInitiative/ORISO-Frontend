@@ -1,0 +1,26 @@
+// Lottie renders a <div><svg/></div>, so the animation cannot inherit the
+// `& > svg` sizing the overlay applies to the static illustrations. It fills
+// whatever box the host gives it instead.
+.animatedIllustration {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+
+	// The animations draw at ~73% of their own canvas, which reads small next
+	// to the rest of the illustration set. Scaling the box (not the layout)
+	// brings them up to the weight of the static artwork.
+	transform: scale(1.25);
+
+	> div {
+		width: 100%;
+		height: 100%;
+	}
+
+	svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+}

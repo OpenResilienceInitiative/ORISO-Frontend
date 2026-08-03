@@ -77,7 +77,18 @@ export const applyTenantPalette = (
 		return false;
 	}
 	try {
-		const { tokens } = computeOrisoPalette(seeds, 'light');
+		const { tokens, tooPale } = computeOrisoPalette(seeds, 'light');
+		if (tooPale) {
+			// #143: a near-achromatic seed (chroma < TOO_PALE_CHROMA, e.g.
+			// black or grey) cannot yield distinguishable role colours —
+			// hover/container/shadow tints all collapse into one family.
+			// Keep the compiled default palette instead of injecting it.
+			// eslint-disable-next-line no-console
+			console.warn(
+				`Tenant theming: seed ${seeds.primary} is too pale (chroma < 12), keeping the default palette.`
+			);
+			return false;
+		}
 		Object.entries(tokens).forEach(([name, value]) => {
 			root.style.setProperty(name, value);
 		});
@@ -141,7 +152,16 @@ export const applyPreviewFromLocation = (
 		return false;
 	}
 	try {
-		const { tokens } = computeOrisoPalette(seeds, 'light');
+		const { tokens, tooPale } = computeOrisoPalette(seeds, 'light');
+		if (tooPale) {
+			// Preview (Theme Builder sandbox) deliberately still applies:
+			// an admin evaluating a pale seed must see the degenerate
+			// result the guard protects real tenants from.
+			// eslint-disable-next-line no-console
+			console.warn(
+				`Theme preview: seed ${seeds.primary} is too pale (chroma < 12); a stored tenant seed like this would be ignored.`
+			);
+		}
 		Object.entries(tokens).forEach(([name, value]) => {
 			root.style.setProperty(name, value);
 		});

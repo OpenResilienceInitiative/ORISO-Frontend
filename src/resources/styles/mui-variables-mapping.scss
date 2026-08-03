@@ -57,6 +57,11 @@
 	--oriso-app-action: #a5000a;
 	--oriso-lottie-accent-color: var(--oriso-primary-fixed-dim, #ffb4aa);
 	--oriso-lottie-secondary-color: var(--m3-secondary-container, #646d78);
+
+	// Confirmation animations sit on white and carry meaning, so they take the
+	// full brand role rather than the dimmed decorative tones above.
+	--oriso-lottie-success-accent-color: var(--m3-primary, #a5000a);
+	--oriso-lottie-success-base-color: var(--m3-on-surface-variant, #444748);
 	--background-light: #{$background-light};
 	--background-lighter: #{$background-lighter};
 	--button-border-radius: #{$button-border-radius};

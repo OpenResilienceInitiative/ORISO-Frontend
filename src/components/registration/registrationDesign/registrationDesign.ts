@@ -37,8 +37,10 @@ import u25Prevention05 from '../../../resources/img/registration-md3/icons/t-05-
 
 export const registrationMd3 = {
 	...orisoInputColors,
+	// #143: hero panel follows the tenant primary family; the literal stops
+	// keep the designed red gradient when no palette is injected.
 	heroGradient:
-		'linear-gradient(152deg, #DA2530 0%, #C0121F 46%, #7C0D15 100%)'
+		'linear-gradient(152deg, var(--m3-primary-container, #DA2530) 0%, var(--m3-primary, #C0121F) 46%, var(--m3-primary-hover, #7C0D15) 100%)'
 } as const;
 
 export const registrationMd3TextFieldSx = orisoTextFieldSx;

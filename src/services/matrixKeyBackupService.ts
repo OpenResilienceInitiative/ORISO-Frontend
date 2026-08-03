@@ -26,6 +26,33 @@ export class InvalidRecoveryKeyError extends Error {
 	}
 }
 
+export type RecoverySetupPhase =
+	| 'cross-signing'
+	| 'secret-storage'
+	| 'key-backup-creation'
+	| 'key-backup';
+
+export class RecoverySetupPhaseError extends Error {
+	constructor(
+		public readonly phase: RecoverySetupPhase,
+		cause: unknown
+	) {
+		super(`Recovery setup failed during ${phase}`, { cause });
+		this.name = 'RecoverySetupPhaseError';
+	}
+}
+
+const runRecoverySetupPhase = async <T>(
+	phase: RecoverySetupPhase,
+	operation: () => Promise<T>
+): Promise<T> => {
+	try {
+		return await operation();
+	} catch (error) {
+		throw new RecoverySetupPhaseError(phase, error);
+	}
+};
+
 export type EncryptionSetupStatus = {
 	/** 4S (secret storage) is set up and usable. */
 	secretStorageReady: boolean;
@@ -126,12 +153,28 @@ export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 	const generated = await crypto.createRecoveryKeyFromPassphrase();
 	setPendingKey(generated.privateKey);
 	try {
-		await crypto.bootstrapCrossSigning({});
-		await crypto.bootstrapSecretStorage({
-			createSecretStorageKey: async () => generated,
-			setupNewKeyBackup: true
+		await runRecoverySetupPhase('cross-signing', () =>
+			crypto.bootstrapCrossSigning({})
+		);
+		await runRecoverySetupPhase('secret-storage', () =>
+			crypto.bootstrapSecretStorage({
+				createSecretStorageKey: async () => generated,
+				// Let the SDK create the backup while the new secret-storage
+				// key is still part of the same bootstrap transaction. Creating
+				// it afterwards can miss m.megolm_backup.v1 until the account
+				// data cache catches up, so the setup looks healthy only until
+				// the next reload.
+				setupNewKeyBackup: true
+			})
+		);
+		await runRecoverySetupPhase('key-backup', async () => {
+			await crypto.checkKeyBackupAndEnable();
+			if (!(await crypto.isSecretStorageReady())) {
+				throw new Error(
+					'Recovery setup did not persist the key backup secret'
+				);
+			}
 		});
-		await crypto.checkKeyBackupAndEnable();
 	} finally {
 		setPendingKey(null);
 	}

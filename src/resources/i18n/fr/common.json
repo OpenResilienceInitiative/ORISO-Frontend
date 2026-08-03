@@ -2054,8 +2054,11 @@
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
-				"label": "Nom d'utilisateur",
+				"label": "User-ID",
 				"success": "Votre nom d'utilisateur est approprié."
+			},
+			"twoFactorAuth": {
+				"label": "Sécuriser mon mot de passe avec l'authentification à deux facteurs"
 			}
 		},
 		"back": "Retour",
@@ -3111,8 +3114,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Confirmer",
-		"description": "Ensuite, nos conseillers peuvent commencer un appel vidéo avec vous.",
-		"headline": "Bienvenue !",
+		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",
+		"headline": "Bienvenue",
 		"label": {
 			"and": "et",
 			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."

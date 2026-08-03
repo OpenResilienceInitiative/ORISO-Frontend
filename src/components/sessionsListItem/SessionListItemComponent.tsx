@@ -90,6 +90,7 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -230,6 +231,10 @@ export const SessionListItemComponent = ({
 	});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
+	const matrixSessionPreview = useMatrixSessionPreview(
+		sessionItem?.matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked
+	);
 
 	useEffect(() => {
 		if (caseHandoverContentLocked) {
@@ -240,7 +245,20 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			setPlainTextLastMessage(
+				matrixSessionPreview ??
+					translate('e2ee.message.encryption.text')
+			);
+		}
+	}, [
+		caseHandoverContentLocked,
+		isMatrixBackedSession,
+		matrixSessionPreview,
+		translate
+	]);
+
+	useEffect(() => {
+		if (caseHandoverContentLocked || isMatrixBackedSession) {
 			return;
 		}
 

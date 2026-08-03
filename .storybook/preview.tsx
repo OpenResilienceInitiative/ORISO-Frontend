@@ -804,6 +804,27 @@ const preview: Preview = {
 			theme: themes.light,
 			toc: true
 		},
+		/*
+		 * Storybook's built-in `mobile1` is 320x568 ("Small mobile"), which is
+		 * narrower than any phone this product targets. Stories that name a
+		 * width need a viewport that actually is that width, otherwise the
+		 * toolbar contradicts the story name and the component's media queries
+		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
+		 */
+		viewport: {
+			options: {
+				phone375: {
+					name: 'Phone 375 (iPhone SE / 8)',
+					styles: { width: '375px', height: '812px' },
+					type: 'mobile'
+				},
+				phone390: {
+					name: 'Phone 390 (iPhone 12/13/14)',
+					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				}
+			}
+		},
 		backgrounds: {
 			default: 'light',
 			values: [

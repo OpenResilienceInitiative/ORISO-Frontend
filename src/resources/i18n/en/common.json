@@ -2483,19 +2483,30 @@
 				"allShort": "All 3",
 				"avatar": "Avatar",
 				"password": "Password",
-				"username": "Username"
+				"username": "User-ID"
 			},
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
-					"tooShort": "Your username is too short.",
-					"unavailable": "This username is already taken.",
-					"retry": "We could not check this username right now. Please try again."
+					"tooShort": "Your User-ID is too short.",
+					"unavailable": "This User-ID is already taken.",
+					"retry": "We could not check this User-ID right now. Please try again."
 				},
 				"hint": "Anonymous login name. Please do not use real names or initials.",
 				"info": "Anonymous login name. Please do not use real names or initials.",
-				"label": "Username",
-				"success": "Your username is available."
+				"label": "User-ID",
+				"success": "Your User-ID is available."
+			},
+			"email": {
+				"label": "Email address",
+				"info": "Optional. Only used for security features like two-factor authentication.",
+				"error": {
+					"required": "Please provide an email address.",
+					"invalid": "Please provide a valid email address."
+				}
+			},
+			"twoFactorAuth": {
+				"label": "Additionally secure my password with two-factor authentication"
 			}
 		},
 		"back": "Back",
@@ -3852,7 +3863,7 @@
 	},
 	"anonymousConsent": {
 		"button": "Confirm",
-		"description": "After that, our consultants may start a video call with you.",
+		"description": "After that, a counsellor can start a chat with you.",
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",

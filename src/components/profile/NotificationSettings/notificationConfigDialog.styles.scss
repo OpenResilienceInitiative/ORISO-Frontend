@@ -85,7 +85,7 @@
 		height: 24px;
 		border: none;
 		background: transparent;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		padding: 0;
 		cursor: pointer;
 
@@ -204,7 +204,7 @@
 	&__signalText {
 		margin: 0 0 10px;
 		font-size: 13px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	&__signalThanks {
