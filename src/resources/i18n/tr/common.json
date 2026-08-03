@@ -1420,7 +1420,12 @@
 				"pending": "Şifre çözme bekleniyor",
 				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
 				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
-			}
+			},
+			"loadOlder": "Eski etkinlikleri yükle",
+			"loadingOlder": "Eski etkinlikler yükleniyor…",
+			"olderError": "Eski etkinlikler yüklenemedi.",
+			"retryOlder": "Tekrar dene",
+			"endOfHistory": "Etkinlik geçmişinin sonu"
 		}
 	},
 	"overlay": {

@@ -70,6 +70,39 @@
 		transition: margin 240ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
+	&__pagination {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		padding: 16px 8px 4px;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 0.875rem;
+		text-align: center;
+		flex-shrink: 0;
+
+		button {
+			min-height: 44px;
+			padding: 8px 18px;
+			border: 1px solid var(--m3-outline, #747778);
+			border-radius: 999px;
+			background: transparent;
+			color: var(--m3-primary, #a5000a);
+			font: inherit;
+			font-weight: 600;
+			cursor: pointer;
+
+			&:focus-visible {
+				@include list-item-focus-treatment;
+			}
+
+			&:disabled {
+				cursor: progress;
+				opacity: 0.65;
+			}
+		}
+	}
+
 	// Timeline card (Figma: surface-container fill, white hairline outline,
 	// flush corners inside the group).
 	&__card {

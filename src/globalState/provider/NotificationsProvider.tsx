@@ -17,7 +17,8 @@ import {
 	apiClearEventNotifications,
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
-	apiMarkEventNotificationRead
+	apiMarkEventNotificationRead,
+	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
@@ -118,6 +119,10 @@ type NotificationsContextProps = {
 	addNotification: Dispatch<NotificationDefaultType | IncomingVideoCallProps>;
 	addEventNotification: (event: EventNotificationInput) => void;
 	refreshNotificationFeed: () => void;
+	loadOlderNotifications: () => Promise<void>;
+	hasOlderNotifications: boolean;
+	isLoadingOlderNotifications: boolean;
+	olderNotificationsError: boolean;
 	removeNotification: Function;
 	markNotificationAsRead: (id: string) => void;
 	markAllNotificationsAsRead: () => void;
@@ -127,12 +132,52 @@ type NotificationsContextProps = {
 export const NotificationsContext =
 	createContext<NotificationsContextProps | null>(null);
 
+const normalizeEventNotification = (
+	item: EventNotificationFeedItem
+): NotificationFeedItem => ({
+	id: String(item.id),
+	type: NOTIFICATION_TYPE_INFO,
+	title: item.title || 'Notification',
+	text: item.text || '',
+	eventType: item.eventType || 'event',
+	createdAt: item.createdAt || new Date().toISOString(),
+	readAt: item.readAt ?? null,
+	actionPath: item.actionPath,
+	actionLabel: item.actionLabel,
+	sourceSessionId:
+		item.sourceSessionId != null ? String(item.sourceSessionId) : undefined,
+	params: parseEventActionParams(item.params),
+	category: item.category === 'message' ? 'message' : 'system'
+});
+
+/** Newest first, with ids as the deterministic tie-break and dedupe key. */
+const mergeNotificationFeed = (
+	incoming: NotificationFeedItem[],
+	existing: NotificationFeedItem[]
+): NotificationFeedItem[] => {
+	const byId = new Map(existing.map((item) => [item.id, item]));
+	incoming.forEach((item) => byId.set(item.id, item));
+	return Array.from(byId.values()).sort((left, right) => {
+		const timeOrder =
+			new Date(right.createdAt).getTime() -
+			new Date(left.createdAt).getTime();
+		return timeOrder || left.id.localeCompare(right.id);
+	});
+};
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
 	const [notificationFeed, setNotificationFeed] = useState<
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	const [hasOlderNotifications, setHasOlderNotifications] = useState(false);
+	const [isLoadingOlderNotifications, setIsLoadingOlderNotifications] =
+		useState(false);
+	const [olderNotificationsError, setOlderNotificationsError] =
+		useState(false);
+	const highestLoadedPageRef = useRef(0);
+	const loadingOlderRef = useRef(false);
 	// #576: id of the newest event slot we already reconciled, so a feed refresh
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
@@ -172,6 +217,8 @@ export function NotificationsProvider(props) {
 			// Do not hit protected endpoint before auth is available.
 			setNotificationFeed([]);
 			setUnreadNotificationCount(0);
+			setHasOlderNotifications(false);
+			highestLoadedPageRef.current = 0;
 			return;
 		}
 
@@ -182,28 +229,16 @@ export function NotificationsProvider(props) {
 			);
 			const normalized: NotificationFeedItem[] = (
 				response?.items || []
-			).map((item) => ({
-				id: String(item.id),
-				type:
-					item.category === 'message'
-						? NOTIFICATION_TYPE_INFO
-						: NOTIFICATION_TYPE_INFO,
-				title: item.title || 'Notification',
-				text: item.text || '',
-				eventType: item.eventType || 'event',
-				createdAt: item.createdAt || new Date().toISOString(),
-				readAt: item.readAt ?? null,
-				actionPath: item.actionPath,
-				actionLabel: item.actionLabel,
-				sourceSessionId:
-					item.sourceSessionId != null
-						? String(item.sourceSessionId)
-						: undefined,
-				params: parseEventActionParams(item.params),
-				category: item.category === 'message' ? 'message' : 'system'
-			}));
+			).map(normalizeEventNotification);
 			maybePlaySoundForNewEvent(normalized);
-			setNotificationFeed(normalized);
+			setNotificationFeed((existing) =>
+				mergeNotificationFeed(normalized, existing)
+			);
+			if (highestLoadedPageRef.current === 0) {
+				setHasOlderNotifications(
+					normalized.length === NOTIFICATION_FEED_MAX_ITEMS
+				);
+			}
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
 			// Keep existing state but log failures to simplify diagnostics.
@@ -211,6 +246,40 @@ export function NotificationsProvider(props) {
 			console.warn('Failed to refresh notification feed', error);
 		}
 	}, [maybePlaySoundForNewEvent]);
+
+	const loadOlderNotifications = useCallback(async () => {
+		if (loadingOlderRef.current || !hasOlderNotifications) return;
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) return;
+
+		loadingOlderRef.current = true;
+		setIsLoadingOlderNotifications(true);
+		setOlderNotificationsError(false);
+		const page = highestLoadedPageRef.current + 1;
+		try {
+			const response = await apiGetEventNotifications(
+				page,
+				NOTIFICATION_FEED_MAX_ITEMS
+			);
+			const normalized = (response?.items || []).map(
+				normalizeEventNotification
+			);
+			setNotificationFeed((existing) =>
+				mergeNotificationFeed(normalized, existing)
+			);
+			highestLoadedPageRef.current = page;
+			setHasOlderNotifications(
+				normalized.length === NOTIFICATION_FEED_MAX_ITEMS
+			);
+		} catch (error) {
+			setOlderNotificationsError(true);
+			// eslint-disable-next-line no-console
+			console.warn('Failed to load older notification feed', error);
+		} finally {
+			loadingOlderRef.current = false;
+			setIsLoadingOlderNotifications(false);
+		}
+	}, [hasOlderNotifications]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();
@@ -299,7 +368,7 @@ export function NotificationsProvider(props) {
 				category: event.category === 'message' ? 'message' : 'system'
 			};
 			setNotificationFeed((existing) =>
-				[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+				mergeNotificationFeed([feedItem], existing)
 			);
 			setUnreadNotificationCount((value) => value + 1);
 		},
@@ -363,11 +432,17 @@ export function NotificationsProvider(props) {
 		if (!accessToken) {
 			setNotificationFeed([]);
 			setUnreadNotificationCount(0);
+			setHasOlderNotifications(false);
+			setOlderNotificationsError(false);
+			highestLoadedPageRef.current = 0;
 			return;
 		}
 		apiClearEventNotifications().catch(() => undefined);
 		setNotificationFeed([]);
 		setUnreadNotificationCount(0);
+		setHasOlderNotifications(false);
+		setOlderNotificationsError(false);
+		highestLoadedPageRef.current = 0;
 	}, []);
 
 	return (
@@ -381,6 +456,10 @@ export function NotificationsProvider(props) {
 				addNotification,
 				addEventNotification,
 				refreshNotificationFeed: refreshNotificationFeedSafe,
+				loadOlderNotifications,
+				hasOlderNotifications,
+				isLoadingOlderNotifications,
+				olderNotificationsError,
 				removeNotification,
 				markNotificationAsRead,
 				markAllNotificationsAsRead,

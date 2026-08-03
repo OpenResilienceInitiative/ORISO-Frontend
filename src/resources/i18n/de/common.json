@@ -1753,7 +1753,12 @@
 				"pending": "Wird entschlüsselt",
 				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
 				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
-			}
+			},
+			"loadOlder": "Ältere Aktivitäten laden",
+			"loadingOlder": "Ältere Aktivitäten werden geladen…",
+			"olderError": "Ältere Aktivitäten konnten nicht geladen werden.",
+			"retryOlder": "Erneut versuchen",
+			"endOfHistory": "Ende des Aktivitätsverlaufs"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"

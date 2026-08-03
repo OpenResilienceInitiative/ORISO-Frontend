@@ -1729,7 +1729,12 @@
 				"pending": "Waiting for decryption",
 				"roomUnavailable": "Conversation unavailable on this device",
 				"eventUnavailable": "Message unavailable in local history"
-			}
+			},
+			"loadOlder": "Load older activity",
+			"loadingOlder": "Loading older activity…",
+			"olderError": "Could not load older activity.",
+			"retryOlder": "Try again",
+			"endOfHistory": "End of activity history"
 		},
 		"threadReply": {
 			"title": "New thread reply"

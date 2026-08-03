@@ -1420,7 +1420,12 @@
 				"pending": "Déchiffrement en cours",
 				"roomUnavailable": "Conversation indisponible sur cet appareil",
 				"eventUnavailable": "Message indisponible dans l’historique local"
-			}
+			},
+			"loadOlder": "Charger les activités précédentes",
+			"loadingOlder": "Chargement des activités précédentes…",
+			"olderError": "Impossible de charger les activités précédentes.",
+			"retryOlder": "Réessayer",
+			"endOfHistory": "Fin de l’historique des activités"
 		}
 	},
 	"overlay": {

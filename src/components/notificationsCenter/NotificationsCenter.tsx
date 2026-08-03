@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -210,7 +211,11 @@ export const NotificationsCenter = () => {
 		notificationFeed,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
-		refreshNotificationFeed
+		refreshNotificationFeed,
+		loadOlderNotifications,
+		hasOlderNotifications,
+		isLoadingOlderNotifications,
+		olderNotificationsError
 	} = useContext(NotificationsContext);
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
@@ -241,6 +246,45 @@ export const NotificationsCenter = () => {
 		null
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	const listAnchorRef = useRef<{ id: string; top: number } | null>(null);
+
+	// Preserve the first visible card when a live refresh prepends new events.
+	// Appending an older page naturally keeps the same anchor position.
+	useLayoutEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		const rows = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		);
+		const previousAnchor = listAnchorRef.current;
+		if (previousAnchor) {
+			const anchoredRow = rows.find(
+				(row) => row.dataset.notificationId === previousAnchor.id
+			);
+			if (anchoredRow) {
+				list.scrollTop +=
+					anchoredRow.getBoundingClientRect().top -
+					previousAnchor.top;
+			}
+		}
+
+		return () => {
+			if (list.scrollTop <= 0) {
+				listAnchorRef.current = null;
+				return;
+			}
+			const listTop = list.getBoundingClientRect().top;
+			const firstVisible = rows.find(
+				(row) => row.getBoundingClientRect().bottom > listTop
+			);
+			listAnchorRef.current = firstVisible
+				? {
+						id: firstVisible.dataset.notificationId || '',
+						top: firstVisible.getBoundingClientRect().top
+					}
+				: null;
+		};
+	}, [notificationFeed]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -816,6 +860,7 @@ export const NotificationsCenter = () => {
 							return (
 								<div
 									key={item.id}
+									data-notification-id={item.id}
 									className={`notificationsCenter__listRow ${
 										isActive
 											? 'notificationsCenter__listRow--active'
@@ -933,6 +978,55 @@ export const NotificationsCenter = () => {
 								</div>
 							);
 						})
+					)}
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__pagination">
+							{olderNotificationsError ? (
+								<>
+									<span role="alert">
+										{translate(
+											'notifications.center.olderError',
+											'Could not load older activity.'
+										)}
+									</span>
+									<button
+										type="button"
+										onClick={() =>
+											void loadOlderNotifications()
+										}
+									>
+										{translate(
+											'notifications.center.retryOlder',
+											'Try again'
+										)}
+									</button>
+								</>
+							) : hasOlderNotifications ? (
+								<button
+									type="button"
+									disabled={isLoadingOlderNotifications}
+									onClick={() =>
+										void loadOlderNotifications()
+									}
+								>
+									{translate(
+										isLoadingOlderNotifications
+											? 'notifications.center.loadingOlder'
+											: 'notifications.center.loadOlder',
+										isLoadingOlderNotifications
+											? 'Loading older activity…'
+											: 'Load older activity'
+									)}
+								</button>
+							) : (
+								<span role="status">
+									{translate(
+										'notifications.center.endOfHistory',
+										'End of activity history'
+									)}
+								</span>
+							)}
+						</div>
 					)}
 				</div>
 				<Menu

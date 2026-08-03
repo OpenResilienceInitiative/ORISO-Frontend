@@ -37,5 +37,16 @@ describe('Matrix Activity Timeline preview translations', () => {
 			expect(label.trim()).not.toBe('');
 			expect(label).not.toMatch(/^notifications\./);
 		});
+		[
+			'loadOlder',
+			'loadingOlder',
+			'olderError',
+			'retryOlder',
+			'endOfHistory'
+		].forEach((key) => {
+			const label = common.notifications.center[key];
+			expect(label).toEqual(expect.any(String));
+			expect(label.trim()).not.toBe('');
+		});
 	});
 });

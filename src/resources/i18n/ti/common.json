@@ -1420,7 +1420,12 @@
 				"pending": "ምፍታሕ ምስጢር ይጽበ",
 				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
 				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
-			}
+			},
+			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
+			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
+			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
+			"retryOlder": "ደጊምካ ፈትን",
+			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
 		}
 	},
 	"overlay": {
