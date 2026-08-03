@@ -134,25 +134,29 @@ export class MatrixLiveEventBridge {
 					}
 				});
 
-				return events
-					.filter((event) => {
+				return events.reduce<{ event: MatrixEvent; room: Room }[]>(
+					(candidatesForRoom, event) => {
 						if (
 							event.getType() !== 'm.call.invite' &&
 							event.getType() !== 'org.oriso.call.invite'
 						) {
-							return false;
+							return candidatesForRoom;
 						}
 						const content = event.getContent();
 						const callId = content.call_id;
 						const endedAt = callId
 							? hangups.get(callId)
 							: undefined;
-						return (
+						if (
 							isElementOrGroupCallInvite(content) &&
 							(!endedAt || endedAt < event.getTs())
-						);
-					})
-					.map((event) => ({ event, room }));
+						) {
+							candidatesForRoom.push({ event, room });
+						}
+						return candidatesForRoom;
+					},
+					[]
+				);
 			})
 			.sort((a, b) => b.event.getTs() - a.event.getTs());
 
