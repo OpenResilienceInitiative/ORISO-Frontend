@@ -842,8 +842,7 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
-			"back": "Geri",
-			"cardMenu": "Bu görüşme biçimi için seçenekler"
+			"back": "Geri"
 		},
 		"circle": {
 			"rows": {

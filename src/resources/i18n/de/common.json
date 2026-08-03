@@ -769,8 +769,7 @@
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
-			"panelMenu": "Weitere Optionen",
-			"cardMenu": "Optionen für dieses Gesprächsformat"
+			"panelMenu": "Weitere Optionen"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",

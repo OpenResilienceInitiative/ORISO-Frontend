@@ -757,8 +757,7 @@
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
-			"panelMenu": "More options",
-			"cardMenu": "Options for this conversation format"
+			"panelMenu": "More options"
 		},
 		"internal": {
 			"addPerson": "Add person",
