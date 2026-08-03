@@ -170,15 +170,18 @@ export class MatrixClientService {
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
-		// Anonymous live-chat users are exempt: they can never cross-sign the
-		// consultant's device, so verified-only isolation would leave the
-		// consultant seeing only undecryptable noise. They always share to all
-		// devices so the accepted consultant can read the conversation (#774).
+		// Advice seekers are exempt on their sending client: they cannot verify a
+		// consultant's identity as part of the counselling flow, and a consultant
+		// device may only become cross-signed after the room/device list was first
+		// cached. Verified-only key distribution would then silently leave the
+		// consultant seeing undecryptable noise (#551, #774). Consultant clients
+		// remain in verified-only isolation.
 		// Best-effort — never breaks client startup.
 		applyDeviceIsolationMode(
 			client,
 			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
-				loginData.isAnonymous !== true
+				loginData.isAnonymous !== true &&
+				loginData.shareMegolmWithAllDevices !== true
 		);
 
 		(client as any).on(
@@ -287,14 +290,15 @@ export class MatrixClientService {
 		this.refreshingToken = getMatrixAccessToken()
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
-				// anonymity is stable across refreshes, so carry the existing flag
-				// forward — otherwise invisible crypto would re-apply verified-only
-				// isolation on the refreshed client and make an anonymous asker's
-				// messages undecryptable for the consultant again (#774).
+				// Role-derived key-sharing policy is stable across refreshes, so carry
+				// it forward with the legacy anonymous compatibility flag.
 				const refreshedLoginData: MatrixLoginData = {
 					...loginData,
 					isAnonymous:
-						loginData.isAnonymous ?? this.loginData?.isAnonymous
+						loginData.isAnonymous ?? this.loginData?.isAnonymous,
+					shareMegolmWithAllDevices:
+						loginData.shareMegolmWithAllDevices ??
+						this.loginData?.shareMegolmWithAllDevices
 				};
 				persistMatrixLoginData(refreshedLoginData);
 				await this.initializeClient(refreshedLoginData);
@@ -337,7 +341,10 @@ export class MatrixClientService {
 				const recoveredLoginData: MatrixLoginData = {
 					...loginData,
 					isAnonymous:
-						loginData.isAnonymous ?? staleLoginData.isAnonymous
+						loginData.isAnonymous ?? staleLoginData.isAnonymous,
+					shareMegolmWithAllDevices:
+						loginData.shareMegolmWithAllDevices ??
+						staleLoginData.shareMegolmWithAllDevices
 				};
 				persistMatrixLoginData(recoveredLoginData);
 				await this.initializeClient(recoveredLoginData);

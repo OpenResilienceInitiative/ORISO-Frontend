@@ -31,6 +31,11 @@ export interface MatrixLoginData {
 	// (verified-only) would silently make their messages undecryptable for the
 	// consultant. See matrixClientService.initializeClient.
 	isAnonymous?: boolean;
+	/**
+	 * Advice-seeker clients must distribute Megolm keys to the consultant's
+	 * devices. Consultants keep verified-only device isolation.
+	 */
+	shareMegolmWithAllDevices?: boolean;
 }
 
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';

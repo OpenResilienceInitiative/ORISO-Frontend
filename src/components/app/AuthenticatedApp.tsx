@@ -137,7 +137,8 @@ export const AuthenticatedApp = ({
 										const matrixLoginData =
 											await getMatrixAccessToken();
 										persistMatrixLoginData(matrixLoginData);
-										const { homeserverUrl } = matrixLoginData;
+										const { homeserverUrl } =
+											matrixLoginData;
 										if (homeserverUrl) {
 											const { MatrixClientService } =
 												await import(
@@ -151,7 +152,11 @@ export const AuthenticatedApp = ({
 													hasUserAuthority(
 														AUTHORITIES.ANONYMOUS_DEFAULT,
 														userProfileData
-													)
+													) ||
+														hasUserAuthority(
+															AUTHORITIES.ASKER_DEFAULT,
+															userProfileData
+														)
 												)
 											);
 											if (
