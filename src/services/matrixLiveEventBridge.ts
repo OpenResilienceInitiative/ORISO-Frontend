@@ -26,6 +26,7 @@ export class MatrixLiveEventBridge {
 	private eventCallbacks: Map<string, Set<(event: any) => void>> = new Map();
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
+	private activeCallRecoveryScans = 0;
 	private pendingEncryptedEvents = new Map<
 		MatrixEvent,
 		{
@@ -56,6 +57,7 @@ export class MatrixLiveEventBridge {
 
 		this.client = client;
 		this.processedCallInvites.clear();
+		this.activeCallRecoveryScans = 0;
 		this.setupEventListeners();
 		this.initialized = true;
 
@@ -88,8 +90,76 @@ export class MatrixLiveEventBridge {
 			'sync' as any,
 			(state: string, prevState: string | null) => {
 				// console.log("🔄 Matrix sync state:", state, "(previous:", prevState, ")");
+				if (
+					(state === 'PREPARED' || state === 'SYNCING') &&
+					this.activeCallRecoveryScans < 2
+				) {
+					this.activeCallRecoveryScans += 1;
+					if (this.recoverActiveElementCallFromTimeline()) {
+						this.activeCallRecoveryScans = 2;
+					}
+				}
 			}
 		);
+	}
+
+	private recoverActiveElementCallFromTimeline(): boolean {
+		if (!this.client) return false;
+
+		const candidates = this.client
+			.getRooms()
+			.flatMap((room) => {
+				const events = room.getLiveTimeline().getEvents();
+				const hangups = new Map<string, number>();
+				events.forEach((event) => {
+					if (
+						event.getType() === 'm.call.hangup' ||
+						event.getType() === 'org.oriso.call.hangup'
+					) {
+						const callId = event.getContent().call_id;
+						if (callId) {
+							hangups.set(
+								callId,
+								Math.max(hangups.get(callId) ?? 0, event.getTs())
+							);
+						}
+					}
+				});
+
+				return events
+					.filter((event) => {
+						if (
+							event.getType() !== 'm.call.invite' &&
+							event.getType() !== 'org.oriso.call.invite'
+						) {
+							return false;
+						}
+						const content = event.getContent();
+						const callId = content.call_id;
+						const endedAt = callId ? hangups.get(callId) : undefined;
+						return (
+							(content.is_element_call === true ||
+								content.is_group_call === true) &&
+							(!endedAt || endedAt < event.getTs())
+						);
+					})
+					.map((event) => ({ event, room }));
+			})
+			.sort((a, b) => b.event.getTs() - a.event.getTs());
+
+		for (const { event, room } of candidates) {
+			const content = event.getContent();
+			const callRoomId = content.call_room_id || room.roomId;
+			if (
+				event.getSender() !== this.client.getUserId() &&
+				this.hasActiveMatrixRtcMembership(callRoomId)
+			) {
+				this.handleCallInvite(event, room);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private dispatchTimelineEvent(

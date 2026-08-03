@@ -277,6 +277,46 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		membershipSpy.mockRestore();
 	});
 
+	it('scans the synced timeline after reload for an active Element Call invite', () => {
+		const callRoomId = '!active-call:matrix.oriso.org';
+		const historicalInvite = makeEvent({
+			type: 'org.oriso.call.invite',
+			content: {
+				call_id: 'call-active-in-sync',
+				is_element_call: true,
+				is_group_call: false,
+				is_video: false,
+				call_room_id: callRoomId
+			},
+			ts: Date.now() - 60_000
+		});
+		const syncedSignalRoom = {
+			roomId: ROOM_ID,
+			getLiveTimeline: () => ({ getEvents: () => [historicalInvite] })
+		};
+		const activeCallRoom = { roomId: callRoomId };
+		(client as any).getRooms = vi.fn(() => [syncedSignalRoom]);
+		(client as any).getRoom = vi.fn((roomId: string) =>
+			roomId === callRoomId ? activeCallRoom : null
+		);
+		const membershipSpy = vi
+			.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+			.mockReturnValue([{} as any]);
+
+		client.emit('sync', 'PREPARED', null);
+
+		expect(receiveCall).toHaveBeenCalledWith(
+			callRoomId,
+			false,
+			'call-active-in-sync',
+			OTHER_USER_ID,
+			false,
+			ROOM_ID,
+			true
+		);
+		membershipSpy.mockRestore();
+	});
+
 	it('ignores our own call invites', () => {
 		emitInvite({
 			content: { call_id: 'call-mine' },
