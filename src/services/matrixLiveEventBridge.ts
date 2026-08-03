@@ -324,7 +324,13 @@ export class MatrixLiveEventBridge {
 		if (ageSeconds > 10 && !hasActiveMatrixRtcMembership) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
-			this.processedCallInvites.add(callId);
+			// A partially synced Element Call room can gain active MatrixRTC
+			// membership on the next sync. Keep that invite recoverable. Legacy
+			// Matrix WebRTC invites have no equivalent active-membership signal and
+			// remain permanently stale once rejected.
+			if (!isElementCall) {
+				this.processedCallInvites.add(callId);
+			}
 			return;
 		}
 

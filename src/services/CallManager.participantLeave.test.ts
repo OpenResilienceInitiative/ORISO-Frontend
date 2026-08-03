@@ -71,6 +71,51 @@ describe('Element Call participant leave', () => {
 		expect(sendEvent).not.toHaveBeenCalled();
 	});
 
+	it('replaces left metadata when starting a group call in a different room', async () => {
+		const invite = vi.fn().mockResolvedValue(undefined);
+		createRoom.mockResolvedValue({
+			room_id: '!replacement-call:oriso.example'
+		});
+		vi.stubEnv(
+			'REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID',
+			'@matrixrtc-auth:oriso.example'
+		);
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				sendEvent,
+				createRoom,
+				invite,
+				getUserId: () => '@patty:oriso.example',
+				getRoom: () => null
+			})
+		} as never);
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+		callManager.leaveCall();
+
+		callManager.startCall('!different-group:oriso.example', true, true);
+
+		await vi.waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					roomId: '!replacement-call:oriso.example',
+					signalRoomId: '!different-group:oriso.example',
+					state: 'connecting'
+				})
+			)
+		);
+		expect(callManager.getCurrentCall()?.callId).not.toBe('group-call');
+		expect(createRoom).toHaveBeenCalledTimes(1);
+		vi.unstubAllEnvs();
+	});
+
 	it('accepts a different incoming call after the participant left a group call', () => {
 		callManager.receiveCall(
 			CALL_ROOM,

@@ -130,9 +130,12 @@ class CallManager {
 		) {
 			// Reopen the existing MatrixRTC room. Creating another dedicated room
 			// here would strand the participants who stayed in the active call.
-			this.currentCall.isVideo = isVideo;
-			this.currentCall.isIncoming = false;
-			this.currentCall.state = 'connecting';
+			this.currentCall = {
+				...this.currentCall,
+				isVideo,
+				isIncoming: false,
+				state: 'connecting'
+			};
 			this.notifyListeners();
 			return;
 		}
@@ -727,7 +730,7 @@ class CallManager {
 	 */
 	public leaveCall(): void {
 		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
-			this.currentCall.state = 'left';
+			this.currentCall = { ...this.currentCall, state: 'left' };
 			releaseAllCallWarmupStreams();
 			this.notifyListeners();
 			return;
