@@ -30,7 +30,7 @@ export interface EnquirySubmissionGuard {
 
 interface EncryptedInitialEnquiryInput {
 	sessionId: number;
-	sendEncryptedMatrixMessage: () => Promise<{
+	sendEncryptedMatrixMessage: (transactionId: string) => Promise<{
 		event_id?: string;
 		eventId?: string;
 	}>;
@@ -41,6 +41,45 @@ interface EncryptedInitialEnquiryInput {
 const pendingEnquiryEventStorageKey = (sessionId: number) =>
 	`oriso.pendingEncryptedEnquiryEvent.${sessionId}`;
 
+const initialEnquiryTransactionId = (sessionId: number) =>
+	`oriso.enquiry.${sessionId}`;
+
+const readRetryEventId = (
+	storage: Pick<Storage, 'getItem'>,
+	storageKey: string
+): string => {
+	try {
+		return storage.getItem(storageKey) || '';
+	} catch {
+		return '';
+	}
+};
+
+const cacheRetryEventId = (
+	storage: Pick<Storage, 'setItem'>,
+	storageKey: string,
+	matrixEventId: string
+): void => {
+	try {
+		storage.setItem(storageKey, matrixEventId);
+	} catch {
+		// The stable Matrix transaction ID remains the durable idempotency
+		// boundary when browser storage is unavailable.
+	}
+};
+
+const clearRetryEventId = (
+	storage: Pick<Storage, 'removeItem'>,
+	storageKey: string
+): void => {
+	try {
+		storage.removeItem(storageKey);
+	} catch {
+		// Best-effort cache cleanup must not turn a finalized enquiry into a
+		// failed submission.
+	}
+};
+
 export const sendEncryptedInitialEnquiry = async ({
 	sessionId,
 	sendEncryptedMatrixMessage,
@@ -48,20 +87,22 @@ export const sendEncryptedInitialEnquiry = async ({
 	storage = window.localStorage
 }: EncryptedInitialEnquiryInput): Promise<any> => {
 	const storageKey = pendingEnquiryEventStorageKey(sessionId);
-	let matrixEventId = storage.getItem(storageKey) || '';
+	let matrixEventId = readRetryEventId(storage, storageKey);
 	if (!matrixEventId) {
-		const response = await sendEncryptedMatrixMessage();
+		const response = await sendEncryptedMatrixMessage(
+			initialEnquiryTransactionId(sessionId)
+		);
 		matrixEventId = response.event_id || response.eventId || '';
 		if (!matrixEventId) {
 			throw new Error(
 				'Encrypted Matrix enquiry send returned no event ID'
 			);
 		}
-		storage.setItem(storageKey, matrixEventId);
+		cacheRetryEventId(storage, storageKey, matrixEventId);
 	}
 
 	const response = await finalizeEnquiry(matrixEventId);
-	storage.removeItem(storageKey);
+	clearRetryEventId(storage, storageKey);
 	return response;
 };
 

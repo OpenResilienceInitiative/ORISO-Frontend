@@ -196,7 +196,55 @@ describe('messageEncryptionMode', () => {
 		});
 
 		expect(calls).toEqual(['matrix', 'finalize:$encrypted']);
+		expect(sendEncryptedMatrixMessage).toHaveBeenCalledWith(
+			'oriso.enquiry.42'
+		);
 		expect(values.size).toBe(0);
+	});
+
+	it('reuses the homeserver transaction when retry storage is unavailable', async () => {
+		const storage = {
+			getItem: vi.fn(() => {
+				throw new Error('storage unavailable');
+			}),
+			setItem: vi.fn(() => {
+				throw new Error('storage unavailable');
+			}),
+			removeItem: vi.fn(() => {
+				throw new Error('storage unavailable');
+			})
+		};
+		const sendEncryptedMatrixMessage = vi
+			.fn()
+			.mockResolvedValue({ event_id: '$encrypted' });
+		const finalizeEnquiry = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('temporary'))
+			.mockResolvedValueOnce({ sessionId: 42 });
+
+		await expect(
+			sendEncryptedInitialEnquiry({
+				sessionId: 42,
+				sendEncryptedMatrixMessage,
+				finalizeEnquiry,
+				storage
+			})
+		).rejects.toThrow('temporary');
+		await sendEncryptedInitialEnquiry({
+			sessionId: 42,
+			sendEncryptedMatrixMessage,
+			finalizeEnquiry,
+			storage
+		});
+
+		expect(sendEncryptedMatrixMessage).toHaveBeenNthCalledWith(
+			1,
+			'oriso.enquiry.42'
+		);
+		expect(sendEncryptedMatrixMessage).toHaveBeenNthCalledWith(
+			2,
+			'oriso.enquiry.42'
+		);
 	});
 
 	it('retries finalization without sending a duplicate encrypted message', async () => {

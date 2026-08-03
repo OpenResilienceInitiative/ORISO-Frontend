@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -1193,10 +1194,26 @@ export const MessageSubmitInterfaceComponent = ({
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 				return Promise.resolve();
 			}
+			try {
+				assertMatrixRoomEncrypted(
+					matrixClientService.getClient(),
+					matrixRoomId
+				);
+			} catch {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				return Promise.resolve();
+			}
 			return sendEncryptedInitialEnquiry({
 				sessionId: activeSession.item.id,
-				sendEncryptedMatrixMessage: () =>
-					matrixClientService.sendMessage(matrixRoomId, message),
+				sendEncryptedMatrixMessage: (transactionId) =>
+					matrixClientService.sendMessage(
+						matrixRoomId,
+						message,
+						undefined,
+						transactionId
+					),
 				finalizeEnquiry: (matrixEventId) =>
 					apiSendEnquiry(
 						activeSession.item.id,

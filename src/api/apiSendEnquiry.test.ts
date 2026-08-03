@@ -7,8 +7,8 @@ describe('buildEncryptedEnquiryFinalizationPayload', () => {
 			buildEncryptedEnquiryFinalizationPayload('$encrypted', 'de')
 		).toEqual({
 			message: '',
+			t: 'e2e',
 			matrixEventId: '$encrypted',
-			sendNotification: true,
 			language: 'de'
 		});
 	});
