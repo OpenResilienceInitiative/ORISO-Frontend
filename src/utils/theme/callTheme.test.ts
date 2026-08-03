@@ -9,7 +9,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
-import { buildCallThemeCss } from './callTheme';
+import {
+	buildCallThemeCss,
+	CALL_THEME_ARTEFACT_PATH,
+	CALL_TOKEN_MAP
+} from './callTheme';
 import { computeOrisoPalette } from './orisoScheme';
 
 const SEED = '#A5000A';
@@ -50,6 +54,20 @@ describe('buildCallThemeCss', () => {
 		);
 	});
 
+	it.each(Object.entries(CALL_TOKEN_MAP))(
+		'%s traces exactly to its engine role in both schemes',
+		(cpdToken, mapping) => {
+			for (const tokens of [light, dark]) {
+				const scheme = tokens === light ? 'light' : 'dark';
+				const expected =
+					mapping.alpha === undefined
+						? tokens[mapping.m3]
+						: `color-mix(in srgb, ${tokens[mapping.m3]} ${mapping.alpha}%, transparent)`;
+				expect(readToken(css, scheme, cpdToken)).toBe(expected);
+			}
+		}
+	);
+
 	it('is deterministic — same seed, byte-identical output', () => {
 		expect(buildCallThemeCss(SEED)).toBe(css);
 	});
@@ -80,10 +98,13 @@ describe('buildCallThemeCss', () => {
  * before anyone noticed.
  */
 describe('the checked-in artefact', () => {
+	// Same location constant as the generator CLI — the two cannot drift.
 	const artefact = path.join(
 		__dirname,
-		'generated',
-		'element-call-theme.css'
+		'..',
+		'..',
+		'..',
+		CALL_THEME_ARTEFACT_PATH
 	);
 
 	it('exists', () => {

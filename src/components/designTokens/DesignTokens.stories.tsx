@@ -99,11 +99,10 @@ const Score: React.FC<{ ratio: number; large?: boolean }> = ({
 	);
 };
 
-const SchemeColumn: React.FC<{ scheme: OrisoSchemeName; role: string }> = ({
-	scheme,
-	role
-}) => {
-	const { tokens } = computeOrisoPalette({ primary: SEED }, scheme);
+const SchemeColumn: React.FC<{
+	tokens: Record<string, string>;
+	role: string;
+}> = ({ tokens, role }) => {
 	const value = tokens[role];
 	const against = PAIRED_WITH[role];
 	return (
@@ -125,9 +124,11 @@ const SchemeColumn: React.FC<{ scheme: OrisoSchemeName; role: string }> = ({
 };
 
 const RoleTable: React.FC = () => {
-	const roles = Object.keys(
-		computeOrisoPalette({ primary: SEED }, 'light').tokens
-	).filter((r) => r.startsWith('--m3-'));
+	// One palette per scheme, not one per table cell.
+	const palettes = SCHEMES.map(
+		(s) => computeOrisoPalette({ primary: SEED }, s).tokens
+	);
+	const roles = Object.keys(palettes[0]).filter((r) => r.startsWith('--m3-'));
 	return (
 		<table style={{ borderCollapse: 'collapse' }}>
 			<thead>
@@ -152,8 +153,12 @@ const RoleTable: React.FC = () => {
 						style={{ borderTop: '1px solid rgba(128,128,128,.25)' }}
 					>
 						<td style={{ ...mono, padding: '6px 14px' }}>{role}</td>
-						{SCHEMES.map((s) => (
-							<SchemeColumn key={s} scheme={s} role={role} />
+						{SCHEMES.map((s, i) => (
+							<SchemeColumn
+								key={s}
+								tokens={palettes[i]}
+								role={role}
+							/>
 						))}
 					</tr>
 				))}

@@ -281,7 +281,10 @@ export const useElementCallWidget = (
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
-				void api.updateTheme({ name: 'light' }).catch(() => {
+				// Re-assert the same scheme the URL pins (`theme=dark` above):
+				// the ready-time update guards against Element Call defaulting
+				// differently, and must never contradict the URL parameter.
+				void api.updateTheme({ name: 'dark' }).catch(() => {
 					/* the widget may have closed during capability negotiation */
 				});
 			});

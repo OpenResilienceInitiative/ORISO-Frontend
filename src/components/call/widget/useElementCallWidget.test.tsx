@@ -313,7 +313,9 @@ describe('useElementCallWidget', () => {
 		const api = widgetApiMocks.apiInstances[0];
 
 		act(() => api.emit('ready', new CustomEvent('ready')));
-		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'light' });
+		// Must match the `theme=dark` pin in the widget URL — a ready-time
+		// update to any other scheme would flip the call after launch.
+		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
 
 		const closeRequest = {
 			action: 'io.element.close',

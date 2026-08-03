@@ -5,11 +5,11 @@
  * with the theme switchable from the controls.
  *
  * Deliberately an iframe rather than imported components: the call's
- * screens pull `matrix-js-sdk`, `livekit-client` and widget/media state,
- * and the fork runs React 19 while this app does not. Mocking that in
- * would put two React versions and two design systems in one build,
- * break on every upstream merge, and still only show mocks. Component-
- * level coverage belongs in the fork, which already has Playwright.
+ * screens pull `matrix-js-sdk`, `livekit-client` and widget/media state.
+ * Mocking that in would put two dependency trees and two design systems
+ * in one build, break on every upstream merge, and still only show
+ * mocks. Component-level coverage belongs in the fork, which already
+ * has Playwright.
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';

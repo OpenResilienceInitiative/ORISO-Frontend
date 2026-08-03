@@ -12,7 +12,10 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildCallThemeCss } from '../src/utils/theme/callTheme';
+import {
+	buildCallThemeCss,
+	CALL_THEME_ARTEFACT_PATH
+} from '../src/utils/theme/callTheme';
 
 /** The ORISO default tenant. Other tenants arrive at runtime, not here. */
 const DEFAULT_SEED = '#A5000A';
@@ -21,17 +24,10 @@ const DEFAULT_SEED = '#A5000A';
  * Checked-in copy. `ORISO-ElementCall` consumes its own copy of this
  * file; regenerate with `--out` pointing at the fork after any engine
  * change. (The follow-up on #896 replaces the copy with a shared
- * package.)
+ * package.) The location itself is shared with the drift test via
+ * CALL_THEME_ARTEFACT_PATH.
  */
-const DEFAULT_OUT = path.join(
-	__dirname,
-	'..',
-	'src',
-	'utils',
-	'theme',
-	'generated',
-	'element-call-theme.css'
-);
+const DEFAULT_OUT = path.join(__dirname, '..', CALL_THEME_ARTEFACT_PATH);
 
 const argValue = (flag: string): string | undefined => {
 	const i = process.argv.indexOf(flag);

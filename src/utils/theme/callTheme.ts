@@ -16,6 +16,14 @@
  */
 import { type OrisoSchemeName, computeOrisoPalette } from './orisoScheme';
 
+/**
+ * Where the generated artefact lives, relative to the repo root. Shared by
+ * the generator CLI (scripts/generate-call-theme.ts) and the drift test so
+ * the two can never disagree about the location.
+ */
+export const CALL_THEME_ARTEFACT_PATH =
+	'src/utils/theme/generated/element-call-theme.css';
+
 /** The Compound theme class each scheme is emitted under. */
 const SCHEME_CLASS: Record<'dark' | 'light', string> = {
 	dark: 'cpd-theme-dark',
