@@ -17,7 +17,6 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -76,6 +75,7 @@ import {
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
+import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -105,6 +105,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
+	const {
+		settings: currentTenantSettings,
+		isLoading: isLoadingTenantSettings
+	} = useSessionTenantSettings(activeSession.item?.id);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -372,7 +376,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		featureVideoCallsOneOnOneChatsEnabled = true,
 		featureVideoCallsGroupChatsEnabled = true,
 		featureVideoCallsSupervisionChatsEnabled = true
-	} = getTenantSettings();
+	} = currentTenantSettings;
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 
@@ -525,6 +529,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	return (
 		<div className="sessionMenu__wrapper">
 			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
+				!isLoadingTenantSettings &&
 				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
