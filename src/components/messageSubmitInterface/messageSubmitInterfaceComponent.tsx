@@ -43,6 +43,8 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	createAudienceCollector,
+	createIdentityLookup,
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
@@ -2110,6 +2112,22 @@ export const MessageSubmitInterfaceComponent = ({
 		[deriveLabelFromUserId]
 	);
 
+	/**
+	 * Fuzzy id expansion, kept only for the @-mention provider below.
+	 *
+	 * The audience selector no longer uses it: it splits an id on
+	 * non-alphanumerics and keeps every token of four or more characters, so
+	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * homeserver shares. As an identity test that is worthless, which is why
+	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
+	 *
+	 * The mention provider still matches on these tokens, and inherits the same
+	 * weakness one level down: two counsellors who merely share a surname
+	 * collide, so a pill for `hans.meier` can resolve to `@anna.meier`'s Matrix
+	 * id and mark him as in-room. That belongs to the mention feature (#435)
+	 * rather than to the Send-to selector, so it is reported separately instead
+	 * of being changed here.
+	 */
 	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
 		const compact = (rawValue || '').trim().toLowerCase();
 		if (!compact) {
@@ -2294,18 +2312,17 @@ export const MessageSubmitInterfaceComponent = ({
 			setSelectedAudienceValues([AUDIENCE_ALL]);
 			return;
 		}
-		const collected = new Map<string, string>();
-		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromSession = getCurrentMatrixUserId();
-		[
-			matrixUserIdFromSession,
+		/**
+		 * Strict identity throughout: both "is this me?" and "have I already
+		 * got this person?" used to run through `getComparableAudienceIds`,
+		 * whose 4+ character tokens include the homeserver — so every account
+		 * on `oriso.org` matched every other one. See #894.
+		 */
+		const audience = createAudienceCollector([
+			getCurrentMatrixUserId(),
 			userData?.userName,
 			userData?.displayName
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				selfIdentifiers.add(id)
-			);
-		});
+		]);
 		const roomId = getMatrixRoomId();
 		const matrixClient = matrixClientService?.getClient?.();
 		const room =
@@ -2313,7 +2330,10 @@ export const MessageSubmitInterfaceComponent = ({
 		const roomMembers =
 			room?.getMembers?.() || room?.getJoinedMembers?.() || [];
 		const restrictToSupervisionAudience = sessionSupervisors.length > 0;
-		const supervisorLabelByComparableId = new Map<string, string>();
+		// Also strict: under the fuzzy matcher a single supervisor in the room
+		// lent their label — and with it the moderator icon — to everybody who
+		// merely shared their homeserver.
+		const supervisorLabelByIdentity = createIdentityLookup<string>();
 		sessionSupervisors.forEach((supervisor) => {
 			const mappedConsultant = agencyConsultantDirectory.get(
 				supervisor.id
@@ -2326,13 +2346,10 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!preferredLabel) {
 				return;
 			}
-			[supervisor.id, supervisor.username].forEach((rawValue) => {
-				getComparableAudienceIds(rawValue).forEach((id) => {
-					if (!supervisorLabelByComparableId.has(id)) {
-						supervisorLabelByComparableId.set(id, preferredLabel);
-					}
-				});
-			});
+			supervisorLabelByIdentity.set(
+				[supervisor.id, supervisor.username],
+				preferredLabel
+			);
 		});
 
 		roomMembers.forEach((member: any) => {
@@ -2352,26 +2369,18 @@ export const MessageSubmitInterfaceComponent = ({
 			) {
 				return;
 			}
-			const memberComparableIds = getComparableAudienceIds(memberId);
-			const isSelf = Array.from(memberComparableIds).some((id) =>
-				selfIdentifiers.has(id)
-			);
-			if (isSelf) {
+			if (audience.isSelf(memberId)) {
 				return;
 			}
+			const supervisorLabel = supervisorLabelByIdentity.get(memberId);
 			const memberName = `${member?.name || ''}`.trim();
 			if (
 				memberName.toLowerCase().startsWith('enc.') &&
-				!Array.from(memberComparableIds).some((id) =>
-					supervisorLabelByComparableId.has(id)
-				)
+				!supervisorLabel
 			) {
 				return;
 			}
-			const supervisorLabel = Array.from(memberComparableIds)
-				.map((id) => supervisorLabelByComparableId.get(id))
-				.find(Boolean);
-			collected.set(
+			audience.add(
 				memberId,
 				formatAudiencePersonLabel(
 					supervisorLabel || memberName,
@@ -2388,25 +2397,7 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!compactId) {
 				return;
 			}
-			const comparableIds = getComparableAudienceIds(compactId);
-			const isSelf = Array.from(comparableIds).some((id) =>
-				selfIdentifiers.has(id)
-			);
-			if (isSelf) {
-				return;
-			}
-			if (Array.from(comparableIds).some((id) => collected.has(id))) {
-				return;
-			}
-			const existingKey = Array.from(collected.keys()).find((key) =>
-				Array.from(comparableIds).some((id) =>
-					getComparableAudienceIds(key).has(id)
-				)
-			);
-			if (existingKey) {
-				return;
-			}
-			collected.set(
+			audience.add(
 				compactId,
 				formatAudiencePersonLabel(
 					`${fallbackLabel || ''}`.trim(),
@@ -2462,13 +2453,10 @@ export const MessageSubmitInterfaceComponent = ({
 				supervisor.username
 			])
 		});
-		const mapped: AudienceOption[] = Array.from(collected.entries())
+		const mapped: AudienceOption[] = audience
+			.entries()
 			.map(([value, label]) => {
-				const supervisorLabel = Array.from(
-					getComparableAudienceIds(value)
-				)
-					.map((id) => supervisorLabelByComparableId.get(id))
-					.find(Boolean);
+				const supervisorLabel = supervisorLabelByIdentity.get(value);
 				return {
 					value,
 					label: supervisorLabel
@@ -2508,7 +2496,6 @@ export const MessageSubmitInterfaceComponent = ({
 		contact?.username,
 		deriveLabelFromUserId,
 		formatAudiencePersonLabel,
-		getComparableAudienceIds,
 		getMatrixRoomId,
 		audienceRefreshTick,
 		sessionSupervisors,

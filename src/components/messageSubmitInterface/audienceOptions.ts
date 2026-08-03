@@ -82,12 +82,13 @@ export const restoreAudienceSelection = (
 /**
  * The identifiers of everyone whose role we actually know, grouped by role.
  *
- * Deliberately built with a *strict* normaliser rather than the fuzzy
- * `getComparableAudienceIds` used for de-duplication elsewhere in the
- * composer. That one splits an id into tokens of four or more characters, so
- * every participant on the same homeserver shares the token `oriso` — good
- * enough to spot a duplicate of the same person, far too loose to decide
- * whether somebody is a moderator.
+ * Built with the strict normaliser below rather than the composer's fuzzy
+ * `getComparableAudienceIds`, which splits an id into tokens of four or more
+ * characters — so every participant on the same homeserver shares the token
+ * `oriso`, far too loose to decide whether somebody is a moderator.
+ *
+ * Recipient collection (`createAudienceCollector`) is strict for the same
+ * reason; the fuzzy matcher now survives only in the @-mention provider.
  */
 export interface AudienceRoster {
 	asker: Set<string>;
@@ -101,9 +102,7 @@ export interface AudienceRoster {
  * `@enc.<username>:<server>` and as a bare `<username>`, so a leading `enc.`
  * is stripped as well — otherwise the same person fails to match themselves.
  */
-export const audienceIdentityKeys = (
-	rawValue?: string | null
-): Set<string> => {
+export const audienceIdentityKeys = (rawValue?: string | null): Set<string> => {
 	const keys = new Set<string>();
 	const compact = `${rawValue || ''}`.trim().toLowerCase();
 	if (!compact) {
@@ -132,6 +131,119 @@ const collectKeys = (values: (string | null | undefined)[]): Set<string> => {
 		audienceIdentityKeys(value).forEach((key) => keys.add(key))
 	);
 	return keys;
+};
+
+/**
+ * A lookup keyed by identity rather than by one spelling of an id.
+ *
+ * The same person reaches the composer as `@enc.katze_mika:oriso.org` from the
+ * room member list, as `katze_mika` from the session payload and as a bare
+ * consultant id from the supervisor endpoint. Registering every key once means
+ * a later lookup finds them whichever spelling it happens to hold.
+ *
+ * First writer wins, so the caller's own precedence (mapped display name over
+ * username over raw id) survives.
+ */
+export const createIdentityLookup = <T>() => {
+	const byKey = new Map<string, T>();
+	return {
+		set: (rawValues: (string | null | undefined)[], value: T): void => {
+			rawValues.forEach((rawValue) =>
+				audienceIdentityKeys(rawValue).forEach((key) => {
+					if (!byKey.has(key)) {
+						byKey.set(key, value);
+					}
+				})
+			);
+		},
+		get: (rawValue?: string | null): T | undefined =>
+			Array.from(audienceIdentityKeys(rawValue))
+				.map((key) => byKey.get(key))
+				.find((entry) => entry !== undefined),
+		get size(): number {
+			return byKey.size;
+		}
+	};
+};
+
+export interface AudienceCollector {
+	/** Whether this id is the viewer themselves. */
+	isSelf: (rawValue?: string | null) => boolean;
+	/** Whether this id is somebody already collected. */
+	has: (rawValue?: string | null) => boolean;
+	/**
+	 * Record a recipient unless they are the viewer or already present.
+	 * Returns whether the entry was actually taken.
+	 */
+	add: (rawValue: string | null | undefined, label: string) => boolean;
+	/** The collected recipients as `[value, label]`, in insertion order. */
+	entries: () => [string, string][];
+}
+
+/**
+ * Gathers the conversation's recipients, keeping the two decisions that can
+ * silently drop somebody — "is this me?" and "do I already have this
+ * person?" — on strict identity.
+ *
+ * Both used to run through the composer's fuzzy `getComparableAudienceIds`,
+ * which adds every token of four or more characters to the comparison set. For
+ * a Matrix id that includes the homeserver, so *every* participant on
+ * `oriso.org` shares the token `oriso`:
+ *
+ * - as a self test, the first member of the room list matched the signed-in
+ *   user and the entire room was discarded as "me";
+ * - as a duplicate test, the second recipient matched the first and was
+ *   discarded as "already collected".
+ *
+ * Either way the recipient list came out wrong, and a message narrowed to one
+ * person could reach somebody who was never offered as a target. Strict keys
+ * (exact value, without the leading `@`, Matrix local part, `enc.` stripped)
+ * still recognise one person across their several spellings without ever
+ * conflating two people who merely share a homeserver.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#894.
+ */
+export const createAudienceCollector = (
+	selfIdentifiers: (string | null | undefined)[] = []
+): AudienceCollector => {
+	const selfKeys = collectKeys(selfIdentifiers);
+	const labelByValue = new Map<string, string>();
+	const keysByValue = new Map<string, Set<string>>();
+
+	const isSelf = (rawValue?: string | null): boolean =>
+		Array.from(audienceIdentityKeys(rawValue)).some((key) =>
+			selfKeys.has(key)
+		);
+
+	const has = (rawValue?: string | null): boolean => {
+		const keys = Array.from(audienceIdentityKeys(rawValue));
+		if (keys.length === 0) {
+			return false;
+		}
+		return Array.from(keysByValue.values()).some((existing) =>
+			keys.some((key) => existing.has(key))
+		);
+	};
+
+	const add = (
+		rawValue: string | null | undefined,
+		label: string
+	): boolean => {
+		const compact = `${rawValue || ''}`.trim();
+		if (!compact || isSelf(compact) || has(compact)) {
+			return false;
+		}
+		labelByValue.set(compact, label);
+		keysByValue.set(compact, audienceIdentityKeys(compact));
+		return true;
+	};
+
+	return {
+		isSelf,
+		has,
+		add,
+		entries: () => Array.from(labelByValue.entries())
+	};
 };
 
 export const buildAudienceRoster = ({
