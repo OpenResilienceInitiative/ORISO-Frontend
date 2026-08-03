@@ -80,6 +80,7 @@ import {
 import { FutureTimelinePanel } from './FutureTimelinePanel';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
+import { refetchEnquiryListState } from './refetchEnquiryList';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -592,17 +593,18 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
-		return fetchEnquirySessionsWithAutoPage(0)
-			.then(({ sessions, total }) => {
+		return refetchEnquiryListState({
+			fetchPage: () => fetchEnquirySessionsWithAutoPage(0),
+			replaceSessions: (sessions) => {
 				dispatch({
 					type: SET_SESSIONS,
 					ready: true,
 					sessions
 				});
-				setTotalItems(total);
-				setCurrentOffset(0);
-			})
-			.catch(() => {});
+			},
+			setTotalItems,
+			setCurrentOffset
+		});
 	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
 	const refetchSessionList = useCallback(() => {
