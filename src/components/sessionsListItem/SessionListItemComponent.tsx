@@ -85,8 +85,6 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
-import { getMatrixClientService } from '../../services/matrixClientRegistry';
-import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { getLatestDecryptedMatrixMessage } from '../../utils/matrixSessionPreview';
 import {
 	isCaseHandoverAccessControlled,
