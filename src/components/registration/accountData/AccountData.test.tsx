@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountData } from './AccountData';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
@@ -109,5 +109,42 @@ describe('AccountData — configurable email field', () => {
 
 		const field = screen.getByLabelText('registration.account.email.label');
 		expect(field.getAttribute('aria-required')).toBe('true');
+	});
+});
+
+describe('AccountData — optional 2FA toggle', () => {
+	it('does not render the 2FA toggle when the tenant has no email field at all', () => {
+		renderAccountData(tenantWith({ emailVisible: false }));
+
+		expect(
+			screen.queryByLabelText('registration.account.twoFactorAuth.label')
+		).toBeNull();
+	});
+
+	it('renders the 2FA toggle when the tenant shows an email field', () => {
+		renderAccountData(
+			tenantWith({ emailVisible: true, emailRequired: false })
+		);
+
+		expect(
+			screen.getByLabelText('registration.account.twoFactorAuth.label')
+		).toBeDefined();
+	});
+
+	it('marks the email field as required once 2FA is toggled on, even though the tenant does not require it', () => {
+		renderAccountData(
+			tenantWith({ emailVisible: true, emailRequired: false })
+		);
+
+		const emailField = screen.getByLabelText(
+			'registration.account.email.label'
+		);
+		expect(emailField.getAttribute('aria-required')).toBe('false');
+
+		fireEvent.click(
+			screen.getByLabelText('registration.account.twoFactorAuth.label')
+		);
+
+		expect(emailField.getAttribute('aria-required')).toBe('true');
 	});
 });

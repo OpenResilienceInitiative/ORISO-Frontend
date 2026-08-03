@@ -13,6 +13,7 @@ export interface AccountDataDraft {
 	repeatPassword: string;
 	dataProtectionChecked: boolean;
 	email: string;
+	twoFactorAuthEnabled: boolean;
 }
 
 let draft: AccountDataDraft | null = null;

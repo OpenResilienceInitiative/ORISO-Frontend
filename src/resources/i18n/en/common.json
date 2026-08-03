@@ -2500,6 +2500,9 @@
 					"required": "Please provide an email address.",
 					"invalid": "Please provide a valid email address."
 				}
+			},
+			"twoFactorAuth": {
+				"label": "Additionally secure my password with two-factor authentication"
 			}
 		},
 		"back": "Back",

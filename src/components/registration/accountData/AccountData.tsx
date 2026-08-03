@@ -146,6 +146,13 @@ export const AccountData: FC<{
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
+	const [twoFactorAuthEnabled, setTwoFactorAuthEnabled] = useState<boolean>(
+		restoredDraft?.twoFactorAuthEnabled ?? false
+	);
+	// A confirmable email is 2FA's second channel — requiring it here is a
+	// frontend-only guard until the backend module (email confirmation,
+	// persisted preference) lands; see #260.
+	const effectiveEmailRequired = emailRequired || twoFactorAuthEnabled;
 	const [isUsernameAvailable, setIsUsernameAvailable] =
 		useState<boolean>(true);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
@@ -192,7 +199,8 @@ export const AccountData: FC<{
 			password,
 			repeatPassword,
 			dataProtectionChecked,
-			email
+			email,
+			twoFactorAuthEnabled
 		});
 	}, [
 		identity,
@@ -200,7 +208,8 @@ export const AccountData: FC<{
 		password,
 		repeatPassword,
 		dataProtectionChecked,
-		email
+		email,
+		twoFactorAuthEnabled
 	]);
 
 	const isUsernameLongEnough =
@@ -212,7 +221,7 @@ export const AccountData: FC<{
 		repeatPassword.length > 0 && repeatPassword === password;
 	const emailFeedback = getEmailFeedback({
 		visible: emailVisible,
-		required: emailRequired,
+		required: effectiveEmailRequired,
 		wasBlurred: emailWasBlurred,
 		email
 	});
@@ -515,7 +524,7 @@ export const AccountData: FC<{
 					autoComplete="email"
 					inputProps={{
 						'aria-label': t('registration.account.email.label'),
-						'aria-required': emailRequired
+						'aria-required': effectiveEmailRequired
 					}}
 					InputProps={{
 						startAdornment: (
@@ -530,6 +539,34 @@ export const AccountData: FC<{
 					}}
 					sx={{ mt: '20px' }}
 				/>
+			)}
+			{emailVisible && (
+				<FormGroup sx={{ mt: '4px' }}>
+					<FormControlLabel
+						sx={{ alignItems: 'flex-start' }}
+						control={
+							<Checkbox
+								checked={twoFactorAuthEnabled}
+								onClick={() =>
+									setTwoFactorAuthEnabled(
+										!twoFactorAuthEnabled
+									)
+								}
+								inputProps={{
+									'aria-label': t(
+										'registration.account.twoFactorAuth.label'
+									)
+								}}
+								sx={{ mt: '-9px' }}
+							/>
+						}
+						label={
+							<Typography>
+								{t('registration.account.twoFactorAuth.label')}
+							</Typography>
+						}
+					/>
+				</FormGroup>
 			)}
 			<OrisoTextField
 				value={password}
