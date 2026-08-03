@@ -38,6 +38,24 @@ describe('notification action targets', () => {
 		expect(parseEventActionParams('{not-json')).toEqual({});
 	});
 
+	it('keeps typed non-content Matrix preview correlation metadata', () => {
+		expect(
+			parseEventActionParams(
+				JSON.stringify({
+					matrixEventId: '$event:oriso',
+					senderName: 'Lisa',
+					contentClass: 'TEXT',
+					recipientRole: 'consultant'
+				})
+			)
+		).toMatchObject({
+			matrixEventId: '$event:oriso',
+			senderName: 'Lisa',
+			contentClass: 'TEXT',
+			recipientRole: 'consultant'
+		});
+	});
+
 	it('falls back to the nested source session id when the top-level id is absent', () => {
 		expect(
 			resolveNotificationActionPath(

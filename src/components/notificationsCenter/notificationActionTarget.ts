@@ -41,6 +41,10 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 		params.seriesId = source.seriesId;
 	}
 	params.roomRef = asNullableString(source.roomRef);
+	params.matrixEventId = asNullableString(source.matrixEventId);
+	params.senderName = asNullableString(source.senderName);
+	params.contentClass = asNullableString(source.contentClass);
+	params.recipientRole = asNullableString(source.recipientRole);
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);

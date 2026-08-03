@@ -31,15 +31,18 @@ import {
 } from './timelineFilter';
 import {
 	NotificationsContext,
+	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
+import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
+import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
@@ -184,6 +187,8 @@ export const NotificationsCenter = () => {
 	const { selection: activeSelection } = useActiveListItem();
 	const { untilL, fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
+	const sessionsContext = useContext(SessionsDataContext);
+	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
 		markNotificationAsRead,
@@ -204,6 +209,9 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
+	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
+		Record<string, string>
+	>({});
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
@@ -243,6 +251,46 @@ export const NotificationsCenter = () => {
 		() => getFamiliesInFeed(notificationFeed),
 		[notificationFeed]
 	);
+	const messagePreviewSources = useMemo(
+		() =>
+			notificationFeed.flatMap((item) => {
+				if (
+					item.eventType !== 'message.new' &&
+					item.eventType !== 'thread.reply.new'
+				) {
+					return [];
+				}
+				const matrixEventId = item.params?.matrixEventId;
+				const sessionId = resolveSessionId(item);
+				const roomRef =
+					item.params?.roomRef ||
+					getExtendedSession(sessionId || undefined, sessions || [])
+						?.rid;
+				if (!matrixEventId || !roomRef) {
+					return [];
+				}
+				return [
+					{
+						activityEventId: item.id,
+						roomRef,
+						matrixEventId,
+						senderName: item.params?.senderName,
+						fallbackText: describeItem(item, translate).text
+					}
+				];
+			}),
+		[notificationFeed, sessions, translate]
+	);
+	const handlePreviewChange = useCallback(
+		(activityEventId: string, preview: string) => {
+			setHydratedMessagePreviews((current) =>
+				current[activityEventId] === preview
+					? current
+					: { ...current, [activityEventId]: preview }
+			);
+		},
+		[]
+	);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
@@ -253,10 +301,17 @@ export const NotificationsCenter = () => {
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
-					return `${title} ${text}`;
+					return `${title} ${hydratedMessagePreviews[item.id] || text}`;
 				}
 			),
-		[notificationFeed, activeFamily, searchQuery, unreadOnly, translate]
+		[
+			notificationFeed,
+			activeFamily,
+			searchQuery,
+			unreadOnly,
+			translate,
+			hydratedMessagePreviews
+		]
 	);
 
 	// Keep the master-detail selection inside the visible (filtered) feed.
@@ -558,6 +613,13 @@ export const NotificationsCenter = () => {
 
 	return (
 		<div className="notificationsCenter">
+			{messagePreviewSources.map((source) => (
+				<MatrixActivityPreviewHydrator
+					key={source.activityEventId}
+					{...source}
+					onPreviewChange={handlePreviewChange}
+				/>
+			))}
 			<div
 				className="notificationsCenter__listColumn"
 				style={{ width: fromL ? `${listWidth}px` : undefined }}
@@ -680,6 +742,8 @@ export const NotificationsCenter = () => {
 								item,
 								translate
 							);
+							const visibleText =
+								hydratedMessagePreviews[item.id] || text;
 							const Icon = getEventIcon(descriptor.icon);
 							return (
 								<div
@@ -725,7 +789,7 @@ export const NotificationsCenter = () => {
 											</span>
 											<span className="notificationsCenter__cardBodyRow">
 												<span className="notificationsCenter__cardText">
-													{text}
+													{visibleText}
 												</span>
 												{!isActive && (
 													<span className="notificationsCenter__cardTime">

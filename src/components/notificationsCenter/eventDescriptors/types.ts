@@ -84,6 +84,14 @@ export interface EventActionParams {
 	seriesId?: string | number | null;
 	/** Matrix room id / RC group id, when known. */
 	roomRef?: string | null;
+	/** Opaque Matrix event id used only for local E2EE preview correlation. */
+	matrixEventId?: string | null;
+	/** Non-content sender label emitted by the activity-event producer. */
+	senderName?: string | null;
+	/** Coarse Matrix message modality; never a body, URL or attachment key. */
+	contentClass?: string | null;
+	/** Recipient-side role used for localized activity copy. */
+	recipientRole?: string | null;
 	/** Draft resume scope key (`forcedScopeKey`) for draft events. */
 	forcedScopeKey?: string | null;
 	/** Thread root id for thread-scoped message events. */
