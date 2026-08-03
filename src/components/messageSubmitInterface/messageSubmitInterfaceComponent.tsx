@@ -105,6 +105,7 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
+import { resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
@@ -1304,7 +1305,7 @@ export const MessageSubmitInterfaceComponent = ({
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? Number(resolvedChatSession.sessionId) || undefined
+				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
 				? resolvedChatSession.matrixRoomId
