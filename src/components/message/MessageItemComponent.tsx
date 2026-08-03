@@ -83,7 +83,10 @@ import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClien
 import { createPortal } from 'react-dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
-import { formatMessagePersonName } from './messageNameUtils';
+import {
+	formatAgencyLine,
+	formatMessagePersonName
+} from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
@@ -1036,6 +1039,21 @@ export const MessageItemComponent = ({
 		return null;
 	};
 
+	/**
+	 * The counselling centre line under the sender name (#895). Shown for
+	 * messages a counsellor wrote — both to the advice seeker, who chose that
+	 * agency by postcode during registration, and to the counsellor, whose own
+	 * messages carry the same professional identity.
+	 *
+	 * Live Chat is cross-agency and registrationless, so `activeSession.agency`
+	 * is simply absent until a counsellor picks the conversation up; the line
+	 * then stays away rather than rendering an empty row.
+	 */
+	const agencyLine = useMemo(
+		() => formatAgencyLine(activeSession?.agency),
+		[activeSession?.agency]
+	);
+
 	const getUsernameType = () => {
 		if (isMyMessage) {
 			return 'self';
@@ -1721,6 +1739,13 @@ export const MessageItemComponent = ({
 										isMyMessage={isMyMessage}
 										isUser={isUserMessage()}
 										type={getUsernameType()}
+										subtitle={
+											getUsernameType() === 'consultant' ||
+											(getUsernameType() === 'self' &&
+												!isUserMessage())
+												? agencyLine
+												: ''
+										}
 										userId={userId}
 										username={username}
 										displayName={

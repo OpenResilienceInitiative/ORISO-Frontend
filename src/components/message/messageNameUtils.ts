@@ -93,3 +93,30 @@ export const getMessagePersonInitials = (
 	}
 	return parts[0].slice(0, 2).toUpperCase();
 };
+
+/**
+ * The counselling centre a message speaks for: `"54222 Caritas Mainz"`.
+ *
+ * Rendered as the second line of the message sender header (Figma "Message
+ * Recipient Header", App.Oriso 9229:24595). For someone who picked their
+ * agency by postcode during registration, this is the one line that confirms
+ * they are talking to the place they chose.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#895.
+ */
+export const formatAgencyLine = (
+	agency?: { postcode?: string | number | null; name?: string | null } | null
+): string => {
+	const name = `${agency?.name ?? ''}`.trim();
+	if (!name) {
+		// A postcode with no place name says nothing — show nothing.
+		return '';
+	}
+	const postcode = `${agency?.postcode ?? ''}`.trim();
+	// Live Chat registers anonymous askers with the placeholder "00000";
+	// printing it would name a place that does not exist.
+	if (!postcode || /^0+$/.test(postcode)) {
+		return name;
+	}
+	return `${postcode} ${name}`;
+};

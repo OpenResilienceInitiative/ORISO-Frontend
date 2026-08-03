@@ -130,6 +130,24 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	/*
+	 * Second line of the sender header: the counselling centre a counsellor
+	 * speaks for, with its postcode (Figma "Message Recipient Header",
+	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
+	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * an agency to name, so every other message keeps its one-line header.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895.
+	 */
+	&__usernameSubtitle {
+		padding-left: 20px;
+		margin-top: 2px;
+		font-size: 12px;
+		line-height: 14px;
+		color: var(--m3-secondary, #4c555f);
+		text-align: left;
+		overflow-wrap: anywhere;
+	}
+
 	&__header {
 		display: flex;
 		align-items: center;

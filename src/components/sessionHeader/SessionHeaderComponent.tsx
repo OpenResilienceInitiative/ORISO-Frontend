@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
+import { formatAgencyLine } from '../message/messageNameUtils';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	apiGetSessionSupervisors,
@@ -1160,14 +1161,25 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) && (
 				<div className="sessionInfo__metaInfo">
 					{activeSession.agency?.name && (
+						/*
+						 * The counselling centre with its postcode (#895). The
+						 * postcode is what the advice seeker chose their agency
+						 * by during registration, so naming the place without
+						 * it leaves out the identifying half. The name still
+						 * goes through the `agencies` namespace so a
+						 * tenant-specific override wins.
+						 */
 						<div className="sessionInfo__metaInfo__content">
-							{translate(
-								[
-									`agency.${activeSession.agency.id}.name`,
-									activeSession.agency.name
-								],
-								{ ns: 'agencies' }
-							)}
+							{formatAgencyLine({
+								postcode: activeSession.agency.postcode,
+								name: translate(
+									[
+										`agency.${activeSession.agency.id}.name`,
+										activeSession.agency.name
+									],
+									{ ns: 'agencies' }
+								)
+							})}
 						</div>
 					)}
 					{topic?.name && (

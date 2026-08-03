@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	formatAgencyLine,
 	formatMessagePersonName,
 	getMessagePersonInitials
 } from './messageNameUtils';
@@ -58,5 +59,53 @@ describe('getMessagePersonInitials', () => {
 		expect(
 			getMessagePersonInitials(undefined, 'free_bee_frankie_821')
 		).toBe('FB');
+	});
+});
+
+describe('formatAgencyLine', () => {
+	it('puts the postcode in front of the counselling centre', () => {
+		expect(
+			formatAgencyLine({ postcode: '54222', name: 'Caritas Mainz' })
+		).toBe('54222 Caritas Mainz');
+	});
+
+	it('accepts a numeric postcode from the session payload', () => {
+		expect(
+			formatAgencyLine({ postcode: 55116, name: 'Caritas Mainz' })
+		).toBe('55116 Caritas Mainz');
+	});
+
+	/**
+	 * Live Chat registers anonymous askers with the placeholder postcode
+	 * "00000". Printing it would tell the reader the counselling centre sits in
+	 * a place that does not exist, so the name goes out on its own instead.
+	 */
+	it('drops the anonymous placeholder postcode', () => {
+		expect(
+			formatAgencyLine({ postcode: '00000', name: 'Caritas Mainz' })
+		).toBe('Caritas Mainz');
+	});
+
+	it('falls back to the name alone when there is no postcode', () => {
+		expect(formatAgencyLine({ name: 'Caritas Mainz' })).toBe(
+			'Caritas Mainz'
+		);
+		expect(formatAgencyLine({ postcode: '   ', name: 'Caritas Mainz' })).toBe(
+			'Caritas Mainz'
+		);
+	});
+
+	/** No name means no line at all — never a bare postcode with no place. */
+	it('returns an empty string without a name', () => {
+		expect(formatAgencyLine({ postcode: '54222' })).toBe('');
+		expect(formatAgencyLine({})).toBe('');
+		expect(formatAgencyLine(null)).toBe('');
+		expect(formatAgencyLine(undefined)).toBe('');
+	});
+
+	it('trims stray whitespace on both parts', () => {
+		expect(
+			formatAgencyLine({ postcode: ' 54222 ', name: '  Caritas Mainz ' })
+		).toBe('54222 Caritas Mainz');
 	});
 });
