@@ -2133,6 +2133,58 @@
 					"active": "Benachrichtigungen aktiv — klicken zum Stummschalten",
 					"muted": "Alle Benachrichtigungen stumm — klicken zum Aktivieren"
 				}
+			},
+			"descriptionAsker": "Wir schreiben Ihnen nur, wenn etwas passiert ist, das Sie betrifft. Was genau, sehen Sie immer erst nach der Anmeldung – nie in der E-Mail.",
+			"descriptionConsultant": "Ihr Arbeitsstrom per E-Mail. Inhalte aus Beratungen stehen nie in einer E-Mail.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Neue Nachricht",
+						"description": "Ihre Beratung hat Ihnen geschrieben, oder Ihre Anfrage wurde angenommen."
+					},
+					"appointment": {
+						"title": "Termine",
+						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Neue Anfragen",
+						"description": "Eine Anfrage ist in Ihrer Beratungsstelle eingegangen oder richtet sich direkt an Sie."
+					},
+					"dailyDigest": {
+						"title": "Tagesübersicht",
+						"description": "Einmal täglich: wie viele Anfragen offen sind und wie lange die älteste wartet."
+					},
+					"newMessage": {
+						"title": "Nachrichten von Ratsuchenden",
+						"description": "Eine ratsuchende Person hat in einer Ihrer Beratungen geschrieben."
+					},
+					"assignment": {
+						"title": "Zuweisungen",
+						"description": "Ihnen wurde eine Anfrage zugewiesen."
+					},
+					"reassignment": {
+						"title": "Übergaben",
+						"description": "Eine Beratung soll an Sie übergeben werden, oder eine Übergabe wurde bestätigt."
+					},
+					"feedback": {
+						"title": "Fachaustausch",
+						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für Sie."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Wartung und Hinweise",
+						"description": "Geplante Wartungsfenster und Hinweise zur Plattform. Störungen melden wir immer."
+					}
+				},
+				"alwaysSent": {
+					"title": "Diese E-Mails bekommen Sie immer:",
+					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an Ihrem Zugang.",
+					"legal": "Vertragliches – zum Beispiel ein Auftragsverarbeitungsvertrag zur Unterschrift.",
+					"outage": "Störungen der Plattform."
+				}
 			}
 		},
 		"routes": {

@@ -2095,6 +2095,58 @@
 					"active": "Notifications active — click to mute",
 					"muted": "All notifications muted — click to enable"
 				}
+			},
+			"descriptionAsker": "We only write when something has happened that concerns you. What exactly, you always see after signing in — never in the email.",
+			"descriptionConsultant": "Your work stream by email. Counselling content never appears in an email.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "New message",
+						"description": "Your counselling service has written to you, or your enquiry was accepted."
+					},
+					"appointment": {
+						"title": "Appointments",
+						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "New enquiries",
+						"description": "An enquiry arrived at your counselling service or is addressed to you directly."
+					},
+					"dailyDigest": {
+						"title": "Daily summary",
+						"description": "Once a day: how many enquiries are open and how long the oldest has waited."
+					},
+					"newMessage": {
+						"title": "Messages from advice seekers",
+						"description": "Someone seeking advice has written in one of your counselling cases."
+					},
+					"assignment": {
+						"title": "Assignments",
+						"description": "An enquiry was assigned to you."
+					},
+					"reassignment": {
+						"title": "Handovers",
+						"description": "A counselling case is to be handed over to you, or a handover was confirmed."
+					},
+					"feedback": {
+						"title": "Professional exchange",
+						"description": "A reply is waiting for you in the protected professional exchange."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Maintenance and notices",
+						"description": "Planned maintenance windows and platform notices. Outages are always sent."
+					}
+				},
+				"alwaysSent": {
+					"title": "You always receive these emails:",
+					"security": "Signing in and access — password reset, sign-in link, one-time code, changes to your account.",
+					"legal": "Contractual matters — for example a data processing agreement to sign.",
+					"outage": "Platform outages."
+				}
 			}
 		},
 		"routes": {

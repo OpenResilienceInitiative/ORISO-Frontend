@@ -1383,6 +1383,21 @@ declare namespace UserService {
 			 * true
 			 */
 			appointmentNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			assignmentNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			feedbackNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			serviceNoticeNotificationEnabled?: boolean;
 		}
 		export interface OccurrenceOverrideRequest {
 			originalStartUtc: string; // date-time
