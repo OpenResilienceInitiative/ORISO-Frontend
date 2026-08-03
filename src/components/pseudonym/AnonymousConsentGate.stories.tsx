@@ -3,6 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { AnonymousConsentGate } from './AnonymousConsentGate';
 import {
+	phone375Globals,
+	phone390Globals,
 	STORY_WIDTH_COMPACT,
 	STORY_WIDTH_PHONE_SMALL,
 	STORY_WIDTH_WIDE
@@ -90,6 +92,7 @@ export const Busy: Story = {
 };
 
 export const Mobile390: Story = {
+	globals: phone390Globals,
 	name: 'Mobile 390px — fits, without slack',
 	render: (args) => (
 		<div style={{ maxWidth: STORY_WIDTH_COMPACT }}>
@@ -97,7 +100,6 @@ export const Mobile390: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: 'At 390px the two buttons still fit inside the card — but only just. Compare with the 375px story.'
@@ -107,6 +109,7 @@ export const Mobile390: Story = {
 };
 
 export const Mobile375LayoutDefect: Story = {
+	globals: phone375Globals,
 	name: 'Mobile 375px (iPhone SE) — LAYOUT DEFECT',
 	render: (args) => (
 		<div style={{ maxWidth: STORY_WIDTH_PHONE_SMALL }}>
@@ -114,7 +117,6 @@ export const Mobile375LayoutDefect: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: '**Two defects at 375px** — the iPhone SE / iPhone 8 width, still a real device.\n\n1. **The button row breaks out of the card**, starting left of the card edge instead of inside its padding. Per the house dialog rule the buttons should stack full-width below ~575px.\n2. **The headline breaks mid-word:** "Herzlich Willkomm|en!" — the shield icon keeps its fixed width and starves the headline column.\n\nRestoring the icon-only reject button from the design would likely resolve the first on its own. Tracked in ORISO-Frontend#892.'
@@ -124,6 +126,7 @@ export const Mobile375LayoutDefect: Story = {
 };
 
 export const StackedButtonsTarget: Story = {
+	globals: phone375Globals,
 	name: 'Target: stacked buttons below ~575px',
 	render: (args) => (
 		<div
@@ -147,7 +150,6 @@ export const StackedButtonsTarget: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: '**Not the current behaviour — a target.** Applies the stacked arrangement via a story-local stylesheet so the intended result is visible next to the defect. Nothing here ships; the actual fix belongs in the component.'

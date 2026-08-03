@@ -4,8 +4,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ICON_CALL_OFF, ICON_INFO, SystemMessage } from './SystemMessage';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -114,6 +115,7 @@ export const Mobile: Story = {
 			</>
 		)
 	},
+	globals: phone390Globals,
 	parameters: {
 		...mobileParameters,
 		docs: {

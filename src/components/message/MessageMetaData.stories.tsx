@@ -9,8 +9,9 @@ import {
 } from './MessageItemComponent.mocks';
 import {
 	mobileParameters,
-	withMessageContexts,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageContexts
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -134,5 +135,6 @@ export const NoTimestamp: Story = {
 export const Mobile: Story = {
 	name: 'Mobile (390px)',
 	args: { isNotRead: false },
-	parameters: mobileParameters
+	parameters: mobileParameters,
+	globals: phone390Globals
 };

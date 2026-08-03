@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { phone390Globals } from '../message/messageStoryShell';
 
 import {
 	TypewriterText,
@@ -161,5 +162,5 @@ export const StagedSequenceMobile: Story = {
 			</TypingReveal>
 		</div>
 	),
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: phone390Globals
 };

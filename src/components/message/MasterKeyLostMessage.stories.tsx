@@ -3,8 +3,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -55,6 +56,7 @@ export const MasterKeyLost: Story = {
 export const Mobile: Story = {
 	name: 'Mobile (390px)',
 	args: { subscriptionKeyLost: true },
+	globals: phone390Globals,
 	parameters: {
 		...mobileParameters,
 		docs: {
