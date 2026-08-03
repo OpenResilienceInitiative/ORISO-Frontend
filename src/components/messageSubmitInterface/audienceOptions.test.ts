@@ -9,6 +9,7 @@ import {
 	restoreAudienceSelection,
 	shouldShowAudienceSelector,
 	audienceOptionsReady,
+	groupAudienceOptions,
 	type AudienceOption
 } from './audienceOptions';
 
@@ -300,5 +301,72 @@ describe('audienceOptionsReady', () => {
 		expect(
 			audienceOptionsReady([{ value: '@ada', label: 'Ada', kind: 'person' }])
 		).toBe(true);
+	});
+});
+
+describe('groupAudienceOptions', () => {
+	const options: AudienceOption[] = [
+		{ value: '@enc.katze_mika:oriso.org', label: 'Katze Mika', kind: 'asker' },
+		{ value: '@consultant42:oriso.org', label: 'K. Paulstätter', kind: 'consultant' },
+		{ value: '@moderator7:oriso.org', label: 'B. Pardon', kind: 'supervisor' },
+		{ value: '@someone:oriso.org', label: 'Unklar', kind: 'person' },
+		{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' }
+	];
+
+	it('puts each option in the section its role says', () => {
+		const grouped = groupAudienceOptions(options, []);
+		expect(grouped.clients.map((o) => o.value)).toEqual([
+			'@enc.katze_mika:oriso.org'
+		]);
+		expect(grouped.moderators.map((o) => o.value)).toEqual([
+			'@moderator7:oriso.org'
+		]);
+		expect(grouped.counsellors.map((o) => o.value)).toEqual([
+			'@consultant42:oriso.org',
+			'@someone:oriso.org'
+		]);
+	});
+
+	it('never lists the "everyone" sentinel as a person', () => {
+		const grouped = groupAudienceOptions(options, []);
+		const everyone = [
+			...grouped.clients,
+			...grouped.counsellors,
+			...grouped.moderators
+		];
+		expect(everyone.some((o) => o.value === AUDIENCE_ALL)).toBe(false);
+	});
+
+	/**
+	 * The reason this is a function rather than inline classification: the menu
+	 * used to re-derive roles with the fuzzy `getComparableAudienceIds`, whose
+	 * 4+ character tokens include the homeserver name. Every participant on
+	 * `oriso.org` shares the token `oriso`, so one supervisor in the room could
+	 * pull unrelated people into the moderator section — and with them the
+	 * moderator icon. Reported by CodeRabbit on #948.
+	 */
+	it('does not let a shared homeserver drag people into the wrong section', () => {
+		const grouped = groupAudienceOptions(options, []);
+		expect(grouped.moderators).toHaveLength(1);
+		expect(grouped.clients).toHaveLength(1);
+	});
+
+	it('marks the viewer’s own entry as disabled rather than dropping it', () => {
+		const grouped = groupAudienceOptions(options, ['consultant42']);
+		expect(grouped.counsellors[0]).toMatchObject({
+			value: '@consultant42:oriso.org',
+			disabled: true
+		});
+		expect(grouped.counsellors[1].disabled).toBe(false);
+	});
+
+	/** Matching self must be exact too — two generated names can share a word. */
+	it('does not disable someone who merely shares a word with the viewer', () => {
+		const shared: AudienceOption[] = [
+			{ value: '@alpaka_mika:oriso.org', label: 'sanftes Alpaka Mika', kind: 'asker' },
+			{ value: '@alpaka_leon:oriso.org', label: 'gutmütiges Alpaka Leon', kind: 'asker' }
+		];
+		const grouped = groupAudienceOptions(shared, ['alpaka_mika']);
+		expect(grouped.clients.map((o) => o.disabled)).toEqual([true, false]);
 	});
 });

@@ -6,6 +6,9 @@ import GroupIcon from '@mui/icons-material/Group';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { RecipientSplitButton } from './RecipientSplitButton';
+// One place defines what "375px" means; an inline globals object here would
+// drift from `.storybook/preview.tsx` the next time a viewport is renamed.
+import { phone375Globals } from '../../message/messageStoryShell';
 
 const SPLIT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=84-14745';
@@ -158,7 +161,7 @@ export const MobileNeutral: StoryObj = {
 	render: () => (
 		<SplitButtonDemo label="Alle" icon={<GroupIcon />} variant="all" />
 	),
-	globals: { viewport: { value: 'phone375' } }
+	globals: phone375Globals
 };
 
 export const MobileTargeted: StoryObj = {
@@ -169,5 +172,5 @@ export const MobileTargeted: StoryObj = {
 			icon={<PersonIcon />}
 		/>
 	),
-	globals: { viewport: { value: 'phone375' } }
+	globals: phone375Globals
 };

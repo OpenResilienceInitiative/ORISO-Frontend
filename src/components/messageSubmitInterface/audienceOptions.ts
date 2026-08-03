@@ -238,3 +238,62 @@ export const shouldShowAudienceSelector = ({
  */
 export const audienceOptionsReady = (options: AudienceOption[]): boolean =>
 	options.some((option) => option.value !== AUDIENCE_ALL);
+
+export interface GroupedAudienceOption extends AudienceOption {
+	/** The viewer's own entry: shown, but not selectable. */
+	disabled: boolean;
+}
+
+export interface GroupedAudienceOptions {
+	clients: GroupedAudienceOption[];
+	counsellors: GroupedAudienceOption[];
+	moderators: GroupedAudienceOption[];
+}
+
+/**
+ * Split the recipients into the three menu sections, using the role decided
+ * when the option was built.
+ *
+ * The menu used to re-derive roles with `getComparableAudienceIds`, whose
+ * four-character-plus tokens include the homeserver name — every participant
+ * on `oriso.org` shares the token `oriso`, so a single supervisor in the room
+ * could pull unrelated people into the moderator section, and the section
+ * decides which icon their pill gets. Reported by CodeRabbit on #948.
+ *
+ * `person` — somebody in the room whose role we could not establish — joins the
+ * counsellors, which is where the previous implementation put them and the
+ * safer of the two: it does not imply supervision that may not exist, and it
+ * does not label a staff member as a client.
+ */
+export const groupAudienceOptions = (
+	options: AudienceOption[],
+	selfIdentifiers: (string | null | undefined)[]
+): GroupedAudienceOptions => {
+	const selfKeys = collectKeys(selfIdentifiers);
+	const grouped: GroupedAudienceOptions = {
+		clients: [],
+		counsellors: [],
+		moderators: []
+	};
+	options.forEach((option) => {
+		if (option.value === AUDIENCE_ALL) {
+			return;
+		}
+		// Exact match, not the fuzzy one: two generated display names can share
+		// a word ("Alpaka"), and disabling the wrong row hides a real recipient.
+		const disabled = Array.from(audienceIdentityKeys(option.value)).some(
+			(key) => selfKeys.has(key)
+		);
+		const entry = { ...option, disabled };
+		if (option.kind === 'supervisor') {
+			grouped.moderators.push(entry);
+			return;
+		}
+		if (option.kind === 'asker') {
+			grouped.clients.push(entry);
+			return;
+		}
+		grouped.counsellors.push(entry);
+	});
+	return grouped;
+};

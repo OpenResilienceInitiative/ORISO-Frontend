@@ -48,6 +48,7 @@ import {
 	restoreAudienceSelection,
 	shouldShowAudienceSelector,
 	audienceOptionsReady,
+	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -2735,122 +2736,27 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.includes(AUDIENCE_ALL),
 		[selectedAudienceValues]
 	);
-	const audienceSelfComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		[userData?.userName, userData?.displayName].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [getComparableAudienceIds, userData?.displayName, userData?.userName]);
 	const audienceSelectableOptions = useMemo(
 		() => audienceOptions.filter((option) => option.value !== AUDIENCE_ALL),
 		[audienceOptions]
 	);
-	const audienceSupervisorComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		const moderatorIds = Array.isArray(activeSession?.item?.moderators)
-			? activeSession.item.moderators
-			: [];
-		[
-			...moderatorIds,
-			...sessionSupervisors.map((entry) => entry.id),
-			...sessionSupervisors.map((entry) => entry.username)
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [
-		activeSession?.item?.moderators,
-		getComparableAudienceIds,
-		sessionSupervisors
-	]);
-	const audienceGroupedSections = useMemo(() => {
-		const clientsComparable = new Set<string>();
-		const counsellorsComparable = new Set<string>();
-		[
-			activeSession?.item?.askerMatrixUserId,
-			activeSession?.user?.username
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				clientsComparable.add(id)
-			);
-		});
-		[
-			activeSession?.consultant?.id,
-			activeSession?.consultant?.username,
-			activeSession?.consultant?.displayName
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				counsellorsComparable.add(id)
-			);
-		});
-
-		const grouped = {
-			clients: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			counsellors: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			moderators: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>
-		};
-		audienceSelectableOptions.forEach((option) => {
-			const comparableIds = new Set<string>([
-				...Array.from(getComparableAudienceIds(option.value)),
-				...Array.from(getComparableAudienceIds(option.label)),
-				...Array.from(
-					getComparableAudienceIds(
-						deriveLabelFromUserId(option.value)
-					)
-				)
-			]);
-			const disabled = Array.from(comparableIds).some((id) =>
-				audienceSelfComparableIds.has(id)
-			);
-			const isClient = Array.from(comparableIds).some((id) =>
-				clientsComparable.has(id)
-			);
-			const isModeratorByRole = Array.from(comparableIds).some((id) =>
-				audienceSupervisorComparableIds.has(id)
-			);
-			if (isModeratorByRole) {
-				grouped.moderators.push({ ...option, disabled });
-				return;
-			}
-			if (isClient) {
-				grouped.clients.push({ ...option, disabled });
-				return;
-			}
-			const isCounsellorById = Array.from(comparableIds).some((id) =>
-				counsellorsComparable.has(id)
-			);
-			if (isCounsellorById || !isClient) {
-				grouped.counsellors.push({ ...option, disabled });
-				return;
-			}
-			grouped.moderators.push({ ...option, disabled });
-		});
-		return grouped;
-	}, [
-		activeSession?.consultant?.displayName,
-		activeSession?.consultant?.id,
-		activeSession?.consultant?.username,
-		activeSession?.item?.askerMatrixUserId,
-		activeSession?.user?.username,
-		audienceSelectableOptions,
-		audienceSelfComparableIds,
-		audienceSupervisorComparableIds,
-		deriveLabelFromUserId,
-		getComparableAudienceIds
-	]);
+	/**
+	 * The three menu sections, grouped by the role each option already carries.
+	 *
+	 * This used to re-derive the roles here with `getComparableAudienceIds`,
+	 * whose 4+ character tokens include the homeserver name — every
+	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * the room could pull unrelated people into the moderator section, and the
+	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
+	 */
+	const audienceGroupedSections = useMemo(
+		() =>
+			groupAudienceOptions(audienceSelectableOptions, [
+				userData?.userName,
+				userData?.displayName
+			]),
+		[audienceSelectableOptions, userData?.displayName, userData?.userName]
+	);
 	const sectionDefinitions = useMemo(
 		() =>
 			[
