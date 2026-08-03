@@ -250,7 +250,8 @@
 		"prebuild-storybook": "npm run typecheck:storybook",
 		"build-storybook": "storybook build",
 		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
-		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts"
+		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
+		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts"
 	},
 	"eslintConfig": {
 		"extends": [
