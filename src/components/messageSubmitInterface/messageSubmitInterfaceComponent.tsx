@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -28,7 +29,8 @@ import {
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
-	resolveAskerMessageTransport
+	resolveAskerMessageTransport,
+	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
@@ -105,6 +107,7 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
+import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
@@ -1180,17 +1183,45 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message, isEncrypted) => {
+		(message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
 				return Promise.resolve();
 			}
-			return apiSendEnquiry(
-				activeSession.item.id,
-				message,
-				isEncrypted,
-				language
-			)
+			const matrixRoomId = resolvedChatSession.matrixRoomId;
+			if (!matrixRoomId || !matrixClientService) {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				return Promise.resolve();
+			}
+			try {
+				assertMatrixRoomEncrypted(
+					matrixClientService.getClient(),
+					matrixRoomId
+				);
+			} catch {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				return Promise.resolve();
+			}
+			return sendEncryptedInitialEnquiry({
+				sessionId: activeSession.item.id,
+				sendEncryptedMatrixMessage: (transactionId) =>
+					matrixClientService.sendMessage(
+						matrixRoomId,
+						message,
+						undefined,
+						transactionId
+					),
+				finalizeEnquiry: (matrixEventId) =>
+					apiSendEnquiry(
+						activeSession.item.id,
+						matrixEventId,
+						language
+					)
+			})
 				.then((response) => {
 					enquirySubmissionGuard.markSucceeded();
 					reloadActiveSession?.();
@@ -1227,9 +1258,11 @@ export const MessageSubmitInterfaceComponent = ({
 			enquirySubmissionGuard,
 			encryptRoom,
 			language,
+			matrixClientService,
 			onSendButton,
 			clearDraftMessage,
 			reloadActiveSession,
+			resolvedChatSession.matrixRoomId,
 			setE2EEState
 		]
 	);
@@ -1304,7 +1337,7 @@ export const MessageSubmitInterfaceComponent = ({
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? Number(resolvedChatSession.sessionId) || undefined
+				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
 				? resolvedChatSession.matrixRoomId
@@ -1372,7 +1405,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (attachment) {
 				// Matrix attachments stay on the SDK media path.
-				if (matrixSessionId) {
+				if (hasMatrixSessionId(matrixSessionId)) {
 					try {
 						if (!matrixRoomId) {
 							throw new Error('Matrix room ID is missing');
@@ -1434,7 +1467,8 @@ export const MessageSubmitInterfaceComponent = ({
 			// on the editor state having committed before deciding whether to send.
 			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
-				hasTextContent && (!attachment || !matrixSessionId);
+				hasTextContent &&
+				(!attachment || !hasMatrixSessionId(matrixSessionId));
 
 			if (shouldSendTextMessage) {
 				// Intentional mentions (#435): read from the composer's own
@@ -1662,7 +1696,7 @@ export const MessageSubmitInterfaceComponent = ({
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
-				sendEnquiry: () => sendEnquiry(message, isEncrypted),
+				sendEnquiry: () => sendEnquiry(message),
 				sendMatrix: sendCurrentMessage,
 				onBlocked: () => {
 					setIsRequestInProgress(false);

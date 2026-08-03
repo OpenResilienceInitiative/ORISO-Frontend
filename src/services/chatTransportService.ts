@@ -106,7 +106,7 @@ class ChatTransportService {
 		const matrixRoomId = isMatrixRoom(rid)
 			? rid
 			: session?.item?.matrixRoomId || null;
-		const sessionId = session?.item?.id || null;
+		const sessionId = session?.item?.id ?? null;
 
 		return {
 			isMatrixSession: Boolean(

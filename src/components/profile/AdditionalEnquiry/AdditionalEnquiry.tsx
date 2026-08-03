@@ -11,7 +11,7 @@ import { mobileListView } from '../../app/navigationHandler';
 import '../profile.styles';
 import { Headline } from '../../headline/Headline';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as CheckIcon } from '../../../resources/img/illustrations/check.svg';
+import { CheckAnimation } from '../../animatedIllustration/AnimatedIllustration';
 import { ReactComponent as XIcon } from '../../../resources/img/illustrations/x.svg';
 import { AdditionalAgencySelection } from './AdditionalAgencySelection';
 import {
@@ -47,7 +47,7 @@ export const AdditionalEnquiry: React.FC = () => {
 	};
 
 	const overlayItemNewRegistrationSuccess: OverlayItem = {
-		svg: CheckIcon,
+		svg: CheckAnimation,
 		headline: translate('profile.data.registerSuccess.overlay.headline'),
 		buttonSet: [
 			{

@@ -125,6 +125,26 @@ describe('fallbacks (Tests #20/#21, UAT-E)', () => {
 		window.removeEventListener(THEME_APPLIED_EVENT, listener);
 		expect(listener).not.toHaveBeenCalled();
 	});
+
+	it('rejects a near-achromatic seed (tooPale guard, #143) and logs', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const listener = vi.fn();
+		window.addEventListener(THEME_APPLIED_EVENT, listener);
+		const root = freshRoot();
+		const applied = applyTenantPalette({ primaryColor: '#000000' }, root);
+		window.removeEventListener(THEME_APPLIED_EVENT, listener);
+		expect(applied).toBe(false);
+		expect(root.style.length).toBe(0);
+		expect(listener).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('too pale'));
+	});
+
+	it('still applies a chromatic dark seed (guard is about chroma, not tone)', () => {
+		const root = freshRoot();
+		const applied = applyTenantPalette({ primaryColor: '#4B0082' }, root);
+		expect(applied).toBe(true);
+		expect(root.style.length).toBeGreaterThan(0);
+	});
 });
 
 describe('scheme-keyed variable map (Test #22, UAT-I)', () => {

@@ -686,20 +686,32 @@ export const MessageItemComponent = ({
 		},
 		[]
 	);
-	const visibilityGroups = useMemo(() => {
-		const selectedComparableLabels = new Set(
-			visibleAudienceLabels.map((entry) =>
-				makeComparableAudienceLabel(entry)
-			)
-		);
+	/**
+	 * Whether this message goes to *everyone* in the room.
+	 *
+	 * Lifted out of `visibilityGroups` so the render condition can read it too:
+	 * the visibility chip exists to mark a message only **some** participants
+	 * can see, so showing it with the label "Alle" states the opposite of what
+	 * the chip means.
+	 *
+	 * `__all__` is the explicit marker; an empty recipient list in a group is
+	 * the implicit one (nothing was restricted, so everyone is addressed).
+	 */
+	const isAllAudienceSelected = useMemo(() => {
 		const includesAllAudience = parsedMessage.visibleToUserIds.some(
 			(entry) => `${entry || ''}`.trim().toLowerCase() === '__all__'
 		);
 		const assumeAllAudienceByDefault =
 			parsedMessage.visibleToUserIds.length === 0 &&
 			!!activeSession?.isGroup;
-		const isAllAudienceSelected =
-			includesAllAudience || assumeAllAudienceByDefault;
+		return includesAllAudience || assumeAllAudienceByDefault;
+	}, [parsedMessage.visibleToUserIds, activeSession?.isGroup]);
+	const visibilityGroups = useMemo(() => {
+		const selectedComparableLabels = new Set(
+			visibleAudienceLabels.map((entry) =>
+				makeComparableAudienceLabel(entry)
+			)
+		);
 		const allCandidates = new Map<string, string>();
 		const addCandidate = (rawValue?: string | null) => {
 			const label = normalizeAudienceLabel(`${rawValue || ''}`);
@@ -793,11 +805,13 @@ export const MessageItemComponent = ({
 		makeComparableAudienceLabel,
 		getAudienceRoleFromLabel,
 		normalizeAudienceLabel,
-		parsedMessage.visibleToUserIds,
 		matrixRoomUsersContext?.users,
-		activeSession?.isGroup,
 		senderComparableLabels,
-		visibleAudienceLabels
+		visibleAudienceLabels,
+		// `parsedMessage.visibleToUserIds` and `activeSession?.isGroup` moved out
+		// with `isAllAudienceSelected`; this memo now depends on the derived
+		// value instead of on both inputs.
+		isAllAudienceSelected
 	]);
 	const visibleAudienceSummaryLabels = useMemo(() => {
 		const sourceLabels =
@@ -1385,6 +1399,10 @@ export const MessageItemComponent = ({
 	const isRoomSetReadOnly = t === 'room-set-read-only';
 	const showVisibleAudience =
 		visibleAudienceSummaryLabels.length > 0 &&
+		// A restriction chip must only appear when the message is actually
+		// restricted. Without this guard a normal group message renders
+		// "visible only to: Alle", which says the opposite of what it means.
+		!isAllAudienceSelected &&
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
@@ -1678,20 +1696,44 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								<MessageDisplayName
-									isMyMessage={isMyMessage}
-									isUser={isUserMessage()}
-									type={getUsernameType()}
-									userId={userId}
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
-									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-								/>
+								{isSystemNotification &&
+								!isCaseHandoverGrantedEvent ? (
+									/*
+									 * Title above, quiet qualifier below — the same
+									 * two-line header `MessageSendFailed` uses, per
+									 * Figma App.Oriso 8607-28488. Reusing its classes
+									 * on purpose: one system-notice presentation, not
+									 * two that drift apart.
+									 */
+									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
+										<div className="messageItem__sendFailedTitle">
+											{systemNotificationTitle}
+										</div>
+										<div className="messageItem__sendFailedSubtitle">
+											{translate(
+												'message.systemNotification',
+												'System Notification'
+											)}
+										</div>
+									</div>
+								) : (
+									<MessageDisplayName
+										isMyMessage={isMyMessage}
+										isUser={isUserMessage()}
+										type={getUsernameType()}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+									/>
+								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1785,24 +1827,20 @@ export const MessageItemComponent = ({
 										)}
 									</CaseHandoverSystemMessageCard>
 								)}
+							{/*
+							 * The bubble carries the body only. Title and the
+							 * "Systembenachrichtigung" qualifier live in the header,
+							 * matching the shipped `MessageSendFailed` pattern and
+							 * Figma App.Oriso 8607-28488. Previously all three sat
+							 * here — a chip, a headline and a description — so one
+							 * notice wore three labels. See ORISO-Frontend#892.
+							 */}
 							{isSystemNotification &&
-								!isCaseHandoverGrantedEvent && (
-									<>
-										<div className="messageItem__systemNotificationTag">
-											{translate(
-												'message.systemNotification',
-												'System Notification'
-											)}
-										</div>
-										<div className="messageItem__systemNotificationTitle">
-											{systemNotificationTitle}
-										</div>
-										{systemNotificationDescription && (
-											<div className="messageItem__systemNotificationDescription">
-												{systemNotificationDescription}
-											</div>
-										)}
-									</>
+								!isCaseHandoverGrantedEvent &&
+								systemNotificationDescription && (
+									<div className="messageItem__systemNotificationDescription">
+										{systemNotificationDescription}
+									</div>
 								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">

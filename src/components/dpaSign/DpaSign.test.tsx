@@ -72,7 +72,9 @@ describe('DpaSign', () => {
 				'Dieser konkrete Vertragstext ist verbindlich.'
 			)
 		).toBeDefined();
-		expect(screen.getByText('Träger Nord')).toBeDefined();
+		// Named twice on purpose: above the contract, and again at the
+		// confirmation act that binds it.
+		expect(screen.getAllByText('Träger Nord').length).toBe(2);
 		expect(
 			screen.getByRole('heading', {
 				name: 'Auftragsverarbeitungsvereinbarung'
@@ -106,8 +108,8 @@ describe('DpaSign', () => {
 		fireEvent.change(screen.getByLabelText('E-Mail *'), {
 			target: { value: 'marge.simpson@dreambau.com' }
 		});
-		fireEvent.change(screen.getByLabelText('Organisation *'), {
-			target: { value: 'Träger Nord' }
+		fireEvent.change(screen.getByLabelText('Anmerkung (optional)'), {
+			target: { value: 'Vertretung laut Handelsregister' }
 		});
 		fireEvent.click(
 			screen.getByRole('checkbox', {
@@ -126,6 +128,56 @@ describe('DpaSign', () => {
 					signerEmail: 'marge.simpson@dreambau.com',
 					accepted: true
 				})
+			)
+		);
+		expect(
+			await screen.findByText('Die AVV-Bestätigung wurde gespeichert.')
+		).toBeDefined();
+	});
+
+	it('names the Träger the signature binds instead of asking for it again', async () => {
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		// The link is scoped to exactly one Träger, so the organisation is
+		// stated — not retyped into a field that could contradict it.
+		expect(screen.queryByLabelText('Organisation *')).toBeNull();
+		expect(
+			screen.getByText(/Sie unterzeichnen im Namen von/)
+		).toBeDefined();
+		expect(screen.getAllByText('Träger Nord').length).toBeGreaterThan(1);
+	});
+
+	it('signs with the optional note left empty', async () => {
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		fireEvent.change(screen.getByLabelText('Name *'), {
+			target: { value: 'Marge Simpson' }
+		});
+		fireEvent.change(screen.getByLabelText('Position *'), {
+			target: { value: 'Geschäftsführerin' }
+		});
+		fireEvent.change(screen.getByLabelText('E-Mail *'), {
+			target: { value: 'marge.simpson@dreambau.com' }
+		});
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Ich habe die oben angezeigte Vereinbarung gelesen/
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Verbindlich bestätigen' })
+		);
+
+		await waitFor(() =>
+			expect(confirmMock).toHaveBeenCalledWith(
+				'valid-token',
+				expect.objectContaining({ signerOrganisation: '' })
 			)
 		);
 		expect(

@@ -28,6 +28,7 @@ const buildFakeClient = (
 		}),
 		bootstrapCrossSigning: async () => undefined,
 		bootstrapSecretStorage: async () => undefined,
+		resetKeyBackup: async () => undefined,
 		checkKeyBackupAndEnable: async () => ({}),
 		loadSessionBackupPrivateKeyFromSecretStorage: async () => undefined,
 		restoreKeyBackup: async () => ({ imported: 42, total: 42 }),

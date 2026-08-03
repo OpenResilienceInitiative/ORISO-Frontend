@@ -336,6 +336,22 @@ describe('CreateConversationView internal card (finding 2)', () => {
 		] as any);
 	});
 
+	it('loads colleagues when the selected agency id is zero', async () => {
+		renderInUserContext([{ id: 0, name: 'Agency Zero' }]);
+
+		await waitFor(() =>
+			expect(apiGetTenantConsultantList).toHaveBeenCalledTimes(1)
+		);
+	});
+
+	it('does not load colleagues without a selected agency', async () => {
+		renderInUserContext([]);
+
+		await waitFor(() =>
+			expect(apiGetTenantConsultantList).not.toHaveBeenCalled()
+		);
+	});
+
 	it('clears the selected colleagues when the agency changes', async () => {
 		renderInUserContext([
 			{ id: 1, name: 'Agency One' },
