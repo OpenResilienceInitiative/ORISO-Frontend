@@ -556,7 +556,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 
 		&:hover:not(:disabled) {
-			background: #a5000a;
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
 		}
 	}
 
@@ -598,7 +599,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			transform 160ms ease;
 
 		&:hover:not(:disabled) {
-			background: #a5000a;
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
 		}
 
 		&:active:not(:disabled) {
@@ -1027,7 +1029,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		text-align: center;
 		font-size: 15px;
 		line-height: 1.4;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		background-color: #f4f6f9;
 	}
 
@@ -1083,6 +1085,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingModulePreset {
 		border: 1px solid rgba(204, 30, 28, 0.25);
+		border: 1px solid
+			color-mix(in srgb, var(--m3-primary, #a5000a) 25%, transparent);
 		background: #fff;
 		color: #a91a1a;
 		border-radius: 999px;
@@ -1093,6 +1097,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		&--active {
 			background: rgba(204, 30, 28, 0.12);
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 12%,
+				transparent
+			);
 			color: #8c1111;
 		}
 	}
@@ -1180,6 +1189,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			rgba(205, 27, 27, 0.85)
 		);
 		box-shadow: 0 0 16px rgba(204, 30, 28, 0.36);
+		box-shadow: 0 0 16px
+			color-mix(in srgb, var(--m3-primary, #a5000a) 36%, transparent);
 		animation: breathing-pulse-orbit 7s linear infinite;
 	}
 
@@ -1503,6 +1514,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			background: #fff;
 			color: #b01919;
 			border-color: rgba(204, 30, 28, 0.32);
+			border-color: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 32%,
+				transparent
+			);
 		}
 
 		&--secondary {
@@ -1561,7 +1577,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 
 		&--red {
-			background: #a5000a;
+			background: var(--m3-primary, #a5000a);
 			clip-path: inset(0 6px);
 		}
 	}
@@ -1604,7 +1620,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 4px;
 		height: 44px;
 		border-radius: 4px;
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 		pointer-events: none;
 	}
 
@@ -2303,9 +2319,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	0%,
 	100% {
 		box-shadow: 0 0 0 rgba(204, 30, 28, 0.24);
+		box-shadow: 0 0 0
+			color-mix(in srgb, var(--m3-primary, #a5000a) 24%, transparent);
 	}
 	50% {
 		box-shadow: 0 0 18px rgba(204, 30, 28, 0.4);
+		box-shadow: 0 0 18px
+			color-mix(in srgb, var(--m3-primary, #a5000a) 40%, transparent);
 	}
 }
 

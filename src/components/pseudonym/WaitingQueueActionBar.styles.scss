@@ -147,6 +147,10 @@
 		0 0 0 0 rgba(165, 0, 10, 0.28),
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
 		0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	box-shadow:
+		0 0 0 0 color-mix(in srgb, var(--m3-primary, #a5000a) 28%, transparent),
+		0 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	overflow: hidden;
 	animation: waitingQueueActionBar-outlineGlow 4.8s ease-in-out infinite;
 }
@@ -476,12 +480,22 @@
 			0 0 0 0 rgba(165, 0, 10, 0.22),
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+		box-shadow:
+			0 0 0 0
+				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	}
 
 	48% {
 		border-color: rgba(255, 255, 255, 0.9);
 		box-shadow:
 			0 0 0 9px rgba(165, 0, 10, 0.18),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+		box-shadow:
+			0 0 0 9px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 18%, transparent),
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	}

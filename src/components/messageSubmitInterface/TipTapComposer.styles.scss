@@ -101,6 +101,11 @@
 				border-left: 3px solid var(--m3-primary-container, #cc1e1c);
 				color: #4a5561;
 				background: rgba(204, 30, 28, 0.04);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 4%,
+					transparent
+				);
 				border-radius: 0 6px 6px 0;
 			}
 		}

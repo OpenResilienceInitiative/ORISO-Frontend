@@ -90,7 +90,7 @@
 		text-decoration: underline;
 
 		&:hover {
-			color: #a5000a;
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 }
@@ -100,7 +100,7 @@
 	font-size: 14px;
 	line-height: 1.4em;
 	font-weight: 500;
-	color: #a5000a;
+	color: var(--m3-primary, #a5000a);
 	background: #fde8e8;
 	border: 1px solid #f5bcbb;
 	border-radius: 10px;
@@ -183,7 +183,8 @@
 	color: var(--m3-on-primary-container, #ffe2de);
 
 	&:hover:not(:disabled) {
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 	}
 }
 
