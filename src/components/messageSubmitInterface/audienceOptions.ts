@@ -225,3 +225,16 @@ export const shouldShowAudienceSelector = ({
 	}
 	return options.some((option) => option.value === AUDIENCE_ALL);
 };
+
+/**
+ * Whether the option list is real yet, as opposed to the placeholder the
+ * component starts with.
+ *
+ * `audienceOptions` is seeded with a lone `__all__` entry and only gains the
+ * actual recipients once the Matrix room members have loaded. Anything that
+ * reads a stored selection has to wait for that: matching saved recipients
+ * against the placeholder finds nothing, and a restore that has already run
+ * will not run again when the real list arrives.
+ */
+export const audienceOptionsReady = (options: AudienceOption[]): boolean =>
+	options.some((option) => option.value !== AUDIENCE_ALL);

@@ -47,6 +47,7 @@ import {
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	shouldShowAudienceSelector,
+	audienceOptionsReady,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -2533,9 +2534,21 @@ export const MessageSubmitInterfaceComponent = ({
 		restoredAudienceKeyRef.current = null;
 	}, [activeSession?.item?.id, threadRootId]);
 
-	/** Restore this chat's stored recipients — once, and only once options exist. */
+	/**
+	 * Restore this chat's stored recipients — once, and only once the option
+	 * list is real.
+	 *
+	 * `audienceOptions` starts as a lone `__all__` placeholder and gains the
+	 * actual recipients when the Matrix members load. Restoring against the
+	 * placeholder would match nothing, fall back to "everyone", mark the chat
+	 * as restored, and then skip the real list when it arrives — losing the
+	 * saved selection exactly as the old code did.
+	 */
 	useEffect(() => {
-		if (!audienceSelectionStorageKey || audienceOptions.length === 0) {
+		if (
+			!audienceSelectionStorageKey ||
+			!audienceOptionsReady(audienceOptions)
+		) {
 			return;
 		}
 		if (restoredAudienceKeyRef.current === audienceSelectionStorageKey) {

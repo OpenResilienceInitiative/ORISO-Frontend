@@ -8,6 +8,7 @@ import {
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	shouldShowAudienceSelector,
+	audienceOptionsReady,
 	type AudienceOption
 } from './audienceOptions';
 
@@ -261,5 +262,43 @@ describe('shouldShowAudienceSelector', () => {
 				options: [person('@kim'), person('@ada')]
 			})
 		).toBe(false);
+	});
+});
+
+describe('audienceOptionsReady', () => {
+	/**
+	 * The state this guards against, found by re-reading the restore effect
+	 * rather than by a failing screen: `audienceOptions` starts life as a
+	 * one-element `[__all__]` placeholder, and the real recipients only arrive
+	 * once the Matrix room members load. A restore that fires against the
+	 * placeholder finds nothing valid, falls back to "everyone", marks the chat
+	 * as restored — and then skips the real options when they show up. The
+	 * saved selection would be lost exactly as before.
+	 */
+	it('is not ready while only the placeholder exists', () => {
+		expect(
+			audienceOptionsReady([
+				{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' }
+			])
+		).toBe(false);
+	});
+
+	it('is not ready for an empty list', () => {
+		expect(audienceOptionsReady([])).toBe(false);
+	});
+
+	it('is ready once a real recipient is present', () => {
+		expect(
+			audienceOptionsReady([
+				{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' },
+				{ value: '@ada', label: 'Ada', kind: 'consultant' }
+			])
+		).toBe(true);
+	});
+
+	it('is ready even without an "all" option', () => {
+		expect(
+			audienceOptionsReady([{ value: '@ada', label: 'Ada', kind: 'person' }])
+		).toBe(true);
 	});
 });
