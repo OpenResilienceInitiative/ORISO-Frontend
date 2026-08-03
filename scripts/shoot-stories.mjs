@@ -20,11 +20,12 @@ const entries = Object.entries(index.entries)
 	)
 	.sort(([a], [b]) => a.localeCompare(b));
 
-const isMobile = (name) => /mobile|390|375|compact/i.test(name);
-// Stories that name a specific width get that width as a real viewport, so the
-// component's own media queries fire instead of only its container shrinking.
-const viewportWidth = (name) =>
-	/375/.test(name) ? 375 : isMobile(name) ? 390 : 760;
+// One resolver for the viewport width, so a story that names a width actually
+// renders at it. The 375px consent-card story reproduces an overflow that does
+// not occur at 390px, so rendering it at 390 would have quietly hidden the very
+// thing it exists to show.
+const viewportWidth = (id, name) =>
+	/375/.test(id + name) ? 375 : /mobile|390|compact/i.test(name) ? 390 : 760;
 // Animated stories need time to settle; the typewriter runs char-by-char.
 const settleMs = (id, name) =>
 	/botmessageanimation|staged|typewriter|reveal/i.test(id + name)
@@ -41,12 +42,19 @@ const results = [];
 let n = 0;
 
 for (const [id, entry] of entries) {
-	const mob = isMobile(entry.name);
+	const width = viewportWidth(id, entry.name);
+	const mob = width <= 390;
 	const page = await browser.newPage({
-		viewport: { width: viewportWidth(entry.name), height: 900 },
+		viewport: { width, height: 900 },
 		deviceScaleFactor: 2
 	});
 	let status = 'ok';
+	// A story can navigate and render yet still throw at runtime. Without this
+	// the run reports "0 problems" while the screenshot shows a broken card.
+	let pageError = null;
+	page.on('pageerror', (err) => {
+		pageError = err?.message?.split('\n')[0]?.slice(0, 90) ?? 'unknown';
+	});
 	try {
 		await page.goto(`${BASE}/iframe.html?id=${id}&viewMode=story`, {
 			waitUntil: 'load',
@@ -65,11 +73,12 @@ for (const [id, entry] of entries) {
 				textLen: t.length
 			};
 		});
-		if (info.needsData) status = 'needs-data';
+		if (pageError) status = 'PAGEERROR: ' + pageError;
+		else if (info.needsData) status = 'needs-data';
 		else if (info.empty) status = 'EMPTY';
 
 		await page.setViewportSize({
-			width: viewportWidth(entry.name),
+			width,
 			height: Math.min(Math.max(info.height + 32, 80), 1400)
 		});
 		await page.waitForTimeout(120);

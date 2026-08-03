@@ -1,4 +1,3 @@
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';

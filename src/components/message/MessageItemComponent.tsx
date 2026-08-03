@@ -805,11 +805,12 @@ export const MessageItemComponent = ({
 		makeComparableAudienceLabel,
 		getAudienceRoleFromLabel,
 		normalizeAudienceLabel,
-		parsedMessage.visibleToUserIds,
 		matrixRoomUsersContext?.users,
-		activeSession?.isGroup,
 		senderComparableLabels,
 		visibleAudienceLabels,
+		// `parsedMessage.visibleToUserIds` and `activeSession?.isGroup` moved out
+		// with `isAllAudienceSelected`; this memo now depends on the derived
+		// value instead of on both inputs.
 		isAllAudienceSelected
 	]);
 	const visibleAudienceSummaryLabels = useMemo(() => {
