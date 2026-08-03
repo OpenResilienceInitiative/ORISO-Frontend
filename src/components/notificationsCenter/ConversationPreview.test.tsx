@@ -2,6 +2,8 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConversationPreview } from './ConversationPreview';
+import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 
 const transport = vi.hoisted(() => ({
 	getMatrixRoom: vi.fn(),
@@ -10,7 +12,8 @@ const transport = vi.hoisted(() => ({
 }));
 
 // The real chatTransportService imports matrix-js-sdk (heavyweight, hangs the
-// jsdom worker) — the preview only needs these three calls.
+// jsdom worker) — the preview only needs these three calls. vi.mock calls are
+// hoisted above the imports by vitest, so mocking after them is safe.
 vi.mock('../../services/chatTransportService', () => ({
 	chatTransportService: transport
 }));
@@ -21,9 +24,6 @@ vi.mock('react-i18next', () => ({
 		i18n: { language: 'de' }
 	})
 }));
-
-import { ConversationPreview } from './ConversationPreview';
-import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 
 const matrixEvent = (overrides: {
 	id: string;
@@ -128,6 +128,61 @@ describe('ConversationPreview (#847)', () => {
 		expect(container.querySelector('img')).toBeNull();
 		expect(container.querySelector('b')).toBeNull();
 		expect(screen.getByText('bold')).toBeTruthy();
+	});
+
+	it('decodes HTML entities instead of rendering the escape sequences', () => {
+		arrange([
+			matrixEvent({
+				id: '$e',
+				sender: '@lisa:matrix.example',
+				content: {
+					msgtype: 'm.text',
+					body: 'Tom & Jerry <3',
+					formatted_body: 'Tom &amp; Jerry &lt;3'
+				}
+			})
+		]);
+
+		render(<ConversationPreview roomId="!room:matrix.example" />);
+
+		expect(screen.getByText('Tom & Jerry <3')).toBeTruthy();
+		expect(screen.queryByText(/&amp;/)).toBeNull();
+	});
+
+	it('renders only messages of the given thread when threadRootId is set', () => {
+		const threadReply = (id: string, body: string, root: string) =>
+			matrixEvent({
+				id,
+				sender: '@lisa:matrix.example',
+				content: {
+					'msgtype': 'm.text',
+					'body': body,
+					'm.relates_to': {
+						rel_type: 'm.thread',
+						event_id: root
+					}
+				}
+			});
+		arrange([
+			matrixEvent({
+				id: '$root',
+				sender: '@lisa:matrix.example',
+				body: 'Main timeline message'
+			}),
+			threadReply('$t1', 'Reply in our thread', '$root'),
+			threadReply('$t2', 'Reply in another thread', '$other')
+		]);
+
+		render(
+			<ConversationPreview
+				roomId="!room:matrix.example"
+				threadRootId="$root"
+			/>
+		);
+
+		expect(screen.getByText('Reply in our thread')).toBeTruthy();
+		expect(screen.queryByText('Reply in another thread')).toBeNull();
+		expect(screen.queryByText('Main timeline message')).toBeNull();
 	});
 
 	it('shows the unavailable notice when the room is not in the client store', () => {

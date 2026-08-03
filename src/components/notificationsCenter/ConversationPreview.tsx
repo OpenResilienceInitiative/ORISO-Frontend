@@ -16,8 +16,16 @@ interface PreviewMessage {
 	timestamp: Date;
 	text: string;
 	attachmentTitle: string | null;
-	isThreadReply: boolean;
 }
+
+/**
+ * The formatter may return formatted_body HTML; the preview renders plain
+ * text only. A detached DOMParser document strips tags AND decodes entities
+ * (`&amp;` → `&`) without ever attaching the markup to the live DOM, so
+ * there is no HTML injection surface (same approach as DraftsCenter).
+ */
+const stripToPlainText = (html: string): string =>
+	new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
 
 /**
  * #847: read-only conversation preview for the Activity Timeline detail pane.
@@ -84,12 +92,8 @@ export const ConversationPreview = ({
 				senderId: message.u?._id || '',
 				senderName: message.u?.name || message.u?.username || '',
 				timestamp: message.ts,
-				// The formatter may return formatted_body HTML; the preview
-				// renders plain text only, so tags are stripped and the value
-				// is rendered as a text node (no HTML injection surface).
-				text: String(message.msg || '').replace(/<[^>]+>/g, ''),
-				attachmentTitle: message.attachments?.[0]?.title || null,
-				isThreadReply: Boolean(message.threadRootEventId)
+				text: stripToPlainText(String(message.msg || '')),
+				attachmentTitle: message.attachments?.[0]?.title || null
 			}));
 		setMessages(formatted);
 	}, [roomId, threadRootId]);

@@ -35,9 +35,11 @@
 			align-self: flex-end;
 			align-items: flex-end;
 
+			// Shared own-message bubble colours from settings.scss — the same
+			// contract message.styles.scss uses for `--myMessage`.
 			.conversationPreview__bubble {
-				background: var(--m3-primary-fixed, #ffdad5);
-				color: var(--m3-on-primary-fixed, #410001);
+				background: $message-outgoing-bg;
+				color: $message-outgoing-text;
 			}
 		}
 	}
@@ -61,14 +63,14 @@
 	}
 
 	&__bubble {
-		background: var(--m3-surface-container-high, #eae7e8);
+		background: $message-incoming-bg;
 		color: var(--m3-on-surface, #1b1b1c);
 		border-radius: 12px;
 		padding: 8px 12px;
 		font-size: 14px;
 		line-height: 1.5;
 		white-space: pre-wrap;
-		word-break: break-word;
+		overflow-wrap: anywhere;
 	}
 
 	&__attachment {

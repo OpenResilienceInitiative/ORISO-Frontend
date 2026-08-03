@@ -1410,6 +1410,8 @@
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
 			"open": "Sohbeti aç",
+			"showPreview": "Sohbet önizlemesini göster",
+			"showDetails": "Detayları göster",
 			"preview": {
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
 				"empty": "Bu sohbette henüz mesaj yok."
