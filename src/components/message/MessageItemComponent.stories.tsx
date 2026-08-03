@@ -642,3 +642,50 @@ export const OutgoingWithVisibility: Story = {
 		...baseHandlers
 	}
 };
+
+export const GroupMessageEveryoneNoChip: Story = {
+	name: 'Group message everyone can see — NO visibility chip',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Regression pin for ORISO-Frontend#892. A group message with no recipient restriction addresses everyone, so the chip must **not** render. Before the fix it showed "visible only to: Alle" — a restriction chip claiming there is no restriction.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Kurzes Update für das Team: Der Fall bleibt heute bei mir.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageRestrictedShowsChip: Story = {
+	name: 'Group message restricted — chip IS shown',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message: mockVisibilityMessage
+		}),
+		...baseHandlers
+	}
+};
