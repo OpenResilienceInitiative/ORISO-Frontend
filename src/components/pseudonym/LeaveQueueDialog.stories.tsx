@@ -41,7 +41,12 @@ const meta = {
 					'Three choices from the waiting queue: stay, start now, or end the chat and give up the ' +
 					'anonymous access. "Delete access" calls `finishConversation`, which deactivates the ' +
 					'Keycloak account server-side — the account is disabled, not merely logged out. Below ' +
-					'575px the buttons stack full width, per the house dialog rule.'
+					'575px the buttons stack full width, per the house dialog rule.\n\n' +
+					'Note on colour: the destructive action uses the M3 `error` role, which the OrisoScheme ' +
+					'emits as magenta on purpose — red is the brand colour here, so it cannot also mean ' +
+					'"danger". Storybook does not apply the scheme, so these previews show the static ' +
+					'fallback from `mui-variables-mapping.scss` (`#cc0000`) instead of the magenta the app ' +
+					'renders.'
 			}
 		}
 	}

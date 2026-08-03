@@ -156,63 +156,84 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 						</div>
 					</>
 				) : (
-					<div className="leaveQueueDialog__actions">
-						<button
-							type="button"
-							className="leaveQueueDialog__btnSecondary"
-							onClick={onStay}
-							disabled={busy}
-						>
-							{t(
-								'anonymousChat.leaveQueue.stay',
-								'Im Wartebereich bleiben'
-							)}
-						</button>
-						<button
-							type="button"
-							className="leaveQueueDialog__btnPrimary"
-							onClick={onStartChat}
-							disabled={busy || !canStartChat}
-							title={
-								canStartChat
-									? undefined
-									: t(
-											'anonymousChat.leaveQueue.startChatUnavailable',
-											'Sobald eine beratende Person den Chat annimmt, können Sie hier starten.'
-										)
-							}
-						>
-							{t(
-								'anonymousChat.leaveQueue.startChat',
-								'Chat jetzt starten'
-							)}
-						</button>
-						<button
-							type="button"
-							className="leaveQueueDialog__btnDangerQuiet"
-							onClick={() => setConfirmingDelete(true)}
-							disabled={busy}
-						>
-							{t(
-								'anonymousChat.leaveQueue.delete',
-								'Chat beenden & Zugang löschen'
-							)}
-						</button>
-					</div>
+					<>
+						<div className="leaveQueueDialog__actions">
+							<button
+								type="button"
+								className="leaveQueueDialog__btnSecondary"
+								onClick={onStay}
+								disabled={busy}
+							>
+								{t(
+									'anonymousChat.leaveQueue.stay',
+									'Im Wartebereich bleiben'
+								)}
+							</button>
+							<button
+								type="button"
+								className="leaveQueueDialog__btnPrimary"
+								onClick={onStartChat}
+								disabled={busy || !canStartChat}
+								aria-describedby={
+									canStartChat
+										? undefined
+										: 'leaveQueueDialogStartHint'
+								}
+							>
+								{t(
+									'anonymousChat.leaveQueue.startChat',
+									'Chat jetzt starten'
+								)}
+							</button>
+						</div>
+
+						{/*
+						 * Directly under the button it explains, not after the
+						 * delete action — otherwise the reason reads as if it
+						 * belonged to whatever was rendered last.
+						 */}
+						{!canStartChat && (
+							<p
+								className="leaveQueueDialog__hint"
+								id="leaveQueueDialogStartHint"
+							>
+								{t(
+									'anonymousChat.leaveQueue.startChatUnavailable',
+									'Sobald eine beratende Person den Chat annimmt, können Sie hier starten.'
+								)}
+							</p>
+						)}
+
+						{errorMessage && (
+							<p className="leaveQueueDialog__error" role="alert">
+								{errorMessage}
+							</p>
+						)}
+
+						{/*
+						 * The irreversible action sits apart, below a divider,
+						 * so it cannot be mistaken for one of the two ordinary
+						 * choices above it.
+						 */}
+						<div className="leaveQueueDialog__dangerRow">
+							<button
+								type="button"
+								className="leaveQueueDialog__btnDangerQuiet"
+								onClick={() => setConfirmingDelete(true)}
+								disabled={busy}
+							>
+								{t(
+									'anonymousChat.leaveQueue.delete',
+									'Chat beenden & Zugang löschen'
+								)}
+							</button>
+						</div>
+					</>
 				)}
 
-				{errorMessage && (
+				{confirmingDelete && errorMessage && (
 					<p className="leaveQueueDialog__error" role="alert">
 						{errorMessage}
-					</p>
-				)}
-
-				{!canStartChat && !confirmingDelete && (
-					<p className="leaveQueueDialog__hint">
-						{t(
-							'anonymousChat.leaveQueue.startChatUnavailable',
-							'Sobald eine beratende Person den Chat annimmt, können Sie hier starten.'
-						)}
 					</p>
 				)}
 			</div>

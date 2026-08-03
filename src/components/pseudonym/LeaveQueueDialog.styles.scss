@@ -130,8 +130,13 @@
 		outline-offset: 2px;
 	}
 
+	/*
+	 * M3 disabled treatment rather than a faded brand fill. 45% of a saturated
+	 * red still reads as an inviting button; the neutral surface does not.
+	 */
 	&:disabled {
-		opacity: 0.45;
+		background: rgba(29, 27, 32, 0.12);
+		color: rgba(29, 27, 32, 0.38);
 		cursor: not-allowed;
 	}
 }
@@ -161,6 +166,22 @@
 	color: var(--m3-error, #b1005e);
 	padding: 0 12px;
 	text-decoration: underline;
+
+	&:disabled {
+		background: transparent;
+		color: rgba(29, 27, 32, 0.38);
+	}
+}
+
+/*
+ * The irreversible action lives below a divider, apart from the two ordinary
+ * choices, so it cannot be picked up as "the third button".
+ */
+.leaveQueueDialog__dangerRow {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 16px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 }
 
 /* House rule: below 575px the footer buttons stack and go full width. */
@@ -192,7 +213,8 @@
 		overflow-wrap: break-word;
 	}
 
-	.leaveQueueDialog__actions {
+	.leaveQueueDialog__actions,
+	.leaveQueueDialog__dangerRow {
 		flex-direction: column;
 		align-items: stretch;
 	}
