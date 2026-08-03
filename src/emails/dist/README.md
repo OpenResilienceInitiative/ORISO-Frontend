@@ -28,6 +28,20 @@ dialect cannot disagree with what Storybook shows.
 | `beraterin-kontakt` | asker | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{bookingUrl}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `anfrage-zugewiesen` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `systemhinweis` | asker | `{{maintenanceDate}}` `{{maintenanceStart}}` `{{maintenanceEnd}}` `{{statusUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `neue-anfrage` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `direkte-anfrage` | consultant | `{{requestTopic}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `tagesuebersicht` | consultant | `{{openRequestCount}}` `{{oldestRequestAge}}` `{{digestGeneratedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-angefragt` | consultant | `{{fromConsultantName}}` `{{caseReference}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-bestaetigt` | consultant | `{{toConsultantName}}` `{{caseReference}}` `{{handoverAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `rueckmeldung` | consultant | `{{caseReference}}` `{{requestReceivedAt}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `mitteilung` | asker | `{{messageSubject}}` `{{messagePreview}}` `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `anmeldelink` | asker | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einmalcode` | asker | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einladung-traeger` | admin | `{{tenantName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einladung-fachkraft` | consultant | `{{agencyName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `avv-unterschrift` | admin | `{{tenantName}}` `{{senderName}}` `{{dpaProvidedAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `team-aenderung` | consultant | `{{teamChangeStatement}}` `{{agencyName}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `smtp-test` | admin | `{{smtpHost}}` `{{smtpFrom}}` `{{sentAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,
 `logoUrl`, `orgName`, `orgAddress`, `contactLine`) appear in every mail and

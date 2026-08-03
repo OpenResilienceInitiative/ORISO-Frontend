@@ -54,7 +54,19 @@ export const emailType = {
 	button: { size: 16, line: 20, weight: 600 },
 	/** Wordmark next to the logo. */
 	brand: { size: 16, line: 24, weight: 600, tracking: 0.15 },
-	orgName: { size: 13, line: 20, weight: 600 }
+	orgName: { size: 13, line: 20, weight: 600 },
+	/**
+	 * A one-time code. Large and widely tracked because it exists to be read off
+	 * one screen and typed into another — at body size in a label/value row it is
+	 * the hardest thing in the mail to copy correctly.
+	 */
+	code: {
+		size: 32,
+		line: 40,
+		weight: 600,
+		tracking: 4,
+		mobile: { size: 26, line: 34, tracking: 3 }
+	}
 } as const;
 
 export const emailSpace = {

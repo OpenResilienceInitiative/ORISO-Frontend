@@ -113,7 +113,48 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	requestReceivedAt: 'heute, 09:12',
 	maintenanceDate: 'Sonntag, 9. August 2026',
 	maintenanceStart: '02:00',
-	maintenanceEnd: '04:30'
+	maintenanceEnd: '04:30',
+
+	// The counsellor's enquiry stream.
+	openRequestCount: '7',
+	oldestRequestAge: '3 Tage',
+	digestGeneratedAt: 'heute, 06:00',
+
+	// Handover and supervision. Counsellor names are real names in the product —
+	// these two are invented, like everything else here.
+	caseReference: 'BE-2026-0431',
+	fromConsultantName: 'M. Sandmann',
+	toConsultantName: 'K. Reuter',
+	handoverAt: 'heute, 11:05',
+
+	// The free-text mail an administrator composes.
+	messageSubject: 'Neue Öffnungszeiten ab September',
+	messagePreview: 'Ab dem 1. September gelten neue Zeiten.',
+	messageHeadline: 'Neue Öffnungszeiten ab September',
+	messageBody:
+		'Ab dem 1. September ist die Beratung montags bis donnerstags von 9 bis 17 Uhr erreichbar, freitags bis 13 Uhr.',
+
+	// Account and access.
+	expiryMinutes: '15',
+	otpCode: '418 902',
+
+	// Invitations and the DPA.
+	tenantName: 'Caritasverband Mainz',
+	agencyName: 'Beratungsstelle Mainz-Neustadt',
+	inviteUrl: 'https://beratung.example.org/einladung?token=1c9d',
+	inviteExpiresAt: '10. August 2026, 23:59',
+	dpaUrl: 'https://beratung.example.org/avv/2026-0044',
+	senderName: 'ORISO Betrieb',
+	dpaProvidedAt: '3. August 2026',
+
+	// Team and platform operations.
+	teamChangeStatement:
+		'Sie wurden der Beratungsstelle Mainz-Neustadt als Fachkraft zugeordnet.',
+	teamChangedAt: 'heute, 08:40',
+	appUrl: 'https://beratung.example.org',
+	smtpHost: 'smtp.example.org:587',
+	smtpFrom: 'no-reply@beratung.example.org',
+	sentAt: '3. August 2026, 09:14'
 };
 
 /**

@@ -36,6 +36,9 @@ const responsiveStyles = (): string =>
 	'.btn td{width:100% !important}' +
 	'.btn a{display:block !important;padding-left:20px !important;padding-right:20px !important;text-align:center !important}' +
 	`.panel-pad{padding:${emailSpace.panelMobile.block}px ${emailSpace.panelMobile.inline}px !important}` +
+	`.code{font-size:${emailType.code.mobile.size}px !important;` +
+	`line-height:${emailType.code.mobile.line}px !important;` +
+	`letter-spacing:${emailType.code.mobile.tracking}px !important}` +
 	'.row-label{display:block !important;width:100% !important;padding:14px 0 2px 0 !important}' +
 	'.row-value{display:block !important;width:100% !important;padding:0 !important}' +
 	'.row-first{padding-top:0 !important}' +

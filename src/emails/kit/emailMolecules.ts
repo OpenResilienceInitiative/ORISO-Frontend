@@ -11,6 +11,7 @@ import {
 	emailBodyTextStyle,
 	emailButton,
 	emailCaptionStyle,
+	emailCodeMarkup,
 	emailDataRowMarkup,
 	emailDivider,
 	emailEscape,
@@ -74,6 +75,21 @@ export const emailDataPanel = (rows: EmailDataRow[]): string => {
 		{ padding: [0, G, 8, G], className: 'panel' }
 	);
 };
+
+/**
+ * The same tinted panel, carrying a one-time code instead of label/value pairs.
+ * Centred, because the code is the only thing on it.
+ */
+export const emailCodePanel = (row: EmailDataRow): string =>
+	emailBlock(
+		'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
+			`bgcolor="${emailColor.surfaceMuted}" style="background-color:${emailColor.surfaceMuted};` +
+			`border:1px solid ${emailColor.outline};border-radius:${emailRadius.panel}px;">` +
+			`<tr><td class="panel-pad" align="center" style="padding:${emailSpace.panel.block}px ${emailSpace.panel.inline}px;text-align:center;">` +
+			emailCodeMarkup(row) +
+			'</td></tr></table>',
+		{ padding: [0, G, 8, G], className: 'panel' }
+	);
 
 /** The primary action. Left-aligned on desktop, full width on phones. */
 export const emailCallToAction = (

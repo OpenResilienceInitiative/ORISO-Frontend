@@ -13,6 +13,7 @@ import {
 	EmailFooterContent,
 	emailAssurance,
 	emailCallToAction,
+	emailCodePanel,
 	emailDataPanel,
 	emailFooter,
 	emailFootnote,
@@ -40,6 +41,11 @@ export interface EmailContent {
 	paragraphs: string[];
 	/** Optional tinted label/value panel between the copy and the button. */
 	panel?: EmailDataRow[];
+	/**
+	 * A one-time code, shown large on its own panel. Mutually exclusive with
+	 * `panel` in practice — a mail that carries a code carries nothing else.
+	 */
+	code?: EmailDataRow;
 	/** The single primary action. Every ORISO mail has exactly one. */
 	cta: EmailAction;
 	/** Optional lower-weight action directly under the button. */
@@ -66,6 +72,7 @@ export const renderEmailHtml = (
 		emailTitleGroup(content.headline, brand) +
 		emailProse(content.paragraphs) +
 		(content.panel ? emailDataPanel(content.panel) : '') +
+		(content.code ? emailCodePanel(content.code) : '') +
 		emailCallToAction(content.cta, brand) +
 		(content.secondaryAction
 			? emailSecondaryAction(content.secondaryAction, brand)
@@ -112,6 +119,10 @@ export const renderEmailText = (
 			lines.push(`${row.label}: ${flatten(row.value)}`)
 		);
 		lines.push('');
+	}
+
+	if (content.code) {
+		lines.push(`${content.code.label}: ${flatten(content.code.value)}`, '');
 	}
 
 	lines.push(`${content.cta.label}:`, content.cta.href, '');

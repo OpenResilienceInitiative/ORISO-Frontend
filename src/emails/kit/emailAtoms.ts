@@ -231,6 +231,25 @@ export const emailDataRowMarkup = (
 	);
 };
 
+/**
+ * A one-time code, set to be read aloud or retyped.
+ *
+ * The label sits above rather than beside it: a code is not a data point in a
+ * list, it is the one thing the recipient has to get out of the mail. The
+ * `.code` hook lets the media query shrink it before it can wrap, because a
+ * six-digit code broken across two lines is worse than a smaller one.
+ */
+export const emailCodeMarkup = ({ label, value }: EmailDataRow): string =>
+	`<div style="${font(emailType.label.size, emailType.label.line, {
+		tracking: emailType.label.tracking,
+		color: emailColor.onSurfaceVariant
+	})};padding-bottom:6px;">${emailEscape(label)}</div>` +
+	`<div class="code" style="${font(emailType.code.size, emailType.code.line, {
+		weight: emailType.code.weight,
+		tracking: emailType.code.tracking,
+		color: emailColor.onSurface
+	})};word-break:break-word;">${value}</div>`;
+
 /** A footer link. `nowrap` is dropped on mobile so four of them can wrap. */
 export const emailFooterLink = ({
 	href,

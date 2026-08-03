@@ -1,0 +1,30 @@
+New reply in the professional exchange
+======================================
+
+There is a new reply in the protected professional exchange about one of your counselling cases.
+
+You will see the content encrypted, after signing in.
+
+Case: ${caseReference!''}
+Received: ${requestReceivedAt!''}
+
+Read reply:
+${messageUrl!''}
+
+The professional exchange is not visible to the person seeking advice.
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} is a service provided by ${orgName!''}.
+
+Settings: ${settingsUrl!''}
+Privacy: ${privacyUrl!''}
+Imprint: ${imprintUrl!''}
+Unsubscribe from notifications: ${unsubscribeUrl!''}
+
+This email was sent automatically. Please do not reply to it.
