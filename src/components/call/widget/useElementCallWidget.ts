@@ -161,6 +161,12 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// The call UI is deliberately dark even though the app
+					// around it is light; app-wide dark is a separate decision
+					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
+					// Call's own default, which an upstream merge could change
+					// without anything here to point at.
+					theme: 'dark',
 					skipLobby: String(skipLobby),
 					// See releaseToggles.enableCallMediaE2EE: Element Call only
 					// encrypts media when the host asks for it, because the host
