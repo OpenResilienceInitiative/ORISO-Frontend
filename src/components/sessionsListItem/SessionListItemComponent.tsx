@@ -85,7 +85,7 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
-import { getLatestDecryptedMatrixMessage } from '../../utils/matrixSessionPreview';
+import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -96,7 +96,6 @@ import {
 	CaseHandoverActionButton,
 	CaseHandoverActionState
 } from './CaseHandoverActionButton';
-import { chatTransportService } from '../../services/chatTransportService';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -216,6 +215,10 @@ export const SessionListItemComponent = ({
 	});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
+	const matrixSessionPreview = useMatrixSessionPreview(
+		sessionItem?.matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked
+	);
 
 	useEffect(() => {
 		if (caseHandoverContentLocked) {
@@ -226,23 +229,21 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			const roomId = sessionItem?.matrixRoomId;
-			const updatePreview = () => {
-				const events =
-					chatTransportService.getMatrixRoomMessages(roomId, 50) ||
-					[];
-				const latest = getLatestDecryptedMatrixMessage(events);
-				setPlainTextLastMessage(
-					latest ?? translate('e2ee.message.encryption.text')
-				);
-			};
-
-			updatePreview();
-			const detach = chatTransportService.onMatrixTimeline(
-				roomId,
-				updatePreview
+			setPlainTextLastMessage(
+				matrixSessionPreview ??
+					translate('e2ee.message.encryption.text')
 			);
-			return () => detach?.();
+		}
+	}, [
+		caseHandoverContentLocked,
+		isMatrixBackedSession,
+		matrixSessionPreview,
+		translate
+	]);
+
+	useEffect(() => {
+		if (caseHandoverContentLocked || isMatrixBackedSession) {
+			return;
 		}
 
 		if (!ready) {

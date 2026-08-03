@@ -41,4 +41,18 @@ describe('getLatestDecryptedMatrixMessage', () => {
 			'decrypted later'
 		);
 	});
+
+	it('uses the clean replacement body for edited messages', () => {
+		expect(
+			getLatestDecryptedMatrixMessage([
+				{
+					getType: () => 'm.room.message',
+					getContent: () => ({
+						body: '* corrected text',
+						'm.new_content': { body: 'corrected text' }
+					})
+				}
+			])
+		).toBe('corrected text');
+	});
 });
