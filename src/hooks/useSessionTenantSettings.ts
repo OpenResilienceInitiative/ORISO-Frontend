@@ -9,7 +9,13 @@ import {
 interface SessionTenantSettingsState {
 	settings: Partial<TenantDataSettingsInterface>;
 	isLoading: boolean;
+	appliedSessionKey: string | number | null | undefined;
 }
+
+type SessionTenantSettingsResult = Omit<
+	SessionTenantSettingsState,
+	'appliedSessionKey'
+>;
 
 /**
  * Tenant feature permissions can change while a consultant keeps the app open.
@@ -18,10 +24,11 @@ interface SessionTenantSettingsState {
  */
 export const useSessionTenantSettings = (
 	sessionKey: string | number | null | undefined
-): SessionTenantSettingsState => {
+): SessionTenantSettingsResult => {
 	const [state, setState] = useState<SessionTenantSettingsState>(() => ({
 		settings: { ...getTenantSettings() },
-		isLoading: true
+		isLoading: true,
+		appliedSessionKey: undefined
 	}));
 
 	useEffect(() => {
@@ -33,14 +40,19 @@ export const useSessionTenantSettings = (
 				if (!active) return;
 				const settings = tenant?.settings ?? getTenantSettings();
 				if (tenant?.settings) setTenantSettings(tenant.settings);
-				setState({ settings: { ...settings }, isLoading: false });
+				setState({
+					settings: { ...settings },
+					isLoading: false,
+					appliedSessionKey: sessionKey
+				});
 			})
 			.catch(() => {
 				if (!active) return;
-				setState({
-					settings: { ...getTenantSettings() },
-					isLoading: false
-				});
+				setState((current) => ({
+					...current,
+					isLoading: false,
+					appliedSessionKey: sessionKey
+				}));
 			});
 
 		return () => {
@@ -48,5 +60,9 @@ export const useSessionTenantSettings = (
 		};
 	}, [sessionKey]);
 
-	return state;
+	return {
+		settings: state.settings,
+		isLoading:
+			state.isLoading || state.appliedSessionKey !== sessionKey
+	};
 };
