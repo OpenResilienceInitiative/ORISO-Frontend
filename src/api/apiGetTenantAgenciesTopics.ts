@@ -9,9 +9,11 @@ export interface TenantAgenciesTopicsInterface {
 export const apiGetTenantAgenciesTopics = async (): Promise<
 	TenantAgenciesTopicsInterface[]
 > => {
-	return fetchData({
+	const response = await fetchData({
 		url: `${endpoints.agencyTopics}`,
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	});
+
+	return Array.isArray(response) ? response : [];
 };
