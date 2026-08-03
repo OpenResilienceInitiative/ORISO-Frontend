@@ -30,7 +30,8 @@ import {
 	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
-	mockVisibilityMessage
+	mockVisibilityMessage,
+	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
 import { phone390Globals } from './messageStoryShell';
 import './message.styles.scss';
@@ -674,7 +675,7 @@ export const GroupMessageRestrictedShowsChip: Story = {
 		userData: mockUserData(),
 		docs: {
 			description: {
-				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.'
+				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.\n\nThe recipient list names the viewer ("Karina P" from `mockUserData`) on purpose. A restricted message addressed to *other* people is hidden from the viewer entirely — `MessageItemComponent` returns `null` — so a story built on that fixture would render an empty frame and pin nothing.'
 			}
 		}
 	},
@@ -684,7 +685,7 @@ export const GroupMessageRestrictedShowsChip: Story = {
 			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
 			displayName: 'Angela K',
 			username: 'angela.k@oriso.invalid',
-			message: mockVisibilityMessage
+			message: mockVisibilityMessageForViewer
 		}),
 		...baseHandlers
 	}
