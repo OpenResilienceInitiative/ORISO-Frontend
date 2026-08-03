@@ -74,7 +74,10 @@ vi.mock(
 	})
 );
 
-const { RouterConfigConsultant } = await import('./RouterConfig');
+const { RouterConfigConsultant, RouterConfigUser } = await import(
+	'./RouterConfig'
+);
+const { hasUserAuthority } = await import('../../globalState');
 
 const settings = {
 	useOverviewPage: false,
@@ -110,5 +113,19 @@ describe('RouterConfigConsultant navigation', () => {
 		);
 		expect(notificationIndex).toBeGreaterThanOrEqual(0);
 		expect(profileIndex).toBeGreaterThan(notificationIndex);
+	});
+});
+
+describe('RouterConfigUser navigation', () => {
+	it('hides the Activity Timeline from askers', () => {
+		vi.mocked(hasUserAuthority).mockReturnValue(true);
+		const routerConfig = RouterConfigUser(settings);
+		const timelineItem = routerConfig.navigation.find(
+			(item) => item.to === '/notifications'
+		);
+
+		expect(
+			timelineItem.condition({ grantedAuthorities: ['ASKER_DEFAULT'] })
+		).toBe(false);
 	});
 });
