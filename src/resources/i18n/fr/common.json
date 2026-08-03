@@ -2050,7 +2050,7 @@
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
-				"label": "Nom d'utilisateur",
+				"label": "User-ID",
 				"success": "Votre nom d'utilisateur est approprié."
 			}
 		},

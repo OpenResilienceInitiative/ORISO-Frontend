@@ -2549,18 +2549,26 @@
 				"allShort": "Alle 3",
 				"avatar": "Avatar",
 				"password": "Passwort",
-				"username": "Benutzername"
+				"username": "User-ID"
 			},
 			"subline": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"tooShort": "Ihr Benutzername ist zu kurz.",
-					"unavailable": "Dieser Benutzername ist bereits vergeben.",
-					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuchen Sie es erneut."
+					"tooShort": "Ihre User-ID ist zu kurz.",
+					"unavailable": "Diese User-ID ist bereits vergeben.",
+					"retry": "Wir konnten die User-ID gerade nicht prüfen. Bitte versuchen Sie es erneut."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
-				"label": "Benutzername",
-				"success": "Ihr Benutzername ist geeignet."
+				"label": "User-ID",
+				"success": "Ihre User-ID ist geeignet."
+			},
+			"email": {
+				"label": "E-Mail-Adresse",
+				"info": "Optional. Wird nur für Sicherheitsfunktionen wie die Zwei-Faktor-Authentifizierung verwendet.",
+				"error": {
+					"required": "Bitte geben Sie eine E-Mail-Adresse an.",
+					"invalid": "Bitte geben Sie eine gültige E-Mail-Adresse an."
+				}
 			}
 		},
 		"back": "Zurück",

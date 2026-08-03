@@ -21,19 +21,22 @@ import {
 	useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
+import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
-	LocaleContext,
 	RegistrationContext,
 	RegistrationData
-} from '../../../globalState';
+} from '../../../globalState/provider/RegistrationProvider';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
+import { getEmailFeedback } from './emailFeedback';
 import {
 	registrationMd3,
 	registrationScreenIntroSx,
@@ -138,6 +141,11 @@ export const AccountData: FC<{
 	const [username, setUsername] = useState<string>(
 		restoredDraft?.username ?? ''
 	);
+	const { tenant } = useContext(TenantContext);
+	const emailVisible = tenant?.settings?.emailVisible ?? false;
+	const emailRequired = tenant?.settings?.emailRequired ?? false;
+	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
+	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
 	const [isUsernameAvailable, setIsUsernameAvailable] =
 		useState<boolean>(true);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
@@ -183,9 +191,17 @@ export const AccountData: FC<{
 			username,
 			password,
 			repeatPassword,
-			dataProtectionChecked
+			dataProtectionChecked,
+			email
 		});
-	}, [identity, username, password, repeatPassword, dataProtectionChecked]);
+	}, [
+		identity,
+		username,
+		password,
+		repeatPassword,
+		dataProtectionChecked,
+		email
+	]);
 
 	const isUsernameLongEnough =
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
@@ -194,6 +210,12 @@ export const AccountData: FC<{
 		repeatPassword.length > 0 && repeatPassword !== password;
 	const repeatPasswordMatches =
 		repeatPassword.length > 0 && repeatPassword === password;
+	const emailFeedback = getEmailFeedback({
+		visible: emailVisible,
+		required: emailRequired,
+		wasBlurred: emailWasBlurred,
+		email
+	});
 
 	useEffect(() => {
 		if (!isUsernameLongEnough) {
@@ -239,10 +261,16 @@ export const AccountData: FC<{
 			isUsernameLongEnough &&
 			isPasswordValid &&
 			password === repeatPassword &&
-			dataProtectionChecked
+			dataProtectionChecked &&
+			emailFeedback.isSatisfied
 		) {
+			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
-			onChange({ username, password });
+			onChange({
+				username,
+				password,
+				...(emailVisible && trimmedEmail ? { email: trimmedEmail } : {})
+			});
 		} else {
 			setDisabledNextButton(true);
 		}
@@ -256,6 +284,9 @@ export const AccountData: FC<{
 		usernameAvailabilityFailed,
 		isUsernameLongEnough,
 		isPasswordValid,
+		emailFeedback.isSatisfied,
+		email,
+		emailVisible,
 		setDisabledNextButton,
 		onChange
 	]);
@@ -269,6 +300,9 @@ export const AccountData: FC<{
 	});
 
 	const usernameHelperText = t(helperTextKey);
+	const emailHelperText = emailFeedback.helperTextKey
+		? t(emailFeedback.helperTextKey)
+		: undefined;
 
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
@@ -468,6 +502,35 @@ export const AccountData: FC<{
 					)
 				}}
 			/>
+			{emailVisible && (
+				<OrisoTextField
+					value={email}
+					onChange={(event) => setEmail(event.target.value)}
+					onBlur={() => setEmailWasBlurred(true)}
+					placeholder={t('registration.account.email.label')}
+					helperText={emailHelperText}
+					error={emailFeedback.hasError}
+					type="email"
+					fullWidth
+					autoComplete="email"
+					inputProps={{
+						'aria-label': t('registration.account.email.label'),
+						'aria-required': emailRequired
+					}}
+					InputProps={{
+						startAdornment: (
+							<InputAdornment position="start">
+								<EmailOutlinedIcon
+									sx={{
+										color: registrationMd3.onSurfaceVariant
+									}}
+								/>
+							</InputAdornment>
+						)
+					}}
+					sx={{ mt: '20px' }}
+				/>
+			)}
 			<OrisoTextField
 				value={password}
 				onChange={(event) => setPassword(event.target.value)}

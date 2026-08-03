@@ -12,6 +12,7 @@ export interface AccountDataDraft {
 	password: string;
 	repeatPassword: string;
 	dataProtectionChecked: boolean;
+	email: string;
 }
 
 let draft: AccountDataDraft | null = null;

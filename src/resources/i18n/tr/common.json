@@ -2069,7 +2069,7 @@
 				},
 				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
-				"label": "Kullanıcı adı",
+				"label": "User-ID",
 				"success": "Kullanıcı adınız uygun."
 			}
 		},
