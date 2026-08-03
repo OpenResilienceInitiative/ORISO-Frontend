@@ -1808,7 +1808,7 @@
 		}
 	},
 	"anonymousConsent": {
-		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Dir starten.",
+		"description": "Danach kann eine beratende Person einen Chat mit dir beginnen.",
 		"subline": "Bitte bestätige unsere Datenschutzbestimmungen."
 	},
 	"legacyVideoAppointment": {

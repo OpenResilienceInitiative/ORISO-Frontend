@@ -164,17 +164,15 @@ describe('useElementCallWidget', () => {
 		expect(fragment.has('accessToken')).toBe(false);
 		expect(fragment.has('password')).toBe(false);
 		expect(fragment.has('enableE2EE')).toBe(false);
-		// Media E2EE is opt-in per environment: the media keys ride the MatrixRTC
-		// to-device transport, so a gap in the host's Olm path would connect the
-		// call with no audio and no error (ORISO-ElementCall#35).
-		expect(fragment.get('perParticipantE2EE')).toBeNull();
+		// ADR-018 default: host asks Element Call for per-participant media E2EE.
+		expect(fragment.get('perParticipantE2EE')).toBe('true');
 	});
 
-	it('asks Element Call for media E2EE once the environment enables it', async () => {
-		// The off path alone would still pass if the parameter were dropped
-		// unconditionally, which would silently make the toggle unusable.
+	it('omits media E2EE when the environment kill-switch is false', async () => {
+		// The on path alone would still pass if the parameter were always set,
+		// which would silently make the kill-switch unusable (ElementCall#35).
 		setAppConfig({
-			releaseToggles: { enableCallMediaE2EE: true }
+			releaseToggles: { enableCallMediaE2EE: false }
 		} as never);
 		const client = createClient();
 
@@ -189,7 +187,7 @@ describe('useElementCallWidget', () => {
 		const fragment = new URLSearchParams(
 			new URL(result.current.url!).hash.slice(2)
 		);
-		expect(fragment.get('perParticipantE2EE')).toBe('true');
+		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {

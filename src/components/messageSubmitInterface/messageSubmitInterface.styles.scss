@@ -490,7 +490,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 2px 7px;
 			border-radius: 10px;
 			background: rgba(255, 255, 255, 0.92);
-			color: #646d78;
+			color: var(--m3-secondary-container, #646d78);
 			font-size: 11px;
 			font-weight: 500;
 			line-height: 16px;

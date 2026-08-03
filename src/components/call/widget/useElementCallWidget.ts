@@ -162,12 +162,13 @@ export const useElementCallWidget = (
 					confineToRoom: 'true',
 					header: 'none',
 					skipLobby: String(skipLobby),
-					// See releaseToggles.enableCallMediaE2EE: Element Call only
-					// encrypts media when the host asks for it, because the host
-					// owns the crypto stack that distributes the media keys.
-					...(appConfig?.releaseToggles?.enableCallMediaE2EE === true
-						? { perParticipantE2EE: 'true' }
-						: {}),
+					// Per-participant media E2EE is the ADR-018 default. Element
+					// Call only encrypts LiveKit media when the host asks for it
+					// (the host owns the Olm path that distributes media keys).
+					// Kill-switch: releaseToggles.enableCallMediaE2EE === false.
+					...(appConfig?.releaseToggles?.enableCallMediaE2EE === false
+						? {}
+						: { perParticipantE2EE: 'true' }),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;

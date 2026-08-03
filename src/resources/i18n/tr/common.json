@@ -2069,8 +2069,11 @@
 				},
 				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
-				"label": "Kullanıcı adı",
+				"label": "User-ID",
 				"success": "Kullanıcı adınız uygun."
+			},
+			"twoFactorAuth": {
+				"label": "Şifremi iki faktörlü kimlik doğrulamayla ek olarak koru"
 			}
 		},
 		"back": "Geri",
@@ -3137,8 +3140,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Onaylayın",
-		"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
-		"headline": "Sıcak bir karşılama!",
+		"description": "Danışmanlarımız daha sonra sizinle bir sohbet başlatabilir.",
+		"headline": "Sıcak bir karşılama",
 		"label": {
 			"and": "ve",
 			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."

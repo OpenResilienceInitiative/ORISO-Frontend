@@ -10,7 +10,7 @@ import { orisoInputColors } from '../form/orisoInputDesign';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
 import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
-import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { apiConfirmPasswordReset } from '../../api/apiConfirmPasswordReset';
 import {
 	inputValuesFit,
@@ -162,7 +162,7 @@ export const SetNewPassword = () => {
 					) : isSuccess ? (
 						<>
 							<div className="requestPasswordReset__icon">
-								<CheckIcon />
+								<CheckAnimation />
 							</div>
 							<div className="loginForm__headline">
 								<h2>
