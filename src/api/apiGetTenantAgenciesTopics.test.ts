@@ -9,7 +9,7 @@ vi.mock('../resources/scripts/endpoints', () => ({
 }));
 
 vi.mock('./fetchData', () => ({
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' },
+	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL', EMPTY: 'EMPTY' },
 	FETCH_METHODS: { GET: 'GET' },
 	fetchData: vi.fn()
 }));
@@ -29,11 +29,23 @@ describe('apiGetTenantAgenciesTopics', () => {
 		]);
 	});
 
-	it('normalizes the empty 204 response object to an empty topic array', async () => {
-		// fetchData resolves 204 No Content as `{}` unless EMPTY handling is
-		// requested. The API boundary promises an array to its render callers.
-		vi.mocked(fetchData).mockResolvedValue({});
+	it('maps an explicit 204/EMPTY response to an empty topic array', async () => {
+		vi.mocked(fetchData).mockRejectedValue(new Error('EMPTY'));
 
 		await expect(apiGetTenantAgenciesTopics()).resolves.toEqual([]);
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				responseHandling: expect.arrayContaining(['EMPTY'])
+			})
+		);
+	});
+
+	it('does not disguise an unexpected successful response envelope as no topics', async () => {
+		const unexpectedResponse = { unexpected: true };
+		vi.mocked(fetchData).mockResolvedValue(unexpectedResponse);
+
+		await expect(apiGetTenantAgenciesTopics()).resolves.toBe(
+			unexpectedResponse
+		);
 	});
 });
