@@ -17,11 +17,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
 	EMAIL_AUDIENCE,
+	EMAIL_CLASS,
 	EMAIL_DIALECTS,
 	EMAIL_DIALECT_INFO,
 	EMAIL_IDS,
 	EMAIL_LOCALES,
+	EMAIL_LOCALE_LANG,
 	buildEmail,
+	emailIsUnsubscribable,
 	listEmailPlaceholders
 } from '../index';
 
@@ -134,6 +137,46 @@ const run = async () => {
 			}
 		}
 	}
+
+	// The consuming services need the subject and the preview line, and neither
+	// belongs in the HTML file: a subject is a mail header, not a document. One
+	// JSON at the root beats parsing <title> out of 21 templates.
+	await writeFile(
+		path.join(outDir, 'catalogue.json'),
+		`${JSON.stringify(
+			{
+				dialects: EMAIL_DIALECTS,
+				tones: EMAIL_LOCALES,
+				mails: Object.fromEntries(
+					EMAIL_IDS.map((id) => [
+						id,
+						{
+							audience: EMAIL_AUDIENCE[id],
+							class: EMAIL_CLASS[id],
+							unsubscribable: emailIsUnsubscribable(id),
+							placeholders: placeholders[id],
+							tones: Object.fromEntries(
+								EMAIL_LOCALES.map((locale) => {
+									const built = buildEmail(id, locale);
+									return [
+										locale,
+										{
+											lang: EMAIL_LOCALE_LANG[locale],
+											subject: built.subject,
+											preheader: built.preheader
+										}
+									];
+								})
+							)
+						}
+					])
+				)
+			},
+			null,
+			2
+		)}\n`,
+		'utf8'
+	);
 
 	await writeFile(
 		path.join(outDir, 'README.md'),

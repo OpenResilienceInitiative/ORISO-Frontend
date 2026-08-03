@@ -47,6 +47,9 @@ const securityAssurance =
 const codeAssurance =
 	'We will never ask for your password by email. Do not pass this code on to anyone.';
 
+const accountAssurance =
+	'We will never ask for your password by email. We always tell you when your account changes.';
+
 const legalAssurance =
 	'This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.';
 
@@ -427,5 +430,18 @@ export const en: Record<EmailId, EmailContent> = {
 			'This email is only ever sent on request from administration.',
 		assurance: staffAssurance,
 		footer
+	},
+
+	'email-geaendert': {
+		subject: 'Your email address has been changed',
+		preheader: 'The change is active from now on.',
+		headline: 'Your email address has been changed',
+		paragraphs: [
+			'The email address for the account {{username}} has been changed. Notifications now go to this address.',
+			'If this was not you, please change your password immediately.'
+		],
+		cta: { label: 'Go to profile', href: '{{appUrl}}' },
+		assurance: accountAssurance,
+		footer: securityFooter
 	}
 };

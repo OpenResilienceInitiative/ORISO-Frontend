@@ -50,6 +50,9 @@ const securityAssurance =
 const codeAssurance =
 	'Wir fragen dich nie per E-Mail nach deinem Passwort. Gib diesen Code an niemanden weiter.';
 
+const accountAssurance =
+	'Wir fragen dich nie per E-Mail nach deinem Passwort. Änderungen an deinem Zugang melden wir dir immer.';
+
 const legalAssurance =
 	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantName}}.';
 
@@ -431,5 +434,18 @@ export const deDu: Record<EmailId, EmailContent> = {
 			'Diese E-Mail wird nur auf Anforderung aus der Administration versendet.',
 		assurance: staffAssurance,
 		footer
+	},
+
+	'email-geaendert': {
+		subject: 'Deine E-Mail-Adresse wurde geändert',
+		preheader: 'Die Änderung ist ab sofort aktiv.',
+		headline: 'Deine E-Mail-Adresse wurde geändert',
+		paragraphs: [
+			'Die E-Mail-Adresse für den Zugang {{username}} wurde geändert. Ab sofort gehen Benachrichtigungen an diese Adresse.',
+			'Wenn du das nicht warst, ändere bitte sofort dein Passwort.'
+		],
+		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
+		assurance: accountAssurance,
+		footer: securityFooter
 	}
 };

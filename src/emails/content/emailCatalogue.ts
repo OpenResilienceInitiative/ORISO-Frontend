@@ -32,6 +32,7 @@ export const EMAIL_IDS = [
 	// Account and access (#866).
 	'anmeldelink',
 	'einmalcode',
+	'email-geaendert',
 
 	// Invitations and the DPA (#867).
 	'einladung-traeger',
@@ -83,6 +84,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'mitteilung': 'Mitteilung',
 	'anmeldelink': 'Anmeldelink',
 	'einmalcode': 'Einmalcode',
+	'email-geaendert': 'E-Mail-Adresse geändert',
 	'einladung-traeger': 'Einladung für einen Träger',
 	'einladung-fachkraft': 'Einladung für eine Fachkraft',
 	'avv-unterschrift': 'AVV zur Unterschrift',
@@ -120,6 +122,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'mitteilung': 'asker',
 		'anmeldelink': 'asker',
 		'einmalcode': 'asker',
+		'email-geaendert': 'asker',
 		'einladung-traeger': 'admin',
 		'einladung-fachkraft': 'consultant',
 		'avv-unterschrift': 'admin',
@@ -154,6 +157,7 @@ export const EMAIL_CLASS: Record<
 	'mitteilung': 'service',
 	'anmeldelink': 'security',
 	'einmalcode': 'security',
+	'email-geaendert': 'security',
 	'einladung-traeger': 'security',
 	'einladung-fachkraft': 'security',
 	'avv-unterschrift': 'legal',

@@ -37,6 +37,7 @@ dialect cannot disagree with what Storybook shows.
 | `mitteilung` | asker | `{{messageSubject}}` `{{messagePreview}}` `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `anmeldelink` | asker | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einmalcode` | asker | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `email-geaendert` | asker | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einladung-traeger` | admin | `{{tenantName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einladung-fachkraft` | consultant | `{{agencyName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `avv-unterschrift` | admin | `{{tenantName}}` `{{senderName}}` `{{dpaProvidedAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
