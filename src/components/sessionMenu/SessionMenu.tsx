@@ -18,6 +18,7 @@ import {
 	REMOVE_SESSIONS
 } from '../../globalState';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -463,21 +464,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.log('✅ Media permissions granted!', stream);
 				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
 
-				if (activeSession.isGroup) {
-					// Group calls use Element Call in an iframe (separate origin).
-					// Release this warm-up stream so the device is not left open.
-					try {
-						stream
-							.getTracks()
-							.forEach((track: MediaStreamTrack) => track.stop());
-					} catch {
-						// ignore
-					}
-				} else {
-					// 1:1 calls: FloatingCallWidget releases this before placeCall().
-					(window as any).__preRequestedMediaStream = stream;
-					(window as any).__preRequestedMediaStreamTime = Date.now();
-				}
+				// Outgoing calls use Element Call (iframe), which acquires its own
+				// media. Keep getUserMedia in this click handler for mobile Safari
+				// permission/user-gesture, then release immediately so the device
+				// is not left open (storing for FloatingCallWidget leaked tracks
+				// after CallManager always set usesElementCall: true).
+				stopMediaStreamTracks(stream);
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 				// console.error('Error name:', mediaError.name);
