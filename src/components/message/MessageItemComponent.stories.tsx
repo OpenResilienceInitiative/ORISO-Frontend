@@ -32,6 +32,7 @@ import {
 	mockUserData,
 	mockVisibilityMessage
 } from './MessageItemComponent.mocks';
+import { phone390Globals } from './messageStoryShell';
 import './message.styles.scss';
 
 type MessageItemStoryParameters = {
@@ -178,14 +179,12 @@ export const ClientIn1on1Outgoing: Story = {
  * Uses the real MessageItemComponent + production `message.styles.scss`.
  */
 export const AndroidCompactKebabTouchZone: Story = {
+	globals: phone390Globals,
 	name: 'Android Compact — kebab 32×32 touch zone',
 	parameters: {
 		activeSession: mockActiveSession1on1(),
 		userData: mockUserData(),
 		compactShell: true,
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		docs: {
 			description: {
 				story: 'Incoming + outgoing rows on a compact viewport. Each `.messageItem__kebabButton` must measure **32×32px** (min-width/height + box-sizing from production SCSS).'
