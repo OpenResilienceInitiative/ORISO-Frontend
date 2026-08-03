@@ -42,6 +42,7 @@ describe('Element Call participant leave', () => {
 				state: 'left'
 			})
 		);
+		expect(callManager.hasActiveCall()).toBe(false);
 		expect(sendEvent).not.toHaveBeenCalled();
 	});
 

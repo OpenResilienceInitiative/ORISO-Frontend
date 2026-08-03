@@ -825,7 +825,7 @@ class CallManager {
 	 * Check if there's an active call
 	 */
 	public hasActiveCall(): boolean {
-		return this.currentCall !== null;
+		return this.currentCall !== null && this.currentCall.state !== 'left';
 	}
 }
 
