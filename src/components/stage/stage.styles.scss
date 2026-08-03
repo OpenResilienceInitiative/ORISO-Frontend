@@ -39,8 +39,10 @@ $gridSpacing: $grid-base-four;
 	text-align: center;
 	background-color: var(--m3-primary, $primary);
 
-	// Full fallback first: engines without color-mix() reject the whole
-	// shorthand below and keep this legacy-glow variant (CodeRabbit #848).
+	// Baseline gradient: no color-mix() dependency, one declaration, so
+	// there is nothing here for the production build to treat as a
+	// "duplicate" and strip (see the @supports block below for why that
+	// matters — #848 follow-up).
 	background:
 		radial-gradient(
 			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
@@ -58,33 +60,43 @@ $gridSpacing: $grid-base-four;
 			var(--m3-primary, #c0121f) 46%,
 			var(--m3-primary-hover, #7c0d15) 100%
 		);
-	background:
-		radial-gradient(
-			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 255, 255, 0) 40%
-		),
-		radial-gradient(
-			660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			color-mix(
-				in srgb,
-				var(--m3-primary-fixed-dim, #ffb4aa)
-					calc(var(--stage-glow-opacity, 0.32) * 100%),
-				transparent
+
+	// Enhanced glow, gated behind a real feature query instead of a second
+	// same-property declaration: the prior "declare twice, let unsupporting
+	// engines reject the invalid one" fallback was silently collapsed by
+	// the production build's minifier (it treated the repeated `background`
+	// as a duplicate and kept only the last one), and that surviving
+	// declaration's literal `0%` argument to color-mix() was itself
+	// minified to a bare invalid `0` — together the whole shorthand
+	// resolved to nothing in production (#848 follow-up). @supports keeps
+	// this in its own rule, which the minifier cannot merge into the
+	// baseline above, and the zero-mix stop below is written as a plain
+	// `transparent` instead of a `0%` color-mix argument, since mixing 0%
+	// of any colour into transparent is just transparent.
+	@supports (background: color-mix(in srgb, red, blue)) {
+		background:
+			radial-gradient(
+				circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+				rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
+				rgba(255, 255, 255, 0) 40%
 			),
-			color-mix(
+			radial-gradient(
+				660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+				color-mix(
 					in srgb,
-					var(--m3-primary-fixed-dim, #ffb4aa) 0%,
+					var(--m3-primary-fixed-dim, #ffb4aa)
+						calc(var(--stage-glow-opacity, 0.32) * 100%),
 					transparent
-				)
-				62%
-		),
-		linear-gradient(
-			152deg,
-			var(--m3-primary-container, #da2530) 0%,
-			var(--m3-primary, #c0121f) 46%,
-			var(--m3-primary-hover, #7c0d15) 100%
-		);
+				),
+				transparent 62%
+			),
+			linear-gradient(
+				152deg,
+				var(--m3-primary-container, #da2530) 0%,
+				var(--m3-primary, #c0121f) 46%,
+				var(--m3-primary-hover, #7c0d15) 100%
+			);
+	}
 	color: var(--m3-on-primary, $text-invert);
 	flex-direction: column;
 	align-items: center;
