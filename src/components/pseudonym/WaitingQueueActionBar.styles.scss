@@ -519,3 +519,43 @@
 		animation: none;
 	}
 }
+
+/*
+ * Exit from the queue (#893). Deliberately quiet — waiting is the expected
+ * path — but always reachable, and with a 44px touch target so it is usable
+ * on a phone without being easy to hit by accident.
+ */
+.waitingQueueActionBar__leaveRow {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	margin-top: 8px;
+}
+
+.waitingQueueActionBar__leaveBtn {
+	border: 0;
+	background: transparent;
+	min-height: 44px;
+	padding: 0 16px;
+	font-family: Inter, sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--m3-secondary, #4c555f);
+	text-decoration: underline;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		color: var(--m3-on-surface, #1a1c1e);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-outline, #930008);
+		outline-offset: 2px;
+		border-radius: 8px;
+	}
+
+	&:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+}

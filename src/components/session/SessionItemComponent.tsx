@@ -98,6 +98,10 @@ import { PseudonymCard } from '../pseudonym/PseudonymCard';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
+import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import { logout } from '../logout/logout';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
 import {
@@ -533,6 +537,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		null
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	const [isLeaveQueueDialogOpen, setIsLeaveQueueDialogOpen] = useState(false);
+	const [isLeavingQueue, setIsLeavingQueue] = useState(false);
+	const [leaveQueueFailed, setLeaveQueueFailed] = useState(false);
 	/**
 	 * The anonymous enquiry was finished server-side (asker logout, backend
 	 * expiry workflow, admin cleanup) while this tab was still on the
@@ -2155,6 +2162,46 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const handleDismissConsultantAccepted = useCallback(() => {
 		setConsultantAccepted(false);
 	}, []);
+
+	/**
+	 * Leaving the waiting queue (#893).
+	 *
+	 * "Delete access" goes through `finishConversation`, which the advice
+	 * seeker is authorised to call for their own session and which runs
+	 * `DeactivateKeycloakUserActionCommand` on the anonymous account
+	 * server-side — so the account really is disabled, not merely logged out.
+	 * `apiDeleteAskerAccount` is not an option here: it needs the generated
+	 * password, and registration hands over via a full page load, so nothing
+	 * in this view still holds it.
+	 *
+	 * A 409 means the conversation was already finished (the counsellor ended
+	 * it, or a double tap raced) — the outcome the user asked for either way,
+	 * so it is treated as success rather than shown as an error.
+	 */
+	const handleLeaveQueueDelete = useCallback(() => {
+		if (isLeavingQueue) {
+			return;
+		}
+		setIsLeavingQueue(true);
+		const sessionId = activeSession.item?.id;
+		void (async () => {
+			try {
+				if (sessionId) {
+					await apiFinishAnonymousConversation(sessionId);
+				}
+			} catch (error: unknown) {
+				const alreadyFinished =
+					error instanceof Error &&
+					error.message === FETCH_ERRORS.CONFLICT;
+				if (!alreadyFinished) {
+					setIsLeavingQueue(false);
+					setLeaveQueueFailed(true);
+					return;
+				}
+			}
+			void logout();
+		})();
+	}, [activeSession.item?.id, isLeavingQueue]);
 
 	const handleStartAcceptedChat = useCallback(() => {
 		/* Safety net: if the accepted session still lacks its Matrix room
@@ -5326,9 +5373,42 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<WaitingQueueActionBar
 							queuePosition={queuePeopleAhead}
 							onOpenCalmCompanion={handleOpenCalmCompanion}
+							onLeaveQueue={() => {
+								setLeaveQueueFailed(false);
+								setIsLeaveQueueDialogOpen(true);
+							}}
 						/>
 					</div>
 				)}
+
+			{/*
+			 * The exit from the waiting queue (#893). Mounted for the whole
+			 * queue phase rather than inside the action bar, so it survives the
+			 * bar swapping to `ConsultantAcceptedActionBar` the moment somebody
+			 * accepts — an overlay that unmounts under the user is exactly the
+			 * trap that bit us before.
+			 */}
+			{shouldShowPseudonymGate && pseudonymConfirmed && !enquiryClosed && (
+				<LeaveQueueDialog
+					open={isLeaveQueueDialogOpen}
+					canStartChat={consultantAccepted}
+					busy={isLeavingQueue}
+					onStay={() => setIsLeaveQueueDialogOpen(false)}
+					onStartChat={() => {
+						setIsLeaveQueueDialogOpen(false);
+						handleStartAcceptedChat();
+					}}
+					onDeleteAccess={handleLeaveQueueDelete}
+					errorMessage={
+						leaveQueueFailed
+							? translate(
+									'anonymousChat.leaveQueue.error',
+									'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+								)
+							: undefined
+					}
+				/>
+			)}
 
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&

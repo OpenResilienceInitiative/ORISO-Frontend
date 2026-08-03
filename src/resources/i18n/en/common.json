@@ -3632,9 +3632,23 @@
 			"requestLocalCounselor": "Send on-site consultation request",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
-			"dismissAcceptedBanner": "Dismiss notice"
+			"dismissAcceptedBanner": "Dismiss notice",
+			"leave": "Leave chat"
 		},
-		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again.",
+		"leaveQueue": {
+			"headline": "Leave the chat?",
+			"body": "You are still in the waiting area. You can keep waiting, or delete your access — that ends this chat.",
+			"bodyAccepted": "A counsellor is already waiting for you. You can start the chat now, stay in the waiting area, or delete your access.",
+			"stay": "Stay in the waiting area",
+			"startChat": "Start chat now",
+			"startChatUnavailable": "Once a counsellor accepts the chat, you can start it here.",
+			"delete": "End chat & delete access",
+			"deleteWarning": "Your access will be deactivated and this chat ended. You will not be able to sign in with this name and password again, and we cannot restore the access.",
+			"cancelDelete": "Cancel",
+			"confirmDelete": "Yes, delete permanently",
+			"error": "The chat could not be ended just now. Please try again."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
