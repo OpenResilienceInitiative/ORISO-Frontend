@@ -80,6 +80,9 @@ vi.mock('../../headline/Headline', () => ({
 vi.mock('../../../resources/img/illustrations/check.svg', () => ({
 	ReactComponent: () => <svg />
 }));
+vi.mock('../../animatedIllustration/AnimatedIllustration', () => ({
+	CheckAnimation: () => <svg data-testid="check-animation" />
+}));
 vi.mock('../../../resources/img/illustrations/x.svg', () => ({
 	ReactComponent: () => <svg />
 }));
