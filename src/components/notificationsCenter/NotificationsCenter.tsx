@@ -250,6 +250,7 @@ export const NotificationsCenter = () => {
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
 	const listAnchorRef = useRef<{ id: string; top: number } | null>(null);
+	const anchorFrameRef = useRef<number | null>(null);
 	const captureListAnchor = useCallback(() => {
 		const list = listScrollRef.current;
 		if (!list || list.scrollTop <= 0) {
@@ -267,14 +268,29 @@ export const NotificationsCenter = () => {
 				}
 			: null;
 	}, []);
+	const scheduleCaptureListAnchor = useCallback(() => {
+		if (anchorFrameRef.current !== null) return;
+		anchorFrameRef.current = window.requestAnimationFrame(() => {
+			anchorFrameRef.current = null;
+			captureListAnchor();
+		});
+	}, [captureListAnchor]);
 
 	useEffect(() => {
 		const list = listScrollRef.current;
 		if (!list) return;
-		list.addEventListener('scroll', captureListAnchor, { passive: true });
+		list.addEventListener('scroll', scheduleCaptureListAnchor, {
+			passive: true
+		});
 		captureListAnchor();
-		return () => list.removeEventListener('scroll', captureListAnchor);
-	}, [captureListAnchor]);
+		return () => {
+			list.removeEventListener('scroll', scheduleCaptureListAnchor);
+			if (anchorFrameRef.current !== null) {
+				window.cancelAnimationFrame(anchorFrameRef.current);
+				anchorFrameRef.current = null;
+			}
+		};
+	}, [captureListAnchor, scheduleCaptureListAnchor]);
 
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.

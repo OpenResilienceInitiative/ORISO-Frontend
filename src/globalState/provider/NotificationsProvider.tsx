@@ -183,6 +183,15 @@ export function NotificationsProvider(props) {
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
 	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	const resetFeedState = useCallback(() => {
+		loadingOlderRef.current = false;
+		setNotificationFeed([]);
+		setUnreadNotificationCount(0);
+		setHasOlderNotifications(false);
+		setIsLoadingOlderNotifications(false);
+		setOlderNotificationsError(false);
+		highestLoadedPageRef.current = 0;
+	}, []);
 
 	// #576: play the configured sound for a genuinely new, unread top event —
 	// decoupled from the OS popup, so it also sounds with the tab focused. The
@@ -216,14 +225,8 @@ export function NotificationsProvider(props) {
 		const accessToken = getValueFromCookie('keycloak');
 		if (!accessToken) {
 			feedEpochRef.current += 1;
-			loadingOlderRef.current = false;
 			// Do not hit protected endpoint before auth is available.
-			setNotificationFeed([]);
-			setUnreadNotificationCount(0);
-			setHasOlderNotifications(false);
-			setIsLoadingOlderNotifications(false);
-			setOlderNotificationsError(false);
-			highestLoadedPageRef.current = 0;
+			resetFeedState();
 			return;
 		}
 
@@ -252,7 +255,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, [maybePlaySoundForNewEvent]);
+	}, [maybePlaySoundForNewEvent, resetFeedState]);
 
 	const loadOlderNotifications = useCallback(async () => {
 		if (loadingOlderRef.current || !hasOlderNotifications) return;
@@ -441,25 +444,12 @@ export function NotificationsProvider(props) {
 
 	const clearNotificationFeed = useCallback(() => {
 		feedEpochRef.current += 1;
-		loadingOlderRef.current = false;
 		const accessToken = getValueFromCookie('keycloak');
-		if (!accessToken) {
-			setNotificationFeed([]);
-			setUnreadNotificationCount(0);
-			setHasOlderNotifications(false);
-			setIsLoadingOlderNotifications(false);
-			setOlderNotificationsError(false);
-			highestLoadedPageRef.current = 0;
-			return;
+		if (accessToken) {
+			apiClearEventNotifications().catch(() => undefined);
 		}
-		apiClearEventNotifications().catch(() => undefined);
-		setNotificationFeed([]);
-		setUnreadNotificationCount(0);
-		setHasOlderNotifications(false);
-		setIsLoadingOlderNotifications(false);
-		setOlderNotificationsError(false);
-		highestLoadedPageRef.current = 0;
-	}, []);
+		resetFeedState();
+	}, [resetFeedState]);
 
 	return (
 		<NotificationsContext.Provider
