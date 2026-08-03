@@ -28,6 +28,21 @@ const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const isPreparedSyncState = (state: string | null): boolean =>
 	state === 'PREPARED' || state === 'SYNCING';
 
+type RustTrackedUser = {
+	clone: () => unknown;
+	toString: () => string;
+};
+
+type RefreshableRustCrypto = {
+	olmMachine?: {
+		queryKeysForUsers?: (users: unknown[]) => unknown;
+		trackedUsers?: () => Promise<Set<RustTrackedUser>>;
+	};
+	outgoingRequestProcessor?: {
+		makeOutgoingRequest?: (request: unknown) => Promise<unknown>;
+	};
+};
+
 export interface MatrixFileMessageOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
@@ -128,6 +143,10 @@ export class MatrixClientService {
 	private staleDeviceRecoveryVersion = 0;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
+	private readonly deviceListRefreshes = new WeakMap<
+		MatrixClient,
+		Map<string, Promise<boolean>>
+	>();
 	private syncStateListeners = new Set<(state: string | null) => void>();
 	private clientChangeListeners = new Set<
 		(client: MatrixClient | null) => void
@@ -170,18 +189,15 @@ export class MatrixClientService {
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
-		// Advice seekers are exempt on their sending client: they cannot verify a
-		// consultant's identity as part of the counselling flow, and a consultant
-		// device may only become cross-signed after the room/device list was first
-		// cached. Verified-only key distribution would then silently leave the
-		// consultant seeing undecryptable noise (#551, #774). Consultant clients
-		// remain in verified-only isolation.
+		// Anonymous live-chat users are exempt: they can never cross-sign the
+		// consultant's device, so verified-only isolation would leave the
+		// consultant seeing only undecryptable noise. They always share to all
+		// devices so the accepted consultant can read the conversation (#774).
 		// Best-effort — never breaks client startup.
 		applyDeviceIsolationMode(
 			client,
 			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
-				loginData.isAnonymous !== true &&
-				loginData.shareMegolmWithAllDevices !== true
+				loginData.isAnonymous !== true
 		);
 
 		(client as any).on(
@@ -290,15 +306,14 @@ export class MatrixClientService {
 		this.refreshingToken = getMatrixAccessToken()
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
-				// Role-derived key-sharing policy is stable across refreshes, so carry
-				// it forward with the legacy anonymous compatibility flag.
+				// anonymity is stable across refreshes, so carry the existing flag
+				// forward — otherwise invisible crypto would re-apply verified-only
+				// isolation on the refreshed client and make an anonymous asker's
+				// messages undecryptable for the consultant again (#774).
 				const refreshedLoginData: MatrixLoginData = {
 					...loginData,
 					isAnonymous:
-						loginData.isAnonymous ?? this.loginData?.isAnonymous,
-					shareMegolmWithAllDevices:
-						loginData.shareMegolmWithAllDevices ??
-						this.loginData?.shareMegolmWithAllDevices
+						loginData.isAnonymous ?? this.loginData?.isAnonymous
 				};
 				persistMatrixLoginData(refreshedLoginData);
 				await this.initializeClient(refreshedLoginData);
@@ -341,10 +356,7 @@ export class MatrixClientService {
 				const recoveredLoginData: MatrixLoginData = {
 					...loginData,
 					isAnonymous:
-						loginData.isAnonymous ?? staleLoginData.isAnonymous,
-					shareMegolmWithAllDevices:
-						loginData.shareMegolmWithAllDevices ??
-						staleLoginData.shareMegolmWithAllDevices
+						loginData.isAnonymous ?? staleLoginData.isAnonymous
 				};
 				persistMatrixLoginData(recoveredLoginData);
 				await this.initializeClient(recoveredLoginData);
@@ -420,6 +432,91 @@ export class MatrixClientService {
 		await this.refreshMatrixToken();
 	}
 
+	/**
+	 * Refresh already-tracked room members before the first send in a client
+	 * generation. A full sync does not replay historical device-list changes,
+	 * so a room created before the recipient recovered/cross-signed a device can
+	 * otherwise keep an indefinitely stale cache and omit that device from
+	 * Megolm key sharing (#551).
+	 *
+	 * matrix-js-sdk exposes forced downloads only for untracked users. The Rust
+	 * backend already owns the supported query and response processing path, but
+	 * currently narrows it out of CryptoApi. Runtime guards make this best-effort
+	 * and upgrade-safe; a missing internal never blocks normal SDK encryption.
+	 */
+	private async refreshTrackedRoomMemberDevices(
+		client: MatrixClient,
+		roomId: string
+	): Promise<boolean> {
+		let roomRefreshes = this.deviceListRefreshes.get(client);
+		if (!roomRefreshes) {
+			roomRefreshes = new Map<string, Promise<boolean>>();
+			this.deviceListRefreshes.set(client, roomRefreshes);
+		}
+
+		const existing = roomRefreshes.get(roomId);
+		if (existing) {
+			return existing;
+		}
+
+		const refresh = (async () => {
+			const room = client.getRoom(roomId);
+			const crypto = client.getCrypto?.() as
+				| RefreshableRustCrypto
+				| undefined;
+			const olmMachine = crypto?.olmMachine;
+			const makeOutgoingRequest =
+				crypto?.outgoingRequestProcessor?.makeOutgoingRequest;
+			if (
+				!room ||
+				typeof room.getEncryptionTargetMembers !== 'function' ||
+				typeof olmMachine?.trackedUsers !== 'function' ||
+				typeof olmMachine.queryKeysForUsers !== 'function' ||
+				typeof makeOutgoingRequest !== 'function'
+			) {
+				return false;
+			}
+
+			const ownUserId = client.getUserId?.();
+			const members = await room.getEncryptionTargetMembers();
+			const targetUserIds = new Set(
+				members
+					.map((member) => member.userId)
+					.filter((userId) => userId && userId !== ownUserId)
+			);
+			if (targetUserIds.size === 0) {
+				return true;
+			}
+
+			const trackedUsers = await olmMachine.trackedUsers();
+			const queryUsers = Array.from(trackedUsers)
+				.filter((user) => targetUserIds.has(user.toString()))
+				.map((user) => user.clone());
+			if (queryUsers.length === 0) {
+				return false;
+			}
+
+			const request = olmMachine.queryKeysForUsers(queryUsers);
+			await makeOutgoingRequest.call(
+				crypto.outgoingRequestProcessor,
+				request
+			);
+			return true;
+		})();
+
+		roomRefreshes.set(roomId, refresh);
+		try {
+			const refreshed = await refresh;
+			if (!refreshed) {
+				roomRefreshes.delete(roomId);
+			}
+			return refreshed;
+		} catch {
+			roomRefreshes.delete(roomId);
+			return false;
+		}
+	}
+
 	// Send message to a room
 	public async sendMessage(
 		roomId: string,
@@ -439,6 +536,7 @@ export class MatrixClientService {
 			if (!client.getRoom(roomId)) {
 				await client.joinRoom(roomId);
 			}
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
 			const txnId = client.makeTxnId?.();
@@ -571,6 +669,7 @@ export class MatrixClientService {
 		}
 
 		try {
+			await this.refreshTrackedRoomMemberDevices(this.client, roomId);
 			const content = await this.uploadFileMessageContent(file, options);
 			return await this.client.sendMessage(roomId, content as any);
 		} catch (error) {
@@ -583,6 +682,7 @@ export class MatrixClientService {
 				throw new Error('Matrix client not initialized');
 			}
 
+			await this.refreshTrackedRoomMemberDevices(this.client, roomId);
 			const content = await this.uploadFileMessageContent(file, options);
 			return this.client.sendMessage(roomId, content as any);
 		}

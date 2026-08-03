@@ -151,28 +151,6 @@ describe('MatrixClientService', () => {
 		setAppConfig(null as any);
 	});
 
-	it('shares to all devices for a registered advice seeker while consultants stay verified-only (#551)', async () => {
-		const { setAppConfig } = await import('../utils/appConfig');
-		setAppConfig({
-			releaseToggles: { enableInvisibleCrypto: true }
-		} as any);
-		const service = new MatrixClientService();
-
-		await service.initializeClient({
-			userId: '@marge:matrix.localhost',
-			accessToken: 'access-token',
-			deviceId: 'DEVICE_MARGE',
-			homeserverUrl: 'http://matrix.localhost:18008',
-			shareMegolmWithAllDevices: true
-		});
-
-		expect(mockedCrypto.setDeviceIsolationMode).toHaveBeenCalledTimes(1);
-		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
-			DeviceIsolationModeKind.AllDevicesIsolationMode
-		);
-		setAppConfig(null as any);
-	});
-
 	it('preserves the anonymous flag across a token refresh so decryption keeps working (#774)', async () => {
 		const { setAppConfig } = await import('../utils/appConfig');
 		setAppConfig({
@@ -202,36 +180,6 @@ describe('MatrixClientService', () => {
 
 		// The refreshed client must still share to all devices, not fall back to
 		// verified-only isolation and re-break decryption.
-		const lastCall = mockedCrypto.setDeviceIsolationMode.mock.calls.at(-1);
-		expect(lastCall?.[0].kind).toBe(
-			DeviceIsolationModeKind.AllDevicesIsolationMode
-		);
-		setAppConfig(null as any);
-	});
-
-	it('preserves registered advice-seeker key sharing across a token refresh (#551)', async () => {
-		const { setAppConfig } = await import('../utils/appConfig');
-		setAppConfig({
-			releaseToggles: { enableInvisibleCrypto: true }
-		} as any);
-		const service = new MatrixClientService();
-
-		await service.initializeClient({
-			userId: '@marge:matrix.localhost',
-			accessToken: 'access-token',
-			deviceId: 'DEVICE_MARGE',
-			homeserverUrl: 'http://matrix.localhost:18008',
-			shareMegolmWithAllDevices: true
-		});
-		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
-			userId: '@marge:matrix.localhost',
-			accessToken: 'refreshed-token',
-			deviceId: 'DEVICE_MARGE',
-			homeserverUrl: 'http://matrix.localhost:18008'
-		});
-
-		await service.refreshMatrixToken();
-
 		const lastCall = mockedCrypto.setDeviceIsolationMode.mock.calls.at(-1);
 		expect(lastCall?.[0].kind).toBe(
 			DeviceIsolationModeKind.AllDevicesIsolationMode
@@ -684,6 +632,53 @@ describe('MatrixClientService', () => {
 			msgtype: 'm.text',
 			body: 'Hello Matrix'
 		});
+	});
+
+	it('refreshes tracked room-member device keys before the first encrypted send (#551)', async () => {
+		const request = { type: 'keys-query' };
+		const clonedApu = { id: '@apu:matrix.localhost' };
+		const trackedApu = {
+			toString: () => '@apu:matrix.localhost',
+			clone: vi.fn(() => clonedApu)
+		};
+		const makeOutgoingRequest = vi.fn().mockResolvedValue(undefined);
+		const queryKeysForUsers = vi.fn(() => request);
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const room = {
+			getEncryptionTargetMembers: vi
+				.fn()
+				.mockResolvedValue([
+					{ userId: '@marge:matrix.localhost' },
+					{ userId: '@apu:matrix.localhost' }
+				])
+		};
+		const client = {
+			getUserId: () => '@marge:matrix.localhost',
+			getRoom: vi.fn(() => room),
+			getCrypto: () => ({
+				olmMachine: {
+					trackedUsers: vi
+						.fn()
+						.mockResolvedValue(new Set([trackedApu])),
+					queryKeysForUsers
+				},
+				outgoingRequestProcessor: { makeOutgoingRequest }
+			}),
+			sendMessage
+		};
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendMessage('!room:matrix.localhost', 'hello');
+		await service.sendMessage('!room:matrix.localhost', 'again');
+
+		expect(room.getEncryptionTargetMembers).toHaveBeenCalledOnce();
+		expect(trackedApu.clone).toHaveBeenCalledOnce();
+		expect(queryKeysForUsers).toHaveBeenCalledWith([clonedApu]);
+		expect(makeOutgoingRequest).toHaveBeenCalledWith(request);
+		expect(makeOutgoingRequest.mock.invocationCallOrder[0]).toBeLessThan(
+			sendMessage.mock.invocationCallOrder[0]
+		);
 	});
 
 	it('removes the rejected Matrix local echo before the UI offers a fresh retry', async () => {

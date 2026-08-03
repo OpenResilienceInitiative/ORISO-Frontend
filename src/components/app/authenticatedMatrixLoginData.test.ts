@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
 
 describe('withAuthenticatedSessionContext', () => {
-	it('preserves UIA and marks an advice seeker for compatible key sharing', () => {
+	it('preserves the transient device-signing UIA password', () => {
 		const result = withAuthenticatedSessionContext(
 			{
 				accessToken: 'matrix-access-token',
@@ -16,7 +16,7 @@ describe('withAuthenticatedSessionContext', () => {
 
 		expect(result).toMatchObject({
 			uiaPassword: 'transient-password',
-			shareMegolmWithAllDevices: true
+			isAnonymous: true
 		});
 	});
 });
