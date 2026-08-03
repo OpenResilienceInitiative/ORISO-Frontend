@@ -63,11 +63,7 @@
 	--cpd-color-bg-critical-hovered: #b1005e;
 	--cpd-color-bg-critical-subtle: #de0077;
 	--cpd-color-bg-critical-subtle-hovered: #de0077;
-	--cpd-color-bg-success-subtle: color-mix(
-		in srgb,
-		#0a882f 16%,
-		transparent
-	); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
+	--cpd-color-bg-success-subtle: color-mix(in srgb, #0a882f 16%, transparent); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
 	--cpd-color-bg-info-subtle: #656e79;
 	--cpd-color-bg-badge-default: #eae7e8;
 	--cpd-color-bg-badge-accent: #cc1e1c;
@@ -82,11 +78,7 @@
 	--cpd-color-border-critical-hovered: #b1005e;
 	--cpd-color-border-critical-subtle: #de0077;
 	--cpd-color-border-info-subtle: #656e79;
-	--cpd-color-border-success-subtle: color-mix(
-		in srgb,
-		#0a882f 30%,
-		transparent
-	);
+	--cpd-color-border-success-subtle: color-mix(in srgb, #0a882f 30%, transparent);
 	--cpd-color-alpha-gray-100: color-mix(in srgb, #1b1b1c 4%, transparent);
 	--cpd-color-alpha-gray-200: color-mix(in srgb, #1b1b1c 8%, transparent);
 	--cpd-color-alpha-gray-300: color-mix(in srgb, #1b1b1c 12%, transparent);
@@ -150,11 +142,7 @@
 	--cpd-color-bg-critical-hovered: #ffb1c8;
 	--cpd-color-bg-critical-subtle: #8e004a;
 	--cpd-color-bg-critical-subtle-hovered: #8e004a;
-	--cpd-color-bg-success-subtle: color-mix(
-		in srgb,
-		#70dd78 16%,
-		transparent
-	); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
+	--cpd-color-bg-success-subtle: color-mix(in srgb, #70dd78 16%, transparent); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
 	--cpd-color-bg-info-subtle: #3f4852;
 	--cpd-color-bg-badge-default: #2a2a2b;
 	--cpd-color-bg-badge-accent: #930008;
@@ -169,11 +157,7 @@
 	--cpd-color-border-critical-hovered: #ffb1c8;
 	--cpd-color-border-critical-subtle: #8e004a;
 	--cpd-color-border-info-subtle: #3f4852;
-	--cpd-color-border-success-subtle: color-mix(
-		in srgb,
-		#70dd78 30%,
-		transparent
-	);
+	--cpd-color-border-success-subtle: color-mix(in srgb, #70dd78 30%, transparent);
 	--cpd-color-alpha-gray-100: color-mix(in srgb, #e4e2e2 4%, transparent);
 	--cpd-color-alpha-gray-200: color-mix(in srgb, #e4e2e2 8%, transparent);
 	--cpd-color-alpha-gray-300: color-mix(in srgb, #e4e2e2 12%, transparent);
