@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMatrixSessionId } from './matrixSessionId';
+import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 
 describe('resolveMatrixSessionId', () => {
 	it.each([
@@ -16,4 +16,14 @@ describe('resolveMatrixSessionId', () => {
 			expect(resolveMatrixSessionId(value)).toBeUndefined();
 		}
 	);
+});
+
+describe('hasMatrixSessionId', () => {
+	it('accepts zero as a defined Matrix session id', () => {
+		expect(hasMatrixSessionId(0)).toBe(true);
+	});
+
+	it('rejects an undefined Matrix session id', () => {
+		expect(hasMatrixSessionId(undefined)).toBe(false);
+	});
 });

@@ -105,7 +105,7 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
-import { resolveMatrixSessionId } from './matrixSessionId';
+import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
@@ -1373,7 +1373,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (attachment) {
 				// Matrix attachments stay on the SDK media path.
-				if (matrixSessionId) {
+				if (hasMatrixSessionId(matrixSessionId)) {
 					try {
 						if (!matrixRoomId) {
 							throw new Error('Matrix room ID is missing');
@@ -1435,7 +1435,8 @@ export const MessageSubmitInterfaceComponent = ({
 			// on the editor state having committed before deciding whether to send.
 			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
-				hasTextContent && (!attachment || !matrixSessionId);
+				hasTextContent &&
+				(!attachment || !hasMatrixSessionId(matrixSessionId));
 
 			if (shouldSendTextMessage) {
 				// Intentional mentions (#435): read from the composer's own
