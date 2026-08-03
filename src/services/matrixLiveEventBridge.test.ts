@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'module';
+import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixLiveEventBridge } from './matrixLiveEventBridge';
 
 // Hoisted above the imports by vitest: endpoints/runtimeConfig read these
@@ -241,6 +242,39 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		});
 
 		expect(receiveCall).not.toHaveBeenCalled();
+	});
+
+	it('recovers an old Element Call invite when the call room still has active MatrixRTC membership', () => {
+		const callRoomId = '!active-call:matrix.oriso.org';
+		const activeCallRoom = { roomId: callRoomId };
+		(client as any).getRoom = vi.fn((roomId: string) =>
+			roomId === callRoomId ? activeCallRoom : null
+		);
+		const membershipSpy = vi
+			.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+			.mockReturnValue([{} as any]);
+
+		emitInvite({
+			content: {
+				call_id: 'call-active-after-reload',
+				is_element_call: true,
+				is_group_call: false,
+				is_video: false,
+				call_room_id: callRoomId
+			},
+			ts: Date.now() - 60_000
+		});
+
+		expect(receiveCall).toHaveBeenCalledWith(
+			callRoomId,
+			false,
+			'call-active-after-reload',
+			OTHER_USER_ID,
+			false,
+			ROOM_ID,
+			true
+		);
+		membershipSpy.mockRestore();
 	});
 
 	it('ignores our own call invites', () => {

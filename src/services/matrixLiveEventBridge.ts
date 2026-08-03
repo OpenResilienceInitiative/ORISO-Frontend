@@ -1,4 +1,5 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 
 type CallManagerModule = typeof import('./CallManager');
 
@@ -217,6 +218,13 @@ export class MatrixLiveEventBridge {
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
 		const callRoomId = content.call_room_id || room.roomId;
+		const isGroupCall = content.is_group_call === true;
+		const isElementCall = content.is_element_call === true || isGroupCall;
+		const isVideo = isElementCall
+			? content.is_video !== false
+			: isVideoCallInvite(content);
+		const hasActiveMatrixRtcMembership =
+			isElementCall && this.hasActiveMatrixRtcMembership(callRoomId);
 
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🔔 CALL INVITE EVENT RECEIVED");
@@ -228,9 +236,12 @@ export class MatrixLiveEventBridge {
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
-		// CRITICAL: Ignore old call invites (> 10 seconds = from history/replay!)
-		// This prevents phantom notifications on login/reload
-		if (ageSeconds > 10) {
+		// Historical invites normally must not ring again. MatrixRTC is the
+		// exception: after a page reload the original invite is historical even
+		// though another participant is still publishing in the dedicated call
+		// room. The SDK's non-expired membership view is the authoritative active
+		// signal and avoids reviving calls whose invite merely remains in history.
+		if (ageSeconds > 10 && !hasActiveMatrixRtcMembership) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			this.processedCallInvites.add(callId);
@@ -254,13 +265,6 @@ export class MatrixLiveEventBridge {
 			this.processedCallInvites.add(callId);
 			return;
 		}
-
-		// Check if this is an Element Call / LiveKit call (custom field)
-		const isGroupCall = content.is_group_call === true;
-		const isElementCall = content.is_element_call === true || isGroupCall;
-		const isVideo = isElementCall
-			? content.is_video !== false
-			: isVideoCallInvite(content);
 
 		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -309,6 +313,24 @@ export class MatrixLiveEventBridge {
 			false,
 			room.roomId
 		);
+	}
+
+	private hasActiveMatrixRtcMembership(callRoomId: string): boolean {
+		try {
+			const callRoom = this.client?.getRoom(callRoomId);
+			if (!callRoom) return false;
+
+			return (
+				MatrixRTCSession.sessionMembershipsForRoom(callRoom, {
+					id: '',
+					application: 'm.call'
+				}).length > 0
+			);
+		} catch {
+			// A partially synced call room is not evidence that a historical invite
+			// is still active. Fail closed and wait for a new live invite instead.
+			return false;
+		}
 	}
 
 	/**
