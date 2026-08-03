@@ -58,10 +58,11 @@ export const CALL_TOKEN_MAP: Record<string, CallTokenMapping> = {
 	// --- Text ---------------------------------------------------------
 	'--cpd-color-text-primary': { m3: '--m3-on-surface' },
 	'--cpd-color-text-secondary': { m3: '--m3-on-surface-variant' },
-	'--cpd-color-text-placeholder': { m3: '--m3-outline' },
+	'--cpd-color-text-placeholder': {
+		m3: '--m3-outline',
+		note: 'Not a Compound role, but the fork reads it in input/Input.module.css, where it would otherwise resolve to nothing.'
+	},
 	'--cpd-color-text-disabled': { m3: '--m3-outline' },
-	'--cpd-color-text-primary-alpha': { m3: '--m3-on-surface' },
-	'--cpd-color-text-secondary-alpha': { m3: '--m3-on-surface-variant' },
 	'--cpd-color-text-on-solid-primary': { m3: '--m3-on-primary' },
 	'--cpd-color-text-action-primary': { m3: '--m3-on-surface' },
 	'--cpd-color-text-action-accent': { m3: '--m3-primary' },

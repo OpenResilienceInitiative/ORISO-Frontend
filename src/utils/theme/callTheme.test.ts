@@ -136,7 +136,15 @@ const UI_PAIRS: [string, string][] = [
 	['--cpd-color-icon-on-solid-primary', '--cpd-color-bg-action-primary-rest'],
 	// A focus ring nobody can see is the same as no focus ring.
 	['--cpd-color-border-focused', '--cpd-color-bg-canvas-default'],
-	['--cpd-color-border-focused', '--cpd-color-bg-subtle-primary']
+	['--cpd-color-border-focused', '--cpd-color-bg-subtle-primary'],
+	// The regression that caused this epic. The fork forced
+	// --cpd-color-alpha-gray-1400 to opaque #000 to get black video tiles,
+	// not realising Compound derives --cpd-color-icon-primary-alpha from
+	// it — and that in the dark theme it is near-WHITE (hsla(214,78%,98%,
+	// .95)). Every icon on that role went black-on-black. Mapping the two
+	// concerns separately is the fix; this asserts they stay separate.
+	['--cpd-color-icon-primary-alpha', '--cpd-color-bg-canvas-default'],
+	['--cpd-color-icon-secondary-alpha', '--cpd-color-bg-canvas-default']
 ];
 
 describe.each(['dark', 'light'])('contrast in %s', (scheme) => {
