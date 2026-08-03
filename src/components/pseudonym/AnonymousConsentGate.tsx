@@ -99,7 +99,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 				<p className="anonymousConsentGate__body">
 					{t(
 						'anonymousConsent.description',
-						'Bitte bestätigen sie unsere Datenschutzbestimmungen. Erst danach dürfen unsere Berater_innen einen Chat mit ihnen starten.'
+						'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
 					)}
 				</p>
 

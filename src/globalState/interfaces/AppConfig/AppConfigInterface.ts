@@ -78,13 +78,13 @@ interface ReleaseToggles {
 	 */
 	enableInvisibleCrypto?: boolean;
 	/**
-	 * Per-participant media E2EE for calls: when on, the LiveKit SFU only ever
-	 * sees ciphertext. Off by default because media keys ride the MatrixRTC
-	 * to-device transport, so any gap in the host's Olm path makes a call
-	 * connect with no audio in either direction and no error anywhere
-	 * (ORISO-ElementCall#35). Turn it on per environment once a two-browser
-	 * call has proven key distribution end to end; call signalling and room
-	 * events are encrypted by the host regardless of this toggle.
+	 * Kill-switch for per-participant call media E2EE (ADR-018).
+	 * Default / unset = ON: the host asks Element Call for
+	 * `perParticipantE2EE`, so the LiveKit SFU only ever sees ciphertext.
+	 * Set to `false` to fall back to transport-only media if MatrixRTC
+	 * to-device key distribution fails in an environment (ORISO-ElementCall#35:
+	 * call connects with no audio and no UI error). Call signalling and room
+	 * events stay encrypted by the host regardless of this toggle.
 	 */
 	enableCallMediaE2EE?: boolean;
 	/**

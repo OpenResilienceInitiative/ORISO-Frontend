@@ -12,6 +12,12 @@ import { OVERLAY_TWO_FACTOR_NAG } from '../../globalState/interfaces/AppConfig/O
 
 interface TwoFactorNagProps {}
 
+/**
+ * Dismissals live in sessionStorage: the nag may re-appear in a new browser
+ * session but must not force-open on every full page load (#841).
+ */
+export const TWO_FACTOR_NAG_DISMISSED_KEY = 'twoFactorNagDismissed';
+
 export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 	const { t: translate } = useTranslation();
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
@@ -21,7 +27,9 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 	const { userData } = useContext(UserDataContext);
 	const { getDevToolbarOption } = useDevToolbar();
 	const [isShownTwoFactorNag, setIsShownTwoFactorNag] = useState(false);
-	const [forceHideTwoFactorNag, setForceHideTwoFactorNag] = useState(false);
+	const [forceHideTwoFactorNag, setForceHideTwoFactorNag] = useState(
+		() => sessionStorage.getItem(TWO_FACTOR_NAG_DISMISSED_KEY) === 'true'
+	);
 	const [message, setMessage] = useState({
 		title: 'twoFactorAuth.nag.obligatory.moment.title',
 		copy: 'twoFactorAuth.nag.obligatory.moment.copy',
@@ -39,15 +47,16 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 			todaysDate >= settings.twofactor.startObligatoryHint &&
 			getDevToolbarOption(STORAGE_KEY_2FA) === '1'
 		) {
-			if (todaysDate >= settings.twofactor.dateTwoFactorObligatory) {
-				setForceHideTwoFactorNag(true);
-				setIsShownTwoFactorNag(false);
-				openTwoFactorSettings();
-				return;
-			}
-
+			// Obligatory phase: show the nag on top of the requested view
+			// instead of redirecting — deep links must keep their navigation
+			// target, and a non-closable overlay would block every view
+			// underneath it (#841).
+			const configuredMessage =
+				todaysDate >= settings.twofactor.dateTwoFactorObligatory
+					? (settings.twofactor.messages[1] ??
+						settings.twofactor.messages[0])
+					: settings.twofactor.messages[0];
 			setIsShownTwoFactorNag(true);
-			const configuredMessage = settings.twofactor.messages[0];
 			setMessage({ ...configuredMessage, showClose: true });
 		} else {
 			setIsShownTwoFactorNag(false);
@@ -59,12 +68,14 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 		settings.twofactor.dateTwoFactorObligatory,
 		settings.twofactor.messages,
 		getDevToolbarOption,
-		location,
-		openTwoFactorSettings
+		location
 	]);
 
 	const handleTwoFactorNag = useCallback((val) => {
 		setForceHideTwoFactorNag(val);
+		if (val) {
+			sessionStorage.setItem(TWO_FACTOR_NAG_DISMISSED_KEY, 'true');
+		}
 	}, []);
 
 	const closeTwoFactorNag = async () => {
