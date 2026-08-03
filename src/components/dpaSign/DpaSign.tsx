@@ -348,10 +348,25 @@ export const DpaSign = () => {
 										required
 										fullWidth
 									/>
+									{/* The organisation is NOT asked a second time.
+									    This link is scoped to exactly one Träger,
+									    whose name is shown with the contract and
+									    again at the confirmation below, so a
+									    retyped name could only contradict the
+									    record — and being required, it also
+									    stalled signing until someone guessed the
+									    exact spelling. The slot carries a free,
+									    optional note instead, mirroring the admin
+									    panel's shared signer block (owner call
+									    2026-07-30, ORISO-Admin#608). It still
+									    travels as `signerOrganisation`: that is
+									    the append-only signature record's own
+									    field, and the write contract leaves it
+									    optional. */}
 									<TextField
 										label={t(
-											'dpaSign.signerOrganisation',
-											'Organisation'
+											'dpaSign.signerNote',
+											'Anmerkung (optional)'
 										)}
 										value={formState.signerOrganisation}
 										onChange={(event) =>
@@ -360,7 +375,6 @@ export const DpaSign = () => {
 												event.target.value
 											)
 										}
-										required
 										fullWidth
 									/>
 									<TextField
@@ -379,6 +393,25 @@ export const DpaSign = () => {
 										<MenuItem value="de">Deutsch</MenuItem>
 										<MenuItem value="en">English</MenuItem>
 									</TextField>
+									{/* Ticking the box IS the signature, so the
+									    legal entity it binds must be readable at
+									    the act itself — not only in the contract
+									    header further up the page. */}
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{t(
+											'dpaSign.signingFor',
+											'Sie unterzeichnen im Namen von:'
+										)}{' '}
+										<Box
+											component="strong"
+											sx={{ color: 'text.primary' }}
+										>
+											{preview.tenantName}
+										</Box>
+									</Typography>
 									<FormControlLabel
 										control={
 											<Checkbox
