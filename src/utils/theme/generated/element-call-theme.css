@@ -1,0 +1,184 @@
+/*
+ * GENERATED — do not edit by hand.
+ *
+ * Source: ORISO-Frontend scripts/generate-call-theme.ts
+ *         (src/utils/theme/callTheme.ts + the OrisoScheme engine)
+ * Seed:   #a5000a (ORISO default tenant)
+ *
+ * Regenerate with: npm run generate:call-theme
+ * Editing this file directly will be reverted by the drift test.
+ */
+
+.cpd-theme-light.cpd-theme-light {
+	--cpd-color-bg-canvas-default: #fcf9f9;
+	--cpd-color-bg-canvas-disabled: #dcd9da;
+	--cpd-color-bg-subtle-primary: #eae7e8;
+	--cpd-color-bg-subtle-secondary: #f0edee;
+	--cpd-color-theme-bg: #fcf9f9;
+	--cpd-color-text-primary: #1b1b1c;
+	--cpd-color-text-secondary: #444748;
+	--cpd-color-text-placeholder: #747878;
+	--cpd-color-text-disabled: #747878;
+	--cpd-color-text-primary-alpha: #1b1b1c;
+	--cpd-color-text-secondary-alpha: #444748;
+	--cpd-color-text-on-solid-primary: #ffffff;
+	--cpd-color-text-action-primary: #1b1b1c;
+	--cpd-color-text-action-accent: #a5000a;
+	--cpd-color-text-critical-primary: #b1005e;
+	--cpd-color-text-success-primary: #0a882f;
+	--cpd-color-text-info-primary: #4d5660;
+	--cpd-color-text-link-external: #a5000a;
+	--cpd-color-text-badge-accent: #ffe2de;
+	--cpd-color-text-badge-info: #e6effb;
+	--cpd-color-icon-primary: #1b1b1c;
+	--cpd-color-icon-secondary: #444748;
+	--cpd-color-icon-tertiary: #747878;
+	--cpd-color-icon-quaternary: #c4c7c8;
+	--cpd-color-icon-disabled: #c4c7c8;
+	--cpd-color-icon-primary-alpha: #1b1b1c;
+	--cpd-color-icon-secondary-alpha: #444748;
+	--cpd-color-icon-tertiary-alpha: #747878;
+	--cpd-color-icon-quaternary-alpha: #c4c7c8;
+	--cpd-color-icon-on-solid-primary: #ffffff;
+	--cpd-color-icon-accent-primary: #a5000a;
+	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-critical-primary: #b1005e;
+	--cpd-color-icon-success-primary: #0a882f;
+	--cpd-color-icon-info-primary: #4d5660;
+	--cpd-color-bg-action-primary-rest: #a5000a;
+	--cpd-color-bg-action-primary-hovered: #820006;
+	--cpd-color-bg-action-primary-pressed: #820006;
+	--cpd-color-bg-action-primary-disabled: #c4c7c8;
+	--cpd-color-bg-action-secondary-rest: #f6f3f3;
+	--cpd-color-bg-action-secondary-hovered: #f0edee;
+	--cpd-color-bg-action-secondary-pressed: #eae7e8;
+	--cpd-color-bg-action-tertiary-rest: #f6f3f3;
+	--cpd-color-bg-action-tertiary-hovered: #f0edee;
+	--cpd-color-bg-action-tertiary-selected: #eae7e8;
+	--cpd-color-bg-accent-rest: #a5000a;
+	--cpd-color-bg-accent-hovered: #820006;
+	--cpd-color-bg-accent-pressed: #820006;
+	--cpd-color-bg-accent-selected: #cc1e1c;
+	--cpd-color-bg-critical-primary: #b1005e;
+	--cpd-color-bg-critical-hovered: #b1005e;
+	--cpd-color-bg-critical-subtle: #de0077;
+	--cpd-color-bg-critical-subtle-hovered: #de0077;
+	--cpd-color-bg-success-subtle: color-mix(
+		in srgb,
+		#0a882f 16%,
+		transparent
+	); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
+	--cpd-color-bg-info-subtle: #656e79;
+	--cpd-color-bg-badge-default: #eae7e8;
+	--cpd-color-bg-badge-accent: #cc1e1c;
+	--cpd-color-bg-badge-info: #656e79;
+	--cpd-color-border-interactive-primary: #747878;
+	--cpd-color-border-interactive-secondary: #c4c7c8;
+	--cpd-color-border-interactive-hovered: #444748;
+	--cpd-color-border-disabled: #c4c7c8;
+	--cpd-color-border-focused: #a5000a; /* Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both. */
+	--cpd-color-border-accent-subtle: #ffb4aa;
+	--cpd-color-border-critical-primary: #b1005e;
+	--cpd-color-border-critical-hovered: #b1005e;
+	--cpd-color-border-critical-subtle: #de0077;
+	--cpd-color-border-info-subtle: #656e79;
+	--cpd-color-border-success-subtle: color-mix(
+		in srgb,
+		#0a882f 30%,
+		transparent
+	);
+	--cpd-color-alpha-gray-100: color-mix(in srgb, #1b1b1c 4%, transparent);
+	--cpd-color-alpha-gray-200: color-mix(in srgb, #1b1b1c 8%, transparent);
+	--cpd-color-alpha-gray-300: color-mix(in srgb, #1b1b1c 12%, transparent);
+	--cpd-color-alpha-gray-400: color-mix(in srgb, #1b1b1c 16%, transparent);
+	--cpd-color-alpha-gray-500: color-mix(in srgb, #1b1b1c 24%, transparent);
+	--cpd-color-alpha-gray-600: color-mix(in srgb, #1b1b1c 32%, transparent);
+	--cpd-color-alpha-gray-1400: color-mix(in srgb, #000000 80%, transparent);
+}
+
+.cpd-theme-dark.cpd-theme-dark {
+	--cpd-color-bg-canvas-default: #131314;
+	--cpd-color-bg-canvas-disabled: #131314;
+	--cpd-color-bg-subtle-primary: #2a2a2b;
+	--cpd-color-bg-subtle-secondary: #1f1f20;
+	--cpd-color-theme-bg: #131314;
+	--cpd-color-text-primary: #e4e2e2;
+	--cpd-color-text-secondary: #c4c7c8;
+	--cpd-color-text-placeholder: #8e9192;
+	--cpd-color-text-disabled: #8e9192;
+	--cpd-color-text-primary-alpha: #e4e2e2;
+	--cpd-color-text-secondary-alpha: #c4c7c8;
+	--cpd-color-text-on-solid-primary: #690004;
+	--cpd-color-text-action-primary: #e4e2e2;
+	--cpd-color-text-action-accent: #ffb4aa;
+	--cpd-color-text-critical-primary: #ffb1c8;
+	--cpd-color-text-success-primary: #70dd78;
+	--cpd-color-text-info-primary: #bec7d4;
+	--cpd-color-text-link-external: #ffb4aa;
+	--cpd-color-text-badge-accent: #ffdad5;
+	--cpd-color-text-badge-info: #dae3f0;
+	--cpd-color-icon-primary: #e4e2e2;
+	--cpd-color-icon-secondary: #c4c7c8;
+	--cpd-color-icon-tertiary: #8e9192;
+	--cpd-color-icon-quaternary: #444748;
+	--cpd-color-icon-disabled: #444748;
+	--cpd-color-icon-primary-alpha: #e4e2e2;
+	--cpd-color-icon-secondary-alpha: #c4c7c8;
+	--cpd-color-icon-tertiary-alpha: #8e9192;
+	--cpd-color-icon-quaternary-alpha: #444748;
+	--cpd-color-icon-on-solid-primary: #690004;
+	--cpd-color-icon-accent-primary: #ffb4aa;
+	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-critical-primary: #ffb1c8;
+	--cpd-color-icon-success-primary: #70dd78;
+	--cpd-color-icon-info-primary: #bec7d4;
+	--cpd-color-bg-action-primary-rest: #ffb4aa;
+	--cpd-color-bg-action-primary-hovered: #ffd3cd;
+	--cpd-color-bg-action-primary-pressed: #ffd3cd;
+	--cpd-color-bg-action-primary-disabled: #444748;
+	--cpd-color-bg-action-secondary-rest: #1b1b1c;
+	--cpd-color-bg-action-secondary-hovered: #1f1f20;
+	--cpd-color-bg-action-secondary-pressed: #2a2a2b;
+	--cpd-color-bg-action-tertiary-rest: #1b1b1c;
+	--cpd-color-bg-action-tertiary-hovered: #1f1f20;
+	--cpd-color-bg-action-tertiary-selected: #2a2a2b;
+	--cpd-color-bg-accent-rest: #ffb4aa;
+	--cpd-color-bg-accent-hovered: #ffd3cd;
+	--cpd-color-bg-accent-pressed: #ffd3cd;
+	--cpd-color-bg-accent-selected: #930008;
+	--cpd-color-bg-critical-primary: #ffb1c8;
+	--cpd-color-bg-critical-hovered: #ffb1c8;
+	--cpd-color-bg-critical-subtle: #8e004a;
+	--cpd-color-bg-critical-subtle-hovered: #8e004a;
+	--cpd-color-bg-success-subtle: color-mix(
+		in srgb,
+		#70dd78 16%,
+		transparent
+	); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
+	--cpd-color-bg-info-subtle: #3f4852;
+	--cpd-color-bg-badge-default: #2a2a2b;
+	--cpd-color-bg-badge-accent: #930008;
+	--cpd-color-bg-badge-info: #3f4852;
+	--cpd-color-border-interactive-primary: #8e9192;
+	--cpd-color-border-interactive-secondary: #444748;
+	--cpd-color-border-interactive-hovered: #c4c7c8;
+	--cpd-color-border-disabled: #444748;
+	--cpd-color-border-focused: #ffb4aa; /* Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both. */
+	--cpd-color-border-accent-subtle: #ffb4aa;
+	--cpd-color-border-critical-primary: #ffb1c8;
+	--cpd-color-border-critical-hovered: #ffb1c8;
+	--cpd-color-border-critical-subtle: #8e004a;
+	--cpd-color-border-info-subtle: #3f4852;
+	--cpd-color-border-success-subtle: color-mix(
+		in srgb,
+		#70dd78 30%,
+		transparent
+	);
+	--cpd-color-alpha-gray-100: color-mix(in srgb, #e4e2e2 4%, transparent);
+	--cpd-color-alpha-gray-200: color-mix(in srgb, #e4e2e2 8%, transparent);
+	--cpd-color-alpha-gray-300: color-mix(in srgb, #e4e2e2 12%, transparent);
+	--cpd-color-alpha-gray-400: color-mix(in srgb, #e4e2e2 16%, transparent);
+	--cpd-color-alpha-gray-500: color-mix(in srgb, #e4e2e2 24%, transparent);
+	--cpd-color-alpha-gray-600: color-mix(in srgb, #e4e2e2 32%, transparent);
+	--cpd-color-alpha-gray-1400: color-mix(in srgb, #000000 80%, transparent);
+}
