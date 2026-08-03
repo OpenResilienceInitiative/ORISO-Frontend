@@ -86,6 +86,11 @@ export const AdditionalEnquiry: React.FC = () => {
 		apiGetTenantAgenciesTopics()
 			.then((response) => {
 				setTenantAgenciesTopics(response);
+				if (response.length === 1) {
+					const onlyTopicId = response[0].id;
+					setSelectedTopicId(onlyTopicId);
+					setCurrentSelectOption(onlyTopicId.toString());
+				}
 			})
 			.catch((error) => {
 				// console.log(error);

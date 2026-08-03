@@ -47,6 +47,7 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -556,6 +557,14 @@ export const NotificationsCenter = () => {
 		);
 	};
 
+	if (notificationFeed.length === 0) {
+		return (
+			<div className="notificationsCenter notificationsCenter--empty">
+				<ActivityTimelineEmptyState />
+			</div>
+		);
+	}
+
 	return (
 		<div className="notificationsCenter">
 			<div
@@ -648,14 +657,7 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
-					{notificationFeed.length === 0 ? (
-						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.empty',
-								'No notifications yet.'
-							)}
-						</div>
-					) : filteredFeed.length === 0 ? (
+					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
 								'notifications.center.noResults',

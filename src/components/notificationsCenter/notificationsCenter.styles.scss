@@ -15,6 +15,15 @@
 	min-height: 0;
 	background: #fcf9f9;
 
+	&--empty {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__fullEmptyState {
+		min-height: 100%;
+	}
+
 	&__listColumn {
 		position: relative;
 		display: flex;
