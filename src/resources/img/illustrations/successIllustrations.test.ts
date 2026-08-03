@@ -45,6 +45,32 @@ describe('success illustrations follow the tenant scheme', () => {
 		expect(settings).not.toContain('rgba(79, 204, 92, 0.12)');
 	});
 
+	it('leaves no accent green anywhere in the illustration set', () => {
+		// The old palette's greens, all now mapped onto brand roles. waiting.svg
+		// keeps its green: there the colour is a plant, not the accent.
+		const ACCENT_GREENS = ['#0a882f', '#73be00', '#4fcc5c', '#80dd8a'];
+		const KEEPS_ITS_GREEN = ['waiting.svg'];
+
+		const offenders = fs
+			.readdirSync(path.join(process.cwd(), DIR))
+			.filter(
+				(name) =>
+					name.endsWith('.svg') && !KEEPS_ITS_GREEN.includes(name)
+			)
+			.filter((name) => {
+				const svg = asset(name).toLowerCase();
+
+				return ACCENT_GREENS.some(
+					(green) =>
+						svg.includes(`${green};`) ||
+						svg.includes(`${green}"`) ||
+						svg.includes(`${green} `)
+				);
+			});
+
+		expect(offenders).toEqual([]);
+	});
+
 	it('ships no generic cls-* stylesheet', () => {
 		// Inlined SVG <style> blocks apply document-wide, so the Illustrator
 		// default class names leak across every illustration on the page.
