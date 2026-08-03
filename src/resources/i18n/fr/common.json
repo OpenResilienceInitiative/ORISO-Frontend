@@ -1409,7 +1409,15 @@
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
-			"open": "Ouvrir le chat"
+			"open": "Ouvrir le chat",
+			"preview": {
+				"image": "Image",
+				"file": "Fichier",
+				"audio": "Message audio",
+				"video": "Vidéo",
+				"notice": "Avis",
+				"unsupported": "Message non pris en charge"
+			}
 		}
 	},
 	"overlay": {

@@ -1409,7 +1409,15 @@
 			"clearAll": "Tümünü temizle",
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
-			"open": "Sohbeti aç"
+			"open": "Sohbeti aç",
+			"preview": {
+				"image": "Görsel",
+				"file": "Dosya",
+				"audio": "Sesli mesaj",
+				"video": "Video",
+				"notice": "Bildirim",
+				"unsupported": "Desteklenmeyen mesaj"
+			}
 		}
 	},
 	"overlay": {

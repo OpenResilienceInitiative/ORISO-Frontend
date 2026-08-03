@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useMatrixActivityEvent } from '../../hooks/useMatrixActivityEvent';
-import { buildMatrixActivityTextPreview } from '../../utils/matrixActivityPreview';
+import {
+	buildMatrixActivityTextPreview,
+	getMatrixActivityPreviewKind,
+	type MatrixActivityPreviewKind,
+	type MatrixActivityPreviewLabels
+} from '../../utils/matrixActivityPreview';
 
 type MatrixActivityPreviewHydratorProps = {
 	activityEventId: string;
@@ -8,7 +13,12 @@ type MatrixActivityPreviewHydratorProps = {
 	matrixEventId: string;
 	senderName?: string | null;
 	fallbackText: string;
-	onPreviewChange: (activityEventId: string, preview: string) => void;
+	labels: MatrixActivityPreviewLabels;
+	onPreviewChange: (
+		activityEventId: string,
+		preview: string,
+		kind: MatrixActivityPreviewKind
+	) => void;
 };
 
 /**
@@ -22,6 +32,7 @@ export const MatrixActivityPreviewHydrator = ({
 	matrixEventId,
 	senderName,
 	fallbackText,
+	labels,
 	onPreviewChange
 }: MatrixActivityPreviewHydratorProps) => {
 	const resolution = useMatrixActivityEvent(roomRef, matrixEventId);
@@ -30,14 +41,19 @@ export const MatrixActivityPreviewHydrator = ({
 			buildMatrixActivityTextPreview(
 				resolution,
 				senderName,
-				fallbackText
+				fallbackText,
+				labels
 			),
-		[resolution, senderName, fallbackText]
+		[resolution, senderName, fallbackText, labels]
+	);
+	const kind = useMemo(
+		() => getMatrixActivityPreviewKind(resolution),
+		[resolution]
 	);
 
 	useEffect(() => {
-		onPreviewChange(activityEventId, preview);
-	}, [activityEventId, onPreviewChange, preview]);
+		onPreviewChange(activityEventId, preview, kind);
+	}, [activityEventId, kind, onPreviewChange, preview]);
 
 	return null;
 };

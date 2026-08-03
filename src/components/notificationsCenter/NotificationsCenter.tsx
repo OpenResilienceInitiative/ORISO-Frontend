@@ -50,6 +50,11 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
+import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
+import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
+import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
+import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -69,6 +74,18 @@ const FAMILY_ICONS: Record<
 	calls: CallsFamilyIcon,
 	system: SystemFamilyIcon,
 	appointments: AppointmentsFamilyIcon
+};
+
+const MESSAGE_PREVIEW_ICONS: Partial<
+	Record<
+		MatrixActivityPreviewKind,
+		React.ComponentType<React.SVGProps<SVGSVGElement>>
+	>
+> = {
+	image: ImageMessageIcon,
+	file: FileMessageIcon,
+	audio: AudioMessageIcon,
+	video: VideoMessageIcon
 };
 
 const formatRelativeTime = (createdAt: string, locale?: string) => {
@@ -210,7 +227,7 @@ export const NotificationsCenter = () => {
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
-		Record<string, string>
+		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
 	>({});
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
@@ -275,18 +292,52 @@ export const NotificationsCenter = () => {
 						roomRef,
 						matrixEventId,
 						senderName: item.params?.senderName,
-						fallbackText: describeItem(item, translate).text
+						fallbackText: describeItem(item, translate).text,
+						labels: {
+							image: translate(
+								'notifications.center.preview.image',
+								'Image'
+							),
+							file: translate(
+								'notifications.center.preview.file',
+								'File'
+							),
+							audio: translate(
+								'notifications.center.preview.audio',
+								'Audio message'
+							),
+							video: translate(
+								'notifications.center.preview.video',
+								'Video'
+							),
+							notice: translate(
+								'notifications.center.preview.notice',
+								'Notice'
+							),
+							unsupported: translate(
+								'notifications.center.preview.unsupported',
+								'Unsupported message'
+							)
+						}
 					}
 				];
 			}),
 		[notificationFeed, sessions, translate]
 	);
 	const handlePreviewChange = useCallback(
-		(activityEventId: string, preview: string) => {
+		(
+			activityEventId: string,
+			preview: string,
+			kind: MatrixActivityPreviewKind
+		) => {
 			setHydratedMessagePreviews((current) =>
-				current[activityEventId] === preview
+				current[activityEventId]?.text === preview &&
+				current[activityEventId]?.kind === kind
 					? current
-					: { ...current, [activityEventId]: preview }
+					: {
+							...current,
+							[activityEventId]: { text: preview, kind }
+						}
 			);
 		},
 		[]
@@ -301,7 +352,9 @@ export const NotificationsCenter = () => {
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
-					return `${title} ${hydratedMessagePreviews[item.id] || text}`;
+					return `${title} ${
+						hydratedMessagePreviews[item.id]?.text || text
+					}`;
 				}
 			),
 		[
@@ -742,9 +795,12 @@ export const NotificationsCenter = () => {
 								item,
 								translate
 							);
-							const visibleText =
-								hydratedMessagePreviews[item.id] || text;
-							const Icon = getEventIcon(descriptor.icon);
+							const hydratedPreview =
+								hydratedMessagePreviews[item.id];
+							const visibleText = hydratedPreview?.text || text;
+							const Icon =
+								MESSAGE_PREVIEW_ICONS[hydratedPreview?.kind] ||
+								getEventIcon(descriptor.icon);
 							return (
 								<div
 									key={item.id}

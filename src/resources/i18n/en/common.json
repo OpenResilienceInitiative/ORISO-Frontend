@@ -1718,7 +1718,15 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"preview": {
+				"image": "Image",
+				"file": "File",
+				"audio": "Audio message",
+				"video": "Video",
+				"notice": "Notice",
+				"unsupported": "Unsupported message"
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"

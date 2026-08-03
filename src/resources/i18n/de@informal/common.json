@@ -519,7 +519,15 @@
 			"searchPlaceholder": "Aktivität durchsuchen…",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"preview": {
+				"image": "Bild",
+				"file": "Datei",
+				"audio": "Audionachricht",
+				"video": "Video",
+				"notice": "Hinweis",
+				"unsupported": "Nicht unterstützte Nachricht"
+			}
 		},
 		"events": {
 			"requestDenied": {

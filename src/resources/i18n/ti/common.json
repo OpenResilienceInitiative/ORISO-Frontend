@@ -1409,7 +1409,15 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"preview": {
+				"image": "ምስሊ",
+				"file": "ፋይል",
+				"audio": "መልእኽቲ ድምጺ",
+				"video": "ቪድዮ",
+				"notice": "ምልክታ",
+				"unsupported": "ዘይድገፍ መልእኽቲ"
+			}
 		}
 	},
 	"overlay": {

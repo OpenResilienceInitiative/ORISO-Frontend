@@ -28,6 +28,14 @@ describe('MatrixActivityPreviewHydrator', () => {
 				matrixEventId="$event"
 				senderName="Lisa"
 				fallbackText="You received a new message."
+				labels={{
+					image: 'Image',
+					file: 'File',
+					audio: 'Audio message',
+					video: 'Video',
+					notice: 'Notice',
+					unsupported: 'Unsupported message'
+				}}
 				onPreviewChange={onPreviewChange}
 			/>
 		);
@@ -35,7 +43,8 @@ describe('MatrixActivityPreviewHydrator', () => {
 		await waitFor(() =>
 			expect(onPreviewChange).toHaveBeenCalledWith(
 				'activity-1',
-				'Lisa: the exact message'
+				'Lisa: the exact message',
+				'text'
 			)
 		);
 	});
