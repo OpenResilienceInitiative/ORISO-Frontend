@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { EmailFragment, emailFragmentArgTypes } from '../preview/EmailFragment';
 import { emailCodePanel } from '../kit/emailMolecules';

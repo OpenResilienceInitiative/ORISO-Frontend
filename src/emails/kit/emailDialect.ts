@@ -1,3 +1,8 @@
+/* eslint-disable no-template-curly-in-string --
+ * This module's entire job is to emit `${...}` as *literal text* for Thymeleaf
+ * and FreeMarker. Every occurrence flagged by this rule is intended output, not
+ * a JavaScript template literal someone forgot to backtick.
+ */
 /**
  * Template dialects.
  *
