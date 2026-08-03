@@ -3,6 +3,9 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { LeaveQueueDialog } from './LeaveQueueDialog';
+// One place defines what "375px" means; an inline globals object here would
+// drift from `.storybook/preview.tsx` the next time a viewport is renamed.
+import { phone375Globals } from '../message/messageStoryShell';
 
 const CANCEL_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/NEdjgOkKRrCyWVjRjBruXH/CAR02-live-chat_ORISO?node-id=2183-15203';
@@ -134,7 +137,7 @@ export const Failed: StoryObj = {
 export const MobileWaiting: StoryObj = {
 	name: 'Mobile 375px — still waiting',
 	render: () => <DialogDemo />,
-	globals: { viewport: { value: 'phone375' } },
+	globals: phone375Globals,
 	parameters: {
 		docs: {
 			description: {
@@ -147,5 +150,5 @@ export const MobileWaiting: StoryObj = {
 export const MobileAccepted: StoryObj = {
 	name: 'Mobile 375px — counsellor accepted',
 	render: () => <DialogDemo canStartChat />,
-	globals: { viewport: { value: 'phone375' } }
+	globals: phone375Globals
 };
