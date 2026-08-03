@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import {
 	EmailCatalogueSheet,
+	EmailDialectSheet,
 	EmailTokenSheet
 } from '../preview/EmailFoundations';
 import { EMAIL_LOCALES, EMAIL_LOCALE_LABELS } from '../index';
@@ -44,4 +45,9 @@ export const CataloguePerTone: Story = {
 			))}
 		</div>
 	)
+};
+
+export const Dialects: Story = {
+	name: 'Dialects',
+	render: () => <EmailDialectSheet />
 };

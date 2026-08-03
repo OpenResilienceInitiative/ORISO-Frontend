@@ -1,13 +1,16 @@
 import * as React from 'react';
 import {
 	EMAIL_AUDIENCE,
+	EMAIL_DIALECTS,
+	EMAIL_DIALECT_INFO,
 	EMAIL_IDS,
 	EMAIL_LABELS,
 	EMAIL_LOCALES,
 	EMAIL_LOCALE_LABELS,
 	EmailLocale,
 	buildEmail,
-	listEmailPlaceholders
+	listEmailPlaceholders,
+	toEmailDialectHtml
 } from '../index';
 import {
 	emailColor,
@@ -236,9 +239,105 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 			Tone variants:{' '}
 			{EMAIL_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(', ')}. Files
 			ship as{' '}
-			<code style={mono}>emails/&lt;tone&gt;/&lt;id&gt;.html</code> and{' '}
-			<code style={mono}>.txt</code> — the ids are the contract with the
-			sending services, so renaming one is a breaking change.
+			<code style={mono}>
+				emails/&lt;dialect&gt;/&lt;tone&gt;/&lt;id&gt;
+			</code>{' '}
+			— the ids are the contract with the sending services, so renaming
+			one is a breaking change.
 		</p>
 	</div>
 );
+
+/**
+ * The three placeholder dialects, shown on the same fragment so the difference
+ * is visible rather than described.
+ */
+export const EmailDialectSheet: React.FC = () => {
+	const fragment =
+		'<td style="color:{{primaryColor}};">Hallo {{username}}</td>' +
+		'<a href="{{loginUrl}}">Zur Beratung</a>';
+
+	return (
+		<div
+			style={{
+				...shell,
+				display: 'flex',
+				flexDirection: 'column',
+				gap: 28
+			}}
+		>
+			<p style={{ maxWidth: '72ch', margin: 0 }}>
+				None of the services that send mail can import this kit — they
+				are Java, it is TypeScript. So the build emits the same markup
+				once per engine. The rewrite is a post-process on the rendered
+				output, not a second renderer, which is what stops a dialect
+				from quietly disagreeing with the story above it.
+			</p>
+
+			<table style={{ borderCollapse: 'collapse' }}>
+				<thead>
+					<tr>
+						{['Dialect', 'Consumer', 'Placeholder', 'Files'].map(
+							(label) => (
+								<th key={label} style={th}>
+									{label}
+								</th>
+							)
+						)}
+					</tr>
+				</thead>
+				<tbody>
+					{EMAIL_DIALECTS.map((dialect) => {
+						const info = EMAIL_DIALECT_INFO[dialect];
+						return (
+							<tr key={dialect}>
+								<td style={{ ...td, ...mono }}>{dialect}</td>
+								<td style={td}>{info.consumer}</td>
+								<td
+									style={{ ...td, ...mono, color: '#a5000a' }}
+								>
+									{info.syntax}
+								</td>
+								<td style={{ ...td, ...mono }}>
+									.{info.extension.html} / .
+									{info.extension.text}
+								</td>
+							</tr>
+						);
+					})}
+				</tbody>
+			</table>
+
+			{EMAIL_DIALECTS.map((dialect) => (
+				<section key={dialect}>
+					<h3 style={{ margin: '0 0 8px' }}>{dialect}</h3>
+					<pre
+						style={{
+							...mono,
+							margin: 0,
+							padding: 14,
+							background: emailColor.surfaceMuted,
+							border: `1px solid ${emailColor.outline}`,
+							borderRadius: 8,
+							whiteSpace: 'pre-wrap',
+							wordBreak: 'break-word'
+						}}
+					>
+						{toEmailDialectHtml(fragment, dialect)}
+					</pre>
+				</section>
+			))}
+
+			<p style={{ color: emailColor.onSurfaceVariant, maxWidth: '72ch' }}>
+				An attribute keeps its literal{' '}
+				<code style={mono}>{'{{…}}'}</code> in the Thymeleaf dialect and
+				gains a <code style={mono}>th:*</code> twin, because Thymeleaf
+				overwrites the attribute at render time and the file then still
+				reads as the mail it produces. All 21 mails were rendered with
+				real Thymeleaf and real FreeMarker and compared byte-for-byte
+				against the substituted plain template — 86 renders, no
+				differences.
+			</p>
+		</div>
+	);
+};

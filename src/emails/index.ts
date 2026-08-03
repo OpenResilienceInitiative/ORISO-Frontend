@@ -14,6 +14,11 @@ import {
 } from './content/emailCatalogue';
 import { en } from './content/en';
 import {
+	EmailDialect,
+	toEmailDialectHtml,
+	toEmailDialectText
+} from './kit/emailDialect';
+import {
 	EmailContent,
 	renderEmailHtml,
 	renderEmailText
@@ -21,6 +26,7 @@ import {
 import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
+export * from './kit/emailDialect';
 export * from './kit/emailTokens';
 export type { EmailContent } from './kit/emailTemplate';
 
@@ -41,6 +47,11 @@ export const getEmailContent = (
 export interface BuildEmailOptions {
 	/** Defaults to the placeholder brand, i.e. a send-ready template file. */
 	brand?: EmailBrand;
+	/**
+	 * Placeholder syntax of the consuming engine. Defaults to `plain`, which is
+	 * also what the Storybook previews render.
+	 */
+	dialect?: EmailDialect;
 }
 
 export interface BuiltEmail {
@@ -54,15 +65,15 @@ export interface BuiltEmail {
 export const buildEmail = (
 	id: EmailId,
 	locale: EmailLocale,
-	{ brand = emailDefaultBrand }: BuildEmailOptions = {}
+	{ brand = emailDefaultBrand, dialect = 'plain' }: BuildEmailOptions = {}
 ): BuiltEmail => {
 	const content = getEmailContent(id, locale);
 	const options = { brand, lang: EMAIL_LOCALE_LANG[locale] };
 	return {
-		subject: content.subject,
-		preheader: content.preheader,
-		html: renderEmailHtml(content, options),
-		text: renderEmailText(content, options)
+		subject: toEmailDialectText(content.subject, dialect),
+		preheader: toEmailDialectText(content.preheader, dialect),
+		html: toEmailDialectHtml(renderEmailHtml(content, options), dialect),
+		text: toEmailDialectText(renderEmailText(content, options), dialect)
 	};
 };
 
