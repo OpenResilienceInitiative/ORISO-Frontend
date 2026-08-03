@@ -21,6 +21,7 @@ export type CallState =
 	| 'ringing'
 	| 'connecting'
 	| 'connected'
+	| 'left'
 	| 'ended';
 
 export interface CallData {
@@ -118,6 +119,22 @@ class CallManager {
 		// console.log("   Room ID:", roomId);
 		// console.log("   Is Video:", isVideo);
 		// console.log("   Force Group:", forceIsGroup);
+
+		if (
+			this.currentCall?.usesElementCall &&
+			this.currentCall.isGroup &&
+			this.currentCall.state === 'left' &&
+			forceIsGroup === true &&
+			(this.currentCall.signalRoomId || this.currentCall.roomId) === roomId
+		) {
+			// Reopen the existing MatrixRTC room. Creating another dedicated room
+			// here would strand the participants who stayed in the active call.
+			this.currentCall.isVideo = isVideo;
+			this.currentCall.isIncoming = false;
+			this.currentCall.state = 'connecting';
+			this.notifyListeners();
+			return;
+		}
 
 		if (this.currentCall) {
 			// console.warn("⚠️  Already have an active call, cleaning up first...");
@@ -693,6 +710,22 @@ class CallManager {
 		releaseAllCallWarmupStreams();
 
 		this.notifyListeners();
+	}
+
+	/**
+	 * Leave this browser's media session without destroying a MatrixRTC group
+	 * call that other room members are still using. The retained call metadata
+	 * lets the normal room call button rejoin the exact same call room.
+	 */
+	public leaveCall(): void {
+		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
+			this.currentCall.state = 'left';
+			releaseAllCallWarmupStreams();
+			this.notifyListeners();
+			return;
+		}
+
+		this.endCall();
 	}
 
 	/**

@@ -8,11 +8,13 @@ const SIGNAL_ROOM = '!group:oriso.example';
 
 describe('Element Call participant leave', () => {
 	const sendEvent = vi.fn().mockResolvedValue({});
+	const createRoom = vi.fn();
 
 	beforeEach(() => {
 		sendEvent.mockClear();
+		createRoom.mockClear();
 		setMatrixClientServiceRef({
-			getClient: () => ({ sendEvent })
+			getClient: () => ({ sendEvent, createRoom })
 		} as never);
 	});
 
@@ -20,7 +22,7 @@ describe('Element Call participant leave', () => {
 		callManager.endCall(false);
 	});
 
-	it('does not end the group call for remote participants', () => {
+	it('keeps the group-call room available after the local participant leaves', () => {
 		callManager.receiveCall(
 			CALL_ROOM,
 			false,
@@ -31,13 +33,44 @@ describe('Element Call participant leave', () => {
 			true
 		);
 
-		callManager.endCall();
+		callManager.leaveCall();
 
-		expect(callManager.getCurrentCall()).toBeNull();
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({
+				callId: 'group-call',
+				roomId: CALL_ROOM,
+				state: 'left'
+			})
+		);
 		expect(sendEvent).not.toHaveBeenCalled();
 	});
 
-	it('still notifies the remote participant when a one-to-one call ends', () => {
+	it('rejoins that same group-call room instead of creating a new call', () => {
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+		callManager.leaveCall();
+
+		callManager.startCall(SIGNAL_ROOM, false, true);
+
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({
+				callId: 'group-call',
+				roomId: CALL_ROOM,
+				state: 'connecting'
+			})
+		);
+		expect(createRoom).not.toHaveBeenCalled();
+		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('still notifies the remote participant when a one-to-one call is left', () => {
 		callManager.receiveCall(
 			CALL_ROOM,
 			false,
@@ -48,7 +81,7 @@ describe('Element Call participant leave', () => {
 			true
 		);
 
-		callManager.endCall();
+		callManager.leaveCall();
 
 		expect(sendEvent).toHaveBeenCalledWith(
 			SIGNAL_ROOM,
