@@ -3,8 +3,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MessageDisplayName } from './MessageDisplayName';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -128,5 +129,6 @@ export const Mobile: Story = {
 		type: 'user',
 		displayName: 'absichtslose Schildkröte Andrea'
 	},
-	parameters: mobileParameters
+	parameters: mobileParameters,
+	globals: phone390Globals
 };

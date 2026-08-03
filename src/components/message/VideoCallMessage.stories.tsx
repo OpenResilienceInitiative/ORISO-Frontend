@@ -4,8 +4,9 @@ import { VideoCallMessage } from './VideoCallMessage';
 import { MOCK_CONSULTANT_MATRIX_ID } from './MessageItemComponent.mocks';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -79,5 +80,6 @@ export const LongParticipantName: Story = {
 
 export const Mobile: Story = {
 	name: 'Mobile (390px)',
-	parameters: mobileParameters
+	parameters: mobileParameters,
+	globals: phone390Globals
 };

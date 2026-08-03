@@ -3,6 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { AnonymousConsentGate } from './AnonymousConsentGate';
 import {
+	phone375Globals,
+	phone390Globals,
 	STORY_WIDTH_COMPACT,
 	STORY_WIDTH_PHONE_SMALL,
 	STORY_WIDTH_WIDE
@@ -95,6 +97,7 @@ export const Busy: Story = {
 };
 
 export const Mobile390: Story = {
+	globals: phone390Globals,
 	name: 'Mobile 390px — fits, without slack',
 	render: (args) => (
 		<div style={{ maxWidth: STORY_WIDTH_COMPACT }}>
@@ -102,7 +105,6 @@ export const Mobile390: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: 'At 390px the two buttons still fit inside the card — but only just. Compare with the 375px story.'
@@ -112,6 +114,7 @@ export const Mobile390: Story = {
 };
 
 export const Mobile375LayoutDefect: Story = {
+	globals: phone375Globals,
 	name: 'Mobile 375px (iPhone SE)',
 	render: (args) => (
 		<div style={{ maxWidth: STORY_WIDTH_PHONE_SMALL }}>
@@ -119,7 +122,6 @@ export const Mobile375LayoutDefect: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: 'Regression pin for ORISO-Frontend#892 at the iPhone SE / iPhone 8 width. Two defects used to appear here and must not come back: the button row broke out of the card, and the headline split mid-word into "Herzlich Willkomm|en!". Root causes were a missing stacked-button rule below 575px, a global `word-break: break-word` from `sanitize.css`, and 112px of horizontal padding on a 375px screen.'
@@ -129,6 +131,7 @@ export const Mobile375LayoutDefect: Story = {
 };
 
 export const StackedButtonsTarget: Story = {
+	globals: phone375Globals,
 	name: 'Reference: the stacked arrangement, forced',
 	render: (args) => (
 		<div
@@ -152,7 +155,6 @@ export const StackedButtonsTarget: Story = {
 		</div>
 	),
 	parameters: {
-		viewport: { defaultViewport: 'mobile1' },
 		docs: {
 			description: {
 				story: 'Forces the stacked arrangement via a story-local stylesheet. Since ORISO-Frontend#892 the component does this by itself below 575px, so this story should now look identical to the 375px one — if it does not, the media query has regressed.'

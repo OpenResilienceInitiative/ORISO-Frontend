@@ -4,8 +4,9 @@ import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { Appointment } from './Appointment';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -127,5 +128,6 @@ export const Mobile: Story = {
 		}),
 		messageType: ALIAS_MESSAGE_TYPES.APPOINTMENT_SET
 	},
-	parameters: mobileParameters
+	parameters: mobileParameters,
+	globals: phone390Globals
 };

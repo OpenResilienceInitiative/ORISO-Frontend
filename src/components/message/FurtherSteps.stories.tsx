@@ -6,8 +6,9 @@ import { FurtherSteps } from './FurtherSteps';
 import { mockUserData } from './MessageItemComponent.mocks';
 import {
 	mobileParameters,
-	withMessageContexts,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageContexts
 } from './messageStoryShell';
 import './furtherSteps.styles.scss';
 
@@ -184,6 +185,7 @@ export const NoEmailTrägerOptOut: Story = {
 
 export const Mobile: Story = {
 	name: 'Mobile (390px) — both CTAs',
+	globals: phone390Globals,
 	parameters: {
 		...mobileParameters,
 		userData: asker({

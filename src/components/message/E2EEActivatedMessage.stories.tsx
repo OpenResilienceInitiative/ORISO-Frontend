@@ -3,8 +3,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
 import {
 	mobileParameters,
-	withMessageShell,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageShell
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -43,6 +44,7 @@ export const Default: Story = {
 
 export const Mobile: Story = {
 	name: 'Mobile (390px)',
+	globals: phone390Globals,
 	parameters: {
 		...mobileParameters,
 		docs: {

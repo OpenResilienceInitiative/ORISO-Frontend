@@ -5,7 +5,8 @@ import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import {
 	PSEUDONYM_LONGEST,
 	PSEUDONYM_TYPICAL,
-	STORY_WIDTH_COMPACT
+	STORY_WIDTH_COMPACT,
+	phone390Globals
 } from '../message/messageStoryShell';
 import { PrivacyMessageCard } from './PrivacyMessageCard';
 import { PseudonymCard } from './PseudonymCard';
@@ -111,7 +112,7 @@ export const ChooseDisplayNameMobile: Story = {
 			<PseudonymCard pseudonym={longPseudonym} skipTyping />
 		</div>
 	),
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: phone390Globals
 };
 
 export const PrivacyNotice: Story = {
@@ -131,7 +132,7 @@ export const PrivacyNoticeMobile: Story = {
 			<PrivacyMessageCard skipTyping />
 		</div>
 	),
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: phone390Globals
 };
 
 export const TwoMessageStack: Story = {

@@ -9,8 +9,9 @@ import {
 } from './ReassignMessage';
 import {
 	mobileParameters,
-	withMessageContexts,
-	type MessageStoryParameters
+	phone390Globals,
+	type MessageStoryParameters,
+	withMessageContexts
 } from './messageStoryShell';
 import './message.styles.scss';
 
@@ -90,6 +91,7 @@ export const RequestMobile: Story = {
 			onClick={() => {}}
 		/>
 	),
+	globals: phone390Globals,
 	parameters: {
 		...mobileParameters,
 		docs: {

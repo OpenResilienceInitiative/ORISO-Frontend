@@ -28,8 +28,9 @@ import {
  *    `(width >= 900px)`. The bubble itself caps at
  *    `min(calc(100% - 41px), 834px)`, so a desktop frame only shows something
  *    new up to roughly 900px — beyond that the bubble stops growing.
- *    Pair `compact` with `parameters.viewport.defaultViewport: 'mobile1'` so the
- *    toolbar and the shell agree.
+ *    Pair `compact` with `mobileParameters` below so the toolbar and the shell
+ *    agree. Do **not** use Storybook's built-in `mobile1` — it is 320px, so a
+ *    story named "390px" would render at a width it does not claim.
  * 2. **The provider stack** a message row sits inside in production. Components
  *    that read `UserDataContext` (delivery ticks) or `ActiveSessionContext`
  *    (read-status rules) render blank or throw without it.
@@ -155,8 +156,17 @@ export const withMessageContexts = (
 	</MessageContextShell>
 );
 
-/** Shorthand for the mobile parameter block, so every story spells it the same. */
-export const mobileParameters = {
-	compactShell: true,
-	viewport: { defaultViewport: 'mobile1' }
-};
+/**
+ * Mobile story setup.
+ *
+ * The viewport lives in **globals**, not in parameters. Storybook 10 ignores the
+ * legacy `parameters.viewport.defaultViewport`, so stories that used it rendered
+ * at the full manager width — measured at 1100px — while their names claimed
+ * 390. The built-in `mobile1` is not registered in this setup at all, so
+ * selecting it silently did nothing either. `phone375` / `phone390` are
+ * registered in `.storybook/preview.tsx`. Verified: `globals=viewport:phone390`
+ * yields a 390px preview frame.
+ */
+export const mobileParameters = { compactShell: true };
+export const phone390Globals = { viewport: { value: 'phone390' } };
+export const phone375Globals = { viewport: { value: 'phone375' } };
