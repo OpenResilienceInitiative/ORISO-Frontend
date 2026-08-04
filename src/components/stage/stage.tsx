@@ -15,14 +15,10 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
-import { ReactComponent as SkfLogo } from '../../resources/img/logos/01_skf.svg';
-import { ReactComponent as CaritasLogo } from '../../resources/img/logos/02_caritas.svg';
-import { ReactComponent as SkmLogo } from '../../resources/img/logos/03_skm.svg';
-import { ReactComponent as InViaLogo } from '../../resources/img/logos/04_via.svg';
-import { ReactComponent as KreuzbundLogo } from '../../resources/img/logos/05_kreuzbund.svg';
-import { ReactComponent as RaphaelswerkLogo } from '../../resources/img/logos/06_raphael.svg';
-import { ReactComponent as MalteserLogo } from '../../resources/img/logos/07_malteser.svg';
 import { Spinner } from '../spinner/Spinner';
+import { TenantContext } from '../../globalState';
+import { tenantServiceOrigin } from '../../resources/scripts/endpoints';
+import { resolveTenantMediaUrl } from '../../utils/resolveTenantMediaUrl';
 
 export interface StageProps {
 	className?: string;
@@ -38,6 +34,15 @@ export const Stage = ({
 	const { t: translate } = useTranslation();
 
 	const legalLinks = useContext(LegalLinksContext);
+
+	// FE-H05: the stage used to render a fixed Caritas-consortium logo row.
+	// The deployment's own logo comes from tenant theming; when a tenant has
+	// not configured one, the stage shows no logo rather than someone else's.
+	const { tenant } = useContext(TenantContext);
+	const tenantLogo = resolveTenantMediaUrl(
+		tenant?.theming?.logo || undefined,
+		tenantServiceOrigin
+	);
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
 	const glowTargetRef = useRef({ x: 32, y: 24 });
@@ -181,14 +186,16 @@ export const Stage = ({
 					/>
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
+				{/* Kept even without a logo: this box is also the flex spacer
+				    that holds the headline and the legal links apart. */}
 				<div className="stage__logos">
-					<SkfLogo />
-					<CaritasLogo />
-					<SkmLogo />
-					<MalteserLogo />
-					<KreuzbundLogo />
-					<RaphaelswerkLogo />
-					<InViaLogo />
+					{tenantLogo && (
+						<img
+							src={tenantLogo}
+							className="stage__logo"
+							alt={tenant?.name || translate('app.title')}
+						/>
+					)}
 				</div>
 				<div className={`stage__legalLinks`}>
 					<LegalLinks

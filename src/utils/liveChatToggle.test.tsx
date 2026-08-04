@@ -10,6 +10,7 @@ import {
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
 } from '../api/apiSetLiveChatAvailability';
+import { LIVE_CHAT_AVAILABILITY_STORAGE_KEY } from './liveChatAvailabilityStorage';
 
 vi.mock('../api/apiSetLiveChatAvailability', () => ({
 	apiGetLiveChatAvailability: vi.fn(),
@@ -31,7 +32,7 @@ describe('live-chat availability state', () => {
 	});
 
 	it('does not display stale local availability when the backend says false', async () => {
-		localStorage.setItem('caritas_liveChatAvailability', '1');
+		localStorage.setItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY, '1');
 
 		const { result } = renderHook(() => useLiveChatAvailable());
 
@@ -50,7 +51,9 @@ describe('live-chat availability state', () => {
 		await act(async () => result.current[1](true));
 
 		expect(result.current[0]).toBe(true);
-		expect(localStorage.getItem('caritas_liveChatAvailability')).toBe('1');
+		expect(localStorage.getItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY)).toBe(
+			'1'
+		);
 	});
 
 	it('keeps the previous state and preference when enabling is rejected', async () => {
@@ -67,7 +70,9 @@ describe('live-chat availability state', () => {
 		);
 
 		expect(result.current[0]).toBe(false);
-		expect(localStorage.getItem('caritas_liveChatAvailability')).toBeNull();
+		expect(
+			localStorage.getItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
+		).toBeNull();
 	});
 
 	it('reconciles only relevant cross-tab preference changes with the backend', async () => {
@@ -82,7 +87,7 @@ describe('live-chat availability state', () => {
 		act(() => {
 			window.dispatchEvent(
 				new StorageEvent('storage', {
-					key: 'caritas_liveChatAvailability',
+					key: LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
 					newValue: '1'
 				})
 			);
@@ -103,7 +108,9 @@ describe('live-chat availability state', () => {
 		await act(async () => resolveGet(false));
 
 		expect(result.current[0]).toBe(true);
-		expect(localStorage.getItem('caritas_liveChatAvailability')).toBe('1');
+		expect(localStorage.getItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY)).toBe(
+			'1'
+		);
 	});
 
 	it('heartbeats while active and stops after unmount', async () => {
@@ -157,7 +164,9 @@ describe('live-chat availability state', () => {
 		await act(async () => vi.advanceTimersByTimeAsync(45_000));
 
 		expect(result.current[0]).toBe(false);
-		expect(localStorage.getItem('caritas_liveChatAvailability')).toBeNull();
+		expect(
+			localStorage.getItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
+		).toBeNull();
 	});
 
 	it('ignores a stale heartbeat result after a newly acknowledged enable', async () => {
@@ -181,6 +190,8 @@ describe('live-chat availability state', () => {
 		await act(async () => resolveHeartbeat(false));
 
 		expect(result.current[0]).toBe(true);
-		expect(localStorage.getItem('caritas_liveChatAvailability')).toBe('1');
+		expect(localStorage.getItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY)).toBe(
+			'1'
+		);
 	});
 });

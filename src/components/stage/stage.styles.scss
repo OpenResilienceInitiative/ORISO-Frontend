@@ -179,36 +179,14 @@ $gridSpacing: $grid-base-four;
 			margin: 0 auto $grid-base-ten;
 		}
 
-		svg {
-			width: $iconSize;
-			height: $iconSize;
-			margin-right: $gridSpacing;
-			margin-top: $gridSpacing;
-
-			&.raphaelswerk {
-				padding-top: 8px;
-				margin-left: -5px;
-				margin-right: calc(#{$gridSpacing} - 5px);
-				width: 64px;
-				height: 64px;
-			}
-
-			&:first-child {
-				margin-left: 54px;
-			}
-
-			&:nth-child(-n + 3) {
-				margin-top: 0;
-			}
-
-			&:nth-child(4) {
-				margin-left: $grid-base-two;
-				margin-right: $grid-base-three;
-			}
-
-			&:nth-child(7) {
-				margin-right: 0;
-			}
+		// A tenant supplies a single logo of unknown intrinsic size, so bound
+		// it here instead of letting the asset dictate the stage layout.
+		.stage__logo {
+			max-width: 100%;
+			max-height: 96px;
+			width: auto;
+			height: auto;
+			object-fit: contain;
 		}
 	}
 

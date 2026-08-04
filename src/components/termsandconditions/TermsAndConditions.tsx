@@ -19,6 +19,7 @@ import {
 import { Checkbox } from '../checkbox/Checkbox';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { logout } from '../logout/logout';
+import { getLegalPrivacyUrl } from '../../resources/scripts/runtimeConfig';
 
 const hasChanged = (
 	tenantData: TenantDataInterface,
@@ -71,9 +72,9 @@ export const TermsAndConditions = () => {
 
 	const transformText2DataPrivacyLink = (text: string) => {
 		let hereLabel = translate('termsAndConditionOverlay.labels.here');
-		const privacyHref =
-			process.env.REACT_APP_LEGAL_PRIVACY_URL ||
-			'https://www.caritas-beratungundhilfe.de/datenschutz';
+		// FE-H05: the mandatory privacy disclosure comes from the central
+		// runtime config, never from a hardcoded third-party page.
+		const privacyHref = getLegalPrivacyUrl();
 		return text.replace(
 			hereLabel,
 			`<a class='link' target='_blank' href='${privacyHref}'>${hereLabel}</a>`
