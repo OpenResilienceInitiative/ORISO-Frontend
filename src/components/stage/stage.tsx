@@ -16,7 +16,9 @@ import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { Spinner } from '../spinner/Spinner';
-import { TenantContext } from '../../globalState';
+// Direct module path, not the globalState barrel: the barrel's import chain
+// reaches i18n and lottie-web, matching how LegalLinksContext is imported above.
+import { TenantContext } from '../../globalState/provider/TenantProvider';
 import { tenantServiceOrigin } from '../../resources/scripts/endpoints';
 import { resolveTenantMediaUrl } from '../../utils/resolveTenantMediaUrl';
 
@@ -38,7 +40,10 @@ export const Stage = ({
 	// FE-H05: the stage used to render a fixed Caritas-consortium logo row.
 	// The deployment's own logo comes from tenant theming; when a tenant has
 	// not configured one, the stage shows no logo rather than someone else's.
-	const { tenant } = useContext(TenantContext);
+	// TenantContext defaults to null, and Stage also renders on pre-auth /
+	// legal pages and in stories that mount no provider — so read it
+	// defensively rather than destructuring.
+	const tenant = useContext(TenantContext)?.tenant;
 	const tenantLogo = resolveTenantMediaUrl(
 		tenant?.theming?.logo || undefined,
 		tenantServiceOrigin
