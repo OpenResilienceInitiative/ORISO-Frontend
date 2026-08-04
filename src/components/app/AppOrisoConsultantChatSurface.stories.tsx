@@ -746,10 +746,10 @@ function AppOrisoRoutingRuntimeShell() {
 		try {
 			previousListWidth = localStorage.getItem('sessionsList_width');
 			previousLiveChatAvailability = localStorage.getItem(
-				'caritas_liveChatAvailability'
+				'oriso_liveChatAvailability'
 			);
 			localStorage.setItem('sessionsList_width', '397');
-			localStorage.removeItem('caritas_liveChatAvailability');
+			localStorage.removeItem('oriso_liveChatAvailability');
 		} catch {
 			/* Storybook determinism only. */
 		}
@@ -764,10 +764,10 @@ function AppOrisoRoutingRuntimeShell() {
 					);
 				}
 				if (previousLiveChatAvailability == null) {
-					localStorage.removeItem('caritas_liveChatAvailability');
+					localStorage.removeItem('oriso_liveChatAvailability');
 				} else {
 					localStorage.setItem(
-						'caritas_liveChatAvailability',
+						'oriso_liveChatAvailability',
 						previousLiveChatAvailability
 					);
 				}

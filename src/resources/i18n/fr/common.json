@@ -50,7 +50,8 @@
 		"scrollDown": "Faire défiler vers le bas",
 		"selectLanguage": "Choisir la langue",
 		"stage": {
-			"title": "Conseil\nAide et assistance"
+			"title": "Conseil\nAide et assistance",
+			"associationLogoAlt": "Logo de l'organisation prestataire"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
