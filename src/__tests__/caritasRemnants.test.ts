@@ -43,8 +43,10 @@ const FORBIDDEN = [
 		pattern: /https?:\/\/[^\s'"`]*caritas[^\s'"`]*/i
 	},
 	{
-		label: 'caritas-namespaced storage key or DOM event',
-		pattern: /['"`]caritas[_:][A-Za-z]/
+		// Case-insensitive: an SVG export artifact (`id="Caritas_B_Chat_..."`)
+		// slipped past a case-sensitive version of this rule.
+		label: 'caritas-namespaced identifier, storage key or DOM event',
+		pattern: /['"`]caritas[_:][A-Za-z]/i
 	},
 	{
 		label: 'Caritas-consortium logo asset',
