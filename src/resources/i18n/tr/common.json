@@ -1409,7 +1409,17 @@
 			"clearAll": "Tümünü temizle",
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
-			"open": "Sohbeti aç"
+			"open": "Sohbeti aç",
+			"next": "Sonraki bildirim",
+			"cardMenu": "Bildirim işlemleri",
+			"markRead": "Okundu olarak işaretle",
+			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor",
+			"showPreview": "Sohbet önizlemesini göster",
+			"showDetails": "Detayları göster",
+			"preview": {
+				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
+				"empty": "Bu sohbette henüz mesaj yok."
+			}
 		}
 	},
 	"overlay": {
