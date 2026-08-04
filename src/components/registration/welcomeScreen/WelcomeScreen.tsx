@@ -10,6 +10,9 @@ import { useMemo } from 'react';
 import { PreselectionBox } from '../preselectionBox/PreselectionBox';
 import './welcomeScreen.styles';
 
+/** Icon box side length — the icons render at 30px inside it. */
+const ICON_COLUMN_WIDTH = '30px';
+
 interface WelcomeScreenProps {
 	nextStepUrl: string;
 }
@@ -20,6 +23,7 @@ export const WelcomeScreen = ({ nextStepUrl }: WelcomeScreenProps) => {
 	const infoDefinitions = useMemo(
 		() => [
 			{
+				id: 'info1',
 				icon: (
 					<CreateIcon
 						aria-hidden="true"
@@ -32,6 +36,7 @@ export const WelcomeScreen = ({ nextStepUrl }: WelcomeScreenProps) => {
 				subline: t('registration.welcomeScreen.info1.text')
 			},
 			{
+				id: 'info2',
 				icon: (
 					<ChatIcon
 						sx={{ width: '30px', height: '30px' }}
@@ -42,6 +47,7 @@ export const WelcomeScreen = ({ nextStepUrl }: WelcomeScreenProps) => {
 				subline: t('registration.welcomeScreen.info2.text')
 			},
 			{
+				id: 'info3',
 				icon: (
 					<MailIcon
 						sx={{ width: '30px', height: '30px' }}
@@ -52,6 +58,7 @@ export const WelcomeScreen = ({ nextStepUrl }: WelcomeScreenProps) => {
 				subline: t('registration.welcomeScreen.info3.text')
 			},
 			{
+				id: 'info4',
 				icon: (
 					<LockIcon
 						sx={{ width: '30px', height: '30px' }}
@@ -74,15 +81,42 @@ export const WelcomeScreen = ({ nextStepUrl }: WelcomeScreenProps) => {
 			</Typography>
 			{infoDefinitions.map((info) => (
 				<Box
-					sx={{ display: 'flex', alignItems: 'center', mb: '32px' }}
-					key={info.subline}
+					data-welcome-info-row
+					sx={{
+						display: 'flex',
+						// #83: centring against the whole text block made the
+						// icon's height depend on how much text sat next to it,
+						// so a missing or single-line text broke the column.
+						// Anchor to the top and centre the icon inside a fixed
+						// box the height of the headline instead.
+						alignItems: 'flex-start',
+						mb: '32px'
+					}}
+					key={info.id}
 				>
-					{info.icon}
+					<Box
+						data-welcome-info-icon
+						sx={{
+							flex: `0 0 ${ICON_COLUMN_WIDTH}`,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							minHeight: ICON_COLUMN_WIDTH
+						}}
+					>
+						{info.icon}
+					</Box>
 					<Box sx={{ ml: '24px' }}>
 						<Typography variant="h5">{info.headline}</Typography>
-						<Typography variant="body1" sx={{ mt: '4px' }}>
-							{info.subline}
-						</Typography>
+						{info.subline && (
+							<Typography
+								data-welcome-info-subline
+								variant="body1"
+								sx={{ mt: '4px' }}
+							>
+								{info.subline}
+							</Typography>
+						)}
 					</Box>
 				</Box>
 			))}

@@ -6,6 +6,7 @@ import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useElementCallWidget } from './useElementCallWidget';
+import { setAppConfig } from '../../../utils/appConfig';
 
 const widgetApiMocks = vi.hoisted(() => ({
 	widgetDefinitions: [] as Array<Record<string, unknown>>,
@@ -124,6 +125,7 @@ describe('useElementCallWidget', () => {
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		setAppConfig(null as never);
 	});
 
 	it('waits for room join and never puts credentials or premature E2EE flags in the URL', async () => {
@@ -158,11 +160,39 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('userId')).toBe('@user:oriso.example');
 		expect(fragment.get('baseUrl')).toBe('https://matrix.oriso.example');
 		expect(fragment.get('widgetId')).toMatch(/^oriso-call-[a-f0-9]{64}$/);
+		// The call is deliberately dark while the app around it is light.
+		// Pinned rather than inherited, so an upstream change to Element
+		// Call's own default cannot silently restyle our call
+		// (ORISO-Frontend#900).
+		expect(fragment.get('theme')).toBe('dark');
 		expect(url.searchParams.has('accessToken')).toBe(false);
 		expect(fragment.has('accessToken')).toBe(false);
 		expect(fragment.has('password')).toBe(false);
 		expect(fragment.has('enableE2EE')).toBe(false);
+		// ADR-018 default: host asks Element Call for per-participant media E2EE.
 		expect(fragment.get('perParticipantE2EE')).toBe('true');
+	});
+
+	it('omits media E2EE when the environment kill-switch is false', async () => {
+		// The on path alone would still pass if the parameter were always set,
+		// which would silently make the kill-switch unusable (ElementCall#35).
+		setAppConfig({
+			releaseToggles: { enableCallMediaE2EE: false }
+		} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const fragment = new URLSearchParams(
+			new URL(result.current.url!).hash.slice(2)
+		);
+		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
@@ -283,7 +313,9 @@ describe('useElementCallWidget', () => {
 		const api = widgetApiMocks.apiInstances[0];
 
 		act(() => api.emit('ready', new CustomEvent('ready')));
-		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'light' });
+		// Must match the `theme=dark` pin in the widget URL — a ready-time
+		// update to any other scheme would flip the call after launch.
+		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
 
 		const closeRequest = {
 			action: 'io.element.close',
@@ -469,5 +501,135 @@ describe('useElementCallWidget', () => {
 		expect(api.feedStateUpdate).toHaveBeenCalledTimes(1);
 		expect(api.feedToDevice).toHaveBeenCalledWith(rawEvent, true);
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
+	});
+
+	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
+		vi.useFakeTimers();
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		try {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await vi.waitFor(() => expect(result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = result.current.url!;
+			act(() => result.current.attachIframe(iframe));
+			const api =
+				widgetApiMocks.apiInstances[
+					widgetApiMocks.apiInstances.length - 1
+				];
+
+			const decryptionListeners = new Set<
+				(event: unknown, error?: Error) => void
+			>();
+			const stuckEvent = {
+				getRoomId: () => CALL_ROOM,
+				getId: () => '$stuck-key-event',
+				getType: () => 'm.room.encrypted',
+				getWireType: () => 'm.room.encrypted',
+				getEffectiveEvent: () => ({ type: 'm.room.encrypted' }),
+				on: (name: string, l: (e: unknown, err?: Error) => void) => {
+					if (name === 'Event.decrypted') decryptionListeners.add(l);
+				},
+				off: (name: string, l: (e: unknown, err?: Error) => void) => {
+					if (name === 'Event.decrypted')
+						decryptionListeners.delete(l);
+				}
+			};
+
+			act(() => {
+				client.emitTest('Room.timeline', stuckEvent, {}, false);
+			});
+			expect(decryptionListeners.size).toBe(1);
+
+			// A failed decryption must NOT drop the listener: Megolm keys often
+			// arrive later and the SDK retries. It must be reported, though.
+			act(() => {
+				decryptionListeners.forEach((l) =>
+					l(stuckEvent, new Error('The sender key is unknown'))
+				);
+			});
+			expect(decryptionListeners.size).toBe(1);
+			expect(api.feedEvent).not.toHaveBeenCalled();
+			expect(warn).toHaveBeenCalledWith(
+				'[call] call event still undecrypted, waiting for the key:',
+				'$stuck-key-event',
+				'The sender key is unknown'
+			);
+
+			// Only after the timeout is the event truly lost — and that loss is
+			// what makes a connected call silent, so it must be loud.
+			act(() => {
+				vi.advanceTimersByTime(5 * 60 * 1000);
+			});
+			expect(decryptionListeners.size).toBe(0);
+			expect(error).toHaveBeenCalledWith(
+				'[call] dropping call event that never decrypted:',
+				'$stuck-key-event',
+				'in',
+				CALL_ROOM,
+				'— media keys carried by this event are lost'
+			);
+		} finally {
+			warn.mockRestore();
+			error.mockRestore();
+			vi.useRealTimers();
+		}
+	});
+
+	it('releases camera and microphone when the call ends, however it ended', async () => {
+		const client = createClient();
+		const { result, unmount } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(result.current.url);
+
+		// Element Call hanging up on its own side unmounts the iframe, which
+		// calls the ref callback with null. Stopping the widget channel alone
+		// would leave the iframe document — and its capture — alive.
+		act(() => result.current.attachIframe(null));
+		expect(iframe.src).toBe('about:blank');
+
+		// And the same must hold when the surface simply unmounts.
+		const second = document.createElement('iframe');
+		second.src = result.current.url!;
+		act(() => result.current.attachIframe(second));
+		unmount();
+		expect(second.src).toBe('about:blank');
+	});
+
+	it('keeps a live call running when the same iframe is re-attached', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+
+		// React hands the same element to a new ref callback whenever that
+		// callback's identity changes. Releasing the devices here would kill
+		// the media of a call that is still running.
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(result.current.url);
+
+		// Swapping in a different iframe must still release the old one.
+		const replacement = document.createElement('iframe');
+		replacement.src = result.current.url!;
+		act(() => result.current.attachIframe(replacement));
+		expect(iframe.src).toBe('about:blank');
+		expect(replacement.src).toBe(result.current.url);
 	});
 });

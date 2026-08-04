@@ -291,6 +291,39 @@
 			"overlay": {
 				"headline": "Deine Änderungen wurden erfolgreich gespeichert."
 			}
+		},
+		"format": {
+			"panelTitle": "Neue Unterhaltung erstellen",
+			"panelMenu": "Weitere Optionen",
+			"back": "Zurück",
+			"cardMenu": "Optionen für dieses Gesprächsformat"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Datum wählen",
+				"timeLabel": "Startzeitpunkt",
+				"durationLabel": "Dauer einstellen",
+				"repeatLabel": "Wiederholungen",
+				"mediumLabel": "Primäres Medium wählen",
+				"languageLabel": "Sprache Gesprächskreis",
+				"increase": "{{field}} erhöhen",
+				"decrease": "{{field}} verringern",
+				"openList": "{{field}} auswählen",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} mal",
+				"repeatValue_other": "{{count}} mal"
+			}
+		},
+		"create": {
+			"authorContent": {
+				"defaultRule1": "Sprich von dir selbst, nicht über andere.",
+				"defaultRule2": "Was hier geteilt wird, bleibt hier.",
+				"ruleEditorLabel": "Regel bearbeiten",
+				"editRule": "Regel {{index}} bearbeiten",
+				"deleteRule": "Regel {{index}} löschen",
+				"addRule": "Regel hinzufügen",
+				"ruleChip": "Regel Nr. {{index}}"
+			}
 		}
 	},
 	"help": {
@@ -486,7 +519,15 @@
 			"searchPlaceholder": "Aktivität durchsuchen…",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"events": {
 			"requestDenied": {
@@ -1775,12 +1816,17 @@
 		}
 	},
 	"anonymousConsent": {
-		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Dir starten.",
+		"description": "Danach kann eine beratende Person einen Chat mit dir beginnen.",
 		"subline": "Bitte bestätige unsere Datenschutzbestimmungen."
 	},
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"app": {
+		"stage": {
+			"associationLogoAlt": "Logo der Trägerorganisation"
 		}
 	}
 }

@@ -1,22 +1,10 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Lottie, { LottieRefCurrentProps } from 'lottie-react';
-import { recolorLottieAccent } from './lottieColorUtils';
+import { readCssColor, recolorLottieAccent } from './lottieColorUtils';
 
 const DEFAULT_ACCENT_COLOR = '#ffb4aa';
 const DEFAULT_SECONDARY_COLOR = '#646d78';
-
-const readCssColor = (cssVariableName: string, fallbackColor: string) => {
-	if (typeof window === 'undefined') {
-		return fallbackColor;
-	}
-
-	const value = getComputedStyle(document.documentElement)
-		.getPropertyValue(cssVariableName)
-		.trim();
-
-	return /^#[0-9a-f]{6}$/i.test(value) ? value : fallbackColor;
-};
 
 interface EmptyStateAnimationProps {
 	animationData: Record<string, any>;

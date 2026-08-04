@@ -208,6 +208,11 @@ vi.mock('../../resources/img/icons/two-factor/confirm_filled.svg', () => ({
 		<svg aria-hidden="true" {...props} />
 	)
 }));
+vi.mock('../animatedIllustration/AnimatedIllustration', () => ({
+	CheckAnimation: (props: React.SVGProps<SVGSVGElement>) => (
+		<svg data-testid="success-checkmark" {...props} />
+	)
+}));
 
 const clickButton = (name: string) => {
 	fireEvent.click(screen.getByRole('button', { name }));
@@ -353,6 +358,17 @@ describe('TwoFactorSetupDialog', () => {
 				'twoFactorAuth.setupDialog.app.success.title'
 			)
 		).toBeTruthy();
+
+		// Success plays the shared confirmation animation, and its lone close
+		// action switches the footer to the single-column row.
+		expect(screen.getByTestId('success-checkmark')).toBeTruthy();
+		const actions = document.querySelector(
+			'.twoFactorSetupDialog__actions'
+		);
+		expect(
+			actions?.classList.contains('twoFactorSetupDialog__actions--single')
+		).toBe(true);
+		expect(actions?.querySelectorAll('button')).toHaveLength(1);
 	});
 
 	it('keeps the success step when refreshed user data changes the current type', async () => {

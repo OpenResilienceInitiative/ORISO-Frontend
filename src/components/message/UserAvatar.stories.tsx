@@ -95,27 +95,10 @@ export const UsernameOnly: Story = {
 export const MultipleAvatars: Story = {
 	render: () => (
 		<div style={{ display: 'flex', gap: '16px', padding: '20px' }}>
-			<UserAvatar
-				username="alice"
-				userId="alice"
-				size="32px"
-			/>
-			<UserAvatar
-				username="bob"
-				userId="bob"
-				size="32px"
-			/>
-			<UserAvatar
-				username="consultant"
-				userId="consultant"
-				size="32px"
-			/>
-			<UserAvatar
-				username="orisouser"
-				userId="orisouser"
-				size="32px"
-			/>
+			<UserAvatar username="alice" userId="alice" size="32px" />
+			<UserAvatar username="bob" userId="bob" size="32px" />
+			<UserAvatar username="consultant" userId="consultant" size="32px" />
+			<UserAvatar username="orisouser" userId="orisouser" size="32px" />
 		</div>
 	)
 };
-

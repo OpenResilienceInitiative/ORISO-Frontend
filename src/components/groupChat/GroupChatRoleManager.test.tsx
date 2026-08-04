@@ -181,6 +181,9 @@ describe('GroupChatRoleManager', () => {
 				'target'
 			)
 		);
-		expect(screen.queryByText('Bob')).toBeNull();
+		// The row is removed on a later render than the mutation call, so wait
+		// for the DOM update rather than asserting it synchronously — otherwise
+		// this races the re-render and flakes (Bob still present).
+		await waitFor(() => expect(screen.queryByText('Bob')).toBeNull());
 	});
 });

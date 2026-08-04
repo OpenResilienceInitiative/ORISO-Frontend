@@ -32,3 +32,40 @@ describe('two-factor setup dialog responsive layout', () => {
 		);
 	});
 });
+
+describe('two-factor setup dialog success step', () => {
+	it('sizes the confirmation animation without repainting it green', () => {
+		const scss = dialogStyles();
+		const iconStart = scss.indexOf('&__successIcon');
+		const successIcon = scss.slice(
+			iconStart,
+			scss.indexOf('}', iconStart) + 1
+		);
+
+		// The animation carries its own M3 roles; the dialog only boxes it.
+		expect(successIcon).toContain('width: 120px !important;');
+		expect(successIcon).toContain('height: 120px !important;');
+		expect(successIcon).not.toContain('--m3-success');
+		expect(successIcon).not.toContain('#0a882f');
+	});
+
+	it('keeps the lone close action on one right-aligned row, desktop and mobile', () => {
+		const scss = dialogStyles();
+
+		expect(scss).toMatch(
+			/&__actions--single\s*\{[^}]*grid-template-columns:\s*1fr;[^}]*justify-items:\s*end;/
+		);
+		expect(scss).toMatch(
+			/&__primaryAction\s*\{[^}]*white-space:\s*nowrap\s*!important;/
+		);
+
+		// The mobile block re-declares the icon tracks, so it has to re-declare
+		// the single-action override too or it silently wins by source order.
+		const mobileStyles = scss.slice(
+			scss.indexOf('@media (width <= 520px)')
+		);
+		expect(mobileStyles).toMatch(
+			/&__actions--single\s*\{[^}]*grid-template-columns:\s*1fr;/
+		);
+	});
+});

@@ -50,7 +50,8 @@
 		"scrollDown": "ንታሕቲ ስክሮል ግበሩ",
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
-			"title": "ምኽሪ\n& ሓገዝ"
+			"title": "ምኽሪ\n& ሓገዝ",
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት"
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -279,7 +280,7 @@
 	},
 	"chatFlyout": {
 		"archive": "መዝገበ",
-		"archiveDescription": "የተኣረከቡ ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
+		"archiveDescription": "የተኣረከቡ ቻት ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
 		"askerProfil": "ፕሮፋይል ደላዪ ምኽሪ",
 		"dataProtection": "ምክልኻል መረዳእታ",
 		"dearchive": "ዲኣርኪቭ",
@@ -670,6 +671,15 @@
 					"long": "እቲ ኣርእስቲ ኣዝዩ ነዊሕ እዩ።",
 					"short": "እቲ ኣርእስቲ ኣዝዩ ሓጺር እዩ።"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "ብዛዕባ ርእስኻ ተዛረብ፡ ብዛዕባ ካልኦት ኣይትዛረብ።",
+				"defaultRule2": "እቲ ኣብዚ ዝካፈል ኣብዚ ይተርፍ።",
+				"ruleEditorLabel": "ሕጊ ኣተዓራርይ",
+				"editRule": "ሕጊ {{index}} ኣተዓራርይ",
+				"deleteRule": "ሕጊ {{index}} ሰርዝ",
+				"addRule": "ሕጊ ወስኽ",
+				"ruleChip": "ሕጊ ቁ. {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +838,28 @@
 			"overlay": {
 				"button1Label": "ዕፁው",
 				"headline": "ለውጥታትካ ብዓወት ተዓቂቡ ኣሎ።"
+			}
+		},
+		"format": {
+			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
+			"panelMenu": "ተወሳኺ ኣማራጺታት",
+			"back": "ተመለስ",
+			"cardMenu": "ኣማራጺታት ናይዚ ዓይነት ዝርርብ"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "ዕለት ምረጽ",
+				"timeLabel": "መጀመሪ ሰዓት",
+				"durationLabel": "ግዜ ኣዳልው",
+				"repeatLabel": "ተደጋጋሚነት",
+				"mediumLabel": "ቀንዲ መራኸቢ ምረጽ",
+				"languageLabel": "ቋንቋ ናይቲ ክቢ",
+				"increase": "{{field}} ወስኽ",
+				"decrease": "{{field}} ኣጉድል",
+				"openList": "{{field}} ምረጽ",
+				"durationValue": "{{count}} ሰዓት",
+				"repeatValue_one": "{{count}} ግዜ",
+				"repeatValue_other": "{{count}} ግዜ"
 			}
 		}
 	},
@@ -1378,7 +1410,17 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"next": "ቀጻሊ ሓበሬታ",
+			"cardMenu": "ናይ ሓበሬታ ተግባራት",
+			"markRead": "ከም ተነብበ ምልክት ግበር",
+			"waitingSince": "ካብ {{time}} ({{date}}) ጀሚሩ ይጽበ ኣሎ",
+			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
+			"showDetails": "ዝርዝር ኣርእይ",
+			"preview": {
+				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
+				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።"
+			}
 		}
 	},
 	"overlay": {
@@ -2019,7 +2061,7 @@
 				},
 				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
-				"label": "ስም ተጠቃሚ",
+				"label": "User-ID",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}
 		},

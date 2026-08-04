@@ -4,7 +4,7 @@ import { apiSetAbsence } from '../../api';
 import { BUTTON_TYPES } from '../button/Button';
 import { OverlayItem, OVERLAY_FUNCTIONS, Overlay } from '../overlay/Overlay';
 import { UserDataContext } from '../../globalState';
-import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './absenceFormular.styles';
 import { Headline } from '../headline/Headline';
 import { Switch } from '../Switch';
@@ -24,7 +24,7 @@ export const AbsenceFormular = () => {
 	const isAbsent = useMemo(() => userData.absent, [userData.absent]);
 
 	const absenceOverlayItem: OverlayItem = {
-		svg: CheckIcon,
+		svg: CheckAnimation,
 		headline: translate('absence.overlay.changeSuccess.headline'),
 		buttonSet: [
 			{

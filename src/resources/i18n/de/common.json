@@ -51,7 +51,8 @@
 		"scrollDown": "Nach unten scrollen",
 		"selectLanguage": "Sprache wählen",
 		"stage": {
-			"title": "Beratung\n& Hilfe"
+			"title": "Beratung\n& Hilfe",
+			"associationLogoAlt": "Logo der Trägerorganisation"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",
@@ -291,7 +292,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archivieren",
-		"archiveDescription": "Archivierte Benachrichtigungen sind inaktiv. Der Chat wird in 12 Monaten gelöscht.",
+		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
 		"askerProfil": "Ratsuchendenprofil",
 		"dataProtection": "Datenschutz",
 		"dearchive": "Dearchivieren",
@@ -305,7 +306,7 @@
 		"activateNotification": "Benachrichtigungen aktivieren",
 		"privacyPolicy": "Datenschutzerklärung",
 		"privacyPolicyDescription": "Lese wie diese Beratungsstelle deine Daten verarbeitet.",
-		"help": "Hilfe Anfragen",
+		"help": "Hilfe anfragen",
 		"helpDescription": "Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen.",
 		"invite": "Weitere Personen einladen",
 		"inviteDescription": "Wer eingeladen werden kann, hängt von den Admin-Einstellungen ab.",
@@ -739,7 +740,13 @@
 				"removeRule": "Entfernen",
 				"translate": "In aktive Sprachen übersetzen",
 				"translating": "Wird übersetzt…",
-				"translationError": "Übersetzung fehlgeschlagen. Der Text wurde beibehalten; bitte erneut versuchen."
+				"translationError": "Übersetzung fehlgeschlagen. Der Text wurde beibehalten; bitte erneut versuchen.",
+				"defaultRule1": "Sprechen Sie von sich selbst, nicht über andere.",
+				"defaultRule2": "Was hier geteilt wird, bleibt hier.",
+				"ruleEditorLabel": "Regel bearbeiten",
+				"editRule": "Regel {{index}} bearbeiten",
+				"deleteRule": "Regel {{index}} löschen",
+				"ruleChip": "Regel Nr. {{index}}"
 			},
 			"listItem": {
 				"label": "Neuer Chat"
@@ -761,7 +768,10 @@
 			"back": "Zurück",
 			"headerTitle": "Neue Unterhaltung erstellen",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
-			"title": "Gesprächsformat wählen"
+			"title": "Gesprächsformat wählen",
+			"panelTitle": "Neue Unterhaltung erstellen",
+			"panelMenu": "Weitere Optionen",
+			"cardMenu": "Optionen für dieses Gesprächsformat"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -796,7 +806,21 @@
 			"title": "Gesprächskreis",
 			"toggleModeratorList": "Liste der Co-Moderator:innen öffnen oder schließen",
 			"toggleTopicList": "Themenliste öffnen oder schließen",
-			"topicLabel": "Thema / Fachbereich"
+			"topicLabel": "Thema / Fachbereich",
+			"rows": {
+				"dateLabel": "Datum wählen",
+				"timeLabel": "Startzeitpunkt",
+				"durationLabel": "Dauer einstellen",
+				"repeatLabel": "Wiederholungen",
+				"mediumLabel": "Primäres Medium wählen",
+				"languageLabel": "Sprache Gesprächskreis",
+				"increase": "{{field}} erhöhen",
+				"decrease": "{{field}} verringern",
+				"openList": "{{field}} auswählen",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} mal",
+				"repeatValue_other": "{{count}} mal"
+			}
 		},
 		"createError": {
 			"overlay": {
@@ -1719,7 +1743,15 @@
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -2526,18 +2558,29 @@
 				"allShort": "Alle 3",
 				"avatar": "Avatar",
 				"password": "Passwort",
-				"username": "Benutzername"
+				"username": "User-ID"
 			},
 			"subline": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"tooShort": "Ihr Benutzername ist zu kurz.",
-					"unavailable": "Dieser Benutzername ist bereits vergeben.",
-					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuchen Sie es erneut."
+					"tooShort": "Ihre User-ID ist zu kurz.",
+					"unavailable": "Diese User-ID ist bereits vergeben.",
+					"retry": "Wir konnten die User-ID gerade nicht prüfen. Bitte versuchen Sie es erneut."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
-				"label": "Benutzername",
-				"success": "Ihr Benutzername ist geeignet."
+				"label": "User-ID",
+				"success": "Ihre User-ID ist geeignet."
+			},
+			"email": {
+				"label": "E-Mail-Adresse",
+				"info": "Optional. Wird nur für Sicherheitsfunktionen wie die Zwei-Faktor-Authentifizierung verwendet.",
+				"error": {
+					"required": "Bitte geben Sie eine E-Mail-Adresse an.",
+					"invalid": "Bitte geben Sie eine gültige E-Mail-Adresse an."
+				}
+			},
+			"twoFactorAuth": {
+				"label": "Passwort zusätzlich durch Zwei-Faktor-Authentifizierung sichern"
 			}
 		},
 		"back": "Zurück",
@@ -3923,8 +3966,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Bestätigen",
-		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Ihnen starten.",
-		"headline": "Herzlich Willkommen!",
+		"description": "Danach kann eine beratende Person einen Chat mit Ihnen beginnen.",
+		"headline": "Herzlich Willkommen",
 		"label": {
 			"and": "und",
 			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."

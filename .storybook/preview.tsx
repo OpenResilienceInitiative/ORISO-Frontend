@@ -31,6 +31,11 @@ import {
 	SessionTypeContext
 } from '../src/globalState';
 import { Buffer } from 'buffer';
+import {
+	shouldMockStorybookRealtimeUrl,
+	StorybookWebSocketMock
+} from './storybookRealtimeMocks';
+import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -429,15 +434,6 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(config);
 	}
 
-	if (url.pathname === '/api/v1/settings.public') {
-		return storybookJsonResponse({
-			count: 0,
-			offset: 0,
-			total: 0,
-			settings: []
-		});
-	}
-
 	if (url.pathname.startsWith('/service/users/event-notifications')) {
 		return method === 'GET'
 			? storybookJsonResponse(storybookEventNotificationFeed)
@@ -513,128 +509,6 @@ const installStorybookFetchMocks = () => {
 
 installStorybookFetchMocks();
 
-class StorybookWebSocketMock extends EventTarget {
-	static CONNECTING = 0;
-	static OPEN = 1;
-	static CLOSING = 2;
-	static CLOSED = 3;
-
-	binaryType: BinaryType = 'blob';
-	bufferedAmount = 0;
-	extensions = '';
-	onclose: ((event: CloseEvent) => void) | null = null;
-	onerror: ((event: Event) => void) | null = null;
-	onmessage: ((event: MessageEvent) => void) | null = null;
-	onopen: ((event: Event) => void) | null = null;
-	protocol = '';
-	readyState = StorybookWebSocketMock.CONNECTING;
-	url: string;
-
-	constructor(url: string | URL) {
-		super();
-		this.url = String(url);
-		window.setTimeout(() => {
-			if (this.readyState !== StorybookWebSocketMock.CONNECTING) {
-				return;
-			}
-			this.readyState = StorybookWebSocketMock.OPEN;
-			const event = new Event('open');
-			this.onopen?.(event);
-			this.dispatchEvent(event);
-		}, 0);
-	}
-
-	close() {
-		if (this.readyState === StorybookWebSocketMock.CLOSED) {
-			return;
-		}
-		this.readyState = StorybookWebSocketMock.CLOSED;
-		const event = new CloseEvent('close', { code: 1000 });
-		this.onclose?.(event);
-		this.dispatchEvent(event);
-	}
-
-	send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
-		const payload = this.storybookRocketChatPayload(data);
-		if (!payload) {
-			return;
-		}
-		window.setTimeout(() => this.emitMessage(payload), 0);
-	}
-
-	private emitMessage(payload: unknown) {
-		if (this.readyState !== StorybookWebSocketMock.OPEN) {
-			return;
-		}
-		const event = new MessageEvent('message', {
-			data: JSON.stringify(payload)
-		});
-		this.onmessage?.(event);
-		this.dispatchEvent(event);
-	}
-
-	private storybookRocketChatPayload(
-		data: string | ArrayBufferLike | Blob | ArrayBufferView
-	): Record<string, unknown> | null {
-		if (typeof data !== 'string') {
-			return null;
-		}
-
-		try {
-			const message = JSON.parse(data);
-			if (message.msg === 'connect') {
-				return { msg: 'connected', session: 'storybook' };
-			}
-			if (message.msg === 'ping') {
-				return { msg: 'pong' };
-			}
-			if (message.msg === 'method') {
-				return {
-					msg: 'result',
-					id: message.id,
-					result: this.storybookRocketChatMethodResult(message.method)
-				};
-			}
-			if (message.msg === 'sub') {
-				return { msg: 'ready', subs: [message.id] };
-			}
-		} catch {
-			return null;
-		}
-
-		return null;
-	}
-
-	private storybookRocketChatMethodResult(method: string): unknown {
-		switch (method) {
-			case 'login':
-				return {
-					id: 'storybook-rocket-user',
-					token: 'storybook-rocket-token'
-				};
-			case 'rooms/get':
-			case 'subscriptions/get':
-				return [];
-			case 'public-settings/get':
-				return [];
-			case 'getUsersOfRoom':
-				return { total: 0, records: [] };
-			default:
-				return {};
-		}
-	}
-}
-
-const shouldMockRealtimeUrl = (url: string | URL): boolean => {
-	try {
-		return isStorybookServiceUrl(
-			new URL(String(url), window.location.href)
-		);
-	} catch {
-		return false;
-	}
-};
-
 const installStorybookRealtimeMocks = () => {
 	const marker = '__orisoStorybookRealtimeMocksInstalled';
 	if ((globalThis as any)[marker]) {
@@ -648,7 +522,7 @@ const installStorybookRealtimeMocks = () => {
 		url: string | URL,
 		protocols?: string | string[]
 	) {
-		if (shouldMockRealtimeUrl(url)) {
+		if (shouldMockStorybookRealtimeUrl(url, window.location.href)) {
 			return new StorybookWebSocketMock(url);
 		}
 		return new OriginalWebSocket(url, protocols as any);
@@ -667,7 +541,7 @@ const installStorybookRealtimeMocks = () => {
 			url: string | URL,
 			eventSourceInitDict?: EventSourceInit
 		) {
-			if (!shouldMockRealtimeUrl(url)) {
+			if (!shouldMockStorybookRealtimeUrl(url, window.location.href)) {
 				return new OriginalEventSource(url, eventSourceInitDict);
 			}
 			const target = new EventTarget() as EventSource;
@@ -931,6 +805,27 @@ const preview: Preview = {
 			theme: themes.light,
 			toc: true
 		},
+		/*
+		 * Storybook's built-in `mobile1` is 320x568 ("Small mobile"), which is
+		 * narrower than any phone this product targets. Stories that name a
+		 * width need a viewport that actually is that width, otherwise the
+		 * toolbar contradicts the story name and the component's media queries
+		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
+		 */
+		viewport: {
+			options: {
+				phone375: {
+					name: 'Phone 375 (iPhone SE / 8)',
+					styles: { width: '375px', height: '812px' },
+					type: 'mobile'
+				},
+				phone390: {
+					name: 'Phone 390 (iPhone 12/13/14)',
+					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				}
+			}
+		},
 		backgrounds: {
 			default: 'light',
 			values: [
@@ -949,15 +844,19 @@ const preview: Preview = {
 			]
 		}
 	},
+	globalTypes: orisoSchemeGlobalType,
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
-		}
+		},
+		scheme: 'light'
 	},
 	tags: ['autodocs'],
-	decorators: [withMuiTheme]
+	// The scheme decorator runs outermost so its custom properties are in
+	// place before any component reads them.
+	decorators: [withMuiTheme, withOrisoScheme]
 };
 
 export default preview;

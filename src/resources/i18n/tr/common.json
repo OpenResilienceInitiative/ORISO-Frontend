@@ -50,7 +50,8 @@
 		"scrollDown": "Aşağı kaydırın",
 		"selectLanguage": "Dil seçin",
 		"stage": {
-			"title": "Danışmanlık\n& Yardım"
+			"title": "Danışmanlık\n& Yardım",
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
@@ -279,7 +280,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Arşiv",
-		"archiveDescription": "Arşivlenen bildirimler pasiftir. Sohbet 12 ay içinde silinecek.",
+		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
 		"askerProfil": "Danışman profili",
 		"dataProtection": "Veri koruma",
 		"dearchive": "Dearchive",
@@ -670,6 +671,15 @@
 					"long": "Konu çok uzun",
 					"short": "Konu çok kısa"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Başkaları hakkında değil, kendiniz hakkında konuşun.",
+				"defaultRule2": "Burada paylaşılanlar burada kalır.",
+				"ruleEditorLabel": "Kuralı düzenle",
+				"editRule": "{{index}}. kuralı düzenle",
+				"deleteRule": "{{index}}. kuralı sil",
+				"addRule": "Kural ekle",
+				"ruleChip": "Kural No. {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +838,28 @@
 			"overlay": {
 				"button1Label": "Kapat",
 				"headline": "Değişiklikleriniz başarıyla kaydedildi."
+			}
+		},
+		"format": {
+			"panelTitle": "Yeni görüşme oluştur",
+			"panelMenu": "Diğer seçenekler",
+			"back": "Geri",
+			"cardMenu": "Bu görüşme biçimi için seçenekler"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Tarih seç",
+				"timeLabel": "Başlangıç saati",
+				"durationLabel": "Süreyi ayarla",
+				"repeatLabel": "Tekrarlar",
+				"mediumLabel": "Birincil ortamı seç",
+				"languageLabel": "Görüşme çemberi dili",
+				"increase": "{{field}} artır",
+				"decrease": "{{field}} azalt",
+				"openList": "{{field}} seç",
+				"durationValue": "{{count}} sa",
+				"repeatValue_one": "{{count}} kez",
+				"repeatValue_other": "{{count}} kez"
 			}
 		}
 	},
@@ -1378,7 +1410,17 @@
 			"clearAll": "Tümünü temizle",
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
-			"open": "Sohbeti aç"
+			"open": "Sohbeti aç",
+			"next": "Sonraki bildirim",
+			"cardMenu": "Bildirim işlemleri",
+			"markRead": "Okundu olarak işaretle",
+			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor",
+			"showPreview": "Sohbet önizlemesini göster",
+			"showDetails": "Detayları göster",
+			"preview": {
+				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
+				"empty": "Bu sohbette henüz mesaj yok."
+			}
 		}
 	},
 	"overlay": {
@@ -2038,8 +2080,11 @@
 				},
 				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
-				"label": "Kullanıcı adı",
+				"label": "User-ID",
 				"success": "Kullanıcı adınız uygun."
+			},
+			"twoFactorAuth": {
+				"label": "Şifremi iki faktörlü kimlik doğrulamayla ek olarak koru"
 			}
 		},
 		"back": "Geri",
@@ -3106,8 +3151,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Onaylayın",
-		"description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
-		"headline": "Sıcak bir karşılama!",
+		"description": "Danışmanlarımız daha sonra sizinle bir sohbet başlatabilir.",
+		"headline": "Sıcak bir karşılama",
 		"label": {
 			"and": "ve",
 			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."

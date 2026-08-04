@@ -21,12 +21,9 @@ import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
 import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
-import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
-import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
@@ -36,8 +33,7 @@ import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
-	SESSION_LIST_TAB_ARCHIVE,
-	SESSION_LIST_TYPES
+	SESSION_LIST_TAB_ARCHIVE
 } from '../session/sessionHelpers';
 import {
 	AUTHORITIES,
@@ -58,7 +54,10 @@ import './sessionsListItem.styles';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
-import { TeamDiscussionBadge } from '../teamDiscussion/TeamDiscussionBadge';
+import {
+	TeamDiscussionBadge,
+	getCachedTeamDiscussion
+} from '../teamDiscussion/TeamDiscussionBadge';
 import {
 	decryptText,
 	MissingKeyError,
@@ -69,6 +68,12 @@ import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
 import { getSessionNavigationPath } from './sessionsListItemHelpers';
+import {
+	getChatroomSettingsMenuVisibility,
+	withTeamDiscussionParam
+} from './chatroomSettingsMenu';
+import DeleteSession from '../session/DeleteSession';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import {
@@ -85,6 +90,7 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -158,6 +164,11 @@ export const SessionListItemComponent = ({
 		top: 0,
 		left: 0
 	});
+	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
+	// therefore mounted at the component root, not inside the flyout — clicking
+	// the confirm overlay counts as an outside click and closes the flyout, so
+	// anything rendered inside it would unmount mid-confirmation.
+	const openDeleteConfirmRef = React.useRef<(() => void) | null>(null);
 	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -170,6 +181,12 @@ export const SessionListItemComponent = ({
 	const [caseHandoverStatus, setCaseHandoverStatus] =
 		useState<CaseHandoverStatus | null>(null);
 	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
+		useState(false);
+	// FE#781: after acceptance the Team-Besprechung entry point only survives
+	// as read-only archive access, so the menu must know whether a discussion
+	// exists. Resolved lazily on menu open (cached per session by the badge
+	// helper) rather than eagerly for every list item.
+	const [hasExistingTeamDiscussion, setHasExistingTeamDiscussion] =
 		useState(false);
 
 	useEffect(() => {
@@ -214,6 +231,10 @@ export const SessionListItemComponent = ({
 	});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
+	const matrixSessionPreview = useMatrixSessionPreview(
+		sessionItem?.matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked
+	);
 
 	useEffect(() => {
 		if (caseHandoverContentLocked) {
@@ -224,7 +245,20 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			setPlainTextLastMessage(
+				matrixSessionPreview ??
+					translate('e2ee.message.encryption.text')
+			);
+		}
+	}, [
+		caseHandoverContentLocked,
+		isMatrixBackedSession,
+		matrixSessionPreview,
+		translate
+	]);
+
+	useEffect(() => {
+		if (caseHandoverContentLocked || isMatrixBackedSession) {
 			return;
 		}
 
@@ -338,6 +372,63 @@ export const SessionListItemComponent = ({
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
+
+	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
+	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	const isAgencyCounselling =
+		!!activeSession &&
+		getModality(activeSession) === Modality.AGENCY_COUNSELLING;
+	const chatroomSettingsMenu = getChatroomSettingsMenuVisibility({
+		isAsker,
+		isConsultant: hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		),
+		isSupervisorView,
+		isSession: !!activeSession?.isSession,
+		isEnquiry: !!activeSession?.isEnquiry,
+		isGroup: !!activeSession?.isGroup,
+		listType: type,
+		isArchiveTab: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+		isAgencyCounselling,
+		teamDiscussionFeatureEnabled: featureTeamDiscussionEnabled,
+		hasExistingTeamDiscussion
+	});
+	const hasChatroomSettingsActions =
+		chatroomSettingsMenu.showArchive ||
+		chatroomSettingsMenu.showDearchive ||
+		chatroomSettingsMenu.showDelete ||
+		chatroomSettingsMenu.showRequestHelp;
+
+	// Only an accepted session needs the lookup — an open enquiry always allows
+	// starting a discussion, so its availability is already decided above.
+	const needsTeamDiscussionLookup =
+		flyoutOpen &&
+		!isAsker &&
+		featureTeamDiscussionEnabled &&
+		isAgencyCounselling &&
+		!activeSession?.isGroup &&
+		!activeSession?.isEnquiry &&
+		!!sessionItem?.id;
+
+	useEffect(() => {
+		// Reset first: list items are reused across sessions, and a stale `true`
+		// would offer a Team-Besprechung that this session does not have.
+		setHasExistingTeamDiscussion(false);
+		if (!needsTeamDiscussionLookup) {
+			return;
+		}
+		let cancelled = false;
+		getCachedTeamDiscussion(sessionItem.id).then((discussion) => {
+			if (!cancelled) {
+				setHasExistingTeamDiscussion(!!discussion);
+			}
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [needsTeamDiscussionLookup, sessionItem?.id]);
+
 	const caseHandoverActionState: CaseHandoverActionState =
 		caseHandoverStatus?.canViewContent
 			? 'accessGranted'
@@ -523,31 +614,24 @@ export const SessionListItemComponent = ({
 		);
 	}
 
-	const handleOnClick = () => {
-		// console.log('🖱️ CARD CLICKED:', {
-		// sessionId: activeSession.item.id,
-		// groupId: activeSession.item.matrixRoomId,
-		// isGroup: activeSession.isGroup,
-		// listPath,
-		// isEmptyEnquiry: activeSession.isEmptyEnquiry,
-		// isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
-		// });
+	// Single source of truth for this item's route — the card click and the
+	// menu's Request Help entry must never drift apart.
+	const getSessionPath = () =>
+		getSessionNavigationPath({
+			listPath,
+			sessionId: activeSession.item.id,
+			groupId: activeSession.item.matrixRoomId,
+			rid: activeSession.rid,
+			isGroup: activeSession.isGroup,
+			isAsker,
+			isEmptyEnquiry: activeSession.isEmptyEnquiry,
+			isLiveChat: getModality(activeSession) === Modality.LIVE_CHAT,
+			tabSuffix: getSessionListTab()
+		});
 
+	const handleOnClick = () => {
 		if (activeSession.item.id !== undefined) {
-			navigate(
-				getSessionNavigationPath({
-					listPath,
-					sessionId: activeSession.item.id,
-					groupId: activeSession.item.matrixRoomId,
-					rid: activeSession.rid,
-					isGroup: activeSession.isGroup,
-					isAsker,
-					isEmptyEnquiry: activeSession.isEmptyEnquiry,
-					isLiveChat:
-						getModality(activeSession) === Modality.LIVE_CHAT,
-					tabSuffix: getSessionListTab()
-				})
-			);
+			navigate(getSessionPath());
 		}
 	};
 
@@ -637,6 +721,34 @@ export const SessionListItemComponent = ({
 			.catch((error) => {
 				// console.error(error);
 			});
+	};
+
+	// Closes the menu first, then opens the confirmation that lives outside it.
+	const handleDeleteSession = () => {
+		setFlyoutOpen(false);
+		openDeleteConfirmRef.current?.();
+	};
+
+	// FE#781: mirrors the header menu's post-delete behaviour (SessionMenu's
+	// onSuccessDeleteSession) — the deleted chat leaves the list and the user
+	// lands back on the list instead of a dangling detail route.
+	const handleDeleteSessionSuccess = () => {
+		setFlyoutOpen(false);
+		sessionsDispatch({
+			type: REMOVE_SESSIONS,
+			ids: activeSession.item.matrixRoomId
+				? [activeSession.item.matrixRoomId]
+				: [activeSession.item.id]
+		});
+		mobileListView();
+		navigate(listPath + getSessionListTab());
+	};
+
+	// FE#781 / ADR-016: reuses SessionStream's `teamDiscussion=1` contract so
+	// the list menu opens the very same Team-Besprechung panel, expanded.
+	const handleRequestHelp = () => {
+		setFlyoutOpen(false);
+		navigate(withTeamDiscussionParam(getSessionPath()));
 	};
 
 	const handleOverlayAction = (buttonFunction: string) => {
@@ -966,299 +1078,240 @@ export const SessionListItemComponent = ({
 								activeSession.item.createDate
 							)}
 						</div>
-						{!activeSession.isGroup && (
-							<>
-								<button
-									type="button"
-									ref={menuIconRef}
-									className="sessionsListItem__menuIcon"
-									onClick={handleMenuClick}
-									onKeyDown={handleMenuKeyDown}
-									aria-label={dropdownLabel}
-									aria-haspopup="dialog"
-									aria-expanded={flyoutOpen}
-									aria-controls={
-										flyoutOpen ? dropdownId : undefined
-									}
-								>
-									<MenuVerticalIcon />
-								</button>
-								{flyoutOpen &&
-									createPortal(
-										<div
-											id={dropdownId}
-											ref={dropdownRef}
-											className="sessionsListItem__dropdown"
-											onKeyDown={handleDropdownKeyDown}
-											role="dialog"
-											aria-label={dropdownLabel}
-											style={{
-												top:
-													dropdownPosition.top > 0
-														? `${dropdownPosition.top}px`
-														: '40px',
-												left:
-													dropdownPosition.left > 0
-														? `${dropdownPosition.left}px`
-														: 'auto',
-												right: 'auto',
-												zIndex: 999999
-											}}
-										>
-											<div className="sessionsListItem__dropdownHeader">
-												<p className="sessionsListItem__dropdownSubtitle">
-													{translate(
-														'groupChat.info.settings.subtitle'
-													)}
-												</p>
-												<h1 className="sessionsListItem__dropdownTitle">
-													{translate(
-														'groupChat.info.settings.headline'
-													)}
-												</h1>
-											</div>
-											<div className="sessionsListItem__dropdownDivider" />
-											{isAsker ? (
-												<>
-													<div className="sessionsListItem__dropdownContent">
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<TrashIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.remove'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧D
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.removeDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.activateNotification'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧R
-																	</kbd>
-																</div>
-															</div>
-														</button>
-														<LegalLinks
-															legalLinks={
-																legalLinks
-															}
-															params={{
-																aid: activeSession
-																	?.agency?.id
-															}}
-															filter={(link) =>
-																link.label ===
-																'login.legal.infoText.dataprotection'
-															}
-														>
-															{(_, url) => (
+						{!activeSession.isGroup &&
+							(isAsker || hasChatroomSettingsActions) && (
+								<>
+									<button
+										type="button"
+										ref={menuIconRef}
+										className="sessionsListItem__menuIcon"
+										onClick={handleMenuClick}
+										onKeyDown={handleMenuKeyDown}
+										aria-label={dropdownLabel}
+										aria-haspopup="dialog"
+										aria-expanded={flyoutOpen}
+										aria-controls={
+											flyoutOpen ? dropdownId : undefined
+										}
+									>
+										<MenuVerticalIcon />
+									</button>
+									{flyoutOpen &&
+										createPortal(
+											<div
+												id={dropdownId}
+												ref={dropdownRef}
+												className="sessionsListItem__dropdown"
+												onKeyDown={
+													handleDropdownKeyDown
+												}
+												role="dialog"
+												aria-label={dropdownLabel}
+												style={{
+													top:
+														dropdownPosition.top > 0
+															? `${dropdownPosition.top}px`
+															: '40px',
+													left:
+														dropdownPosition.left >
+														0
+															? `${dropdownPosition.left}px`
+															: 'auto',
+													right: 'auto',
+													zIndex: 999999
+												}}
+											>
+												<div className="sessionsListItem__dropdownHeader">
+													<p className="sessionsListItem__dropdownSubtitle">
+														{translate(
+															'groupChat.info.settings.subtitle'
+														)}
+													</p>
+													<h1 className="sessionsListItem__dropdownTitle">
+														{translate(
+															'groupChat.info.settings.headline'
+														)}
+													</h1>
+												</div>
+												<div className="sessionsListItem__dropdownDivider" />
+												{isAsker ? (
+													<>
+														<div className="sessionsListItem__dropdownContent">
+															<LegalLinks
+																legalLinks={
+																	legalLinks
+																}
+																params={{
+																	aid: activeSession
+																		?.agency
+																		?.id
+																}}
+																filter={(
+																	link
+																) =>
+																	link.label ===
+																	'login.legal.infoText.dataprotection'
+																}
+															>
+																{(_, url) => (
+																	<button
+																		type="button"
+																		className="sessionsListItem__dropdownOption"
+																		onClick={() => {
+																			setFlyoutOpen(
+																				false
+																			);
+																			setLegalModal(
+																				{
+																					title: translate(
+																						'chatFlyout.privacyPolicy'
+																					),
+																					url
+																				}
+																			);
+																		}}
+																	>
+																		<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<div className="sessionsListItem__dropdownOptionCenter">
+																			<div className="sessionsListItem__dropdownOptionTitleRow">
+																				<span className="sessionsListItem__dropdownOptionTitle">
+																					{translate(
+																						'chatFlyout.privacyPolicy'
+																					)}
+																				</span>
+																			</div>
+																			<p className="sessionsListItem__dropdownOptionDescription">
+																				{translate(
+																					'chatFlyout.privacyPolicyDescription'
+																				)}
+																			</p>
+																		</div>
+																	</button>
+																)}
+															</LegalLinks>
+															<LegalLinks
+																legalLinks={
+																	legalLinks
+																}
+																params={{
+																	aid: activeSession
+																		?.agency
+																		?.id
+																}}
+																filter={(
+																	link
+																) =>
+																	link.label ===
+																	'login.legal.infoText.impressum'
+																}
+															>
+																{(_, url) => (
+																	<button
+																		type="button"
+																		className="sessionsListItem__dropdownOption"
+																		onClick={() => {
+																			setFlyoutOpen(
+																				false
+																			);
+																			setLegalModal(
+																				{
+																					title: translate(
+																						'chatFlyout.imprint'
+																					),
+																					url
+																				}
+																			);
+																		}}
+																	>
+																		<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<div className="sessionsListItem__dropdownOptionCenter">
+																			<div className="sessionsListItem__dropdownOptionTitleRow">
+																				<span className="sessionsListItem__dropdownOptionTitle">
+																					{translate(
+																						'chatFlyout.imprint'
+																					)}
+																				</span>
+																			</div>
+																		</div>
+																	</button>
+																)}
+															</LegalLinks>
+														</div>
+													</>
+												) : (
+													<>
+														<div className="sessionsListItem__dropdownContent">
+															{chatroomSettingsMenu.showArchive && (
 																<button
-																	type="button"
+																	onClick={
+																		handleArchiveSession
+																	}
 																	className="sessionsListItem__dropdownOption"
-																	onClick={() => {
-																		setFlyoutOpen(
-																			false
-																		);
-																		setLegalModal(
-																			{
-																				title: translate(
-																					'chatFlyout.privacyPolicy'
-																				),
-																				url
-																			}
-																		);
-																	}}
+																	type="button"
+																	data-cy="session-list-menu-archive"
 																>
-																	<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
 																		<div className="sessionsListItem__dropdownOptionTitleRow">
 																			<span className="sessionsListItem__dropdownOptionTitle">
 																				{translate(
-																					'chatFlyout.privacyPolicy'
+																					'chatFlyout.archive'
 																				)}
 																			</span>
-																			<kbd className="sessionsListItem__dropdownOptionShortcut">
-																				⇧Ä
-																			</kbd>
 																		</div>
 																		<p className="sessionsListItem__dropdownOptionDescription">
 																			{translate(
-																				'chatFlyout.privacyPolicyDescription'
+																				'chatFlyout.archiveDescription'
 																			)}
 																		</p>
 																	</div>
 																</button>
 															)}
-														</LegalLinks>
-														<LegalLinks
-															legalLinks={
-																legalLinks
-															}
-															params={{
-																aid: activeSession
-																	?.agency?.id
-															}}
-															filter={(link) =>
-																link.label ===
-																'login.legal.infoText.impressum'
-															}
-														>
-															{(_, url) => (
+															{chatroomSettingsMenu.showDearchive && (
 																<button
-																	type="button"
+																	onClick={
+																		handleDearchiveSession
+																	}
 																	className="sessionsListItem__dropdownOption"
-																	onClick={() => {
-																		setFlyoutOpen(
-																			false
-																		);
-																		setLegalModal(
-																			{
-																				title: translate(
-																					'chatFlyout.imprint'
-																				),
-																				url
-																			}
-																		);
-																	}}
+																	type="button"
+																	data-cy="session-list-menu-dearchive"
 																>
-																	<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
 																		<div className="sessionsListItem__dropdownOptionTitleRow">
 																			<span className="sessionsListItem__dropdownOptionTitle">
 																				{translate(
-																					'chatFlyout.imprint'
+																					'chatFlyout.dearchive'
 																				)}
 																			</span>
-																			<kbd className="sessionsListItem__dropdownOptionShortcut">
-																				⇧I
-																			</kbd>
 																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription">
+																			{translate(
+																				'chatFlyout.dearchiveDescription'
+																			)}
+																		</p>
 																	</div>
 																</button>
 															)}
-														</LegalLinks>
-													</div>
-												</>
-											) : (
-												<>
-													<div className="sessionsListItem__dropdownContent">
-														{!hasUserAuthority(
-															AUTHORITIES.ASKER_DEFAULT,
-															userData
-														) &&
-															type !==
-																SESSION_LIST_TYPES.ENQUIRY &&
-															activeSession.isSession && (
-																<>
-																	{sessionListTab !==
-																	SESSION_LIST_TAB_ARCHIVE ? (
-																		<button
-																			onClick={
-																				handleArchiveSession
-																			}
-																			className="sessionsListItem__dropdownOption"
-																			type="button"
-																		>
-																			<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																			<div className="sessionsListItem__dropdownOptionCenter">
-																				<div className="sessionsListItem__dropdownOptionTitleRow">
-																					<span className="sessionsListItem__dropdownOptionTitle">
-																						{translate(
-																							'chatFlyout.archive'
-																						)}
-																					</span>
-																					<kbd className="sessionsListItem__dropdownOptionShortcut">
-																						⇧A
-																					</kbd>
-																				</div>
-																				<p className="sessionsListItem__dropdownOptionDescription">
-																					{translate(
-																						'chatFlyout.archiveDescription'
-																					)}
-																				</p>
-																			</div>
-																		</button>
-																	) : (
-																		<button
-																			onClick={
-																				handleDearchiveSession
-																			}
-																			className="sessionsListItem__dropdownOption"
-																			type="button"
-																		>
-																			<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																			<div className="sessionsListItem__dropdownOptionCenter">
-																				<div className="sessionsListItem__dropdownOptionTitleRow">
-																					<span className="sessionsListItem__dropdownOptionTitle">
-																						{translate(
-																							'chatFlyout.dearchive'
-																						)}
-																					</span>
-																					<kbd className="sessionsListItem__dropdownOptionShortcut">
-																						⇧A
-																					</kbd>
-																				</div>
-																				<p className="sessionsListItem__dropdownOptionDescription">
-																					{translate(
-																						'chatFlyout.dearchiveDescription'
-																					)}
-																				</p>
-																			</div>
-																		</button>
-																	)}
-																</>
-															)}
-														{hasUserAuthority(
-															AUTHORITIES.CONSULTANT_DEFAULT,
-															userData
-														) &&
-															type !==
-																SESSION_LIST_TYPES.ENQUIRY &&
-															activeSession.isSession && (
+															{chatroomSettingsMenu.showDelete && (
 																<button
-																	className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+																	onClick={
+																		handleDeleteSession
+																	}
+																	className="sessionsListItem__dropdownOption"
 																	type="button"
-																	disabled
+																	data-cy="session-list-menu-delete"
 																>
-																	<TrashIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+																	<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
 																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																			<span className="sessionsListItem__dropdownOptionTitle">
 																				{translate(
 																					'chatFlyout.remove'
 																				)}
 																			</span>
-																			<kbd className="sessionsListItem__dropdownOptionShortcut">
-																				⇧D
-																			</kbd>
 																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																		<p className="sessionsListItem__dropdownOptionDescription">
 																			{translate(
 																				'chatFlyout.removeDescription'
 																			)}
@@ -1266,113 +1319,40 @@ export const SessionListItemComponent = ({
 																	</div>
 																</button>
 															)}
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.mute'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧Ö
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.muteDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<HelpIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.help'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧Ä
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.helpDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-													</div>
-													<div className="sessionsListItem__dropdownDivider" />
-													<div className="sessionsListItem__dropdownContent">
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<PlusIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.invite'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧I
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.inviteDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
-														>
-															<PackageIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.summarize'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧Ü
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.summarizeDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-													</div>
-												</>
-											)}
-										</div>,
-										document.body
-									)}
-							</>
-						)}
+															{chatroomSettingsMenu.showRequestHelp && (
+																<button
+																	onClick={
+																		handleRequestHelp
+																	}
+																	className="sessionsListItem__dropdownOption"
+																	type="button"
+																	data-cy="session-list-menu-request-help"
+																>
+																	<HelpIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle">
+																				{translate(
+																					'chatFlyout.help'
+																				)}
+																			</span>
+																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription">
+																			{translate(
+																				'chatFlyout.helpDescription'
+																			)}
+																		</p>
+																	</div>
+																</button>
+															)}
+														</div>
+													</>
+												)}
+											</div>,
+											document.body
+										)}
+								</>
+							)}
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
@@ -1679,6 +1659,20 @@ export const SessionListItemComponent = ({
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
 				/>
+			)}
+			{/* FE#781: mounted outside the flyout so the confirmation overlay
+			    survives the menu closing. Renders nothing itself — it only
+			    hands the menu item its opener. */}
+			{chatroomSettingsMenu.showDelete && (
+				<DeleteSession
+					chatId={activeSession.item.id}
+					onSuccess={handleDeleteSessionSuccess}
+				>
+					{(openConfirm) => {
+						openDeleteConfirmRef.current = openConfirm;
+						return null;
+					}}
+				</DeleteSession>
 			)}
 		</div>
 	);

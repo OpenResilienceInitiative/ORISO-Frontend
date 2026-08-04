@@ -50,7 +50,8 @@
 		"scrollDown": "Scroll down",
 		"selectLanguage": "Select language",
 		"stage": {
-			"title": "Consulting & Help"
+			"title": "Consulting & Help",
+			"associationLogoAlt": "Provider organisation logo"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -279,7 +280,7 @@
 	},
 	"chatFlyout": {
 		"archive": "Archive",
-		"archiveDescription": "Archived notifications are inactive. The chat will be deleted in 12 months.",
+		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",
 		"askerProfil": "Advice seeker profile",
 		"dataProtection": "Data protection",
 		"dearchive": "Dearchive",
@@ -727,7 +728,13 @@
 				"removeRule": "Remove",
 				"translate": "Translate into active languages",
 				"translating": "Translating…",
-				"translationError": "Translation failed. Your text was kept; please try again."
+				"translationError": "Translation failed. Your text was kept; please try again.",
+				"defaultRule1": "Speak about yourself, not about others.",
+				"defaultRule2": "What is shared here stays here.",
+				"ruleEditorLabel": "Edit rule",
+				"editRule": "Edit rule {{index}}",
+				"deleteRule": "Delete rule {{index}}",
+				"ruleChip": "Rule no. {{index}}"
 			},
 			"listItem": {
 				"label": "New chat"
@@ -749,7 +756,10 @@
 			"back": "Back",
 			"headerTitle": "Create new conversation",
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
-			"title": "Choose conversation format"
+			"title": "Choose conversation format",
+			"panelTitle": "Create new conversation",
+			"panelMenu": "More options",
+			"cardMenu": "Options for this conversation format"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -784,7 +794,21 @@
 			"title": "Conversation circle",
 			"toggleModeratorList": "Open or close the co-moderator list",
 			"toggleTopicList": "Open or close the topic list",
-			"topicLabel": "Topic / subject area"
+			"topicLabel": "Topic / subject area",
+			"rows": {
+				"dateLabel": "Choose date",
+				"timeLabel": "Start time",
+				"durationLabel": "Set duration",
+				"repeatLabel": "Repetitions",
+				"mediumLabel": "Choose primary medium",
+				"languageLabel": "Circle language",
+				"increase": "Increase {{field}}",
+				"decrease": "Decrease {{field}}",
+				"openList": "Choose {{field}}",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} time",
+				"repeatValue_other": "{{count}} times"
+			}
 		},
 		"createError": {
 			"overlay": {
@@ -1695,7 +1719,15 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"next": "Next notification",
+			"cardMenu": "Notification actions",
+			"markRead": "Mark as read",
+			"waitingSince": "Waiting since {{time}} ({{date}})",
+			"preview": {
+				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
+				"empty": "No messages in this conversation yet."
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2456,19 +2488,30 @@
 				"allShort": "All 3",
 				"avatar": "Avatar",
 				"password": "Password",
-				"username": "Username"
+				"username": "User-ID"
 			},
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
-					"tooShort": "Your username is too short.",
-					"unavailable": "This username is already taken.",
-					"retry": "We could not check this username right now. Please try again."
+					"tooShort": "Your User-ID is too short.",
+					"unavailable": "This User-ID is already taken.",
+					"retry": "We could not check this User-ID right now. Please try again."
 				},
 				"hint": "Anonymous login name. Please do not use real names or initials.",
 				"info": "Anonymous login name. Please do not use real names or initials.",
-				"label": "Username",
-				"success": "Your username is available."
+				"label": "User-ID",
+				"success": "Your User-ID is available."
+			},
+			"email": {
+				"label": "Email address",
+				"info": "Optional. Only used for security features like two-factor authentication.",
+				"error": {
+					"required": "Please provide an email address.",
+					"invalid": "Please provide a valid email address."
+				}
+			},
+			"twoFactorAuth": {
+				"label": "Additionally secure my password with two-factor authentication"
 			}
 		},
 		"back": "Back",
@@ -3825,7 +3868,7 @@
 	},
 	"anonymousConsent": {
 		"button": "Confirm",
-		"description": "After that, our consultants may start a video call with you.",
+		"description": "After that, a counsellor can start a chat with you.",
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",
