@@ -1823,5 +1823,10 @@
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
 		}
+	},
+	"app": {
+		"stage": {
+			"associationLogoAlt": "Logo der Trägerorganisation"
+		}
 	}
 }

@@ -50,7 +50,8 @@
 		"scrollDown": "Scroll down",
 		"selectLanguage": "Select language",
 		"stage": {
-			"title": "Consulting & Help"
+			"title": "Consulting & Help",
+			"associationLogoAlt": "Provider organisation logo"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",

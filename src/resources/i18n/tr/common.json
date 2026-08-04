@@ -50,7 +50,8 @@
 		"scrollDown": "Aşağı kaydırın",
 		"selectLanguage": "Dil seçin",
 		"stage": {
-			"title": "Danışmanlık\n& Yardım"
+			"title": "Danışmanlık\n& Yardım",
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",

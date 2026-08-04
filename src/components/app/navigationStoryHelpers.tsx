@@ -109,12 +109,12 @@ export function NavigationStoryProviders({
 		try {
 			previousLiveChatKeys.current = {
 				availability: localStorage.getItem(
-					'caritas_liveChatAvailability'
+					'oriso_liveChatAvailability'
 				),
-				viaSidebar: localStorage.getItem('caritas_liveChatViaSidebar')
+				viaSidebar: localStorage.getItem('oriso_liveChatViaSidebar')
 			};
-			localStorage.removeItem('caritas_liveChatAvailability');
-			localStorage.setItem('caritas_liveChatViaSidebar', '1');
+			localStorage.removeItem('oriso_liveChatAvailability');
+			localStorage.setItem('oriso_liveChatViaSidebar', '1');
 		} catch {
 			previousLiveChatKeys.current = {
 				availability: null,
@@ -131,18 +131,18 @@ export function NavigationStoryProviders({
 			}
 			try {
 				if (previous.availability == null) {
-					localStorage.removeItem('caritas_liveChatAvailability');
+					localStorage.removeItem('oriso_liveChatAvailability');
 				} else {
 					localStorage.setItem(
-						'caritas_liveChatAvailability',
+						'oriso_liveChatAvailability',
 						previous.availability
 					);
 				}
 				if (previous.viaSidebar == null) {
-					localStorage.removeItem('caritas_liveChatViaSidebar');
+					localStorage.removeItem('oriso_liveChatViaSidebar');
 				} else {
 					localStorage.setItem(
-						'caritas_liveChatViaSidebar',
+						'oriso_liveChatViaSidebar',
 						previous.viaSidebar
 					);
 				}
