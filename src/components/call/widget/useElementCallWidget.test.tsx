@@ -160,6 +160,11 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('userId')).toBe('@user:oriso.example');
 		expect(fragment.get('baseUrl')).toBe('https://matrix.oriso.example');
 		expect(fragment.get('widgetId')).toMatch(/^oriso-call-[a-f0-9]{64}$/);
+		// The call is deliberately dark while the app around it is light.
+		// Pinned rather than inherited, so an upstream change to Element
+		// Call's own default cannot silently restyle our call
+		// (ORISO-Frontend#900).
+		expect(fragment.get('theme')).toBe('dark');
 		expect(url.searchParams.has('accessToken')).toBe(false);
 		expect(fragment.has('accessToken')).toBe(false);
 		expect(fragment.has('password')).toBe(false);
@@ -308,7 +313,9 @@ describe('useElementCallWidget', () => {
 		const api = widgetApiMocks.apiInstances[0];
 
 		act(() => api.emit('ready', new CustomEvent('ready')));
-		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'light' });
+		// Must match the `theme=dark` pin in the widget URL — a ready-time
+		// update to any other scheme would flip the call after launch.
+		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
 
 		const closeRequest = {
 			action: 'io.element.close',

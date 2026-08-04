@@ -1,6 +1,12 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	ssr: {
+		// Same reason as `test.server.deps.inline` below, but at the Vite
+		// level so `vite-node` (which runs scripts/generate-call-theme.ts)
+		// transforms the package instead of handing it to node's ESM loader.
+		noExternal: ['@material/material-color-utilities']
+	},
 	resolve: {
 		// The webpack build resolves extensionless style imports
 		// (e.g. `import './session.styles'`) to .scss files; mirror that so
