@@ -1409,7 +1409,11 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"next": "ቀጻሊ ሓበሬታ",
+			"cardMenu": "ናይ ሓበሬታ ተግባራት",
+			"markRead": "ከም ተነብበ ምልክት ግበር",
+			"waitingSince": "ካብ {{time}} ({{date}}) ጀሚሩ ይጽበ ኣሎ"
 		}
 	},
 	"overlay": {

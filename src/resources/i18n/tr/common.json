@@ -1409,7 +1409,11 @@
 			"clearAll": "Tümünü temizle",
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
-			"open": "Sohbeti aç"
+			"open": "Sohbeti aç",
+			"next": "Sonraki bildirim",
+			"cardMenu": "Bildirim işlemleri",
+			"markRead": "Okundu olarak işaretle",
+			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor"
 		}
 	},
 	"overlay": {
