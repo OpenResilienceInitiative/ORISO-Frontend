@@ -1410,6 +1410,10 @@
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
 			"open": "Sohbeti aç",
+			"next": "Sonraki bildirim",
+			"cardMenu": "Bildirim işlemleri",
+			"markRead": "Okundu olarak işaretle",
+			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor",
 			"showPreview": "Sohbet önizlemesini göster",
 			"showDetails": "Detayları göster",
 			"preview": {
