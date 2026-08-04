@@ -248,7 +248,8 @@
 		"storybook": "storybook dev -p 6006",
 		"typecheck:storybook": "tsc --noEmit --project tsconfig.storybook.json",
 		"prebuild-storybook": "npm run typecheck:storybook",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts"
 	},
 	"eslintConfig": {
 		"extends": [
