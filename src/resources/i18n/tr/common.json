@@ -1413,7 +1413,13 @@
 			"next": "Sonraki bildirim",
 			"cardMenu": "Bildirim işlemleri",
 			"markRead": "Okundu olarak işaretle",
-			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor"
+			"waitingSince": "{{time}} ({{date}}) itibarıyla bekliyor",
+			"showPreview": "Sohbet önizlemesini göster",
+			"showDetails": "Detayları göster",
+			"preview": {
+				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
+				"empty": "Bu sohbette henüz mesaj yok."
+			}
 		}
 	},
 	"overlay": {

@@ -1722,7 +1722,11 @@
 			"next": "Next notification",
 			"cardMenu": "Notification actions",
 			"markRead": "Mark as read",
-			"waitingSince": "Waiting since {{time}} ({{date}})"
+			"waitingSince": "Waiting since {{time}} ({{date}})",
+			"preview": {
+				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
+				"empty": "No messages in this conversation yet."
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"

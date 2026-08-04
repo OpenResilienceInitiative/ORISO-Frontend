@@ -50,6 +50,7 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { ConversationPreview } from './ConversationPreview';
 import { getNextNotificationId } from './notificationQueue';
 import {
 	formatAbsoluteTime,
@@ -136,6 +137,24 @@ const resolveThreadRootId = (item: any): string | null => {
 	const params = new URLSearchParams(query);
 	const threadRootId = params.get('threadRootId');
 	return threadRootId ? decodeURIComponent(threadRootId) : null;
+};
+
+// #847: Matrix room for the embedded preview — params.roomRef when the
+// backend sent it (#846), else the room segment of the stored actionPath
+// (/sessions/<role>/<list>/<roomId>/<sessionId>).
+const resolveRoomId = (item: any): string | null => {
+	if (item?.params?.roomRef) {
+		return String(item.params.roomRef);
+	}
+	const path = item?.actionPath;
+	if (!path) {
+		return null;
+	}
+	const segments = String(path).split('?')[0].split('/').filter(Boolean);
+	const roomSegment = segments.find(
+		(segment) => segment.startsWith('!') || segment.startsWith('%21')
+	);
+	return roomSegment ? decodeURIComponent(roomSegment) : null;
 };
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
@@ -407,31 +426,16 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	const embeddedChatPath = useMemo(() => {
-		if (!canShowChatPreview) {
-			return null;
-		}
-		const basePath = selectedNotification?.actionPath
-			? selectedNotification.actionPath
-			: selectedSessionId
-				? `${getDefaultSessionsPath()}/session/${selectedSessionId}${
-						selectedThreadRootId
-							? `?threadRootId=${encodeURIComponent(selectedThreadRootId)}`
-							: ''
-					}`
-				: null;
-		if (!basePath) {
-			return null;
-		}
-		const hasQuery = basePath.includes('?');
-		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
-	}, [
-		canShowChatPreview,
-		getDefaultSessionsPath,
-		selectedNotification?.actionPath,
-		selectedSessionId,
-		selectedThreadRootId
-	]);
+	// #847: the preview renders from the app's own Matrix client — no more
+	// embeddedNotifications iframe (a second SPA whose session view registered
+	// an active view and suppressed the timeline's own message events).
+	const selectedRoomId = useMemo(
+		() =>
+			canShowChatPreview && selectedNotification
+				? resolveRoomId(selectedNotification)
+				: null,
+		[canShowChatPreview, selectedNotification]
+	);
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
@@ -520,9 +524,7 @@ export const NotificationsCenter = () => {
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
-	const showEmbeddedChat = Boolean(
-		embeddedChatOpen && canShowChatPreview && embeddedChatPath
-	);
+	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
 
 	// Same filter-chip contract as the conversation page toolbar: inactive
 	// chips are icon-only pills, the active chip expands with its label.
@@ -902,10 +904,9 @@ export const NotificationsCenter = () => {
 							)}
 						</div>
 					) : showEmbeddedChat ? (
-						<iframe
-							title="notifications-chat-session"
-							src={embeddedChatPath}
-							className="notificationsCenter__embeddedSessionFrame"
+						<ConversationPreview
+							roomId={selectedRoomId}
+							threadRootId={selectedThreadRootId}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">
