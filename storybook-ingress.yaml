@@ -2,12 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: storybook-ingress
-  namespace: caritas
   annotations:
     # Traefik entrypoints: HTTP (80) and HTTPS (443)
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     # Redirect HTTP to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: caritas-https-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${ORISO_K8S_NAMESPACE}-https-redirect@kubernetescrd
     # cert-manager: Automatically request certificate from Let's Encrypt
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
