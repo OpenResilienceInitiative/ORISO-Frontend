@@ -523,6 +523,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			height: $illustrationWrapperSize;
 			border-radius: calc($illustrationWrapperSize / 2);
 			background-color: $illustration-background-info;
+			border: $illustration-border-accent;
 			display: flex;
 			align-items: center;
 			justify-content: center;

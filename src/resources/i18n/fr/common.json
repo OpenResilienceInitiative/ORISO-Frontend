@@ -50,7 +50,8 @@
 		"scrollDown": "Faire défiler vers le bas",
 		"selectLanguage": "Choisir la langue",
 		"stage": {
-			"title": "Conseil\nAide et assistance"
+			"title": "Conseil\nAide et assistance",
+			"associationLogoAlt": "Logo de l'organisation prestataire"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -1409,7 +1410,17 @@
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
-			"open": "Ouvrir le chat"
+			"open": "Ouvrir le chat",
+			"next": "Notification suivante",
+			"cardMenu": "Actions de notification",
+			"markRead": "Marquer comme lu",
+			"waitingSince": "En attente depuis {{time}} ({{date}})",
+			"showPreview": "Afficher l'aperçu de la conversation",
+			"showDetails": "Afficher les détails",
+			"preview": {
+				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
+				"empty": "Pas encore de messages dans cette conversation."
+			}
 		}
 	},
 	"overlay": {
