@@ -32,6 +32,18 @@ const config: StorybookConfig = {
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
+			// `../public` is already a staticDir above, and Vite's default
+			// publicDir points at that very same folder. builder-vite never turns
+			// publicDir off, so the build copied public/ into storybook-static
+			// twice at once: Storybook's staticDirs copy and Vite's own
+			// copyPublicDir. Both create storybook-static/static, and node's
+			// fs.cp mkdirs each directory non-recursively, so whichever loses the
+			// race dies with `EEXIST ... mkdir './storybook-static/static'`.
+			// Local builds usually won the race; the emulated linux/arm64 leg of
+			// the Docker job is slow enough to lose it intermittently.
+			// Disabling publicDir leaves staticDirs as the single copier, which
+			// Storybook runs sequentially and therefore deterministically.
+			publicDir: false,
 			plugins: [
 				// The virtual project-annotations module imports @storybook/react's
 				// dist files by absolute /node_modules/... path. Vite doesn't map
