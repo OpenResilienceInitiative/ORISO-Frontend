@@ -9,6 +9,19 @@
 	gap: 2px;
 	height: 32px;
 
+	/*
+	 * Colour says what the control does: neutral while everybody in the room
+	 * receives the message, accent while the audience is narrowed. This used to
+	 * live on `.textarea__audienceSelectorMain` / `…Chevron` — class names that
+	 * are not rendered anywhere — so the chip stayed accent-coloured even for
+	 * "Alle". See OpenResilienceInitiative/ORISO-Frontend#894 rule B.
+	 */
+	&--all &__leading,
+	&--all &__trailing {
+		background: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-secondary, #fff);
+	}
+
 	&__leading,
 	&__trailing {
 		height: 32px;

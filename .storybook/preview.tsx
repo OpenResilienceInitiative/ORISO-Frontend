@@ -35,6 +35,7 @@ import {
 	shouldMockStorybookRealtimeUrl,
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
+import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -843,15 +844,19 @@ const preview: Preview = {
 			]
 		}
 	},
+	globalTypes: orisoSchemeGlobalType,
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
-		}
+		},
+		scheme: 'light'
 	},
 	tags: ['autodocs'],
-	decorators: [withMuiTheme]
+	// The scheme decorator runs outermost so its custom properties are in
+	// place before any component reads them.
+	decorators: [withMuiTheme, withOrisoScheme]
 };
 
 export default preview;

@@ -21,6 +21,7 @@ export type CallState =
 	| 'ringing'
 	| 'connecting'
 	| 'connected'
+	| 'left'
 	| 'ended';
 
 export interface CallData {
@@ -118,6 +119,26 @@ class CallManager {
 		// console.log("   Room ID:", roomId);
 		// console.log("   Is Video:", isVideo);
 		// console.log("   Force Group:", forceIsGroup);
+
+		if (
+			this.currentCall?.usesElementCall &&
+			this.currentCall.isGroup &&
+			this.currentCall.state === 'left' &&
+			forceIsGroup === true &&
+			(this.currentCall.signalRoomId || this.currentCall.roomId) ===
+				roomId
+		) {
+			// Reopen the existing MatrixRTC room. Creating another dedicated room
+			// here would strand the participants who stayed in the active call.
+			this.currentCall = {
+				...this.currentCall,
+				isVideo,
+				isIncoming: false,
+				state: 'connecting'
+			};
+			this.notifyListeners();
+			return;
+		}
 
 		if (this.currentCall) {
 			// console.warn("⚠️  Already have an active call, cleaning up first...");
@@ -574,6 +595,13 @@ class CallManager {
 		// console.log("   Is Video:", isVideo);
 		// console.log("   Caller:", callerUserId);
 
+		// A left group call is retained only so the same room can be reopened from
+		// its own conversation. It must not make the client busy for a different
+		// incoming call.
+		if (this.currentCall?.state === 'left') {
+			this.currentCall = null;
+		}
+
 		if (this.currentCall) {
 			// console.warn("⚠️  Already have an active call, ignoring incoming call");
 			return;
@@ -669,7 +697,12 @@ class CallManager {
 		}
 		this.currentCall = null;
 
-		if (notifyRemote && call.usesElementCall) {
+		// A MatrixRTC group call belongs to the room, not to the participant who
+		// originally invited everyone. Leaving it must clear only this browser's
+		// local call surface. Broadcasting the legacy ORISO hangup event here
+		// used to make every other participant tear down the same active call.
+		// One-to-one Element Call still needs the remote hangup notification.
+		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}
 
@@ -688,6 +721,22 @@ class CallManager {
 		releaseAllCallWarmupStreams();
 
 		this.notifyListeners();
+	}
+
+	/**
+	 * Leave this browser's media session without destroying a MatrixRTC group
+	 * call that other room members are still using. The retained call metadata
+	 * lets the normal room call button rejoin the exact same call room.
+	 */
+	public leaveCall(): void {
+		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
+			this.currentCall = { ...this.currentCall, state: 'left' };
+			releaseAllCallWarmupStreams();
+			this.notifyListeners();
+			return;
+		}
+
+		this.endCall();
 	}
 
 	/**
@@ -779,7 +828,7 @@ class CallManager {
 	 * Check if there's an active call
 	 */
 	public hasActiveCall(): boolean {
-		return this.currentCall !== null;
+		return this.currentCall !== null && this.currentCall.state !== 'left';
 	}
 }
 

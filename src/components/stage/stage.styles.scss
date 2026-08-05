@@ -6,9 +6,6 @@ $animation-duration-title: calc($animation-duration / 7);
 $animation-easing-width: cubic-bezier(0, 0, 0.1, 1);
 $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 
-$iconSize: 55px;
-$gridSpacing: $grid-base-four;
-
 .stageLayout {
 	@media (min-width: $fromXLarge) {
 		&__legalLinks {
@@ -179,36 +176,14 @@ $gridSpacing: $grid-base-four;
 			margin: 0 auto $grid-base-ten;
 		}
 
-		svg {
-			width: $iconSize;
-			height: $iconSize;
-			margin-right: $gridSpacing;
-			margin-top: $gridSpacing;
-
-			&.raphaelswerk {
-				padding-top: 8px;
-				margin-left: -5px;
-				margin-right: calc(#{$gridSpacing} - 5px);
-				width: 64px;
-				height: 64px;
-			}
-
-			&:first-child {
-				margin-left: 54px;
-			}
-
-			&:nth-child(-n + 3) {
-				margin-top: 0;
-			}
-
-			&:nth-child(4) {
-				margin-left: $grid-base-two;
-				margin-right: $grid-base-three;
-			}
-
-			&:nth-child(7) {
-				margin-right: 0;
-			}
+		// One tenant-configured association mark, in place of the seven
+		// hardcoded Caritas-association logos this block used to carry
+		// (FE-H05, #178). The asset is uploaded by an admin, so cap it
+		// instead of assuming the old fixed icon grid.
+		img {
+			max-width: 100%;
+			max-height: 72px;
+			object-fit: contain;
 		}
 	}
 

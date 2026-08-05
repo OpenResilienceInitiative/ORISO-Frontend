@@ -15,14 +15,8 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
-import { ReactComponent as SkfLogo } from '../../resources/img/logos/01_skf.svg';
-import { ReactComponent as CaritasLogo } from '../../resources/img/logos/02_caritas.svg';
-import { ReactComponent as SkmLogo } from '../../resources/img/logos/03_skm.svg';
-import { ReactComponent as InViaLogo } from '../../resources/img/logos/04_via.svg';
-import { ReactComponent as KreuzbundLogo } from '../../resources/img/logos/05_kreuzbund.svg';
-import { ReactComponent as RaphaelswerkLogo } from '../../resources/img/logos/06_raphael.svg';
-import { ReactComponent as MalteserLogo } from '../../resources/img/logos/07_malteser.svg';
 import { Spinner } from '../spinner/Spinner';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 
 export interface StageProps {
 	className?: string;
@@ -38,6 +32,13 @@ export const Stage = ({
 	const { t: translate } = useTranslation();
 
 	const legalLinks = useContext(LegalLinksContext);
+	const tenant = useTenant();
+	// The stage used to ship seven hardcoded Caritas-association logos, which
+	// is a third party's branding on every ORISO login screen (FE-H05, #178).
+	// The association mark is tenant data now: shown when a tenant configures
+	// one, absent otherwise. No fallback — a wrong mark is worse than none.
+	const associationLogo =
+		tenant?.theming?.associationLogo || tenant?.theming?.logo || '';
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
 	const glowTargetRef = useRef({ x: 32, y: 24 });
@@ -181,15 +182,14 @@ export const Stage = ({
 					/>
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
-				<div className="stage__logos">
-					<SkfLogo />
-					<CaritasLogo />
-					<SkmLogo />
-					<MalteserLogo />
-					<KreuzbundLogo />
-					<RaphaelswerkLogo />
-					<InViaLogo />
-				</div>
+				{associationLogo ? (
+					<div className="stage__logos">
+						<img
+							src={associationLogo}
+							alt={translate('app.stage.associationLogoAlt')}
+						/>
+					</div>
+				) : null}
 				<div className={`stage__legalLinks`}>
 					<LegalLinks
 						legalLinks={legalLinks}

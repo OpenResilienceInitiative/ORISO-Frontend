@@ -51,7 +51,8 @@
 		"scrollDown": "Nach unten scrollen",
 		"selectLanguage": "Sprache wählen",
 		"stage": {
-			"title": "Beratung\n& Hilfe"
+			"title": "Beratung\n& Hilfe",
+			"associationLogoAlt": "Logo der Trägerorganisation"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",
@@ -1742,7 +1743,15 @@
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -2996,7 +3005,12 @@
 			"mySessions": "Sie haben zurzeit keine aktiven Beratungen"
 		},
 		"preview": {
-			"headline": "Erstanfragen"
+			"headline": "Erstanfragen",
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"

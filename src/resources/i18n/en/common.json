@@ -50,7 +50,8 @@
 		"scrollDown": "Scroll down",
 		"selectLanguage": "Select language",
 		"stage": {
-			"title": "Consulting & Help"
+			"title": "Consulting & Help",
+			"associationLogoAlt": "Provider organisation logo"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -1718,7 +1719,15 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"next": "Next notification",
+			"cardMenu": "Notification actions",
+			"markRead": "Mark as read",
+			"waitingSince": "Waiting since {{time}} ({{date}})",
+			"preview": {
+				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
+				"empty": "No messages in this conversation yet."
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2937,6 +2946,11 @@
 		},
 		"preview": {
 			"headline": "Initial inquiries",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "Initial inquiries"
 			}

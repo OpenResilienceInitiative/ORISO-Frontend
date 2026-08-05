@@ -74,7 +74,10 @@ vi.mock(
 	})
 );
 
-const { RouterConfigConsultant } = await import('./RouterConfig');
+const { RouterConfigConsultant, RouterConfigUser } = await import(
+	'./RouterConfig'
+);
+const { hasUserAuthority } = await import('../../globalState');
 
 const settings = {
 	useOverviewPage: false,
@@ -110,5 +113,44 @@ describe('RouterConfigConsultant navigation', () => {
 		);
 		expect(notificationIndex).toBeGreaterThanOrEqual(0);
 		expect(profileIndex).toBeGreaterThan(notificationIndex);
+	});
+});
+
+describe('RouterConfigUser navigation', () => {
+	it('keeps the Activity Timeline rail item and route but hides it from askers', () => {
+		const routerConfig = RouterConfigUser(settings, false);
+		const timelineItem = routerConfig.navigation.find(
+			(item) => item.to === '/notifications'
+		);
+
+		// The rail item must exist — this fails if the route is removed.
+		expect(timelineItem).toBeDefined();
+
+		// Askers (ASKER_DEFAULT authority) must not see the timeline …
+		const askerData = { grantedAuthorities: ['ASKER_DEFAULT'] };
+		vi.mocked(hasUserAuthority).mockReturnValue(true);
+		expect(timelineItem.condition(askerData)).toBe(false);
+		expect(hasUserAuthority).toHaveBeenCalledWith(
+			'ASKER_DEFAULT',
+			askerData
+		);
+
+		// … while non-asker users do.
+		vi.mocked(hasUserAuthority).mockReturnValue(false);
+		expect(
+			timelineItem.condition({
+				grantedAuthorities: ['CONSULTANT_DEFAULT']
+			})
+		).toBe(true);
+
+		// The NotificationsCenter page itself stays reachable via its route.
+		expect(routerConfig.profileRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					path: '/notifications',
+					exact: true
+				})
+			])
+		);
 	});
 });
