@@ -43,7 +43,9 @@ export const filterTopicsForAgencies = (
 	if (!topicIds) {
 		return topics;
 	}
-	const offered = topics.filter((topic) => topicIds.includes(topic.id));
+	const offered = topics.filter(
+		(topic) => topic.id !== undefined && topicIds.includes(topic.id)
+	);
 	// A selected agency whose topics are unknown to the tenant list would
 	// otherwise strand the counsellor without any choice.
 	return offered.length ? offered : topics;

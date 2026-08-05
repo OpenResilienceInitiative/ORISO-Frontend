@@ -42,11 +42,12 @@ export const GroupCallWidget: React.FC = () => {
 			iframeRef.current.src = 'about:blank';
 		}
 		setElementCallUrl('');
-		setCallData(null);
-		setCallState(null);
 		setIsDismissed(true);
 		if (callManager.hasActiveCall()) {
-			callManager.endCall();
+			callManager.leaveCall();
+		} else {
+			setCallData(null);
+			setCallState(null);
 		}
 	}, []);
 
@@ -57,6 +58,7 @@ export const GroupCallWidget: React.FC = () => {
 		: null;
 	const shouldPrepareWidget =
 		!!callData &&
+		callState !== 'left' &&
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
@@ -147,7 +149,7 @@ export const GroupCallWidget: React.FC = () => {
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
-				setIsDismissed(false);
+				setIsDismissed(newCallData.state === 'left');
 			}
 			if (!newCallData) {
 				setElementCallUrl('');
@@ -156,6 +158,7 @@ export const GroupCallWidget: React.FC = () => {
 		const currentCall = callManager.getCurrentCall();
 		setCallData(currentCall);
 		setCallState(currentCall?.state || null);
+		setIsDismissed(currentCall?.state === 'left');
 		return () => unsubscribe();
 	}, []);
 
