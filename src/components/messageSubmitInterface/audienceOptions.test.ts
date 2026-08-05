@@ -31,9 +31,9 @@ describe('defaultAudienceSelection', () => {
 	});
 
 	it('falls back to the first option when there is no "all"', () => {
-		expect(defaultAudienceSelection([option('@kim'), option('@ada')])).toEqual(
-			['@kim']
-		);
+		expect(
+			defaultAudienceSelection([option('@kim'), option('@ada')])
+		).toEqual(['@kim']);
 	});
 
 	it('returns "all" for an empty option list', () => {
@@ -299,16 +299,30 @@ describe('audienceOptionsReady', () => {
 
 	it('is ready even without an "all" option', () => {
 		expect(
-			audienceOptionsReady([{ value: '@ada', label: 'Ada', kind: 'person' }])
+			audienceOptionsReady([
+				{ value: '@ada', label: 'Ada', kind: 'person' }
+			])
 		).toBe(true);
 	});
 });
 
 describe('groupAudienceOptions', () => {
 	const options: AudienceOption[] = [
-		{ value: '@enc.katze_mika:oriso.org', label: 'Katze Mika', kind: 'asker' },
-		{ value: '@consultant42:oriso.org', label: 'K. Paulstätter', kind: 'consultant' },
-		{ value: '@moderator7:oriso.org', label: 'B. Pardon', kind: 'supervisor' },
+		{
+			value: '@enc.katze_mika:oriso.org',
+			label: 'Katze Mika',
+			kind: 'asker'
+		},
+		{
+			value: '@consultant42:oriso.org',
+			label: 'K. Paulstätter',
+			kind: 'consultant'
+		},
+		{
+			value: '@moderator7:oriso.org',
+			label: 'B. Pardon',
+			kind: 'supervisor'
+		},
 		{ value: '@someone:oriso.org', label: 'Unklar', kind: 'person' },
 		{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' }
 	];
@@ -363,8 +377,16 @@ describe('groupAudienceOptions', () => {
 	/** Matching self must be exact too — two generated names can share a word. */
 	it('does not disable someone who merely shares a word with the viewer', () => {
 		const shared: AudienceOption[] = [
-			{ value: '@alpaka_mika:oriso.org', label: 'sanftes Alpaka Mika', kind: 'asker' },
-			{ value: '@alpaka_leon:oriso.org', label: 'gutmütiges Alpaka Leon', kind: 'asker' }
+			{
+				value: '@alpaka_mika:oriso.org',
+				label: 'sanftes Alpaka Mika',
+				kind: 'asker'
+			},
+			{
+				value: '@alpaka_leon:oriso.org',
+				label: 'gutmütiges Alpaka Leon',
+				kind: 'asker'
+			}
 		];
 		const grouped = groupAudienceOptions(shared, ['alpaka_mika']);
 		expect(grouped.clients.map((o) => o.disabled)).toEqual([true, false]);

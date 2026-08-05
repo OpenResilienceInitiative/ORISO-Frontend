@@ -101,9 +101,7 @@ export interface AudienceRoster {
  * `@enc.<username>:<server>` and as a bare `<username>`, so a leading `enc.`
  * is stripped as well — otherwise the same person fails to match themselves.
  */
-export const audienceIdentityKeys = (
-	rawValue?: string | null
-): Set<string> => {
+export const audienceIdentityKeys = (rawValue?: string | null): Set<string> => {
 	const keys = new Set<string>();
 	const compact = `${rawValue || ''}`.trim().toLowerCase();
 	if (!compact) {

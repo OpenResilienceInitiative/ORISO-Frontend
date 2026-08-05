@@ -41,50 +41,50 @@ export const RecipientSplitButton = React.forwardRef<
 		},
 		ref
 	) => (
-	<div
-		ref={ref}
-		className={`recipientSplitButton recipientSplitButton--${variant}`}
-	>
-		<button
-			type="button"
-			className="recipientSplitButton__leading"
-			onClick={onToggle}
-			aria-haspopup="listbox"
-			aria-expanded={isOpen}
+		<div
+			ref={ref}
+			className={`recipientSplitButton recipientSplitButton--${variant}`}
 		>
-			<span className="recipientSplitButton__icon" aria-hidden>
-				{icon}
-			</span>
-			<span
-				className={[
-					'recipientSplitButton__label',
-					isMulti && 'recipientSplitButton__label--multi'
-				]
-					.filter(Boolean)
-					.join(' ')}
+			<button
+				type="button"
+				className="recipientSplitButton__leading"
+				onClick={onToggle}
+				aria-haspopup="listbox"
+				aria-expanded={isOpen}
 			>
-				{label}
-			</span>
-		</button>
-		<button
-			type="button"
-			className="recipientSplitButton__trailing"
-			onClick={onToggle}
-			aria-label={chevronLabel}
-			aria-haspopup="listbox"
-			aria-expanded={isOpen}
-		>
-			<KeyboardArrowUpIcon
-				className={[
-					'recipientSplitButton__chevron',
-					isOpen && 'recipientSplitButton__chevron--open'
-				]
-					.filter(Boolean)
-					.join(' ')}
-				fontSize="small"
-			/>
-		</button>
-	</div>
+				<span className="recipientSplitButton__icon" aria-hidden>
+					{icon}
+				</span>
+				<span
+					className={[
+						'recipientSplitButton__label',
+						isMulti && 'recipientSplitButton__label--multi'
+					]
+						.filter(Boolean)
+						.join(' ')}
+				>
+					{label}
+				</span>
+			</button>
+			<button
+				type="button"
+				className="recipientSplitButton__trailing"
+				onClick={onToggle}
+				aria-label={chevronLabel}
+				aria-haspopup="listbox"
+				aria-expanded={isOpen}
+			>
+				<KeyboardArrowUpIcon
+					className={[
+						'recipientSplitButton__chevron',
+						isOpen && 'recipientSplitButton__chevron--open'
+					]
+						.filter(Boolean)
+						.join(' ')}
+					fontSize="small"
+				/>
+			</button>
+		</div>
 	)
 );
 

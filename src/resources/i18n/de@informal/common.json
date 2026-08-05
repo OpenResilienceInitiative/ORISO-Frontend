@@ -1196,6 +1196,13 @@
 		}
 	},
 	"sessionList": {
+		"preview": {
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
+		},
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat"

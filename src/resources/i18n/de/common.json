@@ -3005,7 +3005,12 @@
 			"mySessions": "Sie haben zurzeit keine aktiven Beratungen"
 		},
 		"preview": {
-			"headline": "Erstanfragen"
+			"headline": "Erstanfragen",
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"

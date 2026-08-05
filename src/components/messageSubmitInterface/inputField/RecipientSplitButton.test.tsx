@@ -44,13 +44,19 @@ describe('RecipientSplitButton', () => {
 			variant: 'targeted',
 			label: 'K. Paulstätter'
 		});
-		expect(chipClasses(container)).toContain('recipientSplitButton--targeted');
-		expect(chipClasses(container)).not.toContain('recipientSplitButton--all');
+		expect(chipClasses(container)).toContain(
+			'recipientSplitButton--targeted'
+		);
+		expect(chipClasses(container)).not.toContain(
+			'recipientSplitButton--all'
+		);
 	});
 
 	it('treats a missing variant as targeted, the safer signal', () => {
 		const { container } = renderButton();
-		expect(chipClasses(container)).toContain('recipientSplitButton--targeted');
+		expect(chipClasses(container)).toContain(
+			'recipientSplitButton--targeted'
+		);
 	});
 
 	it('exposes both halves as one labelled control', () => {
