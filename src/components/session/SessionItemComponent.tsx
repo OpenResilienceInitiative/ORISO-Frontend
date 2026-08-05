@@ -99,9 +99,7 @@ import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
-import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
-import { FETCH_ERRORS } from '../../api/fetchData';
-import { logout } from '../logout/logout';
+import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
 import {
@@ -2164,43 +2162,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	/**
-	 * Leaving the waiting queue (#893).
-	 *
-	 * "Delete access" goes through `finishConversation`, which the advice
-	 * seeker is authorised to call for their own session and which runs
-	 * `DeactivateKeycloakUserActionCommand` on the anonymous account
-	 * server-side — so the account really is disabled, not merely logged out.
-	 * `apiDeleteAskerAccount` is not an option here: it needs the generated
-	 * password, and registration hands over via a full page load, so nothing
-	 * in this view still holds it.
-	 *
-	 * A 409 means the conversation was already finished (the counsellor ended
-	 * it, or a double tap raced) — the outcome the user asked for either way,
-	 * so it is treated as success rather than shown as an error.
+	 * Leaving the waiting queue (#893). See `performLeaveQueueDelete` for why
+	 * this goes through `finishConversation` and why signing out only happens
+	 * once the conversation was really finished.
 	 */
 	const handleLeaveQueueDelete = useCallback(() => {
 		if (isLeavingQueue) {
 			return;
 		}
 		setIsLeavingQueue(true);
-		const sessionId = activeSession.item?.id;
-		void (async () => {
-			try {
-				if (sessionId) {
-					await apiFinishAnonymousConversation(sessionId);
-				}
-			} catch (error: unknown) {
-				const alreadyFinished =
-					error instanceof Error &&
-					error.message === FETCH_ERRORS.CONFLICT;
-				if (!alreadyFinished) {
-					setIsLeavingQueue(false);
-					setLeaveQueueFailed(true);
-					return;
-				}
+		void performLeaveQueueDelete(activeSession.item?.id, {
+			onFailure: () => {
+				setIsLeavingQueue(false);
+				setLeaveQueueFailed(true);
 			}
-			void logout();
-		})();
+		});
 	}, [activeSession.item?.id, isLeavingQueue]);
 
 	const handleStartAcceptedChat = useCallback(() => {
@@ -5388,27 +5364,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			 * accepts — an overlay that unmounts under the user is exactly the
 			 * trap that bit us before.
 			 */}
-			{shouldShowPseudonymGate && pseudonymConfirmed && !enquiryClosed && (
-				<LeaveQueueDialog
-					open={isLeaveQueueDialogOpen}
-					canStartChat={consultantAccepted}
-					busy={isLeavingQueue}
-					onStay={() => setIsLeaveQueueDialogOpen(false)}
-					onStartChat={() => {
-						setIsLeaveQueueDialogOpen(false);
-						handleStartAcceptedChat();
-					}}
-					onDeleteAccess={handleLeaveQueueDelete}
-					errorMessage={
-						leaveQueueFailed
-							? translate(
-									'anonymousChat.leaveQueue.error',
-									'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
-								)
-							: undefined
-					}
-				/>
-			)}
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				!enquiryClosed && (
+					<LeaveQueueDialog
+						open={isLeaveQueueDialogOpen}
+						canStartChat={consultantAccepted}
+						busy={isLeavingQueue}
+						onStay={() => setIsLeaveQueueDialogOpen(false)}
+						onStartChat={() => {
+							setIsLeaveQueueDialogOpen(false);
+							handleStartAcceptedChat();
+						}}
+						onDeleteAccess={handleLeaveQueueDelete}
+						errorMessage={
+							leaveQueueFailed
+								? translate(
+										'anonymousChat.leaveQueue.error',
+										'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+									)
+								: undefined
+						}
+					/>
+				)}
 
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&

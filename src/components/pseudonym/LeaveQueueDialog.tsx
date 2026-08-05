@@ -83,6 +83,23 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 		}
 	}, [open]);
 
+	// Escape dismisses the same way as "Im Wartebereich bleiben" / cancel.
+	useEffect(() => {
+		if (!open) {
+			return;
+		}
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') {
+				return;
+			}
+			onStay();
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		return () => document.removeEventListener('keydown', handleKeyDown);
+	}, [onStay, open]);
+
 	if (!open) {
 		return null;
 	}
@@ -103,7 +120,10 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 						className="leaveQueueDialog__title"
 						id="leaveQueueDialogTitle"
 					>
-						{t('anonymousChat.leaveQueue.headline', 'Chat verlassen?')}
+						{t(
+							'anonymousChat.leaveQueue.headline',
+							'Chat verlassen?'
+						)}
 					</h2>
 				</div>
 
@@ -121,10 +141,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 
 				{confirmingDelete ? (
 					<>
-						<p
-							className="leaveQueueDialog__warning"
-							role="status"
-						>
+						<p className="leaveQueueDialog__warning" role="status">
 							{t(
 								'anonymousChat.leaveQueue.deleteWarning',
 								'Ihr Zugang wird deaktiviert und dieser Chat beendet. Sie können sich mit diesem Namen und Passwort nicht mehr anmelden, und wir können den Zugang nicht wiederherstellen.'

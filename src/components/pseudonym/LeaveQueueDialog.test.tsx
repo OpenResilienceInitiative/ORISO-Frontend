@@ -122,4 +122,10 @@ describe('LeaveQueueDialog', () => {
 		const dialog = utils.getByRole('dialog');
 		expect(dialog.getAttribute('aria-modal')).toBe('true');
 	});
+
+	it('closes on Escape the same way as cancel', () => {
+		const utils = renderDialog();
+		fireEvent.keyDown(document, { key: 'Escape' });
+		expect(utils.onStay).toHaveBeenCalledTimes(1);
+	});
 });
