@@ -4,7 +4,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: frontend-temp-runtime-config
-  namespace: caritas
 data:
   config.js: |
     window.__ORISO_RUNTIME_CONFIG__ = {
@@ -18,7 +17,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-temp
-  namespace: caritas
 spec:
   replicas: 1
   selector:
@@ -35,11 +33,11 @@ spec:
         imagePullPolicy: Never
         env:
         - name: LIVEKIT_TOKEN_SERVICE_URL
-          value: "http://livekit-token-service.caritas.svc.cluster.local:3010"
+          value: "http://livekit-token-service:3010"
         - name: KEYCLOAK_REALM_URL
-          value: "http://oriso-platform-keycloak.caritas.svc.cluster.local:8080/realms/online-beratung"
+          value: "http://oriso-platform-keycloak:8080/realms/online-beratung"
         - name: USER_SERVICE_URL
-          value: "http://oriso-platform-userservice.caritas.svc.cluster.local:8082"
+          value: "http://oriso-platform-userservice:8082"
         ports:
         - containerPort: 80
         volumeMounts:
@@ -56,7 +54,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-temp
-  namespace: caritas
 spec:
   selector:
     app: frontend-temp
@@ -68,7 +65,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: frontend-temp-ingress
-  namespace: caritas
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
