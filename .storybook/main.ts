@@ -104,13 +104,6 @@ const config: StorybookConfig = {
 					}
 				}
 			],
-			// `../public` is already copied/served by staticDirs above. Vite's
-			// default publicDir ('public') would copy the same tree into
-			// storybook-static concurrently with Storybook's own static-file
-			// copy (they run in one Promise.all), and the two writers race on
-			// mkdir storybook-static/static — a flaky EEXIST that killed the
-			// Docker build gate. One writer only: Storybook's.
-			publicDir: false,
 			// CRA components read process.env.REACT_APP_*; keep them from crashing under Vite.
 			define: { 'process.env': {} },
 			// webpack resolved extensionless imports incl. .scss (e.g. import './x.styles'); mirror that.
