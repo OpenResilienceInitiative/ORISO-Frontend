@@ -120,3 +120,32 @@ export const formatAgencyLine = (
 	}
 	return `${postcode} ${name}`;
 };
+
+/**
+ * The same line, resolved through the `agencies` i18n namespace first, so a
+ * tenant-specific name override wins. The chat header and the message sender
+ * header must never disagree about what the counselling centre is called.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#895.
+ */
+export const formatAgencyLineWithI18n = (
+	agency:
+		| {
+				id?: number;
+				postcode?: string | number | null;
+				name?: string | null;
+		  }
+		| null
+		| undefined,
+	translate: (keys: [string, string], options: { ns: 'agencies' }) => string
+): string => {
+	if (!agency) {
+		return formatAgencyLine(agency);
+	}
+	return formatAgencyLine({
+		postcode: agency.postcode,
+		name: translate([`agency.${agency.id}.name`, agency.name ?? ''], {
+			ns: 'agencies'
+		})
+	});
+};

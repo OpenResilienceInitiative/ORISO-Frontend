@@ -84,8 +84,8 @@ import { createPortal } from 'react-dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import {
-	formatAgencyLine,
-	formatMessagePersonName
+	formatMessagePersonName,
+	formatAgencyLineWithI18n
 } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
@@ -1050,8 +1050,8 @@ export const MessageItemComponent = ({
 	 * then stays away rather than rendering an empty row.
 	 */
 	const agencyLine = useMemo(
-		() => formatAgencyLine(activeSession?.agency),
-		[activeSession?.agency]
+		() => formatAgencyLineWithI18n(activeSession?.agency, translate),
+		[activeSession?.agency, translate]
 	);
 
 	const getUsernameType = () => {
@@ -1740,7 +1740,8 @@ export const MessageItemComponent = ({
 										isUser={isUserMessage()}
 										type={getUsernameType()}
 										subtitle={
-											getUsernameType() === 'consultant' ||
+											getUsernameType() ===
+												'consultant' ||
 											(getUsernameType() === 'self' &&
 												!isUserMessage())
 												? agencyLine

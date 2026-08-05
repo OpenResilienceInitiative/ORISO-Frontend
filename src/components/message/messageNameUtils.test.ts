@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	formatAgencyLine,
+	formatAgencyLineWithI18n,
 	formatMessagePersonName,
 	getMessagePersonInitials
 } from './messageNameUtils';
@@ -90,9 +91,9 @@ describe('formatAgencyLine', () => {
 		expect(formatAgencyLine({ name: 'Caritas Mainz' })).toBe(
 			'Caritas Mainz'
 		);
-		expect(formatAgencyLine({ postcode: '   ', name: 'Caritas Mainz' })).toBe(
-			'Caritas Mainz'
-		);
+		expect(
+			formatAgencyLine({ postcode: '   ', name: 'Caritas Mainz' })
+		).toBe('Caritas Mainz');
 	});
 
 	/** No name means no line at all — never a bare postcode with no place. */
@@ -107,5 +108,25 @@ describe('formatAgencyLine', () => {
 		expect(
 			formatAgencyLine({ postcode: ' 54222 ', name: '  Caritas Mainz ' })
 		).toBe('54222 Caritas Mainz');
+	});
+});
+
+describe('formatAgencyLineWithI18n', () => {
+	it('uses the agencies-namespace override for the message subtitle name', () => {
+		const translate = (
+			keys: [string, string],
+			_options: { ns: 'agencies' }
+		) => {
+			if (keys[0] === 'agency.42.name') {
+				return 'Tenant Overlay Caritas';
+			}
+			return keys[1];
+		};
+		expect(
+			formatAgencyLineWithI18n(
+				{ id: 42, postcode: '54222', name: 'Caritas Mainz' },
+				translate
+			)
+		).toBe('54222 Tenant Overlay Caritas');
 	});
 });
