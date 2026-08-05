@@ -40,6 +40,19 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
+	AUDIENCE_ALL,
+	buildAudienceRoster,
+	classifyAudienceKind,
+	defaultAudienceSelection,
+	reconcileAudienceSelection,
+	restoreAudienceSelection,
+	shouldShowAudienceSelector,
+	audienceOptionsReady,
+	groupAudienceOptions,
+	type AudienceKind,
+	type AudienceOption
+} from './audienceOptions';
+import {
 	AUTHORITIES,
 	getContact,
 	hasUserAuthority,
@@ -328,6 +341,13 @@ export const MessageSubmitInterfaceComponent = ({
 		</svg>
 	);
 
+	/*
+	 * All four glyphs inherit `currentColor` so they follow the chip's variant.
+	 * The consultant icon was hardcoded to #4C555F, which is near-invisible on
+	 * the accent fill — invisible in practice too, because the old label-string
+	 * icon picker almost never selected it. Now that the role decides
+	 * (#894 rule C), it shows up.
+	 */
 	const AudienceSingleUserIcon = () => (
 		<svg
 			width="14"
@@ -339,7 +359,7 @@ export const MessageSubmitInterfaceComponent = ({
 		>
 			<path
 				d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
-				fill="white"
+				fill="currentColor"
 			/>
 		</svg>
 	);
@@ -355,7 +375,7 @@ export const MessageSubmitInterfaceComponent = ({
 		>
 			<path
 				d="M4.33333 0C4.88889 0 5.36111 0.194444 5.75 0.583333C6.13889 0.972222 6.33333 1.44444 6.33333 2C6.33333 2.55556 6.13889 3.02778 5.75 3.41667C5.36111 3.80556 4.88889 4 4.33333 4C3.77778 4 3.30556 3.80556 2.91667 3.41667C2.52778 3.02778 2.33333 2.55556 2.33333 2C2.33333 1.44444 2.52778 0.972222 2.91667 0.583333C3.30556 0.194444 3.77778 0 4.33333 0ZM4.33333 4.66667C4.85556 4.66667 5.37222 4.72778 5.88333 4.85C6.39444 4.97222 6.85556 5.14444 7.26667 5.36667C7.68889 5.57778 8.02778 5.82778 8.28333 6.11667C8.53889 6.40556 8.66667 6.72222 8.66667 7.06667V10.9333C8.66667 11.1222 8.62222 11.3083 8.53333 11.4917C8.44444 11.675 8.32222 11.8444 8.16667 12C8.01111 12.1556 7.83056 12.3 7.625 12.4333C7.41944 12.5667 7.18889 12.6889 6.93333 12.8V11.3C6.93333 10.8778 6.64167 10.5333 6.05833 10.2667C5.475 10 4.9 9.86667 4.33333 9.86667C3.77778 9.86667 3.24167 9.98056 2.725 10.2083C2.20833 10.4361 1.88889 10.7333 1.76667 11.1C2.18889 11.2667 2.62222 11.3833 3.06667 11.45C3.51111 11.5167 3.96667 11.5556 4.43333 11.5667H5V13.3C4.92222 13.3222 4.84167 13.3333 4.75833 13.3333H4.5C4.1 13.3333 3.64167 13.2889 3.125 13.2C2.60833 13.1111 2.11667 12.9722 1.65 12.7833C1.18333 12.5944 0.791667 12.3472 0.475 12.0417C0.158333 11.7361 0 11.3667 0 10.9333V7.06667C0 6.72222 0.127778 6.40556 0.383333 6.11667C0.638889 5.82778 0.972222 5.57778 1.38333 5.36667C1.80556 5.14444 2.27222 4.97222 2.78333 4.85C3.29444 4.72778 3.81111 4.66667 4.33333 4.66667ZM4.33333 8.66667C4.7 8.66667 5.01389 8.53611 5.275 8.275C5.53611 8.01389 5.66667 7.7 5.66667 7.33333C5.66667 6.96667 5.53611 6.65278 5.275 6.39167C5.01389 6.13056 4.7 6 4.33333 6C3.96667 6 3.65278 6.13056 3.39167 6.39167C3.13056 6.65278 3 6.96667 3 7.33333C3 7.7 3.13056 8.01389 3.39167 8.275C3.65278 8.53611 3.96667 8.66667 4.33333 8.66667Z"
-				fill="#4C555F"
+				fill="currentColor"
 			/>
 		</svg>
 	);
@@ -371,7 +391,7 @@ export const MessageSubmitInterfaceComponent = ({
 		>
 			<path
 				d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
-				fill="white"
+				fill="currentColor"
 			/>
 		</svg>
 	);
@@ -483,12 +503,18 @@ export const MessageSubmitInterfaceComponent = ({
 		height: number;
 		borderRadius: string;
 	} | null>(null);
-	const [audienceOptions, setAudienceOptions] = useState<
-		Array<{ value: string; label: string }>
-	>([{ value: '__all__', label: 'ALL' }]);
+	const [audienceOptions, setAudienceOptions] = useState<AudienceOption[]>([
+		{ value: AUDIENCE_ALL, label: 'ALL', kind: 'all' }
+	]);
+	/**
+	 * Which chat's stored selection has already been restored. Without this the
+	 * restore effect would re-run on every option rebuild and overwrite what the
+	 * user just picked — see #894 rule D.
+	 */
+	const restoredAudienceKeyRef = useRef<string | null>(null);
 	const [selectedAudienceValues, setSelectedAudienceValues] = useState<
 		string[]
-	>(['__all__']);
+	>([AUDIENCE_ALL]);
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
 	const [sessionSupervisors, setSessionSupervisors] = useState<
 		Array<{ id: string; username: string }>
@@ -1284,13 +1310,15 @@ export const MessageSubmitInterfaceComponent = ({
 			setEditorState(EditorState.createEmpty());
 			setComposerText('');
 			composerRef.current?.clear();
-			setSelectedAudienceValues(
-				audienceOptions.some((option) => option.value === '__all__')
-					? ['__all__']
-					: audienceOptions[0]?.value
-						? [audienceOptions[0].value]
-						: ['__all__']
-			);
+			/**
+			 * The recipient selection deliberately survives sending (#894 rule
+			 * D). Resetting to "everyone" here would widen the audience of the
+			 * *next* message beyond what the user last chose — the disclosing
+			 * direction — and would also make the per-chat memory pointless,
+			 * since the stored value would only ever be the post-send default.
+			 * The chip stays in its "targeted" colour so the restriction is
+			 * visible while it is in force.
+			 */
 			setIsAudienceMenuOpen(false);
 			clearDraftMessage();
 			setActiveInfo('');
@@ -1310,7 +1338,6 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => setIsRequestInProgress(false), 1200);
 		},
 		[
-			audienceOptions,
 			clearDraftMessage,
 			onMessageSendSuccess,
 			reloadActiveSession,
@@ -1629,10 +1656,10 @@ export const MessageSubmitInterfaceComponent = ({
 			// VISIBLE_TO prefix, regardless of any stale selection state.
 			if (!retryContext) {
 				const humanTargetCount = audienceOptions.filter(
-					(option) => option.value !== '__all__'
+					(option) => option.value !== AUDIENCE_ALL
 				).length;
 				const explicitAudience = selectedAudienceValues.filter(
-					(value) => value !== '__all__'
+					(value) => value !== AUDIENCE_ALL
 				);
 				const hasExplicitAudience =
 					humanTargetCount > 1 && explicitAudience.length > 0;
@@ -2254,16 +2281,17 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	useEffect(() => {
-		const defaultOption = {
-			value: '__all__',
-			label: translate('message.audience.sendToAll', 'Send to all')
+		const defaultOption: AudienceOption = {
+			value: AUDIENCE_ALL,
+			label: translate('message.audience.sendToAll', 'Send to all'),
+			kind: 'all'
 		};
 		const isInquiryNotAccepted =
 			type === SESSION_LIST_TYPES.ENQUIRY ||
 			activeSession?.item?.status === STATUS_ENQUIRY;
 		if (isInquiryNotAccepted) {
 			setAudienceOptions([defaultOption]);
-			setSelectedAudienceValues(['__all__']);
+			setSelectedAudienceValues([AUDIENCE_ALL]);
 			return;
 		}
 		const collected = new Map<string, string>();
@@ -2418,7 +2446,23 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		});
 
-		const mapped = Array.from(collected.entries())
+		/**
+		 * Roles are decided here, where we still know who is who, instead of
+		 * being guessed later from the rendered label. #894 rule C.
+		 */
+		const roster = buildAudienceRoster({
+			askerIds: [askerId, askerUsername],
+			consultantIds: [
+				activeSession?.consultant?.username,
+				activeSession?.consultant?.id,
+				contact?.username
+			],
+			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
+				supervisor.id,
+				supervisor.username
+			])
+		});
+		const mapped: AudienceOption[] = Array.from(collected.entries())
 			.map(([value, label]) => {
 				const supervisorLabel = Array.from(
 					getComparableAudienceIds(value)
@@ -2432,7 +2476,10 @@ export const MessageSubmitInterfaceComponent = ({
 								supervisorLabel,
 								supervisorLabel
 							)
-						: label
+						: label,
+					kind: supervisorLabel
+						? ('supervisor' as AudienceKind)
+						: classifyAudienceKind(value, roster)
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
@@ -2446,24 +2493,9 @@ export const MessageSubmitInterfaceComponent = ({
 			? [defaultOption, ...mapped]
 			: mapped;
 		setAudienceOptions(nextOptions);
-		setSelectedAudienceValues((currentValues) => {
-			const hasAllOption = nextOptions.some(
-				(option) => option.value === '__all__'
-			);
-			if (hasAllOption && currentValues.includes('__all__')) {
-				return ['__all__'];
-			}
-			const stillAvailable = currentValues.filter((value) =>
-				nextOptions.some((option) => option.value === value)
-			);
-			if (stillAvailable.length > 0) {
-				return stillAvailable;
-			}
-			if (includeAllOption) {
-				return ['__all__'];
-			}
-			return nextOptions[0]?.value ? [nextOptions[0].value] : ['__all__'];
-		});
+		setSelectedAudienceValues((currentValues) =>
+			reconcileAudienceSelection(currentValues, nextOptions)
+		);
 	}, [
 		type,
 		activeSession?.item?.status,
@@ -2489,63 +2521,62 @@ export const MessageSubmitInterfaceComponent = ({
 		matrixClientService
 	]);
 
+	/**
+	 * Switching chat or thread closes the menu and arms the restore below.
+	 *
+	 * It deliberately does *not* touch the selection itself and does *not*
+	 * depend on `audienceOptions`. The previous version did both, and since the
+	 * option array is rebuilt on a 700 ms timer and again whenever a Matrix
+	 * member arrives, it reset the audience to "everyone" seconds after the
+	 * user had chosen a single recipient.
+	 */
 	useEffect(() => {
 		setIsAudienceMenuOpen(false);
-		setSelectedAudienceValues((currentValues) => {
-			const hasSendToAll = audienceOptions.some(
-				(option) => option.value === '__all__'
-			);
-			if (hasSendToAll) {
-				return ['__all__'];
-			}
-			const stillAvailable = currentValues.filter((value) =>
-				audienceOptions.some((option) => option.value === value)
-			);
-			if (stillAvailable.length > 0) {
-				return stillAvailable;
-			}
-			return audienceOptions[0]?.value
-				? [audienceOptions[0].value]
-				: ['__all__'];
-		});
-	}, [activeSession?.item?.id, threadRootId, audienceOptions]);
+		restoredAudienceKeyRef.current = null;
+	}, [activeSession?.item?.id, threadRootId]);
 
+	/**
+	 * Restore this chat's stored recipients — once, and only once the option
+	 * list is real.
+	 *
+	 * `audienceOptions` starts as a lone `__all__` placeholder and gains the
+	 * actual recipients when the Matrix members load. Restoring against the
+	 * placeholder would match nothing, fall back to "everyone", mark the chat
+	 * as restored, and then skip the real list when it arrives — losing the
+	 * saved selection exactly as the old code did.
+	 */
 	useEffect(() => {
-		if (!audienceSelectionStorageKey) {
+		if (
+			!audienceSelectionStorageKey ||
+			!audienceOptionsReady(audienceOptions)
+		) {
 			return;
 		}
-		const hasAllOption = audienceOptions.some(
-			(option) => option.value === '__all__'
-		);
-		if (hasAllOption) {
-			// Always default to "All" when available.
-			setSelectedAudienceValues(['__all__']);
+		if (restoredAudienceKeyRef.current === audienceSelectionStorageKey) {
 			return;
 		}
+		restoredAudienceKeyRef.current = audienceSelectionStorageKey;
+		let saved: string | null = null;
 		try {
-			const saved = window.localStorage.getItem(
-				audienceSelectionStorageKey
-			);
-			if (!saved) {
-				return;
-			}
-			const parsed = JSON.parse(saved);
-			if (!Array.isArray(parsed)) {
-				return;
-			}
-			const valid = parsed.filter((value) =>
-				audienceOptions.some((option) => option.value === value)
-			);
-			if (valid.length > 0) {
-				setSelectedAudienceValues(valid);
-			}
+			saved = window.localStorage.getItem(audienceSelectionStorageKey);
 		} catch (_error) {
-			// Ignore broken local storage values.
+			// Storage can be unavailable (private mode, blocked cookies).
 		}
+		setSelectedAudienceValues(
+			restoreAudienceSelection(saved, audienceOptions) ??
+				defaultAudienceSelection(audienceOptions)
+		);
 	}, [audienceOptions, audienceSelectionStorageKey]);
 
+	/**
+	 * Persist the selection — but never before the restore above has run for
+	 * this chat, or the initial default would overwrite what was stored.
+	 */
 	useEffect(() => {
-		if (!audienceSelectionStorageKey) {
+		if (
+			!audienceSelectionStorageKey ||
+			restoredAudienceKeyRef.current !== audienceSelectionStorageKey
+		) {
 			return;
 		}
 		try {
@@ -2614,7 +2645,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const selectedAudienceLabels = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
 			return [translate('message.audience.sendToAll', 'Send to all')];
 		}
@@ -2639,16 +2670,10 @@ export const MessageSubmitInterfaceComponent = ({
 		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
 		return hasAskerAuthority && !hasConsultantAuthority;
 	}, [userData]);
-	const audienceTargetCount = useMemo(
-		() =>
-			audienceOptions.filter((option) => option.value !== '__all__')
-				.length,
-		[audienceOptions]
-	);
 	const selectedAudienceChipLabel = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
 			return translate('message.audience.all', 'Alle');
 		}
@@ -2660,180 +2685,78 @@ export const MessageSubmitInterfaceComponent = ({
 			defaultValue: `${selectedAudienceLabels.length} Personen`
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
-	const showAudienceSelector = useMemo(() => {
-		if (isClientUser) {
-			return false;
-		}
-		if (audienceTargetCount <= 1) {
-			return false;
-		}
-		return audienceOptions.some((option) => option.value === '__all__');
-	}, [audienceOptions, audienceTargetCount, isClientUser]);
+	const showAudienceSelector = useMemo(
+		() =>
+			shouldShowAudienceSelector({
+				isClientUser,
+				options: audienceOptions
+			}),
+		[audienceOptions, isClientUser]
+	);
+	/**
+	 * #894 rule C: the symbol follows the recipient's actual role, taken from
+	 * the option that was built for them. It used to be inferred by searching
+	 * the rendered label for "moderator"/"supervisor"/"berater", which both
+	 * missed real moderators and mislabelled generated pseudonyms.
+	 */
 	const selectedAudienceIcon = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected || selectedAudienceValues.length > 1) {
 			return <AudienceAllMultiIcon />;
 		}
-		const selectedValue = selectedAudienceValues[0];
-		const normalizedValue = `${selectedValue || ''}`.toLowerCase();
-		const selectedLabel =
-			`${selectedAudienceLabels[0] || ''}`.toLowerCase();
-		const looksLikeModerator =
-			normalizedValue.includes('moderator') ||
-			normalizedValue.includes('supervisor') ||
-			selectedLabel.includes('moderator') ||
-			selectedLabel.includes('supervisor');
-		const looksLikeConsultant =
-			normalizedValue.includes('consultant') ||
-			selectedLabel.includes('consultant') ||
-			selectedLabel.includes('counsellor') ||
-			selectedLabel.includes('counselor') ||
-			selectedLabel.includes('berater');
-		if (looksLikeModerator) {
+		const selectedKind = audienceOptions.find(
+			(option) => option.value === selectedAudienceValues[0]
+		)?.kind;
+		if (selectedKind === 'supervisor') {
 			return <AudienceModeratorIcon />;
 		}
-		return looksLikeConsultant ? (
+		return selectedKind === 'consultant' ? (
 			<AudienceSingleConsultantIcon />
 		) : (
 			<AudienceSingleUserIcon />
 		);
-	}, [selectedAudienceLabels, selectedAudienceValues]);
+	}, [audienceOptions, selectedAudienceValues]);
 	const isMultiAudienceSelection = useMemo(() => {
 		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
+			(value) => value !== AUDIENCE_ALL
 		);
 		return explicitAudience.length > 1;
 	}, [selectedAudienceValues]);
 	const isAllAudienceChip = useMemo(
 		() =>
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__'),
+			selectedAudienceValues.includes(AUDIENCE_ALL),
 		[selectedAudienceValues]
 	);
 	const isAllAudienceSelectedInMenu = useMemo(
 		() =>
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__'),
+			selectedAudienceValues.includes(AUDIENCE_ALL),
 		[selectedAudienceValues]
 	);
-	const audienceSelfComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		[userData?.userName, userData?.displayName].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [getComparableAudienceIds, userData?.displayName, userData?.userName]);
 	const audienceSelectableOptions = useMemo(
-		() => audienceOptions.filter((option) => option.value !== '__all__'),
+		() => audienceOptions.filter((option) => option.value !== AUDIENCE_ALL),
 		[audienceOptions]
 	);
-	const audienceSupervisorComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		const moderatorIds = Array.isArray(activeSession?.item?.moderators)
-			? activeSession.item.moderators
-			: [];
-		[
-			...moderatorIds,
-			...sessionSupervisors.map((entry) => entry.id),
-			...sessionSupervisors.map((entry) => entry.username)
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [
-		activeSession?.item?.moderators,
-		getComparableAudienceIds,
-		sessionSupervisors
-	]);
-	const audienceGroupedSections = useMemo(() => {
-		const clientsComparable = new Set<string>();
-		const counsellorsComparable = new Set<string>();
-		[
-			activeSession?.item?.askerMatrixUserId,
-			activeSession?.user?.username
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				clientsComparable.add(id)
-			);
-		});
-		[
-			activeSession?.consultant?.id,
-			activeSession?.consultant?.username,
-			activeSession?.consultant?.displayName
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				counsellorsComparable.add(id)
-			);
-		});
-
-		const grouped = {
-			clients: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			counsellors: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			moderators: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>
-		};
-		audienceSelectableOptions.forEach((option) => {
-			const comparableIds = new Set<string>([
-				...Array.from(getComparableAudienceIds(option.value)),
-				...Array.from(getComparableAudienceIds(option.label)),
-				...Array.from(
-					getComparableAudienceIds(
-						deriveLabelFromUserId(option.value)
-					)
-				)
-			]);
-			const disabled = Array.from(comparableIds).some((id) =>
-				audienceSelfComparableIds.has(id)
-			);
-			const isClient = Array.from(comparableIds).some((id) =>
-				clientsComparable.has(id)
-			);
-			const isModeratorByRole = Array.from(comparableIds).some((id) =>
-				audienceSupervisorComparableIds.has(id)
-			);
-			if (isModeratorByRole) {
-				grouped.moderators.push({ ...option, disabled });
-				return;
-			}
-			if (isClient) {
-				grouped.clients.push({ ...option, disabled });
-				return;
-			}
-			const isCounsellorById = Array.from(comparableIds).some((id) =>
-				counsellorsComparable.has(id)
-			);
-			if (isCounsellorById || !isClient) {
-				grouped.counsellors.push({ ...option, disabled });
-				return;
-			}
-			grouped.moderators.push({ ...option, disabled });
-		});
-		return grouped;
-	}, [
-		activeSession?.consultant?.displayName,
-		activeSession?.consultant?.id,
-		activeSession?.consultant?.username,
-		activeSession?.item?.askerMatrixUserId,
-		activeSession?.user?.username,
-		audienceSelectableOptions,
-		audienceSelfComparableIds,
-		audienceSupervisorComparableIds,
-		deriveLabelFromUserId,
-		getComparableAudienceIds
-	]);
+	/**
+	 * The three menu sections, grouped by the role each option already carries.
+	 *
+	 * This used to re-derive the roles here with `getComparableAudienceIds`,
+	 * whose 4+ character tokens include the homeserver name — every
+	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * the room could pull unrelated people into the moderator section, and the
+	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
+	 */
+	const audienceGroupedSections = useMemo(
+		() =>
+			groupAudienceOptions(audienceSelectableOptions, [
+				userData?.userName,
+				userData?.displayName
+			]),
+		[audienceSelectableOptions, userData?.displayName, userData?.userName]
+	);
 	const sectionDefinitions = useMemo(
 		() =>
 			[
@@ -2846,17 +2769,17 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const toggleAudienceSelection = useCallback((value: string) => {
 		setSelectedAudienceValues((previousValues) => {
-			if (value === '__all__') {
-				return ['__all__'];
+			if (value === AUDIENCE_ALL) {
+				return [AUDIENCE_ALL];
 			}
 			const withoutAll = previousValues.filter(
-				(entry) => entry !== '__all__'
+				(entry) => entry !== AUDIENCE_ALL
 			);
 			if (withoutAll.includes(value)) {
 				const nextValues = withoutAll.filter(
 					(entry) => entry !== value
 				);
-				return nextValues.length > 0 ? nextValues : ['__all__'];
+				return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
 			}
 			return [...withoutAll, value];
 		});
@@ -2886,9 +2809,9 @@ export const MessageSubmitInterfaceComponent = ({
 				]
 					.filter((entry) => !entry.disabled)
 					.map((entry) => entry.value);
-				const withoutAll = previousValues.includes('__all__')
+				const withoutAll = previousValues.includes(AUDIENCE_ALL)
 					? allVisibleValues
-					: previousValues.filter((value) => value !== '__all__');
+					: previousValues.filter((value) => value !== AUDIENCE_ALL);
 				const hasAllSelected = sectionValues.every((value) =>
 					withoutAll.includes(value)
 				);
@@ -2896,7 +2819,7 @@ export const MessageSubmitInterfaceComponent = ({
 					const nextValues = withoutAll.filter(
 						(value) => !sectionValues.includes(value)
 					);
-					return nextValues.length > 0 ? nextValues : ['__all__'];
+					return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
 				}
 				const nextValues = Array.from(
 					new Set([...withoutAll, ...sectionValues])
@@ -2906,7 +2829,7 @@ export const MessageSubmitInterfaceComponent = ({
 					allVisibleValues.every((value) =>
 						nextValues.includes(value)
 					);
-				return isEverythingSelected ? ['__all__'] : nextValues;
+				return isEverythingSelected ? [AUDIENCE_ALL] : nextValues;
 			});
 		},
 		[audienceGroupedSections]
@@ -3347,7 +3270,7 @@ export const MessageSubmitInterfaceComponent = ({
 		directory: agencyConsultantDirectory,
 		inRoomValues: new Set(
 			audienceOptions
-				.filter((option) => option.value !== '__all__')
+				.filter((option) => option.value !== AUDIENCE_ALL)
 				.flatMap((option) => [
 					...Array.from(getComparableAudienceIds(option.value)),
 					...Array.from(getComparableAudienceIds(option.label))
@@ -3362,7 +3285,7 @@ export const MessageSubmitInterfaceComponent = ({
 			audienceOptions
 				.filter(
 					(option) =>
-						option.value !== '__all__' &&
+						option.value !== AUDIENCE_ALL &&
 						/^@[^:@\s]+:.+$/.test(option.value)
 				)
 				.flatMap((option) =>
@@ -3731,17 +3654,15 @@ export const MessageSubmitInterfaceComponent = ({
 							)}
 						{showAudienceSelector && (
 							<div
-								className={clsx(
-									'textarea__audienceSelector',
-									isAllAudienceChip
-										? 'textarea__audienceSelector--all'
-										: 'textarea__audienceSelector--target'
-								)}
+								className="textarea__audienceSelector"
 								ref={audienceMenuRef}
 							>
 								<RecipientSplitButton
 									label={selectedAudienceChipLabel}
 									icon={selectedAudienceIcon}
+									variant={
+										isAllAudienceChip ? 'all' : 'targeted'
+									}
 									isOpen={isAudienceMenuOpen}
 									isMulti={isMultiAudienceSelection}
 									onToggle={() =>
@@ -4084,7 +4005,7 @@ export const MessageSubmitInterfaceComponent = ({
 													className="textarea__audienceSelectorMenuSelectAll"
 													onClick={() =>
 														toggleAudienceSelection(
-															'__all__'
+															AUDIENCE_ALL
 														)
 													}
 												>
