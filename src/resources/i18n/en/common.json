@@ -50,7 +50,8 @@
 		"scrollDown": "Scroll down",
 		"selectLanguage": "Select language",
 		"stage": {
-			"title": "Consulting & Help"
+			"title": "Consulting & Help",
+			"associationLogoAlt": "Provider organisation logo"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -757,8 +758,7 @@
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
-			"panelMenu": "More options",
-			"cardMenu": "Options for this conversation format"
+			"panelMenu": "More options"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -1718,7 +1718,15 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"next": "Next notification",
+			"cardMenu": "Notification actions",
+			"markRead": "Mark as read",
+			"waitingSince": "Waiting since {{time}} ({{date}})",
+			"preview": {
+				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
+				"empty": "No messages in this conversation yet."
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2581,6 +2589,8 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"title": "A counsellor requested access to this conversation",
+			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
 			"decline": "Decline access"
 		},
@@ -2937,6 +2947,11 @@
 		},
 		"preview": {
 			"headline": "Initial inquiries",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "Initial inquiries"
 			}

@@ -296,9 +296,15 @@
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
 			"back": "Zurück",
-			"cardMenu": "Optionen für dieses Gesprächsformat"
+			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
+		},
+		"internal": {
+			"subtitle": "mit deinen Kolleg:innen",
+			"supportText": "Stimme dich innerhalb deiner Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf."
 		},
 		"circle": {
+			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
+			"settingsSubtitle": "Passe nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
 			"rows": {
 				"dateLabel": "Datum wählen",
 				"timeLabel": "Startzeitpunkt",
@@ -519,7 +525,15 @@
 			"searchPlaceholder": "Aktivität durchsuchen…",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"events": {
 			"requestDenied": {
@@ -1188,6 +1202,13 @@
 		}
 	},
 	"sessionList": {
+		"preview": {
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
+		},
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat"
@@ -1814,6 +1835,11 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"app": {
+		"stage": {
+			"associationLogoAlt": "Logo der Trägerorganisation"
 		}
 	}
 }

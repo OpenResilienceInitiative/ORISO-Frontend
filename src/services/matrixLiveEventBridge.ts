@@ -1,4 +1,5 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 
 type CallManagerModule = typeof import('./CallManager');
 
@@ -15,6 +16,11 @@ const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
 	return isVideoCallFromMatrixInviteContent(content);
 };
 
+const isElementOrGroupCallInvite = (
+	content: Record<string, unknown>
+): boolean =>
+	content.is_element_call === true || content.is_group_call === true;
+
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
  * This service listens to Matrix Room.timeline events and triggers appropriate
@@ -25,6 +31,7 @@ export class MatrixLiveEventBridge {
 	private eventCallbacks: Map<string, Set<(event: any) => void>> = new Map();
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
+	private activeCallRecoveryScans = 0;
 	private pendingEncryptedEvents = new Map<
 		MatrixEvent,
 		{
@@ -55,6 +62,7 @@ export class MatrixLiveEventBridge {
 
 		this.client = client;
 		this.processedCallInvites.clear();
+		this.activeCallRecoveryScans = 0;
 		this.setupEventListeners();
 		this.initialized = true;
 
@@ -87,8 +95,85 @@ export class MatrixLiveEventBridge {
 			'sync' as any,
 			(state: string, prevState: string | null) => {
 				// console.log("🔄 Matrix sync state:", state, "(previous:", prevState, ")");
+				if (
+					(state === 'PREPARED' || state === 'SYNCING') &&
+					this.activeCallRecoveryScans < 2
+				) {
+					this.activeCallRecoveryScans += 1;
+					if (this.recoverActiveElementCallFromTimeline()) {
+						this.activeCallRecoveryScans = 2;
+					}
+				}
 			}
 		);
+	}
+
+	private recoverActiveElementCallFromTimeline(): boolean {
+		if (!this.client) return false;
+
+		const candidates = this.client
+			.getRooms()
+			.flatMap((room) => {
+				const events = room.getLiveTimeline().getEvents();
+				const hangups = new Map<string, number>();
+				events.forEach((event) => {
+					if (
+						event.getType() === 'm.call.hangup' ||
+						event.getType() === 'org.oriso.call.hangup'
+					) {
+						const callId = event.getContent().call_id;
+						if (callId) {
+							hangups.set(
+								callId,
+								Math.max(
+									hangups.get(callId) ?? 0,
+									event.getTs()
+								)
+							);
+						}
+					}
+				});
+
+				return events.reduce<{ event: MatrixEvent; room: Room }[]>(
+					(candidatesForRoom, event) => {
+						if (
+							event.getType() !== 'm.call.invite' &&
+							event.getType() !== 'org.oriso.call.invite'
+						) {
+							return candidatesForRoom;
+						}
+						const content = event.getContent();
+						const callId = content.call_id;
+						const endedAt = callId
+							? hangups.get(callId)
+							: undefined;
+						if (
+							isElementOrGroupCallInvite(content) &&
+							(!endedAt || endedAt < event.getTs())
+						) {
+							candidatesForRoom.push({ event, room });
+						}
+						return candidatesForRoom;
+					},
+					[]
+				);
+			})
+			.sort((a, b) => b.event.getTs() - a.event.getTs());
+
+		for (const { event, room } of candidates) {
+			const content = event.getContent();
+			const callRoomId = content.call_room_id || room.roomId;
+			if (
+				event.getSender() !== this.client.getUserId() &&
+				!this.processedCallInvites.has(content.call_id) &&
+				this.hasActiveMatrixRtcMembership(callRoomId)
+			) {
+				this.handleCallInvite(event, room);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private dispatchTimelineEvent(
@@ -217,6 +302,13 @@ export class MatrixLiveEventBridge {
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
 		const callRoomId = content.call_room_id || room.roomId;
+		const isGroupCall = content.is_group_call === true;
+		const isElementCall = isElementOrGroupCallInvite(content);
+		const isVideo = isElementCall
+			? content.is_video !== false
+			: isVideoCallInvite(content);
+		const hasActiveMatrixRtcMembership =
+			isElementCall && this.hasActiveMatrixRtcMembership(callRoomId);
 
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🔔 CALL INVITE EVENT RECEIVED");
@@ -228,12 +320,21 @@ export class MatrixLiveEventBridge {
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
-		// CRITICAL: Ignore old call invites (> 10 seconds = from history/replay!)
-		// This prevents phantom notifications on login/reload
-		if (ageSeconds > 10) {
+		// Historical invites normally must not ring again. MatrixRTC is the
+		// exception: after a page reload the original invite is historical even
+		// though another participant is still publishing in the dedicated call
+		// room. The SDK's non-expired membership view is the authoritative active
+		// signal and avoids reviving calls whose invite merely remains in history.
+		if (ageSeconds > 10 && !hasActiveMatrixRtcMembership) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
-			this.processedCallInvites.add(callId);
+			// A partially synced Element Call room can gain active MatrixRTC
+			// membership on the next sync. Keep that invite recoverable. Legacy
+			// Matrix WebRTC invites have no equivalent active-membership signal and
+			// remain permanently stale once rejected.
+			if (!isElementCall) {
+				this.processedCallInvites.add(callId);
+			}
 			return;
 		}
 
@@ -254,13 +355,6 @@ export class MatrixLiveEventBridge {
 			this.processedCallInvites.add(callId);
 			return;
 		}
-
-		// Check if this is an Element Call / LiveKit call (custom field)
-		const isGroupCall = content.is_group_call === true;
-		const isElementCall = content.is_element_call === true || isGroupCall;
-		const isVideo = isElementCall
-			? content.is_video !== false
-			: isVideoCallInvite(content);
 
 		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -309,6 +403,24 @@ export class MatrixLiveEventBridge {
 			false,
 			room.roomId
 		);
+	}
+
+	private hasActiveMatrixRtcMembership(callRoomId: string): boolean {
+		try {
+			const callRoom = this.client?.getRoom(callRoomId);
+			if (!callRoom) return false;
+
+			return (
+				MatrixRTCSession.sessionMembershipsForRoom(callRoom, {
+					id: '',
+					application: 'm.call'
+				}).length > 0
+			);
+		} catch {
+			// A partially synced call room is not evidence that a historical invite
+			// is still active. Fail closed and wait for a new live invite instead.
+			return false;
+		}
 	}
 
 	/**

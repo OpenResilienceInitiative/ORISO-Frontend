@@ -9,6 +9,7 @@ import { apiDeleteAskerAccount, FETCH_ERRORS } from '../../api';
 import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { clearDeletedMatrixAccountStorage } from '../../services/matrixAccountStorage';
 
 export const DeleteAccount = () => {
 	const settings = useAppConfig();
@@ -99,7 +100,8 @@ export const DeleteAccount = () => {
 		) {
 			setIsRequestInProgress(true);
 			apiDeleteAskerAccount(password)
-				.then(() => {
+				.then(async () => {
+					await clearDeletedMatrixAccountStorage();
 					setIsSuccessOverlay(true);
 				})
 				.catch((error) => {

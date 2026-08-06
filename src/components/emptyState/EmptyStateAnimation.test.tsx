@@ -4,6 +4,7 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EmptyStateAnimation } from './EmptyStateAnimation';
+import { EmptyState } from './EmptyState';
 
 vi.mock('lottie-react', () => ({
 	default: () => <div data-lottie="true" />
@@ -59,6 +60,24 @@ describe('EmptyStateAnimation over the shared player', () => {
 		);
 
 		expect(container.querySelector('.emptyState__animation')).toBeTruthy();
+		expect(container.querySelector('[data-lottie="true"]')).toBeNull();
+	});
+});
+
+describe('EmptyState', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('holds layout under reduced motion without playing Lottie', () => {
+		stubReducedMotion(true);
+		const { container } = render(
+			<EmptyState headline="Nothing here yet" variant="archive" />
+		);
+
+		expect(
+			container.querySelector('[data-cy="empty-state-animation"]')
+		).toBeTruthy();
 		expect(container.querySelector('[data-lottie="true"]')).toBeNull();
 	});
 });

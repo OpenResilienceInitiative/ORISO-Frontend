@@ -89,6 +89,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			align-items: center;
 			justify-content: center;
 			position: relative;
+			margin: 0;
 
 			@media screen and (width <= 899px) {
 				margin: 0;
@@ -1012,47 +1013,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: 62px;
 		}
 
-		&__audienceSelectorMain {
-			height: 100%;
-			max-width: 186px;
-			padding: 0 10px;
-			display: inline-flex;
-			align-items: center;
-			gap: 6px;
-			border: 0;
-			border-radius: 12px 3px 3px 12px;
-			color: #fff;
-			cursor: pointer;
-			text-align: left;
-		}
-
-		&__audienceSelectorChevron {
-			height: 100%;
-			min-width: 44px;
-			padding: 0 10px;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			border: 0;
-			border-radius: 3px 12px 12px 3px;
-			color: #fff;
-			cursor: pointer;
-		}
-
-		&__audienceSelector--all {
-			.textarea__audienceSelectorMain,
-			.textarea__audienceSelectorChevron {
-				background: var(--m3-secondary, #4c555f);
-			}
-		}
-
-		&__audienceSelector--target {
-			.textarea__audienceSelectorMain,
-			.textarea__audienceSelectorChevron {
-				background: var(--m3-primary-container, #cc1e1c);
-				color: var(--m3-on-primary-container, #ffe2de);
-			}
-		}
+		/*
+		 * The chip's own geometry and colour live with the component that
+		 * renders it, `recipientSplitButton.styles.scss`. Rules for
+		 * `__audienceSelectorMain`, `__audienceSelectorChevron` and the
+		 * `--all` / `--target` colour pair used to sit here, but no component
+		 * has rendered those class names since the split button replaced the
+		 * hand-rolled chip — which is why "Alle" never turned grey (#894).
+		 */
 
 		&__audienceSelectorMenu {
 			position: absolute;

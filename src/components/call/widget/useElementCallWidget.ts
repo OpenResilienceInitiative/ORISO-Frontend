@@ -161,6 +161,12 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// The call UI is deliberately dark even though the app
+					// around it is light; app-wide dark is a separate decision
+					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
+					// Call's own default, which an upstream merge could change
+					// without anything here to point at.
+					theme: 'dark',
 					skipLobby: String(skipLobby),
 					// Per-participant media E2EE is the ADR-018 default. Element
 					// Call only encrypts LiveKit media when the host asks for it
@@ -275,7 +281,10 @@ export const useElementCallWidget = (
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
-				void api.updateTheme({ name: 'light' }).catch(() => {
+				// Re-assert the same scheme the URL pins (`theme=dark` above):
+				// the ready-time update guards against Element Call defaulting
+				// differently, and must never contradict the URL parameter.
+				void api.updateTheme({ name: 'dark' }).catch(() => {
 					/* the widget may have closed during capability negotiation */
 				});
 			});

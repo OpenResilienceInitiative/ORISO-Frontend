@@ -99,7 +99,8 @@ export const AnimatedIllustration = ({
 			data-base-color={baseColor.toLowerCase()}
 			data-complete={isComplete ? 'true' : 'false'}
 			data-loop={String(ANIMATION_LOOPS)}
-			data-speed={ANIMATION_SPEED}
+			data-secondary-color={baseColor.toLowerCase()}
+			data-speed={String(ANIMATION_SPEED)}
 			{...hostAttributes}
 		>
 			<Lottie
