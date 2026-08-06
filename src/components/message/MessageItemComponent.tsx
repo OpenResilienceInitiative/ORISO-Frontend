@@ -82,7 +82,6 @@ import {
 import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
-import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import {
 	formatMessagePersonName,
 	formatAgencyLineWithI18n
@@ -1452,7 +1451,13 @@ export const MessageItemComponent = ({
 		isMyMessage ? userData?.firstName : resolvedIncomingNameParts.firstName,
 		isMyMessage ? userData?.lastName : resolvedIncomingNameParts.lastName
 	);
-	const profileSubtitle = '';
+	/**
+	 * Own counsellor messages render outside MessageDisplayName (that
+	 * header is gated by !isMyMessage), so the agency line has to be
+	 * supplied here. Advice-seeker own messages stay one-line.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895 / PR #949.
+	 */
+	const profileSubtitle = isMyMessage && !isUserMessage() ? agencyLine : '';
 	const isRejectedCallInGroupChat =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL &&
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
@@ -2409,7 +2414,6 @@ export const MessageItemComponent = ({
 							{profileSubtitle ? (
 								<div className="messageItem__senderInfoSubtitle">
 									<span>{profileSubtitle}</span>
-									<EyeIcon className="messageItem__senderInfoMetaIcon" />
 								</div>
 							) : null}
 						</div>

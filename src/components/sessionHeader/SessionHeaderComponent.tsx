@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
-import { formatAgencyLine } from '../message/messageNameUtils';
+import { formatAgencyLineWithI18n } from '../message/messageNameUtils';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	apiGetSessionSupervisors,
@@ -1170,16 +1170,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						 * tenant-specific override wins.
 						 */
 						<div className="sessionInfo__metaInfo__content">
-							{formatAgencyLine({
-								postcode: activeSession.agency.postcode,
-								name: translate(
-									[
-										`agency.${activeSession.agency.id}.name`,
-										activeSession.agency.name
-									],
-									{ ns: 'agencies' }
-								)
-							})}
+							{formatAgencyLineWithI18n(
+								activeSession.agency,
+								translate
+							)}
 						</div>
 					)}
 					{topic?.name && (
