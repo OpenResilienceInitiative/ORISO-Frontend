@@ -440,7 +440,10 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 			: storybookJsonResponse({});
 	}
 
-	if (url.pathname.includes('/service/topic/public/')) {
+	// No trailing slash: `endpoints.topicsData` is `/service/topic/public`, so
+	// the old `/service/topic/public/` pattern never matched and the topic
+	// step fell through to the generic `{}` response, i.e. its load-error state.
+	if (url.pathname.includes('/service/topic/public')) {
 		return storybookJsonResponse(storybookTopics);
 	}
 

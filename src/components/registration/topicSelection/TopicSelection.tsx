@@ -387,15 +387,11 @@ export const TopicSelection: FC<{
 					>
 						{t('registration.topic.headline')}
 					</Typography>
-					<Typography
-						sx={{
-							mt: '16px',
-							mb: '24px',
-							...registrationScreenIntroSx
-						}}
-					>
-						{t('registration.topic.subline')}
-					</Typography>
+					{/* Design 8b: the headline already asks the question, so the
+					    explanatory sentence underneath only cost vertical space
+					    on a 375 pt screen. The string stays in the catalogue —
+					    other surfaces still use it. */}
+					<Box sx={{ height: { xs: 16, sm: 24 } }} />
 				</>
 			)}
 			{topics === undefined || topicGroups === undefined ? (
@@ -914,7 +910,14 @@ const TopicSelect = ({
 						variant: 'body2',
 						color: registrationMd3.onSurfaceVariant,
 						sx: {
-							lineHeight: 1.45
+							// Design 8b: one line per topic. The text is tenant
+							// content of unbounded length, so it is clamped here
+							// rather than shortened at the source.
+							lineHeight: 1.45,
+							display: '-webkit-box',
+							WebkitLineClamp: 1,
+							WebkitBoxOrient: 'vertical',
+							overflow: 'hidden'
 						}
 					}}
 					sx={{ my: 0, minWidth: 0 }}

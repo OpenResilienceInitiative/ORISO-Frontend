@@ -6,6 +6,7 @@ import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { RegistrationSelectionChip } from './selectionChips/RegistrationSelectionChips';
 import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
+import { TopicSelection } from './topicSelection/TopicSelection';
 import { WhyLocalDisclosure } from './zipcodeInput/WhyLocalDisclosure';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -232,6 +233,61 @@ export const ZipcodeStep: StoryObj = {
 					nextLabel="Weiter"
 					registerLabel="Registrieren"
 					registeringLabel="Wird registriert ..."
+				/>
+			</Box>
+		</Phone>
+	)
+};
+
+/** 8b — the existing topic step, only chrome and wording changed. */
+export const TopicStep: StoryObj = {
+	name: '8b — Thema waehlen',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Liste, Gruppen-Aufklapper, Icon-Set und Auswahl-Logik sind unveraendert aus dem Bestand. Neu sind nur: Kopf (Fortschrittszeile statt Icon-Stepper), Fuss (F3) und Wording — der Erklaersatz unter der Ueberschrift ist raus, Beschreibungen sind auf eine Zeile geklemmt.'
+			}
+		}
+	},
+	render: () => (
+		<Phone>
+			<RegistrationHeader
+				fullBleed={false}
+				layout="compact"
+				currentStepName="topic-selection"
+				visibleStepNames={STEP_NAMES}
+			/>
+			<Box
+				sx={{
+					flex: 1,
+					minHeight: 0,
+					overflowY: 'auto',
+					px: 2,
+					pt: 2.5
+				}}
+			>
+				<TopicSelection
+					onChange={() => undefined}
+					onNextClick={() => undefined}
+					nextStepUrl="/next"
+				/>
+			</Box>
+			<Box
+				sx={{
+					flex: 'none',
+					bgcolor: '#fff',
+					borderTop: `1px solid ${registrationMd3.outlineVariant}`,
+					p: 2
+				}}
+			>
+				<RegistrationStepNav
+					prevStepUrl={null}
+					backLabel="Zurueck"
+					nextStepUrl="/next"
+					nextLabel="Weiter"
+					registerLabel="Registrieren"
+					registeringLabel="Wird registriert ..."
+					disabledNext
 				/>
 			</Box>
 		</Phone>
