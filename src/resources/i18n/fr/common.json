@@ -843,8 +843,7 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
-			"back": "Retour",
-			"cardMenu": "Options pour ce format de conversation"
+			"back": "Retour"
 		},
 		"circle": {
 			"rows": {
