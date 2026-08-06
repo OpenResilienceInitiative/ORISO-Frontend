@@ -9,10 +9,13 @@ import { appConfig } from '../../utils/appConfig';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
 
+export const isInviteRoute = (): boolean =>
+	/^\/invite(?:\/|$)/.test(window.location.pathname);
+
 export const isPublicAuthRoute = (): boolean => {
 	const { pathname } = window.location;
 	return (
-		/^\/(?:login|registration|error\.401\.html|error\.404\.html|error\.500\.html)(?:\/|$)/.test(
+		/^\/(?:login|registration|invite|error\.401\.html|error\.404\.html|error\.500\.html)(?:\/|$)/.test(
 			pathname
 		) || /^\/[^/]+\/registration(?:\/|$)/.test(pathname)
 	);

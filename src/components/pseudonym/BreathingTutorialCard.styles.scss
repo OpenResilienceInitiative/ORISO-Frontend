@@ -131,7 +131,7 @@
 	font-size: 28px;
 	line-height: 32px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	text-align: center;
 }
 
@@ -140,7 +140,7 @@
 	font-size: 16px;
 	line-height: 22px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	text-align: center;
 }
 
@@ -162,7 +162,7 @@
 	padding: 12px 18px;
 	border: none;
 	cursor: pointer;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 500;
@@ -184,7 +184,7 @@
 
 .breathingTutorialCard__btnCancel {
 	border-radius: 8px;
-	background: #4c555f;
+	background: var(--m3-secondary, #4c555f);
 	color: #e7effc;
 
 	&:hover:not(:disabled) {
@@ -194,15 +194,16 @@
 
 .breathingTutorialCard__btnConfirm {
 	border-radius: 100px;
-	background: #cc1e1c;
-	color: #ffffff;
+	background: var(--m3-primary-container, #cc1e1c);
+	color: var(--m3-on-primary-container, #ffe2de);
 
 	&:hover:not(:disabled) {
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 	}
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.breathingTutorialCard {
 		padding: 8px 12px;
 		gap: 18px;

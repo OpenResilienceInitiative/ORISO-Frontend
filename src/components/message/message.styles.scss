@@ -4,16 +4,33 @@ $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 
+// $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
+// to resources/styles/settings.scss so other bubble renderers (e.g. the
+// conversation preview) share the same colour contract.
+
+// How far the bubble tucks under the in-flow avatar column on either side —
+// keep in sync with the avatar geometry above, never hardcode per side.
+$message-avatar-overlap: -19px;
+
+.messageItem__mention {
+	padding: 0 4px;
+	border-radius: 6px;
+	background: var(--m3-primary-fixed, #ffdad5);
+	color: var(--m3-primary-container, #cc1e1c);
+	font-weight: 500;
+	white-space: nowrap;
+}
+
 .messageItem {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: $grid-base-two;
+	margin-bottom: 32px;
 	opacity: 0;
-	animation: appearMessageItem 500ms ease forwards;
+	animation: appearMessageItem 150ms ease forwards;
 
 	@for $i from 1 through 50 {
 		&:nth-last-child(#{$i}) {
-			animation-delay: $i * 50ms;
+			animation-delay: $i * 15ms;
 		}
 	}
 
@@ -33,7 +50,7 @@ $message-avatar-ring: #ebe2e2;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			transition: unset;
 		}
 	}
@@ -42,12 +59,31 @@ $message-avatar-ring: #ebe2e2;
 		align-items: flex-end;
 
 		.messageItem__message {
+			background-color: $message-outgoing-bg;
+			border-color: $message-outgoing-bg;
+			color: $message-outgoing-text;
 			margin: 4px 0;
-			border-radius: 12px 12px 0;
+
+			// Figma 8498-32645: squared corner toward the bottom-right avatar.
+			border-radius: 12px 12px 0 12px;
+		}
+
+		.messageItem__message a,
+		.messageItem__message a:hover {
+			color: var(--m3-primary, $primary);
 		}
 
 		.messageItem__divider {
 			align-self: center;
+		}
+
+		// Improvement report: the avatar must "cut" the bubble corner — the
+		// bubble tucks 19px under the in-flow avatar column. Safe since the
+		// reaction chips live inside the bubble now.
+		.messageItem__content {
+			margin-left: 0;
+			margin-right: $message-avatar-overlap;
+			align-items: flex-end;
 		}
 	}
 
@@ -96,7 +132,15 @@ $message-avatar-ring: #ebe2e2;
 
 	&__headerTime {
 		font-size: $font-size-secondary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
+		white-space: nowrap;
+	}
+
+	// Editing (m.replace, #435): marker next to the timestamp.
+	&__editedMarker {
+		font-size: $font-size-secondary;
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-style: italic;
 		white-space: nowrap;
 	}
 
@@ -111,17 +155,24 @@ $message-avatar-ring: #ebe2e2;
 		flex-direction: row;
 		align-items: flex-start;
 		gap: 8px;
-		max-width: min(71%, 600px);
+
+		// Figma 7539-29191: 41px breathing room on the opposite side (the
+		// 60px avatar column minus 19px overlap gives the same 41px on the
+		// avatar side). Desktop cap = wide bubble 770px + avatar column.
+		max-width: min(calc(100% - 41px), 834px);
 		position: relative;
+
+		&--left,
+		&--right {
+			align-items: start;
+			gap: 4px;
+			position: relative;
+		}
 
 		&--right {
 			flex-direction: row-reverse;
-			align-self: center;
+			align-self: flex-end;
 			margin-left: auto;
-			align-items: center;
-			gap: 4px;
-			position: relative;
-			padding-right: 32px;
 		}
 
 		&--furtherSteps {
@@ -137,14 +188,18 @@ $message-avatar-ring: #ebe2e2;
 		}
 	}
 
+	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the white
+	// ring got thicker by growing OUTWARD into that frame space (6px ring),
+	// so the visible avatar stays 48px and the ring cuts into the bubble
+	// corner without touching the kebab.
 	&__avatar {
-		width: 48px;
-		height: 48px;
-		min-width: 48px;
-		min-height: 48px;
-		border: 10px solid #fff;
+		width: 60px;
+		height: 60px;
+		min-width: 60px;
+		min-height: 60px;
+		border: 6px solid #fff;
 		border-radius: 999px;
-		background: #ffd9d9;
+		background: #fff;
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
@@ -154,11 +209,11 @@ $message-avatar-ring: #ebe2e2;
 
 		// Force Compound avatar to render properly
 		span[class*='_avatar_'] {
-			width: 32px !important;
-			height: 32px !important;
-			min-width: 32px !important;
-			min-height: 32px !important;
-			font-size: 16px !important;
+			width: 48px !important;
+			height: 48px !important;
+			min-width: 48px !important;
+			min-height: 48px !important;
+			font-size: 18px !important;
 			font-weight: 600 !important;
 			display: flex !important;
 			align-items: center !important;
@@ -168,23 +223,49 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__sideColumn {
-		display: inline-flex;
+		display: flex;
 		flex-direction: column;
+		justify-content: space-between;
 		align-items: center;
 		flex-shrink: 0;
 		margin-top: 0;
 		position: relative;
 		z-index: 6;
+		height: stretch;
 	}
 
+	&__sideColumn--left,
 	&__sideColumn--right {
 		align-items: center;
-		justify-content: center;
 		margin-bottom: 0;
-		position: absolute;
-		right: -4px;
-		bottom: 40px;
+	}
+
+	&__sideColumn--left {
 		z-index: 5;
+	}
+
+	// Figma 8498-32645: own-message column sits in flow right of the bubble
+	// (kebab above the avatar, bottom-aligned) — nothing may overflow the
+	// viewport edge anymore.
+	&__sideColumn--right {
+		justify-content: flex-end;
+		align-self: flex-end;
+		z-index: 5;
+	}
+
+	&__sideColumnGroup {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		&--left {
+			translate: 0% -25%;
+		}
+
+		&--right {
+			margin-top: auto;
+			translate: 0% 25%;
+		}
 	}
 
 	&--right {
@@ -200,15 +281,24 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 24px;
-		height: 24px;
+		box-sizing: border-box;
+		flex-shrink: 0;
+
+		// Figma "Message Menu" (772:18407) + Android Compact (#564):
+		// 32×32px touch zone (icon stays 20px centered inside).
+		width: 32px;
+		height: 32px;
+		min-width: 32px;
+		min-height: 32px;
 		cursor: pointer;
 		opacity: 1;
 		z-index: 7;
 
 		svg {
-			width: 16px;
-			height: 16px;
+			width: 20px;
+			height: 20px;
+			flex-shrink: 0;
+			pointer-events: none;
 		}
 
 		path,
@@ -219,11 +309,20 @@ $message-avatar-ring: #ebe2e2;
 		&:hover {
 			opacity: 1;
 		}
+
+		// Reinforce touch target on Android Compact / mobile viewports.
+		@media screen and (width <= 899px) {
+			width: 32px;
+			height: 32px;
+			min-width: 32px;
+			min-height: 32px;
+			padding: 0;
+		}
 	}
 
 	&__kebabIconDefault {
-		width: 16px !important;
-		height: 16px !important;
+		width: 20px !important;
+		height: 20px !important;
 	}
 
 	&__kebabButton--left {
@@ -243,7 +342,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 200px;
 		max-width: 280px;
 		padding: 8px 0;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 8px;
 		background: #fff;
 		box-shadow:
@@ -266,7 +365,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 8px 12px;
 		border: 0;
 		background: #fff;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		cursor: pointer;
 		text-align: left;
 
@@ -288,7 +387,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
@@ -296,7 +395,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 16px;
 		line-height: 24px;
 		letter-spacing: 0.0313em;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 	}
 
 	&__visibilityChip {
@@ -318,8 +417,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityChip--active {
-		background: #cc1e1c;
-		border-color: #cc1e1c;
+		background: var(--m3-primary-container, #cc1e1c);
+		border-color: var(--m3-primary-container, #cc1e1c);
 	}
 
 	&__visibilityChipIcon {
@@ -338,12 +437,12 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
 	&__visibilityChipCount {
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 1;
@@ -351,26 +450,30 @@ $message-avatar-ring: #ebe2e2;
 
 	&__visibilityChip--active .messageItem__visibilityChipCount,
 	&__visibilityChip--active .messageItem__visibilityChipIcon {
-		color: #fff;
+		color: var(--m3-on-primary-container, #ffe2de);
 	}
 
 	&__visibilityChip--active .messageItem__visibilityChipIcon path {
-		fill: #fff;
+		fill: var(--m3-on-primary-container, #ffe2de);
 	}
 
 	&__visibilityChip--incoming {
+		bottom: -16px;
 		margin-top: -2px;
+		translate: 0% 50%;
 	}
 
 	&__visibilityChip--outgoing {
+		top: -16px;
 		margin-bottom: -2px;
+		translate: 0% -50%;
 	}
 
 	&__visibilityMenu {
 		min-width: 260px;
 		max-width: 260px;
 		padding: 8px;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 12px;
 		background: #fff;
 		box-shadow:
@@ -422,14 +525,14 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4c555f;
+			fill: var(--m3-secondary, #4c555f);
 		}
 	}
 
 	&__visibilityMenuSectionTitle {
 		font-size: 12px;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		font-weight: 400;
 	}
 
@@ -441,7 +544,7 @@ $message-avatar-ring: #ebe2e2;
 		width: 14px;
 		height: 14px;
 		border-radius: 999px;
-		border: 2px solid #5f6873;
+		border: 2px solid var(--m3-secondary-container, #5f6873);
 		background: #fff;
 		flex: 0 0 14px;
 	}
@@ -492,7 +595,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibilityMenuSubheading {
 		font-size: 12px;
 		line-height: 1.4;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		text-align: right;
 		padding: 8px 12px 2px;
 	}
@@ -530,7 +633,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	&__visibilityMenuPill--active {
@@ -548,7 +651,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 10px;
 		line-height: 14px;
 		font-weight: 400;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		padding: 2px 2px 2px 18px;
 	}
 
@@ -577,11 +680,26 @@ $message-avatar-ring: #ebe2e2;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
+		z-index: 5;
 	}
 
+	// Bot avatar (reused Carimat robot from the live-chat onboarding).
 	&__systemAvatarIcon {
-		width: 15px;
-		height: 15px;
+		width: 16px;
+		height: 16px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+
+		@media (resolution >= 1.5dppx), (width >= 1920px) {
+			width: 20px;
+			height: 20px;
+		}
+
+		svg {
+			width: auto;
+			height: 100%;
+		}
 
 		* {
 			fill: #e53952;
@@ -593,7 +711,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		margin-left: -19px;
+		margin-left: $message-avatar-overlap;
 	}
 
 	&__divider {
@@ -608,8 +726,7 @@ $message-avatar-ring: #ebe2e2;
 		&::after {
 			content: '';
 			display: inline-block;
-			border-top: 1px solid
-				var(--skin-color-secondary-contrast-safe, $text-divider-color);
+			border-top: 1px solid var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;
@@ -617,11 +734,11 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--lastRead {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 
 			&::before,
 			&::after {
-				border-top: 1px solid var(--skin-color-primary, $primary);
+				border-top: 1px solid var(--m3-primary, $primary);
 			}
 		}
 
@@ -631,10 +748,13 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__message {
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
-		background-color: #fff1f1;
-		border-radius: 0 12px 12px;
+		background-color: $message-incoming-bg;
+		border: 1px solid $message-incoming-bg;
+
+		// Figma 8498-32645: 12px radii, squared corner toward the avatar.
+		border-radius: 0 12px 12px 12px;
 		margin: 4px 0;
 		padding: $grid-base-two;
 		text-align: left;
@@ -642,7 +762,18 @@ $message-avatar-ring: #ebe2e2;
 		position: relative;
 		display: inline-block;
 		max-width: 100%;
-		min-width: 180px;
+		min-width: 200px;
+
+		// Improvement report (desktop): bubbles default to 460px so lines
+		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
+		// the fluid width from the wrap.
+		@media (width >= 900px) {
+			max-width: 460px;
+
+			&--wide {
+				max-width: 770px;
+			}
+		}
 
 		/* Reduce padding for messages with attachments */
 		&:has(&__attachment) {
@@ -655,8 +786,8 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--systemNotification {
-			background: #fff6f7;
-			border: 1px solid #ffd9df;
+			background: #fffafa;
+			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			border-radius: 12px;
 		}
 
@@ -693,8 +824,13 @@ $message-avatar-ring: #ebe2e2;
 		blockquote {
 			margin: 8px 0;
 			padding: 4px 0 4px 10px;
-			border-left: 3px solid #cc1e1c; // incoming + default quote color
+			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 6%,
+				transparent
+			);
 			border-radius: 0 6px 6px 0;
 		}
 
@@ -749,8 +885,75 @@ $message-avatar-ring: #ebe2e2;
 			text-align: right;
 		}
 
-		span:not(.messageItem__highlight) {
+		span:not(.messageItem__highlight, .messageItem__messageTime) {
 			display: inline;
+		}
+
+		// "Time + Emoji Rail" (Figma 336-12244 / 336-12225): timestamp and
+		// reaction chips share one row at the bubble bottom. Incoming: chips
+		// left, time right. Outgoing: time left, chips right.
+		.messageItem__timeRail {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: flex-end;
+			justify-content: flex-end;
+			gap: 4px;
+			width: 100%;
+			min-width: 0;
+			margin-top: 4px;
+
+			&--outgoing {
+				justify-content: flex-start;
+
+				// Figma 336-12225: extra clearance so chips never sit under
+				// the overlapping avatar ring at the bubble corner.
+				padding-right: 12px;
+			}
+		}
+
+		.messageItem__messageTime {
+			display: inline-flex;
+			align-items: center;
+			flex-shrink: 0;
+			gap: 4px;
+			padding-top: 8px;
+			line-height: 1;
+			font-size: $font-size-secondary;
+			color: var(--m3-on-surface-variant, $tertiary);
+			white-space: nowrap;
+		}
+
+		// Delivery status (Figma 7086-57415): the bubble time rail carries one
+		// of three states next to the timestamp. Each state is a single glyph
+		// (the double check ships as one SVG), so height is fixed and width is
+		// left to `auto` to preserve each icon's own aspect ratio.
+		.messageItem__deliveryStatus {
+			display: inline-flex;
+			align-items: center;
+
+			svg {
+				display: block;
+				height: 10px;
+				width: auto;
+			}
+
+			// Figma (7539-29191/-29194 and the annotated Chat Room frames)
+			// renders ALL delivery glyphs in the brand red — single check
+			// (zugestellt), double check (gelesen) and the failure cross.
+			&--sent svg path,
+			&--read svg path {
+				fill: var(--m3-primary, #a5000a);
+			}
+
+			// Not delivered: red cross, a touch larger to match the denser
+			// icon.
+			&--failed svg {
+				height: 14px;
+
+				path {
+					fill: var(--m3-primary, #a5000a);
+				}
+			}
 		}
 
 		&__attachment {
@@ -774,14 +977,58 @@ $message-avatar-ring: #ebe2e2;
 				padding: 0;
 				margin: 0;
 				width: 100%;
+				position: relative;
+
+				// Reserve the box via the sender-provided intrinsic ratio
+				// (inline aspect-ratio style) but never grow past the bubble.
+				max-height: 320px;
 
 				img {
 					width: 100%;
 					max-width: 100%;
-					height: auto;
+					height: 100%;
+					max-height: 320px;
+					object-fit: contain;
 					display: block;
 					margin: 0;
 					border-radius: 0;
+				}
+
+				// Media check state "unchecked" (WP-4): this styles the
+				// no-source placeholder shown before deliberate reveal.
+				&--blurred {
+					img {
+						filter: blur(24px);
+						transform: scale(1.06); // hide sharp blur edges
+					}
+				}
+			}
+
+			&__reveal {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+				border: 0;
+				background: rgba(23, 25, 28, 0.35);
+				color: #fff;
+				font-size: 14px;
+				font-weight: 500;
+				cursor: pointer;
+			}
+
+			&--blocked {
+				opacity: 0.85;
+
+				&:hover {
+					border-color: #e3e8f0;
+					box-shadow: none;
+				}
+
+				.messageItem__message__attachment__meta {
+					color: var(--m3-primary, #a5000a);
 				}
 			}
 
@@ -840,13 +1087,14 @@ $message-avatar-ring: #ebe2e2;
 			&__meta {
 				font-size: $font-size-secondary;
 				line-height: $line-height-secondary;
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 		}
 
 		&--myMessage {
-			color: #1c1b1f;
-			background-color: #ebe2e2;
+			color: $message-outgoing-text;
+			background-color: $message-outgoing-bg;
+			border-color: $message-outgoing-bg;
 
 			.messageItem__message__attachment {
 				background-color: $white;
@@ -854,12 +1102,17 @@ $message-avatar-ring: #ebe2e2;
 
 			a,
 			a:hover {
-				color: #1c1b1f;
+				color: var(--m3-primary, $primary);
 			}
 
 			blockquote {
-				border-left-color: #7d4c4c;
-				background: rgba(125, 76, 76, 0.08);
+				border-left-color: var(--m3-primary, $primary);
+				background: rgba(165, 0, 10, 0.08);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 8%,
+					transparent
+				);
 			}
 		}
 	}
@@ -870,12 +1123,13 @@ $message-avatar-ring: #ebe2e2;
 		gap: 6px;
 		flex-wrap: wrap;
 		margin: 2px 0 6px;
+		padding-left: 20px;
 	}
 
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -890,7 +1144,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		white-space: nowrap;
 	}
 
@@ -936,7 +1190,7 @@ $message-avatar-ring: #ebe2e2;
 		gap: 2px;
 		font-size: 12px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__senderInfoMetaIcon {
@@ -945,7 +1199,7 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-block;
 
 		path {
-			fill: #646d78;
+			fill: var(--m3-secondary-container, #646d78);
 		}
 	}
 
@@ -962,24 +1216,22 @@ $message-avatar-ring: #ebe2e2;
 		border: 1px solid rgba(30, 136, 229, 0.35);
 	}
 
-	&__systemNotificationTag {
-		display: inline-flex;
-		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: #3b4044;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		margin-bottom: 8px;
-	}
+	/*
+	 * The chip and the 24px headline that used to sit inside the bubble are
+	 * gone: a system notice now uses the same two-line header as
+	 * MessageSendFailed (Figma App.Oriso 8607-28488), so the bubble carries
+	 * the body only. See ORISO-Frontend#892.
+	 */
 
-	&__systemNotificationTitle {
-		font-size: 24px;
-		font-weight: 700;
-		color: #1f1f1f;
-		line-height: 1.25;
-		margin-bottom: 8px;
+	/*
+	 * MessageSendFailed puts its avatar in a real side column, so its header
+	 * needs no indent. Here the avatar deliberately overlaps the content column
+	 * (see the 19px-overlap note above), which is why the name line carries
+	 * `padding-left: 20px`. The system-notice header sits in the same slot and
+	 * needs the same clearance — without it the title runs under the avatar.
+	 */
+	&__systemNotificationHeaderText {
+		padding-left: 20px;
 	}
 
 	&__systemNotificationDescription {
@@ -1001,7 +1253,6 @@ $message-avatar-ring: #ebe2e2;
 			border-color: rgba(255, 255, 255, 0.4);
 		}
 
-		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}
@@ -1056,7 +1307,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 
 	&__threadButton:hover .messageItem__threadButtonHover {
@@ -1075,8 +1326,8 @@ $message-avatar-ring: #ebe2e2;
 		max-width: 360px;
 		padding: 8px 10px;
 		border-radius: 999px;
-		background: #32b86c;
-		color: #fff;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary-container, #ffe2de);
 
 		audio {
 			display: none;
@@ -1085,8 +1336,8 @@ $message-avatar-ring: #ebe2e2;
 
 	&__voiceNote__play {
 		border: none;
-		background: rgba(0, 0, 0, 0.18);
-		color: #fff;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
@@ -1097,6 +1348,15 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
+			outline-offset: 2px;
+		}
 	}
 
 	&__voiceNote__wave {
@@ -1106,7 +1366,7 @@ $message-avatar-ring: #ebe2e2;
 		border-radius: 10px;
 		background-image: repeating-linear-gradient(
 			90deg,
-			rgba(255, 255, 255, 0.28) 0 3px,
+			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
 			transparent 3px 7px
 		);
 		opacity: 1;
@@ -1122,7 +1382,7 @@ $message-avatar-ring: #ebe2e2;
 		border-radius: 10px;
 		background-image: repeating-linear-gradient(
 			90deg,
-			rgba(255, 255, 255, 0.95) 0 3px,
+			var(--m3-on-primary-container, #ffe2de) 0 3px,
 			transparent 3px 7px
 		);
 		transition: width 120ms linear;
@@ -1143,10 +1403,10 @@ $message-avatar-ring: #ebe2e2;
 		cursor: pointer;
 
 		svg {
-			fill: var(--skin-color-secondary, $secondary);
+			fill: var(--m3-secondary, $secondary);
 
 			path {
-				fill: var(--skin-color-secondary, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 
 			&.copy {
@@ -1156,14 +1416,14 @@ $message-avatar-ring: #ebe2e2;
 			}
 
 			&:hover path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
 			}
 
 			&.success {
 				position: absolute;
 				bottom: 0;
 				left: 50%;
-				fill: $form-success;
+				fill: var(--m3-success, $form-success);
 				width: 18px;
 				transform: translate(-50%, 0) scale(0);
 				opacity: 0;
@@ -1174,7 +1434,7 @@ $message-avatar-ring: #ebe2e2;
 
 				path,
 				&:hover path {
-					fill: $form-success;
+					fill: var(--m3-success, $form-success);
 				}
 			}
 		}
@@ -1195,7 +1455,7 @@ $message-avatar-ring: #ebe2e2;
 	&__time {
 		font-size: $font-size-secondary;
 		line-height: $font-size-tertiary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
 	&__icon {
@@ -1214,7 +1474,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		svg * {
-			fill: $form-success;
+			fill: var(--m3-success, $form-success);
 		}
 
 		&--grey {
@@ -1268,12 +1528,12 @@ $message-avatar-ring: #ebe2e2;
 
 		&__item {
 			&--delete {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-decoration: none;
 				display: flex;
 
 				svg g {
-					fill: $form-error;
+					fill: var(--m3-error, $form-error);
 				}
 			}
 		}
@@ -1281,9 +1541,17 @@ $message-avatar-ring: #ebe2e2;
 }
 
 .messageItem--chatEvent {
+	align-items: center;
+	display: flex;
 	justify-content: center;
 	margin: 12px 0;
-	flex-direction: unset !important;
+	flex-direction: column !important;
+	width: 100%;
+
+	.messageItem__divider {
+		align-self: stretch;
+		width: 100%;
+	}
 
 	.messageItem__chatEvent {
 		display: inline-block;
@@ -1312,7 +1580,7 @@ $message-avatar-ring: #ebe2e2;
 		padding-bottom: 2px;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $form-primary);
+			fill: var(--m3-secondary, $form-primary);
 		}
 	}
 
@@ -1404,19 +1672,248 @@ $message-avatar-ring: #ebe2e2;
 		}
 	}
 
-	// Color for outgoing messages (myMessage - white)
+	// Color for outgoing messages on the light pink bubble.
 	&--myMessage {
-		color: #ffffff; // White color for outgoing messages
+		color: var(--m3-primary, $primary);
 
 		&:hover {
-			color: #e6e6e6;
+			color: var(--m3-primary-hover, $hover-primary);
 			text-decoration: none;
 		}
 
 		&:focus {
-			outline: 2px solid #ffffff;
+			outline: 2px solid var(--m3-primary, $primary);
 			outline-offset: 2px;
 			border-radius: 4px;
+		}
+	}
+}
+
+// Relations foundation (#435): quote block of the replied-to message,
+// rendered above the reply body from the m.in_reply_to relation.
+.messageItem__replyQuote {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 6px;
+	padding: 6px 10px;
+	border-left: 3px solid var(--m3-primary, #a5000a);
+	border-radius: 4px;
+	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	font-size: 12px;
+	line-height: 1.4;
+
+	&--myMessage {
+		background: rgba(255, 255, 255, 0.16);
+		border-left-color: var(--m3-on-primary, #ffffff);
+	}
+
+	.messageItem__replyQuoteAuthor {
+		font-weight: 600;
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+
+	&--myMessage .messageItem__replyQuoteAuthor {
+		color: inherit;
+	}
+
+	.messageItem__replyQuoteText {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		color: inherit;
+		opacity: 0.85;
+	}
+}
+
+// Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
+// bubble, sharing the time rail. Own reaction = red count.
+// Issue #564: overflow must scroll horizontally — never wrap/stack.
+.messageItem__reactions {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 4px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
+	overscroll-behavior-x: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+
+	// Right-align via auto margin instead of justify-content: flex-end —
+	// flex-end would make the overflowing start unreachable when scrolling.
+	&--right .messageItem__reactionPill:first-child {
+		margin-left: auto;
+	}
+
+	.messageItem__reactionPill {
+		display: inline-flex;
+		align-items: center;
+		flex-shrink: 0;
+		gap: 4px;
+		height: 32px;
+		padding: 6px 8px;
+		white-space: nowrap;
+
+		// M3 outlined chips stroke with `outline-variant`; this design uses
+		// the custom Figma role `outline-variant-light`, which is fixed white
+		// and NOT emitted by the OrisoScheme engine — hence the literal.
+		border: 1px solid #fff;
+		border-radius: 8px;
+		background: #fff;
+		font-size: 16px;
+		line-height: 1;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+		}
+
+		.messageItem__reactionPillCount {
+			color: var(--m3-on-surface, #1b1b1c);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: 0.1px;
+		}
+
+		&--mine .messageItem__reactionPillCount {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+}
+
+// "Sending message failed" notification (Figma Chat Room frames): error
+// avatar + bold title/subtitle header above a grey explanation bubble. The
+// failure cross inherits the shared `.messageItem__deliveryStatus--failed`
+// styling (M3 error colour), so no colour override is needed here.
+.messageItem__sendFailedHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 4px;
+}
+
+// Avoid `.sideColumnGroup--left` (-25% for kebab+avatar). Send-failed has
+// avatar only, so use a lighter lift.
+.messageItem--sendFailed .messageItem__sideColumnGroup {
+	translate: 0% -5%;
+}
+
+// The content column overlaps the avatar column by 19px (like every
+// incoming message) — indent the header text so it clears the avatar ring.
+.messageItem--sendFailed .messageItem__header {
+	padding-left: 24px;
+}
+
+// Inner 48px circle inside the standard ringed avatar frame.
+.messageItem__sendFailedAvatar {
+	width: 48px;
+	height: 48px;
+	min-width: 48px;
+	border-radius: 50%;
+
+	background: #410001;
+	color: var(--m3-inverse-on-surface, #fff);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.messageItem__sendFailedTitle {
+	font-size: 14px;
+	line-height: 14px;
+	font-weight: 600;
+	color: var(--m3-on-surface, #1f2937);
+}
+
+.messageItem__sendFailedSubtitle {
+	margin-top: 4px;
+	font-size: 12px;
+	line-height: 12px;
+	font-weight: 500;
+	color: var(--m3-secondary-container, #646d78);
+}
+
+.messageItem__sendFailedRetry {
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	margin: 0;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			var(--m3-primary, #a5000a) 8%,
+			transparent
+		);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+.messageItem--sendFailed .messageItem__timeRail {
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 8px;
+}
+
+// Quick-react emoji row inside the message action menu (long-press / kebab),
+// Slack-style. Lives in a portal, hence outside .messageItem.
+.messageItem__actionMenuReactions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2px;
+	padding: 4px 12px 8px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.12));
+
+	.messageItem__actionMenuReactionEmoji {
+		border: none;
+		background: none;
+		font-size: 18px;
+		line-height: 1;
+		padding: 5px;
+		cursor: pointer;
+		border-radius: 999px;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+
+		&--mine {
+			// primary-fixed stays light for every tenant seed.
+			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
+			box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
 		}
 	}
 }

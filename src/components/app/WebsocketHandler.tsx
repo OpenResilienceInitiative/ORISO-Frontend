@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -28,8 +28,10 @@ interface WebsocketHandlerProps {
 }
 
 export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
+	const liveWebsocketDisabled =
+		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
@@ -46,18 +48,30 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		WebsocketConnectionDeactivatedContext
 	);
 
-	const stompClient = Stomp.over(function () {
-		return new SockJS(endpoints.liveservice);
-	});
+	const stompClient = React.useMemo(
+		() =>
+			liveWebsocketDisabled
+				? undefined
+				: Stomp.over(function () {
+						return new SockJS(endpoints.liveservice);
+					}),
+		[liveWebsocketDisabled]
+	);
 
 	let reconnectAttemptCount = 0;
 	const RECONNECT_ATTEMPT_LIMIT = 2;
 	const RECONNECT_DELAY = 5000;
 
 	// DEV-NOTE: comment next line to activate debug mode (stomp logging) for development
-	stompClient.debug = () => {};
+	if (stompClient) {
+		stompClient.debug = () => {};
+	}
 
 	useEffect(() => {
+		if (!stompClient) {
+			return;
+		}
+
 		// STOMP WebSocket setup (for LiveService)
 		stompClient.beforeConnect = () => {
 			stompClient.connectHeaders = {
@@ -96,43 +110,8 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			}
 		};
 
-		// Listen to Matrix 'videoCallRequest' events
-		const handleMatrixCallRequest = (event: any) => {
-			// console.log('📞 Matrix videoCallRequest event received:', event);
-
-			// Use CallContext to trigger floating widget
-			const callContext = (window as any).callContext;
-			if (callContext) {
-				// console.log('📞 Triggering incoming call via CallContext');
-				callContext.receiveCall(
-					event.roomId,
-					true, // Assume video for now (we can enhance this later)
-					event.callId,
-					event.sender
-				);
-			} else {
-				// console.error('❌ CallContext not available');
-			}
-		};
-
-		// Listen to Matrix 'callEnded' events
-		const handleMatrixCallEnded = (event: any) => {
-			// console.log('📴 Matrix callEnded event received:', event);
-
-			// Use CallContext to end the call
-			const callContext = (window as any).callContext;
-			if (callContext) {
-				// console.log('📴 Ending call via CallContext');
-				callContext.hangupCall();
-			} else {
-				// console.error('❌ CallContext not available');
-			}
-		};
-
 		// Register Matrix event listeners
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
-		matrixLiveEventBridge.on('videoCallRequest', handleMatrixCallRequest);
-		matrixLiveEventBridge.on('callEnded', handleMatrixCallEnded);
 
 		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
 
@@ -143,11 +122,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 				'directMessage',
 				handleMatrixDirectMessage
 			);
-			matrixLiveEventBridge.off(
-				'videoCallRequest',
-				handleMatrixCallRequest
-			);
-			matrixLiveEventBridge.off('callEnded', handleMatrixCallEnded);
 			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -171,8 +145,12 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 				isBrowserNotificationTypeEnabled('newMessage')
 			) {
 				sendNotification(translate('notifications.message.new'), {
+					// Route the banner to its config row (#576 harmonised
+					// model): Gespräch → Standard-Benachrichtigung.
+					family: 'messages',
+					eventType: 'message.new',
 					onclick: () => {
-						history.push(`/sessions/consultant/sessionView`);
+						navigate(`/sessions/consultant/sessionView`);
 					}
 				});
 			}
@@ -209,7 +187,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	useEffect(() => {
 		if (newStompVideoCallRequest) {
 			addNotification({
-				id: newStompVideoCallRequest.rcGroupId,
+				id: newStompVideoCallRequest.matrixRoomId,
 				notificationType: NOTIFICATION_TYPE_CALL,
 				videoCall: newStompVideoCallRequest
 			});
@@ -217,6 +195,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	}, [newStompVideoCallRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const stompConnect = () => {
+		if (!stompClient) {
+			return;
+		}
+
 		stompClient.reconnect_delay = RECONNECT_DELAY;
 		stompClient.connect({}, (frame) => {
 			reconnectAttemptCount = 0;

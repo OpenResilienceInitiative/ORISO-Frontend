@@ -1,7 +1,7 @@
 import { BookingEventsInterface } from '../globalState/interfaces';
 import { endpoints } from '../resources/scripts/endpoints';
 import { BookingsStatus } from '../utils/consultant';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 export const apiGetConsultantAppointments = async (
 	userId: string,
@@ -11,6 +11,7 @@ export const apiGetConsultantAppointments = async (
 
 	return fetchData({
 		url,
-		method: FETCH_METHODS.GET
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	});
 };

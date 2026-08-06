@@ -5,12 +5,12 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useRef,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
 import {
 	IncomingVideoCallProps,
-	NOTIFICATION_TYPE_CALL,
 	NotificationTypeCall
 } from '../../components/incomingVideoCall/IncomingVideoCall';
 import {
@@ -20,6 +20,16 @@ import {
 	apiMarkEventNotificationRead
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
+import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
+import {
+	installAudioUnlock,
+	playNotificationSound,
+	selectEventToAnnounce
+} from '../../utils/notificationSettings/soundPlayback';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -81,6 +91,7 @@ export type NotificationFeedItem = {
 	actionPath?: string;
 	actionLabel?: string;
 	sourceSessionId?: string;
+	params?: EventActionParams;
 	category: 'system' | 'message';
 };
 
@@ -93,6 +104,7 @@ export type EventNotificationInput = {
 	actionPath?: string;
 	actionLabel?: string;
 	sourceSessionId?: string | number;
+	params?: EventActionParams;
 };
 
 const NOTIFICATION_FEED_MAX_ITEMS = 50;
@@ -121,6 +133,38 @@ export function NotificationsProvider(props) {
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	// #576: id of the newest event slot we already reconciled, so a feed refresh
+	// only announces a genuinely newer event (not every poll, and never on the
+	// backlog surfaced when an event above it is read).
+	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+
+	// #576: play the configured sound for a genuinely new, unread top event —
+	// decoupled from the OS popup, so it also sounds with the tab focused. The
+	// sound routes through the single suppression gate (DND, per-conversation
+	// level, mute, family-off) inside playNotificationSound.
+	const maybePlaySoundForNewEvent = useCallback(
+		(feed: NotificationFeedItem[]) => {
+			const { announce, nextMarker } = selectEventToAnnounce(
+				feed,
+				lastAnnouncedEventIdRef.current
+			);
+			lastAnnouncedEventIdRef.current = nextMarker;
+			if (!announce) {
+				return;
+			}
+			const { settings, device } = notificationSettingsStore.getState();
+			const family = getEventDescriptor(announce.eventType).family;
+			const isMention = announce.params?.mentioned === true;
+			playNotificationSound(
+				settings,
+				device,
+				family,
+				announce.eventType,
+				isMention
+			);
+		},
+		[]
+	);
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
@@ -132,23 +176,33 @@ export function NotificationsProvider(props) {
 		}
 
 		try {
-			const response = await apiGetEventNotifications(0, NOTIFICATION_FEED_MAX_ITEMS);
-			const normalized: NotificationFeedItem[] = (response?.items || []).map(
-				(item) => ({
-					id: String(item.id),
-					type: item.category === 'message' ? NOTIFICATION_TYPE_INFO : NOTIFICATION_TYPE_INFO,
-					title: item.title || 'Notification',
-					text: item.text || '',
-					eventType: item.eventType || 'event',
-					createdAt: item.createdAt || new Date().toISOString(),
-					readAt: item.readAt ?? null,
-					actionPath: item.actionPath,
-					actionLabel: item.actionLabel,
-					sourceSessionId:
-						item.sourceSessionId != null ? String(item.sourceSessionId) : undefined,
-					category: item.category === 'message' ? 'message' : 'system'
-				})
+			const response = await apiGetEventNotifications(
+				0,
+				NOTIFICATION_FEED_MAX_ITEMS
 			);
+			const normalized: NotificationFeedItem[] = (
+				response?.items || []
+			).map((item) => ({
+				id: String(item.id),
+				type:
+					item.category === 'message'
+						? NOTIFICATION_TYPE_INFO
+						: NOTIFICATION_TYPE_INFO,
+				title: item.title || 'Notification',
+				text: item.text || '',
+				eventType: item.eventType || 'event',
+				createdAt: item.createdAt || new Date().toISOString(),
+				readAt: item.readAt ?? null,
+				actionPath: item.actionPath,
+				actionLabel: item.actionLabel,
+				sourceSessionId:
+					item.sourceSessionId != null
+						? String(item.sourceSessionId)
+						: undefined,
+				params: parseEventActionParams(item.params),
+				category: item.category === 'message' ? 'message' : 'system'
+			}));
+			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
@@ -156,7 +210,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, []);
+	}, [maybePlaySoundForNewEvent]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();
@@ -166,6 +220,30 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe]);
+
+	// Safari: programmatic audio.play() is only allowed on an element that was
+	// played from a user gesture — prime one on the first pointer/keydown.
+	useEffect(() => installAudioUnlock(), []);
+
+	// Refresh trigger (#845, corrected): there is NO backend live push — the
+	// LiveService transport is a 410 tombstone (ORISO-UserService
+	// DeprecatedLiveProxyController). `messageEventEmitter` is fed by the
+	// client's OWN Matrix sync (WebsocketHandler → matrixLiveEventBridge
+	// 'directMessage'), so this only fires early for rooms this client
+	// syncs; everything else arrives via the 15s poll above. Debounced so
+	// a burst of events collapses into a single refetch.
+	useEffect(() => {
+		let debounceTimer: number | undefined;
+		const onLiveEvent = () => {
+			window.clearTimeout(debounceTimer);
+			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
+		};
+		messageEventEmitter.on(onLiveEvent);
+		return () => {
+			messageEventEmitter.off(onLiveEvent);
+			window.clearTimeout(debounceTimer);
+		};
 	}, [refreshNotificationFeedSafe]);
 
 	const hasNotification = useCallback(
@@ -200,29 +278,33 @@ export function NotificationsProvider(props) {
 		[hasNotification, notifications]
 	);
 
-	const addEventNotification = useCallback((event: EventNotificationInput) => {
-		// Fallback for local-only events until every producer is fully backend-backed.
-		const feedItem: NotificationFeedItem = {
-			id: `local-${uuid()}`,
-			type: event.type || NOTIFICATION_TYPE_INFO,
-			title: event.title,
-			text: event.text,
-			eventType: event.eventType,
-			createdAt: new Date().toISOString(),
-			readAt: null,
-			actionPath: event.actionPath,
-			actionLabel: event.actionLabel,
-			sourceSessionId:
-				event.sourceSessionId != null
-					? String(event.sourceSessionId)
-					: undefined,
-			category: event.category === 'message' ? 'message' : 'system'
-		};
-		setNotificationFeed((existing) =>
-			[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
-		);
-		setUnreadNotificationCount((value) => value + 1);
-	}, []);
+	const addEventNotification = useCallback(
+		(event: EventNotificationInput) => {
+			// Fallback for local-only events until every producer is fully backend-backed.
+			const feedItem: NotificationFeedItem = {
+				id: `local-${uuid()}`,
+				type: event.type || NOTIFICATION_TYPE_INFO,
+				title: event.title,
+				text: event.text,
+				eventType: event.eventType,
+				createdAt: new Date().toISOString(),
+				readAt: null,
+				actionPath: event.actionPath,
+				actionLabel: event.actionLabel,
+				sourceSessionId:
+					event.sourceSessionId != null
+						? String(event.sourceSessionId)
+						: undefined,
+				params: event.params,
+				category: event.category === 'message' ? 'message' : 'system'
+			};
+			setNotificationFeed((existing) =>
+				[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+			);
+			setUnreadNotificationCount((value) => value + 1);
+		},
+		[]
+	);
 
 	const removeNotification = useCallback(
 		(id: string | number, type: NotificationTypes) => {
@@ -269,7 +351,9 @@ export function NotificationsProvider(props) {
 		apiMarkAllEventNotificationsRead().catch(() => undefined);
 		const now = new Date().toISOString();
 		setNotificationFeed((existing) =>
-			existing.map((item) => (item.readAt ? item : { ...item, readAt: now }))
+			existing.map((item) =>
+				item.readAt ? item : { ...item, readAt: now }
+			)
 		);
 		setUnreadNotificationCount(0);
 	}, []);

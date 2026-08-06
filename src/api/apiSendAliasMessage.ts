@@ -31,13 +31,13 @@ export enum ReassignStatus {
 	REJECTED = 'REJECTED'
 }
 interface AliasMessageParams {
-	rcGroupId: string;
+	matrixRoomId: string;
 	type: ALIAS_MESSAGE_TYPES;
 	args?: ConsultantReassignment;
 }
 
 export const apiSendAliasMessage = async ({
-	rcGroupId,
+	matrixRoomId,
 	type,
 	args
 }: AliasMessageParams): Promise<any> => {
@@ -45,9 +45,8 @@ export const apiSendAliasMessage = async ({
 
 	return fetchData({
 		url,
-		headersData: { rcGroupId },
+		headersData: { matrixRoomId },
 		method: FETCH_METHODS.POST,
-		rcValidation: true,
 		bodyData: JSON.stringify({
 			messageType: type,
 			args: args

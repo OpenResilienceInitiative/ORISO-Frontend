@@ -12,6 +12,14 @@ import {
 	getValueFromCookie,
 	setValueInCookie
 } from '../sessionCookie/accessSessionCookie';
+import { STORAGE_KEY_E2EE_DISABLED } from '../../globalState/provider/E2EEProvider';
+import {
+	canUseStoredValue,
+	DEV_ONLY_SWITCH_KEYS,
+	STORAGE_KEY_2FA,
+	STORAGE_KEY_DISABLE_2FA_DUTY,
+	STORAGE_KEY_LOCALE
+} from './devToolbarKeys';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -21,21 +29,23 @@ import {
 	RequestLog
 } from '../../utils/requestCollector';
 
-export const STORAGE_KEY_LOCALE = 'locale';
 export const STORAGE_KEY_API = 'devProxy';
 export const STORAGE_KEY_DEV_TOOLBAR = 'showDevTools';
 export const STORAGE_KEY_POSITION = 'positionDevTools';
 export const STORAGE_KEY_HIDDEN = 'hiddenDevTools';
 
-export const STORAGE_KEY_2FA = '2fa';
-export const STORAGE_KEY_DISABLE_2FA_DUTY = 'disable 2fa_duty';
 export const STORAGE_KEY_RELEASE_NOTES = 'release_notes';
 export const STORAGE_KEY_ERROR_BOUNDARY = 'error_boundary';
-export const STORAGE_KEY_E2EE_DISABLED = 'e2ee_disabled';
+export { STORAGE_KEY_E2EE_DISABLED };
+export {
+	STORAGE_KEY_LOCALE,
+	STORAGE_KEY_2FA,
+	STORAGE_KEY_DISABLE_2FA_DUTY,
+	DEV_ONLY_SWITCH_KEYS
+};
 export const STORAGE_KEY_TRANSLATION_DISABLE_CACHE =
 	'translation_disable_cache';
 export const STORAGE_KEY_ENABLE_TRANSLATION_CHECK = 'enable_translation_check';
-export const STORAGE_KEY_ATTACHMENT_ENCRYPTION = 'attachement_encryption';
 
 const DEVTOOLBAR_EVENT = 'devToolbar';
 
@@ -153,23 +163,6 @@ const LOCAL_STORAGE_SWITCHES: (TLocalStorageSwitches | null)[] = [
 			'Disable the release notes dialog if there are new release notes added'
 	},
 	{
-		label: 'DEV E2EE',
-		key: STORAGE_KEY_E2EE_DISABLED,
-		type: TOGGLE,
-		choices: { '0': 'Enabled', '1': 'Disabled' },
-		value: '0',
-		description: 'Disable end-to-end encryption. DEV only'
-	},
-	{
-		label: 'DEV ATTACHMENT ENCRYPTION',
-		key: STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-		type: TOGGLE,
-		choices: { '0': 'Disabled', '1': 'Enabled' },
-		value: (appConfig) => (appConfig.attachmentEncryption ? '1' : '0'),
-		description:
-			'Disable attachment encryption. Enable only when e2ee is also enabled. DEV only'
-	},
-	{
 		label: 'DEV Error Boundary',
 		key: STORAGE_KEY_ERROR_BOUNDARY,
 		type: TOGGLE,
@@ -219,7 +212,7 @@ const LOCAL_STORAGE_SWITCHES: (TLocalStorageSwitches | null)[] = [
 			i18n.changeLanguage(
 				value === 'cimode'
 					? 'cimode'
-					: localStorage.getItem(STORAGE_KEY_LOCALE) ?? 'de'
+					: (localStorage.getItem(STORAGE_KEY_LOCALE) ?? 'de')
 			);
 		}
 	},
@@ -253,6 +246,11 @@ const LOCAL_STORAGE_SWITCHES: (TLocalStorageSwitches | null)[] = [
 	}
 ];
 
+const getVisibleLocalStorageSwitches = () =>
+	LOCAL_STORAGE_SWITCHES.filter(Boolean).filter((localStorageSwitch) =>
+		canUseStoredValue(localStorageSwitch.key)
+	);
+
 export const useDevToolbar = () => {
 	const [lastChange, setLastChange] = useState(null);
 	const appConfig = useAppConfig();
@@ -271,8 +269,13 @@ export const useDevToolbar = () => {
 
 	const getDevToolbarOption = useCallback(
 		(key) => {
+			// A dev-only switch must fall back to its default outside development,
+			// even when someone set the localStorage key by hand (FE-M10).
+			const storedValue = canUseStoredValue(key)
+				? localStorage.getItem(key)
+				: null;
 			const value =
-				localStorage.getItem(key) ??
+				storedValue ??
 				LOCAL_STORAGE_SWITCHES.filter(Boolean).find(
 					(localStorageSwitch) => localStorageSwitch.key === key
 				)?.value;
@@ -335,14 +338,12 @@ export const DevToolbar = () => {
 
 	const initLcSwitches = useCallback(() => {
 		setLcSwitches(
-			LOCAL_STORAGE_SWITCHES.filter(Boolean).map(
-				(localStorageSwitch) => ({
-					...localStorageSwitch,
-					value:
-						localStorage.getItem(localStorageSwitch.key) ??
-						localStorageSwitch.value
-				})
-			)
+			getVisibleLocalStorageSwitches().map((localStorageSwitch) => ({
+				...localStorageSwitch,
+				value:
+					localStorage.getItem(localStorageSwitch.key) ??
+					localStorageSwitch.value
+			}))
 		);
 	}, []);
 
@@ -412,7 +413,7 @@ export const DevToolbar = () => {
 	);
 
 	const reset = useCallback(() => {
-		LOCAL_STORAGE_SWITCHES.filter(Boolean).forEach((localStorageSwitch) => {
+		getVisibleLocalStorageSwitches().forEach((localStorageSwitch) => {
 			if (localStorageSwitch.key === STORAGE_KEY_DEV_TOOLBAR) {
 				return;
 			}

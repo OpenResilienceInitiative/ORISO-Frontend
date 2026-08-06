@@ -2,14 +2,14 @@
 	height: 20px;
 	margin: $grid-base-two 0;
 	width: 100%;
-	border: 1px solid $secondary;
+	border: 1px solid var(--m3-on-surface, $secondary);
 	border-radius: $button-border-radius;
 	overflow: hidden;
 	position: relative;
 
 	&__progress {
 		height: 18px;
-		background: $primary;
+		background: var(--m3-primary, $primary);
 		transition: width 0.5s ease;
 		display: flex;
 		justify-content: center;

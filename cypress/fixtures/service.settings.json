@@ -16,10 +16,6 @@
 		"value": false,
 		"readOnly": false
 	},
-	"disableVideoAppointments": {
-		"value": false,
-		"readOnly": false
-	},
 	"mainTenantSubdomainForSingleDomainMultitenancy": {
 		"value": "app",
 		"readOnly": false

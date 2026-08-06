@@ -11,7 +11,6 @@ import { EmptyType } from '../EmptyState';
 import { OverviewCard } from '../OverviewCard/OverviewCard';
 import './sessionCard.styles.scss';
 import { LanguagesContext } from '../../../../globalState/provider/LanguagesProvider';
-import { RocketChatUsersOfRoomProvider } from '../../../../globalState/provider/RocketChatUsersOfRoomProvider';
 
 interface SessionCardProps {
 	type: SESSION_LIST_TYPES;
@@ -50,12 +49,10 @@ export const SessionCard = ({
 							key={activeSession.item.id}
 							activeSession={activeSession}
 						>
-							<RocketChatUsersOfRoomProvider>
-								<SessionListItemComponent
-									defaultLanguage={fixedLanguages[0]}
-									index={index}
-								/>
-							</RocketChatUsersOfRoomProvider>
+							<SessionListItemComponent
+								defaultLanguage={fixedLanguages[0]}
+								index={index}
+							/>
 						</ActiveSessionProvider>
 					))}
 			</SessionTypeProvider>

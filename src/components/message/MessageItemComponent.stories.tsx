@@ -1,0 +1,691 @@
+import * as React from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
+import { expect, waitFor, within } from 'storybook/test';
+import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
+import {
+	ActiveSessionContext,
+	E2EEContext,
+	UserDataContext,
+	type ExtendedSessionInterface
+} from '../../globalState';
+import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
+import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
+import type { UserDataInterface } from '../../globalState/interfaces';
+import { MessageItemComponent } from './MessageItemComponent';
+import {
+	MOCK_ASKER_MATRIX_ID,
+	MOCK_CONSULTANT_MATRIX_ID,
+	MOCK_GROUP_MODERATOR_MATRIX_ID,
+	mockActiveSession1on1,
+	mockActiveSessionGroup,
+	mockAppointmentAliasContent,
+	mockConsultantListContext,
+	mockE2EEContext,
+	mockE2eeParams,
+	mockLongGermanMessage,
+	mockMessageItemComponentProps,
+	mockServerSettingsContext,
+	mockCaseHandoverGrantedMessage,
+	mockManyReactions,
+	mockReactions,
+	mockSystemNotificationMessage,
+	mockUserData,
+	mockVisibilityMessage
+} from './MessageItemComponent.mocks';
+import { phone390Globals } from './messageStoryShell';
+import './message.styles.scss';
+
+type MessageItemStoryParameters = {
+	activeSession?: ExtendedSessionInterface;
+	userData?: UserDataInterface;
+};
+
+function MessageItemContextDecorator({
+	activeSession,
+	userData,
+	children,
+	compact = false
+}: {
+	activeSession: ExtendedSessionInterface;
+	userData: UserDataInterface;
+	children: React.ReactNode;
+	compact?: boolean;
+}) {
+	return (
+		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
+			<ConsultantListContext.Provider value={mockConsultantListContext()}>
+				<E2EEContext.Provider value={mockE2EEContext()}>
+					<UserDataContext.Provider
+						value={{
+							userData,
+							setUserData: () => {},
+							reloadUserData: async () => null as any
+						}}
+					>
+						<ActiveSessionContext.Provider
+							value={{
+								activeSession,
+								reloadActiveSession: () => {},
+								readActiveSession: () => {}
+							}}
+						>
+							<div
+								style={{
+									maxWidth: compact ? 390 : 1000,
+									padding: compact
+										? '16px 12px'
+										: '24px 16px',
+									background: '#ffffff'
+								}}
+							>
+								{children}
+							</div>
+						</ActiveSessionContext.Provider>
+					</UserDataContext.Provider>
+				</E2EEContext.Provider>
+			</ConsultantListContext.Provider>
+		</ServerSettingsContext.Provider>
+	);
+}
+
+const baseHandlers = {
+	handleDecryptionErrors: () => {},
+	handleDecryptionSuccess: () => {},
+	e2eeParams: mockE2eeParams()
+};
+
+const meta = {
+	title: 'Components/Chat/MessageItem',
+	component: MessageItemComponent,
+	tags: ['autodocs'],
+	parameters: {
+		layout: 'fullscreen',
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				component:
+					'Chat message row (avatar, bubble, kebab). Production `.messageItem__kebabButton` is a **32×32px** touch zone (Figma Message Menu 772:18407 / issue #564 Android Compact). See `AndroidCompactKebabTouchZone`.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(),
+		...baseHandlers
+	},
+	decorators: [
+		(Story, { parameters }) => (
+			<MessageItemContextDecorator
+				activeSession={
+					(parameters as MessageItemStoryParameters).activeSession ??
+					mockActiveSession1on1()
+				}
+				userData={
+					(parameters as MessageItemStoryParameters).userData ??
+					mockUserData()
+				}
+				compact={Boolean(
+					(parameters as { compactShell?: boolean }).compactShell
+				)}
+			>
+				<Story />
+			</MessageItemContextDecorator>
+		)
+	]
+} satisfies Meta<typeof MessageItemComponent>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const ClientIn1on1Incoming: Story = {
+	name: 'Client 1-on-1 incoming (animal avatar)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		...baseHandlers
+	}
+};
+
+export const ClientIn1on1Outgoing: Story = {
+	name: 'Client 1-on-1 outgoing (animal avatar)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns zuerst die nächsten 10 Minuten strukturieren.'
+		}),
+		...baseHandlers
+	}
+};
+
+/**
+ * Issue #564 / Figma Android Compact: kebab (⋮) touch zone must be 32×32px.
+ * Uses the real MessageItemComponent + production `message.styles.scss`.
+ */
+export const AndroidCompactKebabTouchZone: Story = {
+	globals: phone390Globals,
+	name: 'Android Compact — kebab 32×32 touch zone',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		compactShell: true,
+		docs: {
+			description: {
+				story: 'Incoming + outgoing rows on a compact viewport. Each `.messageItem__kebabButton` must measure **32×32px** (min-width/height + box-sizing from production SCSS).'
+			}
+		}
+	},
+	render: () => (
+		<div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					isMyMessage: false,
+					userId: MOCK_ASKER_MATRIX_ID,
+					askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+					displayName: 'Sanftes Alpaka Kala',
+					username: 'sanftes.alpaka.kala@oriso.invalid',
+					message: 'Okay. Ich bin gerade zuhause und kann schreiben.'
+				})}
+				{...baseHandlers}
+			/>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					isMyMessage: true,
+					userId: MOCK_CONSULTANT_MATRIX_ID,
+					displayName: 'Beratende Person Kim G.',
+					username: 'kim.g@oriso.invalid',
+					message:
+						'Danke, dass du dich meldest. Lass uns zuerst die nächsten 10 Minuten strukturieren.'
+				})}
+				{...baseHandlers}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() => {
+			const kebabs = canvasElement.querySelectorAll(
+				'.messageItem__kebabButton'
+			);
+			expect(kebabs.length).toBeGreaterThanOrEqual(2);
+			kebabs.forEach((button) => {
+				const rect = (button as HTMLElement).getBoundingClientRect();
+				expect(Math.round(rect.width)).toBe(32);
+				expect(Math.round(rect.height)).toBe(32);
+				expect(button).toHaveAttribute('aria-label', 'More');
+			});
+		});
+		// Keep canvas typed usage so Storybook interaction panel stays wired.
+		expect(canvas.getAllByLabelText('More').length).toBeGreaterThanOrEqual(
+			2
+		);
+	}
+};
+
+export const GroupIncoming: Story = {
+	name: 'Group incoming (initials avatar)',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			rid: mockActiveSessionGroup().rid,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Kurzes Update für das Team: Der Fall bleibt heute bei mir.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupOutgoing: Story = {
+	name: 'Group outgoing (initials avatar)',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			rid: mockActiveSessionGroup().rid,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Verstanden, ich übernehme die Rückmeldung an die Klientin.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const NormalMessage: Story = {
+	name: 'Normal text message',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+		}),
+		...baseHandlers
+	}
+};
+
+export const SystemNotification: Story = {
+	name: 'System notification',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: mockSystemNotificationMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const CaseHandoverGranted: Story = {
+	name: 'Case handover granted (system card)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: mockCaseHandoverGrantedMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const AppointmentSet: Story = {
+	name: 'Appointment set',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message: '',
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.APPOINTMENT_SET,
+				content: mockAppointmentAliasContent
+			}
+		}),
+		...baseHandlers
+	}
+};
+
+export const DeletedMessage: Story = {
+	name: 'Deleted message',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			t: 'rm',
+			message: 'Diese Nachricht wurde gelöscht.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const LongMessage: Story = {
+	name: 'Long message with show more',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: mockLongGermanMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const IncomingWithReactions: Story = {
+	name: 'Incoming with reactions',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithReactions: Story = {
+	name: 'Outgoing with reactions (delivered)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message:
+				'Danke für deine Offenheit. Wir schauen uns das morgen gemeinsam an.'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+async function assertReactionRailScrollsHorizontally(
+	canvasElement: HTMLElement
+) {
+	await waitFor(() => {
+		const rail = canvasElement.querySelector(
+			'.messageItem__reactions'
+		) as HTMLElement | null;
+		expect(rail).toBeTruthy();
+		const pills = Array.from(
+			rail!.querySelectorAll('.messageItem__reactionPill')
+		) as HTMLElement[];
+		expect(pills.length).toBeGreaterThan(3);
+
+		// Single row: every pill shares the same top edge (no vertical stack).
+		const firstTop = pills[0].offsetTop;
+		pills.forEach((pill) => {
+			expect(pill.offsetTop).toBe(firstTop);
+			expect(getComputedStyle(pill).flexShrink).toBe('0');
+		});
+
+		const style = getComputedStyle(rail!);
+		expect(style.flexWrap).toBe('nowrap');
+		expect(style.overflowX).toMatch(/auto|scroll/);
+		expect(style.overflowY).toBe('hidden');
+		// Overflow content must be wider than the visible rail (scrollable).
+		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
+	});
+}
+
+export const OutgoingWithManyReactions: Story = {
+	name: 'Outgoing with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		// Narrow shell so the chip rail overflows and must scroll (#564).
+		compactShell: true,
+		docs: {
+			description: {
+				story: 'Many reaction chips stay on one row and scroll horizontally (`overflow-x: auto`) instead of wrapping.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Viele Reaktionen: die Chip-Leiste scrollt horizontal.'
+		}),
+		reactions: mockManyReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await assertReactionRailScrollsHorizontally(canvasElement);
+	}
+};
+
+export const IncomingWithManyReactions: Story = {
+	name: 'Incoming with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		compactShell: true,
+		docs: {
+			description: {
+				story: 'Many reaction chips stay on one row and scroll horizontally (`overflow-x: auto`) instead of wrapping.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockManyReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await assertReactionRailScrollsHorizontally(canvasElement);
+	}
+};
+
+export const OutgoingDelivered: Story = {
+	name: 'Outgoing delivered (single checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht ist zugestellt, aber noch nicht gelesen.'
+		}),
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingRead: Story = {
+	name: 'Outgoing read (double checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: false,
+			message: 'Diese Nachricht wurde bereits gelesen.'
+		}),
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingSendFailed: Story = {
+	name: 'Outgoing send failed (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht hat den Server nicht erreicht.'
+		}),
+		sendFailed: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const IncomingEncryptionBroke: Story = {
+	name: 'Incoming encryption broke (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Leila Pavlov',
+			username: 'leila.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht konnte nicht entschlüsselt werden.'
+		}),
+		// Incoming message whose Megolm decryption failed: the red cross shows
+		// on the received message (not own-message-only), labelled
+		// "Verschlüsselung gebrochen".
+		encryptionBroke: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const WideLongMessageDesktop: Story = {
+	name: 'Long text widens bubble (desktop 770px)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message:
+				'Hier ist das folgende Problem mit der Länge der Chatnachrichten: Oft sind die natürlich wie in einem Chat nicht so lang, weil sie eine direkte Unterhaltung sind. Manchmal sind das aber riesige Textbrocken, und da wäre auf dem Desktop besser, wenn die eher die breite Variante nutzen, damit die Zeilen nicht endlos umbrechen und der Text gut lesbar bleibt.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithVisibility: Story = {
+	name: 'Outgoing with visibility chip',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message: mockVisibilityMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageEveryoneNoChip: Story = {
+	name: 'Group message everyone can see — NO visibility chip',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Regression pin for ORISO-Frontend#892. A group message with no recipient restriction addresses everyone, so the chip must **not** render. Before the fix it showed "visible only to: Alle" — a restriction chip claiming there is no restriction.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Kurzes Update für das Team: Der Fall bleibt heute bei mir.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageRestrictedShowsChip: Story = {
+	name: 'Group message restricted — chip IS shown',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message: mockVisibilityMessage
+		}),
+		...baseHandlers
+	}
+};

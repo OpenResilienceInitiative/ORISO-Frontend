@@ -1,38 +1,44 @@
 import * as React from 'react';
-import { Redirect } from 'react-router-dom';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import {
 	UserDataContext,
 	hasUserAuthority,
 	AUTHORITIES,
 	ConsultingTypesContext,
-	RocketChatProvider,
 	InformalContext,
 	LocaleContext,
 	NotificationsContext
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
+import { RegistrationLoader } from './registrationLoader/RegistrationLoader';
+import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { handleTokenRefresh } from '../auth/auth';
 import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
-import { RocketChatSubscriptionsProvider } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUnreadProvider } from '../../globalState/provider/RocketChatUnreadProvider';
-import { RocketChatPublicSettingsProvider } from '../../globalState/provider/RocketChatPublicSettingsProvider';
-import { RocketChatGetUserRolesProvider } from '../../globalState/provider/RocketChatSytemUsersProvider';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
-import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
+import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	markConsultantLoginBlocked
+} from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
+import { withTimeout } from '../../utils/promiseTimeout';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -51,10 +57,28 @@ export const AuthenticatedApp = ({
 	const { joinGroupChat } = useJoinGroupChat();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
+	const { setMatrixClientService } = useMatrixClient();
+	const mounted = useRef(true);
+	useEffect(
+		() => () => {
+			mounted.current = false;
+		},
+		[]
+	);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
+	// Freshly-registered askers get a welcome loading animation bridging the
+	// bootstrap below (one-shot flag set just before the post-registration redirect).
+	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
+		const shouldShow =
+			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
+		if (shouldShow) {
+			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
+		}
+		return shouldShow;
+	});
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -84,6 +108,18 @@ export const AuthenticatedApp = ({
 				.then(() => {
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (
+								appConfig.blockConsultantAppLogin &&
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userProfileData
+								)
+							) {
+								clearAuthSession();
+								markConsultantLoginBlocked();
+								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+							}
+
 							// set informal / formal cookie depending on the given userdata
 							setInformal(!userProfileData.formalLanguage);
 							setConsultingTypes(consultingTypes);
@@ -94,69 +130,109 @@ export const AuthenticatedApp = ({
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
-							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
+							const matrixBootstrapActive = { current: true };
 							try {
-								const matrixLoginData =
-									await getMatrixAccessToken();
-								persistMatrixLoginData(matrixLoginData);
-								try {
-									const { MatrixClientService } =
-										await import(
-											'../../services/matrixClientService'
-										);
-									const matrixClientService =
-										new MatrixClientService();
-
-									const homeserverUrl =
-										getMatrixHomeserverUrl();
-									if (!homeserverUrl) {
-										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
-									} else {
-										matrixClientService.initializeClient({
-											userId: matrixLoginData.userId,
-											accessToken:
-												matrixLoginData.accessToken,
-											deviceId: matrixLoginData.deviceId,
-											homeserverUrl: homeserverUrl
-										});
-
-										(window as any).matrixClientService =
-											matrixClientService;
-										(window as any).callContext =
-											callContext;
-
-										const { matrixLiveEventBridge } =
-											await import(
-												'../../services/matrixLiveEventBridge'
+								await withTimeout(
+									(async () => {
+										const matrixLoginData =
+											await getMatrixAccessToken();
+										persistMatrixLoginData(matrixLoginData);
+										const homeserverUrl =
+											getMatrixHomeserverUrl();
+										if (homeserverUrl) {
+											const { MatrixClientService } =
+												await import(
+													'../../services/matrixClientService'
+												);
+											const matrixClientService =
+												new MatrixClientService();
+											await matrixClientService.initializeClient(
+												{
+													userId: matrixLoginData.userId,
+													accessToken:
+														matrixLoginData.accessToken,
+													deviceId:
+														matrixLoginData.deviceId,
+													homeserverUrl,
+													isAnonymous:
+														hasUserAuthority(
+															AUTHORITIES.ANONYMOUS_DEFAULT,
+															userProfileData
+														)
+												}
 											);
-										matrixLiveEventBridge.initialize(
-											matrixClientService.getClient()!
-										);
-									}
-								} catch (error) {
-									// console.warn('⚠️ Matrix client initialization failed:', error);
-									// Don't fail app startup if Matrix fails
-								}
-							} catch {
-								// console.warn('⚠️ No Matrix credentials found in localStorage');
+											if (
+												!matrixBootstrapActive.current ||
+												!mounted.current
+											) {
+												matrixClientService.stopAndCleanup();
+												return;
+											}
+
+											setMatrixClientService(
+												matrixClientService
+											);
+											(window as any).callContext =
+												callContext;
+
+											const { matrixLiveEventBridge } =
+												await import(
+													'../../services/matrixLiveEventBridge'
+												);
+											if (
+												!matrixBootstrapActive.current ||
+												!mounted.current
+											) {
+												matrixClientService.stopAndCleanup();
+												return;
+											}
+											const matrixClient =
+												matrixClientService.getClient();
+											if (!matrixClient) {
+												throw new Error(
+													'Matrix client missing after initialization'
+												);
+											}
+											matrixLiveEventBridge.initialize(
+												matrixClient
+											);
+										}
+									})(),
+									15_000,
+									'Matrix bootstrap timed out'
+								);
+							} catch (matrixError) {
+								matrixBootstrapActive.current = false;
+								console.error(
+									'Matrix bootstrap failed; continuing with non-chat features',
+									matrixError
+								);
 							}
 
 							setAppReady(true);
 						})
 						.catch((error) => {
+							console.error(
+								'Authenticated app bootstrap failed',
+								error
+							);
 							setLoading(false);
-							// console.log(error);
 						});
 				})
 				.catch(() => {
 					setLoading(false);
 				});
 		}
+		// callContext is deliberately omitted: the CallProvider context value is
+		// recreated on every call-state change and would re-run this bootstrap
+		// effect; it is only mirrored to window.callContext here.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		locale,
 		setConsultingTypes,
 		setInformal,
 		setLocale,
+		setMatrixClientService,
 		reloadUserData,
 		userDataRequested
 	]);
@@ -167,31 +243,46 @@ export const AuthenticatedApp = ({
 
 	const handleLogout = useCallback(() => {
 		onLogout();
+		// Clear the React context's Matrix client reference on sign-out so a
+		// stale authenticated client cannot survive into a subsequent session
+		// (logout() also resets the module-level registry).
+		setMatrixClientService(null);
 		logout();
-	}, [onLogout]);
+	}, [onLogout, setMatrixClientService]);
+
+	const handlePostRegLoaderFinish = useCallback(() => {
+		setShowPostRegLoader(false);
+	}, []);
+	const platformVersion = getPlatformVersion();
+
+	// Post-registration: bridge the bootstrap load with the welcome animation,
+	// driven by appReady (the real "everything loaded" signal). Falls through to the
+	// usual branches on error (loading=false, appReady=false → redirect to login).
+	if (showPostRegLoader && (loading || appReady)) {
+		return (
+			<RegistrationLoader
+				ready={appReady}
+				onFinish={handlePostRegLoaderFinish}
+			/>
+		);
+	}
 
 	if (appReady) {
 		return (
 			<>
-				<RocketChatProvider>
-					<RocketChatGetUserRolesProvider>
-						<RocketChatPublicSettingsProvider>
-							<RocketChatSubscriptionsProvider>
-								<RocketChatUnreadProvider>
-									<RocketChatUserStatusProvider>
-										<E2EEncryptionSupportBanner />
-										<Routing logout={handleLogout} />
-									</RocketChatUserStatusProvider>
-								</RocketChatUnreadProvider>
-							</RocketChatSubscriptionsProvider>
-						</RocketChatPublicSettingsProvider>
-					</RocketChatGetUserRolesProvider>
-				</RocketChatProvider>
+				<E2EEncryptionSupportBanner />
+				<KeyBackupRecoveryPrompt />
+				<Routing logout={handleLogout} />
+				{platformVersion && (
+					<div className="app__platformVersion">
+						{platformVersion}
+					</div>
+				)}
 			</>
 		);
 	} else if (loading) {
 		return <Loading />;
 	}
 
-	return <Redirect to="/login" />;
+	return <Navigate to="/login" replace />;
 };

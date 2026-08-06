@@ -1,14 +1,14 @@
 /**
  * Video Call Component (Matrix Migration)
- * Now uses Matrix native WebRTC calls instead of Jitsi/VideoService
+ * Uses Matrix native WebRTC calls.
  */
 
 import React from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MatrixCallView } from '../matrixCall/MatrixCallView';
 
 const VideoCall = () => {
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { roomId: encodedRoomId, type } = useParams<{
 		roomId: string;
 		type: string;
@@ -25,29 +25,31 @@ const VideoCall = () => {
 
 	const handleCallEnd = () => {
 		// console.log('📞 Call ended, returning to session');
-		history.goBack();
+		navigate(-1);
 	};
 
 	if (!roomId) {
 		return (
-			<div style={{ 
-				display: 'flex', 
-				flexDirection: 'column',
-				justifyContent: 'center', 
-				alignItems: 'center', 
-				height: '100vh', 
-				background: '#000', 
-				color: '#fff',
-				padding: '20px',
-				textAlign: 'center'
-			}}>
+			<div
+				style={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					height: '100vh',
+					background: '#000',
+					color: '#fff',
+					padding: '20px',
+					textAlign: 'center'
+				}}
+			>
 				<h2>❌ No room ID provided</h2>
 				<p>Cannot start call without a room ID.</p>
 				<p style={{ fontSize: '12px', color: '#888' }}>
 					Encoded: {encodedRoomId || 'none'}
 				</p>
-				<button 
-					onClick={() => history.goBack()}
+				<button
+					onClick={() => navigate(-1)}
 					style={{
 						marginTop: '20px',
 						padding: '10px 20px',

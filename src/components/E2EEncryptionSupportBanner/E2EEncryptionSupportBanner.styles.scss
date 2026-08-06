@@ -32,3 +32,92 @@
 		}
 	}
 }
+
+// #843 login-time key-backup prompt — standard dialog, based on the approved
+// Element-inspired recovery mockup. Actions stack and fill the row on mobile.
+.keyBackupDialog {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-two;
+
+	p {
+		margin: 0;
+	}
+
+	&__field {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		font-size: 13px;
+		color: var(--m3-on-surface-variant, #4c555f);
+
+		input {
+			box-sizing: border-box;
+			width: 100%;
+			min-height: 52px;
+			border: 1px solid var(--m3-outline, #74777f);
+			border-radius: 8px;
+			padding: 12px;
+			background: var(--m3-surface, #fff);
+			color: var(--m3-on-surface, #1b1b1c);
+			font: inherit;
+			font-family: monospace;
+			letter-spacing: 0.08em;
+		}
+	}
+
+	&__error {
+		color: var(--m3-error, #b1005e);
+		font-weight: 600;
+	}
+
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: $grid-base-two;
+		margin-top: $grid-base-two;
+	}
+
+	&__later,
+	&__primary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 48px;
+		border-radius: 24px;
+		padding: 10px 24px;
+		font: inherit;
+		font-weight: 600;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	&__later {
+		border: 0;
+		background: var(--m3-surface-container, #f0edee);
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+
+	&__primary {
+		border: 0;
+		background: var(--m3-primary, #4c555f);
+		color: var(--m3-on-primary, #fff);
+
+		&:disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+	}
+
+	@media (width <= 575px) {
+		&__actions {
+			flex-direction: column;
+		}
+
+		&__later,
+		&__primary {
+			box-sizing: border-box;
+			width: 100%;
+		}
+	}
+}

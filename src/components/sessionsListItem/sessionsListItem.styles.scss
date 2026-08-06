@@ -1,20 +1,43 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
 $session-card-bg: #eae7e8;
-$session-card-hover-bg: #eadcdc;
-$session-card-selected-bg: #fffafa;
-$session-light-border: rgba(255, 255, 255, 0.58);
-$session-selected-border: #ff9d96;
-$session-active-border: #d93025;
-$session-focus-ring: rgba(185, 54, 45, 0.35);
-$session-topic-chip-bg: #646d78;
-$session-topic-chip-color: #ffffff;
-$session-postcode-border: #646d78;
+$session-card-hover-bg: #f0e7e7;
+
+// WP-06 Slice 0b: source the active-state colours from the shared list-item
+// selection tokens (settings.scss → _listItemSelection.scss). Values are
+// unchanged — this only makes them the single canonical source.
+$session-card-selected-bg: #f6f3f3;
+$session-light-border: #fff;
+
+// #597: selected ring uses M3 primary (was #ffb4aa / 1px)
+$session-selected-border: var(--m3-primary, #a5000a);
+$session-active-border: var(--m3-primary-container, #cc1e1c);
+$session-focus-ring: #ffdad5;
+$session-topic-chip-bg: #ffb4aa;
+$session-topic-chip-color: #410001;
+$session-chip-hover-bg: #cc1e1c;
+$session-chip-hover-color: #ffffff;
+$session-postcode-border: #ffb4aa;
+$session-postcode-color: #cc1e1c;
+$case-handover-action: var(--m3-primary, $primary);
+$case-handover-action-hover: var(--m3-primary-hover, $hover-primary);
+$case-handover-action-disabled: var(--m3-surface-variant, #d8dde3);
+$case-handover-status-muted: var(--m3-on-surface-variant, #667280);
+$case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
+$case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 .sessionsListItem {
+	&__groupModalityIcon {
+		width: $grid-base-two;
+		height: $grid-base-two;
+		margin-right: $grid-base;
+		vertical-align: text-bottom;
+	}
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 10px;
+
+	// Every card is a standalone tile: 6px gap + full 24px radius always.
+	margin: 0 0 6px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -28,8 +51,8 @@ $session-postcode-border: #646d78;
 		}
 	}
 
-	&:first-of-type {
-		margin-top: 3px;
+	&:last-child {
+		margin-bottom: 15px;
 	}
 
 	@keyframes appearSessionListItem {
@@ -52,8 +75,9 @@ $session-postcode-border: #646d78;
 
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
-			border: 1px solid $session-selected-border !important;
-			border-radius: 24px !important;
+
+			// #597: 2px solid --m3-primary (overrides resting 1px border)
+			@include list-item-selected-border($important: true);
 			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 			transition:
 				background-color 160ms ease,
@@ -64,7 +88,7 @@ $session-postcode-border: #646d78;
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
-				border-color: $session-selected-border !important;
+				border-color: $list-item-selected-border-color !important;
 			}
 		}
 
@@ -72,6 +96,11 @@ $session-postcode-border: #646d78;
 		.sessionsListItem__topic {
 			background-color: $session-active-border !important;
 			color: #ffffff !important;
+		}
+
+		.sessionsListItem__menuIcon {
+			border-color: $session-selected-border;
+			color: #410001;
 		}
 
 		// Make consulting type icons red when card is active
@@ -91,6 +120,34 @@ $session-postcode-border: #646d78;
 		.sessionsListItem__consultingTypeIcon--liveChatLabel {
 			color: #da5248 !important;
 		}
+
+		.sessionsListItem__consultingTypeIcon--nearbyLabel {
+			color: #da5248 !important;
+		}
+
+		.sessionsListItem__consultingTypeIcon--internalLabel,
+		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+			color: #da5248 !important;
+		}
+	}
+
+	// Read state: muted gray background for sessions the counselor has already read
+	&--read {
+		.sessionsListItem__content {
+			background-color: $session-card-bg;
+		}
+
+		.sessionsListItem__topic {
+			background-color: $session-topic-chip-bg;
+		}
+
+		.sessionsListItem__username {
+			color: var(--m3-on-surface-variant, $tertiary);
+		}
+
+		.sessionsListItem__date {
+			opacity: 0.65;
+		}
 	}
 
 	&:hover {
@@ -100,23 +157,40 @@ $session-postcode-border: #646d78;
 	&--menuOpen {
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-			border: 2px solid $session-active-border !important;
+
+			@include list-item-active-menu-border($important: true);
 		}
 
+		// Flyout open: vertical pill (height > width) + 2px primary-container
 		.sessionsListItem__menuIcon {
-			border-color: $session-active-border;
+			width: 32px;
+			height: 48px;
+
+			@include list-item-active-menu-border;
 			color: $session-active-border;
+		}
+
+		.sessionsListItem__topic {
+			background-color: $session-active-border !important;
+			color: #ffffff !important;
 		}
 	}
 
 	&__content {
-		width: calc(100% - 48px);
-		max-width: calc(100% - 48px);
+		// Cards fill the 12px column gutter (set on .sessionsList__scrollContainer)
+		// instead of adding their own side margin.
+		width: 100%;
+		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
-		min-height: 112px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+
+		// 160px card height; every card keeps a full 24px radius.
+		min-height: 160px;
 		padding: 0;
-		margin: 0 24px;
+		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
 		border-radius: 24px;
@@ -129,13 +203,13 @@ $session-postcode-border: #646d78;
 		overflow: hidden;
 
 		&--anonymous {
-			border: 1px solid #9e9e9e; // Gray border for anonymous chat cards
+			border-color: $session-light-border;
 		}
 
 		@include breakpoint($fromMedium) {
-			margin: 0 24px;
-			width: calc(100% - 48px);
-			max-width: calc(100% - 48px);
+			margin: 0;
+			width: 100%;
+			max-width: 100%;
 		}
 
 		&:focus {
@@ -143,9 +217,9 @@ $session-postcode-border: #646d78;
 		}
 
 		// Show a single keyboard-navigation ring for the focused item.
+		// WP-06 Slice 0b: shared focus treatment (identical output).
 		&:focus-visible {
-			outline: none;
-			box-shadow: 0 0 0 3px $session-focus-ring;
+			@include list-item-focus-treatment;
 			transition: box-shadow 0.2s ease;
 		}
 
@@ -158,46 +232,45 @@ $session-postcode-border: #646d78;
 		}
 	}
 
+	&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
+		.sessionsListItem__content:hover {
+		.sessionsListItem__topic {
+			background-color: $session-chip-hover-bg;
+			color: $session-chip-hover-color;
+		}
+
+		.sessionsListItem__postcode {
+			border-color: $session-chip-hover-bg;
+			color: $session-chip-hover-bg;
+		}
+	}
+
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
 		border-color: $session-light-border;
 	}
 
-	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-	}
-
-	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--beforeActive .sessionsListItem__content {
-		border-bottom-left-radius: 24px;
-		border-bottom-right-radius: 24px;
-	}
-
-	&.sessionsListItem--afterActive .sessionsListItem__content {
-		border-top-left-radius: 24px;
-		border-top-right-radius: 24px;
-		border-top: 1px solid $session-light-border;
+	&--caseHandoverLocked:not(.sessionsListItem--active)
+		.sessionsListItem__content {
+		background: #ffffff;
+		border-color: #ffd8d4;
 	}
 
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		border: 2px solid $session-active-border !important;
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
 	&__row {
 		display: flex;
 		gap: 10px;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
-			padding: 12px 16px;
-			color: $tertiary;
+			padding: 18px 16px 0;
+			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
 		}
@@ -210,7 +283,10 @@ $session-postcode-border: #646d78;
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			min-height: 36px;
+			padding: 0 16px 14px 24px;
+
+			// Figma 8609-31260: 48px-high bottom action row.
+			min-height: 48px;
 		}
 
 		&:not(:last-child) {
@@ -229,7 +305,7 @@ $session-postcode-border: #646d78;
 		flex: 1;
 		min-width: 0;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Give the tag cluster full priority on narrow devices.
 			flex: 1 1 1;
 		}
@@ -244,7 +320,7 @@ $session-postcode-border: #646d78;
 		position: relative;
 		z-index: 1000;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// On narrow devices, let the right cluster compress first
 			// so topic tags keep more readable space.
 			padding-right: 4px;
@@ -262,13 +338,13 @@ $session-postcode-border: #646d78;
 	}
 
 	&__date {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		font-size: 12px;
 		line-height: 16px;
 		white-space: nowrap;
 		flex-shrink: 0;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Prefer keeping topic text visible by truncating long dates first.
 			max-width: 72px;
 			overflow: hidden;
@@ -278,7 +354,7 @@ $session-postcode-border: #646d78;
 			text-align: right;
 		}
 
-		@media screen and (max-width: 350px) {
+		@media screen and (width <= 350px) {
 			// Ultra-narrow devices: topic/postcode readability is more important.
 			display: none;
 		}
@@ -291,6 +367,7 @@ $session-postcode-border: #646d78;
 		cursor: pointer;
 		width: 48px;
 		height: 32px;
+		padding: 0;
 		flex-shrink: 0;
 		position: relative;
 		box-sizing: border-box;
@@ -298,7 +375,13 @@ $session-postcode-border: #646d78;
 		border: 1px solid #ffffff;
 		background-color: #ffffff;
 		color: #1e1e1e;
+		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+		transition:
+			width 160ms ease,
+			height 160ms ease,
+			border-color 160ms ease,
+			background-color 160ms ease;
 
 		svg {
 			width: 24px;
@@ -315,26 +398,29 @@ $session-postcode-border: #646d78;
 
 	&__dropdown {
 		position: fixed !important;
-		top: 190px !important;
-		right: 40px !important;
-		opacity: 1 !important;
-		visibility: visible !important;
+		opacity: 1;
+		visibility: visible;
 		box-sizing: border-box;
 		background: white !important;
-		width: 280px;
-		max-width: calc(100vw - 40px);
-		border: 2px solid #cc1e1c;
+		width: 301px;
+		max-width: calc(100vw - 32px);
+
+		@include list-item-active-menu-border;
 		border-radius: 8px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		overflow: hidden;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+		overflow: auto;
 		z-index: 99999 !important;
 		display: flex !important;
 		flex-direction: column;
-		padding: 10px;
+		padding: 8px;
+		max-height: min(520px, calc(100vh - 32px));
+		transform-origin: top right;
+		will-change: opacity, transform;
+		animation: sessionsListDropdownGrow 180ms cubic-bezier(0.2, 0, 0, 1)
+			both;
 
-		@media screen and (max-width: 599px) {
-			right: auto !important;
-			left: 20px !important;
+		@media screen and (width <= 599px) {
+			width: min(301px, calc(100vw - 24px));
 		}
 	}
 
@@ -365,6 +451,11 @@ $session-postcode-border: #646d78;
 		width: 100%;
 		height: 1px;
 		background-color: rgba(204, 30, 28, 0.15);
+		background-color: color-mix(
+			in srgb,
+			var(--m3-primary, #a5000a) 15%,
+			transparent
+		);
 		margin: 8px 0;
 	}
 
@@ -377,19 +468,47 @@ $session-postcode-border: #646d78;
 	&__dropdownOption {
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
-		padding: 8px 12px;
+		gap: 12px;
+		padding: 12px 16px;
 		cursor: pointer;
-		transition: background-color 0.2s ease;
+		transition:
+			background-color 150ms ease,
+			color 150ms ease;
 		border: none;
 		background: transparent;
 		text-align: left;
 		width: 100%;
-		border-radius: 4px;
+		border-radius: 8px;
 		margin: 0;
 
 		&:hover:not(:disabled) {
-			background-color: #f8f8f8;
+			background-color: #e7effc;
+
+			.sessionsListItem__dropdownOptionTitle,
+			.sessionsListItem__dropdownOptionShortcut {
+				color: var(--m3-primary, #a5000a);
+			}
+
+			.sessionsListItem__dropdownOptionDescription {
+				color: var(--m3-on-primary-fixed, #410001);
+			}
+		}
+
+		&:focus-visible:not(:disabled) {
+			outline: 2px solid rgba(204, 30, 28, 0.42);
+			outline: 2px solid
+				color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent);
+			outline-offset: -2px;
+			background-color: #e7effc;
+
+			.sessionsListItem__dropdownOptionTitle,
+			.sessionsListItem__dropdownOptionShortcut {
+				color: var(--m3-primary, #a5000a);
+			}
+
+			.sessionsListItem__dropdownOptionDescription {
+				color: var(--m3-on-primary-fixed, #410001);
+			}
 		}
 
 		&:disabled {
@@ -398,7 +517,6 @@ $session-postcode-border: #646d78;
 
 		&--disabled {
 			cursor: not-allowed;
-			opacity: 0.6;
 		}
 	}
 
@@ -410,8 +528,7 @@ $session-postcode-border: #646d78;
 		margin-top: 2px;
 
 		&--disabled {
-			fill: rgba(0, 0, 0, 0.5);
-			opacity: 0.7;
+			fill: #9ba4b0;
 		}
 	}
 
@@ -431,15 +548,14 @@ $session-postcode-border: #646d78;
 	}
 
 	&__dropdownOptionTitle {
-		font-size: 14px;
+		font-size: 16px;
 		font-weight: 500;
-		color: rgba(0, 0, 0, 0.9);
-		line-height: 1.4;
+		color: var(--m3-secondary, #4c555f);
+		line-height: 24px;
 		flex: 1;
 
 		&--disabled {
-			color: rgba(0, 0, 0, 0.5);
-			opacity: 0.7;
+			color: #9ba4b0;
 		}
 	}
 
@@ -449,7 +565,7 @@ $session-postcode-border: #646d78;
 		justify-content: flex-end;
 		font-size: 12px;
 		font-weight: 400;
-		color: $form-primary;
+		color: var(--m3-secondary, #4c555f);
 		background: transparent;
 		border: none;
 		padding: 0;
@@ -459,24 +575,23 @@ $session-postcode-border: #646d78;
 
 	&__dropdownOptionDescription {
 		font-size: 12px;
-		color: $form-secondary;
-		line-height: 1.4;
+		color: var(--m3-secondary-container, #646d78);
+		line-height: 20px;
 		margin: 0;
 
 		&--disabled {
-			color: rgba(0, 0, 0, 0.5);
-			opacity: 0.7;
+			color: #9ba4b0;
 		}
 	}
 
 	&__topicPostcodeGroup {
-		display: flex;
+		display: inline-flex;
 		align-items: stretch;
 		max-width: 100%;
 		min-height: 0;
 		min-width: 0;
 		overflow: hidden;
-		flex: 1 1 1;
+		flex: 0 1 auto;
 	}
 
 	&__postcode {
@@ -489,10 +604,10 @@ $session-postcode-border: #646d78;
 		border: 1px solid $session-postcode-border;
 		border-left: none;
 		border-radius: 0 12px 12px 0;
-		font-size: 14px;
-		line-height: 8px;
-		letter-spacing: 0.28px;
-		color: $session-postcode-border;
+		font-size: 12px;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		color: $session-postcode-color;
 		white-space: nowrap;
 		flex-shrink: 0;
 	}
@@ -515,12 +630,13 @@ $session-postcode-border: #646d78;
 		align-self: center;
 		min-width: 0;
 		max-width: 100%;
-		flex: 1 1 1;
-		font-size: 14px;
+		flex: 0 1 auto;
+		font-size: 12px;
 		line-height: 16px;
 		font-weight: 500;
+		letter-spacing: 0.5px;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Give tag text slightly more room on compact screens.
 			padding-left: 6px;
 			padding-right: 6px;
@@ -534,7 +650,8 @@ $session-postcode-border: #646d78;
 		align-self: stretch;
 		display: inline-flex;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
+		padding: 2px 4px 2px 12px;
 	}
 
 	&--active .sessionsListItem__postcode,
@@ -592,11 +709,11 @@ $session-postcode-border: #646d78;
 		}
 
 		&--plus {
-			background-color: var(--skin-color-primary, #cc1e1c);
+			background-color: var(--m3-primary-container, #cc1e1c);
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: $white;
+			color: var(--m3-on-primary-container, #ffe2de);
 			font-weight: $font-weight-bold;
 			font-size: 12px;
 		}
@@ -644,13 +761,13 @@ $session-postcode-border: #646d78;
 		background-color: $upload-progress;
 		display: inline-block;
 		word-break: keep-all;
-		color: var(--skin-color-secondary, $secondary);
+		color: var(--m3-secondary, $secondary);
 		align-self: flex-end;
 		margin: 5px 0 auto;
 	}
 
 	&__subject {
-		padding: 8px 16px;
+		// padding: 8px 16px;
 		font-size: 14px;
 		line-height: 20px;
 		letter-spacing: 0.25px;
@@ -678,7 +795,7 @@ $session-postcode-border: #646d78;
 				height: $icon-size-small;
 
 				* {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 		}
@@ -690,15 +807,14 @@ $session-postcode-border: #646d78;
 		height: $icon-size-small;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			fill: var(--m3-secondary, $secondary);
 		}
 	}
 
 	&__consultingTypeIcon {
-		padding: 8px 16px 8px 8px;
 		margin-left: auto;
 		display: flex;
-		align-items: center;
+		align-items: end;
 		justify-content: center;
 		flex-shrink: 0;
 		margin-right: 0;
@@ -712,7 +828,7 @@ $session-postcode-border: #646d78;
 			height: $icon-size-small;
 
 			* {
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 		}
 
@@ -742,23 +858,298 @@ $session-postcode-border: #646d78;
 				flex-shrink: 0;
 
 				* {
-					fill: #4b515a !important;
+					fill: var(--m3-secondary, #4b515a) !important;
 				}
 			}
 		}
 
 		&--liveChatLabel {
-			font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-			font-size: 13px;
-			font-weight: 700;
-			color: #4b515a;
-			line-height: 1;
-			letter-spacing: 0.01em;
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--m3-secondary, #4b515a);
+			line-height: 20px;
+			letter-spacing: 0;
+		}
+
+		&--nearby {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			height: 38px;
+			white-space: nowrap;
+		}
+
+		&--nearbyIcon {
+			width: 24px !important;
+			height: 24px !important;
+			flex-shrink: 0;
+		}
+
+		&--nearbyLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--m3-secondary, #4b515a);
+			line-height: 20px;
+			letter-spacing: 0;
+		}
+
+		&--internal,
+		&--selfHelp {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			height: 38px;
+			white-space: nowrap;
+		}
+
+		&--internalIcon,
+		&--selfHelpIcon {
+			width: 24px !important;
+			height: 24px !important;
+			flex-shrink: 0;
+		}
+
+		&--internalLabel,
+		&--selfHelpLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--m3-secondary, #4b515a);
+			line-height: 20px;
+			letter-spacing: 0;
 		}
 	}
 
 	.tag {
 		margin-left: $grid-base;
+	}
+
+	// Case-handover split button — M3 "split button" (Figma node 115-27170):
+	// two segments separated by a 2px gap, outer corners 20px, inner corners
+	// 4px. The per-state background colour is set once on the container as a
+	// CSS custom property and inherited by both segments.
+	&__handoverAction {
+		position: relative;
+		display: inline-flex;
+		align-items: stretch;
+		gap: 2px;
+		margin: 8px 16px 8px 8px;
+		background: transparent;
+		color: var(--m3-on-primary, #ffffff);
+		flex-shrink: 0;
+
+		--handover-segment-bg: var(--m3-secondary, #4b515a);
+		--handover-segment-fg: var(--m3-on-primary, #ffffff);
+
+		&--active,
+		&--selected {
+			--handover-segment-bg: var(--m3-primary, #a5000a);
+			--handover-segment-fg: var(--m3-on-primary, #ffffff);
+		}
+
+		&--status {
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-on-surface-variant, #5c6167);
+		}
+
+		&--denied {
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-primary, #a5000a);
+		}
+
+		&--disabled {
+			--handover-segment-bg: var(--m3-surface-variant, #e7e8ea);
+			--handover-segment-fg: var(--m3-outline, #9ca1a6);
+		}
+	}
+
+	&__handoverActionPrimary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 40px;
+		min-width: 116px;
+		padding: 0 12px 0 16px;
+		border: 0;
+		border-radius: 20px 4px 4px 20px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		line-height: 1;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		// Pressed feedback: a gentle darken of the segment colour (M3 state
+		// layer) — never a hard black overlay/ring.
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
+		}
+
+		// Focus ring uses the segment foreground so it reads white on the red
+		// button and dark on the muted/status button — never a black circle.
+		&:focus-visible {
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionLabel {
+		white-space: nowrap;
+	}
+
+	&__handoverActionToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 48px;
+		border: 0;
+		border-radius: 4px 20px 20px 4px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionCheckbox {
+		width: 15px;
+		height: 15px;
+		border: 2px solid currentcolor;
+		border-radius: 3px;
+		background: transparent;
+		flex-shrink: 0;
+		position: relative;
+
+		&--selected {
+			background: var(--m3-surface, #ffffff);
+			border-color: var(--m3-on-primary, #ffffff);
+
+			&::after {
+				content: '';
+				position: absolute;
+				left: 3px;
+				top: 0;
+				width: 4px;
+				height: 7px;
+				border: solid var(--m3-primary, #a5000a);
+				border-width: 0 2px 2px 0;
+				transform: rotate(45deg);
+			}
+		}
+	}
+
+	&__handoverActionMenu {
+		position: absolute;
+		top: calc(100% + 6px);
+		right: 0;
+		z-index: 40;
+		min-width: 236px;
+		padding: 6px;
+		border-radius: 14px;
+		border: 1px solid var(--m3-primary, #a5000a);
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+	}
+
+	&__handoverActionMenuItem {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: 12px;
+		width: 100%;
+		padding: 10px 12px;
+		border: 0;
+		border-radius: 10px;
+		background: transparent;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container-low, #f5f2f3);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionMenuItemIcon {
+		flex-shrink: 0;
+		display: inline-flex;
+		margin-top: 1px;
+		color: var(--m3-on-surface, #1b1b1c);
+
+		svg {
+			display: block;
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__handoverActionMenuItemText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	&__handoverActionMenuItemTitle {
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__handoverActionMenuItemDescription {
+		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #5c6167);
+	}
+}
+
+@keyframes sessionsListDropdownGrow {
+	0% {
+		opacity: 0;
+		transform: scale(0.94);
+	}
+
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sessionsListItem__dropdown {
+		animation: none;
+		transform: none;
+		will-change: auto;
 	}
 }
 

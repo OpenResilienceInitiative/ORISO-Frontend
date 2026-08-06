@@ -1,3 +1,209 @@
 .description {
 	padding-right: 70px;
 }
+
+.switch {
+	--switch-primary: var(--m3-primary, #a5000a);
+	--switch-primary-container: var(--m3-primary-container, #cc1e1c);
+	--switch-on-primary: var(--m3-on-primary, #ffffff);
+	--switch-on-primary-container: var(--m3-on-primary-container, #ffe2de);
+	--switch-surface: #fcf9f9;
+	--switch-surface-container-highest: #e4e2e2;
+	--switch-on-surface: #1b1b1c;
+	--switch-on-surface-variant: #444748;
+	--switch-outline: #747878;
+	--switch-focus: var(--m3-secondary, #4c555f);
+
+	align-items: center;
+	cursor: pointer;
+	display: inline-flex;
+	height: 32px;
+	position: relative;
+	flex: 0 0 auto;
+	vertical-align: middle;
+	width: 52px;
+}
+
+.input {
+	height: 1px;
+	margin: 0;
+	opacity: 0;
+	position: absolute;
+	width: 1px;
+}
+
+.track {
+	background: var(--switch-surface-container-highest);
+	border: 2px solid var(--switch-outline);
+	border-radius: 100px;
+	box-sizing: border-box;
+	display: block;
+	height: 32px;
+	position: relative;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		opacity 160ms ease;
+	width: 52px;
+}
+
+.target {
+	align-items: center;
+	border-radius: 100px;
+	display: flex;
+	height: 40px;
+	justify-content: center;
+	left: -4px;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	transition:
+		background-color 160ms ease,
+		left 160ms ease,
+		right 160ms ease;
+	width: 40px;
+}
+
+.handle {
+	align-items: center;
+	background: var(--switch-outline);
+	border-radius: 24px;
+	color: var(--switch-surface-container-highest);
+	display: flex;
+	height: 24px;
+	justify-content: center;
+	position: relative;
+	transition:
+		background-color 160ms ease,
+		color 160ms ease,
+		height 120ms ease,
+		width 120ms ease;
+	width: 24px;
+}
+
+.icon {
+	display: block;
+	height: 16px;
+	position: relative;
+	width: 16px;
+}
+
+.icon::before,
+.icon::after {
+	background: currentColor;
+	content: '';
+	position: absolute;
+	transform-origin: center;
+}
+
+.icon::before {
+	border-radius: 2px;
+	height: 9px;
+	left: 9px;
+	top: 3px;
+	transform: rotate(45deg);
+	width: 2px;
+}
+
+.icon::after {
+	border-radius: 2px;
+	height: 2px;
+	left: 3px;
+	top: 8px;
+	transform: rotate(45deg);
+	width: 6px;
+}
+
+.input:not(:checked) + .track .icon::before,
+.input:not(:checked) + .track .icon::after {
+	height: 14px;
+	border-radius: 2px;
+	left: 7px;
+	top: 1px;
+	width: 2px;
+}
+
+.input:not(:checked) + .track .icon::before {
+	transform: rotate(45deg);
+}
+
+.input:not(:checked) + .track .icon::after {
+	transform: rotate(-45deg);
+}
+
+.input:checked + .track {
+	background: var(--switch-primary);
+	border-color: var(--switch-primary);
+}
+
+.input:checked + .track .target {
+	left: auto;
+	right: -4px;
+}
+
+.input:checked + .track .handle {
+	background: var(--switch-on-primary);
+	color: var(--switch-primary);
+}
+
+.switch:hover .input:not(:disabled, :checked) + .track .target {
+	background: rgba(27, 27, 28, 0.08);
+}
+
+.switch:hover .input:not(:disabled, :checked) + .track .handle {
+	background: var(--switch-on-surface-variant);
+}
+
+.switch:hover .input:not(:disabled):checked + .track .target {
+	background: rgba(165, 0, 10, 0.08);
+	background: color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent);
+}
+
+.switch:hover .input:not(:disabled):checked + .track .handle {
+	background: var(--switch-primary-container);
+	color: var(--switch-on-primary-container);
+}
+
+.switch:active .input:not(:disabled) + .track .handle {
+	height: 28px;
+	width: 28px;
+}
+
+.switch:active .input:not(:disabled, :checked) + .track .target {
+	background: rgba(27, 27, 28, 0.1);
+}
+
+.switch:active .input:not(:disabled):checked + .track .target {
+	background: rgba(165, 0, 10, 0.1);
+	background: color-mix(in srgb, var(--m3-primary, #a5000a) 10%, transparent);
+}
+
+.input:focus-visible + .track {
+	outline: 3px solid var(--switch-focus);
+	outline-offset: 2px;
+}
+
+.input:disabled + .track {
+	background: rgba(224, 227, 227, 0.1);
+	border-color: rgba(27, 27, 28, 0.1);
+	cursor: not-allowed;
+}
+
+.input:disabled + .track .handle {
+	background: rgba(27, 27, 28, 0.38);
+	color: rgba(252, 249, 249, 0.75);
+}
+
+.input:disabled:checked + .track {
+	background: rgba(27, 27, 28, 0.1);
+	border-color: transparent;
+}
+
+.input:disabled:checked + .track .handle {
+	background: var(--switch-surface);
+	color: rgba(27, 27, 28, 0.38);
+}
+
+.disabled {
+	cursor: not-allowed;
+}

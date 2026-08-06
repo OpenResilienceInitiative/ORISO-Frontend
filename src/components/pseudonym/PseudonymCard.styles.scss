@@ -24,28 +24,41 @@
 	width: 100%;
 }
 
-/* ----- Avatar column ----- */
+/* ----- Avatar column -----
+ *
+ * A Carimat bubble is a *kind of chat message*, so its avatar has to use the
+ * same circle geometry as every other message avatar — 60×60 with a 6px white
+ * ring, as defined by `.messageItem__avatar` in `message.styles.scss`. It used
+ * to carry its own 54×54 frame in a 64px column, which made Carimat rows sit a
+ * few pixels off from the human ones in the same conversation.
+ * See OpenResilienceInitiative/ORISO-Frontend#892.
+ */
 .pseudonymCard__avatarCol {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 4px;
 	flex-shrink: 0;
-	width: 64px;
+	width: 60px;
 }
 
 .pseudonymCard__avatarFrame {
-	width: 64px;
-	height: 64px;
+	/* Keep in sync with `.messageItem__avatar`. */
+	width: 60px;
+	height: 60px;
+	min-width: 60px;
+	min-height: 60px;
+	border: 6px solid #ffffff;
 	border-radius: 999px;
-	background: #fff;
+	background: #ffffff;
+	box-shadow: 0 0 0 1.5px #e8e8e8;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 14px;
 	box-sizing: border-box;
 	position: relative;
 	z-index: 2;
+	flex-shrink: 0;
 }
 
 .pseudonymCard__avatarIcon {
@@ -56,21 +69,13 @@
 
 	svg {
 		display: block;
-		width: 32px;
-		height: 36px;
-	}
-}
+		width: 25px;
+		height: 25px;
 
-.pseudonymCard__menuIcon {
-	width: 24px;
-	height: 24px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0.7;
-
-	svg {
-		display: block;
+		@media (resolution >= 1.5dppx), (width >= 1920px) {
+			width: 29px;
+			height: 29px;
+		}
 	}
 }
 
@@ -84,6 +89,7 @@
 	flex: 1 1 auto;
 	max-width: 560px;
 	padding-top: 6px;
+
 	/* Pull content left so the bubble slides a little under the avatar,
 	   giving the avatar a "sitting on top-left corner" overlap effect. */
 	margin-left: -32px;
@@ -104,7 +110,7 @@
 }
 
 .pseudonymCard__headerName {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 16px;
@@ -112,11 +118,11 @@
 }
 
 .pseudonymCard__headerSubtitle {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 14px;
-	color: #646d78;
+	color: var(--m3-secondary-container, #646d78);
 }
 
 /* ----- Bubble ----- */
@@ -132,6 +138,7 @@
 	border-radius: 4px 14px 14px 14px;
 	background: #eeeeee;
 	box-sizing: border-box;
+
 	/* Smoothly accommodate the revealed pseudonym block so the bubble
 	   grows instead of snapping its height when the display column
 	   slides in. */
@@ -206,11 +213,11 @@
 }
 
 .pseudonymCard__label {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 32px;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	text-align: center;
 	padding: 16px 0 0;
 	text-transform: uppercase;
@@ -218,7 +225,7 @@
 }
 
 .pseudonymCard__name {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 22px;
 	font-weight: 700;
 	line-height: 28px;
@@ -229,7 +236,7 @@
 }
 
 /* Mobile shrink */
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.pseudonymCard__wrap {
 		gap: 10px;
 	}

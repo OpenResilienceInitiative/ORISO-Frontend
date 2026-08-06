@@ -20,6 +20,9 @@ beforeEach(() => {
 	cy.fixture('service.topics.json').then((content) => {
 		cy.willReturn('topics', content);
 	});
+	cy.fixture('service.topicGroups.json').then((content) => {
+		cy.willReturn('topicGroups', content);
+	});
 });
 
 afterEach(() => {

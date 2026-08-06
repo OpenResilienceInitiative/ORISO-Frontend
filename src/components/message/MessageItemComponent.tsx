@@ -2,13 +2,15 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 import { PrettyDate } from '../../utils/dateHelpers';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
 	UserDataContext,
 	hasUserAuthority,
 	AUTHORITIES,
 	E2EEContext,
-	RocketChatGlobalSettingsContext,
-	ActiveSessionContext
+	ServerSettingsContext,
+	ActiveSessionContext,
+	useTenant
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import { isUserModerator } from '../session/sessionHelpers';
@@ -16,7 +18,7 @@ import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
 import { stateToHTML } from 'draft-js-export-html';
-import { convertFromRaw, ContentState } from 'draft-js';
+import { convertFromRaw } from 'draft-js';
 import {
 	markdownToDraftDefaultOptions,
 	normalizeHighlightColor,
@@ -26,7 +28,13 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { FurtherSteps } from './FurtherSteps';
 import { MessageAttachment } from './MessageAttachment';
-import { Text } from '../text/Text';
+import type { MediaCheckState } from './MessageAttachment';
+import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
+import { getModality, Modality } from '../session/getModality';
+import {
+	hasMediaInlineDisplayFeature,
+	type MediaChatType
+} from '../../utils/mediaUploadHelpers';
 import './message.styles';
 import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
@@ -55,32 +63,43 @@ import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted
 import {
 	IBooleanSetting,
 	SETTING_MESSAGE_ALLOWDELETING
-} from '../../api/apiRocketChatSettingsPublic';
+} from '../../api/apiMatrixSettingsPublic';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
 import { apiDeleteMessage } from '../../api/apiDeleteMessage';
 import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
-import { UserAvatar } from './UserAvatar';
+import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import {
 	parseMessagePrefixes,
-	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
+	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
+import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
-import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as StackVerticalCircleIcon } from '../../resources/img/icons/stack-vertical-circle.svg';
-import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
-import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { formatMessagePersonName } from './messageNameUtils';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
+import { AggregatedReaction } from '../../utils/messageRelations';
+import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
+import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/delivery-read.svg';
+import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
+import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import { MessageDateDivider } from './MessageDateDivider';
+
+const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+// Slack-style long-press on the bubble opens the message action menu.
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+
+const logger = getMatrixClientLogger();
 
 const ActiveKebabIcon = () => (
 	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
@@ -133,6 +152,14 @@ const MenuForwardIcon = () => (
 	<svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden>
 		<path
 			d="M14 12L12.575 10.6L17.175 6L12.575 1.4L14 0L20 6L14 12ZM0 14V10C0 8.61667 0.483333 7.44167 1.45 6.475C2.43333 5.49167 3.61667 5 5 5H11.175L7.575 1.4L9 0L15 6L9 12L7.575 10.6L11.175 7H5C4.16667 7 3.45833 7.29167 2.875 7.875C2.29167 8.45833 2 9.16667 2 10V14H0Z"
+			fill="#4B515A"
+		/>
+	</svg>
+);
+const MenuEditIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+		<path
+			d="M0 18V14.25L13.2 1.05C13.4 0.85 13.6208 0.7 13.8625 0.6C14.1042 0.5 14.3583 0.45 14.625 0.45C14.8917 0.45 15.15 0.5 15.4 0.6C15.65 0.7 15.8667 0.85 16.05 1.05L17.425 2.45C17.625 2.63333 17.7708 2.85 17.8625 3.1C17.9542 3.35 18 3.6 18 3.85C18 4.11667 17.9542 4.37083 17.8625 4.6125C17.7708 4.85417 17.625 5.07083 17.425 5.2625L4.25 18H0ZM2 16H3.4L11.2 8.2L10.525 7.5L9.8 6.8L2 14.6V16Z"
 			fill="#4B515A"
 		/>
 	</svg>
@@ -224,7 +251,7 @@ const ChevronIcon = ({ className }: { className?: string }) => (
 
 export interface VideoCallMessageDTO {
 	eventType: 'IGNORED_CALL';
-	initiatorRcUserId: string;
+	initiatorMatrixUserId: string;
 	initiatorUserName: string;
 }
 
@@ -235,7 +262,7 @@ export interface MessageItem {
 	messageTime: string;
 	displayName: string;
 	username: string;
-	askerRcId?: string;
+	askerMatrixUserId?: string;
 	userId: string;
 	consultant?: {
 		username: string;
@@ -247,11 +274,17 @@ export interface MessageItem {
 		content?: string;
 		messageType: ALIAS_MESSAGE_TYPES;
 	};
-	attachments?: MessageService.Schemas.AttachmentDTO[];
-	file?: MessageService.Schemas.FileDTO;
+	attachments?: ChatAttachment[];
+	file?: ChatFile;
 	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
 	rid: string;
 	isVideoActive?: boolean;
+	/** Relations foundation (#435): id of the replied-to event, if a reply. */
+	replyToEventId?: string | null;
+	/** MSC3440: thread root event id when the message is a thread reply. */
+	threadRootEventId?: string | null;
+	/** Editing (m.replace, #435): true when a later m.replace was applied. */
+	isEdited?: boolean;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -268,6 +301,28 @@ interface MessageItemComponentProps extends MessageItem {
 		lastReplyText: string;
 	};
 	onOpenThread?: () => void;
+	/** Relations foundation (#435): this message replies to that event. */
+	replyToEventId?: string | null;
+	/** Resolved quote of the replied-to message (author + text), if known. */
+	replyQuote?: { author: string; text: string } | null;
+	/** Start a direct reply to THIS message (wires the composer). */
+	onReplyDirect?: () => void;
+	/** Start editing THIS message (wires the composer, own messages only). */
+	onEditDirect?: () => void;
+	/** Reactions (m.annotation, #435): aggregated pills for this message. */
+	reactions?: AggregatedReaction[];
+	/** Add own reaction with the given emoji key. */
+	onReact?: (key: string) => void;
+	/** Remove own reaction by redacting the given reaction event id. */
+	onUnreact?: (reactionEventId: string) => void;
+	/** Send failure: cross instead of checkmarks in the bubble time rail. */
+	sendFailed?: boolean;
+	/**
+	 * This client could not decrypt the Matrix event (UTD). Rendered with the
+	 * failure cross while the adjacent decryption card explains that the
+	 * incoming message is unavailable.
+	 */
+	encryptionBroke?: boolean;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -287,7 +342,7 @@ export const MessageItemComponent = ({
 	isMyMessage,
 	displayName,
 	username,
-	askerRcId,
+	askerMatrixUserId,
 	attachments,
 	file,
 	isNotRead,
@@ -303,13 +358,25 @@ export const MessageItemComponent = ({
 	threadRootId,
 	forceShow = false,
 	threadSummary,
-	onOpenThread
+	onOpenThread,
+	replyToEventId,
+	threadRootEventId,
+	isEdited,
+	replyQuote,
+	onReplyDirect,
+	onEditDirect,
+	reactions,
+	onReact,
+	onUnreact,
+	sendFailed,
+	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const tenant = useTenant();
+	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
@@ -334,21 +401,10 @@ export const MessageItemComponent = ({
 	);
 
 	const currentRecipientIdentifiers = useMemo(() => {
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
-		const matrixUserIdFromCookie =
-			typeof document !== 'undefined'
-				? document.cookie
-						.split('; ')
-						.find((entry) => entry.startsWith('rc_uid='))
-						?.split('=')[1] || ''
-				: '';
+		const matrixUserIdFromSession = getCurrentMatrixUserId();
 		const merged = new Set<string>();
 		[
-			matrixUserIdFromStorage,
-			matrixUserIdFromCookie,
+			matrixUserIdFromSession,
 			userData?.userName,
 			userData?.displayName
 		].forEach((value) => {
@@ -377,6 +433,12 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// Slack-style long-press on the bubble opens the action menu (mobile).
+	const longPressTimerRef = React.useRef<number | null>(null);
+	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
+		null
+	);
+	const longPressFiredRef = React.useRef(false);
 	const [expandedVisibilitySections, setExpandedVisibilitySections] =
 		useState<{
 			clients: boolean;
@@ -435,6 +497,15 @@ export const MessageItemComponent = ({
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isVisibilityMenuOpen]);
 
+	useEffect(
+		() => () => {
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
+			}
+		},
+		[]
+	);
+
 	useEffect((): void => {
 		if (isE2eeEnabled && message) {
 			decryptText(
@@ -480,17 +551,19 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const roomUser = useMemo(() => {
-		if (!rcUsersContext?.users?.length) {
+		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
 		}
 		return (
-			rcUsersContext.users.find((entry) => entry?._id === userId) ||
-			rcUsersContext.users.find(
+			matrixRoomUsersContext.users.find(
+				(entry) => entry?._id === userId
+			) ||
+			matrixRoomUsersContext.users.find(
 				(entry) => entry?.username === username
 			) ||
 			null
 		);
-	}, [rcUsersContext?.users, userId, username]);
+	}, [matrixRoomUsersContext?.users, userId, username]);
 	const consultantMatch = useMemo(() => {
 		const consultantList = consultantContext?.consultantList || [];
 		if (!consultantList.length) {
@@ -613,20 +686,32 @@ export const MessageItemComponent = ({
 		},
 		[]
 	);
-	const visibilityGroups = useMemo(() => {
-		const selectedComparableLabels = new Set(
-			visibleAudienceLabels.map((entry) =>
-				makeComparableAudienceLabel(entry)
-			)
-		);
+	/**
+	 * Whether this message goes to *everyone* in the room.
+	 *
+	 * Lifted out of `visibilityGroups` so the render condition can read it too:
+	 * the visibility chip exists to mark a message only **some** participants
+	 * can see, so showing it with the label "Alle" states the opposite of what
+	 * the chip means.
+	 *
+	 * `__all__` is the explicit marker; an empty recipient list in a group is
+	 * the implicit one (nothing was restricted, so everyone is addressed).
+	 */
+	const isAllAudienceSelected = useMemo(() => {
 		const includesAllAudience = parsedMessage.visibleToUserIds.some(
 			(entry) => `${entry || ''}`.trim().toLowerCase() === '__all__'
 		);
 		const assumeAllAudienceByDefault =
 			parsedMessage.visibleToUserIds.length === 0 &&
 			!!activeSession?.isGroup;
-		const isAllAudienceSelected =
-			includesAllAudience || assumeAllAudienceByDefault;
+		return includesAllAudience || assumeAllAudienceByDefault;
+	}, [parsedMessage.visibleToUserIds, activeSession?.isGroup]);
+	const visibilityGroups = useMemo(() => {
+		const selectedComparableLabels = new Set(
+			visibleAudienceLabels.map((entry) =>
+				makeComparableAudienceLabel(entry)
+			)
+		);
 		const allCandidates = new Map<string, string>();
 		const addCandidate = (rawValue?: string | null) => {
 			const label = normalizeAudienceLabel(`${rawValue || ''}`);
@@ -668,7 +753,7 @@ export const MessageItemComponent = ({
 		addCandidate(activeSession?.consultant?.username);
 
 		(activeSession?.item?.moderators || []).forEach((moderatorId) => {
-			const roomMatch = (rcUsersContext?.users || []).find(
+			const roomMatch = (matrixRoomUsersContext?.users || []).find(
 				(entry) => entry?._id === moderatorId
 			);
 			addCandidate(
@@ -720,11 +805,13 @@ export const MessageItemComponent = ({
 		makeComparableAudienceLabel,
 		getAudienceRoleFromLabel,
 		normalizeAudienceLabel,
-		parsedMessage.visibleToUserIds,
-		rcUsersContext?.users,
-		activeSession?.isGroup,
+		matrixRoomUsersContext?.users,
 		senderComparableLabels,
-		visibleAudienceLabels
+		visibleAudienceLabels,
+		// `parsedMessage.visibleToUserIds` and `activeSession?.isGroup` moved out
+		// with `isAllAudienceSelected`; this memo now depends on the derived
+		// value instead of on both inputs.
+		isAllAudienceSelected
 	]);
 	const visibleAudienceSummaryLabels = useMemo(() => {
 		const sourceLabels =
@@ -870,51 +957,67 @@ export const MessageItemComponent = ({
 			return;
 		}
 
-		const rawMessageObject = markdownToDraft(
-			preparedMessage,
-			markdownToDraftDefaultOptions
-		);
-		const contentStateMessage: ContentState =
-			convertFromRaw(rawMessageObject);
+		try {
+			const rawMessageObject = markdownToDraft(
+				preparedMessage,
+				markdownToDraftDefaultOptions
+			);
+			const contentStateMessage = convertFromRaw(rawMessageObject);
 
-		setRenderedMessage(
-			contentStateMessage.hasText()
-				? sanitizeHtml(
-						renderHighlightTokens(
-							renderImageMarkers(
-								urlifyLinksInText(
-									stateToHTML(contentStateMessage)
+			setRenderedMessage(
+				contentStateMessage.hasText()
+					? sanitizeHtml(
+							renderHighlightTokens(
+								renderImageMarkers(
+									urlifyLinksInText(
+										stateToHTML(contentStateMessage)
+									)
 								)
-							)
-						),
-						sanitizeHtmlDefaultOptions
-					)
-				: ''
-		);
-	}, [decryptedMessage]);
+							),
+							sanitizeHtmlDefaultOptions
+						)
+					: ''
+			);
+		} catch (error) {
+			// Markdown parsing failed; fall back to the sanitized raw message.
+			logger.debug(
+				'Message markdown render failed, using raw text',
+				error
+			);
+			setRenderedMessage(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
+		}
+		// parsedMessage is memoized on decryptedMessage, so this stays
+		// equivalent to depending on decryptedMessage alone.
+	}, [decryptedMessage, parsedMessage.cleanedMessage]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
-	const userLeftChatDisplayName = (() => {
-		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
-		if (
-			fromPayload &&
-			!fromPayload.startsWith('enc.') &&
-			!fromPayload.startsWith('@')
-		) {
-			return fromPayload;
-		}
-		return '';
-	})();
+	const isCaseHandoverGrantedEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	const userLeftChatEventText = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	)
+		? translate('message.userLeftChat', 'User left the chat')
+		: translate('message.consultantLeftChat', 'Consultant left the chat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
+	const systemNotificationReasonLabel =
+		parsedMessage.systemNotificationReasonLabel;
+	const systemNotificationExplanation =
+		parsedMessage.systemNotificationExplanation;
+	const systemNotificationRawDescription =
+		parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -923,14 +1026,11 @@ export const MessageItemComponent = ({
 	const getMessageDate = () => {
 		if (messageDate.str || messageDate.date) {
 			return (
-				<div className="messageItem__divider">
-					<Text
-						text={translate(
-							messageDate.str ? messageDate.str : messageDate.date
-						)}
-						type="divider"
-					/>
-				</div>
+				<MessageDateDivider
+					label={translate(
+						messageDate.str ? messageDate.str : messageDate.date
+					)}
+				/>
 			);
 		}
 		return null;
@@ -961,7 +1061,7 @@ export const MessageItemComponent = ({
 						.then(() => {
 							// WORKAROUND for an issue with reassignment and old users breaking the lastMessage for this session
 							apiSendAliasMessage({
-								rcGroupId: activeSession.rid,
+								matrixRoomId: activeSession.rid,
 								type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT_RESET_LAST_MESSAGE
 							});
 							reloadActiveSession();
@@ -983,9 +1083,35 @@ export const MessageItemComponent = ({
 	};
 
 	const isUserMessage = () =>
-		userId === askerRcId ||
+		userId === askerMatrixUserId ||
 		(activeSession.isGroup &&
 			!activeSession.item.moderators?.includes(userId));
+
+	// WP-4 media check (epic ORISO-Admin#366): images from anonymous live-chat
+	// guests render blurred until the counsellor reveals them (phase 1: the
+	// human is the check); inline display is a per-chat-type tenant switch.
+	const isLiveChatModality =
+		getModality(activeSession) === Modality.LIVE_CHAT;
+	const mediaChatType: MediaChatType = activeSession?.isGroup
+		? 'group'
+		: isLiveChatModality
+			? 'anonymous'
+			: 'oneOnOne';
+	const getAttachmentMediaCheckState = (
+		attachment: ChatAttachment
+	): MediaCheckState => {
+		const scannerState = attachment.mediaCheckState;
+		if (scannerState === 'blocked') {
+			return 'blocked';
+		}
+		return isLiveChatModality && !isMyMessage && isUserMessage()
+			? 'unchecked'
+			: 'safe';
+	};
+	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
+		tenant?.settings,
+		mediaChatType
+	);
 
 	const videoCallMessage: VideoCallMessageDTO = alias?.videoCallMessageDTO;
 	const isFurtherStepsMessage =
@@ -1008,16 +1134,39 @@ export const MessageItemComponent = ({
 		isVideoCallMessage && !videoCallMessage?.eventType;
 	const actionMenuItems = useMemo(
 		() => [
-			{
-				key: 'reply-direct',
-				label: translate('message.menu.replyDirect', 'Reply directly'),
-				icon: <MenuReplyDirectIcon />
-			},
+			// Relations foundation (#435): only offer direct reply where a
+			// handler is wired (main timeline; not the thread panel).
+			...(onReplyDirect
+				? [
+						{
+							key: 'reply-direct',
+							label: translate(
+								'message.menu.replyDirect',
+								'Reply directly'
+							),
+							icon: <MenuReplyDirectIcon />
+						}
+					]
+				: []),
 			{
 				key: 'reply-thread',
 				label: translate('message.menu.replyThread', 'Reply in Thread'),
 				icon: <MenuReplyThreadIcon />
 			},
+			// Editing (m.replace, #435): own messages only, where a handler
+			// is wired (main timeline; not the thread panel).
+			...(onEditDirect
+				? [
+						{
+							key: 'edit',
+							label: translate(
+								'message.menu.edit',
+								'Edit Message'
+							),
+							icon: <MenuEditIcon />
+						}
+					]
+				: []),
 			{
 				key: 'mark-text',
 				label: translate('message.menu.markText', 'Mark Text'),
@@ -1034,7 +1183,7 @@ export const MessageItemComponent = ({
 				icon: <MenuDeleteIcon />
 			}
 		],
-		[translate]
+		[translate, onReplyDirect, onEditDirect]
 	);
 
 	const handleActionMenuItemClick = useCallback(
@@ -1043,8 +1192,45 @@ export const MessageItemComponent = ({
 			if (actionKey === 'reply-thread' && onOpenThread) {
 				onOpenThread();
 			}
+			// Relations foundation (#435): direct reply finally has a handler.
+			if (actionKey === 'reply-direct' && onReplyDirect) {
+				onReplyDirect();
+			}
+			if (actionKey === 'edit' && onEditDirect) {
+				onEditDirect();
+			}
 		},
-		[onOpenThread]
+		[onOpenThread, onReplyDirect, onEditDirect]
+	);
+
+	const openActionMenuAt = useCallback(
+		(preferredLeft: number, preferredTop: number) => {
+			const menuWidth = 210;
+			const menuHeight = 300;
+			const viewportPadding = 12;
+			const computedLeft = Math.max(
+				viewportPadding,
+				Math.min(
+					preferredLeft,
+					window.innerWidth - menuWidth - viewportPadding
+				)
+			);
+			const computedTop = Math.max(
+				viewportPadding,
+				Math.min(
+					preferredTop,
+					window.innerHeight - menuHeight - viewportPadding
+				)
+			);
+			setIsVisibilityMenuOpen(false);
+			setVisibilityMenuPosition(null);
+			setActionMenuPosition({
+				top: computedTop,
+				left: computedLeft
+			});
+			setIsActionMenuOpen(true);
+		},
+		[]
 	);
 
 	const toggleActionMenu = useCallback(
@@ -1056,39 +1242,85 @@ export const MessageItemComponent = ({
 			event.stopPropagation();
 			const triggerRect = event.currentTarget.getBoundingClientRect();
 			const menuWidth = 210;
-			const menuHeight = 300;
-			const viewportPadding = 12;
 			const gap = 10;
 			const preferredLeft =
 				side === 'left'
 					? triggerRect.right + gap
 					: triggerRect.left - menuWidth - gap;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					triggerRect.top - 12,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
 			if (isActionMenuOpen) {
 				setIsActionMenuOpen(false);
 				setActionMenuPosition(null);
 				return;
 			}
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
-			setActionMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
-			setIsActionMenuOpen(true);
+			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+		},
+		[isActionMenuOpen, openActionMenuAt]
+	);
+
+	// Slack-style long-press on the message bubble opens the action menu at
+	// the press position (touch and mouse alike).
+	const cancelLongPress = useCallback(() => {
+		if (longPressTimerRef.current !== null) {
+			window.clearTimeout(longPressTimerRef.current);
+			longPressTimerRef.current = null;
+		}
+		longPressStartRef.current = null;
+	}, []);
+
+	const handleBubblePointerDown = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			if (
+				isActionMenuOpen ||
+				alias?.messageType ||
+				isSystemNotification
+			) {
+				return;
+			}
+			const { clientX, clientY } = event;
+			longPressFiredRef.current = false;
+			longPressStartRef.current = { x: clientX, y: clientY };
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
+			}
+			longPressTimerRef.current = window.setTimeout(() => {
+				longPressTimerRef.current = null;
+				longPressStartRef.current = null;
+				longPressFiredRef.current = true;
+				openActionMenuAt(clientX, clientY);
+			}, LONG_PRESS_MS);
+		},
+		[
+			isActionMenuOpen,
+			alias?.messageType,
+			isSystemNotification,
+			openActionMenuAt
+		]
+	);
+
+	const handleBubblePointerMove = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			const start = longPressStartRef.current;
+			if (!start) {
+				return;
+			}
+			if (
+				Math.abs(event.clientX - start.x) >
+					LONG_PRESS_MOVE_TOLERANCE_PX ||
+				Math.abs(event.clientY - start.y) > LONG_PRESS_MOVE_TOLERANCE_PX
+			) {
+				cancelLongPress();
+			}
+		},
+		[cancelLongPress]
+	);
+
+	const handleBubbleContextMenu = useCallback(
+		(event: React.MouseEvent<HTMLDivElement>) => {
+			// Long-press on touch devices fires contextmenu; swallow it once
+			// the menu has been opened via the long-press timer.
+			if (longPressFiredRef.current || isActionMenuOpen) {
+				event.preventDefault();
+			}
 		},
 		[isActionMenuOpen]
 	);
@@ -1167,13 +1399,16 @@ export const MessageItemComponent = ({
 	const isRoomSetReadOnly = t === 'room-set-read-only';
 	const showVisibleAudience =
 		visibleAudienceSummaryLabels.length > 0 &&
+		// A restriction chip must only appear when the message is actually
+		// restricted. Without this guard a normal group message renders
+		// "visible only to: Alle", which says the opposite of what it means.
+		!isAllAudienceSelected &&
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
 	const resolvedIncomingDisplayName = !isMyMessage
 		? consultantMatch?.consultantDisplayName ||
 			roomUser?.displayName ||
-			roomUser?.name ||
 			displayName
 		: displayName;
 	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
@@ -1204,6 +1439,142 @@ export const MessageItemComponent = ({
 		alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL &&
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
+
+	// Delivery status per Figma (node 7086-57415): the bubble time rail carries
+	// one of three states for own messages —
+	//   • Send Success    → single grey check (reached the server, not yet read)
+	//   • Recipient Read   → double red check ("gelesen")
+	//   • Encryption broke → red cross (the message never reached the server, or
+	//     end-to-end encryption failed for the recipient).
+	// `sendFailed` and `encryptionBroke` both resolve to the cross: to the user
+	// they mean the same thing — "this did not get delivered, resend it".
+	const deliveryState: 'failed' | 'read' | 'sent' =
+		sendFailed || encryptionBroke ? 'failed' : isNotRead ? 'sent' : 'read';
+	const deliveryStatusLabel =
+		deliveryState === 'failed'
+			? encryptionBroke
+				? translate(
+						'message.encryptionBroke.status',
+						'Verschlüsselung gebrochen'
+					)
+				: translate('message.sendFailed.status', 'nicht zugestellt')
+			: translate(
+					deliveryState === 'sent' ? 'message.sent' : 'message.read'
+				);
+	// The delivery cross for a broken decryption belongs on the affected
+	// message whether or not it is ours: you can always decrypt your own
+	// sends, so `encryptionBroke` in practice flags an INCOMING message the
+	// recipient's client could not decrypt. Own-message sent/read status stays
+	// own-only as before.
+	const deliveryStatusInBubble =
+		t !== 'rm' && (isMyMessage || encryptionBroke) ? (
+			<span
+				className={clsx(
+					'messageItem__deliveryStatus',
+					`messageItem__deliveryStatus--${deliveryState}`
+				)}
+				role="img"
+				aria-label={deliveryStatusLabel}
+				title={deliveryStatusLabel}
+			>
+				{deliveryState === 'failed' ? (
+					<DeliveryFailedIcon aria-hidden focusable="false" />
+				) : deliveryState === 'sent' ? (
+					<DeliverySentIcon aria-hidden focusable="false" />
+				) : (
+					<DeliveryReadIcon aria-hidden focusable="false" />
+				)}
+			</span>
+		) : null;
+
+	const messageTimeInBubble = messageTime ? (
+		<span
+			className={clsx(
+				'messageItem__messageTime',
+				isMyMessage && 'messageItem__messageTime--outgoing'
+			)}
+		>
+			{formatToHHMM(messageTime)}
+			{deliveryStatusInBubble}
+			{/* Editing (m.replace, #435): marker next to the bubble timestamp. */}
+			{isEdited && (
+				<span
+					className="messageItem__editedMarker"
+					title={translate(
+						'message.edit.markerTitle',
+						'Nachricht wurde bearbeitet'
+					)}
+				>
+					{translate('message.edit.marker', '(bearbeitet)')}
+				</span>
+			)}
+		</span>
+	) : null;
+
+	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
+	// sharing one rail with the timestamp. Adding happens via the action menu.
+	const reactionChips =
+		reactions && reactions.length > 0 ? (
+			<div
+				className={clsx(
+					'messageItem__reactions',
+					isMyMessage && 'messageItem__reactions--right'
+				)}
+			>
+				{reactions.map((reaction) => (
+					<button
+						key={reaction.key}
+						type="button"
+						className={clsx(
+							'messageItem__reactionPill',
+							reaction.ownEventId &&
+								'messageItem__reactionPill--mine'
+						)}
+						onClick={() =>
+							reaction.ownEventId
+								? onUnreact?.(reaction.ownEventId)
+								: onReact?.(reaction.key)
+						}
+						aria-label={translate(
+							'message.reaction.count',
+							'{{key}} reacted by {{count}}',
+							{
+								key: reaction.key,
+								count: reaction.count
+							}
+						)}
+					>
+						<span aria-hidden>{reaction.key}</span>
+						<span className="messageItem__reactionPillCount">
+							{reaction.count}
+						</span>
+					</button>
+				))}
+			</div>
+		) : null;
+
+	// Desktop conditional width (Figma note): bubbles stay at 460px; texts
+	// that would exceed ~4 lines at that width widen to 770px. Applied via
+	// CSS only from the large breakpoint up. Measure the RENDERED text (like
+	// the MESSAGE_CHAR_LIMIT truncation does) so markdown/HTML syntax does
+	// not inflate the count; fall back to the raw source until rendered.
+	const isWideMessage =
+		(renderedMessage ?? message ?? '').replace(/<[^>]+>/g, '').length > 220;
+
+	// "Time + Emoji Rail" (Figma): incoming = chips left / time right,
+	// outgoing = time left / chips right.
+	const timeRailInBubble = (
+		<div
+			className={clsx(
+				'messageItem__timeRail',
+				isMyMessage && 'messageItem__timeRail--outgoing'
+			)}
+		>
+			{!isMyMessage && reactionChips}
+			{messageTimeInBubble}
+			{isMyMessage && reactionChips}
+		</div>
+	);
 
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
@@ -1292,27 +1663,32 @@ export const MessageItemComponent = ({
 							activeSession.consultant?.displayName ||
 							activeSession.consultant?.username
 						}
-						activeSessionAskerRcId={activeSession.item.askerRcId}
+						activeSessionAskerRcId={
+							activeSession.item.askerMatrixUserId
+						}
 					/>
 				);
 			case isDeleteMessage:
 				return (
-					<div className="messageItem__message messageItem__message--deleted flex flex--ai-c">
-						<div className="mr--1">
-							<DeletedIcon
-								width={14}
-								height={14}
-								aria-hidden="true"
-								focusable="false"
-							/>
+					<div className="messageItem__message messageItem__message--deleted">
+						<div className="flex flex--ai-c">
+							<div className="mr--1">
+								<DeletedIcon
+									width={14}
+									height={14}
+									aria-hidden="true"
+									focusable="false"
+								/>
+							</div>
+							<div>
+								{translate(
+									isMyMessage
+										? 'message.delete.deleted.own'
+										: 'message.delete.deleted.other'
+								)}
+							</div>
 						</div>
-						<div>
-							{translate(
-								isMyMessage
-									? 'message.delete.deleted.own'
-									: 'message.delete.deleted.other'
-							)}
-						</div>
+						{timeRailInBubble}
 					</div>
 				);
 			default:
@@ -1320,25 +1696,44 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								<MessageDisplayName
-									isMyMessage={isMyMessage}
-									isUser={isUserMessage()}
-									type={getUsernameType()}
-									userId={userId}
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
-									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-								/>
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
+								{isSystemNotification &&
+								!isCaseHandoverGrantedEvent ? (
+									/*
+									 * Title above, quiet qualifier below — the same
+									 * two-line header `MessageSendFailed` uses, per
+									 * Figma App.Oriso 8607-28488. Reusing its classes
+									 * on purpose: one system-notice presentation, not
+									 * two that drift apart.
+									 */
+									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
+										<div className="messageItem__sendFailedTitle">
+											{systemNotificationTitle}
+										</div>
+										<div className="messageItem__sendFailedSubtitle">
+											{translate(
+												'message.systemNotification',
+												'System Notification'
+											)}
+										</div>
+									</div>
+								) : (
+									<MessageDisplayName
+										isMyMessage={isMyMessage}
+										isUser={isUserMessage()}
+										type={getUsernameType()}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+									/>
+								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1397,31 +1792,89 @@ export const MessageItemComponent = ({
 								isMyMessage
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
-							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
+							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
+							onPointerDown={handleBubblePointerDown}
+							onPointerMove={handleBubblePointerMove}
+							onPointerUp={cancelLongPress}
+							onPointerLeave={cancelLongPress}
+							onPointerCancel={cancelLongPress}
+							onContextMenu={handleBubbleContextMenu}
 						>
-							{isSystemNotification && (
-								<>
-									<div className="messageItem__systemNotificationTag">
-										{translate(
-											'message.systemNotification',
-											'System Notification'
+							{isSystemNotification &&
+								isCaseHandoverGrantedEvent && (
+									<CaseHandoverSystemMessageCard
+										title={translate(
+											'caseHandover.systemMessage.tookOverTitle'
 										)}
+										subtitle={translate(
+											'caseHandover.systemMessage.noActionNeeded'
+										)}
+										reasonLabel={
+											systemNotificationReasonLabel ||
+											undefined
+										}
+										explanation={
+											systemNotificationExplanation ||
+											undefined
+										}
+									>
+										{systemNotificationRawDescription && (
+											<p className="messageItem__systemNotificationDescription">
+												{
+													systemNotificationRawDescription
+												}
+											</p>
+										)}
+									</CaseHandoverSystemMessageCard>
+								)}
+							{/*
+							 * The bubble carries the body only. Title and the
+							 * "Systembenachrichtigung" qualifier live in the header,
+							 * matching the shipped `MessageSendFailed` pattern and
+							 * Figma App.Oriso 8607-28488. Previously all three sat
+							 * here — a chip, a headline and a description — so one
+							 * notice wore three labels. See ORISO-Frontend#892.
+							 */}
+							{isSystemNotification &&
+								!isCaseHandoverGrantedEvent &&
+								systemNotificationDescription && (
+									<div className="messageItem__systemNotificationDescription">
+										{systemNotificationDescription}
 									</div>
-									<div className="messageItem__systemNotificationTitle">
-										{systemNotificationTitle}
-									</div>
-									{systemNotificationDescription && (
-										<div className="messageItem__systemNotificationDescription">
-											{systemNotificationDescription}
-										</div>
-									)}
-								</>
-							)}
+								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
 									{translate(
 										'message.feedbackTag',
 										'Feedback'
+									)}
+								</div>
+							)}
+							{/* Relations foundation (#435): quote of the replied-to
+							    message, rendered from the m.in_reply_to relation. */}
+							{replyToEventId && !isSystemNotification && (
+								<div
+									className={`messageItem__replyQuote ${
+										isMyMessage
+											? 'messageItem__replyQuote--myMessage'
+											: ''
+									}`}
+									aria-label={translate(
+										'message.reply.quoteLabel',
+										'Antwort auf'
+									)}
+								>
+									<span className="messageItem__replyQuoteAuthor">
+										{replyQuote?.author ||
+											translate(
+												'message.reply.quoteUnknown',
+												'Frühere Nachricht'
+											)}
+									</span>
+									{replyQuote?.text && (
+										<span className="messageItem__replyQuoteText">
+											{replyQuote.text}
+										</span>
 									)}
 								</div>
 							)}
@@ -1636,8 +2089,15 @@ export const MessageItemComponent = ({
 										file={file}
 										t={t}
 										hasRenderedMessage={hasRenderedMessage}
+										mediaCheckState={getAttachmentMediaCheckState(
+											attachment
+										)}
+										inlineDisplayEnabled={
+											attachmentInlineDisplayEnabled
+										}
 									/>
 								))}
+							{!isSystemNotification && timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -1711,22 +2171,23 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	// MSC3440 (#435) / ADR-017 hard cut: thread membership comes ONLY from the
+	// m.thread relation. Legacy [THREAD:...] prefix messages carry no thread
+	// semantics anymore and render flat.
+	const effectiveThreadRootId = threadRootEventId || null;
+	const isThreadReply = Boolean(effectiveThreadRootId);
 	if (!forceShow) {
-		if (
-			renderMode === 'main' &&
-			threadsEnabled &&
-			parsedMessage.isThreadMessage
-		) {
+		if (renderMode === 'main' && threadsEnabled && isThreadReply) {
 			return null;
 		}
 		if (renderMode === 'thread') {
 			if (!threadsEnabled) {
 				return null;
 			}
-			if (!parsedMessage.isThreadMessage) {
+			if (!isThreadReply) {
 				return null;
 			}
-			if (threadRootId && parsedMessage.threadRootId !== threadRootId) {
+			if (threadRootId && effectiveThreadRootId !== threadRootId) {
 				return null;
 			}
 		}
@@ -1737,11 +2198,7 @@ export const MessageItemComponent = ({
 			<div className="messageItem messageItem--chatEvent">
 				{getMessageDate()}
 				<div className="messageItem__chatEvent">
-					{translate('message.userLeftChat', {
-						name:
-							userLeftChatDisplayName ||
-							translate('message.anonymousUser', 'User')
-					})}
+					{userLeftChatEventText}
 				</div>
 			</div>
 		);
@@ -1760,7 +2217,7 @@ export const MessageItemComponent = ({
 			<div
 				className={`
 					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : ''}
+					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
 					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
@@ -1772,21 +2229,40 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					!isSystemNotification && (
-						<div className="messageItem__sideColumn">
-							<div className="messageItem__avatar">
-								<UserAvatar
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+										size={44}
+									/>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
 									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-									userId={userId}
-									size="32px"
-									ring={false}
-								/>
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
 							</div>
 							{showVisibleAudience && (
 								<button
@@ -1817,20 +2293,6 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'left')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -1840,7 +2302,9 @@ export const MessageItemComponent = ({
 							className="messageItem__systemAvatar"
 							aria-hidden="true"
 						>
-							<NotificationBellIcon className="messageItem__systemAvatarIcon" />
+							<span className="messageItem__systemAvatarIcon">
+								<CarimatRobotIcon />
+							</span>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -1876,30 +2340,33 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--right"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'right')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
-							<div className="messageItem__avatar">
-								<UserAvatar
-									username={username}
-									displayName={displayName}
-									firstName={userData?.firstName}
-									lastName={userData?.lastName}
-									userId={userId}
-									size="32px"
-									ring={false}
-								/>
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--right"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'right')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={displayName}
+										firstName={userData?.firstName}
+										lastName={userData?.lastName}
+										size={44}
+									/>
+								</div>
 							</div>
 						</div>
 					)}
@@ -1909,11 +2376,6 @@ export const MessageItemComponent = ({
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
 								<div className="messageItem__senderInfoName">
 									{formattedName}
 								</div>
@@ -1926,57 +2388,6 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
-
-					{onOpenThread &&
-						renderMode === 'main' &&
-						!alias?.messageType && (
-							<button
-								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right',
-									threadSummary?.replyCount
-										? 'messageItem__threadButton--hasReplies'
-										: ''
-								)}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									onOpenThread();
-								}}
-							>
-								<span className="messageItem__threadButtonMain">
-									{threadSummary?.replyCount
-										? translate(
-												'message.thread.replies',
-												'{{count}} replies',
-												{
-													count: threadSummary.replyCount
-												}
-											)
-										: translate(
-												'message.thread.reply',
-												'Reply'
-											)}
-								</span>
-								{threadSummary?.replyCount ? (
-									<span className="messageItem__threadButtonMeta">
-										{threadSummary.lastReplyText}
-									</span>
-								) : (
-									<span className="messageItem__threadButtonMeta">
-										&nbsp;
-									</span>
-								)}
-								<span className="messageItem__threadButtonHover">
-									{translate(
-										'message.thread.view',
-										'View thread'
-									)}
-								</span>
-							</button>
-						)}
 				</div>
 			</div>
 			{isActionMenuOpen && actionMenuPosition
@@ -1992,6 +2403,52 @@ export const MessageItemComponent = ({
 								zIndex: 99999
 							}}
 						>
+							{onReact && (
+								<div
+									className="messageItem__actionMenuReactions"
+									role="group"
+									aria-label={translate(
+										'message.reaction.add',
+										'React'
+									)}
+								>
+									{QUICK_REACTION_EMOJIS.map((emoji) => {
+										const ownReaction = (
+											reactions || []
+										).find(
+											(reaction) =>
+												reaction.key === emoji &&
+												reaction.ownEventId
+										);
+										return (
+											<button
+												key={emoji}
+												type="button"
+												role="menuitem"
+												className={clsx(
+													'messageItem__actionMenuReactionEmoji',
+													ownReaction &&
+														'messageItem__actionMenuReactionEmoji--mine'
+												)}
+												onClick={() => {
+													if (
+														ownReaction?.ownEventId
+													) {
+														onUnreact?.(
+															ownReaction.ownEventId
+														);
+													} else {
+														onReact(emoji);
+													}
+													setIsActionMenuOpen(false);
+												}}
+											>
+												{emoji}
+											</button>
+										);
+									})}
+								</div>
+							)}
 							{actionMenuItems.map((item) => (
 								<button
 									key={item.key}
@@ -2218,18 +2675,18 @@ const MessageFlyoutMenu = ({
 	isArchived: boolean;
 }) => {
 	const { activeSession } = useContext(ActiveSessionContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
+	const { getSetting } = useContext(ServerSettingsContext);
 	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
 		useState<boolean>(false);
 
 	const currentUserIsModerator = isUserModerator({
 		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
+		matrixUserId: getCurrentMatrixUserId()
 	});
 
 	const subscriberIsModerator = isUserModerator({
 		chatItem: activeSession.item,
-		rcUserId: userId
+		matrixUserId: userId
 	});
 
 	return (
@@ -2240,7 +2697,7 @@ const MessageFlyoutMenu = ({
 					!isUserBanned && (
 						<BanUser
 							userName={username}
-							rcUserId={userId}
+							matrixUserId={userId}
 							chatId={activeSession.item.id}
 							handleUserBan={() => {
 								setIsUserBanOverlayOpen(true);

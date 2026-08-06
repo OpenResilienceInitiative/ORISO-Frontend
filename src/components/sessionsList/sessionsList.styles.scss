@@ -4,9 +4,17 @@ $iconWrapperSize: 48px;
 $iconSize: 24px;
 $selectWrapperHeight: 98px;
 $headerHeight: 80px;
-$mobileNavigationHeight: 72px;
+$mobileNavigationHeight: 76px;
 $tabBarHeightMobile: 77px;
 $tabBarHeightDesktop: 53px;
+$sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
+$caseHandoverAction: var(--m3-primary, $primary);
+$caseHandoverActionDisabled: var(--m3-surface-variant, #d8dde3);
+$caseHandoverTextMuted: var(--m3-on-surface-variant, #6d747d);
+$caseHandoverPanelBorder: var(--m3-primary-fixed-dim, #ffb4aa);
+$caseHandoverPanelSurface: var(--m3-surface, #ffffff);
+$caseHandoverFieldSurface: var(--m3-surface-container-low, #f5f3f4);
+$caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 .sessionsList,
 .session {
@@ -14,7 +22,7 @@ $tabBarHeightDesktop: 53px;
 		justify-content: stretch;
 		align-items: stretch;
 		flex: 1;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		position: relative;
 		min-height: 0;
 		display: flex;
@@ -31,7 +39,7 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		flex-direction: row;
 		padding: $grid-base-three $grid-base-two;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 15;
 
 		@include breakpoint($fromMedium) {
@@ -97,9 +105,182 @@ $tabBarHeightDesktop: 53px;
 		flex-direction: column;
 	}
 
+	&__caseHandoverBatch {
+		padding: 0 24px 12px;
+		background: $sessionShellSurface;
+	}
+
+	&__caseHandoverBatchToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding: 0 18px;
+		border: 0;
+		border-radius: 20px;
+		background: $caseHandoverAction;
+		color: #ffffff;
+		font-weight: 700;
+		cursor: pointer;
+
+		&:disabled {
+			background: $caseHandoverActionDisabled;
+			color: $caseHandoverTextMuted;
+			cursor: not-allowed;
+		}
+	}
+
+	&__caseHandoverBatchPanel {
+		padding: 14px;
+		border-radius: 18px;
+		background: $caseHandoverPanelSurface;
+		border: 1px solid $caseHandoverPanelBorder;
+		box-shadow: 0 1px 3px rgba(45, 34, 33, 0.08);
+	}
+
+	&__caseHandoverBatchHeader {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 12px;
+		color: $caseHandoverBodyText;
+		font-size: 14px;
+	}
+
+	&__caseHandoverBatchReasons {
+		display: grid;
+		gap: 8px;
+		margin-bottom: 10px;
+
+		label {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 34px;
+			padding: 6px 10px;
+			border-radius: 12px;
+			background: $caseHandoverFieldSurface;
+			font-size: 13px;
+			color: $caseHandoverBodyText;
+		}
+
+		input {
+			accent-color: $caseHandoverAction;
+		}
+	}
+
+	&__caseHandoverBatchExplanation {
+		display: block;
+		width: 100%;
+		min-height: 84px;
+		padding: 12px;
+		border: 1px solid $caseHandoverPanelBorder;
+		border-radius: 14px;
+		resize: vertical;
+		font: inherit;
+		font-size: 13px;
+		color: $caseHandoverBodyText;
+	}
+
+	&__caseHandoverBatchActions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+		margin-top: 12px;
+
+		button {
+			min-height: 36px;
+			padding: 0 14px;
+			border: 0;
+			border-radius: 18px;
+			background: $caseHandoverFieldSurface;
+			color: $caseHandoverTextMuted;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.sessionsList__caseHandoverBatchSubmit {
+			background: $caseHandoverAction;
+			color: #ffffff;
+
+			&:disabled {
+				background: $caseHandoverActionDisabled;
+				color: $caseHandoverTextMuted;
+				cursor: not-allowed;
+			}
+		}
+	}
+
+	&__caseHandoverWizardOverlay {
+		position: fixed;
+		inset: 0;
+		z-index: 120;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		background: rgba(27, 27, 28, 0.4);
+	}
+
+	&__caseHandoverWizardShell {
+		width: min(720px, 100%);
+		max-height: min(86vh, 780px);
+		display: flex;
+		flex-direction: column;
+		border-radius: 24px;
+		overflow: hidden auto;
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+
+		.caseHandoverCurtain {
+			padding: 0;
+			background: transparent;
+		}
+
+		.caseHandoverCurtain__card {
+			box-shadow: none;
+			border-radius: 0;
+		}
+	}
+
+	&__caseHandoverWizardBar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 20px 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+
+		span {
+			color: var(--m3-on-surface-variant, #6d747d);
+		}
+	}
+
+	&__caseHandoverWizardClose {
+		margin-left: auto;
+		border: 0;
+		background: transparent;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 700;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__caseHandoverBatchSummary {
+		margin-top: 10px;
+		color: $caseHandoverTextMuted;
+		font-size: 13px;
+		font-weight: 600;
+	}
+
 	&__selectWrapper {
 		width: 100%;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
@@ -117,10 +298,16 @@ $tabBarHeightDesktop: 53px;
 		flex: 1;
 		padding-right: 0;
 		scrollbar-width: none; // Firefox: hide native scrollbar
+		// Mobile: 6px gutter left/right of the chat cards (Frank feedback
+		// 2026-07-19); desktop widens to the 12px Figma gutter below.
+		margin-left: 6px;
+		margin-right: 6px;
 
 		@include breakpoint($fromLarge) {
 			margin-top: 0;
 			padding-top: 0;
+			margin-left: 12px;
+			margin-right: 12px;
 		}
 
 		// WebKit: hide native scrollbar (we render a custom one)
@@ -192,10 +379,11 @@ $tabBarHeightDesktop: 53px;
 
 	&__resizeHandle {
 		position: absolute;
-		right: 0;
+		right: -12px;
 		top: 0;
 		bottom: 0;
 		width: 24px;
+
 		/* Cursor is controlled dynamically (resize vs scroll drag mode) */
 		cursor: grab;
 		z-index: 30;
@@ -209,31 +397,66 @@ $tabBarHeightDesktop: 53px;
 	&__resizeHandlePill {
 		position: absolute;
 		right: -3px;
-		top: 0;
+		top: 50%;
 		width: 6px;
-		height: var(--sessionsListThumbHeight, 56px);
+		height: 56px;
 		border-radius: 999px;
 		background: #ffffff;
-		transform: translateY(var(--sessionsListThumbTop, 0px));
-		transition:
-			box-shadow 140ms ease,
-			transform 140ms ease;
+		transform: translateY(-50%);
+		transition: box-shadow 140ms ease;
+	}
+
+	&__resizeToggle {
+		position: absolute;
+		right: -14px;
+		top: 18px;
+		z-index: 3;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: 1px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 999px;
+		background: var(--m3-surface-container-highest, #e1dddf);
+		color: var(--m3-on-surface, #1d1b1c);
+		font-size: 22px;
+		line-height: 24px;
+		cursor: pointer;
+		display: none;
+		align-items: center;
+		justify-content: center;
+
+		@include breakpoint($fromLarge) {
+			display: flex;
+		}
+
+		&:hover {
+			background: var(--m3-secondary-container, #ffdad5);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.22),
 			0 3px 10px rgba(0, 0, 0, 0.14);
-		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.08);
+		box-shadow:
+			0 0 0 1px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
+			0 3px 10px rgba(0, 0, 0, 0.14);
+		transform: translateY(-50%) scaleX(1.08);
 	}
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
-		background: #ffdad5;
-		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.12);
+		background: var(--m3-primary-fixed, #ffdad5);
+		transform: translateY(-50%) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
-		box-shadow: 0 0 0 1px #ffdad5;
+		box-shadow: 0 0 0 1px var(--m3-primary-fixed, #ffdad5);
 	}
 
 	&__functionalityWrapper {
@@ -248,16 +471,16 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		width: 100%;
 		padding: $grid-base-three;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
 			padding: 0 $grid-base-three $grid-base-three;
-			background-color: #eae7e8;
+			background-color: $sessionShellSurface;
 		}
 
 		a {
-			color: var(--skin-color-default, $tertiary);
+			color: var(--m3-primary, $tertiary);
 
 			&:last-of-type {
 				margin-left: $grid-base-three;
@@ -265,7 +488,7 @@ $tabBarHeightDesktop: 53px;
 
 			@media (hover: hover) {
 				&:hover .text {
-					color: var(--skin-color-default, $hover-primary);
+					color: var(--m3-primary, $hover-primary);
 				}
 			}
 		}
@@ -273,12 +496,12 @@ $tabBarHeightDesktop: 53px;
 		&--active {
 			.text {
 				font-weight: $font-weight-medium;
-				color: var(--skin-color-primary-contrast-safe, $primary);
+				color: var(--m3-primary, $primary);
 			}
 
 			&::after {
 				content: '';
-				background: var(--skin-color-primary, $primary);
+				background: var(--m3-primary, $primary);
 				display: block;
 				height: 3px;
 				margin-top: 5px;
@@ -300,6 +523,7 @@ $tabBarHeightDesktop: 53px;
 			height: $illustrationWrapperSize;
 			border-radius: calc($illustrationWrapperSize / 2);
 			background-color: $illustration-background-info;
+			border: $illustration-border-accent;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -364,6 +588,25 @@ $tabBarHeightDesktop: 53px;
 		}
 	}
 
+	// Empty state (Figma node 7108-45494): stacked cards each carry a 1px white
+	// frame, which reads as a continuous white hairline down the left and right
+	// column edges. With no cards those hairlines disappear, so the empty state
+	// re-draws them itself and stretches to fill the column height.
+	&__emptyState {
+		flex: 1 1 auto;
+		align-self: stretch;
+		box-sizing: border-box;
+
+		// Align the hairlines with the card gutter: 6px on mobile, 12px on
+		// desktop (matches the scrollContainer margins above).
+		margin: 0 6px;
+		border-right: 1px solid #fff;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 12px;
+		}
+	}
+
 	&__reloadWrapper {
 		margin: $grid-base-three auto;
 
@@ -374,6 +617,14 @@ $tabBarHeightDesktop: 53px;
 			line-height: $grid-base-three;
 		}
 	}
+}
+
+// Issue #564: white list↔chat separator pill is only for the empty
+// (no conversation) layout. SessionsZone adds --smallInactive on the list
+// column when a session detail route is active — hide the pill then.
+// Resize hit-target stays; only the decorative white pill is suppressed.
+.contentWrapper__list--smallInactive .sessionsList__resizeHandlePill {
+	opacity: 0;
 }
 
 .sessionsList {
@@ -419,7 +670,7 @@ $tabBarHeightDesktop: 53px;
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
-			margin-bottom: 4px;
+			margin-bottom: 0px;
 
 			&__content {
 				display: flex;
@@ -457,26 +708,91 @@ $tabBarHeightDesktop: 53px;
 	}
 }
 
+.sessionsListDraftItem {
+	width: calc(100% - 24px);
+	min-height: 76px;
+	margin: 0 12px 8px;
+	padding: 12px 14px;
+	box-sizing: border-box;
+	border: 1px solid var(--m3-outline-variant, #e1e6ee);
+	border-radius: 16px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface-variant, #4c555f);
+	font-family: $font-family-sans-serif;
+	text-align: left;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 4px 12px;
+	cursor: pointer;
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.72;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-outline, #57606a);
+		outline-offset: 2px;
+	}
+
+	&__tag {
+		grid-column: 1 / -1;
+		font-size: 12px;
+		line-height: 16px;
+		font-weight: $font-weight-medium;
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__title {
+		min-width: 0;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: $font-weight-medium;
+		color: var(--m3-on-surface, #1b1b1c);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__meta {
+		font-size: 12px;
+		line-height: 24px;
+		color: var(--m3-on-surface-variant, #4c555f);
+		white-space: nowrap;
+	}
+
+	&__hint {
+		grid-column: 1 / -1;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+}
+
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
 .sessionsListToolbar {
 	$toolbar-search-bg: #f6f3f3;
 	$toolbar-text: #444748;
-	// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
+
+	// Figma filter pill contract: inactive icon-only pills, expanded active pill.
 	$toolbar-chip-bg: #ffffff;
-	$toolbar-chip-fg: #333333;
+	$toolbar-chip-fg: #4c555f;
 	$toolbar-chip-border-rest: #e1e6ee;
 	$toolbar-chip-hover-bg: #eef1f6;
 	$toolbar-chip-hover-border: #d1d8e6;
-	$toolbar-chip-selected-bg: #333333;
+	$toolbar-chip-selected-bg: #410001;
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
-	padding: $grid-base-three $grid-base-three 0;
-	background-color: #eae7e8;
+
+	// Mobile: 6px outer gutter around the search bar (Frank feedback
+	// 2026-07-19). Desktop widens to the 12px Figma gutter below the rail.
+	padding: 6px 6px 0;
+	background-color: $sessionShellSurface;
 	z-index: 5;
 
 	@include breakpoint($fromLarge) {
-		padding: 0 $grid-base-three 0;
+		padding: 0 12px 0;
 	}
 
 	/* Enquiry tab gets a compact chip row (Chats + Live Chat) — no search,
@@ -662,8 +978,17 @@ $tabBarHeightDesktop: 53px;
 		overflow-x: auto;
 		overflow-y: hidden;
 		-webkit-overflow-scrolling: touch;
+		-ms-overflow-style: none;
+		overscroll-behavior-x: contain;
+		scroll-behavior: smooth;
 		margin-bottom: $grid-base-two;
-		scrollbar-width: thin;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+			width: 0;
+			height: 0;
+		}
 
 		@include breakpoint($fromLarge) {
 			margin-bottom: $grid-base-three;
@@ -677,7 +1002,7 @@ $tabBarHeightDesktop: 53px;
 		flex-wrap: nowrap;
 		gap: 8px;
 		width: max-content;
-		min-height: 40px;
+		min-height: 48px;
 		padding: 4px 0 6px;
 	}
 
@@ -686,10 +1011,12 @@ $tabBarHeightDesktop: 53px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 4px;
+		gap: 0;
+
 		/* Pill / oval (not circles): avoid equal min-width + min-height + full radius */
-		padding: 8px 14px;
-		min-height: 40px;
+		padding: 0 16px;
+		min-height: 48px;
+		min-width: 48px;
 		box-sizing: border-box;
 		border-radius: 9999px;
 		border: 1px solid $toolbar-chip-border-rest;
@@ -697,6 +1024,7 @@ $tabBarHeightDesktop: 53px;
 		color: $toolbar-chip-fg;
 		text-decoration: none;
 		cursor: pointer;
+
 		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
 		&:link,
 		&:visited:not(&--active) {
@@ -706,16 +1034,25 @@ $tabBarHeightDesktop: 53px;
 		&:focus {
 			border-radius: 9999px;
 		}
+
 		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		font-weight: $font-weight-medium;
+		line-height: 16px;
+		letter-spacing: 0.5px;
 		position: relative;
-		overflow: hidden;
 		isolation: isolate;
+		max-width: 260px;
+		will-change: max-width, padding, background-color, color, transform;
 		-webkit-tap-highlight-color: transparent;
 		transition:
-			background-color 160ms cubic-bezier(0.2, 0, 0, 1),
-			border-color 160ms cubic-bezier(0.2, 0, 0, 1),
-			color 140ms cubic-bezier(0.2, 0, 0, 1),
-			transform 120ms cubic-bezier(0.2, 0, 0, 1);
+			background-color 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			border-color 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			box-shadow 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			color 300ms cubic-bezier(0.16, 1, 0.3, 1),
+			padding 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			max-width 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 
 		&::before {
 			content: '';
@@ -751,7 +1088,7 @@ $tabBarHeightDesktop: 53px;
 		}
 
 		&:active {
-			transform: scale(0.985);
+			transform: scale(0.97);
 		}
 
 		&:active:not(&--active) {
@@ -762,15 +1099,17 @@ $tabBarHeightDesktop: 53px;
 		}
 
 		&--iconOnly {
-			/* Wider horizontal padding → oval capsule, same height as text chips */
-			min-width: 0;
-			padding: 8px 18px;
+			max-width: 48px;
+			padding: 0;
 		}
 
 		/* Figma selected chip: dark surface + white label/icons */
 		&--active {
+			animation: sessionsListToolbarChipActivate 220ms
+				cubic-bezier(0.16, 1, 0.3, 1);
 			background-color: $toolbar-chip-selected-bg;
 			border-color: $toolbar-chip-selected-bg;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 			color: $toolbar-chip-selected-fg;
 
 			&:link,
@@ -786,8 +1125,8 @@ $tabBarHeightDesktop: 53px;
 
 		@media (hover: hover) {
 			&--active:hover {
-				background-color: #404040;
-				border-color: #404040;
+				background-color: #5f1313;
+				border-color: #5f1313;
 				color: $toolbar-chip-selected-fg;
 
 				&::before {
@@ -805,9 +1144,15 @@ $tabBarHeightDesktop: 53px;
 
 	&__chipIconSvg {
 		display: block;
-		width: 16px;
-		height: 16px;
+		width: 24px;
+		height: 24px;
 		flex-shrink: 0;
+	}
+
+	&__chipIconSvg--asset {
+		path {
+			fill: currentcolor;
+		}
 	}
 
 	&__groupIconSlot {
@@ -827,10 +1172,61 @@ $tabBarHeightDesktop: 53px;
 
 	&__chipLabel {
 		font-size: 12px;
-		font-weight: $font-weight-bold;
-		line-height: 14px;
+		font-weight: $font-weight-medium;
+		line-height: 16px;
+		letter-spacing: 0.5px;
 		color: inherit;
 		white-space: nowrap;
+		display: inline-block;
+		max-width: 0;
+		margin-left: 0;
+		opacity: 0;
+		overflow: hidden;
+		transform: translateX(-4px);
+		will-change: max-width, margin-left, opacity, transform;
+		transition:
+			max-width 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			margin-left 480ms cubic-bezier(0.16, 1, 0.3, 1),
+			opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
+			transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	&__chip--active &__chipLabel {
+		max-width: 180px;
+		margin-left: 8px;
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	&__chipBadge {
+		min-width: 16px;
+		height: 16px;
+		padding: 0 4px;
+		border-radius: 999px;
+		background: var(--oriso-unread-indicator-color, #b1005e);
+		color: #ffffff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+		font-weight: $font-weight-bold;
+		line-height: 16px;
+		letter-spacing: 0;
+	}
+
+	&__chip--iconOnly &__chipBadge {
+		position: absolute;
+		right: 3px;
+		top: 3px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__chip,
+		&__chip::before,
+		&__chipLabel {
+			animation: none;
+			transition: none;
+		}
 	}
 
 	&__searchModal {
@@ -842,7 +1238,7 @@ $tabBarHeightDesktop: 53px;
 		border-radius: 0 0 28px 28px;
 		border: 1px solid #d9d6d7;
 		border-top: none;
-		background: #eae7e8;
+		background: $sessionShellSurface;
 		overflow: hidden;
 		max-height: min(56vh, 520px);
 		overflow-y: auto;
@@ -902,7 +1298,9 @@ $tabBarHeightDesktop: 53px;
 	&__searchModalTab {
 		border: none;
 		background: transparent;
-		padding: 10px 12px 6px;
+		flex: 1 1 0;
+		min-width: 0;
+		padding: 10px 8px 6px;
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
@@ -918,8 +1316,8 @@ $tabBarHeightDesktop: 53px;
 	}
 
 	&__searchModalTab--active {
-		color: #a5000a;
-		border-bottom-color: #a5000a;
+		color: var(--m3-primary, #a5000a);
+		border-bottom-color: var(--m3-primary, #a5000a);
 	}
 
 	&__searchModalTabIcon {
@@ -935,6 +1333,10 @@ $tabBarHeightDesktop: 53px;
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	&__searchModalTabIconWithDot {
@@ -976,8 +1378,8 @@ $tabBarHeightDesktop: 53px;
 		width: 40px;
 		height: 40px;
 		border-radius: 999px;
-		background: #cc1e1c;
-		color: #ffe2de;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary-container, #ffe2de);
 		font-size: 16px;
 		font-weight: 600;
 		display: inline-flex;
@@ -1013,13 +1415,13 @@ $tabBarHeightDesktop: 53px;
 		width: 18px;
 		height: 18px;
 		border-radius: 3px;
-		border: 2px solid #444748;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
 	}
 
 	&__personCheckbox--selected {
-		background: #a5000a;
-		border-color: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		border-color: var(--m3-primary, #a5000a);
 		position: relative;
 
 		&::after {
@@ -1035,10 +1437,72 @@ $tabBarHeightDesktop: 53px;
 		}
 	}
 
+	&__personRadio {
+		width: 20px;
+		height: 20px;
+		border-radius: 999px;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
+		flex-shrink: 0;
+		position: relative;
+	}
+
+	&__personRadio--selected {
+		border-color: var(--m3-primary, #a5000a);
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 3px;
+			border-radius: 999px;
+			background: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__searchRefineHint {
+		padding: 10px 16px 8px;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--m3-on-surface-variant, #444748);
+		background: var(--m3-surface-container-low, #f5f2f3);
+		border-bottom: 1px solid var(--m3-outline-variant, #d9d6d7);
+	}
+
+	&__searchConfirmButton {
+		width: 40px;
+		height: 40px;
+		border: none;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline-offset: 2px;
+		}
+
+		svg path {
+			fill: var(--m3-on-primary, #ffffff);
+		}
+	}
+
 	&__searchEmpty {
 		padding: 18px 16px;
 		font-size: 14px;
 		line-height: 20px;
 		color: #444748;
+	}
+}
+
+@keyframes sessionsListToolbarChipActivate {
+	from {
+		transform: scale(0.98);
+	}
+
+	to {
+		transform: scale(1);
 	}
 }

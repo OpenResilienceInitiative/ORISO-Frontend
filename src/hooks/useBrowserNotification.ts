@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ListItemInterface } from '../globalState/interfaces';
 import {
 	isBrowserNotificationTypeEnabled,
@@ -9,7 +9,7 @@ import {
 
 export const useBrowserNotification = () => {
 	const { t } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const maybeSendNewEnquiryNotification = useCallback(
 		(sessions: ListItemInterface[]) => {
@@ -28,14 +28,18 @@ export const useBrowserNotification = () => {
 				isBrowserNotificationTypeEnabled('initialEnquiry')
 			) {
 				sendNotification(t('notifications.initialRequest.new'), {
+					// A new enquiry belongs to Anfrage → Neue Anfrage, not to
+					// the conversations fallback row (#586 audit).
+					family: 'requests',
+					eventType: 'request.new',
 					showAlways: true,
 					onclick: () => {
-						history.push(`/sessions/consultant/sessionPreview`);
+						navigate(`/sessions/consultant/sessionPreview`);
 					}
 				});
 			}
 		},
-		[history, t]
+		[navigate, t]
 	);
 
 	return {

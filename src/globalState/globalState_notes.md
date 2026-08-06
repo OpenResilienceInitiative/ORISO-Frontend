@@ -27,8 +27,6 @@
 
 ```json
 {
-	"rocketchatToken": "string",
-	"rocketchatUserId": "string",
 	"keycloakToken": "string",
 	"keycloakRefreshToken": "string"
 }
@@ -49,7 +47,7 @@ Example json object for userRole consultant
 				"status": 1,
 				"postcode": 88046,
 				"groupId": "xGklslk2JJKK",
-				"askerRcId": "8ertjlasdKJA",
+				"askerMatrixUserId": "8ertjlasdKJA",
 				"messageDate": 1539184948,
 				"messagesRead": false
 			},
@@ -82,7 +80,7 @@ Example json object for userRole user
 				"status": 2,
 				"postcode": "25252",
 				"groupId": "upncZaeACtWErNACh",
-				"askerRcId": "qQ6EvvxoXS2ERMz77",
+				"askerMatrixUserId": "qQ6EvvxoXS2ERMz77",
 				"messageDate": 1558593730,
 				"messagesRead": true
 			},

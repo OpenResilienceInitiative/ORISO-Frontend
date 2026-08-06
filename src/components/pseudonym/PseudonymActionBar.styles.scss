@@ -28,7 +28,7 @@
 	border: none;
 	cursor: pointer;
 	overflow: hidden;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-weight: 500;
 	transition:
 		background 160ms ease,
@@ -43,7 +43,7 @@
 .pseudonymActionBar__btnChange {
 	flex: 0 0 auto;
 	border-radius: 20px;
-	background: #646d78;
+	background: var(--m3-secondary-container, #646d78);
 	color: #e7effc;
 	padding: 0 28px 0 64px;
 	position: relative;
@@ -63,8 +63,8 @@
 .pseudonymActionBar__btnContinue {
 	flex: 1 1 auto;
 	border-radius: 999px;
-	background: #a5000a;
-	color: #ffffff;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
 
 	&:hover:not(:disabled) {
 		background: #8a0008;
@@ -91,7 +91,7 @@
 }
 
 /* Desktop: bigger Figma-spec type sizes, wider padding */
-@media screen and (min-width: 900px) {
+@media screen and (width >= 900px) {
 	.pseudonymActionBar {
 		padding: 16px 24px;
 		gap: 4px;
@@ -118,7 +118,7 @@
 }
 
 /* Ultra-wide spec (Figma 390 phone frame looked giant): keep above sane */
-@media screen and (max-width: 420px) {
+@media screen and (width <= 420px) {
 	.pseudonymActionBar {
 		padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0));
 	}

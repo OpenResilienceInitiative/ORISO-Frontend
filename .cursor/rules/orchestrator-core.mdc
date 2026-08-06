@@ -1,0 +1,41 @@
+---
+description: Task orchestration - triage, documentation trail, loop discipline, and approval gates
+alwaysApply: true
+---
+
+# Orchestrator Core
+
+## Triage first
+
+Before coding, classify the task:
+
+- **Trivial** (one file, no new behavior, no UI/security impact): just do it, no docs required.
+- **Non-trivial** (anything else): follow the goal-loop workflow — `problem-intake` → `spike-doc` → `task-implementation-doc` → iterate think/implement/verify → `regression-check` → `pr-prep`. Artifacts go in `docs/agent-tasks/YYYY-MM-DD_short-feature-name/` (legacy `docs/cursor-orchestrator/` is historical only).
+
+When the user says "loop" or asks to iterate until done, use the `goal-loop` skill.
+
+## Context discipline
+
+- Prefer file references over copying content into docs or chat.
+- Delegate broad codebase searches to the `codebase-explorer` subagent or Explore; keep raw results out of the main context.
+- Summarize long logs and long source documents; never paste them.
+- Keep every orchestrator doc concise and implementation-oriented.
+
+## Delegation
+
+- `planner` subagent: spikes and implementation plans for complex/ambiguous work.
+- `verifier` subagent: independent post-implementation validation.
+- `security-auditor` subagent: touched-scope security review when auth, input handling, storage, network, or privacy boundaries change.
+- Browser: UI verification for frontend changes.
+
+## Approval gates — always stop and ask before
+
+- using credentials or tokens
+- configuring external services
+- destructive commands (reset, force push, rm of tracked files)
+- opening, updating, or merging a PR
+- installing marketplace skills or third-party tools
+
+## Learnings
+
+After a task that involved a wrong assumption, a repeated failure, or a correction from the user, append one short entry to `.learnings/LEARNINGS.md` (or `.learnings/ERRORS.md` for bugs in our process). One concept per entry. Promote a lesson to AGENTS.md only if it applies to most future tasks.

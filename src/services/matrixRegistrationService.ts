@@ -1,5 +1,6 @@
 import { createClient } from 'matrix-js-sdk';
 import { getMatrixHomeserverUrl } from '../resources/scripts/runtimeConfig';
+import { getMatrixClientLogger } from '../utils/matrixLogging';
 
 export interface MatrixRegistrationData {
 	username: string;
@@ -31,7 +32,8 @@ export const registerMatrixUser = async (
 
 		// Create Matrix client
 		const client = createClient({
-			baseUrl: homeserverUrl
+			baseUrl: homeserverUrl,
+			logger: getMatrixClientLogger()
 		});
 
 		// Register user with proper type casting
@@ -40,7 +42,7 @@ export const registerMatrixUser = async (
 			registrationData.password,
 			null, // auth
 			{
-				initial_device_display_name: 'Caritas Frontend',
+				initial_device_display_name: 'ORISO Frontend',
 				...(registrationData.displayName && {
 					displayname: registrationData.displayName
 				})
@@ -99,7 +101,8 @@ export const loginMatrixUser = async (
 
 		// Create Matrix client
 		const client = createClient({
-			baseUrl: homeserverUrl
+			baseUrl: homeserverUrl,
+			logger: getMatrixClientLogger()
 		});
 
 		// Login user

@@ -1,0 +1,19 @@
+{
+	"version": 1,
+	"hooks": {
+		"beforeShellExecution": [
+			{
+				"command": "bash .cursor/hooks/guard-destructive.sh",
+				"timeout": 10,
+				"failClosed": true
+			}
+		],
+		"beforeReadFile": [
+			{
+				"command": "bash .cursor/hooks/guard-secrets-read.sh",
+				"timeout": 10,
+				"failClosed": true
+			}
+		]
+	}
+}
