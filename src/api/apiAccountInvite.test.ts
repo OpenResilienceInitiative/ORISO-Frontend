@@ -22,7 +22,9 @@ vi.mock('./fetchData', () => ({
 
 describe('account invite API', () => {
 	it('loads invite details anonymously with an encoded token', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ recipientEmail: 'lisa@oriso.org' });
+		vi.mocked(fetchData).mockResolvedValue({
+			recipientEmail: 'lisa@oriso.org'
+		});
 
 		await getAccountInvite('token/with spaces');
 

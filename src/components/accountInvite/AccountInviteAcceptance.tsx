@@ -1,4 +1,10 @@
-import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
+import {
+	Alert,
+	Box,
+	Button,
+	CircularProgress,
+	Typography
+} from '@mui/material';
 import * as React from 'react';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +36,9 @@ export const AccountInviteAcceptance = () => {
 	useEffect(() => {
 		let active = true;
 		if (!token) {
-			setError(t('accountInvite.invalid', 'Der Einladungslink ist ungültig.'));
+			setError(
+				t('accountInvite.invalid', 'Der Einladungslink ist ungültig.')
+			);
 			setLoading(false);
 			return () => {
 				active = false;
@@ -98,11 +106,23 @@ export const AccountInviteAcceptance = () => {
 			<Box className="loginForm" data-testid="account-invite-acceptance">
 				<Box className="loginForm__inner">
 					{loading ? (
-						<CircularProgress aria-label={t('accountInvite.loading', 'Einladung wird geladen')} />
+						<CircularProgress
+							aria-label={t(
+								'accountInvite.loading',
+								'Einladung wird geladen'
+							)}
+						/>
 					) : completed ? (
 						<Box>
-							<Typography component="h1" variant="h4" gutterBottom>
-								{t('accountInvite.successTitle', 'Konto erstellt')}
+							<Typography
+								component="h1"
+								variant="h4"
+								gutterBottom
+							>
+								{t(
+									'accountInvite.successTitle',
+									'Konto erstellt'
+								)}
 							</Typography>
 							<Typography paragraph>
 								{t(
@@ -110,14 +130,25 @@ export const AccountInviteAcceptance = () => {
 									'Ihr Beratungskonto wurde erstellt.'
 								)}
 							</Typography>
-							<Button component={Link} to="/login" variant="contained">
+							<Button
+								component={Link}
+								to="/login"
+								variant="contained"
+							>
 								{t('accountInvite.toLogin', 'Zur Anmeldung')}
 							</Button>
 						</Box>
 					) : (
 						<Box component="form" onSubmit={submit} noValidate>
-							<Typography component="h1" variant="h4" gutterBottom>
-								{t('accountInvite.title', 'Beratungskonto erstellen')}
+							<Typography
+								component="h1"
+								variant="h4"
+								gutterBottom
+							>
+								{t(
+									'accountInvite.title',
+									'Beratungskonto erstellen'
+								)}
 							</Typography>
 							<Typography paragraph>
 								{t(
@@ -129,25 +160,38 @@ export const AccountInviteAcceptance = () => {
 							{invite && (
 								<>
 									<OrisoTextField
-										label={t('accountInvite.email', 'E-Mail-Adresse')}
+										label={t(
+											'accountInvite.email',
+											'E-Mail-Adresse'
+										)}
 										value={invite.recipientEmail}
 										disabled
 										fullWidth
 										margin="normal"
 									/>
 									<OrisoTextField
-										label={t('accountInvite.username', 'Benutzername')}
+										label={t(
+											'accountInvite.username',
+											'Benutzername'
+										)}
 										value={username}
-										onChange={(event) => setUsername(event.target.value)}
+										onChange={(event) =>
+											setUsername(event.target.value)
+										}
 										autoComplete="username"
 										fullWidth
 										margin="normal"
 									/>
 									<OrisoTextField
-										label={t('accountInvite.password', 'Passwort')}
+										label={t(
+											'accountInvite.password',
+											'Passwort'
+										)}
 										type="password"
 										value={password}
-										onChange={(event) => setPassword(event.target.value)}
+										onChange={(event) =>
+											setPassword(event.target.value)
+										}
 										autoComplete="new-password"
 										fullWidth
 										margin="normal"
@@ -163,7 +207,11 @@ export const AccountInviteAcceptance = () => {
 										)}
 										type="password"
 										value={repeatedPassword}
-										onChange={(event) => setRepeatedPassword(event.target.value)}
+										onChange={(event) =>
+											setRepeatedPassword(
+												event.target.value
+											)
+										}
 										autoComplete="new-password"
 										fullWidth
 										margin="normal"
@@ -174,7 +222,10 @@ export const AccountInviteAcceptance = () => {
 										disabled={!valid || submitting}
 										sx={{ mt: 2 }}
 									>
-										{t('accountInvite.submit', 'Konto erstellen')}
+										{t(
+											'accountInvite.submit',
+											'Konto erstellen'
+										)}
 									</Button>
 								</>
 							)}
