@@ -246,9 +246,11 @@
 		"dtsgen": "ts-node dtsgen.ts",
 		"prepare": "husky install",
 		"browserstack": "browserstack-cypress run --sync --env BROWSER=none,REACT_APP_API_URL=http://127.0.0.1:9001,HTTPS=0,PORT=9001,WDS_SOCKET_PORT=9001",
+		"generate:icon-catalog": "node scripts/generateIconCatalog.mjs",
+		"prestorybook": "npm run generate:icon-catalog",
 		"storybook": "storybook dev -p 6006",
 		"typecheck:storybook": "tsc --noEmit --project tsconfig.storybook.json",
-		"prebuild-storybook": "npm run typecheck:storybook",
+		"prebuild-storybook": "npm run generate:icon-catalog && npm run typecheck:storybook",
 		"build-storybook": "storybook build",
 		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts"
 	},
