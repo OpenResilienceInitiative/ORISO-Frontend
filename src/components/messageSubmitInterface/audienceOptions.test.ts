@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	AUDIENCE_ALL,
+	audienceIdentityKeys,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	createAudienceCollector,
+	createIdentityLookup,
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
@@ -390,5 +393,158 @@ describe('groupAudienceOptions', () => {
 		];
 		const grouped = groupAudienceOptions(shared, ['alpaka_mika']);
 		expect(grouped.clients.map((o) => o.disabled)).toEqual([true, false]);
+	});
+});
+
+describe('audienceIdentityKeys', () => {
+	it('recognises one person across the spellings they arrive in', () => {
+		const keys = audienceIdentityKeys('@enc.katze_mika:oriso.org');
+		expect(keys.has('katze_mika')).toBe(true);
+		expect(keys.has('enc.katze_mika')).toBe(true);
+		expect(keys.has('@enc.katze_mika:oriso.org')).toBe(true);
+	});
+
+	/** The whole point: the homeserver must never become an identity. */
+	it('never yields the homeserver as a key', () => {
+		const keys = audienceIdentityKeys('@consultant42:oriso.org');
+		expect(keys.has('oriso')).toBe(false);
+		expect(keys.has('oriso.org')).toBe(false);
+	});
+
+	it('has nothing in common with another account on the same homeserver', () => {
+		const mine = audienceIdentityKeys('@consultant42:oriso.org');
+		const theirs = audienceIdentityKeys('@moderator7:oriso.org');
+		const shared = [...mine].filter((key) => theirs.has(key));
+		expect(shared).toEqual([]);
+	});
+});
+
+describe('createAudienceCollector', () => {
+	/**
+	 * The regression this collector exists for.
+	 *
+	 * De-duplication used to run through the composer's fuzzy
+	 * `getComparableAudienceIds`, which adds every token of four or more
+	 * characters — so `@consultant42:oriso.org` contributed `oriso`, and every
+	 * account on the homeserver looked like a duplicate of every other one. The
+	 * second recipient was silently dropped and the message went out narrowed
+	 * to the wrong audience.
+	 */
+	it('keeps two different people who share a homeserver', () => {
+		const collector = createAudienceCollector([]);
+		collector.add('@consultant42:oriso.org', 'K. Paulstätter');
+		collector.add('@moderator7:oriso.org', 'B. Pardon');
+
+		expect(collector.entries()).toEqual([
+			['@consultant42:oriso.org', 'K. Paulstätter'],
+			['@moderator7:oriso.org', 'B. Pardon']
+		]);
+	});
+
+	it('keeps a whole room of accounts on one homeserver', () => {
+		const collector = createAudienceCollector([]);
+		[
+			'@enc.katze_mika:oriso.org',
+			'@consultant42:oriso.org',
+			'@moderator7:oriso.org',
+			'@someone-else:oriso.org'
+		].forEach((id) => collector.add(id, id));
+
+		expect(collector.entries()).toHaveLength(4);
+	});
+
+	it('still collapses the same person arriving twice', () => {
+		const collector = createAudienceCollector([]);
+		collector.add('@enc.katze_mika:oriso.org', 'Katze Mika');
+		// The session payload calls the same asker by their bare username.
+		collector.add('katze_mika', 'katze_mika');
+
+		expect(collector.entries()).toEqual([
+			['@enc.katze_mika:oriso.org', 'Katze Mika']
+		]);
+	});
+
+	it('reports whether an entry was taken', () => {
+		const collector = createAudienceCollector([]);
+		expect(collector.add('@consultant42:oriso.org', 'K.')).toBe(true);
+		expect(collector.add('consultant42', 'K.')).toBe(false);
+		expect(collector.add('', 'nobody')).toBe(false);
+	});
+
+	/**
+	 * The same defect on the self test, and the more damaging half: it runs
+	 * before de-duplication, over the Matrix room member list. With the fuzzy
+	 * matcher the signed-in consultant's own `oriso` token matched every member
+	 * of the room, so the loop discarded all of them as "me" and the selector
+	 * fell back to whatever the explicit additions could supply.
+	 */
+	it('does not mistake a colleague on the same homeserver for the viewer', () => {
+		const collector = createAudienceCollector(['@consultant1:oriso.org']);
+
+		expect(collector.isSelf('@moderator7:oriso.org')).toBe(false);
+		expect(collector.isSelf('@enc.katze_mika:oriso.org')).toBe(false);
+		expect(collector.isSelf('@consultant1:oriso.org')).toBe(true);
+	});
+
+	it('drops the viewer however their own id is spelled', () => {
+		const collector = createAudienceCollector([
+			'@consultant1:oriso.org',
+			'consultant1',
+			'Kim Paulstätter'
+		]);
+		collector.add('@consultant1:oriso.org', 'me');
+		collector.add('consultant1', 'me');
+		collector.add('@moderator7:oriso.org', 'B. Pardon');
+
+		expect(collector.entries()).toEqual([
+			['@moderator7:oriso.org', 'B. Pardon']
+		]);
+	});
+
+	/** Two generated pseudonyms can share a word without being one person. */
+	it('does not merge two people who merely share a name word', () => {
+		const collector = createAudienceCollector([]);
+		collector.add('@alpaka_mika:oriso.org', 'sanftes Alpaka Mika');
+		collector.add('@alpaka_leon:oriso.org', 'gutmütiges Alpaka Leon');
+
+		expect(collector.entries()).toHaveLength(2);
+	});
+});
+
+describe('createIdentityLookup', () => {
+	it('finds the entry whichever spelling of the id is used', () => {
+		const lookup = createIdentityLookup<string>();
+		lookup.set(['@moderator7:oriso.org', 'moderator7'], 'B. Pardon');
+
+		expect(lookup.get('@moderator7:oriso.org')).toBe('B. Pardon');
+		expect(lookup.get('moderator7')).toBe('B. Pardon');
+	});
+
+	/**
+	 * Under the fuzzy matcher a single supervisor lent their label — and with
+	 * it the moderator icon — to everybody sharing the homeserver.
+	 */
+	it('does not hand a supervisor label to their homeserver neighbours', () => {
+		const lookup = createIdentityLookup<string>();
+		lookup.set(['@moderator7:oriso.org'], 'B. Pardon');
+
+		expect(lookup.get('@consultant42:oriso.org')).toBeUndefined();
+		expect(lookup.get('@enc.katze_mika:oriso.org')).toBeUndefined();
+	});
+
+	it('keeps the first label written for an identity', () => {
+		const lookup = createIdentityLookup<string>();
+		lookup.set(['moderator7'], 'B. Pardon');
+		lookup.set(['moderator7'], 'raw-id-fallback');
+
+		expect(lookup.get('moderator7')).toBe('B. Pardon');
+	});
+
+	it('ignores empty ids', () => {
+		const lookup = createIdentityLookup<string>();
+		lookup.set([null, undefined, '  '], 'nobody');
+
+		expect(lookup.size).toBe(0);
+		expect(lookup.get('')).toBeUndefined();
 	});
 });
