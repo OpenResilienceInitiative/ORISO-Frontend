@@ -30,12 +30,31 @@ export const formatMatrixTimelineEvent = (
 		return null;
 	}
 
-	const content = event?.getClearContent?.() || event?.getContent?.() || {};
 	const senderId = event?.getSender?.() || '';
 	const senderUsername = senderId?.split(':')[0]?.substring(1) || 'unknown';
 	const senderMember = matrixRoom?.getMember?.(senderId);
 	const senderDisplayName =
 		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
+
+	// Matrix redact (#827): redacted events keep m.room.message type but
+	// empty content — surface as legacy deleted state for MessageItem.
+	if (event?.isRedacted?.()) {
+		return {
+			_id:
+				event?.getId?.() ||
+				`${senderId}-${event?.getTs?.() || Date.now()}`,
+			msg: '',
+			ts: new Date(event?.getTs?.() || Date.now()),
+			t: 'rm',
+			u: {
+				_id: senderId,
+				username: senderUsername,
+				name: senderDisplayName
+			}
+		};
+	}
+
+	const content = event?.getClearContent?.() || event?.getContent?.() || {};
 	const isUndecryptedEvent =
 		eventType === 'm.room.encrypted' && !content?.msgtype;
 	// Relations foundation (#435): replies are the m.in_reply_to relation.

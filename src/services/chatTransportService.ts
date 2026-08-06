@@ -70,6 +70,12 @@ export interface RemoveReactionOptions {
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
+export interface RedactMessageOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
 export interface SendFileMessageOptions extends MatrixFileMessageOptions {
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
@@ -240,6 +246,26 @@ class ChatTransportService {
 		const response = await matrixClientService.redactEvent(
 			matrixRoomId,
 			reactionEventId
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** Delete a message by redacting the Matrix event (#827). */
+	public async redactMessage({
+		matrixRoomId,
+		targetEventId,
+		matrixClientServiceOverride
+	}: RedactMessageOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.redactEvent(
+			matrixRoomId,
+			targetEventId
 		);
 
 		return { success: true, event_id: response.event_id };

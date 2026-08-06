@@ -309,6 +309,8 @@ interface MessageItemComponentProps extends MessageItem {
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
 	onEditDirect?: () => void;
+	/** Delete THIS message via Matrix redact (own messages only, #827). */
+	onDeleteDirect?: () => void;
 	/** Reactions (m.annotation, #435): aggregated pills for this message. */
 	reactions?: AggregatedReaction[];
 	/** Add own reaction with the given emoji key. */
@@ -365,6 +367,7 @@ export const MessageItemComponent = ({
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
+	onDeleteDirect,
 	reactions,
 	onReact,
 	onUnreact,
@@ -375,8 +378,12 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
 	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const [deleteOverlay, setDeleteOverlay] = useState(false);
+	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
+		useState(false);
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
@@ -1132,6 +1139,12 @@ export const MessageItemComponent = ({
 		alias?.messageType === ALIAS_MESSAGE_TYPES.INITIAL_APPOINTMENT_DEFINED;
 	const isFullWidthMessage =
 		isVideoCallMessage && !videoCallMessage?.eventType;
+	const canDeleteMessage =
+		Boolean(onDeleteDirect) &&
+		activeSession?.item?.status !== STATUS_ARCHIVED &&
+		Boolean(
+			getSetting<IBooleanSetting>(SETTING_MESSAGE_ALLOWDELETING)?.value
+		);
 	const actionMenuItems = useMemo(
 		() => [
 			// Relations foundation (#435): only offer direct reply where a
@@ -1177,13 +1190,21 @@ export const MessageItemComponent = ({
 				label: translate('message.menu.forward', 'Forward Message'),
 				icon: <MenuForwardIcon />
 			},
-			{
-				key: 'delete',
-				label: translate('message.menu.delete', 'Delete Message'),
-				icon: <MenuDeleteIcon />
-			}
+			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
+			...(canDeleteMessage
+				? [
+						{
+							key: 'delete',
+							label: translate(
+								'message.menu.delete',
+								'Delete Message'
+							),
+							icon: <MenuDeleteIcon />
+						}
+					]
+				: [])
 		],
-		[translate, onReplyDirect, onEditDirect]
+		[translate, onReplyDirect, onEditDirect, canDeleteMessage]
 	);
 
 	const handleActionMenuItemClick = useCallback(
@@ -1199,8 +1220,55 @@ export const MessageItemComponent = ({
 			if (actionKey === 'edit' && onEditDirect) {
 				onEditDirect();
 			}
+			if (actionKey === 'delete' && onDeleteDirect) {
+				setDeleteOverlay(true);
+			}
 		},
-		[onOpenThread, onReplyDirect, onEditDirect]
+		[onOpenThread, onReplyDirect, onEditDirect, onDeleteDirect]
+	);
+
+	const confirmDeleteMessage = useCallback(() => {
+		if (!onDeleteDirect || isDeleteRequestInProgress) {
+			return;
+		}
+		setIsDeleteRequestInProgress(true);
+		try {
+			onDeleteDirect();
+			setDeleteOverlay(false);
+		} finally {
+			setIsDeleteRequestInProgress(false);
+		}
+	}, [onDeleteDirect, isDeleteRequestInProgress]);
+
+	const deleteOverlayItem: OverlayItem = useMemo(
+		() => ({
+			headline: translate('message.delete.overlay.headline'),
+			copy: translate('message.delete.overlay.copy'),
+			svg: XIllustration,
+			illustrationBackground: 'neutral',
+			buttonSet: [
+				{
+					label: translate('message.delete.overlay.cancel'),
+					function: OVERLAY_FUNCTIONS.CLOSE,
+					type: BUTTON_TYPES.SECONDARY,
+					disabled: isDeleteRequestInProgress
+				},
+				{
+					label: translate('message.delete.overlay.confirm'),
+					function: 'CONFIRM',
+					type: BUTTON_TYPES.PRIMARY,
+					disabled: isDeleteRequestInProgress
+				}
+			],
+			handleOverlay: (functionName) => {
+				if (functionName === 'CONFIRM') {
+					confirmDeleteMessage();
+					return;
+				}
+				setDeleteOverlay(false);
+			}
+		}),
+		[confirmDeleteMessage, isDeleteRequestInProgress, translate]
 	);
 
 	const openActionMenuAt = useCallback(
@@ -2655,6 +2723,14 @@ export const MessageItemComponent = ({
 						document.body
 					)
 				: null}
+			{deleteOverlay && (
+				<Overlay
+					item={deleteOverlayItem}
+					handleOverlayClose={() => {
+						setDeleteOverlay(false);
+					}}
+				/>
+			)}
 		</div>
 	);
 };
