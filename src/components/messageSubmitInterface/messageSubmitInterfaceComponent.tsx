@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -22,10 +23,16 @@ import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
+	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
 } from './inputField/composerResize';
+import {
+	getExplicitAudienceValues,
+	shouldShowAudienceSelector
+} from './audienceSelectorVisibility';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -39,6 +46,20 @@ import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+import {
+	AUDIENCE_ALL,
+	buildAudienceRoster,
+	classifyAudienceKind,
+	createAudienceCollector,
+	createIdentityLookup,
+	defaultAudienceSelection,
+	reconcileAudienceSelection,
+	restoreAudienceSelection,
+	audienceOptionsReady,
+	groupAudienceOptions,
+	type AudienceKind,
+	type AudienceOption
+} from './audienceOptions';
 import {
 	AUTHORITIES,
 	getContact,
@@ -238,6 +259,132 @@ export interface MessageSubmitInterfaceComponentProps {
 	onRetrySettled?: (requestId: string) => void;
 }
 
+/*
+ * Presentational glyphs for the composer, at module scope on purpose.
+ *
+ * They used to be declared inside the component body, which makes them a new
+ * component *type* on every render: React cannot reconcile the old element
+ * with the new one, so it unmounts and remounts the whole SVG subtree instead
+ * of leaving it alone. This is the composer - it re-renders on every keystroke
+ * - so that churn is not academic.
+ *
+ * None of them closes over anything from the component; the chevron takes the
+ * only prop. Keep them here.
+ */
+const ComposerMobileBackIcon = () => (
+	<svg
+		width="5"
+		height="10"
+		viewBox="0 0 5 10"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
+	</svg>
+);
+
+const ComposerMobileDownIcon = () => (
+	<svg
+		width="10"
+		height="5"
+		viewBox="0 0 10 5"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
+	</svg>
+);
+
+const AudienceAllMultiIcon = () => (
+	<svg
+		width="19"
+		height="14"
+		viewBox="0 0 19 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M0 13.3333V11C0 10.5278 0.121528 10.0937 0.364583 9.69792C0.607639 9.30208 0.930556 9 1.33333 8.79167C2.19444 8.36111 3.06944 8.03819 3.95833 7.82292C4.84722 7.60764 5.75 7.5 6.66667 7.5C7.58333 7.5 8.48611 7.60764 9.375 7.82292C10.2639 8.03819 11.1389 8.36111 12 8.79167C12.4028 9 12.7257 9.30208 12.9688 9.69792C13.2118 10.0937 13.3333 10.5278 13.3333 11V13.3333H0ZM15 13.3333V10.8333C15 10.2222 14.8299 9.63542 14.4896 9.07292C14.1493 8.51042 13.6667 8.02778 13.0417 7.625C13.75 7.70833 14.4167 7.85069 15.0417 8.05208C15.6667 8.25347 16.25 8.5 16.7917 8.79167C17.2917 9.06944 17.6736 9.37847 17.9375 9.71875C18.2014 10.059 18.3333 10.4306 18.3333 10.8333V13.3333H15ZM6.66667 6.66667C5.75 6.66667 4.96528 6.34028 4.3125 5.6875C3.65972 5.03472 3.33333 4.25 3.33333 3.33333C3.33333 2.41667 3.65972 1.63194 4.3125 0.979167C4.96528 0.326389 5.75 0 6.66667 0C7.58333 0 8.36806 0.326389 9.02083 0.979167C9.67361 1.63194 10 2.41667 10 3.33333C10 4.25 9.67361 5.03472 9.02083 5.6875C8.36806 6.34028 7.58333 6.66667 6.66667 6.66667ZM15 3.33333C15 4.25 14.6736 5.03472 14.0208 5.6875C13.3681 6.34028 12.5833 6.66667 11.6667 6.66667C11.5139 6.66667 11.3194 6.6493 11.0833 6.61458C10.8472 6.57986 10.6528 6.54167 10.5 6.5C10.875 6.05556 11.1632 5.5625 11.3646 5.02083C11.566 4.47917 11.6667 3.91667 11.6667 3.33333C11.6667 2.75 11.566 2.1875 11.3646 1.64583C11.1632 1.10417 10.875 0.611111 10.5 0.166667C10.6944 0.0972222 10.8889 0.0520833 11.0833 0.03125C11.2778 0.0104167 11.4722 0 11.6667 0C12.5833 0 13.3681 0.326389 14.0208 0.979167C14.6736 1.63194 15 2.41667 15 3.33333Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+const AudienceChipChevronIcon = ({ className }: { className?: string }) => (
+	<svg
+		width="11"
+		height="7"
+		viewBox="0 0 11 7"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		className={className}
+		aria-hidden="true"
+	>
+		<path
+			d="M5.5 2.56667L1.28333 6.78333L0 5.5L5.5 0L11 5.5L9.71667 6.78333L5.5 2.56667Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+/*
+ * All four glyphs inherit `currentColor` so they follow the chip's variant.
+ * The consultant icon was hardcoded to #4C555F, which is near-invisible on
+ * the accent fill — invisible in practice too, because the old label-string
+ * icon picker almost never selected it. Now that the role decides
+ * (#894 rule C), it shows up.
+ */
+const AudienceSingleUserIcon = () => (
+	<svg
+		width="14"
+		height="14"
+		viewBox="0 0 14 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+const AudienceSingleConsultantIcon = () => (
+	<svg
+		width="9"
+		height="14"
+		viewBox="0 0 9 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M4.33333 0C4.88889 0 5.36111 0.194444 5.75 0.583333C6.13889 0.972222 6.33333 1.44444 6.33333 2C6.33333 2.55556 6.13889 3.02778 5.75 3.41667C5.36111 3.80556 4.88889 4 4.33333 4C3.77778 4 3.30556 3.80556 2.91667 3.41667C2.52778 3.02778 2.33333 2.55556 2.33333 2C2.33333 1.44444 2.52778 0.972222 2.91667 0.583333C3.30556 0.194444 3.77778 0 4.33333 0ZM4.33333 4.66667C4.85556 4.66667 5.37222 4.72778 5.88333 4.85C6.39444 4.97222 6.85556 5.14444 7.26667 5.36667C7.68889 5.57778 8.02778 5.82778 8.28333 6.11667C8.53889 6.40556 8.66667 6.72222 8.66667 7.06667V10.9333C8.66667 11.1222 8.62222 11.3083 8.53333 11.4917C8.44444 11.675 8.32222 11.8444 8.16667 12C8.01111 12.1556 7.83056 12.3 7.625 12.4333C7.41944 12.5667 7.18889 12.6889 6.93333 12.8V11.3C6.93333 10.8778 6.64167 10.5333 6.05833 10.2667C5.475 10 4.9 9.86667 4.33333 9.86667C3.77778 9.86667 3.24167 9.98056 2.725 10.2083C2.20833 10.4361 1.88889 10.7333 1.76667 11.1C2.18889 11.2667 2.62222 11.3833 3.06667 11.45C3.51111 11.5167 3.96667 11.5556 4.43333 11.5667H5V13.3C4.92222 13.3222 4.84167 13.3333 4.75833 13.3333H4.5C4.1 13.3333 3.64167 13.2889 3.125 13.2C2.60833 13.1111 2.11667 12.9722 1.65 12.7833C1.18333 12.5944 0.791667 12.3472 0.475 12.0417C0.158333 11.7361 0 11.3667 0 10.9333V7.06667C0 6.72222 0.127778 6.40556 0.383333 6.11667C0.638889 5.82778 0.972222 5.57778 1.38333 5.36667C1.80556 5.14444 2.27222 4.97222 2.78333 4.85C3.29444 4.72778 3.81111 4.66667 4.33333 4.66667ZM4.33333 8.66667C4.7 8.66667 5.01389 8.53611 5.275 8.275C5.53611 8.01389 5.66667 7.7 5.66667 7.33333C5.66667 6.96667 5.53611 6.65278 5.275 6.39167C5.01389 6.13056 4.7 6 4.33333 6C3.96667 6 3.65278 6.13056 3.39167 6.39167C3.13056 6.65278 3 6.96667 3 7.33333C3 7.7 3.13056 8.01389 3.39167 8.275C3.65278 8.53611 3.96667 8.66667 4.33333 8.66667Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+const AudienceModeratorIcon = () => (
+	<svg
+		width="11"
+		height="14"
+		viewBox="0 0 11 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
 export const MessageSubmitInterfaceComponent = ({
 	className,
 	onSendButton,
@@ -269,113 +416,6 @@ export const MessageSubmitInterfaceComponent = ({
 	retryRequest,
 	onRetrySettled
 }: MessageSubmitInterfaceComponentProps) => {
-	const ComposerMobileBackIcon = () => (
-		<svg
-			width="5"
-			height="10"
-			viewBox="0 0 5 10"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
-		</svg>
-	);
-
-	const ComposerMobileDownIcon = () => (
-		<svg
-			width="10"
-			height="5"
-			viewBox="0 0 10 5"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
-		</svg>
-	);
-
-	const AudienceAllMultiIcon = () => (
-		<svg
-			width="19"
-			height="14"
-			viewBox="0 0 19 14"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path
-				d="M0 13.3333V11C0 10.5278 0.121528 10.0937 0.364583 9.69792C0.607639 9.30208 0.930556 9 1.33333 8.79167C2.19444 8.36111 3.06944 8.03819 3.95833 7.82292C4.84722 7.60764 5.75 7.5 6.66667 7.5C7.58333 7.5 8.48611 7.60764 9.375 7.82292C10.2639 8.03819 11.1389 8.36111 12 8.79167C12.4028 9 12.7257 9.30208 12.9688 9.69792C13.2118 10.0937 13.3333 10.5278 13.3333 11V13.3333H0ZM15 13.3333V10.8333C15 10.2222 14.8299 9.63542 14.4896 9.07292C14.1493 8.51042 13.6667 8.02778 13.0417 7.625C13.75 7.70833 14.4167 7.85069 15.0417 8.05208C15.6667 8.25347 16.25 8.5 16.7917 8.79167C17.2917 9.06944 17.6736 9.37847 17.9375 9.71875C18.2014 10.059 18.3333 10.4306 18.3333 10.8333V13.3333H15ZM6.66667 6.66667C5.75 6.66667 4.96528 6.34028 4.3125 5.6875C3.65972 5.03472 3.33333 4.25 3.33333 3.33333C3.33333 2.41667 3.65972 1.63194 4.3125 0.979167C4.96528 0.326389 5.75 0 6.66667 0C7.58333 0 8.36806 0.326389 9.02083 0.979167C9.67361 1.63194 10 2.41667 10 3.33333C10 4.25 9.67361 5.03472 9.02083 5.6875C8.36806 6.34028 7.58333 6.66667 6.66667 6.66667ZM15 3.33333C15 4.25 14.6736 5.03472 14.0208 5.6875C13.3681 6.34028 12.5833 6.66667 11.6667 6.66667C11.5139 6.66667 11.3194 6.6493 11.0833 6.61458C10.8472 6.57986 10.6528 6.54167 10.5 6.5C10.875 6.05556 11.1632 5.5625 11.3646 5.02083C11.566 4.47917 11.6667 3.91667 11.6667 3.33333C11.6667 2.75 11.566 2.1875 11.3646 1.64583C11.1632 1.10417 10.875 0.611111 10.5 0.166667C10.6944 0.0972222 10.8889 0.0520833 11.0833 0.03125C11.2778 0.0104167 11.4722 0 11.6667 0C12.5833 0 13.3681 0.326389 14.0208 0.979167C14.6736 1.63194 15 2.41667 15 3.33333Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const AudienceChipChevronIcon = ({ className }: { className?: string }) => (
-		<svg
-			width="11"
-			height="7"
-			viewBox="0 0 11 7"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			className={className}
-			aria-hidden="true"
-		>
-			<path
-				d="M5.5 2.56667L1.28333 6.78333L0 5.5L5.5 0L11 5.5L9.71667 6.78333L5.5 2.56667Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const AudienceSingleUserIcon = () => (
-		<svg
-			width="14"
-			height="14"
-			viewBox="0 0 14 14"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path
-				d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
-				fill="white"
-			/>
-		</svg>
-	);
-
-	const AudienceSingleConsultantIcon = () => (
-		<svg
-			width="9"
-			height="14"
-			viewBox="0 0 9 14"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path
-				d="M4.33333 0C4.88889 0 5.36111 0.194444 5.75 0.583333C6.13889 0.972222 6.33333 1.44444 6.33333 2C6.33333 2.55556 6.13889 3.02778 5.75 3.41667C5.36111 3.80556 4.88889 4 4.33333 4C3.77778 4 3.30556 3.80556 2.91667 3.41667C2.52778 3.02778 2.33333 2.55556 2.33333 2C2.33333 1.44444 2.52778 0.972222 2.91667 0.583333C3.30556 0.194444 3.77778 0 4.33333 0ZM4.33333 4.66667C4.85556 4.66667 5.37222 4.72778 5.88333 4.85C6.39444 4.97222 6.85556 5.14444 7.26667 5.36667C7.68889 5.57778 8.02778 5.82778 8.28333 6.11667C8.53889 6.40556 8.66667 6.72222 8.66667 7.06667V10.9333C8.66667 11.1222 8.62222 11.3083 8.53333 11.4917C8.44444 11.675 8.32222 11.8444 8.16667 12C8.01111 12.1556 7.83056 12.3 7.625 12.4333C7.41944 12.5667 7.18889 12.6889 6.93333 12.8V11.3C6.93333 10.8778 6.64167 10.5333 6.05833 10.2667C5.475 10 4.9 9.86667 4.33333 9.86667C3.77778 9.86667 3.24167 9.98056 2.725 10.2083C2.20833 10.4361 1.88889 10.7333 1.76667 11.1C2.18889 11.2667 2.62222 11.3833 3.06667 11.45C3.51111 11.5167 3.96667 11.5556 4.43333 11.5667H5V13.3C4.92222 13.3222 4.84167 13.3333 4.75833 13.3333H4.5C4.1 13.3333 3.64167 13.2889 3.125 13.2C2.60833 13.1111 2.11667 12.9722 1.65 12.7833C1.18333 12.5944 0.791667 12.3472 0.475 12.0417C0.158333 11.7361 0 11.3667 0 10.9333V7.06667C0 6.72222 0.127778 6.40556 0.383333 6.11667C0.638889 5.82778 0.972222 5.57778 1.38333 5.36667C1.80556 5.14444 2.27222 4.97222 2.78333 4.85C3.29444 4.72778 3.81111 4.66667 4.33333 4.66667ZM4.33333 8.66667C4.7 8.66667 5.01389 8.53611 5.275 8.275C5.53611 8.01389 5.66667 7.7 5.66667 7.33333C5.66667 6.96667 5.53611 6.65278 5.275 6.39167C5.01389 6.13056 4.7 6 4.33333 6C3.96667 6 3.65278 6.13056 3.39167 6.39167C3.13056 6.65278 3 6.96667 3 7.33333C3 7.7 3.13056 8.01389 3.39167 8.275C3.65278 8.53611 3.96667 8.66667 4.33333 8.66667Z"
-				fill="#4C555F"
-			/>
-		</svg>
-	);
-
-	const AudienceModeratorIcon = () => (
-		<svg
-			width="11"
-			height="14"
-			viewBox="0 0 11 14"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			aria-hidden="true"
-		>
-			<path
-				d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
-				fill="white"
-			/>
-		</svg>
-	);
-
 	const { t: translate } = useTranslation();
 
 	// Debug logging
@@ -466,6 +506,9 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
+	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
+		null
+	);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -483,12 +526,18 @@ export const MessageSubmitInterfaceComponent = ({
 		height: number;
 		borderRadius: string;
 	} | null>(null);
-	const [audienceOptions, setAudienceOptions] = useState<
-		Array<{ value: string; label: string }>
-	>([{ value: '__all__', label: 'ALL' }]);
+	const [audienceOptions, setAudienceOptions] = useState<AudienceOption[]>([
+		{ value: AUDIENCE_ALL, label: 'ALL', kind: 'all' }
+	]);
+	/**
+	 * Which chat's stored selection has already been restored. Without this the
+	 * restore effect would re-run on every option rebuild and overwrite what the
+	 * user just picked — see #894 rule D.
+	 */
+	const restoredAudienceKeyRef = useRef<string | null>(null);
 	const [selectedAudienceValues, setSelectedAudienceValues] = useState<
 		string[]
-	>(['__all__']);
+	>([AUDIENCE_ALL]);
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
 	const [sessionSupervisors, setSessionSupervisors] = useState<
 		Array<{ id: string; username: string }>
@@ -1284,13 +1333,15 @@ export const MessageSubmitInterfaceComponent = ({
 			setEditorState(EditorState.createEmpty());
 			setComposerText('');
 			composerRef.current?.clear();
-			setSelectedAudienceValues(
-				audienceOptions.some((option) => option.value === '__all__')
-					? ['__all__']
-					: audienceOptions[0]?.value
-						? [audienceOptions[0].value]
-						: ['__all__']
-			);
+			/**
+			 * The recipient selection deliberately survives sending (#894 rule
+			 * D). Resetting to "everyone" here would widen the audience of the
+			 * *next* message beyond what the user last chose — the disclosing
+			 * direction — and would also make the per-chat memory pointless,
+			 * since the stored value would only ever be the post-send default.
+			 * The chip stays in its "targeted" colour so the restriction is
+			 * visible while it is in force.
+			 */
 			setIsAudienceMenuOpen(false);
 			clearDraftMessage();
 			setActiveInfo('');
@@ -1310,7 +1361,6 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => setIsRequestInProgress(false), 1200);
 		},
 		[
-			audienceOptions,
 			clearDraftMessage,
 			onMessageSendSuccess,
 			reloadActiveSession,
@@ -1629,13 +1679,28 @@ export const MessageSubmitInterfaceComponent = ({
 			// VISIBLE_TO prefix, regardless of any stale selection state.
 			if (!retryContext) {
 				const humanTargetCount = audienceOptions.filter(
-					(option) => option.value !== '__all__'
+					(option) => option.value !== AUDIENCE_ALL
 				).length;
-				const explicitAudience = selectedAudienceValues.filter(
-					(value) => value !== '__all__'
-				);
-				const hasExplicitAudience =
-					humanTargetCount > 1 && explicitAudience.length > 0;
+				const sendChatType = isSupervisor
+					? 'supervision'
+					: activeSession.isGroup
+						? 'group'
+						: isAnonymousChat
+							? 'anonymous'
+							: 'oneOnOne';
+				const sendIsClientUser =
+					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+					!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+				const explicitAudience = getExplicitAudienceValues({
+					chatType: sendChatType,
+					isClientUser: sendIsClientUser,
+					targetCount: humanTargetCount,
+					hasAllOption: audienceOptions.some(
+						(option) => option.value === AUDIENCE_ALL
+					),
+					selectedValues: selectedAudienceValues
+				});
+				const hasExplicitAudience = explicitAudience.length > 0;
 				if (hasExplicitAudience) {
 					prefixParts.push(buildVisibleToPrefix(explicitAudience));
 				}
@@ -1716,6 +1781,7 @@ export const MessageSubmitInterfaceComponent = ({
 			await sendCurrentMessage();
 		},
 		[
+			activeSession.isGroup,
 			attachmentSelected,
 			audienceOptions,
 			editingMessageId,
@@ -1724,6 +1790,7 @@ export const MessageSubmitInterfaceComponent = ({
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
+			isAnonymousChat,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -1731,7 +1798,8 @@ export const MessageSubmitInterfaceComponent = ({
 			resolvedChatSession,
 			selectedAudienceValues,
 			sendEnquiry,
-			sendMessage
+			sendMessage,
+			userData
 		]
 	);
 
@@ -2083,6 +2151,22 @@ export const MessageSubmitInterfaceComponent = ({
 		[deriveLabelFromUserId]
 	);
 
+	/**
+	 * Fuzzy id expansion, kept only for the @-mention provider below.
+	 *
+	 * The audience selector no longer uses it: it splits an id on
+	 * non-alphanumerics and keeps every token of four or more characters, so
+	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * homeserver shares. As an identity test that is worthless, which is why
+	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
+	 *
+	 * The mention provider still matches on these tokens, and inherits the same
+	 * weakness one level down: two counsellors who merely share a surname
+	 * collide, so a pill for `hans.meier` can resolve to `@anna.meier`'s Matrix
+	 * id and mark him as in-room. That belongs to the mention feature (#435)
+	 * rather than to the Send-to selector, so it is reported separately instead
+	 * of being changed here.
+	 */
 	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
 		const compact = (rawValue || '').trim().toLowerCase();
 		if (!compact) {
@@ -2254,30 +2338,30 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	useEffect(() => {
-		const defaultOption = {
-			value: '__all__',
-			label: translate('message.audience.sendToAll', 'Send to all')
+		const defaultOption: AudienceOption = {
+			value: AUDIENCE_ALL,
+			label: translate('message.audience.sendToAll', 'Send to all'),
+			kind: 'all'
 		};
 		const isInquiryNotAccepted =
 			type === SESSION_LIST_TYPES.ENQUIRY ||
 			activeSession?.item?.status === STATUS_ENQUIRY;
 		if (isInquiryNotAccepted) {
 			setAudienceOptions([defaultOption]);
-			setSelectedAudienceValues(['__all__']);
+			setSelectedAudienceValues([AUDIENCE_ALL]);
 			return;
 		}
-		const collected = new Map<string, string>();
-		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromSession = getCurrentMatrixUserId();
-		[
-			matrixUserIdFromSession,
+		/**
+		 * Strict identity throughout: both "is this me?" and "have I already
+		 * got this person?" used to run through `getComparableAudienceIds`,
+		 * whose 4+ character tokens include the homeserver — so every account
+		 * on `oriso.org` matched every other one. See #894.
+		 */
+		const audience = createAudienceCollector([
+			getCurrentMatrixUserId(),
 			userData?.userName,
 			userData?.displayName
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				selfIdentifiers.add(id)
-			);
-		});
+		]);
 		const roomId = getMatrixRoomId();
 		const matrixClient = matrixClientService?.getClient?.();
 		const room =
@@ -2285,7 +2369,10 @@ export const MessageSubmitInterfaceComponent = ({
 		const roomMembers =
 			room?.getMembers?.() || room?.getJoinedMembers?.() || [];
 		const restrictToSupervisionAudience = sessionSupervisors.length > 0;
-		const supervisorLabelByComparableId = new Map<string, string>();
+		// Also strict: under the fuzzy matcher a single supervisor in the room
+		// lent their label — and with it the moderator icon — to everybody who
+		// merely shared their homeserver.
+		const supervisorLabelByIdentity = createIdentityLookup<string>();
 		sessionSupervisors.forEach((supervisor) => {
 			const mappedConsultant = agencyConsultantDirectory.get(
 				supervisor.id
@@ -2298,13 +2385,10 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!preferredLabel) {
 				return;
 			}
-			[supervisor.id, supervisor.username].forEach((rawValue) => {
-				getComparableAudienceIds(rawValue).forEach((id) => {
-					if (!supervisorLabelByComparableId.has(id)) {
-						supervisorLabelByComparableId.set(id, preferredLabel);
-					}
-				});
-			});
+			supervisorLabelByIdentity.set(
+				[supervisor.id, supervisor.username],
+				preferredLabel
+			);
 		});
 
 		roomMembers.forEach((member: any) => {
@@ -2324,26 +2408,18 @@ export const MessageSubmitInterfaceComponent = ({
 			) {
 				return;
 			}
-			const memberComparableIds = getComparableAudienceIds(memberId);
-			const isSelf = Array.from(memberComparableIds).some((id) =>
-				selfIdentifiers.has(id)
-			);
-			if (isSelf) {
+			if (audience.isSelf(memberId)) {
 				return;
 			}
+			const supervisorLabel = supervisorLabelByIdentity.get(memberId);
 			const memberName = `${member?.name || ''}`.trim();
 			if (
 				memberName.toLowerCase().startsWith('enc.') &&
-				!Array.from(memberComparableIds).some((id) =>
-					supervisorLabelByComparableId.has(id)
-				)
+				!supervisorLabel
 			) {
 				return;
 			}
-			const supervisorLabel = Array.from(memberComparableIds)
-				.map((id) => supervisorLabelByComparableId.get(id))
-				.find(Boolean);
-			collected.set(
+			audience.add(
 				memberId,
 				formatAudiencePersonLabel(
 					supervisorLabel || memberName,
@@ -2360,25 +2436,7 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!compactId) {
 				return;
 			}
-			const comparableIds = getComparableAudienceIds(compactId);
-			const isSelf = Array.from(comparableIds).some((id) =>
-				selfIdentifiers.has(id)
-			);
-			if (isSelf) {
-				return;
-			}
-			if (Array.from(comparableIds).some((id) => collected.has(id))) {
-				return;
-			}
-			const existingKey = Array.from(collected.keys()).find((key) =>
-				Array.from(comparableIds).some((id) =>
-					getComparableAudienceIds(key).has(id)
-				)
-			);
-			if (existingKey) {
-				return;
-			}
-			collected.set(
+			audience.add(
 				compactId,
 				formatAudiencePersonLabel(
 					`${fallbackLabel || ''}`.trim(),
@@ -2418,13 +2476,26 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		});
 
-		const mapped = Array.from(collected.entries())
+		/**
+		 * Roles are decided here, where we still know who is who, instead of
+		 * being guessed later from the rendered label. #894 rule C.
+		 */
+		const roster = buildAudienceRoster({
+			askerIds: [askerId, askerUsername],
+			consultantIds: [
+				activeSession?.consultant?.username,
+				activeSession?.consultant?.id,
+				contact?.username
+			],
+			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
+				supervisor.id,
+				supervisor.username
+			])
+		});
+		const mapped: AudienceOption[] = audience
+			.entries()
 			.map(([value, label]) => {
-				const supervisorLabel = Array.from(
-					getComparableAudienceIds(value)
-				)
-					.map((id) => supervisorLabelByComparableId.get(id))
-					.find(Boolean);
+				const supervisorLabel = supervisorLabelByIdentity.get(value);
 				return {
 					value,
 					label: supervisorLabel
@@ -2432,7 +2503,10 @@ export const MessageSubmitInterfaceComponent = ({
 								supervisorLabel,
 								supervisorLabel
 							)
-						: label
+						: label,
+					kind: supervisorLabel
+						? ('supervisor' as AudienceKind)
+						: classifyAudienceKind(value, roster)
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
@@ -2446,24 +2520,9 @@ export const MessageSubmitInterfaceComponent = ({
 			? [defaultOption, ...mapped]
 			: mapped;
 		setAudienceOptions(nextOptions);
-		setSelectedAudienceValues((currentValues) => {
-			const hasAllOption = nextOptions.some(
-				(option) => option.value === '__all__'
-			);
-			if (hasAllOption && currentValues.includes('__all__')) {
-				return ['__all__'];
-			}
-			const stillAvailable = currentValues.filter((value) =>
-				nextOptions.some((option) => option.value === value)
-			);
-			if (stillAvailable.length > 0) {
-				return stillAvailable;
-			}
-			if (includeAllOption) {
-				return ['__all__'];
-			}
-			return nextOptions[0]?.value ? [nextOptions[0].value] : ['__all__'];
-		});
+		setSelectedAudienceValues((currentValues) =>
+			reconcileAudienceSelection(currentValues, nextOptions)
+		);
 	}, [
 		type,
 		activeSession?.item?.status,
@@ -2476,7 +2535,6 @@ export const MessageSubmitInterfaceComponent = ({
 		contact?.username,
 		deriveLabelFromUserId,
 		formatAudiencePersonLabel,
-		getComparableAudienceIds,
 		getMatrixRoomId,
 		audienceRefreshTick,
 		sessionSupervisors,
@@ -2489,63 +2547,62 @@ export const MessageSubmitInterfaceComponent = ({
 		matrixClientService
 	]);
 
+	/**
+	 * Switching chat or thread closes the menu and arms the restore below.
+	 *
+	 * It deliberately does *not* touch the selection itself and does *not*
+	 * depend on `audienceOptions`. The previous version did both, and since the
+	 * option array is rebuilt on a 700 ms timer and again whenever a Matrix
+	 * member arrives, it reset the audience to "everyone" seconds after the
+	 * user had chosen a single recipient.
+	 */
 	useEffect(() => {
 		setIsAudienceMenuOpen(false);
-		setSelectedAudienceValues((currentValues) => {
-			const hasSendToAll = audienceOptions.some(
-				(option) => option.value === '__all__'
-			);
-			if (hasSendToAll) {
-				return ['__all__'];
-			}
-			const stillAvailable = currentValues.filter((value) =>
-				audienceOptions.some((option) => option.value === value)
-			);
-			if (stillAvailable.length > 0) {
-				return stillAvailable;
-			}
-			return audienceOptions[0]?.value
-				? [audienceOptions[0].value]
-				: ['__all__'];
-		});
-	}, [activeSession?.item?.id, threadRootId, audienceOptions]);
+		restoredAudienceKeyRef.current = null;
+	}, [activeSession?.item?.id, threadRootId]);
 
+	/**
+	 * Restore this chat's stored recipients — once, and only once the option
+	 * list is real.
+	 *
+	 * `audienceOptions` starts as a lone `__all__` placeholder and gains the
+	 * actual recipients when the Matrix members load. Restoring against the
+	 * placeholder would match nothing, fall back to "everyone", mark the chat
+	 * as restored, and then skip the real list when it arrives — losing the
+	 * saved selection exactly as the old code did.
+	 */
 	useEffect(() => {
-		if (!audienceSelectionStorageKey) {
+		if (
+			!audienceSelectionStorageKey ||
+			!audienceOptionsReady(audienceOptions)
+		) {
 			return;
 		}
-		const hasAllOption = audienceOptions.some(
-			(option) => option.value === '__all__'
-		);
-		if (hasAllOption) {
-			// Always default to "All" when available.
-			setSelectedAudienceValues(['__all__']);
+		if (restoredAudienceKeyRef.current === audienceSelectionStorageKey) {
 			return;
 		}
+		restoredAudienceKeyRef.current = audienceSelectionStorageKey;
+		let saved: string | null = null;
 		try {
-			const saved = window.localStorage.getItem(
-				audienceSelectionStorageKey
-			);
-			if (!saved) {
-				return;
-			}
-			const parsed = JSON.parse(saved);
-			if (!Array.isArray(parsed)) {
-				return;
-			}
-			const valid = parsed.filter((value) =>
-				audienceOptions.some((option) => option.value === value)
-			);
-			if (valid.length > 0) {
-				setSelectedAudienceValues(valid);
-			}
+			saved = window.localStorage.getItem(audienceSelectionStorageKey);
 		} catch (_error) {
-			// Ignore broken local storage values.
+			// Storage can be unavailable (private mode, blocked cookies).
 		}
+		setSelectedAudienceValues(
+			restoreAudienceSelection(saved, audienceOptions) ??
+				defaultAudienceSelection(audienceOptions)
+		);
 	}, [audienceOptions, audienceSelectionStorageKey]);
 
+	/**
+	 * Persist the selection — but never before the restore above has run for
+	 * this chat, or the initial default would overwrite what was stored.
+	 */
 	useEffect(() => {
-		if (!audienceSelectionStorageKey) {
+		if (
+			!audienceSelectionStorageKey ||
+			restoredAudienceKeyRef.current !== audienceSelectionStorageKey
+		) {
 			return;
 		}
 		try {
@@ -2614,7 +2671,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const selectedAudienceLabels = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
 			return [translate('message.audience.sendToAll', 'Send to all')];
 		}
@@ -2639,16 +2696,10 @@ export const MessageSubmitInterfaceComponent = ({
 		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
 		return hasAskerAuthority && !hasConsultantAuthority;
 	}, [userData]);
-	const audienceTargetCount = useMemo(
-		() =>
-			audienceOptions.filter((option) => option.value !== '__all__')
-				.length,
-		[audienceOptions]
-	);
 	const selectedAudienceChipLabel = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
 			return translate('message.audience.all', 'Alle');
 		}
@@ -2660,180 +2711,100 @@ export const MessageSubmitInterfaceComponent = ({
 			defaultValue: `${selectedAudienceLabels.length} Personen`
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
+	const audienceTargetCount = useMemo(
+		() =>
+			audienceOptions.filter((option) => option.value !== AUDIENCE_ALL)
+				.length,
+		[audienceOptions]
+	);
 	const showAudienceSelector = useMemo(() => {
-		if (isClientUser) {
-			return false;
+		return shouldShowAudienceSelector({
+			chatType: currentChatType,
+			isClientUser,
+			targetCount: audienceTargetCount,
+			hasAllOption: audienceOptions.some(
+				(option) => option.value === AUDIENCE_ALL
+			)
+		});
+	}, [audienceOptions, audienceTargetCount, currentChatType, isClientUser]);
+	useEffect(() => {
+		if (showAudienceSelector) {
+			return;
 		}
-		if (audienceTargetCount <= 1) {
-			return false;
+		setIsAudienceMenuOpen(false);
+		setSelectedAudienceValues([AUDIENCE_ALL]);
+		if (audienceSelectionStorageKey) {
+			try {
+				window.localStorage.removeItem(audienceSelectionStorageKey);
+			} catch {
+				// Storage may be disabled; in-memory reset still keeps routing safe.
+			}
 		}
-		return audienceOptions.some((option) => option.value === '__all__');
-	}, [audienceOptions, audienceTargetCount, isClientUser]);
+	}, [audienceSelectionStorageKey, showAudienceSelector]);
+	/**
+	 * #894 rule C: the symbol follows the recipient's actual role, taken from
+	 * the option that was built for them. It used to be inferred by searching
+	 * the rendered label for "moderator"/"supervisor"/"berater", which both
+	 * missed real moderators and mislabelled generated pseudonyms.
+	 */
 	const selectedAudienceIcon = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__');
+			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected || selectedAudienceValues.length > 1) {
 			return <AudienceAllMultiIcon />;
 		}
-		const selectedValue = selectedAudienceValues[0];
-		const normalizedValue = `${selectedValue || ''}`.toLowerCase();
-		const selectedLabel =
-			`${selectedAudienceLabels[0] || ''}`.toLowerCase();
-		const looksLikeModerator =
-			normalizedValue.includes('moderator') ||
-			normalizedValue.includes('supervisor') ||
-			selectedLabel.includes('moderator') ||
-			selectedLabel.includes('supervisor');
-		const looksLikeConsultant =
-			normalizedValue.includes('consultant') ||
-			selectedLabel.includes('consultant') ||
-			selectedLabel.includes('counsellor') ||
-			selectedLabel.includes('counselor') ||
-			selectedLabel.includes('berater');
-		if (looksLikeModerator) {
+		const selectedKind = audienceOptions.find(
+			(option) => option.value === selectedAudienceValues[0]
+		)?.kind;
+		if (selectedKind === 'supervisor') {
 			return <AudienceModeratorIcon />;
 		}
-		return looksLikeConsultant ? (
+		return selectedKind === 'consultant' ? (
 			<AudienceSingleConsultantIcon />
 		) : (
 			<AudienceSingleUserIcon />
 		);
-	}, [selectedAudienceLabels, selectedAudienceValues]);
+	}, [audienceOptions, selectedAudienceValues]);
 	const isMultiAudienceSelection = useMemo(() => {
 		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
+			(value) => value !== AUDIENCE_ALL
 		);
 		return explicitAudience.length > 1;
 	}, [selectedAudienceValues]);
 	const isAllAudienceChip = useMemo(
 		() =>
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__'),
+			selectedAudienceValues.includes(AUDIENCE_ALL),
 		[selectedAudienceValues]
 	);
 	const isAllAudienceSelectedInMenu = useMemo(
 		() =>
 			selectedAudienceValues.length === 0 ||
-			selectedAudienceValues.includes('__all__'),
+			selectedAudienceValues.includes(AUDIENCE_ALL),
 		[selectedAudienceValues]
 	);
-	const audienceSelfComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		[userData?.userName, userData?.displayName].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [getComparableAudienceIds, userData?.displayName, userData?.userName]);
 	const audienceSelectableOptions = useMemo(
-		() => audienceOptions.filter((option) => option.value !== '__all__'),
+		() => audienceOptions.filter((option) => option.value !== AUDIENCE_ALL),
 		[audienceOptions]
 	);
-	const audienceSupervisorComparableIds = useMemo(() => {
-		const ids = new Set<string>();
-		const moderatorIds = Array.isArray(activeSession?.item?.moderators)
-			? activeSession.item.moderators
-			: [];
-		[
-			...moderatorIds,
-			...sessionSupervisors.map((entry) => entry.id),
-			...sessionSupervisors.map((entry) => entry.username)
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
-		});
-		return ids;
-	}, [
-		activeSession?.item?.moderators,
-		getComparableAudienceIds,
-		sessionSupervisors
-	]);
-	const audienceGroupedSections = useMemo(() => {
-		const clientsComparable = new Set<string>();
-		const counsellorsComparable = new Set<string>();
-		[
-			activeSession?.item?.askerMatrixUserId,
-			activeSession?.user?.username
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				clientsComparable.add(id)
-			);
-		});
-		[
-			activeSession?.consultant?.id,
-			activeSession?.consultant?.username,
-			activeSession?.consultant?.displayName
-		].forEach((rawValue) => {
-			getComparableAudienceIds(rawValue).forEach((id) =>
-				counsellorsComparable.add(id)
-			);
-		});
-
-		const grouped = {
-			clients: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			counsellors: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>,
-			moderators: [] as Array<{
-				value: string;
-				label: string;
-				disabled: boolean;
-			}>
-		};
-		audienceSelectableOptions.forEach((option) => {
-			const comparableIds = new Set<string>([
-				...Array.from(getComparableAudienceIds(option.value)),
-				...Array.from(getComparableAudienceIds(option.label)),
-				...Array.from(
-					getComparableAudienceIds(
-						deriveLabelFromUserId(option.value)
-					)
-				)
-			]);
-			const disabled = Array.from(comparableIds).some((id) =>
-				audienceSelfComparableIds.has(id)
-			);
-			const isClient = Array.from(comparableIds).some((id) =>
-				clientsComparable.has(id)
-			);
-			const isModeratorByRole = Array.from(comparableIds).some((id) =>
-				audienceSupervisorComparableIds.has(id)
-			);
-			if (isModeratorByRole) {
-				grouped.moderators.push({ ...option, disabled });
-				return;
-			}
-			if (isClient) {
-				grouped.clients.push({ ...option, disabled });
-				return;
-			}
-			const isCounsellorById = Array.from(comparableIds).some((id) =>
-				counsellorsComparable.has(id)
-			);
-			if (isCounsellorById || !isClient) {
-				grouped.counsellors.push({ ...option, disabled });
-				return;
-			}
-			grouped.moderators.push({ ...option, disabled });
-		});
-		return grouped;
-	}, [
-		activeSession?.consultant?.displayName,
-		activeSession?.consultant?.id,
-		activeSession?.consultant?.username,
-		activeSession?.item?.askerMatrixUserId,
-		activeSession?.user?.username,
-		audienceSelectableOptions,
-		audienceSelfComparableIds,
-		audienceSupervisorComparableIds,
-		deriveLabelFromUserId,
-		getComparableAudienceIds
-	]);
+	/**
+	 * The three menu sections, grouped by the role each option already carries.
+	 *
+	 * This used to re-derive the roles here with `getComparableAudienceIds`,
+	 * whose 4+ character tokens include the homeserver name — every
+	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * the room could pull unrelated people into the moderator section, and the
+	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
+	 */
+	const audienceGroupedSections = useMemo(
+		() =>
+			groupAudienceOptions(audienceSelectableOptions, [
+				userData?.userName,
+				userData?.displayName
+			]),
+		[audienceSelectableOptions, userData?.displayName, userData?.userName]
+	);
 	const sectionDefinitions = useMemo(
 		() =>
 			[
@@ -2846,17 +2817,17 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const toggleAudienceSelection = useCallback((value: string) => {
 		setSelectedAudienceValues((previousValues) => {
-			if (value === '__all__') {
-				return ['__all__'];
+			if (value === AUDIENCE_ALL) {
+				return [AUDIENCE_ALL];
 			}
 			const withoutAll = previousValues.filter(
-				(entry) => entry !== '__all__'
+				(entry) => entry !== AUDIENCE_ALL
 			);
 			if (withoutAll.includes(value)) {
 				const nextValues = withoutAll.filter(
 					(entry) => entry !== value
 				);
-				return nextValues.length > 0 ? nextValues : ['__all__'];
+				return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
 			}
 			return [...withoutAll, value];
 		});
@@ -2886,9 +2857,9 @@ export const MessageSubmitInterfaceComponent = ({
 				]
 					.filter((entry) => !entry.disabled)
 					.map((entry) => entry.value);
-				const withoutAll = previousValues.includes('__all__')
+				const withoutAll = previousValues.includes(AUDIENCE_ALL)
 					? allVisibleValues
-					: previousValues.filter((value) => value !== '__all__');
+					: previousValues.filter((value) => value !== AUDIENCE_ALL);
 				const hasAllSelected = sectionValues.every((value) =>
 					withoutAll.includes(value)
 				);
@@ -2896,7 +2867,7 @@ export const MessageSubmitInterfaceComponent = ({
 					const nextValues = withoutAll.filter(
 						(value) => !sectionValues.includes(value)
 					);
-					return nextValues.length > 0 ? nextValues : ['__all__'];
+					return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
 				}
 				const nextValues = Array.from(
 					new Set([...withoutAll, ...sectionValues])
@@ -2906,7 +2877,7 @@ export const MessageSubmitInterfaceComponent = ({
 					allVisibleValues.every((value) =>
 						nextValues.includes(value)
 					);
-				return isEverythingSelected ? ['__all__'] : nextValues;
+				return isEverythingSelected ? [AUDIENCE_ALL] : nextValues;
 			});
 		},
 		[audienceGroupedSections]
@@ -3347,7 +3318,7 @@ export const MessageSubmitInterfaceComponent = ({
 		directory: agencyConsultantDirectory,
 		inRoomValues: new Set(
 			audienceOptions
-				.filter((option) => option.value !== '__all__')
+				.filter((option) => option.value !== AUDIENCE_ALL)
 				.flatMap((option) => [
 					...Array.from(getComparableAudienceIds(option.value)),
 					...Array.from(getComparableAudienceIds(option.label))
@@ -3362,7 +3333,7 @@ export const MessageSubmitInterfaceComponent = ({
 			audienceOptions
 				.filter(
 					(option) =>
-						option.value !== '__all__' &&
+						option.value !== AUDIENCE_ALL &&
 						/^@[^:@\s]+:.+$/.test(option.value)
 				)
 				.flatMap((option) =>
@@ -3460,6 +3431,64 @@ export const MessageSubmitInterfaceComponent = ({
 		[getComposerHeightBounds]
 	);
 
+	const composerMinHeight = getComposerHeightBounds().minHeight;
+	const effectiveComposerHeight = getEffectiveComposerHeight(
+		composerHeight,
+		autoComposerHeight,
+		composerMinHeight
+	);
+
+	// A dragged height belongs to one conversation only. Keeping the component
+	// mounted while routing between sessions must not carry that geometry over.
+	useEffect(() => {
+		setComposerHeight(null);
+		setAutoComposerHeight(null);
+	}, [activeSession?.item?.id, activeSession?.rid, threadRootId]);
+
+	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
+	// content up to fourteen lines. Beyond that the editor scrolls, while the
+	// drag handle can still explicitly make the composer taller.
+	useLayoutEffect(() => {
+		if (isExpandedComposer) {
+			return;
+		}
+		const input = textareaInputRef.current;
+		const editor = input?.querySelector<HTMLElement>('.ProseMirror');
+		const shell = input?.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!editor || !shell || typeof document === 'undefined') {
+			return;
+		}
+
+		const range = document.createRange();
+		range.selectNodeContents(editor);
+		const contentHeight = range.getBoundingClientRect().height;
+		const firstBlock = editor.firstElementChild as HTMLElement | null;
+		const lineHeight = Number.parseFloat(
+			window.getComputedStyle(firstBlock || editor).lineHeight
+		);
+		const composerChromeHeight =
+			shell.getBoundingClientRect().height -
+			editor.getBoundingClientRect().height;
+		const bounds = getComposerHeightBounds();
+		const nextHeight = calculateAutoComposerHeight({
+			contentHeight,
+			lineHeight: Number.isFinite(lineHeight) ? lineHeight : 20,
+			composerChromeHeight,
+			bounds
+		});
+		setAutoComposerHeight(
+			nextHeight > bounds.minHeight ? nextHeight : null
+		);
+	}, [
+		attachmentSelected,
+		composerText,
+		getComposerHeightBounds,
+		isExpandedComposer,
+		isMobileViewport
+	]);
+
 	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
 			if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -3472,7 +3501,7 @@ export const MessageSubmitInterfaceComponent = ({
 			) as HTMLElement | null;
 			const startHeight =
 				composerShell?.getBoundingClientRect().height ||
-				composerHeight ||
+				effectiveComposerHeight ||
 				getComposerHeightBounds().minHeight;
 
 			composerResizeStartRef.current = {
@@ -3522,7 +3551,7 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			clampComposerHeight,
-			composerHeight,
+			effectiveComposerHeight,
 			getComposerHeightBounds,
 			setComposerHeight
 		]
@@ -3532,7 +3561,7 @@ export const MessageSubmitInterfaceComponent = ({
 		(e: React.KeyboardEvent<HTMLButtonElement>) => {
 			const bounds = getComposerHeightBounds();
 			const nextHeight = stepComposerHeight(
-				composerHeight || bounds.minHeight,
+				effectiveComposerHeight || bounds.minHeight,
 				{ key: e.key, shiftKey: e.shiftKey },
 				bounds
 			);
@@ -3542,7 +3571,7 @@ export const MessageSubmitInterfaceComponent = ({
 			e.preventDefault();
 			setComposerHeight(nextHeight);
 		},
-		[composerHeight, getComposerHeightBounds, setComposerHeight]
+		[effectiveComposerHeight, getComposerHeightBounds, setComposerHeight]
 	);
 
 	const composerMenuDirection = getMenuDirection({
@@ -3658,9 +3687,9 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--resizing'
 						)}
 						style={
-							!isExpandedComposer && composerHeight
+							!isExpandedComposer && effectiveComposerHeight
 								? ({
-										'--composer-height': `${composerHeight}px`
+										'--composer-height': `${effectiveComposerHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}
@@ -3731,17 +3760,15 @@ export const MessageSubmitInterfaceComponent = ({
 							)}
 						{showAudienceSelector && (
 							<div
-								className={clsx(
-									'textarea__audienceSelector',
-									isAllAudienceChip
-										? 'textarea__audienceSelector--all'
-										: 'textarea__audienceSelector--target'
-								)}
+								className="textarea__audienceSelector"
 								ref={audienceMenuRef}
 							>
 								<RecipientSplitButton
 									label={selectedAudienceChipLabel}
 									icon={selectedAudienceIcon}
+									variant={
+										isAllAudienceChip ? 'all' : 'targeted'
+									}
 									isOpen={isAudienceMenuOpen}
 									isMulti={isMultiAudienceSelection}
 									onToggle={() =>
@@ -4084,7 +4111,7 @@ export const MessageSubmitInterfaceComponent = ({
 													className="textarea__audienceSelectorMenuSelectAll"
 													onClick={() =>
 														toggleAudienceSelection(
-															'__all__'
+															AUDIENCE_ALL
 														)
 													}
 												>

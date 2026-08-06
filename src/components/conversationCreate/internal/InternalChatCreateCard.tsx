@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InternalIcon } from '../../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as MoreIcon } from '../../../resources/img/icons/stack-vertical.svg';
 import internalTeamImage from '../../../resources/img/illustrations/conversation/internal-team.png';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
@@ -150,16 +149,6 @@ export const InternalChatCreateCard = ({
 					height={188}
 					loading="lazy"
 				/>
-			}
-			headerAction={
-				<button
-					type="button"
-					className="formatCard__menuButton"
-					aria-label={translate('groupChat.format.cardMenu')}
-					disabled
-				>
-					<MoreIcon aria-hidden />
-				</button>
 			}
 			mediaDimmed={selectedCount > 0}
 			mediaOverlay={

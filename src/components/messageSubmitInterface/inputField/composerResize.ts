@@ -18,6 +18,43 @@ export interface ComposerHeightBounds {
 	maxHeight: number;
 }
 
+export const COMPOSER_AUTO_GROW_MAX_LINES = 14;
+
+export const calculateAutoComposerHeight = ({
+	contentHeight,
+	lineHeight,
+	composerChromeHeight,
+	bounds
+}: {
+	contentHeight: number;
+	lineHeight: number;
+	composerChromeHeight: number;
+	bounds: ComposerHeightBounds;
+}): number => {
+	const safeLineHeight = Math.max(1, lineHeight);
+	const maxContentHeight = safeLineHeight * COMPOSER_AUTO_GROW_MAX_LINES;
+	const desiredHeight =
+		composerChromeHeight + Math.min(contentHeight, maxContentHeight);
+	return clampComposerHeight(
+		Math.max(bounds.minHeight, desiredHeight),
+		bounds
+	);
+};
+
+export const getEffectiveComposerHeight = (
+	manualHeight: number | null,
+	autoHeight: number | null,
+	minHeight: number
+): number | null => {
+	if (manualHeight !== null) {
+		return Math.max(manualHeight, autoHeight || minHeight);
+	}
+	if (!autoHeight || autoHeight <= minHeight) {
+		return null;
+	}
+	return autoHeight;
+};
+
 export const getComposerHeightBounds = ({
 	viewportWidth,
 	viewportHeight

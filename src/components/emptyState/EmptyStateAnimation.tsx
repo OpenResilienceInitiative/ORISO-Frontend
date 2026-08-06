@@ -1,22 +1,11 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Lottie, { LottieRefCurrentProps } from 'lottie-react';
-import { recolorLottieAccent } from './lottieColorUtils';
+import { readCssColor, recolorLottieAccent } from './lottieColorUtils';
 
 const DEFAULT_ACCENT_COLOR = '#ffb4aa';
 const DEFAULT_SECONDARY_COLOR = '#646d78';
-
-const readCssColor = (cssVariableName: string, fallbackColor: string) => {
-	if (typeof window === 'undefined') {
-		return fallbackColor;
-	}
-
-	const value = getComputedStyle(document.documentElement)
-		.getPropertyValue(cssVariableName)
-		.trim();
-
-	return /^#[0-9a-f]{6}$/i.test(value) ? value : fallbackColor;
-};
 
 interface EmptyStateAnimationProps {
 	animationData: Record<string, any>;
@@ -34,6 +23,9 @@ export const EmptyStateAnimation = ({
 	variant
 }: EmptyStateAnimationProps) => {
 	const lottieRef = useRef<LottieRefCurrentProps | null>(null);
+	// Same treatment as AnimatedIllustration: the illustration still reads,
+	// it just does not move — we show its resting (final) frame instead.
+	const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 	const [playbackState, setPlaybackState] = useState('playing');
 	const accentColor = readCssColor(accentColorVar, DEFAULT_ACCENT_COLOR);
 	const secondaryColor = readCssColor(
@@ -45,14 +37,28 @@ export const EmptyStateAnimation = ({
 		[accentColor, animationData, secondaryColor]
 	);
 
-	useEffect(() => {
-		lottieRef.current?.setSpeed(speed);
-	}, [speed]);
+	const showFinalFrame = () => {
+		const totalFrames = lottieRef.current?.getDuration(true) ?? 1;
+		lottieRef.current?.goToAndStop(Math.max(totalFrames - 1, 0), true);
+	};
 
 	useEffect(() => {
+		if (reduceMotion) {
+			return;
+		}
+		lottieRef.current?.setSpeed(speed);
+	}, [reduceMotion, speed]);
+
+	useEffect(() => {
+		if (reduceMotion) {
+			setPlaybackState('complete');
+			showFinalFrame();
+			return;
+		}
 		setPlaybackState('playing');
 		lottieRef.current?.setSpeed(speed);
-	}, [animationData, speed, variant]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [animationData, reduceMotion, speed, variant]);
 
 	return (
 		<div
@@ -63,16 +69,21 @@ export const EmptyStateAnimation = ({
 			data-cy="empty-state-animation"
 			data-empty-state={variant}
 			data-loop="false"
+			data-reduced-motion={reduceMotion ? 'true' : 'false'}
 			data-secondary-color={secondaryColor.toLowerCase()}
 			data-speed={speed}
 		>
 			<Lottie
 				animationData={recoloredAnimationData}
-				autoplay
+				autoplay={!reduceMotion}
 				loop={false}
 				lottieRef={lottieRef}
 				onComplete={() => setPlaybackState('complete')}
-				onDOMLoaded={() => lottieRef.current?.setSpeed(speed)}
+				onDOMLoaded={() =>
+					reduceMotion
+						? showFinalFrame()
+						: lottieRef.current?.setSpeed(speed)
+				}
 				rendererSettings={{
 					preserveAspectRatio: 'xMidYMid meet'
 				}}

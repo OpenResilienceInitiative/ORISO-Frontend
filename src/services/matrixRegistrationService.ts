@@ -42,7 +42,7 @@ export const registerMatrixUser = async (
 			registrationData.password,
 			null, // auth
 			{
-				initial_device_display_name: 'Caritas Frontend',
+				initial_device_display_name: 'ORISO Frontend',
 				...(registrationData.displayName && {
 					displayname: registrationData.displayName
 				})

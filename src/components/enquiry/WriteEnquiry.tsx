@@ -20,7 +20,7 @@ import {
 	mobileDetailView,
 	mobileListView
 } from '../app/navigationHandler';
-import { ReactComponent as EnvelopeCheckIcon } from '../../resources/img/illustrations/envelope-check.svg';
+import { EmailSentAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { ReactComponent as WelcomeIcon } from '../../resources/img/illustrations/welcome.svg';
 import './enquiry.styles';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
@@ -158,7 +158,7 @@ export const WriteEnquiry: React.FC = () => {
 	};
 
 	const overlayItem: OverlayItem = {
-		svg: EnvelopeCheckIcon,
+		svg: EmailSentAnimation,
 		headline: translate('enquiry.write.overlay.headline'),
 		copy: translate('enquiry.write.overlay.copy'),
 		buttonSet: [
