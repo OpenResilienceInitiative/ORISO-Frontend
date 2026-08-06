@@ -1602,9 +1602,23 @@
 			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
-			"dismissAcceptedBanner": "Hinweis ausblenden"
+			"dismissAcceptedBanner": "Hinweis ausblenden",
+			"leave": "Chat verlassen"
 		},
-		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut."
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut.",
+		"leaveQueue": {
+			"headline": "Chat verlassen?",
+			"body": "Du bist noch im Wartebereich. Du kannst weiter warten oder deinen Zugang löschen — dann wird dieser Chat beendet.",
+			"bodyAccepted": "Eine beratende Person wartet schon auf dich. Du kannst den Chat jetzt starten, im Wartebereich bleiben oder deinen Zugang löschen.",
+			"stay": "Im Wartebereich bleiben",
+			"startChat": "Chat jetzt starten",
+			"startChatUnavailable": "Sobald eine beratende Person den Chat annimmt, kannst du hier starten.",
+			"delete": "Chat beenden & Zugang löschen",
+			"deleteWarning": "Dein Zugang wird deaktiviert und dieser Chat beendet. Du kannst dich mit diesem Namen und Passwort nicht mehr anmelden, und wir können den Zugang nicht wiederherstellen.",
+			"cancelDelete": "Abbrechen",
+			"confirmDelete": "Ja, endgültig löschen",
+			"error": "Der Chat konnte gerade nicht beendet werden. Bitte versuch es noch einmal."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
