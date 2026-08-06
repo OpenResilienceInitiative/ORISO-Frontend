@@ -1013,10 +1013,24 @@
 			"summary": "Dein Thema:"
 		},
 		"zipcode": {
-			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",
-			"bullet2": "• die Gesetze Deines Bundeslandes kennen",
-			"headline": "Um Dich bestmöglich beraten zu können benötigen wir Deine Postleitzahl",
-			"label": "Deine Postleitzahl"
+			"headline": "Wo suchst du Beratung?",
+			"label": "Deine Postleitzahl",
+			"subline": "Nur deine Postleitzahl — mehr brauchen wir nicht.",
+			"digitLabel": "Postleitzahl, Ziffer {{position}} von {{total}}",
+			"whyLocal": {
+				"title": "Warum lokal beraten?",
+				"localHelp": "Deine Beratungsstelle kennt die Hilfsangebote vor Ort.",
+				"stateLaw": "Sie kennt die Gesetze deines Bundeslandes.",
+				"anonymous": "Nur diese eine Stelle sieht deine Angabe — du bleibst anonym.",
+				"inPerson": "Wenn du möchtest, kannst du später auch persönlich weiterreden."
+			}
+		},
+		"handover": {
+			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"status": {
+				"ready": "Alles bereit — du kannst schreiben",
+				"entering": "Dein Beratungsraum wird geöffnet …"
+			}
 		}
 	},
 	"session": {
