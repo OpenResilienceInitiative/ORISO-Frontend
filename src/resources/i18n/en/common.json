@@ -2442,10 +2442,6 @@
 			"copy": "We're setting up your secure counseling room …",
 			"ready": "Your counseling room is ready."
 		},
-		"stepbar": {
-			"of": "of",
-			"step": "Step"
-		},
 		"submitButton": {
 			"label": "Register"
 		},

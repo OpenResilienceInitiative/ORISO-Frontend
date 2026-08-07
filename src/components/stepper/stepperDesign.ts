@@ -17,6 +17,13 @@ export const stepperColors = {
 	surface: orisoInputColors.surface,
 	surfaceContainer: orisoInputColors.surfaceContainer,
 	surfaceContainerHigh: orisoInputColors.surfaceContainerHigh,
+	/**
+	 * The unfilled progress segments. `orisoInputColors` stops at
+	 * `surfaceContainerHigh`, but the design specifies the *highest* step, and
+	 * the token exists in the scheme — one tone too light and the segments stop
+	 * reading as "not yet".
+	 */
+	surfaceContainerHighest: 'var(--m3-surface-container-highest, #e4e2e2)',
 	selectedLayer: orisoInputColors.selectedLayer,
 	focusLayer: orisoInputColors.focusLayer
 } as const;

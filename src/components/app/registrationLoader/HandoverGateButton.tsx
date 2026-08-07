@@ -73,13 +73,13 @@ export const HandoverGateButton = ({
 			<Box
 				aria-hidden
 				sx={{
-					position: 'absolute',
-					left: 0,
-					top: 0,
-					bottom: 0,
-					width: `${GATE_PROGRESS[state]}%`,
-					bgcolor: 'rgba(255, 255, 255, 0.16)',
-					transition: 'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
+					'position': 'absolute',
+					'left': 0,
+					'top': 0,
+					'bottom': 0,
+					'width': `${GATE_PROGRESS[state]}%`,
+					'bgcolor': 'rgba(255, 255, 255, 0.16)',
+					'transition': 'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
 					'@media (prefers-reduced-motion: reduce)': {
 						transition: 'none'
 					}
@@ -96,6 +96,7 @@ export const HandoverGateButton = ({
 				<Typography
 					component="span"
 					sx={{
+						color: 'inherit',
 						fontSize: 17,
 						fontWeight: 700,
 						lineHeight: '22px',
@@ -104,16 +105,14 @@ export const HandoverGateButton = ({
 						textOverflow: 'ellipsis'
 					}}
 				>
-					{t(
-						'registration.handover.cta',
-						'Anfrage schreiben'
-					)}
+					{t('registration.handover.cta', 'Anfrage schreiben')}
 				</Typography>
 				<Typography
 					component="span"
 					role="status"
 					aria-live="polite"
 					sx={{
+						color: 'inherit',
 						fontSize: 12,
 						lineHeight: '16px',
 						opacity: 0.92,
@@ -129,17 +128,19 @@ export const HandoverGateButton = ({
 				component="span"
 				aria-hidden
 				sx={{
-					position: 'relative',
-					width: 44,
-					height: 44,
-					flexShrink: 0,
-					ml: 1,
-					borderRadius: '50%',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					bgcolor: open ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-					transition: 'background-color 300ms ease',
+					'position': 'relative',
+					'width': 44,
+					'height': 44,
+					'flexShrink': 0,
+					'ml': 1,
+					'borderRadius': '50%',
+					'display': 'flex',
+					'alignItems': 'center',
+					'justifyContent': 'center',
+					'bgcolor': open
+						? 'rgba(255, 255, 255, 0.2)'
+						: 'transparent',
+					'transition': 'background-color 300ms ease',
 					'@media (prefers-reduced-motion: reduce)': {
 						transition: 'none'
 					}

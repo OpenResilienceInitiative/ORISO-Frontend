@@ -53,13 +53,7 @@ export const RegistrationHandover = ({
 
 	const state: HandoverGateState =
 		forcedState ??
-		(entering
-			? 'entering'
-			: ready
-				? 'ready'
-				: slow
-					? 'slow'
-					: 'preparing');
+		(entering ? 'entering' : ready ? 'ready' : slow ? 'slow' : 'preparing');
 
 	// Tier 3 waits for both: the content the user came for, and the app behind
 	// the gate. Decoration must never compete with either.
@@ -122,14 +116,14 @@ export const RegistrationHandover = ({
 							component="span"
 							aria-hidden
 							sx={{
-								width: 22,
-								height: 22,
-								borderRadius: '50%',
-								bgcolor: registrationMd3.primary,
-								color: registrationMd3.onPrimary,
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
+								'width': 22,
+								'height': 22,
+								'borderRadius': '50%',
+								'bgcolor': registrationMd3.primary,
+								'color': registrationMd3.onPrimary,
+								'display': 'flex',
+								'alignItems': 'center',
+								'justifyContent': 'center',
 								'& svg': { fontSize: 14 }
 							}}
 						>
@@ -151,6 +145,9 @@ export const RegistrationHandover = ({
 					<Typography
 						component="h1"
 						sx={{
+							// Same reason as the button labels: Typography does
+							// not inherit the surface colour.
+							color: 'inherit',
 							fontSize: { xs: 30, sm: 34 },
 							lineHeight: { xs: '36px', sm: '41px' },
 							fontWeight: 700

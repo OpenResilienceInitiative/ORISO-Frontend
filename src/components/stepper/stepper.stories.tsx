@@ -46,7 +46,11 @@ const REGISTRATION_STEPS = [
 		label: 'Registrieren',
 		icon: <HowToRegRoundedIcon />
 	},
-	{ name: 'request', label: 'Anfrage stellen', icon: <ChatBubbleRoundedIcon /> }
+	{
+		name: 'request',
+		label: 'Anfrage stellen',
+		icon: <ChatBubbleRoundedIcon />
+	}
 ];
 
 const DIALOG_STEPS = [

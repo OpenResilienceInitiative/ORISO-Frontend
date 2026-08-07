@@ -71,7 +71,9 @@ export const RegistrationStepNav = ({
 					'bgcolor': registrationMd3.surfaceContainer,
 					'color': registrationMd3.onSurfaceVariant,
 					'&.Mui-disabled': { opacity: 0.38 },
-					'&:hover': { bgcolor: registrationMd3.surfaceContainerHigh },
+					'&:hover': {
+						bgcolor: registrationMd3.surfaceContainerHigh
+					},
 					'&:focus-visible': {
 						boxShadow: `0 0 0 3px ${registrationMd3.focusLayer}`
 					}
@@ -82,9 +84,15 @@ export const RegistrationStepNav = ({
 
 			<ButtonBase
 				type={
-					nextStepUrl ? 'button' : primaryDisabled ? 'button' : 'submit'
+					nextStepUrl
+						? 'button'
+						: primaryDisabled
+							? 'button'
+							: 'submit'
 				}
-				component={nextStepUrl && !primaryDisabled ? RouterLink : 'button'}
+				component={
+					nextStepUrl && !primaryDisabled ? RouterLink : 'button'
+				}
 				to={nextStepUrl && !primaryDisabled ? nextStepUrl : undefined}
 				disabled={primaryDisabled}
 				data-cy="registration-next"
@@ -124,6 +132,10 @@ export const RegistrationStepNav = ({
 				<Typography
 					component="span"
 					sx={{
+						// Typography always resolves to text.primary and never
+						// inherits the colour of the surface it sits on, so the
+						// label has to say white itself.
+						color: 'inherit',
 						fontSize: 17,
 						fontWeight: 700,
 						overflow: 'hidden',

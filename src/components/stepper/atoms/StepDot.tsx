@@ -33,10 +33,7 @@ export interface StepDotProps {
  * steppers had two divergent copies of this before.
  */
 export const StepDot = React.forwardRef<HTMLDivElement, StepDotProps>(
-	(
-		{ state, icon, size = 'md', emphasizeActive = true, className },
-		ref
-	) => {
+	({ state, icon, size = 'md', emphasizeActive = true, className }, ref) => {
 		const filled = state === 'active' || state === 'done';
 
 		return (
@@ -45,27 +42,27 @@ export const StepDot = React.forwardRef<HTMLDivElement, StepDotProps>(
 				className={className}
 				aria-hidden
 				sx={{
-					width: DOT_SIZE[size],
-					height: DOT_SIZE[size],
-					flexShrink: 0,
-					borderRadius: '50%',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					bgcolor: filled
+					'width': DOT_SIZE[size],
+					'height': DOT_SIZE[size],
+					'flexShrink': 0,
+					'borderRadius': '50%',
+					'display': 'flex',
+					'alignItems': 'center',
+					'justifyContent': 'center',
+					'bgcolor': filled
 						? stepperColors.primary
 						: stepperColors.surfaceContainerHigh,
-					color: filled
+					'color': filled
 						? stepperColors.onPrimary
 						: stepperColors.onSurfaceVariant,
-					border: filled
+					'border': filled
 						? 'none'
 						: `1.5px solid ${stepperColors.outline}`,
-					boxShadow:
+					'boxShadow':
 						state === 'active' && emphasizeActive
 							? `0 0 0 5px ${stepperColors.selectedLayer}`
 							: 'none',
-					transition: `background-color ${stepperMotion.standard} ease, color ${stepperMotion.standard} ease, border-color ${stepperMotion.standard} ease, box-shadow ${stepperMotion.standard} ease`,
+					'transition': `background-color ${stepperMotion.standard} ease, color ${stepperMotion.standard} ease, border-color ${stepperMotion.standard} ease, box-shadow ${stepperMotion.standard} ease`,
 					'& svg': {
 						fontSize: `${ICON_SIZE[size]}px`,
 						width: ICON_SIZE[size],

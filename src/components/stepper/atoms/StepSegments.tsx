@@ -35,7 +35,7 @@ export const StepSegments = ({
 					height: 4,
 					borderRadius: 2,
 					flexShrink: 0,
-					bgcolor: stepperColors.surfaceContainerHigh,
+					bgcolor: stepperColors.surfaceContainerHighest,
 					overflow: 'hidden'
 				}}
 			>
@@ -66,7 +66,7 @@ export const StepSegments = ({
 						bgcolor:
 							index < filled
 								? stepperColors.primary
-								: stepperColors.surfaceContainerHigh
+								: stepperColors.surfaceContainerHighest
 					}}
 				/>
 			))}

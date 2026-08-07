@@ -2601,10 +2601,6 @@
 		},
 		"next": "Weiter",
 		"register": "Registrieren",
-		"stepbar": {
-			"of": "von",
-			"step": "Schritt"
-		},
 		"topic": {
 			"headline": "Zu welchem Thema suchen Sie Beratung?",
 			"infoOverlay": {

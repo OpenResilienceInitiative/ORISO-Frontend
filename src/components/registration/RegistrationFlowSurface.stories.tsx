@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import { StepBar } from './stepBar/StepBar';
 import { OrisoTextField } from '../form/OrisoTextField';
 import {
 	APP_ORISO_FIGMA_URL,
@@ -122,7 +121,6 @@ function RegistrationFlowSurface() {
 						</Typography>
 					</Box>
 					<Box sx={styles.stepper}>
-						<StepBar currentStep={2} maxNumberOfSteps={5} />
 					</Box>
 				</Box>
 
@@ -361,7 +359,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Composite registration Storybook MCP target: StepBar, topic choice, zipcode input, agency cards and account fields in one M3-oriented registration surface. This fills the gap between isolated registration atoms and the full routed registration flow, which still needs API/provider mocks.'
+					'Composite registration Storybook MCP target: topic choice, zipcode input, agency cards and account fields in one M3-oriented registration surface. This fills the gap between isolated registration atoms and the full routed registration flow, which still needs API/provider mocks.'
 			}
 		}
 	}

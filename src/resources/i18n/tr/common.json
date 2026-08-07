@@ -2026,10 +2026,6 @@
 			"copy": "Güvenli görüşme alanınızı hazırlıyoruz, birkaç saniye sürebilir …",
 			"ready": "Güvenli görüşme alanınız hazır. Başlayabilirsiniz."
 		},
-		"stepbar": {
-			"of": "itibaren",
-			"step": "Adım"
-		},
 		"submitButton": {
 			"label": "Kayıt Olun"
 		},
