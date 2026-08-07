@@ -15,6 +15,7 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
 import { Spinner } from '../spinner/Spinner';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 
@@ -203,18 +204,11 @@ export const Stage = ({
 						}
 					>
 						{(label, url) => (
-							<button
-								type="button"
-								className="button-as-link"
-								data-cy-link={url}
-								onClick={() => window.open(url, '_blank')}
-							>
-								<Text
-									className="stage__legalLinksItem"
-									type="infoSmall"
-									text={translate(label)}
-								/>
-							</button>
+							<LegalLinkButton
+								label={label}
+								url={url}
+								textClassName="stage__legalLinksItem"
+							/>
 						)}
 					</LegalLinks>
 				</div>

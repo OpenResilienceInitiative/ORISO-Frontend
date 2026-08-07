@@ -51,7 +51,8 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo"
+			"associationLogoAlt": "Provider organisation logo",
+			"mobileHeadline": "There is room here for what is on your mind."
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -1281,6 +1282,16 @@
 			"showOriginal": "Show original",
 			"showingOriginal": "You are viewing the original version.",
 			"showTranslation": "Show translation"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	},
 	"login": {
@@ -1325,13 +1336,32 @@
 		"register": {
 			"infoText": {
 				"copy": "We will be happy to advise you on the following topics:",
-				"title": "Not registered yet?"
+				"title": "Not registered yet?",
+				"short": "New here?"
 			},
 			"linkLabel": "To the consulting topics"
 		},
 		"security": {
-			"headline": "Secure & Encrypted",
-			"description": "Your privacy is fully protected with end-to-end encryption."
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {

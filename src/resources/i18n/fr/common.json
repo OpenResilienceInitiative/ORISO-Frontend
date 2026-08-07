@@ -51,7 +51,8 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"associationLogoAlt": "Logo de l'organisation prestataire"
+			"associationLogoAlt": "Logo de l'organisation prestataire",
+			"mobileHeadline": "There is room here for what is on your mind."
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -1201,13 +1202,32 @@
 		"register": {
 			"infoText": {
 				"copy": "Nous vous conseillons volontiers sur les thèmes suivants :",
-				"title": "Pas encore inscrit ?"
+				"title": "Pas encore inscrit ?",
+				"short": "New here?"
 			},
 			"linkLabel": "Vers les thèmes de conseil"
 		},
 		"security": {
-			"headline": "Sécurisé et chiffré",
-			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout."
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3136,6 +3156,18 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Les rendez-vous vidéo ne sont actuellement pas disponibles."
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	}
 }

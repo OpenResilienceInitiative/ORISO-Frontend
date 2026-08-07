@@ -1095,6 +1095,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:agency:base",
+		"family": "agency",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "agency.svg",
+		"sourcePath": "src/resources/img/icons/agency.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:apple:base",
 		"family": "apple",
 		"state": "base",
@@ -1191,6 +1204,7 @@
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionHeader/SessionHeaderComponent.tsx",
@@ -2289,6 +2303,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:hacker:base",
+		"family": "hacker",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "hacker.svg",
+		"sourcePath": "src/resources/img/icons/hacker.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:heart:base",
 		"family": "heart",
 		"state": "base",
@@ -2582,6 +2609,7 @@
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
@@ -2969,6 +2997,7 @@
 		"usageFiles": [
 			"src/components/askerInfo/AskerInfo.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/RequestPasswordResetFormView.tsx",
 			"src/resources/img/icons.ts"
@@ -3432,9 +3461,6 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
-			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/internal/InternalChatCreateCard.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

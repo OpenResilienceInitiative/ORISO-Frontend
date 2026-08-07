@@ -51,7 +51,8 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት"
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት",
+			"mobileHeadline": "There is room here for what is on your mind."
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -1201,13 +1202,32 @@
 		"register": {
 			"infoText": {
 				"copy": "ኣብዞም ዝስዕቡ ኣርእስታት ብሓጎስ ክንመኽረኩም ንደሊ፤",
-				"title": "ገና ኣይተመዝገበን?"
+				"title": "ገና ኣይተመዝገበን?",
+				"short": "New here?"
 			},
 			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት"
 		},
 		"security": {
-			"headline": "ደህንነት እና ተመስጢር",
-			"description": "ግላዊነትኩም ብመጨረሻ-ወደ-መጨረሻ ምስጢር ፍጹም ይሕሎ."
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3133,6 +3153,18 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	}
 }

@@ -51,7 +51,8 @@
 		"selectLanguage": "Выберите язык",
 		"stage": {
 			"title": "Консультации\n& Помощь",
-			"associationLogoAlt": "Логотип организации-поставщика"
+			"associationLogoAlt": "Логотип организации-поставщика",
+			"mobileHeadline": "There is room here for what is on your mind."
 		},
 		"successful": "Успешный",
 		"title": "Консультации",
@@ -1201,13 +1202,32 @@
 		"register": {
 			"infoText": {
 				"copy": "Мы будем рады проконсультировать вас по следующим вопросам:",
-				"title": "Еще не зарегистрированы?"
+				"title": "Еще не зарегистрированы?",
+				"short": "New here?"
 			},
 			"linkLabel": "К темам консультаций"
 		},
 		"security": {
-			"headline": "Безопасно и зашифровано",
-			"description": "Ваша конфиденциальность полностью защищена сквозным шифрованием."
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3136,6 +3156,18 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	}
 }

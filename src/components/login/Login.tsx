@@ -19,6 +19,7 @@ import { ReactComponent as VerifiedIcon } from '../../resources/img/icons/verifi
 import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
 import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
 import { StageLayout } from '../stageLayout/StageLayout';
+import { LoginSecurityExplainer } from './LoginSecurityExplainer';
 import { apiGetUserData, FETCH_ERRORS } from '../../api';
 import {
 	OTP_LENGTH,
@@ -108,6 +109,8 @@ export const Login = () => {
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
+		useState<boolean>(false);
+	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
 		useState<boolean>(false);
 	const { featureToolsEnabled } = getTenantSettings();
 
@@ -392,8 +395,16 @@ export const Login = () => {
 				showRegistrationLink={hasTenant}
 				registrationUrl={registrationUrl}
 			>
-				<div className="loginForm">
-					<div className="loginForm__inner">
+				<div
+					className={clsx('loginForm', {
+						'loginForm--securityOpen': isSecurityExplainerOpen
+					})}
+				>
+					<div
+						className="loginForm__inner loginForm__pane loginForm__pane--login"
+						aria-hidden={isSecurityExplainerOpen}
+						inert={isSecurityExplainerOpen}
+					>
 						<div className="loginForm__headline">
 							<h2>{translate('login.headline')}</h2>
 						</div>
@@ -733,36 +744,38 @@ export const Login = () => {
 							</div>
 						)}
 
-						<div className="loginForm__securityBanner">
-							<div className="security-header">
-								<svg
-									width="20"
-									height="20"
-									viewBox="0 0 24 24"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z"
-										stroke="#10b981"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										fill="none"
-									/>
-									<path
-										d="M9 12L11 14L15 10"
-										stroke="#10b981"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
-							</div>
-							<span>
-								{translate('login.security.description')}
+						<div className="loginForm__separator" />
+
+						<button
+							type="button"
+							className="loginForm__securityTeaser"
+							onClick={() => setIsSecurityExplainerOpen(true)}
+							data-cy="login-security-teaser"
+						>
+							<LockIcon className="loginForm__securityTeaserIcon" />
+							<span className="loginForm__securityTeaserText">
+								{translate('login.security.teaser.text')}
 							</span>
-						</div>
+							<span className="loginForm__securityTeaserTextShort">
+								{translate('login.security.teaser.textShort')}
+							</span>
+							<span className="loginForm__securityTeaserLink">
+								{translate('login.security.teaser.link')}
+							</span>
+							<span className="loginForm__securityTeaserLinkShort">
+								{translate('login.security.teaser.linkShort')}
+							</span>
+						</button>
+					</div>
+
+					<div
+						className="loginForm__inner loginForm__pane loginForm__pane--info"
+						aria-hidden={!isSecurityExplainerOpen}
+						inert={!isSecurityExplainerOpen}
+					>
+						<LoginSecurityExplainer
+							onBack={() => setIsSecurityExplainerOpen(false)}
+						/>
 					</div>
 				</div>
 			</StageLayout>
