@@ -235,4 +235,43 @@ describe('useDraftMessage', () => {
 			)
 		).toHaveLength(0);
 	});
+
+	it('does not carry buffered text over into the next scope', async () => {
+		const loadDraft = vi.fn();
+
+		const { result, rerender, unmount } = renderHook(
+			({ scopeKey }: { scopeKey: string }) =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: scopeKey
+				}),
+			{
+				wrapper,
+				initialProps: { scopeKey: 'scope:session-42|thread:main' }
+			}
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		act(() => {
+			result.current.onChange('<p>Im Gespräch getippt</p>');
+		});
+
+		// Switch to a thread that has no draft of its own, before the
+		// debounced autosave for the session has fired.
+		rerender({ scopeKey: 'scope:session-42|thread:root-1' });
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		mocks.apiUpsertUserDraft.mockClear();
+
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.filter(
+				([scopeKey]) => scopeKey === 'scope:session-42|thread:root-1'
+			)
+		).toHaveLength(0);
+	});
 });

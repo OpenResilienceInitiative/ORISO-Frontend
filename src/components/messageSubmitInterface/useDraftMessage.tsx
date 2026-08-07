@@ -133,6 +133,17 @@ export const useDraftMessage = (
 					delete indexMap[remoteScopeKey];
 				}
 
+				if (Object.keys(indexMap).length === 0) {
+					/*
+					 * #976: an empty map serialises to "{}", which is not blank,
+					 * so the backend keeps the row forever - a contentless draft
+					 * that no view can open and nothing can clear. Drop the row
+					 * instead of storing an empty index.
+					 */
+					await apiDeleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+					return;
+				}
+
 				await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
 					text: JSON.stringify(indexMap)
 				});
@@ -160,6 +171,14 @@ export const useDraftMessage = (
 		setLoaded(false);
 		setMessageRes(null);
 		hasRemoteDraftRef.current = false;
+		/*
+		 * #976: the scope changed, so whatever is still buffered belongs to the
+		 * previous conversation or thread. The unmount cleanup writes this ref
+		 * under the *current* scope key, so carrying it over files text into a
+		 * conversation nobody typed in. Loading a draft for the new scope sets
+		 * it again below; finding none must leave it empty.
+		 */
+		latestMessageRef.current = '';
 		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
