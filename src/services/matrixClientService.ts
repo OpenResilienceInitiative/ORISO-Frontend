@@ -542,7 +542,7 @@ export class MatrixClientService {
 		}
 	}
 
-	// Redact an event (used to remove a reaction)
+	// Redact an event (reactions un-react, and message delete #827)
 	public async redactEvent(roomId: string, eventId: string): Promise<any> {
 		await this.ensureFreshToken();
 

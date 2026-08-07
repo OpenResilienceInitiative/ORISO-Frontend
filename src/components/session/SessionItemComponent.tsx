@@ -3281,6 +3281,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		});
 	}, []);
 
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) => {
+			if (!resolvedMatrixRoomId || !message?._id) {
+				return;
+			}
+			chatTransportService
+				.redactMessage({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: message._id
+				})
+				.catch(() => undefined);
+		},
+		[resolvedMatrixRoomId]
+	);
+
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
 
 	// A reply or edit context never survives a conversation switch.
@@ -4938,6 +4953,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											isMyMessageMatrix(message.userId)
 												? () =>
 														handleEditDirect(
+															message
+														)
+												: undefined
+										}
+										onDeleteDirect={
+											isMyMessageMatrix(message.userId)
+												? () =>
+														handleDeleteDirect(
 															message
 														)
 												: undefined
