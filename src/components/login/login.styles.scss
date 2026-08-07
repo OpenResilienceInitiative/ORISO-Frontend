@@ -187,47 +187,6 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
-	&__securityBanner {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 8px;
-		padding: 16px 18px;
-		background: rgba(16, 185, 129, 0.12);
-		border: 1.5px solid rgba(16, 185, 129, 0.4);
-		border-radius: 12px;
-		margin-top: 20px;
-		margin-bottom: 0;
-		box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-		text-align: center;
-
-		.security-header {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-
-			svg {
-				flex-shrink: 0;
-				width: 20px;
-				height: 20px;
-			}
-
-			strong {
-				font-size: 14px;
-				color: #059669;
-				font-weight: 600;
-				letter-spacing: 0.3px;
-			}
-		}
-
-		span {
-			font-size: 12px;
-			color: #047857;
-			font-weight: 400;
-			line-height: 1.4;
-		}
-	}
-
 	&__otp {
 		max-height: 0;
 		overflow: hidden;
@@ -327,6 +286,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__register {
+		width: 100%;
+		max-width: 380px;
 		margin-top: $grid-base-four;
 
 		&__separator {
@@ -351,6 +312,13 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&__content {
+			// Same column as the fields and the primary button, so the
+			// secondary lines up with them instead of shrinking to its label.
+			width: 100%;
+			max-width: 380px;
+			margin-left: auto;
+			margin-right: auto;
+
 			.text {
 				font-weight: 600;
 				text-align: center;

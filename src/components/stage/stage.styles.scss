@@ -217,12 +217,18 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		z-index: 50;
 
 		.button-as-link {
+			// The stage is a saturated red panel: the neutral on-surface tone
+			// these links inherit elsewhere sits at roughly 2:1 against it.
+			// On the stage they are white and underlined, and go fully opaque
+			// on hover (design 2d).
 			background: none;
 			border: none;
 			cursor: pointer;
 			padding: 0;
 			white-space: nowrap;
-			color: var(--m3-on-surface-variant, $tertiary);
+			color: rgb(255 255 255 / 92%);
+			text-decoration: underline;
+			text-underline-offset: 3px;
 			pointer-events: auto;
 			position: relative;
 			z-index: 51;
@@ -237,7 +243,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 			}
 
 			&:hover {
-				color: var(--m3-primary-hover, $hover-primary);
+				color: #fff;
 			}
 		}
 
@@ -247,7 +253,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__legalLinksItem {
-		color: $dark-grey;
+		color: rgb(255 255 255 / 92%);
 
 		&:hover {
 			color: $white;

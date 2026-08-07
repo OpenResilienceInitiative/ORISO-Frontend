@@ -14,6 +14,7 @@ import {
 import { LanguageSelectDropdown } from '../select/LanguageSelectDropdown';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import LanguageIcon from '@mui/icons-material/Language';
+import { LocaleSwitchPill } from './LocaleSwitchPill';
 
 export interface LocaleSwitchProp {
 	updateUserData?: boolean;
@@ -28,6 +29,12 @@ export interface LocaleSwitchProp {
 	color?: string;
 	colorHover?: string;
 	iconOnly?: boolean;
+	/**
+	 * `'select'` (default) is the react-select control the in-app navigation
+	 * uses. `'pill'` is the login header's control from design 2d — same
+	 * options, same context wiring, different surface.
+	 */
+	variant?: 'select' | 'pill';
 	/** When set (e.g. Figma nav globe), replaces default language SVGs in the control */
 	leadingIconOverride?: React.ReactNode;
 	onMenuOpen?: () => void;
@@ -47,6 +54,7 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	color = 'var(--m3-on-surface)',
 	colorHover = 'var(--m3-primary-hover)',
 	iconOnly,
+	variant = 'select',
 	leadingIconOverride,
 	onMenuOpen,
 	onMenuClose
@@ -82,14 +90,37 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 		return null;
 	}
 
+	const selectLocale = (value: string) => {
+		// The cookie has to be written before the context switch: requests are
+		// keyed off `locale`, and setting the context first fires them against
+		// the old cookie.
+		setValueInCookie('lang', value);
+		setLocale(value);
+	};
+
+	if (variant === 'pill') {
+		return (
+			<LocaleSwitchPill
+				className={className}
+				value={locale}
+				options={selectableLocales.map((lng) => ({
+					value: lng,
+					// The `languages` namespace ships the code inside the label
+					// ("(DE) Deutsch"). The pill shows the code in its own slot,
+					// so the prefix has to come off or it appears twice.
+					label: translate([lng, lng], { ns: 'languages' }).replace(
+						/^\([A-Z]{2}\)\s*/,
+						''
+					)
+				}))}
+				onChange={selectLocale}
+				ariaLabel={translate('app.selectLanguage')}
+			/>
+		);
+	}
+
 	const languageSelectDropdown: SelectDropdownItem = {
-		handleDropdownSelect: ({ value }) => {
-			// If we wait to be set in LocaleSwitch sometimes we've an problem of reloading the requests
-			// because we're always looking by "locale" from the context but the locale is changed before
-			// we save the cookie so to fix this we set the cookie before the locale switch
-			setValueInCookie('lang', value);
-			setLocale(value);
-		},
+		handleDropdownSelect: ({ value }) => selectLocale(value),
 		id: 'languageSelect',
 		className,
 		selectedOptions: selectableLocales.map((lng) => ({

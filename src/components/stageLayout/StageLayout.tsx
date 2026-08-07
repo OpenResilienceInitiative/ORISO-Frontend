@@ -9,6 +9,8 @@ import { LocaleSwitch } from '../localeSwitch/LocaleSwitch';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { useLegalLinkDialog } from '../legalLinks/useLegalLinkDialog';
+import { StageMobileHero } from './StageMobileHero';
 import { MENUPLACEMENT_BOTTOM_LEFT } from '../select/SelectDropdown';
 import {
 	AppBar,
@@ -40,6 +42,13 @@ interface StageLayoutProps {
 	loginParams?: string;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
+	/**
+	 * `'login'` switches on the login dramaturgy from design 2d/2e: the pill
+	 * language control and a filled primary CTA in the desktop header, and on
+	 * mobile a 230 px red head with the content in a white sheet over it
+	 * instead of the shared app bar.
+	 */
+	variant?: 'default' | 'login';
 }
 
 export const StageLayout = ({
@@ -51,8 +60,10 @@ export const StageLayout = ({
 	showRegistrationLink,
 	loginParams,
 	registrationUrl,
-	showRegistrationInfoDrawer
+	showRegistrationInfoDrawer,
+	variant = 'default'
 }: StageLayoutProps) => {
+	const isLogin = variant === 'login';
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
@@ -71,14 +82,23 @@ export const StageLayout = ({
 	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 	const platformVersion = getPlatformVersion();
+	const { openLegalLink, dialog: legalDialog } = useLegalLinkDialog();
 
 	return (
-		<div className={clsx('stageLayout', className)}>
+		<div
+			className={clsx(
+				'stageLayout',
+				{ 'stageLayout--login': isLogin },
+				className
+			)}
+		>
 			<Slide appear={false} direction="down" in={!trigger}>
 				<AppBar
 					elevation={0}
 					sx={{
-						display: { md: 'none' },
+						// The login head carries the title and the language
+						// control itself; a second bar above it repeats both.
+						display: isLogin ? 'none' : { md: 'none' },
 						zIndex: (theme) => theme.zIndex.drawer + 1
 					}}
 				>
@@ -135,15 +155,39 @@ export const StageLayout = ({
 				className: 'stageLayout__stage'
 			})}
 
+			{isLogin && (
+				<Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+					<StageMobileHero
+						title={translate('app.stage.title')}
+						headline={translate('login.mobile.headline')}
+						claim={translate('app.claim')}
+						action={
+							selectableLocales.length > 1 && (
+								<LocaleSwitch
+									iconOnly
+									color="var(--m3-on-primary, #ffffff)"
+									colorHover="var(--m3-on-primary, #ffffff)"
+								/>
+							)
+						}
+					/>
+				</Box>
+			)}
+
 			<Box className="stageLayout__contentWrapper">
 				<Box
 					className={`stageLayout__header`}
 					sx={{
-						'display': showRegistrationLink
-							? 'flex'
-							: { xs: 'none', md: 'flex' },
+						// On login the mobile head already carries the language
+						// control, and the registration CTA lives inside the
+						// sheet (2e) — so the header is desktop-only there.
+						'display': isLogin
+							? { xs: 'none', lg: 'flex' }
+							: showRegistrationLink
+								? 'flex'
+								: { xs: 'none', md: 'flex' },
 						'mt': {
-							xs: showRegistrationLink ? '48px' : 0,
+							xs: showRegistrationLink && !isLogin ? '48px' : 0,
 							md: 0
 						},
 						'height': { xs: 'auto', md: '72px' },
@@ -168,6 +212,7 @@ export const StageLayout = ({
 					{selectableLocales.length > 1 && (
 						<Box sx={{ display: { xs: 'none', md: 'block' } }}>
 							<LocaleSwitch
+								variant={isLogin ? 'pill' : 'select'}
 								menuPlacement={MENUPLACEMENT_BOTTOM_LEFT}
 							/>
 						</Box>
@@ -265,9 +310,13 @@ export const StageLayout = ({
 											component: 'a',
 											href: registrationHref
 										})}
-								variant="outlined"
+								variant={isLogin ? 'contained' : 'outlined'}
 								startIcon={<CenterFocusStrongRoundedIcon />}
-								sx={registrationHeaderButtonSx}
+								sx={
+									isLogin
+										? loginHeaderButtonSx
+										: registrationHeaderButtonSx
+								}
 							>
 								{translate('login.register.linkLabel')}
 							</MuiButton>
@@ -306,13 +355,17 @@ export const StageLayout = ({
 									params={{ aid: specificAgency?.id }}
 									legalLinks={legalLinks}
 								>
-									{(label, url) => (
+									{(label, url, rawLabel) => (
 										<button
 											type="button"
 											className="button-as-link"
 											data-cy-link={url}
 											onClick={() =>
-												window.open(url, '_blank')
+												openLegalLink(
+													label,
+													url,
+													rawLabel
+												)
 											}
 										>
 											<Text
@@ -335,9 +388,39 @@ export const StageLayout = ({
 					</div>
 				)}
 			</Box>
+			{legalDialog}
 		</div>
 	);
 };
+
+/**
+ * The login header's CTA (design 2d). Registration is the onboarding path, so
+ * here it is the filled primary — everywhere else it stays the outlined button
+ * next to a page that already has its own primary action.
+ */
+const loginHeaderButtonSx = {
+	'minHeight': '48px',
+	'minWidth': '300px',
+	'borderRadius': '999px',
+	'px': 2.75,
+	'py': 1,
+	'fontSize': '16px',
+	'fontWeight': 700,
+	'lineHeight': 1.2,
+	'textTransform': 'none',
+	'color': 'var(--m3-on-primary, #ffffff)',
+	'backgroundColor': 'var(--m3-primary, #a5000a)',
+	'boxShadow': 'none',
+	'& .MuiButton-startIcon': { color: 'inherit', mr: 0.75 },
+	'&:hover': {
+		backgroundColor: 'var(--m3-primary-hover, #7c0d15)',
+		boxShadow: 'none'
+	},
+	'&:focus-visible': {
+		outline: '2px solid var(--m3-primary, #a5000a)',
+		outlineOffset: '2px'
+	}
+} as const;
 
 const registrationHeaderButtonSx = {
 	'minHeight': '48px',

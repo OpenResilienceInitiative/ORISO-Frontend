@@ -15,6 +15,7 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { useLegalLinkDialog } from '../legalLinks/useLegalLinkDialog';
 import { Spinner } from '../spinner/Spinner';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useStageEffect } from './effects/useStageEffect';
@@ -148,6 +149,8 @@ export const Stage = ({
 		[animateStageGlow]
 	);
 
+	const { openLegalLink, dialog: legalDialog } = useLegalLinkDialog();
+
 	const [ieBanner, setIeBanner] = useState(true);
 	const closeIeBanner = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
@@ -225,12 +228,14 @@ export const Stage = ({
 							/>
 						}
 					>
-						{(label, url) => (
+						{(label, url, rawLabel) => (
 							<button
 								type="button"
 								className="button-as-link"
 								data-cy-link={url}
-								onClick={() => window.open(url, '_blank')}
+								onClick={() =>
+									openLegalLink(label, url, rawLabel)
+								}
 							>
 								<Text
 									className="stage__legalLinksItem"
@@ -242,6 +247,7 @@ export const Stage = ({
 					</LegalLinks>
 				</div>
 			</div>
+			{legalDialog}
 		</div>
 	);
 };

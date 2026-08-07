@@ -1095,6 +1095,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:agency:base",
+		"family": "agency",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "agency.svg",
+		"sourcePath": "src/resources/img/icons/agency.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:apple:base",
 		"family": "apple",
 		"state": "base",
@@ -1261,6 +1274,19 @@
 			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx"
 		],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:arrows-lr:base",
+		"family": "arrows-lr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "arrows-lr.svg",
+		"sourcePath": "src/resources/img/icons/arrows-lr.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:audio-off:base",
@@ -2011,6 +2037,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:devices:base",
+		"family": "devices",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "devices.svg",
+		"sourcePath": "src/resources/img/icons/devices.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:diversity-2:base",
 		"family": "diversity-2",
 		"state": "base",
@@ -2172,7 +2211,6 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
-			"src/components/message/MessageItemComponent.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
@@ -2287,6 +2325,19 @@
 		"exportNames": ["GroupChatAvatarIcon"],
 		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:hacker:base",
+		"family": "hacker",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "hacker.svg",
+		"sourcePath": "src/resources/img/icons/hacker.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:heart:base",
@@ -2582,6 +2633,7 @@
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
+			"src/components/login/LoginSecurityNote.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
@@ -3432,9 +3484,6 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
-			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/internal/InternalChatCreateCard.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

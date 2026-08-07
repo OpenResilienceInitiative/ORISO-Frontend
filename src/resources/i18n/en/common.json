@@ -1325,13 +1325,16 @@
 		"register": {
 			"infoText": {
 				"copy": "We will be happy to advise you on the following topics:",
-				"title": "Not registered yet?"
+				"title": "New here?"
 			},
-			"linkLabel": "To the consulting topics"
+			"linkLabel": "To the consulting topics",
+			"separator": "New here?"
 		},
 		"security": {
 			"headline": "Secure & Encrypted",
-			"description": "Your privacy is fully protected with end-to-end encryption."
+			"description": "Your privacy is fully protected with end-to-end encryption.",
+			"teaser": "End-to-end encrypted — the key is created on your device.",
+			"teaserShort": "Key stays on your device"
 		},
 		"resend": {
 			"otp": {
@@ -1404,6 +1407,9 @@
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here."
 			}
+		},
+		"mobile": {
+			"headline": "There is room here\nfor what is on your mind."
 		}
 	},
 	"message": {

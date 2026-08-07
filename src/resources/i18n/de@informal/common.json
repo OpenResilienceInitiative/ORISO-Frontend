@@ -1855,5 +1855,20 @@
 		"stage": {
 			"associationLogoAlt": "Logo der Trägerorganisation"
 		}
+	},
+	"login": {
+		"mobile": {
+			"headline": "Hier ist Raum für\ndeine Anliegen."
+		},
+		"register": {
+			"separator": "Neu hier?",
+			"infoText": {
+				"title": "Neu hier?"
+			}
+		},
+		"security": {
+			"teaser": "Ende-zu-Ende verschlüsselt — der Schlüssel entsteht auf deinem Gerät.",
+			"teaserShort": "Schlüssel nur auf deinem Gerät"
+		}
 	}
 }

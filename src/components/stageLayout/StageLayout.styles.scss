@@ -1,4 +1,92 @@
 .stageLayout {
+	// Login (design 2e): below the stage breakpoint the content sits in a white
+	// sheet that overlaps the red head by 28px. The head itself is rendered by
+	// StageLayout; everything here is the sheet it slides under.
+	&--login {
+		// From the stage breakpoint up, the stage occupies the left 40vw. The
+		// header belongs to the right column — without this the language pill
+		// floats over the red panel.
+		@include breakpoint($fromXLarge) {
+			.stageLayout__header {
+				padding-left: calc(40vw + #{$grid-base-three});
+				padding-right: $grid-base-four;
+				justify-content: space-between;
+			}
+
+			// The stage carries the legal links on desktop; the footer would
+			// print them a second time under the form.
+			.stageLayout__footer {
+				display: none;
+			}
+
+			// Card geometry from 2d.
+			.loginForm {
+				max-width: 560px;
+				padding: 44px 56px 34px;
+				border-radius: 24px;
+				border: 1px solid rgb(0 0 0 / 6%);
+				box-shadow: 0 3px 0 1px rgb(0 0 0 / 7%);
+			}
+		}
+
+		@media screen and (width < 1200px) {
+			.stageLayout__contentWrapper {
+				position: relative;
+				z-index: 2;
+				margin-top: -28px;
+				border-radius: 28px 28px 0 0;
+				background: var(--m3-surface-container-lowest, #ffffff);
+				box-shadow: 0 -4px 24px rgb(0 0 0 / 8%);
+				overflow: hidden;
+				animation: loginSheetEnter 520ms cubic-bezier(0.2, 0, 0, 1) both;
+			}
+
+			.stageLayout__content {
+				padding: 28px 20px 40px;
+				justify-content: flex-start;
+			}
+
+			// The sheet *is* the card here (2e). Leaving the form's own white
+			// panel inside it stacks white on white and adds 55px of padding
+			// on top of the sheet's own.
+			.loginForm {
+				max-width: none;
+				padding: 0;
+				border: 0;
+				border-radius: 0;
+				background: none;
+				box-shadow: none;
+				animation: none;
+			}
+
+			// The footer is hidden on small screens for the other flows; on
+			// login the legal links belong in the sheet, since the desktop
+			// stage that normally carries them is not rendered here.
+			.stageLayout__footer {
+				display: flex;
+				justify-content: center;
+				margin-top: 0;
+				padding-bottom: 32px;
+			}
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.stageLayout__contentWrapper {
+				animation: none;
+			}
+		}
+	}
+
+	@keyframes loginSheetEnter {
+		from {
+			transform: translateY(108%);
+		}
+
+		to {
+			transform: translateY(0);
+		}
+	}
+
 	&--registration {
 		font-family: 'Inter Variable', Arial, sans-serif;
 

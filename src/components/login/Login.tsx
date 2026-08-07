@@ -56,9 +56,34 @@ import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { setTokens } from '../auth/auth';
-import { IconButton, InputAdornment } from '@mui/material';
+import {
+	Box,
+	Button as MuiButton,
+	IconButton,
+	InputAdornment
+} from '@mui/material';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { orisoInputColors } from '../form/orisoInputDesign';
+import { LoginSecurityNote } from './LoginSecurityNote';
+
+/**
+ * "Zu den Beratungsthemen" inside the sheet (2e): the secondary next to the
+ * primary "Anmelden", same 48 px height and pill radius.
+ */
+const registrationSheetButtonSx = {
+	'minHeight': '48px',
+	'borderRadius': '999px',
+	'fontSize': '16px',
+	'fontWeight': 700,
+	'lineHeight': 1.2,
+	'textTransform': 'none',
+	'color': 'var(--m3-primary, #a5000a)',
+	'borderColor': 'var(--m3-outline-variant, #c4c7c8)',
+	'&:hover': {
+		borderColor: 'var(--m3-primary, #a5000a)',
+		backgroundColor: 'var(--m3-primary-container, #ffdad5)'
+	}
+} as const;
 
 const regexAccountDeletedError = /account disabled/i;
 type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
@@ -387,6 +412,7 @@ export const Login = () => {
 	return (
 		<>
 			<StageLayout
+				variant="login"
 				stage={<Stage hasAnimation={isFirstVisit} isReady={isReady} />}
 				showLegalLinks
 				showRegistrationLink={hasTenant}
@@ -705,64 +731,51 @@ export const Login = () => {
 								)}
 						</div>
 
-						{!hasTenant && (
-							<div className="loginForm__register">
-								<div className="loginForm__register__separator">
-									<span>{translate('login.seperator')}</span>
-								</div>
-								<div className="loginForm__register__content">
-									<Text
-										text={translate(
-											'login.register.infoText.title'
-										)}
-										type={'infoMedium'}
-									/>
-									<button
-										onClick={() =>
-											window.open(
-												registrationUrl,
-												'_self'
-											)
-										}
-										className="button-as-link consulting-topics"
-										type="button"
-									>
-										{translate('login.register.linkLabel')}
-									</button>
-								</div>
+						{/* The registration path (2e): inside the sheet on mobile,
+						    where the header is not rendered. On desktop the
+						    header carries it, so it only appears here when no
+						    tenant supplies one. */}
+						<Box
+							className="loginForm__register"
+							sx={{
+								display: hasTenant
+									? { xs: 'block', lg: 'none' }
+									: 'block'
+							}}
+						>
+							<div className="loginForm__register__separator">
+								<span>
+									{translate('login.register.separator')}
+								</span>
 							</div>
-						)}
-
-						<div className="loginForm__securityBanner">
-							<div className="security-header">
-								<svg
-									width="20"
-									height="20"
-									viewBox="0 0 24 24"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
+							<div className="loginForm__register__content">
+								{/* The separator already says "Neu hier?"; the
+								    old headline under it repeated the same
+								    words. What is left is the action — a full
+								    width secondary button, not a text link:
+								    registration is the second path off this
+								    screen, and 2e gives it a target you can hit
+								    with a thumb. */}
+								<MuiButton
+									className="consulting-topics"
+									onClick={() =>
+										window.open(registrationUrl, '_self')
+									}
+									variant="outlined"
+									fullWidth
+									sx={registrationSheetButtonSx}
 								>
-									<path
-										d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z"
-										stroke="#10b981"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										fill="none"
-									/>
-									<path
-										d="M9 12L11 14L15 10"
-										stroke="#10b981"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
+									{translate('login.register.linkLabel')}
+								</MuiButton>
 							</div>
-							<span>
-								{translate('login.security.description')}
-							</span>
-						</div>
+						</Box>
+
+						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+							<LoginSecurityNote />
+						</Box>
+						<Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+							<LoginSecurityNote variant="compact" />
+						</Box>
 					</div>
 				</div>
 			</StageLayout>
