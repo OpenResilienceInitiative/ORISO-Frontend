@@ -1973,6 +1973,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	display: flex;
 	align-items: flex-start;
 	gap: 8px;
+
+	// Hugs the quoted message instead of spanning the whole composer: the bar
+	// should read like the chat bubble it quotes. `max-width` keeps a long
+	// quote inside the composer, where the 1-line clamp below takes over.
+	width: fit-content;
+	max-width: calc(100% - 24px);
 	margin: 0 12px 6px;
 	padding: 8px 12px;
 	border-left: 3px solid var(--m3-primary, #a5000a);
@@ -1986,7 +1992,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		flex-direction: column;
 		gap: 2px;
 		min-width: 0;
-		flex: 1;
+		flex: 0 1 auto;
 	}
 
 	.messageSubmit__replyPreviewLabel {

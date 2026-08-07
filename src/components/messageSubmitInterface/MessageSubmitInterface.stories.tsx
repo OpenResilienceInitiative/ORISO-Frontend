@@ -347,7 +347,36 @@ export const ReplyingToMessage: Story = {
 			}}
 			onCancelReply={() => {}}
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeTruthy();
+		});
+
+		const preview = canvasElement.querySelector(
+			'.messageSubmit__replyPreview'
+		) as HTMLElement;
+		const form = preview.closest('form') as HTMLElement;
+
+		// The bar hugs the quote instead of spanning the composer — it should
+		// read like the bubble it quotes, not like a full-width banner.
+		expect(preview.getBoundingClientRect().width).toBeLessThan(
+			form.getBoundingClientRect().width * 0.8
+		);
+
+		// …but a very long quote still has to stay inside the composer.
+		const text = preview.querySelector(
+			'.messageSubmit__replyPreviewText'
+		) as HTMLElement;
+		const original = text.textContent;
+		text.textContent = 'x'.repeat(600);
+		expect(preview.getBoundingClientRect().width).toBeLessThanOrEqual(
+			form.getBoundingClientRect().width
+		);
+		text.textContent = original;
+	}
 };
 
 export const EditingMessage: Story = {
