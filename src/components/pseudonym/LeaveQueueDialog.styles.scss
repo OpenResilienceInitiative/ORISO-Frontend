@@ -1,0 +1,244 @@
+/* Live-chat "leave the queue" dialog — CAR02 2183-15203.
+ *
+ *   ┌────────────────────────────────────────────────┐
+ *   │  🚪  Chat verlassen?                            │
+ *   │                                                │
+ *   │  Sie sind noch im Wartebereich. …              │
+ *   │                                                │
+ *   │  [Im Wartebereich bleiben] [Chat jetzt starten]│
+ *   │                 [Chat beenden & Zugang löschen]│
+ *   └────────────────────────────────────────────────┘
+ *
+ * Deleting takes a second, explicit step; the footer swaps to a
+ * cancel/confirm pair rather than acting on the first tap.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#893.
+ */
+
+.leaveQueueDialog {
+	position: fixed;
+	inset: 0;
+	z-index: 5000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(2px);
+}
+
+.leaveQueueDialog__card {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 20px;
+	width: 100%;
+	max-width: 560px;
+	padding: 32px;
+	border-radius: 18px;
+	background: #ffffff;
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.08),
+		0 1px 3px 0 rgba(0, 0, 0, 0.18);
+	box-sizing: border-box;
+}
+
+.leaveQueueDialog__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.leaveQueueDialog__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	flex-shrink: 0;
+}
+
+.leaveQueueDialog__title {
+	margin: 0;
+	font-family: Inter, sans-serif;
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 30px;
+	color: #1c1b1f;
+}
+
+.leaveQueueDialog__body {
+	margin: 0;
+	font-family: Inter, sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+	color: var(--m3-on-surface, #1a1c1e);
+}
+
+.leaveQueueDialog__warning {
+	margin: 0;
+	padding: 12px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #ffd9e2);
+	color: var(--m3-on-error-container, #3e0018);
+	font-family: Inter, sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.leaveQueueDialog__hint {
+	margin: 0;
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--m3-secondary, #4c555f);
+}
+
+.leaveQueueDialog__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+.leaveQueueDialog__btnPrimary,
+.leaveQueueDialog__btnSecondary,
+.leaveQueueDialog__btnDanger,
+.leaveQueueDialog__btnDangerQuiet {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* Comfortably above the 32px minimum used elsewhere in the chat. */
+	min-height: 44px;
+	padding: 0 20px;
+	border: 0;
+	border-radius: 999px;
+	font-family: Inter, sans-serif;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 20px;
+	cursor: pointer;
+	transition: filter 120ms ease;
+
+	&:hover:not(:disabled) {
+		filter: brightness(0.94);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-outline, #930008);
+		outline-offset: 2px;
+	}
+
+	/*
+	 * M3 disabled treatment rather than a faded brand fill. 45% of a saturated
+	 * red still reads as an inviting button; the neutral surface does not.
+	 */
+	&:disabled {
+		background: rgba(29, 27, 32, 0.12);
+		color: rgba(29, 27, 32, 0.38);
+		cursor: not-allowed;
+	}
+}
+
+.leaveQueueDialog__btnPrimary {
+	background: var(--m3-primary-container, #cc1e1c);
+	color: var(--m3-on-primary, #ffffff);
+}
+
+.leaveQueueDialog__btnSecondary {
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1a1c1e);
+}
+
+/*
+ * Destructive actions use the M3 error role, which in the ORISO scheme is
+ * magenta rather than red on purpose — red is the brand colour here, so it
+ * cannot also mean "danger".
+ */
+.leaveQueueDialog__btnDanger {
+	background: var(--m3-error, #b1005e);
+	color: var(--m3-on-error, #ffffff);
+}
+
+.leaveQueueDialog__btnDangerQuiet {
+	background: transparent;
+	color: var(--m3-error, #b1005e);
+	padding: 0 12px;
+	text-decoration: underline;
+
+	&:disabled {
+		background: transparent;
+		color: rgba(29, 27, 32, 0.38);
+	}
+}
+
+/*
+ * The irreversible action lives below a divider, apart from the two ordinary
+ * choices, so it cannot be picked up as "the third button".
+ */
+.leaveQueueDialog__dangerRow {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 16px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+/* House rule: below 575px the footer buttons stack and go full width. */
+@media screen and (width <= 575px) {
+	.leaveQueueDialog {
+		padding: 12px;
+	}
+
+	.leaveQueueDialog__card {
+		padding: 20px;
+		gap: 16px;
+	}
+
+	.leaveQueueDialog__icon {
+		width: 56px;
+		height: 56px;
+
+		svg {
+			width: 56px;
+			height: 56px;
+		}
+	}
+
+	.leaveQueueDialog__title {
+		font-size: 20px;
+		line-height: 26px;
+		/* Long German compounds must wrap between words, never mid-word. */
+		word-break: normal;
+		overflow-wrap: break-word;
+	}
+
+	.leaveQueueDialog__actions,
+	.leaveQueueDialog__dangerRow {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.leaveQueueDialog__btnPrimary,
+	.leaveQueueDialog__btnSecondary,
+	.leaveQueueDialog__btnDanger,
+	.leaveQueueDialog__btnDangerQuiet {
+		width: 100%;
+	}
+}
+
+/*
+ * A real failure, as opposed to the explanatory warning above it. Uses the M3
+ * error role, which in the ORISO scheme is magenta on purpose.
+ */
+.leaveQueueDialog__error {
+	margin: 0;
+	padding: 12px 16px;
+	border-radius: 12px;
+	border: 1px solid var(--m3-error, #b1005e);
+	background: var(--m3-error-container, #ffd9e2);
+	color: var(--m3-on-error-container, #3e0018);
+	font-family: Inter, sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+}

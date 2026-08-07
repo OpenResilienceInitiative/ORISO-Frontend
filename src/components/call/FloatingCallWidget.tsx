@@ -16,6 +16,10 @@ import {
 	type ResizeEdge,
 	type Size
 } from '../../utils/videoTileSizing';
+import {
+	releaseWindowMediaStream,
+	stopMediaStreamTracks
+} from '../../utils/callMediaStreamCleanup';
 import './FloatingCallWidget.scss';
 
 const FLOATING_DEFAULT_WIDTH = 460;
@@ -214,18 +218,7 @@ export const FloatingCallWidget: React.FC = () => {
 		// acquires its OWN media internally, so we must release the
 		// pre-requested stream first — opening the same device twice fails with
 		// NotReadableError on Windows/Android and leaves an orphaned capture.
-		const preRequestedStream = (window as any).__preRequestedMediaStream;
-		if (preRequestedStream) {
-			try {
-				preRequestedStream
-					.getTracks()
-					.forEach((track: MediaStreamTrack) => track.stop());
-			} catch {
-				// ignore
-			}
-			delete (window as any).__preRequestedMediaStream;
-			delete (window as any).__preRequestedMediaStreamTime;
-		}
+		releaseWindowMediaStream('__preRequestedMediaStream');
 
 		matrixCallService
 			.startCall({
@@ -346,11 +339,8 @@ export const FloatingCallWidget: React.FC = () => {
 	// Cleanup
 	useEffect(() => {
 		return () => {
-			const stream = (window as any).__activeMediaStream;
-			if (stream) {
-				stream.getTracks().forEach((track: any) => track.stop());
-				delete (window as any).__activeMediaStream;
-			}
+			releaseWindowMediaStream('__activeMediaStream');
+			releaseWindowMediaStream('__preRequestedMediaStream');
 		};
 	}, []);
 
@@ -379,11 +369,7 @@ export const FloatingCallWidget: React.FC = () => {
 				video: callData.isVideo,
 				audio: true
 			});
-			try {
-				stream.getTracks().forEach((track) => track.stop());
-			} catch {
-				// ignore
-			}
+			stopMediaStreamTracks(stream);
 
 			callManager.answerCall();
 			await matrixCallService.answerCall(

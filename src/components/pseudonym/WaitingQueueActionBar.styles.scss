@@ -147,6 +147,10 @@
 		0 0 0 0 rgba(165, 0, 10, 0.28),
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
 		0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	box-shadow:
+		0 0 0 0 color-mix(in srgb, var(--m3-primary, #a5000a) 28%, transparent),
+		0 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	overflow: hidden;
 	animation: waitingQueueActionBar-outlineGlow 4.8s ease-in-out infinite;
 }
@@ -476,12 +480,22 @@
 			0 0 0 0 rgba(165, 0, 10, 0.22),
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+		box-shadow:
+			0 0 0 0
+				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	}
 
 	48% {
 		border-color: rgba(255, 255, 255, 0.9);
 		box-shadow:
 			0 0 0 9px rgba(165, 0, 10, 0.18),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+		box-shadow:
+			0 0 0 9px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 18%, transparent),
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	}
@@ -503,5 +517,45 @@
 	.waitingQueueActionBar__queueBtn,
 	.waitingQueueActionBar__queueIcon svg {
 		animation: none;
+	}
+}
+
+/*
+ * Exit from the queue (#893). Deliberately quiet — waiting is the expected
+ * path — but always reachable, and with a 44px touch target so it is usable
+ * on a phone without being easy to hit by accident.
+ */
+.waitingQueueActionBar__leaveRow {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	margin-top: 8px;
+}
+
+.waitingQueueActionBar__leaveBtn {
+	border: 0;
+	background: transparent;
+	min-height: 44px;
+	padding: 0 16px;
+	font-family: Inter, sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--m3-secondary, #4c555f);
+	text-decoration: underline;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		color: var(--m3-on-surface, #1a1c1e);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-outline, #930008);
+		outline-offset: 2px;
+		border-radius: 8px;
+	}
+
+	&:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
 	}
 }

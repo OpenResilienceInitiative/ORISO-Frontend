@@ -31,6 +31,32 @@ vi.mock('../api/apiGetSessionRooms', () => ({
 const ROOM_ID = '!room:matrix.oriso.org';
 const OTHER_ROOM_ID = '!other:matrix.oriso.org';
 
+describe('chatTransportService session resolution', () => {
+	it('preserves session id zero for Matrix-backed group attachments', () => {
+		expect(
+			chatTransportService.resolveSession({
+				item: { id: 0, matrixRoomId: ROOM_ID }
+			})
+		).toEqual({
+			isMatrixSession: true,
+			matrixRoomId: ROOM_ID,
+			sessionId: 0
+		});
+	});
+
+	it('uses null when a session id is absent', () => {
+		expect(
+			chatTransportService.resolveSession({
+				item: { matrixRoomId: ROOM_ID }
+			})
+		).toEqual({
+			isMatrixSession: true,
+			matrixRoomId: ROOM_ID,
+			sessionId: null
+		});
+	});
+});
+
 type Listener = (...args: any[]) => void;
 
 /**

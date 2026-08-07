@@ -39,16 +39,23 @@ ARG PORT=80
 # The node base image bundles an npm whose vendored dependencies (tar,
 # sigstore, picomatch, brace-expansion) carry fixable HIGH/CRITICAL CVEs
 # flagged by the Trivy publish gate. Upgrade npm to a release that ships
-# fixed versions and patch its vendored brace-expansion to 5.0.8
-# (CVE-2026-14257 fix), which no npm release bundles yet.
+# fixed versions and patch its vendored brace-expansion to 5.0.9
+# (CVE-2026-69152) and ip-address to 10.3.1 (CVE-2026-69192), which no
+# npm release bundles yet.
 RUN npm install -g npm@11.18.0 \
 	&& cd /tmp \
-	&& npm pack brace-expansion@5.0.8 \
+	&& npm pack brace-expansion@5.0.9 \
 	&& mkdir -p /tmp/brace-expansion-patch \
-	&& tar -xzf brace-expansion-5.0.8.tgz -C /tmp/brace-expansion-patch \
+	&& tar -xzf brace-expansion-5.0.9.tgz -C /tmp/brace-expansion-patch \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
 	&& mv /tmp/brace-expansion-patch/package /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
-	&& rm -rf /tmp/brace-expansion-patch /tmp/brace-expansion-5.0.8.tgz \
+	&& rm -rf /tmp/brace-expansion-patch /tmp/brace-expansion-5.0.9.tgz \
+	&& npm pack ip-address@10.3.1 \
+	&& mkdir -p /tmp/ip-address-patch \
+	&& tar -xzf ip-address-10.3.1.tgz -C /tmp/ip-address-patch \
+	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/ip-address \
+	&& mv /tmp/ip-address-patch/package /usr/local/lib/node_modules/npm/node_modules/ip-address \
+	&& rm -rf /tmp/ip-address-patch /tmp/ip-address-10.3.1.tgz \
 	&& npm cache clean --force
 
 USER node

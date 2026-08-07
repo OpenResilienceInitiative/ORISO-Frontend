@@ -106,7 +106,7 @@ class ChatTransportService {
 		const matrixRoomId = isMatrixRoom(rid)
 			? rid
 			: session?.item?.matrixRoomId || null;
-		const sessionId = session?.item?.id || null;
+		const sessionId = session?.item?.id ?? null;
 
 		return {
 			isMatrixSession: Boolean(
@@ -172,7 +172,10 @@ class ChatTransportService {
 			supervisorMessage: !!supervisorMessage,
 			senderDisplayName: senderDisplayName || null,
 			teamDiscussion: !!teamDiscussion,
-			mentionedUserIds: mentionedUserIds || null
+			mentionedUserIds: mentionedUserIds || null,
+			// #942: the event id keys backend deduplication against the
+			// server-side Matrix listener announcing the same message.
+			matrixEventId: response?.event_id || null
 		}).catch(() => undefined);
 
 		return { success: true, event_id: response.event_id };
@@ -265,7 +268,8 @@ class ChatTransportService {
 			matrixRoom: true,
 			threadRootId: options.threadRootId || null,
 			supervisorMessage: !!options.supervisorMessage,
-			senderDisplayName: options.senderDisplayName || null
+			senderDisplayName: options.senderDisplayName || null,
+			matrixEventId: response?.event_id || null
 		}).catch(() => undefined);
 
 		return response;

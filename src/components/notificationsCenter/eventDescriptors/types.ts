@@ -94,6 +94,24 @@ export interface EventActionParams {
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
 	isVideo?: boolean | null;
+	/** Sender label (metadata only, ADR-AT-01 — never message content). */
+	senderName?: string | null;
+	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */
+	senderDisplayName?: string | null;
+	/** Coarse content class (text / attachment / …), metadata only. */
+	contentClass?: string | null;
+	/** Which role received this row (user / consultant). */
+	recipientRole?: string | null;
+	/** Agency the enquiry belongs to (request events). */
+	agencyId?: string | number | null;
+	/** Main topic of the enquiry (request events). */
+	topicId?: string | number | null;
+	/** Consulting type of the enquiry (request events). */
+	consultingTypeId?: string | number | null;
+	/** Occurrence index for recurring group chats. */
+	occurrenceIndex?: string | number | null;
+	/** ISO start timestamp for group-chat occurrences. */
+	start?: string | null;
 	/**
 	 * Base path for the signed-in user's conversation list, e.g.
 	 * `/sessions/consultant/sessionView` or `/sessions/user/view`. The consumer

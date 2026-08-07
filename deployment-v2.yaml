@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-v2
-  namespace: caritas
   labels:
     app: frontend-v2
     version: v2
@@ -27,11 +26,11 @@ spec:
         - name: PORT
           value: "80"
         - name: LIVEKIT_TOKEN_SERVICE_URL
-          value: "http://livekit-token-service.caritas.svc.cluster.local:3010"
+          value: "http://livekit-token-service:3010"
         - name: KEYCLOAK_REALM_URL
-          value: "http://oriso-platform-keycloak.caritas.svc.cluster.local:8080/realms/online-beratung"
+          value: "http://oriso-platform-keycloak:8080/realms/online-beratung"
         - name: USER_SERVICE_URL
-          value: "http://oriso-platform-userservice.caritas.svc.cluster.local:8082"
+          value: "http://oriso-platform-userservice:8082"
         ports:
         - containerPort: 80
           name: http

@@ -26,7 +26,7 @@
 
 	&__subtitle {
 		font-size: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 		margin: 0;
 		line-height: 17px;
 	}
@@ -76,19 +76,24 @@
 		&:focus-visible:not(:disabled, &--disabled),
 		&--active:not(:disabled, &--disabled) {
 			background-color: rgba(165, 0, 10, 0.08);
+			background-color: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 8%,
+				transparent
+			);
 			outline: none;
 
 			.chatMenuDropdown__itemTitle,
 			.chatMenuDropdown__itemShortcut {
-				color: #a5000a;
+				color: var(--m3-primary, #a5000a);
 			}
 
 			.chatMenuDropdown__itemDescription {
-				color: #410001;
+				color: var(--m3-on-primary-fixed, #410001);
 			}
 
 			.chatMenuDropdown__itemIcon {
-				color: #a5000a;
+				color: var(--m3-primary, #a5000a);
 			}
 		}
 

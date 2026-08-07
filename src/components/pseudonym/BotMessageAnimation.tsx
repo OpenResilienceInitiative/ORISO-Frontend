@@ -35,9 +35,11 @@ export const TypingDots: React.FC<{ className?: string }> = ({ className }) => (
  * Reveals `text` character-by-character with a terminal-style jitter:
  * each character waits 70 + (random 0-100) ms, and the trailing cursor
  * is a "_" that toggles with the current index (visible on odd, empty
- * on even) — same idiom as the reference Typewriter.js. `charMs`/
- * `startDelayMs` are kept in the prop signature for backwards compat
- * but charMs is superseded by the jittered delay.
+ * on even) — same idiom as the reference Typewriter.js.
+ *
+ * `charMs` pins the per-character delay when a caller needs a predictable
+ * speed; leave it unset for the natural jitter. It used to be declared but
+ * never destructured, so it silently did nothing — see ORISO-Frontend#849.
  */
 export const TypewriterText: React.FC<{
 	text: string;
@@ -45,7 +47,7 @@ export const TypewriterText: React.FC<{
 	startDelayMs?: number;
 	onDone?: () => void;
 	className?: string;
-}> = ({ text, startDelayMs = 0, onDone, className }) => {
+}> = ({ text, charMs, startDelayMs = 0, onDone, className }) => {
 	const [visibleLen, setVisibleLen] = useState(0);
 	const doneRef = useRef(false);
 	/* Stash onDone in a ref so a fresh function reference from the
@@ -77,7 +79,14 @@ export const TypewriterText: React.FC<{
 					}
 					return next;
 				});
-				timer = window.setTimeout(tick, 24 + 28 * Math.random());
+				/* `charMs` pins the per-character delay when a caller needs a
+				   predictable speed (Storybook timing comparisons, tests).
+				   Without it, keep the natural 24-52ms jitter that makes the
+				   bot read as typing rather than as a metronome. */
+				timer = window.setTimeout(
+					tick,
+					charMs ?? 24 + 28 * Math.random()
+				);
 			};
 			tick();
 		}, startDelayMs);
@@ -87,7 +96,7 @@ export const TypewriterText: React.FC<{
 			if (timer) window.clearTimeout(timer);
 			window.clearTimeout(start);
 		};
-	}, [text, startDelayMs]);
+	}, [text, charMs, startDelayMs]);
 
 	const done = visibleLen >= text.length;
 	const cursor = visibleLen & 1 ? '_' : ' ';

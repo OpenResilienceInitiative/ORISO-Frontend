@@ -166,3 +166,65 @@ export const CaseHandoverSystemMessageCard = ({
 		</div>
 	);
 };
+
+interface CaseHandoverConsentCardProps {
+	isSubmitting?: boolean;
+	error?: string;
+	onApprove: () => void;
+	onDecline: () => void;
+}
+
+/** Client-side continuation for a handover request that requires explicit consent. */
+export const CaseHandoverConsentCard = ({
+	isSubmitting = false,
+	error,
+	onApprove,
+	onDecline
+}: CaseHandoverConsentCardProps) => {
+	const { t: translate } = useTranslation();
+
+	return (
+		<div
+			className="caseHandoverInlineConsent"
+			data-testid="case-handover-inline-consent"
+		>
+			<CaseHandoverSystemMessageCard
+				title={translate(
+					'caseHandover.consent.title',
+					'A counsellor requested access to this conversation'
+				)}
+				subtitle={translate(
+					'caseHandover.consent.copy',
+					'Please approve or decline the request to continue the handover.'
+				)}
+			>
+				<div className="caseHandoverInlineConsent__actions">
+					<button
+						type="button"
+						className="caseHandoverInlineConsent__button caseHandoverInlineConsent__button--approve"
+						onClick={onApprove}
+						disabled={isSubmitting}
+					>
+						{translate('caseHandover.consent.approve')}
+					</button>
+					<button
+						type="button"
+						className="caseHandoverInlineConsent__button"
+						onClick={onDecline}
+						disabled={isSubmitting}
+					>
+						{translate('caseHandover.consent.decline')}
+					</button>
+				</div>
+				{error && (
+					<p
+						className="caseHandoverInlineConsent__error"
+						role="alert"
+					>
+						{error}
+					</p>
+				)}
+			</CaseHandoverSystemMessageCard>
+		</div>
+	);
+};

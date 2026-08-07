@@ -17,6 +17,12 @@ interface WaitingQueueActionBarProps {
 	onOpenCalmCompanion?: () => void;
 	/** User tapped "Send request to local counselor". */
 	onRequestLocalCounselor?: () => void;
+	/**
+	 * User tapped "Chat verlassen". Opens the dialog that offers staying,
+	 * starting, or giving up the anonymous access (#893). Omitted means the
+	 * exit is not wired up and the control is not rendered.
+	 */
+	onLeaveQueue?: () => void;
 	disabled?: boolean;
 }
 
@@ -96,6 +102,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 	queuePosition = null,
 	onOpenCalmCompanion,
 	onRequestLocalCounselor,
+	onLeaveQueue,
 	disabled
 }) => {
 	const { t } = useTranslation();
@@ -242,6 +249,25 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 					</div>
 				</div>
 			</div>
+
+			{/*
+			 * The way out. Quiet on purpose — waiting is the expected path and
+			 * this must not compete with it — but present, because until #893
+			 * the only exit from the queue was abandoning the tab, which
+			 * leaves the anonymous account behind.
+			 */}
+			{onLeaveQueue && (
+				<div className="waitingQueueActionBar__leaveRow">
+					<button
+						type="button"
+						className="waitingQueueActionBar__leaveBtn"
+						onClick={onLeaveQueue}
+						disabled={disabled}
+					>
+						{t('anonymousChat.queue.leave', 'Chat verlassen')}
+					</button>
+				</div>
+			)}
 		</div>
 	);
 };
