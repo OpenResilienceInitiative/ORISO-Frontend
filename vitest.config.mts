@@ -26,6 +26,15 @@ export default defineConfig({
 	},
 	test: {
 		include: ['src/**/*.test.{ts,tsx}'],
+		// Explicit rather than inherited from the defaults, so the intent is
+		// visible: a test or hook that never settles must fail here, not sit
+		// until CI's job timeout kills the whole run. Note these only catch
+		// asynchronous stalls — a synchronous block cannot be interrupted by a
+		// JS timer, which is why no test in this suite may spawn a child
+		// process synchronously.
+		testTimeout: 10_000,
+		hookTimeout: 15_000,
+		teardownTimeout: 15_000,
 		// Polyfill the layout APIs jsdom lacks (Range.getClientRects,
 		// Element.scrollIntoView) so TipTap's focus/scroll path doesn't throw
 		// an async unhandled error that flakes the composer emoji test in CI.
