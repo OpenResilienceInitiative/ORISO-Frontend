@@ -1254,7 +1254,6 @@
 						"missing": "Veuillez saisir le code de votre application pour l'authentification à deux facteurs."
 					}
 				},
-				"deletedAccount": "Votre compte a été fermé par un conseiller.",
 				"email": {
 					"otp": {
 						"missing": "Veuillez saisir le code figurant dans votre e-mail pour l'authentification à deux facteurs."

@@ -1254,7 +1254,6 @@
 						"missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
 					}
 				},
-				"deletedAccount": "Hesabınız bir danışman tarafından kapatıldı.",
 				"email": {
 					"otp": {
 						"missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."

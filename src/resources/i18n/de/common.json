@@ -1407,7 +1407,7 @@
 						"missing": "Bitte geben Sie den Code aus Ihrer App für die Zwei-Faktor-Authentifizierung ein."
 					}
 				},
-				"deletedAccount": "Ihr Account wurde von einer Beratungsfachkraft geschlossen.",
+				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
