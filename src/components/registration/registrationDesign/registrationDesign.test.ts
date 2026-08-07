@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	buildRegistrationTopicPresentationGroups,
-	getRegistrationTopicDisplay
+	getRegistrationCategoryIcon,
+	getRegistrationTopicDisplay,
+	getRegistrationTopicIcon
 } from './registrationDesign';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 
@@ -219,6 +221,16 @@ describe('registration topic clusters (ORISO-Frontend#973)', () => {
 				'de'
 			).title
 		).toBe('Aus-/Rück- und Weiterwanderung');
+	});
+
+	it('gives the school-to-work topic its own icon rather than the cluster fallback', () => {
+		const icon = getRegistrationTopicIcon({
+			slug: 'school-to-work-transition',
+			internalIdentifier: 'school-to-work'
+		});
+
+		expect(icon).not.toBe(getRegistrationCategoryIcon(10004));
+		expect(icon).toContain('schule');
 	});
 
 	it('keeps a topic that lives in several clusters independently selectable', () => {

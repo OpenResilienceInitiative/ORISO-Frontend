@@ -17,6 +17,7 @@ import childrenYouth from '../../../resources/img/registration-md3/icons/t-01-ki
 import curesParents01 from '../../../resources/img/registration-md3/icons/t-01-kuren-fu-r-mu-tter-und-va-ter.png';
 import pregnancy from '../../../resources/img/registration-md3/icons/t-01-schwangerschaft.png';
 import u25Prevention01 from '../../../resources/img/registration-md3/icons/t-01-u25-suizidpra-vention.png';
+import schoolToWork from '../../../resources/img/registration-md3/icons/t-01-u-bergang-von-schule-zu-beruf.png';
 import bereavement02 from '../../../resources/img/registration-md3/icons/t-02-trauerberatung.png';
 import hospicePalliative from '../../../resources/img/registration-md3/icons/t-02-hospiz-und-palliativberatung.png';
 import lifeInOldAge from '../../../resources/img/registration-md3/icons/t-02-leben-im-alter.png';
@@ -103,8 +104,7 @@ const topicIconBySlug: Record<string, string> = {
 	'general-social-counselling': generalSocial,
 	'debt': debt,
 	'offending': offending,
-	// TODO(#973): awaiting a dedicated asset for the school-to-work topic.
-	'school-to-work-transition': category01
+	'school-to-work-transition': schoolToWork
 };
 
 const topicIconByInternalIdentifier: Record<string, string> = {
@@ -124,7 +124,7 @@ const topicIconByInternalIdentifier: Record<string, string> = {
 	'general-social': generalSocial,
 	'debt': debt,
 	'offending': offending,
-	'school-to-work': category01,
+	'school-to-work': schoolToWork,
 	'addiction': addiction04,
 	'bereavement': bereavement02,
 	'migration-support': migration03
@@ -612,10 +612,7 @@ const presentationCategoryDefinitions: PresentationCategoryDefinition[] = [
 			{ key: 'cures-mothers-fathers', icon: curesParents01 },
 			{ key: 'pregnancy', icon: pregnancy },
 			{ key: 'sucht', icon: addiction04 },
-			// TODO(#973): no dedicated icon asset exists yet for the
-			// school-to-work topic; falls back to the cluster icon until
-			// design delivers one.
-			{ key: 'school-to-work-transition', icon: category01 },
+			{ key: 'school-to-work-transition', icon: schoolToWork },
 			{ key: 'trauerberatung', icon: bereavement02 },
 			{ key: 'u25-suicide-prevention', icon: u25Prevention01 }
 		]
