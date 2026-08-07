@@ -49,7 +49,44 @@ export interface ComposerToolbarProps {
 	translate: TFunction;
 }
 
-const HEADING_LEVELS = [1, 2, 3, 4] as const;
+/**
+ * Text-style menu (#995). The block styles are named the way a counsellor
+ * thinks about them — "Titel", "Große Überschrift" — not by their H-level, and
+ * the paragraph entry comes first so there is always a way back to body text.
+ * `glyph` keeps the language-neutral letter shape of the Figma menu.
+ */
+const TEXT_STYLE_ENTRIES = [
+	{
+		action: 'paragraph',
+		labelKey: 'paragraph',
+		fallback: 'Normal text',
+		glyph: 'T'
+	},
+	{
+		action: 'heading1',
+		labelKey: 'heading1',
+		fallback: 'Title',
+		glyph: 'H1'
+	},
+	{
+		action: 'heading2',
+		labelKey: 'heading2',
+		fallback: 'Large heading',
+		glyph: 'H2'
+	},
+	{
+		action: 'heading3',
+		labelKey: 'heading3',
+		fallback: 'Medium heading',
+		glyph: 'H3'
+	},
+	{
+		action: 'heading4',
+		labelKey: 'heading4',
+		fallback: 'Small heading',
+		glyph: 'H4'
+	}
+] as const;
 
 /**
  * Full editor toolbar — Figma "Text Editor Menu Variants" (487:19879) and
@@ -77,16 +114,16 @@ export const ComposerToolbar = ({
 	);
 	const closeMenu = useCallback(() => setOpenMenu(null), []);
 
-	const headingItems: ToolbarMenuItem[] = HEADING_LEVELS.map((level) => ({
-		key: `heading${level}`,
-		label: translate(
-			`message.submit.toolbar.heading${level}`,
-			`Heading ${level}`
-		),
-		glyph: <span className="composerToolbar__hGlyph">H{level}</span>,
-		selected: isActionSelected(`heading${level}`),
-		onSelect: () => onAction(`heading${level}`)
-	}));
+	const textStyleItems: ToolbarMenuItem[] = TEXT_STYLE_ENTRIES.map(
+		({ action, labelKey, fallback, glyph }) => ({
+			key: action,
+			label: translate(`message.submit.toolbar.${labelKey}`, fallback),
+			glyph: <span className="composerToolbar__hGlyph">{glyph}</span>,
+			selected: isActionSelected(action),
+			exclusive: true,
+			onSelect: () => onAction(action)
+		})
+	);
 
 	const listItems: ToolbarMenuItem[] = [
 		{
@@ -97,6 +134,7 @@ export const ComposerToolbar = ({
 			),
 			glyph: <FormatListBulletedIcon fontSize="inherit" />,
 			selected: isActionSelected('bulletList'),
+			exclusive: true,
 			onSelect: () => onAction('bulletList')
 		},
 		{
@@ -107,6 +145,7 @@ export const ComposerToolbar = ({
 			),
 			glyph: <FormatListNumberedIcon fontSize="inherit" />,
 			selected: isActionSelected('orderedList'),
+			exclusive: true,
 			onSelect: () => onAction('orderedList')
 		},
 		{
@@ -114,6 +153,7 @@ export const ComposerToolbar = ({
 			label: translate('message.submit.toolbar.taskList', 'Task List'),
 			glyph: <ChecklistIcon fontSize="inherit" />,
 			selected: isActionSelected('taskList'),
+			exclusive: true,
 			onSelect: () => onAction('taskList')
 		}
 	];
@@ -279,9 +319,9 @@ export const ComposerToolbar = ({
 			<ToolbarDivider />
 			{renderMenuAnchor(
 				'heading',
-				translate('message.submit.toolbar.heading', 'Heading style'),
+				translate('message.submit.toolbar.heading', 'Text style'),
 				<span className="composerToolbar__hGlyph">H</span>,
-				headingItems
+				textStyleItems
 			)}
 			{renderMenuAnchor(
 				'list',
