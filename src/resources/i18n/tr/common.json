@@ -3167,5 +3167,59 @@
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
 		}
+	},
+	"erstantwort": {
+		"subtitle": "İlk adımlarınız",
+		"greeting": {
+			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
+		},
+		"whoReadsAlong": {
+			"headline": "Mesajınızı kim okuyor",
+			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+		},
+		"responseDeadline": {
+			"headline": "Ne zaman yanıt alacaksınız",
+			"body": "{{deadlineDays}} iş günü içinde uygun bir iletişim kişisinden yanıt alacaksınız."
+		},
+		"modalityNote": {
+			"body": "Danışmanlık bu korumalı alanda yazılı olarak yapılır. İstediğiniz zaman yazmaya devam edebilirsiniz."
+		},
+		"noPersonalData": {
+			"headline": "Lütfen kişisel veri göndermeyin",
+			"body": "Lütfen bize tam adınızı, adresinizi veya telefon numaranızı yazmayın. Danışmanlık için bunlara ihtiyacımız yok."
+		},
+		"emergencyNumbers": {
+			"headline": "Bekleyemeyecek durumdaysanız",
+			"body": "Acil bir durumda Telefonseelsorge'a günün her saati 0800 111 0 111 veya 0800 111 0 222 numaralarından, acil yardım servisine ise 112'den ulaşabilirsiniz."
+		},
+		"dataProtection": {
+			"body": "Verilerinizi nasıl işlediğimiz gizlilik politikasında yer alır."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "E-posta ile bildirim",
+			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
+			"action": "E-posta adresi ekle"
+		},
+		"accountProtection": {
+			"headline": "Erişiminiz, ek olarak korunur",
+			"body": "Erişiminizi ikinci bir faktörle güvence altına alabilirsiniz, böylece başka kimse giremez.",
+			"action": "Erişimimi koru"
+		},
+		"closing": {
+			"body": "Yakında görüşmek üzere — size geri döneceğiz."
+		},
+		"saveCredentials": {
+			"headline": "Erişiminizi güvenceye alın",
+			"body": "Giriş adınız olmadan bu görüşmeye daha sonra geri dönemezsiniz. Onu güvenli bir yerde saklayın — en iyisi bir parola yöneticisinde. Bu cihazı başkaları da kullanıyorsa burada kaydetmemeniz daha iyi olur.",
+			"action": "Erişim bilgilerimi kaydet"
+		},
+		"displayName": {
+			"headline": "Görünen adınız",
+			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
+			"action": "Adımı değiştir"
+		}
 	}
 }

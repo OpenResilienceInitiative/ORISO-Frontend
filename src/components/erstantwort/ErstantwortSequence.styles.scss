@@ -1,0 +1,91 @@
+/* Erstantwort — the staged Carimat bubble sequence (ADR-018).
+ *
+ * Geometry is inherited from `PseudonymCard.styles.scss` on purpose: an
+ * Erstantwort bubble IS a Carimat bubble, and the two must not drift apart in
+ * avatar size or bubble radius. Only what is genuinely new to a *sequence*
+ * lives here — the vertical rhythm between consecutive bubbles from one
+ * sender, and the action affordances a single onboarding card never had.
+ */
+
+.erstantwort {
+	width: 100%;
+}
+
+.erstantwort__row {
+	margin-bottom: 12px;
+}
+
+.erstantwort__content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.erstantwort__bubble {
+	/* Consecutive bubbles from the same sender: only the first keeps the flat
+	   top-left corner that attaches it to the avatar. The rest are fully
+	   rounded, the same idiom the message list uses for a run of messages. */
+	border-radius: 14px;
+	max-width: 100%;
+
+	&:first-of-type {
+		border-radius: 4px 14px 14px 14px;
+	}
+}
+
+.erstantwort__bubble--typing {
+	display: inline-flex;
+	align-items: center;
+	min-height: 52px;
+	padding: 18px 22px;
+}
+
+.erstantwort__headline {
+	margin: 0 0 4px;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.erstantwort__body {
+	margin: 0;
+	white-space: pre-line;
+}
+
+.erstantwort__links {
+	list-style: none;
+	margin: 8px 0 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+
+	a {
+		text-decoration: underline;
+	}
+}
+
+.erstantwort__action {
+	margin-top: 12px;
+	padding: 8px 16px;
+	border: 1px solid currentcolor;
+	border-radius: 999px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		opacity: 0.8;
+	}
+
+	/* The platform's focus-ring convention — never remove the outline without
+	   putting an equally visible one back (ORISO-Frontend#113). */
+	&:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+}

@@ -3137,5 +3137,59 @@
 		"unavailable": {
 			"message": "Les rendez-vous vidéo ne sont actuellement pas disponibles."
 		}
+	},
+	"erstantwort": {
+		"subtitle": "Vos premières étapes",
+		"greeting": {
+			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
+		},
+		"whoReadsAlong": {
+			"headline": "Qui lit votre message",
+			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+		},
+		"responseDeadline": {
+			"headline": "Quand vous recevrez une réponse",
+			"body": "Vous recevrez une réponse d'une personne de contact appropriée sous {{deadlineDays}} jours ouvrables."
+		},
+		"modalityNote": {
+			"body": "La consultation se déroule par écrit, dans cet espace protégé. Vous pouvez continuer à écrire à tout moment."
+		},
+		"noPersonalData": {
+			"headline": "Merci de ne pas envoyer de données personnelles",
+			"body": "Merci de ne pas nous communiquer votre nom complet, votre adresse ni votre numéro de téléphone. Nous n'en avons pas besoin pour la consultation."
+		},
+		"emergencyNumbers": {
+			"headline": "Si cela ne peut pas attendre",
+			"body": "En cas d'urgence aiguë, vous pouvez joindre Telefonseelsorge 24 h/24 au 0800 111 0 111 ou au 0800 111 0 222, et les secours au 112."
+		},
+		"dataProtection": {
+			"body": "La manière dont nous traitons vos données est décrite dans la déclaration de protection des données."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Notification par e-mail",
+			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
+			"action": "Indiquer une adresse e-mail"
+		},
+		"accountProtection": {
+			"headline": "Votre accès, protégé en plus",
+			"body": "Vous pouvez sécuriser votre accès avec un deuxième facteur, afin que personne d'autre ne puisse entrer.",
+			"action": "Protéger mon accès"
+		},
+		"closing": {
+			"body": "À bientôt — nous revenons vers vous."
+		},
+		"saveCredentials": {
+			"headline": "Conservez votre accès",
+			"body": "Sans votre nom de connexion, vous ne pourrez plus revenir à cette conversation. Conservez-le en lieu sûr — de préférence dans un gestionnaire de mots de passe. Si d'autres personnes utilisent cet appareil, mieux vaut ne pas l'enregistrer ici.",
+			"action": "Sauvegarder mes accès"
+		},
+		"displayName": {
+			"headline": "Votre nom affiché",
+			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+			"action": "Changer de nom"
+		}
 	}
 }
