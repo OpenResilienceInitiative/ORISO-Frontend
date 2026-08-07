@@ -116,8 +116,10 @@ export const createProjection = (): MapProjection => {
 		for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
 			const [xi, yi] = outline[i];
 			const [xj, yj] = outline[j];
+			const above = yi > y;
+			const otherAbove = yj > y;
 			if (
-				yi > y !== yj > y &&
+				above !== otherAbove &&
 				x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
 			) {
 				inside = !inside;
