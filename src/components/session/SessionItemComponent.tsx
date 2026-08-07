@@ -10,6 +10,7 @@ import {
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor } from './anonymousConsentInvariant';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
@@ -661,10 +662,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isAnonymousEnquiryPhaseSession =
 		sessionStatusNum === STATUS_EMPTY ||
 		sessionStatusNum === STATUS_ENQUIRY;
-	const requiresAnonymousInquiryConsent =
-		isAnonymousAskerExperience &&
-		isAnonymousEnquiryPhaseSession &&
-		!privacyAcceptanceRecorded;
+	/* ORISO-UserService#927: the Eingabesperre lives in one pure predicate now,
+	   pinned by `anonymousConsentInvariant.test.ts`. It used to be assembled
+	   inline here, which meant the consent guarantee for §11 KDG special-category
+	   data was emergent from three booleans and asserted nowhere. */
+	const requiresAnonymousInquiryConsent = requiresAnonymousInquiryConsentFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
+	});
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
 		[activeSession.item.id]

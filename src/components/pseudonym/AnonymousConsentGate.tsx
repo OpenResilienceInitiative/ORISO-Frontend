@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './AnonymousConsentGate.styles.scss';
 
@@ -73,6 +73,9 @@ const AcceptCheckIcon: React.FC = () => (
  * Rejection surfaces an inline warning instead of navigating away — the
  * asker can still click accept after reading it.
  */
+const TITLE_ID = 'anonymousConsentGateTitle';
+const DESCRIPTION_ID = 'anonymousConsentGateDescription';
+
 export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	consentLabelHtml,
 	onAccept,
@@ -80,9 +83,28 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
+	const dialogRef = useRef<HTMLDivElement | null>(null);
+
+	/* ORISO-UserService#927. The gate declares itself a modal dialog, and since
+	   `SessionItemComponent` renders it *instead of* the conversation with the
+	   composer hidden, that is accurate — what was missing is what makes the
+	   claim true for a screen reader: a name, a description, and focus actually
+	   inside the thing the person cannot leave. Without this, `aria-modal` was
+	   an assertion with nothing behind it. */
+	useEffect(() => {
+		dialogRef.current?.focus();
+	}, []);
 
 	return (
-		<div className="anonymousConsentGate" role="dialog" aria-modal="true">
+		<div
+			className="anonymousConsentGate"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={TITLE_ID}
+			aria-describedby={DESCRIPTION_ID}
+			tabIndex={-1}
+			ref={dialogRef}
+		>
 			<div className="anonymousConsentGate__card">
 				<div className="anonymousConsentGate__header">
 					<span
@@ -91,12 +113,12 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 					>
 						<PrivacyShieldIcon />
 					</span>
-					<h2 className="anonymousConsentGate__title">
+					<h2 className="anonymousConsentGate__title" id={TITLE_ID}>
 						{t('anonymousConsent.headline', 'Herzlich Willkommen')}
 					</h2>
 				</div>
 
-				<p className="anonymousConsentGate__body">
+				<p className="anonymousConsentGate__body" id={DESCRIPTION_ID}>
 					{t(
 						'anonymousConsent.description',
 						'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
