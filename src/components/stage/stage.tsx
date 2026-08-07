@@ -17,6 +17,7 @@ import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
 import { Spinner } from '../spinner/Spinner';
+import { useLampMap } from './lampMap/useLampMap';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 
 export interface StageProps {
@@ -134,6 +135,11 @@ export const Stage = ({
 		[animateStageGlow]
 	);
 
+	// Design 5b. Nothing about this reaches the critical path or a phone —
+	// the hook owns the breakpoint / reduced-motion / idle gate and the
+	// dynamic import of the effect chunk.
+	const lampMap = useLampMap({ containerRef: rootNodeRef });
+
 	const [ieBanner, setIeBanner] = useState(true);
 	const closeIeBanner = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
@@ -168,6 +174,12 @@ export const Stage = ({
 					<Trans i18nKey="banner.ie.text" />
 				</Banner>
 			)}
+
+			<canvas
+				ref={lampMap.canvasRef}
+				className="stage__lampMap"
+				aria-hidden="true"
+			/>
 
 			<div className="stage__content">
 				<div className="stage__headline">
