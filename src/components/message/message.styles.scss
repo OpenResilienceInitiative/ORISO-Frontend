@@ -979,6 +979,11 @@ $message-avatar-overlap: -19px;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
+			// The voice player runs with bubble="none" inside this bubble, so
+			// its unplayed tiles have to read against the outgoing surface
+			// rather than against the incoming one.
+			--voice-player-tile-idle: rgba(255, 255, 255, 0.72);
+
 			.attachmentCard {
 				background-color: var(--m3-surface-container-lowest, #fff);
 			}
@@ -1203,83 +1208,6 @@ $message-avatar-overlap: -19px;
 
 	&__threadButton:hover .messageItem__threadButtonMeta {
 		display: none;
-	}
-
-	&__voiceNote {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 220px;
-		max-width: 360px;
-		padding: 8px 10px;
-		border-radius: 999px;
-		background: var(--m3-primary-container, #cc1e1c);
-		color: var(--m3-on-primary-container, #ffe2de);
-
-		audio {
-			display: none;
-		}
-	}
-
-	&__voiceNote__play {
-		border: none;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		cursor: pointer;
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-
-		&:hover {
-			background: var(--m3-primary-hover, #820006);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
-			outline-offset: 2px;
-		}
-	}
-
-	&__voiceNote__wave {
-		position: relative;
-		flex: 1;
-		height: 16px;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
-			transparent 3px 7px
-		);
-		opacity: 1;
-		overflow: hidden;
-	}
-
-	&__voiceNote__wavePlayed {
-		position: absolute;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		width: 0;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-on-primary-container, #ffe2de) 0 3px,
-			transparent 3px 7px
-		);
-		transition: width 120ms linear;
-	}
-
-	&__voiceNote__time {
-		font-size: 12px;
-		font-weight: 700;
-		letter-spacing: 0.3px;
-		white-space: nowrap;
 	}
 
 	&__action {
