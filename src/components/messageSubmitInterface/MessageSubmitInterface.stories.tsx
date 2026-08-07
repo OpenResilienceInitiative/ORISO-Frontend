@@ -123,6 +123,60 @@ export const Selected: Story = {
 	}
 };
 
+/**
+ * #835: opening the emoji picker in the docked composer must not leave a dark
+ * clipped fragment over the emoji / mention controls. The picker is portalled
+ * to document.body (outside `.session { overflow: hidden }`).
+ */
+export const DockedEmojiPickerNoOverlay: Story = {
+	name: 'Docked emoji picker — no dark overlay (#835)',
+	render: () => (
+		<div
+			style={{
+				// Leave room above the docked composer so the portalled picker
+				// (380px) is visible in Storybook screenshots / visual review.
+				minHeight: 720,
+				display: 'flex',
+				flexDirection: 'column',
+				justifyContent: 'flex-end'
+			}}
+		>
+			<ComposerShell />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const emojiButton = await canvas.findByRole('button', {
+			name: /emoji/i
+		});
+		const mentionButton = await canvas.findByRole('button', {
+			name: /mention/i
+		});
+
+		await userEvent.click(emojiButton);
+
+		const popup = await waitFor(() => {
+			const node = document.querySelector(
+				'[data-testid="emoji-picker-popup"]'
+			);
+			if (!(node instanceof HTMLElement)) {
+				throw new Error('emoji picker popup not mounted yet');
+			}
+			return node;
+		});
+
+		await expect(popup.parentElement).toBe(document.body);
+		await expect(popup.className).toContain('emojiPickerPopup--portalled');
+		await expect(
+			canvasElement.querySelector('.session')?.contains(popup)
+		).toBe(false);
+
+		// Toolbar controls stay in the layout (not covered by an in-session clip).
+		await expect(emojiButton).toBeVisible();
+		await expect(mentionButton).toBeVisible();
+	}
+};
+
 export const ReadyToSend: Story = {
 	name: 'Ready to send (typed)',
 	render: () => <ComposerShell />,
