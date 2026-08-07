@@ -30,6 +30,25 @@ describe('resolveLoginError', () => {
 		});
 	});
 
+	it('still shows the deleted-account message after a second factor was submitted', () => {
+		expect(resolveLoginError(accountDisabledError(), true)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.ACCOUNT_DELETED
+		});
+	});
+
+	it('does not ask for the second factor again once one was submitted', () => {
+		expect(
+			resolveLoginError(
+				{
+					message: FETCH_ERRORS.BAD_REQUEST,
+					options: { data: { otpType: 'APP' } }
+				},
+				true
+			)
+		).toEqual({ kind: 'none' });
+	});
+
 	it('shows the credentials message for wrong username or password', () => {
 		expect(
 			resolveLoginError({ message: FETCH_ERRORS.UNAUTHORIZED }, false)
