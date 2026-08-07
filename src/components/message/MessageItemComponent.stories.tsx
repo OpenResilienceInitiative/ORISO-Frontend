@@ -30,8 +30,10 @@ import {
 	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
-	mockVisibilityMessage
+	mockVisibilityMessage,
+	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
+import { phone390Globals } from './messageStoryShell';
 import './message.styles.scss';
 
 type MessageItemStoryParameters = {
@@ -178,14 +180,12 @@ export const ClientIn1on1Outgoing: Story = {
  * Uses the real MessageItemComponent + production `message.styles.scss`.
  */
 export const AndroidCompactKebabTouchZone: Story = {
+	globals: phone390Globals,
 	name: 'Android Compact — kebab 32×32 touch zone',
 	parameters: {
 		activeSession: mockActiveSession1on1(),
 		userData: mockUserData(),
 		compactShell: true,
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		docs: {
 			description: {
 				story: 'Incoming + outgoing rows on a compact viewport. Each `.messageItem__kebabButton` must measure **32×32px** (min-width/height + box-sizing from production SCSS).'
@@ -639,6 +639,53 @@ export const OutgoingWithVisibility: Story = {
 			displayName: 'Karina P',
 			username: 'karina.p@oriso.invalid',
 			message: mockVisibilityMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageEveryoneNoChip: Story = {
+	name: 'Group message everyone can see — NO visibility chip',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Regression pin for ORISO-Frontend#892. A group message with no recipient restriction addresses everyone, so the chip must **not** render. Before the fix it showed "visible only to: Alle" — a restriction chip claiming there is no restriction.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Kurzes Update für das Team: Der Fall bleibt heute bei mir.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageRestrictedShowsChip: Story = {
+	name: 'Group message restricted — chip IS shown',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.\n\nThe recipient list names the viewer ("Karina P" from `mockUserData`) on purpose. A restricted message addressed to *other* people is hidden from the viewer entirely — `MessageItemComponent` returns `null` — so a story built on that fixture would render an empty frame and pin nothing.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message: mockVisibilityMessageForViewer
 		}),
 		...baseHandlers
 	}

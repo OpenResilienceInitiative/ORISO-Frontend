@@ -64,6 +64,10 @@ const setClient = (
 	(service as unknown as { client: Record<string, unknown> }).client = client;
 };
 
+const setSyncState = (service: MatrixClientService, state: string) => {
+	(service as unknown as { syncState: string }).syncState = state;
+};
+
 describe('MatrixClientService', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -350,6 +354,116 @@ describe('MatrixClientService', () => {
 		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
 	});
 
+	it('exposes only the recovered PREPARED client to encryption setup (#839)', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		const recoveredClient = {
+			...mockedMatrixClient,
+			initRustCrypto: vi.fn().mockResolvedValue(undefined),
+			getCrypto: vi.fn().mockReturnValue(mockedCrypto),
+			on: vi.fn((event, listener) => {
+				if (event === 'sync') syncListeners.push(listener);
+			}),
+			removeAllListeners: vi.fn(),
+			startClient: vi.fn(),
+			stopClient: vi.fn()
+		};
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') {
+				syncListeners.push(listener);
+			}
+		});
+		vi.mocked(createMatrixClient)
+			.mockReturnValueOnce(mockedMatrixClient as any)
+			.mockReturnValueOnce(recoveredClient as any);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		const readyClient = service.getReadyClient();
+		let settled = false;
+		void readyClient.finally(() => {
+			settled = true;
+		});
+		await vi.waitFor(() => {
+			expect(createMatrixClient).toHaveBeenCalledTimes(2);
+		});
+
+		expect(settled).toBe(false);
+		syncListeners.at(-1)?.('PREPARED', null);
+		await expect(readyClient).resolves.toBe(recoveredClient);
+		expect(service.getStaleDeviceRecoveryVersion()).toBe(1);
+	});
+
+	it('keeps waiting when stale-device recovery starts during the initial readiness wait (#839)', async () => {
+		const syncListeners: Array<
+			(state: string, previous: string | null, error?: unknown) => void
+		> = [];
+		const recoveredClient = {
+			...mockedMatrixClient,
+			initRustCrypto: vi.fn().mockResolvedValue(undefined),
+			getCrypto: vi.fn().mockReturnValue(mockedCrypto),
+			on: vi.fn((event, listener) => {
+				if (event === 'sync') syncListeners.push(listener);
+			}),
+			removeAllListeners: vi.fn(),
+			startClient: vi.fn(),
+			stopClient: vi.fn()
+		};
+		mockedMatrixClient.on.mockImplementation((event, listener) => {
+			if (event === 'sync') syncListeners.push(listener);
+		});
+		vi.mocked(createMatrixClient)
+			.mockReturnValueOnce(mockedMatrixClient as any)
+			.mockReturnValueOnce(recoveredClient as any);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'fresh-token',
+			deviceId: 'DEVICE_TWO',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'stale-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const errorObserver = vi.mocked(createMatrixClient).mock.calls[0]?.[1];
+
+		const readyClient = service.getReadyClient();
+		await vi.waitFor(() => {
+			expect(
+				(service as unknown as { syncStateListeners: Set<unknown> })
+					.syncStateListeners.size
+			).toBeGreaterThan(0);
+		});
+		errorObserver?.(
+			'Failed to process outgoing request 0: M_UNKNOWN: MatrixError: [400] One time key signed_curve25519:AAAAAAAAAAQ already exists.'
+		);
+		await vi.waitFor(() =>
+			expect(createMatrixClient).toHaveBeenCalledTimes(2)
+		);
+		syncListeners.at(-1)?.('PREPARED', null);
+
+		await expect(readyClient).resolves.toBe(recoveredClient);
+	});
+
 	it('fails a recovered-client readiness wait immediately when that client is replaced', async () => {
 		const service = new MatrixClientService();
 		const recoveredClient = {
@@ -379,6 +493,34 @@ describe('MatrixClientService', () => {
 		await expect(wait).rejects.toThrow(
 			'Recovered Matrix client was replaced before reaching PREPARED'
 		);
+	});
+
+	it('propagates the second readiness failure after following a replacement client', async () => {
+		const service = new MatrixClientService();
+		const initialClient = { ...mockedMatrixClient };
+		const replacementClient = { ...mockedMatrixClient };
+		const secondFailure = new Error('replacement readiness failed');
+		setClient(service, initialClient);
+
+		vi.spyOn(service as any, 'waitForClientPrepared')
+			.mockImplementationOnce(async () => {
+				setClient(service, replacementClient);
+				throw new Error('initial client replaced');
+			})
+			.mockRejectedValueOnce(secondFailure);
+
+		await expect(service.getReadyClient()).rejects.toBe(secondFailure);
+	});
+
+	it('treats the steady SYNCING state as prepared after recovery (#839)', async () => {
+		const service = new MatrixClientService();
+		setClient(service, mockedMatrixClient);
+		setSyncState(service, 'SYNCING');
+
+		await expect(service.getReadyClient()).resolves.toBe(
+			mockedMatrixClient
+		);
+		expect(service.isReady()).toBe(true);
 	});
 
 	it('refreshes the token when sync fails with M_UNKNOWN_TOKEN (invalidated access token)', async () => {
@@ -490,6 +632,31 @@ describe('MatrixClientService', () => {
 			msgtype: 'm.text',
 			body: 'Hello Matrix'
 		});
+	});
+
+	it('uses an explicit transaction id for an idempotent Matrix send', async () => {
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$event' })
+		);
+		const service = new MatrixClientService();
+		setClient(service, {
+			makeTxnId: () => 'generated-transaction',
+			sendMessage,
+			getRoom: () => ({})
+		});
+
+		await service.sendMessage(
+			'!room:example.org',
+			'Encrypted initial enquiry',
+			undefined,
+			'oriso.enquiry.42'
+		);
+
+		expect(sendMessage).toHaveBeenCalledWith(
+			'!room:example.org',
+			{ msgtype: 'm.text', body: 'Encrypted initial enquiry' },
+			'oriso.enquiry.42'
+		);
 	});
 
 	it('removes the rejected Matrix local echo before the UI offers a fresh retry', async () => {

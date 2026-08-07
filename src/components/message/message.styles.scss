@@ -3,16 +3,10 @@ $icon-size-small: 24px;
 $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
-$message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 
-// Use the always-light `primary-fixed` (tonal palette tone 90) rather than
-// `on-primary-container`. The latter is a foreground/contrast role whose
-// lightness flips with the tenant seed brightness, so bright-red tenants
-// (e.g. Kiel) got a dark bubble under the fixed-dark outgoing text below,
-// making outgoing messages unreadable. `primary-fixed` stays light for
-// every seed and keeps the branded tint.
-$message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
-$message-outgoing-text: var(--m3-on-surface, #1a1c1e);
+// $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
+// to resources/styles/settings.scss so other bubble renderers (e.g. the
+// conversation preview) share the same colour contract.
 
 // How far the bubble tucks under the in-flow avatar column on either side —
 // keep in sync with the avatar geometry above, never hardcode per side.
@@ -128,6 +122,24 @@ $message-avatar-overlap: -19px;
 		.flyoutMenu {
 			margin-left: $grid-base;
 		}
+	}
+
+	/*
+	 * Second line of the sender header: the counselling centre a counsellor
+	 * speaks for, with its postcode (Figma "Message Recipient Header",
+	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
+	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * an agency to name, so every other message keeps its one-line header.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895.
+	 */
+	&__usernameSubtitle {
+		padding-left: 20px;
+		margin-top: 2px;
+		font-size: 12px;
+		line-height: 14px;
+		color: var(--m3-secondary, #4c555f);
+		text-align: left;
+		overflow-wrap: anywhere;
 	}
 
 	&__header {
@@ -793,7 +805,7 @@ $message-avatar-overlap: -19px;
 
 		&--systemNotification {
 			background: #fffafa;
-			border: 1px solid #ffdad5;
+			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			border-radius: 12px;
 		}
 
@@ -832,6 +844,11 @@ $message-avatar-overlap: -19px;
 			padding: 4px 0 4px 10px;
 			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 6%,
+				transparent
+			);
 			border-radius: 0 6px 6px 0;
 		}
 
@@ -1029,7 +1046,7 @@ $message-avatar-overlap: -19px;
 				}
 
 				.messageItem__message__attachment__meta {
-					color: #a5000a;
+					color: var(--m3-primary, #a5000a);
 				}
 			}
 
@@ -1109,6 +1126,11 @@ $message-avatar-overlap: -19px;
 			blockquote {
 				border-left-color: var(--m3-primary, $primary);
 				background: rgba(165, 0, 10, 0.08);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 8%,
+					transparent
+				);
 			}
 		}
 	}
@@ -1187,6 +1209,10 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+		text-align: right;
 	}
 
 	&__senderInfoMetaIcon {
@@ -1212,24 +1238,22 @@ $message-avatar-overlap: -19px;
 		border: 1px solid rgba(30, 136, 229, 0.35);
 	}
 
-	&__systemNotificationTag {
-		display: inline-flex;
-		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: #3b4044;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		margin-bottom: 8px;
-	}
+	/*
+	 * The chip and the 24px headline that used to sit inside the bubble are
+	 * gone: a system notice now uses the same two-line header as
+	 * MessageSendFailed (Figma App.Oriso 8607-28488), so the bubble carries
+	 * the body only. See ORISO-Frontend#892.
+	 */
 
-	&__systemNotificationTitle {
-		font-size: 24px;
-		font-weight: 700;
-		color: #1f1f1f;
-		line-height: 1.25;
-		margin-bottom: 8px;
+	/*
+	 * MessageSendFailed puts its avatar in a real side column, so its header
+	 * needs no indent. Here the avatar deliberately overlaps the content column
+	 * (see the 19px-overlap note above), which is why the name line carries
+	 * `padding-left: 20px`. The system-notice header sits in the same slot and
+	 * needs the same clearance — without it the title runs under the avatar.
+	 */
+	&__systemNotificationHeaderText {
+		padding-left: 20px;
 	}
 
 	&__systemNotificationDescription {
@@ -1251,7 +1275,6 @@ $message-avatar-overlap: -19px;
 			border-color: rgba(255, 255, 255, 0.4);
 		}
 
-		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}

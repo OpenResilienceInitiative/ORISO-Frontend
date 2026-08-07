@@ -100,6 +100,8 @@ import { PseudonymCard } from '../pseudonym/PseudonymCard';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
+import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
 import {
@@ -535,6 +537,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		null
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	const [isLeaveQueueDialogOpen, setIsLeaveQueueDialogOpen] = useState(false);
+	const [isLeavingQueue, setIsLeavingQueue] = useState(false);
+	const [leaveQueueFailed, setLeaveQueueFailed] = useState(false);
 	/**
 	 * The anonymous enquiry was finished server-side (asker logout, backend
 	 * expiry workflow, admin cleanup) while this tab was still on the
@@ -2158,6 +2163,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setConsultantAccepted(false);
 	}, []);
 
+	/**
+	 * Leaving the waiting queue (#893). See `performLeaveQueueDelete` for why
+	 * this goes through `finishConversation` and why signing out only happens
+	 * once the conversation was really finished.
+	 */
+	const handleLeaveQueueDelete = useCallback(() => {
+		if (isLeavingQueue) {
+			return;
+		}
+		setIsLeavingQueue(true);
+		void performLeaveQueueDelete(activeSession.item?.id, {
+			onFailure: () => {
+				setIsLeavingQueue(false);
+				setLeaveQueueFailed(true);
+			}
+		});
+	}, [activeSession.item?.id, isLeavingQueue]);
+
 	const handleStartAcceptedChat = useCallback(() => {
 		/* Safety net: if the accepted session still lacks its Matrix room
 		   id (reload raced the room provisioning), fetch it again now so
@@ -3259,6 +3282,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			)
 		});
 	}, []);
+
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) => {
+			if (!resolvedMatrixRoomId || !message?._id) {
+				return;
+			}
+			chatTransportService
+				.redactMessage({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: message._id
+				})
+				.catch(() => undefined);
+		},
+		[resolvedMatrixRoomId]
+	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
 
@@ -4897,6 +4935,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														)
 												: undefined
 										}
+										onDeleteDirect={
+											isMyMessageMatrix(message.userId)
+												? () =>
+														handleDeleteDirect(
+															message
+														)
+												: undefined
+										}
 										reactions={getReactionsFor(message._id)}
 										onReact={(key: string) =>
 											handleReact(message._id, key)
@@ -5304,8 +5350,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<WaitingQueueActionBar
 							queuePosition={queuePeopleAhead}
 							onOpenCalmCompanion={handleOpenCalmCompanion}
+							onLeaveQueue={() => {
+								setLeaveQueueFailed(false);
+								setIsLeaveQueueDialogOpen(true);
+							}}
 						/>
 					</div>
+				)}
+
+			{/*
+			 * The exit from the waiting queue (#893). Mounted for the whole
+			 * queue phase rather than inside the action bar, so it survives the
+			 * bar swapping to `ConsultantAcceptedActionBar` the moment somebody
+			 * accepts — an overlay that unmounts under the user is exactly the
+			 * trap that bit us before.
+			 */}
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				!enquiryClosed && (
+					<LeaveQueueDialog
+						open={isLeaveQueueDialogOpen}
+						canStartChat={consultantAccepted}
+						busy={isLeavingQueue}
+						onStay={() => setIsLeaveQueueDialogOpen(false)}
+						onStartChat={() => {
+							setIsLeaveQueueDialogOpen(false);
+							handleStartAcceptedChat();
+						}}
+						onDeleteAccess={handleLeaveQueueDelete}
+						errorMessage={
+							leaveQueueFailed
+								? translate(
+										'anonymousChat.leaveQueue.error',
+										'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+									)
+								: undefined
+						}
+					/>
 				)}
 
 			{shouldShowPseudonymGate &&

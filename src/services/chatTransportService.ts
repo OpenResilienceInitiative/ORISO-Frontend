@@ -70,6 +70,12 @@ export interface RemoveReactionOptions {
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
+export interface RedactMessageOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
 export interface SendFileMessageOptions extends MatrixFileMessageOptions {
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
@@ -106,7 +112,7 @@ class ChatTransportService {
 		const matrixRoomId = isMatrixRoom(rid)
 			? rid
 			: session?.item?.matrixRoomId || null;
-		const sessionId = session?.item?.id || null;
+		const sessionId = session?.item?.id ?? null;
 
 		return {
 			isMatrixSession: Boolean(
@@ -172,7 +178,10 @@ class ChatTransportService {
 			supervisorMessage: !!supervisorMessage,
 			senderDisplayName: senderDisplayName || null,
 			teamDiscussion: !!teamDiscussion,
-			mentionedUserIds: mentionedUserIds || null
+			mentionedUserIds: mentionedUserIds || null,
+			// #942: the event id keys backend deduplication against the
+			// server-side Matrix listener announcing the same message.
+			matrixEventId: response?.event_id || null
 		}).catch(() => undefined);
 
 		return { success: true, event_id: response.event_id };
@@ -242,6 +251,26 @@ class ChatTransportService {
 		return { success: true, event_id: response.event_id };
 	}
 
+	/** Delete a message by redacting the Matrix event (#827). */
+	public async redactMessage({
+		matrixRoomId,
+		targetEventId,
+		matrixClientServiceOverride
+	}: RedactMessageOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.redactEvent(
+			matrixRoomId,
+			targetEventId
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
 	public async sendFileMessage(
 		matrixRoomId: string,
 		file: File,
@@ -265,7 +294,8 @@ class ChatTransportService {
 			matrixRoom: true,
 			threadRootId: options.threadRootId || null,
 			supervisorMessage: !!options.supervisorMessage,
-			senderDisplayName: options.senderDisplayName || null
+			senderDisplayName: options.senderDisplayName || null,
+			matrixEventId: response?.event_id || null
 		}).catch(() => undefined);
 
 		return response;

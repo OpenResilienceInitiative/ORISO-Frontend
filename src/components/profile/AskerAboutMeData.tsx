@@ -181,7 +181,6 @@ export const AskerAboutMeData = () => {
 			apiPutEmail(email)
 				.then(reloadUserData)
 				.then(() => {
-					setIsRequestInProgress(false);
 					setIsEmailDisabled(true);
 					setEmailLabel(translate('profile.data.email'));
 				})
@@ -189,9 +188,9 @@ export const AskerAboutMeData = () => {
 					const reason = error.headers?.get(FETCH_ERRORS.X_REASON);
 					if (reason === X_REASON.EMAIL_NOT_AVAILABLE) {
 						setIsEmailNotAvailable(true);
-						setIsRequestInProgress(false);
 					}
-				});
+				})
+				.finally(() => setIsRequestInProgress(false));
 		}
 	};
 

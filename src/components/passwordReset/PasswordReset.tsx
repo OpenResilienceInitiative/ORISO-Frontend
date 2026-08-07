@@ -9,7 +9,7 @@ import {
 	inputValuesFit,
 	strengthIndicator
 } from '../../utils/validateInputValue';
-import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './passwordReset.styles';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
@@ -52,7 +52,7 @@ export const PasswordReset = () => {
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
 	const overlayItem: OverlayItem = {
-		svg: CheckIcon,
+		svg: CheckAnimation,
 		headline: translate(
 			'profile.functions.password.reset.overlay.headline'
 		),

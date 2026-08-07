@@ -7,7 +7,8 @@ import {
 	resetCryptoIdentity,
 	secretStorageKeyCallback,
 	InvalidRecoveryKeyError,
-	CryptoUnavailableError
+	CryptoUnavailableError,
+	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
 
 /**
@@ -37,6 +38,7 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 	createRecoveryKeyFromPassphrase: vi.fn().mockResolvedValue(generatedKey),
 	bootstrapCrossSigning: vi.fn().mockResolvedValue(undefined),
 	bootstrapSecretStorage: vi.fn().mockResolvedValue(undefined),
+	resetKeyBackup: vi.fn().mockResolvedValue(undefined),
 	checkKeyBackupAndEnable: vi.fn().mockResolvedValue({ backupInfo: {} }),
 	loadSessionBackupPrivateKeyFromSecretStorage: vi
 		.fn()
@@ -92,7 +94,7 @@ describe('matrixKeyBackupService (#437)', () => {
 	});
 
 	describe('setUpRecovery', () => {
-		it('bootstraps cross-signing + secret storage with a fresh key and returns it once for display', async () => {
+		it('creates key backup inside secret-storage bootstrap and verifies the durable state before displaying the key', async () => {
 			const crypto = buildCrypto();
 			const encoded = await setUpRecovery(buildClient(crypto));
 
@@ -101,7 +103,14 @@ describe('matrixKeyBackupService (#437)', () => {
 			expect(crypto.bootstrapSecretStorage).toHaveBeenCalledWith(
 				expect.objectContaining({ setupNewKeyBackup: true })
 			);
+			expect(crypto.resetKeyBackup).not.toHaveBeenCalled();
 			expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
+			expect(
+				crypto.bootstrapSecretStorage.mock.invocationCallOrder[0]
+			).toBeLessThan(
+				crypto.checkKeyBackupAndEnable.mock.invocationCallOrder[0]
+			);
+			expect(crypto.isSecretStorageReady).toHaveBeenCalled();
 
 			// createSecretStorageKey hands the SDK the same generated key.
 			const opts = crypto.bootstrapSecretStorage.mock.calls[0][0];
@@ -133,22 +142,37 @@ describe('matrixKeyBackupService (#437)', () => {
 			).resolves.toBeNull();
 		});
 
-		it('clears the cached key even when bootstrap fails', async () => {
+		it('classifies the failing phase without exposing SDK details and clears the cached key', async () => {
 			const crypto = buildCrypto({
 				bootstrapSecretStorage: vi
 					.fn()
-					.mockRejectedValue(new Error('boom'))
+					.mockRejectedValue(new Error('sensitive sdk payload'))
 			});
 
-			await expect(setUpRecovery(buildClient(crypto))).rejects.toThrow(
-				'boom'
+			const failure = await setUpRecovery(buildClient(crypto)).catch(
+				(error) => error
 			);
+			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
+			expect(failure.phase).toBe('secret-storage');
+			expect(failure.message).not.toContain('sensitive sdk payload');
 			await expect(
 				secretStorageKeyCallback(
 					{ keys: { 'key-id-1': {} } } as any,
 					'm.cross_signing.master'
 				)
 			).resolves.toBeNull();
+		});
+
+		it('does not expose a recovery key when the new backup is not durably stored in secret storage', async () => {
+			const crypto = buildCrypto({
+				isSecretStorageReady: vi.fn().mockResolvedValue(false)
+			});
+
+			const failure = await setUpRecovery(buildClient(crypto)).catch(
+				(error) => error
+			);
+			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
+			expect(failure.phase).toBe('key-backup');
 		});
 	});
 

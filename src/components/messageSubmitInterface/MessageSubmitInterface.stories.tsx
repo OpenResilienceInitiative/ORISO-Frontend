@@ -123,6 +123,60 @@ export const Selected: Story = {
 	}
 };
 
+/**
+ * #835: opening the emoji picker in the docked composer must not leave a dark
+ * clipped fragment over the emoji / mention controls. The picker is portalled
+ * to document.body (outside `.session { overflow: hidden }`).
+ */
+export const DockedEmojiPickerNoOverlay: Story = {
+	name: 'Docked emoji picker — no dark overlay (#835)',
+	render: () => (
+		<div
+			style={{
+				// Leave room above the docked composer so the portalled picker
+				// (380px) is visible in Storybook screenshots / visual review.
+				minHeight: 720,
+				display: 'flex',
+				flexDirection: 'column',
+				justifyContent: 'flex-end'
+			}}
+		>
+			<ComposerShell />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const emojiButton = await canvas.findByRole('button', {
+			name: /emoji/i
+		});
+		const mentionButton = await canvas.findByRole('button', {
+			name: /mention/i
+		});
+
+		await userEvent.click(emojiButton);
+
+		const popup = await waitFor(() => {
+			const node = document.querySelector(
+				'[data-testid="emoji-picker-popup"]'
+			);
+			if (!(node instanceof HTMLElement)) {
+				throw new Error('emoji picker popup not mounted yet');
+			}
+			return node;
+		});
+
+		await expect(popup.parentElement).toBe(document.body);
+		await expect(popup.className).toContain('emojiPickerPopup--portalled');
+		await expect(
+			canvasElement.querySelector('.session')?.contains(popup)
+		).toBe(false);
+
+		// Toolbar controls stay in the layout (not covered by an in-session clip).
+		await expect(emojiButton).toBeVisible();
+		await expect(mentionButton).toBeVisible();
+	}
+};
+
 export const ReadyToSend: Story = {
 	name: 'Ready to send (typed)',
 	render: () => <ComposerShell />,
@@ -146,6 +200,87 @@ export const ReadyToSend: Story = {
 				name: /senden|send/i
 			});
 			await expect(sendButton).toBeEnabled();
+		});
+	}
+};
+
+export const LongMessageAutoGrow: Story = {
+	name: 'Long message (auto-grows to 14 lines)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) throw new Error('composer editor not mounted yet');
+			return node;
+		});
+		await userEvent.click(editor);
+		await userEvent.type(
+			editor,
+			Array.from({ length: 20 }, (_, index) => `Zeile ${index + 1}`).join(
+				'{Enter}'
+			)
+		);
+
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
+				436
+			);
+		});
+	}
+};
+
+function SessionHeightResetHarness() {
+	const [sessionId, setSessionId] = React.useState(360);
+	return (
+		<div style={{ position: 'relative' }}>
+			<button
+				type="button"
+				style={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}
+				onClick={() => setSessionId(361)}
+			>
+				Gespräch wechseln
+			</button>
+			<ComposerShell
+				activeSession={buildMockActiveSession({}, { id: sessionId })}
+			/>
+		</div>
+	);
+}
+
+export const SessionHeightReset: Story = {
+	name: 'Dragged height resets on conversation change',
+	render: () => <SessionHeightResetHarness />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const dragHandle = await canvas.findByRole('button', {
+			name: /drag to resize composer/i
+		});
+		dragHandle.focus();
+		await userEvent.keyboard('{End}');
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(shell?.getBoundingClientRect().height || 0).toBeGreaterThan(
+				196
+			);
+		});
+
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Gespräch wechseln' })
+		);
+		await waitFor(() => {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
+				196
+			);
 		});
 	}
 };

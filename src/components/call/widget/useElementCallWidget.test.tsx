@@ -160,21 +160,24 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('userId')).toBe('@user:oriso.example');
 		expect(fragment.get('baseUrl')).toBe('https://matrix.oriso.example');
 		expect(fragment.get('widgetId')).toMatch(/^oriso-call-[a-f0-9]{64}$/);
+		// The call is deliberately dark while the app around it is light.
+		// Pinned rather than inherited, so an upstream change to Element
+		// Call's own default cannot silently restyle our call
+		// (ORISO-Frontend#900).
+		expect(fragment.get('theme')).toBe('dark');
 		expect(url.searchParams.has('accessToken')).toBe(false);
 		expect(fragment.has('accessToken')).toBe(false);
 		expect(fragment.has('password')).toBe(false);
 		expect(fragment.has('enableE2EE')).toBe(false);
-		// Media E2EE is opt-in per environment: the media keys ride the MatrixRTC
-		// to-device transport, so a gap in the host's Olm path would connect the
-		// call with no audio and no error (ORISO-ElementCall#35).
-		expect(fragment.get('perParticipantE2EE')).toBeNull();
+		// ADR-018 default: host asks Element Call for per-participant media E2EE.
+		expect(fragment.get('perParticipantE2EE')).toBe('true');
 	});
 
-	it('asks Element Call for media E2EE once the environment enables it', async () => {
-		// The off path alone would still pass if the parameter were dropped
-		// unconditionally, which would silently make the toggle unusable.
+	it('omits media E2EE when the environment kill-switch is false', async () => {
+		// The on path alone would still pass if the parameter were always set,
+		// which would silently make the kill-switch unusable (ElementCall#35).
 		setAppConfig({
-			releaseToggles: { enableCallMediaE2EE: true }
+			releaseToggles: { enableCallMediaE2EE: false }
 		} as never);
 		const client = createClient();
 
@@ -189,7 +192,7 @@ describe('useElementCallWidget', () => {
 		const fragment = new URLSearchParams(
 			new URL(result.current.url!).hash.slice(2)
 		);
-		expect(fragment.get('perParticipantE2EE')).toBe('true');
+		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
@@ -310,7 +313,9 @@ describe('useElementCallWidget', () => {
 		const api = widgetApiMocks.apiInstances[0];
 
 		act(() => api.emit('ready', new CustomEvent('ready')));
-		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'light' });
+		// Must match the `theme=dark` pin in the widget URL — a ready-time
+		// update to any other scheme would flip the call after launch.
+		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
 
 		const closeRequest = {
 			action: 'io.element.close',

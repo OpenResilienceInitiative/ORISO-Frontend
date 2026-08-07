@@ -198,7 +198,8 @@
 	color: var(--m3-on-primary-container, #ffe2de);
 
 	&:hover:not(:disabled) {
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 	}
 }
 

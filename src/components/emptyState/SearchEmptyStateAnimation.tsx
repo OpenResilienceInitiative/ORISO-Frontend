@@ -40,10 +40,6 @@ export const SearchEmptyStateAnimation = () => {
 	}
 
 	return (
-		<EmptyStateAnimation
-			animationData={animationData}
-			speed={0.8}
-			variant="search"
-		/>
+		<EmptyStateAnimation animationData={animationData} variant="search" />
 	);
 };

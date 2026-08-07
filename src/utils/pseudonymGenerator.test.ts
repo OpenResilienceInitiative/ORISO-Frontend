@@ -14,21 +14,23 @@ describe('renderAvatarSvg', () => {
 	});
 
 	it('loads and recolors valid SVG avatar markup', async () => {
-		vi.stubGlobal(
-			'fetch',
-			vi
-				.fn()
-				.mockResolvedValue(
-					new Response(
-						'<svg xmlns="http://www.w3.org/2000/svg"><path fill="#000000" d="M0 0h1v1z"/></svg>',
-						{ headers: { 'content-type': 'image/svg+xml' } }
-					)
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(
+					'<svg xmlns="http://www.w3.org/2000/svg"><path fill="#000000" d="M0 0h1v1z"/></svg>',
+					{ headers: { 'content-type': 'image/svg+xml' } }
 				)
-		);
+			);
+		vi.stubGlobal('fetch', fetchMock);
 
 		const svg = await renderAvatarSvg(avatar('valid-test.svg'));
 
 		expect(svg).toContain('#123456');
+		// #840: must not use /assets (Element Call owns that prefix on the main host).
+		expect(fetchMock).toHaveBeenCalledWith(
+			'/static/anon-animals/valid-test.svg'
+		);
 	});
 
 	it('rejects failed SVG responses before caching', async () => {

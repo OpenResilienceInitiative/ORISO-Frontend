@@ -50,7 +50,8 @@
 		"scrollDown": "Faire défiler vers le bas",
 		"selectLanguage": "Choisir la langue",
 		"stage": {
-			"title": "Conseil\nAide et assistance"
+			"title": "Conseil\nAide et assistance",
+			"associationLogoAlt": "Logo de l'organisation prestataire"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -842,8 +843,7 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
-			"back": "Retour",
-			"cardMenu": "Options pour ce format de conversation"
+			"back": "Retour"
 		},
 		"circle": {
 			"rows": {
@@ -1409,7 +1409,17 @@
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
-			"open": "Ouvrir le chat"
+			"open": "Ouvrir le chat",
+			"next": "Notification suivante",
+			"cardMenu": "Actions de notification",
+			"markRead": "Marquer comme lu",
+			"waitingSince": "En attente depuis {{time}} ({{date}})",
+			"showPreview": "Afficher l'aperçu de la conversation",
+			"showDetails": "Afficher les détails",
+			"preview": {
+				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
+				"empty": "Pas encore de messages dans cette conversation."
+			}
 		}
 	},
 	"overlay": {
@@ -2050,8 +2060,11 @@
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
-				"label": "Nom d'utilisateur",
+				"label": "User-ID",
 				"success": "Votre nom d'utilisateur est approprié."
+			},
+			"twoFactorAuth": {
+				"label": "Sécuriser mon mot de passe avec l'authentification à deux facteurs"
 			}
 		},
 		"back": "Retour",
@@ -2368,6 +2381,11 @@
 		},
 		"preview": {
 			"headline": "Premières demandes",
+			"voice": "Message vocal",
+			"audio": "Message audio",
+			"image": "Image",
+			"video": "Vidéo",
+			"file": "Fichier",
 			"registered": {
 				"tab": "Premières demandes"
 			}
@@ -3107,8 +3125,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Confirmer",
-		"description": "Ensuite, nos conseillers peuvent commencer un appel vidéo avec vous.",
-		"headline": "Bienvenue !",
+		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",
+		"headline": "Bienvenue",
 		"label": {
 			"and": "et",
 			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
