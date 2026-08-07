@@ -2351,7 +2351,10 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label="More"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2443,7 +2446,10 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label="More"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
 									onClick={(event) =>
 										toggleActionMenu(event, 'right')
 									}

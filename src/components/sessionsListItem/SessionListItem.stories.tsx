@@ -340,7 +340,7 @@ function SessionMenuMock({ onClose }: { onClose: () => void }) {
 	);
 }
 
-/** Mirrors registered Nähe row layout (topic + PLZ, menu pill, Nähe meta). */
+/** Mirrors registered Mail row layout (topic + PLZ, menu pill, Mail meta). */
 function ConsultantCardMock({
 	active = false,
 	beforeActive = false,
@@ -469,11 +469,11 @@ function ConsultantCardMock({
 					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
 						<img
 							src={nearbyConversationIcon}
-							alt="Nähe"
+							alt="Mail"
 							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 						/>
 						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-							Nähe
+							Mail
 						</span>
 					</div>
 				</div>
@@ -668,11 +668,11 @@ function PostcodeOnlyCardMock() {
 					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
 						<img
 							src={nearbyConversationIcon}
-							alt="Nähe"
+							alt="Mail"
 							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 						/>
 						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-							Nähe
+							Mail
 						</span>
 					</div>
 				</div>
@@ -1071,8 +1071,8 @@ export const InternalCounsellorChat: Story = {
 	)
 };
 
-// ZipTopicSelection (Nähe, Figma 98-20505) is intentionally NOT a separate
-// story: its layout (topic tag + postcode pill + "Nähe" chat-type icon) is
+// ZipTopicSelection (Mail, Figma 98-20505) is intentionally NOT a separate
+// story: its layout (topic tag + postcode pill + "Mail" chat-type icon) is
 // already covered by `ConsultantUnselected` (ConsultantCardMock). Adding it
 // again would just duplicate that story, so it is skipped per the refactor.
 
