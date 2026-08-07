@@ -52,7 +52,8 @@
 		"stage": {
 			"title": "Консультации\n& Помощь",
 			"associationLogoAlt": "Логотип организации-поставщика",
-			"mobileHeadline": "There is room here for what is on your mind."
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Успешный",
 		"title": "Консультации",

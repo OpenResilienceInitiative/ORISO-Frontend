@@ -18,6 +18,7 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
 import { Spinner } from '../spinner/Spinner';
 import { useLampMap } from './lampMap/useLampMap';
+import { StageCarrierLogos } from './StageCarrierLogos';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 
 export interface StageProps {
@@ -196,13 +197,17 @@ export const Stage = ({
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
 				{associationLogo ? (
-					<div className="stage__logos">
+					<div className="stage__tenantLogo">
 						<img
 							src={associationLogo}
 							alt={translate('app.stage.associationLogoAlt')}
 						/>
 					</div>
 				) : null}
+				<StageCarrierLogos
+					allowed={tenant?.theming?.associationLogos}
+					onHighlight={lampMap.setCarrier}
+				/>
 				<div className={`stage__legalLinks`}>
 					<LegalLinks
 						legalLinks={legalLinks}

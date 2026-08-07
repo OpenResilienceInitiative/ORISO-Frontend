@@ -52,7 +52,8 @@
 		"stage": {
 			"title": "Conseil\nAide et assistance",
 			"associationLogoAlt": "Logo de l'organisation prestataire",
-			"mobileHeadline": "There is room here for what is on your mind."
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",

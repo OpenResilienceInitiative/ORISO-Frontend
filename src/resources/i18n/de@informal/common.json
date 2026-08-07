@@ -1864,7 +1864,8 @@
 	"app": {
 		"stage": {
 			"associationLogoAlt": "Logo der Trägerorganisation",
-			"mobileHeadline": "Hier ist Raum für dein Anliegen."
+			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
+			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		}
 	},
 	"login": {

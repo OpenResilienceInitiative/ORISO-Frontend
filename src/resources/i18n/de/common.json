@@ -53,7 +53,8 @@
 		"stage": {
 			"title": "Beratung\n& Hilfe",
 			"associationLogoAlt": "Logo der Trägerorganisation",
-			"mobileHeadline": "Hier ist Raum für Ihre Anliegen."
+			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
+			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",

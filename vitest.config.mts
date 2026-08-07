@@ -1,6 +1,29 @@
 import { defineConfig } from 'vitest/config';
 
+/**
+ * The webpack build turns `*.svg` into a module with a `ReactComponent` named
+ * export (SVGR) plus a URL default export. Vitest has no such loader, so any
+ * component that renders an inline icon blows up with "Element type is
+ * invalid". Stub both exports — tests assert behaviour, not path data.
+ */
+const svgStub = {
+	name: 'oriso-svg-stub',
+	enforce: 'pre' as const,
+	load(id: string) {
+		if (!id.split('?')[0].endsWith('.svg')) {
+			return null;
+		}
+		return [
+			"import * as React from 'react';",
+			'export const ReactComponent = (props) =>',
+			"  React.createElement('svg', props);",
+			"export default 'test-file-stub';"
+		].join('\n');
+	}
+};
+
 export default defineConfig({
+	plugins: [svgStub],
 	ssr: {
 		// Same reason as `test.server.deps.inline` below, but at the Vite
 		// level so `vite-node` (which runs scripts/generate-call-theme.ts)

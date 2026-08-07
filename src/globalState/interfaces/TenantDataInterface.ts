@@ -4,6 +4,13 @@ export interface TenantDataInterface {
 	theming: {
 		logo: string;
 		associationLogo: string | null;
+		/**
+		 * Which of the partner marks the tenant wants on the login stage
+		 * (FE-H05 / #178). Absent on backends that do not deliver the setting
+		 * yet — then every mark is shown, which is what the operator has to be
+		 * able to switch off. Empty array = show none.
+		 */
+		associationLogos?: string[];
 		favicon: string;
 		primaryColor: string;
 		secondaryColor: string;
