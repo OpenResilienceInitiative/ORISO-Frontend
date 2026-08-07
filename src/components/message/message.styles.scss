@@ -1209,6 +1209,10 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+		text-align: right;
 	}
 
 	&__senderInfoMetaIcon {

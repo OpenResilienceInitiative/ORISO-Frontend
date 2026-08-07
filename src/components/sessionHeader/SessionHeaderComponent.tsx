@@ -959,6 +959,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		);
 	}
 
+	const agencyLine = formatAgencyLineWithI18n(
+		activeSession?.agency,
+		translate
+	);
+
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
@@ -1160,20 +1165,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) && (
 				<div className="sessionInfo__metaInfo">
-					{activeSession.agency?.name && (
+					{agencyLine && (
 						/*
 						 * The counselling centre with its postcode (#895). The
 						 * postcode is what the advice seeker chose their agency
 						 * by during registration, so naming the place without
 						 * it leaves out the identifying half. The name still
 						 * goes through the `agencies` namespace so a
-						 * tenant-specific override wins.
+						 * tenant-specific override wins. Gate on the formatted
+						 * line (not raw agency.name) so an empty API name with a
+						 * tenant i18n override still shows.
 						 */
 						<div className="sessionInfo__metaInfo__content">
-							{formatAgencyLineWithI18n(
-								activeSession.agency,
-								translate
-							)}
+							{agencyLine}
 						</div>
 					)}
 					{topic?.name && (

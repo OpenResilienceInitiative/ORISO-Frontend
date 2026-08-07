@@ -142,10 +142,14 @@ export const formatAgencyLineWithI18n = (
 	if (!agency) {
 		return formatAgencyLine(agency);
 	}
+	const name =
+		agency.id != null
+			? translate([`agency.${agency.id}.name`, agency.name ?? ''], {
+					ns: 'agencies'
+				})
+			: (agency.name ?? '');
 	return formatAgencyLine({
 		postcode: agency.postcode,
-		name: translate([`agency.${agency.id}.name`, agency.name ?? ''], {
-			ns: 'agencies'
-		})
+		name
 	});
 };

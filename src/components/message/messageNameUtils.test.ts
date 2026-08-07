@@ -129,4 +129,22 @@ describe('formatAgencyLineWithI18n', () => {
 			)
 		).toBe('54222 Tenant Overlay Caritas');
 	});
+
+	it('shows tenant i18n overlay when the API name is empty', () => {
+		const translate = (
+			keys: [string, string],
+			_options: { ns: 'agencies' }
+		) => {
+			if (keys[0] === 'agency.42.name') {
+				return 'Tenant Overlay';
+			}
+			return keys[1];
+		};
+		expect(
+			formatAgencyLineWithI18n(
+				{ id: 42, postcode: '54222', name: '' },
+				translate
+			)
+		).toBe('54222 Tenant Overlay');
+	});
 });
