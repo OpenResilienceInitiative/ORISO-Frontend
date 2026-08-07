@@ -93,3 +93,63 @@ export const getMessagePersonInitials = (
 	}
 	return parts[0].slice(0, 2).toUpperCase();
 };
+
+/**
+ * The counselling centre a message speaks for: `"54222 Caritas Mainz"`.
+ *
+ * Rendered as the second line of the message sender header (Figma "Message
+ * Recipient Header", App.Oriso 9229:24595). For someone who picked their
+ * agency by postcode during registration, this is the one line that confirms
+ * they are talking to the place they chose.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#895.
+ */
+export const formatAgencyLine = (
+	agency?: { postcode?: string | number | null; name?: string | null } | null
+): string => {
+	const name = `${agency?.name ?? ''}`.trim();
+	if (!name) {
+		// A postcode with no place name says nothing — show nothing.
+		return '';
+	}
+	const postcode = `${agency?.postcode ?? ''}`.trim();
+	// Live Chat registers anonymous askers with the placeholder "00000";
+	// printing it would name a place that does not exist.
+	if (!postcode || /^0+$/.test(postcode)) {
+		return name;
+	}
+	return `${postcode} ${name}`;
+};
+
+/**
+ * The same line, resolved through the `agencies` i18n namespace first, so a
+ * tenant-specific name override wins. The chat header and the message sender
+ * header must never disagree about what the counselling centre is called.
+ *
+ * See OpenResilienceInitiative/ORISO-Frontend#895.
+ */
+export const formatAgencyLineWithI18n = (
+	agency:
+		| {
+				id?: number;
+				postcode?: string | number | null;
+				name?: string | null;
+		  }
+		| null
+		| undefined,
+	translate: (keys: [string, string], options: { ns: 'agencies' }) => string
+): string => {
+	if (!agency) {
+		return formatAgencyLine(agency);
+	}
+	const name =
+		agency.id != null
+			? translate([`agency.${agency.id}.name`, agency.name ?? ''], {
+					ns: 'agencies'
+				})
+			: (agency.name ?? '');
+	return formatAgencyLine({
+		postcode: agency.postcode,
+		name
+	});
+};
