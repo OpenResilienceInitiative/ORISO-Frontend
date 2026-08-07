@@ -1,9 +1,6 @@
 import { trackStagePointer } from '../pointer';
 import { StageEffect, StageEffectContext } from '../types';
-import {
-	isInsideBorder,
-	projectGermanBorder
-} from './germanBorder';
+import { isInsideBorder, projectGermanBorder } from './germanBorder';
 import { CARRIER_COVERAGE, CITIES } from './coverage';
 
 /** Spacing of the dot grid in CSS px. */
@@ -124,9 +121,10 @@ export const createConnectedDotsEffect = ({
 		const strongholds = coverage.strongholds
 			.map(cityPoint)
 			.filter(Boolean) as [number, number][];
-		const seeds = coverage.seeds
-			.map(cityPoint)
-			.filter(Boolean) as [number, number][];
+		const seeds = coverage.seeds.map(cityPoint).filter(Boolean) as [
+			number,
+			number
+		][];
 
 		const chosen = new Set<number>();
 		dots.forEach((dot, index) => {
@@ -160,7 +158,10 @@ export const createConnectedDotsEffect = ({
 			let best = 0;
 			let bestDistance = Infinity;
 			seeds.forEach(([sx, sy], seedIndex) => {
-				const distance = Math.hypot(dots[index].mx - sx, dots[index].my - sy);
+				const distance = Math.hypot(
+					dots[index].mx - sx,
+					dots[index].my - sy
+				);
 				if (distance < bestDistance) {
 					bestDistance = distance;
 					best = seedIndex;
@@ -179,7 +180,10 @@ export const createConnectedDotsEffect = ({
 					// in faster. (An earlier version scaled this by the
 					// carrier's `step`, which made the whole map light up about
 					// ten times too quickly.)
-					schedule.push({ index: entry.index, delay: rank * SEED_STEP });
+					schedule.push({
+						index: entry.index,
+						delay: rank * SEED_STEP
+					});
 				});
 		});
 		return schedule;
@@ -205,8 +209,64 @@ export const createConnectedDotsEffect = ({
 		spriteCtx.fillRect(0, 0, 64, 64);
 	}
 
+	// The wandering point: it drifts across the surface until the cursor catches
+	// up with it, then it holds still, threads itself to the dots nearby, and
+	// once it has fully settled it stays behind as a small light and a new one
+	// sets off. Society is the dots; this is one person moving through it.
+	const HERO_RADIUS = 92;
+	const CATCH_DISTANCE = 64;
+	const HELD_LIMIT = 12;
+	const EDGE_PADDING = 22;
+
+	interface Wanderer {
+		x: number;
+		y: number;
+		/** Heading in radians. */
+		angle: number;
+		/** 0 → drifting, 1 → settled. */
+		hold: number;
+		/** Rotation of the ring drawn around it. */
+		ring: number;
+		links: Dot[] | null;
+	}
+
+	const spawn = (): Wanderer => ({
+		x: width * (0.25 + 0.5 * random()),
+		y: height * (0.2 + 0.45 * random()),
+		angle: random() * Math.PI * 2,
+		hold: 0,
+		ring: random() * Math.PI * 2,
+		links: null
+	});
+
+	let hero = spawn();
+	const held: { x: number; y: number; links: Dot[] | null }[] = [];
+
 	let previous = 0;
 	let dim = 0;
+
+	const thread = (
+		from: { x: number; y: number },
+		to: { x: number; y: number },
+		extent: number,
+		alpha: number
+	) => {
+		const nx = -(to.y - from.y);
+		const ny = to.x - from.x;
+		const length = Math.hypot(nx, ny) || 1;
+		const bow = 10 * (1 - extent);
+		ctx.beginPath();
+		ctx.moveTo(from.x, from.y);
+		ctx.quadraticCurveTo(
+			(from.x + to.x) / 2 + (nx / length) * bow,
+			(from.y + to.y) / 2 + (ny / length) * bow,
+			to.x,
+			to.y
+		);
+		ctx.strokeStyle = `rgba(226,152,142,${alpha.toFixed(3)})`;
+		ctx.lineWidth = 0.8 + 0.7 * extent;
+		ctx.stroke();
+	};
 
 	return {
 		setCarrier: (next) => {
@@ -217,6 +277,9 @@ export const createConnectedDotsEffect = ({
 			previous = elapsed;
 			ctx.clearRect(0, 0, width, height);
 			tracker.update(elapsed, dt, false);
+			const { pointer } = tracker;
+			const cursorX = pointer.hovering ? pointer.x * width : -999;
+			const cursorY = pointer.hovering ? pointer.y * height : -999;
 
 			if (pendingCarrier !== carrier) {
 				carrier = pendingCarrier;
@@ -244,10 +307,7 @@ export const createConnectedDotsEffect = ({
 					}
 					dot.glow += (1 - dot.glow) * Math.min(1, dt * 4);
 				} else if (dot.glow > 0) {
-					dot.glow *= Math.max(
-						0,
-						1 - dt * (0.7 + dot.jitter * 0.45)
-					);
+					dot.glow *= Math.max(0, 1 - dt * (0.7 + dot.jitter * 0.45));
 					if (dot.glow < 0.004) {
 						dot.glow = 0;
 						dot.flare = 0;
@@ -274,37 +334,185 @@ export const createConnectedDotsEffect = ({
 				ctx.fillRect(0, 0, width, height);
 			}
 
-			for (const dot of dots) {
-				if (dot.glow <= 0.004) {
-					// Resting dots: barely there, and only inside the country.
-					if (dot.inside) {
-						ctx.fillStyle = `rgba(255,255,255,${(0.07 * intensity * (1 - dim * 0.6)).toFixed(3)})`;
-						ctx.fillRect(dot.x - 0.9, dot.y - 0.9, 1.8, 1.8);
+			// Move the wanderer — unless the cursor has caught it, or the
+			// visitor asked for no motion.
+			if (hero.hold < 1) {
+				const caught =
+					Math.hypot(hero.x - cursorX, hero.y - cursorY) <
+					CATCH_DISTANCE;
+				if (caught) {
+					hero.hold = Math.min(1, hero.hold + dt * 0.7);
+					if (!hero.links) {
+						hero.links = dots
+							.slice()
+							.sort(
+								(a, b) =>
+									Math.hypot(a.x - hero.x, a.y - hero.y) -
+									Math.hypot(b.x - hero.x, b.y - hero.y)
+							)
+							.slice(0, 6);
 					}
-					continue;
+				} else {
+					hero.hold = Math.max(0, hero.hold - dt * 0.45);
+					if (hero.hold === 0) {
+						hero.links = null;
+					}
 				}
-				if (dot.flare > 0 && spriteCtx) {
-					const size = 26 + 30 * dot.flare;
-					ctx.globalAlpha = Math.min(
-						1,
-						dot.flare * dot.glow * intensity
-					);
-					ctx.drawImage(
-						sprite,
-						dot.x - size / 2,
-						dot.y - size / 2,
-						size,
-						size
-					);
-					ctx.globalAlpha = 1;
+
+				if (!reducedMotion) {
+					const speed = 1 - hero.hold;
+					hero.angle += Math.sin(elapsed * 0.63) * 0.3 * dt;
+					hero.x += Math.cos(hero.angle) * 17 * dt * speed;
+					hero.y += Math.sin(hero.angle) * 17 * dt * speed;
+					if (hero.x < EDGE_PADDING) {
+						hero.x = EDGE_PADDING;
+						hero.angle = Math.PI - hero.angle;
+					} else if (hero.x > width - EDGE_PADDING) {
+						hero.x = width - EDGE_PADDING;
+						hero.angle = Math.PI - hero.angle;
+					}
+					if (hero.y < EDGE_PADDING) {
+						hero.y = EDGE_PADDING;
+						hero.angle = -hero.angle;
+					} else if (hero.y > height - EDGE_PADDING) {
+						hero.y = height - EDGE_PADDING;
+						hero.angle = -hero.angle;
+					}
 				}
-				ctx.fillStyle = `rgba(255,240,238,${(0.9 * dot.glow * intensity).toFixed(3)})`;
-				ctx.fillRect(dot.x - 1.2, dot.y - 1.2, 2.4, 2.4);
+
+				if (hero.hold >= 1) {
+					held.push({ x: hero.x, y: hero.y, links: hero.links });
+					if (held.length > HELD_LIMIT) {
+						held.shift();
+					}
+					hero = spawn();
+				}
+			}
+			hero.ring += dt * 1.3;
+
+			ctx.lineCap = 'round';
+			held.forEach((point) =>
+				(point.links || []).forEach((dot) =>
+					thread(dot, point, 1, 0.22 * intensity)
+				)
+			);
+			if (hero.links) {
+				// The threads draw themselves one after another as the point
+				// settles, rather than all appearing at once.
+				hero.links.forEach((dot, index) => {
+					const extent = Math.max(
+						0,
+						Math.min(1, hero.hold * 6 - index * 0.7)
+					);
+					if (extent > 0.01) {
+						thread(
+							dot,
+							hero,
+							extent,
+							(0.05 + 0.26 * extent) * intensity
+						);
+					}
+				});
 			}
 
-			if (reducedMotion) {
-				return;
+			for (const dot of dots) {
+				const nearHero =
+					1 -
+					Math.min(
+						1,
+						Math.hypot(dot.x - hero.x, dot.y - hero.y) / HERO_RADIUS
+					);
+				const pulse =
+					dot.glow > 0
+						? Math.min(1, dot.glow) *
+							(0.93 +
+								0.07 * Math.sin(elapsed * 7 + dot.jitter * 6))
+						: 0;
+				// Ease-out: the afterglow holds, then lets go.
+				const glow =
+					Math.sin(Math.min(1, dot.flare) * (Math.PI / 2)) *
+					Math.min(1, dot.glow * 2);
+
+				if (glow > 0.02 && spriteCtx) {
+					const r = 9 + 7 * glow;
+					ctx.globalAlpha = Math.min(1, glow * intensity * 0.95);
+					ctx.drawImage(sprite, dot.x - r, dot.y - r, r * 2, r * 2);
+					ctx.globalAlpha = 1;
+				}
+
+				// The resting dot is dark red, not white: the dots are the
+				// surface, and only a lamp or the wanderer brings light.
+				const shade = 1 - 0.55 * dim;
+				ctx.beginPath();
+				ctx.arc(
+					dot.x,
+					dot.y,
+					1.2 + 0.5 * nearHero + 0.4 * pulse,
+					0,
+					Math.PI * 2
+				);
+				ctx.fillStyle = `rgba(${Math.round(158 * shade)},${Math.round(4 * shade)},${Math.round(16 * shade)},${(0.66 + 0.2 * (1 - nearHero)).toFixed(2)})`;
+				ctx.fill();
+
+				if (nearHero > 0.02) {
+					ctx.beginPath();
+					ctx.arc(dot.x, dot.y, 1.2 + 0.5 * nearHero, 0, Math.PI * 2);
+					ctx.fillStyle = `rgba(255,214,206,${(0.4 * nearHero * intensity).toFixed(3)})`;
+					ctx.fill();
+				}
+				if (pulse > 0.02) {
+					ctx.beginPath();
+					ctx.arc(dot.x, dot.y, 0.8 + 0.9 * pulse, 0, Math.PI * 2);
+					ctx.fillStyle = `rgba(255,240,238,${(0.92 * pulse * intensity).toFixed(3)})`;
+					ctx.fill();
+				}
 			}
+
+			// Points the wanderer already settled on stay behind as small lights.
+			held.forEach((point) => {
+				ctx.beginPath();
+				ctx.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
+				ctx.fillStyle = `rgba(255,232,226,${(0.65 * intensity).toFixed(2)})`;
+				ctx.fill();
+			});
+
+			const halo = ctx.createRadialGradient(
+				hero.x,
+				hero.y,
+				0,
+				hero.x,
+				hero.y,
+				HERO_RADIUS
+			);
+			halo.addColorStop(
+				0,
+				`rgba(255,236,228,${(0.15 * intensity).toFixed(3)})`
+			);
+			halo.addColorStop(1, 'rgba(255,236,228,0)');
+			ctx.fillStyle = halo;
+			ctx.fillRect(
+				hero.x - HERO_RADIUS,
+				hero.y - HERO_RADIUS,
+				HERO_RADIUS * 2,
+				HERO_RADIUS * 2
+			);
+
+			const beat = reducedMotion ? 1 : 1 + 0.15 * Math.sin(elapsed * 2.2);
+			ctx.beginPath();
+			ctx.arc(hero.x, hero.y, 4.4 * beat, 0, Math.PI * 2);
+			ctx.fillStyle = `rgba(255,255,255,${(0.92 * intensity).toFixed(2)})`;
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(
+				hero.x,
+				hero.y,
+				13 + 4 * hero.hold,
+				hero.ring,
+				hero.ring + 1.4 + 4.7 * hero.hold
+			);
+			ctx.strokeStyle = `rgba(255,255,255,${((0.16 + 0.4 * hero.hold) * intensity).toFixed(3)})`;
+			ctx.lineWidth = 1.4;
+			ctx.stroke();
 		},
 		destroy: () => {
 			tracker.destroy();

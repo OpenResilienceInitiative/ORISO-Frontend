@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createLinesEffect } from './variants/lines';
 import { createConnectedDotsEffect } from './variants/connectedDots';
 import { loadStageEffect } from './loadStageEffect';
@@ -14,20 +14,28 @@ import { isInsideBorder, projectGermanBorder } from './variants/germanBorder';
  */
 const recordingContext = () => {
 	const calls: string[] = [];
+	const args: Record<string, number[][]> = {};
 	const record =
 		(name: string) =>
-		(...args: unknown[]) => {
-			calls.push(`${name}(${args.length})`);
+		(...received: unknown[]) => {
+			calls.push(`${name}(${received.length})`);
+			(args[name] ||= []).push(
+				received.filter((v): v is number => typeof v === 'number')
+			);
 		};
 	const ctx = {
 		calls,
+		args,
 		scale: record('scale'),
 		clearRect: record('clearRect'),
 		beginPath: record('beginPath'),
 		moveTo: record('moveTo'),
 		lineTo: record('lineTo'),
+		arc: record('arc'),
+		fill: record('fill'),
 		stroke: record('stroke'),
 		fillRect: record('fillRect'),
+		quadraticCurveTo: record('quadraticCurveTo'),
 		drawImage: record('drawImage'),
 		save: record('save'),
 		restore: record('restore'),
@@ -36,11 +44,20 @@ const recordingContext = () => {
 		strokeStyle: '',
 		fillStyle: '',
 		lineWidth: 0,
+		lineCap: 'butt',
 		globalAlpha: 1,
 		globalCompositeOperation: 'source-over'
 	};
 	return ctx;
 };
+
+// jsdom has no 2D context at all, so offscreen canvases the effects create for
+// sprites and scratch layers come back null and whole branches never run.
+beforeAll(() => {
+	HTMLCanvasElement.prototype.getContext = function getContext() {
+		return recordingContext() as unknown as CanvasRenderingContext2D;
+	} as HTMLCanvasElement['getContext'];
+});
 
 const stubCanvas = (width: number, height: number) => {
 	const ctx = recordingContext();
@@ -54,11 +71,25 @@ const stubCanvas = (width: number, height: number) => {
 	return { canvas, ctx };
 };
 
-const stubHost = () => {
+const stubHost = (width = 430, height = 640) => {
 	const host = document.createElement('div');
 	host.getBoundingClientRect = () =>
-		({ left: 0, top: 0, width: 576, height: 900 }) as DOMRect;
+		({ left: 0, top: 0, width, height }) as DOMRect;
 	return host;
+};
+
+const connectedDots = (reducedMotion = false) => {
+	const { canvas, ctx } = stubCanvas(430, 640);
+	const host = stubHost();
+	const effect = createConnectedDotsEffect({
+		canvas,
+		host,
+		width: 430,
+		height: 640,
+		intensity: 1,
+		reducedMotion
+	});
+	return { effect, ctx, host };
 };
 
 describe('stage effect names', () => {
@@ -164,27 +195,56 @@ describe('lines effect', () => {
 
 describe('connected dots effect', () => {
 	it('lights nothing until a carrier is hovered, then lights up', () => {
-		const { canvas, ctx } = stubCanvas(430, 640);
-		const effect = createConnectedDotsEffect({
-			canvas,
-			host: stubHost(),
-			width: 430,
-			height: 640,
-			intensity: 1,
-			reducedMotion: false
-		});
+		const { effect, ctx } = connectedDots();
 		expect(effect).not.toBeNull();
 
+		// A lamp coming on draws its glow sprite. Nothing is lit at rest.
 		effect?.frame(0.1);
-		const resting = ctx.calls.filter((c) => c === 'fillRect(4)').length;
+		expect(ctx.calls.filter((c) => c === 'drawImage(5)')).toHaveLength(0);
 
 		effect?.setCarrier('caritas');
-		// Far enough in the future that the whole schedule has elapsed.
+		// Far enough ahead that the whole schedule has elapsed.
 		effect?.frame(0.2);
 		effect?.frame(30);
-		const lit = ctx.calls.filter((c) => c === 'fillRect(4)').length;
+		expect(
+			ctx.calls.filter((c) => c === 'drawImage(5)').length
+		).toBeGreaterThan(0);
+	});
 
-		expect(lit).toBeGreaterThan(resting);
+	it('draws the wandering point on every frame', () => {
+		const { effect, ctx } = connectedDots();
+
+		effect?.frame(0.1);
+		// Its core is the last arc of the frame, drawn after every dot.
+		expect(ctx.args.arc?.length).toBeGreaterThan(0);
+		expect(ctx.calls.filter((c) => c === 'fillRect(4)').length).toBe(1);
+	});
+
+	it('moves the wandering point while nothing has caught it', () => {
+		const { effect, ctx } = connectedDots();
+
+		effect?.frame(0.1);
+		const first = ctx.args.arc?.at(-1)?.slice(0, 2);
+		for (let i = 1; i < 20; i += 1) {
+			effect?.frame(0.1 + i * 0.05);
+		}
+		const later = ctx.args.arc?.at(-1)?.slice(0, 2);
+
+		expect(first).toBeDefined();
+		expect(later).not.toEqual(first);
+	});
+
+	it('holds the wandering point still under reduced motion', () => {
+		const { effect, ctx } = connectedDots(true);
+
+		effect?.frame(0.1);
+		const first = ctx.args.arc?.at(-1)?.slice(0, 2);
+		for (let i = 1; i < 20; i += 1) {
+			effect?.frame(0.1 + i * 0.05);
+		}
+		const later = ctx.args.arc?.at(-1)?.slice(0, 2);
+
+		expect(later).toEqual(first);
 	});
 
 	it('does not throw for an unknown carrier', () => {
