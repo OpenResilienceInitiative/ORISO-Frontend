@@ -143,7 +143,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Herunterladen"
+			"label": "Herunterladen",
+			"aria": "{{name}} herunterladen"
 		},
 		"error": {
 			"format": {

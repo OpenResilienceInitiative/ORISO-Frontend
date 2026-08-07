@@ -140,7 +140,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Download"
+			"label": "Download",
+			"aria": "Download {{name}}"
 		},
 		"error": {
 			"format": {
