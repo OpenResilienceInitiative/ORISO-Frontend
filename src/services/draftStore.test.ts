@@ -6,6 +6,7 @@ import {
 	DRAFTS_UPDATED_EVENT,
 	getAllDraftEntries,
 	getDraftEntry,
+	hasDraftContent,
 	removeDraftEntry,
 	saveDraftEntry
 } from './draftStore';
@@ -89,6 +90,27 @@ describe('draftStore', () => {
 		saveDraftEntry({ ...draft, text: '   ' });
 
 		expect(getDraftEntry(draft.key)).toBeNull();
+	});
+
+	describe('hasDraftContent (#976)', () => {
+		it.each([
+			['', false],
+			['   ', false],
+			[null, false],
+			[undefined, false],
+			['<p></p>', false],
+			['<p><br></p>', false],
+			['<p>&nbsp;</p>', false],
+			['<p>​</p>', false],
+			['<p>Hallo</p>', true],
+			['Hallo', true],
+			// E2EE drafts are opaque ciphertext and always count as content.
+			['enc.AbCdEf123', true]
+		])('treats %j as content=%s', (text, expected) => {
+			expect(hasDraftContent(text as string | null | undefined)).toBe(
+				expected
+			);
+		});
 	});
 
 	it('recovers from malformed draft storage data', () => {

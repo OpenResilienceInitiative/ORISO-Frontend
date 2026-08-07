@@ -81,6 +81,11 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
+import {
+	buildEditContext,
+	buildReplyQuoteContext,
+	buildReplyQuotePreview
+} from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
@@ -3255,14 +3260,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo({
-			eventId: message._id,
-			author: message.displayName || message.username,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setReplyTo(buildReplyQuoteContext(message));
 	}, []);
 
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
@@ -3274,13 +3272,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage({
-			eventId: message._id,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setEditingMessage(buildEditContext(message));
 	}, []);
 
 	const handleDeleteDirect = useCallback(
@@ -3320,12 +3312,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return {
-				author: target.displayName || target.username,
-				text: parseMessagePrefixes(target.message)
-					.cleanedMessage.replace(/<[^>]*>/g, '')
-					.slice(0, 200)
-			};
+			return buildReplyQuotePreview(target);
 		},
 		[messages]
 	);

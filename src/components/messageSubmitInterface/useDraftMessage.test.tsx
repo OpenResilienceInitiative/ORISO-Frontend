@@ -157,4 +157,82 @@ describe('useDraftMessage', () => {
 			'scope:session-42|thread:main'
 		);
 	});
+
+	// #976: a zero-content autosave used to upsert `text: ''`, which left a
+	// draft row the badge kept counting but no view could ever open.
+	it('deletes the remote draft instead of storing an empty one', async () => {
+		const loadDraft = vi.fn();
+
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		vi.useFakeTimers();
+
+		act(() => {
+			result.current.onChange('<p>Halb getippt</p>');
+		});
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1600);
+		});
+
+		expect(mocks.apiUpsertUserDraft).toHaveBeenCalledWith(
+			'scope:session-42|thread:main',
+			expect.objectContaining({ text: '<p>Halb getippt</p>' })
+		);
+
+		mocks.apiUpsertUserDraft.mockClear();
+
+		// TipTap serialises an emptied composer as `<p></p>`.
+		act(() => {
+			result.current.onChange('<p></p>');
+		});
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1600);
+		});
+
+		expect(mocks.apiDeleteUserDraft).toHaveBeenCalledWith(
+			'scope:session-42|thread:main'
+		);
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.filter(
+				([scopeKey]) => scopeKey === 'scope:session-42|thread:main'
+			)
+		).toHaveLength(0);
+	});
+
+	// #976: autosave also fires on unmount. A conversation that was only opened
+	// must not leave a draft row behind.
+	it('does not persist a draft for a conversation that was only visited', async () => {
+		const loadDraft = vi.fn();
+
+		const { result, unmount } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.filter(
+				([scopeKey]) => scopeKey === 'scope:session-42|thread:main'
+			)
+		).toHaveLength(0);
+	});
 });
