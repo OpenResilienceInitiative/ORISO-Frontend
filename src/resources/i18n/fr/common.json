@@ -530,7 +530,7 @@
 			},
 			"overlay": {
 				"button": "Vers le message",
-				"copy": "Vous recevrez une réponse de notre part dans un délai de 2 jours ouvrables.",
+				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
 		}

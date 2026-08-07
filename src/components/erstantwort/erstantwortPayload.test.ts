@@ -131,7 +131,11 @@ describe('parseErstantwortPayload', () => {
 						body: 'Details finden Sie hier.',
 						links: [
 							{ label: 'Datenschutz', url: 'https://x.test/dpp' },
-							{ label: 'Böse', url: 'javascript:alert(1)' },
+							{
+								label: 'Böse',
+								// eslint-disable-next-line no-script-url -- the hostile input under test
+								url: 'javascript:alert(1)'
+							},
 							{ label: 'Ohne URL' }
 						]
 					}

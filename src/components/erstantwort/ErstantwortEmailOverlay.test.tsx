@@ -59,6 +59,8 @@ vi.mock('../../resources/img/illustrations/check.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
+/* eslint-disable-next-line import/first -- must be imported after the vi.mock
+   calls above, otherwise the real Overlay and SVG modules load first. */
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 
 afterEach(cleanup);

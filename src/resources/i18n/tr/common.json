@@ -530,7 +530,7 @@
 			},
 			"overlay": {
 				"button": "Mesaja",
-				"copy": "Bizden 2 iş günü içinde bir yanıt alacaksınız.",
+				"copy": "Mesajınızı aldık.",
 				"headline": "Mesajınız için teşekkür ederiz!"
 			}
 		}

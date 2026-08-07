@@ -26,7 +26,8 @@ import {
 	urlifyLinksInText
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
-import { FurtherSteps } from './FurtherSteps';
+import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -1003,6 +1004,19 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
+	   `parsedMessage.systemNotificationType`, because the payload version has to
+	   be inspected too: an event from a newer server must render nothing at all
+	   rather than fall through to the generic system-notification chrome, which
+	   would show a raw JSON blob. */
+	const isErstantwortEvent = useMemo(
+		() => isErstantwortMessage(decryptedMessage),
+		[decryptedMessage]
+	);
+	const erstantwortModality = useMemo(
+		() => (activeSession ? getModality(activeSession) : undefined),
+		[activeSession]
+	);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -1138,8 +1152,10 @@ export const MessageItemComponent = ({
 	);
 
 	const videoCallMessage: VideoCallMessageDTO = alias?.videoCallMessageDTO;
-	const isFurtherStepsMessage =
-		alias?.messageType === ALIAS_MESSAGE_TYPES.FURTHER_STEPS;
+	/* ADR-018 retires the FURTHER_STEPS renderer together with the alias path
+	   it keyed off: no Matrix code path produces an `alias` object, so this
+	   branch never fired. `UPDATE_SESSION_DATA` shared the same renderer and is
+	   still discarded below, where it always was. */
 	const isUpdateSessionDataMessage =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.UPDATE_SESSION_DATA;
 	const isVideoCallMessage =
@@ -1723,10 +1739,6 @@ export const MessageItemComponent = ({
 					}
 				}
 				return;
-			case isFurtherStepsMessage:
-				return <FurtherSteps />;
-			case isUpdateSessionDataMessage:
-				return <FurtherSteps />;
 			case isAppointmentSet:
 				return (
 					<Appointment
@@ -2292,6 +2304,24 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event
+	   carrying a versioned Baustein payload, not a message body. It returns
+	   early — before the generic system-notification chrome — because it renders
+	   as its own staged Carimat sequence, and the surrounding message frame
+	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
+	   sequence already draws. */
+	if (isErstantwortEvent) {
+		return (
+			<div className="messageItem messageItem--erstantwort">
+				{getMessageDate()}
+				<ErstantwortMessage
+					rawMessage={decryptedMessage}
+					conversationType={erstantwortModality}
+				/>
+			</div>
+		);
+	}
+
 	if (isUserLeftChatEvent) {
 		return (
 			<div className="messageItem messageItem--chatEvent">
@@ -2317,7 +2347,6 @@ export const MessageItemComponent = ({
 				className={`
 					messageItem__messageWrap
 					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
 							? 'messageItem__messageWrap--e2eeActivatedMessage'

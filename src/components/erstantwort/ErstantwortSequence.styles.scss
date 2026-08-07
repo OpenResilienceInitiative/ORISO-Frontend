@@ -1,3 +1,5 @@
+@import '../../resources/styles/settings';
+
 /* Erstantwort — the staged Carimat bubble sequence (ADR-018).
  *
  * Geometry is inherited from `PseudonymCard.styles.scss` on purpose: an
@@ -28,7 +30,14 @@
 	   top-left corner that attaches it to the avatar. The rest are fully
 	   rounded, the same idiom the message list uses for a run of messages. */
 	border-radius: 14px;
-	max-width: 100%;
+
+	/* Shrink to the text. A bubble stretched to the full column reads as a
+	   document block rather than as somebody talking — most visible on the
+	   one-line Bausteine, where a full-width box for four words looks like a
+	   form field. `fit-content` keeps the chat grammar; the cap keeps the long
+	   Bausteine at a readable measure. */
+	width: fit-content;
+	max-width: min(100%, 34rem);
 
 	&:first-of-type {
 		border-radius: 4px 14px 14px 14px;
@@ -38,8 +47,14 @@
 .erstantwort__bubble--typing {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	min-height: 52px;
 	padding: 18px 22px;
+
+	/* `.pseudonymCard__bubble` carries `min-width: 260px`, which is right for a
+	   card holding a pseudonym and a dice but absurd around three dots — it
+	   rendered as a wide empty box. The typing placeholder sizes to the dots. */
+	min-width: 0;
 }
 
 .erstantwort__headline {
@@ -50,6 +65,15 @@
 }
 
 .erstantwort__body {
+	/* The Carimat onboarding cards set a monospace face on
+	   `.pseudonymCard__bubbleText` for their typewriter effect. That reads as a
+	   deliberate flourish on one short line and as a wall of code on a
+	   ten-Baustein sequence, so the Erstantwort takes the body face back. The
+	   person reading this has just written about something hard; legibility
+	   outranks the effect. */
+	font-family: $font-family-sans-serif;
+	font-size: 15px;
+	line-height: 1.5;
 	margin: 0;
 	white-space: pre-line;
 }

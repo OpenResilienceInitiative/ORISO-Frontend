@@ -530,7 +530,7 @@
 			},
 			"overlay": {
 				"button": "Go to the message",
-				"copy": "Within two business days you will receive a response from us.",
+				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
 		}
