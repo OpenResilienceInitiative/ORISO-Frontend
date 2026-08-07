@@ -13,8 +13,9 @@ env:
 
 jobs:
   publish:
-    name: lint, type-check, build and publish Storybook image
+    name: build and publish Storybook image
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     permissions:
       contents: read
@@ -24,11 +25,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '18'
-
+      # No node-build step: "Frontend Build and Publish" runs lint, type-check
+      # and unit tests on the same commit, and Dockerfile.storybook runs its own
+      # install and `npm run build-storybook`.
       - name: Publish Storybook Docker image
         uses: ./.github/actions/docker-build-push
         with:

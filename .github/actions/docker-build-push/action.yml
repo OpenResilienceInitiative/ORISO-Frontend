@@ -32,7 +32,10 @@ outputs:
 runs:
   using: 'composite'
   steps:
+  # QEMU is only needed to emulate a foreign architecture. Single-platform
+  # amd64 builds run natively on the runner and must not pay for the emulator.
   - name: Set up QEMU
+    if: ${{ inputs.platforms != 'linux/amd64' }}
     uses: docker/setup-qemu-action@v4
 
   - name: Set up Docker Buildx
@@ -65,8 +68,10 @@ runs:
       file: ${{ inputs.dockerfile }}
       platforms: ${{ inputs.platforms }}
       push: ${{ inputs.push_to_ghcr }}
-      provenance: mode=max
-      sbom: true
+      # Provenance and SBOM attestations are only meaningful on an image that
+      # gets pushed — on a validation build they are computed and discarded.
+      provenance: ${{ inputs.push_to_ghcr == 'true' && 'mode=max' || 'false' }}
+      sbom: ${{ inputs.push_to_ghcr == 'true' }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
       # Scope the GHA cache per image so images built from this shared action

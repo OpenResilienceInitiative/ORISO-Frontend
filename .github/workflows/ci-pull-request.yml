@@ -7,29 +7,35 @@ env:
   REGISTRY: ghcr.io
   ORG: openresilienceinitiative
 
+concurrency:
+  group: frontend-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: lint, type-check, test, build and Docker validation
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Runs lint, type-check, unit tests and the app build.
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'
 
-      - name: Run unit tests
-        shell: bash
-        run: npm run test:unit
-
+      # Native amd64 only: this image is thrown away, so emulating arm64 under
+      # QEMU buys nothing but wall-clock. The publish workflow still builds both
+      # architectures for the images that actually get deployed.
       - name: Docker build validation without publishing
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: false
           image_name: oriso-frontend
+          platforms: linux/amd64
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
 # NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
