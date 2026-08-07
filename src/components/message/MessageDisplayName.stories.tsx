@@ -191,7 +191,8 @@ export const ConsultantLongAgencyMobile: Story = {
 		type: 'consultant',
 		isUser: false,
 		displayName: 'Beratende Person Kim G.',
-		subtitle: '54222 Katholische Beratungsstelle für Ehe-, Familien- und Lebensfragen Mainz'
+		subtitle:
+			'54222 Katholische Beratungsstelle für Ehe-, Familien- und Lebensfragen Mainz'
 	},
 	parameters: {
 		...mobileParameters,

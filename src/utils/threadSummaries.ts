@@ -5,7 +5,7 @@
  * `threadRootEventId`. No legacy `[THREAD:]`-prefix fallback.
  */
 
-import { parseMessagePrefixes } from '../components/message/messageConstants';
+import { toMessagePreviewText } from './messagePreviewText';
 
 export interface ThreadableMessage {
 	_id: string;
@@ -35,7 +35,7 @@ export const computeThreadSummaries = (
 
 		const rootMessage = byId.get(rootId);
 		const rootPreview = rootMessage
-			? parseMessagePrefixes(rootMessage.message).cleanedMessage
+			? toMessagePreviewText(rootMessage.message)
 			: '';
 
 		const existing = map.get(rootId);

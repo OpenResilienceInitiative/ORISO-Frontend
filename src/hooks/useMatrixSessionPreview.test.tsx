@@ -14,7 +14,9 @@ vi.mock('../services/chatTransportService', () => ({
 describe('useMatrixSessionPreview', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(chatTransportService.getMatrixRoomMessages).mockReturnValue([]);
+		vi.mocked(chatTransportService.getMatrixRoomMessages).mockReturnValue(
+			[]
+		);
 		vi.mocked(chatTransportService.onMatrixTimeline).mockReturnValue(
 			vi.fn()
 		);
