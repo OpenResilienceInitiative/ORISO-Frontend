@@ -17,6 +17,8 @@ import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { Spinner } from '../spinner/Spinner';
 import { useTenant } from '../../globalState/provider/TenantProvider';
+import { useStageEffect } from './effects/useStageEffect';
+import { resolveTenantStageEffect } from './effects/tenantStageEffect';
 
 export interface StageProps {
 	className?: string;
@@ -41,6 +43,19 @@ export const Stage = ({
 		tenant?.theming?.associationLogo || tenant?.theming?.logo || '';
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
+	const effectCanvasRef = useRef<HTMLCanvasElement>(null);
+	/*
+	 * The tenant's decorative effect. Nothing about it is in the critical path:
+	 * the hook fetches the one selected effect's chunk only once the stage is on
+	 * screen and the browser has been idle, skips narrow viewports entirely so a
+	 * phone never downloads it, and honours prefers-reduced-motion. An
+	 * unconfigured tenant resolves to 'none', which loads nothing at all.
+	 */
+	const stageEffect = resolveTenantStageEffect(tenant);
+	useStageEffect(stageEffect, {
+		hostRef: rootNodeRef,
+		canvasRef: effectCanvasRef
+	});
 	const glowTargetRef = useRef({ x: 32, y: 24 });
 	const glowPositionRef = useRef({ x: 32, y: 24 });
 	const glowAnimationFrameRef = useRef<number | null>(null);
@@ -149,7 +164,15 @@ export const Stage = ({
 				'stage--ready': hasAnimationFinished
 			})}
 			data-cy="stage"
+			data-cy-effect={stageEffect}
 		>
+			{stageEffect !== 'none' && (
+				<canvas
+					ref={effectCanvasRef}
+					aria-hidden
+					className="stage__effectCanvas"
+				/>
+			)}
 			{ieBanner && (
 				<Banner
 					className="ieBanner"

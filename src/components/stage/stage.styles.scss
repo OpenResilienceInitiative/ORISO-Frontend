@@ -260,3 +260,17 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		margin: 0 $grid-base;
 	}
 }
+
+/*
+ * Canvas for the tenant's decorative stage effect. Sits under the content and
+ * never takes pointer events — the effect reads the pointer from the stage
+ * element itself, so the links and logos above stay clickable.
+ */
+.stage__effectCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
