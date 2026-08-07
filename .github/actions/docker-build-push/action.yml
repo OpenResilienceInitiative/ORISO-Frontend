@@ -4,24 +4,19 @@ inputs:
   push_to_ghcr:
     description: Whether to push the built image to GHCR
     required: true
-    type: boolean
   image_name:
     description: GHCR image name without registry or organization
     required: true
-    type: string
   github_token:
     description: GitHub token used only when publishing is enabled
     required: true
-    type: string
   dockerfile:
     description: Dockerfile path relative to the repository root
     required: false
-    type: string
     default: Dockerfile
   platforms:
     description: Comma-separated OCI target platforms
     required: false
-    type: string
     default: linux/amd64,linux/arm64
 
 outputs:
