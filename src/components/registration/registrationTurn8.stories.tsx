@@ -21,7 +21,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Implementation of design turn 8 ("Finale"). Approval surface — nothing here is wired into the live registration flow yet. Card artwork is still a placeholder; the finals are being delivered separately.'
+					'Implementation of design turn 8 ("Finale"). Approval surface — nothing here is wired into the live registration flow yet. All artwork is final.'
 			}
 		}
 	}
@@ -194,7 +194,7 @@ export const ZipcodeStep: StoryObj = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Der echte Schritt, nicht nachgebaut: Ziffer eingeben springt weiter, Ruecktaste auf leerem Feld springt zurueck, Einfuegen fuellt die ganze Zeile. Der Aufklapper ist zu — die vier Motive laden erst beim Oeffnen. **Bilder sind Platzhalter.**'
+				story: 'Der echte Schritt, nicht nachgebaut: Ziffer eingeben springt weiter, Ruecktaste auf leerem Feld springt zurueck, Einfuegen fuellt die ganze Zeile. Der Aufklapper ist zu — die vier Motive laden erst beim Oeffnen.'
 			}
 		}
 	},
@@ -299,10 +299,7 @@ export const WhyLocalOpen: StoryObj = {
 	name: '8a — Aufklapper "Warum lokal beraten?"',
 	render: () => (
 		<Box sx={{ width: 343 }}>
-			<Caption>
-				Platzhalter-Motive — die finalen 48-pt-Bilder ersetzen sie in
-				einer Datei (registrationArtwork.ts).
-			</Caption>
+			<Caption>Die vier finalen Motive im 48-pt-Kreis.</Caption>
 			<WhyLocalDisclosure />
 		</Box>
 	)
@@ -380,7 +377,7 @@ export const HandoverMobile: StoryObj = {
 		layout: 'centered',
 		docs: {
 			description: {
-				story: 'Ladephase: Text steht sofort, der Button ist zu. Die Karten sind horizontal wischbar. **Bilder sind Platzhalter.**'
+				story: 'Ladephase: Text steht sofort, der Button ist zu. Die Karten sind horizontal wischbar.'
 			}
 		}
 	}
