@@ -191,15 +191,34 @@ describe('registration topic clusters (ORISO-Frontend#973)', () => {
 		});
 	});
 
-	it('recognises the school-to-work topic when the backend only sends an internal identifier', () => {
-		const backendTopic = {
-			slug: undefined,
-			internalIdentifier: 'school-to-work'
-		};
+	// Topics created through the admin panel carry no slug — the form only
+	// offers name, description, internal identifier and status. The four
+	// topics #973 still needs from the backend must therefore be reachable by
+	// internal identifier alone, and "migration" is already taken by
+	// Aus-/Rück- und Weiterwanderung.
+	it.each([
+		['school-to-work', 'Übergang von Schule zu Beruf'],
+		['addiction', 'Sucht'],
+		['bereavement', 'Trauerberatung'],
+		['migration-support', 'Migration']
+	])(
+		'recognises internal identifier "%s" when the backend sends no slug',
+		(internalIdentifier, expectedTitle) => {
+			const backendTopic = { slug: undefined, internalIdentifier };
 
-		expect(getRegistrationTopicDisplay(backendTopic, 'de').title).toBe(
-			'Übergang von Schule zu Beruf'
-		);
+			expect(getRegistrationTopicDisplay(backendTopic, 'de').title).toBe(
+				expectedTitle
+			);
+		}
+	);
+
+	it('keeps Aus-/Rück- und Weiterwanderung on the internal identifier it already uses', () => {
+		expect(
+			getRegistrationTopicDisplay(
+				{ slug: undefined, internalIdentifier: 'migration' },
+				'de'
+			).title
+		).toBe('Aus-/Rück- und Weiterwanderung');
 	});
 
 	it('keeps a topic that lives in several clusters independently selectable', () => {

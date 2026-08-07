@@ -124,7 +124,10 @@ const topicIconByInternalIdentifier: Record<string, string> = {
 	'general-social': generalSocial,
 	'debt': debt,
 	'offending': offending,
-	'school-to-work': category01
+	'school-to-work': category01,
+	'addiction': addiction04,
+	'bereavement': bereavement02,
+	'migration-support': migration03
 };
 
 type RegistrationTopicCopy = {
@@ -483,6 +486,11 @@ const topicDisplayCopyByInternalIdentifier: Record<string, string> = {
 	'u25-suicide-prevention': 'u25-suicide-prevention',
 	'men-boys': 'counselling-men-boys',
 	'school-to-work': 'school-to-work-transition',
+	// Topics created in the admin panel arrive without a slug, so the four
+	// topics #973 still needs must be reachable by identifier alone.
+	'addiction': 'sucht',
+	'bereavement': 'trauerberatung',
+	'migration-support': 'migration',
 	'hospice-palliative': 'hospice-palliative-care-counselling',
 	'life-in-old-age': 'life-in-old-age',
 	'legal-guardianship': 'legal-guardianship-advance-care',
