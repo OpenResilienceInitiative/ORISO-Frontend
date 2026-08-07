@@ -153,7 +153,7 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 	{
 		id: 'nearby',
 		labelKey: 'sessionList.toolbar.chips.nearby',
-		fallback: 'Nearby',
+		fallback: 'Mail',
 		Icon: NearbyFilterIcon,
 		dataCy: 'sessions-list-chip-nearby'
 	},

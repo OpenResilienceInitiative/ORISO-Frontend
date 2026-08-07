@@ -124,3 +124,12 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 		).toBeTruthy();
 	});
 });
+
+describe('agency counselling modality chip (ORISO-Frontend#985)', () => {
+	it('labels the modality filter "Mail" even without a loaded translation', () => {
+		renderToolbar(true);
+
+		expect(screen.getByText('Mail')).toBeDefined();
+		expect(screen.queryByText('Nearby')).toBeNull();
+	});
+});

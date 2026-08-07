@@ -72,7 +72,7 @@ const topics: SessionSearchTopicOption[] = [
 const types: SessionSearchTypeOption[] = [
 	{ id: 'oneToOne', label: '1-1 Beratung' },
 	{ id: 'liveChat', label: 'Live Chat' },
-	{ id: 'nearby', label: 'Nähe' },
+	{ id: 'nearby', label: 'Mail' },
 	{ id: 'group', label: 'Kreis' }
 ];
 

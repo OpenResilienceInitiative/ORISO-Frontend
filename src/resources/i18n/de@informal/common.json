@@ -1245,7 +1245,7 @@
 				"neu": "Ungelesen",
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
-				"nearby": "Nähe",
+				"nearby": "Mail",
 				"create": "Erstellen",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
@@ -1253,7 +1253,7 @@
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Nähe"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
