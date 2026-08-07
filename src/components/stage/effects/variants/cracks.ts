@@ -109,8 +109,10 @@ export const createCracksEffect = ({
 			h
 		);
 		target.restore();
-		// White mask → tint. `source-in` keeps the tint only where the mask is
-		// bright, which is exactly the crack network.
+		// The asset carries white pixels with the crack network in its alpha,
+		// so `source-in` recolours exactly those pixels and leaves the gaps
+		// transparent. (Shipping the alpha as a greyscale image instead made
+		// the whole rectangle opaque, and the tint covered the entire stage.)
 		target.globalCompositeOperation = 'source-in';
 		target.fillStyle = CRACK_TINT;
 		target.fillRect(0, 0, width, height);

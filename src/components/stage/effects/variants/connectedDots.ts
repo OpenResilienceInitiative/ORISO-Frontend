@@ -174,10 +174,12 @@ export const createConnectedDotsEffect = ({
 			group
 				.sort((a, b) => a.distance - b.distance)
 				.forEach((entry, rank) => {
-					schedule.push({
-						index: entry.index,
-						delay: rank * SEED_STEP * (coverage.step / 0.008) * 0.1
-					});
+					// Straight from the design: every seed spreads at the same
+					// pace, so a carrier with more starting cities simply fills
+					// in faster. (An earlier version scaled this by the
+					// carrier's `step`, which made the whole map light up about
+					// ten times too quickly.)
+					schedule.push({ index: entry.index, delay: rank * SEED_STEP });
 				});
 		});
 		return schedule;

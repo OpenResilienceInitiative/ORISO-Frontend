@@ -6,7 +6,8 @@ import { StageEffectName, STAGE_EFFECT_NAMES } from './types';
 import { useStageEffect, STAGE_EFFECT_MIN_WIDTH } from './useStageEffect';
 import { loadStageEffect } from './loadStageEffect';
 import { ConnectedDotsEffect } from './variants/connectedDots';
-import { CARRIER_COVERAGE, COVERAGE_IS_PROVISIONAL } from './variants/coverage';
+import { COVERAGE_IS_PROVISIONAL } from './variants/coverage';
+import { CARRIERS } from './variants/carriers';
 
 const meta: Meta = {
 	title: 'Stage/Login effects',
@@ -104,12 +105,26 @@ const StagePanel = ({
 						pointerEvents: 'none'
 					}}
 				>
+					{/* Typography defaults to text.primary and ignores an
+					    inherited colour, so white has to be set here. */}
 					<Typography
-						sx={{ fontSize: 32, fontWeight: 600, lineHeight: 1.15 }}
+						sx={{
+							fontSize: 32,
+							fontWeight: 600,
+							lineHeight: 1.15,
+							letterSpacing: '-0.5px',
+							color: '#fff'
+						}}
 					>
 						Beratung &amp; Hilfe
 					</Typography>
-					<Typography sx={{ mt: 1.25, fontSize: 16, opacity: 0.92 }}>
+					<Typography
+						sx={{
+							mt: 1.25,
+							fontSize: 16,
+							color: 'rgba(255,255,255,0.92)'
+						}}
+					>
 						Online. Anonym. Sicher.
 					</Typography>
 				</Box>
@@ -239,39 +254,76 @@ export const CarrierLights: StoryObj = {
 								color: '#fff'
 							}}
 						>
+							{/* The real marks from the design, at the sizes it
+							    specifies: resting at 60% opacity, lifting on
+							    hover. Focus does the same, so the map is
+							    reachable from the keyboard. */}
 							<Box
+								component="ul"
 								sx={{
 									display: 'flex',
 									flexWrap: 'wrap',
 									justifyContent: 'center',
-									gap: 2,
-									mb: 3
+									alignItems: 'flex-end',
+									gap: '14px 18px',
+									width: 300,
+									m: 0,
+									p: 0,
+									mb: 3,
+									listStyle: 'none'
 								}}
 							>
-								{Object.keys(CARRIER_COVERAGE).map((key) => (
+								{CARRIERS.map((carrier) => (
 									<Box
-										key={key}
-										component="button"
-										type="button"
-										onMouseEnter={() => setActive(key)}
-										onMouseLeave={() => setActive(null)}
-										onFocus={() => setActive(key)}
-										onBlur={() => setActive(null)}
-										sx={{
-											px: 1.5,
-											py: 0.75,
-											borderRadius: 999,
-											border: '1px solid rgba(255,255,255,.35)',
-											background:
-												active === key
-													? 'rgba(255,255,255,.22)'
-													: 'transparent',
-											color: '#fff',
-											fontSize: 12,
-											cursor: 'pointer'
-										}}
+										component="li"
+										key={carrier.id}
+										sx={{ display: 'flex' }}
 									>
-										{key}
+										<Box
+											component="button"
+											type="button"
+											aria-label={carrier.name}
+											aria-pressed={active === carrier.id}
+											onMouseEnter={() =>
+												setActive(carrier.id)
+											}
+											onMouseLeave={() => setActive(null)}
+											onFocus={() =>
+												setActive(carrier.id)
+											}
+											onBlur={() => setActive(null)}
+											sx={{
+												'display': 'flex',
+												'p': 0,
+												'border': 'none',
+												'background': 'none',
+												'cursor': 'pointer',
+												'opacity':
+													active === carrier.id
+														? 1
+														: 0.6,
+												'transform':
+													active === carrier.id
+														? 'translateY(-2px)'
+														: 'none',
+												'transition':
+													'opacity 200ms ease, transform 200ms ease',
+												'&:focus-visible': {
+													outline: '2px solid #fff',
+													outlineOffset: 3
+												}
+											}}
+										>
+											<Box
+												component="img"
+												src={carrier.logo}
+												alt=""
+												sx={{
+													width: carrier.size,
+													height: carrier.size
+												}}
+											/>
+										</Box>
 									</Box>
 								))}
 							</Box>
