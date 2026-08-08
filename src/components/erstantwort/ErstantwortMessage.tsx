@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
 import { useOpenTwoFactorSettings } from '../../hooks/useOpenTwoFactorSettings';
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { ErstantwortActionKind } from './erstantwortPayload';
 import {
 	ErstantwortLiveState,
@@ -51,6 +53,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
+	const navigate = useNavigate();
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
@@ -89,15 +92,23 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				case 'ENABLE_2FA':
 					openTwoFactorSettings();
 					break;
+				case 'SET_DISPLAY_NAME':
+					/* The display-name setting takes effect at assignment time
+					   and lives in the profile. Whether free entry is offered at
+					   all is governed by ORISO-Admin#602 switch 1; until that
+					   ships, the profile's own rules apply unchanged. */
+					navigate('/profile');
+					break;
+				case 'SAVE_CREDENTIALS':
+					/* Handled inline by SaveCredentialsCard — there is no dialog
+					   to open. The button exists only for keyboard users who
+					   reach it before the card. */
+					break;
 				default:
-					/* SAVE_CREDENTIALS and SET_DISPLAY_NAME arrive with the
-					   post-dispatch slice (ORISO-Frontend#825). Until then the
-					   catalogue does not emit them on this trigger, so this
-					   branch is unreachable rather than a silent no-op. */
 					break;
 			}
 		},
-		[openTwoFactorSettings]
+		[navigate, openTwoFactorSettings]
 	);
 
 	if (!bausteine.length) return null;
@@ -109,6 +120,13 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				skipAnimation={skipAnimation}
 				onAction={handleAction}
 				onFirstReveal={onFirstReveal}
+				slots={{
+					saveCredentials: (
+						<SaveCredentialsCard
+							userName={userData?.userName ?? ''}
+						/>
+					)
+				}}
 			/>
 			{isEmailOverlayOpen && (
 				<ErstantwortEmailOverlay

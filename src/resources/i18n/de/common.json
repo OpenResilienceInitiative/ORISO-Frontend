@@ -4045,7 +4045,11 @@
 		"saveCredentials": {
 			"headline": "Sichern Sie sich Ihren Zugang",
 			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager. Wenn andere dieses Gerät mitbenutzen, speichern Sie ihn besser nicht hier.",
-			"action": "Zugangsdaten sichern"
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen"
 		},
 		"displayName": {
 			"headline": "Ihr angezeigter Name",

@@ -40,6 +40,13 @@ export interface ErstantwortSequenceProps {
 	onAction?: (kind: ErstantwortActionKind) => void;
 	/** Subtitle beside the Carimat name; defaults to the platform wording. */
 	subtitle?: string;
+	/**
+	 * Extra content rendered inside a specific Baustein's bubble, keyed by id.
+	 * Used by the post-dispatch slice, where "Zugangsdaten sichern" is a card
+	 * rather than a button — the person needs the login name in front of them,
+	 * not a dialog they have to open first.
+	 */
+	slots?: Record<string, React.ReactNode>;
 }
 
 const DEFAULT_STAGGER_MS = 1400;
@@ -63,7 +70,8 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	skipAnimation = false,
 	onFirstReveal,
 	onAction,
-	subtitle
+	subtitle,
+	slots
 }) => {
 	const { t } = useTranslation();
 	const total = bausteine.length;
@@ -179,6 +187,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 										))}
 									</ul>
 								) : null}
+								{slots?.[baustein.id]}
 								{baustein.action &&
 									renderAction(baustein.action, onAction)}
 							</div>

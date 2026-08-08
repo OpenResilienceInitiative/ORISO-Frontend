@@ -3947,7 +3947,11 @@
 		"saveCredentials": {
 			"headline": "Keep hold of your access",
 			"body": "Without your login name you will not be able to return to this conversation later. Keep it somewhere safe — a password manager is best. If other people use this device, better not to save it here.",
-			"action": "Save my access details"
+			"userNameLabel": "Login name",
+			"copy": "Copy",
+			"copied": "Login name copied.",
+			"sharedDevice": "If other people use this device, better not to save your login name here — write it down somewhere safe instead.",
+			"setPassword": "Set a password now"
 		},
 		"displayName": {
 			"headline": "Your displayed name",

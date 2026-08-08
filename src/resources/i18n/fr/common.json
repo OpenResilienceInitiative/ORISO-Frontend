@@ -3184,7 +3184,11 @@
 		"saveCredentials": {
 			"headline": "Conservez votre accès",
 			"body": "Sans votre nom de connexion, vous ne pourrez plus revenir à cette conversation. Conservez-le en lieu sûr — de préférence dans un gestionnaire de mots de passe. Si d'autres personnes utilisent cet appareil, mieux vaut ne pas l'enregistrer ici.",
-			"action": "Sauvegarder mes accès"
+			"userNameLabel": "Nom de connexion",
+			"copy": "Copier",
+			"copied": "Nom de connexion copié.",
+			"sharedDevice": "Si d'autres personnes utilisent cet appareil, mieux vaut ne pas enregistrer votre nom de connexion ici — notez-le plutôt en lieu sûr.",
+			"setPassword": "Définir un mot de passe maintenant"
 		},
 		"displayName": {
 			"headline": "Votre nom affiché",

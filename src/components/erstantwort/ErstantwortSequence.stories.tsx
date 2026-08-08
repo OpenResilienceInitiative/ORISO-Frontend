@@ -1,6 +1,8 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
+import { SaveCredentialsCard } from './SaveCredentialsCard';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
@@ -177,7 +179,41 @@ export const AfterEnquiryDispatched: Story = {
 			translate,
 			state: OPEN_STATE
 		}).bausteine,
-		skipAnimation: true
+		skipAnimation: true,
+		slots: {
+			saveCredentials: <SaveCredentialsCard userName="katze_mika_1234" />
+		}
+	}
+};
+
+/**
+ * **Credential saving, close up.** Three things to check, each a decision
+ * rather than a detail:
+ *
+ * - **No download anywhere.** A `zugangsdaten.txt` in the download folder is a
+ *   lasting trace on a device somebody else may use — hence the shared-device
+ *   warning too.
+ * - **The password is not shown, and is not claimed to be.** It is hashed in
+ *   Keycloak and gone from the browser after the post-registration redirect;
+ *   "Passwort jetzt setzen" reaches the existing profile flow, where the person
+ *   chooses one they actually know and Keycloak overwrites the generated one.
+ * - **The login name field carries `name="username"` and
+ *   `autocomplete="username"`**, which is what lets a password manager
+ *   associate the credential. The Credential Management API is Chromium-only
+ *   and is deliberately *not* the mechanism.
+ */
+export const SaveCredentials: Story = {
+	args: {
+		skipAnimation: true,
+		bausteine: resolveErstantwortBausteine({
+			trigger: 'AFTER_ENQUIRY_DISPATCHED',
+			context: { conversationType: 'AGENCY_COUNSELLING' },
+			translate,
+			state: OPEN_STATE
+		}).bausteine.filter((baustein) => baustein.id === 'saveCredentials'),
+		slots: {
+			saveCredentials: <SaveCredentialsCard userName="katze_mika_1234" />
+		}
 	}
 };
 

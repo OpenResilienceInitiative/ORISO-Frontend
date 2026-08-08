@@ -16,6 +16,8 @@ vi.mock('../../resources/img/icons/reload.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
+/* eslint-disable-next-line import/first -- must load after the vi.mock calls
+   above, otherwise the real Overlay module (and lottie-web) loads first. */
 import { Button, BUTTON_TYPES } from './Button';
 
 const OVERLAY_RESET_TIME = 10000;

@@ -263,12 +263,12 @@ export const ERSTANTWORT_CATALOGUE: ErstantwortCatalogueEntry[] = [
 		defaultHeadline: 'Sichern Sie sich Ihren Zugang',
 		bodyKey: 'erstantwort.saveCredentials.body',
 		defaultBody:
-			'Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager. Wenn andere dieses Gerät mitbenutzen, speichern Sie ihn besser nicht hier.',
-		action: {
-			kind: 'SAVE_CREDENTIALS',
-			labelKey: 'erstantwort.saveCredentials.action',
-			defaultLabel: 'Zugangsdaten sichern'
-		}
+			'Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager.'
+		/* No `action` on purpose. This Baustein's affordance is the inline
+		   SaveCredentialsCard — the login name has to be *in front of* the
+		   person, not behind a button they must press first. A button here would
+		   either open nothing or duplicate the card, and a button that does
+		   nothing is worse than no button. */
 	},
 	{
 		id: 'displayName',

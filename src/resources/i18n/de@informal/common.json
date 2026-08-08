@@ -1902,7 +1902,11 @@
 		"saveCredentials": {
 			"headline": "Sichere Dir Deinen Zugang",
 			"body": "Ohne Deinen Anmeldenamen kommst Du später nicht mehr in dieses Gespräch zurück. Bewahre ihn gut auf — am besten in einem Passwort-Manager. Wenn andere dieses Gerät mitbenutzen, speicher ihn besser nicht hier.",
-			"action": "Zugangsdaten sichern"
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speicher den Anmeldenamen besser nicht hier, sondern notiere ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen"
 		},
 		"displayName": {
 			"headline": "Dein angezeigter Name",

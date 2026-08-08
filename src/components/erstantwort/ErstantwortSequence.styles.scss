@@ -92,6 +92,11 @@
 }
 
 .erstantwort__action {
+	/* `.pseudonymCard__bubble` is a flex column with `align-items: stretch`, so
+	   without this the action button spans the whole bubble while the buttons
+	   inside SaveCredentialsCard size to their content — two button widths in
+	   one sequence, from the same sender. */
+	align-self: flex-start;
 	margin-top: 12px;
 	padding: 8px 16px;
 	border: 1px solid currentcolor;
