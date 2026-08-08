@@ -194,14 +194,14 @@ export const LegalModal: StoryObj = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Der Login ist der erste Bildschirm; ein zweiter Tab für die Datenschutzerklärung verliert die Anmeldung. Inhalt kommt aus dem Träger (`content.impressum` / `content.privacy`, Admin → Legal). Pflegt ein Träger nichts, bleibt der externe Link — ein Modal auf den Platzhalterhinweis wäre schlechter als die Seite, die der Link heute erreicht.'
+				story: 'Der Login ist der erste Bildschirm; ein zweiter Tab für die Datenschutzerklärung verliert die Anmeldung. Wichtig: hier ist noch **keine Beratungsstelle gewählt**, es gibt also keinen Trägertext, der hier gelten könnte. Der Hinweis ist bewusst auf Plattformebene, der vollständige und verbindliche Text liegt einen Klick weiter.\n\n⚠️ **Der Text ist ein Platzhalter und nicht rechtlich abgenommen.** Betreiberseitig gepflegt wird er laut Handoff §3 über Admin → Legal (Auswahl „Plattform-Impressum" / „Vorlage für weitere Nutzung") — das ist noch nicht gebaut.'
 			}
 		}
 	},
 	render: () => {
 		const [open, setOpen] = useState(true);
 		return (
-			<Box sx={{ minHeight: 620 }}>
+			<Box sx={{ minHeight: 560 }}>
 				<Caption>
 					Escape und Klick auf den Scrim schließen; der Fokus ist
 					gefangen und kehrt zum Auslöser zurück.
@@ -224,9 +224,10 @@ export const LegalModal: StoryObj = {
 				<LegalLinkDialog
 					open={open}
 					title="Datenschutzerklärung"
-					content={
-						'<h2>Verantwortliche Stelle</h2><p>Diesen Text pflegt der Plattformbetreiber im Admin-Panel unter <strong>Legal</strong>. Er wird hier sanitisiert gerendert.</p><h2>Zwecke der Verarbeitung</h2><p>Beispieltext, damit die Typografie im Modal beurteilt werden kann.</p>'
+					note={
+						'Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.'
 					}
+					fullTextUrl="/datenschutz"
 					onClose={() => setOpen(false)}
 				/>
 			</Box>

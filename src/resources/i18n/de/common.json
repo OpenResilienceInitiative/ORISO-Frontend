@@ -1318,6 +1318,11 @@
 				"dataprotection": "Datenschutzerklärung",
 				"termsAndConditions": "Nutzungsbedingungen",
 				"impressum": "Impressum"
+			},
+			"platform": {
+				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie Sie den Betreiber erreichen, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die sehen Sie, sobald Sie eine gewählt haben.",
+				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.",
+				"fullText": "Vollständigen Text öffnen"
 			}
 		},
 		"password": {
