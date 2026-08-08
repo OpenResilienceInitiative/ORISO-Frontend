@@ -8,7 +8,9 @@ import {
 
 describe('recentEmojis', () => {
 	beforeEach(() => {
-		window.localStorage.clear();
+		// Prefer removeItem: some Node/jsdom hybrids expose a localStorage
+		// object without `.clear()` (Vitest then warns about --localstorage-file).
+		window.localStorage.removeItem('oriso.recentEmojis');
 	});
 
 	it('offers the defaults before the user has picked anything', () => {

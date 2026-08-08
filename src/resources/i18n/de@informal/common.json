@@ -183,7 +183,7 @@
 				}
 			},
 			"overlay": {
-				"copy": "Innerhalb von 2 Arbeitstagen erhältst Du eine Antwort von uns.",
+				"copy": "Wir haben Deine Nachricht erhalten.",
 				"headline": "Vielen Dank für Deine Nachricht!"
 			}
 		}
@@ -1854,6 +1854,66 @@
 	"app": {
 		"stage": {
 			"associationLogoAlt": "Logo der Trägerorganisation"
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Deine ersten Schritte",
+		"greeting": {
+			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
+		},
+		"whoReadsAlong": {
+			"headline": "Wer Deine Nachricht liest",
+			"body": "Deine Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+		},
+		"responseDeadline": {
+			"headline": "Wann Du eine Antwort bekommst",
+			"body": "Du bekommst innerhalb von {{deadlineDays}} Werktagen eine Antwort von einer passenden Ansprechperson."
+		},
+		"modalityNote": {
+			"body": "Die Beratung findet schriftlich in diesem geschützten Bereich statt. Du kannst jederzeit weiterschreiben."
+		},
+		"noPersonalData": {
+			"headline": "Bitte keine persönlichen Daten senden",
+			"body": "Bitte schreib uns keinen vollständigen Namen, keine Adresse und keine Telefonnummer. Für die Beratung brauchen wir das nicht."
+		},
+		"emergencyNumbers": {
+			"headline": "Wenn es nicht warten kann",
+			"body": "Bei einer akuten Notlage erreichst Du rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112."
+		},
+		"dataProtection": {
+			"body": "Wie wir mit Deinen Daten umgehen, steht in der Datenschutzerklärung."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Benachrichtigung per E-Mail",
+			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal."
+		},
+		"accountProtection": {
+			"headline": "Dein Zugang, zusätzlich geschützt",
+			"body": "Du kannst Deinen Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.",
+			"action": "Zugang schützen"
+		},
+		"closing": {
+			"body": "Bis bald — wir melden uns bei Dir."
+		},
+		"saveCredentials": {
+			"headline": "Sichere Dir Deinen Zugang",
+			"body": "Ohne Deinen Anmeldenamen kommst Du später nicht mehr in dieses Gespräch zurück. Bewahre ihn gut auf — am besten in einem Passwort-Manager.",
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speicher den Anmeldenamen besser nicht hier, sondern notiere ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markier den Anmeldenamen und kopier ihn von Hand."
+		},
+		"displayName": {
+			"headline": "Dein angezeigter Name",
+			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+			"action": "Namen ändern"
 		}
 	}
 }

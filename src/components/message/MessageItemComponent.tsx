@@ -26,7 +26,8 @@ import {
 	urlifyLinksInText
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
-import { FurtherSteps } from './FurtherSteps';
+import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -97,6 +98,13 @@ import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
 import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
+
+/* How recently an Erstantwort event must have arrived for its staged reveal to
+   play. Generous on purpose: the cost of skipping the animation on a genuinely
+   new event is that the person sees the text immediately, while the cost of
+   replaying it on old history is a wall of text re-typing itself every time the
+   list scrolls. */
+const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -1048,6 +1056,36 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
+	   `parsedMessage.systemNotificationType`, because the payload version has to
+	   be inspected too: an event from a newer server must render nothing at all
+	   rather than fall through to the generic system-notification chrome, which
+	   would show a raw JSON blob. */
+	const isErstantwortEvent = useMemo(
+		() => isErstantwortMessage(decryptedMessage),
+		[decryptedMessage]
+	);
+	const erstantwortModality = useMemo(
+		() => (activeSession ? getModality(activeSession) : undefined),
+		[activeSession]
+	);
+	/* An Erstantwort in an internal counsellor room would be a category error —
+	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
+	   resolves anything unknown to Agency Counselling, so it would render the
+	   wrong sequence rather than none. Excluded explicitly. */
+	const isErstantwortModality =
+		erstantwortModality !== undefined &&
+		erstantwortModality !== Modality.INTERNAL_GROUP;
+	/* Only a freshly arrived event plays the stagger. The message list mounts and
+	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
+	   `revealed` to 0 on every mount — so without this an event received days ago
+	   types itself out again each time it scrolls into view, and `onFirstReveal`
+	   fires again with it. */
+	const isRecentErstantwortEvent = useMemo(() => {
+		const timestamp = Number(messageTime);
+		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
+	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -1183,8 +1221,10 @@ export const MessageItemComponent = ({
 	);
 
 	const videoCallMessage: VideoCallMessageDTO = alias?.videoCallMessageDTO;
-	const isFurtherStepsMessage =
-		alias?.messageType === ALIAS_MESSAGE_TYPES.FURTHER_STEPS;
+	/* ADR-018 retires the FURTHER_STEPS renderer together with the alias path
+	   it keyed off: no Matrix code path produces an `alias` object, so this
+	   branch never fired. `UPDATE_SESSION_DATA` shared the same renderer and is
+	   still discarded below, where it always was. */
 	const isUpdateSessionDataMessage =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.UPDATE_SESSION_DATA;
 	const isVideoCallMessage =
@@ -1768,10 +1808,6 @@ export const MessageItemComponent = ({
 					}
 				}
 				return;
-			case isFurtherStepsMessage:
-				return <FurtherSteps />;
-			case isUpdateSessionDataMessage:
-				return <FurtherSteps />;
 			case isAppointmentSet:
 				return (
 					<Appointment
@@ -2337,6 +2373,25 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event
+	   carrying a versioned Baustein payload, not a message body. It returns
+	   early — before the generic system-notification chrome — because it renders
+	   as its own staged Carimat sequence, and the surrounding message frame
+	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
+	   sequence already draws. */
+	if (isErstantwortEvent && isErstantwortModality) {
+		return (
+			<div className="messageItem messageItem--erstantwort">
+				{getMessageDate()}
+				<ErstantwortMessage
+					rawMessage={decryptedMessage}
+					conversationType={erstantwortModality}
+					skipAnimation={!isRecentErstantwortEvent}
+				/>
+			</div>
+		);
+	}
+
 	if (isUserLeftChatEvent) {
 		return (
 			<div className="messageItem messageItem--chatEvent">
@@ -2362,7 +2417,6 @@ export const MessageItemComponent = ({
 				className={`
 					messageItem__messageWrap
 					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
 							? 'messageItem__messageWrap--e2eeActivatedMessage'
@@ -2599,6 +2653,12 @@ export const MessageItemComponent = ({
 										className="messageItem__actionMenuReactionMore"
 										aria-haspopup="dialog"
 										aria-expanded={isQuickEmojiPickerOpen}
+										// Same exemption the composer's emoji
+										// toggle uses: without it, the picker's
+										// pointerdown-outside handler closes the
+										// picker on this button, then the click
+										// toggles it open again.
+										data-emoji-picker-toggle=""
 										aria-label={translate(
 											'message.reaction.more',
 											'Weitere Emojis'
