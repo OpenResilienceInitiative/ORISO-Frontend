@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -72,11 +72,44 @@ describe('SaveCredentialsCard', () => {
 	it('copies the login name to the clipboard on request', async () => {
 		renderCard();
 
-		screen.getByRole('button', { name: /kopieren/i }).click();
+		await act(async () => {
+			screen.getByRole('button', { name: /kopieren/i }).click();
+		});
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
 			'katze_mika_1234'
 		);
+		expect(screen.getByText('Anmeldename kopiert.')).toBeTruthy();
+	});
+
+	it('does not claim a successful copy when the clipboard write rejects', async () => {
+		/* The card used to announce "Anmeldename kopiert" the instant the button
+		   was pressed. On this card that is the difference between keeping and
+		   losing the account: the person is told their only handle back in is
+		   safely copied when nothing was copied at all. */
+		(
+			navigator.clipboard.writeText as ReturnType<typeof vi.fn>
+		).mockRejectedValue(new Error('denied'));
+		renderCard();
+
+		await act(async () => {
+			screen.getByRole('button', { name: /kopieren/i }).click();
+		});
+
+		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
+		expect(screen.getByText(/Kopieren hat nicht geklappt/i)).toBeTruthy();
+	});
+
+	it('does not claim a successful copy when there is no clipboard at all', async () => {
+		// Insecure context, an embedded webview, Firefox without permission.
+		Object.assign(navigator, { clipboard: undefined });
+		renderCard();
+
+		await act(async () => {
+			screen.getByRole('button', { name: /kopieren/i }).click();
+		});
+
+		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
 	});
 
 	it('routes "set a password now" to the existing profile security settings', () => {

@@ -128,9 +128,17 @@ export const ErstantwortEmailOverlay: React.FC<
 			'Add an e-mail address'
 		),
 		/* The failure text belongs on the field label, next to the input that
-		   caused it — not duplicated into the overlay copy above it. */
+		   caused it — not duplicated into the overlay copy above it.
+		   The live region is separate and visually hidden: after pressing Save
+		   focus stays on the button, so a label change alone announces nothing
+		   and the person can reasonably assume the save worked. */
 		nestedComponent: (
-			<InputField item={inputItem} inputHandle={handleChange} />
+			<>
+				<InputField item={inputItem} inputHandle={handleChange} />
+				<p role="alert" aria-live="polite" className="sr-only">
+					{errorText ?? ''}
+				</p>
+			</>
 		),
 		svg: EnvelopeIllustration
 	};

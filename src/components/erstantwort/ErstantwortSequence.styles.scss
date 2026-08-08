@@ -38,10 +38,14 @@
 	   Bausteine at a readable measure. */
 	width: fit-content;
 	max-width: min(100%, 34rem);
+}
 
-	&:first-of-type {
-		border-radius: 4px 14px 14px 14px;
-	}
+/* The flat top-left corner belongs to the *first bubble*, which is the sibling
+   right after the kicker line. `&:first-of-type` never matched it: the header is
+   also a div, so it is the first-of-type in this container and every bubble kept
+   the fully rounded radius. */
+.erstantwort__content > .pseudonymCard__header + .erstantwort__bubble {
+	border-radius: 4px 14px 14px 14px;
 }
 
 .erstantwort__bubble--typing {
@@ -91,13 +95,9 @@
 	}
 }
 
-.erstantwort__action {
-	/* `.pseudonymCard__bubble` is a flex column with `align-items: stretch`, so
-	   without this the action button spans the whole bubble while the buttons
-	   inside SaveCredentialsCard size to their content — two button widths in
-	   one sequence, from the same sender. */
-	align-self: flex-start;
-	margin-top: 12px;
+/* The one pill affordance the Erstantwort uses, defined once and extended by
+   SaveCredentialsCard's buttons too. */
+%erstantwort-pill-affordance {
 	padding: 8px 16px;
 	border: 1px solid currentcolor;
 	border-radius: 999px;
@@ -117,4 +117,15 @@
 		outline: 2px solid currentcolor;
 		outline-offset: 2px;
 	}
+}
+
+.erstantwort__action {
+	@extend %erstantwort-pill-affordance;
+
+	/* `.pseudonymCard__bubble` is a flex column with `align-items: stretch`, so
+	   without this the action button spans the whole bubble while the buttons
+	   inside SaveCredentialsCard size to their content — two button widths in
+	   one sequence, from the same sender. */
+	align-self: flex-start;
+	margin-top: 12px;
 }

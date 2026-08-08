@@ -51,18 +51,25 @@ export interface ErstantwortSequenceProps {
 
 const DEFAULT_STAGGER_MS = 1400;
 
+/**
+ * No handler, no button. An enabled control that does nothing is worse than an
+ * absent one anywhere, and worst of all in the message that is meant to be the
+ * transparency record — the person presses it, nothing happens, and they are
+ * left unsure whether they just did something.
+ */
 const renderAction = (
 	action: NonNullable<ResolvedBaustein['action']>,
 	onAction?: (kind: ErstantwortActionKind) => void
-) => (
-	<button
-		type="button"
-		className="erstantwort__action"
-		onClick={() => onAction?.(action.kind)}
-	>
-		{action.label}
-	</button>
-);
+) =>
+	onAction ? (
+		<button
+			type="button"
+			className="erstantwort__action"
+			onClick={() => onAction(action.kind)}
+		>
+			{action.label}
+		</button>
+	) : null;
 
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,

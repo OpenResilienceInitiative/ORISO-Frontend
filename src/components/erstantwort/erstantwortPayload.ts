@@ -191,7 +191,10 @@ export const parseErstantwortPayload = (
 	if (typeof version !== 'number' || !Number.isFinite(version)) {
 		return { status: 'unsupported-version', version: NaN, bausteine: [] };
 	}
-	if (version > ERSTANTWORT_PAYLOAD_VERSION) {
+	/* Anything that is not exactly the supported version is unsupported —
+	   including 0, a negative number and 0.5. `> VERSION` let all three through
+	   and rendered a payload of an unknown wire format as if it were v1. */
+	if (version !== ERSTANTWORT_PAYLOAD_VERSION) {
 		return { status: 'unsupported-version', version, bausteine: [] };
 	}
 

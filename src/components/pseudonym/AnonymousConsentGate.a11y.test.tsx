@@ -73,12 +73,20 @@ describe('AnonymousConsentGate — accessibility of a blocking gate', () => {
 	});
 
 	it('moves focus into the gate on mount instead of leaving it behind', () => {
-		renderGate();
+		const { container } = renderGate();
+		const dialog = container.querySelector('[role="dialog"]');
 
-		expect(document.activeElement).toBe(
-			document.querySelector('[role="dialog"]')
-		);
+		/* Inside the dialog, not necessarily *on* it — the focus trap may settle
+		   on the container or on its first control depending on the engine. What
+		   matters is that focus is not left behind outside it. */
+		expect(dialog?.contains(document.activeElement)).toBe(true);
 	});
+
+	/* Containment itself is not asserted here: jsdom does not move focus on Tab,
+	   so a simulated Tab would pass against a dialog that leaks in a real
+	   browser — a test that proves nothing while looking reassuring. The
+	   behavioural proof runs in Chromium, Firefox and WebKit in
+	   `playwright/consent-gate-focus.crossbrowser.spec.ts`. */
 
 	it('says nothing gendered — the platform voice is neutral by reformulation', () => {
 		const { container } = renderGate();

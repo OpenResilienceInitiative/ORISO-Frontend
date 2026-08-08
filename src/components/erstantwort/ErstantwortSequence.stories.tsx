@@ -48,6 +48,11 @@ const meta = {
 			}
 		}
 	},
+	/* Action buttons only render when a handler exists — no handler, no no-op
+	   button. In the app `ErstantwortMessage` always supplies one, so the
+	   stories do too, otherwise they would show a version of the sequence
+	   nobody ever sees. */
+	args: { onAction: () => undefined },
 	argTypes: {
 		staggerMs: {
 			control: { type: 'range', min: 200, max: 3000, step: 100 },

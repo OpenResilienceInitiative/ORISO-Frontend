@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { TWO_FACTOR_SETTINGS_PATH } from '../../hooks/useOpenTwoFactorSettings';
 import './SaveCredentialsCard.styles.scss';
 
 /**
@@ -41,22 +42,50 @@ export interface SaveCredentialsCardProps {
 	userName: string;
 }
 
-const SECURITY_SETTINGS_PATH = '/profile/einstellungen/sicherheit';
+/* The profile security tab, reused rather than re-declared. `useOpenTwoFactorSettings`
+   already exports this path and centralises it precisely so a route change is one
+   edit; a second literal here would drift silently the first time it moves. */
+const SECURITY_SETTINGS_PATH = TWO_FACTOR_SETTINGS_PATH;
 
 export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 	userName
 }) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const [copied, setCopied] = useState(false);
+	const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+		'idle'
+	);
+	const resetTimer = useRef<number | undefined>(undefined);
+
+	useEffect(
+		() => () => {
+			if (resetTimer.current) window.clearTimeout(resetTimer.current);
+		},
+		[]
+	);
+
+	/* The result has to be awaited. The previous version announced "Anmeldename
+	   kopiert" the instant the button was pressed, so a rejected write or an
+	   absent clipboard (insecure context, Firefox without permission, an
+	   embedded webview) told the person their only handle back into the account
+	   was safely copied when nothing had been copied at all. On this card that
+	   is the difference between keeping and losing the account. */
+	const copy = useCallback(async () => {
+		if (resetTimer.current) window.clearTimeout(resetTimer.current);
+		try {
+			if (!navigator.clipboard?.writeText) throw new Error('unavailable');
+			await navigator.clipboard.writeText(userName);
+			setCopyState('copied');
+		} catch {
+			setCopyState('failed');
+		}
+		resetTimer.current = window.setTimeout(
+			() => setCopyState('idle'),
+			3000
+		);
+	}, [userName]);
 
 	if (!userName) return null;
-
-	const copy = () => {
-		navigator.clipboard?.writeText(userName);
-		setCopied(true);
-		window.setTimeout(() => setCopied(false), 3000);
-	};
 
 	return (
 		<div className="saveCredentialsCard">
@@ -89,13 +118,24 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 				</button>
 			</div>
 
-			<p className="saveCredentialsCard__status" aria-live="polite">
-				{copied
-					? t(
-							'erstantwort.saveCredentials.copied',
-							'Anmeldename kopiert.'
-						)
-					: ''}
+			<p
+				className={`saveCredentialsCard__status ${
+					copyState === 'failed'
+						? 'saveCredentialsCard__status--failed'
+						: ''
+				}`}
+				aria-live="polite"
+			>
+				{copyState === 'copied' &&
+					t(
+						'erstantwort.saveCredentials.copied',
+						'Anmeldename kopiert.'
+					)}
+				{copyState === 'failed' &&
+					t(
+						'erstantwort.saveCredentials.copyFailed',
+						'Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand.'
+					)}
 			</p>
 
 			<p className="saveCredentialsCard__warning">

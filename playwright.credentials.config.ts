@@ -1,12 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * ORISO-Frontend#825 — the three-engine config for the credential-saving check.
+ * The three-engine config for every check that needs a real browser.
  *
  * Separate from `playwright.config.ts` on purpose: that one boots the CRA dev server and needs a
- * reachable backend, so it is chromium-only and local-only. This spec runs against a **Storybook
- * build**, needs no backend at all, and its whole point is that it runs in **all three engines** —
- * the Credential Management API is Chromium-only, so a chromium-only run would prove nothing.
+ * reachable backend, so it is chromium-only and local-only. These specs run against a **Storybook
+ * build**, need no backend at all, and their whole point is that they run in **all three engines**.
+ *
+ * Two things live here, and neither is provable in one engine or in jsdom:
+ *
+ * - **Credential saving** (ORISO-Frontend#825) — the Credential Management API is Chromium-only, so
+ *   a chromium-only run would prove exactly nothing about Safari and Firefox.
+ * - **Consent-gate focus containment** (ORISO-UserService#927) — jsdom does not move focus on Tab,
+ *   so a simulated Tab passes against a dialog that leaks in a real browser.
  *
  * Serve a Storybook build first and point `STORYBOOK_URL` at it:
  *
@@ -16,7 +22,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
 	testDir: './playwright',
-	testMatch: /credential-saving\.crossbrowser\.spec\.ts/,
+	testMatch: /\.crossbrowser\.spec\.ts$/,
 	timeout: 30_000,
 	expect: { timeout: 10_000 },
 	fullyParallel: true,

@@ -3201,7 +3201,8 @@
 		"emailNotification": {
 			"headline": "E-posta ile bildirim",
 			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
-			"action": "E-posta adresi ekle"
+			"action": "E-posta adresi ekle",
+			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin."
 		},
 		"accountProtection": {
 			"headline": "Erişiminiz, ek olarak korunur",
@@ -3213,12 +3214,13 @@
 		},
 		"saveCredentials": {
 			"headline": "Erişiminizi güvenceye alın",
-			"body": "Giriş adınız olmadan bu görüşmeye daha sonra geri dönemezsiniz. Onu güvenli bir yerde saklayın — en iyisi bir parola yöneticisinde. Bu cihazı başkaları da kullanıyorsa burada kaydetmemeniz daha iyi olur.",
+			"body": "Giriş adınız olmadan bu görüşmeye daha sonra geri dönemezsiniz. Onu güvenli bir yerde saklayın — en iyisi bir parola yöneticisinde.",
 			"userNameLabel": "Giriş adı",
 			"copy": "Kopyala",
 			"copied": "Giriş adı kopyalandı.",
 			"sharedDevice": "Bu cihazı başkaları da kullanıyorsa giriş adınızı burada kaydetmemeniz daha iyi olur — güvenli bir yere not edin.",
-			"setPassword": "Şimdi parola belirle"
+			"setPassword": "Şimdi parola belirle",
+			"copyFailed": "Kopyalama başarısız oldu. Lütfen giriş adını seçip elle kopyalayın."
 		},
 		"displayName": {
 			"headline": "Görünen adınız",

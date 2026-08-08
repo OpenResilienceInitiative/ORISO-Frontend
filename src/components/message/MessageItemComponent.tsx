@@ -96,6 +96,13 @@ import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { MessageDateDivider } from './MessageDateDivider';
 
+/* How recently an Erstantwort event must have arrived for its staged reveal to
+   play. Generous on purpose: the cost of skipping the animation on a genuinely
+   new event is that the person sees the text immediately, while the cost of
+   replaying it on old history is a wall of text re-typing itself every time the
+   list scrolls. */
+const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
+
 const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 // Slack-style long-press on the bubble opens the message action menu.
@@ -1017,6 +1024,23 @@ export const MessageItemComponent = ({
 		() => (activeSession ? getModality(activeSession) : undefined),
 		[activeSession]
 	);
+	/* An Erstantwort in an internal counsellor room would be a category error —
+	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
+	   resolves anything unknown to Agency Counselling, so it would render the
+	   wrong sequence rather than none. Excluded explicitly. */
+	const isErstantwortModality =
+		erstantwortModality !== undefined &&
+		erstantwortModality !== Modality.INTERNAL_GROUP;
+	/* Only a freshly arrived event plays the stagger. The message list mounts and
+	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
+	   `revealed` to 0 on every mount — so without this an event received days ago
+	   types itself out again each time it scrolls into view, and `onFirstReveal`
+	   fires again with it. */
+	const isRecentErstantwortEvent = useMemo(() => {
+		const timestamp = Number(messageTime);
+		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
+	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -2310,13 +2334,14 @@ export const MessageItemComponent = ({
 	   as its own staged Carimat sequence, and the surrounding message frame
 	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
 	   sequence already draws. */
-	if (isErstantwortEvent) {
+	if (isErstantwortEvent && isErstantwortModality) {
 		return (
 			<div className="messageItem messageItem--erstantwort">
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
 		);

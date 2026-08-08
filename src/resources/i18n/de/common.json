@@ -4032,7 +4032,8 @@
 		"emailNotification": {
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
-			"action": "E-Mail-Adresse angeben"
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 		},
 		"accountProtection": {
 			"headline": "Ihr Zugang, zusätzlich geschützt",
@@ -4044,12 +4045,13 @@
 		},
 		"saveCredentials": {
 			"headline": "Sichern Sie sich Ihren Zugang",
-			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager. Wenn andere dieses Gerät mitbenutzen, speichern Sie ihn besser nicht hier.",
+			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager.",
 			"userNameLabel": "Anmeldename",
 			"copy": "Kopieren",
 			"copied": "Anmeldename kopiert.",
 			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.",
-			"setPassword": "Passwort jetzt setzen"
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand."
 		},
 		"displayName": {
 			"headline": "Ihr angezeigter Name",

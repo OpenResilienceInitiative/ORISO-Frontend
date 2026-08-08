@@ -43,11 +43,14 @@ describe('the send confirmation does not restate the response deadline', () => {
 	});
 
 	it('the deadline still has an owner — the responseDeadline Baustein states it', () => {
-		expect(de.erstantwort.responseDeadline.body).toMatch(
-			/\{\{deadlineDays\}\}/
-		);
-		expect(deInformal.erstantwort.responseDeadline.body).toMatch(
-			/\{\{deadlineDays\}\}/
-		);
+		/* Every loaded locale, not just German: a locale whose translation lost
+		   the placeholder would render "Sie erhalten innerhalb von  Werktagen"
+		   and the promise would silently have no number in it. */
+		Object.entries(LOCALES).forEach(([locale, resources]) => {
+			expect(
+				resources?.erstantwort?.responseDeadline?.body,
+				`${locale} lost the {{deadlineDays}} placeholder`
+			).toMatch(/\{\{deadlineDays\}\}/);
+		});
 	});
 });

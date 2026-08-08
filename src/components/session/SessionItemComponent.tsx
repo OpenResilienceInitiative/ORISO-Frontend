@@ -10,7 +10,10 @@ import {
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor } from './anonymousConsentInvariant';
+import {
+	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
+	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
+} from './anonymousConsentInvariant';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
@@ -902,8 +905,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
-	const shouldBlockAnonymousInquiryChat =
-		shouldShowConsentGate || shouldShowPseudonymGate;
+	/* The runtime lock goes through the same predicate the invariant test pins.
+	   Recomposing it locally left `anonymousConsentInvariant.test.ts` asserting a
+	   copy of the rule while the composer obeyed a different one — the test would
+	   have stayed green through exactly the regression it exists to catch. */
+	const shouldBlockAnonymousInquiryChat = shouldBlockAnonymousInquiryChatFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation,
+		consentAcceptedInSession: anonymousInquiryConsentAccepted,
+		requiresPseudonymConfirmation,
+		isInAnonymousWaitingQueuePhase
+	});
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",

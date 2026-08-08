@@ -1889,7 +1889,8 @@
 		"emailNotification": {
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
-			"action": "E-Mail-Adresse angeben"
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal."
 		},
 		"accountProtection": {
 			"headline": "Dein Zugang, zusätzlich geschützt",
@@ -1901,12 +1902,13 @@
 		},
 		"saveCredentials": {
 			"headline": "Sichere Dir Deinen Zugang",
-			"body": "Ohne Deinen Anmeldenamen kommst Du später nicht mehr in dieses Gespräch zurück. Bewahre ihn gut auf — am besten in einem Passwort-Manager. Wenn andere dieses Gerät mitbenutzen, speicher ihn besser nicht hier.",
+			"body": "Ohne Deinen Anmeldenamen kommst Du später nicht mehr in dieses Gespräch zurück. Bewahre ihn gut auf — am besten in einem Passwort-Manager.",
 			"userNameLabel": "Anmeldename",
 			"copy": "Kopieren",
 			"copied": "Anmeldename kopiert.",
 			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speicher den Anmeldenamen besser nicht hier, sondern notiere ihn an einem sicheren Ort.",
-			"setPassword": "Passwort jetzt setzen"
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markier den Anmeldenamen und kopier ihn von Hand."
 		},
 		"displayName": {
 			"headline": "Dein angezeigter Name",

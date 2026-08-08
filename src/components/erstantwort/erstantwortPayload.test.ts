@@ -68,6 +68,20 @@ describe('parseErstantwortPayload', () => {
 		expect(result.version).toBe(ERSTANTWORT_PAYLOAD_VERSION + 1);
 	});
 
+	it('rejects every version that is not exactly the supported one', () => {
+		/* `> VERSION` used to let 0, -1 and 0.5 through and render them as v1 —
+		   an unknown wire format rendered as if it were understood. */
+		[0, -1, 0.5, ERSTANTWORT_PAYLOAD_VERSION - 1].forEach((version) => {
+			const result = parseErstantwortPayload(
+				buildEvent({ ...validPayload, version })
+			);
+			expect(result.status, `version ${version}`).toBe(
+				'unsupported-version'
+			);
+			expect(result.bausteine).toEqual([]);
+		});
+	});
+
 	it('treats a missing or non-numeric version as unsupported rather than assuming v1', () => {
 		expect(
 			parseErstantwortPayload(
