@@ -358,23 +358,30 @@ export const ReplyingToMessage: Story = {
 		const preview = canvasElement.querySelector(
 			'.messageSubmit__replyPreview'
 		) as HTMLElement;
-		const form = preview.closest('form') as HTMLElement;
+		const editor = preview
+			.closest('form')
+			?.querySelector('.textarea__input') as HTMLElement;
+		const editorRect = editor.getBoundingClientRect();
 
 		// The bar hugs the quote instead of spanning the composer — it should
 		// read like the bubble it quotes, not like a full-width banner.
 		expect(preview.getBoundingClientRect().width).toBeLessThan(
-			form.getBoundingClientRect().width * 0.8
+			editorRect.width * 0.8
+		);
+		// …starting on the editor's left edge, not outside it.
+		expect(Math.round(preview.getBoundingClientRect().left)).toBe(
+			Math.round(editorRect.left)
 		);
 
-		// …but a very long quote still has to stay inside the composer.
+		// A very long quote grows to the editor's width and stops there.
 		const text = preview.querySelector(
 			'.messageSubmit__replyPreviewText'
 		) as HTMLElement;
 		const original = text.textContent;
 		text.textContent = 'x'.repeat(600);
-		expect(preview.getBoundingClientRect().width).toBeLessThanOrEqual(
-			form.getBoundingClientRect().width
-		);
+		expect(
+			Math.round(preview.getBoundingClientRect().right)
+		).toBeLessThanOrEqual(Math.round(editorRect.right));
 		text.textContent = original;
 	}
 };
@@ -392,13 +399,17 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 		return found;
 	});
 
-	// Full width of the composer, one 32px line — never wraps.
-	const form = banner.closest('form') as HTMLElement;
+	// One 32px line, never wrapping, and flush with the *editor* below it.
+	// Figma 18:1990 puts the bar and the text component both at x=16 /
+	// width 863 — not at the outer card's edges.
+	const editor = banner
+		.closest('form')
+		?.querySelector('.textarea__input') as HTMLElement;
 	const bannerRect = banner.getBoundingClientRect();
+	const editorRect = editor.getBoundingClientRect();
 	expect(Math.round(bannerRect.height)).toBe(32);
-	expect(bannerRect.width).toBeGreaterThan(
-		form.getBoundingClientRect().width * 0.8
-	);
+	expect(Math.round(bannerRect.left)).toBe(Math.round(editorRect.left));
+	expect(Math.round(bannerRect.right)).toBe(Math.round(editorRect.right));
 
 	const text = banner.querySelector(
 		'.messageSubmit__editPreviewText'
