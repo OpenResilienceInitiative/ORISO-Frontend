@@ -5,7 +5,7 @@ import {
 } from '../messageSubmitInterface/attachmentHelpers';
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
 import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
 import {
@@ -16,6 +16,7 @@ import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { getIconForAttachmentType } from './messageHelpers';
 import { AttachmentCard } from './AttachmentCard';
+import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 
 /**
@@ -54,13 +55,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
 		isEncryptedAttachment ? ENCRYPTED : NOT_ENCRYPTED
 	);
-	const audioRef = useRef<HTMLAudioElement | null>(null);
-	const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
-	const [audioDurationSec, setAudioDurationSec] = React.useState<
-		number | null
-	>(null);
-	const [audioCurrentTimeSec, setAudioCurrentTimeSec] = React.useState(0);
-
 	const decryptFile = useCallback(
 		async (url: string) => {
 			if (
@@ -221,21 +215,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = buildUrl(props.attachment.downloadUrl);
 
-	const formatAudioDuration = useCallback((duration: number | null) => {
-		if (
-			duration == null ||
-			Number.isNaN(duration) ||
-			!Number.isFinite(duration) ||
-			duration <= 0
-		) {
-			return '--:--';
-		}
-		const rounded = Math.round(duration);
-		const minutes = Math.floor(rounded / 60);
-		const seconds = rounded % 60;
-		return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-	}, []);
-
 	const getVoiceDurationFromFileName = useCallback((): number | null => {
 		const name = props.file?.name || props.attachment?.title || '';
 		const matchSec = name.match(/-s(\d+)-ms\d+\.(webm|ogg|mp3|wav)$/i);
@@ -260,97 +239,22 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		return Number.isNaN(value) ? null : value;
 	}, [props.file?.name, props.attachment?.title]);
 
+	// Prefer the canonical duration encoded in the file name so sender and
+	// receiver show the same length; VoicePlayer falls back to the duration
+	// reported by the audio element when the name carries none.
 	const durationFromFileName = getVoiceDurationFromFileName();
-	const resolvedDurationSec = durationFromFileName ?? audioDurationSec;
-	const playbackProgress =
-		resolvedDurationSec && resolvedDurationSec > 0
-			? Math.min(
-					100,
-					Math.max(
-						0,
-						(audioCurrentTimeSec / resolvedDurationSec) * 100
-					)
-				)
-			: 0;
 
 	const renderVoiceAttachment = useCallback(
 		(src: string) => (
-			<div className="messageItem__voiceNote">
-				<button
-					type="button"
-					className="messageItem__voiceNote__play"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						if (!audioRef.current) {
-							return;
-						}
-						if (audioRef.current.paused) {
-							audioRef.current.play().catch(() => {
-								// ignore autoplay/permission rejections
-							});
-						} else {
-							audioRef.current.pause();
-						}
-					}}
-				>
-					{isAudioPlaying ? '||' : '▶'}
-				</button>
-				<div className="messageItem__voiceNote__wave">
-					<div
-						className="messageItem__voiceNote__wavePlayed"
-						style={{ width: `${playbackProgress}%` }}
-					/>
-				</div>
-				<span className="messageItem__voiceNote__time">
-					{formatAudioDuration(resolvedDurationSec)}
-				</span>
-				<audio
-					ref={audioRef}
-					src={src}
-					preload="metadata"
-					onPlay={() => setIsAudioPlaying(true)}
-					onPause={() => setIsAudioPlaying(false)}
-					onEnded={() => {
-						setIsAudioPlaying(false);
-						setAudioCurrentTimeSec(0);
-					}}
-					onTimeUpdate={() => {
-						setAudioCurrentTimeSec(
-							audioRef.current?.currentTime || 0
-						);
-					}}
-					onLoadedMetadata={() => {
-						if (durationFromFileName != null) {
-							// Keep sender/receiver display identical by preferring canonical filename duration.
-							setAudioDurationSec(durationFromFileName);
-						} else {
-							const duration = audioRef.current?.duration ?? null;
-							if (
-								duration != null &&
-								Number.isFinite(duration) &&
-								duration > 0
-							) {
-								setAudioDurationSec(duration);
-							} else {
-								setAudioDurationSec(
-									getVoiceDurationFromFileName()
-								);
-							}
-						}
-						setAudioCurrentTimeSec(0);
-					}}
-				/>
-			</div>
+			<VoicePlayer
+				src={src}
+				durationSec={durationFromFileName}
+				// The surrounding message already draws the bubble; it also
+				// sets --voicePlayer-tile-idle for own messages.
+				bubble="none"
+			/>
 		),
-		[
-			playbackProgress,
-			resolvedDurationSec,
-			durationFromFileName,
-			formatAudioDuration,
-			isAudioPlaying,
-			getVoiceDurationFromFileName
-		]
+		[durationFromFileName]
 	);
 
 	if (effectiveMediaState === 'blocked') {

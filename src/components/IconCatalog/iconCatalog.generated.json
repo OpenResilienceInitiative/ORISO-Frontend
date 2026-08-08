@@ -2172,7 +2172,6 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
-			"src/components/message/MessageItemComponent.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
@@ -3432,9 +3431,6 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
-			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/internal/InternalChatCreateCard.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

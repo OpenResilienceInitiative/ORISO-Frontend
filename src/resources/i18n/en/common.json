@@ -3551,6 +3551,20 @@
 			}
 		}
 	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"close": "Close tour",
 		"overview": {
