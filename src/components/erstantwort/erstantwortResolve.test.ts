@@ -162,6 +162,33 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 
 		expect(resolved.bausteine).toEqual([]);
 	});
+
+	it('drops a SAVE_CREDENTIALS action carried by an already-persisted event', () => {
+		/* The catalogue no longer emits it, but v1 events already in rooms may,
+		   and the wire format still accepts the kind — so removing it from the
+		   catalogue alone protects nothing. Its affordance is the inline
+		   SaveCredentialsCard; a button here would render enabled and do nothing. */
+		const resolved = resolveErstantwortBausteine({
+			rawMessage: event([
+				{
+					id: 'saveCredentials',
+					body: 'Sichern Sie sich Ihren Zugang.',
+					action: {
+						kind: 'SAVE_CREDENTIALS',
+						label: 'Zugangsdaten sichern'
+					}
+				}
+			]),
+			translate,
+			state: baseState
+		});
+
+		expect(resolved.bausteine).toHaveLength(1);
+		expect(resolved.bausteine[0].action).toBeUndefined();
+		expect(resolved.bausteine[0].body).toBe(
+			'Sichern Sie sich Ihren Zugang.'
+		);
+	});
 });
 
 describe('resolveErstantwortBausteine — client-side triggers (no event)', () => {

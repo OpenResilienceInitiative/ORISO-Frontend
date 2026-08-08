@@ -125,11 +125,29 @@ const isBausteinSilenced = (
 	return emailRelated && state.isAskerEmailEnabled === false;
 };
 
+/**
+ * `SAVE_CREDENTIALS` is dropped from any payload that carries it.
+ *
+ * The catalogue no longer emits it, but v1 events already persisted may, and the
+ * wire format still accepts the kind — so removing it from the catalogue alone
+ * protects nothing. Its affordance is the inline `SaveCredentialsCard`; a button
+ * would render enabled and do nothing, which is the one thing this sequence must
+ * never do.
+ */
+const dropUnactionableKinds = (
+	bausteine: ResolvedBaustein[]
+): ResolvedBaustein[] =>
+	bausteine.map((baustein) => {
+		if (baustein.action?.kind !== 'SAVE_CREDENTIALS') return baustein;
+		const { action: _dropped, ...rest } = baustein;
+		return rest;
+	});
+
 const applyLiveState = (
 	bausteine: ResolvedBaustein[],
 	state: ErstantwortLiveState
 ): ResolvedBaustein[] =>
-	bausteine
+	dropUnactionableKinds(bausteine)
 		.filter(
 			(baustein) =>
 				!isBausteinSilenced(baustein.id, baustein.action, state)

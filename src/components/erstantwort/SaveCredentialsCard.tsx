@@ -42,11 +42,6 @@ export interface SaveCredentialsCardProps {
 	userName: string;
 }
 
-/* The profile security tab, reused rather than re-declared. `useOpenTwoFactorSettings`
-   already exports this path and centralises it precisely so a route change is one
-   edit; a second literal here would drift silently the first time it moves. */
-const SECURITY_SETTINGS_PATH = TWO_FACTOR_SETTINGS_PATH;
-
 export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 	userName
 }) => {
@@ -148,7 +143,7 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 			<button
 				type="button"
 				className="saveCredentialsCard__setPassword"
-				onClick={() => navigate(SECURITY_SETTINGS_PATH)}
+				onClick={() => navigate(TWO_FACTOR_SETTINGS_PATH)}
 			>
 				{t(
 					'erstantwort.saveCredentials.setPassword',
