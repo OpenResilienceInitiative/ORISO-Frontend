@@ -12,9 +12,12 @@ import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/
 import { OrisoDialog } from '../modal/OrisoDialog';
 import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
 import './E2EEncryptionSupportBanner.styles.scss';
+import { TWO_FACTOR_SETTINGS_PATH } from '../../hooks/useOpenTwoFactorSettings';
 
 const DISMISS_KEY = 'hideKeyBackupPrompt';
-const SECURITY_SETTINGS_PATH = '/profile/einstellungen/sicherheit';
+/* One source of truth for the profile security tab — `useOpenTwoFactorSettings`
+   exports it precisely so a route change stays a single edit. */
+const SECURITY_SETTINGS_PATH = TWO_FACTOR_SETTINGS_PATH;
 export type KeyBackupPromptMode = 'setup' | 'recovery';
 
 type KeyBackupRecoveryDialogProps = {

@@ -22,10 +22,7 @@
 		"fileName": "ant.svg",
 		"sourcePath": "public/static/anon-animals/ant.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/message/FurtherSteps.tsx",
-			"src/utils/anonName/data.ts"
-		],
+		"usageFiles": ["src/utils/anonName/data.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -1779,8 +1776,8 @@
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
+			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/message/Appointment.tsx",
-			"src/components/message/FurtherSteps.tsx",
 			"src/components/passwordResetRequest/PasswordResetSentView.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/DeleteAccount.tsx",
@@ -2115,7 +2112,7 @@
 		"sourcePath": "src/resources/img/icons/envelope.svg",
 		"exportNames": ["ClosedEnvelopeIcon", "EnvelopeIcon"],
 		"usageFiles": [
-			"src/components/message/FurtherSteps.tsx",
+			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
