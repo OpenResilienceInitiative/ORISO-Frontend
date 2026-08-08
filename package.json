@@ -252,7 +252,8 @@
 		"typecheck:storybook": "tsc --noEmit --project tsconfig.storybook.json",
 		"prebuild-storybook": "npm run generate:icon-catalog && npm run typecheck:storybook",
 		"build-storybook": "storybook build",
-		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts"
+		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts",
+		"test:credentials": "playwright test --config playwright.credentials.config.ts"
 	},
 	"eslintConfig": {
 		"extends": [

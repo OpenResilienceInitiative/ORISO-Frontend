@@ -34,6 +34,15 @@ export interface ButtonItem {
 		| 'transparent';
 	title?: string;
 	type: string;
+	/**
+	 * Only for `AUTO_CLOSE`: how long before the button fires itself, in ms.
+	 * Defaults to the shared `OVERLAY_RESET_TIME`.
+	 *
+	 * ADR-018 §10 needs a shorter one for the enquiry send confirmation: it now
+	 * acknowledges dispatch and gets out of the way once the first Erstantwort
+	 * bubble is up, instead of holding a modal over the answer for a fixed 10 s.
+	 */
+	autoCloseMs?: number;
 }
 
 export interface ButtonProps {
@@ -64,7 +73,7 @@ export const Button = (props: ButtonProps) => {
 		if (item.type === BUTTON_TYPES.AUTO_CLOSE) {
 			timeoutID = window.setTimeout(() => {
 				props.buttonHandle(item.function, item.functionArgs);
-			}, OVERLAY_RESET_TIME);
+			}, item.autoCloseMs ?? OVERLAY_RESET_TIME);
 		}
 	};
 

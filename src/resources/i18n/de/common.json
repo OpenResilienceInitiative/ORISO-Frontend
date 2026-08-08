@@ -542,7 +542,7 @@
 			},
 			"overlay": {
 				"button": "Zur Nachricht",
-				"copy": "Innerhalb von 2 Arbeitstagen erhalten Sie eine Antwort von uns.",
+				"copy": "Wir haben Ihre Nachricht erhalten.",
 				"headline": "Vielen Dank für Ihre Nachricht!"
 			}
 		}
@@ -3997,6 +3997,66 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Ihre ersten Schritte",
+		"greeting": {
+			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
+		},
+		"whoReadsAlong": {
+			"headline": "Wer Ihre Nachricht liest",
+			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+		},
+		"responseDeadline": {
+			"headline": "Wann Sie eine Antwort erhalten",
+			"body": "Sie erhalten innerhalb von {{deadlineDays}} Werktagen eine Antwort von einer passenden Ansprechperson."
+		},
+		"modalityNote": {
+			"body": "Die Beratung findet schriftlich in diesem geschützten Bereich statt. Sie können jederzeit weiterschreiben."
+		},
+		"noPersonalData": {
+			"headline": "Bitte keine persönlichen Daten senden",
+			"body": "Bitte schreiben Sie uns keinen vollständigen Namen, keine Adresse und keine Telefonnummer. Für die Beratung brauchen wir das nicht."
+		},
+		"emergencyNumbers": {
+			"headline": "Wenn es nicht warten kann",
+			"body": "Bei einer akuten Notlage erreichen Sie rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112."
+		},
+		"dataProtection": {
+			"body": "Wie wir mit Ihren Daten umgehen, steht in der Datenschutzerklärung."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Benachrichtigung per E-Mail",
+			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+		},
+		"accountProtection": {
+			"headline": "Ihr Zugang, zusätzlich geschützt",
+			"body": "Sie können Ihren Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.",
+			"action": "Zugang schützen"
+		},
+		"closing": {
+			"body": "Bis bald — wir melden uns bei Ihnen."
+		},
+		"saveCredentials": {
+			"headline": "Sichern Sie sich Ihren Zugang",
+			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager.",
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand."
+		},
+		"displayName": {
+			"headline": "Ihr angezeigter Name",
+			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
+			"action": "Namen ändern"
 		}
 	}
 }
