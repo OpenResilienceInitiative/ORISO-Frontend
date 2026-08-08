@@ -234,6 +234,8 @@ describe('useDraftMessage', () => {
 				([scopeKey]) => scopeKey === 'scope:session-42|thread:main'
 			)
 		).toHaveLength(0);
+		// #976: no index row was ever written, so there is nothing to delete.
+		expect(mocks.apiDeleteUserDraft).not.toHaveBeenCalled();
 	});
 
 	it('does not carry buffered text over into the next scope', async () => {

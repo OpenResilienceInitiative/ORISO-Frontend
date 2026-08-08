@@ -93,7 +93,10 @@ export const buildDraftKey = (
 
 export const saveDraftEntry = (entry: DraftEntry) => {
 	const store = parseStore();
-	if (!entry.text || entry.text.trim().length === 0) {
+	// #976: the same emptiness rule as the remote path. A `trim()` check treats
+	// TipTap's empty document (`<p></p>`) as content, so the local store kept
+	// exactly the zero-content drafts the remote store now refuses.
+	if (!hasDraftContent(entry.text)) {
 		delete store[entry.key];
 		persistStore(store);
 		return;

@@ -113,14 +113,18 @@ export const useDraftMessage = (
 					updatedAt: Date.now()
 				};
 				let indexMap: Record<string, any> = {};
+				// #976: whether the index row exists at all. Without this an
+				// untouched conversation would issue a DELETE on unmount for a
+				// row that was never written.
+				let hadIndexRow = false;
 				try {
 					const indexRes = await apiGetUserDraft(
 						REMOTE_DRAFT_INDEX_SCOPE
 					);
-					indexMap =
-						indexRes?.text && typeof indexRes.text === 'string'
-							? JSON.parse(indexRes.text)
-							: {};
+					if (indexRes?.text && typeof indexRes.text === 'string') {
+						hadIndexRow = true;
+						indexMap = JSON.parse(indexRes.text);
+					}
 				} catch (e: any) {
 					if (e?.message !== FETCH_ERRORS.EMPTY) {
 						indexMap = {};
@@ -138,9 +142,13 @@ export const useDraftMessage = (
 					 * #976: an empty map serialises to "{}", which is not blank,
 					 * so the backend keeps the row forever - a contentless draft
 					 * that no view can open and nothing can clear. Drop the row
-					 * instead of storing an empty index.
+					 * instead of storing an empty index - but only when there is
+					 * a row to drop, so a merely visited conversation stays
+					 * silent on the wire.
 					 */
-					await apiDeleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+					if (hadIndexRow) {
+						await apiDeleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+					}
 					return;
 				}
 

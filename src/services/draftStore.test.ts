@@ -92,6 +92,38 @@ describe('draftStore', () => {
 		expect(getDraftEntry(draft.key)).toBeNull();
 	});
 
+	// #976: TipTap serialises an emptied composer as markup, not as an empty
+	// string, so a trim() check would have stored these as real drafts.
+	it.each(['<p></p>', '<p><br></p>', '<p>&nbsp;</p>', '<p>​</p>'])(
+		'removes a draft when the saved text is only empty markup (%s)',
+		(emptyMarkup) => {
+			const draft = {
+				key: buildDraftKey('user-1', 'room-1'),
+				userId: 'user-1',
+				text: 'Text',
+				updatedAt: 100
+			};
+			saveDraftEntry(draft);
+
+			saveDraftEntry({ ...draft, text: emptyMarkup });
+
+			expect(getDraftEntry(draft.key)).toBeNull();
+		}
+	);
+
+	it('still stores a draft whose markup carries real text', () => {
+		const draft = {
+			key: buildDraftKey('user-1', 'room-2'),
+			userId: 'user-1',
+			text: '<p>Halb getippt</p>',
+			updatedAt: 100
+		};
+
+		saveDraftEntry(draft);
+
+		expect(getDraftEntry(draft.key)?.text).toBe('<p>Halb getippt</p>');
+	});
+
 	describe('hasDraftContent (#976)', () => {
 		it.each([
 			['', false],
