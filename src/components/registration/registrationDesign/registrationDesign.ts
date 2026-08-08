@@ -17,6 +17,7 @@ import childrenYouth from '../../../resources/img/registration-md3/icons/t-01-ki
 import curesParents01 from '../../../resources/img/registration-md3/icons/t-01-kuren-fu-r-mu-tter-und-va-ter.png';
 import pregnancy from '../../../resources/img/registration-md3/icons/t-01-schwangerschaft.png';
 import u25Prevention01 from '../../../resources/img/registration-md3/icons/t-01-u25-suizidpra-vention.png';
+import schoolToWork from '../../../resources/img/registration-md3/icons/t-01-u-bergang-von-schule-zu-beruf.png';
 import bereavement02 from '../../../resources/img/registration-md3/icons/t-02-trauerberatung.png';
 import hospicePalliative from '../../../resources/img/registration-md3/icons/t-02-hospiz-und-palliativberatung.png';
 import lifeInOldAge from '../../../resources/img/registration-md3/icons/t-02-leben-im-alter.png';
@@ -31,8 +32,6 @@ import addiction04 from '../../../resources/img/registration-md3/icons/t-04-such
 import generalSocial from '../../../resources/img/registration-md3/icons/t-05-allgemeine-sozialberatung.png';
 import debt from '../../../resources/img/registration-md3/icons/t-05-schulden.png';
 import offending from '../../../resources/img/registration-md3/icons/t-05-straffa-lligkeit.png';
-import hivAids05 from '../../../resources/img/registration-md3/icons/t-05-hiv-und-aids.png';
-import legalGuardianship05 from '../../../resources/img/registration-md3/icons/t-05-rechtliche-betreuung-und-vorsorge.png';
 import u25Prevention05 from '../../../resources/img/registration-md3/icons/t-05-u25-suizidpra-vention.png';
 
 export const registrationMd3 = {
@@ -104,7 +103,8 @@ const topicIconBySlug: Record<string, string> = {
 	'trauerberatung': bereavement02,
 	'general-social-counselling': generalSocial,
 	'debt': debt,
-	'offending': offending
+	'offending': offending,
+	'school-to-work-transition': schoolToWork
 };
 
 const topicIconByInternalIdentifier: Record<string, string> = {
@@ -123,7 +123,11 @@ const topicIconByInternalIdentifier: Record<string, string> = {
 	'hiv-aids': hivAids04,
 	'general-social': generalSocial,
 	'debt': debt,
-	'offending': offending
+	'offending': offending,
+	'school-to-work': schoolToWork,
+	'addiction': addiction04,
+	'bereavement': bereavement02,
+	'migration-support': migration03
 };
 
 type RegistrationTopicCopy = {
@@ -146,7 +150,7 @@ const topicDisplayCopyByKey: Record<
 				'Ob Erziehungsfragen, Konflikte oder familiäre Krisen - hier finden Sie verständnisvolle Begleitung.'
 		},
 		en: {
-			title: 'Parents and family',
+			title: 'Parent and Family Support',
 			description:
 				'Support for parenting questions, conflict, and family pressure.'
 		},
@@ -163,7 +167,7 @@ const topicDisplayCopyByKey: Record<
 				'Wenn der Alltag zu viel wird - hier gibt es Hilfe und ein offenes Ohr.'
 		},
 		en: {
-			title: 'Children and young people',
+			title: 'Children and Young People',
 			description:
 				'Support and a listening ear when everyday life becomes too much.'
 		},
@@ -180,7 +184,7 @@ const topicDisplayCopyByKey: Record<
 				'Für junge Menschen, die nach Krankheit oder Belastung neue Kraft schöpfen möchten.'
 		},
 		en: {
-			title: 'Child and youth rehabilitation',
+			title: 'Pediatric Rehabilitation',
 			description:
 				'Rehabilitation guidance for children and young people.'
 		},
@@ -197,7 +201,7 @@ const topicDisplayCopyByKey: Record<
 				'Kurmaßnahmen helfen erschöpften Eltern, wieder zu sich zu finden.'
 		},
 		en: {
-			title: 'Rehabilitation cures for parents',
+			title: 'Parent Health Rehabilitation',
 			description: 'Guidance on recovery programs for exhausted parents.'
 		},
 		tr: {
@@ -225,12 +229,12 @@ const topicDisplayCopyByKey: Record<
 	},
 	'u25-suicide-prevention': {
 		de: {
-			title: 'U25 Suizidprävention',
+			title: '[U25] Suizidprävention',
 			description:
 				'Anonyme Begleitung für junge Menschen in Krisen und Suizidgedanken.'
 		},
 		en: {
-			title: 'U25 suicide prevention',
+			title: '[U25] Suicide Prevention',
 			description:
 				'Anonymous support for young people in crisis or with suicidal thoughts.'
 		},
@@ -240,6 +244,23 @@ const topicDisplayCopyByKey: Record<
 				'Kriz yaşayan veya intihar düşünceleri olan gençler için anonim destek.'
 		}
 	},
+	'school-to-work-transition': {
+		de: {
+			title: 'Übergang von Schule zu Beruf',
+			description:
+				'Begleitung beim Schritt von der Schule in Ausbildung, Studium und Beruf.'
+		},
+		en: {
+			title: 'School-to-Work Transition',
+			description:
+				'Support for the step from school into training, study, and work.'
+		},
+		tr: {
+			title: 'Okuldan mesleğe geçiş',
+			description:
+				'Okuldan mesleki eğitime, üniversiteye ve iş hayatına geçişte destek.'
+		}
+	},
 	'counselling-men-boys': {
 		de: {
 			title: 'Jungen- und Männerberatung',
@@ -247,7 +268,7 @@ const topicDisplayCopyByKey: Record<
 				'Ein sicherer Raum für Männer und Jungen, um offen über Sorgen zu sprechen.'
 		},
 		en: {
-			title: 'Counselling for men and boys',
+			title: "Boys and Men's Support",
 			description:
 				'A safe space for men and boys to talk openly about worries.'
 		},
@@ -264,7 +285,7 @@ const topicDisplayCopyByKey: Record<
 				'Beratung bei schwerer Krankheit, Sterben, Abschied und Begleitung.'
 		},
 		en: {
-			title: 'Hospice and palliative care',
+			title: 'Hospice and Palliative Care Support',
 			description:
 				'Counselling around serious illness, dying, farewell, and care.'
 		},
@@ -281,7 +302,7 @@ const topicDisplayCopyByKey: Record<
 				'Unterstuetzung bei Fragen rund um Alter, Pflege und Alltag.'
 		},
 		en: {
-			title: 'Life in old age',
+			title: 'Later Life Support',
 			description:
 				'Support for questions around ageing, care, and everyday life.'
 		},
@@ -298,7 +319,7 @@ const topicDisplayCopyByKey: Record<
 				'Orientierung zu Betreuung, Vollmacht und persönlicher Vorsorge.'
 		},
 		en: {
-			title: 'Legal guardianship and advance care',
+			title: 'Supported Decision-Making and Advance Planning',
 			description:
 				'Guidance on guardianship, powers of attorney, and advance care.'
 		},
@@ -310,12 +331,12 @@ const topicDisplayCopyByKey: Record<
 	},
 	'initial-return-further-migration': {
 		de: {
-			title: 'Aus-, Rück- und Weiterwanderung',
+			title: 'Aus-/Rück- und Weiterwanderung',
 			description:
 				'Beratung zu Migration, Rückkehr und nächsten Schritten.'
 		},
 		en: {
-			title: 'Migration and return',
+			title: 'Relocation and Return Support',
 			description:
 				'Counselling on migration, return, and onward movement.'
 		},
@@ -332,7 +353,7 @@ const topicDisplayCopyByKey: Record<
 				'Unterstützung bei Ankommen, Integration und Orientierung.'
 		},
 		en: {
-			title: 'Migration',
+			title: 'Migration Support',
 			description: 'Support with arrival, integration, and orientation.'
 		},
 		tr: {
@@ -347,7 +368,7 @@ const topicDisplayCopyByKey: Record<
 				'Unterstuetzung bei Fragen zu Teilhabe, Alltag und Belastungen.'
 		},
 		en: {
-			title: 'Disability and psychological impairment',
+			title: 'Disability and Mental Health Support',
 			description:
 				'Support for participation, everyday life, and psychological strain.'
 		},
@@ -397,7 +418,7 @@ const topicDisplayCopyByKey: Record<
 			description: 'Begleitung bei Verlust, Abschied und schwerer Trauer.'
 		},
 		en: {
-			title: 'Bereavement counselling',
+			title: 'Bereavement Support',
 			description: 'Support with loss, farewell, and grief.'
 		},
 		tr: {
@@ -412,7 +433,7 @@ const topicDisplayCopyByKey: Record<
 				'Hilfe bei sozialen, finanziellen und persönlichen Fragen.'
 		},
 		en: {
-			title: 'General social counselling',
+			title: 'Social Support',
 			description: 'Help with social, financial, and personal questions.'
 		},
 		tr: {
@@ -444,7 +465,7 @@ const topicDisplayCopyByKey: Record<
 				'Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag.'
 		},
 		en: {
-			title: 'Offending',
+			title: 'Offender Support',
 			description:
 				'Support for questions around offending, restart, and daily life.'
 		},
@@ -464,6 +485,12 @@ const topicDisplayCopyByInternalIdentifier: Record<string, string> = {
 	'pregnancy': 'pregnancy',
 	'u25-suicide-prevention': 'u25-suicide-prevention',
 	'men-boys': 'counselling-men-boys',
+	'school-to-work': 'school-to-work-transition',
+	// Topics created in the admin panel arrive without a slug, so the four
+	// topics #973 still needs must be reachable by identifier alone.
+	'addiction': 'sucht',
+	'bereavement': 'trauerberatung',
+	'migration-support': 'migration',
 	'hospice-palliative': 'hospice-palliative-care-counselling',
 	'life-in-old-age': 'life-in-old-age',
 	'legal-guardianship': 'legal-guardianship-advance-care',
@@ -476,11 +503,12 @@ const topicDisplayCopyByInternalIdentifier: Record<string, string> = {
 };
 
 export type RegistrationCategoryId =
-	| 'familie'
 	| 'alter'
-	| 'soziales'
+	| 'krisen'
 	| 'gesundheit'
-	| 'migration';
+	| 'familie'
+	| 'migration'
+	| 'teilhabe';
 
 type PresentationTopicDefinition = {
 	key: string;
@@ -511,56 +539,43 @@ export type RegistrationTopicPresentationGroup = {
 	topics: RegistrationTopicPlacement[];
 };
 
+// Cluster order and membership are owned by Deutscher Caritasverband e.V.
+// (ORISO-Frontend#973); the list follows the German cluster names alphabetically.
 const presentationCategoryDefinitions: PresentationCategoryDefinition[] = [
 	{
 		id: 10001,
-		categoryId: 'familie',
-		icon: category01,
-		topics: [
-			{ key: 'parents-and-family', icon: parentsFamily },
-			{ key: 'children-youth-counselling', icon: childrenYouth },
-			{ key: 'child-youth-rehabilitation', icon: childYouthRehab01 },
-			{ key: 'cures-mothers-fathers', icon: curesParents01 },
-			{ key: 'counselling-men-boys', icon: menBoys },
-			{ key: 'pregnancy', icon: pregnancy },
-			{ key: 'u25-suicide-prevention', icon: u25Prevention01 }
-		]
-	},
-	{
-		id: 10002,
 		categoryId: 'alter',
 		icon: category02,
 		topics: [
-			{ key: 'life-in-old-age', icon: lifeInOldAge },
-			{
-				key: 'legal-guardianship-advance-care',
-				icon: legalGuardianship02
-			},
+			{ key: 'general-social-counselling', icon: generalSocial },
 			{
 				key: 'hospice-palliative-care-counselling',
 				icon: hospicePalliative
 			},
+			{ key: 'life-in-old-age', icon: lifeInOldAge },
 			{ key: 'trauerberatung', icon: bereavement02 }
 		]
 	},
 	{
-		id: 10003,
-		categoryId: 'soziales',
+		id: 10002,
+		categoryId: 'krisen',
 		icon: category05,
 		topics: [
 			{ key: 'general-social-counselling', icon: generalSocial },
-			{ key: 'debt', icon: debt },
-			{ key: 'offending', icon: offending },
-			{ key: 'u25-suicide-prevention', icon: u25Prevention05 },
 			{
-				key: 'legal-guardianship-advance-care',
-				icon: legalGuardianship05
+				key: 'hospice-palliative-care-counselling',
+				icon: hospicePalliative
 			},
-			{ key: 'hiv-aids', icon: hivAids05 }
+			{ key: 'debt', icon: debt },
+			{ key: 'pregnancy', icon: pregnancy },
+			{ key: 'offending', icon: offending },
+			{ key: 'sucht', icon: addiction04 },
+			{ key: 'trauerberatung', icon: bereavement02 },
+			{ key: 'u25-suicide-prevention', icon: u25Prevention05 }
 		]
 	},
 	{
-		id: 10004,
+		id: 10003,
 		categoryId: 'gesundheit',
 		icon: category04,
 		topics: [
@@ -568,10 +583,38 @@ const presentationCategoryDefinitions: PresentationCategoryDefinition[] = [
 				key: 'disability-psychological-impairment',
 				icon: disabilityPsych
 			},
-			{ key: 'sucht', icon: addiction04 },
 			{ key: 'hiv-aids', icon: hivAids04 },
+			{
+				key: 'hospice-palliative-care-counselling',
+				icon: hospicePalliative
+			},
 			{ key: 'child-youth-rehabilitation', icon: childYouthRehab04 },
-			{ key: 'cures-mothers-fathers', icon: curesParents04 }
+			{ key: 'cures-mothers-fathers', icon: curesParents04 },
+			{ key: 'life-in-old-age', icon: lifeInOldAge },
+			{ key: 'sucht', icon: addiction04 },
+			{ key: 'u25-suicide-prevention', icon: u25Prevention05 }
+		]
+	},
+	{
+		id: 10004,
+		categoryId: 'familie',
+		icon: category01,
+		topics: [
+			{ key: 'general-social-counselling', icon: generalSocial },
+			{ key: 'parents-and-family', icon: parentsFamily },
+			{
+				key: 'hospice-palliative-care-counselling',
+				icon: hospicePalliative
+			},
+			{ key: 'counselling-men-boys', icon: menBoys },
+			{ key: 'children-youth-counselling', icon: childrenYouth },
+			{ key: 'child-youth-rehabilitation', icon: childYouthRehab01 },
+			{ key: 'cures-mothers-fathers', icon: curesParents01 },
+			{ key: 'pregnancy', icon: pregnancy },
+			{ key: 'sucht', icon: addiction04 },
+			{ key: 'school-to-work-transition', icon: schoolToWork },
+			{ key: 'trauerberatung', icon: bereavement02 },
+			{ key: 'u25-suicide-prevention', icon: u25Prevention01 }
 		]
 	},
 	{
@@ -579,10 +622,28 @@ const presentationCategoryDefinitions: PresentationCategoryDefinition[] = [
 		categoryId: 'migration',
 		icon: category03,
 		topics: [
-			{ key: 'migration', icon: migration03 },
 			{
 				key: 'initial-return-further-migration',
 				icon: initialReturnMigration03
+			},
+			{ key: 'migration', icon: migration03 }
+		]
+	},
+	{
+		id: 10006,
+		categoryId: 'teilhabe',
+		// TODO(#973): reuses the health cluster icon until design delivers a
+		// dedicated asset for the disability-inclusion cluster.
+		icon: category04,
+		topics: [
+			{
+				key: 'disability-psychological-impairment',
+				icon: disabilityPsych
+			},
+			{ key: 'child-youth-rehabilitation', icon: childYouthRehab04 },
+			{
+				key: 'legal-guardianship-advance-care',
+				icon: legalGuardianship02
 			}
 		]
 	}
@@ -592,30 +653,35 @@ const categoryCopyById: Record<
 	RegistrationCategoryId,
 	{ de: string; en: string; tr: string }
 > = {
-	familie: {
-		de: 'Familie, Kinder & Jugend',
-		en: 'Family, children & youth',
-		tr: 'Aile, çocuklar ve gençler'
-	},
 	alter: {
-		de: 'Alter, Pflege & Abschied',
-		en: 'Ageing, care & farewell',
-		tr: 'Yaşlılık, bakım ve veda'
+		de: 'Alter',
+		en: 'Ageing, Older Adults',
+		tr: 'Yaşlılık ve yaşlı yetişkinler'
 	},
-	soziales: {
-		de: 'Soziale Notlagen, Krisen & Finanzen',
-		en: 'Social hardship, crises & finances',
-		tr: 'Sosyal zorluklar, krizler ve finans'
+	krisen: {
+		de: 'Besondere Lebenssituationen & Krisen',
+		en: 'Challenging Life Situations & Crises',
+		tr: 'Zorlu yaşam durumları ve krizler'
 	},
 	gesundheit: {
-		de: 'Gesundheit, Behinderung & Sucht',
-		en: 'Health, disability & addiction',
-		tr: 'Sağlık, engellilik ve bağımlılık'
+		de: 'Gesundheit & Sucht',
+		en: 'Health and Addiction',
+		tr: 'Sağlık ve bağımlılık'
+	},
+	familie: {
+		de: 'Kinder, Jugend, Erwachsene, Schwangerschaft und Familie',
+		en: 'Children, Young People and Families',
+		tr: 'Çocuklar, gençler ve aileler'
 	},
 	migration: {
-		de: 'Migration & Integration',
-		en: 'Migration & integration',
+		de: 'Migration',
+		en: 'Migration & Integration',
 		tr: 'Göç ve entegrasyon'
+	},
+	teilhabe: {
+		de: 'Teilhabe für Menschen mit Beeinträchtigungen',
+		en: 'Disability Inclusion',
+		tr: 'Engelli bireylerin katılımı'
 	}
 };
 

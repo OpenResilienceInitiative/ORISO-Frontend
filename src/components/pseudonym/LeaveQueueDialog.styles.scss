@@ -109,6 +109,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+
 	/* Comfortably above the 32px minimum used elsewhere in the chat. */
 	min-height: 44px;
 	padding: 0 20px;
@@ -208,6 +209,7 @@
 	.leaveQueueDialog__title {
 		font-size: 20px;
 		line-height: 26px;
+
 		/* Long German compounds must wrap between words, never mid-word. */
 		word-break: normal;
 		overflow-wrap: break-word;

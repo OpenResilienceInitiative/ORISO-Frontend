@@ -10,6 +10,10 @@ import {
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import {
+	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
+	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
+} from './anonymousConsentInvariant';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
@@ -666,10 +670,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isAnonymousEnquiryPhaseSession =
 		sessionStatusNum === STATUS_EMPTY ||
 		sessionStatusNum === STATUS_ENQUIRY;
-	const requiresAnonymousInquiryConsent =
-		isAnonymousAskerExperience &&
-		isAnonymousEnquiryPhaseSession &&
-		!privacyAcceptanceRecorded;
+	/* ORISO-UserService#927: the Eingabesperre lives in one pure predicate now,
+	   pinned by `anonymousConsentInvariant.test.ts`. It used to be assembled
+	   inline here, which meant the consent guarantee for §11 KDG special-category
+	   data was emergent from three booleans and asserted nowhere. */
+	const requiresAnonymousInquiryConsent = requiresAnonymousInquiryConsentFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
+	});
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
 		[activeSession.item.id]
@@ -901,8 +910,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
-	const shouldBlockAnonymousInquiryChat =
-		shouldShowConsentGate || shouldShowPseudonymGate;
+	/* The runtime lock goes through the same predicate the invariant test pins.
+	   Recomposing it locally left `anonymousConsentInvariant.test.ts` asserting a
+	   copy of the rule while the composer obeyed a different one — the test would
+	   have stayed green through exactly the regression it exists to catch. */
+	const shouldBlockAnonymousInquiryChat = shouldBlockAnonymousInquiryChatFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation,
+		consentAcceptedInSession: anonymousInquiryConsentAccepted,
+		requiresPseudonymConfirmation,
+		isInAnonymousWaitingQueuePhase
+	});
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",

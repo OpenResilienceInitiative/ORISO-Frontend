@@ -20,6 +20,9 @@ import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import { rememberEmoji } from '../../utils/recentEmojis';
+import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
@@ -91,11 +94,7 @@ import {
 } from './attachmentHelpers';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
-import {
-	escapeMarkdownChars,
-	INPUT_MAX_LENGTH,
-	normalizeHighlightColor
-} from './richtextHelpers';
+import { escapeMarkdownChars, INPUT_MAX_LENGTH } from './richtextHelpers';
 import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
@@ -127,6 +126,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
@@ -816,63 +816,8 @@ export const MessageSubmitInterfaceComponent = ({
 		return getPlainTextFromComposerValue(rawMessage).trim().length > 0;
 	}, []);
 
-	const encodeHighlightColorsForTransport = useCallback(
-		(rawMessage: string) => {
-			if (!rawMessage) {
-				return rawMessage;
-			}
-			return rawMessage.replace(
-				/<mark([^>]*)>([\s\S]*?)<\/mark>/gi,
-				(_full, attrs: string, inner: string) => {
-					const styleMatch = attrs.match(
-						/style\s*=\s*["']([^"']*)["']/i
-					);
-					const dataColorMatch = attrs.match(
-						/data-color\s*=\s*["']([^"']+)["']/i
-					);
-					const styleColorMatch = styleMatch?.[1]?.match(
-						/background-color\s*:\s*([^;]+)/i
-					);
-					const color =
-						normalizeHighlightColor(dataColorMatch?.[1] || '') ||
-						normalizeHighlightColor(styleColorMatch?.[1] || '') ||
-						normalizeHighlightColor(attrs || '');
-					if (!color) {
-						return `<mark>${inner}</mark>`;
-					}
-					// Use a backend-safe token format to avoid downstream conversions that drop color.
-					return `[[hl:${color}]]${inner}[[/hl]]`;
-				}
-			);
-		},
-		[]
-	);
-
-	const encodeAlignmentForTransport = useCallback((rawMessage: string) => {
-		if (!rawMessage) {
-			return rawMessage;
-		}
-		return rawMessage.replace(
-			/<(p|h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
-			(_full, tagName: string, attrs: string, inner: string) => {
-				const styleAlignMatch = attrs.match(
-					/text-align\s*:\s*(left|center|right)/i
-				);
-				const dataAlignMatch = attrs.match(
-					/data-text-align\s*=\s*["'](left|center|right)["']/i
-				);
-				const align = (
-					dataAlignMatch?.[1] ||
-					styleAlignMatch?.[1] ||
-					''
-				).toLowerCase();
-				if (!align) {
-					return `<${tagName}${attrs}>${inner}</${tagName}>`;
-				}
-				return `[[align:${align}]]<${tagName}>${inner}</${tagName}>[[/align]]`;
-			}
-		);
-	}, []);
+	// Extracted to ./composerTransportEncoding so the encoding can be covered by
+	// the toolbar round-trip test; behaviour is unchanged.
 
 	useEffect(() => {
 		if (!activeInfo && isConsultantAbsent) {
@@ -1666,9 +1611,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			let message = retryContext
 				? retryContext.transportMessage
-				: encodeAlignmentForTransport(
-						encodeHighlightColorsForTransport(currentTypedMessage)
-					).trim();
+				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
@@ -1788,8 +1731,6 @@ export const MessageSubmitInterfaceComponent = ({
 			attachmentSelected,
 			audienceOptions,
 			editingMessageId,
-			encodeAlignmentForTransport,
-			encodeHighlightColorsForTransport,
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
@@ -3041,6 +2982,20 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
+
+	/**
+	 * Voice-message insertion point (#996). Recording types nothing into the
+	 * editor, so without a marker the user cannot see where in a half-written
+	 * message the recording is going to land. The dot is pinned at the caret
+	 * the moment recording starts and stays for as long as the recording is
+	 * pending — through the mic-button blur, through the preview — until it is
+	 * sent or discarded.
+	 */
+	const isVoiceInsertionPending =
+		isVoiceRecording || isVoiceAttachmentSelected;
+	useEffect(() => {
+		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
+	}, [isVoiceInsertionPending]);
 	const formatRecordingDuration = useCallback((totalSeconds: number) => {
 		const minutes = Math.floor(totalSeconds / 60);
 		const seconds = totalSeconds % 60;
@@ -3312,6 +3267,9 @@ export const MessageSubmitInterfaceComponent = ({
 		if (!emoji) {
 			return;
 		}
+		// Shared with the message action menu's quick-reaction row, so an emoji
+		// used here is offered there first (and vice versa).
+		rememberEmoji(emoji);
 		// Keep the picker open so users can insert multiple emojis.
 		composerRef.current?.insertText(`${emoji} `);
 	}, []);
@@ -3660,16 +3618,12 @@ export const MessageSubmitInterfaceComponent = ({
 						</button>
 					</div>
 				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
-				    same dock as the reply preview. */}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
+				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
+				    a full-width 32px bar — cancel glyph, emphasized lead, then
+				    the message itself on one ellipsized line. */}
 				{editingMessage && (
 					<div className="messageSubmit__editPreview" role="status">
-						<span className="messageSubmit__editPreviewLabel">
-							{translate(
-								'message.edit.previewLabel',
-								'Nachricht bearbeiten'
-							)}
-						</span>
 						<button
 							type="button"
 							className="messageSubmit__editPreviewCancel"
@@ -3679,8 +3633,19 @@ export const MessageSubmitInterfaceComponent = ({
 								'Bearbeiten abbrechen'
 							)}
 						>
-							×
+							<HighlightOffIcon fontSize="inherit" />
 						</button>
+						<span className="messageSubmit__editPreviewText">
+							<span className="messageSubmit__editPreviewLabel">
+								{translate(
+									'message.edit.previewLabel',
+									'Nachricht bearbeiten'
+								)}
+							</span>{' '}
+							<span className="messageSubmit__editPreviewQuote">
+								{editingMessage.text}
+							</span>
+						</span>
 					</div>
 				)}
 				<div
@@ -4482,10 +4447,18 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											</span>
 											{voicePreviewUrl && (
-												<audio
-													className="textarea__voicePreview__audio"
-													controls
+												// #996: the same player the
+												// sent message uses, so what
+												// you check before sending
+												// looks like what the other
+												// side gets.
+												<VoicePlayer
 													src={voicePreviewUrl}
+													durationSec={
+														voiceAttachmentDurationSec ||
+														null
+													}
+													size="sm"
 												/>
 											)}
 											<span className="textarea__attachmentSelected__remove">

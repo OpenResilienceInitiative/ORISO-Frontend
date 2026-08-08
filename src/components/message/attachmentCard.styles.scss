@@ -1,0 +1,179 @@
+/*
+ * Attachment card (#994). One visual definition for every attachment state —
+ * downloadable, encrypted, awaiting media check, blocked — so the same file
+ * does not change shape depending on encryption or scan state. Colours,
+ * radii and spacing come from the M3 tokens with a literal fallback, never
+ * from a bare hex.
+ */
+.attachmentCard {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 400px;
+	margin: 4px 0 0;
+	padding: 0;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface, #1a1c1e);
+	font: inherit;
+	text-align: left;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		border-color 120ms ease,
+		background-color 120ms ease;
+
+	&:hover {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-outline, #930008);
+		outline-offset: 2px;
+	}
+
+	&__info {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+		padding: 12px;
+		min-width: 0;
+	}
+
+	&__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		flex: 0 0 auto;
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
+	&__text {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	/*
+	 * A long file name truncates instead of pushing the card past the bubble;
+	 * the full name stays reachable through the title attribute.
+	 */
+	&__filename {
+		display: block;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		color: inherit;
+	}
+
+	&__meta {
+		display: block;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__action {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		flex: 0 0 auto;
+		color: var(--m3-primary, #a5000a);
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__preview {
+		position: relative;
+		width: 100%;
+		max-height: 320px;
+		margin: 0;
+		background: var(--m3-surface-container-lowest, #fff);
+
+		img {
+			display: block;
+			width: 100%;
+			max-width: 100%;
+			height: 100%;
+			max-height: 320px;
+			margin: 0;
+			object-fit: contain;
+			border-radius: 0;
+		}
+
+		/* Media check state "unchecked" (WP-4): placeholder before reveal. */
+		&--blurred img {
+			filter: blur(24px);
+			transform: scale(1.06); /* hide the sharp blur edges */
+		}
+	}
+
+	&__reveal {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		padding: 0 16px;
+		border: 0;
+		background: color-mix(in srgb, var(--m3-scrim, #000) 45%, transparent);
+		color: var(--m3-on-primary, #fff);
+		font-size: 14px;
+		font-weight: 500;
+		text-align: center;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-primary, #fff);
+			outline-offset: -4px;
+		}
+	}
+
+	/* Encrypted, not yet decrypted: an action, not a download. */
+	&--locked &__action {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	/* Blocked media is inert: no hover promise, no pointer, error-coloured meta. */
+	&--blocked,
+	&--inert {
+		cursor: default;
+
+		&:hover {
+			border-color: var(--m3-outline-variant, #c4c7c8);
+			background: var(--m3-surface-container-lowest, #fff);
+		}
+	}
+
+	&--blocked {
+		.attachmentCard__meta,
+		.attachmentCard__action {
+			color: var(--m3-error, #a5000a);
+		}
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+}
