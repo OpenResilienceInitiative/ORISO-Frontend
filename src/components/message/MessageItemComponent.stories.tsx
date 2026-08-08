@@ -690,3 +690,176 @@ export const GroupMessageRestrictedShowsChip: Story = {
 		...baseHandlers
 	}
 };
+
+/**
+ * Figma "Message Menu" (666:25242): the open kebab is a 28×32 red pill with
+ * **white** dots, and the menu lists "Reply directly" first.
+ *
+ * Pins the regression Frank reported: `.messageItem__kebabButton svg` forced
+ * 20×20 and `path, circle { fill: #17191c }` applied to *every* glyph, so
+ * opening the menu shrank the pill and painted its white dots near-black.
+ */
+export const KebabActiveState: Story = {
+	name: 'Kebab open — red pill, white dots (Figma 666:25242)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Click the ⋮ and the trigger must stay a 28×32 red pill with white dots. Also the only story that wires `onReplyDirect`, so "Reply directly" is actually rendered.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message: 'Okay. Ich bin gerade zuhause und kann schreiben.'
+		}),
+		onReact: () => {},
+		onUnreact: () => {},
+		onReplyDirect: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const kebab = canvasElement.querySelector(
+			'.messageItem__kebabButton'
+		) as HTMLElement;
+		expect(kebab).toBeTruthy();
+		kebab.click();
+
+		await waitFor(() => {
+			const active = canvasElement.querySelector(
+				'.messageItem__kebabIconActive'
+			) as SVGElement;
+			expect(active).toBeTruthy();
+
+			const rect = active.getBoundingClientRect();
+			expect(Math.round(rect.width)).toBe(28);
+			expect(Math.round(rect.height)).toBe(32);
+
+			// The dots must stay white — this is the exact bit the blanket
+			// `path { fill: #17191c }` used to clobber.
+			const dots = active.querySelectorAll('path[fill="white"]');
+			expect(dots.length).toBeGreaterThan(0);
+			dots.forEach((dot) => {
+				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+			});
+		});
+
+		await waitFor(() => {
+			const menu = document.querySelector(
+				'.messageItem__actionMenu'
+			) as HTMLElement;
+			expect(menu).toBeTruthy();
+			expect(getComputedStyle(menu).backgroundColor).toBe(
+				'rgb(255, 255, 255)'
+			);
+			expect(menu.textContent).toContain('Reply directly');
+		});
+	}
+};
+
+/**
+ * Same pins as `KebabActiveState`, but for the **outgoing** side: the kebab
+ * lives in the right side column (`--right`) and the menu is positioned from
+ * the other edge, so the fix has to hold there independently.
+ */
+export const KebabActiveStateOutgoing: Story = {
+	name: 'Kebab open — outgoing side (Figma 666:25242)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Outgoing counterpart of the incoming kebab pin. Also asserts the full emoji picker renders **above** the action menu that opened it.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns zuerst die nächsten 10 Minuten strukturieren.'
+		}),
+		onReact: () => {},
+		onUnreact: () => {},
+		onReplyDirect: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const kebab = canvasElement.querySelector(
+			'.messageItem__kebabButton--right'
+		) as HTMLElement;
+		expect(kebab).toBeTruthy();
+		kebab.click();
+
+		await waitFor(() => {
+			const active = canvasElement.querySelector(
+				'.messageItem__kebabIconActive'
+			) as SVGElement;
+			expect(active).toBeTruthy();
+
+			const rect = active.getBoundingClientRect();
+			expect(Math.round(rect.width)).toBe(28);
+			expect(Math.round(rect.height)).toBe(32);
+
+			const dots = active.querySelectorAll('path[fill="white"]');
+			expect(dots.length).toBeGreaterThan(0);
+			dots.forEach((dot) => {
+				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+			});
+		});
+
+		const menu = await waitFor(() => {
+			const found = document.querySelector(
+				'.messageItem__actionMenu'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		expect(menu.textContent).toContain('Reply directly');
+
+		// The menu must stay inside the viewport on this side too — it is
+		// positioned from the right edge, so a wrong clamp pushes it off-screen.
+		const menuRect = menu.getBoundingClientRect();
+		expect(menuRect.left).toBeGreaterThanOrEqual(0);
+		expect(menuRect.right).toBeLessThanOrEqual(window.innerWidth);
+
+		// The picker the quick row opens has to sit ON TOP of that menu.
+		const more = menu.querySelector(
+			'.messageItem__actionMenuReactionMore'
+		) as HTMLElement;
+		expect(more).toBeTruthy();
+		more.click();
+
+		await waitFor(() => {
+			const picker = document.querySelector(
+				'[data-testid="emoji-picker-popup"]'
+			) as HTMLElement;
+			expect(picker).toBeTruthy();
+			expect(Number(getComputedStyle(picker).zIndex)).toBeGreaterThan(
+				Number(menu.style.zIndex)
+			);
+
+			// …and beside the menu, not over its entries.
+			const pickerRect = picker.getBoundingClientRect();
+			const menuRect2 = menu.getBoundingClientRect();
+			const overlaps = !(
+				pickerRect.right <= menuRect2.left ||
+				pickerRect.left >= menuRect2.right ||
+				pickerRect.bottom <= menuRect2.top ||
+				pickerRect.top >= menuRect2.bottom
+			);
+			expect(overlaps).toBe(false);
+			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
+			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
+		});
+	}
+};

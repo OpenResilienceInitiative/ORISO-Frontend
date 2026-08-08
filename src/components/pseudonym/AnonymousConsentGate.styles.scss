@@ -140,6 +140,7 @@
 	justify-content: center;
 	gap: 6px;
 	padding: 8px 14px;
+
 	// Both action buttons are pills. This used to be declared per button, and
 	// they had drifted apart (reject 8px, accept 100px). Side by side at auto
 	// width the mismatch was easy to miss; once #892 stacked them full-width

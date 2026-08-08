@@ -171,7 +171,11 @@ describe('TopicSelection', () => {
 				'Kinder und Jugendliche',
 				'children-youth-counselling'
 			),
-			topicWithSlug(3, '[U25] Suizidprävention', 'u25-suicide-prevention'),
+			topicWithSlug(
+				3,
+				'[U25] Suizidprävention',
+				'u25-suicide-prevention'
+			),
 			topicWithSlug(
 				4,
 				'Rechtliche Betreuung und Vorsorge',

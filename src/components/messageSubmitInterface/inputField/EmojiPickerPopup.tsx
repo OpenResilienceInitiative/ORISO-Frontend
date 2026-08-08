@@ -1,7 +1,14 @@
 import * as React from 'react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { autoUpdate, computePosition, offset, shift } from '@floating-ui/dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift
+} from '@floating-ui/dom';
+import type { Placement } from '@floating-ui/dom';
 import type { Theme } from 'emoji-picker-react';
 import type { MenuDirection } from './menuDirection';
 import './emojiPickerPopup.styles.scss';
@@ -22,6 +29,12 @@ export interface EmojiPickerPopupProps {
 	 * clipping (#835).
 	 */
 	anchorEl: HTMLElement | null;
+	/**
+	 * Overrides the `direction`-derived placement. The message action menu
+	 * passes a side placement so the picker opens *beside* the menu instead of
+	 * covering its entries; the composer leaves this unset.
+	 */
+	placement?: Placement;
 }
 
 /**
@@ -33,7 +46,8 @@ export const EmojiPickerPopup = ({
 	direction,
 	onPick,
 	onClose,
-	anchorEl
+	anchorEl,
+	placement
 }: EmojiPickerPopupProps) => {
 	const popupRef = useRef<HTMLDivElement | null>(null);
 	const [position, setPosition] = useState<{ top: number; left: number }>({
@@ -49,11 +63,32 @@ export const EmojiPickerPopup = ({
 		return autoUpdate(anchorEl, popupEl, () => {
 			computePosition(anchorEl, popupEl, {
 				// Match ToolbarMenu: docked/mobile open upward, fullscreen down.
-				placement: direction === 'up' ? 'top-start' : 'bottom-start',
-				middleware: [offset(8), shift({ padding: 8 })]
+				placement:
+					placement ??
+					(direction === 'up' ? 'top-start' : 'bottom-start'),
+				// A side placement must be free to flip — on the outgoing half
+				// of the chat there is no room to the right of the menu, and on
+				// a phone there is room on neither side, where only a top/bottom
+				// fallback keeps the 320px picker on screen (`shift` clamps the
+				// main axis only, which is vertical for left/right placements).
+				// The composer keeps the deliberately flip-free up/down rule
+				// from #835, where flipping put the picker over the editor.
+				middleware: placement
+					? [
+							offset(8),
+							flip({
+								fallbackPlacements: [
+									'left-start',
+									'bottom-end',
+									'top-end'
+								]
+							}),
+							shift({ padding: 8 })
+						]
+					: [offset(8), shift({ padding: 8 })]
 			}).then(({ x, y }) => setPosition({ left: x, top: y }));
 		});
-	}, [anchorEl, direction]);
+	}, [anchorEl, direction, placement]);
 
 	useEffect(() => {
 		const handlePointerDown = (event: PointerEvent) => {

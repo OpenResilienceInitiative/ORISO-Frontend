@@ -313,15 +313,23 @@ $message-avatar-overlap: -19px;
 		z-index: 7;
 
 		svg {
-			width: 20px;
-			height: 20px;
 			flex-shrink: 0;
 			pointer-events: none;
 		}
 
-		path,
-		circle {
-			fill: #17191c;
+		// Scoped to the resting glyph on purpose. The open state renders
+		// `messageItem__kebabIconActive`, a 28×32 red pill that carries its own
+		// white dots and highlights — a blanket `svg { width: 20px }` squashed
+		// it and a blanket `path { fill: #17191c }` painted the white dots
+		// black, so selecting an item turned the button small and dark.
+		.messageItem__kebabIconDefault {
+			width: 20px;
+			height: 20px;
+
+			path,
+			circle {
+				fill: #17191c;
+			}
 		}
 
 		&:hover {
@@ -341,6 +349,14 @@ $message-avatar-overlap: -19px;
 	&__kebabIconDefault {
 		width: 20px !important;
 		height: 20px !important;
+	}
+
+	// Figma "Message Menu" (666:25242): open state is a 28×32 red pill with
+	// white dots. It keeps its own geometry and fills — see the note in
+	// `&__kebabButton` for why nothing here may be inherited from the button.
+	&__kebabIconActive {
+		width: 28px !important;
+		height: 32px !important;
 	}
 
 	&__kebabButton--left {
@@ -1936,6 +1952,36 @@ $message-avatar-overlap: -19px;
 			// primary-fixed stays light for every tenant seed.
 			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
 			box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Hands over to the full emoji picker when the six recents aren't enough.
+	.messageItem__actionMenuReactionMore {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: var(--m3-secondary, #4b515a);
+		font-size: 18px;
+		line-height: 1;
+		padding: 5px;
+		cursor: pointer;
+		border-radius: 999px;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
 		}
 	}
 }

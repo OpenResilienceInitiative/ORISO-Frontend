@@ -95,6 +95,9 @@ import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/de
 import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { MessageDateDivider } from './MessageDateDivider';
+import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
+import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
+import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -103,8 +106,6 @@ import { MessageDateDivider } from './MessageDateDivider';
    list scrolls. */
 const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
 
-const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
-
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
@@ -112,7 +113,14 @@ const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 const logger = getMatrixClientLogger();
 
 const ActiveKebabIcon = () => (
-	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
+	<svg
+		className="messageItem__kebabIconActive"
+		width="28"
+		height="32"
+		viewBox="0 0 28 32"
+		fill="none"
+		aria-hidden
+	>
 		<g clipPath="url(#active-kebab-clip)">
 			<rect width="28" height="32" rx="14" fill="#CC1E1C" />
 			<rect width="28" height="32" fill="white" fillOpacity="0.08" />
@@ -444,6 +452,11 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// Quick-reaction row: the user's own recent picks, refreshed every time the
+	// menu opens, plus the "more" button that hands over to the full picker.
+	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
+	const [isQuickEmojiPickerOpen, setIsQuickEmojiPickerOpen] = useState(false);
+	const quickEmojiMoreRef = React.useRef<HTMLButtonElement | null>(null);
 	const [isVisibilityMenuOpen, setIsVisibilityMenuOpen] = useState(false);
 	const [visibilityMenuPosition, setVisibilityMenuPosition] = useState<{
 		top: number;
@@ -478,12 +491,44 @@ export const MessageItemComponent = ({
 	}, [_id]);
 
 	useEffect(() => {
+		if (isActionMenuOpen) {
+			// Re-read on open: an emoji picked in the composer (or on another
+			// message) must show up here without a reload.
+			setQuickEmojis(getQuickEmojis());
+			return;
+		}
+		setIsQuickEmojiPickerOpen(false);
+	}, [isActionMenuOpen]);
+
+	/** React with `emoji` and promote it to the front of the recent list. */
+	const applyQuickReaction = useCallback(
+		(emoji: string) => {
+			rememberEmoji(emoji);
+			setQuickEmojis(getQuickEmojis());
+			onReact?.(emoji);
+			setIsQuickEmojiPickerOpen(false);
+			setIsActionMenuOpen(false);
+		},
+		[onReact]
+	);
+
+	useEffect(() => {
 		if (!isActionMenuOpen) {
 			return;
 		}
 		const handleOutsideClick = (event: MouseEvent) => {
 			const target = event.target as Node | null;
 			if (!target) {
+				return;
+			}
+			// The full emoji picker portals to <body>, so it sits outside the
+			// menu element. Without this exemption picking an emoji from it
+			// would close the menu (and unmount the picker) on mousedown,
+			// before the click that selects the emoji ever lands.
+			if (
+				target instanceof Element &&
+				target.closest('[data-testid="emoji-picker-popup"]')
+			) {
 				return;
 			}
 			if (!actionMenuRef.current?.contains(target)) {
@@ -2564,7 +2609,7 @@ export const MessageItemComponent = ({
 										'React'
 									)}
 								>
-									{QUICK_REACTION_EMOJIS.map((emoji) => {
+									{quickEmojis.map((emoji) => {
 										const ownReaction = (
 											reactions || []
 										).find(
@@ -2589,16 +2634,58 @@ export const MessageItemComponent = ({
 														onUnreact?.(
 															ownReaction.ownEventId
 														);
-													} else {
-														onReact(emoji);
+														setIsActionMenuOpen(
+															false
+														);
+														return;
 													}
-													setIsActionMenuOpen(false);
+													applyQuickReaction(emoji);
 												}}
 											>
 												{emoji}
 											</button>
 										);
 									})}
+									<button
+										ref={quickEmojiMoreRef}
+										type="button"
+										role="menuitem"
+										className="messageItem__actionMenuReactionMore"
+										aria-haspopup="dialog"
+										aria-expanded={isQuickEmojiPickerOpen}
+										// Same exemption the composer's emoji
+										// toggle uses: without it, the picker's
+										// pointerdown-outside handler closes the
+										// picker on this button, then the click
+										// toggles it open again.
+										data-emoji-picker-toggle=""
+										aria-label={translate(
+											'message.reaction.more',
+											'Weitere Emojis'
+										)}
+										onClick={() =>
+											setIsQuickEmojiPickerOpen(
+												(open) => !open
+											)
+										}
+									>
+										<AddReactionOutlinedIcon fontSize="inherit" />
+									</button>
+									{isQuickEmojiPickerOpen && (
+										<EmojiPickerPopup
+											direction="down"
+											// Beside the menu, not over it:
+											// anchored to the menu itself so
+											// the picker never covers "Reply
+											// directly" & co.
+											anchorEl={actionMenuRef.current}
+											placement="right-start"
+											onPick={applyQuickReaction}
+											onClose={() =>
+												setIsQuickEmojiPickerOpen(false)
+											}
+										/>
+									)}
 								</div>
 							)}
 							{actionMenuItems.map((item) => (

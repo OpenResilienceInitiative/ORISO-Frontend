@@ -8,6 +8,12 @@
 
 	&--portalled {
 		position: fixed;
+
+		// Above the message action menu (inline z-index 99999): the menu's
+		// quick-reaction row opens this picker, so it must not end up behind
+		// the menu that spawned it. Still below the app's modal layer
+		// (999990+).
+		z-index: 99999 + 1;
 	}
 
 	// Legacy absolute anchors kept for non-portalled story harnesses.
