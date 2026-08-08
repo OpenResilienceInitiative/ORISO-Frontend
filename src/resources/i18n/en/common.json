@@ -140,7 +140,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Download"
+			"label": "Download",
+			"aria": "Download {{name}}"
 		},
 		"error": {
 			"format": {
@@ -3548,6 +3549,20 @@
 				"reason": "Unfortunately you are not authorized to view this page.",
 				"title": "No entry!"
 			}
+		}
+	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
 		}
 	},
 	"walkthrough": {

@@ -143,7 +143,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Herunterladen"
+			"label": "Herunterladen",
+			"aria": "{{name}} herunterladen"
 		},
 		"error": {
 			"format": {
@@ -3606,6 +3607,20 @@
 				"reason": "Leider sind Sie nicht berechtigt diese Seite einzusehen.",
 				"title": "Kein Zutritt!"
 			}
+		}
+	},
+	"voicePlayer": {
+		"label": "Sprachnachricht",
+		"play": "Sprachnachricht abspielen",
+		"pause": "Sprachnachricht anhalten",
+		"timeline": "Zeitachse",
+		"jumpTo": "Zu {{time}} springen",
+		"aria": "Sprachnachricht, {{duration}}, abspielen",
+		"remaining": "noch {{remaining}} von {{total}}",
+		"encrypted": "Ende-zu-Ende verschlüsselt",
+		"meta": {
+			"perSecond": "{{seconds}} Sekunden · Klick springt zur Sekunde",
+			"perTile": "{{total}} · je Kachel {{seconds}} s"
 		}
 	},
 	"walkthrough": {

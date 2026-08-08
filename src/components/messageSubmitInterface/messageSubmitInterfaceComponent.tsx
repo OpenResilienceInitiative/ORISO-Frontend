@@ -126,6 +126,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
@@ -2981,6 +2982,20 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
+
+	/**
+	 * Voice-message insertion point (#996). Recording types nothing into the
+	 * editor, so without a marker the user cannot see where in a half-written
+	 * message the recording is going to land. The dot is pinned at the caret
+	 * the moment recording starts and stays for as long as the recording is
+	 * pending — through the mic-button blur, through the preview — until it is
+	 * sent or discarded.
+	 */
+	const isVoiceInsertionPending =
+		isVoiceRecording || isVoiceAttachmentSelected;
+	useEffect(() => {
+		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
+	}, [isVoiceInsertionPending]);
 	const formatRecordingDuration = useCallback((totalSeconds: number) => {
 		const minutes = Math.floor(totalSeconds / 60);
 		const seconds = totalSeconds % 60;
@@ -4432,10 +4447,18 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											</span>
 											{voicePreviewUrl && (
-												<audio
-													className="textarea__voicePreview__audio"
-													controls
+												// #996: the same player the
+												// sent message uses, so what
+												// you check before sending
+												// looks like what the other
+												// side gets.
+												<VoicePlayer
 													src={voicePreviewUrl}
+													durationSec={
+														voiceAttachmentDurationSec ||
+														null
+													}
+													size="sm"
 												/>
 											)}
 											<span className="textarea__attachmentSelected__remove">

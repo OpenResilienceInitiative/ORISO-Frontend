@@ -52,6 +52,9 @@
 	--m3-on-background: #1a1c1e;
 	--m3-outline: #747878;
 	--m3-outline-variant: #c4c7c8;
+
+	/* M3 scrim role — used at an opacity, e.g. the unchecked-media overlay. */
+	--m3-scrim: #000;
 	--m3-error: #{$form-error};
 	--m3-success: #{$form-success};
 	--oriso-app-action: #a5000a;

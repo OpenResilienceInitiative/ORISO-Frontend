@@ -810,7 +810,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		/* Reduce padding for messages with attachments */
-		&:has(&__attachment) {
+		&:has(.attachmentCard) {
 			padding: 8px;
 		}
 
@@ -990,148 +990,18 @@ $message-avatar-overlap: -19px;
 			}
 		}
 
-		&__attachment {
-			display: flex;
-			flex-direction: column;
-			margin-top: 4px;
-			border: 1px solid #e3e8f0;
-			border-radius: 8px;
-			overflow: hidden;
-			max-width: 400px;
-			background: transparent;
-			transition: all 0.2s ease;
-
-			&:hover {
-				border-color: #0086e6;
-				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
-			}
-
-			&__preview {
-				background: #fff;
-				padding: 0;
-				margin: 0;
-				width: 100%;
-				position: relative;
-
-				// Reserve the box via the sender-provided intrinsic ratio
-				// (inline aspect-ratio style) but never grow past the bubble.
-				max-height: 320px;
-
-				img {
-					width: 100%;
-					max-width: 100%;
-					height: 100%;
-					max-height: 320px;
-					object-fit: contain;
-					display: block;
-					margin: 0;
-					border-radius: 0;
-				}
-
-				// Media check state "unchecked" (WP-4): this styles the
-				// no-source placeholder shown before deliberate reveal.
-				&--blurred {
-					img {
-						filter: blur(24px);
-						transform: scale(1.06); // hide sharp blur edges
-					}
-				}
-			}
-
-			&__reveal {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				width: 100%;
-				border: 0;
-				background: rgba(23, 25, 28, 0.35);
-				color: #fff;
-				font-size: 14px;
-				font-weight: 500;
-				cursor: pointer;
-			}
-
-			&--blocked {
-				opacity: 0.85;
-
-				&:hover {
-					border-color: #e3e8f0;
-					box-shadow: none;
-				}
-
-				.messageItem__message__attachment__meta {
-					color: var(--m3-primary, #a5000a);
-				}
-			}
-
-			&__info {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				gap: 12px;
-				padding: 12px;
-				background: #f4f6fa;
-			}
-
-			&__filename {
-				font-size: 14px;
-				font-weight: 500;
-				color: #17191c;
-				margin: 0 !important;
-			}
-
-			&__meta {
-				font-size: 12px;
-				color: #8d97a5;
-				margin: 0 !important;
-			}
-
-			&__title {
-				flex: 1;
-				min-width: 0;
-				display: flex;
-				flex-direction: column;
-			}
-
-			&__icon {
-				width: 32px;
-				height: 32px;
-				flex-shrink: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-
-				svg {
-					width: 24px;
-					height: 24px;
-					color: #737d8c;
-				}
-			}
-
-			.loadingSpinner {
-				margin-right: $grid-base;
-			}
-
-			p {
-				margin: 0;
-			}
-
-			&__meta {
-				font-size: $font-size-secondary;
-				line-height: $line-height-secondary;
-				color: var(--m3-on-surface-variant, $tertiary);
-			}
-		}
-
 		&--myMessage {
 			color: $message-outgoing-text;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
-			.messageItem__message__attachment {
-				background-color: $white;
+			// The voice player runs with bubble="none" inside this bubble, so
+			// its unplayed tiles have to read against the outgoing surface
+			// rather than against the incoming one.
+			--voice-player-tile-idle: rgba(255, 255, 255, 0.72);
+
+			.attachmentCard {
+				background-color: var(--m3-surface-container-lowest, #fff);
 			}
 
 			a,
@@ -1354,83 +1224,6 @@ $message-avatar-overlap: -19px;
 
 	&__threadButton:hover .messageItem__threadButtonMeta {
 		display: none;
-	}
-
-	&__voiceNote {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 220px;
-		max-width: 360px;
-		padding: 8px 10px;
-		border-radius: 999px;
-		background: var(--m3-primary-container, #cc1e1c);
-		color: var(--m3-on-primary-container, #ffe2de);
-
-		audio {
-			display: none;
-		}
-	}
-
-	&__voiceNote__play {
-		border: none;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		cursor: pointer;
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-
-		&:hover {
-			background: var(--m3-primary-hover, #820006);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
-			outline-offset: 2px;
-		}
-	}
-
-	&__voiceNote__wave {
-		position: relative;
-		flex: 1;
-		height: 16px;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
-			transparent 3px 7px
-		);
-		opacity: 1;
-		overflow: hidden;
-	}
-
-	&__voiceNote__wavePlayed {
-		position: absolute;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		width: 0;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-on-primary-container, #ffe2de) 0 3px,
-			transparent 3px 7px
-		);
-		transition: width 120ms linear;
-	}
-
-	&__voiceNote__time {
-		font-size: 12px;
-		font-weight: 700;
-		letter-spacing: 0.3px;
-		white-space: nowrap;
 	}
 
 	&__action {
