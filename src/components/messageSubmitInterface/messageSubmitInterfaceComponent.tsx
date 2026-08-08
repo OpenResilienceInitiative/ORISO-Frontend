@@ -20,6 +20,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
@@ -3602,16 +3603,12 @@ export const MessageSubmitInterfaceComponent = ({
 						</button>
 					</div>
 				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
-				    same dock as the reply preview. */}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
+				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
+				    a full-width 32px bar — cancel glyph, emphasized lead, then
+				    the message itself on one ellipsized line. */}
 				{editingMessage && (
 					<div className="messageSubmit__editPreview" role="status">
-						<span className="messageSubmit__editPreviewLabel">
-							{translate(
-								'message.edit.previewLabel',
-								'Nachricht bearbeiten'
-							)}
-						</span>
 						<button
 							type="button"
 							className="messageSubmit__editPreviewCancel"
@@ -3621,8 +3618,19 @@ export const MessageSubmitInterfaceComponent = ({
 								'Bearbeiten abbrechen'
 							)}
 						>
-							×
+							<HighlightOffIcon fontSize="inherit" />
 						</button>
+						<span className="messageSubmit__editPreviewText">
+							<span className="messageSubmit__editPreviewLabel">
+								{translate(
+									'message.edit.previewLabel',
+									'Nachricht bearbeiten'
+								)}
+							</span>{' '}
+							<span className="messageSubmit__editPreviewQuote">
+								{editingMessage.text}
+							</span>
+						</span>
 					</div>
 				)}
 				<div

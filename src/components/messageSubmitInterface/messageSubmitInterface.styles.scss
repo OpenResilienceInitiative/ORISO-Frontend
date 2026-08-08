@@ -2031,42 +2031,79 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 }
 
 // Editing (m.replace, #435): edit-in-progress banner above the input.
+// Figma "Reply Bar_v2" (9354:206458 desktop, 18:6713 mobile): a full-width
+// 32px bar above the composer — cancel glyph at 12px, 8px gap, then one
+// ellipsized line of M3 body-small. Same geometry on both breakpoints; only
+// the available width differs, which the ellipsis absorbs.
 .messageSubmit__editPreview {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: 8px;
+	min-height: 32px;
 	margin: 0 12px 6px;
 	padding: 8px 12px;
-	border-left: 3px solid var(--m3-primary, #a5000a);
-	border-radius: 6px;
-	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
-	font-size: 13px;
-	line-height: 1.4;
+	border-radius: 8px;
 
+	// Figma calls this fill "M3/sys/light/background" (#EAE7E8), but in the
+	// app's seeded scheme --m3-background is #FCF9F9; #EAE7E8 is
+	// surface-container-high. Match the hex, not the Figma variable name.
+	background: var(--m3-surface-container-high, #eae7e8);
+
+	// M3/body/small — Inter 12/16, tracking 0.4.
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.4px;
+
+	.messageSubmit__editPreviewText {
+		flex: 1;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	// "Weight-emphasized: Medium" on the lead, regular on the message.
 	.messageSubmit__editPreviewLabel {
-		color: var(--m3-on-surface-variant, #4c555f);
+		font-weight: 500;
+		color: var(--m3-secondary, #4c555f);
+	}
+
+	.messageSubmit__editPreviewQuote {
+		color: var(--m3-primary, #a5000a);
 	}
 
 	.messageSubmit__editPreviewCancel {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		flex-shrink: 0;
+		width: 16px;
+		height: 16px;
 		border: none;
 		background: none;
-		font-size: 18px;
+		font-size: 16px;
 		line-height: 1;
-		padding: 2px 6px;
+		padding: 0;
 		cursor: pointer;
 		border-radius: 50%;
-		color: var(--m3-on-surface-variant, #4c555f);
+		color: var(--m3-on-primary-fixed, #410001);
 
-		&:hover,
-		&:focus-visible {
-			background: rgba(0, 0, 0, 0.08);
+		svg {
+			width: 16px;
+			height: 16px;
 		}
 
 		&:focus-visible {
 			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 1px;
+			outline-offset: 2px;
 		}
+	}
+
+	// `.textarea__mobileNavigator` is `position: absolute; top: -48px`, so it
+	// is out of flow and paints its white background over the 48px directly
+	// above the composer — exactly where this bar would otherwise sit. Reserve
+	// that band so the banner clears it instead of disappearing behind it.
+	@media screen and (width <= 899px) {
+		margin-bottom: 54px;
 	}
 }

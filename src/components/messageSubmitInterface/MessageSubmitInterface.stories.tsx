@@ -379,17 +379,88 @@ export const ReplyingToMessage: Story = {
 	}
 };
 
+const EDITING_LONG_TEXT =
+	'When some text is written meaning their is something the user can send to the chat room, than onlyshow the red sending state and nothing else at all';
+
+/** Shared assertions for the Figma "Reply Bar_v2" edit banner (9354:206458). */
+const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
+	const banner = await waitFor(() => {
+		const found = canvasElement.querySelector(
+			'.messageSubmit__editPreview'
+		) as HTMLElement;
+		expect(found).toBeTruthy();
+		return found;
+	});
+
+	// Full width of the composer, one 32px line — never wraps.
+	const form = banner.closest('form') as HTMLElement;
+	const bannerRect = banner.getBoundingClientRect();
+	expect(Math.round(bannerRect.height)).toBe(32);
+	expect(bannerRect.width).toBeGreaterThan(
+		form.getBoundingClientRect().width * 0.8
+	);
+
+	const text = banner.querySelector(
+		'.messageSubmit__editPreviewText'
+	) as HTMLElement;
+	expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+	expect(getComputedStyle(text).whiteSpace).toBe('nowrap');
+	// Ellipsized, not clipped away: the line box stays one line high.
+	expect(Math.round(text.getBoundingClientRect().height)).toBe(16);
+
+	// M3 body-small, emphasized lead in secondary, message in primary.
+	expect(getComputedStyle(banner).fontSize).toBe('12px');
+	expect(getComputedStyle(banner).lineHeight).toBe('16px');
+	const label = banner.querySelector(
+		'.messageSubmit__editPreviewLabel'
+	) as HTMLElement;
+	expect(getComputedStyle(label).fontWeight).toBe('500');
+
+	// The cancel glyph is a real 16px icon, not a "×" character.
+	const cancel = banner.querySelector(
+		'.messageSubmit__editPreviewCancel'
+	) as HTMLElement;
+	expect(cancel.querySelector('svg')).toBeTruthy();
+	expect(Math.round(cancel.getBoundingClientRect().width)).toBe(16);
+
+	// #978 must not come back through the newly visible preview text.
+	expect(banner.textContent).not.toMatch(/\[\[/);
+};
+
 export const EditingMessage: Story = {
 	name: 'Editing (m.replace preview)',
 	render: () => (
 		<ComposerShell
 			editingMessage={{
 				eventId: '$orig:matrix.oriso.org',
-				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+				text: EDITING_LONG_TEXT
 			}}
 			onCancelEdit={() => {}}
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+	}
+};
+
+/** Mobile counterpart — Figma 18:6713. Same bar, less room for the text. */
+export const EditingMessageMobile: Story = {
+	name: 'Editing (m.replace preview) — mobile',
+	parameters: {
+		viewport: { defaultViewport: 'mobile1' }
+	},
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: EDITING_LONG_TEXT
+			}}
+			onCancelEdit={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+	}
 };
 
 export const GroupChat: Story = {

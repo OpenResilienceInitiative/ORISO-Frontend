@@ -3258,10 +3258,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setReplyTo({
 			eventId: message._id,
 			author: message.displayName || message.username,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
+			// #978: stripping tags is not enough — `[[align:…]]` / `[[hl:…]]`
+			// are transport tokens, not HTML, and used to end up on screen
+			// verbatim. `toMessagePreviewText` unwraps both.
+			text: toMessagePreviewText(message.message)
 		});
 	}, []);
 
@@ -3276,10 +3276,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const handleEditDirect = useCallback((message: MessageItem) => {
 		setEditingMessage({
 			eventId: message._id,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
+			// Same as the reply hand-off — and now load-bearing, because the
+			// redesigned edit banner puts this text on screen.
+			text: toMessagePreviewText(message.message)
 		});
 	}, []);
 
