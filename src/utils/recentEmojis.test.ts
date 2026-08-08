@@ -1,14 +1,37 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	DEFAULT_QUICK_EMOJIS,
 	getQuickEmojis,
 	rememberEmoji
 } from './recentEmojis';
 
+const createMemoryStorage = (): Storage => {
+	const store = new Map<string, string>();
+	return {
+		get length() {
+			return store.size;
+		},
+		clear: () => store.clear(),
+		getItem: (key: string) => store.get(key) ?? null,
+		key: (index: number) => Array.from(store.keys())[index] ?? null,
+		removeItem: (key: string) => {
+			store.delete(key);
+		},
+		setItem: (key: string, value: string) => {
+			store.set(key, String(value));
+		}
+	};
+};
+
 describe('recentEmojis', () => {
 	beforeEach(() => {
-		window.localStorage.clear();
+		// Node 22+ can inject a partial `--localstorage-file` Storage that
+		// lacks clear/removeItem; pin a complete in-memory stub instead.
+		Object.defineProperty(window, 'localStorage', {
+			configurable: true,
+			value: createMemoryStorage()
+		});
 	});
 
 	it('offers the defaults before the user has picked anything', () => {
@@ -46,14 +69,10 @@ describe('recentEmojis', () => {
 	});
 
 	it('survives a storage write that throws (private mode)', () => {
-		const setItem = vi
-			.spyOn(Storage.prototype, 'setItem')
-			.mockImplementation(() => {
-				throw new Error('QuotaExceededError');
-			});
+		window.localStorage.setItem = () => {
+			throw new Error('QuotaExceededError');
+		};
 
 		expect(() => rememberEmoji('🎉')).not.toThrow();
-
-		setItem.mockRestore();
 	});
 });

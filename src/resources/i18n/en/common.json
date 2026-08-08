@@ -140,7 +140,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Download"
+			"label": "Download",
+			"aria": "Download {{name}}"
 		},
 		"error": {
 			"format": {
@@ -530,7 +531,7 @@
 			},
 			"overlay": {
 				"button": "Go to the message",
-				"copy": "Within two business days you will receive a response from us.",
+				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
 		}
@@ -3550,6 +3551,20 @@
 			}
 		}
 	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"close": "Close tour",
 		"overview": {
@@ -3899,6 +3914,66 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Your first steps",
+		"greeting": {
+			"body": "Thank you for getting in touch. Your message has reached us."
+		},
+		"whoReadsAlong": {
+			"headline": "Who reads your message",
+			"body": "Only the trained staff of the responsible counselling centre read your message. Everyone there is bound by confidentiality."
+		},
+		"responseDeadline": {
+			"headline": "When you will get a reply",
+			"body": "You will receive a reply from a suitable contact person within {{deadlineDays}} working days."
+		},
+		"modalityNote": {
+			"body": "The counselling takes place in writing, in this protected area. You can keep writing at any time."
+		},
+		"noPersonalData": {
+			"headline": "Please do not send personal data",
+			"body": "Please do not send us your full name, your address or your phone number. We do not need any of that for the counselling."
+		},
+		"emergencyNumbers": {
+			"headline": "If it cannot wait",
+			"body": "In an acute emergency you can reach Telefonseelsorge around the clock on 0800 111 0 111 or 0800 111 0 222, and the emergency services on 112."
+		},
+		"dataProtection": {
+			"body": "How we handle your data is set out in the privacy policy."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Notification by e-mail",
+			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
+			"action": "Add an e-mail address",
+			"saveFailed": "Saving failed. Please try again."
+		},
+		"accountProtection": {
+			"headline": "Your access, additionally protected",
+			"body": "You can secure your access with a second factor, so that nobody else can get in.",
+			"action": "Protect my access"
+		},
+		"closing": {
+			"body": "See you soon — we will get back to you."
+		},
+		"saveCredentials": {
+			"headline": "Keep hold of your access",
+			"body": "Without your login name you will not be able to return to this conversation later. Keep it somewhere safe — a password manager is best.",
+			"userNameLabel": "Login name",
+			"copy": "Copy",
+			"copied": "Login name copied.",
+			"sharedDevice": "If other people use this device, better not to save your login name here — write it down somewhere safe instead.",
+			"setPassword": "Set a password now",
+			"copyFailed": "Copying failed. Please select the login name and copy it by hand."
+		},
+		"displayName": {
+			"headline": "Your displayed name",
+			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+			"action": "Change my name"
 		}
 	}
 }

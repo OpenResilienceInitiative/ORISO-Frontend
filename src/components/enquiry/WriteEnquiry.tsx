@@ -43,6 +43,13 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 	)
 );
 
+/**
+ * ADR-018 §10: the send confirmation closes when the first Erstantwort bubble
+ * is up, with this as the upper bound. The shared `OVERLAY_RESET_TIME` of 10 s
+ * held the modal over the chat long after the answer had arrived behind it.
+ */
+const ENQUIRY_CONFIRMATION_CLOSE_MS = 3000;
+
 export const WriteEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation();
 	const { sessionId } = useParams<{ sessionId: string }>();
@@ -157,6 +164,12 @@ export const WriteEnquiry: React.FC = () => {
 		}
 	};
 
+	/* ADR-018 §10 hollows this out. It acknowledges dispatch and nothing else:
+	   the Antwortfrist now has exactly one owner, the `responseDeadline`
+	   Baustein of the Erstantwort, so restating it here could only ever produce
+	   a second version to disagree with. And it closes after ~3 s rather than
+	   the shared 10 s, because the Erstantwort is already arriving behind it —
+	   `deadlineOwnership.test.ts` guards the wording. */
 	const overlayItem: OverlayItem = {
 		svg: EmailSentAnimation,
 		headline: translate('enquiry.write.overlay.headline'),
@@ -165,7 +178,8 @@ export const WriteEnquiry: React.FC = () => {
 			{
 				label: translate('enquiry.write.overlay.button'),
 				function: OVERLAY_FUNCTIONS.REDIRECT,
-				type: BUTTON_TYPES.AUTO_CLOSE
+				type: BUTTON_TYPES.AUTO_CLOSE,
+				autoCloseMs: ENQUIRY_CONFIRMATION_CLOSE_MS
 			}
 		]
 	};
