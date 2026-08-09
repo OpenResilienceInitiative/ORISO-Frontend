@@ -25,11 +25,11 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
-import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
 import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -137,8 +137,7 @@ export const AuthenticatedApp = ({
 										const matrixLoginData =
 											await getMatrixAccessToken();
 										persistMatrixLoginData(matrixLoginData);
-										const homeserverUrl =
-											getMatrixHomeserverUrl();
+										const { homeserverUrl } = matrixLoginData;
 										if (homeserverUrl) {
 											const { MatrixClientService } =
 												await import(
@@ -147,19 +146,13 @@ export const AuthenticatedApp = ({
 											const matrixClientService =
 												new MatrixClientService();
 											await matrixClientService.initializeClient(
-												{
-													userId: matrixLoginData.userId,
-													accessToken:
-														matrixLoginData.accessToken,
-													deviceId:
-														matrixLoginData.deviceId,
-													homeserverUrl,
-													isAnonymous:
-														hasUserAuthority(
-															AUTHORITIES.ANONYMOUS_DEFAULT,
-															userProfileData
-														)
-												}
+												withAuthenticatedSessionContext(
+													matrixLoginData,
+													hasUserAuthority(
+														AUTHORITIES.ANONYMOUS_DEFAULT,
+														userProfileData
+													)
+												)
 											);
 											if (
 												!matrixBootstrapActive.current ||

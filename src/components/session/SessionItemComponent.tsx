@@ -88,6 +88,7 @@ import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSub
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -3373,6 +3374,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
 		}
+		if (
+			!isNotificationActiveViewRoute(location.pathname, location.search)
+		) {
+			return;
+		}
 		const roomId =
 			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
@@ -3383,21 +3389,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		apiPatchNotificationActiveView({
-			roomId,
-			threadRootId: activeThreadRootId,
-			active: true
-		}).catch(() => undefined);
-
-		const heartbeat = window.setInterval(() => {
+		let disposed = false;
+		const markActive = () => {
+			// clearInterval cannot cancel a callback that is already queued. The
+			// guard prevents that stale heartbeat from racing after cleanup and
+			// re-enabling suppression while the user is on Notifications.
+			if (disposed) {
+				return;
+			}
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: activeThreadRootId,
 				active: true
 			}).catch(() => undefined);
+		};
+
+		markActive();
+
+		const heartbeat = window.setInterval(() => {
+			markActive();
 		}, 10000);
 
 		return () => {
+			disposed = true;
 			window.clearInterval(heartbeat);
 			apiPatchNotificationActiveView({
 				roomId,
@@ -3410,7 +3424,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item?.matrixRoomId,
 		activeThreadRootId,
 		isAskerUser,
-		isConsultantUser
+		isConsultantUser,
+		location.pathname,
+		location.search
 	]);
 
 	// Track the decryption success because we have a short timing issue when
