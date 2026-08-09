@@ -18,7 +18,9 @@ describe('isNotificationActiveViewRoute', () => {
 		'/profile/einstellungen/sicherheit',
 		'/sessions/consultant/sessionView',
 		'/sessions/consultant/sessionView/',
-		'/sessions/consultant/sessionView/session/13/userProfile'
+		'/sessions/consultant/sessionView/session/13/userProfile',
+		'/sessions/consultant/sessionView/session/13/editGroupChat',
+		'/sessions/consultant/sessionView/session/13/groupChatInfo'
 	])(
 		'deactivates notification suppression away from a conversation %s',
 		(path) => {

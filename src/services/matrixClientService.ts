@@ -665,27 +665,32 @@ export class MatrixClientService {
 	): Promise<any> {
 		await this.ensureFreshToken();
 
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
+		// Token or stale-device recovery can replace this.client between awaits.
+		// Each attempt pins one client so the device-key refresh, the upload and
+		// the send never span two client generations.
+		const sendWithCurrentClient = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
+			const content = await this.uploadFileMessageContent(
+				client,
+				file,
+				options
+			);
+			return client.sendMessage(roomId, content as any);
+		};
 
 		try {
-			await this.refreshTrackedRoomMemberDevices(this.client, roomId);
-			const content = await this.uploadFileMessageContent(file, options);
-			return await this.client.sendMessage(roomId, content as any);
+			return await sendWithCurrentClient();
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
 				throw error;
 			}
 
 			await this.refreshMatrixToken();
-			if (!this.client) {
-				throw new Error('Matrix client not initialized');
-			}
-
-			await this.refreshTrackedRoomMemberDevices(this.client, roomId);
-			const content = await this.uploadFileMessageContent(file, options);
-			return this.client.sendMessage(roomId, content as any);
+			return sendWithCurrentClient();
 		}
 	}
 
@@ -877,16 +882,13 @@ export class MatrixClientService {
 	}
 
 	private async uploadFileMessageContent(
+		client: MatrixClient,
 		file: File,
 		options: MatrixFileMessageOptions
 	): Promise<Record<string, unknown>> {
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
 		const dimensions = await getImageDimensions(file);
 		const encryptedAttachment = await encryptMatrixAttachment(file);
-		const uploadResponse = await this.client.uploadContent(
+		const uploadResponse = await client.uploadContent(
 			encryptedAttachment.encryptedBlob,
 			{
 				includeFilename: false,
