@@ -1,21 +1,17 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import { buildEncryptedEnquiryFinalizationPayload } from './encryptedEnquiryPayload';
 
 export const apiSendEnquiry = async (
 	sessionId: number,
-	messageData: string,
-	isEncrypted: boolean,
+	matrixEventId: string,
 	language?: string
 ): Promise<any> => {
 	const url = `${endpoints.sessionBase}/${sessionId}/enquiry/new`;
-	const data: any = {
-		message: messageData,
-		t: isEncrypted ? 'e2e' : '',
-		sendNotification: true
-	};
-	if (language) {
-		data.language = language;
-	}
+	const data = buildEncryptedEnquiryFinalizationPayload(
+		matrixEventId,
+		language
+	);
 
 	const message = JSON.stringify(data);
 

@@ -2,9 +2,7 @@ import { setTokens } from '../auth/auth';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import { RedeemInviteLinkSessionResponse } from '../../api/apiRedeemInviteLink';
 
-export const buildInviteSessionAppUrl = (
-	sessionId: number | string
-): string =>
+export const buildInviteSessionAppUrl = (sessionId: number | string): string =>
 	`${window.location.origin}/sessions/user/view/session/${sessionId}`;
 
 /** Apply the identity credentials returned by the invite redeem endpoint. */

@@ -163,3 +163,43 @@
 	font-size: 12px;
 	color: var(--m3-on-surface-variant, #6d747d);
 }
+
+.caseHandoverInlineConsent {
+	display: flex;
+	justify-content: center;
+	padding: 16px 20px 0;
+}
+
+.caseHandoverInlineConsent__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.caseHandoverInlineConsent__button {
+	min-height: 40px;
+	padding: 0 18px;
+	border: 1px solid var(--m3-outline, #79747e);
+	border-radius: 20px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&--approve {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+	}
+
+	&:disabled {
+		opacity: 0.55;
+		cursor: wait;
+	}
+}
+
+.caseHandoverInlineConsent__error {
+	margin: 10px 0 0;
+	color: var(--m3-error, #ba1a1a);
+}

@@ -50,7 +50,8 @@
 		"scrollDown": "ንታሕቲ ስክሮል ግበሩ",
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
-			"title": "ምኽሪ\n& ሓገዝ"
+			"title": "ምኽሪ\n& ሓገዝ",
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት"
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -842,8 +843,7 @@
 		"format": {
 			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
 			"panelMenu": "ተወሳኺ ኣማራጺታት",
-			"back": "ተመለስ",
-			"cardMenu": "ኣማራጺታት ናይዚ ዓይነት ዝርርብ"
+			"back": "ተመለስ"
 		},
 		"circle": {
 			"rows": {
@@ -1409,7 +1409,17 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"next": "ቀጻሊ ሓበሬታ",
+			"cardMenu": "ናይ ሓበሬታ ተግባራት",
+			"markRead": "ከም ተነብበ ምልክት ግበር",
+			"waitingSince": "ካብ {{time}} ({{date}}) ጀሚሩ ይጽበ ኣሎ",
+			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
+			"showDetails": "ዝርዝር ኣርእይ",
+			"preview": {
+				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
+				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።"
+			}
 		}
 	},
 	"overlay": {
@@ -2050,7 +2060,7 @@
 				},
 				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
-				"label": "ስም ተጠቃሚ",
+				"label": "User-ID",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}
 		},
@@ -2368,6 +2378,11 @@
 		},
 		"preview": {
 			"headline": "ናይ መጀመርታ ሕቶታት",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}

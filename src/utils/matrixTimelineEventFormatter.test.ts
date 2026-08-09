@@ -16,6 +16,35 @@ const makeEvent = (content: Record<string, unknown>) => ({
 	getTs: () => 1700000000000
 });
 
+describe('formatMatrixTimelineEvent redacted events (#827)', () => {
+	it('maps isRedacted() events to t: rm', () => {
+		const formatted = formatMatrixTimelineEvent(
+			{
+				...makeEvent({ msgtype: 'm.text', body: 'gone' }),
+				isRedacted: () => true
+			},
+			null,
+			'verschlüsselt'
+		);
+		expect(formatted.t).toBe('rm');
+		expect(formatted.msg).toBe('');
+		expect(formatted._id).toBe('$msg:hs');
+	});
+
+	it('leaves non-redacted messages without t: rm', () => {
+		const formatted = formatMatrixTimelineEvent(
+			{
+				...makeEvent({ msgtype: 'm.text', body: 'hallo' }),
+				isRedacted: () => false
+			},
+			null,
+			'verschlüsselt'
+		);
+		expect(formatted.t).toBeUndefined();
+		expect(formatted.msg).toBe('hallo');
+	});
+});
+
 describe('formatMatrixTimelineEvent reply relation', () => {
 	it('exposes replyToEventId and strips the legacy quote fallback', () => {
 		const formatted = formatMatrixTimelineEvent(

@@ -51,7 +51,8 @@
 		"scrollDown": "Nach unten scrollen",
 		"selectLanguage": "Sprache wählen",
 		"stage": {
-			"title": "Beratung\n& Hilfe"
+			"title": "Beratung\n& Hilfe",
+			"associationLogoAlt": "Logo der Trägerorganisation"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",
@@ -142,7 +143,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Herunterladen"
+			"label": "Herunterladen",
+			"aria": "{{name}} herunterladen"
 		},
 		"error": {
 			"format": {
@@ -541,7 +543,7 @@
 			},
 			"overlay": {
 				"button": "Zur Nachricht",
-				"copy": "Innerhalb von 2 Arbeitstagen erhalten Sie eine Antwort von uns.",
+				"copy": "Wir haben Ihre Nachricht erhalten.",
 				"headline": "Vielen Dank für Ihre Nachricht!"
 			}
 		}
@@ -769,8 +771,7 @@
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
-			"panelMenu": "Weitere Optionen",
-			"cardMenu": "Optionen für dieses Gesprächsformat"
+			"panelMenu": "Weitere Optionen"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -1742,7 +1743,15 @@
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
-			"showDetails": "Details anzeigen"
+			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
+			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch."
+			}
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -2549,18 +2558,29 @@
 				"allShort": "Alle 3",
 				"avatar": "Avatar",
 				"password": "Passwort",
-				"username": "Benutzername"
+				"username": "User-ID"
 			},
 			"subline": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"tooShort": "Ihr Benutzername ist zu kurz.",
-					"unavailable": "Dieser Benutzername ist bereits vergeben.",
-					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuchen Sie es erneut."
+					"tooShort": "Ihre User-ID ist zu kurz.",
+					"unavailable": "Diese User-ID ist bereits vergeben.",
+					"retry": "Wir konnten die User-ID gerade nicht prüfen. Bitte versuchen Sie es erneut."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
-				"label": "Benutzername",
-				"success": "Ihr Benutzername ist geeignet."
+				"label": "User-ID",
+				"success": "Ihre User-ID ist geeignet."
+			},
+			"email": {
+				"label": "E-Mail-Adresse",
+				"info": "Optional. Wird nur für Sicherheitsfunktionen wie die Zwei-Faktor-Authentifizierung verwendet.",
+				"error": {
+					"required": "Bitte geben Sie eine E-Mail-Adresse an.",
+					"invalid": "Bitte geben Sie eine gültige E-Mail-Adresse an."
+				}
+			},
+			"twoFactorAuth": {
+				"label": "Passwort zusätzlich durch Zwei-Faktor-Authentifizierung sichern"
 			}
 		},
 		"back": "Zurück",
@@ -2630,6 +2650,8 @@
 			"title": "Mehrfach-Zugriffsanfrage"
 		},
 		"consent": {
+			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
+			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
 			"decline": "Zugriff ablehnen"
 		},
@@ -2985,7 +3007,12 @@
 			"mySessions": "Sie haben zurzeit keine aktiven Beratungen"
 		},
 		"preview": {
-			"headline": "Erstanfragen"
+			"headline": "Erstanfragen",
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"
@@ -3582,6 +3609,20 @@
 			}
 		}
 	},
+	"voicePlayer": {
+		"label": "Sprachnachricht",
+		"play": "Sprachnachricht abspielen",
+		"pause": "Sprachnachricht anhalten",
+		"timeline": "Zeitachse",
+		"jumpTo": "Zu {{time}} springen",
+		"aria": "Sprachnachricht, {{duration}}, abspielen",
+		"remaining": "noch {{remaining}} von {{total}}",
+		"encrypted": "Ende-zu-Ende verschlüsselt",
+		"meta": {
+			"perSecond": "{{seconds}} Sekunden · Klick springt zur Sekunde",
+			"perTile": "{{total}} · je Kachel {{seconds}} s"
+		}
+	},
 	"walkthrough": {
 		"close": "Rundgang schließen",
 		"overview": {
@@ -3719,9 +3760,23 @@
 			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
-			"dismissAcceptedBanner": "Hinweis ausblenden"
+			"dismissAcceptedBanner": "Hinweis ausblenden",
+			"leave": "Chat verlassen"
 		},
-		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut."
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.",
+		"leaveQueue": {
+			"headline": "Chat verlassen?",
+			"body": "Sie sind noch im Wartebereich. Sie können weiter warten oder Ihren Zugang löschen — dann wird dieser Chat beendet.",
+			"bodyAccepted": "Eine beratende Person wartet bereits auf Sie. Sie können den Chat jetzt starten, im Wartebereich bleiben oder Ihren Zugang löschen.",
+			"stay": "Im Wartebereich bleiben",
+			"startChat": "Chat jetzt starten",
+			"startChatUnavailable": "Sobald eine beratende Person den Chat annimmt, können Sie hier starten.",
+			"delete": "Chat beenden & Zugang löschen",
+			"deleteWarning": "Ihr Zugang wird deaktiviert und dieser Chat beendet. Sie können sich mit diesem Namen und Passwort nicht mehr anmelden, und wir können den Zugang nicht wiederherstellen.",
+			"cancelDelete": "Abbrechen",
+			"confirmDelete": "Ja, endgültig löschen",
+			"error": "Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3946,8 +4001,8 @@
 	},
 	"anonymousConsent": {
 		"button": "Bestätigen",
-		"description": "Danach dürfen unsere Beraterinnen oder Berater einen Video-Call mit Ihnen starten.",
-		"headline": "Herzlich Willkommen!",
+		"description": "Danach kann eine beratende Person einen Chat mit Ihnen beginnen.",
+		"headline": "Herzlich Willkommen",
 		"label": {
 			"and": "und",
 			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."
@@ -3957,6 +4012,66 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Ihre ersten Schritte",
+		"greeting": {
+			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
+		},
+		"whoReadsAlong": {
+			"headline": "Wer Ihre Nachricht liest",
+			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+		},
+		"responseDeadline": {
+			"headline": "Wann Sie eine Antwort erhalten",
+			"body": "Sie erhalten innerhalb von {{deadlineDays}} Werktagen eine Antwort von einer passenden Ansprechperson."
+		},
+		"modalityNote": {
+			"body": "Die Beratung findet schriftlich in diesem geschützten Bereich statt. Sie können jederzeit weiterschreiben."
+		},
+		"noPersonalData": {
+			"headline": "Bitte keine persönlichen Daten senden",
+			"body": "Bitte schreiben Sie uns keinen vollständigen Namen, keine Adresse und keine Telefonnummer. Für die Beratung brauchen wir das nicht."
+		},
+		"emergencyNumbers": {
+			"headline": "Wenn es nicht warten kann",
+			"body": "Bei einer akuten Notlage erreichen Sie rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112."
+		},
+		"dataProtection": {
+			"body": "Wie wir mit Ihren Daten umgehen, steht in der Datenschutzerklärung."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Benachrichtigung per E-Mail",
+			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+		},
+		"accountProtection": {
+			"headline": "Ihr Zugang, zusätzlich geschützt",
+			"body": "Sie können Ihren Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.",
+			"action": "Zugang schützen"
+		},
+		"closing": {
+			"body": "Bis bald — wir melden uns bei Ihnen."
+		},
+		"saveCredentials": {
+			"headline": "Sichern Sie sich Ihren Zugang",
+			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager.",
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand."
+		},
+		"displayName": {
+			"headline": "Ihr angezeigter Name",
+			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
+			"action": "Namen ändern"
 		}
 	}
 }

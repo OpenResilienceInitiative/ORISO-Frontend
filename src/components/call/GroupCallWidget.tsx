@@ -16,6 +16,7 @@ import {
 	type ResizeEdge,
 	type Size
 } from '../../utils/videoTileSizing';
+import { releaseWindowMediaStream } from '../../utils/callMediaStreamCleanup';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -41,11 +42,12 @@ export const GroupCallWidget: React.FC = () => {
 			iframeRef.current.src = 'about:blank';
 		}
 		setElementCallUrl('');
-		setCallData(null);
-		setCallState(null);
 		setIsDismissed(true);
 		if (callManager.hasActiveCall()) {
-			callManager.endCall();
+			callManager.leaveCall();
+		} else {
+			setCallData(null);
+			setCallState(null);
 		}
 	}, []);
 
@@ -56,6 +58,7 @@ export const GroupCallWidget: React.FC = () => {
 		: null;
 	const shouldPrepareWidget =
 		!!callData &&
+		callState !== 'left' &&
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
@@ -146,7 +149,7 @@ export const GroupCallWidget: React.FC = () => {
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
-				setIsDismissed(false);
+				setIsDismissed(newCallData.state === 'left');
 			}
 			if (!newCallData) {
 				setElementCallUrl('');
@@ -155,6 +158,7 @@ export const GroupCallWidget: React.FC = () => {
 		const currentCall = callManager.getCurrentCall();
 		setCallData(currentCall);
 		setCallState(currentCall?.state || null);
+		setIsDismissed(currentCall?.state === 'left');
 		return () => unsubscribe();
 	}, []);
 
@@ -207,6 +211,9 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callData?.usesElementCall || !shouldPrepareWidget) {
 			return;
 		}
+		// Parent-page warm-up streams must not hold the camera while the
+		// Element Call iframe opens its own capture.
+		releaseWindowMediaStream('__preRequestedMediaStream');
 		if (widget.error) {
 			alert(`Failed to start call: ${widget.error.message}`);
 			closeCallSurface();

@@ -1,10 +1,55 @@
 import { describe, expect, it } from 'vitest';
 import {
+	calculateAutoComposerHeight,
 	clampComposerHeight,
 	COMPOSER_MAX_VIEWPORT_FRACTION,
+	getEffectiveComposerHeight,
 	getComposerHeightBounds,
 	stepComposerHeight
 } from './composerResize';
+
+describe('calculateAutoComposerHeight', () => {
+	const bounds = { minHeight: 196, maxHeight: 600 };
+
+	it('keeps the 196px default while content fits', () => {
+		expect(
+			calculateAutoComposerHeight({
+				contentHeight: 44.8,
+				lineHeight: 22.4,
+				composerChromeHeight: 122,
+				bounds
+			})
+		).toBe(196);
+	});
+
+	it('grows with content up to fourteen lines', () => {
+		expect(
+			calculateAutoComposerHeight({
+				contentHeight: 224,
+				lineHeight: 22.4,
+				composerChromeHeight: 122,
+				bounds
+			})
+		).toBe(346);
+	});
+
+	it('caps automatic growth at fourteen lines before scrolling', () => {
+		expect(
+			calculateAutoComposerHeight({
+				contentHeight: 448,
+				lineHeight: 22.4,
+				composerChromeHeight: 122,
+				bounds
+			})
+		).toBe(436);
+	});
+
+	it('lets an explicit drag height override automatic growth', () => {
+		expect(getEffectiveComposerHeight(520, 436, 196)).toBe(520);
+		expect(getEffectiveComposerHeight(300, 436, 196)).toBe(436);
+		expect(getEffectiveComposerHeight(null, 196, 196)).toBeNull();
+	});
+});
 
 describe('getComposerHeightBounds', () => {
 	it('caps the composer at two thirds of the viewport height', () => {

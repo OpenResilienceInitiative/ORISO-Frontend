@@ -737,34 +737,6 @@ body.conversationCreate--active .navigation__wrapper {
 		object-fit: cover;
 		width: 100%;
 	}
-
-	&__menuButton {
-		align-items: center;
-		background: none;
-		border: none;
-		border-radius: 50%;
-		color: $cc-on-surface-variant;
-		cursor: pointer;
-		display: flex;
-		height: 40px;
-		justify-content: center;
-		width: 40px;
-
-		&:hover:not(:disabled) {
-			background-color: rgba(27, 27, 28, 0.04);
-		}
-
-		&:disabled {
-			cursor: default;
-			opacity: 0.38;
-		}
-
-		svg {
-			fill: currentcolor;
-			height: 24px;
-			width: 24px;
-		}
-	}
 }
 
 /* Mobile format row — icon, text block, artwork thumbnail. */

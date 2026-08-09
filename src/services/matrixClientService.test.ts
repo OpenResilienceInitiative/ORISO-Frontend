@@ -681,6 +681,31 @@ describe('MatrixClientService', () => {
 		);
 	});
 
+	it('uses an explicit transaction id for an idempotent Matrix send', async () => {
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$event' })
+		);
+		const service = new MatrixClientService();
+		setClient(service, {
+			makeTxnId: () => 'generated-transaction',
+			sendMessage,
+			getRoom: () => ({})
+		});
+
+		await service.sendMessage(
+			'!room:example.org',
+			'Encrypted initial enquiry',
+			undefined,
+			'oriso.enquiry.42'
+		);
+
+		expect(sendMessage).toHaveBeenCalledWith(
+			'!room:example.org',
+			{ msgtype: 'm.text', body: 'Encrypted initial enquiry' },
+			'oriso.enquiry.42'
+		);
+	});
+
 	it('removes the rejected Matrix local echo before the UI offers a fresh retry', async () => {
 		const failedLocalEcho = {
 			getTxnId: () => 'txn-failed-send'

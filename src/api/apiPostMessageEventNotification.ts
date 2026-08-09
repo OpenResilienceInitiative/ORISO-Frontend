@@ -11,6 +11,8 @@ export interface MessageEventNotificationInput {
 	threadParentPreview?: string | null;
 	teamDiscussion?: boolean;
 	mentionedUserIds?: string[] | null;
+	/** Matrix event id of the sent message (#942, backend dedup key). */
+	matrixEventId?: string | null;
 }
 
 export interface MessageEventNotificationBody {
@@ -23,6 +25,7 @@ export interface MessageEventNotificationBody {
 	threadParentPreview: string | null;
 	teamDiscussion: boolean;
 	mentionedUserIds: string[] | null;
+	matrixEventId: string | null;
 }
 
 const MAX_LEGACY_MESSAGE_PREVIEW_LENGTH = 100;
@@ -36,7 +39,8 @@ export const buildMessageEventNotificationBody = ({
 	senderDisplayName,
 	threadParentPreview,
 	teamDiscussion = false,
-	mentionedUserIds
+	mentionedUserIds,
+	matrixEventId
 }: MessageEventNotificationInput): MessageEventNotificationBody => {
 	const canIncludePlaintextPreview = matrixRoom === false;
 	return {
@@ -52,7 +56,8 @@ export const buildMessageEventNotificationBody = ({
 			? threadParentPreview || null
 			: null,
 		teamDiscussion,
-		mentionedUserIds: mentionedUserIds?.length ? mentionedUserIds : null
+		mentionedUserIds: mentionedUserIds?.length ? mentionedUserIds : null,
+		matrixEventId: matrixEventId || null
 	};
 };
 

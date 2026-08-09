@@ -521,7 +521,8 @@ export class MatrixClientService {
 	public async sendMessage(
 		roomId: string,
 		message: string,
-		options?: TextMessageContentOptions
+		options?: TextMessageContentOptions,
+		transactionId?: string
 	): Promise<any> {
 		await this.ensureFreshToken();
 
@@ -539,7 +540,7 @@ export class MatrixClientService {
 			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
-			const txnId = client.makeTxnId?.();
+			const txnId = transactionId || client.makeTxnId?.();
 			try {
 				return await (txnId
 					? client.sendMessage(roomId, content, txnId)
@@ -646,7 +647,7 @@ export class MatrixClientService {
 		}
 	}
 
-	// Redact an event (used to remove a reaction)
+	// Redact an event (reactions un-react, and message delete #827)
 	public async redactEvent(roomId: string, eventId: string): Promise<any> {
 		await this.ensureFreshToken();
 

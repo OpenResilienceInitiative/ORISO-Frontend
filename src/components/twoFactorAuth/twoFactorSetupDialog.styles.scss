@@ -314,10 +314,13 @@
 		text-align: center;
 	}
 
+	// Sizes both branches of the shared confirmation animation: the Lottie
+	// wrapper div and, under reduced motion, the static illustration. Its
+	// colours come from the animation's own M3 roles, not from here.
 	&__successIcon {
 		width: 120px !important;
 		height: 120px !important;
-		color: var(--m3-success, #0a882f);
+		flex: none;
 	}
 
 	&__successTitle {
@@ -330,6 +333,13 @@
 		grid-template-columns: 72px 72px 1fr;
 		gap: 10px;
 		margin-top: 28px;
+	}
+
+	// Success step: the two icon buttons are gone, so the lone close action
+	// must not inherit the 72px icon track (it wrapped mid-word there).
+	&__actions--single {
+		grid-template-columns: 1fr;
+		justify-items: end;
 	}
 
 	&__iconAction,
@@ -347,6 +357,11 @@
 	&__primaryAction {
 		text-transform: none !important;
 		font-weight: 600 !important;
+		white-space: nowrap !important;
+	}
+
+	&__actions--single &__primaryAction {
+		min-width: 160px !important;
 	}
 
 	@media (width <= 520px) {
@@ -397,6 +412,10 @@
 
 		&__actions {
 			grid-template-columns: 64px 64px 1fr;
+		}
+
+		&__actions--single {
+			grid-template-columns: 1fr;
 		}
 	}
 }

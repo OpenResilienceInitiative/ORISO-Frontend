@@ -101,8 +101,48 @@
 				border-left: 3px solid var(--m3-primary-container, #cc1e1c);
 				color: #4a5561;
 				background: rgba(204, 30, 28, 0.04);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 4%,
+					transparent
+				);
 				border-radius: 0 6px 6px 0;
 			}
 		}
+	}
+}
+
+/*
+ * Voice-message insertion point (#996). Recording types nothing, so without
+ * this dot the user cannot tell where in their half-written message the
+ * recording is going to land. Decorative only — it never enters the document.
+ */
+.composerInsertionMarker {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin: 0 1px;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+	vertical-align: middle;
+	animation: composer-insertion-marker-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes composer-insertion-marker-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	50% {
+		opacity: 0.55;
+		transform: scale(0.8);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.composerInsertionMarker {
+		animation: none;
 	}
 }

@@ -50,7 +50,8 @@
 		"scrollDown": "Scroll down",
 		"selectLanguage": "Select language",
 		"stage": {
-			"title": "Consulting & Help"
+			"title": "Consulting & Help",
+			"associationLogoAlt": "Provider organisation logo"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -139,7 +140,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Download"
+			"label": "Download",
+			"aria": "Download {{name}}"
 		},
 		"error": {
 			"format": {
@@ -529,7 +531,7 @@
 			},
 			"overlay": {
 				"button": "Go to the message",
-				"copy": "Within two business days you will receive a response from us.",
+				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
 		}
@@ -757,8 +759,7 @@
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
-			"panelMenu": "More options",
-			"cardMenu": "Options for this conversation format"
+			"panelMenu": "More options"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -1718,7 +1719,15 @@
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
 			"showPreview": "Show conversation preview",
-			"showDetails": "Show details"
+			"showDetails": "Show details",
+			"next": "Next notification",
+			"cardMenu": "Notification actions",
+			"markRead": "Mark as read",
+			"waitingSince": "Waiting since {{time}} ({{date}})",
+			"preview": {
+				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
+				"empty": "No messages in this conversation yet."
+			}
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2479,19 +2488,30 @@
 				"allShort": "All 3",
 				"avatar": "Avatar",
 				"password": "Password",
-				"username": "Username"
+				"username": "User-ID"
 			},
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
-					"tooShort": "Your username is too short.",
-					"unavailable": "This username is already taken.",
-					"retry": "We could not check this username right now. Please try again."
+					"tooShort": "Your User-ID is too short.",
+					"unavailable": "This User-ID is already taken.",
+					"retry": "We could not check this User-ID right now. Please try again."
 				},
 				"hint": "Anonymous login name. Please do not use real names or initials.",
 				"info": "Anonymous login name. Please do not use real names or initials.",
-				"label": "Username",
-				"success": "Your username is available."
+				"label": "User-ID",
+				"success": "Your User-ID is available."
+			},
+			"email": {
+				"label": "Email address",
+				"info": "Optional. Only used for security features like two-factor authentication.",
+				"error": {
+					"required": "Please provide an email address.",
+					"invalid": "Please provide a valid email address."
+				}
+			},
+			"twoFactorAuth": {
+				"label": "Additionally secure my password with two-factor authentication"
 			}
 		},
 		"back": "Back",
@@ -2570,6 +2590,8 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"title": "A counsellor requested access to this conversation",
+			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
 			"decline": "Decline access"
 		},
@@ -2926,6 +2948,11 @@
 		},
 		"preview": {
 			"headline": "Initial inquiries",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "Initial inquiries"
 			}
@@ -3524,6 +3551,20 @@
 			}
 		}
 	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"close": "Close tour",
 		"overview": {
@@ -3621,9 +3662,23 @@
 			"requestLocalCounselor": "Send on-site consultation request",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
-			"dismissAcceptedBanner": "Dismiss notice"
+			"dismissAcceptedBanner": "Dismiss notice",
+			"leave": "Leave chat"
 		},
-		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again.",
+		"leaveQueue": {
+			"headline": "Leave the chat?",
+			"body": "You are still in the waiting area. You can keep waiting, or delete your access — that ends this chat.",
+			"bodyAccepted": "A counsellor is already waiting for you. You can start the chat now, stay in the waiting area, or delete your access.",
+			"stay": "Stay in the waiting area",
+			"startChat": "Start chat now",
+			"startChatUnavailable": "Once a counsellor accepts the chat, you can start it here.",
+			"delete": "End chat & delete access",
+			"deleteWarning": "Your access will be deactivated and this chat ended. You will not be able to sign in with this name and password again, and we cannot restore the access.",
+			"cancelDelete": "Cancel",
+			"confirmDelete": "Yes, delete permanently",
+			"error": "The chat could not be ended just now. Please try again."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3848,7 +3903,7 @@
 	},
 	"anonymousConsent": {
 		"button": "Confirm",
-		"description": "After that, our consultants may start a video call with you.",
+		"description": "After that, a counsellor can start a chat with you.",
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",
@@ -3859,6 +3914,66 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Your first steps",
+		"greeting": {
+			"body": "Thank you for getting in touch. Your message has reached us."
+		},
+		"whoReadsAlong": {
+			"headline": "Who reads your message",
+			"body": "Only the trained staff of the responsible counselling centre read your message. Everyone there is bound by confidentiality."
+		},
+		"responseDeadline": {
+			"headline": "When you will get a reply",
+			"body": "You will receive a reply from a suitable contact person within {{deadlineDays}} working days."
+		},
+		"modalityNote": {
+			"body": "The counselling takes place in writing, in this protected area. You can keep writing at any time."
+		},
+		"noPersonalData": {
+			"headline": "Please do not send personal data",
+			"body": "Please do not send us your full name, your address or your phone number. We do not need any of that for the counselling."
+		},
+		"emergencyNumbers": {
+			"headline": "If it cannot wait",
+			"body": "In an acute emergency you can reach Telefonseelsorge around the clock on 0800 111 0 111 or 0800 111 0 222, and the emergency services on 112."
+		},
+		"dataProtection": {
+			"body": "How we handle your data is set out in the privacy policy."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Notification by e-mail",
+			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
+			"action": "Add an e-mail address",
+			"saveFailed": "Saving failed. Please try again."
+		},
+		"accountProtection": {
+			"headline": "Your access, additionally protected",
+			"body": "You can secure your access with a second factor, so that nobody else can get in.",
+			"action": "Protect my access"
+		},
+		"closing": {
+			"body": "See you soon — we will get back to you."
+		},
+		"saveCredentials": {
+			"headline": "Keep hold of your access",
+			"body": "Without your login name you will not be able to return to this conversation later. Keep it somewhere safe — a password manager is best.",
+			"userNameLabel": "Login name",
+			"copy": "Copy",
+			"copied": "Login name copied.",
+			"sharedDevice": "If other people use this device, better not to save your login name here — write it down somewhere safe instead.",
+			"setPassword": "Set a password now",
+			"copyFailed": "Copying failed. Please select the login name and copy it by hand."
+		},
+		"displayName": {
+			"headline": "Your displayed name",
+			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+			"action": "Change my name"
 		}
 	}
 }
