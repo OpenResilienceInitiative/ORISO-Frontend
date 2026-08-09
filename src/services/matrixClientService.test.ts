@@ -717,6 +717,15 @@ describe('MatrixClientService', () => {
 		);
 	});
 
+	// Node 18 (the CI runtime) has no global File; the send path only reads
+	// name, type and size, so a structural stub keeps the tests portable.
+	const stubTextFile = () =>
+		({
+			name: 'notes.txt',
+			type: 'text/plain',
+			size: 7
+		}) as unknown as File;
+
 	const createRefreshableClient = (overrides: Record<string, unknown>) => {
 		const request = { type: 'keys-query' };
 		const trackedUser = {
@@ -762,10 +771,7 @@ describe('MatrixClientService', () => {
 		const service = new MatrixClientService();
 		setClient(service, client);
 
-		await service.sendFileMessage(
-			'!room:matrix.localhost',
-			new File(['content'], 'notes.txt', { type: 'text/plain' })
-		);
+		await service.sendFileMessage('!room:matrix.localhost', stubTextFile());
 
 		expect(makeOutgoingRequest.mock.invocationCallOrder[0]).toBeLessThan(
 			uploadContent.mock.invocationCallOrder[0]
@@ -803,10 +809,7 @@ describe('MatrixClientService', () => {
 		});
 
 		await expect(
-			service.sendFileMessage(
-				'!room:matrix.localhost',
-				new File(['content'], 'notes.txt', { type: 'text/plain' })
-			)
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile())
 		).resolves.toEqual({ event_id: '$fresh' });
 
 		expect(staleSend).toHaveBeenCalledOnce();
