@@ -454,18 +454,18 @@
 			"closeMenu": "Senden-an-Menü schließen",
 			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
 			"menuHeading": "Adressaten wählen",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Ratsuchende auswählen",
+			"clientsSelected": "{{count}} Ratsuchende ausgewählt",
+			"clientsSelectAll": "Alle Ratsuchenden auswählen",
+			"counsellorsSelect": "Alle Beratenden auswählen",
+			"counsellorsSelected": "{{count}} Beratende ausgewählt",
+			"moderatorsSelect": "Alle Moderierenden auswählen",
+			"moderatorsSelected": "{{count}} Moderierende ausgewählt",
+			"clientsEmpty": "In diesem Raum sind keine Ratsuchenden",
+			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
+			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Alle auswählen"
 		},
 		"delete": {
 			"deleted": {
@@ -1245,7 +1245,7 @@
 				"neu": "Ungelesen",
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
-				"nearby": "Nähe",
+				"nearby": "Mail",
 				"create": "Erstellen",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
@@ -1253,7 +1253,7 @@
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Nähe"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."

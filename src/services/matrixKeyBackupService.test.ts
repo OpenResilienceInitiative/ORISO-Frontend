@@ -10,6 +10,7 @@ import {
 	CryptoUnavailableError,
 	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
+import { registerDeviceSigningAuth } from './matrixInteractiveAuth';
 
 /**
  * #437 Key backup + recovery UX — service layer over matrix-js-sdk's CryptoApi
@@ -48,7 +49,11 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 	...overrides
 });
 
-const buildClient = (crypto: unknown) => ({ getCrypto: () => crypto }) as any;
+const buildClient = (crypto: unknown) => {
+	const client = { getCrypto: () => crypto } as any;
+	registerDeviceSigningAuth(client, vi.fn());
+	return client;
+};
 
 describe('matrixKeyBackupService (#437)', () => {
 	beforeEach(async () => {
@@ -96,10 +101,15 @@ describe('matrixKeyBackupService (#437)', () => {
 	describe('setUpRecovery', () => {
 		it('creates key backup inside secret-storage bootstrap and verifies the durable state before displaying the key', async () => {
 			const crypto = buildCrypto();
-			const encoded = await setUpRecovery(buildClient(crypto));
+			const client = buildClient(crypto);
+			const authenticate = vi.fn();
+			registerDeviceSigningAuth(client, authenticate);
+			const encoded = await setUpRecovery(client);
 
 			expect(encoded).toBe(VALID_ENCODED_KEY);
-			expect(crypto.bootstrapCrossSigning).toHaveBeenCalled();
+			expect(crypto.bootstrapCrossSigning).toHaveBeenCalledWith({
+				authUploadDeviceSigningKeys: authenticate
+			});
 			expect(crypto.bootstrapSecretStorage).toHaveBeenCalledWith(
 				expect.objectContaining({ setupNewKeyBackup: true })
 			);

@@ -93,14 +93,12 @@ const TOOLBAR_OUTPUT: Array<{
 	},
 	{
 		action: 'bulletList',
-		composerHtml:
-			'<ul><li><p style="text-align: left;">Text</p></li></ul>',
+		composerHtml: '<ul><li><p style="text-align: left;">Text</p></li></ul>',
 		expectRendered: /<ul><li>/
 	},
 	{
 		action: 'orderedList',
-		composerHtml:
-			'<ol><li><p style="text-align: left;">Text</p></li></ol>',
+		composerHtml: '<ol><li><p style="text-align: left;">Text</p></li></ol>',
 		expectRendered: /<ol><li>/
 	},
 	{

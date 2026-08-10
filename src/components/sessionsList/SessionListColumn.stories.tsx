@@ -120,11 +120,11 @@ function DemoCard({
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
 							<img
 								src={nearbyConversationIcon}
-								alt="Nähe"
+								alt="Mail"
 								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-								Nähe
+								Mail
 							</span>
 						</div>
 					)}

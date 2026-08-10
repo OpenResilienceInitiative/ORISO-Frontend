@@ -1254,12 +1254,12 @@
 						"missing": "Veuillez saisir le code de votre application pour l'authentification à deux facteurs."
 					}
 				},
-				"deletedAccount": "Votre compte a été fermé par un conseiller.",
 				"email": {
 					"otp": {
 						"missing": "Veuillez saisir le code figurant dans votre e-mail pour l'authentification à deux facteurs."
 					}
 				},
+				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."

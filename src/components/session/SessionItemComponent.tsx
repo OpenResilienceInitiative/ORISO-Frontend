@@ -85,9 +85,15 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
+import {
+	buildEditContext,
+	buildReplyQuoteContext,
+	buildReplyQuotePreview
+} from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -3274,14 +3280,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo({
-			eventId: message._id,
-			author: message.displayName || message.username,
-			// #978: stripping tags is not enough — `[[align:…]]` / `[[hl:…]]`
-			// are transport tokens, not HTML, and used to end up on screen
-			// verbatim. `toMessagePreviewText` unwraps both.
-			text: toMessagePreviewText(message.message)
-		});
+		setReplyTo(buildReplyQuoteContext(message));
 	}, []);
 
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
@@ -3293,12 +3292,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage({
-			eventId: message._id,
-			// Same as the reply hand-off — and now load-bearing, because the
-			// redesigned edit banner puts this text on screen.
-			text: toMessagePreviewText(message.message)
-		});
+		setEditingMessage(buildEditContext(message));
 	}, []);
 
 	const handleDeleteDirect = useCallback(
@@ -3338,13 +3332,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return {
-				author: target.displayName || target.username,
-				// Same #978 unwrap as reply/edit hand-off: transport tokens are
-				// not HTML tags, so a tag strip leaves `[[align:]]` / `[[hl:]]`
-				// on screen inside the in-timeline quote.
-				text: toMessagePreviewText(target.message).slice(0, 200)
-			};
+			return buildReplyQuotePreview(target);
 		},
 		[messages]
 	);
@@ -3373,6 +3361,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
 		}
+		if (
+			!isNotificationActiveViewRoute(location.pathname, location.search)
+		) {
+			return;
+		}
 		const roomId =
 			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
@@ -3383,21 +3376,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		apiPatchNotificationActiveView({
-			roomId,
-			threadRootId: activeThreadRootId,
-			active: true
-		}).catch(() => undefined);
-
-		const heartbeat = window.setInterval(() => {
+		let disposed = false;
+		const markActive = () => {
+			// clearInterval cannot cancel a callback that is already queued. The
+			// guard prevents that stale heartbeat from racing after cleanup and
+			// re-enabling suppression while the user is on Notifications.
+			if (disposed) {
+				return;
+			}
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: activeThreadRootId,
 				active: true
 			}).catch(() => undefined);
+		};
+
+		markActive();
+
+		const heartbeat = window.setInterval(() => {
+			markActive();
 		}, 10000);
 
 		return () => {
+			disposed = true;
 			window.clearInterval(heartbeat);
 			apiPatchNotificationActiveView({
 				roomId,
@@ -3410,7 +3411,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item?.matrixRoomId,
 		activeThreadRootId,
 		isAskerUser,
-		isConsultantUser
+		isConsultantUser,
+		location.pathname,
+		location.search
 	]);
 
 	// Track the decryption success because we have a short timing issue when
