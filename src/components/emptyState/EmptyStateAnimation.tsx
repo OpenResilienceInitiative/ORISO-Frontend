@@ -1,70 +1,36 @@
 import * as React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Lottie, { LottieRefCurrentProps } from 'lottie-react';
-import { readCssColor, recolorLottieAccent } from './lottieColorUtils';
+import { AnimatedIllustration } from '../animatedIllustration/AnimatedIllustration';
 
-const DEFAULT_ACCENT_COLOR = '#ffb4aa';
-const DEFAULT_SECONDARY_COLOR = '#646d78';
+const DECORATIVE_ACCENT_VAR = '--oriso-lottie-accent-color';
+const DECORATIVE_BASE_VAR = '--oriso-lottie-secondary-color';
 
 interface EmptyStateAnimationProps {
 	animationData: Record<string, any>;
 	accentColorVar?: string;
 	secondaryColorVar?: string;
-	speed?: number;
 	variant: string;
 }
 
+/**
+ * Empty-state preset over the shared player. It only picks the decorative role
+ * pair and keeps the `emptyState__animation` hook its styles and E2E selectors
+ * rely on — playback (slow, played once) belongs to the player, not here.
+ */
 export const EmptyStateAnimation = ({
+	accentColorVar = DECORATIVE_ACCENT_VAR,
 	animationData,
-	accentColorVar = '--oriso-lottie-accent-color',
-	secondaryColorVar = '--oriso-lottie-secondary-color',
-	speed = 0.5,
+	secondaryColorVar = DECORATIVE_BASE_VAR,
 	variant
-}: EmptyStateAnimationProps) => {
-	const lottieRef = useRef<LottieRefCurrentProps | null>(null);
-	const [playbackState, setPlaybackState] = useState('playing');
-	const accentColor = readCssColor(accentColorVar, DEFAULT_ACCENT_COLOR);
-	const secondaryColor = readCssColor(
-		secondaryColorVar,
-		DEFAULT_SECONDARY_COLOR
-	);
-	const recoloredAnimationData = useMemo(
-		() => recolorLottieAccent(animationData, accentColor, secondaryColor),
-		[accentColor, animationData, secondaryColor]
-	);
-
-	useEffect(() => {
-		lottieRef.current?.setSpeed(speed);
-	}, [speed]);
-
-	useEffect(() => {
-		setPlaybackState('playing');
-		lottieRef.current?.setSpeed(speed);
-	}, [animationData, speed, variant]);
-
-	return (
-		<div
-			aria-hidden="true"
-			className="emptyState__animation"
-			data-accent-color={accentColor.toLowerCase()}
-			data-complete={playbackState === 'complete' ? 'true' : 'false'}
-			data-cy="empty-state-animation"
-			data-empty-state={variant}
-			data-loop="false"
-			data-secondary-color={secondaryColor.toLowerCase()}
-			data-speed={speed}
-		>
-			<Lottie
-				animationData={recoloredAnimationData}
-				autoplay
-				loop={false}
-				lottieRef={lottieRef}
-				onComplete={() => setPlaybackState('complete')}
-				onDOMLoaded={() => lottieRef.current?.setSpeed(speed)}
-				rendererSettings={{
-					preserveAspectRatio: 'xMidYMid meet'
-				}}
-			/>
-		</div>
-	);
-};
+}: EmptyStateAnimationProps) => (
+	<AnimatedIllustration
+		accentColorVar={accentColorVar}
+		animationData={animationData}
+		baseColorVar={secondaryColorVar}
+		className="emptyState__animation"
+		hostProps={{
+			'data-cy': 'empty-state-animation',
+			'data-empty-state': variant
+		}}
+		variant={variant}
+	/>
+);

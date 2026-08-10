@@ -48,13 +48,14 @@ describe('useSessionTenantSettings', () => {
 			{ initialProps: { sessionKey: 'session-16' } }
 		);
 
-		await waitFor(() => expect(apiGetTenantTheming).toHaveBeenCalledTimes(1));
+		await waitFor(() =>
+			expect(apiGetTenantTheming).toHaveBeenCalledTimes(1)
+		);
 		rerender({ sessionKey: 'session-17' });
 
 		await waitFor(() =>
 			expect(
-				result.current.settings
-					.featureAudioCallsAnonymousChatsEnabled
+				result.current.settings.featureAudioCallsAnonymousChatsEnabled
 			).toBe(false)
 		);
 		expect(
@@ -109,7 +110,9 @@ describe('useSessionTenantSettings', () => {
 					featureVideoCallsAnonymousChatsEnabled: false
 				}
 			} as any)
-			.mockRejectedValueOnce(new Error('temporary tenant refresh failure'));
+			.mockRejectedValueOnce(
+				new Error('temporary tenant refresh failure')
+			);
 		const { result, rerender } = renderHook(
 			({ sessionKey }) => useSessionTenantSettings(sessionKey),
 			{ initialProps: { sessionKey: 'session-16' } }
@@ -118,7 +121,9 @@ describe('useSessionTenantSettings', () => {
 
 		rerender({ sessionKey: 'session-17' });
 
-		await waitFor(() => expect(apiGetTenantTheming).toHaveBeenCalledTimes(2));
+		await waitFor(() =>
+			expect(apiGetTenantTheming).toHaveBeenCalledTimes(2)
+		);
 		await waitFor(() => expect(result.current.isLoading).toBe(false));
 		expect(result.current.settings).toEqual(
 			expect.objectContaining({

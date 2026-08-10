@@ -39,6 +39,7 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
+import { resolveLoginError } from './loginErrorResolution';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -60,7 +61,6 @@ import { IconButton, InputAdornment } from '@mui/material';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { orisoInputColors } from '../form/orisoInputDesign';
 
-const regexAccountDeletedError = /account disabled/i;
 type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
 
 export const Login = () => {
@@ -289,29 +289,14 @@ export const Login = () => {
 		})
 			.then(postLogin)
 			.catch((error) => {
-				if (error.message === FETCH_ERRORS.UNAUTHORIZED) {
-					setShowLoginError(
-						translate(
-							otp
-								? 'login.warning.failed.unauthorized.otp'
-								: 'login.warning.failed.unauthorized.text'
-						)
-					);
+				const resolution = resolveLoginError(error, Boolean(otp));
+
+				if (resolution.kind === 'message') {
+					setShowLoginError(translate(resolution.messageKey));
 					setLabelState(VALIDITY_INVALID);
-				} else if (!otp && error.message === FETCH_ERRORS.BAD_REQUEST) {
-					if (
-						error.options?.data?.error_description?.match(
-							regexAccountDeletedError
-						)
-					) {
-						setShowLoginError(
-							translate('login.warning.failed.deletedAccount')
-						);
-						setLabelState(VALIDITY_INVALID);
-					} else if (error.options?.data?.otpType) {
-						setTwoFactorType(error.options.data.otpType);
-						setIsOtpRequired(true);
-					}
+				} else if (resolution.kind === 'otpRequired') {
+					setTwoFactorType(resolution.otpType);
+					setIsOtpRequired(true);
 				}
 
 				setIsRequestInProgress(false);

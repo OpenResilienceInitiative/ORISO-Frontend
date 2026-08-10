@@ -48,7 +48,7 @@ describe('getLatestDecryptedMatrixMessage', () => {
 				{
 					getType: () => 'm.room.message',
 					getContent: () => ({
-						body: '* corrected text',
+						'body': '* corrected text',
 						'm.new_content': { body: 'corrected text' }
 					})
 				}
@@ -64,7 +64,7 @@ describe('getLatestDecryptedMatrixMessage', () => {
 					{
 						getType: () => 'm.room.message',
 						getContent: () => ({
-							body: '* original text',
+							'body': '* original text',
 							'm.new_content': { body: replacementBody }
 						})
 					}

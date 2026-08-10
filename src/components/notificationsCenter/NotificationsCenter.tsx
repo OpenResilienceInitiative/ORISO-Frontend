@@ -57,6 +57,7 @@ import {
 	formatClockParts,
 	formatRelativeTime
 } from './timelineTime';
+import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -561,6 +562,14 @@ export const NotificationsCenter = () => {
 		);
 	};
 
+	if (notificationFeed.length === 0) {
+		return (
+			<div className="notificationsCenter notificationsCenter--empty">
+				<ActivityTimelineEmptyState />
+			</div>
+		);
+	}
+
 	return (
 		<div className="notificationsCenter">
 			<div
@@ -653,14 +662,7 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
-					{notificationFeed.length === 0 ? (
-						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.empty',
-								'No notifications yet.'
-							)}
-						</div>
-					) : filteredFeed.length === 0 ? (
+					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
 								'notifications.center.noResults',

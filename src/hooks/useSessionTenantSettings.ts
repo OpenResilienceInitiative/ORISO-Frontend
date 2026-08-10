@@ -62,7 +62,6 @@ export const useSessionTenantSettings = (
 
 	return {
 		settings: state.settings,
-		isLoading:
-			state.isLoading || state.appliedSessionKey !== sessionKey
+		isLoading: state.isLoading || state.appliedSessionKey !== sessionKey
 	};
 };

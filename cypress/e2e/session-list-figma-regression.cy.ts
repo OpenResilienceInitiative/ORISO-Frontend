@@ -18,7 +18,7 @@ describe('Session list Figma regression', () => {
 		mockWebSocket();
 	});
 
-	it('renders registered Nähe sessions with postcode and stable menu interactions', () => {
+	it('renders registered Mail sessions with postcode and stable menu interactions', () => {
 		cy.consultantSession(
 			{
 				session: {
@@ -93,14 +93,14 @@ describe('Session list Figma regression', () => {
 			.first()
 			.as('registeredNearbySession')
 			.should('contain.text', '12345')
-			.and('contain.text', 'Nähe')
+			.and('contain.text', 'Mail')
 			.and('not.contain.text', 'Live Chat');
 		cy.get('@registeredNearbySession')
 			.find('.sessionsListItem__postcode')
 			.should('contain.text', '12345');
 		cy.get('@registeredNearbySession')
 			.find('.sessionsListItem__consultingTypeIcon--nearbyLabel')
-			.should('contain.text', 'Nähe');
+			.should('contain.text', 'Mail');
 
 		cy.get('@registeredNearbySession')
 			.find('.sessionsListItem__menuIcon')
@@ -183,12 +183,12 @@ describe('Session list Figma regression', () => {
 		cy.get('.sessionsListItem__dropdown').should('not.exist');
 		cy.get('@secondRegisteredNearbySession')
 			.should('contain.text', '99322')
-			.and('contain.text', 'Nähe')
+			.and('contain.text', 'Mail')
 			.and('not.contain.text', 'Live Chat');
 		cy.get('[data-cy=session-list-item]')
 			.eq(2)
 			.should('contain.text', 'Auto Select U25')
-			.and('contain.text', 'Nähe')
+			.and('contain.text', 'Mail')
 			.and('not.contain.text', '54321')
 			.and('not.contain.text', 'Live Chat');
 	});

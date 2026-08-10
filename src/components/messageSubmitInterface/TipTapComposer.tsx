@@ -21,6 +21,10 @@ import {
 	MentionProvider
 } from './inputField/extensions/createMentionExtension';
 import {
+	InsertionMarker,
+	insertionMarkerKey
+} from './inputField/extensions/insertionMarker';
+import {
 	FormatBold,
 	FormatListBulleted,
 	FilterList,
@@ -54,6 +58,11 @@ export interface TipTapComposerRef {
 	insertText: (value: string) => void;
 	/** Inserts '@' so the mention suggestion reliably opens. */
 	insertMentionTrigger: () => void;
+	/**
+	 * Pins a dot at the caret, marking where a voice message will land, and
+	 * clears it again (#996).
+	 */
+	setInsertionMarker: (visible: boolean) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 	isActionActive: (action: string) => boolean;
@@ -95,6 +104,19 @@ const getEditorPlainTextLength = (editorLike: any): number =>
 
 const isEditorReady = (editorLike: any): boolean =>
 	Boolean(editorLike && !editorLike.isDestroyed);
+
+/**
+ * Drops the voice-message insertion dot (#996). The marker points at a spot in
+ * the text, so a content reset — send, clear, draft switch — must drop it.
+ */
+const clearInsertionMarker = (editorLike: any): void => {
+	if (!isEditorReady(editorLike)) {
+		return;
+	}
+	editorLike.view?.dispatch(
+		editorLike.state.tr.setMeta(insertionMarkerKey, null)
+	);
+};
 
 const getSelectionTextLength = (
 	editorLike: any,
@@ -220,6 +242,7 @@ export const TipTapComposer = forwardRef<
 					}),
 					TaskList,
 					TaskItem.configure({ nested: true }),
+					InsertionMarker,
 					...(mentionProvider
 						? [createMentionExtension(mentionProvider)]
 						: [])
@@ -327,6 +350,11 @@ export const TipTapComposer = forwardRef<
 			},
 			onBlur: () => {
 				onFocusChange?.(false);
+				// Deliberately NOT clearing the insertion marker here (#996):
+				// pressing the mic button blurs the editor, so a blur-clear
+				// would wipe the dot at the exact moment it becomes useful.
+				// The parent owns the marker's lifetime; a content reset
+				// (send, clear, draft switch) drops it.
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue || !isEditorReady(currentEditor)) {
@@ -385,6 +413,7 @@ export const TipTapComposer = forwardRef<
 			}
 			setIsSyncingFromValue(true);
 			try {
+				clearInsertionMarker(editor);
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
 				if (enforceEditorMaxLength(editor, maxLength)) {
@@ -413,6 +442,7 @@ export const TipTapComposer = forwardRef<
 			},
 			setText: (nextValue: string) => {
 				if (isEditorReady(editor)) {
+					clearInsertionMarker(editor);
 					editor.commands.setContent(nextValue || '');
 				}
 			},
@@ -427,6 +457,18 @@ export const TipTapComposer = forwardRef<
 					return;
 				}
 				editor.chain().focus().insertContent(nextValue).run();
+			},
+			setInsertionMarker: (visible: boolean) => {
+				if (!isEditorReady(editor)) {
+					return;
+				}
+				const { state, view } = editor;
+				view.dispatch(
+					state.tr.setMeta(
+						insertionMarkerKey,
+						visible ? state.selection.from : null
+					)
+				);
 			},
 			insertMentionTrigger: () => {
 				if (!isEditorReady(editor)) {

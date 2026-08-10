@@ -286,6 +286,23 @@ export const mockVisibilityMessage = `${buildVisibleToPrefix([
 	'Familienberatung'
 ])} Diese Nachricht ist nur für ausgewählte Empfänger sichtbar.`;
 
+/**
+ * An incoming restricted message the viewer IS allowed to see.
+ *
+ * `MessageItemComponent` returns `null` for a restricted message when the
+ * viewer is neither the sender nor one of the recipients — correct behaviour,
+ * but it means `mockVisibilityMessage` (addressed to other people) renders
+ * nothing at all on an incoming story. A guard story built on it can never
+ * show the visibility chip, so it pins nothing.
+ *
+ * This fixture names the viewer from `mockUserData` ("Karina P"), so the
+ * message renders and the chip has to appear.
+ */
+export const mockVisibilityMessageForViewer = `${buildVisibleToPrefix([
+	'Karina P',
+	'Familienberatung'
+])} Diese Nachricht ist nur für ausgewählte Empfänger sichtbar.`;
+
 export const mockSystemNotificationMessage = `[SYSTEM_NOTIFICATION]${JSON.stringify(
 	{
 		title: 'Systemhinweis',

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
+	CaseHandoverConsentCard,
 	CaseHandoverSystemMessageCard
 } from './CaseHandoverClientCards';
 import {
@@ -67,6 +68,17 @@ export const InquiryAcceptedMobile: Story = {
 				organisationName="Caritas Mainz"
 				onViewConversation={() => {}}
 				compact
+			/>
+		</div>
+	)
+};
+
+export const PendingClientConsentInConversation: Story = {
+	render: () => (
+		<div style={{ ...shell, backgroundColor: '#f7f2f1' }}>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
 			/>
 		</div>
 	)

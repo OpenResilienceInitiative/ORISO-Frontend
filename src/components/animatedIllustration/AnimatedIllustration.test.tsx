@@ -2,8 +2,15 @@
 
 import * as React from 'react';
 import { render } from '@testing-library/react';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CheckAnimation, EmailSentAnimation } from './AnimatedIllustration';
+import {
+	ANIMATION_LOOPS,
+	ANIMATION_SPEED,
+	CheckAnimation,
+	EmailSentAnimation
+} from './AnimatedIllustration';
 
 vi.mock('lottie-react', () => ({
 	default: ({ animationData }: { animationData: Record<string, any> }) => (
@@ -126,5 +133,41 @@ describe('AnimatedIllustration', () => {
 		expect(colors).toContain('#a5000a');
 		expect(colors).toContain('#444748');
 		expect(colors).not.toContain('#33cccc');
+	});
+});
+
+describe('animation playback policy', () => {
+	it('is the only component that talks to lottie-react', () => {
+		// Two players with two speeds is what this consolidation removed; a new
+		// direct import would let them drift apart again.
+		const hits = execSync('grep -rl "from \'lottie-react\'" src/ || true', {
+			encoding: 'utf8'
+		})
+			.split('\n')
+			.filter(Boolean)
+			.filter((file) => !file.endsWith('.test.tsx'));
+
+		expect(hits).toEqual([
+			'src/components/animatedIllustration/AnimatedIllustration.tsx'
+		]);
+	});
+
+	it('pins one speed and no looping for the whole product', () => {
+		expect(ANIMATION_SPEED).toBe(0.5);
+		expect(ANIMATION_LOOPS).toBe(false);
+	});
+
+	it('never lets a caller override playback', () => {
+		const source = readFileSync(
+			'src/components/animatedIllustration/AnimatedIllustration.tsx',
+			'utf8'
+		);
+		const props = source.slice(
+			source.indexOf('interface AnimatedIllustrationProps'),
+			source.indexOf('export const AnimatedIllustration')
+		);
+
+		expect(props).not.toMatch(/\bspeed\b/);
+		expect(props).not.toMatch(/\bloop\b/);
 	});
 });

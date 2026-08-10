@@ -38,6 +38,7 @@ import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
+import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { translateWithFallback } from '../../utils/translationFallback';
 
 interface JoinGroupChatViewProps {
@@ -315,6 +316,8 @@ export const JoinGroupChatView = ({
 	);
 	const groupChatRules = authorContent.rules;
 	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+	const { showCountdown, showRules, showRulesHeadline } =
+		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -331,17 +334,20 @@ export const JoinGroupChatView = ({
 				{/* The scheduled-chat countdown carries its own headline
 				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
 				    above it just repeats the frame. Only show the standalone
-				    "Spielregeln"-headline in the no-countdown (hint message) view. */}
-				{!plannedStart && (
+				    "Spielregeln"-headline in the no-countdown (hint message) view.
+				    Internal team chats show neither (#979). */}
+				{showRulesHeadline && (
 					<Headline
 						text={translate('groupChat.join.content.headline')}
 						semanticLevel="4"
 					/>
 				)}
-				{!!authorContent.hintMessage && !plannedStart && (
+				{/* An author-written greeting is real content, not waiting-room
+				    chrome — it stays visible for internal team chats too. */}
+				{!!authorContent.hintMessage && !showCountdown && (
 					<Text text={authorContent.hintMessage} type="standard" />
 				)}
-				{plannedStart && (
+				{showCountdown && plannedStart && (
 					<div className="joinChat__waitingBox">
 						<WaitingAreaCountdown
 							plannedStart={plannedStart}
@@ -359,13 +365,15 @@ export const JoinGroupChatView = ({
 						/>
 					</div>
 				)}
-				<WaitingAreaRules
-					rules={groupChatRules}
-					ariaLabel={tr(
-						'groupChat.join.waitingArea.rulesLabel',
-						'Chat rules'
-					)}
-				/>
+				{showRules && (
+					<WaitingAreaRules
+						rules={groupChatRules}
+						ariaLabel={tr(
+							'groupChat.join.waitingArea.rulesLabel',
+							'Chat rules'
+						)}
+					/>
+				)}
 			</div>
 			<div className="joinChat__button-container">
 				{!hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&

@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen, waitFor, act, cleanup } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	act,
+	cleanup,
+	fireEvent,
+	within
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -12,6 +20,8 @@ import {
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
 import { chatTransportService } from '../../services/chatTransportService';
+import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
+import { apiDecideCaseHandoverClientConsent } from '../../api';
 
 const ROOM_ID = '!session:matrix.oriso.org';
 const LIST_PATH = '/sessions/user/view';
@@ -80,6 +90,7 @@ vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
 	apiGetSessionSupervisors: mocks.getSessionSupervisors,
 	apiGetCaseHandoverStatus: mocks.getCaseHandoverStatus,
+	apiDecideCaseHandoverClientConsent: vi.fn(() => Promise.resolve({})),
 	FETCH_ERRORS: { ABORT: 'ABORT' }
 }));
 
@@ -187,7 +198,13 @@ const askerUserData = {
 	grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
 } as any;
 
-const renderSessionStream = ({ isGroup }: { isGroup: boolean }) => {
+const renderSessionStream = ({
+	isGroup,
+	notificationFeed = []
+}: {
+	isGroup: boolean;
+	notificationFeed?: any[];
+}) => {
 	const activeSession = {
 		rid: ROOM_ID,
 		isGroup,
@@ -201,42 +218,55 @@ const renderSessionStream = ({ isGroup }: { isGroup: boolean }) => {
 
 	return render(
 		<MemoryRouter>
-			<UserDataContext.Provider
+			<NotificationsContext.Provider
 				value={
-					{ userData: askerUserData, setUserData: () => {} } as any
+					{
+						notificationFeed,
+						markNotificationAsRead: vi.fn(),
+						refreshNotificationFeed: vi.fn()
+					} as any
 				}
 			>
-				<SessionTypeContext.Provider
-					value={{
-						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: LIST_PATH
-					}}
+				<UserDataContext.Provider
+					value={
+						{
+							userData: askerUserData,
+							setUserData: () => {}
+						} as any
+					}
 				>
-					<ConsultantListContext.Provider
-						value={
-							{
-								consultantList: [],
-								setConsultantList: () => {}
-							} as any
-						}
+					<SessionTypeContext.Provider
+						value={{
+							type: SESSION_LIST_TYPES.MY_SESSION,
+							path: LIST_PATH
+						}}
 					>
-						<ActiveSessionContext.Provider
+						<ConsultantListContext.Provider
 							value={
 								{
-									activeSession,
-									readActiveSession: () => {}
+									consultantList: [],
+									setConsultantList: () => {}
 								} as any
 							}
 						>
-							<SessionStream
-								readonly={false}
-								checkMutedUserForThisSession={() => {}}
-								bannedUsers={[]}
-							/>
-						</ActiveSessionContext.Provider>
-					</ConsultantListContext.Provider>
-				</SessionTypeContext.Provider>
-			</UserDataContext.Provider>
+							<ActiveSessionContext.Provider
+								value={
+									{
+										activeSession,
+										readActiveSession: () => {}
+									} as any
+								}
+							>
+								<SessionStream
+									readonly={false}
+									checkMutedUserForThisSession={() => {}}
+									bannedUsers={[]}
+								/>
+							</ActiveSessionContext.Provider>
+						</ConsultantListContext.Provider>
+					</SessionTypeContext.Provider>
+				</UserDataContext.Provider>
+			</NotificationsContext.Provider>
 		</MemoryRouter>
 	);
 };
@@ -265,6 +295,96 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 	afterEach(() => {
 		cleanup();
+	});
+
+	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+
+		const consentCard = await screen.findByTestId(
+			'case-handover-inline-consent'
+		);
+		fireEvent.click(
+			within(consentCard).getByRole('button', {
+				name: 'caseHandover.consent.approve'
+			})
+		);
+
+		await waitFor(() => {
+			expect(apiDecideCaseHandoverClientConsent).toHaveBeenCalledWith(
+				1,
+				11,
+				true
+			);
+		});
+	});
+
+	it('lets the asker decline the request and removes the card afterwards', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+
+		const consentCard = await screen.findByTestId(
+			'case-handover-inline-consent'
+		);
+		fireEvent.click(
+			within(consentCard).getByRole('button', {
+				name: 'caseHandover.consent.decline'
+			})
+		);
+
+		await waitFor(() => {
+			expect(apiDecideCaseHandoverClientConsent).toHaveBeenCalledWith(
+				1,
+				11,
+				false
+			);
+		});
+		await waitFor(() => {
+			expect(
+				screen.queryByTestId('case-handover-inline-consent')
+			).toBeNull();
+		});
+	});
+
+	it('does not resurface the card for an already-answered (read) request', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					readAt: '2026-08-01T10:00:00.000Z',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+
+		await waitFor(() => {
+			expect(screen.getByTestId('session-item')).toBeDefined();
+		});
+		expect(screen.queryByTestId('case-handover-inline-consent')).toBeNull();
 	});
 
 	it('redirects a removed 1:1 participant back to the session list', async () => {

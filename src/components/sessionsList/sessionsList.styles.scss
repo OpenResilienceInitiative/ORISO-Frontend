@@ -396,14 +396,26 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandlePill {
 		position: absolute;
-		right: -3px;
+		right: 8px;
 		top: 50%;
-		width: 6px;
-		height: 56px;
+		width: 8px;
+		height: 48px;
 		border-radius: 999px;
-		background: #ffffff;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
 		transform: translateY(-50%);
-		transition: box-shadow 140ms ease;
+		transition:
+			background-color 140ms ease,
+			box-shadow 140ms ease,
+			transform 140ms ease;
+	}
+
+	// Once cards overflow, the same visible dragbar becomes their scrollbar
+	// thumb. No separate full-height side line is rendered beside populated
+	// fields.
+	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
+		top: var(--sessions-list-thumb-top);
+		height: var(--sessions-list-thumb-height);
+		transform: none;
 	}
 
 	&__resizeToggle {
@@ -452,7 +464,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
+	}
+
+	&__resizeHandle[data-dragging='true'][data-scrollable='false']
+		&__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
+	}
+
+	&__resizeHandle[data-dragging='true'][data-scrollable='true']
+		&__resizeHandlePill {
+		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
