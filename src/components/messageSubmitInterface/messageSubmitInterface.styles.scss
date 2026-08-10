@@ -60,6 +60,18 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// `.textarea__inputWrapper` plus the card's 1px border.
 		--composer-edge-inset: 17px;
 
+		// The editor's box, derived once so the docked bars never restate it.
+		--composer-inner-width: calc(
+			min(100%, var(--composer-max-width)) - 2 * var(--composer-edge-inset)
+		);
+		--composer-inner-offset: max(
+			0px,
+			calc(
+				(100% - min(100%, var(--composer-max-width))) / 2 +
+					var(--composer-edge-inset)
+			)
+		);
+
 		// Figma 8641-34699: dock must be opaque so scrolled history cannot show through.
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
@@ -1989,6 +2001,24 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 }
 
+/*
+ * Expanding the composer turns the card into a `position: fixed` overlay at
+ * z-index 4500, while these bars stay behind in the docked form (z-index 100).
+ * They are unreachable there, and at some widths wide enough to peek out past
+ * the overlay's edges — 8px on either side at a 940px viewport. Hide them
+ * rather than aligning something nobody can see or click.
+ *
+ * The expanded composer therefore shows no reply/edit context at all. That is
+ * the state before this branch too; giving it one means moving the bars into
+ * the overlay, which is its own change.
+ */
+.messageSubmit__wrapper--expanded {
+	.messageSubmit__replyPreview,
+	.messageSubmit__editPreview {
+		display: none;
+	}
+}
+
 // Relations foundation (#435): cancelable reply-quote preview above the input.
 .messageSubmit__replyPreview {
 	display: flex;
@@ -2000,17 +2030,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	// own though — it starts on the editor's left edge and grows to at most the
 	// editor's width, so the two never drift apart.
 	width: fit-content;
-	max-width: calc(
-		min(100%, var(--composer-max-width, 895px)) - 2 *
-			var(--composer-edge-inset, 17px)
-	);
-	margin: 0 auto 6px
-		max(
-			0px,
-			calc(
-				(100% - min(100%, var(--composer-max-width, 895px))) / 2 + var(--composer-edge-inset, 17px)
-			)
-		);
+	max-width: var(--composer-inner-width);
+	margin: 0 auto 6px var(--composer-inner-offset);
 	padding: 8px 12px;
 	border-left: 3px solid var(--m3-primary, #a5000a);
 	border-radius: 6px;
@@ -2073,10 +2094,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	min-height: 32px;
 
 	// Same box as the editor below it — no width of its own.
-	width: calc(
-		min(100%, var(--composer-max-width, 895px)) - 2 *
-			var(--composer-edge-inset, 17px)
-	);
+	width: var(--composer-inner-width);
 	margin: 0 auto 6px;
 	padding: 8px 12px;
 	border-radius: 8px;

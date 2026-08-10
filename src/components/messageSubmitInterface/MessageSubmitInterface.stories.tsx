@@ -12,6 +12,7 @@ import {
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
+import { phone390Globals } from '../message/messageStoryShell';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -454,12 +455,17 @@ export const EditingMessage: Story = {
 	}
 };
 
-/** Mobile counterpart — Figma 18:6713. Same bar, less room for the text. */
+/**
+ * Mobile counterpart — Figma 18:6713. Same bar, less room for the text.
+ *
+ * Uses `phone390Globals`, not `parameters.viewport.defaultViewport`: preview.tsx
+ * replaces the viewport options with `phone375` / `phone390` only (#849), so
+ * naming a built-in preset like `mobile1` silently leaves the story at desktop
+ * width — and this story's whole point is the mobile breakpoint.
+ */
 export const EditingMessageMobile: Story = {
 	name: 'Editing (m.replace preview) — mobile',
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
+	globals: phone390Globals,
 	render: () => (
 		<ComposerShell
 			editingMessage={{
@@ -495,8 +501,9 @@ export const Supervisor: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
+	// Was `defaultViewport: 'mobile1'`, which has not resolved since #849
+	// removed the built-in presets — the story called itself Mobile and
+	// rendered at desktop width.
+	globals: phone390Globals,
 	render: () => <ComposerShell />
 };
