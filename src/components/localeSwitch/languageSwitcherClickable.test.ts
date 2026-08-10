@@ -39,7 +39,10 @@ const LANGUAGE_SLOT = 'navigation__icon-slot--language';
  * The selector block a declaration sits in — the nearest preceding line that
  * opens a brace.
  */
-const enclosingSelector = (source: string, declarationIndex: number): string => {
+const enclosingSelector = (
+	source: string,
+	declarationIndex: number
+): string => {
 	const before = source.slice(0, declarationIndex);
 	const lines = before.split('\n');
 	for (let i = lines.length - 1; i >= 0; i--) {
@@ -78,12 +81,25 @@ describe('language switcher stays clickable (#998)', () => {
 		expect(offenders).toEqual([]);
 	});
 
-	it('lifts the portalled menu using the prefix the dropdown actually sets', () => {
-		const prefix = LANGUAGE_DROPDOWN.match(
-			/classNamePrefix="([^"]+)"/
-		)?.[1];
+	it('lifts the portalled menu from the styles object, not from a stylesheet', () => {
+		// react-select's own hook: immune both to a wrong classNamePrefix and
+		// to a rule nested under a parent the portalled node never sits in.
+		expect(LANGUAGE_DROPDOWN).toMatch(/menuPortal:\s*\(styles, state\)/);
+		expect(LANGUAGE_DROPDOWN).toMatch(/menuPortal:[\s\S]{0,200}?zIndex/);
+	});
 
-		expect(prefix).toBeTruthy();
-		expect(LOCALE_SWITCH_STYLES).toContain(`.${prefix}__menu-portal`);
+	it('does not try to style the portalled menu from localeSwitch.styles.scss', () => {
+		// `menuPortalTarget` mounts the menu under document.body, so every
+		// selector in this stylesheet — all of it nested under `.localeSwitch`
+		// — compiles to a descendant selector that can never match it.
+		const declarations = LOCALE_SWITCH_STYLES.split('\n')
+			.filter(
+				(line) =>
+					!line.trim().startsWith('/*') &&
+					!line.trim().startsWith('*')
+			)
+			.join('\n');
+
+		expect(declarations).not.toContain('__menu-portal');
 	});
 });
