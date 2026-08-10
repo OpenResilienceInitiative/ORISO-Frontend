@@ -1498,6 +1498,9 @@
 			}
 		},
 		"audience": {
+			"clients": "Ratsuchende",
+			"counsellors": "Beratende",
+			"moderators": "Moderierende",
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
 			"sendToAll": "An alle senden",
@@ -1506,19 +1509,43 @@
 			"closeMenu": "Senden-an-Menü schließen",
 			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
 			"menuHeading": "Adressaten wählen",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Ratsuchende auswählen",
+			"clientsSelected": "{{count}} Ratsuchende ausgewählt",
+			"clientsSelectAll": "Alle Ratsuchenden auswählen",
+			"counsellorsSelect": "Alle Beratenden auswählen",
+			"counsellorsSelected": "{{count}} Beratende ausgewählt",
+			"moderatorsSelect": "Alle Moderierenden auswählen",
+			"moderatorsSelected": "{{count}} Moderierende ausgewählt",
+			"clientsEmpty": "In diesem Raum sind keine Ratsuchenden",
+			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
+			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Alle auswählen"
 		},
+		"edit": {
+			"marker": "(bearbeitet)",
+			"markerTitle": "Nachricht wurde bearbeitet"
+		},
+		"feedbackTag": "Feedback",
+		"menu": {
+			"open": "Weitere Optionen",
+			"replyDirect": "Direkt antworten",
+			"replyThread": "Im Thread antworten",
+			"edit": "Nachricht bearbeiten",
+			"markText": "Text markieren",
+			"forward": "Nachricht weiterleiten",
+			"delete": "Nachricht löschen"
+		},
+		"reaction": {
+			"add": "Reagieren",
+			"count": "{{key}}: {{count}} Reaktionen"
+		},
+		"visibility": {
+			"open": "Sichtbarkeit anzeigen",
+			"people": "Personen, die diese Nachricht sehen",
+			"title": "Nachricht sichtbar für …"
+		},
+		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
@@ -3066,7 +3093,7 @@
 				"neu": "Ungelesen",
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
-				"nearby": "Nähe",
+				"nearby": "Mail",
 				"create": "Erstellen",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
@@ -3074,7 +3101,7 @@
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Nähe"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
