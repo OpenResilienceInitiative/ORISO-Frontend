@@ -28,7 +28,12 @@
 		}
 	}
 
-	.select__input__menu-portal {
+	/* `LanguageSelectDropdown` sets classNamePrefix="language-select__input",
+	   so the portalled menu never carried the `select__input__` class this
+	   rule targeted. On desktop the menu is portalled to document.body with
+	   react-select's default z-index of 1, which puts it behind the rail
+	   (#998). */
+	.language-select__input__menu-portal {
 		z-index: 1000;
 	}
 }
