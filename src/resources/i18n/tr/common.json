@@ -1254,12 +1254,12 @@
 						"missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
 					}
 				},
-				"deletedAccount": "Hesabınız bir danışman tarafından kapatıldı.",
 				"email": {
 					"otp": {
 						"missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."
 					}
 				},
+				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."

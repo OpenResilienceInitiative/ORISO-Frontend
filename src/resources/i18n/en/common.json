@@ -1393,7 +1393,7 @@
 						"missing": "Please enter the code from your app for two-factor authentication."
 					}
 				},
-				"deletedAccount": "Your account has been closed by a counselor.",
+				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."
