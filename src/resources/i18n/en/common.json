@@ -1523,6 +1523,7 @@
 		},
 		"reaction": {
 			"add": "React",
+			"more": "More emojis",
 			"count": "{{key}}: {{count}} reactions"
 		},
 		"visibility": {
