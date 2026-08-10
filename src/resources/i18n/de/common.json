@@ -1538,7 +1538,8 @@
 		},
 		"reaction": {
 			"add": "Reagieren",
-			"count": "{{key}}: {{count}} Reaktionen"
+			"count": "{{key}}: {{count}} Reaktionen",
+			"more": "Weitere Emojis"
 		},
 		"visibility": {
 			"open": "Sichtbarkeit anzeigen",
