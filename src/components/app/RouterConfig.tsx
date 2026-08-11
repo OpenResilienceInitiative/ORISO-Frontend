@@ -21,6 +21,13 @@ import { ReactComponent as ToolsIconOutline } from '../../resources/img/icons/to
 import { ReactComponent as ToolsIconFilled } from '../../resources/img/icons/tools_filled.svg';
 import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons/calendar_outline.svg';
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
+// "My profile" is a single person for every role — asker and counsellor alike.
+// The rail previously used an inlined `supervised_user_circle` glyph (an adult
+// with a supervised child), which reads as a parent/child relationship and is
+// wrong for a counsellor profile (#981). These are the design-system assets
+// that all sibling rail items already use.
+import { ReactComponent as ProfileIconOutline } from '../../resources/img/icons/profil_outline.svg';
+import { ReactComponent as ProfileIconFilled } from '../../resources/img/icons/profil_filled.svg';
 import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
 import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
 import {
@@ -29,10 +36,7 @@ import {
 	NavChatsIconFilled,
 	NavActivityIcon,
 	NavActivityIconHover,
-	NavActivityIconFilled,
-	NavProfileIcon,
-	NavProfileIconHover,
-	NavProfileIconFilled
+	NavActivityIconFilled
 } from './navigationSidebarIcons';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
@@ -137,9 +141,9 @@ export const RouterConfigUser = (
 				condition: (userData) =>
 					!userData.userName?.startsWith('Anonymous-'),
 				to: '/profile',
-				icon: NavProfileIcon,
-				iconHover: NavProfileIconHover,
-				iconFilled: NavProfileIconFilled,
+				icon: ProfileIconOutline,
+				iconHover: ProfileIconOutline,
+				iconFilled: ProfileIconFilled,
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.myProfile'
@@ -278,9 +282,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			// route + DraftsCenter page below remain reachable from sections.
 			{
 				to: '/profile',
-				icon: NavProfileIcon,
-				iconHover: NavProfileIconHover,
-				iconFilled: NavProfileIconFilled,
+				icon: ProfileIconOutline,
+				iconHover: ProfileIconOutline,
+				iconFilled: ProfileIconFilled,
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.myProfile'

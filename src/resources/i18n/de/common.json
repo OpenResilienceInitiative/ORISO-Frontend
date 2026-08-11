@@ -143,7 +143,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Herunterladen"
+			"label": "Herunterladen",
+			"aria": "{{name}} herunterladen"
 		},
 		"error": {
 			"format": {
@@ -542,7 +543,7 @@
 			},
 			"overlay": {
 				"button": "Zur Nachricht",
-				"copy": "Innerhalb von 2 Arbeitstagen erhalten Sie eine Antwort von uns.",
+				"copy": "Wir haben Ihre Nachricht erhalten.",
 				"headline": "Vielen Dank für Ihre Nachricht!"
 			}
 		}
@@ -1407,7 +1408,7 @@
 						"missing": "Bitte geben Sie den Code aus Ihrer App für die Zwei-Faktor-Authentifizierung ein."
 					}
 				},
-				"deletedAccount": "Ihr Account wurde von einer Beratungsfachkraft geschlossen.",
+				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
@@ -1494,9 +1495,60 @@
 			"booking": {
 				"buttonLabel": "Termin zur Beratung vereinbaren",
 				"headline": "Oder vereinbare jetzt einen Termin"
+			},
+			"toolbar": {
+				"openTools": "Zurück zu allen Werkzeugen",
+				"closeTools": "Zu den kompakten Werkzeugen wechseln",
+				"more": "Weitere Werkzeuge",
+				"minimize": "Editor verkleinern",
+				"maximize": "Editor vergrößern",
+				"undo": "Rückgängig",
+				"redo": "Wiederherstellen",
+				"heading": "Textstil",
+				"paragraph": "Normaler Text",
+				"heading1": "Titel",
+				"heading2": "Große Überschrift",
+				"heading3": "Mittlere Überschrift",
+				"heading4": "Kleine Überschrift",
+				"list": "Listenstil",
+				"bulletList": "Aufzählung",
+				"orderedList": "Nummerierte Liste",
+				"taskList": "Aufgabenliste",
+				"quote": "Zitat",
+				"bold": "Fett",
+				"italic": "Kursiv",
+				"strike": "Durchgestrichen",
+				"underline": "Unterstrichen",
+				"code": "Code",
+				"codeBlock": "Codeblock",
+				"link": "Link",
+				"highlight": "Markieren",
+				"highlightYellow": "Gelb markieren",
+				"highlightOrange": "Orange markieren",
+				"highlightRose": "Rosé markieren",
+				"highlightMint": "Mint markieren",
+				"highlightBlue": "Blau markieren",
+				"superscript": "Hochgestellt",
+				"subscript": "Tiefgestellt",
+				"addImage": "Bild einfügen",
+				"addImageShort": "Bild",
+				"dateTime": "Datum und Uhrzeit einfügen",
+				"attachment": "Anhang hinzufügen",
+				"emoji": "Emoji-Auswahl",
+				"mention": "Person erwähnen",
+				"voiceRecording": "Sprachaufnahme"
 			}
 		},
+		"mention": {
+			"notInChat": "nicht im Chat",
+			"empty": "Niemand gefunden",
+			"unavailable": "Liste konnte nicht geladen werden",
+			"loading": "Wird geladen …"
+		},
 		"audience": {
+			"clients": "Ratsuchende",
+			"counsellors": "Beratende",
+			"moderators": "Moderierende",
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
 			"sendToAll": "An alle senden",
@@ -1505,19 +1557,44 @@
 			"closeMenu": "Senden-an-Menü schließen",
 			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
 			"menuHeading": "Adressaten wählen",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Ratsuchende auswählen",
+			"clientsSelected": "{{count}} Ratsuchende ausgewählt",
+			"clientsSelectAll": "Alle Ratsuchenden auswählen",
+			"counsellorsSelect": "Alle Beratenden auswählen",
+			"counsellorsSelected": "{{count}} Beratende ausgewählt",
+			"moderatorsSelect": "Alle Moderierenden auswählen",
+			"moderatorsSelected": "{{count}} Moderierende ausgewählt",
+			"clientsEmpty": "In diesem Raum sind keine Ratsuchenden",
+			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
+			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Alle auswählen"
 		},
+		"edit": {
+			"marker": "(bearbeitet)",
+			"markerTitle": "Nachricht wurde bearbeitet"
+		},
+		"feedbackTag": "Feedback",
+		"menu": {
+			"open": "Weitere Optionen",
+			"replyDirect": "Direkt antworten",
+			"replyThread": "Im Thread antworten",
+			"edit": "Nachricht bearbeiten",
+			"markText": "Text markieren",
+			"forward": "Nachricht weiterleiten",
+			"delete": "Nachricht löschen"
+		},
+		"reaction": {
+			"add": "Reagieren",
+			"count": "{{key}}: {{count}} Reaktionen",
+			"more": "Weitere Emojis"
+		},
+		"visibility": {
+			"open": "Sichtbarkeit anzeigen",
+			"people": "Personen, die diese Nachricht sehen",
+			"title": "Nachricht sichtbar für …"
+		},
+		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
@@ -3608,6 +3685,20 @@
 			}
 		}
 	},
+	"voicePlayer": {
+		"label": "Sprachnachricht",
+		"play": "Sprachnachricht abspielen",
+		"pause": "Sprachnachricht anhalten",
+		"timeline": "Zeitachse",
+		"jumpTo": "Zu {{time}} springen",
+		"aria": "Sprachnachricht, {{duration}}, abspielen",
+		"remaining": "noch {{remaining}} von {{total}}",
+		"encrypted": "Ende-zu-Ende verschlüsselt",
+		"meta": {
+			"perSecond": "{{seconds}} Sekunden · Klick springt zur Sekunde",
+			"perTile": "{{total}} · je Kachel {{seconds}} s"
+		}
+	},
 	"walkthrough": {
 		"close": "Rundgang schließen",
 		"overview": {
@@ -3997,6 +4088,66 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Ihre ersten Schritte",
+		"greeting": {
+			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
+		},
+		"whoReadsAlong": {
+			"headline": "Wer Ihre Nachricht liest",
+			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+		},
+		"responseDeadline": {
+			"headline": "Wann Sie eine Antwort erhalten",
+			"body": "Sie erhalten innerhalb von {{deadlineDays}} Werktagen eine Antwort von einer passenden Ansprechperson."
+		},
+		"modalityNote": {
+			"body": "Die Beratung findet schriftlich in diesem geschützten Bereich statt. Sie können jederzeit weiterschreiben."
+		},
+		"noPersonalData": {
+			"headline": "Bitte keine persönlichen Daten senden",
+			"body": "Bitte schreiben Sie uns keinen vollständigen Namen, keine Adresse und keine Telefonnummer. Für die Beratung brauchen wir das nicht."
+		},
+		"emergencyNumbers": {
+			"headline": "Wenn es nicht warten kann",
+			"body": "Bei einer akuten Notlage erreichen Sie rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112."
+		},
+		"dataProtection": {
+			"body": "Wie wir mit Ihren Daten umgehen, steht in der Datenschutzerklärung."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Benachrichtigung per E-Mail",
+			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+		},
+		"accountProtection": {
+			"headline": "Ihr Zugang, zusätzlich geschützt",
+			"body": "Sie können Ihren Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.",
+			"action": "Zugang schützen"
+		},
+		"closing": {
+			"body": "Bis bald — wir melden uns bei Ihnen."
+		},
+		"saveCredentials": {
+			"headline": "Sichern Sie sich Ihren Zugang",
+			"body": "Ohne Ihren Anmeldenamen kommen Sie später nicht mehr in dieses Gespräch zurück. Bewahren Sie ihn gut auf — am besten in einem Passwort-Manager.",
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand."
+		},
+		"displayName": {
+			"headline": "Ihr angezeigter Name",
+			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
+			"action": "Namen ändern"
 		}
 	}
 }

@@ -10,6 +10,10 @@ import {
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import {
+	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
+	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
+} from './anonymousConsentInvariant';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
@@ -81,9 +85,15 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
+import {
+	buildEditContext,
+	buildReplyQuoteContext,
+	buildReplyQuotePreview
+} from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -661,10 +671,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isAnonymousEnquiryPhaseSession =
 		sessionStatusNum === STATUS_EMPTY ||
 		sessionStatusNum === STATUS_ENQUIRY;
-	const requiresAnonymousInquiryConsent =
-		isAnonymousAskerExperience &&
-		isAnonymousEnquiryPhaseSession &&
-		!privacyAcceptanceRecorded;
+	/* ORISO-UserService#927: the Eingabesperre lives in one pure predicate now,
+	   pinned by `anonymousConsentInvariant.test.ts`. It used to be assembled
+	   inline here, which meant the consent guarantee for §11 KDG special-category
+	   data was emergent from three booleans and asserted nowhere. */
+	const requiresAnonymousInquiryConsent = requiresAnonymousInquiryConsentFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
+	});
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
 		[activeSession.item.id]
@@ -896,8 +911,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
-	const shouldBlockAnonymousInquiryChat =
-		shouldShowConsentGate || shouldShowPseudonymGate;
+	/* The runtime lock goes through the same predicate the invariant test pins.
+	   Recomposing it locally left `anonymousConsentInvariant.test.ts` asserting a
+	   copy of the rule while the composer obeyed a different one — the test would
+	   have stayed green through exactly the regression it exists to catch. */
+	const shouldBlockAnonymousInquiryChat = shouldBlockAnonymousInquiryChatFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation,
+		consentAcceptedInSession: anonymousInquiryConsentAccepted,
+		requiresPseudonymConfirmation,
+		isInAnonymousWaitingQueuePhase
+	});
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
@@ -3255,14 +3280,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo({
-			eventId: message._id,
-			author: message.displayName || message.username,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setReplyTo(buildReplyQuoteContext(message));
 	}, []);
 
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
@@ -3274,13 +3292,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage({
-			eventId: message._id,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setEditingMessage(buildEditContext(message));
 	}, []);
 
 	const handleDeleteDirect = useCallback(
@@ -3320,12 +3332,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return {
-				author: target.displayName || target.username,
-				text: parseMessagePrefixes(target.message)
-					.cleanedMessage.replace(/<[^>]*>/g, '')
-					.slice(0, 200)
-			};
+			return buildReplyQuotePreview(target);
 		},
 		[messages]
 	);
@@ -3354,6 +3361,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
 		}
+		if (
+			!isNotificationActiveViewRoute(location.pathname, location.search)
+		) {
+			return;
+		}
 		const roomId =
 			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
@@ -3364,21 +3376,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		apiPatchNotificationActiveView({
-			roomId,
-			threadRootId: activeThreadRootId,
-			active: true
-		}).catch(() => undefined);
-
-		const heartbeat = window.setInterval(() => {
+		let disposed = false;
+		const markActive = () => {
+			// clearInterval cannot cancel a callback that is already queued. The
+			// guard prevents that stale heartbeat from racing after cleanup and
+			// re-enabling suppression while the user is on Notifications.
+			if (disposed) {
+				return;
+			}
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: activeThreadRootId,
 				active: true
 			}).catch(() => undefined);
+		};
+
+		markActive();
+
+		const heartbeat = window.setInterval(() => {
+			markActive();
 		}, 10000);
 
 		return () => {
+			disposed = true;
 			window.clearInterval(heartbeat);
 			apiPatchNotificationActiveView({
 				roomId,
@@ -3391,7 +3411,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item?.matrixRoomId,
 		activeThreadRootId,
 		isAskerUser,
-		isConsultantUser
+		isConsultantUser,
+		location.pathname,
+		location.search
 	]);
 
 	// Track the decryption success because we have a short timing issue when

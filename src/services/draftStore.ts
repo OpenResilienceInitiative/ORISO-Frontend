@@ -14,6 +14,29 @@ export type DraftEntry = {
 	title?: string | null;
 };
 
+/**
+ * A draft only counts as a draft when it actually carries text (#976).
+ *
+ * TipTap serialises an empty document as markup (`<p></p>`, `<p><br></p>`), so
+ * an emptiness check has to look past the tags — otherwise a merely visited
+ * conversation persists a zero-content draft row, and the drafts badge, which
+ * counts rows, keeps showing a draft that no view can ever open.
+ *
+ * E2EE drafts are opaque ciphertext without markup and therefore always count.
+ */
+export const hasDraftContent = (text?: string | null): boolean => {
+	if (!text) {
+		return false;
+	}
+	return (
+		text
+			.replace(/<[^>]*>/g, ' ')
+			.replace(/&nbsp;|&#160;/gi, ' ')
+			.replace(/[\u00a0\u200b]/g, ' ')
+			.trim().length > 0
+	);
+};
+
 const safeGetStorage = (): Storage | null => {
 	if (typeof window === 'undefined') {
 		return null;
@@ -70,7 +93,10 @@ export const buildDraftKey = (
 
 export const saveDraftEntry = (entry: DraftEntry) => {
 	const store = parseStore();
-	if (!entry.text || entry.text.trim().length === 0) {
+	// #976: the same emptiness rule as the remote path. A `trim()` check treats
+	// TipTap's empty document (`<p></p>`) as content, so the local store kept
+	// exactly the zero-content drafts the remote store now refuses.
+	if (!hasDraftContent(entry.text)) {
 		delete store[entry.key];
 		persistStore(store);
 		return;

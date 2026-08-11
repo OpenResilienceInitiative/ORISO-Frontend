@@ -2,7 +2,11 @@ import { ReactRenderer } from '@tiptap/react';
 import Mention from '@tiptap/extension-mention';
 import type { SuggestionOptions } from '@tiptap/suggestion';
 import { computePosition, flip, offset, shift } from '@floating-ui/dom';
-import { MentionList, MentionListRef } from './MentionList';
+import {
+	MentionDirectoryState,
+	MentionList,
+	MentionListRef
+} from './MentionList';
 import { filterMentionCandidates, MentionCandidate } from './mentionFiltering';
 
 export interface MentionProvider {
@@ -11,6 +15,14 @@ export interface MentionProvider {
 	/** The author's id, excluded from the list. */
 	selfId?: string;
 	notInChatLabel: string;
+	/**
+	 * Why the directory is the way it is, read live at popup time (#993).
+	 * Without it an empty list is silent and a failed request is invisible.
+	 */
+	getDirectoryState?: () => MentionDirectoryState;
+	emptyLabel?: string;
+	unavailableLabel?: string;
+	loadingLabel?: string;
 }
 
 /**
@@ -57,6 +69,13 @@ export const createMentionExtension = (provider: MentionProvider) => {
 			let component: ReactRenderer<MentionListRef> | null = null;
 			let popup: HTMLDivElement | null = null;
 
+			const statusProps = () => ({
+				directoryState: provider.getDirectoryState?.() ?? 'ready',
+				emptyLabel: provider.emptyLabel,
+				unavailableLabel: provider.unavailableLabel,
+				loadingLabel: provider.loadingLabel
+			});
+
 			const reposition = (clientRect: (() => DOMRect | null) | null) => {
 				if (!popup || !clientRect) {
 					return;
@@ -85,7 +104,8 @@ export const createMentionExtension = (provider: MentionProvider) => {
 						props: {
 							items: props.items,
 							command: props.command,
-							notInChatLabel: provider.notInChatLabel
+							notInChatLabel: provider.notInChatLabel,
+							...statusProps()
 						},
 						editor: props.editor
 					});
@@ -101,7 +121,8 @@ export const createMentionExtension = (provider: MentionProvider) => {
 					component?.updateProps({
 						items: props.items,
 						command: props.command,
-						notInChatLabel: provider.notInChatLabel
+						notInChatLabel: provider.notInChatLabel,
+						...statusProps()
 					});
 					reposition(props.clientRect ?? null);
 				},

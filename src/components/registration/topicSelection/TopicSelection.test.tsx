@@ -171,7 +171,11 @@ describe('TopicSelection', () => {
 				'Kinder und Jugendliche',
 				'children-youth-counselling'
 			),
-			topicWithSlug(3, 'U25 Suizidprävention', 'u25-suicide-prevention'),
+			topicWithSlug(
+				3,
+				'[U25] Suizidprävention',
+				'u25-suicide-prevention'
+			),
 			topicWithSlug(
 				4,
 				'Rechtliche Betreuung und Vorsorge',
@@ -185,7 +189,7 @@ describe('TopicSelection', () => {
 			),
 			topicWithSlug(
 				9,
-				'Aus-, Rück- und Weiterwanderung',
+				'Aus-/Rück- und Weiterwanderung',
 				'initial-return-further-migration'
 			),
 			topicWithSlug(10, 'Eltern und Familie', 'parents-and-family'),
@@ -205,36 +209,38 @@ describe('TopicSelection', () => {
 		renderTopicSelection();
 
 		expect(
-			await screen.findByText(
-				'Familie, Kinder & Jugend',
-				{},
-				{ timeout: 5000 }
+			await screen.findByText('Alter', {}, { timeout: 5000 })
+		).toBeDefined();
+		expect(
+			screen.getByText('Besondere Lebenssituationen & Krisen')
+		).toBeDefined();
+		expect(screen.getByText('Gesundheit & Sucht')).toBeDefined();
+		expect(
+			screen.getByText(
+				'Kinder, Jugend, Erwachsene, Schwangerschaft und Familie'
 			)
 		).toBeDefined();
-		expect(screen.getByText('Alter, Pflege & Abschied')).toBeDefined();
+		expect(screen.getByText('Migration')).toBeDefined();
 		expect(
-			screen.getByText('Soziale Notlagen, Krisen & Finanzen')
+			screen.getByText('Teilhabe für Menschen mit Beeinträchtigungen')
 		).toBeDefined();
-		expect(
-			screen.getByText('Gesundheit, Behinderung & Sucht')
-		).toBeDefined();
-		expect(screen.getByText('Migration & Integration')).toBeDefined();
 
 		fireEvent.click(
-			screen.getByText('Soziale Notlagen, Krisen & Finanzen')
+			screen.getByText('Besondere Lebenssituationen & Krisen')
 		);
+		fireEvent.click(screen.getByText('Gesundheit & Sucht'));
 
 		await waitFor(
 			() => {
 				expect(
-					screen.getAllByText('U25 Suizidprävention')
+					screen.getAllByText('[U25] Suizidprävention')
 				).toHaveLength(2);
 			},
 			{ timeout: 5000 }
 		);
 
 		const duplicateRows = screen
-			.getAllByText('U25 Suizidprävention')
+			.getAllByText('[U25] Suizidprävention')
 			.map((node) => node.closest('[role="radio"]'));
 
 		fireEvent.click(duplicateRows[1]!);

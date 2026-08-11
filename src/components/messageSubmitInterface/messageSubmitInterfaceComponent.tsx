@@ -20,6 +20,9 @@ import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import { rememberEmoji } from '../../utils/recentEmojis';
+import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
@@ -73,7 +76,7 @@ import {
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
-	apiGetAgencyConsultantList,
+	fetchAgencyConsultantList,
 	apiPutDearchive,
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
@@ -91,11 +94,7 @@ import {
 } from './attachmentHelpers';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
-import {
-	escapeMarkdownChars,
-	INPUT_MAX_LENGTH,
-	normalizeHighlightColor
-} from './richtextHelpers';
+import { escapeMarkdownChars, INPUT_MAX_LENGTH } from './richtextHelpers';
 import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
@@ -127,6 +126,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
@@ -548,6 +548,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
 		Map<string, { displayName: string; username: string }>
 	>(new Map());
+	/**
+	 * Why the mention directory looks the way it does (#993). Every failure
+	 * used to collapse into an empty Map, so a rejected request, a session
+	 * without an agency and an agency with no other consultants all produced
+	 * the same blank popup — indistinguishable to the user and to us.
+	 */
+	const [mentionDirectoryState, setMentionDirectoryState] = useState<
+		'loading' | 'ready' | 'error' | 'unavailable'
+	>('loading');
 	const [expandedAudienceSections, setExpandedAudienceSections] = useState({
 		clients: true,
 		counsellors: true,
@@ -816,63 +825,8 @@ export const MessageSubmitInterfaceComponent = ({
 		return getPlainTextFromComposerValue(rawMessage).trim().length > 0;
 	}, []);
 
-	const encodeHighlightColorsForTransport = useCallback(
-		(rawMessage: string) => {
-			if (!rawMessage) {
-				return rawMessage;
-			}
-			return rawMessage.replace(
-				/<mark([^>]*)>([\s\S]*?)<\/mark>/gi,
-				(_full, attrs: string, inner: string) => {
-					const styleMatch = attrs.match(
-						/style\s*=\s*["']([^"']*)["']/i
-					);
-					const dataColorMatch = attrs.match(
-						/data-color\s*=\s*["']([^"']+)["']/i
-					);
-					const styleColorMatch = styleMatch?.[1]?.match(
-						/background-color\s*:\s*([^;]+)/i
-					);
-					const color =
-						normalizeHighlightColor(dataColorMatch?.[1] || '') ||
-						normalizeHighlightColor(styleColorMatch?.[1] || '') ||
-						normalizeHighlightColor(attrs || '');
-					if (!color) {
-						return `<mark>${inner}</mark>`;
-					}
-					// Use a backend-safe token format to avoid downstream conversions that drop color.
-					return `[[hl:${color}]]${inner}[[/hl]]`;
-				}
-			);
-		},
-		[]
-	);
-
-	const encodeAlignmentForTransport = useCallback((rawMessage: string) => {
-		if (!rawMessage) {
-			return rawMessage;
-		}
-		return rawMessage.replace(
-			/<(p|h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
-			(_full, tagName: string, attrs: string, inner: string) => {
-				const styleAlignMatch = attrs.match(
-					/text-align\s*:\s*(left|center|right)/i
-				);
-				const dataAlignMatch = attrs.match(
-					/data-text-align\s*=\s*["'](left|center|right)["']/i
-				);
-				const align = (
-					dataAlignMatch?.[1] ||
-					styleAlignMatch?.[1] ||
-					''
-				).toLowerCase();
-				if (!align) {
-					return `<${tagName}${attrs}>${inner}</${tagName}>`;
-				}
-				return `[[align:${align}]]<${tagName}>${inner}</${tagName}>[[/align]]`;
-			}
-		);
-	}, []);
+	// Extracted to ./composerTransportEncoding so the encoding can be covered by
+	// the toolbar round-trip test; behaviour is unchanged.
 
 	useEffect(() => {
 		if (!activeInfo && isConsultantAbsent) {
@@ -1666,9 +1620,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			let message = retryContext
 				? retryContext.transportMessage
-				: encodeAlignmentForTransport(
-						encodeHighlightColorsForTransport(currentTypedMessage)
-					).trim();
+				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
@@ -1788,8 +1740,6 @@ export const MessageSubmitInterfaceComponent = ({
 			attachmentSelected,
 			audienceOptions,
 			editingMessageId,
-			encodeAlignmentForTransport,
-			encodeHighlightColorsForTransport,
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
@@ -2280,15 +2230,26 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
 		if (isAskerOnly || isAnonymousChat) {
+			// Mentions are a counsellor tool; askers and anonymous chats have
+			// no directory by design, not by failure.
 			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('unavailable');
 			return;
 		}
 		if (!agencyId) {
 			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('error');
+			apiPostError({
+				name: 'MentionDirectoryUnavailable',
+				message:
+					'No agencyId on the active session; the @-mention directory stays empty.',
+				level: ERROR_LEVEL_WARN
+			}).then();
 			return;
 		}
 		let cancelled = false;
-		apiGetAgencyConsultantList(agencyId)
+		setMentionDirectoryState('loading');
+		fetchAgencyConsultantList(agencyId)
 			.then((consultants) => {
 				if (cancelled) {
 					return;
@@ -2323,12 +2284,25 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				);
 				setAgencyConsultantDirectory(nextDirectory);
+				setMentionDirectoryState('ready');
 			})
-			.catch(() => {
+			.catch((error) => {
 				if (cancelled) {
 					return;
 				}
 				setAgencyConsultantDirectory(new Map());
+				setMentionDirectoryState('error');
+				// The consultant list used to be swallowed twice — once in the
+				// api helper, once here — so a 403 looked exactly like an
+				// agency with no other consultants (#993).
+				apiPostError({
+					name: error?.name || 'MentionDirectoryRequestFailed',
+					message: `Agency consultant list for the @-mention picker failed (agencyId ${agencyId}): ${
+						error?.message || 'unknown error'
+					}`,
+					stack: error?.stack,
+					level: ERROR_LEVEL_WARN
+				}).then();
 			});
 		return () => {
 			cancelled = true;
@@ -3041,6 +3015,20 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
+
+	/**
+	 * Voice-message insertion point (#996). Recording types nothing into the
+	 * editor, so without a marker the user cannot see where in a half-written
+	 * message the recording is going to land. The dot is pinned at the caret
+	 * the moment recording starts and stays for as long as the recording is
+	 * pending — through the mic-button blur, through the preview — until it is
+	 * sent or discarded.
+	 */
+	const isVoiceInsertionPending =
+		isVoiceRecording || isVoiceAttachmentSelected;
+	useEffect(() => {
+		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
+	}, [isVoiceInsertionPending]);
 	const formatRecordingDuration = useCallback((totalSeconds: number) => {
 		const minutes = Math.floor(totalSeconds / 60);
 		const seconds = totalSeconds % 60;
@@ -3312,6 +3300,9 @@ export const MessageSubmitInterfaceComponent = ({
 		if (!emoji) {
 			return;
 		}
+		// Shared with the message action menu's quick-reaction row, so an emoji
+		// used here is offered there first (and vice versa).
+		rememberEmoji(emoji);
 		// Keep the picker open so users can insert multiple emojis.
 		composerRef.current?.insertText(`${emoji} `);
 	}, []);
@@ -3326,12 +3317,14 @@ export const MessageSubmitInterfaceComponent = ({
 	// always see the current agency directory and room membership.
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
+		directoryState: mentionDirectoryState,
 		inRoomValues: new Set<string>(),
 		matrixUserIdByComparableId: new Map<string, string>(),
 		selfId: userData?.userId as string | undefined
 	});
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
+		directoryState: mentionDirectoryState,
 		inRoomValues: new Set(
 			audienceOptions
 				.filter((option) => option.value !== AUDIENCE_ALL)
@@ -3374,6 +3367,17 @@ export const MessageSubmitInterfaceComponent = ({
 			notInChatLabel: translate(
 				'message.mention.notInChat',
 				'nicht im Chat'
+			),
+			// #993: the popup says why it is empty instead of rendering nothing.
+			getDirectoryState: () => mentionDataRef.current.directoryState,
+			emptyLabel: translate('message.mention.empty', 'Niemand gefunden'),
+			unavailableLabel: translate(
+				'message.mention.unavailable',
+				'Liste konnte nicht geladen werden'
+			),
+			loadingLabel: translate(
+				'message.mention.loading',
+				'Wird geladen …'
 			),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
@@ -3660,16 +3664,12 @@ export const MessageSubmitInterfaceComponent = ({
 						</button>
 					</div>
 				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
-				    same dock as the reply preview. */}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
+				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
+				    a full-width 32px bar — cancel glyph, emphasized lead, then
+				    the message itself on one ellipsized line. */}
 				{editingMessage && (
 					<div className="messageSubmit__editPreview" role="status">
-						<span className="messageSubmit__editPreviewLabel">
-							{translate(
-								'message.edit.previewLabel',
-								'Nachricht bearbeiten'
-							)}
-						</span>
 						<button
 							type="button"
 							className="messageSubmit__editPreviewCancel"
@@ -3679,8 +3679,19 @@ export const MessageSubmitInterfaceComponent = ({
 								'Bearbeiten abbrechen'
 							)}
 						>
-							×
+							<HighlightOffIcon fontSize="inherit" />
 						</button>
+						<span className="messageSubmit__editPreviewText">
+							<span className="messageSubmit__editPreviewLabel">
+								{translate(
+									'message.edit.previewLabel',
+									'Nachricht bearbeiten'
+								)}
+							</span>{' '}
+							<span className="messageSubmit__editPreviewQuote">
+								{editingMessage.text}
+							</span>
+						</span>
 					</div>
 				)}
 				<div
@@ -4482,10 +4493,18 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											</span>
 											{voicePreviewUrl && (
-												<audio
-													className="textarea__voicePreview__audio"
-													controls
+												// #996: the same player the
+												// sent message uses, so what
+												// you check before sending
+												// looks like what the other
+												// side gets.
+												<VoicePlayer
 													src={voicePreviewUrl}
+													durationSec={
+														voiceAttachmentDurationSec ||
+														null
+													}
+													size="sm"
 												/>
 											)}
 											<span className="textarea__attachmentSelected__remove">

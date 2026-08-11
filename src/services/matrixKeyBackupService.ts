@@ -1,6 +1,7 @@
 import type { MatrixClient } from 'matrix-js-sdk';
 import type { SecretStorageKeyDescription } from 'matrix-js-sdk/lib/secret-storage';
 import { decodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
+import { getDeviceSigningAuth } from './matrixInteractiveAuth';
 
 /**
  * #437 Key backup + recovery UX — thin service layer over matrix-js-sdk's
@@ -149,12 +150,16 @@ export const getEncryptionStatus = async (
  */
 export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 	const crypto = getCryptoOrThrow(client);
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
 
 	const generated = await crypto.createRecoveryKeyFromPassphrase();
 	setPendingKey(generated.privateKey);
 	try {
 		await runRecoverySetupPhase('cross-signing', () =>
-			crypto.bootstrapCrossSigning({})
+			crypto.bootstrapCrossSigning({ authUploadDeviceSigningKeys })
 		);
 		await runRecoverySetupPhase('secret-storage', () =>
 			crypto.bootstrapSecretStorage({
@@ -192,6 +197,10 @@ export const recoverWithKey = async (
 	encodedRecoveryKey: string
 ): Promise<{ imported: number; total: number }> => {
 	const crypto = getCryptoOrThrow(client);
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
 
 	let privateKey: Uint8Array;
 	try {
@@ -205,7 +214,7 @@ export const recoverWithKey = async (
 		await crypto.loadSessionBackupPrivateKeyFromSecretStorage();
 		const result = await crypto.restoreKeyBackup();
 		// Self-verify this device against the recovered cross-signing identity.
-		await crypto.bootstrapCrossSigning({});
+		await crypto.bootstrapCrossSigning({ authUploadDeviceSigningKeys });
 		return { imported: result.imported, total: result.total };
 	} finally {
 		setPendingKey(null);
@@ -222,7 +231,9 @@ export const resetCryptoIdentity = async (
 	client: MatrixClient
 ): Promise<void> => {
 	const crypto = getCryptoOrThrow(client);
-	await crypto.resetEncryption(async (makeRequest) => {
-		await makeRequest(null);
-	});
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
+	await crypto.resetEncryption(authUploadDeviceSigningKeys);
 };

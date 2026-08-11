@@ -1147,7 +1147,16 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		background: transparent;
 		color: var(--oriso-nav-bar-label);
 		overflow: visible;
-		pointer-events: none;
+
+		/* Route clicks to the stable Link/div wrapper, not the swappable icon
+		   SVG — same intent as the narrower rule further up this file. The
+		   language slot is excluded there and must be excluded here too: it
+		   holds its own react-select control rather than a link, so blocking
+		   pointer events leaves the locale menu unopenable by mouse, while the
+		   wrapper it falls through to has no click handler at all (#998). */
+		&:not(.navigation__icon-slot--language) {
+			pointer-events: none;
+		}
 
 		@include breakpoint($fromLarge) {
 			width: 48px !important;
