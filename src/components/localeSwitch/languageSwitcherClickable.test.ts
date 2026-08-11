@@ -174,6 +174,16 @@ const withoutNegations = (selector: string) =>
 const negationClauses = (selector: string) =>
 	selector.match(/:not\(([^)]*)\)/g) ?? [];
 
+/**
+ * Whether a `:not(...)` clause excludes the language slot itself.
+ *
+ * Matched as a whole class token: a substring test would accept
+ * `:not(.navigation__icon-slot--language-alt)`, which excludes a different
+ * class entirely and leaves the real slot disabled.
+ */
+const excludesLanguageSlot = (clause: string) =>
+	new RegExp(`\\.${LANGUAGE_SLOT}(?![\\w-])`).test(clause);
+
 describe('language switcher stays clickable (#998)', () => {
 	it('never disables pointer events on the language slot', () => {
 		const offenders = selectorsDisablingPointerEvents(NAVIGATION_STYLES)
@@ -194,9 +204,7 @@ describe('language switcher stays clickable (#998)', () => {
 					return false;
 				}
 
-				return !negationClauses(selector).some((clause) =>
-					clause.includes(LANGUAGE_SLOT)
-				);
+				return !negationClauses(selector).some(excludesLanguageSlot);
 			})
 			.map((selector) => selector.replace(/\s+/g, ' ').trim());
 
