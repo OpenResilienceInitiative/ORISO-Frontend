@@ -54,14 +54,25 @@ const LANGUAGE_SLOT = 'navigation__icon-slot--language';
  * reaches it just as surely as one written against the base class. An earlier
  * version of this file assumed modifiers were mutually exclusive and would
  * therefore have ignored exactly that rule.
+ *
+ * The className is a multi-line `clsx(...)`, so we take a short window around
+ * the `--language` literal — enough to catch the conditional `--active` that
+ * is applied when the menu is open, without walking the whole file.
  */
 const languageSlotClasses = (): string[] => {
-	const declaration = NAVIGATION_BAR.split('\n').find((line) =>
-		line.includes(LANGUAGE_SLOT)
-	);
+	const lines = NAVIGATION_BAR.split('\n');
+	const index = lines.findIndex((line) => line.includes(LANGUAGE_SLOT));
+	if (index === -1) {
+		return [];
+	}
+	const window = lines.slice(Math.max(0, index - 1), index + 5).join('\n');
 	return Array.from(
-		(declaration ?? '').matchAll(/(navigation__icon-slot(?:--[\w-]+)?)/g)
-	).map((match) => match[1]);
+		new Set(
+			Array.from(
+				window.matchAll(/(navigation__icon-slot(?:--[\w-]+)?)/g)
+			).map((match) => match[1])
+		)
+	);
 };
 
 const LANGUAGE_SLOT_CLASSES = languageSlotClasses();
@@ -228,6 +239,9 @@ describe('language switcher stays clickable (#998)', () => {
 		expect(LANGUAGE_SLOT_CLASSES).toContain(ICON_SLOT);
 		expect(LANGUAGE_SLOT_CLASSES).toContain(LANGUAGE_SLOT);
 		expect(LANGUAGE_SLOT_CLASSES).toContain(`${ICON_SLOT}--row`);
+		// Applied while the menu is open — a `pointer-events: none` rule aimed
+		// at `--active` alone would still disable the language control.
+		expect(LANGUAGE_SLOT_CLASSES).toContain(`${ICON_SLOT}--active`);
 	});
 
 	it('lifts the portalled menu from the styles object, not from a stylesheet', () => {
