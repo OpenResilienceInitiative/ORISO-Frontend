@@ -7,20 +7,26 @@ on:
       - dev
       - pre-dev
 
+# Only the newest push on a branch is worth validating. Without this, a series
+# of quick pushes leaves every superseded run occupying a runner to completion.
+concurrency:
+  group: frontend-branch-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: lint, type-check, build and test frontend
     runs-on: ubuntu-latest
+    # Success median is ~8 min. Without a cap, a hung vitest process runs into
+    # GitHub's 6 h job limit and reports no test result at all.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Runs lint, type-check, unit tests and the app build.
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'
-
-      - name: Run unit tests
-        shell: bash
-        run: npm run test:unit
