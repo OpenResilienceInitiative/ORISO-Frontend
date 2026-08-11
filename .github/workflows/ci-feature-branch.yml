@@ -29,4 +29,4 @@ jobs:
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
-          node_version: '18'
+          node_version: '22'
