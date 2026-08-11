@@ -6,16 +6,29 @@ export type LegalLinkKind = 'imprint' | 'privacy';
 
 /**
  * The legal links are configured as label/url pairs, not as typed entries, so
- * the kind has to be derived from the label and the target path. Kept in one
- * place so the modal and the link buttons never disagree about it.
+ * the kind has to be derived from what a caller can offer. Kept in one place so
+ * the modal and the link buttons never disagree about it.
+ *
+ * `rawLabel` is the untranslated i18n key and the only stable signal: the
+ * displayed title changes with the UI language — French privacy reads
+ * "Politique de confidentialité", which matches neither "daten" nor "privacy" —
+ * and the URL is deployment configuration. When a caller supplies the key, it
+ * decides alone; the language-dependent title is only consulted without one.
  */
-export const getLegalLinkKind = (title: string, url: string): LegalLinkKind => {
-	const source = `${title} ${url}`.toLowerCase();
-	return source.includes('daten') ||
+export const getLegalLinkKind = (
+	title: string,
+	url: string,
+	rawLabel?: string
+): LegalLinkKind => {
+	const isPrivacy = (source: string) =>
+		source.includes('daten') ||
 		source.includes('privacy') ||
-		source.includes('datenschutz')
-		? 'privacy'
-		: 'imprint';
+		source.includes('dataprotection');
+
+	if (rawLabel) {
+		return isPrivacy(rawLabel.toLowerCase()) ? 'privacy' : 'imprint';
+	}
+	return isPrivacy(`${title} ${url}`.toLowerCase()) ? 'privacy' : 'imprint';
 };
 
 /**
@@ -30,10 +43,14 @@ export const getLegalLinkKind = (title: string, url: string): LegalLinkKind => {
  * text yet. Callers on public pages use that to fall back to opening the
  * legal URL instead of showing an empty dialog.
  */
-export const useLegalLinkContent = (title: string, url: string) => {
+export const useLegalLinkContent = (
+	title: string,
+	url: string,
+	rawLabel?: string
+) => {
 	const tenant = useTenant();
 	const { i18n } = useTranslation();
-	const kind = getLegalLinkKind(title, url);
+	const kind = getLegalLinkKind(title, url, rawLabel);
 
 	const rawMap =
 		kind === 'privacy'

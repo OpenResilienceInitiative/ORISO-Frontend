@@ -104,11 +104,15 @@ export const StageLayout = ({
 					className={`stageLayout__header`}
 					sx={{
 						// Below $fromXLarge the header content lives in the
-						// mobile hero, so the row only exists from md up.
-						'display': { xs: 'none', md: 'flex' },
-						'height': { xs: 'auto', md: '72px' },
-						'minHeight': { xs: '48px', md: '72px' },
-						'py': { xs: 1, md: 1.5 },
+						// mobile hero, so the row only exists from there up.
+						// This theme remaps MUI's breakpoints (md is 600, not
+						// 900) — `lg` is the 1200px the hero hides at. Using
+						// `md` here put both language controls and both CTAs on
+						// screen at once across the whole tablet range.
+						'display': { xs: 'none', lg: 'flex' },
+						'height': { xs: 'auto', lg: '72px' },
+						'minHeight': { xs: '48px', lg: '72px' },
+						'py': { xs: 1, lg: 1.5 },
 						'animation': `registrationHeaderEnter ${registrationMotion.standard} ${registrationMotion.easeOut} both`,
 						'@keyframes registrationHeaderEnter': {
 							'0%': {
@@ -126,14 +130,14 @@ export const StageLayout = ({
 					}}
 				>
 					{selectableLocales.length > 1 && (
-						<Box sx={{ display: { xs: 'none', md: 'block' } }}>
+						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
 							<LocaleSwitchPill />
 						</Box>
 					)}
 					{showLoginLink && (
 						<Box
 							className="stageLayout__toLogin"
-							sx={{ display: { xs: 'none', md: 'block' } }}
+							sx={{ display: { xs: 'none', lg: 'block' } }}
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
@@ -264,9 +268,10 @@ export const StageLayout = ({
 									params={{ aid: specificAgency?.id }}
 									legalLinks={legalLinks}
 								>
-									{(label, url) => (
+									{(label, url, rawLabel) => (
 										<LegalLinkButton
 											label={label}
+											rawLabel={rawLabel}
 											url={url}
 											textClassName="stageLayout__legalLinksItem"
 										/>

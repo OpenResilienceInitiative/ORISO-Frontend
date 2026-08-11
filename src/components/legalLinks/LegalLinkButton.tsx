@@ -7,6 +7,12 @@ import { useLegalLinkContent } from './useLegalLinkContent';
 export interface LegalLinkButtonProps {
 	/** Already-translated label, as handed down by `LegalLinks`. */
 	label: string;
+	/**
+	 * The untranslated i18n key for this entry. `LegalLinks` supplies it as the
+	 * third render-prop argument; it is what decides imprint vs privacy, since
+	 * the translated label does not carry that reliably in every language.
+	 */
+	rawLabel?: string;
 	url: string;
 	/** BEM class of the surrounding surface, e.g. `stage__legalLinksItem`. */
 	textClassName?: string;
@@ -22,10 +28,11 @@ export interface LegalLinkButtonProps {
  */
 export const LegalLinkButton = ({
 	label,
+	rawLabel,
 	url,
 	textClassName
 }: LegalLinkButtonProps) => {
-	const { content } = useLegalLinkContent(label, url);
+	const { content } = useLegalLinkContent(label, url, rawLabel);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleClick = useCallback(() => {
@@ -49,7 +56,12 @@ export const LegalLinkButton = ({
 				<Text className={textClassName} type="infoSmall" text={label} />
 			</button>
 			{isModalOpen && (
-				<LegalLinkModal title={label} url={url} onClose={closeModal} />
+				<LegalLinkModal
+					title={label}
+					rawLabel={rawLabel}
+					url={url}
+					onClose={closeModal}
+				/>
 			)}
 		</>
 	);

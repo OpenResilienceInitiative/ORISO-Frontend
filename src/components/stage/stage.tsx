@@ -243,9 +243,10 @@ export const Stage = ({
 							/>
 						}
 					>
-						{(label, url) => (
+						{(label, url, rawLabel) => (
 							<LegalLinkButton
 								label={label}
+								rawLabel={rawLabel}
 								url={url}
 								textClassName="stage__legalLinksItem"
 							/>

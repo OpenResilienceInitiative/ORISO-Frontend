@@ -1871,8 +1871,10 @@
 	"login": {
 		"register": {
 			"infoText": {
-				"short": "Neu hier?"
-			}
+				"short": "Neu hier?",
+				"title": "Neu hier?"
+			},
+			"separator": "Neu hier?"
 		},
 		"security": {
 			"teaser": {
@@ -1894,6 +1896,16 @@
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
 				"protocolLink": "Mehr dazu",
 				"back": "Zurück zur Anmeldung"
+			}
+		},
+		"mobile": {
+			"headline": "Hier ist Raum für\ndeine Anliegen."
+		},
+		"legal": {
+			"platform": {
+				"impressum": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie du den Betreiber erreichst, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die siehst du, sobald du eine gewählt hast.",
+				"dataprotection": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Deine Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf deinem Gerät und bei deiner Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die du später wählst.",
+				"fullText": "Vollständigen Text öffnen"
 			}
 		}
 	},
@@ -1955,28 +1967,6 @@
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
-		}
-	},
-	"login": {
-		"mobile": {
-			"headline": "Hier ist Raum für\ndeine Anliegen."
-		},
-		"register": {
-			"separator": "Neu hier?",
-			"infoText": {
-				"title": "Neu hier?"
-			}
-		},
-		"security": {
-			"teaser": "Ende-zu-Ende verschlüsselt — der Schlüssel entsteht auf deinem Gerät.",
-			"teaserShort": "Schlüssel nur auf deinem Gerät"
-		},
-		"legal": {
-			"platform": {
-				"impressum": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie du den Betreiber erreichst, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die siehst du, sobald du eine gewählt hast.",
-				"dataprotection": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Deine Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf deinem Gerät und bei deiner Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die du später wählst.",
-				"fullText": "Vollständigen Text öffnen"
-			}
 		}
 	}
 }

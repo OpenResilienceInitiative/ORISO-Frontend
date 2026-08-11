@@ -136,7 +136,31 @@ export const Login = () => {
 		useState<boolean>(false);
 	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
 		useState<boolean>(false);
+	const securityTeaserRef = useRef<HTMLButtonElement>(null);
+	const securityPaneRef = useRef<HTMLDivElement>(null);
+	const wasSecurityExplainerOpen = useRef(false);
 	const { featureToolsEnabled } = getTenantSettings();
+
+	// The two panes make each other `inert`, so whichever pane the focus is
+	// sitting in loses it the moment the other one takes over — opening drops
+	// focus off the teaser, going back drops it off the back button, and in
+	// both cases it lands on <body>. Hand it over explicitly instead.
+	useEffect(() => {
+		if (isSecurityExplainerOpen === wasSecurityExplainerOpen.current) {
+			return;
+		}
+		wasSecurityExplainerOpen.current = isSecurityExplainerOpen;
+
+		if (isSecurityExplainerOpen) {
+			securityPaneRef.current
+				?.querySelector<HTMLElement>(
+					'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+				)
+				?.focus();
+		} else {
+			securityTeaserRef.current?.focus();
+		}
+	}, [isSecurityExplainerOpen]);
 
 	useEffect(() => {
 		// If we're authenticated and have a gcid, redirect to app
@@ -768,6 +792,7 @@ export const Login = () => {
 
 						<button
 							type="button"
+							ref={securityTeaserRef}
 							className="loginForm__securityTeaser"
 							onClick={() => setIsSecurityExplainerOpen(true)}
 							data-cy="login-security-teaser"
@@ -789,6 +814,7 @@ export const Login = () => {
 					</div>
 
 					<div
+						ref={securityPaneRef}
 						className="loginForm__inner loginForm__pane loginForm__pane--info"
 						aria-hidden={!isSecurityExplainerOpen}
 						inert={!isSecurityExplainerOpen}

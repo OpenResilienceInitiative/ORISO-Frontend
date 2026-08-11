@@ -9,17 +9,20 @@ import './legalLinkModal.styles';
 
 type LegalLinkModalProps = {
 	title: string;
+	/** Untranslated i18n key, when the caller has one — see `getLegalLinkKind`. */
+	rawLabel?: string;
 	url: string;
 	onClose: () => void;
 };
 
 export const LegalLinkModal = ({
 	title,
+	rawLabel,
 	url,
 	onClose
 }: LegalLinkModalProps) => {
 	const { t: translate } = useTranslation();
-	const { kind, content } = useLegalLinkContent(title, url);
+	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
 
 	return (
 		<OrisoDialog
