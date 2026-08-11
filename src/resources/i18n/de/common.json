@@ -52,7 +52,9 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"associationLogoAlt": "Logo der Trägerorganisation"
+			"associationLogoAlt": "Logo der Trägerorganisation",
+			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
+			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",
@@ -1296,6 +1298,16 @@
 			"showOriginal": "Original anzeigen",
 			"showingOriginal": "Sie sehen die Originalfassung.",
 			"showTranslation": "Übersetzung anzeigen"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Impressum"
+			},
+			"privacy": {
+				"title": "Datenschutzerklärung"
+			},
+			"back": "Zurück",
+			"confirm": "Verstanden"
 		}
 	},
 	"login": {
@@ -1341,13 +1353,32 @@
 		"register": {
 			"infoText": {
 				"copy": "Wir beraten Sie gerne zu folgenden Themen:",
-				"title": "Noch nicht registriert?"
+				"title": "Noch nicht registriert?",
+				"short": "Neu hier?"
 			},
 			"linkLabel": "Zu den Beratungsthemen"
 		},
 		"security": {
-			"headline": "Sicher & verschlüsselt",
-			"description": "Ihre Privatsphäre ist dank Ende-zu-Ende-Verschlüsselung vollständig geschützt."
+			"teaser": {
+				"text": "Ende-zu-Ende verschlüsselt — der Schlüssel entsteht auf Ihrem Gerät.",
+				"link": "Warum das extra sicher ist",
+				"textShort": "Schlüssel nur auf Ihrem Gerät",
+				"linkShort": "Warum das sicher ist"
+			},
+			"explainer": {
+				"badge": "NEU",
+				"headline": "Nur Sie beide können mitlesen.",
+				"message": "Mir geht es nicht gut.",
+				"you": "Sie",
+				"agency": "Beratungsstelle",
+				"encrypted": "verschlüsselt",
+				"attack": "mehr bekommt ein Angreifer nicht",
+				"cipherLabel": "Abgefangene, verschlüsselte Daten",
+				"key": "Der Schlüssel entsteht auf Ihrem Gerät und bleibt dort — wir haben ihn nicht.",
+				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
+				"protocolLink": "Mehr dazu",
+				"back": "Zurück zur Anmeldung"
+			}
 		},
 		"resend": {
 			"otp": {

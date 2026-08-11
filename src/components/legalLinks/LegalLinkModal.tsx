@@ -1,12 +1,11 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
-import { useTenant } from '../../globalState/provider/TenantProvider';
-import htmlParser from '../../resources/scripts/util/htmlParser';
 import { OrisoDialog } from '../modal/OrisoDialog';
+import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { useLegalLinkContent } from './useLegalLinkContent';
 import './legalLinkModal.styles';
-
-type LegalLinkModalKind = 'imprint' | 'privacy';
 
 type LegalLinkModalProps = {
 	title: string;
@@ -19,19 +18,13 @@ export const LegalLinkModal = ({
 	url,
 	onClose
 }: LegalLinkModalProps) => {
-	const tenant = useTenant();
-	const kind = getLegalModalKind(title, url);
-	const modalTitle =
-		kind === 'privacy' ? 'Datenschutz-erklärung' : 'Impressum';
-	const content =
-		kind === 'privacy'
-			? tenant?.content?.privacy || FIGMA_LEGAL_CONTENT
-			: tenant?.content?.impressum || FIGMA_LEGAL_CONTENT;
+	const { t: translate } = useTranslation();
+	const { kind, content } = useLegalLinkContent(title, url);
 
 	return (
 		<OrisoDialog
 			open
-			title={modalTitle}
+			title={translate(`legal.modal.${kind}.title`)}
 			icon={
 				kind === 'privacy' ? (
 					<DescriptionOutlinedIcon />
@@ -40,24 +33,23 @@ export const LegalLinkModal = ({
 				)
 			}
 			onClose={onClose}
-			backLabel="Zurück"
-			confirmLabel="Verstanden"
+			backLabel={translate('legal.modal.back')}
+			confirmLabel={translate('legal.modal.confirm')}
 		>
-			<div className="legalLinkModal__content">{htmlParser(content)}</div>
+			<LegalContentRenderer
+				className="legalLinkModal__content"
+				content={content ?? FALLBACK_LEGAL_CONTENT}
+			/>
 		</OrisoDialog>
 	);
 };
 
-const getLegalModalKind = (title: string, url: string): LegalLinkModalKind => {
-	const source = `${title} ${url}`.toLowerCase();
-	return source.includes('daten') ||
-		source.includes('privacy') ||
-		source.includes('datenschutz')
-		? 'privacy'
-		: 'imprint';
-};
-
-const FIGMA_LEGAL_CONTENT = `
+/**
+ * Shown only where the modal is opened unconditionally (session views). Public
+ * pages resolve the content first via `useLegalLinkContent` and fall back to
+ * the configured legal URL instead of rendering this placeholder.
+ */
+const FALLBACK_LEGAL_CONTENT = `
 	<p>FULL CONSENT AGREEMENT</p>
 	<p>&nbsp;</p>
 	<p>Basic Information</p>

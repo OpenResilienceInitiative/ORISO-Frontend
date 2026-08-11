@@ -51,7 +51,9 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"associationLogoAlt": "Logo de l'organisation prestataire"
+			"associationLogoAlt": "Logo de l'organisation prestataire",
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -1201,13 +1203,34 @@
 		"register": {
 			"infoText": {
 				"copy": "Nous vous conseillons volontiers sur les thèmes suivants :",
-				"title": "Pas encore inscrit ?"
+				"title": "Pas encore inscrit ?",
+				"short": "New here?"
 			},
 			"linkLabel": "Vers les thèmes de conseil"
 		},
 		"security": {
 			"headline": "Sécurisé et chiffré",
-			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout."
+			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout.",
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1263,7 +1286,8 @@
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
-				}
+				},
+				"deletedAccount": "Votre compte a été fermé par un conseiller."
 			}
 		}
 	},
@@ -3196,6 +3220,18 @@
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
 			"action": "Changer de nom"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Mentions légales"
+			},
+			"privacy": {
+				"title": "Politique de confidentialité"
+			},
+			"back": "Retour",
+			"confirm": "Compris"
 		}
 	}
 }

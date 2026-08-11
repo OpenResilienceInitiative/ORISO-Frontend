@@ -93,6 +93,107 @@
 	flex-direction: column;
 	min-height: 100%;
 
+	/*
+	 * Mobile hero (design 2e). Exists exactly where the desktop stage does
+	 * not, so the two never show at the same time.
+	 */
+	.stageMobileHero {
+		position: relative;
+		flex: none;
+		height: 230px;
+		overflow: hidden;
+		background: radial-gradient(
+			120% 90% at 78% 8%,
+			#e0313b 0%,
+			var(--m3-primary, #a5000a) 42%,
+			#8c0e17 78%,
+			#6f0a11 100%
+		);
+		color: var(--m3-on-primary, $white);
+
+		@include breakpoint($fromXLarge) {
+			display: none;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: radial-gradient(
+				60% 50% at 18% 92%,
+				rgba(255, 180, 168, 0.22),
+				rgba(255, 180, 168, 0) 70%
+			);
+			pointer-events: none;
+		}
+
+		&__ring {
+			position: absolute;
+			border-radius: 50%;
+			pointer-events: none;
+
+			&--large {
+				top: -90px;
+				right: -70px;
+				width: 260px;
+				height: 260px;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+			}
+
+			&--small {
+				top: -40px;
+				right: -20px;
+				width: 160px;
+				height: 160px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+			}
+		}
+
+		&__bar {
+			position: absolute;
+			top: 14px;
+			right: 20px;
+			left: 20px;
+			z-index: 2;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		&__brand {
+			font-size: 17px;
+			font-weight: $font-weight-bold;
+		}
+
+		&__actions {
+			display: flex;
+			align-items: center;
+			gap: $grid-base;
+		}
+
+		&__copy {
+			position: absolute;
+			bottom: 52px;
+			left: 24px;
+			z-index: 2;
+			padding-right: 24px;
+		}
+
+		&__headline {
+			margin: 0;
+			font-size: 27px;
+			font-weight: $font-weight-bold;
+			letter-spacing: -0.5px;
+			line-height: 1.15;
+		}
+
+		&__claim {
+			margin: $grid-base 0 0;
+			font-size: 14px;
+			color: rgba(255, 255, 255, 0.9);
+		}
+	}
+
 	&__header,
 	&__footer {
 		flex: 0;
@@ -138,6 +239,21 @@
 		flex-direction: column;
 		justify-content: space-between;
 		min-height: 100%;
+
+		/*
+		 * The white sheet of design 2e: overlaps the hero by 28px and takes
+		 * the remaining height. From $fromXLarge the desktop stage takes over
+		 * and the wrapper goes back to being a plain column.
+		 */
+		@media screen and (width <= #{$fromXLarge - 1px}) {
+			position: relative;
+			z-index: 2;
+			flex: 1;
+			margin-top: -28px;
+			border-radius: 28px 28px 0 0;
+			background: var(--m3-surface-container-lowest, $white);
+			box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+		}
 	}
 
 	&__stage {
@@ -173,6 +289,15 @@
 		flex-grow: 1;
 		width: auto;
 		padding: 48px 16px;
+
+		/*
+		 * Inside the mobile sheet the form starts at the top (design 2e) —
+		 * centring it leaves a large dead area under the hero.
+		 */
+		@media screen and (width <= #{$fromXLarge - 1px}) {
+			justify-content: flex-start;
+			padding: 28px 20px 40px;
+		}
 
 		@include breakpoint($fromLarge) {
 			& > *:not(.loadingIndicator) {

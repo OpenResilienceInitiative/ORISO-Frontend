@@ -51,7 +51,9 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu",
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
@@ -1201,13 +1203,34 @@
 		"register": {
 			"infoText": {
 				"copy": "Aşağıdaki konularda size tavsiyelerde bulunmaktan memnuniyet duyarız:",
-				"title": "Henüz kayıt olmadınız mı?"
+				"title": "Henüz kayıt olmadınız mı?",
+				"short": "New here?"
 			},
 			"linkLabel": "Danışmanlık konularına"
 		},
 		"security": {
 			"headline": "Güvenli ve Şifreli",
-			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur."
+			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur.",
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1263,7 +1286,8 @@
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
-				}
+				},
+				"deletedAccount": "Hesabınız bir danışman tarafından kapatıldı."
 			}
 		}
 	},
@@ -3226,6 +3250,18 @@
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
 			"action": "Adımı değiştir"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Künye"
+			},
+			"privacy": {
+				"title": "Gizlilik politikası"
+			},
+			"back": "Geri",
+			"confirm": "Anladım"
 		}
 	}
 }

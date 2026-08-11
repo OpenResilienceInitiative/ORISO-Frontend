@@ -15,7 +15,10 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
 import { Spinner } from '../spinner/Spinner';
+import { useLampMap } from './lampMap/useLampMap';
+import { StageCarrierLogos } from './StageCarrierLogos';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 
 export interface StageProps {
@@ -133,6 +136,11 @@ export const Stage = ({
 		[animateStageGlow]
 	);
 
+	// Design 5b. Nothing about this reaches the critical path or a phone —
+	// the hook owns the breakpoint / reduced-motion / idle gate and the
+	// dynamic import of the effect chunk.
+	const lampMap = useLampMap({ containerRef: rootNodeRef });
+
 	const [ieBanner, setIeBanner] = useState(true);
 	const closeIeBanner = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
@@ -168,6 +176,12 @@ export const Stage = ({
 				</Banner>
 			)}
 
+			<canvas
+				ref={lampMap.canvasRef}
+				className="stage__lampMap"
+				aria-hidden="true"
+			/>
+
 			<div className="stage__content">
 				<div className="stage__headline">
 					<Headline
@@ -183,13 +197,17 @@ export const Stage = ({
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
 				{associationLogo ? (
-					<div className="stage__logos">
+					<div className="stage__tenantLogo">
 						<img
 							src={associationLogo}
 							alt={translate('app.stage.associationLogoAlt')}
 						/>
 					</div>
 				) : null}
+				<StageCarrierLogos
+					allowed={tenant?.theming?.associationLogos}
+					onHighlight={lampMap.setCarrier}
+				/>
 				<div className={`stage__legalLinks`}>
 					<LegalLinks
 						legalLinks={legalLinks}
@@ -203,18 +221,11 @@ export const Stage = ({
 						}
 					>
 						{(label, url) => (
-							<button
-								type="button"
-								className="button-as-link"
-								data-cy-link={url}
-								onClick={() => window.open(url, '_blank')}
-							>
-								<Text
-									className="stage__legalLinksItem"
-									type="infoSmall"
-									text={translate(label)}
-								/>
-							</button>
+							<LegalLinkButton
+								label={label}
+								url={url}
+								textClassName="stage__legalLinksItem"
+							/>
 						)}
 					</LegalLinks>
 				</div>
