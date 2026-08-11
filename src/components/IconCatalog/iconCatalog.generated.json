@@ -1274,6 +1274,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:arrows-lr:base",
+		"family": "arrows-lr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "arrows-lr.svg",
+		"sourcePath": "src/resources/img/icons/arrows-lr.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:audio-off:base",
 		"family": "audio-off",
 		"state": "base",
@@ -2020,6 +2033,19 @@
 		"exportNames": [],
 		"usageFiles": ["src/components/message/MessageItemComponent.tsx"],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:devices:base",
+		"family": "devices",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "devices.svg",
+		"sourcePath": "src/resources/img/icons/devices.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:diversity-2:base",
@@ -3151,8 +3177,11 @@
 		"fileName": "profil_filled.svg",
 		"sourcePath": "src/resources/img/icons/profil_filled.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:profil:outline",
@@ -3164,8 +3193,11 @@
 		"fileName": "profil_outline.svg",
 		"sourcePath": "src/resources/img/icons/profil_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:qr-code:base",
@@ -4286,6 +4318,21 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "topic-icon:t-01-u-bergang-von-schule-zu-beruf:base",
+		"family": "t-01-u-bergang-von-schule-zu-beruf",
+		"state": "base",
+		"role": "default",
+		"kind": "topic-icon",
+		"size": null,
+		"fileName": "t-01-u-bergang-von-schule-zu-beruf.png",
+		"sourcePath": "src/resources/img/registration-md3/icons/t-01-u-bergang-von-schule-zu-beruf.png",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/registration/registrationDesign/registrationDesign.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "topic-icon:t-01-u25-suizidpra-vention:base",
 		"family": "t-01-u25-suizidpra-vention",
 		"state": "base",
@@ -4490,10 +4537,8 @@
 		"fileName": "t-05-hiv-und-aids.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-hiv-und-aids.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-rechtliche-betreuung-und-vorsorge:base",
@@ -4505,10 +4550,8 @@
 		"fileName": "t-05-rechtliche-betreuung-und-vorsorge.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-rechtliche-betreuung-und-vorsorge.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-schulden:base",

@@ -1316,6 +1316,11 @@
 			"infoText": {
 				"dataprotection": "Privacy policy",
 				"impressum": "Imprint"
+			},
+			"platform": {
+				"impressum": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nWho operates the platform and how to reach them is in the full legal notice. The counselling itself is done by independent centres with their own details, which you see once you have chosen one.",
+				"dataprotection": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nSigning in processes only what signing in needs. Your messages are end-to-end encrypted: they become readable only on your device and at your counselling centre. What is processed beyond that depends on the centre you choose later.",
+				"fullText": "Open the full text"
 			}
 		},
 		"password": {
@@ -1341,7 +1346,8 @@
 				"title": "Not registered yet?",
 				"short": "New here?"
 			},
-			"linkLabel": "To the consulting topics"
+			"linkLabel": "To the consulting topics",
+			"separator": "New here?"
 		},
 		"security": {
 			"teaser": {
@@ -1363,7 +1369,9 @@
 				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
 				"protocolLink": "Learn more",
 				"back": "Back to sign in"
-			}
+			},
+			"headline": "Secure & Encrypted",
+			"description": "Your privacy is fully protected with end-to-end encryption."
 		},
 		"resend": {
 			"otp": {
@@ -1436,6 +1444,9 @@
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here."
 			}
+		},
+		"mobile": {
+			"headline": "There is room here\nfor what is on your mind."
 		}
 	},
 	"message": {

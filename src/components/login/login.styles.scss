@@ -417,6 +417,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__register {
+		width: 100%;
+		max-width: 380px;
 		margin-top: $grid-base-four;
 
 		&__separator {
@@ -441,6 +443,13 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&__content {
+			// Same column as the fields and the primary button, so the
+			// secondary lines up with them instead of shrinking to its label.
+			width: 100%;
+			max-width: 380px;
+			margin-left: auto;
+			margin-right: auto;
+
 			.text {
 				font-weight: 600;
 				text-align: center;

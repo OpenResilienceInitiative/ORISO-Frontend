@@ -1331,6 +1331,11 @@
 				"dataprotection": "Datenschutzerklärung",
 				"termsAndConditions": "Nutzungsbedingungen",
 				"impressum": "Impressum"
+			},
+			"platform": {
+				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie Sie den Betreiber erreichen, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die sehen Sie, sobald Sie eine gewählt haben.",
+				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.",
+				"fullText": "Vollständigen Text öffnen"
 			}
 		},
 		"password": {
@@ -1356,7 +1361,8 @@
 				"title": "Noch nicht registriert?",
 				"short": "Neu hier?"
 			},
-			"linkLabel": "Zu den Beratungsthemen"
+			"linkLabel": "Zu den Beratungsthemen",
+			"separator": "Neu hier?"
 		},
 		"security": {
 			"teaser": {
@@ -1378,7 +1384,9 @@
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
 				"protocolLink": "Mehr dazu",
 				"back": "Zurück zur Anmeldung"
-			}
+			},
+			"headline": "Sicher & verschlüsselt",
+			"description": "Ihre Privatsphäre ist dank Ende-zu-Ende-Verschlüsselung vollständig geschützt."
 		},
 		"resend": {
 			"otp": {
@@ -1451,6 +1459,9 @@
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden."
 			}
+		},
+		"mobile": {
+			"headline": "Hier ist Raum für\nIhre Anliegen."
 		}
 	},
 	"message": {

@@ -58,9 +58,33 @@ import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { setTokens } from '../auth/auth';
-import { IconButton, InputAdornment } from '@mui/material';
+import {
+	Box,
+	Button as MuiButton,
+	IconButton,
+	InputAdornment
+} from '@mui/material';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { orisoInputColors } from '../form/orisoInputDesign';
+
+/**
+ * "Zu den Beratungsthemen" inside the sheet (2e): the secondary next to the
+ * primary "Anmelden", same 48 px height and pill radius.
+ */
+const registrationSheetButtonSx = {
+	'minHeight': '48px',
+	'borderRadius': '999px',
+	'fontSize': '16px',
+	'fontWeight': 700,
+	'lineHeight': 1.2,
+	'textTransform': 'none',
+	'color': 'var(--m3-primary, #a5000a)',
+	'borderColor': 'var(--m3-outline-variant, #c4c7c8)',
+	'&:hover': {
+		borderColor: 'var(--m3-primary, #a5000a)',
+		backgroundColor: 'var(--m3-primary-container, #ffdad5)'
+	}
+} as const;
 
 type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
 
@@ -701,33 +725,44 @@ export const Login = () => {
 								)}
 						</div>
 
-						{!hasTenant && (
-							<div className="loginForm__register">
-								<div className="loginForm__register__separator">
-									<span>{translate('login.seperator')}</span>
-								</div>
-								<div className="loginForm__register__content">
-									<Text
-										text={translate(
-											'login.register.infoText.title'
-										)}
-										type={'infoMedium'}
-									/>
-									<button
-										onClick={() =>
-											window.open(
-												registrationUrl,
-												'_self'
-											)
-										}
-										className="button-as-link consulting-topics"
-										type="button"
-									>
-										{translate('login.register.linkLabel')}
-									</button>
-								</div>
+						{/* The registration path (2e): inside the sheet on mobile,
+						    where the header is not rendered. On desktop the
+						    header carries it, so it only appears here when no
+						    tenant supplies one. */}
+						<Box
+							className="loginForm__register"
+							sx={{
+								display: hasTenant
+									? { xs: 'block', lg: 'none' }
+									: 'block'
+							}}
+						>
+							<div className="loginForm__register__separator">
+								<span>
+									{translate('login.register.separator')}
+								</span>
 							</div>
-						)}
+							<div className="loginForm__register__content">
+								{/* The separator already says "Neu hier?"; the
+								    old headline under it repeated the same
+								    words. What is left is the action — a full
+								    width secondary button, not a text link:
+								    registration is the second path off this
+								    screen, and 2e gives it a target you can hit
+								    with a thumb. */}
+								<MuiButton
+									className="consulting-topics"
+									onClick={() =>
+										window.open(registrationUrl, '_self')
+									}
+									variant="outlined"
+									fullWidth
+									sx={registrationSheetButtonSx}
+								>
+									{translate('login.register.linkLabel')}
+								</MuiButton>
+							</div>
+						</Box>
 
 						<div className="loginForm__separator" />
 
