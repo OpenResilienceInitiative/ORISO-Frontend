@@ -98,7 +98,7 @@ function SessionsListToolbarPlayground({
 				searchTypeResults={[
 					{ id: 'oneToOne', label: '1-1 Beratung' },
 					{ id: 'liveChat', label: 'Live Chat' },
-					{ id: 'nearby', label: 'Nähe' }
+					{ id: 'nearby', label: 'Mail' }
 				]}
 				selectedTypeId={selectedTypeId}
 				onSelectedTypeIdChange={setSelectedTypeId}

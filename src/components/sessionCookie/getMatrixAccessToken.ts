@@ -13,6 +13,10 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
+import {
+	createPasswordUiAuth,
+	registerDeviceSigningAuth
+} from '../../services/matrixInteractiveAuth';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -20,6 +24,8 @@ export interface MatrixLoginData {
 	deviceId: string;
 	homeserverUrl: string;
 	expiresInMs?: number;
+	/** Transient Matrix password for device-signing UIA; never persisted. */
+	uiaPassword?: string;
 	// Anonymous live-chat users can never cross-sign a consultant's device, so
 	// their client must share Megolm keys to all devices; invisible crypto
 	// (verified-only) would silently make their messages undecryptable for the
@@ -119,7 +125,8 @@ export const getMatrixAccessToken = (
 				response.deviceId
 			),
 			homeserverUrl,
-			expiresInMs: response.expiresInMs
+			expiresInMs: response.expiresInMs,
+			uiaPassword: response.uiaPassword
 		};
 	});
 };
@@ -154,7 +161,7 @@ export const createMatrixClient = (
 	onSdkError?: (...messages: unknown[]) => void
 ): MatrixClient => {
 	const baseLogger = getMatrixClientLogger();
-	return createClient({
+	const client = createClient({
 		baseUrl: loginData.homeserverUrl,
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
@@ -170,4 +177,13 @@ export const createMatrixClient = (
 			getSecretStorageKey: secretStorageKeyCallback
 		}
 	});
+
+	if (loginData.uiaPassword) {
+		registerDeviceSigningAuth(
+			client,
+			createPasswordUiAuth(loginData.userId, loginData.uiaPassword)
+		);
+	}
+
+	return client;
 };

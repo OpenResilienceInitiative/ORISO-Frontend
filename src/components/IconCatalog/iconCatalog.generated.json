@@ -22,10 +22,7 @@
 		"fileName": "ant.svg",
 		"sourcePath": "public/static/anon-animals/ant.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/message/FurtherSteps.tsx",
-			"src/utils/anonName/data.ts"
-		],
+		"usageFiles": ["src/utils/anonName/data.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -1095,6 +1092,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:agency:base",
+		"family": "agency",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "agency.svg",
+		"sourcePath": "src/resources/img/icons/agency.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:apple:base",
 		"family": "apple",
 		"state": "base",
@@ -1191,6 +1201,7 @@
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionHeader/SessionHeaderComponent.tsx",
@@ -1261,6 +1272,19 @@
 			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx"
 		],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:arrows-lr:base",
+		"family": "arrows-lr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "arrows-lr.svg",
+		"sourcePath": "src/resources/img/icons/arrows-lr.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:audio-off:base",
@@ -1779,8 +1803,8 @@
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
+			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/message/Appointment.tsx",
-			"src/components/message/FurtherSteps.tsx",
 			"src/components/passwordResetRequest/PasswordResetSentView.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/DeleteAccount.tsx",
@@ -2011,6 +2035,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:devices:base",
+		"family": "devices",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "devices.svg",
+		"sourcePath": "src/resources/img/icons/devices.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:diversity-2:base",
 		"family": "diversity-2",
 		"state": "base",
@@ -2115,7 +2152,7 @@
 		"sourcePath": "src/resources/img/icons/envelope.svg",
 		"exportNames": ["ClosedEnvelopeIcon", "EnvelopeIcon"],
 		"usageFiles": [
-			"src/components/message/FurtherSteps.tsx",
+			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
@@ -2172,7 +2209,6 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
-			"src/components/message/MessageItemComponent.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
@@ -2286,6 +2322,19 @@
 		"sourcePath": "src/resources/img/icons/group-chat-avatar.svg",
 		"exportNames": ["GroupChatAvatarIcon"],
 		"usageFiles": ["src/resources/img/icons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:hacker:base",
+		"family": "hacker",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "hacker.svg",
+		"sourcePath": "src/resources/img/icons/hacker.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -2582,6 +2631,7 @@
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
@@ -2969,6 +3019,7 @@
 		"usageFiles": [
 			"src/components/askerInfo/AskerInfo.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/RequestPasswordResetFormView.tsx",
 			"src/resources/img/icons.ts"
@@ -3126,8 +3177,11 @@
 		"fileName": "profil_filled.svg",
 		"sourcePath": "src/resources/img/icons/profil_filled.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:profil:outline",
@@ -3139,8 +3193,11 @@
 		"fileName": "profil_outline.svg",
 		"sourcePath": "src/resources/img/icons/profil_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:qr-code:base",
@@ -3432,9 +3489,6 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
-			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/internal/InternalChatCreateCard.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
@@ -4264,6 +4318,21 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "topic-icon:t-01-u-bergang-von-schule-zu-beruf:base",
+		"family": "t-01-u-bergang-von-schule-zu-beruf",
+		"state": "base",
+		"role": "default",
+		"kind": "topic-icon",
+		"size": null,
+		"fileName": "t-01-u-bergang-von-schule-zu-beruf.png",
+		"sourcePath": "src/resources/img/registration-md3/icons/t-01-u-bergang-von-schule-zu-beruf.png",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/registration/registrationDesign/registrationDesign.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "topic-icon:t-01-u25-suizidpra-vention:base",
 		"family": "t-01-u25-suizidpra-vention",
 		"state": "base",
@@ -4468,10 +4537,8 @@
 		"fileName": "t-05-hiv-und-aids.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-hiv-und-aids.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-rechtliche-betreuung-und-vorsorge:base",
@@ -4483,10 +4550,8 @@
 		"fileName": "t-05-rechtliche-betreuung-und-vorsorge.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-rechtliche-betreuung-und-vorsorge.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-schulden:base",

@@ -51,7 +51,9 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu",
+			"mobileHeadline": "Endişeleriniz için burada yer var.",
+			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
@@ -530,7 +532,7 @@
 			},
 			"overlay": {
 				"button": "Mesaja",
-				"copy": "Bizden 2 iş günü içinde bir yanıt alacaksınız.",
+				"copy": "Mesajınızı aldık.",
 				"headline": "Mesajınız için teşekkür ederiz!"
 			}
 		}
@@ -1201,13 +1203,35 @@
 		"register": {
 			"infoText": {
 				"copy": "Aşağıdaki konularda size tavsiyelerde bulunmaktan memnuniyet duyarız:",
-				"title": "Henüz kayıt olmadınız mı?"
+				"title": "Henüz kayıt olmadınız mı?",
+				"short": "Burada yeni misiniz?"
 			},
-			"linkLabel": "Danışmanlık konularına"
+			"linkLabel": "Danışmanlık konularına",
+			"separator": "Burada yeni misiniz?"
 		},
 		"security": {
 			"headline": "Güvenli ve Şifreli",
-			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur."
+			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur.",
+			"teaser": {
+				"text": "Uçtan uca şifreli — anahtar cihazınızda oluşturulur.",
+				"link": "Bu neden özellikle güvenli",
+				"textShort": "Anahtar cihazınızda kalır",
+				"linkShort": "Bu neden güvenli"
+			},
+			"explainer": {
+				"badge": "YENİ",
+				"headline": "Yalnızca ikiniz okuyabilirsiniz.",
+				"message": "Kendimi iyi hissetmiyorum.",
+				"you": "Siz",
+				"agency": "Danışma Merkezi",
+				"encrypted": "şifreli",
+				"attack": "bir saldırgan bundan fazlasını elde edemez",
+				"cipherLabel": "Ele geçirilen, şifrelenmiş veriler",
+				"key": "Anahtar cihazınızda oluşturulur ve orada kalır — bizde yoktur.",
+				"protocol": "Açık protokol <strong>Matrix</strong>, bağımsız olarak doğrulanabilir.",
+				"protocolLink": "Daha fazla bilgi",
+				"back": "Girişe geri dön"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1254,12 +1278,12 @@
 						"missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
 					}
 				},
-				"deletedAccount": "Hesabınız bir danışman tarafından kapatıldı.",
 				"email": {
 					"otp": {
 						"missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."
 					}
 				},
+				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
@@ -2152,6 +2176,15 @@
 		},
 		"overlay": {
 			"close": "Kapat"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Talebiniz bir danışman tarafından kabul edildi.",
+			"copy": "{{organisation}} danışma merkezinden {{advisor}} bundan sonra talebinizle ilgileniyor. Mesajlarınız uçtan uca şifrelenmiştir. Gerektiğinde bu danışma merkezindeki diğer uzmanlar da sürece dahil edilebilir; örneğin bir vekâlet ya da mesleki bir görüş alışverişi için. Hepsi gizlilik yükümlülüğü altındadır.",
+			"cta": "Görüşmeye git",
+			"advisorFallback": "Bir danışman",
+			"organisationFallback": "danışma merkeziniz"
 		}
 	},
 	"session": {
@@ -3162,6 +3195,78 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "İlk adımlarınız",
+		"greeting": {
+			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
+		},
+		"whoReadsAlong": {
+			"headline": "Mesajınızı kim okuyor",
+			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+		},
+		"responseDeadline": {
+			"headline": "Ne zaman yanıt alacaksınız",
+			"body": "{{deadlineDays}} iş günü içinde uygun bir iletişim kişisinden yanıt alacaksınız."
+		},
+		"modalityNote": {
+			"body": "Danışmanlık bu korumalı alanda yazılı olarak yapılır. İstediğiniz zaman yazmaya devam edebilirsiniz."
+		},
+		"noPersonalData": {
+			"headline": "Lütfen kişisel veri göndermeyin",
+			"body": "Lütfen bize tam adınızı, adresinizi veya telefon numaranızı yazmayın. Danışmanlık için bunlara ihtiyacımız yok."
+		},
+		"emergencyNumbers": {
+			"headline": "Bekleyemeyecek durumdaysanız",
+			"body": "Acil bir durumda Telefonseelsorge'a günün her saati 0800 111 0 111 veya 0800 111 0 222 numaralarından, acil yardım servisine ise 112'den ulaşabilirsiniz."
+		},
+		"dataProtection": {
+			"body": "Verilerinizi nasıl işlediğimiz gizlilik politikasında yer alır."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "E-posta ile bildirim",
+			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
+			"action": "E-posta adresi ekle",
+			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin."
+		},
+		"accountProtection": {
+			"headline": "Erişiminiz, ek olarak korunur",
+			"body": "Erişiminizi ikinci bir faktörle güvence altına alabilirsiniz, böylece başka kimse giremez.",
+			"action": "Erişimimi koru"
+		},
+		"closing": {
+			"body": "Yakında görüşmek üzere — size geri döneceğiz."
+		},
+		"saveCredentials": {
+			"headline": "Erişiminizi güvenceye alın",
+			"body": "Giriş adınız olmadan bu görüşmeye daha sonra geri dönemezsiniz. Onu güvenli bir yerde saklayın — en iyisi bir parola yöneticisinde.",
+			"userNameLabel": "Giriş adı",
+			"copy": "Kopyala",
+			"copied": "Giriş adı kopyalandı.",
+			"sharedDevice": "Bu cihazı başkaları da kullanıyorsa giriş adınızı burada kaydetmemeniz daha iyi olur — güvenli bir yere not edin.",
+			"setPassword": "Şimdi parola belirle",
+			"copyFailed": "Kopyalama başarısız oldu. Lütfen giriş adını seçip elle kopyalayın."
+		},
+		"displayName": {
+			"headline": "Görünen adınız",
+			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
+			"action": "Adımı değiştir"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Künye"
+			},
+			"privacy": {
+				"title": "Gizlilik politikası"
+			},
+			"back": "Geri",
+			"confirm": "Anladım"
 		}
 	}
 }

@@ -3,6 +3,17 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import type { MentionCandidate } from './mentionFiltering';
 import './mentionList.styles.scss';
 
+/**
+ * Why the list is empty (#993). Without this the popup rendered nothing at
+ * all, so "nobody matches what you typed" and "the directory never loaded"
+ * looked identical — the user just saw the @ do nothing.
+ */
+export type MentionDirectoryState =
+	| 'loading'
+	| 'ready'
+	| 'error'
+	| 'unavailable';
+
 export interface MentionListProps {
 	items: MentionCandidate[];
 	command: (item: {
@@ -11,6 +22,10 @@ export interface MentionListProps {
 		matrixUserId: string | null;
 	}) => void;
 	notInChatLabel: string;
+	directoryState?: MentionDirectoryState;
+	emptyLabel?: string;
+	unavailableLabel?: string;
+	loadingLabel?: string;
 }
 
 export interface MentionListRef {
@@ -23,7 +38,18 @@ export interface MentionListRef {
  * them into the conversation). Keyboard-navigable per TipTap's suggestion API.
  */
 export const MentionList = forwardRef<MentionListRef, MentionListProps>(
-	({ items, command, notInChatLabel }, ref) => {
+	(
+		{
+			items,
+			command,
+			notInChatLabel,
+			directoryState = 'ready',
+			emptyLabel,
+			unavailableLabel,
+			loadingLabel
+		},
+		ref
+	) => {
 		const [selectedIndex, setSelectedIndex] = useState(0);
 
 		useEffect(() => setSelectedIndex(0), [items]);
@@ -60,7 +86,35 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 		}));
 
 		if (!items.length) {
-			return null;
+			// 'unavailable' is by design (asker, anonymous chat): stay silent.
+			if (directoryState === 'unavailable') {
+				return null;
+			}
+			const message =
+				directoryState === 'error'
+					? unavailableLabel
+					: directoryState === 'loading'
+						? loadingLabel
+						: emptyLabel;
+			if (!message) {
+				return null;
+			}
+			return (
+				<div className="mentionList" role="listbox">
+					<p
+						className={[
+							'mentionList__status',
+							directoryState === 'error' &&
+								'mentionList__status--error'
+						]
+							.filter(Boolean)
+							.join(' ')}
+						role="status"
+					>
+						{message}
+					</p>
+				</div>
+			);
 		}
 
 		return (

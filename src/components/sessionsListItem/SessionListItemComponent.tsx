@@ -1554,7 +1554,7 @@ export const SessionListItemComponent = ({
 							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
 					)}
-					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					{/* Consulting-type modality icon (Mail / Live Chat / Interna
 					    / Gesprächskreis) — always shown, including alongside the
 					    case-handover action button (Figma node 115). */}
 					{
@@ -1598,14 +1598,14 @@ export const SessionListItemComponent = ({
 										src={nearbyConversationIcon}
 										alt={translate(
 											'sessionList.toolbar.chips.nearby',
-											'Nähe'
+											'Mail'
 										)}
 										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 										{translate(
 											'sessionList.toolbar.chips.nearby',
-											'Nähe'
+											'Mail'
 										)}
 									</span>
 								</div>

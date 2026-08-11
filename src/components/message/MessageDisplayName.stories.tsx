@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MessageDisplayName } from './MessageDisplayName';
 import {
 	mobileParameters,
+	phone375Globals,
 	phone390Globals,
 	type MessageStoryParameters,
 	withMessageShell
@@ -131,4 +132,75 @@ export const Mobile: Story = {
 	},
 	parameters: mobileParameters,
 	globals: phone390Globals
+};
+
+export const ConsultantWithAgency: Story = {
+	name: 'Counsellor — with counselling centre',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'Beratende Person Kim G.',
+		subtitle: '54222 Caritas Mainz'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Figma "Message Recipient Header" (App.Oriso 9229:24595). The second line names the counselling centre the counsellor speaks for, prefixed by its postcode — the value the advice seeker actually chose their agency by during registration. See #895.'
+			}
+		}
+	}
+};
+
+export const ConsultantWithoutAgency: Story = {
+	name: 'Counsellor — Live Chat, no agency yet',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'Beratende Person Kim G.',
+		subtitle: ''
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Live Chat is cross-agency and registrationless, so there is no single counselling centre to name before somebody picks the conversation up. The row is omitted entirely rather than rendering an empty line, and the header keeps its one-line height.'
+			}
+		}
+	}
+};
+
+export const ConsultantAgencyWithoutPostcode: Story = {
+	name: 'Counsellor — agency without a usable postcode',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'Beratende Person Kim G.',
+		subtitle: 'Caritas Mainz'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Anonymous registrations carry the placeholder postcode "00000". Printing it would name a place that does not exist, so `formatAgencyLine` drops it and the centre stands on its own.'
+			}
+		}
+	}
+};
+
+export const ConsultantLongAgencyMobile: Story = {
+	name: 'Mobile (375px) — long counselling centre',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'Beratende Person Kim G.',
+		subtitle:
+			'54222 Katholische Beratungsstelle für Ehe-, Familien- und Lebensfragen Mainz'
+	},
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'The narrowest phone still in use with a realistically long centre name. The line wraps inside the header column instead of widening the message row.'
+			}
+		}
+	},
+	globals: phone375Globals
 };

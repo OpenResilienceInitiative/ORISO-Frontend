@@ -28,6 +28,21 @@ const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const isPreparedSyncState = (state: string | null): boolean =>
 	state === 'PREPARED' || state === 'SYNCING';
 
+type RustTrackedUser = {
+	clone: () => unknown;
+	toString: () => string;
+};
+
+type RefreshableRustCrypto = {
+	olmMachine?: {
+		queryKeysForUsers?: (users: unknown[]) => unknown;
+		trackedUsers?: () => Promise<Set<RustTrackedUser>>;
+	};
+	outgoingRequestProcessor?: {
+		makeOutgoingRequest?: (request: unknown) => Promise<unknown>;
+	};
+};
+
 export interface MatrixFileMessageOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
@@ -128,6 +143,10 @@ export class MatrixClientService {
 	private staleDeviceRecoveryVersion = 0;
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
+	private readonly deviceListRefreshes = new WeakMap<
+		MatrixClient,
+		Map<string, Promise<boolean>>
+	>();
 	private syncStateListeners = new Set<(state: string | null) => void>();
 	private clientChangeListeners = new Set<
 		(client: MatrixClient | null) => void
@@ -413,6 +432,91 @@ export class MatrixClientService {
 		await this.refreshMatrixToken();
 	}
 
+	/**
+	 * Refresh already-tracked room members before the first send in a client
+	 * generation. A full sync does not replay historical device-list changes,
+	 * so a room created before the recipient recovered/cross-signed a device can
+	 * otherwise keep an indefinitely stale cache and omit that device from
+	 * Megolm key sharing (#551).
+	 *
+	 * matrix-js-sdk exposes forced downloads only for untracked users. The Rust
+	 * backend already owns the supported query and response processing path, but
+	 * currently narrows it out of CryptoApi. Runtime guards make this best-effort
+	 * and upgrade-safe; a missing internal never blocks normal SDK encryption.
+	 */
+	private async refreshTrackedRoomMemberDevices(
+		client: MatrixClient,
+		roomId: string
+	): Promise<boolean> {
+		let roomRefreshes = this.deviceListRefreshes.get(client);
+		if (!roomRefreshes) {
+			roomRefreshes = new Map<string, Promise<boolean>>();
+			this.deviceListRefreshes.set(client, roomRefreshes);
+		}
+
+		const existing = roomRefreshes.get(roomId);
+		if (existing) {
+			return existing;
+		}
+
+		const refresh = (async () => {
+			const room = client.getRoom(roomId);
+			const crypto = client.getCrypto?.() as
+				| RefreshableRustCrypto
+				| undefined;
+			const olmMachine = crypto?.olmMachine;
+			const makeOutgoingRequest =
+				crypto?.outgoingRequestProcessor?.makeOutgoingRequest;
+			if (
+				!room ||
+				typeof room.getEncryptionTargetMembers !== 'function' ||
+				typeof olmMachine?.trackedUsers !== 'function' ||
+				typeof olmMachine.queryKeysForUsers !== 'function' ||
+				typeof makeOutgoingRequest !== 'function'
+			) {
+				return false;
+			}
+
+			const ownUserId = client.getUserId?.();
+			const members = await room.getEncryptionTargetMembers();
+			const targetUserIds = new Set(
+				members
+					.map((member) => member.userId)
+					.filter((userId) => userId && userId !== ownUserId)
+			);
+			if (targetUserIds.size === 0) {
+				return true;
+			}
+
+			const trackedUsers = await olmMachine.trackedUsers();
+			const queryUsers = Array.from(trackedUsers)
+				.filter((user) => targetUserIds.has(user.toString()))
+				.map((user) => user.clone());
+			if (queryUsers.length === 0) {
+				return false;
+			}
+
+			const request = olmMachine.queryKeysForUsers(queryUsers);
+			await makeOutgoingRequest.call(
+				crypto.outgoingRequestProcessor,
+				request
+			);
+			return true;
+		})();
+
+		roomRefreshes.set(roomId, refresh);
+		try {
+			const refreshed = await refresh;
+			if (!refreshed) {
+				roomRefreshes.delete(roomId);
+			}
+			return refreshed;
+		} catch {
+			roomRefreshes.delete(roomId);
+			return false;
+		}
+	}
+
 	// Send message to a room
 	public async sendMessage(
 		roomId: string,
@@ -433,6 +537,7 @@ export class MatrixClientService {
 			if (!client.getRoom(roomId)) {
 				await client.joinRoom(roomId);
 			}
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
 			const txnId = transactionId || client.makeTxnId?.();
@@ -542,7 +647,7 @@ export class MatrixClientService {
 		}
 	}
 
-	// Redact an event (used to remove a reaction)
+	// Redact an event (reactions un-react, and message delete #827)
 	public async redactEvent(roomId: string, eventId: string): Promise<any> {
 		await this.ensureFreshToken();
 
@@ -560,25 +665,32 @@ export class MatrixClientService {
 	): Promise<any> {
 		await this.ensureFreshToken();
 
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
+		// Token or stale-device recovery can replace this.client between awaits.
+		// Each attempt pins one client so the device-key refresh, the upload and
+		// the send never span two client generations.
+		const sendWithCurrentClient = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
+			const content = await this.uploadFileMessageContent(
+				client,
+				file,
+				options
+			);
+			return client.sendMessage(roomId, content as any);
+		};
 
 		try {
-			const content = await this.uploadFileMessageContent(file, options);
-			return await this.client.sendMessage(roomId, content as any);
+			return await sendWithCurrentClient();
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
 				throw error;
 			}
 
 			await this.refreshMatrixToken();
-			if (!this.client) {
-				throw new Error('Matrix client not initialized');
-			}
-
-			const content = await this.uploadFileMessageContent(file, options);
-			return this.client.sendMessage(roomId, content as any);
+			return sendWithCurrentClient();
 		}
 	}
 
@@ -770,16 +882,13 @@ export class MatrixClientService {
 	}
 
 	private async uploadFileMessageContent(
+		client: MatrixClient,
 		file: File,
 		options: MatrixFileMessageOptions
 	): Promise<Record<string, unknown>> {
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
 		const dimensions = await getImageDimensions(file);
 		const encryptedAttachment = await encryptMatrixAttachment(file);
-		const uploadResponse = await this.client.uploadContent(
+		const uploadResponse = await client.uploadContent(
 			encryptedAttachment.encryptedBlob,
 			{
 				includeFilename: false,

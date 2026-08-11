@@ -123,6 +123,60 @@ export const Selected: Story = {
 	}
 };
 
+/**
+ * #835: opening the emoji picker in the docked composer must not leave a dark
+ * clipped fragment over the emoji / mention controls. The picker is portalled
+ * to document.body (outside `.session { overflow: hidden }`).
+ */
+export const DockedEmojiPickerNoOverlay: Story = {
+	name: 'Docked emoji picker — no dark overlay (#835)',
+	render: () => (
+		<div
+			style={{
+				// Leave room above the docked composer so the portalled picker
+				// (380px) is visible in Storybook screenshots / visual review.
+				minHeight: 720,
+				display: 'flex',
+				flexDirection: 'column',
+				justifyContent: 'flex-end'
+			}}
+		>
+			<ComposerShell />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const emojiButton = await canvas.findByRole('button', {
+			name: /emoji/i
+		});
+		const mentionButton = await canvas.findByRole('button', {
+			name: /mention/i
+		});
+
+		await userEvent.click(emojiButton);
+
+		const popup = await waitFor(() => {
+			const node = document.querySelector(
+				'[data-testid="emoji-picker-popup"]'
+			);
+			if (!(node instanceof HTMLElement)) {
+				throw new Error('emoji picker popup not mounted yet');
+			}
+			return node;
+		});
+
+		await expect(popup.parentElement).toBe(document.body);
+		await expect(popup.className).toContain('emojiPickerPopup--portalled');
+		await expect(
+			canvasElement.querySelector('.session')?.contains(popup)
+		).toBe(false);
+
+		// Toolbar controls stay in the layout (not covered by an in-session clip).
+		await expect(emojiButton).toBeVisible();
+		await expect(mentionButton).toBeVisible();
+	}
+};
+
 export const ReadyToSend: Story = {
 	name: 'Ready to send (typed)',
 	render: () => <ComposerShell />,
@@ -293,7 +347,84 @@ export const ReplyingToMessage: Story = {
 			}}
 			onCancelReply={() => {}}
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeTruthy();
+		});
+
+		const preview = canvasElement.querySelector(
+			'.messageSubmit__replyPreview'
+		) as HTMLElement;
+		const form = preview.closest('form') as HTMLElement;
+
+		// The bar hugs the quote instead of spanning the composer — it should
+		// read like the bubble it quotes, not like a full-width banner.
+		expect(preview.getBoundingClientRect().width).toBeLessThan(
+			form.getBoundingClientRect().width * 0.8
+		);
+
+		// …but a very long quote still has to stay inside the composer.
+		const text = preview.querySelector(
+			'.messageSubmit__replyPreviewText'
+		) as HTMLElement;
+		const original = text.textContent;
+		text.textContent = 'x'.repeat(600);
+		expect(preview.getBoundingClientRect().width).toBeLessThanOrEqual(
+			form.getBoundingClientRect().width
+		);
+		text.textContent = original;
+	}
+};
+
+const EDITING_LONG_TEXT =
+	'When some text is written meaning their is something the user can send to the chat room, than onlyshow the red sending state and nothing else at all';
+
+/** Shared assertions for the Figma "Reply Bar_v2" edit banner (9354:206458). */
+const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
+	const banner = await waitFor(() => {
+		const found = canvasElement.querySelector(
+			'.messageSubmit__editPreview'
+		) as HTMLElement;
+		expect(found).toBeTruthy();
+		return found;
+	});
+
+	// Full width of the composer, one 32px line — never wraps.
+	const form = banner.closest('form') as HTMLElement;
+	const bannerRect = banner.getBoundingClientRect();
+	expect(Math.round(bannerRect.height)).toBe(32);
+	expect(bannerRect.width).toBeGreaterThan(
+		form.getBoundingClientRect().width * 0.8
+	);
+
+	const text = banner.querySelector(
+		'.messageSubmit__editPreviewText'
+	) as HTMLElement;
+	expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+	expect(getComputedStyle(text).whiteSpace).toBe('nowrap');
+	// Ellipsized, not clipped away: the line box stays one line high.
+	expect(Math.round(text.getBoundingClientRect().height)).toBe(16);
+
+	// M3 body-small, emphasized lead in secondary, message in primary.
+	expect(getComputedStyle(banner).fontSize).toBe('12px');
+	expect(getComputedStyle(banner).lineHeight).toBe('16px');
+	const label = banner.querySelector(
+		'.messageSubmit__editPreviewLabel'
+	) as HTMLElement;
+	expect(getComputedStyle(label).fontWeight).toBe('500');
+
+	// The cancel glyph is a real 16px icon, not a "×" character.
+	const cancel = banner.querySelector(
+		'.messageSubmit__editPreviewCancel'
+	) as HTMLElement;
+	expect(cancel.querySelector('svg')).toBeTruthy();
+	expect(Math.round(cancel.getBoundingClientRect().width)).toBe(16);
+
+	// #978 must not come back through the newly visible preview text.
+	expect(banner.textContent).not.toMatch(/\[\[/);
 };
 
 export const EditingMessage: Story = {
@@ -302,11 +433,34 @@ export const EditingMessage: Story = {
 		<ComposerShell
 			editingMessage={{
 				eventId: '$orig:matrix.oriso.org',
-				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+				text: EDITING_LONG_TEXT
 			}}
 			onCancelEdit={() => {}}
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+	}
+};
+
+/** Mobile counterpart — Figma 18:6713. Same bar, less room for the text. */
+export const EditingMessageMobile: Story = {
+	name: 'Editing (m.replace preview) — mobile',
+	parameters: {
+		viewport: { defaultViewport: 'mobile1' }
+	},
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: EDITING_LONG_TEXT
+			}}
+			onCancelEdit={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+	}
 };
 
 export const GroupChat: Story = {
