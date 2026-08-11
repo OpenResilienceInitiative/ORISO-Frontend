@@ -15,8 +15,13 @@ import './stage.styles';
 import { Banner } from '../banner/Banner';
 import { Headline } from '../headline/Headline';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
 import { Spinner } from '../spinner/Spinner';
+import { useLampMap } from './lampMap/useLampMap';
+import { StageCarrierLogos } from './StageCarrierLogos';
 import { useTenant } from '../../globalState/provider/TenantProvider';
+import { useStageEffect } from './effects/useStageEffect';
+import { resolveTenantStageEffect } from './effects/tenantStageEffect';
 
 export interface StageProps {
 	className?: string;
@@ -41,6 +46,19 @@ export const Stage = ({
 		tenant?.theming?.associationLogo || tenant?.theming?.logo || '';
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
+	const effectCanvasRef = useRef<HTMLCanvasElement>(null);
+	/*
+	 * The tenant's decorative effect. Nothing about it is in the critical path:
+	 * the hook fetches the one selected effect's chunk only once the stage is on
+	 * screen and the browser has been idle, skips narrow viewports entirely so a
+	 * phone never downloads it, and honours prefers-reduced-motion. An
+	 * unconfigured tenant resolves to 'none', which loads nothing at all.
+	 */
+	const stageEffect = resolveTenantStageEffect(tenant);
+	useStageEffect(stageEffect, {
+		hostRef: rootNodeRef,
+		canvasRef: effectCanvasRef
+	});
 	const glowTargetRef = useRef({ x: 32, y: 24 });
 	const glowPositionRef = useRef({ x: 32, y: 24 });
 	const glowAnimationFrameRef = useRef<number | null>(null);
@@ -133,6 +151,11 @@ export const Stage = ({
 		[animateStageGlow]
 	);
 
+	// Design 5b. Nothing about this reaches the critical path or a phone —
+	// the hook owns the breakpoint / reduced-motion / idle gate and the
+	// dynamic import of the effect chunk.
+	const lampMap = useLampMap({ containerRef: rootNodeRef });
+
 	const [ieBanner, setIeBanner] = useState(true);
 	const closeIeBanner = useCallback((e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
@@ -149,7 +172,15 @@ export const Stage = ({
 				'stage--ready': hasAnimationFinished
 			})}
 			data-cy="stage"
+			data-cy-effect={stageEffect}
 		>
+			{stageEffect !== 'none' && (
+				<canvas
+					ref={effectCanvasRef}
+					aria-hidden
+					className="stage__effectCanvas"
+				/>
+			)}
 			{ieBanner && (
 				<Banner
 					className="ieBanner"
@@ -168,6 +199,12 @@ export const Stage = ({
 				</Banner>
 			)}
 
+			<canvas
+				ref={lampMap.canvasRef}
+				className="stage__lampMap"
+				aria-hidden="true"
+			/>
+
 			<div className="stage__content">
 				<div className="stage__headline">
 					<Headline
@@ -183,13 +220,17 @@ export const Stage = ({
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
 				{associationLogo ? (
-					<div className="stage__logos">
+					<div className="stage__tenantLogo">
 						<img
 							src={associationLogo}
 							alt={translate('app.stage.associationLogoAlt')}
 						/>
 					</div>
 				) : null}
+				<StageCarrierLogos
+					allowed={tenant?.theming?.associationLogos}
+					onHighlight={lampMap.setCarrier}
+				/>
 				<div className={`stage__legalLinks`}>
 					<LegalLinks
 						legalLinks={legalLinks}
@@ -202,19 +243,13 @@ export const Stage = ({
 							/>
 						}
 					>
-						{(label, url) => (
-							<button
-								type="button"
-								className="button-as-link"
-								data-cy-link={url}
-								onClick={() => window.open(url, '_blank')}
-							>
-								<Text
-									className="stage__legalLinksItem"
-									type="infoSmall"
-									text={translate(label)}
-								/>
-							</button>
+						{(label, url, rawLabel) => (
+							<LegalLinkButton
+								label={label}
+								rawLabel={rawLabel}
+								url={url}
+								textClassName="stage__legalLinksItem"
+							/>
 						)}
 					</LegalLinks>
 				</div>

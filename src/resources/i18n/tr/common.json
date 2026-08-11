@@ -51,7 +51,9 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu",
+			"mobileHeadline": "Endişeleriniz için burada yer var.",
+			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
@@ -1201,13 +1203,35 @@
 		"register": {
 			"infoText": {
 				"copy": "Aşağıdaki konularda size tavsiyelerde bulunmaktan memnuniyet duyarız:",
-				"title": "Henüz kayıt olmadınız mı?"
+				"title": "Henüz kayıt olmadınız mı?",
+				"short": "Burada yeni misiniz?"
 			},
-			"linkLabel": "Danışmanlık konularına"
+			"linkLabel": "Danışmanlık konularına",
+			"separator": "Burada yeni misiniz?"
 		},
 		"security": {
 			"headline": "Güvenli ve Şifreli",
-			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur."
+			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur.",
+			"teaser": {
+				"text": "Uçtan uca şifreli — anahtar cihazınızda oluşturulur.",
+				"link": "Bu neden özellikle güvenli",
+				"textShort": "Anahtar cihazınızda kalır",
+				"linkShort": "Bu neden güvenli"
+			},
+			"explainer": {
+				"badge": "YENİ",
+				"headline": "Yalnızca ikiniz okuyabilirsiniz.",
+				"message": "Kendimi iyi hissetmiyorum.",
+				"you": "Siz",
+				"agency": "Danışma Merkezi",
+				"encrypted": "şifreli",
+				"attack": "bir saldırgan bundan fazlasını elde edemez",
+				"cipherLabel": "Ele geçirilen, şifrelenmiş veriler",
+				"key": "Anahtar cihazınızda oluşturulur ve orada kalır — bizde yoktur.",
+				"protocol": "Açık protokol <strong>Matrix</strong>, bağımsız olarak doğrulanabilir.",
+				"protocolLink": "Daha fazla bilgi",
+				"back": "Girişe geri dön"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3226,6 +3250,18 @@
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
 			"action": "Adımı değiştir"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Künye"
+			},
+			"privacy": {
+				"title": "Gizlilik politikası"
+			},
+			"back": "Geri",
+			"confirm": "Anladım"
 		}
 	}
 }

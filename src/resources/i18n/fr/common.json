@@ -51,7 +51,9 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"associationLogoAlt": "Logo de l'organisation prestataire"
+			"associationLogoAlt": "Logo de l'organisation prestataire",
+			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
+			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -1201,13 +1203,35 @@
 		"register": {
 			"infoText": {
 				"copy": "Nous vous conseillons volontiers sur les thèmes suivants :",
-				"title": "Pas encore inscrit ?"
+				"title": "Pas encore inscrit ?",
+				"short": "Nouveau ici ?"
 			},
-			"linkLabel": "Vers les thèmes de conseil"
+			"linkLabel": "Vers les thèmes de conseil",
+			"separator": "Nouveau ici ?"
 		},
 		"security": {
 			"headline": "Sécurisé et chiffré",
-			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout."
+			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout.",
+			"teaser": {
+				"text": "Chiffré de bout en bout — la clé est créée sur votre appareil.",
+				"link": "Pourquoi c'est particulièrement sûr",
+				"textShort": "La clé reste sur votre appareil",
+				"linkShort": "Pourquoi c'est sûr"
+			},
+			"explainer": {
+				"badge": "NOUVEAU",
+				"headline": "Vous deux êtes les seuls à pouvoir lire.",
+				"message": "Je ne vais pas bien.",
+				"you": "Vous",
+				"agency": "Service de consultation",
+				"encrypted": "chiffré",
+				"attack": "un attaquant n'obtient rien de plus",
+				"cipherLabel": "Données interceptées et chiffrées",
+				"key": "La clé est créée sur votre appareil et y reste — nous ne l'avons pas.",
+				"protocol": "Protocole ouvert <strong>Matrix</strong>, vérifiable de manière indépendante.",
+				"protocolLink": "En savoir plus",
+				"back": "Retour à la connexion"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3196,6 +3220,18 @@
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
 			"action": "Changer de nom"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Mentions légales"
+			},
+			"privacy": {
+				"title": "Politique de confidentialité"
+			},
+			"back": "Retour",
+			"confirm": "Compris"
 		}
 	}
 }

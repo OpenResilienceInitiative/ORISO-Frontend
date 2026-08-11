@@ -51,7 +51,9 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት"
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት",
+			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
+			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -1201,13 +1203,33 @@
 		"register": {
 			"infoText": {
 				"copy": "ኣብዞም ዝስዕቡ ኣርእስታት ብሓጎስ ክንመኽረኩም ንደሊ፤",
-				"title": "ገና ኣይተመዝገበን?"
+				"title": "ገና ኣይተመዝገበን?",
+				"short": "ኣብዚ ሓድሽ ዲኹም?"
 			},
-			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት"
+			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት",
+			"separator": "ኣብዚ ሓድሽ ዲኹም?"
 		},
 		"security": {
-			"headline": "ደህንነት እና ተመስጢር",
-			"description": "ግላዊነትኩም ብመጨረሻ-ወደ-መጨረሻ ምስጢር ፍጹም ይሕሎ."
+			"teaser": {
+				"text": "ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ — እቲ መፍትሕ ኣብ መሳርሒኹም እዩ ዝፍጠር።",
+				"link": "ስለምንታይ እዚ ብፍሉይ ውሑስ ዝኸውን",
+				"textShort": "እቲ መፍትሕ ኣብ መሳርሒኹም ይተርፍ",
+				"linkShort": "ስለምንታይ ውሑስ ዝኸውን"
+			},
+			"explainer": {
+				"badge": "ሓድሽ",
+				"headline": "ክልቴኹም ጥራይ ኢኹም ከተንብቡ እትኽእሉ።",
+				"message": "ጽቡቕ ኣይኮንኩን ዘለኹ።",
+				"you": "ንስኹም",
+				"agency": "ማእከል ምኽሪ",
+				"encrypted": "ምስጢራዊ",
+				"attack": "ካብዚ ንላዕሊ ሓደ ኣጥቃዒ ኣይረክብን",
+				"cipherLabel": "እተመንጠለ ምስጢራዊ ዳታ",
+				"key": "እቲ መፍትሕ ኣብ መሳርሒኹም ተፈጢሩ ኣብኡ ይተርፍ — ንሕና የብልናን።",
+				"protocol": "ክፉት ፕሮቶኮል <strong>Matrix</strong>፣ ብናጻ ክምርመር ዝኽእል።",
+				"protocolLink": "ዝያዳ ፍለጥ",
+				"back": "ናብ መእተዊ ተመለስ"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -3132,6 +3154,18 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "ኣሰር"
+			},
+			"privacy": {
+				"title": "ናይ ምስጢርነት ፖሊሲ"
+			},
+			"back": "ተመለስ",
+			"confirm": "ተረዲአ"
 		}
 	}
 }

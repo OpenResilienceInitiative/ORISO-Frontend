@@ -51,7 +51,9 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo"
+			"associationLogoAlt": "Provider organisation logo",
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -1282,6 +1284,16 @@
 			"showOriginal": "Show original",
 			"showingOriginal": "You are viewing the original version.",
 			"showTranslation": "Show translation"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	},
 	"login": {
@@ -1304,6 +1316,11 @@
 			"infoText": {
 				"dataprotection": "Privacy policy",
 				"impressum": "Imprint"
+			},
+			"platform": {
+				"impressum": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nWho operates the platform and how to reach them is in the full legal notice. The counselling itself is done by independent centres with their own details, which you see once you have chosen one.",
+				"dataprotection": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nSigning in processes only what signing in needs. Your messages are end-to-end encrypted: they become readable only on your device and at your counselling centre. What is processed beyond that depends on the centre you choose later.",
+				"fullText": "Open the full text"
 			}
 		},
 		"password": {
@@ -1326,11 +1343,33 @@
 		"register": {
 			"infoText": {
 				"copy": "We will be happy to advise you on the following topics:",
-				"title": "Not registered yet?"
+				"title": "Not registered yet?",
+				"short": "New here?"
 			},
-			"linkLabel": "To the consulting topics"
+			"linkLabel": "To the consulting topics",
+			"separator": "New here?"
 		},
 		"security": {
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			},
 			"headline": "Secure & Encrypted",
 			"description": "Your privacy is fully protected with end-to-end encryption."
 		},
@@ -1405,6 +1444,9 @@
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here."
 			}
+		},
+		"mobile": {
+			"headline": "There is room here\nfor what is on your mind."
 		}
 	},
 	"message": {
