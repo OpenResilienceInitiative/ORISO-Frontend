@@ -2743,7 +2743,7 @@
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
-			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. Your messages are end-to-end encrypted. Where it is needed, other specialists at this counselling centre can be brought in — to cover an absence or to consult professionally — and all of them are bound by confidentiality.",
 			"cta": "View conversation",
 			"advisorFallback": "A consultant",
 			"organisationFallback": "your counselling centre"

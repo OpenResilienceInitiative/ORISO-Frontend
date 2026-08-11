@@ -2124,6 +2124,15 @@
 			"close": "ዕፁው"
 		}
 	},
+	"caseHandover": {
+		"accepted": {
+			"title": "ሕቶኹም ብሓደ ኣማኻሪ ተቐቢሉ ኣሎ።",
+			"copy": "{{advisor}} ካብ ማእከል ምኽሪ {{organisation}} ካብ ሕጂ ንደሓር ጉዳይኩም ክከታተል እዩ። መልእኽትታትኩም ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ እዮም። ኣድላዪ ምስ ዝኸውን፡ ካልኦት ክኢላታት ናይዚ ማእከል ምኽሪ ክሳተፉ ይኽእሉ እዮም፡ ንኣብነት ንውክልና ወይ ንሞያዊ ምምኽኻር — ኩሎም ድማ ምስጢር ናይ ምሕላው ግቡእ ኣለዎም።",
+			"cta": "ናብ ዝርርብ",
+			"advisorFallback": "ሓደ ኣማኻሪ",
+			"organisationFallback": "ማእከል ምኽርኹም"
+		}
+	},
 	"session": {
 		"waitingMiniGame": {
 			"inhaleExhale": "Inhale exhale breathing guide",

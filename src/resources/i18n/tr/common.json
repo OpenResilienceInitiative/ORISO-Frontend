@@ -2158,6 +2158,15 @@
 			"close": "Kapat"
 		}
 	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Talebiniz bir danışman tarafından kabul edildi.",
+			"copy": "{{organisation}} danışma merkezinden {{advisor}} bundan sonra talebinizle ilgileniyor. Mesajlarınız uçtan uca şifrelenmiştir. Gerektiğinde bu danışma merkezindeki diğer uzmanlar da sürece dahil edilebilir; örneğin bir vekâlet ya da mesleki bir görüş alışverişi için. Hepsi gizlilik yükümlülüğü altındadır.",
+			"cta": "Görüşmeye git",
+			"advisorFallback": "Bir danışman",
+			"organisationFallback": "danışma merkeziniz"
+		}
+	},
 	"session": {
 		"waitingMiniGame": {
 			"inhaleExhale": "Nefes rehberi nefes al ver",

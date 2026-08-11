@@ -2128,6 +2128,15 @@
 			"close": "Fermer"
 		}
 	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
+			"copy": "{{advisor}} du service de consultation {{organisation}} prend désormais en charge votre demande. Vos messages sont cryptés de bout en bout. En cas de besoin, d'autres personnes qualifiées de ce service de consultation peuvent être associées, par exemple pour un remplacement ou pour un échange professionnel — toutes sont tenues au secret professionnel.",
+			"cta": "Voir la conversation",
+			"advisorFallback": "Une conseillère ou un conseiller",
+			"organisationFallback": "votre service de consultation"
+		}
+	},
 	"session": {
 		"waitingMiniGame": {
 			"inhaleExhale": "Guide respiratoire inspirer expirer",
