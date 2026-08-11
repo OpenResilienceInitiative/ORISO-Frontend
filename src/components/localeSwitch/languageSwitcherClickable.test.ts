@@ -38,11 +38,56 @@ const read = (...segments: string[]) =>
 	readFileSync(join(__dirname, ...segments), 'utf-8');
 
 const NAVIGATION_STYLES = read('..', 'app', 'navigation.styles.scss');
+const NAVIGATION_BAR = read('..', 'app', 'NavigationBar.tsx');
 const LOCALE_SWITCH_STYLES = read('localeSwitch.styles.scss');
 const LANGUAGE_DROPDOWN = read('..', 'select', 'LanguageSelectDropdown.tsx');
 
 const ICON_SLOT = 'navigation__icon-slot';
 const LANGUAGE_SLOT = 'navigation__icon-slot--language';
+
+/**
+ * Every icon-slot class the language slot actually carries, read from the
+ * component rather than assumed.
+ *
+ * This matters: the slot is rendered with `navigation__icon-slot`,
+ * `--row` *and* `--language` together, so a rule written against `--row`
+ * reaches it just as surely as one written against the base class. An earlier
+ * version of this file assumed modifiers were mutually exclusive and would
+ * therefore have ignored exactly that rule.
+ */
+const languageSlotClasses = (): string[] => {
+	const declaration = NAVIGATION_BAR.split('\n').find((line) =>
+		line.includes(LANGUAGE_SLOT)
+	);
+	return Array.from(
+		(declaration ?? '').matchAll(/(navigation__icon-slot(?:--[\w-]+)?)/g)
+	).map((match) => match[1]);
+};
+
+const LANGUAGE_SLOT_CLASSES = languageSlotClasses();
+
+/** The body of a `key: (…) => ({ … })` callback, matched brace by brace. */
+const callbackBody = (source: string, key: string): string => {
+	const start = source.indexOf(`${key}:`);
+	if (start === -1) {
+		return '';
+	}
+	const open = source.indexOf('({', start);
+	if (open === -1) {
+		return '';
+	}
+	let depth = 0;
+	for (let i = open + 1; i < source.length; i++) {
+		if (source[i] === '{') depth++;
+		else if (source[i] === '}') {
+			depth--;
+			if (depth === 0) {
+				return source.slice(open + 1, i + 1);
+			}
+		}
+	}
+	return '';
+};
 
 const stripComments = (source: string) =>
 	source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
@@ -134,12 +179,16 @@ describe('language switcher stays clickable (#998)', () => {
 		const offenders = selectorsDisablingPointerEvents(NAVIGATION_STYLES)
 			.filter((selector) => {
 				const tokens = iconSlotTokens(selector);
+				if (tokens.length === 0) {
+					return false;
+				}
 
-				// A rule aimed at a different modifier — `--tile`, `--live`,
-				// `--logout` — cannot reach the language slot, whether or not
-				// it carries a negation.
-				const canReachLanguageSlot = tokens.some(
-					(token) => token === ICON_SLOT || token === LANGUAGE_SLOT
+				// A rule reaches the language slot when every icon-slot class
+				// it requires is one the slot actually carries. `--tile`,
+				// `--live` and `--logout` are therefore out of scope, while
+				// `--row` is emphatically not.
+				const canReachLanguageSlot = tokens.every((token) =>
+					LANGUAGE_SLOT_CLASSES.includes(token)
 				);
 				if (!canReachLanguageSlot) {
 					return false;
@@ -159,19 +208,31 @@ describe('language switcher stays clickable (#998)', () => {
 		// the assertion above would pass vacuously.
 		const policed = selectorsDisablingPointerEvents(NAVIGATION_STYLES)
 			.flatMap(iconSlotTokens)
-			.filter((token) => token === ICON_SLOT);
+			.filter((token) => LANGUAGE_SLOT_CLASSES.includes(token));
 
 		expect(policed.length).toBeGreaterThan(0);
+	});
+
+	it('knows which classes the language slot carries', () => {
+		// The reachability rule is only as good as this list. If the slot is
+		// ever rendered from a variable instead of a literal, this fails loudly
+		// rather than quietly excusing every rule.
+		expect(LANGUAGE_SLOT_CLASSES).toContain(ICON_SLOT);
+		expect(LANGUAGE_SLOT_CLASSES).toContain(LANGUAGE_SLOT);
+		expect(LANGUAGE_SLOT_CLASSES).toContain(`${ICON_SLOT}--row`);
 	});
 
 	it('lifts the portalled menu from the styles object, not from a stylesheet', () => {
 		// react-select's own hook: immune both to a wrong classNamePrefix and
 		// to a rule nested under a parent the portalled node never sits in.
-		// The z-index is pinned, because react-select's default of 1 would
-		// satisfy a looser check while leaving the menu behind the rail.
-		expect(LANGUAGE_DROPDOWN).toMatch(
-			/menuPortal:\s*\([^)]*\)\s*=>\s*\(\{[\s\S]*?zIndex:\s*1000\b/
-		);
+		// The body is extracted brace by brace so that a `zIndex` belonging to
+		// some later style callback cannot satisfy this on menuPortal's behalf,
+		// and the value is pinned — react-select's default of 1 is precisely
+		// what leaves the menu behind the rail.
+		const body = callbackBody(LANGUAGE_DROPDOWN, 'menuPortal');
+
+		expect(body).not.toBe('');
+		expect(body).toMatch(/zIndex:\s*1000\b/);
 	});
 
 	it('does not try to style the portalled menu from localeSwitch.styles.scss', () => {
