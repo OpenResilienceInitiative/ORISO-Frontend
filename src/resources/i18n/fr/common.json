@@ -2987,7 +2987,12 @@
 		"agencies": {
 			"noresults": "Aucun centre de consultation disponible pour ce sujet."
 		},
-		"start": "Démarrer la consultation"
+		"start": "Démarrer la consultation",
+		"consent": {
+			"accept": "J'accepte",
+			"reject": "Je n'accepte pas",
+			"mustAcceptToContinue": "Pour continuer, vous devez accepter notre politique de confidentialité."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {

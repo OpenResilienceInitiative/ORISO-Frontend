@@ -3796,6 +3796,11 @@
 			"cancelDelete": "Cancel",
 			"confirmDelete": "Yes, delete permanently",
 			"error": "The chat could not be ended just now. Please try again."
+		},
+		"consent": {
+			"accept": "I agree",
+			"reject": "I do not agree",
+			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
 		}
 	},
 	"sessionHeader": {

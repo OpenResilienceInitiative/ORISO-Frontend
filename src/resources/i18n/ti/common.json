@@ -2981,7 +2981,12 @@
 		"agencies": {
 			"noresults": "እዚ ርእስ ንምክር የለን ማእከል ምክር።"
 		},
-		"start": "ምክር ጀምር"
+		"start": "ምክር ጀምር",
+		"consent": {
+			"accept": "ይሰማማዕ እየ",
+			"reject": "ኣይሰማማዕን እየ",
+			"mustAcceptToContinue": "ንምቕጻል ንፖሊሲ ውልቃዊ ሓበሬታና ክትሰማምዑ ኣለኩም።"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3152,7 +3157,7 @@
 	},
 	"anonymousConsent": {
 		"button": "ኣረጋግፅ",
-		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ናይ ቪድዮ ጻውዒት ክጅምሩ ይኽእሉ።",
+		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ቻት ክጅምሩ ይኽእሉ።",
 		"headline": "እንኳዕ ደሓን መፁ!",
 		"label": {
 			"and": "እና",
