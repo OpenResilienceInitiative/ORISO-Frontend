@@ -206,7 +206,10 @@ export const AgencySelectionResults = ({
 							'fontSize': 14,
 							'textTransform': 'none',
 							'minWidth': { xs: 44, sm: 'auto' },
-							'mt': { xs: 0, sm: 0.5 },
+							// Same centre line as the absolutely positioned
+							// radio (top 11px + 21px half-height = 32px): the
+							// button is 36px tall, so no extra offset here.
+							'mt': 0,
 							'px': { xs: 1, sm: 1.25 },
 							'whiteSpace': 'nowrap',
 							'&:hover': {
@@ -408,7 +411,11 @@ export const AgencySelectionResults = ({
 									},
 									'& .MuiRadio-root': {
 										position: 'absolute',
-										top: '18px',
+										// Centre on the header row: the
+										// 36px "Mehr" button and the 40px
+										// avatar both centre at ~32px, the
+										// 42px radio therefore starts at 11.
+										top: { xs: '13px', sm: '11px' },
 										right: { xs: 12, sm: 16 },
 										m: 0
 									}
@@ -502,7 +509,11 @@ export const AgencySelectionResults = ({
 											},
 											'& .MuiRadio-root': {
 												position: 'absolute',
-												top: '18px',
+												// Centre on the header row: the
+										// 36px "Mehr" button and the 40px
+										// avatar both centre at ~32px, the
+										// 42px radio therefore starts at 11.
+										top: { xs: '13px', sm: '11px' },
 												right: { xs: 12, sm: 16 },
 												m: 0
 											}

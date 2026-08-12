@@ -2136,6 +2136,36 @@
 			"headline": "Pour pouvoir vous conseiller au mieux, nous avons besoin de votre code postal.",
 			"label": "Votre code postal",
 			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :"
+		},
+		"handover": {
+			"badge": "Inscrit(e)",
+			"headline": "C'est fait.",
+			"subline": "Voici la suite :",
+			"cta": "Écrire votre demande",
+			"encryption": "Chiffré : votre demande est lisible uniquement par vous et par les personnes qualifiées de votre service de consultation.",
+			"goToStep": "Aller à l'étape {{position}} sur {{total}}",
+			"steps": {
+				"write": {
+					"title": "Vous écrivez ce qui se passe",
+					"text": "Que s'est-il passé, où, depuis quand ? Quelques phrases suffisent."
+				},
+				"counsellor": {
+					"title": "Nous trouvons votre conseillère ou conseiller",
+					"text": "Avec les compétences adaptées — et du temps pour vous."
+				},
+				"reply": {
+					"title": "Une réponse sous 2 jours ouvrables",
+					"text": "Votre demande reçoit une réponse personnelle et professionnelle. La forme que prendra ensuite la consultation, vous la déterminez ensemble."
+				}
+			},
+			"status": {
+				"preparing": "Chiffrement de votre espace de consultation …",
+				"verifying": "Vérification : humain ou robot …",
+				"queued": "C'est bientôt votre tour …",
+				"ready": "Tout est prêt — vous pouvez écrire",
+				"slow": "Cela prend plus de temps que d'habitude",
+				"entering": "Ouverture de votre espace de consultation …"
+			}
 		}
 	},
 	"releaseNote": {

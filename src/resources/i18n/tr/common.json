@@ -2166,6 +2166,36 @@
 			"headline": "Size mümkün olan en iyi tavsiyeyi verebilmemiz için posta kodunuza ihtiyacımız var",
 			"label": "Posta kodunuz",
 			"subline": "Neden mi? Çünkü o zaman uzmanlarımız:"
+		},
+		"handover": {
+			"badge": "Kayıtlı",
+			"headline": "Tamamdır.",
+			"subline": "Şimdi sırada şunlar var:",
+			"cta": "Talebinizi yazın",
+			"encryption": "Şifreli: Talebinizi yalnızca siz ve danışma merkezinizin uzmanları görebilir.",
+			"goToStep": "{{total}} adımdan {{position}}. adıma git",
+			"steps": {
+				"write": {
+					"title": "Neler olduğunu siz yazarsınız",
+					"text": "Ne oldu, nerede, ne zamandan beri? Birkaç cümle yeterli."
+				},
+				"counsellor": {
+					"title": "Danışmanınızı biz buluruz",
+					"text": "Uzmanlık alanına uygun — ve size zaman ayıracak biri."
+				},
+				"reply": {
+					"title": "2 iş günü içinde yanıt",
+					"text": "Talebiniz kişisel ve profesyonel bir şekilde yanıtlanır. Danışmanlığın hangi biçimde devam edeceğine ise sonrasında birlikte karar verirsiniz."
+				}
+			},
+			"status": {
+				"preparing": "Görüşme alanınız şifreleniyor …",
+				"verifying": "Kontrol: insan mı, bot mu …",
+				"queued": "Birazdan sıra sizde …",
+				"ready": "Her şey hazır — yazmaya başlayabilirsiniz",
+				"slow": "Bu her zamankinden uzun sürüyor",
+				"entering": "Görüşme alanınız açılıyor …"
+			}
 		}
 	},
 	"releaseNote": {

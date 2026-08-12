@@ -1036,9 +1036,32 @@
 			}
 		},
 		"handover": {
+			"badge": "Registriert",
+			"headline": "Geschafft.",
+			"subline": "So geht es weiter:",
+			"cta": "Anfrage schreiben",
 			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"goToStep": "Zu Schritt {{position}} von {{total}}",
+			"steps": {
+				"write": {
+					"title": "Du schreibst, was los ist",
+					"text": "Was ist passiert, wo, seit wann? Ein paar Sätze genügen."
+				},
+				"counsellor": {
+					"title": "Wir finden deine Beraterin",
+					"text": "Fachlich passend — und mit Zeit für dich."
+				},
+				"reply": {
+					"title": "Antwort in 2 Arbeitstagen",
+					"text": "Auf deine Anfrage wird persönlich und professionell geantwortet. In welcher Form die Beratung weitergeht, bestimmt ihr danach gemeinsam."
+				}
+			},
 			"status": {
+				"preparing": "Beratungsraum wird verschlüsselt …",
+				"verifying": "Prüfung: Mensch oder Bot …",
+				"queued": "Gleich bist du an der Reihe …",
 				"ready": "Alles bereit — du kannst schreiben",
+				"slow": "Das dauert länger als gewohnt",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
 		}

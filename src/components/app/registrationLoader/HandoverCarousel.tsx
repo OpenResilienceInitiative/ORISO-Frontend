@@ -32,8 +32,9 @@ const STEPS: HandoverStep[] = [
 	{
 		key: 'reply',
 		artwork: processArtwork.reply,
-		titleFallback: 'Antwort in 2 Werktagen',
-		textFallback: 'Wir benachrichtigen Sie, sobald sie da ist.'
+		titleFallback: 'Antwort in 2 Arbeitstagen',
+		textFallback:
+			'Auf Ihre Anfrage wird persönlich und professionell geantwortet. In welcher Form die Beratung weitergeht, bestimmen Sie danach gemeinsam.'
 	}
 ];
 
