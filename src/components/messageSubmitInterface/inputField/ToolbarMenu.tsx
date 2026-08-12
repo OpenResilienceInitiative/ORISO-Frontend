@@ -9,6 +9,11 @@ export interface ToolbarMenuItem {
 	label: string;
 	glyph?: React.ReactNode;
 	selected?: boolean;
+	/**
+	 * True when the entry is one of a set the caret can only be in one of
+	 * (text style, list style) — announced as a radio rather than a toggle.
+	 */
+	exclusive?: boolean;
 	onSelect: () => void;
 }
 
@@ -100,7 +105,19 @@ export const ToolbarMenu = ({
 				<button
 					key={item.key}
 					type="button"
-					role="menuitem"
+					// Entries that carry a selected state are a choice, not a
+					// one-shot command: announce them as such so a screen
+					// reader says which text style the caret is in (#995).
+					role={
+						item.selected === undefined
+							? 'menuitem'
+							: item.exclusive
+								? 'menuitemradio'
+								: 'menuitemcheckbox'
+					}
+					aria-checked={
+						item.selected === undefined ? undefined : item.selected
+					}
 					className={[
 						'composerToolbar__menuItem',
 						item.selected && 'composerToolbar__menuItem--selected'

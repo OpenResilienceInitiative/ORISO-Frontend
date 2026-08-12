@@ -40,6 +40,24 @@ describe('notification action targets', () => {
 		expect(parseEventActionParams('{not-json')).toEqual({});
 	});
 
+	it('keeps typed non-content Matrix preview correlation metadata', () => {
+		expect(
+			parseEventActionParams(
+				JSON.stringify({
+					matrixEventId: '$event:oriso',
+					senderName: 'Lisa',
+					contentClass: 'TEXT',
+					recipientRole: 'consultant'
+				})
+			)
+		).toMatchObject({
+			matrixEventId: '$event:oriso',
+			senderName: 'Lisa',
+			contentClass: 'TEXT',
+			recipientRole: 'consultant'
+		});
+	});
+
 	it('falls back to the nested source session id when the top-level id is absent', () => {
 		expect(
 			resolveNotificationActionPath(
@@ -87,6 +105,11 @@ describe('shared params contract (#846)', () => {
 		// ORISO-UserService EventNotificationServiceTest
 		// .allEmittedParamKeysStayInsideTheSharedFrontendContract pins the
 		// identical set — update BOTH sides together.
+		//
+		// `matrixEventId` is the one key the frontend accepts before the
+		// backend emits it (#924 / ORISO-UserService#961). That direction is
+		// safe: the backend test asserts every emitted key is *inside* this
+		// contract, so a key we accept early cannot break it.
 		expect([...EVENT_PARAM_KEYS].sort()).toEqual(
 			[
 				'sessionId',
@@ -107,7 +130,8 @@ describe('shared params contract (#846)', () => {
 				'start',
 				'callRoomId',
 				'isVideo',
-				'forcedScopeKey'
+				'forcedScopeKey',
+				'matrixEventId'
 			].sort()
 		);
 	});

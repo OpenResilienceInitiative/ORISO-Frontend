@@ -80,13 +80,13 @@ export const MobileCompact: Story = {
 	render: () => <ToolbarHarness isMobile />
 };
 
-export const HeadingMenuOpensUp: Story = {
-	name: 'Heading menu opens upward (docked)',
+export const TextStyleMenuOpensUp: Story = {
+	name: 'Text style menu opens upward (docked)',
 	render: () => <ToolbarHarness />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Heading style' })
+			await canvas.findByRole('button', { name: 'Textstil' })
 		);
 		await waitFor(async () => {
 			const menu = canvasElement.querySelector('.composerToolbar__menu');
@@ -94,19 +94,28 @@ export const HeadingMenuOpensUp: Story = {
 				'composerToolbar__menu--up'
 			);
 		});
+		// #995: body text first, then the four German heading names.
 		await expect(
-			canvas.getByRole('menuitem', { name: /Heading 4/ })
-		).toBeInTheDocument();
+			canvas
+				.getAllByRole('menuitemradio')
+				.map((item) => item.textContent?.replace(/^(T|H[1-4])/, ''))
+		).toEqual([
+			'Normaler Text',
+			'Titel',
+			'Große Überschrift',
+			'Mittlere Überschrift',
+			'Kleine Überschrift'
+		]);
 	}
 };
 
-export const HeadingMenuOpensDownInFullscreen: Story = {
-	name: 'Heading menu opens downward (fullscreen)',
+export const TextStyleMenuOpensDownInFullscreen: Story = {
+	name: 'Text style menu opens downward (fullscreen)',
 	render: () => <ToolbarHarness isExpanded />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Heading style' })
+			await canvas.findByRole('button', { name: 'Textstil' })
 		);
 		await waitFor(async () => {
 			const menu = canvasElement.querySelector('.composerToolbar__menu');
@@ -122,11 +131,11 @@ export const MobileOverflowMenu: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'More tools' })
+			await canvas.findByRole('button', { name: 'Weitere Werkzeuge' })
 		);
 		await waitFor(async () => {
 			await expect(
-				canvas.getByRole('menuitem', { name: /Bold/ })
+				canvas.getByRole('menuitemcheckbox', { name: 'Fett' })
 			).toBeInTheDocument();
 		});
 	}

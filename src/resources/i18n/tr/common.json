@@ -51,7 +51,9 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu"
+			"associationLogoAlt": "Hizmet sağlayıcı kuruluş logosu",
+			"mobileHeadline": "Endişeleriniz için burada yer var.",
+			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
@@ -1201,13 +1203,35 @@
 		"register": {
 			"infoText": {
 				"copy": "Aşağıdaki konularda size tavsiyelerde bulunmaktan memnuniyet duyarız:",
-				"title": "Henüz kayıt olmadınız mı?"
+				"title": "Henüz kayıt olmadınız mı?",
+				"short": "Burada yeni misiniz?"
 			},
-			"linkLabel": "Danışmanlık konularına"
+			"linkLabel": "Danışmanlık konularına",
+			"separator": "Burada yeni misiniz?"
 		},
 		"security": {
 			"headline": "Güvenli ve Şifreli",
-			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur."
+			"description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur.",
+			"teaser": {
+				"text": "Uçtan uca şifreli — anahtar cihazınızda oluşturulur.",
+				"link": "Bu neden özellikle güvenli",
+				"textShort": "Anahtar cihazınızda kalır",
+				"linkShort": "Bu neden güvenli"
+			},
+			"explainer": {
+				"badge": "YENİ",
+				"headline": "Yalnızca ikiniz okuyabilirsiniz.",
+				"message": "Kendimi iyi hissetmiyorum.",
+				"you": "Siz",
+				"agency": "Danışma Merkezi",
+				"encrypted": "şifreli",
+				"attack": "bir saldırgan bundan fazlasını elde edemez",
+				"cipherLabel": "Ele geçirilen, şifrelenmiş veriler",
+				"key": "Anahtar cihazınızda oluşturulur ve orada kalır — bizde yoktur.",
+				"protocol": "Açık protokol <strong>Matrix</strong>, bağımsız olarak doğrulanabilir.",
+				"protocolLink": "Daha fazla bilgi",
+				"back": "Girişe geri dön"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1254,12 +1278,12 @@
 						"missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
 					}
 				},
-				"deletedAccount": "Hesabınız bir danışman tarafından kapatıldı.",
 				"email": {
 					"otp": {
 						"missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."
 					}
 				},
+				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
@@ -1418,8 +1442,22 @@
 			"showDetails": "Detayları göster",
 			"preview": {
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
-				"empty": "Bu sohbette henüz mesaj yok."
-			}
+				"empty": "Bu sohbette henüz mesaj yok.",
+				"image": "Görsel",
+				"file": "Dosya",
+				"audio": "Sesli mesaj",
+				"video": "Video",
+				"notice": "Bildirim",
+				"unsupported": "Desteklenmeyen mesaj",
+				"pending": "Şifre çözme bekleniyor",
+				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+			},
+			"loadOlder": "Eski etkinlikleri yükle",
+			"loadingOlder": "Eski etkinlikler yükleniyor…",
+			"olderError": "Eski etkinlikler yüklenemedi.",
+			"retryOlder": "Tekrar dene",
+			"endOfHistory": "Etkinlik geçmişinin sonu"
 		}
 	},
 	"overlay": {
@@ -2156,6 +2194,15 @@
 		},
 		"overlay": {
 			"close": "Kapat"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Talebiniz bir danışman tarafından kabul edildi.",
+			"copy": "{{organisation}} danışma merkezinden {{advisor}} bundan sonra talebinizle ilgileniyor. Mesajlarınız uçtan uca şifrelenmiştir. Gerektiğinde bu danışma merkezindeki diğer uzmanlar da sürece dahil edilebilir; örneğin bir vekâlet ya da mesleki bir görüş alışverişi için. Hepsi gizlilik yükümlülüğü altındadır.",
+			"cta": "Görüşmeye git",
+			"advisorFallback": "Bir danışman",
+			"organisationFallback": "danışma merkeziniz"
 		}
 	},
 	"session": {
@@ -3226,6 +3273,18 @@
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
 			"action": "Adımı değiştir"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Künye"
+			},
+			"privacy": {
+				"title": "Gizlilik politikası"
+			},
+			"back": "Geri",
+			"confirm": "Anladım"
 		}
 	}
 }

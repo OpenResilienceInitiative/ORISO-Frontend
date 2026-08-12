@@ -89,7 +89,7 @@ const labelFallbacks: Record<string, string> = {
 	'sessionList.toolbar.search.removeSelectedPerson': 'Person entfernen',
 	'sessionList.toolbar.chips.unread': 'Ungelesen',
 	'sessionList.toolbar.chips.drafts': 'Entwürfe',
-	'sessionList.toolbar.chips.nearby': 'Nearby',
+	'sessionList.toolbar.chips.nearby': 'Mail',
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
@@ -709,6 +709,11 @@ function AppOrisoRoutingRuntimeProviders({
 													notificationNoop,
 												refreshNotificationFeed:
 													notificationNoop,
+												loadOlderNotifications:
+													async () => {},
+												hasOlderNotifications: false,
+												isLoadingOlderNotifications: false,
+												olderNotificationsError: false,
 												removeNotification:
 													notificationNoop,
 												markNotificationAsRead:

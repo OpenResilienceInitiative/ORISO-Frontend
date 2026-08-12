@@ -1,10 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	KeyBackupRecoveryDialog,
-	type KeyBackupPromptMode
-} from './KeyBackupRecoveryPrompt';
+import { KeyBackupRecoveryDialog } from './KeyBackupRecoveryPrompt';
 
 const meta = {
 	title: 'Organisms/KeyBackupRecoveryDialog',
@@ -13,7 +10,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#843 login-time recovery prompt. Standard ORISO dialog based on the approved Element-inspired Tresor mockup. Recovery happens inline; setup links to the existing Sicherheit flow. Actions stack full-width at 575px and below.'
+					'#843 login-time recovery prompt. Standard ORISO dialog based on the approved Element-inspired Tresor mockup. Only the new-device case still asks: first-time setup runs silently in the background and surfaces its recovery key in the Sicherheit panel. Actions stack full-width at 575px and below.'
 			}
 		}
 	}
@@ -22,7 +19,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const InteractiveDialog = ({ mode }: { mode: KeyBackupPromptMode }) => {
+const InteractiveDialog = () => {
 	const [open, setOpen] = useState(true);
 	return (
 		<>
@@ -33,7 +30,6 @@ const InteractiveDialog = ({ mode }: { mode: KeyBackupPromptMode }) => {
 			)}
 			{open && (
 				<KeyBackupRecoveryDialog
-					mode={mode}
 					onClose={() => setOpen(false)}
 					onRecover={async () => 42}
 				/>
@@ -44,20 +40,10 @@ const InteractiveDialog = ({ mode }: { mode: KeyBackupPromptMode }) => {
 
 export const NewDeviceRecovery: Story = {
 	args: {
-		mode: 'recovery',
 		onClose: () => undefined,
 		onRecover: async () => 42
 	},
-	render: () => <InteractiveDialog mode="recovery" />
-};
-
-export const FirstTimeSetup: Story = {
-	args: {
-		mode: 'setup',
-		onClose: () => undefined,
-		onRecover: async () => 0
-	},
-	render: () => <InteractiveDialog mode="setup" />
+	render: () => <InteractiveDialog />
 };
 
 export const NewDeviceRecoveryMobile: Story = {

@@ -51,7 +51,9 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo"
+			"associationLogoAlt": "Provider organisation logo",
+			"mobileHeadline": "There is room here for what is on your mind.",
+			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"successful": "Successful",
 		"title": "Consulting & Help",
@@ -1283,6 +1285,16 @@
 			"showOriginal": "Show original",
 			"showingOriginal": "You are viewing the original version.",
 			"showTranslation": "Show translation"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Imprint"
+			},
+			"privacy": {
+				"title": "Privacy policy"
+			},
+			"back": "Back",
+			"confirm": "Got it"
 		}
 	},
 	"login": {
@@ -1305,6 +1317,11 @@
 			"infoText": {
 				"dataprotection": "Privacy policy",
 				"impressum": "Imprint"
+			},
+			"platform": {
+				"impressum": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nWho operates the platform and how to reach them is in the full legal notice. The counselling itself is done by independent centres with their own details, which you see once you have chosen one.",
+				"dataprotection": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nSigning in processes only what signing in needs. Your messages are end-to-end encrypted: they become readable only on your device and at your counselling centre. What is processed beyond that depends on the centre you choose later.",
+				"fullText": "Open the full text"
 			}
 		},
 		"password": {
@@ -1327,11 +1344,33 @@
 		"register": {
 			"infoText": {
 				"copy": "We will be happy to advise you on the following topics:",
-				"title": "Not registered yet?"
+				"title": "Not registered yet?",
+				"short": "New here?"
 			},
-			"linkLabel": "To the consulting topics"
+			"linkLabel": "To the consulting topics",
+			"separator": "New here?"
 		},
 		"security": {
+			"teaser": {
+				"text": "End-to-end encrypted — the key is created on your device.",
+				"link": "Why this is extra safe",
+				"textShort": "Key stays on your device",
+				"linkShort": "Why this is safe"
+			},
+			"explainer": {
+				"badge": "NEW",
+				"headline": "Only the two of you can read along.",
+				"message": "I am not doing well.",
+				"you": "You",
+				"agency": "Counselling centre",
+				"encrypted": "encrypted",
+				"attack": "this is all an attacker gets",
+				"cipherLabel": "Intercepted, encrypted data",
+				"key": "The key is created on your device and stays there — we do not have it.",
+				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
+				"protocolLink": "Learn more",
+				"back": "Back to sign in"
+			},
 			"headline": "Secure & Encrypted",
 			"description": "Your privacy is fully protected with end-to-end encryption."
 		},
@@ -1394,7 +1433,7 @@
 						"missing": "Please enter the code from your app for two-factor authentication."
 					}
 				},
-				"deletedAccount": "Your account has been closed by a counselor.",
+				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."
@@ -1406,6 +1445,9 @@
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here."
 			}
+		},
+		"mobile": {
+			"headline": "There is room here\nfor what is on your mind."
 		}
 	},
 	"message": {
@@ -1481,9 +1523,60 @@
 			"booking": {
 				"buttonLabel": "Make an appointment for consultation",
 				"headline": "Or make an appointment now"
+			},
+			"toolbar": {
+				"openTools": "Back to full editor tools",
+				"closeTools": "Switch to compact tools",
+				"more": "More tools",
+				"minimize": "Minimize editor",
+				"maximize": "Maximize editor",
+				"undo": "Undo",
+				"redo": "Redo",
+				"heading": "Text style",
+				"paragraph": "Normal text",
+				"heading1": "Title",
+				"heading2": "Large heading",
+				"heading3": "Medium heading",
+				"heading4": "Small heading",
+				"list": "List style",
+				"bulletList": "Bullet list",
+				"orderedList": "Ordered list",
+				"taskList": "Task list",
+				"quote": "Quote",
+				"bold": "Bold",
+				"italic": "Italic",
+				"strike": "Strikethrough",
+				"underline": "Underline",
+				"code": "Inline code",
+				"codeBlock": "Code block",
+				"link": "Link",
+				"highlight": "Highlight",
+				"highlightYellow": "Highlight yellow",
+				"highlightOrange": "Highlight orange",
+				"highlightRose": "Highlight rose",
+				"highlightMint": "Highlight mint",
+				"highlightBlue": "Highlight blue",
+				"superscript": "Superscript",
+				"subscript": "Subscript",
+				"addImage": "Add image",
+				"addImageShort": "Add",
+				"dateTime": "Insert date and time",
+				"attachment": "Add attachment",
+				"emoji": "Emoji panel",
+				"mention": "Mention someone",
+				"voiceRecording": "Voice recording"
 			}
 		},
+		"mention": {
+			"notInChat": "not in chat",
+			"empty": "No one found",
+			"unavailable": "The list could not be loaded",
+			"loading": "Loading …"
+		},
 		"audience": {
+			"clients": "Clients",
+			"counsellors": "Counsellors",
+			"moderators": "Moderators",
 			"all": "All",
 			"multiCount": "{{count}} persons",
 			"sendToAll": "Send to all",
@@ -1505,6 +1598,31 @@
 			"toggleSection": "Toggle section",
 			"selectAllBottom": "Select All"
 		},
+		"edit": {
+			"marker": "(edited)",
+			"markerTitle": "Message was edited"
+		},
+		"feedbackTag": "Feedback",
+		"menu": {
+			"open": "More options",
+			"replyDirect": "Reply directly",
+			"replyThread": "Reply in thread",
+			"edit": "Edit message",
+			"markText": "Mark text",
+			"forward": "Forward message",
+			"delete": "Delete message"
+		},
+		"reaction": {
+			"add": "React",
+			"count": "{{key}}: {{count}} reactions",
+			"more": "More emojis"
+		},
+		"visibility": {
+			"open": "Open visibility details",
+			"people": "People that see this message",
+			"title": "Message visible to …"
+		},
+		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
 		"systemNotification": "System Notification",
@@ -1727,8 +1845,22 @@
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
-				"empty": "No messages in this conversation yet."
-			}
+				"empty": "No messages in this conversation yet.",
+				"image": "Image",
+				"file": "File",
+				"audio": "Audio message",
+				"video": "Video",
+				"notice": "Notice",
+				"unsupported": "Unsupported message",
+				"pending": "Waiting for decryption",
+				"roomUnavailable": "Conversation unavailable on this device",
+				"eventUnavailable": "Message unavailable in local history"
+			},
+			"loadOlder": "Load older activity",
+			"loadingOlder": "Loading older activity…",
+			"olderError": "Could not load older activity.",
+			"retryOlder": "Try again",
+			"endOfHistory": "End of activity history"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -1801,6 +1933,13 @@
 					},
 					"text": "Copy link",
 					"title": "Copy registration link to counseling center to clipboard"
+				},
+				"mapLink": "Open in OpenStreetMap",
+				"openingHours": {
+					"label": "Opening hours"
+				},
+				"phone": {
+					"label": "Phone"
 				}
 			},
 			"displayName": "Display name",
@@ -1858,7 +1997,13 @@
 				"consultingTypeSelect": {
 					"label": "Topics"
 				},
-				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you."
+				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
+				"dialog": {
+					"openButton": "Request another topic",
+					"title": "Start a new request",
+					"close": "Close"
+				},
+				"agencyKnownBadge": "Already in contact with you"
 			},
 			"registerError": {
 				"overlay": {
@@ -2668,7 +2813,7 @@
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
-			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. Your messages are end-to-end encrypted. Where it is needed, other specialists at this counselling centre can be brought in — to cover an absence or to consult professionally — and all of them are bound by confidentiality.",
 			"cta": "View conversation",
 			"advisorFallback": "A consultant",
 			"organisationFallback": "your counselling centre"
@@ -3010,7 +3155,7 @@
 				"neu": "Unread",
 				"unread": "Unread",
 				"drafts": "Drafts",
-				"nearby": "Nearby",
+				"nearby": "Mail",
 				"create": "Create",
 				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
@@ -3018,7 +3163,7 @@
 				"internalGroup": "Internal group chat",
 				"groups": "Conversation circle",
 				"supervision": "Supervision",
-				"chats": "Nearby"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "No consultations match your search or filters.",
 			"draftMetadataOnly": "Unsent message saved."

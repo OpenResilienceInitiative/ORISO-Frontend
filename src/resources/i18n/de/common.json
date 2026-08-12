@@ -52,7 +52,9 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"associationLogoAlt": "Logo der Trägerorganisation"
+			"associationLogoAlt": "Logo der Trägerorganisation",
+			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
+			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"successful": "Erfolgreich",
 		"title": "Beratung",
@@ -1297,6 +1299,16 @@
 			"showOriginal": "Original anzeigen",
 			"showingOriginal": "Sie sehen die Originalfassung.",
 			"showTranslation": "Übersetzung anzeigen"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Impressum"
+			},
+			"privacy": {
+				"title": "Datenschutzerklärung"
+			},
+			"back": "Zurück",
+			"confirm": "Verstanden"
 		}
 	},
 	"login": {
@@ -1320,6 +1332,11 @@
 				"dataprotection": "Datenschutzerklärung",
 				"termsAndConditions": "Nutzungsbedingungen",
 				"impressum": "Impressum"
+			},
+			"platform": {
+				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie Sie den Betreiber erreichen, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die sehen Sie, sobald Sie eine gewählt haben.",
+				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.",
+				"fullText": "Vollständigen Text öffnen"
 			}
 		},
 		"password": {
@@ -1342,11 +1359,33 @@
 		"register": {
 			"infoText": {
 				"copy": "Wir beraten Sie gerne zu folgenden Themen:",
-				"title": "Noch nicht registriert?"
+				"title": "Noch nicht registriert?",
+				"short": "Neu hier?"
 			},
-			"linkLabel": "Zu den Beratungsthemen"
+			"linkLabel": "Zu den Beratungsthemen",
+			"separator": "Neu hier?"
 		},
 		"security": {
+			"teaser": {
+				"text": "Ende-zu-Ende verschlüsselt — der Schlüssel entsteht auf Ihrem Gerät.",
+				"link": "Warum das extra sicher ist",
+				"textShort": "Schlüssel nur auf Ihrem Gerät",
+				"linkShort": "Warum das sicher ist"
+			},
+			"explainer": {
+				"badge": "NEU",
+				"headline": "Nur Sie beide können mitlesen.",
+				"message": "Mir geht es nicht gut.",
+				"you": "Sie",
+				"agency": "Beratungsstelle",
+				"encrypted": "verschlüsselt",
+				"attack": "mehr bekommt ein Angreifer nicht",
+				"cipherLabel": "Abgefangene, verschlüsselte Daten",
+				"key": "Der Schlüssel entsteht auf Ihrem Gerät und bleibt dort — wir haben ihn nicht.",
+				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
+				"protocolLink": "Mehr dazu",
+				"back": "Zurück zur Anmeldung"
+			},
 			"headline": "Sicher & verschlüsselt",
 			"description": "Ihre Privatsphäre ist dank Ende-zu-Ende-Verschlüsselung vollständig geschützt."
 		},
@@ -1409,7 +1448,7 @@
 						"missing": "Bitte geben Sie den Code aus Ihrer App für die Zwei-Faktor-Authentifizierung ein."
 					}
 				},
-				"deletedAccount": "Ihr Account wurde von einer Beratungsfachkraft geschlossen.",
+				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
@@ -1421,6 +1460,9 @@
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden."
 			}
+		},
+		"mobile": {
+			"headline": "Hier ist Raum für\nIhre Anliegen."
 		}
 	},
 	"message": {
@@ -1496,9 +1538,60 @@
 			"booking": {
 				"buttonLabel": "Termin zur Beratung vereinbaren",
 				"headline": "Oder vereinbare jetzt einen Termin"
+			},
+			"toolbar": {
+				"openTools": "Zurück zu allen Werkzeugen",
+				"closeTools": "Zu den kompakten Werkzeugen wechseln",
+				"more": "Weitere Werkzeuge",
+				"minimize": "Editor verkleinern",
+				"maximize": "Editor vergrößern",
+				"undo": "Rückgängig",
+				"redo": "Wiederherstellen",
+				"heading": "Textstil",
+				"paragraph": "Normaler Text",
+				"heading1": "Titel",
+				"heading2": "Große Überschrift",
+				"heading3": "Mittlere Überschrift",
+				"heading4": "Kleine Überschrift",
+				"list": "Listenstil",
+				"bulletList": "Aufzählung",
+				"orderedList": "Nummerierte Liste",
+				"taskList": "Aufgabenliste",
+				"quote": "Zitat",
+				"bold": "Fett",
+				"italic": "Kursiv",
+				"strike": "Durchgestrichen",
+				"underline": "Unterstrichen",
+				"code": "Code",
+				"codeBlock": "Codeblock",
+				"link": "Link",
+				"highlight": "Markieren",
+				"highlightYellow": "Gelb markieren",
+				"highlightOrange": "Orange markieren",
+				"highlightRose": "Rosé markieren",
+				"highlightMint": "Mint markieren",
+				"highlightBlue": "Blau markieren",
+				"superscript": "Hochgestellt",
+				"subscript": "Tiefgestellt",
+				"addImage": "Bild einfügen",
+				"addImageShort": "Bild",
+				"dateTime": "Datum und Uhrzeit einfügen",
+				"attachment": "Anhang hinzufügen",
+				"emoji": "Emoji-Auswahl",
+				"mention": "Person erwähnen",
+				"voiceRecording": "Sprachaufnahme"
 			}
 		},
+		"mention": {
+			"notInChat": "nicht im Chat",
+			"empty": "Niemand gefunden",
+			"unavailable": "Liste konnte nicht geladen werden",
+			"loading": "Wird geladen …"
+		},
 		"audience": {
+			"clients": "Ratsuchende",
+			"counsellors": "Beratende",
+			"moderators": "Moderierende",
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
 			"sendToAll": "An alle senden",
@@ -1507,19 +1600,44 @@
 			"closeMenu": "Senden-an-Menü schließen",
 			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
 			"menuHeading": "Adressaten wählen",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Ratsuchende auswählen",
+			"clientsSelected": "{{count}} Ratsuchende ausgewählt",
+			"clientsSelectAll": "Alle Ratsuchenden auswählen",
+			"counsellorsSelect": "Alle Beratenden auswählen",
+			"counsellorsSelected": "{{count}} Beratende ausgewählt",
+			"moderatorsSelect": "Alle Moderierenden auswählen",
+			"moderatorsSelected": "{{count}} Moderierende ausgewählt",
+			"clientsEmpty": "In diesem Raum sind keine Ratsuchenden",
+			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
+			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Alle auswählen"
 		},
+		"edit": {
+			"marker": "(bearbeitet)",
+			"markerTitle": "Nachricht wurde bearbeitet"
+		},
+		"feedbackTag": "Feedback",
+		"menu": {
+			"open": "Weitere Optionen",
+			"replyDirect": "Direkt antworten",
+			"replyThread": "Im Thread antworten",
+			"edit": "Nachricht bearbeiten",
+			"markText": "Text markieren",
+			"forward": "Nachricht weiterleiten",
+			"delete": "Nachricht löschen"
+		},
+		"reaction": {
+			"add": "Reagieren",
+			"count": "{{key}}: {{count}} Reaktionen",
+			"more": "Weitere Emojis"
+		},
+		"visibility": {
+			"open": "Sichtbarkeit anzeigen",
+			"people": "Personen, die diese Nachricht sehen",
+			"title": "Nachricht sichtbar für …"
+		},
+		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
@@ -1751,8 +1869,22 @@
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
-				"empty": "Noch keine Nachrichten in diesem Gespräch."
-			}
+				"empty": "Noch keine Nachrichten in diesem Gespräch.",
+				"image": "Bild",
+				"file": "Datei",
+				"audio": "Audionachricht",
+				"video": "Video",
+				"notice": "Hinweis",
+				"unsupported": "Nicht unterstützte Nachricht",
+				"pending": "Wird entschlüsselt",
+				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
+			},
+			"loadOlder": "Ältere Aktivitäten laden",
+			"loadingOlder": "Ältere Aktivitäten werden geladen…",
+			"olderError": "Ältere Aktivitäten konnten nicht geladen werden.",
+			"retryOlder": "Erneut versuchen",
+			"endOfHistory": "Ende des Aktivitätsverlaufs"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -1825,6 +1957,13 @@
 					},
 					"text": "Link kopieren",
 					"title": "Registrierungslink zur Beratungsstelle in Zwischenablage kopieren"
+				},
+				"mapLink": "In OpenStreetMap öffnen",
+				"openingHours": {
+					"label": "Öffnungszeiten"
+				},
+				"phone": {
+					"label": "Telefon"
 				}
 			},
 			"displayName": "Anzeigename",
@@ -1883,7 +2022,13 @@
 				"consultingTypeSelect": {
 					"label": "Themenfelder"
 				},
-				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne."
+				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne.",
+				"dialog": {
+					"openButton": "Weiteres Thema anfragen",
+					"title": "Neue Anfrage stellen",
+					"close": "Schließen"
+				},
+				"agencyKnownBadge": "Bereits mit Ihnen in Kontakt"
 			},
 			"registerError": {
 				"overlay": {
@@ -2727,11 +2872,11 @@
 			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
 		},
 		"accepted": {
-			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
-			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Alle Nachrichten bleiben Ende-zu-Ende verschlüsselt und nur für die an deiner Beratung beteiligten Personen sichtbar.",
+			"title": "Ihre Anfrage wurde von einer Berater:in angenommen.",
+			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um Ihr Anliegen. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Bei Bedarf können weitere Fachkräfte dieser Beratungsstelle hinzugezogen werden, etwa zur Vertretung oder zur fachlichen Rücksprache — alle sind zur Verschwiegenheit verpflichtet.",
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
-			"organisationFallback": "deiner Beratungsstelle"
+			"organisationFallback": "Ihrer Beratungsstelle"
 		},
 		"systemMessage": {
 			"badge": "System-Benachrichtigung",
@@ -3067,7 +3212,7 @@
 				"neu": "Ungelesen",
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
-				"nearby": "Nähe",
+				"nearby": "Mail",
 				"create": "Erstellen",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
@@ -3075,7 +3220,7 @@
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Nähe"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
