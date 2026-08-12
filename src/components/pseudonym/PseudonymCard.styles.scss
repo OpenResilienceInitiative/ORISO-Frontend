@@ -100,7 +100,7 @@
    The content column slides 32px under the avatar column and the avatar frame
    paints its own white background on top of it (z-index 2 over 1), so any
    header text starting before 60px is hidden behind the avatar — that is what
-   swallowed the leading "I" of "Ihre ersten Schritte". 34px of indent puts the
+   swallowed the leading "I" of "Ihre ersten Schritte". 22px of indent puts the
    text 8px past the visible 48px circle (which ends at 54px inside the 60px
    frame), the same avatar-to-name gap the message header uses. */
 .pseudonymCard__header {
@@ -109,7 +109,7 @@
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
-	padding-left: 34px;
+	padding-left: 22px;
 }
 
 .pseudonymCard__headerName {
