@@ -405,9 +405,6 @@ export const CircleSettingsView = ({
 									anchorRef={moderatorButtonRef}
 									onClose={() => setModeratorMenuOpen(false)}
 									labelledBy="circleModeratorButton"
-									vacatedHint={translate(
-										'groupChat.internal.vacatedHint'
-									)}
 									toggleLabel={(label, selected) =>
 										translate(
 											selected

@@ -162,7 +162,6 @@ const PersonMenuDemo = () => {
 				}
 				anchorRef={anchorRef}
 				onClose={() => undefined}
-				vacatedHint="nicht mehr in der Beratungsstelle"
 				toggleLabel={(label, isSelected) =>
 					isSelected ? `${label} entfernen` : `${label} auswählen`
 				}
@@ -225,7 +224,6 @@ const CardMenuOverlayDemo = () => {
 					}
 					anchorRef={splitButtonRef}
 					onClose={() => setOpen(false)}
-					vacatedHint="nicht mehr in der Beratungsstelle"
 					toggleLabel={(label, isSelected) =>
 						isSelected ? `${label} entfernen` : `${label} auswählen`
 					}

@@ -300,11 +300,7 @@
 		},
 		"internal": {
 			"subtitle": "mit deinen Kolleg:innen",
-			"supportText": "Stimme dich innerhalb deiner Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
-			"nameLabel": "Name Interna",
-			"personCount_one": "{{count}}x Person hinzufügen",
-			"personCount_other": "{{count}}x Person hinzufügen",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"supportText": "Stimme dich innerhalb deiner Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf."
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
