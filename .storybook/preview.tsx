@@ -833,6 +833,11 @@ const preview: Preview = {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
+				},
+				tablet834: {
+					name: 'Tablet 834 (iPad Air portrait)',
+					styles: { width: '834px', height: '1194px' },
+					type: 'tablet'
 				}
 			}
 		},
