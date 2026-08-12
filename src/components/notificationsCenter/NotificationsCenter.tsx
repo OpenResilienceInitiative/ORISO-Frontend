@@ -48,7 +48,7 @@ import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
 import {
-	isTimelineCaseHandoverControlled,
+	requiresCaseHandoverCheck,
 	useCaseHandoverPreviewGate
 } from './caseHandoverPreviewGate';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
@@ -423,26 +423,25 @@ export const NotificationsCenter = () => {
 						fallbackText: describeItem(item, translate).text,
 						labels: previewLabels,
 						sessionId,
-						caseHandoverControlled:
-							isTimelineCaseHandoverControlled(
-								session,
-								userData?.userId
-							)
+						needsCaseHandoverCheck: requiresCaseHandoverCheck(
+							session,
+							userData?.userId
+						)
 					}
 				];
 			}),
 		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
 	);
-	// Only sessions owned by another consultant can be curtained, so only those
-	// cost a status request; everything else previews without one.
-	const controlledSessionIds = useMemo(
+	// Only sessions that could be curtained cost a status request; a group
+	// chat, an enquiry or one's own case previews without one.
+	const checkedSessionIds = useMemo(
 		() =>
 			Array.from(
 				new Set(
 					candidatePreviewSources
 						.filter(
 							(source) =>
-								source.caseHandoverControlled &&
+								source.needsCaseHandoverCheck &&
 								source.sessionId
 						)
 						.map((source) => source.sessionId as string)
@@ -451,24 +450,54 @@ export const NotificationsCenter = () => {
 		[candidatePreviewSources]
 	);
 	const isCaseHandoverPreviewAllowed =
-		useCaseHandoverPreviewGate(controlledSessionIds);
+		useCaseHandoverPreviewGate(checkedSessionIds);
 	const messagePreviewSources = useMemo(
 		() =>
 			candidatePreviewSources
-				.filter(
-					(source) =>
-						!source.caseHandoverControlled ||
+				.filter((source) => {
+					if (!source.needsCaseHandoverCheck) {
+						return true;
+					}
+					// A card whose session cannot even be named is one we have
+					// no way to clear, so it never hydrates.
+					return (
+						Boolean(source.sessionId) &&
 						isCaseHandoverPreviewAllowed(source.sessionId)
-				)
+					);
+				})
 				.map(
 					({
-						caseHandoverControlled: _controlled,
+						needsCaseHandoverCheck: _needsCheck,
 						sessionId: _sessionId,
 						...source
 					}) => source
 				),
 		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
 	);
+	// Previews are dropped again the moment their card stops being allowed —
+	// a session arriving late in SessionsDataContext can turn a hydrated card
+	// into a curtained one, and the decrypted text would otherwise survive in
+	// this map, still feeding the card body and the search index.
+	const allowedPreviewIds = useMemo(
+		() =>
+			new Set(
+				messagePreviewSources.map((source) => source.activityEventId)
+			),
+		[messagePreviewSources]
+	);
+	useEffect(() => {
+		setHydratedMessagePreviews((current) => {
+			const staleIds = Object.keys(current).filter(
+				(activityEventId) => !allowedPreviewIds.has(activityEventId)
+			);
+			if (staleIds.length === 0) {
+				return current;
+			}
+			const next = { ...current };
+			staleIds.forEach((activityEventId) => delete next[activityEventId]);
+			return next;
+		});
+	}, [allowedPreviewIds]);
 	const handlePreviewChange = useCallback(
 		(
 			activityEventId: string,

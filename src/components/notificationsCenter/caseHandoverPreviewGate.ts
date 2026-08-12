@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 // Imported from its own module rather than the `api` barrel: the barrel pulls
 // the whole API surface (and, transitively, the Lottie player) into anything
 // that touches this gate.
@@ -21,20 +21,27 @@ import { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers
  */
 
 /**
- * Whether a session is subject to case-handover access control at all.
+ * Whether a card must pass the handover check before it may hydrate.
  *
- * Mirrors the ownership condition of `isCaseHandoverAccessControlled` without
- * its `type` argument, which is a session-list notion the timeline does not
- * have: a one-to-one session, past the enquiry stage, owned by a **different**
- * consultant. Everything else — group chats, enquiries, one's own cases — is
- * never curtained, so it must not cost a request.
+ * Phrased as "requires a check", not "is controlled", because the honest
+ * default is the expensive one. The exemptions below are the only cases where
+ * the *loaded* session proves handover cannot apply — a group chat, an enquiry
+ * nobody owns yet, or a case owned by the reader. Mirrors the ownership
+ * condition of `isCaseHandoverAccessControlled` without its `type` argument,
+ * which is a session-list notion the timeline does not have.
+ *
+ * Anything else answers `true`, **including a session the timeline could not
+ * resolve at all**: `SessionsDataContext` is paginated and populated
+ * asynchronously, so a card can easily name a session that is not loaded yet.
+ * Reading "not found" as "not controlled" would have opened the gate for
+ * exactly the rows it exists to close.
  */
-export const isTimelineCaseHandoverControlled = (
+export const requiresCaseHandoverCheck = (
 	session: ExtendedSessionInterface | null | undefined,
 	userId: string | undefined
 ): boolean => {
 	if (!session?.item || !userId) {
-		return false;
+		return true;
 	}
 	if (session.isGroup || !session.isSession) {
 		return false;
@@ -43,7 +50,11 @@ export const isTimelineCaseHandoverControlled = (
 		return false;
 	}
 	const ownerId = session.consultant?.id;
-	return Boolean(ownerId) && String(ownerId) !== String(userId);
+	// An ownerless session is nobody's case to hand over.
+	if (!ownerId) {
+		return false;
+	}
+	return String(ownerId) !== String(userId);
 };
 
 type GateState = 'allowed' | 'blocked';
@@ -65,10 +76,10 @@ export const resetCaseHandoverPreviewGateCache = () => statusCache.clear();
  * blocked set" for "allowed" — an unknown id answers `false`.
  */
 export const useCaseHandoverPreviewGate = (
-	controlledSessionIds: readonly string[]
+	checkedSessionIds: readonly string[]
 ): ((sessionId: string | null | undefined) => boolean) => {
-	const [, setResolvedCount] = useState(0);
-	const key = controlledSessionIds.join(',');
+	const [resolvedCount, setResolvedCount] = useState(0);
+	const key = checkedSessionIds.join(',');
 
 	useEffect(() => {
 		let cancelled = false;
@@ -104,6 +115,14 @@ export const useCaseHandoverPreviewGate = (
 		};
 	}, [key]);
 
-	return (sessionId) =>
-		Boolean(sessionId) && statusCache.get(String(sessionId)) === 'allowed';
+	// Memoized so the caller's derived lists keep a stable identity between
+	// renders; `resolvedCount` is what makes a newly cached status visible,
+	// since the cache itself is module state React cannot observe.
+	return useCallback(
+		(sessionId: string | null | undefined) =>
+			Boolean(sessionId) &&
+			statusCache.get(String(sessionId)) === 'allowed',
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[resolvedCount, key]
+	);
 };

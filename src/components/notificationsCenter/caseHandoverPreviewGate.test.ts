@@ -1,15 +1,15 @@
 // @vitest-environment jsdom — the module reaches the api layer, which reads
 // `window` while resolving the API base URL at import time.
 import { describe, expect, it } from 'vitest';
-import { isTimelineCaseHandoverControlled } from './caseHandoverPreviewGate';
+import { requiresCaseHandoverCheck } from './caseHandoverPreviewGate';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces';
 
 /**
  * The timeline is the third surface that shows message content: the
  * conversation (curtained by `SessionStream`), the session list (which shows
  * `caseHandover.list.hiddenPreview`) and now the activity card. This predicate
- * decides which sessions have to pass the handover check before a card may
- * hydrate its preview — everything it lets through previews without a request.
+ * decides which cards must clear the handover check before hydrating — so
+ * every `false` it returns is a card that decrypts without asking anyone.
  */
 const session = (overrides: Record<string, any> = {}) =>
 	({
@@ -21,14 +21,14 @@ const session = (overrides: Record<string, any> = {}) =>
 		...overrides
 	}) as any;
 
-describe('isTimelineCaseHandoverControlled', () => {
-	it("controls a colleague's live one-to-one session", () => {
-		expect(isTimelineCaseHandoverControlled(session(), 'me')).toBe(true);
+describe('requiresCaseHandoverCheck', () => {
+	it("checks a colleague's live one-to-one session", () => {
+		expect(requiresCaseHandoverCheck(session(), 'me')).toBe(true);
 	});
 
-	it('leaves my own session alone, so it costs no status request', () => {
+	it('exempts my own session, so it costs no status request', () => {
 		expect(
-			isTimelineCaseHandoverControlled(
+			requiresCaseHandoverCheck(
 				session({ consultant: { id: 'me' } }),
 				'me'
 			)
@@ -37,47 +37,45 @@ describe('isTimelineCaseHandoverControlled', () => {
 
 	it('compares owner ids as strings, since one side may be numeric', () => {
 		expect(
-			isTimelineCaseHandoverControlled(
-				session({ consultant: { id: 42 } }),
-				'42'
-			)
+			requiresCaseHandoverCheck(session({ consultant: { id: 42 } }), '42')
 		).toBe(false);
 	});
 
-	it('leaves group chats alone — handover applies to one-to-one cases', () => {
+	it('exempts group chats — handover applies to one-to-one cases', () => {
 		expect(
-			isTimelineCaseHandoverControlled(session({ isGroup: true }), 'me')
+			requiresCaseHandoverCheck(session({ isGroup: true }), 'me')
 		).toBe(false);
 	});
 
-	it('leaves enquiries alone, before anyone owns them', () => {
+	it('exempts enquiries, before anyone owns them', () => {
 		expect(
-			isTimelineCaseHandoverControlled(
+			requiresCaseHandoverCheck(
 				session({ item: { status: STATUS_ENQUIRY } }),
 				'me'
 			)
 		).toBe(false);
 		expect(
-			isTimelineCaseHandoverControlled(
-				session({ isEmptyEnquiry: true }),
-				'me'
-			)
+			requiresCaseHandoverCheck(session({ isEmptyEnquiry: true }), 'me')
 		).toBe(false);
 	});
 
-	it('treats an ownerless session as uncontrolled', () => {
+	it('exempts an ownerless session — nobody has a case to hand over', () => {
 		expect(
-			isTimelineCaseHandoverControlled(
-				session({ consultant: undefined }),
-				'me'
-			)
+			requiresCaseHandoverCheck(session({ consultant: undefined }), 'me')
 		).toBe(false);
 	});
 
-	it('answers false without a session or without a user', () => {
-		expect(isTimelineCaseHandoverControlled(null, 'me')).toBe(false);
-		expect(isTimelineCaseHandoverControlled(session(), undefined)).toBe(
-			false
-		);
+	it('checks a session the timeline could not resolve', () => {
+		// The hole Shanzae found on PR #1046: `SessionsDataContext` is
+		// paginated and fills asynchronously, so a card routinely names a
+		// session that is not loaded. Reading "not found" as "not controlled"
+		// let exactly those cards decrypt.
+		expect(requiresCaseHandoverCheck(null, 'me')).toBe(true);
+		expect(requiresCaseHandoverCheck(undefined, 'me')).toBe(true);
+		expect(requiresCaseHandoverCheck({} as any, 'me')).toBe(true);
+	});
+
+	it('checks when the reader is unknown, since ownership cannot be compared', () => {
+		expect(requiresCaseHandoverCheck(session(), undefined)).toBe(true);
 	});
 });
