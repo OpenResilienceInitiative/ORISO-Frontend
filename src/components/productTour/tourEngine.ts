@@ -72,13 +72,16 @@ export interface TourReduction {
 /**
  * Pure transition function from a Joyride callback to the next controlled
  * run-state plus the domain events it implies. Closing or skipping is never
- * reported as completion; a missing final target closes the tour without a
- * terminal status so it stays resumable.
+ * reported as completion; a missing final REQUIRED target closes the tour
+ * without a terminal status so it stays resumable. A missing final OPTIONAL
+ * target (per `steps` metadata) completes the tour when moving forward —
+ * trailing optional steps must never trap a fresh account in `in_progress`.
  */
 export const reduceTourCallback = (
 	state: TourRunState,
 	cb: TourCallbackInput,
-	stepCount: number
+	stepCount: number,
+	steps?: ReadonlyArray<Pick<TourStep, 'optional'>>
 ): TourReduction => {
 	const events: TourEvent[] = [];
 	const next = { ...state };
@@ -97,13 +100,20 @@ export const reduceTourCallback = (
 	}
 
 	if (cb.type === EVENTS.TARGET_NOT_FOUND) {
-		events.push('target_missing');
+		const isOptional = !!steps?.[cb.index]?.optional;
+		events.push(isOptional ? 'optional_step_skipped' : 'target_missing');
 		const direction = cb.action === ACTIONS.PREV ? -1 : 1;
 		const nextIndex = cb.index + direction;
 		if (nextIndex < 0 || nextIndex >= stepCount) {
-			// No presentable step in that direction: close without a terminal
-			// status so the tour stays resumable.
 			next.run = false;
+			if (isOptional && direction === 1) {
+				// Running forward off the end over an optional step is a
+				// finished tour, not an interrupted one.
+				next.status = 'completed';
+				events.push('tour_completed');
+			}
+			// Otherwise: close without a terminal status so the tour stays
+			// resumable.
 		} else {
 			next.stepIndex = nextIndex;
 		}
