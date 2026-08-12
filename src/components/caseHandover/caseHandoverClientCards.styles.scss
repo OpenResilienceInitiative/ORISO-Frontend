@@ -103,13 +103,15 @@
 	color: var(--m3-on-surface, #1c1b1f);
 }
 
-.caseHandoverMessage__reason {
+.caseHandoverMessage__body .caseHandoverMessage__reason {
 	margin: 0;
 	font-weight: 500;
 }
 
-.caseHandoverMessage__explanation {
-	/* Figma leaves one empty body line between reason and explanation. */
+/* `.messageItem__message p { margin: 0 }` resets paragraphs inside the bubble,
+   so the blank body line Figma leaves between reason and explanation needs the
+   matching specificity to survive. */
+.caseHandoverMessage__body .caseHandoverMessage__explanation {
 	margin: 24px 0 0;
 	font-weight: 400;
 	line-height: 21px;
@@ -129,6 +131,12 @@
 
 	.button__wrapper {
 		margin: 0;
+	}
+
+	/* Buttons default to a 200px floor, which forces the pair onto two rows
+	   inside a 444px bubble. Inside a message they size to their label. */
+	.button__item {
+		min-width: 0;
 	}
 }
 

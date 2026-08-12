@@ -225,24 +225,28 @@ export const CaseHandoverSystemMessageCard = ({
 						>
 							{children}
 						</CaseHandoverSystemMessageBody>
-						<div className="messageItem__timeRail">
-							<span className="messageItem__messageTime">
-								{timestamp}
-								<span
-									className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
-									role="img"
-									aria-label={translate(
-										'message.deliveryStatus.sent',
-										'sent'
-									)}
-								>
-									<DeliverySentIcon
-										aria-hidden
-										focusable="false"
-									/>
+						{/* No time rail without a time — a lone delivery tick in an
+						    empty rail reads as a broken message. */}
+						{timestamp && (
+							<div className="messageItem__timeRail">
+								<span className="messageItem__messageTime">
+									{timestamp}
+									<span
+										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
+										role="img"
+										aria-label={translate(
+											'message.deliveryStatus.sent',
+											'sent'
+										)}
+									>
+										<DeliverySentIcon
+											aria-hidden
+											focusable="false"
+										/>
+									</span>
 								</span>
-							</span>
-						</div>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
