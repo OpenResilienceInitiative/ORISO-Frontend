@@ -498,6 +498,21 @@ export const NotificationsCenter = () => {
 			return next;
 		});
 	}, [allowedPreviewIds]);
+	/**
+	 * The only way a hydrated preview should ever be read.
+	 *
+	 * The purge above is state cleanup and lands one render late; in the render
+	 * where a card loses its allowance the decrypted text is still in the map.
+	 * Reading through this guard means a curtained card never shows it, not
+	 * even for a single paint.
+	 */
+	const visiblePreview = useCallback(
+		(activityEventId: string) =>
+			allowedPreviewIds.has(activityEventId)
+				? hydratedMessagePreviews[activityEventId]
+				: undefined,
+		[allowedPreviewIds, hydratedMessagePreviews]
+	);
 	const handlePreviewChange = useCallback(
 		(
 			activityEventId: string,
@@ -526,9 +541,7 @@ export const NotificationsCenter = () => {
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
-					return `${title} ${
-						hydratedMessagePreviews[item.id]?.text || text
-					}`;
+					return `${title} ${visiblePreview(item.id)?.text || text}`;
 				}
 			),
 		[
@@ -537,7 +550,7 @@ export const NotificationsCenter = () => {
 			searchQuery,
 			unreadOnly,
 			translate,
-			hydratedMessagePreviews
+			visiblePreview
 		]
 	);
 
@@ -963,8 +976,7 @@ export const NotificationsCenter = () => {
 								item,
 								translate
 							);
-							const hydratedPreview =
-								hydratedMessagePreviews[item.id];
+							const hydratedPreview = visiblePreview(item.id);
 							const visibleText = hydratedPreview?.text || text;
 							const Icon = hydratedPreview?.kind
 								? MESSAGE_PREVIEW_ICONS[hydratedPreview.kind] ||

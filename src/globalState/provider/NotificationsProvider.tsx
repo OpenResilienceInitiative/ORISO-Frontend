@@ -166,6 +166,29 @@ const isLocalItem = (item: NotificationFeedItem) =>
 	item.id.startsWith('local-');
 
 /**
+ * Cap on client-side rows only.
+ *
+ * The feed itself is deliberately uncapped now that older pages load on demand
+ * (#930), but `local-*` rows are never reconciled away by a page-0 response, so
+ * without a bound they accumulate for as long as the tab lives.
+ */
+const MAX_LOCAL_FEED_ITEMS = NOTIFICATION_FEED_MAX_ITEMS;
+
+const capLocalItems = (
+	items: NotificationFeedItem[]
+): NotificationFeedItem[] => {
+	const local = items.filter(isLocalItem);
+	if (local.length <= MAX_LOCAL_FEED_ITEMS) {
+		return items;
+	}
+	// `items` is already newest-first, so the tail is the oldest local rows.
+	const dropped = new Set(
+		local.slice(MAX_LOCAL_FEED_ITEMS).map((item) => item.id)
+	);
+	return items.filter((item) => !dropped.has(item.id));
+};
+
+/**
  * Merge a freshly fetched page into the feed, newest first, with ids as the
  * deterministic tie-break and dedupe key.
  *
@@ -178,16 +201,23 @@ const isLocalItem = (item: NotificationFeedItem) =>
 const mergeNotificationFeed = (
 	incoming: NotificationFeedItem[],
 	existing: NotificationFeedItem[],
-	options: { reconcileWindow?: boolean } = {}
+	options: { reconcileWindow?: boolean; olderPagesLoaded?: boolean } = {}
 ): NotificationFeedItem[] => {
 	const incomingIds = new Set(incoming.map((item) => item.id));
+	// An empty page describes no window, so it can only be read as "nothing
+	// left" while page 0 is the whole feed. With older pages loaded it would
+	// otherwise delete rows this response never covered, and one transient
+	// empty answer would blank everything.
+	const reconcile =
+		options.reconcileWindow &&
+		(incoming.length > 0 || !options.olderPagesLoaded);
 	const windowStart = incoming.length
 		? Math.min(
 				...incoming.map((item) => new Date(item.createdAt).getTime())
 			)
 		: Number.NEGATIVE_INFINITY;
 
-	const retained = options.reconcileWindow
+	const retained = reconcile
 		? existing.filter((item) => {
 				if (incomingIds.has(item.id) || isLocalItem(item)) {
 					return true;
@@ -198,7 +228,7 @@ const mergeNotificationFeed = (
 
 	const byId = new Map(retained.map((item) => [item.id, item]));
 	incoming.forEach((item) => byId.set(item.id, item));
-	return sortNewestFirst(Array.from(byId.values()));
+	return capLocalItems(sortNewestFirst(Array.from(byId.values())));
 };
 
 export function NotificationsProvider(props) {
@@ -282,7 +312,8 @@ export function NotificationsProvider(props) {
 				// server dropped disappears here instead of surviving until a
 				// reload.
 				mergeNotificationFeed(normalized, existing, {
-					reconcileWindow: true
+					reconcileWindow: true,
+					olderPagesLoaded: highestLoadedPageRef.current > 0
 				})
 			);
 			if (highestLoadedPageRef.current === 0) {

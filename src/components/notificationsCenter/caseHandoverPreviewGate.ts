@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 // the whole API surface (and, transitively, the Lottie player) into anything
 // that touches this gate.
 import { apiGetCaseHandoverStatus } from '../../api/apiCaseHandover';
-import { STATUS_ENQUIRY } from '../../globalState/interfaces';
+import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 
 /**
@@ -40,7 +40,7 @@ export const requiresCaseHandoverCheck = (
 	session: ExtendedSessionInterface | null | undefined,
 	userId: string | undefined
 ): boolean => {
-	if (!session?.item || !userId) {
+	if (!session?.item) {
 		return true;
 	}
 	if (session.isGroup || !session.isSession) {
@@ -53,6 +53,12 @@ export const requiresCaseHandoverCheck = (
 	// An ownerless session is nobody's case to hand over.
 	if (!ownerId) {
 		return false;
+	}
+	// Tested last, and only where ownership actually decides the answer: user
+	// data loads asynchronously, and checking it first made every group chat
+	// and enquiry request a handover status during that window.
+	if (!userId) {
+		return true;
 	}
 	return String(ownerId) !== String(userId);
 };

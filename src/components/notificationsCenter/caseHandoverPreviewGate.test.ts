@@ -74,8 +74,31 @@ describe('requiresCaseHandoverCheck', () => {
 		expect(requiresCaseHandoverCheck(undefined, 'me')).toBe(true);
 		expect(requiresCaseHandoverCheck({} as any, 'me')).toBe(true);
 	});
+});
 
-	it('checks when the reader is unknown, since ownership cannot be compared', () => {
+describe('requiresCaseHandoverCheck while user data is still loading', () => {
+	// Ownership is the only thing `userId` decides, so it is tested last.
+	// Checking it first made every group chat and enquiry request a handover
+	// status during the window before user data arrived.
+	it('still exempts group chats, enquiries and ownerless sessions', () => {
+		expect(
+			requiresCaseHandoverCheck(session({ isGroup: true }), undefined)
+		).toBe(false);
+		expect(
+			requiresCaseHandoverCheck(
+				session({ item: { status: STATUS_ENQUIRY } }),
+				undefined
+			)
+		).toBe(false);
+		expect(
+			requiresCaseHandoverCheck(
+				session({ consultant: undefined }),
+				undefined
+			)
+		).toBe(false);
+	});
+
+	it('checks an owned session, because ownership cannot be compared yet', () => {
 		expect(requiresCaseHandoverCheck(session(), undefined)).toBe(true);
 	});
 });
