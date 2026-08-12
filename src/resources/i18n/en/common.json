@@ -1918,6 +1918,13 @@
 					},
 					"text": "Copy link",
 					"title": "Copy registration link to counseling center to clipboard"
+				},
+				"mapLink": "Open in OpenStreetMap",
+				"openingHours": {
+					"label": "Opening hours"
+				},
+				"phone": {
+					"label": "Phone"
 				}
 			},
 			"displayName": "Display name",
@@ -1975,7 +1982,13 @@
 				"consultingTypeSelect": {
 					"label": "Topics"
 				},
-				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you."
+				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
+				"dialog": {
+					"openButton": "Request another topic",
+					"title": "Start a new request",
+					"close": "Close"
+				},
+				"agencyKnownBadge": "Already in contact with you"
 			},
 			"registerError": {
 				"overlay": {

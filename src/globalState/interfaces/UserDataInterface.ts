@@ -48,6 +48,10 @@ export interface AgencyDataInterface {
 	name: string;
 	offline: boolean;
 	postcode: string;
+	street?: string;
+	houseNumber?: string;
+	phone?: string;
+	openingHours?: string;
 	url?: string;
 	external?: boolean;
 	tenantId?: number;
