@@ -693,7 +693,12 @@ function MuiStoryShell({
 											markNotificationAsRead: () => {},
 											markAllNotificationsAsRead:
 												() => {},
-											clearNotificationFeed: () => {}
+											clearNotificationFeed: () => {},
+											loadOlderNotifications:
+												async () => {},
+											hasOlderNotifications: false,
+											isLoadingOlderNotifications: false,
+											olderNotificationsError: false
 										}}
 									>
 										<RegistrationContext.Provider

@@ -101,6 +101,52 @@ describe('resolveLocalMatrixActivityEvent', () => {
 		expect(detachRoom).toHaveBeenCalledTimes(1);
 	});
 
+	it('attaches for a lone subscriber once Matrix becomes ready', async () => {
+		// The test below only retries because a *second* subscriber arrives.
+		// A single card mounted during app start had nothing to re-attempt
+		// attachment, so it could sit on room-unavailable indefinitely.
+		vi.useFakeTimers();
+		try {
+			const event = matrixEvent('$only');
+			const getMatrixRoom = vi
+				.spyOn(chatTransportService, 'getMatrixRoom')
+				.mockReturnValue(null as any);
+			const detachRoom = vi.fn();
+			const onRaw = vi
+				.spyOn(chatTransportService, 'onMatrixTimelineRaw')
+				.mockReturnValue(null);
+			const listener = vi.fn();
+
+			const unsubscribe = subscribeToLocalMatrixActivityEvent(
+				'!room:oriso',
+				'$only',
+				listener
+			);
+			expect(listener).toHaveBeenLastCalledWith({
+				status: 'room-unavailable'
+			});
+
+			// Matrix comes up; nobody else subscribes.
+			onRaw.mockReturnValue(detachRoom);
+			getMatrixRoom.mockReturnValue({
+				findEventById: (eventId: string) =>
+					eventId === '$only' ? event : undefined
+			} as any);
+			await vi.advanceTimersByTimeAsync(1000);
+
+			expect(onRaw).toHaveBeenCalledTimes(2);
+			expect(listener).toHaveBeenLastCalledWith({
+				status: 'resolved',
+				event
+			});
+
+			unsubscribe();
+			expect(detachRoom).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('retries the shared raw listener when Matrix becomes ready later', () => {
 		const events = new Map([
 			['$first', matrixEvent('$first')],

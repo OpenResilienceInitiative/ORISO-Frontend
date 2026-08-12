@@ -26,6 +26,33 @@ const REQUIRED_MODALITY_LABELS = [
 	'video'
 ];
 
+const REQUIRED_PAGINATION_LABELS = [
+	'loadOlder',
+	'loadingOlder',
+	'olderError',
+	'retryOlder',
+	'endOfHistory'
+];
+
+/**
+ * `de@informal` is an **overlay**, not a full catalogue: `i18n.ts` declares
+ * `fallbackLng: { 'de@informal': ['de'] }`, so it should carry only the strings
+ * whose informal wording actually differs. Copying every generic label into it
+ * would create duplicates that silently drift from the formal catalogue, so
+ * that locale is checked against the resource a user really sees.
+ */
+const resolved = (locale: string, common: any) =>
+	locale === 'de@informal'
+		? {
+				...de.notifications.center,
+				...common.notifications.center,
+				preview: {
+					...de.notifications.center.preview,
+					...common.notifications.center.preview
+				}
+			}
+		: common.notifications.center;
+
 describe('Matrix Activity Timeline preview translations', () => {
 	it.each([
 		['de', de],
@@ -35,27 +62,44 @@ describe('Matrix Activity Timeline preview translations', () => {
 		['ru', ru],
 		['ti', ti],
 		['tr', tr]
-	])('provides every safe modality label in %s', (_locale, common) => {
-		const preview = common.notifications.center.preview;
+	])('provides every safe modality label in %s', (locale, common) => {
+		const centre = resolved(locale, common);
+		const preview = centre.preview;
 
 		REQUIRED_MODALITY_LABELS.forEach((key) => {
 			expect(Object.keys(preview)).toContain(key);
 		});
 		Object.values(preview).forEach((label) => {
 			expect(label).toEqual(expect.any(String));
-			expect(label.trim()).not.toBe('');
+			expect((label as string).trim()).not.toBe('');
 			expect(label).not.toMatch(/^notifications\./);
 		});
-		[
-			'loadOlder',
-			'loadingOlder',
-			'olderError',
-			'retryOlder',
-			'endOfHistory'
-		].forEach((key) => {
-			const label = common.notifications.center[key];
+		REQUIRED_PAGINATION_LABELS.forEach((key) => {
+			const label = centre[key];
 			expect(label).toEqual(expect.any(String));
 			expect(label.trim()).not.toBe('');
 		});
+	});
+
+	it('keeps de@informal free of strings identical to the formal catalogue', () => {
+		// A duplicate is not merely redundant: the two copies drift, and the
+		// informal user then reads a stale version of a string somebody
+		// updated once.
+		const duplicates = [
+			...REQUIRED_PAGINATION_LABELS.filter(
+				(key) =>
+					deInformal.notifications.center[key] !== undefined &&
+					deInformal.notifications.center[key] ===
+						de.notifications.center[key]
+			),
+			...Object.entries(deInformal.notifications.center.preview ?? {})
+				.filter(
+					([key, value]) =>
+						value === (de.notifications.center.preview as any)[key]
+				)
+				.map(([key]) => `preview.${key}`)
+		];
+
+		expect(duplicates).toEqual([]);
 	});
 });

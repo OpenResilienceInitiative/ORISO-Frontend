@@ -168,7 +168,10 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 		expect(ids.slice(-3)).toEqual(['50', '51', '52']);
 	});
 
-	it('exposes an accessible retryable error without discarding loaded items', async () => {
+	// Named for what it asserts: the provider's state machine. The accessible
+	// error affordance itself is rendered by NotificationsCenter and belongs in
+	// that component's tests, not here.
+	it('exposes a retryable error state without discarding loaded items', async () => {
 		const newestPage = Array.from({ length: 50 }, (_, index) =>
 			feedItem(index + 1, new Date(100 - index).toISOString())
 		);
@@ -184,8 +187,16 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 				<PaginationProbe />
 			</NotificationsProvider>
 		);
+		// Wait on the pagination state, not on a boolean: `waitFor` resolves as
+		// soon as its callback stops throwing, and `getByTestId('ids')` finds
+		// the probe on the very first render. The click below could therefore
+		// run before page 0 arrived, while `hasOlderNotifications` was still
+		// false — `loadOlderNotifications` would return early and the rejected
+		// mock would be consumed by the retry instead.
 		await waitFor(() =>
-			screen.getByTestId('ids').textContent?.includes('50')
+			expect(screen.getByTestId('pagination-state').textContent).toBe(
+				'more'
+			)
 		);
 
 		fireEvent.click(screen.getByText('load'));
@@ -244,7 +255,10 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 		);
 		fireEvent.click(screen.getByText('load'));
 		messageEventEmitter.emit({});
-		await waitFor(() => expect(pageZeroCalls).toBe(2));
+		// The provider debounces this refresh by 400ms and the test runs on
+		// real timers, so waitFor's 1s default leaves too little room on a
+		// loaded CI runner.
+		await waitFor(() => expect(pageZeroCalls).toBe(2), { timeout: 3000 });
 
 		resolveOlder({
 			items: [newestPage[49], feedItem(51, new Date(1).toISOString())],

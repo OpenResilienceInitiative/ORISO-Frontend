@@ -47,6 +47,10 @@ import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
+import {
+	isTimelineCaseHandoverControlled,
+	useCaseHandoverPreviewGate
+} from './caseHandoverPreviewGate';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
@@ -311,6 +315,10 @@ export const NotificationsCenter = () => {
 
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.
+	//
+	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
+	// does: a card above the viewport growing from one line to two on
+	// decryption shifts the list by exactly as much as a prepended event would.
 	useLayoutEffect(() => {
 		const list = listScrollRef.current;
 		if (!list) return;
@@ -330,7 +338,7 @@ export const NotificationsCenter = () => {
 		}
 
 		captureListAnchor();
-	}, [captureListAnchor, notificationFeed]);
+	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -387,7 +395,7 @@ export const NotificationsCenter = () => {
 		}),
 		[translate]
 	);
-	const messagePreviewSources = useMemo(
+	const candidatePreviewSources = useMemo(
 		() =>
 			notificationFeed.flatMap((item) => {
 				if (
@@ -398,10 +406,11 @@ export const NotificationsCenter = () => {
 				}
 				const matrixEventId = item.params?.matrixEventId;
 				const sessionId = resolveSessionId(item);
-				const roomRef =
-					item.params?.roomRef ||
-					getExtendedSession(sessionId || undefined, sessions || [])
-						?.rid;
+				const session = getExtendedSession(
+					sessionId || undefined,
+					sessions || []
+				);
+				const roomRef = item.params?.roomRef || session?.rid;
 				if (!matrixEventId || !roomRef) {
 					return [];
 				}
@@ -412,11 +421,53 @@ export const NotificationsCenter = () => {
 						matrixEventId,
 						senderName: item.params?.senderName,
 						fallbackText: describeItem(item, translate).text,
-						labels: previewLabels
+						labels: previewLabels,
+						sessionId,
+						caseHandoverControlled:
+							isTimelineCaseHandoverControlled(
+								session,
+								userData?.userId
+							)
 					}
 				];
 			}),
-		[notificationFeed, previewLabels, sessions, translate]
+		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
+	);
+	// Only sessions owned by another consultant can be curtained, so only those
+	// cost a status request; everything else previews without one.
+	const controlledSessionIds = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					candidatePreviewSources
+						.filter(
+							(source) =>
+								source.caseHandoverControlled &&
+								source.sessionId
+						)
+						.map((source) => source.sessionId as string)
+				)
+			).sort(),
+		[candidatePreviewSources]
+	);
+	const isCaseHandoverPreviewAllowed =
+		useCaseHandoverPreviewGate(controlledSessionIds);
+	const messagePreviewSources = useMemo(
+		() =>
+			candidatePreviewSources
+				.filter(
+					(source) =>
+						!source.caseHandoverControlled ||
+						isCaseHandoverPreviewAllowed(source.sessionId)
+				)
+				.map(
+					({
+						caseHandoverControlled: _controlled,
+						sessionId: _sessionId,
+						...source
+					}) => source
+				),
+		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
 	);
 	const handlePreviewChange = useCallback(
 		(

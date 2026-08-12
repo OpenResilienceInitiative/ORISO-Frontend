@@ -137,7 +137,10 @@ const normalizeEventNotification = (
 ): NotificationFeedItem => ({
 	id: String(item.id),
 	type: NOTIFICATION_TYPE_INFO,
-	title: item.title || 'Notification',
+	// Left empty rather than defaulted to an English literal: the presentation
+	// layer already resolves a localized title from the event type, and
+	// 'Notification' rendered untranslated inside the German UI.
+	title: item.title || '',
 	text: item.text || '',
 	eventType: item.eventType || 'event',
 	createdAt: item.createdAt || new Date().toISOString(),
@@ -150,19 +153,52 @@ const normalizeEventNotification = (
 	category: item.category === 'message' ? 'message' : 'system'
 });
 
-/** Newest first, with ids as the deterministic tie-break and dedupe key. */
-const mergeNotificationFeed = (
-	incoming: NotificationFeedItem[],
-	existing: NotificationFeedItem[]
-): NotificationFeedItem[] => {
-	const byId = new Map(existing.map((item) => [item.id, item]));
-	incoming.forEach((item) => byId.set(item.id, item));
-	return Array.from(byId.values()).sort((left, right) => {
+const sortNewestFirst = (items: NotificationFeedItem[]) =>
+	items.sort((left, right) => {
 		const timeOrder =
 			new Date(right.createdAt).getTime() -
 			new Date(left.createdAt).getTime();
 		return timeOrder || left.id.localeCompare(right.id);
 	});
+
+/** Client-side rows (incoming calls, toasts) the server never knows about. */
+const isLocalItem = (item: NotificationFeedItem) =>
+	item.id.startsWith('local-');
+
+/**
+ * Merge a freshly fetched page into the feed, newest first, with ids as the
+ * deterministic tie-break and dedupe key.
+ *
+ * `windowStart` marks the oldest item of the incoming page. Existing backend
+ * rows at or above that point but missing from the response were deleted or
+ * cleared on the server and must disappear — a plain union kept them on screen
+ * until a reload. Rows below the window belong to older pages the response
+ * never covered, and local rows are not the server's to remove.
+ */
+const mergeNotificationFeed = (
+	incoming: NotificationFeedItem[],
+	existing: NotificationFeedItem[],
+	options: { reconcileWindow?: boolean } = {}
+): NotificationFeedItem[] => {
+	const incomingIds = new Set(incoming.map((item) => item.id));
+	const windowStart = incoming.length
+		? Math.min(
+				...incoming.map((item) => new Date(item.createdAt).getTime())
+			)
+		: Number.NEGATIVE_INFINITY;
+
+	const retained = options.reconcileWindow
+		? existing.filter((item) => {
+				if (incomingIds.has(item.id) || isLocalItem(item)) {
+					return true;
+				}
+				return new Date(item.createdAt).getTime() < windowStart;
+			})
+		: existing;
+
+	const byId = new Map(retained.map((item) => [item.id, item]));
+	incoming.forEach((item) => byId.set(item.id, item));
+	return sortNewestFirst(Array.from(byId.values()));
 };
 
 export function NotificationsProvider(props) {
@@ -242,7 +278,12 @@ export function NotificationsProvider(props) {
 			if (feedEpoch !== feedEpochRef.current) return;
 			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed((existing) =>
-				mergeNotificationFeed(normalized, existing)
+				// Page 0 is authoritative for its own window, so a row the
+				// server dropped disappears here instead of surviving until a
+				// reload.
+				mergeNotificationFeed(normalized, existing, {
+					reconcileWindow: true
+				})
 			);
 			if (highestLoadedPageRef.current === 0) {
 				setHasOlderNotifications(
@@ -250,6 +291,10 @@ export function NotificationsProvider(props) {
 				);
 			}
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
+			// A healthy feed must not keep rendering the older-page error: it
+			// was only ever cleared inside loadOlderNotifications, so a user who
+			// never retried saw the error state on every subsequent refresh.
+			setOlderNotificationsError(false);
 		} catch (error) {
 			// Keep existing state but log failures to simplify diagnostics.
 			// eslint-disable-next-line no-console

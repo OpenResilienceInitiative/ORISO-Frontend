@@ -16,7 +16,16 @@ type WatchedEvent = {
 type WatchedRoom = {
 	events: Map<string, WatchedEvent>;
 	detachTimeline: (() => void) | null;
+	attachRetry: ReturnType<typeof setTimeout> | null;
 };
+
+/**
+ * How long to wait before retrying a timeline attachment that failed because
+ * the Matrix client was not up yet. Bounded polling rather than a ready event:
+ * the transport exposes no readiness signal, and a preview that never attaches
+ * stays stuck on "conversation not available on this device" forever.
+ */
+const ATTACH_RETRY_MS = 1000;
 
 const watchedRooms = new Map<string, WatchedRoom>();
 
@@ -85,6 +94,57 @@ const refreshWatchedEvent = (roomRef: string, matrixEventId: string) => {
 };
 
 /**
+ * Attach the room's shared timeline listener, retrying while the Matrix client
+ * is still starting.
+ *
+ * `onMatrixTimelineRaw` returns `null` when there is no client yet — which is
+ * the normal state for a preview mounted during app start. Without a retry the
+ * only thing that ever re-attempted attachment was a *second* subscriber
+ * arriving later, so a single mounted card could stay on
+ * `room-unavailable` / `event-unavailable` indefinitely.
+ */
+const attachTimeline = (roomRef: string) => {
+	const watchedRoom = watchedRooms.get(roomRef);
+	if (!watchedRoom || watchedRoom.detachTimeline) {
+		return;
+	}
+
+	watchedRoom.detachTimeline = chatTransportService.onMatrixTimelineRaw(
+		roomRef,
+		(event) => {
+			const eventId = event.getId();
+			if (eventId && watchedRooms.get(roomRef)?.events.has(eventId)) {
+				refreshWatchedEvent(roomRef, eventId);
+			}
+		}
+	);
+
+	if (watchedRoom.detachTimeline) {
+		if (watchedRoom.attachRetry) {
+			clearTimeout(watchedRoom.attachRetry);
+			watchedRoom.attachRetry = null;
+		}
+		// The client appeared after the first attempt, so what is on screen was
+		// resolved against a client that did not exist. Resolve it again.
+		Array.from(watchedRoom.events.keys()).forEach((eventId) =>
+			refreshWatchedEvent(roomRef, eventId)
+		);
+		return;
+	}
+
+	if (!watchedRoom.attachRetry) {
+		watchedRoom.attachRetry = setTimeout(() => {
+			const current = watchedRooms.get(roomRef);
+			if (!current) return;
+			current.attachRetry = null;
+			if (current.events.size > 0) {
+				attachTimeline(roomRef);
+			}
+		}, ATTACH_RETRY_MS);
+	}
+};
+
+/**
  * Watch one exact local Matrix event. Subscribers for the same room share one
  * raw SDK timeline listener; only pending events that are actually referenced
  * by an activity card receive a decryption listener.
@@ -96,20 +156,14 @@ export const subscribeToLocalMatrixActivityEvent = (
 ): (() => void) => {
 	let watchedRoom = watchedRooms.get(roomRef);
 	if (!watchedRoom) {
-		watchedRoom = { events: new Map(), detachTimeline: null };
+		watchedRoom = {
+			events: new Map(),
+			detachTimeline: null,
+			attachRetry: null
+		};
 		watchedRooms.set(roomRef, watchedRoom);
 	}
-	if (!watchedRoom.detachTimeline) {
-		watchedRoom.detachTimeline = chatTransportService.onMatrixTimelineRaw(
-			roomRef,
-			(event) => {
-				const eventId = event.getId();
-				if (eventId && watchedRooms.get(roomRef)?.events.has(eventId)) {
-					refreshWatchedEvent(roomRef, eventId);
-				}
-			}
-		);
-	}
+	attachTimeline(roomRef);
 
 	let watchedEvent = watchedRoom.events.get(matrixEventId);
 	if (!watchedEvent) {
@@ -130,6 +184,11 @@ export const subscribeToLocalMatrixActivityEvent = (
 		}
 		if (currentRoom.events.size === 0) {
 			currentRoom.detachTimeline?.();
+			if (currentRoom.attachRetry) {
+				// Otherwise a pending retry keeps a timer alive for a room
+				// nobody watches any more.
+				clearTimeout(currentRoom.attachRetry);
+			}
 			watchedRooms.delete(roomRef);
 		}
 	};
