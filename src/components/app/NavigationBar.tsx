@@ -569,6 +569,7 @@ export const NavigationBar = ({
 							)}
 							tabIndex={0}
 							role="switch"
+							data-tour-target="livechat-availability-toggle"
 							aria-checked={liveChatAvailable}
 							aria-label={translate(
 								liveChatAvailable
