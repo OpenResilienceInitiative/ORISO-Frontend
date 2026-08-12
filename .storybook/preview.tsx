@@ -76,8 +76,13 @@ class StoryErrorBoundary extends React.Component<
 	static getDerivedStateFromError() {
 		return { failed: true };
 	}
-	componentDidCatch() {
-		/* swallow — the panel below is the user-facing result */
+	componentDidCatch(error: unknown) {
+		// Log rather than swallow. The panel is the right user-facing result,
+		// but a silently discarded error is why several stories sat behind this
+		// placeholder unnoticed while their play functions asserted markup that
+		// was never rendered.
+		// eslint-disable-next-line no-console
+		console.warn('[storybook] story needs live data:', error);
 	}
 	render() {
 		if (this.state.failed) {

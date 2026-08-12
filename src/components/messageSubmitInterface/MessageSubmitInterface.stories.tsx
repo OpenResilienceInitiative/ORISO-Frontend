@@ -146,11 +146,14 @@ export const DockedEmojiPickerNoOverlay: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		// Both languages: the Storybook preview defaults to German
+		// (`initialGlobals.locale = FALLBACK_LNG`, and the component test pins
+		// the browser to de-DE), but the toolbar can be switched to English.
 		const emojiButton = await canvas.findByRole('button', {
 			name: /emoji/i
 		});
 		const mentionButton = await canvas.findByRole('button', {
-			name: /mention/i
+			name: /mention|erwähnen/i
 		});
 
 		await userEvent.click(emojiButton);
