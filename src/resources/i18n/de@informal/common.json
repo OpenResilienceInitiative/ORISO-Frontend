@@ -923,8 +923,10 @@
 			},
 			"postcode": {
 				"label": "Deine Postleitzahl",
+				"search": "Zur Beratungsstellensuche",
 				"unavailable": {
-					"text": "Momentan haben wir leider noch keine Online-Beratungsstelle in Deiner Nähe. Auf unserer Webseite findest Du Beratungsstellen vor Ort für Dein Anliegen."
+					"text": "Momentan haben wir leider noch keine Online-Beratungsstelle in Deiner Nähe. Auf unserer Webseite findest Du Beratungsstellen vor Ort für Dein Anliegen.",
+					"title": "Keine Online-Beratungsstelle gefunden"
 				}
 			}
 		},
