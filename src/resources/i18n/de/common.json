@@ -1942,6 +1942,13 @@
 					},
 					"text": "Link kopieren",
 					"title": "Registrierungslink zur Beratungsstelle in Zwischenablage kopieren"
+				},
+				"mapLink": "In OpenStreetMap öffnen",
+				"openingHours": {
+					"label": "Öffnungszeiten"
+				},
+				"phone": {
+					"label": "Telefon"
 				}
 			},
 			"displayName": "Anzeigename",
@@ -2000,7 +2007,13 @@
 				"consultingTypeSelect": {
 					"label": "Themenfelder"
 				},
-				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne."
+				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne.",
+				"dialog": {
+					"openButton": "Weiteres Thema anfragen",
+					"title": "Neue Anfrage stellen",
+					"close": "Schließen"
+				},
+				"agencyKnownBadge": "Bereits mit Ihnen in Kontakt"
 			},
 			"registerError": {
 				"overlay": {
