@@ -27,8 +27,10 @@ import {
  * disabled and a persistent Live Chat toggle appears in the rail. This is a
  * placement preference — it never calls the availability backend by itself.
  */
-const SIDEBAR_STORAGE_KEY = 'caritas_liveChatViaSidebar';
-const SIDEBAR_CHANGE_EVENT = 'caritas:liveChatViaSidebarChange';
+const SIDEBAR_STORAGE_KEY = 'oriso_liveChatViaSidebar';
+const SIDEBAR_CHANGE_EVENT = 'oriso:liveChatViaSidebarChange';
+/** Written by pre-rename builds (FE-H05, #178); read once, then dropped. */
+const LEGACY_SIDEBAR_STORAGE_KEY = 'caritas_liveChatViaSidebar';
 let availabilityRevision = 0;
 
 export const isLiveChatAvailable = (): boolean => {
@@ -153,7 +155,10 @@ export const useLiveChatAvailabilityHeartbeat = (
 
 export const isLiveChatViaSidebar = (): boolean => {
 	try {
-		return localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1';
+		return (
+			localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1' ||
+			localStorage.getItem(LEGACY_SIDEBAR_STORAGE_KEY) === '1'
+		);
 	} catch {
 		return false;
 	}
@@ -166,6 +171,7 @@ export const setLiveChatViaSidebar = (active: boolean): void => {
 		} else {
 			localStorage.removeItem(SIDEBAR_STORAGE_KEY);
 		}
+		localStorage.removeItem(LEGACY_SIDEBAR_STORAGE_KEY);
 	} catch {
 		/* storage errors are non-fatal — the preference just won't persist */
 	}

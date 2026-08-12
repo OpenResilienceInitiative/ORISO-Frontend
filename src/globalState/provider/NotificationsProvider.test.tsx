@@ -88,8 +88,9 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		);
 		apiGetEventNotifications.mockClear();
 
-		// The backend fires a `directMessage` live event to the recipient whenever a
-		// notification is persisted; the websocket handler re-emits it on messageEventEmitter.
+		// The client's own Matrix sync re-emits room events on
+		// messageEventEmitter (there is no backend live push, see #845);
+		// any such signal must refresh the feed ahead of the 15s poll.
 		messageEventEmitter.emit({});
 
 		await waitFor(() =>

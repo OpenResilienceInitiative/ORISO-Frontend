@@ -183,7 +183,7 @@
 				}
 			},
 			"overlay": {
-				"copy": "Innerhalb von 2 Arbeitstagen erhältst Du eine Antwort von uns.",
+				"copy": "Wir haben Deine Nachricht erhalten.",
 				"headline": "Vielen Dank für Deine Nachricht!"
 			}
 		}
@@ -296,9 +296,15 @@
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
 			"back": "Zurück",
-			"cardMenu": "Optionen für dieses Gesprächsformat"
+			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
+		},
+		"internal": {
+			"subtitle": "mit deinen Kolleg:innen",
+			"supportText": "Stimme dich innerhalb deiner Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf."
 		},
 		"circle": {
+			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
+			"settingsSubtitle": "Passe nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
 			"rows": {
 				"dateLabel": "Datum wählen",
 				"timeLabel": "Startzeitpunkt",
@@ -427,6 +433,16 @@
 			"showOriginal": "Original anzeigen",
 			"showingOriginal": "Du siehst die Originalfassung.",
 			"showTranslation": "Übersetzung anzeigen"
+		},
+		"modal": {
+			"imprint": {
+				"title": "Impressum"
+			},
+			"privacy": {
+				"title": "Datenschutzerklärung"
+			},
+			"back": "Zurück",
+			"confirm": "Verstanden"
 		}
 	},
 	"message": {
@@ -448,18 +464,18 @@
 			"closeMenu": "Senden-an-Menü schließen",
 			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
 			"menuHeading": "Adressaten wählen",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Ratsuchende auswählen",
+			"clientsSelected": "{{count}} Ratsuchende ausgewählt",
+			"clientsSelectAll": "Alle Ratsuchenden auswählen",
+			"counsellorsSelect": "Alle Beratenden auswählen",
+			"counsellorsSelected": "{{count}} Beratende ausgewählt",
+			"moderatorsSelect": "Alle Moderierenden auswählen",
+			"moderatorsSelected": "{{count}} Moderierende ausgewählt",
+			"clientsEmpty": "In diesem Raum sind keine Ratsuchenden",
+			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
+			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Alle auswählen"
 		},
 		"delete": {
 			"deleted": {
@@ -520,7 +536,13 @@
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen",
+			"next": "Nächste Benachrichtigung",
+			"cardMenu": "Benachrichtigungsaktionen",
+			"markRead": "Als gelesen markieren",
+			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen.",
+				"empty": "Noch keine Nachrichten in diesem Gespräch.",
 				"image": "Bild",
 				"file": "Datei",
 				"audio": "Audionachricht",
@@ -1204,6 +1226,13 @@
 		}
 	},
 	"sessionList": {
+		"preview": {
+			"voice": "Sprachnachricht",
+			"audio": "Audionachricht",
+			"image": "Bild",
+			"video": "Video",
+			"file": "Datei"
+		},
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat"
@@ -1240,7 +1269,7 @@
 				"neu": "Ungelesen",
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
-				"nearby": "Nähe",
+				"nearby": "Mail",
 				"create": "Erstellen",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
@@ -1248,7 +1277,7 @@
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Nähe"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
@@ -1597,9 +1626,23 @@
 			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
-			"dismissAcceptedBanner": "Hinweis ausblenden"
+			"dismissAcceptedBanner": "Hinweis ausblenden",
+			"leave": "Chat verlassen"
 		},
-		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut."
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut.",
+		"leaveQueue": {
+			"headline": "Chat verlassen?",
+			"body": "Du bist noch im Wartebereich. Du kannst weiter warten oder deinen Zugang löschen — dann wird dieser Chat beendet.",
+			"bodyAccepted": "Eine beratende Person wartet schon auf dich. Du kannst den Chat jetzt starten, im Wartebereich bleiben oder deinen Zugang löschen.",
+			"stay": "Im Wartebereich bleiben",
+			"startChat": "Chat jetzt starten",
+			"startChatUnavailable": "Sobald eine beratende Person den Chat annimmt, kannst du hier starten.",
+			"delete": "Chat beenden & Zugang löschen",
+			"deleteWarning": "Dein Zugang wird deaktiviert und dieser Chat beendet. Du kannst dich mit diesem Namen und Passwort nicht mehr anmelden, und wir können den Zugang nicht wiederherstellen.",
+			"cancelDelete": "Abbrechen",
+			"confirmDelete": "Ja, endgültig löschen",
+			"error": "Der Chat konnte gerade nicht beendet werden. Bitte versuch es noch einmal."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -1830,6 +1873,123 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video-Termine sind derzeit nicht verfügbar."
+		}
+	},
+	"app": {
+		"stage": {
+			"associationLogoAlt": "Logo der Trägerorganisation",
+			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
+			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
+		}
+	},
+	"login": {
+		"register": {
+			"infoText": {
+				"short": "Neu hier?",
+				"title": "Neu hier?"
+			},
+			"separator": "Neu hier?"
+		},
+		"security": {
+			"teaser": {
+				"text": "Ende-zu-Ende verschlüsselt — der Schlüssel entsteht auf deinem Gerät.",
+				"link": "Warum das extra sicher ist",
+				"textShort": "Schlüssel nur auf deinem Gerät",
+				"linkShort": "Warum das sicher ist"
+			},
+			"explainer": {
+				"badge": "NEU",
+				"headline": "Nur ihr beide könnt mitlesen.",
+				"message": "Mir geht es nicht gut.",
+				"you": "Du",
+				"agency": "Beratungsstelle",
+				"encrypted": "verschlüsselt",
+				"attack": "mehr bekommt ein Angreifer nicht",
+				"cipherLabel": "Abgefangene, verschlüsselte Daten",
+				"key": "Der Schlüssel entsteht auf deinem Gerät und bleibt dort — wir haben ihn nicht.",
+				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
+				"protocolLink": "Mehr dazu",
+				"back": "Zurück zur Anmeldung"
+			}
+		},
+		"mobile": {
+			"headline": "Hier ist Raum für\ndeine Anliegen."
+		},
+		"legal": {
+			"platform": {
+				"impressum": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie du den Betreiber erreichst, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die siehst du, sobald du eine gewählt hast.",
+				"dataprotection": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Deine Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf deinem Gerät und bei deiner Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die du später wählst.",
+				"fullText": "Vollständigen Text öffnen"
+			}
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Deine ersten Schritte",
+		"greeting": {
+			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
+		},
+		"whoReadsAlong": {
+			"headline": "Wer Deine Nachricht liest",
+			"body": "Deine Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+		},
+		"responseDeadline": {
+			"headline": "Wann Du eine Antwort bekommst",
+			"body": "Du bekommst innerhalb von {{deadlineDays}} Werktagen eine Antwort von einer passenden Ansprechperson."
+		},
+		"modalityNote": {
+			"body": "Die Beratung findet schriftlich in diesem geschützten Bereich statt. Du kannst jederzeit weiterschreiben."
+		},
+		"noPersonalData": {
+			"headline": "Bitte keine persönlichen Daten senden",
+			"body": "Bitte schreib uns keinen vollständigen Namen, keine Adresse und keine Telefonnummer. Für die Beratung brauchen wir das nicht."
+		},
+		"emergencyNumbers": {
+			"headline": "Wenn es nicht warten kann",
+			"body": "Bei einer akuten Notlage erreichst Du rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112."
+		},
+		"dataProtection": {
+			"body": "Wie wir mit Deinen Daten umgehen, steht in der Datenschutzerklärung."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Benachrichtigung per E-Mail",
+			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
+			"action": "E-Mail-Adresse angeben",
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal."
+		},
+		"accountProtection": {
+			"headline": "Dein Zugang, zusätzlich geschützt",
+			"body": "Du kannst Deinen Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.",
+			"action": "Zugang schützen"
+		},
+		"closing": {
+			"body": "Bis bald — wir melden uns bei Dir."
+		},
+		"saveCredentials": {
+			"headline": "Sichere Dir Deinen Zugang",
+			"body": "Ohne Deinen Anmeldenamen kommst Du später nicht mehr in dieses Gespräch zurück. Bewahre ihn gut auf — am besten in einem Passwort-Manager.",
+			"userNameLabel": "Anmeldename",
+			"copy": "Kopieren",
+			"copied": "Anmeldename kopiert.",
+			"sharedDevice": "Wenn andere dieses Gerät mitbenutzen, speicher den Anmeldenamen besser nicht hier, sondern notiere ihn an einem sicheren Ort.",
+			"setPassword": "Passwort jetzt setzen",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markier den Anmeldenamen und kopier ihn von Hand."
+		},
+		"displayName": {
+			"headline": "Dein angezeigter Name",
+			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+			"action": "Namen ändern"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
+			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Bei Bedarf können weitere Fachkräfte dieser Beratungsstelle hinzugezogen werden, etwa zur Vertretung oder zur fachlichen Rücksprache — alle sind zur Verschwiegenheit verpflichtet.",
+			"cta": "Zum Gespräch",
+			"advisorFallback": "Eine Berater:in",
+			"organisationFallback": "deiner Beratungsstelle"
 		}
 	}
 }

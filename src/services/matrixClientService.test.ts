@@ -36,6 +36,17 @@ vi.mock('../components/sessionCookie/getMatrixAccessToken', () => ({
 	persistMatrixLoginData: vi.fn()
 }));
 
+vi.mock('../utils/imageDimensions', () => ({
+	getImageDimensions: vi.fn().mockResolvedValue(undefined)
+}));
+
+vi.mock('../utils/matrixEncryptedAttachment', () => ({
+	encryptMatrixAttachment: vi.fn().mockResolvedValue({
+		encryptedBlob: 'encrypted-blob',
+		file: { key: {}, iv: 'iv', hashes: {}, v: 'v2' }
+	})
+}));
+
 vi.hoisted(() => {
 	process.env.REACT_APP_KEYCLOAK_REALM = 'oriso';
 	Object.defineProperty(globalThis, 'window', {
@@ -634,6 +645,53 @@ describe('MatrixClientService', () => {
 		});
 	});
 
+	it('refreshes tracked room-member device keys before the first encrypted send (#551)', async () => {
+		const request = { type: 'keys-query' };
+		const clonedApu = { id: '@apu:matrix.localhost' };
+		const trackedApu = {
+			toString: () => '@apu:matrix.localhost',
+			clone: vi.fn(() => clonedApu)
+		};
+		const makeOutgoingRequest = vi.fn().mockResolvedValue(undefined);
+		const queryKeysForUsers = vi.fn(() => request);
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const room = {
+			getEncryptionTargetMembers: vi
+				.fn()
+				.mockResolvedValue([
+					{ userId: '@marge:matrix.localhost' },
+					{ userId: '@apu:matrix.localhost' }
+				])
+		};
+		const client = {
+			getUserId: () => '@marge:matrix.localhost',
+			getRoom: vi.fn(() => room),
+			getCrypto: () => ({
+				olmMachine: {
+					trackedUsers: vi
+						.fn()
+						.mockResolvedValue(new Set([trackedApu])),
+					queryKeysForUsers
+				},
+				outgoingRequestProcessor: { makeOutgoingRequest }
+			}),
+			sendMessage
+		};
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendMessage('!room:matrix.localhost', 'hello');
+		await service.sendMessage('!room:matrix.localhost', 'again');
+
+		expect(room.getEncryptionTargetMembers).toHaveBeenCalledOnce();
+		expect(trackedApu.clone).toHaveBeenCalledOnce();
+		expect(queryKeysForUsers).toHaveBeenCalledWith([clonedApu]);
+		expect(makeOutgoingRequest).toHaveBeenCalledWith(request);
+		expect(makeOutgoingRequest.mock.invocationCallOrder[0]).toBeLessThan(
+			sendMessage.mock.invocationCallOrder[0]
+		);
+	});
+
 	it('uses an explicit transaction id for an idempotent Matrix send', async () => {
 		const sendMessage = vi.fn(() =>
 			Promise.resolve({ event_id: '$event' })
@@ -657,6 +715,124 @@ describe('MatrixClientService', () => {
 			{ msgtype: 'm.text', body: 'Encrypted initial enquiry' },
 			'oriso.enquiry.42'
 		);
+	});
+
+	// Node 18 (the CI runtime) has no global File; the send path only reads
+	// name, type and size, so a structural stub keeps the tests portable.
+	const stubTextFile = () =>
+		({
+			name: 'notes.txt',
+			type: 'text/plain',
+			size: 7
+		}) as unknown as File;
+
+	const createRefreshableClient = (overrides: Record<string, unknown>) => {
+		const request = { type: 'keys-query' };
+		const trackedUser = {
+			toString: () => '@apu:matrix.localhost',
+			clone: vi.fn(() => ({ id: '@apu:matrix.localhost' }))
+		};
+		const makeOutgoingRequest = vi.fn().mockResolvedValue(undefined);
+		const queryKeysForUsers = vi.fn(() => request);
+		const room = {
+			getEncryptionTargetMembers: vi
+				.fn()
+				.mockResolvedValue([{ userId: '@apu:matrix.localhost' }])
+		};
+		return {
+			makeOutgoingRequest,
+			queryKeysForUsers,
+			client: {
+				getUserId: () => '@marge:matrix.localhost',
+				getRoom: vi.fn(() => room),
+				getCrypto: () => ({
+					olmMachine: {
+						trackedUsers: vi
+							.fn()
+							.mockResolvedValue(new Set([trackedUser])),
+						queryKeysForUsers
+					},
+					outgoingRequestProcessor: { makeOutgoingRequest }
+				}),
+				...overrides
+			}
+		};
+	};
+
+	it('refreshes tracked room-member device keys before a file upload', async () => {
+		const uploadContent = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/file' });
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const { client, makeOutgoingRequest } = createRefreshableClient({
+			uploadContent,
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendFileMessage('!room:matrix.localhost', stubTextFile());
+
+		expect(makeOutgoingRequest.mock.invocationCallOrder[0]).toBeLessThan(
+			uploadContent.mock.invocationCallOrder[0]
+		);
+		expect(sendMessage).toHaveBeenCalledOnce();
+	});
+
+	it('retries the whole file send on the replacement client after an expired token', async () => {
+		const expiredTokenError = {
+			errcode: 'M_UNKNOWN_TOKEN',
+			data: { errcode: 'M_UNKNOWN_TOKEN' }
+		};
+		const staleUpload = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/stale' });
+		const staleSend = vi.fn().mockRejectedValue(expiredTokenError);
+		const stale = createRefreshableClient({
+			uploadContent: staleUpload,
+			sendMessage: staleSend
+		});
+		const freshUpload = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/fresh' });
+		const freshSend = vi.fn().mockResolvedValue({ event_id: '$fresh' });
+		const fresh = createRefreshableClient({
+			uploadContent: freshUpload,
+			sendMessage: freshSend
+		});
+		const service = new MatrixClientService();
+		setClient(service, stale.client);
+		(
+			service as unknown as { refreshMatrixToken: () => Promise<void> }
+		).refreshMatrixToken = vi.fn(async () => {
+			setClient(service, fresh.client);
+		});
+
+		await expect(
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile())
+		).resolves.toEqual({ event_id: '$fresh' });
+
+		expect(staleSend).toHaveBeenCalledOnce();
+		expect(fresh.makeOutgoingRequest).toHaveBeenCalledOnce();
+		expect(freshUpload).toHaveBeenCalledOnce();
+		expect(freshSend).toHaveBeenCalledOnce();
+	});
+
+	it('runs one device-key refresh for concurrent sends to the same room', async () => {
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const { client, makeOutgoingRequest, queryKeysForUsers } =
+			createRefreshableClient({ sendMessage });
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await Promise.all([
+			service.sendMessage('!room:matrix.localhost', 'first'),
+			service.sendMessage('!room:matrix.localhost', 'second')
+		]);
+
+		expect(queryKeysForUsers).toHaveBeenCalledOnce();
+		expect(makeOutgoingRequest).toHaveBeenCalledOnce();
+		expect(sendMessage).toHaveBeenCalledTimes(2);
 	});
 
 	it('removes the rejected Matrix local echo before the UI offers a fresh retry', async () => {

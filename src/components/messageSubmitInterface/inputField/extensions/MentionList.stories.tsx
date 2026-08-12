@@ -65,3 +65,53 @@ export const AllInChat: StoryObj = {
 		/>
 	)
 };
+
+/*
+ * #993 — an empty popup used to render nothing at all, so a failed request
+ * and "nobody matches" were the same silent blank. Each cause now says so.
+ */
+const emptyLabels = {
+	notInChatLabel: 'nicht im Chat',
+	emptyLabel: 'Niemand gefunden',
+	unavailableLabel: 'Liste konnte nicht geladen werden',
+	loadingLabel: 'Wird geladen …'
+};
+
+export const NobodyMatches: StoryObj = {
+	name: 'Empty — nobody matches the query',
+	render: () => (
+		<MentionList
+			ref={createRef<MentionListRef>()}
+			items={[]}
+			command={() => {}}
+			directoryState="ready"
+			{...emptyLabels}
+		/>
+	)
+};
+
+export const DirectoryUnavailable: StoryObj = {
+	name: 'Empty — the consultant list could not be loaded',
+	render: () => (
+		<MentionList
+			ref={createRef<MentionListRef>()}
+			items={[]}
+			command={() => {}}
+			directoryState="error"
+			{...emptyLabels}
+		/>
+	)
+};
+
+export const DirectoryLoading: StoryObj = {
+	name: 'Empty — the consultant list is still loading',
+	render: () => (
+		<MentionList
+			ref={createRef<MentionListRef>()}
+			items={[]}
+			command={() => {}}
+			directoryState="loading"
+			{...emptyLabels}
+		/>
+	)
+};

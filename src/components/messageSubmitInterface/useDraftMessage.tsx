@@ -23,7 +23,10 @@ import {
 	addEventListener,
 	removeEventListener
 } from '../../utils/eventHandler';
-import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
+import {
+	hasDraftContent,
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../../services/draftStore';
 
 const SAVE_DRAFT_TIMEOUT = 1500;
 
@@ -46,6 +49,10 @@ export const useDraftMessage = (
 	const loadVersionRef = useRef(0);
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
+	// #976: whether a remote draft row is known to exist for this scope. An
+	// emptied composer only has to issue a DELETE when there is something to
+	// delete — merely opening and leaving a conversation must stay silent.
+	const hasRemoteDraftRef = useRef(false);
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
@@ -106,24 +113,43 @@ export const useDraftMessage = (
 					updatedAt: Date.now()
 				};
 				let indexMap: Record<string, any> = {};
+				// #976: whether the index row exists at all. Without this an
+				// untouched conversation would issue a DELETE on unmount for a
+				// row that was never written.
+				let hadIndexRow = false;
 				try {
 					const indexRes = await apiGetUserDraft(
 						REMOTE_DRAFT_INDEX_SCOPE
 					);
-					indexMap =
-						indexRes?.text && typeof indexRes.text === 'string'
-							? JSON.parse(indexRes.text)
-							: {};
+					if (indexRes?.text && typeof indexRes.text === 'string') {
+						hadIndexRow = true;
+						indexMap = JSON.parse(indexRes.text);
+					}
 				} catch (e: any) {
 					if (e?.message !== FETCH_ERRORS.EMPTY) {
 						indexMap = {};
 					}
 				}
 
-				if (draftText && draftText.trim().length > 0) {
+				if (hasDraftContent(draftText)) {
 					indexMap[remoteScopeKey] = upsertPayload;
 				} else {
 					delete indexMap[remoteScopeKey];
+				}
+
+				if (Object.keys(indexMap).length === 0) {
+					/*
+					 * #976: an empty map serialises to "{}", which is not blank,
+					 * so the backend keeps the row forever - a contentless draft
+					 * that no view can open and nothing can clear. Drop the row
+					 * instead of storing an empty index - but only when there is
+					 * a row to drop, so a merely visited conversation stays
+					 * silent on the wire.
+					 */
+					if (hadIndexRow) {
+						await apiDeleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+					}
+					return;
 				}
 
 				await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
@@ -152,6 +178,15 @@ export const useDraftMessage = (
 		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
+		hasRemoteDraftRef.current = false;
+		/*
+		 * #976: the scope changed, so whatever is still buffered belongs to the
+		 * previous conversation or thread. The unmount cleanup writes this ref
+		 * under the *current* scope key, so carrying it over files text into a
+		 * conversation nobody typed in. Loading a draft for the new scope sets
+		 * it again below; finding none must leave it empty.
+		 */
+		latestMessageRef.current = '';
 		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
@@ -170,6 +205,7 @@ export const useDraftMessage = (
 						currentLoadVersion === loadVersionRef.current &&
 						remoteDraft?.text
 					) {
+						hasRemoteDraftRef.current = true;
 						setMessageRes(remoteDraft);
 						return;
 					}
@@ -247,6 +283,8 @@ export const useDraftMessage = (
 				return;
 			}
 			let message = draftMessage ?? '';
+			// #976: the plaintext decides — an encrypted payload is opaque.
+			const isEmptyDraft = !hasDraftContent(message);
 
 			if (isE2eeEnabled && encrypted && draftMessage) {
 				try {
@@ -268,17 +306,35 @@ export const useDraftMessage = (
 
 			if (canUseRemoteApi) {
 				try {
-					await apiUpsertUserDraft(remoteScopeKey, {
-						text: message,
-						actionPath: options?.actionPath || null,
-						title: options?.title || null,
-						sourceSessionId:
-							options?.sessionId ??
-							activeSession?.item?.id ??
-							null,
-						roomRef: options?.roomRef ?? activeSession?.rid ?? null,
-						threadRootId: options?.threadRootId || null
-					});
+					if (isEmptyDraft) {
+						// #976: an emptied composer must delete the draft, not
+						// store an empty one. Autosave also runs on unmount, so
+						// upserting empty text turned every merely visited
+						// conversation into a permanent drafts-badge entry that
+						// no view could open.
+						if (hasRemoteDraftRef.current) {
+							hasRemoteDraftRef.current = false;
+							await Promise.allSettled(
+								scopeKeysToTry.map((scopeKey) =>
+									apiDeleteUserDraft(scopeKey)
+								)
+							);
+						}
+					} else {
+						hasRemoteDraftRef.current = true;
+						await apiUpsertUserDraft(remoteScopeKey, {
+							text: message,
+							actionPath: options?.actionPath || null,
+							title: options?.title || null,
+							sourceSessionId:
+								options?.sessionId ??
+								activeSession?.item?.id ??
+								null,
+							roomRef:
+								options?.roomRef ?? activeSession?.rid ?? null,
+							threadRootId: options?.threadRootId || null
+						});
+					}
 					await updateRemoteDraftIndex(draftMessage);
 				} catch {
 					// Draft autosave must never break chat input.
@@ -301,6 +357,7 @@ export const useDraftMessage = (
 			options?.threadRootId,
 			options?.title,
 			remoteScopeKey,
+			scopeKeysToTry,
 			updateRemoteDraftIndex
 		]
 	);
@@ -377,6 +434,7 @@ export const useDraftMessage = (
 		}
 		latestMessageRef.current = '';
 		skipNextCleanupSaveRef.current = true;
+		hasRemoteDraftRef.current = false;
 		if (canUseRemoteApi) {
 			await Promise.allSettled([
 				...scopeKeysToTry.map((scopeKey) =>

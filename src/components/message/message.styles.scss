@@ -3,16 +3,10 @@ $icon-size-small: 24px;
 $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
-$message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 
-// Use the always-light `primary-fixed` (tonal palette tone 90) rather than
-// `on-primary-container`. The latter is a foreground/contrast role whose
-// lightness flips with the tenant seed brightness, so bright-red tenants
-// (e.g. Kiel) got a dark bubble under the fixed-dark outgoing text below,
-// making outgoing messages unreadable. `primary-fixed` stays light for
-// every seed and keeps the branded tint.
-$message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
-$message-outgoing-text: var(--m3-on-surface, #1a1c1e);
+// $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
+// to resources/styles/settings.scss so other bubble renderers (e.g. the
+// conversation preview) share the same colour contract.
 
 // How far the bubble tucks under the in-flow avatar column on either side —
 // keep in sync with the avatar geometry above, never hardcode per side.
@@ -128,6 +122,24 @@ $message-avatar-overlap: -19px;
 		.flyoutMenu {
 			margin-left: $grid-base;
 		}
+	}
+
+	/*
+	 * Second line of the sender header: the counselling centre a counsellor
+	 * speaks for, with its postcode (Figma "Message Recipient Header",
+	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
+	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * an agency to name, so every other message keeps its one-line header.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895.
+	 */
+	&__usernameSubtitle {
+		padding-left: 20px;
+		margin-top: 2px;
+		font-size: 12px;
+		line-height: 14px;
+		color: var(--m3-secondary, #4c555f);
+		text-align: left;
+		overflow-wrap: anywhere;
 	}
 
 	&__header {
@@ -301,15 +313,23 @@ $message-avatar-overlap: -19px;
 		z-index: 7;
 
 		svg {
-			width: 20px;
-			height: 20px;
 			flex-shrink: 0;
 			pointer-events: none;
 		}
 
-		path,
-		circle {
-			fill: #17191c;
+		// Scoped to the resting glyph on purpose. The open state renders
+		// `messageItem__kebabIconActive`, a 28×32 red pill that carries its own
+		// white dots and highlights — a blanket `svg { width: 20px }` squashed
+		// it and a blanket `path { fill: #17191c }` painted the white dots
+		// black, so selecting an item turned the button small and dark.
+		.messageItem__kebabIconDefault {
+			width: 20px;
+			height: 20px;
+
+			path,
+			circle {
+				fill: #17191c;
+			}
 		}
 
 		&:hover {
@@ -329,6 +349,14 @@ $message-avatar-overlap: -19px;
 	&__kebabIconDefault {
 		width: 20px !important;
 		height: 20px !important;
+	}
+
+	// Figma "Message Menu" (666:25242): open state is a 28×32 red pill with
+	// white dots. It keeps its own geometry and fills — see the note in
+	// `&__kebabButton` for why nothing here may be inherited from the button.
+	&__kebabIconActive {
+		width: 28px !important;
+		height: 32px !important;
 	}
 
 	&__kebabButton--left {
@@ -782,7 +810,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		/* Reduce padding for messages with attachments */
-		&:has(&__attachment) {
+		&:has(.attachmentCard) {
 			padding: 8px;
 		}
 
@@ -962,148 +990,18 @@ $message-avatar-overlap: -19px;
 			}
 		}
 
-		&__attachment {
-			display: flex;
-			flex-direction: column;
-			margin-top: 4px;
-			border: 1px solid #e3e8f0;
-			border-radius: 8px;
-			overflow: hidden;
-			max-width: 400px;
-			background: transparent;
-			transition: all 0.2s ease;
-
-			&:hover {
-				border-color: #0086e6;
-				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
-			}
-
-			&__preview {
-				background: #fff;
-				padding: 0;
-				margin: 0;
-				width: 100%;
-				position: relative;
-
-				// Reserve the box via the sender-provided intrinsic ratio
-				// (inline aspect-ratio style) but never grow past the bubble.
-				max-height: 320px;
-
-				img {
-					width: 100%;
-					max-width: 100%;
-					height: 100%;
-					max-height: 320px;
-					object-fit: contain;
-					display: block;
-					margin: 0;
-					border-radius: 0;
-				}
-
-				// Media check state "unchecked" (WP-4): this styles the
-				// no-source placeholder shown before deliberate reveal.
-				&--blurred {
-					img {
-						filter: blur(24px);
-						transform: scale(1.06); // hide sharp blur edges
-					}
-				}
-			}
-
-			&__reveal {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				width: 100%;
-				border: 0;
-				background: rgba(23, 25, 28, 0.35);
-				color: #fff;
-				font-size: 14px;
-				font-weight: 500;
-				cursor: pointer;
-			}
-
-			&--blocked {
-				opacity: 0.85;
-
-				&:hover {
-					border-color: #e3e8f0;
-					box-shadow: none;
-				}
-
-				.messageItem__message__attachment__meta {
-					color: var(--m3-primary, #a5000a);
-				}
-			}
-
-			&__info {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				gap: 12px;
-				padding: 12px;
-				background: #f4f6fa;
-			}
-
-			&__filename {
-				font-size: 14px;
-				font-weight: 500;
-				color: #17191c;
-				margin: 0 !important;
-			}
-
-			&__meta {
-				font-size: 12px;
-				color: #8d97a5;
-				margin: 0 !important;
-			}
-
-			&__title {
-				flex: 1;
-				min-width: 0;
-				display: flex;
-				flex-direction: column;
-			}
-
-			&__icon {
-				width: 32px;
-				height: 32px;
-				flex-shrink: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-
-				svg {
-					width: 24px;
-					height: 24px;
-					color: #737d8c;
-				}
-			}
-
-			.loadingSpinner {
-				margin-right: $grid-base;
-			}
-
-			p {
-				margin: 0;
-			}
-
-			&__meta {
-				font-size: $font-size-secondary;
-				line-height: $line-height-secondary;
-				color: var(--m3-on-surface-variant, $tertiary);
-			}
-		}
-
 		&--myMessage {
 			color: $message-outgoing-text;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
-			.messageItem__message__attachment {
-				background-color: $white;
+			// The voice player runs with bubble="none" inside this bubble, so
+			// its unplayed tiles have to read against the outgoing surface
+			// rather than against the incoming one.
+			--voice-player-tile-idle: rgba(255, 255, 255, 0.72);
+
+			.attachmentCard {
+				background-color: var(--m3-surface-container-lowest, #fff);
 			}
 
 			a,
@@ -1197,6 +1095,10 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+		text-align: right;
 	}
 
 	&__senderInfoMetaIcon {
@@ -1322,83 +1224,6 @@ $message-avatar-overlap: -19px;
 
 	&__threadButton:hover .messageItem__threadButtonMeta {
 		display: none;
-	}
-
-	&__voiceNote {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 220px;
-		max-width: 360px;
-		padding: 8px 10px;
-		border-radius: 999px;
-		background: var(--m3-primary-container, #cc1e1c);
-		color: var(--m3-on-primary-container, #ffe2de);
-
-		audio {
-			display: none;
-		}
-	}
-
-	&__voiceNote__play {
-		border: none;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		cursor: pointer;
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-
-		&:hover {
-			background: var(--m3-primary-hover, #820006);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
-			outline-offset: 2px;
-		}
-	}
-
-	&__voiceNote__wave {
-		position: relative;
-		flex: 1;
-		height: 16px;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
-			transparent 3px 7px
-		);
-		opacity: 1;
-		overflow: hidden;
-	}
-
-	&__voiceNote__wavePlayed {
-		position: absolute;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		width: 0;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-on-primary-container, #ffe2de) 0 3px,
-			transparent 3px 7px
-		);
-		transition: width 120ms linear;
-	}
-
-	&__voiceNote__time {
-		font-size: 12px;
-		font-weight: 700;
-		letter-spacing: 0.3px;
-		white-space: nowrap;
 	}
 
 	&__action {
@@ -1920,6 +1745,36 @@ $message-avatar-overlap: -19px;
 			// primary-fixed stays light for every tenant seed.
 			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
 			box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Hands over to the full emoji picker when the six recents aren't enough.
+	.messageItem__actionMenuReactionMore {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: var(--m3-secondary, #4b515a);
+		font-size: 18px;
+		line-height: 1;
+		padding: 5px;
+		cursor: pointer;
+		border-radius: 999px;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
 		}
 	}
 }

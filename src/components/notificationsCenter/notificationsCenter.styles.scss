@@ -15,6 +15,15 @@
 	min-height: 0;
 	background: #fcf9f9;
 
+	&--empty {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__fullEmptyState {
+		min-height: 100%;
+	}
+
 	&__listColumn {
 		position: relative;
 		display: flex;
@@ -478,6 +487,14 @@
 		line-height: 1.6;
 		color: #444748;
 		max-width: 640px;
+		text-align: left;
+	}
+
+	&__detailTimestamp {
+		margin: 4px 0 0;
+		font-size: 13px;
+		line-height: 1.4;
+		color: var(--m3-secondary, #4c555f);
 		text-align: left;
 	}
 

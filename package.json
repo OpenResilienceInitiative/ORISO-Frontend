@@ -109,7 +109,7 @@
 		"react-use-measure": "^2.1.1",
 		"resolve": "^1.22.8",
 		"resolve-url-loader": "^5.0.0",
-		"sanitize-html": "^2.11.0",
+		"sanitize-html": "^2.17.5",
 		"semver": "^7.5.4",
 		"sockjs-client": "^1.6.1",
 		"source-map-loader": "^5.0.0",
@@ -224,6 +224,7 @@
 		"dev": "node scripts/start.js",
 		"dev:server": "nodemon",
 		"build": "node scripts/build.js",
+		"postbuild": "bash scripts/validate-hardcoded-hosts.sh build",
 		"test": "cross-env NODE_ENV=development FAST_REFRESH=false BROWSER=none REACT_APP_API_URL=http://127.0.0.1:9001 HTTPS=0 PORT=9001 WDS_SOCKET_PORT=9001 concurrently --kill-others --success first \"npm run dev\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=6144 vitest run --maxWorkers=2 --minWorkers=1",
 		"test:smoke": "playwright test",
@@ -245,10 +246,14 @@
 		"dtsgen": "ts-node dtsgen.ts",
 		"prepare": "husky install",
 		"browserstack": "browserstack-cypress run --sync --env BROWSER=none,REACT_APP_API_URL=http://127.0.0.1:9001,HTTPS=0,PORT=9001,WDS_SOCKET_PORT=9001",
+		"generate:icon-catalog": "node scripts/generateIconCatalog.mjs",
+		"prestorybook": "npm run generate:icon-catalog",
 		"storybook": "storybook dev -p 6006",
 		"typecheck:storybook": "tsc --noEmit --project tsconfig.storybook.json",
-		"prebuild-storybook": "npm run typecheck:storybook",
-		"build-storybook": "storybook build"
+		"prebuild-storybook": "npm run generate:icon-catalog && npm run typecheck:storybook",
+		"build-storybook": "storybook build",
+		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts",
+		"test:credentials": "playwright test --config playwright.credentials.config.ts"
 	},
 	"eslintConfig": {
 		"extends": [

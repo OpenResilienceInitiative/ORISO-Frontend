@@ -7,6 +7,25 @@ import ru from '../resources/i18n/ru/common.json';
 import ti from '../resources/i18n/ti/common.json';
 import tr from '../resources/i18n/tr/common.json';
 
+/**
+ * The modality labels this issue owns. Asserted as a subset, not as the whole
+ * node: `notifications.center.preview` is shared — #847 put the read-only
+ * conversation preview's own strings (`unavailable`, `empty`) in the same
+ * place. An exact-set assertion here would fail whenever a neighbouring issue
+ * adds a string, which says nothing about whether these labels are complete.
+ */
+const REQUIRED_MODALITY_LABELS = [
+	'audio',
+	'eventUnavailable',
+	'file',
+	'image',
+	'notice',
+	'pending',
+	'roomUnavailable',
+	'unsupported',
+	'video'
+];
+
 describe('Matrix Activity Timeline preview translations', () => {
 	it.each([
 		['de', de],
@@ -19,19 +38,9 @@ describe('Matrix Activity Timeline preview translations', () => {
 	])('provides every safe modality label in %s', (_locale, common) => {
 		const preview = common.notifications.center.preview;
 
-		expect(Object.keys(preview).sort()).toEqual(
-			[
-				'audio',
-				'eventUnavailable',
-				'file',
-				'image',
-				'notice',
-				'pending',
-				'roomUnavailable',
-				'unsupported',
-				'video'
-			].sort()
-		);
+		REQUIRED_MODALITY_LABELS.forEach((key) => {
+			expect(Object.keys(preview)).toContain(key);
+		});
 		Object.values(preview).forEach((label) => {
 			expect(label).toEqual(expect.any(String));
 			expect(label.trim()).not.toBe('');

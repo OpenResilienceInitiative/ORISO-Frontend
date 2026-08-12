@@ -28,7 +28,8 @@
 		}
 	}
 
-	.select__input__menu-portal {
-		z-index: 1000;
-	}
+	/* The portalled menu is deliberately NOT styled from here. `menuPortalTarget`
+	   mounts it under document.body, so any rule nested in this block compiles
+	   to a descendant selector that cannot match it. Its stacking lives in
+	   `colourStyles.menuPortal` in LanguageSelectDropdown.tsx (#998). */
 }

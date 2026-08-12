@@ -12,6 +12,8 @@ export interface AccountDataDraft {
 	password: string;
 	repeatPassword: string;
 	dataProtectionChecked: boolean;
+	email: string;
+	twoFactorAuthEnabled: boolean;
 }
 
 let draft: AccountDataDraft | null = null;

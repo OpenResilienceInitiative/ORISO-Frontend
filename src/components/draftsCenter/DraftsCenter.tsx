@@ -7,7 +7,10 @@ import {
 	apiGetUserDrafts,
 	IUserDraftItem
 } from '../../api';
-import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
+import {
+	hasDraftContent,
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../../services/draftStore';
 import { useResponsive } from '../../hooks/useResponsive';
 import './draftsCenter.styles';
 
@@ -106,7 +109,10 @@ export const DraftsCenter = () => {
 			}
 			const visibleDrafts =
 				response?.items?.filter(
-					(entry) => entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
+					(entry) =>
+						entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
+						// #976: zero-content rows from older builds are not drafts.
+						hasDraftContent(entry.text)
 				) || [];
 			setDrafts(visibleDrafts);
 		};

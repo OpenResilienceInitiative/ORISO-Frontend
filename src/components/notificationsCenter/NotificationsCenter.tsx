@@ -22,7 +22,10 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import { EventFamily } from './eventDescriptors/types';
-import { resolveNotificationActionPath } from './notificationActionTarget';
+import {
+	resolveNotificationActionPath,
+	toInterpolationValues
+} from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -59,6 +62,14 @@ import type {
 	MatrixActivityPreviewKind,
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
+import { ConversationPreview } from './ConversationPreview';
+import { getNextNotificationId } from './notificationQueue';
+import {
+	formatAbsoluteTime,
+	formatClockParts,
+	formatRelativeTime
+} from './timelineTime';
+import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -92,24 +103,9 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 	video: VideoMessageIcon
 };
 
-const formatRelativeTime = (createdAt: string, locale?: string) => {
-	const normalizedCreatedAt =
-		createdAt &&
-		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(createdAt) &&
-		!/Z|[+-]\d{2}:\d{2}$/.test(createdAt)
-			? `${createdAt}Z`
-			: createdAt;
-	const date = new Date(normalizedCreatedAt);
-	const diffMs = Date.now() - date.getTime();
-	const diffMin = Math.max(0, Math.floor(diffMs / (1000 * 60)));
-	if (diffMin < 1) return 'now';
-	if (diffMin < 60) return `${diffMin}m ago`;
-	const diffHours = Math.floor(diffMin / 60);
-	if (diffHours < 24) return `${diffHours}h ago`;
-	const diffDays = Math.floor(diffHours / 24);
-	if (diffDays < 7) return `${diffDays}d ago`;
-	return date.toLocaleString(locale || 'de-DE');
-};
+// The branch's own `formatRelativeTime` is gone on purpose: #845 replaced the
+// hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
+// `timelineTime.ts`, which is imported above.
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
@@ -135,7 +131,10 @@ const describeItem = (
 	const descriptor = getEventDescriptor(item?.eventType);
 	const { title, text } = renderEventStrings(descriptor, translate, {
 		fallbackTitle: item?.title,
-		fallbackText: item?.text
+		fallbackText: item?.text,
+		// #846: params metadata feeds template placeholders such as
+		// {{senderDisplayName}} — previously they rendered unresolved.
+		interpolation: toInterpolationValues(item?.params)
 	});
 	return { descriptor, title, text };
 };
@@ -167,6 +166,24 @@ const resolveThreadRootId = (item: any): string | null => {
 	const params = new URLSearchParams(query);
 	const threadRootId = params.get('threadRootId');
 	return threadRootId ? decodeURIComponent(threadRootId) : null;
+};
+
+// #847: Matrix room for the embedded preview — params.roomRef when the
+// backend sent it (#846), else the room segment of the stored actionPath
+// (/sessions/<role>/<list>/<roomId>/<sessionId>).
+const resolveRoomId = (item: any): string | null => {
+	if (item?.params?.roomRef) {
+		return String(item.params.roomRef);
+	}
+	const path = item?.actionPath;
+	if (!path) {
+		return null;
+	}
+	const segments = String(path).split('?')[0].split('/').filter(Boolean);
+	const roomSegment = segments.find(
+		(segment) => segment.startsWith('!') || segment.startsWith('%21')
+	);
+	return roomSegment ? decodeURIComponent(roomSegment) : null;
 };
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
@@ -525,6 +542,21 @@ export const NotificationsCenter = () => {
 				: 'system',
 		[selectedNotification]
 	);
+
+	// #845: on desktop the selected card is rendered in the detail pane —
+	// displayed means read (Slack semantics). This also covers the
+	// auto-selected first card, which previously stayed unread and made
+	// the Next button die on its first click. Skipped while the unread
+	// filter is on: marking read would drop the card from the filtered
+	// list and cascade-read the entire feed one selection at a time.
+	useEffect(() => {
+		if (untilL || unreadOnly) {
+			return;
+		}
+		if (selectedNotification && !selectedNotification.readAt) {
+			markNotificationAsRead(selectedNotification.id);
+		}
+	}, [untilL, unreadOnly, selectedNotification, markNotificationAsRead]);
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
@@ -564,64 +596,36 @@ export const NotificationsCenter = () => {
 				: '/sessions/user/view',
 		[userData]
 	);
+	// #846: request-origin events (request.new, waiting_room.client.joined)
+	// live in the consultant's enquiry list, not the sessions list.
+	const getDefaultRequestsPath = useCallback(
+		() =>
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? '/sessions/consultant/sessionPreview'
+				: '/sessions/user/view',
+		[userData]
+	);
 	const getNotificationActionPath = useCallback(
 		(item: (typeof notificationFeed)[number]) =>
 			toNonEmbeddedPath(
-				resolveNotificationActionPath(item, getDefaultSessionsPath())
+				resolveNotificationActionPath(
+					item,
+					getDefaultSessionsPath(),
+					getDefaultRequestsPath()
+				)
 			),
-		[getDefaultSessionsPath]
+		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	const embeddedChatPath = useMemo(() => {
-		if (!canShowChatPreview) {
-			return null;
-		}
-		const basePath = selectedNotification?.actionPath
-			? selectedNotification.actionPath
-			: selectedSessionId
-				? `${getDefaultSessionsPath()}/session/${selectedSessionId}${
-						selectedThreadRootId
-							? `?threadRootId=${encodeURIComponent(selectedThreadRootId)}`
-							: ''
-					}`
-				: null;
-		if (!basePath) {
-			return null;
-		}
-		const hasQuery = basePath.includes('?');
-		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
-	}, [
-		canShowChatPreview,
-		getDefaultSessionsPath,
-		selectedNotification?.actionPath,
-		selectedSessionId,
-		selectedThreadRootId
-	]);
-
-	const getNextNotificationId = (
-		fromId: string | null,
-		unreadOnly: boolean
-	): string | null => {
-		if (filteredFeed.length === 0) {
-			return null;
-		}
-		const startIndex = fromId
-			? filteredFeed.findIndex((item) => item.id === fromId)
-			: -1;
-		const matchesRule = (item: (typeof filteredFeed)[number]) =>
-			!unreadOnly || !item.readAt;
-
-		for (let i = startIndex + 1; i < filteredFeed.length; i++) {
-			if (matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		for (let i = 0; i <= startIndex; i++) {
-			if (i >= 0 && matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		return null;
-	};
+	// #847: the preview renders from the app's own Matrix client — no more
+	// embeddedNotifications iframe (a second SPA whose session view registered
+	// an active view and suppressed the timeline's own message events).
+	const selectedRoomId = useMemo(
+		() =>
+			canShowChatPreview && selectedNotification
+				? resolveRoomId(selectedNotification)
+				: null,
+		[canShowChatPreview, selectedNotification]
+	);
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
@@ -640,6 +644,7 @@ export const NotificationsCenter = () => {
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotification.id,
 			true
 		);
@@ -657,10 +662,13 @@ export const NotificationsCenter = () => {
 
 	const handleNextNotification = () => {
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotificationId,
 			true
 		);
-		if (nextUnreadId) {
+		// #845: defensive self-guard — the queue already excludes the
+		// anchor, so a match is always a different card.
+		if (nextUnreadId && nextUnreadId !== selectedNotificationId) {
 			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
@@ -698,13 +706,15 @@ export const NotificationsCenter = () => {
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
-	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const nextUnreadId = getNextNotificationId(
+		filteredFeed,
+		selectedNotificationId,
+		true
+	);
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
-	const showEmbeddedChat = Boolean(
-		embeddedChatOpen && canShowChatPreview && embeddedChatPath
-	);
+	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
 
 	// Same filter-chip contract as the conversation page toolbar: inactive
 	// chips are icon-only pills, the active chip expands with its label.
@@ -740,6 +750,14 @@ export const NotificationsCenter = () => {
 			</button>
 		);
 	};
+
+	if (notificationFeed.length === 0) {
+		return (
+			<div className="notificationsCenter notificationsCenter--empty">
+				<ActivityTimelineEmptyState />
+			</div>
+		);
+	}
 
 	return (
 		<div className="notificationsCenter">
@@ -840,14 +858,7 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
-					{notificationFeed.length === 0 ? (
-						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.empty',
-								'No notifications yet.'
-							)}
-						</div>
-					) : filteredFeed.length === 0 ? (
+					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
 								'notifications.center.noResults',
@@ -1148,10 +1159,9 @@ export const NotificationsCenter = () => {
 							)}
 						</div>
 					) : showEmbeddedChat ? (
-						<iframe
-							title="notifications-chat-session"
-							src={embeddedChatPath}
-							className="notificationsCenter__embeddedSessionFrame"
+						<ConversationPreview
+							roomId={selectedRoomId}
+							threadRootId={selectedThreadRootId}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">
@@ -1167,6 +1177,28 @@ export const NotificationsCenter = () => {
 							</div>
 							<p className="notificationsCenter__detailText">
 								{selectedDisplay?.text}
+							</p>
+							{/* #845: the pane never showed WHEN the event
+							    happened; waiting-room events phrase it as
+							    "waiting since" so the queue age is obvious. */}
+							<p className="notificationsCenter__detailTimestamp">
+								{selectedNotification?.eventType ===
+								'waiting_room.client.joined'
+									? translate(
+											'notifications.center.waitingSince',
+											{
+												defaultValue:
+													'Waiting since {{time}} ({{date}})',
+												...formatClockParts(
+													selectedNotification.createdAt,
+													i18n.language
+												)
+											}
+										)
+									: formatAbsoluteTime(
+											selectedNotification.createdAt,
+											i18n.language
+										)}
 							</p>
 							{selectedNotification?.eventType ===
 								'case.handover.consent.requested' && (

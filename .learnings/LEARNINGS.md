@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-08-02 — PR screenshots need a non-ignored docs path
+
+- Context: #834 Threads list plain preview (`docs/agent-tasks/` is covered by `docs/*` ignore)
+- Lesson: Put PR-attached screenshots under an allowed path such as `docs/storybook/…` (or add a gitignore negation for the task folder) so raw GitHub image URLs work in the PR body.
+
 ## 2026-08-02 — Element Call warm-up must release parent MediaStream
 
 - Context: `docs/cursor-orchestrator/2026-08-02_camera-activation-bug/` (gitignored under `docs/*`)

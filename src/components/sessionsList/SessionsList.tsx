@@ -75,11 +75,13 @@ import { useSessionListViewState } from './SessionListViewStateContext';
 import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
 import {
 	DRAFTS_UPDATED_EVENT,
+	hasDraftContent,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
 import { FutureTimelinePanel } from './FutureTimelinePanel';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
+import { refetchEnquiryListState } from './refetchEnquiryList';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -592,17 +594,18 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
-		return fetchEnquirySessionsWithAutoPage(0)
-			.then(({ sessions, total }) => {
+		return refetchEnquiryListState({
+			fetchPage: () => fetchEnquirySessionsWithAutoPage(0),
+			replaceSessions: (sessions) => {
 				dispatch({
 					type: SET_SESSIONS,
 					ready: true,
 					sessions
 				});
-				setTotalItems(total);
-				setCurrentOffset(0);
-			})
-			.catch(() => {});
+			},
+			setTotalItems,
+			setCurrentOffset
+		});
 	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
 	const refetchSessionList = useCallback(() => {
@@ -1204,7 +1207,12 @@ export const SessionsList = ({
 	const visibleUserDrafts = React.useMemo(
 		() =>
 			userDrafts.filter(
-				(draft) => draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
+				(draft) =>
+					draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
+					// #976: zero-content rows persisted by older builds still sit
+					// in the backend. They can never be opened, so they must not
+					// keep the drafts badge lit either.
+					hasDraftContent(draft.text)
 			),
 		[userDrafts]
 	);
