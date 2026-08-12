@@ -12,6 +12,13 @@
  * which is the one thing this project must never allow.
  */
 
+// The two stylesheets `preview-head.html` links. Without them the Compound
+// components render unstyled here while looking correct in the Storybook UI, so
+// a styling regression could pass and axe would judge contrast on the wrong
+// colours. Served from ./static in the UI; imported here so Vite injects them.
+import './static/compound-design-tokens.css';
+import './static/compound-web.css';
+
 // draft-js (via fbjs/lib/setImmediate) dereferences the Node-style `global` at
 // module scope. Storybook's preview shell provides it; a bare browser page does
 // not, so every story that transitively imports the message editor would die
