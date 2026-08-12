@@ -21,7 +21,9 @@ import {
 import {
 	clearPendingRecoveryKey,
 	getPendingRecoveryKey,
-	savePendingRecoveryKey
+	RecoverySetupBusyError,
+	savePendingRecoveryKey,
+	withRecoverySetupLock
 } from '../../../services/pendingRecoveryKeyStore';
 import './encryptionSettings.styles.scss';
 import {
@@ -149,11 +151,17 @@ export const EncryptionSettingsPanel = ({
 		setError(null);
 		setSetupFailurePhase(null);
 		try {
-			const encodedKey = await executeWithReadyEncryptionClient(
-				clientOverride,
-				getMatrixClientService(),
-				setUpRecovery
-			);
+			const runSetup = () =>
+				executeWithReadyEncryptionClient(
+					clientOverride,
+					getMatrixClientService(),
+					setUpRecovery
+				);
+			// Same cross-tab lock the background bootstrap takes: two setups
+			// at once would produce two backup versions and one dead key.
+			const encodedKey = userId
+				? await withRecoverySetupLock(userId, runSetup)
+				: await runSetup();
 			if (!encodedKey) {
 				setPhase('unavailable');
 				return;
@@ -169,6 +177,15 @@ export const EncryptionSettingsPanel = ({
 			setKeyFromSilentSetup(false);
 			setPhase('showKey');
 		} catch (setupError) {
+			if (setupError instanceof RecoverySetupBusyError) {
+				setError(
+					t(
+						'profile.encryption.setup.busy',
+						'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.'
+					)
+				);
+				return;
+			}
 			setSetupFailurePhase(
 				setupError instanceof RecoverySetupPhaseError
 					? setupError.phase

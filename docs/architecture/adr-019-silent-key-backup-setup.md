@@ -41,6 +41,11 @@ Split them.
    cannot read (`keyStorageOutOfSync`), only the user can unlock it, so the
    recovery dialog stays exactly as it is. That dialog now has a single mode.
 
+Its session-scoped dismissal is bound to the user who dismissed it, and it
+silences nothing but the dialog: a different account logging into the same tab
+still gets its own answer, and the background bootstrap always runs when it is
+eligible — nobody dismissed *that*.
+
 Silent bootstrap is deliberately restricted to `!serverBackupExists &&
 !secretStorageReady` (`canBootstrapSilently`). Bootstrapping replaces secret
 storage and creates a new backup version; doing that unattended on an account
@@ -48,8 +53,14 @@ that already has a backup would orphan history the user could still have
 recovered with their existing key. Those accounts keep the explicit,
 user-triggered path in the Sicherheit panel.
 
-A per-user lock in `localStorage` (2-minute TTL) keeps two tabs from
-bootstrapping concurrently and creating rival recovery keys.
+A per-user, owner-bound lock in `localStorage` keeps two tabs from
+bootstrapping concurrently and creating rival recovery keys. The owner holds it
+for the whole `setUpRecovery` call and keeps it alive by heartbeat, so a slow
+setup never loses it; only the owner can release it, so a superseded tab
+finishing late cannot free somebody else's lock. The 60-second TTL therefore
+only ever expires for a tab that is actually gone. The manual setup in the
+Sicherheit panel takes the same lock and reports a busy state rather than
+starting a rival bootstrap.
 
 ## Consequences
 

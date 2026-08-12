@@ -5,7 +5,10 @@ import {
 	clearPendingRecoveryKey,
 	endRecoverySetup,
 	getPendingRecoveryKey,
-	savePendingRecoveryKey
+	RecoverySetupBusyError,
+	refreshRecoverySetup,
+	savePendingRecoveryKey,
+	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
 
 const USER = '@abe.simpson:oriso.org';
@@ -44,15 +47,15 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 	});
 
 	it('lets the first caller take the setup lock and refuses the second', () => {
-		expect(beginRecoverySetup(USER)).toBe(true);
-		expect(beginRecoverySetup(USER)).toBe(false);
+		expect(beginRecoverySetup(USER)).toBeTruthy();
+		expect(beginRecoverySetup(USER)).toBeNull();
 	});
 
 	it('frees the lock again when the flow finishes', () => {
-		beginRecoverySetup(USER);
-		endRecoverySetup(USER);
+		const owner = beginRecoverySetup(USER);
+		endRecoverySetup(USER, owner);
 
-		expect(beginRecoverySetup(USER)).toBe(true);
+		expect(beginRecoverySetup(USER)).toBeTruthy();
 	});
 
 	it('breaks a lock left behind by a tab that never finished', () => {
@@ -62,13 +65,69 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 
 		vi.setSystemTime(new Date('2026-08-12T10:03:00Z'));
 
-		expect(beginRecoverySetup(USER)).toBe(true);
+		expect(beginRecoverySetup(USER)).toBeTruthy();
 	});
 
 	it('keeps locks per user', () => {
 		beginRecoverySetup(USER);
 
-		expect(beginRecoverySetup(OTHER_USER)).toBe(true);
+		expect(beginRecoverySetup(OTHER_USER)).toBeTruthy();
+	});
+
+	it('never lets a superseded owner release the new owner’s lock', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-08-12T10:00:00Z'));
+		const stale = beginRecoverySetup(USER);
+
+		// The first tab froze; its lock expires and a second tab takes over.
+		vi.setSystemTime(new Date('2026-08-12T10:03:00Z'));
+		const fresh = beginRecoverySetup(USER);
+
+		// The first tab finally finishes and tries to clean up after itself.
+		endRecoverySetup(USER, stale);
+
+		expect(beginRecoverySetup(USER)).toBeNull();
+		expect(refreshRecoverySetup(USER, stale)).toBe(false);
+		expect(refreshRecoverySetup(USER, fresh)).toBe(true);
+	});
+
+	it('holds the lock for the whole setup, however long it takes', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-08-12T10:00:00Z'));
+		let finish: () => void = () => undefined;
+		const slowSetup = withRecoverySetupLock(
+			USER,
+			() =>
+				new Promise<string>((resolve) => {
+					finish = () => resolve('done');
+				})
+		);
+
+		// Well past the TTL — the heartbeat has to keep the lock alive.
+		await vi.advanceTimersByTimeAsync(3 * 60 * 1000);
+		expect(beginRecoverySetup(USER)).toBeNull();
+
+		finish();
+		await expect(slowSetup).resolves.toBe('done');
+		expect(beginRecoverySetup(USER)).toBeTruthy();
+	});
+
+	it('turns a busy lock into a typed error the caller can react to', async () => {
+		beginRecoverySetup(USER);
+
+		await expect(
+			withRecoverySetupLock(USER, async () => 'never runs')
+		).rejects.toBeInstanceOf(RecoverySetupBusyError);
+	});
+
+	it('releases the lock when the setup throws', async () => {
+		await expect(
+			withRecoverySetupLock(USER, async () => {
+				throw new Error('UIA rejected');
+			})
+		).rejects.toThrow('UIA rejected');
+
+		expect(beginRecoverySetup(USER)).toBeTruthy();
 	});
 
 	it('stays silent when localStorage is unavailable', () => {
@@ -86,7 +145,7 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 		expect(() => savePendingRecoveryKey(USER, KEY)).not.toThrow();
 		expect(getPendingRecoveryKey(USER)).toBeNull();
 		// Without storage we cannot coordinate tabs — do not block the setup.
-		expect(beginRecoverySetup(USER)).toBe(true);
+		expect(beginRecoverySetup(USER)).toBeTruthy();
 
 		getItem.mockRestore();
 		setItem.mockRestore();

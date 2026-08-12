@@ -11,6 +11,7 @@ import type { MatrixClient } from 'matrix-js-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupService';
 import {
+	beginRecoverySetup,
 	getPendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
@@ -139,6 +140,7 @@ describe('EncryptionSettingsPanel', () => {
 		beforeEach(() => {
 			localStorage.clear();
 			getEncryptionStatus.mockReset();
+			setUpRecovery.mockClear();
 		});
 
 		it('shows the key the background setup generated', async () => {
@@ -168,6 +170,43 @@ describe('EncryptionSettingsPanel', () => {
 				expect(getPendingRecoveryKey(USER_ID)).toBeNull()
 			);
 			expect(screen.queryByText(PARKED_KEY)).toBeNull();
+		});
+
+		it('keeps a manually created key across a reload until it is confirmed', async () => {
+			getEncryptionStatus.mockResolvedValue(notSetUp);
+			const firstVisit = render(
+				<EncryptionSettingsPanel clientOverride={clientWithUser} />
+			);
+
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'Wiederherstellungsschlüssel einrichten'
+				})
+			);
+			expect(await screen.findByText('test-recovery-key')).toBeTruthy();
+			firstVisit.unmount();
+
+			render(<EncryptionSettingsPanel clientOverride={clientWithUser} />);
+
+			expect(await screen.findByText('test-recovery-key')).toBeTruthy();
+		});
+
+		it('refuses to set up a second time while another tab is at it', async () => {
+			getEncryptionStatus.mockResolvedValue(notSetUp);
+			// The background bootstrap (or another tab) holds the lock.
+			beginRecoverySetup(USER_ID);
+
+			render(<EncryptionSettingsPanel clientOverride={clientWithUser} />);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'Wiederherstellungsschlüssel einrichten'
+				})
+			);
+
+			expect(
+				await screen.findByText(/gerade schon eingerichtet/i)
+			).toBeTruthy();
+			expect(setUpRecovery).not.toHaveBeenCalled();
 		});
 
 		it('asks for the recovery key first when this device is out of sync', async () => {

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { MatrixClient } from 'matrix-js-sdk';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	canBootstrapSilently,
@@ -11,9 +10,9 @@ import {
 	setUpRecovery
 } from '../../services/matrixKeyBackupService';
 import {
-	beginRecoverySetup,
-	endRecoverySetup,
-	savePendingRecoveryKey
+	RecoverySetupBusyError,
+	savePendingRecoveryKey,
+	withRecoverySetupLock
 } from '../../services/pendingRecoveryKeyStore';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
@@ -157,19 +156,20 @@ export const KeyBackupRecoveryDialog = ({
  *   parked for the Sicherheit panel, which shows it when the user gets there.
  *   Nobody is stopped mid-Anfrage by a modal they cannot act on usefully.
  *
- * Probes once per session, only after sync reaches PREPARED; dismissal is
- * session-scoped so we do not nag on every navigation.
+ * Probes once per mount, only after sync reaches PREPARED. Dismissal is
+ * session-scoped *and* bound to the user who dismissed, so we do not nag on
+ * every navigation but a different account logging into the same tab still
+ * gets its own answer. It only ever silences the dialog — the background
+ * setup is not something the user dismissed, so it always gets to run.
  */
 export const KeyBackupRecoveryPrompt = () => {
 	const { matrixClientService } = useMatrixClient();
 	const [showRecovery, setShowRecovery] = useState(false);
 	const probedRef = useRef(false);
+	const userIdRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!matrixClientService) {
-			return undefined;
-		}
-		if (sessionStorage.getItem(DISMISS_KEY)) {
 			return undefined;
 		}
 
@@ -180,25 +180,26 @@ export const KeyBackupRecoveryPrompt = () => {
 		 * not ask for this, so an error here must not become their problem —
 		 * the Sicherheit panel still offers the explicit setup.
 		 */
-		const bootstrapSilently = async (client: MatrixClient) => {
-			const userId = client.getUserId();
-			// The lock keeps a second tab from creating a rival recovery key.
-			if (!userId || !beginRecoverySetup(userId)) {
-				return;
-			}
+		const bootstrapSilently = async (userId: string) => {
 			try {
-				const encodedKey = await executeWithReadyEncryptionClient(
-					undefined,
-					matrixClientService,
-					setUpRecovery
+				// The lock keeps a second tab — or the panel's manual setup —
+				// from creating a rival recovery key while this one runs.
+				const encodedKey = await withRecoverySetupLock(userId, () =>
+					executeWithReadyEncryptionClient(
+						undefined,
+						matrixClientService,
+						setUpRecovery
+					)
 				);
 				if (encodedKey) {
 					savePendingRecoveryKey(userId, encodedKey);
 				}
 			} catch (setupError) {
+				if (setupError instanceof RecoverySetupBusyError) {
+					// Someone else is already on it; theirs wins, ours is a no-op.
+					return;
+				}
 				console.warn('Silent key-backup setup failed', setupError);
-			} finally {
-				endRecoverySetup(userId);
 			}
 		};
 
@@ -212,17 +213,23 @@ export const KeyBackupRecoveryPrompt = () => {
 				if (!client) {
 					return;
 				}
+				const userId = client.getUserId();
+				userIdRef.current = userId;
 				getEncryptionStatus(client)
 					.then((status) => {
 						if (cancelled) {
 							return;
 						}
 						if (status.keyStorageOutOfSync) {
-							setShowRecovery(true);
+							if (
+								sessionStorage.getItem(DISMISS_KEY) !== userId
+							) {
+								setShowRecovery(true);
+							}
 							return;
 						}
-						if (canBootstrapSilently(status)) {
-							void bootstrapSilently(client);
+						if (userId && canBootstrapSilently(status)) {
+							void bootstrapSilently(userId);
 						}
 					})
 					.catch(() => {
@@ -242,7 +249,8 @@ export const KeyBackupRecoveryPrompt = () => {
 	}
 
 	const closePrompt = () => {
-		sessionStorage.setItem(DISMISS_KEY, 'true');
+		// Remember *who* dismissed: the next account in this tab has not.
+		sessionStorage.setItem(DISMISS_KEY, userIdRef.current ?? 'true');
 		setShowRecovery(false);
 	};
 
