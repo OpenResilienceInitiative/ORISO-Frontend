@@ -779,15 +779,16 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
-			"nameLabel": "Name des internen Chats",
-			"personCount_one": "{{count}} Person hinzugefügt",
-			"personCount_other": "{{count}} Personen hinzugefügt",
+			"nameLabel": "Name Interna",
+			"personCount_one": "{{count}}x Person hinzufügen",
+			"personCount_other": "{{count}}x Person hinzufügen",
 			"removePerson": "{{name}} entfernen",
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
 			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"title": "Interna besprechen",
-			"togglePersonList": "Personenliste öffnen oder schließen"
+			"togglePersonList": "Personenliste öffnen oder schließen",
+			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {
 			"addModerator": "Co-Moderator:in hinzufügen",

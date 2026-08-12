@@ -767,15 +767,16 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
-			"nameLabel": "Internal chat name",
-			"personCount_one": "{{count}} person added",
-			"personCount_other": "{{count}} people added",
+			"nameLabel": "Internal name",
+			"personCount_one": "Add {{count}}x person",
+			"personCount_other": "Add {{count}}x person",
 			"removePerson": "Remove {{name}}",
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
-			"togglePersonList": "Open or close the person list"
+			"togglePersonList": "Open or close the person list",
+			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {
 			"addModerator": "Add co-moderator",
