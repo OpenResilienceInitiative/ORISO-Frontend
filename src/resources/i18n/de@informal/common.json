@@ -449,6 +449,11 @@
 			"confirm": "Verstanden"
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Textausschnitt zur Antwort hinzugefügt"
+		}
+	},
 	"message": {
 		"appointmentCancelled": {
 			"title": "Dein Termin wurde abgesagt"
@@ -501,6 +506,15 @@
 			"quoteLabel": "Antwort auf",
 			"quoteUnknown": "Frühere Nachricht"
 		},
+		"edit": {
+			"cancel": "Bearbeiten abbrechen",
+			"previewLabel": "Nachricht bearbeiten"
+		},
+		"mobileNav": {
+			"back": "Zurück",
+			"dragToExpand": "Ziehen, um den Editor zu vergrößern",
+			"scrollToBottom": "Zum Ende scrollen"
+		},
 		"sendFailed": {
 			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Mit „Erneut senden“ kannst du die Nachricht einmal wiederholen. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
 			"retry": "Erneut senden",
@@ -509,6 +523,10 @@
 		"submit": {
 			"booking": {
 				"headline": "Oder vereinbaren Sie jetzt einen Termin"
+			},
+			"characterCounter": {
+				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
+				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
 			}
 		},
 		"video": {
@@ -1517,6 +1535,16 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Aufnahme läuft…",
+			"error": {
+				"headline": "Sprachaufnahme nicht verfügbar",
+				"message": "Bitte erlaube den Mikrofonzugriff und versuche es erneut."
+			},
+			"preview": "Sprachnachricht"
+		}
+	},
 	"walkthrough": {
 		"close": "Rundgang schließen",
 		"overview": {
@@ -1865,11 +1893,13 @@
 		}
 	},
 	"app": {
+		"cancel": "Abbrechen",
 		"stage": {
 			"associationLogoAlt": "Logo der Trägerorganisation",
 			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
-		}
+		},
+		"stop": "Stopp"
 	},
 	"login": {
 		"register": {
