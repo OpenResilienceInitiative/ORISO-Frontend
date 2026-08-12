@@ -115,10 +115,18 @@ export const NewRequestDialog = ({
 		apiGetTenantAgenciesTopics()
 			.then((response) => {
 				setTenantAgenciesTopics(response);
+				// keep the pre-dev behaviour: a single available topic is
+				// selected right away (unless a preselection was passed in)
+				if (preselectedTopicId == null && response.length === 1) {
+					const onlyTopicId = response[0].id;
+					setSelectedTopicId(onlyTopicId);
+					setCurrentSelectOption(onlyTopicId.toString());
+				}
 			})
 			.catch(() => {
 				setTenantAgenciesTopics([]);
 			});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
 	const isAllRequiredDataSet = () =>
