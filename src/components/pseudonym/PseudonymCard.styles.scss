@@ -10,6 +10,10 @@
  *   avatar, matching the existing robot onboarding messages.
  */
 
+/* Inputs for the header inset below — the avatar overlap this card is built on. */
+$avatar-visible-edge: 54px;
+$content-column-overlap: 32px;
+
 .pseudonymCard {
 	width: 100%;
 	max-width: 720px;
@@ -100,16 +104,17 @@
    The content column slides 32px under the avatar column and the avatar frame
    paints its own white background on top of it (z-index 2 over 1), so any
    header text starting before 60px is hidden behind the avatar — that is what
-   swallowed the leading "I" of "Ihre ersten Schritte". 22px of indent puts the
-   text 8px past the visible 48px circle (which ends at 54px inside the 60px
-   frame), the same avatar-to-name gap the message header uses. */
+   swallowed the leading "I" of "Ihre ersten Schritte". */
 .pseudonymCard__header {
 	display: flex;
 	flex-direction: column;
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
-	padding-left: 22px;
+	/* Derived, not chosen: the visible circle ends 54px from the card's left
+	   edge, and the content column already starts 32px in, so the header has
+	   to clear the remaining 22px to escape the avatar's white backdrop. */
+	padding-left: $avatar-visible-edge - $content-column-overlap;
 }
 
 .pseudonymCard__headerName {

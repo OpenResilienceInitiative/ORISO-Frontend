@@ -286,12 +286,17 @@ export const CaseHandoverConsentCard = ({
 				)}
 			>
 				<div className="caseHandoverMessage__actions">
+					{/* `item.disabled` only greys the button out; the native
+					attribute comes from Button's own `disabled` prop, and
+					without it both controls stay focusable and announce
+					themselves as enabled while the decision is in flight. */}
 					<Button
 						item={{
 							type: BUTTON_TYPES.PRIMARY,
 							label: translate('caseHandover.consent.approve'),
 							disabled: isSubmitting
 						}}
+						disabled={isSubmitting}
 						buttonHandle={onApprove}
 					/>
 					<Button
@@ -300,6 +305,7 @@ export const CaseHandoverConsentCard = ({
 							label: translate('caseHandover.consent.decline'),
 							disabled: isSubmitting
 						}}
+						disabled={isSubmitting}
 						buttonHandle={onDecline}
 					/>
 				</div>
