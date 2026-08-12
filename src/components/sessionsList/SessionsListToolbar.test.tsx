@@ -88,6 +88,18 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 		).toBe(false);
 	});
 
+	it('carries the product-tour anchor on the Create action', () => {
+		renderToolbar(true);
+
+		const createLink = screen.getByRole('link', {
+			name: 'sessionList.createChat.buttonTitle'
+		});
+
+		expect(createLink.getAttribute('data-tour-target')).toBe(
+			'groupchat-create-button'
+		);
+	});
+
 	it('hides group filters when their tenant modules are disabled', () => {
 		renderToolbar(false, {
 			showGroupChip: false,
