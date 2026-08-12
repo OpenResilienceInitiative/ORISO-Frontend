@@ -515,6 +515,12 @@
 			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
 		}
 	},
+	"notification": {
+		"error": "Fehler",
+		"info": "Information",
+		"success": "Erfolg",
+		"warning": "Warnung"
+	},
 	"notifications": {
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
@@ -1788,7 +1794,7 @@
 			},
 			"editLastMessage": {
 				"label": "Letzte Nachricht bearbeiten",
-				"description": "Bearbeitet Ihre zuletzt gesendete Nachricht."
+				"description": "Bearbeitet deine zuletzt gesendete Nachricht."
 			},
 			"cancelReplyOrEdit": {
 				"label": "Antwort oder Bearbeitung abbrechen",
@@ -1847,7 +1853,7 @@
 		"archivedChip": "Archiviert",
 		"teamOnlyMarker": "Nur für das Team sichtbar – Ratsuchende sehen diesen Bereich nicht.",
 		"archivedBanner": "Diese Besprechung wurde bei Annahme der Anfrage geschlossen ({{date}}) und ist nur noch lesbar.",
-		"empty": "Noch keine Beiträge. Stimmen Sie sich hier mit Ihrem Team zur Anfrage ab.",
+		"empty": "Noch keine Beiträge. Stimme dich hier mit deinem Team zur Anfrage ab.",
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
