@@ -1600,7 +1600,9 @@
 		},
 		"edit": {
 			"marker": "(edited)",
-			"markerTitle": "Message was edited"
+			"markerTitle": "Message was edited",
+			"previewLabel": "Edit message",
+			"cancel": "Cancel editing"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1641,6 +1643,9 @@
 			"cancel": "Discard reply",
 			"quoteLabel": "In reply to",
 			"quoteUnknown": "Earlier message"
+		},
+		"thread": {
+			"unknownRoot": "Earlier message"
 		}
 	},
 	"navigation": {
@@ -2358,6 +2363,47 @@
 				"title": "Notify about",
 				"description": "Choose which event families may trigger notifications."
 			}
+		},
+		"encryption": {
+			"title": "Encryption & recovery",
+			"description": "Your messages are end-to-end encrypted. With a recovery key you can keep reading your conversation history on a new device.",
+			"loading": "Loading …",
+			"unavailable": "Encryption settings are unavailable right now. Please reload the page.",
+			"setup": {
+				"busy": "Your vault is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
+				"error": "Setup failed. Please try again.",
+				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
+				"cta": "Set up recovery key"
+			},
+			"showKey": {
+				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
+				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
+				"copy": "Copy key",
+				"confirmLabel": "I have saved the key securely."
+			},
+			"status": {
+				"ok": "✓ Key backup is active. Your history stays readable on new devices."
+			},
+			"changeKey": {
+				"cta": "Change recovery key"
+			},
+			"outOfSync": {
+				"warning": "Key backup is not set up on this device. Enter your recovery key so your history becomes readable here."
+			},
+			"recover": {
+				"inputLabel": "Recovery key",
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"success": "{{count}} message keys restored."
+			},
+			"reset": {
+				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
+				"cta": "Reset encryption",
+				"confirmWarning": "Are you sure? Resetting creates a new encryption identity. Messages that were only readable with the old backup remain permanently unreadable.",
+				"confirmCta": "Yes, reset",
+				"cancel": "Cancel",
+				"error": "Reset failed. Please try again."
+			}
 		}
 	},
 	"qrCode": {
@@ -2711,7 +2757,8 @@
 			"headline": "To be able to advise you as best as possible, we need your postcode",
 			"label": "Your postcode",
 			"subline": "Why? Because then our specialists:"
-		}
+		},
+		"registering": "Registration in progress…"
 	},
 	"releaseNote": {
 		"content": {
@@ -3081,7 +3128,8 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Peer support group"
 			}
 		},
 		"createChat": {
@@ -3824,6 +3872,23 @@
 			"cancelDelete": "Cancel",
 			"confirmDelete": "Yes, delete permanently",
 			"error": "The chat could not be ended just now. Please try again."
+		},
+		"noAvailability": {
+			"subtitle": "If you want counselling without registering, please come back during opening hours.",
+			"openingHours": "Show regular opening hours",
+			"mailHint": "Or start anonymous mail counselling anytime: with your postcode you can find a counselling centre near you and write your request. For the reply you only need an email address — not your real name.",
+			"tip": "Tip: Use an email address only you can access.",
+			"startMailCounseling": "Start anonymous mail counselling",
+			"responseTime": "Reply within 2 working days",
+			"back": "Back to previous page",
+			"later": "Come back later"
+		},
+		"consent": {
+			"mustAcceptToContinue": "To continue you must accept our privacy policy.",
+			"reject": "I do not agree"
+		},
+		"pseudonym": {
+			"changeName": "Change name"
 		}
 	},
 	"sessionHeader": {
@@ -3890,7 +3955,10 @@
 				"remove": "Remove",
 				"added": "Added",
 				"loading": "Loading...",
-				"loadingConsultants": "Loading consultants..."
+				"loadingConsultants": "Loading consultants...",
+				"reasonLabel": "Reason for supervision",
+				"reasonPlaceholder": "Please enter the reason for supervision...",
+				"reasonError": "Please enter a reason."
 			},
 			"success": {
 				"add": {
@@ -3914,6 +3982,9 @@
 				"loadConsultants": {
 					"title": "Error",
 					"text": "Consultants could not be loaded."
+				},
+				"reasonRequired": {
+					"text": "Please enter the reason for supervision."
 				}
 			},
 			"remove": {
@@ -4121,5 +4192,47 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
 	}
 }
