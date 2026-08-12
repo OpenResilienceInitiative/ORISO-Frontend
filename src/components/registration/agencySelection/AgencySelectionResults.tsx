@@ -258,21 +258,44 @@ export const AgencySelectionResults = ({
 			{results?.length === 0 && (
 				<Box
 					sx={{
-						display: 'flex',
-						flexWrap: { xs: 'wrap-reverse', md: 'nowrap' },
-						justifyContent: 'space-between',
-						alignItems: 'center',
+						// Grid instead of wrap-reverse flex: the text column
+						// used to shrink to min-content on phones and broke
+						// words mid-syllable. Mobile order per design review:
+						// headline, icon centred, copy, full-width button.
+						display: 'grid',
+						gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+						gridTemplateAreas: {
+							xs: '"headline" "icon" "body"',
+							md: '"headline icon" "body icon"'
+						},
+						columnGap: { md: '24px' },
+						alignItems: { md: 'center' },
 						p: '16px',
 						mt: '16px',
 						borderRadius: '4px',
 						border: '1px solid #c6c5c4'
 					}}
 				>
-					<Box sx={{ mr: { xs: '0', md: '24px' } }}>
-						<Typography variant="h5" sx={{ fontWeight: '600' }}>
-							{t('registration.agency.noresult.headline')}
-						</Typography>
-						<Typography sx={{ mt: '16px' }}>
+					<Typography
+						variant="h5"
+						sx={{ gridArea: 'headline', fontWeight: '600' }}
+					>
+						{t('registration.agency.noresult.headline')}
+					</Typography>
+					<Box
+						sx={{
+							'gridArea': 'icon',
+							'--empty-state-animation-size': '176px',
+							'--empty-state-lottie-scale': '0.86',
+							'justifySelf': 'center',
+							'alignSelf': 'center',
+							'my': { xs: '24px', md: 0 }
+						}}
+					>
+						<SearchEmptyStateAnimation />
+					</Box>
+					<Box sx={{ gridArea: 'body' }}>
+						<Typography>
 							{t('registration.agency.noresult.subline')}
 						</Typography>
 						<Button
@@ -293,17 +316,6 @@ export const AgencySelectionResults = ({
 							{t('registration.agency.noresult.label')}
 						</Button>
 					</Box>
-					<Box
-						sx={{
-							'--empty-state-animation-size': '176px',
-							'--empty-state-lottie-scale': '0.86',
-							'mx': 'auto',
-							'mb': { xs: '24px', md: '0' },
-							'flexShrink': 0
-						}}
-					>
-						<SearchEmptyStateAnimation />
-					</Box>
 				</Box>
 			)}
 
@@ -311,21 +323,29 @@ export const AgencySelectionResults = ({
 			{results?.length > 0 && onlyExternalAgencies && (
 				<Box
 					sx={{
-						display: 'flex',
-						flexWrap: { xs: 'wrap-reverse', md: 'nowrap' },
-						justifyContent: 'space-between',
-						alignItems: 'center',
+						// Same grid as the no-results state above, same reason.
+						display: 'grid',
+						gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+						gridTemplateAreas: {
+							xs: '"headline" "icon" "body"',
+							md: '"headline icon" "body icon"'
+						},
+						columnGap: { md: '24px' },
+						alignItems: { md: 'center' },
 						p: '16px',
 						mt: '16px',
 						borderRadius: '4px',
 						border: '1px solid #c6c5c4'
 					}}
 				>
-					<Box sx={{ mr: { xs: '0', md: '24px' } }}>
-						<Typography variant="h5" sx={{ fontWeight: '600' }}>
-							{t('registration.agency.result.external.headline')}
-						</Typography>
-						<Typography sx={{ mt: '16px' }}>
+					<Typography
+						variant="h5"
+						sx={{ gridArea: 'headline', fontWeight: '600' }}
+					>
+						{t('registration.agency.result.external.headline')}
+					</Typography>
+					<Box sx={{ gridArea: 'body' }}>
+						<Typography>
 							{t('registration.agency.result.external.subline')}
 						</Typography>
 						{results?.[0]?.url && (
@@ -348,10 +368,12 @@ export const AgencySelectionResults = ({
 						component="img"
 						src={ConsultantIllustration}
 						sx={{
+							gridArea: 'icon',
 							height: '156px',
 							width: '156px',
-							mx: 'auto',
-							mb: { xs: '24px', md: '0' }
+							justifySelf: 'center',
+							alignSelf: 'center',
+							my: { xs: '16px', md: 0 }
 						}}
 					/>
 				</Box>

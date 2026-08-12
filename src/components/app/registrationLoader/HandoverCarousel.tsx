@@ -34,7 +34,7 @@ const STEPS: HandoverStep[] = [
 		artwork: processArtwork.reply,
 		titleFallback: 'Antwort in 2 Arbeitstagen',
 		textFallback:
-			'Auf Ihre Anfrage wird persönlich und professionell geantwortet. In welcher Form die Beratung weitergeht, bestimmen Sie danach gemeinsam.'
+			'Auf Ihre Anfrage wird persönlich und professionell geantwortet.'
 	}
 ];
 
@@ -219,6 +219,10 @@ export const HandoverCarousel = ({
 									fontSize: { xs: 17, sm: 18 },
 									fontWeight: 700,
 									lineHeight: { xs: '23px', sm: '24px' },
+									// Two title lines are reserved so every
+									// card is the same height regardless of
+									// how its headline wraps.
+									minHeight: { xs: '46px', sm: '48px' },
 									mb: 0.75,
 									color: registrationMd3.onSurface
 								}}
@@ -232,7 +236,15 @@ export const HandoverCarousel = ({
 								sx={{
 									fontSize: { xs: 13, sm: 14 },
 									lineHeight: { xs: '19px', sm: '20px' },
-									color: registrationMd3.onSurfaceVariant
+									color: registrationMd3.onSurfaceVariant,
+									// Design rule: at most three lines after
+									// the heading, and always the same box —
+									// shorter copy pads, longer copy clips.
+									minHeight: { xs: '57px', sm: '60px' },
+									display: '-webkit-box',
+									WebkitLineClamp: 3,
+									WebkitBoxOrient: 'vertical',
+									overflow: 'hidden'
 								}}
 							>
 								{t(
