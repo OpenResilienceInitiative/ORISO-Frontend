@@ -68,7 +68,14 @@ jobs:
         # --ignore-scripts above skips Playwright's own postinstall, so the
         # browser has to be fetched explicitly. Chromium only — this suite
         # asserts behaviour and accessibility, not cross-browser rendering.
-        run: npx playwright install --with-deps chromium
+        #
+        # Not `npx playwright`: this repo has two packages shipping that bin —
+        # `playwright` (which @vitest/browser drives) and the older
+        # `@playwright/test` used by the smoke specs. npx picked the latter and
+        # installed the wrong Chromium revision, so the run died with
+        # "Executable doesn't exist at …/chromium_headless_shell-1208".
+        # Address the CLI that belongs to the version the tests actually launch.
+        run: node node_modules/playwright/cli.js install --with-deps chromium
 
       - name: Run Storybook component tests
         run: npm run test:storybook
