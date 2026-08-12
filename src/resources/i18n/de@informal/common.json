@@ -302,8 +302,8 @@
 			"subtitle": "mit deinen Kolleg:innen",
 			"supportText": "Stimme dich innerhalb deiner Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"nameLabel": "Name Interna",
-			"personCount_one": "{{count}}x Person hinzufügen",
-			"personCount_other": "{{count}}x Person hinzufügen",
+			"personCount_one": "{{count}} Person hinzugefügt",
+			"personCount_other": "{{count}} Personen hinzugefügt",
 			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {
