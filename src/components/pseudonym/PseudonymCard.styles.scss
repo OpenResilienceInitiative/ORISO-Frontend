@@ -51,7 +51,6 @@
 	border: 6px solid #ffffff;
 	border-radius: 999px;
 	background: #ffffff;
-	box-shadow: 0 0 0 1.5px #e8e8e8;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -98,15 +97,19 @@
 }
 
 /* Header: Carimat on one line, subtitle stacked below.
-   padding-left keeps the text visually clear of the avatar while the
-   content column itself slides under it. */
+   The content column slides 32px under the avatar column and the avatar frame
+   paints its own white background on top of it (z-index 2 over 1), so any
+   header text starting before 60px is hidden behind the avatar — that is what
+   swallowed the leading "I" of "Ihre ersten Schritte". 34px of indent puts the
+   text 8px past the visible 48px circle (which ends at 54px inside the 60px
+   frame), the same avatar-to-name gap the message header uses. */
 .pseudonymCard__header {
 	display: flex;
 	flex-direction: column;
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
-	padding-left: 20px;
+	padding-left: 34px;
 }
 
 .pseudonymCard__headerName {
@@ -121,7 +124,10 @@
 	font-family: Inter, sans-serif;
 	font-size: 12px;
 	font-weight: 500;
-	line-height: 14px;
+
+	/* M3 label-medium is 12/16. The old 14px box clipped ascenders and
+	   umlauts on the subtitle line. */
+	line-height: 16px;
 	color: var(--m3-secondary-container, #646d78);
 }
 
