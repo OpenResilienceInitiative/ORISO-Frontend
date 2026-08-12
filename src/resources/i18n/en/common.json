@@ -1844,8 +1844,22 @@
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
-				"empty": "No messages in this conversation yet."
-			}
+				"empty": "No messages in this conversation yet.",
+				"image": "Image",
+				"file": "File",
+				"audio": "Audio message",
+				"video": "Video",
+				"notice": "Notice",
+				"unsupported": "Unsupported message",
+				"pending": "Waiting for decryption",
+				"roomUnavailable": "Conversation unavailable on this device",
+				"eventUnavailable": "Message unavailable in local history"
+			},
+			"loadOlder": "Load older activity",
+			"loadingOlder": "Loading older activity…",
+			"olderError": "Could not load older activity.",
+			"retryOlder": "Try again",
+			"endOfHistory": "End of activity history"
 		},
 		"threadReply": {
 			"title": "New thread reply"
