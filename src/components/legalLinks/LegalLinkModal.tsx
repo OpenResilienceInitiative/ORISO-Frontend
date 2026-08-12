@@ -5,6 +5,10 @@ import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import { OrisoDialog } from '../modal/OrisoDialog';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
 import { useLegalLinkContent } from './useLegalLinkContent';
+import {
+	PLATFORM_LEGAL_FULL_TEXT_KEY,
+	platformLegalNoteKey
+} from './platformLegalNote';
 import './legalLinkModal.styles';
 
 type LegalLinkModalProps = {
@@ -13,13 +17,21 @@ type LegalLinkModalProps = {
 	rawLabel?: string;
 	url: string;
 	onClose: () => void;
+	/**
+	 * `'platform'` shows the short platform note plus a link to the full text,
+	 * for public pages where no Beratungsstelle has been chosen yet. Default
+	 * `'tenant'` renders the carrier-authored document, which is what the
+	 * session views want.
+	 */
+	scope?: 'tenant' | 'platform';
 };
 
 export const LegalLinkModal = ({
 	title,
 	rawLabel,
 	url,
-	onClose
+	onClose,
+	scope = 'tenant'
 }: LegalLinkModalProps) => {
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
@@ -39,10 +51,19 @@ export const LegalLinkModal = ({
 			backLabel={translate('legal.modal.back')}
 			confirmLabel={translate('legal.modal.confirm')}
 		>
-			<LegalContentRenderer
-				className="legalLinkModal__content"
-				content={content ?? FALLBACK_LEGAL_CONTENT}
-			/>
+			{scope === 'platform' ? (
+				<div className="legalLinkModal__platformNote">
+					<p>{translate(platformLegalNoteKey(kind))}</p>
+					<a href={url} target="_blank" rel="noopener noreferrer">
+						{translate(PLATFORM_LEGAL_FULL_TEXT_KEY)}
+					</a>
+				</div>
+			) : (
+				<LegalContentRenderer
+					className="legalLinkModal__content"
+					content={content ?? FALLBACK_LEGAL_CONTENT}
+				/>
+			)}
 		</OrisoDialog>
 	);
 };
