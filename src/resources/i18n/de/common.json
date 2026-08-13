@@ -523,6 +523,7 @@
 					"facts": "<ul><li>Was ist passiert?</li><li>Wie ist Ihre aktuelle Situation?</li><li>Was beschäftigt Sie?</li><li>Haben Sie eine bestimmte Frage oder wissen Sie vielleicht selbst noch nicht so genau was Ihnen helfen könnte?</li></ul>",
 					"title": "Vielleicht helfen Ihnen folgende Punkte bei der Formulierung weiter:"
 				},
+				"deletionNotice": "Schreiben Sie uns direkt eine kurze Nachricht, damit dieser Account aktiv bleibt. Ohne erste Nachricht wird dieser Account in der kommenden Nacht automatisch gelöscht. Danach müssen Sie sich zunächst neu registrieren, bevor Sie Ihre Nachricht verfassen können.",
 				"headline": "Hier ist Platz für Ihre Anliegen.",
 				"iconTitle": "Willkommen"
 			},

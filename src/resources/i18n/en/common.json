@@ -511,6 +511,7 @@
 					"facts": "<ul><li>What happened?</li><li>What is your current situation?</li><li>What is on your mind?</li><li>Do you have a specific question or do you perhaps not yet know exactly what could help you?</li></ul>",
 					"title": "Perhaps the following points will help you with the formulation:"
 				},
+				"deletionNotice": "Please send us a short message right away so this account stays active. Without a first message, this account will be deleted automatically tonight. After that you must register again before you can write your message.",
 				"headline": "Here is room for your concerns.",
 				"iconTitle": "Welcome"
 			},
