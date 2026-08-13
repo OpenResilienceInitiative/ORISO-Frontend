@@ -110,7 +110,7 @@ export const emailHeadline = (text: string): string =>
 export const emailBodyTextStyle = (): string =>
 	`${font(emailType.body.size, emailType.body.line, {
 		color: emailColor.onSurface
-	})};mso-line-height-rule:exactly;`;
+	})};mso-line-height-rule:exactly`;
 
 /** The muted, reassuring line under the call to action. */
 export const emailFootnoteStyle = (): string =>

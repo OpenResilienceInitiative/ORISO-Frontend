@@ -20,7 +20,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The white card: the message itself, minus envelope. Rounded 24px, 1px outline, on the tinted canvas.\n\nThe row order is fixed for all seven mails — accent rule, headline, copy, optional data panel, action, optional secondary link, footnote, divider, assurance. That fixed order is what makes seven different occasions feel like one sender. `bgcolor` is repeated next to `background-color` because Outlook ignores the CSS property on a table and would otherwise leave the card transparent.'
+					'The white card: the message itself, minus envelope. Rounded 24px, 1px outline, on the tinted canvas.\n\nThe row order is fixed for every mail — accent rule, headline, copy, optional data panel, action, optional secondary link, footnote, divider, assurance. That fixed order is what makes very different occasions feel like one sender. `bgcolor` is repeated next to `background-color` because Outlook ignores the CSS property on a table and would otherwise leave the card transparent.'
 			}
 		}
 	}

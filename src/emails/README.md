@@ -1,6 +1,6 @@
 # Transactional e-mail kit
 
-Seven occasions, three tone variants, two MIME parts — built from one atomic
+Twenty-two occasions, three tone variants, two MIME parts — built from one atomic
 component set and previewed in Storybook under `Email/`.
 
 ```
@@ -8,8 +8,9 @@ kit/        atoms → molecules → organisms → document, plus the two rendere
 content/    the copy, one file per tone variant
 preview/    Storybook-only harnesses (iframe preview, inbox line, token sheet)
 stories/    Email/Foundations, Email/Atoms, Email/Molecules, Email/Organisms, Email/Pages
-scripts/    buildEmails.mts — emits dist/
-dist/       generated, committed: emails/<tone>/<id>.{html,txt}
+scripts/    buildEmails.mts, buildKeycloakTheme.mts, buildMailServiceTemplates.mts
+dist/       generated, committed: <dialect>/<tone>/<id>.* plus the packaged
+            Keycloak theme (keycloak/email/) and MailService set (mailservice/)
 ```
 
 ## Why this is separate from the app component library
@@ -26,7 +27,9 @@ so the two libraries can never be mistaken for each other.
 
 ```bash
 npm run storybook          # preview every atom, molecule, organism and page
-npm run emails:build       # regenerate dist/
+npm run emails:build       # regenerate dist/ (plain, thymeleaf, freemarker)
+npm run emails:keycloak    # regenerate dist/keycloak/ (packaged theme)
+npm run emails:mailservice # regenerate dist/mailservice/
 ```
 
 `dist/` is committed on purpose: after changing an atom, `git diff` shows every

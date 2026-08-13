@@ -11,7 +11,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The tinted block that holds the facts of a mail: appointment details, contact details, the assigned request, the user name to keep. Anything in here has to survive being skim-read, which is why it is a label/value list rather than a sentence.\n\nFour of the seven mails use it. Below 620px every row stacks — check the 320px stories, where the appointment panel is the worst case in the whole kit.'
+					'The tinted block that holds the facts of a mail: appointment details, contact details, the assigned request, the user name to keep. Anything in here has to survive being skim-read, which is why it is a label/value list rather than a sentence.\n\nMost of the mails in the catalogue use it. Below 620px every row stacks — check the 320px stories, where the appointment panel is the worst case in the whole kit.'
 			}
 		}
 	}

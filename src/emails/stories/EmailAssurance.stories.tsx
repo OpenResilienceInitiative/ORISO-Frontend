@@ -12,7 +12,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Divider plus the end-to-end encryption promise, closing every card.\n\nIt is repeated in all seven mails on purpose. The mail itself is the one part of the product that is *not* encrypted and *not* behind a login, so it is exactly where the promise has to be restated — and where a recipient can check it without signing in.'
+					'Divider plus the end-to-end encryption promise, closing every card.\n\nIt is repeated in every mail on purpose. The mail itself is the one part of the product that is *not* encrypted and *not* behind a login, so it is exactly where the promise has to be restated — and where a recipient can check it without signing in.'
 			}
 		}
 	}
