@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
-import { ReactComponent as MoreIcon } from '../../../resources/img/icons/stack-vertical.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
@@ -337,16 +336,6 @@ export const CircleSettingsView = ({
 							/>
 						) : undefined
 					}
-					headerAction={
-						<button
-							type="button"
-							className="formatCard__menuButton"
-							aria-label={translate('groupChat.format.cardMenu')}
-							disabled
-						>
-							<MoreIcon aria-hidden />
-						</button>
-					}
 				>
 					{/* Desktop picks the topic on screen 1; edit mode enters here
 					    directly, so the row must be reachable then too. */}
@@ -416,6 +405,9 @@ export const CircleSettingsView = ({
 									anchorRef={moderatorButtonRef}
 									onClose={() => setModeratorMenuOpen(false)}
 									labelledBy="circleModeratorButton"
+									vacatedHint={translate(
+										'groupChat.internal.vacatedHint'
+									)}
 									toggleLabel={(label, selected) =>
 										translate(
 											selected

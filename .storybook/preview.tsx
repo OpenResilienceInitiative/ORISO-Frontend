@@ -35,6 +35,7 @@ import {
 	shouldMockStorybookRealtimeUrl,
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
+import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -75,8 +76,13 @@ class StoryErrorBoundary extends React.Component<
 	static getDerivedStateFromError() {
 		return { failed: true };
 	}
-	componentDidCatch() {
-		/* swallow — the panel below is the user-facing result */
+	componentDidCatch(error: unknown) {
+		// Log rather than swallow. The panel is the right user-facing result,
+		// but a silently discarded error is why several stories sat behind this
+		// placeholder unnoticed while their play functions asserted markup that
+		// was never rendered.
+		// eslint-disable-next-line no-console
+		console.warn('[storybook] story needs live data:', error);
 	}
 	render() {
 		if (this.state.failed) {
@@ -692,7 +698,12 @@ function MuiStoryShell({
 											markNotificationAsRead: () => {},
 											markAllNotificationsAsRead:
 												() => {},
-											clearNotificationFeed: () => {}
+											clearNotificationFeed: () => {},
+											loadOlderNotifications:
+												async () => {},
+											hasOlderNotifications: false,
+											isLoadingOlderNotifications: false,
+											olderNotificationsError: false
 										}}
 									>
 										<RegistrationContext.Provider
@@ -804,6 +815,32 @@ const preview: Preview = {
 			theme: themes.light,
 			toc: true
 		},
+		/*
+		 * Storybook's built-in `mobile1` is 320x568 ("Small mobile"), which is
+		 * narrower than any phone this product targets. Stories that name a
+		 * width need a viewport that actually is that width, otherwise the
+		 * toolbar contradicts the story name and the component's media queries
+		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
+		 */
+		viewport: {
+			options: {
+				phone375: {
+					name: 'Phone 375 (iPhone SE / 8)',
+					styles: { width: '375px', height: '812px' },
+					type: 'mobile'
+				},
+				phone390: {
+					name: 'Phone 390 (iPhone 12/13/14)',
+					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				},
+				tablet834: {
+					name: 'Tablet 834 (iPad Air portrait)',
+					styles: { width: '834px', height: '1194px' },
+					type: 'tablet'
+				}
+			}
+		},
 		backgrounds: {
 			default: 'light',
 			values: [
@@ -822,15 +859,19 @@ const preview: Preview = {
 			]
 		}
 	},
+	globalTypes: orisoSchemeGlobalType,
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
-		}
+		},
+		scheme: 'light'
 	},
 	tags: ['autodocs'],
-	decorators: [withMuiTheme]
+	// The scheme decorator runs outermost so its custom properties are in
+	// place before any component reads them.
+	decorators: [withMuiTheme, withOrisoScheme]
 };
 
 export default preview;

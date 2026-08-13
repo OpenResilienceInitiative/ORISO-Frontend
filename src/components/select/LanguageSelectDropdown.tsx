@@ -78,6 +78,7 @@ const colourStyles = (
 		multiValueRemove,
 		indicatorSeparator,
 		valueContainer,
+		menuPortal,
 		...overrides
 	}: defaultStyles
 ) => ({
@@ -366,6 +367,19 @@ const colourStyles = (
 		display: 'none',
 		cursor: 'pointer',
 		...(indicatorSeparator?.(styles, state) ?? {})
+	}),
+	/*
+	 * The right-placed menu is portalled to `document.body` (see
+	 * `menuPortalTarget` below), where react-select's default `z-index: 1`
+	 * puts it behind the navigation rail. It has to be lifted here rather
+	 * than in a stylesheet: a rule nested under `.localeSwitch` compiles to
+	 * a descendant selector, and the portalled node is not a descendant of
+	 * anything in this component (#998).
+	 */
+	menuPortal: (styles, state) => ({
+		...styles,
+		zIndex: 1000,
+		...(menuPortal?.(styles, state) ?? {})
 	}),
 	...overrides
 });

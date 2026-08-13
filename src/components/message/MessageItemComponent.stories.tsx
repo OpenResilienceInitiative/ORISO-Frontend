@@ -30,8 +30,10 @@ import {
 	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
-	mockVisibilityMessage
+	mockVisibilityMessage,
+	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
+import { phone390Globals } from './messageStoryShell';
 import './message.styles.scss';
 
 type MessageItemStoryParameters = {
@@ -178,14 +180,12 @@ export const ClientIn1on1Outgoing: Story = {
  * Uses the real MessageItemComponent + production `message.styles.scss`.
  */
 export const AndroidCompactKebabTouchZone: Story = {
+	globals: phone390Globals,
 	name: 'Android Compact — kebab 32×32 touch zone',
 	parameters: {
 		activeSession: mockActiveSession1on1(),
 		userData: mockUserData(),
 		compactShell: true,
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		docs: {
 			description: {
 				story: 'Incoming + outgoing rows on a compact viewport. Each `.messageItem__kebabButton` must measure **32×32px** (min-width/height + box-sizing from production SCSS).'
@@ -229,11 +229,17 @@ export const AndroidCompactKebabTouchZone: Story = {
 				const rect = (button as HTMLElement).getBoundingClientRect();
 				expect(Math.round(rect.width)).toBe(32);
 				expect(Math.round(rect.height)).toBe(32);
-				expect(button).toHaveAttribute('aria-label', 'More');
+				// German is the preview default; keep the assertion readable
+				// in either language rather than pinning one.
+				expect(button.getAttribute('aria-label')).toMatch(
+					/^(More|Weitere Optionen)$/
+				);
 			});
 		});
 		// Keep canvas typed usage so Storybook interaction panel stays wired.
-		expect(canvas.getAllByLabelText('More').length).toBeGreaterThanOrEqual(
+		expect(
+			canvas.getAllByLabelText(/^(More|Weitere Optionen)$/).length
+		).toBeGreaterThanOrEqual(
 			2
 		);
 	}
@@ -641,5 +647,225 @@ export const OutgoingWithVisibility: Story = {
 			message: mockVisibilityMessage
 		}),
 		...baseHandlers
+	}
+};
+
+export const GroupMessageEveryoneNoChip: Story = {
+	name: 'Group message everyone can see — NO visibility chip',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Regression pin for ORISO-Frontend#892. A group message with no recipient restriction addresses everyone, so the chip must **not** render. Before the fix it showed "visible only to: Alle" — a restriction chip claiming there is no restriction.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Kurzes Update für das Team: Der Fall bleibt heute bei mir.'
+		}),
+		...baseHandlers
+	}
+};
+
+export const GroupMessageRestrictedShowsChip: Story = {
+	name: 'Group message restricted — chip IS shown',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The other half of the pin: when the message really is limited to some participants, the chip must still appear. Guards against the #892 fix hiding the chip everywhere.\n\nThe recipient list names the viewer ("Karina P" from `mockUserData`) on purpose. A restricted message addressed to *other* people is hidden from the viewer entirely — `MessageItemComponent` returns `null` — so a story built on that fixture would render an empty frame and pin nothing.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			displayName: 'Angela K',
+			username: 'angela.k@oriso.invalid',
+			message: mockVisibilityMessageForViewer
+		}),
+		...baseHandlers
+	}
+};
+
+/**
+ * Figma "Message Menu" (666:25242): the open kebab is a 28×32 red pill with
+ * **white** dots, and the menu lists "Reply directly" first.
+ *
+ * Pins the regression Frank reported: `.messageItem__kebabButton svg` forced
+ * 20×20 and `path, circle { fill: #17191c }` applied to *every* glyph, so
+ * opening the menu shrank the pill and painted its white dots near-black.
+ */
+export const KebabActiveState: Story = {
+	name: 'Kebab open — red pill, white dots (Figma 666:25242)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Click the ⋮ and the trigger must stay a 28×32 red pill with white dots. Also the only story that wires `onReplyDirect`, so "Reply directly" is actually rendered.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message: 'Okay. Ich bin gerade zuhause und kann schreiben.'
+		}),
+		onReact: () => {},
+		onUnreact: () => {},
+		onReplyDirect: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const kebab = canvasElement.querySelector(
+			'.messageItem__kebabButton'
+		) as HTMLElement;
+		expect(kebab).toBeTruthy();
+		kebab.click();
+
+		await waitFor(() => {
+			const active = canvasElement.querySelector(
+				'.messageItem__kebabIconActive'
+			) as SVGElement;
+			expect(active).toBeTruthy();
+
+			const rect = active.getBoundingClientRect();
+			expect(Math.round(rect.width)).toBe(28);
+			expect(Math.round(rect.height)).toBe(32);
+
+			// The dots must stay white — this is the exact bit the blanket
+			// `path { fill: #17191c }` used to clobber.
+			const dots = active.querySelectorAll('path[fill="white"]');
+			expect(dots.length).toBeGreaterThan(0);
+			dots.forEach((dot) => {
+				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+			});
+		});
+
+		await waitFor(() => {
+			const menu = document.querySelector(
+				'.messageItem__actionMenu'
+			) as HTMLElement;
+			expect(menu).toBeTruthy();
+			expect(getComputedStyle(menu).backgroundColor).toBe(
+				'rgb(255, 255, 255)'
+			);
+			expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
+		});
+	}
+};
+
+/**
+ * Same pins as `KebabActiveState`, but for the **outgoing** side: the kebab
+ * lives in the right side column (`--right`) and the menu is positioned from
+ * the other edge, so the fix has to hold there independently.
+ */
+export const KebabActiveStateOutgoing: Story = {
+	name: 'Kebab open — outgoing side (Figma 666:25242)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Outgoing counterpart of the incoming kebab pin. Also asserts the full emoji picker renders **above** the action menu that opened it.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns zuerst die nächsten 10 Minuten strukturieren.'
+		}),
+		onReact: () => {},
+		onUnreact: () => {},
+		onReplyDirect: () => {},
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const kebab = canvasElement.querySelector(
+			'.messageItem__kebabButton--right'
+		) as HTMLElement;
+		expect(kebab).toBeTruthy();
+		kebab.click();
+
+		await waitFor(() => {
+			const active = canvasElement.querySelector(
+				'.messageItem__kebabIconActive'
+			) as SVGElement;
+			expect(active).toBeTruthy();
+
+			const rect = active.getBoundingClientRect();
+			expect(Math.round(rect.width)).toBe(28);
+			expect(Math.round(rect.height)).toBe(32);
+
+			const dots = active.querySelectorAll('path[fill="white"]');
+			expect(dots.length).toBeGreaterThan(0);
+			dots.forEach((dot) => {
+				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+			});
+		});
+
+		const menu = await waitFor(() => {
+			const found = document.querySelector(
+				'.messageItem__actionMenu'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
+
+		// The menu must stay inside the viewport on this side too — it is
+		// positioned from the right edge, so a wrong clamp pushes it off-screen.
+		const menuRect = menu.getBoundingClientRect();
+		expect(menuRect.left).toBeGreaterThanOrEqual(0);
+		expect(menuRect.right).toBeLessThanOrEqual(window.innerWidth);
+
+		// The picker the quick row opens has to sit ON TOP of that menu.
+		const more = menu.querySelector(
+			'.messageItem__actionMenuReactionMore'
+		) as HTMLElement;
+		expect(more).toBeTruthy();
+		more.click();
+
+		await waitFor(() => {
+			const picker = document.querySelector(
+				'[data-testid="emoji-picker-popup"]'
+			) as HTMLElement;
+			expect(picker).toBeTruthy();
+			expect(Number(getComputedStyle(picker).zIndex)).toBeGreaterThan(
+				Number(menu.style.zIndex)
+			);
+
+			// …and beside the menu, not over its entries.
+			const pickerRect = picker.getBoundingClientRect();
+			const menuRect2 = menu.getBoundingClientRect();
+			const overlaps = !(
+				pickerRect.right <= menuRect2.left ||
+				pickerRect.left >= menuRect2.right ||
+				pickerRect.bottom <= menuRect2.top ||
+				pickerRect.top >= menuRect2.bottom
+			);
+			expect(overlaps).toBe(false);
+			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
+			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
+		});
 	}
 };

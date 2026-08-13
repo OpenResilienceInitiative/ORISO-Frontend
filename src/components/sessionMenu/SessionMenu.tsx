@@ -17,7 +17,7 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -76,6 +76,7 @@ import {
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
+import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -105,6 +106,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
+	const {
+		settings: currentTenantSettings,
+		isLoading: isLoadingTenantSettings
+	} = useSessionTenantSettings(activeSession.item?.id);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -372,7 +377,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		featureVideoCallsOneOnOneChatsEnabled = true,
 		featureVideoCallsGroupChatsEnabled = true,
 		featureVideoCallsSupervisionChatsEnabled = true
-	} = getTenantSettings();
+	} = currentTenantSettings;
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 
@@ -463,21 +468,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.log('✅ Media permissions granted!', stream);
 				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
 
-				if (activeSession.isGroup) {
-					// Group calls use Element Call in an iframe (separate origin).
-					// Release this warm-up stream so the device is not left open.
-					try {
-						stream
-							.getTracks()
-							.forEach((track: MediaStreamTrack) => track.stop());
-					} catch {
-						// ignore
-					}
-				} else {
-					// 1:1 calls: FloatingCallWidget releases this before placeCall().
-					(window as any).__preRequestedMediaStream = stream;
-					(window as any).__preRequestedMediaStreamTime = Date.now();
-				}
+				// Outgoing calls use Element Call (iframe), which acquires its own
+				// media. Keep getUserMedia in this click handler for mobile Safari
+				// permission/user-gesture, then release immediately so the device
+				// is not left open (storing for FloatingCallWidget leaked tracks
+				// after CallManager always set usesElementCall: true).
+				stopMediaStreamTracks(stream);
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 				// console.error('Error name:', mediaError.name);
@@ -525,6 +521,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	return (
 		<div className="sessionMenu__wrapper">
 			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
+				!isLoadingTenantSettings &&
 				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (

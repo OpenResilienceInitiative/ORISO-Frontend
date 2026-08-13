@@ -24,18 +24,40 @@ const config: StorybookConfig = {
 		// The transactional e-mail kit. Kept apart from the in-app component
 		// library on purpose — same design language, completely different
 		// rendering rules (tables, inline styles, no JS).
-		'../src/emails/**/*.stories.@(ts|tsx)'
+		'../src/emails/**/*.stories.@(ts|tsx)',
+		// Free-form documentation pages (Introduction, design tokens, guides).
+		'../src/**/*.mdx'
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],
+	// addon-a11y runs axe (WCAG 2.2 AA) per story; `a11y.test: 'error'` in
+	// preview.tsx makes a violation fail the component test, not just warn.
+	// addon-docs renders autodocs + the .mdx pages above.
+	// addon-vitest adds the sidebar test widget; it drives
+	// `vitest --project storybook` (real Chromium) and reports interaction,
+	// a11y and coverage results inside the Storybook UI.
 	addons: [
 		'@storybook/addon-mcp',
 		'@storybook/addon-designs',
-		'@storybook/addon-a11y'
+		'@storybook/addon-a11y',
+		'@storybook/addon-docs',
+		'@storybook/addon-vitest'
 	],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
+			// `../public` is already a staticDir above, and Vite's default
+			// publicDir points at that very same folder. builder-vite never turns
+			// publicDir off, so the build copied public/ into storybook-static
+			// twice at once: Storybook's staticDirs copy and Vite's own
+			// copyPublicDir. Both create storybook-static/static, and node's
+			// fs.cp mkdirs each directory non-recursively, so whichever loses the
+			// race dies with `EEXIST ... mkdir './storybook-static/static'`.
+			// Local builds usually won the race; the emulated linux/arm64 leg of
+			// the Docker job is slow enough to lose it intermittently.
+			// Disabling publicDir leaves staticDirs as the single copier, which
+			// Storybook runs sequentially and therefore deterministically.
+			publicDir: false,
 			plugins: [
 				// The virtual project-annotations module imports @storybook/react's
 				// dist files by absolute /node_modules/... path. Vite doesn't map

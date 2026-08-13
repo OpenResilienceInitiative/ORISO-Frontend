@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vertical.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
@@ -104,20 +103,6 @@ const MobileShell = ({ children }: { children: React.ReactNode }) => (
 	</div>
 );
 
-const CardOverflow = () => {
-	const { t } = useTranslation();
-	return (
-		<button
-			type="button"
-			className="formatCard__menuButton"
-			aria-label={t('groupChat.format.cardMenu')}
-			disabled
-		>
-			<MoreIcon aria-hidden />
-		</button>
-	);
-};
-
 const CircleCard = ({ menuOpen = false }: { menuOpen?: boolean }) => {
 	const { t } = useTranslation();
 	const anchorRef = useRef<HTMLDivElement | null>(null);
@@ -132,7 +117,6 @@ const CircleCard = ({ menuOpen = false }: { menuOpen?: boolean }) => {
 			media={
 				<TopicMedia topic={topic} alt={t('groupChat.circle.title')} />
 			}
-			headerAction={<CardOverflow />}
 		>
 			<p className="conversationCreate__cardText">
 				<strong>{t('groupChat.circle.cardHeadline')}</strong>
@@ -383,7 +367,6 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 								/>
 							) : undefined
 						}
-						headerAction={<CardOverflow />}
 					>
 						{compact && (
 							<SplitButton

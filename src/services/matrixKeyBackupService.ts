@@ -1,6 +1,7 @@
 import type { MatrixClient } from 'matrix-js-sdk';
 import type { SecretStorageKeyDescription } from 'matrix-js-sdk/lib/secret-storage';
 import { decodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
+import { getDeviceSigningAuth } from './matrixInteractiveAuth';
 
 /**
  * #437 Key backup + recovery UX — thin service layer over matrix-js-sdk's
@@ -25,6 +26,33 @@ export class InvalidRecoveryKeyError extends Error {
 		this.name = 'InvalidRecoveryKeyError';
 	}
 }
+
+export type RecoverySetupPhase =
+	| 'cross-signing'
+	| 'secret-storage'
+	| 'key-backup-creation'
+	| 'key-backup';
+
+export class RecoverySetupPhaseError extends Error {
+	constructor(
+		public readonly phase: RecoverySetupPhase,
+		cause: unknown
+	) {
+		super(`Recovery setup failed during ${phase}`, { cause });
+		this.name = 'RecoverySetupPhaseError';
+	}
+}
+
+const runRecoverySetupPhase = async <T>(
+	phase: RecoverySetupPhase,
+	operation: () => Promise<T>
+): Promise<T> => {
+	try {
+		return await operation();
+	} catch (error) {
+		throw new RecoverySetupPhaseError(phase, error);
+	}
+};
 
 export type EncryptionSetupStatus = {
 	/** 4S (secret storage) is set up and usable. */
@@ -114,6 +142,18 @@ export const getEncryptionStatus = async (
 };
 
 /**
+ * May the app bootstrap the Tresor on its own, without asking first?
+ *
+ * Only on a genuinely fresh identity. Bootstrapping replaces secret storage
+ * and creates a new backup version, so doing it silently while the server
+ * already holds a backup would orphan history the user can still recover
+ * with their existing key. Those accounts keep the explicit path in the
+ * Sicherheit panel.
+ */
+export const canBootstrapSilently = (status: EncryptionSetupStatus): boolean =>
+	!status.serverBackupExists && !status.secretStorageReady;
+
+/**
  * First-time setup: generate a recovery key, bootstrap cross-signing and
  * secret storage with it, and enable server-side key backup.
  *
@@ -122,16 +162,36 @@ export const getEncryptionStatus = async (
  */
 export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 	const crypto = getCryptoOrThrow(client);
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
 
 	const generated = await crypto.createRecoveryKeyFromPassphrase();
 	setPendingKey(generated.privateKey);
 	try {
-		await crypto.bootstrapCrossSigning({});
-		await crypto.bootstrapSecretStorage({
-			createSecretStorageKey: async () => generated,
-			setupNewKeyBackup: true
+		await runRecoverySetupPhase('cross-signing', () =>
+			crypto.bootstrapCrossSigning({ authUploadDeviceSigningKeys })
+		);
+		await runRecoverySetupPhase('secret-storage', () =>
+			crypto.bootstrapSecretStorage({
+				createSecretStorageKey: async () => generated,
+				// Let the SDK create the backup while the new secret-storage
+				// key is still part of the same bootstrap transaction. Creating
+				// it afterwards can miss m.megolm_backup.v1 until the account
+				// data cache catches up, so the setup looks healthy only until
+				// the next reload.
+				setupNewKeyBackup: true
+			})
+		);
+		await runRecoverySetupPhase('key-backup', async () => {
+			await crypto.checkKeyBackupAndEnable();
+			if (!(await crypto.isSecretStorageReady())) {
+				throw new Error(
+					'Recovery setup did not persist the key backup secret'
+				);
+			}
 		});
-		await crypto.checkKeyBackupAndEnable();
 	} finally {
 		setPendingKey(null);
 	}
@@ -149,6 +209,10 @@ export const recoverWithKey = async (
 	encodedRecoveryKey: string
 ): Promise<{ imported: number; total: number }> => {
 	const crypto = getCryptoOrThrow(client);
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
 
 	let privateKey: Uint8Array;
 	try {
@@ -162,7 +226,7 @@ export const recoverWithKey = async (
 		await crypto.loadSessionBackupPrivateKeyFromSecretStorage();
 		const result = await crypto.restoreKeyBackup();
 		// Self-verify this device against the recovered cross-signing identity.
-		await crypto.bootstrapCrossSigning({});
+		await crypto.bootstrapCrossSigning({ authUploadDeviceSigningKeys });
 		return { imported: result.imported, total: result.total };
 	} finally {
 		setPendingKey(null);
@@ -179,7 +243,9 @@ export const resetCryptoIdentity = async (
 	client: MatrixClient
 ): Promise<void> => {
 	const crypto = getCryptoOrThrow(client);
-	await crypto.resetEncryption(async (makeRequest) => {
-		await makeRequest(null);
-	});
+	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	if (!authUploadDeviceSigningKeys) {
+		throw new Error('Matrix device-signing authentication is unavailable');
+	}
+	await crypto.resetEncryption(authUploadDeviceSigningKeys);
 };

@@ -19,6 +19,7 @@ import { useMatrixClient } from '../../../globalState/context/MatrixClientContex
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
+import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
@@ -218,13 +219,7 @@ export const GroupChatHeader = ({
 				// Group calls render Element Call in an iframe which acquires its
 				// own media (on its own origin). Release this warm-up stream so
 				// the camera/mic don't stay on in the parent page.
-				try {
-					stream
-						.getTracks()
-						.forEach((track: MediaStreamTrack) => track.stop());
-				} catch {
-					// ignore
-				}
+				stopMediaStreamTracks(stream);
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 
@@ -434,6 +429,7 @@ export const GroupChatHeader = ({
 						<div
 							className="sessionInfo__videoCallButtons"
 							data-cy="session-header-video-call-buttons"
+							data-tour-target="groupchat-call-button"
 						>
 							{isVideoCallsEnabled && (
 								<Button

@@ -167,6 +167,10 @@ const notificationsValue = (feed: NotificationFeedItem[]) => ({
 	addNotification: noop,
 	addEventNotification: noop,
 	refreshNotificationFeed: noop,
+	loadOlderNotifications: async () => {},
+	hasOlderNotifications: false,
+	isLoadingOlderNotifications: false,
+	olderNotificationsError: false,
 	removeNotification: noop,
 	markNotificationAsRead: noop,
 	markAllNotificationsAsRead: noop,
@@ -265,7 +269,17 @@ export const AllEventTypes: Story = {
 					eventType,
 					createdAt: minutesAgo(5 + index * 7),
 					sourceSessionId: '101',
-					actionPath: '/sessions/consultant/sessionView/room-101/101'
+					actionPath: '/sessions/consultant/sessionView/room-101/101',
+					// #846: mirror the backend params contract so interpolated
+					// templates ({{senderDisplayName}}) render realistically.
+					params:
+						eventType === 'team.discussion.new'
+							? {
+									roomRef: '!team:matrix.example',
+									senderDisplayName: 'Marge Bouvier',
+									mentioned: false
+								}
+							: undefined
 				})
 			)
 		)

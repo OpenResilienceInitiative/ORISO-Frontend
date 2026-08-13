@@ -954,6 +954,8 @@ declare namespace UserService {
 			message: string;
 			language?: /* ISO 639-1 code */ LanguageCode;
 			t?: string;
+			/** ID of the browser-encrypted Matrix event to finalize as the initial enquiry */
+			matrixEventId?: string;
 		}
 		export interface FullAgencyResponseDTO {
 			/**

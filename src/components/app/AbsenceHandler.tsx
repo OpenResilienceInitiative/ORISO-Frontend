@@ -4,7 +4,7 @@ import * as React from 'react';
 import { apiSetAbsence } from '../../api';
 import { UserDataContext } from '../../globalState';
 import { useContext, useState, useEffect } from 'react';
-import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_ABSENCE } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 
@@ -29,7 +29,7 @@ export const AbsenceHandler = () => {
 	};
 
 	const absenceChangedOverlayItem: OverlayItem = {
-		svg: CheckIcon,
+		svg: CheckAnimation,
 		headline: translate('absence.overlay.changeSuccess.headline'),
 		buttonSet: [
 			{
@@ -77,7 +77,9 @@ export const AbsenceHandler = () => {
 				.then(() => {
 					setOverlayItem(absenceChangedOverlayItem);
 				})
-				.catch((error) => { /* console.log(error); */ });
+				.catch((error) => {
+					/* console.log(error); */
+				});
 		}
 	};
 

@@ -396,14 +396,26 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandlePill {
 		position: absolute;
-		right: -3px;
+		right: 8px;
 		top: 50%;
-		width: 6px;
-		height: 56px;
+		width: 8px;
+		height: 48px;
 		border-radius: 999px;
-		background: #ffffff;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
 		transform: translateY(-50%);
-		transition: box-shadow 140ms ease;
+		transition:
+			background-color 140ms ease,
+			box-shadow 140ms ease,
+			transform 140ms ease;
+	}
+
+	// Once cards overflow, the same visible dragbar becomes their scrollbar
+	// thumb. No separate full-height side line is rendered beside populated
+	// fields.
+	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
+		top: var(--sessions-list-thumb-top);
+		height: var(--sessions-list-thumb-height);
+		transform: none;
 	}
 
 	&__resizeToggle {
@@ -443,12 +455,25 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.22),
 			0 3px 10px rgba(0, 0, 0, 0.14);
+		box-shadow:
+			0 0 0 1px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
+			0 3px 10px rgba(0, 0, 0, 0.14);
 		transform: translateY(-50%) scaleX(1.08);
 	}
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
+	}
+
+	&__resizeHandle[data-dragging='true'][data-scrollable='false']
+		&__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
+	}
+
+	&__resizeHandle[data-dragging='true'][data-scrollable='true']
+		&__resizeHandlePill {
+		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
@@ -519,6 +544,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			height: $illustrationWrapperSize;
 			border-radius: calc($illustrationWrapperSize / 2);
 			background-color: $illustration-background-info;
+			border: $illustration-border-accent;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -1311,8 +1337,8 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__searchModalTab--active {
-		color: #a5000a;
-		border-bottom-color: #a5000a;
+		color: var(--m3-primary, #a5000a);
+		border-bottom-color: var(--m3-primary, #a5000a);
 	}
 
 	&__searchModalTabIcon {

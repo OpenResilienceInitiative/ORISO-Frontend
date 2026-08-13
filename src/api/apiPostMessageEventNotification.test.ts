@@ -32,6 +32,25 @@ describe('buildMessageEventNotificationBody', () => {
 		expect(body.mentionedUserIds).toBeNull();
 	});
 
+	it('carries the matrix event id for backend deduplication (#942)', () => {
+		const body = buildMessageEventNotificationBody({
+			roomId: '!room:oriso',
+			matrixRoom: true,
+			matrixEventId: '$evt-42'
+		});
+
+		expect(body.matrixEventId).toBe('$evt-42');
+	});
+
+	it('defaults the matrix event id to null (legacy callers)', () => {
+		const body = buildMessageEventNotificationBody({
+			roomId: '!room:oriso',
+			matrixRoom: true
+		});
+
+		expect(body.matrixEventId).toBeNull();
+	});
+
 	it('never includes plaintext previews for matrix rooms, also for team discussions', () => {
 		const body = buildMessageEventNotificationBody({
 			roomId: '!discussion:oriso',

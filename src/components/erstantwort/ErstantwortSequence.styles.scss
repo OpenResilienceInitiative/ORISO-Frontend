@@ -1,0 +1,131 @@
+@import '../../resources/styles/settings';
+
+/* Erstantwort — the staged Carimat bubble sequence (ADR-018).
+ *
+ * Geometry is inherited from `PseudonymCard.styles.scss` on purpose: an
+ * Erstantwort bubble IS a Carimat bubble, and the two must not drift apart in
+ * avatar size or bubble radius. Only what is genuinely new to a *sequence*
+ * lives here — the vertical rhythm between consecutive bubbles from one
+ * sender, and the action affordances a single onboarding card never had.
+ */
+
+.erstantwort {
+	width: 100%;
+}
+
+.erstantwort__row {
+	margin-bottom: 12px;
+}
+
+.erstantwort__content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.erstantwort__bubble {
+	/* Consecutive bubbles from the same sender: only the first keeps the flat
+	   top-left corner that attaches it to the avatar. The rest are fully
+	   rounded, the same idiom the message list uses for a run of messages. */
+	border-radius: 14px;
+
+	/* Shrink to the text. A bubble stretched to the full column reads as a
+	   document block rather than as somebody talking — most visible on the
+	   one-line Bausteine, where a full-width box for four words looks like a
+	   form field. `fit-content` keeps the chat grammar; the cap keeps the long
+	   Bausteine at a readable measure. */
+	width: fit-content;
+	max-width: min(100%, 34rem);
+}
+
+/* The flat top-left corner belongs to the *first bubble*, which is the sibling
+   right after the kicker line. `&:first-of-type` never matched it: the header is
+   also a div, so it is the first-of-type in this container and every bubble kept
+   the fully rounded radius. */
+.erstantwort__content > .pseudonymCard__header + .erstantwort__bubble {
+	border-radius: 4px 14px 14px 14px;
+}
+
+.erstantwort__bubble--typing {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 52px;
+	padding: 18px 22px;
+
+	/* `.pseudonymCard__bubble` carries `min-width: 260px`, which is right for a
+	   card holding a pseudonym and a dice but absurd around three dots — it
+	   rendered as a wide empty box. The typing placeholder sizes to the dots. */
+	min-width: 0;
+}
+
+.erstantwort__headline {
+	margin: 0 0 4px;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.erstantwort__body {
+	/* The Carimat onboarding cards set a monospace face on
+	   `.pseudonymCard__bubbleText` for their typewriter effect. That reads as a
+	   deliberate flourish on one short line and as a wall of code on a
+	   ten-Baustein sequence, so the Erstantwort takes the body face back. The
+	   person reading this has just written about something hard; legibility
+	   outranks the effect. */
+	font-family: $font-family-sans-serif;
+	font-size: 15px;
+	line-height: 1.5;
+	margin: 0;
+	white-space: pre-line;
+}
+
+.erstantwort__links {
+	list-style: none;
+	margin: 8px 0 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+
+	a {
+		text-decoration: underline;
+	}
+}
+
+/* The one pill affordance the Erstantwort uses, defined once and extended by
+   SaveCredentialsCard's buttons too. */
+%erstantwort-pill-affordance {
+	padding: 8px 16px;
+	border: 1px solid currentcolor;
+	border-radius: 999px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		opacity: 0.8;
+	}
+
+	/* The platform's focus-ring convention — never remove the outline without
+	   putting an equally visible one back (ORISO-Frontend#113). */
+	&:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+}
+
+.erstantwort__action {
+	@extend %erstantwort-pill-affordance;
+
+	/* `.pseudonymCard__bubble` is a flex column with `align-items: stretch`, so
+	   without this the action button spans the whole bubble while the buttons
+	   inside SaveCredentialsCard size to their content — two button widths in
+	   one sequence, from the same sender. */
+	align-self: flex-start;
+	margin-top: 12px;
+}

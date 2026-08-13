@@ -22,6 +22,7 @@ vi.mock('matrix-js-sdk/lib/logger', () => ({
 
 // eslint-disable-next-line import/first -- must load after vi.mock
 import {
+	createMatrixErrorAwareLogger,
 	configureMatrixLogging,
 	getMatrixClientLogger,
 	resetMatrixLoggingForTests
@@ -69,5 +70,45 @@ describe('matrixLogging', () => {
 		configureMatrixLogging();
 
 		expect(rootSetLevel).toHaveBeenCalledTimes(1);
+	});
+
+	it('observes child logger errors while preserving the SDK log output', () => {
+		const rootError = vi.fn();
+		const childError = vi.fn();
+		const childLogger = {
+			trace: vi.fn(),
+			debug: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: childError,
+			getChild: vi.fn()
+		};
+		const rootLogger = {
+			trace: vi.fn(),
+			debug: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: rootError,
+			getChild: vi.fn(() => childLogger)
+		};
+		const observer = vi.fn();
+		const observedLogger = createMatrixErrorAwareLogger(
+			rootLogger,
+			observer
+		);
+
+		observedLogger
+			.getChild('[room encryption]')
+			.error('Failed to process outgoing request', 0);
+
+		expect(observer).toHaveBeenCalledWith(
+			'Failed to process outgoing request',
+			0
+		);
+		expect(childError).toHaveBeenCalledWith(
+			'Failed to process outgoing request',
+			0
+		);
+		expect(rootError).not.toHaveBeenCalled();
 	});
 });

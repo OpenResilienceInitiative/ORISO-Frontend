@@ -52,8 +52,19 @@ describe('Matrix-only active frontend artifacts', () => {
 		);
 
 		expect(buildAction).toContain('linux/amd64,linux/arm64');
-		expect(buildAction).toContain('provenance: mode=max');
-		expect(buildAction).toContain('sbom: true');
+		// Provenance and SBOM are conditional on actually pushing: a discarded
+		// validation build must not pay for attestations it throws away. The
+		// guarantee still holds for every published image — ci-main.yml is the
+		// only publishing caller of this action and passes push_to_ghcr: true
+		// (release-image.yml calls docker/build-push-action directly and is
+		// covered by the unconditional assertions further down).
+		expect(buildAction).toMatch(
+			/provenance: \$\{\{ inputs\.push_to_ghcr == 'true' && 'mode=max' \|\| 'false' \}\}/
+		);
+		expect(buildAction).toMatch(
+			/sbom: \$\{\{ inputs\.push_to_ghcr == 'true' \}\}/
+		);
+		expect(mainWorkflow).toContain('push_to_ghcr: true');
 		expect(buildAction).toMatch(
 			/value: \$\{\{ steps\.build\.outputs\.digest \}\}/
 		);

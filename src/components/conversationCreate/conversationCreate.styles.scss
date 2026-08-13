@@ -243,7 +243,15 @@ body.conversationCreate--active .navigation__wrapper {
 }
 
 .personChipGrid {
-	align-content: flex-end;
+	/* Not `flex-end` (#1010): an end-aligned wrapping flex container spills its
+	   overflow out of the *start* edge, and that spill is not counted in
+	   `scrollHeight` — the browser then reports nothing to scroll, renders no
+	   scrollbar, and every chip past the fourth row sits above the container
+	   with its remove button out of reach. The chips still sit at the bottom:
+	   `.formatCard__mediaOverlay` is a column with `justify-content: flex-end`,
+	   so this box is placed there and only grows upwards until `max-height`
+	   caps it and it scrolls normally. */
+	align-content: flex-start;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
@@ -375,15 +383,28 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__row--vacated {
+		/* Greyed out in the design — but this row is a button, and it is the
+		   only way to take the person off the list. At the original #d4d4d4 it
+		   sat at about 1.5:1 on white, failing WCAG 1.4.3 for the label and
+		   1.4.11 for the control. The state is carried by the × and by a spelt
+		   out hint instead of by paleness alone. */
 		.personSelectMenu__name {
-			color: #d4d4d4;
+			color: $cc-on-surface-variant;
 		}
 
 		.personSelectMenu__toggle {
 			background: rgba(27, 27, 28, 0.1);
 			color: $cc-on-surface-variant;
-			opacity: 0.38;
 		}
+	}
+
+	&__vacatedHint {
+		color: $cc-on-surface-variant;
+		display: block;
+		font-size: 12px;
+		font-weight: 400;
+		letter-spacing: 0.4px;
+		line-height: 16px;
 	}
 }
 
@@ -736,34 +757,6 @@ body.conversationCreate--active .navigation__wrapper {
 		height: 100%;
 		object-fit: cover;
 		width: 100%;
-	}
-
-	&__menuButton {
-		align-items: center;
-		background: none;
-		border: none;
-		border-radius: 50%;
-		color: $cc-on-surface-variant;
-		cursor: pointer;
-		display: flex;
-		height: 40px;
-		justify-content: center;
-		width: 40px;
-
-		&:hover:not(:disabled) {
-			background-color: rgba(27, 27, 28, 0.04);
-		}
-
-		&:disabled {
-			cursor: default;
-			opacity: 0.38;
-		}
-
-		svg {
-			fill: currentcolor;
-			height: 24px;
-			width: 24px;
-		}
 	}
 }
 

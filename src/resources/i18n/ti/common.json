@@ -50,7 +50,10 @@
 		"scrollDown": "ንታሕቲ ስክሮል ግበሩ",
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
-			"title": "ምኽሪ\n& ሓገዝ"
+			"title": "ምኽሪ\n& ሓገዝ",
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት",
+			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
+			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -842,8 +845,7 @@
 		"format": {
 			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
 			"panelMenu": "ተወሳኺ ኣማራጺታት",
-			"back": "ተመለስ",
-			"cardMenu": "ኣማራጺታት ናይዚ ዓይነት ዝርርብ"
+			"back": "ተመለስ"
 		},
 		"circle": {
 			"rows": {
@@ -1201,13 +1203,33 @@
 		"register": {
 			"infoText": {
 				"copy": "ኣብዞም ዝስዕቡ ኣርእስታት ብሓጎስ ክንመኽረኩም ንደሊ፤",
-				"title": "ገና ኣይተመዝገበን?"
+				"title": "ገና ኣይተመዝገበን?",
+				"short": "ኣብዚ ሓድሽ ዲኹም?"
 			},
-			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት"
+			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት",
+			"separator": "ኣብዚ ሓድሽ ዲኹም?"
 		},
 		"security": {
-			"headline": "ደህንነት እና ተመስጢር",
-			"description": "ግላዊነትኩም ብመጨረሻ-ወደ-መጨረሻ ምስጢር ፍጹም ይሕሎ."
+			"teaser": {
+				"text": "ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ — እቲ መፍትሕ ኣብ መሳርሒኹም እዩ ዝፍጠር።",
+				"link": "ስለምንታይ እዚ ብፍሉይ ውሑስ ዝኸውን",
+				"textShort": "እቲ መፍትሕ ኣብ መሳርሒኹም ይተርፍ",
+				"linkShort": "ስለምንታይ ውሑስ ዝኸውን"
+			},
+			"explainer": {
+				"badge": "ሓድሽ",
+				"headline": "ክልቴኹም ጥራይ ኢኹም ከተንብቡ እትኽእሉ።",
+				"message": "ጽቡቕ ኣይኮንኩን ዘለኹ።",
+				"you": "ንስኹም",
+				"agency": "ማእከል ምኽሪ",
+				"encrypted": "ምስጢራዊ",
+				"attack": "ካብዚ ንላዕሊ ሓደ ኣጥቃዒ ኣይረክብን",
+				"cipherLabel": "እተመንጠለ ምስጢራዊ ዳታ",
+				"key": "እቲ መፍትሕ ኣብ መሳርሒኹም ተፈጢሩ ኣብኡ ይተርፍ — ንሕና የብልናን።",
+				"protocol": "ክፉት ፕሮቶኮል <strong>Matrix</strong>፣ ብናጻ ክምርመር ዝኽእል።",
+				"protocolLink": "ዝያዳ ፍለጥ",
+				"back": "ናብ መእተዊ ተመለስ"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1254,7 +1276,6 @@
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኣፕኩም ኣእትዉ።"
 					}
 				},
-				"deletedAccount": "ኣካውንትካ ብሓደ ኣማኻሪ ተዓጽዩ እዩ።",
 				"email": {
 					"otp": {
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኢመይልኩም ኣእትዉ።"
@@ -1409,7 +1430,31 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"next": "ቀጻሊ ሓበሬታ",
+			"cardMenu": "ናይ ሓበሬታ ተግባራት",
+			"markRead": "ከም ተነብበ ምልክት ግበር",
+			"waitingSince": "ካብ {{time}} ({{date}}) ጀሚሩ ይጽበ ኣሎ",
+			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
+			"showDetails": "ዝርዝር ኣርእይ",
+			"preview": {
+				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
+				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።",
+				"image": "ምስሊ",
+				"file": "ፋይል",
+				"audio": "መልእኽቲ ድምጺ",
+				"video": "ቪድዮ",
+				"notice": "ምልክታ",
+				"unsupported": "ዘይድገፍ መልእኽቲ",
+				"pending": "ምፍታሕ ምስጢር ይጽበ",
+				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+			},
+			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
+			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
+			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
+			"retryOlder": "ደጊምካ ፈትን",
+			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
 		}
 	},
 	"overlay": {
@@ -2050,7 +2095,7 @@
 				},
 				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
-				"label": "ስም ተጠቃሚ",
+				"label": "User-ID",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}
 		},
@@ -2113,6 +2158,15 @@
 		},
 		"overlay": {
 			"close": "ዕፁው"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "ሕቶኹም ብሓደ ኣማኻሪ ተቐቢሉ ኣሎ።",
+			"copy": "{{advisor}} ካብ ማእከል ምኽሪ {{organisation}} ካብ ሕጂ ንደሓር ጉዳይኩም ክከታተል እዩ። መልእኽትታትኩም ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ እዮም። ኣድላዪ ምስ ዝኸውን፡ ካልኦት ክኢላታት ናይዚ ማእከል ምኽሪ ክሳተፉ ይኽእሉ እዮም፡ ንኣብነት ንውክልና ወይ ንሞያዊ ምምኽኻር — ኩሎም ድማ ምስጢር ናይ ምሕላው ግቡእ ኣለዎም።",
+			"cta": "ናብ ዝርርብ",
+			"advisorFallback": "ሓደ ኣማኻሪ",
+			"organisationFallback": "ማእከል ምኽርኹም"
 		}
 	},
 	"session": {
@@ -2368,6 +2422,11 @@
 		},
 		"preview": {
 			"headline": "ናይ መጀመርታ ሕቶታት",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}
@@ -3118,6 +3177,18 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "ኣሰር"
+			},
+			"privacy": {
+				"title": "ናይ ምስጢርነት ፖሊሲ"
+			},
+			"back": "ተመለስ",
+			"confirm": "ተረዲአ"
 		}
 	}
 }

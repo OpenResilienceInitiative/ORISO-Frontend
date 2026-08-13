@@ -90,6 +90,12 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
+import {
+	getLatestMatrixRoomPreview,
+	getPreviewLastMessageType,
+	MatrixRoomPreview
+} from './matrixRoomPreview';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -216,7 +222,12 @@ export const SessionListItemComponent = ({
 	const isMatrixBackedSession =
 		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId) ||
 		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId);
-	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
+	const [plainTextLastMessage, setPlainTextLastMessage] = useState<
+		string | null
+	>(null);
+	const matrixRoomId = isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId)
+		? sessionItem?.matrixRoomId
+		: null;
 	const caseHandoverAccessControlled = isCaseHandoverAccessControlled({
 		activeSession,
 		userData,
@@ -230,6 +241,11 @@ export const SessionListItemComponent = ({
 	});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
+	const matrixSessionPreview = useMatrixSessionPreview(
+		matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked,
+		getLatestMatrixRoomPreview
+	);
 
 	useEffect(() => {
 		if (caseHandoverContentLocked) {
@@ -240,7 +256,29 @@ export const SessionListItemComponent = ({
 		}
 
 		if (isMatrixBackedSession) {
-			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			const formatPreview = (preview: MatrixRoomPreview | null) => {
+				if (!preview || preview.kind === 'encrypted') {
+					return translate('e2ee.message.encryption.text');
+				}
+				if (preview.kind === 'text') {
+					return preview.text || '';
+				}
+				return translate(
+					`sessionList.preview.${preview.kind}`,
+					preview.kind
+				);
+			};
+			setPlainTextLastMessage(formatPreview(matrixSessionPreview));
+		}
+	}, [
+		caseHandoverContentLocked,
+		isMatrixBackedSession,
+		matrixSessionPreview,
+		translate
+	]);
+
+	useEffect(() => {
+		if (caseHandoverContentLocked || isMatrixBackedSession) {
 			return;
 		}
 
@@ -1426,7 +1464,10 @@ export const SessionListItemComponent = ({
 							lastMessageType={
 								caseHandoverContentLocked
 									? null
-									: activeSession.item.lastMessageType
+									: getPreviewLastMessageType(
+											isMatrixBackedSession,
+											activeSession.item.lastMessageType
+										)
 							}
 							language={language}
 							showLanguage={
@@ -1513,7 +1554,7 @@ export const SessionListItemComponent = ({
 							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
 					)}
-					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					{/* Consulting-type modality icon (Mail / Live Chat / Interna
 					    / Gesprächskreis) — always shown, including alongside the
 					    case-handover action button (Figma node 115). */}
 					{
@@ -1557,14 +1598,14 @@ export const SessionListItemComponent = ({
 										src={nearbyConversationIcon}
 										alt={translate(
 											'sessionList.toolbar.chips.nearby',
-											'Nähe'
+											'Mail'
 										)}
 										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 										{translate(
 											'sessionList.toolbar.chips.nearby',
-											'Nähe'
+											'Mail'
 										)}
 									</span>
 								</div>

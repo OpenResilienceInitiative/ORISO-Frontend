@@ -6,6 +6,7 @@ import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
+import { M3Checkbox } from '../../M3Checkbox';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -13,9 +14,24 @@ import {
 	setUpRecovery,
 	recoverWithKey,
 	resetCryptoIdentity,
-	InvalidRecoveryKeyError
+	InvalidRecoveryKeyError,
+	RecoverySetupPhase,
+	RecoverySetupPhaseError
 } from '../../../services/matrixKeyBackupService';
+import {
+	clearPendingRecoveryKey,
+	getPendingRecoveryKey,
+	RecoverySetupBusyError,
+	savePendingRecoveryKey,
+	withRecoverySetupLock
+} from '../../../services/pendingRecoveryKeyStore';
 import './encryptionSettings.styles.scss';
+import {
+	EncryptionClientReadinessError,
+	EncryptionClientReadinessStage,
+	executeWithReadyEncryptionClient,
+	resolveReadyEncryptionClient
+} from './encryptionClient';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -55,6 +71,9 @@ export const EncryptionSettingsPanel = ({
 	);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [setupFailurePhase, setSetupFailurePhase] = useState<
+		RecoverySetupPhase | EncryptionClientReadinessStage | 'unknown' | null
+	>(null);
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
 	);
@@ -62,12 +81,15 @@ export const EncryptionSettingsPanel = ({
 	const [recoveryInput, setRecoveryInput] = useState('');
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
 	const [copied, setCopied] = useState(false);
+	const [userId, setUserId] = useState<string | null>(null);
+	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
 
-	const getClient = useCallback(
-		(): MatrixClient | null =>
-			clientOverride !== undefined
-				? clientOverride
-				: (getMatrixClientService()?.getClient() ?? null),
+	const getReadyClient = useCallback(
+		(): Promise<MatrixClient | null> =>
+			resolveReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService()
+			),
 		[clientOverride]
 	);
 
@@ -79,19 +101,42 @@ export const EncryptionSettingsPanel = ({
 	};
 
 	const refreshStatus = useCallback(async () => {
-		const client = getClient();
-		if (!client) {
-			setPhase('unavailable');
-			return;
-		}
 		try {
+			const client = await getReadyClient();
+			if (!client) {
+				setPhase('unavailable');
+				return;
+			}
 			const nextStatus = await getEncryptionStatus(client);
 			setStatus(nextStatus);
+
+			const currentUserId = client.getUserId();
+			setUserId(currentUserId);
+			const pendingKey = currentUserId
+				? getPendingRecoveryKey(currentUserId)
+				: null;
+			// The background setup had no dialog to show the key in, so this
+			// panel is where the user finally gets to see and save it.
+			if (pendingKey && !nextStatus.keyStorageOutOfSync) {
+				setRecoveryKeyToShow(pendingKey);
+				setKeyStoredConfirmed(false);
+				setCopied(false);
+				setKeyFromSilentSetup(true);
+				setPhase('showKey');
+				return;
+			}
+
 			setPhase(phaseForStatus(nextStatus));
-		} catch {
+		} catch (setupError) {
+			console.warn(
+				'Matrix recovery setup failed at phase',
+				setupError instanceof RecoverySetupPhaseError
+					? setupError.phase
+					: 'unknown'
+			);
 			setPhase('unavailable');
 		}
-	}, [getClient]);
+	}, [getReadyClient]);
 
 	useEffect(() => {
 		if (initialStatusOverride) {
@@ -102,19 +147,52 @@ export const EncryptionSettingsPanel = ({
 	}, [refreshStatus, initialStatusOverride]);
 
 	const onSetUp = useCallback(async () => {
-		const client = getClient();
-		if (!client) {
-			return;
-		}
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
-			const encodedKey = await setUpRecovery(client);
+			const runSetup = () =>
+				executeWithReadyEncryptionClient(
+					clientOverride,
+					getMatrixClientService(),
+					setUpRecovery
+				);
+			// Same cross-tab lock the background bootstrap takes: two setups
+			// at once would produce two backup versions and one dead key.
+			const encodedKey = userId
+				? await withRecoverySetupLock(userId, runSetup)
+				: await runSetup();
+			if (!encodedKey) {
+				setPhase('unavailable');
+				return;
+			}
+			// Park it too: a reload before the confirmation must not lose the
+			// only copy of a key the server cannot hand out again.
+			if (userId) {
+				savePendingRecoveryKey(userId, encodedKey);
+			}
 			setRecoveryKeyToShow(encodedKey);
 			setKeyStoredConfirmed(false);
 			setCopied(false);
+			setKeyFromSilentSetup(false);
 			setPhase('showKey');
-		} catch {
+		} catch (setupError) {
+			if (setupError instanceof RecoverySetupBusyError) {
+				setError(
+					t(
+						'profile.encryption.setup.busy',
+						'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.'
+					)
+				);
+				return;
+			}
+			setSetupFailurePhase(
+				setupError instanceof RecoverySetupPhaseError
+					? setupError.phase
+					: setupError instanceof EncryptionClientReadinessError
+						? setupError.stage
+						: 'unknown'
+			);
 			setError(
 				t(
 					'profile.encryption.setup.error',
@@ -124,15 +202,19 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, t]);
+	}, [clientOverride, t, userId]);
 
 	const onConfirmKeyStored = useCallback(() => {
-		// One-time display: drop the key from memory the moment the user
-		// confirms it is stored safely.
+		// One-time display: drop the key from memory and from the parking spot
+		// the moment the user confirms it is stored safely.
+		if (userId) {
+			clearPendingRecoveryKey(userId);
+		}
 		setRecoveryKeyToShow(null);
 		setKeyStoredConfirmed(false);
+		setKeyFromSilentSetup(false);
 		void refreshStatus();
-	}, [refreshStatus]);
+	}, [refreshStatus, userId]);
 
 	const onCopyKey = useCallback(async () => {
 		if (!recoveryKeyToShow) {
@@ -147,14 +229,22 @@ export const EncryptionSettingsPanel = ({
 	}, [recoveryKeyToShow]);
 
 	const onRecover = useCallback(async () => {
-		const client = getClient();
-		if (!client || !recoveryInput.trim()) {
+		if (!recoveryInput.trim()) {
 			return;
 		}
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
-			const result = await recoverWithKey(client, recoveryInput);
+			const result = await executeWithReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService(),
+				(client) => recoverWithKey(client, recoveryInput)
+			);
+			if (!result) {
+				setPhase('unavailable');
+				return;
+			}
 			setRecoveredCount(result.imported);
 			setRecoveryInput('');
 			await refreshStatus();
@@ -173,17 +263,18 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, recoveryInput, refreshStatus, t]);
+	}, [clientOverride, recoveryInput, refreshStatus, t]);
 
 	const onReset = useCallback(async () => {
-		const client = getClient();
-		if (!client) {
-			return;
-		}
 		setBusy(true);
 		setError(null);
+		setSetupFailurePhase(null);
 		try {
-			await resetCryptoIdentity(client);
+			await executeWithReadyEncryptionClient(
+				clientOverride,
+				getMatrixClientService(),
+				resetCryptoIdentity
+			);
 			await refreshStatus();
 		} catch {
 			setError(
@@ -195,7 +286,7 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [getClient, refreshStatus, t]);
+	}, [clientOverride, refreshStatus, t]);
 
 	const recoveryInputItem: InputFieldItem = {
 		id: 'encryptionRecoveryKey',
@@ -262,7 +353,12 @@ export const EncryptionSettingsPanel = ({
 			{renderHeader()}
 
 			{error && (
-				<div className="encryptionSettings__error" role="alert">
+				<div
+					className="encryptionSettings__error"
+					role="alert"
+					data-cy="encryption-setup-error"
+					data-setup-phase={setupFailurePhase ?? undefined}
+				>
 					<Text text={error} type="standard" />
 				</div>
 			)}
@@ -293,10 +389,17 @@ export const EncryptionSettingsPanel = ({
 			{phase === 'showKey' && recoveryKeyToShow && (
 				<>
 					<Text
-						text={t(
-							'profile.encryption.showKey.explainer',
-							'Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
-						)}
+						text={
+							keyFromSilentSetup
+								? t(
+										'profile.encryption.showKey.silentExplainer',
+										'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Wiederherstellungsschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.'
+									)
+								: t(
+										'profile.encryption.showKey.explainer',
+										'Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
+									)
+						}
 						type="standard"
 					/>
 					<div
@@ -320,23 +423,18 @@ export const EncryptionSettingsPanel = ({
 								type: BUTTON_TYPES.SECONDARY
 							}}
 							buttonHandle={onCopyKey}
+							className="encryptionSettings__fullWidthAction"
 						/>
 					</div>
-					<label className="encryptionSettings__confirm">
-						<input
-							type="checkbox"
-							checked={keyStoredConfirmed}
-							onChange={(event) =>
-								setKeyStoredConfirmed(event.target.checked)
-							}
-						/>
-						<span>
-							{t(
-								'profile.encryption.showKey.confirmLabel',
-								'Ich habe den Schlüssel sicher gespeichert.'
-							)}
-						</span>
-					</label>
+					<M3Checkbox
+						checked={keyStoredConfirmed}
+						onChange={setKeyStoredConfirmed}
+						label={t(
+							'profile.encryption.showKey.confirmLabel',
+							'Ich habe den Schlüssel sicher gespeichert.'
+						)}
+						dataCy="encryption-key-stored-confirmation"
+					/>
 					<Button
 						item={{
 							label: t(
@@ -347,6 +445,7 @@ export const EncryptionSettingsPanel = ({
 							disabled: !keyStoredConfirmed
 						}}
 						buttonHandle={onConfirmKeyStored}
+						className="encryptionSettings__fullWidthAction"
 					/>
 				</>
 			)}

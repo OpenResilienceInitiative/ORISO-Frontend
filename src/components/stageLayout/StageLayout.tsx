@@ -5,20 +5,17 @@ import './StageLayout.styles.scss';
 import clsx from 'clsx';
 import { AgencySpecificContext, LocaleContext } from '../../globalState';
 import { useTranslation } from 'react-i18next';
-import { LocaleSwitch } from '../localeSwitch/LocaleSwitch';
+import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import LegalLinks from '../legalLinks/LegalLinks';
-import { MENUPLACEMENT_BOTTOM_LEFT } from '../select/SelectDropdown';
+import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
+import { StageMobileHero } from './StageMobileHero';
 import {
-	AppBar,
 	Box,
 	Button as MuiButton,
-	Divider,
 	IconButton,
-	Slide,
 	SvgIcon,
-	Toolbar,
 	Typography,
 	useScrollTrigger
 } from '@mui/material';
@@ -74,58 +71,25 @@ export const StageLayout = ({
 
 	return (
 		<div className={clsx('stageLayout', className)}>
-			<Slide appear={false} direction="down" in={!trigger}>
-				<AppBar
-					elevation={0}
-					sx={{
-						display: { md: 'none' },
-						zIndex: (theme) => theme.zIndex.drawer + 1
-					}}
-				>
-					<Toolbar variant="dense">
-						<Typography
-							variant="h6"
+			<StageMobileHero
+				action={
+					showLoginLink && (
+						<IconButton
+							{...(loginRoute && routerContext
+								? {
+										component: RouterLink,
+										to: loginRoute
+									}
+								: { href: loginRoute || loginUrl })}
 							color="inherit"
-							component="div"
+							aria-label={translate('registration.login.label')}
+							sx={{ color: 'var(--m3-on-primary, #fff)' }}
 						>
-							{translate('app.stage.title')}
-						</Typography>
-						<Box sx={{ flexGrow: 1 }} />
-						<Box sx={{ display: 'flex' }}>
-							{selectableLocales.length > 1 && (
-								<LocaleSwitch
-									iconOnly={true}
-									color="var(--white)"
-									colorHover="var(--white)"
-								/>
-							)}
-
-							{showLoginLink && (
-								<IconButton
-									{...(loginRoute && routerContext
-										? {
-												component: RouterLink,
-												to: loginRoute
-											}
-										: { href: loginRoute || loginUrl })}
-									edge="end"
-									color="inherit"
-									aria-label={translate(
-										'registration.login.label'
-									)}
-									sx={{ ml: '4px' }}
-								>
-									<LoginDoorIcon color="inherit" />
-								</IconButton>
-							)}
-						</Box>
-					</Toolbar>
-
-					<Divider
-						sx={{ borderColor: 'white', borderWidth: '0.5px' }}
-					></Divider>
-				</AppBar>
-			</Slide>
+							<LoginDoorIcon color="inherit" />
+						</IconButton>
+					)
+				}
+			/>
 
 			{showRegistrationInfoDrawer && (
 				<InfoDrawer trigger={trigger}></InfoDrawer>
@@ -139,16 +103,16 @@ export const StageLayout = ({
 				<Box
 					className={`stageLayout__header`}
 					sx={{
-						'display': showRegistrationLink
-							? 'flex'
-							: { xs: 'none', md: 'flex' },
-						'mt': {
-							xs: showRegistrationLink ? '48px' : 0,
-							md: 0
-						},
-						'height': { xs: 'auto', md: '72px' },
-						'minHeight': { xs: '48px', md: '72px' },
-						'py': { xs: 1, md: 1.5 },
+						// Below $fromXLarge the header content lives in the
+						// mobile hero, so the row only exists from there up.
+						// This theme remaps MUI's breakpoints (md is 600, not
+						// 900) — `lg` is the 1200px the hero hides at. Using
+						// `md` here put both language controls and both CTAs on
+						// screen at once across the whole tablet range.
+						'display': { xs: 'none', lg: 'flex' },
+						'height': { xs: 'auto', lg: '72px' },
+						'minHeight': { xs: '48px', lg: '72px' },
+						'py': { xs: 1, lg: 1.5 },
 						'animation': `registrationHeaderEnter ${registrationMotion.standard} ${registrationMotion.easeOut} both`,
 						'@keyframes registrationHeaderEnter': {
 							'0%': {
@@ -166,16 +130,14 @@ export const StageLayout = ({
 					}}
 				>
 					{selectableLocales.length > 1 && (
-						<Box sx={{ display: { xs: 'none', md: 'block' } }}>
-							<LocaleSwitch
-								menuPlacement={MENUPLACEMENT_BOTTOM_LEFT}
-							/>
+						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+							<LocaleSwitchPill />
 						</Box>
 					)}
 					{showLoginLink && (
 						<Box
 							className="stageLayout__toLogin"
-							sx={{ display: { xs: 'none', md: 'block' } }}
+							sx={{ display: { xs: 'none', lg: 'block' } }}
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
@@ -252,7 +214,7 @@ export const StageLayout = ({
 									whiteSpace: 'nowrap'
 								}}
 							>
-								{translate('login.register.infoText.title')}
+								{translate('login.register.infoText.short')}
 							</Typography>
 							<MuiButton
 								className="login__tenantRegistrationLink"
@@ -265,7 +227,8 @@ export const StageLayout = ({
 											component: 'a',
 											href: registrationHref
 										})}
-								variant="outlined"
+								variant="contained"
+								disableElevation
 								startIcon={<CenterFocusStrongRoundedIcon />}
 								sx={registrationHeaderButtonSx}
 							>
@@ -277,12 +240,11 @@ export const StageLayout = ({
 
 				<Box
 					sx={{
+						// The hero is in flow, so mobile no longer needs an
+						// offset for a fixed app bar — only the registration
+						// info drawer still overlays the top of the sheet.
 						mt: {
-							xs: showRegistrationInfoDrawer
-								? '96px'
-								: showRegistrationLink
-									? 0
-									: '48px',
+							xs: showRegistrationInfoDrawer ? '96px' : 0,
 							md: '0'
 						}
 					}}
@@ -291,38 +253,32 @@ export const StageLayout = ({
 					{children}
 				</Box>
 
-				{showLegalLinks && (
+				{(showLegalLinks || platformVersion) && (
 					<div className="stageLayout__footer">
-						<div className={`stageLayout__legalLinks`}>
-							<LegalLinks
-								delimiter={
-									<Text
-										type="infoSmall"
-										className="stageLayout__legalLinksSeparator"
-										text=" | "
-									/>
-								}
-								params={{ aid: specificAgency?.id }}
-								legalLinks={legalLinks}
-							>
-								{(label, url) => (
-									<button
-										type="button"
-										className="button-as-link"
-										data-cy-link={url}
-										onClick={() =>
-											window.open(url, '_blank')
-										}
-									>
+						{showLegalLinks && (
+							<div className={`stageLayout__legalLinks`}>
+								<LegalLinks
+									delimiter={
 										<Text
-											className="stageLayout__legalLinksItem"
 											type="infoSmall"
-											text={label}
+											className="stageLayout__legalLinksSeparator"
+											text=" | "
 										/>
-									</button>
-								)}
-							</LegalLinks>
-						</div>
+									}
+									params={{ aid: specificAgency?.id }}
+									legalLinks={legalLinks}
+								>
+									{(label, url, rawLabel) => (
+										<LegalLinkButton
+											label={label}
+											rawLabel={rawLabel}
+											url={url}
+											textClassName="stageLayout__legalLinksItem"
+										/>
+									)}
+								</LegalLinks>
+							</div>
+						)}
 						{platformVersion && (
 							<Text
 								className="stageLayout__platformVersion"
@@ -337,6 +293,11 @@ export const StageLayout = ({
 	);
 };
 
+/**
+ * Registration is the onboarding path, so it carries the strongest CTA on the
+ * screen (design 2d): a filled primary button, not the outlined variant it
+ * used to be.
+ */
 const registrationHeaderButtonSx = {
 	'minHeight': '48px',
 	'borderRadius': '999px',
@@ -346,35 +307,31 @@ const registrationHeaderButtonSx = {
 	'fontWeight': 700,
 	'lineHeight': 1.2,
 	'textTransform': 'none',
-	'color': 'var(--m3-primary, #a4262e)',
-	'borderColor': 'var(--m3-primary, #a4262e)',
-	'backgroundColor': 'rgba(255, 255, 255, 0.94)',
-	'boxShadow': '0 8px 22px rgba(164, 38, 46, 0.08)',
+	'color': 'var(--m3-on-primary, #ffffff)',
+	'backgroundColor': 'var(--m3-primary, #a5000a)',
+	'boxShadow': 'none',
 	'transition':
-		'background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
+		'background-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
 	'& .MuiButton-startIcon': {
 		color: 'inherit',
 		mr: 0.75
 	},
 	'&:hover': {
-		color: 'var(--m3-on-secondary, #ffffff)',
-		borderColor: 'var(--m3-secondary, #4c555f)',
-		backgroundColor: 'var(--m3-secondary, #4c555f)',
-		boxShadow: '0 10px 26px rgba(76, 85, 95, 0.18)',
+		color: 'var(--m3-on-primary, #ffffff)',
+		backgroundColor: 'var(--m3-primary-hover, #820006)',
+		boxShadow: '0 10px 26px rgba(165, 0, 10, 0.18)',
 		transform: 'translateY(-1px)'
 	},
 	'&&:active, &&:active:hover': {
 		color: 'var(--m3-on-primary, #ffffff)',
 		WebkitTextFillColor: 'var(--m3-on-primary, #ffffff)',
-		borderColor: 'var(--m3-primary, #a4262e)',
-		backgroundColor: 'var(--m3-primary, #a4262e)',
-		boxShadow: '0 8px 20px rgba(164, 38, 46, 0.18)',
+		backgroundColor: 'var(--m3-primary-hover, #820006)',
+		boxShadow: 'none',
 		transform: 'translateY(0)'
 	},
 	'&:focus-visible': {
-		outline: 'none',
-		boxShadow:
-			'0 0 0 3px rgba(45, 111, 123, 0.12), 0 8px 22px rgba(164, 38, 46, 0.08)'
+		outline: '2px solid var(--m3-primary-outline, #930008)',
+		outlineOffset: '2px'
 	}
 } as const;
 
