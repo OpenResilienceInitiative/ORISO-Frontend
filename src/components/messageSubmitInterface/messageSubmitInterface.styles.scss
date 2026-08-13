@@ -62,7 +62,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		// The editor's box, derived once so the docked bars never restate it.
 		--composer-inner-width: calc(
-			min(100%, var(--composer-max-width)) - 2 * var(--composer-edge-inset)
+			min(100%, var(--composer-max-width)) - 2 *
+				var(--composer-edge-inset)
 		);
 		--composer-inner-offset: max(
 			0px,

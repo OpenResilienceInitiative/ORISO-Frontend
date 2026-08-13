@@ -3031,7 +3031,12 @@
 		"agencies": {
 			"noresults": "Bu konu için uygun bir danışma merkezi yok."
 		},
-		"start": "Danışmayı başlat"
+		"start": "Danışmayı başlat",
+		"consent": {
+			"accept": "Kabul ediyorum",
+			"reject": "Kabul etmiyorum",
+			"mustAcceptToContinue": "Devam etmek için gizlilik politikamızı kabul etmeniz gerekir."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {

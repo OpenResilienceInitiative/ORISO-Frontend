@@ -3917,8 +3917,9 @@
 			"later": "Come back later"
 		},
 		"consent": {
-			"mustAcceptToContinue": "To continue you must accept our privacy policy.",
-			"reject": "I do not agree"
+			"accept": "I agree",
+			"reject": "I do not agree",
+			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
 		},
 		"pseudonym": {
 			"changeName": "Change name"

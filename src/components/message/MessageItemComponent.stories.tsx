@@ -239,9 +239,7 @@ export const AndroidCompactKebabTouchZone: Story = {
 		// Keep canvas typed usage so Storybook interaction panel stays wired.
 		expect(
 			canvas.getAllByLabelText(/^(More|Weitere Optionen)$/).length
-		).toBeGreaterThanOrEqual(
-			2
-		);
+		).toBeGreaterThanOrEqual(2);
 	}
 };
 
