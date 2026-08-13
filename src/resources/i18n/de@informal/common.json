@@ -234,6 +234,11 @@
 		}
 	},
 	"groupChat": {
+		"copy": {
+			"link": {
+				"title": "Einladungs-Link in Zwischenablage kopieren"
+			}
+		},
 		"createError": {
 			"overlay": {
 				"headline": "Es ist ein Fehler aufgetreten. Bitte versuche es erneut."

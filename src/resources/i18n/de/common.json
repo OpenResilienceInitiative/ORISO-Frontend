@@ -685,7 +685,8 @@
 					"text": "Link in Zwischenablage kopiert!",
 					"title": "Link kopiert"
 				},
-				"text": "Einladungs-Link kopieren"
+				"text": "Einladungs-Link kopieren",
+				"title": "Einladungs-Link in Zwischenablage kopieren"
 			}
 		},
 		"create": {
