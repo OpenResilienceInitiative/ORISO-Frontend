@@ -1615,7 +1615,9 @@
 		},
 		"edit": {
 			"marker": "(bearbeitet)",
-			"markerTitle": "Nachricht wurde bearbeitet"
+			"markerTitle": "Nachricht wurde bearbeitet",
+			"previewLabel": "Nachricht bearbeiten",
+			"cancel": "Bearbeiten abbrechen"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1663,6 +1665,9 @@
 			"cancel": "Antwort verwerfen",
 			"quoteLabel": "Antwort auf",
 			"quoteUnknown": "Frühere Nachricht"
+		},
+		"thread": {
+			"unknownRoot": "Frühere Nachricht"
 		}
 	},
 	"navigation": {
@@ -2396,6 +2401,47 @@
 				"title": "Benachrichtigen bei",
 				"description": "Wählen Sie, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
 			}
+		},
+		"encryption": {
+			"title": "Verschlüsselung & Wiederherstellung",
+			"description": "Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
+			"loading": "Wird geladen …",
+			"unavailable": "Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.",
+			"setup": {
+				"busy": "Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.",
+				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"explainer": "Richten Sie einmalig einen Wiederherstellungsschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.",
+				"cta": "Wiederherstellungsschlüssel einrichten"
+			},
+			"showKey": {
+				"silentExplainer": "Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Wiederherstellungsschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
+				"explainer": "Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.",
+				"copy": "Schlüssel kopieren",
+				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert."
+			},
+			"status": {
+				"ok": "✓ Schlüsselsicherung ist aktiv. Ihr Verlauf bleibt auf neuen Geräten lesbar."
+			},
+			"changeKey": {
+				"cta": "Wiederherstellungsschlüssel ändern"
+			},
+			"outOfSync": {
+				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Wiederherstellungsschlüssel ein, damit Ihr Verlauf hier lesbar wird."
+			},
+			"recover": {
+				"inputLabel": "Wiederherstellungsschlüssel",
+				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
+				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt."
+			},
+			"reset": {
+				"explainer": "Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
+				"cta": "Verschlüsselung zurücksetzen",
+				"confirmWarning": "Sind Sie sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.",
+				"confirmCta": "Ja, zurücksetzen",
+				"cancel": "Abbrechen",
+				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+			}
 		}
 	},
 	"qrCode": {
@@ -2771,7 +2817,8 @@
 			"headline": "Um Sie bestmöglich beraten zu können, benötigen wir Ihre Postleitzahl",
 			"label": "Ihre Postleitzahl",
 			"subline": "Warum? Weil dann unsere Fachleute:"
-		}
+		},
+		"registering": "Registrierung läuft..."
 	},
 	"releaseNote": {
 		"content": {
@@ -3141,7 +3188,8 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Gesprächskreis"
 			}
 		},
 		"createChat": {
@@ -3922,6 +3970,16 @@
 			"cancelDelete": "Abbrechen",
 			"confirmDelete": "Ja, endgültig löschen",
 			"error": "Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal."
+		},
+		"noAvailability": {
+			"subtitle": "Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.",
+			"openingHours": "Reguläre Öffnungszeiten anzeigen",
+			"mailHint": "Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.",
+			"tip": "Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.",
+			"startMailCounseling": "anonyme Mail-Beratung starten",
+			"responseTime": "Antwort innerhalb von 2 Werktagen",
+			"back": "Zurück zur vorherigen Seite",
+			"later": "Später wiederkommen"
 		}
 	},
 	"sessionHeader": {
@@ -3988,7 +4046,10 @@
 				"remove": "Entfernen",
 				"added": "Hinzugefügt",
 				"loading": "Lädt...",
-				"loadingConsultants": "Lädt Berater..."
+				"loadingConsultants": "Lädt Berater...",
+				"reasonLabel": "Grund für die Supervision",
+				"reasonPlaceholder": "Bitte geben Sie den Grund für die Supervision an...",
+				"reasonError": "Bitte geben Sie einen Grund an."
 			},
 			"success": {
 				"add": {
@@ -4012,6 +4073,9 @@
 				"loadConsultants": {
 					"title": "Fehler",
 					"text": "Berater konnten nicht geladen werden."
+				},
+				"reasonRequired": {
+					"text": "Bitte geben Sie den Grund für die Supervision an."
 				}
 			},
 			"remove": {
@@ -4219,5 +4283,47 @@
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
 		}
+	},
+	"dpaSign": {
+		"title": "AVV unterzeichnen",
+		"subtitle": "Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
+		"loadingContract": "Vereinbarung wird geladen...",
+		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
+		"signingFor": "Sie unterzeichnen im Namen von:",
+		"accept": "Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.",
+		"submit": "Verbindlich bestätigen",
+		"submitting": "Speichern...",
+		"success": "Die AVV-Bestätigung wurde gespeichert.",
+		"error": {
+			"missingToken": "Der Signaturlink ist unvollständig.",
+			"previewRequired": "Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.",
+			"acceptRequired": "Bitte bestätigen Sie die Vereinbarung.",
+			"generic": "Die Signatur konnte gerade nicht gespeichert werden.",
+			"invalidToken": "Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.",
+			"invalidRequest": "Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
+				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"recoveryTitle": "Schön, dass Sie wieder da sind",
+				"recoveryCopy": "Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.",
+				"recoveryInstruction": "Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.",
+				"keyLabel": "Wiederherstellungsschlüssel",
+				"later": "Später",
+				"openVault": "Tresor öffnen"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "Der Einladungslink ist ungültig oder abgelaufen.",
+		"createFailed": "Das Beratungskonto konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+		"loading": "Einladung wird geladen",
+		"success": "Ihr Beratungskonto wurde erstellt.",
+		"toLogin": "Zur Anmeldung",
+		"description": "Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.",
+		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
 	}
 }
