@@ -1677,6 +1677,12 @@
 		"myProfile": "My profile",
 		"tools": "My tools"
 	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
+	},
 	"notifications": {
 		"families": {
 			"all": "All",
