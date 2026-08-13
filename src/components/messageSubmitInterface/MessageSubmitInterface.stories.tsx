@@ -147,11 +147,14 @@ export const DockedEmojiPickerNoOverlay: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		// Both languages: the Storybook preview defaults to German
+		// (`initialGlobals.locale = FALLBACK_LNG`, and the component test pins
+		// the browser to de-DE), but the toolbar can be switched to English.
 		const emojiButton = await canvas.findByRole('button', {
 			name: /emoji/i
 		});
 		const mentionButton = await canvas.findByRole('button', {
-			name: /mention/i
+			name: /mention|erwähnen/i
 		});
 
 		await userEvent.click(emojiButton);
@@ -262,7 +265,15 @@ export const SessionHeightReset: Story = {
 			name: /drag to resize composer/i
 		});
 		dragHandle.focus();
-		await userEvent.keyboard('{End}');
+		// Dispatch on the handle rather than via `userEvent.keyboard`, which
+		// sends to whatever holds focus. The composer's editor takes focus back
+		// asynchronously, so on a slower machine the key landed on the TipTap
+		// contenteditable instead and user-event threw "Not implemented" trying
+		// to move the caret — green on macOS, red on the Linux CI runner. Same
+		// approach as DragHandle.stories.tsx.
+		dragHandle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
+		);
 		await waitFor(() => {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'

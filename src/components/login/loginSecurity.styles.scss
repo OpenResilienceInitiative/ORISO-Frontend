@@ -1,0 +1,250 @@
+/* Encryption explainer card — design 2d (desktop) / 2e (mobile sheet). */
+
+.loginSecurity {
+	width: 100%;
+	text-align: left;
+
+	svg {
+		fill: currentcolor;
+	}
+
+	&__head {
+		display: flex;
+		align-items: center;
+		gap: $grid-base;
+		flex-wrap: wrap;
+	}
+
+	&__badge {
+		flex: none;
+		padding: 3px 10px;
+		border-radius: 12px;
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-on-primary-fixed, #410001);
+		font-size: 12px;
+		font-weight: $font-weight-bold;
+		letter-spacing: 0.5px;
+	}
+
+	&__headline {
+		margin: 0;
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 20px;
+		font-weight: $font-weight-medium;
+		line-height: 1.25;
+	}
+
+	&__transport {
+		display: grid;
+		grid-template-columns: 1fr 132px 1fr;
+		align-items: start;
+		margin-top: $grid-base-three;
+	}
+
+	/* Points from the intercepted traffic up at the wire it was taken from. */
+	&__tapArrow {
+		display: block;
+		width: 26px;
+		height: 26px;
+		margin: $grid-base-two auto 0;
+		color: var(--m3-primary, #a5000a);
+		transform: rotate(90deg);
+	}
+
+	&__party {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: $grid-base;
+		text-align: center;
+	}
+
+	&__partyIcon {
+		width: 30px;
+		height: 30px;
+		color: var(--m3-on-surface-variant, #444748);
+		opacity: 0.75;
+	}
+
+	&__bubble {
+		margin: 0;
+		padding: 8px 12px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 13px;
+
+		&--you {
+			border-radius: 14px 14px 14px 4px;
+		}
+
+		&--agency {
+			border-radius: 14px 14px 4px 14px;
+		}
+	}
+
+	&__partyLabel {
+		color: var(--m3-outline, #747878);
+		font-size: 12px;
+	}
+
+	&__wire {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: $grid-base;
+		margin-top: 22px;
+		padding: 0 $grid-base;
+	}
+
+	&__wireLine {
+		width: 100%;
+		height: 2px;
+		background: repeating-linear-gradient(
+			90deg,
+			var(--m3-outline-variant, #c4c7c8) 0 6px,
+			transparent 6px 12px
+		);
+	}
+
+	&__wireChip {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 3px 10px;
+		border-radius: 999px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 11.5px;
+		white-space: nowrap;
+	}
+
+	&__wireLock {
+		width: 12px;
+		height: 12px;
+		opacity: 0.6;
+	}
+
+	&__attack {
+		display: flex;
+		align-items: center;
+		gap: $grid-base-two;
+		margin-top: $grid-base;
+		padding: 12px 18px;
+		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		border-radius: 16px;
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&__attackIcon {
+		flex: none;
+		width: 60px;
+		height: 60px;
+		color: var(--m3-primary, #a5000a);
+		opacity: 0.9;
+	}
+
+	&__cipher {
+		margin: 0;
+		min-height: 20px;
+		color: var(--m3-on-primary-fixed-variant, #930008);
+		font-family: ui-monospace, menlo, monospace;
+		font-size: 14px;
+		letter-spacing: 0.4px;
+	}
+
+	&__attackCaption {
+		margin: 4px 0 0;
+		color: var(--m3-on-primary-fixed, #410001);
+		font-size: 12.5px;
+	}
+
+	&__footnote {
+		margin: $grid-base-three 0 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 13px;
+		line-height: 1.55;
+		text-align: center;
+	}
+
+	&__protocol {
+		display: block;
+		margin-top: 2px;
+		color: var(--m3-outline, #747878);
+		font-size: 12.5px;
+
+		strong {
+			color: var(--m3-on-surface-variant, #444748);
+			font-weight: $font-weight-bold;
+		}
+
+		a {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__back {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base;
+		width: 100%;
+		margin-top: $grid-base-three;
+		padding: 8px;
+		border: 0;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 0 0 12px 12px;
+		background: none;
+		color: var(--m3-primary, #a5000a);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 15px;
+		font-weight: $font-weight-bold;
+
+		&:hover {
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
+	&__backIcon {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* Mobile sheet (2e): tighter, and the wire chip loses its label. */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		&__transport {
+			grid-template-columns: 1fr 52px 1fr;
+		}
+
+		&__wireLabel {
+			display: none;
+		}
+
+		&__wireChip {
+			padding: 4px;
+		}
+
+		&__headline {
+			font-size: 18px;
+		}
+
+		&__bubble {
+			font-size: 12px;
+		}
+
+		&__attackIcon {
+			width: 44px;
+			height: 44px;
+		}
+
+		&__cipher {
+			font-size: 12.5px;
+		}
+	}
+}

@@ -83,123 +83,74 @@
 	}
 }
 
-.caseHandoverSystemMessage {
-	position: relative;
-	width: min(560px, 100%);
-	padding: 16px 18px;
-	border-radius: 16px;
-	border: 1px solid var(--m3-primary-fixed-dim, #ffd8d4);
-	background: var(--m3-surface-container-lowest, #fff8f7);
-	box-sizing: border-box;
-}
-
-.caseHandoverSystemMessage__head {
+/*
+ * Case-handover notices are ordinary Carimat system messages, not cards.
+ * Everything that draws the chat surface — bot avatar, kebab, grey bubble,
+ * time rail — comes from `.messageItem*` in `message.styles.scss`; only the
+ * payload typography lives here.
+ *
+ * Measurements taken from Figma App.Oriso 8498-32373 and the annotated
+ * review screenshot: body type is M3 body-large (16/24, tracking 0.5), the
+ * reason line is the emphasized weight, and the explanation follows after a
+ * 24px blank line — the same rhythm as a normal message paragraph.
+ */
+.caseHandoverMessage__body {
 	display: flex;
-	align-items: flex-start;
-	gap: 12px;
-}
-
-.caseHandoverSystemMessage__bellIcon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
-	border-radius: 999px;
-	background: var(--m3-primary-container, #ffdad6);
-	color: var(--m3-primary, #a5000a);
-	flex-shrink: 0;
-}
-
-.caseHandoverSystemMessage__badge {
-	display: inline-flex;
-	align-items: center;
-	min-height: 22px;
-	padding: 2px 10px;
-	border-radius: 999px;
-	background: var(--m3-secondary, #4b515a);
-	color: var(--m3-on-primary, #ffffff);
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: 0.3px;
-}
-
-.caseHandoverSystemMessage__title {
-	margin: 8px 0 0;
-	font-size: 18px;
+	flex-direction: column;
+	font-size: 16px;
 	line-height: 24px;
-	font-weight: 700;
-	color: var(--m3-on-surface, #1b1b1c);
+	letter-spacing: 0.5px;
+	color: var(--m3-on-surface, #1c1b1f);
 }
 
-.caseHandoverSystemMessage__subtitle {
-	margin: 2px 0 0;
-	font-size: 12px;
-	line-height: 16px;
-	color: var(--m3-on-surface-variant, #6d747d);
-}
-
-.caseHandoverSystemMessage__body {
-	margin-top: 10px;
-	padding-left: 48px;
-	font-size: 14px;
-	line-height: 20px;
-	color: var(--m3-on-surface, #2d3135);
-}
-
-.caseHandoverSystemMessage__reason {
-	margin: 0 0 6px;
-	font-weight: 600;
-}
-
-.caseHandoverSystemMessage__explanation {
+.caseHandoverMessage__body .caseHandoverMessage__reason {
 	margin: 0;
+	font-weight: 500;
 }
 
-.caseHandoverSystemMessage__timestamp {
-	position: absolute;
-	right: 14px;
-	bottom: 10px;
-	font-size: 12px;
-	color: var(--m3-on-surface-variant, #6d747d);
+/* `.messageItem__message p { margin: 0 }` resets paragraphs inside the bubble,
+   so the blank body line Figma leaves between reason and explanation needs the
+   matching specificity to survive. */
+.caseHandoverMessage__body .caseHandoverMessage__explanation {
+	margin: 24px 0 0;
+	font-weight: 400;
+	line-height: 21px;
 }
 
-.caseHandoverInlineConsent {
-	display: flex;
-	justify-content: center;
-	padding: 16px 20px 0;
-}
-
-.caseHandoverInlineConsent__actions {
+/*
+ * Actions belong to the message flow, so they sit inside the bubble under the
+ * copy rather than in a card footer. `Button` brings the app's own PRIMARY /
+ * SECONDARY styling; only the row rhythm is set here.
+ */
+.caseHandoverMessage__actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
-}
+	align-items: center;
+	gap: 16px;
+	margin-top: 16px;
 
-.caseHandoverInlineConsent__button {
-	min-height: 40px;
-	padding: 0 18px;
-	border: 1px solid var(--m3-outline, #79747e);
-	border-radius: 20px;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-weight: 600;
-	cursor: pointer;
-
-	&--approve {
-		border-color: var(--m3-primary, #a5000a);
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
+	.button__wrapper {
+		margin: 0;
 	}
 
-	&:disabled {
-		opacity: 0.55;
-		cursor: wait;
+	/* Buttons default to a 200px floor, which forces the pair onto two rows
+	   inside a 444px bubble. Inside a message they size to their label. */
+	.button__item {
+		min-width: 0;
 	}
 }
 
-.caseHandoverInlineConsent__error {
-	margin: 10px 0 0;
-	color: var(--m3-error, #ba1a1a);
+.caseHandoverMessage__error {
+	margin: 12px 0 0;
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: normal;
+	color: var(--m3-error, #b1005e);
+}
+
+/* Outer left margin of the message block against the stream edge: 16px. */
+.caseHandoverInlineConsent {
+	display: flex;
+	justify-content: flex-start;
+	padding: 16px 16px 0;
 }

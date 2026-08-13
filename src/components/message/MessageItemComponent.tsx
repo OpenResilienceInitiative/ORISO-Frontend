@@ -80,7 +80,7 @@ import {
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
-import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
+import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import {
@@ -1868,24 +1868,33 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								{isSystemNotification &&
-								!isCaseHandoverGrantedEvent ? (
+								{isSystemNotification ? (
 									/*
 									 * Title above, quiet qualifier below — the same
 									 * two-line header `MessageSendFailed` uses, per
 									 * Figma App.Oriso 8607-28488. Reusing its classes
 									 * on purpose: one system-notice presentation, not
-									 * two that drift apart.
+									 * two that drift apart. Case handover used to opt
+									 * out of this and render its own bordered card in
+									 * the bubble instead (ORISO-Frontend#491).
 									 */
 									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
 										<div className="messageItem__sendFailedTitle">
-											{systemNotificationTitle}
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.tookOverTitle'
+													)
+												: systemNotificationTitle}
 										</div>
 										<div className="messageItem__sendFailedSubtitle">
-											{translate(
-												'message.systemNotification',
-												'System Notification'
-											)}
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.noActionNeeded'
+													)
+												: translate(
+														'message.systemNotification',
+														'System Notification'
+													)}
 										</div>
 									</div>
 								) : (
@@ -1982,13 +1991,7 @@ export const MessageItemComponent = ({
 						>
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
-									<CaseHandoverSystemMessageCard
-										title={translate(
-											'caseHandover.systemMessage.tookOverTitle'
-										)}
-										subtitle={translate(
-											'caseHandover.systemMessage.noActionNeeded'
-										)}
+									<CaseHandoverSystemMessageBody
 										reasonLabel={
 											systemNotificationReasonLabel ||
 											undefined
@@ -2005,7 +2008,7 @@ export const MessageItemComponent = ({
 												}
 											</p>
 										)}
-									</CaseHandoverSystemMessageCard>
+									</CaseHandoverSystemMessageBody>
 								)}
 							{/*
 							 * The bubble carries the body only. Title and the
@@ -2277,7 +2280,12 @@ export const MessageItemComponent = ({
 										}
 									/>
 								))}
-							{!isSystemNotification && timeRailInBubble}
+							{/*
+							 * Figma App.Oriso 8498-32373 shows the time rail on system
+							 * notices too — they are messages, so they carry a timestamp
+							 * like every other bubble in the stream.
+							 */}
+							{timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2499,13 +2507,42 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					isSystemNotification && (
-						<div
-							className="messageItem__systemAvatar"
-							aria-hidden="true"
-						>
-							<span className="messageItem__systemAvatarIcon">
-								<CarimatRobotIcon />
-							</span>
+						/*
+						 * Figma App.Oriso 8498-32373: a system notice uses the same
+						 * side column as any incoming message — the ringed 60px
+						 * avatar frame with the Carimat robot inside, and the kebab
+						 * beneath it. The previous 32px pink puck sat outside that
+						 * column, so system messages never lined up with the stream
+						 * around them. See ORISO-Frontend#491.
+						 */
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar">
+									<span
+										className="messageItem__botAvatarIcon"
+										aria-hidden
+									>
+										<CarimatRobotIcon />
+									</span>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+							</div>
 						</div>
 					)}
 				{!alias?.messageType &&

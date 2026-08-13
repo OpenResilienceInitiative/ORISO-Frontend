@@ -125,10 +125,36 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		transition-delay: unset;
 	}
 
+	/*
+	 * Lamp map (design 5b). Always in the DOM so the gate has something to
+	 * measure, but only ever painted once the effect chunk has been fetched —
+	 * which never happens below $fromXLarge, under prefers-reduced-motion, or
+	 * while the stage is out of view.
+	 */
+	&__lampMap {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	/*
+	 * `.stageLayout__stage` is already `position: fixed` and therefore its own
+	 * containing block; everywhere else the stage has to become one so the
+	 * canvas does not escape to the page.
+	 */
+	&:not(.stageLayout__stage) {
+		position: relative;
+	}
+
 	&__content,
 	&__loader {
 		flex-shrink: 0;
 		flex-grow: 0;
+		position: relative;
+		z-index: 1;
 	}
 
 	&__content {
@@ -160,6 +186,50 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		font-weight: $font-weight-regular;
 	}
 
+	&__tenantLogo {
+		display: flex;
+		justify-content: center;
+		margin: 0 auto $grid-base-three;
+
+		img {
+			max-height: 64px;
+		}
+	}
+
+	&__logo {
+		display: block;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: inherit;
+		cursor: pointer;
+		opacity: 0.6;
+		transition:
+			opacity 200ms ease,
+			transform 200ms ease;
+
+		&:hover,
+		&:focus-visible {
+			opacity: 1;
+			transform: translateY(-2px);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 8px;
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+
+			&:hover,
+			&:focus-visible {
+				transform: none;
+			}
+		}
+	}
+
 	&__logos {
 		display: flex;
 		flex-wrap: wrap;
@@ -169,6 +239,8 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		justify-content: center;
 		width: 335px;
 		margin: 0 auto $grid-base-five;
+		padding: 0;
+		list-style: none;
 		transform: scale(0.9);
 
 		@media (width >=calc(#{$xsmall} + #{$grid-base-three})) {
@@ -217,12 +289,18 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		z-index: 50;
 
 		.button-as-link {
+			// The stage is a saturated red panel: the neutral on-surface tone
+			// these links inherit elsewhere sits at roughly 2:1 against it.
+			// On the stage they are white and underlined, and go fully opaque
+			// on hover (design 2d).
 			background: none;
 			border: none;
 			cursor: pointer;
 			padding: 0;
 			white-space: nowrap;
-			color: var(--m3-on-surface-variant, $tertiary);
+			color: rgb(255 255 255 / 92%);
+			text-decoration: underline;
+			text-underline-offset: 3px;
 			pointer-events: auto;
 			position: relative;
 			z-index: 51;
@@ -237,7 +315,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 			}
 
 			&:hover {
-				color: var(--m3-primary-hover, $hover-primary);
+				color: #fff;
 			}
 		}
 
@@ -247,7 +325,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__legalLinksItem {
-		color: $dark-grey;
+		color: rgb(255 255 255 / 92%);
 
 		&:hover {
 			color: $white;
@@ -259,4 +337,18 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		color: $white;
 		margin: 0 $grid-base;
 	}
+}
+
+/*
+ * Canvas for the tenant's decorative stage effect. Sits under the content and
+ * never takes pointer events — the effect reads the pointer from the stage
+ * element itself, so the links and logos above stay clickable.
+ */
+.stage__effectCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
 }
