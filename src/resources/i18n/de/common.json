@@ -36,6 +36,7 @@
 	},
 	"app": {
 		"back": "Zurück",
+		"cancel": "Abbrechen",
 		"claim": "Online. Anonym. Sicher.",
 		"close": "Schließen",
 		"closeBanner": "Banner schließen",
@@ -56,6 +57,7 @@
 			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
+		"stop": "Stopp",
 		"successful": "Erfolgreich",
 		"title": "Beratung",
 		"ui": {
@@ -293,6 +295,11 @@
 			}
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Textausschnitt zur Antwort hinzugefügt"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archivieren",
 		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
@@ -523,6 +530,7 @@
 					"facts": "<ul><li>Was ist passiert?</li><li>Wie ist Ihre aktuelle Situation?</li><li>Was beschäftigt Sie?</li><li>Haben Sie eine bestimmte Frage oder wissen Sie vielleicht selbst noch nicht so genau was Ihnen helfen könnte?</li></ul>",
 					"title": "Vielleicht helfen Ihnen folgende Punkte bei der Formulierung weiter:"
 				},
+				"deletionNotice": "Schreiben Sie uns direkt eine kurze Nachricht, damit dieser Account aktiv bleibt. Ohne erste Nachricht wird dieser Account in der kommenden Nacht automatisch gelöscht. Danach müssen Sie sich zunächst neu registrieren, bevor Sie Ihre Nachricht verfassen können.",
 				"headline": "Hier ist Platz für Ihre Anliegen.",
 				"iconTitle": "Willkommen"
 			},
@@ -1539,6 +1547,10 @@
 				"buttonLabel": "Termin zur Beratung vereinbaren",
 				"headline": "Oder vereinbare jetzt einen Termin"
 			},
+			"characterCounter": {
+				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
+				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
+			},
 			"toolbar": {
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
@@ -1614,10 +1626,10 @@
 			"selectAllBottom": "Alle auswählen"
 		},
 		"edit": {
+			"cancel": "Bearbeiten abbrechen",
 			"marker": "(bearbeitet)",
 			"markerTitle": "Nachricht wurde bearbeitet",
-			"previewLabel": "Nachricht bearbeiten",
-			"cancel": "Bearbeiten abbrechen"
+			"previewLabel": "Nachricht bearbeiten"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1660,6 +1672,11 @@
 			"moderatorStartedTitle": "Moderator:in {{name}} hat eine Videokonferenz gestartet"
 		},
 		"yesterday": "Gestern",
+		"mobileNav": {
+			"back": "Zurück",
+			"dragToExpand": "Ziehen, um den Editor zu vergrößern",
+			"scrollToBottom": "Zum Ende scrollen"
+		},
 		"reply": {
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
@@ -3807,6 +3824,16 @@
 				"reason": "Leider sind Sie nicht berechtigt diese Seite einzusehen.",
 				"title": "Kein Zutritt!"
 			}
+		}
+	},
+	"voice": {
+		"recording": {
+			"active": "Aufnahme läuft…",
+			"error": {
+				"headline": "Sprachaufnahme nicht verfügbar",
+				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
+			},
+			"preview": "Sprachnachricht"
 		}
 	},
 	"voicePlayer": {

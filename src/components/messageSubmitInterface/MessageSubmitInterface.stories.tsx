@@ -262,7 +262,7 @@ export const SessionHeightReset: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const dragHandle = await canvas.findByRole('button', {
-			name: /drag to resize composer/i
+			name: /ziehen, um den editor zu vergrößern/i
 		});
 		dragHandle.focus();
 		// Dispatch on the handle rather than via `userEvent.keyboard`, which

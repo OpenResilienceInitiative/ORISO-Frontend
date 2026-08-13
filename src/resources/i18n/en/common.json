@@ -36,6 +36,7 @@
 	},
 	"app": {
 		"back": "back",
+		"cancel": "Cancel",
 		"claim": "Online. Anonymous. Secure.",
 		"close": "close",
 		"delete": "delete",
@@ -55,6 +56,7 @@
 			"mobileHeadline": "There is room here for what is on your mind.",
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
+		"stop": "Stop",
 		"successful": "Successful",
 		"title": "Consulting & Help",
 		"ui": {
@@ -279,6 +281,11 @@
 			"button": {
 				"label": "Start video call"
 			}
+		}
+	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
 		}
 	},
 	"chatFlyout": {
@@ -511,6 +518,7 @@
 					"facts": "<ul><li>What happened?</li><li>What is your current situation?</li><li>What is on your mind?</li><li>Do you have a specific question or do you perhaps not yet know exactly what could help you?</li></ul>",
 					"title": "Perhaps the following points will help you with the formulation:"
 				},
+				"deletionNotice": "Please send us a short message right away so this account stays active. Without a first message, this account will be deleted automatically tonight. After that you must register again before you can write your message.",
 				"headline": "Here is room for your concerns.",
 				"iconTitle": "Welcome"
 			},
@@ -1524,6 +1532,10 @@
 				"buttonLabel": "Make an appointment for consultation",
 				"headline": "Or make an appointment now"
 			},
+			"characterCounter": {
+				"overLimit": "Message is over the character limit.",
+				"warning": "Message is approaching the character limit."
+			},
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1599,10 +1611,10 @@
 			"selectAllBottom": "Select All"
 		},
 		"edit": {
+			"cancel": "Cancel editing",
 			"marker": "(edited)",
 			"markerTitle": "Message was edited",
-			"previewLabel": "Edit message",
-			"cancel": "Cancel editing"
+			"previewLabel": "Edit message"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1638,6 +1650,11 @@
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
 		"yesterday": "Yesterday",
+		"mobileNav": {
+			"back": "Navigate up",
+			"dragToExpand": "Drag to resize composer",
+			"scrollToBottom": "Scroll to bottom"
+		},
 		"reply": {
 			"previewLabel": "Replying to",
 			"cancel": "Discard reply",
@@ -3749,6 +3766,16 @@
 				"reason": "Unfortunately you are not authorized to view this page.",
 				"title": "No entry!"
 			}
+		}
+	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
 		}
 	},
 	"voicePlayer": {
