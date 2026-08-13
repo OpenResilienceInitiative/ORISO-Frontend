@@ -164,6 +164,14 @@ export const ButtonGroup = ({
 	const autoStackEnabled =
 		alignment === 'horizontal-flex' && !disableAutoStack;
 
+	/** Everything that can change the row's intrinsic width, and nothing else. */
+	const measuredSignature = items
+		.map(
+			(item) =>
+				`${item.label}\u0001${item.variant ?? ''}\u0001${item.badge ?? ''}`
+		)
+		.join('\u0000');
+
 	useLayoutEffect(() => {
 		if (!autoStackEnabled) {
 			setMustStack(false);
@@ -178,7 +186,12 @@ export const ButtonGroup = ({
 		if (containerRef.current) observer.observe(containerRef.current);
 		if (mirrorRef.current) observer.observe(mirrorRef.current);
 		return () => observer.disconnect();
-	}, [autoStackEnabled, measure, items, numbered, variant]);
+		// Keyed on what the measurement actually depends on, not on `items`
+		// identity: consumers pass an inline array literal, so depending on the
+		// array would tear down and rebuild the observer — and force a synchronous
+		// layout read in the commit phase — on every parent render. Message lists
+		// re-render often, and none of those renders change the row's width.
+	}, [autoStackEnabled, measure, measuredSignature, numbered, variant]);
 
 	/**
 	 * Web fonts land after first paint and change the row's intrinsic width,

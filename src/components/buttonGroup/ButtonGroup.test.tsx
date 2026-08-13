@@ -53,6 +53,9 @@ const items = [
 ];
 
 let restoreWidths: (() => void) | undefined;
+// The component has an explicit `typeof ResizeObserver === 'undefined'` branch,
+// so a stub leaking out of this file would silently mask that path elsewhere.
+const originalResizeObserver = (globalThis as any).ResizeObserver;
 
 beforeEach(() => {
 	// A no-op observer is enough: the component measures once on layout too,
@@ -67,6 +70,7 @@ beforeEach(() => {
 afterEach(() => {
 	restoreWidths?.();
 	restoreWidths = undefined;
+	(globalThis as any).ResizeObserver = originalResizeObserver;
 	cleanup();
 	vi.clearAllMocks();
 });
@@ -156,6 +160,38 @@ describe('ButtonGroup', () => {
 		expect(
 			document.querySelector('.buttonGroup__track--mirror')
 		).toBeNull();
+	});
+
+	it('keeps the chosen alignment when auto-stacking is switched off', () => {
+		restoreWidths = withWidths({ available: 320, required: 440 });
+		render(
+			<ButtonGroup
+				items={items}
+				alignment="horizontal-flex"
+				disableAutoStack
+			/>
+		);
+
+		const group = screen.getByRole('group');
+		expect(group.dataset.alignment).toBe('horizontal-flex');
+		expect(group.dataset.autoStacked).toBeUndefined();
+		// No measuring twin either — nothing would ever read it.
+		expect(
+			document.querySelector('.buttonGroup__track--mirror')
+		).toBeNull();
+	});
+
+	it('still measures once where ResizeObserver is unavailable', () => {
+		// Older Safari and some embedded webviews have no ResizeObserver. The
+		// group must still pick the right alignment from its initial layout
+		// measurement; only later resizes go unnoticed.
+		delete (globalThis as any).ResizeObserver;
+		restoreWidths = withWidths({ available: 320, required: 440 });
+		render(<ButtonGroup items={items} alignment="horizontal-flex" />);
+
+		const group = screen.getByRole('group');
+		expect(group.dataset.alignment).toBe('stacked');
+		expect(group.dataset.autoStacked).toBe('true');
 	});
 
 	it('re-measures when the observed box changes', () => {
