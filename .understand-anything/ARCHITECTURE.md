@@ -115,7 +115,6 @@ Representative directories:
 
 - `src/resources/`
 - `public/`
-- `translation-files-current/`
 
 ### Tests Stories
 
