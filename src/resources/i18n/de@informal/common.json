@@ -508,8 +508,8 @@
 			"quoteUnknown": "Frühere Nachricht"
 		},
 		"edit": {
-			"cancel": "Bearbeiten abbrechen",
-			"previewLabel": "Nachricht bearbeiten"
+			"previewLabel": "Nachricht bearbeiten",
+			"cancel": "Bearbeiten abbrechen"
 		},
 		"mobileNav": {
 			"back": "Zurück",
@@ -535,10 +535,6 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
-		},
-		"edit": {
-			"previewLabel": "Nachricht bearbeiten",
-			"cancel": "Bearbeiten abbrechen"
 		}
 	},
 	"notification": {
@@ -1207,7 +1203,10 @@
 				"2": "Okay, du musst im Spiel drei Dinge tun.",
 				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
 				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			}
+			},
+			"onboardingLine1": "Komm einfach an. Wir atmen zusammen.",
+			"onboardingLine3": "Wenn du bereit bist, starte deinen ersten Versuch.",
+			"volumeHint": "Für ein besseres Erlebnis schalte bitte den Ton ein."
 		},
 		"acceptance": {
 			"overlay": {
@@ -1287,6 +1286,14 @@
 						"title": "{{oldConsultant}} möchte Dich an {{newConsultant}} übergeben."
 					}
 				}
+			}
+		},
+		"supervisor": {
+			"startChat": {
+				"hint": "Nutze das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die du hier sendest, sind nur für Berater:innen sichtbar."
 			}
 		}
 	},
@@ -1784,7 +1791,8 @@
 				"loadingConsultants": "Lädt Berater...",
 				"reasonLabel": "Grund für die Supervision",
 				"reasonPlaceholder": "Bitte gib den Grund für die Supervision an...",
-				"reasonError": "Bitte gib einen Grund an."
+				"reasonError": "Bitte gib einen Grund an.",
+				"note": "Wenn Supervisor:innen künftig mitbetreuen sollen, kannst du sie vorab hinzufügen."
 			},
 			"success": {
 				"add": {
@@ -2127,5 +2135,10 @@
 		"toLogin": "Zur Anmeldung",
 		"description": "Vervollständige deine Einladung mit einem Benutzernamen und Passwort.",
 		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
+	},
+	"drafts": {
+		"center": {
+			"emptyDetail": "Wähle einen Entwurf aus, um weiterzuschreiben."
+		}
 	}
 }

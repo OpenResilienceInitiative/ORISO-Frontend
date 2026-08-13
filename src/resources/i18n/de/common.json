@@ -1684,7 +1684,14 @@
 			"quoteUnknown": "Frühere Nachricht"
 		},
 		"thread": {
-			"unknownRoot": "Frühere Nachricht"
+			"unknownRoot": "Frühere Nachricht",
+			"listToggle": "Threads",
+			"replies": "{{count}} Antworten",
+			"title": "Thread",
+			"placeholder": "Im Thread antworten"
+		},
+		"deliveryStatus": {
+			"sent": "Gesendet"
 		}
 	},
 	"navigation": {
@@ -3058,7 +3065,10 @@
 				"2": "Okay, du musst im Spiel drei Dinge tun.",
 				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
 				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			}
+			},
+			"onboardingLine1": "Kommen Sie einfach an. Wir atmen zusammen.",
+			"onboardingLine3": "Wenn Sie bereit sind, starten Sie Ihren ersten Versuch.",
+			"volumeHint": "Für ein besseres Erlebnis schalten Sie bitte den Ton ein."
 		},
 		"acceptance": {
 			"button": {
@@ -3203,6 +3213,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervisionsgrund"
+			},
+			"startChat": {
+				"title": "Chat starten",
+				"hint": "Nutzen Sie das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die Sie hier senden, sind nur für Berater:innen sichtbar."
+			}
 		}
 	},
 	"sessionList": {
@@ -3212,7 +3234,8 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Gesprächskreis"
+				"selfHelp": "Gesprächskreis",
+				"internal": "Interna"
 			}
 		},
 		"createChat": {
@@ -3271,7 +3294,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"toggle": "Suchergebnisse öffnen oder schließen"
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -4012,7 +4036,8 @@
 			"startMailCounseling": "anonyme Mail-Beratung starten",
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
-			"later": "Später wiederkommen"
+			"later": "Später wiederkommen",
+			"title": "Live-Chat ist zurzeit leider geschlossen"
 		}
 	},
 	"sessionHeader": {
@@ -4082,7 +4107,9 @@
 				"loadingConsultants": "Lädt Berater...",
 				"reasonLabel": "Grund für die Supervision",
 				"reasonPlaceholder": "Bitte geben Sie den Grund für die Supervision an...",
-				"reasonError": "Bitte geben Sie einen Grund an."
+				"reasonError": "Bitte geben Sie einen Grund an.",
+				"note": "Wenn Supervisor:innen künftig mitbetreuen sollen, können Sie sie vorab hinzufügen.",
+				"reason": "Grund"
 			},
 			"success": {
 				"add": {
@@ -4108,7 +4135,8 @@
 					"text": "Berater konnten nicht geladen werden."
 				},
 				"reasonRequired": {
-					"text": "Bitte geben Sie den Grund für die Supervision an."
+					"text": "Bitte geben Sie den Grund für die Supervision an.",
+					"title": "Grund erforderlich"
 				}
 			},
 			"remove": {
@@ -4118,6 +4146,10 @@
 				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
 				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
 				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
+			},
+			"status": {
+				"on": "Supervision an",
+				"off": "Supervision aus"
 			}
 		}
 	},
@@ -4346,7 +4378,8 @@
 				"recoveryInstruction": "Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.",
 				"keyLabel": "Wiederherstellungsschlüssel",
 				"later": "Später",
-				"openVault": "Tresor öffnen"
+				"openVault": "Tresor öffnen",
+				"restoring": "Wird wiederhergestellt …"
 			}
 		}
 	},
@@ -4358,5 +4391,19 @@
 		"toLogin": "Zur Anmeldung",
 		"description": "Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.",
 		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
+	},
+	"drafts": {
+		"center": {
+			"title": "Entwürfe",
+			"subtitle": "Ungesendete Nachrichten werden pro Chat und Thread gespeichert.",
+			"empty": "Noch keine Entwürfe.",
+			"messageTag": "Entwurf",
+			"untitledChat": "Chat",
+			"thread": "Thread",
+			"open": "Entwurf öffnen",
+			"next": "Nächster Entwurf",
+			"delete": "Entwurf löschen",
+			"emptyDetail": "Wählen Sie einen Entwurf aus, um weiterzuschreiben."
+		}
 	}
 }
