@@ -240,6 +240,19 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	/*
+	 * Photo avatars must be clipped to the circle. The Carimat robot must not:
+	 * `overflow: hidden` clips against the *padding* box, i.e. the 48px inner
+	 * circle, and the glyph's chin sits exactly on that edge — so it was
+	 * rendered with a flat-cut bottom and shaved sides (review screenshot on
+	 * ORISO-Frontend#491). Figma App.Oriso 9564-86125 draws the full robot on
+	 * an unclipped white disc; the 6px ring is white too, so letting the glyph
+	 * reach into it changes nothing but the missing pixels.
+	 */
+	&__avatar--bot {
+		overflow: visible;
+	}
+
 	&__sideColumn {
 		display: flex;
 		flex-direction: column;

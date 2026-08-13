@@ -5,7 +5,7 @@ import { ReactComponent as CaseAcceptedIcon } from '../../resources/img/icons/ca
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
-import { Button, BUTTON_TYPES } from '../button/Button';
+import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import '../message/message.styles.scss';
 import './caseHandoverClientCards.styles';
 
@@ -175,7 +175,7 @@ export const CaseHandoverSystemMessageCard = ({
 			<div className="messageItem__messageWrap messageItem__messageWrap--left">
 				<div className="messageItem__sideColumn messageItem__sideColumn--left">
 					<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-						<div className="messageItem__avatar">
+						<div className="messageItem__avatar messageItem__avatar--bot">
 							<span
 								className="messageItem__botAvatarIcon"
 								aria-hidden
@@ -259,6 +259,13 @@ interface CaseHandoverConsentCardProps {
 	error?: string;
 	onApprove: () => void;
 	onDecline: () => void;
+	/**
+	 * Optional time for the bubble's bottom-right rail (Figma 9564-86125).
+	 * `SessionStream` has no timestamp for a still-pending consent request, so
+	 * it omits it — and the card renders no rail at all rather than a lone
+	 * delivery tick in an empty one.
+	 */
+	timestamp?: string;
 }
 
 /** Client-side continuation for a handover request that requires explicit consent. */
@@ -266,7 +273,8 @@ export const CaseHandoverConsentCard = ({
 	isSubmitting = false,
 	error,
 	onApprove,
-	onDecline
+	onDecline,
+	timestamp
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
 
@@ -284,31 +292,47 @@ export const CaseHandoverConsentCard = ({
 					'caseHandover.consent.copy',
 					'Please approve or decline the request to continue the handover.'
 				)}
+				timestamp={timestamp}
 			>
-				<div className="caseHandoverMessage__actions">
-					{/* `item.disabled` only greys the button out; the native
-					attribute comes from Button's own `disabled` prop, and
-					without it both controls stay focusable and announce
-					themselves as enabled while the decision is in flight. */}
-					<Button
-						item={{
-							type: BUTTON_TYPES.PRIMARY,
+				{/*
+				 * The pair is a design-system button group (Figma App.Oriso
+				 * 9564-86125), not two loose buttons: the numbered badges, the
+				 * dark-red / slate pairing and — crucially — the stack-instead-
+				 * of-overflow behaviour all belong to the group, and the same
+				 * question/answer box recurs elsewhere in the product.
+				 *
+				 * `ButtonGroup` puts the native `disabled` attribute on each
+				 * item, so while the decision is in flight both controls really
+				 * do leave the tab order instead of only looking greyed out.
+				 */}
+				<ButtonGroup
+					className="caseHandoverMessage__actions"
+					alignment="horizontal-flex"
+					numbered
+					ariaLabel={translate(
+						'caseHandover.consent.title',
+						'A counsellor requested access to this conversation'
+					)}
+					testingAttribute="case-handover-consent-actions"
+					items={[
+						{
+							id: 'caseHandoverConsentApprove',
 							label: translate('caseHandover.consent.approve'),
-							disabled: isSubmitting
-						}}
-						disabled={isSubmitting}
-						buttonHandle={onApprove}
-					/>
-					<Button
-						item={{
-							type: BUTTON_TYPES.SECONDARY,
+							variant: 'primary',
+							disabled: isSubmitting,
+							onClick: onApprove,
+							testingAttribute: 'case-handover-consent-approve'
+						},
+						{
+							id: 'caseHandoverConsentDecline',
 							label: translate('caseHandover.consent.decline'),
-							disabled: isSubmitting
-						}}
-						disabled={isSubmitting}
-						buttonHandle={onDecline}
-					/>
-				</div>
+							variant: 'tonal',
+							disabled: isSubmitting,
+							onClick: onDecline,
+							testingAttribute: 'case-handover-consent-decline'
+						}
+					]}
+				/>
 				{error && (
 					<p className="caseHandoverMessage__error" role="alert">
 						{error}

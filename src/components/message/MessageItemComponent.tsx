@@ -2517,7 +2517,7 @@ export const MessageItemComponent = ({
 						 */
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-								<div className="messageItem__avatar">
+								<div className="messageItem__avatar messageItem__avatar--bot">
 									<span
 										className="messageItem__botAvatarIcon"
 										aria-hidden
