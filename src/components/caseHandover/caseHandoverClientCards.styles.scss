@@ -119,25 +119,12 @@
 
 /*
  * Actions belong to the message flow, so they sit inside the bubble under the
- * copy rather than in a card footer. `Button` brings the app's own PRIMARY /
- * SECONDARY styling; only the row rhythm is set here.
+ * copy rather than in a card footer. The pair itself is `ButtonGroup`
+ * (Figma App.Oriso 9564-86125) — colours, shape, badges and the stacking
+ * fallback all live there. Only the gap to the copy above is set here.
  */
 .caseHandoverMessage__actions {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 16px;
-	margin-top: 16px;
-
-	.button__wrapper {
-		margin: 0;
-	}
-
-	/* Buttons default to a 200px floor, which forces the pair onto two rows
-	   inside a 444px bubble. Inside a message they size to their label. */
-	.button__item {
-		min-width: 0;
-	}
+	margin-top: 4px;
 }
 
 .caseHandoverMessage__error {
@@ -153,4 +140,21 @@
 	display: flex;
 	justify-content: flex-start;
 	padding: 16px 16px 0;
+}
+
+/*
+ * The 444px cap on `--systemNotification` is measured off a text-only notice
+ * (App.Oriso 8498-32373). The consent notice is the one that carries a button
+ * group, and its own frame — App.Oriso 9564-86125 — sizes the bubble
+ * min 440 / max 720 so the answer pair fits on one line. Left at 444px the
+ * group's stacking fallback fires on a desktop stream too, which is not the
+ * layout that was signed off.
+ */
+.caseHandoverInlineConsent .messageItem__message--systemNotification {
+	// Hug the answer pair like the Figma frame does, instead of stretching to
+	// the full content column — a 720px bubble around two centred buttons
+	// reads as an empty panel.
+	width: fit-content;
+	min-width: min(440px, 100%);
+	max-width: min(720px, 100%);
 }
