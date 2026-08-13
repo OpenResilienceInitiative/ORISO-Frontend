@@ -267,10 +267,14 @@ export const AgencySelectionResults = ({
 				>
 					<Box sx={{ mr: { xs: '0', md: '24px' } }}>
 						<Typography variant="h5" sx={{ fontWeight: '600' }}>
-							{t('registration.agency.noresult.headline')}
+							{t(
+								'registration.agencySelection.postcode.unavailable.title'
+							)}
 						</Typography>
 						<Typography sx={{ mt: '16px' }}>
-							{t('registration.agency.noresult.subline')}
+							{t(
+								'registration.agencySelection.postcode.unavailable.text'
+							)}
 						</Typography>
 						<Button
 							sx={{
@@ -287,7 +291,7 @@ export const AgencySelectionResults = ({
 									: getOrganizationHomeUrl()
 							}
 						>
-							{t('registration.agency.noresult.label')}
+							{t('registration.agencySelection.postcode.search')}
 						</Button>
 					</Box>
 					<Box

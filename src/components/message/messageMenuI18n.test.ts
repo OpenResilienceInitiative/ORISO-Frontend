@@ -10,9 +10,10 @@
  *
  * The guard is deliberately source-driven rather than a snapshot of one menu:
  * it reads the translate() call sites out of `MessageItemComponent.tsx` and
- * asserts that every `message.*` key they reference actually resolves in the
- * two catalogues authored in this repo (de + en). A new hardcoded-default
- * label with a missing key reintroduces the bug and fails here.
+ * asserts that every `message.*` key they reference actually resolves in de
+ * and en. Those two plus the de@informal Du overlay are the catalogues
+ * authored in this repo. A new hardcoded-default label with a missing key
+ * reintroduces the bug and fails here.
  */
 
 import { readFileSync } from 'fs';
