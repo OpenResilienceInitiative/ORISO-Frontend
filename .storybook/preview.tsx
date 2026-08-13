@@ -76,8 +76,13 @@ class StoryErrorBoundary extends React.Component<
 	static getDerivedStateFromError() {
 		return { failed: true };
 	}
-	componentDidCatch() {
-		/* swallow — the panel below is the user-facing result */
+	componentDidCatch(error: unknown) {
+		// Log rather than swallow. The panel is the right user-facing result,
+		// but a silently discarded error is why several stories sat behind this
+		// placeholder unnoticed while their play functions asserted markup that
+		// was never rendered.
+		// eslint-disable-next-line no-console
+		console.warn('[storybook] story needs live data:', error);
 	}
 	render() {
 		if (this.state.failed) {
@@ -693,7 +698,12 @@ function MuiStoryShell({
 											markNotificationAsRead: () => {},
 											markAllNotificationsAsRead:
 												() => {},
-											clearNotificationFeed: () => {}
+											clearNotificationFeed: () => {},
+											loadOlderNotifications:
+												async () => {},
+											hasOlderNotifications: false,
+											isLoadingOlderNotifications: false,
+											olderNotificationsError: false
 										}}
 									>
 										<RegistrationContext.Provider
@@ -823,6 +833,11 @@ const preview: Preview = {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
+				},
+				tablet834: {
+					name: 'Tablet 834 (iPad Air portrait)',
+					styles: { width: '834px', height: '1194px' },
+					type: 'tablet'
 				}
 			}
 		},

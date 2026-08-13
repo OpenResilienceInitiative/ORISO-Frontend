@@ -122,12 +122,17 @@ export const ProductTourAdapter = ({
 	 * Makes step `index` presentable: navigates to its route when needed and
 	 * waits (bounded) for its target. A missing target is skipped safely in
 	 * the direction of travel; if no presentable step remains the tour closes
-	 * without completion. Resolves true when a step became presentable.
+	 * without completion — unless only OPTIONAL steps were missing while
+	 * moving forward past shown steps, which completes the tour (trailing
+	 * optional anchors must not trap a fresh account in `in_progress`).
+	 * Resolves true when a step became presentable.
 	 */
 	const prepareStep = useCallback(
 		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
 			prepareTokenRef.current += 1;
 			const token = prepareTokenRef.current;
+			let requiredMissing = false;
+			let lastSkipped: TourStep | undefined;
 			/* eslint-disable no-await-in-loop, no-continue -- steps are prepared strictly sequentially; a skipped target falls through to the neighboring step */
 			for (let i = index; i >= 0 && i < steps.length; i += direction) {
 				const step = steps[i];
@@ -148,7 +153,13 @@ export const ProductTourAdapter = ({
 						return false;
 					}
 					if (!found) {
-						emit('target_missing', step);
+						if (step.optional) {
+							emit('optional_step_skipped', step);
+						} else {
+							requiredMissing = true;
+							emit('target_missing', step);
+						}
+						lastSkipped = step;
 						continue;
 					}
 					const rect = document
@@ -175,11 +186,23 @@ export const ProductTourAdapter = ({
 				return true;
 			}
 			/* eslint-enable no-await-in-loop, no-continue */
-			// No presentable step left: close without recording completion.
+			// No presentable step left. Moving forward past shown steps over
+			// only-optional gaps finishes the tour; anything else closes
+			// without recording completion so the tour stays resumable.
+			if (direction === 1 && !requiredMissing && index > 0) {
+				applyRunState({
+					...runStateRef.current,
+					run: false,
+					status: 'completed'
+				});
+				emit('tour_completed', lastSkipped);
+				reportTerminal('completed', lastSkipped?.id);
+				return false;
+			}
 			applyRunState({ ...runStateRef.current, run: false });
 			return false;
 		},
-		[applyRunState, emit, navigate, steps, targetTimeoutMs]
+		[applyRunState, emit, navigate, reportTerminal, steps, targetTimeoutMs]
 	);
 
 	// Gate the initial run: prepare step 0 (route + target) before Joyride
@@ -210,7 +233,8 @@ export const ProductTourAdapter = ({
 					status: data.status,
 					type: data.type
 				},
-				steps.length
+				steps.length,
+				steps
 			);
 
 			events.forEach((event) => {

@@ -36,6 +36,7 @@
 	},
 	"app": {
 		"back": "back",
+		"cancel": "Cancel",
 		"claim": "Online. Anonymous. Secure.",
 		"close": "close",
 		"delete": "delete",
@@ -55,6 +56,7 @@
 			"mobileHeadline": "There is room here for what is on your mind.",
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
+		"stop": "Stop",
 		"successful": "Successful",
 		"title": "Consulting & Help",
 		"ui": {
@@ -279,6 +281,11 @@
 			"button": {
 				"label": "Start video call"
 			}
+		}
+	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
 		}
 	},
 	"chatFlyout": {
@@ -511,6 +518,7 @@
 					"facts": "<ul><li>What happened?</li><li>What is your current situation?</li><li>What is on your mind?</li><li>Do you have a specific question or do you perhaps not yet know exactly what could help you?</li></ul>",
 					"title": "Perhaps the following points will help you with the formulation:"
 				},
+				"deletionNotice": "Please send us a short message right away so this account stays active. Without a first message, this account will be deleted automatically tonight. After that you must register again before you can write your message.",
 				"headline": "Here is room for your concerns.",
 				"iconTitle": "Welcome"
 			},
@@ -767,7 +775,7 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
-			"nameLabel": "Internal chat name",
+			"nameLabel": "Internal name",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"removePerson": "Remove {{name}}",
@@ -775,7 +783,8 @@
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
-			"togglePersonList": "Open or close the person list"
+			"togglePersonList": "Open or close the person list",
+			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {
 			"addModerator": "Add co-moderator",
@@ -1523,6 +1532,10 @@
 				"buttonLabel": "Make an appointment for consultation",
 				"headline": "Or make an appointment now"
 			},
+			"characterCounter": {
+				"overLimit": "Message is over the character limit.",
+				"warning": "Message is approaching the character limit."
+			},
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1598,8 +1611,10 @@
 			"selectAllBottom": "Select All"
 		},
 		"edit": {
+			"cancel": "Cancel editing",
 			"marker": "(edited)",
-			"markerTitle": "Message was edited"
+			"markerTitle": "Message was edited",
+			"previewLabel": "Edit message"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1635,11 +1650,19 @@
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
 		"yesterday": "Yesterday",
+		"mobileNav": {
+			"back": "Navigate up",
+			"dragToExpand": "Drag to resize composer",
+			"scrollToBottom": "Scroll to bottom"
+		},
 		"reply": {
 			"previewLabel": "Replying to",
 			"cancel": "Discard reply",
 			"quoteLabel": "In reply to",
 			"quoteUnknown": "Earlier message"
+		},
+		"thread": {
+			"unknownRoot": "Earlier message"
 		}
 	},
 	"navigation": {
@@ -1670,6 +1693,12 @@
 		"profile": "Profile",
 		"myProfile": "My profile",
 		"tools": "My tools"
+	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
 	},
 	"notifications": {
 		"families": {
@@ -1844,8 +1873,22 @@
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
-				"empty": "No messages in this conversation yet."
-			}
+				"empty": "No messages in this conversation yet.",
+				"image": "Image",
+				"file": "File",
+				"audio": "Audio message",
+				"video": "Video",
+				"notice": "Notice",
+				"unsupported": "Unsupported message",
+				"pending": "Waiting for decryption",
+				"roomUnavailable": "Conversation unavailable on this device",
+				"eventUnavailable": "Message unavailable in local history"
+			},
+			"loadOlder": "Load older activity",
+			"loadingOlder": "Loading older activity…",
+			"olderError": "Could not load older activity.",
+			"retryOlder": "Try again",
+			"endOfHistory": "End of activity history"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -1918,6 +1961,13 @@
 					},
 					"text": "Copy link",
 					"title": "Copy registration link to counseling center to clipboard"
+				},
+				"mapLink": "Open in OpenStreetMap",
+				"openingHours": {
+					"label": "Opening hours"
+				},
+				"phone": {
+					"label": "Phone"
 				}
 			},
 			"displayName": "Display name",
@@ -1975,7 +2025,13 @@
 				"consultingTypeSelect": {
 					"label": "Topics"
 				},
-				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you."
+				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
+				"dialog": {
+					"openButton": "Request another topic",
+					"title": "Start a new request",
+					"close": "Close"
+				},
+				"agencyKnownBadge": "Already in contact with you"
 			},
 			"registerError": {
 				"overlay": {
@@ -2330,6 +2386,47 @@
 				"title": "Notify about",
 				"description": "Choose which event families may trigger notifications."
 			}
+		},
+		"encryption": {
+			"title": "Encryption & recovery",
+			"description": "Your messages are end-to-end encrypted. With a recovery key you can keep reading your conversation history on a new device.",
+			"loading": "Loading …",
+			"unavailable": "Encryption settings are unavailable right now. Please reload the page.",
+			"setup": {
+				"busy": "Your vault is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
+				"error": "Setup failed. Please try again.",
+				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
+				"cta": "Set up recovery key"
+			},
+			"showKey": {
+				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
+				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
+				"copy": "Copy key",
+				"confirmLabel": "I have saved the key securely."
+			},
+			"status": {
+				"ok": "✓ Key backup is active. Your history stays readable on new devices."
+			},
+			"changeKey": {
+				"cta": "Change recovery key"
+			},
+			"outOfSync": {
+				"warning": "Key backup is not set up on this device. Enter your recovery key so your history becomes readable here."
+			},
+			"recover": {
+				"inputLabel": "Recovery key",
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"success": "{{count}} message keys restored."
+			},
+			"reset": {
+				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
+				"cta": "Reset encryption",
+				"confirmWarning": "Are you sure? Resetting creates a new encryption identity. Messages that were only readable with the old backup remain permanently unreadable.",
+				"confirmCta": "Yes, reset",
+				"cancel": "Cancel",
+				"error": "Reset failed. Please try again."
+			}
 		}
 	},
 	"qrCode": {
@@ -2683,7 +2780,8 @@
 			"headline": "To be able to advise you as best as possible, we need your postcode",
 			"label": "Your postcode",
 			"subline": "Why? Because then our specialists:"
-		}
+		},
+		"registering": "Registration in progress…"
 	},
 	"releaseNote": {
 		"content": {
@@ -3053,7 +3151,8 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Peer support group"
 			}
 		},
 		"createChat": {
@@ -3669,6 +3768,16 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
 	"voicePlayer": {
 		"label": "Voice message",
 		"play": "Play voice message",
@@ -3797,10 +3906,23 @@
 			"confirmDelete": "Yes, delete permanently",
 			"error": "The chat could not be ended just now. Please try again."
 		},
+		"noAvailability": {
+			"subtitle": "If you want counselling without registering, please come back during opening hours.",
+			"openingHours": "Show regular opening hours",
+			"mailHint": "Or start anonymous mail counselling anytime: with your postcode you can find a counselling centre near you and write your request. For the reply you only need an email address — not your real name.",
+			"tip": "Tip: Use an email address only you can access.",
+			"startMailCounseling": "Start anonymous mail counselling",
+			"responseTime": "Reply within 2 working days",
+			"back": "Back to previous page",
+			"later": "Come back later"
+		},
 		"consent": {
 			"accept": "I agree",
 			"reject": "I do not agree",
 			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
+		},
+		"pseudonym": {
+			"changeName": "Change name"
 		}
 	},
 	"sessionHeader": {
@@ -3867,7 +3989,10 @@
 				"remove": "Remove",
 				"added": "Added",
 				"loading": "Loading...",
-				"loadingConsultants": "Loading consultants..."
+				"loadingConsultants": "Loading consultants...",
+				"reasonLabel": "Reason for supervision",
+				"reasonPlaceholder": "Please enter the reason for supervision...",
+				"reasonError": "Please enter a reason."
 			},
 			"success": {
 				"add": {
@@ -3891,6 +4016,9 @@
 				"loadConsultants": {
 					"title": "Error",
 					"text": "Consultants could not be loaded."
+				},
+				"reasonRequired": {
+					"text": "Please enter the reason for supervision."
 				}
 			},
 			"remove": {
@@ -4098,5 +4226,47 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
 	}
 }

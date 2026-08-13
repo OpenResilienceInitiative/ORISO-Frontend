@@ -1442,8 +1442,22 @@
 			"showDetails": "Afficher les détails",
 			"preview": {
 				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
-				"empty": "Pas encore de messages dans cette conversation."
-			}
+				"empty": "Pas encore de messages dans cette conversation.",
+				"image": "Image",
+				"file": "Fichier",
+				"audio": "Message audio",
+				"video": "Vidéo",
+				"notice": "Avis",
+				"unsupported": "Message non pris en charge",
+				"pending": "Déchiffrement en cours",
+				"roomUnavailable": "Conversation indisponible sur cet appareil",
+				"eventUnavailable": "Message indisponible dans l’historique local"
+			},
+			"loadOlder": "Charger les activités précédentes",
+			"loadingOlder": "Chargement des activités précédentes…",
+			"olderError": "Impossible de charger les activités précédentes.",
+			"retryOlder": "Réessayer",
+			"endOfHistory": "Fin de l’historique des activités"
 		}
 	},
 	"overlay": {
