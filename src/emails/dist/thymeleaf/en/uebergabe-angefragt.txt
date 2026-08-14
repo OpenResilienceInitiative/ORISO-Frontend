@@ -1,0 +1,31 @@
+A counselling case is to be handed over to you
+==============================================
+
+[[${fromConsultantName}]] has asked to hand an ongoing counselling case over to you.
+
+Please check in the counselling area whether you can take it on.
+
+Case: [[${caseReference}]]
+Requested by: [[${fromConsultantName}]]
+Requested on: [[${requestReceivedAt}]]
+
+Review handover:
+[[${requestUrl}]]
+
+Until you agree, the case stays with the counsellor who has it now.
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] is a service provided by [[${orgName}]].
+
+Settings: [[${settingsUrl}]]
+Privacy: [[${privacyUrl}]]
+Imprint: [[${imprintUrl}]]
+Unsubscribe from notifications: [[${unsubscribeUrl}]]
+
+This email was sent automatically. Please do not reply to it.
