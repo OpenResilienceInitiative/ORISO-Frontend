@@ -78,7 +78,7 @@ describe('EncryptionSettingsPanel', () => {
 
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: 'Wiederherstellungsschlüssel einrichten'
+				name: 'Ersatzschlüssel einrichten'
 			})
 		);
 
@@ -107,7 +107,7 @@ describe('EncryptionSettingsPanel', () => {
 
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: 'Wiederherstellungsschlüssel einrichten'
+				name: 'Ersatzschlüssel einrichten'
 			})
 		);
 
@@ -122,7 +122,7 @@ describe('EncryptionSettingsPanel', () => {
 			/>
 		);
 
-		fireEvent.change(screen.getByLabelText('Wiederherstellungsschlüssel'), {
+		fireEvent.change(screen.getByLabelText('Ersatzschlüssel'), {
 			target: { value: 'recovery-key' }
 		});
 		fireEvent.click(
@@ -180,7 +180,7 @@ describe('EncryptionSettingsPanel', () => {
 
 			fireEvent.click(
 				await screen.findByRole('button', {
-					name: 'Wiederherstellungsschlüssel einrichten'
+					name: 'Ersatzschlüssel einrichten'
 				})
 			);
 			expect(await screen.findByText('test-recovery-key')).toBeTruthy();
@@ -199,7 +199,7 @@ describe('EncryptionSettingsPanel', () => {
 			render(<EncryptionSettingsPanel clientOverride={clientWithUser} />);
 			fireEvent.click(
 				await screen.findByRole('button', {
-					name: 'Wiederherstellungsschlüssel einrichten'
+					name: 'Ersatzschlüssel einrichten'
 				})
 			);
 
@@ -216,7 +216,7 @@ describe('EncryptionSettingsPanel', () => {
 			render(<EncryptionSettingsPanel clientOverride={clientWithUser} />);
 
 			expect(
-				await screen.findByLabelText('Wiederherstellungsschlüssel')
+				await screen.findByLabelText('Ersatzschlüssel')
 			).toBeTruthy();
 			expect(screen.queryByText(PARKED_KEY)).toBeNull();
 		});
