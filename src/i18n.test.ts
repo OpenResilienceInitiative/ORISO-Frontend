@@ -1,17 +1,6 @@
-/**
- * Catalogue-vs-catalogue missing-key drift for #1003.
- *
- * Mirrors the xor check in `src/i18n.ts` (init callback): keys present in a
- * non-fallback locale but not in `de`, and keys present in `de` but missing
- * from a non-`@informal` locale. `de@informal` is a partial Du overlay, so
- * absence there is not reported — only extras that are missing from `de`.
- *
- * This file does not import `i18n.ts` (that module reads localStorage at
- * load). It compares the bundled JSON catalogues the runtime merge uses.
- */
+import { readFileSync } from 'node:fs';
 
-import { flatten } from 'flat';
-import _ from 'lodash';
+import { globSync } from 'glob';
 import { describe, expect, it } from 'vitest';
 
 import de from './resources/i18n/de/common.json';
@@ -21,101 +10,101 @@ import fr from './resources/i18n/fr/common.json';
 import ru from './resources/i18n/ru/common.json';
 import ti from './resources/i18n/ti/common.json';
 import tr from './resources/i18n/tr/common.json';
+import {
+	collectCatalogueDrift,
+	collectRedundantOverlayKeys,
+	extractStaticTranslationKeys,
+	findUnknownStaticTranslationKeys,
+	flattenCatalogueKeys
+} from './utils/i18nCatalogueGuard';
 
-const FALLBACK_LNG = 'de';
+const driftBudgets = {
+	en: { extraInLocale: 5, missingInLocale: 63 },
+	fr: { extraInLocale: 5, missingInLocale: 746 },
+	ru: { extraInLocale: 5, missingInLocale: 746 },
+	ti: { extraInLocale: 5, missingInLocale: 782 },
+	tr: { extraInLocale: 5, missingInLocale: 728 }
+} as const;
 
-const flattenKeys = (catalogue: object): string[] =>
-	[...Object.keys(flatten(catalogue) as Record<string, unknown>)].sort(
-		(a, b) => a.localeCompare(b)
-	);
+const locales = { en, fr, ru, ti, tr } as const;
+const deKeys = flattenCatalogueKeys(de);
 
-export const collectMissingKeyDrift = (
-	deLanguageKeys: string[],
-	currLanguageKeys: string[],
-	lng: string
-): { extraInLocale: string[]; missingInLocale: string[] } => {
-	const extraInLocale: string[] = [];
-	const missingInLocale: string[] = [];
-
-	_.xor(deLanguageKeys, currLanguageKeys).forEach((missingKey) => {
-		if (!deLanguageKeys.includes(missingKey)) {
-			extraInLocale.push(missingKey);
-		} else if (lng.indexOf('@informal') < 0) {
-			missingInLocale.push(missingKey);
-		}
-	});
-
-	return { extraInLocale, missingInLocale };
-};
-
-const deKeys = flattenKeys(de);
-
-const locales: { lng: string; catalogue: object }[] = [
-	{ lng: 'en', catalogue: en },
-	{ lng: 'fr', catalogue: fr },
-	{ lng: 'ru', catalogue: ru },
-	{ lng: 'ti', catalogue: ti },
-	{ lng: 'tr', catalogue: tr },
-	{ lng: 'de@informal', catalogue: deInformal }
-];
-
-describe('missing-key drift guard (#1003)', () => {
-	it('reports extras against de and skips informal absences', () => {
-		const deLanguageKeys = ['a', 'b'];
+describe('i18n catalogue guard (#1101)', () => {
+	it('reports missing and extra keys from hand-checked fixtures', () => {
 		expect(
-			collectMissingKeyDrift(deLanguageKeys, ['a', 'c'], 'en')
+			collectCatalogueDrift(
+				['account.name', 'account.email'],
+				['account.name', 'account.phone']
+			)
 		).toEqual({
-			extraInLocale: ['c'],
-			missingInLocale: ['b']
-		});
-		expect(
-			collectMissingKeyDrift(deLanguageKeys, ['a', 'c'], 'de@informal')
-		).toEqual({
-			extraInLocale: ['c'],
-			missingInLocale: []
+			extraInLocale: ['account.phone'],
+			missingInLocale: ['account.email']
 		});
 	});
 
-	it.each(locales)(
-		'lists remaining $lng keys that still trigger the runtime guard',
-		({ lng, catalogue }) => {
-			const { extraInLocale, missingInLocale } = collectMissingKeyDrift(
+	it.each(Object.entries(locales))(
+		'does not allow the $0 catalogue to exceed its existing drift budget',
+		(lng, catalogue) => {
+			const drift = collectCatalogueDrift(
 				deKeys,
-				flattenKeys(catalogue),
-				lng
+				flattenCatalogueKeys(catalogue)
 			);
+			const budget = driftBudgets[lng as keyof typeof driftBudgets];
 
-			if (extraInLocale.length > 0) {
-				console.error(
-					extraInLocale
-						.map(
-							(key) =>
-								`[${lng}] has key "${key}" but its missing in fallback language "${FALLBACK_LNG}"`
-						)
-						.join('\n')
-				);
-			}
-			if (missingInLocale.length > 0) {
-				console.error(
-					missingInLocale
-						.map((key) => `[${lng}] has missing key "${key}"`)
-						.join('\n')
-				);
-			}
-
-			expect({
-				lng,
-				extraInLocaleCount: extraInLocale.length,
-				missingInLocaleCount: missingInLocale.length,
-				extraInLocale,
-				missingInLocale
-			}).toEqual({
-				lng,
-				extraInLocaleCount: extraInLocale.length,
-				missingInLocaleCount: missingInLocale.length,
-				extraInLocale,
-				missingInLocale
-			});
+			expect(drift.extraInLocale.length).toBeLessThanOrEqual(
+				budget.extraInLocale
+			);
+			expect(drift.missingInLocale.length).toBeLessThanOrEqual(
+				budget.missingInLocale
+			);
 		}
 	);
+
+	it('does not allow another redundant value in the sparse informal overlay', () => {
+		expect(
+			collectRedundantOverlayKeys(de, deInformal).length
+		).toBeLessThanOrEqual(582);
+	});
+
+	it('extracts literal translation calls and ignores dynamic keys', () => {
+		const source = `
+			translate('navigation.home');
+			t("navigation.settings", { defaultValue: 'Settings' });
+			i18n.t('navigation.logout');
+			<Component i18nKey="navigation.help" />;
+			translate('profile.' + field);
+			translate(\`profile.\${field}\`);
+		`;
+
+		expect(extractStaticTranslationKeys(source)).toEqual([
+			'navigation.help',
+			'navigation.home',
+			'navigation.logout',
+			'navigation.settings'
+		]);
+	});
+
+	it('reports literal source keys that are absent from the canonical catalogue', () => {
+		expect(
+			findUnknownStaticTranslationKeys(
+				{
+					'a.tsx': `translate('known.title')`,
+					'b.tsx': `t('missing.title')`
+				},
+				['known.title']
+			)
+		).toEqual(['missing.title']);
+	});
+
+	it('does not allow another unknown literal translation key in source', () => {
+		const sourceFiles = Object.fromEntries(
+			globSync('src/**/*.{ts,tsx}', {
+				ignore: ['**/*.test.*', '**/*.stories.*', '**/__tests__/**']
+			}).map((path) => [path, readFileSync(path, 'utf8')])
+		);
+
+		expect(
+			findUnknownStaticTranslationKeys(sourceFiles, deKeys).length
+		).toBeLessThanOrEqual(58);
+	});
 });
