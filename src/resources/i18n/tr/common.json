@@ -2179,7 +2179,7 @@
 			"bullet2": "- federal eyaletinizin yasalarını bilin",
 			"headline": "Size mümkün olan en iyi tavsiyeyi verebilmemiz için posta kodunuza ihtiyacımız var",
 			"label": "Posta kodunuz",
-			"subline": "Neden mi? Çünkü o zaman uzmanlarımız:",
+			"subline": "Yalnızca posta kodunuz — başka bir şeye ihtiyacımız yok.",
 			"digitLabel": "Posta kodu, {{total}} rakamdan {{position}}. rakam",
 			"remaining_one": "{{count}} rakam kaldı",
 			"remaining_other": "{{count}} rakam kaldı",

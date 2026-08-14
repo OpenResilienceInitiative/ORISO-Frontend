@@ -305,7 +305,7 @@ export const WhyLocalOpen: StoryObj = {
 	render: () => (
 		<Box sx={{ width: 343 }}>
 			<Caption>Die vier finalen Motive im 48-pt-Kreis.</Caption>
-			<WhyLocalDisclosure />
+			<WhyLocalDisclosure defaultOpen />
 		</Box>
 	)
 };

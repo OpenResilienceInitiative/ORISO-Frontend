@@ -2149,7 +2149,7 @@
 			"bullet2": "- connaître les lois de votre État",
 			"headline": "Pour pouvoir vous conseiller au mieux, nous avons besoin de votre code postal.",
 			"label": "Votre code postal",
-			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :",
+			"subline": "Uniquement votre code postal — nous n'avons besoin de rien de plus.",
 			"digitLabel": "Code postal, chiffre {{position}} sur {{total}}",
 			"remaining_one": "Encore {{count}} chiffre",
 			"remaining_other": "Encore {{count}} chiffres",

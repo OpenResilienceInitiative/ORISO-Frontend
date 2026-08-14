@@ -35,9 +35,16 @@ const FALLBACKS: Record<string, string> = {
  */
 const PANEL_ID = 'why-local-panel';
 
-export const WhyLocalDisclosure = () => {
+export interface WhyLocalDisclosureProps {
+	/** Start expanded. The flow keeps it closed; Storybook shows the content. */
+	defaultOpen?: boolean;
+}
+
+export const WhyLocalDisclosure = ({
+	defaultOpen = false
+}: WhyLocalDisclosureProps = {}) => {
 	const { t } = useTranslation();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(defaultOpen);
 
 	return (
 		<Box

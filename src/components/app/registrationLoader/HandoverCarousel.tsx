@@ -298,14 +298,23 @@ export const HandoverCarousel = ({
 						})}
 						aria-current={index === activeIndex}
 						sx={{
-							width: index === activeIndex ? 22 : 6,
-							height: 6,
-							borderRadius: 3,
-							bgcolor:
+							'width': index === activeIndex ? 22 : 6,
+							'height': 6,
+							'borderRadius': 3,
+							'bgcolor':
 								index === activeIndex
 									? registrationMd3.primary
 									: registrationMd3.outlineVariant,
-							transition: 'width 200ms ease'
+							'transition': 'width 200ms ease',
+							// A 6px dot needs the ring set off from it, or the
+							// keyboard user cannot see where they are.
+							'&.Mui-focusVisible': {
+								outline: `2px solid ${registrationMd3.focus}`,
+								outlineOffset: 4
+							},
+							'@media (prefers-reduced-motion: reduce)': {
+								transition: 'none'
+							}
 						}}
 					/>
 				))}
