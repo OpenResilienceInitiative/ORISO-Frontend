@@ -2475,15 +2475,14 @@
 				"neu": "Non lu",
 				"unread": "Non lu",
 				"drafts": "Brouillons",
-				"nearby": "Proximité",
+				"nearby": "Mail",
 				"create": "Créer",
 				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
 				"internalGroup": "Discussion de groupe interne",
 				"groups": "Cercle de discussion",
-				"supervision": "Supervision",
-				"chats": "Proximité"
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
 			"draftMetadataOnly": "Message non envoyé enregistré."

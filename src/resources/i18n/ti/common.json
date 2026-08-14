@@ -2469,15 +2469,14 @@
 				"neu": "Unread",
 				"unread": "Unread",
 				"drafts": "Drafts",
-				"nearby": "ቀረባ",
+				"nearby": "Mail",
 				"create": "ፍጠር",
 				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",
 				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
 				"groups": "ናይ ዝርርብ ክበብ",
-				"supervision": "Supervision",
-				"chats": "ቀረባ"
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
 			"draftMetadataOnly": "Unsent message saved."

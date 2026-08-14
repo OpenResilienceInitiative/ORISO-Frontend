@@ -2505,15 +2505,14 @@
 				"neu": "Okunmamış",
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
-				"nearby": "Yakın",
+				"nearby": "Mail",
 				"create": "Oluştur",
 				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",
 				"internalGroup": "Dahili grup sohbeti",
 				"groups": "Sohbet çevresi",
-				"supervision": "Süpervizyon",
-				"chats": "Yakın"
+				"supervision": "Süpervizyon"
 			},
 			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
 			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."

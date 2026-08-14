@@ -1394,8 +1394,7 @@
 				"liveChat": "Live-Chat",
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
-				"supervision": "Supervision",
-				"chats": "Mail"
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."

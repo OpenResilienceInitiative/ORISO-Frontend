@@ -3285,8 +3285,7 @@
 				"liveChat": "Live chat",
 				"internalGroup": "Internal group chat",
 				"groups": "Conversation circle",
-				"supervision": "Supervision",
-				"chats": "Mail"
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "No consultations match your search or filters.",
 			"draftMetadataOnly": "Unsent message saved."
