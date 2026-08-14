@@ -46,7 +46,8 @@ import {
 import { getUrlParameter } from '../../utils/getUrlParameter';
 import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
-import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
+import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
+import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
@@ -343,6 +344,18 @@ export const Registration = () => {
 		selectedTopicLabel
 	]);
 
+	/** Header chips are the same picks, plus the a11y label the chip row needs. */
+	const headerChips = useMemo(
+		() =>
+			footerChips.map((chip) => ({
+				...chip,
+				deleteAriaLabel: t('registration.selection.remove', {
+					label: chip.label
+				})
+			})),
+		[footerChips, t]
+	);
+
 	/* Forward navigation is additionally capped by data validity: once an
 	   earlier step's mandatory value was cleared (chip ✕), later steps stop
 	   being clickable until the flow is completed again. The missing step
@@ -570,6 +583,7 @@ export const Registration = () => {
 				showLoginLink={true}
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
+				mobileHero="bar"
 			>
 				<Box
 					sx={{
@@ -599,7 +613,7 @@ export const Registration = () => {
 									}}
 								>
 									<PreselectionBox hasDrawer={false} />
-									<RegistrationStepper
+									<RegistrationHeader
 										currentStepName={step}
 										visibleStepNames={availableSteps.map(
 											({ name }) => name
@@ -608,6 +622,8 @@ export const Registration = () => {
 											clickableStepperStepNames
 										}
 										onStepClick={onStepperClick}
+										chips={headerChips}
+										fullBleed
 									/>
 
 									<Box
@@ -732,47 +748,35 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<RegistrationFooterChips
-												chips={footerChips}
-												selectedPrefix={selectedPrefix}
-												emptyLabel={footerEmptyLabel}
-												mobile
+											{/* F3: the picks live in the
+											    header chip row on mobile, so
+											    the footer is navigation only. */}
+											<RegistrationStepNav
+												prevStepUrl={
+													currStepIndex === 0
+														? null
+														: prevStepUrl
+												}
+												onPrevClick={onPrevClick}
+												backLabel={t(
+													'registration.back'
+												)}
+												nextStepUrl={nextStepUrl}
+												nextLabel={t(
+													'registration.next'
+												)}
+												registerLabel={t(
+													'registration.register'
+												)}
+												registeringLabel={t(
+													'registration.registering',
+													'Registering...'
+												)}
+												disabledNext={
+													disabledNextButton
+												}
+												isRegistering={isRegistering}
 											/>
-											<Box
-												sx={{
-													display: 'flex',
-													alignItems: 'center',
-													gap: 1.5
-												}}
-											>
-												<RegistrationFooterBackLink
-													to={prevStepUrl}
-													onClick={onPrevClick}
-													label={t(
-														'registration.back'
-													)}
-												/>
-												<Box sx={{ flex: 1 }} />
-												<RegistrationFooterPrimaryButton
-													nextStepUrl={nextStepUrl}
-													disabledNextButton={
-														disabledNextButton
-													}
-													isRegistering={
-														isRegistering
-													}
-													registerLabel={t(
-														'registration.register'
-													)}
-													registeringLabel={t(
-														'registration.registering',
-														'Registering...'
-													)}
-													nextLabel={t(
-														'registration.next'
-													)}
-												/>
-											</Box>
 										</Box>
 									</Box>
 								</Box>

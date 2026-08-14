@@ -2721,6 +2721,9 @@
 				"slow": "This is taking longer than usual",
 				"entering": "Opening your counselling room …"
 			}
+		},
+		"selection": {
+			"remove": "Remove {{label}}"
 		}
 	},
 	"releaseNote": {

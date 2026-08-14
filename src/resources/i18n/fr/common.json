@@ -2166,6 +2166,9 @@
 				"slow": "Cela prend plus de temps que d'habitude",
 				"entering": "Ouverture de votre espace de consultation …"
 			}
+		},
+		"selection": {
+			"remove": "Supprimer {{label}}"
 		}
 	},
 	"releaseNote": {

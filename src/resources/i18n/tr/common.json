@@ -2196,6 +2196,9 @@
 				"slow": "Bu her zamankinden uzun sürüyor",
 				"entering": "Görüşme alanınız açılıyor …"
 			}
+		},
+		"selection": {
+			"remove": "{{label}} kaldır"
 		}
 	},
 	"releaseNote": {

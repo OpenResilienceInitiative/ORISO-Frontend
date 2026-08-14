@@ -156,7 +156,10 @@ export const RegistrationHeader = ({
 			data-cy="registration-header"
 			sx={{
 				position: fullBleed ? 'sticky' : 'relative',
-				top: fullBleed ? { xs: '48px', md: '72px' } : undefined,
+				// xs sticks to the viewport top: the old 48px band above the
+				// stepper is gone on mobile, and a 48px offset here made the
+				// row hover over the first headline line before any scroll.
+				top: fullBleed ? { xs: 0, md: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
 				width: fullBleed ? { xs: '100vw', lg: '60vw' } : '100%',

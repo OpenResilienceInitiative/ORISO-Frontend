@@ -2781,6 +2781,9 @@
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Ihr Beratungsraum wird geöffnet …"
 			}
+		},
+		"selection": {
+			"remove": "{{label}} entfernen"
 		}
 	},
 	"releaseNote": {

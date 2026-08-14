@@ -2160,6 +2160,9 @@
 				"slow": "እዚ ካብ ንቡር ንላዕሊ ግዜ ይወስድ ኣሎ",
 				"entering": "ናይ ምኽሪ ክፍልኹም ይኽፈት ኣሎ …"
 			}
+		},
+		"selection": {
+			"remove": "{{label}} ኣወግድ"
 		}
 	},
 	"releaseNote": {

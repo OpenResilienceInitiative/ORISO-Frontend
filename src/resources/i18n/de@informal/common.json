@@ -1064,6 +1064,9 @@
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
+		},
+		"selection": {
+			"remove": "{{label}} entfernen"
 		}
 	},
 	"session": {
