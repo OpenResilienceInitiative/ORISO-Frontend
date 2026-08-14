@@ -818,6 +818,42 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// #1079: a received task list keeps its checkboxes, so it needs the layout
+	// a checklist implies — no bullet next to the box, and the box on the same
+	// line as its text. The input is rendered `disabled` by the sanitizer: this
+	// is the sender's list, the reader only reads it.
+	&__message ul[data-type='taskList'] {
+		list-style: none;
+		padding-left: 0;
+		margin: 0;
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		label {
+			display: inline-flex;
+			align-items: center;
+
+			// Aligns the box with the first line of a wrapping item.
+			height: $message-lineheight;
+			flex: 0 0 auto;
+		}
+
+		input[type='checkbox'] {
+			margin: 0;
+
+			// Reads as state, not as a control the reader may operate.
+			cursor: default;
+		}
+
+		p {
+			margin: 0;
+		}
+	}
+
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
