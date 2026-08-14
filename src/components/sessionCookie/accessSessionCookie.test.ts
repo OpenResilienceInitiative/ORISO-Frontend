@@ -99,6 +99,17 @@ describe('accessSessionCookie', () => {
 		);
 	});
 
+	// A single malformed cookie anywhere in the jar makes decodeURIComponent
+	// throw for all of them; writing a session cookie must not go down with it.
+	it('still writes and reads when another cookie is malformed', () => {
+		document.cookie = 'legacy=100%broken';
+
+		expect(() =>
+			setValueInCookie('keycloak', 'access-token')
+		).not.toThrow();
+		expect(getValueFromCookie('keycloak')).toBe('access-token');
+	});
+
 	it('never mirrors non-auth cookies', () => {
 		setValueInCookie('tenantId', 'tenant-1');
 

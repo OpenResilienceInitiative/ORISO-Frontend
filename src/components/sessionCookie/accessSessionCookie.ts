@@ -51,7 +51,15 @@ const getCookieSecurityAttributes = () => {
 
 const readCookieValue = (targetValue: string): string | null => {
 	const targetName = targetValue + '=';
-	const decodedCookie = decodeURIComponent(document.cookie);
+	let decodedCookie: string;
+	try {
+		decodedCookie = decodeURIComponent(document.cookie);
+	} catch {
+		// A single cookie with a stray `%` makes decodeURIComponent throw for
+		// the whole jar. Reading raw still finds our own values, which are
+		// written unencoded, and never takes a cookie write down with it.
+		decodedCookie = document.cookie;
+	}
 
 	const ca = decodedCookie.split(';');
 
