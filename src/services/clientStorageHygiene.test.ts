@@ -79,7 +79,7 @@ describe('clientStorageHygiene (#1071)', () => {
 			localStorage.setItem('oriso.recentEmojis', '["👋"]');
 			localStorage.setItem('oriso.circleDefaults.v1.9', '{}');
 			localStorage.setItem('oriso.keyboardShortcuts.v1', '{}');
-			localStorage.setItem('oriso.consultantLoginBlocked', 'true');
+			localStorage.setItem('oriso.enquiry.42', '{}');
 
 			purgeAppWebStorage();
 
@@ -89,9 +89,7 @@ describe('clientStorageHygiene (#1071)', () => {
 				)
 			).toEqual([]);
 			expect(localStorage.getItem('oriso.recentEmojis')).toBeNull();
-			expect(
-				localStorage.getItem('oriso.consultantLoginBlocked')
-			).toBeNull();
+			expect(localStorage.getItem('oriso.enquiry.42')).toBeNull();
 		});
 
 		// The silently bootstrapped Tresor key (ADR-019) is the one app key whose

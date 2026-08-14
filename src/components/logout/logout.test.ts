@@ -55,7 +55,7 @@ describe('logout storage sweep (#1071)', () => {
 	it('drops app-scoped Web Storage when the session ends', async () => {
 		localStorage.setItem('oriso.chatDrafts.v1', '{"k":{"text":"secret"}}');
 		localStorage.setItem('oriso.recentEmojis', '["👋"]');
-		localStorage.setItem('oriso.consultantLoginBlocked', 'true');
+		localStorage.setItem('oriso.enquiry.42', '{"text":"half typed"}');
 		localStorage.setItem('i18nextLng', 'de');
 		sessionStorage.setItem('registrationSession', '{"username":"ned"}');
 
@@ -65,7 +65,7 @@ describe('logout storage sweep (#1071)', () => {
 
 		expect(localStorage.getItem('oriso.chatDrafts.v1')).toBeNull();
 		expect(localStorage.getItem('oriso.recentEmojis')).toBeNull();
-		expect(localStorage.getItem('oriso.consultantLoginBlocked')).toBeNull();
+		expect(localStorage.getItem('oriso.enquiry.42')).toBeNull();
 		expect(sessionStorage.getItem('registrationSession')).toBeNull();
 		// Not user-scoped: the next person keeps the interface language.
 		expect(localStorage.getItem('i18nextLng')).toBe('de');
