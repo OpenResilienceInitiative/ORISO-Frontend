@@ -38,6 +38,16 @@ export const ZipcodeDigits = ({
 		[value]
 	);
 
+	/**
+	 * The first slot without a digit. Focus never goes past it, so the row can
+	 * never hold a hole — which is what keeps `join('')` faithful: a value of
+	 * "12" always means slots 1 and 2, never slots 1 and 4.
+	 */
+	const firstEmpty = useMemo(() => {
+		const found = digits.findIndex((digit) => !digit);
+		return found === -1 ? ZIPCODE_LENGTH - 1 : found;
+	}, [digits]);
+
 	const focusDigit = useCallback((index: number) => {
 		const target = refs.current[index];
 		if (target) {
@@ -94,10 +104,10 @@ export const ZipcodeDigits = ({
 			}
 			if (event.key === 'ArrowRight' && index < ZIPCODE_LENGTH - 1) {
 				event.preventDefault();
-				focusDigit(index + 1);
+				focusDigit(Math.min(index + 1, firstEmpty));
 			}
 		},
-		[digits, focusDigit, onChange]
+		[digits, firstEmpty, focusDigit, onChange]
 	);
 
 	return (
@@ -115,7 +125,17 @@ export const ZipcodeDigits = ({
 					autoFocus={autoFocus && index === 0}
 					onChange={(event) => writeAt(index, event.target.value)}
 					onKeyDown={onKeyDown(index)}
-					onFocus={(event) => event.target.select()}
+					onFocus={(event) => {
+						// Clicking or tabbing into an empty slot further right
+						// used to accept a digit there; `join('')` then moved
+						// it to the front and the user submitted a different
+						// postcode than the one on screen.
+						if (index > firstEmpty) {
+							focusDigit(firstEmpty);
+							return;
+						}
+						event.target.select();
+					}}
 					inputProps={{
 						'inputMode': 'numeric',
 						'autoComplete': index === 0 ? 'postal-code' : 'off',
@@ -128,7 +148,7 @@ export const ZipcodeDigits = ({
 						'minWidth': 0,
 						'height': 60,
 						'borderRadius': '10px',
-						'bgcolor': '#fff',
+						'bgcolor': registrationMd3.surface,
 						'border': `2px solid ${
 							digit
 								? registrationMd3.outline

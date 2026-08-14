@@ -2149,7 +2149,17 @@
 			"bullet2": "- connaître les lois de votre État",
 			"headline": "Pour pouvoir vous conseiller au mieux, nous avons besoin de votre code postal.",
 			"label": "Votre code postal",
-			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :"
+			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :",
+			"digitLabel": "Code postal, chiffre {{position}} sur {{total}}",
+			"remaining_one": "Encore {{count}} chiffre",
+			"remaining_other": "Encore {{count}} chiffres",
+			"whyLocal": {
+				"title": "Pourquoi un conseil local ?",
+				"localHelp": "Votre service de consultation connaît les offres d'aide près de chez vous.",
+				"stateLaw": "Il connaît les lois de votre État fédéral.",
+				"anonymous": "Seul ce service voit ce que vous indiquez — vous restez anonyme.",
+				"inPerson": "Si vous le souhaitez, vous pourrez aussi poursuivre l'échange en personne plus tard."
+			}
 		},
 		"handover": {
 			"badge": "Inscrit(e)",

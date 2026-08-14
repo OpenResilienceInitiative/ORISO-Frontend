@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AgencySelectionResults } from './AgencySelectionResults';
+import type { AgencyDataInterface } from '../../../globalState/interfaces';
 import { ORISO_M3_FIGMA_URL } from '../../storybookDesignLinks';
 
 /**
@@ -44,7 +45,7 @@ export const OnlyExternal: Story = {
 				name: 'Beratungsstelle Musterstadt',
 				external: true,
 				url: 'https://example.org/beratung'
-			} as any
+			} as AgencyDataInterface
 		]
 	}
 };

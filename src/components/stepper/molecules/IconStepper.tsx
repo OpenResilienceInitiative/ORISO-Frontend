@@ -52,8 +52,15 @@ export const IconStepper = ({
 	}, [currentStepName, steps]);
 
 	useEffect(() => {
+		// TopicSelection and StepDot already respect this; the auto-scroll
+		// was the last place that animated regardless.
+		const reducedMotion =
+			typeof window !== 'undefined' &&
+			typeof window.matchMedia === 'function' &&
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 		activeRef.current?.scrollIntoView({
-			behavior: 'smooth',
+			behavior: reducedMotion ? 'auto' : 'smooth',
 			inline: 'center',
 			block: 'nearest'
 		});

@@ -83,18 +83,21 @@ export const RegistrationStepNav = ({
 			</ButtonBase>
 
 			<ButtonBase
-				type={
-					nextStepUrl
-						? 'button'
-						: primaryDisabled
-							? 'button'
-							: 'submit'
+				// Always a submit, never a router link: the form's submit
+				// handler is what commits this step's answers into the
+				// registration data before navigating. A link would move to
+				// the next step with the current selection uncommitted, and
+				// the next screen would overwrite it. The desktop footer
+				// submits for the same reason.
+				type={primaryDisabled ? 'button' : 'submit'}
+				disabled={disabledNext && !submitting}
+				aria-disabled={primaryDisabled}
+				aria-busy={submitting}
+				onClick={
+					submitting
+						? (event: React.MouseEvent) => event.preventDefault()
+						: undefined
 				}
-				component={
-					nextStepUrl && !primaryDisabled ? RouterLink : 'button'
-				}
-				to={nextStepUrl && !primaryDisabled ? nextStepUrl : undefined}
-				disabled={primaryDisabled}
 				data-cy="registration-next"
 				sx={{
 					'flex': 1,
