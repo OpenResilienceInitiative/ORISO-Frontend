@@ -260,7 +260,10 @@
 		"prebuild-storybook": "npm run generate:icon-catalog && npm run typecheck:storybook",
 		"build-storybook": "storybook build",
 		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts",
-		"test:credentials": "playwright test --config playwright.credentials.config.ts"
+		"test:credentials": "playwright test --config playwright.credentials.config.ts",
+		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
+		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
+		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts"
 	},
 	"eslintConfig": {
 		"extends": [

@@ -1,0 +1,29 @@
+Der AVV liegt zur Unterschrift bereit
+=====================================
+
+Für ${tenantName!''} wurde ein Auftragsverarbeitungsvertrag erstellt.
+
+Bitte prüfen Sie den Vertrag und zeichnen Sie ihn digital.
+
+Träger: ${tenantName!''}
+Bereitgestellt am: ${dpaProvidedAt!''}
+Zu unterschreiben bis: ${dpaExpiresAt!''}
+
+Vertrag öffnen:
+${dpaUrl!''}
+
+Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.
+
+----------------------------------------------------------------
+Diese E-Mail gehört zum Vertragsverhältnis zwischen ${orgName!''} und ${tenantName!''}.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+
+Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.

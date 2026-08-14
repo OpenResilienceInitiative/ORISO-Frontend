@@ -1,0 +1,27 @@
+Kurze Wartungspause
+===================
+
+Am {{maintenanceDate}} ist {{platformName}} zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar.
+
+Danach kannst du wie gewohnt weiterschreiben.
+
+Statusseite ansehen:
+{{statusUrl}}
+
+Bereits geschriebene Nachrichten gehen nicht verloren.
+
+----------------------------------------------------------------
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.
