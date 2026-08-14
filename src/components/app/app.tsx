@@ -10,7 +10,7 @@ import {
 import { StageProps } from '../stage/stage';
 import '../../resources/styles/styles';
 import { ContextProvider } from '../../globalState/state';
-import { WebsocketHandler } from './WebsocketHandler';
+import { MatrixRealtimeHandler } from './MatrixRealtimeHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
@@ -140,8 +140,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	// Request notification permission for incoming calls
 	useNotificationPermission();
 
-	const [startWebsocket, setStartWebsocket] = useState<boolean>(false);
-	const [disconnectWebsocket, setDisconnectWebsocket] =
+	const [startRealtimeEvents, setStartRealtimeEvents] =
 		useState<boolean>(false);
 	const [failedPreCondition, setFailedPreCondition] =
 		useState(preConditionsMet());
@@ -158,11 +157,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
-						{startWebsocket && (
-							<WebsocketHandler
-								disconnect={disconnectWebsocket}
-							/>
-						)}
+						{startRealtimeEvents && <MatrixRealtimeHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
 								{settings.urls.landingpage !== '/' && (
@@ -254,10 +249,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 									element={
 										<AuthenticatedApp
 											onAppReady={() =>
-												setStartWebsocket(true)
-											}
-											onLogout={() =>
-												setDisconnectWebsocket(true)
+												setStartRealtimeEvents(true)
 											}
 										/>
 									}

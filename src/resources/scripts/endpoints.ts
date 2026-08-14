@@ -100,7 +100,6 @@ export const endpoints = {
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/logout'),
-	liveservice: apiUrl + '/service/live',
 	loginResetPasswordLink:
 		keycloakOrigin +
 		getKeycloakAuthPath(

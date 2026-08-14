@@ -1,5 +1,4 @@
 import './commands/mockApi';
-import './commands/socket';
 
 let sessions = [];
 

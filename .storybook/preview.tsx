@@ -475,10 +475,6 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse([]);
 	}
 
-	if (url.pathname.startsWith('/service/live')) {
-		return storybookJsonResponse({});
-	}
-
 	if (isStorybookServiceUrl(url) || isStorybookLocalApiUrl(url)) {
 		return storybookJsonResponse({});
 	}
