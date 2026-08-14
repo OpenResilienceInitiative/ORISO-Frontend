@@ -184,7 +184,8 @@
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
-			"blocked": "Blocked by the security check"
+			"blocked": "Blocked by the security check",
+			"error": "Security check unavailable – file stays locked"
 		}
 	},
 	"banner": {

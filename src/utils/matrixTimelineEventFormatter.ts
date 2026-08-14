@@ -6,6 +6,7 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { getScannedMediaDownloadPath } from '../services/mediaContentScanner';
 import type {
 	ChatAttachment,
 	ChatFile
@@ -14,6 +15,14 @@ import type {
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
 		return contentUrl;
+	}
+
+	// Where a content scanner is deployed, unencrypted media goes through it
+	// too (ADR-019) — otherwise legacy attachments from before the E2EE
+	// migration would keep a route that nothing inspects.
+	const scannedPath = getScannedMediaDownloadPath(contentUrl);
+	if (scannedPath) {
+		return scannedPath;
 	}
 
 	const [serverName, mediaId] = contentUrl.substring(6).split('/');

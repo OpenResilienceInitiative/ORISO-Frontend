@@ -181,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
 			"reveal": "Görseli göster",
-			"blocked": "Güvenlik kontrolü tarafından engellendi"
+			"blocked": "Güvenlik kontrolü tarafından engellendi",
+			"error": "Güvenlik kontrolü yapılamadı – dosya kilitli kalıyor"
 		}
 	},
 	"banner": {
