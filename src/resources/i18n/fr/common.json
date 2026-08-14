@@ -2190,6 +2190,11 @@
 				"slow": "Cela prend plus de temps que d'habitude",
 				"entering": "Ouverture de votre espace de consultation …"
 			}
+		},
+		"stepState": {
+			"done": "terminé",
+			"active": "étape actuelle",
+			"pending": "à venir"
 		}
 	},
 	"releaseNote": {

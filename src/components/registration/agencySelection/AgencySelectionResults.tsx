@@ -371,6 +371,8 @@ export const AgencySelectionResults = ({
 					<Box
 						component="img"
 						src={ConsultantIllustration}
+						alt=""
+						aria-hidden="true"
 						sx={{
 							gridArea: 'icon',
 							height: '156px',

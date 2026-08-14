@@ -165,7 +165,7 @@ export const HandoverCarousel = ({
 							scrollSnapAlign: { xs: 'center', sm: 'start' },
 							display: 'flex',
 							flexDirection: 'column',
-							bgcolor: '#fff',
+							bgcolor: registrationMd3.surface,
 							border: `1px solid ${registrationMd3.outlineVariant}`,
 							borderRadius: { xs: '18px', sm: '20px' },
 							overflow: 'hidden'

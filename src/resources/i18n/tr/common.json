@@ -1991,7 +1991,7 @@
 		"headline": "Kayıt",
 		"md3": {
 			"stepNames": {
-				"focus": "Odak seç",
+				"focus": "Konu seç",
 				"postcode": "Posta kodu",
 				"agency": "Danışma merkezi",
 				"register": "Kayıt ol",
@@ -2220,6 +2220,11 @@
 				"slow": "Bu her zamankinden uzun sürüyor",
 				"entering": "Görüşme alanınız açılıyor …"
 			}
+		},
+		"stepState": {
+			"done": "tamamlandı",
+			"active": "geçerli adım",
+			"pending": "bekliyor"
 		}
 	},
 	"releaseNote": {

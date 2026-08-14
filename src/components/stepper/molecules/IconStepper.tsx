@@ -24,6 +24,13 @@ export interface IconStepperProps {
 	emphasizeActive?: boolean;
 	/** Accessible name for the surrounding navigation landmark. */
 	ariaLabel?: string;
+	/**
+	 * Translated words for "done" / "current" / "open". Completion is drawn as
+	 * a colour plus an `aria-hidden` check mark, so without these a screen
+	 * reader cannot tell a finished step from a pending one. The caller owns
+	 * the `t` instance, hence the injection.
+	 */
+	stateLabel?: (state: 'done' | 'active' | 'pending') => string;
 }
 
 /**
@@ -39,7 +46,8 @@ export const IconStepper = ({
 	clickableStepNames = [],
 	onStepClick,
 	emphasizeActive = true,
-	ariaLabel
+	ariaLabel,
+	stateLabel
 }: IconStepperProps) => {
 	const activeRef = useRef<HTMLDivElement>(null);
 	const clickable = useMemo(
@@ -97,7 +105,13 @@ export const IconStepper = ({
 							aria-current={
 								state === 'active' ? 'step' : undefined
 							}
-							aria-label={isClickable ? label : undefined}
+							aria-label={
+								stateLabel
+									? `${label}, ${stateLabel(state)}`
+									: isClickable
+										? label
+										: undefined
+							}
 							data-cy={`icon-stepper-step-${name}`}
 							onClick={isClickable ? activate : undefined}
 							onKeyDown={

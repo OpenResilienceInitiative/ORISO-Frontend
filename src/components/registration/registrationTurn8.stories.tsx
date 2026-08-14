@@ -12,6 +12,7 @@ import { RegistrationHandover } from '../app/registrationLoader/RegistrationHand
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { HandoverGateState } from '../app/registrationLoader/handoverGate';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
+import { phone375Globals } from '../message/messageStoryShell';
 
 const meta: Meta = {
 	title: 'Registration/Turn 8 — Mobile Dichte',
@@ -87,6 +88,7 @@ const Caption = ({ children }: { children: React.ReactNode }) => (
  * `sm` (600 pt) to see the icon stepper.
  */
 export const ChromeMobile: StoryObj = {
+	globals: phone375Globals,
 	name: 'Kopf + F3-Fuss (mobil, Viewport 375)',
 	parameters: {
 		docs: {
@@ -190,6 +192,7 @@ export const ChromeDesktop: StoryObj = {
 
 /** 8a — the postcode step, rendering the real `ZipcodeInput`. */
 export const ZipcodeStep: StoryObj = {
+	globals: phone375Globals,
 	name: '8a — Postleitzahl',
 	parameters: {
 		docs: {
@@ -241,6 +244,7 @@ export const ZipcodeStep: StoryObj = {
 
 /** 8b — the existing topic step, only chrome and wording changed. */
 export const TopicStep: StoryObj = {
+	globals: phone375Globals,
 	name: '8b — Thema waehlen',
 	parameters: {
 		docs: {
@@ -296,6 +300,7 @@ export const TopicStep: StoryObj = {
 
 /** The disclosure on its own, open, so the four motifs are reviewable. */
 export const WhyLocalOpen: StoryObj = {
+	globals: phone375Globals,
 	name: '8a — Aufklapper "Warum lokal beraten?"',
 	render: () => (
 		<Box sx={{ width: 343 }}>
@@ -354,6 +359,7 @@ export const HandoverGateStates: StoryObj = {
 };
 
 export const HandoverMobile: StoryObj = {
+	globals: phone375Globals,
 	name: '8c — Geschafft (mobil)',
 	render: () => (
 		<Box

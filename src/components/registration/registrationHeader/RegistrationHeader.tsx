@@ -247,6 +247,7 @@ export const RegistrationHeader = ({
 					clickableStepNames={clickableStepNames}
 					onStepClick={onStepClick}
 					ariaLabel={t('registration.headline', 'Registrierung')}
+					stateLabel={(state) => t(`registration.stepState.${state}`)}
 				/>
 			</Box>
 		</Box>

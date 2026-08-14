@@ -14,6 +14,7 @@ import { StepLabel } from './atoms/StepLabel';
 import { StepSegments } from './atoms/StepSegments';
 import { IconStepper } from './molecules/IconStepper';
 import { CompactStepRow } from './molecules/CompactStepRow';
+import { phone375Globals } from '../message/messageStoryShell';
 
 const meta: Meta = {
 	title: 'Molecules/Stepper',
@@ -178,6 +179,7 @@ export const IconStepperDesktop: StoryObj = {
 
 /** Mobile registration header row. Replaces the icon stepper below `sm`. */
 export const CompactRowMobile: StoryObj = {
+	globals: phone375Globals,
 	render: () => (
 		<Box sx={{ maxWidth: 375 }}>
 			<Panel title="375 pt — Schritt 2 von 4">

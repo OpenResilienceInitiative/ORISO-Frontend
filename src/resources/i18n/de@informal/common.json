@@ -1193,6 +1193,11 @@
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
+		},
+		"stepState": {
+			"done": "abgeschlossen",
+			"active": "aktueller Schritt",
+			"pending": "offen"
 		}
 	},
 	"session": {

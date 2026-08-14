@@ -2877,6 +2877,11 @@
 				"slow": "This is taking longer than usual",
 				"entering": "Opening your counselling room …"
 			}
+		},
+		"stepState": {
+			"done": "completed",
+			"active": "current step",
+			"pending": "not started"
 		}
 	},
 	"releaseNote": {

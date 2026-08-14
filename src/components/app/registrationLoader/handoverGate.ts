@@ -58,6 +58,9 @@ export const GATE_PROGRESS: Record<HandoverGateState, number> = {
 	verifying: 85,
 	queued: 85,
 	ready: 100,
-	slow: 100,
+	// Still waiting, so the fill must not read as finished — a bar that sits
+	// at 100 while the work continues is exactly what this file argues
+	// against. The button is already clickable here, which is the way out.
+	slow: 90,
 	entering: 100
 };

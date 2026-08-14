@@ -2937,6 +2937,11 @@
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Ihr Beratungsraum wird geöffnet …"
 			}
+		},
+		"stepState": {
+			"done": "abgeschlossen",
+			"active": "aktueller Schritt",
+			"pending": "offen"
 		}
 	},
 	"releaseNote": {
