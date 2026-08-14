@@ -8,6 +8,8 @@
  * from older builds have to be removed once on startup.
  */
 
+import { getCookieDomain } from '../resources/scripts/runtimeConfig';
+
 /** Namespace every key this app owns is written under. */
 export const APP_STORAGE_PREFIX = 'oriso.';
 
@@ -107,9 +109,24 @@ export const purgeAppWebStorage = (): void => {
 	);
 };
 
-/** Expires any leftover Matrix SSO handoff cookies (#1071 task 6, #196). */
+/**
+ * Expires any leftover Matrix SSO handoff cookies (#1071 task 6, #196).
+ *
+ * Before #231, these were written with a `domain=` attribute whenever
+ * `REACT_APP_COOKIE_DOMAIN` was configured (see `UIVersionToggle`, which
+ * still reads that same value for the `ui-version` cookie today). A
+ * domain-scoped cookie and a host-only cookie with the same name are
+ * distinct entries in the browser's cookie jar, so an expiry without
+ * `domain=` never touches one written with it — the access token in
+ * `matrix_sso_access_token` would survive logout on profiles that predate
+ * #231. Expire both scopes to reach either kind of leftover.
+ */
 export const clearMatrixSsoHandoffCookies = (): void => {
+	const cookieDomain = getCookieDomain();
 	MATRIX_SSO_HANDOFF_COOKIES.forEach((name) => {
 		document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+		if (cookieDomain) {
+			document.cookie = `${name}=; path=/; domain=${cookieDomain}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+		}
 	});
 };
