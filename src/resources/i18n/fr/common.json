@@ -627,7 +627,8 @@
 					"text": "Lien copié dans le presse-papiers !",
 					"title": "Lien copié"
 				},
-				"text": "Copier le lien d'invitation"
+				"text": "Copier le lien d'invitation",
+				"title": "Copier le lien d'invitation dans le presse-papiers"
 			}
 		},
 		"create": {
