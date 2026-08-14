@@ -5,11 +5,11 @@ anything under `src/emails/`.
 
 Layout: `<dialect>/<tone>/<id>.<ext>`.
 
-| Dialect       | Consumer                                                   | Placeholder         | Files                    |
-| ------------- | ---------------------------------------------------------- | ------------------- | ------------------------ |
-| `plain/`      | UserService direct-SMTP senders (plain string replacement) | `{{name}}`          | `.html` / `.txt`         |
-| `thymeleaf/`  | MailService                                                | `[[${name}]]`       | `.html` / `.txt`         |
-| `freemarker/` | Keycloak e-mail theme                                      | `${(name!'')?html}` | `.html.ftl` / `.txt.ftl` |
+| Dialect | Consumer | Placeholder | Files |
+| --- | --- | --- | --- |
+| `plain/` | UserService direct-SMTP senders (plain string replacement) | `{{name}}` | `.html` / `.txt` |
+| `thymeleaf/` | MailService | `[[${name}]]` | `.html` / `.txt` |
+| `freemarker/` | Keycloak e-mail theme | `${(name!'')?html}` | `.html.ftl` / `.txt.ftl` |
 
 Tones: de-sie, de-du, en.
 
@@ -19,30 +19,30 @@ dialect cannot disagree with what Storybook shows.
 
 ## What each mail needs
 
-| Occasion                 | Audience   | Placeholders                                                                                                                                                                                                          |
-| ------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `neue-nachricht`         | asker      | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                             |
-| `willkommen`             | asker      | `{{username}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                |
-| `passwort-zuruecksetzen` | asker      | `{{expiryHours}}` `{{resetUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                             |
-| `termin`                 | asker      | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentType}}` `{{locationName}}` `{{locationAddress}}` `{{appointmentUrl}}` `{{mapUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
-| `beraterin-kontakt`      | asker      | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{bookingUrl}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                     |
-| `anfrage-zugewiesen`     | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
-| `systemhinweis`          | asker      | `{{maintenanceDate}}` `{{maintenanceStart}}` `{{maintenanceEnd}}` `{{statusUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
-| `neue-anfrage`           | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
-| `direkte-anfrage`        | consultant | `{{requestTopic}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                  |
-| `tagesuebersicht`        | consultant | `{{openRequestCount}}` `{{oldestRequestAge}}` `{{digestGeneratedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                       |
-| `uebergabe-angefragt`    | consultant | `{{fromConsultantName}}` `{{caseReference}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                        |
-| `uebergabe-bestaetigt`   | consultant | `{{toConsultantName}}` `{{caseReference}}` `{{handoverAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                 |
-| `rueckmeldung`           | consultant | `{{caseReference}}` `{{requestReceivedAt}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                 |
-| `mitteilung`             | asker      | `{{messageSubject}}` `{{messagePreview}}` `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                             |
-| `anmeldelink`            | asker      | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                                  |
-| `einmalcode`             | asker      | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                    |
-| `email-geaendert`        | asker      | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                                         |
-| `einladung-traeger`      | admin      | `{{tenantName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                              |
-| `einladung-fachkraft`    | consultant | `{{agencyName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                              |
-| `avv-unterschrift`       | admin      | `{{tenantName}}` `{{dpaProvidedAt}}` `{{dpaExpiresAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                |
-| `team-aenderung`         | consultant | `{{teamChangeStatement}}` `{{caseReference}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                               |
-| `smtp-test`              | admin      | `{{smtpHost}}` `{{smtpFrom}}` `{{sentAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                      |
+| Occasion | Audience | Placeholders |
+| --- | --- | --- |
+| `neue-nachricht` | asker | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `willkommen` | asker | `{{username}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `passwort-zuruecksetzen` | asker | `{{expiryHours}}` `{{resetUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `termin` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentType}}` `{{locationName}}` `{{locationAddress}}` `{{appointmentUrl}}` `{{mapUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `beraterin-kontakt` | asker | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{bookingUrl}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `anfrage-zugewiesen` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `systemhinweis` | asker | `{{maintenanceDate}}` `{{maintenanceStart}}` `{{maintenanceEnd}}` `{{statusUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `neue-anfrage` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `direkte-anfrage` | consultant | `{{requestTopic}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `tagesuebersicht` | consultant | `{{openRequestCount}}` `{{oldestRequestAge}}` `{{digestGeneratedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-angefragt` | consultant | `{{fromConsultantName}}` `{{caseReference}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-bestaetigt` | consultant | `{{toConsultantName}}` `{{caseReference}}` `{{handoverAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `rueckmeldung` | consultant | `{{caseReference}}` `{{requestReceivedAt}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `mitteilung` | asker | `{{messageSubject}}` `{{messagePreview}}` `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `anmeldelink` | asker | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einmalcode` | asker | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `email-geaendert` | asker | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einladung-traeger` | admin | `{{tenantName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `einladung-fachkraft` | consultant | `{{agencyName}}` `{{inviteExpiresAt}}` `{{inviteUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `avv-unterschrift` | admin | `{{tenantName}}` `{{dpaProvidedAt}}` `{{dpaExpiresAt}}` `{{dpaUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
+| `team-aenderung` | consultant | `{{teamChangeStatement}}` `{{caseReference}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `smtp-test` | admin | `{{smtpHost}}` `{{smtpFrom}}` `{{sentAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,
 `logoUrl`, `orgName`, `orgAddress`, `contactLine`) appear in every mail and
