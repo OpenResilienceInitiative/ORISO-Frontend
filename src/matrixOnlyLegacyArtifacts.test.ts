@@ -235,4 +235,15 @@ describe('Matrix-only active frontend artifacts', () => {
 			)
 		).toBe(false);
 	});
+
+	it('does not retain the superseded LiveService Storybook worklog', () => {
+		expect(
+			fs.existsSync(
+				path.join(
+					repoRoot,
+					'docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat'
+				)
+			)
+		).toBe(false);
+	});
 });
