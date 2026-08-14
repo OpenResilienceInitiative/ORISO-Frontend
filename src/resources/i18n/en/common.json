@@ -838,10 +838,8 @@
 				"headline": "You have successfully created a chat."
 			}
 		},
-		"edit": {
-			"title": "Chat settings",
-			"subtitle": "Change this series' schedule and content"
-		},
+		"edit.title": "Chat settings",
+		"edit.subtitle": "Change this series' schedule and content",
 		"info": {
 			"headline": "Chat-Info",
 			"settings": {
@@ -963,11 +961,7 @@
 			},
 			"text": "If you share this QR code with someone, that person can scan it with their phone camera to join the group. You can also download the code."
 		},
-		"save": {
-			"button": {
-				"label": "Save"
-			}
-		},
+		"save.button.label": "Save",
 		"stopChat": {
 			"securityOverlay": {
 				"button1Label": "End chat",
@@ -1007,11 +1001,9 @@
 				"intro": "To participate in video calls, you must log in using one of the supported browsers. The chat consultation still works with Firefox.",
 				"steps": {
 					"1": {
-						"1": {
-							"1": "Follow the link to ",
-							"2": " or ",
-							"3": " (only for macOS and iOS available)"
-						}
+						"1.1": "Follow the link to ",
+						"1.2": " or ",
+						"1.3": " (only for macOS and iOS available)"
 					},
 					"2": "Download one of the supported browsers",
 					"3": "Install it on your PC/laptop/tablet/smartphone.",
@@ -2618,16 +2610,12 @@
 			"consultingType": {
 				"headline": "Please select a topic",
 				"infoText": "Your consultant is active in several subject areas. Please select your desired subject area.",
-				"select": {
-					"label": "Topic"
-				}
+				"select.label": "Topic"
 			},
 			"topic": {
 				"headline": "Please select a topic",
 				"infoText": "Your consultant is active in several subject areas. Please select your desired subject area.",
-				"select": {
-					"label": "Topic"
-				}
+				"select.label": "Topic"
 			}
 		},
 		"dataProtection": {
