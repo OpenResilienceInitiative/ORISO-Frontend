@@ -273,14 +273,16 @@ export const AgencySelectionResults = ({
 						p: '16px',
 						mt: '16px',
 						borderRadius: '4px',
-						border: '1px solid #c6c5c4'
+						border: `1px solid ${registrationMd3.outlineVariant}`
 					}}
 				>
 					<Typography
 						variant="h5"
 						sx={{ gridArea: 'headline', fontWeight: '600' }}
 					>
-						{t('registration.agency.noresult.headline')}
+						{t(
+							'registration.agencySelection.postcode.unavailable.title'
+						)}
 					</Typography>
 					<Box
 						sx={{
@@ -296,7 +298,9 @@ export const AgencySelectionResults = ({
 					</Box>
 					<Box sx={{ gridArea: 'body' }}>
 						<Typography>
-							{t('registration.agency.noresult.subline')}
+							{t(
+								'registration.agencySelection.postcode.unavailable.text'
+							)}
 						</Typography>
 						<Button
 							sx={{
@@ -313,7 +317,7 @@ export const AgencySelectionResults = ({
 									: getOrganizationHomeUrl()
 							}
 						>
-							{t('registration.agency.noresult.label')}
+							{t('registration.agencySelection.postcode.search')}
 						</Button>
 					</Box>
 				</Box>
@@ -335,7 +339,7 @@ export const AgencySelectionResults = ({
 						p: '16px',
 						mt: '16px',
 						borderRadius: '4px',
-						border: '1px solid #c6c5c4'
+						border: `1px solid ${registrationMd3.outlineVariant}`
 					}}
 				>
 					<Typography

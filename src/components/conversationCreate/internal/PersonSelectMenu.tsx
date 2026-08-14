@@ -8,9 +8,10 @@ import { resolveListboxKey } from '../listboxKeyboard';
 /**
  * Person selection menu (Figma "Menu Selection List", node 8482:25911).
  * Rows show the person's name and a round toggle: primary red check when
- * selected, tonal grey check when selectable, a disabled × for people who
+ * selected, tonal grey check when selectable, a muted × for people who
  * have vacated the agency — those stay listed until they are deselected,
- * only then do they leave the list. The menu opens towards the side with
+ * only then do they leave the list, and they name their state in words rather
+ * than only by being pale. The menu opens towards the side with
  * more space and scrolls internally when it cannot fit, and floats above the
  * card instead of being clipped by it.
  */
@@ -30,6 +31,8 @@ interface PersonSelectMenuProps {
 	onClose: () => void;
 	labelledBy?: string;
 	toggleLabel: (label: string, selected: boolean) => string;
+	/** Spelt-out state for people who have left the agency. */
+	vacatedHint: string;
 }
 
 const PREFERRED_MENU_HEIGHT = 420;
@@ -40,7 +43,8 @@ export const PersonSelectMenu = ({
 	anchorRef,
 	onClose,
 	labelledBy,
-	toggleLabel
+	toggleLabel,
+	vacatedHint
 }: PersonSelectMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const { direction, style } = useAnchoredMenuLayout(
@@ -141,6 +145,11 @@ export const PersonSelectMenu = ({
 						>
 							<span className="personSelectMenu__name">
 								{option.label}
+								{option.vacated && (
+									<span className="personSelectMenu__vacatedHint">
+										{vacatedHint}
+									</span>
+								)}
 							</span>
 							<span
 								className="personSelectMenu__toggle"

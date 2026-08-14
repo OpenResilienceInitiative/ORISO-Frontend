@@ -229,13 +229,17 @@ export const AndroidCompactKebabTouchZone: Story = {
 				const rect = (button as HTMLElement).getBoundingClientRect();
 				expect(Math.round(rect.width)).toBe(32);
 				expect(Math.round(rect.height)).toBe(32);
-				expect(button).toHaveAttribute('aria-label', 'More');
+				// German is the preview default; keep the assertion readable
+				// in either language rather than pinning one.
+				expect(button.getAttribute('aria-label')).toMatch(
+					/^(More|Weitere Optionen)$/
+				);
 			});
 		});
 		// Keep canvas typed usage so Storybook interaction panel stays wired.
-		expect(canvas.getAllByLabelText('More').length).toBeGreaterThanOrEqual(
-			2
-		);
+		expect(
+			canvas.getAllByLabelText(/^(More|Weitere Optionen)$/).length
+		).toBeGreaterThanOrEqual(2);
 	}
 };
 
@@ -758,7 +762,7 @@ export const KebabActiveState: Story = {
 			expect(getComputedStyle(menu).backgroundColor).toBe(
 				'rgb(255, 255, 255)'
 			);
-			expect(menu.textContent).toContain('Reply directly');
+			expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
 		});
 	}
 };
@@ -824,7 +828,7 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(found).toBeTruthy();
 			return found;
 		});
-		expect(menu.textContent).toContain('Reply directly');
+		expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
 
 		// The menu must stay inside the viewport on this side too — it is
 		// positioned from the right edge, so a wrong clamp pushes it off-screen.

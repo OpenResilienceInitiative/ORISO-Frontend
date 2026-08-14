@@ -36,6 +36,7 @@
 	},
 	"app": {
 		"back": "Zurück",
+		"cancel": "Abbrechen",
 		"claim": "Online. Anonym. Sicher.",
 		"close": "Schließen",
 		"closeBanner": "Banner schließen",
@@ -56,6 +57,7 @@
 			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
+		"stop": "Stopp",
 		"successful": "Erfolgreich",
 		"title": "Beratung",
 		"ui": {
@@ -293,6 +295,11 @@
 			}
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Textausschnitt zur Antwort hinzugefügt"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archivieren",
 		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
@@ -523,6 +530,7 @@
 					"facts": "<ul><li>Was ist passiert?</li><li>Wie ist Ihre aktuelle Situation?</li><li>Was beschäftigt Sie?</li><li>Haben Sie eine bestimmte Frage oder wissen Sie vielleicht selbst noch nicht so genau was Ihnen helfen könnte?</li></ul>",
 					"title": "Vielleicht helfen Ihnen folgende Punkte bei der Formulierung weiter:"
 				},
+				"deletionNotice": "Schreiben Sie uns direkt eine kurze Nachricht, damit dieser Account aktiv bleibt. Ohne erste Nachricht wird dieser Account in der kommenden Nacht automatisch gelöscht. Danach müssen Sie sich zunächst neu registrieren, bevor Sie Ihre Nachricht verfassen können.",
 				"headline": "Hier ist Platz für Ihre Anliegen.",
 				"iconTitle": "Willkommen"
 			},
@@ -779,7 +787,7 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
-			"nameLabel": "Name des internen Chats",
+			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"removePerson": "{{name}} entfernen",
@@ -787,7 +795,8 @@
 			"subtitle": "mit Ihren Kolleg:innen",
 			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"title": "Interna besprechen",
-			"togglePersonList": "Personenliste öffnen oder schließen"
+			"togglePersonList": "Personenliste öffnen oder schließen",
+			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {
 			"addModerator": "Co-Moderator:in hinzufügen",
@@ -1017,9 +1026,11 @@
 					},
 					"5": "Melden Sie sich bei der Online-Beratung an.",
 					"6": "Bitten Sie Ihre_n Berater_in Sie nochmals anzurufen.",
-					"1.1": "Folgen Sie dem Link zu ",
-					"1.2": " oder ",
-					"1.3": " (nur für macOS und iOS verfügbar)",
+					"1": {
+						"1": "Folgen Sie dem Link zu ",
+						"2": " oder ",
+						"3": " (nur für macOS und iOS verfügbar)"
+					},
 					"headline": {
 						"1": "Schritt-für-Schritt-Anleitung",
 						"2": "Sie haben bereits Google Chrome, Microsoft Edge oder Safari?"
@@ -1042,9 +1053,11 @@
 					},
 					"5": "Melden Sie sich bei der Online-Beratung an.",
 					"6": "Starten Sie den Video-Call.",
-					"1.1": "Folgen Sie dem Link zu ",
-					"1.2": " oder ",
-					"1.3": " (nur für macOS und iOS verfügbar)",
+					"1": {
+						"1": "Folgen Sie dem Link zu ",
+						"2": " oder ",
+						"3": " (nur für macOS und iOS verfügbar)"
+					},
 					"headline": {
 						"1": "Schritt-für-Schritt-Anleitung",
 						"2": "Sie haben bereits Google Chrome, Microsoft Edge oder Safari?"
@@ -1538,6 +1551,10 @@
 				"buttonLabel": "Termin zur Beratung vereinbaren",
 				"headline": "Oder vereinbare jetzt einen Termin"
 			},
+			"characterCounter": {
+				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
+				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
+			},
 			"toolbar": {
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
@@ -1613,8 +1630,10 @@
 			"selectAllBottom": "Alle auswählen"
 		},
 		"edit": {
+			"cancel": "Bearbeiten abbrechen",
 			"marker": "(bearbeitet)",
-			"markerTitle": "Nachricht wurde bearbeitet"
+			"markerTitle": "Nachricht wurde bearbeitet",
+			"previewLabel": "Nachricht bearbeiten"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1657,11 +1676,19 @@
 			"moderatorStartedTitle": "Moderator:in {{name}} hat eine Videokonferenz gestartet"
 		},
 		"yesterday": "Gestern",
+		"mobileNav": {
+			"back": "Zurück",
+			"dragToExpand": "Ziehen, um den Editor zu vergrößern",
+			"scrollToBottom": "Zum Ende scrollen"
+		},
 		"reply": {
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
 			"quoteLabel": "Antwort auf",
 			"quoteUnknown": "Frühere Nachricht"
+		},
+		"thread": {
+			"unknownRoot": "Frühere Nachricht"
 		}
 	},
 	"navigation": {
@@ -1694,6 +1721,12 @@
 		"profile": "Profil",
 		"myProfile": "Mein Profil",
 		"tools": "Meine Tools"
+	},
+	"notification": {
+		"error": "Fehler",
+		"info": "Information",
+		"success": "Erfolg",
+		"warning": "Warnung"
 	},
 	"notifications": {
 		"families": {
@@ -1868,8 +1901,22 @@
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
-				"empty": "Noch keine Nachrichten in diesem Gespräch."
-			}
+				"empty": "Noch keine Nachrichten in diesem Gespräch.",
+				"image": "Bild",
+				"file": "Datei",
+				"audio": "Audionachricht",
+				"video": "Video",
+				"notice": "Hinweis",
+				"unsupported": "Nicht unterstützte Nachricht",
+				"pending": "Wird entschlüsselt",
+				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
+			},
+			"loadOlder": "Ältere Aktivitäten laden",
+			"loadingOlder": "Ältere Aktivitäten werden geladen…",
+			"olderError": "Ältere Aktivitäten konnten nicht geladen werden.",
+			"retryOlder": "Erneut versuchen",
+			"endOfHistory": "Ende des Aktivitätsverlaufs"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -1942,6 +1989,13 @@
 					},
 					"text": "Link kopieren",
 					"title": "Registrierungslink zur Beratungsstelle in Zwischenablage kopieren"
+				},
+				"mapLink": "In OpenStreetMap öffnen",
+				"openingHours": {
+					"label": "Öffnungszeiten"
+				},
+				"phone": {
+					"label": "Telefon"
 				}
 			},
 			"displayName": "Anzeigename",
@@ -2000,7 +2054,13 @@
 				"consultingTypeSelect": {
 					"label": "Themenfelder"
 				},
-				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne."
+				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne.",
+				"dialog": {
+					"openButton": "Weiteres Thema anfragen",
+					"title": "Neue Anfrage stellen",
+					"close": "Schließen"
+				},
+				"agencyKnownBadge": "Bereits mit Ihnen in Kontakt"
 			},
 			"registerError": {
 				"overlay": {
@@ -2260,6 +2320,58 @@
 					"active": "Benachrichtigungen aktiv — klicken zum Stummschalten",
 					"muted": "Alle Benachrichtigungen stumm — klicken zum Aktivieren"
 				}
+			},
+			"descriptionAsker": "Wir schreiben Ihnen nur, wenn etwas passiert ist, das Sie betrifft. Was genau, sehen Sie immer erst nach der Anmeldung – nie in der E-Mail.",
+			"descriptionConsultant": "Ihr Arbeitsstrom per E-Mail. Inhalte aus Beratungen stehen nie in einer E-Mail.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Neue Nachricht",
+						"description": "Ihre Beratung hat Ihnen geschrieben, oder Ihre Anfrage wurde angenommen."
+					},
+					"appointment": {
+						"title": "Termine",
+						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Neue Anfragen",
+						"description": "Eine Anfrage ist in Ihrer Beratungsstelle eingegangen oder richtet sich direkt an Sie."
+					},
+					"dailyDigest": {
+						"title": "Tagesübersicht",
+						"description": "Einmal täglich: wie viele Anfragen offen sind und wie lange die älteste wartet."
+					},
+					"newMessage": {
+						"title": "Nachrichten von Ratsuchenden",
+						"description": "Eine ratsuchende Person hat in einer Ihrer Beratungen geschrieben."
+					},
+					"assignment": {
+						"title": "Zuweisungen",
+						"description": "Ihnen wurde eine Anfrage zugewiesen."
+					},
+					"reassignment": {
+						"title": "Übergaben",
+						"description": "Eine Beratung soll an Sie übergeben werden, oder eine Übergabe wurde bestätigt."
+					},
+					"feedback": {
+						"title": "Fachaustausch",
+						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für Sie."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Wartung und Hinweise",
+						"description": "Geplante Wartungsfenster und Hinweise zur Plattform. Störungen melden wir immer."
+					}
+				},
+				"alwaysSent": {
+					"title": "Diese E-Mails bekommen Sie immer:",
+					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an Ihrem Zugang.",
+					"legal": "Vertragliches – zum Beispiel ein Auftragsverarbeitungsvertrag zur Unterschrift.",
+					"outage": "Störungen der Plattform."
+				}
 			}
 		},
 		"routes": {
@@ -2367,6 +2479,47 @@
 			"families": {
 				"title": "Benachrichtigen bei",
 				"description": "Wählen Sie, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
+			}
+		},
+		"encryption": {
+			"title": "Verschlüsselung & Wiederherstellung",
+			"description": "Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
+			"loading": "Wird geladen …",
+			"unavailable": "Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.",
+			"setup": {
+				"busy": "Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.",
+				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"explainer": "Richten Sie einmalig einen Wiederherstellungsschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.",
+				"cta": "Wiederherstellungsschlüssel einrichten"
+			},
+			"showKey": {
+				"silentExplainer": "Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Wiederherstellungsschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
+				"explainer": "Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.",
+				"copy": "Schlüssel kopieren",
+				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert."
+			},
+			"status": {
+				"ok": "✓ Schlüsselsicherung ist aktiv. Ihr Verlauf bleibt auf neuen Geräten lesbar."
+			},
+			"changeKey": {
+				"cta": "Wiederherstellungsschlüssel ändern"
+			},
+			"outOfSync": {
+				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Wiederherstellungsschlüssel ein, damit Ihr Verlauf hier lesbar wird."
+			},
+			"recover": {
+				"inputLabel": "Wiederherstellungsschlüssel",
+				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
+				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt."
+			},
+			"reset": {
+				"explainer": "Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
+				"cta": "Verschlüsselung zurücksetzen",
+				"confirmWarning": "Sind Sie sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.",
+				"confirmCta": "Ja, zurücksetzen",
+				"cancel": "Abbrechen",
+				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
 			}
 		}
 	},
@@ -2720,6 +2873,10 @@
 		},
 		"next": "Weiter",
 		"register": "Registrieren",
+		"stepbar": {
+			"of": "von",
+			"step": "Schritt"
+		},
 		"topic": {
 			"headline": "Zu welchem Thema suchen Sie Beratung?",
 			"infoOverlay": {
@@ -2734,6 +2891,8 @@
 			"summary": "Ihr Thema:"
 		},
 		"zipcode": {
+			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
+			"bullet2": "• die Gesetze Ihres Bundeslandes kennen",
 			"headline": "Wo suchen Sie Beratung?",
 			"label": "Ihre Postleitzahl",
 			"subline": "Nur Ihre Postleitzahl — mehr brauchen wir nicht.",
@@ -2748,6 +2907,7 @@
 				"inPerson": "Wenn Sie möchten, können Sie später auch persönlich weiterreden."
 			}
 		},
+		"registering": "Registrierung läuft...",
 		"stepper": {
 			"progress": "Schritt {{current}} von {{total}}",
 			"progressShort": "Schritt {{current}}/{{total}}"
@@ -2809,7 +2969,7 @@
 			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
 			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
-			"decline": "Zugriff ablehnen"
+			"decline": "Zugriff verweigern"
 		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
@@ -3151,7 +3311,8 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Gesprächskreis"
 			}
 		},
 		"createChat": {
@@ -3765,6 +3926,16 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Aufnahme läuft…",
+			"error": {
+				"headline": "Sprachaufnahme nicht verfügbar",
+				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
+			},
+			"preview": "Sprachnachricht"
+		}
+	},
 	"voicePlayer": {
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
@@ -3932,6 +4103,16 @@
 			"cancelDelete": "Abbrechen",
 			"confirmDelete": "Ja, endgültig löschen",
 			"error": "Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal."
+		},
+		"noAvailability": {
+			"subtitle": "Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.",
+			"openingHours": "Reguläre Öffnungszeiten anzeigen",
+			"mailHint": "Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.",
+			"tip": "Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.",
+			"startMailCounseling": "anonyme Mail-Beratung starten",
+			"responseTime": "Antwort innerhalb von 2 Werktagen",
+			"back": "Zurück zur vorherigen Seite",
+			"later": "Später wiederkommen"
 		}
 	},
 	"sessionHeader": {
@@ -3998,7 +4179,10 @@
 				"remove": "Entfernen",
 				"added": "Hinzugefügt",
 				"loading": "Lädt...",
-				"loadingConsultants": "Lädt Berater..."
+				"loadingConsultants": "Lädt Berater...",
+				"reasonLabel": "Grund für die Supervision",
+				"reasonPlaceholder": "Bitte geben Sie den Grund für die Supervision an...",
+				"reasonError": "Bitte geben Sie einen Grund an."
 			},
 			"success": {
 				"add": {
@@ -4022,6 +4206,9 @@
 				"loadConsultants": {
 					"title": "Fehler",
 					"text": "Berater konnten nicht geladen werden."
+				},
+				"reasonRequired": {
+					"text": "Bitte geben Sie den Grund für die Supervision an."
 				}
 			},
 			"remove": {
@@ -4229,5 +4416,47 @@
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
 		}
+	},
+	"dpaSign": {
+		"title": "AVV unterzeichnen",
+		"subtitle": "Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
+		"loadingContract": "Vereinbarung wird geladen...",
+		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
+		"signingFor": "Sie unterzeichnen im Namen von:",
+		"accept": "Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.",
+		"submit": "Verbindlich bestätigen",
+		"submitting": "Speichern...",
+		"success": "Die AVV-Bestätigung wurde gespeichert.",
+		"error": {
+			"missingToken": "Der Signaturlink ist unvollständig.",
+			"previewRequired": "Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.",
+			"acceptRequired": "Bitte bestätigen Sie die Vereinbarung.",
+			"generic": "Die Signatur konnte gerade nicht gespeichert werden.",
+			"invalidToken": "Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.",
+			"invalidRequest": "Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
+				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+				"recoveryTitle": "Schön, dass Sie wieder da sind",
+				"recoveryCopy": "Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.",
+				"recoveryInstruction": "Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.",
+				"keyLabel": "Wiederherstellungsschlüssel",
+				"later": "Später",
+				"openVault": "Tresor öffnen"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "Der Einladungslink ist ungültig oder abgelaufen.",
+		"createFailed": "Das Beratungskonto konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+		"loading": "Einladung wird geladen",
+		"success": "Ihr Beratungskonto wurde erstellt.",
+		"toLogin": "Zur Anmeldung",
+		"description": "Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.",
+		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
 	}
 }

@@ -1442,8 +1442,22 @@
 			"showDetails": "Detayları göster",
 			"preview": {
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
-				"empty": "Bu sohbette henüz mesaj yok."
-			}
+				"empty": "Bu sohbette henüz mesaj yok.",
+				"image": "Görsel",
+				"file": "Dosya",
+				"audio": "Sesli mesaj",
+				"video": "Video",
+				"notice": "Bildirim",
+				"unsupported": "Desteklenmeyen mesaj",
+				"pending": "Şifre çözme bekleniyor",
+				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+			},
+			"loadOlder": "Eski etkinlikleri yükle",
+			"loadingOlder": "Eski etkinlikler yükleniyor…",
+			"olderError": "Eski etkinlikler yüklenemedi.",
+			"retryOlder": "Tekrar dene",
+			"endOfHistory": "Etkinlik geçmişinin sonu"
 		}
 	},
 	"overlay": {
@@ -3043,7 +3057,12 @@
 		"agencies": {
 			"noresults": "Bu konu için uygun bir danışma merkezi yok."
 		},
-		"start": "Danışmayı başlat"
+		"start": "Danışmayı başlat",
+		"consent": {
+			"accept": "Kabul ediyorum",
+			"reject": "Kabul etmiyorum",
+			"mustAcceptToContinue": "Devam etmek için gizlilik politikamızı kabul etmeniz gerekir."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {

@@ -1439,8 +1439,22 @@
 			"showDetails": "ዝርዝር ኣርእይ",
 			"preview": {
 				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
-				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።"
-			}
+				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።",
+				"image": "ምስሊ",
+				"file": "ፋይል",
+				"audio": "መልእኽቲ ድምጺ",
+				"video": "ቪድዮ",
+				"notice": "ምልክታ",
+				"unsupported": "ዘይድገፍ መልእኽቲ",
+				"pending": "ምፍታሕ ምስጢር ይጽበ",
+				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+			},
+			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
+			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
+			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
+			"retryOlder": "ደጊምካ ፈትን",
+			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
 		}
 	},
 	"overlay": {
@@ -3007,7 +3021,12 @@
 		"agencies": {
 			"noresults": "እዚ ርእስ ንምክር የለን ማእከል ምክር።"
 		},
-		"start": "ምክር ጀምር"
+		"start": "ምክር ጀምር",
+		"consent": {
+			"accept": "ይሰማማዕ እየ",
+			"reject": "ኣይሰማማዕን እየ",
+			"mustAcceptToContinue": "ንምቕጻል ንፖሊሲ ውልቃዊ ሓበሬታና ክትሰማምዑ ኣለኩም።"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3178,7 +3197,7 @@
 	},
 	"anonymousConsent": {
 		"button": "ኣረጋግፅ",
-		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ናይ ቪድዮ ጻውዒት ክጅምሩ ይኽእሉ።",
+		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ቻት ክጅምሩ ይኽእሉ።",
 		"headline": "እንኳዕ ደሓን መፁ!",
 		"label": {
 			"and": "እና",

@@ -10,11 +10,16 @@ import { Headline } from '../../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import { AgencyRadioSelect } from '../../agencyRadioSelect/AgencyRadioSelect';
 import { VALID_POSTCODE_LENGTH } from '../../agencySelection/agencySelectionHelpers';
+import { sortKnownAgenciesFirst } from '../../../utils/sortKnownAgenciesFirst';
 
 export interface AdditionalAgencySelectionProps {
 	onAgencyChange: Function;
 	onPostcodeChange: Function;
 	selectedTopicId: number;
+	/** Prefill for the postcode input - user can still change it. */
+	initialPostcode?: string;
+	/** Agencies the asker already talks to; listed first with a badge. */
+	knownAgencyIds?: number[];
 }
 
 export const AdditionalAgencySelection = (
@@ -24,10 +29,12 @@ export const AdditionalAgencySelection = (
 	const [proposedAgencies, setProposedAgencies] = useState<
 		AgencyDataInterface[] | null
 	>(null);
-	const [selectedPostcode, setSelectedPostcode] = useState('');
+	const [selectedPostcode, setSelectedPostcode] = useState(
+		props.initialPostcode ?? ''
+	);
 	const [selectedAgency, setSelectedAgency] =
 		useState<AgencyDataInterface | null>(null);
-	
+
 	// Debug logging
 	useEffect(() => {
 		// console.log('🟢 selectedAgency changed:', selectedAgency?.id);
@@ -57,10 +64,14 @@ export const AdditionalAgencySelection = (
 		if (validPostcode()) {
 			apiGetAgenciesByTenant(selectedPostcode, props.selectedTopicId)
 				.then((agencies) => {
-					setProposedAgencies(agencies);
+					const sorted = sortKnownAgenciesFirst(
+						agencies,
+						props.knownAgencyIds
+					);
+					setProposedAgencies(sorted);
 					// Only set default agency if none is selected yet
 					if (!selectedAgency) {
-					setSelectedAgency(agencies[0]);
+						setSelectedAgency(sorted[0]);
 					}
 				})
 				.catch((err: any) => {
@@ -153,16 +164,29 @@ export const AdditionalAgencySelection = (
 						{proposedAgencies ? (
 							proposedAgencies.map(
 								(proposedAgency: AgencyDataInterface) => (
-									<AgencyRadioSelect
-										key={`agency-${proposedAgency.id}`}
-										agency={proposedAgency}
-									checkedValue={selectedAgency?.id.toString() || ''}
-										showTooltipAbove={true}
-									onChange={(agency) => {
-										// console.log('🔵 Radio clicked, setting agency:', agency.id);
-										setSelectedAgency(agency);
-									}}
-									/>
+									<div key={`agency-${proposedAgency.id}`}>
+										{props.knownAgencyIds?.includes(
+											proposedAgency.id
+										) && (
+											<Text
+												text={translate(
+													'profile.data.register.agencyKnownBadge'
+												)}
+												type="infoLargeAlternative"
+											/>
+										)}
+										<AgencyRadioSelect
+											agency={proposedAgency}
+											checkedValue={
+												selectedAgency?.id.toString() ||
+												''
+											}
+											showTooltipAbove={true}
+											onChange={(agency) => {
+												setSelectedAgency(agency);
+											}}
+										/>
+									</div>
 								)
 							)
 						) : (

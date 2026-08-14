@@ -84,6 +84,8 @@ export interface EventActionParams {
 	seriesId?: string | number | null;
 	/** Matrix room id / RC group id, when known. */
 	roomRef?: string | null;
+	/** Opaque Matrix event id used only for local E2EE preview correlation. */
+	matrixEventId?: string | null;
 	/** Draft resume scope key (`forcedScopeKey`) for draft events. */
 	forcedScopeKey?: string | null;
 	/** Thread root id for thread-scoped message events. */

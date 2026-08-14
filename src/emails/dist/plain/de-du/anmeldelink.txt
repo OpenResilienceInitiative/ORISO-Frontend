@@ -1,0 +1,25 @@
+Dein Anmeldelink
+================
+
+Mit diesem Link meldest du dich ohne Passwort an.
+
+Der Link gilt {{expiryMinutes}} Minuten und funktioniert genau einmal.
+
+Jetzt anmelden:
+{{loginUrl}}
+
+Wenn du dich nicht anmelden wolltest, ignorier diese E-Mail. Ohne den Link passiert nichts.
+
+----------------------------------------------------------------
+Wir fragen dich nie per E-Mail nach deinem Passwort. Gib diesen Link an niemanden weiter.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+
+Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

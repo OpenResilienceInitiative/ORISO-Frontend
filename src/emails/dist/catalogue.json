@@ -1,0 +1,696 @@
+{
+  "dialects": [
+    "plain",
+    "thymeleaf",
+    "freemarker"
+  ],
+  "tones": [
+    "de-sie",
+    "de-du",
+    "en"
+  ],
+  "mails": {
+    "neue-nachricht": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Sie haben eine neue Nachricht",
+          "preheader": "In Ihrer Beratung liegt eine neue Nachricht für Sie bereit."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Du hast eine neue Nachricht",
+          "preheader": "In deiner Beratung liegt eine neue Nachricht für dich bereit."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "You have a new message",
+          "preheader": "A new message is waiting for you in your counselling."
+        }
+      }
+    },
+    "willkommen": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{username}}",
+        "{{loginUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Willkommen bei {{platformName}}",
+          "preheader": "Ihr anonymer Zugang ist eingerichtet – so geht es weiter."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Willkommen bei {{platformName}}",
+          "preheader": "Dein anonymer Zugang ist eingerichtet – so geht es weiter."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Welcome to {{platformName}}",
+          "preheader": "Your anonymous account is ready – here is what happens next."
+        }
+      }
+    },
+    "passwort-zuruecksetzen": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryHours}}",
+        "{{resetUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neues Passwort festlegen",
+          "preheader": "Der Link ist {{expiryHours}} Stunden gültig."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neues Passwort festlegen",
+          "preheader": "Der Link ist {{expiryHours}} Stunden gültig."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Set a new password",
+          "preheader": "The link is valid for {{expiryHours}} hours."
+        }
+      }
+    },
+    "termin": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{appointmentDate}}",
+        "{{appointmentTime}}",
+        "{{appointmentType}}",
+        "{{locationName}}",
+        "{{locationAddress}}",
+        "{{appointmentUrl}}",
+        "{{mapUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Termin am {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Termin am {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your appointment on {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+        }
+      }
+    },
+    "beraterin-kontakt": {
+      "audience": "asker",
+      "class": "requested",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{consultantName}}",
+        "{{consultantPhone}}",
+        "{{consultantHours}}",
+        "{{consultantEmail}}",
+        "{{bookingUrl}}",
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "So erreichen Sie Ihre Beratung",
+          "preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "So erreichst du deine Beratung",
+          "preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "How to reach your counselling service",
+          "preheader": "Direct line, phone hours and booking at a glance."
+        }
+      }
+    },
+    "anfrage-zugewiesen": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestPostcode}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Beratungsanfrage",
+          "preheader": "Eine neue Anfrage wartet auf Sie."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Beratungsanfrage",
+          "preheader": "Eine neue Anfrage wartet auf dich."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New counselling request",
+          "preheader": "A new request is waiting for you."
+        }
+      }
+    },
+    "systemhinweis": {
+      "audience": "asker",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{maintenanceDate}}",
+        "{{maintenanceStart}}",
+        "{{maintenanceEnd}}",
+        "{{statusUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Geplante Wartung am {{maintenanceDate}}",
+          "preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Geplante Wartung am {{maintenanceDate}}",
+          "preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Scheduled maintenance on {{maintenanceDate}}",
+          "preheader": "Unavailable from {{maintenanceStart}} to {{maintenanceEnd}}."
+        }
+      }
+    },
+    "neue-anfrage": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestPostcode}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Anfrage in Ihrer Beratungsstelle",
+          "preheader": "Eine Anfrage wartet auf Annahme."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Anfrage in deiner Beratungsstelle",
+          "preheader": "Eine Anfrage wartet auf Annahme."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New enquiry at your counselling service",
+          "preheader": "An enquiry is waiting to be accepted."
+        }
+      }
+    },
+    "direkte-anfrage": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Eine Anfrage richtet sich direkt an Sie",
+          "preheader": "Diese Anfrage wurde für Sie geschrieben."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Eine Anfrage richtet sich direkt an dich",
+          "preheader": "Diese Anfrage wurde für dich geschrieben."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "An enquiry is addressed to you directly",
+          "preheader": "This enquiry was written for you."
+        }
+      }
+    },
+    "tagesuebersicht": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{openRequestCount}}",
+        "{{oldestRequestAge}}",
+        "{{digestGeneratedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihre Tagesübersicht",
+          "preheader": "Offene Anfragen in Ihrer Beratungsstelle."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Deine Tagesübersicht",
+          "preheader": "Offene Anfragen in deiner Beratungsstelle."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your daily summary",
+          "preheader": "Open enquiries at your counselling service."
+        }
+      }
+    },
+    "uebergabe-angefragt": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{fromConsultantName}}",
+        "{{caseReference}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Übergabe angefragt",
+          "preheader": "Eine Beratung soll an Sie übergeben werden."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Übergabe angefragt",
+          "preheader": "Eine Beratung soll an dich übergeben werden."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Handover requested",
+          "preheader": "A counselling case is to be handed over to you."
+        }
+      }
+    },
+    "uebergabe-bestaetigt": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{toConsultantName}}",
+        "{{caseReference}}",
+        "{{handoverAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Übergabe bestätigt",
+          "preheader": "Die Zuständigkeit hat gewechselt."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Übergabe bestätigt",
+          "preheader": "Die Zuständigkeit hat gewechselt."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Handover confirmed",
+          "preheader": "Responsibility has changed."
+        }
+      }
+    },
+    "rueckmeldung": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{caseReference}}",
+        "{{requestReceivedAt}}",
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Rückmeldung im Fachaustausch",
+          "preheader": "Im Fachaustausch liegt eine Rückmeldung für Sie."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Rückmeldung im Fachaustausch",
+          "preheader": "Im Fachaustausch liegt eine Rückmeldung für dich."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New reply in the professional exchange",
+          "preheader": "A reply is waiting for you in the professional exchange."
+        }
+      }
+    },
+    "mitteilung": {
+      "audience": "asker",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{messageSubject}}",
+        "{{messagePreview}}",
+        "{{messageHeadline}}",
+        "{{messageBody}}",
+        "{{loginUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "en": {
+          "lang": "en",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        }
+      }
+    },
+    "anmeldelink": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryMinutes}}",
+        "{{loginUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Anmeldelink für {{platformName}}",
+          "preheader": "Der Link gilt {{expiryMinutes}} Minuten."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Anmeldelink für {{platformName}}",
+          "preheader": "Der Link gilt {{expiryMinutes}} Minuten."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your sign-in link for {{platformName}}",
+          "preheader": "The link is valid for {{expiryMinutes}} minutes."
+        }
+      }
+    },
+    "einmalcode": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryMinutes}}",
+        "{{otpCode}}",
+        "{{loginUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Einmalcode für die Anmeldung",
+          "preheader": "Der Code gilt {{expiryMinutes}} Minuten."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Einmalcode für die Anmeldung",
+          "preheader": "Der Code gilt {{expiryMinutes}} Minuten."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your one-time code for signing in",
+          "preheader": "The code is valid for {{expiryMinutes}} minutes."
+        }
+      }
+    },
+    "email-geaendert": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{username}}",
+        "{{appUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihre E-Mail-Adresse wurde geändert",
+          "preheader": "Die Änderung ist ab sofort aktiv."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Deine E-Mail-Adresse wurde geändert",
+          "preheader": "Die Änderung ist ab sofort aktiv."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your email address has been changed",
+          "preheader": "The change is active from now on."
+        }
+      }
+    },
+    "einladung-traeger": {
+      "audience": "admin",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{tenantName}}",
+        "{{inviteExpiresAt}}",
+        "{{inviteUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Einladung: {{tenantName}} bei {{platformName}}",
+          "preheader": "Richten Sie Ihren Zugang zur Administration ein."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Einladung: {{tenantName}} bei {{platformName}}",
+          "preheader": "Richte deinen Zugang zur Administration ein."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Invitation: {{tenantName}} on {{platformName}}",
+          "preheader": "Set up your administration access."
+        }
+      }
+    },
+    "einladung-fachkraft": {
+      "audience": "consultant",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{agencyName}}",
+        "{{inviteExpiresAt}}",
+        "{{inviteUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Einladung in die Beratung bei {{platformName}}",
+          "preheader": "Richten Sie Ihren Zugang als Fachkraft ein."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Einladung in die Beratung bei {{platformName}}",
+          "preheader": "Richte deinen Zugang als Fachkraft ein."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Invitation to counsel on {{platformName}}",
+          "preheader": "Set up your counsellor access."
+        }
+      }
+    },
+    "avv-unterschrift": {
+      "audience": "admin",
+      "class": "legal",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{tenantName}}",
+        "{{dpaProvidedAt}}",
+        "{{dpaExpiresAt}}",
+        "{{dpaUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
+          "preheader": "Der AVV für {{tenantName}} liegt bereit."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
+          "preheader": "Der AVV für {{tenantName}} liegt bereit."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Data processing agreement ready for signature",
+          "preheader": "The agreement for {{tenantName}} is ready."
+        }
+      }
+    },
+    "team-aenderung": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{teamChangeStatement}}",
+        "{{caseReference}}",
+        "{{teamChangedAt}}",
+        "{{appUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Änderung in Ihrem Team",
+          "preheader": "Ihre Zuständigkeiten haben sich geändert."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Änderung in deinem Team",
+          "preheader": "Deine Zuständigkeiten haben sich geändert."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "A change in your team",
+          "preheader": "Your responsibilities have changed."
+        }
+      }
+    },
+    "smtp-test": {
+      "audience": "admin",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{smtpHost}}",
+        "{{smtpFrom}}",
+        "{{sentAt}}",
+        "{{appUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "SMTP-Test erfolgreich",
+          "preheader": "Der Versand über {{smtpHost}} funktioniert."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "SMTP-Test erfolgreich",
+          "preheader": "Der Versand über {{smtpHost}} funktioniert."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "SMTP test successful",
+          "preheader": "Sending via {{smtpHost}} works."
+        }
+      }
+    }
+  }
+}

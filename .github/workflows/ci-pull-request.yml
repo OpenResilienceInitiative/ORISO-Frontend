@@ -38,6 +38,53 @@ jobs:
           platforms: linux/amd64
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+  # Runs every story in a real Chromium: renders it, executes its `play`
+  # function, and fails on any axe (WCAG 2.2 AA) violation, because
+  # .storybook/preview.tsx sets `a11y.test: 'error'`. Kept separate from
+  # `validate` so it runs in parallel and a red story is attributable at a
+  # glance instead of hiding inside the build job.
+  storybook-tests:
+    name: Storybook component tests (interactions + a11y)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # This job only reads the tree and runs tests; it never pushes. Not
+          # leaving a usable token in .git/config keeps a compromised dependency
+          # in the install step from using it.
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        # Same flags as .github/actions/node-build: --ignore-scripts for
+        # supply-chain hardening, --legacy-peer-deps because @cypress/react@7
+        # still peers on @types/react 17.
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Install Chromium for Vitest browser mode
+        # --ignore-scripts above skips Playwright's own postinstall, so the
+        # browser has to be fetched explicitly. Chromium only — this suite
+        # asserts behaviour and accessibility, not cross-browser rendering.
+        #
+        # Not `npx playwright`: this repo has two packages shipping that bin —
+        # `playwright` (which @vitest/browser drives) and the older
+        # `@playwright/test` used by the smoke specs. npx picked the latter and
+        # installed the wrong Chromium revision, so the run died with
+        # "Executable doesn't exist at …/chromium_headless_shell-1208".
+        # Address the CLI that belongs to the version the tests actually launch.
+        run: node node_modules/playwright/cli.js install --with-deps chromium
+
+      - name: Run Storybook component tests
+        run: npm run test:storybook
+
 # NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
 # NOT a CI job. The app's bootstrap requires a reachable backend to render; CI
 # runners can't reach the dev cluster, so a browser smoke would need Cypress's
