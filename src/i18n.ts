@@ -157,9 +157,9 @@ export const init = async (
 								translation?.cache?.disabled
 							) && LocalStorageBackend,
 
-						translation?.weblate.path && FetchBackend,
-						resourcesToBackend(unflatten(baseResources) as any)
-					].filter(Boolean),
+							translation?.weblate.path && FetchBackend,
+							resourcesToBackend(unflatten(baseResources) as any)
+						].filter(Boolean),
 						backendOptions: [
 							!(
 								translationCacheDisabledLocally ??
@@ -287,13 +287,13 @@ export const init = async (
 
 					missingKeys.forEach((missingKey) => {
 						if (!deLanguageKeys.includes(missingKey)) {
-							// console.error(
-							// `[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
-							// );
+							console.error(
+								`[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
+							);
 						} else if (lng.indexOf('@informal') < 0) {
-							// console.error(
-							// `[${lng}] has missing key "${missingKey}"`
-							// );
+							console.error(
+								`[${lng}] has missing key "${missingKey}"`
+							);
 						}
 					});
 				});
