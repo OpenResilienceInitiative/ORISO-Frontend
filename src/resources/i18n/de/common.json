@@ -2921,7 +2921,7 @@
 			"headline": "Geschafft.",
 			"subline": "So geht es weiter:",
 			"cta": "Anfrage schreiben",
-			"encryption": "Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.",
+			"encryption": "Verschlüsselt: Außer Ihnen sieht Ihre Anfrage nur Ihre Beratungsstelle.",
 			"goToStep": "Zu Schritt {{position}} von {{total}}",
 			"steps": {
 				"write": {
@@ -2929,7 +2929,7 @@
 					"text": "Was ist passiert, wo, seit wann? Ein paar Sätze genügen."
 				},
 				"counsellor": {
-					"title": "Wir finden Ihre Beraterin",
+					"title": "Wir finden die passende Beratung",
 					"text": "Fachlich passend — und mit Zeit für Sie."
 				},
 				"reply": {
