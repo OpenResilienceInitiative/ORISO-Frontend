@@ -627,7 +627,8 @@
 					"text": "Bağlantı panoya kopyalandı!",
 					"title": "Bağlantı kopyalandı"
 				},
-				"text": "Davetiye bağlantısını kopyala"
+				"text": "Davetiye bağlantısını kopyala",
+				"title": "Davet bağlantısını panoya kopyala"
 			}
 		},
 		"create": {

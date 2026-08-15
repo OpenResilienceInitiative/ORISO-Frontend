@@ -673,7 +673,8 @@
 					"text": "Link copied to clipboard!",
 					"title": "Link copied"
 				},
-				"text": "Copy invitation link"
+				"text": "Copy invitation link",
+				"title": "Copy invitation link to clipboard"
 			}
 		},
 		"create": {
