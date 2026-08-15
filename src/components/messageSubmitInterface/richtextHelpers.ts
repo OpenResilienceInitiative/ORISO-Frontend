@@ -147,11 +147,22 @@ export const sanitizeHtmlDefaultOptions = {
 		'span',
 		's',
 		'strike',
-		'img'
+		'img',
+		// Task lists (#1079): without these the checkbox structure is stripped
+		// and a list the sender saw as ☑ / ☐ arrives as plain bullets. Both are
+		// forced inert by `transformTags` below.
+		'input',
+		'label'
 	],
 	allowedAttributes: {
 		...sanitizeHtml.defaults.allowedAttributes,
+		// #1080: `rel` has to be allowed before `transformTags` can force it.
+		a: ['href', 'name', 'target', 'rel'],
 		div: ['style', 'class'],
+		// Task-list state travels on the list item and its checkbox.
+		ul: ['data-type'],
+		li: ['data-checked', 'data-type'],
+		input: ['type', 'checked', 'disabled'],
 		p: ['style'],
 		h1: ['style'],
 		h2: ['style'],
@@ -225,6 +236,36 @@ export const sanitizeHtmlDefaultOptions = {
 		}
 	},
 	transformTags: {
+		/**
+		 * #1080 — every rendered link is forced to `rel="noopener noreferrer
+		 * nofollow"`, whatever the sender's client produced. Forced rather than
+		 * merely allowed: an old message, or a hostile body, must not be able
+		 * to opt out and hand the opened page a live `window.opener` handle on
+		 * the counselling tab.
+		 */
+		a: (tagName, attribs) => ({
+			tagName,
+			attribs: {
+				...attribs,
+				rel: 'noopener noreferrer nofollow'
+			}
+		}),
+		/**
+		 * #1079 — a task-list checkbox may be *displayed* but never operated:
+		 * the reader is looking at the sender's list, not their own. Type and
+		 * disabled state are forced so no other input kind can slip through the
+		 * newly allowed `input` tag.
+		 */
+		input: (tagName, attribs) => ({
+			tagName,
+			attribs: {
+				type: 'checkbox',
+				disabled: 'disabled',
+				...(attribs.checked !== undefined
+					? { checked: 'checked' }
+					: {})
+			}
+		}),
 		mark: (tagName, attribs) => {
 			const dataColor = attribs['data-color'] || '';
 			const extractedFromStyle =

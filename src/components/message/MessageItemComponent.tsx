@@ -82,6 +82,14 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift
+} from '@floating-ui/dom';
+import type { Placement, VirtualElement } from '@floating-ui/dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import {
 	formatMessagePersonName,
@@ -452,6 +460,15 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// #1081: both menus are anchored with floating-ui instead of a one-shot
+	// calculation, so they follow their message while the timeline scrolls and
+	// stay on screen at any menu length. The anchor is either the trigger
+	// button or — for a long-press — a virtual element at the press point.
+	const [actionMenuAnchor, setActionMenuAnchor] = useState<
+		Element | VirtualElement | null
+	>(null);
+	const [actionMenuPlacement, setActionMenuPlacement] =
+		useState<Placement>('right-start');
 	// Quick-reaction row: the user's own recent picks, refreshed every time the
 	// menu opens, plus the "more" button that hands over to the full picker.
 	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
@@ -463,6 +480,10 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
+		useState<Element | null>(null);
+	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
+		useState<Placement>('top-start');
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -1373,30 +1394,29 @@ export const MessageItemComponent = ({
 		[confirmDeleteMessage, isDeleteRequestInProgress, translate]
 	);
 
+	/**
+	 * Opens the menu against a fixed point — the long-press position. floating-ui
+	 * takes a virtual element, so the same positioning path serves both the
+	 * point and the button anchor below.
+	 */
 	const openActionMenuAt = useCallback(
-		(preferredLeft: number, preferredTop: number) => {
-			const menuWidth = 210;
-			const menuHeight = 300;
-			const viewportPadding = 12;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredTop,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
+		(clientX: number, clientY: number) => {
 			setIsVisibilityMenuOpen(false);
 			setVisibilityMenuPosition(null);
-			setActionMenuPosition({
-				top: computedTop,
-				left: computedLeft
+			setVisibilityMenuAnchor(null);
+			setActionMenuPlacement('right-start');
+			setActionMenuAnchor({
+				getBoundingClientRect: () =>
+					({
+						width: 0,
+						height: 0,
+						x: clientX,
+						y: clientY,
+						top: clientY,
+						left: clientX,
+						right: clientX,
+						bottom: clientY
+					}) as DOMRect
 			});
 			setIsActionMenuOpen(true);
 		},
@@ -1410,22 +1430,56 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 210;
-			const gap = 10;
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.right + gap
-					: triggerRect.left - menuWidth - gap;
 			if (isActionMenuOpen) {
 				setIsActionMenuOpen(false);
 				setActionMenuPosition(null);
+				setActionMenuAnchor(null);
 				return;
 			}
-			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+			setIsVisibilityMenuOpen(false);
+			setVisibilityMenuPosition(null);
+			setVisibilityMenuAnchor(null);
+			// The kebab sits outside the bubble, so the menu opens away from it:
+			// to the right on the incoming side, to the left on the outgoing one.
+			setActionMenuPlacement(
+				side === 'left' ? 'right-start' : 'left-start'
+			);
+			setActionMenuAnchor(event.currentTarget);
+			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen, openActionMenuAt]
+		[isActionMenuOpen]
 	);
+
+	// Keeps the action menu on its anchor across scroll, resize and any change
+	// in menu height — replacing a one-shot calculation that assumed a fixed
+	// 300px menu and never ran again.
+	useEffect(() => {
+		const menuEl = actionMenuRef.current;
+		if (!isActionMenuOpen || !actionMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(actionMenuAnchor, menuEl, () => {
+			computePosition(actionMenuAnchor, menuEl, {
+				placement: actionMenuPlacement,
+				middleware: [offset(10), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+		});
+	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
+
+	useEffect(() => {
+		const menuEl = visibilityMenuRef.current;
+		if (!isVisibilityMenuOpen || !visibilityMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
+			computePosition(visibilityMenuAnchor, menuEl, {
+				placement: visibilityMenuPlacement,
+				middleware: [offset(6), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) =>
+				setVisibilityMenuPosition({ left: x, top: y })
+			);
+		});
+	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
 	// Slack-style long-press on the message bubble opens the action menu at
 	// the press position (touch and mouse alike).
@@ -1502,40 +1556,20 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 336;
-			const menuHeight = 460;
-			const viewportPadding = 12;
-			// Anchor menu so one corner sits behind the +N chip.
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.left - triggerRect.width * 0.35
-					: triggerRect.right - menuWidth + triggerRect.width * 0.35;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					triggerRect.bottom - menuHeight + triggerRect.height * 0.45,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
 			if (isVisibilityMenuOpen) {
 				setIsVisibilityMenuOpen(false);
 				setVisibilityMenuPosition(null);
+				setVisibilityMenuAnchor(null);
 				return;
 			}
 			setIsActionMenuOpen(false);
 			setActionMenuPosition(null);
-			setVisibilityMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
+			setActionMenuAnchor(null);
+			// The menu rises from the +N chip, aligned to the side the chip is on.
+			setVisibilityMenuPlacement(
+				side === 'left' ? 'top-start' : 'top-end'
+			);
+			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
 		[isVisibilityMenuOpen]
@@ -2630,7 +2664,7 @@ export const MessageItemComponent = ({
 					)}
 				</div>
 			</div>
-			{isActionMenuOpen && actionMenuPosition
+			{isActionMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__actionMenu"
@@ -2638,8 +2672,12 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${actionMenuPosition.top}px`,
-								left: `${actionMenuPosition.left}px`,
+								// Off-screen until floating-ui has measured the
+								// rendered menu — it needs the real element, so
+								// the first paint cannot already know where it
+								// goes (same pattern as ToolbarMenu).
+								top: `${actionMenuPosition?.top ?? -9999}px`,
+								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
 							}}
 						>
@@ -2753,7 +2791,7 @@ export const MessageItemComponent = ({
 						document.body
 					)
 				: null}
-			{isVisibilityMenuOpen && visibilityMenuPosition
+			{isVisibilityMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__visibilityMenu"
@@ -2761,8 +2799,8 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${visibilityMenuPosition.top}px`,
-								left: `${visibilityMenuPosition.left}px`,
+								top: `${visibilityMenuPosition?.top ?? -9999}px`,
+								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000
 							}}
 						>
