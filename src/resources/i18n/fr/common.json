@@ -2057,10 +2057,6 @@
 			"copy": "Nous préparons votre espace de consultation sécurisé, encore un instant …",
 			"ready": "Votre espace de consultation est prêt. Vous pouvez commencer."
 		},
-		"stepbar": {
-			"of": "de",
-			"step": "Étape"
-		},
 		"submitButton": {
 			"label": "S'inscrire"
 		},
@@ -2165,7 +2161,52 @@
 			"bullet2": "- connaître les lois de votre État",
 			"headline": "Pour pouvoir vous conseiller au mieux, nous avons besoin de votre code postal.",
 			"label": "Votre code postal",
-			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :"
+			"subline": "Uniquement votre code postal — nous n'avons besoin de rien de plus.",
+			"digitLabel": "Code postal, chiffre {{position}} sur {{total}}",
+			"remaining_one": "Encore {{count}} chiffre",
+			"remaining_other": "Encore {{count}} chiffres",
+			"whyLocal": {
+				"title": "Pourquoi un conseil local ?",
+				"localHelp": "Votre service de consultation connaît les offres d'aide près de chez vous.",
+				"stateLaw": "Il connaît les lois de votre État fédéral.",
+				"anonymous": "Seul ce service voit ce que vous indiquez — vous restez anonyme.",
+				"inPerson": "Si vous le souhaitez, vous pourrez aussi poursuivre l'échange en personne plus tard."
+			}
+		},
+		"handover": {
+			"badge": "Inscrit(e)",
+			"headline": "C'est fait.",
+			"subline": "Voici la suite :",
+			"cta": "Écrire votre demande",
+			"encryption": "Chiffré : votre demande est lisible uniquement par vous et par les personnes qualifiées de votre service de consultation.",
+			"goToStep": "Aller à l'étape {{position}} sur {{total}}",
+			"steps": {
+				"write": {
+					"title": "Vous écrivez ce qui se passe",
+					"text": "Que s'est-il passé, où, depuis quand ? Quelques phrases suffisent."
+				},
+				"counsellor": {
+					"title": "Nous trouvons votre conseillère ou conseiller",
+					"text": "Avec les compétences adaptées — et du temps pour vous."
+				},
+				"reply": {
+					"title": "Une réponse sous 2 jours ouvrables",
+					"text": "Votre demande reçoit une réponse personnelle et professionnelle."
+				}
+			},
+			"status": {
+				"preparing": "Chiffrement de votre espace de consultation …",
+				"verifying": "Vérification : humain ou robot …",
+				"queued": "C'est bientôt votre tour …",
+				"ready": "Tout est prêt — vous pouvez écrire",
+				"slow": "Cela prend plus de temps que d'habitude",
+				"entering": "Ouverture de votre espace de consultation …"
+			}
+		},
+		"stepState": {
+			"done": "terminé",
+			"active": "étape actuelle",
+			"pending": "à venir"
 		}
 	},
 	"releaseNote": {

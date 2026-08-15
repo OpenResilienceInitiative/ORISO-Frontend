@@ -2003,7 +2003,7 @@
 		"headline": "Kayıt",
 		"md3": {
 			"stepNames": {
-				"focus": "Odak seç",
+				"focus": "Konu seç",
 				"postcode": "Posta kodu",
 				"agency": "Danışma merkezi",
 				"register": "Kayıt ol",
@@ -2075,10 +2075,6 @@
 			"headline": "Hoş geldiniz.",
 			"copy": "Güvenli görüşme alanınızı hazırlıyoruz, birkaç saniye sürebilir …",
 			"ready": "Güvenli görüşme alanınız hazır. Başlayabilirsiniz."
-		},
-		"stepbar": {
-			"of": "itibaren",
-			"step": "Adım"
 		},
 		"submitButton": {
 			"label": "Kayıt Olun"
@@ -2195,7 +2191,52 @@
 			"bullet2": "- federal eyaletinizin yasalarını bilin",
 			"headline": "Size mümkün olan en iyi tavsiyeyi verebilmemiz için posta kodunuza ihtiyacımız var",
 			"label": "Posta kodunuz",
-			"subline": "Neden mi? Çünkü o zaman uzmanlarımız:"
+			"subline": "Yalnızca posta kodunuz — başka bir şeye ihtiyacımız yok.",
+			"digitLabel": "Posta kodu, {{total}} rakamdan {{position}}. rakam",
+			"remaining_one": "{{count}} rakam kaldı",
+			"remaining_other": "{{count}} rakam kaldı",
+			"whyLocal": {
+				"title": "Neden yerel danışmanlık?",
+				"localHelp": "Danışma merkeziniz yakınınızdaki yardım olanaklarını bilir.",
+				"stateLaw": "Federal eyaletinizin yasalarını da bilir.",
+				"anonymous": "Girdiğiniz bilgiyi yalnızca bu merkez görür — anonim kalırsınız.",
+				"inPerson": "İsterseniz daha sonra yüz yüze de görüşmeye devam edebilirsiniz."
+			}
+		},
+		"handover": {
+			"badge": "Kayıtlı",
+			"headline": "Tamamdır.",
+			"subline": "Şimdi sırada şunlar var:",
+			"cta": "Talebinizi yazın",
+			"encryption": "Şifreli: Talebinizi yalnızca siz ve danışma merkezinizin uzmanları görebilir.",
+			"goToStep": "{{total}} adımdan {{position}}. adıma git",
+			"steps": {
+				"write": {
+					"title": "Neler olduğunu siz yazarsınız",
+					"text": "Ne oldu, nerede, ne zamandan beri? Birkaç cümle yeterli."
+				},
+				"counsellor": {
+					"title": "Danışmanınızı biz buluruz",
+					"text": "Uzmanlık alanına uygun — ve size zaman ayıracak biri."
+				},
+				"reply": {
+					"title": "2 iş günü içinde yanıt",
+					"text": "Talebiniz kişisel ve profesyonel bir şekilde yanıtlanır."
+				}
+			},
+			"status": {
+				"preparing": "Görüşme alanınız şifreleniyor …",
+				"verifying": "Kontrol: insan mı, bot mu …",
+				"queued": "Birazdan sıra sizde …",
+				"ready": "Her şey hazır — yazmaya başlayabilirsiniz",
+				"slow": "Bu her zamankinden uzun sürüyor",
+				"entering": "Görüşme alanınız açılıyor …"
+			}
+		},
+		"stepState": {
+			"done": "tamamlandı",
+			"active": "geçerli adım",
+			"pending": "bekliyor"
 		}
 	},
 	"releaseNote": {

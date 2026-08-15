@@ -2697,7 +2697,7 @@
 		"headline": "Registrierung",
 		"md3": {
 			"stepNames": {
-				"focus": "Fokus wählen",
+				"focus": "Thema wählen",
 				"postcode": "Postleitzahl",
 				"agency": "Beratungsstelle",
 				"register": "Registrieren",
@@ -2897,11 +2897,60 @@
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
 			"bullet2": "• die Gesetze Ihres Bundeslandes kennen",
-			"headline": "Um Sie bestmöglich beraten zu können, benötigen wir Ihre Postleitzahl",
+			"headline": "Wo suchen Sie Beratung?",
 			"label": "Ihre Postleitzahl",
-			"subline": "Warum? Weil dann unsere Fachleute:"
+			"subline": "Nur Ihre Postleitzahl — mehr brauchen wir nicht.",
+			"digitLabel": "Postleitzahl, Ziffer {{position}} von {{total}}",
+			"remaining_one": "Noch {{count}} Ziffer",
+			"remaining_other": "Noch {{count}} Ziffern",
+			"whyLocal": {
+				"title": "Warum lokal beraten?",
+				"localHelp": "Ihre Beratungsstelle kennt die Hilfsangebote vor Ort.",
+				"stateLaw": "Sie kennt die Gesetze Ihres Bundeslandes.",
+				"anonymous": "Nur diese eine Stelle sieht Ihre Angabe — Sie bleiben anonym.",
+				"inPerson": "Wenn Sie möchten, können Sie später auch persönlich weiterreden."
+			}
 		},
-		"registering": "Registrierung läuft..."
+		"registering": "Registrierung läuft...",
+		"stepper": {
+			"progress": "Schritt {{current}} von {{total}}",
+			"progressShort": "Schritt {{current}}/{{total}}"
+		},
+		"handover": {
+			"badge": "Registriert",
+			"headline": "Geschafft.",
+			"subline": "So geht es weiter:",
+			"cta": "Anfrage schreiben",
+			"encryption": "Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.",
+			"goToStep": "Zu Schritt {{position}} von {{total}}",
+			"steps": {
+				"write": {
+					"title": "Sie schreiben, was los ist",
+					"text": "Was ist passiert, wo, seit wann? Ein paar Sätze genügen."
+				},
+				"counsellor": {
+					"title": "Wir finden Ihre Beraterin",
+					"text": "Fachlich passend — und mit Zeit für Sie."
+				},
+				"reply": {
+					"title": "Antwort in 2 Arbeitstagen",
+					"text": "Auf Ihre Anfrage wird persönlich und professionell geantwortet."
+				}
+			},
+			"status": {
+				"preparing": "Beratungsraum wird verschlüsselt …",
+				"verifying": "Prüfung: Mensch oder Bot …",
+				"queued": "Gleich sind Sie an der Reihe …",
+				"ready": "Alles bereit — Sie können schreiben",
+				"slow": "Das dauert länger als gewohnt",
+				"entering": "Ihr Beratungsraum wird geöffnet …"
+			}
+		},
+		"stepState": {
+			"done": "abgeschlossen",
+			"active": "aktueller Schritt",
+			"pending": "offen"
+		}
 	},
 	"releaseNote": {
 		"content": {

@@ -2645,7 +2645,7 @@
 		"headline": "Registration",
 		"md3": {
 			"stepNames": {
-				"focus": "Choose focus",
+				"focus": "Choose a topic",
 				"postcode": "Postcode",
 				"agency": "Consulting center",
 				"register": "Register",
@@ -2837,11 +2837,60 @@
 		"zipcode": {
 			"bullet1": "• know the help available around your place of residence",
 			"bullet2": "• know the laws of your federal state",
-			"headline": "To be able to advise you as best as possible, we need your postcode",
+			"headline": "Where are you looking for counselling?",
 			"label": "Your postcode",
-			"subline": "Why? Because then our specialists:"
+			"subline": "Just your postcode — that is all we need.",
+			"digitLabel": "Postcode, digit {{position}} of {{total}}",
+			"remaining_one": "{{count}} digit to go",
+			"remaining_other": "{{count}} digits to go",
+			"whyLocal": {
+				"title": "Why local counselling?",
+				"localHelp": "Your counselling centre knows the support available near you.",
+				"stateLaw": "It knows the laws of your federal state.",
+				"anonymous": "Only this one centre sees what you enter — you stay anonymous.",
+				"inPerson": "If you want to, you can continue in person later on."
+			}
 		},
-		"registering": "Registration in progress…"
+		"registering": "Registration in progress…",
+		"stepper": {
+			"progress": "Step {{current}} of {{total}}",
+			"progressShort": "Step {{current}}/{{total}}"
+		},
+		"handover": {
+			"badge": "Registered",
+			"headline": "All done.",
+			"subline": "Here is what happens next:",
+			"cta": "Write your enquiry",
+			"encryption": "Encrypted: only you and the staff at your counselling centre can read your enquiry.",
+			"goToStep": "Go to step {{position}} of {{total}}",
+			"steps": {
+				"write": {
+					"title": "You write what is going on",
+					"text": "What happened, where, since when? A few sentences are enough."
+				},
+				"counsellor": {
+					"title": "We find your counsellor",
+					"text": "The right expertise — and time for you."
+				},
+				"reply": {
+					"title": "An answer within 2 working days",
+					"text": "Your enquiry is answered personally and professionally."
+				}
+			},
+			"status": {
+				"preparing": "Encrypting your counselling room …",
+				"verifying": "Checking: human or bot …",
+				"queued": "You are next in line …",
+				"ready": "All set — you can start writing",
+				"slow": "This is taking longer than usual",
+				"entering": "Opening your counselling room …"
+			}
+		},
+		"stepState": {
+			"done": "completed",
+			"active": "current step",
+			"pending": "not started"
+		}
 	},
 	"releaseNote": {
 		"content": {
