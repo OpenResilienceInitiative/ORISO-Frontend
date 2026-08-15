@@ -42,6 +42,34 @@ describe('i18n catalogue guard (#1101)', () => {
 		});
 	});
 
+	// German has only `one`/`other`, Russian additionally needs `few`/`many`.
+	// A locale carrying the plural forms its language requires is correct, not
+	// drift — see #1106.
+	it('does not report richer plural forms as extra keys', () => {
+		expect(
+			collectCatalogueDrift(
+				['zipcode.remaining_one', 'zipcode.remaining_other'],
+				[
+					'zipcode.remaining_one',
+					'zipcode.remaining_few',
+					'zipcode.remaining_many',
+					'zipcode.remaining_other'
+				]
+			).extraInLocale
+		).toEqual([]);
+	});
+
+	// The exemption is scoped to plural bases the fallback actually knows, so a
+	// genuinely unknown key still counts even when it ends in a plural suffix.
+	it('still reports a plural-suffixed key whose base the fallback does not have', () => {
+		expect(
+			collectCatalogueDrift(
+				['zipcode.remaining_one'],
+				['zipcode.remaining_one', 'zipcode.unknown_many']
+			).extraInLocale
+		).toEqual(['zipcode.unknown_many']);
+	});
+
 	it.each(Object.entries(locales))(
 		'does not allow the $0 catalogue to exceed its existing drift budget',
 		(lng, catalogue) => {

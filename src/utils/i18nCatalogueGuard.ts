@@ -11,6 +11,15 @@ const flattenCatalogue = (catalogue: object): Record<string, unknown> =>
 export const flattenCatalogueKeys = (catalogue: object): string[] =>
 	Object.keys(flattenCatalogue(catalogue)).sort((a, b) => a.localeCompare(b));
 
+/**
+ * i18next plural suffixes (CLDR categories). Languages need different subsets
+ * of these: German uses `one`/`other`, Russian additionally `few`/`many`.
+ */
+const PLURAL_SUFFIX = /^(.*)_(zero|one|two|few|many|other)$/;
+
+const pluralBase = (key: string): string | undefined =>
+	PLURAL_SUFFIX.exec(key)?.[1];
+
 export const collectCatalogueDrift = (
 	fallbackKeys: string[],
 	localeKeys: string[]
@@ -18,9 +27,22 @@ export const collectCatalogueDrift = (
 	const fallback = new Set(fallbackKeys);
 	const locale = new Set(localeKeys);
 
+	// A locale that carries the plural forms its language requires is correct,
+	// not drift. Only bases the fallback itself pluralizes are exempt, so a key
+	// the fallback has never heard of still counts even when it ends in a
+	// plural suffix.
+	const fallbackPluralBases = new Set(
+		fallbackKeys.map(pluralBase).filter((base) => base !== undefined)
+	);
+
+	const isKnownPluralForm = (key: string): boolean => {
+		const base = pluralBase(key);
+		return base !== undefined && fallbackPluralBases.has(base);
+	};
+
 	return {
 		extraInLocale: localeKeys
-			.filter((key) => !fallback.has(key))
+			.filter((key) => !fallback.has(key) && !isKnownPluralForm(key))
 			.sort((a, b) => a.localeCompare(b)),
 		missingInLocale: fallbackKeys
 			.filter((key) => !locale.has(key))
