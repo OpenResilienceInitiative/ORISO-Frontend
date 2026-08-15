@@ -1662,7 +1662,14 @@
 			"quoteUnknown": "Earlier message"
 		},
 		"thread": {
-			"unknownRoot": "Earlier message"
+			"unknownRoot": "Earlier message",
+			"listToggle": "Threads",
+			"replies": "{{count}} replies",
+			"title": "Thread",
+			"placeholder": "Reply in thread"
+		},
+		"deliveryStatus": {
+			"sent": "Sent"
 		}
 	},
 	"navigation": {
@@ -3050,7 +3057,10 @@
 				"2": "Okay you need to do three things in the game.",
 				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
 				"negative": "Okay please hold on once a counsellor is free we let you in."
-			}
+			},
+			"onboardingLine1": "Just arrive. We breathe together.",
+			"onboardingLine3": "When you are ready, start your first try.",
+			"volumeHint": "For a better experience, turn on your volume."
 		},
 		"acceptance": {
 			"button": {
@@ -3195,6 +3205,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervision reason"
+			},
+			"startChat": {
+				"title": "Start chat",
+				"hint": "Use the message field at the bottom to send the first supervision message."
+			},
+			"input": {
+				"note": "Messages you send here are visible only to consultants."
+			}
 		}
 	},
 	"sessionList": {
@@ -3204,7 +3226,8 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group"
+				"selfHelp": "Peer support group",
+				"internal": "Internal"
 			}
 		},
 		"createChat": {
@@ -3266,7 +3289,8 @@
 					"type": "By type",
 					"centre": "Counseling center",
 					"archiveOnly": "Archive only"
-				}
+				},
+				"toggle": "Open or close search results"
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -3966,7 +3990,8 @@
 			"startMailCounseling": "Start anonymous mail counselling",
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
-			"later": "Come back later"
+			"later": "Come back later",
+			"title": "Live chat is currently closed"
 		},
 		"consent": {
 			"accept": "I agree",
@@ -4044,7 +4069,9 @@
 				"loadingConsultants": "Loading consultants...",
 				"reasonLabel": "Reason for supervision",
 				"reasonPlaceholder": "Please enter the reason for supervision...",
-				"reasonError": "Please enter a reason."
+				"reasonError": "Please enter a reason.",
+				"note": "If you want any supervisors to supervise in future, you can add them in advance.",
+				"reason": "Reason"
 			},
 			"success": {
 				"add": {
@@ -4070,7 +4097,8 @@
 					"text": "Consultants could not be loaded."
 				},
 				"reasonRequired": {
-					"text": "Please enter the reason for supervision."
+					"text": "Please enter the reason for supervision.",
+					"title": "Reason required"
 				}
 			},
 			"remove": {
@@ -4080,6 +4108,10 @@
 				"disabledAsker": "Supervision is managed by the counselling team",
 				"disabledMobile": "Add supervisor – available on desktop",
 				"disabledUnavailable": "Add supervisor – not available here"
+			},
+			"status": {
+				"on": "Supervision on",
+				"off": "Supervision off"
 			}
 		}
 	},
@@ -4308,7 +4340,8 @@
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault"
+				"openVault": "Open vault",
+				"restoring": "Restoring…"
 			}
 		}
 	},
@@ -4320,5 +4353,19 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"drafts": {
+		"center": {
+			"title": "Drafts",
+			"subtitle": "Unsent messages are saved per chat and thread.",
+			"empty": "No drafts yet.",
+			"messageTag": "Draft",
+			"untitledChat": "Chat",
+			"thread": "Thread",
+			"open": "Open draft",
+			"next": "Next draft",
+			"delete": "Delete draft",
+			"emptyDetail": "Select a draft to continue writing."
+		}
 	}
 }
