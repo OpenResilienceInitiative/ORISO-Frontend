@@ -82,7 +82,7 @@ const tenant = {
 	settings: { emailVisible: false }
 } as unknown as TenantDataInterface;
 
-const renderStep = ({
+const stepTree = ({
 	hasPublishedDpp,
 	setDisabledNextButton = () => {},
 	agencyId = AGENCY_A
@@ -90,43 +90,46 @@ const renderStep = ({
 	hasPublishedDpp: boolean;
 	setDisabledNextButton?: (disabled: boolean) => void;
 	agencyId?: number;
-}) =>
-	render(
-		<LegalLinksContext.Provider value={legalLinks}>
-			<LocaleContext.Provider
+}) => (
+	<LegalLinksContext.Provider value={legalLinks}>
+		<LocaleContext.Provider
+			value={
+				{
+					locale: 'de',
+					initLocale: 'de',
+					setLocale: () => {},
+					locales: ['de'],
+					selectableLocales: ['de']
+				} as never
+			}
+		>
+			<RegistrationContext.Provider
 				value={
 					{
-						locale: 'de',
-						initLocale: 'de',
-						setLocale: () => {},
-						locales: ['de'],
-						selectableLocales: ['de']
+						setDisabledNextButton,
+						registrationData: {
+							agency: agencyWith(hasPublishedDpp, agencyId),
+							mainTopic: {
+								id: TOPIC,
+								name: 'Suchtberatung'
+							}
+						}
 					} as never
 				}
 			>
-				<RegistrationContext.Provider
-					value={
-						{
-							setDisabledNextButton,
-							registrationData: {
-								agency: agencyWith(hasPublishedDpp, agencyId),
-								mainTopic: {
-									id: TOPIC,
-									name: 'Suchtberatung'
-								}
-							}
-						} as never
-					}
+				<TenantContext.Provider
+					value={{ tenant, setTenant: () => {} } as never}
 				>
-					<TenantContext.Provider
-						value={{ tenant, setTenant: () => {} } as never}
-					>
-						<AccountData onChange={() => {}} />
-					</TenantContext.Provider>
-				</RegistrationContext.Provider>
-			</LocaleContext.Provider>
-		</LegalLinksContext.Provider>
-	);
+					<AccountData onChange={() => {}} />
+				</TenantContext.Provider>
+			</RegistrationContext.Provider>
+		</LocaleContext.Provider>
+	</LegalLinksContext.Provider>
+);
+
+type StepOptions = Parameters<typeof stepTree>[0];
+
+const renderStep = (options: StepOptions) => render(stepTree(options));
 
 const consentCheckbox = () =>
 	screen

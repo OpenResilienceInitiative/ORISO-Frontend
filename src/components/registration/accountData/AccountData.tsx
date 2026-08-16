@@ -51,7 +51,11 @@ import {
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
-import { consentBindingKey } from './consentAcceptance';
+import {
+	ConsentResolution,
+	consentBindingKey,
+	isResolutionForSelection
+} from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
@@ -60,7 +64,6 @@ import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-ava
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
 import {
-	ConsentResolution,
 	DataProtectionConsentLabel,
 	departmentMayHaveConsentText
 } from './DataProtectionConsentLabel';
@@ -178,13 +181,29 @@ export const AccountData: FC<{
 		useState<ConsentResolution>(() =>
 			departmentMayHaveConsentText(agency, mainTopic)
 				? { status: 'pending' }
-				: { status: 'resolved', consentText: null }
+				: {
+						status: 'resolved',
+						consentText: null,
+						agencyId: agency?.id,
+						topicId: mainTopic?.id
+					}
 		);
-	const isConsentSentenceResolved = consentResolution.status === 'resolved';
+	/* A resolution answers the selection that produced it and no other. The
+	   label applies the same check, but this component holds its own copy of
+	   the state, so between an agency/topic change and the label's effect
+	   reporting the new `pending` it would otherwise still be holding the
+	   previous Beratungsstelle's answer — enabling acceptance of the old
+	   sentence while writing a binding under the new identity. Checking here
+	   too makes that independent of effect ordering. */
+	const isConsentSentenceResolved = isResolutionForSelection(
+		consentResolution,
+		agency?.id,
+		mainTopic?.id
+	);
 	/* Which consent is on offer right now. Null while the sentence is unknown —
 	   there is nothing to accept yet. */
 	const currentConsentBinding =
-		consentResolution.status === 'resolved'
+		isConsentSentenceResolved && consentResolution.status === 'resolved'
 			? consentBindingKey(
 					agency?.id,
 					mainTopic?.id,

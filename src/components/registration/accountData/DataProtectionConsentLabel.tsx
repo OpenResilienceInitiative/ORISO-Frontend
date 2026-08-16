@@ -5,12 +5,15 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../../globalState/interfaces';
-import {
-	apiGetConsentText,
-	ConsentTextData
-} from '../../../api/apiGetConsentText';
+import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
+import {
+	ConsentResolution,
+	isResolutionForSelection
+} from './consentAcceptance';
 import { ConsentSentence } from './ConsentSentence';
+
+export type { ConsentResolution };
 
 /**
  * Whether the selected Fachbereich *could* carry a Träger-authored consent
@@ -31,17 +34,6 @@ export const departmentMayHaveConsentText = (
 	getDepartmentForTopic(agency, topic)?.hasPublishedDpp === true &&
 	!!agency?.id &&
 	!!topic?.id;
-
-/**
- * Whether the sentence a help-seeker is asked to agree to is known yet.
- *
- * `pending` is not a cosmetic loading state: while it holds, there is no
- * wording on screen, and consent to wording nobody has seen is not consent.
- * Everything that can record agreement has to be inert until this resolves.
- */
-export type ConsentResolution =
-	| { status: 'pending' }
-	| { status: 'resolved'; consentText: ConsentTextData | null };
 
 export interface DataProtectionConsentLabelProps {
 	agency?: AgencyDataInterface;
@@ -75,25 +67,56 @@ export const DataProtectionConsentLabel: FC<
 	const [resolution, setResolution] = useState<ConsentResolution>(() =>
 		mayHaveConsentText
 			? { status: 'pending' }
-			: { status: 'resolved', consentText: null }
+			: {
+					status: 'resolved',
+					consentText: null,
+					agencyId: agency?.id,
+					topicId: topic?.id
+				}
 	);
 
+	/* State is written in an effect, so between an agency/topic change and that
+	   effect running, `resolution` still answers the *previous* question. Derive
+	   the effective one during render instead of acting on the stale value. */
+	const effectiveResolution: ConsentResolution = isResolutionForSelection(
+		resolution,
+		agency?.id,
+		topic?.id
+	)
+		? resolution
+		: { status: 'pending' };
+
 	useEffect(() => {
-		onResolutionChange?.(resolution);
-	}, [resolution, onResolutionChange]);
+		onResolutionChange?.(effectiveResolution);
+		// `effectiveResolution` is derived per render; keying the effect on its
+		// two inputs keeps this from firing on every render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [resolution, agency?.id, topic?.id, onResolutionChange]);
 
 	useEffect(() => {
 		if (!mayHaveConsentText) {
-			setResolution({ status: 'resolved', consentText: null });
+			setResolution({
+				status: 'resolved',
+				consentText: null,
+				agencyId: agency?.id,
+				topicId: topic?.id
+			});
 			return;
 		}
 
 		const abortController = new AbortController();
+		const agencyId = agency.id;
+		const topicId = topic.id;
 		setResolution({ status: 'pending' });
-		apiGetConsentText(agency.id, topic.id, abortController.signal).then(
+		apiGetConsentText(agencyId, topicId, abortController.signal).then(
 			(consentText) => {
 				if (!abortController.signal.aborted) {
-					setResolution({ status: 'resolved', consentText });
+					setResolution({
+						status: 'resolved',
+						consentText,
+						agencyId,
+						topicId
+					});
 				}
 			}
 		);
@@ -108,7 +131,7 @@ export const DataProtectionConsentLabel: FC<
 	   happening. A loading notice is safe here precisely because it is not a
 	   consent sentence: there is nothing in it to agree to. `aria-live` because
 	   it is replaced in place once the real sentence arrives. */
-	if (resolution.status === 'pending') {
+	if (effectiveResolution.status === 'pending') {
 		return (
 			<span aria-live="polite" data-cy="consent-sentence-pending">
 				{t(
@@ -119,5 +142,5 @@ export const DataProtectionConsentLabel: FC<
 		);
 	}
 
-	return <ConsentSentence consentText={resolution.consentText} />;
+	return <ConsentSentence consentText={effectiveResolution.consentText} />;
 };

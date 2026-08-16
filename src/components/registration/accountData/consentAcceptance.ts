@@ -1,3 +1,5 @@
+import { ConsentTextData } from '../../../api/apiGetConsentText';
+
 /**
  * Identity of the exact consent a help-seeker can give.
  *
@@ -25,3 +27,45 @@ export const consentBindingKey = (
 	versionId: string | null | undefined
 ): string =>
 	`${agencyId ?? 'none'}:${topicId ?? 'none'}:${versionId ?? 'none'}`;
+
+/**
+ * Whether the sentence a help-seeker is asked to agree to is known yet.
+ *
+ * `pending` is not a cosmetic loading state: while it holds, there is no
+ * wording on screen, and consent to wording nobody has seen is not consent.
+ * Everything that can record agreement has to be inert until this resolves.
+ */
+export type ConsentResolution =
+	| { status: 'pending' }
+	| {
+			status: 'resolved';
+			consentText: ConsentTextData | null;
+			/**
+			 * The selection this answer belongs to. A resolution answers the
+			 * question that produced it and no other.
+			 */
+			agencyId?: number;
+			topicId?: number;
+	  };
+
+/**
+ * Whether a resolution answers the selection currently on screen.
+ *
+ * Resolutions are written in effects, which run after the commit that changed
+ * the selection. For that gap both the label and `AccountData` would otherwise
+ * still be holding the previous Beratungsstelle's answer — long enough for a
+ * paint, and therefore long enough for a click. Acting on it would show the
+ * previous sentence with an enabled checkbox and record a binding that pairs
+ * the *new* agency with the *previous* wording.
+ *
+ * Pure, and used by both components, so neither can drift from the other and
+ * neither depends on effect ordering for correctness.
+ */
+export const isResolutionForSelection = (
+	resolution: ConsentResolution,
+	agencyId: number | undefined,
+	topicId: number | undefined
+): boolean =>
+	resolution.status === 'resolved' &&
+	resolution.agencyId === agencyId &&
+	resolution.topicId === topicId;
