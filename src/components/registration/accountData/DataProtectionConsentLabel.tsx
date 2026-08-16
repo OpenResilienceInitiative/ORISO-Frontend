@@ -11,9 +11,47 @@ import {
 import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
 import { ConsentSentence } from './ConsentSentence';
 
+/**
+ * Whether the selected Fachbereich *could* carry a Träger-authored consent
+ * text. The sentence is a field of the department's data-protection policy
+ * (ADR-021 decision 4), so a department without a published policy cannot have
+ * one — which is decidable from data the registration already holds, with no
+ * request and therefore no waiting.
+ *
+ * Exported because `AccountData` needs the same answer on its very first
+ * render to decide whether the consent checkbox starts enabled. Without that,
+ * the far more common unconfigured case would flicker through a disabled
+ * state it has no reason to be in.
+ */
+export const departmentMayHaveConsentText = (
+	agency?: AgencyDataInterface,
+	topic?: TopicsDataInterface
+): boolean =>
+	getDepartmentForTopic(agency, topic)?.hasPublishedDpp === true &&
+	!!agency?.id &&
+	!!topic?.id;
+
+/**
+ * Whether the sentence a help-seeker is asked to agree to is known yet.
+ *
+ * `pending` is not a cosmetic loading state: while it holds, there is no
+ * wording on screen, and consent to wording nobody has seen is not consent.
+ * Everything that can record agreement has to be inert until this resolves.
+ */
+export type ConsentResolution =
+	| { status: 'pending' }
+	| { status: 'resolved'; consentText: ConsentTextData | null };
+
 export interface DataProtectionConsentLabelProps {
 	agency?: AgencyDataInterface;
 	topic?: TopicsDataInterface;
+	/**
+	 * Reports the resolution so the owner of the checkbox can keep it disabled
+	 * until there is a sentence next to it, and can bind an acceptance to the
+	 * exact wording that was accepted. Must be referentially stable — a
+	 * `useState` setter is.
+	 */
+	onResolutionChange?: (resolution: ConsentResolution) => void;
 }
 
 /**
@@ -27,33 +65,33 @@ export interface DataProtectionConsentLabelProps {
  */
 export const DataProtectionConsentLabel: FC<
 	DataProtectionConsentLabelProps
-> = ({ agency, topic }) => {
-	/* Deciding this from data the registration already holds means the
-	   unconfigured case issues no request at all and renders today's sentence
-	   immediately: no spinner, no swap, nothing to regress. */
-	const department = getDepartmentForTopic(agency, topic);
-	const mayHaveConsentText =
-		department?.hasPublishedDpp === true && !!agency?.id && !!topic?.id;
+> = ({ agency, topic, onResolutionChange }) => {
+	const mayHaveConsentText = departmentMayHaveConsentText(agency, topic);
 
-	const [consentText, setConsentText] = useState<ConsentTextData | null>(
-		null
+	/* Starts resolved in the unconfigured case, so that path issues no request,
+	   shows today's sentence immediately and never disables anything. */
+	const [resolution, setResolution] = useState<ConsentResolution>(() =>
+		mayHaveConsentText
+			? { status: 'pending' }
+			: { status: 'resolved', consentText: null }
 	);
-	const [isResolved, setIsResolved] = useState(false);
+
+	useEffect(() => {
+		onResolutionChange?.(resolution);
+	}, [resolution, onResolutionChange]);
 
 	useEffect(() => {
 		if (!mayHaveConsentText) {
-			setConsentText(null);
-			setIsResolved(true);
+			setResolution({ status: 'resolved', consentText: null });
 			return;
 		}
 
 		const abortController = new AbortController();
-		setIsResolved(false);
+		setResolution({ status: 'pending' });
 		apiGetConsentText(agency.id, topic.id, abortController.signal).then(
-			(data) => {
+			(consentText) => {
 				if (!abortController.signal.aborted) {
-					setConsentText(data);
-					setIsResolved(true);
+					setResolution({ status: 'resolved', consentText });
 				}
 			}
 		);
@@ -63,10 +101,11 @@ export const DataProtectionConsentLabel: FC<
 	/* A configured Fachbereich is still being fetched: render nothing rather
 	   than the platform wording. Showing it and swapping it for the Träger's a
 	   moment later would mean the checkbox briefly carries a sentence that is
-	   not the one in force. */
-	if (!isResolved) {
+	   not the one in force. The checkbox itself is disabled meanwhile — see
+	   `AccountData`. */
+	if (resolution.status === 'pending') {
 		return null;
 	}
 
-	return <ConsentSentence consentText={consentText} />;
+	return <ConsentSentence consentText={resolution.consentText} />;
 };

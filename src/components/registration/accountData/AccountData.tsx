@@ -58,7 +58,11 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
-import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
+import {
+	ConsentResolution,
+	DataProtectionConsentLabel,
+	departmentMayHaveConsentText
+} from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -160,6 +164,22 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
 		useContext(RegistrationContext);
+	const agency = registrationData?.agency;
+	const mainTopic = registrationData?.mainTopic;
+
+	/* While the consent sentence is being fetched there is no wording next to
+	   the checkbox, and agreement to wording nobody has seen is not agreement.
+	   The label reports its resolution here so the control can stay inert until
+	   there is something to consent to. Seeded from the same predicate the
+	   label uses, so the far more common unconfigured case — which issues no
+	   request at all — is never disabled, not even for one frame. */
+	const [consentResolution, setConsentResolution] =
+		useState<ConsentResolution>(() =>
+			departmentMayHaveConsentText(agency, mainTopic)
+				? { status: 'pending' }
+				: { status: 'resolved', consentText: null }
+		);
+	const isConsentSentenceResolved = consentResolution.status === 'resolved';
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -267,6 +287,9 @@ export const AccountData: FC<{
 			isUsernameLongEnough &&
 			isPasswordValid &&
 			password === repeatPassword &&
+			// Not merely "the box is ticked": the box may only count once the
+			// sentence it sits next to is actually on screen.
+			isConsentSentenceResolved &&
 			dataProtectionChecked &&
 			emailFeedback.isSatisfied
 		) {
@@ -285,6 +308,7 @@ export const AccountData: FC<{
 		password,
 		repeatPassword,
 		dataProtectionChecked,
+		isConsentSentenceResolved,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -683,6 +707,7 @@ export const AccountData: FC<{
 					control={
 						<Checkbox
 							checked={dataProtectionChecked}
+							disabled={!isConsentSentenceResolved}
 							onClick={() => {
 								setDataProtectionChecked(
 									!dataProtectionChecked
@@ -697,8 +722,9 @@ export const AccountData: FC<{
 						   Fachbereich has one (ADR-021), otherwise exactly the
 						   three-fragment sentence this used to assemble inline. */
 						<DataProtectionConsentLabel
-							agency={registrationData?.agency}
-							topic={registrationData?.mainTopic}
+							agency={agency}
+							topic={mainTopic}
+							onResolutionChange={setConsentResolution}
 						/>
 					}
 				/>
@@ -708,8 +734,8 @@ export const AccountData: FC<{
 			    falls back to the tenant text if it cannot be loaded. */}
 			<Box sx={{ mt: '12px' }}>
 				<DepartmentLegalSection
-					agency={registrationData?.agency}
-					topic={registrationData?.mainTopic}
+					agency={agency}
+					topic={mainTopic}
 					variant="consent"
 				/>
 			</Box>
