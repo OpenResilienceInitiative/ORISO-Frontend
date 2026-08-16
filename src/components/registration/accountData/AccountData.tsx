@@ -54,7 +54,7 @@ import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
 import {
 	ConsentResolution,
 	consentBindingKey,
-	isResolutionForSelection
+	mayAcceptConsent
 } from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
@@ -195,7 +195,7 @@ export const AccountData: FC<{
 	   previous Beratungsstelle's answer — enabling acceptance of the old
 	   sentence while writing a binding under the new identity. Checking here
 	   too makes that independent of effect ordering. */
-	const isConsentSentenceResolved = isResolutionForSelection(
+	const isConsentSentenceResolved = mayAcceptConsent(
 		consentResolution,
 		agency?.id,
 		mainTopic?.id

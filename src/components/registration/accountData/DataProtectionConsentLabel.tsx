@@ -7,10 +7,7 @@ import {
 } from '../../../globalState/interfaces';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
-import {
-	ConsentResolution,
-	isResolutionForSelection
-} from './consentAcceptance';
+import { answersSelection, ConsentResolution } from './consentAcceptance';
 import { ConsentSentence } from './ConsentSentence';
 
 export type { ConsentResolution };
@@ -78,7 +75,7 @@ export const DataProtectionConsentLabel: FC<
 	/* State is written in an effect, so between an agency/topic change and that
 	   effect running, `resolution` still answers the *previous* question. Derive
 	   the effective one during render instead of acting on the stale value. */
-	const effectiveResolution: ConsentResolution = isResolutionForSelection(
+	const effectiveResolution: ConsentResolution = answersSelection(
 		resolution,
 		agency?.id,
 		topic?.id
@@ -109,15 +106,20 @@ export const DataProtectionConsentLabel: FC<
 		const topicId = topic.id;
 		setResolution({ status: 'pending' });
 		apiGetConsentText(agencyId, topicId, abortController.signal).then(
-			(consentText) => {
-				if (!abortController.signal.aborted) {
-					setResolution({
-						status: 'resolved',
-						consentText,
-						agencyId,
-						topicId
-					});
+			(result) => {
+				if (abortController.signal.aborted) {
+					return;
 				}
+				setResolution(
+					result.status === 'ok'
+						? {
+								status: 'resolved',
+								consentText: result.consentText,
+								agencyId,
+								topicId
+							}
+						: { status: 'unavailable', agencyId, topicId }
+				);
 			}
 		);
 		return () => abortController.abort();
@@ -131,6 +133,23 @@ export const DataProtectionConsentLabel: FC<
 	   happening. A loading notice is safe here precisely because it is not a
 	   consent sentence: there is nothing in it to agree to. `aria-live` because
 	   it is replaced in place once the real sentence arrives. */
+	/* Asked, and the backend could not answer. The platform sentence must not
+	   stand in: this Fachbereich reports a published policy, so its own wording
+	   is the one that governs, and offering the platform text here would
+	   collect agreement to a document that does not apply. Fail closed — the
+	   checkbox stays disabled (`AccountData`), and the person is told why
+	   rather than being left with a dead control. */
+	if (effectiveResolution.status === 'unavailable') {
+		return (
+			<span role="alert" data-cy="consent-sentence-unavailable">
+				{t(
+					'registration.agency.legal.unavailable',
+					'Die Datenschutzhinweise können derzeit nicht geladen werden.'
+				)}
+			</span>
+		);
+	}
+
 	if (effectiveResolution.status === 'pending') {
 		return (
 			<span aria-live="polite" data-cy="consent-sentence-pending">

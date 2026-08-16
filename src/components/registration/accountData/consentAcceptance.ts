@@ -38,6 +38,19 @@ export const consentBindingKey = (
 export type ConsentResolution =
 	| { status: 'pending' }
 	| {
+			/**
+			 * The backend was asked and could not answer. Distinct from
+			 * `resolved` with a null sentence, which means "asked, and there is
+			 * no Träger wording". Treating the two alike would let a dropped
+			 * request enable acceptance of the platform sentence for a
+			 * Fachbereich whose own wording governs — the error path arriving
+			 * at exactly the outcome the pending gate exists to prevent.
+			 */
+			status: 'unavailable';
+			agencyId?: number;
+			topicId?: number;
+	  }
+	| {
 			status: 'resolved';
 			consentText: ConsentTextData | null;
 			/**
@@ -49,23 +62,43 @@ export type ConsentResolution =
 	  };
 
 /**
- * Whether a resolution answers the selection currently on screen.
+ * Whether a settled resolution was produced by the selection currently on
+ * screen.
  *
  * Resolutions are written in effects, which run after the commit that changed
  * the selection. For that gap both the label and `AccountData` would otherwise
  * still be holding the previous Beratungsstelle's answer — long enough for a
- * paint, and therefore long enough for a click. Acting on it would show the
- * previous sentence with an enabled checkbox and record a binding that pairs
- * the *new* agency with the *previous* wording.
+ * paint, and therefore long enough for a click. A foreign answer is treated as
+ * "not answered yet".
+ *
+ * `pending` carries no selection and is always current: it says nothing about
+ * any particular Fachbereich.
+ */
+export const answersSelection = (
+	resolution: ConsentResolution,
+	agencyId: number | undefined,
+	topicId: number | undefined
+): boolean =>
+	resolution.status === 'pending' ||
+	(resolution.agencyId === agencyId && resolution.topicId === topicId);
+
+/**
+ * Whether the consent on screen may be accepted at all.
+ *
+ * A strictly narrower question than `answersSelection`, and the two must not be
+ * conflated: `unavailable` *is* an answer for the current selection — it is why
+ * the failure notice renders instead of the sentence — but it is emphatically
+ * not permission to accept anything. `pending` and `unavailable` both answer
+ * false here; only a `resolved` answer produced by this selection opens the
+ * gate.
  *
  * Pure, and used by both components, so neither can drift from the other and
  * neither depends on effect ordering for correctness.
  */
-export const isResolutionForSelection = (
+export const mayAcceptConsent = (
 	resolution: ConsentResolution,
 	agencyId: number | undefined,
 	topicId: number | undefined
 ): boolean =>
 	resolution.status === 'resolved' &&
-	resolution.agencyId === agencyId &&
-	resolution.topicId === topicId;
+	answersSelection(resolution, agencyId, topicId);

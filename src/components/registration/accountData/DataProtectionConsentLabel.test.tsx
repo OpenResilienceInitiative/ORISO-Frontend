@@ -47,7 +47,14 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../../globalState/interfaces';
+import { ConsentTextData } from '../../../api/apiGetConsentText';
 /* eslint-enable import/first */
+
+/** The API returns an envelope; almost every test wants the happy branch. */
+const ok = (consentText: ConsentTextData | null) => ({
+	status: 'ok' as const,
+	consentText
+});
 
 const legalLinks = [
 	{
@@ -90,7 +97,7 @@ afterEach(() => {
 
 describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 	beforeEach(() => {
-		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 	});
 
 	it('renders the three-fragment sentence and never asks the backend when the Fachbereich has no published policy', async () => {
@@ -150,13 +157,15 @@ describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 
 describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	it('renders the server-substituted sentence with real, clickable links', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			// {{Beratungsstelle}} / {{Thema}} are already substituted server-side
-			// (ADR-021 decision 5); only {{legal_links}} arrives intact.
-			sentence:
-				'Ich willige ein, dass die Beratungsstelle Musterstadt meine Angaben zum Thema Suchtberatung nach {{legal_links}} verarbeitet.',
-			versionId: 7
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// {{Beratungsstelle}} / {{Thema}} are already substituted server-side
+				// (ADR-021 decision 5); only {{legal_links}} arrives intact.
+				sentence:
+					'Ich willige ein, dass die Beratungsstelle Musterstadt meine Angaben zum Thema Suchtberatung nach {{legal_links}} verarbeitet.',
+				versionId: 7
+			})
+		);
 
 		renderLabel(agencyWith(true));
 
@@ -186,10 +195,12 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	});
 
 	it('renders the cookie/authentication notice as a fixed addendum beneath it', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: 'Kurzer Trägersatz mit {{legal_links}}.',
-			versionId: null
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Kurzer Trägersatz mit {{legal_links}}.',
+				versionId: null
+			})
+		);
 
 		const { container } = renderLabel(agencyWith(true));
 
@@ -219,11 +230,13 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		   would hand a Träger the ability to reword — or quietly drop — the
 		   platform's own disclosure, which is what ADR-021 decision 2 exists to
 		   prevent. */
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: 'Trägersatz mit {{legal_links}}.',
-			versionId: null,
-			cookieNotice: 'Wir nutzen gar keine Cookies.'
-		} as never);
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Trägersatz mit {{legal_links}}.',
+				versionId: null,
+				cookieNotice: 'Wir nutzen gar keine Cookies.'
+			})
+		);
 
 		const { container } = renderLabel(agencyWith(true));
 
@@ -238,14 +251,51 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		);
 	});
 
-	it('resolves the language map the other legal texts use', async () => {
+	it('does not fall back to the platform sentence when the request fails', async () => {
+		/* The department reports a published policy, so its own wording is what
+		   governs. A dropped request must not quietly hand the help-seeker the
+		   platform text instead — they would be agreeing to a document that
+		   does not apply to them. Fail closed. */
 		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: JSON.stringify({
-				de: 'Deutscher Trägersatz mit {{legal_links}}.',
-				en: 'English consent sentence with {{legal_links}}.'
-			}),
-			versionId: null
+			status: 'unavailable'
 		});
+
+		const { container } = renderLabel(agencyWith(true));
+
+		await waitFor(() =>
+			expect(
+				container.querySelector(
+					'[data-cy="consent-sentence-unavailable"]'
+				)
+			).not.toBeNull()
+		);
+		expect(screen.queryByText(/Ich habe die/)).toBeNull();
+		expect(container.querySelector('a')).toBeNull();
+	});
+
+	it('announces the failure rather than leaving a silent dead control', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue({
+			status: 'unavailable'
+		});
+
+		renderLabel(agencyWith(true));
+
+		const notice = await screen.findByRole('alert');
+		expect(notice.textContent).toBe(
+			'Die Datenschutzhinweise können derzeit nicht geladen werden.'
+		);
+	});
+
+	it('resolves the language map the other legal texts use', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: JSON.stringify({
+					de: 'Deutscher Trägersatz mit {{legal_links}}.',
+					en: 'English consent sentence with {{legal_links}}.'
+				}),
+				versionId: null
+			})
+		);
 
 		renderLabel(agencyWith(true));
 
@@ -256,14 +306,16 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	});
 
 	it('sanitizes the Träger sentence through the shared legal allowlist', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: [
-				'Ich willige ein, siehe {{legal_links}}.',
-				'<script>window.__consentXss = true;</script>',
-				'<img src="https://oriso.test/x.png" onerror="window.__consentXss = true">'
-			].join(''),
-			versionId: null
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: [
+					'Ich willige ein, siehe {{legal_links}}.',
+					'<script>window.__consentXss = true;</script>',
+					'<img src="https://oriso.test/x.png" onerror="window.__consentXss = true">'
+				].join(''),
+				versionId: null
+			})
+		);
 
 		const { container } = renderLabel(agencyWith(true));
 
@@ -289,11 +341,13 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		   server's mandatory-token validation and still shows no links — which
 		   is exactly what ADR-021 decision 2 makes the token mandatory to
 		   prevent. The consent allowlist drops `class` entirely. */
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence:
-				'Ich willige ein, siehe <span class="remove">{{legal_links}}</span>.',
-			versionId: null
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence:
+					'Ich willige ein, siehe <span class="remove">{{legal_links}}</span>.',
+				versionId: null
+			})
+		);
 
 		renderLabel(agencyWith(true));
 
@@ -307,10 +361,12 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	});
 
 	it('keeps the links reachable even if a sentence without the mandatory token slips through', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: 'Trägersatz ganz ohne Pflicht-Token.',
-			versionId: null
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Trägersatz ganz ohne Pflicht-Token.',
+				versionId: null
+			})
+		);
 
 		renderLabel(agencyWith(true));
 

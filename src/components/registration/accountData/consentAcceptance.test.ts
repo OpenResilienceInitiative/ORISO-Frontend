@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+	answersSelection,
 	consentBindingKey,
 	ConsentResolution,
-	isResolutionForSelection
+	mayAcceptConsent
 } from './consentAcceptance';
 
 const resolvedFor = (
@@ -28,28 +29,26 @@ const resolvedFor = (
  * jsdom and a component-level test of it passes whether or not the guard is
  * there. A component test that cannot fail is worse than none.
  */
-describe('isResolutionForSelection', () => {
+describe('mayAcceptConsent', () => {
 	it('accepts a resolution produced by the selection on screen', () => {
-		expect(isResolutionForSelection(resolvedFor(42, 7), 42, 7)).toBe(true);
+		expect(mayAcceptConsent(resolvedFor(42, 7), 42, 7)).toBe(true);
 	});
 
 	it('rejects one produced by a different Beratungsstelle', () => {
-		expect(isResolutionForSelection(resolvedFor(42, 7), 99, 7)).toBe(false);
+		expect(mayAcceptConsent(resolvedFor(42, 7), 99, 7)).toBe(false);
 	});
 
 	it('rejects one produced by a different topic', () => {
-		expect(isResolutionForSelection(resolvedFor(42, 7), 42, 8)).toBe(false);
+		expect(mayAcceptConsent(resolvedFor(42, 7), 42, 8)).toBe(false);
 	});
 
 	it('rejects a pending resolution', () => {
-		expect(isResolutionForSelection({ status: 'pending' }, 42, 7)).toBe(
-			false
-		);
+		expect(mayAcceptConsent({ status: 'pending' }, 42, 7)).toBe(false);
 	});
 
 	it('accepts the unconfigured case, where there is no selection either', () => {
 		expect(
-			isResolutionForSelection(
+			mayAcceptConsent(
 				resolvedFor(undefined, undefined),
 				undefined,
 				undefined
@@ -60,9 +59,45 @@ describe('isResolutionForSelection', () => {
 	it('rejects a resolution that carries no selection against a real one', () => {
 		// A resolution from before the selection was known must not be read as
 		// an answer for a selection made since.
-		expect(
-			isResolutionForSelection(resolvedFor(undefined, undefined), 42, 7)
-		).toBe(false);
+		expect(mayAcceptConsent(resolvedFor(undefined, undefined), 42, 7)).toBe(
+			false
+		);
+	});
+});
+
+describe('answersSelection — a settled answer belongs to one selection', () => {
+	it('accepts an answer produced by the selection on screen', () => {
+		expect(answersSelection(resolvedFor(42, 7), 42, 7)).toBe(true);
+	});
+
+	it('rejects one produced by a different Beratungsstelle', () => {
+		expect(answersSelection(resolvedFor(42, 7), 99, 7)).toBe(false);
+	});
+
+	it('treats pending as current, because it names no Fachbereich', () => {
+		expect(answersSelection({ status: 'pending' }, 42, 7)).toBe(true);
+	});
+
+	it('keeps an unavailable answer for its own selection', () => {
+		/* This is the distinction `mayAcceptConsent` must not blur: the
+		   failure notice has to render, so the answer is current — but nothing
+		   about it permits acceptance. */
+		const unavailable: ConsentResolution = {
+			status: 'unavailable',
+			agencyId: 42,
+			topicId: 7
+		};
+		expect(answersSelection(unavailable, 42, 7)).toBe(true);
+		expect(mayAcceptConsent(unavailable, 42, 7)).toBe(false);
+	});
+
+	it('discards an unavailable answer from a previous selection', () => {
+		const unavailable: ConsentResolution = {
+			status: 'unavailable',
+			agencyId: 42,
+			topicId: 7
+		};
+		expect(answersSelection(unavailable, 99, 7)).toBe(false);
 	});
 });
 
