@@ -379,8 +379,7 @@ export const TopicSelection: FC<{
 					{t('registration.topic.oneResult')}
 				</Typography>
 			) : (
-				<>
-				</>
+				<></>
 			)}
 			{topics === undefined || topicGroups === undefined ? (
 				<Box

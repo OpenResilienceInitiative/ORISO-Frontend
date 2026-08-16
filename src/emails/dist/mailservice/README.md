@@ -13,15 +13,15 @@ Each template consumes only what the sending supplier in ORISO-UserService puts
 on the wire. The build fails if a template references anything else, because a
 missing model variable renders as a blank line rather than as an error.
 
-| Template | Designed as | Model variables |
-| --- | --- | --- |
-| `enquiry-notification-consultant` | `neue-anfrage` | `name` `plz` `beratungsstelle` `url` |
-| `direct-enquiry-notification-consultant` | `direkte-anfrage` | `name` `plz` `url` |
-| `assign-enquiry-notification` | `anfrage-zugewiesen` | `name_recipient` `name_sender` `name_user` `url` |
-| `daily-enquiry-notification` | `tagesuebersicht` | `consultant_name` `agency_name` `enquiries` `subject` `url` |
-| `reassign-request-notification` | `uebergabe-angefragt` | `name_recipient` `url` |
-| `reassign-confirmation-notification` | `uebergabe-bestaetigt` | `name_recipient` `name_from_consultant` `url` |
-| `free-text` | `mitteilung` | `subject` `text` `url` |
+| Template                                 | Designed as            | Model variables                                             |
+| ---------------------------------------- | ---------------------- | ----------------------------------------------------------- |
+| `enquiry-notification-consultant`        | `neue-anfrage`         | `name` `plz` `beratungsstelle` `url`                        |
+| `direct-enquiry-notification-consultant` | `direkte-anfrage`      | `name` `plz` `url`                                          |
+| `assign-enquiry-notification`            | `anfrage-zugewiesen`   | `name_recipient` `name_sender` `name_user` `url`            |
+| `daily-enquiry-notification`             | `tagesuebersicht`      | `consultant_name` `agency_name` `enquiries` `subject` `url` |
+| `reassign-request-notification`          | `uebergabe-angefragt`  | `name_recipient` `url`                                      |
+| `reassign-confirmation-notification`     | `uebergabe-bestaetigt` | `name_recipient` `name_from_consultant` `url`               |
+| `free-text`                              | `mitteilung`           | `subject` `text` `url`                                      |
 
 Tenant attributes (`tenant_name`, `tenant_claim`, `tenant_urldatenschutz`,
 `tenant_urlimpressum`) travel with every mail when multitenancy is on.

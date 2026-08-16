@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
 	getCookieDomain,
 	getElementUrl,
-	getHostnamesWithoutCookieDomain,
-	getUseHttps
+	getHostnamesWithoutCookieDomain
 } from '../../resources/scripts/runtimeConfig';
 import './uiVersionToggle.styles.scss';
 
@@ -58,25 +57,15 @@ export const UIVersionToggle = () => {
 				return;
 			}
 
-			try {
-				const { getMatrixAccessToken } = await import(
-					'../sessionCookie/getMatrixAccessToken'
-				);
-				const matrixLoginData = await getMatrixAccessToken();
-				const homeserverUrl = matrixLoginData.homeserverUrl;
-				const isSecure = getUseHttps();
-				const secureStr = isSecure ? '; secure' : '';
-				document.cookie = `matrix_sso_user_id=${encodeURIComponent(matrixLoginData.userId)}; path=/; SameSite=Lax${secureStr}`;
-				document.cookie = `matrix_sso_access_token=${encodeURIComponent(matrixLoginData.accessToken)}; path=/; SameSite=Lax${secureStr}`;
-				document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixLoginData.deviceId)}; path=/; SameSite=Lax${secureStr}`;
-				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${secureStr}`;
-			} catch (error) {
-				console.error(
-					'Failed to fetch Matrix credentials for UI toggle:',
-					error
-				);
-			}
-
+			// #1071/#196: the four `matrix_sso_*` handoff cookies that used to
+			// be written here are gone. They carried the full Matrix access
+			// token — the whole chat identity — in a JS-readable cookie, and
+			// no longer served any purpose: their only consumer,
+			// `element-sso-bridge.html`, was deleted with #231, and since #201
+			// dropped the `domain=` attribute they are host-scoped, so the
+			// Element origin could not read them anyway. Element performs its
+			// own SSO login. Leftovers on long-lived profiles are expired on
+			// logout by `clearMatrixSsoHandoffCookies`.
 			window.location.href = elementUrl;
 			return;
 		} else {

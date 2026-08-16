@@ -78,10 +78,7 @@ export const ZipcodeDigits = ({
 				});
 			onChange(next.join('').slice(0, ZIPCODE_LENGTH));
 
-			const landed = Math.min(
-				index + cleaned.length,
-				ZIPCODE_LENGTH - 1
-			);
+			const landed = Math.min(index + cleaned.length, ZIPCODE_LENGTH - 1);
 			focusDigit(landed);
 		},
 		[digits, focusDigit, onChange]

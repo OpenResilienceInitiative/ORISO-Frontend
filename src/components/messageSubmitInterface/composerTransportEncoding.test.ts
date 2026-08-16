@@ -206,7 +206,9 @@ describe('composer formatting survives the transport round trip', () => {
 		])('coerces %s into an inert checkbox', (_label, hostile) => {
 			const rendered = sanitizeHtml(hostile, sanitizeHtmlDefaultOptions);
 
-			expect(rendered).toBe('<input type="checkbox" disabled="disabled" />');
+			expect(rendered).toBe(
+				'<input type="checkbox" disabled="disabled" />'
+			);
 		});
 	});
 

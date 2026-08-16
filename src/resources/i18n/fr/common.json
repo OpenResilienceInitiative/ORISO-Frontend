@@ -181,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
-			"blocked": "Bloquée par le contrôle de sécurité"
+			"blocked": "Bloquée par le contrôle de sécurité",
+			"error": "Contrôle de sécurité impossible – le fichier reste bloqué"
 		}
 	},
 	"banner": {
@@ -3416,5 +3417,37 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Conseil par messagerie",
+			"summary": "Ce qui a changé dans le conseil par messagerie — de la première demande aux archives.",
+			"step": {
+				"whatsNew": {
+					"title": "Quoi de neuf ?",
+					"intro": "Vous connaissez déjà le conseil par messagerie de la plateforme précédente. Cette courte visite vous montre où se trouvent désormais vos étapes de travail habituelles — et ce qui est vraiment nouveau."
+				},
+				"enquiries": {
+					"title": "Premières demandes",
+					"intro": "Les nouvelles demandes arrivent comme avant dans une liste partagée — elle se trouve désormais ici. Tant que personne ne l’a acceptée, tous les conseillers de votre centre voient la demande ouverte."
+				},
+				"accepting": {
+					"title": "Accepter & première réponse",
+					"intro": "Avec « Accepter », vous prenez une demande dans vos consultations. Nouveau : les personnes en recherche de conseil reçoivent automatiquement une première réponse avec les informations essentielles juste après leur premier message — vous commencez sans pression."
+				},
+				"mySessions": {
+					"title": "Mes consultations",
+					"intro": "Vos consultations acceptées se trouvent ici — triées selon le message le plus récent, comme vous en avez l’habitude."
+				},
+				"composer": {
+					"title": "Écrire — avec de nouvelles options",
+					"intro": "Nouveau par rapport à la plateforme précédente : vous pouvez répondre dans des fils de discussion, enregistrer des messages vocaux et joindre des fichiers directement."
+				},
+				"archive": {
+					"title": "Archives",
+					"intro": "Les consultations terminées sont déplacées vers les archives comme avant — elles se trouvent désormais dans cet onglet."
+				}
+			}
+		}
 	}
 }

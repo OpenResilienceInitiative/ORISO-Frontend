@@ -3,7 +3,10 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { ProductTourTooltip } from './ProductTourTooltip';
-import { consultantWalkthroughTour } from './tourDefinitions';
+import {
+	consultantMailCounsellingTour,
+	consultantWalkthroughTour
+} from './tourDefinitions';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import type {
 	TourDefinition,
@@ -335,6 +338,59 @@ export const CompoundConsultantWalkthrough: Story = {
 		docs: {
 			description: {
 				story: 'The migrated five-step consultant walkthrough as a controlled compound story: all real tour definitions, semantic targets mocked in place. Route navigation is exercised for real in the running app (Playwright regression).'
+			}
+		}
+	}
+};
+
+export const CompoundMailCounsellingTour: Story = {
+	render: () => (
+		<TourPlayground
+			tour={consultantMailCounsellingTour}
+			targetTimeoutMs={4000}
+		>
+			<div
+				style={{
+					display: 'grid',
+					gap: 24,
+					padding: 24,
+					gridTemplateColumns: '280px 1fr'
+				}}
+			>
+				<div
+					data-tour-target="consultant-enquiries-list"
+					style={{
+						border: '1px solid #ccc',
+						borderRadius: 8,
+						padding: 12
+					}}
+				>
+					<span data-tour-target="sessions-archive-tab">
+						Archiv-Chip
+					</span>
+					<p>Mock Anfragen-/Gesprächsliste</p>
+					<div data-tour-target="consultant-sessions-list">
+						Meine Beratungen
+					</div>
+				</div>
+				<div
+					data-tour-target="session-composer"
+					style={{
+						border: '1px solid #ccc',
+						borderRadius: 8,
+						padding: 12,
+						alignSelf: 'end'
+					}}
+				>
+					Mock Composer (Threads, Sprachnachricht, Anhänge)
+				</div>
+			</div>
+		</TourPlayground>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: 'TOUR-10: the six-step Mail-Beratung tour for consultants migrating from the legacy platform, difference-first copy. The composer step is optional — in the real app it is skipped silently when no session is open, and the tour still completes.'
 			}
 		}
 	}
