@@ -51,6 +51,7 @@ import {
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
+import { consentBindingKey } from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
@@ -134,9 +135,9 @@ export const AccountData: FC<{
 		restoredDraft?.repeatPassword ?? ''
 	);
 	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-	const [dataProtectionChecked, setDataProtectionChecked] = useState<boolean>(
-		restoredDraft?.dataProtectionChecked ?? false
-	);
+	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
+		string | null
+	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
 	const [username, setUsername] = useState<string>(
@@ -180,6 +181,23 @@ export const AccountData: FC<{
 				: { status: 'resolved', consentText: null }
 		);
 	const isConsentSentenceResolved = consentResolution.status === 'resolved';
+	/* Which consent is on offer right now. Null while the sentence is unknown —
+	   there is nothing to accept yet. */
+	const currentConsentBinding =
+		consentResolution.status === 'resolved'
+			? consentBindingKey(
+					agency?.id,
+					mainTopic?.id,
+					consentResolution.consentText?.versionId
+				)
+			: null;
+	/* Ticked only while the acceptance on record is the acceptance of *this*
+	   wording. Change the Beratungsstelle, the topic, or publish a new version,
+	   and the box unticks itself because the agreement no longer matches what is
+	   being asked. Come back to the same one and it is still ticked. */
+	const dataProtectionChecked =
+		currentConsentBinding !== null &&
+		acceptedConsentBinding === currentConsentBinding;
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -215,7 +233,7 @@ export const AccountData: FC<{
 			username,
 			password,
 			repeatPassword,
-			dataProtectionChecked,
+			acceptedConsentBinding,
 			email,
 			twoFactorAuthEnabled
 		});
@@ -224,7 +242,7 @@ export const AccountData: FC<{
 		username,
 		password,
 		repeatPassword,
-		dataProtectionChecked,
+		acceptedConsentBinding,
 		email,
 		twoFactorAuthEnabled
 	]);
@@ -709,8 +727,10 @@ export const AccountData: FC<{
 							checked={dataProtectionChecked}
 							disabled={!isConsentSentenceResolved}
 							onClick={() => {
-								setDataProtectionChecked(
-									!dataProtectionChecked
+								setAcceptedConsentBinding(
+									dataProtectionChecked
+										? null
+										: currentConsentBinding
 								);
 							}}
 							sx={{ mt: '-9px' }}
