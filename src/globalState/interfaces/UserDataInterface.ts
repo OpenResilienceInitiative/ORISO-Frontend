@@ -71,6 +71,13 @@ export interface AgencyDepartmentDataInterface {
 	topicId: number;
 	hasPublishedDpp?: boolean;
 	hasPublishedImprint?: boolean;
+	/**
+	 * Per-department contact overrides (AgencyService #242). Optional -
+	 * older backends simply never send them.
+	 */
+	openingHours?: string;
+	phoneExtension?: string;
+	floorLocation?: string;
 }
 
 export interface ConsultingTypeDataInterface {

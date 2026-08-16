@@ -87,6 +87,13 @@ assignIfPresent(
 	'REACT_APP_OBSERVABILITY_ENABLED',
 	'VITE_OBSERVABILITY_ENABLED'
 );
+// Media content scanner (ADR-019). Absent means no scanner is deployed, which
+// is the normal case today; the client then keeps its previous media path.
+assignIfPresent(
+	'REACT_APP_MEDIA_SCANNER_URL',
+	'REACT_APP_MEDIA_SCANNER_URL',
+	'VITE_MEDIA_SCANNER_URL'
+);
 assignIfPresent(
 	'REACT_APP_OTEL_METRICS_URL',
 	'REACT_APP_OTEL_METRICS_URL',

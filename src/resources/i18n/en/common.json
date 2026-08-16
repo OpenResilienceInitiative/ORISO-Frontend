@@ -184,7 +184,8 @@
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
-			"blocked": "Blocked by the security check"
+			"blocked": "Blocked by the security check",
+			"error": "Security check unavailable – file stays locked"
 		}
 	},
 	"banner": {
@@ -673,7 +674,8 @@
 					"text": "Link copied to clipboard!",
 					"title": "Link copied"
 				},
-				"text": "Copy invitation link"
+				"text": "Copy invitation link",
+				"title": "Copy invitation link to clipboard"
 			}
 		},
 		"create": {
@@ -1662,7 +1664,14 @@
 			"quoteUnknown": "Earlier message"
 		},
 		"thread": {
-			"unknownRoot": "Earlier message"
+			"unknownRoot": "Earlier message",
+			"listToggle": "Threads",
+			"replies": "{{count}} replies",
+			"title": "Thread",
+			"placeholder": "Reply in thread"
+		},
+		"deliveryStatus": {
+			"sent": "Sent"
 		}
 	},
 	"navigation": {
@@ -2637,7 +2646,7 @@
 		"headline": "Registration",
 		"md3": {
 			"stepNames": {
-				"focus": "Choose focus",
+				"focus": "Choose a topic",
 				"postcode": "Postcode",
 				"agency": "Consulting center",
 				"register": "Register",
@@ -2829,11 +2838,60 @@
 		"zipcode": {
 			"bullet1": "• know the help available around your place of residence",
 			"bullet2": "• know the laws of your federal state",
-			"headline": "To be able to advise you as best as possible, we need your postcode",
+			"headline": "Where are you looking for counselling?",
 			"label": "Your postcode",
-			"subline": "Why? Because then our specialists:"
+			"subline": "Just your postcode — that is all we need.",
+			"digitLabel": "Postcode, digit {{position}} of {{total}}",
+			"remaining_one": "{{count}} digit to go",
+			"remaining_other": "{{count}} digits to go",
+			"whyLocal": {
+				"title": "Why local counselling?",
+				"localHelp": "Your counselling centre knows the support available near you.",
+				"stateLaw": "It knows the laws of your federal state.",
+				"anonymous": "Only this one centre sees what you enter — you stay anonymous.",
+				"inPerson": "If you want to, you can continue in person later on."
+			}
 		},
-		"registering": "Registration in progress…"
+		"registering": "Registration in progress…",
+		"stepper": {
+			"progress": "Step {{current}} of {{total}}",
+			"progressShort": "Step {{current}}/{{total}}"
+		},
+		"handover": {
+			"badge": "Registered",
+			"headline": "All done.",
+			"subline": "Here is what happens next:",
+			"cta": "Write your enquiry",
+			"encryption": "Encrypted: only you and the staff at your counselling centre can read your enquiry.",
+			"goToStep": "Go to step {{position}} of {{total}}",
+			"steps": {
+				"write": {
+					"title": "You write what is going on",
+					"text": "What happened, where, since when? A few sentences are enough."
+				},
+				"counsellor": {
+					"title": "We find your counsellor",
+					"text": "The right expertise — and time for you."
+				},
+				"reply": {
+					"title": "An answer within 2 working days",
+					"text": "Your enquiry is answered personally and professionally."
+				}
+			},
+			"status": {
+				"preparing": "Encrypting your counselling room …",
+				"verifying": "Checking: human or bot …",
+				"queued": "You are next in line …",
+				"ready": "All set — you can start writing",
+				"slow": "This is taking longer than usual",
+				"entering": "Opening your counselling room …"
+			}
+		},
+		"stepState": {
+			"done": "completed",
+			"active": "current step",
+			"pending": "not started"
+		}
 	},
 	"releaseNote": {
 		"content": {
@@ -3050,7 +3108,10 @@
 				"2": "Okay you need to do three things in the game.",
 				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
 				"negative": "Okay please hold on once a counsellor is free we let you in."
-			}
+			},
+			"onboardingLine1": "Just arrive. We breathe together.",
+			"onboardingLine3": "When you are ready, start your first try.",
+			"volumeHint": "For a better experience, turn on your volume."
 		},
 		"acceptance": {
 			"button": {
@@ -3195,6 +3256,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervision reason"
+			},
+			"startChat": {
+				"title": "Start chat",
+				"hint": "Use the message field at the bottom to send the first supervision message."
+			},
+			"input": {
+				"note": "Messages you send here are visible only to consultants."
+			}
 		}
 	},
 	"sessionList": {
@@ -3204,7 +3277,8 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group"
+				"selfHelp": "Peer support group",
+				"internal": "Internal"
 			}
 		},
 		"createChat": {
@@ -3266,7 +3340,8 @@
 					"type": "By type",
 					"centre": "Counseling center",
 					"archiveOnly": "Archive only"
-				}
+				},
+				"toggle": "Open or close search results"
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -3966,7 +4041,8 @@
 			"startMailCounseling": "Start anonymous mail counselling",
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
-			"later": "Come back later"
+			"later": "Come back later",
+			"title": "Live chat is currently closed"
 		},
 		"consent": {
 			"accept": "I agree",
@@ -4044,7 +4120,9 @@
 				"loadingConsultants": "Loading consultants...",
 				"reasonLabel": "Reason for supervision",
 				"reasonPlaceholder": "Please enter the reason for supervision...",
-				"reasonError": "Please enter a reason."
+				"reasonError": "Please enter a reason.",
+				"note": "If you want any supervisors to supervise in future, you can add them in advance.",
+				"reason": "Reason"
 			},
 			"success": {
 				"add": {
@@ -4070,7 +4148,8 @@
 					"text": "Consultants could not be loaded."
 				},
 				"reasonRequired": {
-					"text": "Please enter the reason for supervision."
+					"text": "Please enter the reason for supervision.",
+					"title": "Reason required"
 				}
 			},
 			"remove": {
@@ -4080,6 +4159,10 @@
 				"disabledAsker": "Supervision is managed by the counselling team",
 				"disabledMobile": "Add supervisor – available on desktop",
 				"disabledUnavailable": "Add supervisor – not available here"
+			},
+			"status": {
+				"on": "Supervision on",
+				"off": "Supervision off"
 			}
 		}
 	},
@@ -4308,7 +4391,8 @@
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault"
+				"openVault": "Open vault",
+				"restoring": "Restoring…"
 			}
 		}
 	},
@@ -4320,5 +4404,51 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"drafts": {
+		"center": {
+			"title": "Drafts",
+			"subtitle": "Unsent messages are saved per chat and thread.",
+			"empty": "No drafts yet.",
+			"messageTag": "Draft",
+			"untitledChat": "Chat",
+			"thread": "Thread",
+			"open": "Open draft",
+			"next": "Next draft",
+			"delete": "Delete draft",
+			"emptyDetail": "Select a draft to continue writing."
+		}
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Mail counselling",
+			"summary": "What has changed in mail counselling — from the first enquiry to the archive.",
+			"step": {
+				"whatsNew": {
+					"title": "What is new?",
+					"intro": "You already know mail counselling from the previous platform. This short tour shows you where your familiar workflows live now — and what is genuinely new."
+				},
+				"enquiries": {
+					"title": "Initial enquiries",
+					"intro": "New enquiries arrive in a shared list, as before — it now lives here. Until someone accepts, every consultant of your counselling centre sees the open enquiry."
+				},
+				"accepting": {
+					"title": "Accepting & first response",
+					"intro": "With “Accept” you take an enquiry into your consultations. New: advice seekers automatically receive a first response with the most important information right after their first message — you can start without time pressure."
+				},
+				"mySessions": {
+					"title": "My consultations",
+					"intro": "Your accepted consultations live here — sorted by the most recent message, just as you are used to."
+				},
+				"composer": {
+					"title": "Writing — with new options",
+					"intro": "New compared to the previous platform: you can reply in threads, record voice messages and attach files directly."
+				},
+				"archive": {
+					"title": "Archive",
+					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
+				}
+			}
+		}
 	}
 }
