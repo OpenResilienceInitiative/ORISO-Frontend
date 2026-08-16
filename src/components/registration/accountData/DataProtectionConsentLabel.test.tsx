@@ -223,18 +223,21 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		).toBeTruthy();
 	});
 
-	it('takes the addendum from the catalogue, never from the payload', async () => {
+	it('renders the addendum from the catalogue beside a Träger sentence', async () => {
 		/* ORISO-AgencyService#256 is explicit that the cookie/authentication
 		   notice is not part of the delivered text: it is the client's fixed,
-		   non-editable addendum. If a payload ever carried one, honouring it
-		   would hand a Träger the ability to reword — or quietly drop — the
-		   platform's own disclosure, which is what ADR-021 decision 2 exists to
-		   prevent. */
+		   non-editable addendum, so that no Träger can reword — or quietly drop
+		   — the platform's own disclosure (ADR-021 decision 2).
+
+		   That a payload-supplied notice is discarded is asserted at the
+		   boundary where it could arrive, in `apiGetConsentText.test.ts`;
+		   `ConsentTextData` has no such field, so the component cannot read one
+		   without a type error. This mock therefore stays a legal
+		   `ConsentTextData`. */
 		vi.mocked(apiGetConsentText).mockResolvedValue(
 			ok({
 				sentence: 'Trägersatz mit {{legal_links}}.',
-				versionId: null,
-				cookieNotice: 'Wir nutzen gar keine Cookies.'
+				versionId: null
 			})
 		);
 

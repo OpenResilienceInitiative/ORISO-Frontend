@@ -91,6 +91,28 @@ describe('normalizeConsentTextResponse', () => {
 		});
 	});
 
+	it('drops a cookie notice the payload has no business carrying', () => {
+		/* The schema says the cookie/authentication notice is the client's
+		   fixed addendum, not part of the delivered text. Dropping it here, at
+		   the boundary, is what makes it impossible further in: `ConsentTextData`
+		   has no such field, so no component can read one by accident. If the
+		   backend ever starts sending it, this is where the decision to ignore
+		   it lives. */
+		const normalized = normalizeConsentTextResponse({
+			dpp: {
+				consentText: 'Satz mit {{legal_links}}.',
+				versionId: 3,
+				cookieNotice: 'Wir nutzen gar keine Cookies.'
+			}
+		});
+
+		expect(normalized).toEqual({
+			sentence: 'Satz mit {{legal_links}}.',
+			versionId: 3
+		});
+		expect(normalized).not.toHaveProperty('cookieNotice');
+	});
+
 	it('returns null when the department carries no consent sentence', () => {
 		expect(
 			normalizeConsentTextResponse({
