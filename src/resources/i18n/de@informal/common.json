@@ -69,8 +69,7 @@
 		"mediaCheck": {
 			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
 			"reveal": "Bild anzeigen",
-			"blocked": "Von der Sicherheitsprüfung blockiert",
-			"error": "Sicherheitsprüfung nicht möglich – Datei bleibt gesperrt"
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {
