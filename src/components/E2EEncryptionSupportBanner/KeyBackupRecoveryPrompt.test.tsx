@@ -11,10 +11,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import { getPendingRecoveryKey } from '../../services/pendingRecoveryKeyStore';
 import type { EncryptionSetupStatus } from '../../services/matrixKeyBackupService';
 
 const getEncryptionStatus = vi.fn();
 const recoverWithKey = vi.fn();
+const setUpRecovery = vi.fn();
+
+const USER_ID = '@abe.simpson:oriso.org';
+const GENERATED_KEY = 'EsTc 1111 2222 3333 4444';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (_key: string, def?: string) => def ?? _key })
@@ -46,6 +51,9 @@ vi.mock('../modal/OrisoDialog', () => ({
 vi.mock('../../services/matrixKeyBackupService', () => ({
 	getEncryptionStatus: (...args: unknown[]) => getEncryptionStatus(...args),
 	recoverWithKey: (...args: unknown[]) => recoverWithKey(...args),
+	setUpRecovery: (...args: unknown[]) => setUpRecovery(...args),
+	canBootstrapSilently: (status: EncryptionSetupStatus) =>
+		!status.serverBackupExists && !status.secretStorageReady,
 	InvalidRecoveryKeyError: class InvalidRecoveryKeyError extends Error {}
 }));
 
@@ -65,10 +73,18 @@ const healthy: EncryptionSetupStatus = {
 	keyStorageOutOfSync: false
 };
 
+const freshAccount: EncryptionSetupStatus = {
+	secretStorageReady: false,
+	crossSigningReady: false,
+	activeBackupVersion: null,
+	serverBackupExists: false,
+	keyStorageOutOfSync: false
+};
+
 /** Fake MatrixClientService: immediately reports PREPARED to its listener. */
-const buildService = (ready = true) =>
+const buildService = (ready = true, userId = USER_ID) =>
 	(() => {
-		const client = {} as any;
+		const client = { getUserId: () => userId } as any;
 		return {
 			getClient: () => client,
 			getReadyClient: async () => client,
@@ -95,17 +111,24 @@ const renderPrompt = (service: unknown) =>
 	);
 
 const RECOVERY_TEXT = /auf einem neuen Gerät angemeldet/i;
-const SETUP_TEXT = /Richten Sie einen Wiederherstellungsschlüssel ein/i;
+const flush = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 	beforeEach(() => {
 		document.body.innerHTML = '<div id="banner"></div>';
 		sessionStorage.clear();
+		localStorage.clear();
 		getEncryptionStatus.mockReset();
 		recoverWithKey.mockReset();
+		setUpRecovery.mockReset();
+		setUpRecovery.mockResolvedValue(GENERATED_KEY);
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	});
 
-	afterEach(() => cleanup());
+	afterEach(() => {
+		cleanup();
+		vi.restoreAllMocks();
+	});
 
 	it('shows the recovery prompt when key storage is out of sync after login', async () => {
 		getEncryptionStatus.mockResolvedValue(outOfSync);
@@ -145,38 +168,61 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 			)
 		);
 		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-		expect(sessionStorage.getItem('hideKeyBackupPrompt')).toBe('true');
+		expect(sessionStorage.getItem('hideKeyBackupPrompt')).toBe(USER_ID);
 	});
 
-	it.each([
-		['server backup', { ...healthy, serverBackupExists: false }],
-		['secret storage', { ...healthy, secretStorageReady: false }],
-		['cross-signing', { ...healthy, crossSigningReady: false }]
-	])(
-		'shows setup-specific copy when %s is missing (#839)',
-		async (_prerequisite, status) => {
-			getEncryptionStatus.mockResolvedValue(status);
+	it('sets the Tresor up in the background instead of asking (#839 follow-up)', async () => {
+		getEncryptionStatus.mockResolvedValue(freshAccount);
 
-			renderPrompt(buildService());
+		renderPrompt(buildService());
 
-			await waitFor(() =>
-				expect(screen.queryByText(SETUP_TEXT)).toBeTruthy()
-			);
-			expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
-			expect(screen.getByRole('dialog')).toBeTruthy();
-			expect(screen.getByRole('link').textContent).toMatch(
-				/Tresor einrichten/i
-			);
-			expect(screen.getByRole('link').getAttribute('href')).toContain(
-				'/profile/einstellungen/sicherheit'
-			);
-		}
-	);
+		await waitFor(() => expect(setUpRecovery).toHaveBeenCalled());
+		// Nothing interrupts the user — the dialog never appears.
+		expect(screen.queryByRole('dialog')).toBeNull();
+		// The key waits in the Sicherheit panel instead of a modal.
+		await waitFor(() =>
+			expect(getPendingRecoveryKey(USER_ID)).toBe(GENERATED_KEY)
+		);
+	});
 
-	it('prioritizes recovery copy when key storage is out of sync', async () => {
+	it('runs the silent setup once, even with a second tab on the same account', async () => {
+		getEncryptionStatus.mockResolvedValue(freshAccount);
+
+		renderPrompt(buildService());
+		renderPrompt(buildService());
+
+		await flush();
+		expect(setUpRecovery).toHaveBeenCalledTimes(1);
+	});
+
+	it('stays silent and shows no dialog when the background setup fails', async () => {
+		getEncryptionStatus.mockResolvedValue(freshAccount);
+		setUpRecovery.mockRejectedValue(new Error('UIA rejected'));
+
+		renderPrompt(buildService());
+
+		await waitFor(() => expect(setUpRecovery).toHaveBeenCalled());
+		await flush();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(getPendingRecoveryKey(USER_ID)).toBeNull();
+	});
+
+	it('never bootstraps over an existing server backup', async () => {
 		getEncryptionStatus.mockResolvedValue({
 			...healthy,
-			serverBackupExists: false,
+			secretStorageReady: false
+		});
+
+		renderPrompt(buildService());
+
+		await flush();
+		expect(setUpRecovery).not.toHaveBeenCalled();
+		expect(screen.queryByRole('dialog')).toBeNull();
+	});
+
+	it('prioritizes recovery over setup when key storage is out of sync', async () => {
+		getEncryptionStatus.mockResolvedValue({
+			...freshAccount,
 			keyStorageOutOfSync: true
 		});
 
@@ -185,11 +231,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		await waitFor(() =>
 			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
 		);
-		expect(screen.queryByText(SETUP_TEXT)).toBeNull();
-		expect(screen.getByRole('textbox')).toBeTruthy();
-		expect(
-			screen.getByRole('button', { name: /Tresor öffnen/i })
-		).toBeTruthy();
+		expect(setUpRecovery).not.toHaveBeenCalled();
 	});
 
 	it('stays hidden when encryption is healthy', async () => {
@@ -200,7 +242,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		// Give the probe time to resolve, then assert nothing rendered.
 		await waitFor(() => expect(getEncryptionStatus).toHaveBeenCalled());
 		expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
-		expect(screen.queryByText(SETUP_TEXT)).toBeNull();
+		expect(setUpRecovery).not.toHaveBeenCalled();
 	});
 
 	it('does not probe until the client is PREPARED', async () => {
@@ -208,27 +250,58 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 
 		renderPrompt(buildService(false));
 
-		await new Promise((resolve) => setTimeout(resolve, 20));
+		await flush();
 		expect(getEncryptionStatus).not.toHaveBeenCalled();
 		expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
 	});
 
-	it('stays hidden when dismissed earlier this session', async () => {
-		sessionStorage.setItem('hideKeyBackupPrompt', 'true');
+	it('stays hidden when this user dismissed it earlier in the session', async () => {
+		sessionStorage.setItem('hideKeyBackupPrompt', USER_ID);
 		getEncryptionStatus.mockResolvedValue(outOfSync);
 
 		renderPrompt(buildService());
 
-		// Dismissal short-circuits before any crypto probe.
-		await new Promise((resolve) => setTimeout(resolve, 20));
-		expect(getEncryptionStatus).not.toHaveBeenCalled();
+		await flush();
 		expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
+	});
+
+	it('remembers who dismissed it, not just that someone did', async () => {
+		getEncryptionStatus.mockResolvedValue(outOfSync);
+		recoverWithKey.mockResolvedValue({ imported: 0, total: 0 });
+
+		renderPrompt(buildService());
+
+		fireEvent.click(await screen.findByRole('button', { name: /Später/i }));
+
+		expect(sessionStorage.getItem('hideKeyBackupPrompt')).toBe(USER_ID);
+	});
+
+	it('still asks the next account that logs into the same tab', async () => {
+		sessionStorage.setItem('hideKeyBackupPrompt', USER_ID);
+		getEncryptionStatus.mockResolvedValue(outOfSync);
+
+		renderPrompt(buildService(true, '@lisa.simpson:oriso.org'));
+
+		await waitFor(() =>
+			expect(screen.queryByText(RECOVERY_TEXT)).toBeTruthy()
+		);
+	});
+
+	it('sets a dismissed-tab account up in the background all the same', async () => {
+		// The dismissal was about a dialog. It never spoke for the bootstrap.
+		sessionStorage.setItem('hideKeyBackupPrompt', USER_ID);
+		getEncryptionStatus.mockResolvedValue(freshAccount);
+
+		renderPrompt(buildService());
+
+		await waitFor(() => expect(setUpRecovery).toHaveBeenCalled());
+		expect(screen.queryByRole('dialog')).toBeNull();
 	});
 
 	it('renders nothing and never probes without a Matrix client service', async () => {
 		renderPrompt(null);
 
-		await new Promise((resolve) => setTimeout(resolve, 20));
+		await flush();
 		expect(getEncryptionStatus).not.toHaveBeenCalled();
 		expect(screen.queryByText(RECOVERY_TEXT)).toBeNull();
 	});

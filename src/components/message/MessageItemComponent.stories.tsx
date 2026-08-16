@@ -229,13 +229,17 @@ export const AndroidCompactKebabTouchZone: Story = {
 				const rect = (button as HTMLElement).getBoundingClientRect();
 				expect(Math.round(rect.width)).toBe(32);
 				expect(Math.round(rect.height)).toBe(32);
-				expect(button).toHaveAttribute('aria-label', 'More');
+				// German is the preview default; keep the assertion readable
+				// in either language rather than pinning one.
+				expect(button.getAttribute('aria-label')).toMatch(
+					/^(More|Weitere Optionen)$/
+				);
 			});
 		});
 		// Keep canvas typed usage so Storybook interaction panel stays wired.
-		expect(canvas.getAllByLabelText('More').length).toBeGreaterThanOrEqual(
-			2
-		);
+		expect(
+			canvas.getAllByLabelText(/^(More|Weitere Optionen)$/).length
+		).toBeGreaterThanOrEqual(2);
 	}
 };
 
@@ -758,7 +762,7 @@ export const KebabActiveState: Story = {
 			expect(getComputedStyle(menu).backgroundColor).toBe(
 				'rgb(255, 255, 255)'
 			);
-			expect(menu.textContent).toContain('Reply directly');
+			expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
 		});
 	}
 };
@@ -824,7 +828,7 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(found).toBeTruthy();
 			return found;
 		});
-		expect(menu.textContent).toContain('Reply directly');
+		expect(menu.textContent).toMatch(/Reply directly|Direkt antworten/);
 
 		// The menu must stay inside the viewport on this side too — it is
 		// positioned from the right edge, so a wrong clamp pushes it off-screen.
@@ -861,5 +865,99 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
 			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
 		});
+	}
+};
+
+/**
+ * #1081: the action menu must follow its message. It used to be positioned once
+ * at open time and frozen there, so scrolling the conversation left it pointing
+ * at a different message — and the next click applied "Reply directly" or
+ * "Delete Message" to something the counsellor was no longer looking at.
+ *
+ * Renders inside a short scroll container so the story can actually scroll.
+ */
+export const KebabMenuFollowsScroll: Story = {
+	name: 'Kebab open — menu follows the message on scroll (#1081)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Open the ⋮ and scroll the container: the menu keeps the same offset to its message instead of staying put.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message: 'Okay. Ich bin gerade zuhause und kann schreiben.'
+		}),
+		onReact: () => {},
+		onUnreact: () => {},
+		onReplyDirect: () => {},
+		...baseHandlers
+	},
+	decorators: [
+		(Story) => (
+			<div
+				data-testid="scroll-container"
+				style={{ height: 260, overflowY: 'auto' }}
+			>
+				<div style={{ height: 200 }} />
+				<Story />
+				<div style={{ height: 600 }} />
+			</div>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const kebab = canvasElement.querySelector(
+			'.messageItem__kebabButton'
+		) as HTMLElement;
+		expect(kebab).toBeTruthy();
+		kebab.click();
+
+		const menu = await waitFor(() => {
+			const found = document.querySelector(
+				'.messageItem__actionMenu'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			// Wait for floating-ui to place it, not the off-screen default.
+			expect(found.getBoundingClientRect().top).toBeGreaterThan(-1000);
+			return found;
+		});
+
+		const offsetBefore =
+			menu.getBoundingClientRect().top -
+			kebab.getBoundingClientRect().top;
+
+		const kebabTopBefore = kebab.getBoundingClientRect().top;
+		const scroller = canvasElement.querySelector(
+			'[data-testid="scroll-container"]'
+		) as HTMLElement;
+		scroller.scrollTop = 120;
+		scroller.dispatchEvent(new Event('scroll'));
+
+		await waitFor(() => {
+			// Guard against a vacuous pass: if the container did not actually
+			// scroll, "the offset is unchanged" is true for the wrong reason.
+			expect(
+				kebabTopBefore - kebab.getBoundingClientRect().top
+			).toBeGreaterThan(100);
+
+			const offsetAfter =
+				menu.getBoundingClientRect().top -
+				kebab.getBoundingClientRect().top;
+			// The menu tracks the trigger: their distance is unchanged.
+			expect(Math.abs(offsetAfter - offsetBefore)).toBeLessThan(2);
+		});
+
+		// And it is still inside the viewport after the scroll.
+		const rect = menu.getBoundingClientRect();
+		expect(rect.left).toBeGreaterThanOrEqual(0);
+		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
 	}
 };

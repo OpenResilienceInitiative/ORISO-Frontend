@@ -429,6 +429,7 @@ export const GroupChatHeader = ({
 						<div
 							className="sessionInfo__videoCallButtons"
 							data-cy="session-header-video-call-buttons"
+							data-tour-target="groupchat-call-button"
 						>
 							{isVideoCallsEnabled && (
 								<Button

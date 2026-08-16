@@ -4,9 +4,23 @@ export interface TenantDataInterface {
 	theming: {
 		logo: string;
 		associationLogo: string | null;
+		/**
+		 * Which of the partner marks the tenant wants on the login stage
+		 * (FE-H05 / #178). Absent on backends that do not deliver the setting
+		 * yet — then every mark is shown, which is what the operator has to be
+		 * able to switch off. Empty array = show none.
+		 */
+		associationLogos?: string[];
 		favicon: string;
 		primaryColor: string;
 		secondaryColor: string;
+		/**
+		 * Which decorative effect the login stage runs, chosen by the tenant in
+		 * Admin -> Appearance. Absent or `null` means never configured and is
+		 * read as `none`, i.e. the plain stage. Additive TenantService field —
+		 * older backends simply do not send it.
+		 */
+		loginEffect?: 'NONE' | 'LINES' | 'CONNECTED_DOTS' | 'CRACKS' | null;
 	};
 	content: {
 		impressum: string;

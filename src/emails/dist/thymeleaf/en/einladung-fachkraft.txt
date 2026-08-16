@@ -1,0 +1,28 @@
+You have been invited to counsel
+================================
+
+[[${agencyName}]] has invited you to [[${platformName}]] as a counsellor.
+
+Use the link to set your password and set up two-factor sign-in.
+
+Counselling service: [[${agencyName}]]
+Link valid until: [[${inviteExpiresAt}]]
+
+Set up access:
+[[${inviteUrl}]]
+
+Without two-factor sign-in there is no access to counselling.
+
+----------------------------------------------------------------
+We will never ask for your password by email. Do not pass this link on to anyone.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] is a service provided by [[${orgName}]].
+
+Privacy: [[${privacyUrl}]]
+Imprint: [[${imprintUrl}]]
+
+This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.

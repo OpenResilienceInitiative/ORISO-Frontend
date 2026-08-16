@@ -1,0 +1,29 @@
+Ihre Tagesübersicht
+===================
+
+In Ihrer Beratungsstelle warten offene Anfragen auf Annahme.
+
+Offene Anfragen: ${openRequestCount!''}
+Längste Wartezeit: ${oldestRequestAge!''}
+Stand: ${digestGeneratedAt!''}
+
+Anfragen ansehen:
+${requestUrl!''}
+
+Diese Übersicht kommt einmal täglich. Sie können sie in den Einstellungen abbestellen.
+
+----------------------------------------------------------------
+Inhalte aus Beratungen stehen nie in einer E-Mail. Sie sehen sie ausschließlich verschlüsselt nach der Anmeldung.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Einstellungen: ${settingsUrl!''}
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+Benachrichtigungen abbestellen: ${unsubscribeUrl!''}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.
