@@ -258,6 +258,15 @@ describe('Walkthrough', () => {
 		expect(queryByTestId('product-tour-adapter')).toBeNull();
 	});
 
+	it('does not fall back to the legacy auto-run for an unknown requested tour id', () => {
+		const { queryByTestId } = renderWalkthrough(
+			{ isWalkThroughEnabled: true },
+			{ tourId: 'does-not-exist', mode: 'start', requestedAt: 9 }
+		);
+
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
+	});
+
 	it('does not touch the legacy boolean for carousel-only runs', async () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: false },

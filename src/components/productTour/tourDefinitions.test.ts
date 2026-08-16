@@ -180,7 +180,9 @@ describe('frontendTours registry', () => {
 		});
 	});
 
-	it('ships the mail-counselling copy natively in every bundled locale', () => {
+	it('ships the mail-counselling copy natively in every full locale', () => {
+		// de@informal is a sparse overlay by contract (#1101): it carries only
+		// values that differ from `de` and falls back for the rest.
 		const keys = [
 			consultantMailCounsellingTour.titleKey,
 			consultantMailCounsellingTour.summaryKey,
@@ -189,13 +191,43 @@ describe('frontendTours registry', () => {
 				s.contentKey
 			])
 		];
-		bundledLocales.forEach(([locale, bundle]) => {
-			keys.forEach((key) => {
-				expect(
-					typeof resolveKey(bundle, key),
-					`missing ${locale} key ${key}`
-				).toBe('string');
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keys.forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
 			});
+	});
+
+	it('keeps the informal overlay sparse: only du-form step copy, no values identical to de', () => {
+		const informalTour = resolveKey(
+			deInformalTranslations,
+			'tour.mailCounselling'
+		) as Record<string, any>;
+		const walk = (node: any, base: any, path: string) => {
+			Object.entries(node).forEach(([k, v]) => {
+				if (v && typeof v === 'object') {
+					walk(v, base?.[k], `${path}.${k}`);
+				} else {
+					expect(v, `${path}.${k} duplicates de`).not.toBe(base?.[k]);
+				}
+			});
+		};
+		walk(
+			informalTour,
+			resolveKey(deTranslations, 'tour.mailCounselling'),
+			'tour.mailCounselling'
+		);
+		// Every step's content is present in du-form.
+		consultantMailCounsellingTour.steps.forEach((s) => {
+			expect(
+				typeof resolveKey(deInformalTranslations, s.contentKey),
+				`missing informal ${s.contentKey}`
+			).toBe('string');
 		});
 	});
 });

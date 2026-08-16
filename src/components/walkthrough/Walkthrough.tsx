@@ -30,7 +30,9 @@ export const Walkthrough = () => {
 	const requestedTour = launchRequest
 		? frontendTours.find((tour) => tour.id === launchRequest.tourId)
 		: undefined;
-	const isAutoRun = !requestedTour && !!userData.isWalkThroughEnabled;
+	// Auto-run only when nothing was requested at all: a stale or unknown
+	// request must not fall back to starting an unrelated tour.
+	const isAutoRun = !launchRequest && !!userData.isWalkThroughEnabled;
 	const activeTour =
 		requestedTour ?? (isAutoRun ? consultantWalkthroughTour : undefined);
 
