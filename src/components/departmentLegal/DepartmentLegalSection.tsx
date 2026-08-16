@@ -15,22 +15,14 @@ import {
 } from '../../api/apiGetDepartmentLegal';
 import {
 	AgencyDataInterface,
-	AgencyDepartmentDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { pickConsentPrivacyContent } from '../../utils/legalContent';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { getDepartmentForTopic } from './getDepartmentForTopic';
 
-export const getDepartmentForTopic = (
-	agency?: AgencyDataInterface,
-	topic?: TopicsDataInterface
-): AgencyDepartmentDataInterface | undefined =>
-	topic?.id !== undefined
-		? agency?.departments?.find(
-				(department) => department.topicId === topic.id
-			)
-		: undefined;
+export { getDepartmentForTopic };
 
 export interface DepartmentLegalSectionProps {
 	agency?: AgencyDataInterface;

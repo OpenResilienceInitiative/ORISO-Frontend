@@ -2679,6 +2679,7 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
 			"label": {
 				"and": " und ",
 				"prefix": "Ich habe die ",

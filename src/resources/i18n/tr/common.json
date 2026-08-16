@@ -1985,6 +1985,7 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
 			"label": {
 				"and": " ve ",
 				"prefix": "Bende ",

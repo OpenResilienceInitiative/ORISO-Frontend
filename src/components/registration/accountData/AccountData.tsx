@@ -6,7 +6,6 @@ import {
 	FormGroup,
 	IconButton,
 	InputAdornment,
-	Link,
 	Typography
 } from '@mui/material';
 import * as React from 'react';
@@ -26,7 +25,6 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
 	RegistrationContext,
@@ -35,7 +33,6 @@ import {
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
-import LegalLinks from '../../../components/legalLinks/LegalLinks';
 import { getEmailFeedback } from './emailFeedback';
 import {
 	registrationMd3,
@@ -61,6 +58,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
+import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -116,7 +114,6 @@ const suggestButtonSx = (filled: boolean) =>
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 }> = ({ onChange }) => {
-	const legalLinks = useContext(LegalLinksContext);
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -695,29 +692,14 @@ export const AccountData: FC<{
 						/>
 					}
 					label={
-						<Typography>
-							<LegalLinks
-								delimiter={', '}
-								filter={(legalLink) => legalLink.registration}
-								legalLinks={legalLinks}
-								params={{ aid: null }}
-								prefix={t(
-									'registration.dataProtection.label.prefix'
-								)}
-								lastDelimiter={t(
-									'registration.dataProtection.label.and'
-								)}
-								suffix={t(
-									'registration.dataProtection.label.suffix'
-								)}
-							>
-								{(label, url) => (
-									<Link target="_blank" href={url}>
-										{label}
-									</Link>
-								)}
-							</LegalLinks>
-						</Typography>
+						/* The sentence itself is resolved in its own component:
+						   a Träger-authored consent text when the selected
+						   Fachbereich has one (ADR-021), otherwise exactly the
+						   three-fragment sentence this used to assemble inline. */
+						<DataProtectionConsentLabel
+							agency={registrationData?.agency}
+							topic={registrationData?.mainTopic}
+						/>
 					}
 				/>
 			</FormGroup>

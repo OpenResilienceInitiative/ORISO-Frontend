@@ -1972,6 +1972,7 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም።",
 			"label": {
 				"and": " እና ",
 				"prefix": "ኣነ እቲ... ",
