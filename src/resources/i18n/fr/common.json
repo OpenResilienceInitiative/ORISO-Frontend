@@ -1976,11 +1976,13 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Pour l'authentification et la navigation, ce site utilise des cookies.",
 			"label": {
 				"and": " et ",
 				"prefix": "J'ai fait le ",
 				"suffix": " a pris note. Pour l'authentification et la navigation, ce site utilise des cookies."
-			}
+			},
+			"loading": "Chargement du texte de consentement …"
 		},
 		"error": {
 			"required_field_missing": {

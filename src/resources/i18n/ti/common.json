@@ -1973,11 +1973,13 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም።",
 			"label": {
 				"and": " እና ",
 				"prefix": "ኣነ እቲ... ",
 				"suffix": " ተመዝጊቡ። እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም።"
-			}
+			},
+			"loading": "ይጽዕን ኣሎ …"
 		},
 		"error": {
 			"required_field_missing": {

@@ -1986,11 +1986,13 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
 			"label": {
 				"and": " ve ",
 				"prefix": "Bende ",
 				"suffix": " not alınmıştır. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
-			}
+			},
+			"loading": "Onay metni yükleniyor …"
 		},
 		"error": {
 			"required_field_missing": {

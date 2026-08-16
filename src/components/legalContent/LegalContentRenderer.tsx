@@ -2,27 +2,13 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import sanitizeHtml from 'sanitize-html';
 import htmlParser from '../../resources/scripts/util/htmlParser';
 import {
 	normalizeLegalLang,
 	resolveLegalContent
 } from '../../utils/legalContent';
+import { sanitizeLegalHtml } from './legalHtmlSanitizer';
 import './legalContent.styles.scss';
-
-const LEGAL_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-	allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img'],
-	allowedAttributes: {
-		'*': ['class'],
-		'a': ['href', 'name', 'target', 'rel'],
-		'img': ['src', 'alt', 'title', 'width', 'height', 'loading']
-	},
-	allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-	allowedSchemesByTag: {
-		img: ['http', 'https']
-	},
-	allowProtocolRelative: false
-};
 
 export interface LegalContentRendererProps {
 	/**
@@ -65,10 +51,7 @@ export const LegalContentRenderer = ({
 		[showOriginal, resolved, content]
 	);
 	const sanitizedHtml = useMemo(
-		() =>
-			displayed
-				? sanitizeHtml(displayed.html, LEGAL_HTML_SANITIZE_OPTIONS)
-				: '',
+		() => sanitizeLegalHtml(displayed?.html),
 		[displayed]
 	);
 

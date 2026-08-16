@@ -2680,11 +2680,13 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
 			"label": {
 				"and": " und ",
 				"prefix": "Ich habe die ",
 				"suffix": " zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies."
-			}
+			},
+			"loading": "Der Einwilligungstext wird geladen …"
 		},
 		"error": {
 			"required_field_missing": {

@@ -6,7 +6,6 @@ import {
 	FormGroup,
 	IconButton,
 	InputAdornment,
-	Link,
 	Typography
 } from '@mui/material';
 import * as React from 'react';
@@ -26,7 +25,6 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
 	RegistrationContext,
@@ -35,7 +33,6 @@ import {
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
-import LegalLinks from '../../../components/legalLinks/LegalLinks';
 import { getEmailFeedback } from './emailFeedback';
 import {
 	registrationMd3,
@@ -54,6 +51,11 @@ import {
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
+import {
+	ConsentResolution,
+	consentBindingKey,
+	isResolutionForSelection
+} from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
@@ -61,6 +63,10 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
+import {
+	DataProtectionConsentLabel,
+	departmentMayHaveConsentText
+} from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -116,7 +122,6 @@ const suggestButtonSx = (filled: boolean) =>
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 }> = ({ onChange }) => {
-	const legalLinks = useContext(LegalLinksContext);
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -133,9 +138,9 @@ export const AccountData: FC<{
 		restoredDraft?.repeatPassword ?? ''
 	);
 	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-	const [dataProtectionChecked, setDataProtectionChecked] = useState<boolean>(
-		restoredDraft?.dataProtectionChecked ?? false
-	);
+	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
+		string | null
+	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
 	const [username, setUsername] = useState<string>(
@@ -163,6 +168,55 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
 		useContext(RegistrationContext);
+	const agency = registrationData?.agency;
+	const mainTopic = registrationData?.mainTopic;
+
+	/* While the consent sentence is being fetched there is no wording next to
+	   the checkbox, and agreement to wording nobody has seen is not agreement.
+	   The label reports its resolution here so the control can stay inert until
+	   there is something to consent to. Seeded from the same predicate the
+	   label uses, so the far more common unconfigured case — which issues no
+	   request at all — is never disabled, not even for one frame. */
+	const [consentResolution, setConsentResolution] =
+		useState<ConsentResolution>(() =>
+			departmentMayHaveConsentText(agency, mainTopic)
+				? { status: 'pending' }
+				: {
+						status: 'resolved',
+						consentText: null,
+						agencyId: agency?.id,
+						topicId: mainTopic?.id
+					}
+		);
+	/* A resolution answers the selection that produced it and no other. The
+	   label applies the same check, but this component holds its own copy of
+	   the state, so between an agency/topic change and the label's effect
+	   reporting the new `pending` it would otherwise still be holding the
+	   previous Beratungsstelle's answer — enabling acceptance of the old
+	   sentence while writing a binding under the new identity. Checking here
+	   too makes that independent of effect ordering. */
+	const isConsentSentenceResolved = isResolutionForSelection(
+		consentResolution,
+		agency?.id,
+		mainTopic?.id
+	);
+	/* Which consent is on offer right now. Null while the sentence is unknown —
+	   there is nothing to accept yet. */
+	const currentConsentBinding =
+		isConsentSentenceResolved && consentResolution.status === 'resolved'
+			? consentBindingKey(
+					agency?.id,
+					mainTopic?.id,
+					consentResolution.consentText?.versionId
+				)
+			: null;
+	/* Ticked only while the acceptance on record is the acceptance of *this*
+	   wording. Change the Beratungsstelle, the topic, or publish a new version,
+	   and the box unticks itself because the agreement no longer matches what is
+	   being asked. Come back to the same one and it is still ticked. */
+	const dataProtectionChecked =
+		currentConsentBinding !== null &&
+		acceptedConsentBinding === currentConsentBinding;
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -198,7 +252,7 @@ export const AccountData: FC<{
 			username,
 			password,
 			repeatPassword,
-			dataProtectionChecked,
+			acceptedConsentBinding,
 			email,
 			twoFactorAuthEnabled
 		});
@@ -207,7 +261,7 @@ export const AccountData: FC<{
 		username,
 		password,
 		repeatPassword,
-		dataProtectionChecked,
+		acceptedConsentBinding,
 		email,
 		twoFactorAuthEnabled
 	]);
@@ -270,6 +324,9 @@ export const AccountData: FC<{
 			isUsernameLongEnough &&
 			isPasswordValid &&
 			password === repeatPassword &&
+			// Not merely "the box is ticked": the box may only count once the
+			// sentence it sits next to is actually on screen.
+			isConsentSentenceResolved &&
 			dataProtectionChecked &&
 			emailFeedback.isSatisfied
 		) {
@@ -288,6 +345,7 @@ export const AccountData: FC<{
 		password,
 		repeatPassword,
 		dataProtectionChecked,
+		isConsentSentenceResolved,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -686,38 +744,27 @@ export const AccountData: FC<{
 					control={
 						<Checkbox
 							checked={dataProtectionChecked}
+							disabled={!isConsentSentenceResolved}
 							onClick={() => {
-								setDataProtectionChecked(
-									!dataProtectionChecked
+								setAcceptedConsentBinding(
+									dataProtectionChecked
+										? null
+										: currentConsentBinding
 								);
 							}}
 							sx={{ mt: '-9px' }}
 						/>
 					}
 					label={
-						<Typography>
-							<LegalLinks
-								delimiter={', '}
-								filter={(legalLink) => legalLink.registration}
-								legalLinks={legalLinks}
-								params={{ aid: null }}
-								prefix={t(
-									'registration.dataProtection.label.prefix'
-								)}
-								lastDelimiter={t(
-									'registration.dataProtection.label.and'
-								)}
-								suffix={t(
-									'registration.dataProtection.label.suffix'
-								)}
-							>
-								{(label, url) => (
-									<Link target="_blank" href={url}>
-										{label}
-									</Link>
-								)}
-							</LegalLinks>
-						</Typography>
+						/* The sentence itself is resolved in its own component:
+						   a Träger-authored consent text when the selected
+						   Fachbereich has one (ADR-021), otherwise exactly the
+						   three-fragment sentence this used to assemble inline. */
+						<DataProtectionConsentLabel
+							agency={agency}
+							topic={mainTopic}
+							onResolutionChange={setConsentResolution}
+						/>
 					}
 				/>
 			</FormGroup>
@@ -726,8 +773,8 @@ export const AccountData: FC<{
 			    falls back to the tenant text if it cannot be loaded. */}
 			<Box sx={{ mt: '12px' }}>
 				<DepartmentLegalSection
-					agency={registrationData?.agency}
-					topic={registrationData?.mainTopic}
+					agency={agency}
+					topic={mainTopic}
 					variant="consent"
 				/>
 			</Box>

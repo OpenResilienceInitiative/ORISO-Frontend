@@ -15,22 +15,14 @@ import {
 } from '../../api/apiGetDepartmentLegal';
 import {
 	AgencyDataInterface,
-	AgencyDepartmentDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { pickConsentPrivacyContent } from '../../utils/legalContent';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { getDepartmentForTopic } from './getDepartmentForTopic';
 
-export const getDepartmentForTopic = (
-	agency?: AgencyDataInterface,
-	topic?: TopicsDataInterface
-): AgencyDepartmentDataInterface | undefined =>
-	topic?.id !== undefined
-		? agency?.departments?.find(
-				(department) => department.topicId === topic.id
-			)
-		: undefined;
+export { getDepartmentForTopic };
 
 export interface DepartmentLegalSectionProps {
 	agency?: AgencyDataInterface;
@@ -97,11 +89,22 @@ export const DepartmentLegalSection = ({
 
 	const dppContent = legal?.dpp?.content;
 	const imprintContent = legal?.imprint?.content;
-	// Consent display: department DPP wins, tenant content is the fallback
-	// (e.g. when the endpoint 404s on a backend without AgencyService #90).
+	/* Consent display: department DPP wins, tenant content is the fallback
+	   (e.g. when the endpoint 404s on a backend without AgencyService #90).
+
+	   `renderedPrivacy`, not `privacy`: the two differ by exactly the
+	   data-protection placeholder rendering (TenantService `TenantConverter`,
+	   `renderPrivacyForNoAgencyContext`). Passing the raw field put an
+	   unsubstituted `${responsible}` in front of help-seekers at registration.
+	   TenantService already falls back to the raw text when no contact template
+	   is configured, so the `||` here only covers a backend that predates the
+	   field entirely. */
 	const consentContent =
 		variant === 'consent'
-			? pickConsentPrivacyContent(dppContent, tenant?.content?.privacy)
+			? pickConsentPrivacyContent(
+					dppContent,
+					tenant?.content?.renderedPrivacy || tenant?.content?.privacy
+				)
 			: null;
 
 	const nothingLoaded =

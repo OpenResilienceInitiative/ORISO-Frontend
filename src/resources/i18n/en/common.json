@@ -2628,11 +2628,13 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "For authentication and navigation, this website uses cookies.",
 			"label": {
 				"and": " and ",
 				"prefix": "I have the ",
 				"suffix": " noted. For authentication and navigation, this website uses cookies. I agree with this."
-			}
+			},
+			"loading": "Loading the consent text …"
 		},
 		"error": {
 			"required_field_missing": {
