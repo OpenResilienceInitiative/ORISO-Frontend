@@ -4267,5 +4267,37 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Mail counselling",
+			"summary": "What has changed in mail counselling — from the first enquiry to the archive.",
+			"step": {
+				"whatsNew": {
+					"title": "What is new?",
+					"intro": "You already know mail counselling from the previous platform. This short tour shows you where your familiar workflows live now — and what is genuinely new."
+				},
+				"enquiries": {
+					"title": "Initial enquiries",
+					"intro": "New enquiries arrive in a shared list, as before — it now lives here. Until someone accepts, every consultant of your counselling centre sees the open enquiry."
+				},
+				"accepting": {
+					"title": "Accepting & first response",
+					"intro": "With “Accept” you take an enquiry into your consultations. New: advice seekers automatically receive a first response with the most important information right after their first message — you can start without time pressure."
+				},
+				"mySessions": {
+					"title": "My consultations",
+					"intro": "Your accepted consultations live here — sorted by the most recent message, just as you are used to."
+				},
+				"composer": {
+					"title": "Writing — with new options",
+					"intro": "New compared to the previous platform: you can reply in threads, record voice messages and attach files directly."
+				},
+				"archive": {
+					"title": "Archive",
+					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
+				}
+			}
+		}
 	}
 }

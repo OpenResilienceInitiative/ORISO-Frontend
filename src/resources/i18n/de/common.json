@@ -4358,5 +4358,37 @@
 		"toLogin": "Zur Anmeldung",
 		"description": "Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.",
 		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Mail-Beratung",
+			"summary": "Was sich bei der Mail-Beratung geändert hat — von der Erstanfrage bis zum Archiv.",
+			"step": {
+				"whatsNew": {
+					"title": "Was ist neu?",
+					"intro": "Sie kennen die Mail-Beratung bereits aus der bisherigen Plattform. Dieser kurze Rundgang zeigt Ihnen, wo Ihre gewohnten Arbeitsschritte jetzt liegen — und was neu dazugekommen ist."
+				},
+				"enquiries": {
+					"title": "Erstanfragen",
+					"intro": "Neue Anfragen landen wie gewohnt in einer gemeinsamen Liste — sie liegt jetzt hier. Bis zur Annahme sehen alle Berater und Beraterinnen Ihrer Beratungsstelle die offene Anfrage."
+				},
+				"accepting": {
+					"title": "Annehmen & Erstantwort",
+					"intro": "Mit „Annehmen“ übernehmen Sie eine Anfrage in Ihre Beratungen. Neu: Ratsuchende erhalten direkt nach ihrer ersten Nachricht eine automatische Erstantwort mit den wichtigsten Informationen — Sie steigen ohne Zeitdruck ein."
+				},
+				"mySessions": {
+					"title": "Meine Beratungen",
+					"intro": "Ihre angenommenen Beratungen finden Sie hier — sortiert nach der zuletzt eingegangenen Nachricht, wie Sie es gewohnt sind."
+				},
+				"composer": {
+					"title": "Schreiben — mit neuen Möglichkeiten",
+					"intro": "Neu im Vergleich zur bisherigen Plattform: Sie können in Threads antworten, Sprachnachrichten aufnehmen und Dateien direkt anhängen."
+				},
+				"archive": {
+					"title": "Archiv",
+					"intro": "Abgeschlossene Beratungen verschieben Sie wie bisher ins Archiv — es liegt jetzt in diesem Tab."
+				}
+			}
+		}
 	}
 }

@@ -180,6 +180,84 @@ describe('Walkthrough', () => {
 		expect(store.get(tourLaunchRequestAtom)).toBeNull();
 	});
 
+	it('hosts the mail-counselling tour when the carousel requests it', () => {
+		renderWalkthrough(
+			{ isWalkThroughEnabled: false },
+			{
+				tourId: 'consultant-mail-counselling',
+				mode: 'start',
+				requestedAt: 4
+			}
+		);
+
+		expect(adapterProps).not.toBeNull();
+		expect(adapterProps.tour.id).toBe('consultant-mail-counselling');
+		expect(adapterProps.active).toBe(true);
+	});
+
+	it('prefers the requested tour over the legacy auto-run', () => {
+		renderWalkthrough(
+			{ isWalkThroughEnabled: true },
+			{
+				tourId: 'consultant-mail-counselling',
+				mode: 'start',
+				requestedAt: 5
+			}
+		);
+
+		expect(adapterProps.tour.id).toBe('consultant-mail-counselling');
+	});
+
+	it('persists step progress under the requested tour id', () => {
+		renderWalkthrough(
+			{ isWalkThroughEnabled: false },
+			{
+				tourId: 'consultant-mail-counselling',
+				mode: 'start',
+				requestedAt: 6
+			}
+		);
+
+		adapterProps.onEvent('step_completed', { id: 'enquiries' });
+
+		expect(
+			versionedTourProgressRepository.saveProgress
+		).toHaveBeenCalledWith({
+			tourId: 'consultant-mail-counselling',
+			tourVersion: 1,
+			status: 'in_progress',
+			currentStepId: 'enquiries'
+		});
+	});
+
+	it('never syncs the legacy boolean for a non-walkthrough tour', async () => {
+		renderWalkthrough(
+			{ isWalkThroughEnabled: true },
+			{
+				tourId: 'consultant-mail-counselling',
+				mode: 'start',
+				requestedAt: 7
+			}
+		);
+
+		await adapterProps.onTerminalStatus({
+			tourId: 'consultant-mail-counselling',
+			tourVersion: 1,
+			status: 'completed'
+		});
+
+		expect(apiPatchConsultantData).not.toHaveBeenCalled();
+	});
+
+	it('renders nothing for an unknown requested tour id', () => {
+		const { queryByTestId } = renderWalkthrough(
+			{ isWalkThroughEnabled: false },
+			{ tourId: 'does-not-exist', mode: 'start', requestedAt: 8 }
+		);
+
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
+	});
+
 	it('does not touch the legacy boolean for carousel-only runs', async () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: false },
