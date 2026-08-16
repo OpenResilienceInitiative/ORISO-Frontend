@@ -67,6 +67,36 @@
 			caret-color: var(--m3-primary-container, #cc1e1c);
 			box-sizing: border-box;
 
+			// #1079: a task list is a checklist, not a bullet list with a box
+			// bolted on. Mirrors the rendered message so the sender and the
+			// reader see the same thing — the checkbox stays operable here,
+			// because here it is the author's own list.
+			ul[data-type='taskList'] {
+				list-style: none;
+				padding-left: 0;
+
+				li {
+					display: flex;
+					align-items: flex-start;
+					gap: 8px;
+				}
+
+				label {
+					display: inline-flex;
+					align-items: center;
+					height: 1.5em;
+					flex: 0 0 auto;
+				}
+
+				input[type='checkbox'] {
+					margin: 0;
+				}
+
+				p {
+					margin: 0;
+				}
+			}
+
 			@media screen and (width >= 900px) {
 				top: 66px;
 				right: 64px;

@@ -162,13 +162,11 @@ export const RegistrationHeader = ({
 				top: fullBleed ? { xs: 0, md: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
-				width: fullBleed ? { xs: '100vw', lg: '60vw' } : '100%',
-				ml: fullBleed
-					? {
-							xs: 'calc((100% - 100vw) / 2)',
-							lg: 'calc((100% - 60vw) / 2)'
-						}
-					: 0,
+				// 100vw counts the classic scrollbar, so pairing it with the
+				// negative margin pushed the document sideways by the scrollbar
+				// width. The xs row simply fills its column instead.
+				width: fullBleed ? { xs: '100%', lg: '60vw' } : '100%',
+				ml: fullBleed ? { xs: 0, lg: 'calc((100% - 60vw) / 2)' } : 0,
 				px: { xs: 2, sm: 3, lg: 4 },
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',
@@ -250,6 +248,7 @@ export const RegistrationHeader = ({
 					clickableStepNames={clickableStepNames}
 					onStepClick={onStepClick}
 					ariaLabel={t('registration.headline', 'Registrierung')}
+					stateLabel={(state) => t(`registration.stepState.${state}`)}
 				/>
 			</Box>
 		</Box>

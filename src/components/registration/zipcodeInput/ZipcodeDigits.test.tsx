@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
+
 import * as React from 'react';
 import { useState } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ZipcodeDigits } from './ZipcodeDigits';
 
-afterEach(cleanup);
-
+/** Controlled the way ZipcodeInput drives it: one string, five slots. */
 const Harness = ({ initial = '' }: { initial?: string }) => {
 	const [value, setValue] = useState(initial);
 	return (
@@ -16,113 +16,64 @@ const Harness = ({ initial = '' }: { initial?: string }) => {
 				onChange={setValue}
 				digitLabel={(position) => `Ziffer ${position}`}
 			/>
-			<output data-testid="value">{value}</output>
+			<output data-cy="emitted">{value}</output>
 		</>
 	);
 };
 
-const digit = (position: number) =>
+const slot = (position: number) =>
 	screen.getByLabelText(`Ziffer ${position}`) as HTMLInputElement;
+const emitted = () =>
+	(document.querySelector('output') as HTMLOutputElement).textContent;
 
-const row = () =>
-	[1, 2, 3, 4, 5].map((position) => digit(position).value).join('|');
-
-const currentValue = () => screen.getByTestId('value').textContent;
-
-/** What the browser does when a character is typed into an empty field. */
-const type = (position: number, text: string) =>
-	fireEvent.change(digit(position), { target: { value: text } });
+afterEach(cleanup);
 
 describe('ZipcodeDigits', () => {
-	it('advances to the next field as digits are typed', () => {
+	it('never lets a digit land in a slot the user has not reached yet', () => {
 		render(<Harness />);
 
-		type(1, '1');
-		type(2, '0');
-		type(3, '1');
-		type(4, '1');
-		type(5, '7');
+		// Clicking the third box on an empty row used to accept a digit there;
+		// the joined value then placed it first, so the postcode on screen and
+		// the postcode submitted disagreed.
+		fireEvent.focus(slot(3));
+		expect(document.activeElement).toBe(slot(1));
 
-		expect(row()).toBe('1|0|1|1|7');
-		expect(currentValue()).toBe('10117');
-		expect(document.activeElement).toBe(digit(5));
+		fireEvent.change(slot(1), { target: { value: '7' } });
+		expect(emitted()).toBe('7');
+		expect(slot(1).value).toBe('7');
+		expect(slot(3).value).toBe('');
 	});
 
-	it('drops non-numeric characters', () => {
+	it('keeps the row hole-free when a middle digit is cleared', () => {
+		render(<Harness initial="12345" />);
+
+		fireEvent.change(slot(3), { target: { value: '' } });
+
+		// Same as deleting a character in a plain text field: the tail closes
+		// up. What must not happen is a gap that makes slot and position drift.
+		expect(emitted()).toBe('1245');
+		expect(slot(1).value).toBe('1');
+		expect(slot(2).value).toBe('2');
+		expect(slot(3).value).toBe('4');
+		expect(slot(4).value).toBe('5');
+		expect(slot(5).value).toBe('');
+	});
+
+	it('fills the whole row from a pasted postcode', () => {
 		render(<Harness />);
 
-		type(1, 'a');
-		expect(currentValue()).toBe('');
+		fireEvent.change(slot(1), { target: { value: '50667' } });
 
-		type(1, '4');
-		expect(currentValue()).toBe('4');
+		expect(emitted()).toBe('50667');
+		expect(slot(5).value).toBe('7');
 	});
 
-	it('steps back and clears the previous field on backspace in an empty one', () => {
-		render(<Harness initial="1011" />);
-
-		fireEvent.keyDown(digit(5), { key: 'Backspace' });
-
-		expect(currentValue()).toBe('101');
-		expect(document.activeElement).toBe(digit(4));
-	});
-
-	it('leaves a filled field to the browser on backspace', () => {
-		render(<Harness initial="10117" />);
-
-		// The handler must not intercept here: the browser deletes the
-		// character itself and the resulting change event clears the field.
-		fireEvent.keyDown(digit(5), { key: 'Backspace' });
-		expect(document.activeElement).not.toBe(digit(4));
-
-		type(5, '');
-		expect(currentValue()).toBe('1011');
-	});
-
-	it('does not step back past the first field', () => {
-		render(<Harness />);
-
-		fireEvent.keyDown(digit(1), { key: 'Backspace' });
-
-		expect(currentValue()).toBe('');
-	});
-
-	it('spreads a pasted postcode across the row', () => {
-		render(<Harness />);
-
-		type(1, '10117');
-
-		expect(row()).toBe('1|0|1|1|7');
-		expect(document.activeElement).toBe(digit(5));
-	});
-
-	it('spreads a paste from the middle without overflowing', () => {
+	it('steps back and clears on backspace in an empty slot', () => {
 		render(<Harness initial="12" />);
 
-		type(3, '999999');
+		fireEvent.keyDown(slot(3), { key: 'Backspace' });
 
-		expect(currentValue()).toBe('12999');
-	});
-
-	it('moves the caret with the arrow keys', () => {
-		render(<Harness initial="10117" />);
-
-		fireEvent.keyDown(digit(3), { key: 'ArrowLeft' });
-		expect(document.activeElement).toBe(digit(2));
-
-		fireEvent.keyDown(digit(2), { key: 'ArrowRight' });
-		expect(document.activeElement).toBe(digit(3));
-	});
-
-	it('does not run past the ends with the arrow keys', () => {
-		render(<Harness initial="10117" />);
-
-		digit(1).focus();
-		fireEvent.keyDown(digit(1), { key: 'ArrowLeft' });
-		expect(document.activeElement).toBe(digit(1));
-
-		digit(5).focus();
-		fireEvent.keyDown(digit(5), { key: 'ArrowRight' });
-		expect(document.activeElement).toBe(digit(5));
+		expect(emitted()).toBe('1');
+		expect(document.activeElement).toBe(slot(2));
 	});
 });

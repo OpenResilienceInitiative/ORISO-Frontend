@@ -73,13 +73,26 @@ export const HandoverCarousel = ({
 		}
 
 		const onScroll = () => {
-			const cardWidth = track.scrollWidth / STEPS.length;
-			setActiveIndex(
-				Math.min(
-					STEPS.length - 1,
-					Math.max(0, Math.round(track.scrollLeft / cardWidth))
-				)
-			);
+			// Read the real card positions rather than an averaged card
+			// width: where several cards fit at once, the browser clamps
+			// scrollLeft well before the averaged target for the last card,
+			// and the dot then reported a step the user was not on.
+			const cards = Array.from(track.children) as HTMLElement[];
+			if (!cards.length) {
+				return;
+			}
+			const centre = track.scrollLeft + track.clientWidth / 2;
+			let nearest = 0;
+			let best = Infinity;
+			cards.forEach((card, index) => {
+				const cardCentre = card.offsetLeft + card.offsetWidth / 2;
+				const distance = Math.abs(cardCentre - centre);
+				if (distance < best) {
+					best = distance;
+					nearest = index;
+				}
+			});
+			setActiveIndex(nearest);
 		};
 
 		track.addEventListener('scroll', onScroll, { passive: true });
@@ -88,13 +101,18 @@ export const HandoverCarousel = ({
 
 	const scrollTo = (index: number) => {
 		const track = trackRef.current;
-		if (!track) {
+		const card = track?.children[index] as HTMLElement | undefined;
+		if (!track || !card) {
 			return;
 		}
-		const cardWidth = track.scrollWidth / STEPS.length;
+		const reducedMotion =
+			typeof window.matchMedia === 'function' &&
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		// Centre the card the dot stands for; `offsetLeft` alone would push
+		// the last card against the right edge where it cannot scroll.
 		track.scrollTo({
-			left: cardWidth * index,
-			behavior: 'smooth'
+			left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2,
+			behavior: reducedMotion ? 'auto' : 'smooth'
 		});
 	};
 
@@ -145,7 +163,7 @@ export const HandoverCarousel = ({
 							scrollSnapAlign: { xs: 'center', sm: 'start' },
 							display: 'flex',
 							flexDirection: 'column',
-							bgcolor: '#fff',
+							bgcolor: registrationMd3.surface,
 							border: `1px solid ${registrationMd3.outlineVariant}`,
 							borderRadius: { xs: '18px', sm: '20px' },
 							overflow: 'hidden'
@@ -278,14 +296,23 @@ export const HandoverCarousel = ({
 						})}
 						aria-current={index === activeIndex}
 						sx={{
-							width: index === activeIndex ? 22 : 6,
-							height: 6,
-							borderRadius: 3,
-							bgcolor:
+							'width': index === activeIndex ? 22 : 6,
+							'height': 6,
+							'borderRadius': 3,
+							'bgcolor':
 								index === activeIndex
 									? registrationMd3.primary
 									: registrationMd3.outlineVariant,
-							transition: 'width 200ms ease'
+							'transition': 'width 200ms ease',
+							// A 6px dot needs the ring set off from it, or the
+							// keyboard user cannot see where they are.
+							'&.Mui-focusVisible': {
+								outline: `2px solid ${registrationMd3.focus}`,
+								outlineOffset: 4
+							},
+							'@media (prefers-reduced-motion: reduce)': {
+								transition: 'none'
+							}
 						}}
 					/>
 				))}

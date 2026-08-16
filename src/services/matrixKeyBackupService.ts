@@ -142,6 +142,18 @@ export const getEncryptionStatus = async (
 };
 
 /**
+ * May the app bootstrap the Tresor on its own, without asking first?
+ *
+ * Only on a genuinely fresh identity. Bootstrapping replaces secret storage
+ * and creates a new backup version, so doing it silently while the server
+ * already holds a backup would orphan history the user can still recover
+ * with their existing key. Those accounts keep the explicit path in the
+ * Sicherheit panel.
+ */
+export const canBootstrapSilently = (status: EncryptionSetupStatus): boolean =>
+	!status.serverBackupExists && !status.secretStorageReady;
+
+/**
  * First-time setup: generate a recovery key, bootstrap cross-signing and
  * secret storage with it, and enable server-side key backup.
  *

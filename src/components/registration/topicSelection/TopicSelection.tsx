@@ -379,20 +379,7 @@ export const TopicSelection: FC<{
 					{t('registration.topic.oneResult')}
 				</Typography>
 			) : (
-				<>
-					<Typography
-						component="h1"
-						variant="h3"
-						sx={registrationScreenTitleSx}
-					>
-						{t('registration.topic.headline')}
-					</Typography>
-					{/* Design 8b: the headline already asks the question, so the
-					    explanatory sentence underneath only cost vertical space
-					    on a 375 pt screen. The string stays in the catalogue —
-					    other surfaces still use it. */}
-					<Box sx={{ height: { xs: 16, sm: 24 } }} />
-				</>
+				<></>
 			)}
 			{topics === undefined || topicGroups === undefined ? (
 				<Box

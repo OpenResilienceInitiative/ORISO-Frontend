@@ -33,9 +33,18 @@ const FALLBACKS: Record<string, string> = {
  * The four motifs load lazily: they sit behind a closed disclosure, and the
  * step must be usable before any of them arrive.
  */
-export const WhyLocalDisclosure = () => {
+const PANEL_ID = 'why-local-panel';
+
+export interface WhyLocalDisclosureProps {
+	/** Start expanded. The flow keeps it closed; Storybook shows the content. */
+	defaultOpen?: boolean;
+}
+
+export const WhyLocalDisclosure = ({
+	defaultOpen = false
+}: WhyLocalDisclosureProps = {}) => {
 	const { t } = useTranslation();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(defaultOpen);
 
 	return (
 		<Box
@@ -44,7 +53,7 @@ export const WhyLocalDisclosure = () => {
 				width: '100%',
 				borderRadius: '12px',
 				overflow: 'hidden',
-				bgcolor: open ? '#fff' : 'transparent',
+				bgcolor: open ? registrationMd3.surface : 'transparent',
 				border: `1px solid ${
 					open ? registrationMd3.outlineVariant : 'transparent'
 				}`,
@@ -55,17 +64,24 @@ export const WhyLocalDisclosure = () => {
 			<ButtonBase
 				onClick={() => setOpen((current) => !current)}
 				aria-expanded={open}
+				aria-controls={PANEL_ID}
 				data-cy="why-local-toggle"
 				sx={{
-					width: '100%',
-					minHeight: 56,
-					display: 'flex',
-					alignItems: 'center',
-					gap: 1.25,
-					px: 1.5,
-					py: 1,
-					textAlign: 'left',
-					borderRadius: '12px'
+					'width': '100%',
+					'minHeight': 56,
+					'display': 'flex',
+					'alignItems': 'center',
+					'gap': 1.25,
+					'px': 1.5,
+					'py': 1,
+					'textAlign': 'left',
+					'borderRadius': '12px',
+					// The other registration controls all define their ring
+					// from the token set; the browser default is nearly
+					// invisible on this white panel.
+					'&:focus-visible': {
+						boxShadow: `0 0 0 3px ${registrationMd3.focusLayer}`
+					}
 				}}
 			>
 				<InfoOutlinedIcon
@@ -96,7 +112,7 @@ export const WhyLocalDisclosure = () => {
 					<ArrowDropDownRoundedIcon sx={{ flexShrink: 0 }} />
 				)}
 			</ButtonBase>
-			<Collapse in={open} unmountOnExit>
+			<Collapse in={open} unmountOnExit id={PANEL_ID}>
 				<Box
 					sx={{
 						px: 1.75,

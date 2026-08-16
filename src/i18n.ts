@@ -17,6 +17,7 @@ import {
 } from './components/devToolbar/DevToolbar';
 import { TranslationConfig } from './globalState/interfaces';
 import { FETCH_METHODS, FETCH_SUCCESS, fetchData } from './api';
+import { collectCatalogueDrift } from './utils/i18nCatalogueGuard';
 
 export const FALLBACK_LNG = 'de';
 
@@ -157,9 +158,9 @@ export const init = async (
 								translation?.cache?.disabled
 							) && LocalStorageBackend,
 
-						translation?.weblate.path && FetchBackend,
-						resourcesToBackend(unflatten(baseResources) as any)
-					].filter(Boolean),
+							translation?.weblate.path && FetchBackend,
+							resourcesToBackend(unflatten(baseResources) as any)
+						].filter(Boolean),
 						backendOptions: [
 							!(
 								translationCacheDisabledLocally ??
@@ -280,22 +281,28 @@ export const init = async (
 						});
 					}
 
-					const missingKeys = _.xor(deLanguageKeys, currLanguageKeys);
-					if (missingKeys.length <= 0) {
+					const { extraInLocale, missingInLocale } =
+						collectCatalogueDrift(deLanguageKeys, currLanguageKeys);
+					if (
+						extraInLocale.length <= 0 &&
+						(missingInLocale.length <= 0 ||
+							lng.indexOf('@informal') >= 0)
+					) {
 						return;
 					}
 
-					missingKeys.forEach((missingKey) => {
-						if (!deLanguageKeys.includes(missingKey)) {
-							// console.error(
-							// `[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
-							// );
-						} else if (lng.indexOf('@informal') < 0) {
-							// console.error(
-							// `[${lng}] has missing key "${missingKey}"`
-							// );
-						}
+					extraInLocale.forEach((missingKey) => {
+						console.error(
+							`[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
+						);
 					});
+					if (lng.indexOf('@informal') < 0) {
+						missingInLocale.forEach((missingKey) => {
+							console.error(
+								`[${lng}] has missing key "${missingKey}"`
+							);
+						});
+					}
 				});
 			}
 		)

@@ -23,6 +23,9 @@ export const useDeferredFlourish = (importantObjectsReady: boolean) => {
 
 	useEffect(() => {
 		if (!importantObjectsReady) {
+			// Content can go away again (a failed refetch); the decoration
+			// must not outlive the condition that allowed it.
+			setEnabled(false);
 			return undefined;
 		}
 

@@ -1,0 +1,25 @@
+Your sign-in link
+=================
+
+This link signs you in without a password.
+
+It is valid for {{expiryMinutes}} minutes and works exactly once.
+
+Sign in now:
+{{loginUrl}}
+
+If you did not want to sign in, ignore this email. Nothing happens without the link.
+
+----------------------------------------------------------------
+We will never ask for your password by email. Do not pass this link on to anyone.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+
+This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.

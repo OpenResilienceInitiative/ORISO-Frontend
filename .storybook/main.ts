@@ -20,14 +20,28 @@ const config: StorybookConfig = {
 		// stories included here, so keep real product surfaces (registration,
 		// session list, composer-adjacent pieces) in the catalog instead of only
 		// the first atomic proof batch.
-		'../src/components/**/*.stories.@(ts|tsx)'
+		'../src/components/**/*.stories.@(ts|tsx)',
+		// The transactional e-mail kit. Kept apart from the in-app component
+		// library on purpose — same design language, completely different
+		// rendering rules (tables, inline styles, no JS).
+		'../src/emails/**/*.stories.@(ts|tsx)',
+		// Free-form documentation pages (Introduction, design tokens, guides).
+		'../src/**/*.mdx'
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],
+	// addon-a11y runs axe (WCAG 2.2 AA) per story; `a11y.test: 'error'` in
+	// preview.tsx makes a violation fail the component test, not just warn.
+	// addon-docs renders autodocs + the .mdx pages above.
+	// addon-vitest adds the sidebar test widget; it drives
+	// `vitest --project storybook` (real Chromium) and reports interaction,
+	// a11y and coverage results inside the Storybook UI.
 	addons: [
 		'@storybook/addon-mcp',
 		'@storybook/addon-designs',
-		'@storybook/addon-a11y'
+		'@storybook/addon-a11y',
+		'@storybook/addon-docs',
+		'@storybook/addon-vitest'
 	],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {

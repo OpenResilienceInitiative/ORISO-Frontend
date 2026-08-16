@@ -67,10 +67,10 @@ export const ZipcodeInput: FC<{
 			<Box
 				aria-hidden
 				sx={{
-					width: { xs: 132, sm: 152 },
-					height: { xs: 132, sm: 152 },
-					mb: 2.5,
-					color: registrationMd3.primary,
+					'width': { xs: 132, sm: 152 },
+					'height': { xs: 132, sm: 152 },
+					'mb': 2.5,
+					'color': registrationMd3.primary,
 					'& svg': { width: '100%', height: '100%', display: 'block' }
 				}}
 			>
@@ -130,10 +130,8 @@ export const ZipcodeInput: FC<{
 					{remaining > 0 && value.length > 0
 						? t('registration.zipcode.remaining', {
 								count: remaining,
-								defaultValue_one:
-									'Noch {{count}} Ziffer',
-								defaultValue_other:
-									'Noch {{count}} Ziffern',
+								defaultValue_one: 'Noch {{count}} Ziffer',
+								defaultValue_other: 'Noch {{count}} Ziffern',
 								defaultValue: 'Noch {{count}} Ziffern'
 							})
 						: ''}

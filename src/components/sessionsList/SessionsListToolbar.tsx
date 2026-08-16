@@ -639,6 +639,7 @@ export const SessionsListToolbar = ({
 								createGroupChatActive ? 'page' : undefined
 							}
 							data-cy="sessions-list-chip-create"
+							data-tour-target="groupchat-create-button"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
 							<span className="sessionsListToolbar__chipLabel">

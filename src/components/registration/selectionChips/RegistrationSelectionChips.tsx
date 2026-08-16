@@ -106,7 +106,7 @@ export const RegistrationSelectionChips = ({
 				'flexShrink': chip.fixed ? 0 : 1,
 				'height': header ? '30px' : '38px',
 				'borderRadius': '999px',
-				'bgcolor': '#fff',
+				'bgcolor': registrationMd3.surface,
 				'fontWeight': header ? 400 : 600,
 				'fontSize': header ? 13 : 14,
 				'borderColor': registrationMd3.outlineVariant,
@@ -143,12 +143,19 @@ export const RegistrationSelectionChips = ({
 			<Box
 				data-cy="registration-header-chips"
 				sx={{
-					height: 38,
-					display: 'flex',
-					alignItems: 'center',
-					gap: 0.75,
-					minWidth: 0,
-					overflow: 'hidden'
+					'height': 38,
+					'display': 'flex',
+					'alignItems': 'center',
+					'gap': 0.75,
+					'minWidth': 0,
+					// Scroll rather than clip: on a 375pt screen the topic and
+					// postcode chips already compete for the row, and a clipped
+					// chip takes its delete control off-screen with it — the
+					// selection could then not be removed here at all.
+					'overflowX': 'auto',
+					'overflowY': 'hidden',
+					'scrollbarWidth': 'none',
+					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>
 				{chips.map(renderChip)}
