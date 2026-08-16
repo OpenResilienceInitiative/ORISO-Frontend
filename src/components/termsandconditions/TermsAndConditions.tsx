@@ -7,29 +7,13 @@ import './termsandconfitions.styles.scss';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_TERMS_AND_CONDITION } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { UserDataContext, useTenant } from '../../globalState';
-import {
-	TenantDataInterface,
-	UserDataInterface
-} from '../../globalState/interfaces';
+
 import { Checkbox } from '../checkbox/Checkbox';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { isAnonymousAsker } from './isAnonymousAsker';
+import { hasChanged } from './hasChanged';
 import { logout } from '../logout/logout';
 import { getLegalPrivacyUrl } from '../../resources/scripts/runtimeConfig';
-
-const hasChanged = (
-	tenantData: TenantDataInterface,
-	userData: UserDataInterface,
-	field: string
-) => {
-	if (tenantData && tenantData.content) {
-		return (
-			userData[field] === null ||
-			new Date(userData[field]) < new Date(tenantData.content[field])
-		);
-	}
-	return false;
-};
 
 export const TermsAndConditions = () => {
 	const { t: translate } = useTranslation();
