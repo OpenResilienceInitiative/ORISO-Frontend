@@ -1,4 +1,24 @@
 import { ConsentTextData } from '../../../api/apiGetConsentText';
+import {
+	AgencyDataInterface,
+	TopicsDataInterface
+} from '../../../globalState/interfaces';
+import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
+
+/**
+ * Whether the selected Fachbereich *could* carry a Träger-authored consent
+ * text. The sentence is a field of the department's data-protection policy
+ * (ADR-021 decision 4), so a department without a published policy cannot have
+ * one — which is decidable from data the registration already holds, with no
+ * request and therefore no waiting.
+ */
+export const departmentMayHaveConsentText = (
+	agency?: AgencyDataInterface,
+	topic?: TopicsDataInterface
+): boolean =>
+	getDepartmentForTopic(agency, topic)?.hasPublishedDpp === true &&
+	!!agency?.id &&
+	!!topic?.id;
 
 /**
  * Identity of the exact consent a help-seeker can give.
@@ -29,11 +49,51 @@ export const consentBindingKey = (
 	`${agencyId ?? 'none'}:${topicId ?? 'none'}:${versionId ?? 'none'}`;
 
 /**
+ * The complete input state a consent resolution is an answer to.
+ *
+ * This exists because the same defect has now appeared three times, each time
+ * because the identity of a resolution was one field narrower than the set of
+ * things that can change what the answer should be:
+ *
+ * 1. no identity at all — a resolution from before the fetch settled counted;
+ * 2. agency/topic missing — an answer for the previous Beratungsstelle counted;
+ * 3. applicability missing — an answer produced while the department looked
+ *    like it had no published policy still counted after the agency data
+ *    arrived and revealed that it does, so the platform wording stayed
+ *    acceptable although the Träger sentence is the one that must apply.
+ *
+ * Widening the comparison by one field each time only postpones the fourth
+ * instance. So the identity is derived here, in one place, from *everything*
+ * that feeds the decision — and it is a single opaque string, so a comparison
+ * cannot accidentally check some of it. Adding a fourth input means editing
+ * this function and nothing else; every comparison stays correct by
+ * construction.
+ *
+ * Computed during render from props, never in an effect: a key written by an
+ * effect would itself lag behind the inputs it describes, which is the very
+ * gap it exists to close.
+ */
+export const consentInputKey = (
+	agency?: AgencyDataInterface,
+	topic?: TopicsDataInterface
+): string =>
+	[
+		agency?.id ?? 'none',
+		topic?.id ?? 'none',
+		// Not redundant with the ids: `departments` can arrive after the agency
+		// itself, flipping applicability for an unchanged agency/topic pair.
+		departmentMayHaveConsentText(agency, topic) ? 'dpp' : 'no-dpp'
+	].join(':');
+
+/**
  * Whether the sentence a help-seeker is asked to agree to is known yet.
  *
  * `pending` is not a cosmetic loading state: while it holds, there is no
  * wording on screen, and consent to wording nobody has seen is not consent.
  * Everything that can record agreement has to be inert until this resolves.
+ *
+ * Both settled states carry the `inputKey` they were produced for. It is
+ * required rather than optional on purpose: a future state cannot forget it.
  */
 export type ConsentResolution =
 	| { status: 'pending' }
@@ -47,58 +107,45 @@ export type ConsentResolution =
 			 * at exactly the outcome the pending gate exists to prevent.
 			 */
 			status: 'unavailable';
-			agencyId?: number;
-			topicId?: number;
+			inputKey: string;
 	  }
 	| {
 			status: 'resolved';
 			consentText: ConsentTextData | null;
-			/**
-			 * The selection this answer belongs to. A resolution answers the
-			 * question that produced it and no other.
-			 */
-			agencyId?: number;
-			topicId?: number;
+			inputKey: string;
 	  };
 
 /**
- * Whether a settled resolution was produced by the selection currently on
- * screen.
+ * Whether a settled resolution still describes the inputs on screen.
  *
  * Resolutions are written in effects, which run after the commit that changed
- * the selection. For that gap both the label and `AccountData` would otherwise
- * still be holding the previous Beratungsstelle's answer — long enough for a
- * paint, and therefore long enough for a click. A foreign answer is treated as
- * "not answered yet".
+ * an input. For that gap both the label and `AccountData` would otherwise still
+ * be holding an answer to a question nobody is asking any more — long enough
+ * for a paint, and therefore long enough for a click. A stale answer is treated
+ * as "not answered yet".
  *
- * `pending` carries no selection and is always current: it says nothing about
- * any particular Fachbereich.
+ * `pending` carries no key and is always current: it makes no claim about any
+ * particular input state.
  */
 export const answersSelection = (
 	resolution: ConsentResolution,
-	agencyId: number | undefined,
-	topicId: number | undefined
-): boolean =>
-	resolution.status === 'pending' ||
-	(resolution.agencyId === agencyId && resolution.topicId === topicId);
+	inputKey: string
+): boolean => resolution.status === 'pending' || resolution.inputKey === inputKey;
 
 /**
  * Whether the consent on screen may be accepted at all.
  *
- * A strictly narrower question than `answersSelection`, and the two must not be
- * conflated: `unavailable` *is* an answer for the current selection — it is why
- * the failure notice renders instead of the sentence — but it is emphatically
- * not permission to accept anything. `pending` and `unavailable` both answer
- * false here; only a `resolved` answer produced by this selection opens the
- * gate.
+ * Strictly narrower than `answersSelection`, and the two must not be conflated:
+ * `unavailable` *is* a current answer — it is why the failure notice renders
+ * instead of the sentence — but it is emphatically not permission to accept
+ * anything. `pending` and `unavailable` both answer false here; only a
+ * `resolved` answer for the current inputs opens the gate.
  *
  * Pure, and used by both components, so neither can drift from the other and
  * neither depends on effect ordering for correctness.
  */
 export const mayAcceptConsent = (
 	resolution: ConsentResolution,
-	agencyId: number | undefined,
-	topicId: number | undefined
+	inputKey: string
 ): boolean =>
-	resolution.status === 'resolved' &&
-	answersSelection(resolution, agencyId, topicId);
+	resolution.status === 'resolved' && answersSelection(resolution, inputKey);

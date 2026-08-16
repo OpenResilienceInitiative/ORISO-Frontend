@@ -6,31 +6,16 @@ import {
 	TopicsDataInterface
 } from '../../../globalState/interfaces';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
-import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
-import { answersSelection, ConsentResolution } from './consentAcceptance';
+import {
+	answersSelection,
+	ConsentResolution,
+	consentInputKey,
+	departmentMayHaveConsentText
+} from './consentAcceptance';
 import { ConsentSentence } from './ConsentSentence';
 
 export type { ConsentResolution };
-
-/**
- * Whether the selected Fachbereich *could* carry a Träger-authored consent
- * text. The sentence is a field of the department's data-protection policy
- * (ADR-021 decision 4), so a department without a published policy cannot have
- * one — which is decidable from data the registration already holds, with no
- * request and therefore no waiting.
- *
- * Exported because `AccountData` needs the same answer on its very first
- * render to decide whether the consent checkbox starts enabled. Without that,
- * the far more common unconfigured case would flicker through a disabled
- * state it has no reason to be in.
- */
-export const departmentMayHaveConsentText = (
-	agency?: AgencyDataInterface,
-	topic?: TopicsDataInterface
-): boolean =>
-	getDepartmentForTopic(agency, topic)?.hasPublishedDpp === true &&
-	!!agency?.id &&
-	!!topic?.id;
+export { departmentMayHaveConsentText };
 
 export interface DataProtectionConsentLabelProps {
 	agency?: AgencyDataInterface;
@@ -58,18 +43,16 @@ export const DataProtectionConsentLabel: FC<
 > = ({ agency, topic, onResolutionChange }) => {
 	const { t } = useTranslation();
 	const mayHaveConsentText = departmentMayHaveConsentText(agency, topic);
+	/* Derived during render from every input that feeds the answer, so it can
+	   never lag behind them. See `consentInputKey`. */
+	const inputKey = consentInputKey(agency, topic);
 
 	/* Starts resolved in the unconfigured case, so that path issues no request,
 	   shows today's sentence immediately and never disables anything. */
 	const [resolution, setResolution] = useState<ConsentResolution>(() =>
 		mayHaveConsentText
 			? { status: 'pending' }
-			: {
-					status: 'resolved',
-					consentText: null,
-					agencyId: agency?.id,
-					topicId: topic?.id
-				}
+			: { status: 'resolved', consentText: null, inputKey }
 	);
 
 	/* State is written in an effect, so between an agency/topic change and that
@@ -77,8 +60,7 @@ export const DataProtectionConsentLabel: FC<
 	   the effective one during render instead of acting on the stale value. */
 	const effectiveResolution: ConsentResolution = answersSelection(
 		resolution,
-		agency?.id,
-		topic?.id
+		inputKey
 	)
 		? resolution
 		: { status: 'pending' };
@@ -92,20 +74,13 @@ export const DataProtectionConsentLabel: FC<
 
 	useEffect(() => {
 		if (!mayHaveConsentText) {
-			setResolution({
-				status: 'resolved',
-				consentText: null,
-				agencyId: agency?.id,
-				topicId: topic?.id
-			});
+			setResolution({ status: 'resolved', consentText: null, inputKey });
 			return;
 		}
 
 		const abortController = new AbortController();
-		const agencyId = agency.id;
-		const topicId = topic.id;
 		setResolution({ status: 'pending' });
-		apiGetConsentText(agencyId, topicId, abortController.signal).then(
+		apiGetConsentText(agency.id, topic.id, abortController.signal).then(
 			(result) => {
 				if (abortController.signal.aborted) {
 					return;
@@ -115,15 +90,16 @@ export const DataProtectionConsentLabel: FC<
 						? {
 								status: 'resolved',
 								consentText: result.consentText,
-								agencyId,
-								topicId
+								inputKey
 							}
-						: { status: 'unavailable', agencyId, topicId }
+						: { status: 'unavailable', inputKey }
 				);
 			}
 		);
 		return () => abortController.abort();
-	}, [mayHaveConsentText, agency?.id, topic?.id]);
+		// `inputKey` subsumes every input this reads; the ids are listed only
+		// to satisfy the exhaustive-deps rule.
+	}, [inputKey, mayHaveConsentText, agency?.id, topic?.id]);
 
 	/* A configured Fachbereich is still being fetched: never the platform
 	   wording, which would mean the checkbox briefly carries a sentence that is
