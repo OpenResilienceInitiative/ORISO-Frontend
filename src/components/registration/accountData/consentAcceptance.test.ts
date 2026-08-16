@@ -5,6 +5,7 @@ import {
 	consentInputKey,
 	ConsentResolution,
 	departmentMayHaveConsentText,
+	effectiveConsentResolution,
 	mayAcceptConsent
 } from './consentAcceptance';
 import {
@@ -201,5 +202,112 @@ describe('consentBindingKey', () => {
 		expect(consentBindingKey(42, 7, null)).toBe(
 			consentBindingKey(42, 7, undefined)
 		);
+	});
+});
+
+/**
+ * The pending gate was built so the unconfigured case never flickers through a
+ * disabled control: it issues no request, so nothing can be pending for it.
+ * Comparing the input key alone broke that guarantee — switching from a
+ * configured department to an unconfigured selection left the previous answer
+ * mismatched, and "mismatched means pending" turned into a disabled checkbox
+ * and a loading notice while nothing was loading.
+ *
+ * The unconfigured answer is knowable during render, so it is derived there.
+ */
+describe('effectiveConsentResolution', () => {
+	const CONFIGURED = agency(42, true);
+	const UNCONFIGURED = agency(42, false);
+
+	it('resolves an unconfigured input immediately, even after a configured one', () => {
+		const previous: ConsentResolution = {
+			status: 'resolved',
+			consentText: { sentence: 'Trägersatz', versionId: 3 },
+			inputKey: consentInputKey(CONFIGURED, TOPIC)
+		};
+
+		const effective = effectiveConsentResolution(
+			previous,
+			UNCONFIGURED,
+			TOPIC
+		);
+
+		expect(effective).toEqual({
+			status: 'resolved',
+			consentText: null,
+			inputKey: consentInputKey(UNCONFIGURED, TOPIC)
+		});
+		// The gate opens in the same render — no flicker through disabled.
+		expect(
+			mayAcceptConsent(effective, consentInputKey(UNCONFIGURED, TOPIC))
+		).toBe(true);
+	});
+
+	it('never carries the previous Träger sentence into the unconfigured case', () => {
+		const previous: ConsentResolution = {
+			status: 'resolved',
+			consentText: { sentence: 'Trägersatz', versionId: 3 },
+			inputKey: consentInputKey(CONFIGURED, TOPIC)
+		};
+
+		expect(
+			effectiveConsentResolution(previous, UNCONFIGURED, TOPIC).status ===
+				'resolved' &&
+				effectiveConsentResolution(previous, UNCONFIGURED, TOPIC)
+					.consentText
+		).toBeNull();
+	});
+
+	it('resolves the no-selection case immediately too', () => {
+		expect(
+			effectiveConsentResolution(
+				{ status: 'pending' },
+				undefined,
+				undefined
+			)
+		).toEqual({
+			status: 'resolved',
+			consentText: null,
+			inputKey: consentInputKey(undefined, undefined)
+		});
+	});
+
+	it('still treats a stale answer for another configured input as pending', () => {
+		const previous: ConsentResolution = {
+			status: 'resolved',
+			consentText: null,
+			inputKey: consentInputKey(agency(99, true), TOPIC)
+		};
+
+		expect(effectiveConsentResolution(previous, CONFIGURED, TOPIC)).toEqual(
+			{ status: 'pending' }
+		);
+	});
+
+	it('passes a matching configured answer through untouched', () => {
+		const current: ConsentResolution = {
+			status: 'resolved',
+			consentText: { sentence: 'Trägersatz', versionId: 3 },
+			inputKey: consentInputKey(CONFIGURED, TOPIC)
+		};
+
+		expect(effectiveConsentResolution(current, CONFIGURED, TOPIC)).toBe(
+			current
+		);
+	});
+
+	it('keeps an unavailable answer for a configured input', () => {
+		// Fail closed must survive this derivation.
+		const unavailable: ConsentResolution = {
+			status: 'unavailable',
+			inputKey: consentInputKey(CONFIGURED, TOPIC)
+		};
+
+		expect(effectiveConsentResolution(unavailable, CONFIGURED, TOPIC)).toBe(
+			unavailable
+		);
+		expect(
+			mayAcceptConsent(unavailable, consentInputKey(CONFIGURED, TOPIC))
+		).toBe(false);
 	});
 });

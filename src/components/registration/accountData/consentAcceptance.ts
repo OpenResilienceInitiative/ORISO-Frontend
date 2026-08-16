@@ -149,3 +149,37 @@ export const mayAcceptConsent = (
 	inputKey: string
 ): boolean =>
 	resolution.status === 'resolved' && answersSelection(resolution, inputKey);
+
+/**
+ * The resolution that actually applies to the inputs on screen.
+ *
+ * Two jobs, and both have to happen during render rather than in an effect:
+ *
+ * 1. A settled answer for *other* inputs is not an answer here, so it is
+ *    treated as `pending` until the effect replaces it.
+ * 2. An **unconfigured** input needs no effect at all. A Fachbereich that
+ *    cannot carry a Träger sentence issues no request, so nothing is ever
+ *    pending for it and the answer — today's static wording — is knowable
+ *    synchronously. Deriving it here is what keeps that case from flickering
+ *    through a disabled checkbox and a "loading" notice while nothing loads,
+ *    which is exactly what happened when only the key was compared: switching
+ *    from a configured department to an unconfigured one left the previous
+ *    answer mismatched, and rule 1 alone turned that into a spurious `pending`.
+ *
+ * Shared by both components so the answer and the gate cannot disagree.
+ */
+export const effectiveConsentResolution = (
+	resolution: ConsentResolution,
+	agency?: AgencyDataInterface,
+	topic?: TopicsDataInterface
+): ConsentResolution => {
+	const inputKey = consentInputKey(agency, topic);
+
+	if (!departmentMayHaveConsentText(agency, topic)) {
+		return { status: 'resolved', consentText: null, inputKey };
+	}
+
+	return answersSelection(resolution, inputKey)
+		? resolution
+		: { status: 'pending' };
+};

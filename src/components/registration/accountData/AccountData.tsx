@@ -56,6 +56,7 @@ import {
 	consentBindingKey,
 	consentInputKey,
 	departmentMayHaveConsentText,
+	effectiveConsentResolution,
 	mayAcceptConsent
 } from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
@@ -197,18 +198,27 @@ export const AccountData: FC<{
 	   previous Beratungsstelle's answer — enabling acceptance of the old
 	   sentence while writing a binding under the new identity. Checking here
 	   too makes that independent of effect ordering. */
-	const isConsentSentenceResolved = mayAcceptConsent(
+	/* The same derivation the label uses, so the sentence on screen and the
+	   gate that lets it be accepted can never disagree — including for an
+	   unconfigured Fachbereich, which resolves synchronously because nothing is
+	   loading for it. */
+	const effectiveConsent = effectiveConsentResolution(
 		consentResolution,
+		agency,
+		mainTopic
+	);
+	const isConsentSentenceResolved = mayAcceptConsent(
+		effectiveConsent,
 		consentInputs
 	);
 	/* Which consent is on offer right now. Null while the sentence is unknown —
 	   there is nothing to accept yet. */
 	const currentConsentBinding =
-		isConsentSentenceResolved && consentResolution.status === 'resolved'
+		isConsentSentenceResolved && effectiveConsent.status === 'resolved'
 			? consentBindingKey(
 					agency?.id,
 					mainTopic?.id,
-					consentResolution.consentText?.versionId
+					effectiveConsent.consentText?.versionId
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

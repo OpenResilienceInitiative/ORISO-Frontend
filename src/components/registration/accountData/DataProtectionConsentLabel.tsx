@@ -7,10 +7,10 @@ import {
 } from '../../../globalState/interfaces';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import {
-	answersSelection,
 	ConsentResolution,
 	consentInputKey,
-	departmentMayHaveConsentText
+	departmentMayHaveConsentText,
+	effectiveConsentResolution
 } from './consentAcceptance';
 import { ConsentSentence } from './ConsentSentence';
 
@@ -58,12 +58,11 @@ export const DataProtectionConsentLabel: FC<
 	/* State is written in an effect, so between an agency/topic change and that
 	   effect running, `resolution` still answers the *previous* question. Derive
 	   the effective one during render instead of acting on the stale value. */
-	const effectiveResolution: ConsentResolution = answersSelection(
+	const effectiveResolution: ConsentResolution = effectiveConsentResolution(
 		resolution,
-		inputKey
-	)
-		? resolution
-		: { status: 'pending' };
+		agency,
+		topic
+	);
 
 	useEffect(() => {
 		onResolutionChange?.(effectiveResolution);
