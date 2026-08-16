@@ -147,8 +147,11 @@
 		.stageLayout__content {
 			justify-content: flex-start;
 			align-items: center;
-			margin-top: 48px !important;
-			padding-top: $grid-base-four;
+			// The sticky step header brings its own spacing; anything extra
+			// here reads as an empty band between the red bar and the step
+			// row (the "warum diese area?" finding).
+			margin-top: 0 !important;
+			padding-top: 0;
 			padding-bottom: 120px;
 
 			@include breakpoint($fromLarge) {
@@ -190,6 +193,14 @@
 		flex: none;
 		height: 230px;
 		overflow: hidden;
+
+		// Design 8a: the registration steps carry the brand row only. The
+		// sheet overlap below stays (-28px), so the bar needs its own
+		// padding to keep the row clear of the rounded sheet edge.
+		&--bar {
+			height: auto;
+			padding-bottom: 44px;
+		}
 		background: radial-gradient(
 			120% 90% at 78% 8%,
 			#e0313b 0%,

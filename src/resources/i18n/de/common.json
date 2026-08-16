@@ -2949,6 +2949,9 @@
 				"entering": "Ihr Beratungsraum wird geöffnet …"
 			}
 		},
+		"selection": {
+			"remove": "{{label}} entfernen"
+		},
 		"stepState": {
 			"done": "abgeschlossen",
 			"active": "aktueller Schritt",

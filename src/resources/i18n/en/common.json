@@ -2889,6 +2889,9 @@
 				"entering": "Opening your counselling room …"
 			}
 		},
+		"selection": {
+			"remove": "Remove {{label}}"
+		},
 		"stepState": {
 			"done": "completed",
 			"active": "current step",

@@ -2206,6 +2206,9 @@
 				"entering": "Ouverture de votre espace de consultation …"
 			}
 		},
+		"selection": {
+			"remove": "Supprimer {{label}}"
+		},
 		"stepState": {
 			"done": "terminé",
 			"active": "étape actuelle",
