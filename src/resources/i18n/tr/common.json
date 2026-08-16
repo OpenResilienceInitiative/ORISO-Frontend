@@ -280,6 +280,11 @@
 			}
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Arşiv",
 		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
@@ -627,7 +632,8 @@
 					"text": "Bağlantı panoya kopyalandı!",
 					"title": "Bağlantı kopyalandı"
 				},
-				"text": "Davetiye bağlantısını kopyala"
+				"text": "Davetiye bağlantısını kopyala",
+				"title": "Davet bağlantısını panoya kopyala"
 			}
 		},
 		"create": {
@@ -1415,6 +1421,12 @@
 		"myProfile": "Profilim",
 		"tools": "Aletlerim"
 	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
+	},
 	"notifications": {
 		"error": "Başarısız",
 		"info": "Bilgi",
@@ -1991,7 +2003,7 @@
 		"headline": "Kayıt",
 		"md3": {
 			"stepNames": {
-				"focus": "Odak seç",
+				"focus": "Konu seç",
 				"postcode": "Posta kodu",
 				"agency": "Danışma merkezi",
 				"register": "Kayıt ol",
@@ -2063,10 +2075,6 @@
 			"headline": "Hoş geldiniz.",
 			"copy": "Güvenli görüşme alanınızı hazırlıyoruz, birkaç saniye sürebilir …",
 			"ready": "Güvenli görüşme alanınız hazır. Başlayabilirsiniz."
-		},
-		"stepbar": {
-			"of": "itibaren",
-			"step": "Adım"
 		},
 		"submitButton": {
 			"label": "Kayıt Olun"
@@ -2183,7 +2191,52 @@
 			"bullet2": "- federal eyaletinizin yasalarını bilin",
 			"headline": "Size mümkün olan en iyi tavsiyeyi verebilmemiz için posta kodunuza ihtiyacımız var",
 			"label": "Posta kodunuz",
-			"subline": "Neden mi? Çünkü o zaman uzmanlarımız:"
+			"subline": "Yalnızca posta kodunuz — başka bir şeye ihtiyacımız yok.",
+			"digitLabel": "Posta kodu, {{total}} rakamdan {{position}}. rakam",
+			"remaining_one": "{{count}} rakam kaldı",
+			"remaining_other": "{{count}} rakam kaldı",
+			"whyLocal": {
+				"title": "Neden yerel danışmanlık?",
+				"localHelp": "Danışma merkeziniz yakınınızdaki yardım olanaklarını bilir.",
+				"stateLaw": "Federal eyaletinizin yasalarını da bilir.",
+				"anonymous": "Girdiğiniz bilgiyi yalnızca bu merkez görür — anonim kalırsınız.",
+				"inPerson": "İsterseniz daha sonra yüz yüze de görüşmeye devam edebilirsiniz."
+			}
+		},
+		"handover": {
+			"badge": "Kayıtlı",
+			"headline": "Tamamdır.",
+			"subline": "Şimdi sırada şunlar var:",
+			"cta": "Talebinizi yazın",
+			"encryption": "Şifreli: Talebinizi yalnızca siz ve danışma merkezinizin uzmanları görebilir.",
+			"goToStep": "{{total}} adımdan {{position}}. adıma git",
+			"steps": {
+				"write": {
+					"title": "Neler olduğunu siz yazarsınız",
+					"text": "Ne oldu, nerede, ne zamandan beri? Birkaç cümle yeterli."
+				},
+				"counsellor": {
+					"title": "Danışmanınızı biz buluruz",
+					"text": "Uzmanlık alanına uygun — ve size zaman ayıracak biri."
+				},
+				"reply": {
+					"title": "2 iş günü içinde yanıt",
+					"text": "Talebiniz kişisel ve profesyonel bir şekilde yanıtlanır."
+				}
+			},
+			"status": {
+				"preparing": "Görüşme alanınız şifreleniyor …",
+				"verifying": "Kontrol: insan mı, bot mu …",
+				"queued": "Birazdan sıra sizde …",
+				"ready": "Her şey hazır — yazmaya başlayabilirsiniz",
+				"slow": "Bu her zamankinden uzun sürüyor",
+				"entering": "Görüşme alanınız açılıyor …"
+			}
+		},
+		"stepState": {
+			"done": "tamamlandı",
+			"active": "geçerli adım",
+			"pending": "bekliyor"
 		}
 	},
 	"releaseNote": {
@@ -2967,6 +3020,30 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -3006,6 +3083,24 @@
 		},
 		"title": "Tur"
 	},
+	"consultingTypes": {
+		"title": "Welcome to Caritas online counselling",
+		"intro": "I am looking for counselling on the following topic:",
+		"selectGroup": "Please select a topic",
+		"learnMore": "Learn more about how Caritas counselling works",
+		"info": "Info",
+		"details": {
+			"explanation": {
+				"title": "To advise you as well as possible, we need your postcode",
+				"description": "Why? Because then our specialists:\n•  know the support available around your place of residence\n•  know the laws of your federal state"
+			}
+		},
+		"overlay": {
+			"title": "How Caritas counselling works",
+			"close": "Close"
+		},
+		"register": "Register"
+	},
 	"anonymousChat": {
 		"headline": "Anonim Danışma",
 		"subline": "Bir danışma merkezi seçin ve hemen anonim danışma başlatın.",
@@ -3031,7 +3126,12 @@
 		"agencies": {
 			"noresults": "Bu konu için uygun bir danışma merkezi yok."
 		},
-		"start": "Danışmayı başlat"
+		"start": "Danışmayı başlat",
+		"consent": {
+			"accept": "Kabul ediyorum",
+			"reject": "Kabul etmiyorum",
+			"mustAcceptToContinue": "Devam etmek için gizlilik politikamızı kabul etmeniz gerekir."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3200,6 +3300,22 @@
 			"cmd": "Cmd"
 		}
 	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
+		}
+	},
 	"anonymousConsent": {
 		"button": "Onaylayın",
 		"description": "Danışmanlarımız daha sonra sizinle bir sohbet başlatabilir.",
@@ -3286,6 +3402,48 @@
 			"back": "Geri",
 			"confirm": "Anladım"
 		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
 	},
 	"tour": {
 		"mailCounselling": {

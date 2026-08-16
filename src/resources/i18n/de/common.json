@@ -685,7 +685,8 @@
 					"text": "Link in Zwischenablage kopiert!",
 					"title": "Link kopiert"
 				},
-				"text": "Einladungs-Link kopieren"
+				"text": "Einladungs-Link kopieren",
+				"title": "Einladungs-Link in Zwischenablage kopieren"
 			}
 		},
 		"create": {
@@ -1684,7 +1685,14 @@
 			"quoteUnknown": "Frühere Nachricht"
 		},
 		"thread": {
-			"unknownRoot": "Frühere Nachricht"
+			"unknownRoot": "Frühere Nachricht",
+			"listToggle": "Threads",
+			"replies": "{{count}} Antworten",
+			"title": "Thread",
+			"placeholder": "Im Thread antworten"
+		},
+		"deliveryStatus": {
+			"sent": "Gesendet"
 		}
 	},
 	"navigation": {
@@ -2316,6 +2324,58 @@
 					"active": "Benachrichtigungen aktiv — klicken zum Stummschalten",
 					"muted": "Alle Benachrichtigungen stumm — klicken zum Aktivieren"
 				}
+			},
+			"descriptionAsker": "Wir schreiben Ihnen nur, wenn etwas passiert ist, das Sie betrifft. Was genau, sehen Sie immer erst nach der Anmeldung – nie in der E-Mail.",
+			"descriptionConsultant": "Ihr Arbeitsstrom per E-Mail. Inhalte aus Beratungen stehen nie in einer E-Mail.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Neue Nachricht",
+						"description": "Ihre Beratung hat Ihnen geschrieben, oder Ihre Anfrage wurde angenommen."
+					},
+					"appointment": {
+						"title": "Termine",
+						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Neue Anfragen",
+						"description": "Eine Anfrage ist in Ihrer Beratungsstelle eingegangen oder richtet sich direkt an Sie."
+					},
+					"dailyDigest": {
+						"title": "Tagesübersicht",
+						"description": "Einmal täglich: wie viele Anfragen offen sind und wie lange die älteste wartet."
+					},
+					"newMessage": {
+						"title": "Nachrichten von Ratsuchenden",
+						"description": "Eine ratsuchende Person hat in einer Ihrer Beratungen geschrieben."
+					},
+					"assignment": {
+						"title": "Zuweisungen",
+						"description": "Ihnen wurde eine Anfrage zugewiesen."
+					},
+					"reassignment": {
+						"title": "Übergaben",
+						"description": "Eine Beratung soll an Sie übergeben werden, oder eine Übergabe wurde bestätigt."
+					},
+					"feedback": {
+						"title": "Fachaustausch",
+						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für Sie."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Wartung und Hinweise",
+						"description": "Geplante Wartungsfenster und Hinweise zur Plattform. Störungen melden wir immer."
+					}
+				},
+				"alwaysSent": {
+					"title": "Diese E-Mails bekommen Sie immer:",
+					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an Ihrem Zugang.",
+					"legal": "Vertragliches – zum Beispiel ein Auftragsverarbeitungsvertrag zur Unterschrift.",
+					"outage": "Störungen der Plattform."
+				}
 			}
 		},
 		"routes": {
@@ -2637,7 +2697,7 @@
 		"headline": "Registrierung",
 		"md3": {
 			"stepNames": {
-				"focus": "Fokus wählen",
+				"focus": "Thema wählen",
 				"postcode": "Postleitzahl",
 				"agency": "Beratungsstelle",
 				"register": "Registrieren",
@@ -2837,11 +2897,60 @@
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
 			"bullet2": "• die Gesetze Ihres Bundeslandes kennen",
-			"headline": "Um Sie bestmöglich beraten zu können, benötigen wir Ihre Postleitzahl",
+			"headline": "Wo suchen Sie Beratung?",
 			"label": "Ihre Postleitzahl",
-			"subline": "Warum? Weil dann unsere Fachleute:"
+			"subline": "Nur Ihre Postleitzahl — mehr brauchen wir nicht.",
+			"digitLabel": "Postleitzahl, Ziffer {{position}} von {{total}}",
+			"remaining_one": "Noch {{count}} Ziffer",
+			"remaining_other": "Noch {{count}} Ziffern",
+			"whyLocal": {
+				"title": "Warum lokal beraten?",
+				"localHelp": "Ihre Beratungsstelle kennt die Hilfsangebote vor Ort.",
+				"stateLaw": "Sie kennt die Gesetze Ihres Bundeslandes.",
+				"anonymous": "Nur diese eine Stelle sieht Ihre Angabe — Sie bleiben anonym.",
+				"inPerson": "Wenn Sie möchten, können Sie später auch persönlich weiterreden."
+			}
 		},
-		"registering": "Registrierung läuft..."
+		"registering": "Registrierung läuft...",
+		"stepper": {
+			"progress": "Schritt {{current}} von {{total}}",
+			"progressShort": "Schritt {{current}}/{{total}}"
+		},
+		"handover": {
+			"badge": "Registriert",
+			"headline": "Geschafft.",
+			"subline": "So geht es weiter:",
+			"cta": "Anfrage schreiben",
+			"encryption": "Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.",
+			"goToStep": "Zu Schritt {{position}} von {{total}}",
+			"steps": {
+				"write": {
+					"title": "Sie schreiben, was los ist",
+					"text": "Was ist passiert, wo, seit wann? Ein paar Sätze genügen."
+				},
+				"counsellor": {
+					"title": "Wir finden Ihre Beraterin",
+					"text": "Fachlich passend — und mit Zeit für Sie."
+				},
+				"reply": {
+					"title": "Antwort in 2 Arbeitstagen",
+					"text": "Auf Ihre Anfrage wird persönlich und professionell geantwortet."
+				}
+			},
+			"status": {
+				"preparing": "Beratungsraum wird verschlüsselt …",
+				"verifying": "Prüfung: Mensch oder Bot …",
+				"queued": "Gleich sind Sie an der Reihe …",
+				"ready": "Alles bereit — Sie können schreiben",
+				"slow": "Das dauert länger als gewohnt",
+				"entering": "Ihr Beratungsraum wird geöffnet …"
+			}
+		},
+		"stepState": {
+			"done": "abgeschlossen",
+			"active": "aktueller Schritt",
+			"pending": "offen"
+		}
 	},
 	"releaseNote": {
 		"content": {
@@ -3058,7 +3167,10 @@
 				"2": "Okay, du musst im Spiel drei Dinge tun.",
 				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
 				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			}
+			},
+			"onboardingLine1": "Kommen Sie einfach an. Wir atmen zusammen.",
+			"onboardingLine3": "Wenn Sie bereit sind, starten Sie Ihren ersten Versuch.",
+			"volumeHint": "Für ein besseres Erlebnis schalten Sie bitte den Ton ein."
 		},
 		"acceptance": {
 			"button": {
@@ -3203,6 +3315,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervisionsgrund"
+			},
+			"startChat": {
+				"title": "Chat starten",
+				"hint": "Nutzen Sie das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die Sie hier senden, sind nur für Berater:innen sichtbar."
+			}
 		}
 	},
 	"sessionList": {
@@ -3212,7 +3336,8 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Gesprächskreis"
+				"selfHelp": "Gesprächskreis",
+				"internal": "Interna"
 			}
 		},
 		"createChat": {
@@ -3271,7 +3396,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"toggle": "Suchergebnisse öffnen oder schließen"
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -4012,7 +4138,8 @@
 			"startMailCounseling": "anonyme Mail-Beratung starten",
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
-			"later": "Später wiederkommen"
+			"later": "Später wiederkommen",
+			"title": "Live-Chat ist zurzeit leider geschlossen"
 		}
 	},
 	"sessionHeader": {
@@ -4082,7 +4209,9 @@
 				"loadingConsultants": "Lädt Berater...",
 				"reasonLabel": "Grund für die Supervision",
 				"reasonPlaceholder": "Bitte geben Sie den Grund für die Supervision an...",
-				"reasonError": "Bitte geben Sie einen Grund an."
+				"reasonError": "Bitte geben Sie einen Grund an.",
+				"note": "Wenn Supervisor:innen künftig mitbetreuen sollen, können Sie sie vorab hinzufügen.",
+				"reason": "Grund"
 			},
 			"success": {
 				"add": {
@@ -4108,7 +4237,8 @@
 					"text": "Berater konnten nicht geladen werden."
 				},
 				"reasonRequired": {
-					"text": "Bitte geben Sie den Grund für die Supervision an."
+					"text": "Bitte geben Sie den Grund für die Supervision an.",
+					"title": "Grund erforderlich"
 				}
 			},
 			"remove": {
@@ -4118,6 +4248,10 @@
 				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
 				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
 				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
+			},
+			"status": {
+				"on": "Supervision an",
+				"off": "Supervision aus"
 			}
 		}
 	},
@@ -4346,7 +4480,8 @@
 				"recoveryInstruction": "Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.",
 				"keyLabel": "Wiederherstellungsschlüssel",
 				"later": "Später",
-				"openVault": "Tresor öffnen"
+				"openVault": "Tresor öffnen",
+				"restoring": "Wird wiederhergestellt …"
 			}
 		}
 	},
@@ -4358,6 +4493,20 @@
 		"toLogin": "Zur Anmeldung",
 		"description": "Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.",
 		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
+	},
+	"drafts": {
+		"center": {
+			"title": "Entwürfe",
+			"subtitle": "Ungesendete Nachrichten werden pro Chat und Thread gespeichert.",
+			"empty": "Noch keine Entwürfe.",
+			"messageTag": "Entwurf",
+			"untitledChat": "Chat",
+			"thread": "Thread",
+			"open": "Entwurf öffnen",
+			"next": "Nächster Entwurf",
+			"delete": "Entwurf löschen",
+			"emptyDetail": "Wählen Sie einen Entwurf aus, um weiterzuschreiben."
+		}
 	},
 	"tour": {
 		"mailCounselling": {

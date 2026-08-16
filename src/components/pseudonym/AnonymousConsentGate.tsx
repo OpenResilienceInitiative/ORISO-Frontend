@@ -84,6 +84,10 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
+	const rejectLabel = t(
+		'anonymousChat.consent.reject',
+		'Ich stimme nicht zu'
+	);
 	const dialogRef = useRef<HTMLDivElement | null>(null);
 
 	/* Explicit initial focus alongside the trap. focus-trap-react resolves its
@@ -174,19 +178,20 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 					)}
 
 					<div className="anonymousConsentGate__actions">
+						{/* Icon-only per the design (CAR02 2183-14718). The label
+						    still exists — as the accessible name and the tooltip
+						    — because a bare ✕ says nothing to a screen reader,
+						    and because the two labelled buttons were what pushed
+						    this row out of the card at 375px (#892). */}
 						<button
 							type="button"
 							className="anonymousConsentGate__btnReject"
 							onClick={() => setRejected(true)}
 							disabled={busy}
+							aria-label={rejectLabel}
+							title={rejectLabel}
 						>
 							<RejectXIcon />
-							<span>
-								{t(
-									'anonymousChat.consent.reject',
-									'Ich stimme nicht zu'
-								)}
-							</span>
 						</button>
 						<button
 							type="button"

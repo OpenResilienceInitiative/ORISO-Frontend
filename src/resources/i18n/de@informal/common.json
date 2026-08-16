@@ -820,6 +820,58 @@
 					"active": "Benachrichtigungen aktiv — klicke zum Stummschalten",
 					"muted": "Alle Benachrichtigungen stumm — klicke zum Aktivieren"
 				}
+			},
+			"descriptionAsker": "Wir schreiben dir nur, wenn etwas passiert ist, das dich betrifft. Was genau, siehst du immer erst nach der Anmeldung – nie in der E-Mail.",
+			"descriptionConsultant": "Dein Arbeitsstrom per E-Mail. Inhalte aus Beratungen stehen nie in einer E-Mail.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Neue Nachricht",
+						"description": "Deine Beratung hat dir geschrieben, oder deine Anfrage wurde angenommen."
+					},
+					"appointment": {
+						"title": "Termine",
+						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Neue Anfragen",
+						"description": "Eine Anfrage ist in deiner Beratungsstelle eingegangen oder richtet sich direkt an dich."
+					},
+					"dailyDigest": {
+						"title": "Tagesübersicht",
+						"description": "Einmal täglich: wie viele Anfragen offen sind und wie lange die älteste wartet."
+					},
+					"newMessage": {
+						"title": "Nachrichten von Ratsuchenden",
+						"description": "Eine ratsuchende Person hat in einer deiner Beratungen geschrieben."
+					},
+					"assignment": {
+						"title": "Zuweisungen",
+						"description": "Dir wurde eine Anfrage zugewiesen."
+					},
+					"reassignment": {
+						"title": "Übergaben",
+						"description": "Eine Beratung soll an dich übergeben werden, oder eine Übergabe wurde bestätigt."
+					},
+					"feedback": {
+						"title": "Fachaustausch",
+						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für dich."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Wartung und Hinweise",
+						"description": "Geplante Wartungsfenster und Hinweise zur Plattform. Störungen melden wir immer."
+					}
+				},
+				"alwaysSent": {
+					"title": "Diese E-Mails bekommst du immer:",
+					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an deinem Zugang.",
+					"legal": "Vertragliches – zum Beispiel ein Auftragsverarbeitungsvertrag zur Unterschrift.",
+					"outage": "Störungen der Plattform."
+				}
 			}
 		},
 		"spokenLanguages": {
@@ -1099,10 +1151,37 @@
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",
 			"bullet2": "• die Gesetze Deines Bundeslandes kennen",
-			"headline": "Um Dich bestmöglich beraten zu können benötigen wir Deine Postleitzahl",
-			"label": "Deine Postleitzahl"
+			"headline": "Wo suchst du Beratung?",
+			"label": "Deine Postleitzahl",
+			"subline": "Nur deine Postleitzahl — mehr brauchen wir nicht.",
+			"whyLocal": {
+				"localHelp": "Deine Beratungsstelle kennt die Hilfsangebote vor Ort.",
+				"stateLaw": "Sie kennt die Gesetze deines Bundeslandes.",
+				"anonymous": "Nur diese eine Stelle sieht deine Angabe — du bleibst anonym.",
+				"inPerson": "Wenn du möchtest, kannst du später auch persönlich weiterreden."
+			}
 		},
-		"registering": "Registrierung läuft..."
+		"registering": "Registrierung läuft...",
+		"handover": {
+			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"steps": {
+				"write": {
+					"title": "Du schreibst, was los ist"
+				},
+				"counsellor": {
+					"title": "Wir finden deine Beraterin",
+					"text": "Fachlich passend — und mit Zeit für dich."
+				},
+				"reply": {
+					"text": "Auf deine Anfrage wird persönlich und professionell geantwortet."
+				}
+			},
+			"status": {
+				"queued": "Gleich bist du an der Reihe …",
+				"ready": "Alles bereit — du kannst schreiben",
+				"entering": "Dein Beratungsraum wird geöffnet …"
+			}
+		}
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -1203,7 +1282,10 @@
 				"2": "Okay, du musst im Spiel drei Dinge tun.",
 				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
 				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			}
+			},
+			"onboardingLine1": "Komm einfach an. Wir atmen zusammen.",
+			"onboardingLine3": "Wenn du bereit bist, starte deinen ersten Versuch.",
+			"volumeHint": "Für ein besseres Erlebnis schalte bitte den Ton ein."
 		},
 		"acceptance": {
 			"overlay": {
@@ -1283,6 +1365,14 @@
 						"title": "{{oldConsultant}} möchte Dich an {{newConsultant}} übergeben."
 					}
 				}
+			}
+		},
+		"supervisor": {
+			"startChat": {
+				"hint": "Nutze das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die du hier sendest, sind nur für Berater:innen sichtbar."
 			}
 		}
 	},
@@ -1780,7 +1870,8 @@
 				"loadingConsultants": "Lädt Berater...",
 				"reasonLabel": "Grund für die Supervision",
 				"reasonPlaceholder": "Bitte gib den Grund für die Supervision an...",
-				"reasonError": "Bitte gib einen Grund an."
+				"reasonError": "Bitte gib einen Grund an.",
+				"note": "Wenn Supervisor:innen künftig mitbetreuen sollen, kannst du sie vorab hinzufügen."
 			},
 			"success": {
 				"add": {
@@ -2123,6 +2214,11 @@
 		"toLogin": "Zur Anmeldung",
 		"description": "Vervollständige deine Einladung mit einem Benutzernamen und Passwort.",
 		"passwordHint": "Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen."
+	},
+	"drafts": {
+		"center": {
+			"emptyDetail": "Wähle einen Entwurf aus, um weiterzuschreiben."
+		}
 	},
 	"tour": {
 		"mailCounselling": {

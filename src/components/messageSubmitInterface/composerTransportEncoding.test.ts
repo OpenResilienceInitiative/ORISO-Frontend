@@ -159,35 +159,84 @@ describe('composer formatting survives the transport round trip', () => {
 	});
 
 	/**
-	 * Known gap found by the toolbar audit, pinned so a fix is visible as a
-	 * test change: the render-side sanitizer allows neither `<input>` nor
-	 * `<label>` nor `data-checked`, so a task list the sender saw as ☑ arrives
-	 * in the timeline as a plain bullet with no state. The composer round trip
-	 * above is fine — only the rendered message loses the checkbox.
+	 * #1079 — the sender writes ☑ / ☐, so the reader has to see ☑ / ☐. This was
+	 * the gap the toolbar audit pinned: the sanitizer used to strip the whole
+	 * checkbox structure and the list arrived as plain bullets, which changes
+	 * what the message says.
 	 */
-	it('documents that the timeline drops task-list checkboxes', () => {
-		const rendered = sanitizeHtml(
-			'<ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input type="checkbox"><span></span></label><div><p>Erledigt</p></div></li></ul>',
-			sanitizeHtmlDefaultOptions
-		);
+	describe('task-list state reaches the reader (#1079)', () => {
+		const renderTask = (checked: boolean) =>
+			sanitizeHtml(
+				`<ul data-type="taskList"><li data-checked="${checked}" data-type="taskItem"><label><input type="checkbox"${
+					checked ? ' checked' : ''
+				}><span></span></label><div><p>Erledigt</p></div></li></ul>`,
+				sanitizeHtmlDefaultOptions
+			);
 
-		expect(rendered).toContain('Erledigt');
-		expect(rendered).not.toContain('<input');
-		expect(rendered).not.toContain('data-checked');
+		it('keeps a ticked box ticked', () => {
+			const rendered = renderTask(true);
+
+			expect(rendered).toContain('Erledigt');
+			expect(rendered).toContain('data-checked="true"');
+			expect(rendered).toContain('checked="checked"');
+		});
+
+		it('keeps an unticked box unticked', () => {
+			const rendered = renderTask(false);
+
+			expect(rendered).toContain('data-checked="false"');
+			expect(rendered).not.toContain('checked="checked"');
+		});
+
+		it('renders the box read-only — it is the sender’s list', () => {
+			expect(renderTask(true)).toContain('disabled="disabled"');
+		});
+
+		/**
+		 * Allowing `<input>` at all is only safe because the transform pins the
+		 * type. A message body is remote content: it must not be able to smuggle
+		 * a text field, a name, a value or a submit button into the timeline.
+		 */
+		it.each([
+			['a text field', '<input type="text" name="pw" value="secret">'],
+			[
+				'a submit button',
+				'<input type="submit" formaction="https://evil.example">'
+			]
+		])('coerces %s into an inert checkbox', (_label, hostile) => {
+			const rendered = sanitizeHtml(hostile, sanitizeHtmlDefaultOptions);
+
+			expect(rendered).toBe(
+				'<input type="checkbox" disabled="disabled" />'
+			);
+		});
 	});
 
 	/**
-	 * Also from the audit: `target="_blank"` survives but `rel` does not, so
-	 * every sent link is a reverse-tabnabbing candidate on browsers that do not
-	 * imply `noopener`. Pinned for the same reason.
+	 * #1080 — `target="_blank"` without `rel="noopener"` hands the opened page a
+	 * live handle on the counselling tab. Forced by the sanitizer rather than
+	 * merely allowed through, so neither an old message nor a hostile body can
+	 * opt out.
 	 */
-	it('documents that the timeline strips rel from links', () => {
-		const rendered = sanitizeHtml(
-			'<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://example.org/">Text</a></p>',
-			sanitizeHtmlDefaultOptions
-		);
+	describe('sent links cannot reach back into the tab (#1080)', () => {
+		it.each([
+			[
+				'the sender already set it',
+				'<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://example.org/">Text</a></p>'
+			],
+			[
+				'the sender omitted it',
+				'<p><a target="_blank" href="https://example.org/">Text</a></p>'
+			],
+			[
+				'the body tries to drop it',
+				'<p><a target="_blank" rel="opener" href="https://evil.example/">Text</a></p>'
+			]
+		])('forces rel when %s', (_label, body) => {
+			const rendered = sanitizeHtml(body, sanitizeHtmlDefaultOptions);
 
-		expect(rendered).toContain('target="_blank"');
-		expect(rendered).not.toContain('rel=');
+			expect(rendered).toContain('rel="noopener noreferrer nofollow"');
+			expect(rendered).not.toContain('rel="opener"');
+		});
 	});
 });

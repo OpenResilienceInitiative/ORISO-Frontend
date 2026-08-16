@@ -173,9 +173,17 @@
 	}
 }
 
+// Icon-only per the design (CAR02 2183-14718): a round button holding just the
+// ✕, sized to match the accept pill's height so the pair sits on one baseline.
+// Its label lives on `aria-label`/`title`, not in the box.
 .anonymousConsentGate__btnReject {
 	background: var(--m3-secondary, #4c555f);
 	color: #e7effc;
+	flex: 0 0 auto;
+	padding: 8px;
+	width: 34px;
+	height: 34px;
+	gap: 0;
 
 	&:hover:not(:disabled) {
 		background: #3d444d;
@@ -225,7 +233,6 @@
 		gap: 6px;
 	}
 
-	.anonymousConsentGate__btnReject,
 	.anonymousConsentGate__btnAccept {
 		padding: 8px 12px;
 		font-size: 12px;
@@ -275,15 +282,19 @@
 		hyphens: auto;
 	}
 
+	// The row is back on one line, as the design has it. It fits again because
+	// the reject button is now an icon; what overflowed was two labelled
+	// buttons side by side. The accept label may wrap rather than push the row
+	// out of the card — locales are longer than the German original.
 	.anonymousConsentGate__actions {
-		flex-direction: column;
-		align-items: stretch;
-		justify-content: stretch;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-end;
 		gap: 8px;
 	}
 
-	.anonymousConsentGate__btnReject,
 	.anonymousConsentGate__btnAccept {
-		width: 100%;
+		min-width: 0;
+		white-space: normal;
 	}
 }
