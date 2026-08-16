@@ -111,9 +111,7 @@ export const HandoverCarousel = ({
 		// Centre the card the dot stands for; `offsetLeft` alone would push
 		// the last card against the right edge where it cannot scroll.
 		track.scrollTo({
-			left:
-				card.offsetLeft -
-				(track.clientWidth - card.offsetWidth) / 2,
+			left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2,
 			behavior: reducedMotion ? 'auto' : 'smooth'
 		});
 	};

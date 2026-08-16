@@ -261,9 +261,7 @@ export const sanitizeHtmlDefaultOptions = {
 			attribs: {
 				type: 'checkbox',
 				disabled: 'disabled',
-				...(attribs.checked !== undefined
-					? { checked: 'checked' }
-					: {})
+				...(attribs.checked !== undefined ? { checked: 'checked' } : {})
 			}
 		}),
 		mark: (tagName, attribs) => {

@@ -201,6 +201,19 @@ export const getMatrixHomeserverUrl = (): string =>
 export const getRuntimeApiBaseUrl = (): string =>
 	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
 
+/**
+ * Base URL of the matrix-content-scanner media proxy, e.g.
+ * `https://<domain>/_matrix/media_proxy/unstable` (ADR-019).
+ *
+ * Empty means no scanner is deployed in this environment — which is the
+ * normal case today. Deliberately not inferred from the app hostname: a
+ * guessed scanner URL would send file keys somewhere nobody configured.
+ */
+export const getMediaScannerUrl = (): string =>
+	stripTrailingSlashes(
+		pickValue('REACT_APP_MEDIA_SCANNER_URL', 'VITE_MEDIA_SCANNER_URL') || ''
+	);
+
 const isLocalServiceOrigin = (value?: string | null): boolean =>
 	/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(
 		String(value || '').trim()

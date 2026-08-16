@@ -87,7 +87,6 @@ export const endpoints = {
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
-	draftMessages: userServiceOrigin + '/service/messages/draft',
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
