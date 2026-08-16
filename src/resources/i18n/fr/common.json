@@ -181,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
-			"blocked": "Bloquée par le contrôle de sécurité"
+			"blocked": "Bloquée par le contrôle de sécurité",
+			"error": "Contrôle de sécurité impossible – le fichier reste bloqué"
 		}
 	},
 	"banner": {
