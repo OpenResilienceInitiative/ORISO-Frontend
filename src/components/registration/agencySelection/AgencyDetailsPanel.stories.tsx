@@ -58,7 +58,10 @@ const agencyWithoutOptionalFields: AgencyDataInterface = {
 	offline: false
 };
 
-const selectedTopic = { id: 7, name: 'Familienberatung' } as TopicsDataInterface;
+const selectedTopic = {
+	id: 7,
+	name: 'Familienberatung'
+} as TopicsDataInterface;
 
 const agencyWithDepartmentOverrides: AgencyDataInterface = {
 	...agencyWithBackendFields,

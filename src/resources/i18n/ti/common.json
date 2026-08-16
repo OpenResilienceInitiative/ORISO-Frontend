@@ -181,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
-			"blocked": "Blocked by the security check"
+			"blocked": "Blocked by the security check",
+			"error": "Security check unavailable – file stays locked"
 		}
 	},
 	"banner": {
@@ -3408,5 +3409,37 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "ናይ ደብዳበ ምኽሪ",
+			"summary": "ኣብ ናይ ደብዳበ ምኽሪ እንታይ ከም እተቐየረ — ካብ መጀመርታ ሕቶ ክሳብ መዝገብ።",
+			"step": {
+				"whatsNew": {
+					"title": "እንታይ ሓድሽ ኣሎ?",
+					"intro": "ናይ ደብዳበ ምኽሪ ካብቲ ናይ ቀደም መድረኽ ትፈልጥዎ ኢኹም። እዚ ሓጺር ዙረት ልሙዳት ስራሕኩም ሕጂ ኣበይ ከም ዘለዉን እንታይ ሓድሽ ከም ዝኾነን የርእየኩም።"
+				},
+				"enquiries": {
+					"title": "ናይ መጀመርታ ሕቶታት",
+					"intro": "ሓደስቲ ሕቶታት ከም ቀደም ኣብ ሓባራዊ ዝርዝር ይኣትዉ — ሕጂ ኣብዚ ይርከብ። ክሳብ ዝቕበል፡ ኩሎም ኣማኸርቲ ናይ ማእከልኩም ነቲ ክፉት ሕቶ ይርእይዎ።"
+				},
+				"accepting": {
+					"title": "ምቕባልን ቀዳማይ መልስን",
+					"intro": "ብ«ተቐበል» ሓደ ሕቶ ናብ ምኽርታትኩም ትወስዱ። ሓድሽ፡ ተመኸርቲ ድሕሪ ቀዳማይ መልእኽቶም ብቐጥታ ኣገደስቲ ሓበሬታ ዝሓዘ ኣውቶማቲክ ቀዳማይ መልሲ ይረኽቡ — ብዘይ ጸቕጢ ግዜ ክትጅምሩ ትኽእሉ።"
+				},
+				"mySessions": {
+					"title": "ምኽርታተይ",
+					"intro": "እተቐበልኩምዎም ምኽርታት ኣብዚ ይርከቡ — ከም ልማድኩም ብናይ መወዳእታ መልእኽቲ ተሰሪዖም።"
+				},
+				"composer": {
+					"title": "ምጽሓፍ — ብሓደስቲ ተኽእሎታት",
+					"intro": "ካብቲ ናይ ቀደም መድረኽ ሓድሽ፡ ኣብ ክርክራት ክትምልሱ፣ ናይ ድምጺ መልእኽትታት ክትቀርጹን ፋይላት ብቐጥታ ከተተሓሕዙን ትኽእሉ።"
+				},
+				"archive": {
+					"title": "መዝገብ",
+					"intro": "እተወድኡ ምኽርታት ከም ቀደም ናብ መዝገብ ይሰጋገሩ — ሕጂ ኣብዚ ትር ይርከብ።"
+				}
+			}
+		}
 	}
 }

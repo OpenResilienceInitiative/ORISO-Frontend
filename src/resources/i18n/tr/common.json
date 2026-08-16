@@ -181,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
 			"reveal": "Görseli göster",
-			"blocked": "Güvenlik kontrolü tarafından engellendi"
+			"blocked": "Güvenlik kontrolü tarafından engellendi",
+			"error": "Güvenlik kontrolü yapılamadı – dosya kilitli kalıyor"
 		}
 	},
 	"banner": {
@@ -3444,5 +3445,37 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Yazılı danışmanlık",
+			"summary": "Yazılı danışmanlıkta neler değişti — ilk talepten arşive kadar.",
+			"step": {
+				"whatsNew": {
+					"title": "Neler yeni?",
+					"intro": "Yazılı danışmanlığı önceki platformdan zaten tanıyorsunuz. Bu kısa tur, alışık olduğunuz iş adımlarının artık nerede olduğunu ve nelerin gerçekten yeni olduğunu gösterir."
+				},
+				"enquiries": {
+					"title": "İlk talepler",
+					"intro": "Yeni talepler eskisi gibi ortak bir listeye düşer — liste artık burada. Talep kabul edilene kadar danışma merkezinizdeki tüm danışmanlar açık talebi görür."
+				},
+				"accepting": {
+					"title": "Kabul etme ve ilk yanıt",
+					"intro": "“Kabul et” ile bir talebi danışmanlıklarınıza alırsınız. Yeni: Danışanlar ilk mesajlarından hemen sonra en önemli bilgileri içeren otomatik bir ilk yanıt alır — zaman baskısı olmadan başlayabilirsiniz."
+				},
+				"mySessions": {
+					"title": "Danışmanlıklarım",
+					"intro": "Kabul ettiğiniz danışmanlıklar burada — alışık olduğunuz gibi en son mesaja göre sıralanır."
+				},
+				"composer": {
+					"title": "Yazma — yeni olanaklarla",
+					"intro": "Önceki platforma göre yeni: Konu dizilerinde yanıt verebilir, sesli mesaj kaydedebilir ve dosyaları doğrudan ekleyebilirsiniz."
+				},
+				"archive": {
+					"title": "Arşiv",
+					"intro": "Tamamlanan danışmanlıklar eskisi gibi arşive taşınır — arşiv artık bu sekmede."
+				}
+			}
+		}
 	}
 }
