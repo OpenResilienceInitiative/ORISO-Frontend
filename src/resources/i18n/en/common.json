@@ -4417,14 +4417,5 @@
 			"delete": "Delete draft",
 			"emptyDetail": "Select a draft to continue writing."
 		}
-	},
-	"teamAccess": {
-		"systemMessage": {
-			"title": "Team access to this counselling session",
-			"description": "Advisors from the same counselling centre may temporarily read along for supervision or professional advice. Turning this off ends active access immediately and requires your explicit consent for future access.",
-			"controlLabel": "Allow team access without asking me",
-			"consentRequired": "Off: Future team access is possible only after your active consent.",
-			"saveError": "The setting could not be saved. The previous state has been restored."
-		}
 	}
 }

@@ -23,7 +23,6 @@ import {
 	apiGetCaseHandoverStatus,
 	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
-	apiSetTeamAccess,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
@@ -68,7 +67,6 @@ import {
 } from '../../services/matrixRoomHistoryKeyTransfer';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
-import { ICON_INFO, SystemMessage } from '../message/SystemMessage';
 
 const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
 	if (!actionPath?.includes('?')) {
@@ -140,42 +138,6 @@ export const SessionStream = ({
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
-	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const [teamAccessAllowed, setTeamAccessAllowed] = useState(true);
-	const [teamAccessPending, setTeamAccessPending] = useState(false);
-	const [teamAccessError, setTeamAccessError] = useState('');
-
-	useEffect(() => {
-		setTeamAccessAllowed(activeSession.item?.teamAccessAllowed !== false);
-		setTeamAccessError('');
-	}, [activeSession.item?.id, activeSession.item?.teamAccessAllowed]);
-
-	const handleTeamAccessChange = useCallback(
-		(nextAllowed: boolean) => {
-			const sessionId = activeSession.item?.id;
-			if (!sessionId || teamAccessPending) return;
-			const previousAllowed = teamAccessAllowed;
-			setTeamAccessAllowed(nextAllowed);
-			setTeamAccessPending(true);
-			setTeamAccessError('');
-			apiSetTeamAccess(sessionId, nextAllowed)
-				.then(() => readActiveSession())
-				.catch(() => {
-					setTeamAccessAllowed(previousAllowed);
-					setTeamAccessError(
-						translate('teamAccess.systemMessage.saveError')
-					);
-				})
-				.finally(() => setTeamAccessPending(false));
-		},
-		[
-			activeSession.item?.id,
-			readActiveSession,
-			teamAccessAllowed,
-			teamAccessPending,
-			translate
-		]
-	);
 	const notificationsContext = useContext(NotificationsContext);
 	const [caseHandoverStatus, setCaseHandoverStatus] =
 		useState<CaseHandoverStatus | null>(null);
@@ -1209,17 +1171,6 @@ export const SessionStream = ({
 		!activeSession.isGroup &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
 		!!activeSession.item?.id;
-	const teamAccessSystemMessage =
-		isAsker && !activeSession.isGroup ? (
-			<SystemMessage
-				variant="team-access"
-				icon={ICON_INFO}
-				teamAccessAllowed={teamAccessAllowed}
-				onTeamAccessChange={handleTeamAccessChange}
-				pending={teamAccessPending}
-				error={teamAccessError}
-			/>
-		) : null;
 
 	return (
 		<div className="session__wrapper">
@@ -1254,7 +1205,6 @@ export const SessionStream = ({
 				reactionEvents={messagesItem?.reactionEvents || []}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
-				systemMessages={teamAccessSystemMessage}
 			/>
 			{isOverlayActive && (
 				<Overlay
