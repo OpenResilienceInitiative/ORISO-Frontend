@@ -232,7 +232,7 @@
 		"postbuild": "bash scripts/validate-hardcoded-hosts.sh build",
 		"test": "cross-env NODE_ENV=development FAST_REFRESH=false BROWSER=none REACT_APP_API_URL=http://127.0.0.1:9001 HTTPS=0 PORT=9001 WDS_SOCKET_PORT=9001 concurrently --kill-others --success first \"npm run dev\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=6144 vitest run --project unit --maxWorkers=2 --minWorkers=1",
-		"test:storybook": "cross-env NODE_OPTIONS=--max-old-space-size=6144 vitest run --project storybook --maxWorkers=1 --minWorkers=1",
+		"test:storybook": "node scripts/run-storybook-tests.mjs",
 		"test:storybook:coverage": "cross-env NODE_OPTIONS=--max-old-space-size=6144 vitest run --project storybook --coverage",
 		"test:smoke": "playwright test",
 		"test:matrix-megolm": "node scripts/matrixMegolmSmoke.mjs",
