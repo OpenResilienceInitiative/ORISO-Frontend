@@ -163,9 +163,7 @@ export const RegistrationHeader = ({
 				// negative margin pushed the document sideways by the scrollbar
 				// width. The xs row simply fills its column instead.
 				width: fullBleed ? { xs: '100%', lg: '60vw' } : '100%',
-				ml: fullBleed
-					? { xs: 0, lg: 'calc((100% - 60vw) / 2)' }
-					: 0,
+				ml: fullBleed ? { xs: 0, lg: 'calc((100% - 60vw) / 2)' } : 0,
 				px: { xs: 2, sm: 3, lg: 4 },
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',

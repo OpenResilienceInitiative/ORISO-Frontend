@@ -538,10 +538,10 @@ export const AgencySelectionResults = ({
 											'& .MuiRadio-root': {
 												position: 'absolute',
 												// Centre on the header row: the
-										// 36px "Mehr" button and the 40px
-										// avatar both centre at ~32px, the
-										// 42px radio therefore starts at 11.
-										top: { xs: '13px', sm: '11px' },
+												// 36px "Mehr" button and the 40px
+												// avatar both centre at ~32px, the
+												// 42px radio therefore starts at 11.
+												top: { xs: '13px', sm: '11px' },
 												right: { xs: 12, sm: 16 },
 												m: 0
 											}

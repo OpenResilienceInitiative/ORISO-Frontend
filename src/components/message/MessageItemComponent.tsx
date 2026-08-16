@@ -1399,29 +1399,26 @@ export const MessageItemComponent = ({
 	 * takes a virtual element, so the same positioning path serves both the
 	 * point and the button anchor below.
 	 */
-	const openActionMenuAt = useCallback(
-		(clientX: number, clientY: number) => {
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
-			setVisibilityMenuAnchor(null);
-			setActionMenuPlacement('right-start');
-			setActionMenuAnchor({
-				getBoundingClientRect: () =>
-					({
-						width: 0,
-						height: 0,
-						x: clientX,
-						y: clientY,
-						top: clientY,
-						left: clientX,
-						right: clientX,
-						bottom: clientY
-					}) as DOMRect
-			});
-			setIsActionMenuOpen(true);
-		},
-		[]
-	);
+	const openActionMenuAt = useCallback((clientX: number, clientY: number) => {
+		setIsVisibilityMenuOpen(false);
+		setVisibilityMenuPosition(null);
+		setVisibilityMenuAnchor(null);
+		setActionMenuPlacement('right-start');
+		setActionMenuAnchor({
+			getBoundingClientRect: () =>
+				({
+					width: 0,
+					height: 0,
+					x: clientX,
+					y: clientY,
+					top: clientY,
+					left: clientX,
+					right: clientX,
+					bottom: clientY
+				}) as DOMRect
+		});
+		setIsActionMenuOpen(true);
+	}, []);
 
 	const toggleActionMenu = useCallback(
 		(
