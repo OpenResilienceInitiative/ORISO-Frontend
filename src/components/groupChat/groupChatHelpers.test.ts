@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	canModerateGroupChat,
+	getGroupChatWaitingAreaVisibility,
 	isV2GroupChatSession,
 	shouldShowGroupChatJoinView
 } from './groupChatHelpers';
@@ -77,6 +78,68 @@ describe('shouldShowGroupChatJoinView', () => {
 				isBanned: true
 			})
 		).toBe(false);
+	});
+});
+
+describe('getGroupChatWaitingAreaVisibility', () => {
+	const plannedStart = new Date('2026-08-08T10:00:00.000Z');
+
+	it('hides countdown, rules and headline for an internal team chat (#979)', () => {
+		// No repeatCount/repetitive and no explicit conversationType — the
+		// fallback in getModality resolves this to INTERNAL_GROUP.
+		const internalTeamChat = {
+			isGroup: true,
+			item: { id: 1, topic: 'Absprachen' }
+		} as any;
+
+		expect(
+			getGroupChatWaitingAreaVisibility(internalTeamChat, plannedStart)
+		).toEqual({
+			showCountdown: false,
+			showRules: false,
+			showRulesHeadline: false
+		});
+	});
+
+	it('hides the waiting area for an explicitly typed internal team chat', () => {
+		const internalTeamChat = {
+			isGroup: true,
+			item: { id: 1, conversationType: 'INTERNAL_GROUP', repetitive: true }
+		} as any;
+
+		expect(
+			getGroupChatWaitingAreaVisibility(internalTeamChat, plannedStart)
+				.showCountdown
+		).toBe(false);
+	});
+
+	it('keeps the countdown for a scheduled self-help group chat', () => {
+		const selfHelpChat = {
+			isGroup: true,
+			item: { id: 1, repetitive: true }
+		} as any;
+
+		expect(
+			getGroupChatWaitingAreaVisibility(selfHelpChat, plannedStart)
+		).toEqual({
+			showCountdown: true,
+			showRules: true,
+			// The countdown brings its own headline.
+			showRulesHeadline: false
+		});
+	});
+
+	it('falls back to the rules headline when a self-help chat has no planned start', () => {
+		const selfHelpChat = {
+			isGroup: true,
+			item: { id: 1, repeatCount: 0 }
+		} as any;
+
+		expect(getGroupChatWaitingAreaVisibility(selfHelpChat, null)).toEqual({
+			showCountdown: false,
+			showRules: true,
+			showRulesHeadline: true
+		});
 	});
 });
 

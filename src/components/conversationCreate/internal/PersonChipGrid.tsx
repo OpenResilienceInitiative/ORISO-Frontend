@@ -55,6 +55,7 @@ export const PersonChipGrid = ({
 						>
 							<path
 								d="M6 6L18 18M18 6L6 18"
+								fill="none"
 								stroke="currentColor"
 								strokeWidth="2"
 								strokeLinecap="round"

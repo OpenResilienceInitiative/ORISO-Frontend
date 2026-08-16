@@ -78,6 +78,16 @@ interface ReleaseToggles {
 	 */
 	enableInvisibleCrypto?: boolean;
 	/**
+	 * Kill-switch for per-participant call media E2EE (ADR-018).
+	 * Default / unset = ON: the host asks Element Call for
+	 * `perParticipantE2EE`, so the LiveKit SFU only ever sees ciphertext.
+	 * Set to `false` to fall back to transport-only media if MatrixRTC
+	 * to-device key distribution fails in an environment (ORISO-ElementCall#35:
+	 * call connects with no audio and no UI error). Call signalling and room
+	 * events stay encrypted by the host regardless of this toggle.
+	 */
+	enableCallMediaE2EE?: boolean;
+	/**
 	 * #439 MSC3814 "dehydrated devices": when on, park a sleeping device
 	 * server-side so Megolm keys sent during a login gap are delivered and the
 	 * gap becomes readable on next login. Hard-depends on the key-backup /

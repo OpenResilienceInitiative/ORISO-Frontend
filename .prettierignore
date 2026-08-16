@@ -8,3 +8,7 @@ devvars.env
 node_modules
 build
 CHANGELOG.md
+# Generated artefacts — the generator owns their formatting, and the
+# drift test compares them byte-for-byte against its output.
+src/utils/theme/generated
+coverage

@@ -16,6 +16,9 @@ const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
 
 export const endpoints = {
+	accountInvite: (token: string) =>
+		userServiceOrigin +
+		`/service/users/account-invites/${encodeURIComponent(token)}`,
 	agencyConsultants: userServiceOrigin + '/service/users/consultants',
 	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
 	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
@@ -84,7 +87,6 @@ export const endpoints = {
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
-	draftMessages: userServiceOrigin + '/service/messages/draft',
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',

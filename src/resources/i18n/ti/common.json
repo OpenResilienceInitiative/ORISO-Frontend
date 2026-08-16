@@ -50,7 +50,10 @@
 		"scrollDown": "ንታሕቲ ስክሮል ግበሩ",
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
-			"title": "ምኽሪ\n& ሓገዝ"
+			"title": "ምኽሪ\n& ሓገዝ",
+			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት",
+			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
+			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"successful": "ዕውት",
 		"title": "ምኽሪ",
@@ -178,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
-			"blocked": "Blocked by the security check"
+			"blocked": "Blocked by the security check",
+			"error": "Security check unavailable – file stays locked"
 		}
 	},
 	"banner": {
@@ -277,9 +281,14 @@
 			}
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
+		}
+	},
 	"chatFlyout": {
 		"archive": "መዝገበ",
-		"archiveDescription": "የተኣረከቡ ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
+		"archiveDescription": "የተኣረከቡ ቻት ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
 		"askerProfil": "ፕሮፋይል ደላዪ ምኽሪ",
 		"dataProtection": "ምክልኻል መረዳእታ",
 		"dearchive": "ዲኣርኪቭ",
@@ -624,7 +633,8 @@
 					"text": "ሊንክ ናብ ቅንጥብጣብ ሰሌዳ ተቐዲሑ!",
 					"title": "ሊንክ ተቐዲሑ"
 				},
-				"text": "ናይ ዕድመ ሊንክ ቅዳሕ"
+				"text": "ናይ ዕድመ ሊንክ ቅዳሕ",
+				"title": "ናይ ዕድመ ሊንክ ናብ ቅንጥብጣብ ሰሌዳ ቅዳሕ"
 			}
 		},
 		"create": {
@@ -670,6 +680,15 @@
 					"long": "እቲ ኣርእስቲ ኣዝዩ ነዊሕ እዩ።",
 					"short": "እቲ ኣርእስቲ ኣዝዩ ሓጺር እዩ።"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "ብዛዕባ ርእስኻ ተዛረብ፡ ብዛዕባ ካልኦት ኣይትዛረብ።",
+				"defaultRule2": "እቲ ኣብዚ ዝካፈል ኣብዚ ይተርፍ።",
+				"ruleEditorLabel": "ሕጊ ኣተዓራርይ",
+				"editRule": "ሕጊ {{index}} ኣተዓራርይ",
+				"deleteRule": "ሕጊ {{index}} ሰርዝ",
+				"addRule": "ሕጊ ወስኽ",
+				"ruleChip": "ሕጊ ቁ. {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +847,27 @@
 			"overlay": {
 				"button1Label": "ዕፁው",
 				"headline": "ለውጥታትካ ብዓወት ተዓቂቡ ኣሎ።"
+			}
+		},
+		"format": {
+			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
+			"panelMenu": "ተወሳኺ ኣማራጺታት",
+			"back": "ተመለስ"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "ዕለት ምረጽ",
+				"timeLabel": "መጀመሪ ሰዓት",
+				"durationLabel": "ግዜ ኣዳልው",
+				"repeatLabel": "ተደጋጋሚነት",
+				"mediumLabel": "ቀንዲ መራኸቢ ምረጽ",
+				"languageLabel": "ቋንቋ ናይቲ ክቢ",
+				"increase": "{{field}} ወስኽ",
+				"decrease": "{{field}} ኣጉድል",
+				"openList": "{{field}} ምረጽ",
+				"durationValue": "{{count}} ሰዓት",
+				"repeatValue_one": "{{count}} ግዜ",
+				"repeatValue_other": "{{count}} ግዜ"
 			}
 		}
 	},
@@ -1170,13 +1210,33 @@
 		"register": {
 			"infoText": {
 				"copy": "ኣብዞም ዝስዕቡ ኣርእስታት ብሓጎስ ክንመኽረኩም ንደሊ፤",
-				"title": "ገና ኣይተመዝገበን?"
+				"title": "ገና ኣይተመዝገበን?",
+				"short": "ኣብዚ ሓድሽ ዲኹም?"
 			},
-			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት"
+			"linkLabel": "ብዛዕባ ናይ ምምኽኻር ኣርእስታት",
+			"separator": "ኣብዚ ሓድሽ ዲኹም?"
 		},
 		"security": {
-			"headline": "ደህንነት እና ተመስጢር",
-			"description": "ግላዊነትኩም ብመጨረሻ-ወደ-መጨረሻ ምስጢር ፍጹም ይሕሎ."
+			"teaser": {
+				"text": "ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ — እቲ መፍትሕ ኣብ መሳርሒኹም እዩ ዝፍጠር።",
+				"link": "ስለምንታይ እዚ ብፍሉይ ውሑስ ዝኸውን",
+				"textShort": "እቲ መፍትሕ ኣብ መሳርሒኹም ይተርፍ",
+				"linkShort": "ስለምንታይ ውሑስ ዝኸውን"
+			},
+			"explainer": {
+				"badge": "ሓድሽ",
+				"headline": "ክልቴኹም ጥራይ ኢኹም ከተንብቡ እትኽእሉ።",
+				"message": "ጽቡቕ ኣይኮንኩን ዘለኹ።",
+				"you": "ንስኹም",
+				"agency": "ማእከል ምኽሪ",
+				"encrypted": "ምስጢራዊ",
+				"attack": "ካብዚ ንላዕሊ ሓደ ኣጥቃዒ ኣይረክብን",
+				"cipherLabel": "እተመንጠለ ምስጢራዊ ዳታ",
+				"key": "እቲ መፍትሕ ኣብ መሳርሒኹም ተፈጢሩ ኣብኡ ይተርፍ — ንሕና የብልናን።",
+				"protocol": "ክፉት ፕሮቶኮል <strong>Matrix</strong>፣ ብናጻ ክምርመር ዝኽእል።",
+				"protocolLink": "ዝያዳ ፍለጥ",
+				"back": "ናብ መእተዊ ተመለስ"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1223,7 +1283,6 @@
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኣፕኩም ኣእትዉ።"
 					}
 				},
-				"deletedAccount": "ኣካውንትካ ብሓደ ኣማኻሪ ተዓጽዩ እዩ።",
 				"email": {
 					"otp": {
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኢመይልኩም ኣእትዉ።"
@@ -1360,6 +1419,12 @@
 		"myProfile": "መግለጺይ",
 		"tools": "መሳርሒታተይ"
 	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
+	},
 	"notifications": {
 		"error": "ወዲቑ",
 		"info": "ሓበሬታ",
@@ -1378,7 +1443,31 @@
 			"clearAll": "ኩሉ ኣጥፍእ",
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
-			"open": "ቻት ክፈት"
+			"open": "ቻት ክፈት",
+			"next": "ቀጻሊ ሓበሬታ",
+			"cardMenu": "ናይ ሓበሬታ ተግባራት",
+			"markRead": "ከም ተነብበ ምልክት ግበር",
+			"waitingSince": "ካብ {{time}} ({{date}}) ጀሚሩ ይጽበ ኣሎ",
+			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
+			"showDetails": "ዝርዝር ኣርእይ",
+			"preview": {
+				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
+				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።",
+				"image": "ምስሊ",
+				"file": "ፋይል",
+				"audio": "መልእኽቲ ድምጺ",
+				"video": "ቪድዮ",
+				"notice": "ምልክታ",
+				"unsupported": "ዘይድገፍ መልእኽቲ",
+				"pending": "ምፍታሕ ምስጢር ይጽበ",
+				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+			},
+			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
+			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
+			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
+			"retryOlder": "ደጊምካ ፈትን",
+			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
 		}
 	},
 	"overlay": {
@@ -1966,10 +2055,6 @@
 			"copy": "ውሑስ ናይ ምኽሪ ክፍልኹም ነዳሉ ኣለና …",
 			"ready": "ናይ ምኽሪ ክፍልኹም ድሉው እዩ።"
 		},
-		"stepbar": {
-			"of": "ካብ",
-			"step": "ደረጃ"
-		},
 		"submitButton": {
 			"label": "ምዝገባ"
 		},
@@ -2019,7 +2104,7 @@
 				},
 				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
-				"label": "ስም ተጠቃሚ",
+				"label": "User-ID",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}
 		},
@@ -2071,7 +2156,52 @@
 			"bullet2": "• ሕግታት ግዝኣትካ ፍለጥ",
 			"headline": "ዝበለጸ ምኽሪ ንኽንህበኩም ዚፕ ኮድኩም የድልየና።",
 			"label": "ዚፕ ኮድካ",
-			"subline": "ንምንታይ፧ ምኽንያቱ ሽዑ ክኢላታትና፤"
+			"subline": "ናይ ዚፕ ኮድኩም ጥራይ — ካልእ ኣየድልየናን እዩ።",
+			"digitLabel": "ዚፕ ኮድ፡ ቁጽሪ {{position}} ካብ {{total}}",
+			"remaining_one": "{{count}} ቁጽሪ ተሪፉ",
+			"remaining_other": "{{count}} ቁጽርታት ተሪፉ",
+			"whyLocal": {
+				"title": "ስለምንታይ ኣብ ከባቢኻ ምኽሪ፧",
+				"localHelp": "ማእከል ምኽርኻ ኣብ ከባቢኻ ዘሎ ናይ ሓገዝ ኣገልግሎታት ይፈልጥ እዩ።",
+				"stateLaw": "ሕግታት ግዝኣትካ እውን ይፈልጥ እዩ።",
+				"anonymous": "ነቲ እትህቦ ሓበሬታ እዛ ሓንቲ ማእከል ጥራይ እያ እትርእዮ — ስውር ኮይንካ ትተርፍ።",
+				"inPerson": "እንተ ደሊኻ፡ ጸኒሕካ ብኣካል እውን ክትዘራረብ ትኽእል ኢኻ።"
+			}
+		},
+		"handover": {
+			"badge": "ተመዝጊብኩም",
+			"headline": "ተዛዚሙ።",
+			"subline": "ቀጺሉ እዚ ይኸውን፤",
+			"cta": "ሕቶኹም ጽሓፉ",
+			"encryption": "ምስጢራዊ፤ ሕቶኹም ክርእዩ ዝኽእሉ ንስኹምን ክኢላታት ማእከል ምኽርኹምን ጥራይ እዮም።",
+			"goToStep": "ናብ ስጉምቲ {{position}} ካብ {{total}} ኪዱ",
+			"steps": {
+				"write": {
+					"title": "እንታይ ከም ዘጋጠመ ንስኹም ትጽሕፉ",
+					"text": "እንታይ ኣጋጢሙ፡ ኣበይ፡ ካብ መዓስ ጀሚሩ? ውሑዳት ምሉኣት ሓሳባት እኹላት እዮም።"
+				},
+				"counsellor": {
+					"title": "ዝሰማማዕ ኣማኻሪ ንረኽበልኩም",
+					"text": "ብሞያኡ ዝሰማማዕ — ንዓኻትኩም ድማ ግዜ ዘለዎ።"
+				},
+				"reply": {
+					"title": "ኣብ ውሽጢ 2 ናይ ስራሕ መዓልቲ መልሲ",
+					"text": "ንሕቶኹም ብውልቃውን ብሞያውን መገዲ መልሲ ይወሃበኩም።"
+				}
+			},
+			"status": {
+				"preparing": "ናይ ምኽሪ ክፍሊ ኢንክሪፕት ይግበር ኣሎ …",
+				"verifying": "ምጽራይ፤ ሰብ ድዩ ቦት …",
+				"queued": "ኣብ ቀረባ ተራኹም እዩ …",
+				"ready": "ኩሉ ድሉው እዩ — ክትጽሕፉ ትኽእሉ ኢኹም",
+				"slow": "እዚ ካብ ንቡር ንላዕሊ ግዜ ይወስድ ኣሎ",
+				"entering": "ናይ ምኽሪ ክፍልኹም ይኽፈት ኣሎ …"
+			}
+		},
+		"stepState": {
+			"done": "ተዛዚሙ",
+			"active": "ህሉው ስጉምቲ",
+			"pending": "ዘይተጀመረ"
 		}
 	},
 	"releaseNote": {
@@ -2082,6 +2212,15 @@
 		},
 		"overlay": {
 			"close": "ዕፁው"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "ሕቶኹም ብሓደ ኣማኻሪ ተቐቢሉ ኣሎ።",
+			"copy": "{{advisor}} ካብ ማእከል ምኽሪ {{organisation}} ካብ ሕጂ ንደሓር ጉዳይኩም ክከታተል እዩ። መልእኽትታትኩም ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ እዮም። ኣድላዪ ምስ ዝኸውን፡ ካልኦት ክኢላታት ናይዚ ማእከል ምኽሪ ክሳተፉ ይኽእሉ እዮም፡ ንኣብነት ንውክልና ወይ ንሞያዊ ምምኽኻር — ኩሎም ድማ ምስጢር ናይ ምሕላው ግቡእ ኣለዎም።",
+			"cta": "ናብ ዝርርብ",
+			"advisorFallback": "ሓደ ኣማኻሪ",
+			"organisationFallback": "ማእከል ምኽርኹም"
 		}
 	},
 	"session": {
@@ -2337,6 +2476,11 @@
 		},
 		"preview": {
 			"headline": "ናይ መጀመርታ ሕቶታት",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}
@@ -2841,6 +2985,30 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2880,6 +3048,24 @@
 		},
 		"title": "ዙር"
 	},
+	"consultingTypes": {
+		"title": "Welcome to Caritas online counselling",
+		"intro": "I am looking for counselling on the following topic:",
+		"selectGroup": "Please select a topic",
+		"learnMore": "Learn more about how Caritas counselling works",
+		"info": "Info",
+		"details": {
+			"explanation": {
+				"title": "To advise you as well as possible, we need your postcode",
+				"description": "Why? Because then our specialists:\n•  know the support available around your place of residence\n•  know the laws of your federal state"
+			}
+		},
+		"overlay": {
+			"title": "How Caritas counselling works",
+			"close": "Close"
+		},
+		"register": "Register"
+	},
 	"anonymousChat": {
 		"headline": "ምክር ብስውር",
 		"subline": "ማእከል ምክር ምረጽ እሞ ብስውር ምክር ሕጂ ጀምር።",
@@ -2905,7 +3091,12 @@
 		"agencies": {
 			"noresults": "እዚ ርእስ ንምክር የለን ማእከል ምክር።"
 		},
-		"start": "ምክር ጀምር"
+		"start": "ምክር ጀምር",
+		"consent": {
+			"accept": "ይሰማማዕ እየ",
+			"reject": "ኣይሰማማዕን እየ",
+			"mustAcceptToContinue": "ንምቕጻል ንፖሊሲ ውልቃዊ ሓበሬታና ክትሰማምዑ ኣለኩም።"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3074,9 +3265,25 @@
 			"cmd": "Cmd"
 		}
 	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
+		}
+	},
 	"anonymousConsent": {
 		"button": "ኣረጋግፅ",
-		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ናይ ቪድዮ ጻውዒት ክጅምሩ ይኽእሉ።",
+		"description": "ድሕሪኡ ኣማኸርትና ምሳኻትኩም ቻት ክጅምሩ ይኽእሉ።",
 		"headline": "እንኳዕ ደሓን መፁ!",
 		"label": {
 			"and": "እና",
@@ -3087,6 +3294,152 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Video appointments are currently unavailable."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Your first steps",
+		"greeting": {
+			"body": "Thank you for getting in touch. Your message has reached us."
+		},
+		"whoReadsAlong": {
+			"headline": "Who reads your message",
+			"body": "Only the trained staff of the responsible counselling centre read your message. Everyone there is bound by confidentiality."
+		},
+		"responseDeadline": {
+			"headline": "When you will get a reply",
+			"body": "You will receive a reply from a suitable contact person within {{deadlineDays}} working days."
+		},
+		"modalityNote": {
+			"body": "The counselling takes place in writing, in this protected area. You can keep writing at any time."
+		},
+		"noPersonalData": {
+			"headline": "Please do not send personal data",
+			"body": "Please do not send us your full name, your address or your phone number. We do not need any of that for the counselling."
+		},
+		"emergencyNumbers": {
+			"headline": "If it cannot wait",
+			"body": "In an acute emergency you can reach Telefonseelsorge around the clock on 0800 111 0 111 or 0800 111 0 222, and the emergency services on 112."
+		},
+		"dataProtection": {
+			"body": "How we handle your data is set out in the privacy policy."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Notification by e-mail",
+			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
+			"action": "Add an e-mail address",
+			"saveFailed": "Saving failed. Please try again."
+		},
+		"accountProtection": {
+			"headline": "Your access, additionally protected",
+			"body": "You can secure your access with a second factor, so that nobody else can get in.",
+			"action": "Protect my access"
+		},
+		"closing": {
+			"body": "See you soon — we will get back to you."
+		},
+		"saveCredentials": {
+			"headline": "Keep hold of your access",
+			"body": "Without your login name you will not be able to return to this conversation later. Keep it somewhere safe — a password manager is best.",
+			"userNameLabel": "Login name",
+			"copy": "Copy",
+			"copied": "Login name copied.",
+			"sharedDevice": "If other people use this device, better not to save your login name here — write it down somewhere safe instead.",
+			"setPassword": "Set a password now",
+			"copyFailed": "Copying failed. Please select the login name and copy it by hand."
+		},
+		"displayName": {
+			"headline": "Your displayed name",
+			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+			"action": "Change my name"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "ኣሰር"
+			},
+			"privacy": {
+				"title": "ናይ ምስጢርነት ፖሊሲ"
+			},
+			"back": "ተመለስ",
+			"confirm": "ተረዲአ"
+		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "ናይ ደብዳበ ምኽሪ",
+			"summary": "ኣብ ናይ ደብዳበ ምኽሪ እንታይ ከም እተቐየረ — ካብ መጀመርታ ሕቶ ክሳብ መዝገብ።",
+			"step": {
+				"whatsNew": {
+					"title": "እንታይ ሓድሽ ኣሎ?",
+					"intro": "ናይ ደብዳበ ምኽሪ ካብቲ ናይ ቀደም መድረኽ ትፈልጥዎ ኢኹም። እዚ ሓጺር ዙረት ልሙዳት ስራሕኩም ሕጂ ኣበይ ከም ዘለዉን እንታይ ሓድሽ ከም ዝኾነን የርእየኩም።"
+				},
+				"enquiries": {
+					"title": "ናይ መጀመርታ ሕቶታት",
+					"intro": "ሓደስቲ ሕቶታት ከም ቀደም ኣብ ሓባራዊ ዝርዝር ይኣትዉ — ሕጂ ኣብዚ ይርከብ። ክሳብ ዝቕበል፡ ኩሎም ኣማኸርቲ ናይ ማእከልኩም ነቲ ክፉት ሕቶ ይርእይዎ።"
+				},
+				"accepting": {
+					"title": "ምቕባልን ቀዳማይ መልስን",
+					"intro": "ብ«ተቐበል» ሓደ ሕቶ ናብ ምኽርታትኩም ትወስዱ። ሓድሽ፡ ተመኸርቲ ድሕሪ ቀዳማይ መልእኽቶም ብቐጥታ ኣገደስቲ ሓበሬታ ዝሓዘ ኣውቶማቲክ ቀዳማይ መልሲ ይረኽቡ — ብዘይ ጸቕጢ ግዜ ክትጅምሩ ትኽእሉ።"
+				},
+				"mySessions": {
+					"title": "ምኽርታተይ",
+					"intro": "እተቐበልኩምዎም ምኽርታት ኣብዚ ይርከቡ — ከም ልማድኩም ብናይ መወዳእታ መልእኽቲ ተሰሪዖም።"
+				},
+				"composer": {
+					"title": "ምጽሓፍ — ብሓደስቲ ተኽእሎታት",
+					"intro": "ካብቲ ናይ ቀደም መድረኽ ሓድሽ፡ ኣብ ክርክራት ክትምልሱ፣ ናይ ድምጺ መልእኽትታት ክትቀርጹን ፋይላት ብቐጥታ ከተተሓሕዙን ትኽእሉ።"
+				},
+				"archive": {
+					"title": "መዝገብ",
+					"intro": "እተወድኡ ምኽርታት ከም ቀደም ናብ መዝገብ ይሰጋገሩ — ሕጂ ኣብዚ ትር ይርከብ።"
+				}
+			}
 		}
 	}
 }

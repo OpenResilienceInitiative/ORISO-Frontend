@@ -16,19 +16,41 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 .loginForm {
 	margin: 0;
-	display: flex;
-	justify-content: center;
-	align-items: $login-align-items;
+
+	/*
+	 * Login card and encryption explainer share one grid cell, so the card can
+	 * slide up out of the viewport while the explainer comes in from below
+	 * (design 2d / 2e) without the surrounding layout jumping. The cell is as
+	 * tall as the taller of the two.
+	 */
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+
+	/*
+	 * The cell is as tall as the taller pane — usually the explainer. Pinning
+	 * to the top keeps the login form where the eye expects it instead of
+	 * floating it down by half the height difference.
+	 */
+	align-items: start;
+	overflow: hidden;
 	text-align: center;
 	width: 100%;
 	max-width: 520px;
 	padding: 55px 60px;
-	background: #ffffff;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	position: relative;
 	border: 0px solid rgba(220, 38, 38, 0.3);
+	border: 0px solid
+		color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 	border-radius: 20px;
 	animation: fadeIn 0.5s ease-out;
 	transition: transform 0.3s ease;
+
+	/* The mobile sheet already supplies the outer margin (design 2e). */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		padding: 8px 0 0;
+		border-radius: 0;
+	}
 
 	&__inner {
 		position: relative;
@@ -37,6 +59,117 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+
+	&__pane {
+		grid-area: 1 / 1;
+		transition:
+			transform 520ms cubic-bezier(0.2, 0, 0, 1),
+			opacity 260ms linear,
+			visibility 0s linear 520ms;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	&__pane--login {
+		transform: translateY(0);
+		opacity: 1;
+	}
+
+	&__pane--info {
+		transform: translateY(118%);
+		opacity: 0;
+		visibility: hidden;
+	}
+
+	&--securityOpen {
+		.loginForm__pane--login {
+			transform: translateY(-118%);
+			opacity: 0;
+			visibility: hidden;
+		}
+
+		.loginForm__pane--info {
+			transform: translateY(0);
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+	}
+
+	&__separator {
+		width: 100%;
+		height: 1px;
+		margin: $grid-base-three 0 $grid-base-two;
+		background: var(--m3-outline-variant, #c4c7c8);
+		opacity: 0.6;
+	}
+
+	&__securityTeaser {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base;
+		width: 100%;
+		padding: $grid-base;
+		border: 0;
+		border-radius: 12px;
+		background: none;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 13.5px;
+		text-align: center;
+
+		&:hover {
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
+	&__securityTeaserIcon {
+		flex: none;
+		width: 15px;
+		height: 15px;
+		fill: currentcolor;
+		opacity: 0.6;
+	}
+
+	&__securityTeaserLink {
+		color: var(--m3-primary, #a5000a);
+		font-weight: $font-weight-bold;
+		white-space: nowrap;
+	}
+
+	&__securityTeaserLinkShort,
+	&__securityTeaserTextShort {
+		display: none;
+	}
+
+	/* The mobile sheet has no room for the long wording. */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		&__securityTeaserText,
+		&__securityTeaserLink {
+			display: none;
+		}
+
+		&__securityTeaserTextShort {
+			display: inline;
+		}
+
+		&__securityTeaserLinkShort {
+			display: inline;
+			color: var(--m3-primary, #a5000a);
+			font-weight: $font-weight-bold;
+			white-space: nowrap;
+		}
 	}
 
 	&__fields,
@@ -105,6 +238,12 @@ $link-hover-text-decoration: $link-text-decoration !default;
 				background: white;
 				outline: none;
 				box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.05);
+				box-shadow: 0 0 0 3px
+					color-mix(
+						in srgb,
+						var(--m3-primary, #a5000a) 5%,
+						transparent
+					);
 			}
 
 			&::placeholder {
@@ -163,6 +302,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			background: #ffffff;
 			color: #111827;
 			box-shadow: inset 0 -2px 0 rgba(216, 0, 3, 0.8);
+			box-shadow: inset 0 -2px 0
+				color-mix(in srgb, var(--m3-primary, #a5000a) 80%, transparent);
 		}
 	}
 
@@ -174,47 +315,6 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		.button {
 			width: 100%;
 			max-width: 100%;
-		}
-	}
-
-	&__securityBanner {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 8px;
-		padding: 16px 18px;
-		background: rgba(16, 185, 129, 0.12);
-		border: 1.5px solid rgba(16, 185, 129, 0.4);
-		border-radius: 12px;
-		margin-top: 20px;
-		margin-bottom: 0;
-		box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-		text-align: center;
-
-		.security-header {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-
-			svg {
-				flex-shrink: 0;
-				width: 20px;
-				height: 20px;
-			}
-
-			strong {
-				font-size: 14px;
-				color: #059669;
-				font-weight: 600;
-				letter-spacing: 0.3px;
-			}
-		}
-
-		span {
-			font-size: 12px;
-			color: #047857;
-			font-weight: 400;
-			line-height: 1.4;
 		}
 	}
 
@@ -268,20 +368,28 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		max-width: 100%;
 		margin-top: 25px;
 		padding: 15px 24px;
-		background: rgba(216, 0, 3);
+		background: var(--m3-primary, #a5000a);
 		border: none;
 		border-radius: 28px;
-		color: white;
+		color: var(--m3-on-primary, #ffffff);
 		font-size: 15px;
 		font-weight: 600;
 		letter-spacing: 0.3px;
 		box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+		box-shadow: 0 4px 15px
+			color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 		transition: all 0.3s ease;
 		transform: $login-icon-transform;
 
 		&:hover:not(:disabled) {
-			background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+			background: linear-gradient(
+				135deg,
+				var(--m3-primary, #b91c1c) 0%,
+				var(--m3-primary-hover, #7f1d1d) 100%
+			);
 			box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+			box-shadow: 0 6px 20px
+				color-mix(in srgb, var(--m3-primary, #a5000a) 40%, transparent);
 			transform: translateY(-2px);
 		}
 
@@ -309,6 +417,8 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__register {
+		width: 100%;
+		max-width: 380px;
 		margin-top: $grid-base-four;
 
 		&__separator {
@@ -333,6 +443,13 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&__content {
+			// Same column as the fields and the primary button, so the
+			// secondary lines up with them instead of shrinking to its label.
+			width: 100%;
+			max-width: 380px;
+			margin-left: auto;
+			margin-right: auto;
+
 			.text {
 				font-weight: 600;
 				text-align: center;

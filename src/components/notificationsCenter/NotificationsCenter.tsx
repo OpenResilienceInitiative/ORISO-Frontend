@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -21,7 +22,10 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import { EventFamily } from './eventDescriptors/types';
-import { resolveNotificationActionPath } from './notificationActionTarget';
+import {
+	resolveNotificationActionPath,
+	toInterpolationValues
+} from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -31,15 +35,22 @@ import {
 } from './timelineFilter';
 import {
 	NotificationsContext,
+	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
+import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
+import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
+import {
+	requiresCaseHandoverCheck,
+	useCaseHandoverPreviewGate
+} from './caseHandoverPreviewGate';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
@@ -47,6 +58,22 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
+import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
+import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
+import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
+import type {
+	MatrixActivityPreviewKind,
+	MatrixActivityPreviewLabels
+} from '../../utils/matrixActivityPreview';
+import { ConversationPreview } from './ConversationPreview';
+import { getNextNotificationId } from './notificationQueue';
+import {
+	formatAbsoluteTime,
+	formatClockParts,
+	formatRelativeTime
+} from './timelineTime';
+import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -68,24 +95,21 @@ const FAMILY_ICONS: Record<
 	appointments: AppointmentsFamilyIcon
 };
 
-const formatRelativeTime = (createdAt: string, locale?: string) => {
-	const normalizedCreatedAt =
-		createdAt &&
-		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(createdAt) &&
-		!/Z|[+-]\d{2}:\d{2}$/.test(createdAt)
-			? `${createdAt}Z`
-			: createdAt;
-	const date = new Date(normalizedCreatedAt);
-	const diffMs = Date.now() - date.getTime();
-	const diffMin = Math.max(0, Math.floor(diffMs / (1000 * 60)));
-	if (diffMin < 1) return 'now';
-	if (diffMin < 60) return `${diffMin}m ago`;
-	const diffHours = Math.floor(diffMin / 60);
-	if (diffHours < 24) return `${diffHours}h ago`;
-	const diffDays = Math.floor(diffHours / 24);
-	if (diffDays < 7) return `${diffDays}d ago`;
-	return date.toLocaleString(locale || 'de-DE');
+const MESSAGE_PREVIEW_ICONS: Partial<
+	Record<
+		MatrixActivityPreviewKind,
+		React.ComponentType<React.SVGProps<SVGSVGElement>>
+	>
+> = {
+	image: ImageMessageIcon,
+	file: FileMessageIcon,
+	audio: AudioMessageIcon,
+	video: VideoMessageIcon
 };
+
+// The branch's own `formatRelativeTime` is gone on purpose: #845 replaced the
+// hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
+// `timelineTime.ts`, which is imported above.
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
@@ -111,7 +135,10 @@ const describeItem = (
 	const descriptor = getEventDescriptor(item?.eventType);
 	const { title, text } = renderEventStrings(descriptor, translate, {
 		fallbackTitle: item?.title,
-		fallbackText: item?.text
+		fallbackText: item?.text,
+		// #846: params metadata feeds template placeholders such as
+		// {{senderDisplayName}} — previously they rendered unresolved.
+		interpolation: toInterpolationValues(item?.params)
 	});
 	return { descriptor, title, text };
 };
@@ -143,6 +170,24 @@ const resolveThreadRootId = (item: any): string | null => {
 	const params = new URLSearchParams(query);
 	const threadRootId = params.get('threadRootId');
 	return threadRootId ? decodeURIComponent(threadRootId) : null;
+};
+
+// #847: Matrix room for the embedded preview — params.roomRef when the
+// backend sent it (#846), else the room segment of the stored actionPath
+// (/sessions/<role>/<list>/<roomId>/<sessionId>).
+const resolveRoomId = (item: any): string | null => {
+	if (item?.params?.roomRef) {
+		return String(item.params.roomRef);
+	}
+	const path = item?.actionPath;
+	if (!path) {
+		return null;
+	}
+	const segments = String(path).split('?')[0].split('/').filter(Boolean);
+	const roomSegment = segments.find(
+		(segment) => segment.startsWith('!') || segment.startsWith('%21')
+	);
+	return roomSegment ? decodeURIComponent(roomSegment) : null;
 };
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
@@ -184,11 +229,17 @@ export const NotificationsCenter = () => {
 	const { selection: activeSelection } = useActiveListItem();
 	const { untilL, fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
+	const sessionsContext = useContext(SessionsDataContext);
+	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
-		refreshNotificationFeed
+		refreshNotificationFeed,
+		loadOlderNotifications,
+		hasOlderNotifications,
+		isLoadingOlderNotifications,
+		olderNotificationsError
 	} = useContext(NotificationsContext);
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
@@ -204,6 +255,9 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
+	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
+		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
+	>({});
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
@@ -216,6 +270,75 @@ export const NotificationsCenter = () => {
 		null
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	const listAnchorRef = useRef<{ id: string; top: number } | null>(null);
+	const anchorFrameRef = useRef<number | null>(null);
+	const captureListAnchor = useCallback(() => {
+		const list = listScrollRef.current;
+		if (!list || list.scrollTop <= 0) {
+			listAnchorRef.current = null;
+			return;
+		}
+		const listTop = list.getBoundingClientRect().top;
+		const firstVisible = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		).find((row) => row.getBoundingClientRect().bottom > listTop);
+		listAnchorRef.current = firstVisible
+			? {
+					id: firstVisible.dataset.notificationId || '',
+					top: firstVisible.getBoundingClientRect().top
+				}
+			: null;
+	}, []);
+	const scheduleCaptureListAnchor = useCallback(() => {
+		if (anchorFrameRef.current !== null) return;
+		anchorFrameRef.current = window.requestAnimationFrame(() => {
+			anchorFrameRef.current = null;
+			captureListAnchor();
+		});
+	}, [captureListAnchor]);
+
+	useEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		list.addEventListener('scroll', scheduleCaptureListAnchor, {
+			passive: true
+		});
+		captureListAnchor();
+		return () => {
+			list.removeEventListener('scroll', scheduleCaptureListAnchor);
+			if (anchorFrameRef.current !== null) {
+				window.cancelAnimationFrame(anchorFrameRef.current);
+				anchorFrameRef.current = null;
+			}
+		};
+	}, [captureListAnchor, scheduleCaptureListAnchor]);
+
+	// Preserve the first visible card when a live refresh prepends new events.
+	// Appending an older page naturally keeps the same anchor position.
+	//
+	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
+	// does: a card above the viewport growing from one line to two on
+	// decryption shifts the list by exactly as much as a prepended event would.
+	useLayoutEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		const rows = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		);
+		const previousAnchor = listAnchorRef.current;
+		if (previousAnchor) {
+			const anchoredRow = rows.find(
+				(row) => row.dataset.notificationId === previousAnchor.id
+			);
+			if (anchoredRow) {
+				list.scrollTop +=
+					anchoredRow.getBoundingClientRect().top -
+					previousAnchor.top;
+			}
+		}
+
+		captureListAnchor();
+	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -243,6 +366,171 @@ export const NotificationsCenter = () => {
 		() => getFamiliesInFeed(notificationFeed),
 		[notificationFeed]
 	);
+	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
+		() => ({
+			image: translate('notifications.center.preview.image', 'Image'),
+			file: translate('notifications.center.preview.file', 'File'),
+			audio: translate(
+				'notifications.center.preview.audio',
+				'Audio message'
+			),
+			video: translate('notifications.center.preview.video', 'Video'),
+			notice: translate('notifications.center.preview.notice', 'Notice'),
+			unsupported: translate(
+				'notifications.center.preview.unsupported',
+				'Unsupported message'
+			),
+			pending: translate(
+				'notifications.center.preview.pending',
+				'Waiting for decryption'
+			),
+			roomUnavailable: translate(
+				'notifications.center.preview.roomUnavailable',
+				'Conversation unavailable on this device'
+			),
+			eventUnavailable: translate(
+				'notifications.center.preview.eventUnavailable',
+				'Message unavailable in local history'
+			)
+		}),
+		[translate]
+	);
+	const candidatePreviewSources = useMemo(
+		() =>
+			notificationFeed.flatMap((item) => {
+				if (
+					item.eventType !== 'message.new' &&
+					item.eventType !== 'thread.reply.new'
+				) {
+					return [];
+				}
+				const matrixEventId = item.params?.matrixEventId;
+				const sessionId = resolveSessionId(item);
+				const session = getExtendedSession(
+					sessionId || undefined,
+					sessions || []
+				);
+				const roomRef = item.params?.roomRef || session?.rid;
+				if (!matrixEventId || !roomRef) {
+					return [];
+				}
+				return [
+					{
+						activityEventId: item.id,
+						roomRef,
+						matrixEventId,
+						senderName: item.params?.senderName,
+						fallbackText: describeItem(item, translate).text,
+						labels: previewLabels,
+						sessionId,
+						needsCaseHandoverCheck: requiresCaseHandoverCheck(
+							session,
+							userData?.userId
+						)
+					}
+				];
+			}),
+		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
+	);
+	// Only sessions that could be curtained cost a status request; a group
+	// chat, an enquiry or one's own case previews without one.
+	const checkedSessionIds = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					candidatePreviewSources
+						.filter(
+							(source) =>
+								source.needsCaseHandoverCheck &&
+								source.sessionId
+						)
+						.map((source) => source.sessionId as string)
+				)
+			).sort(),
+		[candidatePreviewSources]
+	);
+	const isCaseHandoverPreviewAllowed =
+		useCaseHandoverPreviewGate(checkedSessionIds);
+	const messagePreviewSources = useMemo(
+		() =>
+			candidatePreviewSources
+				.filter((source) => {
+					if (!source.needsCaseHandoverCheck) {
+						return true;
+					}
+					// A card whose session cannot even be named is one we have
+					// no way to clear, so it never hydrates.
+					return (
+						Boolean(source.sessionId) &&
+						isCaseHandoverPreviewAllowed(source.sessionId)
+					);
+				})
+				.map(
+					({
+						needsCaseHandoverCheck: _needsCheck,
+						sessionId: _sessionId,
+						...source
+					}) => source
+				),
+		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
+	);
+	// Previews are dropped again the moment their card stops being allowed —
+	// a session arriving late in SessionsDataContext can turn a hydrated card
+	// into a curtained one, and the decrypted text would otherwise survive in
+	// this map, still feeding the card body and the search index.
+	const allowedPreviewIds = useMemo(
+		() =>
+			new Set(
+				messagePreviewSources.map((source) => source.activityEventId)
+			),
+		[messagePreviewSources]
+	);
+	useEffect(() => {
+		setHydratedMessagePreviews((current) => {
+			const staleIds = Object.keys(current).filter(
+				(activityEventId) => !allowedPreviewIds.has(activityEventId)
+			);
+			if (staleIds.length === 0) {
+				return current;
+			}
+			const next = { ...current };
+			staleIds.forEach((activityEventId) => delete next[activityEventId]);
+			return next;
+		});
+	}, [allowedPreviewIds]);
+	/**
+	 * The only way a hydrated preview should ever be read.
+	 *
+	 * The purge above is state cleanup and lands one render late; in the render
+	 * where a card loses its allowance the decrypted text is still in the map.
+	 * Reading through this guard means a curtained card never shows it, not
+	 * even for a single paint.
+	 */
+	const visiblePreview = useCallback(
+		(activityEventId: string) =>
+			allowedPreviewIds.has(activityEventId)
+				? hydratedMessagePreviews[activityEventId]
+				: undefined,
+		[allowedPreviewIds, hydratedMessagePreviews]
+	);
+	const handlePreviewChange = useCallback(
+		(
+			activityEventId: string,
+			preview: string,
+			kind: MatrixActivityPreviewKind
+		) => {
+			setHydratedMessagePreviews((current) =>
+				current[activityEventId]?.text === preview &&
+				current[activityEventId]?.kind === kind
+					? current
+					: {
+							...current,
+							[activityEventId]: { text: preview, kind }
+						}
+			);
+		},
+		[]
+	);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
@@ -253,10 +541,17 @@ export const NotificationsCenter = () => {
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
-					return `${title} ${text}`;
+					return `${title} ${visiblePreview(item.id)?.text || text}`;
 				}
 			),
-		[notificationFeed, activeFamily, searchQuery, unreadOnly, translate]
+		[
+			notificationFeed,
+			activeFamily,
+			searchQuery,
+			unreadOnly,
+			translate,
+			visiblePreview
+		]
 	);
 
 	// Keep the master-detail selection inside the visible (filtered) feed.
@@ -340,6 +635,21 @@ export const NotificationsCenter = () => {
 				: 'system',
 		[selectedNotification]
 	);
+
+	// #845: on desktop the selected card is rendered in the detail pane —
+	// displayed means read (Slack semantics). This also covers the
+	// auto-selected first card, which previously stayed unread and made
+	// the Next button die on its first click. Skipped while the unread
+	// filter is on: marking read would drop the card from the filtered
+	// list and cascade-read the entire feed one selection at a time.
+	useEffect(() => {
+		if (untilL || unreadOnly) {
+			return;
+		}
+		if (selectedNotification && !selectedNotification.readAt) {
+			markNotificationAsRead(selectedNotification.id);
+		}
+	}, [untilL, unreadOnly, selectedNotification, markNotificationAsRead]);
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
@@ -379,64 +689,36 @@ export const NotificationsCenter = () => {
 				: '/sessions/user/view',
 		[userData]
 	);
+	// #846: request-origin events (request.new, waiting_room.client.joined)
+	// live in the consultant's enquiry list, not the sessions list.
+	const getDefaultRequestsPath = useCallback(
+		() =>
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? '/sessions/consultant/sessionPreview'
+				: '/sessions/user/view',
+		[userData]
+	);
 	const getNotificationActionPath = useCallback(
 		(item: (typeof notificationFeed)[number]) =>
 			toNonEmbeddedPath(
-				resolveNotificationActionPath(item, getDefaultSessionsPath())
+				resolveNotificationActionPath(
+					item,
+					getDefaultSessionsPath(),
+					getDefaultRequestsPath()
+				)
 			),
-		[getDefaultSessionsPath]
+		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	const embeddedChatPath = useMemo(() => {
-		if (!canShowChatPreview) {
-			return null;
-		}
-		const basePath = selectedNotification?.actionPath
-			? selectedNotification.actionPath
-			: selectedSessionId
-				? `${getDefaultSessionsPath()}/session/${selectedSessionId}${
-						selectedThreadRootId
-							? `?threadRootId=${encodeURIComponent(selectedThreadRootId)}`
-							: ''
-					}`
-				: null;
-		if (!basePath) {
-			return null;
-		}
-		const hasQuery = basePath.includes('?');
-		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
-	}, [
-		canShowChatPreview,
-		getDefaultSessionsPath,
-		selectedNotification?.actionPath,
-		selectedSessionId,
-		selectedThreadRootId
-	]);
-
-	const getNextNotificationId = (
-		fromId: string | null,
-		unreadOnly: boolean
-	): string | null => {
-		if (filteredFeed.length === 0) {
-			return null;
-		}
-		const startIndex = fromId
-			? filteredFeed.findIndex((item) => item.id === fromId)
-			: -1;
-		const matchesRule = (item: (typeof filteredFeed)[number]) =>
-			!unreadOnly || !item.readAt;
-
-		for (let i = startIndex + 1; i < filteredFeed.length; i++) {
-			if (matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		for (let i = 0; i <= startIndex; i++) {
-			if (i >= 0 && matchesRule(filteredFeed[i])) {
-				return filteredFeed[i].id;
-			}
-		}
-		return null;
-	};
+	// #847: the preview renders from the app's own Matrix client — no more
+	// embeddedNotifications iframe (a second SPA whose session view registered
+	// an active view and suppressed the timeline's own message events).
+	const selectedRoomId = useMemo(
+		() =>
+			canShowChatPreview && selectedNotification
+				? resolveRoomId(selectedNotification)
+				: null,
+		[canShowChatPreview, selectedNotification]
+	);
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
@@ -455,6 +737,7 @@ export const NotificationsCenter = () => {
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotification.id,
 			true
 		);
@@ -472,10 +755,13 @@ export const NotificationsCenter = () => {
 
 	const handleNextNotification = () => {
 		const nextUnreadId = getNextNotificationId(
+			filteredFeed,
 			selectedNotificationId,
 			true
 		);
-		if (nextUnreadId) {
+		// #845: defensive self-guard — the queue already excludes the
+		// anchor, so a match is always a different card.
+		if (nextUnreadId && nextUnreadId !== selectedNotificationId) {
 			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
@@ -513,13 +799,15 @@ export const NotificationsCenter = () => {
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
-	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const nextUnreadId = getNextNotificationId(
+		filteredFeed,
+		selectedNotificationId,
+		true
+	);
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
-	const showEmbeddedChat = Boolean(
-		embeddedChatOpen && canShowChatPreview && embeddedChatPath
-	);
+	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
 
 	// Same filter-chip contract as the conversation page toolbar: inactive
 	// chips are icon-only pills, the active chip expands with its label.
@@ -556,8 +844,23 @@ export const NotificationsCenter = () => {
 		);
 	};
 
+	if (notificationFeed.length === 0) {
+		return (
+			<div className="notificationsCenter notificationsCenter--empty">
+				<ActivityTimelineEmptyState />
+			</div>
+		);
+	}
+
 	return (
 		<div className="notificationsCenter">
+			{messagePreviewSources.map((source) => (
+				<MatrixActivityPreviewHydrator
+					key={source.activityEventId}
+					{...source}
+					onPreviewChange={handlePreviewChange}
+				/>
+			))}
 			<div
 				className="notificationsCenter__listColumn"
 				style={{ width: fromL ? `${listWidth}px` : undefined }}
@@ -648,14 +951,7 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
-					{notificationFeed.length === 0 ? (
-						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.empty',
-								'No notifications yet.'
-							)}
-						</div>
-					) : filteredFeed.length === 0 ? (
+					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
 								'notifications.center.noResults',
@@ -680,10 +976,16 @@ export const NotificationsCenter = () => {
 								item,
 								translate
 							);
-							const Icon = getEventIcon(descriptor.icon);
+							const hydratedPreview = visiblePreview(item.id);
+							const visibleText = hydratedPreview?.text || text;
+							const Icon = hydratedPreview?.kind
+								? MESSAGE_PREVIEW_ICONS[hydratedPreview.kind] ||
+									getEventIcon(descriptor.icon)
+								: getEventIcon(descriptor.icon);
 							return (
 								<div
 									key={item.id}
+									data-notification-id={item.id}
 									className={`notificationsCenter__listRow ${
 										isActive
 											? 'notificationsCenter__listRow--active'
@@ -725,7 +1027,7 @@ export const NotificationsCenter = () => {
 											</span>
 											<span className="notificationsCenter__cardBodyRow">
 												<span className="notificationsCenter__cardText">
-													{text}
+													{visibleText}
 												</span>
 												{!isActive && (
 													<span className="notificationsCenter__cardTime">
@@ -801,6 +1103,56 @@ export const NotificationsCenter = () => {
 								</div>
 							);
 						})
+					)}
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__pagination">
+							{olderNotificationsError ? (
+								<>
+									<span role="alert">
+										{translate(
+											'notifications.center.olderError',
+											'Could not load older activity.'
+										)}
+									</span>
+									<button
+										type="button"
+										disabled={isLoadingOlderNotifications}
+										onClick={() =>
+											void loadOlderNotifications()
+										}
+									>
+										{translate(
+											'notifications.center.retryOlder',
+											'Try again'
+										)}
+									</button>
+								</>
+							) : hasOlderNotifications ? (
+								<button
+									type="button"
+									disabled={isLoadingOlderNotifications}
+									onClick={() =>
+										void loadOlderNotifications()
+									}
+								>
+									{translate(
+										isLoadingOlderNotifications
+											? 'notifications.center.loadingOlder'
+											: 'notifications.center.loadOlder',
+										isLoadingOlderNotifications
+											? 'Loading older activity…'
+											: 'Load older activity'
+									)}
+								</button>
+							) : (
+								<span role="status">
+									{translate(
+										'notifications.center.endOfHistory',
+										'End of activity history'
+									)}
+								</span>
+							)}
+						</div>
 					)}
 				</div>
 				<Menu
@@ -899,10 +1251,9 @@ export const NotificationsCenter = () => {
 							)}
 						</div>
 					) : showEmbeddedChat ? (
-						<iframe
-							title="notifications-chat-session"
-							src={embeddedChatPath}
-							className="notificationsCenter__embeddedSessionFrame"
+						<ConversationPreview
+							roomId={selectedRoomId}
+							threadRootId={selectedThreadRootId}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">
@@ -918,6 +1269,28 @@ export const NotificationsCenter = () => {
 							</div>
 							<p className="notificationsCenter__detailText">
 								{selectedDisplay?.text}
+							</p>
+							{/* #845: the pane never showed WHEN the event
+							    happened; waiting-room events phrase it as
+							    "waiting since" so the queue age is obvious. */}
+							<p className="notificationsCenter__detailTimestamp">
+								{selectedNotification?.eventType ===
+								'waiting_room.client.joined'
+									? translate(
+											'notifications.center.waitingSince',
+											{
+												defaultValue:
+													'Waiting since {{time}} ({{date}})',
+												...formatClockParts(
+													selectedNotification.createdAt,
+													i18n.language
+												)
+											}
+										)
+									: formatAbsoluteTime(
+											selectedNotification.createdAt,
+											i18n.language
+										)}
 							</p>
 							{selectedNotification?.eventType ===
 								'case.handover.consent.requested' && (

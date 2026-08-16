@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	clearPersistedMatrixDeviceId,
 	createMatrixClient,
 	getMatrixAccessToken,
 	persistMatrixLoginData
@@ -10,6 +11,7 @@ import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { createClient } from 'matrix-js-sdk';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
+import { getDeviceSigningAuth } from '../../services/matrixInteractiveAuth';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -113,6 +115,25 @@ describe('persistMatrixLoginData', () => {
 		expect(localStorage.getItem('matrix_session_subject')).toBe(
 			'keycloak-user'
 		);
+	});
+});
+
+describe('clearPersistedMatrixDeviceId', () => {
+	it('removes both request and user-scoped ids before stale-device recovery', () => {
+		localStorage.setItem('matrix_device_id', 'STALE_DEVICE');
+		localStorage.setItem(
+			'matrix_device_id:@consultant:matrix.example.test',
+			'STALE_DEVICE'
+		);
+
+		clearPersistedMatrixDeviceId('@consultant:matrix.example.test');
+
+		expect(localStorage.getItem('matrix_device_id')).toBeNull();
+		expect(
+			localStorage.getItem(
+				'matrix_device_id:@consultant:matrix.example.test'
+			)
+		).toBeNull();
 	});
 });
 
@@ -433,6 +454,7 @@ describe('getMatrixAccessToken', () => {
 			accessToken: 'matrix-token',
 			deviceId: 'RESPONSE_DEVICE',
 			expiresInMs: 120_000,
+			uiaPassword: 'ephemeral-uia-password',
 			userId: '@user:matrix.example.test'
 		});
 
@@ -441,6 +463,7 @@ describe('getMatrixAccessToken', () => {
 			deviceId: 'RESPONSE_DEVICE',
 			expiresInMs: 120_000,
 			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'ephemeral-uia-password',
 			userId: '@user:matrix.example.test'
 		});
 
@@ -532,11 +555,24 @@ describe('getMatrixAccessToken', () => {
 		expect(localStorage.getItem('matrix_token_expires_at')).toBeNull();
 	});
 
+	it('never persists the transient UIA password', () => {
+		persistMatrixLoginData({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'must-stay-in-memory',
+			userId: '@consultant:matrix.example.test'
+		});
+
+		expect([...storage.values()]).not.toContain('must-stay-in-memory');
+	});
+
 	it('creates a Matrix client from stored credentials', () => {
 		const client = createMatrixClient({
 			accessToken: 'matrix-token',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
 			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'ephemeral-uia-password',
 			userId: '@consultant:matrix.example.test'
 		});
 
@@ -564,5 +600,6 @@ describe('getMatrixAccessToken', () => {
 				}
 			}
 		});
+		expect(getDeviceSigningAuth(client)).toBeTypeOf('function');
 	});
 });

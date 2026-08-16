@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as GroupChatAvatarIcon } from '../../../resources/img/icons/group-chat-avatar.svg';
-import { ReactComponent as TeamIllustration } from '../../../resources/img/illustrations/Team.svg';
+import { ReactComponent as InternalIcon } from '../../../resources/img/icons/internal-conversation.svg';
+import internalTeamImage from '../../../resources/img/illustrations/conversation/internal-team.png';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import {
@@ -10,7 +10,7 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
-import { M3SplitButton } from '../M3SplitButton';
+import { SplitButton } from '../../splitButton/SplitButton';
 import { PersonChipGrid } from './PersonChipGrid';
 import { PersonOption, PersonSelectMenu } from './PersonSelectMenu';
 
@@ -139,8 +139,17 @@ export const InternalChatCreateCard = ({
 			className="internalChatCreateCard"
 			title={translate('groupChat.internal.title')}
 			subtitle={translate('groupChat.internal.subtitle')}
-			avatar={<GroupChatAvatarIcon />}
-			media={<TeamIllustration />}
+			avatar={<InternalIcon />}
+			media={
+				<img
+					className="formatCard__mediaImage"
+					src={internalTeamImage}
+					alt={translate('groupChat.internal.title')}
+					width={360}
+					height={188}
+					loading="lazy"
+				/>
+			}
 			mediaDimmed={selectedCount > 0}
 			mediaOverlay={
 				<PersonChipGrid
@@ -190,16 +199,23 @@ export const InternalChatCreateCard = ({
 			</p>
 			<div className="internalChatCreateCard__actions">
 				<div className="internalChatCreateCard__splitButtonWrap">
-					<M3SplitButton
+					<SplitButton
 						ref={splitButtonRef}
 						id="internalChatPersonButton"
 						label={splitButtonLabel}
-						leadingIcon={<PersonAddIcon />}
-						selected={selectedCount > 0}
+						icon={<PersonAddIcon />}
+						variant={
+							menuOpen
+								? 'elevated'
+								: selectedCount > 0
+									? 'primary'
+									: 'outlined'
+						}
+						fullWidth
 						open={menuOpen}
-						onLeadingClick={() => setMenuOpen((prev) => !prev)}
-						onTrailingClick={() => setMenuOpen((prev) => !prev)}
-						trailingAriaLabel={translate(
+						onClick={() => setMenuOpen((prev) => !prev)}
+						onToggleMenu={() => setMenuOpen((prev) => !prev)}
+						menuLabel={translate(
 							'groupChat.internal.togglePersonList'
 						)}
 					/>
@@ -210,6 +226,9 @@ export const InternalChatCreateCard = ({
 							anchorRef={splitButtonRef}
 							onClose={() => setMenuOpen(false)}
 							labelledBy="internalChatPersonButton"
+							vacatedHint={translate(
+								'groupChat.internal.vacatedHint'
+							)}
 							toggleLabel={(label, selected) =>
 								translate(
 									selected

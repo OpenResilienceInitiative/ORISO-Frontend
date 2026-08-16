@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
 import './AnonymousConsentGate.styles.scss';
 
@@ -73,6 +74,9 @@ const AcceptCheckIcon: React.FC = () => (
  * Rejection surfaces an inline warning instead of navigating away — the
  * asker can still click accept after reading it.
  */
+const TITLE_ID = 'anonymousConsentGateTitle';
+const DESCRIPTION_ID = 'anonymousConsentGateDescription';
+
 export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	consentLabelHtml,
 	onAccept,
@@ -80,77 +84,132 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
+	const rejectLabel = t(
+		'anonymousChat.consent.reject',
+		'Ich stimme nicht zu'
+	);
+	const dialogRef = useRef<HTMLDivElement | null>(null);
 
+	/* Explicit initial focus alongside the trap. focus-trap-react resolves its
+	   own `initialFocus` only once it considers the tree tabbable, which does
+	   not hold in jsdom — so relying on it alone would leave the very behaviour
+	   this exists for untested in CI. The trap still owns *containment*. */
+	useEffect(() => {
+		dialogRef.current?.focus();
+	}, []);
+
+	/* ORISO-UserService#927. The gate declares itself a modal dialog, and since
+	   `SessionItemComponent` renders it *instead of* the conversation with the
+	   composer hidden, that is accurate — what was missing is what makes the
+	   claim true for a screen reader: a name, a description, and focus that is
+	   actually *contained* in the thing the person cannot leave.
+	   Moving focus in on mount was not enough: a keyboard user could still Tab
+	   straight out of an `aria-modal` dialog into content the attribute claims
+	   is inert. `FocusTrap` is the same primitive the platform `Overlay` uses,
+	   so the behaviour matches every other dialog rather than being bespoke. */
 	return (
-		<div className="anonymousConsentGate" role="dialog" aria-modal="true">
-			<div className="anonymousConsentGate__card">
-				<div className="anonymousConsentGate__header">
-					<span
-						className="anonymousConsentGate__icon"
-						aria-hidden="true"
-					>
-						<PrivacyShieldIcon />
-					</span>
-					<h2 className="anonymousConsentGate__title">
-						{t('anonymousConsent.headline', 'Herzlich Willkommen')}
-					</h2>
-				</div>
+		<FocusTrap
+			focusTrapOptions={{
+				/* The dialog container itself, not the heading: an <h2> is not
+				   focusable, and landing on the container is what makes a
+				   screen reader announce the dialog's name and description
+				   before anything else. */
+				/* Handled explicitly above, so the behaviour is testable. */
+				initialFocus: false,
+				// The gate has no dismiss affordance — consent is the only way
+				// forward — so Escape must not appear to close it.
+				escapeDeactivates: false,
+				fallbackFocus: `.anonymousConsentGate`
+			}}
+		>
+			<div
+				className="anonymousConsentGate"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby={TITLE_ID}
+				aria-describedby={DESCRIPTION_ID}
+				tabIndex={-1}
+				ref={dialogRef}
+			>
+				<div className="anonymousConsentGate__card">
+					<div className="anonymousConsentGate__header">
+						<span
+							className="anonymousConsentGate__icon"
+							aria-hidden="true"
+						>
+							<PrivacyShieldIcon />
+						</span>
+						<h2
+							className="anonymousConsentGate__title"
+							id={TITLE_ID}
+						>
+							{t(
+								'anonymousConsent.headline',
+								'Herzlich Willkommen'
+							)}
+						</h2>
+					</div>
 
-				<p className="anonymousConsentGate__body">
-					{t(
-						'anonymousConsent.description',
-						'Bitte bestätigen sie unsere Datenschutzbestimmungen. Erst danach dürfen unsere Berater_innen einen Chat mit ihnen starten.'
-					)}
-				</p>
-
-				<p
-					className="anonymousConsentGate__consent"
-					dangerouslySetInnerHTML={{ __html: consentLabelHtml }}
-				/>
-
-				{rejected && (
 					<p
-						className="anonymousConsentGate__rejectedNotice"
-						role="alert"
+						className="anonymousConsentGate__body"
+						id={DESCRIPTION_ID}
 					>
 						{t(
-							'anonymousChat.consent.mustAcceptToContinue',
-							'Um fortzufahren müssen Sie unseren Datenschutzbestimmungen zustimmen.'
+							'anonymousConsent.description',
+							'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
 						)}
 					</p>
-				)}
 
-				<div className="anonymousConsentGate__actions">
-					<button
-						type="button"
-						className="anonymousConsentGate__btnReject"
-						onClick={() => setRejected(true)}
-						disabled={busy}
-					>
-						<RejectXIcon />
-						<span>
+					<p
+						className="anonymousConsentGate__consent"
+						dangerouslySetInnerHTML={{ __html: consentLabelHtml }}
+					/>
+
+					{rejected && (
+						<p
+							className="anonymousConsentGate__rejectedNotice"
+							role="alert"
+						>
 							{t(
-								'anonymousChat.consent.reject',
-								'Ich stimme nicht zu'
+								'anonymousChat.consent.mustAcceptToContinue',
+								'Um fortzufahren müssen Sie unseren Datenschutzbestimmungen zustimmen.'
 							)}
-						</span>
-					</button>
-					<button
-						type="button"
-						className="anonymousConsentGate__btnAccept"
-						onClick={onAccept}
-						disabled={busy}
-					>
-						<AcceptCheckIcon />
-						<span>
-							{t(
-								'anonymousChat.consent.accept',
-								'Ich bin einverstanden'
-							)}
-						</span>
-					</button>
+						</p>
+					)}
+
+					<div className="anonymousConsentGate__actions">
+						{/* Icon-only per the design (CAR02 2183-14718). The label
+						    still exists — as the accessible name and the tooltip
+						    — because a bare ✕ says nothing to a screen reader,
+						    and because the two labelled buttons were what pushed
+						    this row out of the card at 375px (#892). */}
+						<button
+							type="button"
+							className="anonymousConsentGate__btnReject"
+							onClick={() => setRejected(true)}
+							disabled={busy}
+							aria-label={rejectLabel}
+							title={rejectLabel}
+						>
+							<RejectXIcon />
+						</button>
+						<button
+							type="button"
+							className="anonymousConsentGate__btnAccept"
+							onClick={onAccept}
+							disabled={busy}
+						>
+							<AcceptCheckIcon />
+							<span>
+								{t(
+									'anonymousChat.consent.accept',
+									'Ich bin einverstanden'
+								)}
+							</span>
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
+		</FocusTrap>
 	);
 };

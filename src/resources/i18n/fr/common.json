@@ -50,7 +50,10 @@
 		"scrollDown": "Faire défiler vers le bas",
 		"selectLanguage": "Choisir la langue",
 		"stage": {
-			"title": "Conseil\nAide et assistance"
+			"title": "Conseil\nAide et assistance",
+			"associationLogoAlt": "Logo de l'organisation prestataire",
+			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
+			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
 		"successful": "Réussir",
 		"title": "Conseil",
@@ -178,7 +181,8 @@
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
-			"blocked": "Bloquée par le contrôle de sécurité"
+			"blocked": "Bloquée par le contrôle de sécurité",
+			"error": "Contrôle de sécurité impossible – le fichier reste bloqué"
 		}
 	},
 	"banner": {
@@ -277,9 +281,14 @@
 			}
 		}
 	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archiver",
-		"archiveDescription": "Les notifications archivées sont inactives. Le chat sera supprimé dans 12 mois.",
+		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
 		"askerProfil": "Profil de la conseillère",
 		"dataProtection": "Protection des données",
 		"dearchive": "Désarchiver",
@@ -529,7 +538,7 @@
 			},
 			"overlay": {
 				"button": "Vers le message",
-				"copy": "Vous recevrez une réponse de notre part dans un délai de 2 jours ouvrables.",
+				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
 		}
@@ -624,7 +633,8 @@
 					"text": "Lien copié dans le presse-papiers !",
 					"title": "Lien copié"
 				},
-				"text": "Copier le lien d'invitation"
+				"text": "Copier le lien d'invitation",
+				"title": "Copier le lien d'invitation dans le presse-papiers"
 			}
 		},
 		"create": {
@@ -670,6 +680,15 @@
 					"long": "Le sujet est trop long",
 					"short": "Le sujet est trop court"
 				}
+			},
+			"authorContent": {
+				"defaultRule1": "Parlez de vous, pas des autres.",
+				"defaultRule2": "Ce qui est partagé ici reste ici.",
+				"ruleEditorLabel": "Modifier la règle",
+				"editRule": "Modifier la règle {{index}}",
+				"deleteRule": "Supprimer la règle {{index}}",
+				"addRule": "Ajouter une règle",
+				"ruleChip": "Règle n° {{index}}"
 			}
 		},
 		"createError": {
@@ -828,6 +847,27 @@
 			"overlay": {
 				"button1Label": "Fermer",
 				"headline": "Vos modifications ont été enregistrées avec succès."
+			}
+		},
+		"format": {
+			"panelTitle": "Créer une nouvelle conversation",
+			"panelMenu": "Plus d’options",
+			"back": "Retour"
+		},
+		"circle": {
+			"rows": {
+				"dateLabel": "Choisir la date",
+				"timeLabel": "Heure de début",
+				"durationLabel": "Définir la durée",
+				"repeatLabel": "Répétitions",
+				"mediumLabel": "Choisir le média principal",
+				"languageLabel": "Langue du cercle",
+				"increase": "Augmenter {{field}}",
+				"decrease": "Diminuer {{field}}",
+				"openList": "Choisir {{field}}",
+				"durationValue": "{{count}} h",
+				"repeatValue_one": "{{count}} fois",
+				"repeatValue_other": "{{count}} fois"
 			}
 		}
 	},
@@ -1170,13 +1210,35 @@
 		"register": {
 			"infoText": {
 				"copy": "Nous vous conseillons volontiers sur les thèmes suivants :",
-				"title": "Pas encore inscrit ?"
+				"title": "Pas encore inscrit ?",
+				"short": "Nouveau ici ?"
 			},
-			"linkLabel": "Vers les thèmes de conseil"
+			"linkLabel": "Vers les thèmes de conseil",
+			"separator": "Nouveau ici ?"
 		},
 		"security": {
 			"headline": "Sécurisé et chiffré",
-			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout."
+			"description": "Votre confidentialité est entièrement protégée par le chiffrement de bout en bout.",
+			"teaser": {
+				"text": "Chiffré de bout en bout — la clé est créée sur votre appareil.",
+				"link": "Pourquoi c'est particulièrement sûr",
+				"textShort": "La clé reste sur votre appareil",
+				"linkShort": "Pourquoi c'est sûr"
+			},
+			"explainer": {
+				"badge": "NOUVEAU",
+				"headline": "Vous deux êtes les seuls à pouvoir lire.",
+				"message": "Je ne vais pas bien.",
+				"you": "Vous",
+				"agency": "Service de consultation",
+				"encrypted": "chiffré",
+				"attack": "un attaquant n'obtient rien de plus",
+				"cipherLabel": "Données interceptées et chiffrées",
+				"key": "La clé est créée sur votre appareil et y reste — nous ne l'avons pas.",
+				"protocol": "Protocole ouvert <strong>Matrix</strong>, vérifiable de manière indépendante.",
+				"protocolLink": "En savoir plus",
+				"back": "Retour à la connexion"
+			}
 		},
 		"resend": {
 			"otp": {
@@ -1223,12 +1285,12 @@
 						"missing": "Veuillez saisir le code de votre application pour l'authentification à deux facteurs."
 					}
 				},
-				"deletedAccount": "Votre compte a été fermé par un conseiller.",
 				"email": {
 					"otp": {
 						"missing": "Veuillez saisir le code figurant dans votre e-mail pour l'authentification à deux facteurs."
 					}
 				},
+				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
@@ -1360,6 +1422,12 @@
 		"myProfile": "Mon profil",
 		"tools": "Mes outils"
 	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
+	},
 	"notifications": {
 		"error": "Échec",
 		"info": "Information",
@@ -1378,7 +1446,31 @@
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
-			"open": "Ouvrir le chat"
+			"open": "Ouvrir le chat",
+			"next": "Notification suivante",
+			"cardMenu": "Actions de notification",
+			"markRead": "Marquer comme lu",
+			"waitingSince": "En attente depuis {{time}} ({{date}})",
+			"showPreview": "Afficher l'aperçu de la conversation",
+			"showDetails": "Afficher les détails",
+			"preview": {
+				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
+				"empty": "Pas encore de messages dans cette conversation.",
+				"image": "Image",
+				"file": "Fichier",
+				"audio": "Message audio",
+				"video": "Vidéo",
+				"notice": "Avis",
+				"unsupported": "Message non pris en charge",
+				"pending": "Déchiffrement en cours",
+				"roomUnavailable": "Conversation indisponible sur cet appareil",
+				"eventUnavailable": "Message indisponible dans l’historique local"
+			},
+			"loadOlder": "Charger les activités précédentes",
+			"loadingOlder": "Chargement des activités précédentes…",
+			"olderError": "Impossible de charger les activités précédentes.",
+			"retryOlder": "Réessayer",
+			"endOfHistory": "Fin de l’historique des activités"
 		}
 	},
 	"overlay": {
@@ -1966,10 +2058,6 @@
 			"copy": "Nous préparons votre espace de consultation sécurisé, encore un instant …",
 			"ready": "Votre espace de consultation est prêt. Vous pouvez commencer."
 		},
-		"stepbar": {
-			"of": "de",
-			"step": "Étape"
-		},
 		"submitButton": {
 			"label": "S'inscrire"
 		},
@@ -2019,8 +2107,11 @@
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
-				"label": "Nom d'utilisateur",
+				"label": "User-ID",
 				"success": "Votre nom d'utilisateur est approprié."
+			},
+			"twoFactorAuth": {
+				"label": "Sécuriser mon mot de passe avec l'authentification à deux facteurs"
 			}
 		},
 		"back": "Retour",
@@ -2071,7 +2162,52 @@
 			"bullet2": "- connaître les lois de votre État",
 			"headline": "Pour pouvoir vous conseiller au mieux, nous avons besoin de votre code postal.",
 			"label": "Votre code postal",
-			"subline": "Pourquoi ? Parce qu'alors nos spécialistes :"
+			"subline": "Uniquement votre code postal — nous n'avons besoin de rien de plus.",
+			"digitLabel": "Code postal, chiffre {{position}} sur {{total}}",
+			"remaining_one": "Encore {{count}} chiffre",
+			"remaining_other": "Encore {{count}} chiffres",
+			"whyLocal": {
+				"title": "Pourquoi un conseil local ?",
+				"localHelp": "Votre service de consultation connaît les offres d'aide près de chez vous.",
+				"stateLaw": "Il connaît les lois de votre État fédéral.",
+				"anonymous": "Seul ce service voit ce que vous indiquez — vous restez anonyme.",
+				"inPerson": "Si vous le souhaitez, vous pourrez aussi poursuivre l'échange en personne plus tard."
+			}
+		},
+		"handover": {
+			"badge": "Inscrit(e)",
+			"headline": "C'est fait.",
+			"subline": "Voici la suite :",
+			"cta": "Écrire votre demande",
+			"encryption": "Chiffré : votre demande est lisible uniquement par vous et par les personnes qualifiées de votre service de consultation.",
+			"goToStep": "Aller à l'étape {{position}} sur {{total}}",
+			"steps": {
+				"write": {
+					"title": "Vous écrivez ce qui se passe",
+					"text": "Que s'est-il passé, où, depuis quand ? Quelques phrases suffisent."
+				},
+				"counsellor": {
+					"title": "Nous trouvons votre conseillère ou conseiller",
+					"text": "Avec les compétences adaptées — et du temps pour vous."
+				},
+				"reply": {
+					"title": "Une réponse sous 2 jours ouvrables",
+					"text": "Votre demande reçoit une réponse personnelle et professionnelle."
+				}
+			},
+			"status": {
+				"preparing": "Chiffrement de votre espace de consultation …",
+				"verifying": "Vérification : humain ou robot …",
+				"queued": "C'est bientôt votre tour …",
+				"ready": "Tout est prêt — vous pouvez écrire",
+				"slow": "Cela prend plus de temps que d'habitude",
+				"entering": "Ouverture de votre espace de consultation …"
+			}
+		},
+		"stepState": {
+			"done": "terminé",
+			"active": "étape actuelle",
+			"pending": "à venir"
 		}
 	},
 	"releaseNote": {
@@ -2082,6 +2218,15 @@
 		},
 		"overlay": {
 			"close": "Fermer"
+		}
+	},
+	"caseHandover": {
+		"accepted": {
+			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
+			"copy": "{{advisor}} du service de consultation {{organisation}} prend désormais en charge votre demande. Vos messages sont cryptés de bout en bout. En cas de besoin, d'autres personnes qualifiées de ce service de consultation peuvent être associées, par exemple pour un remplacement ou pour un échange professionnel — toutes sont tenues au secret professionnel.",
+			"cta": "Voir la conversation",
+			"advisorFallback": "Une conseillère ou un conseiller",
+			"organisationFallback": "votre service de consultation"
 		}
 	},
 	"session": {
@@ -2337,6 +2482,11 @@
 		},
 		"preview": {
 			"headline": "Premières demandes",
+			"voice": "Message vocal",
+			"audio": "Message audio",
+			"image": "Image",
+			"video": "Vidéo",
+			"file": "Fichier",
 			"registered": {
 				"tab": "Premières demandes"
 			}
@@ -2841,6 +2991,30 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2880,6 +3054,24 @@
 		},
 		"title": "Visite guidée"
 	},
+	"consultingTypes": {
+		"title": "Welcome to Caritas online counselling",
+		"intro": "I am looking for counselling on the following topic:",
+		"selectGroup": "Please select a topic",
+		"learnMore": "Learn more about how Caritas counselling works",
+		"info": "Info",
+		"details": {
+			"explanation": {
+				"title": "To advise you as well as possible, we need your postcode",
+				"description": "Why? Because then our specialists:\n•  know the support available around your place of residence\n•  know the laws of your federal state"
+			}
+		},
+		"overlay": {
+			"title": "How Caritas counselling works",
+			"close": "Close"
+		},
+		"register": "Register"
+	},
 	"anonymousChat": {
 		"headline": "Consultation anonyme",
 		"subline": "Choisissez un centre de consultation et démarrez immédiatement une consultation anonyme.",
@@ -2905,7 +3097,12 @@
 		"agencies": {
 			"noresults": "Aucun centre de consultation disponible pour ce sujet."
 		},
-		"start": "Démarrer la consultation"
+		"start": "Démarrer la consultation",
+		"consent": {
+			"accept": "J'accepte",
+			"reject": "Je n'accepte pas",
+			"mustAcceptToContinue": "Pour continuer, vous devez accepter notre politique de confidentialité."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3074,10 +3271,26 @@
 			"cmd": "Cmd"
 		}
 	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirmer",
-		"description": "Ensuite, nos conseillers peuvent commencer un appel vidéo avec vous.",
-		"headline": "Bienvenue !",
+		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",
+		"headline": "Bienvenue",
 		"label": {
 			"and": "et",
 			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
@@ -3087,6 +3300,152 @@
 	"legacyVideoAppointment": {
 		"unavailable": {
 			"message": "Les rendez-vous vidéo ne sont actuellement pas disponibles."
+		}
+	},
+	"erstantwort": {
+		"subtitle": "Vos premières étapes",
+		"greeting": {
+			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
+		},
+		"whoReadsAlong": {
+			"headline": "Qui lit votre message",
+			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+		},
+		"responseDeadline": {
+			"headline": "Quand vous recevrez une réponse",
+			"body": "Vous recevrez une réponse d'une personne de contact appropriée sous {{deadlineDays}} jours ouvrables."
+		},
+		"modalityNote": {
+			"body": "La consultation se déroule par écrit, dans cet espace protégé. Vous pouvez continuer à écrire à tout moment."
+		},
+		"noPersonalData": {
+			"headline": "Merci de ne pas envoyer de données personnelles",
+			"body": "Merci de ne pas nous communiquer votre nom complet, votre adresse ni votre numéro de téléphone. Nous n'en avons pas besoin pour la consultation."
+		},
+		"emergencyNumbers": {
+			"headline": "Si cela ne peut pas attendre",
+			"body": "En cas d'urgence aiguë, vous pouvez joindre Telefonseelsorge 24 h/24 au 0800 111 0 111 ou au 0800 111 0 222, et les secours au 112."
+		},
+		"dataProtection": {
+			"body": "La manière dont nous traitons vos données est décrite dans la déclaration de protection des données."
+		},
+		"freeNotice": {
+			"body": ""
+		},
+		"emailNotification": {
+			"headline": "Notification par e-mail",
+			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
+			"action": "Indiquer une adresse e-mail",
+			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+		},
+		"accountProtection": {
+			"headline": "Votre accès, protégé en plus",
+			"body": "Vous pouvez sécuriser votre accès avec un deuxième facteur, afin que personne d'autre ne puisse entrer.",
+			"action": "Protéger mon accès"
+		},
+		"closing": {
+			"body": "À bientôt — nous revenons vers vous."
+		},
+		"saveCredentials": {
+			"headline": "Conservez votre accès",
+			"body": "Sans votre nom de connexion, vous ne pourrez plus revenir à cette conversation. Conservez-le en lieu sûr — de préférence dans un gestionnaire de mots de passe.",
+			"userNameLabel": "Nom de connexion",
+			"copy": "Copier",
+			"copied": "Nom de connexion copié.",
+			"sharedDevice": "Si d'autres personnes utilisent cet appareil, mieux vaut ne pas enregistrer votre nom de connexion ici — notez-le plutôt en lieu sûr.",
+			"setPassword": "Définir un mot de passe maintenant",
+			"copyFailed": "La copie a échoué. Veuillez sélectionner le nom de connexion et le copier manuellement."
+		},
+		"displayName": {
+			"headline": "Votre nom affiché",
+			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+			"action": "Changer de nom"
+		}
+	},
+	"legal": {
+		"modal": {
+			"imprint": {
+				"title": "Mentions légales"
+			},
+			"privacy": {
+				"title": "Politique de confidentialité"
+			},
+			"back": "Retour",
+			"confirm": "Compris"
+		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Conseil par messagerie",
+			"summary": "Ce qui a changé dans le conseil par messagerie — de la première demande aux archives.",
+			"step": {
+				"whatsNew": {
+					"title": "Quoi de neuf ?",
+					"intro": "Vous connaissez déjà le conseil par messagerie de la plateforme précédente. Cette courte visite vous montre où se trouvent désormais vos étapes de travail habituelles — et ce qui est vraiment nouveau."
+				},
+				"enquiries": {
+					"title": "Premières demandes",
+					"intro": "Les nouvelles demandes arrivent comme avant dans une liste partagée — elle se trouve désormais ici. Tant que personne ne l’a acceptée, tous les conseillers de votre centre voient la demande ouverte."
+				},
+				"accepting": {
+					"title": "Accepter & première réponse",
+					"intro": "Avec « Accepter », vous prenez une demande dans vos consultations. Nouveau : les personnes en recherche de conseil reçoivent automatiquement une première réponse avec les informations essentielles juste après leur premier message — vous commencez sans pression."
+				},
+				"mySessions": {
+					"title": "Mes consultations",
+					"intro": "Vos consultations acceptées se trouvent ici — triées selon le message le plus récent, comme vous en avez l’habitude."
+				},
+				"composer": {
+					"title": "Écrire — avec de nouvelles options",
+					"intro": "Nouveau par rapport à la plateforme précédente : vous pouvez répondre dans des fils de discussion, enregistrer des messages vocaux et joindre des fichiers directement."
+				},
+				"archive": {
+					"title": "Archives",
+					"intro": "Les consultations terminées sont déplacées vers les archives comme avant — elles se trouvent désormais dans cet onglet."
+				}
+			}
 		}
 	}
 }

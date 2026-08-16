@@ -19,6 +19,10 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
+import {
+	clearMatrixSsoHandoffCookies,
+	purgeAppWebStorage
+} from '../../services/clientStorageHygiene';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	MATRIX_USER_ID_STORAGE_KEY,
@@ -83,6 +87,11 @@ const invalidateCookies = (
 	});
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
+	// #1071: counselling agencies share browser profiles, so nothing
+	// user-scoped may outlive sign-out. Runs after the pre-logout draft flush
+	// (EVENT_PRE_LOGOUT, awaited in `logout`), so no unsaved draft is lost.
+	clearMatrixSsoHandoffCookies();
+	purgeAppWebStorage();
 	if (withRedirect) {
 		redirectAfterLogout(redirectUrl);
 	}

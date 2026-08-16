@@ -74,6 +74,10 @@ $inputHeight: 50px;
 				--m3-selected-layer,
 				rgba(165, 0, 10, 0.08)
 			) !important;
+			background-color: var(
+				--m3-selected-layer,
+				color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent)
+			) !important;
 
 			&:hover {
 				// The `!important` annotation is relevant to not be overridden by inline styles.
@@ -81,6 +85,14 @@ $inputHeight: 50px;
 				background-color: var(
 					--m3-selected-layer,
 					rgba(165, 0, 10, 0.12)
+				) !important;
+				background-color: var(
+					--m3-selected-layer,
+					color-mix(
+						in srgb,
+						var(--m3-primary, #a5000a) 12%,
+						transparent
+					)
 				) !important;
 
 				.select__input__multi-value__label,

@@ -954,6 +954,8 @@ declare namespace UserService {
 			message: string;
 			language?: /* ISO 639-1 code */ LanguageCode;
 			t?: string;
+			/** ID of the browser-encrypted Matrix event to finalize as the initial enquiry */
+			matrixEventId?: string;
 		}
 		export interface FullAgencyResponseDTO {
 			/**
@@ -1383,6 +1385,21 @@ declare namespace UserService {
 			 * true
 			 */
 			appointmentNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			assignmentNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			feedbackNotificationEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			serviceNoticeNotificationEnabled?: boolean;
 		}
 		export interface OccurrenceOverrideRequest {
 			originalStartUtc: string; // date-time

@@ -1,0 +1,31 @@
+A new enquiry has arrived
+=========================
+
+A new counselling enquiry has arrived at your counselling service. It has not been assigned to anyone yet.
+
+Whoever accepts it takes on the counselling.
+
+Topic: ${requestTopic!''}
+Postcode: ${requestPostcode!''}
+Received: ${requestReceivedAt!''}
+
+View enquiry:
+${requestUrl!''}
+
+Please accept the enquiry within 2 working days.
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} is a service provided by ${orgName!''}.
+
+Settings: ${settingsUrl!''}
+Privacy: ${privacyUrl!''}
+Imprint: ${imprintUrl!''}
+Unsubscribe from notifications: ${unsubscribeUrl!''}
+
+This email was sent automatically. Please do not reply to it.

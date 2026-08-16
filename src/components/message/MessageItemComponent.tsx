@@ -26,7 +26,8 @@ import {
 	urlifyLinksInText
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
-import { FurtherSteps } from './FurtherSteps';
+import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -79,11 +80,21 @@ import {
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
-import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
+import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift
+} from '@floating-ui/dom';
+import type { Placement, VirtualElement } from '@floating-ui/dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
-import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
-import { formatMessagePersonName } from './messageNameUtils';
+import {
+	formatMessagePersonName,
+	formatAgencyLineWithI18n
+} from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
@@ -92,8 +103,16 @@ import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/de
 import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { MessageDateDivider } from './MessageDateDivider';
+import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
+import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
+import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
 
-const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+/* How recently an Erstantwort event must have arrived for its staged reveal to
+   play. Generous on purpose: the cost of skipping the animation on a genuinely
+   new event is that the person sees the text immediately, while the cost of
+   replaying it on old history is a wall of text re-typing itself every time the
+   list scrolls. */
+const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -102,7 +121,14 @@ const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 const logger = getMatrixClientLogger();
 
 const ActiveKebabIcon = () => (
-	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
+	<svg
+		className="messageItem__kebabIconActive"
+		width="28"
+		height="32"
+		viewBox="0 0 28 32"
+		fill="none"
+		aria-hidden
+	>
 		<g clipPath="url(#active-kebab-clip)">
 			<rect width="28" height="32" rx="14" fill="#CC1E1C" />
 			<rect width="28" height="32" fill="white" fillOpacity="0.08" />
@@ -309,6 +335,8 @@ interface MessageItemComponentProps extends MessageItem {
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
 	onEditDirect?: () => void;
+	/** Delete THIS message via Matrix redact (own messages only, #827). */
+	onDeleteDirect?: () => void;
 	/** Reactions (m.annotation, #435): aggregated pills for this message. */
 	reactions?: AggregatedReaction[];
 	/** Add own reaction with the given emoji key. */
@@ -365,6 +393,7 @@ export const MessageItemComponent = ({
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
+	onDeleteDirect,
 	reactions,
 	onReact,
 	onUnreact,
@@ -375,8 +404,12 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
 	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const [deleteOverlay, setDeleteOverlay] = useState(false);
+	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
+		useState(false);
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
@@ -427,12 +460,30 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// #1081: both menus are anchored with floating-ui instead of a one-shot
+	// calculation, so they follow their message while the timeline scrolls and
+	// stay on screen at any menu length. The anchor is either the trigger
+	// button or — for a long-press — a virtual element at the press point.
+	const [actionMenuAnchor, setActionMenuAnchor] = useState<
+		Element | VirtualElement | null
+	>(null);
+	const [actionMenuPlacement, setActionMenuPlacement] =
+		useState<Placement>('right-start');
+	// Quick-reaction row: the user's own recent picks, refreshed every time the
+	// menu opens, plus the "more" button that hands over to the full picker.
+	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
+	const [isQuickEmojiPickerOpen, setIsQuickEmojiPickerOpen] = useState(false);
+	const quickEmojiMoreRef = React.useRef<HTMLButtonElement | null>(null);
 	const [isVisibilityMenuOpen, setIsVisibilityMenuOpen] = useState(false);
 	const [visibilityMenuPosition, setVisibilityMenuPosition] = useState<{
 		top: number;
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
+		useState<Element | null>(null);
+	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
+		useState<Placement>('top-start');
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -461,12 +512,44 @@ export const MessageItemComponent = ({
 	}, [_id]);
 
 	useEffect(() => {
+		if (isActionMenuOpen) {
+			// Re-read on open: an emoji picked in the composer (or on another
+			// message) must show up here without a reload.
+			setQuickEmojis(getQuickEmojis());
+			return;
+		}
+		setIsQuickEmojiPickerOpen(false);
+	}, [isActionMenuOpen]);
+
+	/** React with `emoji` and promote it to the front of the recent list. */
+	const applyQuickReaction = useCallback(
+		(emoji: string) => {
+			rememberEmoji(emoji);
+			setQuickEmojis(getQuickEmojis());
+			onReact?.(emoji);
+			setIsQuickEmojiPickerOpen(false);
+			setIsActionMenuOpen(false);
+		},
+		[onReact]
+	);
+
+	useEffect(() => {
 		if (!isActionMenuOpen) {
 			return;
 		}
 		const handleOutsideClick = (event: MouseEvent) => {
 			const target = event.target as Node | null;
 			if (!target) {
+				return;
+			}
+			// The full emoji picker portals to <body>, so it sits outside the
+			// menu element. Without this exemption picking an emoji from it
+			// would close the menu (and unmount the picker) on mousedown,
+			// before the click that selects the emoji ever lands.
+			if (
+				target instanceof Element &&
+				target.closest('[data-testid="emoji-picker-popup"]')
+			) {
 				return;
 			}
 			if (!actionMenuRef.current?.contains(target)) {
@@ -686,20 +769,32 @@ export const MessageItemComponent = ({
 		},
 		[]
 	);
-	const visibilityGroups = useMemo(() => {
-		const selectedComparableLabels = new Set(
-			visibleAudienceLabels.map((entry) =>
-				makeComparableAudienceLabel(entry)
-			)
-		);
+	/**
+	 * Whether this message goes to *everyone* in the room.
+	 *
+	 * Lifted out of `visibilityGroups` so the render condition can read it too:
+	 * the visibility chip exists to mark a message only **some** participants
+	 * can see, so showing it with the label "Alle" states the opposite of what
+	 * the chip means.
+	 *
+	 * `__all__` is the explicit marker; an empty recipient list in a group is
+	 * the implicit one (nothing was restricted, so everyone is addressed).
+	 */
+	const isAllAudienceSelected = useMemo(() => {
 		const includesAllAudience = parsedMessage.visibleToUserIds.some(
 			(entry) => `${entry || ''}`.trim().toLowerCase() === '__all__'
 		);
 		const assumeAllAudienceByDefault =
 			parsedMessage.visibleToUserIds.length === 0 &&
 			!!activeSession?.isGroup;
-		const isAllAudienceSelected =
-			includesAllAudience || assumeAllAudienceByDefault;
+		return includesAllAudience || assumeAllAudienceByDefault;
+	}, [parsedMessage.visibleToUserIds, activeSession?.isGroup]);
+	const visibilityGroups = useMemo(() => {
+		const selectedComparableLabels = new Set(
+			visibleAudienceLabels.map((entry) =>
+				makeComparableAudienceLabel(entry)
+			)
+		);
 		const allCandidates = new Map<string, string>();
 		const addCandidate = (rawValue?: string | null) => {
 			const label = normalizeAudienceLabel(`${rawValue || ''}`);
@@ -793,11 +888,13 @@ export const MessageItemComponent = ({
 		makeComparableAudienceLabel,
 		getAudienceRoleFromLabel,
 		normalizeAudienceLabel,
-		parsedMessage.visibleToUserIds,
 		matrixRoomUsersContext?.users,
-		activeSession?.isGroup,
 		senderComparableLabels,
-		visibleAudienceLabels
+		visibleAudienceLabels,
+		// `parsedMessage.visibleToUserIds` and `activeSession?.isGroup` moved out
+		// with `isAllAudienceSelected`; this memo now depends on the derived
+		// value instead of on both inputs.
+		isAllAudienceSelected
 	]);
 	const visibleAudienceSummaryLabels = useMemo(() => {
 		const sourceLabels =
@@ -980,6 +1077,36 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
+	   `parsedMessage.systemNotificationType`, because the payload version has to
+	   be inspected too: an event from a newer server must render nothing at all
+	   rather than fall through to the generic system-notification chrome, which
+	   would show a raw JSON blob. */
+	const isErstantwortEvent = useMemo(
+		() => isErstantwortMessage(decryptedMessage),
+		[decryptedMessage]
+	);
+	const erstantwortModality = useMemo(
+		() => (activeSession ? getModality(activeSession) : undefined),
+		[activeSession]
+	);
+	/* An Erstantwort in an internal counsellor room would be a category error —
+	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
+	   resolves anything unknown to Agency Counselling, so it would render the
+	   wrong sequence rather than none. Excluded explicitly. */
+	const isErstantwortModality =
+		erstantwortModality !== undefined &&
+		erstantwortModality !== Modality.INTERNAL_GROUP;
+	/* Only a freshly arrived event plays the stagger. The message list mounts and
+	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
+	   `revealed` to 0 on every mount — so without this an event received days ago
+	   types itself out again each time it scrolls into view, and `onFirstReveal`
+	   fires again with it. */
+	const isRecentErstantwortEvent = useMemo(() => {
+		const timestamp = Number(messageTime);
+		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
+	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -1021,6 +1148,21 @@ export const MessageItemComponent = ({
 		}
 		return null;
 	};
+
+	/**
+	 * The counselling centre line under the sender name (#895). Shown for
+	 * messages a counsellor wrote — both to the advice seeker, who chose that
+	 * agency by postcode during registration, and to the counsellor, whose own
+	 * messages carry the same professional identity.
+	 *
+	 * Live Chat is cross-agency and registrationless, so `activeSession.agency`
+	 * is simply absent until a counsellor picks the conversation up; the line
+	 * then stays away rather than rendering an empty row.
+	 */
+	const agencyLine = useMemo(
+		() => formatAgencyLineWithI18n(activeSession?.agency, translate),
+		[activeSession?.agency, translate]
+	);
 
 	const getUsernameType = () => {
 		if (isMyMessage) {
@@ -1100,8 +1242,10 @@ export const MessageItemComponent = ({
 	);
 
 	const videoCallMessage: VideoCallMessageDTO = alias?.videoCallMessageDTO;
-	const isFurtherStepsMessage =
-		alias?.messageType === ALIAS_MESSAGE_TYPES.FURTHER_STEPS;
+	/* ADR-018 retires the FURTHER_STEPS renderer together with the alias path
+	   it keyed off: no Matrix code path produces an `alias` object, so this
+	   branch never fired. `UPDATE_SESSION_DATA` shared the same renderer and is
+	   still discarded below, where it always was. */
 	const isUpdateSessionDataMessage =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.UPDATE_SESSION_DATA;
 	const isVideoCallMessage =
@@ -1118,6 +1262,12 @@ export const MessageItemComponent = ({
 		alias?.messageType === ALIAS_MESSAGE_TYPES.INITIAL_APPOINTMENT_DEFINED;
 	const isFullWidthMessage =
 		isVideoCallMessage && !videoCallMessage?.eventType;
+	const canDeleteMessage =
+		Boolean(onDeleteDirect) &&
+		activeSession?.item?.status !== STATUS_ARCHIVED &&
+		Boolean(
+			getSetting<IBooleanSetting>(SETTING_MESSAGE_ALLOWDELETING)?.value
+		);
 	const actionMenuItems = useMemo(
 		() => [
 			// Relations foundation (#435): only offer direct reply where a
@@ -1163,13 +1313,21 @@ export const MessageItemComponent = ({
 				label: translate('message.menu.forward', 'Forward Message'),
 				icon: <MenuForwardIcon />
 			},
-			{
-				key: 'delete',
-				label: translate('message.menu.delete', 'Delete Message'),
-				icon: <MenuDeleteIcon />
-			}
+			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
+			...(canDeleteMessage
+				? [
+						{
+							key: 'delete',
+							label: translate(
+								'message.menu.delete',
+								'Delete Message'
+							),
+							icon: <MenuDeleteIcon />
+						}
+					]
+				: [])
 		],
-		[translate, onReplyDirect, onEditDirect]
+		[translate, onReplyDirect, onEditDirect, canDeleteMessage]
 	);
 
 	const handleActionMenuItemClick = useCallback(
@@ -1185,39 +1343,82 @@ export const MessageItemComponent = ({
 			if (actionKey === 'edit' && onEditDirect) {
 				onEditDirect();
 			}
+			if (actionKey === 'delete' && onDeleteDirect) {
+				setDeleteOverlay(true);
+			}
 		},
-		[onOpenThread, onReplyDirect, onEditDirect]
+		[onOpenThread, onReplyDirect, onEditDirect, onDeleteDirect]
 	);
 
-	const openActionMenuAt = useCallback(
-		(preferredLeft: number, preferredTop: number) => {
-			const menuWidth = 210;
-			const menuHeight = 300;
-			const viewportPadding = 12;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredTop,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
-			setActionMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
-			setIsActionMenuOpen(true);
-		},
-		[]
+	const confirmDeleteMessage = useCallback(() => {
+		if (!onDeleteDirect || isDeleteRequestInProgress) {
+			return;
+		}
+		setIsDeleteRequestInProgress(true);
+		try {
+			onDeleteDirect();
+			setDeleteOverlay(false);
+		} finally {
+			setIsDeleteRequestInProgress(false);
+		}
+	}, [onDeleteDirect, isDeleteRequestInProgress]);
+
+	const deleteOverlayItem: OverlayItem = useMemo(
+		() => ({
+			headline: translate('message.delete.overlay.headline'),
+			copy: translate('message.delete.overlay.copy'),
+			svg: XIllustration,
+			illustrationBackground: 'neutral',
+			buttonSet: [
+				{
+					label: translate('message.delete.overlay.cancel'),
+					function: OVERLAY_FUNCTIONS.CLOSE,
+					type: BUTTON_TYPES.SECONDARY,
+					disabled: isDeleteRequestInProgress
+				},
+				{
+					label: translate('message.delete.overlay.confirm'),
+					function: 'CONFIRM',
+					type: BUTTON_TYPES.PRIMARY,
+					disabled: isDeleteRequestInProgress
+				}
+			],
+			handleOverlay: (functionName) => {
+				if (functionName === 'CONFIRM') {
+					confirmDeleteMessage();
+					return;
+				}
+				setDeleteOverlay(false);
+			}
+		}),
+		[confirmDeleteMessage, isDeleteRequestInProgress, translate]
 	);
+
+	/**
+	 * Opens the menu against a fixed point — the long-press position. floating-ui
+	 * takes a virtual element, so the same positioning path serves both the
+	 * point and the button anchor below.
+	 */
+	const openActionMenuAt = useCallback((clientX: number, clientY: number) => {
+		setIsVisibilityMenuOpen(false);
+		setVisibilityMenuPosition(null);
+		setVisibilityMenuAnchor(null);
+		setActionMenuPlacement('right-start');
+		setActionMenuAnchor({
+			getBoundingClientRect: () =>
+				({
+					width: 0,
+					height: 0,
+					x: clientX,
+					y: clientY,
+					top: clientY,
+					left: clientX,
+					right: clientX,
+					bottom: clientY
+				}) as DOMRect
+		});
+		setIsActionMenuOpen(true);
+	}, []);
 
 	const toggleActionMenu = useCallback(
 		(
@@ -1226,22 +1427,56 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 210;
-			const gap = 10;
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.right + gap
-					: triggerRect.left - menuWidth - gap;
 			if (isActionMenuOpen) {
 				setIsActionMenuOpen(false);
 				setActionMenuPosition(null);
+				setActionMenuAnchor(null);
 				return;
 			}
-			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+			setIsVisibilityMenuOpen(false);
+			setVisibilityMenuPosition(null);
+			setVisibilityMenuAnchor(null);
+			// The kebab sits outside the bubble, so the menu opens away from it:
+			// to the right on the incoming side, to the left on the outgoing one.
+			setActionMenuPlacement(
+				side === 'left' ? 'right-start' : 'left-start'
+			);
+			setActionMenuAnchor(event.currentTarget);
+			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen, openActionMenuAt]
+		[isActionMenuOpen]
 	);
+
+	// Keeps the action menu on its anchor across scroll, resize and any change
+	// in menu height — replacing a one-shot calculation that assumed a fixed
+	// 300px menu and never ran again.
+	useEffect(() => {
+		const menuEl = actionMenuRef.current;
+		if (!isActionMenuOpen || !actionMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(actionMenuAnchor, menuEl, () => {
+			computePosition(actionMenuAnchor, menuEl, {
+				placement: actionMenuPlacement,
+				middleware: [offset(10), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+		});
+	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
+
+	useEffect(() => {
+		const menuEl = visibilityMenuRef.current;
+		if (!isVisibilityMenuOpen || !visibilityMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
+			computePosition(visibilityMenuAnchor, menuEl, {
+				placement: visibilityMenuPlacement,
+				middleware: [offset(6), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) =>
+				setVisibilityMenuPosition({ left: x, top: y })
+			);
+		});
+	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
 	// Slack-style long-press on the message bubble opens the action menu at
 	// the press position (touch and mouse alike).
@@ -1318,40 +1553,20 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 336;
-			const menuHeight = 460;
-			const viewportPadding = 12;
-			// Anchor menu so one corner sits behind the +N chip.
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.left - triggerRect.width * 0.35
-					: triggerRect.right - menuWidth + triggerRect.width * 0.35;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					triggerRect.bottom - menuHeight + triggerRect.height * 0.45,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
 			if (isVisibilityMenuOpen) {
 				setIsVisibilityMenuOpen(false);
 				setVisibilityMenuPosition(null);
+				setVisibilityMenuAnchor(null);
 				return;
 			}
 			setIsActionMenuOpen(false);
 			setActionMenuPosition(null);
-			setVisibilityMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
+			setActionMenuAnchor(null);
+			// The menu rises from the +N chip, aligned to the side the chip is on.
+			setVisibilityMenuPlacement(
+				side === 'left' ? 'top-start' : 'top-end'
+			);
+			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
 		[isVisibilityMenuOpen]
@@ -1385,6 +1600,10 @@ export const MessageItemComponent = ({
 	const isRoomSetReadOnly = t === 'room-set-read-only';
 	const showVisibleAudience =
 		visibleAudienceSummaryLabels.length > 0 &&
+		// A restriction chip must only appear when the message is actually
+		// restricted. Without this guard a normal group message renders
+		// "visible only to: Alle", which says the opposite of what it means.
+		!isAllAudienceSelected &&
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
@@ -1416,7 +1635,13 @@ export const MessageItemComponent = ({
 		isMyMessage ? userData?.firstName : resolvedIncomingNameParts.firstName,
 		isMyMessage ? userData?.lastName : resolvedIncomingNameParts.lastName
 	);
-	const profileSubtitle = '';
+	/**
+	 * Own counsellor messages render outside MessageDisplayName (that
+	 * header is gated by !isMyMessage), so the agency line has to be
+	 * supplied here. Advice-seeker own messages stay one-line.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895 / PR #949.
+	 */
+	const profileSubtitle = isMyMessage && !isUserMessage() ? agencyLine : '';
 	const isRejectedCallInGroupChat =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL &&
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
@@ -1614,10 +1839,6 @@ export const MessageItemComponent = ({
 					}
 				}
 				return;
-			case isFurtherStepsMessage:
-				return <FurtherSteps />;
-			case isUpdateSessionDataMessage:
-				return <FurtherSteps />;
 			case isAppointmentSet:
 				return (
 					<Appointment
@@ -1678,20 +1899,61 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								<MessageDisplayName
-									isMyMessage={isMyMessage}
-									isUser={isUserMessage()}
-									type={getUsernameType()}
-									userId={userId}
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
-									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-								/>
+								{isSystemNotification ? (
+									/*
+									 * Title above, quiet qualifier below — the same
+									 * two-line header `MessageSendFailed` uses, per
+									 * Figma App.Oriso 8607-28488. Reusing its classes
+									 * on purpose: one system-notice presentation, not
+									 * two that drift apart. Case handover used to opt
+									 * out of this and render its own bordered card in
+									 * the bubble instead (ORISO-Frontend#491).
+									 */
+									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
+										<div className="messageItem__sendFailedTitle">
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.tookOverTitle'
+													)
+												: systemNotificationTitle}
+										</div>
+										<div className="messageItem__sendFailedSubtitle">
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.noActionNeeded'
+													)
+												: translate(
+														'message.systemNotification',
+														'System Notification'
+													)}
+										</div>
+									</div>
+								) : (
+									<MessageDisplayName
+										isMyMessage={isMyMessage}
+										isUser={isUserMessage()}
+										type={getUsernameType()}
+										subtitle={
+											getUsernameType() ===
+												'consultant' ||
+											(getUsernameType() === 'self' &&
+												!isUserMessage())
+												? agencyLine
+												: ''
+										}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+									/>
+								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1760,13 +2022,7 @@ export const MessageItemComponent = ({
 						>
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
-									<CaseHandoverSystemMessageCard
-										title={translate(
-											'caseHandover.systemMessage.tookOverTitle'
-										)}
-										subtitle={translate(
-											'caseHandover.systemMessage.noActionNeeded'
-										)}
+									<CaseHandoverSystemMessageBody
 										reasonLabel={
 											systemNotificationReasonLabel ||
 											undefined
@@ -1783,26 +2039,22 @@ export const MessageItemComponent = ({
 												}
 											</p>
 										)}
-									</CaseHandoverSystemMessageCard>
+									</CaseHandoverSystemMessageBody>
 								)}
+							{/*
+							 * The bubble carries the body only. Title and the
+							 * "Systembenachrichtigung" qualifier live in the header,
+							 * matching the shipped `MessageSendFailed` pattern and
+							 * Figma App.Oriso 8607-28488. Previously all three sat
+							 * here — a chip, a headline and a description — so one
+							 * notice wore three labels. See ORISO-Frontend#892.
+							 */}
 							{isSystemNotification &&
-								!isCaseHandoverGrantedEvent && (
-									<>
-										<div className="messageItem__systemNotificationTag">
-											{translate(
-												'message.systemNotification',
-												'System Notification'
-											)}
-										</div>
-										<div className="messageItem__systemNotificationTitle">
-											{systemNotificationTitle}
-										</div>
-										{systemNotificationDescription && (
-											<div className="messageItem__systemNotificationDescription">
-												{systemNotificationDescription}
-											</div>
-										)}
-									</>
+								!isCaseHandoverGrantedEvent &&
+								systemNotificationDescription && (
+									<div className="messageItem__systemNotificationDescription">
+										{systemNotificationDescription}
+									</div>
 								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
@@ -2059,7 +2311,12 @@ export const MessageItemComponent = ({
 										}
 									/>
 								))}
-							{!isSystemNotification && timeRailInBubble}
+							{/*
+							 * Figma App.Oriso 8498-32373 shows the time rail on system
+							 * notices too — they are messages, so they carry a timestamp
+							 * like every other bubble in the stream.
+							 */}
+							{timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2155,6 +2412,25 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event
+	   carrying a versioned Baustein payload, not a message body. It returns
+	   early — before the generic system-notification chrome — because it renders
+	   as its own staged Carimat sequence, and the surrounding message frame
+	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
+	   sequence already draws. */
+	if (isErstantwortEvent && isErstantwortModality) {
+		return (
+			<div className="messageItem messageItem--erstantwort">
+				{getMessageDate()}
+				<ErstantwortMessage
+					rawMessage={decryptedMessage}
+					conversationType={erstantwortModality}
+					skipAnimation={!isRecentErstantwortEvent}
+				/>
+			</div>
+		);
+	}
+
 	if (isUserLeftChatEvent) {
 		return (
 			<div className="messageItem messageItem--chatEvent">
@@ -2180,7 +2456,6 @@ export const MessageItemComponent = ({
 				className={`
 					messageItem__messageWrap
 					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
 							? 'messageItem__messageWrap--e2eeActivatedMessage'
@@ -2214,7 +2489,10 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label="More"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2260,13 +2538,42 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					isSystemNotification && (
-						<div
-							className="messageItem__systemAvatar"
-							aria-hidden="true"
-						>
-							<span className="messageItem__systemAvatarIcon">
-								<CarimatRobotIcon />
-							</span>
+						/*
+						 * Figma App.Oriso 8498-32373: a system notice uses the same
+						 * side column as any incoming message — the ringed 60px
+						 * avatar frame with the Carimat robot inside, and the kebab
+						 * beneath it. The previous 32px pink puck sat outside that
+						 * column, so system messages never lined up with the stream
+						 * around them. See ORISO-Frontend#491.
+						 */
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar messageItem__avatar--bot">
+									<span
+										className="messageItem__botAvatarIcon"
+										aria-hidden
+									>
+										<CarimatRobotIcon />
+									</span>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+							</div>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -2306,7 +2613,10 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label="More"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
 									onClick={(event) =>
 										toggleActionMenu(event, 'right')
 									}
@@ -2345,14 +2655,13 @@ export const MessageItemComponent = ({
 							{profileSubtitle ? (
 								<div className="messageItem__senderInfoSubtitle">
 									<span>{profileSubtitle}</span>
-									<EyeIcon className="messageItem__senderInfoMetaIcon" />
 								</div>
 							) : null}
 						</div>
 					)}
 				</div>
 			</div>
-			{isActionMenuOpen && actionMenuPosition
+			{isActionMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__actionMenu"
@@ -2360,8 +2669,12 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${actionMenuPosition.top}px`,
-								left: `${actionMenuPosition.left}px`,
+								// Off-screen until floating-ui has measured the
+								// rendered menu — it needs the real element, so
+								// the first paint cannot already know where it
+								// goes (same pattern as ToolbarMenu).
+								top: `${actionMenuPosition?.top ?? -9999}px`,
+								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
 							}}
 						>
@@ -2374,7 +2687,7 @@ export const MessageItemComponent = ({
 										'React'
 									)}
 								>
-									{QUICK_REACTION_EMOJIS.map((emoji) => {
+									{quickEmojis.map((emoji) => {
 										const ownReaction = (
 											reactions || []
 										).find(
@@ -2399,16 +2712,58 @@ export const MessageItemComponent = ({
 														onUnreact?.(
 															ownReaction.ownEventId
 														);
-													} else {
-														onReact(emoji);
+														setIsActionMenuOpen(
+															false
+														);
+														return;
 													}
-													setIsActionMenuOpen(false);
+													applyQuickReaction(emoji);
 												}}
 											>
 												{emoji}
 											</button>
 										);
 									})}
+									<button
+										ref={quickEmojiMoreRef}
+										type="button"
+										role="menuitem"
+										className="messageItem__actionMenuReactionMore"
+										aria-haspopup="dialog"
+										aria-expanded={isQuickEmojiPickerOpen}
+										// Same exemption the composer's emoji
+										// toggle uses: without it, the picker's
+										// pointerdown-outside handler closes the
+										// picker on this button, then the click
+										// toggles it open again.
+										data-emoji-picker-toggle=""
+										aria-label={translate(
+											'message.reaction.more',
+											'Weitere Emojis'
+										)}
+										onClick={() =>
+											setIsQuickEmojiPickerOpen(
+												(open) => !open
+											)
+										}
+									>
+										<AddReactionOutlinedIcon fontSize="inherit" />
+									</button>
+									{isQuickEmojiPickerOpen && (
+										<EmojiPickerPopup
+											direction="down"
+											// Beside the menu, not over it:
+											// anchored to the menu itself so
+											// the picker never covers "Reply
+											// directly" & co.
+											anchorEl={actionMenuRef.current}
+											placement="right-start"
+											onPick={applyQuickReaction}
+											onClose={() =>
+												setIsQuickEmojiPickerOpen(false)
+											}
+										/>
+									)}
 								</div>
 							)}
 							{actionMenuItems.map((item) => (
@@ -2433,7 +2788,7 @@ export const MessageItemComponent = ({
 						document.body
 					)
 				: null}
-			{isVisibilityMenuOpen && visibilityMenuPosition
+			{isVisibilityMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__visibilityMenu"
@@ -2441,8 +2796,8 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${visibilityMenuPosition.top}px`,
-								left: `${visibilityMenuPosition.left}px`,
+								top: `${visibilityMenuPosition?.top ?? -9999}px`,
+								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000
 							}}
 						>
@@ -2617,6 +2972,14 @@ export const MessageItemComponent = ({
 						document.body
 					)
 				: null}
+			{deleteOverlay && (
+				<Overlay
+					item={deleteOverlayItem}
+					handleOverlayClose={() => {
+						setDeleteOverlay(false);
+					}}
+				/>
+			)}
 		</div>
 	);
 };

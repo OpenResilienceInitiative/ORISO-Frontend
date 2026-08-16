@@ -64,4 +64,4 @@ One short block per iteration in `03-progress-log.md`:
 
 ## Artifacts
 
-All docs live in `docs/cursor-orchestrator/YYYY-MM-DD_short-feature-name/`. Reference file paths; do not copy large file contents into docs.
+All docs live in `docs/agent-tasks/YYYY-MM-DD_short-feature-name/` (legacy `docs/cursor-orchestrator/` is historical only). Reference file paths; do not copy large file contents into docs.

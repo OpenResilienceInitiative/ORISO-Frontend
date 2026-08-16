@@ -2,7 +2,10 @@ import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
-import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import {
+	createMatrixErrorAwareLogger,
+	getMatrixClientLogger
+} from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getValueFromCookie } from './accessSessionCookie';
 import { parseJwt } from '../../utils/parseJWT';
@@ -13,6 +16,10 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
+import {
+	createPasswordUiAuth,
+	registerDeviceSigningAuth
+} from '../../services/matrixInteractiveAuth';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -20,6 +27,8 @@ export interface MatrixLoginData {
 	deviceId: string;
 	homeserverUrl: string;
 	expiresInMs?: number;
+	/** Transient Matrix password for device-signing UIA; never persisted. */
+	uiaPassword?: string;
 	// Anonymous live-chat users can never cross-sign a consultant's device, so
 	// their client must share Megolm keys to all devices; invisible crypto
 	// (verified-only) would silently make their messages undecryptable for the
@@ -193,7 +202,8 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 				response.deviceId
 			),
 			homeserverUrl,
-			expiresInMs: response.expiresInMs
+			expiresInMs: response.expiresInMs,
+			uiaPassword: response.uiaPassword
 		};
 	});
 };
@@ -261,17 +271,26 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	}
 };
 
+export const clearPersistedMatrixDeviceId = (userId: string): void => {
+	localStorage.removeItem(MATRIX_DEVICE_ID_STORAGE_KEY);
+	localStorage.removeItem(`${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`);
+};
+
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
-	loginData: MatrixLoginData
+	loginData: MatrixLoginData,
+	onSdkError?: (...messages: unknown[]) => void
 ): MatrixClient => {
-	return createClient({
+	const baseLogger = getMatrixClientLogger();
+	const client = createClient({
 		baseUrl: loginData.homeserverUrl,
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
 		deviceId: loginData.deviceId,
 		fallbackICEServerAllowed: true,
-		logger: getMatrixClientLogger(),
+		logger: onSdkError
+			? createMatrixErrorAwareLogger(baseLogger, onSdkError)
+			: baseLogger,
 		// #437 key backup + recovery: the SDK pulls the secret-storage key
 		// through this callback during setup/recovery flows (one-shot in-memory
 		// cache, never persisted).
@@ -279,4 +298,13 @@ export const createMatrixClient = (
 			getSecretStorageKey: secretStorageKeyCallback
 		}
 	});
+
+	if (loginData.uiaPassword) {
+		registerDeviceSigningAuth(
+			client,
+			createPasswordUiAuth(loginData.userId, loginData.uiaPassword)
+		);
+	}
+
+	return client;
 };

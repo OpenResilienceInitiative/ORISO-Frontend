@@ -15,6 +15,9 @@ jobs:
   publish:
     name: lint, type-check, build and publish image
     runs-on: ubuntu-latest
+    # Multi-arch build + Trivy + attestation; success median is ~29 min.
+    # No cancel-in-progress here — this produces the deployed image.
+    timeout-minutes: 60
 
     permissions:
       contents: read

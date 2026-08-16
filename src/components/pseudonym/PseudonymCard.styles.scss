@@ -10,6 +10,10 @@
  *   avatar, matching the existing robot onboarding messages.
  */
 
+/* Inputs for the header inset below — the avatar overlap this card is built on. */
+$avatar-visible-edge: 54px;
+$content-column-overlap: 32px;
+
 .pseudonymCard {
 	width: 100%;
 	max-width: 720px;
@@ -24,29 +28,40 @@
 	width: 100%;
 }
 
-/* ----- Avatar column ----- */
+/* ----- Avatar column -----
+ *
+ * A Carimat bubble is a *kind of chat message*, so its avatar has to use the
+ * same circle geometry as every other message avatar — 60×60 with a 6px white
+ * ring, as defined by `.messageItem__avatar` in `message.styles.scss`. It used
+ * to carry its own 54×54 frame in a 64px column, which made Carimat rows sit a
+ * few pixels off from the human ones in the same conversation.
+ * See OpenResilienceInitiative/ORISO-Frontend#892.
+ */
 .pseudonymCard__avatarCol {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 4px;
 	flex-shrink: 0;
-	width: 64px;
+	width: 60px;
 }
 
 .pseudonymCard__avatarFrame {
-	width: 54px;
-	height: 54px;
+	/* Keep in sync with `.messageItem__avatar`. */
+	width: 60px;
+	height: 60px;
+	min-width: 60px;
+	min-height: 60px;
+	border: 6px solid #ffffff;
 	border-radius: 999px;
 	background: #ffffff;
-	box-shadow: 0 0 0 1.5px #e8e8e8;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 14px;
 	box-sizing: border-box;
 	position: relative;
 	z-index: 2;
+	flex-shrink: 0;
 }
 
 .pseudonymCard__avatarIcon {
@@ -86,15 +101,20 @@
 }
 
 /* Header: Carimat on one line, subtitle stacked below.
-   padding-left keeps the text visually clear of the avatar while the
-   content column itself slides under it. */
+   The content column slides 32px under the avatar column and the avatar frame
+   paints its own white background on top of it (z-index 2 over 1), so any
+   header text starting before 60px is hidden behind the avatar — that is what
+   swallowed the leading "I" of "Ihre ersten Schritte". */
 .pseudonymCard__header {
 	display: flex;
 	flex-direction: column;
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
-	padding-left: 20px;
+	/* Derived, not chosen: the visible circle ends 54px from the card's left
+	   edge, and the content column already starts 32px in, so the header has
+	   to clear the remaining 22px to escape the avatar's white backdrop. */
+	padding-left: $avatar-visible-edge - $content-column-overlap;
 }
 
 .pseudonymCard__headerName {
@@ -109,7 +129,10 @@
 	font-family: Inter, sans-serif;
 	font-size: 12px;
 	font-weight: 500;
-	line-height: 14px;
+
+	/* M3 label-medium is 12/16. The old 14px box clipped ascenders and
+	   umlauts on the subtitle line. */
+	line-height: 16px;
 	color: var(--m3-secondary-container, #646d78);
 }
 

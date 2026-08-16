@@ -3,16 +3,10 @@ $icon-size-small: 24px;
 $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
-$message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 
-// Use the always-light `primary-fixed` (tonal palette tone 90) rather than
-// `on-primary-container`. The latter is a foreground/contrast role whose
-// lightness flips with the tenant seed brightness, so bright-red tenants
-// (e.g. Kiel) got a dark bubble under the fixed-dark outgoing text below,
-// making outgoing messages unreadable. `primary-fixed` stays light for
-// every seed and keeps the branded tint.
-$message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
-$message-outgoing-text: var(--m3-on-surface, #1a1c1e);
+// $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
+// to resources/styles/settings.scss so other bubble renderers (e.g. the
+// conversation preview) share the same colour contract.
 
 // How far the bubble tucks under the in-flow avatar column on either side —
 // keep in sync with the avatar geometry above, never hardcode per side.
@@ -130,6 +124,24 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	/*
+	 * Second line of the sender header: the counselling centre a counsellor
+	 * speaks for, with its postcode (Figma "Message Recipient Header",
+	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
+	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * an agency to name, so every other message keeps its one-line header.
+	 * See OpenResilienceInitiative/ORISO-Frontend#895.
+	 */
+	&__usernameSubtitle {
+		padding-left: 20px;
+		margin-top: 2px;
+		font-size: 12px;
+		line-height: 14px;
+		color: var(--m3-secondary, #4c555f);
+		text-align: left;
+		overflow-wrap: anywhere;
+	}
+
 	&__header {
 		display: flex;
 		align-items: center;
@@ -228,6 +240,19 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	/*
+	 * Photo avatars must be clipped to the circle. The Carimat robot must not:
+	 * `overflow: hidden` clips against the *padding* box, i.e. the 48px inner
+	 * circle, and the glyph's chin sits exactly on that edge — so it was
+	 * rendered with a flat-cut bottom and shaved sides (review screenshot on
+	 * ORISO-Frontend#491). Figma App.Oriso 9564-86125 draws the full robot on
+	 * an unclipped white disc; the 6px ring is white too, so letting the glyph
+	 * reach into it changes nothing but the missing pixels.
+	 */
+	&__avatar--bot {
+		overflow: visible;
+	}
+
 	&__sideColumn {
 		display: flex;
 		flex-direction: column;
@@ -301,15 +326,23 @@ $message-avatar-overlap: -19px;
 		z-index: 7;
 
 		svg {
-			width: 20px;
-			height: 20px;
 			flex-shrink: 0;
 			pointer-events: none;
 		}
 
-		path,
-		circle {
-			fill: #17191c;
+		// Scoped to the resting glyph on purpose. The open state renders
+		// `messageItem__kebabIconActive`, a 28×32 red pill that carries its own
+		// white dots and highlights — a blanket `svg { width: 20px }` squashed
+		// it and a blanket `path { fill: #17191c }` painted the white dots
+		// black, so selecting an item turned the button small and dark.
+		.messageItem__kebabIconDefault {
+			width: 20px;
+			height: 20px;
+
+			path,
+			circle {
+				fill: #17191c;
+			}
 		}
 
 		&:hover {
@@ -329,6 +362,14 @@ $message-avatar-overlap: -19px;
 	&__kebabIconDefault {
 		width: 20px !important;
 		height: 20px !important;
+	}
+
+	// Figma "Message Menu" (666:25242): open state is a 28×32 red pill with
+	// white dots. It keeps its own geometry and fills — see the note in
+	// `&__kebabButton` for why nothing here may be inherited from the button.
+	&__kebabIconActive {
+		width: 28px !important;
+		height: 32px !important;
 	}
 
 	&__kebabButton--left {
@@ -675,6 +716,8 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// Small tinted puck, still used by the waiting-room robot cards in
+	// `SessionItemComponent`.
 	&__systemAvatar {
 		width: 32px;
 		height: 32px;
@@ -709,6 +752,28 @@ $message-avatar-overlap: -19px;
 
 		* {
 			fill: #e53952;
+		}
+	}
+
+	// Carimat glyph for a system message in the stream. It sits inside the
+	// shared 60px `__avatar` ring like every other sender and fills the same
+	// 48px inner circle — Figma App.Oriso 8498-32373 renders the robot at 48px
+	// on white, not as a small tinted puck off to the side.
+	&__botAvatarIcon {
+		width: 48px;
+		height: 48px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		* {
+			fill: var(--m3-on-surface, #1b1b1c);
 		}
 	}
 
@@ -753,6 +818,42 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// #1079: a received task list keeps its checkboxes, so it needs the layout
+	// a checklist implies — no bullet next to the box, and the box on the same
+	// line as its text. The input is rendered `disabled` by the sanitizer: this
+	// is the sender's list, the reader only reads it.
+	&__message ul[data-type='taskList'] {
+		list-style: none;
+		padding-left: 0;
+		margin: 0;
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		label {
+			display: inline-flex;
+			align-items: center;
+
+			// Aligns the box with the first line of a wrapping item.
+			height: $message-lineheight;
+			flex: 0 0 auto;
+		}
+
+		input[type='checkbox'] {
+			margin: 0;
+
+			// Reads as state, not as a control the reader may operate.
+			cursor: default;
+		}
+
+		p {
+			margin: 0;
+		}
+	}
+
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
@@ -782,7 +883,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		/* Reduce padding for messages with attachments */
-		&:has(&__attachment) {
+		&:has(.attachmentCard) {
 			padding: 8px;
 		}
 
@@ -791,10 +892,16 @@ $message-avatar-overlap: -19px;
 			font-size: $font-size-tertiary;
 		}
 
+		// Figma App.Oriso 8498-32373: a system notice is an ordinary incoming
+		// message. It keeps the shared grey bubble ($message-incoming-bg =
+		// --m3-surface-container-high), the 0/12/12/12 radii and the 16px
+		// padding inherited above — the off-white fill with the
+		// --m3-primary-fixed outline read as an alert card and was rejected in
+		// review (ORISO-Frontend#491). Only the width differs: the frame's
+		// "Chat Spacing" column is 484px wide with a 40px left inset, so the
+		// bubble itself caps at 444px.
 		&--systemNotification {
-			background: #fffafa;
-			border: 1px solid #ffdad5;
-			border-radius: 12px;
+			max-width: 444px;
 		}
 
 		&--deleted {
@@ -832,6 +939,11 @@ $message-avatar-overlap: -19px;
 			padding: 4px 0 4px 10px;
 			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 6%,
+				transparent
+			);
 			border-radius: 0 6px 6px 0;
 		}
 
@@ -957,148 +1069,18 @@ $message-avatar-overlap: -19px;
 			}
 		}
 
-		&__attachment {
-			display: flex;
-			flex-direction: column;
-			margin-top: 4px;
-			border: 1px solid #e3e8f0;
-			border-radius: 8px;
-			overflow: hidden;
-			max-width: 400px;
-			background: transparent;
-			transition: all 0.2s ease;
-
-			&:hover {
-				border-color: #0086e6;
-				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
-			}
-
-			&__preview {
-				background: #fff;
-				padding: 0;
-				margin: 0;
-				width: 100%;
-				position: relative;
-
-				// Reserve the box via the sender-provided intrinsic ratio
-				// (inline aspect-ratio style) but never grow past the bubble.
-				max-height: 320px;
-
-				img {
-					width: 100%;
-					max-width: 100%;
-					height: 100%;
-					max-height: 320px;
-					object-fit: contain;
-					display: block;
-					margin: 0;
-					border-radius: 0;
-				}
-
-				// Media check state "unchecked" (WP-4): this styles the
-				// no-source placeholder shown before deliberate reveal.
-				&--blurred {
-					img {
-						filter: blur(24px);
-						transform: scale(1.06); // hide sharp blur edges
-					}
-				}
-			}
-
-			&__reveal {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				width: 100%;
-				border: 0;
-				background: rgba(23, 25, 28, 0.35);
-				color: #fff;
-				font-size: 14px;
-				font-weight: 500;
-				cursor: pointer;
-			}
-
-			&--blocked {
-				opacity: 0.85;
-
-				&:hover {
-					border-color: #e3e8f0;
-					box-shadow: none;
-				}
-
-				.messageItem__message__attachment__meta {
-					color: #a5000a;
-				}
-			}
-
-			&__info {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				gap: 12px;
-				padding: 12px;
-				background: #f4f6fa;
-			}
-
-			&__filename {
-				font-size: 14px;
-				font-weight: 500;
-				color: #17191c;
-				margin: 0 !important;
-			}
-
-			&__meta {
-				font-size: 12px;
-				color: #8d97a5;
-				margin: 0 !important;
-			}
-
-			&__title {
-				flex: 1;
-				min-width: 0;
-				display: flex;
-				flex-direction: column;
-			}
-
-			&__icon {
-				width: 32px;
-				height: 32px;
-				flex-shrink: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-
-				svg {
-					width: 24px;
-					height: 24px;
-					color: #737d8c;
-				}
-			}
-
-			.loadingSpinner {
-				margin-right: $grid-base;
-			}
-
-			p {
-				margin: 0;
-			}
-
-			&__meta {
-				font-size: $font-size-secondary;
-				line-height: $line-height-secondary;
-				color: var(--m3-on-surface-variant, $tertiary);
-			}
-		}
-
 		&--myMessage {
 			color: $message-outgoing-text;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
-			.messageItem__message__attachment {
-				background-color: $white;
+			// The voice player runs with bubble="none" inside this bubble, so
+			// its unplayed tiles have to read against the outgoing surface
+			// rather than against the incoming one.
+			--voice-player-tile-idle: rgba(255, 255, 255, 0.72);
+
+			.attachmentCard {
+				background-color: var(--m3-surface-container-lowest, #fff);
 			}
 
 			a,
@@ -1109,6 +1091,11 @@ $message-avatar-overlap: -19px;
 			blockquote {
 				border-left-color: var(--m3-primary, $primary);
 				background: rgba(165, 0, 10, 0.08);
+				background: color-mix(
+					in srgb,
+					var(--m3-primary, #a5000a) 8%,
+					transparent
+				);
 			}
 		}
 	}
@@ -1187,6 +1174,10 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+		text-align: right;
 	}
 
 	&__senderInfoMetaIcon {
@@ -1212,24 +1203,30 @@ $message-avatar-overlap: -19px;
 		border: 1px solid rgba(30, 136, 229, 0.35);
 	}
 
-	&__systemNotificationTag {
-		display: inline-flex;
-		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: #3b4044;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		margin-bottom: 8px;
-	}
+	/*
+	 * The chip and the 24px headline that used to sit inside the bubble are
+	 * gone: a system notice now uses the same two-line header as
+	 * MessageSendFailed (Figma App.Oriso 8607-28488), so the bubble carries
+	 * the body only. See ORISO-Frontend#892.
+	 */
 
-	&__systemNotificationTitle {
-		font-size: 24px;
-		font-weight: 700;
-		color: #1f1f1f;
-		line-height: 1.25;
-		margin-bottom: 8px;
+	/*
+	 * MessageSendFailed puts its avatar in a real side column, so its header
+	 * needs no indent. Here the avatar deliberately overlaps the content column
+	 * (see the 19px-overlap note above), which is why the name line carries
+	 * `padding-left: 20px`. The system-notice header sits in the same slot and
+	 * needs the same clearance — without it the title runs under the avatar.
+	 */
+	// Geometry, not a round number: the content column overlaps the avatar
+	// column by $message-avatar-overlap (-19px), so it starts 41px from the
+	// wrap edge while the visible 48px avatar circle ends at 54px (6px ring).
+	// 17px of indent puts the title exactly 8px past the avatar — the
+	// avatar-to-name gap measured on Figma App.Oriso 8498-32373. The 12px
+	// bottom margin plus the bubble's own 4px top margin make the 16px
+	// name-to-bubble gap from the same frame.
+	&__systemNotificationHeaderText {
+		padding-left: 17px;
+		margin-bottom: 12px;
 	}
 
 	&__systemNotificationDescription {
@@ -1251,7 +1248,6 @@ $message-avatar-overlap: -19px;
 			border-color: rgba(255, 255, 255, 0.4);
 		}
 
-		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}
@@ -1315,83 +1311,6 @@ $message-avatar-overlap: -19px;
 
 	&__threadButton:hover .messageItem__threadButtonMeta {
 		display: none;
-	}
-
-	&__voiceNote {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 220px;
-		max-width: 360px;
-		padding: 8px 10px;
-		border-radius: 999px;
-		background: var(--m3-primary-container, #cc1e1c);
-		color: var(--m3-on-primary-container, #ffe2de);
-
-		audio {
-			display: none;
-		}
-	}
-
-	&__voiceNote__play {
-		border: none;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		cursor: pointer;
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-
-		&:hover {
-			background: var(--m3-primary-hover, #820006);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
-			outline-offset: 2px;
-		}
-	}
-
-	&__voiceNote__wave {
-		position: relative;
-		flex: 1;
-		height: 16px;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
-			transparent 3px 7px
-		);
-		opacity: 1;
-		overflow: hidden;
-	}
-
-	&__voiceNote__wavePlayed {
-		position: absolute;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		width: 0;
-		border-radius: 10px;
-		background-image: repeating-linear-gradient(
-			90deg,
-			var(--m3-on-primary-container, #ffe2de) 0 3px,
-			transparent 3px 7px
-		);
-		transition: width 120ms linear;
-	}
-
-	&__voiceNote__time {
-		font-size: 12px;
-		font-weight: 700;
-		letter-spacing: 0.3px;
-		white-space: nowrap;
 	}
 
 	&__action {
@@ -1830,9 +1749,14 @@ $message-avatar-overlap: -19px;
 	line-height: 1;
 }
 
+// Figma draws both lines in a box the exact height of the glyphs (14/14 and
+// 12/12), which only holds while they stay on one line. A title or qualifier
+// that wraps - "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung"
+// on a 390px phone - then overlaps itself. Use the M3 line heights the type
+// scale defines for these roles: title-small 14/20, label-medium 12/16.
 .messageItem__sendFailedTitle {
 	font-size: 14px;
-	line-height: 14px;
+	line-height: 20px;
 	font-weight: 600;
 	color: var(--m3-on-surface, #1f2937);
 }
@@ -1840,7 +1764,7 @@ $message-avatar-overlap: -19px;
 .messageItem__sendFailedSubtitle {
 	margin-top: 4px;
 	font-size: 12px;
-	line-height: 12px;
+	line-height: 16px;
 	font-weight: 500;
 	color: var(--m3-secondary-container, #646d78);
 }
@@ -1884,6 +1808,33 @@ $message-avatar-overlap: -19px;
 	margin-top: 8px;
 }
 
+// Stand-alone Carimat system message (case-handover consent prompt in
+// `SessionStream`, Storybook). It reuses the incoming-message markup, so only
+// the outer block needs sizing: 16px from the stream edge, bubble capped at
+// the 444px Figma App.Oriso 8498-32373 gives it (484px chat-spacing column
+// minus its 40px left inset).
+.messageItem--caseHandoverNotice {
+	width: 100%;
+
+	.messageItem__messageWrap {
+		max-width: 100%;
+	}
+
+	// In the stream the avatar column is lifted 25% so it straddles the gap to
+	// the message above. Standalone there is nothing above to straddle, so the
+	// lift pushed the avatar out of the top of its own container and clipped it.
+	.messageItem__sideColumnGroup--left {
+		translate: none;
+	}
+
+	// The kebab is a pure affordance here — there is no message action menu
+	// outside the stream, so it must not look or behave like a control.
+	.messageItem__kebabButton--static {
+		cursor: default;
+		pointer-events: none;
+	}
+}
+
 // Quick-react emoji row inside the message action menu (long-press / kebab),
 // Slack-style. Lives in a portal, hence outside .messageItem.
 .messageItem__actionMenuReactions {
@@ -1913,6 +1864,36 @@ $message-avatar-overlap: -19px;
 			// primary-fixed stays light for every tenant seed.
 			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
 			box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Hands over to the full emoji picker when the six recents aren't enough.
+	.messageItem__actionMenuReactionMore {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: var(--m3-secondary, #4b515a);
+		font-size: 18px;
+		line-height: 1;
+		padding: 5px;
+		cursor: pointer;
+		border-radius: 999px;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
 		}
 	}
 }

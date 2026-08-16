@@ -12,6 +12,13 @@ interface MessageDisplayNameProps {
 	displayName?: string;
 	firstName?: string;
 	lastName?: string;
+	/**
+	 * Quiet second line under the name — the counselling centre and its
+	 * postcode for messages written by a counsellor (Figma "Message Recipient
+	 * Header", App.Oriso 9229:24595). Empty or missing renders nothing at all,
+	 * so the header keeps its single-line height everywhere else.
+	 */
+	subtitle?: string;
 }
 
 export const MessageDisplayName = ({
@@ -19,7 +26,8 @@ export const MessageDisplayName = ({
 	username,
 	displayName,
 	firstName,
-	lastName
+	lastName,
+	subtitle
 }: MessageDisplayNameProps) => {
 	const { t: translate } = useTranslation();
 
@@ -39,6 +47,8 @@ export const MessageDisplayName = ({
 		}
 	}, [displayName, firstName, lastName, type, translate, username]);
 
+	const trimmedSubtitle = (subtitle || '').trim();
+
 	return (
 		<>
 			<div
@@ -46,6 +56,11 @@ export const MessageDisplayName = ({
 			>
 				{getUsernameWithPrefix()}
 			</div>
+			{trimmedSubtitle && (
+				<div className="messageItem__usernameSubtitle">
+					{trimmedSubtitle}
+				</div>
+			)}
 		</>
 	);
 };

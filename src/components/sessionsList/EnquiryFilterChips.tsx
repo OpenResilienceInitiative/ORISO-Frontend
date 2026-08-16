@@ -12,7 +12,7 @@ interface EnquiryFilterChipsProps {
 
 /**
  * Compact filter-chip row for the consultant enquiry tab.
- * Two chips: "Nearby" (registered enquiries) and "Live Chat" (anonymous
+ * Two chips: "Mail" (registered enquiries) and "Live Chat" (anonymous
  * enquiries, shown only when the sidebar live-chat availability toggle is
  * active). Clicking a chip toggles it; clicking the active one again clears
  * the filter so the full list returns.
@@ -41,10 +41,7 @@ export const EnquiryFilterChips: React.FC<EnquiryFilterChipsProps> = ({
 					data-cy="enquiry-list-chip-nearby"
 				>
 					<span className="sessionsListToolbar__chipLabel">
-						{translate(
-							'sessionList.toolbar.chips.nearby',
-							'Nearby'
-						)}
+						{translate('sessionList.toolbar.chips.nearby', 'Mail')}
 					</span>
 				</button>
 				{showLiveChatChip && (
@@ -54,6 +51,7 @@ export const EnquiryFilterChips: React.FC<EnquiryFilterChipsProps> = ({
 						onClick={() => onChipToggle('liveChat')}
 						aria-pressed={activeChip === 'liveChat'}
 						data-cy="enquiry-list-chip-live-chat"
+						data-tour-target="livechat-queue"
 					>
 						<span className="sessionsListToolbar__chipLabel">
 							{translate(

@@ -7,24 +7,29 @@ env:
   REGISTRY: ghcr.io
   ORG: openresilienceinitiative
 
+concurrency:
+  group: storybook-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   validate:
-    name: lint, type-check, build and Storybook Docker validation
+    name: Storybook Docker validation
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '18'
-
+      # No node-build step here: lint, type-check and unit tests already run in
+      # "Frontend PR Validation" on the same commit, and Dockerfile.storybook
+      # does its own `npm install` + `npm run build-storybook` — so running the
+      # app build first only duplicated work this job then threw away.
       - name: Storybook Docker build validation without publishing
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: false
           image_name: oriso-storybook
           dockerfile: Dockerfile.storybook
+          platforms: linux/amd64
           github_token: ${{ secrets.GITHUB_TOKEN }}

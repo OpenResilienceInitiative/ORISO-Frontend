@@ -29,6 +29,7 @@ import {
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
+import { appConfig } from '../../../utils/appConfig';
 
 export interface ElementCallWidgetOptions {
 	/** The Matrix room the call takes place in. */
@@ -73,6 +74,23 @@ const fragmentParams = (url: string): URLSearchParams => {
 	return new URLSearchParams(queryStart === -1 ? '' : hash.slice(queryStart));
 };
 
+/**
+ * Navigate a call iframe to a blank document so the browser releases the camera
+ * and microphone it holds.
+ *
+ * Removing the element from the DOM is not reliable enough on its own: the
+ * capture indicator can stay lit after a call ends, which on a counselling
+ * platform reads to the person on the other side as still being watched.
+ */
+const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
+	if (!iframe) return;
+	try {
+		iframe.src = 'about:blank';
+	} catch {
+		/* the iframe may already be detached; the devices go with it */
+	}
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
@@ -87,6 +105,7 @@ export const useElementCallWidget = (
 	const [url, setUrl] = useState<string | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
+	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
 	const instanceNonceRef = useRef(globalThis.crypto.randomUUID());
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
@@ -142,8 +161,20 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// The call UI is deliberately dark even though the app
+					// around it is light; app-wide dark is a separate decision
+					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
+					// Call's own default, which an upstream merge could change
+					// without anything here to point at.
+					theme: 'dark',
 					skipLobby: String(skipLobby),
-					perParticipantE2EE: 'true',
+					// Per-participant media E2EE is the ADR-018 default. Element
+					// Call only encrypts LiveKit media when the host asks for it
+					// (the host owns the Olm path that distributes media keys).
+					// Kill-switch: releaseToggles.enableCallMediaE2EE === false.
+					...(appConfig?.releaseToggles?.enableCallMediaE2EE === false
+						? {}
+						: { perParticipantE2EE: 'true' }),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;
@@ -169,6 +200,21 @@ export const useElementCallWidget = (
 				apiRef.current = null;
 				driverRef.current = null;
 			}
+			// Stopping the channel does not stop the call: the iframe document
+			// keeps its camera and microphone tracks, so the capture indicator
+			// stays lit after hanging up until the user reloads the page.
+			// Navigating it away destroys that document and releases the
+			// devices, whoever ended the call.
+			//
+			// Only when this iframe is really going away, though. React calls
+			// the previous ref callback with null and the new one with the same
+			// element whenever the callback's identity changes, so blanking
+			// unconditionally would tear the media out of a live call.
+			const previous = attachedIframeRef.current;
+			if (previous && previous !== iframe) {
+				releaseIframeDevices(previous);
+			}
+			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
 				window.removeEventListener(
 					'message',
@@ -229,12 +275,16 @@ export const useElementCallWidget = (
 			});
 
 			driverRef.current = driver;
+			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
-				void api.updateTheme({ name: 'light' }).catch(() => {
+				// Re-assert the same scheme the URL pins (`theme=dark` above):
+				// the ready-time update guards against Element Call defaulting
+				// differently, and must never contradict the URL parameter.
+				void api.updateTheme({ name: 'dark' }).catch(() => {
 					/* the widget may have closed during capability negotiation */
 				});
 			});
@@ -320,13 +370,34 @@ export const useElementCallWidget = (
 
 			const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
 				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					// Keep waiting: Megolm keys frequently arrive after the event,
+					// and the SDK re-runs decryption when they do. Only report it,
+					// so a call that stays silent is not silent in the log too.
+					console.warn(
+						'[call] call event still undecrypted, waiting for the key:',
+						event.getId(),
+						error?.message ?? 'no decryption error reported'
+					);
 					return;
 				}
 				clearPendingDecryption(event);
 				feedAllowedRoomEvent(decryptedEvent);
 			};
 			const timeout = setTimeout(
-				() => clearPendingDecryption(event),
+				() => {
+					// The widget never received this event. For
+					// `io.element.call.encryption_keys` that means media stays
+					// undecodable — the participant is connected but silent, with
+					// nothing else in the UI to explain it (see ElementCall#35).
+					console.error(
+						'[call] dropping call event that never decrypted:',
+						event.getId(),
+						'in',
+						event.getRoomId(),
+						'— media keys carried by this event are lost'
+					);
+					clearPendingDecryption(event);
+				},
 				5 * 60 * 1000
 			);
 			pendingDecryptions.set(event, { listener, timeout });
@@ -406,6 +477,8 @@ export const useElementCallWidget = (
 		() => () => {
 			apiRef.current?.stop();
 			apiRef.current = null;
+			releaseIframeDevices(attachedIframeRef.current);
+			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
 				window.removeEventListener(
 					'message',

@@ -54,4 +54,11 @@ build-storybook.log
 docs/*
 !docs/storybook/
 !docs/storybook/**
+!docs/cursor-orchestrator/
+docs/cursor-orchestrator/*
+!docs/cursor-orchestrator/index.md
+!docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat/
+!docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat/**
 *.pem
+
+storybook-static/
