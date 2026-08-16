@@ -272,6 +272,30 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		).toBe('https://oriso.test/datenschutz');
 	});
 
+	it('cannot delete its own policy links through an authored class', async () => {
+		/* `htmlParser` replaces any node classed `remove` with an empty
+		   fragment. A Träger could therefore publish a sentence that passes the
+		   server's mandatory-token validation and still shows no links — which
+		   is exactly what ADR-021 decision 2 makes the token mandatory to
+		   prevent. The consent allowlist drops `class` entirely. */
+		vi.mocked(apiGetConsentText).mockResolvedValue({
+			sentence:
+				'Ich willige ein, siehe <span class="remove">{{legal_links}}</span>.',
+			versionId: null,
+			cookieNotice: null
+		});
+
+		renderLabel(agencyWith(true));
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		expect(
+			screen.getByRole('link', { name: 'Datenschutzerklärung' })
+		).toBeDefined();
+		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
+	});
+
 	it('keeps the links reachable even if a sentence without the mandatory token slips through', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Trägersatz ganz ohne Pflicht-Token.',

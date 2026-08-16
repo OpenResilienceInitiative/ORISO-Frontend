@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { ConsentTextData } from '../../../api/apiGetConsentText';
-import { sanitizeLegalHtml } from '../../legalContent/legalHtmlSanitizer';
+import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
 import htmlParser from '../../../resources/scripts/util/htmlParser';
 import {
 	normalizeLegalLang,
@@ -81,7 +81,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 		   smuggled into an attribute (`href="{{legal_links}}"`) inject markup
 		   past the sanitizer; this way every byte that reaches the DOM has been
 		   through the allowlist, our own anchors included. */
-		return sanitizeLegalHtml(
+		return sanitizeConsentHtml(
 			substituteLegalLinks(resolved.html, legalLinksHtml)
 		);
 	}, [consentText, i18n?.language, legalLinksHtml]);

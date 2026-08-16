@@ -26,15 +26,53 @@ export const LEGAL_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 	allowProtocolRelative: false
 };
 
+const { '*': _anyTagAttributes, ...LEGAL_TAG_ATTRIBUTES } =
+	LEGAL_HTML_SANITIZE_OPTIONS.allowedAttributes as Record<string, string[]>;
+
 /**
- * Sanitizes authored legal HTML (imprint, data-protection policy, consent
- * sentence) before it is rendered.
+ * The allowlist for a **consent sentence**, as opposed to a whole legal
+ * document: identical, minus `class` on every tag.
+ *
+ * `class` is not merely useless in a one-sentence consent label, it is
+ * dangerous there. `htmlParser` — the rendering path every authored legal
+ * string goes through — implements a documented convention where a node whose
+ * class is exactly `remove` is replaced by an empty fragment. That is a
+ * reasonable authoring tool inside a long policy document. Inside a consent
+ * sentence it means `<span class="remove">{{legal_links}}</span>` passes the
+ * server's mandatory-token validation (ADR-021 decision 2) and then silently
+ * deletes the links the token exists to guarantee — defeating the one
+ * technical protection the platform's mandatory disclosures have.
+ *
+ * Dropping the whole attribute rather than blocklisting the string `remove`:
+ * a blocklist would only move the problem to whatever the next parser
+ * convention is, and a consent sentence has no legitimate use for a class.
+ */
+export const CONSENT_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+	...LEGAL_HTML_SANITIZE_OPTIONS,
+	allowedAttributes: LEGAL_TAG_ATTRIBUTES
+};
+
+/**
+ * Sanitizes an authored **legal document** (imprint, data-protection policy)
+ * before it is rendered.
  *
  * Anything that reaches a browser from a Träger-authored field must go through
- * here — `sanitize-html` strips every tag and attribute outside the allowlist
- * above, so `<script>` and `on*` handlers cannot survive.
+ * here or through `sanitizeConsentHtml` — `sanitize-html` strips every tag and
+ * attribute outside the allowlist, so `<script>` and `on*` handlers cannot
+ * survive.
  */
 export const sanitizeLegalHtml = (html: string | null | undefined): string =>
 	typeof html === 'string' && html !== ''
 		? sanitizeHtml(html, LEGAL_HTML_SANITIZE_OPTIONS)
+		: '';
+
+/**
+ * Sanitizes an authored **consent sentence** — the one a help-seeker ticks at
+ * registration, and the one the anonymous consent gate shows before the first
+ * message. Stricter than `sanitizeLegalHtml` by exactly one attribute; see
+ * `CONSENT_HTML_SANITIZE_OPTIONS`.
+ */
+export const sanitizeConsentHtml = (html: string | null | undefined): string =>
+	typeof html === 'string' && html !== ''
+		? sanitizeHtml(html, CONSENT_HTML_SANITIZE_OPTIONS)
 		: '';

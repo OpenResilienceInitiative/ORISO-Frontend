@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
-import { sanitizeLegalHtml } from '../legalContent/legalHtmlSanitizer';
+import { sanitizeConsentHtml } from '../legalContent/legalHtmlSanitizer';
 import htmlParser from '../../resources/scripts/util/htmlParser';
 import './AnonymousConsentGate.styles.scss';
 
@@ -104,14 +104,17 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	   in the Admin by the Träger (ADR-021 decision 4) and delivered by the
 	   backend. From that moment an unsanitised sink here is a stored-XSS hole
 	   in the one dialog a help-seeker cannot get past.
-	   The fix is not a second, bespoke allowlist but the one every other piece
-	   of authored legal HTML already uses — `sanitizeLegalHtml` shared with
-	   `LegalContentRenderer`. `a[href,target,rel]` stays allowed, so the link
-	   to the policy keeps working; `<script>` and `on*` handlers do not
-	   survive. `htmlParser` replaces the raw-HTML sink entirely and applies the
-	   same tenant-media URL rewriting as the legal renderer. */
+	   The fix is not a second, bespoke allowlist but the shared one every other
+	   piece of authored legal HTML uses, in its consent-sentence variant:
+	   `sanitizeConsentHtml` is `LegalContentRenderer`'s allowlist minus `class`,
+	   because `htmlParser` deletes any node classed `remove` and a consent
+	   sentence must not be able to delete its own policy links.
+	   `a[href,target,rel]` stays allowed, so the link to the policy keeps
+	   working; `<script>` and `on*` handlers do not survive. `htmlParser`
+	   replaces the raw-HTML sink entirely and applies the same tenant-media URL
+	   rewriting as the legal renderer. */
 	const consentLabelNodes = useMemo(
-		() => htmlParser(sanitizeLegalHtml(consentLabelHtml)),
+		() => htmlParser(sanitizeConsentHtml(consentLabelHtml)),
 		[consentLabelHtml]
 	);
 
