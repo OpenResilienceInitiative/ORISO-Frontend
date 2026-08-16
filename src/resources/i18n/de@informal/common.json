@@ -1181,9 +1181,6 @@
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
-		},
-		"selection": {
-			"remove": "{{label}} entfernen"
 		}
 	},
 	"session": {
