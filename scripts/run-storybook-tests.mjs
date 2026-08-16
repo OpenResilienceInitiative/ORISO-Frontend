@@ -11,16 +11,25 @@ const TEST_FAILURE_SIGNATURES = [
 	/\bAssertionError\b/
 ];
 
-export const shouldRetryStorybookRun = (code, capturedOutput) =>
+const hasTestFailure = (output) =>
+	TEST_FAILURE_SIGNATURES.some((signature) => signature.test(output));
+
+export const shouldRetryStorybookRun = (
+	code,
+	capturedOutput,
+	{ failureDetected = false, outputTruncated = false } = {}
+) =>
 	code !== 0 &&
+	!failureDetected &&
+	!outputTruncated &&
 	capturedOutput.includes(BROWSER_DISCONNECT_SIGNATURE) &&
-	!TEST_FAILURE_SIGNATURES.some((signature) =>
-		signature.test(capturedOutput)
-	);
+	!hasTestFailure(capturedOutput);
 
 const runStorybookTests = () =>
 	new Promise((resolve) => {
 		let capturedOutput = '';
+		let failureDetected = false;
+		let outputTruncated = false;
 		const child = spawn(
 			process.execPath,
 			[
@@ -43,9 +52,10 @@ const runStorybookTests = () =>
 		const forwardOutput = (stream, destination) => {
 			stream.on('data', (chunk) => {
 				destination.write(chunk);
-				capturedOutput = `${capturedOutput}${chunk}`.slice(
-					-MAX_CAPTURED_OUTPUT
-				);
+				const combinedOutput = `${capturedOutput}${chunk}`;
+				failureDetected ||= hasTestFailure(combinedOutput);
+				outputTruncated ||= combinedOutput.length > MAX_CAPTURED_OUTPUT;
+				capturedOutput = combinedOutput.slice(-MAX_CAPTURED_OUTPUT);
 			});
 		};
 
@@ -53,9 +63,16 @@ const runStorybookTests = () =>
 		forwardOutput(child.stderr, process.stderr);
 		child.on('error', (error) => {
 			console.error(error);
-			resolve({ code: 1, capturedOutput });
+			resolve({
+				code: 1,
+				capturedOutput,
+				failureDetected,
+				outputTruncated
+			});
 		});
-		child.on('close', (code) => resolve({ code, capturedOutput }));
+		child.on('close', (code) =>
+			resolve({ code, capturedOutput, failureDetected, outputTruncated })
+		);
 	});
 
 const main = async () => {
@@ -65,7 +82,13 @@ const main = async () => {
 		return 0;
 	}
 
-	if (!shouldRetryStorybookRun(firstRun.code, firstRun.capturedOutput)) {
+	if (
+		!shouldRetryStorybookRun(
+			firstRun.code,
+			firstRun.capturedOutput,
+			firstRun
+		)
+	) {
 		return firstRun.code ?? 1;
 	}
 

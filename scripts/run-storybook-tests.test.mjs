@@ -20,6 +20,29 @@ test('does not retry and mask a failed assertion reported before the disconnect'
 });
 
 test('does not retry ordinary test failures or successful runs', () => {
-	assert.equal(shouldRetryStorybookRun(1, 'Test Files 2 failed'), false);
+	for (const output of [
+		`FAIL  story.test.ts\n${disconnect}`,
+		`Test Files 2 failed\n${disconnect}`,
+		`Tests 1 failed\n${disconnect}`
+	]) {
+		assert.equal(shouldRetryStorybookRun(1, output), false);
+	}
 	assert.equal(shouldRetryStorybookRun(0, disconnect), false);
+});
+
+test('does not retry after truncation can have removed an earlier failure', () => {
+	assert.equal(
+		shouldRetryStorybookRun(1, disconnect, {
+			failureDetected: true,
+			outputTruncated: true
+		}),
+		false
+	);
+	assert.equal(
+		shouldRetryStorybookRun(1, disconnect, {
+			failureDetected: false,
+			outputTruncated: true
+		}),
+		false
+	);
 });
