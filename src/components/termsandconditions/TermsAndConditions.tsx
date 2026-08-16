@@ -16,6 +16,8 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { isAnonymousAsker } from './isAnonymousAsker';
 import { logout } from '../logout/logout';
 import { getLegalPrivacyUrl } from '../../resources/scripts/runtimeConfig';
+import { sanitizeLegalHtml } from '../legalContent/legalHtmlSanitizer';
+import htmlParser from '../../resources/scripts/util/htmlParser';
 
 const hasChanged = (
 	tenantData: TenantDataInterface,
@@ -214,11 +216,19 @@ export const TermsAndConditions = () => {
 							semanticLevel="2"
 						/>
 						<div>
-							<label
-								dangerouslySetInnerHTML={{
-									__html: viewState.mainText
-								}}
-							/>
+							{/* Same allowlist as `LegalContentRenderer` and the
+							    anonymous consent gate. Today's input is i18n text
+							    plus an anchor this component builds itself, so
+							    nothing changes visually — but this is the other
+							    place a help-seeker re-confirms a data-protection
+							    policy, and ORISO-Frontend#1108 asks for the second
+							    door to be closed in the same pass rather than left
+							    open for whoever routes authored text here next. */}
+							<label>
+								{htmlParser(
+									sanitizeLegalHtml(viewState.mainText)
+								)}
+							</label>
 
 							<div
 								style={{

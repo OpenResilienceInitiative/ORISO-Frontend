@@ -150,7 +150,8 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 			// (ADR-021 decision 5); only {{legal_links}} arrives intact.
 			sentence:
 				'Ich willige ein, dass die Beratungsstelle Musterstadt meine Angaben zum Thema Suchtberatung nach {{legal_links}} verarbeitet.',
-			versionId: 'v-7'
+			versionId: 'v-7',
+			cookieNotice: null
 		});
 
 		renderLabel(agencyWith(true));
@@ -177,7 +178,8 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	it('renders the cookie/authentication notice as a fixed addendum beneath it', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Kurzer Trägersatz mit {{legal_links}}.',
-			versionId: null
+			versionId: null,
+			cookieNotice: null
 		});
 
 		const { container } = renderLabel(agencyWith(true));
@@ -201,13 +203,36 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		).toBeTruthy();
 	});
 
+	it('prefers the addendum wording the backend delivers over its own', async () => {
+		// ORISO-AgencyService#254 ships the fixed addendum in the payload so
+		// every client renders the same wording. The frontend string is the
+		// stand-in until then — the addendum itself is never optional.
+		vi.mocked(apiGetConsentText).mockResolvedValue({
+			sentence: 'Trägersatz mit {{legal_links}}.',
+			versionId: null,
+			cookieNotice:
+				'Diese Seite nutzt Cookies ausschließlich zur Anmeldung.'
+		});
+
+		const { container } = renderLabel(agencyWith(true));
+
+		await waitFor(() =>
+			expect(screen.getByText(/Trägersatz mit/)).toBeDefined()
+		);
+		expect(
+			container.querySelector('[data-cy="consent-cookie-notice"]')
+				?.textContent
+		).toBe('Diese Seite nutzt Cookies ausschließlich zur Anmeldung.');
+	});
+
 	it('resolves the language map the other legal texts use', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: JSON.stringify({
 				de: 'Deutscher Trägersatz mit {{legal_links}}.',
 				en: 'English consent sentence with {{legal_links}}.'
 			}),
-			versionId: null
+			versionId: null,
+			cookieNotice: null
 		});
 
 		renderLabel(agencyWith(true));
@@ -225,7 +250,8 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 				'<script>window.__consentXss = true;</script>',
 				'<img src="https://oriso.test/x.png" onerror="window.__consentXss = true">'
 			].join(''),
-			versionId: null
+			versionId: null,
+			cookieNotice: null
 		});
 
 		const { container } = renderLabel(agencyWith(true));
@@ -249,7 +275,8 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	it('keeps the links reachable even if a sentence without the mandatory token slips through', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Trägersatz ganz ohne Pflicht-Token.',
-			versionId: null
+			versionId: null,
+			cookieNotice: null
 		});
 
 		renderLabel(agencyWith(true));

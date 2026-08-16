@@ -24,7 +24,8 @@ describe('normalizeConsentTextResponse', () => {
 		).toEqual({
 			sentence:
 				'Ich habe die {{legal_links}} der Beratungsstelle Musterstadt gelesen.',
-			versionId: 'v-7'
+			versionId: 'v-7',
+			cookieNotice: null
 		});
 	});
 
@@ -35,8 +36,21 @@ describe('normalizeConsentTextResponse', () => {
 			})
 		).toEqual({
 			sentence: 'Ich habe die {{legal_links}} gelesen.',
-			versionId: null
+			versionId: null,
+			cookieNotice: null
 		});
+	});
+
+	it('carries the fixed cookie addendum when the payload supplies it', () => {
+		expect(
+			normalizeConsentTextResponse({
+				dpp: {
+					consentText: 'Ich habe die {{legal_links}} gelesen.',
+					cookieNotice:
+						'Diese Seite nutzt Cookies ausschließlich zur Anmeldung.'
+				}
+			})?.cookieNotice
+		).toBe('Diese Seite nutzt Cookies ausschließlich zur Anmeldung.');
 	});
 
 	it('returns null when the department carries no consent sentence', () => {

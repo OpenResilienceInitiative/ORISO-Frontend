@@ -135,10 +135,15 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				sx={{ display: 'block', mt: '4px', color: 'text.secondary' }}
 				data-cy="consent-cookie-notice"
 			>
-				{t(
-					'registration.dataProtection.cookieNotice',
-					'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
-				)}
+				{/* ORISO-AgencyService#254 delivers this wording in the payload
+				    so every client renders the same addendum. Until it does,
+				    the frontend's own string stands in — the addendum itself is
+				    never optional, only its source is. */}
+				{consentText?.cookieNotice ??
+					t(
+						'registration.dataProtection.cookieNotice',
+						'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
+					)}
 			</Typography>
 		</>
 	);

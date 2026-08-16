@@ -34,7 +34,9 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
  *      language->HTML map the other legal texts use (both are handled — see
  *      `resolveLegalContent` at the call site);
  *   3. the version-pointer field name (`dpp.versionId` here), which ADR-022
- *      decision 2 will persist as `session.consented_legal_version_id`.
+ *      decision 2 will persist as `session.consented_legal_version_id`;
+ *   4. the field carrying the fixed cookie/authentication addendum
+ *      (`dpp.cookieNotice` here) that #254 says the payload delivers.
  * Until it lands, a backend that knows nothing about any of this simply omits
  * the field and the registration falls back to today's static sentence.
  */
@@ -53,6 +55,14 @@ export interface ConsentTextData {
 	 * not carry the version history yet.
 	 */
 	versionId: string | null;
+	/**
+	 * The fixed cookie/authentication addendum (ADR-021 decision 2), delivered
+	 * by the backend so every client renders the same wording without
+	 * re-implementing it — see ORISO-AgencyService#254. `null` until that
+	 * endpoint ships, in which case the frontend falls back to its own i18n
+	 * string; the addendum is never optional in the UI.
+	 */
+	cookieNotice: string | null;
 }
 
 const asNonEmptyString = (value: unknown): string | null =>
@@ -88,7 +98,11 @@ export const normalizeConsentTextResponse = (
 	return {
 		sentence,
 		versionId:
-			asNonEmptyString(dpp?.versionId) ?? asNonEmptyString(body.versionId)
+			asNonEmptyString(dpp?.versionId) ??
+			asNonEmptyString(body.versionId),
+		cookieNotice:
+			asNonEmptyString(dpp?.cookieNotice) ??
+			asNonEmptyString(body.cookieNotice)
 	};
 };
 
