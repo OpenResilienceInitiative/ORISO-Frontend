@@ -39,6 +39,7 @@ export * from './apiSendMatrixAttachmentMessage';
 export * from './apiSendMessage';
 export * from './apiSessionAssign';
 export * from './apiSetAbsence';
+export * from './apiSetTeamAccess';
 export * from './apiTwoFactorAuth';
 export * from './apiUpdatePassword';
 export * from './apiMatrixUpload';

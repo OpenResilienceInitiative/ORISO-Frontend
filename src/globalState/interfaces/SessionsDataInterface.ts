@@ -85,6 +85,7 @@ export interface SessionItemInterface {
 	postcode: number;
 	registrationType: registrationTypeRegistered;
 	teamSession?: boolean;
+	teamAccessAllowed?: boolean;
 	status:
 		| statusEmpty
 		| statusEnquiry

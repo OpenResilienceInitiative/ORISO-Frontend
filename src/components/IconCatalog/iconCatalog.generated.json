@@ -2031,7 +2031,10 @@
 		"fileName": "delivery-sent.svg",
 		"sourcePath": "src/resources/img/icons/delivery-sent.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/message/MessageItemComponent.tsx"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/message/MessageItemComponent.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -2227,6 +2230,7 @@
 		"exportNames": ["FileDocIcon"],
 		"usageFiles": [
 			"src/components/message/messageHelpers.ts",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2243,6 +2247,7 @@
 		"exportNames": ["FileImageIcon"],
 		"usageFiles": [
 			"src/components/message/messageHelpers.ts",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2815,8 +2820,10 @@
 		"fileName": "notification_audio.svg",
 		"sourcePath": "src/resources/img/icons/notification_audio.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/notificationsCenter/NotificationsCenter.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:notification-bell:base",
@@ -3489,6 +3496,7 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
@@ -3981,6 +3989,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/message/VideoChatDetails/index.tsx",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -4005,8 +4014,8 @@
 			"src/components/notifications/Notification.tsx",
 			"src/components/overlay/Overlay.tsx",
 			"src/components/productTour/ProductTourTooltip.tsx",
-			"src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
+			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
 			"src/components/session/DeleteSession.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

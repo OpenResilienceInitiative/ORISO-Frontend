@@ -125,3 +125,60 @@ export const Mobile: Story = {
 		}
 	}
 };
+
+const TeamAccessInteractive = ({
+	initialAllowed = true
+}: {
+	initialAllowed?: boolean;
+}) => {
+	const [allowed, setAllowed] = React.useState(initialAllowed);
+	return (
+		<SystemMessage
+			variant="team-access"
+			teamAccessAllowed={allowed}
+			onTeamAccessChange={setAllowed}
+		/>
+	);
+};
+
+export const TeamAccessOn: Story = {
+	name: 'Team access — on (default)',
+	args: { subject: undefined },
+	render: () => <TeamAccessInteractive />
+};
+
+export const TeamAccessOff: Story = {
+	name: 'Team access — off / active consent required',
+	args: { subject: undefined },
+	render: () => <TeamAccessInteractive initialAllowed={false} />
+};
+
+export const TeamAccessPending: Story = {
+	name: 'Team access — saving',
+	args: {
+		subject: undefined,
+		variant: 'team-access',
+		teamAccessAllowed: true,
+		onTeamAccessChange: () => {},
+		pending: true
+	}
+};
+
+export const TeamAccessError: Story = {
+	name: 'Team access — rollback error',
+	args: {
+		subject: undefined,
+		variant: 'team-access',
+		teamAccessAllowed: false,
+		onTeamAccessChange: () => {},
+		error: 'Die Einstellung konnte nicht gespeichert werden. Der vorherige Status wurde wiederhergestellt.'
+	}
+};
+
+export const TeamAccessMobile: Story = {
+	name: 'Team access — mobile (390px)',
+	args: { subject: undefined },
+	render: () => <TeamAccessInteractive />,
+	globals: phone390Globals,
+	parameters: mobileParameters
+};

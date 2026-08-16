@@ -4507,5 +4507,14 @@
 			"delete": "Entwurf löschen",
 			"emptyDetail": "Wählen Sie einen Entwurf aus, um weiterzuschreiben."
 		}
+	},
+	"teamAccess": {
+		"systemMessage": {
+			"title": "Teamzugriff auf diese Beratung",
+			"description": "Beratende derselben Beratungsstelle dürfen zur Supervision oder für fachlichen Rat vorübergehend mitlesen. Wenn Sie dies ausschalten, endet ein aktiver Einblick sofort und künftiger Zugriff benötigt Ihre ausdrückliche Zustimmung.",
+			"controlLabel": "Teamzugriff ohne Rückfrage erlauben",
+			"consentRequired": "Ausgeschaltet: Künftiger Teamzugriff ist nur nach Ihrer aktiven Zustimmung möglich.",
+			"saveError": "Die Einstellung konnte nicht gespeichert werden. Der vorherige Status wurde wiederhergestellt."
+		}
 	}
 }

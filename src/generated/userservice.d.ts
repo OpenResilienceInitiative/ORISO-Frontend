@@ -1734,6 +1734,8 @@ declare namespace UserService {
 			 * false
 			 */
 			isTeamSession?: boolean;
+			/** Session-scoped supervision and Advice Needed co-access choice. */
+			teamAccessAllowed?: boolean;
 			/**
 			 * example:
 			 * ANONYMOUS

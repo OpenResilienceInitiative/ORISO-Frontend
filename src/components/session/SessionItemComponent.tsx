@@ -156,6 +156,8 @@ interface SessionItemProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
+	/** Session-scoped notices rendered inside the timeline before persisted messages. */
+	systemMessages?: React.ReactNode;
 }
 
 let initMessageCount: number;
@@ -4888,6 +4890,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</div>
 						)}
 						{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
+						{props.systemMessages}
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (

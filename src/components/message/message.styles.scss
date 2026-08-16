@@ -1488,6 +1488,28 @@ $message-avatar-overlap: -19px;
 	&__subjectWrapper {
 		display: flex;
 		flex-direction: row;
+
+		&--teamAccess {
+			width: min(100%, 520px);
+			box-sizing: border-box;
+			padding: 16px;
+			border: 1px solid var(--m3-outline-variant, #c4c7c8);
+			margin: 12px auto;
+			background: var(--m3-surface-container-low, #f6f3f3);
+			border-radius: 16px;
+			color: var(--m3-on-surface, #1b1b1c);
+
+			> div:last-child {
+				min-width: 0;
+				flex: 1;
+			}
+
+			.systemMessage__subject {
+				font-size: 16px;
+				font-weight: 600;
+				line-height: 24px;
+			}
+		}
 	}
 
 	&__icon {
@@ -1506,6 +1528,76 @@ $message-avatar-overlap: -19px;
 		font-size: $font-size-tertiary;
 		line-height: 20px;
 		margin: 0;
+	}
+
+	&__infoText,
+	&__teamAccessStatus,
+	&__teamAccessError {
+		margin: 8px 0 0;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__teamAccessControl {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 16px;
+		gap: 16px;
+		font-size: 14px;
+		font-weight: 500;
+	}
+
+	&__teamAccessSwitch {
+		position: relative;
+		display: inline-flex;
+		width: 52px;
+		height: 32px;
+		flex: 0 0 52px;
+		align-items: center;
+		padding: 0 4px;
+		border: 2px solid var(--m3-outline, #747878);
+		appearance: none;
+		background: var(--m3-surface-container-highest, #e2e2e2);
+		border-radius: 999px;
+		cursor: pointer;
+		text-decoration: none;
+
+		span {
+			width: 20px;
+			height: 20px;
+			background: var(--m3-outline, #747878);
+			border-radius: 50%;
+			transition: transform 150ms ease;
+		}
+
+		&--checked {
+			border-color: var(--m3-primary, #a5000a);
+			background: var(--m3-primary, #a5000a);
+
+			span {
+				background: var(--m3-surface, #ffffff);
+				transform: translateX(20px);
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			cursor: wait;
+			opacity: 0.55;
+		}
+	}
+
+	&__teamAccessStatus {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__teamAccessError {
+		color: var(--m3-error, #ba1a1a);
 	}
 
 	button {
