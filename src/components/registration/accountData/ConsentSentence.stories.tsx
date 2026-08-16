@@ -159,7 +159,7 @@ export const TraegerSentenceSanitized: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Backend-provided HTML goes through the same allowlist as every other authored legal text (`sanitizeLegalHtml`, shared with `LegalContentRenderer` and the anonymous consent gate). The `<script>` and the `onerror` handler never reach the DOM; `a[href,target,rel]` does. The broken-image glyph is the point, not a defect: `<img>` is on the allowlist because authored legal texts legitimately embed images, so the element survives — stripped of its handler and pointing at a host that does not exist.'
+				story: 'Backend-provided HTML goes through `sanitizeConsentHtml` — the allowlist every other authored legal text uses (`LegalContentRenderer`), minus `class`. The consent variant drops the attribute because `htmlParser` deletes any node classed `remove`, which would let an author publish a sentence that passes the mandatory-token validation and still shows no links (shared with the anonymous consent gate). The `<script>` and the `onerror` handler never reach the DOM; `a[href,target,rel]` does. The broken-image glyph is the point, not a defect: `<img>` is on the allowlist because authored legal texts legitimately embed images, so the element survives — stripped of its handler and pointing at a host that does not exist.'
 			}
 		}
 	}

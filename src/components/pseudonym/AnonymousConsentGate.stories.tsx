@@ -50,7 +50,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Consent dialog shown before an anonymous participant may write. `consentLabelHtml` is HTML so the privacy-policy link resolves to the tenant’s own document — passed through the shared legal-HTML sanitizer (`sanitizeLegalHtml`, the same allowlist `LegalContentRenderer` uses) rather than into a raw `dangerouslySetInnerHTML` sink. See the “Träger text with an XSS payload” story.'
+					'Consent dialog shown before an anonymous participant may write. `consentLabelHtml` is HTML so the privacy-policy link resolves to the tenant’s own document — passed through the shared `sanitizeConsentHtml` (the allowlist `LegalContentRenderer` uses, minus `class`) rather than into a raw `dangerouslySetInnerHTML` sink. See the “Träger text with an XSS payload” story.'
 			}
 		}
 	},
