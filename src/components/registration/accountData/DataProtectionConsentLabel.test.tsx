@@ -101,8 +101,11 @@ describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 			screen.getByRole('link', { name: 'Datenschutzerklärung' })
 		).toBeDefined();
 		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
-		// The non-registration link stays out — `filter` semantics preserved.
-		expect(screen.queryByRole('link', { name: /agb/i })).toBeNull();
+		/* The non-registration link stays out — `filter` semantics preserved.
+		   Asserted as a count: the mocked `t` returns the raw key for anything
+		   absent from TRANSLATIONS, so a name query for the excluded link could
+		   never match and would pass even if `filter` stopped filtering. */
+		expect(screen.getAllByRole('link')).toHaveLength(2);
 		expect(
 			screen.getByText(
 				/Für Authentifizierung und Navigation verwendet diese Webseite Cookies\./
@@ -172,6 +175,12 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 			'https://oriso.test/datenschutz'
 		);
 		expect(policyLink.getAttribute('target')).toBe('_blank');
+		/* `target="_blank"` without `rel` would leave `window.opener` reachable
+		   from the target document. `LegalLinks` emits the `rel`; what is
+		   asserted here is that the consent allowlist does not strip it on the
+		   way through — it drops `class`, and the two are adjacent in the same
+		   options object. */
+		expect(policyLink.getAttribute('rel')).toBe('noreferrer');
 		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
 	});
 
