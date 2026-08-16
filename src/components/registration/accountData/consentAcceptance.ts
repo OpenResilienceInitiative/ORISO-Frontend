@@ -24,7 +24,7 @@ import { ConsentTextData } from '../../../api/apiGetConsentText';
 export const consentBindingKey = (
 	agencyId: number | null | undefined,
 	topicId: number | null | undefined,
-	versionId: string | null | undefined
+	versionId: number | null | undefined
 ): string =>
 	`${agencyId ?? 'none'}:${topicId ?? 'none'}:${versionId ?? 'none'}`;
 

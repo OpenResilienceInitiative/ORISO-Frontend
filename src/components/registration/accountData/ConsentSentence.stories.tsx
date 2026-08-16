@@ -105,8 +105,7 @@ export const TraegerSentence: Story = {
 		consentText: {
 			sentence:
 				'Ich willige ein, dass die <strong>Beratungsstelle Musterstadt</strong> meine Angaben zum Thema <em>Suchtberatung</em> nach Maßgabe der {{legal_links}} verarbeitet.',
-			versionId: 'v-7',
-			cookieNotice: null
+			versionId: 7
 		}
 	},
 	play: async ({ canvasElement }) => {
@@ -145,8 +144,7 @@ export const TraegerSentenceSanitized: Story = {
 				'<script>window.__consentXss = true;</script>',
 				'<img src="https://oriso.example/x.png" onerror="window.__consentXss = true">'
 			].join(''),
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		}
 	},
 	play: async ({ canvasElement }) => {
@@ -171,8 +169,7 @@ export const MissingMandatoryToken: Story = {
 		consentText: {
 			sentence:
 				'Ich willige in die Verarbeitung meiner Angaben durch die Beratungsstelle Musterstadt ein.',
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		}
 	},
 	play: async ({ canvasElement }) => {

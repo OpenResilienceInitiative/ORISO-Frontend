@@ -135,15 +135,16 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				sx={{ display: 'block', mt: '4px', color: 'text.secondary' }}
 				data-cy="consent-cookie-notice"
 			>
-				{/* ORISO-AgencyService#254 delivers this wording in the payload
-				    so every client renders the same addendum. Until it does,
-				    the frontend's own string stands in — the addendum itself is
-				    never optional, only its source is. */}
-				{consentText?.cookieNotice ??
-					t(
-						'registration.dataProtection.cookieNotice',
-						'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
-					)}
+				{/* The client owns this wording. ORISO-AgencyService#256 states
+				    it explicitly: the cookie/authentication notice "is NOT part
+				    of this text: it is a fixed, non-editable addendum the
+				    client renders beneath the sentence." So it comes from the
+				    catalogue, not from the payload — and a Träger cannot edit
+				    it away, which is the point of ADR-021 decision 2. */}
+				{t(
+					'registration.dataProtection.cookieNotice',
+					'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
+				)}
 			</Typography>
 		</>
 	);

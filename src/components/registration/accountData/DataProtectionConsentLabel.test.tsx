@@ -155,8 +155,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 			// (ADR-021 decision 5); only {{legal_links}} arrives intact.
 			sentence:
 				'Ich willige ein, dass die Beratungsstelle Musterstadt meine Angaben zum Thema Suchtberatung nach {{legal_links}} verarbeitet.',
-			versionId: 'v-7',
-			cookieNotice: null
+			versionId: 7
 		});
 
 		renderLabel(agencyWith(true));
@@ -189,8 +188,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	it('renders the cookie/authentication notice as a fixed addendum beneath it', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Kurzer Trägersatz mit {{legal_links}}.',
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		});
 
 		const { container } = renderLabel(agencyWith(true));
@@ -214,16 +212,18 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		).toBeTruthy();
 	});
 
-	it('prefers the addendum wording the backend delivers over its own', async () => {
-		// ORISO-AgencyService#254 ships the fixed addendum in the payload so
-		// every client renders the same wording. The frontend string is the
-		// stand-in until then — the addendum itself is never optional.
+	it('takes the addendum from the catalogue, never from the payload', async () => {
+		/* ORISO-AgencyService#256 is explicit that the cookie/authentication
+		   notice is not part of the delivered text: it is the client's fixed,
+		   non-editable addendum. If a payload ever carried one, honouring it
+		   would hand a Träger the ability to reword — or quietly drop — the
+		   platform's own disclosure, which is what ADR-021 decision 2 exists to
+		   prevent. */
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Trägersatz mit {{legal_links}}.',
 			versionId: null,
-			cookieNotice:
-				'Diese Seite nutzt Cookies ausschließlich zur Anmeldung.'
-		});
+			cookieNotice: 'Wir nutzen gar keine Cookies.'
+		} as never);
 
 		const { container } = renderLabel(agencyWith(true));
 
@@ -233,7 +233,9 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		expect(
 			container.querySelector('[data-cy="consent-cookie-notice"]')
 				?.textContent
-		).toBe('Diese Seite nutzt Cookies ausschließlich zur Anmeldung.');
+		).toBe(
+			'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
+		);
 	});
 
 	it('resolves the language map the other legal texts use', async () => {
@@ -242,8 +244,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 				de: 'Deutscher Trägersatz mit {{legal_links}}.',
 				en: 'English consent sentence with {{legal_links}}.'
 			}),
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		});
 
 		renderLabel(agencyWith(true));
@@ -261,8 +262,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 				'<script>window.__consentXss = true;</script>',
 				'<img src="https://oriso.test/x.png" onerror="window.__consentXss = true">'
 			].join(''),
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		});
 
 		const { container } = renderLabel(agencyWith(true));
@@ -292,8 +292,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence:
 				'Ich willige ein, siehe <span class="remove">{{legal_links}}</span>.',
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		});
 
 		renderLabel(agencyWith(true));
@@ -310,8 +309,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 	it('keeps the links reachable even if a sentence without the mandatory token slips through', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Trägersatz ganz ohne Pflicht-Token.',
-			versionId: null,
-			cookieNotice: null
+			versionId: null
 		});
 
 		renderLabel(agencyWith(true));

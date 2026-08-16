@@ -3,42 +3,46 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 /**
  * ============================================================================
- * CONTRACT — ALIGNMENT PENDING (EPIC ORISO-AgencyService#250)
- * ============================================================================
+ * CONTRACT — verified against ORISO-AgencyService PR #256
+ * (`feat/legal-text-versioning-250`: `api/agencyservice.yaml` and
+ * `api/service/legal/ResolvedLegalText.java`), which serves
+ * `GET /service/agencies/{agencyId}/topics/{topicId}/legal` as:
  *
- * Everything this frontend assumes about the *wire shape* of the consent
- * sentence lives in this module and nowhere else. When the AgencyService PR
- * lands, only `normalizeConsentTextResponse` below should need editing — no
- * component, no test of a component, no i18n catalogue.
+ *   { "dpp":     { "content", "consentText", "sourceLevel", "versionId" },
+ *     "imprint": { "content", "consentText", "sourceLevel", "versionId" } }
  *
- * What ADR-021 fixes, and what this module therefore relies on:
+ * Everything this frontend assumes about the wire shape lives in this module
+ * and nowhere else, so aligning with the backend never reaches a component.
+ *
+ * What ADR-021 fixes and this relies on:
  *
  * - decision 4 — the consent sentence is a **field of the data-protection
- *   policy**, not a legal-text kind of its own. It is consequently expected on
- *   the department's existing public legal endpoint
- *   (`/service/agencies/{aid}/topics/{tid}/legal`, `endpoints.agencyDepartmentLegal`)
- *   next to `dpp` and `imprint`, and it shares the DPP's version pointer.
- * - decision 5 — placeholder substitution is **split**: the server has already
- *   substituted `{{Beratungsstelle}}`, `{{Thema}}` and any contact data;
- *   `{{legal_links}}` arrives **intact**, because the link targets come from
- *   this frontend's deployment configuration (`LegalLinksProvider`) and the
- *   backend does not know them.
+ *   policy**, hence `dpp.consentText`. Always null on `imprint`, which is an
+ *   information duty and never a consent gate (decision 7).
+ * - decision 5 — substitution is **split**: `{{Beratungsstelle}}` and
+ *   `{{Thema}}` are already substituted server-side; `{{legal_links}}` arrives
+ *   **intact**, because the link targets come from this frontend's deployment
+ *   configuration and the backend does not know them.
  * - decision 6 — the token dialect is `{{key}}`. Träger-authored text never
  *   passes through Freemarker, so `${...}` must not appear.
  *
- * TODO(ORISO-AgencyService#250): verify against the AgencyService PR and drop
- * this block once confirmed:
- *   1. field name and nesting — `dpp.consentText` vs. a sibling `consentText`
- *      vs. a dedicated endpoint;
- *   2. whether the sentence is a bare HTML string or the same
- *      language->HTML map the other legal texts use (both are handled — see
- *      `resolveLegalContent` at the call site);
- *   3. the version-pointer field name (`dpp.versionId` here), which ADR-022
- *      decision 2 will persist as `session.consented_legal_version_id`;
- *   4. the field carrying the fixed cookie/authentication addendum
- *      (`dpp.cookieNotice` here) that #254 says the payload delivers.
- * Until it lands, a backend that knows nothing about any of this simply omits
- * the field and the registration falls back to today's static sentence.
+ * Two corrections this alignment made, both of which would have failed
+ * silently rather than loudly:
+ *
+ * 1. `versionId` is `integer`/`int64` — a JSON **number**, not a string.
+ *    Reading it as a string yielded `null` for every response, which would
+ *    have made every consent binding version-blind: a Träger publishing new
+ *    wording would not have invalidated an existing acceptance.
+ * 2. There is **no `cookieNotice` field**. The schema says so in as many
+ *    words: the cookie/authentication notice "is NOT part of this text: it is
+ *    a fixed, non-editable addendum the client renders beneath the sentence."
+ *    An earlier commit here read one from the payload on the strength of the
+ *    prose in sub-issue #254. The client owns that wording; the frontend
+ *    catalogue is its source, not a fallback.
+ *
+ * `sourceLevel` is served and deliberately not read: nothing renders it yet,
+ * and a field parsed into a type but never used is exactly how `renderedPrivacy`
+ * came to hide a defect in this same flow.
  */
 
 export interface ConsentTextData {
@@ -50,23 +54,20 @@ export interface ConsentTextData {
 	 */
 	sentence: string;
 	/**
-	 * Version of the data-protection policy this sentence belongs to
-	 * (ADR-021 decision 4 — one history, not two). `null` on backends that do
-	 * not carry the version history yet.
+	 * Id of the `legal_text_version` snapshot this wording corresponds to
+	 * (ADR-021 decision 4 — one history, not two; the identifier ADR-022
+	 * decision 2 pins a recorded consent to). A JSON number on the wire.
+	 * `null` for the Träger and platform levels, whose history lives in
+	 * ORISO-TenantService rather than in AgencyService.
 	 */
-	versionId: string | null;
-	/**
-	 * The fixed cookie/authentication addendum (ADR-021 decision 2), delivered
-	 * by the backend so every client renders the same wording without
-	 * re-implementing it — see ORISO-AgencyService#254. `null` until that
-	 * endpoint ships, in which case the frontend falls back to its own i18n
-	 * string; the addendum is never optional in the UI.
-	 */
-	cookieNotice: string | null;
+	versionId: number | null;
 }
 
 const asNonEmptyString = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() !== '' ? value : null;
+
+const asVersionId = (value: unknown): number | null =>
+	typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 /**
  * Maps the department legal response onto `ConsentTextData`.
@@ -88,21 +89,14 @@ export const normalizeConsentTextResponse = (
 			? (body.dpp as Record<string, unknown>)
 			: null;
 
-	const sentence =
-		asNonEmptyString(dpp?.consentText) ??
-		asNonEmptyString(body.consentText);
+	const sentence = asNonEmptyString(dpp?.consentText);
 	if (!sentence) {
 		return null;
 	}
 
 	return {
 		sentence,
-		versionId:
-			asNonEmptyString(dpp?.versionId) ??
-			asNonEmptyString(body.versionId),
-		cookieNotice:
-			asNonEmptyString(dpp?.cookieNotice) ??
-			asNonEmptyString(body.cookieNotice)
+		versionId: asVersionId(dpp?.versionId)
 	};
 };
 

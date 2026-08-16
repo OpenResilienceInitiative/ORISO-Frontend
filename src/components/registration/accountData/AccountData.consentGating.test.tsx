@@ -290,10 +290,9 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	it('drops it when the Träger published a new version of the wording', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Neue Fassung mit {{legal_links}}.',
-			versionId: 'v-2',
-			cookieNotice: null
+			versionId: 2
 		});
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 'v-1'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
@@ -311,10 +310,9 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	it('keeps it when the same version is served again', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			sentence: 'Unveränderte Fassung mit {{legal_links}}.',
-			versionId: 'v-1',
-			cookieNotice: null
+			versionId: 1
 		});
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 'v-1'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
