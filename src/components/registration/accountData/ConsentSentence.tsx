@@ -112,7 +112,19 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 		<>
 			<Typography
 				component="span"
-				sx={{ display: 'block' }}
+				/* The anchors here come from `renderToString` and are therefore
+				   plain `<a>`, not the MUI `<Link>` the fallback renders. Style
+				   them the same way (`primary.main`, always underlined) so the
+				   two shapes are indistinguishable to a help-seeker — a policy
+				   link that does not read as a link is a consent problem, not a
+				   cosmetic one. */
+				sx={{
+					'display': 'block',
+					'& a': {
+						color: 'primary.main',
+						textDecoration: 'underline'
+					}
+				}}
 				data-cy="consent-sentence-traeger"
 			>
 				{htmlParser(traegerSentenceHtml)}

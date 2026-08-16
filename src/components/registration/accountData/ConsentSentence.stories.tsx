@@ -157,7 +157,7 @@ export const TraegerSentenceSanitized: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Backend-provided HTML goes through the same allowlist as every other authored legal text (`sanitizeLegalHtml`, shared with `LegalContentRenderer` and the anonymous consent gate). The payload never reaches the DOM; `a[href,target,rel]` does.'
+				story: 'Backend-provided HTML goes through the same allowlist as every other authored legal text (`sanitizeLegalHtml`, shared with `LegalContentRenderer` and the anonymous consent gate). The `<script>` and the `onerror` handler never reach the DOM; `a[href,target,rel]` does. The broken-image glyph is the point, not a defect: `<img>` is on the allowlist because authored legal texts legitimately embed images, so the element survives — stripped of its handler and pointing at a host that does not exist.'
 			}
 		}
 	}

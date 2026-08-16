@@ -172,7 +172,7 @@ export const SanitizedTraegerText: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'ADR-022 calls the unsanitised `dangerouslySetInnerHTML` here the **blocking dependency** for Gate 2: once this sentence is a Träger-authored field of the Beratungsstelle’s data-protection policy (ADR-021 decision 4), anyone who can edit a legal text in the Admin could execute script in the one dialog a help-seeker cannot get past. The label below carries a `<script>`, an `onerror` handler and a `javascript:` link — none of them reach the DOM, while the policy anchor keeps its `href`, `target` and `rel`.'
+				story: 'ADR-022 calls the unsanitised `dangerouslySetInnerHTML` here the **blocking dependency** for Gate 2: once this sentence is a Träger-authored field of the Beratungsstelle’s data-protection policy (ADR-021 decision 4), anyone who can edit a legal text in the Admin could execute script in the one dialog a help-seeker cannot get past. The label below carries a `<script>`, an `onerror` handler and a `javascript:` link — none of them reach the DOM, while the policy anchor keeps its `href`, `target` and `rel`. Two leftovers are expected and are the sanitizer working as specified rather than failing: the broken-image glyph is an `<img>` stripped of its handler (`<img>` is on the allowlist because authored legal texts embed images), and "Nicht anklickbar" is an `<a>` that lost its `javascript:` href, so it is inert.'
 			}
 		}
 	}
