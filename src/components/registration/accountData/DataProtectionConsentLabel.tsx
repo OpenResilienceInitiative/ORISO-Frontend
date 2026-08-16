@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { FC, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
@@ -66,6 +67,7 @@ export interface DataProtectionConsentLabelProps {
 export const DataProtectionConsentLabel: FC<
 	DataProtectionConsentLabelProps
 > = ({ agency, topic, onResolutionChange }) => {
+	const { t } = useTranslation();
 	const mayHaveConsentText = departmentMayHaveConsentText(agency, topic);
 
 	/* Starts resolved in the unconfigured case, so that path issues no request,
@@ -98,13 +100,23 @@ export const DataProtectionConsentLabel: FC<
 		return () => abortController.abort();
 	}, [mayHaveConsentText, agency?.id, topic?.id]);
 
-	/* A configured Fachbereich is still being fetched: render nothing rather
-	   than the platform wording. Showing it and swapping it for the Träger's a
-	   moment later would mean the checkbox briefly carries a sentence that is
-	   not the one in force. The checkbox itself is disabled meanwhile — see
-	   `AccountData`. */
+	/* A configured Fachbereich is still being fetched: never the platform
+	   wording, which would mean the checkbox briefly carries a sentence that is
+	   not the one in force. But not nothing either — disabling a control does
+	   not remove it from the accessibility tree, so rendering nothing left a
+	   screen-reader user on an unnamed checkbox with no hint that anything was
+	   happening. A loading notice is safe here precisely because it is not a
+	   consent sentence: there is nothing in it to agree to. `aria-live` because
+	   it is replaced in place once the real sentence arrives. */
 	if (resolution.status === 'pending') {
-		return null;
+		return (
+			<span aria-live="polite" data-cy="consent-sentence-pending">
+				{t(
+					'registration.dataProtection.loading',
+					'Der Einwilligungstext wird geladen …'
+				)}
+			</span>
+		);
 	}
 
 	return <ConsentSentence consentText={resolution.consentText} />;

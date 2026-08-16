@@ -169,6 +169,33 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		).toBeNull();
 	});
 
+	it('names the disabled checkbox with a loading notice, not with nothing', async () => {
+		/* Disabling a control does not remove it from the accessibility tree.
+		   Without this, a screen-reader user met an unnamed checkbox and no
+		   indication that anything was happening. The notice is safe where the
+		   consent sentence is not, because there is nothing in it to agree to. */
+		renderStep({ hasPublishedDpp: true });
+
+		const pending = await screen.findByText(
+			'registration.dataProtection.loading'
+		);
+		expect(pending.getAttribute('aria-live')).toBe('polite');
+		expect(anyCheckbox()?.disabled).toBe(true);
+		// The checkbox takes the notice as its accessible name.
+		expect(pending.closest('label')).not.toBeNull();
+	});
+
+	it('replaces the notice with the sentence once it arrives', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() => expect(consentCheckbox()?.disabled).toBe(false));
+		expect(
+			screen.queryByText('registration.dataProtection.loading')
+		).toBeNull();
+	});
+
 	it('enables it once the sentence has resolved', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(null);
 

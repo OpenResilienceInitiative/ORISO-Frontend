@@ -8,6 +8,8 @@ const TRANSLATIONS: Record<string, string> = {
 	'registration.dataProtection.label.and': ' und ',
 	'registration.dataProtection.label.suffix':
 		' zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies.',
+	'registration.dataProtection.loading':
+		'Der Einwilligungstext wird geladen …',
 	'registration.dataProtection.cookieNotice':
 		'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.',
 	'legal.dataprotection': 'Datenschutzerklärung',
@@ -322,13 +324,18 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		).toBeDefined();
 	});
 
-	it('shows no sentence at all while a configured Fachbereich is still loading', () => {
+	it('shows a loading notice, and no sentence, while a configured Fachbereich is still loading', () => {
 		vi.mocked(apiGetConsentText).mockReturnValue(new Promise(() => {}));
 
 		const { container } = renderLabel(agencyWith(true));
 
 		// Never the platform wording as a placeholder: the checkbox must not
-		// briefly carry a sentence that is not the one in force.
-		expect(container.textContent).toBe('');
+		// briefly carry a sentence that is not the one in force…
+		expect(container.querySelector('a')).toBeNull();
+		expect(screen.queryByText(/Ich habe die/)).toBeNull();
+		// …but not an unnamed control either.
+		expect(container.textContent).toBe(
+			'Der Einwilligungstext wird geladen …'
+		);
 	});
 });
