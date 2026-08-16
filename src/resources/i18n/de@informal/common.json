@@ -1163,13 +1163,12 @@
 		},
 		"registering": "Registrierung läuft...",
 		"handover": {
-			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"encryption": "Verschlüsselt: Außer dir sieht deine Anfrage nur deine Beratungsstelle.",
 			"steps": {
 				"write": {
 					"title": "Du schreibst, was los ist"
 				},
 				"counsellor": {
-					"title": "Wir finden deine Beraterin",
 					"text": "Fachlich passend — und mit Zeit für dich."
 				},
 				"reply": {
@@ -2218,30 +2217,6 @@
 	"drafts": {
 		"center": {
 			"emptyDetail": "Wähle einen Entwurf aus, um weiterzuschreiben."
-		}
-	},
-	"tour": {
-		"mailCounselling": {
-			"step": {
-				"whatsNew": {
-					"intro": "Du kennst die Mail-Beratung bereits aus der bisherigen Plattform. Dieser kurze Rundgang zeigt dir, wo deine gewohnten Arbeitsschritte jetzt liegen — und was neu dazugekommen ist."
-				},
-				"enquiries": {
-					"intro": "Neue Anfragen landen wie gewohnt in einer gemeinsamen Liste — sie liegt jetzt hier. Bis zur Annahme sehen alle Berater und Beraterinnen deiner Beratungsstelle die offene Anfrage."
-				},
-				"accepting": {
-					"intro": "Mit „Annehmen“ übernimmst du eine Anfrage in deine Beratungen. Neu: Ratsuchende erhalten direkt nach ihrer ersten Nachricht eine automatische Erstantwort mit den wichtigsten Informationen — du steigst ohne Zeitdruck ein."
-				},
-				"mySessions": {
-					"intro": "Deine angenommenen Beratungen findest du hier — sortiert nach der zuletzt eingegangenen Nachricht, wie du es gewohnt bist."
-				},
-				"composer": {
-					"intro": "Neu im Vergleich zur bisherigen Plattform: Du kannst in Threads antworten, Sprachnachrichten aufnehmen und Dateien direkt anhängen."
-				},
-				"archive": {
-					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
-				}
-			}
 		}
 	}
 }
