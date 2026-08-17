@@ -1226,13 +1226,10 @@
 				"linkShort": "Bu neden güvenli"
 			},
 			"explainer": {
-				"badge": "YENİ",
-				"headline": "Yalnızca ikiniz okuyabilirsiniz.",
+				"headline": "Uçtan uca gizli",
 				"message": "Kendimi iyi hissetmiyorum.",
-				"you": "Siz",
-				"agency": "Danışma Merkezi",
 				"encrypted": "şifreli",
-				"attack": "bir saldırgan bundan fazlasını elde edemez",
+				"attack": "Veri hırsızları bizden karışık sayılardan başka bir şey alamaz.",
 				"cipherLabel": "Ele geçirilen, şifrelenmiş veriler",
 				"key": "Anahtar cihazınızda oluşturulur ve orada kalır — bizde yoktur.",
 				"protocol": "Açık protokol <strong>Matrix</strong>, bağımsız olarak doğrulanabilir.",

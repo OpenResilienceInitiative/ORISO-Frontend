@@ -1,6 +1,12 @@
-/* Encryption explainer card — design 2d (desktop) / 2e (mobile sheet). */
+/*
+ * Encryption explainer card — design 2d (desktop) / 2e (mobile sheet).
+ * Geometry and type from the Figma frame `div.loginForm` (node 9579:55787).
+ */
 
 .loginSecurity {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base;
 	width: 100%;
 	text-align: left;
 
@@ -15,51 +21,48 @@
 		flex-wrap: wrap;
 	}
 
-	&__badge {
-		flex: none;
-		padding: 3px 10px;
-		border-radius: 12px;
-		background: var(--m3-primary-fixed, #ffdad5);
-		color: var(--m3-on-primary-fixed, #410001);
-		font-size: 12px;
-		font-weight: $font-weight-bold;
-		letter-spacing: 0.5px;
-	}
-
 	&__headline {
 		margin: 0;
 		color: var(--m3-on-surface, #1a1c1e);
 		font-size: 20px;
 		font-weight: $font-weight-medium;
-		line-height: 1.25;
+		line-height: 25px;
 	}
 
+	/*
+	 * you | wire | agency — each party takes what its bubble needs (up to 42%
+	 * of the row, then the text wraps), the wire stretches across the rest so
+	 * the dashed line really runs from bubble to bubble.
+	 */
 	&__transport {
 		display: grid;
-		grid-template-columns: 1fr 132px 1fr;
+		grid-template-columns: fit-content(42%) minmax(52px, 1fr) fit-content(
+				42%
+			);
 		align-items: start;
-		margin-top: $grid-base-three;
-	}
-
-	/* Points from the intercepted traffic up at the wire it was taken from. */
-	&__tapArrow {
-		display: block;
-		width: 26px;
-		height: 26px;
-		margin: $grid-base-two auto 0;
-		color: var(--m3-primary, #a5000a);
-		transform: rotate(90deg);
+		padding-top: $grid-base-two;
 	}
 
 	&__party {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
 		gap: $grid-base;
-		text-align: center;
+		min-width: 0;
+
+		/* the mark sits under the bubble, on the outer side (design) */
+		&--you {
+			align-items: flex-start;
+			padding-right: $grid-base;
+		}
+
+		&--agency {
+			align-items: flex-end;
+			padding-left: $grid-base;
+		}
 	}
 
 	&__partyIcon {
+		flex: none;
 		width: 30px;
 		height: 30px;
 		color: var(--m3-on-surface-variant, #444748);
@@ -67,38 +70,42 @@
 	}
 
 	&__bubble {
+		box-sizing: border-box;
+		max-width: 100%;
 		margin: 0;
-		padding: 8px 12px;
+		padding: 7px 12px;
 		border: 1px solid var(--m3-outline-variant, #c4c7c8);
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-on-surface, #1a1c1e);
 		font-size: 13px;
+		line-height: 24px;
+		text-align: center;
+
+		/* long translations wrap inside the bubble instead of pushing the wire away */
+		overflow-wrap: anywhere;
 
 		&--you {
 			border-radius: 14px 14px 14px 4px;
 		}
 
 		&--agency {
-			border-radius: 14px 14px 4px 14px;
+			border-radius: 16px 16px 4px 16px;
 		}
 	}
 
-	&__partyLabel {
-		color: var(--m3-outline, #747878);
-		font-size: 12px;
-	}
-
 	&__wire {
+		position: relative;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: $grid-base;
-		margin-top: 22px;
+		justify-content: center;
+		height: 37px;
 		padding: 0 $grid-base;
 	}
 
+	/* the dashed line the chip sits on — from bubble to bubble */
 	&__wireLine {
-		width: 100%;
+		position: absolute;
+		inset: 50% 0 auto;
 		height: 2px;
 		background: repeating-linear-gradient(
 			90deg,
@@ -108,14 +115,16 @@
 	}
 
 	&__wireChip {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
-		padding: 3px 10px;
+		padding: 2px 12px;
 		border-radius: 999px;
-		background: var(--m3-surface-container-high, #eae7e8);
+		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-on-surface-variant, #444748);
 		font-size: 11.5px;
+		line-height: 24px;
 		white-space: nowrap;
 	}
 
@@ -125,11 +134,15 @@
 		opacity: 0.6;
 	}
 
+	/* what the wire gives away: noise, and no key to it */
 	&__attack {
 		display: flex;
 		align-items: center;
 		gap: $grid-base-two;
-		margin-top: $grid-base;
+		box-sizing: border-box;
+		width: 340px;
+		max-width: 100%;
+		margin: 0 auto;
 		padding: 12px 18px;
 		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
 		border-radius: 16px;
@@ -144,26 +157,42 @@
 		opacity: 0.9;
 	}
 
+	&__attackBody {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+
 	&__cipher {
 		margin: 0;
 		min-height: 20px;
 		color: var(--m3-on-primary-fixed-variant, #930008);
 		font-family: ui-monospace, menlo, monospace;
 		font-size: 14px;
+		line-height: 24px;
 		letter-spacing: 0.4px;
+		text-align: center;
 	}
 
+	/* M3 label/small */
 	&__attackCaption {
-		margin: 4px 0 0;
+		margin: 0;
 		color: var(--m3-on-primary-fixed, #410001);
-		font-size: 12.5px;
+		font-size: 11px;
+		font-weight: $font-weight-medium;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		text-align: center;
 	}
 
 	&__footnote {
-		margin: $grid-base-three 0 0;
+		margin: $grid-base 0 0;
+		padding-bottom: $grid-base-two;
 		color: var(--m3-on-surface-variant, #444748);
 		font-size: 13px;
-		line-height: 1.55;
+		line-height: 20px;
 		text-align: center;
 	}
 
@@ -172,6 +201,7 @@
 		margin-top: 2px;
 		color: var(--m3-outline, #747878);
 		font-size: 12.5px;
+		line-height: 19px;
 
 		strong {
 			color: var(--m3-on-surface-variant, #444748);
@@ -189,7 +219,6 @@
 		justify-content: center;
 		gap: $grid-base;
 		width: 100%;
-		margin-top: $grid-base-three;
 		padding: 8px;
 		border: 0;
 		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
@@ -200,6 +229,7 @@
 		font-family: inherit;
 		font-size: 15px;
 		font-weight: $font-weight-bold;
+		line-height: 24px;
 
 		&:hover {
 			background: var(--m3-surface-container-low, #f6f3f3);
@@ -218,8 +248,23 @@
 
 	/* Mobile sheet (2e): tighter, and the wire chip loses its label. */
 	@media screen and (width <= #{$fromMedium - 1px}) {
-		&__transport {
-			grid-template-columns: 1fr 52px 1fr;
+		&__headline {
+			font-size: 18px;
+			line-height: 24px;
+		}
+
+		&__party {
+			&--you {
+				padding-right: 4px;
+			}
+
+			&--agency {
+				padding-left: 4px;
+			}
+		}
+
+		&__wire {
+			padding: 0 4px;
 		}
 
 		&__wireLabel {
@@ -230,12 +275,21 @@
 			padding: 4px;
 		}
 
-		&__headline {
-			font-size: 18px;
+		&__bubble {
+			padding: 6px 10px;
+			font-size: 12px;
+			line-height: 20px;
 		}
 
-		&__bubble {
-			font-size: 12px;
+		&__partyIcon {
+			width: 26px;
+			height: 26px;
+		}
+
+		&__attack {
+			width: 100%;
+			gap: 12px;
+			padding: 10px 14px;
 		}
 
 		&__attackIcon {
@@ -245,6 +299,7 @@
 
 		&__cipher {
 			font-size: 12.5px;
+			line-height: 20px;
 		}
 	}
 }

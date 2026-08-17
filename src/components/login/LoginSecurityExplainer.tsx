@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
-import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import KeyOffOutlinedIcon from '@mui/icons-material/KeyOffOutlined';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/agency.svg';
-import { ReactComponent as HackerIcon } from '../../resources/img/icons/hacker.svg';
-import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
 import './loginSecurity.styles';
 
 const MATRIX_E2EE_URL =
@@ -60,8 +60,16 @@ export interface LoginSecurityExplainerProps {
  * "Why is this extra safe?" — the card that slides in when the encryption
  * teaser below the login form is clicked (design 2d desktop / 2e mobile).
  *
+ * Layout and copy follow the Figma frame `div.loginForm` (App.Oriso,
+ * node 9579:55787): headline, the two parties with their bubbles and their
+ * mark underneath, the "encrypted" chip on the wire between them, the
+ * intercepted-noise box, the footnote, the way back. Icons are Material
+ * Symbols (outlined) via `@mui/icons-material`; the agency mark is the
+ * project's own M3-style `agency` icon.
+ *
  * The argument is the key, not the lock: it is created on the user's device
- * and stays there, so the servers only ever carry noise.
+ * and stays there, so whoever taps the wire is left without one — hence
+ * `KeyOff` on the noise, and no skull.
  */
 export const LoginSecurityExplainer = ({
 	onBack
@@ -72,54 +80,55 @@ export const LoginSecurityExplainer = ({
 	return (
 		<div className="loginSecurity" data-cy="login-security-explainer">
 			<div className="loginSecurity__head">
-				<span className="loginSecurity__badge">
-					{translate('login.security.explainer.badge')}
-				</span>
 				<h2 className="loginSecurity__headline">
 					{translate('login.security.explainer.headline')}
 				</h2>
 			</div>
 
 			<div className="loginSecurity__transport">
-				<div className="loginSecurity__party">
-					<PersonIcon className="loginSecurity__partyIcon" />
+				<div className="loginSecurity__party loginSecurity__party--you">
 					<p className="loginSecurity__bubble loginSecurity__bubble--you">
 						{translate('login.security.explainer.message')}
 					</p>
-					<span className="loginSecurity__partyLabel">
-						{translate('login.security.explainer.you')}
-					</span>
+					<PersonOutlinedIcon
+						className="loginSecurity__partyIcon"
+						aria-hidden="true"
+						focusable="false"
+					/>
 				</div>
 
 				<div className="loginSecurity__wire" aria-hidden="true">
 					<span className="loginSecurity__wireLine" />
 					<span className="loginSecurity__wireChip">
-						<LockIcon className="loginSecurity__wireLock" />
+						<LockOutlinedIcon
+							className="loginSecurity__wireLock"
+							focusable="false"
+						/>
 						<span className="loginSecurity__wireLabel">
 							{translate('login.security.explainer.encrypted')}
 						</span>
 					</span>
 				</div>
 
-				<div className="loginSecurity__party">
-					<AgencyIcon className="loginSecurity__partyIcon" />
+				<div className="loginSecurity__party loginSecurity__party--agency">
 					<p className="loginSecurity__bubble loginSecurity__bubble--agency">
 						{translate('login.security.explainer.message')}
 					</p>
-					<span className="loginSecurity__partyLabel">
-						{translate('login.security.explainer.agency')}
-					</span>
+					<AgencyIcon
+						className="loginSecurity__partyIcon"
+						aria-hidden="true"
+						focusable="false"
+					/>
 				</div>
 			</div>
 
-			<ArrowLeftIcon
-				className="loginSecurity__tapArrow"
-				aria-hidden="true"
-			/>
-
 			<div className="loginSecurity__attack">
-				<HackerIcon className="loginSecurity__attackIcon" />
-				<div>
+				<KeyOffOutlinedIcon
+					className="loginSecurity__attackIcon"
+					aria-hidden="true"
+					focusable="false"
+				/>
+				<div className="loginSecurity__attackBody">
 					<p
 						className="loginSecurity__cipher"
 						aria-label={translate(
@@ -157,7 +166,11 @@ export const LoginSecurityExplainer = ({
 				onClick={onBack}
 				data-cy="login-security-back"
 			>
-				<ArrowLeftIcon className="loginSecurity__backIcon" />
+				<ArrowBackIosNewIcon
+					className="loginSecurity__backIcon"
+					aria-hidden="true"
+					focusable="false"
+				/>
 				{translate('login.security.explainer.back')}
 			</button>
 		</div>
