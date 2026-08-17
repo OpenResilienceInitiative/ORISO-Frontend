@@ -1177,6 +1177,12 @@ export const SessionStream = ({
 			{pendingCaseHandoverConsent &&
 				pendingCaseHandoverRequestId !== null && (
 					<CaseHandoverConsentCard
+						mode={
+							pendingCaseHandoverConsent.params?.clientConsent ===
+							'OPT_OUT'
+								? 'OPT_OUT'
+								: 'OPT_IN'
+						}
 						isSubmitting={caseHandoverConsentSubmitting}
 						error={caseHandoverConsentError}
 						onApprove={() =>

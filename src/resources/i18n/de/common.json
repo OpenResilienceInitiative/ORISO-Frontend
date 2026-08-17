@@ -2979,7 +2979,12 @@
 			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
 			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
-			"decline": "Zugriff verweigern"
+			"decline": "Zugriff verweigern",
+			"optOut": {
+				"title": "Eine Beratungskraft hat Zugriff auf diese Unterhaltung",
+				"copy": "Der Zugriff ist bereits aktiv. Schalten Sie ihn aus, wenn Sie diesen Zugriff beenden möchten.",
+				"switchLabel": "Zugriff für diese Fallübergabe erlauben"
+			}
 		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",

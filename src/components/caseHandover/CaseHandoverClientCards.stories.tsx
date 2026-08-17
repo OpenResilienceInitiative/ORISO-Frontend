@@ -150,6 +150,33 @@ export const PendingClientConsentMobile: Story = {
 	)
 };
 
+export const ActiveClientOptOut: Story = {
+	name: 'Active access — client opt-out — desktop',
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	)
+};
+
+export const ActiveClientOptOutMobile: Story = {
+	name: 'Active access — client opt-out — phone 390',
+	globals: phone390Globals,
+	render: () => (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	)
+};
+
 export const PendingClientConsentFailed: Story = {
 	name: 'Pending client consent — request failed',
 	parameters: {
@@ -191,8 +218,8 @@ const TookOverNotice = () => {
 		<CaseHandoverSystemMessageCard
 			title={t('caseHandover.systemMessage.tookOverTitle')}
 			subtitle={t('caseHandover.systemMessage.noActionNeeded')}
-			reasonLabel="Other emergency"
-			explanation="My colleague's kids are ill, so I decided it is better if I take care of this client."
+			reasonLabel="Unplanned absence"
+			explanation="The previous counsellor is unexpectedly unavailable, so I will continue this consultation."
 			timestamp="12:54"
 		/>
 	);
@@ -234,44 +261,6 @@ export const NewCounsellorTookOverMobile: Story = {
 	)
 };
 
-/* ------------------------------------------------------------- supervision */
-
-const SupervisionNotice = () => {
-	const { t } = useTranslation();
-	return (
-		<CaseHandoverSystemMessageCard
-			title={t('caseHandover.systemMessage.supervisionTitle')}
-			subtitle={t('caseHandover.systemMessage.noActionNeeded')}
-			timestamp="12:54"
-		>
-			<p style={{ margin: 0 }}>
-				{t('caseHandover.systemMessage.supervisionBody', {
-					advisor: 'Shazia Kausar'
-				})}
-			</p>
-		</CaseHandoverSystemMessageCard>
-	);
-};
-
-export const SupervisionActivated: Story = {
-	name: 'Supervision activated — desktop',
-	render: () => (
-		<Stream>
-			<SupervisionNotice />
-		</Stream>
-	)
-};
-
-export const SupervisionActivatedMobile: Story = {
-	name: 'Supervision activated — phone 390',
-	globals: phone390Globals,
-	render: () => (
-		<Stream compact>
-			<SupervisionNotice />
-		</Stream>
-	)
-};
-
 /* -------------------------------------------------------------- important */
 
 const ImportantNotice = () => {
@@ -280,7 +269,7 @@ const ImportantNotice = () => {
 		<CaseHandoverSystemMessageCard
 			title={t('caseHandover.systemMessage.importantTitle')}
 			subtitle={t('caseHandover.systemMessage.noActionNeeded')}
-			reasonLabel="Counsellor is ill"
+			reasonLabel="Unplanned absence"
 			explanation="Your case was handed over so you don't have to wait."
 			timestamp="09:32"
 		/>

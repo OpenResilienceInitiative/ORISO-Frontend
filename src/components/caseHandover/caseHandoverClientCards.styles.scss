@@ -127,6 +127,17 @@
 	margin-top: 4px;
 }
 
+.caseHandoverMessage__optOutSwitch {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	margin-top: 12px;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 500;
+}
+
 .caseHandoverMessage__error {
 	margin: 12px 0 0;
 	font-size: 14px;

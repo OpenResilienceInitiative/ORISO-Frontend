@@ -2919,7 +2919,12 @@
 			"title": "A counsellor requested access to this conversation",
 			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
-			"decline": "Decline access"
+			"decline": "Decline access",
+			"optOut": {
+				"title": "A counsellor has access to this conversation",
+				"copy": "Access is already active. Turn it off if you want to end this access.",
+				"switchLabel": "Allow access for this case handover"
+			}
 		},
 		"denied": {
 			"copy": "The previous request did not grant content visibility.",
