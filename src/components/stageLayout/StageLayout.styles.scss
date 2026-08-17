@@ -413,6 +413,7 @@
 			// (580px of content); the card grows for it and shrinks back.
 			& > .loginForm.loginForm--securityOpen {
 				width: min($login-security-card-width, calc(60vw - 48px));
+				max-width: $login-security-card-width;
 			}
 		}
 	}
