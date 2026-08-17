@@ -1,3 +1,5 @@
+import { AUTHORITIES } from '../../globalState/helpers/stateHelpers';
+
 interface CaseHandoverInternalDetails {
 	reasonLabel?: string | null;
 	explanation?: string | null;
@@ -7,11 +9,11 @@ interface CaseHandoverInternalDetails {
  * Legacy Matrix events may still contain staff-only case-handover metadata.
  * Fail closed for every viewer who does not have an explicit staff authority.
  */
-export const getVisibleCaseHandoverInternalDetails = (
-	canViewInternalDetails: boolean,
+export const getVisibleCaseHandoverInternalDetailsForViewer = (
+	grantedAuthorities: readonly string[] | undefined,
 	details: CaseHandoverInternalDetails
 ): CaseHandoverInternalDetails => {
-	if (!canViewInternalDetails) {
+	if (!grantedAuthorities?.includes(AUTHORITIES.CONSULTANT_DEFAULT)) {
 		return {};
 	}
 
