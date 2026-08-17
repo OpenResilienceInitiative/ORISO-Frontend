@@ -1,0 +1,79 @@
+# TEMPORARY — delete this branch once the burst has reported.
+#
+# The storybook job lost its browser on ~10% of runs (6 of 56). A single green
+# run after a fix proves nothing: at that rate you would see one 89% of the
+# time even if nothing changed. This runs the suite 30 times in parallel on the
+# fixed config; 30 clean runs would happen by luck only ~4% of the time, so a
+# clean sweep is real evidence and a single disconnect is a refutation.
+name: Storybook flake burst
+
+on:
+  push:
+    branches:
+      - 'ci/flake-burst-**'
+
+jobs:
+  burst:
+    name: burst ${{ matrix.run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    strategy:
+      # Every sample matters — one red run must not cancel the other 29, or the
+      # measurement is lost.
+      fail-fast: false
+      matrix:
+        run:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10
+          - 11
+          - 12
+          - 13
+          - 14
+          - 15
+          - 16
+          - 17
+          - 18
+          - 19
+          - 20
+          - 21
+          - 22
+          - 23
+          - 24
+          - 25
+          - 26
+          - 27
+          - 28
+          - 29
+          - 30
+
+    # Steps mirror the storybook-tests job in ci-pull-request.yml exactly; if
+    # they drift, the burst stops measuring the thing it is meant to measure.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Install Chrome for Vitest browser mode
+        run: node node_modules/playwright/cli.js install --with-deps chrome
+
+      - name: Run Storybook component tests
+        run: npm run test:storybook
