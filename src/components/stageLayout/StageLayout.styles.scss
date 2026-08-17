@@ -31,7 +31,7 @@
 			// While the encryption explainer is open the card is the design's
 			// 700px one — width comes from `.stageLayout__content` below.
 			.loginForm--securityOpen {
-				max-width: 700px;
+				max-width: $login-security-card-width;
 				padding: 44px 60px 34px;
 			}
 		}
@@ -412,7 +412,7 @@
 			// The encryption explainer is drawn on the design's 700px card
 			// (580px of content); the card grows for it and shrinks back.
 			& > .loginForm.loginForm--securityOpen {
-				width: min(700px, calc(60vw - 48px));
+				width: min($login-security-card-width, calc(60vw - 48px));
 			}
 		}
 	}
