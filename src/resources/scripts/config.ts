@@ -46,7 +46,7 @@ export const config: AppConfigInterface = {
 	budibaseSSO: false, // Feature flag to enable SSO on budibase
 	calcomUrl: '',
 	calendarAppUrl: '',
-	enableWalkthrough: false, // Feature flag to enable walkthrough (false by default here & true in the theme repo)
+	enableWalkthrough: true, // Feature flag to enable walkthrough — turned on for the 2026-08-17 demo (default false here, true in the theme repo)
 	multitenancyWithSingleDomainEnabled: false, // Feature flag to enable the multi tenancy with a single domain ex: lands
 	useTenantService: true,
 	useApiClusterSettings: true, // Feature flag to enable the cluster use the cluster settings instead of the config file
