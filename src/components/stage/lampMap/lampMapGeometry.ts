@@ -223,66 +223,105 @@ export interface LampSchedule {
 }
 
 /**
- * Turns a carrier's presence into the order its lamps light up in.
+ * The vertical stretch design 5b applies when testing whether a point sits
+ * inside a cluster: catchments read a touch wider than tall on the map.
+ */
+const CLUSTER_Y_STRETCH = 1.15;
+
+/** Seconds between two lamps of the same seed at pace 1 (design 5b). */
+const SEED_STEP_SECONDS = 0.1;
+
+/**
+ * Turns a carrier's presence into the order its lamps light up in — the
+ * spread design 5b prescribes:
  *
- * Every anchor spreads at the same pace, so an organisation with many seats
- * simply lights up from more places in parallel — which is what "bigger"
- * should look like. Points outside the country, or outside every anchor's
- * reach, are never scheduled: that is what keeps the white spots white.
+ * 1. **Which lamps.** A carrier's nationwide share of the dots inside the
+ *    country, plus every dot inside one of its clusters (each with its own
+ *    share). A dot is scheduled at most once, however many rules pick it.
+ * 2. **In what order.** Every scheduled dot belongs to the nearest of the
+ *    carrier's seed cities; within a seed the dots come on nearest-first,
+ *    one step apart. All seeds run in parallel, so an organisation with many
+ *    seeds simply lights up from more places at once, and the wave from
+ *    each city travels outward. `pace` stretches the step for the slow ones.
  *
- * This is the expensive part of the effect (points x anchors), which is why
- * the caller builds it lazily rather than at start-up.
+ * Points outside the country are never scheduled. This is the expensive part
+ * of the effect (points x anchors), which is why the caller builds it lazily
+ * rather than at start-up.
  */
 export const buildSchedule = (
 	points: readonly LampPoint[],
 	presence: CarrierPresence,
 	projection: MapProjection,
-	stepSeconds = 0.1
+	stepSeconds = SEED_STEP_SECONDS
 ): LampSchedule[] => {
-	const anchors = presence.anchors.map((anchor) =>
-		projection.project(anchor)
-	);
 	// Deterministic per carrier, so the same lamps light every time.
 	const random = seededRandom(
 		1 + presence.id.split('').reduce((sum, c) => sum + c.charCodeAt(0), 0)
 	);
 
-	const groups: { index: number; distance: number }[][] = anchors.map(
-		() => []
-	);
+	const clusters = presence.clusters.map((cluster) => ({
+		anchors: cluster.anchors.map((anchor) => projection.project(anchor)),
+		reach: cluster.reach,
+		share: cluster.share
+	}));
+	const seeds = presence.seeds.map((seed) => projection.project(seed));
 
+	// 1 — which lamps
+	const picked = new Set<number>();
 	points.forEach((point, index) => {
 		if (!point.inside) {
 			return;
 		}
-		let nearest = -1;
+		if (presence.nationwide > 0 && random() < presence.nationwide) {
+			picked.add(index);
+		}
+	});
+	clusters.forEach(({ anchors, reach, share }) => {
+		points.forEach((point, index) => {
+			if (!point.inside) {
+				return;
+			}
+			const inReach = anchors.some(
+				([ax, ay]) =>
+					Math.hypot(
+						point.mapX - ax,
+						(point.mapY - ay) * CLUSTER_Y_STRETCH
+					) < reach
+			);
+			if (inReach && random() < share) {
+				picked.add(index);
+			}
+		});
+	});
+
+	if (seeds.length === 0) {
+		return Array.from(picked, (index) => ({ index, delay: 0 }));
+	}
+
+	// 2 — in what order
+	const groups: { index: number; distance: number }[][] = seeds.map(() => []);
+	picked.forEach((index) => {
+		const point = points[index];
+		let nearest = 0;
 		let nearestDistance = Infinity;
-		for (let a = 0; a < anchors.length; a++) {
-			const [ax, ay] = anchors[a];
-			const distance = Math.hypot(point.mapX - ax, point.mapY - ay);
+		for (let s = 0; s < seeds.length; s++) {
+			const [sx, sy] = seeds[s];
+			const distance = Math.hypot(point.mapX - sx, point.mapY - sy);
 			if (distance < nearestDistance) {
 				nearestDistance = distance;
-				nearest = a;
+				nearest = s;
 			}
-		}
-		if (nearest < 0 || nearestDistance > presence.reach) {
-			return;
-		}
-		if (random() > presence.density) {
-			return;
 		}
 		groups[nearest].push({ index, distance: nearestDistance });
 	});
 
+	const step = stepSeconds * (presence.pace || 1);
 	const schedule: LampSchedule[] = [];
 	groups.forEach((group) => {
 		group
 			.sort((a, b) => a.distance - b.distance)
 			.forEach((entry, rank) => {
-				schedule.push({
-					index: entry.index,
-					delay: rank * stepSeconds
-				});
+				schedule.push({ index: entry.index, delay: rank * step });
 			});
 	});
 	return schedule;

@@ -1,23 +1,19 @@
 /**
- * Where the partner organisations shown on the stage are actually present.
+ * Where the partner organisations shown on the stage are present — as the
+ * picture design 5b ("Lichter der Hoffnung") paints it.
  *
  * ## This is schematic, not a data source
  *
- * The map on the login stage is a picture of "together they cover a lot of
- * ground", not a directory. The anchors below are the publicly documented
- * seats and focus regions of each organisation, not the platform's own agency
- * records — see {@link loadCarrierPresence} for how the real data is meant to
- * get in here later.
+ * The map on the login stage says "together they cover a lot of ground", it is
+ * not a directory. Every carrier below is described the way the design does
+ * it: a **nationwide share** of the dots inside the country (how much of the
+ * whole map an organisation reaches at all), a few **clusters** around the
+ * places it demonstrably concentrates on, and the **seed cities** its wave of
+ * lights spreads out from. Bigger organisations light up from more cities at
+ * once and reach further; small specialist services stay a handful of islands.
  *
- * Two rules keep the picture honest:
- *
- * 1. **No carrier covers the whole country.** Not even Caritas. Everything is
- *    anchored to places it demonstrably reaches, so the gaps stay gaps. A map
- *    where every square kilometre lights up for a single organisation reads as
- *    marketing; the empty patches are what make the combined coverage — and
- *    the fact that the carriers complement each other — believable.
- * 2. **Reach and density are per carrier.** A nationwide association with 700
- *    locations does not look like a specialist service at nine sites.
+ * None of these numbers are counts or addresses — see {@link loadCarrierPresence}
+ * for how the platform's own agency data is meant to replace them one day.
  */
 
 export type GeoPoint = readonly [lon: number, lat: number];
@@ -31,9 +27,8 @@ export type CarrierId =
 	| 'via'
 	| 'raphael';
 
-export interface CarrierPresence {
-	id: CarrierId;
-	/** Places the organisation reaches, as lon/lat. */
+export interface PresenceCluster {
+	/** Places the organisation concentrates on, as lon/lat. */
 	anchors: readonly GeoPoint[];
 	/**
 	 * Radius around each anchor in normalised map units (the map is 1x1), so
@@ -41,171 +36,260 @@ export interface CarrierPresence {
 	 */
 	reach: number;
 	/** Share of the grid points inside `reach` that light up, 0..1. */
-	density: number;
+	share: number;
+}
+
+export interface CarrierPresence {
+	id: CarrierId;
+	/**
+	 * Share of *all* grid points inside the country that light up regardless
+	 * of location, 0..1. Caritas is close to 1 — it is present in every
+	 * diocese — a specialist service is 0.
+	 */
+	nationwide: number;
+	/** Regional focus on top of the nationwide share. */
+	clusters: readonly PresenceCluster[];
+	/**
+	 * Cities the wave of lights spreads out from. Every seed spreads at the
+	 * same pace, so an organisation with many seeds simply lights up from more
+	 * places in parallel — which is what "bigger" should look like.
+	 */
+	seeds: readonly GeoPoint[];
+	/**
+	 * Slows the spread down: 1 is the design's default pace, 3 makes the same
+	 * number of lamps take three times as long to come on.
+	 */
+	pace: number;
 	/** Human-readable source note, surfaced in the Storybook docs. */
 	note: string;
 }
 
-/**
- * The 27 German (arch)dioceses. Caritas, Malteser and Kreuzbund are all
- * organised along them, so they share this list and differ in reach/density.
- */
-const DIOCESE_SEATS: readonly GeoPoint[] = [
-	[6.08, 50.78], // Aachen
-	[10.9, 48.37], // Augsburg
-	[10.89, 49.89], // Bamberg
-	[13.4, 52.52], // Berlin
-	[13.74, 51.05], // Dresden-Meissen
-	[11.19, 48.89], // Eichstaett
-	[11.03, 50.98], // Erfurt
-	[7.01, 51.46], // Essen
-	[7.85, 47.99], // Freiburg
-	[9.68, 50.55], // Fulda
-	[14.99, 51.15], // Goerlitz
-	[10.0, 53.55], // Hamburg
-	[9.95, 52.15], // Hildesheim
-	[6.96, 50.94], // Koeln
-	[8.06, 50.39], // Limburg
-	[11.63, 52.13], // Magdeburg
-	[8.27, 50.0], // Mainz
-	[11.58, 48.14], // Muenchen und Freising
-	[7.63, 51.96], // Muenster
-	[8.05, 52.28], // Osnabrueck
-	[8.75, 51.72], // Paderborn
-	[13.46, 48.57], // Passau
-	[12.1, 49.02], // Regensburg
-	[8.93, 48.48], // Rottenburg-Stuttgart
-	[8.43, 49.32], // Speyer
-	[6.64, 49.76], // Trier
-	[9.93, 49.79] // Wuerzburg
-];
+/* --- cities, lon/lat ------------------------------------------------------ */
+
+const AACHEN: GeoPoint = [6.08, 50.78];
+const AUGSBURG: GeoPoint = [10.9, 48.37];
+const BERLIN: GeoPoint = [13.4, 52.52];
+const BREMEN: GeoPoint = [8.8, 53.08];
+const DORTMUND: GeoPoint = [7.47, 51.51];
+const DRESDEN: GeoPoint = [13.74, 51.05];
+const DUESSELDORF: GeoPoint = [6.78, 51.23];
+const ERFURT: GeoPoint = [11.03, 50.98];
+const ESSEN: GeoPoint = [7.01, 51.46];
+const FRANKFURT: GeoPoint = [8.68, 50.11];
+const FREIBURG: GeoPoint = [7.85, 47.99];
+const HAMBURG: GeoPoint = [10.0, 53.55];
+const HANNOVER: GeoPoint = [9.73, 52.37];
+const KOELN: GeoPoint = [6.96, 50.94];
+const LEIPZIG: GeoPoint = [12.37, 51.34];
+const MAGDEBURG: GeoPoint = [11.63, 52.13];
+const MAINZ: GeoPoint = [8.27, 50.0];
+const MUENCHEN: GeoPoint = [11.58, 48.14];
+const MUENSTER: GeoPoint = [7.63, 51.96];
+const NUERNBERG: GeoPoint = [11.08, 49.45];
+const OSNABRUECK: GeoPoint = [8.05, 52.28];
+const PADERBORN: GeoPoint = [8.75, 51.72];
+const PASSAU: GeoPoint = [13.46, 48.57];
+const REGENSBURG: GeoPoint = [12.1, 49.02];
+const ROSTOCK: GeoPoint = [12.14, 54.09];
+const STUTTGART: GeoPoint = [9.18, 48.78];
+const WUERZBURG: GeoPoint = [9.93, 49.79];
 
 /** Rhineland / Westphalia — the historic heartland of SkF, SkM and Kreuzbund. */
 const WEST: readonly GeoPoint[] = [
-	[6.96, 50.94], // Koeln
-	[6.78, 51.23], // Duesseldorf
-	[7.47, 51.51], // Dortmund
-	[7.63, 51.96], // Muenster
-	[8.75, 51.72], // Paderborn
-	[7.01, 51.46], // Essen
-	[6.08, 50.78], // Aachen
-	[7.22, 51.27], // Wuppertal
-	[7.1, 50.74] // Bonn
+	KOELN,
+	DUESSELDORF,
+	DORTMUND,
+	MUENSTER,
+	PADERBORN,
+	ESSEN,
+	AACHEN
 ];
 
-const BIG_CITIES: readonly GeoPoint[] = [
-	[13.4, 52.52], // Berlin
-	[10.0, 53.55], // Hamburg
-	[11.58, 48.14], // Muenchen
-	[6.96, 50.94], // Koeln
-	[8.68, 50.11], // Frankfurt
-	[9.18, 48.78], // Stuttgart
-	[6.78, 51.23], // Duesseldorf
-	[7.47, 51.51], // Dortmund
-	[12.37, 51.34], // Leipzig
-	[9.73, 52.37], // Hannover
-	[11.08, 49.45], // Nuernberg
-	[8.8, 53.08], // Bremen
-	[13.74, 51.05], // Dresden
-	[12.14, 54.09], // Rostock
-	[10.14, 54.32], // Kiel
-	[11.63, 52.13] // Magdeburg
+const IN_VIA_CITIES: readonly GeoPoint[] = [
+	HAMBURG,
+	BERLIN,
+	HANNOVER,
+	KOELN,
+	DORTMUND,
+	PADERBORN,
+	FRANKFURT,
+	MAINZ,
+	WUERZBURG,
+	NUERNBERG,
+	MUENCHEN,
+	STUTTGART,
+	FREIBURG,
+	DRESDEN,
+	ERFURT,
+	OSNABRUECK
 ];
+
+const RAPHAEL_SITES: readonly GeoPoint[] = [
+	HAMBURG,
+	HANNOVER,
+	OSNABRUECK,
+	BERLIN,
+	KOELN,
+	FRANKFURT,
+	STUTTGART,
+	FREIBURG,
+	MUENCHEN
+];
+
+/* --- the seven, as design 5b tunes them ----------------------------------- */
 
 const STATIC_PRESENCE: readonly CarrierPresence[] = [
 	{
 		id: 'caritas',
-		anchors: [...DIOCESE_SEATS, ...BIG_CITIES],
-		reach: 0.115,
-		density: 0.82,
-		note: 'Present in all 27 dioceses with local branches. Widest reach of the seven — but the sparsely covered north-east and the Eifel/Altmark gaps are real, not a rendering artefact.'
+		nationwide: 0.99,
+		clusters: [],
+		seeds: [
+			BERLIN,
+			HAMBURG,
+			MUENCHEN,
+			KOELN,
+			FRANKFURT,
+			STUTTGART,
+			DUESSELDORF,
+			DORTMUND,
+			LEIPZIG,
+			DRESDEN,
+			HANNOVER,
+			NUERNBERG,
+			BREMEN,
+			MUENSTER,
+			FREIBURG,
+			ROSTOCK,
+			ERFURT,
+			MAGDEBURG
+		],
+		pace: 1,
+		note: 'Present in all 27 dioceses with local branches — the whole country lights up, from eighteen cities at once, and it takes its time.'
 	},
 	{
 		id: 'malteser',
-		anchors: [...DIOCESE_SEATS, ...BIG_CITIES],
-		reach: 0.085,
-		density: 0.5,
-		note: 'Around 700 locations and 29 diocesan offices — nationwide, but thinner between the centres.'
+		nationwide: 0.5,
+		clusters: [
+			{
+				anchors: [KOELN, MUENCHEN, BERLIN, DRESDEN, MAINZ],
+				reach: 0.12,
+				share: 0.8
+			}
+		],
+		seeds: [
+			KOELN,
+			MUENCHEN,
+			BERLIN,
+			DRESDEN,
+			MAINZ,
+			HAMBURG,
+			HANNOVER,
+			STUTTGART,
+			NUERNBERG,
+			FREIBURG,
+			MAGDEBURG,
+			PASSAU
+		],
+		pace: 1,
+		note: 'Around 700 locations and 29 diocesan offices — nationwide, a bit thinner than Caritas, denser around the big centres.'
 	},
 	{
 		id: 'kreuzbund',
-		anchors: [...DIOCESE_SEATS, ...WEST],
-		reach: 0.075,
-		density: 0.45,
+		nationwide: 0.3,
+		clusters: [
+			{
+				anchors: [
+					...WEST,
+					PADERBORN,
+					OSNABRUECK,
+					WUERZBURG,
+					REGENSBURG
+				],
+				reach: 0.11,
+				share: 0.85
+			}
+		],
+		seeds: [
+			PADERBORN,
+			KOELN,
+			MUENSTER,
+			OSNABRUECK,
+			WUERZBURG,
+			REGENSBURG,
+			FREIBURG,
+			ERFURT,
+			HANNOVER,
+			MUENCHEN
+		],
+		pace: 1,
 		note: 'Roughly 1,400 self-help groups in 27 diocesan associations, strongest in the west.'
 	},
 	{
 		id: 'skf',
-		anchors: [
-			...WEST,
-			[9.73, 52.37], // Hannover
-			[9.18, 48.78], // Stuttgart
-			[11.58, 48.14], // Muenchen
-			[10.9, 48.37], // Augsburg
-			[7.85, 47.99], // Freiburg
-			[13.4, 52.52], // Berlin
-			[8.68, 50.11], // Frankfurt
-			[9.93, 49.79], // Wuerzburg
-			[8.05, 52.28] // Osnabrueck
+		nationwide: 0.16,
+		clusters: [
+			{
+				anchors: [
+					...WEST,
+					HANNOVER,
+					STUTTGART,
+					MUENCHEN,
+					AUGSBURG,
+					FREIBURG
+				],
+				reach: 0.1,
+				share: 0.75
+			}
 		],
-		reach: 0.055,
-		density: 0.6,
+		seeds: [
+			DORTMUND,
+			KOELN,
+			HANNOVER,
+			STUTTGART,
+			MUENCHEN,
+			AUGSBURG,
+			FREIBURG,
+			BERLIN
+		],
+		pace: 1,
 		note: 'Roughly 130-150 local associations, head office Dortmund.'
 	},
 	{
 		id: 'skm',
-		anchors: [
-			...WEST,
-			[8.27, 50.0], // Mainz
-			[8.68, 50.11], // Frankfurt
-			[9.73, 52.37], // Hannover
-			[7.85, 47.99], // Freiburg
-			[11.58, 48.14] // Muenchen
+		nationwide: 0,
+		clusters: [
+			{
+				anchors: [
+					...WEST,
+					MAINZ,
+					FRANKFURT,
+					HANNOVER,
+					FREIBURG,
+					MUENCHEN
+				],
+				reach: 0.1,
+				share: 0.8
+			}
 		],
-		reach: 0.05,
-		density: 0.6,
+		seeds: [KOELN, DUESSELDORF, DORTMUND, MAINZ, MUENCHEN, HANNOVER],
+		pace: 1,
 		note: 'Roughly 120 associations from eleven dioceses, focus on the Rhineland and Westphalia.'
 	},
 	{
 		id: 'via',
-		anchors: [
-			[10.0, 53.55], // Hamburg
-			[13.4, 52.52], // Berlin
-			[9.73, 52.37], // Hannover
-			[6.96, 50.94], // Koeln
-			[7.47, 51.51], // Dortmund
-			[8.75, 51.72], // Paderborn
-			[8.68, 50.11], // Frankfurt
-			[8.27, 50.0], // Mainz
-			[9.93, 49.79], // Wuerzburg
-			[11.08, 49.45], // Nuernberg
-			[11.58, 48.14], // Muenchen
-			[9.18, 48.78], // Stuttgart
-			[7.85, 47.99], // Freiburg
-			[13.74, 51.05], // Dresden
-			[11.03, 50.98], // Erfurt
-			[8.05, 52.28] // Osnabrueck
-		],
-		reach: 0.04,
-		density: 0.85,
+		nationwide: 0,
+		clusters: [{ anchors: IN_VIA_CITIES, reach: 0.045, share: 0.9 }],
+		seeds: IN_VIA_CITIES,
+		pace: 1,
 		note: 'Active in more than 70 cities — city by city, not area-wide.'
 	},
 	{
 		id: 'raphael',
-		anchors: [
-			[10.0, 53.55], // Hamburg
-			[9.73, 52.37], // Hannover
-			[8.05, 52.28], // Osnabrueck
-			[13.4, 52.52], // Berlin
-			[6.96, 50.94], // Koeln
-			[8.68, 50.11], // Frankfurt
-			[9.18, 48.78], // Stuttgart
-			[7.85, 47.99], // Freiburg
-			[11.58, 48.14] // Muenchen
-		],
-		reach: 0.032,
-		density: 1,
-		note: 'Specialist migration counselling at a handful of sites — deliberately the sparsest picture of the seven.'
+		nationwide: 0,
+		clusters: [{ anchors: RAPHAEL_SITES, reach: 0.05, share: 1 }],
+		seeds: RAPHAEL_SITES,
+		pace: 3.2,
+		note: 'Specialist migration counselling at a handful of sites — the sparsest picture of the seven, and the slowest to come on.'
 	}
 ];
 
@@ -224,7 +308,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
  * to change.
  *
  * Whatever the source, the result must stay a picture and never a claim: no
- * counts, no "we are here" per address, and gaps must remain visible.
+ * counts, no "we are here" per address.
  */
 export const loadCarrierPresence = async (): Promise<
 	readonly CarrierPresence[]

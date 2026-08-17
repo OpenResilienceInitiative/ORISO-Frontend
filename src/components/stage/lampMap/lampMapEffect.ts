@@ -89,11 +89,6 @@ export const createLampMap = async (
 		presenceList.map((entry) => [entry.id, entry])
 	);
 
-	const dpr = Math.min(2, window.devicePixelRatio || 1);
-	const width = canvas.clientWidth;
-	const height = canvas.clientHeight;
-	canvas.width = width * dpr;
-	canvas.height = height * dpr;
 	const ctx = canvas.getContext('2d');
 	if (!ctx) {
 		return {
@@ -103,22 +98,43 @@ export const createLampMap = async (
 			destroy: () => undefined
 		};
 	}
-	ctx.scale(dpr, dpr);
 
 	const projection: MapProjection = createProjection();
-	const grid: PointGrid = createPointGrid(projection, width, height);
-	const { points } = grid;
 	const sprite = createGlowSprite();
+
+	/*
+	 * Everything that depends on the panel's size lives behind `fit()`, because
+	 * the size is not settled when the module comes up: on a first visit the
+	 * stage starts at 100vw and slides to 40vw over 2.5 s, and a map measured
+	 * at 100vw would afterwards be squeezed to a third of its width by CSS.
+	 * A ResizeObserver below re-fits when the panel changes size.
+	 */
+	let width = 0;
+	let height = 0;
+	let points: PointGrid['points'] = [];
+	// Stage 4: the schedules are the expensive part (points x anchors x
+	// carriers), so they are only built for a carrier that is actually asked
+	// for, and then cached — until the grid is rebuilt.
+	const schedules = new Map<CarrierId, LampSchedule[]>();
+
+	const fit = () => {
+		const dpr = Math.min(2, window.devicePixelRatio || 1);
+		width = canvas.clientWidth;
+		height = canvas.clientHeight;
+		canvas.width = Math.max(1, Math.round(width * dpr));
+		canvas.height = Math.max(1, Math.round(height * dpr));
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		const grid: PointGrid = createPointGrid(projection, width, height);
+		points = grid.points;
+		schedules.clear();
+	};
+	fit();
 
 	const reducedMotion = window.matchMedia?.(
 		'(prefers-reduced-motion: reduce)'
 	);
 	const isStill = () => Boolean(reducedMotion?.matches);
 
-	// Stage 4: the schedules are the expensive part (points x anchors x
-	// carriers), so they are only built for a carrier that is actually asked
-	// for, and then cached.
-	const schedules = new Map<CarrierId, LampSchedule[]>();
 	const scheduleFor = (carrier: CarrierId): LampSchedule[] => {
 		const cached = schedules.get(carrier);
 		if (cached) {
@@ -157,7 +173,7 @@ export const createLampMap = async (
 	});
 
 	let hero = spawnHero();
-	const held: { x: number; y: number; links: typeof points }[] = [];
+	let held: { x: number; y: number; links: typeof points }[] = [];
 	let heroEnabled = false;
 	let carrier: CarrierId | null = null;
 	let appliedCarrier: CarrierId | null = null;
@@ -165,6 +181,32 @@ export const createLampMap = async (
 	let previousTime = 0;
 	let frame = 0;
 	let firstFramePainted = false;
+
+	// Re-fit once the panel has stopped changing size. The wandering point
+	// and its net are anchored to grid points, so they start over; the
+	// selected carrier is re-applied on the next frame.
+	let resizeTimer = 0;
+	const refit = () => {
+		window.clearTimeout(resizeTimer);
+		resizeTimer = window.setTimeout(() => {
+			if (
+				canvas.clientWidth === width &&
+				canvas.clientHeight === height
+			) {
+				return;
+			}
+			fit();
+			hero = spawnHero();
+			held = [];
+			appliedCarrier = null;
+		}, 150);
+	};
+	const resizeObserver =
+		typeof ResizeObserver === 'function' ? new ResizeObserver(refit) : null;
+	resizeObserver?.observe(canvas);
+	if (!resizeObserver) {
+		window.addEventListener('resize', refit);
+	}
 
 	const applyCarrier = (time: number) => {
 		points.forEach((point) => {
@@ -467,6 +509,9 @@ export const createLampMap = async (
 		},
 		destroy: () => {
 			cancelAnimationFrame(frame);
+			window.clearTimeout(resizeTimer);
+			resizeObserver?.disconnect();
+			window.removeEventListener('resize', refit);
 			container.removeEventListener('mousemove', handlePointerMove);
 			container.removeEventListener('mouseleave', handlePointerLeave);
 		}
