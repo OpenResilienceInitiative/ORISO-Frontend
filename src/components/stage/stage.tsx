@@ -71,7 +71,16 @@ export const Stage = ({
 			setIsOpen(true);
 		}
 
-		const onTransitionEnd = () => {
+		// Only the panel's own width transition counts — a focused mark's
+		// opacity/transform transition bubbles up here too and would mark the
+		// stage ready (and interactive) while it is still sliding.
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (
+				event.target !== rootNodeRef.current ||
+				event.propertyName !== 'width'
+			) {
+				return;
+			}
 			setHasAnimationFinished(true);
 		};
 

@@ -118,9 +118,17 @@ export const createLampMap = async (
 	const schedules = new Map<CarrierId, LampSchedule[]>();
 
 	const fit = () => {
+		// A panel that has not been laid out yet measures 0x0; fitting to that
+		// would leave an empty grid behind (and a NaN dim, see below). Wait for
+		// the ResizeObserver to report a real size instead.
+		const nextWidth = canvas.clientWidth;
+		const nextHeight = canvas.clientHeight;
+		if (nextWidth < 1 || nextHeight < 1) {
+			return;
+		}
 		const dpr = Math.min(2, window.devicePixelRatio || 1);
-		width = canvas.clientWidth;
-		height = canvas.clientHeight;
+		width = nextWidth;
+		height = nextHeight;
 		canvas.width = Math.max(1, Math.round(width * dpr));
 		canvas.height = Math.max(1, Math.round(height * dpr));
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -288,7 +296,9 @@ export const createLampMap = async (
 			litSum += point.glow;
 		}
 
-		const litFraction = Math.min(1, litSum / (points.length * 0.35));
+		const litFraction = points.length
+			? Math.min(1, litSum / (points.length * 0.35))
+			: 0;
 		const targetDim = carrier ? Math.max(0.25, litFraction) : litFraction;
 		dim += (targetDim - dim) * Math.min(1, delta * 1.6);
 		if (dim > 0.01) {

@@ -12,7 +12,7 @@
  * lights spreads out from. Bigger organisations light up from more cities at
  * once and reach further; small specialist services stay a handful of islands.
  *
- * None of these numbers are counts or addresses — see {@link loadCarrierPresence}
+ * None of this is a count or an address — see {@link loadCarrierPresence}
  * for how the platform's own agency data is meant to replace them one day.
  */
 
@@ -164,7 +164,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			MAGDEBURG
 		],
 		pace: 1,
-		note: 'Present in all 27 dioceses with local branches — the whole country lights up, from eighteen cities at once, and it takes its time.'
+		note: 'Present in every diocese with local branches — the whole country lights up, from many cities at once, and it takes its time.'
 	},
 	{
 		id: 'malteser',
@@ -191,7 +191,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			PASSAU
 		],
 		pace: 1,
-		note: 'Around 700 locations and 29 diocesan offices — nationwide, a bit thinner than Caritas, denser around the big centres.'
+		note: 'Nationwide, a bit thinner than Caritas, denser around the big centres.'
 	},
 	{
 		id: 'kreuzbund',
@@ -222,7 +222,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			MUENCHEN
 		],
 		pace: 1,
-		note: 'Roughly 1,400 self-help groups in 27 diocesan associations, strongest in the west.'
+		note: 'Self-help groups organised along the dioceses, strongest in the west.'
 	},
 	{
 		id: 'skf',
@@ -252,7 +252,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			BERLIN
 		],
 		pace: 1,
-		note: 'Roughly 130-150 local associations, head office Dortmund.'
+		note: 'Local associations, head office Dortmund, densest in the west.'
 	},
 	{
 		id: 'skm',
@@ -273,7 +273,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 		],
 		seeds: [KOELN, DUESSELDORF, DORTMUND, MAINZ, MUENCHEN, HANNOVER],
 		pace: 1,
-		note: 'Roughly 120 associations from eleven dioceses, focus on the Rhineland and Westphalia.'
+		note: 'Local associations with a focus on the Rhineland and Westphalia.'
 	},
 	{
 		id: 'via',
@@ -281,7 +281,7 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 		clusters: [{ anchors: IN_VIA_CITIES, reach: 0.045, share: 0.9 }],
 		seeds: IN_VIA_CITIES,
 		pace: 1,
-		note: 'Active in more than 70 cities — city by city, not area-wide.'
+		note: 'Active city by city, not area-wide.'
 	},
 	{
 		id: 'raphael',

@@ -96,6 +96,7 @@ describe('createLampMap sizing (#1135)', () => {
 		container.appendChild(canvas);
 		const handle = await createLampMap(container, canvas);
 		const before = canvas.width;
+		expect(resizeCallback).not.toBeNull();
 		resizeCallback?.([]);
 		vi.advanceTimersByTime(200);
 		expect(canvas.width).toBe(before);

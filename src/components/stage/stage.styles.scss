@@ -161,6 +161,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		// `fit()` in lampMapEffect.ts) and the map fades in over the result.
 		opacity: 0;
 		transition: opacity 500ms ease 200ms;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
 	}
 
 	&.stage--no-animation &__lampMap,

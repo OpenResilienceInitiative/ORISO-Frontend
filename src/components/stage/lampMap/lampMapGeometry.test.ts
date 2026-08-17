@@ -102,6 +102,23 @@ describe('buildSchedule (design 5b)', () => {
 		);
 	});
 
+	it('lights a seedless carrier all at once', () => {
+		const schedule = buildSchedule(
+			grid.points,
+			{
+				id: 'caritas',
+				nationwide: 0.5,
+				clusters: [],
+				seeds: [],
+				pace: 1,
+				note: 'test fixture'
+			},
+			projection
+		);
+		expect(schedule.length).toBeGreaterThan(0);
+		expect(schedule.every(({ delay }) => delay === 0)).toBe(true);
+	});
+
 	it('lets a slow carrier take its time', async () => {
 		const [fast, slow] = await Promise.all([
 			scheduleFor('via'),
