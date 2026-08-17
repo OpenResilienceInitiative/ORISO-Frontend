@@ -202,33 +202,10 @@ describe('resolveErstantwortBausteine — client-side triggers (no event)', () =
 
 		expect(resolved.status).toBe('ok');
 		expect(resolved.bausteine.map((b) => b.id)).toEqual([
-			'enquiryReceived',
-			'notificationChoice',
-			'deviceLimit',
 			'saveCredentials',
 			'displayName'
 		]);
-		expect(
-			resolved.bausteine.find((b) => b.id === 'saveCredentials')?.body
-		).toContain('Anmeldenamen');
-	});
-
-	it('reassures before it limits — the counselling survives a lost device', () => {
-		const { bausteine } = resolveErstantwortBausteine({
-			trigger: 'AFTER_ENQUIRY_DISPATCHED',
-			context: { conversationType: 'AGENCY_COUNSELLING' },
-			translate,
-			state: baseState
-		});
-
-		const deviceLimit = bausteine.find((b) => b.id === 'deviceLimit');
-
-		// "Beratung geht weiter" has to come before "Ersatzschlüssel", or the
-		// message reads as "everything you wrote is about to be lost".
-		expect(
-			deviceLimit?.body.indexOf('geht die Beratung ganz normal weiter')
-		).toBeLessThan(deviceLimit?.body.indexOf('Ersatzschlüssel') ?? -1);
-		expect(deviceLimit?.action?.kind).toBe('SHOW_RECOVERY_KEY');
+		expect(resolved.bausteine[0].body).toContain('Anmeldenamen');
 	});
 
 	it('respects the modality assignment — Live Chat gets no post-dispatch Bausteine', () => {

@@ -3,8 +3,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
-import { NotificationChoiceCard } from './NotificationChoiceCard';
-import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
@@ -188,93 +186,9 @@ export const AfterEnquiryDispatched: Story = {
 		}).bausteine,
 		skipAnimation: true,
 		slots: {
-			enquiryReceived: <EnquiryReceivedIllustration />,
-			notificationChoice: (
-				<NotificationChoiceCard onChoose={() => undefined} />
-			),
 			saveCredentials: <SaveCredentialsCard userName="katze_mika_1234" />
 		}
 	}
-};
-
-/**
- * **"Wie sollen wir Sie erreichen?", close up.** Three stacked, full-width
- * targets rather than a form: this lands on someone who has just written about
- * something hard and wants an answer, not homework — recognising an option is
- * cheaper than producing an address.
- *
- * The browser option never claims to be the equal of an e-mail. It reaches
- * this device and this browser only, and on iOS not until the page sits on the
- * home screen, so the hint says so instead of finding out later.
- */
-export const NotificationChoice: Story = {
-	args: {
-		skipAnimation: true,
-		bausteine: resolveErstantwortBausteine({
-			trigger: 'AFTER_ENQUIRY_DISPATCHED',
-			context: { conversationType: 'AGENCY_COUNSELLING' },
-			translate,
-			state: OPEN_STATE
-		}).bausteine.filter((baustein) => baustein.id === 'notificationChoice'),
-		slots: {
-			notificationChoice: (
-				<NotificationChoiceCard onChoose={() => undefined} />
-			)
-		}
-	}
-};
-
-/**
- * **The same question where the browser cannot deliver.** No browser option is
- * offered at all — an unkept promise here means a person waits for a signal
- * that never arrives.
- */
-export const NotificationChoiceWithoutBrowserSupport: Story = {
-	...NotificationChoice,
-	args: {
-		...NotificationChoice.args,
-		slots: {
-			notificationChoice: (
-				<NotificationChoiceCard
-					isBrowserNotificationSupported={false}
-					onChoose={() => undefined}
-				/>
-			)
-		}
-	}
-};
-
-/**
- * **The device limit, said without scaring anyone.** The reassurance comes
- * first and the limit second, because the limit alone reads as "you are about
- * to lose everything".
- *
- * What is true: the counsellor keeps the conversation and picks it up on any
- * device, so the counselling itself is never lost. Only the person's own view
- * of what they already wrote depends on this device — and that is exactly what
- * the Ersatzschlüssel from ADR-019 restores.
- */
-export const DeviceLimit: Story = {
-	args: {
-		skipAnimation: true,
-		bausteine: resolveErstantwortBausteine({
-			trigger: 'AFTER_ENQUIRY_DISPATCHED',
-			context: { conversationType: 'AGENCY_COUNSELLING' },
-			translate,
-			state: OPEN_STATE
-		}).bausteine.filter((baustein) => baustein.id === 'deviceLimit')
-	}
-};
-
-/**
- * **The whole post-dispatch sequence on a 390px phone**, staged as it actually
- * arrives. The reference user is older and on a phone: every target is stacked
- * and full width, and nothing needs a precise tap.
- */
-export const AfterEnquiryDispatchedMobile: Story = {
-	...AfterEnquiryDispatched,
-	globals: phone390Globals,
-	args: { ...AfterEnquiryDispatched.args, skipAnimation: false }
 };
 
 /**

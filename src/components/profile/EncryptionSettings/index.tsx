@@ -253,7 +253,7 @@ export const EncryptionSettingsPanel = ({
 				recoverError instanceof InvalidRecoveryKeyError
 					? t(
 							'profile.encryption.recover.invalidKey',
-							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
+							'Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
 						)
 					: t(
 							'profile.encryption.recover.error',
@@ -292,7 +292,10 @@ export const EncryptionSettingsPanel = ({
 		id: 'encryptionRecoveryKey',
 		name: 'encryptionRecoveryKey',
 		type: 'text',
-		label: t('profile.encryption.recover.inputLabel', 'Ersatzschlüssel'),
+		label: t(
+			'profile.encryption.recover.inputLabel',
+			'Wiederherstellungsschlüssel'
+		),
 		content: recoveryInput
 	};
 
@@ -308,7 +311,7 @@ export const EncryptionSettingsPanel = ({
 			<Text
 				text={t(
 					'profile.encryption.description',
-					'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Ersatzschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.'
+					'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.'
 				)}
 				type="standard"
 				className="tertiary"
@@ -365,7 +368,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.setup.explainer',
-							'Richten Sie einmalig einen Ersatzschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.'
+							'Richten Sie einmalig einen Wiederherstellungsschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.'
 						)}
 						type="standard"
 					/>
@@ -373,7 +376,7 @@ export const EncryptionSettingsPanel = ({
 						item={{
 							label: t(
 								'profile.encryption.setup.cta',
-								'Ersatzschlüssel einrichten'
+								'Wiederherstellungsschlüssel einrichten'
 							),
 							type: BUTTON_TYPES.PRIMARY,
 							disabled: busy
@@ -390,11 +393,11 @@ export const EncryptionSettingsPanel = ({
 							keyFromSilentSetup
 								? t(
 										'profile.encryption.showKey.silentExplainer',
-										'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.'
+										'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Wiederherstellungsschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.'
 									)
 								: t(
 										'profile.encryption.showKey.explainer',
-										'Das ist Ihr Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
+										'Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
 									)
 						}
 						type="standard"
@@ -476,7 +479,7 @@ export const EncryptionSettingsPanel = ({
 						item={{
 							label: t(
 								'profile.encryption.changeKey.cta',
-								'Ersatzschlüssel ändern'
+								'Wiederherstellungsschlüssel ändern'
 							),
 							type: BUTTON_TYPES.SECONDARY,
 							disabled: busy
@@ -487,7 +490,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.reset.explainer',
-							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
+							'Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
 						)}
 						type="standard"
 						className="tertiary"
@@ -519,7 +522,7 @@ export const EncryptionSettingsPanel = ({
 						<Text
 							text={t(
 								'profile.encryption.outOfSync.warning',
-								'Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Ersatzschlüssel ein, damit Ihr Verlauf hier lesbar wird.'
+								'Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Wiederherstellungsschlüssel ein, damit Ihr Verlauf hier lesbar wird.'
 							)}
 							type="standard"
 						/>
@@ -545,7 +548,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.reset.explainer',
-							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
+							'Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
 						)}
 						type="standard"
 						className="tertiary"

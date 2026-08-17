@@ -141,7 +141,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		expect(screen.getByRole('dialog')).toBeTruthy();
 		expect(
 			screen.getByRole('textbox', {
-				name: /Ersatzschlüssel/i
+				name: /Wiederherstellungsschlüssel/i
 			})
 		).toBeTruthy();
 		expect(
@@ -156,7 +156,7 @@ describe('KeyBackupRecoveryPrompt (#437 login-time recovery)', () => {
 		renderPrompt(buildService());
 
 		const input = await screen.findByRole('textbox', {
-			name: /Ersatzschlüssel/i
+			name: /Wiederherstellungsschlüssel/i
 		});
 		fireEvent.change(input, { target: { value: 'valid recovery key' } });
 		fireEvent.click(screen.getByRole('button', { name: /Tresor öffnen/i }));
