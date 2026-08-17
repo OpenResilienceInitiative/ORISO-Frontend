@@ -101,19 +101,41 @@ export const normalizeConsentTextResponse = (
 };
 
 /**
+ * The outcome of asking for a department's consent sentence.
+ *
+ * `ok` with a null `consentText` and `unavailable` are deliberately different
+ * answers, because they mean opposite things for a Fachbereich the backend has
+ * already told us carries a published policy:
+ *
+ * - `ok` + null — the backend answered, and there is no Träger sentence. The
+ *   platform wording applies, and accepting it is correct.
+ * - `unavailable` — we do not know what applies. Collapsing this into the
+ *   first would let a dropped request enable acceptance of the platform
+ *   sentence for a department whose own wording is the one in force: the user
+ *   agrees to a text that does not govern them. The consent gate therefore
+ *   fails **closed** — "we could not load it" must never degrade into "the
+ *   platform text applies".
+ */
+export type ConsentTextResult =
+	| { status: 'ok'; consentText: ConsentTextData | null }
+	| { status: 'unavailable' };
+
+/**
  * Loads the Träger-authored consent sentence for a department (agency x topic).
  * Public endpoint, no auth.
  *
- * Degrades to `null` on every failure — a backend without #250 answers without
- * the field, an older one 404s, and the network can be down. In all three
- * cases the caller renders today's static sentence, so an unconfigured or
- * unreachable backend can never leave the consent checkbox unlabelled.
+ * A backend that predates this epic answers 200 without the field, which is an
+ * honest `ok` + null and yields today's static sentence. A backend without the
+ * endpoint at all also reports `hasPublishedDpp: false`, so nothing is
+ * requested for it in the first place. What reaches `unavailable` is the case
+ * that matters: the backend said this Fachbereich has a policy, and we could
+ * not read it.
  */
 export const apiGetConsentText = async (
 	agencyId: number,
 	topicId: number,
 	signal?: AbortSignal
-): Promise<ConsentTextData | null> =>
+): Promise<ConsentTextResult> =>
 	fetchData({
 		url: endpoints.agencyDepartmentLegal(agencyId, topicId),
 		method: FETCH_METHODS.GET,
@@ -123,5 +145,8 @@ export const apiGetConsentText = async (
 		responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL],
 		...(signal ? { signal } : {})
 	})
-		.then(normalizeConsentTextResponse)
-		.catch(() => null);
+		.then((response) => ({
+			status: 'ok' as const,
+			consentText: normalizeConsentTextResponse(response)
+		}))
+		.catch(() => ({ status: 'unavailable' as const }));

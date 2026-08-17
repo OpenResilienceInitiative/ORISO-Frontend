@@ -32,7 +32,10 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 /* eslint-disable import/first -- must load after the vi.mock calls above. */
 import { AccountData } from './AccountData';
-import { apiGetConsentText } from '../../../api/apiGetConsentText';
+import {
+	apiGetConsentText,
+	ConsentTextData
+} from '../../../api/apiGetConsentText';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
@@ -41,6 +44,12 @@ import { setAccountDataDraft, clearAccountDataDraft } from './accountDataDraft';
 import { consentBindingKey } from './consentAcceptance';
 import { TenantDataInterface } from '../../../globalState/interfaces';
 /* eslint-enable import/first */
+
+/** The API returns an envelope; almost every test wants the happy branch. */
+const ok = (consentText: ConsentTextData | null) => ({
+	status: 'ok' as const,
+	consentText
+});
 
 const VALID_PASSWORD = 'Sichere-Passphrase9!';
 const VALID_USERNAME = 'anon-musterstadt';
@@ -189,7 +198,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 	});
 
 	it('replaces the notice with the sentence once it arrives', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 
 		renderStep({ hasPublishedDpp: true });
 
@@ -200,7 +209,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 	});
 
 	it('enables it once the sentence has resolved', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 
 		renderStep({ hasPublishedDpp: true });
 
@@ -230,7 +239,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 	});
 
 	it('does enable it once that same restored acceptance has a sentence again', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
 		const setDisabledNextButton = vi.fn();
 
@@ -240,6 +249,28 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 			() => expect(setDisabledNextButton).toHaveBeenCalledWith(false),
 			{ timeout: 3000 }
 		);
+	});
+
+	it('never enables the next step when the consent request fails', async () => {
+		/* The error path must arrive at the same place as the pending path: a
+		   department that reports a published policy and whose sentence could
+		   not be loaded is not a department whose consent can be given. */
+		vi.mocked(apiGetConsentText).mockResolvedValue({
+			status: 'unavailable'
+		});
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		const setDisabledNextButton = vi.fn();
+
+		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
+
+		await screen.findByRole('alert');
+		await waitFor(() => expect(setDisabledNextButton).toHaveBeenCalled(), {
+			timeout: 3000
+		});
+		await new Promise((resolve) => setTimeout(resolve, 600));
+
+		expect(anyCheckbox()?.disabled).toBe(true);
+		expect(setDisabledNextButton).not.toHaveBeenCalledWith(false);
 	});
 
 	it('leaves the unconfigured case untouched — enabled from the first frame, no request', async () => {
@@ -264,7 +295,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
  */
 describe('AccountData — an acceptance belongs to one Fachbereich and one version', () => {
 	beforeEach(() => {
-		vi.mocked(apiGetConsentText).mockResolvedValue(null);
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 	});
 
 	it('keeps the tick when the user comes back to the same Fachbereich', async () => {
@@ -288,10 +319,12 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('drops it when the Träger published a new version of the wording', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: 'Neue Fassung mit {{legal_links}}.',
-			versionId: 2
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Neue Fassung mit {{legal_links}}.',
+				versionId: 2
+			})
+		);
 		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
@@ -308,10 +341,12 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('keeps it when the same version is served again', async () => {
-		vi.mocked(apiGetConsentText).mockResolvedValue({
-			sentence: 'Unveränderte Fassung mit {{legal_links}}.',
-			versionId: 1
-		});
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Unveränderte Fassung mit {{legal_links}}.',
+				versionId: 1
+			})
+		);
 		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });

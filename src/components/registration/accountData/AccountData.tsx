@@ -54,7 +54,10 @@ import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
 import {
 	ConsentResolution,
 	consentBindingKey,
-	isResolutionForSelection
+	consentInputKey,
+	departmentMayHaveConsentText,
+	effectiveConsentResolution,
+	mayAcceptConsent
 } from './consentAcceptance';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
@@ -63,10 +66,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
-import {
-	DataProtectionConsentLabel,
-	departmentMayHaveConsentText
-} from './DataProtectionConsentLabel';
+import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -177,6 +177,10 @@ export const AccountData: FC<{
 	   there is something to consent to. Seeded from the same predicate the
 	   label uses, so the far more common unconfigured case — which issues no
 	   request at all — is never disabled, not even for one frame. */
+	/* The complete input state the label's answer must match — derived during
+	   render, in the same one place the label derives it, so the two cannot
+	   drift and no input can be forgotten from the comparison. */
+	const consentInputs = consentInputKey(agency, mainTopic);
 	const [consentResolution, setConsentResolution] =
 		useState<ConsentResolution>(() =>
 			departmentMayHaveConsentText(agency, mainTopic)
@@ -184,8 +188,7 @@ export const AccountData: FC<{
 				: {
 						status: 'resolved',
 						consentText: null,
-						agencyId: agency?.id,
-						topicId: mainTopic?.id
+						inputKey: consentInputs
 					}
 		);
 	/* A resolution answers the selection that produced it and no other. The
@@ -195,19 +198,27 @@ export const AccountData: FC<{
 	   previous Beratungsstelle's answer — enabling acceptance of the old
 	   sentence while writing a binding under the new identity. Checking here
 	   too makes that independent of effect ordering. */
-	const isConsentSentenceResolved = isResolutionForSelection(
+	/* The same derivation the label uses, so the sentence on screen and the
+	   gate that lets it be accepted can never disagree — including for an
+	   unconfigured Fachbereich, which resolves synchronously because nothing is
+	   loading for it. */
+	const effectiveConsent = effectiveConsentResolution(
 		consentResolution,
-		agency?.id,
-		mainTopic?.id
+		agency,
+		mainTopic
+	);
+	const isConsentSentenceResolved = mayAcceptConsent(
+		effectiveConsent,
+		consentInputs
 	);
 	/* Which consent is on offer right now. Null while the sentence is unknown —
 	   there is nothing to accept yet. */
 	const currentConsentBinding =
-		isConsentSentenceResolved && consentResolution.status === 'resolved'
+		isConsentSentenceResolved && effectiveConsent.status === 'resolved'
 			? consentBindingKey(
 					agency?.id,
 					mainTopic?.id,
-					consentResolution.consentText?.versionId
+					effectiveConsent.consentText?.versionId
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

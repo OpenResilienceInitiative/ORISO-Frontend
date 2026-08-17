@@ -1,6 +1,21 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { normalizeConsentTextResponse } from './apiGetConsentText';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('./fetchData', () => ({
+	fetchData: vi.fn(),
+	FETCH_METHODS: { GET: 'GET' },
+	FETCH_ERRORS: { NO_MATCH: 'NO_MATCH', CATCH_ALL: 'CATCH_ALL' }
+}));
+
+/* eslint-disable-next-line import/first -- must load after the vi.mock above. */
+import {
+	apiGetConsentText,
+	normalizeConsentTextResponse
+} from './apiGetConsentText';
+/* eslint-disable-next-line import/first */
+import { fetchData } from './fetchData';
+
+afterEach(() => vi.clearAllMocks());
 
 /**
  * Pinned against the response ORISO-AgencyService#256 actually serves:
@@ -76,6 +91,28 @@ describe('normalizeConsentTextResponse', () => {
 		});
 	});
 
+	it('drops a cookie notice the payload has no business carrying', () => {
+		/* The schema says the cookie/authentication notice is the client's
+		   fixed addendum, not part of the delivered text. Dropping it here, at
+		   the boundary, is what makes it impossible further in: `ConsentTextData`
+		   has no such field, so no component can read one by accident. If the
+		   backend ever starts sending it, this is where the decision to ignore
+		   it lives. */
+		const normalized = normalizeConsentTextResponse({
+			dpp: {
+				consentText: 'Satz mit {{legal_links}}.',
+				versionId: 3,
+				cookieNotice: 'Wir nutzen gar keine Cookies.'
+			}
+		});
+
+		expect(normalized).toEqual({
+			sentence: 'Satz mit {{legal_links}}.',
+			versionId: 3
+		});
+		expect(normalized).not.toHaveProperty('cookieNotice');
+	});
+
 	it('returns null when the department carries no consent sentence', () => {
 		expect(
 			normalizeConsentTextResponse({
@@ -97,5 +134,56 @@ describe('normalizeConsentTextResponse', () => {
 		expect(
 			normalizeConsentTextResponse('<html>error page</html>')
 		).toBeNull();
+	});
+});
+
+/**
+ * The distinction this suite exists for: `ok` with no sentence and
+ * `unavailable` mean opposite things for a Fachbereich the backend has already
+ * said carries a published policy. Collapsing them — which is what the code did
+ * before, mapping every rejection to `null` — let a dropped request enable
+ * acceptance of the *platform* sentence for a department whose own wording is
+ * the one in force. The user then agrees to a text that does not govern them:
+ * the error path arriving at exactly the outcome the pending gate prevents.
+ *
+ * Tested here rather than through the components, because they mock this
+ * module and so never execute the `catch` at all.
+ */
+describe('apiGetConsentText — a failed request is not an empty one', () => {
+	it('reports unavailable when the request rejects', async () => {
+		vi.mocked(fetchData).mockRejectedValue(new Error('network down'));
+
+		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
+			status: 'unavailable'
+		});
+	});
+
+	it('reports ok with a null sentence when the backend simply has none', async () => {
+		vi.mocked(fetchData).mockResolvedValue({
+			dpp: { content: '<p>Policy</p>', consentText: null },
+			imprint: { content: null }
+		});
+
+		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
+			status: 'ok',
+			consentText: null
+		});
+	});
+
+	it('reports ok with the sentence when the backend has one', async () => {
+		vi.mocked(fetchData).mockResolvedValue({
+			dpp: {
+				consentText: 'Ich willige ein, siehe {{legal_links}}.',
+				versionId: 5
+			}
+		});
+
+		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
+			status: 'ok',
+			consentText: {
+				sentence: 'Ich willige ein, siehe {{legal_links}}.',
+				versionId: 5
+			}
+		});
 	});
 });
