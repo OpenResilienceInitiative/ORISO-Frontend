@@ -93,15 +93,15 @@ describe('Matrix-only active frontend artifacts', () => {
 				.filter((line) => !line.trim().startsWith('#'))
 				.join('\n');
 
-		for (const [rawSource, publishMarker] of [
-			[buildAction, 'push: ${{ inputs.push_to_ghcr }}'],
-			[releaseWorkflow, 'push: true']
+		for (const [rawSource, publishPattern] of [
+			[buildAction, /push: \$\{\{ inputs\.push_to_ghcr \}\}/],
+			[releaseWorkflow, /push: true/]
 		] as const) {
 			const source = withoutComments(rawSource);
 			const scanIndex = source.indexOf(
 				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
 			);
-			const publishIndex = source.indexOf(publishMarker);
+			const publishIndex = source.search(publishPattern);
 			expect(scanIndex).toBeGreaterThan(-1);
 			expect(publishIndex).toBeGreaterThan(-1);
 			expect(scanIndex).toBeLessThan(publishIndex);
