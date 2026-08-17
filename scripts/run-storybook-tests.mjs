@@ -30,15 +30,18 @@ const runStorybookTests = () =>
 		let capturedOutput = '';
 		let failureDetected = false;
 		let outputTruncated = false;
+		// Deliberately no --maxWorkers: vitest's browser pool gives each worker
+		// its own orchestrator page and they share one queue, so forcing a single
+		// worker funnels every story file through one long-lived tab — the exact
+		// shape that provokes the disconnect this wrapper retries around. Let
+		// vitest pick the count.
 		const child = spawn(
 			process.execPath,
 			[
 				'node_modules/vitest/vitest.mjs',
 				'run',
 				'--project',
-				'storybook',
-				'--maxWorkers=1',
-				'--minWorkers=1'
+				'storybook'
 			],
 			{
 				env: {
