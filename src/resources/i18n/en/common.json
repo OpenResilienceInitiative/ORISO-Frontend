@@ -1371,6 +1371,7 @@
 				"headline": "Confidential from end to end",
 				"message": "I am not doing well.",
 				"encrypted": "encrypted",
+				"diagram": "Diagram: your message travels encrypted from your device to the counselling centre — only there does it become readable again.",
 				"attack": "Scrambled numbers are all a data thief gets from us.",
 				"cipherLabel": "Intercepted, encrypted data",
 				"key": "The key is created on your device and stays there — we do not have it.",

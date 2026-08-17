@@ -85,7 +85,16 @@ export const LoginSecurityExplainer = ({
 				</h2>
 			</div>
 
-			<div className="loginSecurity__transport">
+			{/*
+			 * The diagram is one picture for assistive technology: two identical
+			 * bubbles and a hidden wire say nothing on their own, so the group
+			 * carries a localized description instead. Nothing inside is focusable.
+			 */}
+			<div
+				className="loginSecurity__transport"
+				role="img"
+				aria-label={translate('login.security.explainer.diagram')}
+			>
 				<div className="loginSecurity__party loginSecurity__party--you">
 					<p className="loginSecurity__bubble loginSecurity__bubble--you">
 						{translate('login.security.explainer.message')}

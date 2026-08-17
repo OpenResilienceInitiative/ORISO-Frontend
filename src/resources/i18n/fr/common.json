@@ -1229,6 +1229,7 @@
 				"headline": "Confidentiel de bout en bout",
 				"message": "Je ne vais pas bien.",
 				"encrypted": "chiffré",
+				"diagram": "Schéma : votre message part chiffré de votre appareil vers le service de consultation — il ne redevient lisible que là-bas.",
 				"attack": "Chez nous, un voleur de données ne récolte qu’une bouillie de chiffres.",
 				"cipherLabel": "Données interceptées et chiffrées",
 				"key": "La clé est créée sur votre appareil et y reste — nous ne l'avons pas.",
