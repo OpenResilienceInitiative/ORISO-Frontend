@@ -197,7 +197,15 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__logo {
-		display: block;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		// Every mark ships on a 60x60 artboard, but the artwork inside fills
+		// that board to a different degree. Sizing the button — not the SVG —
+		// is what puts them on one baseline.
+		width: var(--stage-logo-size);
+		height: var(--stage-logo-size);
 		padding: 0;
 		border: 0;
 		background: none;
@@ -207,6 +215,18 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		transition:
 			opacity 200ms ease,
 			transform 200ms ease;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		// Raphaelswerk is a thin outline drawing; at the shared size it reads
+		// noticeably lighter than the solid marks beside it. Design 2d gives it
+		// 48px against the others' 42px, so scale rather than hardcode.
+		&--raphael {
+			--stage-logo-size: calc(var(--stage-logo-base) * 8 / 7);
+		}
 
 		&:hover,
 		&:focus-visible {
@@ -231,31 +251,36 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__logos {
+		// Design 2d: a 300px band under the claim, gap 14px/18px, marks at
+		// 42px. The band is exactly wide enough for five marks, so the last
+		// two centre themselves on a second row. Without the gap the 60x60
+		// artboards touched and that second row read as an accident — which
+		// is what it looked like on Pre-Dev.
+		--stage-logo-base: 38px;
+		--stage-logo-size: var(--stage-logo-base);
+
 		display: flex;
 		flex-wrap: wrap;
 		flex: 1 1 0;
 		align-items: flex-end;
 		align-content: flex-end;
 		justify-content: center;
-		width: 335px;
+		gap: 14px 18px;
+		width: 272px;
 		margin: 0 auto $grid-base-five;
 		padding: 0;
 		list-style: none;
-		transform: scale(0.9);
 
 		@media (width >=calc(#{$xsmall} + #{$grid-base-three})) {
-			transform: scale(1);
+			--stage-logo-base: 42px;
+
+			width: 300px;
 			margin: 0 auto $grid-base-ten;
 		}
 
-		// One tenant-configured association mark, in place of the seven
-		// hardcoded Caritas-association logos this block used to carry
-		// (FE-H05, #178). The asset is uploaded by an admin, so cap it
-		// instead of assuming the old fixed icon grid.
-		img {
-			max-width: 100%;
-			max-height: 72px;
-			object-fit: contain;
+		li {
+			display: flex;
+			align-items: flex-end;
 		}
 	}
 
@@ -345,10 +370,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
  * element itself, so the links and logos above stay clickable.
  */
 .stage__effectCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 0;
 }
