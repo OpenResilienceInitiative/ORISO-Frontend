@@ -81,6 +81,7 @@ import {
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { getVisibleCaseHandoverInternalDetails } from '../caseHandover/caseHandoverPrivacy';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -1129,6 +1130,14 @@ export const MessageItemComponent = ({
 		parsedMessage.systemNotificationReasonLabel;
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
+	const visibleCaseHandoverInternalDetails =
+		getVisibleCaseHandoverInternalDetails(
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
+			{
+				reasonLabel: systemNotificationReasonLabel,
+				explanation: systemNotificationExplanation
+			}
+		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
@@ -2023,14 +2032,7 @@ export const MessageItemComponent = ({
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
 									<CaseHandoverSystemMessageBody
-										reasonLabel={
-											systemNotificationReasonLabel ||
-											undefined
-										}
-										explanation={
-											systemNotificationExplanation ||
-											undefined
-										}
+										{...visibleCaseHandoverInternalDetails}
 									>
 										{systemNotificationRawDescription && (
 											<p className="messageItem__systemNotificationDescription">
