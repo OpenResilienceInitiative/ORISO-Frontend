@@ -2521,7 +2521,7 @@
 				"neu": "Unread",
 				"unread": "Unread",
 				"drafts": "Drafts",
-				"nearby": "ቀረባ",
+				"nearby": "Mail",
 				"create": "ፍጠር",
 				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
@@ -2529,7 +2529,7 @@
 				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
 				"groups": "ናይ ዝርርብ ክበብ",
 				"supervision": "Supervision",
-				"chats": "ቀረባ"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
 			"draftMetadataOnly": "Unsent message saved."

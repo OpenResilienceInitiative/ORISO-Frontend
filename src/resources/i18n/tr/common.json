@@ -2557,7 +2557,7 @@
 				"neu": "Okunmamış",
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
-				"nearby": "Yakın",
+				"nearby": "Mail",
 				"create": "Oluştur",
 				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
@@ -2565,7 +2565,7 @@
 				"internalGroup": "Dahili grup sohbeti",
 				"groups": "Sohbet çevresi",
 				"supervision": "Süpervizyon",
-				"chats": "Yakın"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
 			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."
