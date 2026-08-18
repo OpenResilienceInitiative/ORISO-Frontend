@@ -265,17 +265,22 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		align-items: flex-end;
 		align-content: flex-end;
 		justify-content: center;
-		gap: 14px 18px;
-		width: 272px;
-		margin: 0 auto $grid-base-five;
+		// Twice the design file's 14/18px: at the file's gap the seven marks
+		// read as one cluster on the real panel (Frank, 2026-08-18). Five marks
+		// still fit one row; the last two centre underneath.
+		gap: 24px 30px;
+		width: 312px;
+		// The band sits low on the panel, a grid step above the legal links —
+		// not floating mid-height with 120px of red under it.
+		margin: 0 auto $grid-base-two;
 		padding: 0;
 		list-style: none;
 
 		@media (width >=calc(#{$xsmall} + #{$grid-base-three})) {
 			--stage-logo-base: 42px;
 
-			width: 300px;
-			margin: 0 auto $grid-base-ten;
+			gap: 28px 36px;
+			width: 356px;
 		}
 
 		li {
@@ -308,7 +313,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		display: flex;
 		align-items: center;
 		align-self: center;
-		margin: 40px 0;
+		margin: 0 0 $grid-base-five;
 		pointer-events: auto;
 		position: relative;
 		z-index: 50;
