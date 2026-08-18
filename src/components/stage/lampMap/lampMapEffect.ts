@@ -20,6 +20,8 @@ import {
 
 const GLOW_SPRITE_SIZE = 64;
 const HERO_RADIUS = 92;
+/** The torch: how far the pointer's light reaches into the dot field. */
+const TORCH_RADIUS = 150;
 const HERO_SPEED = 17;
 const MAX_HELD = 12;
 
@@ -387,11 +389,27 @@ export const createLampMap = async (
 			}
 		}
 
+		// The pointer is a torch on the dot field: dots under it lighten and
+		// grow a touch, falling off with the square of the distance so the
+		// light has a soft core and a quick edge.
+		const torchX = pointer.inside ? pointer.x : -9999;
+		const torchY = pointer.inside ? pointer.y : -9999;
+
 		for (const point of points) {
 			const distance = heroEnabled
 				? Math.hypot(point.x - hero.x, point.y - hero.y)
 				: Infinity;
+			const torchDistance = Math.hypot(
+				point.x - torchX,
+				point.y - torchY
+			);
+			const torch =
+				torchDistance < TORCH_RADIUS
+					? (1 - torchDistance / TORCH_RADIUS) ** 2
+					: 0;
+			// `near` (the wandering point's halo) is a hint; the torch is light.
 			const near = Math.max(0, 1 - distance / HERO_RADIUS);
+			const lit = Math.max(near * 0.5, torch);
 			const breathing = still
 				? 1
 				: 0.93 + 0.07 * Math.sin(time * 7 + point.phase);
@@ -419,7 +437,7 @@ export const createLampMap = async (
 			ctx.arc(
 				point.x,
 				point.y,
-				1.2 + 0.5 * near + 0.4 * glow,
+				1.2 + 0.9 * lit + 0.4 * glow,
 				0,
 				Math.PI * 2
 			);
@@ -427,15 +445,15 @@ export const createLampMap = async (
 			const shade = 1 - 0.55 * dim;
 			ctx.fillStyle = `rgba(${Math.round(158 * shade)}, ${Math.round(
 				4 * shade
-			)}, ${Math.round(16 * shade)}, ${(0.66 + 0.2 * (1 - near)).toFixed(
+			)}, ${Math.round(16 * shade)}, ${(0.66 + 0.2 * (1 - lit)).toFixed(
 				2
 			)})`;
 			ctx.fill();
 
-			if (near > 0.02) {
+			if (lit > 0.02) {
 				ctx.beginPath();
-				ctx.arc(point.x, point.y, 1.2 + 0.5 * near, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(255, 214, 206, ${(0.4 * near).toFixed(3)})`;
+				ctx.arc(point.x, point.y, 1.2 + 0.9 * lit, 0, Math.PI * 2);
+				ctx.fillStyle = `rgba(255, 224, 218, ${(0.85 * lit).toFixed(3)})`;
 				ctx.fill();
 			}
 			if (glow > 0.02) {

@@ -230,6 +230,13 @@ const CLUSTER_Y_STRETCH = 1.15;
 
 /** Seconds between two lamps of the same seed at pace 1 (design 5b). */
 const SEED_STEP_SECONDS = 0.1;
+/**
+ * Every seed city starts its wave somewhere in this window rather than all
+ * at once, and every lamp is a little early or late — otherwise the country
+ * lights up like a stadium: too even, too programmatic. Both scale with pace.
+ */
+const SEED_STAGGER_SECONDS = 1.4;
+const LAMP_JITTER_SECONDS = 0.35;
 
 /**
  * Turns a carrier's presence into the order its lamps light up in — the
@@ -240,9 +247,10 @@ const SEED_STEP_SECONDS = 0.1;
  *    share). A dot is scheduled at most once, however many rules pick it.
  * 2. **In what order.** Every scheduled dot belongs to the nearest of the
  *    carrier's seed cities; within a seed the dots come on nearest-first,
- *    one step apart. All seeds run in parallel, so an organisation with many
- *    seeds simply lights up from more places at once, and the wave from
- *    each city travels outward. `pace` stretches the step for the slow ones.
+ *    one step apart, each a little early or late. Seeds start staggered and
+ *    run in parallel, so an organisation with many seeds lights up from more
+ *    places at once and the wave from each city travels outward. `pace`
+ *    stretches step, stagger and jitter alike for the slow ones.
  *
  * Points outside the country are never scheduled. This is the expensive part
  * of the effect (points x anchors), which is why the caller builds it lazily
@@ -315,13 +323,19 @@ export const buildSchedule = (
 		groups[nearest].push({ index, distance: nearestDistance });
 	});
 
-	const step = stepSeconds * (presence.pace || 1);
+	const pace = presence.pace || 1;
+	const step = stepSeconds * pace;
 	const schedule: LampSchedule[] = [];
 	groups.forEach((group) => {
+		const start = random() * SEED_STAGGER_SECONDS * pace;
 		group
 			.sort((a, b) => a.distance - b.distance)
 			.forEach((entry, rank) => {
-				schedule.push({ index: entry.index, delay: rank * step });
+				const jitter = random() * LAMP_JITTER_SECONDS * pace;
+				schedule.push({
+					index: entry.index,
+					delay: start + rank * step + jitter
+				});
 			});
 	});
 	return schedule;

@@ -95,10 +95,24 @@ describe('buildSchedule (design 5b)', () => {
 				0
 			) / list.length;
 		expect(mean(first)).toBeLessThan(mean(last));
-		// Delays step in 0.1 s per rank at pace 1.
-		expect(sorted[0].delay).toBe(0);
-		expect(sorted.some(({ delay }) => Math.abs(delay - 0.1) < 1e-9)).toBe(
-			true
+		// The first lamps come on within the seed stagger window, not all at
+		// once, and the whole country takes its time.
+		expect(sorted[0].delay).toBeLessThan(2.5);
+		expect(sorted[sorted.length - 1].delay).toBeGreaterThan(8);
+	});
+
+	it('staggers the seeds and jitters the lamps instead of a lockstep wave', async () => {
+		const { schedule } = await scheduleFor('caritas');
+		const delays = schedule.map(({ delay }) => delay);
+		// With a lockstep wave every delay would be a multiple of the step;
+		// here fewer than a tenth may sit on the grid.
+		const onGrid = delays.filter(
+			(delay) => Math.abs(delay / 0.16 - Math.round(delay / 0.16)) < 1e-6
+		).length;
+		expect(onGrid / delays.length).toBeLessThan(0.1);
+		// And the wave does not start everywhere at t=0.
+		expect(delays.filter((delay) => delay < 0.05).length).toBeLessThan(
+			schedule.length * 0.02
 		);
 	});
 
@@ -119,17 +133,27 @@ describe('buildSchedule (design 5b)', () => {
 		expect(schedule.every(({ delay }) => delay === 0)).toBe(true);
 	});
 
-	it('lets a slow carrier take its time', async () => {
-		const [fast, slow] = await Promise.all([
-			scheduleFor('via'),
-			scheduleFor('raphael')
-		]);
-		const step = (schedule: { delay: number }[]) =>
-			Math.min(
-				...schedule
-					.filter(({ delay }) => delay > 0)
-					.map(({ delay }) => delay)
-			);
-		expect(step(slow.schedule)).toBeGreaterThan(step(fast.schedule) * 3);
+	it('lets a slow carrier take its time — pace scales the whole schedule', () => {
+		const fixture = {
+			id: 'via' as CarrierId,
+			nationwide: 0,
+			clusters: [
+				{ anchors: [[10.0, 53.55]] as const, reach: 0.06, share: 1 }
+			],
+			seeds: [[10.0, 53.55]] as const,
+			pace: 1,
+			note: 'test fixture'
+		};
+		const one = buildSchedule(grid.points, fixture, projection);
+		const three = buildSchedule(
+			grid.points,
+			{ ...fixture, pace: 3 },
+			projection
+		);
+		expect(three.length).toBe(one.length);
+		one.forEach((entry, i) => {
+			expect(three[i].index).toBe(entry.index);
+			expect(three[i].delay).toBeCloseTo(entry.delay * 3, 9);
+		});
 	});
 });

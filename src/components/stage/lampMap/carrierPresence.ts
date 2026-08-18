@@ -163,7 +163,9 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			ERFURT,
 			MAGDEBURG
 		],
-		pace: 1,
+		// The whole country takes its time — the wave should be watched, not
+		// blink through.
+		pace: 1.6,
 		note: 'Present in every diocese with local branches — the whole country lights up, from many cities at once, and it takes its time.'
 	},
 	{

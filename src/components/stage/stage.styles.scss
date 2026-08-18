@@ -43,13 +43,13 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	background:
 		radial-gradient(
 			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 255, 255, 0) 40%
+			rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 255, 255, 0) 26%
 		),
 		radial-gradient(
-			660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 180, 168, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 180, 168, 0) 62%
+			400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+			rgba(255, 180, 168, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 180, 168, 0) 58%
 		),
 		linear-gradient(
 			152deg,
@@ -74,15 +74,15 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		background:
 			radial-gradient(
 				circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-				rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-				rgba(255, 255, 255, 0) 40%
+				rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+				rgba(255, 255, 255, 0) 26%
 			),
 			radial-gradient(
-				660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+				400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
 				color-mix(
 					in srgb,
 					var(--m3-primary-fixed-dim, #ffb4aa)
-						calc(var(--stage-glow-opacity, 0.32) * 100%),
+						calc(var(--stage-glow-opacity, 0.18) * 100%),
 					transparent
 				),
 				transparent 62%
