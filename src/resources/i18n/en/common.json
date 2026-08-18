@@ -1304,7 +1304,11 @@
 				"title": "Privacy policy"
 			},
 			"back": "Back",
-			"confirm": "Got it"
+			"confirm": "Got it",
+			"missing": {
+				"text": "No legal text has been provided here for this service.",
+				"link": "Open the configured address"
+			}
 		}
 	},
 	"login": {
