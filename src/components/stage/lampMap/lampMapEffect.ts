@@ -511,7 +511,10 @@ export const createLampMap = async (
 			ctx.stroke();
 		}
 
-		if (!firstFramePainted) {
+		// Only a frame that actually painted a fitted grid counts as the first
+		// one — `fit()` bails on a 0x0 canvas, and the caller starts the
+		// wandering point off this callback.
+		if (!firstFramePainted && width > 0 && height > 0) {
 			firstFramePainted = true;
 			options.onFirstFrame?.();
 		}

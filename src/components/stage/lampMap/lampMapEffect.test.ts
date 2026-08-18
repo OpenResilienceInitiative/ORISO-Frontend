@@ -90,6 +90,37 @@ describe('createLampMap sizing (#1135)', () => {
 		handle.destroy();
 	});
 
+	it('waits for a real size before reporting its first frame', async () => {
+		clientWidth = 0;
+		clientHeight = 0;
+		const container = document.createElement('div');
+		const canvas = document.createElement('canvas');
+		container.appendChild(canvas);
+		const onFirstFrame = vi.fn();
+		// The render loop is driven by hand: rAF is stubbed out, so calling
+		// the frame callback is what "paints" here.
+		let frame: FrameRequestCallback | null = null;
+		vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+			frame = cb;
+			return 1;
+		});
+
+		const handle = await createLampMap(container, canvas, { onFirstFrame });
+		frame?.(0);
+		// Nothing was fitted yet — the caller must not start the wandering
+		// point on a blank frame.
+		expect(onFirstFrame).not.toHaveBeenCalled();
+
+		clientWidth = 576;
+		clientHeight = 900;
+		resizeCallback?.([]);
+		vi.advanceTimersByTime(200);
+		frame?.(16);
+		expect(onFirstFrame).toHaveBeenCalledTimes(1);
+
+		handle.destroy();
+	});
+
 	it('leaves the bitmap alone when the size did not actually change', async () => {
 		const container = document.createElement('div');
 		const canvas = document.createElement('canvas');

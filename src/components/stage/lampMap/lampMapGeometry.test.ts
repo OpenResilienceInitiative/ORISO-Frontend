@@ -17,6 +17,19 @@ const projection = createProjection();
 const grid = createPointGrid(projection, 576, 900);
 const inside = grid.points.filter((point) => point.inside);
 
+/**
+ * One seed, so seed staggering shifts the whole wave by a single constant and
+ * cannot be mistaken for per-lamp jitter.
+ */
+const ONE_SEED = {
+	id: 'via' as CarrierId,
+	nationwide: 0,
+	clusters: [{ anchors: [[10.0, 53.55]] as const, reach: 0.09, share: 1 }],
+	seeds: [[10.0, 53.55]] as const,
+	pace: 1,
+	note: 'test fixture'
+};
+
 const scheduleFor = async (id: CarrierId) => {
 	const presence = (await loadCarrierPresence()).find(
 		(entry) => entry.id === id
@@ -149,19 +162,53 @@ describe('buildSchedule (design 5b)', () => {
 		expect(sorted[sorted.length - 1].delay).toBeLessThan(30);
 	});
 
-	it('staggers the seeds and jitters the lamps instead of a lockstep wave', async () => {
-		const { schedule } = await scheduleFor('caritas');
-		const delays = schedule.map(({ delay }) => delay);
-		// With a lockstep wave every delay would be a multiple of the step;
-		// here fewer than a tenth may sit on the grid.
-		const onGrid = delays.filter(
-			(delay) => Math.abs(delay / 0.16 - Math.round(delay / 0.16)) < 1e-6
-		).length;
-		expect(onGrid / delays.length).toBeLessThan(0.1);
-		// And the wave does not start everywhere at t=0.
-		expect(delays.filter((delay) => delay < 0.05).length).toBeLessThan(
-			schedule.length * 0.02
+	it('jitters the individual lamps of one wave', () => {
+		const schedule = buildSchedule(grid.points, ONE_SEED, projection);
+		expect(schedule.length).toBeGreaterThan(10);
+		// One seed, so its start time is a single constant; stripping the
+		// lockstep part leaves the per-lamp jitter and nothing else.
+		const offsets = schedule.map(({ delay }, rank) => delay - rank * 0.1);
+		expect(Math.max(...offsets) - Math.min(...offsets)).toBeGreaterThan(
+			0.05
 		);
+		const unique = new Set(offsets.map((offset) => offset.toFixed(6)));
+		expect(unique.size).toBeGreaterThan(offsets.length * 0.5);
+	});
+
+	it('staggers the seeds against each other', async () => {
+		const { presence, schedule } = await scheduleFor('caritas');
+		const seeds = presence.seeds.map((seed) => projection.project(seed));
+		const groups = seeds.map(() => [] as number[]);
+		schedule.forEach(({ index, delay }) => {
+			const point = grid.points[index];
+			let nearest = 0;
+			let best = Infinity;
+			seeds.forEach(([sx, sy], i) => {
+				const d = Math.hypot(point.mapX - sx, point.mapY - sy);
+				if (d < best) {
+					best = d;
+					nearest = i;
+				}
+			});
+			groups[nearest].push(delay);
+		});
+
+		// A lamp's own jitter is at most 0.35s x pace x its group's slowdown,
+		// and the slowdown is at most 3. So a wave whose *first* lamp lands
+		// later than that bound can only have been started late — which is
+		// what the seed stagger does.
+		const bound = 0.35 * presence.pace * 3;
+		const startsLate = groups
+			.filter((group) => group.length > 0)
+			.filter((group) => Math.min(...group) > bound);
+		expect(startsLate.length).toBeGreaterThan(0);
+	});
+
+	it('never lights the whole country at once', async () => {
+		const { schedule } = await scheduleFor('caritas');
+		expect(
+			schedule.filter(({ delay }) => delay < 0.05).length
+		).toBeLessThan(schedule.length * 0.02);
 	});
 
 	it('lights a seedless carrier all at once', () => {
@@ -182,16 +229,7 @@ describe('buildSchedule (design 5b)', () => {
 	});
 
 	it('lets a slow carrier take its time — pace scales the whole schedule', () => {
-		const fixture = {
-			id: 'via' as CarrierId,
-			nationwide: 0,
-			clusters: [
-				{ anchors: [[10.0, 53.55]] as const, reach: 0.06, share: 1 }
-			],
-			seeds: [[10.0, 53.55]] as const,
-			pace: 1,
-			note: 'test fixture'
-		};
+		const fixture = ONE_SEED;
 		const one = buildSchedule(grid.points, fixture, projection);
 		const three = buildSchedule(
 			grid.points,
