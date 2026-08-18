@@ -736,17 +736,6 @@ export const Login = () => {
 											isRequestInProgress
 								}
 							/>
-
-							{activeLoginMethod === 'password' &&
-								!(twoFactorType === TWO_FACTOR_TYPES.EMAIL) && (
-									<button
-										onClick={onPasswordResetClick}
-										className="button-as-link"
-										type="button"
-									>
-										{translate('login.resetPasswort.label')}
-									</button>
-								)}
 						</div>
 
 						{/* The registration path (2e): inside the sheet on mobile,
@@ -787,6 +776,24 @@ export const Login = () => {
 								</MuiButton>
 							</div>
 						</Box>
+
+						{/* Password recovery is the exception, registration the
+						    primary path for a new asker — so this sits below
+						    the "Neu hier?" block. DOM order matches the visual
+						    order at every width, so tab order and screen-reader
+						    sequence follow the screen. */}
+						{activeLoginMethod === 'password' &&
+							!(twoFactorType === TWO_FACTOR_TYPES.EMAIL) && (
+								<div className="loginForm__passwordReset">
+									<button
+										onClick={onPasswordResetClick}
+										className="button-as-link"
+										type="button"
+									>
+										{translate('login.resetPasswort.label')}
+									</button>
+								</div>
+							)}
 
 						<div className="loginForm__separator" />
 
