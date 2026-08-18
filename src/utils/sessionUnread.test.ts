@@ -10,7 +10,11 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
-import { isChatItemUnread, isRoomUnread } from './sessionUnread';
+import {
+	countUnreadSessions,
+	isChatItemUnread,
+	isRoomUnread
+} from './sessionUnread';
 
 const serviceWithRoom = (room: unknown) =>
 	({
@@ -78,5 +82,31 @@ describe('isChatItemUnread', () => {
 				messagesRead: true
 			} as any)
 		).toBe(true);
+	});
+});
+
+describe('countUnreadSessions', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('counts list entries whose Matrix room is unread, for sessions and group chats', () => {
+		const unreadRooms = new Set(['!unread-1:hs', '!unread-chat:hs']);
+		setMatrixClientServiceRef({
+			getRoom: (roomId: string) => ({
+				getUnreadNotificationCount: () =>
+					unreadRooms.has(roomId) ? 2 : 0
+			})
+		} as any);
+
+		const sessions = [
+			// backend constant messagesRead: true everywhere — must be ignored
+			{ session: { matrixRoomId: '!unread-1:hs', messagesRead: true } },
+			{ session: { matrixRoomId: '!read-1:hs', messagesRead: true } },
+			{ chat: { matrixRoomId: '!unread-chat:hs', messagesRead: true } },
+			{ session: { matrixRoomId: null, messagesRead: true } }
+		] as any[];
+
+		expect(countUnreadSessions(sessions)).toBe(2);
 	});
 });

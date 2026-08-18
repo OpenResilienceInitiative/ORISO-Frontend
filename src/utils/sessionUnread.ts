@@ -40,3 +40,16 @@ export const isRoomUnread = (matrixRoomId?: string | null): boolean => {
 export const isChatItemUnread = (
 	chatItem?: { matrixRoomId?: string | null } | null
 ): boolean => isRoomUnread(chatItem?.matrixRoomId);
+
+/**
+ * Number of unread entries in a session list (1:1 sessions and group chats).
+ * Feeds the "unread" toolbar chip counter.
+ */
+export const countUnreadSessions = (
+	sessions: Array<{
+		session?: { matrixRoomId?: string | null } | null;
+		chat?: { matrixRoomId?: string | null } | null;
+	} | null>
+): number =>
+	sessions.filter((entry) => isChatItemUnread(entry?.chat ?? entry?.session))
+		.length;
