@@ -71,7 +71,16 @@ export const Stage = ({
 			setIsOpen(true);
 		}
 
-		const onTransitionEnd = () => {
+		// Only the panel's own width transition counts — a focused mark's
+		// opacity/transform transition bubbles up here too and would mark the
+		// stage ready (and interactive) while it is still sliding.
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (
+				event.target !== rootNodeRef.current ||
+				event.propertyName !== 'width'
+			) {
+				return;
+			}
 			setHasAnimationFinished(true);
 		};
 
@@ -100,9 +109,11 @@ export const Stage = ({
 
 		current.x += deltaX * 0.06;
 		current.y += deltaY * 0.06;
+		// Design 2d's torch: soft, and softer the lower it sits on the panel.
+		// (0.2 peak; the older 0.42 read as a floodlight over the dot field.)
 		const glowOpacity = Math.max(
-			0.08,
-			Math.min(0.42, 0.42 - current.y * 0.0028)
+			0.06,
+			Math.min(0.2, 0.2 - current.y * 0.0011)
 		);
 
 		rootNode.style.setProperty('--stage-mx', `${current.x.toFixed(2)}%`);

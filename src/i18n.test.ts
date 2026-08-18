@@ -23,11 +23,7 @@ import {
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
 	fr: { extraInLocale: 5, missingInLocale: 770 },
-	// Russian is allowed two keys German cannot have: i18next plural
-	// categories. Russian resolves one/few/many/other, German only
-	// one/other, so `registration.zipcode.remaining_few` and `_many` have no
-	// German counterpart by definition. Everything above 7 is real drift.
-	ru: { extraInLocale: 7, missingInLocale: 770 },
+	ru: { extraInLocale: 5, missingInLocale: 770 },
 	ti: { extraInLocale: 5, missingInLocale: 806 },
 	tr: { extraInLocale: 5, missingInLocale: 752 }
 } as const;

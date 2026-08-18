@@ -133,7 +133,9 @@ export const SecurityExplainer: StoryObj = {
 				py: 3
 			}}
 		>
-			<Caption>Zurück führt auf das Formular, nicht auf eine neue Seite</Caption>
+			<Caption>
+				Zurück führt auf das Formular, nicht auf eine neue Seite
+			</Caption>
 			<LoginSecurityExplainer onBack={() => undefined} />
 		</Box>
 	)

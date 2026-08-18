@@ -43,13 +43,13 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	background:
 		radial-gradient(
 			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 255, 255, 0) 40%
+			rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 255, 255, 0) 26%
 		),
 		radial-gradient(
-			660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 180, 168, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 180, 168, 0) 62%
+			400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+			rgba(255, 180, 168, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 180, 168, 0) 58%
 		),
 		linear-gradient(
 			152deg,
@@ -74,15 +74,15 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		background:
 			radial-gradient(
 				circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-				rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-				rgba(255, 255, 255, 0) 40%
+				rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+				rgba(255, 255, 255, 0) 26%
 			),
 			radial-gradient(
-				660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+				400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
 				color-mix(
 					in srgb,
 					var(--m3-primary-fixed-dim, #ffb4aa)
-						calc(var(--stage-glow-opacity, 0.32) * 100%),
+						calc(var(--stage-glow-opacity, 0.18) * 100%),
 					transparent
 				),
 				transparent 62%
@@ -126,6 +126,22 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	/*
+	 * `.stageLayout__stage` makes the whole panel pass-through, and for a
+	 * reason: on a first visit the stage starts at 100vw over the page and
+	 * takes 2.5 s to slide to 40vw, and the form underneath must be usable
+	 * from the first moment. Once the panel has settled — immediately without
+	 * the animation, on `transitionend` with it — nothing sits underneath any
+	 * more, and it takes the pointer back. Without this the stage is dead in
+	 * the real login: no mark lights the lamp map, no glow follows the cursor,
+	 * the wandering point never notices anyone. (Only Storybook, where the
+	 * stage is not a `.stageLayout__stage`, ever showed the effect.)
+	 */
+	&.stage--no-animation,
+	&.stage--ready {
+		pointer-events: auto;
+	}
+
+	/*
 	 * Lamp map (design 5b). Always in the DOM so the gate has something to
 	 * measure, but only ever painted once the effect chunk has been fetched —
 	 * which never happens below $fromXLarge, under prefers-reduced-motion, or
@@ -138,6 +154,22 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		width: 100%;
 		height: 100%;
 		pointer-events: none;
+
+		// Hidden while the first-visit slide is still squeezing the panel
+		// from 100vw to 40vw — dots painted at 100vw would visibly compress
+		// on the way. Once the panel has settled the effect re-fits (see
+		// `fit()` in lampMapEffect.ts) and the map fades in over the result.
+		opacity: 0;
+		transition: opacity 500ms ease 200ms;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	&.stage--no-animation &__lampMap,
+	&.stage--ready &__lampMap {
+		opacity: 1;
 	}
 
 	/*
@@ -197,7 +229,15 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__logo {
-		display: block;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		// Every mark ships on a 60x60 artboard, but the artwork inside fills
+		// that board to a different degree. Sizing the button — not the SVG —
+		// is what puts them on one baseline.
+		width: var(--stage-logo-size);
+		height: var(--stage-logo-size);
 		padding: 0;
 		border: 0;
 		background: none;
@@ -207,6 +247,18 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		transition:
 			opacity 200ms ease,
 			transform 200ms ease;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		// Raphaelswerk is a thin outline drawing; at the shared size it reads
+		// noticeably lighter than the solid marks beside it. Design 2d gives it
+		// 48px against the others' 42px, so scale rather than hardcode.
+		&--raphael {
+			--stage-logo-size: calc(var(--stage-logo-base) * 8 / 7);
+		}
 
 		&:hover,
 		&:focus-visible {
@@ -231,31 +283,41 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__logos {
+		// Design 2d: a 300px band under the claim, gap 14px/18px, marks at
+		// 42px. The band is exactly wide enough for five marks, so the last
+		// two centre themselves on a second row. Without the gap the 60x60
+		// artboards touched and that second row read as an accident — which
+		// is what it looked like on Pre-Dev.
+		--stage-logo-base: 38px;
+		--stage-logo-size: var(--stage-logo-base);
+
 		display: flex;
 		flex-wrap: wrap;
 		flex: 1 1 0;
 		align-items: flex-end;
 		align-content: flex-end;
 		justify-content: center;
-		width: 335px;
-		margin: 0 auto $grid-base-five;
+		// Twice the design file's 14/18px: at the file's gap the seven marks
+		// read as one cluster on the real panel (Frank, 2026-08-18). Five marks
+		// still fit one row; the last two centre underneath.
+		gap: 24px 30px;
+		width: 312px;
+		// The band sits low on the panel, a grid step above the legal links —
+		// not floating mid-height with 120px of red under it.
+		margin: 0 auto $grid-base-two;
 		padding: 0;
 		list-style: none;
-		transform: scale(0.9);
 
 		@media (width >=calc(#{$xsmall} + #{$grid-base-three})) {
-			transform: scale(1);
-			margin: 0 auto $grid-base-ten;
+			--stage-logo-base: 42px;
+
+			gap: 28px 36px;
+			width: 356px;
 		}
 
-		// One tenant-configured association mark, in place of the seven
-		// hardcoded Caritas-association logos this block used to carry
-		// (FE-H05, #178). The asset is uploaded by an admin, so cap it
-		// instead of assuming the old fixed icon grid.
-		img {
-			max-width: 100%;
-			max-height: 72px;
-			object-fit: contain;
+		li {
+			display: flex;
+			align-items: flex-end;
 		}
 	}
 
@@ -283,7 +345,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		display: flex;
 		align-items: center;
 		align-self: center;
-		margin: 40px 0;
+		margin: 0 0 $grid-base-five;
 		pointer-events: auto;
 		position: relative;
 		z-index: 50;
@@ -345,10 +407,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
  * element itself, so the links and logos above stay clickable.
  */
 .stage__effectCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 0;
 }
