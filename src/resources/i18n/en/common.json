@@ -1304,7 +1304,11 @@
 				"title": "Privacy policy"
 			},
 			"back": "Back",
-			"confirm": "Got it"
+			"confirm": "Got it",
+			"missing": {
+				"text": "No legal text has been provided here for this service.",
+				"link": "Open the configured address"
+			}
 		}
 	},
 	"login": {
@@ -1368,13 +1372,11 @@
 				"linkShort": "Why this is safe"
 			},
 			"explainer": {
-				"badge": "NEW",
-				"headline": "Only the two of you can read along.",
+				"headline": "Confidential from end to end",
 				"message": "I am not doing well.",
-				"you": "You",
-				"agency": "Counselling centre",
 				"encrypted": "encrypted",
-				"attack": "this is all an attacker gets",
+				"diagram": "Diagram: your message travels encrypted from your device to the counselling centre — only there does it become readable again.",
+				"attack": "Scrambled numbers are all a data thief gets from us.",
 				"cipherLabel": "Intercepted, encrypted data",
 				"key": "The key is created on your device and stays there — we do not have it.",
 				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
