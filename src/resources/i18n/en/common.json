@@ -52,7 +52,6 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo",
 			"mobileHeadline": "There is room here for what is on your mind.",
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
