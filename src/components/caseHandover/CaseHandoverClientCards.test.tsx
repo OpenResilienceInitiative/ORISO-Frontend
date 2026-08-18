@@ -47,7 +47,7 @@ describe('CaseHandoverConsentCard', () => {
 		}) as HTMLInputElement;
 		expect(optOutSwitch.checked).toBe(true);
 		expect(
-			screen.queryByRole('button', { name: 'Allow access' })
+			screen.queryByRole('button', { name: 'Approve access' })
 		).toBeNull();
 
 		fireEvent.click(optOutSwitch);
