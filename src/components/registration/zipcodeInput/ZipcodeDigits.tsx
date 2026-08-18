@@ -48,11 +48,30 @@ export const ZipcodeDigits = ({
 		return found === -1 ? ZIPCODE_LENGTH - 1 : found;
 	}, [digits]);
 
+	/**
+	 * True only while the component moves focus itself. `focus()` dispatches
+	 * the target slot's `onFocus` guard synchronously — still inside the tick
+	 * that called `onChange`, so `value` (and with it `firstEmpty`) is the row
+	 * as it was *before* the keystroke. The guard would read that stale row,
+	 * conclude the user jumped ahead and bounce focus back onto the slot just
+	 * filled, where its `select()` makes the next keystroke overwrite the digit
+	 * instead of advancing. Every index passed to `focusDigit` is derived from
+	 * the value being written and is legal by construction, so our own moves
+	 * skip the guard; the guard stays in force for focus the *user* moves.
+	 */
+	const selfFocus = useRef(false);
+
 	const focusDigit = useCallback((index: number) => {
 		const target = refs.current[index];
-		if (target) {
+		if (!target) {
+			return;
+		}
+		selfFocus.current = true;
+		try {
 			target.focus();
 			target.select();
+		} finally {
+			selfFocus.current = false;
 		}
 	}, []);
 
@@ -127,7 +146,7 @@ export const ZipcodeDigits = ({
 						// used to accept a digit there; `join('')` then moved
 						// it to the front and the user submitted a different
 						// postcode than the one on screen.
-						if (index > firstEmpty) {
+						if (!selfFocus.current && index > firstEmpty) {
 							focusDigit(firstEmpty);
 							return;
 						}
