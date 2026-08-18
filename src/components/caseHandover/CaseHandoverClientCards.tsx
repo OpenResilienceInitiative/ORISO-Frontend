@@ -4,6 +4,8 @@ import clsx from 'clsx';
 import { ReactComponent as CaseAcceptedIcon } from '../../resources/img/icons/case-handover/case-accepted.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
+import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import { Switch } from '../Switch';
@@ -282,7 +284,7 @@ export const CaseHandoverConsentCard = ({
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
-	const title = isOptOut
+	const messageTitle = isOptOut
 		? translate(
 				'caseHandover.consent.optOut.title',
 				'Privacy notice for case handover'
@@ -291,27 +293,40 @@ export const CaseHandoverConsentCard = ({
 				'caseHandover.consent.title',
 				'A counsellor requested access to this conversation'
 			);
+	const messageCopy = isOptOut
+		? translate(
+				'caseHandover.consent.optOut.prompt',
+				'Please read the information and then make your decision.'
+			)
+		: translate(
+				'caseHandover.consent.copy',
+				'Please approve or decline the request to continue the handover.'
+			);
 
 	return (
 		<div
-			className="caseHandoverInlineConsent"
+			className={clsx(
+				'caseHandoverInlineConsent',
+				!isOptOut && 'caseHandoverInlineConsent--choice'
+			)}
 			data-testid="case-handover-inline-consent"
 		>
 			<CaseHandoverSystemMessageCard
-				title={title}
-				subtitle={
-					isOptOut
-						? translate(
-								'caseHandover.consent.optOut.prompt',
-								'Please read the information and then make your decision.'
-							)
-						: translate(
-								'caseHandover.consent.copy',
-								'Please approve or decline the request to continue the handover.'
-							)
-				}
+				title={translate('caseHandover.consent.sender', 'Carimat')}
+				subtitle={translate(
+					'caseHandover.consent.senderRole',
+					'Quick Guide'
+				)}
 				timestamp={timestamp}
 			>
+				<div className="caseHandoverMessage__intro">
+					<p className="caseHandoverMessage__introTitle">
+						{messageTitle}
+					</p>
+					<p className="caseHandoverMessage__introCopy">
+						{messageCopy}
+					</p>
+				</div>
 				{isOptOut ? (
 					<>
 						<p className="caseHandoverMessage__optOutCopy">
@@ -349,11 +364,10 @@ export const CaseHandoverConsentCard = ({
 				) : (
 					<>
 						{/*
-						 * The pair is a design-system button group (Figma App.Oriso
-						 * 9564-86125), not two loose buttons: the numbered badges, the
-						 * dark-red / slate pairing and — crucially — the stack-instead-
-						 * of-overflow behaviour all belong to the group, and the same
-						 * question/answer box recurs elsewhere in the product.
+						 * The pair is the shared design-system button group (Figma
+						 * 9596-35524), not two loose controls. Wide messages use the
+						 * primary/secondary event colours; narrow messages keep the same
+						 * controls and switch them to the stacked outline presentation.
 						 *
 						 * `ButtonGroup` puts the native `disabled` attribute on each
 						 * item, so while the decision is in flight both controls really
@@ -362,8 +376,7 @@ export const CaseHandoverConsentCard = ({
 						<ButtonGroup
 							className="caseHandoverMessage__actions"
 							alignment="horizontal-flex"
-							numbered
-							ariaLabel={title}
+							ariaLabel={messageTitle}
 							testingAttribute="case-handover-consent-actions"
 							items={[
 								{
@@ -373,6 +386,7 @@ export const CaseHandoverConsentCard = ({
 										'Approve access'
 									),
 									variant: 'primary',
+									icon: <CheckIcon />,
 									disabled: isSubmitting,
 									onClick: onApprove,
 									testingAttribute:
@@ -385,6 +399,7 @@ export const CaseHandoverConsentCard = ({
 										'Decline access'
 									),
 									variant: 'tonal',
+									icon: <CloseIcon />,
 									disabled: isSubmitting,
 									onClick: onDecline,
 									testingAttribute:

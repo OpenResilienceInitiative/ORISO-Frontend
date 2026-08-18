@@ -1802,6 +1802,7 @@
 		"usageFiles": [
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/message/Appointment.tsx",
@@ -1932,6 +1933,7 @@
 		"sourcePath": "src/resources/img/icons/close.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/groupChat/RuleChipsEditor.tsx"
 		],

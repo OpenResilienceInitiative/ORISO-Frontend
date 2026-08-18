@@ -2916,6 +2916,8 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"sender": "Carimat",
+			"senderRole": "Quick Guide",
 			"title": "A counsellor requested access to this conversation",
 			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",

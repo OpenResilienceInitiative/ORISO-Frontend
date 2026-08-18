@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
@@ -56,6 +56,16 @@ const meta: Meta = {
 				type: 'figma',
 				name: 'App.Oriso — Chatbot system-message ring (336-12244)',
 				url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=336-12244&m=dev'
+			},
+			{
+				type: 'figma',
+				name: 'App.Oriso — Consent message mobile (9596-35524)',
+				url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9596-35524&m=dev'
+			},
+			{
+				type: 'figma',
+				name: 'App.Oriso — Consent message desktop (9596-36168)',
+				url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9596-36168&m=dev'
 			},
 			{
 				type: 'figma',
@@ -133,15 +143,18 @@ export const InquiryAcceptedMobile: Story = {
 
 export const PendingClientConsent: Story = {
 	name: 'Pending client consent — desktop',
+	globals: { locale: 'en' },
 	render: () => (
 		<Stream>
 			<CaseHandoverConsentCard
 				onApprove={() => {}}
 				onDecline={() => {}}
+				timestamp="12:54"
 			/>
 		</Stream>
 	),
 	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
 		const avatar = canvasElement.querySelector<HTMLElement>(
 			'.messageItem__avatar--bot'
 		);
@@ -163,20 +176,149 @@ export const PendingClientConsent: Story = {
 		expect(getComputedStyle(icon!).height).toBe('36px');
 		expect(getComputedStyle(glyph!).width).toBe('32px');
 		expect(getComputedStyle(glyph!).height).toBe('36px');
+
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		);
+		const actions = canvas.getByRole('group', {
+			name: 'A counsellor requested access to this conversation'
+		});
+		const approve = canvas.getByRole('button', { name: 'Approve access' });
+		const decline = canvas.getByRole('button', { name: 'Decline access' });
+
+		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
+		expect(canvas.getByText('Quick Guide')).toBeVisible();
+		expect(bubble).toContainElement(
+			canvas.getByText(
+				'A counsellor requested access to this conversation'
+			)
+		);
+		expect(bubble).toContainElement(
+			canvas.getByText(
+				'Please approve or decline the request to continue the handover.'
+			)
+		);
+		expect(bubble).toContainElement(actions);
+		expect(bubble).toContainElement(canvas.getByText('12:54'));
+		expect(actions.querySelector('.buttonGroup__badge')).toBeNull();
+		expect(
+			actions.querySelectorAll(
+				':scope > .buttonGroup__track > .buttonGroup__item > .buttonGroup__icon'
+			)
+		).toHaveLength(2);
+		expect(actions).toHaveAttribute('data-alignment', 'horizontal-flex');
+		expect(approve).toHaveClass('buttonGroup__item--primary');
+		expect(decline).toHaveClass('buttonGroup__item--tonal');
+		expect(getComputedStyle(approve).backgroundColor).not.toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+		expect(getComputedStyle(decline).backgroundColor).not.toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+		expect(getComputedStyle(approve).backgroundColor).not.toBe(
+			getComputedStyle(decline).backgroundColor
+		);
 	}
 };
 
 export const PendingClientConsentMobile: Story = {
 	name: 'Pending client consent — phone 390',
-	globals: phone390Globals,
+	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
 		<Stream compact>
 			<CaseHandoverConsentCard
 				onApprove={() => {}}
 				onDecline={() => {}}
+				timestamp="12:54"
 			/>
 		</Stream>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		);
+		const actions = canvas.getByRole('group', {
+			name: 'A counsellor requested access to this conversation'
+		});
+		const approve = canvas.getByRole('button', { name: 'Approve access' });
+		const decline = canvas.getByRole('button', { name: 'Decline access' });
+
+		expect(bubble).toContainElement(actions);
+		await waitFor(() =>
+			expect(actions).toHaveAttribute('data-alignment', 'stacked')
+		);
+		expect(getComputedStyle(approve).backgroundColor).toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+		expect(getComputedStyle(decline).backgroundColor).toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+		expect(getComputedStyle(approve).borderTopColor).toBe(
+			'rgb(196, 199, 200)'
+		);
+		expect(getComputedStyle(decline).borderTopColor).toBe(
+			'rgb(196, 199, 200)'
+		);
+	}
+};
+
+export const PendingClientConsentGerman: Story = {
+	name: 'Ausstehende Zustimmung — Desktop (Deutsch)',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
+				timestamp="12:54"
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		);
+		const actions = canvas.getByRole('group', {
+			name: 'Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung'
+		});
+
+		expect(bubble).toContainElement(actions);
+		expect(actions).toHaveAttribute('data-alignment', 'horizontal-flex');
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Zugriff freigeben' })
+			).toBeVisible()
+		);
+		expect(
+			canvas.getByRole('button', { name: 'Zugriff verweigern' })
+		).toBeVisible();
+	}
+};
+
+export const PendingClientConsentGermanMobile: Story = {
+	name: 'Ausstehende Zustimmung — Telefon 390 (Deutsch)',
+	globals: { ...phone390Globals, locale: 'de' },
+	render: () => (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
+				timestamp="12:54"
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const actions = canvas.getByRole('group', {
+			name: 'Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung'
+		});
+
+		await waitFor(() =>
+			expect(actions).toHaveAttribute('data-alignment', 'stacked')
+		);
+	}
 };
 
 export const ActiveClientOptOut: Story = {
