@@ -43,13 +43,13 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	background:
 		radial-gradient(
 			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 255, 255, 0) 40%
+			rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 255, 255, 0) 26%
 		),
 		radial-gradient(
-			660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 180, 168, var(--stage-glow-opacity, 0.32)),
-			rgba(255, 180, 168, 0) 62%
+			400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+			rgba(255, 180, 168, var(--stage-glow-opacity, 0.18)),
+			rgba(255, 180, 168, 0) 58%
 		),
 		linear-gradient(
 			152deg,
@@ -74,15 +74,15 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		background:
 			radial-gradient(
 				circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-				rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
-				rgba(255, 255, 255, 0) 40%
+				rgba(255, 255, 255, var(--stage-glow-opacity, 0.18)),
+				rgba(255, 255, 255, 0) 26%
 			),
 			radial-gradient(
-				660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+				400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
 				color-mix(
 					in srgb,
 					var(--m3-primary-fixed-dim, #ffb4aa)
-						calc(var(--stage-glow-opacity, 0.32) * 100%),
+						calc(var(--stage-glow-opacity, 0.18) * 100%),
 					transparent
 				),
 				transparent 62%
@@ -126,6 +126,22 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	/*
+	 * `.stageLayout__stage` makes the whole panel pass-through, and for a
+	 * reason: on a first visit the stage starts at 100vw over the page and
+	 * takes 2.5 s to slide to 40vw, and the form underneath must be usable
+	 * from the first moment. Once the panel has settled — immediately without
+	 * the animation, on `transitionend` with it — nothing sits underneath any
+	 * more, and it takes the pointer back. Without this the stage is dead in
+	 * the real login: no mark lights the lamp map, no glow follows the cursor,
+	 * the wandering point never notices anyone. (Only Storybook, where the
+	 * stage is not a `.stageLayout__stage`, ever showed the effect.)
+	 */
+	&.stage--no-animation,
+	&.stage--ready {
+		pointer-events: auto;
+	}
+
+	/*
 	 * Lamp map (design 5b). Always in the DOM so the gate has something to
 	 * measure, but only ever painted once the effect chunk has been fetched —
 	 * which never happens below $fromXLarge, under prefers-reduced-motion, or
@@ -138,6 +154,22 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		width: 100%;
 		height: 100%;
 		pointer-events: none;
+
+		// Hidden while the first-visit slide is still squeezing the panel
+		// from 100vw to 40vw — dots painted at 100vw would visibly compress
+		// on the way. Once the panel has settled the effect re-fits (see
+		// `fit()` in lampMapEffect.ts) and the map fades in over the result.
+		opacity: 0;
+		transition: opacity 500ms ease 200ms;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	&.stage--no-animation &__lampMap,
+	&.stage--ready &__lampMap {
+		opacity: 1;
 	}
 
 	/*
@@ -345,10 +377,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
  * element itself, so the links and logos above stay clickable.
  */
 .stage__effectCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 0;
 }
