@@ -1318,7 +1318,11 @@
 				"title": "Datenschutzerklärung"
 			},
 			"back": "Zurück",
-			"confirm": "Verstanden"
+			"confirm": "Verstanden",
+			"missing": {
+				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
+				"link": "Zur hinterlegten Adresse"
+			}
 		}
 	},
 	"login": {
