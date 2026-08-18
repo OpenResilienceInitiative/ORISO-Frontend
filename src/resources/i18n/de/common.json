@@ -2981,9 +2981,11 @@
 			"approve": "Zugriff freigeben",
 			"decline": "Zugriff verweigern",
 			"optOut": {
-				"title": "Eine Beratungskraft hat Zugriff auf diese Unterhaltung",
-				"copy": "Der Zugriff ist bereits aktiv. Schalten Sie ihn aus, wenn Sie diesen Zugriff beenden möchten.",
-				"switchLabel": "Zugriff für diese Fallübergabe erlauben"
+				"title": "Datenschutzhinweis zur Fallübergabe",
+				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
+				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
+				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
 			}
 		},
 		"denied": {

@@ -127,15 +127,31 @@
 	margin-top: 4px;
 }
 
+.caseHandoverMessage__optOutCopy {
+	margin: 0;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 400;
+	letter-spacing: normal;
+}
+
+.caseHandoverMessage__optOutCopy + .caseHandoverMessage__optOutCopy {
+	margin-top: 12px;
+}
+
 .caseHandoverMessage__optOutSwitch {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 24px;
-	margin-top: 12px;
+	margin-top: 16px;
 	font-size: 15px;
 	line-height: 22px;
 	font-weight: 500;
+
+	> span {
+		flex: 1 1 auto;
+	}
 }
 
 .caseHandoverMessage__error {

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
@@ -152,6 +153,50 @@ export const PendingClientConsentMobile: Story = {
 
 export const ActiveClientOptOut: Story = {
 	name: 'Active access — client opt-out — desktop',
+	globals: { locale: 'en' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const control = canvas.getByRole('switch', {
+			name: 'I consent to data processing for this case handover'
+		});
+		const track = control.nextElementSibling as HTMLElement;
+		const target = track.firstElementChild as HTMLElement;
+		const handle = target.firstElementChild as HTMLElement;
+
+		expect(control).toBeChecked();
+		expect(getComputedStyle(track).display).toBe('block');
+		expect(getComputedStyle(target).display).toBe('flex');
+		expect(getComputedStyle(handle).display).toBe('flex');
+		expect(getComputedStyle(handle).width).toBe('24px');
+	}
+};
+
+export const ActiveClientOptOutMobile: Story = {
+	name: 'Active access — client opt-out — phone 390',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	)
+};
+
+export const ActiveClientOptOutGerman: Story = {
+	name: 'Aktiver Zugriff — Opt-out — Desktop (Deutsch)',
+	globals: { locale: 'de' },
 	render: () => (
 		<Stream>
 			<CaseHandoverConsentCard
@@ -163,9 +208,9 @@ export const ActiveClientOptOut: Story = {
 	)
 };
 
-export const ActiveClientOptOutMobile: Story = {
-	name: 'Active access — client opt-out — phone 390',
-	globals: phone390Globals,
+export const ActiveClientOptOutGermanMobile: Story = {
+	name: 'Aktiver Zugriff — Opt-out — Telefon 390 (Deutsch)',
+	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
 		<Stream compact>
 			<CaseHandoverConsentCard

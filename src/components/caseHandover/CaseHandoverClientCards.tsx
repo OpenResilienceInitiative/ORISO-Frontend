@@ -285,7 +285,7 @@ export const CaseHandoverConsentCard = ({
 	const title = isOptOut
 		? translate(
 				'caseHandover.consent.optOut.title',
-				'A counsellor has access to this conversation'
+				'Privacy notice for case handover'
 			)
 		: translate(
 				'caseHandover.consent.title',
@@ -302,8 +302,8 @@ export const CaseHandoverConsentCard = ({
 				subtitle={
 					isOptOut
 						? translate(
-								'caseHandover.consent.optOut.copy',
-								'Access is already active. You can allow it to continue or end it immediately.'
+								'caseHandover.consent.optOut.prompt',
+								'Please read the information and then make your decision.'
 							)
 						: translate(
 								'caseHandover.consent.copy',
@@ -313,25 +313,39 @@ export const CaseHandoverConsentCard = ({
 				timestamp={timestamp}
 			>
 				{isOptOut ? (
-					<div className="caseHandoverMessage__optOutSwitch">
-						<span>
+					<>
+						<p className="caseHandoverMessage__optOutCopy">
 							{translate(
-								'caseHandover.consent.optOut.switchLabel',
-								'Allow access for this case handover'
+								'caseHandover.consent.optOut.copy',
+								'For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.'
 							)}
-						</span>
-						<Switch
-							checked
-							disabled={isSubmitting}
-							aria-label={translate(
-								'caseHandover.consent.optOut.switchLabel',
-								'Allow access for this case handover'
+						</p>
+						<p className="caseHandoverMessage__optOutCopy">
+							{translate(
+								'caseHandover.consent.optOut.revocationCopy',
+								'By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.'
 							)}
-							onChange={(checked) =>
-								checked ? onApprove() : onDecline()
-							}
-						/>
-					</div>
+						</p>
+						<div className="caseHandoverMessage__optOutSwitch">
+							<span>
+								{translate(
+									'caseHandover.consent.optOut.switchLabel',
+									'I consent to data processing for this case handover'
+								)}
+							</span>
+							<Switch
+								checked
+								disabled={isSubmitting}
+								aria-label={translate(
+									'caseHandover.consent.optOut.switchLabel',
+									'I consent to data processing for this case handover'
+								)}
+								onChange={(checked) =>
+									checked ? onApprove() : onDecline()
+								}
+							/>
+						</div>
+					</>
 				) : (
 					<>
 						{/*
