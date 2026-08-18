@@ -218,16 +218,6 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		font-weight: $font-weight-regular;
 	}
 
-	&__tenantLogo {
-		display: flex;
-		justify-content: center;
-		margin: 0 auto $grid-base-three;
-
-		img {
-			max-height: 64px;
-		}
-	}
-
 	&__logo {
 		display: flex;
 		align-items: center;

@@ -51,7 +51,6 @@
 		"selectLanguage": "Выберите язык",
 		"stage": {
 			"title": "Консультации\n& Помощь",
-			"associationLogoAlt": "Логотип организации-поставщика",
 			"mobileHeadline": "Здесь есть место для ваших забот.",
 			"carrierLogoAlt": "Показать карту местоположений {{name}}"
 		},
