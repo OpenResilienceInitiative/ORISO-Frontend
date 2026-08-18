@@ -1163,13 +1163,12 @@
 		},
 		"registering": "Registrierung läuft...",
 		"handover": {
-			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"encryption": "Verschlüsselt: Außer dir sieht deine Anfrage nur deine Beratungsstelle.",
 			"steps": {
 				"write": {
 					"title": "Du schreibst, was los ist"
 				},
 				"counsellor": {
-					"title": "Wir finden deine Beraterin",
 					"text": "Fachlich passend — und mit Zeit für dich."
 				},
 				"reply": {
