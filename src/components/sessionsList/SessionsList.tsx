@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
-	getChatItemForSession,
 	getSessionType,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -68,8 +67,6 @@ import {
 import {
 	draftMatchesSession,
 	isAnonymousAskerSession,
-	isConversationCircleSession,
-	isInternalGroupChatSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
