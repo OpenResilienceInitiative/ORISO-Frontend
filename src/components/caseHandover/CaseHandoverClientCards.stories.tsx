@@ -180,14 +180,30 @@ export const PendingClientConsent: Story = {
 		const bubble = canvasElement.querySelector<HTMLElement>(
 			'.messageItem__message--systemNotification'
 		);
+		const sender = canvas.getByText('Carimat');
 		const actions = canvas.getByRole('group', {
 			name: 'A counsellor requested access to this conversation'
 		});
 		const approve = canvas.getByRole('button', { name: 'Approve access' });
 		const decline = canvas.getByRole('button', { name: 'Decline access' });
 
-		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
+		await waitFor(() => expect(sender).toBeVisible());
 		expect(canvas.getByText('Quick Guide')).toBeVisible();
+
+		// Figma 9596:35524: the 60px avatar/header layer sits above the chat
+		// container. The bubble starts 40px into the rail and 44px below the
+		// avatar origin, so its square top-left corner is visibly tucked under
+		// the avatar instead of beginning beneath the complete sender block.
+		const avatarBounds = avatar!.getBoundingClientRect();
+		const bubbleBounds = bubble!.getBoundingClientRect();
+		const senderBounds = sender.getBoundingClientRect();
+		expect(Math.round(bubbleBounds.left - avatarBounds.left)).toBe(40);
+		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(44);
+		expect(
+			Math.abs(senderBounds.left - avatarBounds.left - 64)
+		).toBeLessThanOrEqual(1);
+		expect(bubbleBounds.left).toBeLessThan(avatarBounds.right);
+		expect(bubbleBounds.top).toBeLessThan(avatarBounds.bottom);
 		expect(bubble).toContainElement(
 			canvas.getByText(
 				'A counsellor requested access to this conversation'
