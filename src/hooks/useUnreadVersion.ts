@@ -23,7 +23,7 @@ export const useUnreadVersion = (): number => {
 	const [version, setVersion] = useState(0);
 
 	useEffect(() => {
-		const client = service?.getClient();
+		const client = service?.getClient?.();
 		if (!client) {
 			return undefined;
 		}

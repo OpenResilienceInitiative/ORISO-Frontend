@@ -998,6 +998,7 @@ type Story = StoryObj<typeof meta>;
  */
 const seedMatrixRoom = (unreadCount: number) => {
 	setMatrixClientServiceRef({
+		getClient: () => null,
 		getRoom: () => ({
 			getUnreadNotificationCount: () => unreadCount
 		})
