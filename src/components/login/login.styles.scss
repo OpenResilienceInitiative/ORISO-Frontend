@@ -44,7 +44,14 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 	border-radius: 20px;
 	animation: fadeIn 0.5s ease-out;
-	transition: transform 0.3s ease;
+	transition:
+		transform 0.3s ease,
+		width 320ms cubic-bezier(0.2, 0, 0, 1),
+		max-width 320ms cubic-bezier(0.2, 0, 0, 1);
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
 
 	/* The mobile sheet already supplies the outer margin (design 2e). */
 	@media screen and (width <= #{$fromMedium - 1px}) {
@@ -85,6 +92,15 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&--securityOpen {
+		/*
+		 * The explainer is drawn on the design's 700px card (580px of content):
+		 * two 202px party blocks, a 132px wire and a 340px noise box need the
+		 * room. The card grows for it and shrinks back for the form.
+		 */
+		@media screen and (width >= #{$fromMedium}) {
+			max-width: $login-security-card-width;
+		}
+
 		.loginForm__pane--login {
 			transform: translateY(-118%);
 			opacity: 0;

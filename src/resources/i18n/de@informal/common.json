@@ -2079,13 +2079,11 @@
 				"linkShort": "Warum das sicher ist"
 			},
 			"explainer": {
-				"badge": "NEU",
-				"headline": "Nur ihr beide könnt mitlesen.",
+				"headline": "Vertraulich von Ende zu Ende",
 				"message": "Mir geht es nicht gut.",
-				"you": "Du",
-				"agency": "Beratungsstelle",
 				"encrypted": "verschlüsselt",
-				"attack": "mehr bekommt ein Angreifer nicht",
+				"diagram": "Schaubild: Deine Nachricht geht verschlüsselt von deinem Gerät zur Beratungsstelle — nur dort wird sie wieder lesbar.",
+				"attack": "Mehr als Zahlensalat gibt’s bei uns für Datendiebe nicht zu holen.",
 				"cipherLabel": "Abgefangene, verschlüsselte Daten",
 				"key": "Der Schlüssel entsteht auf deinem Gerät und bleibt dort — wir haben ihn nicht.",
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",

@@ -1226,13 +1226,11 @@
 				"linkShort": "Pourquoi c'est sûr"
 			},
 			"explainer": {
-				"badge": "NOUVEAU",
-				"headline": "Vous deux êtes les seuls à pouvoir lire.",
+				"headline": "Confidentiel de bout en bout",
 				"message": "Je ne vais pas bien.",
-				"you": "Vous",
-				"agency": "Service de consultation",
 				"encrypted": "chiffré",
-				"attack": "un attaquant n'obtient rien de plus",
+				"diagram": "Schéma : votre message part chiffré de votre appareil vers le service de consultation — il ne redevient lisible que là-bas.",
+				"attack": "Chez nous, un voleur de données ne récolte qu’une bouillie de chiffres.",
 				"cipherLabel": "Données interceptées et chiffrées",
 				"key": "La clé est créée sur votre appareil et y reste — nous ne l'avons pas.",
 				"protocol": "Protocole ouvert <strong>Matrix</strong>, vérifiable de manière indépendante.",

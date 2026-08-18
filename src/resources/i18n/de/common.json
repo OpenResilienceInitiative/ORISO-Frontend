@@ -1387,13 +1387,11 @@
 				"linkShort": "Warum das sicher ist"
 			},
 			"explainer": {
-				"badge": "NEU",
-				"headline": "Nur Sie beide können mitlesen.",
+				"headline": "Vertraulich von Ende zu Ende",
 				"message": "Mir geht es nicht gut.",
-				"you": "Sie",
-				"agency": "Beratungsstelle",
 				"encrypted": "verschlüsselt",
-				"attack": "mehr bekommt ein Angreifer nicht",
+				"diagram": "Schaubild: Ihre Nachricht geht verschlüsselt von Ihrem Gerät zur Beratungsstelle — nur dort wird sie wieder lesbar.",
+				"attack": "Mehr als Zahlensalat gibt’s bei uns für Datendiebe nicht zu holen.",
 				"cipherLabel": "Abgefangene, verschlüsselte Daten",
 				"key": "Der Schlüssel entsteht auf Ihrem Gerät und bleibt dort — wir haben ihn nicht.",
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
