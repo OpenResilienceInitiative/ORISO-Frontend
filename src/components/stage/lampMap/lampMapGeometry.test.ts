@@ -31,9 +31,56 @@ const scheduleFor = async (id: CarrierId) => {
 };
 
 describe('buildSchedule (design 5b)', () => {
-	it('lights up nearly the whole country for Caritas', async () => {
+	it('lights most of the country for Caritas — thick in the west and south, thin in the north-east', async () => {
 		const { schedule } = await scheduleFor('caritas');
-		expect(schedule.length / inside.length).toBeGreaterThan(0.95);
+		expect(schedule.length / inside.length).toBeGreaterThan(0.55);
+		const lit = new Set(schedule.map(({ index }) => index));
+		const share = (pick: (p: (typeof inside)[number]) => boolean) => {
+			const region = grid.points.filter((p) => p.inside && pick(p));
+			return (
+				region.filter((p) => lit.has(grid.points.indexOf(p))).length /
+				region.length
+			);
+		};
+		// map space: x 0..1 west→east, y 0..1 north→south
+		const west = share((p) => p.mapX < 0.35 && p.mapY > 0.35);
+		const south = share((p) => p.mapY > 0.65);
+		const northEast = share((p) => p.mapX > 0.55 && p.mapY < 0.4);
+		expect(west).toBeGreaterThan(northEast * 1.5);
+		expect(south).toBeGreaterThan(northEast * 1.5);
+	});
+
+	it('lets a thin seed group come on slower than a thick one', async () => {
+		const { presence, schedule } = await scheduleFor('caritas');
+		const seeds = presence.seeds.map((seed) => projection.project(seed));
+		// group every scheduled lamp by its nearest seed and measure the
+		// spacing between consecutive lamps of that group
+		const bySeed = new Map<number, number[]>();
+		schedule.forEach(({ index, delay }) => {
+			const point = grid.points[index];
+			let nearest = 0;
+			let best = Infinity;
+			seeds.forEach(([sx, sy], i) => {
+				const d = Math.hypot(point.mapX - sx, point.mapY - sy);
+				if (d < best) {
+					best = d;
+					nearest = i;
+				}
+			});
+			bySeed.set(nearest, [...(bySeed.get(nearest) ?? []), delay]);
+		});
+		const spacing = (delays: number[]) => {
+			const sorted = delays.slice().sort((a, b) => a - b);
+			return (
+				(sorted[sorted.length - 1] - sorted[0]) /
+				Math.max(1, sorted.length - 1)
+			);
+		};
+		const groups = [...bySeed.values()].filter((d) => d.length > 3);
+		groups.sort((a, b) => a.length - b.length);
+		const thin = spacing(groups[0]);
+		const thick = spacing(groups[groups.length - 1]);
+		expect(thin).toBeGreaterThan(thick * 1.5);
 	});
 
 	it('keeps the specialist service a handful of islands', async () => {
@@ -99,6 +146,7 @@ describe('buildSchedule (design 5b)', () => {
 		// once, and the whole country takes its time.
 		expect(sorted[0].delay).toBeLessThan(2.5);
 		expect(sorted[sorted.length - 1].delay).toBeGreaterThan(8);
+		expect(sorted[sorted.length - 1].delay).toBeLessThan(30);
 	});
 
 	it('staggers the seeds and jitters the lamps instead of a lockstep wave', async () => {

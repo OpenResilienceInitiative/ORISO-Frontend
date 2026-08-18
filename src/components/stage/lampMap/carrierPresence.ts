@@ -93,16 +93,74 @@ const REGENSBURG: GeoPoint = [12.1, 49.02];
 const ROSTOCK: GeoPoint = [12.14, 54.09];
 const STUTTGART: GeoPoint = [9.18, 48.78];
 const WUERZBURG: GeoPoint = [9.93, 49.79];
+const BAMBERG: GeoPoint = [10.89, 49.89];
+const COTTBUS: GeoPoint = [14.33, 51.76];
+const FULDA: GeoPoint = [9.68, 50.55];
+const KARLSRUHE: GeoPoint = [8.4, 49.01];
+const KIEL: GeoPoint = [10.14, 54.32];
+const KOBLENZ: GeoPoint = [7.6, 50.36];
+const KONSTANZ: GeoPoint = [9.17, 47.66];
+const OLDENBURG: GeoPoint = [8.21, 53.14];
+const SAARBRUECKEN: GeoPoint = [7.0, 49.23];
+const SCHWERIN: GeoPoint = [11.42, 53.63];
+const TRIER: GeoPoint = [6.64, 49.76];
+const ULM: GeoPoint = [9.99, 48.4];
 
-/** Rhineland / Westphalia — the historic heartland of SkF, SkM and Kreuzbund. */
-const WEST: readonly GeoPoint[] = [
+/*
+ * Regional weighting. The Caritas family is densest where the Church is:
+ * Rhineland/Westphalia, the south-west and Bavaria; a mid band through
+ * Hesse, Rhineland-Palatinate, Saarland and Lower Saxony; thin in the north
+ * and the east (Frank's Caritas locations map, 2026-08-18). Not counts —
+ * a picture of where the marks are thick and where they are sparse.
+ */
+const HEARTLAND_WEST: readonly GeoPoint[] = [
 	KOELN,
 	DUESSELDORF,
 	DORTMUND,
+	ESSEN,
 	MUENSTER,
 	PADERBORN,
-	ESSEN,
-	AACHEN
+	AACHEN,
+	KOBLENZ,
+	TRIER
+];
+const HEARTLAND_SOUTHWEST: readonly GeoPoint[] = [
+	FREIBURG,
+	KARLSRUHE,
+	STUTTGART,
+	ULM,
+	KONSTANZ,
+	SAARBRUECKEN,
+	MAINZ
+];
+const HEARTLAND_SOUTH: readonly GeoPoint[] = [
+	MUENCHEN,
+	AUGSBURG,
+	REGENSBURG,
+	PASSAU,
+	NUERNBERG,
+	WUERZBURG,
+	BAMBERG
+];
+const MID_BAND: readonly GeoPoint[] = [
+	FRANKFURT,
+	FULDA,
+	OSNABRUECK,
+	OLDENBURG,
+	HANNOVER,
+	BREMEN
+];
+const NORTH_EAST_SPARSE: readonly GeoPoint[] = [
+	HAMBURG,
+	KIEL,
+	SCHWERIN,
+	ROSTOCK,
+	BERLIN,
+	MAGDEBURG,
+	LEIPZIG,
+	DRESDEN,
+	ERFURT,
+	COTTBUS
 ];
 
 const IN_VIA_CITIES: readonly GeoPoint[] = [
@@ -141,41 +199,44 @@ const RAPHAEL_SITES: readonly GeoPoint[] = [
 const STATIC_PRESENCE: readonly CarrierPresence[] = [
 	{
 		id: 'caritas',
-		nationwide: 0.99,
-		clusters: [],
+		// A thin base everywhere; the heartlands stack on top of it.
+		nationwide: 0.22,
+		clusters: [
+			{ anchors: HEARTLAND_WEST, reach: 0.13, share: 0.85 },
+			{ anchors: HEARTLAND_SOUTHWEST, reach: 0.12, share: 0.8 },
+			{ anchors: HEARTLAND_SOUTH, reach: 0.12, share: 0.75 },
+			{ anchors: MID_BAND, reach: 0.1, share: 0.55 },
+			{ anchors: NORTH_EAST_SPARSE, reach: 0.08, share: 0.3 }
+		],
 		seeds: [
-			BERLIN,
-			HAMBURG,
-			MUENCHEN,
-			KOELN,
-			FRANKFURT,
-			STUTTGART,
-			DUESSELDORF,
-			DORTMUND,
-			LEIPZIG,
-			DRESDEN,
-			HANNOVER,
-			NUERNBERG,
-			BREMEN,
-			MUENSTER,
-			FREIBURG,
-			ROSTOCK,
-			ERFURT,
-			MAGDEBURG
+			...HEARTLAND_WEST,
+			...HEARTLAND_SOUTHWEST,
+			...HEARTLAND_SOUTH,
+			...MID_BAND,
+			...NORTH_EAST_SPARSE
 		],
 		// The whole country takes its time — the wave should be watched, not
 		// blink through.
-		pace: 1.6,
-		note: 'Present in every diocese with local branches — the whole country lights up, from many cities at once, and it takes its time.'
+		pace: 2.2,
+		note: 'Present in every diocese with local branches — thick where the Church is (west, south-west, Bavaria), thinner through the middle, sparse in the north and east; the wave takes its time.'
 	},
 	{
 		id: 'malteser',
-		nationwide: 0.5,
+		nationwide: 0.18,
 		clusters: [
 			{
-				anchors: [KOELN, MUENCHEN, BERLIN, DRESDEN, MAINZ],
-				reach: 0.12,
-				share: 0.8
+				anchors: [
+					...HEARTLAND_WEST,
+					...HEARTLAND_SOUTH,
+					...HEARTLAND_SOUTHWEST
+				],
+				reach: 0.11,
+				share: 0.6
+			},
+			{
+				anchors: [...MID_BAND, BERLIN, DRESDEN, HAMBURG],
+				reach: 0.09,
+				share: 0.4
 			}
 		],
 		seeds: [
@@ -190,92 +251,117 @@ const STATIC_PRESENCE: readonly CarrierPresence[] = [
 			NUERNBERG,
 			FREIBURG,
 			MAGDEBURG,
-			PASSAU
+			PASSAU,
+			TRIER,
+			PADERBORN
 		],
 		pace: 1,
-		note: 'Nationwide, a bit thinner than Caritas, denser around the big centres.'
+		note: 'Nationwide along the dioceses, a bit thinner than Caritas, denser around the big centres of the west and south.'
 	},
 	{
 		id: 'kreuzbund',
-		nationwide: 0.3,
+		nationwide: 0.12,
 		clusters: [
+			{ anchors: HEARTLAND_WEST, reach: 0.12, share: 0.8 },
 			{
-				anchors: [
-					...WEST,
-					PADERBORN,
-					OSNABRUECK,
-					WUERZBURG,
-					REGENSBURG
-				],
-				reach: 0.11,
-				share: 0.85
+				anchors: [...HEARTLAND_SOUTH, ...HEARTLAND_SOUTHWEST],
+				reach: 0.1,
+				share: 0.6
+			},
+			{
+				anchors: [OSNABRUECK, FULDA, HANNOVER, ERFURT],
+				reach: 0.08,
+				share: 0.45
 			}
 		],
 		seeds: [
 			PADERBORN,
 			KOELN,
 			MUENSTER,
+			ESSEN,
 			OSNABRUECK,
 			WUERZBURG,
 			REGENSBURG,
+			BAMBERG,
 			FREIBURG,
 			ERFURT,
 			HANNOVER,
-			MUENCHEN
+			MUENCHEN,
+			TRIER
 		],
 		pace: 1,
-		note: 'Self-help groups organised along the dioceses, strongest in the west.'
+		note: 'Self-help groups organised along the dioceses, strongest in the west, then Bavaria and the south-west.'
 	},
 	{
 		id: 'skf',
-		nationwide: 0.16,
+		nationwide: 0.06,
 		clusters: [
+			{ anchors: HEARTLAND_WEST, reach: 0.1, share: 0.7 },
 			{
 				anchors: [
-					...WEST,
+					OSNABRUECK,
 					HANNOVER,
 					STUTTGART,
 					MUENCHEN,
 					AUGSBURG,
-					FREIBURG
+					FREIBURG,
+					FRANKFURT,
+					WUERZBURG
 				],
-				reach: 0.1,
-				share: 0.75
-			}
+				reach: 0.07,
+				share: 0.55
+			},
+			{ anchors: [BERLIN, DRESDEN, ERFURT], reach: 0.05, share: 0.4 }
 		],
 		seeds: [
 			DORTMUND,
 			KOELN,
+			ESSEN,
+			OSNABRUECK,
 			HANNOVER,
 			STUTTGART,
 			MUENCHEN,
 			AUGSBURG,
 			FREIBURG,
+			FRANKFURT,
 			BERLIN
 		],
 		pace: 1,
-		note: 'Local associations, head office Dortmund, densest in the west.'
+		note: 'Local associations, head office Dortmund — the west first, then the south and a few places in the east.'
 	},
 	{
 		id: 'skm',
 		nationwide: 0,
 		clusters: [
+			{ anchors: HEARTLAND_WEST, reach: 0.1, share: 0.75 },
 			{
 				anchors: [
-					...WEST,
 					MAINZ,
 					FRANKFURT,
 					HANNOVER,
+					OSNABRUECK,
 					FREIBURG,
-					MUENCHEN
+					STUTTGART,
+					MUENCHEN,
+					REGENSBURG,
+					AUGSBURG
 				],
-				reach: 0.1,
-				share: 0.8
+				reach: 0.06,
+				share: 0.55
 			}
 		],
-		seeds: [KOELN, DUESSELDORF, DORTMUND, MAINZ, MUENCHEN, HANNOVER],
+		seeds: [
+			KOELN,
+			DUESSELDORF,
+			DORTMUND,
+			MUENSTER,
+			MAINZ,
+			MUENCHEN,
+			HANNOVER,
+			FREIBURG
+		],
 		pace: 1,
-		note: 'Local associations with a focus on the Rhineland and Westphalia.'
+		note: 'Local associations with a focus on the Rhineland and Westphalia, plus a scatter through the south.'
 	},
 	{
 		id: 'via',

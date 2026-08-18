@@ -237,6 +237,8 @@ const SEED_STEP_SECONDS = 0.1;
  */
 const SEED_STAGGER_SECONDS = 1.4;
 const LAMP_JITTER_SECONDS = 0.35;
+/** How much slower a thin seed group may run than the typical one. */
+const SPARSE_SLOWDOWN_MAX = 3;
 
 /**
  * Turns a carrier's presence into the order its lamps light up in — the
@@ -325,16 +327,31 @@ export const buildSchedule = (
 
 	const pace = presence.pace || 1;
 	const step = stepSeconds * pace;
+	// Where a carrier is thin, its lamps come on slower — a seed with a
+	// third of the typical group takes up to three times as long per lamp,
+	// so the sparse north does not blink through while the west is still
+	// filling. Reference is the median group.
+	const sizes = groups.map((group) => group.length).filter((n) => n > 0);
+	sizes.sort((a, b) => a - b);
+	const typical = sizes.length ? sizes[Math.floor(sizes.length / 2)] : 1;
 	const schedule: LampSchedule[] = [];
 	groups.forEach((group) => {
+		if (!group.length) {
+			return;
+		}
+		const slowdown = Math.min(
+			SPARSE_SLOWDOWN_MAX,
+			Math.max(1, typical / group.length)
+		);
+		const groupStep = step * slowdown;
 		const start = random() * SEED_STAGGER_SECONDS * pace;
 		group
 			.sort((a, b) => a.distance - b.distance)
 			.forEach((entry, rank) => {
-				const jitter = random() * LAMP_JITTER_SECONDS * pace;
+				const jitter = random() * LAMP_JITTER_SECONDS * pace * slowdown;
 				schedule.push({
 					index: entry.index,
-					delay: start + rank * step + jitter
+					delay: start + rank * groupStep + jitter
 				});
 			});
 	});
