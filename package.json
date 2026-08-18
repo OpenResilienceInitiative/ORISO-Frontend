@@ -339,5 +339,8 @@
 			"proxy/"
 		],
 		"delay": 2500
+	},
+	"overrides": {
+		"brace-expansion@1": "^1.1.18"
 	}
 }
