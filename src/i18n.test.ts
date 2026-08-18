@@ -10,6 +10,12 @@ import fr from './resources/i18n/fr/common.json';
 import ru from './resources/i18n/ru/common.json';
 import ti from './resources/i18n/ti/common.json';
 import tr from './resources/i18n/tr/common.json';
+import deConsultingTypes from './resources/i18n/de/consultingTypes.json';
+import enConsultingTypes from './resources/i18n/en/consultingTypes.json';
+import frConsultingTypes from './resources/i18n/fr/consultingTypes.json';
+import ruConsultingTypes from './resources/i18n/ru/consultingTypes.json';
+import tiConsultingTypes from './resources/i18n/ti/consultingTypes.json';
+import trConsultingTypes from './resources/i18n/tr/consultingTypes.json';
 import guardBaseline from './i18nCatalogueGuard.baseline.json';
 import {
 	collectCatalogueDrift,
@@ -22,14 +28,22 @@ import {
 
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
-	fr: { extraInLocale: 5, missingInLocale: 770 },
-	ru: { extraInLocale: 5, missingInLocale: 770 },
-	ti: { extraInLocale: 5, missingInLocale: 806 },
-	tr: { extraInLocale: 5, missingInLocale: 752 }
+	fr: { extraInLocale: 5, missingInLocale: 699 },
+	ru: { extraInLocale: 5, missingInLocale: 699 },
+	ti: { extraInLocale: 5, missingInLocale: 702 },
+	tr: { extraInLocale: 5, missingInLocale: 699 }
 } as const;
 
 const locales = { en, fr, ru, ti, tr } as const;
 const deKeys = flattenCatalogueKeys(de);
+
+const consultingTypeCatalogues = {
+	en: enConsultingTypes,
+	fr: frConsultingTypes,
+	ru: ruConsultingTypes,
+	ti: tiConsultingTypes,
+	tr: trConsultingTypes
+} as const;
 
 // A failing guard has to name the keys it tripped over; a bare count sends the
 // next reader into `git log`. Long lists stay readable by showing the head.
@@ -181,4 +195,57 @@ describe('i18n catalogue guard (#1101)', () => {
 				listKeys(newlyUnknown)
 		).toEqual([]);
 	});
+});
+
+describe('consulting-type catalogues are per language (#1154)', () => {
+	// Every non-German locale used to be wired to `enConsultingTypes` in
+	// `config.ts`, so counselling topics rendered in English no matter which
+	// language the person had chosen. These two guards are what would have
+	// caught that: the file has to exist and cover the German key set, and it
+	// has to say something other than English.
+	it.each(Object.entries(consultingTypeCatalogues))(
+		'gives the $0 locale a consultingTypes catalogue with the German key set',
+		(lng, catalogue) => {
+			const drift = collectCatalogueDrift(
+				// `consultingType.0` is an empty placeholder in the German
+				// source and carries no copy, so a locale that omits it — as
+				// `en` always has — is not missing a translation.
+				flattenCatalogueKeys(deConsultingTypes).filter(
+					(key) => key !== 'consultingType.0'
+				),
+				flattenCatalogueKeys(catalogue)
+			);
+
+			expect(
+				drift.missingInLocale,
+				`${lng}/consultingTypes.json is missing keys that ` +
+					`de/consultingTypes.json has, so those counselling topics fall ` +
+					`back to another language: ${listKeys(drift.missingInLocale)}`
+			).toEqual([]);
+		}
+	);
+
+	it.each(
+		Object.entries(consultingTypeCatalogues).filter(([lng]) => lng !== 'en')
+	)(
+		'does not serve the English topic titles as the $0 catalogue',
+		(lng, catalogue) => {
+			const total = flattenCatalogueKeys(catalogue).length;
+			// A locale may legitimately share a word with English
+			// ("Prostitution" in French), so require that most of the
+			// catalogue differs rather than every single entry.
+			const untranslated = collectRedundantOverlayKeys(
+				enConsultingTypes,
+				catalogue
+			);
+
+			expect(
+				untranslated.length,
+				`${untranslated.length} of ${total} values in ` +
+					`${lng}/consultingTypes.json are identical to the English ` +
+					`catalogue. Translate them from de/consultingTypes.json: ` +
+					listKeys(untranslated)
+			).toBeLessThan(total / 10);
+		}
+	);
 });

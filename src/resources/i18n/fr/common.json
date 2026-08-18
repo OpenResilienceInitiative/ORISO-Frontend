@@ -1406,7 +1406,7 @@
 			"enquiries": "Demandes",
 			"sessions": {
 				"large": "Mes consultations",
-				"nav": "Chats",
+				"nav": "Conversation",
 				"small": "Nouvelles"
 			}
 		},
@@ -1414,6 +1414,8 @@
 		"language": "Langue",
 		"drafts": "Brouillons",
 		"liveChat": "Chat en direct",
+		"liveChatToggleActive": "Chat en direct disponible",
+		"liveChatToggleInactive": "Chat en direct indisponible",
 		"notifications": "Notifications",
 		"overview": "Aperçu",
 		"profile": "Profil",
@@ -1888,6 +1890,7 @@
 			"preselected": {
 				"prefix": "Votre centre de conseil présélectionné : "
 			},
+			"consultantheadline": "Votre centre de consultation",
 			"result": {
 				"external": {
 					"headline": "Le centre de consultation trouvé utilise une autre application pour la consultation",
@@ -1910,7 +1913,23 @@
 				"websiteLabel": "Site web"
 			},
 			"search": "Recherche par code postal",
-			"summary": "Votre centre de consultation :"
+			"summary": "Votre centre de consultation :",
+			"infoOverlay": {
+				"backButtonLabel": "Choisir un autre centre de consultation",
+				"nextButtonLabel": "Choisir ce centre de consultation et continuer"
+			},
+			"noresult": {
+				"headline": "Aucun centre de consultation en ligne trouvé",
+				"label": "Vers la recherche de centres de consultation",
+				"subline": "Malheureusement, nous n’avons pas encore de centre de consultation en ligne près de chez vous. Sur notre site web, vous trouverez des centres de consultation sur place pour votre demande."
+			},
+			"legal": {
+				"department": "Domaine spécialisé",
+				"headline": "Informations sur la protection des données du centre de consultation",
+				"imprintHeadline": "Mentions légales du centre de consultation",
+				"label": "Informations légales",
+				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment."
+			}
 		},
 		"agencyPreselected": {
 			"headline": "Veuillez indiquer votre code postal",
@@ -2068,6 +2087,9 @@
 				"backButtonLabel": "Choisir un autre thème",
 				"nextButtonLabel": "Choisir un thème et continuer"
 			},
+			"empty": "Aucun thème n’est disponible pour le moment. Veuillez réessayer plus tard.",
+			"loadError": "Les thèmes n’ont pas pu être chargés. Veuillez réessayer.",
+			"loadErrorRetry": "Réessayer",
 			"oneResult": "Nous vous conseillons sur le thème",
 			"subline": "Choisissez un thème dans notre offre de conseil.",
 			"summary": "Votre sujet"
@@ -2110,9 +2132,19 @@
 			},
 			"twoFactorAuth": {
 				"label": "Sécuriser mon mot de passe avec l'authentification à deux facteurs"
+			},
+			"email": {
+				"label": "Adresse e-mail",
+				"info": "Facultatif. Utilisée uniquement pour des fonctions de sécurité comme l’authentification à deux facteurs.",
+				"error": {
+					"required": "Veuillez indiquer une adresse e-mail.",
+					"invalid": "Veuillez indiquer une adresse e-mail valide."
+				}
 			}
 		},
 		"back": "Retour",
+		"consultantlink": "Votre conseillère ou votre conseiller vous a invité(e) au conseil en ligne ! Veuillez vous inscrire pour entrer en contact avec la personne qui vous accompagne.",
+		"consultantlinkAbsent": "Cette personne est actuellement absente. Vous pouvez malgré tout envoyer votre demande au centre de consultation.",
 		"next": "Continuer",
 		"register": "S'inscrire",
 		"title": {
@@ -2172,6 +2204,7 @@
 				"inPerson": "Si vous le souhaitez, vous pourrez aussi poursuivre l'échange en personne plus tard."
 			}
 		},
+		"registering": "Inscription en cours…",
 		"handover": {
 			"badge": "Inscrit(e)",
 			"headline": "C'est fait.",
@@ -2206,6 +2239,32 @@
 			"done": "terminé",
 			"active": "étape actuelle",
 			"pending": "à venir"
+		},
+		"md3": {
+			"stepNames": {
+				"focus": "Choisir un thème",
+				"postcode": "Code postal",
+				"agency": "Centre de consultation",
+				"register": "S’inscrire",
+				"request": "Envoyer la demande"
+			}
+		},
+		"errors": {
+			"ups": {
+				"text": "Nous sommes désolés, quelque chose s’est mal passé. Rechargez la page et réessayez.",
+				"title": "Oups !"
+			},
+			"aid": "Le centre de consultation que vous avez choisi n’a malheureusement pas pu être trouvé. Veuillez sélectionner à nouveau un centre de consultation lors de l’inscription.",
+			"cid": "Nous n’avons malheureusement pas pu trouver votre conseillère ou votre conseiller. Veuillez vous adresser à la personne qui vous accompagne pour obtenir un nouveau lien, ou inscrivez-vous ici auprès du centre de consultation de votre choix.",
+			"tid": "Le thème que vous avez choisi n’a malheureusement pas pu être trouvé. Veuillez sélectionner à nouveau un thème approprié lors de l’inscription."
+		},
+		"stepbar": {
+			"of": "sur",
+			"step": "Étape"
+		},
+		"stepper": {
+			"progress": "Étape {{current}} sur {{total}}",
+			"progressShort": "Étape {{current}}/{{total}}"
 		}
 	},
 	"releaseNote": {

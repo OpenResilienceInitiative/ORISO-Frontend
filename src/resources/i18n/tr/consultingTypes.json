@@ -1,0 +1,410 @@
+{
+	"consultingType": {
+		"0": {},
+		"1": {
+			"description": "Bir çocuğu evlat edinmek ya da evinize koruyucu bir çocuk almak mı istiyorsunuz? Çocuğunuza iyi bakabileceğinizden emin değil misiniz? Kendiniz evlat edinildiniz ve dosyanızı görmek mi istiyorsunuz? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Evlat edinme ve koruyucu aile",
+				"short": "Evlat edinme ve koruyucu aile",
+				"long": "Evlat edinme ve koruyucu aile danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Evlat edinme ve koruyucu aile danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"2": {
+			"description": "Kişisel bir sorununuz mu var, zor bir maddi durumda mısınız ya da bir kurumla sorun mu yaşıyorsunuz? Sizi hangi sorun rahatsız ederse etsin, size burada, çevrimiçi danışmanlıkta ücretsiz ve gizlilik içinde danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\", \"Geçimin güvence altına alınması\"]",
+			"titles": {
+				"default": "Genel sosyal danışmanlık",
+				"short": "Genel sosyal danışmanlık",
+				"long": "Genel sosyal danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Genel sosyal danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"3": {
+			"description": "İşinizi mi kaybettiniz? İşsizlik parası I ve II hakkında sorularınız mı var? İş ararken yardıma mı ihtiyacınız var veya güvencesiz koşullarda mı çalışıyorsunuz? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Geçimin güvence altına alınması\"]",
+			"titles": {
+				"default": "İşsizlik",
+				"short": "İşsizlik",
+				"long": "İşsizler için danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "İşsizler için danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"4": {
+			"description": "Almanya’dan ayrılmak zorunda mısınız ya da ayrılmak mı istiyorsunuz? Almanya’da mı yoksa geldiğiniz ülkede mi yaşamak istediğinizi mi düşünüyorsunuz? Oturum durumunuzdan bağımsız olarak size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Göç, mültecilik, iltica\"]",
+			"titles": {
+				"default": "Ülkeden ayrılma ve gelecek planı",
+				"short": "Ülkeden ayrılma ve gelecek planı",
+				"long": "Ülkeden ayrılma ve gelecek planı danışmanlığı – geri dönüş danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Ülkeden ayrılma ve gelecek planı danışmanlığı – geri dönüş danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"5": {
+			"description": "Eviniz yok mu ya da evinizi kaybetmekten mi korkuyorsunuz? Kabul edilemez konut koşullarında mı yaşıyorsunuz? Acil bir durumda mısınız? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Geçimin güvence altına alınması\", \"Özel yaşam durumları ve krizler\"]",
+			"titles": {
+				"default": "Konut acil durumu",
+				"short": "Konut acil durumu",
+				"long": "Konut acil durumlarında danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Konut acil durumlarında danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"6": {
+			"description": "Seks işçisisiniz ve sık sık damgalanma, ayrımcılık ve aşağılanma mı yaşıyorsunuz? Artık seks işçisi olarak çalışmak istemiyor musunuz? Haklarınızı savunmanızda size destek oluyor, gerekli yardımları organize ediyor ve bu işten çıkmanıza yardımcı oluyoruz.",
+			"groups": "[\"Özel yaşam durumları ve krizler\"]",
+			"titles": {
+				"default": "Fuhuş",
+				"short": "Fuhuş",
+				"long": "Fuhuş içindeki ve insan ticaretinden etkilenen kişiler için danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Fuhuş içindeki ve insan ticaretinden etkilenen kişiler için danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"7": {
+			"description": "Cezaevinde kaldınız ve sosyal yardım haklarınızla ilgili sorularınız mı var? Konut ve iş ararken desteğe mi ihtiyacınız var? Kişisel sorunlarınız mı var? Cezaevi süreci, tek başına üstesinden gelinemeyecek durumlar yaratır. Size gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Geçimin güvence altına alınması\", \"Özel yaşam durumları ve krizler\"]",
+			"titles": {
+				"default": "Suç geçmişi",
+				"short": "Suç geçmişi",
+				"long": "Suç işlemiş kişiler ve yakınları için danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Suç işlemiş kişiler ve yakınları için danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"8": {
+			"description": "Ailenizin uygun fiyatlı bir molaya mı ihtiyacı var? Size kendi tatiliniz ve düşük gelirli aileler için destek olanakları hakkında memnuniyetle danışmanlık veriyoruz. Tatil merkezlerinde bütün aileler hoş karşılanır. Mezhep ve aile yapısı önemli değildir.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Aile tatili",
+				"short": "Aile tatili",
+				"long": "Aile tatili konularında danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Aile tatili konularında danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"9": {
+			"description": "Yıpratıcı bir çatışma mı yaşıyorsunuz ya da endişeler sizi rahat bırakmıyor mu? İlişkinizde çözemediğiniz sorunlar mı var? Korkular günlük yaşamınızı belirliyorsa, bir yakınınızı kaybetmenin acısı ya da yalnızlık yaşama sevincinizi elinizden alıyorsa size yardımcı oluyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Evlilik, çift ve yaşam",
+				"short": "Evlilik, çift ve yaşam",
+				"long": "Evlilik, çift ve yaşam danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Evlilik, çift ve yaşam danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"10": {
+			"description": "Çocuğunuz anaokulunda veya okulda zorluk mu yaşıyor? Günlük aile yaşamında kendinizi aşırı yüklenmiş mi hissediyorsunuz? Bir ayrılığın eşiğinde misiniz ya da ayrılık nedeniyle kendiniz ve çocuklarınız için desteğe mi ihtiyacınız var? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Eğitim ve aile",
+				"short": "Eğitim ve aile",
+				"long": "Eğitim ve aile danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Eğitim ve aile danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"11": {
+			"description": "Ülkenizden kaçtınız ve iltica prosedürü hakkında sorularınız mı var? İltica prosedüründeki mülakata hazırlanmak için yardıma mı ihtiyacınız var? İltica prosedürü tamamlandı ve Almanya’da desteğe mi ihtiyacınız var? Her kökenden ve her inançtan insana danışmanlık veriyoruz.",
+			"groups": "[\"Göç, mültecilik, iltica\"]",
+			"titles": {
+				"default": "Mültecilik ve iltica",
+				"short": "Mültecilik ve iltica",
+				"long": "Mülteci ve iltica prosedürü danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Mülteci ve iltica prosedürü danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"12": {
+			"description": "Pozitif bir test sonucu aldınız ve bundan sonra ne olacağını mı merak ediyorsunuz? HIV pozitif bir kişinin yakını mısınız ve yanıtlanmamış sorularınız mı var? HIV’den veya cinsel yolla bulaşan diğer enfeksiyonlardan nasıl korunacağınızı mı öğrenmek istiyorsunuz? Size gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Sağlık sorunları\"]",
+			"titles": {
+				"default": "HIV ve AIDS",
+				"short": "HIV ve AIDS",
+				"long": "HIV ve AIDS",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "HIV ve AIDS"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"13": {
+			"description": "Ağır hastasınız, yaşayacak fazla zamanınız yok ya da bir yakınısınız ve desteğe mi ihtiyacınız var? Bu durumda mümkün olan en iyi yaşam kalitesine mi ulaşmak istiyorsunuz? Önceden bakım planlaması hakkında sorularınız mı var? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Sağlık sorunları\", \"Çocuklar, gençler, yetişkinler ve aile\", \"Yaşlılık\"]",
+			"titles": {
+				"default": "Hospis ve palyatif bakım",
+				"short": "Hospis ve palyatif bakım",
+				"long": "Hospis ve palyatif bakım danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Hospis ve palyatif bakım danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"14": {
+			"description": "Cinsel şiddete mi maruz kaldınız? Başka bir kişi tarafından fiziksel şiddetle mi yaralandınız? Biri sizi tehdit ediyor, hakaret ediyor ya da size bağırıyor mu? Aile içi veya cinsel şiddet yaşayan birini tanıyor musunuz? Size gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Şiddet",
+				"short": "Şiddet",
+				"long": "Aile içi ve cinsel şiddet danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Aile içi ve cinsel şiddet danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"15": {
+			"description": "12 ile 27 yaş arasındasın, göçmen kökenlisin ve okul diplomaları, meslek eğitimi ya da dil kursları hakkında soruların mı var? Sana eğitim ve boş zaman olanakları konusunda burada, çevrimiçi danışmanlıkta ücretsiz ve gizlilik içinde danışmanlık veriyoruz.",
+			"groups": "[\"Göç, mültecilik, iltica\"]",
+			"titles": {
+				"default": "Genç göçmen hizmetleri",
+				"short": "Genç göçmen hizmetleri",
+				"long": "Genç göçmen hizmetleri (JMD)",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Genç göçmen hizmetleri (JMD)"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"16": {
+			"description": "Nasıl devam edeceğini bilemiyor musun? Anlaşılmadığını mı hissediyorsun? Bir arkadaşın için endişeleniyor musun? Ailenle sorun mu yaşıyorsun? Dayak mı yiyorsun? Okulda, arkadaşlarınla ya da para yüzünden stres mi yaşıyorsun? Sana gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Çocuklar ve gençler",
+				"short": "Çocuklar ve gençler",
+				"long": "Çocuk ve gençlik danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Çocuk ve gençlik danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"17": {
+			"description": "İş, aile ya da bir yakınınıza bakmak sizi tüketiyor mu? Hastasınız ve günlük hayattan bir molaya mı ihtiyacınız var? Bir kür yeniden güç toplamanıza yardımcı olabilir. Annelere, babalara ve bakım veren yakınlara burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\", \"Sağlık sorunları\"]",
+			"titles": {
+				"default": "Kür danışmanlığı",
+				"short": "Kür danışmanlığı",
+				"long": "Anneler ve babalar için kür danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Anneler ve babalar için kür danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"18": {
+			"description": "Yaşlılıkta konut konusunda danışmanlığa mı ihtiyacınız var? Ev işlerinde yardım hakkında sorularınız mı var? Kendinizin ya da yaşlı bir aile üyesinin boş zamanını daha çeşitli hale mi getirmek istiyorsunuz? Demans gibi konularda bilgi mi arıyorsunuz? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Sağlık sorunları\", \"Yaşlılık\"]",
+			"titles": {
+				"default": "Yaşlılık ve bakım danışmanlığı",
+				"short": "Yaşlılık ve bakım danışmanlığı",
+				"long": "Yaşlılıkta yaşam ve bakım danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Yaşlılıkta yaşam ve bakım danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"19": {
+			"description": "26 yaşından büyüksünüz ve Almanya’da yolunuzu bulmak için yardıma mı ihtiyacınız var? İş ya da dil kursu ararken desteğe mi ihtiyacınız var? Yeni gelenlere olduğu kadar uzun süredir Almanya’da yaşayanlara, geç göçmenlere ve Avrupa Birliği vatandaşlarına da danışmanlık veriyoruz.",
+			"groups": "[\"Göç, mültecilik, iltica\"]",
+			"titles": {
+				"default": "Göç danışmanlığı",
+				"short": "Göç danışmanlığı",
+				"long": "Yetişkinler ve aileler için göç danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Yetişkinler ve aileler için göç danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"20": {
+			"description": "Kendi kararlarınızı verdiğiniz bir yaşam sürmek istiyor ve bunun için yardıma mı ihtiyacınız var? Finansman, yardımcı araçlar ve asistan desteği hakkında sorularınız mı var? İş, konut, eğitim ve boş zaman alanlarında kendine yardım konusundaki sorularınızda size gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Sağlık sorunları\"]",
+			"titles": {
+				"default": "Ruhsal sorunlar",
+				"short": "Ruhsal sorunlar",
+				"long": "Ruhsal sorunlar",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Ruhsal sorunlar"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"21": {
+			"description": "Kaçış yolculuğunuz sırasında travmatik deneyimler mi yaşadınız? Geldiğiniz ülkede işkence, şiddet ve ırkçılık mı gördünüz? Travma yaşamış bir mülteci mi tanıyorsunuz? Psikolojik ve sosyal pedagojik danışmanlıkla size yardımcı oluyoruz.",
+			"groups": "[\"Göç, mültecilik, iltica\"]",
+			"titles": {
+				"default": "Psikososyal danışmanlık",
+				"short": "Psikososyal danışmanlık",
+				"long": "Mülteciler ve göçmenler için psikososyal danışmanlık",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Mülteciler ve göçmenler için psikososyal danışmanlık"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"22": {
+			"description": "Yasal vasi olarak atanmak istiyor ve vesayetin nasıl kurulduğunu, sizi hangi görevlerin beklediğini mi öğrenmek istiyorsunuz? Kendiniz için önlem alıp bir hasta vasiyeti mi hazırlamak istiyorsunuz? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Engelli bireylerin topluma katılımı\"]",
+			"titles": {
+				"default": "Yasal vesayet",
+				"short": "Yasal vesayet",
+				"long": "Yasal vesayet",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Yasal vesayet"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"23": {
+			"description": "Borçlarınız mı var, kira sözleşmeniz mi feshedildi ya da icra memuru mu geliyor? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Geçimin güvence altına alınması\"]",
+			"titles": {
+				"default": "Borç ve iflas",
+				"short": "Borç ve iflas",
+				"long": "Borç ve iflas danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Borç ve iflas danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"24": {
+			"description": "Hamilesiniz ve sorularınız mı var? İlişkiniz için endişeleniyor musunuz? Çocuk geldiğinde maddi zorluklardan mı korkuyorsunuz? Doğum öncesi muayeneler hakkında danışmanlık mı istiyorsunuz? Gebeliği sonlandırmayı mı düşünüyorsunuz? Size gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Gebelik",
+				"short": "Gebelik",
+				"long": "Gebelik ve gebelik çatışması danışmanlığı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Gebelik ve gebelik çatışması danışmanlığı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"25": {
+			"description": "Bağımlılık sorununuz mu var ya da etkilenen arkadaşlarınız ve akrabalarınız için mi endişeleniyorsunuz? Bağımlılık konusunda sorularınız mı var – alkol, uyuşturucu, ilaç, kumar, bilgisayar ve medya kullanımı? Size burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\", \"Özel yaşam durumları ve krizler\", \"Sağlık sorunları\"]",
+			"titles": {
+				"default": "Bağımlılık",
+				"short": "Bağımlılık",
+				"long": "Bağımlılık danışmanlığı ve önleme",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Bağımlılık danışmanlığı ve önleme"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"26": {
+			"description": "Kendi kararlarınızı verdiğiniz bir yaşam sürmek istiyor ve bunun için yardıma mı ihtiyacınız var? Finansman, yardımcı araçlar ve asistan desteği hakkında sorularınız mı var? İş, konut, eğitim ve boş zaman alanlarında kendine yardım konusundaki sorularınızda size gizlilik içinde ve ücretsiz danışmanlık veriyoruz.",
+			"groups": "[\"Engelli bireylerin topluma katılımı\"]",
+			"titles": {
+				"default": "Topluma katılım",
+				"short": "Topluma katılım",
+				"long": "Engelli bireylerin topluma katılımı",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Engelli bireylerin topluma katılımı"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		},
+		"27": {
+			"description": "Okul, meslek eğitimi ve iş hakkında soruların mı var? Geleceğini nasıl hayal ediyorsun? Bunun için neye ihtiyacın var? Sana burada, çevrimiçi danışmanlıkta gizlilik içinde ve ücretsiz yardımcı oluyoruz.",
+			"groups": "[\"Çocuklar, gençler, yetişkinler ve aile\"]",
+			"titles": {
+				"default": "Okuldan mesleğe",
+				"short": "Okuldan mesleğe",
+				"long": "Okuldan mesleğe geçiş",
+				"welcome": "Çevrimiçi danışmanlığa hoş geldiniz",
+				"registrationDropdown": "Okuldan mesleğe geçiş"
+			},
+			"anonymous": {
+				"title": "Anonim ve ücretsiz",
+				"text": "Anonim kalırsınız ve ücretsiz danışmanlık ile yardım alırsınız"
+			}
+		}
+	}
+}

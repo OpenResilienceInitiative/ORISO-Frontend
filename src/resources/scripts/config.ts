@@ -5,13 +5,21 @@ import en from '../i18n/en/common.json';
 import enAgency from '../i18n/en/agency.json';
 import enConsultingTypes from '../i18n/en/consultingTypes.json';
 import enLanguages from '../i18n/en/languages.json';
+import frAgency from '../i18n/fr/agency.json';
 import frCommon from '../i18n/fr/common.json';
+import frConsultingTypes from '../i18n/fr/consultingTypes.json';
 import frLanguages from '../i18n/fr/languages.json';
+import ruAgency from '../i18n/ru/agency.json';
 import ruCommon from '../i18n/ru/common.json';
+import ruConsultingTypes from '../i18n/ru/consultingTypes.json';
 import ruLanguages from '../i18n/ru/languages.json';
+import tiAgency from '../i18n/ti/agency.json';
 import tiCommon from '../i18n/ti/common.json';
+import tiConsultingTypes from '../i18n/ti/consultingTypes.json';
 import tiLanguages from '../i18n/ti/languages.json';
+import trAgency from '../i18n/tr/agency.json';
 import trCommon from '../i18n/tr/common.json';
+import trConsultingTypes from '../i18n/tr/consultingTypes.json';
 import trLanguages from '../i18n/tr/languages.json';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import {
@@ -360,10 +368,10 @@ export const config: AppConfigInterface = {
 			fr: {
 				common: [frCommon],
 				consultingTypes: {
-					...enConsultingTypes
+					...frConsultingTypes
 				},
 				agencies: {
-					...enAgency
+					...frAgency
 				},
 				languages: {
 					...frLanguages
@@ -372,10 +380,10 @@ export const config: AppConfigInterface = {
 			ru: {
 				common: [ruCommon],
 				consultingTypes: {
-					...enConsultingTypes
+					...ruConsultingTypes
 				},
 				agencies: {
-					...enAgency
+					...ruAgency
 				},
 				languages: {
 					...ruLanguages
@@ -384,10 +392,10 @@ export const config: AppConfigInterface = {
 			ti: {
 				common: [tiCommon],
 				consultingTypes: {
-					...enConsultingTypes
+					...tiConsultingTypes
 				},
 				agencies: {
-					...enAgency
+					...tiAgency
 				},
 				languages: {
 					...tiLanguages
@@ -396,10 +404,10 @@ export const config: AppConfigInterface = {
 			tr: {
 				common: [trCommon],
 				consultingTypes: {
-					...enConsultingTypes
+					...trConsultingTypes
 				},
 				agencies: {
-					...enAgency
+					...trAgency
 				},
 				languages: {
 					...trLanguages
