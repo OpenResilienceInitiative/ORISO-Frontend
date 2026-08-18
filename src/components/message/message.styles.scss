@@ -755,13 +755,13 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// Carimat glyph for a system message in the stream. It sits inside the
-	// shared 60px `__avatar` ring like every other sender and fills the same
-	// 48px inner circle — Figma App.Oriso 8498-32373 renders the robot at 48px
-	// on white, not as a small tinted puck off to the side.
+	// Carimat glyph for a system message in the stream. Figma App.Oriso
+	// 336:12244 keeps the shared 60px white avatar frame and centres the
+	// robot at its native 32×36 ratio. Stretching it to the full 48px inner
+	// circle hid the white ring and distorted the glyph.
 	&__botAvatarIcon {
-		width: 48px;
-		height: 48px;
+		width: 32px;
+		height: 36px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;

@@ -54,6 +54,11 @@ const meta: Meta = {
 			},
 			{
 				type: 'figma',
+				name: 'App.Oriso — Chatbot system-message ring (336-12244)',
+				url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=336-12244&m=dev'
+			},
+			{
+				type: 'figma',
 				name: 'CARX Case Handover — client view (Section 04 / Screen 01)',
 				url: CASE_HANDOVER_CLIENT_FIGMA_URL
 			},
@@ -135,7 +140,30 @@ export const PendingClientConsent: Story = {
 				onDecline={() => {}}
 			/>
 		</Stream>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__avatar--bot'
+		);
+		const icon = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__botAvatarIcon'
+		);
+		const glyph = icon?.querySelector<SVGElement>('svg');
+
+		expect(avatar).toBeTruthy();
+		expect(icon).toBeTruthy();
+		expect(glyph).toBeTruthy();
+
+		const avatarStyle = getComputedStyle(avatar!);
+		expect(avatarStyle.width).toBe('60px');
+		expect(avatarStyle.height).toBe('60px');
+		expect(avatarStyle.borderTopWidth).toBe('6px');
+		expect(avatarStyle.borderTopColor).toBe('rgb(255, 255, 255)');
+		expect(getComputedStyle(icon!).width).toBe('32px');
+		expect(getComputedStyle(icon!).height).toBe('36px');
+		expect(getComputedStyle(glyph!).width).toBe('32px');
+		expect(getComputedStyle(glyph!).height).toBe('36px');
+	}
 };
 
 export const PendingClientConsentMobile: Story = {
