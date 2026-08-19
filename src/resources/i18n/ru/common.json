@@ -303,7 +303,7 @@
 	},
 	"chat": {
 		"highlightSnippet": {
-			"ready": "Text snippet added to your reply"
+			"ready": "Фрагмент текста добавлен в ответ"
 		}
 	},
 	"chatFlyout": {
@@ -311,7 +311,7 @@
 		"archiveDescription": "Для архивных чатов уведомления отключены. Чат будет удален через 12 месяцев.",
 		"askerProfil": "Профиль консультанта",
 		"dataProtection": "Защита данных",
-		"dearchive": "Dearchive",
+		"dearchive": "Разархивировать",
 		"dearchiveDescription": "Восстановить чат из архива.",
 		"editGroupChat": "Настройки чата",
 		"groupChatInfo": "Информация о чате",
@@ -350,7 +350,7 @@
 			},
 			"2": {
 				"long": "Вторник",
-				"short": "Tue"
+				"short": "Вт"
 			},
 			"3": {
 				"long": "Среда",
@@ -362,7 +362,7 @@
 			},
 			"5": {
 				"long": "Пятница",
-				"short": "Fri"
+				"short": "Пт"
 			},
 			"6": {
 				"long": "Суббота",
@@ -1127,7 +1127,7 @@
 	"languages": {
 		"aa": "Афар",
 		"ab": "Абхазия",
-		"ae": "Avestic",
+		"ae": "Авестийский",
 		"af": "Африканцы",
 		"ak": "Акан",
 		"am": "Амхарский язык",
@@ -1601,18 +1601,18 @@
 			"closeMenu": "Закрыть меню получателей",
 			"menuSubheading": "Выберите, кто может видеть это сообщение",
 			"menuHeading": "Выбрать получателей",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Выбрать обращающихся за консультацией",
+			"clientsSelected": "Выбрано обращающихся за консультацией: {{count}}",
+			"clientsSelectAll": "Выбрать всех обращающихся за консультацией",
+			"counsellorsSelect": "Выбрать всех консультантов",
+			"counsellorsSelected": "Выбрано консультантов: {{count}}",
+			"moderatorsSelect": "Выбрать всех модераторов",
+			"moderatorsSelected": "Выбрано модераторов: {{count}}",
+			"clientsEmpty": "В этой комнате нет обращающихся за консультацией",
+			"counsellorsEmpty": "В этой комнате нет консультантов",
+			"moderatorsEmpty": "В этой комнате нет модераторов",
 			"toggleSection": "Переключить раздел",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Выбрать всех"
 		},
 		"edit": {
 			"cancel": "Отменить редактирование",
@@ -1715,10 +1715,10 @@
 		"tools": "Мои инструменты"
 	},
 	"notification": {
-		"error": "Error",
-		"info": "Info",
-		"success": "Success",
-		"warning": "Warning"
+		"error": "Ошибка",
+		"info": "Информация",
+		"success": "Успешно",
+		"warning": "Предупреждение"
 	},
 	"notifications": {
 		"families": {
@@ -3948,26 +3948,26 @@
 	},
 	"voice": {
 		"recording": {
-			"active": "Recording…",
+			"active": "Идёт запись…",
 			"error": {
-				"headline": "Voice recording is unavailable",
-				"message": "Please allow microphone access and try again."
+				"headline": "Голосовая запись недоступна",
+				"message": "Пожалуйста, разрешите доступ к микрофону и попробуйте ещё раз."
 			},
-			"preview": "Voice message"
+			"preview": "Голосовое сообщение"
 		}
 	},
 	"voicePlayer": {
-		"label": "Voice message",
-		"play": "Play voice message",
-		"pause": "Pause voice message",
-		"timeline": "Timeline",
-		"jumpTo": "Jump to {{time}}",
-		"aria": "Voice message, {{duration}}, play",
-		"remaining": "{{remaining}} left of {{total}}",
-		"encrypted": "End-to-end encrypted",
+		"label": "Голосовое сообщение",
+		"play": "Воспроизвести голосовое сообщение",
+		"pause": "Приостановить голосовое сообщение",
+		"timeline": "Шкала времени",
+		"jumpTo": "Перейти к {{time}}",
+		"aria": "Голосовое сообщение, {{duration}}, воспроизвести",
+		"remaining": "осталось {{remaining}} из {{total}}",
+		"encrypted": "Сквозное шифрование",
 		"meta": {
-			"perSecond": "{{seconds}} seconds · click jumps to the second",
-			"perTile": "{{total}} · {{seconds}} s per tile"
+			"perSecond": "{{seconds}} секунд · нажатие переходит к нужной секунде",
+			"perTile": "{{total}} · по {{seconds}} с на плитку"
 		}
 	},
 	"walkthrough": {
@@ -4251,7 +4251,7 @@
 		"disableShortcut": "Отключено",
 		"restoreDefaults": "Восстановить значения по умолчанию",
 		"restoreDefaultsSuccess": "Стандартные горячие клавиши восстановлены.",
-		"primaryModifier": "Primary modifier",
+		"primaryModifier": "Основная клавиша-модификатор",
 		"help": {
 			"title": "Горячие клавиши",
 			"close": "Закрыть"
@@ -4285,36 +4285,36 @@
 				"description": "Открывает справку по горячим клавишам."
 			},
 			"focusInput": {
-				"label": "Focus Message Input",
-				"description": "Move focus to the message composer."
+				"label": "Перейти к полю ввода",
+				"description": "Ставит фокус на поле ввода сообщения."
 			},
 			"uploadFile": {
-				"label": "Upload File",
-				"description": "Open the file attachment picker."
+				"label": "Загрузить файл",
+				"description": "Открывает выбор файлов для вложений."
 			},
 			"searchMessages": {
-				"label": "Search Messages",
-				"description": "Search messages in the current conversation."
+				"label": "Искать сообщения",
+				"description": "Ищет сообщения в текущей беседе."
 			},
 			"editLastMessage": {
-				"label": "Edit Last Message",
-				"description": "Edit your last sent message."
+				"label": "Изменить последнее сообщение",
+				"description": "Изменяет ваше последнее отправленное сообщение."
 			},
 			"cancelReplyOrEdit": {
-				"label": "Cancel Reply or Edit",
-				"description": "Cancel the current reply or edit."
+				"label": "Отменить ответ или редактирование",
+				"description": "Отменяет текущий ответ или редактирование."
 			},
 			"openEmojiPicker": {
-				"label": "Open Emoji Picker",
-				"description": "Open the emoji picker."
+				"label": "Открыть выбор эмодзи",
+				"description": "Открывает выбор эмодзи."
 			},
 			"startNewConversation": {
-				"label": "Start New Conversation",
-				"description": "Start a new conversation."
+				"label": "Начать новую беседу",
+				"description": "Начинает новую беседу."
 			},
 			"openCommandPalette": {
-				"label": "Open Command Palette",
-				"description": "Open the command palette."
+				"label": "Открыть палитру команд",
+				"description": "Открывает палитру команд."
 			}
 		},
 		"conflicts": {
@@ -4327,11 +4327,11 @@
 			"unsafePlainKey": "Эту клавишу нельзя использовать как сочетание во время ввода."
 		},
 		"hints": {
-			"enterSends": "Enter sends the message",
-			"shiftEnterNewline": "Shift+Enter inserts a new line",
-			"enterNewline": "Enter inserts a new line",
-			"ctrlEnterSends": "Ctrl+Enter sends the message",
-			"cmdEnterSends": "Cmd+Enter sends the message"
+			"enterSends": "Enter отправляет сообщение",
+			"shiftEnterNewline": "Shift+Enter вставляет новую строку",
+			"enterNewline": "Enter вставляет новую строку",
+			"ctrlEnterSends": "Ctrl+Enter отправляет сообщение",
+			"cmdEnterSends": "Cmd+Enter отправляет сообщение"
 		},
 		"lockedNewline": "Зафиксировано как Shift+Enter, пока Enter отправляет сообщение.",
 		"resetAction": "Сбросить",
@@ -4342,27 +4342,27 @@
 			"enter": "Enter",
 			"escape": "Esc",
 			"arrowUp": "↑",
-			"shift": "Shift",
+			"shift": "SHIFT",
 			"alt": "Alt",
 			"option": "Option",
-			"ctrl": "Ctrl",
+			"ctrl": "CTRL",
 			"cmd": "Cmd"
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
-		"startHint": "Start discussion",
-		"postCount": "{{count}} posts",
-		"postCount_one": "1 post",
-		"archivedChip": "Archived",
-		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
-		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
-		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
-		"placeholder": "Message to the team …",
-		"send": "Send",
+		"title": "Обсуждение в команде",
+		"startHint": "Начать обсуждение",
+		"postCount": "Сообщений: {{count}}",
+		"postCount_one": "1 сообщение",
+		"archivedChip": "В архиве",
+		"teamOnlyMarker": "Видно только команде — обращающиеся за консультацией этот раздел не видят.",
+		"archivedBanner": "Это обсуждение было закрыто при принятии запроса ({{date}}) и доступно только для чтения.",
+		"empty": "Записей пока нет. Обсудите здесь этот запрос со своей командой.",
+		"placeholder": "Сообщение команде …",
+		"send": "Отправить",
 		"error": {
-			"open": "The team discussion could not be opened.",
-			"send": "The message could not be sent."
+			"open": "Не удалось открыть обсуждение в команде.",
+			"send": "Не удалось отправить сообщение."
 		}
 	},
 	"anonymousConsent": {
@@ -4377,7 +4377,7 @@
 	},
 	"legacyVideoAppointment": {
 		"unavailable": {
-			"message": "Video appointments are currently unavailable."
+			"message": "Видеовстречи сейчас недоступны."
 		}
 	},
 	"erstantwort": {
@@ -4465,47 +4465,47 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Sign DPA",
-		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
-		"loadingContract": "Loading agreement…",
-		"signerHeading": "Confirmation by authorised signatory",
-		"signingFor": "You are signing on behalf of:",
-		"accept": "I have read the agreement shown above and confirm it as binding.",
-		"submit": "Confirm bindingly",
-		"submitting": "Saving…",
-		"success": "The DPA confirmation has been saved.",
+		"title": "Подписать договор об обработке данных",
+		"subtitle": "Пожалуйста, прочитайте соглашение полностью, а затем подтвердите данные подписывающего лица.",
+		"loadingContract": "Соглашение загружается...",
+		"signerHeading": "Подтверждение лицом, уполномоченным представлять организацию",
+		"signingFor": "Вы подписываете от имени:",
+		"accept": "Я прочитал(а) показанное выше соглашение и подтверждаю его как обязательное.",
+		"submit": "Подтвердить с обязательной силой",
+		"submitting": "Сохранение...",
+		"success": "Подтверждение договора об обработке данных сохранено.",
 		"error": {
-			"missingToken": "The signature link is incomplete.",
-			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
-			"acceptRequired": "Please confirm the agreement.",
-			"generic": "The signature could not be saved just now.",
-			"invalidToken": "This signature link is invalid, expired, or has already been used.",
-			"invalidRequest": "The details could not be saved. Please check the form."
+			"missingToken": "Ссылка для подписания неполная.",
+			"previewRequired": "Соглашение должно быть полностью загружено, прежде чем вы сможете его подтвердить.",
+			"acceptRequired": "Пожалуйста, подтвердите соглашение.",
+			"generic": "Сейчас подпись не удалось сохранить.",
+			"invalidToken": "Эта ссылка для подписания недействительна, истекла или уже была использована.",
+			"invalidRequest": "Не удалось сохранить данные. Пожалуйста, проверьте форму."
 		}
 	},
 	"encryption": {
 		"keyBackup": {
 			"dialog": {
-				"invalidKey": "This recovery key is invalid. Please check your entry.",
-				"error": "Recovery failed. Please try again.",
-				"recoveryTitle": "Welcome back",
-				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
-				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
-				"keyLabel": "Recovery key",
-				"later": "Later",
-				"openVault": "Open vault",
+				"invalidKey": "Этот ключ восстановления недействителен. Пожалуйста, проверьте введённые данные.",
+				"error": "Восстановление не удалось. Пожалуйста, попробуйте ещё раз.",
+				"recoveryTitle": "Хорошо, что вы снова здесь",
+				"recoveryCopy": "Вы вошли на новом устройстве. Ваша прежняя история переписки надёжно заперта в вашем хранилище.",
+				"recoveryInstruction": "Введите свой ключ восстановления, чтобы продолжить читать здесь свои сообщения.",
+				"keyLabel": "Ключ восстановления",
+				"later": "Позже",
+				"openVault": "Открыть хранилище",
 				"restoring": "Восстанавливается …"
 			}
 		}
 	},
 	"accountInvite": {
-		"invalid": "This invite link is invalid or expired.",
-		"createFailed": "The counselling account could not be created. Please try again.",
-		"loading": "Loading invitation",
-		"success": "Your counselling account has been created.",
-		"toLogin": "Go to login",
-		"description": "Complete your invitation with a username and password.",
-		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+		"invalid": "Ссылка-приглашение недействительна или истекла.",
+		"createFailed": "Не удалось создать учётную запись консультанта. Пожалуйста, попробуйте ещё раз.",
+		"loading": "Приглашение загружается",
+		"success": "Ваша учётная запись консультанта создана.",
+		"toLogin": "К входу",
+		"description": "Завершите оформление приглашения, указав имя пользователя и пароль.",
+		"passwordHint": "Не менее 16 знаков, с заглавными и строчными буквами, цифрой и специальным символом."
 	},
 	"drafts": {
 		"center": {

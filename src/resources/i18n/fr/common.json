@@ -88,8 +88,8 @@
 		},
 		"onlineMeeting": {
 			"form": {
-				"date": "Date",
-				"description": "Description",
+				"date": "Date du rendez-vous",
+				"description": "Description du rendez-vous",
 				"time": "Début (hh:mm)",
 				"title": "Titre"
 			},
@@ -303,7 +303,7 @@
 	},
 	"chat": {
 		"highlightSnippet": {
-			"ready": "Text snippet added to your reply"
+			"ready": "Extrait de texte ajouté à votre réponse"
 		}
 	},
 	"chatFlyout": {
@@ -380,7 +380,7 @@
 			},
 			"2": {
 				"long": "Mars",
-				"short": "Mar"
+				"short": "Mars"
 			},
 			"3": {
 				"long": "Avril",
@@ -408,7 +408,7 @@
 			},
 			"9": {
 				"long": "Octobre",
-				"short": "Oct"
+				"short": "Oct."
 			},
 			"10": {
 				"long": "Novembre",
@@ -451,11 +451,11 @@
 			"headline": "Supprimer le chat"
 		},
 		"errorOverlay": {
-			"button": "ok",
+			"button": "OK",
 			"headline": "Oups ! Nous ne pouvons pas supprimer le chat pour le moment. Veuillez réessayer."
 		},
 		"successOverlay": {
-			"button": "ok",
+			"button": "OK",
 			"headline": "Vous avez supprimé le chat avec succès."
 		}
 	},
@@ -676,7 +676,7 @@
 		},
 		"active": {
 			"sessionInfo": {
-				"subscriber": "Participants"
+				"subscriber": "Personnes participantes"
 			}
 		},
 		"noTopicSpecified": "Aucun sujet spécifié",
@@ -733,11 +733,11 @@
 				"label": "Sélectionner des conseillers"
 			},
 			"dateInput": {
-				"label": "Date"
+				"label": "Date du rendez-vous"
 			},
 			"durationSelect": {
 				"label": "Durée",
-				"option1": "30 minutes",
+				"option1": "30 min",
 				"option2": "1 heure",
 				"option3": "1,5 heures",
 				"option4": "2 heures",
@@ -819,13 +819,13 @@
 					"single": "une fois",
 					"weekly": "hebdomadaire"
 				},
-				"startDate": "Date",
+				"startDate": "Date de début",
 				"startTime": "Début",
 				"topic": "Thème du chat"
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Participants"
+				"headline": "Personnes participantes"
 			}
 		},
 		"join": {
@@ -853,7 +853,7 @@
 					"toggleLabel": "Désactiver l'animation",
 					"unitDays": "Jours",
 					"unitHours": "Heures",
-					"unitMinutes": "Minutes",
+					"unitMinutes": "minutes",
 					"unitSeconds": "Secondes"
 				},
 				"catMinutes": "{{value}} minutes félines",
@@ -1143,9 +1143,9 @@
 		"bh": "Bihari",
 		"bi": "Bislama",
 		"bm": "Bambara",
-		"bn": "Bengali",
+		"bn": "bengali",
 		"bo": "Tibétain",
-		"br": "Breton",
+		"br": "breton",
 		"bs": "Bosniaque",
 		"ca": "catalan, valencien",
 		"ce": "Tchétchène",
@@ -1166,7 +1166,7 @@
 		"eo": "Espéranto",
 		"es": "espagnol, castillan",
 		"et": "Estonien",
-		"eu": "Basque",
+		"eu": "basque",
 		"fa": "Persan",
 		"ff": "Fulfulde",
 		"fi": "Finlandais",
@@ -1205,7 +1205,7 @@
 		"kg": "Kikongo",
 		"ki": "Kikuyu",
 		"kj": "oshiKwanyama",
-		"kk": "Kazakh",
+		"kk": "kazakh",
 		"kl": "Groenlandais, Kalaallisut",
 		"km": "Khmer",
 		"kn": "Kannada",
@@ -1216,7 +1216,7 @@
 		"kv": "Komi",
 		"kw": "Kornisch",
 		"ky": "Kirghiz",
-		"la": "Latin",
+		"la": "latin",
 		"lb": "Luxembourgeois",
 		"lg": "Luganda",
 		"li": "limbourgeois, sud de la Basse-Franconie",
@@ -1246,7 +1246,7 @@
 		"nr": "Sud Ndébélé",
 		"nv": "Navajo",
 		"ny": "Chichewa",
-		"oc": "Occitan",
+		"oc": "occitan",
 		"oj": "Ojibwe",
 		"om": "Oromo",
 		"or": "Oriya",
@@ -1270,7 +1270,7 @@
 		"si": "Cinghalais",
 		"sk": "Slovaque",
 		"sl": "Slovène",
-		"sm": "Samoan",
+		"sm": "samoan",
 		"sn": "Shona",
 		"so": "Somali",
 		"sq": "Albanais",
@@ -1304,7 +1304,7 @@
 		"wa": "Wallon",
 		"wo": "Wolof",
 		"xh": "isiXhosa",
-		"yi": "Yiddish",
+		"yi": "yiddish",
 		"yo": "Yoruba",
 		"za": "Zhuang",
 		"zh": "Chinois",
@@ -1601,18 +1601,18 @@
 			"closeMenu": "Fermer le menu des destinataires",
 			"menuSubheading": "Choisissez qui peut voir ce message",
 			"menuHeading": "Choisir les destinataires",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Sélectionner les personnes en quête de conseils",
+			"clientsSelected": "{{count}} personnes en quête de conseils sélectionnées",
+			"clientsSelectAll": "Sélectionner toutes les personnes en quête de conseils",
+			"counsellorsSelect": "Sélectionner tous les conseiller·ères",
+			"counsellorsSelected": "{{count}} conseiller·ères sélectionné·es",
+			"moderatorsSelect": "Sélectionner tous les modérateur·rices",
+			"moderatorsSelected": "{{count}} modérateur·rices sélectionné·es",
+			"clientsEmpty": "Aucune personne en quête de conseils dans cette salle",
+			"counsellorsEmpty": "Aucun·e conseiller·ère dans cette salle",
+			"moderatorsEmpty": "Aucun·e modérateur·rice dans cette salle",
 			"toggleSection": "Basculer la section",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Tout sélectionner"
 		},
 		"edit": {
 			"cancel": "Annuler la modification",
@@ -1715,10 +1715,10 @@
 		"tools": "Mes outils"
 	},
 	"notification": {
-		"error": "Error",
-		"info": "Info",
-		"success": "Success",
-		"warning": "Warning"
+		"error": "Erreur",
+		"info": "Information",
+		"success": "Succès",
+		"warning": "Avertissement"
 	},
 	"notifications": {
 		"families": {
@@ -1874,7 +1874,7 @@
 		"center": {
 			"searchPlaceholder": "Rechercher dans l'activité…",
 			"noResults": "Aucune activité ne correspond à vos filtres.",
-			"title": "Notifications",
+			"title": "Centre de notifications",
 			"subtitle": "Activités récentes et mises à jour de vos chats.",
 			"markAllRead": "Tout marquer comme lu",
 			"clearAll": "Tout effacer",
@@ -1894,7 +1894,7 @@
 			"preview": {
 				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
 				"empty": "Pas encore de messages dans cette conversation.",
-				"image": "Image",
+				"image": "Image jointe",
 				"file": "Fichier",
 				"audio": "Message audio",
 				"video": "Vidéo",
@@ -2384,7 +2384,7 @@
 			},
 			"notifications": {
 				"email": "Notification par e-mail",
-				"title": "Notifications"
+				"title": "Mes notifications"
 			},
 			"settings": {
 				"security": {
@@ -3148,7 +3148,7 @@
 			"presets": {
 				"starter334": "première fois",
 				"standard446": "expérience modérée (recommandé)",
-				"deep556": "long (experts)"
+				"deep556": "long (personnes expertes)"
 			},
 			"briefing": {
 				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
@@ -3334,7 +3334,7 @@
 			"headline": "Premières demandes",
 			"voice": "Message vocal",
 			"audio": "Message audio",
-			"image": "Image",
+			"image": "Image jointe",
 			"video": "Vidéo",
 			"file": "Fichier",
 			"registered": {
@@ -3522,7 +3522,7 @@
 				"step5": {
 					"title": "Le lien vers l'application a été configuré avec succès.",
 					"visualisation": {
-						"label": "Confirmation"
+						"label": "Validation"
 					}
 				}
 			},
@@ -3563,7 +3563,7 @@
 				"step4": {
 					"title": "L'authentification du courrier électronique a été configurée avec succès.",
 					"visualisation": {
-						"label": "Confirmation"
+						"label": "Validation"
 					}
 				}
 			},
@@ -3946,26 +3946,26 @@
 	},
 	"voice": {
 		"recording": {
-			"active": "Recording…",
+			"active": "Enregistrement en cours…",
 			"error": {
-				"headline": "Voice recording is unavailable",
-				"message": "Please allow microphone access and try again."
+				"headline": "Enregistrement vocal non disponible",
+				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
-			"preview": "Voice message"
+			"preview": "Message vocal"
 		}
 	},
 	"voicePlayer": {
-		"label": "Voice message",
-		"play": "Play voice message",
-		"pause": "Pause voice message",
-		"timeline": "Timeline",
-		"jumpTo": "Jump to {{time}}",
-		"aria": "Voice message, {{duration}}, play",
-		"remaining": "{{remaining}} left of {{total}}",
-		"encrypted": "End-to-end encrypted",
+		"label": "Message vocal",
+		"play": "Lire le message vocal",
+		"pause": "Mettre le message vocal en pause",
+		"timeline": "Barre de progression",
+		"jumpTo": "Aller à {{time}}",
+		"aria": "Message vocal, {{duration}}, lire",
+		"remaining": "encore {{remaining}} sur {{total}}",
+		"encrypted": "Chiffré de bout en bout",
 		"meta": {
-			"perSecond": "{{seconds}} seconds · click jumps to the second",
-			"perTile": "{{total}} · {{seconds}} s per tile"
+			"perSecond": "{{seconds}} secondes · un clic vous amène à la seconde",
+			"perTile": "{{total}} · {{seconds}} s par case"
 		}
 	},
 	"walkthrough": {
@@ -4249,7 +4249,7 @@
 		"disableShortcut": "Désactivé",
 		"restoreDefaults": "Restaurer les valeurs par défaut",
 		"restoreDefaultsSuccess": "Raccourcis par défaut restaurés.",
-		"primaryModifier": "Primary modifier",
+		"primaryModifier": "Touche de modification principale",
 		"help": {
 			"title": "Raccourcis clavier",
 			"close": "Fermer"
@@ -4283,36 +4283,36 @@
 				"description": "Ouvre l’aide des raccourcis clavier."
 			},
 			"focusInput": {
-				"label": "Focus Message Input",
-				"description": "Move focus to the message composer."
+				"label": "Activer le champ de saisie",
+				"description": "Place le focus sur le champ de saisie des messages."
 			},
 			"uploadFile": {
-				"label": "Upload File",
-				"description": "Open the file attachment picker."
+				"label": "Téléverser un fichier",
+				"description": "Ouvre le sélecteur de fichiers pour les pièces jointes."
 			},
 			"searchMessages": {
-				"label": "Search Messages",
-				"description": "Search messages in the current conversation."
+				"label": "Rechercher des messages",
+				"description": "Recherche des messages dans la conversation en cours."
 			},
 			"editLastMessage": {
-				"label": "Edit Last Message",
-				"description": "Edit your last sent message."
+				"label": "Modifier le dernier message",
+				"description": "Modifie le dernier message que vous avez envoyé."
 			},
 			"cancelReplyOrEdit": {
-				"label": "Cancel Reply or Edit",
-				"description": "Cancel the current reply or edit."
+				"label": "Annuler la réponse ou la modification",
+				"description": "Annule la réponse ou la modification en cours."
 			},
 			"openEmojiPicker": {
-				"label": "Open Emoji Picker",
-				"description": "Open the emoji picker."
+				"label": "Ouvrir la sélection d'émojis",
+				"description": "Ouvre la sélection d'émojis."
 			},
 			"startNewConversation": {
-				"label": "Start New Conversation",
-				"description": "Start a new conversation."
+				"label": "Démarrer une nouvelle conversation",
+				"description": "Démarre une nouvelle conversation."
 			},
 			"openCommandPalette": {
-				"label": "Open Command Palette",
-				"description": "Open the command palette."
+				"label": "Ouvrir la palette de commandes",
+				"description": "Ouvre la palette de commandes."
 			}
 		},
 		"conflicts": {
@@ -4325,11 +4325,11 @@
 			"unsafePlainKey": "Cette touche ne peut pas être utilisée comme raccourci pendant la saisie."
 		},
 		"hints": {
-			"enterSends": "Enter sends the message",
-			"shiftEnterNewline": "Shift+Enter inserts a new line",
-			"enterNewline": "Enter inserts a new line",
-			"ctrlEnterSends": "Ctrl+Enter sends the message",
-			"cmdEnterSends": "Cmd+Enter sends the message"
+			"enterSends": "Entrée envoie le message",
+			"shiftEnterNewline": "Maj+Entrée insère une nouvelle ligne",
+			"enterNewline": "Entrée insère une nouvelle ligne",
+			"ctrlEnterSends": "Ctrl+Entrée envoie le message",
+			"cmdEnterSends": "Cmd+Entrée envoie le message"
 		},
 		"lockedNewline": "Verrouillé sur Maj+Entrée tant qu’Entrée envoie le message.",
 		"resetAction": "Réinitialiser",
@@ -4348,19 +4348,19 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
-		"startHint": "Start discussion",
-		"postCount": "{{count}} posts",
-		"postCount_one": "1 post",
-		"archivedChip": "Archived",
-		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
-		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
-		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
-		"placeholder": "Message to the team …",
-		"send": "Send",
+		"title": "Réunion d'équipe",
+		"startHint": "Démarrer la réunion",
+		"postCount": "{{count}} contributions",
+		"postCount_one": "1 contribution",
+		"archivedChip": "Archivée",
+		"teamOnlyMarker": "Visible uniquement par l'équipe – les personnes en quête de conseils ne voient pas cet espace.",
+		"archivedBanner": "Cette réunion a été fermée lors de l'acceptation de la demande ({{date}}) et n'est plus accessible qu'en lecture.",
+		"empty": "Aucune contribution pour le moment. Concertez-vous ici avec votre équipe au sujet de la demande.",
+		"placeholder": "Message à l'équipe …",
+		"send": "Envoyer",
 		"error": {
-			"open": "The team discussion could not be opened.",
-			"send": "The message could not be sent."
+			"open": "La réunion d'équipe n'a pas pu être ouverte.",
+			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
 	"anonymousConsent": {
@@ -4463,47 +4463,47 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Sign DPA",
-		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
-		"loadingContract": "Loading agreement…",
-		"signerHeading": "Confirmation by authorised signatory",
-		"signingFor": "You are signing on behalf of:",
-		"accept": "I have read the agreement shown above and confirm it as binding.",
-		"submit": "Confirm bindingly",
-		"submitting": "Saving…",
-		"success": "The DPA confirmation has been saved.",
+		"title": "Signer le contrat de sous-traitance",
+		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
+		"loadingContract": "Chargement du contrat...",
+		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
+		"signingFor": "Vous signez au nom de :",
+		"accept": "J'ai lu le contrat affiché ci-dessus et je le confirme de manière contraignante.",
+		"submit": "Confirmer de manière contraignante",
+		"submitting": "Enregistrement...",
+		"success": "La confirmation du contrat de sous-traitance a été enregistrée.",
 		"error": {
-			"missingToken": "The signature link is incomplete.",
-			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
-			"acceptRequired": "Please confirm the agreement.",
-			"generic": "The signature could not be saved just now.",
-			"invalidToken": "This signature link is invalid, expired, or has already been used.",
-			"invalidRequest": "The details could not be saved. Please check the form."
+			"missingToken": "Le lien de signature est incomplet.",
+			"previewRequired": "Le contrat doit être entièrement chargé avant que vous puissiez le confirmer.",
+			"acceptRequired": "Veuillez confirmer le contrat.",
+			"generic": "La signature n'a pas pu être enregistrée pour le moment.",
+			"invalidToken": "Ce lien de signature n'est pas valide, a expiré ou a déjà été utilisé.",
+			"invalidRequest": "Les informations n'ont pas pu être enregistrées. Veuillez vérifier le formulaire."
 		}
 	},
 	"encryption": {
 		"keyBackup": {
 			"dialog": {
-				"invalidKey": "This recovery key is invalid. Please check your entry.",
-				"error": "Recovery failed. Please try again.",
-				"recoveryTitle": "Welcome back",
-				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
-				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
-				"keyLabel": "Recovery key",
-				"later": "Later",
-				"openVault": "Open vault",
+				"invalidKey": "Cette clé de récupération n'est pas valide. Veuillez vérifier votre saisie.",
+				"error": "La récupération a échoué. Veuillez réessayer.",
+				"recoveryTitle": "Nous sommes heureux de vous revoir",
+				"recoveryCopy": "Vous êtes connecté sur un nouvel appareil. L'historique de vos conversations est conservé en sécurité dans votre coffre-fort.",
+				"recoveryInstruction": "Saisissez votre clé de récupération pour continuer à lire vos messages ici.",
+				"keyLabel": "Clé de récupération",
+				"later": "Plus tard",
+				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
 			}
 		}
 	},
 	"accountInvite": {
-		"invalid": "This invite link is invalid or expired.",
-		"createFailed": "The counselling account could not be created. Please try again.",
-		"loading": "Loading invitation",
-		"success": "Your counselling account has been created.",
-		"toLogin": "Go to login",
-		"description": "Complete your invitation with a username and password.",
-		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+		"invalid": "Le lien d'invitation n'est pas valide ou a expiré.",
+		"createFailed": "Le compte de consultation n'a pas pu être créé. Veuillez réessayer.",
+		"loading": "Chargement de l'invitation",
+		"success": "Votre compte de consultation a été créé.",
+		"toLogin": "Vers la connexion",
+		"description": "Complétez votre invitation avec un nom d'utilisateur et un mot de passe.",
+		"passwordHint": "Au moins 16 caractères, avec des majuscules et des minuscules, un chiffre et un caractère spécial."
 	},
 	"drafts": {
 		"center": {

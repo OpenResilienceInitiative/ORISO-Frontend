@@ -303,7 +303,7 @@
 	},
 	"chat": {
 		"highlightSnippet": {
-			"ready": "Text snippet added to your reply"
+			"ready": "Metin alıntısı yanıtınıza eklendi"
 		}
 	},
 	"chatFlyout": {
@@ -311,7 +311,7 @@
 		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
 		"askerProfil": "Danışman profili",
 		"dataProtection": "Veri koruma",
-		"dearchive": "Dearchive",
+		"dearchive": "Arşivden çıkar",
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
 		"groupChatInfo": "Sohbet bilgileri",
@@ -380,7 +380,7 @@
 			},
 			"2": {
 				"long": "Mart",
-				"short": "Mar"
+				"short": "Mart"
 			},
 			"3": {
 				"long": "Nisan",
@@ -1127,14 +1127,14 @@
 	"languages": {
 		"aa": "Afar",
 		"ab": "Abhazca",
-		"ae": "Avestic",
+		"ae": "Avestaca",
 		"af": "Afrikanca",
 		"ak": "Akan",
 		"am": "Amharca",
-		"an": "Aragonese",
+		"an": "Aragonca",
 		"ar": "Arapça",
 		"as": "Assamca",
-		"av": "Avaric",
+		"av": "Avarca",
 		"ay": "Aymara",
 		"az": "Azerice",
 		"ba": "Başkurt",
@@ -1145,7 +1145,7 @@
 		"bm": "Bambara",
 		"bn": "Bengalce",
 		"bo": "Tibetçe",
-		"br": "Breton",
+		"br": "Bretonca",
 		"bs": "Boşnakça",
 		"ca": "Katalanca, Valensiya",
 		"ce": "Çeçen",
@@ -1155,7 +1155,7 @@
 		"cs": "Çek Cumhuriyeti",
 		"cu": "Kilise Slavcası, Eski Kilise Slavcası",
 		"cv": "Çuvaş",
-		"cy": "Welsh",
+		"cy": "Galce",
 		"da": "Danimarka",
 		"de": "Alman",
 		"dv": "Dhivehi",
@@ -1170,8 +1170,8 @@
 		"fa": "Farsça",
 		"ff": "Fulfulde",
 		"fi": "Fince",
-		"fj": "Fiji",
-		"fo": "Faroese",
+		"fj": "Fijice",
+		"fo": "Faroece",
 		"fr": "Fransızca",
 		"fy": "Batı Frizce",
 		"ga": "İrlandalı",
@@ -1200,7 +1200,7 @@
 		"it": "İtalyan",
 		"iu": "Inuktitut",
 		"ja": "Japonca",
-		"jv": "Javanese",
+		"jv": "Cavaca",
 		"ka": "Gürcüce",
 		"kg": "Kikongo",
 		"ki": "Kikuyu",
@@ -1213,8 +1213,8 @@
 		"kr": "Kanuri",
 		"ks": "Kashmiri",
 		"ku": "Kürtçe",
-		"kv": "Comi",
-		"kw": "Cornish",
+		"kv": "Komice",
+		"kw": "Kornca",
 		"ky": "Kırgız",
 		"la": "Latince",
 		"lb": "Lüksemburgca",
@@ -1226,16 +1226,16 @@
 		"lu": "Kiluba",
 		"lv": "Letonca",
 		"mg": "Malgaşça, Malgaşça",
-		"mh": "Marshallese",
+		"mh": "Marshallca",
 		"mi": "Maori",
 		"mk": "Makedonca",
 		"ml": "Malayalam",
 		"mn": "Moğolca",
 		"mr": "Marathi",
-		"ms": "Malay",
+		"ms": "Malayca",
 		"mt": "Maltaca",
 		"my": "Birmanya",
-		"na": "Nauruan",
+		"na": "Nauruca",
 		"nb": "Bokmål",
 		"nd": "Kuzey Ndebele",
 		"ne": "Nepalce",
@@ -1267,7 +1267,7 @@
 		"sd": "Sindhi",
 		"se": "Kuzey Sami",
 		"sg": "Sango.",
-		"si": "Sinhala",
+		"si": "Sinhalaca",
 		"sk": "Slovakça",
 		"sl": "Slovence",
 		"sm": "Samoalı",
@@ -1277,7 +1277,7 @@
 		"sr": "Sırpça",
 		"ss": "Siswati",
 		"st": "Sesotho, Güney Sotho",
-		"su": "Sundanese",
+		"su": "Sundaca",
 		"sv": "İsveç",
 		"sw": "Swahili",
 		"ta": "Tamilce",
@@ -1288,12 +1288,12 @@
 		"tk": "Türkmen",
 		"tl": "Tagalogca",
 		"tn": "Setswana",
-		"to": "Tongan",
+		"to": "Tongaca",
 		"tr": "Türkçe",
 		"ts": "Xitsonga",
-		"tt": "Tatar",
+		"tt": "Tatarca",
 		"tw": "Twi",
-		"ty": "Tahitian, Tahitian",
+		"ty": "Tahitice, Tahiti dili",
 		"ug": "Uygur",
 		"uk": "Ukrayna",
 		"ur": "Urduca",
@@ -1601,18 +1601,18 @@
 			"closeMenu": "Alıcı menüsünü kapat",
 			"menuSubheading": "Bu mesajı kimin göreceğini seçin",
 			"menuHeading": "Alıcıları seçin",
-			"clientsSelectSuffix": "Client Select",
-			"clientsSelected": "{{count}} Clients Selected",
-			"clientsSelectAll": "Select All Clients",
-			"counsellorsSelect": "Select All Counsellors",
-			"counsellorsSelected": "{{count}} Counsellors Selected",
-			"moderatorsSelect": "Select All Moderators",
-			"moderatorsSelected": "{{count}} Moderators Selected",
-			"clientsEmpty": "No clients are in this room",
-			"counsellorsEmpty": "No counsellors are in this room",
-			"moderatorsEmpty": "No moderators are in this room",
+			"clientsSelectSuffix": "Danışanları seç",
+			"clientsSelected": "{{count}} danışan seçildi",
+			"clientsSelectAll": "Tüm danışanları seç",
+			"counsellorsSelect": "Tüm danışmanları seç",
+			"counsellorsSelected": "{{count}} danışman seçildi",
+			"moderatorsSelect": "Tüm moderatörleri seç",
+			"moderatorsSelected": "{{count}} moderatör seçildi",
+			"clientsEmpty": "Bu odada hiç danışan yok",
+			"counsellorsEmpty": "Bu odada hiç danışman yok",
+			"moderatorsEmpty": "Bu odada hiç moderatör yok",
 			"toggleSection": "Bölümü aç/kapat",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Tümünü seç"
 		},
 		"edit": {
 			"cancel": "Düzenlemeyi iptal et",
@@ -1715,10 +1715,10 @@
 		"tools": "Aletlerim"
 	},
 	"notification": {
-		"error": "Error",
-		"info": "Info",
-		"success": "Success",
-		"warning": "Warning"
+		"error": "Hata",
+		"info": "Bilgi",
+		"success": "Başarılı",
+		"warning": "Uyarı"
 	},
 	"notifications": {
 		"families": {
@@ -3846,11 +3846,11 @@
 				"4": "Brandenburg",
 				"5": "Bremen",
 				"6": "Hamburg",
-				"7": "Hesse",
+				"7": "Hessen",
 				"8": "Mecklenburg-Batı Pomeranya",
 				"9": "Aşağı Saksonya",
 				"10": "Kuzey Ren-Vestfalya",
-				"11": "Rhineland-Palatinate",
+				"11": "Rheinland-Pfalz",
 				"12": "Saarland",
 				"13": "Saksonya",
 				"14": "Saksonya-Anhalt",
@@ -3946,26 +3946,26 @@
 	},
 	"voice": {
 		"recording": {
-			"active": "Recording…",
+			"active": "Kayıt sürüyor…",
 			"error": {
-				"headline": "Voice recording is unavailable",
-				"message": "Please allow microphone access and try again."
+				"headline": "Sesli kayıt kullanılamıyor",
+				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
-			"preview": "Voice message"
+			"preview": "Sesli mesaj"
 		}
 	},
 	"voicePlayer": {
-		"label": "Voice message",
-		"play": "Play voice message",
-		"pause": "Pause voice message",
-		"timeline": "Timeline",
-		"jumpTo": "Jump to {{time}}",
-		"aria": "Voice message, {{duration}}, play",
-		"remaining": "{{remaining}} left of {{total}}",
-		"encrypted": "End-to-end encrypted",
+		"label": "Sesli mesaj",
+		"play": "Sesli mesajı oynat",
+		"pause": "Sesli mesajı duraklat",
+		"timeline": "Zaman çizelgesi",
+		"jumpTo": "{{time}} konumuna atla",
+		"aria": "Sesli mesaj, {{duration}}, oynat",
+		"remaining": "{{total}} içinden {{remaining}} kaldı",
+		"encrypted": "Uçtan uca şifrelenmiş",
 		"meta": {
-			"perSecond": "{{seconds}} seconds · click jumps to the second",
-			"perTile": "{{total}} · {{seconds}} s per tile"
+			"perSecond": "{{seconds}} saniye · tıklama ilgili saniyeye atlar",
+			"perTile": "{{total}} · her karo {{seconds}} sn"
 		}
 	},
 	"walkthrough": {
@@ -4249,7 +4249,7 @@
 		"disableShortcut": "Devre dışı",
 		"restoreDefaults": "Varsayılanları Geri Yükle",
 		"restoreDefaultsSuccess": "Varsayılan kısayollar geri yüklendi.",
-		"primaryModifier": "Primary modifier",
+		"primaryModifier": "Birincil değiştirici tuş",
 		"help": {
 			"title": "Klavye kısayolları",
 			"close": "Kapat"
@@ -4283,36 +4283,36 @@
 				"description": "Klavye kısayolları yardımını açar."
 			},
 			"focusInput": {
-				"label": "Focus Message Input",
-				"description": "Move focus to the message composer."
+				"label": "Giriş alanına odaklan",
+				"description": "Odağı mesaj giriş alanına taşır."
 			},
 			"uploadFile": {
-				"label": "Upload File",
-				"description": "Open the file attachment picker."
+				"label": "Dosya yükle",
+				"description": "Ekler için dosya seçimini açar."
 			},
 			"searchMessages": {
-				"label": "Search Messages",
-				"description": "Search messages in the current conversation."
+				"label": "Mesajlarda ara",
+				"description": "Geçerli görüşmedeki mesajlarda arama yapar."
 			},
 			"editLastMessage": {
-				"label": "Edit Last Message",
-				"description": "Edit your last sent message."
+				"label": "Son mesajı düzenle",
+				"description": "En son gönderdiğiniz mesajı düzenler."
 			},
 			"cancelReplyOrEdit": {
-				"label": "Cancel Reply or Edit",
-				"description": "Cancel the current reply or edit."
+				"label": "Yanıtı veya düzenlemeyi iptal et",
+				"description": "Geçerli yanıtı veya düzenlemeyi iptal eder."
 			},
 			"openEmojiPicker": {
-				"label": "Open Emoji Picker",
-				"description": "Open the emoji picker."
+				"label": "Emoji seçimini aç",
+				"description": "Emoji seçimini açar."
 			},
 			"startNewConversation": {
-				"label": "Start New Conversation",
-				"description": "Start a new conversation."
+				"label": "Yeni görüşme başlat",
+				"description": "Yeni bir görüşme başlatır."
 			},
 			"openCommandPalette": {
-				"label": "Open Command Palette",
-				"description": "Open the command palette."
+				"label": "Komut paletini aç",
+				"description": "Komut paletini açar."
 			}
 		},
 		"conflicts": {
@@ -4325,11 +4325,11 @@
 			"unsafePlainKey": "Bu tuş yazarken kısayol olarak kullanılamaz."
 		},
 		"hints": {
-			"enterSends": "Enter sends the message",
-			"shiftEnterNewline": "Shift+Enter inserts a new line",
-			"enterNewline": "Enter inserts a new line",
-			"ctrlEnterSends": "Ctrl+Enter sends the message",
-			"cmdEnterSends": "Cmd+Enter sends the message"
+			"enterSends": "Enter mesajı gönderir",
+			"shiftEnterNewline": "Shift+Enter yeni satır ekler",
+			"enterNewline": "Enter yeni satır ekler",
+			"ctrlEnterSends": "Ctrl+Enter mesajı gönderir",
+			"cmdEnterSends": "Cmd+Enter mesajı gönderir"
 		},
 		"lockedNewline": "Enter mesaj gönderirken Shift+Enter olarak kilitlenir.",
 		"resetAction": "Sıfırla",
@@ -4340,27 +4340,27 @@
 			"enter": "Enter",
 			"escape": "Esc",
 			"arrowUp": "↑",
-			"shift": "Shift",
+			"shift": "Shift tuşu",
 			"alt": "Alt",
 			"option": "Option",
-			"ctrl": "Ctrl",
+			"ctrl": "Ctrl tuşu",
 			"cmd": "Cmd"
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
-		"startHint": "Start discussion",
-		"postCount": "{{count}} posts",
-		"postCount_one": "1 post",
-		"archivedChip": "Archived",
-		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
-		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
-		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
-		"placeholder": "Message to the team …",
-		"send": "Send",
+		"title": "Ekip görüşmesi",
+		"startHint": "Görüşmeyi başlat",
+		"postCount": "{{count}} gönderi",
+		"postCount_one": "1 gönderi",
+		"archivedChip": "Arşivlendi",
+		"teamOnlyMarker": "Yalnızca ekip tarafından görülebilir – danışanlar bu alanı görmez.",
+		"archivedBanner": "Bu görüşme, talep kabul edildiğinde kapatıldı ({{date}}) ve artık yalnızca okunabilir.",
+		"empty": "Henüz gönderi yok. Talep hakkında ekibinizle burada görüşün.",
+		"placeholder": "Ekibe mesaj …",
+		"send": "Gönder",
 		"error": {
-			"open": "The team discussion could not be opened.",
-			"send": "The message could not be sent."
+			"open": "Ekip görüşmesi açılamadı.",
+			"send": "Mesaj gönderilemedi."
 		}
 	},
 	"anonymousConsent": {
@@ -4375,7 +4375,7 @@
 	},
 	"legacyVideoAppointment": {
 		"unavailable": {
-			"message": "Video appointments are currently unavailable."
+			"message": "Görüntülü randevular şu anda kullanılamıyor."
 		}
 	},
 	"erstantwort": {
@@ -4463,47 +4463,47 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Sign DPA",
-		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
-		"loadingContract": "Loading agreement…",
-		"signerHeading": "Confirmation by authorised signatory",
-		"signingFor": "You are signing on behalf of:",
-		"accept": "I have read the agreement shown above and confirm it as binding.",
-		"submit": "Confirm bindingly",
-		"submitting": "Saving…",
-		"success": "The DPA confirmation has been saved.",
+		"title": "Veri işleme sözleşmesini imzala",
+		"subtitle": "Lütfen sözleşmeyi tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
+		"loadingContract": "Sözleşme yükleniyor...",
+		"signerHeading": "Temsile yetkili kişinin onayı",
+		"signingFor": "Şunun adına imzalıyorsunuz:",
+		"accept": "Yukarıda gösterilen sözleşmeyi okudum ve bağlayıcı olarak onaylıyorum.",
+		"submit": "Bağlayıcı olarak onayla",
+		"submitting": "Kaydediliyor...",
+		"success": "Veri işleme sözleşmesi onayı kaydedildi.",
 		"error": {
-			"missingToken": "The signature link is incomplete.",
-			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
-			"acceptRequired": "Please confirm the agreement.",
-			"generic": "The signature could not be saved just now.",
-			"invalidToken": "This signature link is invalid, expired, or has already been used.",
-			"invalidRequest": "The details could not be saved. Please check the form."
+			"missingToken": "İmza bağlantısı eksik.",
+			"previewRequired": "Sözleşmeyi onaylayabilmeniz için önce tamamen yüklenmiş olması gerekir.",
+			"acceptRequired": "Lütfen sözleşmeyi onaylayın.",
+			"generic": "İmza şu anda kaydedilemedi.",
+			"invalidToken": "Bu imza bağlantısı geçersiz, süresi dolmuş veya daha önce kullanılmış.",
+			"invalidRequest": "Bilgiler kaydedilemedi. Lütfen formu kontrol edin."
 		}
 	},
 	"encryption": {
 		"keyBackup": {
 			"dialog": {
-				"invalidKey": "This recovery key is invalid. Please check your entry.",
-				"error": "Recovery failed. Please try again.",
-				"recoveryTitle": "Welcome back",
-				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
-				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
-				"keyLabel": "Recovery key",
-				"later": "Later",
-				"openVault": "Open vault",
+				"invalidKey": "Bu kurtarma anahtarı geçersiz. Lütfen girdiğiniz bilgiyi kontrol edin.",
+				"error": "Kurtarma başarısız oldu. Lütfen tekrar deneyin.",
+				"recoveryTitle": "Tekrar aramızda olmanız güzel",
+				"recoveryCopy": "Yeni bir cihazda oturum açtınız. Önceki görüşme geçmişiniz kasanızda güvenle kilitli duruyor.",
+				"recoveryInstruction": "Mesajlarınızı burada okumaya devam etmek için kurtarma anahtarınızı girin.",
+				"keyLabel": "Kurtarma anahtarı",
+				"later": "Daha sonra",
+				"openVault": "Kasayı aç",
 				"restoring": "Geri getiriliyor …"
 			}
 		}
 	},
 	"accountInvite": {
-		"invalid": "This invite link is invalid or expired.",
-		"createFailed": "The counselling account could not be created. Please try again.",
-		"loading": "Loading invitation",
-		"success": "Your counselling account has been created.",
-		"toLogin": "Go to login",
-		"description": "Complete your invitation with a username and password.",
-		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+		"invalid": "Davet bağlantısı geçersiz veya süresi dolmuş.",
+		"createFailed": "Danışmanlık hesabı oluşturulamadı. Lütfen tekrar deneyin.",
+		"loading": "Davet yükleniyor",
+		"success": "Danışmanlık hesabınız oluşturuldu.",
+		"toLogin": "Girişe git",
+		"description": "Davetinizi bir kullanıcı adı ve parola ile tamamlayın.",
+		"passwordHint": "En az 16 karakter; büyük ve küçük harf, rakam ve özel karakter içermeli."
 	},
 	"drafts": {
 		"center": {
