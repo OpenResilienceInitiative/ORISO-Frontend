@@ -19,19 +19,24 @@ import trConsultingTypes from './resources/i18n/tr/consultingTypes.json';
 import guardBaseline from './i18nCatalogueGuard.baseline.json';
 import {
 	collectCatalogueDrift,
+	collectEnglishCopyKeys,
 	collectKeysAbsentFromBaseline,
+	collectPlaceholderDriftKeys,
 	collectRedundantOverlayKeys,
 	extractStaticTranslationKeys,
 	findUnknownStaticTranslationKeys,
 	flattenCatalogueKeys
 } from './utils/i18nCatalogueGuard';
 
+// fr, ru, ti and tr were backfilled to full coverage in #1154, so their budget
+// is zero: a new German key now has to be translated in the same change that
+// introduces it. English still trails by 63 keys.
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
-	fr: { extraInLocale: 5, missingInLocale: 699 },
-	ru: { extraInLocale: 5, missingInLocale: 699 },
-	ti: { extraInLocale: 5, missingInLocale: 702 },
-	tr: { extraInLocale: 5, missingInLocale: 699 }
+	fr: { extraInLocale: 5, missingInLocale: 0 },
+	ru: { extraInLocale: 5, missingInLocale: 0 },
+	ti: { extraInLocale: 5, missingInLocale: 0 },
+	tr: { extraInLocale: 5, missingInLocale: 0 }
 } as const;
 
 const locales = { en, fr, ru, ti, tr } as const;
@@ -126,6 +131,52 @@ describe('i18n catalogue guard (#1101)', () => {
 					`locale's budget deliberately: ` +
 					listKeys(drift.missingInLocale)
 			).toBeLessThanOrEqual(budget.missingInLocale);
+		}
+	);
+
+	// #1154: 573 values across fr, ru, ti and tr were the English string
+	// copied verbatim while the German said something else — a Tigrinya reader
+	// got English back. The allowlist holds the handful of French words that
+	// genuinely are the same in both languages.
+	it.each(Object.entries(locales).filter(([lng]) => lng !== 'en'))(
+		'does not park another English string in the $0 catalogue',
+		(lng, catalogue) => {
+			const newlyCopied = collectKeysAbsentFromBaseline(
+				guardBaseline.englishIdenticalValueKeys,
+				collectEnglishCopyKeys(de, en, catalogue).map(
+					(key) => `${lng}:${key}`
+				)
+			);
+
+			expect(
+				newlyCopied,
+				`These ${lng}/common.json values are the English string verbatim ` +
+					`while de/common.json says something else, so this locale ` +
+					`serves English to someone who did not choose it. Translate ` +
+					`them from the German: ${listKeys(newlyCopied)}`
+			).toEqual([]);
+		}
+	);
+
+	// Renaming or dropping an interpolation is the quiet failure mode of a
+	// translation pass: the catalogue still loads and the sentence still
+	// renders, only with a raw `{{name}}` or a swallowed tag in it.
+	it.each(Object.entries(locales))(
+		'keeps the $0 catalogue on the placeholders its German source uses',
+		(lng, catalogue) => {
+			const drifted = collectKeysAbsentFromBaseline(
+				guardBaseline.placeholderDriftKeys,
+				collectPlaceholderDriftKeys(de, catalogue).map(
+					(key) => `${lng}:${key}`
+				)
+			);
+
+			expect(
+				drifted,
+				`These ${lng}/common.json values do not carry the same ` +
+					`{{interpolations}}, $t(…) references and tag markers as ` +
+					`de/common.json, so they render broken: ${listKeys(drifted)}`
+			).toEqual([]);
 		}
 	);
 
