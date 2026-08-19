@@ -1540,6 +1540,13 @@
 					},
 					"text": "Bağlantıyı kopyala",
 					"title": "Danışma merkezine kayıt bağlantısını panoya kopyalayın"
+				},
+				"mapLink": "OpenStreetMap'te aç",
+				"openingHours": {
+					"label": "Çalışma saatleri"
+				},
+				"phone": {
+					"label": "Telefon"
 				}
 			},
 			"displayName": "Görünen ad",
@@ -1555,7 +1562,8 @@
 			"firstName": "İlk isim",
 			"info": {
 				"private": "Bu veriler tavsiye arayanlar tarafından görüntülenemez.",
-				"public": "Reklam ismiyle tavsiye arayanların karşısına çıkacaksınız."
+				"public": "Reklam ismiyle tavsiye arayanların karşısına çıkacaksınız.",
+				"nameChangePropagation": "Görünen addaki değişikliğin geçerli olması 15 dakikaya kadar sürebilir."
 			},
 			"lastName": "Soyadı",
 			"personal": {
@@ -1567,6 +1575,22 @@
 					"text": "İletişim bağlantısını kopyala",
 					"title": "Kişi bağlantısını panoya kopyala",
 					"tooltip": "Kişisel iletişim bağlantınızı biriyle paylaşın, böylece sizinle doğrudan çevrimiçi bir danışmanlık oturumu başlatabilirler."
+				}
+			},
+			"publicSlug": {
+				"info": "Yalnızca küçük harf ve tire kullanın. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
+				"input": "Herkese açık iletişim bağlantısının adı",
+				"label": "Herkese açık iletişim bağlantısı",
+				"notification": {
+					"error": "İletişim bağlantısının adı kaydedilemedi. Lütfen biçimi kontrol edin veya başka bir ad seçin.",
+					"text": "İletişim bağlantısının adı onaya gönderildi.",
+					"title": "Talep kaydedildi"
+				},
+				"status": {
+					"active": "Etkin bağlantı adı: {{slug}}",
+					"empty": "Henüz etkin bir herkese açık bağlantı adı yok. UUID bağlantısı kullanılmaya devam ediyor.",
+					"pending": "Bir yönetimin onayı bekleniyor: {{slug}}",
+					"rejected": "En son talep edilen bağlantı adı reddedildi."
 				}
 			},
 			"profileIcon": "Profil resmi",
@@ -1581,7 +1605,13 @@
 				"consultingTypeSelect": {
 					"label": "Konu alanları"
 				},
-				"headline": "Başka konularda da tavsiye veya yardıma mı ihtiyacınız var? <br>Size destek olmaktan mutluluk duyarız."
+				"headline": "Başka konularda da tavsiye veya yardıma mı ihtiyacınız var? <br>Size destek olmaktan mutluluk duyarız.",
+				"dialog": {
+					"openButton": "Başka bir konu için talep gönder",
+					"title": "Yeni talep gönder",
+					"close": "Kapat"
+				},
+				"agencyKnownBadge": "Sizinle zaten iletişimde"
 			},
 			"registerError": {
 				"overlay": {
@@ -1645,10 +1675,23 @@
 			"liveChat": {
 				"title": "Live-Chat uygunluğum",
 				"description": "Uygunluğunuzu etkinleştirin, İlk başvurular altındaki „Live-Chat istekleri“ bölümünde bekleyen anonim danışanları göreceksiniz.",
-				"toggleLabel": "Uygunum"
+				"toggleLabel": "Uygunum",
+				"viaSidebar": {
+					"label": "Canlı sohbeti menü çubuğundan etkinleştir",
+					"description": "Etkinleştirildiğinde, canlı sohbet uygunluğunuzu burası yerine menü çubuğundan (yan menü) açıp kapatırsınız. Yukarıdaki uygunluk düğmesi o zaman devre dışı kalır ve canlı sohbet simgesi yan menüde kalıcı olarak görünür – tıklamak yalnızca simgenin durumunu değiştirir, simge kaybolmaz. Bu seçenek kapalıyken canlı sohbet eskisi gibi yalnızca burada, Profilim bölümünde yönetilir."
+				}
 			},
 			"masterKey": {
 				"saveError": "Şifrenizi değiştirirken bir sorun oluştu. Lütfen tekrar deneyin."
+			},
+			"magicLinks": {
+				"subtitle": "Magic Links'i parolasız giriş seçeneği olarak etkinleştirin. Bu, mevcut kullanıma alma aşaması için bir arayüz etkinleştirmesidir.",
+				"title": "Magic Links ile giriş",
+				"emailRequired": "Magic Links girişini etkinleştirmeden önce lütfen profilinizde bir e-posta adresi kaydedin.",
+				"toggle": {
+					"disabled": "Magic Links giriş özelliği devre dışı bırakıldı",
+					"enabled": "Magic Links giriş özelliği etkinleştirildi"
+				}
 			},
 			"password": {
 				"reset": {
@@ -1716,12 +1759,139 @@
 				"title": "Başvuru kabul edildi",
 				"description": "Başvurunuz bir danışman tarafından kabul edildi."
 			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"description": "Danışan anonim sohbeti sonlandırdı."
+			},
 			"mainEmail": {
 				"title": "E-posta bildirimlerine izin ver"
+			},
+			"newMessageAdviceSeeker": {
+				"description": "Sisteme giriş yapmadığınız sürece sizi bilgilendiririz",
+				"title": "Yeni sohbet mesajı"
+			},
+			"newMessageConsultant": {
+				"description": "Size atanan danışanlardan biri size yanıt verdi. Sisteme giriş yapmadığınız sürece sizi bilgilendiririz.",
+				"title": "Yeni sohbet mesajı"
 			},
 			"newMessage": {
 				"description": "Size atanan tavsiye arayanlardan biri şu cevabı verdi",
 				"title": "Yeni sohbet mesajı"
+			},
+			"feed": {
+				"title": "Sistem bildirimleri",
+				"description": "Burada tüm sistem bildirimlerini görürsünüz.",
+				"empty": "Henüz bildirim yok."
+			},
+			"dnd": {
+				"title": "Rahatsız etmeyin",
+				"description": "Tüm bildirimleri (ses, açılır pencere, e-posta) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
+				"activeUntil": "{{time}} saatine kadar etkin",
+				"option": {
+					"off": "Kapalı",
+					"1h": "1 saat",
+					"8h": "8 saat",
+					"tomorrow": "Yarın sabaha kadar"
+				}
+			},
+			"config": {
+				"title": "Bildirimleri ayarlayın",
+				"intro": "Bildirim seslerinizi her alan için ayrı ayrı seçin.",
+				"emailNote": "E-postalar yalnızca olaydan sonraki beş dakika içinde yanıt vermezseniz gönderilir.",
+				"noSound": "Ses seçilmedi",
+				"tone": "Ses #{{number}}",
+				"sendByEmail": "E-posta ile gönder",
+				"confirm": "Onayla",
+				"cancel": "İptal",
+				"area": {
+					"requests": "Talep",
+					"conversations": "Görüşme",
+					"timeCritical": "Zamana duyarlı"
+				},
+				"kind": {
+					"new": "Yeni talep",
+					"standard": "Standart bildirim",
+					"mention": "@ Bahsetme",
+					"handover": "Devir",
+					"call": "Gelen arama",
+					"appointment": "Randevu"
+				},
+				"play": "Sesi dinle",
+				"volumeUp": "Daha yüksek",
+				"volumeDown": "Daha kısık",
+				"showBanner": "Banner göster",
+				"ringTone": "Zil sesi",
+				"wecker": {
+					"title": "Çalar saat modu (planlanıyor)",
+					"text": "Zamana duyarlı olaylar ısrarla çalmaya devam eder — tarayıcının izin verdiği ölçüde sessize alma ayarlarını da aşarak. Bu size yardımcı olur muydu?",
+					"upvote": "İyi olurdu",
+					"downvote": "Bana gerekmez",
+					"thanks": "Geri bildiriminiz için teşekkürler!"
+				},
+				"banner": {
+					"label": "Banner",
+					"off": "Kapalı",
+					"temporary": "Geçici",
+					"persistent": "Kapatılana kadar kalır"
+				},
+				"statusButton": {
+					"sidebarToggle": "Bildirim durumunu menü çubuğunda göster",
+					"sidebarToggleDescription": "Yan menüde, tüm bildirimleri tek tıklamayla sessize alan veya yeniden etkinleştiren bir düğme.",
+					"active": "Bildirimler etkin — sessize almak için tıklayın",
+					"muted": "Tüm bildirimler sessizde — etkinleştirmek için tıklayın"
+				}
+			},
+			"descriptionAsker": "Size yalnızca sizi ilgilendiren bir şey olduğunda yazarız. Tam olarak ne olduğunu her zaman ancak giriş yaptıktan sonra görürsünüz – asla e-postada değil.",
+			"descriptionConsultant": "Çalışma akışınız e-posta ile. Danışmanlık içerikleri asla bir e-postada yer almaz.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Yeni mesaj",
+						"description": "Danışmanınız size yazdı veya talebiniz kabul edildi."
+					},
+					"appointment": {
+						"title": "Randevular",
+						"description": "Bir randevu onaylandı, ertelendi veya iptal edildi – ve öncesindeki hatırlatma."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Yeni talepler",
+						"description": "Danışma merkezinize bir talep geldi veya doğrudan size yöneltildi."
+					},
+					"dailyDigest": {
+						"title": "Günlük özet",
+						"description": "Günde bir kez: kaç talebin açık olduğu ve en eskisinin ne kadar süredir beklediği."
+					},
+					"newMessage": {
+						"title": "Danışanlardan gelen mesajlar",
+						"description": "Bir danışan, danışmanlıklarınızdan birinde mesaj yazdı."
+					},
+					"assignment": {
+						"title": "Atamalar",
+						"description": "Size bir talep atandı."
+					},
+					"reassignment": {
+						"title": "Devirler",
+						"description": "Bir danışmanlık size devredilecek veya bir devir onaylandı."
+					},
+					"feedback": {
+						"title": "Mesleki paylaşım",
+						"description": "Korumalı mesleki paylaşımda sizin için bir geri bildirim var."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Bakım ve duyurular",
+						"description": "Planlanan bakım zamanları ve platforma ilişkin duyurular. Arızaları her zaman bildiririz."
+					}
+				},
+				"alwaysSent": {
+					"title": "Bu e-postaları her zaman alırsınız:",
+					"security": "Giriş ve erişim – parola sıfırlama, giriş bağlantısı, tek kullanımlık kod, erişiminizdeki değişiklikler.",
+					"legal": "Sözleşmeye ilişkin konular – örneğin imzalanacak bir veri işleme sözleşmesi.",
+					"outage": "Platformdaki arızalar."
+				}
 			},
 			"noEmail": {
 				"button": "E-posta adresi ekle",
@@ -1838,6 +2008,69 @@
 			"successOverlay": {
 				"button": "Tamam.",
 				"headline": "E-posta adresinizi başarıyla sildiniz."
+			}
+		},
+		"notificationSettings": {
+			"title": "Bildirimler",
+			"description": "Bu ayarlar, hesabınız için tüm cihazlarda ve tarayıcılarda geçerlidir.",
+			"globalMute": "Tüm bildirimleri sessize al",
+			"deviceSilence": {
+				"title": "Bu cihazı sessize al",
+				"description": "Yalnızca bu tarayıcı sessiz kalır — diğer cihazlarınız bildirim vermeye devam eder."
+			},
+			"browser": {
+				"title": "Tarayıcı bildirimleri",
+				"description": "Uygulama arka plandayken masaüstü bildirimlerini göster."
+			},
+			"preview": {
+				"title": "Mesaj içeriğini göster",
+				"description": "Mesaj metnini bildirimin içinde gösterir. Gizlilik nedeniyle varsayılan olarak kapalıdır."
+			},
+			"sounds": "Bildirim sesleri",
+			"families": {
+				"title": "Şunlarda bildir",
+				"description": "Hangi olay gruplarının bildirim tetikleyebileceğini seçin."
+			}
+		},
+		"encryption": {
+			"title": "Şifreleme ve kurtarma",
+			"description": "Mesajlarınız uçtan uca şifrelenmiştir. Bir kurtarma anahtarı ile görüşme geçmişinizi yeni bir cihazda da okumaya devam edebilirsiniz.",
+			"loading": "Yükleniyor …",
+			"unavailable": "Şifreleme ayarları şu anda kullanılamıyor. Lütfen sayfayı yeniden yükleyin.",
+			"setup": {
+				"busy": "Kasanız şu anda zaten kuruluyor — başka bir sekmede veya arka planda. Lütfen biraz bekleyin ve sayfayı yeniden yükleyin.",
+				"error": "Kurulum başarısız oldu. Lütfen tekrar deneyin.",
+				"explainer": "Bir kereye mahsus bir kurtarma anahtarı oluşturun. Anahtarı güvenli bir yerde saklayın — örneğin bir parola yöneticisinde. Anahtar olmadan, cihazınızı kaybederseniz geçmişiniz geri getirilemez.",
+				"cta": "Kurtarma anahtarı oluştur"
+			},
+			"showKey": {
+				"silentExplainer": "Kasanız giriş yaparken otomatik olarak kuruldu. Bu, sizin kurtarma anahtarınız — anahtarı şimdi güvenli bir yere kaydedin, örneğin bir parola yöneticisine. Bundan sonra anahtarı bir daha göstermeyeceğiz.",
+				"explainer": "Bu, sizin kurtarma anahtarınız. Yalnızca bu bir kez gösterilir. Anahtarı şimdi güvenli bir yere kaydedin.",
+				"copy": "Anahtarı kopyala",
+				"confirmLabel": "Anahtarı güvenli bir şekilde kaydettim."
+			},
+			"status": {
+				"ok": "✓ Anahtar yedeklemesi etkin. Geçmişiniz yeni cihazlarda okunabilir kalır."
+			},
+			"changeKey": {
+				"cta": "Kurtarma anahtarını değiştir"
+			},
+			"outOfSync": {
+				"warning": "Anahtar yedeklemesi bu cihazda kurulu değil. Geçmişinizin burada okunabilmesi için kurtarma anahtarınızı girin."
+			},
+			"recover": {
+				"inputLabel": "Kurtarma anahtarı",
+				"invalidKey": "Bu kurtarma anahtarı geçersiz. Lütfen girdiğiniz bilgiyi kontrol edin.",
+				"error": "Kurtarma başarısız oldu. Lütfen tekrar deneyin.",
+				"success": "{{count}} mesaj anahtarı geri getirildi."
+			},
+			"reset": {
+				"explainer": "Kurtarma anahtarınızı mı unuttunuz? Şifreleme kimliğinizi sıfırlayabilirsiniz. Dikkat: Şimdiye kadar şifrelenmiş olan geçmiş, bundan sonra kalıcı olarak okunamaz hale gelebilir.",
+				"cta": "Şifrelemeyi sıfırla",
+				"confirmWarning": "Emin misiniz? Sıfırlama, yeni bir şifreleme kimliği oluşturur. Yalnızca eski yedekle okunabilen mesajlar kalıcı olarak okunamaz kalır.",
+				"confirmCta": "Evet, sıfırla",
+				"cancel": "İptal",
+				"error": "Sıfırlama başarısız oldu. Lütfen tekrar deneyin."
 			}
 		}
 	},

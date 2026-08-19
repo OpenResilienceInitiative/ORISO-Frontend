@@ -1540,6 +1540,13 @@
 					},
 					"text": "Copier le lien",
 					"title": "Copier le lien d'inscription au service de consultation dans le presse-papiers"
+				},
+				"mapLink": "Ouvrir dans OpenStreetMap",
+				"openingHours": {
+					"label": "Heures d'ouverture"
+				},
+				"phone": {
+					"label": "Téléphone"
 				}
 			},
 			"displayName": "Nom d'affichage",
@@ -1555,7 +1562,8 @@
 			"firstName": "Prénom",
 			"info": {
 				"private": "Les personnes qui demandent des conseils ne peuvent pas consulter ces données.",
-				"public": "Avec le nom de l'annonce, vous apparaissez auprès des personnes en quête de conseils."
+				"public": "Avec le nom de l'annonce, vous apparaissez auprès des personnes en quête de conseils.",
+				"nameChangePropagation": "La modification du nom affiché peut prendre jusqu'à 15 minutes avant de devenir effective."
 			},
 			"lastName": "Nom de famille",
 			"personal": {
@@ -1567,6 +1575,22 @@
 					"text": "Copier le lien de contact",
 					"title": "Copier le lien du contact dans le presse-papiers",
 					"tooltip": "Partagez votre lien de contact personnel avec quelqu'un pour que cette personne puisse commencer une consultation en ligne directement avec vous."
+				}
+			},
+			"publicSlug": {
+				"info": "Utilisez uniquement des lettres minuscules et des traits d'union. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
+				"input": "Nom du lien de contact public",
+				"label": "Lien de contact public",
+				"notification": {
+					"error": "Le nom du lien de contact n'a pas pu être enregistré. Veuillez vérifier le format ou choisir un autre nom.",
+					"text": "Le nom du lien de contact a été soumis pour validation.",
+					"title": "Demande enregistrée"
+				},
+				"status": {
+					"active": "Nom de lien actif : {{slug}}",
+					"empty": "Aucun nom de lien public n'est encore actif. Le lien UUID reste utilisé.",
+					"pending": "En attente de validation par une administration : {{slug}}",
+					"rejected": "Le dernier nom de lien demandé a été refusé."
 				}
 			},
 			"profileIcon": "Photo de profil",
@@ -1581,7 +1605,13 @@
 				"consultingTypeSelect": {
 					"label": "Champs thématiques"
 				},
-				"headline": "Si vous avez besoin de conseils ou d'aide sur d'autres sujets, nous nous ferons un plaisir de vous aider."
+				"headline": "Si vous avez besoin de conseils ou d'aide sur d'autres sujets, nous nous ferons un plaisir de vous aider.",
+				"dialog": {
+					"openButton": "Demander un autre champ thématique",
+					"title": "Faire une nouvelle demande",
+					"close": "Fermer"
+				},
+				"agencyKnownBadge": "Déjà en contact avec vous"
 			},
 			"registerError": {
 				"overlay": {
@@ -1645,10 +1675,23 @@
 			"liveChat": {
 				"title": "Ma disponibilité Live-Chat",
 				"description": "Activez votre disponibilité pour voir les demandeurs de conseil anonymes en attente sous « Demandes Live-Chat » dans les premières demandes.",
-				"toggleLabel": "Je suis disponible"
+				"toggleLabel": "Je suis disponible",
+				"viaSidebar": {
+					"label": "Activer le Live-Chat depuis la barre de menu",
+					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				}
 			},
 			"masterKey": {
 				"saveError": "Un problème s'est produit lors du changement de mot de passe. Veuillez réessayer."
+			},
+			"magicLinks": {
+				"subtitle": "Activez les Magic Links comme option de connexion sans mot de passe. Il s'agit d'une activation de l'interface pour le déploiement en cours.",
+				"title": "Connexion par Magic Links",
+				"emailRequired": "Veuillez d'abord enregistrer une adresse e-mail dans votre profil avant d'activer la connexion par Magic Links.",
+				"toggle": {
+					"disabled": "Fonction de connexion par Magic Links désactivée",
+					"enabled": "Fonction de connexion par Magic Links activée"
+				}
 			},
 			"password": {
 				"reset": {
@@ -1716,12 +1759,139 @@
 				"title": "Demande acceptée",
 				"description": "Votre demande a été acceptée par un conseiller."
 			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"description": "La personne en quête de conseils a mis fin au chat anonyme."
+			},
 			"mainEmail": {
 				"title": "Autoriser les notifications par e-mail"
+			},
+			"newMessageAdviceSeeker": {
+				"description": "Nous vous informons tant que vous n'êtes pas connecté au système",
+				"title": "Nouveau message de chat"
+			},
+			"newMessageConsultant": {
+				"description": "L'une des personnes en quête de conseils qui vous sont attribuées vous a répondu. Nous vous informons tant que vous n'êtes pas connecté au système.",
+				"title": "Nouveau message de chat"
 			},
 			"newMessage": {
 				"description": "L'un des demandeurs de conseils qui vous a été attribué vous a répondu",
 				"title": "Nouveau message de chat"
+			},
+			"feed": {
+				"title": "Notifications du système",
+				"description": "Vous voyez ici toutes les notifications du système.",
+				"empty": "Aucune notification pour le moment."
+			},
+			"dnd": {
+				"title": "Ne pas déranger",
+				"description": "Mettez toutes les notifications en pause (son, fenêtres contextuelles, e-mails) pour une durée choisie. Votre historique continue de se remplir.",
+				"activeUntil": "Actif jusqu'à {{time}}",
+				"option": {
+					"off": "Désactivé",
+					"1h": "1 heure",
+					"8h": "8 heures",
+					"tomorrow": "Jusqu'à demain matin"
+				}
+			},
+			"config": {
+				"title": "Régler les notifications",
+				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
+				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
+				"noSound": "Aucun son sélectionné",
+				"tone": "Son n° {{number}}",
+				"sendByEmail": "Envoyer par e-mail",
+				"confirm": "Confirmer",
+				"cancel": "Annuler",
+				"area": {
+					"requests": "Demande",
+					"conversations": "Entretien",
+					"timeCritical": "Urgent"
+				},
+				"kind": {
+					"new": "Nouvelle demande",
+					"standard": "Notification standard",
+					"mention": "Mention @",
+					"handover": "Transfert",
+					"call": "Appel entrant",
+					"appointment": "Rendez-vous"
+				},
+				"play": "Écouter le son",
+				"volumeUp": "Plus fort",
+				"volumeDown": "Moins fort",
+				"showBanner": "Afficher la bannière",
+				"ringTone": "Sonnerie",
+				"wecker": {
+					"title": "Mode réveil (prévu)",
+					"text": "Les événements urgents continuent de sonner de manière insistante — même malgré les mises en sourdine, dans la mesure où le navigateur le permet. Est-ce que cela vous aiderait ?",
+					"upvote": "Cela me plairait",
+					"downvote": "Je n'en ai pas besoin",
+					"thanks": "Merci pour votre retour !"
+				},
+				"banner": {
+					"label": "Bannière",
+					"off": "Désactivée",
+					"temporary": "Temporaire",
+					"persistent": "Reste affichée jusqu'à fermeture"
+				},
+				"statusButton": {
+					"sidebarToggle": "Afficher l'état des notifications dans la barre de menu",
+					"sidebarToggleDescription": "Un bouton dans la barre latérale qui met toutes les notifications en sourdine ou les réactive en un clic.",
+					"active": "Notifications actives — cliquez pour mettre en sourdine",
+					"muted": "Toutes les notifications sont en sourdine — cliquez pour les activer"
+				}
+			},
+			"descriptionAsker": "Nous ne vous écrivons que lorsqu'il s'est passé quelque chose qui vous concerne. Ce dont il s'agit exactement, vous ne le voyez qu'après vous être connecté – jamais dans l'e-mail.",
+			"descriptionConsultant": "Votre flux de travail par e-mail. Le contenu des consultations n'apparaît jamais dans un e-mail.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "Nouveau message",
+						"description": "Votre service de consultation vous a écrit, ou votre demande a été acceptée."
+					},
+					"appointment": {
+						"title": "Rendez-vous",
+						"description": "Un rendez-vous a été confirmé, déplacé ou annulé – ainsi que le rappel qui le précède."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "Nouvelles demandes",
+						"description": "Une demande est arrivée dans votre service de consultation ou vous est adressée directement."
+					},
+					"dailyDigest": {
+						"title": "Aperçu du jour",
+						"description": "Une fois par jour : combien de demandes sont ouvertes et depuis combien de temps la plus ancienne attend."
+					},
+					"newMessage": {
+						"title": "Messages des personnes en quête de conseils",
+						"description": "Une personne en quête de conseils a écrit dans l'une de vos consultations."
+					},
+					"assignment": {
+						"title": "Attributions",
+						"description": "Une demande vous a été attribuée."
+					},
+					"reassignment": {
+						"title": "Transferts",
+						"description": "Une consultation doit vous être transférée, ou un transfert a été confirmé."
+					},
+					"feedback": {
+						"title": "Échange professionnel",
+						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Maintenance et informations",
+						"description": "Fenêtres de maintenance prévues et informations sur la plateforme. Nous signalons toujours les pannes."
+					}
+				},
+				"alwaysSent": {
+					"title": "Vous recevez toujours ces e-mails :",
+					"security": "Connexion et accès – réinitialisation du mot de passe, lien de connexion, code à usage unique, modifications de votre accès.",
+					"legal": "Questions contractuelles – par exemple un contrat de sous-traitance à signer.",
+					"outage": "Pannes de la plateforme."
+				}
 			},
 			"noEmail": {
 				"button": "Ajouter une adresse e-mail",
@@ -1838,6 +2008,69 @@
 			"successOverlay": {
 				"button": "Ok",
 				"headline": "Vous avez réussi à supprimer votre adresse e-mail."
+			}
+		},
+		"notificationSettings": {
+			"title": "Mes notifications",
+			"description": "Ces réglages s'appliquent à votre compte sur tous les appareils et navigateurs.",
+			"globalMute": "Mettre toutes les notifications en sourdine",
+			"deviceSilence": {
+				"title": "Mettre cet appareil en sourdine",
+				"description": "Seul ce navigateur reste silencieux — vos autres appareils continuent de vous notifier."
+			},
+			"browser": {
+				"title": "Notifications du navigateur",
+				"description": "Afficher des notifications sur le bureau lorsque l'application est en arrière-plan."
+			},
+			"preview": {
+				"title": "Afficher le contenu du message",
+				"description": "Affiche le texte du message dans la notification. Désactivé par défaut pour des raisons de protection des données."
+			},
+			"sounds": "Sons de notification",
+			"families": {
+				"title": "Me notifier pour",
+				"description": "Choisissez quelles familles d'événements peuvent déclencher des notifications."
+			}
+		},
+		"encryption": {
+			"title": "Chiffrement et récupération",
+			"description": "Vos messages sont chiffrés de bout en bout. Avec une clé de récupération, vous pouvez continuer à lire l'historique de vos conversations, même sur un nouvel appareil.",
+			"loading": "Chargement …",
+			"unavailable": "Les réglages de chiffrement ne sont pas disponibles pour le moment. Veuillez recharger la page.",
+			"setup": {
+				"busy": "Votre coffre-fort est déjà en cours de configuration — dans un autre onglet ou en arrière-plan. Veuillez patienter un instant et recharger la page.",
+				"error": "La configuration a échoué. Veuillez réessayer.",
+				"explainer": "Configurez une seule fois une clé de récupération. Conservez-la en lieu sûr — par exemple dans un gestionnaire de mots de passe. Sans elle, votre historique ne pourra pas être restauré en cas de perte de votre appareil.",
+				"cta": "Configurer la clé de récupération"
+			},
+			"showKey": {
+				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
+				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
+				"copy": "Copier la clé",
+				"confirmLabel": "J'ai enregistré la clé en lieu sûr."
+			},
+			"status": {
+				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
+			},
+			"changeKey": {
+				"cta": "Modifier la clé de récupération"
+			},
+			"outOfSync": {
+				"warning": "La sauvegarde des clés n'est pas configurée sur cet appareil. Saisissez votre clé de récupération pour que votre historique devienne lisible ici."
+			},
+			"recover": {
+				"inputLabel": "Clé de récupération",
+				"invalidKey": "Cette clé de récupération n'est pas valide. Veuillez vérifier votre saisie.",
+				"error": "La récupération a échoué. Veuillez réessayer.",
+				"success": "{{count}} clés de messages restaurées."
+			},
+			"reset": {
+				"explainer": "Vous avez oublié votre clé de récupération ? Vous pouvez réinitialiser votre identité de chiffrement. Attention : l'historique chiffré jusqu'ici peut alors devenir définitivement illisible.",
+				"cta": "Réinitialiser le chiffrement",
+				"confirmWarning": "Êtes-vous sûr ? La réinitialisation crée une nouvelle identité de chiffrement. Les messages qui n'étaient lisibles qu'avec l'ancienne sauvegarde resteront définitivement illisibles.",
+				"confirmCta": "Oui, réinitialiser",
+				"cancel": "Annuler",
+				"error": "La réinitialisation a échoué. Veuillez réessayer."
 			}
 		}
 	},
