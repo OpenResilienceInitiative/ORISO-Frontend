@@ -2977,10 +2977,19 @@
 			"title": "Mehrfach-Zugriffsanfrage"
 		},
 		"consent": {
+			"sender": "Carimat",
+			"senderRole": "Quick Guide",
 			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
 			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
-			"decline": "Zugriff verweigern"
+			"decline": "Zugriff verweigern",
+			"optOut": {
+				"title": "Datenschutzhinweis zur Fallübergabe",
+				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
+				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
+				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
+			}
 		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
