@@ -36,8 +36,10 @@
 	},
 	"app": {
 		"back": "Retour",
+		"cancel": "Annuler",
 		"claim": "En ligne. De manière anonyme. En toute sécurité.",
 		"close": "Fermer",
+		"closeBanner": "Fermer la bannière",
 		"delete": "Effacer la saisie",
 		"download": "Télécharger",
 		"faulty": "Erreur",
@@ -55,13 +57,16 @@
 			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
+		"stop": "Arrêter",
 		"successful": "Réussir",
 		"title": "Conseil",
 		"ui": {
 			"classic": "Aspect classique",
 			"new": "Nouvel aspect !"
 		},
-		"wait": "Veuillez attendre"
+		"wait": "Veuillez attendre",
+		"info": "Information",
+		"or": "ou"
 	},
 	"appointments": {
 		"copy": {
@@ -142,7 +147,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "Télécharger"
+			"label": "Télécharger",
+			"aria": "Télécharger {{name}}"
 		},
 		"error": {
 			"format": {
@@ -232,6 +238,7 @@
 			}
 		},
 		"event": {
+			"appointmentType": "Type de rendez-vous souhaité",
 			"asker": "Demandeur_de_conseil",
 			"booking": {
 				"cancel": "Annulations",
@@ -246,6 +253,15 @@
 				}
 			},
 			"description": "Votre message concernant le rendez-vous",
+			"linkVideo": "Lien vers l'appel vidéo",
+			"location": {
+				"CHAT": "Chat écrit",
+				"IN_PERSON": "Au service de consultation",
+				"LINK": "Consultation par vidéo",
+				"PHONE_CALL": "Consultation par téléphone",
+				"USER_PHONE": "Consultation par téléphone",
+				"VIDEO_CALL": "Consultation par vidéo"
+			},
 			"show": {
 				"less": "Afficher moins",
 				"more": "Voir plus"
@@ -255,6 +271,10 @@
 				"canceled": "Annulé",
 				"expired": "Passé",
 				"settings": "Réglages"
+			},
+			"tooltip": {
+				"adviceSeeker": "Si votre conseiller·ère ne peut pas assurer le rendez-vous dans le mode que vous avez choisi, nous générons toujours pour vous un lien vers un appel vidéo comme solution de remplacement.",
+				"consultant": "Si vous ne pouvez pas assurer le rendez-vous dans le mode choisi par la personne en quête de conseils, nous générons toujours pour vous un lien vers un appel vidéo comme solution de remplacement."
 			},
 			"your": {
 				"counselor": "Votre conseiller"
@@ -516,6 +536,7 @@
 					"facts": "<ul><li>Que s'est-il passé ?</li><li>Quelle est votre situation actuelle ?</li><li>Qu'est-ce qui vous préoccupe ?</li><li>Avez-vous une question précise ou ne savez-vous peut-être pas encore exactement ce qui pourrait vous aider ?</li></ul>",
 					"title": "Les points suivants vous aideront peut-être à le formuler :"
 				},
+				"deletionNotice": "Écrivez-nous tout de suite un court message pour que ce compte reste actif. Sans premier message, ce compte sera automatiquement supprimé au cours de la nuit prochaine. Vous devrez alors vous réinscrire avant de pouvoir rédiger votre message.",
 				"headline": "Il y a de la place ici pour vos demandes.",
 				"iconTitle": "Bienvenue sur"
 			},
@@ -1005,11 +1026,9 @@
 				"intro": "Pour pouvoir participer à des appels vidéo, vous devez vous connecter via l'un des navigateurs pris en charge. Les conseils par chat continuent de fonctionner avec Firefox.",
 				"steps": {
 					"1": {
-						"1": {
-							"1": "Suivez le lien vers ",
-							"2": " ou ",
-							"3": " (disponible uniquement pour macOS et iOS)"
-						}
+						"1": "Suivez le lien vers ",
+						"2": " ou ",
+						"3": " (disponible uniquement pour macOS et iOS)"
 					},
 					"2": "Téléchargez l'un des navigateurs pris en charge.",
 					"3": "Installez-le sur votre PC/ordinateur portable/tablette/smartphone.",
@@ -1310,7 +1329,13 @@
 		"legal": {
 			"infoText": {
 				"dataprotection": "Déclaration de confidentialité",
+				"termsAndConditions": "Conditions d'utilisation",
 				"impressum": "Mentions légales"
+			},
+			"platform": {
+				"impressum": "Vous n'êtes encore inscrit auprès d'aucun service de consultation — cette information concerne la plateforme elle-même.\n\nQui exploite la plateforme et comment joindre l'exploitant figure dans les mentions légales complètes. La consultation est assurée par des services de consultation indépendants, avec leurs propres informations ; vous les verrez dès que vous en aurez choisi un.",
+				"dataprotection": "Vous n'êtes encore inscrit auprès d'aucun service de consultation — cette information concerne la plateforme elle-même.\n\nPour la connexion, nous ne traitons que ce qui est nécessaire à celle-ci. Vos messages sont chiffrés de bout en bout : ils ne deviennent lisibles que sur votre appareil et auprès de votre service de consultation. Les données traitées au-delà dépendent du service de consultation que vous choisirez ensuite.",
+				"fullText": "Ouvrir le texte complet"
 			}
 		},
 		"password": {
@@ -1395,6 +1420,20 @@
 				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
 			}
 		},
+		"magicLink": {
+			"label": "Se connecter avec un Magic Link",
+			"submitLabel": "Envoyer le Magic Link",
+			"emailLabel": "E-mail",
+			"usernameLabel": "Nom d'utilisateur",
+			"emailRequired": "Veuillez d'abord saisir votre e-mail.",
+			"notEnabled": "La connexion par Magic Link n'est pas activée pour ce compte.",
+			"usernameRequired": "Veuillez d'abord saisir votre nom d'utilisateur.",
+			"sentInfo": "Si le compte y a droit, un e-mail contenant un Magic Link a été envoyé pour {{username}}."
+		},
+		"tabs": {
+			"password": "Mot de passe",
+			"magicLink": "Magic Link"
+		},
 		"seperator": "ou",
 		"user": {
 			"label": "Nom d'utilisateur/e-mail"
@@ -1415,8 +1454,12 @@
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
-				}
+				},
+				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici."
 			}
+		},
+		"mobile": {
+			"headline": "Ici, il y a de la place\npour vos préoccupations."
 		}
 	},
 	"message": {
@@ -3093,6 +3136,13 @@
 					"instruction": "Définissez maintenant vos propres intervalles de temps pendant que vous respirez.",
 					"repeatGame": "Rejouer",
 					"backToWaiting": "Retour à l'attente"
+				},
+				"completion": {
+					"instruction": "Félicitations, vous y êtes arrivé.",
+					"receiveGift": "Recevoir un petit cadeau"
+				},
+				"serenity": {
+					"instruction": "Ce cadeau est un petit mantra qui a aidé beaucoup de personnes à traverser des périodes difficiles. On l'appelle la prière de la sérénité : “Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux changer, et la sagesse de distinguer les unes des autres.”"
 				}
 			},
 			"presets": {
@@ -3106,7 +3156,10 @@
 				"2": "D'accord, vous devez faire trois choses dans le jeu.",
 				"3": "1. Inspirez par le nez\n\n2. Retenez votre souffle\n\n3. Expirez par la bouche",
 				"negative": "D'accord, merci de patienter. Dès qu'un conseiller est libre, nous vous faisons entrer."
-			}
+			},
+			"onboardingLine1": "Prenez simplement le temps d'arriver. Nous respirons ensemble.",
+			"onboardingLine3": "Quand vous êtes prêt, lancez votre premier essai.",
+			"volumeHint": "Pour une meilleure expérience, veuillez activer le son."
 		},
 		"acceptance": {
 			"button": {
@@ -3251,6 +3304,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Motif de la supervision"
+			},
+			"startChat": {
+				"title": "Démarrer le chat",
+				"hint": "Utilisez le champ de message en bas pour envoyer le premier message de supervision."
+			},
+			"input": {
+				"note": "Les messages que vous envoyez ici ne sont visibles que par les conseiller·ères."
+			}
 		}
 	},
 	"sessionList": {
@@ -3288,6 +3353,7 @@
 			"consultantUnknown": "Recherche de conseillères ou conseillers en cours",
 			"headline": "Mes consultations",
 			"peer": "Peer",
+			"unknown": "Inconnu",
 			"writeEnquiry": "Écrire un message maintenant"
 		},
 		"view": {
@@ -3302,7 +3368,21 @@
 		"toolbar": {
 			"search": {
 				"label": "Rechercher dans les consultations",
-				"placeholder": "Recherche"
+				"placeholder": "Recherche",
+				"refineHint": "Affinez encore votre recherche à l'aide des filtres",
+				"confirm": "Confirmer la sélection",
+				"close": "Fermer la recherche",
+				"clear": "Effacer la recherche",
+				"emptyPeople": "Aucune personne correspondante trouvée.",
+				"emptyTypes": "Aucun type de chat disponible.",
+				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
+				"tabs": {
+					"people": "Personnes",
+					"type": "Par type",
+					"centre": "Service de consultation",
+					"archiveOnly": "Archives uniquement"
+				},
+				"toggle": "Ouvrir ou fermer les résultats de recherche"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
@@ -3332,7 +3412,9 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Cercle de parole",
+				"internal": "Échange interne"
 			}
 		}
 	},
@@ -3887,6 +3969,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Fermer la visite guidée",
+		"overview": {
+			"title": "Mes visites guidées",
+			"subtitle": "Démarrez des visites guidées de l'application ou reprenez-les.",
+			"empty": "Aucune visite guidée n'est actuellement disponible pour vous.",
+			"status": {
+				"not_started": "Non commencée",
+				"in_progress": "En cours",
+				"completed": "Terminée",
+				"skipped": "Ignorée"
+			},
+			"action": {
+				"start": "Démarrer",
+				"continue": "Reprendre",
+				"restart": "Recommencer"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Pour vous expliquer les différentes fonctions, nous vous avons préparé une petite visite guidée. <br /><br /> Vous pouvez l'interrompre à tout moment ou la relancer dans votre profil.",
@@ -4340,6 +4439,14 @@
 		}
 	},
 	"legal": {
+		"notice": {
+			"fallbackLanguage": "Ce texte n'est pas disponible dans votre langue et s'affiche dans sa langue d'origine.",
+			"machineTranslated": "Traduction automatique — seule la version allemande fait foi sur le plan juridique.",
+			"placeholder": "Remarque : ce texte est un texte provisoire et n'a pas encore de valeur juridique.",
+			"showOriginal": "Afficher l'original",
+			"showingOriginal": "Vous consultez la version originale.",
+			"showTranslation": "Afficher la traduction"
+		},
 		"modal": {
 			"imprint": {
 				"title": "Mentions légales"
@@ -4348,7 +4455,11 @@
 				"title": "Politique de confidentialité"
 			},
 			"back": "Retour",
-			"confirm": "Compris"
+			"confirm": "Compris",
+			"missing": {
+				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
+				"link": "Vers l'adresse enregistrée"
+			}
 		}
 	},
 	"dpaSign": {
@@ -4380,7 +4491,8 @@
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault"
+				"openVault": "Open vault",
+				"restoring": "Restauration en cours …"
 			}
 		}
 	},
@@ -4392,6 +4504,20 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"drafts": {
+		"center": {
+			"title": "Brouillons",
+			"subtitle": "Les messages non envoyés sont enregistrés par chat et par fil de discussion.",
+			"empty": "Aucun brouillon pour le moment.",
+			"messageTag": "Brouillon",
+			"untitledChat": "Chat",
+			"thread": "Fil de discussion",
+			"open": "Ouvrir le brouillon",
+			"next": "Brouillon suivant",
+			"delete": "Supprimer le brouillon",
+			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire."
+		}
 	},
 	"tour": {
 		"mailCounselling": {

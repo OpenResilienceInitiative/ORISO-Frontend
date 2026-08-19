@@ -36,8 +36,10 @@
 	},
 	"app": {
 		"back": "Geri",
+		"cancel": "İptal",
 		"claim": "Çevrimiçi. Anonim. Güvenli.",
 		"close": "Kapat",
+		"closeBanner": "Banner'ı kapat",
 		"delete": "Girişi sil",
 		"download": "İndir",
 		"faulty": "Hatalı",
@@ -55,13 +57,16 @@
 			"mobileHeadline": "Endişeleriniz için burada yer var.",
 			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
+		"stop": "Dur",
 		"successful": "Başarılı",
 		"title": "Danışmanlık",
 		"ui": {
 			"classic": "Klasik Görünüm",
 			"new": "Yeni Görünüm!"
 		},
-		"wait": "Lütfen bekleyin"
+		"wait": "Lütfen bekleyin",
+		"info": "Bilgi",
+		"or": "veya"
 	},
 	"appointments": {
 		"copy": {
@@ -142,7 +147,8 @@
 	},
 	"attachments": {
 		"download": {
-			"label": "İndir"
+			"label": "İndir",
+			"aria": "{{name}} dosyasını indir"
 		},
 		"error": {
 			"format": {
@@ -232,6 +238,7 @@
 			}
 		},
 		"event": {
+			"appointmentType": "İstenen randevu türü",
 			"asker": "Tavsiye arayan",
 			"booking": {
 				"cancel": "İptaller",
@@ -246,6 +253,15 @@
 				}
 			},
 			"description": "Randevu hakkındaki mesajınız",
+			"linkVideo": "Görüntülü görüşme bağlantısı",
+			"location": {
+				"CHAT": "Yazılı sohbet",
+				"IN_PERSON": "Danışma merkezinde",
+				"LINK": "Görüntülü danışmanlık",
+				"PHONE_CALL": "Telefonla danışmanlık",
+				"USER_PHONE": "Telefonla danışmanlık",
+				"VIDEO_CALL": "Görüntülü danışmanlık"
+			},
 			"show": {
 				"less": "Daha az göster",
 				"more": "Daha fazla göster"
@@ -255,6 +271,10 @@
 				"canceled": "İptal Edildi",
 				"expired": "Geçmiş",
 				"settings": "Ayarlar"
+			},
+			"tooltip": {
+				"adviceSeeker": "Danışmanınız randevuyu sizin seçtiğiniz biçimde gerçekleştiremezse, alternatif olarak sizin için her zaman bir görüntülü görüşme bağlantısı oluştururuz.",
+				"consultant": "Randevuyu danışanın seçtiği biçimde gerçekleştiremezseniz, alternatif olarak sizin için her zaman bir görüntülü görüşme bağlantısı oluştururuz."
 			},
 			"your": {
 				"counselor": "Danışmanınız"
@@ -516,6 +536,7 @@
 					"facts": "<ul><li></li><li></li><li></li><li>Ne oldu? Şu anki durumunuz nedir? Aklınızda ne var? Belirli bir sorunuz mu var ya da size neyin yardımcı olabileceğini henüz tam olarak bilmiyor musunuz?</li></ul>",
 					"title": "Belki aşağıdaki hususlar ifade konusunda size yardımcı olacaktır:"
 				},
+				"deletionNotice": "Bu hesabın etkin kalması için lütfen hemen bize kısa bir mesaj yazın. İlk mesaj olmadan bu hesap gelecek gece otomatik olarak silinir. Bundan sonra mesajınızı yazabilmek için önce yeniden kayıt olmanız gerekir.",
 				"headline": "Endişeleriniz için burada yer var.",
 				"iconTitle": "Hoş geldiniz"
 			},
@@ -1005,11 +1026,9 @@
 				"intro": "Görüntülü aramalara katılmak için desteklenen tarayıcılardan birini kullanarak oturum açmalısınız. Sohbet danışmanlığı hala Firefox ile çalışmaktadır.",
 				"steps": {
 					"1": {
-						"1": {
-							"1": "Şu bağlantıyı takip edin: ",
-							"2": " veya ",
-							"3": " (yalnızca macOS ve iOS için kullanılabilir)"
-						}
+						"1": "Şu bağlantıyı izleyin: ",
+						"2": " veya ",
+						"3": " (yalnızca macOS ve iOS için kullanılabilir)"
 					},
 					"2": "Desteklenen tarayıcılardan birini indirin.",
 					"3": "Bunu PC/dizüstü/tablet/akıllı telefonunuza yükleyin.",
@@ -1310,7 +1329,13 @@
 		"legal": {
 			"infoText": {
 				"dataprotection": "Gizlilik Politikası",
+				"termsAndConditions": "Kullanım koşulları",
 				"impressum": "Künye"
+			},
+			"platform": {
+				"impressum": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nPlatformu kimin işlettiği ve işletmeciye nasıl ulaşabileceğiniz, tam künyede yer alır. Danışmanlığı, kendi bilgileri olan bağımsız danışma merkezleri verir; bu bilgileri bir merkez seçtiğinizde görürsünüz.",
+				"dataprotection": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nOturum açmak için yalnızca bunun için gerekli olan verileri işleriz. Mesajlarınız uçtan uca şifrelenmiştir: yalnızca sizin cihazınızda ve danışma merkezinizde okunabilir hale gelir. Bunun ötesinde hangi verilerin işleneceği, daha sonra seçeceğiniz danışma merkezine bağlıdır.",
+				"fullText": "Tam metni aç"
 			}
 		},
 		"password": {
@@ -1395,6 +1420,20 @@
 				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin."
 			}
 		},
+		"magicLink": {
+			"label": "Magic Link ile giriş yap",
+			"submitLabel": "Magic Link gönder",
+			"emailLabel": "E-posta",
+			"usernameLabel": "Kullanıcı adı",
+			"emailRequired": "Lütfen önce e-posta adresinizi girin.",
+			"notEnabled": "Magic Link ile giriş bu hesap için etkin değil.",
+			"usernameRequired": "Lütfen önce kullanıcı adınızı girin.",
+			"sentInfo": "Hesap uygunsa, {{username}} için bir Magic Link e-postası gönderildi."
+		},
+		"tabs": {
+			"password": "Parola",
+			"magicLink": "Magic Link"
+		},
 		"seperator": "veya",
 		"user": {
 			"label": "Kullanıcı adı/e-posta"
@@ -1415,8 +1454,12 @@
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
-				}
+				},
+				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz."
 			}
+		},
+		"mobile": {
+			"headline": "Burada sizi düşündüren\nher şeye yer var."
 		}
 	},
 	"message": {
@@ -3093,6 +3136,13 @@
 					"instruction": "Bu sefer nefes alırken kendi zaman aralıklarını sen belirle.",
 					"repeatGame": "Oyunu tekrarla",
 					"backToWaiting": "Beklemeye dön"
+				},
+				"completion": {
+					"instruction": "Tebrikler, başardınız.",
+					"receiveGift": "Küçük bir hediye alın"
+				},
+				"serenity": {
+					"instruction": "Bu hediye, birçok insana zor zamanlarında yardımcı olmuş küçük bir mantradır. Adı Huzur Duası: “Tanrım, bana değiştiremeyeceğim şeyleri kabul etme huzurunu, değiştirebileceğim şeyleri değiştirme cesaretini ve ikisini birbirinden ayırt etme bilgeliğini ver.”"
 				}
 			},
 			"presets": {
@@ -3106,7 +3156,10 @@
 				"2": "Tamam, oyunda üç şey yapman gerekiyor.",
 				"3": "1. Burnundan nefes al\n\n2. Nefesini tut\n\n3. Ağzından nefes ver",
 				"negative": "Tamam, lütfen biraz daha bekle. Bir danışman müsait olur olmaz seni içeri alacağız."
-			}
+			},
+			"onboardingLine1": "Sadece gelin. Birlikte nefes alıyoruz.",
+			"onboardingLine3": "Hazır olduğunuzda ilk denemenizi başlatın.",
+			"volumeHint": "Daha iyi bir deneyim için lütfen sesi açın."
 		},
 		"acceptance": {
 			"button": {
@@ -3251,6 +3304,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Süpervizyon nedeni"
+			},
+			"startChat": {
+				"title": "Sohbeti başlat",
+				"hint": "İlk süpervizyon mesajını göndermek için aşağıdaki mesaj alanını kullanın."
+			},
+			"input": {
+				"note": "Burada gönderdiğiniz mesajları yalnızca danışmanlar görebilir."
+			}
 		}
 	},
 	"sessionList": {
@@ -3288,6 +3353,7 @@
 			"consultantUnknown": "Danışman arayışları devam ediyor",
 			"headline": "İstişarelerim",
 			"peer": "Akran",
+			"unknown": "Bilinmiyor",
 			"writeEnquiry": "Şimdi bir mesaj yazın"
 		},
 		"view": {
@@ -3302,7 +3368,21 @@
 		"toolbar": {
 			"search": {
 				"label": "İstişareleri ara",
-				"placeholder": "Ara"
+				"placeholder": "Ara",
+				"refineHint": "Aramanızı filtrelerle daha da daraltın",
+				"confirm": "Seçimi onayla",
+				"close": "Aramayı kapat",
+				"clear": "Aramayı temizle",
+				"emptyPeople": "Eşleşen kişi bulunamadı.",
+				"emptyTypes": "Kullanılabilir sohbet türü yok.",
+				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
+				"tabs": {
+					"people": "Kişiler",
+					"type": "Türe göre",
+					"centre": "Danışma merkezi",
+					"archiveOnly": "Yalnızca arşiv"
+				},
+				"toggle": "Arama sonuçlarını aç veya kapat"
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"
@@ -3332,7 +3412,9 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Sohbet çemberi",
+				"internal": "Dahili"
 			}
 		}
 	},
@@ -3887,6 +3969,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Turu kapat",
+		"overview": {
+			"title": "Turlarım",
+			"subtitle": "Uygulama içindeki turları başlatın veya kaldığınız yerden sürdürün.",
+			"empty": "Şu anda sizin için kullanılabilir bir tur yok.",
+			"status": {
+				"not_started": "Başlatılmadı",
+				"in_progress": "Devam ediyor",
+				"completed": "Tamamlandı",
+				"skipped": "Atlandı"
+			},
+			"action": {
+				"start": "Başlat",
+				"continue": "Devam et",
+				"restart": "Yeniden başlat"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Bireysel işlevleri açıklamak için sizin için kısa bir tur hazırladık. <br /><br /> İstediğiniz zaman iptal edebilir veya profilinizde yeniden başlatabilirsiniz.",
@@ -4340,6 +4439,14 @@
 		}
 	},
 	"legal": {
+		"notice": {
+			"fallbackLanguage": "Bu metin sizin dilinizde mevcut değil ve orijinal dilinde gösteriliyor.",
+			"machineTranslated": "Makine çevirisi — hukuken bağlayıcı olan Almanca metindir.",
+			"placeholder": "Not: Bu metin bir yer tutucudur ve henüz hukuken bağlayıcı biçimde hazırlanmamıştır.",
+			"showOriginal": "Orijinali göster",
+			"showingOriginal": "Orijinal metni görüyorsunuz.",
+			"showTranslation": "Çeviriyi göster"
+		},
 		"modal": {
 			"imprint": {
 				"title": "Künye"
@@ -4348,7 +4455,11 @@
 				"title": "Gizlilik politikası"
 			},
 			"back": "Geri",
-			"confirm": "Anladım"
+			"confirm": "Anladım",
+			"missing": {
+				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
+				"link": "Tanımlı adrese git"
+			}
 		}
 	},
 	"dpaSign": {
@@ -4380,7 +4491,8 @@
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault"
+				"openVault": "Open vault",
+				"restoring": "Geri getiriliyor …"
 			}
 		}
 	},
@@ -4392,6 +4504,20 @@
 		"toLogin": "Go to login",
 		"description": "Complete your invitation with a username and password.",
 		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"drafts": {
+		"center": {
+			"title": "Taslaklar",
+			"subtitle": "Gönderilmemiş mesajlar her sohbet ve konu için ayrı ayrı kaydedilir.",
+			"empty": "Henüz taslak yok.",
+			"messageTag": "Taslak",
+			"untitledChat": "Sohbet",
+			"thread": "Konu",
+			"open": "Taslağı aç",
+			"next": "Sonraki taslak",
+			"delete": "Taslağı sil",
+			"emptyDetail": "Yazmaya devam etmek için bir taslak seçin."
+		}
 	},
 	"tour": {
 		"mailCounselling": {
