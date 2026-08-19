@@ -3966,10 +3966,65 @@
 			"noresults": "እዚ ርእስ ንምክር የለን ማእከል ምክር።"
 		},
 		"start": "ምክር ጀምር",
+		"pseudonym": {
+			"carimatSubtitle": "ዝረአ ስም ምረጹ",
+			"carimatPrivacySubtitle": "ውልቃዊ ናጽነትኩም",
+			"carimatMessage": "ሰላም፡ ቅድሚ ምቕጻልና፡ በጃኹም ነቲ ንዚ ክፍለ ግዜ ብሃውሪ ዝተመርጸ ስምኩም ኣረጋግጹ።",
+			"privacyMessage": "ጽቡቕ ምረጻ። ውልቃዊ ናጽነትኩም ንምሕላው ኩሎም መልእኽትታት ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ ተገይሮም እዮም፡ ድሕሪ 48 ሰዓታት ድማ ብኣውቶማቲክ ይድምሰሱ።",
+			"yourPseudonym": "ናይ ምስጢር ስምኩም",
+			"nextName": "ዝቕጽል ስም",
+			"confirm": "ኣረጋግጽ",
+			"changeName": "ስም ቀይር",
+			"continueWithSelection": "በዚ ምረጻ ቀጽል",
+			"actionsLabel": "ተግባራት ናይ ምስጢር ስም"
+		},
 		"consent": {
 			"accept": "ይሰማማዕ እየ",
 			"reject": "ኣይሰማማዕን እየ",
 			"mustAcceptToContinue": "ንምቕጻል ንፖሊሲ ውልቃዊ ሓበሬታና ክትሰማምዑ ኣለኩም።"
+		},
+		"queue": {
+			"actionsLabel": "ተግባራት መጸበዪ ቦታ",
+			"calmCompanion": "ሓጺር ህዱእ መሰነይታ ክፈት",
+			"calmCompanionHint": "እቲ ቻት ክሳብ ዝጅምር፡ ሓጺር ተሳታፍነት ዘለዎ ህዱእ መሰነይታ። ልክዕ ኣብዚ ክፍሊ ቻት",
+			"calmCompanionHintMobileLine1": "እቲ ቻት ክሳብ ዝጅምር፡ ሓጺር",
+			"calmCompanionHintMobileLine2": "ተሳታፍነት ዘለዎ ህዱእ መሰነይታ።",
+			"calmCompanionHintDesktop": "እቲ ቻት ክሳብ ዝጅምር፡ ሓጺር ህዱእ መሰነይታ። ልክዕ ኣብዚ ክፍሊ ቻት",
+			"positionCount_one": "{{count}} ሰብ ቅድሜኹም",
+			"positionCount_other": "{{count}} ሰባት ቅድሜኹም",
+			"positionCountSuffix": "ጌና ቅድሜኹም",
+			"connecting": "ይራኸብ ኣሎ …",
+			"insteadOfWaiting": "ኣብ ክንዲ ምጽባይ",
+			"requestLocalCounselor": "ኣብ ቦታ ንዝወሃብ ምኽሪ ሕቶ ስደድ",
+			"consultantAccepted": "ሕጂ ኣማኻሪኹም ኣብቲ ቻት ይጽበየኩም ኣሎ።",
+			"startChatNow": "ሕጂ ቻት ጀምር",
+			"dismissAcceptedBanner": "መዘኻኸሪ ሕባእ",
+			"leave": "ቻት ግደፍ"
+		},
+		"enquiryClosed": "እዚ ላይቭ ቻት ተወዲኡ። ሓድሽ ቻት ንምጅማር፡ በጃኹም ነቲ ናይ ዕድመ ሊንክኩም ደጊምኩም ክፈትዎ።",
+		"leaveQueue": {
+			"headline": "ቻት ክትገድፉ ዲኹም?",
+			"body": "ጌና ኣብ መጸበዪ ቦታ ኣለኹም። ክትጽበዩ ትኽእሉ ኢኹም፡ ወይ ድማ መእተዊኹም ክትድምስስዎ — ሽዑ እዚ ቻት ይውዳእ።",
+			"bodyAccepted": "ሓደ ኣማኻሪ ድሮ ይጽበየኩም ኣሎ። ሕጂ ነቲ ቻት ክትጅምርዎ፡ ኣብ መጸበዪ ቦታ ክትጸንሑ ወይ መእተዊኹም ክትድምስስዎ ትኽእሉ።",
+			"stay": "ኣብ መጸበዪ ቦታ ጽናሕ",
+			"startChat": "ሕጂ ቻት ጀምር",
+			"startChatUnavailable": "ሓደ ኣማኻሪ ነቲ ቻት ምስ ተቐበሎ፡ ኣብዚ ክትጅምሩ ትኽእሉ።",
+			"delete": "ቻት ወድእ & መእተዊ ደምስስ",
+			"deleteWarning": "መእተዊኹም ክዕጾ እዩ እዚ ቻት ድማ ክውዳእ እዩ። በዚ ስምን ፓስዎርድን ደጊምኩም ክትኣትዉ ኣይትኽእሉን፡ ንሕና እውን ነቲ መእተዊ ክንመልሶ ኣይንኽእልን።",
+			"cancelDelete": "ሰርዝ",
+			"confirmDelete": "እወ፡ ንሓዋሩ ደምስስ",
+			"error": "እቲ ቻት ሕጂ ክውዳእ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።"
+		},
+		"noAvailability": {
+			"subtitle": "ብዘይ ምዝገባ ምኽሪ ክትረኽቡ እንተደሊኹም፡ በጃኹም ኣብ ሰዓታት ስራሕ ተመለሱ።",
+			"openingHours": "ልሙዳት ሰዓታት ስራሕ ኣርኢ",
+			"mailHint": "ወይ ድማ ኣብ ዝኾነ ግዜ ስም ዘይሓትት ናይ መይል ምኽሪ ጀምሩ፦ ብናይ ፖስታ ኮድኩም ኣብ ጥቓኹም ዘሎ ማእከል ምኽሪ ረኺብኩም ሕቶኹም ትጽሕፉ። ንመልሲ ኢመይል ኣድራሻ ጥራይ እዩ ዘድልየኩም - ናይ ሓቂ ስም ኣየድልን።",
+			"tip": "ምኽሪ፦ ንስኹም ጥራይ እትበጽሕዎ ኢመይል ኣድራሻ ተጠቐሙ።",
+			"startMailCounseling": "ስም ዘይሓትት ናይ መይል ምኽሪ ጀምር",
+			"responseTime": "መልሲ ኣብ ውሽጢ 2 ናይ ስራሕ መዓልትታት",
+			"back": "ናብቲ ዝሓለፈ ገጽ ተመለስ",
+			"later": "ደሓር ተመለሱ",
+			"title": "ሕማቕ ኣጋጣሚ ኮይኑ ላይቭ ቻት ኣብዚ እዋን ተዓጽዩ ኣሎ"
 		}
 	},
 	"sessionHeader": {
@@ -3987,6 +4042,39 @@
 					"title": "ስህተት ምስርዝ",
 					"text": "መለያ ምስርዝ ኣይተቻለን። እባክኩም ደጊም ፈትኑ።"
 				}
+			},
+			"endChat": {
+				"label": "ቻት ወድእ",
+				"ending": "ይውዳእ ኣሎ …",
+				"consultant": {
+					"label": "ቻት ወድእ",
+					"confirm": {
+						"headline": "ነዚ ስሙ ዘይተፈልጠ ቻት ክትውድእዎ ዲኹም?",
+						"copy": "እቲ ዝርርብ ንዓኹምን ነቲ ምኽሪ ዝደሊ ሰብን ክዕጾ እዩ።",
+						"buttonConfirm": "ቻት ወድእ"
+					},
+					"success": {
+						"headline": "ቻት ተወዲኡ",
+						"copy": "እቲ ስሙ ዘይተፈልጠ ቻት ተዓጽዩ።",
+						"buttonClose": "ናብ ቻታት ተመለስ"
+					}
+				},
+				"confirm": {
+					"headline": "ብሓቂ ነቲ ቻት ክትውድእዎ ትደልዩ ዲኹም?",
+					"copy": "እቲ ዝርርብ ክዕጾ እዩ። ነዚ ስሙ ዘይተፈልጠ ቻት ክትቅጽልዎ ኣይትኽእሉን።",
+					"buttonConfirm": "ቻት ወድእ",
+					"buttonCancel": "ሰርዝ"
+				},
+				"success": {
+					"headline": "ቻት ተወዲኡ",
+					"copy": "ላይቭ ቻትና ስለ እተጠቐምኩም የቐንየልና። ሕጂ ነዚ ገጽ ክትዓጽውዎ ትኽእሉ።",
+					"buttonClose": "ዕጸው"
+				},
+				"error": {
+					"headline": "ቻት ክውዳእ ኣይከኣለን",
+					"copy": "እቲ ቻት ክውዳእ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+					"buttonClose": "ዕጸው"
+				}
 			}
 		},
 		"supervisor": {
@@ -4003,7 +4091,12 @@
 				"remove": "ኣስወግድ",
 				"added": "ተኣከለ",
 				"loading": "ብምጽዋእ ላዕሊ...",
-				"loadingConsultants": "ኣመራሕቲ ብምጽዋእ ላዕሊ..."
+				"loadingConsultants": "ኣመራሕቲ ብምጽዋእ ላዕሊ...",
+				"reasonLabel": "ምኽንያት ናይቲ ምክትታል",
+				"reasonPlaceholder": "በጃኹም ምኽንያት ናይቲ ምክትታል ኣመልክቱ...",
+				"reasonError": "በጃኹም ምኽንያት ኣመልክቱ።",
+				"note": "ንመጻኢ ተቖጻጸርቲ ክሕግዙ እንተደሊኹም፡ ኣቐዲምኩም ክትውስኽዎም ትኽእሉ።",
+				"reason": "ምኽንያት"
 			},
 			"success": {
 				"add": {
@@ -4027,10 +4120,23 @@
 				"loadConsultants": {
 					"title": "ስህተት",
 					"text": "ኣመራሕቲ ምጽዋእ ኣይተቻለን።"
+				},
+				"reasonRequired": {
+					"text": "በጃኹም ምኽንያት ናይቲ ምክትታል ኣመልክቱ።",
+					"title": "ምኽንያት የድሊ"
 				}
 			},
 			"remove": {
 				"confirm": "እዚ ሱፐርቫይዘር ንምእልፍል እርግጠኛ ዲኻ?"
+			},
+			"add": {
+				"disabledAsker": "ምክትታል ብጉጅለ ምኽሪ እዩ ዝመሓደር",
+				"disabledMobile": "ተቖጻጻሪ ወስኽ – ኣብ ደስክቶፕ ይርከብ",
+				"disabledUnavailable": "ተቖጻጻሪ ወስኽ – ኣብዚ ኣይርከብን"
+			},
+			"status": {
+				"on": "ምክትታል ተኸፊቱ",
+				"off": "ምክትታል ተዓጽዩ"
 			}
 		}
 	},

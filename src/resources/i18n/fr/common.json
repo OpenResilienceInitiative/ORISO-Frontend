@@ -3969,10 +3969,65 @@
 			"noresults": "Aucun centre de consultation disponible pour ce sujet."
 		},
 		"start": "Démarrer la consultation",
+		"pseudonym": {
+			"carimatSubtitle": "Choisir le nom affiché",
+			"carimatPrivacySubtitle": "Votre vie privée",
+			"carimatMessage": "Bonjour, avant de continuer, veuillez confirmer le nom qui a été tiré au hasard pour cette session.",
+			"privacyMessage": "Bon choix. Pour protéger votre vie privée, tous les messages sont chiffrés de bout en bout et supprimés automatiquement au bout de 48 heures.",
+			"yourPseudonym": "Votre pseudonyme",
+			"nextName": "Nom suivant",
+			"confirm": "Confirmer",
+			"changeName": "Modifier le nom",
+			"continueWithSelection": "Continuer avec ce choix",
+			"actionsLabel": "Actions liées au pseudonyme"
+		},
 		"consent": {
 			"accept": "J'accepte",
 			"reject": "Je n'accepte pas",
 			"mustAcceptToContinue": "Pour continuer, vous devez accepter notre politique de confidentialité."
+		},
+		"queue": {
+			"actionsLabel": "Actions dans la salle d'attente",
+			"calmCompanion": "Ouvrir un court accompagnement apaisant",
+			"calmCompanionHint": "En attendant le début du chat, un court accompagnement apaisant et interactif. Directement ici, dans la salle de chat",
+			"calmCompanionHintMobileLine1": "En attendant le début du chat, un court",
+			"calmCompanionHintMobileLine2": "accompagnement apaisant et interactif.",
+			"calmCompanionHintDesktop": "En attendant le début du chat, un court accompagnement apaisant. Directement ici, dans la salle de chat",
+			"positionCount_one": "{{count}} personne avant vous",
+			"positionCount_other": "{{count}} personnes avant vous",
+			"positionCountSuffix": "encore avant vous",
+			"connecting": "Connexion en cours …",
+			"insteadOfWaiting": "Plutôt que d'attendre",
+			"requestLocalCounselor": "Envoyer une demande de consultation sur place",
+			"consultantAccepted": "Votre conseiller·ère vous attend désormais dans le chat.",
+			"startChatNow": "Démarrer le chat maintenant",
+			"dismissAcceptedBanner": "Masquer cette information",
+			"leave": "Quitter le chat"
+		},
+		"enquiryClosed": "Ce Live-Chat est terminé. Pour démarrer un nouveau chat, veuillez ouvrir à nouveau votre lien d'invitation.",
+		"leaveQueue": {
+			"headline": "Quitter le chat ?",
+			"body": "Vous êtes encore dans la salle d'attente. Vous pouvez continuer à attendre ou supprimer votre accès — dans ce cas, ce chat sera terminé.",
+			"bodyAccepted": "Une personne consultante vous attend déjà. Vous pouvez démarrer le chat maintenant, rester dans la salle d'attente ou supprimer votre accès.",
+			"stay": "Rester dans la salle d'attente",
+			"startChat": "Démarrer le chat maintenant",
+			"startChatUnavailable": "Dès qu'une personne consultante accepte le chat, vous pourrez le démarrer ici.",
+			"delete": "Terminer le chat et supprimer l'accès",
+			"deleteWarning": "Votre accès sera désactivé et ce chat prendra fin. Vous ne pourrez plus vous connecter avec ce nom et ce mot de passe, et nous ne pourrons pas rétablir cet accès.",
+			"cancelDelete": "Annuler",
+			"confirmDelete": "Oui, supprimer définitivement",
+			"error": "Le chat n'a pas pu être terminé pour le moment. Veuillez réessayer."
+		},
+		"noAvailability": {
+			"subtitle": "Si vous souhaitez être conseillé sans vous inscrire, revenez pendant les heures d'ouverture.",
+			"openingHours": "Afficher les heures d'ouverture habituelles",
+			"mailHint": "Ou lancez à tout moment la consultation anonyme par e-mail : avec votre code postal, vous trouvez un service de consultation près de chez vous et vous rédigez votre demande. Pour la réponse, vous n'avez besoin que d'une adresse e-mail - pas d'un vrai nom.",
+			"tip": "Conseil : utilisez une adresse e-mail à laquelle vous seul avez accès.",
+			"startMailCounseling": "démarrer la consultation anonyme par e-mail",
+			"responseTime": "Réponse sous 2 jours ouvrables",
+			"back": "Retour à la page précédente",
+			"later": "Revenir plus tard",
+			"title": "Le Live-Chat est malheureusement fermé pour le moment"
 		}
 	},
 	"sessionHeader": {
@@ -3990,6 +4045,39 @@
 					"title": "Erreur de suppression",
 					"text": "Le compte n'a pas pu être supprimé. Veuillez réessayer."
 				}
+			},
+			"endChat": {
+				"label": "Terminer le chat",
+				"ending": "Fin en cours …",
+				"consultant": {
+					"label": "Terminer le chat",
+					"confirm": {
+						"headline": "Terminer ce chat anonyme ?",
+						"copy": "L'entretien sera clos pour vous et pour la personne en quête de conseils.",
+						"buttonConfirm": "Terminer le chat"
+					},
+					"success": {
+						"headline": "Chat terminé",
+						"copy": "Le chat anonyme a été clos.",
+						"buttonClose": "Retour aux chats"
+					}
+				},
+				"confirm": {
+					"headline": "Voulez-vous vraiment terminer le chat ?",
+					"copy": "L'entretien sera clos. Vous ne pourrez pas poursuivre ce chat anonyme.",
+					"buttonConfirm": "Terminer le chat",
+					"buttonCancel": "Annuler"
+				},
+				"success": {
+					"headline": "Chat terminé",
+					"copy": "Merci d'avoir utilisé notre Live-Chat. Vous pouvez maintenant fermer cette page.",
+					"buttonClose": "Fermer"
+				},
+				"error": {
+					"headline": "Le chat n'a pas pu être terminé",
+					"copy": "Le chat n'a pas pu être terminé. Veuillez réessayer.",
+					"buttonClose": "Fermer"
+				}
 			}
 		},
 		"supervisor": {
@@ -4006,7 +4094,12 @@
 				"remove": "Supprimer",
 				"added": "Ajouté",
 				"loading": "Chargement...",
-				"loadingConsultants": "Chargement des conseillers..."
+				"loadingConsultants": "Chargement des conseillers...",
+				"reasonLabel": "Motif de la supervision",
+				"reasonPlaceholder": "Veuillez indiquer le motif de la supervision...",
+				"reasonError": "Veuillez indiquer un motif.",
+				"note": "Si des superviseur·es doivent intervenir à l'avenir, vous pouvez les ajouter à l'avance.",
+				"reason": "Motif"
 			},
 			"success": {
 				"add": {
@@ -4030,10 +4123,23 @@
 				"loadConsultants": {
 					"title": "Erreur",
 					"text": "Impossible de charger les conseillers."
+				},
+				"reasonRequired": {
+					"text": "Veuillez indiquer le motif de la supervision.",
+					"title": "Motif obligatoire"
 				}
 			},
 			"remove": {
 				"confirm": "Êtes-vous sûr de vouloir supprimer ce superviseur ?"
+			},
+			"add": {
+				"disabledAsker": "La supervision est gérée par l'équipe de consultation",
+				"disabledMobile": "Ajouter un·e superviseur·e – disponible sur ordinateur",
+				"disabledUnavailable": "Ajouter un·e superviseur·e – non disponible ici"
+			},
+			"status": {
+				"on": "Supervision activée",
+				"off": "Supervision désactivée"
 			}
 		}
 	},

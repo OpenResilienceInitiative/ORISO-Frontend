@@ -3969,10 +3969,65 @@
 			"noresults": "Bu konu için uygun bir danışma merkezi yok."
 		},
 		"start": "Danışmayı başlat",
+		"pseudonym": {
+			"carimatSubtitle": "Görünen adı seçin",
+			"carimatPrivacySubtitle": "Gizliliğiniz",
+			"carimatMessage": "Merhaba, devam etmeden önce lütfen bu oturum için rastgele seçilen adınızı onaylayın.",
+			"privacyMessage": "İyi bir seçim. Gizliliğinizi korumak için tüm mesajlar uçtan uca şifrelenir ve 48 saat sonra otomatik olarak silinir.",
+			"yourPseudonym": "Takma adınız",
+			"nextName": "Sonraki ad",
+			"confirm": "Onayla",
+			"changeName": "Adı değiştir",
+			"continueWithSelection": "Seçimle devam et",
+			"actionsLabel": "Takma ad işlemleri"
+		},
 		"consent": {
 			"accept": "Kabul ediyorum",
 			"reject": "Kabul etmiyorum",
 			"mustAcceptToContinue": "Devam etmek için gizlilik politikamızı kabul etmeniz gerekir."
+		},
+		"queue": {
+			"actionsLabel": "Bekleme alanı işlemleri",
+			"calmCompanion": "Kısa bir sakinleşme rehberi aç",
+			"calmCompanionHint": "Sohbet başlayana kadar kısa, etkileşimli bir sakinleşme rehberi. Tam burada, sohbet odasında",
+			"calmCompanionHintMobileLine1": "Sohbet başlayana kadar kısa,",
+			"calmCompanionHintMobileLine2": "etkileşimli bir sakinleşme rehberi.",
+			"calmCompanionHintDesktop": "Sohbet başlayana kadar kısa bir sakinleşme rehberi. Tam burada, sohbet odasında",
+			"positionCount_one": "Önünüzde {{count}} kişi var",
+			"positionCount_other": "Önünüzde {{count}} kişi var",
+			"positionCountSuffix": "Hâlâ önünüzde",
+			"connecting": "Bağlanıyor …",
+			"insteadOfWaiting": "Beklemek yerine",
+			"requestLocalCounselor": "Yerinde danışmanlık talebi gönder",
+			"consultantAccepted": "Danışmanınız sizi şimdi sohbette bekliyor.",
+			"startChatNow": "Sohbeti şimdi başlat",
+			"dismissAcceptedBanner": "Bildirimi gizle",
+			"leave": "Sohbetten ayrıl"
+		},
+		"enquiryClosed": "Bu canlı sohbet sona erdi. Yeni bir sohbet başlatmak için lütfen davet bağlantınızı tekrar açın.",
+		"leaveQueue": {
+			"headline": "Sohbetten ayrılmak istiyor musunuz?",
+			"body": "Hâlâ bekleme alanındasınız. Beklemeye devam edebilir veya erişiminizi silebilirsiniz — bu durumda bu sohbet sona erer.",
+			"bodyAccepted": "Bir danışman sizi şimdiden bekliyor. Sohbeti şimdi başlatabilir, bekleme alanında kalabilir veya erişiminizi silebilirsiniz.",
+			"stay": "Bekleme alanında kal",
+			"startChat": "Sohbeti şimdi başlat",
+			"startChatUnavailable": "Bir danışman sohbeti kabul eder etmez buradan başlatabilirsiniz.",
+			"delete": "Sohbeti bitir ve erişimi sil",
+			"deleteWarning": "Erişiminiz devre dışı bırakılacak ve bu sohbet sona erecek. Bu ad ve parola ile bir daha giriş yapamazsınız ve erişimi geri getiremeyiz.",
+			"cancelDelete": "İptal",
+			"confirmDelete": "Evet, kalıcı olarak sil",
+			"error": "Sohbet şu anda sonlandırılamadı. Lütfen bir kez daha deneyin."
+		},
+		"noAvailability": {
+			"subtitle": "Kayıt olmadan danışmanlık almak isterseniz lütfen çalışma saatleri içinde tekrar gelin.",
+			"openingHours": "Normal çalışma saatlerini göster",
+			"mailHint": "Ya da istediğiniz zaman anonim e-posta danışmanlığını başlatın: Posta kodunuzla size yakın bir danışma merkezi bulur ve talebinizi yazarsınız. Yanıt için yalnızca bir e-posta adresine ihtiyacınız var - gerçek adınıza değil.",
+			"tip": "İpucu: Yalnızca sizin erişebildiğiniz bir e-posta adresi kullanın.",
+			"startMailCounseling": "anonim e-posta danışmanlığını başlat",
+			"responseTime": "2 iş günü içinde yanıt",
+			"back": "Önceki sayfaya dön",
+			"later": "Daha sonra tekrar gelin",
+			"title": "Canlı sohbet şu anda maalesef kapalı"
 		}
 	},
 	"sessionHeader": {
@@ -3990,6 +4045,39 @@
 					"title": "Silme Hatası",
 					"text": "Hesap silinemedi. Lütfen tekrar deneyin."
 				}
+			},
+			"endChat": {
+				"label": "Sohbeti bitir",
+				"ending": "Sonlandırılıyor …",
+				"consultant": {
+					"label": "Sohbeti bitir",
+					"confirm": {
+						"headline": "Bu anonim sohbet bitirilsin mi?",
+						"copy": "Görüşme, hem sizin hem de danışan için kapatılacak.",
+						"buttonConfirm": "Sohbeti bitir"
+					},
+					"success": {
+						"headline": "Sohbet sona erdi",
+						"copy": "Anonim sohbet kapatıldı.",
+						"buttonClose": "Sohbetlere dön"
+					}
+				},
+				"confirm": {
+					"headline": "Sohbeti gerçekten bitirmek istiyor musunuz?",
+					"copy": "Görüşme kapatılacak. Bu anonim sohbete devam edemezsiniz.",
+					"buttonConfirm": "Sohbeti bitir",
+					"buttonCancel": "İptal"
+				},
+				"success": {
+					"headline": "Sohbet sona erdi",
+					"copy": "Canlı sohbetimizi kullandığınız için teşekkür ederiz. Bu sayfayı artık kapatabilirsiniz.",
+					"buttonClose": "Kapat"
+				},
+				"error": {
+					"headline": "Sohbet bitirilemedi",
+					"copy": "Sohbet bitirilemedi. Lütfen tekrar deneyin.",
+					"buttonClose": "Kapat"
+				}
 			}
 		},
 		"supervisor": {
@@ -4006,7 +4094,12 @@
 				"remove": "Kaldır",
 				"added": "Eklendi",
 				"loading": "Yükleniyor...",
-				"loadingConsultants": "Danışmanlar yükleniyor..."
+				"loadingConsultants": "Danışmanlar yükleniyor...",
+				"reasonLabel": "Süpervizyon nedeni",
+				"reasonPlaceholder": "Lütfen süpervizyon nedenini belirtin...",
+				"reasonError": "Lütfen bir neden belirtin.",
+				"note": "İleride süpervizörlerin de sürece katılmasını istiyorsanız, onları önceden ekleyebilirsiniz.",
+				"reason": "Neden"
 			},
 			"success": {
 				"add": {
@@ -4030,10 +4123,23 @@
 				"loadConsultants": {
 					"title": "Hata",
 					"text": "Danışmanlar yüklenemedi."
+				},
+				"reasonRequired": {
+					"text": "Lütfen süpervizyon nedenini belirtin.",
+					"title": "Neden gerekli"
 				}
 			},
 			"remove": {
 				"confirm": "Bu süpervizörü kaldırmak istediğinizden emin misiniz?"
+			},
+			"add": {
+				"disabledAsker": "Süpervizyon, danışmanlık ekibi tarafından yönetilir",
+				"disabledMobile": "Süpervizör ekle – masaüstünde kullanılabilir",
+				"disabledUnavailable": "Süpervizör ekle – burada kullanılamaz"
+			},
+			"status": {
+				"on": "Süpervizyon açık",
+				"off": "Süpervizyon kapalı"
 			}
 		}
 	},
