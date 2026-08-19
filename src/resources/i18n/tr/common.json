@@ -1462,6 +1462,15 @@
 				"headline": "Mesajı sil"
 			}
 		},
+		"encryptionBroke": {
+			"status": "şifreleme bozuldu"
+		},
+		"decryptionFailed": {
+			"body": "Bu gelen mesajın şifresi çözülemedi. Gönderen kişiden mesajı tekrar göndermesini isteyin veya görüşmeyi yeniden yükleyin.",
+			"status": "şifresi çözülemedi",
+			"subtitle": "Gelen mesaj kullanılamıyor",
+			"title": "Mesajın şifresi çözülemedi"
+		},
 		"groupChat": "Grup sohbeti",
 		"isMyMessage": {
 			"name": "I"
@@ -1483,9 +1492,64 @@
 			"booking": {
 				"buttonLabel": "Danışma için bir randevu ayarlayın",
 				"headline": "Ya da şimdi randevu alın"
+			},
+			"characterCounter": {
+				"overLimit": "Mesaj, karakter sınırını aşıyor.",
+				"warning": "Mesaj, karakter sınırına yaklaşıyor."
+			},
+			"toolbar": {
+				"openTools": "Tüm araçlara geri dön",
+				"closeTools": "Kompakt araçlara geç",
+				"more": "Diğer araçlar",
+				"minimize": "Editörü küçült",
+				"maximize": "Editörü büyüt",
+				"undo": "Geri al",
+				"redo": "Yinele",
+				"heading": "Metin stili",
+				"paragraph": "Normal metin",
+				"heading1": "Başlık",
+				"heading2": "Büyük başlık",
+				"heading3": "Orta başlık",
+				"heading4": "Küçük başlık",
+				"list": "Liste stili",
+				"bulletList": "Madde işaretli liste",
+				"orderedList": "Numaralı liste",
+				"taskList": "Görev listesi",
+				"quote": "Alıntı",
+				"bold": "Kalın",
+				"italic": "İtalik",
+				"strike": "Üstü çizili",
+				"underline": "Altı çizili",
+				"code": "Kod",
+				"codeBlock": "Kod bloğu",
+				"link": "Bağlantı",
+				"highlight": "Vurgula",
+				"highlightYellow": "Sarı vurgula",
+				"highlightOrange": "Turuncu vurgula",
+				"highlightRose": "Pembe vurgula",
+				"highlightMint": "Nane yeşili vurgula",
+				"highlightBlue": "Mavi vurgula",
+				"superscript": "Üst simge",
+				"subscript": "Alt simge",
+				"addImage": "Resim ekle",
+				"addImageShort": "Resim",
+				"dateTime": "Tarih ve saat ekle",
+				"attachment": "Ek ekle",
+				"emoji": "Emoji seçimi",
+				"mention": "Kişiden bahset",
+				"voiceRecording": "Sesli kayıt"
 			}
 		},
+		"mention": {
+			"notInChat": "sohbette değil",
+			"empty": "Kimse bulunamadı",
+			"unavailable": "Liste yüklenemedi",
+			"loading": "Yükleniyor …"
+		},
 		"audience": {
+			"clients": "Danışanlar",
+			"counsellors": "Danışmanlar",
+			"moderators": "Moderatörler",
 			"all": "Tümü",
 			"multiCount": "{{count}} kişi",
 			"sendToAll": "Herkese gönder",
@@ -1507,12 +1571,74 @@
 			"toggleSection": "Bölümü aç/kapat",
 			"selectAllBottom": "Select All"
 		},
+		"edit": {
+			"cancel": "Düzenlemeyi iptal et",
+			"marker": "(düzenlendi)",
+			"markerTitle": "Mesaj düzenlendi",
+			"previewLabel": "Mesajı düzenle"
+		},
+		"feedbackTag": "Geri bildirim",
+		"menu": {
+			"open": "Diğer seçenekler",
+			"replyDirect": "Doğrudan yanıtla",
+			"replyThread": "Konuda yanıtla",
+			"edit": "Mesajı düzenle",
+			"markText": "Metni işaretle",
+			"forward": "Mesajı ilet",
+			"delete": "Mesajı sil"
+		},
+		"reaction": {
+			"add": "Tepki ver",
+			"count": "{{key}}: {{count}} tepki",
+			"more": "Diğer emojiler"
+		},
+		"visibility": {
+			"open": "Görünürlüğü göster",
+			"people": "Bu mesajı gören kişiler",
+			"title": "Mesajı görebilenler …"
+		},
+		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"systemNotification": "Sistem bildirimi",
+		"systemNotificationTitle": "Sistem bildirimi",
+		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
+		"consultantLeftChat": "Danışman sohbetten ayrıldı",
+		"anonymousUser": "Kullanıcı",
+		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
+		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
 		"today": "Bugün",
 		"tomorrow": "Yarın",
 		"unread": "okunmamış",
-		"yesterday": "Dün"
+		"video": {
+			"callActive": "Görüntülü konferans devam ediyor",
+			"description": "Artık görüntülü konferansa katılabilirsiniz",
+			"join": "Katıl",
+			"moderatorEndedTitle": "Görüntülü konferans sona erdi: {{time}}",
+			"moderatorStartedTitle": "Moderatör {{name}} bir görüntülü konferans başlattı"
+		},
+		"yesterday": "Dün",
+		"mobileNav": {
+			"back": "Geri",
+			"dragToExpand": "Editörü büyütmek için sürükleyin",
+			"scrollToBottom": "En alta kaydır"
+		},
+		"reply": {
+			"previewLabel": "Şuna yanıt",
+			"cancel": "Yanıtı iptal et",
+			"quoteLabel": "Şu mesaja yanıt",
+			"quoteUnknown": "Önceki mesaj"
+		},
+		"thread": {
+			"unknownRoot": "Önceki mesaj",
+			"listToggle": "Konular",
+			"replies": "{{count}} yanıt",
+			"title": "Konu",
+			"placeholder": "Konuda yanıtla"
+		},
+		"deliveryStatus": {
+			"sent": "Gönderildi"
+		}
 	},
 	"navigation": {
 		"appointments": "Video - Tarihler",

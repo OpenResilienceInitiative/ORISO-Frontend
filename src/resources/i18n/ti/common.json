@@ -1459,6 +1459,15 @@
 				"headline": "መልእኽቲ ምድምሳስ"
 			}
 		},
+		"encryptionBroke": {
+			"status": "ምስጢራዊ ምግባር ተሰይሩ"
+		},
+		"decryptionFailed": {
+			"body": "እዚ ዝኣተወ መልእኽቲ ክፍታሕ ኣይከኣለን። ነቲ ዝሰደዶ ሰብ ደጊሙ ክሰዶ ሕተትዎ፡ ወይ ነቲ ዝርርብ ዳግም ጸዓንዎ።",
+			"status": "ክፍታሕ ኣይከኣለን",
+			"subtitle": "ዝኣተወ መልእኽቲ ኣይርከብን",
+			"title": "መልእኽቲ ክፍታሕ ኣይከኣለን"
+		},
 		"groupChat": "ናይ ጉጅለ ዕላል",
 		"isMyMessage": {
 			"name": "ኣነ"
@@ -1480,9 +1489,64 @@
 			"booking": {
 				"buttonLabel": "ንምምኽኻር ቆጸራ ውሰድ",
 				"headline": "ወይ ድማ ሕጂ ቆጸራ ውሰድ"
+			},
+			"characterCounter": {
+				"overLimit": "እቲ መልእኽቲ ካብ ገደብ ፊደላት ሓሊፉ።",
+				"warning": "እቲ መልእኽቲ ናብ ገደብ ፊደላት ይቐርብ ኣሎ።"
+			},
+			"toolbar": {
+				"openTools": "ናብ ኩሎም መሳርሒታት ተመለስ",
+				"closeTools": "ናብ ጽፉፋት መሳርሒታት ቀይር",
+				"more": "ተወሰኽቲ መሳርሒታት",
+				"minimize": "ኤዲተር ኣንኡስ",
+				"maximize": "ኤዲተር ኣግፍሕ",
+				"undo": "ንድሕሪት መልስ",
+				"redo": "ደጊምካ ግበሮ",
+				"heading": "ቅዲ ጽሑፍ",
+				"paragraph": "ልሙድ ጽሑፍ",
+				"heading1": "ርእሲ",
+				"heading2": "ዓባይ ንኡስ ርእሲ",
+				"heading3": "ማእከላይ ንኡስ ርእሲ",
+				"heading4": "ንእሽቶ ንኡስ ርእሲ",
+				"list": "ቅዲ ዝርዝር",
+				"bulletList": "ነጥባዊ ዝርዝር",
+				"orderedList": "ብቑጽሪ ዝተሰርዐ ዝርዝር",
+				"taskList": "ዝርዝር ዕማማት",
+				"quote": "ጥቕሲ",
+				"bold": "ረጒድ",
+				"italic": "ዘንቢሉ",
+				"strike": "ዝተሰረዘ",
+				"underline": "ትሕቲኡ ዝተሰመረ",
+				"code": "ኮድ",
+				"codeBlock": "ብሎክ ኮድ",
+				"link": "ሊንክ",
+				"highlight": "ኣድምቕ",
+				"highlightYellow": "ብብጫ ኣድምቕ",
+				"highlightOrange": "ብብርቱኳናዊ ኣድምቕ",
+				"highlightRose": "ብሮዘ ኣድምቕ",
+				"highlightMint": "ብሚንት ኣድምቕ",
+				"highlightBlue": "ብሰማያዊ ኣድምቕ",
+				"superscript": "ናብ ላዕሊ ዝቐረበ",
+				"subscript": "ናብ ታሕቲ ዝቐረበ",
+				"addImage": "ስእሊ ኣእቱ",
+				"addImageShort": "ስእሊ",
+				"dateTime": "ዕለትን ሰዓትን ኣእቱ",
+				"attachment": "መተሓሓዚ ወስኽ",
+				"emoji": "ምረጻ ኢሞጂ",
+				"mention": "ሰብ ጥቐስ",
+				"voiceRecording": "ናይ ድምጺ ቅዳሕ"
 			}
 		},
+		"mention": {
+			"notInChat": "ኣብቲ ቻት የለን",
+			"empty": "ሓደ እኳ ኣይተረኽበን",
+			"unavailable": "እቲ ዝርዝር ክጽዕን ኣይከኣለን",
+			"loading": "ይጽዕን ኣሎ …"
+		},
 		"audience": {
+			"clients": "ምኽሪ ዝደልዩ",
+			"counsellors": "ኣማኸርቲ",
+			"moderators": "መራሕቲ ዘተ",
 			"all": "ኩሉ",
 			"multiCount": "{{count}} ሰባት",
 			"sendToAll": "ናብ ኩሉ ስደድ",
@@ -1504,12 +1568,74 @@
 			"toggleSection": "ክፍሊ ቀያይር",
 			"selectAllBottom": "Select All"
 		},
+		"edit": {
+			"cancel": "ምስትኽኻል ሰርዝ",
+			"marker": "(ተስተኻኺሉ)",
+			"markerTitle": "እቲ መልእኽቲ ተስተኻኺሉ",
+			"previewLabel": "መልእኽቲ ኣስተኻኽል"
+		},
+		"feedbackTag": "ርእይቶ",
+		"menu": {
+			"open": "ተወሰኽቲ ኣማራጽታት",
+			"replyDirect": "ብቐጥታ መልስ",
+			"replyThread": "ኣብ ትሬድ መልስ",
+			"edit": "መልእኽቲ ኣስተኻኽል",
+			"markText": "ጽሑፍ ኣድምቕ",
+			"forward": "መልእኽቲ ኣመሓላልፍ",
+			"delete": "መልእኽቲ ደምስስ"
+		},
+		"reaction": {
+			"add": "ግብረ መልሲ ሃብ",
+			"count": "{{key}}፦ {{count}} ግብረ መልስታት",
+			"more": "ተወሰኽቲ ኢሞጂታት"
+		},
+		"visibility": {
+			"open": "ተራእይነት ኣርኢ",
+			"people": "ነዚ መልእኽቲ ዝርእዩ ሰባት",
+			"title": "እቲ መልእኽቲ ዝርኣዮም …"
+		},
+		"visibleOnlyTo": "ዝርእይዎ ጥራይ፦",
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
+		"systemNotification": "መፍለጢ ሲስተም",
+		"systemNotificationTitle": "መፍለጢ ሲስተም",
+		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",
+		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
+		"anonymousUser": "ተጠቃሚ",
+		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
+		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
 		"today": "ሎምዓንቲ",
 		"tomorrow": "ጉሓት",
 		"unread": "ዘይተነበበ",
-		"yesterday": "ትማሊ"
+		"video": {
+			"callActive": "ናይ ቪድዮ ኮንፈረንስ ይካየድ ኣሎ",
+			"description": "ሕጂ ኣብቲ ናይ ቪድዮ ኮንፈረንስ ክትሳተፉ ትኽእሉ ኢኹም",
+			"join": "ተጸምበር",
+			"moderatorEndedTitle": "ናይ ቪድዮ ኮንፈረንስ ተወዲኡ፦ {{time}}",
+			"moderatorStartedTitle": "መራሒ ዘተ {{name}} ናይ ቪድዮ ኮንፈረንስ ጀሚሩ"
+		},
+		"yesterday": "ትማሊ",
+		"mobileNav": {
+			"back": "ተመለስ",
+			"dragToExpand": "ነቲ ኤዲተር ንምግፋሕ ጎትት",
+			"scrollToBottom": "ናብ መወዳእታ ስክሮል ግበር"
+		},
+		"reply": {
+			"previewLabel": "መልሲ ናብ",
+			"cancel": "መልሲ ሰርዝ",
+			"quoteLabel": "መልሲ ናይ",
+			"quoteUnknown": "ቀዳማይ መልእኽቲ"
+		},
+		"thread": {
+			"unknownRoot": "ቀዳማይ መልእኽቲ",
+			"listToggle": "ትሬዳት",
+			"replies": "{{count}} መልስታት",
+			"title": "ትሬድ",
+			"placeholder": "ኣብ ትሬድ መልስ"
+		},
+		"deliveryStatus": {
+			"sent": "ተላኢኹ"
+		}
 	},
 	"navigation": {
 		"appointments": "ቪድዮ - ቆጸራታት",

@@ -1462,6 +1462,15 @@
 				"headline": "Удалить сообщение"
 			}
 		},
+		"encryptionBroke": {
+			"status": "шифрование нарушено"
+		},
+		"decryptionFailed": {
+			"body": "Это входящее сообщение не удалось расшифровать. Попросите отправителя прислать его ещё раз или перезагрузите беседу.",
+			"status": "не удалось расшифровать",
+			"subtitle": "Входящее сообщение недоступно",
+			"title": "Сообщение не удалось расшифровать"
+		},
 		"groupChat": "Групповой чат",
 		"isMyMessage": {
 			"name": "I"
@@ -1483,9 +1492,64 @@
 			"booking": {
 				"buttonLabel": "Запишитесь на консультацию",
 				"headline": "Или запишитесь на прием прямо сейчас"
+			},
+			"characterCounter": {
+				"overLimit": "Сообщение превышает лимит знаков.",
+				"warning": "Сообщение приближается к лимиту знаков."
+			},
+			"toolbar": {
+				"openTools": "Назад ко всем инструментам",
+				"closeTools": "Перейти к компактным инструментам",
+				"more": "Другие инструменты",
+				"minimize": "Уменьшить редактор",
+				"maximize": "Увеличить редактор",
+				"undo": "Отменить",
+				"redo": "Вернуть",
+				"heading": "Стиль текста",
+				"paragraph": "Обычный текст",
+				"heading1": "Заглавие",
+				"heading2": "Крупный заголовок",
+				"heading3": "Средний заголовок",
+				"heading4": "Мелкий заголовок",
+				"list": "Стиль списка",
+				"bulletList": "Маркированный список",
+				"orderedList": "Нумерованный список",
+				"taskList": "Список задач",
+				"quote": "Цитата",
+				"bold": "Полужирный",
+				"italic": "Курсив",
+				"strike": "Зачёркнутый",
+				"underline": "Подчёркнутый",
+				"code": "Код",
+				"codeBlock": "Блок кода",
+				"link": "Ссылка",
+				"highlight": "Выделить",
+				"highlightYellow": "Выделить жёлтым",
+				"highlightOrange": "Выделить оранжевым",
+				"highlightRose": "Выделить розовым",
+				"highlightMint": "Выделить мятным",
+				"highlightBlue": "Выделить синим",
+				"superscript": "Верхний индекс",
+				"subscript": "Нижний индекс",
+				"addImage": "Вставить изображение",
+				"addImageShort": "Изображение",
+				"dateTime": "Вставить дату и время",
+				"attachment": "Добавить вложение",
+				"emoji": "Выбор эмодзи",
+				"mention": "Упомянуть человека",
+				"voiceRecording": "Голосовая запись"
 			}
 		},
+		"mention": {
+			"notInChat": "не в чате",
+			"empty": "Никого не найдено",
+			"unavailable": "Не удалось загрузить список",
+			"loading": "Загрузка …"
+		},
 		"audience": {
+			"clients": "Обращающиеся за консультацией",
+			"counsellors": "Консультанты",
+			"moderators": "Модераторы",
 			"all": "Все",
 			"multiCount": "{{count}} человек",
 			"sendToAll": "Отправить всем",
@@ -1507,12 +1571,74 @@
 			"toggleSection": "Переключить раздел",
 			"selectAllBottom": "Select All"
 		},
+		"edit": {
+			"cancel": "Отменить редактирование",
+			"marker": "(изменено)",
+			"markerTitle": "Сообщение было изменено",
+			"previewLabel": "Редактировать сообщение"
+		},
+		"feedbackTag": "Отзыв",
+		"menu": {
+			"open": "Другие опции",
+			"replyDirect": "Ответить напрямую",
+			"replyThread": "Ответить в теме",
+			"edit": "Редактировать сообщение",
+			"markText": "Выделить текст",
+			"forward": "Переслать сообщение",
+			"delete": "Удалить сообщение"
+		},
+		"reaction": {
+			"add": "Отреагировать",
+			"count": "{{key}}: {{count}} реакций",
+			"more": "Другие эмодзи"
+		},
+		"visibility": {
+			"open": "Показать видимость",
+			"people": "Люди, которые видят это сообщение",
+			"title": "Сообщение видно …"
+		},
+		"visibleOnlyTo": "видно только:",
 		"showLess": "Показать меньше",
 		"showMore": "Показать больше",
+		"systemNotification": "Системное уведомление",
+		"systemNotificationTitle": "Системное уведомление",
+		"userLeftChat": "Пользователь покинул чат",
+		"consultantLeftChat": "Консультант покинул чат",
+		"anonymousUser": "Пользователь",
+		"supervisionEnabledTitle": "Супервизия включена!",
+		"supervisionEnabledDescription": "{{name}} добавлен(а) в этот чат в качестве консультанта-супервизора.",
 		"today": "Сегодня",
 		"tomorrow": "Завтра",
 		"unread": "непрочитанное",
-		"yesterday": "Вчера"
+		"video": {
+			"callActive": "Идёт видеоконференция",
+			"description": "Теперь вы можете присоединиться к видеоконференции",
+			"join": "Присоединиться",
+			"moderatorEndedTitle": "Видеоконференция завершена: {{time}}",
+			"moderatorStartedTitle": "Модератор {{name}} начал(а) видеоконференцию"
+		},
+		"yesterday": "Вчера",
+		"mobileNav": {
+			"back": "Назад",
+			"dragToExpand": "Потяните, чтобы увеличить редактор",
+			"scrollToBottom": "Прокрутить в конец"
+		},
+		"reply": {
+			"previewLabel": "Ответ для",
+			"cancel": "Отменить ответ",
+			"quoteLabel": "Ответ на",
+			"quoteUnknown": "Предыдущее сообщение"
+		},
+		"thread": {
+			"unknownRoot": "Предыдущее сообщение",
+			"listToggle": "Темы",
+			"replies": "Ответов: {{count}}",
+			"title": "Тема",
+			"placeholder": "Ответить в теме"
+		},
+		"deliveryStatus": {
+			"sent": "Отправлено"
+		}
 	},
 	"navigation": {
 		"appointments": "Видео - Даты",

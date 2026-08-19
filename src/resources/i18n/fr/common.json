@@ -1462,6 +1462,15 @@
 				"headline": "Supprimer un message"
 			}
 		},
+		"encryptionBroke": {
+			"status": "chiffrement rompu"
+		},
+		"decryptionFailed": {
+			"body": "Ce message entrant n'a pas pu être déchiffré. Demandez à la personne expéditrice de l'envoyer à nouveau, ou rechargez la conversation.",
+			"status": "n'a pas pu être déchiffré",
+			"subtitle": "Message entrant non disponible",
+			"title": "Le message n'a pas pu être déchiffré"
+		},
 		"groupChat": "Chat de groupe",
 		"isMyMessage": {
 			"name": "Je consulte"
@@ -1483,9 +1492,64 @@
 			"booking": {
 				"buttonLabel": "Prendre rendez-vous pour une consultation",
 				"headline": "Ou prends rendez-vous dès maintenant"
+			},
+			"characterCounter": {
+				"overLimit": "Le message dépasse la limite de caractères.",
+				"warning": "Le message approche de la limite de caractères."
+			},
+			"toolbar": {
+				"openTools": "Revenir à tous les outils",
+				"closeTools": "Passer aux outils compacts",
+				"more": "Plus d'outils",
+				"minimize": "Réduire l'éditeur",
+				"maximize": "Agrandir l'éditeur",
+				"undo": "Annuler",
+				"redo": "Rétablir",
+				"heading": "Style de texte",
+				"paragraph": "Texte normal",
+				"heading1": "Titre",
+				"heading2": "Grand titre",
+				"heading3": "Titre moyen",
+				"heading4": "Petit titre",
+				"list": "Style de liste",
+				"bulletList": "Liste à puces",
+				"orderedList": "Liste numérotée",
+				"taskList": "Liste de tâches",
+				"quote": "Citation",
+				"bold": "Gras",
+				"italic": "Italique",
+				"strike": "Barré",
+				"underline": "Souligné",
+				"code": "Code",
+				"codeBlock": "Bloc de code",
+				"link": "Lien",
+				"highlight": "Surligner",
+				"highlightYellow": "Surligner en jaune",
+				"highlightOrange": "Surligner en orange",
+				"highlightRose": "Surligner en rosé",
+				"highlightMint": "Surligner en vert menthe",
+				"highlightBlue": "Surligner en bleu",
+				"superscript": "Exposant",
+				"subscript": "Indice",
+				"addImage": "Insérer une image",
+				"addImageShort": "Image",
+				"dateTime": "Insérer la date et l'heure",
+				"attachment": "Ajouter une pièce jointe",
+				"emoji": "Sélection d'émojis",
+				"mention": "Mentionner une personne",
+				"voiceRecording": "Enregistrement vocal"
 			}
 		},
+		"mention": {
+			"notInChat": "pas dans le chat",
+			"empty": "Aucune personne trouvée",
+			"unavailable": "La liste n'a pas pu être chargée",
+			"loading": "Chargement …"
+		},
 		"audience": {
+			"clients": "Personnes en quête de conseils",
+			"counsellors": "Conseiller·ères",
+			"moderators": "Modérateur·rices",
 			"all": "Tous",
 			"multiCount": "{{count}} personnes",
 			"sendToAll": "Envoyer à tous",
@@ -1507,12 +1571,74 @@
 			"toggleSection": "Basculer la section",
 			"selectAllBottom": "Select All"
 		},
+		"edit": {
+			"cancel": "Annuler la modification",
+			"marker": "(modifié)",
+			"markerTitle": "Le message a été modifié",
+			"previewLabel": "Modifier le message"
+		},
+		"feedbackTag": "Feedback",
+		"menu": {
+			"open": "Plus d'options",
+			"replyDirect": "Répondre directement",
+			"replyThread": "Répondre dans le fil",
+			"edit": "Modifier le message",
+			"markText": "Surligner le texte",
+			"forward": "Transférer le message",
+			"delete": "Supprimer le message"
+		},
+		"reaction": {
+			"add": "Réagir",
+			"count": "{{key}} : {{count}} réactions",
+			"more": "Plus d'émojis"
+		},
+		"visibility": {
+			"open": "Afficher la visibilité",
+			"people": "Personnes qui voient ce message",
+			"title": "Message visible pour …"
+		},
+		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"systemNotification": "Notification du système",
+		"systemNotificationTitle": "Notification du système",
+		"userLeftChat": "L'utilisateur a quitté le chat",
+		"consultantLeftChat": "La personne consultante a quitté le chat",
+		"anonymousUser": "Utilisateur",
+		"supervisionEnabledTitle": "Supervision activée !",
+		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
 		"today": "Aujourd'hui",
 		"tomorrow": "Demain",
 		"unread": "non lu",
-		"yesterday": "Hier"
+		"video": {
+			"callActive": "Visioconférence en cours",
+			"description": "Vous pouvez maintenant participer à la visioconférence",
+			"join": "Rejoindre",
+			"moderatorEndedTitle": "La visioconférence a pris fin : {{time}}",
+			"moderatorStartedTitle": "{{name}}, à la modération, a démarré une visioconférence"
+		},
+		"yesterday": "Hier",
+		"mobileNav": {
+			"back": "Retour",
+			"dragToExpand": "Faire glisser pour agrandir l'éditeur",
+			"scrollToBottom": "Faire défiler jusqu'en bas"
+		},
+		"reply": {
+			"previewLabel": "Réponse à",
+			"cancel": "Abandonner la réponse",
+			"quoteLabel": "En réponse à",
+			"quoteUnknown": "Message précédent"
+		},
+		"thread": {
+			"unknownRoot": "Message précédent",
+			"listToggle": "Fils de discussion",
+			"replies": "{{count}} réponses",
+			"title": "Fil de discussion",
+			"placeholder": "Répondre dans le fil"
+		},
+		"deliveryStatus": {
+			"sent": "Envoyé"
+		}
 	},
 	"navigation": {
 		"appointments": "Vidéo - Dates",
