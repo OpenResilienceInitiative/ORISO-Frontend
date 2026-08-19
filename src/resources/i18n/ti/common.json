@@ -616,6 +616,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "ናብ ካላንደር ወስኽ",
+			"defaultTitle": "ናይ ኦንላይን ቆጸራ",
+			"download": "ICS ኣውርድ",
+			"google": "ካላንደር Google",
+			"outlook": "ካላንደር Outlook",
+			"titleLabel": "ገለልተኛ ርእሲ ካላንደር"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "ቆጸራ",
+			"ariaLabel": "መጻኢ ቆጸራታት",
+			"commandError": "እቲ ቆጸራ ክቕየር ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"duplicate": "ከም ናይ ሓደ ግዜ ቆጸራ ቅዳሕ ግበር",
+			"empty": "ዝመጽእ ቆጸራ የለን።",
+			"groupChatFallback": "ጉጅለ ዕላል",
+			"hide": "መጻኢ ቆጸራታት ሕባእ",
+			"loadMore": "ተወሳኺ ሰለስተ ኣዋርሕ ጸዓን",
+			"loadError": "ገለ መጻኢ ቆጸራታት ክጽዕኑ ኣይከኣሉን።",
+			"loading": "መጻኢ ቆጸራታት ይጽዕኑ ኣለዉ…",
+			"now": "ሕጂ",
+			"revealAriaLabel": "መጻኢ ቆጸራታት ኣርኢ",
+			"show": "መጻኢ ቆጸራታት ኣርኢ",
+			"skip": "ቆጸራ ዘሊልካ ሕለፍ"
+		},
+		"roles": {
+			"CO_MODERATOR": "ተሓጋጋዚ መራሒ ዘተ",
+			"OWNER": "ወናኒ",
+			"PARTICIPANT": "ተሳታፊ",
+			"headline": "ተራታት ኣብ ጉጅለ ምኽሪ",
+			"remove": "ካብቲ ጉጅለ ኣውጽእ",
+			"removeError": "እቲ ሰብ ካብቲ ጉጅለ ክወጽእ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"roleLabel": "ተራ ናይ {{name}}",
+			"transfer": "ቀንዲ ውንነት ኣመሓላልፍ",
+			"transferError": "ቀንዲ ውንነት ክመሓላለፍ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"transferLabel": "ቀንዲ ውንነት ናብ {{name}} ኣመሓላልፍ",
+			"updateError": "እቲ ተራ ክሕደስ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።"
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "ተሳተፍቲ ምዃኖም ይፍለጥ"
@@ -638,6 +675,30 @@
 			}
 		},
 		"create": {
+			"duration": "ጽንሓት",
+			"interval": {
+				"label": "ግዜያዊ ክፍተት",
+				"options": {
+					"biweekly": "ኩሉ ክልተ ሰሙን",
+					"daily": "መዓልታዊ",
+					"monthly": "ወርሓዊ",
+					"quarterly": "ሰለስተ ወርሓዊ",
+					"weekly": "ሰሙናዊ",
+					"yearly": "ዓመታዊ"
+				}
+			},
+			"modality": {
+				"label": "ቅርጺ",
+				"options": {
+					"audio": "ድምጺ",
+					"text": "ጽሑፍ",
+					"video": "ቪድዮ"
+				}
+			},
+			"repeatCount": "ቁጽሪ ቆጸራታት",
+			"schedule": "መደብ ቆጸራ",
+			"startDate": "ዕለት ምጅማር",
+			"startTime": "ሰዓት ምጅማር",
 			"agencySelect": {
 				"label": "ማእከል ምኽሪ"
 			},
@@ -687,7 +748,16 @@
 				"ruleEditorLabel": "ሕጊ ኣተዓራርይ",
 				"editRule": "ሕጊ {{index}} ኣተዓራርይ",
 				"deleteRule": "ሕጊ {{index}} ሰርዝ",
+				"title": "ናይ እንቋዕ ደሓን መጻእኩም መልእኽትን ሕግታት ጉጅለን",
+				"sourceLanguage": "መበቆላዊ ቋንቋ",
+				"welcome": "ናይ እንቋዕ ደሓን መጻእኩም መልእኽቲ (እንተበዝሐ 120 ፊደላት)",
+				"rules": "ሕግታት ጉጅለ",
+				"rule": "ሕጊ",
 				"addRule": "ሕጊ ወስኽ",
+				"removeRule": "ኣወግድ",
+				"translate": "ናብ ንጡፋት ቋንቋታት ተርጉም",
+				"translating": "ይትርጎም ኣሎ…",
+				"translationError": "ትርጉም ኣይተዓወተን። ጽሑፍኩም ተዓቂቡ ኣሎ፤ በጃኹም ደጊምኩም ፈትኑ።",
 				"ruleChip": "ሕጊ ቁ. {{index}}"
 			}
 		},
@@ -696,6 +766,11 @@
 				"buttonLabel": "ዕፁው",
 				"headline": "ጌጋ ኣጋጢሙ ኣሎ። በጃኹም ደጊምኩም ፈትኑ።"
 			}
+		},
+		"loadError": {
+			"consultants": "እቶም መሳርሕቲ ክጽዕኑ ኣይከኣሉን።",
+			"retry": "ደጊምኩም ፈትኑ",
+			"topics": "እቶም ኣርእስቲ ክጽዕኑ ኣይከኣሉን።"
 		},
 		"createSuccess": {
 			"overlay": {
@@ -733,6 +808,7 @@
 			}
 		},
 		"join": {
+			"timeConversions": "መስሓቕ ናይ ግዜ መግለጺታት",
 			"waitingArea": {
 				"countdown": {
 					"etaDay": "ኣብ ሓደ መዓልቲ",
@@ -758,7 +834,17 @@
 					"unitHours": "ሰዓታት",
 					"unitMinutes": "ደቓይቕ",
 					"unitSeconds": "ካልኢታት"
-				}
+				},
+				"catMinutes": "{{value}} ናይ ድሙ ደቓይቕ",
+				"discomfort": {
+					"late": "ደንጉዩ",
+					"onTime": "ኣብ ሰዓቱ",
+					"slightlyLate": "ቅሩብ ደንጉዩ",
+					"veryLate": "ኣዝዩ ደንጉዩ"
+				},
+				"dogMinutes": "{{value}} ናይ ከልቢ ደቓይቕ",
+				"romanMinutes": "{{value}} ደቓይቕ",
+				"rulesLabel": "ሕግታት ቻት"
 			},
 			"button": {
 				"label": {
@@ -852,9 +938,46 @@
 		"format": {
 			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
 			"panelMenu": "ተወሳኺ ኣማራጺታት",
-			"back": "ተመለስ"
+			"back": "ተመለስ",
+			"headerTitle": "ሓድሽ ዝርርብ ፍጠር",
+			"subtitle": "ንዓኹምን ነቶም ምኽሪ ዝደልዩን ዝተፈላለዩ ፍሉያት ቅርጽታት ዝርርብ ነቕርብ ኢና። እቲ ምረጻ ብትካላትን ብማእከል ምኽርኹምን ብናጻ ክውሰን ይኽእል።",
+			"title": "ቅርጺ ዝርርብ ምረጹ"
+		},
+		"internal": {
+			"addPerson": "ሰብ ወስኽ",
+			"createLabel": "ውሽጣዊ ዕላል ፍጠር",
+			"deselectPerson": "{{name}} ኣወግድ",
+			"nameLabel": "ስም ውሽጣዊ ዕላል",
+			"personCount_one": "{{count}} ሰብ ተወሲኹ",
+			"personCount_other": "{{count}} ሰባት ተወሲኾም",
+			"removePerson": "{{name}} ኣወግድ",
+			"selectPerson": "{{name}} ምረጽ",
+			"subtitle": "ምስ መሳርሕትኹም",
+			"supportText": "ኣብ ውሽጢ ማእከል ምኽርኹም ተመያየጡ። ብውልቂ ይኹን ብጋንታ፡ ብድምጺ፡ ብቪድዮ ወይ ብቻት፡ ከከም ዘድልየኩም።",
+			"title": "ውሽጣዊ ምይይጥ",
+			"togglePersonList": "ዝርዝር ሰባት ክፈት ወይ ዕጸው",
+			"vacatedHint": "ኣብዚ ማእከል ምኽሪ ኣይኮነን ዘሎ"
 		},
 		"circle": {
+			"addModerator": "ተሓጋጋዚ መራሒ ዘተ ወስኽ",
+			"cardHeadline": "ስሞም ዘይተፈልጠ ጉጅለታት ናይ ገዛእ ርእስኻ ሓገዝ",
+			"cardText": "ኣብ ዓውዲ ሞያኹም ጀምሩ። ሓደ ግዜ ወይ ብቐጻሊ፦ ዝሰማማዕ መገዲ ምረጹ እሞ ነቲ ክቢ ምስ ተሳተፍቲ ኣካፍሉ።",
+			"createLabel": "ፍጠር",
+			"deselectModerator": "{{name}} ኣወግድ",
+			"moderatorCount_one": "{{count}} ተሓጋጋዚ መራሒ ዘተ ተወሲኹ",
+			"moderatorCount_other": "{{count}} ተሓገግዝቲ መራሕቲ ዘተ ተወሲኾም",
+			"moderatorsLabel": "ተወሳኺ መሪሕነት ዘተ",
+			"noTopics": "ኣርእስቲ የለን",
+			"removeModerator": "{{name}} ኣወግድ",
+			"saveLabel": "ምቑጣብ",
+			"settingsSubtitle": "ሕጂ ናይ እንቋዕ ደሓን መጻእኩም ጽሑፍ፡ ቅርጺ፡ ሕግታት፡ ግዜያዊ ክፍተትን እቲ ክቢ ብቐንዱ ዝካየደሉ ቋንቋን ኣስተኻኽሉ።",
+			"settingsTitle": "ቅጥዕታት ናይቲ ክቢ ዝርርብ",
+			"subtitle": "ብኣማኸርቲ ዝምራሕ",
+			"selectModerator": "{{name}} ምረጽ",
+			"title": "ክቢ ዝርርብ",
+			"toggleModeratorList": "ዝርዝር ተሓገግዝቲ መራሕቲ ዘተ ክፈት ወይ ዕጸው",
+			"toggleTopicList": "ዝርዝር ኣርእስቲ ክፈት ወይ ዕጸው",
+			"topicLabel": "ኣርእስቲ / ዓውዲ ሞያ",
 			"rows": {
 				"dateLabel": "ዕለት ምረጽ",
 				"timeLabel": "መጀመሪ ሰዓት",

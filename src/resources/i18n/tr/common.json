@@ -616,6 +616,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "Takvime ekle",
+			"defaultTitle": "Çevrimiçi randevu",
+			"download": "ICS indir",
+			"google": "Google Takvim",
+			"outlook": "Outlook Takvim",
+			"titleLabel": "Nötr takvim başlığı"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "Randevu",
+			"ariaLabel": "Gelecekteki randevular",
+			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
+			"duplicate": "Tek seferlik randevu olarak çoğalt",
+			"empty": "Yaklaşan randevu yok.",
+			"groupChatFallback": "Grup sohbeti",
+			"hide": "Gelecekteki randevuları gizle",
+			"loadMore": "Üç ay daha yükle",
+			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
+			"loading": "Gelecekteki randevular yükleniyor…",
+			"now": "Şimdi",
+			"revealAriaLabel": "Gelecekteki randevuları göster",
+			"show": "Gelecekteki randevuları göster",
+			"skip": "Randevuyu atla"
+		},
+		"roles": {
+			"CO_MODERATOR": "Yardımcı moderatör",
+			"OWNER": "Sahip",
+			"PARTICIPANT": "Katılımcı",
+			"headline": "Danışmanlık ekibindeki roller",
+			"remove": "Gruptan çıkar",
+			"removeError": "Kişi gruptan çıkarılamadı. Lütfen tekrar deneyin.",
+			"roleLabel": "{{name}} için rol",
+			"transfer": "Birincil sahipliği devret",
+			"transferError": "Birincil sahiplik devredilemedi. Lütfen tekrar deneyin.",
+			"transferLabel": "Birincil sahipliği {{name}} kişisine devret",
+			"updateError": "Rol güncellenemedi. Lütfen tekrar deneyin."
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "Katılımcılar"
@@ -638,6 +675,30 @@
 			}
 		},
 		"create": {
+			"duration": "Süre",
+			"interval": {
+				"label": "Aralık",
+				"options": {
+					"biweekly": "İki haftada bir",
+					"daily": "Günlük",
+					"monthly": "Aylık",
+					"quarterly": "Üç ayda bir",
+					"weekly": "Haftalık",
+					"yearly": "Yıllık"
+				}
+			},
+			"modality": {
+				"label": "Format",
+				"options": {
+					"audio": "Sesli",
+					"text": "Metin",
+					"video": "Görüntülü"
+				}
+			},
+			"repeatCount": "Randevu sayısı",
+			"schedule": "Randevu planlaması",
+			"startDate": "Başlangıç tarihi",
+			"startTime": "Başlangıç saati",
 			"agencySelect": {
 				"label": "Danışma Merkezi"
 			},
@@ -687,7 +748,16 @@
 				"ruleEditorLabel": "Kuralı düzenle",
 				"editRule": "{{index}}. kuralı düzenle",
 				"deleteRule": "{{index}}. kuralı sil",
+				"title": "Karşılama ve grup kuralları",
+				"sourceLanguage": "Kaynak dil",
+				"welcome": "Karşılama (en fazla 120 karakter)",
+				"rules": "Grup kuralları",
+				"rule": "Kural",
 				"addRule": "Kural ekle",
+				"removeRule": "Kaldır",
+				"translate": "Etkin dillere çevir",
+				"translating": "Çevriliyor…",
+				"translationError": "Çeviri başarısız oldu. Metniniz korundu; lütfen tekrar deneyin.",
 				"ruleChip": "Kural No. {{index}}"
 			}
 		},
@@ -696,6 +766,11 @@
 				"buttonLabel": "Kapat",
 				"headline": "Bir hata oluştu. Lütfen tekrar deneyin."
 			}
+		},
+		"loadError": {
+			"consultants": "Meslektaşlar yüklenemedi.",
+			"retry": "Tekrar deneyin",
+			"topics": "Konular yüklenemedi."
 		},
 		"createSuccess": {
 			"overlay": {
@@ -733,6 +808,7 @@
 			}
 		},
 		"join": {
+			"timeConversions": "Eğlenceli zaman ölçüleri",
 			"waitingArea": {
 				"countdown": {
 					"etaDay": "1 gün içinde",
@@ -758,7 +834,17 @@
 					"unitHours": "Saat",
 					"unitMinutes": "Dakika",
 					"unitSeconds": "Saniye"
-				}
+				},
+				"catMinutes": "{{value}} kedi dakikası",
+				"discomfort": {
+					"late": "gecikmeli",
+					"onTime": "zamanında",
+					"slightlyLate": "hafif gecikmeli",
+					"veryLate": "çok gecikmeli"
+				},
+				"dogMinutes": "{{value}} köpek dakikası",
+				"romanMinutes": "{{value}} dakika",
+				"rulesLabel": "Sohbet kuralları"
 			},
 			"button": {
 				"label": {
@@ -852,9 +938,46 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
-			"back": "Geri"
+			"back": "Geri",
+			"headerTitle": "Yeni görüşme oluştur",
+			"subtitle": "Sizin ve danışanlar için farklı, özel görüşme formatları sunuyoruz. Seçenekler, kurumlar ve danışma merkeziniz tarafından serbestçe yapılandırılabilir.",
+			"title": "Görüşme formatını seçin"
+		},
+		"internal": {
+			"addPerson": "Kişi ekle",
+			"createLabel": "Dahili sohbet oluştur",
+			"deselectPerson": "{{name}} kişisini kaldır",
+			"nameLabel": "Dahili sohbetin adı",
+			"personCount_one": "{{count}} kişi eklendi",
+			"personCount_other": "{{count}} kişi eklendi",
+			"removePerson": "{{name}} kişisini kaldır",
+			"selectPerson": "{{name}} kişisini seç",
+			"subtitle": "meslektaşlarınızla",
+			"supportText": "Danışma merkeziniz içinde birbirinizle uyum sağlayın. İster tek tek ister ekip olarak; sesli, görüntülü, sohbet üzerinden ya da ihtiyaca göre hepsiyle.",
+			"title": "Dahili görüşme",
+			"togglePersonList": "Kişi listesini aç veya kapat",
+			"vacatedHint": "artık bu danışma merkezinde değil"
 		},
 		"circle": {
+			"addModerator": "Yardımcı moderatör ekle",
+			"cardHeadline": "Anonim kendine yardım grupları",
+			"cardText": "kendi uzmanlık alanınızda başlatın. Tek seferlik veya düzenli: uygun ortamı seçin ve çemberi katılımcılarla paylaşın.",
+			"createLabel": "Oluştur",
+			"deselectModerator": "{{name}} kişisini kaldır",
+			"moderatorCount_one": "{{count}} yardımcı moderatör eklendi",
+			"moderatorCount_other": "{{count}} yardımcı moderatör eklendi",
+			"moderatorsLabel": "Ek moderasyon",
+			"noTopics": "Uygun konu yok",
+			"removeModerator": "{{name}} kişisini kaldır",
+			"saveLabel": "Kaydet",
+			"settingsSubtitle": "Şimdi karşılama metnini, formatı, kuralları, aralıkları ve çemberin öncelikli olarak hangi dilde gerçekleşeceğini ayarlayın.",
+			"settingsTitle": "Sohbet çemberi ayarları",
+			"subtitle": "danışmanlar tarafından yönetilir",
+			"selectModerator": "{{name}} kişisini seç",
+			"title": "Sohbet çemberi",
+			"toggleModeratorList": "Yardımcı moderatör listesini aç veya kapat",
+			"toggleTopicList": "Konu listesini aç veya kapat",
+			"topicLabel": "Konu / uzmanlık alanı",
 			"rows": {
 				"dateLabel": "Tarih seç",
 				"timeLabel": "Başlangıç saati",

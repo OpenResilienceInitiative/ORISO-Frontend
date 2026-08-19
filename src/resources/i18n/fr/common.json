@@ -616,6 +616,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "Ajouter au calendrier",
+			"defaultTitle": "Rendez-vous en ligne",
+			"download": "Télécharger le fichier ICS",
+			"google": "Google Agenda",
+			"outlook": "Calendrier Outlook",
+			"titleLabel": "Titre neutre pour le calendrier"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "Rendez-vous",
+			"ariaLabel": "Rendez-vous à venir",
+			"commandError": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
+			"duplicate": "Dupliquer comme rendez-vous unique",
+			"empty": "Aucun rendez-vous à venir.",
+			"groupChatFallback": "Chat de groupe",
+			"hide": "Masquer les rendez-vous à venir",
+			"loadMore": "Charger trois mois de plus",
+			"loadError": "Certains rendez-vous à venir n'ont pas pu être chargés.",
+			"loading": "Chargement des rendez-vous à venir…",
+			"now": "Maintenant",
+			"revealAriaLabel": "Afficher les rendez-vous à venir",
+			"show": "Afficher les rendez-vous à venir",
+			"skip": "Ignorer ce rendez-vous"
+		},
+		"roles": {
+			"CO_MODERATOR": "Co-modérateur·rice",
+			"OWNER": "Propriétaire",
+			"PARTICIPANT": "Personne participante",
+			"headline": "Rôles dans l'équipe de consultation",
+			"remove": "Retirer du groupe",
+			"removeError": "La personne n'a pas pu être retirée du groupe. Veuillez réessayer.",
+			"roleLabel": "Rôle de {{name}}",
+			"transfer": "Transférer la propriété principale",
+			"transferError": "La propriété principale n'a pas pu être transférée. Veuillez réessayer.",
+			"transferLabel": "Transférer la propriété principale à {{name}}",
+			"updateError": "Le rôle n'a pas pu être mis à jour. Veuillez réessayer."
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "Participants"
@@ -638,6 +675,30 @@
 			}
 		},
 		"create": {
+			"duration": "Durée",
+			"interval": {
+				"label": "Intervalle",
+				"options": {
+					"biweekly": "Toutes les deux semaines",
+					"daily": "Tous les jours",
+					"monthly": "Tous les mois",
+					"quarterly": "Tous les trimestres",
+					"weekly": "Toutes les semaines",
+					"yearly": "Tous les ans"
+				}
+			},
+			"modality": {
+				"label": "Format",
+				"options": {
+					"audio": "Audio",
+					"text": "Texte",
+					"video": "Vidéo"
+				}
+			},
+			"repeatCount": "Nombre de rendez-vous",
+			"schedule": "Planification des rendez-vous",
+			"startDate": "Date de début",
+			"startTime": "Heure de début",
 			"agencySelect": {
 				"label": "Service de consultation"
 			},
@@ -687,7 +748,16 @@
 				"ruleEditorLabel": "Modifier la règle",
 				"editRule": "Modifier la règle {{index}}",
 				"deleteRule": "Supprimer la règle {{index}}",
+				"title": "Message d'accueil et règles du groupe",
+				"sourceLanguage": "Langue source",
+				"welcome": "Message d'accueil (120 caractères maximum)",
+				"rules": "Règles du groupe",
+				"rule": "Règle",
 				"addRule": "Ajouter une règle",
+				"removeRule": "Supprimer",
+				"translate": "Traduire dans les langues actives",
+				"translating": "Traduction en cours…",
+				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},
@@ -696,6 +766,11 @@
 				"buttonLabel": "Fermer",
 				"headline": "Une erreur s'est produite. Veuillez réessayer."
 			}
+		},
+		"loadError": {
+			"consultants": "Les collègues n'ont pas pu être chargés.",
+			"retry": "Réessayer",
+			"topics": "Les sujets n'ont pas pu être chargés."
 		},
 		"createSuccess": {
 			"overlay": {
@@ -733,6 +808,7 @@
 			}
 		},
 		"join": {
+			"timeConversions": "Indications de temps ludiques",
 			"waitingArea": {
 				"countdown": {
 					"etaDay": "dans 1 jour",
@@ -758,7 +834,17 @@
 					"unitHours": "Heures",
 					"unitMinutes": "Minutes",
 					"unitSeconds": "Secondes"
-				}
+				},
+				"catMinutes": "{{value}} minutes félines",
+				"discomfort": {
+					"late": "en retard",
+					"onTime": "à l'heure",
+					"slightlyLate": "légèrement en retard",
+					"veryLate": "très en retard"
+				},
+				"dogMinutes": "{{value}} minutes canines",
+				"romanMinutes": "{{value}} minutes",
+				"rulesLabel": "Règles du chat"
 			},
 			"button": {
 				"label": {
@@ -852,9 +938,46 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
-			"back": "Retour"
+			"back": "Retour",
+			"headerTitle": "Créer une nouvelle conversation",
+			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
+			"title": "Choisir le format d'entretien"
+		},
+		"internal": {
+			"addPerson": "Ajouter une personne",
+			"createLabel": "Créer un échange interne",
+			"deselectPerson": "Retirer {{name}}",
+			"nameLabel": "Nom de l'échange interne",
+			"personCount_one": "{{count}} personne ajoutée",
+			"personCount_other": "{{count}} personnes ajoutées",
+			"removePerson": "Retirer {{name}}",
+			"selectPerson": "Sélectionner {{name}}",
+			"subtitle": "avec vos collègues",
+			"supportText": "Concertez-vous au sein de votre service de consultation. Que ce soit à deux ou en équipe, par audio, par vidéo, dans le chat ou tout à la fois, selon vos besoins.",
+			"title": "Échanger en interne",
+			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
+			"vacatedHint": "ne fait plus partie du service de consultation"
 		},
 		"circle": {
+			"addModerator": "Ajouter une co-modération",
+			"cardHeadline": "Groupes d'entraide anonymes",
+			"cardText": "à lancer dans votre domaine spécialisé. Une seule fois ou régulièrement : choisissez le support adapté et partagez le cercle avec les personnes participantes.",
+			"createLabel": "Créer",
+			"deselectModerator": "Retirer {{name}}",
+			"moderatorCount_one": "{{count}} co-modérateur·rice ajouté·e",
+			"moderatorCount_other": "{{count}} co-modérateur·rices ajouté·es",
+			"moderatorsLabel": "Modération supplémentaire",
+			"noTopics": "Aucun sujet disponible",
+			"removeModerator": "Retirer {{name}}",
+			"saveLabel": "Enregistrer",
+			"settingsSubtitle": "Adaptez maintenant le message d'accueil, le format, les règles, les intervalles et la langue dans laquelle le cercle se déroulera principalement.",
+			"settingsTitle": "Paramètres du cercle de parole",
+			"subtitle": "animé par des conseiller·ères",
+			"selectModerator": "Sélectionner {{name}}",
+			"title": "Cercle de parole",
+			"toggleModeratorList": "Ouvrir ou fermer la liste des co-modérateur·rices",
+			"toggleTopicList": "Ouvrir ou fermer la liste des sujets",
+			"topicLabel": "Sujet / domaine spécialisé",
 			"rows": {
 				"dateLabel": "Choisir la date",
 				"timeLabel": "Heure de début",
