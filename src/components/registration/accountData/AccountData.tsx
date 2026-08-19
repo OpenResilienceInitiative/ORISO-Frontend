@@ -59,6 +59,7 @@ import {
 	effectiveConsentResolution,
 	mayAcceptConsent
 } from './consentAcceptance';
+import { useTraegerSentenceHtml } from './useTraegerSentenceHtml';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
@@ -207,10 +208,27 @@ export const AccountData: FC<{
 		agency,
 		mainTopic
 	);
-	const isConsentSentenceResolved = mayAcceptConsent(
-		effectiveConsent,
-		consentInputs
+	/* The sentence exactly as it reaches the DOM — the same hook `ConsentSentence`
+	   renders from, so the gate cannot believe a sentence is on screen that is
+	   not. Null here means either "no Träger text configured" (platform wording
+	   applies, acceptance is fine) or "configured but unrenderable", which the
+	   next line separates. */
+	const traegerSentenceHtml = useTraegerSentenceHtml(
+		effectiveConsent.status === 'resolved'
+			? effectiveConsent.consentText
+			: null
 	);
+	/* A configured Träger text that cannot be rendered must block acceptance.
+	   Otherwise the platform sentence would be on screen while the acceptance
+	   binds to the Träger versionId, and the help-seeker consents to wording
+	   they never saw (ORISO-Frontend#1110). */
+	const traegerSentenceUnrenderable =
+		effectiveConsent.status === 'resolved' &&
+		!!effectiveConsent.consentText &&
+		!traegerSentenceHtml;
+	const isConsentSentenceResolved =
+		mayAcceptConsent(effectiveConsent, consentInputs) &&
+		!traegerSentenceUnrenderable;
 	/* Which consent is on offer right now. Null while the sentence is unknown —
 	   there is nothing to accept yet. */
 	const currentConsentBinding =

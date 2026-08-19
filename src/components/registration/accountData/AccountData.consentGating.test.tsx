@@ -379,3 +379,74 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 		expect(setDisabledNextButton).not.toHaveBeenCalledWith(false);
 	});
 });
+
+/**
+ * Shirloin on PR #1110: a Träger text that exists but cannot be rendered — an
+ * empty language map, or markup the allowlist strips to nothing — used to fall
+ * through to the platform sentence while the acceptance still bound to the
+ * Träger `versionId`. The help-seeker would have agreed to wording they never
+ * saw, which is not consent in any sense that survives review.
+ *
+ * Each shape below reaches "unrenderable" by a genuinely different route:
+ * `resolveLegalContent` takes a *string*, so a JSON map with no usable entry
+ * fails at parsing, while markup that survives parsing can still be emptied by
+ * the sanitizer. Fixtures that all collapse into one branch would let two of
+ * these three names claim coverage the test does not have.
+ */
+describe('AccountData — an unrenderable Träger sentence blocks acceptance', () => {
+	const unrenderable = {
+		'a language map with no usable entry': '{}',
+		'markup the allowlist strips to nothing': '<script>alert(1)</script>',
+		'markup that sanitizes to whitespace only': '<p>   </p>'
+	};
+
+	Object.entries(unrenderable).forEach(([shape, sentence]) => {
+		it(`shows no platform fallback and keeps the checkbox disabled — ${shape}`, async () => {
+			vi.mocked(apiGetConsentText).mockResolvedValue(
+				ok({ sentence, versionId: 4711 } as ConsentTextData)
+			);
+
+			renderStep({ hasPublishedDpp: true });
+
+			/* Wait for the fetch to SETTLE, not merely for a checkbox to
+			   exist. While the resolution is still `pending` the checkbox is
+			   disabled anyway, so asserting there would pass whatever the
+			   production code does — the pending notice disappearing is the
+			   first moment the answer is the resolved one. */
+			await waitFor(() =>
+				expect(
+					document.querySelector(
+						'[data-cy="consent-sentence-pending"]'
+					)
+				).toBeNull()
+			);
+			// The platform sentence must NOT stand in for wording that failed
+			// to render: it is not what the acceptance would bind to.
+			expect(
+				screen.queryByText('registration.dataProtection.label.prefix', {
+					exact: false
+				})
+			).toBeNull();
+			expect(anyCheckbox()?.disabled).toBe(true);
+		});
+	});
+
+	it('still accepts a Träger sentence that does render', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence:
+					'Ich willige ein, dass meine Angaben nach {{legal_links}} verarbeitet werden.',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		// Guards the fix from degenerating into "disable everything": the
+		// renderable case must stay acceptable.
+		expect(anyCheckbox()?.disabled).toBe(false);
+	});
+});

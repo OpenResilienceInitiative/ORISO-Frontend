@@ -1,18 +1,12 @@
 import * as React from 'react';
-import { FC, useContext, useMemo } from 'react';
-import { renderToString } from 'react-dom/server';
+import { FC, useContext } from 'react';
 import { Link, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { ConsentTextData } from '../../../api/apiGetConsentText';
-import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
 import htmlParser from '../../../resources/scripts/util/htmlParser';
-import {
-	normalizeLegalLang,
-	resolveLegalContent
-} from '../../../utils/legalContent';
-import { substituteLegalLinks } from '../../../utils/consentText';
+import { useTraegerSentenceHtml } from './useTraegerSentenceHtml';
 
 export interface ConsentSentenceProps {
 	/**
@@ -42,49 +36,18 @@ export interface ConsentSentenceProps {
  * platform's mandatory disclosure has to survive that replacement on its own).
  */
 export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
-	/* The links rendered once as markup, so they can be spliced into a string
-	   the backend authored. Same technique as the anonymous variant in
-	   `SessionItemComponent`. `filter` keeps the registration-relevant subset
-	   and `params` carries the `aid` placeholder the fallback passes too, so
-	   both shapes link to exactly the same documents. */
-	const legalLinksHtml = useMemo(
-		() =>
-			renderToString(
-				<LegalLinks
-					legalLinks={legalLinks}
-					delimiter={', '}
-					lastDelimiter={t('registration.dataProtection.label.and')}
-					filter={(legalLink) => legalLink.registration}
-					params={{ aid: null }}
-				/>
-			),
-		[legalLinks, t]
-	);
+	const traegerSentenceHtml = useTraegerSentenceHtml(consentText);
 
-	const traegerSentenceHtml = useMemo(() => {
-		if (!consentText) {
-			return null;
-		}
-		// The sentence may arrive as the same language->HTML map the other
-		// legal texts use, or as plain HTML. `resolveLegalContent` handles both.
-		const resolved = resolveLegalContent(
-			consentText.sentence,
-			normalizeLegalLang(i18n?.language)
-		);
-		if (!resolved) {
-			return null;
-		}
-		/* Substitute first, sanitize second. The other order would let a token
-		   smuggled into an attribute (`href="{{legal_links}}"`) inject markup
-		   past the sanitizer; this way every byte that reaches the DOM has been
-		   through the allowlist, our own anchors included. */
-		return sanitizeConsentHtml(
-			substituteLegalLinks(resolved.html, legalLinksHtml)
-		);
-	}, [consentText, i18n?.language, legalLinksHtml]);
+	/* Platform wording applies only when no Träger text is configured. A
+	   configured text that cannot be rendered is a fault, not a reason to show
+	   different wording than the acceptance binds to (ORISO-Frontend#1110) — the
+	   gate in `AccountData` keeps the checkbox disabled for exactly this case. */
+	if (consentText && !traegerSentenceHtml) {
+		return null;
+	}
 
 	if (!traegerSentenceHtml) {
 		return (
