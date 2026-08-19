@@ -2046,7 +2046,7 @@
 				"consultingTypeSelect": {
 					"label": "Champs thématiques"
 				},
-				"headline": "Si vous avez besoin de conseils ou d'aide sur d'autres sujets, nous nous ferons un plaisir de vous aider.",
+				"headline": "Avez-vous besoin de conseils ou d'aide sur d'autres sujets ?<br>Nous vous soutenons volontiers.",
 				"dialog": {
 					"openButton": "Demander un autre champ thématique",
 					"title": "Faire une nouvelle demande",
@@ -2140,7 +2140,7 @@
 						"label": "Confirmer le nouveau mot de passe"
 					},
 					"insecure": "Votre mot de passe n'est pas sécurisé.",
-					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>Maj. majuscule</li><li>Minimum. un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
+					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>majuscules et minuscules</li><li>au moins un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
 					"new": {
 						"label": "Nouveau mot de passe"
 					},
@@ -2695,7 +2695,7 @@
 			"success": {
 				"button": "Rédiger un message",
 				"copy": "Vous vous êtes inscrit(e) avec succès.",
-				"headline": "Bienvenue<br>au service de consultation de la diaconie."
+				"headline": "Bienvenue<br>au service de consultation de la Caritas."
 			}
 		},
 		"overline": "Bienvenue sur le site de conseil en ligne",
@@ -2855,7 +2855,7 @@
 				"buttonLabel": "S'inscrire",
 				"helperText": "Nouveau sur la consultation en ligne ?"
 			},
-			"subline": "Voici comment se déroule la consultation de la diaconie",
+			"subline": "Voici comment se déroule la consultation de la Caritas",
 			"login": {
 				"buttonLabel": "Se connecter",
 				"helperText": "Déjà inscrit ?"

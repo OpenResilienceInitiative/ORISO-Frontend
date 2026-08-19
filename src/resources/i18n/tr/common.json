@@ -2140,7 +2140,7 @@
 						"label": "Yeni şifreyi onayla"
 					},
 					"insecure": "Şifreniz güvenli değil.",
-					"instructions": "<span class=\"text--bold\">Korumalı bir danışmayı garanti etmek için şifreniz aşağıdaki kriterleri karşılamalıdır:</span><ul class=\"pl--2 my--1\"><li>Harf büyüklüğüne duyarlı</li><li>en az bir sayı</li><li>. bir sayı</li><li>en az bir özel karakter (örneğin: ?, !, +, #, &, ...)</li><li>en az 9 karakter</li></ul>",
+					"instructions": "<span class=\"text--bold\">Korumalı bir danışmayı garanti etmek için şifreniz aşağıdaki kriterleri karşılamalıdır:</span><ul class=\"pl--2 my--1\"><li>büyük ve küçük harf</li><li>en az bir sayı</li><li>en az bir özel karakter (örneğin: ?, !, +, #, &, ...)</li><li>en az 9 karakter</li></ul>",
 					"new": {
 						"label": "Yeni şifre"
 					},
@@ -2704,7 +2704,7 @@
 			"success": {
 				"button": "Mesaj oluştur",
 				"copy": "Başarıyla kayıt oldunuz.",
-				"headline": "Caritas danışmanlık hizmetine hoş geldiniz<br>."
+				"headline": "Caritas danışmanlık hizmetine<br>hoş geldiniz."
 			}
 		},
 		"overline": "Çevrimiçi danışmanlığa hoş geldiniz",
