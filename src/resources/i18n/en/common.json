@@ -4313,6 +4313,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Send me an email",
+			"emailHint": "What you discuss here never appears in that email.",
+			"browser": "Give me a signal here",
+			"browserHint": "No address needed — but it only works on this device.",
+			"both": "Both, and let me set a password now",
+			"bothHint": "Recommended. That way you can get back in if you forget something."
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
