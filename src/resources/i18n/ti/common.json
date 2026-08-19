@@ -1675,6 +1675,146 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"families": {
+			"all": "ኩሉ",
+			"requests": "ሕቶታት",
+			"messages": "መልእኽትታት",
+			"drafts": "ንድፍታት",
+			"handover": "ምትሕልላፍ",
+			"calls": "ጻውዒታት",
+			"system": "ሲስተም",
+			"appointments": "ቆጸራታት"
+		},
+		"events": {
+			"fallback": {
+				"title": "ንጥፈት",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "ሕቶ ተቐባልነት ረኺቡ",
+				"text": "እቲ ሕቶ ተቐባልነት ረኺቡ። ነቲ ዝርርብ ክትጅምርዎ ትኽእሉ።"
+			},
+			"messageNew": {
+				"title": "ሓድሽ መልእኽቲ",
+				"text": "ሓድሽ መልእኽቲ በጺሑኩም።"
+			},
+			"threadReplyNew": {
+				"title": "ሓድሽ መልሲ ኣብ ትሬድ",
+				"text": "ኣብ ሓደ ትሬድ ሓድሽ መልሲ ኣሎ።"
+			},
+			"supervisorAdded": {
+				"title": "ተቖጻጻሪ ተወሲኹ",
+				"text": "ናብዚ ጉዳይ ተቖጻጻሪ ተወሲኹ።"
+			},
+			"supervisorRemoved": {
+				"title": "ተቖጻጻሪ ተኣልዩ",
+				"text": "ካብዚ ጉዳይ ተቖጻጻሪ ተኣልዩ።"
+			},
+			"supervisorAssigned": {
+				"title": "ተቖጻጻሪ ተመዲቡ",
+				"text": "ናብዚ ጉዳይ ተቖጻጻሪ ተመዲቡ።"
+			},
+			"counselorRenamed": {
+				"title": "ኣማኻሪ ስሙ ተቐዪሩ",
+				"text": "ስም ምርኢት ናይቲ ምኽሪ ተቐዪሩ።"
+			},
+			"requestNew": {
+				"title": "ሓድሽ ሕቶ ተገልጋሊ",
+				"text": "ሓድሽ ሕቶ ክስራሕ ይጽበ ኣሎ።"
+			},
+			"draftCreated": {
+				"title": "ንድፊ ተዓቂቡ",
+				"text": "ዘይተላእከ ንድፊ ኣለኩም። ካብ ዝገደፍኩምዎ ቀጽሉ።"
+			},
+			"handoverRequested": {
+				"title": "ምትሕልላፍ ተሓቲቱ",
+				"text": "ናይ ጉዳይ ምትሕልላፍ ተሓቲቱ። ክልቲኡ ወገን ከረጋግጽ ኣለዎ።"
+			},
+			"handoverPartial": {
+				"title": "ምትሕልላፍ ብኸፊል ተረጋጊጹ",
+				"text": "ሓደ ወገን ነቲ ምትሕልላፍ ኣረጋጊጽዎ።"
+			},
+			"handoverAllConfirmed": {
+				"title": "ምትሕልላፍ ተረጋጊጹ",
+				"text": "ክልቲኡ ወገን ኣረጋጊጹ። እቲ ምትሕልላፍ ኣብ ግብሪ ውዒሉ።"
+			},
+			"handoverAutoConfirmed": {
+				"title": "ምትሕልላፍ ብኣውቶማቲክ ተረጋጊጹ",
+				"text": "እቲ ምትሕልላፍ ብመሰረት እቲ መምርሒ ብኣውቶማቲክ ተረጋጊጹ።"
+			},
+			"handoverDenied": {
+				"title": "ምትሕልላፍ ተነጺጉ",
+				"text": "እቲ ምትሕልላፍ ተነጺጉን ተቋሪጹን።"
+			},
+			"caseHandoverConsentRequested": {
+				"title": "ናይ ኣማኻሪ ሕቶ ተበጻሕነት",
+				"text": "ሓደ ኣማኻሪ ናብዚ ጉዳይ ክበጽሕ ሓቲቱ። ብመሰረት እቲ መምርሒ ፍቓድኩም የድሊ።"
+			},
+			"caseHandoverGranted": {
+				"title": "ሓድሽ ኣማኻሪ ነቲ ጉዳይ ተረኪብዎ",
+				"text": "እቲ ፍቓድ ዘለዎ ናይ ጉዳይ ምትሕልላፍ ተመዝጊቡ።"
+			},
+			"caseHandoverConsentDeclined": {
+				"title": "ናይ ጉዳይ ምትሕልላፍ ተነጺጉ",
+				"text": "ፍቓድ እቲ ተገልጋሊ ተነጺጉ። እቲ ትሕዝቶ ተዓጽዩ ይጸንሕ።"
+			},
+			"callStarted": {
+				"title": "ጻውዒት ይካየድ ኣሎ",
+				"text": "ሕጂ ጻውዒት ይካየድ ኣሎ። ንምስታፍ ተጸምበሩ።"
+			},
+			"callEnded": {
+				"title": "ጻውዒት ተወዲኡ",
+				"text": "እቲ ጻውዒት ተወዲኡ።"
+			},
+			"callMissed": {
+				"title": "ዝሓለፈ ጻውዒት",
+				"text": "ጻውዒት ሓሊፉኩም።"
+			},
+			"groupChatReminder": {
+				"title": "መዘኻኸሪ ናይ ኦንላይን ቆጸራ",
+				"text": "ናይ ኦንላይን ቆጸራ ኣብ ቀረባ ግዜ ኣሎ።"
+			},
+			"groupChatOpened": {
+				"title": "ናይ ኦንላይን ቆጸራ ተኸፊቱ",
+				"text": "እቲ ናይ ኦንላይን ቆጸራ ተኸፊቱ ኣሎ። ሕጂ ክትጽንበሩ ትኽእሉ።"
+			},
+			"groupChatCancelled": {
+				"title": "ናይ ኦንላይን ቆጸራ ተሰሪዙ",
+				"text": "እቲ ናይ ኦንላይን ቆጸራ ተሰሪዙ።"
+			},
+			"requestDenied": {
+				"title": "ሕቶ ተነጺጉ",
+				"text": "ናይቲ ተገልጋሊ ሕቶ ተነጺጉ።"
+			},
+			"waitingRoomClientJoined": {
+				"title": "ተገልጋሊ ኣብ መጸበዪ ክፍሊ",
+				"text": "ሓደ ተገልጋሊ ናብቲ መጸበዪ ክፍሊ ኣትዩ።"
+			},
+			"callInvited": {
+				"title": "ዕድመ ናብ ውሽጣዊ ናይ ጉጅለ ጻውዒት",
+				"text": "ናብ ውሽጣዊ ናይ ጉጅለ ጻውዒት ተዓዲምኩም ኣለኹም።"
+			},
+			"appointmentRequested": {
+				"title": "ቆጸራ ንጻውዒት ተሓቲቱ",
+				"text": "ሓድሽ ናይ ቆጸራ ሕቶ ንጻውዒት ኣሎ።"
+			},
+			"appointmentScheduled": {
+				"title": "ኣብ ቦታ ዝካየድ ቆጸራ ተመዲቡ",
+				"text": "ኣብ ቦታ ዝካየድ ቆጸራ ተሰማሚዕኩም ኣለኹም።"
+			},
+			"appointmentCancelled": {
+				"title": "ቆጸራ ተሰሪዙ",
+				"text": "ተመዲቡ ዝነበረ ቆጸራ ተሰሪዙ።"
+			},
+			"appointmentBriefing": {
+				"title": "ሓጺር መግለጺ ቆጸራታት",
+				"text": "ሓፈሻዊ ትሕዝቶ ናይ ዝመጽኡ ቆጸራታትኩም ተዳልዩ ኣሎ።"
+			},
+			"teamDiscussionNew": {
+				"title": "ናይ ጋንታ ምይይጥ",
+				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			}
+		},
 		"error": "ወዲቑ",
 		"info": "ሓበሬታ",
 		"initialRequest": {
@@ -1686,6 +1826,8 @@
 		"success": "ዕውት",
 		"warning": "ምኸዳን",
 		"center": {
+			"searchPlaceholder": "ንጥፈት ድለ…",
+			"noResults": "ምስ መጻረይኹም ዝሰማማዕ ንጥፈት የለን።",
 			"title": "ሓበሬታታት",
 			"subtitle": "ካብ ቻትኩም ዝቐረበ ንጥፈታትን ሓድሽ ሓበሬታን።",
 			"markAllRead": "ኩሉ ከም ተነብበ ምልክት ግበር",
@@ -1693,6 +1835,10 @@
 			"empty": "ገና ሓበሬታ የለን።",
 			"emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
 			"open": "ቻት ክፈት",
+			"join": "ተጸምበር",
+			"systemTag": "መፍለጢ ሲስተም",
+			"messageTag": "መፍለጢ መልእኽቲ",
+			"unreadFilter": "ዘይተነበበ",
 			"next": "ቀጻሊ ሓበሬታ",
 			"cardMenu": "ናይ ሓበሬታ ተግባራት",
 			"markRead": "ከም ተነብበ ምልክት ግበር",
@@ -1717,6 +1863,9 @@
 			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
 			"retryOlder": "ደጊምካ ፈትን",
 			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
+		},
+		"threadReply": {
+			"title": "ሓድሽ መልሲ ኣብ ትሬድ"
 		}
 	},
 	"overlay": {

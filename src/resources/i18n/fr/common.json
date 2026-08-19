@@ -1678,6 +1678,146 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"families": {
+			"all": "Toutes",
+			"requests": "Demandes",
+			"messages": "Messagerie",
+			"drafts": "Brouillons",
+			"handover": "Transfert",
+			"calls": "Appels",
+			"system": "Système",
+			"appointments": "Rendez-vous"
+		},
+		"events": {
+			"fallback": {
+				"title": "Activité",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Demande acceptée",
+				"text": "La demande a été acceptée. Vous pouvez commencer l'entretien."
+			},
+			"messageNew": {
+				"title": "Nouveau message",
+				"text": "Vous avez reçu un nouveau message."
+			},
+			"threadReplyNew": {
+				"title": "Nouvelle réponse dans un fil",
+				"text": "Il y a une nouvelle réponse dans un fil de discussion."
+			},
+			"supervisorAdded": {
+				"title": "Superviseur·e ajouté·e",
+				"text": "Un·e superviseur·e a été ajouté·e à ce dossier."
+			},
+			"supervisorRemoved": {
+				"title": "Superviseur·e retiré·e",
+				"text": "Un·e superviseur·e a été retiré·e de ce dossier."
+			},
+			"supervisorAssigned": {
+				"title": "Superviseur·e attribué·e",
+				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
+			},
+			"counselorRenamed": {
+				"title": "Conseiller·ère renommé·e",
+				"text": "Le nom affiché de la personne consultante a changé."
+			},
+			"requestNew": {
+				"title": "Nouvelle demande de client·e",
+				"text": "Une nouvelle demande attend d'être traitée."
+			},
+			"draftCreated": {
+				"title": "Brouillon enregistré",
+				"text": "Vous avez un brouillon non envoyé. Reprenez là où vous vous êtes arrêté."
+			},
+			"handoverRequested": {
+				"title": "Transfert demandé",
+				"text": "Un transfert de dossier a été demandé. Les deux parties doivent le confirmer."
+			},
+			"handoverPartial": {
+				"title": "Transfert partiellement confirmé",
+				"text": "Une partie a confirmé le transfert."
+			},
+			"handoverAllConfirmed": {
+				"title": "Transfert confirmé",
+				"text": "Les deux parties ont confirmé. Le transfert est effectif."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Transfert confirmé automatiquement",
+				"text": "Le transfert a été confirmé automatiquement conformément aux règles en vigueur."
+			},
+			"handoverDenied": {
+				"title": "Transfert refusé",
+				"text": "Le transfert a été refusé et annulé."
+			},
+			"caseHandoverConsentRequested": {
+				"title": "Demande d'accès d'une personne consultante",
+				"text": "Une personne consultante a demandé l'accès à ce dossier. Votre consentement est requis conformément aux règles en vigueur."
+			},
+			"caseHandoverGranted": {
+				"title": "Une nouvelle personne consultante a repris le dossier",
+				"text": "Le transfert de dossier autorisé a été consigné."
+			},
+			"caseHandoverConsentDeclined": {
+				"title": "Transfert de dossier refusé",
+				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
+			},
+			"callStarted": {
+				"title": "Appel en cours",
+				"text": "Un appel est en cours. Rejoignez-le pour y participer."
+			},
+			"callEnded": {
+				"title": "Appel terminé",
+				"text": "L'appel est terminé."
+			},
+			"callMissed": {
+				"title": "Appel manqué",
+				"text": "Vous avez manqué un appel."
+			},
+			"groupChatReminder": {
+				"title": "Rappel d'un rendez-vous en ligne",
+				"text": "Un rendez-vous en ligne aura bientôt lieu."
+			},
+			"groupChatOpened": {
+				"title": "Rendez-vous en ligne ouvert",
+				"text": "Le rendez-vous en ligne est ouvert. Vous pouvez le rejoindre dès maintenant."
+			},
+			"groupChatCancelled": {
+				"title": "Rendez-vous en ligne annulé",
+				"text": "Le rendez-vous en ligne a été annulé."
+			},
+			"requestDenied": {
+				"title": "Demande refusée",
+				"text": "La demande du·de la client·e a été refusée."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Client·e dans la salle d'attente",
+				"text": "Un·e client·e a rejoint la salle d'attente."
+			},
+			"callInvited": {
+				"title": "Invitation à un appel de groupe interne",
+				"text": "Vous avez été invité·e à un appel de groupe interne."
+			},
+			"appointmentRequested": {
+				"title": "Rendez-vous demandé pour un appel",
+				"text": "Une nouvelle demande de rendez-vous pour un appel a été reçue."
+			},
+			"appointmentScheduled": {
+				"title": "Rendez-vous sur place planifié",
+				"text": "Un rendez-vous sur place a été convenu."
+			},
+			"appointmentCancelled": {
+				"title": "Rendez-vous annulé",
+				"text": "Un rendez-vous planifié a été annulé."
+			},
+			"appointmentBriefing": {
+				"title": "Point sur vos rendez-vous",
+				"text": "Un aperçu de vos prochains rendez-vous est disponible."
+			},
+			"teamDiscussionNew": {
+				"title": "Réunion d'équipe",
+				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			}
+		},
 		"error": "Échec",
 		"info": "Information",
 		"initialRequest": {
@@ -1689,6 +1829,8 @@
 		"success": "Réussir",
 		"warning": "Avertissement",
 		"center": {
+			"searchPlaceholder": "Rechercher dans l'activité…",
+			"noResults": "Aucune activité ne correspond à vos filtres.",
 			"title": "Notifications",
 			"subtitle": "Activités récentes et mises à jour de vos chats.",
 			"markAllRead": "Tout marquer comme lu",
@@ -1696,6 +1838,10 @@
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
 			"open": "Ouvrir le chat",
+			"join": "Rejoindre",
+			"systemTag": "Notification du système",
+			"messageTag": "Notification de message",
+			"unreadFilter": "Non lues",
 			"next": "Notification suivante",
 			"cardMenu": "Actions de notification",
 			"markRead": "Marquer comme lu",
@@ -1720,6 +1866,9 @@
 			"olderError": "Impossible de charger les activités précédentes.",
 			"retryOlder": "Réessayer",
 			"endOfHistory": "Fin de l’historique des activités"
+		},
+		"threadReply": {
+			"title": "Nouvelle réponse dans un fil"
 		}
 	},
 	"overlay": {

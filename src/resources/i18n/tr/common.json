@@ -1678,6 +1678,146 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"families": {
+			"all": "Tümü",
+			"requests": "Talepler",
+			"messages": "Mesajlar",
+			"drafts": "Taslaklar",
+			"handover": "Devir",
+			"calls": "Aramalar",
+			"system": "Sistem",
+			"appointments": "Randevular"
+		},
+		"events": {
+			"fallback": {
+				"title": "Etkinlik",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Talep kabul edildi",
+				"text": "Talep kabul edildi. Görüşmeye başlayabilirsiniz."
+			},
+			"messageNew": {
+				"title": "Yeni mesaj",
+				"text": "Yeni bir mesaj aldınız."
+			},
+			"threadReplyNew": {
+				"title": "Konuya yeni yanıt",
+				"text": "Bir konuda yeni bir yanıt var."
+			},
+			"supervisorAdded": {
+				"title": "Süpervizör eklendi",
+				"text": "Bu vakaya bir süpervizör eklendi."
+			},
+			"supervisorRemoved": {
+				"title": "Süpervizör çıkarıldı",
+				"text": "Bu vakadan bir süpervizör çıkarıldı."
+			},
+			"supervisorAssigned": {
+				"title": "Süpervizör atandı",
+				"text": "Bu vakaya bir süpervizör atandı."
+			},
+			"counselorRenamed": {
+				"title": "Danışmanın adı değişti",
+				"text": "Danışmanlığın görünen adı değişti."
+			},
+			"requestNew": {
+				"title": "Yeni danışan talebi",
+				"text": "Yeni bir talep işlenmeyi bekliyor."
+			},
+			"draftCreated": {
+				"title": "Taslak kaydedildi",
+				"text": "Gönderilmemiş bir taslağınız var. Kaldığınız yerden devam edin."
+			},
+			"handoverRequested": {
+				"title": "Devir talep edildi",
+				"text": "Bir vaka devri talep edildi. Her iki tarafın da onaylaması gerekir."
+			},
+			"handoverPartial": {
+				"title": "Devir kısmen onaylandı",
+				"text": "Taraflardan biri devri onayladı."
+			},
+			"handoverAllConfirmed": {
+				"title": "Devir onaylandı",
+				"text": "Her iki taraf da onayladı. Devir geçerli oldu."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Devir otomatik olarak onaylandı",
+				"text": "Devir, kural gereği otomatik olarak onaylandı."
+			},
+			"handoverDenied": {
+				"title": "Devir reddedildi",
+				"text": "Devir reddedildi ve iptal edildi."
+			},
+			"caseHandoverConsentRequested": {
+				"title": "Bir danışmanın erişim talebi",
+				"text": "Bir danışman bu vakaya erişim talep etti. Kural gereği onayınız gerekiyor."
+			},
+			"caseHandoverGranted": {
+				"title": "Yeni danışman vakayı devraldı",
+				"text": "Yetkili vaka devri kayda geçirildi."
+			},
+			"caseHandoverConsentDeclined": {
+				"title": "Vaka devri reddedildi",
+				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
+			},
+			"callStarted": {
+				"title": "Arama devam ediyor",
+				"text": "Şu anda bir arama devam ediyor. Katılmak için aramaya bağlanın."
+			},
+			"callEnded": {
+				"title": "Arama sona erdi",
+				"text": "Arama sona erdi."
+			},
+			"callMissed": {
+				"title": "Cevapsız arama",
+				"text": "Bir aramayı kaçırdınız."
+			},
+			"groupChatReminder": {
+				"title": "Çevrimiçi randevu hatırlatması",
+				"text": "Yaklaşan bir çevrimiçi randevunuz var."
+			},
+			"groupChatOpened": {
+				"title": "Çevrimiçi randevu açıldı",
+				"text": "Çevrimiçi randevu açıldı. Artık katılabilirsiniz."
+			},
+			"groupChatCancelled": {
+				"title": "Çevrimiçi randevu iptal edildi",
+				"text": "Çevrimiçi randevu iptal edildi."
+			},
+			"requestDenied": {
+				"title": "Talep reddedildi",
+				"text": "Danışan talebi reddedildi."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Bekleme odasında bir danışan var",
+				"text": "Bir danışan bekleme odasına katıldı."
+			},
+			"callInvited": {
+				"title": "Dahili grup aramasına davet",
+				"text": "Dahili bir grup aramasına davet edildiniz."
+			},
+			"appointmentRequested": {
+				"title": "Arama için randevu talep edildi",
+				"text": "Bir arama için yeni bir randevu talebi var."
+			},
+			"appointmentScheduled": {
+				"title": "Yüz yüze randevu planlandı",
+				"text": "Yüz yüze bir randevu kararlaştırıldı."
+			},
+			"appointmentCancelled": {
+				"title": "Randevu iptal edildi",
+				"text": "Planlanmış bir randevu iptal edildi."
+			},
+			"appointmentBriefing": {
+				"title": "Randevu özeti",
+				"text": "Yaklaşan randevularınızın bir özeti hazır."
+			},
+			"teamDiscussionNew": {
+				"title": "Ekip görüşmesi",
+				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			}
+		},
 		"error": "Başarısız",
 		"info": "Bilgi",
 		"initialRequest": {
@@ -1689,6 +1829,8 @@
 		"success": "Başarılı",
 		"warning": "Uyarı",
 		"center": {
+			"searchPlaceholder": "Etkinliklerde ara…",
+			"noResults": "Filtrelerinize uyan bir etkinlik yok.",
 			"title": "Bildirimler",
 			"subtitle": "Sohbetlerinizden son aktiviteler ve güncellemeler.",
 			"markAllRead": "Tümünü okundu işaretle",
@@ -1696,6 +1838,10 @@
 			"empty": "Henüz bildirim yok.",
 			"emptyDetail": "Detayları görmek için bir bildirim seçin.",
 			"open": "Sohbeti aç",
+			"join": "Katıl",
+			"systemTag": "Sistem bildirimi",
+			"messageTag": "Mesaj bildirimi",
+			"unreadFilter": "Okunmamış",
 			"next": "Sonraki bildirim",
 			"cardMenu": "Bildirim işlemleri",
 			"markRead": "Okundu olarak işaretle",
@@ -1720,6 +1866,9 @@
 			"olderError": "Eski etkinlikler yüklenemedi.",
 			"retryOlder": "Tekrar dene",
 			"endOfHistory": "Etkinlik geçmişinin sonu"
+		},
+		"threadReply": {
+			"title": "Konuya yeni yanıt"
 		}
 	},
 	"overlay": {
