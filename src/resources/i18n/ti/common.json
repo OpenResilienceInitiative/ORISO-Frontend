@@ -2906,12 +2906,109 @@
 		}
 	},
 	"caseHandover": {
+		"copy": "እዚ ጉዳይ እዚ ከም ሜታዳታ ጥራይ እዩ ዝረአ። ናይ ምትሕልላፍ ምኽንያት ምረጹ እሞ ስለምንታይ ተበጻሕነት ከም ዘድልየኩም ግለጹ።",
+		"batch": {
+			"cancel": "ምረጻ ዕጸው",
+			"confirm": "ንዝተመርጹ ሕተት",
+			"required": "እንተወሓደ ሓደ ጉዳይ፡ ሓደ ምኽንያትን ሓደ መብርሂን ምረጹ።",
+			"result": "{{successful}} ሕቶ(ታት) ተላኢኹ፡ {{failed}} ኣይተዓወተን።",
+			"selectCase": "ጉዳይ ምረጽ",
+			"selectedCount": "{{count}} ተመሪጹ",
+			"start": "ብዙሓት ጉዳያት ምረጽ",
+			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት"
+		},
+		"consent": {
+			"title": "ሓደ ኣማኻሪ ናብዚ ዝርርብ ተበጻሕነት ይሓትት ኣሎ",
+			"copy": "እቲ ናይ ጉዳይ ምትሕልላፍ ክቕጽል ምእንቲ፡ በጃኹም ነቲ ተበጻሕነት ፍቐድዎ ወይ ንጸግዎ።",
+			"approve": "ተበጻሕነት ፍቐድ",
+			"decline": "ተበጻሕነት ከልክል"
+		},
+		"denied": {
+			"copy": "እቲ ዝሓለፈ ሕቶ ትሕዝቶ ንኽርአ ኣይፈቐደን።",
+			"title": "ተበጻሕነት ተነጺጉ"
+		},
+		"error": {
+			"failed": "እቲ ናይ ተበጻሕነት ሕቶ ክለኣኽ ኣይከኣለን።",
+			"forbidden": "ንዚ ጉዳይ ተበጻሕነት ክትሓቱ ኣይፍቀደልኩምን።",
+			"required": "ምኽንያት ምረጹ እሞ መብርሂ ወስኹ።"
+		},
+		"explanation": {
+			"placeholder": "መብርሂ ጽሓፉ"
+		},
+		"eyebrow": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
+		"hidden": {
+			"title": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ"
+		},
+		"list": {
+			"accessDenied": "ተበጻሕነት ተነጺጉ",
+			"accessGranted": "ተበጻሕነት ተፈቒዱ",
+			"awaitingApproval": "ፍቓድ ይጽበ ኣሎ",
+			"hiddenPreview": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
+			"requestAccess": "ተበጻሕነት ሕተት"
+		},
+		"pending": {
+			"copy": "ሕቶኹም ተመዝጊቡ ኣሎ እሞ ነቲ ዝተቐመጠ ናይ መምርሒ ውሳነ ይጽበ ኣሎ።",
+			"title": "ፍቓድ ይጽበ ኣሎ"
+		},
+		"policy": {
+			"clientConsentRequired": "ተበጻሕነት ቅድሚ ምንቃሑ ፍቓድ እቲ ተገልጋሊ የድሊ።",
+			"defaultAuthority": "መምርሒ መድረኽ ንናይ ጉዳይ ምትሕልላፍ"
+		},
+		"reasons": {
+			"loading": "ምኽንያታት ይጽዕኑ ኣለዉ"
+		},
+		"submit": "ተበጻሕነት ሕተት",
+		"submitSending": "ይለኣኽ ኣሎ",
+		"title": "ተበጻሕነት ሕተት",
+		"menu": {
+			"label": "ኣማራጽታት ናይ ጉዳይ ምትሕልላፍ",
+			"selectMultiple": {
+				"title": "ብዙሓት ዝርርባት ምረጽ",
+				"description": "ካብ ታሪኽ ቻት ብዙሓት ጉዳያት ምረጹ እሞ ንኹሎም ብሓንሳብ ናይ ምትሕልላፍ ሕቶ ኣቕርቡ።"
+			},
+			"confirmSelection": {
+				"title": "ምረጻ ኣረጋግጽ",
+				"description": "ምትሕልላፍ ንምሕታት ምስቶም ዝመረጽኩምዎም ጉዳያት ቀጽሉ።"
+			},
+			"deselect": {
+				"title": "ምረጻ ኣልግስን ዕጸውን",
+				"description": "ኩሉ ምረጻ የልግስ እሞ ነቲ ናይ ብዙሓት ኩነታት ይዓጽዎ።"
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "እቲ ሕቶ ኣብዚ ከመይ ጌረ እርእዮ?",
+				"copy": "መጀመርታ ነቲ መድለዪ ተጠቒምኩም ኣማኻሪ ወይ ናይ ሞያ ክፍልኹም ምረጹ። ብድሕሪኡ ነቲ ዝርርብ ምረጹ። ምኽሪ፦ ብመኑ ኣቢልኩም ብዙሓት ጉዳያት ብሓንሳብ ክትመርጹ ትኽእሉ።",
+				"cta": "ስጉምቲ ብስጉምቲ ኣርእየኒ"
+			},
+			"reason": {
+				"title": "በጃኹም ምኽንያት ምረጹ",
+				"subtitle": "ቅድሚ ምቕጻልኩም፡ ንሕቶኹም ምኽንያት ክትመርጹ ኣለኩም።"
+			},
+			"describe": {
+				"title": "በጃኹም ነቲ ምኽንያት ግለጽዎ",
+				"subtitle": "በጃኹም ስለምንታይ ናብዚ ጉዳይ ተበጻሕነት ከም ዘድልየኩም ብሓጺሩ ግለጹ።"
+			},
+			"back": "ተመለስ",
+			"next": "ቀጽል",
+			"consentPending": "ተበጻሕነት ቅድሚ ምንቃሑ ፍቓድ እቲ ተገልጋሊ የድሊ።"
+		},
 		"accepted": {
 			"title": "ሕቶኹም ብሓደ ኣማኻሪ ተቐቢሉ ኣሎ።",
 			"copy": "{{advisor}} ካብ ማእከል ምኽሪ {{organisation}} ካብ ሕጂ ንደሓር ጉዳይኩም ክከታተል እዩ። መልእኽትታትኩም ካብ መወዳእታ ናብ መወዳእታ ምስጢራዊ እዮም። ኣድላዪ ምስ ዝኸውን፡ ካልኦት ክኢላታት ናይዚ ማእከል ምኽሪ ክሳተፉ ይኽእሉ እዮም፡ ንኣብነት ንውክልና ወይ ንሞያዊ ምምኽኻር — ኩሎም ድማ ምስጢር ናይ ምሕላው ግቡእ ኣለዎም።",
 			"cta": "ናብ ዝርርብ",
 			"advisorFallback": "ሓደ ኣማኻሪ",
 			"organisationFallback": "ማእከል ምኽርኹም"
+		},
+		"systemMessage": {
+			"badge": "መፍለጢ ሲስተም",
+			"selectedReason": "ዝተመርጸ ምኽንያት፦ {{reason}}",
+			"explanation": "መብርሂ፦ {{explanation}}",
+			"tookOverTitle": "ሓድሽ ኣማኻሪ ነቲ ጉዳይኩም ተረኪብዎ",
+			"noActionNeeded": "ተወሳኺ ክትገብሩዎ ዘለኩም የለን",
+			"importantTitle": "ኣገዳሲ መልእኽቲ",
+			"supervisionTitle": "ምክትታል ተነቓቒሑ!",
+			"supervisionBody": "{{advisor}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።"
 		}
 	},
 	"session": {
@@ -3427,7 +3524,8 @@
 					},
 					"button": {
 						"confirm": "ምርግጋጽ ምርግጋጽ ኣሰናኽል",
-						"deny": "ሰርዝ"
+						"deny": "ሰርዝ",
+						"edit": "ካልኣይ ረቛሒ ኣስተኻኽል"
 					},
 					"copy": {
 						"1": "ነዚ ኢመይል ኣድራሻ ከም ካልኣይ ረቛሒ ንውሑስ ምዝገባ ትጥቀመሉ።",
@@ -3457,6 +3555,91 @@
 				"title": "ሕጂ ኣካውንትካ ሓልው"
 			},
 			"title": "ኣካውንትካ ሓልው"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "ተመለስ",
+				"close": "ዕጸው",
+				"confirm": "ኣረጋግጽ",
+				"copied": "መፍትሕ ተቐዲሑ",
+				"copy": "መፍትሕ ቅዳሕ",
+				"disable": "ምርግጋጽ ኣጥፍእ",
+				"next": "ቀጽል"
+			},
+			"app": {
+				"connect": {
+					"copy": "ነታ Authenticator ኣፕ ክፈቱ እሞ ነቲ ናይ ኦንላይን ምኽሪ ወስኽዎ። ነቲ QR ኮድ ስካን ግበሩ ወይ ነቲ መፍትሕ ብኢድኩም ኣእትዉ።",
+					"manual": "ብኢድ ዝኣቱ መፍትሕ",
+					"missingQr": "እቲ QR ኮድ ኣብዚ እዋን ኣይርከብን። ነቲ ብኢድ ዝኣቱ መፍትሕ ተጠቐሙ።",
+					"missingSecret": "እቲ መፍትሕ ኣብዚ እዋን ኣይርከብን።",
+					"or": "ወይ",
+					"qrAlt": "QR ኮድ ናይታ Authenticator ኣፕ"
+				},
+				"install": {
+					"android": "ኣብ Google Play Store ኣውርድ",
+					"copy": "Google Authenticator ወይ Microsoft Authenticator ኣብ ስማርትፎንኩም ወይ ታብሌትኩም ኣእትዉ። ክልቲኤን ኣፕታት ነቲ ናይ ኦንላይን ምኽሪ ናይ ድሕነት ኮድ ይድግፋ።",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "ኣብ Apple App Store ኣውርድ",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "ናይ ኣፕ ምርግጋጽ ብዓወት ተዳልዩ።"
+				},
+				"verify": {
+					"copy": "ነቲ ምድላው ንምዝዛም፡ ነቲ ሽዱሽተ ኣሃዝ ዘለዎ ኮድ ካብታ ኣፕ ኣእትዉ።",
+					"input": "ናይ ሓደ ግዜ ኮድ"
+				}
+			},
+			"decision": {
+				"app": "ብኣፕ ብውሑስ ተራኸቡ",
+				"copy": "ንኣካውንትኩም ብካልኣይ ረቛሒ ሓልውዎ። እታ Authenticator ኣፕ ዝያዳ ውሕስቲ እያ፤ ከም ኣማራጺ ድማ ኮድ ብኢመይል ክትቅበሉ ትኽእሉ።",
+				"email": "ናይ ኢመይል ኮድ ተጠቐሙ (ውሕስነቱ ትሑት)"
+			},
+			"email": {
+				"connect": {
+					"copy": "ሕጂ ናብ {{email}} ኢመይል ሰዲድናልኩም ኣለና። በጃኹም ነቲ ኣብቲ ኢመይል ዘሎ ኮድ ኣብዚ ኣእትዉ።",
+					"input": "ናይ ሓደ ግዜ ኮድ",
+					"resend": "ሓድሽ ኮድ ስደድ",
+					"resendTitle": "ኣይሰርሐን ድዩ?",
+					"sent": "ሓድሽ ኮድ ተላኢኹ።"
+				},
+				"select": {
+					"copy": "ናይ ድሕነት ኮድኩም ክንሰደሉ ዘለና ኢመይል ኣድራሻ ኣእትዉ።",
+					"hint": "ነቲ ኢመይል ኣድራሻ እንተቐዪርኩምዎ፡ ንመጻኢ መፍለጢታት እውን ናብዚ ኣድራሻ እዚ ክመጹኹም እዮም።",
+					"input": "ኢመይል ኣድራሻ"
+				},
+				"success": {
+					"title": "ናይ ኢመይል ምርግጋጽ ብዓወት ተዳልዩ።"
+				}
+			},
+			"error": {
+				"appSetup": "ናይ ኣፕ ምርግጋጽ ክዳሎ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+				"disable": "እቲ ናይ ክልተ ረቛሒ ምርግጋጽ ክጠፍእ ኣይከኣለን።",
+				"emailSend": "እቲ ናይ ኢመይል ኮድ ክለኣኽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+				"emailSetup": "ናይ ኢመይል ምርግጋጽ ክረጋገጽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+				"invalidCode": "በጃኹም ቅኑዕ ሽዱሽተ ኣሃዝ ዘለዎ ኮድ ኣእትዉ።",
+				"invalidEmail": "በጃኹም ቅኑዕ ኢመይል ኣድራሻ ኣእትዉ።",
+				"precondition": "እዚ ኢመይል ኣድራሻ ድሮ ኣብ ጥቕሚ ኣሎ። በጃኹም ካልእ ኣድራሻ ምረጹ ወይ ነታ ኣፕ ተጠቐሙ።",
+				"roleDisabled": "እቲ ናይ ክልተ ረቛሒ ምርግጋጽ ንተራኹም ኣብዚ እዋን ኣይርከብን።",
+				"tooManyRequests": "ብዙሓት ኮዳት ተሓቲቶም። በጃኹም ቅሩብ ተጸበዩ እሞ ደጊምኩም ፈትኑ።"
+			},
+			"step": {
+				"confirm": "ኣረጋግጽ",
+				"connect": "ተራኸብ",
+				"decide": "ወስን",
+				"install": "ኣእቱ",
+				"select": "ምረጽ",
+				"verify": "መርምር"
+			},
+			"title": "ኣየናይ መራኸቢ ክትጥቀሙ ትደልዩ?"
 		},
 		"overlayButton": {
 			"back": "ዝባን",

@@ -2909,12 +2909,109 @@
 		}
 	},
 	"caseHandover": {
+		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
+		"batch": {
+			"cancel": "Fermer la sélection",
+			"confirm": "Demander pour la sélection",
+			"required": "Choisissez au moins un dossier, un motif et une explication.",
+			"result": "{{successful}} demande(s) envoyée(s), {{failed}} en échec.",
+			"selectCase": "Sélectionner le dossier",
+			"selectedCount": "{{count}} sélectionné(s)",
+			"start": "Sélectionner plusieurs dossiers",
+			"title": "Demande d'accès groupée"
+		},
+		"consent": {
+			"title": "Une personne consultante demande l'accès à cette conversation",
+			"copy": "Veuillez autoriser ou refuser l'accès afin que le transfert du dossier puisse se poursuivre.",
+			"approve": "Autoriser l'accès",
+			"decline": "Refuser l'accès"
+		},
+		"denied": {
+			"copy": "La demande précédente n'a pas donné accès au contenu.",
+			"title": "Accès refusé"
+		},
+		"error": {
+			"failed": "La demande d'accès n'a pas pu être envoyée.",
+			"forbidden": "Vous ne pouvez pas demander l'accès à ce dossier.",
+			"required": "Choisissez un motif et ajoutez une explication."
+		},
+		"explanation": {
+			"placeholder": "Décrivez le motif"
+		},
+		"eyebrow": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
+		"hidden": {
+			"title": "Les informations restent masquées jusqu'à ce que la demande soit acceptée"
+		},
+		"list": {
+			"accessDenied": "Accès refusé",
+			"accessGranted": "Accès autorisé",
+			"awaitingApproval": "En attente d'autorisation",
+			"hiddenPreview": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
+			"requestAccess": "Demander l'accès"
+		},
+		"pending": {
+			"copy": "Votre demande a été enregistrée et attend la décision prévue par les règles configurées.",
+			"title": "En attente d'autorisation"
+		},
+		"policy": {
+			"clientConsentRequired": "Le consentement du·de la client·e est nécessaire avant que l'accès puisse être activé.",
+			"defaultAuthority": "Règles de la plateforme pour les transferts de dossier"
+		},
+		"reasons": {
+			"loading": "Chargement des motifs"
+		},
+		"submit": "Demander l'accès",
+		"submitSending": "Envoi en cours",
+		"title": "Demander l'accès",
+		"menu": {
+			"label": "Options de transfert de dossier",
+			"selectMultiple": {
+				"title": "Sélectionner plusieurs entretiens",
+				"description": "Sélectionnez plusieurs dossiers dans l'historique du chat et faites la demande de transfert pour tous en même temps."
+			},
+			"confirmSelection": {
+				"title": "Confirmer la sélection",
+				"description": "Poursuivez avec les dossiers sélectionnés pour demander le transfert."
+			},
+			"deselect": {
+				"title": "Annuler la sélection et fermer",
+				"description": "Annule la sélection et quitte le mode multiple."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Comment puis-je voir la demande ici ?",
+				"copy": "Utilisez d'abord la recherche pour choisir une personne consultante ou votre service spécialisé. Sélectionnez ensuite l'entretien. Astuce : le menu vous permet de sélectionner plusieurs dossiers à la fois.",
+				"cta": "Montrer étape par étape"
+			},
+			"reason": {
+				"title": "Veuillez choisir un motif",
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+			},
+			"describe": {
+				"title": "Veuillez décrire le motif",
+				"subtitle": "Expliquez brièvement pourquoi vous avez besoin d'accéder à ce dossier."
+			},
+			"back": "Retour",
+			"next": "Continuer",
+			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé."
+		},
 		"accepted": {
 			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
 			"copy": "{{advisor}} du service de consultation {{organisation}} prend désormais en charge votre demande. Vos messages sont cryptés de bout en bout. En cas de besoin, d'autres personnes qualifiées de ce service de consultation peuvent être associées, par exemple pour un remplacement ou pour un échange professionnel — toutes sont tenues au secret professionnel.",
 			"cta": "Voir la conversation",
 			"advisorFallback": "Une conseillère ou un conseiller",
 			"organisationFallback": "votre service de consultation"
+		},
+		"systemMessage": {
+			"badge": "Notification du système",
+			"selectedReason": "Motif choisi : {{reason}}",
+			"explanation": "Explication : {{explanation}}",
+			"tookOverTitle": "Une nouvelle personne consultante a repris votre dossier",
+			"noActionNeeded": "Vous n'avez rien d'autre à faire",
+			"importantTitle": "Information importante",
+			"supervisionTitle": "Supervision activée !",
+			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
 		}
 	},
 	"session": {
@@ -3430,7 +3527,8 @@
 					},
 					"button": {
 						"confirm": "Désactiver l'authentification",
-						"deny": "Annuler"
+						"deny": "Annuler",
+						"edit": "Modifier le deuxième facteur"
 					},
 					"copy": {
 						"1": "Ils utilisent cette adresse e-mail comme deuxième facteur pour une connexion sécurisée.",
@@ -3460,6 +3558,91 @@
 				"title": "Protégez maintenant votre compte"
 			},
 			"title": "Protéger son compte"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "Retour",
+				"close": "Fermer",
+				"confirm": "Confirmer",
+				"copied": "Clé copiée",
+				"copy": "Copier la clé",
+				"disable": "Désactiver l'authentification",
+				"next": "Continuer"
+			},
+			"app": {
+				"connect": {
+					"copy": "Ouvrez l'application d'authentification et ajoutez-y la consultation en ligne. Scannez le code QR ou saisissez la clé manuellement.",
+					"manual": "Clé manuelle",
+					"missingQr": "Le code QR n'est pas disponible pour le moment. Utilisez la clé manuelle.",
+					"missingSecret": "La clé n'est pas disponible pour le moment.",
+					"or": "ou",
+					"qrAlt": "Code QR pour l'application d'authentification"
+				},
+				"install": {
+					"android": "Télécharger sur le Google Play Store",
+					"copy": "Installez Google Authenticator ou Microsoft Authenticator sur votre smartphone ou votre tablette. Les deux applications prennent en charge le code de sécurité de la consultation en ligne.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Télécharger sur l'Apple App Store",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "L'authentification par application a bien été configurée."
+				},
+				"verify": {
+					"copy": "Saisissez le code à six chiffres affiché dans l'application pour terminer la configuration.",
+					"input": "Code à usage unique"
+				}
+			},
+			"decision": {
+				"app": "Se connecter en toute sécurité via l'application",
+				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
+				"email": "Utiliser un code par e-mail (moins sûr)"
+			},
+			"email": {
+				"connect": {
+					"copy": "Nous venons d'envoyer un e-mail à {{email}}. Veuillez saisir ici le code figurant dans cet e-mail.",
+					"input": "Code à usage unique",
+					"resend": "Envoyer un nouveau code",
+					"resendTitle": "Cela n'a pas fonctionné ?",
+					"sent": "Nouveau code envoyé."
+				},
+				"select": {
+					"copy": "Saisissez l'adresse e-mail à laquelle nous devons envoyer votre code de sécurité.",
+					"hint": "Si vous modifiez l'adresse e-mail, vous recevrez également vos prochaines notifications à cette adresse.",
+					"input": "Adresse e-mail"
+				},
+				"success": {
+					"title": "L'authentification par e-mail a bien été configurée."
+				}
+			},
+			"error": {
+				"appSetup": "L'authentification par application n'a pas pu être configurée. Veuillez réessayer.",
+				"disable": "L'authentification à deux facteurs n'a pas pu être désactivée.",
+				"emailSend": "Le code par e-mail n'a pas pu être envoyé. Veuillez réessayer.",
+				"emailSetup": "L'authentification par e-mail n'a pas pu être confirmée. Veuillez réessayer.",
+				"invalidCode": "Veuillez saisir un code valide à six chiffres.",
+				"invalidEmail": "Veuillez saisir une adresse e-mail valide.",
+				"precondition": "Cette adresse e-mail est déjà utilisée. Veuillez choisir une autre adresse ou utiliser l'application.",
+				"roleDisabled": "L'authentification à deux facteurs n'est actuellement pas disponible pour votre rôle.",
+				"tooManyRequests": "Trop de codes ont été demandés. Veuillez patienter un instant et réessayer."
+			},
+			"step": {
+				"confirm": "Confirmer",
+				"connect": "Connecter",
+				"decide": "Décider",
+				"install": "Installer",
+				"select": "Sélectionner",
+				"verify": "Vérifier"
+			},
+			"title": "Quelle méthode de connexion souhaitez-vous utiliser ?"
 		},
 		"overlayButton": {
 			"back": "Retour",

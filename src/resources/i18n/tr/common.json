@@ -2909,12 +2909,109 @@
 		}
 	},
 	"caseHandover": {
+		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",
+		"batch": {
+			"cancel": "Seçimi kapat",
+			"confirm": "Seçilenler için talep gönder",
+			"required": "En az bir vaka, bir neden ve bir açıklama seçin.",
+			"result": "{{successful}} talep gönderildi, {{failed}} tanesi başarısız oldu.",
+			"selectCase": "Vaka seç",
+			"selectedCount": "{{count}} tanesi seçildi",
+			"start": "Birden fazla vaka seç",
+			"title": "Toplu erişim talebi"
+		},
+		"consent": {
+			"title": "Bir danışman bu görüşmeye erişim istiyor",
+			"copy": "Vaka devrinin sürdürülebilmesi için lütfen erişime izin verin veya erişimi reddedin.",
+			"approve": "Erişime izin ver",
+			"decline": "Erişimi reddet"
+		},
+		"denied": {
+			"copy": "Önceki talep, içeriklerin görüntülenmesini açmadı.",
+			"title": "Erişim reddedildi"
+		},
+		"error": {
+			"failed": "Erişim talebi gönderilemedi.",
+			"forbidden": "Bu vaka için erişim talep etme yetkiniz yok.",
+			"required": "Bir neden seçin ve bir açıklama ekleyin."
+		},
+		"explanation": {
+			"placeholder": "Gerekçeyi açıklayın"
+		},
+		"eyebrow": "Talep onaylanana kadar bilgiler gizli kalır",
+		"hidden": {
+			"title": "Talep onaylanana kadar bilgiler gizli kalır"
+		},
+		"list": {
+			"accessDenied": "Erişim reddedildi",
+			"accessGranted": "Erişim verildi",
+			"awaitingApproval": "Onay bekleniyor",
+			"hiddenPreview": "Talep onaylanana kadar bilgiler gizli kalır",
+			"requestAccess": "Erişim talep et"
+		},
+		"pending": {
+			"copy": "Talebiniz kayda geçirildi ve yapılandırılmış kural kararını bekliyor.",
+			"title": "Onay bekleniyor"
+		},
+		"policy": {
+			"clientConsentRequired": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir.",
+			"defaultAuthority": "Vaka devirleri için platform kuralı"
+		},
+		"reasons": {
+			"loading": "Nedenler yükleniyor"
+		},
+		"submit": "Erişim talep et",
+		"submitSending": "Gönderiliyor",
+		"title": "Erişim talep et",
+		"menu": {
+			"label": "Vaka devri seçenekleri",
+			"selectMultiple": {
+				"title": "Birden fazla görüşme seç",
+				"description": "Sohbet geçmişinden birden fazla vaka seçin ve devir talebini hepsi için aynı anda gönderin."
+			},
+			"confirmSelection": {
+				"title": "Seçimi onayla",
+				"description": "Devri talep etmek için seçtiğiniz vakalarla devam edin."
+			},
+			"deselect": {
+				"title": "Seçimi kaldır ve kapat",
+				"description": "Seçimi kaldırır ve çoklu seçim modunu sonlandırır."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Talebi burada nasıl görebilirim?",
+				"copy": "Önce arama alanını kullanarak bir danışman ya da kendi uzmanlık biriminizi seçin. Ardından görüşmeyi seçin. İpucu: Menü üzerinden aynı anda birden fazla vaka seçebilirsiniz.",
+				"cta": "Adım adım göster"
+			},
+			"reason": {
+				"title": "Lütfen bir neden seçin",
+				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz."
+			},
+			"describe": {
+				"title": "Lütfen nedeni açıklayın",
+				"subtitle": "Lütfen bu vakaya neden erişmeniz gerektiğini kısaca açıklayın."
+			},
+			"back": "Geri",
+			"next": "İleri",
+			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir."
+		},
 		"accepted": {
 			"title": "Talebiniz bir danışman tarafından kabul edildi.",
 			"copy": "{{organisation}} danışma merkezinden {{advisor}} bundan sonra talebinizle ilgileniyor. Mesajlarınız uçtan uca şifrelenmiştir. Gerektiğinde bu danışma merkezindeki diğer uzmanlar da sürece dahil edilebilir; örneğin bir vekâlet ya da mesleki bir görüş alışverişi için. Hepsi gizlilik yükümlülüğü altındadır.",
 			"cta": "Görüşmeye git",
 			"advisorFallback": "Bir danışman",
 			"organisationFallback": "danışma merkeziniz"
+		},
+		"systemMessage": {
+			"badge": "Sistem bildirimi",
+			"selectedReason": "Seçilen neden: {{reason}}",
+			"explanation": "Açıklama: {{explanation}}",
+			"tookOverTitle": "Yeni danışman vakanızı devraldı",
+			"noActionNeeded": "Başka bir şey yapmanıza gerek yok",
+			"importantTitle": "Önemli bildirim",
+			"supervisionTitle": "Süpervizyon etkinleştirildi!",
+			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
 		}
 	},
 	"session": {
@@ -3430,7 +3527,8 @@
 					},
 					"button": {
 						"confirm": "Kimlik doğrulamayı devre dışı bırak",
-						"deny": "İptal"
+						"deny": "İptal",
+						"edit": "İkinci faktörü düzenle"
 					},
 					"copy": {
 						"1": "Bu e-posta adresini güvenli giriş için ikinci bir faktör olarak kullanırsınız.",
@@ -3460,6 +3558,91 @@
 				"title": "Hesabınızı şimdi koruyun"
 			},
 			"title": "Hesabınızı koruyun"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "Geri",
+				"close": "Kapat",
+				"confirm": "Onayla",
+				"copied": "Anahtar kopyalandı",
+				"copy": "Anahtarı kopyala",
+				"disable": "Kimlik doğrulamayı devre dışı bırak",
+				"next": "İleri"
+			},
+			"app": {
+				"connect": {
+					"copy": "Kimlik doğrulama uygulamasını açın ve Çevrimiçi Danışmanlık'ı ekleyin. QR kodunu tarayın veya anahtarı elle girin.",
+					"manual": "Manuel anahtar",
+					"missingQr": "QR kodu şu anda kullanılamıyor. Manuel anahtarı kullanın.",
+					"missingSecret": "Anahtar şu anda kullanılamıyor.",
+					"or": "veya",
+					"qrAlt": "Kimlik doğrulama uygulaması için QR kodu"
+				},
+				"install": {
+					"android": "Google Play Store'dan indirin",
+					"copy": "Akıllı telefonunuza veya tabletinize Google Authenticator ya da Microsoft Authenticator uygulamasını yükleyin. Her iki uygulama da Çevrimiçi Danışmanlık için güvenlik kodunu destekler.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Apple App Store'dan indirin",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "Uygulama ile kimlik doğrulama başarıyla kuruldu."
+				},
+				"verify": {
+					"copy": "Kurulumu tamamlamak için uygulamadaki altı haneli kodu girin.",
+					"input": "Tek kullanımlık kod"
+				}
+			},
+			"decision": {
+				"app": "Uygulama ile güvenli şekilde bağlan",
+				"copy": "Hesabınızı ikinci bir faktörle koruyun. Kimlik doğrulama uygulaması daha güvenli seçenektir; alternatif olarak kodları e-posta ile de alabilirsiniz.",
+				"email": "E-posta kodu kullan (daha az güvenli)"
+			},
+			"email": {
+				"connect": {
+					"copy": "Az önce {{email}} adresine bir e-posta gönderdik. Lütfen e-postadaki kodu buraya girin.",
+					"input": "Tek kullanımlık kod",
+					"resend": "Yeni kod gönder",
+					"resendTitle": "İşe yaramadı mı?",
+					"sent": "Yeni kod gönderildi."
+				},
+				"select": {
+					"copy": "Güvenlik kodunuzu göndermemizi istediğiniz e-posta adresini girin.",
+					"hint": "E-posta adresini değiştirirseniz, bundan sonra bildirimleri de bu adrese alırsınız.",
+					"input": "E-posta adresi"
+				},
+				"success": {
+					"title": "E-posta ile kimlik doğrulama başarıyla kuruldu."
+				}
+			},
+			"error": {
+				"appSetup": "Uygulama ile kimlik doğrulama kurulamadı. Lütfen tekrar deneyin.",
+				"disable": "İki faktörlü kimlik doğrulama devre dışı bırakılamadı.",
+				"emailSend": "E-posta kodu gönderilemedi. Lütfen tekrar deneyin.",
+				"emailSetup": "E-posta ile kimlik doğrulama onaylanamadı. Lütfen tekrar deneyin.",
+				"invalidCode": "Lütfen geçerli, altı haneli bir kod girin.",
+				"invalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
+				"precondition": "Bu e-posta adresi zaten kullanılıyor. Lütfen başka bir adres seçin veya uygulamayı kullanın.",
+				"roleDisabled": "İki faktörlü kimlik doğrulama şu anda sizin rolünüz için kullanılamıyor.",
+				"tooManyRequests": "Çok fazla kod talep edildi. Lütfen kısa bir süre bekleyip tekrar deneyin."
+			},
+			"step": {
+				"confirm": "Onayla",
+				"connect": "Bağlan",
+				"decide": "Karar ver",
+				"install": "Yükle",
+				"select": "Seç",
+				"verify": "Doğrula"
+			},
+			"title": "Hangi bağlantıyı kullanmak istersiniz?"
 		},
 		"overlayButton": {
 			"back": "Geri",
