@@ -49,7 +49,7 @@ export const KeyBackupRecoveryDialog = ({
 				recoverError instanceof InvalidRecoveryKeyError
 					? translate(
 							'encryption.keyBackup.dialog.invalidKey',
-							'Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
+							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
 						)
 					: translate(
 							'encryption.keyBackup.dialog.error',
@@ -87,14 +87,14 @@ export const KeyBackupRecoveryDialog = ({
 				<p>
 					{translate(
 						'encryption.keyBackup.dialog.recoveryInstruction',
-						'Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
+						'Geben Sie Ihren Ersatzschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
 					)}
 				</p>
 				<label className="keyBackupDialog__field">
 					<span>
 						{translate(
 							'encryption.keyBackup.dialog.keyLabel',
-							'Wiederherstellungsschlüssel'
+							'Ersatzschlüssel'
 						)}
 					</span>
 					<input

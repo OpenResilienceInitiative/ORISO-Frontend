@@ -62,6 +62,22 @@ export const collectRedundantOverlayKeys = (
 		.sort((a, b) => a.localeCompare(b));
 };
 
+/**
+ * Ratchet helper: the guards tolerate a checked-in list of known offenders, so
+ * a failure can name exactly the keys a change introduced instead of reporting
+ * that one count grew past another.
+ */
+export const collectKeysAbsentFromBaseline = (
+	baselineKeys: string[],
+	currentKeys: string[]
+): string[] => {
+	const baseline = new Set(baselineKeys);
+
+	return currentKeys
+		.filter((key) => !baseline.has(key))
+		.sort((a, b) => a.localeCompare(b));
+};
+
 export const extractStaticTranslationKeys = (source: string): string[] => {
 	const keys = new Set<string>();
 	const callPattern =
