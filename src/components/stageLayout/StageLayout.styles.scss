@@ -399,12 +399,6 @@
 			padding: 28px 20px 40px;
 		}
 
-		@include breakpoint($fromLarge) {
-			& > *:not(.loadingIndicator) {
-				max-width: 700px;
-			}
-		}
-
 		@include breakpoint($fromXLarge) {
 			width: 100%;
 			padding-left: calc(40vw + 16px);
