@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiGetDepartmentLegal } from './apiGetDepartmentLegal';
+import {
+	apiGetDepartmentLegal,
+	normalizeDepartmentLegalResponse
+} from './apiGetDepartmentLegal';
 import { fetchData, FETCH_ERRORS } from './fetchData';
 
 vi.mock('./fetchData', async () => {
@@ -18,19 +21,59 @@ vi.mock('../resources/scripts/endpoints', () => ({
 	}
 }));
 
+describe('normalizeDepartmentLegalResponse', () => {
+	it('maps consentText from the dpp payload', () => {
+		expect(
+			normalizeDepartmentLegalResponse({
+				dpp: {
+					content: '{"de":"<p>DPP</p>"}',
+					consentText: '{"de":"Ich willige ein."}'
+				},
+				imprint: { content: null }
+			})
+		).toEqual({
+			dpp: {
+				content: '{"de":"<p>DPP</p>"}',
+				consentText: '{"de":"Ich willige ein."}'
+			},
+			imprint: { content: null, consentText: null }
+		});
+	});
+
+	it('normalizes a missing consentText to null', () => {
+		expect(
+			normalizeDepartmentLegalResponse({
+				dpp: { content: '<p>DPP</p>' },
+				imprint: { content: null }
+			})
+		).toEqual({
+			dpp: { content: '<p>DPP</p>', consentText: null },
+			imprint: { content: null, consentText: null }
+		});
+	});
+});
+
 describe('apiGetDepartmentLegal', () => {
 	afterEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it('resolves the published legal texts', async () => {
-		const legal = {
-			dpp: { content: '{"de":"<p>Hallo</p>"}' },
+	it('resolves the published legal texts including consentText', async () => {
+		vi.mocked(fetchData).mockResolvedValue({
+			dpp: {
+				content: '{"de":"<p>Hallo</p>"}',
+				consentText: '{"de":"Einwilligungssatz"}'
+			},
 			imprint: { content: null }
-		};
-		vi.mocked(fetchData).mockResolvedValue(legal);
+		});
 
-		await expect(apiGetDepartmentLegal(42, 7)).resolves.toEqual(legal);
+		await expect(apiGetDepartmentLegal(42, 7)).resolves.toEqual({
+			dpp: {
+				content: '{"de":"<p>Hallo</p>"}',
+				consentText: '{"de":"Einwilligungssatz"}'
+			},
+			imprint: { content: null, consentText: null }
+		});
 	});
 
 	it('degrades gracefully to null when the endpoint 404s (backend without AgencyService #90)', async () => {

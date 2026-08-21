@@ -81,6 +81,7 @@ import {
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -93,7 +94,9 @@ import type { Placement, VirtualElement } from '@floating-ui/dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import {
 	formatMessagePersonName,
-	formatAgencyLineWithI18n
+	formatAgencyLineWithI18n,
+	resolveIncomingConsultantNameForAsker,
+	resolveOwnConsultantName
 } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
@@ -1129,6 +1132,14 @@ export const MessageItemComponent = ({
 		parsedMessage.systemNotificationReasonLabel;
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
+	const visibleCaseHandoverInternalDetails =
+		getVisibleCaseHandoverInternalDetailsForViewer(
+			userData?.grantedAuthorities,
+			{
+				reasonLabel: systemNotificationReasonLabel,
+				explanation: systemNotificationExplanation
+			}
+		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
@@ -1607,17 +1618,34 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const resolvedIncomingDisplayName = !isMyMessage
-		? consultantMatch?.consultantDisplayName ||
-			roomUser?.displayName ||
-			displayName
-		: displayName;
+	const isAskerViewer = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const askerIncomingConsultantName =
+		!isMyMessage && isAskerViewer
+			? resolveIncomingConsultantNameForAsker({
+					sessionConsultantDisplayName:
+						activeSession?.consultant?.displayName,
+					matrixDisplayName: roomUser?.displayName,
+					eventDisplayName: displayName,
+					username
+				})
+			: null;
+	const resolvedIncomingDisplayName = askerIncomingConsultantName
+		? askerIncomingConsultantName.displayName
+		: !isMyMessage
+			? consultantMatch?.consultantDisplayName ||
+				roomUser?.displayName ||
+				displayName
+			: displayName;
 	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
 	const incomingNameParts = normalizedIncomingName
 		.split(/\s+/)
 		.filter(Boolean);
-	const resolvedIncomingNameParts =
-		incomingNameParts.length >= 2
+	const resolvedIncomingNameParts = askerIncomingConsultantName
+		? {
+				firstName: askerIncomingConsultantName.firstName,
+				lastName: askerIncomingConsultantName.lastName
+			}
+		: incomingNameParts.length >= 2
 			? {
 					firstName:
 						consultantMatch?.firstName || incomingNameParts[0],
@@ -1629,11 +1657,28 @@ export const MessageItemComponent = ({
 					firstName: consultantMatch?.firstName || undefined,
 					lastName: consultantMatch?.lastName || undefined
 				};
+	const ownConsultantName =
+		isMyMessage && !isUserMessage()
+			? resolveOwnConsultantName({
+					displayName: userData?.displayName,
+					firstName: userData?.firstName,
+					lastName: userData?.lastName,
+					username: userData?.userName || username
+				})
+			: null;
 	const formattedName = formatMessagePersonName(
-		resolvedIncomingDisplayName,
+		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
 		username,
-		isMyMessage ? userData?.firstName : resolvedIncomingNameParts.firstName,
-		isMyMessage ? userData?.lastName : resolvedIncomingNameParts.lastName
+		ownConsultantName
+			? ownConsultantName.firstName
+			: isMyMessage
+				? userData?.firstName
+				: resolvedIncomingNameParts.firstName,
+		ownConsultantName
+			? ownConsultantName.lastName
+			: isMyMessage
+				? userData?.lastName
+				: resolvedIncomingNameParts.lastName
 	);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
@@ -2023,14 +2068,7 @@ export const MessageItemComponent = ({
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
 									<CaseHandoverSystemMessageBody
-										reasonLabel={
-											systemNotificationReasonLabel ||
-											undefined
-										}
-										explanation={
-											systemNotificationExplanation ||
-											undefined
-										}
+										{...visibleCaseHandoverInternalDetails}
 									>
 										{systemNotificationRawDescription && (
 											<p className="messageItem__systemNotificationDescription">
@@ -2633,9 +2671,20 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
-										displayName={displayName}
-										firstName={userData?.firstName}
-										lastName={userData?.lastName}
+										displayName={
+											ownConsultantName?.displayName ??
+											displayName
+										}
+										firstName={
+											ownConsultantName
+												? ownConsultantName.firstName
+												: userData?.firstName
+										}
+										lastName={
+											ownConsultantName
+												? ownConsultantName.lastName
+												: userData?.lastName
+										}
 										size={44}
 									/>
 								</div>

@@ -3,16 +3,28 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
-import { useOpenTwoFactorSettings } from '../../hooks/useOpenTwoFactorSettings';
+import {
+	TWO_FACTOR_SETTINGS_PATH,
+	useOpenTwoFactorSettings
+} from '../../hooks/useOpenTwoFactorSettings';
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
+import {
+	NotificationChoice,
+	NotificationChoiceCard
+} from './NotificationChoiceCard';
+import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
 import { ErstantwortActionKind } from './erstantwortPayload';
 import {
 	ErstantwortLiveState,
 	resolveErstantwortBausteine
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
+import {
+	isSupported as isNotificationSupported,
+	requestPermissions
+} from '../../utils/notificationHelpers';
 
 /**
  * The chat-side container for the Erstantwort (ADR-018, ORISO-Frontend#772).
@@ -83,6 +95,26 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		[rawMessage, trigger, conversationType, deadlineDays, t, state]
 	);
 
+	/* Browsers that cannot deliver a notification at all must not be offered
+	   as an option — an unkept promise here means a person waits for a signal
+	   that will never come. */
+	const isBrowserNotificationSupported = Boolean(isNotificationSupported());
+
+	const handleNotificationChoice = useCallback(
+		(choice: NotificationChoice) => {
+			if (choice === 'BROWSER' || choice === 'BOTH') {
+				void requestPermissions();
+			}
+			if (choice === 'EMAIL' || choice === 'BOTH') {
+				setIsEmailOverlayOpen(true);
+				return;
+			}
+			/* Browser-only: nothing else to collect, so the person is left in
+			   the conversation rather than pushed into settings. */
+		},
+		[]
+	);
+
 	const handleAction = useCallback(
 		(kind: ErstantwortActionKind) => {
 			switch (kind) {
@@ -104,6 +136,12 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					   to open. The button exists only for keyboard users who
 					   reach it before the card. */
 					break;
+				case 'SHOW_RECOVERY_KEY':
+					/* The Ersatzschlüssel is generated silently at login and
+					   parked for the Sicherheit panel (ADR-019), so this button
+					   only has to take the person to where it already waits. */
+					navigate(TWO_FACTOR_SETTINGS_PATH);
+					break;
 				default:
 					break;
 			}
@@ -121,6 +159,15 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				onAction={handleAction}
 				onFirstReveal={onFirstReveal}
 				slots={{
+					enquiryReceived: <EnquiryReceivedIllustration />,
+					notificationChoice: (
+						<NotificationChoiceCard
+							isBrowserNotificationSupported={
+								isBrowserNotificationSupported
+							}
+							onChoose={handleNotificationChoice}
+						/>
+					),
 					saveCredentials: (
 						<SaveCredentialsCard
 							userName={userData?.userName ?? ''}

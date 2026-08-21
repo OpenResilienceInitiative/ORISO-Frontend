@@ -69,18 +69,23 @@ jobs:
         # still peers on @types/react 17.
         run: npm ci --ignore-scripts --legacy-peer-deps
 
-      - name: Install Chromium for Vitest browser mode
+      - name: Install Chrome for Vitest browser mode
         # --ignore-scripts above skips Playwright's own postinstall, so the
-        # browser has to be fetched explicitly. Chromium only — this suite
+        # browser has to be fetched explicitly. Chrome only — this suite
         # asserts behaviour and accessibility, not cross-browser rendering.
+        #
+        # `chrome`, not `chromium`: vitest.config.mts pins the storybook project
+        # to `channel: 'chrome'` because the bundled chrome-headless-shell drops
+        # the orchestrator's WebSocket mid-run (see the comment there). This
+        # installs the channel the tests actually launch.
         #
         # Not `npx playwright`: this repo has two packages shipping that bin —
         # `playwright` (which @vitest/browser drives) and the older
         # `@playwright/test` used by the smoke specs. npx picked the latter and
-        # installed the wrong Chromium revision, so the run died with
+        # installed the wrong revision, so the run died with
         # "Executable doesn't exist at …/chromium_headless_shell-1208".
         # Address the CLI that belongs to the version the tests actually launch.
-        run: node node_modules/playwright/cli.js install --with-deps chromium
+        run: node node_modules/playwright/cli.js install --with-deps chrome
 
       - name: Run Storybook component tests
         run: npm run test:storybook

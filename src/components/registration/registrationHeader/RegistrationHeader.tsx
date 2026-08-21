@@ -162,12 +162,10 @@ export const RegistrationHeader = ({
 				top: fullBleed ? { xs: 0, md: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
-				// 100vw counts the classic scrollbar, so pairing it with the
-				// negative margin pushed the document sideways by the scrollbar
-				// width. The xs row simply fills its column instead.
-				width: fullBleed ? { xs: '100%', lg: '60vw' } : '100%',
-				ml: fullBleed ? { xs: 0, lg: 'calc((100% - 60vw) / 2)' } : 0,
-				px: { xs: 2, sm: 3, lg: 4 },
+				// Follow the registration column (60vw on desktop). Avoid vw
+				// breakouts that overflow into the red stage panel.
+				width: '100%',
+				maxWidth: '100%',
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',
 				// One rule, default outline tone. The previous header stacked a
