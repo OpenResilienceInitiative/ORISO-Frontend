@@ -166,6 +166,11 @@ export const RegistrationHeader = ({
 				// breakouts that overflow into the red stage panel.
 				width: '100%',
 				maxWidth: '100%',
+				// The band spans the whole column and #1174 zeroed that column's
+				// padding, so it has to carry its own — without this the step label
+				// and the chips sit flat against the screen edge. #1174 dropped this
+				// line while the component was still unwired and rendered nowhere.
+				px: { xs: 2, sm: 3, lg: 4 },
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',
 				// One rule, default outline tone. The previous header stacked a
