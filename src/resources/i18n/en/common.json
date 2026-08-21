@@ -2549,6 +2549,10 @@
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
 			},
+			"type": {
+				"team": "Team counselling",
+				"single": "Single counselling"
+			},
 			"details": {
 				"aboutLabel": "About this center",
 				"addressLabel": "Address",
