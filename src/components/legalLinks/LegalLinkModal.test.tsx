@@ -100,4 +100,38 @@ describe('LegalLinkModal', () => {
 		expect(screen.getByTestId('legal-missing')).toBeTruthy();
 		expect(screen.queryByRole('link')).toBeNull();
 	});
+
+	/**
+	 * Platform scope: the login screen has no tenant yet, so the modal must
+	 * ignore any carrier-authored text a tenant later configures and render the
+	 * translated platform note instead, with the full binding document linked.
+	 */
+	it('renders the platform note and full-text link when scope is platform', () => {
+		mockedContent.mockReturnValue({
+			kind: 'privacy',
+			content: '<p>Vom Träger gepflegter Datenschutztext.</p>'
+		});
+
+		render(
+			<LegalLinkModal
+				title="Datenschutz"
+				rawLabel="privacy"
+				url="https://platform.example/datenschutz"
+				scope="platform"
+				onClose={() => undefined}
+			/>
+		);
+
+		expect(screen.getByTestId('legal-platform')).toBeTruthy();
+		expect(screen.queryByTestId('legal-missing')).toBeNull();
+		expect(
+			screen.queryByText('Vom Träger gepflegter Datenschutztext.')
+		).toBeNull();
+
+		const link = screen.getByRole('link');
+		expect(link.getAttribute('href')).toBe(
+			'https://platform.example/datenschutz'
+		);
+		expect(link.getAttribute('rel')).toContain('noopener');
+	});
 });

@@ -52,6 +52,9 @@ export const LegalLinkModal = ({
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
 
+	const platformNote =
+		scope === 'platform' ? translate(platformLegalNoteKey(kind)) : null;
+
 	return (
 		<OrisoDialog
 			open
@@ -67,13 +70,36 @@ export const LegalLinkModal = ({
 			backLabel={translate('legal.modal.back')}
 			confirmLabel={translate('legal.modal.confirm')}
 		>
-			{content ? (
+			{scope === 'platform' ? (
+				<div
+					className="legalLinkModal__platform"
+					data-testid="legal-platform"
+				>
+					{platformNote?.split('\n\n').map((paragraph, index) => (
+						<p key={index}>{paragraph}</p>
+					))}
+					{url && (
+						<p>
+							<a
+								href={url}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{translate(PLATFORM_LEGAL_FULL_TEXT_KEY)}
+							</a>
+						</p>
+					)}
+				</div>
+			) : content ? (
 				<LegalContentRenderer
 					className="legalLinkModal__content"
 					content={content}
 				/>
 			) : (
-				<div className="legalLinkModal__missing" data-testid="legal-missing">
+				<div
+					className="legalLinkModal__missing"
+					data-testid="legal-missing"
+				>
 					<p>
 						{translate(
 							'legal.modal.missing.text',
