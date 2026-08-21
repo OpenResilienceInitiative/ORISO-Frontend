@@ -1,0 +1,52 @@
+@import '../../resources/styles/settings';
+@import './ErstantwortSequence.styles.scss';
+
+/* "Wie sollen wir Sie erreichen?" — ORISO-Frontend#825.
+ *
+ * Sits inside an Erstantwort bubble and only styles what the bubble does not
+ * provide. Stacked full-width targets on every viewport, not just the narrow
+ * one: the reference user is older and often on a phone, and a row of small
+ * side-by-side buttons is the classic way to lose them.
+ */
+
+.notificationChoiceCard {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 12px;
+	font-family: $font-family-sans-serif;
+}
+
+.notificationChoiceCard__option {
+	@extend %erstantwort-pill-affordance;
+
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	width: 100%;
+	text-align: left;
+
+	/* Comfortably above the 44px touch minimum — two lines of copy at the
+	   platform's own sizes already carry it there, so nothing is hardcoded. */
+	padding: 12px 16px;
+	border-radius: $box-border-radius;
+}
+
+.notificationChoiceCard__option--selected {
+	/* The bubble sets the colour context; a selected option only needs to be
+	   heavier than its siblings, not a second brand colour on top of it. */
+	border-width: 2px;
+}
+
+.notificationChoiceCard__label {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.notificationChoiceCard__hint {
+	font-size: 13px;
+	line-height: 1.45;
+	font-weight: 400;
+	opacity: 0.85;
+}

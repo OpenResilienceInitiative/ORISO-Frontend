@@ -10,8 +10,10 @@ import fr from './resources/i18n/fr/common.json';
 import ru from './resources/i18n/ru/common.json';
 import ti from './resources/i18n/ti/common.json';
 import tr from './resources/i18n/tr/common.json';
+import guardBaseline from './i18nCatalogueGuard.baseline.json';
 import {
 	collectCatalogueDrift,
+	collectKeysAbsentFromBaseline,
 	collectRedundantOverlayKeys,
 	extractStaticTranslationKeys,
 	findUnknownStaticTranslationKeys,
@@ -28,6 +30,13 @@ const driftBudgets = {
 
 const locales = { en, fr, ru, ti, tr } as const;
 const deKeys = flattenCatalogueKeys(de);
+
+// A failing guard has to name the keys it tripped over; a bare count sends the
+// next reader into `git log`. Long lists stay readable by showing the head.
+const listKeys = (keys: string[], limit = 20): string =>
+	keys.length > limit
+		? `${keys.slice(0, limit).join(', ')} … and ${keys.length - limit} more`
+		: keys.join(', ');
 
 describe('i18n catalogue guard (#1101)', () => {
 	it('reports missing and extra keys from hand-checked fixtures', () => {
@@ -70,6 +79,15 @@ describe('i18n catalogue guard (#1101)', () => {
 		).toEqual(['zipcode.unknown_many']);
 	});
 
+	it('reports only the offending keys the baseline does not already cover', () => {
+		expect(
+			collectKeysAbsentFromBaseline(
+				['attachments.reveal', 'attachments.title'],
+				['attachments.mediaCheck.error', 'attachments.reveal']
+			)
+		).toEqual(['attachments.mediaCheck.error']);
+	});
+
 	it.each(Object.entries(locales))(
 		'does not allow the $0 catalogue to exceed its existing drift budget',
 		(lng, catalogue) => {
@@ -79,19 +97,38 @@ describe('i18n catalogue guard (#1101)', () => {
 			);
 			const budget = driftBudgets[lng as keyof typeof driftBudgets];
 
-			expect(drift.extraInLocale.length).toBeLessThanOrEqual(
-				budget.extraInLocale
-			);
-			expect(drift.missingInLocale.length).toBeLessThanOrEqual(
-				budget.missingInLocale
-			);
+			expect(
+				drift.extraInLocale.length,
+				`${lng}/common.json carries ${drift.extraInLocale.length} keys ` +
+					`(budget ${budget.extraInLocale}) that de/common.json does not ` +
+					`have. Add them to the German catalogue or drop them here: ` +
+					listKeys(drift.extraInLocale)
+			).toBeLessThanOrEqual(budget.extraInLocale);
+			expect(
+				drift.missingInLocale.length,
+				`${lng}/common.json is missing ${drift.missingInLocale.length} keys ` +
+					`(budget ${budget.missingInLocale}) that de/common.json has. New ` +
+					`keys usually land in de first — translate them, or raise this ` +
+					`locale's budget deliberately: ` +
+					listKeys(drift.missingInLocale)
+			).toBeLessThanOrEqual(budget.missingInLocale);
 		}
 	);
 
 	it('does not allow another redundant value in the sparse informal overlay', () => {
+		const newlyRedundant = collectKeysAbsentFromBaseline(
+			guardBaseline.redundantInformalOverlayKeys,
+			collectRedundantOverlayKeys(de, deInformal)
+		);
+
 		expect(
-			collectRedundantOverlayKeys(de, deInformal).length
-		).toBeLessThanOrEqual(596);
+			newlyRedundant,
+			'de@informal is a sparse overlay and may only carry values that differ ' +
+				'from de/common.json. Delete these keys from ' +
+				'src/resources/i18n/de@informal/common.json — the de value is used ' +
+				'automatically — or give them a genuinely informal wording: ' +
+				listKeys(newlyRedundant)
+		).toEqual([]);
 	});
 
 	it('extracts literal translation calls and ignores dynamic keys', () => {
@@ -131,8 +168,17 @@ describe('i18n catalogue guard (#1101)', () => {
 			}).map((path) => [path, readFileSync(path, 'utf8')])
 		);
 
+		const newlyUnknown = collectKeysAbsentFromBaseline(
+			guardBaseline.unknownStaticTranslationKeys,
+			findUnknownStaticTranslationKeys(sourceFiles, deKeys)
+		);
+
 		expect(
-			findUnknownStaticTranslationKeys(sourceFiles, deKeys).length
-		).toBeLessThanOrEqual(58);
+			newlyUnknown,
+			'These literal translation keys are used in src but absent from ' +
+				'de/common.json, so they render as their own key at runtime. Add ' +
+				'them to the German catalogue or fix the typo: ' +
+				listKeys(newlyUnknown)
+		).toEqual([]);
 	});
 });

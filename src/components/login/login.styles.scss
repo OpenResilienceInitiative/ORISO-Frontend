@@ -44,7 +44,14 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 	border-radius: 20px;
 	animation: fadeIn 0.5s ease-out;
-	transition: transform 0.3s ease;
+	transition:
+		transform 0.3s ease,
+		width 320ms cubic-bezier(0.2, 0, 0, 1),
+		max-width 320ms cubic-bezier(0.2, 0, 0, 1);
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
 
 	/* The mobile sheet already supplies the outer margin (design 2e). */
 	@media screen and (width <= #{$fromMedium - 1px}) {
@@ -85,6 +92,15 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&--securityOpen {
+		/*
+		 * The explainer is drawn on the design's 700px card (580px of content):
+		 * two 202px party blocks, a 132px wire and a 340px noise box need the
+		 * room. The card grows for it and shrinks back for the form.
+		 */
+		@media screen and (width >= #{$fromMedium}) {
+			max-width: $login-security-card-width;
+		}
+
 		.loginForm__pane--login {
 			transform: translateY(-118%);
 			opacity: 0;
@@ -367,6 +383,12 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		min-width: unset;
 		max-width: 100%;
 		margin-top: 25px;
+
+		// Fold budget on the phone sheet (see loginForm__register below):
+		// every vertical step above the registration entry counts at 664px.
+		@media screen and (width <= #{$fromMedium - 1px}) {
+			margin-top: $grid-base-two;
+		}
 		padding: 15px 24px;
 		background: var(--m3-primary, #a5000a);
 		border: none;
@@ -403,23 +425,30 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
+	// Row that carries the "Forgot password?" link. It sits BELOW the
+	// registration block: recovery is the exception, registration the
+	// primary path for a new asker, and on phones the registration entry
+	// has to be above the fold. (The link inside keeps the shared
+	// .button-as-link styling, including its $grid-base-four top margin.)
 	&__passwordReset {
-		color: $link-color;
-		transform: $login-icon-transform;
-		text-decoration: $link-text-decoration;
-		font-weight: $link-font-weight;
-		padding: 0;
-
-		&:hover {
-			text-decoration: $link-hover-text-decoration;
-			cursor: pointer;
-		}
+		width: 100%;
+		max-width: 380px;
+		margin: 0 auto;
+		text-align: center;
 	}
 
 	&__register {
 		width: 100%;
 		max-width: 380px;
 		margin-top: $grid-base-four;
+
+		// On the phone sheet the desktop air around "Neu hier?" pushes the
+		// registration button below a 664px-high viewport (390x844 minus
+		// Chrome's browser chrome). Tighten the rhythm so the entry stays
+		// above the fold without scrolling.
+		@media screen and (width <= #{$fromMedium - 1px}) {
+			margin-top: $grid-base-two;
+		}
 
 		&__separator {
 			width: 100%;
@@ -428,6 +457,11 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			height: 18px;
 			margin-bottom: 15px;
 			font-size: $font-size-secondary;
+
+			// See above: fold budget on the phone sheet.
+			@media screen and (width <= #{$fromMedium - 1px}) {
+				margin-bottom: $grid-base;
+			}
 
 			span {
 				line-height: 15px;
@@ -456,6 +490,11 @@ $link-hover-text-decoration: $link-text-decoration !default;
 				color: $text-high-emphasis;
 			}
 			margin-top: $grid-base-six;
+
+			// See above: fold budget on the phone sheet.
+			@media screen and (width <= #{$fromMedium - 1px}) {
+				margin-top: $grid-base-two;
+			}
 		}
 	}
 

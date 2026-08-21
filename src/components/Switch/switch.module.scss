@@ -88,6 +88,27 @@
 	width: 16px;
 }
 
+/*
+ * A shared control must keep its own layout when it is placed inside rich
+ * content. Chat messages intentionally render generic `span` descendants as
+ * inline text; without these structural selectors that host rule collapses
+ * the M3 track, target, handle and icon into one red pill. The element chain
+ * adds enough specificity to protect the component without `!important` or a
+ * case-handover-only override.
+ */
+.switch > .input + .track {
+	display: block;
+}
+
+.switch > .input + .track > .target,
+.switch > .input + .track > .target > .handle {
+	display: flex;
+}
+
+.switch > .input + .track > .target > .handle > .icon {
+	display: block;
+}
+
 .icon::before,
 .icon::after {
 	background: currentColor;

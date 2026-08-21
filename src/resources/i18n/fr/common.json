@@ -51,7 +51,6 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"associationLogoAlt": "Logo de l'organisation prestataire",
 			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
@@ -1226,13 +1225,11 @@
 				"linkShort": "Pourquoi c'est sûr"
 			},
 			"explainer": {
-				"badge": "NOUVEAU",
-				"headline": "Vous deux êtes les seuls à pouvoir lire.",
+				"headline": "Confidentiel de bout en bout",
 				"message": "Je ne vais pas bien.",
-				"you": "Vous",
-				"agency": "Service de consultation",
 				"encrypted": "chiffré",
-				"attack": "un attaquant n'obtient rien de plus",
+				"diagram": "Schéma : votre message part chiffré de votre appareil vers le service de consultation — il ne redevient lisible que là-bas.",
+				"attack": "Chez nous, un voleur de données ne récolte qu’une bouillie de chiffres.",
 				"cipherLabel": "Données interceptées et chiffrées",
 				"key": "La clé est créée sur votre appareil et y reste — nous ne l'avons pas.",
 				"protocol": "Protocole ouvert <strong>Matrix</strong>, vérifiable de manière indépendante.",
@@ -2187,7 +2184,7 @@
 					"text": "Que s'est-il passé, où, depuis quand ? Quelques phrases suffisent."
 				},
 				"counsellor": {
-					"title": "Nous trouvons votre conseillère ou conseiller",
+					"title": "Nous trouvons la personne qui vous accompagnera",
 					"text": "Avec les compétences adaptées — et du temps pour vous."
 				},
 				"reply": {
@@ -2532,7 +2529,7 @@
 				"neu": "Non lu",
 				"unread": "Non lu",
 				"drafts": "Brouillons",
-				"nearby": "Proximité",
+				"nearby": "Mail",
 				"create": "Créer",
 				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
@@ -2540,7 +2537,7 @@
 				"internalGroup": "Discussion de groupe interne",
 				"groups": "Cercle de discussion",
 				"supervision": "Supervision",
-				"chats": "Proximité"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
 			"draftMetadataOnly": "Message non envoyé enregistré."

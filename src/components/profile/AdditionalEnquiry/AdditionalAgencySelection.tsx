@@ -69,10 +69,17 @@ export const AdditionalAgencySelection = (
 						props.knownAgencyIds
 					);
 					setProposedAgencies(sorted);
-					// Only set default agency if none is selected yet
-					if (!selectedAgency) {
-						setSelectedAgency(sorted[0]);
-					}
+					/* The proposals are scoped to postcode + topic, so an
+					   agency picked before the change may not serve the new
+					   pair at all. Keeping it would submit the enquiry to a
+					   counselling centre that never offered the topic
+					   (ORISO-Frontend#1143), so only a selection that is
+					   still on offer survives. */
+					setSelectedAgency((current) =>
+						current && sorted.some((a) => a.id === current.id)
+							? current
+							: (sorted[0] ?? null)
+					);
 				})
 				.catch((err: any) => {
 					if (err.message === FETCH_ERRORS.EMPTY) {

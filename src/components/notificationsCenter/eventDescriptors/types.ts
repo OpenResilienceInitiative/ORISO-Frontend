@@ -104,6 +104,8 @@ export interface EventActionParams {
 	contentClass?: string | null;
 	/** Which role received this row (user / consultant). */
 	recipientRole?: string | null;
+	/** Case Handover consent variant; metadata only, never conversation content. */
+	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */

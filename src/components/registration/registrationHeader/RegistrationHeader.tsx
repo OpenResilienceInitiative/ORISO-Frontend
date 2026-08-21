@@ -167,26 +167,21 @@ export const RegistrationHeader = ({
 				top: fullBleed ? { xs: 0, lg: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
-				// Below lg the band must span the whole scroller, not its
-				// 780px column — otherwise content stays visible in the
-				// gutters beside it while it is pinned. 100vw + centering
-				// margin is the only pure-CSS full bleed from inside a
-				// centered column; with classic scrollbars the band's inner
-				// content can sit half a scrollbar width off-centre, which is
-				// invisible next to see-through gutters (and macOS overlay
-				// scrollbars make it exact). The overhang is clipped by the
-				// scroller's overflow-x: hidden, so nothing pushes sideways.
-				width: fullBleed ? { xs: '100vw', lg: '60vw' } : '100%',
-				ml: fullBleed
-					? {
-							xs: 'calc((100% - 100vw) / 2)',
-							lg: 'calc((100% - 60vw) / 2)'
-						}
-					: 0,
+				// Follow the registration column (60vw on desktop) rather than
+				// breaking out with 100vw: that width counts the classic scrollbar,
+				// so pairing it with a centering margin pushed the whole document
+				// sideways (#1174). The band still pads itself: it spans the whole
+				// column, and #1174 zeroed that column's padding — the px it dropped
+				// here could not be missed on pre-dev, where this component is not
+				// wired in and renders nowhere.
+				width: '100%',
+				maxWidth: '100%',
 				px: { xs: 2, sm: 3, lg: 4 },
-				// Opaque, token-true surface: rows scrolling underneath must
-				// not shine through a header. Same token the StageLayout
-				// header row paints with, so the two read as one surface.
+				// Opaque, token-true surface: rows scrolling underneath must not
+				// shine through a header. Same token the StageLayout header row
+				// paints with, so the two read as one surface. This is the point of
+				// #1167 and #1174 never meant to touch it — the translucent
+				// rgba/backdrop-filter pair it still carried is the old value.
 				backgroundColor: 'var(--m3-background, #fff)',
 				// One rule, default outline tone. The previous header stacked a
 				// border plus a margin band below it, which read as two lines
