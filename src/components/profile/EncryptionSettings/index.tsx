@@ -18,6 +18,13 @@ import {
 	RecoverySetupPhase,
 	RecoverySetupPhaseError
 } from '../../../services/matrixKeyBackupService';
+import {
+	clearPendingRecoveryKey,
+	getPendingRecoveryKey,
+	RecoverySetupBusyError,
+	savePendingRecoveryKey,
+	withRecoverySetupLock
+} from '../../../services/pendingRecoveryKeyStore';
 import './encryptionSettings.styles.scss';
 import {
 	EncryptionClientReadinessError,
@@ -74,6 +81,8 @@ export const EncryptionSettingsPanel = ({
 	const [recoveryInput, setRecoveryInput] = useState('');
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
 	const [copied, setCopied] = useState(false);
+	const [userId, setUserId] = useState<string | null>(null);
+	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
 
 	const getReadyClient = useCallback(
 		(): Promise<MatrixClient | null> =>
@@ -100,6 +109,23 @@ export const EncryptionSettingsPanel = ({
 			}
 			const nextStatus = await getEncryptionStatus(client);
 			setStatus(nextStatus);
+
+			const currentUserId = client.getUserId();
+			setUserId(currentUserId);
+			const pendingKey = currentUserId
+				? getPendingRecoveryKey(currentUserId)
+				: null;
+			// The background setup had no dialog to show the key in, so this
+			// panel is where the user finally gets to see and save it.
+			if (pendingKey && !nextStatus.keyStorageOutOfSync) {
+				setRecoveryKeyToShow(pendingKey);
+				setKeyStoredConfirmed(false);
+				setCopied(false);
+				setKeyFromSilentSetup(true);
+				setPhase('showKey');
+				return;
+			}
+
 			setPhase(phaseForStatus(nextStatus));
 		} catch (setupError) {
 			console.warn(
@@ -125,20 +151,41 @@ export const EncryptionSettingsPanel = ({
 		setError(null);
 		setSetupFailurePhase(null);
 		try {
-			const encodedKey = await executeWithReadyEncryptionClient(
-				clientOverride,
-				getMatrixClientService(),
-				setUpRecovery
-			);
+			const runSetup = () =>
+				executeWithReadyEncryptionClient(
+					clientOverride,
+					getMatrixClientService(),
+					setUpRecovery
+				);
+			// Same cross-tab lock the background bootstrap takes: two setups
+			// at once would produce two backup versions and one dead key.
+			const encodedKey = userId
+				? await withRecoverySetupLock(userId, runSetup)
+				: await runSetup();
 			if (!encodedKey) {
 				setPhase('unavailable');
 				return;
 			}
+			// Park it too: a reload before the confirmation must not lose the
+			// only copy of a key the server cannot hand out again.
+			if (userId) {
+				savePendingRecoveryKey(userId, encodedKey);
+			}
 			setRecoveryKeyToShow(encodedKey);
 			setKeyStoredConfirmed(false);
 			setCopied(false);
+			setKeyFromSilentSetup(false);
 			setPhase('showKey');
 		} catch (setupError) {
+			if (setupError instanceof RecoverySetupBusyError) {
+				setError(
+					t(
+						'profile.encryption.setup.busy',
+						'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.'
+					)
+				);
+				return;
+			}
 			setSetupFailurePhase(
 				setupError instanceof RecoverySetupPhaseError
 					? setupError.phase
@@ -155,15 +202,19 @@ export const EncryptionSettingsPanel = ({
 		} finally {
 			setBusy(false);
 		}
-	}, [clientOverride, t]);
+	}, [clientOverride, t, userId]);
 
 	const onConfirmKeyStored = useCallback(() => {
-		// One-time display: drop the key from memory the moment the user
-		// confirms it is stored safely.
+		// One-time display: drop the key from memory and from the parking spot
+		// the moment the user confirms it is stored safely.
+		if (userId) {
+			clearPendingRecoveryKey(userId);
+		}
 		setRecoveryKeyToShow(null);
 		setKeyStoredConfirmed(false);
+		setKeyFromSilentSetup(false);
 		void refreshStatus();
-	}, [refreshStatus]);
+	}, [refreshStatus, userId]);
 
 	const onCopyKey = useCallback(async () => {
 		if (!recoveryKeyToShow) {
@@ -202,7 +253,7 @@ export const EncryptionSettingsPanel = ({
 				recoverError instanceof InvalidRecoveryKeyError
 					? t(
 							'profile.encryption.recover.invalidKey',
-							'Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
+							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
 						)
 					: t(
 							'profile.encryption.recover.error',
@@ -241,10 +292,7 @@ export const EncryptionSettingsPanel = ({
 		id: 'encryptionRecoveryKey',
 		name: 'encryptionRecoveryKey',
 		type: 'text',
-		label: t(
-			'profile.encryption.recover.inputLabel',
-			'Wiederherstellungsschlüssel'
-		),
+		label: t('profile.encryption.recover.inputLabel', 'Ersatzschlüssel'),
 		content: recoveryInput
 	};
 
@@ -260,7 +308,7 @@ export const EncryptionSettingsPanel = ({
 			<Text
 				text={t(
 					'profile.encryption.description',
-					'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.'
+					'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Ersatzschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.'
 				)}
 				type="standard"
 				className="tertiary"
@@ -317,7 +365,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.setup.explainer',
-							'Richten Sie einmalig einen Wiederherstellungsschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.'
+							'Richten Sie einmalig einen Ersatzschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.'
 						)}
 						type="standard"
 					/>
@@ -325,7 +373,7 @@ export const EncryptionSettingsPanel = ({
 						item={{
 							label: t(
 								'profile.encryption.setup.cta',
-								'Wiederherstellungsschlüssel einrichten'
+								'Ersatzschlüssel einrichten'
 							),
 							type: BUTTON_TYPES.PRIMARY,
 							disabled: busy
@@ -338,10 +386,17 @@ export const EncryptionSettingsPanel = ({
 			{phase === 'showKey' && recoveryKeyToShow && (
 				<>
 					<Text
-						text={t(
-							'profile.encryption.showKey.explainer',
-							'Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
-						)}
+						text={
+							keyFromSilentSetup
+								? t(
+										'profile.encryption.showKey.silentExplainer',
+										'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.'
+									)
+								: t(
+										'profile.encryption.showKey.explainer',
+										'Das ist Ihr Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
+									)
+						}
 						type="standard"
 					/>
 					<div
@@ -421,7 +476,7 @@ export const EncryptionSettingsPanel = ({
 						item={{
 							label: t(
 								'profile.encryption.changeKey.cta',
-								'Wiederherstellungsschlüssel ändern'
+								'Ersatzschlüssel ändern'
 							),
 							type: BUTTON_TYPES.SECONDARY,
 							disabled: busy
@@ -432,7 +487,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.reset.explainer',
-							'Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
+							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
 						)}
 						type="standard"
 						className="tertiary"
@@ -464,7 +519,7 @@ export const EncryptionSettingsPanel = ({
 						<Text
 							text={t(
 								'profile.encryption.outOfSync.warning',
-								'Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Wiederherstellungsschlüssel ein, damit Ihr Verlauf hier lesbar wird.'
+								'Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Ersatzschlüssel ein, damit Ihr Verlauf hier lesbar wird.'
 							)}
 							type="standard"
 						/>
@@ -490,7 +545,7 @@ export const EncryptionSettingsPanel = ({
 					<Text
 						text={t(
 							'profile.encryption.reset.explainer',
-							'Wiederherstellungsschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
+							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
 						)}
 						type="standard"
 						className="tertiary"

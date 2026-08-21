@@ -51,7 +51,6 @@
 		"selectLanguage": "Выберите язык",
 		"stage": {
 			"title": "Консультации\n& Помощь",
-			"associationLogoAlt": "Логотип организации-поставщика",
 			"mobileHeadline": "Здесь есть место для ваших забот.",
 			"carrierLogoAlt": "Показать карту местоположений {{name}}"
 		},
@@ -181,7 +180,8 @@
 		"mediaCheck": {
 			"unchecked": "Изображение из анонимного чата – ещё не проверено",
 			"reveal": "Показать изображение",
-			"blocked": "Заблокировано проверкой безопасности"
+			"blocked": "Заблокировано проверкой безопасности",
+			"error": "Проверка безопасности недоступна – файл остаётся заблокированным"
 		}
 	},
 	"banner": {
@@ -278,6 +278,11 @@
 			"button": {
 				"label": "Начать видеозвонок"
 			}
+		}
+	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
 		}
 	},
 	"chatFlyout": {
@@ -627,7 +632,8 @@
 					"text": "Ссылка скопирована в буфер обмена!",
 					"title": "Ссылка скопирована"
 				},
-				"text": "Скопируйте ссылку на приглашение"
+				"text": "Скопируйте ссылку на приглашение",
+				"title": "Скопировать ссылку-приглашение в буфер обмена"
 			}
 		},
 		"create": {
@@ -1219,13 +1225,11 @@
 				"linkShort": "Почему это надежно"
 			},
 			"explainer": {
-				"badge": "НОВОЕ",
-				"headline": "Читать переписку можете только вы двое.",
+				"headline": "Конфиденциально от начала до конца",
 				"message": "Мне плохо.",
-				"you": "Вы",
-				"agency": "Консультационный центр",
 				"encrypted": "зашифровано",
-				"attack": "больше злоумышленник не получит",
+				"diagram": "Схема: ваше сообщение передаётся с вашего устройства в консультационный центр в зашифрованном виде — читаемым оно становится только там.",
+				"attack": "Похититель данных получит у нас лишь бессмысленный набор символов.",
 				"cipherLabel": "Перехваченные зашифрованные данные",
 				"key": "Ключ создается на вашем устройстве и остается там — у нас его нет.",
 				"protocol": "Открытый протокол <strong>Matrix</strong>, поддающийся независимой проверке.",
@@ -1415,6 +1419,12 @@
 		"myProfile": "Мой профиль",
 		"tools": "Мои инструменты"
 	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
+	},
 	"notifications": {
 		"error": "Не удалось",
 		"info": "Информация",
@@ -1442,8 +1452,22 @@
 			"showDetails": "Показать детали",
 			"preview": {
 				"unavailable": "Предпросмотр беседы пока недоступен — откройте чат, чтобы прочитать.",
-				"empty": "В этой беседе пока нет сообщений."
-			}
+				"empty": "В этой беседе пока нет сообщений.",
+				"image": "Изображение",
+				"file": "Файл",
+				"audio": "Аудиосообщение",
+				"video": "Видео",
+				"notice": "Уведомление",
+				"unsupported": "Неподдерживаемое сообщение",
+				"pending": "Ожидание расшифровки",
+				"roomUnavailable": "Разговор недоступен на этом устройстве",
+				"eventUnavailable": "Сообщение недоступно в локальной истории"
+			},
+			"loadOlder": "Загрузить предыдущие события",
+			"loadingOlder": "Загрузка предыдущих событий…",
+			"olderError": "Не удалось загрузить предыдущие события.",
+			"retryOlder": "Повторить",
+			"endOfHistory": "Конец истории событий"
 		}
 	},
 	"overlay": {
@@ -2031,10 +2055,6 @@
 			"copy": "Готовим ваше защищённое пространство для беседы. Это займёт всего несколько секунд …",
 			"ready": "Ваше защищённое пространство готово. Можно начинать."
 		},
-		"stepbar": {
-			"of": "с сайта",
-			"step": "Шаг"
-		},
 		"submitButton": {
 			"label": "Регистрация"
 		},
@@ -2139,7 +2159,54 @@
 			"bullet2": "- знать законы своего штата",
 			"headline": "Чтобы дать вам наилучший совет, нам нужен ваш почтовый индекс",
 			"label": "Ваш почтовый индекс",
-			"subline": "Почему? Потому что это наши эксперты:"
+			"subline": "Только ваш почтовый индекс — больше нам ничего не нужно.",
+			"digitLabel": "Почтовый индекс, цифра {{position}} из {{total}}",
+			"remaining_one": "Ещё {{count}} цифра",
+			"remaining_few": "Ещё {{count}} цифры",
+			"remaining_many": "Ещё {{count}} цифр",
+			"remaining_other": "Ещё {{count}} цифры",
+			"whyLocal": {
+				"title": "Почему консультация рядом с вами?",
+				"localHelp": "Ваш консультационный центр знает, какая помощь доступна рядом с вами.",
+				"stateLaw": "Он знает законы вашего федерального штата.",
+				"anonymous": "Ваши данные видит только этот один центр — вы остаётесь анонимными.",
+				"inPerson": "Если захотите, позже вы сможете продолжить разговор лично."
+			}
+		},
+		"handover": {
+			"badge": "Зарегистрированы",
+			"headline": "Готово.",
+			"subline": "Что будет дальше:",
+			"cta": "Написать запрос",
+			"encryption": "Зашифровано: ваш запрос могут прочитать только вы и специалисты вашего консультационного центра.",
+			"goToStep": "Перейти к шагу {{position}} из {{total}}",
+			"steps": {
+				"write": {
+					"title": "Вы пишете, что происходит",
+					"text": "Что случилось, где, с каких пор? Достаточно нескольких предложений."
+				},
+				"counsellor": {
+					"title": "Мы подбираем вашего консультанта",
+					"text": "С подходящей квалификацией — и со временем для вас."
+				},
+				"reply": {
+					"title": "Ответ в течение 2 рабочих дней",
+					"text": "На ваш запрос ответят лично и профессионально."
+				}
+			},
+			"status": {
+				"preparing": "Ваше пространство для беседы шифруется …",
+				"verifying": "Проверка: человек или бот …",
+				"queued": "Скоро ваша очередь …",
+				"ready": "Всё готово — можно писать",
+				"slow": "Это занимает больше времени, чем обычно",
+				"entering": "Открываем ваше пространство для беседы …"
+			}
+		},
+		"stepState": {
+			"done": "завершено",
+			"active": "текущий шаг",
+			"pending": "предстоит"
 		}
 	},
 	"releaseNote": {
@@ -2461,7 +2528,7 @@
 				"neu": "Непрочитанные",
 				"unread": "Непрочитанные",
 				"drafts": "Черновики",
-				"nearby": "Рядом",
+				"nearby": "Mail",
 				"create": "Создать",
 				"archive": "Архивировано",
 				"oneToOne": "Индивидуальная консультация",
@@ -2469,7 +2536,7 @@
 				"internalGroup": "Внутренний групповой чат",
 				"groups": "Круг общения",
 				"supervision": "Супервизия",
-				"chats": "Рядом"
+				"chats": "Mail"
 			},
 			"emptyFilterResult": "Нет консультаций, соответствующих поиску или фильтрам.",
 			"draftMetadataOnly": "Черновик сообщения сохранён."
@@ -2923,6 +2990,30 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
+	"voicePlayer": {
+		"label": "Voice message",
+		"play": "Play voice message",
+		"pause": "Pause voice message",
+		"timeline": "Timeline",
+		"jumpTo": "Jump to {{time}}",
+		"aria": "Voice message, {{duration}}, play",
+		"remaining": "{{remaining}} left of {{total}}",
+		"encrypted": "End-to-end encrypted",
+		"meta": {
+			"perSecond": "{{seconds}} seconds · click jumps to the second",
+			"perTile": "{{total}} · {{seconds}} s per tile"
+		}
+	},
 	"walkthrough": {
 		"step": {
 			"0": {
@@ -2962,6 +3053,24 @@
 		},
 		"title": "Тур"
 	},
+	"consultingTypes": {
+		"title": "Welcome to Caritas online counselling",
+		"intro": "I am looking for counselling on the following topic:",
+		"selectGroup": "Please select a topic",
+		"learnMore": "Learn more about how Caritas counselling works",
+		"info": "Info",
+		"details": {
+			"explanation": {
+				"title": "To advise you as well as possible, we need your postcode",
+				"description": "Why? Because then our specialists:\n•  know the support available around your place of residence\n•  know the laws of your federal state"
+			}
+		},
+		"overlay": {
+			"title": "How Caritas counselling works",
+			"close": "Close"
+		},
+		"register": "Register"
+	},
 	"anonymousChat": {
 		"headline": "Анонимная консультация",
 		"subline": "Выберите консультационный центр и сразу начните анонимную консультацию.",
@@ -2987,7 +3096,12 @@
 		"agencies": {
 			"noresults": "Для этой темы нет доступных консультационных центров."
 		},
-		"start": "Начать консультацию"
+		"start": "Начать консультацию",
+		"consent": {
+			"accept": "Я согласен",
+			"reject": "Я не согласен",
+			"mustAcceptToContinue": "Чтобы продолжить, необходимо принять нашу политику конфиденциальности."
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3156,6 +3270,22 @@
 			"cmd": "Cmd"
 		}
 	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
+		}
+	},
 	"anonymousConsent": {
 		"button": "Подтвердите",
 		"description": "После этого консультант может начать с вами чат.",
@@ -3241,6 +3371,80 @@
 			},
 			"back": "Назад",
 			"confirm": "Понятно"
+		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Консультация по переписке",
+			"summary": "Что изменилось в консультации по переписке — от первого запроса до архива.",
+			"step": {
+				"whatsNew": {
+					"title": "Что нового?",
+					"intro": "Вы уже знакомы с консультацией по переписке по прежней платформе. Этот короткий тур покажет, где теперь находятся привычные шаги работы — и что действительно ново."
+				},
+				"enquiries": {
+					"title": "Первичные запросы",
+					"intro": "Новые запросы, как и раньше, попадают в общий список — теперь он находится здесь. Пока запрос не принят, его видят все консультанты вашего консультационного центра."
+				},
+				"accepting": {
+					"title": "Принятие и первый ответ",
+					"intro": "Нажав «Принять», вы берёте запрос в свои консультации. Новое: обратившиеся автоматически получают первый ответ с самой важной информацией сразу после первого сообщения — вы можете начать без спешки."
+				},
+				"mySessions": {
+					"title": "Мои консультации",
+					"intro": "Принятые консультации находятся здесь — отсортированы по последнему сообщению, как вы привыкли."
+				},
+				"composer": {
+					"title": "Написание — новые возможности",
+					"intro": "Новое по сравнению с прежней платформой: вы можете отвечать в ветках, записывать голосовые сообщения и прикреплять файлы напрямую."
+				},
+				"archive": {
+					"title": "Архив",
+					"intro": "Завершённые консультации, как и раньше, перемещаются в архив — теперь он находится на этой вкладке."
+				}
+			}
 		}
 	}
 }

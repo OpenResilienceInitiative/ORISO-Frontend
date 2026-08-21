@@ -318,6 +318,31 @@ class ChatTransportService {
 		);
 	}
 
+	/**
+	 * Subscribe to newly cached events in one room without adding decryption,
+	 * active-view or read-receipt behavior. Exact-event consumers own the
+	 * decryption lifecycle so many activity cards can share one room listener.
+	 */
+	public onMatrixTimelineRaw(
+		matrixRoomId: string,
+		listener: TimelineListener
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) return null;
+
+		const handleTimeline: TimelineListener = (
+			event,
+			room,
+			toStartOfTimeline
+		) => {
+			if (room?.roomId !== matrixRoomId || toStartOfTimeline) return;
+			listener(event, room, false);
+		};
+
+		(matrixClient as any).on('Room.timeline', handleTimeline);
+		return () => (matrixClient as any).off('Room.timeline', handleTimeline);
+	}
+
 	public onMatrixTimeline(
 		matrixRoomId: string,
 		listener: TimelineListener

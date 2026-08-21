@@ -17,7 +17,8 @@ import {
 	apiClearEventNotifications,
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
-	apiMarkEventNotificationRead
+	apiMarkEventNotificationRead,
+	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
@@ -118,6 +119,10 @@ type NotificationsContextProps = {
 	addNotification: Dispatch<NotificationDefaultType | IncomingVideoCallProps>;
 	addEventNotification: (event: EventNotificationInput) => void;
 	refreshNotificationFeed: () => void;
+	loadOlderNotifications: () => Promise<void>;
+	hasOlderNotifications: boolean;
+	isLoadingOlderNotifications: boolean;
+	olderNotificationsError: boolean;
 	removeNotification: Function;
 	markNotificationAsRead: (id: string) => void;
 	markAllNotificationsAsRead: () => void;
@@ -127,16 +132,132 @@ type NotificationsContextProps = {
 export const NotificationsContext =
 	createContext<NotificationsContextProps | null>(null);
 
+const normalizeEventNotification = (
+	item: EventNotificationFeedItem
+): NotificationFeedItem => ({
+	id: String(item.id),
+	type: NOTIFICATION_TYPE_INFO,
+	// Left empty rather than defaulted to an English literal: the presentation
+	// layer already resolves a localized title from the event type, and
+	// 'Notification' rendered untranslated inside the German UI.
+	title: item.title || '',
+	text: item.text || '',
+	eventType: item.eventType || 'event',
+	createdAt: item.createdAt || new Date().toISOString(),
+	readAt: item.readAt ?? null,
+	actionPath: item.actionPath,
+	actionLabel: item.actionLabel,
+	sourceSessionId:
+		item.sourceSessionId != null ? String(item.sourceSessionId) : undefined,
+	params: parseEventActionParams(item.params),
+	category: item.category === 'message' ? 'message' : 'system'
+});
+
+const sortNewestFirst = (items: NotificationFeedItem[]) =>
+	items.sort((left, right) => {
+		const timeOrder =
+			new Date(right.createdAt).getTime() -
+			new Date(left.createdAt).getTime();
+		return timeOrder || left.id.localeCompare(right.id);
+	});
+
+/** Client-side rows (incoming calls, toasts) the server never knows about. */
+const isLocalItem = (item: NotificationFeedItem) =>
+	item.id.startsWith('local-');
+
+/**
+ * Cap on client-side rows only.
+ *
+ * The feed itself is deliberately uncapped now that older pages load on demand
+ * (#930), but `local-*` rows are never reconciled away by a page-0 response, so
+ * without a bound they accumulate for as long as the tab lives.
+ */
+const MAX_LOCAL_FEED_ITEMS = NOTIFICATION_FEED_MAX_ITEMS;
+
+const capLocalItems = (
+	items: NotificationFeedItem[]
+): NotificationFeedItem[] => {
+	const local = items.filter(isLocalItem);
+	if (local.length <= MAX_LOCAL_FEED_ITEMS) {
+		return items;
+	}
+	// `items` is already newest-first, so the tail is the oldest local rows.
+	const dropped = new Set(
+		local.slice(MAX_LOCAL_FEED_ITEMS).map((item) => item.id)
+	);
+	return items.filter((item) => !dropped.has(item.id));
+};
+
+/**
+ * Merge a freshly fetched page into the feed, newest first, with ids as the
+ * deterministic tie-break and dedupe key.
+ *
+ * `windowStart` marks the oldest item of the incoming page. Existing backend
+ * rows at or above that point but missing from the response were deleted or
+ * cleared on the server and must disappear — a plain union kept them on screen
+ * until a reload. Rows below the window belong to older pages the response
+ * never covered, and local rows are not the server's to remove.
+ */
+const mergeNotificationFeed = (
+	incoming: NotificationFeedItem[],
+	existing: NotificationFeedItem[],
+	options: { reconcileWindow?: boolean; olderPagesLoaded?: boolean } = {}
+): NotificationFeedItem[] => {
+	const incomingIds = new Set(incoming.map((item) => item.id));
+	// An empty page describes no window, so it can only be read as "nothing
+	// left" while page 0 is the whole feed. With older pages loaded it would
+	// otherwise delete rows this response never covered, and one transient
+	// empty answer would blank everything.
+	const reconcile =
+		options.reconcileWindow &&
+		(incoming.length > 0 || !options.olderPagesLoaded);
+	const windowStart = incoming.length
+		? Math.min(
+				...incoming.map((item) => new Date(item.createdAt).getTime())
+			)
+		: Number.NEGATIVE_INFINITY;
+
+	const retained = reconcile
+		? existing.filter((item) => {
+				if (incomingIds.has(item.id) || isLocalItem(item)) {
+					return true;
+				}
+				return new Date(item.createdAt).getTime() < windowStart;
+			})
+		: existing;
+
+	const byId = new Map(retained.map((item) => [item.id, item]));
+	incoming.forEach((item) => byId.set(item.id, item));
+	return capLocalItems(sortNewestFirst(Array.from(byId.values())));
+};
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
 	const [notificationFeed, setNotificationFeed] = useState<
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	const [hasOlderNotifications, setHasOlderNotifications] = useState(false);
+	const [isLoadingOlderNotifications, setIsLoadingOlderNotifications] =
+		useState(false);
+	const [olderNotificationsError, setOlderNotificationsError] =
+		useState(false);
+	const highestLoadedPageRef = useRef(0);
+	const loadingOlderRef = useRef(false);
+	const feedEpochRef = useRef(0);
 	// #576: id of the newest event slot we already reconciled, so a feed refresh
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
 	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	const resetFeedState = useCallback(() => {
+		loadingOlderRef.current = false;
+		setNotificationFeed([]);
+		setUnreadNotificationCount(0);
+		setHasOlderNotifications(false);
+		setIsLoadingOlderNotifications(false);
+		setOlderNotificationsError(false);
+		highestLoadedPageRef.current = 0;
+	}, []);
 
 	// #576: play the configured sound for a genuinely new, unread top event —
 	// decoupled from the OS popup, so it also sounds with the tab focused. The
@@ -169,12 +290,13 @@ export function NotificationsProvider(props) {
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
 		if (!accessToken) {
+			feedEpochRef.current += 1;
 			// Do not hit protected endpoint before auth is available.
-			setNotificationFeed([]);
-			setUnreadNotificationCount(0);
+			resetFeedState();
 			return;
 		}
 
+		const feedEpoch = feedEpochRef.current;
 		try {
 			const response = await apiGetEventNotifications(
 				0,
@@ -182,35 +304,73 @@ export function NotificationsProvider(props) {
 			);
 			const normalized: NotificationFeedItem[] = (
 				response?.items || []
-			).map((item) => ({
-				id: String(item.id),
-				type:
-					item.category === 'message'
-						? NOTIFICATION_TYPE_INFO
-						: NOTIFICATION_TYPE_INFO,
-				title: item.title || 'Notification',
-				text: item.text || '',
-				eventType: item.eventType || 'event',
-				createdAt: item.createdAt || new Date().toISOString(),
-				readAt: item.readAt ?? null,
-				actionPath: item.actionPath,
-				actionLabel: item.actionLabel,
-				sourceSessionId:
-					item.sourceSessionId != null
-						? String(item.sourceSessionId)
-						: undefined,
-				params: parseEventActionParams(item.params),
-				category: item.category === 'message' ? 'message' : 'system'
-			}));
+			).map(normalizeEventNotification);
+			if (feedEpoch !== feedEpochRef.current) return;
 			maybePlaySoundForNewEvent(normalized);
-			setNotificationFeed(normalized);
+			setNotificationFeed((existing) =>
+				// Page 0 is authoritative for its own window, so a row the
+				// server dropped disappears here instead of surviving until a
+				// reload.
+				mergeNotificationFeed(normalized, existing, {
+					reconcileWindow: true,
+					olderPagesLoaded: highestLoadedPageRef.current > 0
+				})
+			);
+			if (highestLoadedPageRef.current === 0) {
+				setHasOlderNotifications(
+					normalized.length === NOTIFICATION_FEED_MAX_ITEMS
+				);
+			}
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
+			// A healthy feed must not keep rendering the older-page error: it
+			// was only ever cleared inside loadOlderNotifications, so a user who
+			// never retried saw the error state on every subsequent refresh.
+			setOlderNotificationsError(false);
 		} catch (error) {
 			// Keep existing state but log failures to simplify diagnostics.
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, [maybePlaySoundForNewEvent]);
+	}, [maybePlaySoundForNewEvent, resetFeedState]);
+
+	const loadOlderNotifications = useCallback(async () => {
+		if (loadingOlderRef.current || !hasOlderNotifications) return;
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) return;
+
+		loadingOlderRef.current = true;
+		setIsLoadingOlderNotifications(true);
+		setOlderNotificationsError(false);
+		const page = highestLoadedPageRef.current + 1;
+		const feedEpoch = feedEpochRef.current;
+		try {
+			const response = await apiGetEventNotifications(
+				page,
+				NOTIFICATION_FEED_MAX_ITEMS
+			);
+			const normalized = (response?.items || []).map(
+				normalizeEventNotification
+			);
+			if (feedEpoch !== feedEpochRef.current) return;
+			setNotificationFeed((existing) =>
+				mergeNotificationFeed(normalized, existing)
+			);
+			highestLoadedPageRef.current = page;
+			setHasOlderNotifications(
+				normalized.length === NOTIFICATION_FEED_MAX_ITEMS
+			);
+		} catch (error) {
+			if (feedEpoch !== feedEpochRef.current) return;
+			setOlderNotificationsError(true);
+			// eslint-disable-next-line no-console
+			console.warn('Failed to load older notification feed', error);
+		} finally {
+			if (feedEpoch === feedEpochRef.current) {
+				loadingOlderRef.current = false;
+				setIsLoadingOlderNotifications(false);
+			}
+		}
+	}, [hasOlderNotifications]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();
@@ -299,7 +459,7 @@ export function NotificationsProvider(props) {
 				category: event.category === 'message' ? 'message' : 'system'
 			};
 			setNotificationFeed((existing) =>
-				[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+				mergeNotificationFeed([feedItem], existing)
 			);
 			setUnreadNotificationCount((value) => value + 1);
 		},
@@ -359,16 +519,13 @@ export function NotificationsProvider(props) {
 	}, []);
 
 	const clearNotificationFeed = useCallback(() => {
+		feedEpochRef.current += 1;
 		const accessToken = getValueFromCookie('keycloak');
-		if (!accessToken) {
-			setNotificationFeed([]);
-			setUnreadNotificationCount(0);
-			return;
+		if (accessToken) {
+			apiClearEventNotifications().catch(() => undefined);
 		}
-		apiClearEventNotifications().catch(() => undefined);
-		setNotificationFeed([]);
-		setUnreadNotificationCount(0);
-	}, []);
+		resetFeedState();
+	}, [resetFeedState]);
 
 	return (
 		<NotificationsContext.Provider
@@ -381,6 +538,10 @@ export function NotificationsProvider(props) {
 				addNotification,
 				addEventNotification,
 				refreshNotificationFeed: refreshNotificationFeedSafe,
+				loadOlderNotifications,
+				hasOlderNotifications,
+				isLoadingOlderNotifications,
+				olderNotificationsError,
 				removeNotification,
 				markNotificationAsRead,
 				markAllNotificationsAsRead,

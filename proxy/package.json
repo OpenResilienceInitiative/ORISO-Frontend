@@ -7,7 +7,7 @@
 		"start": "node ./server",
 		"dev:server": "nodemon -e ts --watch server.js --exec \\\"npm run start\\\"",
 		"debug": "node --inspect-brk ./server",
-		"test": "node --test server.test.js"
+		"test": "node --test server.test.js lib/staticServing.test.js"
 	},
 	"repository": {
 		"type": "git",

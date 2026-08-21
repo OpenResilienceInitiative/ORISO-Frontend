@@ -26,8 +26,8 @@ const CARRIERS: {
 	name: string;
 	Logo: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
 }[] = [
-	{ id: 'skf', name: 'SkF', Logo: SkfLogo },
 	{ id: 'caritas', name: 'Caritas', Logo: CaritasLogo },
+	{ id: 'skf', name: 'SkF', Logo: SkfLogo },
 	{ id: 'skm', name: 'SkM', Logo: SkmLogo },
 	{ id: 'malteser', name: 'Malteser', Logo: MalteserLogo },
 	{ id: 'kreuzbund', name: 'Kreuzbund', Logo: KreuzbundLogo },
@@ -79,7 +79,7 @@ export const StageCarrierLogos = ({
 				<li key={id}>
 					<button
 						type="button"
-						className="stage__logo"
+						className={`stage__logo stage__logo--${id}`}
 						aria-label={translate('app.stage.carrierLogoAlt', {
 							name
 						})}

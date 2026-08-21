@@ -573,8 +573,9 @@ export const Registration = () => {
 			>
 				<Box
 					sx={{
-						maxWidth: '780px !important',
-						width: '100%'
+						boxSizing: 'border-box',
+						width: '100%',
+						maxWidth: '100%'
 					}}
 				>
 					{activeStep ? (
@@ -613,7 +614,8 @@ export const Registration = () => {
 									<Box
 										sx={{
 											maxWidth: '780px',
-											mx: 'auto'
+											mx: 'auto',
+											px: { xs: 2, sm: 3, lg: 4 }
 										}}
 									>
 										{(() => {
@@ -639,12 +641,6 @@ export const Registration = () => {
 										'position': 'fixed',
 										'bottom': '0',
 										'right': '0',
-										'px': {
-											xs: '20px',
-											sm: '24px',
-											md: '32px',
-											lg: '32px'
-										},
 										'width': { xs: '100vw', lg: '60vw' },
 										'backgroundColor':
 											'rgba(255, 255, 255, 0.94)',
@@ -658,6 +654,7 @@ export const Registration = () => {
 											xs: 'calc(12px + env(safe-area-inset-bottom))',
 											sm: 0
 										},
+										'px': { xs: 2, sm: 3, lg: 4 },
 										'zIndex': 65,
 										'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
 										'@keyframes registrationFooterEnter': {
