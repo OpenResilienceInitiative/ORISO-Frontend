@@ -113,14 +113,13 @@ export const RegistrationStepper = ({
 			className="registrationStepperSticky"
 			sx={{
 				'position': 'sticky',
-				'top': { xs: '48px', md: '72px' },
+				'top': { xs: '0px', lg: '72px' },
 				'zIndex': 68,
 				'boxSizing': 'border-box',
-				'width': { xs: '100vw', lg: '60vw' },
-				'ml': {
-					xs: 'calc((100% - 100vw) / 2)',
-					lg: 'calc((100% - 60vw) / 2)'
-				},
+				// Fill the registration column (60vw on desktop). Do not use
+				// vw + negative margin breakouts — those overflow into the stage.
+				'width': '100%',
+				'maxWidth': '100%',
 				'px': { xs: 2, sm: 3, lg: 4 },
 				'pt': { xs: 1, md: 1.5 },
 				'backgroundColor': 'rgba(255, 255, 255, 0.96)',
