@@ -16,6 +16,7 @@ import { AgencyDataInterface } from '../../../globalState/interfaces';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { AgencyLanguages } from './AgencyLanguages';
 import { AgencyDetails, getAgencyDetails } from './agencyDetails';
+import { formatOpeningHours } from '../../../utils/openingHours';
 import {
 	DepartmentLegalSection,
 	getDepartmentForTopic
@@ -159,6 +160,17 @@ export const AgencyDetailsPanel = ({
 		() => getAgencyDetails(agency, department),
 		[agency, department]
 	);
+	// The admin stores structured slots as JSON inside the same string that used
+	// to hold free text, so this must be formatted before display — otherwise a
+	// Beratungsstelle with structured hours would show raw JSON here. Legacy free
+	// text passes through unchanged.
+	const openingHours = useMemo(
+		() =>
+			formatOpeningHours(details.hours, (key, fallback) =>
+				t(key, fallback ?? key)
+			),
+		[details.hours, t]
+	);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);
 	const webMapHref = useMemo(() => osmLink(details), [details]);
 	const nativeMapHref = useMemo(
@@ -299,7 +311,7 @@ export const AgencyDetailsPanel = ({
 					<AgencyLanguages agencyId={agency.id} />
 				</InfoRow>
 
-				{details.hours && (
+				{openingHours && (
 					<InfoRow
 						icon={<ScheduleRoundedIcon fontSize="small" />}
 						label={t(
@@ -307,7 +319,7 @@ export const AgencyDetailsPanel = ({
 							'Öffnungszeiten'
 						)}
 					>
-						{details.hours}
+						{openingHours}
 					</InfoRow>
 				)}
 
