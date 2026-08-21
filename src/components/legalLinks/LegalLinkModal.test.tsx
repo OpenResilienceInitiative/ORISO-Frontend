@@ -128,10 +128,17 @@ describe('LegalLinkModal', () => {
 			screen.queryByText('Vom Träger gepflegter Datenschutztext.')
 		).toBeNull();
 
+		expect(
+			screen.getByText(/dieser Hinweis gilt für die Plattform selbst/i)
+		).toBeTruthy();
+
 		const link = screen.getByRole('link');
 		expect(link.getAttribute('href')).toBe(
 			'https://platform.example/datenschutz'
 		);
-		expect(link.getAttribute('rel')).toContain('noopener');
+		expect(link.getAttribute('target')).toBe('_blank');
+		const rel = link.getAttribute('rel') ?? '';
+		expect(rel).toContain('noopener');
+		expect(rel).toContain('noreferrer');
 	});
 });

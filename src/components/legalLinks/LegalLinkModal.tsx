@@ -52,8 +52,14 @@ export const LegalLinkModal = ({
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
 
+	const platformNoteFallback =
+		kind === 'privacy'
+			? 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.'
+			: 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — wer die Plattform betreibt, steht im vollständigen Impressum.';
 	const platformNote =
-		scope === 'platform' ? translate(platformLegalNoteKey(kind)) : null;
+		scope === 'platform'
+			? translate(platformLegalNoteKey(kind), platformNoteFallback)
+			: null;
 
 	return (
 		<OrisoDialog
@@ -75,8 +81,8 @@ export const LegalLinkModal = ({
 					className="legalLinkModal__platform"
 					data-testid="legal-platform"
 				>
-					{platformNote?.split('\n\n').map((paragraph, index) => (
-						<p key={index}>{paragraph}</p>
+					{platformNote?.split('\n\n').map((paragraph) => (
+						<p key={paragraph}>{paragraph}</p>
 					))}
 					{url && (
 						<p>
@@ -85,7 +91,10 @@ export const LegalLinkModal = ({
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								{translate(PLATFORM_LEGAL_FULL_TEXT_KEY)}
+								{translate(
+									PLATFORM_LEGAL_FULL_TEXT_KEY,
+									'Vollständigen Text öffnen'
+								)}
 							</a>
 						</p>
 					)}
