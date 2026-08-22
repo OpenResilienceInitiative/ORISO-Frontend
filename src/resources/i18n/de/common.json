@@ -2597,6 +2597,10 @@
 				"headline": "Beratungsstellen zur Postleitzahl",
 				"languages": "Diese Beratungsstelle berät Sie auf:"
 			},
+			"type": {
+				"team": "Teamberatung",
+				"single": "Einzelberatung"
+			},
 			"details": {
 				"aboutLabel": "Zu dieser Beratungsstelle",
 				"addressLabel": "Adresse",
