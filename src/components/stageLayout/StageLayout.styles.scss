@@ -208,12 +208,23 @@
 		height: 230px;
 		overflow: hidden;
 
-		// Design 8a: the registration steps carry the brand row only. The
-		// sheet overlap below stays (-28px), so the bar needs its own
-		// padding to keep the row clear of the rounded sheet edge.
+		// Design 8a: the registration steps carry the brand row only.
 		&--bar {
 			height: auto;
-			padding-bottom: 44px;
+			// The content sheet below overlaps the head by 28px, and the row
+			// needs to stay clear of that rounded edge — hence more than 28.
+			padding-bottom: 40px;
+
+			// In the tall hero the row floats over the artwork, so it is taken
+			// out of flow. Here there is no artwork and nothing else to give
+			// the head any height: left absolute it measured 0, the head
+			// collapsed to its padding, and the sheet covered the brand, the
+			// language switch and the login action along with their focus
+			// rings. Back in flow the head measures itself from the row.
+			.stageMobileHero__bar {
+				position: static;
+				padding: 14px 20px 0;
+			}
 		}
 		background: radial-gradient(
 			120% 90% at 78% 8%,
