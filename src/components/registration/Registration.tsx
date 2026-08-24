@@ -591,6 +591,13 @@ export const Registration = () => {
 			>
 				<Box
 					sx={{
+						// Top of the chain: `.stageLayout__content` is already a
+						// flex column filling the viewport, so the growth starts
+						// being passed on here.
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+						flexDirection: 'column',
 						boxSizing: 'border-box',
 						width: '100%',
 						maxWidth: '100%'
@@ -603,6 +610,14 @@ export const Registration = () => {
 							</Helmet>
 							<form
 								onSubmit={handleSubmit}
+								// Part of the same chain: a plain block form
+								// would swallow the growth again.
+								style={{
+									flex: 1,
+									minHeight: 0,
+									display: 'flex',
+									flexDirection: 'column'
+								}}
 								data-cy="registration-form"
 								data-cy-step={step}
 								data-cy-steps={availableSteps
@@ -611,6 +626,18 @@ export const Registration = () => {
 							>
 								<Box
 									sx={{
+										// The stage column is a flex column that
+										// fills the viewport, but every box below
+										// it defaulted to `flex: 0 1 auto`, so the
+										// step body stopped at its own height and
+										// the leftover space was dead. Passing the
+										// growth down lets a step centre itself in
+										// what is actually left (see the postcode
+										// step) without anyone computing a height.
+										flex: 1,
+										minHeight: 0,
+										display: 'flex',
+										flexDirection: 'column',
 										marginBottom: {
 											xs: '144px',
 											sm: '112px'
@@ -633,9 +660,20 @@ export const Registration = () => {
 
 									<Box
 										sx={{
-											maxWidth: '780px',
-											mx: 'auto',
-											px: { xs: 2, sm: 3, lg: 4 }
+											'flex': 1,
+											'minHeight': 0,
+											'display': 'flex',
+											'flexDirection': 'column',
+											'width': '100%',
+											'maxWidth': '780px',
+											'mx': 'auto',
+											'px': { xs: 2, sm: 3, lg: 4 },
+											// The band above is opaque and sits
+											// flush; without this the first line of
+											// every step starts hard against its
+											// lower edge.
+											'pt': 1.5,
+											'& > *': { minHeight: 0 }
 										}}
 									>
 										{(() => {
