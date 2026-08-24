@@ -28,10 +28,13 @@ import {
 
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
-	fr: { extraInLocale: 5, missingInLocale: 699 },
-	ru: { extraInLocale: 5, missingInLocale: 699 },
-	ti: { extraInLocale: 5, missingInLocale: 702 },
-	tr: { extraInLocale: 5, missingInLocale: 699 }
+	// Raised by the pre-dev merge that landed the anonymousChat leave-queue /
+	// no-availability copy in de (and en) only — unrelated to this PR's own
+	// scope, translations still need to land in fr/ru/ti/tr.
+	fr: { extraInLocale: 5, missingInLocale: 714 },
+	ru: { extraInLocale: 5, missingInLocale: 714 },
+	ti: { extraInLocale: 5, missingInLocale: 717 },
+	tr: { extraInLocale: 5, missingInLocale: 714 }
 } as const;
 
 const locales = { en, fr, ru, ti, tr } as const;
