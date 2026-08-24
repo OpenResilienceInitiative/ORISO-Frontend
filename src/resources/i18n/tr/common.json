@@ -1413,6 +1413,8 @@
 		"language": "Dil",
 		"drafts": "Taslaklar",
 		"liveChat": "Canlı sohbet",
+		"liveChatToggleActive": "Canlı sohbet kullanılabilir",
+		"liveChatToggleInactive": "Canlı sohbet kullanılamıyor",
 		"notifications": "Bildirimler",
 		"overview": "Genel Bakış",
 		"profile": "Profil",
@@ -1919,7 +1921,14 @@
 				"websiteLabel": "Web sitesi"
 			},
 			"search": "Bir posta kodu arayın",
-			"summary": "Danışma merkeziniz:"
+			"summary": "Danışma merkeziniz:",
+			"legal": {
+				"department": "Uzmanlık alanı",
+				"headline": "Danışma merkezinin veri koruma bilgileri",
+				"imprintHeadline": "Danışma merkezinin künyesi",
+				"label": "Yasal bilgiler",
+				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor."
+			}
 		},
 		"agencyPreselected": {
 			"headline": "Lütfen posta kodunuzu girin",
@@ -2057,11 +2066,11 @@
 				"4": "Brandenburg",
 				"5": "Bremen",
 				"6": "Hamburg",
-				"7": "Hesse",
+				"7": "Hessen",
 				"8": "Mecklenburg-Batı Pomeranya",
 				"9": "Aşağı Saksonya",
 				"10": "Kuzey Ren-Vestfalya",
-				"11": "Rhineland-Palatinate",
+				"11": "Rheinland-Pfalz",
 				"12": "Saarland",
 				"13": "Saksonya",
 				"14": "Saksonya-Anhalt",
@@ -2086,6 +2095,9 @@
 				"backButtonLabel": "Başka bir konu seçin",
 				"nextButtonLabel": "Konuyu seçin ve devam edin"
 			},
+			"empty": "Şu anda hiçbir konu mevcut değil. Lütfen daha sonra tekrar deneyin.",
+			"loadError": "Konular yüklenemedi. Lütfen tekrar deneyin.",
+			"loadErrorRetry": "Tekrar dene",
 			"oneResult": "Size şu konularda tavsiyelerde bulunuyoruz",
 			"subline": "Danışmanlık hizmetlerimizden bir konu seçin.",
 			"summary": "Senin konun:"
@@ -2128,6 +2140,14 @@
 			},
 			"twoFactorAuth": {
 				"label": "Şifremi iki faktörlü kimlik doğrulamayla ek olarak koru"
+			},
+			"email": {
+				"label": "E-posta adresi",
+				"info": "İsteğe bağlı. Yalnızca iki faktörlü kimlik doğrulama gibi güvenlik işlevleri için kullanılır.",
+				"error": {
+					"required": "Lütfen bir e-posta adresi girin.",
+					"invalid": "Lütfen geçerli bir e-posta adresi girin."
+				}
 			}
 		},
 		"back": "Geri",
@@ -2201,6 +2221,7 @@
 				"inPerson": "İsterseniz daha sonra yüz yüze de görüşmeye devam edebilirsiniz."
 			}
 		},
+		"registering": "Kayıt yapılıyor…",
 		"handover": {
 			"badge": "Kayıtlı",
 			"headline": "Tamamdır.",
@@ -2238,6 +2259,14 @@
 			"done": "tamamlandı",
 			"active": "geçerli adım",
 			"pending": "bekliyor"
+		},
+		"stepbar": {
+			"of": "/",
+			"step": "Adım"
+		},
+		"stepper": {
+			"progress": "{{total}} adımdan {{current}}. adım",
+			"progressShort": "Adım {{current}}/{{total}}"
 		}
 	},
 	"releaseNote": {
