@@ -2549,6 +2549,10 @@
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
 			},
+			"type": {
+				"team": "Team counselling",
+				"single": "Single counselling"
+			},
 			"details": {
 				"aboutLabel": "About this center",
 				"addressLabel": "Address",
@@ -4023,7 +4027,7 @@
 			"positionCountSuffix": "still ahead of you",
 			"connecting": "Connecting …",
 			"insteadOfWaiting": "Instead of waiting",
-			"requestLocalCounselor": "Send on-site consultation request",
+			"requestLocalCounselor": "Start mail counselling",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice",
@@ -4313,6 +4317,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Send me an email",
+			"emailHint": "What you discuss here never appears in that email.",
+			"browser": "Give me a signal here",
+			"browserHint": "No address needed — but it only works on this device.",
+			"both": "Both, and let me set a password now",
+			"bothHint": "Recommended. That way you can get back in if you forget something."
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
@@ -4460,5 +4472,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "Monday",
+		"tuesday": "Tuesday",
+		"wednesday": "Wednesday",
+		"thursday": "Thursday",
+		"friday": "Friday",
+		"saturday": "Saturday",
+		"sunday": "Sunday"
 	}
 }

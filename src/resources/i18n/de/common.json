@@ -2597,6 +2597,10 @@
 				"headline": "Beratungsstellen zur Postleitzahl",
 				"languages": "Diese Beratungsstelle berät Sie auf:"
 			},
+			"type": {
+				"team": "Teamberatung",
+				"single": "Einzelberatung"
+			},
 			"details": {
 				"aboutLabel": "Zu dieser Beratungsstelle",
 				"addressLabel": "Adresse",
@@ -4121,7 +4125,7 @@
 			"positionCountSuffix": "Noch vor Ihnen",
 			"connecting": "Wird verbunden …",
 			"insteadOfWaiting": "Statt zu warten",
-			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
+			"requestLocalCounselor": "Mail Beratung starten",
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden",
@@ -4403,6 +4407,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Schreiben Sie mir eine E-Mail",
+			"emailHint": "Was Sie hier besprechen, steht nie in dieser E-Mail.",
+			"browser": "Geben Sie mir hier ein Signal",
+			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
+			"both": "Beides, und Passwort jetzt selbst festlegen",
+			"bothHint": "Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen."
+		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
@@ -4550,5 +4562,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "Montag",
+		"tuesday": "Dienstag",
+		"wednesday": "Mittwoch",
+		"thursday": "Donnerstag",
+		"friday": "Freitag",
+		"saturday": "Samstag",
+		"sunday": "Sonntag"
 	}
 }

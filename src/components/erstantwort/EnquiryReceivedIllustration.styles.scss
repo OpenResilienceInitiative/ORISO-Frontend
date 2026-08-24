@@ -1,0 +1,15 @@
+@import '../../resources/styles/settings';
+
+/* Decorative picture above the first post-dispatch bubble — ORISO-Frontend#825. */
+
+.enquiryReceivedIllustration {
+	margin-top: 12px;
+
+	svg {
+		display: block;
+		width: 100%;
+		height: auto;
+		max-width: 320px;
+		border-radius: $box-border-radius;
+	}
+}

@@ -3438,5 +3438,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "ሰኑይ",
+		"tuesday": "ሰሉስ",
+		"wednesday": "ረቡዕ",
+		"thursday": "ሓሙስ",
+		"friday": "ዓርቢ",
+		"saturday": "ቀዳም",
+		"sunday": "ሰንበት"
 	}
 }
