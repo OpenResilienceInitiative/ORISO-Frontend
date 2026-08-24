@@ -53,7 +53,6 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"associationLogoAlt": "Logo de l'organisation prestataire",
 			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
@@ -4550,5 +4549,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "lundi",
+		"tuesday": "mardi",
+		"wednesday": "mercredi",
+		"thursday": "jeudi",
+		"friday": "vendredi",
+		"saturday": "samedi",
+		"sunday": "dimanche"
 	}
 }

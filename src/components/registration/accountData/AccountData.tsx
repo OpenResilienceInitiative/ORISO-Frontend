@@ -26,13 +26,17 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
+import {
+	LegalLinksContext,
+	TProvidedLegalLink
+} from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
 	RegistrationContext,
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
+import { apiGetDepartmentLegal } from '../../../api/apiGetDepartmentLegal';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
@@ -52,6 +56,7 @@ import {
 	regeneratePseudonym,
 	type Pseudonym
 } from '../../../utils/pseudonymGenerator';
+import { resolveLegalContent } from '../../../utils/legalContent';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
 import { allPasswordCriteriaPass } from './passwordRules';
@@ -60,8 +65,54 @@ import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
-import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
 import { toRegistrationUsername } from './registrationUsername';
+
+/**
+ * Checkbox label for registration data protection: department consent
+ * sentence when present (language already resolved), otherwise the platform
+ * i18n + LegalLinks sentence. Consent text is shown as-is — no client-side
+ * token substitution. While the department legal request is in flight, render
+ * nothing so the i18n fallback does not flash before Träger text arrives.
+ */
+export const DataProtectionCheckboxLabel: FC<{
+	consentSentence: string | null;
+	isLoading: boolean;
+	legalLinks: TProvidedLegalLink[];
+}> = ({ consentSentence, isLoading, legalLinks }) => {
+	const { t } = useTranslation();
+
+	if (isLoading) {
+		return null;
+	}
+
+	if (consentSentence) {
+		return (
+			<Typography data-cy="registration-data-protection-label">
+				{consentSentence}
+			</Typography>
+		);
+	}
+
+	return (
+		<Typography data-cy="registration-data-protection-label">
+			<LegalLinks
+				delimiter=", "
+				filter={(legalLink) => legalLink.registration}
+				legalLinks={legalLinks}
+				params={{ aid: null }}
+				prefix={t('registration.dataProtection.label.prefix')}
+				lastDelimiter={t('registration.dataProtection.label.and')}
+				suffix={t('registration.dataProtection.label.suffix')}
+			>
+				{(label, url) => (
+					<Link target="_blank" href={url}>
+						{label}
+					</Link>
+				)}
+			</LegalLinks>
+		</Typography>
+	);
+};
 
 const suggestButtonSx = (filled: boolean) =>
 	({
@@ -141,6 +192,17 @@ export const AccountData: FC<{
 	const [username, setUsername] = useState<string>(
 		restoredDraft?.username ?? ''
 	);
+	/** Resolved department consent sentence for the UI language, or null. */
+	const [departmentConsentSentence, setDepartmentConsentSentence] = useState<
+		string | null
+	>(null);
+	const { setDisabledNextButton, registrationData } =
+		useContext(RegistrationContext);
+	const agencyId = registrationData?.agency?.id;
+	const topicId = registrationData?.mainTopic?.id;
+	const [isDepartmentLegalLoading, setIsDepartmentLegalLoading] = useState(
+		() => !!(agencyId && topicId)
+	);
 	const { tenant } = useContext(TenantContext);
 	const emailVisible = tenant?.settings?.emailVisible ?? false;
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
@@ -161,8 +223,34 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
-	const { setDisabledNextButton, registrationData } =
-		useContext(RegistrationContext);
+
+	useEffect(() => {
+		if (!agencyId || !topicId) {
+			setDepartmentConsentSentence(null);
+			setIsDepartmentLegalLoading(false);
+			return;
+		}
+
+		const abortController = new AbortController();
+		setIsDepartmentLegalLoading(true);
+		setDepartmentConsentSentence(null);
+		apiGetDepartmentLegal(agencyId, topicId, abortController.signal).then(
+			(legal) => {
+				if (abortController.signal.aborted) {
+					return;
+				}
+				const resolved = resolveLegalContent(
+					legal?.dpp?.consentText,
+					locale
+				);
+				const sentence = resolved?.html?.trim() || null;
+				setDepartmentConsentSentence(sentence);
+				setIsDepartmentLegalLoading(false);
+			}
+		);
+
+		return () => abortController.abort();
+	}, [agencyId, topicId, locale]);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -695,42 +783,14 @@ export const AccountData: FC<{
 						/>
 					}
 					label={
-						<Typography>
-							<LegalLinks
-								delimiter={', '}
-								filter={(legalLink) => legalLink.registration}
-								legalLinks={legalLinks}
-								params={{ aid: null }}
-								prefix={t(
-									'registration.dataProtection.label.prefix'
-								)}
-								lastDelimiter={t(
-									'registration.dataProtection.label.and'
-								)}
-								suffix={t(
-									'registration.dataProtection.label.suffix'
-								)}
-							>
-								{(label, url) => (
-									<Link target="_blank" href={url}>
-										{label}
-									</Link>
-								)}
-							</LegalLinks>
-						</Typography>
+						<DataProtectionCheckboxLabel
+							consentSentence={departmentConsentSentence}
+							isLoading={isDepartmentLegalLoading}
+							legalLinks={legalLinks}
+						/>
 					}
 				/>
 			</FormGroup>
-			{/* Department-specific data privacy policy: shown when the
-			    selected agency has a published DPP for the selected topic;
-			    falls back to the tenant text if it cannot be loaded. */}
-			<Box sx={{ mt: '12px' }}>
-				<DepartmentLegalSection
-					agency={registrationData?.agency}
-					topic={registrationData?.mainTopic}
-					variant="consent"
-				/>
-			</Box>
 		</Box>
 	);
 };

@@ -36,6 +36,7 @@ export const EVENT_PARAM_KEYS = [
 	'senderDisplayName',
 	'contentClass',
 	'recipientRole',
+	'clientConsent',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -97,6 +98,14 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.senderDisplayName = asNullableString(source.senderDisplayName);
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
+	const clientConsent = asNullableString(source.clientConsent);
+	if (
+		clientConsent === 'OPT_IN' ||
+		clientConsent === 'OPT_OUT' ||
+		clientConsent === 'NONE'
+	) {
+		params.clientConsent = clientConsent;
+	}
 	if (isIdentifier(source.agencyId)) {
 		params.agencyId = source.agencyId;
 	}

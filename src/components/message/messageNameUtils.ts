@@ -66,6 +66,97 @@ export const formatMessagePersonName = (
 	lastName?: string
 ) => resolvePreferredName(rawDisplayName, rawUsername, firstName, lastName);
 
+export type IncomingConsultantNameForAsker = {
+	displayName?: string;
+	firstName?: string;
+	lastName?: string;
+};
+
+/**
+ * Asker-facing incoming consultant names (#1146).
+ *
+ * Prefer the session DTO public `displayName` over Matrix member/event names.
+ * When that public name is set, omit first/last so `formatMessagePersonName`
+ * cannot prefer the legal name. Fallback: Matrix name → event name → username.
+ *
+ * Does not change `resolvePreferredName`; consultant-internal surfaces keep
+ * legal-name-first behaviour.
+ */
+export const resolveIncomingConsultantNameForAsker = ({
+	sessionConsultantDisplayName,
+	matrixDisplayName,
+	eventDisplayName,
+	username
+}: {
+	sessionConsultantDisplayName?: string;
+	matrixDisplayName?: string;
+	eventDisplayName?: string;
+	username?: string;
+}): IncomingConsultantNameForAsker => {
+	const publicDisplayName = (sessionConsultantDisplayName || '').trim();
+	if (publicDisplayName) {
+		return { displayName: publicDisplayName };
+	}
+
+	const matrixName = (matrixDisplayName || '').trim();
+	if (matrixName) {
+		return { displayName: matrixName };
+	}
+
+	const eventName = (eventDisplayName || '').trim();
+	if (eventName) {
+		return { displayName: eventName };
+	}
+
+	const fallbackUsername = (username || '').trim();
+	return fallbackUsername ? { displayName: fallbackUsername } : {};
+};
+
+export type OwnConsultantName = {
+	displayName?: string;
+	firstName?: string;
+	lastName?: string;
+};
+
+/**
+ * Counsellor self-view names (#1146).
+ *
+ * Prefer the chosen public `displayName` from userData. When it is set, omit
+ * first/last so `formatMessagePersonName` cannot prefer the legal name.
+ * Fallback: firstName + lastName → username.
+ *
+ * Does not change `resolvePreferredName`; consultant-internal surfaces keep
+ * legal-name-first behaviour.
+ */
+export const resolveOwnConsultantName = ({
+	displayName,
+	firstName,
+	lastName,
+	username
+}: {
+	displayName?: string;
+	firstName?: string;
+	lastName?: string;
+	username?: string;
+}): OwnConsultantName => {
+	const publicDisplayName = (displayName || '').trim();
+	if (publicDisplayName) {
+		return { displayName: publicDisplayName };
+	}
+
+	const normalizedFirstName = (firstName || '').trim();
+	const normalizedLastName = (lastName || '').trim();
+	if (normalizedFirstName || normalizedLastName) {
+		return {
+			firstName: normalizedFirstName || undefined,
+			lastName: normalizedLastName || undefined
+		};
+	}
+
+	const fallbackUsername = (username || '').trim();
+	return fallbackUsername ? { displayName: fallbackUsername } : {};
+};
+
 export const getMessagePersonInitials = (
 	rawDisplayName?: string,
 	rawUsername?: string,

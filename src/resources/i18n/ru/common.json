@@ -53,7 +53,6 @@
 		"selectLanguage": "Выберите язык",
 		"stage": {
 			"title": "Консультации\n& Помощь",
-			"associationLogoAlt": "Логотип организации-поставщика",
 			"mobileHeadline": "Здесь есть место для ваших забот.",
 			"carrierLogoAlt": "Показать карту местоположений {{name}}"
 		},
@@ -4552,5 +4551,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "понедельник",
+		"tuesday": "вторник",
+		"wednesday": "среда",
+		"thursday": "четверг",
+		"friday": "пятница",
+		"saturday": "суббота",
+		"sunday": "воскресенье"
 	}
 }
