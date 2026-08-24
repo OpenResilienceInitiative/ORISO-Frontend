@@ -2602,6 +2602,10 @@
 				"imprintHeadline": "Mentions légales du centre de consultation",
 				"label": "Informations légales",
 				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment."
+			},
+			"type": {
+				"single": "Conseil individuel",
+				"team": "Conseil en équipe"
 			}
 		},
 		"agencyPreselected": {
@@ -2966,7 +2970,16 @@
 			"title": "Une personne consultante demande l'accès à cette conversation",
 			"copy": "Veuillez autoriser ou refuser l'accès afin que le transfert du dossier puisse se poursuivre.",
 			"approve": "Autoriser l'accès",
-			"decline": "Refuser l'accès"
+			"decline": "Refuser l'accès",
+			"optOut": {
+				"copy": "Dans le cadre du transfert de dossier, un autre conseiller ou une autre conseillère du même centre de conseil peut consulter temporairement cette conversation. Cela implique le traitement de données personnelles issues de l'entretien. Votre conseiller ou conseillère actuel(le) reste responsable de vous.",
+				"prompt": "Veuillez lire les informations, puis prendre votre décision.",
+				"revocationCopy": "En activant l'interrupteur, vous consentez à l'accès temporaire et au traitement des données nécessaire à cet effet. Vous pouvez retirer votre consentement à tout moment ; l'accès actif prend alors fin immédiatement. Votre suivi se poursuit indépendamment de cela.",
+				"switchLabel": "J'accepte le traitement des données pour ce transfert de dossier",
+				"title": "Avis de confidentialité relatif au transfert de dossier"
+			},
+			"sender": "Carimat",
+			"senderRole": "Guide rapide"
 		},
 		"denied": {
 			"copy": "La demande précédente n'a pas donné accès au contenu.",
@@ -4435,6 +4448,14 @@
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
 			"action": "Changer de nom"
+		},
+		"notificationChoice": {
+			"both": "Les deux, et je définis un mot de passe maintenant",
+			"bothHint": "Recommandé. Vous pourrez ainsi revenir si vous oubliez quelque chose.",
+			"browser": "Envoyez-moi un signal ici",
+			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
+			"email": "Envoyez-moi un e-mail",
+			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
 		}
 	},
 	"legal": {

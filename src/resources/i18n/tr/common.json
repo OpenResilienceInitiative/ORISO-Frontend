@@ -2602,6 +2602,10 @@
 				"imprintHeadline": "Danışma merkezinin künyesi",
 				"label": "Yasal bilgiler",
 				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor."
+			},
+			"type": {
+				"single": "Bireysel danışmanlık",
+				"team": "Ekip danışmanlığı"
 			}
 		},
 		"agencyPreselected": {
@@ -2966,7 +2970,16 @@
 			"title": "Bir danışman bu görüşmeye erişim istiyor",
 			"copy": "Vaka devrinin sürdürülebilmesi için lütfen erişime izin verin veya erişimi reddedin.",
 			"approve": "Erişime izin ver",
-			"decline": "Erişimi reddet"
+			"decline": "Erişimi reddet",
+			"optOut": {
+				"copy": "Vaka devri kapsamında, aynı danışmanlık merkezinden başka bir danışman bu görüşmeyi sınırlı bir süre için okuyabilir. Bu sırada danışmanlıktan elde edilen kişisel veriler işlenir. Mevcut danışmanınız sizden sorumlu olmaya devam eder.",
+				"prompt": "Lütfen bilgileri okuyun ve ardından kararınızı verin.",
+				"revocationCopy": "Anahtarı açarak, geçici erişime ve bunun için gerekli veri işlemeye onay vermiş olursunuz. Onayınızı istediğiniz zaman geri çekebilirsiniz; bu durumda aktif erişim hemen sona erer. Danışmanlığınız bundan bağımsız olarak devam eder.",
+				"switchLabel": "Bu vaka devri için veri işlenmesini kabul ediyorum",
+				"title": "Vaka devrine ilişkin gizlilik bildirimi"
+			},
+			"sender": "Carimat",
+			"senderRole": "Hızlı Kılavuz"
 		},
 		"denied": {
 			"copy": "Önceki talep, içeriklerin görüntülenmesini açmadı.",
@@ -4435,6 +4448,14 @@
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
 			"action": "Adımı değiştir"
+		},
+		"notificationChoice": {
+			"both": "İkisi de, ve şimdi kendim bir şifre belirleyeyim",
+			"bothHint": "Önerilir. Böylece bir şeyi unutursanız tekrar giriş yapabilirsiniz.",
+			"browser": "Bana burada bir sinyal verin",
+			"browserHint": "Adres gerekmez — ancak yalnızca bu cihazda çalışır.",
+			"email": "Bana bir e-posta yazın",
+			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz."
 		}
 	},
 	"legal": {
