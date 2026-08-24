@@ -38,12 +38,6 @@ export const Stage = ({
 
 	const legalLinks = useContext(LegalLinksContext);
 	const tenant = useTenant();
-	// The stage used to ship seven hardcoded Caritas-association logos, which
-	// is a third party's branding on every ORISO login screen (FE-H05, #178).
-	// The association mark is tenant data now: shown when a tenant configures
-	// one, absent otherwise. No fallback — a wrong mark is worse than none.
-	const associationLogo =
-		tenant?.theming?.associationLogo || tenant?.theming?.logo || '';
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
 	const effectCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -230,14 +224,10 @@ export const Stage = ({
 					/>
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
-				{associationLogo ? (
-					<div className="stage__tenantLogo">
-						<img
-							src={associationLogo}
-							alt={translate('app.stage.associationLogoAlt')}
-						/>
-					</div>
-				) : null}
+				{/* The centre of the panel belongs to the lamp-map composition.
+				    The tenant/association mark that used to sit here was removed
+				    on the owner's decision (2026-08-19): it doubled branding that
+				    already lives on the header and covered the composition. */}
 				<StageCarrierLogos
 					allowed={tenant?.theming?.associationLogos}
 					onHighlight={lampMap.setCarrier}

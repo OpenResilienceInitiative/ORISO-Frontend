@@ -21,10 +21,11 @@ vi.mock('react-i18next', () => ({
 	Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>
 }));
 
-const renderButton = () =>
+const renderButton = (label = 'Impressum', rawLabel?: string) =>
 	render(
 		<LegalLinkButton
-			label="Impressum"
+			label={label}
+			rawLabel={rawLabel}
 			url="https://example.test/impressum"
 		/>
 	);
@@ -36,38 +37,63 @@ afterEach(() => {
 });
 
 describe('LegalLinkButton', () => {
-	it('opens the authored text in a dialog instead of a new tab', async () => {
-		tenant.content = { impressum: '<p>Angaben gemäß § 5 TMG</p>' };
+	it('opens the note instead of a new tab', () => {
 		const open = vi.spyOn(window, 'open').mockImplementation(() => null);
 
 		renderButton();
 		fireEvent.click(screen.getByRole('button', { name: 'Impressum' }));
 
 		expect(open).not.toHaveBeenCalled();
-		expect(await screen.findByRole('dialog')).toBeTruthy();
+		expect(screen.getByText('login.legal.platform.impressum')).toBeTruthy();
 	});
 
-	it('falls back to the configured legal URL when no text is authored', async () => {
-		const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+	it('shows the platform note, not the carrier text', () => {
+		// A carrier text exists — and must still not be shown here, because on
+		// this surface the visitor has not chosen a Beratungsstelle.
+		tenant.content = { impressum: '<p>Angaben gemäß § 5 TMG</p>' };
 
 		renderButton();
 		fireEvent.click(screen.getByRole('button', { name: 'Impressum' }));
 
-		expect(open).toHaveBeenCalledWith(
-			'https://example.test/impressum',
-			'_blank',
-			'noopener,noreferrer'
+		expect(screen.getByText('login.legal.platform.impressum')).toBeTruthy();
+		expect(screen.queryByText(/Angaben gemäß/)).toBeNull();
+	});
+
+	it('picks the privacy note from the untranslated key', () => {
+		renderButton(
+			'Politique de confidentialité',
+			'login.legal.infoText.dataprotection'
 		);
-		expect(screen.queryByRole('dialog')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Politique de confidentialité' })
+		);
+
+		expect(
+			screen.getByText('login.legal.platform.dataprotection')
+		).toBeTruthy();
 	});
 
-	it('treats an empty authored text as not authored', async () => {
-		tenant.content = { impressum: '   ' };
+	it('keeps the full binding document one click away', () => {
+		renderButton();
+		fireEvent.click(screen.getByRole('button', { name: 'Impressum' }));
+
+		const fullText = screen.getByText('login.legal.platform.fullText');
+		expect(fullText.getAttribute('href')).toBe(
+			'https://example.test/impressum'
+		);
+		expect(fullText.getAttribute('target')).toBe('_blank');
+		expect(fullText.getAttribute('rel')).toBe('noopener noreferrer');
+	});
+
+	it('opens the note even when no carrier text is authored', () => {
+		// The note ships in the catalogue, so there is no empty-dialog case and
+		// no reason to bounce the visitor into a new tab.
 		const open = vi.spyOn(window, 'open').mockImplementation(() => null);
 
 		renderButton();
 		fireEvent.click(screen.getByRole('button', { name: 'Impressum' }));
 
-		expect(open).toHaveBeenCalled();
+		expect(open).not.toHaveBeenCalled();
+		expect(screen.getByText('login.legal.platform.impressum')).toBeTruthy();
 	});
 });

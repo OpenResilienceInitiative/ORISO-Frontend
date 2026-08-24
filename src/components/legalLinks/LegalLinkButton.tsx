@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { Text } from '../text/Text';
 import { LegalLinkModal } from './LegalLinkModal';
-import { useLegalLinkContent } from './useLegalLinkContent';
 
 export interface LegalLinkButtonProps {
 	/** Already-translated label, as handed down by `LegalLinks`. */
@@ -21,10 +20,14 @@ export interface LegalLinkButtonProps {
 /**
  * A legal link on a public page (stage, stage layout footer).
  *
- * Opens the tenant-authored text in a dialog instead of tearing the user out
- * of the login flow into a new tab. When the platform operator has not
- * authored the text yet, it degrades to today's behaviour and opens the
- * configured legal URL — better an external page than an empty dialog.
+ * Opens a short platform-level note in a dialog instead of tearing the user
+ * out of the login flow into a new tab, with the full binding document one
+ * click further.
+ *
+ * The note is platform level on purpose: on the stage nobody has chosen a
+ * Beratungsstelle yet, so no carrier's text applies. It ships in the
+ * translation catalogue and therefore always exists — there is no empty-dialog
+ * case to guard against, and no reason left to fall back to a new tab.
  */
 export const LegalLinkButton = ({
 	label,
@@ -32,16 +35,9 @@ export const LegalLinkButton = ({
 	url,
 	textClassName
 }: LegalLinkButtonProps) => {
-	const { content } = useLegalLinkContent(label, url, rawLabel);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const handleClick = useCallback(() => {
-		if (content) {
-			setIsModalOpen(true);
-			return;
-		}
-		window.open(url, '_blank', 'noopener,noreferrer');
-	}, [content, url]);
+	const handleClick = useCallback(() => setIsModalOpen(true), []);
 
 	const closeModal = useCallback(() => setIsModalOpen(false), []);
 
@@ -60,6 +56,7 @@ export const LegalLinkButton = ({
 					title={label}
 					rawLabel={rawLabel}
 					url={url}
+					scope="platform"
 					onClose={closeModal}
 				/>
 			)}

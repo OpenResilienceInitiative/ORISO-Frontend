@@ -8,7 +8,8 @@ import {
 	Box,
 	Button,
 	Link,
-	Avatar
+	Avatar,
+	Chip
 } from '@mui/material';
 import {
 	Dispatch,
@@ -165,6 +166,23 @@ export const AgencySelectionResults = ({
 						>
 							{agency.name}
 						</Typography>
+						<Chip
+							size="small"
+							label={
+								agency.teamAgency
+									? t('registration.agency.type.team')
+									: t('registration.agency.type.single')
+							}
+							sx={{
+								mt: 1,
+								height: 24,
+								fontWeight: 600,
+								fontSize: 12,
+								bgcolor: registrationMd3.surfaceContainer,
+								color: registrationMd3.onSurfaceVariant,
+								border: `1px solid ${registrationMd3.outlineVariant}`
+							}}
+						/>
 						<Typography
 							variant="body2"
 							sx={{

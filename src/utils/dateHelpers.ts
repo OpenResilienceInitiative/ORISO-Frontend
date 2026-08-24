@@ -132,7 +132,7 @@ export const getChatMessageDateDivider = (
 export const formatToHHMM = (timestamp: string) => {
 	const unixDate = parseInt(timestamp);
 	const date = new Date(unixDate);
-	const hours = date.getHours();
+	const hours = date.getHours().toString().padStart(2, '0');
 	let minutes: string = date.getMinutes().toString();
 	if (parseInt(minutes, 10) < 10) {
 		minutes = '0' + minutes;
