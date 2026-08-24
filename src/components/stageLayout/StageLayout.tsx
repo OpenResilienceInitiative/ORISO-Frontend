@@ -244,7 +244,6 @@ export const StageLayout = ({
 						// offset for a fixed app bar — only the registration
 						// info drawer still overlays the top of the sheet.
 						mt: {
-							xs: showRegistrationInfoDrawer ? '96px' : 0,
 							md: '0'
 						}
 					}}

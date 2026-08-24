@@ -54,6 +54,11 @@ export interface AgencyDataInterface {
 	openingHours?: string;
 	url?: string;
 	external?: boolean;
+	/**
+	 * When true, the whole counselling team can see the request;
+	 * when false/undefined the centre is treated as single-counsellor.
+	 */
+	teamAgency?: boolean;
 	tenantId?: number;
 	agencySpecificPrivacy?: string;
 	consultingTypeRel?: ConsultingTypeInterface;

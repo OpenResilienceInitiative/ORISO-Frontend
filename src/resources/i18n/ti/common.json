@@ -51,7 +51,6 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-			"associationLogoAlt": "ኣርማ ትካል ኣገልግሎት",
 			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
 			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
@@ -3501,5 +3500,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "ሰኑይ",
+		"tuesday": "ሰሉስ",
+		"wednesday": "ረቡዕ",
+		"thursday": "ሓሙስ",
+		"friday": "ዓርቢ",
+		"saturday": "ቀዳም",
+		"sunday": "ሰንበት"
 	}
 }
