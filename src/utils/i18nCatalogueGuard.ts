@@ -63,6 +63,65 @@ export const collectRedundantOverlayKeys = (
 };
 
 /**
+ * Keys whose value in `localeCatalogue` is the English string verbatim while
+ * the German source says something else — the signature of an English copy
+ * parked in a translation slot nobody came back to (#1154).
+ *
+ * A value that matches German too is not reported: those are the strings no
+ * language translates, like "0-17" or "Divers".
+ */
+export const collectEnglishCopyKeys = (
+	fallbackCatalogue: object,
+	englishCatalogue: object,
+	localeCatalogue: object
+): string[] => {
+	const fallback = flattenCatalogue(fallbackCatalogue);
+	const english = flattenCatalogue(englishCatalogue);
+	const locale = flattenCatalogue(localeCatalogue);
+
+	return Object.keys(locale)
+		.filter(
+			(key) =>
+				key in english &&
+				english[key] === locale[key] &&
+				fallback[key] !== locale[key] &&
+				String(locale[key]).trim() !== ''
+		)
+		.sort((a, b) => a.localeCompare(b));
+};
+
+/**
+ * Everything i18next substitutes at render time: `{{name}}` interpolations,
+ * `$t(…)` nesting and the tag markers a <Trans> component matches against.
+ * Renaming or dropping one of these silently breaks the rendered sentence, so
+ * a translation has to carry the same multiset its German source does.
+ */
+const extractPlaceholders = (value: unknown): string[] =>
+	[/\{\{[^}]*\}\}/g, /\$t\([^)]*\)/g, /<[^>]*>/g]
+		.flatMap((pattern) => [...String(value).matchAll(pattern)])
+		.map((match) => match[0])
+		.sort((a, b) => a.localeCompare(b));
+
+export const collectPlaceholderDriftKeys = (
+	fallbackCatalogue: object,
+	localeCatalogue: object
+): string[] => {
+	const fallback = flattenCatalogue(fallbackCatalogue);
+	const locale = flattenCatalogue(localeCatalogue);
+
+	return Object.keys(locale)
+		.filter(
+			(key) =>
+				key in fallback &&
+				// Tag markers contain spaces, so the multisets are compared as
+				// JSON rather than as a joined string that could collide.
+				JSON.stringify(extractPlaceholders(fallback[key])) !==
+					JSON.stringify(extractPlaceholders(locale[key]))
+		)
+		.sort((a, b) => a.localeCompare(b));
+};
+
+/**
  * Ratchet helper: the guards tolerate a checked-in list of known offenders, so
  * a failure can name exactly the keys a change introduced instead of reporting
  * that one count grew past another.
