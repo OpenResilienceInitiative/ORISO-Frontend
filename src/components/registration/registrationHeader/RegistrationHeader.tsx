@@ -156,13 +156,21 @@ export const RegistrationHeader = ({
 			data-cy="registration-header"
 			sx={{
 				position: fullBleed ? 'sticky' : 'relative',
-				top: fullBleed ? { xs: '48px', md: '72px' } : undefined,
+				// xs sticks to the viewport top: the old 48px band above the
+				// stepper is gone on mobile, and a 48px offset here made the
+				// row hover over the first headline line before any scroll.
+				top: fullBleed ? { xs: 0, md: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
 				// Follow the registration column (60vw on desktop). Avoid vw
 				// breakouts that overflow into the red stage panel.
 				width: '100%',
 				maxWidth: '100%',
+				// The band spans the whole column and #1174 zeroed that column's
+				// padding, so it has to carry its own — without this the step label
+				// and the chips sit flat against the screen edge. #1174 dropped this
+				// line while the component was still unwired and rendered nowhere.
+				px: { xs: 2, sm: 3, lg: 4 },
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',
 				// One rule, default outline tone. The previous header stacked a
@@ -180,7 +188,8 @@ export const RegistrationHeader = ({
 						? 0
 						: layout === 'stepper'
 							? 1.5
-							: { xs: 0, sm: 1.5 }
+							: { xs: 0, sm: 1.5 },
+				mb: { xs: 2, sm: 3, lg: 4 }
 				// No bottom margin: the gap to the step content belongs to the
 				// page, not to the header. Carrying it here is what produced
 				// the dead band under the desktop stepper.

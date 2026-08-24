@@ -2231,6 +2231,9 @@
 				"entering": "Görüşme alanınız açılıyor …"
 			}
 		},
+		"selection": {
+			"remove": "{{label}} kaldır"
+		},
 		"stepState": {
 			"done": "tamamlandı",
 			"active": "geçerli adım",

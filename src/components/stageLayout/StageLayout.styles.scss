@@ -156,6 +156,11 @@
 			align-items: center;
 			// Registration clears shared content padding so the 60vw column
 			// owns horizontal space; shared login/etc. keep base &__content.
+			// The sticky step header brings its own top spacing as well, so the
+			// margin goes with it — anything left here reads as an empty band
+			// between the red bar and the step row (the "warum diese area?"
+			// finding). `padding: 0` already covers the old `padding-top`.
+			margin-top: 0 !important;
 			padding: 0;
 			padding-bottom: 120px;
 			box-sizing: border-box;
@@ -202,6 +207,25 @@
 		flex: none;
 		height: 230px;
 		overflow: hidden;
+
+		// Design 8a: the registration steps carry the brand row only.
+		&--bar {
+			height: auto;
+			// The content sheet below overlaps the head by 28px, and the row
+			// needs to stay clear of that rounded edge — hence more than 28.
+			padding-bottom: 40px;
+
+			// In the tall hero the row floats over the artwork, so it is taken
+			// out of flow. Here there is no artwork and nothing else to give
+			// the head any height: left absolute it measured 0, the head
+			// collapsed to its padding, and the sheet covered the brand, the
+			// language switch and the login action along with their focus
+			// rings. Back in flow the head measures itself from the row.
+			.stageMobileHero__bar {
+				position: static;
+				padding: 14px 20px 0;
+			}
+		}
 		background: radial-gradient(
 			120% 90% at 78% 8%,
 			#e0313b 0%,

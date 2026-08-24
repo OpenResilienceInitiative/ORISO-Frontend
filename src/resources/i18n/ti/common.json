@@ -2195,6 +2195,9 @@
 				"entering": "ናይ ምኽሪ ክፍልኹም ይኽፈት ኣሎ …"
 			}
 		},
+		"selection": {
+			"remove": "{{label}} ኣወግድ"
+		},
 		"stepState": {
 			"done": "ተዛዚሙ",
 			"active": "ህሉው ስጉምቲ",
