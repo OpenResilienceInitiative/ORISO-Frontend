@@ -18,17 +18,25 @@ import {
 /**
  * The hrefs the platform's own legal links point at.
  *
- * Read off surviving `<a href>` values, not searched for anywhere in the HTML.
+ * Read off surviving, *usable* `<a href>` values — not searched for anywhere in
+ * the HTML, and not counting anchors with nothing to click.
  * A Träger sentence may legitimately carry its own link, so "contains any
  * anchor" is not enough; and the policy URL may appear as visible text, so
  * "contains this string" is not enough either. What has to survive is a
  * clickable link to that target (ORISO-Frontend#1110).
  */
 const anchorTargets = (html: string): string[] =>
-	Array.from(
-		html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g),
-		(match) => match[1]
-	);
+	Array.from(html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g))
+		/* An anchor with the right href but no readable content is not a usable
+		   link: nothing to click, no accessible name. Counting it would suppress
+		   the fallback and leave the mandatory disclosure unreachable. */
+		.filter(([, , content]) =>
+			content
+				.replace(/<[^>]*>/g, '')
+				.replace(INVISIBLE_CHARACTERS, '')
+				.trim()
+		)
+		.map(([, href]) => href);
 
 /** Characters that occupy no visual space, matched as a class rather than listed. */
 const INVISIBLE_CHARACTERS = /\p{Cf}/gu;

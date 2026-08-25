@@ -406,6 +406,23 @@ describe('AccountData — an unrenderable Träger sentence blocks acceptance', (
 		'markup that sanitizes to whitespace only': '<p>   </p>'
 	};
 
+	it('tells the user what happened instead of leaving a nameless disabled box', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({ sentence: '{}', versionId: 4711 } as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'[data-cy="consent-sentence-unrenderable"]'
+				)
+			).not.toBeNull()
+		);
+		expect(anyCheckbox()?.disabled).toBe(true);
+	});
+
 	Object.entries(unrenderable).forEach(([shape, sentence]) => {
 		it(`shows no platform fallback and keeps the checkbox disabled — ${shape}`, async () => {
 			vi.mocked(apiGetConsentText).mockResolvedValue(
@@ -597,6 +614,30 @@ describe('AccountData — inherited wording and mandatory links', () => {
 		expect(
 			document.querySelector('a[href="https://oriso.test/datenschutz"]')
 		).not.toBeNull();
+	});
+
+	it('adds the policy links when the surviving anchor has nothing to click', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// Right href, no content: an href test alone would suppress the
+				// fallback and leave the disclosure unreachable.
+				sentence:
+					'<span title="{{legal_links}}">Ich willige ein.<a href="https://oriso.test/datenschutz"></a></span>',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		const links = Array.from(
+			document.querySelectorAll<HTMLAnchorElement>(
+				'a[href="https://oriso.test/datenschutz"]'
+			)
+		);
+		expect(links.some((link) => link.textContent?.trim())).toBe(true);
 	});
 
 	it('adds the policy links when the URL appears only as visible text', async () => {

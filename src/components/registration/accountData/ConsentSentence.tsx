@@ -44,9 +44,21 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 	/* Platform wording applies only when no Träger text is configured. A
 	   configured text that cannot be rendered is a fault, not a reason to show
 	   different wording than the acceptance binds to (ORISO-Frontend#1110) — the
-	   gate in `AccountData` keeps the checkbox disabled for exactly this case. */
+	   gate in `AccountData` keeps the checkbox disabled for exactly this case.
+	
+	   Rendering nothing here left a disabled checkbox with no accessible name
+	   and no hint that registration cannot continue — a dead end, and the same
+	   shape as the pending and unavailable branches the label already handles
+	   with a message. Say what happened instead. */
 	if (consentText && !traegerSentenceHtml) {
-		return null;
+		return (
+			<span role="alert" data-cy="consent-sentence-unrenderable">
+				{t(
+					'registration.dataProtection.unrenderable',
+					'Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.'
+				)}
+			</span>
+		);
 	}
 
 	if (!traegerSentenceHtml) {
