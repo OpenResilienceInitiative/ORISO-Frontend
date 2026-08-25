@@ -213,7 +213,7 @@ export const AccountData: FC<{
 	   not. Null here means either "no Träger text configured" (platform wording
 	   applies, acceptance is fine) or "configured but unrenderable", which the
 	   next line separates. */
-	const traegerSentenceHtml = useTraegerSentenceHtml(
+	const traegerSentence = useTraegerSentenceHtml(
 		effectiveConsent.status === 'resolved'
 			? effectiveConsent.consentText
 			: null
@@ -225,7 +225,7 @@ export const AccountData: FC<{
 	const traegerSentenceUnrenderable =
 		effectiveConsent.status === 'resolved' &&
 		!!effectiveConsent.consentText &&
-		!traegerSentenceHtml;
+		!traegerSentence;
 	const isConsentSentenceResolved =
 		mayAcceptConsent(effectiveConsent, consentInputs) &&
 		!traegerSentenceUnrenderable;
@@ -237,7 +237,7 @@ export const AccountData: FC<{
 					agency?.id,
 					mainTopic?.id,
 					effectiveConsent.consentText?.versionId,
-					traegerSentenceHtml
+					traegerSentence?.html
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

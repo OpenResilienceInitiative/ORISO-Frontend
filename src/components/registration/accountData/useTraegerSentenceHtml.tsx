@@ -73,9 +73,19 @@ const INVISIBLE_CHARACTERS = /\p{Default_Ignorable_Code_Point}/gu;
  * case, platform wording applies), versus a Träger text that cannot be
  * rendered (a real fault — nothing may be accepted).
  */
+export interface TraegerSentence {
+	html: string;
+	/** True when the wording shown is a machine translation. */
+	isMachineTranslated: boolean;
+	/** The authored, legally binding language of the wording. */
+	originalLang: string;
+	/** The language actually shown. */
+	lang: string;
+}
+
 export const useTraegerSentenceHtml = (
 	consentText: ConsentTextData | null
-): string | null => {
+): TraegerSentence | null => {
 	const { t, i18n } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -142,7 +152,7 @@ export const useTraegerSentenceHtml = (
 		   smuggled into an attribute (`href="{{legal_links}}"`) inject markup
 		   past the sanitizer; this way every byte that reaches the DOM has been
 		   through the allowlist, our own anchors included. */
-		const rendered = sanitizeConsentHtml(
+		const sanitised = sanitizeConsentHtml(
 			substituteLegalLinks(resolved.html, legalLinksHtml)
 		);
 		/* The links must survive to the DOM, not merely be substituted. A token
@@ -153,11 +163,22 @@ export const useTraegerSentenceHtml = (
 		   and the sentence renders with no policy links at all: the platform's
 		   one mandatory disclosure, gone. Check the result rather than the
 		   intent, and append if it did not survive (ORISO-Frontend#1110). */
-		const survivingHrefs = anchorTargets(rendered);
-		return anchorTargets(legalLinksHtml).every((href) =>
+		const survivingHrefs = anchorTargets(sanitised);
+		const html = anchorTargets(legalLinksHtml).every((href) =>
 			survivingHrefs.includes(href)
 		)
-			? rendered
-			: `${rendered} ${sanitizeConsentHtml(legalLinksHtml)}`;
+			? sanitised
+			: `${sanitised} ${sanitizeConsentHtml(legalLinksHtml)}`;
+		/* The translation status travels with the wording. `LegalContentRenderer`
+		   tells a reader when a legal text is machine-translated and which
+		   language is binding; a consent sentence needs that more, not less —
+		   ticking a box next to wording whose binding version you have not seen
+		   is not informed consent (ORISO-Frontend#1110). */
+		return {
+			html,
+			isMachineTranslated: resolved.isMachineTranslated,
+			originalLang: resolved.originalLang,
+			lang: resolved.lang
+		};
 	}, [consentText, i18n?.language, legalLinksHtml]);
 };

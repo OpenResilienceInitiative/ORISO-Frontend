@@ -683,3 +683,57 @@ describe('AccountData — inherited wording and mandatory links', () => {
 		expect(document.querySelector('a[href]')).not.toBeNull();
 	});
 });
+
+/**
+ * Codex P1 on #1110: `resolveLegalContent` reports whether the wording shown is
+ * a machine translation and which language is legally binding, and the hook was
+ * discarding both. `LegalContentRenderer` surfaces them for a policy document;
+ * a consent sentence needs it more, not less — ticking a box next to wording
+ * whose binding version you have never seen is not informed consent.
+ */
+describe('AccountData — the help-seeker is told which wording binds', () => {
+	it('says so when the sentence on screen is machine-translated', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: JSON.stringify({
+					de: 'Maschinelle Fassung {{legal_links}}',
+					de__meta: { mt: true, orig: 'en' },
+					en: 'Authored wording {{legal_links}}'
+				}),
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-machine-translated"]')
+			).not.toBeNull()
+		);
+		// Shown, and acceptable — informing beats blocking, which would stop
+		// registration wherever a Träger has not authored every language.
+		expect(anyCheckbox()?.disabled).toBe(false);
+	});
+
+	it('says nothing when the wording is the authored one', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Ich willige ein {{legal_links}}',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		expect(
+			document.querySelector('[data-cy="consent-machine-translated"]')
+		).toBeNull();
+		expect(
+			document.querySelector('[data-cy="consent-fallback-language"]')
+		).toBeNull();
+	});
+});

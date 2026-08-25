@@ -39,7 +39,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 	const { t } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
-	const traegerSentenceHtml = useTraegerSentenceHtml(consentText);
+	const traegerSentence = useTraegerSentenceHtml(consentText);
 
 	/* Platform wording applies only when no Träger text is configured. A
 	   configured text that cannot be rendered is a fault, not a reason to show
@@ -50,7 +50,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 	   and no hint that registration cannot continue — a dead end, and the same
 	   shape as the pending and unavailable branches the label already handles
 	   with a message. Say what happened instead. */
-	if (consentText && !traegerSentenceHtml) {
+	if (consentText && !traegerSentence) {
 		return (
 			<span role="alert" data-cy="consent-sentence-unrenderable">
 				{t(
@@ -61,7 +61,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 		);
 	}
 
-	if (!traegerSentenceHtml) {
+	if (!traegerSentence) {
 		return (
 			<Typography>
 				<LegalLinks
@@ -102,8 +102,45 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				}}
 				data-cy="consent-sentence-traeger"
 			>
-				{htmlParser(traegerSentenceHtml)}
+				{htmlParser(traegerSentence.html)}
 			</Typography>
+			{traegerSentence.isMachineTranslated && (
+				<Typography
+					component="span"
+					variant="body2"
+					role="note"
+					sx={{
+						display: 'block',
+						mt: '4px',
+						color: 'text.secondary'
+					}}
+					data-cy="consent-machine-translated"
+				>
+					{t(
+						'legal.notice.machineTranslated',
+						'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.'
+					)}
+				</Typography>
+			)}
+			{!traegerSentence.isMachineTranslated &&
+				traegerSentence.lang !== traegerSentence.originalLang && (
+					<Typography
+						component="span"
+						variant="body2"
+						role="note"
+						sx={{
+							display: 'block',
+							mt: '4px',
+							color: 'text.secondary'
+						}}
+						data-cy="consent-fallback-language"
+					>
+						{t(
+							'legal.notice.fallbackLanguage',
+							'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
+						)}
+					</Typography>
+				)}
 			<Typography
 				component="span"
 				variant="body2"
