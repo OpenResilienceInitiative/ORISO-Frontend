@@ -10,7 +10,10 @@ import {
 	normalizeLegalLang,
 	resolveLegalContent
 } from '../../../utils/legalContent';
-import { substituteLegalLinks } from '../../../utils/consentText';
+import {
+	stripLegalLinksToken,
+	substituteLegalLinks
+} from '../../../utils/consentText';
 
 /**
  * The Träger-authored sentence as it would actually reach the DOM, or `null`
@@ -71,14 +74,21 @@ export const useTraegerSentenceHtml = (
 		if (!resolved) {
 			return null;
 		}
-		/* Does the TRÄGER's own wording survive the allowlist? Measured before
+		/* Does the TRÄGER's own wording survive the allowlist? The mandatory
+		   `{{legal_links}}` token is removed first: it is the platform's
+		   requirement, not authored wording, so a "sentence" consisting only of
+		   that token would otherwise count as text and enable acceptance while
+		   the help-seeker sees nothing but policy links and the cookie notice —
+		   no consent statement at all. Measured before
 		   substitution and on its own, because `substituteLegalLinks` appends
 		   the legal links when the `{{legal_links}}` token is absent — so an
 		   empty or fully-stripped sentence would otherwise come back "non-empty"
 		   carrying nothing but our anchors. The help-seeker would then see a
 		   bare link with no sentence and still bind to the Träger versionId,
 		   which is the reported defect wearing a different hat. */
-		const traegerOwnText = sanitizeConsentHtml(resolved.html)
+		const traegerOwnText = stripLegalLinksToken(
+			sanitizeConsentHtml(resolved.html)
+		)
 			.replace(/<[^>]*>/g, '')
 			.trim();
 		if (!traegerOwnText) {

@@ -52,3 +52,28 @@ describe('legal vs. consent sanitizer', () => {
 		expect(sanitizeLegalHtml('')).toBe('');
 	});
 });
+
+describe('consent sentences carry no remote images', () => {
+	it('strips img entirely, so nothing loads before consent is given', () => {
+		const withPixel =
+			'<p>Ich willige ein.<img src="https://tracker.example/p.gif" alt="" /></p>';
+
+		const sanitized = sanitizeConsentHtml(withPixel);
+
+		// A consent sentence renders automatically during registration. An image
+		// would make the browser contact a third party — collecting the
+		// help-seeker's IP at the moment they have agreed to nothing.
+		expect(sanitized).not.toContain('<img');
+		expect(sanitized).not.toContain('tracker.example');
+		expect(sanitized).toContain('Ich willige ein.');
+	});
+
+	it('still allows images inside a full legal document', () => {
+		// A policy is opened deliberately, so the same rule does not apply.
+		expect(
+			sanitizeLegalHtml(
+				'<p><img src="https://cdn.example/logo.png" /></p>'
+			)
+		).toContain('<img');
+	});
+});

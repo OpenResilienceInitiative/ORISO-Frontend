@@ -32,6 +32,16 @@ export const hasLegalLinksToken = (sentence: string): boolean =>
  *   link to the policy it consents to would be the single worst failure mode
  *   here, so the client does not rely on that validator having run.
  */
+/**
+ * Removes the mandatory `{{legal_links}}` token.
+ *
+ * Used when deciding whether a Träger actually authored any wording: the token
+ * is the platform's requirement, not the Träger's sentence, so it must not
+ * count as text (ORISO-Frontend#1110).
+ */
+export const stripLegalLinksToken = (sentence: string): string =>
+	sentence.replace(LEGAL_LINKS_TOKEN, ' ');
+
 export const substituteLegalLinks = (
 	sentence: string,
 	legalLinksHtml: string

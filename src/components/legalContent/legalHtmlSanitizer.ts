@@ -31,7 +31,14 @@ const { '*': _anyTagAttributes, ...LEGAL_TAG_ATTRIBUTES } =
 
 /**
  * The allowlist for a **consent sentence**, as opposed to a whole legal
- * document: identical, minus `class` on every tag.
+ * document: identical, minus `class` on every tag and minus `img`.
+ *
+ * `img` is dropped because a consent sentence renders *automatically*, during
+ * registration, before the help-seeker has agreed to anything. A policy
+ * document is opened deliberately; this sentence is not. An `<img src>` to any
+ * origin therefore makes every registering help-seeker's browser contact a
+ * third party — a tracking pixel would collect their IP address at exactly the
+ * moment they have consented to nothing. No consent sentence needs an image.
  *
  * `class` is not merely useless in a one-sentence consent label, it is
  * dangerous there. `htmlParser` — the rendering path every authored legal
@@ -47,9 +54,14 @@ const { '*': _anyTagAttributes, ...LEGAL_TAG_ATTRIBUTES } =
  * a blocklist would only move the problem to whatever the next parser
  * convention is, and a consent sentence has no legitimate use for a class.
  */
+const { img: _imgAttributes, ...CONSENT_TAG_ATTRIBUTES } = LEGAL_TAG_ATTRIBUTES;
+
 export const CONSENT_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 	...LEGAL_HTML_SANITIZE_OPTIONS,
-	allowedAttributes: LEGAL_TAG_ATTRIBUTES
+	allowedTags: (LEGAL_HTML_SANITIZE_OPTIONS.allowedTags as string[]).filter(
+		(tag) => tag !== 'img'
+	),
+	allowedAttributes: CONSENT_TAG_ATTRIBUTES
 };
 
 /**

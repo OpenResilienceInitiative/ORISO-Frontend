@@ -454,3 +454,58 @@ describe('AccountData — an unrenderable Träger sentence blocks acceptance', (
 		await waitFor(() => expect(anyCheckbox()?.disabled).toBe(false));
 	});
 });
+
+/**
+ * Codex on PR #1110, three findings of one shape: something that is not the
+ * Träger's wording was being treated as if it were.
+ */
+describe('AccountData — only real Träger wording counts as a consent sentence', () => {
+	it('does not accept a sentence that is nothing but the mandatory token', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: '{{legal_links}}',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-sentence-pending"]')
+			).toBeNull()
+		);
+		// Links plus the cookie notice are the platform's requirement, not a
+		// statement anyone can agree to.
+		expect(anyCheckbox()?.disabled).toBe(true);
+	});
+
+	it('does not carry an acceptance across a revision of unversioned wording', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Erste Fassung {{legal_links}}',
+				versionId: null
+			} as ConsentTextData)
+		);
+		// A draft accepted against the FIRST wording, restored next to the second.
+		draftAccepting(
+			consentBindingKey(AGENCY_A, TOPIC, null, 'Erste Fassung')
+		);
+
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Zweite, andere Fassung {{legal_links}}',
+				versionId: null
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Zweite, andere Fassung/)).toBeDefined()
+		);
+		// Without a per-sentence fingerprint both revisions key to
+		// `agency:topic:none` and this box would be restored ticked.
+		expect(anyCheckbox()?.checked).toBe(false);
+	});
+});

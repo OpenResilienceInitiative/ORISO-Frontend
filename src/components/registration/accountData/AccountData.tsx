@@ -236,7 +236,8 @@ export const AccountData: FC<{
 			? consentBindingKey(
 					agency?.id,
 					mainTopic?.id,
-					effectiveConsent.consentText?.versionId
+					effectiveConsent.consentText?.versionId,
+					traegerSentenceHtml
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

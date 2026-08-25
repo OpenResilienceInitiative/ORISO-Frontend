@@ -41,12 +41,42 @@ export const departmentMayHaveConsentText = (
  * not carry the version history yet — there the department alone is the
  * identity, which is what the pre-#250 product had.
  */
+/**
+ * A short, stable fingerprint of the wording itself.
+ *
+ * Not a security primitive and not required to be one — it only has to change
+ * when the sentence changes, so a stored acceptance stops matching wording it
+ * was never given for.
+ */
+const sentenceFingerprint = (sentence: string): string => {
+	let hash = 5381;
+	for (let i = 0; i < sentence.length; i++) {
+		hash = ((hash << 5) + hash + sentence.charCodeAt(i)) | 0;
+	}
+	return `fp${(hash >>> 0).toString(36)}`;
+};
+
 export const consentBindingKey = (
 	agencyId: number | null | undefined,
 	topicId: number | null | undefined,
-	versionId: number | null | undefined
-): string =>
-	`${agencyId ?? 'none'}:${topicId ?? 'none'}:${versionId ?? 'none'}`;
+	versionId: number | null | undefined,
+	/**
+	 * The sentence as displayed, used only when no version is supplied.
+	 *
+	 * The API contract allows inherited Träger-level wording to carry
+	 * `versionId: null`, and without this every revision of that wording
+	 * collapses onto `agency:topic:none`. A draft accepted before such a
+	 * revision would then be restored as ticked next to the *new* sentence —
+	 * the same "agreement to wording never shown" this key exists to prevent,
+	 * just one level up (ORISO-Frontend#1110).
+	 */
+	renderedSentence?: string | null
+): string => {
+	const version =
+		versionId ??
+		(renderedSentence ? sentenceFingerprint(renderedSentence) : 'none');
+	return `${agencyId ?? 'none'}:${topicId ?? 'none'}:${version}`;
+};
 
 /**
  * The complete input state a consent resolution is an answer to.
@@ -130,7 +160,8 @@ export type ConsentResolution =
 export const answersSelection = (
 	resolution: ConsentResolution,
 	inputKey: string
-): boolean => resolution.status === 'pending' || resolution.inputKey === inputKey;
+): boolean =>
+	resolution.status === 'pending' || resolution.inputKey === inputKey;
 
 /**
  * Whether the consent on screen may be accepted at all.
