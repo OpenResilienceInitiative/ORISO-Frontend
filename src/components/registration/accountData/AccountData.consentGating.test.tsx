@@ -273,8 +273,14 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		expect(setDisabledNextButton).not.toHaveBeenCalledWith(false);
 	});
 
-	it('leaves the unconfigured case untouched — enabled from the first frame, no request', async () => {
-		renderStep({ hasPublishedDpp: false });
+	/* Was "no Fachbereich policy of its own -> no request, enabled at once".
+	   That shortcut is gone: the flag means a policy of its *own*, and a
+	   department without one is governed by inherited Träger wording, so
+	   skipping the request offered the platform sentence where it does not
+	   apply (Codex P1, #1110). What survives is the case where there is
+	   genuinely nothing to ask about. */
+	it('asks for nothing and is enabled at once when no Fachbereich is selected', async () => {
+		renderStep({ hasPublishedDpp: false, agencyId: null as never });
 
 		expect(anyCheckbox()?.disabled).toBe(false);
 		await waitFor(() => expect(consentCheckbox()).not.toBeNull());
@@ -526,5 +532,54 @@ describe('AccountData — only real Träger wording counts as a consent sentence
 		// Without a per-sentence fingerprint both revisions key to
 		// `agency:topic:none` and this box would be restored ticked.
 		expect(anyCheckbox()?.checked).toBe(false);
+	});
+});
+
+/**
+ * Codex P1 + P2 on PR #1110: two ways the governing wording could be missed —
+ * one by never asking for it, one by rendering it without its links.
+ */
+describe('AccountData — inherited wording and mandatory links', () => {
+	it('asks for the consent text even when the department has no policy of its own', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: 'Geerbter Trägersatz {{legal_links}}',
+				versionId: null
+			} as ConsentTextData)
+		);
+
+		// hasPublishedDpp === false means "no policy OF ITS OWN"; such a
+		// department is governed by the Träger's inherited text.
+		renderStep({ hasPublishedDpp: false });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Geerbter Trägersatz/)).toBeDefined()
+		);
+		expect(apiGetConsentText).toHaveBeenCalled();
+		// The platform sentence must not stand in for wording that governs.
+		expect(
+			screen.queryByText('registration.dataProtection.label.prefix', {
+				exact: false
+			})
+		).toBeNull();
+	});
+
+	it('keeps the policy links when the token sat in a stripped attribute', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// `title` is not on the consent allowlist, so substituting into it
+				// and sanitising afterwards would drop the anchors entirely.
+				sentence:
+					'<span title="{{legal_links}}">Ich willige ein.</span>',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		expect(document.querySelector('a[href]')).not.toBeNull();
 	});
 });

@@ -109,8 +109,19 @@ export const useTraegerSentenceHtml = (
 		   smuggled into an attribute (`href="{{legal_links}}"`) inject markup
 		   past the sanitizer; this way every byte that reaches the DOM has been
 		   through the allowlist, our own anchors included. */
-		return sanitizeConsentHtml(
+		const rendered = sanitizeConsentHtml(
 			substituteLegalLinks(resolved.html, legalLinksHtml)
 		);
+		/* The links must survive to the DOM, not merely be substituted. A token
+		   sitting in an attribute the allowlist drops — `<span
+		   title="{{legal_links}}">…</span>` — is substituted happily, and then
+		   the sanitizer removes the attribute together with the anchors it now
+		   contains. `hasLegalLinksToken` saw a token, so nothing was appended,
+		   and the sentence renders with no policy links at all: the platform's
+		   one mandatory disclosure, gone. Check the result rather than the
+		   intent, and append if it did not survive (ORISO-Frontend#1110). */
+		return rendered.includes('<a ')
+			? rendered
+			: `${rendered} ${sanitizeConsentHtml(legalLinksHtml)}`;
 	}, [consentText, i18n?.language, legalLinksHtml]);
 };

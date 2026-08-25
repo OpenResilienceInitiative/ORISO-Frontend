@@ -100,8 +100,12 @@ describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
 	});
 
-	it('renders the three-fragment sentence and never asks the backend when the Fachbereich has no published policy', async () => {
-		renderLabel(agencyWith(false));
+	/* Was "…when the Fachbereich has no published policy". Such a department
+	   inherits the Träger's wording, so it must be asked about after all
+	   (Codex P1, #1110). The fallback belongs to the case where nothing is
+	   selected, which is what this now covers. */
+	it('renders the three-fragment sentence and never asks the backend when no Fachbereich is selected', async () => {
+		renderLabel(undefined);
 
 		await waitFor(() =>
 			expect(screen.getByText(/Ich habe die/)).toBeDefined()

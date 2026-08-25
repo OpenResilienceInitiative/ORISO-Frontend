@@ -3,22 +3,34 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../../globalState/interfaces';
-import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
 
 /**
  * Whether the selected Fachbereich *could* carry a Träger-authored consent
- * text. The sentence is a field of the department's data-protection policy
- * (ADR-021 decision 4), so a department without a published policy cannot have
- * one — which is decidable from data the registration already holds, with no
- * request and therefore no waiting.
+ * text — which is true of every Fachbereich that has been selected at all.
+ *
+ * This used to also require `hasPublishedDpp`, on the reasoning that a
+ * department without a published policy cannot carry a sentence, so the
+ * request could be skipped and the static wording shown with no waiting.
+ *
+ * That reasoning was wrong, and wrong in the one direction that matters. The
+ * AgencyService contract defines the flag as a policy **of its own**
+ * (`generated/agencyservice.d.ts`), while legal texts inherit: a department
+ * with no policy of its own is governed by the Träger's, and
+ * `/legal` resolves that with `sourceLevel: 'TENANT'`. So exactly the
+ * departments that inherit reported `false`, skipped the request, and offered
+ * the platform sentence — collecting agreement to wording that does not govern
+ * them. That is the defect this whole module exists to prevent, arriving
+ * through the applicability check instead of the render path
+ * (ORISO-Frontend#1110).
+ *
+ * The saved request was an optimisation resting on a false premise, so it is
+ * gone. What it bought — never showing a pending state for the common case —
+ * is not worth showing the wrong sentence to the uncommon one.
  */
 export const departmentMayHaveConsentText = (
 	agency?: AgencyDataInterface,
 	topic?: TopicsDataInterface
-): boolean =>
-	getDepartmentForTopic(agency, topic)?.hasPublishedDpp === true &&
-	!!agency?.id &&
-	!!topic?.id;
+): boolean => !!agency?.id && !!topic?.id;
 
 /**
  * Identity of the exact consent a help-seeker can give.
@@ -99,6 +111,12 @@ export const consentBindingKey = (
  * this function and nothing else; every comparison stays correct by
  * construction.
  *
+ * It carried a third component for applicability, back when that depended on
+ * `departments` arriving after the agency. Since applicability now follows from
+ * the two ids alone (see `departmentMayHaveConsentText`), that component could
+ * not vary independently of them — an inert field, and tests asserting it
+ * flipped could not fail. Removed rather than kept as decoration.
+ *
  * Computed during render from props, never in an effect: a key written by an
  * effect would itself lag behind the inputs it describes, which is the very
  * gap it exists to close.
@@ -106,14 +124,7 @@ export const consentBindingKey = (
 export const consentInputKey = (
 	agency?: AgencyDataInterface,
 	topic?: TopicsDataInterface
-): string =>
-	[
-		agency?.id ?? 'none',
-		topic?.id ?? 'none',
-		// Not redundant with the ids: `departments` can arrive after the agency
-		// itself, flipping applicability for an unchanged agency/topic pair.
-		departmentMayHaveConsentText(agency, topic) ? 'dpp' : 'no-dpp'
-	].join(':');
+): string => [agency?.id ?? 'none', topic?.id ?? 'none'].join(':');
 
 /**
  * Whether the sentence a help-seeker is asked to agree to is known yet.

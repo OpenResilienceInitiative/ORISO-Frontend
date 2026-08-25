@@ -67,23 +67,6 @@ describe('consentInputKey — the complete input state, in one value', () => {
 		);
 	});
 
-	it('separates a flip in applicability for an unchanged agency and topic', () => {
-		/* The third instance, and the one plain id comparison cannot see: same
-		   agency id, same topic id, but the department now reports a published
-		   policy. The previous answer was "no Träger sentence, platform wording
-		   applies" and must stop counting the moment that stops being true. */
-		expect(consentInputKey(agency(42, false), TOPIC)).not.toBe(
-			consentInputKey(agency(42, true), TOPIC)
-		);
-	});
-
-	it('separates departments arriving late from a department without a policy', () => {
-		// Same agency id, `departments` not loaded yet vs. loaded-and-published.
-		expect(consentInputKey(agencyWithoutDepartments(42), TOPIC)).not.toBe(
-			consentInputKey(agency(42, true), TOPIC)
-		);
-	});
-
 	it('is stable for identical inputs', () => {
 		expect(consentInputKey(agency(42, true), TOPIC)).toBe(
 			consentInputKey(agency(42, true), TOPIC)
@@ -112,10 +95,14 @@ describe('mayAcceptConsent — may this consent be given at all', () => {
 		expect(mayAcceptConsent(resolvedFor(other), current)).toBe(false);
 	});
 
-	it('rejects an answer produced before applicability flipped', () => {
-		// The regression this whole identity exists for.
-		const beforeFlip = consentInputKey(agency(42, false), TOPIC);
-		expect(mayAcceptConsent(resolvedFor(beforeFlip), current)).toBe(false);
+	it('rejects an answer for a different topic', () => {
+		// The regression this whole identity exists for: an answer resolved for
+		// one Fachbereich must not count for another.
+		const otherTopic = consentInputKey(agency(42, true), {
+			...TOPIC,
+			id: 999
+		});
+		expect(mayAcceptConsent(resolvedFor(otherTopic), current)).toBe(false);
 	});
 
 	it('rejects a pending resolution', () => {
@@ -139,9 +126,12 @@ describe('answersSelection — does this answer still describe the inputs', () =
 		expect(answersSelection(resolvedFor(current), current)).toBe(true);
 	});
 
-	it('rejects an answer produced before applicability flipped', () => {
-		const beforeFlip = consentInputKey(agency(42, false), TOPIC);
-		expect(answersSelection(resolvedFor(beforeFlip), current)).toBe(false);
+	it('rejects an answer for a different topic', () => {
+		const otherTopic = consentInputKey(agency(42, true), {
+			...TOPIC,
+			id: 999
+		});
+		expect(answersSelection(resolvedFor(otherTopic), current)).toBe(false);
 	});
 
 	it('treats pending as current, because it claims nothing about any inputs', () => {
@@ -163,22 +153,29 @@ describe('answersSelection — does this answer still describe the inputs', () =
 });
 
 describe('departmentMayHaveConsentText', () => {
-	it('is true only for a department reporting a published policy', () => {
+	/* Codex P1 on #1110: this used to require `hasPublishedDpp`, which the
+	   AgencyService contract defines as a policy *of its own*. Legal texts
+	   inherit, so exactly the departments governed by Träger wording reported
+	   false, skipped the request, and were offered the platform sentence. */
+	it('is true for a department with no policy of its own, which inherits one', () => {
+		expect(departmentMayHaveConsentText(agency(42, false), TOPIC)).toBe(
+			true
+		);
+	});
+
+	it('is true for a department with its own policy', () => {
 		expect(departmentMayHaveConsentText(agency(42, true), TOPIC)).toBe(
 			true
 		);
-		expect(departmentMayHaveConsentText(agency(42, false), TOPIC)).toBe(
-			false
-		);
 	});
 
-	it('is false while the departments are still unknown', () => {
+	it('is true before the departments are known — inheritance does not need them', () => {
 		expect(
 			departmentMayHaveConsentText(agencyWithoutDepartments(42), TOPIC)
-		).toBe(false);
+		).toBe(true);
 	});
 
-	it('is false without an agency or a topic', () => {
+	it('is false without an agency or a topic — nothing to ask about', () => {
 		expect(departmentMayHaveConsentText(undefined, TOPIC)).toBe(false);
 		expect(departmentMayHaveConsentText(agency(42, true), undefined)).toBe(
 			false
@@ -217,7 +214,9 @@ describe('consentBindingKey', () => {
  */
 describe('effectiveConsentResolution', () => {
 	const CONFIGURED = agency(42, true);
-	const UNCONFIGURED = agency(42, false);
+	/* "Unconfigured" now means nothing is selected. A department without its
+	   own policy is *not* unconfigured — it inherits (Codex P1, #1110). */
+	const UNCONFIGURED = undefined;
 
 	it('resolves an unconfigured input immediately, even after a configured one', () => {
 		const previous: ConsentResolution = {
