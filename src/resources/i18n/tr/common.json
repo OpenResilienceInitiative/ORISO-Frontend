@@ -2671,6 +2671,7 @@
 		},
 		"dataProtection": {
 			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
+			"unrenderable": "Bu danışma merkezinin onay metni şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin veya danışma merkeziyle iletişime geçin.",
 			"label": {
 				"and": " ve ",
 				"prefix": "Bende ",
