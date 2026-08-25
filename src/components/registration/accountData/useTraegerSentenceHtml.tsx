@@ -39,18 +39,22 @@ const anchorTargets = (html: string): string[] =>
 		.map(([, href]) => href);
 
 /**
- * Characters that render as nothing, matched by the Unicode property that means
- * exactly that.
+ * Characters that render as nothing.
  *
- * This started as a hand-written list, which missed the bidi marks; became
- * `\p{Cf}`, which missed U+FE0F because a variation selector is `Mn`, not a
- * format character. `Default_Ignorable_Code_Point` is the property that
- * actually asks the question — "should this be rendered?" — instead of
- * approximating it by category, and it needs no maintenance as Unicode grows.
- * Verified to cover U+200B, U+FE0F, U+200E, U+00AD, U+2060, U+FEFF and U+2066
- * while leaving ordinary letters alone (ORISO-Frontend#1110).
+ * Two properties, because neither contains the other — measured, after I
+ * claimed `Default_Ignorable_Code_Point` alone "asks the question" and was
+ * wrong:
+ *
+ * - U+FE0F (variation selector) is `Default_Ignorable_Code_Point` but not `Cf`
+ * - U+FFF9–U+FFFB (interlinear annotation) are `Cf` but not
+ *   `Default_Ignorable_Code_Point`
+ *
+ * The history of this one line is worth keeping: a hand-written list, then
+ * `\p{Cf}`, then `Default_Ignorable_Code_Point`, each an approximation of
+ * "would a person see anything here?" that broke at a different edge
+ * (ORISO-Frontend#1110).
  */
-const INVISIBLE_CHARACTERS = /\p{Default_Ignorable_Code_Point}/gu;
+const INVISIBLE_CHARACTERS = /[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu;
 
 /**
  * The Träger-authored sentence as it would actually reach the DOM, or `null`
