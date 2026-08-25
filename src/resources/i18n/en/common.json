@@ -2549,6 +2549,10 @@
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
 			},
+			"type": {
+				"team": "Team counselling",
+				"single": "Single counselling"
+			},
 			"details": {
 				"aboutLabel": "About this center",
 				"addressLabel": "Address",
@@ -4026,7 +4030,7 @@
 			"positionCountSuffix": "still ahead of you",
 			"connecting": "Connecting …",
 			"insteadOfWaiting": "Instead of waiting",
-			"requestLocalCounselor": "Send on-site consultation request",
+			"requestLocalCounselor": "Start mail counselling",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice",
@@ -4471,5 +4475,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "Monday",
+		"tuesday": "Tuesday",
+		"wednesday": "Wednesday",
+		"thursday": "Thursday",
+		"friday": "Friday",
+		"saturday": "Saturday",
+		"sunday": "Sunday"
 	}
 }

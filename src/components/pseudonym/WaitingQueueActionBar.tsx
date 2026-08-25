@@ -15,7 +15,7 @@ interface WaitingQueueActionBarProps {
 	queuePosition?: number | null;
 	/** User tapped the smiley "short calm companion" pill on the left. */
 	onOpenCalmCompanion?: () => void;
-	/** User tapped "Send request to local counselor". */
+	/** User tapped "Mail Beratung starten" (mail counselling). */
 	onRequestLocalCounselor?: () => void;
 	/**
 	 * User tapped "Chat verlassen". Opens the dialog that offers staying,
@@ -227,7 +227,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 							<span className="waitingQueueActionBar__localLabel">
 								{t(
 									'anonymousChat.queue.requestLocalCounselor',
-									'Vor Ort Beratungsanfrage absenden'
+									'Mail Beratung starten'
 								)}
 							</span>
 						</button>
