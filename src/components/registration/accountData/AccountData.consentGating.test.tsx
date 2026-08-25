@@ -445,8 +445,12 @@ describe('AccountData — an unrenderable Träger sentence blocks acceptance', (
 		await waitFor(() =>
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
-		// Guards the fix from degenerating into "disable everything": the
-		// renderable case must stay acceptable.
-		expect(anyCheckbox()?.disabled).toBe(false);
+		/* Guards the fix from degenerating into "disable everything": the
+		   renderable case must stay acceptable. Waited for rather than asserted
+		   at once — the sentence is rendered by the label while the gate lives
+		   one level up and is fed by an effect, so under load the two can be a
+		   tick apart. The assertion is unchanged in strength: a checkbox that
+		   never enables still fails. */
+		await waitFor(() => expect(anyCheckbox()?.disabled).toBe(false));
 	});
 });
