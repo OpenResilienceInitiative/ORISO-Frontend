@@ -13,7 +13,7 @@ import {
 	normalizeConsentTextResponse
 } from './apiGetConsentText';
 /* eslint-disable-next-line import/first */
-import { fetchData } from './fetchData';
+import { fetchData, FETCH_ERRORS } from './fetchData';
 
 afterEach(() => vi.clearAllMocks());
 
@@ -184,6 +184,33 @@ describe('apiGetConsentText — a failed request is not an empty one', () => {
 				sentence: 'Ich willige ein, siehe {{legal_links}}.',
 				versionId: 5
 			}
+		});
+	});
+});
+
+describe('apiGetConsentText — an absent record is not an unreadable one', () => {
+	/* Codex P1 on #1110: once the applicability predicate stopped gating the
+	   request, a frontend paired with a backend that has no such endpoint would
+	   404 on every selection. Mapping that to `unavailable` disables the consent
+	   checkbox permanently and blocks registration outright. */
+	it('reports ok with no consent text on 404', async () => {
+		vi.mocked(fetchData).mockRejectedValue(
+			new Error(FETCH_ERRORS.NO_MATCH)
+		);
+
+		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
+			status: 'ok',
+			consentText: null
+		});
+	});
+
+	it('still fails closed when the record may exist and could not be read', async () => {
+		vi.mocked(fetchData).mockRejectedValue(
+			new Error(FETCH_ERRORS.CATCH_ALL)
+		);
+
+		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
+			status: 'unavailable'
 		});
 	});
 });

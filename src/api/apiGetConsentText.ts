@@ -125,11 +125,25 @@ export type ConsentTextResult =
  * Public endpoint, no auth.
  *
  * A backend that predates this epic answers 200 without the field, which is an
- * honest `ok` + null and yields today's static sentence. A backend without the
- * endpoint at all also reports `hasPublishedDpp: false`, so nothing is
- * requested for it in the first place. What reaches `unavailable` is the case
- * that matters: the backend said this Fachbereich has a policy, and we could
- * not read it.
+ * honest `ok` + null and yields today's static sentence.
+ *
+ * **404 is `ok` + null, not `unavailable`.** There is no such legal record —
+ * either the department has none or the backend has no such endpoint — so no
+ * department-specific wording governs and the platform sentence is the one in
+ * force. That is the legacy behaviour, and it collects agreement to wording
+ * that genuinely applies.
+ *
+ * This used to be covered by not requesting at all for a department reporting
+ * no policy, but that predicate was removed: it also skipped departments that
+ * *inherit* Träger wording (ORISO-Frontend#1110). Without this distinction a
+ * frontend paired with an older backend would 404 on every selection, resolve
+ * `unavailable`, and disable the checkbox for everyone — blocking registration
+ * outright rather than falling back.
+ *
+ * What still reaches `unavailable` is the case that matters: a record that may
+ * well exist and could not be read — a 5xx, a network failure — where offering
+ * the platform sentence would collect agreement to the wrong document. Fail
+ * closed there, and only there.
  */
 export const apiGetConsentText = async (
 	agencyId: number,
@@ -149,4 +163,8 @@ export const apiGetConsentText = async (
 			status: 'ok' as const,
 			consentText: normalizeConsentTextResponse(response)
 		}))
-		.catch(() => ({ status: 'unavailable' as const }));
+		.catch((error: Error) =>
+			error?.message === FETCH_ERRORS.NO_MATCH
+				? { status: 'ok' as const, consentText: null }
+				: { status: 'unavailable' as const }
+		);

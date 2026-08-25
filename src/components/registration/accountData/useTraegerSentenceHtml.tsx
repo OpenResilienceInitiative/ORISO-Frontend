@@ -43,13 +43,17 @@ import {
 /**
  * The hrefs the platform's own legal links point at.
  *
- * Checked individually rather than "does the output contain any anchor": a
- * Träger sentence may legitimately carry its own link, and that would satisfy a
- * mere anchor test while the mandatory privacy and imprint links are still
- * missing (ORISO-Frontend#1110).
+ * Read off surviving `<a href>` values, not searched for anywhere in the HTML.
+ * A Träger sentence may legitimately carry its own link, so "contains any
+ * anchor" is not enough; and the policy URL may appear as visible text, so
+ * "contains this string" is not enough either. What has to survive is a
+ * clickable link to that target (ORISO-Frontend#1110).
  */
-const legalLinkTargets = (linksHtml: string): string[] =>
-	Array.from(linksHtml.matchAll(/href="([^"]*)"/g), (match) => match[1]);
+const anchorTargets = (html: string): string[] =>
+	Array.from(
+		html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g),
+		(match) => match[1]
+	);
 
 const INVISIBLE_CHARACTERS = /[\u00AD\u200B-\u200D\u2060\uFEFF]/g;
 
@@ -131,8 +135,9 @@ export const useTraegerSentenceHtml = (
 		   and the sentence renders with no policy links at all: the platform's
 		   one mandatory disclosure, gone. Check the result rather than the
 		   intent, and append if it did not survive (ORISO-Frontend#1110). */
-		return legalLinkTargets(legalLinksHtml).every((href) =>
-			rendered.includes(href)
+		const survivingHrefs = anchorTargets(rendered);
+		return anchorTargets(legalLinksHtml).every((href) =>
+			survivingHrefs.includes(href)
 		)
 			? rendered
 			: `${rendered} ${sanitizeConsentHtml(legalLinksHtml)}`;
