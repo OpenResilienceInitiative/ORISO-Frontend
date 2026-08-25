@@ -346,7 +346,14 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 				versionId: 2
 			})
 		);
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
+		draftAccepting(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				1,
+				'Unveränderte Fassung mit {{legal_links}}.'
+			)
+		);
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
@@ -368,7 +375,14 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 				versionId: 1
 			})
 		);
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, 1));
+		draftAccepting(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				1,
+				'Unveränderte Fassung mit {{legal_links}}.'
+			)
+		);
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
@@ -830,5 +844,60 @@ describe('AccountData — a fallback acceptance belongs to the language it was g
 		renderStep({ hasPublishedDpp: false, locale: 'de' });
 
 		await waitFor(() => expect(anyCheckbox()?.checked).toBe(true));
+	});
+});
+
+/**
+ * Codex on #1110: with a version present the key ignored the wording entirely,
+ * so a versioned text with several languages kept its binding across a locale
+ * switch — other words on screen, box still ticked.
+ */
+describe('AccountData — a versioned acceptance is still tied to the wording shown', () => {
+	const versioned = {
+		sentence: JSON.stringify({
+			de: 'Deutsche Fassung {{legal_links}}',
+			en: 'English wording {{legal_links}}'
+		}),
+		versionId: 9
+	} as ConsentTextData;
+
+	it('drops the tick when the same version is shown in another language', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(versioned));
+		// Accepted against the German wording of version 9.
+		draftAccepting(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				9,
+				'Deutsche Fassung {{legal_links}}'
+			)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Deutsche Fassung/)).toBeDefined()
+		);
+		/* Same language, same version: kept. Waited for, not sampled: the tick
+		   follows the sentence by one effect, and asserting immediately has now
+		   produced three false failures in this file under CI load. */
+		await waitFor(() => expect(anyCheckbox()?.checked).toBe(true));
+
+		// The English wording of the same version is different wording.
+		expect(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				9,
+				'English wording {{legal_links}}'
+			)
+		).not.toBe(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				9,
+				'Deutsche Fassung {{legal_links}}'
+			)
+		);
 	});
 });

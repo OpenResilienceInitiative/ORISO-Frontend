@@ -244,7 +244,7 @@ export const AccountData: FC<{
 					   sentence, switch to English with the pill, and the box
 					   stays ticked beside wording nobody affirmatively accepted
 					   (ORISO-Frontend#1110). */
-					traegerSentence?.html ?? `platform:${locale}`
+					traegerSentence?.authored ?? `platform:${locale}`
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

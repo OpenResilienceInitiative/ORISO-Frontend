@@ -73,21 +73,26 @@ export const consentBindingKey = (
 	topicId: number | null | undefined,
 	versionId: number | null | undefined,
 	/**
-	 * The sentence as displayed, used only when no version is supplied.
+	 * The sentence as displayed, or a stand-in for it.
 	 *
-	 * The API contract allows inherited Träger-level wording to carry
-	 * `versionId: null`, and without this every revision of that wording
-	 * collapses onto `agency:topic:none`. A draft accepted before such a
-	 * revision would then be restored as ticked next to the *new* sentence —
-	 * the same "agreement to wording never shown" this key exists to prevent,
-	 * just one level up (ORISO-Frontend#1110).
+	 * Always part of the key, alongside the version rather than instead of it.
+	 * Inherited Träger wording may carry `versionId: null`, so without this
+	 * every revision of it collapsed onto one key; and a versioned text shown
+	 * in another language is different wording even though the version is
+	 * unchanged. The platform fallback passes its locale, having no wording of
+	 * its own to fingerprint.
 	 */
 	renderedSentence?: string | null
 ): string => {
-	const version =
-		versionId ??
-		(renderedSentence ? sentenceFingerprint(renderedSentence) : 'none');
-	return `${agencyId ?? 'none'}:${topicId ?? 'none'}:${version}`;
+	/* Version and wording are separate components, not alternatives. Keying on
+	   the version alone let a versioned text keep its binding across a language
+	   switch — the reader sees other words, the box stays ticked. Keying on the
+	   wording alone would miss a republished text that happens to read the same
+	   in the shown language. Either changing must untick (ORISO-Frontend#1110). */
+	const wording = renderedSentence
+		? sentenceFingerprint(renderedSentence)
+		: 'none';
+	return `${agencyId ?? 'none'}:${topicId ?? 'none'}:${versionId ?? 'none'}:${wording}`;
 };
 
 /**

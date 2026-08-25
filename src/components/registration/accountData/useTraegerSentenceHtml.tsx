@@ -75,6 +75,13 @@ const INVISIBLE_CHARACTERS = /\p{Default_Ignorable_Code_Point}/gu;
  */
 export interface TraegerSentence {
 	html: string;
+	/**
+	 * The language-resolved wording as the Träger authored it, before our links
+	 * are spliced in. This is what a binding is keyed on: it changes when the
+	 * Träger republishes and when another language is shown, and unlike the
+	 * rendered form it can be reproduced from the inputs alone.
+	 */
+	authored: string;
 	/** True when the wording shown is a machine translation. */
 	isMachineTranslated: boolean;
 	/** The authored, legally binding language of the wording. */
@@ -176,6 +183,7 @@ export const useTraegerSentenceHtml = (
 		   is not informed consent (ORISO-Frontend#1110). */
 		return {
 			html,
+			authored: resolved.html,
 			isMachineTranslated: resolved.isMachineTranslated,
 			originalLang: resolved.originalLang,
 			lang: resolved.lang
