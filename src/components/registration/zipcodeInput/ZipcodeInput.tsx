@@ -57,6 +57,13 @@ export const ZipcodeInput: FC<{
 			sx={{
 				maxWidth: '520px',
 				mx: 'auto',
+				// This step is one short block — icon, question, five digit
+				// boxes — in a column that has room to spare. Sitting it at the
+				// top left a large empty field below it. `auto` block margins
+				// centre it in whatever the header and the footer leave over,
+				// and they collapse to the natural top offset as soon as the
+				// disclosure below is expanded and the block outgrows the space.
+				my: 'auto',
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',

@@ -161,8 +161,13 @@
 			// between the red bar and the step row (the "warum diese area?"
 			// finding). `padding: 0` already covers the old `padding-top`.
 			margin-top: 0 !important;
+			// `padding: 0` covers the bottom too. The 120px that used to sit
+			// here reserved room for the fixed step footer a second time — the
+			// step body already reserves 144/112px for it. Doubling it ended
+			// the content column 120px above the footer, which is invisible
+			// while a step is top-aligned and wrong as soon as one centres
+			// itself in the space that is left.
 			padding: 0;
-			padding-bottom: 120px;
 			box-sizing: border-box;
 
 			@include breakpoint($fromLarge) {

@@ -156,23 +156,33 @@ export const RegistrationHeader = ({
 			data-cy="registration-header"
 			sx={{
 				position: fullBleed ? 'sticky' : 'relative',
-				// xs sticks to the viewport top: the old 48px band above the
-				// stepper is gone on mobile, and a 48px offset here made the
-				// row hover over the first headline line before any scroll.
-				top: fullBleed ? { xs: 0, md: '72px' } : undefined,
+				// The 72px offset exists to tuck the band under the in-flow
+				// sticky header row — and that row only renders from `lg` up
+				// (StageLayout hides it below $fromXLarge). Everywhere below
+				// lg nothing sits above the band, so it pins flush at 0;
+				// offsetting it there left a 72px gap that list rows scrolled
+				// through (the sliced-content screenshot). This theme's `md`
+				// is 600px, not MUI's 900 — which is how the gap covered the
+				// whole 600–1199 range.
+				top: fullBleed ? { xs: 0, lg: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
-				// Follow the registration column (60vw on desktop). Avoid vw
-				// breakouts that overflow into the red stage panel.
+				// Follow the registration column (60vw on desktop) rather than
+				// breaking out with 100vw: that width counts the classic scrollbar,
+				// so pairing it with a centering margin pushed the whole document
+				// sideways (#1174). The band still pads itself: it spans the whole
+				// column, and #1174 zeroed that column's padding — the px it dropped
+				// here could not be missed on pre-dev, where this component is not
+				// wired in and renders nowhere.
 				width: '100%',
 				maxWidth: '100%',
-				// The band spans the whole column and #1174 zeroed that column's
-				// padding, so it has to carry its own — without this the step label
-				// and the chips sit flat against the screen edge. #1174 dropped this
-				// line while the component was still unwired and rendered nowhere.
 				px: { xs: 2, sm: 3, lg: 4 },
-				backgroundColor: 'rgba(255, 255, 255, 0.96)',
-				backdropFilter: 'blur(8px)',
+				// Opaque, token-true surface: rows scrolling underneath must not
+				// shine through a header. Same token the StageLayout header row
+				// paints with, so the two read as one surface. This is the point of
+				// #1167 and #1174 never meant to touch it — the translucent
+				// rgba/backdrop-filter pair it still carried is the old value.
+				backgroundColor: 'var(--m3-background, #fff)',
 				// One rule, default outline tone. The previous header stacked a
 				// border plus a margin band below it, which read as two lines
 				// with dead space between them.
