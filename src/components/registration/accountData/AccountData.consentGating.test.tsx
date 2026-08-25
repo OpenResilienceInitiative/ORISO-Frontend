@@ -544,7 +544,12 @@ describe('AccountData — only real Träger wording counts as a consent sentence
 		// Mn, not Cf — outside the property the previous version used.
 		['variation selector', '\uFE0F'],
 		// Cf, but not Default_Ignorable — the other direction.
-		['interlinear annotation anchor', '\uFFF9']
+		['interlinear annotation anchor', '\uFFF9'],
+		// Cc, and survives trim() — outside both properties.
+		['next line control', '\u0085'],
+		// Zs: trim() does remove this one, which is the point of asking
+		// positively rather than listing what to strip.
+		['non-breaking space', '\u00A0']
 	])(
 		'does not accept wording made only of a %s',
 		async (_name, invisible) => {

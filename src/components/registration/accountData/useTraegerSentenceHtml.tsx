@@ -16,6 +16,25 @@ import {
 } from '../../../utils/consentText';
 
 /**
+ * Does this text contain anything a person could actually see?
+ *
+ * Asked positively, after four attempts at answering it by listing what to
+ * remove. A hand-written list missed the bidi marks; `\p{Cf}` missed the
+ * variation selectors; `Default_Ignorable_Code_Point` missed the interlinear
+ * annotation controls; both together missed U+0085, a `Cc` control that
+ * `trim()` also leaves alone. Every one of those was an enumeration of the
+ * invisible, and an enumeration of the invisible is never finished.
+ *
+ * The complement is finite and stable: a character that is not whitespace, not
+ * a control, not a format character, not a separator and not default-ignorable
+ * is a character with a glyph. Verified against U+0085, U+FFF9, U+FE0F, U+200B
+ * and U+00A0 on one side and letters, umlauts, Han and emoji on the other
+ * (ORISO-Frontend#1110).
+ */
+const VISIBLE_CHARACTER =
+	/[^\s\p{Cc}\p{Cf}\p{Zs}\p{Zl}\p{Zp}\p{Default_Ignorable_Code_Point}]/u;
+
+/**
  * The hrefs the platform's own legal links point at.
  *
  * Read off surviving, *usable* `<a href>` values — not searched for anywhere in
@@ -31,30 +50,9 @@ const anchorTargets = (html: string): string[] =>
 		   link: nothing to click, no accessible name. Counting it would suppress
 		   the fallback and leave the mandatory disclosure unreachable. */
 		.filter(([, , content]) =>
-			content
-				.replace(/<[^>]*>/g, '')
-				.replace(INVISIBLE_CHARACTERS, '')
-				.trim()
+			VISIBLE_CHARACTER.test(content.replace(/<[^>]*>/g, ''))
 		)
 		.map(([, href]) => href);
-
-/**
- * Characters that render as nothing.
- *
- * Two properties, because neither contains the other — measured, after I
- * claimed `Default_Ignorable_Code_Point` alone "asks the question" and was
- * wrong:
- *
- * - U+FE0F (variation selector) is `Default_Ignorable_Code_Point` but not `Cf`
- * - U+FFF9–U+FFFB (interlinear annotation) are `Cf` but not
- *   `Default_Ignorable_Code_Point`
- *
- * The history of this one line is worth keeping: a hand-written list, then
- * `\p{Cf}`, then `Default_Ignorable_Code_Point`, each an approximation of
- * "would a person see anything here?" that broke at a different edge
- * (ORISO-Frontend#1110).
- */
-const INVISIBLE_CHARACTERS = /[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu;
 
 /**
  * The Träger-authored sentence as it would actually reach the DOM, or `null`
@@ -146,17 +144,8 @@ export const useTraegerSentenceHtml = (
 		   which is the reported defect wearing a different hat. */
 		const traegerOwnText = stripLegalLinksToken(
 			sanitizeConsentHtml(resolved.html)
-		)
-			.replace(/<[^>]*>/g, '')
-			/* Invisible formatting characters survive `trim()`, so
-			   `\u200B{{legal_links}}` would count as authored wording while the
-			   help-seeker sees nothing. Entity spellings need no special
-			   handling: the sanitiser decodes them first, so `&#x200B;` is
-			   already the character by the time it reaches here — measured, not
-			   assumed (ORISO-Frontend#1110). */
-			.replace(INVISIBLE_CHARACTERS, '')
-			.trim();
-		if (!traegerOwnText) {
+		).replace(/<[^>]*>/g, '');
+		if (!VISIBLE_CHARACTER.test(traegerOwnText)) {
 			return null;
 		}
 		/* Substitute first, sanitize second. The other order would let a token
