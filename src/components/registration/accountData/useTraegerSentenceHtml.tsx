@@ -16,6 +16,34 @@ import {
 } from '../../../utils/consentText';
 
 /**
+ * The hrefs the platform's own legal links point at.
+ *
+ * Read off surviving `<a href>` values, not searched for anywhere in the HTML.
+ * A Träger sentence may legitimately carry its own link, so "contains any
+ * anchor" is not enough; and the policy URL may appear as visible text, so
+ * "contains this string" is not enough either. What has to survive is a
+ * clickable link to that target (ORISO-Frontend#1110).
+ */
+const anchorTargets = (html: string): string[] =>
+	Array.from(
+		html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g),
+		(match) => match[1]
+	);
+
+/**
+ * Characters that occupy no visual space.
+ *
+ * Matched by Unicode property rather than by an explicit list. The list began
+ * as zero-width space/non-joiner/joiner, word joiner, BOM and the soft hyphen,
+ * and was immediately shown to be missing the bidi marks — as any hand-written
+ * enumeration would be, and would be again after adding those two. `\p{Cf}`
+ * covers the format characters as a class, directional overrides and isolates
+ * included, and stays correct as Unicode grows. Exotic spaces are `\p{Zs}` and
+ * `trim()` already removes them (ORISO-Frontend#1110).
+ */
+const INVISIBLE_CHARACTERS = /\p{Cf}/gu;
+
+/**
  * The Träger-authored sentence as it would actually reach the DOM, or `null`
  * when there is none to show.
  *
@@ -36,27 +64,6 @@ import {
  * case, platform wording applies), versus a Träger text that cannot be
  * rendered (a real fault — nothing may be accepted).
  */
-/**
- * Characters that occupy no visual space: zero-width space/non-joiner/joiner,
- * word joiner, BOM, and the soft hyphen. Text made only of these is not text.
- */
-/**
- * The hrefs the platform's own legal links point at.
- *
- * Read off surviving `<a href>` values, not searched for anywhere in the HTML.
- * A Träger sentence may legitimately carry its own link, so "contains any
- * anchor" is not enough; and the policy URL may appear as visible text, so
- * "contains this string" is not enough either. What has to survive is a
- * clickable link to that target (ORISO-Frontend#1110).
- */
-const anchorTargets = (html: string): string[] =>
-	Array.from(
-		html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/g),
-		(match) => match[1]
-	);
-
-const INVISIBLE_CHARACTERS = /[\u00AD\u200B-\u200D\u2060\uFEFF]/g;
-
 export const useTraegerSentenceHtml = (
 	consentText: ConsentTextData | null
 ): string | null => {
