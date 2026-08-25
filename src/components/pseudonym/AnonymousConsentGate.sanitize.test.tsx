@@ -90,7 +90,10 @@ describe('AnonymousConsentGate — Träger-authored HTML is sanitized', () => {
 			'https://beispiel-traeger.de/datenschutz'
 		);
 		expect(policyLink.getAttribute('target')).toBe('_blank');
-		expect(policyLink.getAttribute('rel')).toBe('noreferrer');
+		// The sanitiser forces this on every anchor, so an authored
+		// `rel="opener"` cannot hand the opened page a live handle on the tab
+		// it came from (ORISO-Frontend#1110).
+		expect(policyLink.getAttribute('rel')).toBe('noopener noreferrer');
 	});
 
 	it('keeps the surrounding sentence readable', () => {
