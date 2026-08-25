@@ -23,7 +23,26 @@ export const LEGAL_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 	allowedSchemesByTag: {
 		img: ['http', 'https']
 	},
-	allowProtocolRelative: false
+	allowProtocolRelative: false,
+	transformTags: {
+		/**
+		 * Every authored legal link is forced to `rel="noopener noreferrer"`,
+		 * whatever the Träger wrote. Forced rather than merely allowed: with
+		 * `target="_blank" rel="opener"` an author opts back out of the
+		 * browser's default protection and hands the opened page a live
+		 * `window.opener` handle on the registration tab, which is enough to
+		 * replace it with a phishing copy while the help-seeker is reading the
+		 * policy they were sent to.
+		 *
+		 * Same rule and same reasoning as rendered message links
+		 * (`richtextHelpers.ts`, ORISO-Frontend#1080); this path had simply
+		 * never been brought in line (ORISO-Frontend#1110).
+		 */
+		a: (tagName, attribs) => ({
+			tagName,
+			attribs: { ...attribs, rel: 'noopener noreferrer' }
+		})
+	}
 };
 
 const { '*': _anyTagAttributes, ...LEGAL_TAG_ATTRIBUTES } =

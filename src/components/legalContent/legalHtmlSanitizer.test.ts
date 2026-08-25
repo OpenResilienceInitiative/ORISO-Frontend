@@ -77,3 +77,24 @@ describe('consent sentences carry no remote images', () => {
 		).toContain('<img');
 	});
 });
+
+describe('authored links cannot opt out of opener protection', () => {
+	const hostile =
+		'<a href="https://attacker.example" target="_blank" rel="opener">Mehr</a>';
+
+	it('forces noopener noreferrer in a consent sentence', () => {
+		const out = sanitizeConsentHtml(hostile);
+
+		// `rel="opener"` is an explicit opt-out of the browser default; honouring
+		// it would hand the opened page a live handle on the registration tab.
+		expect(out).toContain('rel="noopener noreferrer"');
+		expect(out).not.toContain('rel="opener"');
+	});
+
+	it('forces it in a legal document too', () => {
+		const out = sanitizeLegalHtml(hostile);
+
+		expect(out).toContain('rel="noopener noreferrer"');
+		expect(out).not.toContain('rel="opener"');
+	});
+});

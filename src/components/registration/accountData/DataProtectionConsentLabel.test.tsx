@@ -190,11 +190,14 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		);
 		expect(policyLink.getAttribute('target')).toBe('_blank');
 		/* `target="_blank"` without `rel` would leave `window.opener` reachable
-		   from the target document. `LegalLinks` emits the `rel`; what is
-		   asserted here is that the consent allowlist does not strip it on the
-		   way through — it drops `class`, and the two are adjacent in the same
-		   options object. */
-		expect(policyLink.getAttribute('rel')).toBe('noreferrer');
+		   from the target document. `LegalLinks` emits `noreferrer`; the
+		   sanitiser then forces `noopener noreferrer` on every anchor, so an
+		   authored `rel="opener"` cannot hand the opened page a live handle on
+		   the registration tab (ORISO-Frontend#1110). What is asserted here is
+		   that the allowlist does not strip the attribute on the way through —
+		   it drops `class`, and the two are adjacent in the same options
+		   object. */
+		expect(policyLink.getAttribute('rel')).toBe('noopener noreferrer');
 		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
 	});
 
