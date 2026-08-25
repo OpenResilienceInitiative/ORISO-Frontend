@@ -36,6 +36,12 @@ import {
  * case, platform wording applies), versus a Träger text that cannot be
  * rendered (a real fault — nothing may be accepted).
  */
+/**
+ * Characters that occupy no visual space: zero-width space/non-joiner/joiner,
+ * word joiner, BOM, and the soft hyphen. Text made only of these is not text.
+ */
+const INVISIBLE_CHARACTERS = /[\u00AD\u200B-\u200D\u2060\uFEFF]/g;
+
 export const useTraegerSentenceHtml = (
 	consentText: ConsentTextData | null
 ): string | null => {
@@ -90,6 +96,11 @@ export const useTraegerSentenceHtml = (
 			sanitizeConsentHtml(resolved.html)
 		)
 			.replace(/<[^>]*>/g, '')
+			/* Zero-width and other invisible formatting characters survive both
+			   the sanitizer and `trim()`, so `\u200B{{legal_links}}` would count
+			   as authored wording while the help-seeker sees nothing. What must
+			   be non-empty is what they can actually read. */
+			.replace(INVISIBLE_CHARACTERS, '')
 			.trim();
 		if (!traegerOwnText) {
 			return null;

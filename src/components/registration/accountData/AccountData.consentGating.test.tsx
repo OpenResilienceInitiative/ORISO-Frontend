@@ -480,6 +480,25 @@ describe('AccountData — only real Träger wording counts as a consent sentence
 		expect(anyCheckbox()?.disabled).toBe(true);
 	});
 
+	it('does not accept wording made only of invisible characters', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// Zero-width space: survives the sanitizer and `trim()`, shows nothing.
+				sentence: '\u200B{{legal_links}}',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-sentence-pending"]')
+			).toBeNull()
+		);
+		expect(anyCheckbox()?.disabled).toBe(true);
+	});
+
 	it('does not carry an acceptance across a revision of unversioned wording', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(
 			ok({
