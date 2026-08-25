@@ -38,8 +38,19 @@ const anchorTargets = (html: string): string[] =>
 		)
 		.map(([, href]) => href);
 
-/** Characters that occupy no visual space, matched as a class rather than listed. */
-const INVISIBLE_CHARACTERS = /\p{Cf}/gu;
+/**
+ * Characters that render as nothing, matched by the Unicode property that means
+ * exactly that.
+ *
+ * This started as a hand-written list, which missed the bidi marks; became
+ * `\p{Cf}`, which missed U+FE0F because a variation selector is `Mn`, not a
+ * format character. `Default_Ignorable_Code_Point` is the property that
+ * actually asks the question — "should this be rendered?" — instead of
+ * approximating it by category, and it needs no maintenance as Unicode grows.
+ * Verified to cover U+200B, U+FE0F, U+200E, U+00AD, U+2060, U+FEFF and U+2066
+ * while leaving ordinary letters alone (ORISO-Frontend#1110).
+ */
+const INVISIBLE_CHARACTERS = /\p{Default_Ignorable_Code_Point}/gu;
 
 /**
  * The Träger-authored sentence as it would actually reach the DOM, or `null`

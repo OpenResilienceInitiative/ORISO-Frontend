@@ -511,7 +511,9 @@ describe('AccountData — only real Träger wording counts as a consent sentence
 		// Not in the string at all until a browser decodes it — the case that
 		// showed string processing was the wrong tool here.
 		['entity-encoded zero-width space', '&#x200B;'],
-		['named entity for a soft hyphen', '&shy;']
+		['named entity for a soft hyphen', '&shy;'],
+		// Mn, not Cf — outside the property the previous version used.
+		['variation selector', '\uFE0F']
 	])(
 		'does not accept wording made only of a %s',
 		async (_name, invisible) => {
