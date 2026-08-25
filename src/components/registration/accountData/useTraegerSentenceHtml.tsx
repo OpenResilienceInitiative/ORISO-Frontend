@@ -40,6 +40,17 @@ import {
  * Characters that occupy no visual space: zero-width space/non-joiner/joiner,
  * word joiner, BOM, and the soft hyphen. Text made only of these is not text.
  */
+/**
+ * The hrefs the platform's own legal links point at.
+ *
+ * Checked individually rather than "does the output contain any anchor": a
+ * Träger sentence may legitimately carry its own link, and that would satisfy a
+ * mere anchor test while the mandatory privacy and imprint links are still
+ * missing (ORISO-Frontend#1110).
+ */
+const legalLinkTargets = (linksHtml: string): string[] =>
+	Array.from(linksHtml.matchAll(/href="([^"]*)"/g), (match) => match[1]);
+
 const INVISIBLE_CHARACTERS = /[\u00AD\u200B-\u200D\u2060\uFEFF]/g;
 
 export const useTraegerSentenceHtml = (
@@ -120,7 +131,9 @@ export const useTraegerSentenceHtml = (
 		   and the sentence renders with no policy links at all: the platform's
 		   one mandatory disclosure, gone. Check the result rather than the
 		   intent, and append if it did not survive (ORISO-Frontend#1110). */
-		return rendered.includes('<a ')
+		return legalLinkTargets(legalLinksHtml).every((href) =>
+			rendered.includes(href)
+		)
 			? rendered
 			: `${rendered} ${sanitizeConsentHtml(legalLinksHtml)}`;
 	}, [consentText, i18n?.language, legalLinksHtml]);

@@ -564,6 +564,28 @@ describe('AccountData — inherited wording and mandatory links', () => {
 		).toBeNull();
 	});
 
+	it('adds the policy links even when the sentence has an unrelated link of its own', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// An own anchor plus the token in a dropped attribute: checking
+				// merely for "an <a>" would be satisfied while the mandatory
+				// privacy and imprint links are still missing.
+				sentence:
+					'<span title="{{legal_links}}">Ich willige ein, siehe <a href="https://traeger.example/info">Infos</a>.</span>',
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		expect(
+			document.querySelector('a[href="https://oriso.test/datenschutz"]')
+		).not.toBeNull();
+	});
+
 	it('keeps the policy links when the token sat in a stripped attribute', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(
 			ok({
