@@ -52,7 +52,6 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo",
 			"mobileHeadline": "There is room here for what is on your mind.",
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
@@ -1304,7 +1303,11 @@
 				"title": "Privacy policy"
 			},
 			"back": "Back",
-			"confirm": "Got it"
+			"confirm": "Got it",
+			"missing": {
+				"text": "No legal text has been provided here for this service.",
+				"link": "Open the configured address"
+			}
 		}
 	},
 	"login": {
@@ -1368,13 +1371,11 @@
 				"linkShort": "Why this is safe"
 			},
 			"explainer": {
-				"badge": "NEW",
-				"headline": "Only the two of you can read along.",
+				"headline": "Confidential from end to end",
 				"message": "I am not doing well.",
-				"you": "You",
-				"agency": "Counselling centre",
 				"encrypted": "encrypted",
-				"attack": "this is all an attacker gets",
+				"diagram": "Diagram: your message travels encrypted from your device to the counselling centre — only there does it become readable again.",
+				"attack": "Scrambled numbers are all a data thief gets from us.",
 				"cipherLabel": "Intercepted, encrypted data",
 				"key": "The key is created on your device and stays there — we do not have it.",
 				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
@@ -2548,6 +2549,10 @@
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
 			},
+			"type": {
+				"team": "Team counselling",
+				"single": "Single counselling"
+			},
 			"details": {
 				"aboutLabel": "About this center",
 				"addressLabel": "Address",
@@ -2887,6 +2892,9 @@
 				"entering": "Opening your counselling room …"
 			}
 		},
+		"selection": {
+			"remove": "Remove {{label}}"
+		},
 		"stepState": {
 			"done": "completed",
 			"active": "current step",
@@ -2916,10 +2924,19 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"sender": "Carimat",
+			"senderRole": "Quick Guide",
 			"title": "A counsellor requested access to this conversation",
 			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
-			"decline": "Decline access"
+			"decline": "Decline access",
+			"optOut": {
+				"title": "Privacy notice for case handover",
+				"prompt": "Please read the information and then make your decision.",
+				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
+				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
+				"switchLabel": "I consent to data processing for this case handover"
+			}
 		},
 		"denied": {
 			"copy": "The previous request did not grant content visibility.",
@@ -4013,7 +4030,7 @@
 			"positionCountSuffix": "still ahead of you",
 			"connecting": "Connecting …",
 			"insteadOfWaiting": "Instead of waiting",
-			"requestLocalCounselor": "Send on-site consultation request",
+			"requestLocalCounselor": "Start mail counselling",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice",
@@ -4303,6 +4320,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Send me an email",
+			"emailHint": "What you discuss here never appears in that email.",
+			"browser": "Give me a signal here",
+			"browserHint": "No address needed — but it only works on this device.",
+			"both": "Both, and let me set a password now",
+			"bothHint": "Recommended. That way you can get back in if you forget something."
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
@@ -4450,5 +4475,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "Monday",
+		"tuesday": "Tuesday",
+		"wednesday": "Wednesday",
+		"thursday": "Thursday",
+		"friday": "Friday",
+		"saturday": "Saturday",
+		"sunday": "Sunday"
 	}
 }

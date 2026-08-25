@@ -14,7 +14,6 @@ import {
 	CHAT_TYPE_GROUP_CHAT,
 	CHAT_TYPE_SINGLE_CHAT,
 	getChatItemForSession,
-	getChatTypeForListItem,
 	SESSION_LIST_TYPES
 } from '../../components/session/sessionHelpers';
 
@@ -107,20 +106,6 @@ export const getSessionsDataKeyForSessionType = (sessionType) => {
 			return SESSION_DATA_KEY_MY_SESSIONS;
 		default:
 			return SESSION_DATA_KEY_MY_SESSIONS;
-	}
-};
-
-export const getUnreadMyMessages: Function = (sessionsData): number => {
-	if (sessionsData.mySessions) {
-		/* eslint-disable */
-		const unreadCount = sessionsData.mySessions.filter((session) => {
-			const chatType = getChatTypeForListItem(session);
-			return !session[chatType].messagesRead;
-		});
-		/* eslint-enable */
-		return unreadCount.length;
-	} else {
-		return 0;
 	}
 };
 

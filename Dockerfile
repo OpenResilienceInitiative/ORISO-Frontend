@@ -56,6 +56,14 @@ RUN npm install -g npm@11.18.0 \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/ip-address \
 	&& mv /tmp/ip-address-patch/package /usr/local/lib/node_modules/npm/node_modules/ip-address \
 	&& rm -rf /tmp/ip-address-patch /tmp/ip-address-10.3.1.tgz \
+	# CVE-2026-73566: node-tar DoS via a crafted long path. npm@11.18.0 still
+	# bundles tar 7.5.19; patch it up to the fixed 7.5.21 the same way.
+	&& npm pack tar@7.5.21 \
+	&& mkdir -p /tmp/tar-patch \
+	&& tar -xzf tar-7.5.21.tgz -C /tmp/tar-patch \
+	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/tar \
+	&& mv /tmp/tar-patch/package /usr/local/lib/node_modules/npm/node_modules/tar \
+	&& rm -rf /tmp/tar-patch /tmp/tar-7.5.21.tgz \
 	&& npm cache clean --force
 
 USER node
