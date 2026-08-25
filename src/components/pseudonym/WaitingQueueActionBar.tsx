@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ReactComponent as SentimentCalmIcon } from '../../resources/img/icons/sentiment-calm.svg';
 import { ReactComponent as HourglassTopQueueIcon } from '../../resources/img/icons/hourglass-top-queue.svg';
-import { ReactComponent as LocalCounselorHouseIcon } from '../../resources/img/icons/local-counselor-house.svg';
+import { ReactComponent as LocalCounselorMailIcon } from '../../resources/img/icons/local-counselor-mail.svg';
 import { ReactComponent as CornerLeftDownIcon } from '../../resources/img/icons/corner-left-down.svg';
 import { ReactComponent as CornerRightUpIcon } from '../../resources/img/icons/corner-right-up.svg';
 import { ReactComponent as CornerUpLeftIcon } from '../../resources/img/icons/corner-up-left.svg';
@@ -222,7 +222,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 							disabled={disabled || !onRequestLocalCounselor}
 						>
 							<span className="waitingQueueActionBar__localIcon">
-								<LocalCounselorHouseIcon />
+								<LocalCounselorMailIcon />
 							</span>
 							<span className="waitingQueueActionBar__localLabel">
 								{t(

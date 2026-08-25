@@ -29,7 +29,7 @@ import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
-import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
@@ -1602,7 +1602,7 @@ export const SessionListItemComponent = ({
 									)}
 								>
 									<img
-										src={nearbyConversationIcon}
+										src={mailConversationIcon}
 										alt={translate(
 											'sessionList.toolbar.chips.nearby',
 											'Mail'
