@@ -6,7 +6,27 @@ import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { ConsentTextData } from '../../../api/apiGetConsentText';
 import htmlParser from '../../../resources/scripts/util/htmlParser';
+import { normalizeLegalLang } from '../../../utils/legalContent';
 import { useTraegerSentenceHtml } from './useTraegerSentenceHtml';
+
+/**
+ * A language code as a reader of `uiLang` would name it, or the bare code.
+ *
+ * `Intl.DisplayNames` keeps this out of the catalogues: naming every authored
+ * language in every UI language by hand would go stale the first time a Träger
+ * writes in one nobody listed.
+ */
+const languageName = (code: string, uiLang?: string): string => {
+	try {
+		return (
+			new Intl.DisplayNames([uiLang || 'de'], { type: 'language' }).of(
+				code
+			) ?? code
+		);
+	} catch {
+		return code;
+	}
+};
 
 export interface ConsentSentenceProps {
 	/**
@@ -36,7 +56,7 @@ export interface ConsentSentenceProps {
  * platform's mandatory disclosure has to survive that replacement on its own).
  */
 export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
 	const traegerSentence = useTraegerSentenceHtml(consentText);
@@ -116,14 +136,24 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 					}}
 					data-cy="consent-machine-translated"
 				>
-					{t(
-						'legal.notice.machineTranslated',
-						'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.'
-					)}
+					{/* The binding language is named from the text's own
+					    metadata. The shared `legal.notice.machineTranslated`
+					    string asserts German, which is untrue when the Träger
+					    authored in another language — a false legal statement
+					    beside a consent box is worse than none
+					    (ORISO-Frontend#1110). */}
+					{t('registration.dataProtection.machineTranslated', {
+						language: languageName(
+							traegerSentence.originalLang,
+							i18n?.language
+						),
+						defaultValue:
+							'Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).'
+					})}
 				</Typography>
 			)}
 			{!traegerSentence.isMachineTranslated &&
-				traegerSentence.lang !== traegerSentence.originalLang && (
+				traegerSentence.lang !== normalizeLegalLang(i18n?.language) && (
 					<Typography
 						component="span"
 						variant="body2"

@@ -5,7 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key,
+		/* Returns the key, as before, so existing assertions still read as
+		   keys — except when a `defaultValue` is supplied, where it renders
+		   that with `{{…}}` interpolated. Without this a component that
+		   interpolates the wrong value, or none, is indistinguishable from one
+		   that gets it right. */
+		t: (key: string, options?: Record<string, unknown>) => {
+			const template = options?.defaultValue;
+			if (typeof template !== 'string') {
+				return key;
+			}
+			return template.replace(/\{\{(\w+)\}\}/g, (_, name) =>
+				String(options?.[name] ?? '')
+			);
+		},
 		i18n: { language: 'de' }
 	})
 }));
@@ -692,6 +705,35 @@ describe('AccountData — inherited wording and mandatory links', () => {
  * whose binding version you have never seen is not informed consent.
  */
 describe('AccountData — the help-seeker is told which wording binds', () => {
+	it('names the language that actually binds, not a fixed one', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence: JSON.stringify({
+					de: 'Maschinelle Fassung {{legal_links}}',
+					de__meta: { mt: true, src: 'en' },
+					en: 'Authored wording {{legal_links}}'
+				}),
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		const notice = await waitFor(() => {
+			const node = document.querySelector(
+				'[data-cy="consent-machine-translated"]'
+			);
+			expect(node).not.toBeNull();
+			return node as HTMLElement;
+		});
+		// The authored language is English here; a notice claiming the German
+		// version binds would be a false legal statement.
+		// The authored language is English here; a notice claiming the German
+		// version binds would be a false legal statement.
+		expect(notice.textContent).toContain('Englisch');
+		expect(notice.textContent).not.toContain('deutsche Fassung');
+	});
+
 	it('says so when the sentence on screen is machine-translated', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(
 			ok({
@@ -711,9 +753,31 @@ describe('AccountData — the help-seeker is told which wording binds', () => {
 				document.querySelector('[data-cy="consent-machine-translated"]')
 			).not.toBeNull()
 		);
-		// Shown, and acceptable — informing beats blocking, which would stop
-		// registration wherever a Träger has not authored every language.
-		expect(anyCheckbox()?.disabled).toBe(false);
+		/* Shown, and acceptable — informing beats blocking, which would stop
+		   registration wherever a Träger has not authored every language.
+		   Waited for: the gate lives one level up and is fed by an effect. */
+		await waitFor(() => expect(anyCheckbox()?.disabled).toBe(false));
+	});
+
+	it('says so when the sentence is shown in another language than the UI', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				// German UI, only English wording authored: the sentence is
+				// displayed in English and the reader must be told why.
+				sentence: JSON.stringify({
+					en: 'Authored wording {{legal_links}}'
+				}),
+				versionId: 4711
+			} as ConsentTextData)
+		);
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-fallback-language"]')
+			).not.toBeNull()
+		);
 	});
 
 	it('says nothing when the wording is the authored one', async () => {

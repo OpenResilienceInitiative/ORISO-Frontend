@@ -2634,6 +2634,7 @@
 		},
 		"dataProtection": {
 			"cookieNotice": "For authentication and navigation, this website uses cookies.",
+			"machineTranslated": "Machine-translated — the original version ({{language}}) is the legally binding one.",
 			"unrenderable": "The consent text of this counselling centre cannot be displayed at the moment. Please try again later or contact the counselling centre.",
 			"label": {
 				"and": " and ",

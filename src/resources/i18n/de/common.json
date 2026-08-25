@@ -2686,6 +2686,7 @@
 		},
 		"dataProtection": {
 			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
+			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).",
 			"unrenderable": "Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.",
 			"label": {
 				"and": " und ",
