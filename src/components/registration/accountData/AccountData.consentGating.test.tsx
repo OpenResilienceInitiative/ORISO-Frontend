@@ -107,17 +107,19 @@ const tenant = {
 const stepTree = ({
 	hasPublishedDpp,
 	setDisabledNextButton = () => {},
-	agencyId = AGENCY_A
+	agencyId = AGENCY_A,
+	locale = 'de'
 }: {
 	hasPublishedDpp: boolean;
 	setDisabledNextButton?: (disabled: boolean) => void;
 	agencyId?: number;
+	locale?: string;
 }) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<LocaleContext.Provider
 			value={
 				{
-					locale: 'de',
+					locale,
 					initLocale: 'de',
 					setLocale: () => {},
 					locales: ['de'],
@@ -236,7 +238,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		// The dangerous shape: everything else already valid from the draft, so
 		// the consent flag is the only thing left between the user and a
 		// completed registration.
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -253,7 +255,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 
 	it('does enable it once that same restored acceptance has a sentence again', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -271,7 +273,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			status: 'unavailable'
 		});
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -318,7 +320,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('keeps the tick when the user comes back to the same Fachbereich', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
@@ -326,7 +328,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('drops it when the Beratungsstelle changed while it was stored', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_B });
 
@@ -381,7 +383,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('does not let a changed Fachbereich enable the next step', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({
@@ -799,5 +801,34 @@ describe('AccountData — the help-seeker is told which wording binds', () => {
 		expect(
 			document.querySelector('[data-cy="consent-fallback-language"]')
 		).toBeNull();
+	});
+});
+
+/**
+ * Codex on #1110: the platform fallback passed no wording into the binding key,
+ * so every language produced `agency:topic:none`. Tick the German sentence,
+ * switch language with the pill, and the box stays ticked beside wording nobody
+ * affirmatively accepted.
+ */
+describe('AccountData — a fallback acceptance belongs to the language it was given in', () => {
+	beforeEach(() => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
+	});
+
+	it('does not carry a German fallback acceptance into another language', async () => {
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+
+		renderStep({ hasPublishedDpp: false, locale: 'en' });
+
+		await waitFor(() => expect(anyCheckbox()).not.toBeNull());
+		expect(anyCheckbox()?.checked).toBe(false);
+	});
+
+	it('keeps it in the language it was given in', async () => {
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+
+		renderStep({ hasPublishedDpp: false, locale: 'de' });
+
+		await waitFor(() => expect(anyCheckbox()?.checked).toBe(true));
 	});
 });
