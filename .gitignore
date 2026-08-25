@@ -62,3 +62,11 @@ docs/cursor-orchestrator/*
 *.pem
 
 storybook-static/
+.design-sync/sb-reference/
+.design-sync/learnings/
+.design-sync/.cache/
+.design-sync/node_modules
+.design-sync/*.log
+.ds-sync/
+ds-bundle/
+index.d.ts
