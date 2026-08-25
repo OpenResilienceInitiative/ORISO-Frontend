@@ -18,6 +18,14 @@ inputs:
     description: Comma-separated OCI target platforms
     required: false
     default: linux/amd64,linux/arm64
+  scan_before_push:
+    description: >-
+      Scan the image with Trivy before anything is published and fail on
+      fixable HIGH/CRITICAL findings. Must be enabled wherever this action
+      publishes: a scan that runs after the push cannot keep a vulnerable
+      image out of the registry (OpenResilienceInitiative/ORISO-Docs#88).
+    required: false
+    default: 'false'
 
 outputs:
   digest:
@@ -54,6 +62,48 @@ runs:
         type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
         type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
         type=raw,value=pre-dev,enable=${{ github.ref == 'refs/heads/pre-dev' }}
+
+  # The vulnerability gate only works ahead of the push. Scanning the image
+  # after `push: true` turns the run red but leaves the vulnerable image in
+  # GHCR under its branch tag and its sha tag, where the deploy scripts
+  # resolve it to a digest and roll it out without ever consulting the
+  # workflow result (OpenResilienceInitiative/ORISO-Docs#88).
+  #
+  # `load: true` hands the result to the runner's Docker daemon and only
+  # supports one platform, so the scanned image is amd64. That matches what
+  # was effectively scanned before: given a multi-platform index, Trivy picks
+  # the host platform anyway. The publish build below still produces the full
+  # multi-platform manifest and reuses this build's amd64 layers straight
+  # from the buildx builder's own cache, so only the arm64 half is new work.
+  # No `cache-to` here on purpose: the publish build stays the single
+  # exporter for the GHA cache scope.
+  - name: Build amd64 image locally for scanning
+    if: ${{ inputs.scan_before_push == 'true' }}
+    uses: docker/build-push-action@v7
+    with:
+      context: .
+      file: ${{ inputs.dockerfile }}
+      platforms: linux/amd64
+      push: false
+      load: true
+      # The docker exporter cannot carry attestations, and an image that is
+      # thrown away after the scan has no use for them either.
+      provenance: false
+      sbom: false
+      tags: ${{ inputs.image_name }}:ci-scan
+      labels: ${{ steps.meta.outputs.labels }}
+      cache-from: type=gha,scope=${{ inputs.image_name }}
+
+  - name: Reject fixable high or critical image vulnerabilities
+    if: ${{ inputs.scan_before_push == 'true' }}
+    uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+    with:
+      image-ref: ${{ inputs.image_name }}:ci-scan
+      format: table
+      exit-code: '1'
+      ignore-unfixed: true
+      vuln-type: os,library
+      severity: CRITICAL,HIGH
 
   - name: Build Docker image and publish when enabled
     id: build
