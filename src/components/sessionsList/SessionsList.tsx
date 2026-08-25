@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
-	getChatItemForSession,
 	getSessionType,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -66,9 +65,10 @@ import {
 	SessionsListToolbar
 } from './SessionsListToolbar';
 import {
-	isConversationCircleSession,
-	isInternalGroupChatSession,
+	draftMatchesSession,
+	isAnonymousAskerSession,
 	normalizeSessionToolbarChip,
+	sessionMatchesToolbar,
 	SessionToolbarChipFilter
 } from './sessionToolbarFilters';
 import { useSessionListViewState } from './SessionListViewStateContext';
@@ -82,121 +82,8 @@ import { FutureTimelinePanel } from './FutureTimelinePanel';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
 import { refetchEnquiryListState } from './refetchEnquiryList';
-
-function buildSessionSearchHaystack(
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
-): string {
-	// Keep list search metadata-only; Matrix/E2EE message bodies must not affect results.
-	const parts: string[] = [];
-	const item = extended.item;
-
-	if (item?.topic) {
-		parts.push(
-			typeof item.topic === 'string'
-				? item.topic
-				: (item.topic as TopicSessionInterface).name || ''
-		);
-	}
-	if (raw.user?.username) {
-		parts.push(raw.user.username);
-	}
-	if (raw.consultant?.displayName) {
-		parts.push(raw.consultant.displayName);
-	}
-	if (raw.consultant?.username) {
-		parts.push(raw.consultant.username);
-	}
-	if (raw.agency?.name) {
-		parts.push(raw.agency.name);
-	}
-	return parts.filter(Boolean).join(' ');
-}
-
-/**
- * Live-chat / anonymous asker sessions on the registered-enquiry feed.
- */
-function isAnonymousAskerSession(
-	raw: ListItemInterface,
-	_extended: ExtendedSessionInterface
-): boolean {
-	return getModality(raw) === Modality.LIVE_CHAT;
-}
-
-const getSessionIdentityValues = (
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
-): string[] => {
-	const item = extended.item;
-	const values = [
-		raw.session?.id,
-		raw.chat?.id,
-		raw.chat?.matrixRoomId,
-		raw.session?.matrixRoomId,
-		item?.id,
-		item?.matrixRoomId,
-		extended.rid
-	]
-		.filter(
-			(value) => value !== null && value !== undefined && value !== ''
-		)
-		.map((value) => String(value));
-
-	return Array.from(new Set(values));
-};
-
-const draftMatchesSession = (
-	draft: IUserDraftItem,
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
-) => {
-	const identities = new Set(getSessionIdentityValues(raw, extended));
-	const candidateValues = new Set<string>();
-
-	const addCandidate = (value: unknown) => {
-		if (value === null || value === undefined || value === '') {
-			return;
-		}
-		const normalizedValue = String(value).trim();
-		if (!normalizedValue) {
-			return;
-		}
-		candidateValues.add(normalizedValue);
-		if (normalizedValue.startsWith('scope:')) {
-			const scopeValue = normalizedValue
-				.split('|')
-				.find((part) => part.startsWith('scope:'))
-				?.replace(/^scope:/, '');
-			if (scopeValue) {
-				candidateValues.add(scopeValue);
-			}
-		}
-	};
-
-	[
-		draft.sourceSessionId,
-		(draft as { sessionId?: string | number | null }).sessionId,
-		draft.roomRef,
-		draft.scopeKey
-	].forEach(addCandidate);
-
-	if (draft.actionPath) {
-		try {
-			const parsedPath = new URL(
-				draft.actionPath,
-				window.location.origin
-			);
-			parsedPath.pathname.split('/').forEach(addCandidate);
-			parsedPath.searchParams.forEach((value) => addCandidate(value));
-		} catch {
-			draft.actionPath.split(/[/?&=#]/).forEach(addCandidate);
-		}
-	}
-
-	return Array.from(identities).some((identity) =>
-		candidateValues.has(identity)
-	);
-};
+import { countUnreadSessions } from '../../utils/sessionUnread';
+import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
 	const [basePath, queryString = ''] = path.split('?');
@@ -239,78 +126,6 @@ const formatDraftTime = (timestamp?: string | null) => {
 	if (diffHours < 24) return `${diffHours}h`;
 	return `${Math.floor(diffHours / 24)}d`;
 };
-
-function sessionMatchesToolbar(
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface,
-	query: string,
-	chip: SessionToolbarChipFilter | null,
-	selectedPersonIds: string[],
-	drafts: IUserDraftItem[],
-	currentUserId?: string
-): boolean {
-	const chatItem = getChatItemForSession(raw);
-
-	/*
-	 * Enquiry-feed axis (Anfragen tab):
-	 *   - chip === 'liveChat' → only anonymous asker sessions
-	 *   - chip === 'nearby'   → only NON-anonymous, non-group sessions
-	 *   - anything else / null → don't filter on this axis
-	 * Runs client-side against the /enquiries/registered feed because this
-	 * install doesn't populate registration_type=ANONYMOUS in the DB.
-	 */
-	const isAnonymous = isAnonymousAskerSession(raw, extended);
-	if (chip === 'liveChat' && !isAnonymous) {
-		return false;
-	}
-	if (chip === 'nearby' && (isAnonymous || extended.isGroup)) {
-		return false;
-	}
-
-	if (chip === 'unread') {
-		if (!chatItem || chatItem.messagesRead !== false) {
-			return false;
-		}
-	} else if (chip === 'drafts') {
-		if (
-			!drafts.some((draft) => draftMatchesSession(draft, raw, extended))
-		) {
-			return false;
-		}
-	} else if (chip === 'internalGroup') {
-		if (!isInternalGroupChatSession(extended)) {
-			return false;
-		}
-	} else if (chip === 'groups') {
-		if (!isConversationCircleSession(extended)) {
-			return false;
-		}
-	} else if (chip === 'supervision') {
-		if (!raw.consultant?.id) {
-			return false;
-		}
-		if (String(raw.consultant.id) === String(currentUserId || '')) {
-			// Assigned consultant chats are excluded; only supervised chats remain.
-			return false;
-		}
-	}
-
-	const toolbarPersonId =
-		String(raw.session?.id || raw.chat?.id || '') ||
-		String(raw.chat?.matrixRoomId || '') ||
-		String(extended.item?.id || '');
-	if (selectedPersonIds.length > 0) {
-		if (!toolbarPersonId || !selectedPersonIds.includes(toolbarPersonId)) {
-			return false;
-		}
-	}
-
-	const q = query.trim().toLowerCase();
-	if (!q) {
-		return true;
-	}
-	return buildSessionSearchHaystack(raw, extended).toLowerCase().includes(q);
-}
 
 const DraftMetadataListItem = ({
 	draft,
@@ -375,6 +190,10 @@ export const SessionsList = ({
 	const { setSessionListViewState } = useSessionListViewState();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+
+	// Unread axis (#1147): re-render when Matrix notification counts or read
+	// receipts change so the toolbar filter/counter and list items update.
+	const unreadVersion = useUnreadVersion();
 
 	const { userData } = useContext(UserDataContext);
 	const tenantData = useTenant();
@@ -1082,9 +901,9 @@ export const SessionsList = ({
 				}
 			]);
 
-			// Refresh the backend room state (messagesRead / lastMessage) for
-			// the touched session so unread badges update on Matrix events —
-			// this is fed by the Matrix sync stream.
+			// Refresh the backend room state (lastMessage / messageDate) for
+			// the touched session. Unread state is NOT part of this refetch:
+			// it is derived client-side from the Matrix room (#1147).
 			const touchesLoadedSession = sessionsRef.current.some(
 				(s) =>
 					s?.chat?.matrixRoomId === roomId ||
@@ -1716,16 +1535,14 @@ export const SessionsList = ({
 	]);
 	const visibleListItemCount = sortedSessions.length + unmatchedDrafts.length;
 	const toolbarChipCounts = React.useMemo(() => {
-		const unreadCount = finalSessionsList.filter((raw) => {
-			const chatItem = getChatItemForSession(raw);
-			return chatItem?.messagesRead === false;
-		}).length;
-
+		// Unread is derived from the Matrix client (#1147); `unreadVersion`
+		// re-runs this memo when notification counts or receipts change.
 		return {
-			unread: unreadCount,
+			unread: countUnreadSessions(finalSessionsList),
 			drafts: visibleUserDrafts.length
 		};
-	}, [finalSessionsList, visibleUserDrafts.length]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [finalSessionsList, visibleUserDrafts.length, unreadVersion]);
 	useEffect(() => {
 		setSessionListViewState(type, {
 			ready: !isLoading,

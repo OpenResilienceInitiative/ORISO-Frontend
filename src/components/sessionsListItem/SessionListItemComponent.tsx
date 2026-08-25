@@ -12,6 +12,8 @@ import {
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { isChatItemUnread } from '../../utils/sessionUnread';
+import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -158,6 +160,15 @@ export const SessionListItemComponent = ({
 				: TextModalityIcon;
 	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
 	const sessionItem = activeSession?.item;
+	// Unread axis (#1147): derived from the Matrix room, NOT from the DTO's
+	// `messagesRead` (hard-coded true by the backend). `unreadVersion` bumps
+	// on notification-count/receipt changes so the styling stays live.
+	const unreadVersion = useUnreadVersion();
+	const isItemUnread = useMemo(
+		() => isChatItemUnread(sessionItem),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionItem, unreadVersion]
+	);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -839,9 +850,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
 					flyoutOpen && 'sessionsListItem--menuOpen',
-					!isChatActive &&
-						activeSession.item.messagesRead &&
-						'sessionsListItem--read',
+					!isChatActive && !isItemUnread && 'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -899,7 +908,7 @@ export const SessionListItemComponent = ({
 						<div
 							className={clsx(
 								'sessionsListItem__username',
-								activeSession.item.messagesRead &&
+								!isItemUnread &&
 									'sessionsListItem__username--readLabel'
 							)}
 						>
@@ -1024,9 +1033,7 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
-				!isChatActive &&
-					activeSession.item.messagesRead &&
-					'sessionsListItem--read',
+				!isChatActive && !isItemUnread && 'sessionsListItem--read',
 				caseHandoverContentLocked &&
 					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
@@ -1431,7 +1438,7 @@ export const SessionListItemComponent = ({
 					<div
 						className={clsx(
 							'sessionsListItem__username',
-							activeSession.item.messagesRead &&
+							!isItemUnread &&
 								'sessionsListItem__username--readLabel'
 						)}
 					>
