@@ -30,17 +30,7 @@ const anchorTargets = (html: string): string[] =>
 		(match) => match[1]
 	);
 
-/**
- * Characters that occupy no visual space.
- *
- * Matched by Unicode property rather than by an explicit list. The list began
- * as zero-width space/non-joiner/joiner, word joiner, BOM and the soft hyphen,
- * and was immediately shown to be missing the bidi marks — as any hand-written
- * enumeration would be, and would be again after adding those two. `\p{Cf}`
- * covers the format characters as a class, directional overrides and isolates
- * included, and stays correct as Unicode grows. Exotic spaces are `\p{Zs}` and
- * `trim()` already removes them (ORISO-Frontend#1110).
- */
+/** Characters that occupy no visual space, matched as a class rather than listed. */
 const INVISIBLE_CHARACTERS = /\p{Cf}/gu;
 
 /**
@@ -118,10 +108,12 @@ export const useTraegerSentenceHtml = (
 			sanitizeConsentHtml(resolved.html)
 		)
 			.replace(/<[^>]*>/g, '')
-			/* Zero-width and other invisible formatting characters survive both
-			   the sanitizer and `trim()`, so `\u200B{{legal_links}}` would count
-			   as authored wording while the help-seeker sees nothing. What must
-			   be non-empty is what they can actually read. */
+			/* Invisible formatting characters survive `trim()`, so
+			   `\u200B{{legal_links}}` would count as authored wording while the
+			   help-seeker sees nothing. Entity spellings need no special
+			   handling: the sanitiser decodes them first, so `&#x200B;` is
+			   already the character by the time it reaches here — measured, not
+			   assumed (ORISO-Frontend#1110). */
 			.replace(INVISIBLE_CHARACTERS, '')
 			.trim();
 		if (!traegerOwnText) {

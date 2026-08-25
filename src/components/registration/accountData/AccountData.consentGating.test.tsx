@@ -490,7 +490,11 @@ describe('AccountData — only real Träger wording counts as a consent sentence
 		['zero-width space', '\u200B'],
 		['left-to-right mark', '\u200E'],
 		['right-to-left mark', '\u200F'],
-		['left-to-right isolate', '\u2066']
+		['left-to-right isolate', '\u2066'],
+		// Not in the string at all until a browser decodes it — the case that
+		// showed string processing was the wrong tool here.
+		['entity-encoded zero-width space', '&#x200B;'],
+		['named entity for a soft hyphen', '&shy;']
 	])(
 		'does not accept wording made only of a %s',
 		async (_name, invisible) => {
