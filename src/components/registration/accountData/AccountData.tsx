@@ -237,14 +237,17 @@ export const AccountData: FC<{
 					agency?.id,
 					mainTopic?.id,
 					effectiveConsent.consentText?.versionId,
-					/* For a Träger sentence the fingerprint is the wording
-					   itself, which already varies by language. The platform
-					   fallback passes no wording, so without the locale every
-					   language produced the same binding: tick the German
-					   sentence, switch to English with the pill, and the box
-					   stays ticked beside wording nobody affirmatively accepted
-					   (ORISO-Frontend#1110). */
-					traegerSentence?.authored ?? `platform:${locale}`
+					/* The locale is part of every binding, Träger sentence or
+					   platform fallback.
+					
+					   The fallback has no wording of its own to fingerprint. And
+					   a Träger sentence in the supported plain-HTML shape does
+					   not vary by language either — `resolveLegalContent`
+					   returns it unchanged — while the links and the cookie
+					   notice around it are translated. Either way, switching the
+					   locale changes what a person reads, so it must change the
+					   binding (ORISO-Frontend#1110). */
+					`${locale}:${traegerSentence?.authored ?? 'platform'}`
 				)
 			: null;
 	/* Ticked only while the acceptance on record is the acceptance of *this*

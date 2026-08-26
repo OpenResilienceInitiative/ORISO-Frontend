@@ -238,7 +238,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		// The dangerous shape: everything else already valid from the draft, so
 		// the consent flag is the only thing left between the user and a
 		// completed registration.
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -255,7 +255,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 
 	it('does enable it once that same restored acceptance has a sentence again', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -273,7 +273,7 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		vi.mocked(apiGetConsentText).mockResolvedValue({
 			status: 'unavailable'
 		});
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({ hasPublishedDpp: true, setDisabledNextButton });
@@ -320,7 +320,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('keeps the tick when the user comes back to the same Fachbereich', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_A });
 
@@ -328,7 +328,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('drops it when the Beratungsstelle changed while it was stored', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 
 		renderStep({ hasPublishedDpp: true, agencyId: AGENCY_B });
 
@@ -351,7 +351,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 				AGENCY_A,
 				TOPIC,
 				1,
-				'Unveränderte Fassung mit {{legal_links}}.'
+				'de:Unveränderte Fassung mit {{legal_links}}.'
 			)
 		);
 
@@ -380,7 +380,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 				AGENCY_A,
 				TOPIC,
 				1,
-				'Unveränderte Fassung mit {{legal_links}}.'
+				'de:Unveränderte Fassung mit {{legal_links}}.'
 			)
 		);
 
@@ -397,7 +397,7 @@ describe('AccountData — an acceptance belongs to one Fachbereich and one versi
 	});
 
 	it('does not let a changed Fachbereich enable the next step', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 		const setDisabledNextButton = vi.fn();
 
 		renderStep({
@@ -837,7 +837,7 @@ describe('AccountData — a fallback acceptance belongs to the language it was g
 	});
 
 	it('does not carry a German fallback acceptance into another language', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 
 		renderStep({ hasPublishedDpp: false, locale: 'en' });
 
@@ -846,7 +846,7 @@ describe('AccountData — a fallback acceptance belongs to the language it was g
 	});
 
 	it('keeps it in the language it was given in', async () => {
-		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'platform:de'));
+		draftAccepting(consentBindingKey(AGENCY_A, TOPIC, null, 'de:platform'));
 
 		renderStep({ hasPublishedDpp: false, locale: 'de' });
 
@@ -876,7 +876,7 @@ describe('AccountData — a versioned acceptance is still tied to the wording sh
 				AGENCY_A,
 				TOPIC,
 				9,
-				'Deutsche Fassung {{legal_links}}'
+				'de:Deutsche Fassung {{legal_links}}'
 			)
 		);
 
@@ -896,15 +896,63 @@ describe('AccountData — a versioned acceptance is still tied to the wording sh
 				AGENCY_A,
 				TOPIC,
 				9,
-				'English wording {{legal_links}}'
+				'en:English wording {{legal_links}}'
 			)
 		).not.toBe(
 			consentBindingKey(
 				AGENCY_A,
 				TOPIC,
 				9,
-				'Deutsche Fassung {{legal_links}}'
+				'de:Deutsche Fassung {{legal_links}}'
 			)
 		);
+	});
+});
+
+/**
+ * Codex on #1110: a plain-HTML Träger sentence does not vary by language —
+ * `resolveLegalContent` returns it unchanged — while the links and cookie notice
+ * around it are translated. Fingerprinting only the authored wording therefore
+ * kept the binding across a locale switch for exactly that shape.
+ */
+describe('AccountData — a Träger acceptance is tied to the language too', () => {
+	const plain = {
+		sentence: 'Gleicher Satz in jeder Sprache {{legal_links}}',
+		versionId: 4711
+	} as ConsentTextData;
+
+	it('drops a plain-HTML acceptance after an in-place locale switch', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(plain));
+		draftAccepting(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				4711,
+				'de:Gleicher Satz in jeder Sprache {{legal_links}}'
+			)
+		);
+
+		renderStep({ hasPublishedDpp: true, locale: 'en' });
+
+		await waitFor(() =>
+			expect(screen.getByText(/Gleicher Satz/)).toBeDefined()
+		);
+		expect(anyCheckbox()?.checked).toBe(false);
+	});
+
+	it('keeps it in the language it was given in', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(plain));
+		draftAccepting(
+			consentBindingKey(
+				AGENCY_A,
+				TOPIC,
+				4711,
+				'de:Gleicher Satz in jeder Sprache {{legal_links}}'
+			)
+		);
+
+		renderStep({ hasPublishedDpp: true, locale: 'de' });
+
+		await waitFor(() => expect(anyCheckbox()?.checked).toBe(true));
 	});
 });
