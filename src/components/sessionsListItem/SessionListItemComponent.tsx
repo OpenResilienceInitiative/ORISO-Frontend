@@ -23,9 +23,8 @@ import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
-import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
+import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
@@ -1180,7 +1179,11 @@ export const SessionListItemComponent = ({
 																	'login.legal.infoText.dataprotection'
 																}
 															>
-																{(_, url) => (
+																{(
+																	label,
+																	url,
+																	rawLabel
+																) => (
 																	<button
 																		type="button"
 																		className="sessionsListItem__dropdownOption"
@@ -1198,7 +1201,18 @@ export const SessionListItemComponent = ({
 																			);
 																		}}
 																	>
-																		<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<LegalLinkMenuIcon
+																			className="sessionsListItem__dropdownOptionIcon"
+																			title={
+																				label
+																			}
+																			url={
+																				url
+																			}
+																			rawLabel={
+																				rawLabel
+																			}
+																		/>
 																		<div className="sessionsListItem__dropdownOptionCenter">
 																			<div className="sessionsListItem__dropdownOptionTitleRow">
 																				<span className="sessionsListItem__dropdownOptionTitle">
@@ -1232,7 +1246,11 @@ export const SessionListItemComponent = ({
 																	'login.legal.infoText.impressum'
 																}
 															>
-																{(_, url) => (
+																{(
+																	label,
+																	url,
+																	rawLabel
+																) => (
 																	<button
 																		type="button"
 																		className="sessionsListItem__dropdownOption"
@@ -1250,7 +1268,18 @@ export const SessionListItemComponent = ({
 																			);
 																		}}
 																	>
-																		<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<LegalLinkMenuIcon
+																			className="sessionsListItem__dropdownOptionIcon"
+																			title={
+																				label
+																			}
+																			url={
+																				url
+																			}
+																			rawLabel={
+																				rawLabel
+																			}
+																		/>
 																		<div className="sessionsListItem__dropdownOptionCenter">
 																			<div className="sessionsListItem__dropdownOptionTitleRow">
 																				<span className="sessionsListItem__dropdownOptionTitle">
