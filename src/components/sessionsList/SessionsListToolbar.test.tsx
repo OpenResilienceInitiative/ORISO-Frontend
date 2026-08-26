@@ -16,6 +16,7 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 		GroupFilterIcon: Icon,
 		InternalGroupFilterIcon: Icon,
 		LiveChatFilterIcon: Icon,
+		MailFilterIcon: Icon,
 		NearbyFilterIcon: Icon,
 		SupervisionFilterIcon: Icon,
 		UnreadFilterIcon: Icon
