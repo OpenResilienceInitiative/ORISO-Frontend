@@ -86,10 +86,12 @@ export const getChatroomSettingsMenuVisibility = ({
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
-	// #1189 — same conditions the header menu applies to its edit entry
-	// (SessionMenu.tsx:1007-1022): the owner may change topic, schedule and
-	// moderators only while the room is not running, and only once a Matrix room
-	// exists to address in the `/:groupId/:sessionId/editGroupChat` route.
+	// #1189 — the header menu's conditions for its edit entry
+	// (SessionMenu.tsx:1007-1008, inside the `isGroup` block at :822): the owner
+	// may change topic, schedule and moderators only while the room is not
+	// running. `hasMatrixRoom` is stricter on purpose — the header still renders
+	// its entry with an empty `to` when no room exists (SessionMenu.tsx:316-322),
+	// which navigates nowhere; there is no route to reach without a room id.
 	const showChatSettings =
 		!isAsker &&
 		isGroup &&
