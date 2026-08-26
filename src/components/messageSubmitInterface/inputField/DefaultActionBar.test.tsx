@@ -51,4 +51,25 @@ describe('DefaultActionBar', () => {
 		).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Mention' })).toBeTruthy();
 	});
+
+	it('exposes a hover tooltip that names the voice-note action', () => {
+		render(<DefaultActionBar {...baseProps} showMic />);
+		expect(
+			screen
+				.getByRole('button', { name: 'Voice recording' })
+				.getAttribute('title')
+		).toBe('Record voice message');
+	});
+
+	it('puts every compact control on the larger default action bar', () => {
+		const { container } = render(
+			<DefaultActionBar {...baseProps} showMic />
+		);
+		expect(
+			container.querySelector('.composerToolbar--default')
+		).toBeTruthy();
+		expect(
+			container.querySelector('.composerToolbar__button--voice')
+		).toBeNull();
+	});
 });

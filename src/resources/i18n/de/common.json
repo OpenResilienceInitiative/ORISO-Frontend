@@ -1594,7 +1594,10 @@
 				"attachment": "Anhang hinzufügen",
 				"emoji": "Emoji-Auswahl",
 				"mention": "Person erwähnen",
-				"voiceRecording": "Sprachaufnahme"
+				"voiceRecording": {
+					"label": "Sprachaufnahme",
+					"tooltip": "Sprachnachricht aufnehmen"
+				}
 			}
 		},
 		"mention": {
