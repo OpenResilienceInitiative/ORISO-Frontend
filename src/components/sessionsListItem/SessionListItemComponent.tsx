@@ -897,6 +897,17 @@ export const SessionListItemComponent = ({
 							)}
 						</div>
 						<div className="sessionsListItem__rowRight">
+							{/*
+							 * Only `showChatSettings` can be true here: the other
+							 * flags need `isSession`, which `buildExtendedSession`
+							 * never sets alongside `isGroup`. That invariant is
+							 * load-bearing — Overlay, LegalLinkModal and
+							 * DeleteSession all live in the main return below, so
+							 * an archive or delete entry surfacing on a group row
+							 * would fire with no confirmation behind it (the
+							 * delete ref would simply be null). Widen the helper
+							 * for group chats only together with those.
+							 */}
 							{hasChatroomSettingsActions && (
 								<SessionListItemMenu
 									flyoutOpen={flyoutOpen}
