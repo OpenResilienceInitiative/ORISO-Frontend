@@ -36,7 +36,7 @@ import {
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
-import { apiGetDepartmentLegal } from '../../../api/apiGetDepartmentLegal';
+import { useDepartmentLegal } from '../../../api/useDepartmentLegal';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
@@ -192,17 +192,21 @@ export const AccountData: FC<{
 	const [username, setUsername] = useState<string>(
 		restoredDraft?.username ?? ''
 	);
-	/** Resolved department consent sentence for the UI language, or null. */
-	const [departmentConsentSentence, setDepartmentConsentSentence] = useState<
-		string | null
-	>(null);
 	const { setDisabledNextButton, registrationData } =
 		useContext(RegistrationContext);
 	const agencyId = registrationData?.agency?.id;
 	const topicId = registrationData?.mainTopic?.id;
-	const [isDepartmentLegalLoading, setIsDepartmentLegalLoading] = useState(
-		() => !!(agencyId && topicId)
-	);
+	const departmentLegalEnabled = !!(agencyId && topicId);
+	const { data: departmentLegal, loading: isDepartmentLegalLoading } =
+		useDepartmentLegal(agencyId, topicId, {
+			enabled: departmentLegalEnabled
+		});
+	const departmentConsentSentence = departmentLegalEnabled
+		? resolveLegalContent(
+				departmentLegal?.dpp?.consentText,
+				locale
+			)?.html?.trim() || null
+		: null;
 	const { tenant } = useContext(TenantContext);
 	const emailVisible = tenant?.settings?.emailVisible ?? false;
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
@@ -223,34 +227,6 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
-
-	useEffect(() => {
-		if (!agencyId || !topicId) {
-			setDepartmentConsentSentence(null);
-			setIsDepartmentLegalLoading(false);
-			return;
-		}
-
-		const abortController = new AbortController();
-		setIsDepartmentLegalLoading(true);
-		setDepartmentConsentSentence(null);
-		apiGetDepartmentLegal(agencyId, topicId, abortController.signal).then(
-			(legal) => {
-				if (abortController.signal.aborted) {
-					return;
-				}
-				const resolved = resolveLegalContent(
-					legal?.dpp?.consentText,
-					locale
-				);
-				const sentence = resolved?.html?.trim() || null;
-				setDepartmentConsentSentence(sentence);
-				setIsDepartmentLegalLoading(false);
-			}
-		);
-
-		return () => abortController.abort();
-	}, [agencyId, topicId, locale]);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);

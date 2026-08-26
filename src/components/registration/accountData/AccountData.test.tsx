@@ -14,7 +14,8 @@ import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { TenantDataInterface } from '../../../globalState/interfaces';
-import { apiGetDepartmentLegal } from '../../../api/apiGetDepartmentLegal';
+import { clearDepartmentLegalCache } from '../../../api/apiGetDepartmentLegal';
+import { fetchData } from '../../../api/fetchData';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -26,9 +27,15 @@ vi.mock('../../../api/apiGetIsUsernameAvailable', () => ({
 	apiGetIsUsernameAvailable: vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock('../../../api/apiGetDepartmentLegal', () => ({
-	apiGetDepartmentLegal: vi.fn().mockResolvedValue(null)
-}));
+vi.mock('../../../api/fetchData', async () => {
+	const actual = await vi.importActual<
+		typeof import('../../../api/fetchData')
+	>('../../../api/fetchData');
+	return {
+		...actual,
+		fetchData: vi.fn().mockResolvedValue(null)
+	};
+});
 
 // RegistrationProvider.tsx also imports the other registration steps
 // (AgencySelection etc.), which transitively pull in lottie-web — unrelated
@@ -43,6 +50,7 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 afterEach(() => {
 	cleanup();
+	clearDepartmentLegalCache();
 	vi.clearAllMocks();
 });
 
@@ -181,7 +189,7 @@ describe('AccountData — optional 2FA toggle', () => {
 
 describe('AccountData — department consent text on checkbox label', () => {
 	it('does not render the Datenschutzhinweise accordion', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: {
 				content: '{"de":"<p>DPP</p>"}',
 				consentText: '{"de":"Fachbereich-Einwilligung"}'
@@ -204,7 +212,7 @@ describe('AccountData — department consent text on checkbox label', () => {
 	});
 
 	it('shows department consentText with the same label wrapper when present', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: {
 				content: '{"de":"<p>DPP</p>"}',
 				consentText: '{"de":"Fachbereich-Einwilligungssatz"}'
@@ -230,10 +238,10 @@ describe('AccountData — department consent text on checkbox label', () => {
 
 	it('shows an empty checkbox label while department legal is loading', async () => {
 		let resolveLegal: (value: unknown) => void = () => {};
-		vi.mocked(apiGetDepartmentLegal).mockReturnValue(
+		vi.mocked(fetchData).mockReturnValue(
 			new Promise((resolve) => {
 				resolveLegal = resolve;
-			}) as ReturnType<typeof apiGetDepartmentLegal>
+			}) as ReturnType<typeof fetchData>
 		);
 
 		renderAccountData(tenantWith({}), agencyWithTopic);
@@ -265,7 +273,7 @@ describe('AccountData — department consent text on checkbox label', () => {
 	});
 
 	it('falls back to the i18n LegalLinks label when consentText is absent', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: { content: '{"de":"<p>DPP</p>"}', consentText: null },
 			imprint: { content: null }
 		});
@@ -291,7 +299,7 @@ describe('AccountData — department consent text on checkbox label', () => {
 	it('falls back to the i18n label when agency/topic are not selected yet', () => {
 		renderAccountData(tenantWith({}), {});
 
-		expect(apiGetDepartmentLegal).not.toHaveBeenCalled();
+		expect(fetchData).not.toHaveBeenCalled();
 		expect(
 			screen.getByText(
 				(_, element) =>
@@ -302,7 +310,7 @@ describe('AccountData — department consent text on checkbox label', () => {
 	});
 
 	it('resolves consentText JSON by the current UI language', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: {
 				content: null,
 				consentText: JSON.stringify({
