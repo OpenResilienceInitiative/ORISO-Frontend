@@ -12,6 +12,8 @@ import {
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { isChatItemUnread } from '../../utils/sessionUnread';
+import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -21,13 +23,12 @@ import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
-import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
+import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
-import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
@@ -158,6 +159,15 @@ export const SessionListItemComponent = ({
 				: TextModalityIcon;
 	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
 	const sessionItem = activeSession?.item;
+	// Unread axis (#1147): derived from the Matrix room, NOT from the DTO's
+	// `messagesRead` (hard-coded true by the backend). `unreadVersion` bumps
+	// on notification-count/receipt changes so the styling stays live.
+	const unreadVersion = useUnreadVersion();
+	const isItemUnread = useMemo(
+		() => isChatItemUnread(sessionItem),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionItem, unreadVersion]
+	);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -839,9 +849,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
 					flyoutOpen && 'sessionsListItem--menuOpen',
-					!isChatActive &&
-						activeSession.item.messagesRead &&
-						'sessionsListItem--read',
+					!isChatActive && !isItemUnread && 'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -899,7 +907,7 @@ export const SessionListItemComponent = ({
 						<div
 							className={clsx(
 								'sessionsListItem__username',
-								activeSession.item.messagesRead &&
+								!isItemUnread &&
 									'sessionsListItem__username--readLabel'
 							)}
 						>
@@ -1024,9 +1032,7 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
-				!isChatActive &&
-					activeSession.item.messagesRead &&
-					'sessionsListItem--read',
+				!isChatActive && !isItemUnread && 'sessionsListItem--read',
 				caseHandoverContentLocked &&
 					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
@@ -1173,7 +1179,11 @@ export const SessionListItemComponent = ({
 																	'login.legal.infoText.dataprotection'
 																}
 															>
-																{(_, url) => (
+																{(
+																	label,
+																	url,
+																	rawLabel
+																) => (
 																	<button
 																		type="button"
 																		className="sessionsListItem__dropdownOption"
@@ -1191,7 +1201,18 @@ export const SessionListItemComponent = ({
 																			);
 																		}}
 																	>
-																		<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<LegalLinkMenuIcon
+																			className="sessionsListItem__dropdownOptionIcon"
+																			title={
+																				label
+																			}
+																			url={
+																				url
+																			}
+																			rawLabel={
+																				rawLabel
+																			}
+																		/>
 																		<div className="sessionsListItem__dropdownOptionCenter">
 																			<div className="sessionsListItem__dropdownOptionTitleRow">
 																				<span className="sessionsListItem__dropdownOptionTitle">
@@ -1225,7 +1246,11 @@ export const SessionListItemComponent = ({
 																	'login.legal.infoText.impressum'
 																}
 															>
-																{(_, url) => (
+																{(
+																	label,
+																	url,
+																	rawLabel
+																) => (
 																	<button
 																		type="button"
 																		className="sessionsListItem__dropdownOption"
@@ -1243,7 +1268,18 @@ export const SessionListItemComponent = ({
 																			);
 																		}}
 																	>
-																		<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
+																		<LegalLinkMenuIcon
+																			className="sessionsListItem__dropdownOptionIcon"
+																			title={
+																				label
+																			}
+																			url={
+																				url
+																			}
+																			rawLabel={
+																				rawLabel
+																			}
+																		/>
 																		<div className="sessionsListItem__dropdownOptionCenter">
 																			<div className="sessionsListItem__dropdownOptionTitleRow">
 																				<span className="sessionsListItem__dropdownOptionTitle">
@@ -1431,7 +1467,7 @@ export const SessionListItemComponent = ({
 					<div
 						className={clsx(
 							'sessionsListItem__username',
-							activeSession.item.messagesRead &&
+							!isItemUnread &&
 								'sessionsListItem__username--readLabel'
 						)}
 					>
@@ -1595,7 +1631,7 @@ export const SessionListItemComponent = ({
 									)}
 								>
 									<img
-										src={nearbyConversationIcon}
+										src={mailConversationIcon}
 										alt={translate(
 											'sessionList.toolbar.chips.nearby',
 											'Mail'

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetSessionRoomBySessionId,
 	apiGetSessionRoomsByRoomIds
@@ -8,6 +8,8 @@ import {
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 import { buildExtendedSession } from '../globalState';
+import { chatTransportService } from '../services/chatTransportService';
+import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import { useSession } from './useSession';
 
 vi.mock('../api', () => ({
@@ -144,5 +146,60 @@ describe('useSession', () => {
 		await waitFor(() => expect(result.current.ready).toBe(true));
 		expect(signals[0].aborted).toBe(true);
 		expect(result.current.session).toBe(secondExtendedSession);
+	});
+
+	describe('read()', () => {
+		// Unread axis (#1147): the backend hard-codes messagesRead: true, so
+		// the receipt gate must derive read state from the Matrix client, not
+		// from the DTO.
+		afterEach(() => {
+			setMatrixClientServiceRef(null);
+		});
+
+		const loadSessionWithRoom = async (unreadCount: number) => {
+			const rawSession = { session: { id: 5 } };
+			const extendedSession = {
+				item: { id: 5, messagesRead: true }
+			};
+			vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+				sessions: [rawSession]
+			} as any);
+			vi.mocked(buildExtendedSession).mockReturnValue(
+				extendedSession as any
+			);
+			vi.mocked(chatTransportService.resolveSession).mockReturnValue({
+				matrixRoomId: '!room:hs'
+			} as any);
+			vi.mocked(chatTransportService.markRoomAsRead).mockResolvedValue(
+				undefined
+			);
+			setMatrixClientServiceRef({
+				getRoom: () => ({
+					getUnreadNotificationCount: () => unreadCount
+				})
+			} as any);
+
+			const { result } = renderHook(() => useSession(null, 5));
+			await waitFor(() => expect(result.current.ready).toBe(true));
+			return result;
+		};
+
+		it('publishes a Matrix read receipt for an unread room even though the DTO claims messagesRead', async () => {
+			const result = await loadSessionWithRoom(2);
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).toHaveBeenCalledWith(
+				'!room:hs'
+			);
+		});
+
+		it('does not publish a receipt when the room has no unread messages', async () => {
+			const result = await loadSessionWithRoom(0);
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).not.toHaveBeenCalled();
+		});
 	});
 });

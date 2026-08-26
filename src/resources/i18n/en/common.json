@@ -36,6 +36,7 @@
 	},
 	"app": {
 		"back": "back",
+		"cancel": "Cancel",
 		"claim": "Online. Anonymous. Secure.",
 		"close": "close",
 		"delete": "delete",
@@ -51,10 +52,10 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"associationLogoAlt": "Provider organisation logo",
 			"mobileHeadline": "There is room here for what is on your mind.",
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
+		"stop": "Stop",
 		"successful": "Successful",
 		"title": "Consulting & Help",
 		"ui": {
@@ -182,7 +183,8 @@
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
-			"blocked": "Blocked by the security check"
+			"blocked": "Blocked by the security check",
+			"error": "Security check unavailable – file stays locked"
 		}
 	},
 	"banner": {
@@ -279,6 +281,11 @@
 			"button": {
 				"label": "Start video call"
 			}
+		}
+	},
+	"chat": {
+		"highlightSnippet": {
+			"ready": "Text snippet added to your reply"
 		}
 	},
 	"chatFlyout": {
@@ -511,6 +518,7 @@
 					"facts": "<ul><li>What happened?</li><li>What is your current situation?</li><li>What is on your mind?</li><li>Do you have a specific question or do you perhaps not yet know exactly what could help you?</li></ul>",
 					"title": "Perhaps the following points will help you with the formulation:"
 				},
+				"deletionNotice": "Please send us a short message right away so this account stays active. Without a first message, this account will be deleted automatically tonight. After that you must register again before you can write your message.",
 				"headline": "Here is room for your concerns.",
 				"iconTitle": "Welcome"
 			},
@@ -665,7 +673,8 @@
 					"text": "Link copied to clipboard!",
 					"title": "Link copied"
 				},
-				"text": "Copy invitation link"
+				"text": "Copy invitation link",
+				"title": "Copy invitation link to clipboard"
 			}
 		},
 		"create": {
@@ -1294,7 +1303,11 @@
 				"title": "Privacy policy"
 			},
 			"back": "Back",
-			"confirm": "Got it"
+			"confirm": "Got it",
+			"missing": {
+				"text": "No legal text has been provided here for this service.",
+				"link": "Open the configured address"
+			}
 		}
 	},
 	"login": {
@@ -1358,13 +1371,11 @@
 				"linkShort": "Why this is safe"
 			},
 			"explainer": {
-				"badge": "NEW",
-				"headline": "Only the two of you can read along.",
+				"headline": "Confidential from end to end",
 				"message": "I am not doing well.",
-				"you": "You",
-				"agency": "Counselling centre",
 				"encrypted": "encrypted",
-				"attack": "this is all an attacker gets",
+				"diagram": "Diagram: your message travels encrypted from your device to the counselling centre — only there does it become readable again.",
+				"attack": "Scrambled numbers are all a data thief gets from us.",
 				"cipherLabel": "Intercepted, encrypted data",
 				"key": "The key is created on your device and stays there — we do not have it.",
 				"protocol": "Open protocol <strong>Matrix</strong>, independently verifiable.",
@@ -1524,6 +1535,10 @@
 				"buttonLabel": "Make an appointment for consultation",
 				"headline": "Or make an appointment now"
 			},
+			"characterCounter": {
+				"overLimit": "Message is over the character limit.",
+				"warning": "Message is approaching the character limit."
+			},
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1564,7 +1579,10 @@
 				"attachment": "Add attachment",
 				"emoji": "Emoji panel",
 				"mention": "Mention someone",
-				"voiceRecording": "Voice recording"
+				"voiceRecording": {
+					"label": "Voice recording",
+					"tooltip": "Record voice message"
+				}
 			}
 		},
 		"mention": {
@@ -1599,8 +1617,10 @@
 			"selectAllBottom": "Select All"
 		},
 		"edit": {
+			"cancel": "Cancel editing",
 			"marker": "(edited)",
-			"markerTitle": "Message was edited"
+			"markerTitle": "Message was edited",
+			"previewLabel": "Edit message"
 		},
 		"feedbackTag": "Feedback",
 		"menu": {
@@ -1636,11 +1656,26 @@
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
 		"yesterday": "Yesterday",
+		"mobileNav": {
+			"back": "Navigate up",
+			"dragToExpand": "Drag to resize composer",
+			"scrollToBottom": "Scroll to bottom"
+		},
 		"reply": {
 			"previewLabel": "Replying to",
 			"cancel": "Discard reply",
 			"quoteLabel": "In reply to",
 			"quoteUnknown": "Earlier message"
+		},
+		"thread": {
+			"unknownRoot": "Earlier message",
+			"listToggle": "Threads",
+			"replies": "{{count}} replies",
+			"title": "Thread",
+			"placeholder": "Reply in thread"
+		},
+		"deliveryStatus": {
+			"sent": "Sent"
 		}
 	},
 	"navigation": {
@@ -1671,6 +1706,12 @@
 		"profile": "Profile",
 		"myProfile": "My profile",
 		"tools": "My tools"
+	},
+	"notification": {
+		"error": "Error",
+		"info": "Info",
+		"success": "Success",
+		"warning": "Warning"
 	},
 	"notifications": {
 		"families": {
@@ -2250,6 +2291,58 @@
 					"active": "Notifications active — click to mute",
 					"muted": "All notifications muted — click to enable"
 				}
+			},
+			"descriptionAsker": "We only write when something has happened that concerns you. What exactly, you always see after signing in — never in the email.",
+			"descriptionConsultant": "Your work stream by email. Counselling content never appears in an email.",
+			"matrix": {
+				"asker": {
+					"newMessage": {
+						"title": "New message",
+						"description": "Your counselling service has written to you, or your enquiry was accepted."
+					},
+					"appointment": {
+						"title": "Appointments",
+						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					}
+				},
+				"consultant": {
+					"newEnquiry": {
+						"title": "New enquiries",
+						"description": "An enquiry arrived at your counselling service or is addressed to you directly."
+					},
+					"dailyDigest": {
+						"title": "Daily summary",
+						"description": "Once a day: how many enquiries are open and how long the oldest has waited."
+					},
+					"newMessage": {
+						"title": "Messages from advice seekers",
+						"description": "Someone seeking advice has written in one of your counselling cases."
+					},
+					"assignment": {
+						"title": "Assignments",
+						"description": "An enquiry was assigned to you."
+					},
+					"reassignment": {
+						"title": "Handovers",
+						"description": "A counselling case is to be handed over to you, or a handover was confirmed."
+					},
+					"feedback": {
+						"title": "Professional exchange",
+						"description": "A reply is waiting for you in the protected professional exchange."
+					}
+				},
+				"shared": {
+					"serviceNotice": {
+						"title": "Maintenance and notices",
+						"description": "Planned maintenance windows and platform notices. Outages are always sent."
+					}
+				},
+				"alwaysSent": {
+					"title": "You always receive these emails:",
+					"security": "Signing in and access — password reset, sign-in link, one-time code, changes to your account.",
+					"legal": "Contractual matters — for example a data processing agreement to sign.",
+					"outage": "Platform outages."
+				}
 			}
 		},
 		"routes": {
@@ -2358,6 +2451,47 @@
 				"title": "Notify about",
 				"description": "Choose which event families may trigger notifications."
 			}
+		},
+		"encryption": {
+			"title": "Encryption & recovery",
+			"description": "Your messages are end-to-end encrypted. With a recovery key you can keep reading your conversation history on a new device.",
+			"loading": "Loading …",
+			"unavailable": "Encryption settings are unavailable right now. Please reload the page.",
+			"setup": {
+				"busy": "Your vault is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
+				"error": "Setup failed. Please try again.",
+				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
+				"cta": "Set up recovery key"
+			},
+			"showKey": {
+				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
+				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
+				"copy": "Copy key",
+				"confirmLabel": "I have saved the key securely."
+			},
+			"status": {
+				"ok": "✓ Key backup is active. Your history stays readable on new devices."
+			},
+			"changeKey": {
+				"cta": "Change recovery key"
+			},
+			"outOfSync": {
+				"warning": "Key backup is not set up on this device. Enter your recovery key so your history becomes readable here."
+			},
+			"recover": {
+				"inputLabel": "Recovery key",
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"success": "{{count}} message keys restored."
+			},
+			"reset": {
+				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
+				"cta": "Reset encryption",
+				"confirmWarning": "Are you sure? Resetting creates a new encryption identity. Messages that were only readable with the old backup remain permanently unreadable.",
+				"confirmCta": "Yes, reset",
+				"cancel": "Cancel",
+				"error": "Reset failed. Please try again."
+			}
 		}
 	},
 	"qrCode": {
@@ -2417,6 +2551,10 @@
 				},
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
+			},
+			"type": {
+				"team": "Team counselling",
+				"single": "Single counselling"
 			},
 			"details": {
 				"aboutLabel": "About this center",
@@ -2516,7 +2654,7 @@
 		"headline": "Registration",
 		"md3": {
 			"stepNames": {
-				"focus": "Choose focus",
+				"focus": "Choose a topic",
 				"postcode": "Postcode",
 				"agency": "Consulting center",
 				"register": "Register",
@@ -2708,9 +2846,62 @@
 		"zipcode": {
 			"bullet1": "• know the help available around your place of residence",
 			"bullet2": "• know the laws of your federal state",
-			"headline": "To be able to advise you as best as possible, we need your postcode",
+			"headline": "Where are you looking for counselling?",
 			"label": "Your postcode",
-			"subline": "Why? Because then our specialists:"
+			"subline": "Just your postcode — that is all we need.",
+			"digitLabel": "Postcode, digit {{position}} of {{total}}",
+			"remaining_one": "{{count}} digit to go",
+			"remaining_other": "{{count}} digits to go",
+			"whyLocal": {
+				"title": "Why local counselling?",
+				"localHelp": "Your counselling centre knows the support available near you.",
+				"stateLaw": "It knows the laws of your federal state.",
+				"anonymous": "Only this one centre sees what you enter — you stay anonymous.",
+				"inPerson": "If you want to, you can continue in person later on."
+			}
+		},
+		"registering": "Registration in progress…",
+		"stepper": {
+			"progress": "Step {{current}} of {{total}}",
+			"progressShort": "Step {{current}}/{{total}}"
+		},
+		"handover": {
+			"badge": "Registered",
+			"headline": "All done.",
+			"subline": "Here is what happens next:",
+			"cta": "Write your enquiry",
+			"encryption": "Encrypted: only you and the staff at your counselling centre can read your enquiry.",
+			"goToStep": "Go to step {{position}} of {{total}}",
+			"steps": {
+				"write": {
+					"title": "You write what is going on",
+					"text": "What happened, where, since when? A few sentences are enough."
+				},
+				"counsellor": {
+					"title": "We find your counsellor",
+					"text": "The right expertise — and time for you."
+				},
+				"reply": {
+					"title": "An answer within 2 working days",
+					"text": "Your enquiry is answered personally and professionally."
+				}
+			},
+			"status": {
+				"preparing": "Encrypting your counselling room …",
+				"verifying": "Checking: human or bot …",
+				"queued": "You are next in line …",
+				"ready": "All set — you can start writing",
+				"slow": "This is taking longer than usual",
+				"entering": "Opening your counselling room …"
+			}
+		},
+		"selection": {
+			"remove": "Remove {{label}}"
+		},
+		"stepState": {
+			"done": "completed",
+			"active": "current step",
+			"pending": "not started"
 		}
 	},
 	"releaseNote": {
@@ -2736,10 +2927,19 @@
 			"title": "Batch access request"
 		},
 		"consent": {
+			"sender": "Carimat",
+			"senderRole": "Quick Guide",
 			"title": "A counsellor requested access to this conversation",
 			"copy": "Please approve or decline the request to continue the handover.",
 			"approve": "Approve access",
-			"decline": "Decline access"
+			"decline": "Decline access",
+			"optOut": {
+				"title": "Privacy notice for case handover",
+				"prompt": "Please read the information and then make your decision.",
+				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
+				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
+				"switchLabel": "I consent to data processing for this case handover"
+			}
 		},
 		"denied": {
 			"copy": "The previous request did not grant content visibility.",
@@ -2928,7 +3128,10 @@
 				"2": "Okay you need to do three things in the game.",
 				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
 				"negative": "Okay please hold on once a counsellor is free we let you in."
-			}
+			},
+			"onboardingLine1": "Just arrive. We breathe together.",
+			"onboardingLine3": "When you are ready, start your first try.",
+			"volumeHint": "For a better experience, turn on your volume."
 		},
 		"acceptance": {
 			"button": {
@@ -3073,6 +3276,18 @@
 		},
 		"unreadCount": {
 			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervision reason"
+			},
+			"startChat": {
+				"title": "Start chat",
+				"hint": "Use the message field at the bottom to send the first supervision message."
+			},
+			"input": {
+				"note": "Messages you send here are visible only to consultants."
+			}
 		}
 	},
 	"sessionList": {
@@ -3081,7 +3296,9 @@
 		},
 		"item": {
 			"sessionType": {
-				"liveChat": "Live Chat"
+				"liveChat": "Live Chat",
+				"selfHelp": "Peer support group",
+				"internal": "Internal"
 			}
 		},
 		"createChat": {
@@ -3143,7 +3360,8 @@
 					"type": "By type",
 					"centre": "Counseling center",
 					"archiveOnly": "Archive only"
-				}
+				},
+				"toggle": "Open or close search results"
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -3697,6 +3915,16 @@
 			}
 		}
 	},
+	"voice": {
+		"recording": {
+			"active": "Recording…",
+			"error": {
+				"headline": "Voice recording is unavailable",
+				"message": "Please allow microphone access and try again."
+			},
+			"preview": "Voice message"
+		}
+	},
 	"voicePlayer": {
 		"label": "Voice message",
 		"play": "Play voice message",
@@ -3805,7 +4033,7 @@
 			"positionCountSuffix": "still ahead of you",
 			"connecting": "Connecting …",
 			"insteadOfWaiting": "Instead of waiting",
-			"requestLocalCounselor": "Send on-site consultation request",
+			"requestLocalCounselor": "Start mail counselling",
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice",
@@ -3824,6 +4052,25 @@
 			"cancelDelete": "Cancel",
 			"confirmDelete": "Yes, delete permanently",
 			"error": "The chat could not be ended just now. Please try again."
+		},
+		"noAvailability": {
+			"subtitle": "If you want counselling without registering, please come back during opening hours.",
+			"openingHours": "Show regular opening hours",
+			"mailHint": "Or start anonymous mail counselling anytime: with your postcode you can find a counselling centre near you and write your request. For the reply you only need an email address — not your real name.",
+			"tip": "Tip: Use an email address only you can access.",
+			"startMailCounseling": "Start anonymous mail counselling",
+			"responseTime": "Reply within 2 working days",
+			"back": "Back to previous page",
+			"later": "Come back later",
+			"title": "Live chat is currently closed"
+		},
+		"consent": {
+			"accept": "I agree",
+			"reject": "I do not agree",
+			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
+		},
+		"pseudonym": {
+			"changeName": "Change name"
 		}
 	},
 	"sessionHeader": {
@@ -3890,7 +4137,12 @@
 				"remove": "Remove",
 				"added": "Added",
 				"loading": "Loading...",
-				"loadingConsultants": "Loading consultants..."
+				"loadingConsultants": "Loading consultants...",
+				"reasonLabel": "Reason for supervision",
+				"reasonPlaceholder": "Please enter the reason for supervision...",
+				"reasonError": "Please enter a reason.",
+				"note": "If you want any supervisors to supervise in future, you can add them in advance.",
+				"reason": "Reason"
 			},
 			"success": {
 				"add": {
@@ -3914,6 +4166,10 @@
 				"loadConsultants": {
 					"title": "Error",
 					"text": "Consultants could not be loaded."
+				},
+				"reasonRequired": {
+					"text": "Please enter the reason for supervision.",
+					"title": "Reason required"
 				}
 			},
 			"remove": {
@@ -3923,6 +4179,10 @@
 				"disabledAsker": "Supervision is managed by the counselling team",
 				"disabledMobile": "Add supervisor – available on desktop",
 				"disabledUnavailable": "Add supervisor – not available here"
+			},
+			"status": {
+				"on": "Supervision on",
+				"off": "Supervision off"
 			}
 		}
 	},
@@ -4063,6 +4323,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Send me an email",
+			"emailHint": "What you discuss here never appears in that email.",
+			"browser": "Give me a signal here",
+			"browserHint": "No address needed — but it only works on this device.",
+			"both": "Both, and let me set a password now",
+			"bothHint": "Recommended. That way you can get back in if you forget something."
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
@@ -4121,5 +4389,103 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		}
+	},
+	"dpaSign": {
+		"title": "Sign DPA",
+		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading agreement…",
+		"signerHeading": "Confirmation by authorised signatory",
+		"signingFor": "You are signing on behalf of:",
+		"accept": "I have read the agreement shown above and confirm it as binding.",
+		"submit": "Confirm bindingly",
+		"submitting": "Saving…",
+		"success": "The DPA confirmation has been saved.",
+		"error": {
+			"missingToken": "The signature link is incomplete.",
+			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
+			"acceptRequired": "Please confirm the agreement.",
+			"generic": "The signature could not be saved just now.",
+			"invalidToken": "This signature link is invalid, expired, or has already been used.",
+			"invalidRequest": "The details could not be saved. Please check the form."
+		}
+	},
+	"encryption": {
+		"keyBackup": {
+			"dialog": {
+				"invalidKey": "This recovery key is invalid. Please check your entry.",
+				"error": "Recovery failed. Please try again.",
+				"recoveryTitle": "Welcome back",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
+				"keyLabel": "Recovery key",
+				"later": "Later",
+				"openVault": "Open vault",
+				"restoring": "Restoring…"
+			}
+		}
+	},
+	"accountInvite": {
+		"invalid": "This invite link is invalid or expired.",
+		"createFailed": "The counselling account could not be created. Please try again.",
+		"loading": "Loading invitation",
+		"success": "Your counselling account has been created.",
+		"toLogin": "Go to login",
+		"description": "Complete your invitation with a username and password.",
+		"passwordHint": "At least 16 characters with upper and lower case letters, a number, and a special character."
+	},
+	"drafts": {
+		"center": {
+			"title": "Drafts",
+			"subtitle": "Unsent messages are saved per chat and thread.",
+			"empty": "No drafts yet.",
+			"messageTag": "Draft",
+			"untitledChat": "Chat",
+			"thread": "Thread",
+			"open": "Open draft",
+			"next": "Next draft",
+			"delete": "Delete draft",
+			"emptyDetail": "Select a draft to continue writing."
+		}
+	},
+	"tour": {
+		"mailCounselling": {
+			"title": "Mail counselling",
+			"summary": "What has changed in mail counselling — from the first enquiry to the archive.",
+			"step": {
+				"whatsNew": {
+					"title": "What is new?",
+					"intro": "You already know mail counselling from the previous platform. This short tour shows you where your familiar workflows live now — and what is genuinely new."
+				},
+				"enquiries": {
+					"title": "Initial enquiries",
+					"intro": "New enquiries arrive in a shared list, as before — it now lives here. Until someone accepts, every consultant of your counselling centre sees the open enquiry."
+				},
+				"accepting": {
+					"title": "Accepting & first response",
+					"intro": "With “Accept” you take an enquiry into your consultations. New: advice seekers automatically receive a first response with the most important information right after their first message — you can start without time pressure."
+				},
+				"mySessions": {
+					"title": "My consultations",
+					"intro": "Your accepted consultations live here — sorted by the most recent message, just as you are used to."
+				},
+				"composer": {
+					"title": "Writing — with new options",
+					"intro": "New compared to the previous platform: you can reply in threads, record voice messages and attach files directly."
+				},
+				"archive": {
+					"title": "Archive",
+					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
+				}
+			}
+		}
+	},
+	"weekday": {
+		"monday": "Monday",
+		"tuesday": "Tuesday",
+		"wednesday": "Wednesday",
+		"thursday": "Thursday",
+		"friday": "Friday",
+		"saturday": "Saturday",
+		"sunday": "Sunday"
 	}
 }

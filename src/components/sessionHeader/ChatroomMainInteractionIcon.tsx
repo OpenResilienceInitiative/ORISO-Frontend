@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import addIcon from '../../resources/img/icons/chatroom/add_icon.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import liveConversationIcon from '../../resources/img/icons/chatroom/live_conv_type_200.svg';
-import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 
 export type ChatroomConversationIconType =
 	| 'internal'
@@ -25,7 +25,7 @@ const conversationIconSources: Partial<
 > = {
 	internal: internalConversationIcon,
 	live: liveConversationIcon,
-	nearby: nearbyConversationIcon
+	nearby: mailConversationIcon
 };
 
 export const ChatroomMainInteractionIcon = ({

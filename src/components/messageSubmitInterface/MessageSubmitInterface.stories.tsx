@@ -12,6 +12,7 @@ import {
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
+import { phone390Globals } from '../message/messageStoryShell';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -261,7 +262,7 @@ export const SessionHeightReset: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const dragHandle = await canvas.findByRole('button', {
-			name: /drag to resize composer/i
+			name: /ziehen, um den editor zu vergrößern/i
 		});
 		dragHandle.focus();
 		// Dispatch on the handle rather than via `userEvent.keyboard`, which
@@ -369,23 +370,30 @@ export const ReplyingToMessage: Story = {
 		const preview = canvasElement.querySelector(
 			'.messageSubmit__replyPreview'
 		) as HTMLElement;
-		const form = preview.closest('form') as HTMLElement;
+		const editor = preview
+			.closest('form')
+			?.querySelector('.textarea__input') as HTMLElement;
+		const editorRect = editor.getBoundingClientRect();
 
 		// The bar hugs the quote instead of spanning the composer — it should
 		// read like the bubble it quotes, not like a full-width banner.
 		expect(preview.getBoundingClientRect().width).toBeLessThan(
-			form.getBoundingClientRect().width * 0.8
+			editorRect.width * 0.8
+		);
+		// …starting on the editor's left edge, not outside it.
+		expect(Math.round(preview.getBoundingClientRect().left)).toBe(
+			Math.round(editorRect.left)
 		);
 
-		// …but a very long quote still has to stay inside the composer.
+		// A very long quote grows to the editor's width and stops there.
 		const text = preview.querySelector(
 			'.messageSubmit__replyPreviewText'
 		) as HTMLElement;
 		const original = text.textContent;
 		text.textContent = 'x'.repeat(600);
-		expect(preview.getBoundingClientRect().width).toBeLessThanOrEqual(
-			form.getBoundingClientRect().width
-		);
+		expect(
+			Math.round(preview.getBoundingClientRect().right)
+		).toBeLessThanOrEqual(Math.round(editorRect.right));
 		text.textContent = original;
 	}
 };
@@ -403,13 +411,17 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 		return found;
 	});
 
-	// Full width of the composer, one 32px line — never wraps.
-	const form = banner.closest('form') as HTMLElement;
+	// One 32px line, never wrapping, and flush with the *editor* below it.
+	// Figma 18:1990 puts the bar and the text component both at x=16 /
+	// width 863 — not at the outer card's edges.
+	const editor = banner
+		.closest('form')
+		?.querySelector('.textarea__input') as HTMLElement;
 	const bannerRect = banner.getBoundingClientRect();
+	const editorRect = editor.getBoundingClientRect();
 	expect(Math.round(bannerRect.height)).toBe(32);
-	expect(bannerRect.width).toBeGreaterThan(
-		form.getBoundingClientRect().width * 0.8
-	);
+	expect(Math.round(bannerRect.left)).toBe(Math.round(editorRect.left));
+	expect(Math.round(bannerRect.right)).toBe(Math.round(editorRect.right));
 
 	const text = banner.querySelector(
 		'.messageSubmit__editPreviewText'
@@ -454,12 +466,17 @@ export const EditingMessage: Story = {
 	}
 };
 
-/** Mobile counterpart — Figma 18:6713. Same bar, less room for the text. */
+/**
+ * Mobile counterpart — Figma 18:6713. Same bar, less room for the text.
+ *
+ * Uses `phone390Globals`, not `parameters.viewport.defaultViewport`: preview.tsx
+ * replaces the viewport options with `phone375` / `phone390` only (#849), so
+ * naming a built-in preset like `mobile1` silently leaves the story at desktop
+ * width — and this story's whole point is the mobile breakpoint.
+ */
 export const EditingMessageMobile: Story = {
 	name: 'Editing (m.replace preview) — mobile',
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
+	globals: phone390Globals,
 	render: () => (
 		<ComposerShell
 			editingMessage={{
@@ -495,8 +512,9 @@ export const Supervisor: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
+	// Was `defaultViewport: 'mobile1'`, which has not resolved since #849
+	// removed the built-in presets — the story called itself Mobile and
+	// rendered at desktop width.
+	globals: phone390Globals,
 	render: () => <ComposerShell />
 };

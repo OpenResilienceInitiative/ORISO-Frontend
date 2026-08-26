@@ -48,6 +48,31 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	.textarea {
 		z-index: 100;
 
+		// One source of truth for the composer's geometry. The white card
+		// claims the width; the docked bars (reply quote, edit banner) derive
+		// from it instead of each inventing a width, which is what left them
+		// hanging ~24px past the card on either side.
+		--composer-max-width: 895px;
+
+		// …and they align to the *editor*, not to the card: Figma 18:1990 puts
+		// the drag handle, the reply bar and the text component all at x=16 /
+		// width 863 inside the 895 dock. 17px = the 16px inset of
+		// `.textarea__inputWrapper` plus the card's 1px border.
+		--composer-edge-inset: 17px;
+
+		// The editor's box, derived once so the docked bars never restate it.
+		--composer-inner-width: calc(
+			min(100%, var(--composer-max-width)) - 2 *
+				var(--composer-edge-inset)
+		);
+		--composer-inner-offset: max(
+			0px,
+			calc(
+				(100% - min(100%, var(--composer-max-width))) / 2 +
+					var(--composer-edge-inset)
+			)
+		);
+
 		// Figma 8641-34699: dock must be opaque so scrolled history cannot show through.
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
@@ -63,6 +88,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		// On mobile, ensure no extra spacing and proper positioning
 		@media screen and (width <= 899px) {
+			// `.textarea__inputWrapper` drops to left/right 0 here, so the
+			// editor is flush with the card and the bars must be too.
+			--composer-edge-inset: 0px;
+
 			padding: 16px;
 			padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
 			position: absolute;
@@ -115,7 +144,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&-send-message {
 				display: block;
 				width: 100%;
-				max-width: 895px;
+
+				// The white card owns the composer's width. Everything docked
+				// above it (reply quote, edit banner) reads the same variable
+				// instead of carrying a width of its own, so their edges line
+				// up with the card at every breakpoint.
+				max-width: var(--composer-max-width, 895px);
 				position: relative;
 				margin: 0 auto;
 				background-color: #ffffff !important;
@@ -1968,6 +2002,24 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 }
 
+/*
+ * Expanding the composer turns the card into a `position: fixed` overlay at
+ * z-index 4500, while these bars stay behind in the docked form (z-index 100).
+ * They are unreachable there, and at some widths wide enough to peek out past
+ * the overlay's edges — 8px on either side at a 940px viewport. Hide them
+ * rather than aligning something nobody can see or click.
+ *
+ * The expanded composer therefore shows no reply/edit context at all. That is
+ * the state before this branch too; giving it one means moving the bars into
+ * the overlay, which is its own change.
+ */
+.messageSubmit__wrapper--expanded {
+	.messageSubmit__replyPreview,
+	.messageSubmit__editPreview {
+		display: none;
+	}
+}
+
 // Relations foundation (#435): cancelable reply-quote preview above the input.
 .messageSubmit__replyPreview {
 	display: flex;
@@ -1975,11 +2027,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	gap: 8px;
 
 	// Hugs the quoted message instead of spanning the whole composer: the bar
-	// should read like the chat bubble it quotes. `max-width` keeps a long
-	// quote inside the composer, where the 1-line clamp below takes over.
+	// should read like the chat bubble it quotes. It never sets a width of its
+	// own though — it starts on the editor's left edge and grows to at most the
+	// editor's width, so the two never drift apart.
 	width: fit-content;
-	max-width: calc(100% - 24px);
-	margin: 0 12px 6px;
+	max-width: var(--composer-inner-width);
+	margin: 0 auto 6px var(--composer-inner-offset);
 	padding: 8px 12px;
 	border-left: 3px solid var(--m3-primary, #a5000a);
 	border-radius: 6px;
@@ -2040,7 +2093,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	align-items: center;
 	gap: 8px;
 	min-height: 32px;
-	margin: 0 12px 6px;
+
+	// Same box as the editor below it — no width of its own.
+	width: var(--composer-inner-width);
+	margin: 0 auto 6px;
 	padding: 8px 12px;
 	border-radius: 8px;
 

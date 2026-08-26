@@ -54,6 +54,11 @@ export interface AgencyDataInterface {
 	openingHours?: string;
 	url?: string;
 	external?: boolean;
+	/**
+	 * When true, the whole counselling team can see the request;
+	 * when false/undefined the centre is treated as single-counsellor.
+	 */
+	teamAgency?: boolean;
 	tenantId?: number;
 	agencySpecificPrivacy?: string;
 	consultingTypeRel?: ConsultingTypeInterface;
@@ -71,6 +76,13 @@ export interface AgencyDepartmentDataInterface {
 	topicId: number;
 	hasPublishedDpp?: boolean;
 	hasPublishedImprint?: boolean;
+	/**
+	 * Per-department contact overrides (AgencyService #242). Optional -
+	 * older backends simply never send them.
+	 */
+	openingHours?: string;
+	phoneExtension?: string;
+	floorLocation?: string;
 }
 
 export interface ConsultingTypeDataInterface {

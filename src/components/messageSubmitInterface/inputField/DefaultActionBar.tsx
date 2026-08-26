@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { TFunction } from 'i18next';
-import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
+import MicIcon from '@mui/icons-material/Mic';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import AddIcon from '@mui/icons-material/Add';
@@ -78,13 +78,17 @@ export const DefaultActionBar = ({
 		{showMic && (
 			<ToolbarButton
 				label={translate(
-					'message.submit.toolbar.voiceRecording',
+					'message.submit.toolbar.voiceRecording.label',
 					'Voice recording'
+				)}
+				title={translate(
+					'message.submit.toolbar.voiceRecording.tooltip',
+					'Record voice message'
 				)}
 				onClick={onMicClick}
 				selected={isRecording}
 			>
-				<MicNoneOutlinedIcon fontSize="inherit" />
+				<MicIcon fontSize="inherit" />
 			</ToolbarButton>
 		)}
 		<ToolbarButton

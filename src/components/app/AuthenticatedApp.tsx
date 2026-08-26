@@ -13,13 +13,14 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
-import { RegistrationLoader } from './registrationLoader/RegistrationLoader';
+import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { handleTokenRefresh } from '../auth/auth';
 import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
+import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -58,6 +59,12 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { setMatrixClientService } = useMatrixClient();
+	// Ask for notification permission (incoming calls) on the user's first
+	// gesture — but only inside the authenticated app. This used to sit at
+	// the router root, where the very first click on the LOGIN page popped
+	// the browser's permission dialog for anonymous visitors (owner report,
+	// 2026-08-19).
+	useNotificationPermission();
 	const mounted = useRef(true);
 	useEffect(
 		() => () => {
@@ -137,7 +144,8 @@ export const AuthenticatedApp = ({
 										const matrixLoginData =
 											await getMatrixAccessToken();
 										persistMatrixLoginData(matrixLoginData);
-										const { homeserverUrl } = matrixLoginData;
+										const { homeserverUrl } =
+											matrixLoginData;
 										if (homeserverUrl) {
 											const { MatrixClientService } =
 												await import(
@@ -243,9 +251,23 @@ export const AuthenticatedApp = ({
 		logout();
 	}, [onLogout, setMatrixClientService]);
 
+	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the
+	   click can land while bootstrap is still in flight. Tearing the handover
+	   down then drops the user onto the generic spinner — the one screen the
+	   gate exists to spare them. Remember the intent instead and let the
+	   effect below close it once routing can actually show the message field;
+	   the handover shows its `entering` state in the meantime. */
+	const [handoverEntered, setHandoverEntered] = useState(false);
+
 	const handlePostRegLoaderFinish = useCallback(() => {
-		setShowPostRegLoader(false);
+		setHandoverEntered(true);
 	}, []);
+
+	useEffect(() => {
+		if (handoverEntered && appReady) {
+			setShowPostRegLoader(false);
+		}
+	}, [handoverEntered, appReady]);
 	const platformVersion = getPlatformVersion();
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
@@ -253,9 +275,9 @@ export const AuthenticatedApp = ({
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
 		return (
-			<RegistrationLoader
+			<RegistrationHandover
 				ready={appReady}
-				onFinish={handlePostRegLoaderFinish}
+				onEnter={handlePostRegLoaderFinish}
 			/>
 		);
 	}

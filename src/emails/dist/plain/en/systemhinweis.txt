@@ -1,0 +1,27 @@
+A short maintenance break
+=========================
+
+On {{maintenanceDate}}, {{platformName}} will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}.
+
+After that you can carry on writing as usual.
+
+View status page:
+{{statusUrl}}
+
+Messages you have already written will not be lost.
+
+----------------------------------------------------------------
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Settings: {{settingsUrl}}
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+Unsubscribe from notifications: {{unsubscribeUrl}}
+
+This email was sent automatically. Please do not reply to it.

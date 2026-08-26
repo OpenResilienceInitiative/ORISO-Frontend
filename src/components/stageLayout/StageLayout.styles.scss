@@ -27,6 +27,13 @@
 				border: 1px solid rgb(0 0 0 / 6%);
 				box-shadow: 0 3px 0 1px rgb(0 0 0 / 7%);
 			}
+
+			// While the encryption explainer is open the card is the design's
+			// 700px one — width comes from `.stageLayout__content` below.
+			.loginForm--securityOpen {
+				max-width: $login-security-card-width;
+				padding: 44px 60px 34px;
+			}
 		}
 
 		@media screen and (width < 1200px) {
@@ -147,30 +154,45 @@
 		.stageLayout__content {
 			justify-content: flex-start;
 			align-items: center;
-			margin-top: 48px !important;
-			padding-top: $grid-base-four;
-			padding-bottom: 120px;
+			// Registration clears shared content padding so the 60vw column
+			// owns horizontal space; shared login/etc. keep base &__content.
+			// The sticky step header brings its own top spacing as well, so the
+			// margin goes with it — anything left here reads as an empty band
+			// between the red bar and the step row (the "warum diese area?"
+			// finding). `padding: 0` already covers the old `padding-top`.
+			margin-top: 0 !important;
+			// `padding: 0` covers the bottom too. The 120px that used to sit
+			// here reserved room for the fixed step footer a second time — the
+			// step body already reserves 144/112px for it. Doubling it ended
+			// the content column 120px above the footer, which is invisible
+			// while a step is top-aligned and wrong as soon as one centres
+			// itself in the space that is left.
+			padding: 0;
+			box-sizing: border-box;
 
 			@include breakpoint($fromLarge) {
 				margin-top: 0 !important;
 				padding-top: 0;
-				padding-right: $grid-base-four;
-				padding-left: $grid-base-four;
 
 				& > *:not(.loadingIndicator) {
 					width: 100%;
-					max-width: 780px;
 				}
 			}
 
+			// Desktop split: stage is 40vw; this column is exactly 60vw.
+			// Children (stepper, form) use width: 100% — no vw breakouts.
 			@include breakpoint($fromXLarge) {
+				align-items: stretch;
+				width: 60vw;
+				max-width: 60vw;
+				margin-left: 40vw;
 				padding-top: 0;
-				padding-left: calc(40vw + #{$grid-base-four});
-				padding-right: $grid-base-four;
+				padding-left: 0;
+				padding-right: 0;
 
 				& > *:not(.loadingIndicator) {
 					width: 100%;
-					max-width: 780px;
+					max-width: none;
 				}
 			}
 		}
@@ -190,6 +212,25 @@
 		flex: none;
 		height: 230px;
 		overflow: hidden;
+
+		// Design 8a: the registration steps carry the brand row only.
+		&--bar {
+			height: auto;
+			// The content sheet below overlaps the head by 28px, and the row
+			// needs to stay clear of that rounded edge — hence more than 28.
+			padding-bottom: 40px;
+
+			// In the tall hero the row floats over the artwork, so it is taken
+			// out of flow. Here there is no artwork and nothing else to give
+			// the head any height: left absolute it measured 0, the head
+			// collapsed to its padding, and the sheet covered the brand, the
+			// language switch and the login action along with their focus
+			// rings. Back in flow the head measures itself from the row.
+			.stageMobileHero__bar {
+				position: static;
+				padding: 14px 20px 0;
+			}
+		}
 		background: radial-gradient(
 			120% 90% at 78% 8%,
 			#e0313b 0%,
@@ -387,12 +428,6 @@
 			padding: 28px 20px 40px;
 		}
 
-		@include breakpoint($fromLarge) {
-			& > *:not(.loadingIndicator) {
-				max-width: 700px;
-			}
-		}
-
 		@include breakpoint($fromXLarge) {
 			width: 100%;
 			padding-left: calc(40vw + 16px);
@@ -400,6 +435,13 @@
 			& > *:not(.loadingIndicator) {
 				max-width: 700px;
 				width: calc(60vw - 300px);
+			}
+
+			// The encryption explainer is drawn on the design's 700px card
+			// (580px of content); the card grows for it and shrinks back.
+			& > .loginForm.loginForm--securityOpen {
+				width: min($login-security-card-width, calc(60vw - 48px));
+				max-width: $login-security-card-width;
 			}
 		}
 	}

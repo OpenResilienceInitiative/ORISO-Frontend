@@ -37,6 +37,8 @@ interface StageLayoutProps {
 	loginParams?: string;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
+	/** Mobile head presentation — `bar` is the slim 8a brand row. */
+	mobileHero?: 'hero' | 'bar';
 }
 
 export const StageLayout = ({
@@ -48,7 +50,8 @@ export const StageLayout = ({
 	showRegistrationLink,
 	loginParams,
 	registrationUrl,
-	showRegistrationInfoDrawer
+	showRegistrationInfoDrawer,
+	mobileHero = 'hero'
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -72,6 +75,7 @@ export const StageLayout = ({
 	return (
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
+				variant={mobileHero}
 				action={
 					showLoginLink && (
 						<IconButton
@@ -244,7 +248,6 @@ export const StageLayout = ({
 						// offset for a fixed app bar — only the registration
 						// info drawer still overlays the top of the sheet.
 						mt: {
-							xs: showRegistrationInfoDrawer ? '96px' : 0,
 							md: '0'
 						}
 					}}
