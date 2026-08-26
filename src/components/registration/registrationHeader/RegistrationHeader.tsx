@@ -198,11 +198,12 @@ export const RegistrationHeader = ({
 						? 0
 						: layout === 'stepper'
 							? 1.5
-							: { xs: 0, sm: 1.5 },
-				mb: { xs: 2, sm: 3, lg: 4 }
+							: { xs: 0, sm: 1.5 }
 				// No bottom margin: the gap to the step content belongs to the
 				// page, not to the header. Carrying it here is what produced
-				// the dead band under the desktop stepper.
+				// the dead band under the desktop stepper. The step body sets
+				// it (`pt` on the content column, #1179); a second one here
+				// simply added to that.
 			}}
 		>
 			{/* Mobile: compact row + chips */}
