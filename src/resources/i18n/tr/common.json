@@ -1579,7 +1579,9 @@
 				"attachment": "Ek ekle",
 				"emoji": "Emoji seçimi",
 				"mention": "Kişiden bahset",
-				"voiceRecording": "Sesli kayıt"
+				"voiceRecording": {
+					"label": "Sesli kayıt"
+				}
 			}
 		},
 		"mention": {

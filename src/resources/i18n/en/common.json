@@ -1579,7 +1579,10 @@
 				"attachment": "Add attachment",
 				"emoji": "Emoji panel",
 				"mention": "Mention someone",
-				"voiceRecording": "Voice recording"
+				"voiceRecording": {
+					"label": "Voice recording",
+					"tooltip": "Record voice message"
+				}
 			}
 		},
 		"mention": {

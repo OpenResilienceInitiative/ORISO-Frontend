@@ -1579,7 +1579,9 @@
 				"attachment": "Добавить вложение",
 				"emoji": "Выбор эмодзи",
 				"mention": "Упомянуть человека",
-				"voiceRecording": "Голосовая запись"
+				"voiceRecording": {
+					"label": "Голосовая запись"
+				}
 			}
 		},
 		"mention": {
