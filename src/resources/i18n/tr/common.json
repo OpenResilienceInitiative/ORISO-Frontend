@@ -1580,7 +1580,8 @@
 				"emoji": "Emoji seçimi",
 				"mention": "Kişiden bahset",
 				"voiceRecording": {
-					"label": "Sesli kayıt"
+					"label": "Sesli kayıt",
+					"tooltip": "Sesli mesaj kaydet"
 				}
 			}
 		},

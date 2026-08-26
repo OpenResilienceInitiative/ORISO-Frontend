@@ -1580,7 +1580,8 @@
 				"emoji": "Sélection d'émojis",
 				"mention": "Mentionner une personne",
 				"voiceRecording": {
-					"label": "Enregistrement vocal"
+					"label": "Enregistrement vocal",
+					"tooltip": "Enregistrer un message vocal"
 				}
 			}
 		},

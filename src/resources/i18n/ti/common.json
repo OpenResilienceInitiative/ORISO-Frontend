@@ -1580,7 +1580,8 @@
 				"emoji": "ምረጻ ኢሞጂ",
 				"mention": "ሰብ ጥቐስ",
 				"voiceRecording": {
-					"label": "ናይ ድምጺ ቅዳሕ"
+					"label": "ናይ ድምጺ ቅዳሕ",
+					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ"
 				}
 			}
 		},
