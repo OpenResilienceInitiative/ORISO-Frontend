@@ -178,7 +178,7 @@ describe('DepartmentLegalSection', () => {
 		});
 
 		it('shows the substituted text, not the raw placeholder', async () => {
-			vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+			vi.mocked(fetchData).mockResolvedValue(null);
 			mockTenant.content.privacy =
 				'<p>Verantwortlich ist ${responsible}.</p>';
 			mockTenant.content.renderedPrivacy =
@@ -203,7 +203,7 @@ describe('DepartmentLegalSection', () => {
 		});
 
 		it('still shows the raw text on a backend that does not send renderedPrivacy', async () => {
-			vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+			vi.mocked(fetchData).mockResolvedValue(null);
 			mockTenant.content.privacy = '<p>Nur roher Trägertext</p>';
 
 			render(
