@@ -313,6 +313,7 @@
 		"dearchive": "Разархивировать",
 		"dearchiveDescription": "Восстановить чат из архива.",
 		"editGroupChat": "Настройки чата",
+		"editGroupChatDescription": "Изменить тему, расписание и модерацию этого чата.",
 		"groupChatInfo": "Информация о чате",
 		"imprint": "Оттиск",
 		"leaveGroupChat": "Покинуть чат",

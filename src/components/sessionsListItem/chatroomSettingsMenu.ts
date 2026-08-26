@@ -26,6 +26,12 @@ export interface ChatroomSettingsMenuInput {
 	isAgencyCounselling: boolean;
 	teamDiscussionFeatureEnabled: boolean;
 	hasExistingTeamDiscussion: boolean;
+	/** Group-chat owner per `groupChatHelpers.isGroupChatOwner`. */
+	isGroupChatOwner: boolean;
+	/** The group chat is currently running (`session.item.active`). */
+	isGroupChatActive: boolean;
+	/** A materialized Matrix room exists, so the settings route is reachable. */
+	hasMatrixRoom: boolean;
 }
 
 export interface ChatroomSettingsMenuVisibility {
@@ -33,6 +39,7 @@ export interface ChatroomSettingsMenuVisibility {
 	showDearchive: boolean;
 	showDelete: boolean;
 	showRequestHelp: boolean;
+	showChatSettings: boolean;
 }
 
 export const getChatroomSettingsMenuVisibility = ({
@@ -46,7 +53,10 @@ export const getChatroomSettingsMenuVisibility = ({
 	isArchiveTab,
 	isAgencyCounselling,
 	teamDiscussionFeatureEnabled,
-	hasExistingTeamDiscussion
+	hasExistingTeamDiscussion,
+	isGroupChatOwner,
+	isGroupChatActive,
+	hasMatrixRoom
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
 	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
 	// stay in lockstep. A supervisor only observes a colleague's session, so it
@@ -76,11 +86,23 @@ export const getChatroomSettingsMenuVisibility = ({
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
+	// #1189 — same conditions the header menu applies to its edit entry
+	// (SessionMenu.tsx:1007-1022): the owner may change topic, schedule and
+	// moderators only while the room is not running, and only once a Matrix room
+	// exists to address in the `/:groupId/:sessionId/editGroupChat` route.
+	const showChatSettings =
+		!isAsker &&
+		isGroup &&
+		isGroupChatOwner &&
+		!isGroupChatActive &&
+		hasMatrixRoom;
+
 	return {
 		showArchive: isOwnEditableSession && !isArchiveTab,
 		showDearchive: isOwnEditableSession && isArchiveTab,
 		showDelete,
-		showRequestHelp
+		showRequestHelp,
+		showChatSettings
 	};
 };
 

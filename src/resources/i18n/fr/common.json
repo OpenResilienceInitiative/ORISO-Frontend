@@ -313,6 +313,7 @@
 		"dearchive": "Désarchiver",
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
+		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
 		"groupChatInfo": "Infos sur le chat",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",

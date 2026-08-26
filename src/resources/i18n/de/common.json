@@ -308,6 +308,7 @@
 		"dearchive": "Dearchivieren",
 		"dearchiveDescription": "Chat aus dem Archiv wiederherstellen.",
 		"editGroupChat": "Chat-Einstellungen",
+		"editGroupChatDescription": "Thema, Termin und Moderation dieses Chats ändern.",
 		"groupChatInfo": "Chat-Info",
 		"imprint": "Impressum",
 		"leaveGroupChat": "Chat verlassen",

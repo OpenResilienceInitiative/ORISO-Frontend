@@ -296,6 +296,7 @@
 		"dearchive": "Dearchive",
 		"dearchiveDescription": "Restore chat from archive.",
 		"editGroupChat": "Chat settings",
+		"editGroupChatDescription": "Change this chat's topic, schedule and moderation.",
 		"groupChatInfo": "Chat info",
 		"imprint": "Imprint",
 		"leaveGroupChat": "Leave chat",

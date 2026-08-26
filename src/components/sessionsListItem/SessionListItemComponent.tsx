@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
 import { getModality, Modality } from '../session/getModality';
@@ -24,6 +24,7 @@ import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
+import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/gear.svg';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
@@ -74,6 +75,7 @@ import {
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import DeleteSession from '../session/DeleteSession';
+import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
@@ -422,13 +424,20 @@ export const SessionListItemComponent = ({
 		isArchiveTab: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
 		isAgencyCounselling,
 		teamDiscussionFeatureEnabled: featureTeamDiscussionEnabled,
-		hasExistingTeamDiscussion
+		hasExistingTeamDiscussion,
+		isGroupChatOwner:
+			!!activeSession && isGroupChatOwner(activeSession, userData),
+		isGroupChatActive: !!activeSession?.item?.active,
+		hasMatrixRoom: !!activeSession?.item?.matrixRoomId
 	});
+	// Every flag below requires `!isAsker`, so this stays false for askers —
+	// their menu is gated separately on the legal-links branch.
 	const hasChatroomSettingsActions =
 		chatroomSettingsMenu.showArchive ||
 		chatroomSettingsMenu.showDearchive ||
 		chatroomSettingsMenu.showDelete ||
-		chatroomSettingsMenu.showRequestHelp;
+		chatroomSettingsMenu.showRequestHelp ||
+		chatroomSettingsMenu.showChatSettings;
 
 	// Only an accepted session needs the lookup — an open enquiry always allows
 	// starting a discussion, so its availability is already decided above.
@@ -781,6 +790,24 @@ export const SessionListItemComponent = ({
 		navigate(withTeamDiscussionParam(getSessionPath()));
 	};
 
+	// #1189: same destination and router state as the header menu's entry
+	// (SessionMenu.tsx). `isEditMode` is what makes CreateConversationView open
+	// the existing chat instead of a blank create form.
+	const handleChatSettings = () => {
+		setFlyoutOpen(false);
+		navigate(
+			generatePath(
+				`${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`,
+				{
+					groupId: activeSession.item.matrixRoomId,
+					id: String(activeSession.item.id),
+					subRoute: 'editGroupChat'
+				}
+			),
+			{ state: { isEditMode: true, prevIsInfoPage: false } }
+		);
+	};
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (isRequestInProgress) {
 			return null;
@@ -1104,7 +1131,7 @@ export const SessionListItemComponent = ({
 								activeSession.item.createDate
 							)}
 						</div>
-						{!activeSession.isGroup &&
+						{!(isAsker && activeSession.isGroup) &&
 							(isAsker || hasChatroomSettingsActions) && (
 								<>
 									<button
@@ -1297,6 +1324,32 @@ export const SessionListItemComponent = ({
 												) : (
 													<>
 														<div className="sessionsListItem__dropdownContent">
+															{chatroomSettingsMenu.showChatSettings && (
+																<button
+																	onClick={
+																		handleChatSettings
+																	}
+																	className="sessionsListItem__dropdownOption"
+																	type="button"
+																	data-cy="session-list-menu-chat-settings"
+																>
+																	<EditGroupChatIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle">
+																				{translate(
+																					'chatFlyout.editGroupChat'
+																				)}
+																			</span>
+																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription">
+																			{translate(
+																				'chatFlyout.editGroupChatDescription'
+																			)}
+																		</p>
+																	</div>
+																</button>
+															)}
 															{chatroomSettingsMenu.showArchive && (
 																<button
 																	onClick={
