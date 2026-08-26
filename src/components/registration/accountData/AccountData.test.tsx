@@ -32,6 +32,7 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 afterEach(() => {
 	cleanup();
+	clearDepartmentLegalCache();
 	vi.clearAllMocks();
 });
 

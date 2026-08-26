@@ -9,7 +9,7 @@ import {
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
 	LiveChatFilterIcon,
-	NearbyFilterIcon,
+	MailFilterIcon,
 	SessionToolbarFilterIconProps,
 	SupervisionFilterIcon,
 	UnreadFilterIcon
@@ -154,7 +154,7 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'nearby',
 		labelKey: 'sessionList.toolbar.chips.nearby',
 		fallback: 'Mail',
-		Icon: NearbyFilterIcon,
+		Icon: MailFilterIcon,
 		dataCy: 'sessions-list-chip-nearby'
 	},
 	{

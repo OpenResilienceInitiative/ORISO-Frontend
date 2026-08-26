@@ -1579,7 +1579,10 @@
 				"attachment": "መተሓሓዚ ወስኽ",
 				"emoji": "ምረጻ ኢሞጂ",
 				"mention": "ሰብ ጥቐስ",
-				"voiceRecording": "ናይ ድምጺ ቅዳሕ"
+				"voiceRecording": {
+					"label": "ናይ ድምጺ ቅዳሕ",
+					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ"
+				}
 			}
 		},
 		"mention": {

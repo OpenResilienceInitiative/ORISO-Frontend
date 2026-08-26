@@ -76,3 +76,49 @@ export const apiGetDepartmentLegal = async (
 	})
 		.then(normalizeDepartmentLegalResponse)
 		.catch(() => null);
+
+/**
+ * In-flight / settled department-legal promises, keyed by agencyId:topicId.
+ * Same pattern as TeamDiscussionBadge's discussionCache — one network call
+ * per key so consent label and policy panel share one snapshot.
+ */
+const departmentLegalCache = new Map<
+	string,
+	Promise<DepartmentLegalData | null>
+>();
+
+const departmentLegalCacheKey = (agencyId: number, topicId: number): string =>
+	`${agencyId}:${topicId}`;
+
+/**
+ * Shared loader for department legal. Does not accept AbortSignal — aborting
+ * would cancel work for every consumer of the same key.
+ */
+export const getCachedDepartmentLegal = (
+	agencyId: number,
+	topicId: number
+): Promise<DepartmentLegalData | null> => {
+	const key = departmentLegalCacheKey(agencyId, topicId);
+	if (!departmentLegalCache.has(key)) {
+		departmentLegalCache.set(
+			key,
+			apiGetDepartmentLegal(agencyId, topicId).catch(() => {
+				departmentLegalCache.delete(key);
+				return null;
+			})
+		);
+	}
+	return departmentLegalCache.get(key)!;
+};
+
+/** Clear one key or the whole cache (tests / invalidation). */
+export const clearDepartmentLegalCache = (
+	agencyId?: number,
+	topicId?: number
+): void => {
+	if (agencyId != null && topicId != null) {
+		departmentLegalCache.delete(departmentLegalCacheKey(agencyId, topicId));
+		return;
+	}
+	departmentLegalCache.clear();
+};

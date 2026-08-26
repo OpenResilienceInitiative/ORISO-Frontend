@@ -9,7 +9,8 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DepartmentLegalSection } from './DepartmentLegalSection';
-import { apiGetDepartmentLegal } from '../../api/apiGetDepartmentLegal';
+import { clearDepartmentLegalCache } from '../../api/apiGetDepartmentLegal';
+import { fetchData } from '../../api/fetchData';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
@@ -22,9 +23,15 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
-vi.mock('../../api/apiGetDepartmentLegal', () => ({
-	apiGetDepartmentLegal: vi.fn()
-}));
+vi.mock('../../api/fetchData', async () => {
+	const actual = await vi.importActual<typeof import('../../api/fetchData')>(
+		'../../api/fetchData'
+	);
+	return {
+		...actual,
+		fetchData: vi.fn()
+	};
+});
 
 const mockTenant: {
 	content: { privacy: string; renderedPrivacy?: string };
@@ -58,7 +65,8 @@ const expandSection = () =>
 
 describe('DepartmentLegalSection', () => {
 	beforeEach(() => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		clearDepartmentLegalCache();
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: { content: JSON.stringify({ de: '<p>Fachbereich DPP</p>' }) },
 			imprint: { content: null }
 		});
@@ -66,6 +74,7 @@ describe('DepartmentLegalSection', () => {
 
 	afterEach(() => {
 		cleanup();
+		clearDepartmentLegalCache();
 		vi.clearAllMocks();
 	});
 
@@ -78,7 +87,7 @@ describe('DepartmentLegalSection', () => {
 		);
 
 		expect(container.innerHTML).toBe('');
-		expect(apiGetDepartmentLegal).not.toHaveBeenCalled();
+		expect(fetchData).not.toHaveBeenCalled();
 	});
 
 	it('renders nothing when the department has no published legal text', () => {
@@ -106,17 +115,11 @@ describe('DepartmentLegalSection', () => {
 		);
 
 		expect(screen.getByText(/Suchtberatung/)).toBeDefined();
-		expect(apiGetDepartmentLegal).not.toHaveBeenCalled();
+		expect(fetchData).not.toHaveBeenCalled();
 
 		expandSection();
 
-		await waitFor(() =>
-			expect(apiGetDepartmentLegal).toHaveBeenCalledWith(
-				42,
-				7,
-				expect.anything()
-			)
-		);
+		await waitFor(() => expect(fetchData).toHaveBeenCalled());
 		await waitFor(() =>
 			expect(screen.getByText('Fachbereich DPP')).toBeDefined()
 		);
@@ -140,8 +143,7 @@ describe('DepartmentLegalSection', () => {
 	});
 
 	it('falls back to the tenant content when the endpoint is unavailable (e.g. 404 before AgencyService #90)', async () => {
-		// apiGetDepartmentLegal maps 404/network errors to null
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+		vi.mocked(fetchData).mockRejectedValue(new Error('NO_MATCH'));
 
 		render(
 			<DepartmentLegalSection
@@ -222,7 +224,7 @@ describe('DepartmentLegalSection', () => {
 	/* eslint-enable no-template-curly-in-string */
 
 	it('shows an unavailable notice when neither department nor tenant content exists', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+		vi.mocked(fetchData).mockRejectedValue(new Error('NO_MATCH'));
 		mockTenant.content.privacy = '';
 
 		render(

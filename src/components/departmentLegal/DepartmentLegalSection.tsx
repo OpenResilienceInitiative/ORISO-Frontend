@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
 	Box,
 	Button,
@@ -9,10 +9,7 @@ import {
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useTranslation } from 'react-i18next';
-import {
-	apiGetDepartmentLegal,
-	DepartmentLegalData
-} from '../../api/apiGetDepartmentLegal';
+import { useDepartmentLegal } from '../../api/useDepartmentLegal';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
@@ -55,9 +52,6 @@ export const DepartmentLegalSection = ({
 	const { t } = useTranslation();
 	const tenant = useTenant();
 	const [open, setOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [legal, setLegal] = useState<DepartmentLegalData | null>(null);
-	const [hasLoaded, setHasLoaded] = useState(false);
 
 	const department = getDepartmentForTopic(agency, topic);
 	const hasPublishedDpp = department?.hasPublishedDpp === true;
@@ -67,21 +61,14 @@ export const DepartmentLegalSection = ({
 			? hasPublishedDpp
 			: hasPublishedDpp || hasPublishedImprint;
 
-	// Lazy-load the public legal endpoint on first expand only
-	useEffect(() => {
-		if (!open || hasLoaded || !isVisible || !agency?.id || !topic?.id) {
-			return;
-		}
-		const abortController = new AbortController();
-		setIsLoading(true);
-		apiGetDepartmentLegal(agency.id, topic.id, abortController.signal)
-			.then((data) => {
-				setLegal(data);
-				setHasLoaded(true);
-			})
-			.finally(() => setIsLoading(false));
-		return () => abortController.abort();
-	}, [open, hasLoaded, isVisible, agency?.id, topic?.id]);
+	const fetchEnabled =
+		open && isVisible && agency?.id != null && topic?.id != null;
+	const { data: legal, loading: isLoading } = useDepartmentLegal(
+		agency?.id,
+		topic?.id,
+		{ enabled: fetchEnabled }
+	);
+	const hasLoaded = fetchEnabled && !isLoading;
 
 	if (!isVisible) {
 		return null;
