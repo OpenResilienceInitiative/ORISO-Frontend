@@ -19,4 +19,17 @@ describe('getSessionDropdownPosition', () => {
 			getSessionDropdownPosition({ bottom: 64, right: 120 }, 280)
 		).toEqual({ top: 72, left: 12 });
 	});
+
+	// #1158: the case-handover menu reuses this helper with its own width.
+	it('right-aligns a narrower menu against its trigger', () => {
+		expect(
+			getSessionDropdownPosition({ bottom: 140, right: 400 }, 1024, 236)
+		).toEqual({ top: 148, left: 164 });
+	});
+
+	it('keeps a narrower menu inside the right viewport edge', () => {
+		expect(
+			getSessionDropdownPosition({ bottom: 140, right: 400 }, 320, 236)
+		).toEqual({ top: 148, left: 72 });
+	});
 });
