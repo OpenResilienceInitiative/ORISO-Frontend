@@ -263,7 +263,8 @@
 		"test:credentials": "playwright test --config playwright.credentials.config.ts",
 		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
 		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
-		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts"
+		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts",
+		"emails:sync": "vite-node src/emails/scripts/syncEmailTranslations.mts"
 	},
 	"eslintConfig": {
 		"extends": [

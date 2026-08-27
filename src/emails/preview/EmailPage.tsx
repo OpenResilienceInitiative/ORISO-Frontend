@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
 	EMAIL_LOCALES,
 	EMAIL_LOCALE_LABELS,
+	EMAIL_LOCALE_RELEASE,
 	EmailId,
 	EmailLocale,
 	buildEmail
@@ -88,7 +89,7 @@ export const EmailPage: React.FC<EmailPageProps> = ({
 /** Controls shared by every page story. */
 export const emailPageArgTypes = {
 	locale: {
-		name: 'Tone',
+		name: 'Language / tone',
 		control: { type: 'radio' as const },
 		options: [...EMAIL_LOCALES],
 		labels: EMAIL_LOCALE_LABELS
@@ -116,7 +117,14 @@ export const emailPageArgTypes = {
 	id: { table: { disable: true } }
 };
 
-/** Side-by-side of all three tone variants, for copy review. */
+/**
+ * Side-by-side of every language and tone, for copy review.
+ *
+ * The four machine-translated languages are marked, because this is the one
+ * place they can be read at all — they produce no files under `dist/` until a
+ * person has signed off what they claim. See `Email/Foundations →
+ * Translations`.
+ */
 export const EmailToneRow: React.FC<{
 	id: EmailId;
 	width?: EmailPreviewWidth;
@@ -137,6 +145,12 @@ export const EmailToneRow: React.FC<{
 					}}
 				>
 					{EMAIL_LOCALE_LABELS[locale]}
+					{EMAIL_LOCALE_RELEASE[locale] === 'released' ? null : (
+						<span style={{ color: '#a5000a' }}>
+							{' '}
+							· not send-ready
+						</span>
+					)}
 				</div>
 				<EmailPage id={id} locale={locale} width={width} />
 			</div>

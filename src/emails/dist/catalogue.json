@@ -9,6 +9,50 @@
     "de-du",
     "en"
   ],
+  "locales": {
+    "de-sie": {
+      "lang": "de",
+      "dir": "ltr",
+      "provenance": "source",
+      "release": "released"
+    },
+    "de-du": {
+      "lang": "de",
+      "dir": "ltr",
+      "provenance": "human",
+      "release": "released"
+    },
+    "en": {
+      "lang": "en",
+      "dir": "ltr",
+      "provenance": "human",
+      "release": "released"
+    },
+    "fr": {
+      "lang": "fr",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "ru": {
+      "lang": "ru",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "ti": {
+      "lang": "ti",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "tr": {
+      "lang": "tr",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    }
+  },
   "mails": {
     "neue-nachricht": {
       "audience": "asker",

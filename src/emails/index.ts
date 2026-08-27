@@ -13,6 +13,10 @@ import {
 	EmailLocale
 } from './content/emailCatalogue';
 import { en } from './content/en';
+import { fr } from './content/fr';
+import { ru } from './content/ru';
+import { ti } from './content/ti';
+import { tr } from './content/tr';
 import {
 	EmailDialect,
 	toEmailDialectHtml,
@@ -26,6 +30,7 @@ import {
 import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
+export * from './content/emailTranslationSync';
 export * from './kit/emailDialect';
 export * from './kit/emailTokens';
 export type { EmailContent } from './kit/emailTemplate';
@@ -36,7 +41,11 @@ export const EMAIL_CONTENT: Record<
 > = {
 	'de-sie': deSie,
 	'de-du': deDu,
-	en
+	en,
+	fr,
+	ru,
+	ti,
+	tr
 };
 
 export const getEmailContent = (

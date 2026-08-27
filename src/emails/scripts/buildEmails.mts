@@ -22,11 +22,31 @@ import {
 	EMAIL_DIALECT_INFO,
 	EMAIL_IDS,
 	EMAIL_LOCALES,
+	EMAIL_LOCALE_DIR,
 	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_PROVENANCE,
+	EMAIL_LOCALE_RELEASE,
+	EMAIL_RELEASED_LOCALES,
 	buildEmail,
 	emailIsUnsubscribable,
 	listEmailPlaceholders
 } from '../index';
+
+/**
+ * Only send-ready variants become files.
+ *
+ * A machine-translated language stays out of `dist/` until a person has read
+ * the strings that make a claim (`emailProtectedPaths`), because everything
+ * in here is addressed by a sending service as a template it may use. Storybook
+ * renders every variant from the same content model, so a reviewer can read the
+ * pending ones there — which is where a translation should be reviewed anyway.
+ *
+ * The moment `EMAIL_LOCALE_RELEASE` flips a language to `released`, its files
+ * appear here in one large, obvious diff.
+ */
+const withheld = EMAIL_LOCALES.filter(
+	(locale) => !EMAIL_RELEASED_LOCALES.includes(locale)
+);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist');
@@ -49,8 +69,19 @@ Layout: \`<dialect>/<tone>/<id>.<ext>\`.
 | --- | --- | --- | --- |
 ${dialectTable}
 
-Tones: ${EMAIL_LOCALES.join(', ')}.
-
+Variants in this directory: ${EMAIL_RELEASED_LOCALES.join(', ')}.
+${
+	withheld.length === 0
+		? ''
+		: `
+**Not here on purpose: ${withheld.join(', ')}.** Those exist in the content
+model and render in Storybook, but they are machine-translated and no person
+has yet read the strings that state what the platform does — the encryption
+promise, the privacy wording, the DPA mail. They become files here when
+\`EMAIL_LOCALE_RELEASE\` says so, which needs signatures in
+\`content/translationReview.json\`. See ADR-022.
+`
+}
 Both MIME parts are generated from one content model, so the plain-text twin
 cannot drift from the HTML, and all three dialects come from one renderer, so a
 dialect cannot disagree with what Storybook shows.
@@ -99,7 +130,7 @@ const run = async () => {
 	for (const dialect of EMAIL_DIALECTS) {
 		const info = EMAIL_DIALECT_INFO[dialect];
 
-		for (const locale of EMAIL_LOCALES) {
+		for (const locale of EMAIL_RELEASED_LOCALES) {
 			await mkdir(path.join(outDir, dialect, locale), {
 				recursive: true
 			});
@@ -146,7 +177,21 @@ const run = async () => {
 		`${JSON.stringify(
 			{
 				dialects: EMAIL_DIALECTS,
-				tones: EMAIL_LOCALES,
+				tones: EMAIL_RELEASED_LOCALES,
+				// Every variant that exists, send-ready or not, so a consumer
+				// can see what is coming and never has to guess whether a
+				// missing directory means "not translated" or "not allowed".
+				locales: Object.fromEntries(
+					EMAIL_LOCALES.map((locale) => [
+						locale,
+						{
+							lang: EMAIL_LOCALE_LANG[locale],
+							dir: EMAIL_LOCALE_DIR[locale],
+							provenance: EMAIL_LOCALE_PROVENANCE[locale],
+							release: EMAIL_LOCALE_RELEASE[locale]
+						}
+					])
+				),
 				mails: Object.fromEntries(
 					EMAIL_IDS.map((id) => [
 						id,
@@ -156,7 +201,7 @@ const run = async () => {
 							unsubscribable: emailIsUnsubscribable(id),
 							placeholders: placeholders[id],
 							tones: Object.fromEntries(
-								EMAIL_LOCALES.map((locale) => {
+								EMAIL_RELEASED_LOCALES.map((locale) => {
 									const built = buildEmail(id, locale);
 									return [
 										locale,
@@ -187,6 +232,15 @@ const run = async () => {
 	console.log(
 		`emails: wrote ${written} files to ${path.relative(process.cwd(), outDir)}`
 	);
+	if (withheld.length > 0) {
+		// Never truncate coverage silently: a missing language has to be
+		// visible in the build output, not inferred from a missing directory.
+		// eslint-disable-next-line no-console
+		console.log(
+			`emails: withheld ${withheld.join(', ')} — machine-translated, ` +
+				'not yet signed off (npm run emails:sync lists what is missing)'
+		);
+	}
 };
 
 run().catch((error) => {

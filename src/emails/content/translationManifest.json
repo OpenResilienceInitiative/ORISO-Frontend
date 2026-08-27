@@ -1,0 +1,569 @@
+{
+	"source": "de-sie",
+	"locales": {
+		"de-du": {
+			"provenance": "human",
+			"release": "released",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "b667796122a9b185"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "04b9d0cfa476445b"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "c615043793e7b76b"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "b10068a08eb5d784"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "ecc0fe5342e787cf"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "26967094f3b61250"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "d5da6ab18f5b010d"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "6d04e81dd3a45e39"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "ddc1ce181e30c8fc"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "00e1b2067386b3ba"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "4f99eeeee9c2a5c2"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "39bb12ba4ab49436"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "cfc1629d9be12291"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "4d11a1e7d608056b"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "6816fdce5b3e295a"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "2be92c81dcf3debd"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "1cd292232c60db67"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "d242b421a5da181d"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "1cc9b281ce577ecd"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "ab11d4b7e5ebcfc3"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "88d44d8177e1c7b5"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "8e8579a88b97e9e4"
+				}
+			}
+		},
+		"en": {
+			"provenance": "human",
+			"release": "released",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "51b4e867bd8e5a23"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "7d9bf4190b683c0d"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "d962a4a347bb4f4f"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "98c82c6b264cc63f"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "138c9cfc95902000"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "1052ec7ec96bc9d2"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "339584e97e4cebad"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "aea7c3e024540ea4"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "eb9a99ad83c8cf99"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "7175de640ba30df0"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "62907c0fe6580193"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "7e09a07ec009994a"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "52bc124ef871d642"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "f33f8d652e0cf931"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "ee7de234677a8bb0"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "94507ef14f858ddd"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "307b4088b670727c"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "52feda3c59d3b008"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "1d2c3070b0ef90f4"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "c8fc641d44ca6ae9"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "3f323774aba94738"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "f162b6309e6630f4"
+				}
+			}
+		},
+		"fr": {
+			"provenance": "machine",
+			"release": "pending-human-review",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "eaf67300b3d14544"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "7962728560a857f9"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "3db8f81628fcba1a"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "cd6fea8f8d8b7023"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "812d9537e1e6b533"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "5789ab78d49b4874"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "8588b9517db593bd"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "7cb1d75356de3ef7"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "5d60bbd94e987fcd"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "32b665729b2d9596"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "6389edaeef993ac2"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "c4ebf524467f8c18"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "5b6f9090daafa79c"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "b95cc56f8e6df25b"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "f4696b9493e18d80"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "46203e97e98518bb"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "685bde01c72c429d"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "4398a3c72f201ae3"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "70b5a01d5a3adf41"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "5363bcab48ab14cf"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "eae22d78a3737dfc"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "125c73e9012f1f2d"
+				}
+			}
+		},
+		"ru": {
+			"provenance": "machine",
+			"release": "pending-human-review",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "ff31b3c018b665ac"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "698424049887dd78"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "42f1e39260c30b4e"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "a88706c36c2e8bff"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "a7da0253e26d4987"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "ae7186ba2472ca66"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "40ec593902312e2d"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "4350e9771d0979a3"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "ceef298d5ec2b201"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "48ea56792737ff1d"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "ac41bfaae379205e"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "e91fa21e5ed0df42"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "dc0bcb7e60949e5a"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "4bcab07f2fa5fd0b"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "1c36ddc750c661f3"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "ac04ecafdae0c33b"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "0dd3dc8a2f75ef76"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "7c0756d80d83fbb4"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "384660f5b902ea19"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "15eb18c1e2e7593d"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "4433931c49cdcd38"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "c55a0da2bc5c85ce"
+				}
+			}
+		},
+		"ti": {
+			"provenance": "machine",
+			"release": "pending-human-review",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "38753ca93dbe9e25"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "d643d59d520ec629"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "66d33207a0ddb3f3"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "e4a24699f10adc6d"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "b88eb6d15948bdfd"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "6f1c49eba66f3d47"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "cd2dacead21fea96"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "387e5670786d9f0c"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "0825c7a048ad514c"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "69da48b6f78e6a2a"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "e6d3c99409045790"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "cfa1751fdfc220bb"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "a2129a52ff3bf68e"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "ab83b2f706ee055b"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "4ee3a4ae526cad02"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "8e16941fd7398cc3"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "9e2cd1724f1d4b76"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "0742450d75faf211"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "108d25c38ad2631f"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "f503d39b3a6a8887"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "0fae71c6c01d0542"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "8848c7079302e893"
+				}
+			}
+		},
+		"tr": {
+			"provenance": "machine",
+			"release": "pending-human-review",
+			"occasions": {
+				"neue-nachricht": {
+					"source": "de3b23b4d5938a00",
+					"target": "d55ea9bd63608769"
+				},
+				"willkommen": {
+					"source": "d4dc0984eae45490",
+					"target": "01ff1f8ad381c43e"
+				},
+				"passwort-zuruecksetzen": {
+					"source": "d7e865d4ccb640d8",
+					"target": "d4785dc1f5e454f5"
+				},
+				"termin": {
+					"source": "cf592c64cf4fde38",
+					"target": "df35c3ce99249372"
+				},
+				"beraterin-kontakt": {
+					"source": "f82c55c77f001ddb",
+					"target": "e3ccfd321c792e76"
+				},
+				"anfrage-zugewiesen": {
+					"source": "8523cb53bd40904f",
+					"target": "5b1922be86f0c2c2"
+				},
+				"systemhinweis": {
+					"source": "d662a1e810c53c74",
+					"target": "8a7f2aae635d9caa"
+				},
+				"neue-anfrage": {
+					"source": "6245074d2b400679",
+					"target": "13814a3ea5e62482"
+				},
+				"direkte-anfrage": {
+					"source": "1e1a46a6c0b7e58a",
+					"target": "1dfa690f09b8bb93"
+				},
+				"tagesuebersicht": {
+					"source": "9376afc54dd80011",
+					"target": "1a2de758b0669d9c"
+				},
+				"uebergabe-angefragt": {
+					"source": "3965fc9afacdd56e",
+					"target": "5fb1e06e0cb4e8ba"
+				},
+				"uebergabe-bestaetigt": {
+					"source": "ee21ea3788dd79c3",
+					"target": "21154314f2a0cbf8"
+				},
+				"rueckmeldung": {
+					"source": "ac5d5404d00fa748",
+					"target": "a1f4864893701324"
+				},
+				"mitteilung": {
+					"source": "34c5d9172dea95fb",
+					"target": "810f137e6e6dec12"
+				},
+				"anmeldelink": {
+					"source": "b3f91ec3c8592e97",
+					"target": "ff56cd47818c3fd3"
+				},
+				"einmalcode": {
+					"source": "b57152456f3e5af9",
+					"target": "d7aebb3baceb1aff"
+				},
+				"email-geaendert": {
+					"source": "e5a5b4a7c3ddad2b",
+					"target": "493d9a220913dc56"
+				},
+				"einladung-traeger": {
+					"source": "1e50982aa4fe13be",
+					"target": "2d267215ce468341"
+				},
+				"einladung-fachkraft": {
+					"source": "e88509e69a133512",
+					"target": "f8ba83c1d0108505"
+				},
+				"avv-unterschrift": {
+					"source": "6f44e881eb57866d",
+					"target": "9b9a0093e6adc26f"
+				},
+				"team-aenderung": {
+					"source": "46e518413d7cad1d",
+					"target": "d7563f267ccbbc32"
+				},
+				"smtp-test": {
+					"source": "0f6d55f49482b6c8",
+					"target": "8ca2dfa3a353eb77"
+				}
+			}
+		}
+	}
+}

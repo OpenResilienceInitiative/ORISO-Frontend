@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
+import {
+	EMAIL_IDS,
+	EMAIL_LOCALES,
+	EMAIL_LOCALE_DIR,
+	EMAIL_LOCALE_LANG,
+	buildEmail
+} from './index';
 
 /**
  * Static compatibility check against what e-mail clients actually support.
@@ -32,7 +38,7 @@ const styleBlock = (html: string): string =>
 const body = (html: string): string => html.split('</head>')[1] ?? '';
 
 describe('e-mail client compatibility', () => {
-	describe.each(cases)('$locale/$id', ({ html }) => {
+	describe.each(cases)('$locale/$id', ({ html, locale }) => {
 		it('lays out with tables, not with CSS layout', () => {
 			// Outlook's Word rendering engine supports neither, and Gmail
 			// strips `position` outright.
@@ -95,8 +101,20 @@ describe('e-mail client compatibility', () => {
 		});
 
 		it('states a language and a character set', () => {
-			expect(html).toMatch(/<html lang="(de|en)">/);
+			// Read from the catalogue rather than spelled out here, so adding
+			// a language is one table edit and not a test edit as well.
+			expect(html).toContain(
+				`<html lang="${EMAIL_LOCALE_LANG[locale]}">`
+			);
 			expect(html).toMatch(/<meta charset="utf-8">/i);
+		});
+
+		it('does not need a mirrored layout', () => {
+			// The kit lays out with tables and left-aligned padding. A genuine
+			// right-to-left language would need every one of those mirrored,
+			// so the catalogue has to say `ltr` for this to hold. Tigrinya is
+			// the one people expect to be RTL and is not.
+			expect(EMAIL_LOCALE_DIR[locale]).toBe('ltr');
 		});
 
 		it('declares how it wants to be treated in dark mode', () => {

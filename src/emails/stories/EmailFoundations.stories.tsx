@@ -3,7 +3,8 @@ import { Meta, StoryObj } from '@storybook/react';
 import {
 	EmailCatalogueSheet,
 	EmailDialectSheet,
-	EmailTokenSheet
+	EmailTokenSheet,
+	EmailTranslationSheet
 } from '../preview/EmailFoundations';
 import { EMAIL_LOCALES, EMAIL_LOCALE_LABELS } from '../index';
 
@@ -29,6 +30,18 @@ export const Tokens: Story = {};
 export const Catalogue: Story = {
 	name: 'Catalogue',
 	render: () => <EmailCatalogueSheet locale="de-sie" />
+};
+
+export const Translations: Story = {
+	name: 'Translations',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Six languages, seven variants, and one column that decides whether a language may be sent: how many strings it uses to *state* something about the platform that nobody who reads that language has confirmed. German is the source; English and the informal German tone were written by people; French, Russian, Tigrinya and Turkish were machine-translated and are not send-ready.'
+			}
+		}
+	},
+	render: () => <EmailTranslationSheet />
 };
 
 export const CataloguePerTone: Story = {

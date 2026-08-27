@@ -11,7 +11,14 @@ Layout: `<dialect>/<tone>/<id>.<ext>`.
 | `thymeleaf/` | MailService | `[[${name}]]` | `.html` / `.txt` |
 | `freemarker/` | Keycloak e-mail theme | `${(name!'')?html}` | `.html.ftl` / `.txt.ftl` |
 
-Tones: de-sie, de-du, en.
+Variants in this directory: de-sie, de-du, en.
+
+**Not here on purpose: fr, ru, ti, tr.** Those exist in the content
+model and render in Storybook, but they are machine-translated and no person
+has yet read the strings that state what the platform does — the encryption
+promise, the privacy wording, the DPA mail. They become files here when
+`EMAIL_LOCALE_RELEASE` says so, which needs signatures in
+`content/translationReview.json`. See ADR-022.
 
 Both MIME parts are generated from one content model, so the plain-text twin
 cannot drift from the HTML, and all three dialects come from one renderer, so a
