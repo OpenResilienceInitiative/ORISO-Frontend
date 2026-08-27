@@ -33,7 +33,9 @@ vi.mock('../../api/fetchData', async () => {
 	};
 });
 
-const mockTenant = {
+const mockTenant: {
+	content: { privacy: string; renderedPrivacy?: string };
+} = {
 	content: { privacy: '<p>Träger Datenschutz</p>' }
 };
 
@@ -157,6 +159,69 @@ describe('DepartmentLegalSection', () => {
 			expect(screen.getByText('Träger Datenschutz')).toBeDefined()
 		);
 	});
+
+	/**
+	 * Regression pin for the defect recorded in `CONTEXT-legal-documents.md`
+	 * ("Known traps", 2026-08-16): this component passed the raw
+	 * `tenant.content.privacy` into the consent display, so an unsubstituted
+	 * `${responsible}` could already be shown to help-seekers at registration.
+	 * `renderedPrivacy` — the same text with the data-protection placeholders
+	 * rendered by TenantService — was declared in `TenantDataInterface` and
+	 * read nowhere.
+	 */
+	/* eslint-disable no-template-curly-in-string -- the unsubstituted
+	   `${responsible}` placeholder is the subject of these assertions. */
+	describe('tenant fallback uses the rendered privacy text', () => {
+		afterEach(() => {
+			mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+			delete mockTenant.content.renderedPrivacy;
+		});
+
+		it('shows the substituted text, not the raw placeholder', async () => {
+			vi.mocked(fetchData).mockResolvedValue(null);
+			mockTenant.content.privacy =
+				'<p>Verantwortlich ist ${responsible}.</p>';
+			mockTenant.content.renderedPrivacy =
+				'<p>Verantwortlich ist Caritas Musterstadt.</p>';
+
+			const { container } = render(
+				<DepartmentLegalSection
+					agency={agencyWithDepartment}
+					topic={topic}
+					variant="consent"
+				/>
+			);
+
+			expandSection();
+
+			await waitFor(() =>
+				expect(
+					screen.getByText(/Verantwortlich ist Caritas Musterstadt\./)
+				).toBeDefined()
+			);
+			expect(container.textContent).not.toContain('${responsible}');
+		});
+
+		it('still shows the raw text on a backend that does not send renderedPrivacy', async () => {
+			vi.mocked(fetchData).mockResolvedValue(null);
+			mockTenant.content.privacy = '<p>Nur roher Trägertext</p>';
+
+			render(
+				<DepartmentLegalSection
+					agency={agencyWithDepartment}
+					topic={topic}
+					variant="consent"
+				/>
+			);
+
+			expandSection();
+
+			await waitFor(() =>
+				expect(screen.getByText('Nur roher Trägertext')).toBeDefined()
+			);
+		});
+	});
+	/* eslint-enable no-template-curly-in-string */
 
 	it('shows an unavailable notice when neither department nor tenant content exists', async () => {
 		vi.mocked(fetchData).mockRejectedValue(new Error('NO_MATCH'));
