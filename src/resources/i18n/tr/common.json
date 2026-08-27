@@ -313,6 +313,7 @@
 		"dearchive": "Arşivden çıkar",
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
+		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
 		"groupChatInfo": "Sohbet bilgileri",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
