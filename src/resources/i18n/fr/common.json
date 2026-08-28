@@ -313,6 +313,7 @@
 		"dearchive": "Désarchiver",
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
+		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
 		"groupChatInfo": "Infos sur le chat",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",
@@ -2673,11 +2674,15 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Pour l'authentification et la navigation, ce site utilise des cookies.",
+			"machineTranslated": "Traduit automatiquement — la version originale ({{language}}) fait juridiquement foi.",
+			"unrenderable": "Le texte de consentement de ce centre de conseil ne peut pas être affiché pour le moment. Veuillez réessayer plus tard ou contacter le centre de conseil.",
 			"label": {
 				"and": " et ",
 				"prefix": "J'ai fait le ",
 				"suffix": " a pris note. Pour l'authentification et la navigation, ce site utilise des cookies."
-			}
+			},
+			"loading": "Chargement du texte de consentement …"
 		},
 		"error": {
 			"required_field_missing": {

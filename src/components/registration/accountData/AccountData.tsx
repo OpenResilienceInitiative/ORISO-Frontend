@@ -6,7 +6,6 @@ import {
 	FormGroup,
 	IconButton,
 	InputAdornment,
-	Link,
 	Typography
 } from '@mui/material';
 import * as React from 'react';
@@ -26,20 +25,14 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import {
-	LegalLinksContext,
-	TProvidedLegalLink
-} from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
 	RegistrationContext,
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
-import { useDepartmentLegal } from '../../../api/useDepartmentLegal';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
-import LegalLinks from '../../../components/legalLinks/LegalLinks';
 import { getEmailFeedback } from './emailFeedback';
 import {
 	registrationMd3,
@@ -56,63 +49,26 @@ import {
 	regeneratePseudonym,
 	type Pseudonym
 } from '../../../utils/pseudonymGenerator';
-import { resolveLegalContent } from '../../../utils/legalContent';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { getAccountDataDraft, setAccountDataDraft } from './accountDataDraft';
+import {
+	ConsentResolution,
+	consentBindingKey,
+	consentInputKey,
+	departmentMayHaveConsentText,
+	effectiveConsentResolution,
+	mayAcceptConsent
+} from './consentAcceptance';
+import { useTraegerSentenceHtml } from './useTraegerSentenceHtml';
 import { allPasswordCriteriaPass } from './passwordRules';
 import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
+import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
+import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
-
-/**
- * Checkbox label for registration data protection: department consent
- * sentence when present (language already resolved), otherwise the platform
- * i18n + LegalLinks sentence. Consent text is shown as-is — no client-side
- * token substitution. While the department legal request is in flight, render
- * nothing so the i18n fallback does not flash before Träger text arrives.
- */
-export const DataProtectionCheckboxLabel: FC<{
-	consentSentence: string | null;
-	isLoading: boolean;
-	legalLinks: TProvidedLegalLink[];
-}> = ({ consentSentence, isLoading, legalLinks }) => {
-	const { t } = useTranslation();
-
-	if (isLoading) {
-		return null;
-	}
-
-	if (consentSentence) {
-		return (
-			<Typography data-cy="registration-data-protection-label">
-				{consentSentence}
-			</Typography>
-		);
-	}
-
-	return (
-		<Typography data-cy="registration-data-protection-label">
-			<LegalLinks
-				delimiter=", "
-				filter={(legalLink) => legalLink.registration}
-				legalLinks={legalLinks}
-				params={{ aid: null }}
-				prefix={t('registration.dataProtection.label.prefix')}
-				lastDelimiter={t('registration.dataProtection.label.and')}
-				suffix={t('registration.dataProtection.label.suffix')}
-			>
-				{(label, url) => (
-					<Link target="_blank" href={url}>
-						{label}
-					</Link>
-				)}
-			</LegalLinks>
-		</Typography>
-	);
-};
 
 const suggestButtonSx = (filled: boolean) =>
 	({
@@ -167,7 +123,6 @@ const suggestButtonSx = (filled: boolean) =>
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 }> = ({ onChange }) => {
-	const legalLinks = useContext(LegalLinksContext);
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -184,29 +139,14 @@ export const AccountData: FC<{
 		restoredDraft?.repeatPassword ?? ''
 	);
 	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-	const [dataProtectionChecked, setDataProtectionChecked] = useState<boolean>(
-		restoredDraft?.dataProtectionChecked ?? false
-	);
+	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
+		string | null
+	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
 	const [username, setUsername] = useState<string>(
 		restoredDraft?.username ?? ''
 	);
-	const { setDisabledNextButton, registrationData } =
-		useContext(RegistrationContext);
-	const agencyId = registrationData?.agency?.id;
-	const topicId = registrationData?.mainTopic?.id;
-	const departmentLegalEnabled = !!(agencyId && topicId);
-	const { data: departmentLegal, loading: isDepartmentLegalLoading } =
-		useDepartmentLegal(agencyId, topicId, {
-			enabled: departmentLegalEnabled
-		});
-	const departmentConsentSentence = departmentLegalEnabled
-		? resolveLegalContent(
-				departmentLegal?.dpp?.consentText,
-				locale
-			)?.html?.trim() || null
-		: null;
 	const { tenant } = useContext(TenantContext);
 	const emailVisible = tenant?.settings?.emailVisible ?? false;
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
@@ -227,6 +167,96 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
+	const { setDisabledNextButton, registrationData } =
+		useContext(RegistrationContext);
+	const agency = registrationData?.agency;
+	const mainTopic = registrationData?.mainTopic;
+
+	/* While the consent sentence is being fetched there is no wording next to
+	   the checkbox, and agreement to wording nobody has seen is not agreement.
+	   The label reports its resolution here so the control can stay inert until
+	   there is something to consent to. Seeded from the same predicate the
+	   label uses, so the far more common unconfigured case — which issues no
+	   request at all — is never disabled, not even for one frame. */
+	/* The complete input state the label's answer must match — derived during
+	   render, in the same one place the label derives it, so the two cannot
+	   drift and no input can be forgotten from the comparison. */
+	const consentInputs = consentInputKey(agency, mainTopic);
+	const [consentResolution, setConsentResolution] =
+		useState<ConsentResolution>(() =>
+			departmentMayHaveConsentText(agency, mainTopic)
+				? { status: 'pending' }
+				: {
+						status: 'resolved',
+						consentText: null,
+						inputKey: consentInputs
+					}
+		);
+	/* A resolution answers the selection that produced it and no other. The
+	   label applies the same check, but this component holds its own copy of
+	   the state, so between an agency/topic change and the label's effect
+	   reporting the new `pending` it would otherwise still be holding the
+	   previous Beratungsstelle's answer — enabling acceptance of the old
+	   sentence while writing a binding under the new identity. Checking here
+	   too makes that independent of effect ordering. */
+	/* The same derivation the label uses, so the sentence on screen and the
+	   gate that lets it be accepted can never disagree — including for an
+	   unconfigured Fachbereich, which resolves synchronously because nothing is
+	   loading for it. */
+	const effectiveConsent = effectiveConsentResolution(
+		consentResolution,
+		agency,
+		mainTopic
+	);
+	/* The sentence exactly as it reaches the DOM — the same hook `ConsentSentence`
+	   renders from, so the gate cannot believe a sentence is on screen that is
+	   not. Null here means either "no Träger text configured" (platform wording
+	   applies, acceptance is fine) or "configured but unrenderable", which the
+	   next line separates. */
+	const traegerSentence = useTraegerSentenceHtml(
+		effectiveConsent.status === 'resolved'
+			? effectiveConsent.consentText
+			: null
+	);
+	/* A configured Träger text that cannot be rendered must block acceptance.
+	   Otherwise the platform sentence would be on screen while the acceptance
+	   binds to the Träger versionId, and the help-seeker consents to wording
+	   they never saw (ORISO-Frontend#1110). */
+	const traegerSentenceUnrenderable =
+		effectiveConsent.status === 'resolved' &&
+		!!effectiveConsent.consentText &&
+		!traegerSentence;
+	const isConsentSentenceResolved =
+		mayAcceptConsent(effectiveConsent, consentInputs) &&
+		!traegerSentenceUnrenderable;
+	/* Which consent is on offer right now. Null while the sentence is unknown —
+	   there is nothing to accept yet. */
+	const currentConsentBinding =
+		isConsentSentenceResolved && effectiveConsent.status === 'resolved'
+			? consentBindingKey(
+					agency?.id,
+					mainTopic?.id,
+					effectiveConsent.consentText?.versionId,
+					/* The locale is part of every binding, Träger sentence or
+					   platform fallback.
+					
+					   The fallback has no wording of its own to fingerprint. And
+					   a Träger sentence in the supported plain-HTML shape does
+					   not vary by language either — `resolveLegalContent`
+					   returns it unchanged — while the links and the cookie
+					   notice around it are translated. Either way, switching the
+					   locale changes what a person reads, so it must change the
+					   binding (ORISO-Frontend#1110). */
+					`${locale}:${traegerSentence?.authored ?? 'platform'}`
+				)
+			: null;
+	/* Ticked only while the acceptance on record is the acceptance of *this*
+	   wording. Change the Beratungsstelle, the topic, or publish a new version,
+	   and the box unticks itself because the agreement no longer matches what is
+	   being asked. Come back to the same one and it is still ticked. */
+	const dataProtectionChecked =
+		currentConsentBinding !== null &&
+		acceptedConsentBinding === currentConsentBinding;
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -262,7 +292,7 @@ export const AccountData: FC<{
 			username,
 			password,
 			repeatPassword,
-			dataProtectionChecked,
+			acceptedConsentBinding,
 			email,
 			twoFactorAuthEnabled
 		});
@@ -271,7 +301,7 @@ export const AccountData: FC<{
 		username,
 		password,
 		repeatPassword,
-		dataProtectionChecked,
+		acceptedConsentBinding,
 		email,
 		twoFactorAuthEnabled
 	]);
@@ -334,6 +364,9 @@ export const AccountData: FC<{
 			isUsernameLongEnough &&
 			isPasswordValid &&
 			password === repeatPassword &&
+			// Not merely "the box is ticked": the box may only count once the
+			// sentence it sits next to is actually on screen.
+			isConsentSentenceResolved &&
 			dataProtectionChecked &&
 			emailFeedback.isSatisfied
 		) {
@@ -352,6 +385,7 @@ export const AccountData: FC<{
 		password,
 		repeatPassword,
 		dataProtectionChecked,
+		isConsentSentenceResolved,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -750,23 +784,40 @@ export const AccountData: FC<{
 					control={
 						<Checkbox
 							checked={dataProtectionChecked}
+							disabled={!isConsentSentenceResolved}
 							onClick={() => {
-								setDataProtectionChecked(
-									!dataProtectionChecked
+								setAcceptedConsentBinding(
+									dataProtectionChecked
+										? null
+										: currentConsentBinding
 								);
 							}}
 							sx={{ mt: '-9px' }}
 						/>
 					}
 					label={
-						<DataProtectionCheckboxLabel
-							consentSentence={departmentConsentSentence}
-							isLoading={isDepartmentLegalLoading}
-							legalLinks={legalLinks}
+						/* The sentence itself is resolved in its own component:
+						   a Träger-authored consent text when the selected
+						   Fachbereich has one (ADR-021), otherwise exactly the
+						   three-fragment sentence this used to assemble inline. */
+						<DataProtectionConsentLabel
+							agency={agency}
+							topic={mainTopic}
+							onResolutionChange={setConsentResolution}
 						/>
 					}
 				/>
 			</FormGroup>
+			{/* Department-specific data privacy policy: shown when the
+			    selected agency has a published DPP for the selected topic;
+			    falls back to the tenant text if it cannot be loaded. */}
+			<Box sx={{ mt: '12px' }}>
+				<DepartmentLegalSection
+					agency={agency}
+					topic={mainTopic}
+					variant="consent"
+				/>
+			</Box>
 		</Box>
 	);
 };

@@ -190,6 +190,21 @@ export const PendingClientConsent: Story = {
 		await waitFor(() => expect(sender).toBeVisible());
 		expect(canvas.getByText('Quick Guide')).toBeVisible();
 
+		// `.messageItem` enters at scale(0.98). Measuring during that
+		// animation yields 40 × 0.98 → 39 after rounding — the CI failure
+		// on "Pending client consent — desktop". Wait until the 100%
+		// keyframe (`forwards`) has settled.
+		const messageItem = canvasElement.querySelector<HTMLElement>(
+			'.messageItem--caseHandoverNotice'
+		);
+		await waitFor(() => {
+			const style = getComputedStyle(messageItem!);
+			expect(style.opacity).toBe('1');
+			expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(
+				style.transform
+			);
+		});
+
 		// Figma 9596:35524: the 60px avatar/header layer sits above the chat
 		// container. The bubble starts 40px into the rail and 44px below the
 		// avatar origin, so its square top-left corner is visibly tucked under

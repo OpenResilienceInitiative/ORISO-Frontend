@@ -313,6 +313,7 @@
 		"dearchive": "Arşivden çıkar",
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
+		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
 		"groupChatInfo": "Sohbet bilgileri",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
@@ -2673,11 +2674,15 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
+			"machineTranslated": "Makine çevirisi — hukuken bağlayıcı olan orijinal metindir ({{language}}).",
+			"unrenderable": "Bu danışma merkezinin onay metni şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin veya danışma merkeziyle iletişime geçin.",
 			"label": {
 				"and": " ve ",
 				"prefix": "Bende ",
 				"suffix": " not alınmıştır. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
-			}
+			},
+			"loading": "Onay metni yükleniyor …"
 		},
 		"error": {
 			"required_field_missing": {

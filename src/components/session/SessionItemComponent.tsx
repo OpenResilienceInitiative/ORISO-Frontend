@@ -1971,8 +1971,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
 	/**
-	 * Confirm the chosen pseudonym for this live-chat session. The Matrix
-	 * username stays "Anonymous-<ts>" so room membership and keys stay intact.
+	 * Confirm the chosen display-name pseudonym for this live-chat session.
+	 * The login User-ID is left unchanged so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
 		if (pseudonymSaving) return;

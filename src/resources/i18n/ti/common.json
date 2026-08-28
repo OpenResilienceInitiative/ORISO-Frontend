@@ -313,6 +313,7 @@
 		"dearchive": "ዲኣርኪቭ",
 		"dearchiveDescription": "ቻት ካብ ማእከል ማስታወሻ መልስ።",
 		"editGroupChat": "ቅጥዕታት ዕላል",
+		"editGroupChatDescription": "ኣርእስቲ፣ ሰዓትን ምምሕዳርን ናይዚ ዕላል ቀይር።",
 		"groupChatInfo": "ናይ ዕላል ሓበሬታ",
 		"imprint": "ኣሰር",
 		"leaveGroupChat": "ቻት ግደፍ",
@@ -2673,11 +2674,15 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም።",
+			"machineTranslated": "ብማሽን ዝተተርጐመ — ብሕጊ ዘገድድ እቲ በዅሪ ቅዳሕ ({{language}}) እዩ።",
+			"unrenderable": "ናይዚ ማእከል ምኽሪ ናይ ፍቓድ ጽሑፍ ሕጂ ክርአ ኣይክእልን እዩ። በጃኹም ደሓር ፈትኑ ወይ ነቲ ማእከል ምኽሪ ተወከሱ።",
 			"label": {
 				"and": " እና ",
 				"prefix": "ኣነ እቲ... ",
 				"suffix": " ተመዝጊቡ። እዚ መርበብ ሓበሬታ እዚ ንምርግጋጽን ንምንቅስቓስን ኩኪስ ይጥቀም።"
-			}
+			},
+			"loading": "ይጽዕን ኣሎ …"
 		},
 		"error": {
 			"required_field_missing": {
