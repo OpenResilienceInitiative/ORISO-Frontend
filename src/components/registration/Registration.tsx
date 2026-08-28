@@ -18,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
+import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -603,7 +604,32 @@ export const Registration = () => {
 						maxWidth: '100%'
 					}}
 				>
-					{activeStep ? (
+					{isRegistering ? (
+						/* The account is being created and auto-login is running.
+						   That wait used to show nothing but a disabled button,
+						   and the handover screen only appeared after the hard
+						   reload in `redirectToApp` — so it read as a separate
+						   thing rather than the cushion it is. Showing it here
+						   already means the same screen stands before and after
+						   the reload, and the reload reads as a flicker instead
+						   of a break.
+
+						   `forcedState="preparing"` rather than deriving from
+						   `ready`: there is no app behind the gate yet, so it
+						   must never open here. The 20s "slow" escape hatch is
+						   deliberately bypassed for the same reason.
+
+						   No cleanup is needed for the failure path: the `catch`
+						   in `onRegisterClick` resets `isRegistering`, which
+						   takes this branch away and puts the form back with its
+						   error notification. */
+						<RegistrationHandover
+							ready={false}
+							forcedState="preparing"
+							variant="inline"
+							onEnter={() => undefined}
+						/>
+					) : activeStep ? (
 						<>
 							<Helmet>
 								<meta name="robots" content="noindex"></meta>

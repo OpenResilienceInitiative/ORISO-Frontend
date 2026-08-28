@@ -20,6 +20,19 @@ export interface RegistrationHandoverProps {
 	onEnter: () => void;
 	/** Test seam: force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
+	/**
+	 * Where the screen lives.
+	 *
+	 * `overlay` (default) covers the viewport — `position: fixed` on the modal
+	 * layer. That is what `AuthenticatedApp` needs: by then the registration
+	 * page is gone and this screen *is* the page.
+	 *
+	 * `inline` fills the column it is placed in instead. Needed inside
+	 * `StageLayout`, where the brand panel must stay visible beside it — an
+	 * overlay would simply paint over the panel and leave
+	 * `.stageLayout__content` at height 0 (ORISO-Frontend#1219).
+	 */
+	variant?: 'overlay' | 'inline';
 }
 
 /**
@@ -38,7 +51,8 @@ export interface RegistrationHandoverProps {
 export const RegistrationHandover = ({
 	ready,
 	onEnter,
-	forcedState
+	forcedState,
+	variant = 'overlay'
 }: RegistrationHandoverProps) => {
 	const { t } = useTranslation();
 	const [slow, setSlow] = useState(false);
@@ -73,9 +87,15 @@ export const RegistrationHandover = ({
 			data-cy="registration-handover"
 			data-cy-flourish={flourish ? 'on' : 'off'}
 			sx={{
-				position: 'fixed',
-				inset: 0,
-				zIndex: (theme) => theme.zIndex.modal,
+				...(variant === 'overlay'
+					? {
+							position: 'fixed',
+							inset: 0,
+							zIndex: (theme) => theme.zIndex.modal
+						}
+					: // Fill the column instead of the viewport, and stay in
+						// flow so the surrounding StageLayout keeps its height.
+						{ position: 'relative', flex: 1, minHeight: 0 }),
 				display: 'flex',
 				flexDirection: 'column',
 				bgcolor: registrationMd3.surface,
