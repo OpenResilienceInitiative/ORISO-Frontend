@@ -13,6 +13,9 @@ import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton
 import { HandoverGateState } from '../app/registrationLoader/handoverGate';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { phone375Globals } from '../message/messageStoryShell';
+import { StageLayout } from '../stageLayout/StageLayout';
+import { Stage } from '../stage/stage';
+import { AgencySpecificContext } from '../../globalState';
 
 const meta: Meta = {
 	title: 'Registration/Turn 8 — Mobile Dichte',
@@ -425,4 +428,60 @@ export const HandoverDesktop: StoryObj = {
 		</Box>
 	),
 	parameters: { layout: 'centered' }
+};
+
+/* The two stories above frame the handover in a bare box. Standing alone it
+   looks right — which is exactly why nobody noticed that the live screen is
+   mounted outside the split stage: `AuthenticatedApp` returns it without any
+   `StageLayout`, so the red brand panel, the partner logos and the legal links
+   die with the registration page at the hard reload.
+
+   These two put it where it belongs, so the mount point can be judged in
+   Storybook instead of on Pre-Dev. See ORISO-Frontend#1219. */
+const HandoverInStage = ({ ready }: { ready: boolean }) => (
+	<AgencySpecificContext.Provider
+		value={{ specificAgency: null, setSpecificAgency: () => undefined }}
+	>
+		<StageLayout
+			className="stageLayout--registration"
+			showLegalLinks={true}
+			showLoginLink={true}
+			stage={<Stage hasAnimation={false} />}
+			showRegistrationInfoDrawer={true}
+			mobileHero="bar"
+		>
+			<RegistrationHandover
+				ready={ready}
+				forcedState={ready ? undefined : 'preparing'}
+				variant="inline"
+				onEnter={() => undefined}
+			/>
+		</StageLayout>
+	</AgencySpecificContext.Provider>
+);
+
+export const HandoverInStagePreparing: StoryObj = {
+	name: '8e — Warteraum in der Bühne (lädt)',
+	render: () => <HandoverInStage ready={false} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Phase 1: der Warteraum steht in der rechten Spalte, die rote Bühne bleibt daneben stehen. Der Knopf ist zu — hinter ihm ist noch keine App.'
+			}
+		}
+	}
+};
+
+export const HandoverInStageReady: StoryObj = {
+	name: '8e — Warteraum in der Bühne (bereit)',
+	render: () => <HandoverInStage ready />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Alles geladen: der Knopf heißt „Anfrage schreiben" und ist klickbar. Die Bühne steht unverändert daneben — derselbe Rahmen wie im Formular davor.'
+			}
+		}
+	}
 };
