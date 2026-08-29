@@ -7,8 +7,9 @@ import {
 describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
 	it('names the pre-ADR-005 Caritas homeserver suffix', () => {
 		// A rename would silently un-filter every legacy account in older-provisioned
-		// rooms, so this asserts the exact value rather than a shape.
-		expect(LEGACY_MATRIX_HOMESERVER_SUFFIX).toBe('@caritas.local');
+		// rooms, so this asserts the exact value rather than a shape. The suffix is
+		// the homeserver half of an MXID (`@localpart:homeserver`).
+		expect(LEGACY_MATRIX_HOMESERVER_SUFFIX).toBe(':caritas.local');
 	});
 });
 

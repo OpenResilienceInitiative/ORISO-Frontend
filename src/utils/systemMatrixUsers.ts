@@ -19,8 +19,13 @@
  * is domain-specific to a couple of composers and does not belong here.
  */
 
-/** Matches Matrix accounts on the legacy Caritas homeserver (pre-ADR-005). */
-export const LEGACY_MATRIX_HOMESERVER_SUFFIX = '@caritas.local';
+/**
+ * Matches Matrix accounts on the legacy Caritas homeserver (pre-ADR-005).
+ * A Matrix ID is `@localpart:homeserver`, so the homeserver appears after a
+ * colon — the previous inline checks looked for `@caritas.local` and therefore
+ * never matched a real legacy ID like `@notification:caritas.local`.
+ */
+export const LEGACY_MATRIX_HOMESERVER_SUFFIX = ':caritas.local';
 
 /**
  * True for Matrix system accounts (`@system`) and pre-ADR-005 legacy accounts
@@ -35,6 +40,6 @@ export const isSystemMatrixUser = (
 	}
 	return (
 		userId.includes('@system') ||
-		userId.includes(LEGACY_MATRIX_HOMESERVER_SUFFIX)
+		userId.endsWith(LEGACY_MATRIX_HOMESERVER_SUFFIX)
 	);
 };
