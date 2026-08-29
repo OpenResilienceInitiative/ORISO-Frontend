@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
 import { logout } from '../logout/logout';
 import {
-	AgencySpecificContext,
 	AUTHORITIES,
 	ConsultingTypesContext,
 	hasUserAuthority,
@@ -62,7 +61,6 @@ export const Profile = () => {
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
-	const { specificAgency } = useContext(AgencySpecificContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 
 	const [mobileMenu, setMobileMenu] = useState<
