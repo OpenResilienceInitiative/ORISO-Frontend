@@ -439,25 +439,31 @@ export const HandoverDesktop: StoryObj = {
    These two put it where it belongs, so the mount point can be judged in
    Storybook instead of on Pre-Dev. See ORISO-Frontend#1219. */
 const HandoverInStage = ({ ready }: { ready: boolean }) => (
-	<AgencySpecificContext.Provider
-		value={{ specificAgency: null, setSpecificAgency: () => undefined }}
-	>
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showLoginLink={true}
-			stage={<Stage hasAnimation={false} />}
-			showRegistrationInfoDrawer={true}
-			mobileHero="bar"
+	/* `#storybook-root` is not full height, so `StageLayout`'s `min-height: 100%`
+	   would resolve against a shorter box and leave a dead strip under the
+	   footer that the real app does not have. This wrapper gives it the
+	   viewport the app root provides. */
+	<Box sx={{ height: '100vh' }}>
+		<AgencySpecificContext.Provider
+			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
 		>
-			<RegistrationHandover
-				ready={ready}
-				forcedState={ready ? undefined : 'preparing'}
-				variant="inline"
-				onEnter={() => undefined}
-			/>
-		</StageLayout>
-	</AgencySpecificContext.Provider>
+			<StageLayout
+				className="stageLayout--registration"
+				showLegalLinks={true}
+				showLoginLink={true}
+				stage={<Stage hasAnimation={false} />}
+				showRegistrationInfoDrawer={true}
+				mobileHero="bar"
+			>
+				<RegistrationHandover
+					ready={ready}
+					forcedState={ready ? undefined : 'preparing'}
+					variant="inline"
+					onEnter={() => undefined}
+				/>
+			</StageLayout>
+		</AgencySpecificContext.Provider>
+	</Box>
 );
 
 export const HandoverInStagePreparing: StoryObj = {
