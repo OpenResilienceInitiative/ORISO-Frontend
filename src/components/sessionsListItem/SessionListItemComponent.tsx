@@ -1054,9 +1054,17 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
-	// Card title: never surface raw technical usernames
-	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
-	// same name pipeline the chat messages use.
+	// Card title:
+	// - Consultant seen by an asker: humanize the technical username via the
+	//   same name pipeline the chat messages use, so a name like
+	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
+	//   Matrix identifier.
+	// - Asker seen by a consultant: the anonymous User-ID is the platform's
+	//   read-only identity anchor (#1209). Never humanize it — dropping
+	//   underscores and the trailing digit block produces a different name
+	//   than the chat header shows for the same user, so a card title of
+	//   "hundchen zuri" would not match a header of "hundchen_zuri_3168".
+	//   Match the header exactly.
 	if (isAsker) {
 		if (hasConsultantData) {
 			sessionTopic = formatMessagePersonName(
@@ -1069,10 +1077,10 @@ export const SessionListItemComponent = ({
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic = formatMessagePersonName(
-			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
-			activeSession.user?.username
-		);
+		sessionTopic =
+			resolveAnonymousChatDisplayName(activeSession.user) ||
+			activeSession.user?.username ||
+			'';
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
