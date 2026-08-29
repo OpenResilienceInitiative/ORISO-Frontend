@@ -499,9 +499,18 @@ export const Profile = () => {
 					</Routes>
 				</div>
 				<div className="profile__footer">
+					{/*
+					 * Footer legal links are platform-level only per #1213. The
+					 * agency-level Impressum + Datenschutz live on the agency
+					 * card (via DepartmentLegalSection); the footer must not
+					 * repeat them, because on a screen that shows several
+					 * agencies at once there is no single carrier the footer
+					 * could speak for. Dropping the `aid` param resolves each
+					 * URL without an agency filter, so the operator's
+					 * platform-level document is returned.
+					 */}
 					<LegalLinks
 						legalLinks={legalLinks}
-						params={{ aid: specificAgency?.id }}
 						delimiter={
 							<Text
 								type="infoSmall"
