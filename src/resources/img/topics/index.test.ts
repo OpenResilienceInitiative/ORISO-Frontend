@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fallbackCard from './fallback-card.png';
+import schuldenCard from './t-05-schulden.png';
 import {
 	getTopicCardImage,
 	hasTopicCardImage,
@@ -45,20 +47,20 @@ describe('hasTopicCardImage', () => {
 });
 
 describe('getTopicCardImage', () => {
-	it('returns the mapped card for a topic whose slug is registered', () => {
-		expect(getTopicCardImage('Schulden')).not.toBe(getTopicCardImage(null));
+	it('returns the mapped Schulden card for a topic whose slug is registered', () => {
+		expect(getTopicCardImage('Schulden')).toBe(schuldenCard);
 	});
 
-	it('falls back to the generic card for an unmapped topic', () => {
+	it('falls back to the fallback card for an unmapped topic', () => {
 		// A topic without artwork must never render a broken image; the picker
 		// depends on this to safely enable new topics before their illustration
 		// arrives.
-		expect(getTopicCardImage('Migration')).toBe(getTopicCardImage(null));
+		expect(getTopicCardImage('Migration')).toBe(fallbackCard);
 	});
 
-	it('falls back to the generic card for null, undefined and empty topics', () => {
-		const fallback = getTopicCardImage(null);
-		expect(getTopicCardImage(undefined)).toBe(fallback);
-		expect(getTopicCardImage('')).toBe(fallback);
+	it('falls back to the fallback card for null, undefined and empty topics', () => {
+		expect(getTopicCardImage(null)).toBe(fallbackCard);
+		expect(getTopicCardImage(undefined)).toBe(fallbackCard);
+		expect(getTopicCardImage('')).toBe(fallbackCard);
 	});
 });
