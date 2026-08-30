@@ -18,6 +18,7 @@ import {
 import { TranslationConfig } from './globalState/interfaces';
 import { FETCH_METHODS, FETCH_SUCCESS, fetchData } from './api';
 import { collectCatalogueDrift } from './utils/i18nCatalogueGuard';
+import { collectSupportedLanguages } from './utils/i18nSupportedLanguages';
 
 export const FALLBACK_LNG = 'de';
 
@@ -49,6 +50,10 @@ export const init = async (
 	translation: TranslationConfig
 ) => {
 	let languageResources = {};
+	// Only a completed request counts as coverage data. Left false when
+	// Weblate is not configured or the request fails, so we do not gate on an
+	// answer we never got.
+	let weblateCoverageAvailable = false;
 	if (translation?.weblate.path) {
 		const languagePath = `${translation.weblate.host || ''}${
 			translation.weblate.path
@@ -82,44 +87,28 @@ export const init = async (
 					return acc;
 				}, {})
 			)
+			.then((resources) => {
+				// Reached only when the whole chain resolved. An empty result
+				// here means "nothing clears the threshold", which must still
+				// gate — unlike a rejection, which means "we cannot tell".
+				weblateCoverageAvailable = true;
+				return resources;
+			})
 			.catch(() => ({}));
 	}
 
-	// Languages Weblate reports as translated above `weblate.percentage`.
-	// Empty when Weblate is not configured or unreachable — we then have no
-	// coverage data and must not gate on it.
-	const weblateLanguages = Object.keys(languageResources);
-	const hasCoverageData = weblateLanguages.length > 0;
-
-	// Languages that ship a full catalogue in the bundle. Their completeness
-	// does not depend on Weblate, so Weblate's percentage must never withhold
-	// them — that would drop a fully translated language from the picker.
-	const bundledLanguages = new Set([
-		...Object.keys(defaultResources),
-		...Object.keys(resources ?? {})
-	]);
-
-	// The tenant's `activeLanguages` used to be unioned in unfiltered, so the
-	// `weblate.percentage` threshold could only ever *add* a language, never
-	// withhold one. A tenant activating a language that exists only in Weblate
-	// and is barely translated there shipped it to advice seekers as a mostly
-	// German UI (ORISO-Frontend#1154).
-	const meetsCoverageThreshold = (lng: string) =>
-		bundledLanguages.has(lng) ||
-		!hasCoverageData ||
-		lng === FALLBACK_LNG ||
-		lng.indexOf('@informal') !== -1 ||
-		weblateLanguages.includes(lng);
-
-	const supportedLanguages = [
-		...new Set(
-			supportedLngs && supportedLngs.length > 0
-				? [...weblateLanguages, ...supportedLngs].filter(
-						meetsCoverageThreshold
-					)
-				: ['de', 'de@informal']
-		)
-	];
+	const supportedLanguages = collectSupportedLanguages({
+		weblateLanguages: Object.keys(languageResources),
+		weblateCoverageAvailable,
+		// A bundled catalogue is complete regardless of what Weblate holds, so
+		// Weblate's percentage must never withhold one of these.
+		bundledLanguages: [
+			...Object.keys(defaultResources),
+			...Object.keys(resources ?? {})
+		],
+		supportedLngs,
+		fallbackLng: FALLBACK_LNG
+	});
 
 	const mergeAndFlattenNamespace = (namespace) => {
 		if (Array.isArray(namespace)) {
