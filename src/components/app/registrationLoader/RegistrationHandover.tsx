@@ -112,7 +112,13 @@ export const RegistrationHandover = ({
 				flexDirection: 'column',
 				bgcolor: registrationMd3.surface,
 				color: registrationMd3.onSurface,
-				overflow: 'hidden'
+				/* The overlay owns the viewport, so clipping is right there. The
+				   inline variant sits in a column that is taller than the screen
+				   on a phone (the mobile hero bar pushes it down), and clipping
+				   would cut off the space reserved for the fixed gate bar — the
+				   encryption line then sits behind it. Let it scroll instead,
+				   exactly as the registration steps do. */
+				overflow: variant === 'overlay' ? 'hidden' : 'visible'
 			}}
 		>
 			<Box
@@ -125,7 +131,8 @@ export const RegistrationHandover = ({
 					maxWidth: { xs: '100%', sm: 720 },
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
-					pt: { xs: 3, sm: 4 }
+					pt: { xs: 3, sm: 4 },
+					pb: 0
 				}}
 			>
 				<Box sx={{ flex: 'none' }}>
@@ -224,6 +231,14 @@ export const RegistrationHandover = ({
 						justifyContent: { xs: 'flex-start', sm: 'center' },
 						gap: 1.25,
 						py: { xs: 1.5, sm: 2 },
+						/* The inline gate bar is fixed, so it reserves no space of
+						   its own. Reserving it on the container would put the gap
+						   at the container's bottom edge — which on a phone sits
+						   below the fold, so the line still ended up behind the
+						   bar. Reserving it here works inside the flex
+						   distribution: the carousel gives up the height and the
+						   line moves up instead. */
+						mb: variant === 'inline' ? '104px' : 0,
 						fontSize: { xs: 12, sm: 13 },
 						lineHeight: { xs: '17px', sm: '18px' },
 						color: registrationMd3.onSurfaceVariant,
@@ -245,12 +260,34 @@ export const RegistrationHandover = ({
 
 			<Box
 				sx={{
-					flex: 'none',
-					bgcolor: '#fff',
+					...(variant === 'inline'
+						? /* Match the registration footer exactly — same fixed
+						     bar the other steps use (`Registration.tsx`, the
+						     `position: fixed` block). In flow it fell below the
+						     fold on a phone: the bar started at y=836 in an
+						     844px viewport, so the gate was simply not there. */
+							{
+								position: 'fixed',
+								bottom: 0,
+								right: 0,
+								width: { xs: '100vw', lg: '60vw' },
+								backgroundColor: 'rgba(255, 255, 255, 0.94)',
+								backdropFilter: 'blur(8px)',
+								zIndex: 65,
+								pt: 1.25,
+								pb: {
+									xs: 'calc(12px + env(safe-area-inset-bottom))',
+									sm: 1.75
+								}
+							}
+						: {
+								flex: 'none',
+								bgcolor: '#fff',
+								pt: 1.25,
+								pb: 1.75
+							}),
 					borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-					px: { xs: 2, sm: 5 },
-					pt: 1.25,
-					pb: 1.75
+					px: { xs: 2, sm: 5 }
 				}}
 			>
 				{/* Desktop: the gate is the registration button carrying on, so it
