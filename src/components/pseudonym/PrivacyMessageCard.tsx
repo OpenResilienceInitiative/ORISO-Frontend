@@ -79,10 +79,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 		if (onDone) onDone();
 	};
 
-	const message = t(
-		'anonymousChat.pseudonym.privacyMessage',
-		'Great choice, to protect your privacy all messages are end to end encrypted and will be deleted after 48h automatically.'
-	);
+	const message = t('anonymousChat.pseudonym.privacyMessage');
 
 	return (
 		<div
@@ -105,8 +102,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
 							{t(
-								'anonymousChat.pseudonym.carimatPrivacySubtitle',
-								'Your privacy'
+								'anonymousChat.pseudonym.carimatPrivacySubtitle'
 							)}
 						</span>
 					</div>

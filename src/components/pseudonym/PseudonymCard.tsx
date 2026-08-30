@@ -52,10 +52,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 }) => {
 	const { t } = useTranslation();
 
-	const message = t(
-		'anonymousChat.pseudonym.carimatMessage',
-		'Hi there before we move on please confirm for this session our randomly chosen username.'
-	);
+	const message = t('anonymousChat.pseudonym.carimatMessage');
 
 	/* Reveal the pseudonym display column (label + avatar + name) only
 	   after the typewriter finishes. Fires once either because skipTyping
@@ -85,10 +82,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 							Carimat
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
-							{t(
-								'anonymousChat.pseudonym.carimatSubtitle',
-								'Select displayed name'
-							)}
+							{t('anonymousChat.pseudonym.carimatSubtitle')}
 						</span>
 					</div>
 
@@ -110,8 +104,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 								<div className="pseudonymCard__displayColumn pseudonymCard__displayColumn--revealed">
 									<div className="pseudonymCard__label">
 										{t(
-											'anonymousChat.pseudonym.yourPseudonym',
-											'Dein Pseudonym'
+											'anonymousChat.pseudonym.yourPseudonym'
 										)}
 									</div>
 

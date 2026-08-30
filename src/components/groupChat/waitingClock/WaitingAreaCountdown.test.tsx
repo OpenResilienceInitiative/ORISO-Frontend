@@ -2,13 +2,33 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import de from '../../../resources/i18n/de/common.json';
+import deInformal from '../../../resources/i18n/de@informal/common.json';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 
-// Return the key untranslated so translateWithFallback serves the German
-// fallback strings — the assertions below match those.
+const readKey = (catalogue: unknown, path: string): unknown =>
+	path.split('.').reduce<unknown>((value, part) => {
+		if (!value || typeof value !== 'object') {
+			return undefined;
+		}
+		return (value as Record<string, unknown>)[part];
+	}, catalogue);
+
+const interpolate = (value: string, options?: Record<string, unknown>) =>
+	value.replace(/\{\{(\w+)\}\}/g, (_, token: string) =>
+		options?.[token] == null ? '' : String(options[token])
+	);
+
+// Resolve informal overlay over formal German so the suite keeps asserting
+// the waiting-area copy the design uses for *du*.
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key
+		t: (key: string, options?: Record<string, unknown>) => {
+			const value = readKey(deInformal, key) ?? readKey(de, key);
+			return typeof value === 'string'
+				? interpolate(value, options)
+				: key;
+		}
 	})
 }));
 

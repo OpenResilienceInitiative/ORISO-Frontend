@@ -1,25 +1,26 @@
-# Test evidence — #1154 stacked PRs
+# Test evidence — #1154 remaining chrome
 
-Verified on 2026-08-30, Node 22.12.0, local only (no Pre-Dev deploy).
+Verified on 2026-08-31, Node 22.12.0, local only (no Pre-Dev deploy).
 
 ## Targeted
 
-- `npx vitest run --project unit src/utils/mergeWeblateCatalogue.test.ts` → pass (4)
-- `npx vitest run --project unit src/components/registration/preselectionBox/PreselectedTopic.test.tsx` → pass (1)
-- `npx vitest run --project unit src/components/registration/registrationChromeI18n.test.ts` → pass (7)
-- `npx vitest run --project unit src/components/registration/accountData/DataProtectionConsentLabel.test.tsx` → pass (13)
-- `npx vitest run --project unit src/components/registration/accountData/AccountData.consentGating.test.tsx` → pass (44)
-- `npx vitest run --project unit src/components/registration/accountData/AccountData.test.tsx` → pass (7)
+- `npx vitest run --project unit src/components/session/remainingChromeI18n.test.ts` → pass (23)
+- `npx vitest run --project unit src/components/groupChat/waitingClock/WaitingAreaCountdown.test.tsx` → pass (10)
+- `npx vitest run --project unit src/components/accountInvite/leftoversI18n.test.ts` → pass (8)
+- `npx vitest run --project unit src/i18n.test.ts` → pass (31)
+- `npx vitest run --project unit src/components/legalLinks/LegalLinkModal.test.tsx` → pass (5)
+- `npx vitest run --project unit src/components/legalPageWrapper/LegalPageWrapper.test.tsx` → pass (9)
+- `npx vitest run --project unit src/utils/openingHours.test.ts` → pass (6)
 
 ## Broader
 
-- `npm run lint:scripts` → pass
-- `npm run test:unit` → pass (358 files, 3635 tests)
-- `npm run lint:style` → not run (no SCSS in this stack); pre-dev is already red on unrelated SCSS
-- `npm run build` → not run (no import/config/type surface change beyond i18n parse helper)
-- Browser registration in `fr`/`ru` → NOT RUN (no local frontend session in this turn)
+- `npx eslint --max-warnings=0` on touched TS/TSX → pass
+- `npm run test:unit` → not re-run this slice (narrow gate used)
+- `npm run lint:style` → not run (no SCSS)
+- `npm run build` → not run
+- Browser in `fr`/`ru` → NOT RUN
 
 ## Red-green
 
-- PreselectedTopic test failed with 0 helper calls before the wiring; passed after.
-- `registrationChromeI18n.test.ts` failed 7/7 before removing German `defaultValue`s; passed after.
+- Source scan `remainingChromeI18n.test.ts` would fail if any listed German/English `t()` fallback returned.
+- Waiting-area tests now resolve `de@informal` over `de` instead of depending on hardcoded informal fallbacks.

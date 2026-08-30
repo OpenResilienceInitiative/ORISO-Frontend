@@ -5,7 +5,6 @@ import IconButton from '@mui/material/IconButton';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
 import { twoDigits } from './waitingClockDigits';
@@ -250,12 +249,12 @@ export const WaitingAreaCountdown = ({
 }: WaitingAreaCountdownProps) => {
 	const { t: translate } = useTranslation();
 	const tr = React.useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(
-				translate,
-				`groupChat.join.waitingArea.countdown.${key}`,
-				fallback,
-				options
+		(key: string, options?: Record<string, unknown>) =>
+			String(
+				translate(
+					`groupChat.join.waitingArea.countdown.${key}`,
+					options
+				)
 			),
 		[translate]
 	);
@@ -381,7 +380,7 @@ export const WaitingAreaCountdown = ({
 		return () => window.clearInterval(t);
 	}, [isOverdue, motionless, overdueEmoji]);
 
-	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
+	const greetingLabel = tr('greetingLabel');
 
 	/**
 	 * The back of the card, page by page: the greeting first, then one page per
@@ -404,11 +403,7 @@ export const WaitingAreaCountdown = ({
 			list.push({
 				key: `rule-${index}`,
 				greeting: false,
-				label: tr(
-					'netiquetteLabel',
-					`Netiquette · Regel ${index + 1}`,
-					{ no: index + 1 }
-				),
+				label: tr('netiquetteLabel', { no: index + 1 }),
 				text: rule
 			})
 		);
@@ -426,7 +421,7 @@ export const WaitingAreaCountdown = ({
 	const closeCard = () => setCardOpen(false);
 	const flipped = cardOpen && canFlip;
 
-	const toggleLabel = tr('toggleLabel', 'Animation abschalten');
+	const toggleLabel = tr('toggleLabel');
 	const toggle = (
 		<label
 			style={{
@@ -483,33 +478,27 @@ export const WaitingAreaCountdown = ({
 	const eta =
 		d > 0
 			? d === 1
-				? tr('etaDay', 'in einem Tag')
-				: tr('etaDays', `in ${d} Tagen`, { count: d })
+				? tr('etaDay')
+				: tr('etaDays', { count: d })
 			: h > 0
 				? h === 1
-					? tr('etaHour', 'in einer Stunde')
-					: tr('etaHours', `in ${h} Stunden`, { count: h })
+					? tr('etaHour')
+					: tr('etaHours', { count: h })
 				: m > 0
 					? m === 1
-						? tr('etaMinute', 'in einer Minute')
-						: tr('etaMinutes', `in ${m} Minuten`, { count: m })
-					: tr('etaSoon', 'gleich');
+						? tr('etaMinute')
+						: tr('etaMinutes', { count: m })
+					: tr('etaSoon');
 	const headline = isOverdue
-		? tr('overdueHeadline', 'Wir sind gleich für dich da.')
-		: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
+		? tr('overdueHeadline')
+		: tr('headline', { eta });
 	// Frank, 2026-09-07: "statt zu sagen hey dieser Bindestrich ist quasi,
 	// kannst auch ein Komma machen" — and nobody clicks "a number" any more,
 	// there is one card now. Short enough to hold one line at 375 px.
 	const subtitle = isOverdue
-		? tr(
-				'overdueSubtitle',
-				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
-			)
+		? tr('overdueSubtitle')
 		: canFlip
-			? tr(
-					'subtitleCard',
-					'Uhr antippen, dahinter Begrüßung und Netiquette.'
-				)
+			? tr('subtitleCard')
 			: '';
 	// The still view keeps the clock's footprint, so the row under it and the
 	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
@@ -523,7 +512,7 @@ export const WaitingAreaCountdown = ({
 				{
 					unit: {
 						key: 'om',
-						label: tr('unitMinutes', 'Minuten'),
+						label: tr('unitMinutes'),
 						value: oM
 					},
 					tint: true
@@ -531,32 +520,32 @@ export const WaitingAreaCountdown = ({
 				{
 					unit: {
 						key: 'os',
-						label: tr('unitSeconds', 'Sekunden'),
+						label: tr('unitSeconds'),
 						value: oS
 					},
 					tint: true
 				}
 			]
 		: [
-				{ unit: { key: 'd', label: tr('unitDays', 'Tage'), value: d } },
+				{ unit: { key: 'd', label: tr('unitDays'), value: d } },
 				{
 					unit: {
 						key: 'h',
-						label: tr('unitHours', 'Stunden'),
+						label: tr('unitHours'),
 						value: h
 					}
 				},
 				{
 					unit: {
 						key: 'm',
-						label: tr('unitMinutes', 'Minuten'),
+						label: tr('unitMinutes'),
 						value: m
 					}
 				},
 				{
 					unit: {
 						key: 's',
-						label: tr('unitSeconds', 'Sekunden'),
+						label: tr('unitSeconds'),
 						value: s
 					}
 				}
@@ -565,16 +554,8 @@ export const WaitingAreaCountdown = ({
 	// "unit: value" phrasing stays grammatical for every count in every locale
 	// (no plural agreement needed).
 	const timerAria = isOverdue
-		? tr(
-				'timerAriaOverdue',
-				`Seit dem geplanten Beginn — Minuten: ${oM}, Sekunden: ${oS}`,
-				{ minutes: oM, seconds: oS }
-			)
-		: tr(
-				'timerAriaFuture',
-				`Bis zum Beginn — Tage: ${d}, Stunden: ${h}, Minuten: ${m}, Sekunden: ${s}`,
-				{ days: d, hours: h, minutes: m, seconds: s }
-			);
+		? tr('timerAriaOverdue', { minutes: oM, seconds: oS })
+		: tr('timerAriaFuture', { days: d, hours: h, minutes: m, seconds: s });
 
 	const plusSign = (
 		<div aria-hidden="true" className="waitingClock__plus">
@@ -599,7 +580,7 @@ export const WaitingAreaCountdown = ({
 			<span aria-hidden="true" style={{ fontSize: 20 }}>
 				{overdueEmoji}
 			</span>
-			{tr('overdueCaption', 'Das Warten wird langsam etwas unangenehm …')}
+			{tr('overdueCaption')}
 		</div>
 	);
 
@@ -687,7 +668,7 @@ export const WaitingAreaCountdown = ({
 		</div>
 	);
 
-	const backToClock = tr('cardBack', 'Zurück zur Uhr');
+	const backToClock = tr('cardBack');
 	// The back is as wide as the clock it replaces, so its type grows with the
 	// clock: 15 px on a phone, up to 19 px on a desktop block.
 	/* The card is as wide as the clock it replaces, so on a 1440 desktop it is
@@ -749,7 +730,7 @@ export const WaitingAreaCountdown = ({
 				<div className="waitingClock__backNav">
 					<IconButton
 						size="small"
-						aria-label={tr('cardPrev', 'Vorherige Seite')}
+						aria-label={tr('cardPrev')}
 						disabled={page === 0}
 						tabIndex={flipped ? 0 : -1}
 						onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -758,14 +739,14 @@ export const WaitingAreaCountdown = ({
 						<ChevronLeftRoundedIcon />
 					</IconButton>
 					<span className="waitingClock__backPage">
-						{tr('cardPage', `${page + 1} von ${pageCount}`, {
+						{tr('cardPage', {
 							current: page + 1,
 							total: pageCount
 						})}
 					</span>
 					<IconButton
 						size="small"
-						aria-label={tr('cardNext', 'Nächste Seite')}
+						aria-label={tr('cardNext')}
 						disabled={page >= pageCount - 1}
 						tabIndex={flipped ? 0 : -1}
 						onClick={() =>
@@ -813,10 +794,7 @@ export const WaitingAreaCountdown = ({
 						role="button"
 						tabIndex={flipped ? -1 : 0}
 						aria-pressed={flipped}
-						aria-label={tr(
-							'cardOpenAria',
-							'Uhr umdrehen, Begrüßung und Netiquette lesen'
-						)}
+						aria-label={tr('cardOpenAria')}
 						onClick={openCard}
 						onKeyDown={(event) => {
 							if (event.key === 'Enter' || event.key === ' ') {
@@ -982,10 +960,7 @@ export const WaitingAreaCountdown = ({
 									onClick={openCard}
 									className="waitingClock__stillOpen"
 								>
-									{tr(
-										'cardOpenAria',
-										'Begrüßung und Netiquette anzeigen'
-									)}
+									{tr('cardOpenAria')}
 								</Button>
 							)}
 						</div>
