@@ -3486,6 +3486,7 @@
 				"confirm": "Confirmer la sélection",
 				"close": "Fermer la recherche",
 				"clear": "Effacer la recherche",
+				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
@@ -4640,6 +4641,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Créer un compte de consultation",
+		"successTitle": "Compte créé",
+		"email": "Adresse e-mail",
+		"username": "Nom d'utilisateur",
+		"password": "Mot de passe",
+		"repeatPassword": "Répéter le mot de passe",
+		"submit": "Créer le compte",
 		"invalid": "Le lien d'invitation n'est pas valide ou a expiré.",
 		"createFailed": "Le compte de consultation n'a pas pu être créé. Veuillez réessayer.",
 		"loading": "Chargement de l'invitation",

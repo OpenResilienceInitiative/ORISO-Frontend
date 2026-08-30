@@ -1400,6 +1400,7 @@
 				"confirm": "Auswahl bestätigen",
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
+				"removeSelectedPerson": "{{name}} entfernen",
 				"emptyPeople": "Keine passenden Personen gefunden.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
@@ -2209,6 +2210,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Beratungskonto erstellen",
+		"successTitle": "Konto erstellt",
+		"email": "E-Mail-Adresse",
+		"username": "Benutzername",
+		"password": "Passwort",
+		"repeatPassword": "Passwort wiederholen",
+		"submit": "Konto erstellen",
 		"invalid": "Der Einladungslink ist ungültig oder abgelaufen.",
 		"createFailed": "Das Beratungskonto konnte nicht erstellt werden. Bitte versuche es erneut.",
 		"loading": "Einladung wird geladen",

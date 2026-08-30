@@ -58,7 +58,7 @@ const withEmbeddedNotificationsParam = (
 	}
 	const [basePath, queryString = ''] = path.split('?');
 	const query = new URLSearchParams(queryString);
-	query.set('embeddedNotifications', '1');
+	query.set('embeddedNotifications');
 	if (draftScopeKey) {
 		// Force iframe navigation when users switch between drafts in the same chat context.
 		query.set('draftScopeKey', draftScopeKey);
@@ -205,20 +205,17 @@ export const DraftsCenter = () => {
 		<div className="draftsCenter">
 			<div className="draftsCenter__header">
 				<h2 className="draftsCenter__title">
-					{translate('drafts.center.title', 'Drafts')}
+					{translate('drafts.center.title')}
 				</h2>
 				<p className="draftsCenter__subtitle">
-					{translate(
-						'drafts.center.subtitle',
-						'Unsent messages are saved per chat and thread.'
-					)}
+					{translate('drafts.center.subtitle')}
 				</p>
 			</div>
 			<div className="draftsCenter__content">
 				<div className="draftsCenter__list">
 					{drafts.length === 0 ? (
 						<div className="draftsCenter__empty">
-							{translate('drafts.center.empty', 'No drafts yet.')}
+							{translate('drafts.center.empty')}
 						</div>
 					) : (
 						drafts.map((entry) => (
@@ -234,18 +231,14 @@ export const DraftsCenter = () => {
 							>
 								<div className="draftsCenter__listItemTagRow">
 									<span className="draftsCenter__listItemTag">
-										{translate(
-											'drafts.center.messageTag',
-											'Draft'
-										)}
+										{translate('drafts.center.messageTag')}
 									</span>
 								</div>
 								<div className="draftsCenter__listItemHeader">
 									<span className="draftsCenter__listItemTitle">
 										{entry.title ||
 											translate(
-												'drafts.center.untitledChat',
-												'Chat'
+												'drafts.center.untitledChat'
 											)}
 									</span>
 									<span className="draftsCenter__listItemTime">
@@ -257,10 +250,7 @@ export const DraftsCenter = () => {
 								</p>
 								{entry.threadRootId && (
 									<span className="draftsCenter__threadTag">
-										{translate(
-											'drafts.center.thread',
-											'Thread'
-										)}
+										{translate('drafts.center.thread')}
 									</span>
 								)}
 							</button>
@@ -278,10 +268,7 @@ export const DraftsCenter = () => {
 						<div className="draftsCenter__detailCard">
 							<h3 className="draftsCenter__detailTitle">
 								{selectedDraft.title ||
-									translate(
-										'drafts.center.untitledChat',
-										'Chat'
-									)}
+									translate('drafts.center.untitledChat')}
 							</h3>
 							<div className="draftsCenter__detailActions">
 								<button
@@ -291,10 +278,7 @@ export const DraftsCenter = () => {
 										handleOpenDraft(selectedDraft)
 									}
 								>
-									{translate(
-										'drafts.center.open',
-										'Open draft'
-									)}
+									{translate('drafts.center.open')}
 								</button>
 								<button
 									type="button"
@@ -302,10 +286,7 @@ export const DraftsCenter = () => {
 									onClick={handleNextDraft}
 									disabled={!nextDraftKey}
 								>
-									{translate(
-										'drafts.center.next',
-										'Next draft'
-									)}
+									{translate('drafts.center.next')}
 								</button>
 								<button
 									type="button"
@@ -314,10 +295,7 @@ export const DraftsCenter = () => {
 										handleDeleteDraft(selectedDraft)
 									}
 								>
-									{translate(
-										'drafts.center.delete',
-										'Delete draft'
-									)}
+									{translate('drafts.center.delete')}
 								</button>
 							</div>
 							{embeddedChatPath && (
@@ -333,10 +311,7 @@ export const DraftsCenter = () => {
 						</div>
 					) : (
 						<div className="draftsCenter__empty">
-							{translate(
-								'drafts.center.emptyDetail',
-								'Select a draft to continue writing.'
-							)}
+							{translate('drafts.center.emptyDetail')}
 						</div>
 					)}
 				</div>

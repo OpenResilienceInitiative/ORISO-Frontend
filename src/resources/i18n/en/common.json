@@ -3447,6 +3447,7 @@
 				"confirm": "Confirm selection",
 				"close": "Close search",
 				"clear": "Clear search",
+				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
@@ -4542,6 +4543,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Create counselling account",
+		"successTitle": "Account created",
+		"email": "E-mail address",
+		"username": "Username",
+		"password": "Password",
+		"repeatPassword": "Repeat password",
+		"submit": "Create account",
 		"invalid": "This invite link is invalid or expired.",
 		"createFailed": "The counselling account could not be created. Please try again.",
 		"loading": "Loading invitation",

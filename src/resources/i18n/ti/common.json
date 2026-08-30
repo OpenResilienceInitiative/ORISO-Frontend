@@ -3486,6 +3486,7 @@
 				"confirm": "ምረጻ ኣረጋግጽ",
 				"close": "ምድላይ ዕጸው",
 				"clear": "ምድላይ ኣጽሪ",
+				"removeSelectedPerson": "{{name}} ኣውጽእ",
 				"emptyPeople": "ዝሰማምዑ ሰባት ኣይተረኽቡን።",
 				"emptyTypes": "ዓይነታት ቻት ኣይርከቡን።",
 				"emptyTopics": "ንማእከላት ምኽርኹም ዝኸውን ኣርእስቲ ኣይተረኽበን።",
@@ -4640,6 +4641,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "ናይ ምኽሪ ሕሳብ ፍጠር",
+		"successTitle": "ሕሳብ ተፈጢሩ",
+		"email": "ናይ ኢ-መይል ኣድራሻ",
+		"username": "ስም ተጠቃሚ",
+		"password": "መሕለፊ ቃል",
+		"repeatPassword": "መሕለፊ ቃል ድገም",
+		"submit": "ሕሳብ ፍጠር",
 		"invalid": "እቲ ናይ ዕድመ ሊንክ ቅኑዕ ኣይኮነን ወይ ግዜኡ ሓሊፉ።",
 		"createFailed": "እቲ ናይ ምኽሪ ኣካውንት ክፍጠር ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
 		"loading": "ዕድመ ይጽዕን ኣሎ",

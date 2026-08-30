@@ -144,19 +144,16 @@ const DraftMetadataListItem = ({
 		disabled={!draft.actionPath}
 	>
 		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts', 'Drafts')}
+			{translate('sessionList.toolbar.chips.drafts')}
 		</span>
 		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat', 'Chat')}
+			{draft.title || translate('drafts.center.untitledChat')}
 		</span>
 		<span className="sessionsListDraftItem__meta">
 			{formatDraftTime(draft.updatedAt)}
 		</span>
 		<span className="sessionsListDraftItem__hint">
-			{translate(
-				'sessionList.toolbar.draftMetadataOnly',
-				'Unsent message saved'
-			)}
+			{translate('sessionList.toolbar.draftMetadataOnly')}
 		</span>
 	</button>
 );

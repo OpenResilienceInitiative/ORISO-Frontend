@@ -3486,6 +3486,7 @@
 				"confirm": "Seçimi onayla",
 				"close": "Aramayı kapat",
 				"clear": "Aramayı temizle",
+				"removeSelectedPerson": "{{name}} kişisini kaldır",
 				"emptyPeople": "Eşleşen kişi bulunamadı.",
 				"emptyTypes": "Kullanılabilir sohbet türü yok.",
 				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
@@ -4640,6 +4641,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Danışmanlık hesabı oluştur",
+		"successTitle": "Hesap oluşturuldu",
+		"email": "E-posta adresi",
+		"username": "Kullanıcı adı",
+		"password": "Parola",
+		"repeatPassword": "Parolayı tekrarla",
+		"submit": "Hesap oluştur",
 		"invalid": "Davet bağlantısı geçersiz veya süresi dolmuş.",
 		"createFailed": "Danışmanlık hesabı oluşturulamadı. Lütfen tekrar deneyin.",
 		"loading": "Davet yükleniyor",
