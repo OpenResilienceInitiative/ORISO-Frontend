@@ -95,7 +95,19 @@ export const RegistrationHandover = ({
 						}
 					: // Fill the column instead of the viewport, and stay in
 						// flow so the surrounding StageLayout keeps its height.
-						{ position: 'relative', flex: 1, minHeight: 0 }),
+						//
+						// `minWidth: 0` is load-bearing: a flex item defaults to
+						// `min-width: auto`, so without it the carousel's three
+						// 250px cards force this box to ~814px and it overflows a
+						// 390px column. The overlay variant never hit this because
+						// `inset: 0` pinned its width to the viewport.
+						{
+							position: 'relative',
+							flex: 1,
+							minHeight: 0,
+							minWidth: 0,
+							width: '100%'
+						}),
 				display: 'flex',
 				flexDirection: 'column',
 				bgcolor: registrationMd3.surface,
@@ -241,7 +253,35 @@ export const RegistrationHandover = ({
 					pb: 1.75
 				}}
 			>
-				<Box sx={{ width: '100%', maxWidth: 720, mx: 'auto' }}>
+				{/* Desktop: the gate is the registration button carrying on, so it
+				    keeps that button's right edge (40px inset, same as `px`) and
+				    grows leftwards out of it instead of appearing as a new
+				    full-width bar. 196px is `RegistrationFooterPrimaryButton`'s
+				    md `minWidth` — the width it is stretching *from*.
+				    Mobile keeps the full-width bar: there the register button is
+				    full width too, so there is nothing to stretch out of. */}
+				<Box
+					sx={{
+						'width': '100%',
+						'maxWidth': { xs: '100%', sm: 480 },
+						'ml': { xs: 0, sm: 'auto' },
+						'mr': 0,
+						'@keyframes handoverGateStretch': {
+							from: { maxWidth: '196px' },
+							to: { maxWidth: '480px' }
+						},
+						/* Desktop only, and only where the stretch has something
+						   to stretch out of. Animating `max-width` rather than
+						   `width` keeps the mobile full-width case untouched —
+						   animating `width` there resolved against the wrong box
+						   and pushed the button off-screen. */
+						'@media (min-width: 600px) and (prefers-reduced-motion: no-preference)':
+							{
+								animation:
+									'handoverGateStretch 420ms cubic-bezier(0.4, 0, 0.2, 1)'
+							}
+					}}
+				>
 					<HandoverGateButton state={state} onEnter={handleEnter} />
 				</Box>
 			</Box>
