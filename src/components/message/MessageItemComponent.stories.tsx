@@ -110,6 +110,22 @@ const longMessageArgs = {
 	...baseHandlers
 };
 
+/** `.messageItem` enters at scale(0.98). Measuring mid-animation is why
+ *  "Long message — expanded — tablet 834" failed in CI: the 700–770 band
+ *  accepts 0.98×width, then expand settles at scale(1) and the delta is ~14px.
+ *  Desktop's 769–771 band happens to wait this out. Same pin as
+ *  CaseHandoverClientCards "Pending client consent". */
+const waitForMessageEnterAnimation = async (canvasElement: HTMLElement) => {
+	const messageItem =
+		canvasElement.querySelector<HTMLElement>('.messageItem');
+	expect(messageItem).not.toBeNull();
+	await waitFor(() => {
+		const style = getComputedStyle(messageItem!);
+		expect(style.opacity).toBe('1');
+		expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(style.transform);
+	});
+};
+
 const verifyLongMessageState = async ({
 	canvasElement,
 	expanded,
@@ -129,6 +145,8 @@ const verifyLongMessageState = async ({
 		'.messageItem__message--wide'
 	);
 	expect(bubble).not.toBeNull();
+
+	await waitForMessageEnterAnimation(canvasElement);
 
 	await waitFor(() => {
 		const width = bubble!.getBoundingClientRect().width;
