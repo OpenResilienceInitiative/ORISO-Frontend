@@ -2777,7 +2777,97 @@
 			"loadErrorRetry": "Réessayer",
 			"oneResult": "Nous vous conseillons sur le thème",
 			"subline": "Choisissez un thème dans notre offre de conseil.",
-			"summary": "Votre sujet"
+			"summary": "Votre sujet",
+			"category": {
+				"alter": "Vieillissement et personnes âgées",
+				"krisen": "Situations de vie difficiles et crises",
+				"gesundheit": "Santé et addiction",
+				"familie": "Enfants, jeunes et familles",
+				"migration": "Migration et intégration",
+				"teilhabe": "Inclusion des personnes en situation de handicap"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Parents et famille",
+					"description": "Questions d'éducation, conflits ou crises familiales : vous trouverez ici un accompagnement bienveillant."
+				},
+				"children-youth-counselling": {
+					"title": "Enfants et adolescents",
+					"description": "Une écoute et un soutien quand le quotidien devient trop lourd."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Rééducation pour enfants et adolescents",
+					"description": "Pour les jeunes qui souhaitent retrouver des forces après une maladie ou une épreuve."
+				},
+				"cures-mothers-fathers": {
+					"title": "Cures pour mères et pères",
+					"description": "Les cures aident les parents épuisés à se retrouver."
+				},
+				"pregnancy": {
+					"title": "Grossesse",
+					"description": "En cas de questions, d'incertitude ou de circonstances difficiles, nous sommes là."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Prévention du suicide",
+					"description": "Accompagnement anonyme pour les jeunes en crise ou ayant des pensées suicidaires."
+				},
+				"school-to-work-transition": {
+					"title": "Transition de l'école à la vie professionnelle",
+					"description": "Accompagnement lors du passage de l'école à la formation, aux études et à l'emploi."
+				},
+				"counselling-men-boys": {
+					"title": "Conseil pour les garçons et les hommes",
+					"description": "Un espace sûr où les hommes et les garçons peuvent parler ouvertement de leurs soucis."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Conseil en soins palliatifs et hospice",
+					"description": "Conseil en cas de maladie grave, de fin de vie, d'adieu et d'accompagnement."
+				},
+				"life-in-old-age": {
+					"title": "La vie à un âge avancé",
+					"description": "Soutien pour les questions liées à l'âge, aux soins et au quotidien."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Protection juridique et directives anticipées",
+					"description": "Orientation sur la curatelle, la procuration et les directives anticipées."
+				},
+				"initial-return-further-migration": {
+					"title": "Émigration, retour et migration ultérieure",
+					"description": "Conseil sur la migration, le retour et les étapes suivantes."
+				},
+				"migration": {
+					"title": "Migration",
+					"description": "Soutien à l'arrivée, à l'intégration et à l'orientation."
+				},
+				"disability-psychological-impairment": {
+					"title": "Handicap et troubles psychiques",
+					"description": "Soutien pour les questions de participation, de quotidien et de charges psychiques."
+				},
+				"hiv-aids": {
+					"title": "VIH et sida",
+					"description": "Conseil confidentiel sur le VIH, le sida, la santé et le quotidien."
+				},
+				"sucht": {
+					"title": "Dépendances",
+					"description": "Conseil sur les questions d'addiction, de dépendance et d'habitudes pesantes."
+				},
+				"trauerberatung": {
+					"title": "Accompagnement du deuil",
+					"description": "Accompagnement en cas de perte, d'adieu et de deuil difficile."
+				},
+				"general-social-counselling": {
+					"title": "Conseil social général",
+					"description": "Aide pour les questions sociales, financières et personnelles."
+				},
+				"debt": {
+					"title": "Endettement",
+					"description": "Conseil en cas de soucis financiers, de rappels de paiement et de surendettement."
+				},
+				"offending": {
+					"title": "Délinquance et réinsertion",
+					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "Suggérer automatiquement",

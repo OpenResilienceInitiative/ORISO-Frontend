@@ -2777,7 +2777,97 @@
 			"loadErrorRetry": "እንደገና ፈትኑ",
 			"oneResult": "ኣብቲ ኣርእስቲ ንመክር",
 			"subline": "ካብቲ ናይ ምምኽኻር ምቕራብና ሓደ ኣርእስቲ ምረጹ።",
-			"summary": "ኣርእስትኻ፤"
+			"summary": "ኣርእስትኻ፤",
+			"category": {
+				"alter": "ዕድመን ኣረጋውያንን",
+				"krisen": "ኣጸጋሚ ናብራን ቅልውላውን",
+				"gesundheit": "ጥዕናን ወልፍን",
+				"familie": "ቈልዑ፣ መንእሰያትን ስድራቤትን",
+				"migration": "ስደትን ውህደትን",
+				"teilhabe": "ስንክልና ንዘለዎም ሰባት ተሳትፎ"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "ወለድን ስድራቤትን",
+					"description": "ብዛዕባ ኣተዓባብያ፣ ግርጭት ወይ ስድራቤታዊ ቅልውላው ዝምልከት ሓጋዚ ደገፍ ኣብዚ ክትረኽቡ ኢኹም።"
+				},
+				"children-youth-counselling": {
+					"title": "ቈልዑን መንእሰያትን",
+					"description": "መዓልታዊ ናብራ ኣዝዩ ከቢድ ምስ ዝኸውን ደገፍን ሰማዒ እዝንን።"
+				},
+				"child-youth-rehabilitation": {
+					"title": "ናይ ቈልዑን መንእሰያትን ተሃድሶ",
+					"description": "ድሕሪ ሕማም ወይ ጸቕጢ ሓድሽ ሓይሊ ክረኽቡ ንዝደልዩ መንእሰያት።"
+				},
+				"cures-mothers-fathers": {
+					"title": "ንኣዴታትን ኣቦታትን ዝኸውን ሕክምናዊ ዕረፍቲ",
+					"description": "እዞም መደባት ንዝደኸሙ ወለዲ ሓይሎም ንኽመልሱ ይሕግዙ።"
+				},
+				"pregnancy": {
+					"title": "ጥንሲ",
+					"description": "ሕቶታት፣ ዘይንጹር ኩነታት ወይ ጽንኩር ኩነታት ምስ ዝህልወኩም ኣብ ጐንኹም ኣለና።"
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] ካብ ነብሰ-ቕትለት ምክልኻል",
+					"description": "ኣብ ቅልውላው ንዘለዉ ወይ ናይ ነብሰ-ቕትለት ሓሳብ ንዘለዎም መንእሰያት ስውር ደገፍ።"
+				},
+				"school-to-work-transition": {
+					"title": "ካብ ትምህርቲ ናብ ሞያ ምስግጋር",
+					"description": "ካብ ቤት ትምህርቲ ናብ ሞያዊ ስልጠና፣ ላዕለዋይ ትምህርትን ስራሕን ኣብ ዝግበር ስግግር ደገፍ።"
+				},
+				"counselling-men-boys": {
+					"title": "ንኣወዳትን ደቂ ተባዕትዮን ዝኸውን ምኽሪ",
+					"description": "ደቂ ተባዕትዮን ኣወዳትን ብዛዕባ ጭንቀቶም ብግልጺ ክዛረቡሉ ዝኽእሉ ውሑስ ቦታ።"
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "ሆስፒስን ፓልያቲቭ ክንክንን ምኽሪ",
+					"description": "ኣብ ከቢድ ሕማም፣ ሞት፣ ስንብታን ሓገዝን ዝወሃብ ምኽሪ።"
+				},
+				"life-in-old-age": {
+					"title": "ናብራ ኣብ ግዜ እርጋን",
+					"description": "ብዛዕባ እርጋን፣ ክንክንን መዓልታዊ ናብራን ዝምልከት ደገፍ።"
+				},
+				"legal-guardianship-advance-care": {
+					"title": "ሕጋዊ ሞግዚትነትን ኣቐዲምካ ምድላውን",
+					"description": "ብዛዕባ ሞግዚትነት፣ ውክልናን ውልቃዊ ምድላውን ዝወሃብ መምርሒ።"
+				},
+				"initial-return-further-migration": {
+					"title": "ምውጻእ፣ ምምላስን ተወሳኺ ስደትን",
+					"description": "ብዛዕባ ስደት፣ ምምላስን ዝቕጽሉ ስጉምትታትን ዝወሃብ ምኽሪ።"
+				},
+				"migration": {
+					"title": "ስደት",
+					"description": "ኣብ ምብጻሕ፣ ውህደትን ኣንፈት ምሃብን ዝወሃብ ደገፍ።"
+				},
+				"disability-psychological-impairment": {
+					"title": "ስንክልናን ኣእምሮኣዊ ጸገምን",
+					"description": "ብዛዕባ ተሳትፎ፣ መዓልታዊ ናብራን ጸቕጥን ዝወሃብ ደገፍ።"
+				},
+				"hiv-aids": {
+					"title": "ኤችኣይቪን ኤድስን",
+					"description": "ብዛዕባ ኤችኣይቪ፣ ኤድስ፣ ጥዕናን መዓልታዊ ናብራን ዝወሃብ ምስጢራዊ ምኽሪ።"
+				},
+				"sucht": {
+					"title": "ወልፊ",
+					"description": "ብዛዕባ ወልፊ፣ ጽግዕተኛነትን ከበድቲ ልምድታትን ዝወሃብ ምኽሪ።"
+				},
+				"trauerberatung": {
+					"title": "ናይ ሓዘን ምኽሪ",
+					"description": "ኣብ ክሳራ፣ ስንብታን ከቢድ ሓዘንን ዝወሃብ ሓገዝ።"
+				},
+				"general-social-counselling": {
+					"title": "ሓፈሻዊ ማሕበራዊ ምኽሪ",
+					"description": "ኣብ ማሕበራዊ፣ ገንዘባውን ውልቃውን ሕቶታት ዝወሃብ ሓገዝ።"
+				},
+				"debt": {
+					"title": "ዕዳ",
+					"description": "ኣብ ገንዘባዊ ጭንቀት፣ ናይ ክፍሊት መዘኻኸርን ልዑል ዕዳን ዝወሃብ ምኽሪ።"
+				},
+				"offending": {
+					"title": "ገበንን ዳግመ ጅማሮን",
+					"description": "ብዛዕባ ገበን፣ ሓድሽ ጅማሮን መዓልታዊ ናብራን ዝወሃብ ደገፍ።"
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "ዝርዝር ብርእሱ ይምክር",

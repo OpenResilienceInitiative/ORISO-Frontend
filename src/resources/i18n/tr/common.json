@@ -2786,7 +2786,97 @@
 			"loadErrorRetry": "Tekrar dene",
 			"oneResult": "Size şu konularda tavsiyelerde bulunuyoruz",
 			"subline": "Danışmanlık hizmetlerimizden bir konu seçin.",
-			"summary": "Senin konun:"
+			"summary": "Senin konun:",
+			"category": {
+				"alter": "Yaşlılık ve yaşlı yetişkinler",
+				"krisen": "Zorlu yaşam durumları ve krizler",
+				"gesundheit": "Sağlık ve bağımlılık",
+				"familie": "Çocuklar, gençler ve aileler",
+				"migration": "Göç ve entegrasyon",
+				"teilhabe": "Engelli bireylerin katılımı"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Ebeveynler ve aile",
+					"description": "Ebeveynlik soruları, çatışmalar veya aile içi krizlerde anlayışlı destek bulabilirsiniz."
+				},
+				"children-youth-counselling": {
+					"title": "Çocuklar ve gençler",
+					"description": "Günlük yaşam fazla geldiğinde burada yardım ve sizi dinleyen biri var."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Çocuk ve gençlik rehabilitasyonu",
+					"description": "Hastalık veya zorlanmadan sonra yeniden güç kazanmak isteyen gençler için."
+				},
+				"cures-mothers-fathers": {
+					"title": "Anneler ve babalar için kürler",
+					"description": "Yorgun ebeveynlerin yeniden güç toplamasına yardımcı olan kür programları hakkında danışmanlık."
+				},
+				"pregnancy": {
+					"title": "Hamilelik",
+					"description": "Sorularınız, belirsizlikleriniz veya zor durumlarınız olduğunda yanınızdayız."
+				},
+				"u25-suicide-prevention": {
+					"title": "U25 intiharı önleme",
+					"description": "Kriz yaşayan veya intihar düşünceleri olan gençler için anonim destek."
+				},
+				"school-to-work-transition": {
+					"title": "Okuldan mesleğe geçiş",
+					"description": "Okuldan mesleki eğitime, üniversiteye ve iş hayatına geçişte destek."
+				},
+				"counselling-men-boys": {
+					"title": "Erkek çocuklar ve erkekler için danışmanlık",
+					"description": "Erkeklerin ve erkek çocukların endişelerini açıkça konuşabileceği güvenli bir alan."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospis ve palyatif danışmanlık",
+					"description": "Ağır hastalık, ölüm, veda ve bakım süreçlerinde danışmanlık."
+				},
+				"life-in-old-age": {
+					"title": "Yaşlılıkta yaşam",
+					"description": "Yaşlanma, bakım ve günlük yaşamla ilgili sorularda destek."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Yasal temsil ve önlem danışmanlığı",
+					"description": "Vesayet, vekaletname ve kişisel önlemler konusunda yönlendirme."
+				},
+				"initial-return-further-migration": {
+					"title": "Göç ve geri dönüş",
+					"description": "Göç, geri dönüş ve sonraki adımlar hakkında danışmanlık."
+				},
+				"migration": {
+					"title": "Göç",
+					"description": "Varış, entegrasyon ve yön bulma konusunda destek."
+				},
+				"disability-psychological-impairment": {
+					"title": "Engellilik ve psikolojik zorlanma",
+					"description": "Katılım, günlük yaşam ve psikolojik yüklerle ilgili sorularda destek."
+				},
+				"hiv-aids": {
+					"title": "HIV ve AIDS",
+					"description": "HIV, AIDS, sağlık ve günlük yaşam hakkında gizli danışmanlık."
+				},
+				"sucht": {
+					"title": "Bağımlılık",
+					"description": "Bağımlılık soruları, bağımlılık durumu ve zorlayıcı alışkanlıklar için danışmanlık."
+				},
+				"trauerberatung": {
+					"title": "Yas danışmanlığı",
+					"description": "Kayıp, veda ve derin yas dönemlerinde destek."
+				},
+				"general-social-counselling": {
+					"title": "Genel sosyal danışmanlık",
+					"description": "Sosyal, maddi ve kişisel sorularda yardım."
+				},
+				"debt": {
+					"title": "Borç",
+					"description": "Maddi kaygılar, ihtarlar ve aşırı borçlanma konusunda danışmanlık."
+				},
+				"offending": {
+					"title": "Suç ve yeniden başlangıç",
+					"description": "Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek."
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "Bilgileri otomatik öner",

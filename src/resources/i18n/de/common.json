@@ -2906,7 +2906,97 @@
 			"loadErrorRetry": "Erneut versuchen",
 			"oneResult": "Wir beraten Sie zum Thema",
 			"subline": "Wählen Sie ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Ihr Thema:"
+			"summary": "Ihr Thema:",
+			"category": {
+				"alter": "Alter",
+				"krisen": "Besondere Lebenssituationen & Krisen",
+				"gesundheit": "Gesundheit & Sucht",
+				"familie": "Kinder, Jugend, Erwachsene, Schwangerschaft und Familie",
+				"migration": "Migration",
+				"teilhabe": "Teilhabe für Menschen mit Beeinträchtigungen"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Eltern und Familie",
+					"description": "Ob Erziehungsfragen, Konflikte oder familiäre Krisen - hier finden Sie verständnisvolle Begleitung."
+				},
+				"children-youth-counselling": {
+					"title": "Kinder und Jugendliche",
+					"description": "Wenn der Alltag zu viel wird - hier gibt es Hilfe und ein offenes Ohr."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Kinder- und Jugend-Reha",
+					"description": "Für junge Menschen, die nach Krankheit oder Belastung neue Kraft schöpfen möchten."
+				},
+				"cures-mothers-fathers": {
+					"title": "Kuren für Mütter und Väter",
+					"description": "Kurmaßnahmen helfen erschöpften Eltern, wieder zu sich zu finden."
+				},
+				"pregnancy": {
+					"title": "Schwangerschaft",
+					"description": "Bei Fragen, Unsicherheit oder schwierigen Umständen sind wir da."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Suizidprävention",
+					"description": "Anonyme Begleitung für junge Menschen in Krisen und Suizidgedanken."
+				},
+				"school-to-work-transition": {
+					"title": "Übergang von Schule zu Beruf",
+					"description": "Begleitung beim Schritt von der Schule in Ausbildung, Studium und Beruf."
+				},
+				"counselling-men-boys": {
+					"title": "Jungen- und Männerberatung",
+					"description": "Ein sicherer Raum für Männer und Jungen, um offen über Sorgen zu sprechen."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospiz- und Palliativberatung",
+					"description": "Beratung bei schwerer Krankheit, Sterben, Abschied und Begleitung."
+				},
+				"life-in-old-age": {
+					"title": "Leben im Alter",
+					"description": "Unterstuetzung bei Fragen rund um Alter, Pflege und Alltag."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Rechtliche Betreuung und Vorsorge",
+					"description": "Orientierung zu Betreuung, Vollmacht und persönlicher Vorsorge."
+				},
+				"initial-return-further-migration": {
+					"title": "Aus-/Rück- und Weiterwanderung",
+					"description": "Beratung zu Migration, Rückkehr und nächsten Schritten."
+				},
+				"migration": {
+					"title": "Migration",
+					"description": "Unterstützung bei Ankommen, Integration und Orientierung."
+				},
+				"disability-psychological-impairment": {
+					"title": "Behinderung und psychische Beeinträchtigung",
+					"description": "Unterstuetzung bei Fragen zu Teilhabe, Alltag und Belastungen."
+				},
+				"hiv-aids": {
+					"title": "HIV und Aids",
+					"description": "Vertrauliche Beratung zu HIV, Aids, Gesundheit und Alltag."
+				},
+				"sucht": {
+					"title": "Sucht",
+					"description": "Beratung bei Suchtfragen, Abhängigkeit und belastenden Gewohnheiten."
+				},
+				"trauerberatung": {
+					"title": "Trauerberatung",
+					"description": "Begleitung bei Verlust, Abschied und schwerer Trauer."
+				},
+				"general-social-counselling": {
+					"title": "Allgemeine Sozialberatung",
+					"description": "Hilfe bei sozialen, finanziellen und persönlichen Fragen."
+				},
+				"debt": {
+					"title": "Schulden",
+					"description": "Beratung bei finanziellen Sorgen, Mahnungen und Überschuldung."
+				},
+				"offending": {
+					"title": "Straffälligkeit",
+					"description": "Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag."
+				}
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
