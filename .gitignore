@@ -55,7 +55,9 @@ docs/*
 !docs/storybook/
 !docs/storybook/**
 !docs/agent-tasks/
-!docs/agent-tasks/**
+docs/agent-tasks/*
+!docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/
+!docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/**
 !docs/cursor-orchestrator/
 docs/cursor-orchestrator/*
 !docs/cursor-orchestrator/index.md
