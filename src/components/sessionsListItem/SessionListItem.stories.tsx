@@ -683,8 +683,19 @@ function PostcodeOnlyCardMock() {
 	);
 }
 
-function RuntimeSessionListItem() {
-	const activeSession = buildExtendedSession(runtimeSession, '');
+function RuntimeSessionListItem({
+	lastMessage = runtimeSession.session.lastMessage
+}: {
+	lastMessage?: string;
+} = {}) {
+	const storySession: ListItemInterface = {
+		...runtimeSession,
+		session: {
+			...runtimeSession.session,
+			lastMessage
+		}
+	};
+	const activeSession = buildExtendedSession(storySession, '');
 
 	return (
 		<div style={listShell}>
@@ -716,7 +727,7 @@ function RuntimeSessionListItem() {
 							<SessionsDataContext.Provider
 								value={{
 									ready: true,
-									sessions: [runtimeSession],
+									sessions: [storySession],
 									dispatch: () => {}
 								}}
 							>
@@ -1021,6 +1032,31 @@ export const RuntimeComponent: Story = {
 					'sessionsListItem__username--readLabel'
 				)
 			).toBe(false);
+		});
+	}
+};
+
+/**
+ * Regression for #1225 / follow-up to #834: the session-list surface must use
+ * the same transport-to-plain-text conversion as the Threads list.
+ */
+export const RuntimeRichTextPreview: Story = {
+	name: 'Rich text preview → readable text (#1225)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<RuntimeSessionListItem lastMessage="[[align:left]]<p>Wir haben die Zwei-Minuten-Runde ausprobiert.</p>[[/align]]" />
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const preview = canvasElement.querySelector(
+				'.sessionsListItem__subject'
+			);
+			expect(preview?.textContent).toBe(
+				'Wir haben die Zwei-Minuten-Runde ausprobiert.'
+			);
+			expect(preview?.textContent).not.toMatch(/\[\[align:|<p>/i);
 		});
 	}
 };

@@ -838,6 +838,11 @@ const preview: Preview = {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
+				},
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' },
+					type: 'desktop'
 				}
 			}
 		},
