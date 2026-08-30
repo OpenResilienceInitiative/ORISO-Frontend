@@ -443,7 +443,7 @@ const HandoverInStage = ({ ready }: { ready: boolean }) => (
 	   would resolve against a shorter box and leave a dead strip under the
 	   footer that the real app does not have. This wrapper gives it the
 	   viewport the app root provides. */
-	<Box sx={{ height: '100vh' }}>
+	<Box sx={{ minHeight: '100vh' }}>
 		<AgencySpecificContext.Provider
 			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
 		>
