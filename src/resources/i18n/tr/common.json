@@ -3528,8 +3528,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Sohbet çemberi",
-				"internal": "Dahili"
+				"internal": "Dahili",
+				"team": "Ekip danışmanlığı"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Görüşme listesinin boyutunu değiştirin. Kaydırmak için dikey sürükleyin.",
+			"expand": "Görüşme listesini genişlet",
+			"collapse": "Sohbeti büyütmek için görüşme listesini daralt"
 		}
 	},
 	"statusOverlay": {

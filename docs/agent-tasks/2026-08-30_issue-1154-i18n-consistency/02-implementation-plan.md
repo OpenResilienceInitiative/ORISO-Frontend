@@ -5,14 +5,15 @@
 
 ## Subtasks
 
-| #   | Subtask                                                 | Files                                                            | Verify with                                                                            | Status                                  |
-| --- | ------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
-| 1   | Publish scan as #1154 comment + sub-issues              | GitHub                                                           | comment URL                                                                            | done (comment only; new issues blocked) |
-| 2   | PR1: Weblate merge — bundle wins                        | `mergeWeblateCatalogue.ts`, `i18n.ts`                            | `npx vitest run src/utils/mergeWeblateCatalogue.test.ts`                               | done                                    |
-| 3   | PR2: PreselectedTopic locale helper                     | `PreselectedTopic.tsx` + test                                    | `npx vitest run src/components/registration/preselectionBox/PreselectedTopic.test.tsx` | done                                    |
-| 4   | PR3: Drop German defaultValues on signup chrome         | header, CompactStepRow, ZipcodeInput, consent                    | targeted vitest + `lint:scripts`                                                       | done                                    |
-| 5   | Follow-up only: API age labels; Ukrainian UI locale     | —                                                                | —                                                                                      | blocked (out of stack)                  |
-| 6   | PR4: remaining registration + profile Overview literals | zipcode/whyLocal, agency details, password chips, profile.routes | `npx vitest run src/components/registration/registrationChromeI18n.test.ts`            | doing                                   |
+| #   | Subtask                                             | Files                                                         | Verify with                                                                            | Status                                  |
+| --- | --------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
+| 1   | Publish scan as #1154 comment + sub-issues          | GitHub                                                        | comment URL                                                                            | done (comment only; new issues blocked) |
+| 2   | PR1: Weblate merge — bundle wins                    | `mergeWeblateCatalogue.ts`, `i18n.ts`                         | `npx vitest run src/utils/mergeWeblateCatalogue.test.ts`                               | done                                    |
+| 3   | PR2: PreselectedTopic locale helper                 | `PreselectedTopic.tsx` + test                                 | `npx vitest run src/components/registration/preselectionBox/PreselectedTopic.test.tsx` | done                                    |
+| 4   | PR3: Drop German defaultValues on signup chrome     | header, CompactStepRow, ZipcodeInput, consent                 | targeted vitest + `lint:scripts`                                                       | done                                    |
+| 5   | Follow-up only: API age labels; Ukrainian UI locale | —                                                             | —                                                                                      | blocked (out of stack)                  |
+| 6   | PR4–11: leftover chrome slices                      | registration → leftovers                                      | per-slice i18n source-scan tests                                                       | done                                    |
+| 12  | Remaining `t(key, 'DE/EN')` after leftovers rescan  | session chrome, waiting countdown, notifications, legal, etc. | `npx vitest run src/components/session/remainingChromeI18n.test.ts`                    | done                                    |
 
 ## Verification checklist
 

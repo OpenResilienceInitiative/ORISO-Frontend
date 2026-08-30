@@ -3528,8 +3528,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "ክቢ ዝርርብ",
-				"internal": "ውሽጣዊ"
+				"internal": "ውሽጣዊ",
+				"team": "ጋንታዊ ምኽሪ"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "ዝርዝር ምኽሪ መጠን ቀይር። ብቐጥታ ስሓብ።",
+			"expand": "ዝርዝር ምኽሪ ኣርእይ",
+			"collapse": "ዝርዝር ምኽሪ ዕጸው"
 		}
 	},
 	"statusOverlay": {

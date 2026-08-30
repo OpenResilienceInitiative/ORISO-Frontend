@@ -134,7 +134,7 @@ const DraftMetadataListItem = ({
 }: {
 	draft: IUserDraftItem;
 	onOpen: (draft: IUserDraftItem) => void;
-	translate: (key: string, fallback?: string) => string;
+	translate: (key: string) => string;
 }) => (
 	<button
 		type="button"
@@ -1131,11 +1131,9 @@ export const SessionsList = ({
 		},
 		[navigate]
 	);
-	const translateWithFallback = useCallback(
-		(key: string, fallback?: string) => {
-			const translated = fallback
-				? translate(key, { defaultValue: fallback })
-				: translate(key);
+	const translateKey = useCallback(
+		(key: string) => {
+			const translated = translate(key);
 			return typeof translated === 'string'
 				? translated
 				: String(translated);
@@ -1880,7 +1878,7 @@ export const SessionsList = ({
 								key={draft.scopeKey}
 								draft={draft}
 								onOpen={handleOpenDraft}
-								translate={translateWithFallback}
+								translate={translateKey}
 							/>
 						))}
 

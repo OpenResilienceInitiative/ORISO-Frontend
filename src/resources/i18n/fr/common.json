@@ -3528,8 +3528,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
-				"internal": "Échange interne"
+				"internal": "Échange interne",
+				"team": "Conseil en équipe"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Redimensionner la liste des consultations. Faites glisser verticalement pour la faire défiler.",
+			"expand": "Afficher la liste des consultations",
+			"collapse": "Réduire la liste des consultations pour agrandir le chat"
 		}
 	},
 	"statusOverlay": {
@@ -4607,7 +4613,7 @@
 		"version": "Version du contrat",
 		"signerName": "Nom",
 		"signerPosition": "Fonction",
-		"signerEmail": "E-mail",
+		"signerEmail": "Adresse e-mail",
 		"signerNote": "Remarque (facultatif)",
 		"language": "Langue",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",

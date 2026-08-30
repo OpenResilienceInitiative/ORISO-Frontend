@@ -9,7 +9,7 @@
 - [ ] Weblate overlay cannot replace a complete bundled catalogue key with a stale English/German value.
 - [ ] Registration preselected-topic summary uses the same locale-aware helper as the topic list.
 - [ ] Registration chrome (`t(key, 'German…')` defaultValues) no longer bypasses `fallbackLng`.
-- [ ] Scan + slice list is on #1154 as sub-issues; each slice has its own PR.
+- [x] Scan + slice list is on #1154 as comments; each slice has its own stacked PR.
 - [ ] `npm run test:unit` (touched tests), `lint:scripts` pass on each PR.
 
 ## Constraints / non-goals

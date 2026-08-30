@@ -3453,8 +3453,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Gesprächskreis",
-				"internal": "Interna"
+				"internal": "Interna",
+				"team": "Team Beratung"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Größe der Beratungsliste ändern. Zum Scrollen der Liste senkrecht ziehen.",
+			"expand": "Beratungsliste einblenden",
+			"collapse": "Beratungsliste einklappen, um den Chatraum zu vergrößern"
 		},
 		"createChat": {
 			"buttonTitle": "Chat anlegen"

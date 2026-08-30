@@ -36,3 +36,10 @@
 - Change: drop leftover German/English `t()` fallbacks on zipcode, why-local, agency details, password chips, Registration footer; `profile.routes` Overview → `navigation.overview`
 - Verify: `registrationChromeI18n.test.ts` 12 PASS; agency i18n 27 PASS; AccountData 7 PASS; eslint PASS
 - Scan posted: https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154#issuecomment-5470327924
+
+### Iteration 5 — pass
+
+- Target: leftovers claimed last in-repo slice; full-platform rescan still found 117 `t`/`tr`/`translate` string fallbacks
+- Hypothesis: slice 11 only covered the leftover file list, not session header/menu/list, waiting countdown, notifications, legal, handover carousel, or opening-hours weekdays
+- Change: stacked branch `cursor/1154/remaining-chrome-i18n`; drop remaining one-language fallbacks; add `sessionList.resizeHandle.*` + `sessionType.team`; source-scan `remainingChromeI18n.test.ts`
+- Verify: remainingChrome 23 PASS; countdown 10 PASS; leftovers 8 PASS; i18n guard 31 PASS; LegalLinkModal 5 PASS; LegalPageWrapper 9 PASS

@@ -14,7 +14,7 @@ vi.mock('./useLegalLinkContent', async () => ({
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) => key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -129,7 +129,7 @@ describe('LegalLinkModal', () => {
 		).toBeNull();
 
 		expect(
-			screen.getByText(/dieser Hinweis gilt für die Plattform selbst/i)
+			screen.getByText('login.legal.platform.dataprotection')
 		).toBeTruthy();
 
 		const link = screen.getByRole('link');

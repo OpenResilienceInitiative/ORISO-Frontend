@@ -197,10 +197,7 @@ export const AgencyDetailsPanel = ({
 				{(details.address || details.floorLocation) && (
 					<InfoRow
 						icon={<PlaceRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.addressLabel',
-							'Adresse'
-						)}
+						label={t('registration.agency.details.addressLabel')}
 					>
 						{details.address && <Box>{details.address}</Box>}
 						{details.floorLocation && (
@@ -361,10 +358,7 @@ export const AgencyDetailsPanel = ({
 				{hasDepartmentLegal && (
 					<InfoRow
 						icon={<PrivacyTipOutlinedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.legal.label',
-							'Rechtliches'
-						)}
+						label={t('registration.agency.legal.label')}
 					>
 						<DepartmentLegalSection
 							agency={agency}

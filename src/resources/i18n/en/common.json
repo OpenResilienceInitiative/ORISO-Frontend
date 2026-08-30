@@ -3393,8 +3393,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Peer support group",
-				"internal": "Internal"
+				"internal": "Internal",
+				"team": "Team counselling"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Resize the consultations list. Drag vertically to scroll the list.",
+			"expand": "Expand consultations list",
+			"collapse": "Collapse consultations list to enlarge the chat"
 		},
 		"createChat": {
 			"buttonTitle": "Create chat"
