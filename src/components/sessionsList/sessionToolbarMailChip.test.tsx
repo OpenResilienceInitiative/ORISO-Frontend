@@ -6,8 +6,8 @@
  * the enquiry filter row, the list-item modality badge, and the catalogues
  * behind them all carried it.
  *
- * Covers both paths a label can take: the catalogue entry and the hardcoded
- * `translate(key, fallback)` default that is used when the catalogue misses.
+ * Covers the catalogue path. Missing keys must follow `fallbackLng`
+ * (#1154), not snap to a hardcoded English "Mail".
  */
 
 import React from 'react';
@@ -55,13 +55,15 @@ describe('"Mail" modality label (#985)', () => {
 		}
 	);
 
-	it('renders "Mail" in the session-list toolbar when the catalogue is missing', () => {
-		// `translate` echoing the key is how the toolbar sees an unresolved
-		// entry, which makes it fall through to the hardcoded default.
+	it('renders the catalogue Mail label in the session-list toolbar', () => {
 		render(
 			<MemoryRouter>
 				<SessionsListToolbar
-					translate={(key) => key}
+					translate={(key) =>
+						key === 'sessionList.toolbar.chips.nearby'
+							? deCommon.sessionList.toolbar.chips.nearby
+							: key
+					}
 					searchValue=""
 					onSearchChange={vi.fn()}
 					activeChip={null}
