@@ -1267,16 +1267,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			addEventNotification({
 				type: NOTIFICATION_TYPE_INFO,
 				eventType: 'thread.reply.new',
-				title: translate(
-					'notifications.threadReply.title',
-					'New thread reply'
-				),
+				title: translate('notifications.threadReply.title'),
 				text: `${contactName}: ${snippet || 'New reply in thread'}`,
 				actionPath,
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'message'
 			});
@@ -1986,7 +1980,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 							onClick={() => setIsThreadListOpen((open) => !open)}
 						>
-							{translate('message.thread.listToggle', 'Threads')}
+							{translate('message.thread.listToggle')}
 							{' ('}
 							{threadSummariesRaw.size}
 							{')'}
@@ -2009,15 +2003,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									)
 								}
 								unknownRootLabel={translate(
-									'message.thread.unknownRoot',
-									'Frühere Nachricht'
+									'message.thread.unknownRoot'
 								)}
 								repliesLabel={(count) =>
-									translate(
-										'message.thread.replies',
-										'{{count}} replies',
-										{ count }
-									)
+									translate('message.thread.replies', {
+										count
+									})
 								}
 								onSelectRoot={(rootId) => {
 									const rootMessage = getMessageById(rootId);
@@ -2048,10 +2039,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{isSupervisor && supervisionReason && (
 					<div className="session__supervisionReason">
 						<div className="session__supervisionReasonTitle">
-							{translate(
-								'session.supervisor.reason.title',
-								'Supervisionsgrund'
-							)}
+							{translate('session.supervisor.reason.title')}
 						</div>
 						<div className="session__supervisionReasonText">
 							{supervisionReason}
@@ -2061,16 +2049,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{isSupervisor && (!messages || messages.length === 0) && (
 					<div className="session__supervisionReason">
 						<div className="session__supervisionReasonTitle">
-							{translate(
-								'session.supervisor.startChat.title',
-								'Chat starten'
-							)}
+							{translate('session.supervisor.startChat.title')}
 						</div>
 						<div className="session__supervisionReasonText">
-							{translate(
-								'session.supervisor.startChat.hint',
-								'Use the message field at the bottom to send the first supervision message.'
-							)}
+							{translate('session.supervisor.startChat.hint')}
 						</div>
 					</div>
 				)}
@@ -2149,8 +2131,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												<div className="messageItem__header">
 													<div className="messageItem__username messageItem__username--system">
 														{translate(
-															'message.systemNotification',
-															'System Notification'
+															'message.systemNotification'
 														)}
 													</div>
 													<span className="messageItem__headerTime">
@@ -2162,8 +2143,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												{index === 0 && (
 													<div className="messageItem__systemNotificationTag">
 														{translate(
-															'message.systemNotification',
-															'System Notification'
+															'message.systemNotification'
 														)}
 													</div>
 												)}
@@ -2449,7 +2429,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				<div className="session__threadPanel">
 					<div className="session__threadHeader">
 						<div className="session__threadTitle">
-							{translate('message.thread.title', 'Thread')}
+							{translate('message.thread.title')}
 						</div>
 						<button
 							type="button"
@@ -2643,8 +2623,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							isTyping={props.isTyping}
 							className="session__submit-interface"
 							placeholder={translate(
-								'message.thread.placeholder',
-								'Reply in thread'
+								'message.thread.placeholder'
 							)}
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
@@ -2705,10 +2684,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						className="session__anonymousEnquiryClosedNote"
 						role="status"
 					>
-						{translate(
-							'anonymousChat.enquiryClosed',
-							'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
-						)}
+						{translate('anonymousChat.enquiryClosed')}
 					</div>
 				</div>
 			)}
@@ -2751,10 +2727,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						onDeleteAccess={handleLeaveQueueDelete}
 						errorMessage={
 							leaveQueueFailed
-								? translate(
-										'anonymousChat.leaveQueue.error',
-										'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
-									)
+								? translate('anonymousChat.leaveQueue.error')
 								: undefined
 						}
 					/>
@@ -2789,10 +2762,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								textAlign: 'center'
 							}}
 						>
-							{translate(
-								'session.supervisor.input.note',
-								'Messages you send here are visible only to consultants.'
-							)}
+							{translate('session.supervisor.input.note')}
 						</div>
 					)}
 					{areRobotMessagesComplete && (

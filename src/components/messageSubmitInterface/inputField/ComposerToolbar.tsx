@@ -59,31 +59,26 @@ const TEXT_STYLE_ENTRIES = [
 	{
 		action: 'paragraph',
 		labelKey: 'paragraph',
-		fallback: 'Normal text',
 		glyph: 'T'
 	},
 	{
 		action: 'heading1',
 		labelKey: 'heading1',
-		fallback: 'Title',
 		glyph: 'H1'
 	},
 	{
 		action: 'heading2',
 		labelKey: 'heading2',
-		fallback: 'Large heading',
 		glyph: 'H2'
 	},
 	{
 		action: 'heading3',
 		labelKey: 'heading3',
-		fallback: 'Medium heading',
 		glyph: 'H3'
 	},
 	{
 		action: 'heading4',
 		labelKey: 'heading4',
-		fallback: 'Small heading',
 		glyph: 'H4'
 	}
 ] as const;
@@ -115,9 +110,9 @@ export const ComposerToolbar = ({
 	const closeMenu = useCallback(() => setOpenMenu(null), []);
 
 	const textStyleItems: ToolbarMenuItem[] = TEXT_STYLE_ENTRIES.map(
-		({ action, labelKey, fallback, glyph }) => ({
+		({ action, labelKey, glyph }) => ({
 			key: action,
-			label: translate(`message.submit.toolbar.${labelKey}`, fallback),
+			label: translate(`message.submit.toolbar.${labelKey}`),
 			glyph: <span className="composerToolbar__hGlyph">{glyph}</span>,
 			selected: isActionSelected(action),
 			exclusive: true,
@@ -128,10 +123,7 @@ export const ComposerToolbar = ({
 	const listItems: ToolbarMenuItem[] = [
 		{
 			key: 'bulletList',
-			label: translate(
-				'message.submit.toolbar.bulletList',
-				'Bullet List'
-			),
+			label: translate('message.submit.toolbar.bulletList'),
 			glyph: <FormatListBulletedIcon fontSize="inherit" />,
 			selected: isActionSelected('bulletList'),
 			exclusive: true,
@@ -139,10 +131,7 @@ export const ComposerToolbar = ({
 		},
 		{
 			key: 'orderedList',
-			label: translate(
-				'message.submit.toolbar.orderedList',
-				'Ordered List'
-			),
+			label: translate('message.submit.toolbar.orderedList'),
 			glyph: <FormatListNumberedIcon fontSize="inherit" />,
 			selected: isActionSelected('orderedList'),
 			exclusive: true,
@@ -150,7 +139,7 @@ export const ComposerToolbar = ({
 		},
 		{
 			key: 'taskList',
-			label: translate('message.submit.toolbar.taskList', 'Task List'),
+			label: translate('message.submit.toolbar.taskList'),
 			glyph: <ChecklistIcon fontSize="inherit" />,
 			selected: isActionSelected('taskList'),
 			exclusive: true,
@@ -160,18 +149,18 @@ export const ComposerToolbar = ({
 
 	const highlightItems: ToolbarMenuItem[] = (
 		[
-			['highlightYellow', 'Yellow'],
-			['highlightOrange', 'Orange'],
-			['highlightRose', 'Rose'],
-			['highlightMint', 'Mint'],
-			['highlightBlue', 'Blue']
+			['highlightYellow', 'yellow'],
+			['highlightOrange', 'orange'],
+			['highlightRose', 'rose'],
+			['highlightMint', 'mint'],
+			['highlightBlue', 'blue']
 		] as const
-	).map(([action, fallback]) => ({
+	).map(([action, swatch]) => ({
 		key: action,
-		label: translate(`message.submit.toolbar.${action}`, fallback),
+		label: translate(`message.submit.toolbar.${action}`),
 		glyph: (
 			<span
-				className={`composerToolbar__swatch composerToolbar__swatch--${fallback.toLowerCase()}`}
+				className={`composerToolbar__swatch composerToolbar__swatch--${swatch}`}
 			/>
 		),
 		onSelect: () => onAction(action)
@@ -180,71 +169,68 @@ export const ComposerToolbar = ({
 	const overflowItems: ToolbarMenuItem[] = [
 		{
 			key: 'blockquote',
-			label: translate('message.submit.toolbar.quote', 'Quote'),
+			label: translate('message.submit.toolbar.quote'),
 			glyph: <FormatQuoteIcon fontSize="inherit" />,
 			selected: isActionSelected('blockquote'),
 			onSelect: () => onAction('blockquote')
 		},
 		{
 			key: 'bold',
-			label: translate('message.submit.toolbar.bold', 'Bold'),
+			label: translate('message.submit.toolbar.bold'),
 			glyph: <FormatBoldIcon fontSize="inherit" />,
 			selected: isActionSelected('bold'),
 			onSelect: () => onAction('bold')
 		},
 		{
 			key: 'italic',
-			label: translate('message.submit.toolbar.italic', 'Italic'),
+			label: translate('message.submit.toolbar.italic'),
 			glyph: <FormatItalicIcon fontSize="inherit" />,
 			selected: isActionSelected('italic'),
 			onSelect: () => onAction('italic')
 		},
 		{
 			key: 'strike',
-			label: translate('message.submit.toolbar.strike', 'Strikethrough'),
+			label: translate('message.submit.toolbar.strike'),
 			glyph: <StrikethroughSIcon fontSize="inherit" />,
 			selected: isActionSelected('strike'),
 			onSelect: () => onAction('strike')
 		},
 		{
 			key: 'underline',
-			label: translate('message.submit.toolbar.underline', 'Underline'),
+			label: translate('message.submit.toolbar.underline'),
 			glyph: <FormatUnderlinedIcon fontSize="inherit" />,
 			selected: isActionSelected('underline'),
 			onSelect: () => onAction('underline')
 		},
 		{
 			key: 'code',
-			label: translate('message.submit.toolbar.code', 'Inline code'),
+			label: translate('message.submit.toolbar.code'),
 			glyph: <CodeIcon fontSize="inherit" />,
 			selected: isActionSelected('code'),
 			onSelect: () => onAction('code')
 		},
 		{
 			key: 'codeBlock',
-			label: translate('message.submit.toolbar.codeBlock', 'Code block'),
+			label: translate('message.submit.toolbar.codeBlock'),
 			glyph: <DataObjectIcon fontSize="inherit" />,
 			selected: isActionSelected('codeBlock'),
 			onSelect: () => onAction('codeBlock')
 		},
 		{
 			key: 'setLink',
-			label: translate('message.submit.toolbar.link', 'Link'),
+			label: translate('message.submit.toolbar.link'),
 			glyph: <LinkIcon fontSize="inherit" />,
 			onSelect: () => onAction('setLink')
 		},
 		{
 			key: 'insertImageMarker',
-			label: translate('message.submit.toolbar.addImage', 'Add image'),
+			label: translate('message.submit.toolbar.addImage'),
 			glyph: <AddPhotoAlternateOutlinedIcon fontSize="inherit" />,
 			onSelect: () => onAction('insertImageMarker')
 		},
 		{
 			key: 'insertDateTime',
-			label: translate(
-				'message.submit.toolbar.dateTime',
-				'Insert date time'
-			),
+			label: translate('message.submit.toolbar.dateTime'),
 			glyph: <EventOutlinedIcon fontSize="inherit" />,
 			onSelect: () => onAction('insertDateTime')
 		}
@@ -295,23 +281,20 @@ export const ComposerToolbar = ({
 	return (
 		<div className="composerToolbar" data-direction={direction}>
 			<ToolbarButton
-				label={translate(
-					'message.submit.toolbar.closeTools',
-					'Switch to compact tools'
-				)}
+				label={translate('message.submit.toolbar.closeTools')}
 				onClick={onCollapse}
 			>
 				<DisabledByDefaultRoundedIcon fontSize="inherit" />
 			</ToolbarButton>
 			<ToolbarDivider />
 			<ToolbarButton
-				label={translate('message.submit.toolbar.undo', 'Undo')}
+				label={translate('message.submit.toolbar.undo')}
 				onClick={() => onAction('undo')}
 			>
 				<UndoIcon fontSize="inherit" />
 			</ToolbarButton>
 			<ToolbarButton
-				label={translate('message.submit.toolbar.redo', 'Redo')}
+				label={translate('message.submit.toolbar.redo')}
 				onClick={() => onAction('redo')}
 			>
 				<RedoIcon fontSize="inherit" />
@@ -319,33 +302,27 @@ export const ComposerToolbar = ({
 			<ToolbarDivider />
 			{renderMenuAnchor(
 				'heading',
-				translate('message.submit.toolbar.heading', 'Text style'),
+				translate('message.submit.toolbar.heading'),
 				<span className="composerToolbar__hGlyph">H</span>,
 				textStyleItems
 			)}
 			{renderMenuAnchor(
 				'list',
-				translate('message.submit.toolbar.list', 'List style'),
+				translate('message.submit.toolbar.list'),
 				<FormatListBulletedIcon fontSize="inherit" />,
 				listItems
 			)}
 			{!isMobile && (
 				<>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.quote',
-							'Quote'
-						)}
+						label={translate('message.submit.toolbar.quote')}
 						onClick={() => onAction('blockquote')}
 						selected={isActionSelected('blockquote')}
 					>
 						<FormatQuoteIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.codeBlock',
-							'Code block'
-						)}
+						label={translate('message.submit.toolbar.codeBlock')}
 						onClick={() => onAction('codeBlock')}
 						selected={isActionSelected('codeBlock')}
 					>
@@ -353,47 +330,35 @@ export const ComposerToolbar = ({
 					</ToolbarButton>
 					<ToolbarDivider />
 					<ToolbarButton
-						label={translate('message.submit.toolbar.bold', 'Bold')}
+						label={translate('message.submit.toolbar.bold')}
 						onClick={() => onAction('bold')}
 						selected={isActionSelected('bold')}
 					>
 						<FormatBoldIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.italic',
-							'Italic'
-						)}
+						label={translate('message.submit.toolbar.italic')}
 						onClick={() => onAction('italic')}
 						selected={isActionSelected('italic')}
 					>
 						<FormatItalicIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.strike',
-							'Strikethrough'
-						)}
+						label={translate('message.submit.toolbar.strike')}
 						onClick={() => onAction('strike')}
 						selected={isActionSelected('strike')}
 					>
 						<StrikethroughSIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.code',
-							'Inline code'
-						)}
+						label={translate('message.submit.toolbar.code')}
 						onClick={() => onAction('code')}
 						selected={isActionSelected('code')}
 					>
 						<CodeIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.underline',
-							'Underline'
-						)}
+						label={translate('message.submit.toolbar.underline')}
 						onClick={() => onAction('underline')}
 						selected={isActionSelected('underline')}
 					>
@@ -401,36 +366,27 @@ export const ComposerToolbar = ({
 					</ToolbarButton>
 					{renderMenuAnchor(
 						'highlight',
-						translate(
-							'message.submit.toolbar.highlight',
-							'Highlight'
-						),
+						translate('message.submit.toolbar.highlight'),
 						<BorderColorOutlinedIcon fontSize="inherit" />,
 						highlightItems,
 						false
 					)}
 					<ToolbarButton
-						label={translate('message.submit.toolbar.link', 'Link')}
+						label={translate('message.submit.toolbar.link')}
 						onClick={() => onAction('setLink')}
 					>
 						<LinkIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarDivider />
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.superscript',
-							'Superscript'
-						)}
+						label={translate('message.submit.toolbar.superscript')}
 						onClick={() => onAction('superscript')}
 						selected={isActionSelected('superscript')}
 					>
 						<SuperscriptIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.subscript',
-							'Subscript'
-						)}
+						label={translate('message.submit.toolbar.subscript')}
 						onClick={() => onAction('subscript')}
 						selected={isActionSelected('subscript')}
 					>
@@ -438,15 +394,9 @@ export const ComposerToolbar = ({
 					</ToolbarButton>
 					<ToolbarDivider />
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.addImage',
-							'Add image'
-						)}
+						label={translate('message.submit.toolbar.addImage')}
 						onClick={() => onAction('insertImageMarker')}
-						text={translate(
-							'message.submit.toolbar.addImageShort',
-							'Add'
-						)}
+						text={translate('message.submit.toolbar.addImageShort')}
 					>
 						<AddPhotoAlternateOutlinedIcon fontSize="inherit" />
 					</ToolbarButton>
@@ -456,7 +406,7 @@ export const ComposerToolbar = ({
 			{isMobile &&
 				renderMenuAnchor(
 					'overflow',
-					translate('message.submit.toolbar.more', 'More tools'),
+					translate('message.submit.toolbar.more'),
 					<MoreVertIcon fontSize="inherit" />,
 					overflowItems,
 					false
@@ -465,8 +415,7 @@ export const ComposerToolbar = ({
 				label={translate(
 					isExpanded
 						? 'message.submit.toolbar.minimize'
-						: 'message.submit.toolbar.maximize',
-					isExpanded ? 'Minimize editor' : 'Maximize editor'
+						: 'message.submit.toolbar.maximize'
 				)}
 				onClick={onExpandToggle}
 			>
