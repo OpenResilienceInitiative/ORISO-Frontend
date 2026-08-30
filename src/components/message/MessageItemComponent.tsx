@@ -682,7 +682,7 @@ export const MessageItemComponent = ({
 				return '';
 			}
 			if (trimmed.toLowerCase() === '__all__') {
-				return translate('message.audience.all', 'All');
+				return translate('message.audience.all');
 			}
 			let normalized = trimmed;
 			if (normalized.startsWith('@')) {
@@ -925,16 +925,10 @@ export const MessageItemComponent = ({
 			}
 			const roleLabel =
 				role === 'clients'
-					? translate('message.audience.clients', 'Clients')
+					? translate('message.audience.clients')
 					: role === 'counsellors'
-						? translate(
-								'message.audience.counsellors',
-								'Counsellors'
-							)
-						: translate(
-								'message.audience.moderators',
-								'Moderators'
-							);
+						? translate('message.audience.counsellors')
+						: translate('message.audience.moderators');
 			summary.push(`${entries.length} ${roleLabel}`);
 		});
 		if (
@@ -942,7 +936,7 @@ export const MessageItemComponent = ({
 			rawVisibleAudienceLabels.length === 0 &&
 			activeSession?.isGroup
 		) {
-			summary.push(translate('message.audience.all', 'All'));
+			summary.push(translate('message.audience.all'));
 		}
 		return summary;
 	}, [
@@ -1120,11 +1114,11 @@ export const MessageItemComponent = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	)
-		? translate('message.userLeftChat', 'User left the chat')
-		: translate('message.consultantLeftChat', 'Consultant left the chat');
+		? translate('message.userLeftChat')
+		: translate('message.consultantLeftChat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
-		translate('message.systemNotificationTitle', 'System notification');
+		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
@@ -1287,17 +1281,14 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'reply-direct',
-							label: translate(
-								'message.menu.replyDirect',
-								'Reply directly'
-							),
+							label: translate('message.menu.replyDirect'),
 							icon: <MenuReplyDirectIcon />
 						}
 					]
 				: []),
 			{
 				key: 'reply-thread',
-				label: translate('message.menu.replyThread', 'Reply in Thread'),
+				label: translate('message.menu.replyThread'),
 				icon: <MenuReplyThreadIcon />
 			},
 			// Editing (m.replace, #435): own messages only, where a handler
@@ -1306,22 +1297,19 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'edit',
-							label: translate(
-								'message.menu.edit',
-								'Edit Message'
-							),
+							label: translate('message.menu.edit'),
 							icon: <MenuEditIcon />
 						}
 					]
 				: []),
 			{
 				key: 'mark-text',
-				label: translate('message.menu.markText', 'Mark Text'),
+				label: translate('message.menu.markText'),
 				icon: <MenuMarkTextIcon />
 			},
 			{
 				key: 'forward',
-				label: translate('message.menu.forward', 'Forward Message'),
+				label: translate('message.menu.forward'),
 				icon: <MenuForwardIcon />
 			},
 			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
@@ -1329,10 +1317,7 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'delete',
-							label: translate(
-								'message.menu.delete',
-								'Delete Message'
-							),
+							label: translate('message.menu.delete'),
 							icon: <MenuDeleteIcon />
 						}
 					]
@@ -1705,11 +1690,8 @@ export const MessageItemComponent = ({
 	const deliveryStatusLabel =
 		deliveryState === 'failed'
 			? encryptionBroke
-				? translate(
-						'message.encryptionBroke.status',
-						'Verschlüsselung gebrochen'
-					)
-				: translate('message.sendFailed.status', 'nicht zugestellt')
+				? translate('message.encryptionBroke.status')
+				: translate('message.sendFailed.status')
 			: translate(
 					deliveryState === 'sent' ? 'message.sent' : 'message.read'
 				);
@@ -1752,12 +1734,9 @@ export const MessageItemComponent = ({
 			{isEdited && (
 				<span
 					className="messageItem__editedMarker"
-					title={translate(
-						'message.edit.markerTitle',
-						'Nachricht wurde bearbeitet'
-					)}
+					title={translate('message.edit.markerTitle')}
 				>
-					{translate('message.edit.marker', '(bearbeitet)')}
+					{translate('message.edit.marker')}
 				</span>
 			)}
 		</span>
@@ -1787,14 +1766,10 @@ export const MessageItemComponent = ({
 								? onUnreact?.(reaction.ownEventId)
 								: onReact?.(reaction.key)
 						}
-						aria-label={translate(
-							'message.reaction.count',
-							'{{key}} reacted by {{count}}',
-							{
-								key: reaction.key,
-								count: reaction.count
-							}
-						)}
+						aria-label={translate('message.reaction.count', {
+							key: reaction.key,
+							count: reaction.count
+						})}
 					>
 						<span aria-hidden>{reaction.key}</span>
 						<span className="messageItem__reactionPillCount">
@@ -1968,8 +1943,7 @@ export const MessageItemComponent = ({
 														'caseHandover.systemMessage.noActionNeeded'
 													)
 												: translate(
-														'message.systemNotification',
-														'System Notification'
+														'message.systemNotification'
 													)}
 										</div>
 									</div>
@@ -2019,10 +1993,7 @@ export const MessageItemComponent = ({
 						{showVisibleAudience && isMyMessage && (
 							<div className="messageItem__visibleOnly">
 								<span className="messageItem__visibleOnlyLabel">
-									{translate(
-										'message.visibleOnlyTo',
-										'visible only to:'
-									)}
+									{translate('message.visibleOnlyTo')}
 								</span>
 								{visibleAudienceSummaryLabels.map(
 									(label, index) => (
@@ -2096,10 +2067,7 @@ export const MessageItemComponent = ({
 								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
-									{translate(
-										'message.feedbackTag',
-										'Feedback'
-									)}
+									{translate('message.feedbackTag')}
 								</div>
 							)}
 							{/* Relations foundation (#435): quote of the replied-to
@@ -2112,15 +2080,13 @@ export const MessageItemComponent = ({
 											: ''
 									}`}
 									aria-label={translate(
-										'message.reply.quoteLabel',
-										'Antwort auf'
+										'message.reply.quoteLabel'
 									)}
 								>
 									<span className="messageItem__replyQuoteAuthor">
 										{replyQuote?.author ||
 											translate(
-												'message.reply.quoteUnknown',
-												'Frühere Nachricht'
+												'message.reply.quoteUnknown'
 											)}
 									</span>
 									{replyQuote?.text && (
@@ -2359,10 +2325,7 @@ export const MessageItemComponent = ({
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
 								<span className="messageItem__visibleOnlyLabel">
-									{translate(
-										'message.visibleOnlyTo',
-										'visible only to:'
-									)}
+									{translate('message.visibleOnlyTo')}
 								</span>
 								{visibleAudienceSummaryLabels.map(
 									(label, index) => (
@@ -2527,10 +2490,7 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2555,8 +2515,7 @@ export const MessageItemComponent = ({
 										toggleVisibilityMenu(event, 'left')
 									}
 									aria-label={translate(
-										'message.visibility.open',
-										'Open visibility details'
+										'message.visibility.open'
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
@@ -2597,10 +2556,7 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2631,8 +2587,7 @@ export const MessageItemComponent = ({
 										toggleVisibilityMenu(event, 'right')
 									}
 									aria-label={translate(
-										'message.visibility.open',
-										'Open visibility details'
+										'message.visibility.open'
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
@@ -2651,10 +2606,7 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'right')
 									}
@@ -2732,8 +2684,7 @@ export const MessageItemComponent = ({
 									className="messageItem__actionMenuReactions"
 									role="group"
 									aria-label={translate(
-										'message.reaction.add',
-										'React'
+										'message.reaction.add'
 									)}
 								>
 									{quickEmojis.map((emoji) => {
@@ -2787,8 +2738,7 @@ export const MessageItemComponent = ({
 										// toggles it open again.
 										data-emoji-picker-toggle=""
 										aria-label={translate(
-											'message.reaction.more',
-											'Weitere Emojis'
+											'message.reaction.more'
 										)}
 										onClick={() =>
 											setIsQuickEmojiPickerOpen(
@@ -2851,16 +2801,10 @@ export const MessageItemComponent = ({
 							}}
 						>
 							<div className="messageItem__visibilityMenuSubheading">
-								{translate(
-									'message.visibility.people',
-									'People that see this message'
-								)}
+								{translate('message.visibility.people')}
 							</div>
 							<div className="messageItem__visibilityMenuHeading">
-								{translate(
-									'message.visibility.title',
-									'Message Visible to...'
-								)}
+								{translate('message.visibility.title')}
 							</div>
 							<div className="messageItem__visibilityMenuDivider" />
 							<div className="messageItem__visibilityMenuSections">
@@ -2869,8 +2813,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'clients',
 											title: translate(
-												'message.audience.clients',
-												'Clients'
+												'message.audience.clients'
 											),
 											items: visibilityGroups.clients,
 											role: 'clients' as const
@@ -2878,8 +2821,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'counsellors',
 											title: translate(
-												'message.audience.counsellors',
-												'Counsellors'
+												'message.audience.counsellors'
 											),
 											items: visibilityGroups.counsellors,
 											role: 'counsellors' as const
@@ -2887,8 +2829,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'moderators',
 											title: translate(
-												'message.audience.moderators',
-												'Moderators'
+												'message.audience.moderators'
 											),
 											items: visibilityGroups.moderators,
 											role: 'moderators' as const
@@ -2963,18 +2904,15 @@ export const MessageItemComponent = ({
 														{section.key ===
 														'clients'
 															? translate(
-																	'message.audience.clientsEmpty',
-																	'No clients are in this room'
+																	'message.audience.clientsEmpty'
 																)
 															: section.key ===
 																  'counsellors'
 																? translate(
-																		'message.audience.counsellorsEmpty',
-																		'No counsellors are in this room'
+																		'message.audience.counsellorsEmpty'
 																	)
 																: translate(
-																		'message.audience.moderatorsEmpty',
-																		'No moderators are in this room'
+																		'message.audience.moderatorsEmpty'
 																	)}
 													</span>
 												) : (
