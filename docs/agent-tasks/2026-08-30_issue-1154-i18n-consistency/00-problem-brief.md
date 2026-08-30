@@ -6,13 +6,13 @@
 
 ## Acceptance criteria
 
-- [x] Slice 13+14 (+ rescan extras) on `cursor/1154/calls-forms-i18n` (uncommitted; stacked PR pending ask).
+- [x] Slice 13+14 (+ rescan extras) on `cursor/1154/calls-forms-i18n`. Independent 2026-08-31 audit found leftover mini-game/nav/composer chrome; those are fixed on the same branch.
 - [x] Source-scan test lists leftover literals and fails if they return.
 - [x] New keys exist in `de`/`en`/`fr`/`ru`/`ti`/`tr`; `fr`/`ru`/`ti`/`tr` missing-vs-de budget stays 0; no redundant `de@informal` copies.
 - [x] No `t(key, 'DE|EN…')` / `{ defaultValue: '…' }` / `translateWithFallback(..., 'literal')` in production `src/`.
 - [x] No raw user-visible DE/EN chrome in production JSX (`button`/`h1–h3`/`title`/`aria-label`/`placeholder`/`alert`/`prompt`).
 - [x] `npx vitest` on the slice test + `src/i18n.test.ts` + updated tests; `npm run lint:scripts`; `npm run test:unit`.
-- [ ] #1154 comment lists out-of-repo leftovers (agency/topic names, age `option.label`, Ukrainian) as follow-ups. Do not close or merge without asking.
+- [x] #1154 comment lists out-of-repo leftovers (agency/topic names, age `option.label`, Ukrainian) as follow-ups. Do not close or merge without asking.
 
 ## Assumptions
 

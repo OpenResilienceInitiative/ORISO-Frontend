@@ -12,8 +12,8 @@
 | 15  | Wire slice 13 call UI                                                   | FloatingCallWidget, GroupCallWidget, MatrixCallView, VideoCall, CallManager                                                 | slice test + i18n guard                                                    | done   |
 | 16  | Wire slice 14 form/modal/composer defaults                              | OrisoDialog, form primitives, TipTap, EmojiPicker, ThreadListPanel                                                          | slice test + touched `*.test.tsx`                                          | done   |
 | 17  | Wire rescan extras (slice 15)                                           | SessionMenu, GroupChatHeader, DepartmentLegal, booking titles, UIVersionToggle, NotFound, Header, typing aria, drafts title | slice test                                                                 | done   |
-| 18  | Full-platform rescan clean                                              | production `src/**/*.{ts,tsx}`                                                                                              | `callsFormsI18n.test.ts` 28 PASS                                           | done   |
-| 19  | Gates                                                                   | —                                                                                                                           | `npm run test:unit` 3735 PASS; `npm run lint:scripts` PASS                 | done   |
+| 18  | Full-platform rescan clean                                              | production `src/**/*.{ts,tsx}`                                                                                              | Audit 2026-08-31: leftovers found then fixed; walk clean                   | done   |
+| 19  | Gates                                                                   | —                                                                                                                           | `npm run test:unit` 3738 PASS; `npm run lint:scripts` PASS                 | done   |
 
 ## Verification checklist
 
@@ -22,7 +22,7 @@
 - [x] `npm run test:unit` — 368 files / 3735 PASS
 - [ ] `lint:style` / `build` — skip unless SCSS/imports change (`lint:style` already red on pre-dev)
 - [ ] Browser in `fr`/`ru` — NOT RUN (no frontend up)
-- [ ] Stacked PR on `cursor/1154/remaining-chrome-i18n`; reviewers BjoernLudwig, shazia-k — ask before open
+- [x] Stacked PR #1243 on `cursor/1154/remaining-chrome-i18n`; reviewers BjoernLudwig, shazia-k — audit commit updates the body; do not merge
 
 ## Risks
 

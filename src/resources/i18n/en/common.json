@@ -1555,6 +1555,8 @@
 				"overLimit": "Message is over the character limit.",
 				"warning": "Message is approaching the character limit."
 			},
+			"loadError": "The chat input could not be loaded. Please try again.",
+			"retry": "Try again",
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1690,6 +1692,7 @@
 			"inlineImageAlt": "Message image",
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
+			"lastReplyAt": "Last reply at {{time}}",
 			"title": "Thread",
 			"placeholder": "Reply in thread"
 		},
@@ -1724,7 +1727,8 @@
 		"overview": "Overview",
 		"profile": "Profile",
 		"myProfile": "My profile",
-		"tools": "My tools"
+		"tools": "My tools",
+		"unreadCount": "{{count}} unread"
 	},
 	"notification": {
 		"error": "Error",
@@ -3235,6 +3239,44 @@
 				"starter334": "first time",
 				"standard446": "mild experience (recommended)",
 				"deep556": "long (experts)"
+			},
+			"secondsAria": "{{label}}, {{count}} seconds",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Chaos Tamer", "success": "Good start." },
+				"2": {
+					"title": "Breath Finder",
+					"success": "You found a rhythm."
+				},
+				"3": {
+					"title": "Breath Director",
+					"success": "Great control."
+				},
+				"4": {
+					"title": "Calm Builder",
+					"success": "Flow is improving."
+				},
+				"5": {
+					"title": "Inner Balance",
+					"success": "Breathing stays smooth."
+				},
+				"6": { "title": "Rhythm Keeper", "success": "Strong focus." },
+				"7": {
+					"title": "Peace Crafter",
+					"success": "You stay centered."
+				},
+				"8": {
+					"title": "Silent Navigator",
+					"success": "Calm under pressure."
+				},
+				"9": {
+					"title": "Stillness Master",
+					"success": "Almost complete."
+				},
+				"10": {
+					"title": "True Wisdom",
+					"success": "You mastered this round."
+				}
 			},
 			"briefing": {
 				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",

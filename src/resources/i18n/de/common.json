@@ -1570,6 +1570,8 @@
 				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
 				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
 			},
+			"loadError": "Der Chat-Eingabebereich konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen",
 			"toolbar": {
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
@@ -1712,6 +1714,7 @@
 			"inlineImageAlt": "Bild in der Nachricht",
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
+			"lastReplyAt": "Letzte Antwort um {{time}}",
 			"title": "Thread",
 			"placeholder": "Im Thread antworten"
 		},
@@ -1748,7 +1751,8 @@
 		"overview": "Übersicht",
 		"profile": "Profil",
 		"myProfile": "Mein Profil",
-		"tools": "Meine Tools"
+		"tools": "Meine Tools",
+		"unreadCount": "{{count}} ungelesen"
 	},
 	"notification": {
 		"error": "Fehler",
@@ -3295,6 +3299,44 @@
 				"starter334": "erstes Mal",
 				"standard446": "mittlere Erfahrung (empfohlen)",
 				"deep556": "lang (Expertinnen und Experten)"
+			},
+			"secondsAria": "{{label}}, {{count}} Sekunden",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Chaosbändiger", "success": "Guter Start." },
+				"2": {
+					"title": "Atemfinder",
+					"success": "Du hast einen Rhythmus gefunden."
+				},
+				"3": { "title": "Atemlenker", "success": "Große Kontrolle." },
+				"4": {
+					"title": "Ruheaufbauer",
+					"success": "Der Fluss wird besser."
+				},
+				"5": {
+					"title": "Innere Balance",
+					"success": "Das Atmen bleibt gleichmäßig."
+				},
+				"6": {
+					"title": "Rhythmuswächter",
+					"success": "Starke Konzentration."
+				},
+				"7": {
+					"title": "Friedensgestalter",
+					"success": "Du bleibst mittig."
+				},
+				"8": {
+					"title": "Stiller Navigator",
+					"success": "Ruhe unter Druck."
+				},
+				"9": {
+					"title": "Meister der Stille",
+					"success": "Fast geschafft."
+				},
+				"10": {
+					"title": "Wahre Weisheit",
+					"success": "Du hast diese Runde gemeistert."
+				}
 			},
 			"briefing": {
 				"0": "Es tut uns leid, du musst gerade warten, im Moment sind alle Beraterinnen und Berater beschäftigt.",

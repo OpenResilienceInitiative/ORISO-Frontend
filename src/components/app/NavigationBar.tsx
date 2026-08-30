@@ -816,6 +816,7 @@ const NavigationUnreadIndicator = ({
 	count: number;
 	variant?: 'default' | 'figma';
 }) => {
+	const { t: translate } = useTranslation();
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
@@ -837,7 +838,7 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={`${count} unread`}
+			aria-label={translate('navigation.unreadCount', { count })}
 		>
 			{isFigma ? (
 				<span className="navigation__item__count__sup">{display}</span>

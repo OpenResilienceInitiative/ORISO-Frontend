@@ -1555,6 +1555,8 @@
 				"overLimit": "Mesaj, karakter sınırını aşıyor.",
 				"warning": "Mesaj, karakter sınırına yaklaşıyor."
 			},
+			"loadError": "Sohbet giriş alanı yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene",
 			"toolbar": {
 				"openTools": "Tüm araçlara geri dön",
 				"closeTools": "Kompakt araçlara geç",
@@ -1697,6 +1699,7 @@
 			"inlineImageAlt": "Mesaj görseli",
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
+			"lastReplyAt": "Son yanıt {{time}}",
 			"title": "Konu",
 			"placeholder": "Konuda yanıtla"
 		},
@@ -1733,7 +1736,8 @@
 		"overview": "Genel Bakış",
 		"profile": "Profil",
 		"myProfile": "Profilim",
-		"tools": "Aletlerim"
+		"tools": "Aletlerim",
+		"unreadCount": "{{count}} okunmamış"
 	},
 	"notification": {
 		"error": "Hata",
@@ -3281,6 +3285,47 @@
 				"starter334": "ilk kez",
 				"standard446": "orta seviye deneyim (önerilen)",
 				"deep556": "uzun (uzmanlar)"
+			},
+			"secondsAria": "{{label}}, {{count}} saniye",
+			"secondsShort": "{{count}} sn",
+			"levels": {
+				"1": {
+					"title": "Kaos terbiyecisi",
+					"success": "İyi başlangıç."
+				},
+				"2": {
+					"title": "Nefes bulucu",
+					"success": "Bir ritim buldunuz."
+				},
+				"3": {
+					"title": "Nefes yönetmeni",
+					"success": "Güzel kontrol."
+				},
+				"4": {
+					"title": "Sakinlik kurucusu",
+					"success": "Akış iyileşiyor."
+				},
+				"5": {
+					"title": "İç denge",
+					"success": "Nefes düzgün kalıyor."
+				},
+				"6": { "title": "Ritim koruyucusu", "success": "Güçlü odak." },
+				"7": {
+					"title": "Barış ustası",
+					"success": "Merkezde kalıyorsunuz."
+				},
+				"8": {
+					"title": "Sessiz rehber",
+					"success": "Baskı altında sakinlik."
+				},
+				"9": {
+					"title": "Dinginlik ustası",
+					"success": "Neredeyse bitti."
+				},
+				"10": {
+					"title": "Gerçek bilgelik",
+					"success": "Bu turu başardınız."
+				}
 			},
 			"briefing": {
 				"0": "Üzgünüz, şu anda beklemeniz gerekiyor, tüm danışmanlar şu an meşgul.",

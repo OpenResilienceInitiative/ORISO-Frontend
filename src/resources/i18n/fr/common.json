@@ -1555,6 +1555,8 @@
 				"overLimit": "Le message dépasse la limite de caractères.",
 				"warning": "Le message approche de la limite de caractères."
 			},
+			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer",
 			"toolbar": {
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
@@ -1697,6 +1699,7 @@
 			"inlineImageAlt": "Image du message",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
+			"lastReplyAt": "Dernière réponse à {{time}}",
 			"title": "Fil de discussion",
 			"placeholder": "Répondre dans le fil"
 		},
@@ -1733,7 +1736,8 @@
 		"overview": "Aperçu",
 		"profile": "Profil",
 		"myProfile": "Mon profil",
-		"tools": "Mes outils"
+		"tools": "Mes outils",
+		"unreadCount": "{{count}} non lu"
 	},
 	"notification": {
 		"error": "Erreur",
@@ -3281,6 +3285,47 @@
 				"starter334": "première fois",
 				"standard446": "expérience modérée (recommandé)",
 				"deep556": "long (personnes expertes)"
+			},
+			"secondsAria": "{{label}}, {{count}} secondes",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Dompteur de chaos", "success": "Bon départ." },
+				"2": {
+					"title": "Chercheur de souffle",
+					"success": "Vous avez trouvé un rythme."
+				},
+				"3": {
+					"title": "Guide du souffle",
+					"success": "Belle maîtrise."
+				},
+				"4": {
+					"title": "Bâtisseur de calme",
+					"success": "Le flux s'améliore."
+				},
+				"5": {
+					"title": "Équilibre intérieur",
+					"success": "La respiration reste fluide."
+				},
+				"6": {
+					"title": "Gardien du rythme",
+					"success": "Concentration solide."
+				},
+				"7": {
+					"title": "Artisan de paix",
+					"success": "Vous restez centré."
+				},
+				"8": {
+					"title": "Navigateur silencieux",
+					"success": "Calme sous pression."
+				},
+				"9": {
+					"title": "Maître du silence",
+					"success": "Presque terminé."
+				},
+				"10": {
+					"title": "Vraie sagesse",
+					"success": "Vous avez maîtrisé cette manche."
+				}
 			},
 			"briefing": {
 				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
