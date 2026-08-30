@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
 import { logout } from '../logout/logout';
 import {
-	AgencySpecificContext,
 	AUTHORITIES,
 	ConsultingTypesContext,
 	hasUserAuthority,
@@ -62,7 +61,6 @@ export const Profile = () => {
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
-	const { specificAgency } = useContext(AgencySpecificContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 
 	const [mobileMenu, setMobileMenu] = useState<
@@ -499,9 +497,18 @@ export const Profile = () => {
 					</Routes>
 				</div>
 				<div className="profile__footer">
+					{/*
+					 * Footer legal links are platform-level only per #1213. The
+					 * agency-level Impressum + Datenschutz live on the agency
+					 * card (via DepartmentLegalSection); the footer must not
+					 * repeat them, because on a screen that shows several
+					 * agencies at once there is no single carrier the footer
+					 * could speak for. Dropping the `aid` param resolves each
+					 * URL without an agency filter, so the operator's
+					 * platform-level document is returned.
+					 */}
 					<LegalLinks
 						legalLinks={legalLinks}
-						params={{ aid: specificAgency?.id }}
 						delimiter={
 							<Text
 								type="infoSmall"
