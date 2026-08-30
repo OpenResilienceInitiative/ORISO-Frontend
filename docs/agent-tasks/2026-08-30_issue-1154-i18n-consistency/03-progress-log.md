@@ -23,3 +23,9 @@
 - Target: AC — registration chrome no longer passes German `defaultValue`s
 - Change: drop German fallbacks from header, stepper, CompactStepRow, zipcode, consent, Registration chips; add `registrationChromeI18n.test.ts`
 - Verify: chrome 7 PASS; DataProtectionConsentLabel 13 PASS; AccountData.consentGating 44 PASS; AccountData 7 PASS; eslint PASS
+
+### Finish — pass
+
+- Target: regression + PR prep
+- Change: `04-test-evidence.md`, `06-pr-summary.md`, `.learnings/STATE.md`
+- Verify: `npm run lint:scripts` PASS; `npm run test:unit` 358 files / 3635 PASS; browser NOT RUN
