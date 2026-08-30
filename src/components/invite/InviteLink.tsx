@@ -5,7 +5,7 @@ import React, {
 	useRef,
 	useState
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Box,
@@ -54,6 +54,7 @@ import type { Pseudonym } from '../../utils/anonName/engine';
  */
 export const InviteLink = () => {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const { token } = useParams<{ token: string; topicSlug?: string }>();
 	const tenantContext = useContext(TenantContext);
 	const localeContext = useContext(LocaleContext);
@@ -138,7 +139,7 @@ export const InviteLink = () => {
 				false,
 				tenant as any
 			);
-			redirectToApp();
+			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
 			setStatus('error');
 			setErrorMessage(
@@ -147,7 +148,7 @@ export const InviteLink = () => {
 					: 'Invite link could not be used'
 			);
 		}
-	}, [legacyRedeem, username, password, locale, tenant]);
+	}, [legacyRedeem, username, password, locale, tenant, navigate]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
 

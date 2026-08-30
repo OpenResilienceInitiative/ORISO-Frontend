@@ -33,11 +33,12 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import {
 	redirectToApp,
 	getPostRegistrationGroupChatId,
+	getPostRegistrationSessionId,
 	POST_REGISTRATION_LOADER_KEY
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { apiPostRegistration } from '../../api';
+import { apiGetAskerSessionList, apiPostRegistration } from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
 import {
@@ -507,7 +508,7 @@ export const Registration = () => {
 				settings.multitenancyWithSingleDomainEnabled,
 				tenant
 			)
-				.then(() => {
+				.then(async () => {
 					sessionStorage.removeItem(registrationSessionStorageKey);
 					sessionStorage.removeItem(
 						registrationMaxStepSessionStorageKey
@@ -520,8 +521,17 @@ export const Registration = () => {
 						POST_REGISTRATION_LOADER_KEY,
 						'true'
 					);
+					let sessionId: string | undefined;
+					try {
+						sessionId = getPostRegistrationSessionId(
+							await apiGetAskerSessionList()
+						);
+					} catch {
+						sessionId = undefined;
+					}
 					redirectToApp(
-						getPostRegistrationGroupChatId(location.search)
+						getPostRegistrationGroupChatId(location.search),
+						{ navigate, sessionId }
 					);
 				})
 				.catch((error) => {
@@ -556,7 +566,8 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		navigate
 	]);
 
 	const handleSubmit = useCallback(
