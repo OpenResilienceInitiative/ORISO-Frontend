@@ -12,7 +12,10 @@ import {
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -93,6 +96,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Assert the public composer-to-session bottom spacing contract in CSS pixels. */
 async function expectComposerBottomInset(
 	canvasElement: HTMLElement,
 	expectedInset: number
@@ -571,9 +575,7 @@ export const Mobile: Story = {
 };
 
 export const Tablet: Story = {
-	globals: {
-		viewport: { value: 'tablet' }
-	},
+	globals: tablet834Globals,
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
 		await expectComposerBottomInset(canvasElement, 16);
