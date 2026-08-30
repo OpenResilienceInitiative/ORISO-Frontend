@@ -17,3 +17,9 @@
 - Target: AC — preselected topic uses locale-aware helper
 - Change: `PreselectedTopic.tsx` calls `getRegistrationTopicDisplay(topic, i18n.language)`; new render test
 - Verify: `npx vitest run --project unit src/components/registration/preselectionBox/PreselectedTopic.test.tsx` → 1 PASS; eslint PASS
+
+### Iteration 3 — pass
+
+- Target: AC — registration chrome no longer passes German `defaultValue`s
+- Change: drop German fallbacks from header, stepper, CompactStepRow, zipcode, consent, Registration chips; add `registrationChromeI18n.test.ts`
+- Verify: chrome 7 PASS; DataProtectionConsentLabel 13 PASS; AccountData.consentGating 44 PASS; AccountData 7 PASS; eslint PASS

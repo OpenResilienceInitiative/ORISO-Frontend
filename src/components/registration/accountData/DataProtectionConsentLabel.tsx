@@ -117,10 +117,7 @@ export const DataProtectionConsentLabel: FC<
 	if (effectiveResolution.status === 'unavailable') {
 		return (
 			<span role="alert" data-cy="consent-sentence-unavailable">
-				{t(
-					'registration.agency.legal.unavailable',
-					'Die Datenschutzhinweise können derzeit nicht geladen werden.'
-				)}
+				{t('registration.agency.legal.unavailable')}
 			</span>
 		);
 	}
@@ -128,10 +125,7 @@ export const DataProtectionConsentLabel: FC<
 	if (effectiveResolution.status === 'pending') {
 		return (
 			<span aria-live="polite" data-cy="consent-sentence-pending">
-				{t(
-					'registration.dataProtection.loading',
-					'Der Einwilligungstext wird geladen …'
-				)}
+				{t('registration.dataProtection.loading')}
 			</span>
 		);
 	}

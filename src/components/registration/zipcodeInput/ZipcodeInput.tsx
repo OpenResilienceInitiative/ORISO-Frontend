@@ -117,9 +117,7 @@ export const ZipcodeInput: FC<{
 					digitLabel={(position) =>
 						t('registration.zipcode.digitLabel', {
 							position,
-							total: ZIPCODE_LENGTH,
-							defaultValue:
-								'Postleitzahl, Ziffer {{position}} von {{total}}'
+							total: ZIPCODE_LENGTH
 						})
 					}
 				/>
@@ -136,10 +134,7 @@ export const ZipcodeInput: FC<{
 				>
 					{remaining > 0 && value.length > 0
 						? t('registration.zipcode.remaining', {
-								count: remaining,
-								defaultValue_one: 'Noch {{count}} Ziffer',
-								defaultValue_other: 'Noch {{count}} Ziffern',
-								defaultValue: 'Noch {{count}} Ziffern'
+								count: remaining
 							})
 						: ''}
 				</Typography>

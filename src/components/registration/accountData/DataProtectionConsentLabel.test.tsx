@@ -8,6 +8,8 @@ const TRANSLATIONS: Record<string, string> = {
 	'registration.dataProtection.label.and': ' und ',
 	'registration.dataProtection.label.suffix':
 		' zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies.',
+	'registration.agency.legal.unavailable':
+		'Die Datenschutzhinweise können derzeit nicht geladen werden.',
 	'registration.dataProtection.loading':
 		'Der Einwilligungstext wird geladen …',
 	'registration.dataProtection.cookieNotice':

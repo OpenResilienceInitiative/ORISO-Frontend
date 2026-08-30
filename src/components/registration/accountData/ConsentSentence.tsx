@@ -73,10 +73,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 	if (consentText && !traegerSentence) {
 		return (
 			<span role="alert" data-cy="consent-sentence-unrenderable">
-				{t(
-					'registration.dataProtection.unrenderable',
-					'Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.'
-				)}
+				{t('registration.dataProtection.unrenderable')}
 			</span>
 		);
 	}
@@ -146,9 +143,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 						language: languageName(
 							traegerSentence.originalLang,
 							i18n?.language
-						),
-						defaultValue:
-							'Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).'
+						)
 					})}
 				</Typography>
 			)}
@@ -165,10 +160,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 						}}
 						data-cy="consent-fallback-language"
 					>
-						{t(
-							'legal.notice.fallbackLanguage',
-							'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
-						)}
+						{t('legal.notice.fallbackLanguage')}
 					</Typography>
 				)}
 			<Typography
@@ -183,10 +175,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				    client renders beneath the sentence." So it comes from the
 				    catalogue, not from the payload — and a Träger cannot edit
 				    it away, which is the point of ADR-021 decision 2. */}
-				{t(
-					'registration.dataProtection.cookieNotice',
-					'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
-				)}
+				{t('registration.dataProtection.cookieNotice')}
 			</Typography>
 		</>
 	);
