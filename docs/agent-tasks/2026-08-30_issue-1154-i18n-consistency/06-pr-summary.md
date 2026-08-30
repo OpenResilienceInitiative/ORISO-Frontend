@@ -1,16 +1,14 @@
-# PR summary — #1154 remaining chrome
+# PR summary — #1154 slices 13–15 + audit
 
-Parent: [ORISO-Frontend#1154](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154). Leftovers comment: [5470637260](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154#issuecomment-5470637260).
-
-Slice 12 stacked on leftovers (`cursor/1154/leftovers-i18n` / #1241). Leftovers was not the last in-repo slice: a full-platform rescan found 117 `t`/`tr`/`translate` string fallbacks still snapping UI to German or English.
+Parent: [ORISO-Frontend#1154](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154). Stacked PR: [#1243](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1243) on #1242.
 
 ## Files changed
 
-See `git diff --stat cursor/1154/leftovers-i18n`. Session header/menu/list, waiting countdown, notifications, legal, handover carousel, opening-hours weekdays, plus `sessionList.resizeHandle.*` and `sessionType.team` keys.
+Call/form chrome from 080ef0df, plus the 2026-08-31 audit fix: NavigationBar unread aria, waiting mini-game / thread chrome in SessionItemComponent, MessageSubmitErrorBoundary, catalogues, and the source-scan test.
 
 ## Test evidence
 
-Headline (local only, Node 22.12.0): remaining-chrome source scan 23 PASS; waiting countdown 10 PASS; leftovers 8 PASS; i18n catalogue guard 31 PASS; LegalLinkModal 5 PASS; LegalPageWrapper 9 PASS.
+Local only, Node 22.12.0: `callsFormsI18n` 31 PASS; `i18n.test.ts` 31 PASS; `test:unit` 3738 PASS; `lint:scripts` PASS.
 
 ## Screenshots
 
@@ -18,6 +16,5 @@ None — no running frontend this turn.
 
 ## Risks / follow-ups
 
-- Call widgets and form-primitive aria-labels still have raw English/German (not `t()` fallbacks).
-- API `agency.name` / `topic.name`, ConsultingTypeService `option.label`, Ukrainian UI locale stay out of this repo.
+- Still out of repo: API `agency.name` / `topic.name`, ConsultingTypeService `option.label`, Ukrainian UI locale.
 - Merge is for senior review. Not merging this stack.

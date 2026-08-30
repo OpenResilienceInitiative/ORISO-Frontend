@@ -34,7 +34,10 @@ const SLICE_FILES = [
 	'src/components/pseudonym/BotMessageAnimation.tsx',
 	'src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx',
 	'src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx',
-	'src/components/draftsCenter/DraftsCenter.tsx'
+	'src/components/draftsCenter/DraftsCenter.tsx',
+	'src/components/app/NavigationBar.tsx',
+	'src/components/session/SessionItemComponent.tsx',
+	'src/components/messageSubmitInterface/MessageSubmitErrorBoundary.tsx'
 ];
 
 const ONE_LANGUAGE_CHROME = [
@@ -104,7 +107,22 @@ const ONE_LANGUAGE_CHROME = [
 	/aria-label="typing"/,
 	/title="booking-reschedule"/,
 	/title="booking-cancellation"/,
-	/title="drafts-chat-session"/
+	/title="drafts-chat-session"/,
+	/`\$\{count\} unread`/,
+	/`\$\{label\} seconds`/,
+	/'Let us get you grounded/,
+	/'Last reply at '/,
+	/'New reply in thread'/,
+	/Congratulations, you made it/,
+	/Level \{currentLevel\}/,
+	/'first time'/,
+	/'Chaos Tamer'/,
+	/'Good start\.'/,
+	/So sorry you must wait/,
+	/label: 'Erneut versuchen'/,
+	/Der Chat-Eingabebereich konnte nicht geladen werden/,
+	/preset\.label/,
+	/phase\.charAt/
 ];
 
 const REQUIRED_CALL_KEYS = [
@@ -118,6 +136,16 @@ const REQUIRED_CALL_KEYS = [
 ] as const;
 
 const REQUIRED_FORM_DIALOG_KEYS = ['back', 'confirm', 'close'] as const;
+
+const REQUIRED_RESCAN_KEYS = [
+	['navigation', 'unreadCount'],
+	['message', 'submit', 'loadError'],
+	['message', 'submit', 'retry'],
+	['message', 'thread', 'lastReplyAt'],
+	['session', 'waitingMiniGame', 'secondsAria'],
+	['session', 'waitingMiniGame', 'secondsShort'],
+	['session', 'waitingMiniGame', 'levels', '1', 'title']
+] as const;
 
 const stripComments = (src: string): string =>
 	src
@@ -176,6 +204,17 @@ describe('call and form chrome has no leftover DE/EN literals (#1154)', () => {
 					catalogue.form?.dialog?.[key],
 					`${locale} form.dialog.${key}`
 				).toBeTruthy();
+			}
+			let cursor: unknown = catalogue;
+			for (const path of REQUIRED_RESCAN_KEYS) {
+				cursor = catalogue;
+				for (const part of path) {
+					cursor =
+						cursor && typeof cursor === 'object'
+							? (cursor as Record<string, unknown>)[part]
+							: undefined;
+				}
+				expect(cursor, `${locale} ${path.join('.')}`).toBeTruthy();
 			}
 		}
 	});
