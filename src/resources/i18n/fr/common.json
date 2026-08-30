@@ -65,7 +65,8 @@
 		},
 		"wait": "Veuillez attendre",
 		"info": "Information",
-		"or": "ou"
+		"or": "ou",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -228,7 +229,8 @@
 		},
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
-			"title": "Votre disponibilité"
+			"title": "Votre disponibilité",
+			"iframeTitle": "Disponibilité"
 		},
 		"calender": {
 			"add": "Ajouter un calendrier",
@@ -309,6 +311,18 @@
 			"button": {
 				"label": "Démarrer un appel vidéo"
 			}
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Calendriers assignés"
+		},
+		"calcom": {
+			"loading": "Chargement de {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Reporter le rendez-vous"
+		},
+		"cancellation": {
+			"iframeTitle": "Annuler le rendez-vous"
 		}
 	},
 	"chat": {
@@ -594,7 +608,8 @@
 				"description": "Il semble que nous ayons actuellement un problème de serveur.<br>Réessayez plus tard.",
 				"headline": "Oups !"
 			}
-		}
+		},
+		"notFound": "Page introuvable"
 	},
 	"furtherSteps": {
 		"arrowTitle": "Continuer",
@@ -1639,7 +1654,9 @@
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
 					"tooltip": "Enregistrer un message vocal"
-				}
+				},
+				"imageUrlPrompt": "URL de l'image",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1736,7 +1753,8 @@
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",
-			"placeholder": "Répondre dans le fil"
+			"placeholder": "Répondre dans le fil",
+			"inlineImageAlt": "Image du message"
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
@@ -2662,7 +2680,8 @@
 				"headline": "Informations sur la protection des données du centre de consultation",
 				"imprintHeadline": "Mentions légales du centre de consultation",
 				"label": "Informations légales",
-				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment."
+				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment.",
+				"loading": "Chargement des informations de protection des données"
 			},
 			"type": {
 				"single": "Conseil individuel",
@@ -3264,17 +3283,85 @@
 				"confirm": "Compris, c'est parti",
 				"inhale": {
 					"bubble": "Vous devez faire 3 choses pour gagner.",
-					"subtitle": "par le nez"
+					"subtitle": "par le nez",
+					"instruction": "Inspirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
 				},
 				"hold": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "retenez votre souffle"
+					"subtitle": "retenez votre souffle",
+					"instruction": "Retenez votre souffle pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
 				},
 				"exhale": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "par la bouche"
+					"subtitle": "par la bouche",
+					"instruction": "Expirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+				},
+				"restart": "Recommencer",
+				"pressAtRightTime": "Appuyez au bon moment",
+				"belly": {
+					"autoPilot": "Pilote auto",
+					"timeIt": "Mesurer",
+					"inhale": "Super, inspirez encore <strong>3 secondes</strong>, mais cette fois en dilatant le ventre.",
+					"hold": "Retenez maintenant votre souffle <strong>3 secondes</strong>.",
+					"exhale": "Expirez maintenant <strong>4 secondes</strong> et détendez tout le corps."
+				},
+				"selfTimer": {
+					"instruction": "Définissez maintenant vos propres intervalles de temps pendant que vous respirez.",
+					"repeatGame": "Rejouer",
+					"backToWaiting": "Retour à l'attente"
+				},
+				"completion": {
+					"instruction": "Félicitations, vous y êtes arrivé.",
+					"receiveGift": "Recevoir un petit cadeau"
+				},
+				"serenity": {
+					"instruction": "Ce cadeau est un petit mantra qui a aidé beaucoup de personnes à traverser des périodes difficiles. On l'appelle la prière de la sérénité : “Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux changer, et la sagesse de distinguer les unes des autres.”"
 				}
-			}
+			},
+			"inhaleExhale": "Guide respiratoire inspirer expirer",
+			"timeLeft": "Temps restant",
+			"choosePace": "Choisissez votre rythme, puis commencez votre premier essai.",
+			"firstTryInstruction": "Premier essai : suivez inspirer, retenir et expirer.",
+			"practiceSuccessPrompt": "Excellent, vous voulez commencer maintenant ?",
+			"timingInfo": "Réglez votre rythme de respiration avant de commencer.",
+			"achievementUnlocked": "Succès débloqué : Niveau {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Niveau {{level}} : {{title}}",
+			"completionTitle": "Félicitations, vous y êtes arrivé",
+			"prizeLine1": "Votre prix principal est la vraie sagesse.",
+			"prizeLine2": "Parce que vous avez dépassé votre bruit intérieur, vaincu l'ennui, pris du recul et trouvé un peu de paix intérieure.",
+			"serenityPrayer": "Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux, et la sagesse d'en connaître la différence.",
+			"changeMind": "Je change d'avis, laissez-moi essayer votre jeu d'attente",
+			"iJustWait": "J'attends simplement",
+			"startGame": "Démarrer le jeu",
+			"startFirstTry": "Commençons le premier essai",
+			"repeatTrainingRound": "Répéter le tour d'entraînement",
+			"startRealGame": "Commençons la vraie partie",
+			"repeatGame": "Répéter le jeu",
+			"receivePrize": "Recevoir votre prix",
+			"playAgain": "Rejouer",
+			"joinRoom": "Rejoindre la salle",
+			"decreaseInhale": "Diminuer les secondes d'inspiration",
+			"increaseInhale": "Augmenter les secondes d'inspiration",
+			"decreaseHold": "Diminuer les secondes de pause",
+			"increaseHold": "Augmenter les secondes de pause",
+			"decreaseExhale": "Diminuer les secondes d'expiration",
+			"increaseExhale": "Augmenter les secondes d'expiration",
+			"robotCard4Info": "Infos",
+			"presets": {
+				"starter334": "première fois",
+				"standard446": "expérience modérée (recommandé)",
+				"deep556": "long (personnes expertes)"
+			},
+			"briefing": {
+				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
+				"1": "Attendre avec tous ces problèmes peut être assez éprouvant. Si vous voulez, nous avons créé un petit pont de salle d'attente.",
+				"2": "D'accord, vous devez faire trois choses dans le jeu.",
+				"3": "1. Inspirez par le nez\n\n2. Retenez votre souffle\n\n3. Expirez par la bouche",
+				"negative": "D'accord, merci de patienter. Dès qu'un conseiller est libre, nous vous faisons entrer."
+			},
+			"onboardingLine1": "Prenez simplement le temps d'arriver. Nous respirons ensemble.",
+			"onboardingLine3": "Quand vous êtes prêt, lancez votre premier essai.",
+			"volumeHint": "Pour une meilleure expérience, veuillez activer le son."
 		},
 		"acceptance": {
 			"button": {
@@ -3535,11 +3622,15 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
-				"internal": "Échange interne"
+				"internal": "Échange interne",
+				"team": "Conseil en équipe"
 			}
 		},
 		"resizeHandle": {
-			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+			"scrollAriaLabel": "Faites glisser pour faire défiler la liste.",
+			"ariaLabel": "Redimensionner la liste des consultations. Faites glisser verticalement pour la faire défiler.",
+			"expand": "Afficher la liste des consultations",
+			"collapse": "Réduire la liste des consultations pour agrandir le chat"
 		}
 	},
 	"statusOverlay": {
@@ -3883,7 +3974,8 @@
 		"twoUsers": {
 			"connector": "et",
 			"typing": "écrire"
-		}
+		},
+		"aria": "En train d’écrire"
 	},
 	"user": {
 		"userAddiction": {
@@ -4690,7 +4782,8 @@
 			"open": "Ouvrir le brouillon",
 			"next": "Brouillon suivant",
 			"delete": "Supprimer le brouillon",
-			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire."
+			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire.",
+			"embeddedTitle": "Chat du brouillon"
 		}
 	},
 	"tour": {
@@ -4898,6 +4991,103 @@
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
 			}
+		}
+	},
+	"calls": {
+		"answer": "Répondre",
+		"reject": "Refuser",
+		"decline": "Refuser",
+		"endCall": "Raccrocher",
+		"fullscreen": "Plein écran",
+		"mute": "Couper le micro",
+		"unmute": "Activer le micro",
+		"turnOnVideo": "Activer la vidéo",
+		"turnOffVideo": "Désactiver la vidéo",
+		"moreOptions": "Autres options",
+		"close": "Fermer l'appel",
+		"title": "Appel",
+		"videoCall": "Appel vidéo",
+		"audioCall": "Appel audio",
+		"autoFit": "Ajuster automatiquement",
+		"autoFitAria": "Ajuster la vidéo à la fenêtre",
+		"resizeAria": "Redimensionner la fenêtre d'appel ({{edge}})",
+		"widget": {
+			"autoFit": "Ajuster la vidéo",
+			"autoFitAria": "Ajuster la vidéo à la fenêtre",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"answerFailed": "Impossible de répondre : {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Appel entrant",
+			"incomingDescription": "Quelqu'un vous appelle…",
+			"close": "Fermer l'appel",
+			"autoFit": "Ajuster automatiquement",
+			"autoFitAria": "Ajuster la fenêtre d'appel",
+			"openFullView": "Ouvrir la vue complète",
+			"switchToSmallView": "Passer à la petite vue",
+			"exitFullScreen": "Quitter le plein écran",
+			"enterFullScreen": "Passer en plein écran",
+			"fullView": "Vue complète",
+			"smallView": "Petite vue",
+			"fullScreen": "Plein écran",
+			"iframeTitle": "Appel vidéo de groupe",
+			"connecting": "Connexion…",
+			"settingUp": "Préparation de l'appel",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Aucun identifiant de salle",
+			"noRoomDescription": "Impossible de démarrer un appel sans identifiant de salle.",
+			"goBack": "Retour"
+		},
+		"error": {
+			"noRoom": "Impossible de démarrer l'appel : aucune salle Matrix pour cette session.",
+			"httpsRequired": "L'accès à la caméra et au microphone nécessite HTTPS. Rediriger vers une connexion sécurisée ?",
+			"cannotAccess": "Impossible d'accéder à la caméra ou au microphone. ",
+			"grantPermissions": "Veuillez autoriser l'accès dans les paramètres du navigateur.",
+			"noDevice": "Aucune caméra ni microphone n'a été trouvé sur cet appareil.",
+			"browserUnsupported": "Votre navigateur ne prend pas en charge cette fonction. Veuillez utiliser HTTPS.",
+			"unknown": "Erreur inconnue.",
+			"callFailed": "L'appel a échoué : {{message}}",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Retour",
+			"confirm": "Compris",
+			"close": "Fermer"
+		},
+		"calendar": {
+			"cancel": "Annuler",
+			"ok": "OK",
+			"previousMonth": "Mois précédent",
+			"selectMonth": "Choisir le mois",
+			"nextMonth": "Mois suivant",
+			"previousYear": "Année précédente",
+			"selectYear": "Choisir l'année",
+			"nextYear": "Année suivante"
+		},
+		"datePicker": {
+			"openCalendar": "Ouvrir le calendrier"
+		},
+		"timePicker": {
+			"dialogTitle": "Choisir l'heure",
+			"cancel": "Annuler",
+			"ok": "OK",
+			"open": "Ouvrir le sélecteur d'heure",
+			"selectHours": "Choisir les heures",
+			"selectMinutes": "Choisir les minutes",
+			"hour": "Heure",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Passer à la saisie texte",
+			"switchToDial": "Passer au cadran"
+		},
+		"select": {
+			"search": "Rechercher"
 		}
 	}
 }

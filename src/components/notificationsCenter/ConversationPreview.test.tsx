@@ -20,7 +20,7 @@ vi.mock('../../services/chatTransportService', () => ({
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (_key: string, defaultValue?: string) => defaultValue ?? _key,
+		t: (key: string) => key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -190,7 +190,9 @@ describe('ConversationPreview (#847)', () => {
 
 		render(<ConversationPreview roomId="!missing:matrix.example" />);
 
-		expect(screen.getByText(/preview is not available yet/)).toBeTruthy();
+		expect(
+			screen.getByText('notifications.center.preview.unavailable')
+		).toBeTruthy();
 	});
 
 	it('shows the empty state for a room without messages', () => {
@@ -199,7 +201,7 @@ describe('ConversationPreview (#847)', () => {
 		render(<ConversationPreview roomId="!room:matrix.example" />);
 
 		expect(
-			screen.getByText(/No messages in this conversation/)
+			screen.getByText('notifications.center.preview.empty')
 		).toBeTruthy();
 	});
 

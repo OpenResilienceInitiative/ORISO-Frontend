@@ -143,7 +143,10 @@ export const DepartmentLegalSection = ({
 					sx={{ pt: 1.5, pb: 0.5 }}
 				>
 					{isLoading && (
-						<CircularProgress size={20} aria-label="loading" />
+						<CircularProgress
+							size={20}
+							aria-label={t('registration.agency.legal.loading')}
+						/>
 					)}
 					{nothingLoaded && (
 						<Typography variant="body2">

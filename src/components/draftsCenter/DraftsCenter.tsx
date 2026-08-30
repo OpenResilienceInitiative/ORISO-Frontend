@@ -58,7 +58,7 @@ const withEmbeddedNotificationsParam = (
 	}
 	const [basePath, queryString = ''] = path.split('?');
 	const query = new URLSearchParams(queryString);
-	query.set('embeddedNotifications');
+	query.set('embeddedNotifications', '1');
 	if (draftScopeKey) {
 		// Force iframe navigation when users switch between drafts in the same chat context.
 		query.set('draftScopeKey', draftScopeKey);
@@ -302,7 +302,9 @@ export const DraftsCenter = () => {
 								<div className="draftsCenter__embeddedSession">
 									<iframe
 										key={selectedDraft.scopeKey}
-										title="drafts-chat-session"
+										title={translate(
+											'drafts.center.embeddedTitle'
+										)}
 										src={embeddedChatPath}
 										className="draftsCenter__embeddedSessionFrame"
 									/>

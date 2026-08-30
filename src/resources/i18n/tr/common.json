@@ -65,7 +65,8 @@
 		},
 		"wait": "Lütfen bekleyin",
 		"info": "Bilgi",
-		"or": "veya"
+		"or": "veya",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -228,7 +229,8 @@
 		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
-			"title": "Müsaitlik durumunuz"
+			"title": "Müsaitlik durumunuz",
+			"iframeTitle": "Müsaitlik"
 		},
 		"calender": {
 			"add": "Takvim ekle",
@@ -309,6 +311,18 @@
 			"button": {
 				"label": "Görüntülü aramayı başlat"
 			}
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Atanmış takvimler"
+		},
+		"calcom": {
+			"loading": "{{calLink}} yükleniyor"
+		},
+		"reschedule": {
+			"iframeTitle": "Randevuyu ertele"
+		},
+		"cancellation": {
+			"iframeTitle": "Randevuyu iptal et"
 		}
 	},
 	"chat": {
@@ -594,7 +608,8 @@
 				"description": "Şu anda bir sunucu sorunumuz var gibi görünüyor.<br>Daha sonra tekrar deneyin.",
 				"headline": "Oops!"
 			}
-		}
+		},
+		"notFound": "Sayfa bulunamadı"
 	},
 	"furtherSteps": {
 		"arrowTitle": "Daha ileri",
@@ -1639,7 +1654,9 @@
 				"voiceRecording": {
 					"label": "Sesli kayıt",
 					"tooltip": "Sesli mesaj kaydet"
-				}
+				},
+				"imageUrlPrompt": "Görsel URL’si",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1736,7 +1753,8 @@
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
 			"title": "Konu",
-			"placeholder": "Konuda yanıtla"
+			"placeholder": "Konuda yanıtla",
+			"inlineImageAlt": "Mesaj görseli"
 		},
 		"deliveryStatus": {
 			"sent": "Gönderildi"
@@ -2662,7 +2680,8 @@
 				"headline": "Danışma merkezinin veri koruma bilgileri",
 				"imprintHeadline": "Danışma merkezinin künyesi",
 				"label": "Yasal bilgiler",
-				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor."
+				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor.",
+				"loading": "Veri koruma bilgileri yükleniyor"
 			},
 			"type": {
 				"single": "Bireysel danışmanlık",
@@ -3264,17 +3283,85 @@
 				"confirm": "Anladım, başlayalım",
 				"inhale": {
 					"bubble": "Kazanmak için 3 şey yapman gerek.",
-					"subtitle": "burnundan"
+					"subtitle": "burnundan",
+					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes al, sonra düğmeye bas."
 				},
 				"hold": {
 					"bubble": "3 şey yapman gerek.",
-					"subtitle": "nefesini tut"
+					"subtitle": "nefesini tut",
+					"instruction": "<strong>{{count}} saniye</strong> nefesini tut, sonra düğmeye bas."
 				},
 				"exhale": {
 					"bubble": "3 şey yapman gerek.",
-					"subtitle": "ağzından"
+					"subtitle": "ağzından",
+					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes ver, sonra düğmeye bas."
+				},
+				"restart": "Yeniden başlat",
+				"pressAtRightTime": "Doğru zamanda bas",
+				"belly": {
+					"autoPilot": "Otomatik pilot",
+					"timeIt": "Sen tut zamanı",
+					"inhale": "Harika, <strong>3 saniye</strong> tekrar nefes al, bu sefer karnını genişleterek.",
+					"hold": "Şimdi <strong>3 saniye</strong> nefesini tut.",
+					"exhale": "Şimdi <strong>4 saniye</strong> nefes ver ve tüm vücudunu gevşet."
+				},
+				"selfTimer": {
+					"instruction": "Bu sefer nefes alırken kendi zaman aralıklarını sen belirle.",
+					"repeatGame": "Oyunu tekrarla",
+					"backToWaiting": "Beklemeye dön"
+				},
+				"completion": {
+					"instruction": "Tebrikler, başardınız.",
+					"receiveGift": "Küçük bir hediye alın"
+				},
+				"serenity": {
+					"instruction": "Bu hediye, birçok insana zor zamanlarında yardımcı olmuş küçük bir mantradır. Adı Huzur Duası: “Tanrım, bana değiştiremeyeceğim şeyleri kabul etme huzurunu, değiştirebileceğim şeyleri değiştirme cesaretini ve ikisini birbirinden ayırt etme bilgeliğini ver.”"
 				}
-			}
+			},
+			"inhaleExhale": "Nefes rehberi nefes al ver",
+			"timeLeft": "Kalan süre",
+			"choosePace": "Temponu seç, sonra ilk denemeni başlat.",
+			"firstTryInstruction": "İlk deneme: nefes al, tut ve ver adımlarını takip et.",
+			"practiceSuccessPrompt": "Harika, şimdi başlamak ister misin?",
+			"timingInfo": "Başlamadan önce nefes zamanlamanı ayarla.",
+			"achievementUnlocked": "Başarım açıldı: Seviye {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Seviye {{level}}: {{title}}",
+			"completionTitle": "Tebrikler, başardın",
+			"prizeLine1": "Asıl ödülün gerçek bilgeliktir.",
+			"prizeLine2": "Çünkü içindeki gürültüyü aştın, sıkıntıyı yendin, mesafe kazandın ve biraz iç huzuru buldun.",
+			"serenityPrayer": "Tanrım, değiştiremeyeceğim şeyleri kabullenmek için sükunet, değiştirebileceğim şeyleri değiştirmek için cesaret ve ikisi arasındaki farkı bilmek için bilgelik ver.",
+			"changeMind": "Fikrimi değiştirdim, bekleme oyununu denememe izin ver",
+			"iJustWait": "Sadece beklerim",
+			"startGame": "Oyunu başlat",
+			"startFirstTry": "İlk denemeyi başlatalım",
+			"repeatTrainingRound": "Antrenman turunu tekrarla",
+			"startRealGame": "Gerçek oyunu başlatalım",
+			"repeatGame": "Oyunu tekrarla",
+			"receivePrize": "Ödülünü al",
+			"playAgain": "Tekrar oyna",
+			"joinRoom": "Odaya katıl",
+			"decreaseInhale": "Nefes alma süresini azalt",
+			"increaseInhale": "Nefes alma süresini artır",
+			"decreaseHold": "Tutma süresini azalt",
+			"increaseHold": "Tutma süresini artır",
+			"decreaseExhale": "Nefes verme süresini azalt",
+			"increaseExhale": "Nefes verme süresini artır",
+			"robotCard4Info": "Bilgi",
+			"presets": {
+				"starter334": "ilk kez",
+				"standard446": "orta seviye deneyim (önerilen)",
+				"deep556": "uzun (uzmanlar)"
+			},
+			"briefing": {
+				"0": "Üzgünüz, şu anda beklemeniz gerekiyor, tüm danışmanlar şu an meşgul.",
+				"1": "Bunca sorunla beklemek oldukça zor olabilir. İstersen bunun için küçük bir bekleme odası köprüsü hazırladık.",
+				"2": "Tamam, oyunda üç şey yapman gerekiyor.",
+				"3": "1. Burnundan nefes al\n\n2. Nefesini tut\n\n3. Ağzından nefes ver",
+				"negative": "Tamam, lütfen biraz daha bekle. Bir danışman müsait olur olmaz seni içeri alacağız."
+			},
+			"onboardingLine1": "Sadece gelin. Birlikte nefes alıyoruz.",
+			"onboardingLine3": "Hazır olduğunuzda ilk denemenizi başlatın.",
+			"volumeHint": "Daha iyi bir deneyim için lütfen sesi açın."
 		},
 		"acceptance": {
 			"button": {
@@ -3535,11 +3622,15 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Sohbet çemberi",
-				"internal": "Dahili"
+				"internal": "Dahili",
+				"team": "Ekip danışmanlığı"
 			}
 		},
 		"resizeHandle": {
-			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin.",
+			"ariaLabel": "Görüşme listesinin boyutunu değiştirin. Kaydırmak için dikey sürükleyin.",
+			"expand": "Görüşme listesini genişlet",
+			"collapse": "Sohbeti büyütmek için görüşme listesini daralt"
 		}
 	},
 	"statusOverlay": {
@@ -3883,7 +3974,8 @@
 		"twoUsers": {
 			"connector": "ve",
 			"typing": "yaz"
-		}
+		},
+		"aria": "Yazıyor"
 	},
 	"user": {
 		"userAddiction": {
@@ -4690,7 +4782,8 @@
 			"open": "Taslağı aç",
 			"next": "Sonraki taslak",
 			"delete": "Taslağı sil",
-			"emptyDetail": "Yazmaya devam etmek için bir taslak seçin."
+			"emptyDetail": "Yazmaya devam etmek için bir taslak seçin.",
+			"embeddedTitle": "Taslak sohbeti"
 		}
 	},
 	"tour": {
@@ -4898,6 +4991,103 @@
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
+		}
+	},
+	"calls": {
+		"answer": "Yanıtla",
+		"reject": "Reddet",
+		"decline": "Reddet",
+		"endCall": "Çağrıyı bitir",
+		"fullscreen": "Tam ekran",
+		"mute": "Sesi kapat",
+		"unmute": "Sesi aç",
+		"turnOnVideo": "Videoyu aç",
+		"turnOffVideo": "Videoyu kapat",
+		"moreOptions": "Diğer seçenekler",
+		"close": "Çağrıyı kapat",
+		"title": "Çağrı",
+		"videoCall": "Görüntülü çağrı",
+		"audioCall": "Sesli çağrı",
+		"autoFit": "Otomatik sığdır",
+		"autoFitAria": "Videoyu pencereye sığdır",
+		"resizeAria": "Çağrı penceresini yeniden boyutlandır ({{edge}})",
+		"widget": {
+			"autoFit": "Videoyu otomatik sığdır",
+			"autoFitAria": "Videoyu pencereye sığdır",
+			"startFailed": "Çağrı başlatılamadı: {{message}}",
+			"answerFailed": "Yanıtlanamadı: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Gelen çağrı",
+			"incomingDescription": "Biri arıyor…",
+			"close": "Çağrıyı kapat",
+			"autoFit": "Otomatik sığdır",
+			"autoFitAria": "Çağrı penceresini sığdır",
+			"openFullView": "Tam görünümü aç",
+			"switchToSmallView": "Küçük görünüme geç",
+			"exitFullScreen": "Tam ekrandan çık",
+			"enterFullScreen": "Tam ekrana geç",
+			"fullView": "Tam görünüm",
+			"smallView": "Küçük görünüm",
+			"fullScreen": "Tam ekran",
+			"iframeTitle": "Grup görüntülü çağrı",
+			"connecting": "Bağlanıyor…",
+			"settingUp": "Çağrı hazırlanıyor",
+			"startFailed": "Çağrı başlatılamadı: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Oda kimliği yok",
+			"noRoomDescription": "Oda kimliği olmadan çağrı başlatılamaz.",
+			"goBack": "Geri"
+		},
+		"error": {
+			"noRoom": "Çağrı başlatılamıyor: bu oturum için Matrix odası bulunamadı.",
+			"httpsRequired": "Kamera ve mikrofon erişimi HTTPS gerektirir. Güvenli bağlantıya geçilsin mi?",
+			"cannotAccess": "Kamera veya mikrofona erişilemiyor. ",
+			"grantPermissions": "Lütfen tarayıcı ayarlarından izin verin.",
+			"noDevice": "Bu cihazda kamera veya mikrofon bulunamadı.",
+			"browserUnsupported": "Tarayıcınız bu özelliği desteklemiyor. Lütfen HTTPS kullanın.",
+			"unknown": "Bilinmeyen hata.",
+			"callFailed": "Çağrı başarısız: {{message}}",
+			"startFailed": "Çağrı başlatılamadı: {{message}}",
+			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Geri",
+			"confirm": "Anlaşıldı",
+			"close": "Kapat"
+		},
+		"calendar": {
+			"cancel": "İptal",
+			"ok": "OK",
+			"previousMonth": "Önceki ay",
+			"selectMonth": "Ay seç",
+			"nextMonth": "Sonraki ay",
+			"previousYear": "Önceki yıl",
+			"selectYear": "Yıl seç",
+			"nextYear": "Sonraki yıl"
+		},
+		"datePicker": {
+			"openCalendar": "Takvimi aç"
+		},
+		"timePicker": {
+			"dialogTitle": "Saat seç",
+			"cancel": "İptal",
+			"ok": "OK",
+			"open": "Saat seçiciyi aç",
+			"selectHours": "Saatleri seç",
+			"selectMinutes": "Dakikaları seç",
+			"hour": "Saat",
+			"minute": "Dakika",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Metin girişine geç",
+			"switchToDial": "Kadrana geç"
+		},
+		"select": {
+			"search": "Ara"
 		}
 	}
 }

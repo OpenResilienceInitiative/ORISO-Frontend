@@ -2,8 +2,14 @@
 import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TipTapComposer, TipTapComposerRef } from '../TipTapComposer';
+
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string) => key
+	})
+}));
 
 afterEach(() => cleanup());
 
