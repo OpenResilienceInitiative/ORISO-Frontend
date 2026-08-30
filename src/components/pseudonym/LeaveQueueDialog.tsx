@@ -120,32 +120,20 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 						className="leaveQueueDialog__title"
 						id="leaveQueueDialogTitle"
 					>
-						{t(
-							'anonymousChat.leaveQueue.headline',
-							'Chat verlassen?'
-						)}
+						{t('anonymousChat.leaveQueue.headline')}
 					</h2>
 				</div>
 
 				<p className="leaveQueueDialog__body">
 					{canStartChat
-						? t(
-								'anonymousChat.leaveQueue.bodyAccepted',
-								'Eine beratende Person wartet bereits auf Sie. Sie können den Chat jetzt starten, im Wartebereich bleiben oder Ihren Zugang löschen.'
-							)
-						: t(
-								'anonymousChat.leaveQueue.body',
-								'Sie sind noch im Wartebereich. Sie können weiter warten oder Ihren Zugang löschen — dann wird dieser Chat beendet.'
-							)}
+						? t('anonymousChat.leaveQueue.bodyAccepted')
+						: t('anonymousChat.leaveQueue.body')}
 				</p>
 
 				{confirmingDelete ? (
 					<>
 						<p className="leaveQueueDialog__warning" role="status">
-							{t(
-								'anonymousChat.leaveQueue.deleteWarning',
-								'Ihr Zugang wird deaktiviert und dieser Chat beendet. Sie können sich mit diesem Namen und Passwort nicht mehr anmelden, und wir können den Zugang nicht wiederherstellen.'
-							)}
+							{t('anonymousChat.leaveQueue.deleteWarning')}
 						</p>
 						<div className="leaveQueueDialog__actions leaveQueueDialog__actions--confirm">
 							<button
@@ -154,10 +142,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 								onClick={() => setConfirmingDelete(false)}
 								disabled={busy}
 							>
-								{t(
-									'anonymousChat.leaveQueue.cancelDelete',
-									'Abbrechen'
-								)}
+								{t('anonymousChat.leaveQueue.cancelDelete')}
 							</button>
 							<button
 								type="button"
@@ -165,10 +150,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 								onClick={onDeleteAccess}
 								disabled={busy}
 							>
-								{t(
-									'anonymousChat.leaveQueue.confirmDelete',
-									'Ja, endgültig löschen'
-								)}
+								{t('anonymousChat.leaveQueue.confirmDelete')}
 							</button>
 						</div>
 					</>
@@ -181,10 +163,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 								onClick={onStay}
 								disabled={busy}
 							>
-								{t(
-									'anonymousChat.leaveQueue.stay',
-									'Im Wartebereich bleiben'
-								)}
+								{t('anonymousChat.leaveQueue.stay')}
 							</button>
 							<button
 								type="button"
@@ -197,10 +176,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 										: 'leaveQueueDialogStartHint'
 								}
 							>
-								{t(
-									'anonymousChat.leaveQueue.startChat',
-									'Chat jetzt starten'
-								)}
+								{t('anonymousChat.leaveQueue.startChat')}
 							</button>
 						</div>
 
@@ -215,8 +191,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 								id="leaveQueueDialogStartHint"
 							>
 								{t(
-									'anonymousChat.leaveQueue.startChatUnavailable',
-									'Sobald eine beratende Person den Chat annimmt, können Sie hier starten.'
+									'anonymousChat.leaveQueue.startChatUnavailable'
 								)}
 							</p>
 						)}
@@ -239,10 +214,7 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 								onClick={() => setConfirmingDelete(true)}
 								disabled={busy}
 							>
-								{t(
-									'anonymousChat.leaveQueue.delete',
-									'Chat beenden & Zugang löschen'
-								)}
+								{t('anonymousChat.leaveQueue.delete')}
 							</button>
 						</div>
 					</>

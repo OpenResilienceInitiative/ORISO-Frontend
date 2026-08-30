@@ -4402,6 +4402,13 @@
 			"send": "The message could not be sent."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "This invite link can no longer be used",
+			"generic": "Invite link could not be used",
+			"missingToken": "This invite link is incomplete"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirm",
 		"description": "After that, a counsellor can start a chat with you.",

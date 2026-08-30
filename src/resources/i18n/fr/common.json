@@ -4476,6 +4476,13 @@
 			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Ce lien d’invitation ne peut plus être utilisé",
+			"generic": "Le lien d’invitation n’a pas pu être utilisé",
+			"missingToken": "Ce lien d’invitation est incomplet"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirmer",
 		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",

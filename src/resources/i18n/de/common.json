@@ -4492,6 +4492,13 @@
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Dieser Einladungslink kann nicht mehr verwendet werden",
+			"generic": "Der Einladungslink konnte nicht verwendet werden",
+			"missingToken": "Der Einladungslink ist unvollständig"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Bestätigen",
 		"description": "Danach kann eine beratende Person einen Chat mit Ihnen beginnen.",

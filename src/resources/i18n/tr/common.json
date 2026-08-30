@@ -4476,6 +4476,13 @@
 			"send": "Mesaj gönderilemedi."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Bu davet bağlantısı artık kullanılamıyor",
+			"generic": "Davet bağlantısı kullanılamadı",
+			"missingToken": "Bu davet bağlantısı eksik"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Onaylayın",
 		"description": "Danışmanlarımız daha sonra sizinle bir sohbet başlatabilir.",
