@@ -125,17 +125,14 @@ export const DepartmentLegalSection = ({
 					textTransform: 'none'
 				}}
 			>
-				{t(
-					'registration.agency.legal.headline',
-					'Datenschutzhinweise der Beratungsstelle'
-				)}
+				{t('registration.agency.legal.headline')}
 			</Button>
 			{topicDisplayName(topic) && (
 				<Typography
 					variant="body2"
 					sx={{ color: 'text.secondary', mt: 0.25 }}
 				>
-					{t('registration.agency.legal.department', 'Fachbereich')}
+					{t('registration.agency.legal.department')}
 					{': '}
 					{topicDisplayName(topic)}
 				</Typography>
@@ -150,10 +147,7 @@ export const DepartmentLegalSection = ({
 					)}
 					{nothingLoaded && (
 						<Typography variant="body2">
-							{t(
-								'registration.agency.legal.unavailable',
-								'Die Datenschutzhinweise können derzeit nicht geladen werden.'
-							)}
+							{t('registration.agency.legal.unavailable')}
 						</Typography>
 					)}
 					{variant === 'consent' ? (
@@ -177,8 +171,7 @@ export const DepartmentLegalSection = ({
 										sx={{ fontWeight: 700, mt: 2, mb: 1 }}
 									>
 										{t(
-											'registration.agency.legal.imprintHeadline',
-											'Impressum der Beratungsstelle'
+											'registration.agency.legal.imprintHeadline'
 										)}
 									</Typography>
 									<LegalContentRenderer
