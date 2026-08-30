@@ -735,10 +735,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		waitingGameStage === 'bellyPractice';
 	const currentPhaseLabel =
 		breathPhase === 'inhale'
-			? translate('session.waitingMiniGame.phase.inhale', 'Inhale')
+			? translate('session.waitingMiniGame.phase.inhale')
 			: breathPhase === 'hold'
-				? translate('session.waitingMiniGame.phase.hold', 'Hold')
-				: translate('session.waitingMiniGame.phase.exhale', 'Exhale');
+				? translate('session.waitingMiniGame.phase.hold')
+				: translate('session.waitingMiniGame.phase.exhale');
 	const currentPhaseIcon =
 		breathPhase === 'inhale'
 			? INHALE_PHASE_ICON
@@ -748,17 +748,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const briefingPhaseSteps = [
 		{
 			key: 'inhale',
-			label: translate('session.waitingMiniGame.phase.inhale', 'Inhale'),
+			label: translate('session.waitingMiniGame.phase.inhale'),
 			icon: INHALE_PHASE_ICON
 		},
 		{
 			key: 'hold',
-			label: translate('session.waitingMiniGame.phase.hold', 'Hold'),
+			label: translate('session.waitingMiniGame.phase.hold'),
 			icon: HOLD_PHASE_ICON
 		},
 		{
 			key: 'exhale',
-			label: translate('session.waitingMiniGame.phase.exhale', 'Exhale'),
+			label: translate('session.waitingMiniGame.phase.exhale'),
 			icon: EXHALE_PHASE_ICON
 		}
 	] as const;
@@ -770,10 +770,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() =>
 			BRIEFING_SCREENS.map((screen, index) => ({
 				...screen,
-				text: translate(
-					`session.waitingMiniGame.briefing.${index}`,
-					screen.text
-				)
+				text: translate(`session.waitingMiniGame.briefing.${index}`)
 			})),
 		[translate]
 	);
@@ -793,10 +790,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				(value) => !value.toLowerCase().startsWith('anonymous-')
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
-			return translate(
-				'session.waitingMiniGame.robotUsernameFallback',
-				'Ratsuchende_r 9'
-			);
+			return translate('session.waitingMiniGame.robotUsernameFallback');
 		}
 		return resolved;
 	}, [
@@ -820,55 +814,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => [
 			{
 				_id: 'robot-system-1',
-				title: translate(
-					'session.waitingMiniGame.robotCard1Title',
-					'Bitte haben Sie etwas Geduld'
-				),
-				description: translate(
-					'session.waitingMiniGame.robotCard1Body',
-					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
-				)
+				title: translate('session.waitingMiniGame.robotCard1Title'),
+				description: translate('session.waitingMiniGame.robotCard1Body')
 			},
 			{
 				_id: 'robot-system-2',
-				title: `${translate(
-					'session.waitingMiniGame.robotCard2TitlePrefix',
-					'Ihr Benutzername lautet:'
-				)} ${robotIncomingUsername}`,
-				description: translate(
-					'session.waitingMiniGame.robotCard2Body',
-					'Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.'
-				)
+				title: `${translate('session.waitingMiniGame.robotCard2TitlePrefix')} ${robotIncomingUsername}`,
+				description: translate('session.waitingMiniGame.robotCard2Body')
 			},
 			{
 				_id: 'robot-system-3',
-				title: translate(
-					'session.waitingMiniGame.robotCard3Title',
-					'Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?'
-				),
+				title: translate('session.waitingMiniGame.robotCard3Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard3Body',
-					'Registrieren Sie sich und hinterlassen Sie uns eine Nachricht. Wir melden uns innerhalb von 2 Werktagen bei Ihnen.'
+					'session.waitingMiniGame.robotCard3Body'
 				),
-				cta: translate(
-					'session.waitingMiniGame.robotCard3Cta',
-					'Gehen Sie zur Registrierung'
-				)
+				cta: translate('session.waitingMiniGame.robotCard3Cta')
 			},
 			{
 				_id: 'robot-system-4',
-				title: translate(
-					'session.waitingMiniGame.robotCard4Title',
-					'Wollen Sie die Wartezeit sinnvoll nutzen?'
-				),
+				title: translate('session.waitingMiniGame.robotCard4Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard4Body',
-					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
+					'session.waitingMiniGame.robotCard4Body'
 				),
-				playLabel: translate(
-					'session.waitingMiniGame.robotCard4Play',
-					'Spiel starten'
-				)
+				playLabel: translate('session.waitingMiniGame.robotCard4Play')
 			}
 		],
 		[robotIncomingUsername, translate]
@@ -876,10 +844,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const currentBriefingScreen = showBriefingNegativeScreen
 		? {
 				...BRIEFING_NEGATIVE_SCREEN,
-				text: translate(
-					'session.waitingMiniGame.briefing.negative',
-					BRIEFING_NEGATIVE_SCREEN.text
-				)
+				text: translate('session.waitingMiniGame.briefing.negative')
 			}
 		: localizedBriefingScreens[briefingScreenIndex];
 	const currentBriefingInteraction = showBriefingNegativeScreen
@@ -995,8 +960,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 			const meta = BREATH_LEVELS[levelSafe - 1];
 			return translate('session.waitingMiniGame.achievementUnlocked', {
-				defaultValue:
-					'Achievement unlocked: Level {{level}} {{emoji}} {{title}}.',
 				level: levelSafe,
 				emoji: meta.emoji,
 				title: meta.title
@@ -1256,12 +1219,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setPhaseMsLeft(0);
 		setBreathProgress(0.2);
 		setWaitingGameStage('tutorial');
-		setStageMessage(
-			translate(
-				'session.waitingMiniGame.choosePace',
-				'Choose your pace, then begin your first try.'
-			)
-		);
+		setStageMessage(translate('session.waitingMiniGame.choosePace'));
 	}, [clearBreathTimer, translate]);
 
 	const startPracticeRound = useCallback(() => {
@@ -1272,10 +1230,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		   startPhase() simply resets phaseMsLeft for the new countdown. */
 		phaseTransitionLockRef.current = false;
 		setStageMessage(
-			translate(
-				'session.waitingMiniGame.tutorialCard.inhale.instruction',
-				'Inhale slowly for 3 seconds, then press the button.'
-			)
+			translate('session.waitingMiniGame.tutorialCard.inhale.instruction')
 		);
 		setWaitingGameStage('practice');
 		startPhase('inhale', STANDARD_PRACTICE_TIMING);
@@ -1367,7 +1322,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setStageMessage(
 				translate(
 					'session.waitingMiniGame.tutorialCard.inhale.instruction',
-					'Inhale slowly for <strong>{{count}} seconds</strong>, then press the button.',
 					{
 						count: seconds,
 						interpolation: { escapeValue: false }
@@ -1378,7 +1332,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setStageMessage(
 				translate(
 					'session.waitingMiniGame.tutorialCard.hold.instruction',
-					'Hold your breath now for <strong>{{count}} seconds</strong>, then press the button.',
 					{
 						count: seconds,
 						interpolation: { escapeValue: false }
@@ -1389,7 +1342,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setStageMessage(
 				translate(
 					'session.waitingMiniGame.tutorialCard.exhale.instruction',
-					'Exhale slowly for <strong>{{count}} seconds</strong>, then press the button.',
 					{
 						count: seconds,
 						interpolation: { escapeValue: false }
@@ -1411,13 +1363,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			'session.waitingMiniGame.tutorialCard.belly.hold',
 			'session.waitingMiniGame.tutorialCard.belly.exhale'
 		];
-		const fallbacks = [
-			'Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.',
-			'Now hold for <strong>3 seconds</strong> your breath.',
-			'Now breath out for <strong>4 seconds</strong> and relax your entire body.'
-		];
 		setStageMessage(
-			translate(keys[bellyCardIndex], fallbacks[bellyCardIndex], {
+			translate(keys[bellyCardIndex], {
 				interpolation: { escapeValue: false }
 			})
 		);
@@ -1476,8 +1423,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (waitingGameStage !== 'selfTimer') return;
 		setStageMessage(
 			translate(
-				'session.waitingMiniGame.tutorialCard.selfTimer.instruction',
-				'Set this time your own time intervals while breathing.'
+				'session.waitingMiniGame.tutorialCard.selfTimer.instruction'
 			)
 		);
 	}, [waitingGameStage, translate]);
@@ -1490,15 +1436,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (waitingGameStage === 'completion') {
 			setStageMessage(
 				translate(
-					'session.waitingMiniGame.tutorialCard.completion.instruction',
-					'Congratulation you have made it.'
+					'session.waitingMiniGame.tutorialCard.completion.instruction'
 				)
 			);
 		} else if (waitingGameStage === 'serenity') {
 			setStageMessage(
 				translate(
-					'session.waitingMiniGame.tutorialCard.serenity.instruction',
-					"The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+					'session.waitingMiniGame.tutorialCard.serenity.instruction'
 				)
 			);
 		}
@@ -2374,10 +2318,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (waitingGameStage === 'practice') {
 			clearBreathTimer();
 			setStageMessage(
-				translate(
-					'session.waitingMiniGame.practiceSuccessPrompt',
-					'Great job, want to start now?'
-				)
+				translate('session.waitingMiniGame.practiceSuccessPrompt')
 			);
 			setWaitingGameStage('practiceResult');
 			return;
@@ -2418,14 +2359,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const lines = [
-			translate(
-				'session.waitingMiniGame.onboardingLine1',
-				'Just arrive. We breathe together.'
-			),
-			translate(
-				'session.waitingMiniGame.onboardingLine3',
-				'When you are ready, start your first try.'
-			)
+			translate('session.waitingMiniGame.onboardingLine1'),
+			translate('session.waitingMiniGame.onboardingLine3')
 		];
 
 		let lineIndex = 0;
@@ -2632,7 +2567,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const fullText = translate('session.waitingMiniGame.levelBadge', {
-			defaultValue: 'Level {{level}}: {{title}}',
 			level: currentLevel,
 			title: BREATH_LEVELS[currentLevel - 1]?.title
 		});
@@ -2659,8 +2593,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const completionTitle = translate(
-			'session.waitingMiniGame.completionTitle',
-			'Congratulation you have made it.'
+			'session.waitingMiniGame.completionTitle'
 		);
 		const completionTitleWithPunctuation = /[.!?…]\s*$/.test(
 			completionTitle
@@ -2671,17 +2604,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			waitingGameStage === 'completion'
 				? completionTitleWithPunctuation
 				: waitingGameStage === 'prize'
-					? `${translate(
-							'session.waitingMiniGame.prizeLine1',
-							'Your main prize is true wisdom.'
-						)}\n\n${translate(
-							'session.waitingMiniGame.prizeLine2',
-							'Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.'
-						)}`
-					: translate(
-							'session.waitingMiniGame.serenityPrayer',
-							'God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.'
-						);
+					? `${translate('session.waitingMiniGame.prizeLine1')}\n\n${translate('session.waitingMiniGame.prizeLine2')}`
+					: translate('session.waitingMiniGame.serenityPrayer');
 		let index = 0;
 		setCenterStageTypewriterBusy(true);
 		setCenterStageTypedText('');
@@ -3674,10 +3598,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										'session__waitingModule--tutorialCard'
 								)}
 								role="region"
-								aria-label={`${translate(
-									'session.waitingMiniGame.inhaleExhale',
-									'Inhale exhale breathing guide'
-								)} ${translate('session.waitingMiniGame.timeLeft', 'Time left')}: ${phaseSecondsLeft}s`}
+								aria-label={`${translate('session.waitingMiniGame.inhaleExhale')} ${translate('session.waitingMiniGame.timeLeft')}: ${phaseSecondsLeft}s`}
 							>
 								<button
 									type="button"
@@ -3735,8 +3656,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												</span>
 												<span className="pseudonymCard__headerSubtitle">
 													{translate(
-														'session.waitingMiniGame.tutorialCard.carimatSubtitle',
-														'Lets bridge your waiting time'
+														'session.waitingMiniGame.tutorialCard.carimatSubtitle'
 													)}
 												</span>
 											</div>
@@ -3810,8 +3730,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										{SPEAKER_HINT_ICON}
 										<span>
 											{translate(
-												'session.waitingMiniGame.volumeHint',
-												'For better experience, turn on your volume.'
+												'session.waitingMiniGame.volumeHint'
 											)}
 										</span>
 									</div>
@@ -3984,15 +3903,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										{!isInitialSetupScreen && (
 											<div className="session__waitingPreGameTitle">
 												{translate(
-													'session.waitingMiniGame.practiceSuccessPrompt',
-													'Great job, want to start now?'
+													'session.waitingMiniGame.practiceSuccessPrompt'
 												)}
 											</div>
 										)}
 										<div className="session__waitingPreGameTitle session__waitingPreGameTitle--small">
 											{translate(
-												'session.waitingMiniGame.timingInfo',
-												'Set your breathing timing before you start.'
+												'session.waitingMiniGame.timingInfo'
 											)}
 										</div>
 										<div className="session__waitingPreGameLevels">
@@ -4028,8 +3945,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											>
 												<span>
 													{translate(
-														'session.waitingMiniGame.phase.inhale',
-														'Inhale'
+														'session.waitingMiniGame.phase.inhale'
 													)}
 												</span>
 												<span className="session__waitingPreGameTimingValue">
@@ -4043,8 +3959,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.decreaseInhale',
-															'Decrease inhale seconds'
+															'session.waitingMiniGame.decreaseInhale'
 														)}
 													>
 														◀
@@ -4062,8 +3977,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.increaseInhale',
-															'Increase inhale seconds'
+															'session.waitingMiniGame.increaseInhale'
 														)}
 													>
 														▶
@@ -4078,8 +3992,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											>
 												<span>
 													{translate(
-														'session.waitingMiniGame.phase.hold',
-														'Hold'
+														'session.waitingMiniGame.phase.hold'
 													)}
 												</span>
 												<span className="session__waitingPreGameTimingValue">
@@ -4093,8 +4006,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.decreaseHold',
-															'Decrease hold seconds'
+															'session.waitingMiniGame.decreaseHold'
 														)}
 													>
 														◀
@@ -4112,8 +4024,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.increaseHold',
-															'Increase hold seconds'
+															'session.waitingMiniGame.increaseHold'
 														)}
 													>
 														▶
@@ -4128,8 +4039,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											>
 												<span>
 													{translate(
-														'session.waitingMiniGame.phase.exhale',
-														'Exhale'
+														'session.waitingMiniGame.phase.exhale'
 													)}
 												</span>
 												<span className="session__waitingPreGameTimingValue">
@@ -4143,8 +4053,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.decreaseExhale',
-															'Decrease exhale seconds'
+															'session.waitingMiniGame.decreaseExhale'
 														)}
 													>
 														◀
@@ -4162,8 +4071,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															)
 														}
 														aria-label={translate(
-															'session.waitingMiniGame.increaseExhale',
-															'Increase exhale seconds'
+															'session.waitingMiniGame.increaseExhale'
 														)}
 													>
 														▶
@@ -4185,8 +4093,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													onClick={startPracticeRound}
 												>
 													{translate(
-														'session.waitingMiniGame.startFirstTry',
-														'Lets start the first try'
+														'session.waitingMiniGame.startFirstTry'
 													)}
 												</button>
 											) : (
@@ -4199,8 +4106,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														}
 													>
 														{translate(
-															'session.waitingMiniGame.repeatTrainingRound',
-															'Repeat training round'
+															'session.waitingMiniGame.repeatTrainingRound'
 														)}
 													</button>
 													<button
@@ -4211,8 +4117,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														}
 													>
 														{translate(
-															'session.waitingMiniGame.startRealGame',
-															'Lets start the real game'
+															'session.waitingMiniGame.startRealGame'
 														)}
 													</button>
 												</>
@@ -4372,8 +4277,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														}}
 													>
 														{translate(
-															'session.waitingMiniGame.changeMind',
-															'I change my mind let me try out your waiting game'
+															'session.waitingMiniGame.changeMind'
 														)}
 													</button>
 												) : currentBriefingInteraction ===
@@ -4389,8 +4293,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															}
 														>
 															{translate(
-																'session.waitingMiniGame.iJustWait',
-																'I just wait'
+																'session.waitingMiniGame.iJustWait'
 															)}
 														</button>
 														<button
@@ -4409,8 +4312,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															}
 														>
 															{translate(
-																'session.waitingMiniGame.startGame',
-																'Start the game'
+																'session.waitingMiniGame.startGame'
 															)}
 														</button>
 													</>
@@ -4459,8 +4361,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												}
 											>
 												{translate(
-													'session.waitingMiniGame.joinRoom',
-													'Join the room'
+													'session.waitingMiniGame.joinRoom'
 												)}
 											</button>
 										)}
@@ -4498,8 +4399,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</svg>
 											<span className="session__waitingMiniGameBellyModeBtnLabel">
 												{translate(
-													'session.waitingMiniGame.tutorialCard.belly.autoPilot',
-													'Auto pilot'
+													'session.waitingMiniGame.tutorialCard.belly.autoPilot'
 												)}
 											</span>
 										</button>
@@ -4532,8 +4432,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</svg>
 											<span className="session__waitingMiniGameBellyModeBtnLabel">
 												{translate(
-													'session.waitingMiniGame.tutorialCard.belly.timeIt',
-													'Time it'
+													'session.waitingMiniGame.tutorialCard.belly.timeIt'
 												)}
 											</span>
 										</button>
@@ -4572,8 +4471,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</svg>
 											<span className="session__waitingMiniGameBellyModeBtnLabel">
 												{translate(
-													'session.waitingMiniGame.tutorialCard.belly.autoPilot',
-													'Auto pilot'
+													'session.waitingMiniGame.tutorialCard.belly.autoPilot'
 												)}
 											</span>
 										</button>
@@ -4604,8 +4502,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</svg>
 											<span className="session__waitingMiniGameBellyModeBtnLabel">
 												{translate(
-													'session.waitingMiniGame.tutorialCard.belly.timeIt',
-													'Time it'
+													'session.waitingMiniGame.tutorialCard.belly.timeIt'
 												)}
 											</span>
 										</button>
@@ -4618,8 +4515,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											className="session__waitingMiniGamePracticeRestart"
 											onClick={handlePracticeRestart}
 											aria-label={translate(
-												'session.waitingMiniGame.tutorialCard.restart',
-												'Restart'
+												'session.waitingMiniGame.tutorialCard.restart'
 											)}
 										>
 											<svg
@@ -4654,8 +4550,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</svg>
 											<span>
 												{translate(
-													'session.waitingMiniGame.tutorialCard.pressAtRightTime',
-													'Press at the right time'
+													'session.waitingMiniGame.tutorialCard.pressAtRightTime'
 												)}
 											</span>
 										</button>
@@ -4679,8 +4574,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
-												'Repeat game'
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame'
 											)}
 										</button>
 										<button
@@ -4691,8 +4585,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.completion.receiveGift',
-												'Receive little gift'
+												'session.waitingMiniGame.tutorialCard.completion.receiveGift'
 											)}
 										</button>
 									</div>
@@ -4707,8 +4600,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
-												'Repeat game'
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame'
 											)}
 										</button>
 										<button
@@ -4725,8 +4617,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting',
-												'Back to waiting'
+												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting'
 											)}
 										</button>
 									</div>
@@ -4739,8 +4630,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											onClick={startAchieverGame}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
-												'Repeat game'
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame'
 											)}
 										</button>
 										<button
@@ -4757,8 +4647,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}}
 										>
 											{translate(
-												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting',
-												'Back to waiting'
+												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting'
 											)}
 										</button>
 									</div>
@@ -5576,18 +5465,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{translate(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{translate('anonymousChat.noAvailability.title')}
 						</MuiTypography>
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
-						{translate(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
 					<MuiBox
@@ -5628,8 +5511,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}}
 								>
 									{translate(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</MuiTypography>
 							</MuiBox>
@@ -5665,8 +5547,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 									>
 										{translate(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</MuiTypography>
 									<MuiTypography
@@ -5683,20 +5564,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
-						{translate(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{translate('anonymousChat.noAvailability.mailHint')}
 					</MuiTypography>
 
 					<MuiTypography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{translate(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{translate('anonymousChat.noAvailability.tip')}
 					</MuiTypography>
 
 					<MuiButton
@@ -5712,8 +5587,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						startIcon={<NorthEastIcon />}
 					>
 						{translate(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
+							'anonymousChat.noAvailability.startMailCounseling'
 						)}
 					</MuiButton>
 
@@ -5726,10 +5600,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							mb: '16px'
 						}}
 					>
-						{translate(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{translate('anonymousChat.noAvailability.responseTime')}
 					</MuiTypography>
 
 					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
@@ -5745,10 +5616,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#4C555F'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{translate('anonymousChat.noAvailability.back')}
 						</MuiButton>
 						<MuiButton
 							fullWidth
@@ -5762,10 +5630,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#A5000A'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{translate('anonymousChat.noAvailability.later')}
 						</MuiButton>
 					</MuiBox>
 				</MuiBox>

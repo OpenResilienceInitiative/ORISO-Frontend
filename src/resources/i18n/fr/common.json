@@ -4239,7 +4239,15 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
-			"title": "Le Live-Chat est malheureusement fermé pour le moment"
+			"title": "Le Live-Chat est malheureusement fermé pour le moment",
+			"topicLabel": "Thème demandé : {{topic}}",
+			"weekdays": {
+				"monday": "lundi",
+				"tuesday": "mardi",
+				"wednesday": "mercredi",
+				"thursday": "jeudi",
+				"friday": "vendredi"
+			}
 		}
 	},
 	"sessionHeader": {

@@ -4239,7 +4239,15 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
-			"title": "Canlı sohbet şu anda maalesef kapalı"
+			"title": "Canlı sohbet şu anda maalesef kapalı",
+			"topicLabel": "Talep edilen konu: {{topic}}",
+			"weekdays": {
+				"monday": "Pazartesi",
+				"tuesday": "Salı",
+				"wednesday": "Çarşamba",
+				"thursday": "Perşembe",
+				"friday": "Cuma"
+			}
 		}
 	},
 	"sessionHeader": {
