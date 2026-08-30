@@ -53,6 +53,23 @@ describe('getLatestMatrixRoomPreview', () => {
 		});
 	});
 
+	it('skips markup-only events in favour of an older readable preview', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: 'Ältere lesbare Nachricht' },
+					1
+				),
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: '[[align:left]][[/align]]' },
+					2
+				)
+			])
+		).toEqual({ kind: 'text', text: 'Ältere lesbare Nachricht' });
+	});
+
 	it('uses an Element-style semantic preview for voice messages', () => {
 		expect(
 			getLatestMatrixRoomPreview([
