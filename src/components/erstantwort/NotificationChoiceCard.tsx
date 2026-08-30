@@ -57,40 +57,22 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 	}[] = [
 		{
 			choice: 'EMAIL',
-			label: t(
-				'erstantwort.notificationChoice.email',
-				'Schreiben Sie mir eine E-Mail'
-			),
-			hint: t(
-				'erstantwort.notificationChoice.emailHint',
-				'Was Sie hier besprechen, steht nie in dieser E-Mail.'
-			)
+			label: t('erstantwort.notificationChoice.email'),
+			hint: t('erstantwort.notificationChoice.emailHint')
 		},
 		...(isBrowserNotificationSupported
 			? [
 					{
 						choice: 'BROWSER' as const,
-						label: t(
-							'erstantwort.notificationChoice.browser',
-							'Geben Sie mir hier ein Signal'
-						),
-						hint: t(
-							'erstantwort.notificationChoice.browserHint',
-							'Ohne Adresse — funktioniert aber nur auf diesem Gerät.'
-						)
+						label: t('erstantwort.notificationChoice.browser'),
+						hint: t('erstantwort.notificationChoice.browserHint')
 					}
 				]
 			: []),
 		{
 			choice: 'BOTH',
-			label: t(
-				'erstantwort.notificationChoice.both',
-				'Beides, und Passwort jetzt selbst festlegen'
-			),
-			hint: t(
-				'erstantwort.notificationChoice.bothHint',
-				'Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen.'
-			)
+			label: t('erstantwort.notificationChoice.both'),
+			hint: t('erstantwort.notificationChoice.bothHint')
 		}
 	];
 
