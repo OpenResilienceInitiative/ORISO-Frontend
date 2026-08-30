@@ -118,8 +118,8 @@ export const AgencySelectionResults = ({
 	const renderAgencyLabel = (agency: AgencyDataInterface) => {
 		const detailsOpen = openAgencyDetailsId === agency.id;
 		const detailsLabel = detailsOpen
-			? t('registration.agency.details.less', 'Weniger')
-			: t('registration.agency.details.more', 'Mehr');
+			? t('registration.agency.details.less')
+			: t('registration.agency.details.more');
 
 		return (
 			<Box

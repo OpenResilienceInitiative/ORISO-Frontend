@@ -12,9 +12,14 @@ const SIGNUP_CHROME_FILES = [
 	'src/components/registration/registrationStepper/RegistrationStepper.tsx',
 	'src/components/stepper/molecules/CompactStepRow.tsx',
 	'src/components/registration/zipcodeInput/ZipcodeInput.tsx',
+	'src/components/registration/zipcodeInput/WhyLocalDisclosure.tsx',
 	'src/components/registration/accountData/ConsentSentence.tsx',
 	'src/components/registration/accountData/DataProtectionConsentLabel.tsx',
-	'src/components/registration/Registration.tsx'
+	'src/components/registration/accountData/PasswordRuleChips.tsx',
+	'src/components/registration/agencySelection/AgencyDetailsPanel.tsx',
+	'src/components/registration/agencySelection/AgencySelectionResults.tsx',
+	'src/components/registration/Registration.tsx',
+	'src/components/profile/profile.routes.ts'
 ];
 
 const GERMAN_T_FALLBACKS = [
@@ -30,7 +35,27 @@ const GERMAN_T_FALLBACKS = [
 	/Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden/,
 	/Maschinell übersetzt — rechtlich verbindlich/,
 	/Dieser Text liegt nicht in Ihrer Sprache vor/,
-	/Für Authentifizierung und Navigation verwendet diese Webseite Cookies/
+	/Für Authentifizierung und Navigation verwendet diese Webseite Cookies/,
+	/'Ausgewählt'/,
+	/'Bitte wählen Sie ein Thema, um fortzufahren\.'/,
+	/'Wählen Sie ein Thema aus\.'/,
+	/'Wo suchen Sie Beratung\?'/,
+	/'Nur Ihre Postleitzahl/,
+	/'Warum lokal beraten\?'/,
+	/Ihre Beratungsstelle kennt die Hilfsangebote/,
+	/'In Karte öffnen'/,
+	/'Navigation starten'/,
+	/'Öffnungszeiten'/,
+	/'Sprachen'/,
+	/'Telefon'/,
+	/'Webseite'/,
+	/'Zu dieser Beratungsstelle'/,
+	/'Weniger'/,
+	/'Mehr'/,
+	/'Passwort-Anforderungen'/,
+	/'fulfilled'/,
+	/'open'/,
+	/title:\s*'Overview'/
 ];
 
 describe('registration chrome has no German t() fallbacks (#1154)', () => {

@@ -29,3 +29,10 @@
 - Target: regression + PR prep
 - Change: `04-test-evidence.md`, `06-pr-summary.md`, `.learnings/STATE.md`
 - Verify: `npm run lint:scripts` PASS; `npm run test:unit` 358 files / 3635 PASS; browser NOT RUN
+
+### Iteration 4 — pass
+
+- Target: remaining signup/profile literals after full-platform rescan
+- Change: drop leftover German/English `t()` fallbacks on zipcode, why-local, agency details, password chips, Registration footer; `profile.routes` Overview → `navigation.overview`
+- Verify: `registrationChromeI18n.test.ts` 12 PASS; agency i18n 27 PASS; AccountData 7 PASS; eslint PASS
+- Scan posted: https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154#issuecomment-5470327924
