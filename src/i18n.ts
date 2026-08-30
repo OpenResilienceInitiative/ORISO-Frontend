@@ -19,6 +19,7 @@ import { TranslationConfig } from './globalState/interfaces';
 import { FETCH_METHODS, FETCH_SUCCESS, fetchData } from './api';
 import { collectCatalogueDrift } from './utils/i18nCatalogueGuard';
 import { collectSupportedLanguages } from './utils/i18nSupportedLanguages';
+import { mergeWeblateCatalogue } from './utils/mergeWeblateCatalogue';
 
 export const FALLBACK_LNG = 'de';
 
@@ -205,11 +206,14 @@ export const init = async (
 										ns,
 										data: apiData
 									} = JSON.parse(data);
-									return unflatten(
-										_.merge(
-											baseResources?.[lng]?.[ns] || {},
-											flatten(apiData || {})
-										)
+									// Bundle wins on conflict so a stale Weblate
+									// file cannot undo #1170/#1227 catalogues
+									// (ORISO-Frontend#1154).
+									return mergeWeblateCatalogue(
+										unflatten(
+											baseResources?.[lng]?.[ns] || {}
+										) as object,
+										apiData || {}
 									);
 								},
 								// init option for fetch, for example

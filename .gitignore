@@ -54,6 +54,8 @@ build-storybook.log
 docs/*
 !docs/storybook/
 !docs/storybook/**
+!docs/agent-tasks/
+!docs/agent-tasks/**
 !docs/cursor-orchestrator/
 docs/cursor-orchestrator/*
 !docs/cursor-orchestrator/index.md
