@@ -86,6 +86,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 16px;
 		}
 
+		// Desktop composer card rests on the chat card's inner bottom edge.
+		// Tablet and mobile keep their existing 16px / safe-area inset.
+		@media screen and (width >= 1367px) {
+			padding-bottom: 0;
+		}
+
 		// On mobile, ensure no extra spacing and proper positioning
 		@media screen and (width <= 899px) {
 			// `.textarea__inputWrapper` drops to left/right 0 here, so the
