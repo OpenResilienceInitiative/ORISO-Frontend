@@ -1,11 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	buildRegistrationTopicPresentationGroups,
 	getRegistrationCategoryIcon,
+	getRegistrationCategoryName,
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIcon
 } from './registrationDesign';
+
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
+
+// The pinned de/en/tr copy never consults i18n, so this stub only ever answers
+// for the languages #1154 is about. An unknown key returns the empty
+// `defaultValue`, which is what i18next does for a key no catalogue carries.
+const translations: Record<string, Record<string, string>> = {
+	'registration.topic.catalog.trauerberatung.title': {
+		ru: 'Консультация в связи с утратой'
+	},
+	'registration.topic.category.alter': { ru: 'Пожилой возраст' }
+};
+
+vi.mock('i18next', () => ({
+	default: {
+		isInitialized: true,
+		t: (key: string, options?: { lng?: string; defaultValue?: string }) =>
+			translations[key]?.[options?.lng ?? ''] ??
+			options?.defaultValue ??
+			''
+	}
+}));
 
 /**
  * The cluster/topic taxonomy of the first registration step is owned by
@@ -266,5 +288,71 @@ describe('registration topic clusters (ORISO-Frontend#973)', () => {
 					getRegistrationTopicDisplay(placement.topic, 'de').title
 			)
 		).toEqual(['Aus-/Rück- und Weiterwanderung']);
+	});
+});
+
+/**
+ * Registration topic copy used to resolve through a `de | en | tr` table whose
+ * default branch was English, so a Russian advice seeker got a Russian frame
+ * around an English topic list. The pinned three stay pinned; every other
+ * language now resolves through i18n and degrades to German like the rest of
+ * the registration flow.
+ */
+describe('registration topic copy for other languages (ORISO-Frontend#1154)', () => {
+	const bereavement = topicBySlug('trauerberatung', 1);
+
+	it('renders a translated topic title when the catalogue carries one', () => {
+		expect(getRegistrationTopicDisplay(bereavement, 'ru').title).toBe(
+			'Консультация в связи с утратой'
+		);
+	});
+
+	it('renders a translated cluster name when the catalogue carries one', () => {
+		expect(getRegistrationCategoryName('alter', 'ru')).toBe(
+			'Пожилой возраст'
+		);
+	});
+
+	it('degrades an untranslated topic to German rather than English', () => {
+		const { title } = getRegistrationTopicDisplay(
+			topicBySlug('debt', 2),
+			'ru'
+		);
+
+		expect(title).not.toBe('Debt');
+		expect(title).toBe('Schulden');
+	});
+
+	it('degrades an untranslated cluster to German rather than English', () => {
+		expect(getRegistrationCategoryName('migration', 'fr')).toBe(
+			'Migration'
+		);
+		expect(getRegistrationCategoryName('gesundheit', 'fr')).toBe(
+			'Gesundheit & Sucht'
+		);
+	});
+
+	it('never renders the English cluster names for an unpinned language', () => {
+		const groups = buildRegistrationTopicPresentationGroups(
+			allTopics,
+			'ti'
+		);
+
+		expect(groups.map((group) => group.name)).not.toContain(
+			'Ageing, Older Adults'
+		);
+		expect(groups.map((group) => group.name)).not.toContain(
+			'Disability Inclusion'
+		);
+	});
+
+	it.each([
+		['de', 'Trauerberatung'],
+		['en', 'Bereavement Support'],
+		['tr', 'Yas danışmanlığı']
+	])('keeps the agreed %s wording pinned in code', (locale, expected) => {
+		expect(getRegistrationTopicDisplay(bereavement, locale).title).toBe(
+			expected
+		);
 	});
 });

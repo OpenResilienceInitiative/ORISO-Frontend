@@ -85,10 +85,38 @@ export const init = async (
 			.catch(() => ({}));
 	}
 
+	// Languages Weblate reports as translated above `weblate.percentage`.
+	// Empty when Weblate is not configured or unreachable — we then have no
+	// coverage data and must not gate on it.
+	const weblateLanguages = Object.keys(languageResources);
+	const hasCoverageData = weblateLanguages.length > 0;
+
+	// Languages that ship a full catalogue in the bundle. Their completeness
+	// does not depend on Weblate, so Weblate's percentage must never withhold
+	// them — that would drop a fully translated language from the picker.
+	const bundledLanguages = new Set([
+		...Object.keys(defaultResources),
+		...Object.keys(resources ?? {})
+	]);
+
+	// The tenant's `activeLanguages` used to be unioned in unfiltered, so the
+	// `weblate.percentage` threshold could only ever *add* a language, never
+	// withhold one. A tenant activating a language that exists only in Weblate
+	// and is barely translated there shipped it to advice seekers as a mostly
+	// German UI (ORISO-Frontend#1154).
+	const meetsCoverageThreshold = (lng: string) =>
+		bundledLanguages.has(lng) ||
+		!hasCoverageData ||
+		lng === FALLBACK_LNG ||
+		lng.indexOf('@informal') !== -1 ||
+		weblateLanguages.includes(lng);
+
 	const supportedLanguages = [
 		...new Set(
 			supportedLngs && supportedLngs.length > 0
-				? [...Object.keys(languageResources), ...supportedLngs]
+				? [...weblateLanguages, ...supportedLngs].filter(
+						meetsCoverageThreshold
+					)
 				: ['de', 'de@informal']
 		)
 	];

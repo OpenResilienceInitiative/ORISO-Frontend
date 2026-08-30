@@ -1,3 +1,7 @@
+// The configured singleton, not `src/i18n.ts` — importing the app module here
+// would drag its module-level localStorage and DevToolbar side effects into
+// every consumer of this design module.
+import i18n from 'i18next';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 import {
 	orisoInputColors,
@@ -685,22 +689,52 @@ const categoryCopyById: Record<
 	}
 };
 
-const getRegistrationCopyLocale = (locale?: string): 'de' | 'en' | 'tr' => {
-	if (locale?.startsWith('de')) {
-		return 'de';
+const PINNED_COPY_LOCALES = ['de', 'en', 'tr'] as const;
+
+type PinnedCopyLocale = (typeof PINNED_COPY_LOCALES)[number];
+
+/**
+ * The cluster/topic wording for these three languages is owned by Deutscher
+ * Caritasverband e.V. (ORISO-Frontend#973) and stays pinned in code so it
+ * cannot be reworded through translation tooling.
+ */
+const getPinnedCopyLocale = (locale?: string): PinnedCopyLocale | undefined =>
+	PINNED_COPY_LOCALES.find((pinned) => locale?.startsWith(pinned));
+
+/**
+ * Every other language resolves through i18n instead of silently rendering the
+ * English copy, which left e.g. a Russian advice seeker with a Russian frame
+ * around an English topic list (ORISO-Frontend#1154). Until a translation
+ * exists the key resolves to German through the normal `fallbackLng` chain,
+ * matching how the rest of the registration flow degrades.
+ */
+const translateRegistrationCopy = (key: string, locale?: string) => {
+	if (!i18n.isInitialized) {
+		return undefined;
 	}
 
-	if (locale?.startsWith('tr')) {
-		return 'tr';
-	}
+	const value = i18n.t(key, { lng: locale, defaultValue: '' });
 
-	return 'en';
+	return typeof value === 'string' && value ? value : undefined;
 };
 
 export const getRegistrationCategoryName = (
 	categoryId: RegistrationCategoryId,
 	locale?: string
-) => categoryCopyById[categoryId][getRegistrationCopyLocale(locale)];
+) => {
+	const pinnedLocale = getPinnedCopyLocale(locale);
+
+	if (pinnedLocale) {
+		return categoryCopyById[categoryId][pinnedLocale];
+	}
+
+	return (
+		translateRegistrationCopy(
+			`registration.topic.category.${categoryId}`,
+			locale
+		) || categoryCopyById[categoryId].de
+	);
+};
 
 const getRegistrationTopicKey = (
 	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>
@@ -723,8 +757,22 @@ export const getRegistrationTopicDisplay = (
 	locale?: string
 ) => {
 	const key = getRegistrationTopicKey(topic);
-	const copyLocale = getRegistrationCopyLocale(locale);
-	const copy = topicDisplayCopyByKey[key || '']?.[copyLocale];
+	const pinnedLocale = getPinnedCopyLocale(locale);
+	const pinned = topicDisplayCopyByKey[key || ''];
+	const copy = pinnedLocale
+		? pinned?.[pinnedLocale]
+		: {
+				title:
+					translateRegistrationCopy(
+						`registration.topic.catalog.${key}.title`,
+						locale
+					) || pinned?.de.title,
+				description:
+					translateRegistrationCopy(
+						`registration.topic.catalog.${key}.description`,
+						locale
+					) || pinned?.de.description
+			};
 
 	return {
 		title: copy?.title || topic?.titles?.long || topic?.name || '',
