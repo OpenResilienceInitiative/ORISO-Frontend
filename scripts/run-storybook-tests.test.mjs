@@ -34,7 +34,7 @@ test('does not retry ordinary test failures or successful runs', () => {
 	assert.equal(shouldRetryStorybookRun(0, disconnect), false);
 });
 
-test('does not retry after truncation can have removed an earlier failure', () => {
+test('does not retry after truncation if a failure was already seen', () => {
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
 			failureDetected: true,
@@ -42,12 +42,18 @@ test('does not retry after truncation can have removed an earlier failure', () =
 		}),
 		false
 	);
+});
+
+test('still retries a disconnect when the log window overflowed but no failure was seen', () => {
+	// Incremental `failureDetected` already latches any FAIL that scrolled out
+	// of the captured tail. Refusing to retry on overflow alone is why the
+	// Storybook job dies on a mid-run Chrome disconnect after 800+ green tests.
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
 			failureDetected: false,
 			outputTruncated: true
 		}),
-		false
+		true
 	);
 });
 
