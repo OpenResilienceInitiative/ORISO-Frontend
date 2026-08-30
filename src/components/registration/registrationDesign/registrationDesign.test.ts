@@ -3,11 +3,15 @@ import {
 	buildRegistrationTopicPresentationGroups,
 	getRegistrationCategoryIcon,
 	getRegistrationCategoryName,
+	RegistrationCategoryId,
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIcon
 } from './registrationDesign';
 
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
+import deCommon from '../../../resources/i18n/de/common.json';
+import enCommon from '../../../resources/i18n/en/common.json';
+import trCommon from '../../../resources/i18n/tr/common.json';
 
 // The pinned de/en/tr copy never consults i18n, so this stub only ever answers
 // for the languages #1154 is about. An unknown key returns the empty
@@ -354,5 +358,54 @@ describe('registration topic copy for other languages (ORISO-Frontend#1154)', ()
 		expect(getRegistrationTopicDisplay(bereavement, locale).title).toBe(
 			expected
 		);
+	});
+});
+
+/**
+ * de/en/tr copy is served from the pinned code table, not from i18n, so that
+ * translation tooling cannot reword what Caritas agreed (#973). The catalogue
+ * still has to carry those strings: the drift guard requires every locale to
+ * hold the German key set, and Weblate needs the German source to translate
+ * from. That leaves two copies of the same three languages, so pin them to
+ * each other — otherwise they drift apart silently.
+ */
+describe('pinned copy matches the catalogue it is duplicated into', () => {
+	type CatalogueTopicCopy = {
+		category: Record<string, string>;
+		catalog: Record<string, { title: string; description: string }>;
+	};
+
+	const catalogueOf = (catalogue: unknown): CatalogueTopicCopy =>
+		(catalogue as { registration: { topic: CatalogueTopicCopy } })
+			.registration.topic;
+
+	it.each([
+		['de', deCommon],
+		['en', enCommon],
+		['tr', trCommon]
+	])('%s/common.json matches the pinned table', (locale, catalogue) => {
+		const { category, catalog } = catalogueOf(catalogue);
+
+		Object.entries(catalog).forEach(([slug, copy]) => {
+			const display = getRegistrationTopicDisplay(
+				topicBySlug(slug, 1),
+				locale
+			);
+
+			expect(display.title, `${locale} ${slug} title`).toBe(copy.title);
+			expect(display.description, `${locale} ${slug} description`).toBe(
+				copy.description
+			);
+		});
+
+		Object.entries(category).forEach(([id, name]) => {
+			expect(
+				getRegistrationCategoryName(
+					id as RegistrationCategoryId,
+					locale
+				),
+				`${locale} category ${id}`
+			).toBe(name);
+		});
 	});
 });

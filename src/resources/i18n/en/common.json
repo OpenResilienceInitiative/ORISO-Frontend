@@ -2753,7 +2753,97 @@
 			"loadErrorRetry": "Try again",
 			"oneResult": "We advise you on the topic",
 			"subline": "Choose a topic from our counseling services.",
-			"summary": "Your topic:"
+			"summary": "Your topic:",
+			"category": {
+				"alter": "Ageing, Older Adults",
+				"krisen": "Challenging Life Situations & Crises",
+				"gesundheit": "Health and Addiction",
+				"familie": "Children, Young People and Families",
+				"migration": "Migration & Integration",
+				"teilhabe": "Disability Inclusion"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Parent and Family Support",
+					"description": "Support for parenting questions, conflict, and family pressure."
+				},
+				"children-youth-counselling": {
+					"title": "Children and Young People",
+					"description": "Support and a listening ear when everyday life becomes too much."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Pediatric Rehabilitation",
+					"description": "Rehabilitation guidance for children and young people."
+				},
+				"cures-mothers-fathers": {
+					"title": "Parent Health Rehabilitation",
+					"description": "Guidance on recovery programs for exhausted parents."
+				},
+				"pregnancy": {
+					"title": "Pregnancy",
+					"description": "Support for pregnancy-related questions and difficult circumstances."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Suicide Prevention",
+					"description": "Anonymous support for young people in crisis or with suicidal thoughts."
+				},
+				"school-to-work-transition": {
+					"title": "School-to-Work Transition",
+					"description": "Support for the step from school into training, study, and work."
+				},
+				"counselling-men-boys": {
+					"title": "Boys and Men's Support",
+					"description": "A safe space for men and boys to talk openly about worries."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospice and Palliative Care Support",
+					"description": "Counselling around serious illness, dying, farewell, and care."
+				},
+				"life-in-old-age": {
+					"title": "Later Life Support",
+					"description": "Support for questions around ageing, care, and everyday life."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Supported Decision-Making and Advance Planning",
+					"description": "Guidance on guardianship, powers of attorney, and advance care."
+				},
+				"initial-return-further-migration": {
+					"title": "Relocation and Return Support",
+					"description": "Counselling on migration, return, and onward movement."
+				},
+				"migration": {
+					"title": "Migration Support",
+					"description": "Support with arrival, integration, and orientation."
+				},
+				"disability-psychological-impairment": {
+					"title": "Disability and Mental Health Support",
+					"description": "Support for participation, everyday life, and psychological strain."
+				},
+				"hiv-aids": {
+					"title": "HIV and AIDS",
+					"description": "Confidential counselling about HIV, AIDS, health, and everyday life."
+				},
+				"sucht": {
+					"title": "Addiction",
+					"description": "Counselling for addiction questions, dependency, and harmful habits."
+				},
+				"trauerberatung": {
+					"title": "Bereavement Support",
+					"description": "Support with loss, farewell, and grief."
+				},
+				"general-social-counselling": {
+					"title": "Social Support",
+					"description": "Help with social, financial, and personal questions."
+				},
+				"debt": {
+					"title": "Debt",
+					"description": "Counselling for financial worries, reminders, and over-indebtedness."
+				},
+				"offending": {
+					"title": "Offender Support",
+					"description": "Support for questions around offending, restart, and daily life."
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "Suggest data automatically",
