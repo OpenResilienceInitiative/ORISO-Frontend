@@ -16,6 +16,7 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 		GroupFilterIcon: Icon,
 		InternalGroupFilterIcon: Icon,
 		LiveChatFilterIcon: Icon,
+		MailFilterIcon: Icon,
 		NearbyFilterIcon: Icon,
 		SupervisionFilterIcon: Icon,
 		UnreadFilterIcon: Icon
@@ -88,6 +89,18 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 		).toBe(false);
 	});
 
+	it('carries the product-tour anchor on the Create action', () => {
+		renderToolbar(true);
+
+		const createLink = screen.getByRole('link', {
+			name: 'sessionList.createChat.buttonTitle'
+		});
+
+		expect(createLink.getAttribute('data-tour-target')).toBe(
+			'groupchat-create-button'
+		);
+	});
+
 	it('hides group filters when their tenant modules are disabled', () => {
 		renderToolbar(false, {
 			showGroupChip: false,
@@ -122,5 +135,14 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 				name: 'Internal group chat'
 			})
 		).toBeTruthy();
+	});
+});
+
+describe('agency counselling modality chip (ORISO-Frontend#985)', () => {
+	it('labels the modality filter "Mail" even without a loaded translation', () => {
+		renderToolbar(true);
+
+		expect(screen.getByText('Mail')).toBeDefined();
+		expect(screen.queryByText('Nearby')).toBeNull();
 	});
 });

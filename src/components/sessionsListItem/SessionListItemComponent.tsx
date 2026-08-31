@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
 import { getModality, Modality } from '../session/getModality';
@@ -12,22 +11,19 @@ import {
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { isChatItemUnread } from '../../utils/sessionUnread';
+import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
-import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
+import { ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
-import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
-import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
-import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
-import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
-import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
+import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
@@ -72,7 +68,9 @@ import {
 	getChatroomSettingsMenuVisibility,
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
+import { SessionListItemMenu } from './SessionListItemMenu';
 import DeleteSession from '../session/DeleteSession';
+import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
@@ -86,7 +84,6 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
 import { mobileListView } from '../app/navigationHandler';
-import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
@@ -158,6 +155,15 @@ export const SessionListItemComponent = ({
 				: TextModalityIcon;
 	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
 	const sessionItem = activeSession?.item;
+	// Unread axis (#1147): derived from the Matrix room, NOT from the DTO's
+	// `messagesRead` (hard-coded true by the backend). `unreadVersion` bumps
+	// on notification-count/receipt changes so the styling stays live.
+	const unreadVersion = useUnreadVersion();
+	const isItemUnread = useMemo(
+		() => isChatItemUnread(sessionItem),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionItem, unreadVersion]
+	);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -412,13 +418,20 @@ export const SessionListItemComponent = ({
 		isArchiveTab: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
 		isAgencyCounselling,
 		teamDiscussionFeatureEnabled: featureTeamDiscussionEnabled,
-		hasExistingTeamDiscussion
+		hasExistingTeamDiscussion,
+		isGroupChatOwner:
+			!!activeSession && isGroupChatOwner(activeSession, userData),
+		isGroupChatActive: !!activeSession?.item?.active,
+		hasMatrixRoom: !!activeSession?.item?.matrixRoomId
 	});
+	// Every flag below requires `!isAsker`, so this stays false for askers —
+	// their menu is gated separately on the legal-links branch.
 	const hasChatroomSettingsActions =
 		chatroomSettingsMenu.showArchive ||
 		chatroomSettingsMenu.showDearchive ||
 		chatroomSettingsMenu.showDelete ||
-		chatroomSettingsMenu.showRequestHelp;
+		chatroomSettingsMenu.showRequestHelp ||
+		chatroomSettingsMenu.showChatSettings;
 
 	// Only an accepted session needs the lookup — an open enquiry always allows
 	// starting a discussion, so its availability is already decided above.
@@ -771,6 +784,24 @@ export const SessionListItemComponent = ({
 		navigate(withTeamDiscussionParam(getSessionPath()));
 	};
 
+	// #1189: same destination and router state as the header menu's entry
+	// (SessionMenu.tsx). `isEditMode` is what makes CreateConversationView open
+	// the existing chat instead of a blank create form.
+	const handleChatSettings = () => {
+		setFlyoutOpen(false);
+		navigate(
+			generatePath(
+				`${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`,
+				{
+					groupId: activeSession.item.matrixRoomId,
+					id: String(activeSession.item.id),
+					subRoute: 'editGroupChat'
+				}
+			),
+			{ state: { isEditMode: true, prevIsInfoPage: false } }
+		);
+	};
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (isRequestInProgress) {
 			return null;
@@ -839,9 +870,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
 					flyoutOpen && 'sessionsListItem--menuOpen',
-					!isChatActive &&
-						activeSession.item.messagesRead &&
-						'sessionsListItem--read',
+					!isChatActive && !isItemUnread && 'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -867,7 +896,46 @@ export const SessionListItemComponent = ({
 								</div>
 							)}
 						</div>
-						<div className="sessionsListItem__rowRight"></div>
+						<div className="sessionsListItem__rowRight">
+							{/*
+							 * Only `showChatSettings` can be true here: the other
+							 * flags need `isSession`, which `buildExtendedSession`
+							 * never sets alongside `isGroup`. That invariant is
+							 * load-bearing — Overlay, LegalLinkModal and
+							 * DeleteSession all live in the main return below, so
+							 * an archive or delete entry surfacing on a group row
+							 * would fire with no confirmation behind it (the
+							 * delete ref would simply be null). Widen the helper
+							 * for group chats only together with those.
+							 */}
+							{hasChatroomSettingsActions && (
+								<SessionListItemMenu
+									flyoutOpen={flyoutOpen}
+									dropdownPosition={dropdownPosition}
+									menuIconRef={menuIconRef}
+									dropdownRef={dropdownRef}
+									dropdownId={dropdownId}
+									dropdownLabel={dropdownLabel}
+									translate={translate}
+									onMenuClick={handleMenuClick}
+									onMenuKeyDown={handleMenuKeyDown}
+									onDropdownKeyDown={handleDropdownKeyDown}
+									isAsker={isAsker}
+									visibility={chatroomSettingsMenu}
+									onChatSettings={handleChatSettings}
+									onArchive={handleArchiveSession}
+									onDearchive={handleDearchiveSession}
+									onDelete={handleDeleteSession}
+									onRequestHelp={handleRequestHelp}
+									legalLinks={legalLinks}
+									agencyId={activeSession?.agency?.id}
+									onLegalLinkClick={(title, url) => {
+										setFlyoutOpen(false);
+										setLegalModal({ title, url });
+									}}
+								/>
+							)}
+						</div>
 					</div>
 					<div className="sessionsListItem__row">
 						<div className="sessionInfo__groupIcon">
@@ -899,7 +967,7 @@ export const SessionListItemComponent = ({
 						<div
 							className={clsx(
 								'sessionsListItem__username',
-								activeSession.item.messagesRead &&
+								!isItemUnread &&
 									'sessionsListItem__username--readLabel'
 							)}
 						>
@@ -986,9 +1054,17 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
-	// Card title: never surface raw technical usernames
-	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
-	// same name pipeline the chat messages use.
+	// Card title:
+	// - Consultant seen by an asker: humanize the technical username via the
+	//   same name pipeline the chat messages use, so a name like
+	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
+	//   Matrix identifier.
+	// - Asker seen by a consultant: the anonymous User-ID is the platform's
+	//   read-only identity anchor (#1209). Never humanize it — dropping
+	//   underscores and the trailing digit block produces a different name
+	//   than the chat header shows for the same user, so a card title of
+	//   "hundchen zuri" would not match a header of "hundchen_zuri_3168".
+	//   Match the header exactly.
 	if (isAsker) {
 		if (hasConsultantData) {
 			sessionTopic = formatMessagePersonName(
@@ -1001,10 +1077,10 @@ export const SessionListItemComponent = ({
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic = formatMessagePersonName(
-			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
-			activeSession.user?.username
-		);
+		sessionTopic =
+			resolveAnonymousChatDisplayName(activeSession.user) ||
+			activeSession.user?.username ||
+			'';
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
@@ -1024,9 +1100,7 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
-				!isChatActive &&
-					activeSession.item.messagesRead &&
-					'sessionsListItem--read',
+				!isChatActive && !isItemUnread && 'sessionsListItem--read',
 				caseHandoverContentLocked &&
 					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
@@ -1098,281 +1172,33 @@ export const SessionListItemComponent = ({
 								activeSession.item.createDate
 							)}
 						</div>
-						{!activeSession.isGroup &&
-							(isAsker || hasChatroomSettingsActions) && (
-								<>
-									<button
-										type="button"
-										ref={menuIconRef}
-										className="sessionsListItem__menuIcon"
-										onClick={handleMenuClick}
-										onKeyDown={handleMenuKeyDown}
-										aria-label={dropdownLabel}
-										aria-haspopup="dialog"
-										aria-expanded={flyoutOpen}
-										aria-controls={
-											flyoutOpen ? dropdownId : undefined
-										}
-									>
-										<MenuVerticalIcon />
-									</button>
-									{flyoutOpen &&
-										createPortal(
-											<div
-												id={dropdownId}
-												ref={dropdownRef}
-												className="sessionsListItem__dropdown"
-												onKeyDown={
-													handleDropdownKeyDown
-												}
-												role="dialog"
-												aria-label={dropdownLabel}
-												style={{
-													top:
-														dropdownPosition.top > 0
-															? `${dropdownPosition.top}px`
-															: '40px',
-													left:
-														dropdownPosition.left >
-														0
-															? `${dropdownPosition.left}px`
-															: 'auto',
-													right: 'auto',
-													zIndex: 999999
-												}}
-											>
-												<div className="sessionsListItem__dropdownHeader">
-													<p className="sessionsListItem__dropdownSubtitle">
-														{translate(
-															'groupChat.info.settings.subtitle'
-														)}
-													</p>
-													<h1 className="sessionsListItem__dropdownTitle">
-														{translate(
-															'groupChat.info.settings.headline'
-														)}
-													</h1>
-												</div>
-												<div className="sessionsListItem__dropdownDivider" />
-												{isAsker ? (
-													<>
-														<div className="sessionsListItem__dropdownContent">
-															<LegalLinks
-																legalLinks={
-																	legalLinks
-																}
-																params={{
-																	aid: activeSession
-																		?.agency
-																		?.id
-																}}
-																filter={(
-																	link
-																) =>
-																	link.label ===
-																	'login.legal.infoText.dataprotection'
-																}
-															>
-																{(_, url) => (
-																	<button
-																		type="button"
-																		className="sessionsListItem__dropdownOption"
-																		onClick={() => {
-																			setFlyoutOpen(
-																				false
-																			);
-																			setLegalModal(
-																				{
-																					title: translate(
-																						'chatFlyout.privacyPolicy'
-																					),
-																					url
-																				}
-																			);
-																		}}
-																	>
-																		<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
-																		<div className="sessionsListItem__dropdownOptionCenter">
-																			<div className="sessionsListItem__dropdownOptionTitleRow">
-																				<span className="sessionsListItem__dropdownOptionTitle">
-																					{translate(
-																						'chatFlyout.privacyPolicy'
-																					)}
-																				</span>
-																			</div>
-																			<p className="sessionsListItem__dropdownOptionDescription">
-																				{translate(
-																					'chatFlyout.privacyPolicyDescription'
-																				)}
-																			</p>
-																		</div>
-																	</button>
-																)}
-															</LegalLinks>
-															<LegalLinks
-																legalLinks={
-																	legalLinks
-																}
-																params={{
-																	aid: activeSession
-																		?.agency
-																		?.id
-																}}
-																filter={(
-																	link
-																) =>
-																	link.label ===
-																	'login.legal.infoText.impressum'
-																}
-															>
-																{(_, url) => (
-																	<button
-																		type="button"
-																		className="sessionsListItem__dropdownOption"
-																		onClick={() => {
-																			setFlyoutOpen(
-																				false
-																			);
-																			setLegalModal(
-																				{
-																					title: translate(
-																						'chatFlyout.imprint'
-																					),
-																					url
-																				}
-																			);
-																		}}
-																	>
-																		<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
-																		<div className="sessionsListItem__dropdownOptionCenter">
-																			<div className="sessionsListItem__dropdownOptionTitleRow">
-																				<span className="sessionsListItem__dropdownOptionTitle">
-																					{translate(
-																						'chatFlyout.imprint'
-																					)}
-																				</span>
-																			</div>
-																		</div>
-																	</button>
-																)}
-															</LegalLinks>
-														</div>
-													</>
-												) : (
-													<>
-														<div className="sessionsListItem__dropdownContent">
-															{chatroomSettingsMenu.showArchive && (
-																<button
-																	onClick={
-																		handleArchiveSession
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																	data-cy="session-list-menu-archive"
-																>
-																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.archive'
-																				)}
-																			</span>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.archiveDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															)}
-															{chatroomSettingsMenu.showDearchive && (
-																<button
-																	onClick={
-																		handleDearchiveSession
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																	data-cy="session-list-menu-dearchive"
-																>
-																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.dearchive'
-																				)}
-																			</span>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.dearchiveDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															)}
-															{chatroomSettingsMenu.showDelete && (
-																<button
-																	onClick={
-																		handleDeleteSession
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																	data-cy="session-list-menu-delete"
-																>
-																	<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.remove'
-																				)}
-																			</span>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.removeDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															)}
-															{chatroomSettingsMenu.showRequestHelp && (
-																<button
-																	onClick={
-																		handleRequestHelp
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																	data-cy="session-list-menu-request-help"
-																>
-																	<HelpIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.help'
-																				)}
-																			</span>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.helpDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															)}
-														</div>
-													</>
-												)}
-											</div>,
-											document.body
-										)}
-								</>
-							)}
+						{(isAsker || hasChatroomSettingsActions) && (
+							<SessionListItemMenu
+								flyoutOpen={flyoutOpen}
+								dropdownPosition={dropdownPosition}
+								menuIconRef={menuIconRef}
+								dropdownRef={dropdownRef}
+								dropdownId={dropdownId}
+								dropdownLabel={dropdownLabel}
+								translate={translate}
+								onMenuClick={handleMenuClick}
+								onMenuKeyDown={handleMenuKeyDown}
+								onDropdownKeyDown={handleDropdownKeyDown}
+								isAsker={isAsker}
+								visibility={chatroomSettingsMenu}
+								onChatSettings={handleChatSettings}
+								onArchive={handleArchiveSession}
+								onDearchive={handleDearchiveSession}
+								onDelete={handleDeleteSession}
+								onRequestHelp={handleRequestHelp}
+								legalLinks={legalLinks}
+								agencyId={activeSession?.agency?.id}
+								onLegalLinkClick={(title, url) => {
+									setFlyoutOpen(false);
+									setLegalModal({ title, url });
+								}}
+							/>
+						)}
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
@@ -1431,7 +1257,7 @@ export const SessionListItemComponent = ({
 					<div
 						className={clsx(
 							'sessionsListItem__username',
-							activeSession.item.messagesRead &&
+							!isItemUnread &&
 								'sessionsListItem__username--readLabel'
 						)}
 					>
@@ -1595,7 +1421,7 @@ export const SessionListItemComponent = ({
 									)}
 								>
 									<img
-										src={nearbyConversationIcon}
+										src={mailConversationIcon}
 										alt={translate(
 											'sessionList.toolbar.chips.nearby',
 											'Mail'

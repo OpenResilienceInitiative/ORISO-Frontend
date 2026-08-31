@@ -52,11 +52,11 @@ import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/g
 import { ReactComponent as MenuVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
 import { ReactComponent as NotificationSettingsIcon } from '../../resources/img/icons/notification_settings.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
-import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
+import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
+import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
 import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
@@ -836,42 +836,45 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								legalLinks={legalLinks}
 								params={{ aid: activeSession?.agency?.id }}
 							>
-								{(label, url) => (
-									<button
-										type="button"
-										className="sessionMenu__item chatMenuDropdown__item"
-										onClick={() => {
-											setFlyoutOpen(false);
-											setLegalModal({
-												title: label,
-												url
-											});
-										}}
-									>
-										<SessionMenuItemContent
-											icon={
-												label
-													.toLowerCase()
-													.includes('daten') ? (
-													<PrivacyPolicyIcon />
-												) : (
-													<ImprintIcon />
-												)
-											}
-											title={label}
-											description={
-												label
-													.toLowerCase()
-													.includes('daten')
-													? translate(
-															'chatFlyout.privacyPolicyDescription',
-															'Lese wie diese Beratungsstelle deine Daten verarbeitet.'
-														)
-													: undefined
-											}
-										/>
-									</button>
-								)}
+								{(label, url, rawLabel) => {
+									const kind = getLegalLinkKind(
+										label,
+										url,
+										rawLabel
+									);
+									return (
+										<button
+											type="button"
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												setFlyoutOpen(false);
+												setLegalModal({
+													title: label,
+													url
+												});
+											}}
+										>
+											<SessionMenuItemContent
+												icon={
+													<LegalLinkMenuIcon
+														title={label}
+														url={url}
+														rawLabel={rawLabel}
+													/>
+												}
+												title={label}
+												description={
+													kind === 'privacy'
+														? translate(
+																'chatFlyout.privacyPolicyDescription',
+																'Lese wie diese Beratungsstelle deine Daten verarbeitet.'
+															)
+														: undefined
+												}
+											/>
+										</button>
+									);
+								}}
 							</LegalLinks>
 						</div>
 					</ChatMenuDropdown>

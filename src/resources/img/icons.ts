@@ -12,6 +12,7 @@ export { ReactComponent as ClipIcon } from '../../resources/img/icons/clip.svg';
 export { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 export { ReactComponent as ClosedEnvelopeIcon } from '../../resources/img/icons/envelope.svg';
 export { ReactComponent as CopyIcon } from '../../resources/img/icons/documents.svg';
+export { ReactComponent as GdprIcon } from '../../resources/img/icons/gdpr.svg';
 export { ReactComponent as CreateGroupChatIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
 export { ReactComponent as CrossMarkIcon } from '../../resources/img/icons/x.svg';
 export { ReactComponent as TrashIcon } from './icons/trash.svg';

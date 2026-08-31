@@ -80,12 +80,23 @@ import {
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
-import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
+import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { createPortal } from 'react-dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift
+} from '@floating-ui/dom';
+import type { Placement, VirtualElement } from '@floating-ui/dom';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import {
 	formatMessagePersonName,
-	formatAgencyLineWithI18n
+	formatAgencyLineWithI18n,
+	resolveIncomingConsultantNameForAsker,
+	resolveOwnConsultantName
 } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
@@ -452,6 +463,15 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// #1081: both menus are anchored with floating-ui instead of a one-shot
+	// calculation, so they follow their message while the timeline scrolls and
+	// stay on screen at any menu length. The anchor is either the trigger
+	// button or — for a long-press — a virtual element at the press point.
+	const [actionMenuAnchor, setActionMenuAnchor] = useState<
+		Element | VirtualElement | null
+	>(null);
+	const [actionMenuPlacement, setActionMenuPlacement] =
+		useState<Placement>('right-start');
 	// Quick-reaction row: the user's own recent picks, refreshed every time the
 	// menu opens, plus the "more" button that hands over to the full picker.
 	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
@@ -463,6 +483,10 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
+		useState<Element | null>(null);
+	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
+		useState<Placement>('top-start');
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -1108,6 +1132,14 @@ export const MessageItemComponent = ({
 		parsedMessage.systemNotificationReasonLabel;
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
+	const visibleCaseHandoverInternalDetails =
+		getVisibleCaseHandoverInternalDetailsForViewer(
+			userData?.grantedAuthorities,
+			{
+				reasonLabel: systemNotificationReasonLabel,
+				explanation: systemNotificationExplanation
+			}
+		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
@@ -1373,35 +1405,31 @@ export const MessageItemComponent = ({
 		[confirmDeleteMessage, isDeleteRequestInProgress, translate]
 	);
 
-	const openActionMenuAt = useCallback(
-		(preferredLeft: number, preferredTop: number) => {
-			const menuWidth = 210;
-			const menuHeight = 300;
-			const viewportPadding = 12;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredTop,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
-			setActionMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
-			setIsActionMenuOpen(true);
-		},
-		[]
-	);
+	/**
+	 * Opens the menu against a fixed point — the long-press position. floating-ui
+	 * takes a virtual element, so the same positioning path serves both the
+	 * point and the button anchor below.
+	 */
+	const openActionMenuAt = useCallback((clientX: number, clientY: number) => {
+		setIsVisibilityMenuOpen(false);
+		setVisibilityMenuPosition(null);
+		setVisibilityMenuAnchor(null);
+		setActionMenuPlacement('right-start');
+		setActionMenuAnchor({
+			getBoundingClientRect: () =>
+				({
+					width: 0,
+					height: 0,
+					x: clientX,
+					y: clientY,
+					top: clientY,
+					left: clientX,
+					right: clientX,
+					bottom: clientY
+				}) as DOMRect
+		});
+		setIsActionMenuOpen(true);
+	}, []);
 
 	const toggleActionMenu = useCallback(
 		(
@@ -1410,22 +1438,56 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 210;
-			const gap = 10;
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.right + gap
-					: triggerRect.left - menuWidth - gap;
 			if (isActionMenuOpen) {
 				setIsActionMenuOpen(false);
 				setActionMenuPosition(null);
+				setActionMenuAnchor(null);
 				return;
 			}
-			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+			setIsVisibilityMenuOpen(false);
+			setVisibilityMenuPosition(null);
+			setVisibilityMenuAnchor(null);
+			// The kebab sits outside the bubble, so the menu opens away from it:
+			// to the right on the incoming side, to the left on the outgoing one.
+			setActionMenuPlacement(
+				side === 'left' ? 'right-start' : 'left-start'
+			);
+			setActionMenuAnchor(event.currentTarget);
+			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen, openActionMenuAt]
+		[isActionMenuOpen]
 	);
+
+	// Keeps the action menu on its anchor across scroll, resize and any change
+	// in menu height — replacing a one-shot calculation that assumed a fixed
+	// 300px menu and never ran again.
+	useEffect(() => {
+		const menuEl = actionMenuRef.current;
+		if (!isActionMenuOpen || !actionMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(actionMenuAnchor, menuEl, () => {
+			computePosition(actionMenuAnchor, menuEl, {
+				placement: actionMenuPlacement,
+				middleware: [offset(10), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+		});
+	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
+
+	useEffect(() => {
+		const menuEl = visibilityMenuRef.current;
+		if (!isVisibilityMenuOpen || !visibilityMenuAnchor || !menuEl) {
+			return undefined;
+		}
+		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
+			computePosition(visibilityMenuAnchor, menuEl, {
+				placement: visibilityMenuPlacement,
+				middleware: [offset(6), flip(), shift({ padding: 12 })]
+			}).then(({ x, y }) =>
+				setVisibilityMenuPosition({ left: x, top: y })
+			);
+		});
+	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
 	// Slack-style long-press on the message bubble opens the action menu at
 	// the press position (touch and mouse alike).
@@ -1502,40 +1564,20 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
-			const menuWidth = 336;
-			const menuHeight = 460;
-			const viewportPadding = 12;
-			// Anchor menu so one corner sits behind the +N chip.
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.left - triggerRect.width * 0.35
-					: triggerRect.right - menuWidth + triggerRect.width * 0.35;
-			const computedLeft = Math.max(
-				viewportPadding,
-				Math.min(
-					preferredLeft,
-					window.innerWidth - menuWidth - viewportPadding
-				)
-			);
-			const computedTop = Math.max(
-				viewportPadding,
-				Math.min(
-					triggerRect.bottom - menuHeight + triggerRect.height * 0.45,
-					window.innerHeight - menuHeight - viewportPadding
-				)
-			);
 			if (isVisibilityMenuOpen) {
 				setIsVisibilityMenuOpen(false);
 				setVisibilityMenuPosition(null);
+				setVisibilityMenuAnchor(null);
 				return;
 			}
 			setIsActionMenuOpen(false);
 			setActionMenuPosition(null);
-			setVisibilityMenuPosition({
-				top: computedTop,
-				left: computedLeft
-			});
+			setActionMenuAnchor(null);
+			// The menu rises from the +N chip, aligned to the side the chip is on.
+			setVisibilityMenuPlacement(
+				side === 'left' ? 'top-start' : 'top-end'
+			);
+			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
 		[isVisibilityMenuOpen]
@@ -1576,17 +1618,34 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const resolvedIncomingDisplayName = !isMyMessage
-		? consultantMatch?.consultantDisplayName ||
-			roomUser?.displayName ||
-			displayName
-		: displayName;
+	const isAskerViewer = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const askerIncomingConsultantName =
+		!isMyMessage && isAskerViewer
+			? resolveIncomingConsultantNameForAsker({
+					sessionConsultantDisplayName:
+						activeSession?.consultant?.displayName,
+					matrixDisplayName: roomUser?.displayName,
+					eventDisplayName: displayName,
+					username
+				})
+			: null;
+	const resolvedIncomingDisplayName = askerIncomingConsultantName
+		? askerIncomingConsultantName.displayName
+		: !isMyMessage
+			? consultantMatch?.consultantDisplayName ||
+				roomUser?.displayName ||
+				displayName
+			: displayName;
 	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
 	const incomingNameParts = normalizedIncomingName
 		.split(/\s+/)
 		.filter(Boolean);
-	const resolvedIncomingNameParts =
-		incomingNameParts.length >= 2
+	const resolvedIncomingNameParts = askerIncomingConsultantName
+		? {
+				firstName: askerIncomingConsultantName.firstName,
+				lastName: askerIncomingConsultantName.lastName
+			}
+		: incomingNameParts.length >= 2
 			? {
 					firstName:
 						consultantMatch?.firstName || incomingNameParts[0],
@@ -1598,11 +1657,28 @@ export const MessageItemComponent = ({
 					firstName: consultantMatch?.firstName || undefined,
 					lastName: consultantMatch?.lastName || undefined
 				};
+	const ownConsultantName =
+		isMyMessage && !isUserMessage()
+			? resolveOwnConsultantName({
+					displayName: userData?.displayName,
+					firstName: userData?.firstName,
+					lastName: userData?.lastName,
+					username: userData?.userName || username
+				})
+			: null;
 	const formattedName = formatMessagePersonName(
-		resolvedIncomingDisplayName,
+		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
 		username,
-		isMyMessage ? userData?.firstName : resolvedIncomingNameParts.firstName,
-		isMyMessage ? userData?.lastName : resolvedIncomingNameParts.lastName
+		ownConsultantName
+			? ownConsultantName.firstName
+			: isMyMessage
+				? userData?.firstName
+				: resolvedIncomingNameParts.firstName,
+		ownConsultantName
+			? ownConsultantName.lastName
+			: isMyMessage
+				? userData?.lastName
+				: resolvedIncomingNameParts.lastName
 	);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
@@ -1868,24 +1944,33 @@ export const MessageItemComponent = ({
 					<>
 						{!isMyMessage && (
 							<div className="messageItem__header">
-								{isSystemNotification &&
-								!isCaseHandoverGrantedEvent ? (
+								{isSystemNotification ? (
 									/*
 									 * Title above, quiet qualifier below — the same
 									 * two-line header `MessageSendFailed` uses, per
 									 * Figma App.Oriso 8607-28488. Reusing its classes
 									 * on purpose: one system-notice presentation, not
-									 * two that drift apart.
+									 * two that drift apart. Case handover used to opt
+									 * out of this and render its own bordered card in
+									 * the bubble instead (ORISO-Frontend#491).
 									 */
 									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
 										<div className="messageItem__sendFailedTitle">
-											{systemNotificationTitle}
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.tookOverTitle'
+													)
+												: systemNotificationTitle}
 										</div>
 										<div className="messageItem__sendFailedSubtitle">
-											{translate(
-												'message.systemNotification',
-												'System Notification'
-											)}
+											{isCaseHandoverGrantedEvent
+												? translate(
+														'caseHandover.systemMessage.noActionNeeded'
+													)
+												: translate(
+														'message.systemNotification',
+														'System Notification'
+													)}
 										</div>
 									</div>
 								) : (
@@ -1982,21 +2067,8 @@ export const MessageItemComponent = ({
 						>
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
-									<CaseHandoverSystemMessageCard
-										title={translate(
-											'caseHandover.systemMessage.tookOverTitle'
-										)}
-										subtitle={translate(
-											'caseHandover.systemMessage.noActionNeeded'
-										)}
-										reasonLabel={
-											systemNotificationReasonLabel ||
-											undefined
-										}
-										explanation={
-											systemNotificationExplanation ||
-											undefined
-										}
+									<CaseHandoverSystemMessageBody
+										{...visibleCaseHandoverInternalDetails}
 									>
 										{systemNotificationRawDescription && (
 											<p className="messageItem__systemNotificationDescription">
@@ -2005,7 +2077,7 @@ export const MessageItemComponent = ({
 												}
 											</p>
 										)}
-									</CaseHandoverSystemMessageCard>
+									</CaseHandoverSystemMessageBody>
 								)}
 							{/*
 							 * The bubble carries the body only. Title and the
@@ -2277,7 +2349,12 @@ export const MessageItemComponent = ({
 										}
 									/>
 								))}
-							{!isSystemNotification && timeRailInBubble}
+							{/*
+							 * Figma App.Oriso 8498-32373 shows the time rail on system
+							 * notices too — they are messages, so they carry a timestamp
+							 * like every other bubble in the stream.
+							 */}
+							{timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2499,13 +2576,42 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					isSystemNotification && (
-						<div
-							className="messageItem__systemAvatar"
-							aria-hidden="true"
-						>
-							<span className="messageItem__systemAvatarIcon">
-								<CarimatRobotIcon />
-							</span>
+						/*
+						 * Figma App.Oriso 8498-32373: a system notice uses the same
+						 * side column as any incoming message — the ringed 60px
+						 * avatar frame with the Carimat robot inside, and the kebab
+						 * beneath it. The previous 32px pink puck sat outside that
+						 * column, so system messages never lined up with the stream
+						 * around them. See ORISO-Frontend#491.
+						 */
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar messageItem__avatar--bot">
+									<span
+										className="messageItem__botAvatarIcon"
+										aria-hidden
+									>
+										<CarimatRobotIcon />
+									</span>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label={translate(
+										'message.menu.open',
+										'More options'
+									)}
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+							</div>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -2565,9 +2671,20 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
-										displayName={displayName}
-										firstName={userData?.firstName}
-										lastName={userData?.lastName}
+										displayName={
+											ownConsultantName?.displayName ??
+											displayName
+										}
+										firstName={
+											ownConsultantName
+												? ownConsultantName.firstName
+												: userData?.firstName
+										}
+										lastName={
+											ownConsultantName
+												? ownConsultantName.lastName
+												: userData?.lastName
+										}
 										size={44}
 									/>
 								</div>
@@ -2593,7 +2710,7 @@ export const MessageItemComponent = ({
 					)}
 				</div>
 			</div>
-			{isActionMenuOpen && actionMenuPosition
+			{isActionMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__actionMenu"
@@ -2601,8 +2718,12 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${actionMenuPosition.top}px`,
-								left: `${actionMenuPosition.left}px`,
+								// Off-screen until floating-ui has measured the
+								// rendered menu — it needs the real element, so
+								// the first paint cannot already know where it
+								// goes (same pattern as ToolbarMenu).
+								top: `${actionMenuPosition?.top ?? -9999}px`,
+								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
 							}}
 						>
@@ -2716,7 +2837,7 @@ export const MessageItemComponent = ({
 						document.body
 					)
 				: null}
-			{isVisibilityMenuOpen && visibilityMenuPosition
+			{isVisibilityMenuOpen
 				? createPortal(
 						<div
 							className="messageItem__visibilityMenu"
@@ -2724,8 +2845,8 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
-								top: `${visibilityMenuPosition.top}px`,
-								left: `${visibilityMenuPosition.left}px`,
+								top: `${visibilityMenuPosition?.top ?? -9999}px`,
+								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000
 							}}
 						>

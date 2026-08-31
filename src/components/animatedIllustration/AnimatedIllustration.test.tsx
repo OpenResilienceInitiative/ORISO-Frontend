@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	ANIMATION_LOOPS,
@@ -69,6 +69,18 @@ function collectColors(value: unknown, found = new Set<string>()) {
 
 	return [...found];
 }
+
+// Paths stay relative to the repo root, matching what `grep -rl src/` printed
+// and the cwd-relative readFileSync further down.
+const scriptFilesUnder = (dir: string): string[] =>
+	readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const entryPath = path.join(dir, entry.name);
+		return entry.isDirectory()
+			? scriptFilesUnder(entryPath)
+			: /\.(?:js|jsx|ts|tsx)$/.test(entry.name)
+				? [entryPath]
+				: [];
+	});
 
 const stubReducedMotion = (matches: boolean) =>
 	vi.stubGlobal(
@@ -140,12 +152,17 @@ describe('animation playback policy', () => {
 	it('is the only component that talks to lottie-react', () => {
 		// Two players with two speeds is what this consolidation removed; a new
 		// direct import would let them drift apart again.
-		const hits = execSync('grep -rl "from \'lottie-react\'" src/ || true', {
-			encoding: 'utf8'
-		})
-			.split('\n')
-			.filter(Boolean)
-			.filter((file) => !file.endsWith('.test.tsx'));
+		//
+		// Searched in-process rather than by shelling out to grep: execSync
+		// blocks the worker's event loop, and vitest's testTimeout is itself a
+		// JS timer, so it cannot fire while that loop is blocked. A stalled
+		// child process here could not be timed out by the test runner and ran
+		// to GitHub's 6 h job ceiling instead.
+		const hits = scriptFilesUnder('src').filter(
+			(file) =>
+				!file.endsWith('.test.tsx') &&
+				readFileSync(file, 'utf8').includes("from 'lottie-react'")
+		);
 
 		expect(hits).toEqual([
 			'src/components/animatedIllustration/AnimatedIllustration.tsx'

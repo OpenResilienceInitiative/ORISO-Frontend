@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -147,6 +149,21 @@ describe('"My profile" rail icon', () => {
 });
 
 describe('RouterConfigUser navigation', () => {
+	it('does not hide My profile behind an Anonymous- username prefix (#1216)', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/components/app/RouterConfig.tsx'),
+			'utf8'
+		);
+		expect(source).not.toMatch(/startsWith\(\s*['"]Anonymous-['"]\s*\)/);
+
+		const profileItem = RouterConfigUser(settings, false).navigation.find(
+			(item) => item.to === '/profile'
+		);
+
+		expect(profileItem).toBeDefined();
+		expect(profileItem.condition).toBeUndefined();
+	});
+
 	it('keeps the Activity Timeline rail item and route but hides it from askers', () => {
 		const routerConfig = RouterConfigUser(settings, false);
 		const timelineItem = routerConfig.navigation.find(

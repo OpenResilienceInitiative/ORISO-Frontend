@@ -52,8 +52,19 @@ describe('Matrix-only active frontend artifacts', () => {
 		);
 
 		expect(buildAction).toContain('linux/amd64,linux/arm64');
-		expect(buildAction).toContain('provenance: mode=max');
-		expect(buildAction).toContain('sbom: true');
+		// Provenance and SBOM are conditional on actually pushing: a discarded
+		// validation build must not pay for attestations it throws away. The
+		// guarantee still holds for every published image — ci-main.yml is the
+		// only publishing caller of this action and passes push_to_ghcr: true
+		// (release-image.yml calls docker/build-push-action directly and is
+		// covered by the unconditional assertions further down).
+		expect(buildAction).toMatch(
+			/provenance: \$\{\{ inputs\.push_to_ghcr == 'true' && 'mode=max' \|\| 'false' \}\}/
+		);
+		expect(buildAction).toMatch(
+			/sbom: \$\{\{ inputs\.push_to_ghcr == 'true' \}\}/
+		);
+		expect(mainWorkflow).toContain('push_to_ghcr: true');
 		expect(buildAction).toMatch(
 			/value: \$\{\{ steps\.build\.outputs\.digest \}\}/
 		);
@@ -62,15 +73,38 @@ describe('Matrix-only active frontend artifacts', () => {
 			expect(workflow).toContain('id-token: write');
 			expect(workflow).toContain('attestations: write');
 			expect(workflow).toContain(
-				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
-			);
-			expect(workflow).toContain(
 				'actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6'
 			);
 			expect(workflow).toContain('subject-digest: ${{ steps.');
-			expect(workflow).toMatch(
-				/image-ref: .*@\$\{\{ steps\..*\.outputs\.digest \}\}/
+		}
+
+		// The vulnerability scan has to sit ahead of the publish. Scanning the
+		// pushed digest afterwards can only redden the run: the image is already
+		// in GHCR and the deploy scripts resolve a tag to a digest without ever
+		// reading a workflow result (OpenResilienceInitiative/ORISO-Docs#88).
+		// ci-main.yml publishes through the shared action, so its gate lives
+		// there; release-image.yml calls build-push-action directly and carries
+		// its own.
+		// Comment lines are stripped first: the explanatory comments themselves
+		// quote `push: true`, which would otherwise match ahead of the real step.
+		const withoutComments = (yaml: string) =>
+			yaml
+				.split('\n')
+				.filter((line) => !line.trim().startsWith('#'))
+				.join('\n');
+
+		for (const [rawSource, publishPattern] of [
+			[buildAction, /push: \$\{\{ inputs\.push_to_ghcr \}\}/],
+			[releaseWorkflow, /push: true/]
+		] as const) {
+			const source = withoutComments(rawSource);
+			const scanIndex = source.indexOf(
+				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
 			);
+			const publishIndex = source.search(publishPattern);
+			expect(scanIndex).toBeGreaterThan(-1);
+			expect(publishIndex).toBeGreaterThan(-1);
+			expect(scanIndex).toBeLessThan(publishIndex);
 		}
 
 		expect(releaseWorkflow).toContain('platforms: linux/amd64,linux/arm64');

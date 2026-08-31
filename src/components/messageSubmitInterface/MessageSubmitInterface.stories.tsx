@@ -12,6 +12,10 @@ import {
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
+import {
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -92,9 +96,58 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Assert the public composer-to-session bottom spacing contract in CSS pixels. */
+async function expectComposerBottomInset(
+	canvasElement: HTMLElement,
+	expectedInset: number
+) {
+	await waitFor(() => {
+		const session = canvasElement.querySelector<HTMLElement>('.session');
+		const composerCard = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!session || !composerCard) {
+			throw new Error('composer layout not mounted yet');
+		}
+
+		const sessionInnerBottom =
+			session.getBoundingClientRect().bottom -
+			Number.parseFloat(
+				getComputedStyle(session).borderBottomWidth || '0'
+			);
+		const composerBottom = composerCard.getBoundingClientRect().bottom;
+
+		expect(Math.round(sessionInnerBottom - composerBottom)).toBe(
+			expectedInset
+		);
+	});
+}
+
 export const Default: Story = {
 	name: 'Default (empty)',
 	render: () => <ComposerShell />
+};
+
+/** Desktop chat card contract: the composer card rests on the session's inner edge. */
+export const DesktopBottomAnchored: Story = {
+	name: 'Desktop — composer anchored to session bottom',
+	parameters: {
+		viewport: {
+			options: {
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' }
+				}
+			}
+		}
+	},
+	globals: {
+		viewport: { value: 'desktop1440' }
+	},
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 0);
+	}
 };
 
 /** #597: focus the editor so `--selected` applies (2px primary-container + send styles). */
@@ -146,11 +199,14 @@ export const DockedEmojiPickerNoOverlay: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		// Both languages: the Storybook preview defaults to German
+		// (`initialGlobals.locale = FALLBACK_LNG`, and the component test pins
+		// the browser to de-DE), but the toolbar can be switched to English.
 		const emojiButton = await canvas.findByRole('button', {
 			name: /emoji/i
 		});
 		const mentionButton = await canvas.findByRole('button', {
-			name: /mention/i
+			name: /mention|erwähnen/i
 		});
 
 		await userEvent.click(emojiButton);
@@ -258,10 +314,18 @@ export const SessionHeightReset: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const dragHandle = await canvas.findByRole('button', {
-			name: /drag to resize composer/i
+			name: /ziehen, um den editor zu vergrößern/i
 		});
 		dragHandle.focus();
-		await userEvent.keyboard('{End}');
+		// Dispatch on the handle rather than via `userEvent.keyboard`, which
+		// sends to whatever holds focus. The composer's editor takes focus back
+		// asynchronously, so on a slower machine the key landed on the TipTap
+		// contenteditable instead and user-event threw "Not implemented" trying
+		// to move the caret — green on macOS, red on the Linux CI runner. Same
+		// approach as DragHandle.stories.tsx.
+		dragHandle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
+		);
 		await waitFor(() => {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'
@@ -358,23 +422,30 @@ export const ReplyingToMessage: Story = {
 		const preview = canvasElement.querySelector(
 			'.messageSubmit__replyPreview'
 		) as HTMLElement;
-		const form = preview.closest('form') as HTMLElement;
+		const editor = preview
+			.closest('form')
+			?.querySelector('.textarea__input') as HTMLElement;
+		const editorRect = editor.getBoundingClientRect();
 
 		// The bar hugs the quote instead of spanning the composer — it should
 		// read like the bubble it quotes, not like a full-width banner.
 		expect(preview.getBoundingClientRect().width).toBeLessThan(
-			form.getBoundingClientRect().width * 0.8
+			editorRect.width * 0.8
+		);
+		// …starting on the editor's left edge, not outside it.
+		expect(Math.round(preview.getBoundingClientRect().left)).toBe(
+			Math.round(editorRect.left)
 		);
 
-		// …but a very long quote still has to stay inside the composer.
+		// A very long quote grows to the editor's width and stops there.
 		const text = preview.querySelector(
 			'.messageSubmit__replyPreviewText'
 		) as HTMLElement;
 		const original = text.textContent;
 		text.textContent = 'x'.repeat(600);
-		expect(preview.getBoundingClientRect().width).toBeLessThanOrEqual(
-			form.getBoundingClientRect().width
-		);
+		expect(
+			Math.round(preview.getBoundingClientRect().right)
+		).toBeLessThanOrEqual(Math.round(editorRect.right));
 		text.textContent = original;
 	}
 };
@@ -392,13 +463,17 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 		return found;
 	});
 
-	// Full width of the composer, one 32px line — never wraps.
-	const form = banner.closest('form') as HTMLElement;
+	// One 32px line, never wrapping, and flush with the *editor* below it.
+	// Figma 18:1990 puts the bar and the text component both at x=16 /
+	// width 863 — not at the outer card's edges.
+	const editor = banner
+		.closest('form')
+		?.querySelector('.textarea__input') as HTMLElement;
 	const bannerRect = banner.getBoundingClientRect();
+	const editorRect = editor.getBoundingClientRect();
 	expect(Math.round(bannerRect.height)).toBe(32);
-	expect(bannerRect.width).toBeGreaterThan(
-		form.getBoundingClientRect().width * 0.8
-	);
+	expect(Math.round(bannerRect.left)).toBe(Math.round(editorRect.left));
+	expect(Math.round(bannerRect.right)).toBe(Math.round(editorRect.right));
 
 	const text = banner.querySelector(
 		'.messageSubmit__editPreviewText'
@@ -443,12 +518,17 @@ export const EditingMessage: Story = {
 	}
 };
 
-/** Mobile counterpart — Figma 18:6713. Same bar, less room for the text. */
+/**
+ * Mobile counterpart — Figma 18:6713. Same bar, less room for the text.
+ *
+ * Uses `phone390Globals`, not `parameters.viewport.defaultViewport`: preview.tsx
+ * replaces the viewport options with `phone375` / `phone390` only (#849), so
+ * naming a built-in preset like `mobile1` silently leaves the story at desktop
+ * width — and this story's whole point is the mobile breakpoint.
+ */
 export const EditingMessageMobile: Story = {
 	name: 'Editing (m.replace preview) — mobile',
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
+	globals: phone390Globals,
 	render: () => (
 		<ComposerShell
 			editingMessage={{
@@ -484,8 +564,20 @@ export const Supervisor: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	},
-	render: () => <ComposerShell />
+	// Was `defaultViewport: 'mobile1'`, which has not resolved since #849
+	// removed the built-in presets — the story called itself Mobile and
+	// rendered at desktop width.
+	globals: phone390Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 16);
+	}
+};
+
+export const Tablet: Story = {
+	globals: tablet834Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 16);
+	}
 };

@@ -16,21 +16,48 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 .loginForm {
 	margin: 0;
-	display: flex;
-	justify-content: center;
-	align-items: $login-align-items;
+
+	/*
+	 * Login card and encryption explainer share one grid cell, so the card can
+	 * slide up out of the viewport while the explainer comes in from below
+	 * (design 2d / 2e) without the surrounding layout jumping. The cell is as
+	 * tall as the taller of the two.
+	 */
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+
+	/*
+	 * The cell is as tall as the taller pane — usually the explainer. Pinning
+	 * to the top keeps the login form where the eye expects it instead of
+	 * floating it down by half the height difference.
+	 */
+	align-items: start;
+	overflow: hidden;
 	text-align: center;
 	width: 100%;
 	max-width: 520px;
 	padding: 55px 60px;
-	background: #ffffff;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	position: relative;
 	border: 0px solid rgba(220, 38, 38, 0.3);
 	border: 0px solid
 		color-mix(in srgb, var(--m3-primary, #a5000a) 30%, transparent);
 	border-radius: 20px;
 	animation: fadeIn 0.5s ease-out;
-	transition: transform 0.3s ease;
+	transition:
+		transform 0.3s ease,
+		width 320ms cubic-bezier(0.2, 0, 0, 1),
+		max-width 320ms cubic-bezier(0.2, 0, 0, 1);
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+
+	/* The mobile sheet already supplies the outer margin (design 2e). */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		padding: 8px 0 0;
+		border-radius: 0;
+	}
 
 	&__inner {
 		position: relative;
@@ -39,6 +66,126 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+
+	&__pane {
+		grid-area: 1 / 1;
+		transition:
+			transform 520ms cubic-bezier(0.2, 0, 0, 1),
+			opacity 260ms linear,
+			visibility 0s linear 520ms;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	&__pane--login {
+		transform: translateY(0);
+		opacity: 1;
+	}
+
+	&__pane--info {
+		transform: translateY(118%);
+		opacity: 0;
+		visibility: hidden;
+	}
+
+	&--securityOpen {
+		/*
+		 * The explainer is drawn on the design's 700px card (580px of content):
+		 * two 202px party blocks, a 132px wire and a 340px noise box need the
+		 * room. The card grows for it and shrinks back for the form.
+		 */
+		@media screen and (width >= #{$fromMedium}) {
+			max-width: $login-security-card-width;
+		}
+
+		.loginForm__pane--login {
+			transform: translateY(-118%);
+			opacity: 0;
+			visibility: hidden;
+		}
+
+		.loginForm__pane--info {
+			transform: translateY(0);
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+	}
+
+	&__separator {
+		width: 100%;
+		height: 1px;
+		margin: $grid-base-three 0 $grid-base-two;
+		background: var(--m3-outline-variant, #c4c7c8);
+		opacity: 0.6;
+	}
+
+	&__securityTeaser {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base;
+		width: 100%;
+		padding: $grid-base;
+		border: 0;
+		border-radius: 12px;
+		background: none;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 13.5px;
+		text-align: center;
+
+		&:hover {
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
+	&__securityTeaserIcon {
+		flex: none;
+		width: 15px;
+		height: 15px;
+		fill: currentcolor;
+		opacity: 0.6;
+	}
+
+	&__securityTeaserLink {
+		color: var(--m3-primary, #a5000a);
+		font-weight: $font-weight-bold;
+		white-space: nowrap;
+	}
+
+	&__securityTeaserLinkShort,
+	&__securityTeaserTextShort {
+		display: none;
+	}
+
+	/* The mobile sheet has no room for the long wording. */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		&__securityTeaserText,
+		&__securityTeaserLink {
+			display: none;
+		}
+
+		&__securityTeaserTextShort {
+			display: inline;
+		}
+
+		&__securityTeaserLinkShort {
+			display: inline;
+			color: var(--m3-primary, #a5000a);
+			font-weight: $font-weight-bold;
+			white-space: nowrap;
+		}
 	}
 
 	&__fields,
@@ -187,47 +334,6 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
-	&__securityBanner {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 8px;
-		padding: 16px 18px;
-		background: rgba(16, 185, 129, 0.12);
-		border: 1.5px solid rgba(16, 185, 129, 0.4);
-		border-radius: 12px;
-		margin-top: 20px;
-		margin-bottom: 0;
-		box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-		text-align: center;
-
-		.security-header {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-
-			svg {
-				flex-shrink: 0;
-				width: 20px;
-				height: 20px;
-			}
-
-			strong {
-				font-size: 14px;
-				color: #059669;
-				font-weight: 600;
-				letter-spacing: 0.3px;
-			}
-		}
-
-		span {
-			font-size: 12px;
-			color: #047857;
-			font-weight: 400;
-			line-height: 1.4;
-		}
-	}
-
 	&__otp {
 		max-height: 0;
 		overflow: hidden;
@@ -277,6 +383,12 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		min-width: unset;
 		max-width: 100%;
 		margin-top: 25px;
+
+		// Fold budget on the phone sheet (see loginForm__register below):
+		// every vertical step above the registration entry counts at 664px.
+		@media screen and (width <= #{$fromMedium - 1px}) {
+			margin-top: $grid-base-two;
+		}
 		padding: 15px 24px;
 		background: var(--m3-primary, #a5000a);
 		border: none;
@@ -313,21 +425,30 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
+	// Row that carries the "Forgot password?" link. It sits BELOW the
+	// registration block: recovery is the exception, registration the
+	// primary path for a new asker, and on phones the registration entry
+	// has to be above the fold. (The link inside keeps the shared
+	// .button-as-link styling, including its $grid-base-four top margin.)
 	&__passwordReset {
-		color: $link-color;
-		transform: $login-icon-transform;
-		text-decoration: $link-text-decoration;
-		font-weight: $link-font-weight;
-		padding: 0;
-
-		&:hover {
-			text-decoration: $link-hover-text-decoration;
-			cursor: pointer;
-		}
+		width: 100%;
+		max-width: 380px;
+		margin: 0 auto;
+		text-align: center;
 	}
 
 	&__register {
+		width: 100%;
+		max-width: 380px;
 		margin-top: $grid-base-four;
+
+		// On the phone sheet the desktop air around "Neu hier?" pushes the
+		// registration button below a 664px-high viewport (390x844 minus
+		// Chrome's browser chrome). Tighten the rhythm so the entry stays
+		// above the fold without scrolling.
+		@media screen and (width <= #{$fromMedium - 1px}) {
+			margin-top: $grid-base-two;
+		}
 
 		&__separator {
 			width: 100%;
@@ -336,6 +457,11 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			height: 18px;
 			margin-bottom: 15px;
 			font-size: $font-size-secondary;
+
+			// See above: fold budget on the phone sheet.
+			@media screen and (width <= #{$fromMedium - 1px}) {
+				margin-bottom: $grid-base;
+			}
 
 			span {
 				line-height: 15px;
@@ -351,12 +477,24 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&__content {
+			// Same column as the fields and the primary button, so the
+			// secondary lines up with them instead of shrinking to its label.
+			width: 100%;
+			max-width: 380px;
+			margin-left: auto;
+			margin-right: auto;
+
 			.text {
 				font-weight: 600;
 				text-align: center;
 				color: $text-high-emphasis;
 			}
 			margin-top: $grid-base-six;
+
+			// See above: fold budget on the phone sheet.
+			@media screen and (width <= #{$fromMedium - 1px}) {
+				margin-top: $grid-base-two;
+			}
 		}
 	}
 

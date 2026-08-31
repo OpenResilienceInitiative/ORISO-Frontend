@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ALIAS_LAST_MESSAGES } from '../../resources/scripts/config';
+import { toMessagePreviewText } from '../../utils/messagePreviewText';
 
 interface SessionListItemLastMessageProps {
 	showSpan?: boolean;
@@ -27,6 +28,7 @@ export const SessionListItemLastMessage: React.FC<
 	);
 
 	let aliasMessage = ALIAS_LAST_MESSAGES[lastMessageType];
+	const previewMessage = toMessagePreviewText(lastMessage);
 
 	// reassign_consultant alias can have multiple states
 	if (lastMessageType === 'REASSIGN_CONSULTANT') {
@@ -46,7 +48,7 @@ export const SessionListItemLastMessage: React.FC<
 			}`}
 		>
 			{showLanguage && language && languageAddOn}
-			{aliasMessage ? translate(aliasMessage) : lastMessage}
+			{aliasMessage ? translate(aliasMessage) : previewMessage}
 		</div>
 	);
 };

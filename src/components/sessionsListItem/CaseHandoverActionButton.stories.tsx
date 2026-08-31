@@ -127,14 +127,19 @@ export const MenuOpenDefault: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		// #1158: menu is portalled to document.body so card overflow cannot
+		// clip it — query the body, not the story canvas.
+		const body = within(document.body);
 		await userEvent.click(
 			canvas.getByRole('button', { name: labels.menuLabel })
 		);
-		await expect(
-			await canvas.findByRole('menuitem', {
-				name: new RegExp(labels.selectMultipleTitle)
-			})
-		).toBeVisible();
+		const menuItem = await body.findByRole('menuitem', {
+			name: new RegExp(labels.selectMultipleTitle)
+		});
+		await expect(menuItem).toBeVisible();
+		await expect(menuItem.closest('[role="menu"]')?.parentElement).toBe(
+			document.body
+		);
 	}
 };
 
@@ -153,16 +158,19 @@ export const MenuOpenBatch: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		// #1158: menu is portalled to document.body so card overflow cannot
+		// clip it — query the body, not the story canvas.
+		const body = within(document.body);
 		await userEvent.click(
 			canvas.getByRole('button', { name: labels.menuLabel })
 		);
 		await expect(
-			await canvas.findByRole('menuitem', {
+			await body.findByRole('menuitem', {
 				name: new RegExp(labels.confirmSelectionTitle)
 			})
 		).toBeVisible();
 		await expect(
-			canvas.getByRole('menuitem', {
+			body.getByRole('menuitem', {
 				name: new RegExp(labels.deselectTitle)
 			})
 		).toBeVisible();

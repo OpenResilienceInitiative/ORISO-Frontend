@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
+import { sanitizeConsentHtml } from '../legalContent/legalHtmlSanitizer';
+import htmlParser from '../../resources/scripts/util/htmlParser';
 import './AnonymousConsentGate.styles.scss';
 
 interface AnonymousConsentGateProps {
@@ -8,6 +10,10 @@ interface AnonymousConsentGateProps {
 	 * HTML for the inline consent line — typically produced by `renderToString`
 	 * over the shared `<LegalLinks>` component so the "Datenschutzbestimmung"
 	 * text becomes a real anchor to the tenant's privacy policy.
+	 *
+	 * Rendered through the shared legal-HTML sanitizer, never raw: this is
+	 * Gate 2 of ADR-022, and the sentence shown here becomes Träger-authored
+	 * content (ADR-021 decision 4). See the block comment below.
 	 */
 	consentLabelHtml: string;
 	/** Called when the user clicks "Ich bin einverstanden". */
@@ -84,7 +90,33 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
+	const rejectLabel = t(
+		'anonymousChat.consent.reject',
+		'Ich stimme nicht zu'
+	);
 	const dialogRef = useRef<HTMLDivElement | null>(null);
+
+	/* ADR-022 "Blocking dependency" / ORISO-UserService#927.
+	   This line used to go straight into `dangerouslySetInnerHTML`. That was
+	   survivable only as long as the input was bundle i18n text plus anchors
+	   this frontend generated itself. Gate 2 changes the input: the sentence
+	   becomes a field of the Beratungsstelle's data-protection policy, authored
+	   in the Admin by the Träger (ADR-021 decision 4) and delivered by the
+	   backend. From that moment an unsanitised sink here is a stored-XSS hole
+	   in the one dialog a help-seeker cannot get past.
+	   The fix is not a second, bespoke allowlist but the shared one every other
+	   piece of authored legal HTML uses, in its consent-sentence variant:
+	   `sanitizeConsentHtml` is `LegalContentRenderer`'s allowlist minus `class`,
+	   because `htmlParser` deletes any node classed `remove` and a consent
+	   sentence must not be able to delete its own policy links.
+	   `a[href,target,rel]` stays allowed, so the link to the policy keeps
+	   working; `<script>` and `on*` handlers do not survive. `htmlParser`
+	   replaces the raw-HTML sink entirely and applies the same tenant-media URL
+	   rewriting as the legal renderer. */
+	const consentLabelNodes = useMemo(
+		() => htmlParser(sanitizeConsentHtml(consentLabelHtml)),
+		[consentLabelHtml]
+	);
 
 	/* Explicit initial focus alongside the trap. focus-trap-react resolves its
 	   own `initialFocus` only once it considers the tree tabbable, which does
@@ -156,10 +188,9 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 						)}
 					</p>
 
-					<p
-						className="anonymousConsentGate__consent"
-						dangerouslySetInnerHTML={{ __html: consentLabelHtml }}
-					/>
+					<p className="anonymousConsentGate__consent">
+						{consentLabelNodes}
+					</p>
 
 					{rejected && (
 						<p
@@ -174,19 +205,20 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 					)}
 
 					<div className="anonymousConsentGate__actions">
+						{/* Icon-only per the design (CAR02 2183-14718). The label
+						    still exists — as the accessible name and the tooltip
+						    — because a bare ✕ says nothing to a screen reader,
+						    and because the two labelled buttons were what pushed
+						    this row out of the card at 375px (#892). */}
 						<button
 							type="button"
 							className="anonymousConsentGate__btnReject"
 							onClick={() => setRejected(true)}
 							disabled={busy}
+							aria-label={rejectLabel}
+							title={rejectLabel}
 						>
 							<RejectXIcon />
-							<span>
-								{t(
-									'anonymousChat.consent.reject',
-									'Ich stimme nicht zu'
-								)}
-							</span>
 						</button>
 						<button
 							type="button"

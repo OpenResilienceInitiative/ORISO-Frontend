@@ -1,0 +1,343 @@
+/*
+ * Encryption explainer card — design 2d (desktop) / 2e (mobile sheet).
+ * Geometry and type from the Figma frame `div.loginForm` (node 9579:55787).
+ */
+
+.loginSecurity {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base;
+	width: 100%;
+	text-align: left;
+
+	svg {
+		fill: currentcolor;
+	}
+
+	/* the tap arrows are strokes, not glyphs */
+	svg#{&}__tapArrow {
+		fill: none;
+	}
+
+	&__head {
+		display: flex;
+		align-items: center;
+		gap: $grid-base;
+		flex-wrap: wrap;
+	}
+
+	&__headline {
+		margin: 0;
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 20px;
+		font-weight: $font-weight-medium;
+		line-height: 25px;
+	}
+
+	/* you | wire | agency — each party owns half the row, the wire takes what it needs */
+	&__transport {
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		padding-top: $grid-base-two;
+	}
+
+	/* each party is as wide as its bubble needs (the design's 202px at most) */
+	&__party {
+		display: flex;
+		flex: 0 1 auto;
+		flex-direction: column;
+		align-items: center;
+		min-width: 0;
+	}
+
+	/*
+	 * Bubble inward with 17px to spare, the mark in the outer corner
+	 * underneath — person bottom-left, agency bottom-right.
+	 */
+	&__partyBlock {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		max-width: 202px;
+	}
+
+	&__party--you &__partyBlock {
+		align-items: flex-start;
+	}
+
+	&__party--agency &__partyBlock {
+		align-items: flex-end;
+	}
+
+	&__partyIcon {
+		flex: none;
+		width: 30px;
+		height: 30px;
+		color: var(--m3-on-surface-variant, #444748);
+		opacity: 0.75;
+	}
+
+	&__bubble {
+		box-sizing: border-box;
+		max-width: 100%;
+		margin: 0 17px;
+		padding: 7px 12px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 13px;
+		line-height: 24px;
+		text-align: center;
+
+		/* long translations wrap inside the bubble instead of pushing the wire away */
+		overflow-wrap: anywhere;
+
+		&--you {
+			border-radius: 14px 14px 14px 4px;
+		}
+
+		&--agency {
+			border-radius: 16px 16px 4px 16px;
+		}
+	}
+
+	/* the wire fills whatever the bubbles leave, 132px at least (design) */
+	&__wire {
+		position: relative;
+		display: flex;
+		flex: 1 1 132px;
+		align-items: center;
+		justify-content: center;
+		min-width: 132px;
+		height: 37px;
+		margin-top: 2px;
+	}
+
+	/* the dashed line the chip sits on — from bubble to bubble */
+	&__wireLine {
+		position: absolute;
+		inset: 50% 0 auto;
+		height: 2px;
+		color: var(--m3-on-surface, #1a1c1e);
+		background: repeating-linear-gradient(
+			90deg,
+			currentcolor 0 8px,
+			transparent 8px 16px
+		);
+	}
+
+	&__wireChip {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 12px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 11.5px;
+		line-height: 24px;
+		white-space: nowrap;
+	}
+
+	&__wireLock {
+		width: 12px;
+		height: 12px;
+		opacity: 0.6;
+	}
+
+	/* what the wire gives away: noise — the arrows point back up at where it was tapped */
+	&__attack {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: $grid-base-two;
+		box-sizing: border-box;
+		width: 340px;
+		max-width: 100%;
+		margin: 20px auto 0;
+		padding: 12px 18px;
+		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		border-radius: 16px;
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&__tapArrow {
+		position: absolute;
+		bottom: 50%;
+		width: 44px;
+		height: 72px;
+		color: var(--m3-primary-fixed-dim, #ffb4aa);
+		pointer-events: none;
+
+		&--left {
+			right: 100%;
+		}
+
+		&--right {
+			left: 100%;
+			transform: scaleX(-1);
+		}
+	}
+
+	&__attackIcon {
+		flex: none;
+		width: 60px;
+		height: 60px;
+		color: var(--m3-primary, #a5000a);
+		opacity: 0.9;
+	}
+
+	&__attackBody {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+
+	&__cipher {
+		margin: 0;
+		min-height: 20px;
+		color: var(--m3-on-primary-fixed-variant, #930008);
+		font-family: ui-monospace, menlo, monospace;
+		font-size: 14px;
+		line-height: 24px;
+		letter-spacing: 0.4px;
+		text-align: center;
+	}
+
+	/* M3 label/small */
+	&__attackCaption {
+		margin: 0;
+		color: var(--m3-on-primary-fixed, #410001);
+		font-size: 11px;
+		font-weight: $font-weight-medium;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		text-align: center;
+	}
+
+	&__footnote {
+		margin: $grid-base 0 0;
+		padding-bottom: $grid-base-two;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 13px;
+		line-height: 20px;
+		text-align: center;
+	}
+
+	&__protocol {
+		display: block;
+		margin-top: 2px;
+		color: var(--m3-outline, #747878);
+		font-size: 12.5px;
+		line-height: 19px;
+
+		strong {
+			color: var(--m3-on-surface-variant, #444748);
+			font-weight: $font-weight-bold;
+		}
+
+		a {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__back {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base;
+		width: 100%;
+		padding: 8px;
+		border: 0;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 0 0 12px 12px;
+		background: none;
+		color: var(--m3-primary, #a5000a);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 15px;
+		font-weight: $font-weight-bold;
+		line-height: 24px;
+
+		&:hover {
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
+	&__backIcon {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* Mobile sheet (2e): tighter, and the wire chip loses its label. */
+	@media screen and (width <= #{$fromMedium - 1px}) {
+		&__headline {
+			font-size: 18px;
+			line-height: 24px;
+		}
+
+		&__partyBlock {
+			gap: 6px;
+		}
+
+		&__bubble {
+			margin: 0 4px;
+		}
+
+		&__wire {
+			flex-basis: 44px;
+			min-width: 44px;
+		}
+
+		&__tapArrow {
+			display: none;
+		}
+
+		&__wireLabel {
+			display: none;
+		}
+
+		&__wireChip {
+			padding: 4px;
+		}
+
+		&__bubble {
+			padding: 6px 10px;
+			font-size: 12px;
+			line-height: 20px;
+		}
+
+		&__attack {
+			margin-top: 12px;
+		}
+
+		&__partyIcon {
+			width: 26px;
+			height: 26px;
+		}
+
+		&__attack {
+			width: 100%;
+			gap: 12px;
+			padding: 10px 14px;
+		}
+
+		&__attackIcon {
+			width: 44px;
+			height: 44px;
+		}
+
+		&__cipher {
+			font-size: 12.5px;
+			line-height: 20px;
+		}
+	}
+}

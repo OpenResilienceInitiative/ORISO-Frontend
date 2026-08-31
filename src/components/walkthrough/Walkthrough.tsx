@@ -6,16 +6,20 @@ import { useAppConfig } from '../../hooks/useAppConfig';
 import { apiPatchConsultantData } from '../../api';
 import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
-import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
+import {
+	consultantWalkthroughTour,
+	frontendTours
+} from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import type { TourEvent, TourProgress, TourStep } from '../productTour/types';
 
 /**
- * Consultant walkthrough host. Runs either through the legacy auto-start
- * gate (app-config flag + the user's walkthrough switch) or on demand from
- * the profile tutorial carousel. Progress is persisted through the versioned
- * UserService API; the legacy boolean is kept in sync so the auto-start
+ * Frontend tour host. Renders whichever registered tour the profile carousel
+ * requested; without a request, the legacy auto-start gate (app-config flag +
+ * the user's walkthrough switch) still runs the consultant walkthrough.
+ * Progress is persisted through the versioned UserService API; the legacy
+ * boolean is kept in sync for the walkthrough tour only, so the auto-start
  * behavior stays unchanged.
  */
 export const Walkthrough = () => {
@@ -23,24 +27,31 @@ export const Walkthrough = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 
-	const isLaunchRequested =
-		launchRequest?.tourId === consultantWalkthroughTour.id;
-	const isAutoRun = !!userData.isWalkThroughEnabled;
+	const requestedTour = launchRequest
+		? frontendTours.find((tour) => tour.id === launchRequest.tourId)
+		: undefined;
+	// Auto-run only when nothing was requested at all: a stale or unknown
+	// request must not fall back to starting an unrelated tour.
+	const isAutoRun = !launchRequest && !!userData.isWalkThroughEnabled;
+	const activeTour =
+		requestedTour ?? (isAutoRun ? consultantWalkthroughTour : undefined);
 
-	const lastStepId =
-		consultantWalkthroughTour.steps[
-			consultantWalkthroughTour.steps.length - 1
-		].id;
+	const lastStepId = activeTour
+		? activeTour.steps[activeTour.steps.length - 1].id
+		: undefined;
 
 	const persistStepProgress = useCallback(
 		(event: TourEvent, step?: TourStep) => {
+			if (!activeTour) {
+				return;
+			}
 			if (event === 'step_completed' && step && step.id !== lastStepId) {
 				// Fire-and-forget: step progress powers the carousel's
 				// continue state but must never block the tour.
 				versionedTourProgressRepository
 					.saveProgress({
-						tourId: consultantWalkthroughTour.id,
-						tourVersion: consultantWalkthroughTour.version,
+						tourId: activeTour.id,
+						tourVersion: activeTour.version,
 						status: 'in_progress',
 						currentStepId: step.id
 					})
@@ -50,14 +61,14 @@ export const Walkthrough = () => {
 				// A restart of a terminal tour re-opens the versioned scope.
 				versionedTourProgressRepository
 					.saveProgress({
-						tourId: consultantWalkthroughTour.id,
-						tourVersion: consultantWalkthroughTour.version,
+						tourId: activeTour.id,
+						tourVersion: activeTour.version,
 						status: 'in_progress'
 					})
 					.catch(() => {});
 			}
 		},
-		[lastStepId, launchRequest?.mode]
+		[activeTour, lastStepId, launchRequest?.mode]
 	);
 
 	const handleTerminalStatus = useCallback(
@@ -65,7 +76,10 @@ export const Walkthrough = () => {
 			try {
 				await versionedTourProgressRepository.saveProgress(progress);
 			} finally {
-				if (userData.isWalkThroughEnabled) {
+				if (
+					activeTour?.id === consultantWalkthroughTour.id &&
+					userData.isWalkThroughEnabled
+				) {
 					// Keep the legacy auto-start boolean in sync so the tour
 					// does not re-open on the next app view.
 					await apiPatchConsultantData({
@@ -76,17 +90,22 @@ export const Walkthrough = () => {
 				setLaunchRequest(null);
 			}
 		},
-		[reloadUserData, setLaunchRequest, userData.isWalkThroughEnabled]
+		[
+			activeTour?.id,
+			reloadUserData,
+			setLaunchRequest,
+			userData.isWalkThroughEnabled
+		]
 	);
 
-	if (!settings.enableWalkthrough || (!isAutoRun && !isLaunchRequested)) {
+	if (!settings.enableWalkthrough || !activeTour) {
 		return null;
 	}
 
 	return (
 		<ProductTourAdapter
-			key={launchRequest?.requestedAt ?? 'auto'}
-			tour={consultantWalkthroughTour}
+			key={`${activeTour.id}-${launchRequest?.requestedAt ?? 'auto'}`}
+			tour={activeTour}
 			active={true}
 			paused={!!userData.twoFactorAuth?.isShown}
 			tooltipComponent={ProductTourTooltip}

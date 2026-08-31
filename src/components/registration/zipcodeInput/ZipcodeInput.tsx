@@ -1,6 +1,5 @@
-import { Box, InputAdornment, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import * as React from 'react';
-import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import {
 	useState,
 	FC,
@@ -12,11 +11,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
-import {
-	registrationMd3,
-	registrationScreenTitleSx
-} from '../registrationDesign/registrationDesign';
-import { OrisoTextField } from '../../form/OrisoTextField';
+import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import { ZipcodeDigits, ZIPCODE_LENGTH } from './ZipcodeDigits';
+import { WhyLocalDisclosure } from './WhyLocalDisclosure';
+import { AgencyCounsellingIcon } from '../../../resources/img/registration-md3/registrationArtwork';
 
 export const ZipcodeInput: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -51,92 +49,104 @@ export const ZipcodeInput: FC<{
 		}
 	}, [setDisabledNextButton, onChange, value, registrationData.zipcode]);
 
+	const remaining = ZIPCODE_LENGTH - value.length;
+
 	return (
 		<Box
+			data-cy="zipcode-step"
 			sx={{
 				maxWidth: '520px',
 				mx: 'auto',
+				// This step is one short block — icon, question, five digit
+				// boxes — in a column that has room to spare. Sitting it at the
+				// top left a large empty field below it. `auto` block margins
+				// centre it in whatever the header and the footer leave over,
+				// and they collapse to the natural top offset as soon as the
+				// disclosure below is expanded and the block outgrows the space.
+				my: 'auto',
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
 				textAlign: 'center'
 			}}
 		>
+			{/* Inlined at build time — no request, and it takes the brand colour. */}
 			<Box
+				aria-hidden
 				sx={{
-					width: 64,
-					height: 64,
-					borderRadius: '50%',
-					bgcolor: registrationMd3.surfaceContainer,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					mb: 2.5
+					'width': { xs: 132, sm: 152 },
+					'height': { xs: 132, sm: 152 },
+					'mb': 2.5,
+					'color': registrationMd3.primary,
+					'& svg': { width: '100%', height: '100%', display: 'block' }
 				}}
 			>
-				<PlaceRoundedIcon
-					sx={{ fontSize: 32, color: registrationMd3.primary }}
-				/>
+				<AgencyCounsellingIcon />
 			</Box>
 			<Typography
 				component="h1"
-				variant="h3"
-				sx={registrationScreenTitleSx}
-			>
-				{t('registration.zipcode.headline')}
-			</Typography>
-			<Box
 				sx={{
-					width: '100%',
-					textAlign: 'left',
-					bgcolor: registrationMd3.surfaceContainer,
-					borderRadius: '16px',
-					px: 3,
-					py: 2.5,
-					mt: 3,
-					mb: 4
+					fontSize: { xs: 24, sm: 28 },
+					lineHeight: { xs: '31px', sm: '35px' },
+					fontWeight: 700,
+					color: registrationMd3.onSurface,
+					textWrap: 'pretty'
 				}}
 			>
-				<Typography sx={{ fontWeight: 700, mb: 1 }}>
-					{t('registration.zipcode.subline')}
-				</Typography>
-				<Typography sx={{ color: registrationMd3.onSurfaceVariant }}>
-					{t('registration.zipcode.bullet1')}
-				</Typography>
-				<Typography sx={{ color: registrationMd3.onSurfaceVariant }}>
-					{t('registration.zipcode.bullet2')}
+				{t('registration.zipcode.headline', 'Wo suchen Sie Beratung?')}
+			</Typography>
+			<Typography
+				sx={{
+					mt: 1,
+					fontSize: 14,
+					lineHeight: '20px',
+					color: registrationMd3.onSurfaceVariant,
+					textWrap: 'pretty'
+				}}
+			>
+				{t(
+					'registration.zipcode.subline',
+					'Nur Ihre Postleitzahl — mehr brauchen wir nicht.'
+				)}
+			</Typography>
+
+			<Box sx={{ width: '100%', maxWidth: 340, mt: 3 }}>
+				<ZipcodeDigits
+					value={value}
+					onChange={setValue}
+					digitLabel={(position) =>
+						t('registration.zipcode.digitLabel', {
+							position,
+							total: ZIPCODE_LENGTH,
+							defaultValue:
+								'Postleitzahl, Ziffer {{position}} von {{total}}'
+						})
+					}
+				/>
+				<Typography
+					role="status"
+					aria-live="polite"
+					sx={{
+						mt: 1.25,
+						minHeight: 20,
+						fontSize: 13,
+						lineHeight: '20px',
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{remaining > 0 && value.length > 0
+						? t('registration.zipcode.remaining', {
+								count: remaining,
+								defaultValue_one: 'Noch {{count}} Ziffer',
+								defaultValue_other: 'Noch {{count}} Ziffern',
+								defaultValue: 'Noch {{count}} Ziffern'
+							})
+						: ''}
 				</Typography>
 			</Box>
-			<Box sx={{ width: '100%', maxWidth: 340 }}>
-				<OrisoTextField
-					value={value}
-					onChange={(event) => {
-						const nextValue = event.target.value
-							.replace(/\D/g, '')
-							.slice(0, 5);
-						setValue(nextValue);
-					}}
-					placeholder={t('registration.zipcode.label')}
-					fullWidth
-					autoComplete="postal-code"
-					inputProps={{
-						'data-cy': 'input-postal-code',
-						'inputMode': 'numeric',
-						'maxLength': 5,
-						'aria-label': t('registration.zipcode.label')
-					}}
-					InputProps={{
-						startAdornment: (
-							<InputAdornment position="start">
-								<PlaceRoundedIcon
-									sx={{
-										color: registrationMd3.onSurfaceVariant
-									}}
-								/>
-							</InputAdornment>
-						)
-					}}
-				/>
+
+			<Box sx={{ width: '100%', maxWidth: 400, mt: 3 }}>
+				<WhyLocalDisclosure />
 			</Box>
 		</Box>
 	);

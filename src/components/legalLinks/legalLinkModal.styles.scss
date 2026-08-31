@@ -35,3 +35,21 @@
 		text-decoration: underline;
 	}
 }
+
+.legalLinkModal__platformNote {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 15px;
+	line-height: 1.6;
+
+	p {
+		margin: 0 0 16px;
+		/* The note is authored with its paragraph breaks; they carry the
+		   "platform, not carrier" distinction and must survive. */
+		white-space: pre-line;
+	}
+
+	a {
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
+}

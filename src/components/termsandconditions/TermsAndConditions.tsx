@@ -6,43 +6,22 @@ import { Headline } from '../headline/Headline';
 import './termsandconfitions.styles.scss';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_TERMS_AND_CONDITION } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import {
-	AUTHORITIES,
-	hasUserAuthority,
-	UserDataContext,
-	useTenant
-} from '../../globalState';
-import {
-	TenantDataInterface,
-	UserDataInterface
-} from '../../globalState/interfaces';
+import { UserDataContext, useTenant } from '../../globalState';
+
 import { Checkbox } from '../checkbox/Checkbox';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { isAnonymousAsker } from './isAnonymousAsker';
+import { hasChanged } from './hasChanged';
 import { logout } from '../logout/logout';
 import { getLegalPrivacyUrl } from '../../resources/scripts/runtimeConfig';
-
-const hasChanged = (
-	tenantData: TenantDataInterface,
-	userData: UserDataInterface,
-	field: string
-) => {
-	if (tenantData && tenantData.content) {
-		return (
-			userData[field] === null ||
-			new Date(userData[field]) < new Date(tenantData.content[field])
-		);
-	}
-	return false;
-};
+import { sanitizeLegalHtml } from '../legalContent/legalHtmlSanitizer';
+import htmlParser from '../../resources/scripts/util/htmlParser';
 
 export const TermsAndConditions = () => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
 	const { userData } = useContext(UserDataContext);
-	const isAnonymousAsker =
-		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		Boolean(userData?.userName?.startsWith('Anonymous-'));
+	const isAnonymous = isAnonymousAsker(userData);
 	let [viewState, setViewState] = useState({
 		headlineText: '',
 		mainText: '',
@@ -105,7 +84,7 @@ export const TermsAndConditions = () => {
 	];
 
 	useEffect(() => {
-		if (isAnonymousAsker) {
+		if (isAnonymous) {
 			return;
 		}
 		// if (
@@ -167,9 +146,9 @@ export const TermsAndConditions = () => {
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAnonymousAsker, viewState.userConfirmed]);
+	}, [isAnonymous, viewState.userConfirmed]);
 
-	if (isAnonymousAsker || !viewState.showOverlay) {
+	if (isAnonymous || !viewState.showOverlay) {
 		return null;
 	}
 
@@ -194,7 +173,16 @@ export const TermsAndConditions = () => {
 				setViewState({ ...viewState, showOverlay: false });
 			})
 			.catch((error) => {
-				/* console.log(error); */
+				// A swallowed rejection left this overlay on screen with no way
+				// out: Continue is its only control, and a failed patch neither
+				// closed it nor said anything (#1087). The consent is a blocking
+				// modal — if we cannot record it we must still let the person
+				// carry on, and leave a trace for whoever investigates.
+				console.error(
+					'Could not record the privacy confirmation; closing the overlay anyway',
+					error
+				);
+				setViewState({ ...viewState, showOverlay: false });
 			});
 	};
 
@@ -212,11 +200,19 @@ export const TermsAndConditions = () => {
 							semanticLevel="2"
 						/>
 						<div>
-							<label
-								dangerouslySetInnerHTML={{
-									__html: viewState.mainText
-								}}
-							/>
+							{/* Same allowlist as `LegalContentRenderer` and the
+							    anonymous consent gate. Today's input is i18n text
+							    plus an anchor this component builds itself, so
+							    nothing changes visually — but this is the other
+							    place a help-seeker re-confirms a data-protection
+							    policy, and ORISO-Frontend#1108 asks for the second
+							    door to be closed in the same pass rather than left
+							    open for whoever routes authored text here next. */}
+							<label>
+								{htmlParser(
+									sanitizeLegalHtml(viewState.mainText)
+								)}
+							</label>
 
 							<div
 								style={{

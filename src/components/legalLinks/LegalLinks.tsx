@@ -19,7 +19,12 @@ const LegalLinks = ({
 	delimiter?: ReactNode;
 	lastDelimiter?: string;
 	params?: { [key: string]: string | number };
-	children?: (label: string, url: string) => ReactNode;
+	/**
+	 * `rawLabel` is the untranslated i18n key. It is the only stable identifier
+	 * a caller can match an entry on — the translated label changes with the UI
+	 * language and the URL is deployment configuration.
+	 */
+	children?: (label: string, url: string, rawLabel: string) => ReactNode;
 	filter?: (legalLink: TProvidedLegalLink) => boolean;
 }) => {
 	const { t: translate } = useTranslation();
@@ -40,14 +45,15 @@ const LegalLinks = ({
 		.filter(filter || (() => true))
 		.map(({ label, getUrl }) => ({
 			label: translate(label),
+			rawLabel: label,
 			url: getUrl(params || {})
 		}))
-		.reduce((links, { label, url }, i, b) => {
+		.reduce((links, { label, rawLabel, url }, i, b) => {
 			links.push(
 				<Fragment key={url}>
 					{getPrefix(i, b.length - 1)}
 					{children ? (
-						children(label, url)
+						children(label, url, rawLabel)
 					) : (
 						<a target="_blank" rel="noreferrer" href={url}>
 							{label}

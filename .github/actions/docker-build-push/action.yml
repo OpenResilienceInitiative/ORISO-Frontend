@@ -4,25 +4,28 @@ inputs:
   push_to_ghcr:
     description: Whether to push the built image to GHCR
     required: true
-    type: boolean
   image_name:
     description: GHCR image name without registry or organization
     required: true
-    type: string
   github_token:
     description: GitHub token used only when publishing is enabled
     required: true
-    type: string
   dockerfile:
     description: Dockerfile path relative to the repository root
     required: false
-    type: string
     default: Dockerfile
   platforms:
     description: Comma-separated OCI target platforms
     required: false
-    type: string
     default: linux/amd64,linux/arm64
+  scan_before_push:
+    description: >-
+      Scan the image with Trivy before anything is published and fail on
+      fixable HIGH/CRITICAL findings. Must be enabled wherever this action
+      publishes: a scan that runs after the push cannot keep a vulnerable
+      image out of the registry (OpenResilienceInitiative/ORISO-Docs#88).
+    required: false
+    default: 'false'
 
 outputs:
   digest:
@@ -32,7 +35,10 @@ outputs:
 runs:
   using: 'composite'
   steps:
+  # QEMU is only needed to emulate a foreign architecture. Single-platform
+  # amd64 builds run natively on the runner and must not pay for the emulator.
   - name: Set up QEMU
+    if: ${{ inputs.platforms != 'linux/amd64' }}
     uses: docker/setup-qemu-action@v4
 
   - name: Set up Docker Buildx
@@ -57,6 +63,48 @@ runs:
         type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
         type=raw,value=pre-dev,enable=${{ github.ref == 'refs/heads/pre-dev' }}
 
+  # The vulnerability gate only works ahead of the push. Scanning the image
+  # after `push: true` turns the run red but leaves the vulnerable image in
+  # GHCR under its branch tag and its sha tag, where the deploy scripts
+  # resolve it to a digest and roll it out without ever consulting the
+  # workflow result (OpenResilienceInitiative/ORISO-Docs#88).
+  #
+  # `load: true` hands the result to the runner's Docker daemon and only
+  # supports one platform, so the scanned image is amd64. That matches what
+  # was effectively scanned before: given a multi-platform index, Trivy picks
+  # the host platform anyway. The publish build below still produces the full
+  # multi-platform manifest and reuses this build's amd64 layers straight
+  # from the buildx builder's own cache, so only the arm64 half is new work.
+  # No `cache-to` here on purpose: the publish build stays the single
+  # exporter for the GHA cache scope.
+  - name: Build amd64 image locally for scanning
+    if: ${{ inputs.scan_before_push == 'true' }}
+    uses: docker/build-push-action@v7
+    with:
+      context: .
+      file: ${{ inputs.dockerfile }}
+      platforms: linux/amd64
+      push: false
+      load: true
+      # The docker exporter cannot carry attestations, and an image that is
+      # thrown away after the scan has no use for them either.
+      provenance: false
+      sbom: false
+      tags: ${{ inputs.image_name }}:ci-scan
+      labels: ${{ steps.meta.outputs.labels }}
+      cache-from: type=gha,scope=${{ inputs.image_name }}
+
+  - name: Reject fixable high or critical image vulnerabilities
+    if: ${{ inputs.scan_before_push == 'true' }}
+    uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+    with:
+      image-ref: ${{ inputs.image_name }}:ci-scan
+      format: table
+      exit-code: '1'
+      ignore-unfixed: true
+      vuln-type: os,library
+      severity: CRITICAL,HIGH
+
   - name: Build Docker image and publish when enabled
     id: build
     uses: docker/build-push-action@v7
@@ -65,8 +113,10 @@ runs:
       file: ${{ inputs.dockerfile }}
       platforms: ${{ inputs.platforms }}
       push: ${{ inputs.push_to_ghcr }}
-      provenance: mode=max
-      sbom: true
+      # Provenance and SBOM attestations are only meaningful on an image that
+      # gets pushed — on a validation build they are computed and discarded.
+      provenance: ${{ inputs.push_to_ghcr == 'true' && 'mode=max' || 'false' }}
+      sbom: ${{ inputs.push_to_ghcr == 'true' }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
       # Scope the GHA cache per image so images built from this shared action

@@ -9,7 +9,7 @@ import {
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
 	LiveChatFilterIcon,
-	NearbyFilterIcon,
+	MailFilterIcon,
 	SessionToolbarFilterIconProps,
 	SupervisionFilterIcon,
 	UnreadFilterIcon
@@ -154,7 +154,7 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'nearby',
 		labelKey: 'sessionList.toolbar.chips.nearby',
 		fallback: 'Mail',
-		Icon: NearbyFilterIcon,
+		Icon: MailFilterIcon,
 		dataCy: 'sessions-list-chip-nearby'
 	},
 	{
@@ -639,6 +639,7 @@ export const SessionsListToolbar = ({
 								createGroupChatActive ? 'page' : undefined
 							}
 							data-cy="sessions-list-chip-create"
+							data-tour-target="groupchat-create-button"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
 							<span className="sessionsListToolbar__chipLabel">
