@@ -764,8 +764,7 @@ export const Registration = () => {
 													'registration.register'
 												)}
 												registeringLabel={t(
-													'registration.registering',
-													'Registering...'
+													'registration.registering'
 												)}
 												nextLabel={t(
 													'registration.next'
@@ -801,8 +800,7 @@ export const Registration = () => {
 													'registration.register'
 												)}
 												registeringLabel={t(
-													'registration.registering',
-													'Registering...'
+													'registration.registering'
 												)}
 												disabledNext={
 													disabledNextButton

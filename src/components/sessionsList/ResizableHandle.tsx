@@ -421,10 +421,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			aria-valuemin={minWidth}
 			aria-valuemax={maxWidth}
 			aria-valuenow={currentWidth}
-			aria-label={t(
-				'sessionList.resizeHandle.ariaLabel',
-				'Resize sessions list. Drag vertically to scroll the sessions list.'
-			)}
+			aria-label={t('sessionList.resizeHandle.ariaLabel')}
 			onDoubleClick={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -465,10 +462,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				aria-label={t(
 					isCollapsed
 						? 'sessionList.resizeHandle.expand'
-						: 'sessionList.resizeHandle.collapse',
-					isCollapsed
-						? 'Expand chat list'
-						: 'Collapse chat list to enlarge the chat room'
+						: 'sessionList.resizeHandle.collapse'
 				)}
 				onPointerDown={(event) => event.stopPropagation()}
 				onClick={(event) => {

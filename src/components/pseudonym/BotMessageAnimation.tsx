@@ -1,35 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Three-dot "typing…" indicator with staggered bounce animation.
  * Uses inline styles so it works without touching global styles.
  */
-export const TypingDots: React.FC<{ className?: string }> = ({ className }) => (
-	<span
-		className={className}
-		aria-label="typing"
-		style={{
-			display: 'inline-flex',
-			alignItems: 'center',
-			gap: 6,
-			height: 22
-		}}
-	>
-		{[0, 1, 2].map((i) => (
-			<span
-				key={i}
-				style={{
-					width: 8,
-					height: 8,
-					borderRadius: '50%',
-					background: '#8a8f96',
-					animation: `botMessageTypingBounce 1.1s ${i * 0.18}s infinite ease-in-out`,
-					display: 'inline-block'
-				}}
-			/>
-		))}
-	</span>
-);
+export const TypingDots: React.FC<{ className?: string }> = ({ className }) => {
+	const { t } = useTranslation();
+	return (
+		<span
+			className={className}
+			aria-label={t('typingIndicator.aria')}
+			style={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				gap: 6,
+				height: 22
+			}}
+		>
+			{[0, 1, 2].map((i) => (
+				<span
+					key={i}
+					style={{
+						width: 8,
+						height: 8,
+						borderRadius: '50%',
+						background: '#8a8f96',
+						animation: `botMessageTypingBounce 1.1s ${i * 0.18}s infinite ease-in-out`,
+						display: 'inline-block'
+					}}
+				/>
+			))}
+		</span>
+	);
+};
 
 /**
  * Reveals `text` character-by-character with a terminal-style jitter:

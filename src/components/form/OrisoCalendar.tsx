@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
 import { Box, Button, ButtonBase, IconButton, Typography } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -135,9 +136,12 @@ export const OrisoCalendar = ({
 	autoFocus,
 	onCancel,
 	onAccept,
-	cancelLabel = 'Cancel',
-	okLabel = 'OK'
+	cancelLabel,
+	okLabel
 }: OrisoCalendarProps) => {
+	const { t } = useTranslation();
+	const resolvedCancel = cancelLabel ?? t('form.calendar.cancel');
+	const resolvedOk = okLabel ?? t('form.calendar.ok');
 	const today = dayjs();
 	const initialMonth = (value ?? referenceDate ?? today).startOf('month');
 	const [viewMonth, setViewMonth] = React.useState<Dayjs>(initialMonth);
@@ -246,7 +250,7 @@ export const OrisoCalendar = ({
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<IconButton
 						size="small"
-						aria-label="Previous month"
+						aria-label={t('form.calendar.previousMonth')}
 						disabled={view !== 'days'}
 						onClick={() =>
 							setViewMonth(viewMonth.subtract(1, 'month'))
@@ -259,7 +263,7 @@ export const OrisoCalendar = ({
 						onClick={() =>
 							setView(view === 'months' ? 'days' : 'months')
 						}
-						aria-label="Select month"
+						aria-label={t('form.calendar.selectMonth')}
 						sx={selectorButtonSx}
 					>
 						{viewMonth.format('MMM')}
@@ -276,7 +280,7 @@ export const OrisoCalendar = ({
 					</ButtonBase>
 					<IconButton
 						size="small"
-						aria-label="Next month"
+						aria-label={t('form.calendar.nextMonth')}
 						disabled={view !== 'days'}
 						onClick={() => setViewMonth(viewMonth.add(1, 'month'))}
 						sx={navIconSx}
@@ -287,7 +291,7 @@ export const OrisoCalendar = ({
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<IconButton
 						size="small"
-						aria-label="Previous year"
+						aria-label={t('form.calendar.previousYear')}
 						disabled={view !== 'days'}
 						onClick={() =>
 							setViewMonth(viewMonth.subtract(1, 'year'))
@@ -300,7 +304,7 @@ export const OrisoCalendar = ({
 						onClick={() =>
 							setView(view === 'years' ? 'days' : 'years')
 						}
-						aria-label="Select year"
+						aria-label={t('form.calendar.selectYear')}
 						sx={selectorButtonSx}
 					>
 						{viewMonth.format('YYYY')}
@@ -317,7 +321,7 @@ export const OrisoCalendar = ({
 					</ButtonBase>
 					<IconButton
 						size="small"
-						aria-label="Next year"
+						aria-label={t('form.calendar.nextYear')}
 						disabled={view !== 'days'}
 						onClick={() => setViewMonth(viewMonth.add(1, 'year'))}
 						sx={navIconSx}
@@ -444,12 +448,12 @@ export const OrisoCalendar = ({
 				>
 					{onCancel && (
 						<Button onClick={onCancel} sx={actionButtonSx}>
-							{cancelLabel}
+							{resolvedCancel}
 						</Button>
 					)}
 					{onAccept && (
 						<Button onClick={onAccept} sx={actionButtonSx}>
-							{okLabel}
+							{resolvedOk}
 						</Button>
 					)}
 				</Box>

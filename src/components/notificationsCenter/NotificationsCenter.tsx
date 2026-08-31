@@ -1111,10 +1111,7 @@ export const NotificationsCenter = () => {
 									{translate(
 										isLoadingOlderNotifications
 											? 'notifications.center.loadingOlder'
-											: 'notifications.center.loadOlder',
-										isLoadingOlderNotifications
-											? 'Loading older activity…'
-											: 'Load older activity'
+											: 'notifications.center.loadOlder'
 									)}
 								</button>
 							) : (
@@ -1148,11 +1145,7 @@ export const NotificationsCenter = () => {
 								selectedNotification?.eventType ===
 									'group_chat.opened'
 									? 'notifications.center.join'
-									: 'notifications.center.open',
-								selectedNotification?.eventType ===
-									'group_chat.opened'
-									? 'Join'
-									: 'Open chat'
+									: 'notifications.center.open'
 							)}
 					</MenuItem>
 					{canShowChatPreview && (
@@ -1165,10 +1158,7 @@ export const NotificationsCenter = () => {
 							{translate(
 								showEmbeddedChat
 									? 'notifications.center.showDetails'
-									: 'notifications.center.showPreview',
-								showEmbeddedChat
-									? 'Show details'
-									: 'Show conversation preview'
+									: 'notifications.center.showPreview'
 							)}
 						</MenuItem>
 					)}
@@ -1242,8 +1232,6 @@ export const NotificationsCenter = () => {
 									? translate(
 											'notifications.center.waitingSince',
 											{
-												defaultValue:
-													'Waiting since {{time}} ({{date}})',
 												...formatClockParts(
 													selectedNotification.createdAt,
 													i18n.language
@@ -1314,11 +1302,7 @@ export const NotificationsCenter = () => {
 											selectedNotification.eventType ===
 												'group_chat.opened'
 												? 'notifications.center.join'
-												: 'notifications.center.open',
-											selectedNotification.eventType ===
-												'group_chat.opened'
-												? 'Join'
-												: 'Open chat'
+												: 'notifications.center.open'
 										)}
 								</button>
 								<button

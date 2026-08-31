@@ -65,7 +65,8 @@
 		},
 		"wait": "በጃኹም ተጸበዩ።",
 		"info": "ሓበሬታ",
-		"or": "ወይ"
+		"or": "ወይ",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -217,7 +218,20 @@
 	"booking": {
 		"availability": {
 			"description": "እቶም ምኽሪ ዝደልዩ ምሳኻ ቆጸራ ምእንቲ ክሕዙ፡ ሓፈሻዊ ምህላውካ ኣብዚ ኣመልክት።",
-			"title": "ምህላውካ"
+			"title": "ምህላውካ",
+			"iframeTitle": "ምህላውካ"
+		},
+		"assignedCalendars": {
+			"iframeTitle": "ዝተመዓራረዩ ኣቆጻጽራታት"
+		},
+		"calcom": {
+			"loading": "Wird geladen: {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Termin verschieben"
+		},
+		"cancellation": {
+			"iframeTitle": "Termin absagen"
 		},
 		"calender": {
 			"add": "ካላንደር ምውሳኽ",
@@ -566,6 +580,7 @@
 	},
 	"error": {
 		"login": "እቶ",
+		"notFound": "Nicht gefunden",
 		"statusCodes": {
 			"400": {
 				"description": "እቲ ዘእተኻዮ URL ቅኑዕ ኣይኮነን።",
@@ -1540,6 +1555,8 @@
 				"overLimit": "እቲ መልእኽቲ ካብ ገደብ ፊደላት ሓሊፉ።",
 				"warning": "እቲ መልእኽቲ ናብ ገደብ ፊደላት ይቐርብ ኣሎ።"
 			},
+			"loadError": "ናይ ዕላል መእተዊ ክጽዓን ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"retry": "ደጊምኩም ፈትኑ",
 			"toolbar": {
 				"openTools": "ናብ ኩሎም መሳርሒታት ተመለስ",
 				"closeTools": "ናብ ጽፉፋት መሳርሒታት ቀይር",
@@ -1583,7 +1600,9 @@
 				"voiceRecording": {
 					"label": "ናይ ድምጺ ቅዳሕ",
 					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ"
-				}
+				},
+				"imageUrlPrompt": "Bild-URL",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1677,8 +1696,10 @@
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",
+			"inlineImageAlt": "Bild in der Nachricht",
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
+			"lastReplyAt": "ናይ መወዳእታ መልሲ ኣብ {{time}}",
 			"title": "ትሬድ",
 			"placeholder": "ኣብ ትሬድ መልስ"
 		},
@@ -1715,7 +1736,8 @@
 		"overview": "ሓፈሻዊ ትሕዝቶ",
 		"profile": "መግለፂ",
 		"myProfile": "መግለጺይ",
-		"tools": "መሳርሒታተይ"
+		"tools": "መሳርሒታተይ",
+		"unreadCount": "{{count}} ዘይተነበበ"
 	},
 	"notification": {
 		"error": "ጌጋ",
@@ -2605,7 +2627,8 @@
 				"headline": "ሓበሬታ ውሕስነት ውልቃዊ ዳታ ናይ ማእከል ምኽሪ",
 				"imprintHeadline": "ኣሰር ናይ ማእከል ምኽሪ",
 				"label": "ሕጋዊ ሓበሬታ",
-				"unavailable": "እቲ ሓበሬታ ውሕስነት ውልቃዊ ዳታ ኣብዚ እዋን ክጽዓን ኣይክእልን።"
+				"unavailable": "እቲ ሓበሬታ ውሕስነት ውልቃዊ ዳታ ኣብዚ እዋን ክጽዓን ኣይክእልን።",
+				"loading": "ዕድመ ይጽዕን ኣሎ"
 			},
 			"type": {
 				"single": "ውልቃዊ ምኽሪ",
@@ -3263,6 +3286,50 @@
 				"standard446": "ማእከላይ ተመክሮ (ዝምከር)",
 				"deep556": "ነዊሕ (ንክኢላታት)"
 			},
+			"secondsAria": "{{label}}፣ {{count}} ካልኢት",
+			"secondsShort": "{{count}} ሰ",
+			"levels": {
+				"1": {
+					"title": "ንንጽይ ዝቆጻጸር",
+					"success": "ጽቡቕ መጀመርታ።"
+				},
+				"2": {
+					"title": "ትንፋስ ዝረክብ",
+					"success": "ሪትም ረኪብኩም።"
+				},
+				"3": {
+					"title": "ትንፋስ ዝመርሕ",
+					"success": "ዓቢ ቁጽጽር።"
+				},
+				"4": {
+					"title": "ህድኣት ዝሃንጽ",
+					"success": "እቲ ዋሕዚ ይመሓየሽ ኣሎ።"
+				},
+				"5": {
+					"title": "ውሽጣዊ ሚዛን",
+					"success": "ትንፋስ ቅኑዕ ይጸንሕ።"
+				},
+				"6": {
+					"title": "ሪትም ዝሕሉ",
+					"success": "ሓያል ትኹረት።"
+				},
+				"7": {
+					"title": "ሰላም ዝፈጥር",
+					"success": "ኣብ ማእከል ትጸንሑ።"
+				},
+				"8": {
+					"title": "ስቕ ዝብል መምርሒ",
+					"success": "ኣብ ጸቕጢ ህድኣት።"
+				},
+				"9": {
+					"title": "ናይ ስቕታ ጎይታ",
+					"success": "ዳርጋ ተወዲኡ።"
+				},
+				"10": {
+					"title": "ሓቀኛ ጥበብ",
+					"success": "ነዚ ዙርያ ሰዓርኩምዎ።"
+				}
+			},
 			"briefing": {
 				"0": "ይቕሬታ፡ ሕጂ ክትጽበዩ ኣለኩም፡ ኣብዚ እዋን ኩሎም ኣማኸርቲ ስራሕ ሒዞም ኣለዉ።",
 				"1": "ምስዚ ኩሉ ጸገማት ምጽባይ ከቢድ ክኸውን ይኽእል እዩ። ስለዚ እንተደሊኹም፡ ንእሽቶ ናይ መጸበዪ ክፍሊ መደልደሊ ሰሪሕናልኩም ኣለና።",
@@ -3486,6 +3553,7 @@
 				"confirm": "ምረጻ ኣረጋግጽ",
 				"close": "ምድላይ ዕጸው",
 				"clear": "ምድላይ ኣጽሪ",
+				"removeSelectedPerson": "{{name}} ኣውጽእ",
 				"emptyPeople": "ዝሰማምዑ ሰባት ኣይተረኽቡን።",
 				"emptyTypes": "ዓይነታት ቻት ኣይርከቡን።",
 				"emptyTopics": "ንማእከላት ምኽርኹም ዝኸውን ኣርእስቲ ኣይተረኽበን።",
@@ -3527,8 +3595,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "ክቢ ዝርርብ",
-				"internal": "ውሽጣዊ"
+				"internal": "ውሽጣዊ",
+				"team": "ጋንታዊ ምኽሪ"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "ዝርዝር ምኽሪ መጠን ቀይር። ብቐጥታ ስሓብ።",
+			"expand": "ዝርዝር ምኽሪ ኣርእይ",
+			"collapse": "ዝርዝር ምኽሪ ዕጸው"
 		}
 	},
 	"statusOverlay": {
@@ -3863,6 +3937,7 @@
 		"title": "ክልተ ረቛሒታት ዘለዎ ምርግጋጽ ምርግጋጽ"
 	},
 	"typingIndicator": {
+		"aria": "ይጽሕፍ",
 		"multipleUsers": {
 			"typing": "ተሳተፍቲ ይጽሕፉ"
 		},
@@ -4640,6 +4715,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "ናይ ምኽሪ ሕሳብ ፍጠር",
+		"successTitle": "ሕሳብ ተፈጢሩ",
+		"email": "ናይ ኢ-መይል ኣድራሻ",
+		"username": "ስም ተጠቃሚ",
+		"password": "መሕለፊ ቃል",
+		"repeatPassword": "መሕለፊ ቃል ድገም",
+		"submit": "ሕሳብ ፍጠር",
 		"invalid": "እቲ ናይ ዕድመ ሊንክ ቅኑዕ ኣይኮነን ወይ ግዜኡ ሓሊፉ።",
 		"createFailed": "እቲ ናይ ምኽሪ ኣካውንት ክፍጠር ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
 		"loading": "ዕድመ ይጽዕን ኣሎ",
@@ -4659,7 +4741,8 @@
 			"open": "ንድፊ ክፈት",
 			"next": "ዝቕጽል ንድፊ",
 			"delete": "ንድፊ ደምስስ",
-			"emptyDetail": "ንኽትቅጽሉ ንድፊ ምረጹ።"
+			"emptyDetail": "ንኽትቅጽሉ ንድፊ ምረጹ።",
+			"embeddedTitle": "Chat zum Entwurf"
 		}
 	},
 	"tour": {
@@ -4702,5 +4785,102 @@
 		"friday": "ዓርቢ",
 		"saturday": "ቀዳም",
 		"sunday": "ሰንበት"
+	},
+	"calls": {
+		"answer": "ቪድዮ ጻውዒት ተቐበል",
+		"reject": "ቪድዮ ጻውዒት ምቕባል",
+		"decline": "ቪድዮ ጻውዒት ምቕባል",
+		"endCall": "Anruf beenden",
+		"fullscreen": "Vollbild",
+		"mute": "Stummschalten",
+		"unmute": "Mikrofon einschalten",
+		"turnOnVideo": "Video einschalten",
+		"turnOffVideo": "Video ausschalten",
+		"moreOptions": "Weitere Optionen",
+		"close": "Anruf schließen",
+		"title": "ሓበሬታ",
+		"videoCall": "Videoanruf",
+		"audioCall": "Audioanruf",
+		"autoFit": "Automatisch anpassen",
+		"autoFitAria": "Video an das Fenster anpassen",
+		"resizeAria": "Videofenster anpassen ({{edge}})",
+		"widget": {
+			"autoFit": "Video automatisch anpassen",
+			"autoFitAria": "Video an das Fenster anpassen",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
+			"answerFailed": "Anruf konnte nicht angenommen werden: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Eingehender Anruf",
+			"incomingDescription": "Jemand ruft an…",
+			"close": "Anruf schließen",
+			"autoFit": "Automatisch anpassen",
+			"autoFitAria": "Anruffenster automatisch anpassen",
+			"openFullView": "Vollansicht öffnen",
+			"switchToSmallView": "Zur kleinen Ansicht wechseln",
+			"exitFullScreen": "Vollbild beenden",
+			"enterFullScreen": "Vollbild öffnen",
+			"fullView": "Vollansicht",
+			"smallView": "Kleine Ansicht",
+			"fullScreen": "Vollbild",
+			"iframeTitle": "Gruppen-Videoanruf",
+			"connecting": "Verbindung wird hergestellt…",
+			"settingUp": "Anruf wird eingerichtet",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Keine Raum-ID angegeben",
+			"noRoomDescription": "Ein Anruf kann ohne Raum-ID nicht gestartet werden.",
+			"goBack": "ዝባን"
+		},
+		"error": {
+			"noRoom": "Anruf kann nicht gestartet werden: Für diese Sitzung wurde kein Matrix-Raum gefunden.",
+			"httpsRequired": "Kamera- und Mikrofonzugriff erfordert HTTPS. Zur sicheren Verbindung wechseln?",
+			"cannotAccess": "Kein Zugriff auf Kamera oder Mikrofon. ",
+			"grantPermissions": "Bitte erteilen Sie die Berechtigungen in den Browser-Einstellungen.",
+			"noDevice": "Auf diesem Gerät wurde keine Kamera und kein Mikrofon gefunden.",
+			"browserUnsupported": "Ihr Browser unterstützt diese Funktion nicht. Bitte verwenden Sie HTTPS.",
+			"unknown": "Unbekannter Fehler.",
+			"callFailed": "Anruf fehlgeschlagen: {{message}}",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
+			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "ዝባን",
+			"confirm": "ተረዲአ",
+			"close": "ዕፁው"
+		},
+		"calendar": {
+			"cancel": "ሰርዝ",
+			"ok": "OK",
+			"previousMonth": "Vorheriger Monat",
+			"selectMonth": "Monat wählen",
+			"nextMonth": "Nächster Monat",
+			"previousYear": "Vorheriges Jahr",
+			"selectYear": "Jahr wählen",
+			"nextYear": "Nächstes Jahr"
+		},
+		"datePicker": {
+			"openCalendar": "Kalender öffnen"
+		},
+		"timePicker": {
+			"dialogTitle": "Uhrzeit wählen",
+			"cancel": "ሰርዝ",
+			"ok": "OK",
+			"open": "Zeitauswahl öffnen",
+			"selectHours": "Stunden wählen",
+			"selectMinutes": "Minuten wählen",
+			"hour": "Stunde",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Zur Texteingabe wechseln",
+			"switchToDial": "Zur Uhransicht wechseln"
+		},
+		"select": {
+			"search": "ደሊ"
+		}
 	}
 }

@@ -16,11 +16,32 @@ vi.mock('../../api/apiAccountInvite', () => ({
 	acceptAccountInvite: vi.fn()
 }));
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
-}));
+vi.mock('react-i18next', () => {
+	const catalogue: Record<string, string> = {
+		'accountInvite.invalid':
+			'Der Einladungslink ist ungültig oder abgelaufen.',
+		'accountInvite.createFailed':
+			'Das Beratungskonto konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
+		'accountInvite.loading': 'Einladung wird geladen',
+		'accountInvite.successTitle': 'Konto erstellt',
+		'accountInvite.success': 'Ihr Beratungskonto wurde erstellt.',
+		'accountInvite.toLogin': 'Zur Anmeldung',
+		'accountInvite.title': 'Beratungskonto erstellen',
+		'accountInvite.description':
+			'Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.',
+		'accountInvite.email': 'E-Mail-Adresse',
+		'accountInvite.username': 'Benutzername',
+		'accountInvite.password': 'Passwort',
+		'accountInvite.passwordHint':
+			'Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen.',
+		'accountInvite.repeatPassword': 'Passwort wiederholen',
+		'accountInvite.submit': 'Konto erstellen'
+	};
+	const t = (key: string) => catalogue[key] ?? key;
+	return {
+		useTranslation: () => ({ t })
+	};
+});
 
 vi.mock('../stageLayout/StageLayout', () => ({
 	StageLayout: ({ children }: { children: React.ReactNode }) => (

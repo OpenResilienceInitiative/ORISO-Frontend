@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
 import './waitingAreaCountdown.styles';
@@ -58,12 +57,12 @@ export const WaitingAreaCountdown = ({
 }: WaitingAreaCountdownProps) => {
 	const { t: translate } = useTranslation();
 	const tr = React.useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(
-				translate,
-				`groupChat.join.waitingArea.countdown.${key}`,
-				fallback,
-				options
+		(key: string, options?: Record<string, unknown>) =>
+			String(
+				translate(
+					`groupChat.join.waitingArea.countdown.${key}`,
+					options
+				)
 			),
 		[translate]
 	);
@@ -144,13 +143,13 @@ export const WaitingAreaCountdown = ({
 		});
 	};
 
-	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
-	const flipHint = tr('flipHint', 'klicken zum Umdrehen');
+	const greetingLabel = tr('greetingLabel');
+	const flipHint = tr('flipHint');
 
 	const backCard = (key: string, isRule: boolean) => {
 		const ruleIndex = backRule[key] ?? 0;
 		const label = isRule
-			? tr('netiquetteLabel', `Netiquette · Regel ${ruleIndex + 1}`, {
+			? tr('netiquetteLabel', {
 					no: ruleIndex + 1
 				})
 			: greetingLabel;
@@ -290,11 +289,10 @@ export const WaitingAreaCountdown = ({
 				key={unit.key}
 				role="button"
 				tabIndex={0}
-				aria-label={tr(
-					'flipAria',
-					`${unit.label}: ${unit.value}. Umdrehen zum Lesen.`,
-					{ label: unit.label, value: unit.value }
-				)}
+				aria-label={tr('flipAria', {
+					label: unit.label,
+					value: unit.value
+				})}
 				aria-pressed={flipped}
 				onClick={() => flip(unit.key, isRule)}
 				onKeyDown={(e) => {
@@ -354,7 +352,7 @@ export const WaitingAreaCountdown = ({
 		);
 	};
 
-	const toggleLabel = tr('toggleLabel', 'Animation abschalten');
+	const toggleLabel = tr('toggleLabel');
 	const toggle = (
 		<label
 			style={{
@@ -411,29 +409,21 @@ export const WaitingAreaCountdown = ({
 	const eta =
 		d > 0
 			? d === 1
-				? tr('etaDay', 'in einem Tag')
-				: tr('etaDays', `in ${d} Tagen`, { count: d })
+				? tr('etaDay')
+				: tr('etaDays', { count: d })
 			: h > 0
 				? h === 1
-					? tr('etaHour', 'in einer Stunde')
-					: tr('etaHours', `in ${h} Stunden`, { count: h })
+					? tr('etaHour')
+					: tr('etaHours', { count: h })
 				: m > 0
 					? m === 1
-						? tr('etaMinute', 'in einer Minute')
-						: tr('etaMinutes', `in ${m} Minuten`, { count: m })
-					: tr('etaSoon', 'gleich');
+						? tr('etaMinute')
+						: tr('etaMinutes', { count: m })
+					: tr('etaSoon');
 	const headline = isOverdue
-		? tr('overdueHeadline', 'Wir sind gleich für dich da.')
-		: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
-	const subtitle = isOverdue
-		? tr(
-				'overdueSubtitle',
-				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
-			)
-		: tr(
-				'subtitle',
-				'Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.'
-			);
+		? tr('overdueHeadline')
+		: tr('headline', { eta });
+	const subtitle = isOverdue ? tr('overdueSubtitle') : tr('subtitle');
 
 	const units: Array<{ unit: Unit; rule: boolean; tint?: boolean }> =
 		isOverdue
@@ -441,7 +431,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 'om',
-							label: tr('unitMinutes', 'Minuten'),
+							label: tr('unitMinutes'),
 							value: oM
 						},
 						rule: !hasWelcome,
@@ -450,7 +440,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 'os',
-							label: tr('unitSeconds', 'Sekunden'),
+							label: tr('unitSeconds'),
 							value: oS
 						},
 						rule: true,
@@ -461,7 +451,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 'd',
-							label: tr('unitDays', 'Tage'),
+							label: tr('unitDays'),
 							value: d
 						},
 						rule: !hasWelcome
@@ -469,7 +459,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 'h',
-							label: tr('unitHours', 'Stunden'),
+							label: tr('unitHours'),
 							value: h
 						},
 						rule: true
@@ -477,7 +467,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 'm',
-							label: tr('unitMinutes', 'Minuten'),
+							label: tr('unitMinutes'),
 							value: m
 						},
 						rule: true
@@ -485,7 +475,7 @@ export const WaitingAreaCountdown = ({
 					{
 						unit: {
 							key: 's',
-							label: tr('unitSeconds', 'Sekunden'),
+							label: tr('unitSeconds'),
 							value: s
 						},
 						rule: true
@@ -495,16 +485,8 @@ export const WaitingAreaCountdown = ({
 	// "unit: value" phrasing stays grammatical for every count in every locale
 	// (no plural agreement needed).
 	const timerAria = isOverdue
-		? tr(
-				'timerAriaOverdue',
-				`Seit dem geplanten Beginn — Minuten: ${oM}, Sekunden: ${oS}`,
-				{ minutes: oM, seconds: oS }
-			)
-		: tr(
-				'timerAriaFuture',
-				`Bis zum Beginn — Tage: ${d}, Stunden: ${h}, Minuten: ${m}, Sekunden: ${s}`,
-				{ days: d, hours: h, minutes: m, seconds: s }
-			);
+		? tr('timerAriaOverdue', { minutes: oM, seconds: oS })
+		: tr('timerAriaFuture', { days: d, hours: h, minutes: m, seconds: s });
 
 	const plusSign = (
 		<div
@@ -539,7 +521,7 @@ export const WaitingAreaCountdown = ({
 			<span aria-hidden="true" style={{ fontSize: 20 }}>
 				{overdueEmoji}
 			</span>
-			{tr('overdueCaption', 'Das Warten wird langsam etwas unangenehm …')}
+			{tr('overdueCaption')}
 		</div>
 	);
 

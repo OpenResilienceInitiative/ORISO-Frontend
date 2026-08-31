@@ -47,7 +47,7 @@ export const AvailabilityContainer = () => {
 				</div>
 				{settings.calcomUrl && (
 					<iframe
-						title={'AvailabilityContainer'}
+						title={translate('booking.availability.iframeTitle')}
 						style={{ paddingRight: '20px' }}
 						src={`${settings.calcomUrl}/availability`}
 						frameBorder={0}

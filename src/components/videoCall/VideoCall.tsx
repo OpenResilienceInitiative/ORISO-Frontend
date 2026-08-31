@@ -5,9 +5,11 @@
 
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MatrixCallView } from '../matrixCall/MatrixCallView';
 
 const VideoCall = () => {
+	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { roomId: encodedRoomId, type } = useParams<{
 		roomId: string;
@@ -43,8 +45,8 @@ const VideoCall = () => {
 					textAlign: 'center'
 				}}
 			>
-				<h2>❌ No room ID provided</h2>
-				<p>Cannot start call without a room ID.</p>
+				<h2>{t('calls.video.noRoomTitle')}</h2>
+				<p>{t('calls.video.noRoomDescription')}</p>
 				<p style={{ fontSize: '12px', color: '#888' }}>
 					Encoded: {encodedRoomId || 'none'}
 				</p>
@@ -57,7 +59,7 @@ const VideoCall = () => {
 						cursor: 'pointer'
 					}}
 				>
-					Go Back
+					{t('calls.video.goBack')}
 				</button>
 			</div>
 		);
