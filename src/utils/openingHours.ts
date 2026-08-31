@@ -31,19 +31,9 @@ interface OpeningHoursSlot {
 	until: string;
 }
 
-type Translate = (key: string, fallback?: string) => string;
+type Translate = (key: string) => string;
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-const WEEKDAY_FALLBACK: Record<Weekday, string> = {
-	MONDAY: 'Monday',
-	TUESDAY: 'Tuesday',
-	WEDNESDAY: 'Wednesday',
-	THURSDAY: 'Thursday',
-	FRIDAY: 'Friday',
-	SATURDAY: 'Saturday',
-	SUNDAY: 'Sunday'
-};
 
 const isWeekday = (value: unknown): value is Weekday =>
 	WEEKDAYS.includes(value as Weekday);
@@ -67,7 +57,7 @@ const toSlot = (entry: unknown): OpeningHoursSlot | null => {
 };
 
 const weekdayLabel = (day: Weekday, t: Translate): string =>
-	t(`weekday.${day.toLowerCase()}`, WEEKDAY_FALLBACK[day]);
+	t(`weekday.${day.toLowerCase()}`);
 
 /**
  * Readable opening hours for display. Returns the input unchanged when it is

@@ -65,7 +65,8 @@
 		},
 		"wait": "Bitte warten",
 		"info": "Information",
-		"or": "oder"
+		"or": "oder",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -212,7 +213,20 @@
 	"booking": {
 		"availability": {
 			"description": "Geben Sie hier Ihre allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Ihnen buchen können.",
-			"title": "Ihre Verfügbarkeit"
+			"title": "Ihre Verfügbarkeit",
+			"iframeTitle": "Verfügbarkeit"
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Zugewiesene Kalender"
+		},
+		"calcom": {
+			"loading": "Wird geladen: {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Termin verschieben"
+		},
+		"cancellation": {
+			"iframeTitle": "Termin absagen"
 		},
 		"calender": {
 			"add": "Kalender hinzufügen",
@@ -561,6 +575,7 @@
 	},
 	"error": {
 		"login": "Einloggen",
+		"notFound": "Nicht gefunden",
 		"statusCodes": {
 			"400": {
 				"description": "Die von Ihnen eingegebene URL ist ungültig.",
@@ -1555,6 +1570,8 @@
 				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
 				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
 			},
+			"loadError": "Der Chat-Eingabebereich konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen",
 			"toolbar": {
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
@@ -1598,7 +1615,9 @@
 				"voiceRecording": {
 					"label": "Sprachaufnahme",
 					"tooltip": "Sprachnachricht aufnehmen"
-				}
+				},
+				"imageUrlPrompt": "Bild-URL",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1692,8 +1711,10 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",
+			"inlineImageAlt": "Bild in der Nachricht",
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
+			"lastReplyAt": "Letzte Antwort um {{time}}",
 			"title": "Thread",
 			"placeholder": "Im Thread antworten"
 		},
@@ -1730,7 +1751,8 @@
 		"overview": "Übersicht",
 		"profile": "Profil",
 		"myProfile": "Mein Profil",
-		"tools": "Meine Tools"
+		"tools": "Meine Tools",
+		"unreadCount": "{{count}} ungelesen"
 	},
 	"notification": {
 		"error": "Fehler",
@@ -2622,7 +2644,8 @@
 				"headline": "Datenschutzhinweise der Beratungsstelle",
 				"imprintHeadline": "Impressum der Beratungsstelle",
 				"label": "Rechtliches",
-				"unavailable": "Die Datenschutzhinweise können derzeit nicht geladen werden."
+				"unavailable": "Die Datenschutzhinweise können derzeit nicht geladen werden.",
+				"loading": "Datenschutzhinweise werden geladen"
 			},
 			"search": "Suche nach einer PLZ",
 			"summary": "Ihre Beratungsstelle:"
@@ -3277,6 +3300,44 @@
 				"standard446": "mittlere Erfahrung (empfohlen)",
 				"deep556": "lang (Expertinnen und Experten)"
 			},
+			"secondsAria": "{{label}}, {{count}} Sekunden",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Chaosbändiger", "success": "Guter Start." },
+				"2": {
+					"title": "Atemfinder",
+					"success": "Du hast einen Rhythmus gefunden."
+				},
+				"3": { "title": "Atemlenker", "success": "Große Kontrolle." },
+				"4": {
+					"title": "Ruheaufbauer",
+					"success": "Der Fluss wird besser."
+				},
+				"5": {
+					"title": "Innere Balance",
+					"success": "Das Atmen bleibt gleichmäßig."
+				},
+				"6": {
+					"title": "Rhythmuswächter",
+					"success": "Starke Konzentration."
+				},
+				"7": {
+					"title": "Friedensgestalter",
+					"success": "Du bleibst mittig."
+				},
+				"8": {
+					"title": "Stiller Navigator",
+					"success": "Ruhe unter Druck."
+				},
+				"9": {
+					"title": "Meister der Stille",
+					"success": "Fast geschafft."
+				},
+				"10": {
+					"title": "Wahre Weisheit",
+					"success": "Du hast diese Runde gemeistert."
+				}
+			},
 			"briefing": {
 				"0": "Es tut uns leid, du musst gerade warten, im Moment sind alle Beraterinnen und Berater beschäftigt.",
 				"1": "Warten mit all diesen Problemen kann ziemlich belastend sein. Wenn du möchtest, haben wir eine kleine Wartezimmer-Brücke erstellt.",
@@ -3453,8 +3514,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Gesprächskreis",
-				"internal": "Interna"
+				"internal": "Interna",
+				"team": "Team Beratung"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Größe der Beratungsliste ändern. Zum Scrollen der Liste senkrecht ziehen.",
+			"expand": "Beratungsliste einblenden",
+			"collapse": "Beratungsliste einklappen, um den Chatraum zu vergrößern"
 		},
 		"createChat": {
 			"buttonTitle": "Chat anlegen"
@@ -3875,6 +3942,7 @@
 		"title": "Zwei-Faktor-Authentifizierung"
 	},
 	"typingIndicator": {
+		"aria": "schreibt",
 		"multipleUsers": {
 			"typing": "Teilnehmerinnen oder Teilnehmer schreiben"
 		},
@@ -4659,7 +4727,8 @@
 			"open": "Entwurf öffnen",
 			"next": "Nächster Entwurf",
 			"delete": "Entwurf löschen",
-			"emptyDetail": "Wählen Sie einen Entwurf aus, um weiterzuschreiben."
+			"emptyDetail": "Wählen Sie einen Entwurf aus, um weiterzuschreiben.",
+			"embeddedTitle": "Chat zum Entwurf"
 		}
 	},
 	"tour": {
@@ -4702,5 +4771,102 @@
 		"friday": "Freitag",
 		"saturday": "Samstag",
 		"sunday": "Sonntag"
+	},
+	"calls": {
+		"answer": "Annehmen",
+		"reject": "Ablehnen",
+		"decline": "Ablehnen",
+		"endCall": "Anruf beenden",
+		"fullscreen": "Vollbild",
+		"mute": "Stummschalten",
+		"unmute": "Mikrofon einschalten",
+		"turnOnVideo": "Video einschalten",
+		"turnOffVideo": "Video ausschalten",
+		"moreOptions": "Weitere Optionen",
+		"close": "Anruf schließen",
+		"title": "Anruf",
+		"videoCall": "Videoanruf",
+		"audioCall": "Audioanruf",
+		"autoFit": "Automatisch anpassen",
+		"autoFitAria": "Video an das Fenster anpassen",
+		"resizeAria": "Videofenster anpassen ({{edge}})",
+		"widget": {
+			"autoFit": "Video automatisch anpassen",
+			"autoFitAria": "Video an das Fenster anpassen",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
+			"answerFailed": "Anruf konnte nicht angenommen werden: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Eingehender Anruf",
+			"incomingDescription": "Jemand ruft an…",
+			"close": "Anruf schließen",
+			"autoFit": "Automatisch anpassen",
+			"autoFitAria": "Anruffenster automatisch anpassen",
+			"openFullView": "Vollansicht öffnen",
+			"switchToSmallView": "Zur kleinen Ansicht wechseln",
+			"exitFullScreen": "Vollbild beenden",
+			"enterFullScreen": "Vollbild öffnen",
+			"fullView": "Vollansicht",
+			"smallView": "Kleine Ansicht",
+			"fullScreen": "Vollbild",
+			"iframeTitle": "Gruppen-Videoanruf",
+			"connecting": "Verbindung wird hergestellt…",
+			"settingUp": "Anruf wird eingerichtet",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Keine Raum-ID angegeben",
+			"noRoomDescription": "Ein Anruf kann ohne Raum-ID nicht gestartet werden.",
+			"goBack": "Zurück"
+		},
+		"error": {
+			"noRoom": "Anruf kann nicht gestartet werden: Für diese Sitzung wurde kein Matrix-Raum gefunden.",
+			"httpsRequired": "Kamera- und Mikrofonzugriff erfordert HTTPS. Zur sicheren Verbindung wechseln?",
+			"cannotAccess": "Kein Zugriff auf Kamera oder Mikrofon. ",
+			"grantPermissions": "Bitte erteilen Sie die Berechtigungen in den Browser-Einstellungen.",
+			"noDevice": "Auf diesem Gerät wurde keine Kamera und kein Mikrofon gefunden.",
+			"browserUnsupported": "Ihr Browser unterstützt diese Funktion nicht. Bitte verwenden Sie HTTPS.",
+			"unknown": "Unbekannter Fehler.",
+			"callFailed": "Anruf fehlgeschlagen: {{message}}",
+			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
+			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Zurück",
+			"confirm": "Verstanden",
+			"close": "Schliessen"
+		},
+		"calendar": {
+			"cancel": "Abbrechen",
+			"ok": "OK",
+			"previousMonth": "Vorheriger Monat",
+			"selectMonth": "Monat wählen",
+			"nextMonth": "Nächster Monat",
+			"previousYear": "Vorheriges Jahr",
+			"selectYear": "Jahr wählen",
+			"nextYear": "Nächstes Jahr"
+		},
+		"datePicker": {
+			"openCalendar": "Kalender öffnen"
+		},
+		"timePicker": {
+			"dialogTitle": "Uhrzeit wählen",
+			"cancel": "Abbrechen",
+			"ok": "OK",
+			"open": "Zeitauswahl öffnen",
+			"selectHours": "Stunden wählen",
+			"selectMinutes": "Minuten wählen",
+			"hour": "Stunde",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Zur Texteingabe wechseln",
+			"switchToDial": "Zur Uhransicht wechseln"
+		},
+		"select": {
+			"search": "Suchen"
+		}
 	}
 }

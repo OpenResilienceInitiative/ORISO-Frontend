@@ -62,7 +62,8 @@
 			"classic": "Classic Look",
 			"new": "New Look!"
 		},
-		"wait": "Please wait"
+		"wait": "Please wait",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -214,7 +215,20 @@
 	"booking": {
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
-			"title": "Your availability"
+			"title": "Your availability",
+			"iframeTitle": "Availability"
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Assigned calendars"
+		},
+		"calcom": {
+			"loading": "Loading {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Reschedule appointment"
+		},
+		"cancellation": {
+			"iframeTitle": "Cancel appointment"
 		},
 		"calender": {
 			"add": "Add calendar",
@@ -549,6 +563,7 @@
 	},
 	"error": {
 		"login": "Login",
+		"notFound": "Not found",
 		"statusCodes": {
 			"400": {
 				"description": "The URL you entered is invalid.",
@@ -1540,6 +1555,8 @@
 				"overLimit": "Message is over the character limit.",
 				"warning": "Message is approaching the character limit."
 			},
+			"loadError": "The chat input could not be loaded. Please try again.",
+			"retry": "Try again",
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1583,7 +1600,9 @@
 				"voiceRecording": {
 					"label": "Voice recording",
 					"tooltip": "Record voice message"
-				}
+				},
+				"imageUrlPrompt": "Image URL",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1670,8 +1689,10 @@
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
+			"inlineImageAlt": "Message image",
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
+			"lastReplyAt": "Last reply at {{time}}",
 			"title": "Thread",
 			"placeholder": "Reply in thread"
 		},
@@ -1706,7 +1727,8 @@
 		"overview": "Overview",
 		"profile": "Profile",
 		"myProfile": "My profile",
-		"tools": "My tools"
+		"tools": "My tools",
+		"unreadCount": "{{count}} unread"
 	},
 	"notification": {
 		"error": "Error",
@@ -2574,7 +2596,8 @@
 				"headline": "Data privacy notes of the counseling center",
 				"imprintHeadline": "Imprint of the counseling center",
 				"label": "Legal",
-				"unavailable": "The data privacy notes cannot be loaded at the moment."
+				"unavailable": "The data privacy notes cannot be loaded at the moment.",
+				"loading": "Loading data privacy notes"
 			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"
@@ -3217,6 +3240,44 @@
 				"standard446": "mild experience (recommended)",
 				"deep556": "long (experts)"
 			},
+			"secondsAria": "{{label}}, {{count}} seconds",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Chaos Tamer", "success": "Good start." },
+				"2": {
+					"title": "Breath Finder",
+					"success": "You found a rhythm."
+				},
+				"3": {
+					"title": "Breath Director",
+					"success": "Great control."
+				},
+				"4": {
+					"title": "Calm Builder",
+					"success": "Flow is improving."
+				},
+				"5": {
+					"title": "Inner Balance",
+					"success": "Breathing stays smooth."
+				},
+				"6": { "title": "Rhythm Keeper", "success": "Strong focus." },
+				"7": {
+					"title": "Peace Crafter",
+					"success": "You stay centered."
+				},
+				"8": {
+					"title": "Silent Navigator",
+					"success": "Calm under pressure."
+				},
+				"9": {
+					"title": "Stillness Master",
+					"success": "Almost complete."
+				},
+				"10": {
+					"title": "True Wisdom",
+					"success": "You mastered this round."
+				}
+			},
 			"briefing": {
 				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",
 				"1": "Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.",
@@ -3393,8 +3454,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Peer support group",
-				"internal": "Internal"
+				"internal": "Internal",
+				"team": "Team counselling"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Resize the consultations list. Drag vertically to scroll the list.",
+			"expand": "Expand consultations list",
+			"collapse": "Collapse consultations list to enlarge the chat"
 		},
 		"createChat": {
 			"buttonTitle": "Create chat"
@@ -3817,6 +3884,7 @@
 		"title": "Two-factor authentication"
 	},
 	"typingIndicator": {
+		"aria": "Typing",
 		"multipleUsers": {
 			"typing": "Participants write"
 		},
@@ -4569,7 +4637,8 @@
 			"open": "Open draft",
 			"next": "Next draft",
 			"delete": "Delete draft",
-			"emptyDetail": "Select a draft to continue writing."
+			"emptyDetail": "Select a draft to continue writing.",
+			"embeddedTitle": "Draft chat session"
 		}
 	},
 	"tour": {
@@ -4612,5 +4681,102 @@
 		"friday": "Friday",
 		"saturday": "Saturday",
 		"sunday": "Sunday"
+	},
+	"calls": {
+		"answer": "Answer",
+		"reject": "Reject",
+		"decline": "Decline",
+		"endCall": "End call",
+		"fullscreen": "Fullscreen",
+		"mute": "Mute",
+		"unmute": "Unmute",
+		"turnOnVideo": "Turn on video",
+		"turnOffVideo": "Turn off video",
+		"moreOptions": "More options",
+		"close": "Close call",
+		"title": "Call",
+		"videoCall": "Video call",
+		"audioCall": "Audio call",
+		"autoFit": "Auto-fit",
+		"autoFitAria": "Auto-fit video to window",
+		"resizeAria": "Resize video call window ({{edge}})",
+		"widget": {
+			"autoFit": "Auto-fit video",
+			"autoFitAria": "Auto-fit video to window",
+			"startFailed": "Failed to start call: {{message}}",
+			"answerFailed": "Failed to answer: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Incoming call",
+			"incomingDescription": "Someone is calling…",
+			"close": "Close call",
+			"autoFit": "Auto-fit",
+			"autoFitAria": "Auto-fit call window",
+			"openFullView": "Open full view",
+			"switchToSmallView": "Switch to small view",
+			"exitFullScreen": "Exit full screen",
+			"enterFullScreen": "Enter full screen",
+			"fullView": "Full view",
+			"smallView": "Small view",
+			"fullScreen": "Full screen",
+			"iframeTitle": "Group video call",
+			"connecting": "Connecting…",
+			"settingUp": "Setting up call",
+			"startFailed": "Failed to start call: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "No room ID provided",
+			"noRoomDescription": "Cannot start a call without a room ID.",
+			"goBack": "Go back"
+		},
+		"error": {
+			"noRoom": "Cannot start call: no Matrix room found for this session.",
+			"httpsRequired": "Camera and microphone access requires HTTPS. Redirect to a secure connection?",
+			"cannotAccess": "Cannot access camera or microphone. ",
+			"grantPermissions": "Please grant permissions in your browser settings.",
+			"noDevice": "No camera or microphone found on this device.",
+			"browserUnsupported": "Your browser does not support this feature. Please use HTTPS.",
+			"unknown": "Unknown error.",
+			"callFailed": "Call failed: {{message}}",
+			"startFailed": "Failed to start call: {{message}}",
+			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Back",
+			"confirm": "Understood",
+			"close": "Close"
+		},
+		"calendar": {
+			"cancel": "Cancel",
+			"ok": "OK",
+			"previousMonth": "Previous month",
+			"selectMonth": "Select month",
+			"nextMonth": "Next month",
+			"previousYear": "Previous year",
+			"selectYear": "Select year",
+			"nextYear": "Next year"
+		},
+		"datePicker": {
+			"openCalendar": "Open calendar"
+		},
+		"timePicker": {
+			"dialogTitle": "Select time",
+			"cancel": "Cancel",
+			"ok": "OK",
+			"open": "Open time picker",
+			"selectHours": "Select hours",
+			"selectMinutes": "Select minutes",
+			"hour": "Hour",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Switch to text input",
+			"switchToDial": "Switch to dial"
+		},
+		"select": {
+			"search": "Search"
+		}
 	}
 }

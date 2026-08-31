@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ThreadSummary } from '../../utils/threadSummaries';
 
 export type ThreadListPanelProps = {
@@ -16,32 +17,40 @@ export type ThreadListPanelProps = {
 export const ThreadListPanel = ({
 	summaries,
 	unreadRootIds,
-	unknownRootLabel = 'Frühere Nachricht',
-	repliesLabel = (count) => `${count} replies`,
+	unknownRootLabel,
+	repliesLabel,
 	onSelectRoot
-}: ThreadListPanelProps) => (
-	<div className="session__threadListPanel" role="menu">
-		{summaries.map((summary) => (
-			<button
-				key={summary.rootId}
-				type="button"
-				role="menuitem"
-				className="session__threadListEntry"
-				onClick={() => onSelectRoot(summary.rootId)}
-			>
-				{unreadRootIds?.has(summary.rootId) && (
-					<span
-						className="session__threadListUnreadDot"
-						aria-hidden
-					/>
-				)}
-				<span className="session__threadListEntryPreview">
-					{summary.rootPreview || unknownRootLabel}
-				</span>
-				<span className="session__threadListEntryMeta">
-					{repliesLabel(summary.replyCount)}
-				</span>
-			</button>
-		))}
-	</div>
-);
+}: ThreadListPanelProps) => {
+	const { t } = useTranslation();
+	const resolvedUnknown = unknownRootLabel ?? t('message.thread.unknownRoot');
+	const resolvedReplies =
+		repliesLabel ??
+		((count: number) => t('message.thread.replies', { count }));
+
+	return (
+		<div className="session__threadListPanel" role="menu">
+			{summaries.map((summary) => (
+				<button
+					key={summary.rootId}
+					type="button"
+					role="menuitem"
+					className="session__threadListEntry"
+					onClick={() => onSelectRoot(summary.rootId)}
+				>
+					{unreadRootIds?.has(summary.rootId) && (
+						<span
+							className="session__threadListUnreadDot"
+							aria-hidden
+						/>
+					)}
+					<span className="session__threadListEntryPreview">
+						{summary.rootPreview || resolvedUnknown}
+					</span>
+					<span className="session__threadListEntryMeta">
+						{resolvedReplies(summary.replyCount)}
+					</span>
+				</button>
+			))}
+		</div>
+	);
+};

@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-08-31 — positional t() second args hide leftover English
+
+- Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
+- Lesson: After dropping `t(key, 'literal')`, still search for `t(key, variable)` whose variable holds DE/EN (preset labels, `phase.charAt(0)…`). A SLICE_FILES scan that only matches quoted literals will call the platform clean while those fallbacks still snap the UI.
+
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 
 - Context: #834 Threads list plain preview (`docs/agent-tasks/` is covered by `docs/*` ignore)

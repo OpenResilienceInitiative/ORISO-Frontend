@@ -29,6 +29,12 @@ const mocks = vi.hoisted(() => {
 	return { editor, options: null as any };
 });
 
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string) => key
+	})
+}));
+
 vi.mock('@tiptap/react', () => ({
 	EditorContent: () => null,
 	useEditor: (options: any) => {

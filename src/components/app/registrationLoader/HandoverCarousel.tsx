@@ -12,29 +12,20 @@ import {
 interface HandoverStep {
 	key: string;
 	artwork: RegistrationArtworkEntry;
-	titleFallback: string;
-	textFallback: string;
 }
 
 const STEPS: HandoverStep[] = [
 	{
 		key: 'write',
-		artwork: processArtwork.write,
-		titleFallback: 'Sie schreiben, was los ist',
-		textFallback: 'Was ist passiert, wo, seit wann? Ein paar Sätze genügen.'
+		artwork: processArtwork.write
 	},
 	{
 		key: 'counsellor',
-		artwork: processArtwork.counsellor,
-		titleFallback: 'Wir finden die passende Beratung',
-		textFallback: 'Fachlich passend — und mit Zeit für Sie.'
+		artwork: processArtwork.counsellor
 	},
 	{
 		key: 'reply',
-		artwork: processArtwork.reply,
-		titleFallback: 'Antwort in 2 Arbeitstagen',
-		textFallback:
-			'Auf Ihre Anfrage wird persönlich und professionell geantwortet.'
+		artwork: processArtwork.reply
 	}
 ];
 
@@ -246,8 +237,7 @@ export const HandoverCarousel = ({
 								}}
 							>
 								{t(
-									`registration.handover.steps.${step.key}.title`,
-									step.titleFallback
+									`registration.handover.steps.${step.key}.title`
 								)}
 							</Typography>
 							<Typography
@@ -266,8 +256,7 @@ export const HandoverCarousel = ({
 								}}
 							>
 								{t(
-									`registration.handover.steps.${step.key}.text`,
-									step.textFallback
+									`registration.handover.steps.${step.key}.text`
 								)}
 							</Typography>
 						</Box>
@@ -290,9 +279,7 @@ export const HandoverCarousel = ({
 						onClick={() => scrollTo(index)}
 						aria-label={t('registration.handover.goToStep', {
 							position: index + 1,
-							total: STEPS.length,
-							defaultValue:
-								'Zu Schritt {{position}} von {{total}}'
+							total: STEPS.length
 						})}
 						aria-current={index === activeIndex}
 						sx={{

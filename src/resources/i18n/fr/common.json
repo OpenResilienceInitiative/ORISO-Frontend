@@ -65,7 +65,8 @@
 		},
 		"wait": "Veuillez attendre",
 		"info": "Information",
-		"or": "ou"
+		"or": "ou",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -217,7 +218,20 @@
 	"booking": {
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
-			"title": "Votre disponibilité"
+			"title": "Votre disponibilité",
+			"iframeTitle": "Disponibilité"
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Calendriers assignés"
+		},
+		"calcom": {
+			"loading": "Chargement de {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Reporter le rendez-vous"
+		},
+		"cancellation": {
+			"iframeTitle": "Annuler le rendez-vous"
 		},
 		"calender": {
 			"add": "Ajouter un calendrier",
@@ -566,6 +580,7 @@
 	},
 	"error": {
 		"login": "Se connecter",
+		"notFound": "Page introuvable",
 		"statusCodes": {
 			"400": {
 				"description": "L'URL que vous avez saisie n'est pas valide.",
@@ -1540,6 +1555,8 @@
 				"overLimit": "Le message dépasse la limite de caractères.",
 				"warning": "Le message approche de la limite de caractères."
 			},
+			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer",
 			"toolbar": {
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
@@ -1583,7 +1600,9 @@
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
 					"tooltip": "Enregistrer un message vocal"
-				}
+				},
+				"imageUrlPrompt": "URL de l'image",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1677,8 +1696,10 @@
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",
+			"inlineImageAlt": "Image du message",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
+			"lastReplyAt": "Dernière réponse à {{time}}",
 			"title": "Fil de discussion",
 			"placeholder": "Répondre dans le fil"
 		},
@@ -1715,7 +1736,8 @@
 		"overview": "Aperçu",
 		"profile": "Profil",
 		"myProfile": "Mon profil",
-		"tools": "Mes outils"
+		"tools": "Mes outils",
+		"unreadCount": "{{count}} non lu"
 	},
 	"notification": {
 		"error": "Erreur",
@@ -2605,7 +2627,8 @@
 				"headline": "Informations sur la protection des données du centre de consultation",
 				"imprintHeadline": "Mentions légales du centre de consultation",
 				"label": "Informations légales",
-				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment."
+				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment.",
+				"loading": "Chargement des informations de protection des données"
 			},
 			"type": {
 				"single": "Conseil individuel",
@@ -3263,6 +3286,47 @@
 				"standard446": "expérience modérée (recommandé)",
 				"deep556": "long (personnes expertes)"
 			},
+			"secondsAria": "{{label}}, {{count}} secondes",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Dompteur de chaos", "success": "Bon départ." },
+				"2": {
+					"title": "Chercheur de souffle",
+					"success": "Vous avez trouvé un rythme."
+				},
+				"3": {
+					"title": "Guide du souffle",
+					"success": "Belle maîtrise."
+				},
+				"4": {
+					"title": "Bâtisseur de calme",
+					"success": "Le flux s'améliore."
+				},
+				"5": {
+					"title": "Équilibre intérieur",
+					"success": "La respiration reste fluide."
+				},
+				"6": {
+					"title": "Gardien du rythme",
+					"success": "Concentration solide."
+				},
+				"7": {
+					"title": "Artisan de paix",
+					"success": "Vous restez centré."
+				},
+				"8": {
+					"title": "Navigateur silencieux",
+					"success": "Calme sous pression."
+				},
+				"9": {
+					"title": "Maître du silence",
+					"success": "Presque terminé."
+				},
+				"10": {
+					"title": "Vraie sagesse",
+					"success": "Vous avez maîtrisé cette manche."
+				}
+			},
 			"briefing": {
 				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
 				"1": "Attendre avec tous ces problèmes peut être assez éprouvant. Si vous voulez, nous avons créé un petit pont de salle d'attente.",
@@ -3528,8 +3592,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
-				"internal": "Échange interne"
+				"internal": "Échange interne",
+				"team": "Conseil en équipe"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Redimensionner la liste des consultations. Faites glisser verticalement pour la faire défiler.",
+			"expand": "Afficher la liste des consultations",
+			"collapse": "Réduire la liste des consultations pour agrandir le chat"
 		}
 	},
 	"statusOverlay": {
@@ -3864,6 +3934,7 @@
 		"title": "Authentification à deux facteurs"
 	},
 	"typingIndicator": {
+		"aria": "En train d’écrire",
 		"multipleUsers": {
 			"typing": "Les participants écrivent"
 		},
@@ -4607,7 +4678,7 @@
 		"version": "Version du contrat",
 		"signerName": "Nom",
 		"signerPosition": "Fonction",
-		"signerEmail": "E-mail",
+		"signerEmail": "Adresse e-mail",
 		"signerNote": "Remarque (facultatif)",
 		"language": "Langue",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
@@ -4667,7 +4738,8 @@
 			"open": "Ouvrir le brouillon",
 			"next": "Brouillon suivant",
 			"delete": "Supprimer le brouillon",
-			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire."
+			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire.",
+			"embeddedTitle": "Chat du brouillon"
 		}
 	},
 	"tour": {
@@ -4710,5 +4782,102 @@
 		"friday": "vendredi",
 		"saturday": "samedi",
 		"sunday": "dimanche"
+	},
+	"calls": {
+		"answer": "Répondre",
+		"reject": "Refuser",
+		"decline": "Refuser",
+		"endCall": "Raccrocher",
+		"fullscreen": "Plein écran",
+		"mute": "Couper le micro",
+		"unmute": "Activer le micro",
+		"turnOnVideo": "Activer la vidéo",
+		"turnOffVideo": "Désactiver la vidéo",
+		"moreOptions": "Autres options",
+		"close": "Fermer l'appel",
+		"title": "Appel",
+		"videoCall": "Appel vidéo",
+		"audioCall": "Appel audio",
+		"autoFit": "Ajuster automatiquement",
+		"autoFitAria": "Ajuster la vidéo à la fenêtre",
+		"resizeAria": "Redimensionner la fenêtre d'appel ({{edge}})",
+		"widget": {
+			"autoFit": "Ajuster la vidéo",
+			"autoFitAria": "Ajuster la vidéo à la fenêtre",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"answerFailed": "Impossible de répondre : {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Appel entrant",
+			"incomingDescription": "Quelqu'un vous appelle…",
+			"close": "Fermer l'appel",
+			"autoFit": "Ajuster automatiquement",
+			"autoFitAria": "Ajuster la fenêtre d'appel",
+			"openFullView": "Ouvrir la vue complète",
+			"switchToSmallView": "Passer à la petite vue",
+			"exitFullScreen": "Quitter le plein écran",
+			"enterFullScreen": "Passer en plein écran",
+			"fullView": "Vue complète",
+			"smallView": "Petite vue",
+			"fullScreen": "Plein écran",
+			"iframeTitle": "Appel vidéo de groupe",
+			"connecting": "Connexion…",
+			"settingUp": "Préparation de l'appel",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Aucun identifiant de salle",
+			"noRoomDescription": "Impossible de démarrer un appel sans identifiant de salle.",
+			"goBack": "Retour"
+		},
+		"error": {
+			"noRoom": "Impossible de démarrer l'appel : aucune salle Matrix pour cette session.",
+			"httpsRequired": "L'accès à la caméra et au microphone nécessite HTTPS. Rediriger vers une connexion sécurisée ?",
+			"cannotAccess": "Impossible d'accéder à la caméra ou au microphone. ",
+			"grantPermissions": "Veuillez autoriser l'accès dans les paramètres du navigateur.",
+			"noDevice": "Aucune caméra ni microphone n'a été trouvé sur cet appareil.",
+			"browserUnsupported": "Votre navigateur ne prend pas en charge cette fonction. Veuillez utiliser HTTPS.",
+			"unknown": "Erreur inconnue.",
+			"callFailed": "L'appel a échoué : {{message}}",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Retour",
+			"confirm": "Compris",
+			"close": "Fermer"
+		},
+		"calendar": {
+			"cancel": "Annuler",
+			"ok": "OK",
+			"previousMonth": "Mois précédent",
+			"selectMonth": "Choisir le mois",
+			"nextMonth": "Mois suivant",
+			"previousYear": "Année précédente",
+			"selectYear": "Choisir l'année",
+			"nextYear": "Année suivante"
+		},
+		"datePicker": {
+			"openCalendar": "Ouvrir le calendrier"
+		},
+		"timePicker": {
+			"dialogTitle": "Choisir l'heure",
+			"cancel": "Annuler",
+			"ok": "OK",
+			"open": "Ouvrir le sélecteur d'heure",
+			"selectHours": "Choisir les heures",
+			"selectMinutes": "Choisir les minutes",
+			"hour": "Heure",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Passer à la saisie texte",
+			"switchToDial": "Passer au cadran"
+		},
+		"select": {
+			"search": "Rechercher"
+		}
 	}
 }
