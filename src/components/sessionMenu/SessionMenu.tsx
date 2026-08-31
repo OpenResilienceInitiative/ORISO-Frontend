@@ -65,6 +65,7 @@ import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
+import { callMediaErrorMessage } from '../../utils/callMediaErrorMessage';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
@@ -432,9 +433,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
-				alert(
-					'Cannot start call: No Matrix room found for this session'
-				);
+				alert(translate('calls.error.noRoom'));
 				return;
 			}
 
@@ -445,11 +444,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					'http://',
 					'https://'
 				);
-				if (
-					window.confirm(
-						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
-					)
-				) {
+				if (window.confirm(translate('calls.error.httpsRequired'))) {
 					window.location.href = httpsUrl;
 				}
 				return;
@@ -479,20 +474,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.error('Error name:', mediaError.name);
 				// console.error('Error message:', mediaError.message);
 
-				let errorMsg = 'Cannot access camera/microphone. ';
-				if (mediaError.name === 'NotAllowedError') {
-					errorMsg +=
-						'Please grant permissions in your browser settings.';
-				} else if (mediaError.name === 'NotFoundError') {
-					errorMsg += 'No camera/microphone found on this device.';
-				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg +=
-						'Your browser does not support this feature. Please use HTTPS.';
-				} else {
-					errorMsg += mediaError.message || 'Unknown error.';
-				}
-
-				alert(errorMsg);
+				alert(callMediaErrorMessage(mediaError));
 				return;
 			}
 
@@ -512,7 +494,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		} catch (error) {
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
 			alert(
-				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+				translate('calls.error.callFailed', {
+					message:
+						error instanceof Error
+							? error.message
+							: translate('calls.error.unknown')
+				})
 			);
 		}
 		// console.log("═══════════════════════════════════════════════");

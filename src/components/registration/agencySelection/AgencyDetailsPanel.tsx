@@ -165,10 +165,7 @@ export const AgencyDetailsPanel = ({
 	// Beratungsstelle with structured hours would show raw JSON here. Legacy free
 	// text passes through unchanged.
 	const openingHours = useMemo(
-		() =>
-			formatOpeningHours(details.hours, (key, fallback) =>
-				t(key, fallback ?? key)
-			),
+		() => formatOpeningHours(details.hours, (key) => t(key)),
 		[details.hours, t]
 	);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);

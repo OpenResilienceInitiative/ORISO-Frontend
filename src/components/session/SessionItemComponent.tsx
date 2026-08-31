@@ -187,90 +187,43 @@ type BreathTiming = {
 type BreathPresetId = 'starter334' | 'standard446' | 'deep556';
 const BREATHING_PRESETS: Array<{
 	id: BreathPresetId;
-	label: string;
 	inhale: number;
 	hold: number;
 	exhale: number;
 }> = [
-	{ id: 'starter334', label: 'first time', inhale: 3, hold: 3, exhale: 4 },
-	{
-		id: 'standard446',
-		label: 'mild experience (recommended)',
-		inhale: 4,
-		hold: 4,
-		exhale: 6
-	},
-	{ id: 'deep556', label: 'long (experts)', inhale: 5, hold: 5, exhale: 6 }
+	{ id: 'starter334', inhale: 3, hold: 3, exhale: 4 },
+	{ id: 'standard446', inhale: 4, hold: 4, exhale: 6 },
+	{ id: 'deep556', inhale: 5, hold: 5, exhale: 6 }
 ];
 
 const BREATH_LEVELS = [
-	{ level: 1, title: 'Chaos Tamer', emoji: '😤', success: 'Good start.' },
-	{
-		level: 2,
-		title: 'Breath Finder',
-		emoji: '😤',
-		success: 'You found a rhythm.'
-	},
-	{
-		level: 3,
-		title: 'Breath Director',
-		emoji: '😌',
-		success: 'Great control.'
-	},
-	{
-		level: 4,
-		title: 'Calm Builder',
-		emoji: '😌',
-		success: 'Flow is improving.'
-	},
-	{
-		level: 5,
-		title: 'Inner Balance',
-		emoji: '🙂',
-		success: 'Breathing stays smooth.'
-	},
-	{ level: 6, title: 'Rhythm Keeper', emoji: '🙂', success: 'Strong focus.' },
-	{
-		level: 7,
-		title: 'Peace Crafter',
-		emoji: '😇',
-		success: 'You stay centered.'
-	},
-	{
-		level: 8,
-		title: 'Silent Navigator',
-		emoji: '😇',
-		success: 'Calm under pressure.'
-	},
-	{
-		level: 9,
-		title: 'Stillness Master',
-		emoji: '🤍',
-		success: 'Almost complete.'
-	},
-	{
-		level: 10,
-		title: 'True Wisdom',
-		emoji: '🤍',
-		success: 'You mastered this round.'
-	}
+	{ level: 1, emoji: '😤' },
+	{ level: 2, emoji: '😤' },
+	{ level: 3, emoji: '😌' },
+	{ level: 4, emoji: '😌' },
+	{ level: 5, emoji: '🙂' },
+	{ level: 6, emoji: '🙂' },
+	{ level: 7, emoji: '😇' },
+	{ level: 8, emoji: '😇' },
+	{ level: 9, emoji: '🤍' },
+	{ level: 10, emoji: '🤍' }
 ];
 
 const BRIEFING_SCREENS: BriefingScreen[] = [
 	{
 		title: '',
-		text: 'So sorry you must wait at the moment, all counsellors are busy at the moment.',
+		text: '',
 		interaction: 'auto',
 		autoAdvanceMs: 3200
 	},
 	{
 		title: '',
-		text: 'Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.',
+		text: '',
 		interaction: 'choice'
 	},
 	{
 		title: '',
-		text: 'Okay you need to do three things in the game.',
+		text: '',
 		interaction: 'auto',
 		autoAdvanceMs: 2200
 	}
@@ -278,7 +231,7 @@ const BRIEFING_SCREENS: BriefingScreen[] = [
 
 const BRIEFING_NEGATIVE_SCREEN = {
 	title: '',
-	text: 'Okay please hold on once a counsellor is free we let you in.',
+	text: '',
 	interaction: 'negative' as const
 };
 const LEVEL_EMOJI_VIEWBOX_OFFSETS = [
@@ -425,6 +378,16 @@ const COMPLETION_HEART_ICON = (
 
 export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
+	const breathLevelTitle = useCallback(
+		(level: number) =>
+			translate(`session.waitingMiniGame.levels.${level}.title`),
+		[translate]
+	);
+	const breathLevelSuccess = useCallback(
+		(level: number) =>
+			translate(`session.waitingMiniGame.levels.${level}.success`),
+		[translate]
+	);
 	const tenantData = useTenant();
 
 	const { activeSession, reloadActiveSession } =
@@ -496,8 +459,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [gameMode, setGameMode] = useState<'autoPilot' | 'timeIt'>(
 		'autoPilot'
 	);
-	const [stageMessage, setStageMessage] = useState(
-		'Let us get you grounded with one easy round.'
+	const [stageMessage, setStageMessage] = useState(() =>
+		translate('session.waitingMiniGame.firstTryInstruction')
 	);
 	const [typedText, setTypedText] = useState('');
 	const [typewriterBusy, setTypewriterBusy] = useState(false);
@@ -962,10 +925,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return translate('session.waitingMiniGame.achievementUnlocked', {
 				level: levelSafe,
 				emoji: meta.emoji,
-				title: meta.title
+				title: breathLevelTitle(levelSafe)
 			});
 		},
-		[translate]
+		[breathLevelTitle, translate]
 	);
 
 	const clearBreathTimer = useCallback(() => {
@@ -1294,9 +1257,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		const nextLevel = currentLevel + 1;
 		setCurrentLevel(nextLevel);
-		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
+		setStageMessage(breathLevelSuccess(nextLevel));
 		startPhase('inhale');
-	}, [breathPhase, currentLevel, startPhase, waitingGameStage]);
+	}, [
+		breathLevelSuccess,
+		breathPhase,
+		currentLevel,
+		startPhase,
+		waitingGameStage
+	]);
 
 	/**
 	 * Keep the Carimat bubble text in sync with the current breath phase
@@ -1579,11 +1548,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setCurrentLevel(1);
 		setBreathCycles(0);
 		setJoinPromptEscalated(false);
-		setStageMessage(BREATH_LEVELS[0].success);
+		setStageMessage(breathLevelSuccess(1));
 		setWaitingGameStage('game');
 		setGameMode('autoPilot');
 		startPhase('inhale');
-	}, [startPhase]);
+	}, [breathLevelSuccess, startPhase]);
 
 	const isThreadsEnabled =
 		featureThreadsEnabled !== false &&
@@ -1685,13 +1654,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		threadSummariesRaw.forEach((summary, rootId) => {
 			map.set(rootId, {
 				replyCount: summary.replyCount,
-				lastReplyText:
-					'Last reply at ' +
-					formatToHHMM(new Date(summary.lastReplyTs).toString())
+				lastReplyText: translate('message.thread.lastReplyAt', {
+					time: formatToHHMM(new Date(summary.lastReplyTs).toString())
+				})
 			});
 		});
 		return map;
-	}, [threadSummariesRaw]);
+	}, [threadSummariesRaw, translate]);
 	// Per-thread unread (#435): device-local approximation, bumped whenever
 	// a thread is opened (markThreadRead) so the derived map recomputes.
 	const [threadReadVersion, setThreadReadVersion] = useState(0);
@@ -2328,14 +2297,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			clearBreathTimer();
 			setWaitingGameStage('completion');
 			setStageMessage(
-				`Congratulations, you made it. ${getAchievementMessage(BREATH_LEVELS.length)}`
+				translate(
+					'session.waitingMiniGame.tutorialCard.completion.instruction'
+				)
 			);
 			return;
 		}
 
 		const nextLevel = currentLevel + 1;
 		setCurrentLevel(nextLevel);
-		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
+		setStageMessage(breathLevelSuccess(nextLevel));
 		window.setTimeout(() => startPhase('inhale'), 0);
 		// translate is deliberately omitted: a language switch must not
 		// re-run this effect, which advances the breathing game state.
@@ -2568,12 +2539,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		const fullText = translate('session.waitingMiniGame.levelBadge', {
 			level: currentLevel,
-			title: BREATH_LEVELS[currentLevel - 1]?.title
+			title: breathLevelTitle(currentLevel)
 		});
 		setLevelBadgeTypewriterBusy(false);
 		setLevelBadgeTypedText(fullText);
 		return () => clearLevelBadgeTypewriterTimer();
 	}, [
+		breathLevelTitle,
 		clearLevelBadgeTypewriterTimer,
 		currentLevel,
 		showWaitingMiniGame,
@@ -2728,7 +2700,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				type: NOTIFICATION_TYPE_INFO,
 				eventType: 'thread.reply.new',
 				title: translate('notifications.threadReply.title'),
-				text: `${contactName}: ${snippet || 'New reply in thread'}`,
+				text: `${contactName}: ${
+					snippet ||
+					translate('notifications.events.threadReplyNew.text')
+				}`,
 				actionPath,
 				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
@@ -3557,8 +3532,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										/>
 									</span>
 									<span className="session__waitingGameLevelBadgeFloat__text">
-										Level {currentLevel}:{' '}
-										{BREATH_LEVELS[currentLevel - 1]?.title}
+										{translate(
+											'session.waitingMiniGame.levelBadge',
+											{
+												level: currentLevel,
+												title: breathLevelTitle(
+													currentLevel
+												)
+											}
+										)}
 									</span>
 								</div>
 							)}
@@ -3798,9 +3780,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												valuePct
 											);
 											const label = translate(
-												`session.waitingMiniGame.phase.${phase}`,
-												phase.charAt(0).toUpperCase() +
-													phase.slice(1)
+												`session.waitingMiniGame.phase.${phase}`
 											);
 											return (
 												<div
@@ -3815,7 +3795,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 																	left: `${centerPct}%`
 																}}
 															>
-																4s
+																{translate(
+																	'session.waitingMiniGame.secondsShort',
+																	{
+																		count: 4
+																	}
+																)}
 															</div>
 														)}
 														<div
@@ -3869,7 +3854,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 																)
 															}
 															className="session__selfTimerInput"
-															aria-label={`${label} seconds`}
+															aria-label={translate(
+																'session.waitingMiniGame.secondsAria',
+																{
+																	label,
+																	count: value
+																}
+															)}
 														/>
 													</div>
 													<span className="session__selfTimerLabel">
@@ -3912,8 +3903,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													}
 												>
 													{translate(
-														`session.waitingMiniGame.presets.${preset.id}`,
-														preset.label
+														`session.waitingMiniGame.presets.${preset.id}`
 													)}
 												</button>
 											))}
