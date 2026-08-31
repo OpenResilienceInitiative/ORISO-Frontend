@@ -4,12 +4,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { LegalLinkModal } from './LegalLinkModal';
 import { useLegalLinkContent } from './useLegalLinkContent';
+import { useDepartmentLegal } from '../../api/useDepartmentLegal';
 
 vi.mock('./useLegalLinkContent', async () => ({
 	...(await vi.importActual<typeof import('./useLegalLinkContent')>(
 		'./useLegalLinkContent'
 	)),
 	useLegalLinkContent: vi.fn()
+}));
+
+vi.mock('../../api/useDepartmentLegal', () => ({
+	useDepartmentLegal: vi.fn(() => ({
+		data: null,
+		loading: false,
+		error: null
+	}))
 }));
 
 vi.mock('react-i18next', () => ({
@@ -140,5 +149,82 @@ describe('LegalLinkModal', () => {
 		const rel = link.getAttribute('rel') ?? '';
 		expect(rel).toContain('noopener');
 		expect(rel).toContain('noreferrer');
+	});
+
+	/**
+	 * #1213: the profile agency card must open agency-level texts in this
+	 * same dialog. Tenant/carrier copy on the same tenant must not leak in.
+	 */
+	it('renders the department legal text when scope is agency', () => {
+		mockedContent.mockReturnValue({
+			kind: 'privacy',
+			content: '<p>Vom Träger gepflegter Datenschutztext.</p>'
+		});
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: {
+				dpp: {
+					content: JSON.stringify({
+						de: '<p>Fachbereich Datenschutz der Beratungsstelle.</p>'
+					}),
+					consentText: null
+				},
+				imprint: { content: null, consentText: null }
+			},
+			loading: false,
+			error: null
+		});
+
+		render(
+			<LegalLinkModal
+				title="Datenschutz"
+				rawLabel="login.legal.infoText.dataprotection"
+				url=""
+				scope="agency"
+				agencyId={7}
+				topicId={3}
+				onClose={() => undefined}
+			/>
+		);
+
+		expect(screen.getByTestId('legal-agency')).toBeTruthy();
+		expect(
+			screen.getByText('Fachbereich Datenschutz der Beratungsstelle.')
+		).toBeTruthy();
+		expect(
+			screen.queryByText('Vom Träger gepflegter Datenschutztext.')
+		).toBeNull();
+		expect(useDepartmentLegal).toHaveBeenCalledWith(7, 3, {
+			enabled: true
+		});
+	});
+
+	it('never substitutes tenant text when the agency document is missing', () => {
+		mockedContent.mockReturnValue({
+			kind: 'imprint',
+			content: '<p>Träger-Impressum</p>'
+		});
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: {
+				dpp: { content: null, consentText: null },
+				imprint: { content: null, consentText: null }
+			},
+			loading: false,
+			error: null
+		});
+
+		render(
+			<LegalLinkModal
+				title="Impressum"
+				rawLabel="login.legal.infoText.impressum"
+				url=""
+				scope="agency"
+				agencyId={7}
+				topicId={3}
+				onClose={() => undefined}
+			/>
+		);
+
+		expect(screen.getByTestId('legal-missing')).toBeTruthy();
+		expect(screen.queryByText('Träger-Impressum')).toBeNull();
 	});
 });

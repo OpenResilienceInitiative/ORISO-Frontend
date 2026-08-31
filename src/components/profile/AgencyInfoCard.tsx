@@ -104,7 +104,7 @@ export const AgencyInfoCard = ({ item }: AgencyInfoCardProps) => {
 									name: sessionTopic.name
 								} as TopicsDataInterface
 							}
-							variant="details"
+							variant="modal"
 						/>
 					</div>
 				)}

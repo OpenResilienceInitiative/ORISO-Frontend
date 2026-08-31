@@ -247,4 +247,108 @@ describe('DepartmentLegalSection', () => {
 
 		mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
 	});
+
+	describe('modal variant (profile agency card, #1213)', () => {
+		const agencyWithBoth = {
+			id: 42,
+			name: 'Beratungsstelle',
+			departments: [
+				{
+					topicId: 7,
+					hasPublishedDpp: true,
+					hasPublishedImprint: true
+				}
+			]
+		} as unknown as AgencyDataInterface;
+
+		beforeEach(() => {
+			vi.mocked(fetchData).mockResolvedValue({
+				dpp: {
+					content: JSON.stringify({
+						de: '<p>Fachbereich DPP der Stelle.</p>'
+					})
+				},
+				imprint: {
+					content: JSON.stringify({
+						de: '<p>Impressum der Beratungsstelle 42.</p>'
+					})
+				}
+			});
+			mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+		});
+
+		it('opens agency privacy in LegalLinkModal, not the tenant text', async () => {
+			render(
+				<DepartmentLegalSection
+					agency={agencyWithBoth}
+					topic={topic}
+					variant="modal"
+				/>
+			);
+
+			expect(fetchData).not.toHaveBeenCalled();
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'Datenschutzhinweise der Beratungsstelle'
+				})
+			);
+
+			expect(await screen.findByTestId('legal-agency')).toBeDefined();
+			expect(
+				screen.getByText('Fachbereich DPP der Stelle.')
+			).toBeDefined();
+			expect(screen.queryByText('Träger Datenschutz')).toBeNull();
+			expect(fetchData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					url: expect.stringMatching(/agencies\/42\/topics\/7\/legal/)
+				})
+			);
+		});
+
+		it('opens that agency’s imprint when a second department is selected', async () => {
+			const secondAgency = {
+				id: 99,
+				name: 'Andere Stelle',
+				departments: [
+					{
+						topicId: 7,
+						hasPublishedDpp: false,
+						hasPublishedImprint: true
+					}
+				]
+			} as unknown as AgencyDataInterface;
+
+			vi.mocked(fetchData).mockResolvedValue({
+				dpp: { content: null },
+				imprint: {
+					content: JSON.stringify({
+						de: '<p>Impressum der Beratungsstelle 99.</p>'
+					})
+				}
+			});
+
+			render(
+				<DepartmentLegalSection
+					agency={secondAgency}
+					topic={topic}
+					variant="modal"
+				/>
+			);
+
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'Impressum der Beratungsstelle'
+				})
+			);
+
+			expect(
+				await screen.findByText('Impressum der Beratungsstelle 99.')
+			).toBeDefined();
+			expect(fetchData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					url: expect.stringMatching(/agencies\/99\/topics\/7\/legal/)
+				})
+			);
+		});
+	});
 });
