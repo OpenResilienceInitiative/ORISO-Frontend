@@ -23,6 +23,9 @@ import { mergeWeblateCatalogue } from './utils/mergeWeblateCatalogue';
 
 export const FALLBACK_LNG = 'de';
 
+/** Bumped when Weblate merge precedence changes so LocalStorage skips stale overlays (#1154). */
+export const WEBLATE_TRANSLATION_CACHE_VERSION = '1154-bundle-wins';
+
 const defaultResources = {
 	'de': {
 		common: {
@@ -185,7 +188,9 @@ export const init = async (
 								translation?.cache?.disabled
 							) && {
 								expirationTime:
-									translation?.cache?.time * 60 * 1000
+									translation?.cache?.time * 60 * 1000,
+								defaultVersion:
+									WEBLATE_TRANSLATION_CACHE_VERSION
 							},
 							translation?.weblate.path && {
 								// path where resources get loaded from, or a function

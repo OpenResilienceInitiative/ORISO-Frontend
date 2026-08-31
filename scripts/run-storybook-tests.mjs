@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 const BROWSER_DISCONNECT_SIGNATURE =
 	'[vitest] Browser connection was closed while running tests';
 const MAX_CAPTURED_OUTPUT = 500_000;
+const MAX_BROWSER_DISCONNECT_RETRIES = 2;
 const TEST_FAILURE_SIGNATURES = [
 	/(?:^|\n)\s*FAIL\s+/m,
 	/\bTest Files\s+\d+\s+failed\b/i,
@@ -79,27 +80,28 @@ const runStorybookTests = () =>
 	});
 
 const main = async () => {
-	const firstRun = await runStorybookTests();
+	let attempt = 0;
+	let lastRun = await runStorybookTests();
 
-	if (firstRun.code === 0) {
-		return 0;
+	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
+		if (
+			!shouldRetryStorybookRun(
+				lastRun.code,
+				lastRun.capturedOutput,
+				lastRun
+			)
+		) {
+			return lastRun.code ?? 1;
+		}
+
+		attempt += 1;
+		console.warn(
+			`Vitest lost its Storybook browser connection; retrying the suite (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).`
+		);
+		lastRun = await runStorybookTests();
 	}
 
-	if (
-		!shouldRetryStorybookRun(
-			firstRun.code,
-			firstRun.capturedOutput,
-			firstRun
-		)
-	) {
-		return firstRun.code ?? 1;
-	}
-
-	console.warn(
-		'Vitest lost its Storybook browser connection; retrying the suite once.'
-	);
-	const retry = await runStorybookTests();
-	return retry.code ?? 1;
+	return lastRun.code ?? 0;
 };
 
 if (
