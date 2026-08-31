@@ -26,7 +26,7 @@ const STEPS: HandoverStep[] = [
 	{
 		key: 'counsellor',
 		artwork: processArtwork.counsellor,
-		titleFallback: 'Wir finden Ihre Beraterin',
+		titleFallback: 'Wir finden die passende Beratung',
 		textFallback: 'Fachlich passend — und mit Zeit für Sie.'
 	},
 	{

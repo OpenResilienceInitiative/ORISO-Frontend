@@ -21,6 +21,13 @@ const USED_KEYS = [
 	'registration.agencySelection.postcode.search'
 ];
 
+/** Team/Single labels — added for #1153 in de + en (other locales fall back). */
+const TYPE_LABEL_LOCALES = ['de', 'en'];
+const TYPE_LABEL_KEYS = [
+	'registration.agency.type.team',
+	'registration.agency.type.single'
+];
+
 function readKey(locale: string, dottedKey: string): unknown {
 	const file = path.join(
 		__dirname,
@@ -52,4 +59,36 @@ describe('agency selection empty state translations', () => {
 			});
 		}
 	}
+});
+
+describe('agency selection Team/Single type labels (#1153)', () => {
+	for (const locale of TYPE_LABEL_LOCALES) {
+		for (const key of TYPE_LABEL_KEYS) {
+			it(`${locale} defines ${key}`, () => {
+				const value = readKey(locale, key);
+				expect(typeof value, `${key} missing in ${locale}`).toBe(
+					'string'
+				);
+				expect((value as string).trim().length).toBeGreaterThan(0);
+			});
+		}
+	}
+
+	it('de uses Teamberatung / Einzelberatung', () => {
+		expect(readKey('de', 'registration.agency.type.team')).toBe(
+			'Teamberatung'
+		);
+		expect(readKey('de', 'registration.agency.type.single')).toBe(
+			'Einzelberatung'
+		);
+	});
+
+	it('en uses Team counselling / Single counselling', () => {
+		expect(readKey('en', 'registration.agency.type.team')).toBe(
+			'Team counselling'
+		);
+		expect(readKey('en', 'registration.agency.type.single')).toBe(
+			'Single counselling'
+		);
+	});
 });

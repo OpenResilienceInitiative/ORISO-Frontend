@@ -29,7 +29,14 @@ export interface TenantDataInterface {
 		claim: string;
 		dataPrivacyConfirmation: string;
 		termsAndConditionsConfirmation: string;
-		renderedPrivacy: string;
+		/**
+		 * `privacy` with the data-protection placeholders (`${responsible}`,
+		 * `${dataProtectionOfficer}`, …) substituted by TenantService. This is
+		 * the field to show a help-seeker — `privacy` still carries the raw
+		 * placeholders. Optional because a backend predating it simply omits
+		 * it, in which case the raw text is the only thing there is.
+		 */
+		renderedPrivacy?: string;
 		/**
 		 * Raw stored language->HTML maps incl. `<lang>__meta` machine-
 		 * translation metadata keys (additive TenantService fields; absent

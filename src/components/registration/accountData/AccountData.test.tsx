@@ -3,6 +3,7 @@ import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountData } from './AccountData';
+import { clearDepartmentLegalCache } from '../../../api/apiGetDepartmentLegal';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
@@ -19,10 +20,6 @@ vi.mock('../../../api/apiGetIsUsernameAvailable', () => ({
 	apiGetIsUsernameAvailable: vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock('../../departmentLegal/DepartmentLegalSection', () => ({
-	DepartmentLegalSection: () => null
-}));
-
 // RegistrationProvider.tsx also imports the other registration steps
 // (AgencySelection etc.), which transitively pull in lottie-web — unrelated
 // to this component. Only the context itself is needed here.
@@ -34,7 +31,11 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 	};
 });
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	clearDepartmentLegalCache();
+	vi.clearAllMocks();
+});
 
 const tenantWith = (
 	settings: Partial<TenantDataInterface['settings']>
@@ -47,9 +48,20 @@ const tenantWith = (
 		settings
 	}) as TenantDataInterface;
 
-const renderAccountData = (tenant: TenantDataInterface) =>
+const renderAccountData = (
+	tenant: TenantDataInterface,
+	registrationData: Record<string, unknown> = {}
+) =>
 	render(
-		<LegalLinksContext.Provider value={[]}>
+		<LegalLinksContext.Provider
+			value={[
+				{
+					label: 'login.legal.infoText.dataprotection',
+					registration: true,
+					getUrl: () => 'https://example.test/privacy'
+				}
+			]}
+		>
 			<LocaleContext.Provider
 				value={{
 					locale: 'de',
@@ -62,7 +74,7 @@ const renderAccountData = (tenant: TenantDataInterface) =>
 				<RegistrationContext.Provider
 					value={{
 						setDisabledNextButton: () => {},
-						registrationData: {}
+						registrationData
 					}}
 				>
 					<TenantContext.Provider

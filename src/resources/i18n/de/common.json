@@ -53,7 +53,6 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"associationLogoAlt": "Logo der Trägerorganisation",
 			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
@@ -309,6 +308,7 @@
 		"dearchive": "Dearchivieren",
 		"dearchiveDescription": "Chat aus dem Archiv wiederherstellen.",
 		"editGroupChat": "Chat-Einstellungen",
+		"editGroupChatDescription": "Thema, Zeitplan und Moderation dieses Chats ändern.",
 		"groupChatInfo": "Chat-Info",
 		"imprint": "Impressum",
 		"leaveGroupChat": "Chat verlassen",
@@ -1318,7 +1318,11 @@
 				"title": "Datenschutzerklärung"
 			},
 			"back": "Zurück",
-			"confirm": "Verstanden"
+			"confirm": "Verstanden",
+			"missing": {
+				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
+				"link": "Zur hinterlegten Adresse"
+			}
 		}
 	},
 	"login": {
@@ -1383,13 +1387,11 @@
 				"linkShort": "Warum das sicher ist"
 			},
 			"explainer": {
-				"badge": "NEU",
-				"headline": "Nur Sie beide können mitlesen.",
+				"headline": "Vertraulich von Ende zu Ende",
 				"message": "Mir geht es nicht gut.",
-				"you": "Sie",
-				"agency": "Beratungsstelle",
 				"encrypted": "verschlüsselt",
-				"attack": "mehr bekommt ein Angreifer nicht",
+				"diagram": "Schaubild: Ihre Nachricht geht verschlüsselt von Ihrem Gerät zur Beratungsstelle — nur dort wird sie wieder lesbar.",
+				"attack": "Mehr als Zahlensalat gibt’s bei uns für Datendiebe nicht zu holen.",
 				"cipherLabel": "Abgefangene, verschlüsselte Daten",
 				"key": "Der Schlüssel entsteht auf Ihrem Gerät und bleibt dort — wir haben ihn nicht.",
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",
@@ -1593,7 +1595,10 @@
 				"attachment": "Anhang hinzufügen",
 				"emoji": "Emoji-Auswahl",
 				"mention": "Person erwähnen",
-				"voiceRecording": "Sprachaufnahme"
+				"voiceRecording": {
+					"label": "Sprachaufnahme",
+					"tooltip": "Sprachnachricht aufnehmen"
+				}
 			}
 		},
 		"mention": {
@@ -2596,6 +2601,10 @@
 				"headline": "Beratungsstellen zur Postleitzahl",
 				"languages": "Diese Beratungsstelle berät Sie auf:"
 			},
+			"type": {
+				"team": "Teamberatung",
+				"single": "Einzelberatung"
+			},
 			"details": {
 				"aboutLabel": "Zu dieser Beratungsstelle",
 				"addressLabel": "Adresse",
@@ -2680,11 +2689,15 @@
 			}
 		},
 		"dataProtection": {
+			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
+			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).",
+			"unrenderable": "Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.",
 			"label": {
 				"and": " und ",
 				"prefix": "Ich habe die ",
 				"suffix": " zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies."
-			}
+			},
+			"loading": "Der Einwilligungstext wird geladen …"
 		},
 		"error": {
 			"required_field_missing": {
@@ -2893,7 +2906,97 @@
 			"loadErrorRetry": "Erneut versuchen",
 			"oneResult": "Wir beraten Sie zum Thema",
 			"subline": "Wählen Sie ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Ihr Thema:"
+			"summary": "Ihr Thema:",
+			"category": {
+				"alter": "Alter",
+				"krisen": "Besondere Lebenssituationen & Krisen",
+				"gesundheit": "Gesundheit & Sucht",
+				"familie": "Kinder, Jugend, Erwachsene, Schwangerschaft und Familie",
+				"migration": "Migration",
+				"teilhabe": "Teilhabe für Menschen mit Beeinträchtigungen"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Eltern und Familie",
+					"description": "Ob Erziehungsfragen, Konflikte oder familiäre Krisen - hier finden Sie verständnisvolle Begleitung."
+				},
+				"children-youth-counselling": {
+					"title": "Kinder und Jugendliche",
+					"description": "Wenn der Alltag zu viel wird - hier gibt es Hilfe und ein offenes Ohr."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Kinder- und Jugend-Reha",
+					"description": "Für junge Menschen, die nach Krankheit oder Belastung neue Kraft schöpfen möchten."
+				},
+				"cures-mothers-fathers": {
+					"title": "Kuren für Mütter und Väter",
+					"description": "Kurmaßnahmen helfen erschöpften Eltern, wieder zu sich zu finden."
+				},
+				"pregnancy": {
+					"title": "Schwangerschaft",
+					"description": "Bei Fragen, Unsicherheit oder schwierigen Umständen sind wir da."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Suizidprävention",
+					"description": "Anonyme Begleitung für junge Menschen in Krisen und Suizidgedanken."
+				},
+				"school-to-work-transition": {
+					"title": "Übergang von Schule zu Beruf",
+					"description": "Begleitung beim Schritt von der Schule in Ausbildung, Studium und Beruf."
+				},
+				"counselling-men-boys": {
+					"title": "Jungen- und Männerberatung",
+					"description": "Ein sicherer Raum für Männer und Jungen, um offen über Sorgen zu sprechen."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospiz- und Palliativberatung",
+					"description": "Beratung bei schwerer Krankheit, Sterben, Abschied und Begleitung."
+				},
+				"life-in-old-age": {
+					"title": "Leben im Alter",
+					"description": "Unterstuetzung bei Fragen rund um Alter, Pflege und Alltag."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Rechtliche Betreuung und Vorsorge",
+					"description": "Orientierung zu Betreuung, Vollmacht und persönlicher Vorsorge."
+				},
+				"initial-return-further-migration": {
+					"title": "Aus-/Rück- und Weiterwanderung",
+					"description": "Beratung zu Migration, Rückkehr und nächsten Schritten."
+				},
+				"migration": {
+					"title": "Migration",
+					"description": "Unterstützung bei Ankommen, Integration und Orientierung."
+				},
+				"disability-psychological-impairment": {
+					"title": "Behinderung und psychische Beeinträchtigung",
+					"description": "Unterstuetzung bei Fragen zu Teilhabe, Alltag und Belastungen."
+				},
+				"hiv-aids": {
+					"title": "HIV und Aids",
+					"description": "Vertrauliche Beratung zu HIV, Aids, Gesundheit und Alltag."
+				},
+				"sucht": {
+					"title": "Sucht",
+					"description": "Beratung bei Suchtfragen, Abhängigkeit und belastenden Gewohnheiten."
+				},
+				"trauerberatung": {
+					"title": "Trauerberatung",
+					"description": "Begleitung bei Verlust, Abschied und schwerer Trauer."
+				},
+				"general-social-counselling": {
+					"title": "Allgemeine Sozialberatung",
+					"description": "Hilfe bei sozialen, finanziellen und persönlichen Fragen."
+				},
+				"debt": {
+					"title": "Schulden",
+					"description": "Beratung bei finanziellen Sorgen, Mahnungen und Überschuldung."
+				},
+				"offending": {
+					"title": "Straffälligkeit",
+					"description": "Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag."
+				}
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
@@ -2922,7 +3025,7 @@
 			"headline": "Geschafft.",
 			"subline": "So geht es weiter:",
 			"cta": "Anfrage schreiben",
-			"encryption": "Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.",
+			"encryption": "Verschlüsselt: Außer Ihnen sieht Ihre Anfrage nur Ihre Beratungsstelle.",
 			"goToStep": "Zu Schritt {{position}} von {{total}}",
 			"steps": {
 				"write": {
@@ -2930,7 +3033,7 @@
 					"text": "Was ist passiert, wo, seit wann? Ein paar Sätze genügen."
 				},
 				"counsellor": {
-					"title": "Wir finden Ihre Beraterin",
+					"title": "Wir finden die passende Beratung",
 					"text": "Fachlich passend — und mit Zeit für Sie."
 				},
 				"reply": {
@@ -2946,6 +3049,9 @@
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Ihr Beratungsraum wird geöffnet …"
 			}
+		},
+		"selection": {
+			"remove": "{{label}} entfernen"
 		},
 		"stepState": {
 			"done": "abgeschlossen",
@@ -2976,10 +3082,19 @@
 			"title": "Mehrfach-Zugriffsanfrage"
 		},
 		"consent": {
+			"sender": "Carimat",
+			"senderRole": "Quick Guide",
 			"title": "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung",
 			"copy": "Bitte geben Sie den Zugriff frei oder lehnen Sie ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff freigeben",
-			"decline": "Zugriff verweigern"
+			"decline": "Zugriff verweigern",
+			"optOut": {
+				"title": "Datenschutzhinweis zur Fallübergabe",
+				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
+				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
+				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
+			}
 		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
@@ -4111,7 +4226,7 @@
 			"positionCountSuffix": "Noch vor Ihnen",
 			"connecting": "Wird verbunden …",
 			"insteadOfWaiting": "Statt zu warten",
-			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
+			"requestLocalCounselor": "Mail Beratung starten",
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden",
@@ -4393,6 +4508,14 @@
 		}
 	},
 	"erstantwort": {
+		"notificationChoice": {
+			"email": "Schreiben Sie mir eine E-Mail",
+			"emailHint": "Was Sie hier besprechen, steht nie in dieser E-Mail.",
+			"browser": "Geben Sie mir hier ein Signal",
+			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
+			"both": "Beides, und Passwort jetzt selbst festlegen",
+			"bothHint": "Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen."
+		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
@@ -4540,5 +4663,14 @@
 				}
 			}
 		}
+	},
+	"weekday": {
+		"monday": "Montag",
+		"tuesday": "Dienstag",
+		"wednesday": "Mittwoch",
+		"thursday": "Donnerstag",
+		"friday": "Freitag",
+		"saturday": "Samstag",
+		"sunday": "Sonntag"
 	}
 }

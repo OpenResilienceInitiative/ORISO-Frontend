@@ -35,6 +35,41 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'text', text: 'So geht es wirklich weiter' });
 	});
 
+	it('converts rich transport markup into a readable one-line preview', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.text',
+						body: '[[align:left]]<p>Wir haben die Zwei-Minuten-Runde ausprobiert.</p>[[/align]]'
+					},
+					3
+				)
+			])
+		).toEqual({
+			kind: 'text',
+			text: 'Wir haben die Zwei-Minuten-Runde ausprobiert.'
+		});
+	});
+
+	it('skips markup-only events in favour of an older readable preview', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: 'Ältere lesbare Nachricht' },
+					1
+				),
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: '[[align:left]][[/align]]' },
+					2
+				)
+			])
+		).toEqual({ kind: 'text', text: 'Ältere lesbare Nachricht' });
+	});
+
 	it('uses an Element-style semantic preview for voice messages', () => {
 		expect(
 			getLatestMatrixRoomPreview([

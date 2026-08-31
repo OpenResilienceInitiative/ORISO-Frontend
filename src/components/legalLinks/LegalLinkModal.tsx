@@ -5,6 +5,10 @@ import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import { OrisoDialog } from '../modal/OrisoDialog';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
 import { useLegalLinkContent } from './useLegalLinkContent';
+import {
+	PLATFORM_LEGAL_FULL_TEXT_KEY,
+	platformLegalNoteKey
+} from './platformLegalNote';
 import './legalLinkModal.styles';
 
 type LegalLinkModalProps = {
@@ -13,16 +17,49 @@ type LegalLinkModalProps = {
 	rawLabel?: string;
 	url: string;
 	onClose: () => void;
+	/**
+	 * `'platform'` shows the short platform note plus a link to the full text,
+	 * for public pages where no Beratungsstelle has been chosen yet. Default
+	 * `'tenant'` renders the carrier-authored document, which is what the
+	 * session views want.
+	 */
+	scope?: 'tenant' | 'platform';
 };
 
+/**
+ * Dialog for a legal link (imprint, privacy).
+ *
+ * Renders the text the operator authored for this tenant and **nothing else**. Until
+ * 2026-08-17 this component carried a hardcoded English consent agreement as a fallback:
+ * it named an operator that does not exist, claimed hosting on AWS and Azure and a
+ * 365-day deletion period — none of which applies to this platform — and left
+ * `{{USERNAME}}` unsubstituted. It reached help-seekers in the session views, which open
+ * the dialog unconditionally.
+ *
+ * A legal text is authored per tenant (ADR-014 shared legal text objects, ADR-021
+ * legal-text hierarchy and versioning) or it does not exist. The client must never invent
+ * one: an unconfigured text is a configuration gap and is named as such, with the
+ * configured address offered as the way out — the same degradation public pages already
+ * apply in `LegalLinkButton`.
+ */
 export const LegalLinkModal = ({
 	title,
 	rawLabel,
 	url,
-	onClose
+	onClose,
+	scope = 'tenant'
 }: LegalLinkModalProps) => {
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
+
+	const platformNoteFallback =
+		kind === 'privacy'
+			? 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.'
+			: 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — wer die Plattform betreibt, steht im vollständigen Impressum.';
+	const platformNote =
+		scope === 'platform'
+			? translate(platformLegalNoteKey(kind), platformNoteFallback)
+			: null;
 
 	return (
 		<OrisoDialog
@@ -39,66 +76,61 @@ export const LegalLinkModal = ({
 			backLabel={translate('legal.modal.back')}
 			confirmLabel={translate('legal.modal.confirm')}
 		>
-			<LegalContentRenderer
-				className="legalLinkModal__content"
-				content={content ?? FALLBACK_LEGAL_CONTENT}
-			/>
+			{scope === 'platform' ? (
+				<div
+					className="legalLinkModal__platform"
+					data-testid="legal-platform"
+				>
+					{platformNote?.split('\n\n').map((paragraph) => (
+						<p key={paragraph}>{paragraph}</p>
+					))}
+					{url && (
+						<p>
+							<a
+								href={url}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{translate(
+									PLATFORM_LEGAL_FULL_TEXT_KEY,
+									'Vollständigen Text öffnen'
+								)}
+							</a>
+						</p>
+					)}
+				</div>
+			) : content ? (
+				<LegalContentRenderer
+					className="legalLinkModal__content"
+					content={content}
+				/>
+			) : (
+				<div
+					className="legalLinkModal__missing"
+					data-testid="legal-missing"
+				>
+					<p>
+						{translate(
+							'legal.modal.missing.text',
+							'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
+						)}
+					</p>
+					{url && (
+						<p>
+							<a
+								href={url}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{translate(
+									'legal.modal.missing.link',
+									'Zur hinterlegten Adresse'
+								)}
+							</a>
+						</p>
+					)}
+				</div>
+			)}
 		</OrisoDialog>
 	);
 };
-
-/**
- * Shown only where the modal is opened unconditionally (session views). Public
- * pages resolve the content first via `useLegalLinkContent` and fall back to
- * the configured legal URL instead of rendering this placeholder.
- */
-const FALLBACK_LEGAL_CONTENT = `
-	<p>FULL CONSENT AGREEMENT</p>
-	<p>&nbsp;</p>
-	<p>Basic Information</p>
-	<p>I, {{USERNAME}}, hereby consent to the disclosure and processing of my personal data, including sensitive data and documents uploaded by me, as provided in the request and completed questionnaire, by WeCare Remote, operated by Sunflower Care e.V. (hereinafter referred to as "WeCare Remote"), to the organisation {{ORGANISATION NAME}} and its consultants responsible for my case, as well as to volunteers engaged by this organisation, for the purpose of providing advice and processing my request.</p>
-	<p>Data Hosting and Storage Information</p>
-	<p>&nbsp;</p>
-	<p>Data Hosting: WeCare Remote (wcr.is) hosts and secures all your data</p>
-	<p>Storage Location: Data is stored on servers in Germany, specifically on Amazon Web Services and Microsoft Azure</p>
-	<p>Privacy Policies: Privacy Policy | Terms of Service</p>
-	<p>What This Means For Your Case</p>
-	<p>I understand that consultants from {{ORGANISATION NAME}} may view my data and will contact me to provide advice</p>
-	<p>I am aware that {{ORGANISATION NAME}} may process my data outside the WeCare Remote platform after taking over the case</p>
-	<p>The responsibility for complying with data protection regulations in this further processing lies with {{ORGANISATION NAME}}</p>
-	<p>Categories of Data Covered By This Consent</p>
-	<p>All information provided by me in the questionnaire, including information on my:</p>
-	<p>Health</p>
-	<p>Origin</p>
-	<p>Residence status</p>
-	<p>Other sensitive areas of life</p>
-	<p>All documents uploaded by me, such as:</p>
-	<p>Identification documents</p>
-	<p>Official notices</p>
-	<p>Medical records</p>
-	<p>Other case-related materials</p>
-	<p>Special Category Data (Article 9 GDPR)</p>
-	<p>The data I voluntarily upload may include special categories of personal data according to Article 9 GDPR, including data revealing:</p>
-	<p>Racial or ethnic origin</p>
-	<p>Political opinions</p>
-	<p>Religious or philosophical beliefs</p>
-	<p>Trade union membership</p>
-	<p>Genetic or biometric data</p>
-	<p>Health data</p>
-	<p>Data concerning sex life or sexual orientation</p>
-	<p>With my consent, I explicitly agree that these special categories of personal data may be disclosed to {{ORGANISATION NAME}} and processed within the scope of consultation.</p>
-	<p>Data Protection Guarantees</p>
-	<p>{{ORGANISATION NAME}} is obligated to treat my data confidentially</p>
-	<p>My data will only be used for the personal and time-limited consultation</p>
-	<p>Disclosure to unauthorised third parties is prohibited</p>
-	<p>After completing the consultation, my data will be deleted when possible, but no later than 365 days</p>
-	<p>Voluntary Consent and Withdrawal Rights</p>
-	<p>This consent is voluntary. I can withdraw it at any time with effect for the future without incurring any disadvantages. The withdrawal should be addressed to: info@wcr.is</p>
-	<p>Note: The withdrawal of consent does not affect the lawfulness of processing based on consent before its withdrawal.</p>
-	<p>Confirmation</p>
-	<p>By clicking the "yes" button to accept my case by {{ORGANISATION NAME}}, I confirm that I have read and understood the above consent declaration and agree to the disclosure and processing of my data as described.</p>
-	<p>Helpful Resources:</p>
-	<p>UK Information Commissioner's Office - Your Data Matters</p>
-	<p>European Data Protection Board</p>
-	<p>German Federal Commissioner for Data Protection</p>
-`;

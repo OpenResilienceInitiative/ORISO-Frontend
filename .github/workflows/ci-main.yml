@@ -42,16 +42,12 @@ jobs:
           push_to_ghcr: true
           image_name: oriso-frontend
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Reject fixable high or critical image vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend@${{ steps.image.outputs.digest }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
+          # Trivy runs inside the action, against a locally built image, and
+          # before anything reaches GHCR. It used to run as a separate step
+          # after this one, which could only redden the run — the vulnerable
+          # image was already published and deployable by then
+          # (OpenResilienceInitiative/ORISO-Docs#88).
+          scan_before_push: true
 
       - name: Sign and publish the image provenance attestation
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0

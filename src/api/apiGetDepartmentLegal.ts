@@ -7,12 +7,49 @@ export interface DepartmentLegalContent {
 	 * Null when the text is a draft or was never authored.
 	 */
 	content: string | null;
+	/**
+	 * Optional multilingual consent sentence (JSON language->text/HTML map),
+	 * e.g. `{"de":"Ich habe die … gelesen."}`. Null/absent when unset.
+	 */
+	consentText?: string | null;
 }
 
 export interface DepartmentLegalData {
 	dpp: DepartmentLegalContent;
 	imprint: DepartmentLegalContent;
 }
+
+const asNullableString = (value: unknown): string | null =>
+	typeof value === 'string' ? value : null;
+
+/**
+ * Keeps only the public legal fields we render. Ensures `consentText` is
+ * always present on the typed object (null when the backend omits it).
+ */
+export const normalizeDepartmentLegalResponse = (
+	response: unknown
+): DepartmentLegalData | null => {
+	if (!response || typeof response !== 'object') {
+		return null;
+	}
+
+	const body = response as Record<string, unknown>;
+	const mapContent = (raw: unknown): DepartmentLegalContent => {
+		if (!raw || typeof raw !== 'object') {
+			return { content: null, consentText: null };
+		}
+		const entry = raw as Record<string, unknown>;
+		return {
+			content: asNullableString(entry.content),
+			consentText: asNullableString(entry.consentText)
+		};
+	};
+
+	return {
+		dpp: mapContent(body.dpp),
+		imprint: mapContent(body.imprint)
+	};
+};
 
 /**
  * Loads the published legal texts (data privacy policy + imprint) of a
@@ -36,4 +73,52 @@ export const apiGetDepartmentLegal = async (
 		// page - any non-2xx simply rejects and is mapped to null here.
 		responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL],
 		...(signal ? { signal } : {})
-	}).catch(() => null);
+	})
+		.then(normalizeDepartmentLegalResponse)
+		.catch(() => null);
+
+/**
+ * In-flight / settled department-legal promises, keyed by agencyId:topicId.
+ * Same pattern as TeamDiscussionBadge's discussionCache — one network call
+ * per key so consent label and policy panel share one snapshot.
+ */
+const departmentLegalCache = new Map<
+	string,
+	Promise<DepartmentLegalData | null>
+>();
+
+const departmentLegalCacheKey = (agencyId: number, topicId: number): string =>
+	`${agencyId}:${topicId}`;
+
+/**
+ * Shared loader for department legal. Does not accept AbortSignal — aborting
+ * would cancel work for every consumer of the same key.
+ */
+export const getCachedDepartmentLegal = (
+	agencyId: number,
+	topicId: number
+): Promise<DepartmentLegalData | null> => {
+	const key = departmentLegalCacheKey(agencyId, topicId);
+	if (!departmentLegalCache.has(key)) {
+		departmentLegalCache.set(
+			key,
+			apiGetDepartmentLegal(agencyId, topicId).catch(() => {
+				departmentLegalCache.delete(key);
+				return null;
+			})
+		);
+	}
+	return departmentLegalCache.get(key)!;
+};
+
+/** Clear one key or the whole cache (tests / invalidation). */
+export const clearDepartmentLegalCache = (
+	agencyId?: number,
+	topicId?: number
+): void => {
+	if (agencyId != null && topicId != null) {
+		departmentLegalCache.delete(departmentLegalCacheKey(agencyId, topicId));
+		return;
+	}
+	departmentLegalCache.clear();
+};

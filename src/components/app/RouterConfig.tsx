@@ -138,8 +138,10 @@ export const RouterConfigUser = (
 				}
 			},
 			{
-				condition: (userData) =>
-					!userData.userName?.startsWith('Anonymous-'),
+				// Invite guests used to mint Anonymous-<ts> handles; this item
+				// was hidden for that prefix. Guests now get animal User-IDs,
+				// so the rail item is always shown. Do not restore a username
+				// prefix check — anonymity is an authority, not a label.
 				to: '/profile',
 				icon: ProfileIconOutline,
 				iconHover: ProfileIconOutline,

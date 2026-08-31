@@ -46,6 +46,7 @@ import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -2377,8 +2378,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 			if (
-				memberId.includes('@system') ||
-				memberId.includes('@caritas.local') ||
+				isSystemMatrixUser(memberId) ||
 				// Agency provisioning/service bots (@agency-<id>-service) are not
 				// human recipients — never offer them as an audience target.
 				/^@agency-\d+-service:/.test(memberId)

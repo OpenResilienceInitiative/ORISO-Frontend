@@ -46,7 +46,8 @@ import {
 import { getUrlParameter } from '../../utils/getUrlParameter';
 import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
-import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
+import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
+import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
@@ -343,6 +344,22 @@ export const Registration = () => {
 		selectedTopicLabel
 	]);
 
+	/** Header chips are the same picks, plus the a11y label the chip row needs. */
+	const headerChips = useMemo(
+		() =>
+			footerChips.map((chip) => ({
+				...chip,
+				// House rule: mandatory UI text carries its German fallback, so
+				// a missing catalogue entry can never surface the raw key —
+				// here it would become the chip's accessible name.
+				deleteAriaLabel: t('registration.selection.remove', {
+					defaultValue: '{{label}} entfernen',
+					label: chip.label
+				})
+			})),
+		[footerChips, t]
+	);
+
 	/* Forward navigation is additionally capped by data validity: once an
 	   earlier step's mandatory value was cleared (chip ✕), later steps stop
 	   being clickable until the flow is completed again. The missing step
@@ -570,11 +587,20 @@ export const Registration = () => {
 				showLoginLink={true}
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
+				mobileHero="bar"
 			>
 				<Box
 					sx={{
-						maxWidth: '780px !important',
-						width: '100%'
+						// Top of the chain: `.stageLayout__content` is already a
+						// flex column filling the viewport, so the growth starts
+						// being passed on here.
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+						flexDirection: 'column',
+						boxSizing: 'border-box',
+						width: '100%',
+						maxWidth: '100%'
 					}}
 				>
 					{activeStep ? (
@@ -584,6 +610,14 @@ export const Registration = () => {
 							</Helmet>
 							<form
 								onSubmit={handleSubmit}
+								// Part of the same chain: a plain block form
+								// would swallow the growth again.
+								style={{
+									flex: 1,
+									minHeight: 0,
+									display: 'flex',
+									flexDirection: 'column'
+								}}
 								data-cy="registration-form"
 								data-cy-step={step}
 								data-cy-steps={availableSteps
@@ -592,6 +626,18 @@ export const Registration = () => {
 							>
 								<Box
 									sx={{
+										// The stage column is a flex column that
+										// fills the viewport, but every box below
+										// it defaulted to `flex: 0 1 auto`, so the
+										// step body stopped at its own height and
+										// the leftover space was dead. Passing the
+										// growth down lets a step centre itself in
+										// what is actually left (see the postcode
+										// step) without anyone computing a height.
+										flex: 1,
+										minHeight: 0,
+										display: 'flex',
+										flexDirection: 'column',
 										marginBottom: {
 											xs: '144px',
 											sm: '112px'
@@ -599,7 +645,7 @@ export const Registration = () => {
 									}}
 								>
 									<PreselectionBox hasDrawer={false} />
-									<RegistrationStepper
+									<RegistrationHeader
 										currentStepName={step}
 										visibleStepNames={availableSteps.map(
 											({ name }) => name
@@ -608,12 +654,26 @@ export const Registration = () => {
 											clickableStepperStepNames
 										}
 										onStepClick={onStepperClick}
+										chips={headerChips}
+										fullBleed
 									/>
 
 									<Box
 										sx={{
-											maxWidth: '780px',
-											mx: 'auto'
+											'flex': 1,
+											'minHeight': 0,
+											'display': 'flex',
+											'flexDirection': 'column',
+											'width': '100%',
+											'maxWidth': '780px',
+											'mx': 'auto',
+											'px': { xs: 2, sm: 3, lg: 4 },
+											// The band above is opaque and sits
+											// flush; without this the first line of
+											// every step starts hard against its
+											// lower edge.
+											'pt': 1.5,
+											'& > *': { minHeight: 0 }
 										}}
 									>
 										{(() => {
@@ -639,12 +699,6 @@ export const Registration = () => {
 										'position': 'fixed',
 										'bottom': '0',
 										'right': '0',
-										'px': {
-											xs: '20px',
-											sm: '24px',
-											md: '32px',
-											lg: '32px'
-										},
 										'width': { xs: '100vw', lg: '60vw' },
 										'backgroundColor':
 											'rgba(255, 255, 255, 0.94)',
@@ -658,6 +712,7 @@ export const Registration = () => {
 											xs: 'calc(12px + env(safe-area-inset-bottom))',
 											sm: 0
 										},
+										'px': { xs: 2, sm: 3, lg: 4 },
 										'zIndex': 65,
 										'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
 										'@keyframes registrationFooterEnter': {
@@ -732,47 +787,35 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<RegistrationFooterChips
-												chips={footerChips}
-												selectedPrefix={selectedPrefix}
-												emptyLabel={footerEmptyLabel}
-												mobile
+											{/* F3: the picks live in the
+											    header chip row on mobile, so
+											    the footer is navigation only. */}
+											<RegistrationStepNav
+												prevStepUrl={
+													currStepIndex === 0
+														? null
+														: prevStepUrl
+												}
+												onPrevClick={onPrevClick}
+												backLabel={t(
+													'registration.back'
+												)}
+												nextStepUrl={nextStepUrl}
+												nextLabel={t(
+													'registration.next'
+												)}
+												registerLabel={t(
+													'registration.register'
+												)}
+												registeringLabel={t(
+													'registration.registering',
+													'Registering...'
+												)}
+												disabledNext={
+													disabledNextButton
+												}
+												isRegistering={isRegistering}
 											/>
-											<Box
-												sx={{
-													display: 'flex',
-													alignItems: 'center',
-													gap: 1.5
-												}}
-											>
-												<RegistrationFooterBackLink
-													to={prevStepUrl}
-													onClick={onPrevClick}
-													label={t(
-														'registration.back'
-													)}
-												/>
-												<Box sx={{ flex: 1 }} />
-												<RegistrationFooterPrimaryButton
-													nextStepUrl={nextStepUrl}
-													disabledNextButton={
-														disabledNextButton
-													}
-													isRegistering={
-														isRegistering
-													}
-													registerLabel={t(
-														'registration.register'
-													)}
-													registeringLabel={t(
-														'registration.registering',
-														'Registering...'
-													)}
-													nextLabel={t(
-														'registration.next'
-													)}
-												/>
-											</Box>
 										</Box>
 									</Box>
 								</Box>

@@ -25,6 +25,7 @@ import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 import { getModality, Modality } from '../../session/getModality';
+import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -310,12 +311,9 @@ export const GroupChatHeader = ({
 		id: String(activeSession.item.id),
 		subRoute: 'groupChatInfo'
 	});
-	const visibleMembers = matrixMembers.filter((member) => {
-		const userId = member.userId || '';
-		return (
-			!userId.includes('@system') && !userId.includes('@caritas.local')
-		);
-	});
+	const visibleMembers = matrixMembers.filter(
+		(member) => !isSystemMatrixUser(member.userId)
+	);
 	// Figma #430: up to 4 members render every avatar; beyond that we collapse
 	// the stack into a single "+N people" count badge instead of avatars.
 	const showMemberCountBadge = visibleMembers.length > 4;

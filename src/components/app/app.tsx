@@ -27,7 +27,6 @@ import {
 } from '../../globalState/interfaces';
 import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { DevToolbarWrapper } from '../devToolbar/DevToolbar';
 import { PreConditions, preConditionsMet } from './PreConditions';
 import { Loading } from './Loading';
@@ -136,9 +135,6 @@ interface RouterWrapperProps {
 
 const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	const settings = useAppConfig();
-
-	// Request notification permission for incoming calls
-	useNotificationPermission();
 
 	const [startRealtimeEvents, setStartRealtimeEvents] =
 		useState<boolean>(false);

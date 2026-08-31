@@ -1163,13 +1163,12 @@
 		},
 		"registering": "Registrierung läuft...",
 		"handover": {
-			"encryption": "Verschlüsselt: Nur du und die Mitarbeiterinnen deiner Beratungsstelle können deine Anfrage einsehen.",
+			"encryption": "Verschlüsselt: Außer dir sieht deine Anfrage nur deine Beratungsstelle.",
 			"steps": {
 				"write": {
 					"title": "Du schreibst, was los ist"
 				},
 				"counsellor": {
-					"title": "Wir finden deine Beraterin",
 					"text": "Fachlich passend — und mit Zeit für dich."
 				},
 				"reply": {
@@ -1785,7 +1784,7 @@
 			"positionCountSuffix": "Noch vor dir",
 			"connecting": "Wird verbunden …",
 			"insteadOfWaiting": "Statt zu warten",
-			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
+			"requestLocalCounselor": "Mail Beratung starten",
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden",
@@ -2057,7 +2056,6 @@
 	"app": {
 		"cancel": "Abbrechen",
 		"stage": {
-			"associationLogoAlt": "Logo der Trägerorganisation",
 			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
@@ -2079,13 +2077,10 @@
 				"linkShort": "Warum das sicher ist"
 			},
 			"explainer": {
-				"badge": "NEU",
-				"headline": "Nur ihr beide könnt mitlesen.",
 				"message": "Mir geht es nicht gut.",
-				"you": "Du",
-				"agency": "Beratungsstelle",
 				"encrypted": "verschlüsselt",
-				"attack": "mehr bekommt ein Angreifer nicht",
+				"diagram": "Schaubild: Deine Nachricht geht verschlüsselt von deinem Gerät zur Beratungsstelle — nur dort wird sie wieder lesbar.",
+				"attack": "Mehr als Zahlensalat gibt’s bei uns für Datendiebe nicht zu holen.",
 				"cipherLabel": "Abgefangene, verschlüsselte Daten",
 				"key": "Der Schlüssel entsteht auf deinem Gerät und bleibt dort — wir haben ihn nicht.",
 				"protocol": "Offenes Protokoll <strong>Matrix</strong>, unabhängig überprüfbar.",

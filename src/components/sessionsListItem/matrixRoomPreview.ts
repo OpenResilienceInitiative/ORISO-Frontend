@@ -1,4 +1,5 @@
 import { stripReplyFallback } from '../../utils/messageRelations';
+import { toMessagePreviewText } from '../../utils/messagePreviewText';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -48,10 +49,10 @@ const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 	switch (content.msgtype) {
 		case 'm.text':
 		case 'm.notice':
-		case 'm.emote':
-			return body
-				? { kind: 'text', text: stripReplyFallback(body).trim() }
-				: null;
+		case 'm.emote': {
+			const text = toMessagePreviewText(stripReplyFallback(body));
+			return text ? { kind: 'text', text } : null;
+		}
 		case 'm.audio':
 			return {
 				kind: Object.prototype.hasOwnProperty.call(

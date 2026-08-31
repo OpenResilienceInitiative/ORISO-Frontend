@@ -9,7 +9,8 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DepartmentLegalSection } from './DepartmentLegalSection';
-import { apiGetDepartmentLegal } from '../../api/apiGetDepartmentLegal';
+import { clearDepartmentLegalCache } from '../../api/apiGetDepartmentLegal';
+import { fetchData } from '../../api/fetchData';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
@@ -22,11 +23,19 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
-vi.mock('../../api/apiGetDepartmentLegal', () => ({
-	apiGetDepartmentLegal: vi.fn()
-}));
+vi.mock('../../api/fetchData', async () => {
+	const actual = await vi.importActual<typeof import('../../api/fetchData')>(
+		'../../api/fetchData'
+	);
+	return {
+		...actual,
+		fetchData: vi.fn()
+	};
+});
 
-const mockTenant = {
+const mockTenant: {
+	content: { privacy: string; renderedPrivacy?: string };
+} = {
 	content: { privacy: '<p>Träger Datenschutz</p>' }
 };
 
@@ -56,7 +65,8 @@ const expandSection = () =>
 
 describe('DepartmentLegalSection', () => {
 	beforeEach(() => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue({
+		clearDepartmentLegalCache();
+		vi.mocked(fetchData).mockResolvedValue({
 			dpp: { content: JSON.stringify({ de: '<p>Fachbereich DPP</p>' }) },
 			imprint: { content: null }
 		});
@@ -64,6 +74,7 @@ describe('DepartmentLegalSection', () => {
 
 	afterEach(() => {
 		cleanup();
+		clearDepartmentLegalCache();
 		vi.clearAllMocks();
 	});
 
@@ -76,7 +87,7 @@ describe('DepartmentLegalSection', () => {
 		);
 
 		expect(container.innerHTML).toBe('');
-		expect(apiGetDepartmentLegal).not.toHaveBeenCalled();
+		expect(fetchData).not.toHaveBeenCalled();
 	});
 
 	it('renders nothing when the department has no published legal text', () => {
@@ -104,17 +115,11 @@ describe('DepartmentLegalSection', () => {
 		);
 
 		expect(screen.getByText(/Suchtberatung/)).toBeDefined();
-		expect(apiGetDepartmentLegal).not.toHaveBeenCalled();
+		expect(fetchData).not.toHaveBeenCalled();
 
 		expandSection();
 
-		await waitFor(() =>
-			expect(apiGetDepartmentLegal).toHaveBeenCalledWith(
-				42,
-				7,
-				expect.anything()
-			)
-		);
+		await waitFor(() => expect(fetchData).toHaveBeenCalled());
 		await waitFor(() =>
 			expect(screen.getByText('Fachbereich DPP')).toBeDefined()
 		);
@@ -138,8 +143,7 @@ describe('DepartmentLegalSection', () => {
 	});
 
 	it('falls back to the tenant content when the endpoint is unavailable (e.g. 404 before AgencyService #90)', async () => {
-		// apiGetDepartmentLegal maps 404/network errors to null
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+		vi.mocked(fetchData).mockRejectedValue(new Error('NO_MATCH'));
 
 		render(
 			<DepartmentLegalSection
@@ -156,8 +160,71 @@ describe('DepartmentLegalSection', () => {
 		);
 	});
 
+	/**
+	 * Regression pin for the defect recorded in `CONTEXT-legal-documents.md`
+	 * ("Known traps", 2026-08-16): this component passed the raw
+	 * `tenant.content.privacy` into the consent display, so an unsubstituted
+	 * `${responsible}` could already be shown to help-seekers at registration.
+	 * `renderedPrivacy` — the same text with the data-protection placeholders
+	 * rendered by TenantService — was declared in `TenantDataInterface` and
+	 * read nowhere.
+	 */
+	/* eslint-disable no-template-curly-in-string -- the unsubstituted
+	   `${responsible}` placeholder is the subject of these assertions. */
+	describe('tenant fallback uses the rendered privacy text', () => {
+		afterEach(() => {
+			mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+			delete mockTenant.content.renderedPrivacy;
+		});
+
+		it('shows the substituted text, not the raw placeholder', async () => {
+			vi.mocked(fetchData).mockResolvedValue(null);
+			mockTenant.content.privacy =
+				'<p>Verantwortlich ist ${responsible}.</p>';
+			mockTenant.content.renderedPrivacy =
+				'<p>Verantwortlich ist Caritas Musterstadt.</p>';
+
+			const { container } = render(
+				<DepartmentLegalSection
+					agency={agencyWithDepartment}
+					topic={topic}
+					variant="consent"
+				/>
+			);
+
+			expandSection();
+
+			await waitFor(() =>
+				expect(
+					screen.getByText(/Verantwortlich ist Caritas Musterstadt\./)
+				).toBeDefined()
+			);
+			expect(container.textContent).not.toContain('${responsible}');
+		});
+
+		it('still shows the raw text on a backend that does not send renderedPrivacy', async () => {
+			vi.mocked(fetchData).mockResolvedValue(null);
+			mockTenant.content.privacy = '<p>Nur roher Trägertext</p>';
+
+			render(
+				<DepartmentLegalSection
+					agency={agencyWithDepartment}
+					topic={topic}
+					variant="consent"
+				/>
+			);
+
+			expandSection();
+
+			await waitFor(() =>
+				expect(screen.getByText('Nur roher Trägertext')).toBeDefined()
+			);
+		});
+	});
+	/* eslint-enable no-template-curly-in-string */
+
 	it('shows an unavailable notice when neither department nor tenant content exists', async () => {
-		vi.mocked(apiGetDepartmentLegal).mockResolvedValue(null);
+		vi.mocked(fetchData).mockRejectedValue(new Error('NO_MATCH'));
 		mockTenant.content.privacy = '';
 
 		render(
