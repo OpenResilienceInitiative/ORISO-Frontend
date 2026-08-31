@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { mergeWeblateCatalogue } from './mergeWeblateCatalogue';
-import { WEBLATE_TRANSLATION_CACHE_VERSION } from '../i18n';
+
+const i18nSource = readFileSync(resolve(__dirname, '../i18n.ts'), 'utf8');
 
 describe('mergeWeblateCatalogue (#1154)', () => {
 	it('keeps the bundled value when Weblate still has an English placeholder', () => {
@@ -45,10 +46,10 @@ describe('mergeWeblateCatalogue (#1154)', () => {
 	});
 
 	it('pins a LocalStorage cache version when merge precedence changes', () => {
-		const source = readFileSync(resolve(__dirname, '../i18n.ts'), 'utf8');
-
-		expect(WEBLATE_TRANSLATION_CACHE_VERSION).toBe('1154-bundle-wins');
-		expect(source).toMatch(
+		expect(i18nSource).toMatch(
+			/export const WEBLATE_TRANSLATION_CACHE_VERSION = '1154-bundle-wins';/
+		);
+		expect(i18nSource).toMatch(
 			/defaultVersion:\s*\n\s*WEBLATE_TRANSLATION_CACHE_VERSION/
 		);
 	});
