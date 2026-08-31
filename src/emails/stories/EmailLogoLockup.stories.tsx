@@ -54,6 +54,19 @@ export const ImagesBlocked: Story = {
 	}
 };
 
+export const WithoutLogo: Story = {
+	name: 'Without logo',
+	args: {
+		// A tenant without a logo sends an empty URL, and the kit drops the
+		// image cell entirely — an <img src=""> would render as a broken-image
+		// icon. The text wordmark carries the header alone, exactly what
+		// UserService produces when it expands {{logoCell}} to nothing.
+		fragment: emailHeaderBar({ ...emailSampleBrand, logoUrl: '' }),
+		onCard: false,
+		width: 700
+	}
+};
+
 export const OnPhone: Story = {
 	args: {
 		fragment: emailHeaderBar(emailSampleBrand),

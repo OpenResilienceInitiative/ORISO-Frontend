@@ -23,6 +23,9 @@
  * never quietly disagree with what Storybook shows.
  */
 
+import { emailLogoCell } from './emailAtoms';
+import { emailDefaultBrand } from './emailTokens';
+
 export const EMAIL_DIALECTS = ['plain', 'thymeleaf', 'freemarker'] as const;
 
 export type EmailDialect = (typeof EMAIL_DIALECTS)[number];
@@ -201,6 +204,22 @@ const toFreemarker = (source: string, escape: boolean): string => {
 	);
 };
 
+/**
+ * Folds the header's logo cell into a single `{{logoCell}}` token.
+ *
+ * A template file cannot express "logo, but only when one is configured", and
+ * plain string replacement has no conditional syntax. So the plain dialect
+ * hands the whole cell to the consumer as one placeholder: UserService's
+ * renderer expands `{{logoCell}}` back into exactly this markup when a logo
+ * URL is set, and into nothing when it is blank — an `<img src="">` would
+ * render as a broken-image icon next to the platform name.
+ *
+ * The replacement matches the cell as rendered for the placeholder brand, so a
+ * preview built with a concrete brand keeps its real `<img>` untouched.
+ */
+const toPlainHtml = (html: string): string =>
+	html.split(emailLogoCell(emailDefaultBrand)).join('{{logoCell}}');
+
 /** Rewrites a rendered `text/html` part into the given dialect. */
 export const toEmailDialectHtml = (
 	html: string,
@@ -212,7 +231,7 @@ export const toEmailDialectHtml = (
 		case 'freemarker':
 			return toFreemarker(html, true);
 		default:
-			return html;
+			return toPlainHtml(html);
 	}
 };
 

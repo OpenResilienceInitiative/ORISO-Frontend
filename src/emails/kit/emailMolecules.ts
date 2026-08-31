@@ -66,7 +66,7 @@ export const emailDataPanel = (rows: EmailDataRow[]): string => {
 		.join('');
 	return emailBlock(
 		'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-			`bgcolor="${emailColor.surfaceMuted}" style="background-color:${emailColor.surfaceMuted};` +
+			`bgcolor="${emailColor.surfaceMuted}" style="border-collapse:separate;background-color:${emailColor.surfaceMuted};` +
 			`border:1px solid ${emailColor.outline};border-radius:${emailRadius.panel}px;">` +
 			`<tr><td class="panel-pad" style="padding:${emailSpace.panel.block}px ${emailSpace.panel.inline}px;">` +
 			'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
@@ -83,7 +83,7 @@ export const emailDataPanel = (rows: EmailDataRow[]): string => {
 export const emailCodePanel = (row: EmailDataRow): string =>
 	emailBlock(
 		'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-			`bgcolor="${emailColor.surfaceMuted}" style="background-color:${emailColor.surfaceMuted};` +
+			`bgcolor="${emailColor.surfaceMuted}" style="border-collapse:separate;background-color:${emailColor.surfaceMuted};` +
 			`border:1px solid ${emailColor.outline};border-radius:${emailRadius.panel}px;">` +
 			`<tr><td class="panel-pad" align="center" style="padding:${emailSpace.panel.block}px ${emailSpace.panel.inline}px;text-align:center;">` +
 			emailCodeMarkup(row) +
