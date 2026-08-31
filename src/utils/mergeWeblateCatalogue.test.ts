@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { mergeWeblateCatalogue } from './mergeWeblateCatalogue';
+
+const i18nSource = readFileSync(resolve(__dirname, '../i18n.ts'), 'utf8');
 
 describe('mergeWeblateCatalogue (#1154)', () => {
 	it('keeps the bundled value when Weblate still has an English placeholder', () => {
@@ -39,5 +43,14 @@ describe('mergeWeblateCatalogue (#1154)', () => {
 		const weblate = { registration: { headline: 'Реєстрація' } };
 
 		expect(mergeWeblateCatalogue({}, weblate)).toEqual(weblate);
+	});
+
+	it('pins a LocalStorage cache version when merge precedence changes', () => {
+		expect(i18nSource).toMatch(
+			/export const WEBLATE_TRANSLATION_CACHE_VERSION = '1154-bundle-wins';/
+		);
+		expect(i18nSource).toMatch(
+			/defaultVersion:\s*\n\s*WEBLATE_TRANSLATION_CACHE_VERSION/
+		);
 	});
 });
