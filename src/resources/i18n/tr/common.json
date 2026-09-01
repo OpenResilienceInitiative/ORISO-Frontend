@@ -4581,6 +4581,11 @@
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"
 			}
+		},
+		"reader": {
+			"chapters": "Bu belgenin bölümleri",
+			"fullscreen": "Tam ekranda oku",
+			"exitFullscreen": "Tam ekrandan çık"
 		}
 	},
 	"dpaSign": {
@@ -4680,5 +4685,11 @@
 		"friday": "Cuma",
 		"saturday": "Cumartesi",
 		"sunday": "Pazar"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Önceki bölümler",
+			"next": "Sonraki bölümler"
+		}
 	}
 }

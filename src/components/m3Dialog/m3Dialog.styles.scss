@@ -23,10 +23,15 @@
 		flex-direction: column;
 		width: 100%;
 
-		/* An M3 dialog never touches the viewport edge, and never grows past
-		   it either — the body scrolls instead. */
-		max-height: calc(100vh - 64px);
-		margin: 32px;
+		/* A dialog has to READ as a dialog: page visible above and below it,
+		   not a sheet pressed against both edges. 128px leaves that band on a
+		   laptop; past that the body scrolls rather than the sheet growing. */
+
+		/* `max(...)` is the guard: in a very short viewport — an embedded frame,
+		   a phone in landscape with the keyboard up — `100vh - 128px` goes to
+		   nothing and the sheet collapses to its padding. */
+		max-height: max(240px, min(760px, calc(100vh - 128px)));
+		margin: 64px 32px;
 		padding: 24px 24px 20px;
 		border-radius: 28px;
 		background: var(--m3-surface-container-high, #eae7e8);
@@ -87,6 +92,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		margin-bottom: 16px;
 		gap: 8px;
 
 		/* Leaves room for the ✕ so a long title can never slide under it. */
@@ -141,13 +147,19 @@
 	&__body {
 		min-height: 0;
 		flex: 1 1 auto;
-		padding: 16px 0 0;
+
+		/* No top padding: the gap belongs to the title block above, so the
+		   scrollport's top edge IS the top of the content. A sticky child — the
+		   legal reader's chapter row — can then cover the whole edge instead of
+		   letting text scroll through a strip of padding above it. */
+		padding: 0;
 		margin-right: -8px;
 		color: var(--m3-on-surface-variant, #444748);
 		font-size: 14px;
 		letter-spacing: 0.25px;
 		line-height: 20px;
 		overflow-y: auto;
+
 		padding-right: 8px;
 		scrollbar-color: var(--m3-outline-variant, #c4c7c8) transparent;
 		scrollbar-width: thin;
@@ -247,6 +259,9 @@
 	   stack full-width with centred labels. */
 	@media (width <= 575px) {
 		.m3Dialog__surface {
+			/* On a phone that band is a luxury the text cannot afford — a legal
+			   document needs the height back. */
+			max-height: calc(100vh - 32px);
 			margin: 16px;
 			padding: 24px 16px 20px;
 		}

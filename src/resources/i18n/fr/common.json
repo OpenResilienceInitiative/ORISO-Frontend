@@ -4581,6 +4581,11 @@
 				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
 				"link": "Vers l'adresse enregistrée"
 			}
+		},
+		"reader": {
+			"chapters": "Chapitres de ce document",
+			"fullscreen": "Lire en plein écran",
+			"exitFullscreen": "Quitter le plein écran"
 		}
 	},
 	"dpaSign": {
@@ -4680,5 +4685,11 @@
 		"friday": "vendredi",
 		"saturday": "samedi",
 		"sunday": "dimanche"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Chapitres précédents",
+			"next": "Chapitres suivants"
+		}
 	}
 }

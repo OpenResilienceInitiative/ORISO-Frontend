@@ -1323,6 +1323,11 @@
 				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
 				"link": "Zur hinterlegten Adresse"
 			}
+		},
+		"reader": {
+			"chapters": "Kapitel dieses Dokuments",
+			"fullscreen": "Im Vollbild lesen",
+			"exitFullscreen": "Vollbild verlassen"
 		}
 	},
 	"login": {
@@ -4672,5 +4677,11 @@
 		"friday": "Freitag",
 		"saturday": "Samstag",
 		"sunday": "Sonntag"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Vorherige Kapitel",
+			"next": "Nächste Kapitel"
+		}
 	}
 }

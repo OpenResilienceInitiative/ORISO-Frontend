@@ -1201,7 +1201,7 @@
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
-			"src/components/login/LoginSecurityExplainer.tsx",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionHeader/SessionHeaderComponent.tsx",
@@ -1234,6 +1234,7 @@
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -1774,6 +1775,22 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:mail-conv-type:200",
+		"family": "mail-conv-type",
+		"state": "200",
+		"role": "alternate-outline",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "mail_conv_type_200.svg",
+		"sourcePath": "src/resources/img/icons/chatroom/mail_conv_type_200.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/sessionHeader/ChatroomMainInteractionIcon.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:nearby-conv-type:200",
 		"family": "nearby-conv-type",
 		"state": "200",
@@ -1783,11 +1800,8 @@
 		"fileName": "nearby_conv_type_200.svg",
 		"sourcePath": "src/resources/img/icons/chatroom/nearby_conv_type_200.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/sessionHeader/ChatroomMainInteractionIcon.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:check:base",
@@ -2287,6 +2301,23 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:gdpr:base",
+		"family": "gdpr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "gdpr.svg",
+		"sourcePath": "src/resources/img/icons/gdpr.svg",
+		"exportNames": ["GdprIcon"],
+		"usageFiles": [
+			"src/components/legalLinks/LegalLinkMenuIcon.tsx",
+			"src/components/legalLinks/LegalLinkModal.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:gear:base",
 		"family": "gear",
 		"state": "base",
@@ -2298,6 +2329,7 @@
 		"exportNames": ["EditGroupChatIcon"],
 		"usageFiles": [
 			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2395,7 +2427,7 @@
 			"src/components/registration/metaInfo/MetaInfo.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/containers/bookings/components/Event/LocationType/index.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
@@ -2427,10 +2459,10 @@
 		"size": null,
 		"fileName": "imprint.svg",
 		"sourcePath": "src/resources/img/icons/imprint.svg",
-		"exportNames": [],
+		"exportNames": ["ImprintIcon"],
 		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+			"src/components/legalLinks/LegalLinkModal.tsx",
+			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
 	},
@@ -2488,7 +2520,7 @@
 		"exportNames": ["InboxIcon"],
 		"usageFiles": [
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2606,6 +2638,19 @@
 		"fileName": "local-counselor-house.svg",
 		"sourcePath": "src/resources/img/icons/local-counselor-house.svg",
 		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:local-counselor-mail:base",
+		"family": "local-counselor-mail",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "local-counselor-mail.svg",
+		"sourcePath": "src/resources/img/icons/local-counselor-mail.svg",
+		"exportNames": [],
 		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
 		"usage": "app-used"
 	},
@@ -2638,7 +2683,6 @@
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
-			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
@@ -2674,6 +2718,22 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:maximize-content:base",
+		"family": "maximize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "maximize-content.svg",
+		"sourcePath": "src/resources/img/icons/maximize-content.svg",
+		"exportNames": ["MaximizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "sidebar-icon:messages:filled",
 		"family": "messages",
 		"state": "filled",
@@ -2698,6 +2758,22 @@
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:minimize-content:base",
+		"family": "minimize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "minimize-content.svg",
+		"sourcePath": "src/resources/img/icons/minimize-content.svg",
+		"exportNames": ["MinimizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:counsellor-request:400",
@@ -3028,7 +3104,6 @@
 		"usageFiles": [
 			"src/components/askerInfo/AskerInfo.tsx",
 			"src/components/login/Login.tsx",
-			"src/components/login/LoginSecurityExplainer.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/RequestPasswordResetFormView.tsx",
 			"src/resources/img/icons.ts"
@@ -3170,11 +3245,8 @@
 		"fileName": "privacy-policy.svg",
 		"sourcePath": "src/resources/img/icons/privacy-policy.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "sidebar-icon:profil:filled",
@@ -3502,7 +3574,7 @@
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3738,7 +3810,7 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -4010,6 +4082,7 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/m3Dialog/M3Dialog.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
 			"src/components/notice/Notice.tsx",
@@ -4022,7 +4095,7 @@
 			"src/components/session/DeleteSession.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],
@@ -4129,6 +4202,7 @@
 		"sourcePath": "src/resources/img/registration-md3/icons/gen-dice.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/invite/InviteLink.tsx",
 			"src/components/registration/accountData/AccountData.tsx"
 		],
 		"usage": "app-used"

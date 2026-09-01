@@ -4,7 +4,7 @@ import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { routePathNames } from '../../resources/scripts/config';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
-import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { LegalTextReader } from '../legalContent/LegalTextReader';
 import { useLegalLinkContent } from './useLegalLinkContent';
 import {
 	PLATFORM_LEGAL_FULL_TEXT_KEY,
@@ -58,6 +58,7 @@ export const LegalLinkModal = ({
 }: LegalLinkModalProps) => {
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
+	const documentTitle = translate(`legal.modal.${kind}.title`);
 
 	const platformNoteFallback =
 		kind === 'privacy'
@@ -70,10 +71,14 @@ export const LegalLinkModal = ({
 
 	return (
 		<M3Dialog
-			title={translate(`legal.modal.${kind}.title`)}
+			title={documentTitle}
 			icon={kind === 'privacy' ? <GdprIcon /> : <ImprintIcon />}
 			onClose={onClose}
 			closeLabel={translate('app.close', 'Schließen')}
+			/* A published document is long-form reading and gets the wider sheet;
+			   the short platform note would only end up with a very short measure
+			   in it. */
+			width={scope === 'platform' || !content ? 560 : 760}
 			data-testid={`legal-modal-${kind}`}
 			actions={[
 				{
@@ -111,10 +116,10 @@ export const LegalLinkModal = ({
 					)}
 				</div>
 			) : content ? (
-				<LegalContentRenderer
-					className="legalLinkModal__content"
-					content={content}
-				/>
+				/* A published legal text gets the reading surface, not a wall of
+				   text: chapter chips, in-place scrolling and a fullscreen mode,
+				   the same three the Admin panel's legal reader carries. */
+				<LegalTextReader content={content} label={documentTitle} />
 			) : (
 				<div
 					className="legalLinkModal__missing"
