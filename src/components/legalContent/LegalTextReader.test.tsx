@@ -219,12 +219,29 @@ describe('LegalTextReader', () => {
 		const layer = screen.getByTestId('legal-reader-fullscreen');
 		expect(layer.getAttribute('aria-modal')).toBe('true');
 
-		const close = screen.getByTestId('legal-reader-close');
-		close.focus();
+		// jsdom reports `offsetParent` as null for everything, so without this
+		// the trap finds no focusable controls and falls back to focusing the
+		// layer — the test would pass through the wrong branch and prove
+		// nothing about wrapping.
+		layer.querySelectorAll('button').forEach((button) =>
+			Object.defineProperty(button, 'offsetParent', {
+				configurable: true,
+				get: () => layer
+			})
+		);
+
+		const buttons = Array.from(layer.querySelectorAll('button'));
+		const first = buttons[0];
+		const last = buttons[buttons.length - 1];
+		last.focus();
+
 		// Tab off the LAST control wraps to the first instead of leaving.
-		const forward = fireEvent.keyDown(document, { key: 'Tab' });
-		expect(forward).toBe(false);
-		expect(layer.contains(document.activeElement)).toBe(true);
+		fireEvent.keyDown(document, { key: 'Tab' });
+		expect(document.activeElement).toBe(first);
+
+		// ...and Shift+Tab off the first wraps back to the last.
+		fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+		expect(document.activeElement).toBe(last);
 	});
 
 	/**
