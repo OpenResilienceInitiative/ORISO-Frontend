@@ -4590,8 +4590,8 @@
 	},
 	"editor": {
 		"anchor": {
-			"previous": "Previous chapters",
-			"next": "Next chapters"
+			"previous": "Show previous chapters",
+			"next": "Show more chapters"
 		}
 	}
 }

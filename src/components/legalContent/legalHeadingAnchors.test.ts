@@ -96,6 +96,22 @@ describe('stampHeadingAnchors', () => {
 		]);
 	});
 
+	/**
+	 * Two headings can arrive carrying the SAME hand-written id. The id is the
+	 * chip's key and the only thing the reader gets back when a chapter is
+	 * picked, so a duplicate makes the second chapter silently unreachable.
+	 */
+	it('suffixes a repeated hand-written id, keeping the first occurrence', () => {
+		const root = render(
+			'<h2 id="kapitel">Erstes</h2><h2 id="kapitel">Zweites</h2>'
+		);
+
+		expect(stampHeadingAnchors(root).map(({ id }) => id)).toEqual([
+			'kapitel',
+			'kapitel-2'
+		]);
+	});
+
 	it('keeps an id that survived sanitising, so cross references still resolve', () => {
 		const root = render('<h2 id="handwritten">Kontakt</h2>');
 

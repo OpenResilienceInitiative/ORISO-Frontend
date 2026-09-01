@@ -30,7 +30,7 @@
 		/* `max(...)` is the guard: in a very short viewport — an embedded frame,
 		   a phone in landscape with the keyboard up — `100vh - 128px` goes to
 		   nothing and the sheet collapses to its padding. */
-		max-height: max(240px, min(760px, calc(100vh - 128px)));
+		max-height: min(760px, calc(100vh - 128px));
 		margin: 64px 32px;
 		padding: 24px 24px 20px;
 		border-radius: 28px;

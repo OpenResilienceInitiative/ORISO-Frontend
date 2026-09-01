@@ -87,11 +87,22 @@ export const LegalAnchorChips = ({
 		return null;
 	}
 
-	const scrollByStep = (direction: -1 | 1) =>
-		rowRef.current?.scrollBy({
-			left: direction * SCROLL_STEP,
-			behavior: 'smooth'
-		});
+	// Direct assignment, for the same reason `scrollAnchorIntoView` uses one: a
+	// scripted smooth scroll is silently DROPPED — not merely instant — wherever
+	// scroll animation is unavailable (embedded browsers, `prefers-reduced-
+	// motion`), and both arrows would then look dead. Clamped so a click at
+	// either end cannot leave the row in an out-of-range position.
+	const scrollByStep = (direction: -1 | 1) => {
+		const row = rowRef.current;
+		if (!row) {
+			return;
+		}
+		const max = Math.max(0, row.scrollWidth - row.clientWidth);
+		row.scrollLeft = Math.min(
+			Math.max(0, row.scrollLeft + direction * SCROLL_STEP),
+			max
+		);
+	};
 
 	return (
 		<div

@@ -120,7 +120,11 @@ export const LegalLinkModal = ({
 				/* A published legal text gets the reading surface, not a wall of
 				   text: chapter chips, in-place scrolling and a fullscreen mode,
 				   the same three the Admin panel's legal reader carries. */
-				<LegalTextReader content={content} label={documentTitle} />
+				<LegalTextReader
+					content={content}
+					label={documentTitle}
+					onClose={onClose}
+				/>
 			) : (
 				<div
 					className="legalLinkModal__missing"

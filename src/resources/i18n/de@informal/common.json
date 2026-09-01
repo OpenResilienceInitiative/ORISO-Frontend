@@ -448,11 +448,6 @@
 			},
 			"back": "Zurück",
 			"confirm": "Verstanden"
-		},
-		"reader": {
-			"chapters": "Kapitel dieses Dokuments",
-			"fullscreen": "Im Vollbild lesen",
-			"exitFullscreen": "Vollbild verlassen"
 		}
 	},
 	"chat": {
@@ -2242,12 +2237,6 @@
 					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
 			}
-		}
-	},
-	"editor": {
-		"anchor": {
-			"previous": "Vorherige Kapitel",
-			"next": "Nächste Kapitel"
 		}
 	}
 }

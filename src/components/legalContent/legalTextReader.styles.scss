@@ -34,7 +34,8 @@
 		}
 	}
 
-	&__fullscreenBtn {
+	&__fullscreenBtn,
+	&__closeBtn {
 		display: inline-flex;
 		width: 32px;
 		height: 32px;
@@ -44,7 +45,6 @@
 		padding: 0;
 		border: 0;
 		border-radius: 50%;
-		margin-left: auto;
 		background: transparent;
 		color: var(--m3-on-surface-variant, #444748);
 		cursor: pointer;
@@ -53,6 +53,7 @@
 		svg {
 			width: 20px;
 			height: 20px;
+			fill: currentColor;
 		}
 
 		&:hover {
@@ -62,6 +63,26 @@
 		&:focus-visible {
 			outline: 2px solid currentColor;
 			outline-offset: 2px;
+		}
+	}
+
+	/* Pushes the control cluster to the end of the row; the close button that
+	   follows in fullscreen keeps its own 4px gap from it. */
+	&__fullscreenBtn {
+		margin-left: auto;
+	}
+
+	/* In fullscreen the control stops being a hint and becomes the way out, so
+	   it is a filled primary circle with a white glyph — the same treatment the
+	   Admin's rich-text card gives its exit control (Figma 1276-72139). A bare
+	   grey glyph on a full screen of text is not findable. */
+	&__fullscreenBtn--exit {
+		background: var(--m3-primary, #a5000a);
+		color: #fff;
+
+		&:hover {
+			background: var(--m3-primary, #a5000a);
+			filter: brightness(0.9);
 		}
 	}
 
@@ -220,6 +241,13 @@
 
 		&:hover {
 			background: color-mix(in srgb, currentColor 8%, transparent);
+		}
+
+		/* Keyboard readers get the same visible focus as the chips do; the
+		   arrows had only a hover state. */
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
 		}
 	}
 

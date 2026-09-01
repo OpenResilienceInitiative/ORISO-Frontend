@@ -4680,8 +4680,8 @@
 	},
 	"editor": {
 		"anchor": {
-			"previous": "Vorherige Kapitel",
-			"next": "Nächste Kapitel"
+			"previous": "Vorherige Kapitel anzeigen",
+			"next": "Weitere Kapitel anzeigen"
 		}
 	}
 }

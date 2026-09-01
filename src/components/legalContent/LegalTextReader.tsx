@@ -16,6 +16,7 @@ import {
 	type LegalHeadingAnchor
 } from './legalHeadingAnchors';
 import {
+	CrossMarkIcon,
 	MaximizeContentIcon,
 	MinimizeContentIcon
 } from '../../resources/img/icons';
@@ -35,6 +36,13 @@ export interface LegalTextReaderProps {
 	language?: string;
 	/** Hide the fullscreen affordance where a host has no room for it. */
 	allowFullscreen?: boolean;
+	/**
+	 * Closes the surrounding dialog. Given one, fullscreen also offers a close
+	 * control — otherwise the only way out of a full-screen legal text is to
+	 * leave fullscreen first and find the host's own close, which is two steps
+	 * for the one thing a reader most wants to do.
+	 */
+	onClose?: () => void;
 	className?: string;
 }
 
@@ -61,9 +69,45 @@ export const LegalTextReader = ({
 	label,
 	language,
 	allowFullscreen = true,
+	onClose,
 	className
 }: LegalTextReaderProps) => {
 	const [isFullscreen, setIsFullscreen] = useState(false);
+	const layerRef = useRef<HTMLDivElement>(null);
+	// A REF to the toggle, not the node that was focused when fullscreen opened.
+	// Entering fullscreen re-parents the body into a new subtree, so the button
+	// is unmounted and a saved node reference points at a detached element that
+	// cannot take focus. The ref always names whichever button is mounted now.
+	const toggleRef = useRef<HTMLButtonElement>(null);
+
+	const openFullscreen = useCallback(() => setIsFullscreen(true), []);
+
+	const closeFullscreen = useCallback(() => {
+		setIsFullscreen(false);
+		// React assigns the ref to the remounted button after this commit, so
+		// the focus call waits for the next frame.
+		window.requestAnimationFrame(() => toggleRef.current?.focus());
+	}, []);
+
+	// Escape leaves fullscreen — the reflex for anything that fills the screen —
+	// and the layer takes focus when it opens, or a keyboard reader is left
+	// tabbing through a document they cannot see.
+	useEffect(() => {
+		if (!isFullscreen) {
+			return undefined;
+		}
+		layerRef.current?.focus();
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') {
+				// The host dialog closes on Escape too. Leaving fullscreen is
+				// the smaller step, so it wins while the layer is open.
+				event.stopPropagation();
+				closeFullscreen();
+			}
+		};
+		document.addEventListener('keydown', onKeyDown, true);
+		return () => document.removeEventListener('keydown', onKeyDown, true);
+	}, [isFullscreen, closeFullscreen]);
 
 	const body = (
 		<LegalReaderBody
@@ -74,9 +118,13 @@ export const LegalTextReader = ({
 			isFullscreen={isFullscreen}
 			onToggleFullscreen={
 				allowFullscreen
-					? () => setIsFullscreen((open) => !open)
+					? isFullscreen
+						? closeFullscreen
+						: openFullscreen
 					: undefined
 			}
+			onClose={onClose}
+			toggleRef={toggleRef}
 		/>
 	);
 
@@ -89,10 +137,19 @@ export const LegalTextReader = ({
 			{/* The in-place copy stays mounted so closing fullscreen returns the
 			    host to the layout it had, rather than to an empty box. */}
 			<div aria-hidden="true" className="legalTextReader__placeholder" />
+			{/* `role="dialog"` with a name, but deliberately NOT
+			    `aria-modal="true"`: the layer renders inside the host dialog's
+			    own React tree — that is what keeps the host's Escape, focus trap
+			    and close action working — which also means Tab can still reach
+			    the host's action row behind the overlay. Claiming a modality we
+			    do not enforce would be a lie to a screen reader. The close
+			    control in the corner is the guaranteed way out instead. */}
+			{/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
 			<div
+				ref={layerRef}
+				tabIndex={-1}
 				className="legalTextReader__fullscreen"
 				role="dialog"
-				aria-modal="true"
 				aria-label={label}
 				data-testid="legal-reader-fullscreen"
 			>
@@ -181,6 +238,8 @@ interface LegalReaderBodyProps
 	> {
 	isFullscreen: boolean;
 	onToggleFullscreen?: () => void;
+	onClose?: () => void;
+	toggleRef?: React.Ref<HTMLButtonElement>;
 }
 
 const LegalReaderBody = ({
@@ -189,7 +248,9 @@ const LegalReaderBody = ({
 	language,
 	className,
 	isFullscreen,
-	onToggleFullscreen
+	onToggleFullscreen,
+	onClose,
+	toggleRef
 }: LegalReaderBodyProps) => {
 	const { t: translate } = useTranslation();
 	const textRef = useRef<HTMLDivElement>(null);
@@ -285,8 +346,13 @@ const LegalReaderBody = ({
 				/>
 				{onToggleFullscreen && (
 					<button
+						ref={toggleRef}
 						type="button"
-						className="legalTextReader__fullscreenBtn"
+						className={clsx(
+							'legalTextReader__fullscreenBtn',
+							isFullscreen &&
+								'legalTextReader__fullscreenBtn--exit'
+						)}
 						data-testid="legal-reader-fullscreen-toggle"
 						aria-pressed={isFullscreen}
 						aria-label={
@@ -307,6 +373,19 @@ const LegalReaderBody = ({
 						) : (
 							<MaximizeContentIcon />
 						)}
+					</button>
+				)}
+				{/* Fullscreen hides the host dialog's own ✕, so the reader would
+				    otherwise have to leave fullscreen first just to close. */}
+				{isFullscreen && onClose && (
+					<button
+						type="button"
+						className="legalTextReader__closeBtn"
+						data-testid="legal-reader-close"
+						aria-label={translate('app.close', 'Schließen')}
+						onClick={onClose}
+					>
+						<CrossMarkIcon />
 					</button>
 				)}
 			</div>

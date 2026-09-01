@@ -10,7 +10,7 @@ import { phone390Globals } from '../message/messageStoryShell';
  * `M3Dialog.tsx` for why it exists next to `OrisoDialog`.
  */
 const meta = {
-	title: 'Molecules/M3Dialog',
+	title: 'Components/Dialog/M3Dialog',
 	component: M3Dialog,
 	parameters: {
 		layout: 'fullscreen',

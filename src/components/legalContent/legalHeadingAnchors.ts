@@ -92,6 +92,10 @@ export const stampHeadingAnchors = (
 		).filter(Boolean)
 	);
 
+	// Ids handed out during THIS pass, so a preserved id can be told apart from
+	// a repeat of it.
+	const seen = new Set<string>();
+
 	return Array.from(root.querySelectorAll<HTMLElement>(HEADING_SELECTOR))
 		.map((heading) => {
 			const text = heading.textContent?.trim() ?? '';
@@ -99,18 +103,26 @@ export const stampHeadingAnchors = (
 				return null;
 			}
 
-			let id = heading.getAttribute('id') ?? '';
-			if (!id) {
-				const base = slugifyAnchorId(text);
-				id = base;
-				let counter = 2;
-				while (used.has(id)) {
-					id = `${base}-${counter}`;
-					counter += 1;
-				}
+			// A PRESERVED id needs the same de-duplication as a generated one.
+			// Two headings can arrive carrying the same hand-written id, and the
+			// id is the chip's key and the only thing the reader gets back when
+			// a chapter is picked — duplicates make the second chapter
+			// unreachable, silently. The seed set already holds every id in the
+			// fragment, so the first occurrence keeps the author's id and only
+			// the repeats are suffixed.
+			const existing = heading.getAttribute('id') ?? '';
+			const base = existing || slugifyAnchorId(text);
+			let id = base;
+			let counter = 2;
+			while (used.has(id) && !(id === existing && !seen.has(id))) {
+				id = `${base}-${counter}`;
+				counter += 1;
+			}
+			if (id !== existing) {
 				heading.setAttribute('id', id);
 			}
 			used.add(id);
+			seen.add(id);
 
 			// The chip moves keyboard focus to the heading it jumps to, and a
 			// heading is not focusable on its own.

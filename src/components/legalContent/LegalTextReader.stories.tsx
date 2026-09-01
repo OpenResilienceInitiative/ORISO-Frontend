@@ -15,7 +15,7 @@ import { phone390Globals } from '../message/messageStoryShell';
  * the chapter row both matter.
  */
 const meta = {
-	title: 'Molecules/Legal text reader',
+	title: 'Components/Dialog/Legal text reader',
 	component: LegalTextReader,
 	parameters: { layout: 'fullscreen' }
 } satisfies Meta<typeof LegalTextReader>;
@@ -126,7 +126,7 @@ export const InDialog: Story = {
 				}
 			]}
 		>
-			<LegalTextReader {...args} />
+			<LegalTextReader {...args} onClose={() => undefined} />
 		</M3Dialog>
 	)
 };

@@ -4688,8 +4688,8 @@
 	},
 	"editor": {
 		"anchor": {
-			"previous": "Önceki bölümler",
-			"next": "Sonraki bölümler"
+			"previous": "Önceki bölümleri göster",
+			"next": "Daha fazla bölüm göster"
 		}
 	}
 }

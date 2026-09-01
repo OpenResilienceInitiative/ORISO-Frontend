@@ -6,6 +6,7 @@ import {
 	fireEvent,
 	render,
 	screen,
+	waitFor,
 	within
 } from '@testing-library/react';
 import { LegalTextReader } from './LegalTextReader';
@@ -98,6 +99,71 @@ describe('LegalTextReader', () => {
 
 		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
 		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();
+	});
+
+	/**
+	 * The toggle has broken more than once, so both directions are pinned, not
+	 * just the opening one.
+	 */
+	it('returns focus to the toggle when fullscreen is left', async () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		const toggle = screen.getByTestId('legal-reader-fullscreen-toggle');
+		toggle.focus();
+
+		fireEvent.click(toggle);
+		// The layer takes focus, so a keyboard reader is inside the document.
+		expect(document.activeElement).toBe(
+			screen.getByTestId('legal-reader-fullscreen')
+		);
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByTestId('legal-reader-fullscreen-toggle')
+			)
+		);
+	});
+
+	it('leaves fullscreen on Escape', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		expect(screen.getByTestId('legal-reader-fullscreen')).toBeTruthy();
+
+		fireEvent.keyDown(document, { key: 'Escape' });
+
+		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();
+	});
+
+	/**
+	 * Fullscreen covers the host dialog's own ✕, so without this the only way
+	 * out of a full-screen legal text is to leave fullscreen first.
+	 */
+	it('offers a close control in fullscreen when the host gives it one', () => {
+		const onClose = vi.fn();
+		render(
+			<LegalTextReader
+				content={POLICY}
+				label="Datenschutz"
+				onClose={onClose}
+			/>
+		);
+		expect(screen.queryByTestId('legal-reader-close')).toBeNull();
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		fireEvent.click(screen.getByTestId('legal-reader-close'));
+
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('marks the fullscreen control as the exit variant while it is open', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		const toggle = () =>
+			screen.getByTestId('legal-reader-fullscreen-toggle');
+		expect(toggle().className).not.toContain('--exit');
+
+		fireEvent.click(toggle());
+
+		expect(toggle().className).toContain('--exit');
 	});
 
 	it('hides the fullscreen affordance where the host has no room for it', () => {
