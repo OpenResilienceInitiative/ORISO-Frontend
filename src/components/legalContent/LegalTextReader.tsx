@@ -103,6 +103,38 @@ export const LegalTextReader = ({
 				// the smaller step, so it wins while the layer is open.
 				event.stopPropagation();
 				closeFullscreen();
+				return;
+			}
+			if (event.key !== 'Tab') {
+				return;
+			}
+			// The layer covers the host dialog but is rendered INSIDE it, so the
+			// host's own focus trap happily tabs on to the close, Back and
+			// Confirm buttons hidden behind the overlay. Keeping Tab inside the
+			// layer is what makes `aria-modal` on it true rather than a claim.
+			const layer = layerRef.current;
+			if (!layer) {
+				return;
+			}
+			const focusable = Array.from(
+				layer.querySelectorAll<HTMLElement>(
+					'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+				)
+			).filter((element) => element.offsetParent !== null);
+			if (!focusable.length) {
+				event.preventDefault();
+				layer.focus();
+				return;
+			}
+			const first = focusable[0];
+			const last = focusable[focusable.length - 1];
+			const active = document.activeElement;
+			if (event.shiftKey && (active === first || active === layer)) {
+				event.preventDefault();
+				last.focus();
+			} else if (!event.shiftKey && active === last) {
+				event.preventDefault();
+				first.focus();
 			}
 		};
 		document.addEventListener('keydown', onKeyDown, true);
@@ -128,36 +160,53 @@ export const LegalTextReader = ({
 		/>
 	);
 
-	if (!isFullscreen) {
-		return body;
-	}
-
+	// ONE tree shape in both states. Returning `body` bare when windowed and a
+	// wrapped `body` when fullscreen changes the returned element's type, which
+	// makes React unmount and remount the whole subtree on every toggle — and
+	// with it `LegalContentRenderer`'s own "show original / show translation"
+	// state. A reader who switched a machine-translated document to the binding
+	// German original was silently flipped back to the translation by pressing
+	// fullscreen. The layer is `display: contents` while windowed, so it costs
+	// nothing in layout, and only its class and its dialog semantics change.
 	return (
 		<>
-			{/* The in-place copy stays mounted so closing fullscreen returns the
-			    host to the layout it had, rather than to an empty box. */}
-			<div aria-hidden="true" className="legalTextReader__placeholder" />
-			{/* `role="dialog"` with a name, but deliberately NOT
-			    `aria-modal="true"`: the layer renders inside the host dialog's
-			    own React tree — that is what keeps the host's Escape, focus trap
-			    and close action working — which also means Tab can still reach
-			    the host's action row behind the overlay. Claiming a modality we
-			    do not enforce would be a lie to a screen reader. The close
-			    control in the corner is the guaranteed way out instead. */}
+			{/* Holds the host's layout open while the text is in fullscreen. */}
+			{isFullscreen && (
+				<div
+					aria-hidden="true"
+					className="legalTextReader__placeholder"
+				/>
+			)}
+			{/* The layer renders inside the host dialog's own React tree — that
+			    is what keeps the host's Escape and close action working — so the
+			    host's focus trap would otherwise tab on to the actions hidden
+			    behind the overlay. The Tab handler above keeps focus in here,
+			    which is what earns `aria-modal`; without that trap the attribute
+			    would be a claim we do not honour. */}
 			{/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
 			<div
 				ref={layerRef}
-				tabIndex={-1}
-				className="legalTextReader__fullscreen"
-				role="dialog"
-				aria-label={label}
-				data-testid="legal-reader-fullscreen"
+				tabIndex={isFullscreen ? -1 : undefined}
+				className={clsx(
+					'legalTextReader__layer',
+					isFullscreen && 'legalTextReader__fullscreen'
+				)}
+				role={isFullscreen ? 'dialog' : undefined}
+				aria-modal={isFullscreen ? true : undefined}
+				aria-label={isFullscreen ? label : undefined}
+				data-testid={
+					isFullscreen ? 'legal-reader-fullscreen' : undefined
+				}
 			>
 				{body}
 			</div>
 		</>
 	);
 };
+
+/** Identity of a chapter list — same ids in the same order means no change. */
+const anchorsKeyOf = (anchors: LegalHeadingAnchor[]): string =>
+	anchors.map((anchor) => anchor.id).join('|');
 
 /**
  * The heading carrying this anchor id.
@@ -261,27 +310,60 @@ const LegalReaderBody = ({
 	// Stamp and collect AFTER the sanitized HTML is in the DOM. `useLayoutEffect`
 	// rather than `useEffect` so the chip row and the text appear in the same
 	// paint — otherwise the row pops in one frame late on every open.
-	useLayoutEffect(() => {
+	const restamp = useCallback(() => {
 		const collected = stampHeadingAnchors(textRef.current);
-		setAnchors(collected);
-		setActiveId(collected[0]?.id ?? null);
-	}, [content, language, isFullscreen]);
+		setAnchors((current) =>
+			// Only replace the list when it actually differs. The mutation
+			// observer below re-runs this on every DOM change, and a new array
+			// each time would re-arm the observers on every keystroke elsewhere.
+			anchorsKeyOf(current) === anchorsKeyOf(collected)
+				? current
+				: collected
+		);
+		setActiveId((current) =>
+			collected.some((anchor) => anchor.id === current)
+				? current
+				: (collected[0]?.id ?? null)
+		);
+	}, []);
 
-	const anchorIds = useMemo(
-		() => anchors.map((anchor) => anchor.id).join('|'),
-		[anchors]
-	);
+	useLayoutEffect(restamp, [restamp, content, language, isFullscreen]);
 
-	// Which chapter is the reader in? The topmost heading that has passed the
-	// top of the scrollport. IntersectionObserver rather than a scroll handler
-	// so this costs nothing while the reader is idle.
+	// `LegalContentRenderer` owns a "show original / show translation" toggle for
+	// machine-translated documents and swaps its whole subtree from its OWN
+	// state — no prop of this component changes when a reader uses it. Without
+	// watching the DOM, the chips would keep the previous language's labels and
+	// point at headings that are no longer there. Only `childList` is observed:
+	// stamping sets attributes, so it cannot retrigger this.
 	useEffect(() => {
 		const root = textRef.current;
-		if (
-			!root ||
-			!anchorIds ||
-			typeof IntersectionObserver === 'undefined'
-		) {
+		if (!root || typeof MutationObserver === 'undefined') {
+			return undefined;
+		}
+		const observer = new MutationObserver(restamp);
+		observer.observe(root, { childList: true, subtree: true });
+		return () => observer.disconnect();
+	}, [restamp]);
+
+	const anchorIds = useMemo(() => anchorsKeyOf(anchors), [anchors]);
+
+	// Which chapter is the reader in? The LAST heading that has passed the top of
+	// the scrollport.
+	//
+	// An IntersectionObserver over a thin band at the top looks like the elegant
+	// answer and is the wrong one: it only ever reports headings that are IN the
+	// band, so once a heading has scrolled above it — which is the normal state
+	// while reading a chapter — nothing fires, and jumping the scroll position
+	// straight past several chapters reports nothing at all. Measured against
+	// this dialog, the selected chip stayed on chapter one all the way to the
+	// bottom of the document.
+	//
+	// A throttled scroll listener answers the question that is actually being
+	// asked. The cost is one `getBoundingClientRect` per heading per animation
+	// frame WHILE SCROLLING, over a few dozen headings.
+	useEffect(() => {
+		const root = textRef.current;
+		if (!root || !anchorIds) {
 			return undefined;
 		}
 
@@ -289,27 +371,50 @@ const LegalReaderBody = ({
 			.split('|')
 			.map((id) => findHeadingById(root, id))
 			.filter((heading): heading is HTMLElement => heading !== null);
+		if (!headings.length) {
+			return undefined;
+		}
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				const entered = entries
-					.filter((entry) => entry.isIntersecting)
-					.sort(
-						(a, b) =>
-							a.boundingClientRect.top - b.boundingClientRect.top
-					)[0];
-				if (entered?.target.id) {
-					setActiveId(entered.target.id);
+		const scroller = findScrollParent(headings[0]);
+		const target: HTMLElement | Window = scroller ?? window;
+
+		let frame = 0;
+		const update = () => {
+			frame = 0;
+			const top = scroller ? scroller.getBoundingClientRect().top : 0;
+			// A heading counts as reached once its top is at or above the line
+			// just under the sticky chip row, with a little tolerance so the
+			// chapter you just jumped to counts immediately.
+			const line = top + (navRef.current?.offsetHeight ?? 0) + 8;
+			let current = headings[0];
+			for (const heading of headings) {
+				if (heading.getBoundingClientRect().top > line) {
+					break;
 				}
-			},
-			// The band is the top fifth of the scrollport: a heading counts as
-			// "the chapter you are in" once it reaches the top, not when it is
-			// merely somewhere on screen.
-			{ rootMargin: '0px 0px -80% 0px', threshold: 0 }
-		);
-		headings.forEach((heading) => observer.observe(heading));
-		return () => observer.disconnect();
-	}, [anchorIds]);
+				current = heading;
+			}
+			setActiveId(current.id);
+		};
+		// Cancel-and-reschedule rather than "skip if one is pending". A frame
+		// scheduled while the tab or the pane is hidden never runs, and a
+		// pending-id guard would then treat the throttle as permanently busy —
+		// the selected chip froze on whatever it last computed and never moved
+		// again. Measured exactly that in a hidden browser pane.
+		const onScroll = () => {
+			window.cancelAnimationFrame(frame);
+			frame = window.requestAnimationFrame(update);
+		};
+
+		// The first measurement waits a frame: on mount the dialog has not laid
+		// out yet, and measuring then picks a chapter at random and scrolls the
+		// chip row to it.
+		frame = window.requestAnimationFrame(update);
+		target.addEventListener('scroll', onScroll, { passive: true });
+		return () => {
+			target.removeEventListener('scroll', onScroll);
+			window.cancelAnimationFrame(frame);
+		};
+	}, [anchorIds, isFullscreen]);
 
 	const selectAnchor = useCallback((anchorId: string) => {
 		const heading = findHeadingById(textRef.current, anchorId);

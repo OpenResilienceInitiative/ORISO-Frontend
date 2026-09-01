@@ -62,6 +62,34 @@ export const LegalAnchorChips = ({
 		});
 	}, []);
 
+	// Keep the selected chip visible. Reading scrolls the selection along the
+	// row, and a chapter row whose current chapter is off to the right tells the
+	// reader nothing about where they are.
+	useEffect(() => {
+		const row = rowRef.current;
+		if (!row || !activeId) {
+			return;
+		}
+		// No selector built from the id: `CSS` (and `CSS.escape`) is absent in
+		// jsdom, and an author-written anchor id can contain anything.
+		const chip = Array.from(
+			row.querySelectorAll<HTMLElement>('[data-anchor-chip]')
+		).find((candidate) => candidate.dataset.anchorChip === activeId);
+		if (!chip) {
+			return;
+		}
+		// `offsetLeft` within the row rather than bounding rects: offsets are
+		// stable whatever the row's own scroll position is, while a rect-based
+		// delta measured before the row has settled scrolls the wrong way.
+		const left = chip.offsetLeft;
+		const right = left + chip.offsetWidth;
+		if (left < row.scrollLeft) {
+			row.scrollLeft = Math.max(0, left - 8);
+		} else if (right > row.scrollLeft + row.clientWidth) {
+			row.scrollLeft = right - row.clientWidth + 8;
+		}
+	}, [activeId]);
+
 	useEffect(() => {
 		const row = rowRef.current;
 		if (!row) {

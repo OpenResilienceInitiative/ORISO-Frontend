@@ -179,7 +179,15 @@
 		}
 	}
 
+	/* Windowed, the layer must not exist as far as layout is concerned — it is
+	   there only so the tree shape stays identical across the fullscreen toggle
+	   (see the component). */
+	&__layer {
+		display: contents;
+	}
+
 	&__fullscreen {
+		display: block;
 		position: fixed;
 		z-index: 1400;
 		inset: 0;

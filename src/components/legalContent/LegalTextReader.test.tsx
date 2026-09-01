@@ -11,12 +11,21 @@ import {
 } from '@testing-library/react';
 import { LegalTextReader } from './LegalTextReader';
 
+let mockLanguage = 'de';
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, fallback?: string) => fallback ?? key,
-		i18n: { language: 'de' }
+		i18n: { language: mockLanguage }
 	})
 }));
+
+/** A machine-translated map, so the renderer offers "Original anzeigen". */
+const TRANSLATED = JSON.stringify({
+	de: '<h2>Erstes Kapitel</h2><p>Verbindliche deutsche Fassung.</p><h2>Zweites Kapitel</h2>',
+	en: '<h2>First chapter</h2><p>Machine translated text.</p><h2>Second chapter</h2>',
+	en__meta: JSON.stringify({ mt: true, src: 'de' })
+});
 
 const POLICY = [
 	'<h1>Datenschutzerklärung</h1>',
@@ -32,7 +41,10 @@ const chip = (label: string): HTMLElement =>
 	});
 
 describe('LegalTextReader', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		mockLanguage = 'de';
+	});
 
 	it('offers one chip per chapter of the document, in document order', () => {
 		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
@@ -164,6 +176,78 @@ describe('LegalTextReader', () => {
 		fireEvent.click(toggle());
 
 		expect(toggle().className).toContain('--exit');
+	});
+
+	/**
+	 * `LegalContentRenderer` swaps its whole subtree from its OWN state when a
+	 * reader flips a machine-translated document to the original. No prop of the
+	 * reader changes, so without watching the DOM the chips would keep the
+	 * previous language's labels and point at headings that are gone.
+	 */
+	it('re-reads the chapters when the rendered text is swapped underneath it', async () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		expect(chip('2. Ihre Rechte')).toBeTruthy();
+
+		const text = document.querySelector('.legalTextReader__text');
+		const rendered = text?.firstElementChild as HTMLElement;
+		rendered.innerHTML = '<h2>Chapter one</h2><h2>Chapter two</h2>';
+
+		await waitFor(() => expect(chip('Chapter one')).toBeTruthy());
+		expect(chip('Chapter two')).toBeTruthy();
+		expect(
+			within(screen.getByTestId('legal-anchor-chips')).queryByRole(
+				'button',
+				{ name: '2. Ihre Rechte' }
+			)
+		).toBeNull();
+	});
+
+	/**
+	 * The layer covers the host dialog but renders inside it, so without a trap
+	 * Tab walks on to the host's close/Back/Confirm buttons behind the overlay —
+	 * which is exactly what its `aria-modal` tells a screen reader cannot happen.
+	 */
+	it('keeps Tab inside the fullscreen layer', () => {
+		render(
+			<LegalTextReader
+				content={POLICY}
+				label="Datenschutz"
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		const layer = screen.getByTestId('legal-reader-fullscreen');
+		expect(layer.getAttribute('aria-modal')).toBe('true');
+
+		const close = screen.getByTestId('legal-reader-close');
+		close.focus();
+		// Tab off the LAST control wraps to the first instead of leaving.
+		const forward = fireEvent.keyDown(document, { key: 'Tab' });
+		expect(forward).toBe(false);
+		expect(layer.contains(document.activeElement)).toBe(true);
+	});
+
+	/**
+	 * The reason the fullscreen toggle "kept breaking": returning a bare body
+	 * when windowed and a wrapped one in fullscreen changed the returned
+	 * element's TYPE, so React unmounted the whole subtree on every toggle —
+	 * including `LegalContentRenderer`'s own show-original state. A reader who
+	 * had switched a machine-translated document to the binding German original
+	 * was silently flipped back to the translation by pressing fullscreen.
+	 */
+	it('keeps the show-original choice across a fullscreen toggle', () => {
+		// English UI, so the machine-translated English version is the one
+		// shown and the "show original" escape hatch is offered.
+		mockLanguage = 'en';
+		render(<LegalTextReader content={TRANSLATED} label="Datenschutz" />);
+
+		fireEvent.click(screen.getByText('Original anzeigen'));
+		expect(screen.getByText('Verbindliche deutsche Fassung.')).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+
+		expect(screen.getByText('Verbindliche deutsche Fassung.')).toBeTruthy();
+		expect(screen.queryByText('Machine translated text.')).toBeNull();
 	});
 
 	it('hides the fullscreen affordance where the host has no room for it', () => {
