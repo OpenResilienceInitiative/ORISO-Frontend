@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin, getPostRegistrationGroupChatId } from './autoLogin';
+import {
+	autoLogin,
+	getPostRegistrationGroupChatId,
+	getPostRegistrationSessionId,
+	redirectToApp
+} from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
@@ -261,4 +266,56 @@ describe('getPostRegistrationGroupChatId', () => {
 			expect(getPostRegistrationGroupChatId(search)).toBeUndefined();
 		}
 	);
+});
+
+describe('getPostRegistrationSessionId', () => {
+	it('reads the first asker session id from the session list payload', () => {
+		expect(
+			getPostRegistrationSessionId({
+				sessions: [{ session: { id: 102900 } }]
+			})
+		).toBe('102900');
+	});
+
+	it('returns undefined when the session list is empty', () => {
+		expect(getPostRegistrationSessionId({ sessions: [] })).toBeUndefined();
+		expect(getPostRegistrationSessionId(undefined)).toBeUndefined();
+	});
+});
+
+describe('redirectToApp', () => {
+	it('uses client-side navigation instead of a hard reload', () => {
+		const navigate = vi.fn();
+		const hrefBefore = window.location.href;
+
+		redirectToApp(undefined, { navigate });
+
+		expect(navigate).toHaveBeenCalledWith('/sessions');
+		expect(window.location.href).toBe(hrefBefore);
+	});
+
+	it('navigates to the asker session route when a session id is known', () => {
+		const navigate = vi.fn();
+
+		redirectToApp(undefined, { navigate, sessionId: 102900 });
+
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/user/view/session/102900'
+		);
+	});
+
+	it('preserves the group chat deep link on the session route', () => {
+		const navigate = vi.fn();
+
+		redirectToApp('!room:matrix.localhost', {
+			navigate,
+			sessionId: 7
+		});
+
+		expect(navigate).toHaveBeenCalledWith(
+			`/sessions/user/view/session/7?${new URLSearchParams({
+				gcid: '!room:matrix.localhost'
+			}).toString()}`
+		);
+	});
 });
