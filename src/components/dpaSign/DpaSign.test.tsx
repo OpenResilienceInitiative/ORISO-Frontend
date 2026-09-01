@@ -16,12 +16,27 @@ import {
 } from '../../api/apiDpaSignature';
 import { DpaSign } from './DpaSign';
 
-const translate = (_key: string, fallback?: string) => fallback ?? _key;
+// The page never uses the ambient language: it renders through
+// `getFixedT(<Sprache select>)`. The mock's ambient language is deliberately
+// NOT German so any regression back to the global `t` shows up as `ru:`-less
+// output where a fixed prefix is asserted.
+const getFixedT = vi.fn(
+	(lng: string) => (key: string, fallback?: string) =>
+		lng === 'de' ? (fallback ?? key) : `${lng}:${key}`
+);
+
+// Stable like the real i18next singleton — a fresh object per render would
+// re-trigger every effect that lists `t`/`i18n` in its dependencies.
+const i18nMock = {
+	language: 'ru',
+	loadLanguages: () => Promise.resolve(),
+	getFixedT
+};
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: translate,
-		i18n: { language: 'de' }
+		t: (key: string) => `ambient:${key}`,
+		i18n: i18nMock
 	})
 }));
 
@@ -77,8 +92,11 @@ describe('DpaSign', () => {
 		expect(screen.getAllByText('Träger Nord').length).toBe(2);
 		expect(
 			screen.getByRole('heading', {
-				name: 'Auftragsverarbeitungsvereinbarung'
+				name: 'Vertragsunterlagen unterzeichnen'
 			})
+		).toBeDefined();
+		expect(
+			screen.getByRole('heading', { name: 'Vertragsunterlagen' })
 		).toBeDefined();
 		expect(
 			screen.getByRole('heading', {
@@ -87,7 +105,7 @@ describe('DpaSign', () => {
 		).toBeDefined();
 		expect(
 			screen.getByText(
-				/Ich habe die oben angezeigte Vereinbarung gelesen/
+				/Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			)
 		).toBeDefined();
 		expect(previewMock).toHaveBeenCalledWith('valid-token');
@@ -113,7 +131,7 @@ describe('DpaSign', () => {
 		});
 		fireEvent.click(
 			screen.getByRole('checkbox', {
-				name: /Ich habe die oben angezeigte Vereinbarung gelesen/
+				name: /Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			})
 		);
 		fireEvent.click(
@@ -131,7 +149,9 @@ describe('DpaSign', () => {
 			)
 		);
 		expect(
-			await screen.findByText('Die AVV-Bestätigung wurde gespeichert.')
+			await screen.findByText(
+				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
+			)
 		).toBeDefined();
 	});
 
@@ -167,7 +187,7 @@ describe('DpaSign', () => {
 		});
 		fireEvent.click(
 			screen.getByRole('checkbox', {
-				name: /Ich habe die oben angezeigte Vereinbarung gelesen/
+				name: /Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			})
 		);
 		fireEvent.click(
@@ -181,7 +201,36 @@ describe('DpaSign', () => {
 			)
 		);
 		expect(
-			await screen.findByText('Die AVV-Bestätigung wurde gespeichert.')
+			await screen.findByText(
+				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
+			)
+		).toBeDefined();
+	});
+
+	it('renders its chrome in the selected signature language, not the ambient app locale', async () => {
+		// Regression: on pre-dev the public page came up entirely in Russian
+		// for a German browser (stale `locale` in localStorage / navigator
+		// order) while the Sprache select said "Deutsch". The chrome must
+		// follow the select — German on first load, and switch with it.
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		// First load: fixed to the select's default 'de', ambient 'ru' ignored.
+		expect(getFixedT).toHaveBeenCalledWith('de');
+		expect(
+			screen.getByRole('heading', {
+				name: 'Vertragsunterlagen unterzeichnen'
+			})
+		).toBeDefined();
+		expect(screen.queryByText(/^ambient:/)).toBeNull();
+
+		// Switching the signature language re-renders the chrome with it.
+		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
+		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+		expect(
+			await screen.findByRole('heading', { name: 'en:dpaSign.title' })
 		).toBeDefined();
 	});
 

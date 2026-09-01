@@ -12,6 +12,7 @@ import {
 	TextField,
 	Typography
 } from '@mui/material';
+import type { TFunction } from 'i18next';
 import * as React from 'react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,8 +49,41 @@ const DPA_DATE_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
 export const DpaSign = () => {
 	const { token } = useParams<{ token: string }>();
-	const { t } = useTranslation();
+	const { i18n } = useTranslation();
 	const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
+	/*
+	 * The page chrome follows the "Sprache" select, not the app-wide locale.
+	 *
+	 * This is a public one-shot page: the global i18n language comes from the
+	 * browser's navigator order — or from a `locale` this browser persisted in
+	 * an earlier app session — and a signer has no profile switcher here to
+	 * correct it. Seen on pre-dev: chrome entirely in Russian while the select
+	 * said "Deutsch". Binding the chrome to the selected signature language
+	 * keeps every visible word in the same language as the contract being
+	 * signed, starting in German like the select itself. `getFixedT` scopes
+	 * this to the page — the app-wide language is left untouched.
+	 */
+	const [chromeLanguage, setChromeLanguage] = useState(
+		INITIAL_FORM_STATE.language
+	);
+	useEffect(() => {
+		let active = true;
+		void i18n
+			.loadLanguages(formState.language)
+			.catch(() => undefined)
+			.then(() => {
+				if (active) {
+					setChromeLanguage(formState.language);
+				}
+			});
+		return () => {
+			active = false;
+		};
+	}, [formState.language, i18n]);
+	const t = useMemo(
+		() => i18n.getFixedT(chromeLanguage),
+		[i18n, chromeLanguage]
+	);
 	const [submitState, setSubmitState] = useState<SubmitState>('idle');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [preview, setPreview] = useState<DpaSignPreviewResponse | null>(null);
@@ -120,7 +154,7 @@ export const DpaSign = () => {
 			setErrorMessage(
 				t(
 					'dpaSign.error.previewRequired',
-					'Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.'
+					'Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.'
 				)
 			);
 			return;
@@ -131,7 +165,7 @@ export const DpaSign = () => {
 			setErrorMessage(
 				t(
 					'dpaSign.error.acceptRequired',
-					'Bitte bestätigen Sie die Vereinbarung.'
+					'Bitte bestätigen Sie die Vertragsunterlagen.'
 				)
 			);
 			return;
@@ -155,6 +189,7 @@ export const DpaSign = () => {
 	return (
 		<Box
 			component="main"
+			lang={chromeLanguage}
 			sx={{
 				minHeight: '100vh',
 				background: 'var(--m3-surface-container-lowest, #f7f5f4)',
@@ -182,12 +217,12 @@ export const DpaSign = () => {
 			>
 				<Box>
 					<Typography variant="h4" component="h1" gutterBottom>
-						{t('dpaSign.title', 'AVV unterzeichnen')}
+						{t('dpaSign.title', 'Vertragsunterlagen unterzeichnen')}
 					</Typography>
 					<Typography color="text.secondary">
 						{t(
 							'dpaSign.subtitle',
-							'Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.'
+							'Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.'
 						)}
 					</Typography>
 				</Box>
@@ -208,7 +243,7 @@ export const DpaSign = () => {
 						<Typography>
 							{t(
 								'dpaSign.loadingContract',
-								'Vereinbarung wird geladen...'
+								'Vertragsunterlagen werden geladen...'
 							)}
 						</Typography>
 					</Box>
@@ -217,7 +252,7 @@ export const DpaSign = () => {
 						{errorMessage ??
 							t(
 								'dpaSign.error.generic',
-								'Die Vereinbarung konnte gerade nicht geladen werden.'
+								'Die Vertragsunterlagen konnten gerade nicht geladen werden.'
 							)}
 					</Alert>
 				) : (
@@ -256,7 +291,7 @@ export const DpaSign = () => {
 							>
 								{t(
 									'dpaSign.contractHeading',
-									'Auftragsverarbeitungsvereinbarung'
+									'Vertragsunterlagen'
 								)}
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
@@ -300,7 +335,7 @@ export const DpaSign = () => {
 								<Alert severity="success">
 									{t(
 										'dpaSign.success',
-										'Die AVV-Bestätigung wurde gespeichert.'
+										'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
 									)}
 								</Alert>
 							) : (
@@ -427,7 +462,7 @@ export const DpaSign = () => {
 										}
 										label={t(
 											'dpaSign.accept',
-											'Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.'
+											'Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.'
 										)}
 									/>
 									{errorMessage && (
@@ -482,10 +517,7 @@ const formatDpaDate = (value: string, language: string) => {
 	return formatter.format(date);
 };
 
-const resolveErrorMessage = (
-	error: unknown,
-	t: ReturnType<typeof useTranslation>['t']
-) => {
+const resolveErrorMessage = (error: unknown, t: TFunction) => {
 	if (
 		error instanceof Error &&
 		error.message === DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN
