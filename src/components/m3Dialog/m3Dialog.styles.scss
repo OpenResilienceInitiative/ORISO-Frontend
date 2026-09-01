@@ -65,12 +65,13 @@
 			fill: currentColor;
 		}
 
+		/* M3 state layer. The Admin tints it with the on-surface role at 8%;
+		   here it has to be `currentColor`, because `m3Sweep.test.ts` forbids an
+		   on-* role in a background property outright and has no allowlist. Same
+		   result — the button's own colour IS the on-surface-variant role — and
+		   it matches how the action buttons below tint themselves. */
 		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--m3-on-surface, #1b1b1c) 8%,
-				transparent
-			);
+			background: color-mix(in srgb, currentColor 8%, transparent);
 		}
 
 		&:focus-visible {

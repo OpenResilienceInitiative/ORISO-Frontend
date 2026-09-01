@@ -212,6 +212,37 @@ describe('getInternalPath', () => {
 		expect(getInternalPath('https://traeger.example/impressum')).toBeNull();
 	});
 
+	/**
+	 * Same-origin is not enough. A deployment may point the legal URL at a
+	 * same-origin document that is not a route — the router has none for it and
+	 * would funnel the reader into the authenticated catch-all instead of the
+	 * document.
+	 */
+	it('returns null for a same-origin path that is not a legal route', () => {
+		expect(
+			getInternalPath(`${window.location.origin}/documents/privacy.pdf`)
+		).toBeNull();
+		expect(
+			getInternalPath(`${window.location.origin}/impressum/extra`)
+		).toBeNull();
+	});
+
+	it('tolerates a trailing slash on a legal route', () => {
+		expect(getInternalPath(`${window.location.origin}/impressum/`)).toBe(
+			'/impressum'
+		);
+	});
+
+	/** A protocol-relative or userinfo-disguised host is a foreign origin. */
+	it('returns null for a URL that only looks same-origin', () => {
+		expect(getInternalPath('//evil.example/impressum')).toBeNull();
+		expect(
+			getInternalPath(
+				`https://${window.location.host}@evil.example/impressum`
+			)
+		).toBeNull();
+	});
+
 	/** A malformed address is handed to the browser, never fed to the router. */
 	it('returns null for a URL it cannot parse', () => {
 		expect(getInternalPath('http://[::1')).toBeNull();

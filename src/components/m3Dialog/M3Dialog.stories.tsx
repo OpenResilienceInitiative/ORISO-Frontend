@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { M3Dialog } from './M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
+import { phone390Globals } from '../message/messageStoryShell';
 
 /**
  * The Admin panel's standard M3 basic dialog, ported to the frontend. It is the
@@ -129,7 +130,10 @@ export const Imprint: Story = {
 
 /** Two short actions stay a right-aligned row on mobile; three or more stack. */
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	/* The registered 390px viewport from the shared story shell. `mobile1` is a
+	   Storybook default that this project never registers, so it silently did
+	   nothing and the "mobile" story rendered at desktop width. */
+	globals: phone390Globals,
 	args: {
 		icon: <GdprIcon />,
 		title: 'Datenschutzerklärung',

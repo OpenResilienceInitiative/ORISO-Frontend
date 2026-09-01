@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
+import { routePathNames } from '../../resources/scripts/config';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
@@ -184,9 +185,31 @@ const LegalFullTextLink = ({
 };
 
 /**
- * `path + search + hash` when `url` points back at this app, otherwise `null`.
+ * The paths this app actually serves a legal document on. Same-origin is NOT
+ * enough to hand a URL to the router: a deployment may point
+ * `REACT_APP_LEGAL_PRIVACY_URL` at a same-origin document that is not a route
+ * — `/documents/privacy.pdf` being the obvious one — and the router has no
+ * route for it. `app.tsx` funnels unknown paths into `AuthenticatedApp`, so a
+ * signed-out reader would be redirected to the login screen instead of reaching
+ * the document, and a signed-in one would land on the authenticated catch-all.
+ * Anything not on this list is a browser link.
+ */
+const IN_APP_LEGAL_PATHS = [
+	routePathNames.imprint,
+	routePathNames.privacy,
+	routePathNames.termsAndConditions
+];
+
+/**
+ * `path + search + hash` when `url` is one of this app's own legal routes,
+ * otherwise `null`.
+ *
  * A malformed URL is treated as external: it is then handed to the browser
- * unchanged rather than fed to the router as a route that does not exist.
+ * unchanged rather than fed to the router as a route that does not exist. The
+ * origin comparison uses `URL.origin` rather than a prefix match, so a
+ * protocol-relative `//evil.example/x` or a userinfo trick like
+ * `https://our.origin@evil.example/` resolves to a foreign origin and stays a
+ * browser link.
  */
 export const getInternalPath = (url: string): string | null => {
 	if (typeof window === 'undefined') {
@@ -194,9 +217,15 @@ export const getInternalPath = (url: string): string | null => {
 	}
 	try {
 		const parsed = new URL(url, window.location.origin);
-		return parsed.origin === window.location.origin
-			? `${parsed.pathname}${parsed.search}${parsed.hash}`
-			: null;
+		if (parsed.origin !== window.location.origin) {
+			return null;
+		}
+		// Trailing slashes are equivalent for routing; a deeper path is not.
+		const normalized = parsed.pathname.replace(/\/+$/, '') || '/';
+		if (!IN_APP_LEGAL_PATHS.includes(normalized)) {
+			return null;
+		}
+		return `${normalized}${parsed.search}${parsed.hash}`;
 	} catch {
 		return null;
 	}

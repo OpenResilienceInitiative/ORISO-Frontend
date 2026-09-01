@@ -26,12 +26,11 @@ const meta = {
 	decorators: [
 		(Story) => (
 			/* The footer strip's own class is `position: absolute` inside the
-			   stage; reproducing only its typography keeps the entry clickable
-			   in isolation. */
-			<div
-				className="stageLayout__legalLinks"
-				style={{ display: 'flex', gap: '8px', padding: '16px' }}
-			>
+			   stage, which would park the entry off-canvas here; its inner
+			   `stageLayout__legalLinks` carries the same typography and lays the
+			   entries out without taking the positioning with it. Spacing comes
+			   from the story layout, not from one-off values. */
+			<div className="stageLayout__legalLinks">
 				<Story />
 			</div>
 		)
