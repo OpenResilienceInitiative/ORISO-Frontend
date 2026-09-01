@@ -7,8 +7,14 @@
 # The real fix is to make `pre-dev` the default branch; until then security
 # fixes have to be applied to `pre-dev` by hand.
 #
-# Security updates are split by dependency-type so that production findings
-# (what actually ships to users) never drown in build/test tooling noise.
+# CONSEQUENCE FOR THE GROUPS BELOW: because `target-branch` is set, every
+# customisation here — groups, labels, commit prefixes — applies to VERSION
+# updates only. The two `applies-to: security-updates` groups are therefore
+# DORMANT: GitHub keeps opening security PRs against `main`, ungrouped and
+# unlabelled. They are kept, not deleted, so the split by dependency-type
+# (production findings not drowning in build/test tooling noise) takes effect
+# the day `pre-dev` becomes the default branch — at which point the
+# `target-branch` lines above come out.
 version: 2
 updates:
     - package-ecosystem: 'npm'
@@ -34,7 +40,8 @@ updates:
               patterns: ['*']
               update-types: ['minor', 'patch']
       ignore:
-          # Majors are upgraded deliberately, never by bot.
+          # Ignore scheduled major version updates; security updates may
+          # still cross a major.
           - dependency-name: '*'
             update-types: ['version-update:semver-major']
 
@@ -61,7 +68,8 @@ updates:
               patterns: ['*']
               update-types: ['minor', 'patch']
       ignore:
-          # Majors are upgraded deliberately, never by bot.
+          # Ignore scheduled major version updates; security updates may
+          # still cross a major.
           - dependency-name: '*'
             update-types: ['version-update:semver-major']
 
