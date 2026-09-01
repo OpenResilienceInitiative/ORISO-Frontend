@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-09-01 — do not un-ignore agent-task folders unless asked
+
+- Context: #1213 (`docs/agent-tasks/` already ignored via `docs/agent-tasks/*`)
+- Lesson: Leave new task folders gitignored. Do not add a `.gitignore` negation for the current task unless the user explicitly wants those docs in the PR.
+
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 
 - Context: #834 Threads list plain preview (`docs/agent-tasks/` is covered by `docs/*` ignore)

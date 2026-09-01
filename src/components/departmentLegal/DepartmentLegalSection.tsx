@@ -17,9 +17,25 @@ import {
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { pickConsentPrivacyContent } from '../../utils/legalContent';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getDepartmentForTopic } from './getDepartmentForTopic';
 
 export { getDepartmentForTopic };
+
+type AgencyLegalKind = 'privacy' | 'imprint';
+
+const AGENCY_LEGAL_RAW_LABEL: Record<AgencyLegalKind, string> = {
+	privacy: 'login.legal.infoText.dataprotection',
+	imprint: 'login.legal.infoText.impressum'
+};
+
+/** One style for every legal control here, so the variants cannot drift apart. */
+const LEGAL_BUTTON_SX = {
+	px: 0,
+	fontWeight: 700,
+	fontSize: 14,
+	textTransform: 'none'
+} as const;
 
 export interface DepartmentLegalSectionProps {
 	agency?: AgencyDataInterface;
@@ -30,8 +46,10 @@ export interface DepartmentLegalSectionProps {
 	 * 'consent': data privacy display for the registration consent step -
 	 * prefers the department's published DPP and falls back to the tenant
 	 * privacy content when the department text cannot be loaded.
+	 * 'modal': profile agency card — published texts open in LegalLinkModal
+	 * (issue #1213). Registration keeps using details/consent.
 	 */
-	variant?: 'details' | 'consent';
+	variant?: 'details' | 'consent' | 'modal';
 }
 
 const topicDisplayName = (topic?: TopicsDataInterface): string =>
@@ -52,6 +70,7 @@ export const DepartmentLegalSection = ({
 	const { t } = useTranslation();
 	const tenant = useTenant();
 	const [open, setOpen] = useState(false);
+	const [modalKind, setModalKind] = useState<AgencyLegalKind | null>(null);
 
 	const department = getDepartmentForTopic(agency, topic);
 	const hasPublishedDpp = department?.hasPublishedDpp === true;
@@ -62,7 +81,11 @@ export const DepartmentLegalSection = ({
 			: hasPublishedDpp || hasPublishedImprint;
 
 	const fetchEnabled =
-		open && isVisible && agency?.id != null && topic?.id != null;
+		variant !== 'modal' &&
+		open &&
+		isVisible &&
+		agency?.id != null &&
+		topic?.id != null;
 	const { data: legal, loading: isLoading } = useDepartmentLegal(
 		agency?.id,
 		topic?.id,
@@ -72,6 +95,76 @@ export const DepartmentLegalSection = ({
 
 	if (!isVisible) {
 		return null;
+	}
+
+	if (variant === 'modal') {
+		return (
+			<Box
+				data-cy="department-legal-modal"
+				data-testid="department-legal-modal"
+				sx={{
+					width: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'flex-start',
+					gap: 0.5
+				}}
+			>
+				{hasPublishedDpp && (
+					<Button
+						type="button"
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							setModalKind('privacy');
+						}}
+						sx={LEGAL_BUTTON_SX}
+					>
+						{t(
+							'registration.agency.legal.headline',
+							'Datenschutzhinweise der Beratungsstelle'
+						)}
+					</Button>
+				)}
+				{hasPublishedImprint && (
+					<Button
+						type="button"
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							setModalKind('imprint');
+						}}
+						sx={LEGAL_BUTTON_SX}
+					>
+						{t(
+							'registration.agency.legal.imprintHeadline',
+							'Impressum der Beratungsstelle'
+						)}
+					</Button>
+				)}
+				{modalKind && agency?.id != null && topic?.id != null && (
+					<LegalLinkModal
+						title={
+							modalKind === 'privacy'
+								? t(
+										'registration.agency.legal.headline',
+										'Datenschutzhinweise der Beratungsstelle'
+									)
+								: t(
+										'registration.agency.legal.imprintHeadline',
+										'Impressum der Beratungsstelle'
+									)
+						}
+						rawLabel={AGENCY_LEGAL_RAW_LABEL[modalKind]}
+						url=""
+						scope="agency"
+						agencyId={agency.id}
+						topicId={topic.id}
+						onClose={() => setModalKind(null)}
+					/>
+				)}
+			</Box>
+		);
 	}
 
 	const dppContent = legal?.dpp?.content;
@@ -118,12 +211,7 @@ export const DepartmentLegalSection = ({
 						}}
 					/>
 				}
-				sx={{
-					px: 0,
-					fontWeight: 700,
-					fontSize: 14,
-					textTransform: 'none'
-				}}
+				sx={LEGAL_BUTTON_SX}
 			>
 				{t(
 					'registration.agency.legal.headline',
