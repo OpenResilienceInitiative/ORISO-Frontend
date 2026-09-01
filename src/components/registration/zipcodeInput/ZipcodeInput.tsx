@@ -93,7 +93,7 @@ export const ZipcodeInput: FC<{
 					textWrap: 'pretty'
 				}}
 			>
-				{t('registration.zipcode.headline', 'Wo suchen Sie Beratung?')}
+				{t('registration.zipcode.headline')}
 			</Typography>
 			<Typography
 				sx={{
@@ -104,10 +104,7 @@ export const ZipcodeInput: FC<{
 					textWrap: 'pretty'
 				}}
 			>
-				{t(
-					'registration.zipcode.subline',
-					'Nur Ihre Postleitzahl — mehr brauchen wir nicht.'
-				)}
+				{t('registration.zipcode.subline')}
 			</Typography>
 
 			<Box sx={{ width: '100%', maxWidth: 340, mt: 3 }}>

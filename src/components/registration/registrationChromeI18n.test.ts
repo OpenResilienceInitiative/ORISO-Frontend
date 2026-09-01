@@ -25,6 +25,8 @@ const GERMAN_T_FALLBACKS = [
 	/defaultValue:\s*'Noch \{\{count\}\} Ziffern'/,
 	/defaultValue:\s*'\{\{label\}\} entfernen'/,
 	/defaultValue:\s*'Postleitzahl, Ziffer/,
+	/t\(\s*'registration\.zipcode\.headline',\s*'Wo suchen Sie Beratung\?'/,
+	/'Nur Ihre Postleitzahl — mehr brauchen wir nicht\.'/,
 	/Die Datenschutzhinweise können derzeit nicht geladen werden/,
 	/Der Einwilligungstext wird geladen/,
 	/Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden/,
