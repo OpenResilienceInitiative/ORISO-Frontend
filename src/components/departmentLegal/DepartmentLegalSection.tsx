@@ -29,6 +29,14 @@ const AGENCY_LEGAL_RAW_LABEL: Record<AgencyLegalKind, string> = {
 	imprint: 'login.legal.infoText.impressum'
 };
 
+/** One style for every legal control here, so the variants cannot drift apart. */
+const LEGAL_BUTTON_SX = {
+	px: 0,
+	fontWeight: 700,
+	fontSize: 14,
+	textTransform: 'none'
+} as const;
+
 export interface DepartmentLegalSectionProps {
 	agency?: AgencyDataInterface;
 	topic?: TopicsDataInterface;
@@ -90,13 +98,6 @@ export const DepartmentLegalSection = ({
 	}
 
 	if (variant === 'modal') {
-		const buttonSx = {
-			px: 0,
-			fontWeight: 700,
-			fontSize: 14,
-			textTransform: 'none'
-		} as const;
-
 		return (
 			<Box
 				data-cy="department-legal-modal"
@@ -117,7 +118,7 @@ export const DepartmentLegalSection = ({
 							event.stopPropagation();
 							setModalKind('privacy');
 						}}
-						sx={buttonSx}
+						sx={LEGAL_BUTTON_SX}
 					>
 						{t(
 							'registration.agency.legal.headline',
@@ -133,7 +134,7 @@ export const DepartmentLegalSection = ({
 							event.stopPropagation();
 							setModalKind('imprint');
 						}}
-						sx={buttonSx}
+						sx={LEGAL_BUTTON_SX}
 					>
 						{t(
 							'registration.agency.legal.imprintHeadline',
@@ -210,12 +211,7 @@ export const DepartmentLegalSection = ({
 						}}
 					/>
 				}
-				sx={{
-					px: 0,
-					fontWeight: 700,
-					fontSize: 14,
-					textTransform: 'none'
-				}}
+				sx={LEGAL_BUTTON_SX}
 			>
 				{t(
 					'registration.agency.legal.headline',

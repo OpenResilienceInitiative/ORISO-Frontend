@@ -131,7 +131,10 @@ export const LegalLinkModal = ({
 			body = (
 				<CircularProgress
 					size={20}
-					aria-label="loading"
+					aria-label={translate(
+						'legal.modal.loading',
+						'Der Rechtstext wird geladen …'
+					)}
 					data-testid="legal-loading"
 				/>
 			);

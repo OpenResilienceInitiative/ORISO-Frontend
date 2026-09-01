@@ -4577,6 +4577,7 @@
 			},
 			"back": "Retour",
 			"confirm": "Compris",
+			"loading": "Chargement du texte juridique …",
 			"missing": {
 				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
 				"link": "Vers l'adresse enregistrée"
