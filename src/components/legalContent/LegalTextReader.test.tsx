@@ -250,6 +250,27 @@ describe('LegalTextReader', () => {
 		expect(screen.queryByText('Machine translated text.')).toBeNull();
 	});
 
+	/**
+	 * A heading edit that slugs to the SAME id — a capitalisation or punctuation
+	 * change, or a translation that happens to slug identically — still has to
+	 * reach the chips, or they keep announcing the old wording.
+	 */
+	it('picks up a heading whose text changed but whose id did not', async () => {
+		render(
+			<LegalTextReader
+				content="<h2>Ihre Rechte</h2><h2>Kontakt</h2>"
+				label="Datenschutz"
+			/>
+		);
+		expect(chip('Ihre Rechte')).toBeTruthy();
+
+		const rendered = document.querySelector('.legalTextReader__text')
+			?.firstElementChild as HTMLElement;
+		rendered.innerHTML = '<h2>IHRE RECHTE</h2><h2>Kontakt</h2>';
+
+		await waitFor(() => expect(chip('IHRE RECHTE')).toBeTruthy());
+	});
+
 	it('hides the fullscreen affordance where the host has no room for it', () => {
 		render(
 			<LegalTextReader

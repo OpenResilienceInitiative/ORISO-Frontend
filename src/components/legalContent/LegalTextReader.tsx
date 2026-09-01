@@ -204,8 +204,22 @@ export const LegalTextReader = ({
 	);
 };
 
-/** Identity of a chapter list — same ids in the same order means no change. */
-const anchorsKeyOf = (anchors: LegalHeadingAnchor[]): string =>
+/**
+ * Identity of a chapter list for CHANGE DETECTION — ids alone are not enough.
+ * Two renderings can slug to the same ids while the headings themselves read
+ * differently (a translation, a capitalisation or punctuation edit), and an
+ * id-only key would discard the new list: the mutation observer fires, the
+ * chips keep the previous text, and a screen reader keeps announcing it.
+ */
+const anchorsFingerprintOf = (anchors: LegalHeadingAnchor[]): string =>
+	anchors
+		.map(
+			(anchor) => `${anchor.id}\u0000${anchor.level}\u0000${anchor.text}`
+		)
+		.join('|');
+
+/** Ids only — the key the heading lookup is driven by. */
+const anchorIdsOf = (anchors: LegalHeadingAnchor[]): string =>
 	anchors.map((anchor) => anchor.id).join('|');
 
 /**
@@ -316,7 +330,7 @@ const LegalReaderBody = ({
 			// Only replace the list when it actually differs. The mutation
 			// observer below re-runs this on every DOM change, and a new array
 			// each time would re-arm the observers on every keystroke elsewhere.
-			anchorsKeyOf(current) === anchorsKeyOf(collected)
+			anchorsFingerprintOf(current) === anchorsFingerprintOf(collected)
 				? current
 				: collected
 		);
@@ -345,7 +359,7 @@ const LegalReaderBody = ({
 		return () => observer.disconnect();
 	}, [restamp]);
 
-	const anchorIds = useMemo(() => anchorsKeyOf(anchors), [anchors]);
+	const anchorIds = useMemo(() => anchorIdsOf(anchors), [anchors]);
 
 	// Which chapter is the reader in? The LAST heading that has passed the top of
 	// the scrollport.
@@ -415,6 +429,30 @@ const LegalReaderBody = ({
 			window.cancelAnimationFrame(frame);
 		};
 	}, [anchorIds, isFullscreen]);
+
+	// Entering fullscreen swaps the scrollport: the new one starts at zero, so a
+	// reader deep in a long document was thrown back to the first line. Restore
+	// the position at chapter granularity — predictable, and it needs nothing
+	// but the chapter that was already being tracked. Skipped on first mount,
+	// where there is nothing to restore and the document belongs at the top.
+	const restoreAfterModeChange = useRef(false);
+	useLayoutEffect(() => {
+		if (!restoreAfterModeChange.current) {
+			restoreAfterModeChange.current = true;
+			return;
+		}
+		if (!activeId) {
+			return;
+		}
+		const heading = findHeadingById(textRef.current, activeId);
+		if (heading) {
+			scrollAnchorIntoView(heading, navRef.current?.offsetHeight ?? 0);
+		}
+		// `activeId` is deliberately not a dependency: this restores on a MODE
+		// change, and re-running it whenever the active chapter changes would
+		// fight the reader's own scrolling.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isFullscreen]);
 
 	const selectAnchor = useCallback((anchorId: string) => {
 		const heading = findHeadingById(textRef.current, anchorId);
