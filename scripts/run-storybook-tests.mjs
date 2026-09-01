@@ -4,11 +4,27 @@ import { pathToFileURL } from 'node:url';
 const BROWSER_DISCONNECT_SIGNATURE =
 	'[vitest] Browser connection was closed while running tests';
 const MAX_CAPTURED_OUTPUT = 500_000;
+/** Full-suite re-runs after a disconnect-only abort (initial attempt + retries). */
+export const MAX_BROWSER_DISCONNECT_RETRIES = 4;
+const RETRY_COOLDOWN_MS = 2_000;
 const TEST_FAILURE_SIGNATURES = [
 	/(?:^|\n)\s*FAIL\s+/m,
 	/\bTest Files\s+\d+\s+failed\b/i,
 	/\bTests\s+\d+\s+failed\b/i,
 	/\bAssertionError\b/
+];
+
+export const storybookVitestArgs = [
+	'node_modules/vitest/vitest.mjs',
+	'run',
+	'--project',
+	'storybook',
+	// Cap workers: unlimited parallelism on CI runners opens many orchestrator
+	// tabs and makes the disconnect flake more likely. Two workers matched the
+	// last stable local run (#1127) without funneling all ~170 files through one
+	// tab (which --maxWorkers=1 provokes).
+	'--maxWorkers=2',
+	'--minWorkers=1'
 ];
 
 const hasTestFailure = (output) =>
@@ -25,32 +41,23 @@ export const shouldRetryStorybookRun = (
 	capturedOutput.includes(BROWSER_DISCONNECT_SIGNATURE) &&
 	!hasTestFailure(capturedOutput);
 
+const sleep = (ms) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+
 const runStorybookTests = () =>
 	new Promise((resolve) => {
 		let capturedOutput = '';
 		let failureDetected = false;
 		let outputTruncated = false;
-		// Deliberately no --maxWorkers: vitest's browser pool gives each worker
-		// its own orchestrator page and they share one queue, so forcing a single
-		// worker funnels every story file through one long-lived tab — the exact
-		// shape that provokes the disconnect this wrapper retries around. Let
-		// vitest pick the count.
-		const child = spawn(
-			process.execPath,
-			[
-				'node_modules/vitest/vitest.mjs',
-				'run',
-				'--project',
-				'storybook'
-			],
-			{
-				env: {
-					...process.env,
-					NODE_OPTIONS: '--max-old-space-size=6144'
-				},
-				stdio: ['inherit', 'pipe', 'pipe']
-			}
-		);
+		const child = spawn(process.execPath, storybookVitestArgs, {
+			env: {
+				...process.env,
+				NODE_OPTIONS: '--max-old-space-size=6144'
+			},
+			stdio: ['inherit', 'pipe', 'pipe']
+		});
 
 		const forwardOutput = (stream, destination) => {
 			stream.on('data', (chunk) => {
@@ -79,27 +86,29 @@ const runStorybookTests = () =>
 	});
 
 const main = async () => {
-	const firstRun = await runStorybookTests();
+	let attempt = 0;
+	let lastRun = await runStorybookTests();
 
-	if (firstRun.code === 0) {
-		return 0;
+	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
+		if (
+			!shouldRetryStorybookRun(
+				lastRun.code,
+				lastRun.capturedOutput,
+				lastRun
+			)
+		) {
+			return lastRun.code ?? 1;
+		}
+
+		attempt += 1;
+		console.warn(
+			`Vitest lost its Storybook browser connection; retrying the suite (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).`
+		);
+		await sleep(RETRY_COOLDOWN_MS);
+		lastRun = await runStorybookTests();
 	}
 
-	if (
-		!shouldRetryStorybookRun(
-			firstRun.code,
-			firstRun.capturedOutput,
-			firstRun
-		)
-	) {
-		return firstRun.code ?? 1;
-	}
-
-	console.warn(
-		'Vitest lost its Storybook browser connection; retrying the suite once.'
-	);
-	const retry = await runStorybookTests();
-	return retry.code ?? 1;
+	return lastRun.code ?? 0;
 };
 
 if (

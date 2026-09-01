@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { shouldRetryStorybookRun } from './run-storybook-tests.mjs';
+import {
+	MAX_BROWSER_DISCONNECT_RETRIES,
+	shouldRetryStorybookRun,
+	storybookVitestArgs
+} from './run-storybook-tests.mjs';
 
 const disconnect = '[vitest] Browser connection was closed while running tests';
 
@@ -44,5 +48,13 @@ test('does not retry after truncation can have removed an earlier failure', () =
 			outputTruncated: true
 		}),
 		false
+	);
+});
+
+test('caps Storybook workers and allows several disconnect retries', () => {
+	assert.equal(MAX_BROWSER_DISCONNECT_RETRIES, 4);
+	assert.deepEqual(
+		storybookVitestArgs.filter((arg) => arg.startsWith('--maxWorkers')),
+		['--maxWorkers=2']
 	);
 });
