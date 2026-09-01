@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { routePathNames } from '../../resources/scripts/config';
+import { toSameOriginRoute } from '../stageLayout/stageLayoutRoutes';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
 import { LegalTextReader } from '../legalContent/LegalTextReader';
@@ -190,48 +191,40 @@ const LegalFullTextLink = ({
 };
 
 /**
- * The paths this app actually serves a legal document on. Same-origin is NOT
- * enough to hand a URL to the router: a deployment may point
- * `REACT_APP_LEGAL_PRIVACY_URL` at a same-origin document that is not a route
- * — `/documents/privacy.pdf` being the obvious one — and the router has no
- * route for it. `app.tsx` funnels unknown paths into `AuthenticatedApp`, so a
- * signed-out reader would be redirected to the login screen instead of reaching
- * the document, and a signed-in one would land on the authenticated catch-all.
- * Anything not on this list is a browser link.
- */
-const IN_APP_LEGAL_PATHS = [
-	routePathNames.imprint,
-	routePathNames.privacy,
-	routePathNames.termsAndConditions
-];
-
-/**
- * `path + search + hash` when `url` is one of this app's own legal routes,
- * otherwise `null`.
+ * The paths this app actually **registers a route for** — not the paths it has
+ * names for. Same-origin is not enough to hand a URL to the router: a
+ * deployment can point `REACT_APP_LEGAL_*_URL` at a same-origin document that
+ * is not a route (`/documents/privacy.pdf`), and `app.tsx` funnels unknown
+ * paths into `AuthenticatedApp` — a signed-out reader would be bounced to the
+ * login screen instead of reaching the document.
  *
- * A malformed URL is treated as external: it is then handed to the browser
- * unchanged rather than fed to the router as a route that does not exist. The
- * origin comparison uses `URL.origin` rather than a prefix match, so a
- * protocol-relative `//evil.example/x` or a userinfo trick like
- * `https://our.origin@evil.example/` resolves to a foreign origin and stays a
- * browser link.
+ * `routePathNames.termsAndConditions` is deliberately NOT here, however much it
+ * looks like it belongs: its route is commented out in `initApp.tsx`, so
+ * `/nutzungsbedingungen` is an unknown path and would hit exactly that
+ * catch-all. Add it back here in the same change that re-enables the route,
+ * never before — `routePathNames` records intent, the router records reality.
  */
+const IN_APP_LEGAL_PATHS = [routePathNames.imprint, routePathNames.privacy];
+
 export const getInternalPath = (url: string): string | null => {
 	if (typeof window === 'undefined') {
 		return null;
 	}
-	try {
-		const parsed = new URL(url, window.location.origin);
-		if (parsed.origin !== window.location.origin) {
-			return null;
-		}
-		// Trailing slashes are equivalent for routing; a deeper path is not.
-		const normalized = parsed.pathname.replace(/\/+$/, '') || '/';
-		if (!IN_APP_LEGAL_PATHS.includes(normalized)) {
-			return null;
-		}
-		return `${normalized}${parsed.search}${parsed.hash}`;
-	} catch {
+	// One answer to "is this our origin" for the whole app: the stage layout's
+	// helper, which compares `URL.origin` rather than matching a prefix — so a
+	// protocol-relative `//evil.example/x` or a userinfo host like
+	// `https://our.origin@evil.example/` resolves foreign and stays a browser
+	// link.
+	const route = toSameOriginRoute(url);
+	if (!route) {
 		return null;
 	}
+	const queryStart = route.search(/[?#]/);
+	const pathname = queryStart === -1 ? route : route.slice(0, queryStart);
+	const rest = queryStart === -1 ? '' : route.slice(queryStart);
+	// Trailing slashes are equivalent for routing; a deeper path is not.
+	const normalized = pathname.replace(/\/+$/, '') || '/';
+	return IN_APP_LEGAL_PATHS.includes(normalized)
+		? `${normalized}${rest}`
+		: null;
 };

@@ -227,6 +227,18 @@ describe('getInternalPath', () => {
 		).toBeNull();
 	});
 
+	/**
+	 * `routePathNames` records intent; the router records reality. The terms
+	 * route is commented out in `initApp.tsx`, so `/nutzungsbedingungen` is an
+	 * unknown path and routing to it would land the reader on the authenticated
+	 * catch-all. Flip this test in the same change that re-enables the route.
+	 */
+	it('returns null for a legal path whose route is not registered', () => {
+		expect(
+			getInternalPath(`${window.location.origin}/nutzungsbedingungen`)
+		).toBeNull();
+	});
+
 	it('tolerates a trailing slash on a legal route', () => {
 		expect(getInternalPath(`${window.location.origin}/impressum/`)).toBe(
 			'/impressum'
