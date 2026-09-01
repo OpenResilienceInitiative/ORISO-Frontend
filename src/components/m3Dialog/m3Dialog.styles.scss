@@ -255,6 +255,31 @@
 		}
 	}
 
+	/* A viewport too short for the reserved band gets the band back as height
+	   rather than a collapsed sheet: `100vh - 128px` goes to nothing below
+	   128px and would clip the title and the actions. Below roughly 300px even
+	   that is not enough for title + text + action row, so the SHEET scrolls
+	   there instead of clipping — an action row the reader cannot reach is
+	   worse than an ugly dialog. This also covers the wide-but-short case (an
+	   embedded 600x200 frame, a heavily zoomed window), which the mobile width
+	   rule below never sees. */
+	@media (height <= 420px) {
+		.m3Dialog__surface {
+			max-height: calc(100vh - 32px);
+			margin: 16px 32px;
+			padding: 16px 24px;
+			overflow-y: auto;
+		}
+
+		&__titleBlock {
+			margin-bottom: 8px;
+		}
+
+		&__body {
+			overflow-y: visible;
+		}
+	}
+
 	/* M3 mobile rule: two short actions stay a right-aligned row; three or more
 	   stack full-width with centred labels. */
 	@media (width <= 575px) {

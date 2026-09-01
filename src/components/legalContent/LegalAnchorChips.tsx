@@ -165,6 +165,16 @@ export const LegalAnchorChips = ({
 								active ? ' legalAnchorChips__chip--active' : ''
 							}`}
 							aria-pressed={active}
+							/* The visible label is cut at 33 characters, so
+							   without this a screen reader hears the truncation —
+							   and two chapters sharing a long prefix become
+							   indistinguishable by ear. The full heading is the
+							   accessible name; the ellipsis is only paint. */
+							aria-label={
+								anchor.text.length > ANCHOR_CHIP_LABEL_MAX
+									? anchor.text
+									: undefined
+							}
 							onClick={() => onSelect(anchor.id)}
 						>
 							{/* A chip is a signpost, not the heading itself: past
