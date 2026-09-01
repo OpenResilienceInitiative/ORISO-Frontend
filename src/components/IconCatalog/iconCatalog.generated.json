@@ -1201,6 +1201,7 @@
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionHeader/SessionHeaderComponent.tsx",
@@ -1233,6 +1234,7 @@
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2310,6 +2312,7 @@
 		"exportNames": ["GdprIcon"],
 		"usageFiles": [
 			"src/components/legalLinks/LegalLinkMenuIcon.tsx",
+			"src/components/legalLinks/LegalLinkModal.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2456,9 +2459,12 @@
 		"size": null,
 		"fileName": "imprint.svg",
 		"sourcePath": "src/resources/img/icons/imprint.svg",
-		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"exportNames": ["ImprintIcon"],
+		"usageFiles": [
+			"src/components/legalLinks/LegalLinkModal.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:in:base",
@@ -2712,6 +2718,22 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:maximize-content:base",
+		"family": "maximize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "maximize-content.svg",
+		"sourcePath": "src/resources/img/icons/maximize-content.svg",
+		"exportNames": ["MaximizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "sidebar-icon:messages:filled",
 		"family": "messages",
 		"state": "filled",
@@ -2736,6 +2758,22 @@
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:minimize-content:base",
+		"family": "minimize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "minimize-content.svg",
+		"sourcePath": "src/resources/img/icons/minimize-content.svg",
+		"exportNames": ["MinimizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:counsellor-request:400",
@@ -4044,6 +4082,8 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/components/m3Dialog/M3Dialog.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
 			"src/components/notice/Notice.tsx",
