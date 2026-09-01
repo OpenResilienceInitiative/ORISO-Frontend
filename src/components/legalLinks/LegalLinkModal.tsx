@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import FingerprintIcon from '@mui/icons-material/Fingerprint';
-import { OrisoDialog } from '../modal/OrisoDialog';
+import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
 import { useLegalLinkContent } from './useLegalLinkContent';
 import {
@@ -41,6 +41,12 @@ type LegalLinkModalProps = {
  * one: an unconfigured text is a configuration gap and is named as such, with the
  * configured address offered as the way out — the same degradation public pages already
  * apply in `LegalLinkButton`.
+ *
+ * The sheet is the shared {@link M3Dialog}, the Admin panel's dialog anatomy, so a legal
+ * notice, a confirm box and an error box are one design across both surfaces. It carries
+ * the ORISO legal artboards rather than the MUI fingerprint/description glyphs that stood
+ * here, and its body scrolls: a published legal text is far longer than this dialog is
+ * tall, and the title and the actions have to stay reachable while it is read.
  */
 export const LegalLinkModal = ({
 	title,
@@ -62,23 +68,28 @@ export const LegalLinkModal = ({
 			: null;
 
 	return (
-		<OrisoDialog
-			open
+		<M3Dialog
 			title={translate(`legal.modal.${kind}.title`)}
-			icon={
-				kind === 'privacy' ? (
-					<DescriptionOutlinedIcon />
-				) : (
-					<FingerprintIcon />
-				)
-			}
+			icon={kind === 'privacy' ? <GdprIcon /> : <ImprintIcon />}
 			onClose={onClose}
-			backLabel={translate('legal.modal.back')}
-			confirmLabel={translate('legal.modal.confirm')}
+			data-testid={`legal-modal-${kind}`}
+			actions={[
+				{
+					label: translate('legal.modal.back'),
+					onClick: onClose,
+					testId: 'legal-modal-back'
+				},
+				{
+					label: translate('legal.modal.confirm'),
+					onClick: onClose,
+					primary: true,
+					testId: 'legal-modal-confirm'
+				}
+			]}
 		>
 			{scope === 'platform' ? (
 				<div
-					className="legalLinkModal__platform"
+					className="legalLinkModal__platformNote"
 					data-testid="legal-platform"
 				>
 					{platformNote?.split('\n\n').map((paragraph) => (
@@ -86,16 +97,14 @@ export const LegalLinkModal = ({
 					))}
 					{url && (
 						<p>
-							<a
-								href={url}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{translate(
+							<LegalFullTextLink
+								url={url}
+								label={translate(
 									PLATFORM_LEGAL_FULL_TEXT_KEY,
 									'Vollständigen Text öffnen'
 								)}
-							</a>
+								onNavigate={onClose}
+							/>
 						</p>
 					)}
 				</div>
@@ -117,20 +126,77 @@ export const LegalLinkModal = ({
 					</p>
 					{url && (
 						<p>
-							<a
-								href={url}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{translate(
+							<LegalFullTextLink
+								url={url}
+								label={translate(
 									'legal.modal.missing.link',
 									'Zur hinterlegten Adresse'
 								)}
-							</a>
+								onNavigate={onClose}
+							/>
 						</p>
 					)}
 				</div>
 			)}
-		</OrisoDialog>
+		</M3Dialog>
 	);
+};
+
+/**
+ * The way out of the dialog to the full document.
+ *
+ * `/impressum` and `/datenschutz` are routes of this very app, and the configured
+ * legal URL points at them unless a deployment overrides it. Opening a route of
+ * the app in a new browser tab boots the whole SPA a second time — the "something
+ * completely new gets loaded" this dialog was built to stop. So a same-origin
+ * target is a router navigation, and only a genuinely external address (an
+ * operator's own website, set via `REACT_APP_LEGAL_*_URL`) still opens a tab.
+ *
+ * Outside a router — Storybook, isolated tests — there is no navigation to make,
+ * so it degrades to a plain link.
+ */
+const LegalFullTextLink = ({
+	url,
+	label,
+	onNavigate
+}: {
+	url: string;
+	label: string;
+	onNavigate: () => void;
+}) => {
+	const inRouter = useInRouterContext();
+	const internalPath = getInternalPath(url);
+
+	if (internalPath && inRouter) {
+		return (
+			<RouterLink to={internalPath} onClick={onNavigate}>
+				{label}
+			</RouterLink>
+		);
+	}
+
+	return (
+		<a href={url} target="_blank" rel="noopener noreferrer">
+			{label}
+		</a>
+	);
+};
+
+/**
+ * `path + search + hash` when `url` points back at this app, otherwise `null`.
+ * A malformed URL is treated as external: it is then handed to the browser
+ * unchanged rather than fed to the router as a route that does not exist.
+ */
+export const getInternalPath = (url: string): string | null => {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+	try {
+		const parsed = new URL(url, window.location.origin);
+		return parsed.origin === window.location.origin
+			? `${parsed.pathname}${parsed.search}${parsed.hash}`
+			: null;
+	} catch {
+		return null;
+	}
 };

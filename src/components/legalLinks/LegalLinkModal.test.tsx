@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
-import { LegalLinkModal } from './LegalLinkModal';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { LegalLinkModal, getInternalPath } from './LegalLinkModal';
 import { useLegalLinkContent } from './useLegalLinkContent';
 
 vi.mock('./useLegalLinkContent', async () => ({
@@ -140,5 +141,79 @@ describe('LegalLinkModal', () => {
 		const rel = link.getAttribute('rel') ?? '';
 		expect(rel).toContain('noopener');
 		expect(rel).toContain('noreferrer');
+	});
+
+	/**
+	 * The complaint this dialog exists for: `/impressum` and `/datenschutz` are
+	 * routes of THIS app, and the configured legal URL points at them by default.
+	 * Opening them with `target="_blank"` boots the whole SPA a second time in a
+	 * new tab — "something completely new gets loaded" — which is precisely what
+	 * moving the text into a dialog was meant to stop. A same-origin target must
+	 * therefore be a router navigation, not a new tab.
+	 */
+	it('navigates in-app instead of opening a tab when the full text is a route of this app', () => {
+		mockedContent.mockReturnValue({ kind: 'privacy', content: null });
+
+		render(
+			<MemoryRouter>
+				<LegalLinkModal
+					title="Datenschutz"
+					rawLabel="privacy"
+					url={`${window.location.origin}/datenschutz`}
+					scope="platform"
+					onClose={() => undefined}
+				/>
+			</MemoryRouter>
+		);
+
+		const link = screen.getByRole('link');
+		expect(link.getAttribute('href')).toBe('/datenschutz');
+		expect(link.getAttribute('target')).toBeNull();
+	});
+
+	it('closes the dialog when the in-app navigation is taken', () => {
+		mockedContent.mockReturnValue({ kind: 'privacy', content: null });
+		const onClose = vi.fn();
+
+		render(
+			<MemoryRouter>
+				<LegalLinkModal
+					title="Datenschutz"
+					rawLabel="privacy"
+					url={`${window.location.origin}/datenschutz`}
+					scope="platform"
+					onClose={onClose}
+				/>
+			</MemoryRouter>
+		);
+
+		fireEvent.click(screen.getByRole('link'));
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('offers both the dismissing and the confirming action', () => {
+		mockedContent.mockReturnValue({ kind: 'privacy', content: null });
+
+		renderModal();
+
+		expect(screen.getByTestId('legal-modal-back')).toBeTruthy();
+		expect(screen.getByTestId('legal-modal-confirm')).toBeTruthy();
+	});
+});
+
+describe('getInternalPath', () => {
+	it('keeps path, query and hash of a same-origin URL', () => {
+		expect(
+			getInternalPath(`${window.location.origin}/impressum?a=1#top`)
+		).toBe('/impressum?a=1#top');
+	});
+
+	it('returns null for a different origin', () => {
+		expect(getInternalPath('https://traeger.example/impressum')).toBeNull();
+	});
+
+	/** A malformed address is handed to the browser, never fed to the router. */
+	it('returns null for a URL it cannot parse', () => {
+		expect(getInternalPath('http://[::1')).toBeNull();
 	});
 });

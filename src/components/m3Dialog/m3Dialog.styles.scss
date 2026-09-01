@@ -1,0 +1,263 @@
+/* Standard M3 basic dialog (Design-System M3_ORISO, node 60942-12062).
+   Deliberately the same anatomy and the same tokens as the Admin panel's
+   `components/Modal/styles.module.scss`: 28px surface-container-high sheet,
+   32px hero icon, centred headline-small title (24/32 regular), body-medium
+   supporting text (14/20, +0.25 tracking), full-width divider, right-aligned
+   M3 text buttons (label-large). The Admin builds this on antd, the frontend
+   on MUI — the shells differ, the design must not. */
+
+.m3Dialog {
+	/* Nested as descendants of the dialog root on purpose: `.m3Dialog
+	   .m3Dialog__surface` (0,2,0) outranks MUI's runtime-injected
+	   `.MuiDialog-paper` (0,1,0), so it does not matter whether MUI's
+	   stylesheet lands before or after this one in <head>. */
+	.m3Dialog__backdrop {
+		background: rgba(255, 255, 255, 0.8);
+		backdrop-filter: blur(4px);
+	}
+
+	.m3Dialog__surface {
+		position: relative;
+		display: flex;
+		box-sizing: border-box;
+		flex-direction: column;
+		width: 100%;
+
+		/* An M3 dialog never touches the viewport edge, and never grows past
+		   it either — the body scrolls instead. */
+		max-height: calc(100vh - 64px);
+		margin: 32px;
+		padding: 24px 24px 20px;
+		border-radius: 28px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		box-shadow:
+			0 16px 16px rgba(12, 12, 13, 0.1),
+			0 4px 2px rgba(12, 12, 13, 0.05);
+
+		/* The sheet itself must not scroll — `__body` does. Without this MUI's
+		   own `overflow-y: auto` on the paper produces a second scrollbar and
+		   the hero icon scrolls away with the text. */
+		overflow: hidden;
+	}
+
+	/* Round close affordance so its hover state matches the 28px surface
+	   instead of clashing with a square highlight. */
+	&__close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		display: inline-flex;
+		width: 40px;
+		height: 40px;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: transparent;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		transition: background-color 150ms ease;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			fill: currentColor;
+		}
+
+		&:hover {
+			background: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 8%,
+				transparent
+			);
+		}
+
+		&:focus-visible {
+			outline: 2px solid currentColor;
+			outline-offset: 2px;
+		}
+	}
+
+	/* Icon → title → description. The 16px between icon and title is carried by
+	   the icon itself so title and description can sit the closer 8px apart —
+	   they are one unit, the icon is above it. */
+	&__titleBlock {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+
+		/* Leaves room for the ✕ so a long title can never slide under it. */
+		padding: 0 28px;
+	}
+
+	&__heroIcon {
+		display: inline-flex;
+		margin-bottom: 8px;
+		color: var(--m3-secondary, #4c555f);
+		font-size: 32px;
+
+		svg {
+			width: 32px;
+			height: 32px;
+		}
+
+		/* The legal artboards ship with a baked `fill="#4C555F"` because other
+		   consumers (the session menu glyphs) depend on it. Overriding the fill
+		   here — rather than editing the asset — lets the hero icon follow the
+		   dialog's colour, including the error role, without touching them. */
+		svg path {
+			fill: currentColor;
+		}
+	}
+
+	&__title {
+		margin: 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 24px;
+		font-weight: 400;
+		letter-spacing: 0;
+		line-height: 32px;
+		text-align: center;
+	}
+
+	/* The anatomy's third line: what the dialog is for. Capped at a reading
+	   width so one long sentence does not stretch a wide dialog edge to edge. */
+	&__description {
+		max-width: 52ch;
+		margin: 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
+		text-align: center;
+	}
+
+	/* The scrolling region. `min-height: 0` is load-bearing: without it a flex
+	   child refuses to shrink below its content and the sheet grows past the
+	   viewport instead of scrolling. */
+	&__body {
+		min-height: 0;
+		flex: 1 1 auto;
+		padding: 16px 0 0;
+		margin-right: -8px;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		overflow-y: auto;
+		padding-right: 8px;
+		scrollbar-color: var(--m3-outline-variant, #c4c7c8) transparent;
+		scrollbar-width: thin;
+
+		&::-webkit-scrollbar {
+			width: 4px;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			border-radius: 4px;
+			background-color: var(--m3-outline-variant, #c4c7c8);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__footer {
+		flex: 0 0 auto;
+	}
+
+	&__divider {
+		display: block;
+		width: 100%;
+		height: 0;
+		margin-top: 16px;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		padding-top: 16px;
+		gap: 8px;
+	}
+
+	/* Base = the dismissing action: M3 neutral. Keeping it neutral and colouring
+	   only the confirming action stops a two-button row reading as "all
+	   primary". Hover tint follows `currentColor` so both variants work. */
+	&__action {
+		display: inline-flex;
+		height: 40px;
+		align-items: center;
+		justify-content: center;
+		padding: 10px 16px;
+		border: 0;
+		border-radius: 100px;
+		background: transparent;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		transition: background-color 150ms ease;
+
+		&:hover:not(:disabled) {
+			background: color-mix(in srgb, currentColor 8%, transparent);
+		}
+
+		&:focus-visible {
+			outline: 2px solid currentColor;
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.38;
+		}
+
+		&--primary {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	/* Error message box. The colour comes from the M3 error ROLE, which the
+	   generated Oriso scheme owns (`orisoScheme.ts` writes `--m3-error` from
+	   the signal palette). The literal is only the static fallback already
+	   declared in `mui-variables-mapping.scss` — do not substitute a red picked
+	   by hand here, or the error box drifts away from the scheme per tenant. */
+	&--error {
+		.m3Dialog__heroIcon {
+			color: var(--m3-error, #cc0000);
+		}
+
+		.m3Dialog__action--primary {
+			color: var(--m3-error, #cc0000);
+		}
+	}
+
+	/* M3 mobile rule: two short actions stay a right-aligned row; three or more
+	   stack full-width with centred labels. */
+	@media (width <= 575px) {
+		.m3Dialog__surface {
+			margin: 16px;
+			padding: 24px 16px 20px;
+		}
+
+		&__actions:has(> :nth-child(3)) {
+			flex-direction: column;
+			align-items: stretch;
+
+			.m3Dialog__action {
+				width: 100%;
+				justify-content: center;
+			}
+		}
+	}
+}
