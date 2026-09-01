@@ -54,9 +54,17 @@ vi.mock('../pseudonym/AnimalAvatar', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'registration.account.username.label': 'User-ID',
+			'anonymousChat.pseudonym.changeName': 'Name ändern',
+			'anonymousChat.pseudonym.continueWithSelection':
+				'Weiter mit Auswahl'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 const { InviteLink } = await import('./InviteLink');

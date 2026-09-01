@@ -90,10 +90,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
-	const rejectLabel = t(
-		'anonymousChat.consent.reject',
-		'Ich stimme nicht zu'
-	);
+	const rejectLabel = t('anonymousChat.consent.reject');
 	const dialogRef = useRef<HTMLDivElement | null>(null);
 
 	/* ADR-022 "Blocking dependency" / ORISO-UserService#927.
@@ -171,10 +168,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 							className="anonymousConsentGate__title"
 							id={TITLE_ID}
 						>
-							{t(
-								'anonymousConsent.headline',
-								'Herzlich Willkommen'
-							)}
+							{t('anonymousConsent.headline')}
 						</h2>
 					</div>
 
@@ -182,10 +176,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 						className="anonymousConsentGate__body"
 						id={DESCRIPTION_ID}
 					>
-						{t(
-							'anonymousConsent.description',
-							'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
-						)}
+						{t('anonymousConsent.description')}
 					</p>
 
 					<p className="anonymousConsentGate__consent">
@@ -197,10 +188,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 							className="anonymousConsentGate__rejectedNotice"
 							role="alert"
 						>
-							{t(
-								'anonymousChat.consent.mustAcceptToContinue',
-								'Um fortzufahren müssen Sie unseren Datenschutzbestimmungen zustimmen.'
-							)}
+							{t('anonymousChat.consent.mustAcceptToContinue')}
 						</p>
 					)}
 
@@ -227,12 +215,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 							disabled={busy}
 						>
 							<AcceptCheckIcon />
-							<span>
-								{t(
-									'anonymousChat.consent.accept',
-									'Ich bin einverstanden'
-								)}
-							</span>
+							<span>{t('anonymousChat.consent.accept')}</span>
 						</button>
 					</div>
 				</div>

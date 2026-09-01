@@ -65,10 +65,7 @@ export const ConsultantAcceptedActionBar: React.FC<
 		<div className="consultantAcceptedActionBar" role="group">
 			<div className="consultantAcceptedActionBar__hint">
 				<p className="consultantAcceptedActionBar__hintText">
-					{t(
-						'anonymousChat.queue.consultantAccepted',
-						'Sie werden jetzt von ihrer Berater_in im Chat erwartet.'
-					)}
+					{t('anonymousChat.queue.consultantAccepted')}
 				</p>
 				<span
 					className="consultantAcceptedActionBar__hintArrow"
@@ -83,10 +80,7 @@ export const ConsultantAcceptedActionBar: React.FC<
 					type="button"
 					className="consultantAcceptedActionBar__dismissBtn"
 					onClick={onDismiss}
-					aria-label={t(
-						'anonymousChat.queue.dismissAcceptedBanner',
-						'Hinweis ausblenden'
-					)}
+					aria-label={t('anonymousChat.queue.dismissAcceptedBanner')}
 				>
 					<CloseIcon />
 				</button>
@@ -97,10 +91,7 @@ export const ConsultantAcceptedActionBar: React.FC<
 					onClick={onStartChat}
 				>
 					<span className="consultantAcceptedActionBar__startBtnLabel">
-						{t(
-							'anonymousChat.queue.startChatNow',
-							'Jetzt Chat starten'
-						)}
+						{t('anonymousChat.queue.startChatNow')}
 					</span>
 				</button>
 			</div>

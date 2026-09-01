@@ -119,10 +119,7 @@ export const LoginSecurityExplainer = ({
 			<div
 				className="loginSecurity__transport"
 				role="img"
-				aria-label={translate(
-					'login.security.explainer.diagram',
-					'Schaubild: Ihre Nachricht geht verschlüsselt von Ihrem Gerät zur Beratungsstelle — nur dort wird sie wieder lesbar.'
-				)}
+				aria-label={translate('login.security.explainer.diagram')}
 			>
 				<div className="loginSecurity__party loginSecurity__party--you">
 					<div className="loginSecurity__partyBlock">
