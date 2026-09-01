@@ -125,6 +125,22 @@ describe('M3Dialog', () => {
 		expect(baseElement.querySelector('.m3Dialog--error')).toBeNull();
 	});
 
+	it('names the ✕ with the caller-supplied label', () => {
+		render(
+			<M3Dialog
+				title="Impressum"
+				closeLabel="Schließen"
+				onClose={() => undefined}
+			/>
+		);
+
+		// The label is translated by the caller — the dialog itself never calls
+		// `t`, so a hardcoded English name here would reach every locale.
+		expect(
+			screen.getByTestId('m3-dialog-close').getAttribute('aria-label')
+		).toBe('Schließen');
+	});
+
 	it('closes via the ✕ affordance and can be built without one', () => {
 		const onClose = vi.fn();
 		const { rerender } = render(

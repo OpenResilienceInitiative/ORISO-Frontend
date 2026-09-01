@@ -72,6 +72,7 @@ export const LegalLinkModal = ({
 			title={translate(`legal.modal.${kind}.title`)}
 			icon={kind === 'privacy' ? <GdprIcon /> : <ImprintIcon />}
 			onClose={onClose}
+			closeLabel={translate('app.close', 'Schließen')}
 			data-testid={`legal-modal-${kind}`}
 			actions={[
 				{

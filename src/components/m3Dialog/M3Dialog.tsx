@@ -40,9 +40,16 @@ export interface M3DialogProps {
 	/** Show the top-right close (✕) affordance. Defaults to true. */
 	'closable'?: boolean;
 	/**
-	 * `'error'` paints hero icon and primary action in the M3 error role. The
-	 * error role in this product is magenta, NOT the ORISO red — see
-	 * `--m3-error` in the scheme; do not "fix" it towards `--form-error`.
+	 * Accessible name of the ✕. Already translated — this component never calls
+	 * `t`, so a caller inside the app should pass `t('app.close')`. The English
+	 * default only covers callers with no translation context (Storybook).
+	 */
+	'closeLabel'?: string;
+	/**
+	 * `'error'` paints hero icon and primary action in the M3 error ROLE
+	 * (`--m3-error`), which the generated Oriso scheme owns per tenant. Do not
+	 * substitute a red picked by hand — the error box would then drift away
+	 * from the scheme wherever a tenant's palette differs.
 	 */
 	'severity'?: M3DialogSeverity;
 	/** Dialog width in px. Defaults to the M3 basic-dialog 560px. */
@@ -81,6 +88,7 @@ export const M3Dialog = ({
 	onClose,
 	showDivider = true,
 	closable = true,
+	closeLabel = 'Close',
 	severity = 'info',
 	width = 560,
 	className,
@@ -116,7 +124,7 @@ export const M3Dialog = ({
 					className="m3Dialog__close"
 					onClick={onClose}
 					data-testid="m3-dialog-close"
-					aria-label="Close"
+					aria-label={closeLabel}
 				>
 					<CrossMarkIcon />
 				</button>
