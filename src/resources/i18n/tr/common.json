@@ -4242,6 +4242,9 @@
 			"title": "Canlı sohbet şu anda maalesef kapalı"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Tavsiye iste"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {

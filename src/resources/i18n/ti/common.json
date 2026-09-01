@@ -4242,6 +4242,9 @@
 			"title": "ሕማቕ ኣጋጣሚ ኮይኑ ላይቭ ቻት ኣብዚ እዋን ተዓጽዩ ኣሎ"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "ምኽሪ ሕተት"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
