@@ -85,7 +85,9 @@ export const FallbackUnchanged: Story = {
 		// Exactly two links, both registration-relevant, and no second cookie
 		// sentence: the fallback carries the notice inside its own suffix, so
 		// the fixed addendum must not be stacked on top of it.
-		await expect(await canvas.findAllByRole('link')).toHaveLength(2);
+		await expect(
+			canvasElement.querySelectorAll('[data-cy-link]')
+		).toHaveLength(2);
 		await expect(
 			canvasElement.querySelector('[data-cy="consent-cookie-notice"]')
 		).toBeNull();
@@ -113,14 +115,13 @@ export const TraegerSentence: Story = {
 		// The name and the topic arrive already substituted — the client never
 		// sees {{Beratungsstelle}} or {{Thema}} (ADR-021 decision 5).
 		await expect(canvasElement.textContent?.includes('{{')).toBeFalsy();
-		const policyLink = await canvas.findByRole('link', {
+		const policyLink = await canvas.findByRole('button', {
 			name: /datenschutz/i
 		});
 		await expect(policyLink).toHaveAttribute(
-			'href',
+			'data-cy-link',
 			'https://oriso.example/datenschutz'
 		);
-		await expect(policyLink).toHaveAttribute('target', '_blank');
 		// The fixed addendum sits beneath the Träger text.
 		await expect(
 			canvasElement.querySelector('[data-cy="consent-cookie-notice"]')
@@ -152,7 +153,9 @@ export const TraegerSentenceSanitized: Story = {
 		await expect(canvasElement.querySelector('script')).toBeNull();
 		await expect(canvasElement.innerHTML).not.toContain('onerror');
 		// …while the links the sentence consents to still work.
-		await expect(await canvas.findAllByRole('link')).toHaveLength(2);
+		await expect(
+			canvasElement.querySelectorAll('[data-cy-link]')
+		).toHaveLength(2);
 	},
 	parameters: {
 		docs: {
@@ -174,7 +177,9 @@ export const MissingMandatoryToken: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(await canvas.findAllByRole('link')).toHaveLength(2);
+		await expect(
+			canvasElement.querySelectorAll('[data-cy-link]')
+		).toHaveLength(2);
 	},
 	parameters: {
 		docs: {

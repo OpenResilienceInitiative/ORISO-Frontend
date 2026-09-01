@@ -4577,6 +4577,7 @@
 			},
 			"back": "Geri",
 			"confirm": "Anladım",
+			"loading": "Yasal metin yükleniyor…",
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"

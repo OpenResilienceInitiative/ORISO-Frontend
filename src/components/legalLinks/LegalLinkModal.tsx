@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
+import { CircularProgress } from '@mui/material';
 import { routePathNames } from '../../resources/scripts/config';
 import { toSameOriginRoute } from '../stageLayout/stageLayoutRoutes';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
 import { LegalTextReader } from '../legalContent/LegalTextReader';
+import { useDepartmentLegal } from '../../api/useDepartmentLegal';
 import { useLegalLinkContent } from './useLegalLinkContent';
 import {
 	PLATFORM_LEGAL_FULL_TEXT_KEY,
@@ -21,11 +23,17 @@ type LegalLinkModalProps = {
 	onClose: () => void;
 	/**
 	 * `'platform'` shows the short platform note plus a link to the full text,
-	 * for public pages where no Beratungsstelle has been chosen yet. Default
-	 * `'tenant'` renders the carrier-authored document, which is what the
-	 * session views want.
+	 * for public pages where no Beratungsstelle has been chosen yet.
+	 * `'agency'` loads the department's published Impressum/DPP for the given
+	 * `agencyId`/`topicId` (registration once a Beratungsstelle is chosen).
+	 * Default `'tenant'` renders the carrier-authored document, which is what
+	 * the session views want.
 	 */
-	scope?: 'tenant' | 'platform';
+	scope?: 'tenant' | 'platform' | 'agency';
+	/** Required when `scope` is `'agency'`. */
+	agencyId?: number;
+	/** Required when `scope` is `'agency'`. */
+	topicId?: number;
 };
 
 /**
@@ -55,10 +63,32 @@ export const LegalLinkModal = ({
 	rawLabel,
 	url,
 	onClose,
-	scope = 'tenant'
+	scope = 'tenant',
+	agencyId,
+	topicId
 }: LegalLinkModalProps) => {
 	const { t: translate } = useTranslation();
-	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
+	const { kind, content: tenantContent } = useLegalLinkContent(
+		title,
+		url,
+		rawLabel
+	);
+	const isAgency = scope === 'agency';
+	const { data: departmentLegal, loading: agencyLoading } =
+		useDepartmentLegal(
+			isAgency ? agencyId : null,
+			isAgency ? topicId : null,
+			{ enabled: isAgency }
+		);
+	/* Agency-scope: the department's published document by kind, falling back
+	   to the tenant text — same rationale as `DepartmentLegalSection`'s consent
+	   variant, so a Beratungsstelle without its own text still gets the
+	   platform operator's. */
+	const agencyContent =
+		kind === 'privacy'
+			? departmentLegal?.dpp?.content
+			: departmentLegal?.imprint?.content;
+	const content = isAgency ? (agencyContent ?? tenantContent) : tenantContent;
 	const documentTitle = translate(`legal.modal.${kind}.title`);
 
 	const platformNoteFallback =
@@ -116,6 +146,15 @@ export const LegalLinkModal = ({
 						</p>
 					)}
 				</div>
+			) : isAgency && agencyLoading ? (
+				<CircularProgress
+					size={20}
+					aria-label={translate(
+						'legal.modal.loading',
+						'Der Rechtstext wird geladen …'
+					)}
+					data-testid="legal-loading"
+				/>
 			) : content ? (
 				/* A published legal text gets the reading surface, not a wall of
 				   text: chapter chips, in-place scrolling and a fullscreen mode,
