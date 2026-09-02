@@ -182,16 +182,6 @@ Cypress.Commands.add('mockApi', () => {
 		statusCode: 204
 	}).as('authLogout');
 
-	cy.intercept(
-		`${endpoints.liveservice}/**/*`,
-		JSON.stringify({
-			entropy: '-1197552011',
-			origins: ['*:*'],
-			cookie_needed: false,
-			websocket: true
-		})
-	).as('liveService');
-
 	cy.intercept('POST', endpoints.keycloakAccessToken, (req) => {
 		req.reply(getWillReturn('auth'));
 	}).as('authToken');

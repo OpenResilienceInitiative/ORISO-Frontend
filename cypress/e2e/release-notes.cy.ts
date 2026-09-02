@@ -1,23 +1,6 @@
 import { USER_CONSULTANT } from '../support/commands/mockApi';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 
 describe('release-note', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	afterEach(() => {
 		cy.clearLocalStorage();
 	});

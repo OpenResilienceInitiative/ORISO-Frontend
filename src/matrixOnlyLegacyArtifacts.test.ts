@@ -209,4 +209,64 @@ describe('Matrix-only active frontend artifacts', () => {
 			)
 		).toBe(false);
 	});
+
+	it('does not ship the retired LiveService browser transport', () => {
+		const packageJson = fs.readFileSync(
+			path.join(repoRoot, 'package.json'),
+			'utf8'
+		);
+		const endpoints = fs.readFileSync(
+			path.join(repoRoot, 'src/resources/scripts/endpoints.ts'),
+			'utf8'
+		);
+		const appShell = fs.readFileSync(
+			path.join(repoRoot, 'src/components/app/app.tsx'),
+			'utf8'
+		);
+		const envExample = fs.readFileSync(
+			path.join(repoRoot, '.env.example'),
+			'utf8'
+		);
+		const matrixTokenBootstrap = fs.readFileSync(
+			path.join(
+				repoRoot,
+				'src/components/sessionCookie/getMatrixAccessToken.ts'
+			),
+			'utf8'
+		);
+
+		expect(packageJson).not.toMatch(
+			/@stomp\/stompjs|sockjs-client|mock-socket/
+		);
+		expect(endpoints).not.toMatch(/liveservice|\/service\/live/);
+		expect(appShell).not.toMatch(/WebsocketHandler|disconnectWebsocket/);
+		expect(envExample).not.toContain('REACT_APP_DISABLE_LIVE_WEBSOCKET');
+		expect(matrixTokenBootstrap).not.toContain(
+			'REACT_APP_DISABLE_LIVE_WEBSOCKET'
+		);
+		expect(
+			fs.existsSync(
+				path.join(repoRoot, 'src/components/app/WebsocketHandler.tsx')
+			)
+		).toBe(false);
+		expect(
+			fs.existsSync(
+				path.join(
+					repoRoot,
+					'src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx'
+				)
+			)
+		).toBe(false);
+	});
+
+	it('does not retain the superseded LiveService Storybook worklog', () => {
+		expect(
+			fs.existsSync(
+				path.join(
+					repoRoot,
+					'docs/cursor-orchestrator/2026-07-28_remove-storybook-rocketchat'
+				)
+			)
+		).toBe(false);
+	});
 });

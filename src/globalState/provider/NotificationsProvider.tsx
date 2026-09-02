@@ -386,13 +386,10 @@ export function NotificationsProvider(props) {
 	// played from a user gesture — prime one on the first pointer/keydown.
 	useEffect(() => installAudioUnlock(), []);
 
-	// Refresh trigger (#845, corrected): there is NO backend live push — the
-	// LiveService transport is a 410 tombstone (ORISO-UserService
-	// DeprecatedLiveProxyController). `messageEventEmitter` is fed by the
-	// client's OWN Matrix sync (WebsocketHandler → matrixLiveEventBridge
-	// 'directMessage'), so this only fires early for rooms this client
-	// syncs; everything else arrives via the 15s poll above. Debounced so
-	// a burst of events collapses into a single refetch.
+	// `messageEventEmitter` is fed by this client's decrypted Matrix sync
+	// (MatrixRealtimeHandler -> matrixLiveEventBridge `directMessage`). This
+	// refreshes synced-room notifications immediately; everything else arrives
+	// through the 15s persistence poll. Debouncing collapses bursts into one fetch.
 	useEffect(() => {
 		let debounceTimer: number | undefined;
 		const onLiveEvent = () => {

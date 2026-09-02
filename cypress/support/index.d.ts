@@ -27,10 +27,6 @@ declare global {
 				mergeData?: boolean
 			): Chainable<undefined>;
 			willReturn(name: string): Chainable<any>;
-
-			emitDirectMessage(index?: number): Chainable<Element>;
-
-			waitForSubscriptions(events: string[]): Chainable<Element>;
 		}
 	}
 }

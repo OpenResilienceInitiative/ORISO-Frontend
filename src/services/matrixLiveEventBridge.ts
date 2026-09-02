@@ -22,9 +22,8 @@ const isElementOrGroupCallInvite = (
 	content.is_element_call === true || content.is_group_call === true;
 
 /**
- * Bridge between Matrix events and the existing LiveService WebSocket system.
- * This service listens to Matrix Room.timeline events and triggers appropriate
- * actions in the frontend (simulating what LiveService would do).
+ * Routes decrypted Matrix timeline events to the ORISO application shell.
+ * Matrix remains the only real-time chat and call transport.
  */
 export class MatrixLiveEventBridge {
 	private client: MatrixClient | null = null;
@@ -276,7 +275,7 @@ export class MatrixLiveEventBridge {
 
 		// Trigger only metadata needed to refresh/touch lists. Matrix message
 		// bodies stay inside the Matrix session renderer and are never bridged
-		// into legacy LiveService-style events.
+		// into application-level refresh events.
 		this.triggerEvent('directMessage', {
 			roomId: room.roomId,
 			sender: sender,

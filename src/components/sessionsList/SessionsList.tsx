@@ -929,8 +929,9 @@ export const SessionsList = ({
 	]);
 
 	/*
-	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
-	 * Poll while Live Chat is selected (without aborting the main list fetch).
+	 * A new invite-link enquiry can be persisted before its Matrix room reaches
+	 * this client's sync. Poll while Live Chat is selected without aborting the
+	 * main list fetch, then let Matrix events take over once the room is visible.
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {

@@ -43,13 +43,9 @@ import { withTimeout } from '../../utils/promiseTimeout';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
-	onLogout: Function;
 }
 
-export const AuthenticatedApp = ({
-	onLogout,
-	onAppReady
-}: AuthenticatedAppProps) => {
+export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 	const { releaseToggles } = useAppConfig();
 	const { setConsultingTypes } = useContext(ConsultingTypesContext);
 	const { userData, reloadUserData } = useContext(UserDataContext);
@@ -243,13 +239,12 @@ export const AuthenticatedApp = ({
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLogout = useCallback(() => {
-		onLogout();
 		// Clear the React context's Matrix client reference on sign-out so a
 		// stale authenticated client cannot survive into a subsequent session
 		// (logout() also resets the module-level registry).
 		setMatrixClientService(null);
 		logout();
-	}, [onLogout, setMatrixClientService]);
+	}, [setMatrixClientService]);
 
 	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the
 	   click can land while bootstrap is still in flight. Tearing the handover

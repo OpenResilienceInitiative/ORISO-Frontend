@@ -1,22 +1,8 @@
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../../cypress/support/websocket';
 import { config } from '../../src/resources/scripts/config';
 
 describe('Login', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
 		cy.willReturn('frontend.settings', config);
-		mockWebSocket();
 	});
 
 	it('should be able to login', () => {

@@ -12,7 +12,6 @@ export * from './provider/SessionsDataProvider';
 export * from './provider/SessionTypeProvider';
 export * from './provider/UpdateSessionListProvider';
 export * from './provider/UserDataProvider';
-export * from './provider/WebsocketConnectionDeactivatedProvider';
 export * from './provider/TenantProvider';
 export * from './provider/ServerSettingsProvider';
 export * from './provider/InformalProvider';

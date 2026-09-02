@@ -1,9 +1,4 @@
 import {
-	closeWebSocketServer,
-	startWebSocketServer,
-	mockWebSocket
-} from '../support/websocket';
-import {
 	generateMultipleAskerSessions,
 	generateMultipleConsultantSessions
 } from '../support/sessions';
@@ -14,18 +9,6 @@ import {
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 
 describe('Sessions', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	describe('Consultant', () => {
 		it('should show confirmation forwarding the session', () => {
 			generateMultipleConsultantSessions(5);
