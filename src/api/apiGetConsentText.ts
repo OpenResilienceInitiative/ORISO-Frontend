@@ -50,8 +50,8 @@ import {
  *
  * ORISO-Frontend#1182: this function now reads from the shared
  * department-legal cache (`getCachedDepartmentLegalOutcome`) so
- * `DataProtectionConsentLabel` and `DepartmentLegalSection` on the same
- * registration screen no longer issue two independent requests and cannot
+ * `DataProtectionConsentLabel` and `LegalLinkModal` (via
+ * `useDepartmentLegal`) no longer issue two independent requests and cannot
  * disagree on the snapshot. The fail-closed distinction (`ok + null` vs
  * `unavailable`) is preserved end-to-end by the discriminated cache outcome.
  */
@@ -134,9 +134,9 @@ export type ConsentTextResult =
 
 /**
  * Loads the Träger-authored consent sentence for a department (agency x topic).
- * Public endpoint, no auth. Backed by the shared department-legal cache so a
- * co-mounted `DepartmentLegalSection` does not fire a second request against
- * the same URL (ORISO-Frontend#1182).
+ * Public endpoint, no auth. Backed by the shared department-legal cache so
+ * `LegalLinkModal` (via `useDepartmentLegal`) does not fire a second request
+ * against the same URL (ORISO-Frontend#1182).
  *
  * A backend that predates this epic answers 200 without the field, which is an
  * honest `ok` + null and yields today's static sentence.
@@ -161,7 +161,7 @@ export type ConsentTextResult =
  *
  * `signal` is accepted for source compatibility with earlier callers but has
  * no effect: the underlying request is shared across all consumers of the same
- * key, and aborting would cancel work for the co-mounted panel too.
+ * key, and aborting would cancel work for `LegalLinkModal` too.
  */
 export const apiGetConsentText = async (
 	agencyId: number,

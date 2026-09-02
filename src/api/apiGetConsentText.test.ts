@@ -20,7 +20,10 @@ import {
 	normalizeConsentTextResponse
 } from './apiGetConsentText';
 /* eslint-disable-next-line import/first */
-import { clearDepartmentLegalCache } from './apiGetDepartmentLegal';
+import {
+	clearDepartmentLegalCache,
+	getCachedDepartmentLegal
+} from './apiGetDepartmentLegal';
 /* eslint-disable-next-line import/first */
 import { fetchData, FETCH_ERRORS } from './fetchData';
 
@@ -224,6 +227,77 @@ describe('apiGetConsentText — an absent record is not an unreadable one', () =
 
 		await expect(apiGetConsentText(42, 7)).resolves.toEqual({
 			status: 'unavailable'
+		});
+	});
+});
+
+describe('apiGetConsentText and getCachedDepartmentLegal share one snapshot', () => {
+	const firstPayload = {
+		dpp: {
+			content: '{"de":"<p>First policy</p>"}',
+			consentText: 'First sentence {{legal_links}}.',
+			versionId: 11
+		},
+		imprint: { content: null }
+	};
+	const secondPayload = {
+		dpp: {
+			content: '{"de":"<p>Second policy</p>"}',
+			consentText: 'Second sentence {{legal_links}}.',
+			versionId: 22
+		},
+		imprint: { content: null }
+	};
+
+	const mockDistinguishableFetches = () => {
+		// mockReset, not clearAllMocks: the afterEach hook clears call history
+		// but leaves queued mockResolvedValueOnce values, so a leftover from the
+		// previous test would be served to this one's single shared fetch.
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData)
+			.mockResolvedValueOnce(firstPayload)
+			.mockResolvedValueOnce(secondPayload);
+	};
+
+	it('uses the first snapshot when the consent label fetches first', async () => {
+		mockDistinguishableFetches();
+
+		const consent = await apiGetConsentText(42, 7);
+		const panel = await getCachedDepartmentLegal(42, 7);
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(consent).toEqual({
+			status: 'ok',
+			consentText: {
+				sentence: 'First sentence {{legal_links}}.',
+				versionId: 11
+			}
+		});
+		expect(panel?.dpp).toEqual({
+			content: '{"de":"<p>First policy</p>"}',
+			consentText: 'First sentence {{legal_links}}.',
+			versionId: 11
+		});
+	});
+
+	it('uses the first snapshot when the legal panel fetches first', async () => {
+		mockDistinguishableFetches();
+
+		const panel = await getCachedDepartmentLegal(42, 7);
+		const consent = await apiGetConsentText(42, 7);
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(panel?.dpp).toEqual({
+			content: '{"de":"<p>First policy</p>"}',
+			consentText: 'First sentence {{legal_links}}.',
+			versionId: 11
+		});
+		expect(consent).toEqual({
+			status: 'ok',
+			consentText: {
+				sentence: 'First sentence {{legal_links}}.',
+				versionId: 11
+			}
 		});
 	});
 });

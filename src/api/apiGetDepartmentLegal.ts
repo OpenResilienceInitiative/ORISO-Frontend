@@ -162,9 +162,11 @@ export const getCachedDepartmentLegalOutcome = (
 	if (!departmentLegalCache.has(key)) {
 		departmentLegalCache.set(
 			key,
-			fetchDepartmentLegalOutcome(agencyId, topicId).catch(() => {
-				departmentLegalCache.delete(key);
-				return { status: 'unavailable' } as DepartmentLegalOutcome;
+			fetchDepartmentLegalOutcome(agencyId, topicId).then((outcome) => {
+				if (outcome.status === 'unavailable') {
+					departmentLegalCache.delete(key);
+				}
+				return outcome;
 			})
 		);
 	}
