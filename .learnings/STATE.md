@@ -19,6 +19,7 @@
 - Before adding UI to a large component, locate every `return` above the insertion point. A guarded early return silently makes the new markup unreachable for exactly the case the ticket is about, and a helper-level test cannot detect it.
 - When a fix relies on removing a bug, prove the new test fails with the bug reintroduced (revert the wiring, run, restore). Absence-assertions like "non-owner sees no menu" pass trivially on broken code, so only the presence-assertions actually guard anything.
 - After parent-page `getUserMedia` warm-up for Element Call, stop tracks immediately; iframe acquires its own media. Also clear `__preRequestedMediaStream` in `endCall`/`rejectCall`.
+- Weblate FetchBackend `parse` must merge **Weblate first, bundle last**. `_.merge(bundle, weblate)` lets a stale Weblate file undo complete fr/ru/ti/tr catalogues and put English/German back on signup (#1154).
 
 ## Open failures
 
@@ -32,6 +33,7 @@
 
 ## Last session
 
+- 2026-08-30: #1154 remaining signup mix after #1164/#1170/#1227. Root cause is not missing JSON — Weblate overlay overwrote the bundle, PreselectedTopic used API German titles, and signup chrome passed German `defaultValue`s. Three stacked PRs: `cursor/1154/weblate-bundle-wins`, `cursor/1154/preselected-topic-locale`, `cursor/1154/registration-german-fallbacks`. Gate: `test:unit` 3635 PASS, `lint:scripts` PASS, local only. Follow-ups: API age labels, Ukrainian UI locale. Scan on issue comment 5468992934.
 - 2026-08-27: #1189 follow-up — first Job 2 commit was a no-op (menu in the main return; group rows early-return). Fixed by extracting `SessionListItemMenu`, wiring it into both branches, and adding render-level tests. Red proven by emptying the group cell: tests 1–2 fail, 3–4 stay green. Verifier's remaining robustness nit recorded in code: Overlay/LegalLinkModal/DeleteSession live only in the main return, so widening group-row flags without moving those would be a silent no-op. PR #1205 ready for review against `pre-dev` (local only). Gate: `test:unit` 3462 PASS, `lint:scripts` PASS, `build` PASS, `lint:style` FAIL on pre-existing SCSS only.
 - 2026-08-26: #1189 — Job 1 (Create Chat hidden on dev) confirmed as a tenant-seed config issue outside this repo (ORISO-Helm#326), no frontend change; evidence commented on the issue. Job 2 implemented: `showChatSettings` in `chatroomSettingsMenu.ts` plus the list-row menu entry mirroring `SessionMenu`. Gate: `test:unit` 3449 PASS, `lint:scripts` PASS, `build` PASS, `lint:style` FAIL on pre-existing SCSS only. Next step: reviewer verification on an environment where the tenant flag is enabled.
 - 2026-08-02: Camera activation bug — fixed orphaned `__preRequestedMediaStream` on Element Call path (`callMediaStreamCleanup` + SessionMenu/CallManager/widgets). Local leak repro PASS; full predev E2E blocked by 2FA.

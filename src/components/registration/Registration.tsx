@@ -351,11 +351,7 @@ export const Registration = () => {
 		() =>
 			footerChips.map((chip) => ({
 				...chip,
-				// House rule: mandatory UI text carries its German fallback, so
-				// a missing catalogue entry can never surface the raw key —
-				// here it would become the chip's accessible name.
 				deleteAriaLabel: t('registration.selection.remove', {
-					defaultValue: '{{label}} entfernen',
 					label: chip.label
 				})
 			})),

@@ -31,13 +31,11 @@ export const CompactStepRow = ({
 	// `stepbar.of` was translated as a standalone word ("с сайта", "itibaren").
 	const longForm = t('registration.stepper.progress', {
 		current,
-		total,
-		defaultValue: 'Schritt {{current}} von {{total}}'
+		total
 	});
 	const shortForm = t('registration.stepper.progressShort', {
 		current,
-		total,
-		defaultValue: 'Schritt {{current}}/{{total}}'
+		total
 	});
 
 	return (
