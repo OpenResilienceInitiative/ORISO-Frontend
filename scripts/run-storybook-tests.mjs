@@ -30,14 +30,31 @@ export const storybookVitestArgs = [
 const hasTestFailure = (output) =>
 	TEST_FAILURE_SIGNATURES.some((signature) => signature.test(output));
 
+/*
+ * `outputTruncated` deliberately does NOT gate the retry.
+ *
+ * It used to, on the reasoning that a truncated log "can have removed an
+ * earlier failure". It cannot: `failureDetected` is latched in `forwardOutput`
+ * against the rolling window (retained tail + the arriving chunk) on every
+ * `data` event, so every FAIL / `Tests n failed` / AssertionError line is
+ * scanned at the moment it streams — truncation only ever discards text that
+ * has already been examined. A chunk is far smaller than MAX_CAPTURED_OUTPUT,
+ * so the retained tail also heals signatures that straddle a chunk boundary.
+ *
+ * Gating on it made the retry unreachable in CI: the Storybook run emits
+ * thousands of "Module … has been externalized for browser compatibility"
+ * lines, so every run crosses MAX_CAPTURED_OUTPUT and latches `outputTruncated`
+ * true. A browser-disconnect abort — 863/863 tests passed, 18 of 171 files
+ * never reached — therefore failed the job outright instead of being retried
+ * (ORISO-Frontend#1233 CI run 33470719328).
+ */
 export const shouldRetryStorybookRun = (
 	code,
 	capturedOutput,
-	{ failureDetected = false, outputTruncated = false } = {}
+	{ failureDetected = false } = {}
 ) =>
 	code !== 0 &&
 	!failureDetected &&
-	!outputTruncated &&
 	capturedOutput.includes(BROWSER_DISCONNECT_SIGNATURE) &&
 	!hasTestFailure(capturedOutput);
 
@@ -102,7 +119,10 @@ const main = async () => {
 
 		attempt += 1;
 		console.warn(
-			`Vitest lost its Storybook browser connection; retrying the suite (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).`
+			`Vitest lost its Storybook browser connection; retrying the suite (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).` +
+				(lastRun.outputTruncated
+					? ' Captured output was truncated; failures were scanned live as the run streamed.'
+					: '')
 		);
 		await sleep(RETRY_COOLDOWN_MS);
 		lastRun = await runStorybookTests();
