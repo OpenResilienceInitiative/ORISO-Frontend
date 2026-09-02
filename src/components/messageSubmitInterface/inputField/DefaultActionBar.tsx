@@ -67,23 +67,16 @@ export const DefaultActionBar = ({
 }: DefaultActionBarProps) => (
 	<div className="composerToolbar composerToolbar--default">
 		<ToolbarButton
-			label={translate(
-				'message.submit.toolbar.openTools',
-				'Back to full editor tools'
-			)}
+			label={translate('message.submit.toolbar.openTools')}
 			onClick={onOpenTools}
 		>
 			<TextFormatIcon />
 		</ToolbarButton>
 		{showMic && (
 			<ToolbarButton
-				label={translate(
-					'message.submit.toolbar.voiceRecording.label',
-					'Voice recording'
-				)}
+				label={translate('message.submit.toolbar.voiceRecording.label')}
 				title={translate(
-					'message.submit.toolbar.voiceRecording.tooltip',
-					'Record voice message'
+					'message.submit.toolbar.voiceRecording.tooltip'
 				)}
 				onClick={onMicClick}
 				selected={isRecording}
@@ -92,7 +85,7 @@ export const DefaultActionBar = ({
 			</ToolbarButton>
 		)}
 		<ToolbarButton
-			label={translate('message.submit.toolbar.emoji', 'Emoji panel')}
+			label={translate('message.submit.toolbar.emoji')}
 			onClick={onEmojiClick}
 			selected={isEmojiOpen}
 			expanded={isEmojiOpen}
@@ -101,17 +94,14 @@ export const DefaultActionBar = ({
 			<AddReactionOutlinedIcon fontSize="inherit" />
 		</ToolbarButton>
 		<ToolbarButton
-			label={translate('message.submit.toolbar.mention', 'Mention')}
+			label={translate('message.submit.toolbar.mention')}
 			onClick={onMentionClick}
 		>
 			<AlternateEmailIcon fontSize="inherit" />
 		</ToolbarButton>
 		{showAttachment && (
 			<ToolbarButton
-				label={translate(
-					'message.submit.toolbar.attachment',
-					'Add attachment'
-				)}
+				label={translate('message.submit.toolbar.attachment')}
 				onClick={onAttachmentClick}
 			>
 				<AddIcon fontSize="inherit" />
@@ -121,8 +111,7 @@ export const DefaultActionBar = ({
 			label={translate(
 				isExpanded
 					? 'message.submit.toolbar.minimize'
-					: 'message.submit.toolbar.maximize',
-				isExpanded ? 'Minimize editor' : 'Maximize editor'
+					: 'message.submit.toolbar.maximize'
 			)}
 			onClick={onExpandToggle}
 		>

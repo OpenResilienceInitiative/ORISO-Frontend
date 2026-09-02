@@ -5,9 +5,25 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationChoiceCard } from './NotificationChoiceCard';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'erstantwort.notificationChoice.email':
+				'Schreiben Sie mir eine E-Mail',
+			'erstantwort.notificationChoice.emailHint':
+				'Was Sie hier besprechen, steht nie in dieser E-Mail.',
+			'erstantwort.notificationChoice.browser':
+				'Geben Sie mir hier ein Signal',
+			'erstantwort.notificationChoice.browserHint':
+				'Ohne Adresse — funktioniert aber nur auf diesem Gerät.',
+			'erstantwort.notificationChoice.both':
+				'Beides, und Passwort jetzt selbst festlegen',
+			'erstantwort.notificationChoice.bothHint':
+				'Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 describe('NotificationChoiceCard (#825 post-dispatch)', () => {

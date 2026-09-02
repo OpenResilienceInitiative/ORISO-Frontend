@@ -88,7 +88,7 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 				className="saveCredentialsCard__label"
 				htmlFor="erstantwortUserName"
 			>
-				{t('erstantwort.saveCredentials.userNameLabel', 'Anmeldename')}
+				{t('erstantwort.saveCredentials.userNameLabel')}
 			</label>
 
 			<div className="saveCredentialsCard__row">
@@ -109,7 +109,7 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 					className="saveCredentialsCard__copy"
 					onClick={copy}
 				>
-					{t('erstantwort.saveCredentials.copy', 'Kopieren')}
+					{t('erstantwort.saveCredentials.copy')}
 				</button>
 			</div>
 
@@ -122,22 +122,13 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 				aria-live="polite"
 			>
 				{copyState === 'copied' &&
-					t(
-						'erstantwort.saveCredentials.copied',
-						'Anmeldename kopiert.'
-					)}
+					t('erstantwort.saveCredentials.copied')}
 				{copyState === 'failed' &&
-					t(
-						'erstantwort.saveCredentials.copyFailed',
-						'Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand.'
-					)}
+					t('erstantwort.saveCredentials.copyFailed')}
 			</p>
 
 			<p className="saveCredentialsCard__warning">
-				{t(
-					'erstantwort.saveCredentials.sharedDevice',
-					'Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.'
-				)}
+				{t('erstantwort.saveCredentials.sharedDevice')}
 			</p>
 
 			<button
@@ -145,10 +136,7 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 				className="saveCredentialsCard__setPassword"
 				onClick={() => navigate(TWO_FACTOR_SETTINGS_PATH)}
 			>
-				{t(
-					'erstantwort.saveCredentials.setPassword',
-					'Passwort jetzt setzen'
-				)}
+				{t('erstantwort.saveCredentials.setPassword')}
 			</button>
 		</div>
 	);

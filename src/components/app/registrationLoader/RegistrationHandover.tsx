@@ -139,7 +139,7 @@ export const RegistrationHandover = ({
 								color: registrationMd3.primary
 							}}
 						>
-							{t('registration.handover.badge', 'Registriert')}
+							{t('registration.handover.badge')}
 						</Typography>
 					</Box>
 					<Typography
@@ -153,7 +153,7 @@ export const RegistrationHandover = ({
 							fontWeight: 700
 						}}
 					>
-						{t('registration.handover.headline', 'Geschafft.')}
+						{t('registration.handover.headline')}
 					</Typography>
 					<Typography
 						sx={{
@@ -163,10 +163,7 @@ export const RegistrationHandover = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{t(
-							'registration.handover.subline',
-							'So geht es weiter:'
-						)}
+						{t('registration.handover.subline')}
 					</Typography>
 				</Box>
 
@@ -203,10 +200,7 @@ export const RegistrationHandover = ({
 						sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
 					/>
 					<Typography component="span" sx={{ fontSize: 'inherit' }}>
-						{t(
-							'registration.handover.encryption',
-							'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
-						)}
+						{t('registration.handover.encryption')}
 					</Typography>
 				</Box>
 			</Box>

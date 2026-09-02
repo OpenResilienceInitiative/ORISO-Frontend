@@ -60,8 +60,7 @@ export const ErstantwortEmailOverlay: React.FC<
 		content: email,
 		icon: <EnvelopeIcon />,
 		id: 'erstantwortEmail',
-		label:
-			errorText ?? t('furtherSteps.email.overlay.input.label', 'E-mail'),
+		label: errorText ?? t('furtherSteps.email.overlay.input.label'),
 		name: 'email',
 		type: 'text',
 		labelState: errorText ? 'invalid' : labelState
@@ -83,14 +82,8 @@ export const ErstantwortEmailOverlay: React.FC<
 				setLabelState('invalid');
 				setErrorText(
 					reason === X_REASON.EMAIL_NOT_AVAILABLE
-						? t(
-								'furtherSteps.email.overlay.input.unavailable',
-								'This e-mail address is already registered.'
-							)
-						: t(
-								'erstantwort.emailNotification.saveFailed',
-								'Saving failed. Please try again.'
-							)
+						? t('furtherSteps.email.overlay.input.unavailable')
+						: t('erstantwort.emailNotification.saveFailed')
 				);
 			});
 	};
@@ -98,15 +91,12 @@ export const ErstantwortEmailOverlay: React.FC<
 	const successItem: OverlayItem = {
 		buttonSet: [
 			{
-				label: t('furtherSteps.email.overlay.button2.label', 'Close'),
+				label: t('furtherSteps.email.overlay.button2.label'),
 				function: OVERLAY_FUNCTIONS.CLOSE,
 				type: BUTTON_TYPES.PRIMARY
 			}
 		],
-		headline: t(
-			'furtherSteps.email.success.overlay.headline',
-			'Your e-mail address has been saved.'
-		),
+		headline: t('furtherSteps.email.success.overlay.headline'),
 		svg: SuccessIllustration
 	};
 
@@ -114,19 +104,16 @@ export const ErstantwortEmailOverlay: React.FC<
 		buttonSet: [
 			{
 				disabled: !isValid || isSaving,
-				label: t('furtherSteps.email.overlay.button1.label', 'Save'),
+				label: t('furtherSteps.email.overlay.button1.label'),
 				type: BUTTON_TYPES.PRIMARY
 			},
 			{
-				label: t('furtherSteps.email.overlay.button2.label', 'Close'),
+				label: t('furtherSteps.email.overlay.button2.label'),
 				function: OVERLAY_FUNCTIONS.CLOSE,
 				type: BUTTON_TYPES.SECONDARY
 			}
 		],
-		headline: t(
-			'furtherSteps.email.overlay.headline',
-			'Add an e-mail address'
-		),
+		headline: t('furtherSteps.email.overlay.headline'),
 		/* The failure text belongs on the field label, next to the input that
 		   caused it — not duplicated into the overlay copy above it.
 		   The live region is separate and visually hidden: after pressing Save

@@ -6,7 +6,6 @@ import { registrationMd3 } from '../../registration/registrationDesign/registrat
 import {
 	GATE_IS_OPEN,
 	GATE_PROGRESS,
-	GATE_STATUS_FALLBACK,
 	GATE_STATUS_KEY,
 	HandoverGateState
 } from './handoverGate';
@@ -105,7 +104,7 @@ export const HandoverGateButton = ({
 						textOverflow: 'ellipsis'
 					}}
 				>
-					{t('registration.handover.cta', 'Anfrage schreiben')}
+					{t('registration.handover.cta')}
 				</Typography>
 				<Typography
 					component="span"
@@ -121,7 +120,7 @@ export const HandoverGateButton = ({
 						textOverflow: 'ellipsis'
 					}}
 				>
-					{t(GATE_STATUS_KEY[state], GATE_STATUS_FALLBACK[state])}
+					{t(GATE_STATUS_KEY[state])}
 				</Typography>
 			</Box>
 			<Box
