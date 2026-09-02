@@ -11,14 +11,15 @@ import { ErstantwortActionKind } from './erstantwortPayload';
  * carries legal weight (consent must precede data transmission).
  *
  * The `default*` strings are the **platform fallback wording**. They serve
- * three purposes and only three:
+ * two purposes and only two:
  *
- * 1. as the i18n `defaultValue`, so a missing key degrades to real German
- *    rather than to a raw key;
- * 2. so Storybook and the tests can render the full sequence with no backend
+ * 1. so Storybook and the tests can render the full sequence with no backend
  *    (ORISO-Frontend#826);
- * 3. so the client-side triggers (post-dispatch, ORISO-Frontend#825) — which
- *    produce no server event — have wording to render.
+ * 2. so gender-voice and catalogue-shape tests can pin the platform voice
+ *    without going through i18n.
+ *
+ * Production resolve calls `t(key)` only. A missing key must follow the
+ * locale fallback chain (#1154), not snap to these German strings.
  *
  * They are **not** the wording of a delivered Erstantwort. That is frozen into
  * the persisted event by the UserService (ADR-018 §4, ORISO-UserService#926),
