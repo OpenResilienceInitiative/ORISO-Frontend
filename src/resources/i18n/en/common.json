@@ -4157,7 +4157,15 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
-			"title": "Live chat is currently closed"
+			"title": "Live chat is currently closed",
+			"topicLabel": "Requested topic: {{topic}}",
+			"weekdays": {
+				"monday": "Monday",
+				"tuesday": "Tuesday",
+				"wednesday": "Wednesday",
+				"thursday": "Thursday",
+				"friday": "Friday"
+			}
 		},
 		"consent": {
 			"accept": "I agree",

@@ -4239,7 +4239,15 @@
 			"responseTime": "መልሲ ኣብ ውሽጢ 2 ናይ ስራሕ መዓልትታት",
 			"back": "ናብቲ ዝሓለፈ ገጽ ተመለስ",
 			"later": "ደሓር ተመለሱ",
-			"title": "ሕማቕ ኣጋጣሚ ኮይኑ ላይቭ ቻት ኣብዚ እዋን ተዓጽዩ ኣሎ"
+			"title": "ሕማቕ ኣጋጣሚ ኮይኑ ላይቭ ቻት ኣብዚ እዋን ተዓጽዩ ኣሎ",
+			"topicLabel": "ዝተሓተት ርእሰ ጉዳይ: {{topic}}",
+			"weekdays": {
+				"monday": "ሰኑይ",
+				"tuesday": "ሰሉስ",
+				"wednesday": "ረቡዕ",
+				"thursday": "ሓሙስ",
+				"friday": "ዓርቢ"
+			}
 		}
 	},
 	"sessionHeader": {

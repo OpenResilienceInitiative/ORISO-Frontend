@@ -47,14 +47,8 @@ export const KeyBackupRecoveryDialog = ({
 		} catch (recoverError) {
 			setError(
 				recoverError instanceof InvalidRecoveryKeyError
-					? translate(
-							'encryption.keyBackup.dialog.invalidKey',
-							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
-						)
-					: translate(
-							'encryption.keyBackup.dialog.error',
-							'Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-						)
+					? translate('encryption.keyBackup.dialog.invalidKey')
+					: translate('encryption.keyBackup.dialog.error')
 			);
 		} finally {
 			setBusy(false);
@@ -65,10 +59,7 @@ export const KeyBackupRecoveryDialog = ({
 		<OrisoDialog
 			open
 			onClose={onClose}
-			title={translate(
-				'encryption.keyBackup.dialog.recoveryTitle',
-				'Schön, dass Sie wieder da sind'
-			)}
+			title={translate('encryption.keyBackup.dialog.recoveryTitle')}
 			icon={<RecoverySafeIcon />}
 			maxWidth="560px"
 			height="auto"
@@ -78,24 +69,15 @@ export const KeyBackupRecoveryDialog = ({
 				className="keyBackupDialog"
 				data-cy="key-backup-recovery-dialog"
 			>
+				<p>{translate('encryption.keyBackup.dialog.recoveryCopy')}</p>
 				<p>
 					{translate(
-						'encryption.keyBackup.dialog.recoveryCopy',
-						'Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.'
-					)}
-				</p>
-				<p>
-					{translate(
-						'encryption.keyBackup.dialog.recoveryInstruction',
-						'Geben Sie Ihren Ersatzschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
+						'encryption.keyBackup.dialog.recoveryInstruction'
 					)}
 				</p>
 				<label className="keyBackupDialog__field">
 					<span>
-						{translate(
-							'encryption.keyBackup.dialog.keyLabel',
-							'Ersatzschlüssel'
-						)}
+						{translate('encryption.keyBackup.dialog.keyLabel')}
 					</span>
 					<input
 						type="text"
@@ -118,10 +100,7 @@ export const KeyBackupRecoveryDialog = ({
 						onClick={onClose}
 						disabled={busy}
 					>
-						{translate(
-							'encryption.keyBackup.dialog.later',
-							'Später'
-						)}
+						{translate('encryption.keyBackup.dialog.later')}
 					</button>
 					<button
 						type="button"
@@ -130,13 +109,9 @@ export const KeyBackupRecoveryDialog = ({
 						disabled={!recoveryKey.trim() || busy}
 					>
 						{busy
-							? translate(
-									'encryption.keyBackup.dialog.restoring',
-									'Wird wiederhergestellt …'
-								)
+							? translate('encryption.keyBackup.dialog.restoring')
 							: translate(
-									'encryption.keyBackup.dialog.openVault',
-									'Tresor öffnen'
+									'encryption.keyBackup.dialog.openVault'
 								)}
 					</button>
 				</div>

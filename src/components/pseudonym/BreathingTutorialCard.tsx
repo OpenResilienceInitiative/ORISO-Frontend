@@ -222,40 +222,22 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 		}
 	> = {
 		inhale: {
-			bubble: t(
-				'session.waitingMiniGame.tutorialCard.inhale.bubble',
-				'You need to 3 things, to win.'
-			),
+			bubble: t('session.waitingMiniGame.tutorialCard.inhale.bubble'),
 			icon: <PhaseInhaleIcon />,
-			label: t('session.waitingMiniGame.phase.inhale', 'Inhale'),
-			subtitle: t(
-				'session.waitingMiniGame.tutorialCard.inhale.subtitle',
-				'through your nose'
-			)
+			label: t('session.waitingMiniGame.phase.inhale'),
+			subtitle: t('session.waitingMiniGame.tutorialCard.inhale.subtitle')
 		},
 		hold: {
-			bubble: t(
-				'session.waitingMiniGame.tutorialCard.hold.bubble',
-				'You need to 3 things, to win.'
-			),
+			bubble: t('session.waitingMiniGame.tutorialCard.hold.bubble'),
 			icon: <PhaseHoldIcon />,
-			label: t('session.waitingMiniGame.phase.hold', 'Hold'),
-			subtitle: t(
-				'session.waitingMiniGame.tutorialCard.hold.subtitle',
-				'your breath'
-			)
+			label: t('session.waitingMiniGame.phase.hold'),
+			subtitle: t('session.waitingMiniGame.tutorialCard.hold.subtitle')
 		},
 		exhale: {
-			bubble: t(
-				'session.waitingMiniGame.tutorialCard.exhale.bubble',
-				'You need to 3 things, to win.'
-			),
+			bubble: t('session.waitingMiniGame.tutorialCard.exhale.bubble'),
 			icon: <PhaseExhaleIcon />,
-			label: t('session.waitingMiniGame.phase.exhale', 'Exhale'),
-			subtitle: t(
-				'session.waitingMiniGame.tutorialCard.exhale.subtitle',
-				'through your mouth'
-			)
+			label: t('session.waitingMiniGame.phase.exhale'),
+			subtitle: t('session.waitingMiniGame.tutorialCard.exhale.subtitle')
 		}
 	};
 
@@ -285,8 +267,7 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
 							{t(
-								'session.waitingMiniGame.tutorialCard.carimatSubtitle',
-								'Lets bridge your waiting time'
+								'session.waitingMiniGame.tutorialCard.carimatSubtitle'
 							)}
 						</span>
 					</div>
@@ -317,10 +298,7 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 				>
 					<RejectXIcon />
 					<span>
-						{t(
-							'session.waitingMiniGame.tutorialCard.cancel',
-							'cancel'
-						)}
+						{t('session.waitingMiniGame.tutorialCard.cancel')}
 					</span>
 				</button>
 				<button
@@ -330,10 +308,7 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 				>
 					<AcceptCheckIcon />
 					<span>
-						{t(
-							'session.waitingMiniGame.tutorialCard.confirm',
-							'Got it, lets start'
-						)}
+						{t('session.waitingMiniGame.tutorialCard.confirm')}
 					</span>
 				</button>
 			</div>

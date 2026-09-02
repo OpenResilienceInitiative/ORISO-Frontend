@@ -8,7 +8,7 @@ export const ActivityTimelineEmptyState = () => {
 	return (
 		<EmptyState
 			className="notificationsCenter__fullEmptyState"
-			headline={t('notifications.center.empty', 'No notifications yet.')}
+			headline={t('notifications.center.empty')}
 			variant="conversation-nothing-to-do"
 		/>
 	);

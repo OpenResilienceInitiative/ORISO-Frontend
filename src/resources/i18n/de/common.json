@@ -4255,7 +4255,15 @@
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
 			"later": "Später wiederkommen",
-			"title": "Live-Chat ist zurzeit leider geschlossen"
+			"title": "Live-Chat ist zurzeit leider geschlossen",
+			"topicLabel": "Angefragtes Thema: {{topic}}",
+			"weekdays": {
+				"monday": "Montag",
+				"tuesday": "Dienstag",
+				"wednesday": "Mittwoch",
+				"thursday": "Donnerstag",
+				"friday": "Freitag"
+			}
 		}
 	},
 	"sessionHeader": {
