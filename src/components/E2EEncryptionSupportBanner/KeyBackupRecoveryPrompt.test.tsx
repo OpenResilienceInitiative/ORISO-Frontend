@@ -22,7 +22,18 @@ const USER_ID = '@abe.simpson:oriso.org';
 const GENERATED_KEY = 'EsTc 1111 2222 3333 4444';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (_key: string, def?: string) => def ?? _key })
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'encryption.keyBackup.dialog.recoveryCopy':
+				'Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.',
+			'encryption.keyBackup.dialog.keyLabel': 'Ersatzschlüssel',
+			'encryption.keyBackup.dialog.openVault': 'Tresor öffnen',
+			'encryption.keyBackup.dialog.later': 'Später'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('../../resources/img/icons/recovery-safe.svg', () => ({
