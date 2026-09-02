@@ -43,6 +43,22 @@ const localStorageMock = {
 	)
 };
 
+const setAuthenticatedSubject = (
+	subject: string,
+	expiresAtMs: number = Date.now() + 60 * 60 * 1000
+) => {
+	const payload = btoa(
+		JSON.stringify({
+			exp: Math.floor(expiresAtMs / 1000),
+			sub: subject
+		})
+	)
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=+$/g, '');
+	localStorage.setItem('auth.keycloak', `e30.${payload}.signature`);
+};
+
 beforeEach(() => {
 	storage.clear();
 	Object.defineProperty(window, 'localStorage', {
@@ -69,6 +85,7 @@ describe('persistMatrixLoginData', () => {
 	it('persists refreshed Matrix credentials and expiry metadata', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-26T00:00:00.000Z'));
+		setAuthenticatedSubject('keycloak-user');
 
 		persistMatrixLoginData({
 			accessToken: 'matrix-token',
@@ -94,6 +111,9 @@ describe('persistMatrixLoginData', () => {
 		).toBe('ORISO_WEB_TEST_DEVICE');
 		expect(localStorage.getItem('matrix_token_expires_at')).toBe(
 			(Date.parse('2026-06-26T00:00:00.000Z') + 3_300_000).toString()
+		);
+		expect(localStorage.getItem('matrix_session_subject')).toBe(
+			'keycloak-user'
 		);
 	});
 });
@@ -124,6 +144,308 @@ describe('getMatrixAccessToken', () => {
 		await expect(getMatrixAccessToken()).rejects.toThrow('MATRIX_DISABLED');
 
 		expect(fetchData).not.toHaveBeenCalled();
+	});
+
+	it('reuses unexpired device credentials without another backend bootstrap', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-26T12:00:00.000Z'));
+		setAuthenticatedSubject('keycloak-user');
+		localStorage.setItem('matrix_access_token', 'persisted-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+
+		await expect(getMatrixAccessToken()).resolves.toEqual({
+			accessToken: 'persisted-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 20 * 60 * 1000,
+			homeserverUrl: 'https://matrix.example.test',
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		expect(fetchData).not.toHaveBeenCalled();
+	});
+
+	it('does not reuse credentials from another authenticated subject', async () => {
+		setAuthenticatedSubject('current-keycloak-user');
+		localStorage.setItem('matrix_access_token', 'other-user-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@other-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'other-keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'current-user-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@current-user:matrix.example.test'
+		});
+
+		await expect(getMatrixAccessToken()).resolves.toEqual(
+			expect.objectContaining({
+				accessToken: 'current-user-token',
+				userId: '@current-user:matrix.example.test'
+			})
+		);
+
+		expect(fetchData).toHaveBeenCalledOnce();
+	});
+
+	it('does not reuse credentials after the platform session expired', async () => {
+		setAuthenticatedSubject('keycloak-user', Date.now() - 1000);
+		localStorage.setItem('matrix_access_token', 'persisted-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		await expect(getMatrixAccessToken()).resolves.toEqual(
+			expect.objectContaining({ accessToken: 'replacement-token' })
+		);
+
+		expect(fetchData).toHaveBeenCalledOnce();
+	});
+
+	it('does not reuse credentials for a malformed platform token', async () => {
+		localStorage.setItem('auth.keycloak', 'not-a-jwt');
+		localStorage.setItem('matrix_access_token', 'persisted-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		await expect(getMatrixAccessToken()).resolves.toEqual(
+			expect.objectContaining({ accessToken: 'replacement-token' })
+		);
+
+		expect(fetchData).toHaveBeenCalledOnce();
+	});
+
+	it('does not reuse credentials inside the refresh safety window', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-26T12:00:00.000Z'));
+		setAuthenticatedSubject('keycloak-user');
+		localStorage.setItem('matrix_access_token', 'nearly-expired-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 2 * 60 * 1000).toString()
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		await expect(getMatrixAccessToken()).resolves.toEqual({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			homeserverUrl: 'https://matrix.example.test',
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		expect(fetchData).toHaveBeenCalledOnce();
+	});
+
+	it('forces a backend bootstrap after Matrix invalidates a cached token', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		localStorage.setItem('matrix_access_token', 'invalidated-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		await expect(
+			getMatrixAccessToken({
+				forceRefresh: true
+			})
+		).resolves.toEqual({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			homeserverUrl: 'https://matrix.example.test',
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		expect(fetchData).toHaveBeenCalledOnce();
+	});
+
+	it('shares one backend bootstrap between 50 concurrent callers', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		let resolveBootstrap:
+			| ((value: Record<string, unknown>) => void)
+			| undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				resolveBootstrap = resolve;
+			}) as ReturnType<typeof fetchData>
+		);
+
+		const concurrentBootstraps = Array.from({ length: 50 }, () =>
+			getMatrixAccessToken()
+		);
+
+		expect(fetchData).toHaveBeenCalledOnce();
+
+		resolveBootstrap?.({
+			accessToken: 'shared-token',
+			deviceId: 'ORISO_WEB_SHARED_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@shared-user:matrix.example.test'
+		});
+
+		const results = await Promise.all(concurrentBootstraps);
+		expect(results).toHaveLength(50);
+		expect(
+			results.every(
+				(result) =>
+					result.accessToken === 'shared-token' &&
+					result.deviceId === 'ORISO_WEB_SHARED_DEVICE'
+			)
+		).toBe(true);
+	});
+
+	it('does not share an in-flight bootstrap across authenticated subjects', async () => {
+		setAuthenticatedSubject('first-keycloak-user');
+		let resolveFirstBootstrap:
+			| ((value: Record<string, unknown>) => void)
+			| undefined;
+		vi.mocked(fetchData)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFirstBootstrap = resolve;
+				}) as ReturnType<typeof fetchData>
+			)
+			.mockResolvedValueOnce({
+				accessToken: 'second-user-token',
+				deviceId: 'ORISO_WEB_SECOND_DEVICE',
+				expiresInMs: 3_300_000,
+				userId: '@second-user:matrix.example.test'
+			});
+
+		const firstBootstrap = getMatrixAccessToken();
+		setAuthenticatedSubject('second-keycloak-user');
+		const secondBootstrap = getMatrixAccessToken();
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+		await expect(secondBootstrap).resolves.toEqual(
+			expect.objectContaining({
+				accessToken: 'second-user-token',
+				userId: '@second-user:matrix.example.test'
+			})
+		);
+
+		resolveFirstBootstrap?.({
+			accessToken: 'first-user-token',
+			deviceId: 'ORISO_WEB_FIRST_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@first-user:matrix.example.test'
+		});
+		await expect(firstBootstrap).resolves.toEqual(
+			expect.objectContaining({
+				accessToken: 'first-user-token',
+				userId: '@first-user:matrix.example.test'
+			})
+		);
+	});
+
+	it('joins an in-flight forced refresh instead of reusing its invalidated token', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		localStorage.setItem('matrix_access_token', 'invalidated-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@persisted-user:matrix.example.test'
+		);
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
+		localStorage.setItem('matrix_session_subject', 'keycloak-user');
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + 20 * 60 * 1000).toString()
+		);
+		let resolveBootstrap:
+			| ((value: Record<string, unknown>) => void)
+			| undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				resolveBootstrap = resolve;
+			}) as ReturnType<typeof fetchData>
+		);
+
+		const forcedRefresh = getMatrixAccessToken({
+			forceRefresh: true
+		});
+		const concurrentBootstrap = getMatrixAccessToken();
+
+		expect(fetchData).toHaveBeenCalledOnce();
+
+		resolveBootstrap?.({
+			accessToken: 'replacement-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			expiresInMs: 3_300_000,
+			userId: '@persisted-user:matrix.example.test'
+		});
+
+		await expect(
+			Promise.all([forcedRefresh, concurrentBootstrap])
+		).resolves.toEqual([
+			expect.objectContaining({ accessToken: 'replacement-token' }),
+			expect.objectContaining({ accessToken: 'replacement-token' })
+		]);
 	});
 
 	it('loads Matrix credentials from the API and uses the response device id', async () => {
