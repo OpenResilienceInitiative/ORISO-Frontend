@@ -1319,10 +1319,16 @@
 			},
 			"back": "Zurück",
 			"confirm": "Verstanden",
+			"loading": "Der Rechtstext wird geladen …",
 			"missing": {
 				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
 				"link": "Zur hinterlegten Adresse"
 			}
+		},
+		"reader": {
+			"chapters": "Kapitel dieses Dokuments",
+			"fullscreen": "Im Vollbild lesen",
+			"exitFullscreen": "Vollbild verlassen"
 		}
 	},
 	"login": {
@@ -1348,8 +1354,8 @@
 				"impressum": "Impressum"
 			},
 			"platform": {
-				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie Sie den Betreiber erreichen, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die sehen Sie, sobald Sie eine gewählt haben.",
-				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.",
+				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht das veröffentlichte Impressum. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nBetreiber der Plattform: [Name und Rechtsform]. Sitz: [Anschrift]. Vertreten durch: [vertretungsberechtigte Personen]. Registereintrag: [Registergericht und Registernummer]. Umsatzsteuer-Identifikationsnummer: [USt-IdNr.]. Kontakt: [E-Mail-Adresse], [Telefonnummer].\n\nDie Beratung leistet der Plattformbetreiber nicht. Auf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche; getragen werden sie von eigenständigen Trägern und deren Beratungsstellen. Diese sind für die Beratung selbst verantwortlich und haben ein eigenes Impressum. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und vermittelt Ihre Anfrage an die zuständige Beratungsstelle.\n\nDas Impressum Ihrer Beratungsstelle sehen Sie, sobald Sie eine gewählt haben.",
+				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht die veröffentlichte Datenschutzerklärung. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nVerantwortlich für die Plattform: [Name, Rechtsform, Anschrift]. Datenschutzbeauftragte Stelle: [Name, Kontakt]. Zuständige Aufsicht: [Name und Anschrift der Aufsichtsbehörde].\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Beratungsinhalte kann der Plattformbetreiber technisch nicht einsehen.\n\nAuf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche. Die Beratung leisten eigenständige Träger und deren Beratungsstellen; die Daten Ihrer Beratung verarbeiten sie überwiegend selbst und in eigener Verantwortung. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und übernimmt die Weiterleitung beziehungsweise Vermittlung Ihrer Anfrage. Wo beide gemeinsam über Zwecke und Mittel entscheiden, geschieht das in gemeinsamer Verantwortlichkeit; wer welche Pflicht erfüllt, regelt die Vereinbarung zwischen Plattformbetreiber und Träger.\n\nWelche Daten Ihre Beratungsstelle darüber hinaus verarbeitet, steht in ihrer eigenen Datenschutzerklärung. Die sehen Sie, bevor Sie Ihre erste Nachricht schreiben.\n\nIhre Rechte: Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerspruch und Beschwerde bei der Aufsichtsbehörde. Wenden Sie sich dafür an [Kontaktweg für Betroffenenanfragen].",
 				"fullText": "Vollständigen Text öffnen"
 			}
 		},
@@ -4672,5 +4678,11 @@
 		"friday": "Freitag",
 		"saturday": "Samstag",
 		"sunday": "Sonntag"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Vorherige Kapitel anzeigen",
+			"next": "Weitere Kapitel anzeigen"
+		}
 	}
 }

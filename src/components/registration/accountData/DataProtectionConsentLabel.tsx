@@ -136,5 +136,11 @@ export const DataProtectionConsentLabel: FC<
 		);
 	}
 
-	return <ConsentSentence consentText={effectiveResolution.consentText} />;
+	return (
+		<ConsentSentence
+			consentText={effectiveResolution.consentText}
+			agency={agency}
+			topic={topic}
+		/>
+	);
 };

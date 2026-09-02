@@ -34,17 +34,17 @@ test('does not retry ordinary test failures or successful runs', () => {
 	assert.equal(shouldRetryStorybookRun(0, disconnect), false);
 });
 
-test('does not retry after truncation can have removed an earlier failure', () => {
-	assert.equal(
-		shouldRetryStorybookRun(1, disconnect, {
-			failureDetected: true,
-			outputTruncated: true
-		}),
-		false
-	);
+test('still retries a disconnect when captured output was truncated', () => {
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
 			failureDetected: false,
+			outputTruncated: true
+		}),
+		true
+	);
+	assert.equal(
+		shouldRetryStorybookRun(1, disconnect, {
+			failureDetected: true,
 			outputTruncated: true
 		}),
 		false

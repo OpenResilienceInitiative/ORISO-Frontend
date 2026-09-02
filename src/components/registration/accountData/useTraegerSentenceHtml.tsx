@@ -12,6 +12,7 @@ import {
 } from '../../../utils/legalContent';
 import {
 	stripLegalLinksToken,
+	substituteConsentContext,
 	substituteLegalLinks
 } from '../../../utils/consentText';
 
@@ -92,9 +93,18 @@ export interface TraegerSentence {
 	lang: string;
 }
 
+export interface ConsentContext {
+	/** Beratungsstelle name — substituted for `{{Beratungsstelle}}` when the server left it raw (issue #1263). */
+	agencyName?: string;
+	/** Thema name — substituted for `{{Thema}}` on the same defensive path. */
+	topicName?: string;
+}
+
 export const useTraegerSentenceHtml = (
-	consentText: ConsentTextData | null
+	consentText: ConsentTextData | null,
+	context: ConsentContext = {}
 ): TraegerSentence | null => {
+	const { agencyName, topicName } = context;
 	const { t, i18n } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -123,13 +133,24 @@ export const useTraegerSentenceHtml = (
 		}
 		// The sentence may arrive as the same language->HTML map the other
 		// legal texts use, or as plain HTML. `resolveLegalContent` handles both.
-		const resolved = resolveLegalContent(
+		const resolvedRaw = resolveLegalContent(
 			consentText.sentence,
 			normalizeLegalLang(i18n?.language)
 		);
-		if (!resolved) {
+		if (!resolvedRaw) {
 			return null;
 		}
+		/* Fill `{{Beratungsstelle}}` and `{{Thema}}` client-side as a defensive
+		   fallback for the server: ADR-021 decision 5 assigns them to
+		   AgencyService, but `GET /agencies/{id}/topics/{tid}/legal` still
+		   returns them raw (issue #1263). A no-op once the server catches up. */
+		const resolved = {
+			...resolvedRaw,
+			html: substituteConsentContext(resolvedRaw.html, {
+				agencyName,
+				topicName
+			})
+		};
 		/* Does the TRÄGER's own wording survive the allowlist? The mandatory
 		   `{{legal_links}}` token is removed first: it is the platform's
 		   requirement, not authored wording, so a "sentence" consisting only of
@@ -181,5 +202,5 @@ export const useTraegerSentenceHtml = (
 			originalLang: resolved.originalLang,
 			lang: resolved.lang
 		};
-	}, [consentText, i18n?.language, legalLinksHtml]);
+	}, [consentText, i18n?.language, legalLinksHtml, agencyName, topicName]);
 };
