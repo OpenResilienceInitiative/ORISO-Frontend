@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./fetchData', () => ({
 	fetchData: vi.fn(),
 	FETCH_METHODS: { GET: 'GET' },
 	FETCH_ERRORS: { NO_MATCH: 'NO_MATCH', CATCH_ALL: 'CATCH_ALL' }
+}));
+
+vi.mock('../resources/scripts/endpoints', () => ({
+	endpoints: {
+		agencyDepartmentLegal: (agencyId: number, topicId: number) =>
+			`https://api.test.local/service/agencies/${agencyId}/topics/${topicId}/legal`
+	}
 }));
 
 /* eslint-disable-next-line import/first -- must load after the vi.mock above. */
@@ -13,9 +20,15 @@ import {
 	normalizeConsentTextResponse
 } from './apiGetConsentText';
 /* eslint-disable-next-line import/first */
+import { clearDepartmentLegalCache } from './apiGetDepartmentLegal';
+/* eslint-disable-next-line import/first */
 import { fetchData, FETCH_ERRORS } from './fetchData';
 
-afterEach(() => vi.clearAllMocks());
+beforeEach(() => clearDepartmentLegalCache());
+afterEach(() => {
+	clearDepartmentLegalCache();
+	vi.clearAllMocks();
+});
 
 /**
  * Pinned against the response ORISO-AgencyService#256 actually serves:

@@ -1,5 +1,8 @@
-import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	DepartmentLegalData,
+	getCachedDepartmentLegalOutcome,
+	normalizeDepartmentLegalResponse
+} from './apiGetDepartmentLegal';
 
 /**
  * ============================================================================
@@ -11,8 +14,9 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
  *   { "dpp":     { "content", "consentText", "sourceLevel", "versionId" },
  *     "imprint": { "content", "consentText", "sourceLevel", "versionId" } }
  *
- * Everything this frontend assumes about the wire shape lives in this module
- * and nowhere else, so aligning with the backend never reaches a component.
+ * Everything this frontend assumes about the wire shape lives in
+ * `apiGetDepartmentLegal.normalizeDepartmentLegalResponse` and here, so
+ * aligning with the backend never reaches a component.
  *
  * What ADR-021 fixes and this relies on:
  *
@@ -43,6 +47,13 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
  * `sourceLevel` is served and deliberately not read: nothing renders it yet,
  * and a field parsed into a type but never used is exactly how `renderedPrivacy`
  * came to hide a defect in this same flow.
+ *
+ * ORISO-Frontend#1182: this function now reads from the shared
+ * department-legal cache (`getCachedDepartmentLegalOutcome`) so
+ * `DataProtectionConsentLabel` and `DepartmentLegalSection` on the same
+ * registration screen no longer issue two independent requests and cannot
+ * disagree on the snapshot. The fail-closed distinction (`ok + null` vs
+ * `unavailable`) is preserved end-to-end by the discriminated cache outcome.
  */
 
 export interface ConsentTextData {
@@ -63,42 +74,43 @@ export interface ConsentTextData {
 	versionId: number | null;
 }
 
-const asNonEmptyString = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() !== '' ? value : null;
-
-const asVersionId = (value: unknown): number | null =>
-	typeof value === 'number' && Number.isFinite(value) ? value : null;
+/**
+ * Derives the consent sentence from an already-normalized department-legal
+ * payload. Returns `null` whenever no sentence is configured — the normal
+ * case today, which must render exactly the pre-#250 registration.
+ *
+ * Kept as a pure function so the wire shape is interpreted in exactly one
+ * place: `apiGetDepartmentLegal.normalizeDepartmentLegalResponse` maps the
+ * response, and this reads the consent sentence off that typed object.
+ */
+export const deriveConsentText = (
+	data: DepartmentLegalData | null
+): ConsentTextData | null => {
+	const sentenceRaw = data?.dpp?.consentText;
+	if (typeof sentenceRaw !== 'string' || sentenceRaw.trim() === '') {
+		return null;
+	}
+	return {
+		sentence: sentenceRaw,
+		versionId:
+			typeof data?.dpp?.versionId === 'number' &&
+			Number.isFinite(data.dpp.versionId)
+				? data.dpp.versionId
+				: null
+	};
+};
 
 /**
- * Maps the department legal response onto `ConsentTextData`.
- *
- * Exported for tests, and the single place the wire shape is interpreted.
- * Returns `null` whenever no consent sentence is configured — which is the
- * normal case today and must produce exactly the pre-#250 registration.
+ * Facade over `deriveConsentText(normalizeDepartmentLegalResponse(...))`.
+ * Kept as a single entry point so tests pinning the wire shape do not have to
+ * chain both helpers, and so any future change to the underlying pipeline
+ * cannot silently drift the consent-sentence contract from the payload the
+ * shared cache stores.
  */
 export const normalizeConsentTextResponse = (
 	response: unknown
-): ConsentTextData | null => {
-	if (!response || typeof response !== 'object') {
-		return null;
-	}
-
-	const body = response as Record<string, unknown>;
-	const dpp =
-		body.dpp && typeof body.dpp === 'object'
-			? (body.dpp as Record<string, unknown>)
-			: null;
-
-	const sentence = asNonEmptyString(dpp?.consentText);
-	if (!sentence) {
-		return null;
-	}
-
-	return {
-		sentence,
-		versionId: asVersionId(dpp?.versionId)
-	};
-};
+): ConsentTextData | null =>
+	deriveConsentText(normalizeDepartmentLegalResponse(response));
 
 /**
  * The outcome of asking for a department's consent sentence.
@@ -122,7 +134,9 @@ export type ConsentTextResult =
 
 /**
  * Loads the Träger-authored consent sentence for a department (agency x topic).
- * Public endpoint, no auth.
+ * Public endpoint, no auth. Backed by the shared department-legal cache so a
+ * co-mounted `DepartmentLegalSection` does not fire a second request against
+ * the same URL (ORISO-Frontend#1182).
  *
  * A backend that predates this epic answers 200 without the field, which is an
  * honest `ok` + null and yields today's static sentence.
@@ -144,27 +158,23 @@ export type ConsentTextResult =
  * well exist and could not be read — a 5xx, a network failure — where offering
  * the platform sentence would collect agreement to the wrong document. Fail
  * closed there, and only there.
+ *
+ * `signal` is accepted for source compatibility with earlier callers but has
+ * no effect: the underlying request is shared across all consumers of the same
+ * key, and aborting would cancel work for the co-mounted panel too.
  */
 export const apiGetConsentText = async (
 	agencyId: number,
 	topicId: number,
-	signal?: AbortSignal
-): Promise<ConsentTextResult> =>
-	fetchData({
-		url: endpoints.agencyDepartmentLegal(agencyId, topicId),
-		method: FETCH_METHODS.GET,
-		skipAuth: true,
-		// NO_MATCH + CATCH_ALL keep fetchData from redirecting to the error
-		// page — any non-2xx simply rejects and is mapped to null here.
-		responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL],
-		...(signal ? { signal } : {})
-	})
-		.then((response) => ({
-			status: 'ok' as const,
-			consentText: normalizeConsentTextResponse(response)
-		}))
-		.catch((error: Error) =>
-			error?.message === FETCH_ERRORS.NO_MATCH
-				? { status: 'ok' as const, consentText: null }
-				: { status: 'unavailable' as const }
-		);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	_signal?: AbortSignal
+): Promise<ConsentTextResult> => {
+	const outcome = await getCachedDepartmentLegalOutcome(agencyId, topicId);
+	if (outcome.status === 'unavailable') {
+		return { status: 'unavailable' };
+	}
+	return {
+		status: 'ok',
+		consentText: deriveConsentText(outcome.data)
+	};
+};
