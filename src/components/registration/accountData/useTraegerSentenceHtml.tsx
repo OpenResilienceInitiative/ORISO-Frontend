@@ -104,6 +104,7 @@ export const useTraegerSentenceHtml = (
 	consentText: ConsentTextData | null,
 	context: ConsentContext = {}
 ): TraegerSentence | null => {
+	const { agencyName, topicName } = context;
 	const { t, i18n } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -145,7 +146,10 @@ export const useTraegerSentenceHtml = (
 		   returns them raw (issue #1263). A no-op once the server catches up. */
 		const resolved = {
 			...resolvedRaw,
-			html: substituteConsentContext(resolvedRaw.html, context)
+			html: substituteConsentContext(resolvedRaw.html, {
+				agencyName,
+				topicName
+			})
 		};
 		/* Does the TRÄGER's own wording survive the allowlist? The mandatory
 		   `{{legal_links}}` token is removed first: it is the platform's
@@ -198,11 +202,5 @@ export const useTraegerSentenceHtml = (
 			originalLang: resolved.originalLang,
 			lang: resolved.lang
 		};
-	}, [
-		consentText,
-		i18n?.language,
-		legalLinksHtml,
-		context.agencyName,
-		context.topicName
-	]);
+	}, [consentText, i18n?.language, legalLinksHtml, agencyName, topicName]);
 };
