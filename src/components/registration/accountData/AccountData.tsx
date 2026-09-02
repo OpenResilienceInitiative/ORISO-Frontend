@@ -66,7 +66,6 @@ import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
-import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { toRegistrationUsername } from './registrationUsername';
 
@@ -216,7 +215,8 @@ export const AccountData: FC<{
 	const traegerSentence = useTraegerSentenceHtml(
 		effectiveConsent.status === 'resolved'
 			? effectiveConsent.consentText
-			: null
+			: null,
+		{ agencyName: agency?.name, topicName: mainTopic?.name }
 	);
 	/* A configured Träger text that cannot be rendered must block acceptance.
 	   Otherwise the platform sentence would be on screen while the acceptance
@@ -808,16 +808,6 @@ export const AccountData: FC<{
 					}
 				/>
 			</FormGroup>
-			{/* Department-specific data privacy policy: shown when the
-			    selected agency has a published DPP for the selected topic;
-			    falls back to the tenant text if it cannot be loaded. */}
-			<Box sx={{ mt: '12px' }}>
-				<DepartmentLegalSection
-					agency={agency}
-					topic={mainTopic}
-					variant="consent"
-				/>
-			</Box>
 		</Box>
 	);
 };

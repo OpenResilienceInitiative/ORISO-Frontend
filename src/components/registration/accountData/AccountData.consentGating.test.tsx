@@ -34,10 +34,6 @@ vi.mock('../../../api/apiGetIsUsernameAvailable', () => ({
 	apiGetIsUsernameAvailable: vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock('../../departmentLegal/DepartmentLegalSection', () => ({
-	DepartmentLegalSection: () => null
-}));
-
 vi.mock('../../../api/apiGetConsentText', () => ({
 	apiGetConsentText: vi.fn()
 }));
@@ -227,6 +223,20 @@ describe('AccountData — consent cannot be given before its sentence exists', (
 		await waitFor(() => expect(consentCheckbox()?.disabled).toBe(false));
 		expect(
 			screen.queryByText('registration.dataProtection.loading')
+		).toBeNull();
+	});
+
+	/* Issue #1263: the department's DPP is reached from the consent-line link
+	   (M3 dialog, `scope="agency"`), so the accordion beneath the checkbox
+	   would only duplicate that. Assert it stays off this step. */
+	it('does not render the department-legal accordion on the account step', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
+
+		renderStep({ hasPublishedDpp: true });
+
+		await waitFor(() => expect(consentCheckbox()?.disabled).toBe(false));
+		expect(
+			document.querySelector('[data-cy="department-legal-consent"]')
 		).toBeNull();
 	});
 
@@ -657,7 +667,9 @@ describe('AccountData — inherited wording and mandatory links', () => {
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
 		expect(
-			document.querySelector('a[href="https://oriso.test/datenschutz"]')
+			document.querySelector(
+				'[data-cy-link="https://oriso.test/datenschutz"]'
+			)
 		).not.toBeNull();
 	});
 
@@ -678,8 +690,8 @@ describe('AccountData — inherited wording and mandatory links', () => {
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
 		const links = Array.from(
-			document.querySelectorAll<HTMLAnchorElement>(
-				'a[href="https://oriso.test/datenschutz"]'
+			document.querySelectorAll<HTMLElement>(
+				'[data-cy-link="https://oriso.test/datenschutz"]'
 			)
 		);
 		expect(links.some((link) => link.textContent?.trim())).toBe(true);
@@ -703,7 +715,9 @@ describe('AccountData — inherited wording and mandatory links', () => {
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
 		expect(
-			document.querySelector('a[href="https://oriso.test/datenschutz"]')
+			document.querySelector(
+				'[data-cy-link="https://oriso.test/datenschutz"]'
+			)
 		).not.toBeNull();
 	});
 
@@ -723,7 +737,7 @@ describe('AccountData — inherited wording and mandatory links', () => {
 		await waitFor(() =>
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
-		expect(document.querySelector('a[href]')).not.toBeNull();
+		expect(document.querySelector('[data-cy-link]')).not.toBeNull();
 	});
 });
 

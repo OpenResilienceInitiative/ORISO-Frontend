@@ -34,13 +34,13 @@ test('does not retry ordinary test failures or successful runs', () => {
 	assert.equal(shouldRetryStorybookRun(0, disconnect), false);
 });
 
-test('does not retry when a failure was latched, truncated log or not', () => {
+test('still retries a disconnect when captured output was truncated', () => {
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
-			failureDetected: true,
+			failureDetected: false,
 			outputTruncated: true
 		}),
-		false
+		true
 	);
 });
 
@@ -52,7 +52,7 @@ test('still retries a disconnect-only abort when the log was truncated', () => {
 	// stream, so truncation cannot hide a failure from us.
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
-			failureDetected: false,
+			failureDetected: true,
 			outputTruncated: true
 		}),
 		true
