@@ -215,7 +215,8 @@ export const AccountData: FC<{
 	const traegerSentence = useTraegerSentenceHtml(
 		effectiveConsent.status === 'resolved'
 			? effectiveConsent.consentText
-			: null
+			: null,
+		{ agencyName: agency?.name, topicName: mainTopic?.name }
 	);
 	/* A configured Träger text that cannot be rendered must block acceptance.
 	   Otherwise the platform sentence would be on screen while the acceptance

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { Text } from '../text/Text';
 import { LegalLinkModal } from './LegalLinkModal';
+import './legalLinkButton.styles';
 
 export interface LegalLinkButtonProps {
 	/** Already-translated label, as handed down by `LegalLinks`. */
@@ -15,6 +16,20 @@ export interface LegalLinkButtonProps {
 	url: string;
 	/** BEM class of the surrounding surface, e.g. `stage__legalLinksItem`. */
 	textClassName?: string;
+	/**
+	 * `inline` sits in a sentence as underlined primary-coloured text
+	 * (registration consent). The default keeps the login-footer chip reset
+	 * (`.button-as-link` + `Text`).
+	 */
+	variant?: 'inline';
+	/**
+	 * Which document the modal loads. Defaults to `'platform'` (public pages).
+	 * At registration a Beratungsstelle has been chosen, so callers pass
+	 * `'agency'` together with `agencyId`/`topicId`.
+	 */
+	scope?: 'tenant' | 'platform' | 'agency';
+	agencyId?: number;
+	topicId?: number;
 }
 
 /**
@@ -33,11 +48,26 @@ export const LegalLinkButton = ({
 	label,
 	rawLabel,
 	url,
-	textClassName
+	textClassName,
+	variant,
+	scope = 'platform',
+	agencyId,
+	topicId
 }: LegalLinkButtonProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const isInline = variant === 'inline';
 
-	const handleClick = useCallback(() => setIsModalOpen(true), []);
+	/* Stop propagation so a click on a legal link inside a `<label>` (registration
+	   consent line) does not toggle the checkbox — the reader would consent by
+	   trying to read what they consent to. */
+	const handleClick = useCallback(
+		(event: React.MouseEvent<HTMLButtonElement>) => {
+			event.preventDefault();
+			event.stopPropagation();
+			setIsModalOpen(true);
+		},
+		[]
+	);
 
 	const closeModal = useCallback(() => setIsModalOpen(false), []);
 
@@ -45,18 +75,32 @@ export const LegalLinkButton = ({
 		<>
 			<button
 				type="button"
-				className="button-as-link"
+				className={
+					isInline
+						? 'legalLinkButton legalLinkButton--inline'
+						: 'button-as-link'
+				}
 				data-cy-link={url}
 				onClick={handleClick}
 			>
-				<Text className={textClassName} type="infoSmall" text={label} />
+				{isInline ? (
+					label
+				) : (
+					<Text
+						className={textClassName}
+						type="infoSmall"
+						text={label}
+					/>
+				)}
 			</button>
 			{isModalOpen && (
 				<LegalLinkModal
 					title={label}
 					rawLabel={rawLabel}
 					url={url}
-					scope="platform"
+					scope={scope}
+					agencyId={agencyId}
+					topicId={topicId}
 					onClose={closeModal}
 				/>
 			)}
