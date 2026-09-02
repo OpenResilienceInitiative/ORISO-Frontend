@@ -16,14 +16,47 @@ import {
 } from '../../api/apiDpaSignature';
 import { DpaSign } from './DpaSign';
 
-const translate = (_key: string, fallback?: string) => fallback ?? _key;
-
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: translate,
-		i18n: { language: 'de' }
-	})
-}));
+vi.mock('react-i18next', () => {
+	const catalogue: Record<string, string> = {
+		'dpaSign.title': 'AVV unterzeichnen',
+		'dpaSign.subtitle':
+			'Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.',
+		'dpaSign.loadingContract': 'Vereinbarung wird geladen...',
+		'dpaSign.contractHeading': 'Auftragsverarbeitungsvereinbarung',
+		'dpaSign.version': 'Vertragsversion',
+		'dpaSign.signerHeading':
+			'Bestätigung der vertretungsberechtigten Person',
+		'dpaSign.signerName': 'Name',
+		'dpaSign.signerPosition': 'Position',
+		'dpaSign.signerEmail': 'E-Mail',
+		'dpaSign.signerNote': 'Anmerkung (optional)',
+		'dpaSign.language': 'Sprache',
+		'dpaSign.signingFor': 'Sie unterzeichnen im Namen von:',
+		'dpaSign.accept':
+			'Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.',
+		'dpaSign.submit': 'Verbindlich bestätigen',
+		'dpaSign.submitting': 'Speichern...',
+		'dpaSign.success': 'Die AVV-Bestätigung wurde gespeichert.',
+		'dpaSign.error.missingToken': 'Der Signaturlink ist unvollständig.',
+		'dpaSign.error.previewRequired':
+			'Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.',
+		'dpaSign.error.acceptRequired':
+			'Bitte bestätigen Sie die Vereinbarung.',
+		'dpaSign.error.generic':
+			'Die Signatur konnte gerade nicht gespeichert werden.',
+		'dpaSign.error.invalidToken':
+			'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.',
+		'dpaSign.error.invalidRequest':
+			'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
+	};
+	const t = (key: string) => catalogue[key] ?? key;
+	return {
+		useTranslation: () => ({
+			t,
+			i18n: { language: 'de' }
+		})
+	};
+});
 
 vi.mock('../../api/apiDpaSignature', () => ({
 	DPA_SIGN_ERRORS: {

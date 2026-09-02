@@ -52,14 +52,8 @@ export const LegalLinkModal = ({
 	const { t: translate } = useTranslation();
 	const { kind, content } = useLegalLinkContent(title, url, rawLabel);
 
-	const platformNoteFallback =
-		kind === 'privacy'
-			? 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.'
-			: 'Sie sind hier noch bei keiner Beratungsstelle angemeldet — wer die Plattform betreibt, steht im vollständigen Impressum.';
 	const platformNote =
-		scope === 'platform'
-			? translate(platformLegalNoteKey(kind), platformNoteFallback)
-			: null;
+		scope === 'platform' ? translate(platformLegalNoteKey(kind)) : null;
 
 	return (
 		<OrisoDialog
@@ -91,10 +85,7 @@ export const LegalLinkModal = ({
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								{translate(
-									PLATFORM_LEGAL_FULL_TEXT_KEY,
-									'Vollständigen Text öffnen'
-								)}
+								{translate(PLATFORM_LEGAL_FULL_TEXT_KEY)}
 							</a>
 						</p>
 					)}
@@ -109,12 +100,7 @@ export const LegalLinkModal = ({
 					className="legalLinkModal__missing"
 					data-testid="legal-missing"
 				>
-					<p>
-						{translate(
-							'legal.modal.missing.text',
-							'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
-						)}
-					</p>
+					<p>{translate('legal.modal.missing.text')}</p>
 					{url && (
 						<p>
 							<a
@@ -122,10 +108,7 @@ export const LegalLinkModal = ({
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								{translate(
-									'legal.modal.missing.link',
-									'Zur hinterlegten Adresse'
-								)}
+								{translate('legal.modal.missing.link')}
 							</a>
 						</p>
 					)}

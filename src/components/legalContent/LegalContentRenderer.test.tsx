@@ -8,7 +8,17 @@ let mockLanguage = 'de';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) =>
+			({
+				'legal.notice.fallbackLanguage':
+					'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.',
+				'legal.notice.machineTranslated':
+					'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.',
+				'legal.notice.showOriginal': 'Original anzeigen',
+				'legal.notice.showingOriginal':
+					'Sie sehen die Originalfassung.',
+				'legal.notice.showTranslation': 'Übersetzung anzeigen'
+			})[key] ?? key,
 		i18n: {
 			get language() {
 				return mockLanguage;

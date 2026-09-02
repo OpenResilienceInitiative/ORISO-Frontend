@@ -1,6 +1,7 @@
 /* eslint-disable prefer-const */
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useEmbed from './useEmbed';
 import './cal.styles';
 
@@ -16,6 +17,7 @@ export default function Cal({
 	embedJsUrl?: string;
 }) {
 	const navigate = useNavigate();
+	const { t } = useTranslation();
 
 	if (!calLink) {
 		throw new Error('calLink is required');
@@ -61,7 +63,7 @@ export default function Cal({
 	}, [Cal, calLink, config, calOrigin]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if (!Cal) {
-		return <div>Loading {calLink}</div>;
+		return <div>{t('booking.calcom.loading', { calLink })}</div>;
 	}
 
 	return <div ref={ref}></div>;

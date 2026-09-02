@@ -65,7 +65,8 @@
 		},
 		"wait": "Lütfen bekleyin",
 		"info": "Bilgi",
-		"or": "veya"
+		"or": "veya",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -217,7 +218,20 @@
 	"booking": {
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
-			"title": "Müsaitlik durumunuz"
+			"title": "Müsaitlik durumunuz",
+			"iframeTitle": "Müsaitlik"
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Atanmış takvimler"
+		},
+		"calcom": {
+			"loading": "{{calLink}} yükleniyor"
+		},
+		"reschedule": {
+			"iframeTitle": "Randevuyu ertele"
+		},
+		"cancellation": {
+			"iframeTitle": "Randevuyu iptal et"
 		},
 		"calender": {
 			"add": "Takvim ekle",
@@ -566,6 +580,7 @@
 	},
 	"error": {
 		"login": "Giriş yap",
+		"notFound": "Sayfa bulunamadı",
 		"statusCodes": {
 			"400": {
 				"description": "Girdiğiniz URL geçersiz.",
@@ -1540,6 +1555,8 @@
 				"overLimit": "Mesaj, karakter sınırını aşıyor.",
 				"warning": "Mesaj, karakter sınırına yaklaşıyor."
 			},
+			"loadError": "Sohbet giriş alanı yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene",
 			"toolbar": {
 				"openTools": "Tüm araçlara geri dön",
 				"closeTools": "Kompakt araçlara geç",
@@ -1583,7 +1600,9 @@
 				"voiceRecording": {
 					"label": "Sesli kayıt",
 					"tooltip": "Sesli mesaj kaydet"
-				}
+				},
+				"imageUrlPrompt": "Görsel URL’si",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1677,8 +1696,10 @@
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",
+			"inlineImageAlt": "Mesaj görseli",
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
+			"lastReplyAt": "Son yanıt {{time}}",
 			"title": "Konu",
 			"placeholder": "Konuda yanıtla"
 		},
@@ -1715,7 +1736,8 @@
 		"overview": "Genel Bakış",
 		"profile": "Profil",
 		"myProfile": "Profilim",
-		"tools": "Aletlerim"
+		"tools": "Aletlerim",
+		"unreadCount": "{{count}} okunmamış"
 	},
 	"notification": {
 		"error": "Hata",
@@ -2605,7 +2627,8 @@
 				"headline": "Danışma merkezinin veri koruma bilgileri",
 				"imprintHeadline": "Danışma merkezinin künyesi",
 				"label": "Yasal bilgiler",
-				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor."
+				"unavailable": "Veri koruma bilgileri şu anda yüklenemiyor.",
+				"loading": "Veri koruma bilgileri yükleniyor"
 			},
 			"type": {
 				"single": "Bireysel danışmanlık",
@@ -3263,6 +3286,47 @@
 				"standard446": "orta seviye deneyim (önerilen)",
 				"deep556": "uzun (uzmanlar)"
 			},
+			"secondsAria": "{{label}}, {{count}} saniye",
+			"secondsShort": "{{count}} sn",
+			"levels": {
+				"1": {
+					"title": "Kaos terbiyecisi",
+					"success": "İyi başlangıç."
+				},
+				"2": {
+					"title": "Nefes bulucu",
+					"success": "Bir ritim buldunuz."
+				},
+				"3": {
+					"title": "Nefes yönetmeni",
+					"success": "Güzel kontrol."
+				},
+				"4": {
+					"title": "Sakinlik kurucusu",
+					"success": "Akış iyileşiyor."
+				},
+				"5": {
+					"title": "İç denge",
+					"success": "Nefes düzgün kalıyor."
+				},
+				"6": { "title": "Ritim koruyucusu", "success": "Güçlü odak." },
+				"7": {
+					"title": "Barış ustası",
+					"success": "Merkezde kalıyorsunuz."
+				},
+				"8": {
+					"title": "Sessiz rehber",
+					"success": "Baskı altında sakinlik."
+				},
+				"9": {
+					"title": "Dinginlik ustası",
+					"success": "Neredeyse bitti."
+				},
+				"10": {
+					"title": "Gerçek bilgelik",
+					"success": "Bu turu başardınız."
+				}
+			},
 			"briefing": {
 				"0": "Üzgünüz, şu anda beklemeniz gerekiyor, tüm danışmanlar şu an meşgul.",
 				"1": "Bunca sorunla beklemek oldukça zor olabilir. İstersen bunun için küçük bir bekleme odası köprüsü hazırladık.",
@@ -3486,6 +3550,7 @@
 				"confirm": "Seçimi onayla",
 				"close": "Aramayı kapat",
 				"clear": "Aramayı temizle",
+				"removeSelectedPerson": "{{name}} kişisini kaldır",
 				"emptyPeople": "Eşleşen kişi bulunamadı.",
 				"emptyTypes": "Kullanılabilir sohbet türü yok.",
 				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
@@ -3527,8 +3592,14 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Sohbet çemberi",
-				"internal": "Dahili"
+				"internal": "Dahili",
+				"team": "Ekip danışmanlığı"
 			}
+		},
+		"resizeHandle": {
+			"ariaLabel": "Görüşme listesinin boyutunu değiştirin. Kaydırmak için dikey sürükleyin.",
+			"expand": "Görüşme listesini genişlet",
+			"collapse": "Sohbeti büyütmek için görüşme listesini daralt"
 		}
 	},
 	"statusOverlay": {
@@ -3863,6 +3934,7 @@
 		"title": "İki faktörlü kimlik doğrulama"
 	},
 	"typingIndicator": {
+		"aria": "Yazıyor",
 		"multipleUsers": {
 			"typing": "Katılımcılar yazıyor"
 		},
@@ -4602,6 +4674,13 @@
 		"title": "Veri işleme sözleşmesini imzala",
 		"subtitle": "Lütfen sözleşmeyi tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
 		"loadingContract": "Sözleşme yükleniyor...",
+		"contractHeading": "Veri işleme sözleşmesi",
+		"version": "Sözleşme sürümü",
+		"signerName": "Ad",
+		"signerPosition": "Görev",
+		"signerEmail": "E-posta",
+		"signerNote": "Not (isteğe bağlı)",
+		"language": "Dil",
 		"signerHeading": "Temsile yetkili kişinin onayı",
 		"signingFor": "Şunun adına imzalıyorsunuz:",
 		"accept": "Yukarıda gösterilen sözleşmeyi okudum ve bağlayıcı olarak onaylıyorum.",
@@ -4633,6 +4712,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Danışmanlık hesabı oluştur",
+		"successTitle": "Hesap oluşturuldu",
+		"email": "E-posta adresi",
+		"username": "Kullanıcı adı",
+		"password": "Parola",
+		"repeatPassword": "Parolayı tekrarla",
+		"submit": "Hesap oluştur",
 		"invalid": "Davet bağlantısı geçersiz veya süresi dolmuş.",
 		"createFailed": "Danışmanlık hesabı oluşturulamadı. Lütfen tekrar deneyin.",
 		"loading": "Davet yükleniyor",
@@ -4652,7 +4738,8 @@
 			"open": "Taslağı aç",
 			"next": "Sonraki taslak",
 			"delete": "Taslağı sil",
-			"emptyDetail": "Yazmaya devam etmek için bir taslak seçin."
+			"emptyDetail": "Yazmaya devam etmek için bir taslak seçin.",
+			"embeddedTitle": "Taslak sohbeti"
 		}
 	},
 	"tour": {
@@ -4695,5 +4782,102 @@
 		"friday": "Cuma",
 		"saturday": "Cumartesi",
 		"sunday": "Pazar"
+	},
+	"calls": {
+		"answer": "Yanıtla",
+		"reject": "Reddet",
+		"decline": "Reddet",
+		"endCall": "Çağrıyı bitir",
+		"fullscreen": "Tam ekran",
+		"mute": "Sesi kapat",
+		"unmute": "Sesi aç",
+		"turnOnVideo": "Videoyu aç",
+		"turnOffVideo": "Videoyu kapat",
+		"moreOptions": "Diğer seçenekler",
+		"close": "Çağrıyı kapat",
+		"title": "Çağrı",
+		"videoCall": "Görüntülü çağrı",
+		"audioCall": "Sesli çağrı",
+		"autoFit": "Otomatik sığdır",
+		"autoFitAria": "Videoyu pencereye sığdır",
+		"resizeAria": "Çağrı penceresini yeniden boyutlandır ({{edge}})",
+		"widget": {
+			"autoFit": "Videoyu otomatik sığdır",
+			"autoFitAria": "Videoyu pencereye sığdır",
+			"startFailed": "Çağrı başlatılamadı: {{message}}",
+			"answerFailed": "Yanıtlanamadı: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Gelen çağrı",
+			"incomingDescription": "Biri arıyor…",
+			"close": "Çağrıyı kapat",
+			"autoFit": "Otomatik sığdır",
+			"autoFitAria": "Çağrı penceresini sığdır",
+			"openFullView": "Tam görünümü aç",
+			"switchToSmallView": "Küçük görünüme geç",
+			"exitFullScreen": "Tam ekrandan çık",
+			"enterFullScreen": "Tam ekrana geç",
+			"fullView": "Tam görünüm",
+			"smallView": "Küçük görünüm",
+			"fullScreen": "Tam ekran",
+			"iframeTitle": "Grup görüntülü çağrı",
+			"connecting": "Bağlanıyor…",
+			"settingUp": "Çağrı hazırlanıyor",
+			"startFailed": "Çağrı başlatılamadı: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Oda kimliği yok",
+			"noRoomDescription": "Oda kimliği olmadan çağrı başlatılamaz.",
+			"goBack": "Geri"
+		},
+		"error": {
+			"noRoom": "Çağrı başlatılamıyor: bu oturum için Matrix odası bulunamadı.",
+			"httpsRequired": "Kamera ve mikrofon erişimi HTTPS gerektirir. Güvenli bağlantıya geçilsin mi?",
+			"cannotAccess": "Kamera veya mikrofona erişilemiyor. ",
+			"grantPermissions": "Lütfen tarayıcı ayarlarından izin verin.",
+			"noDevice": "Bu cihazda kamera veya mikrofon bulunamadı.",
+			"browserUnsupported": "Tarayıcınız bu özelliği desteklemiyor. Lütfen HTTPS kullanın.",
+			"unknown": "Bilinmeyen hata.",
+			"callFailed": "Çağrı başarısız: {{message}}",
+			"startFailed": "Çağrı başlatılamadı: {{message}}",
+			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Geri",
+			"confirm": "Anlaşıldı",
+			"close": "Kapat"
+		},
+		"calendar": {
+			"cancel": "İptal",
+			"ok": "OK",
+			"previousMonth": "Önceki ay",
+			"selectMonth": "Ay seç",
+			"nextMonth": "Sonraki ay",
+			"previousYear": "Önceki yıl",
+			"selectYear": "Yıl seç",
+			"nextYear": "Sonraki yıl"
+		},
+		"datePicker": {
+			"openCalendar": "Takvimi aç"
+		},
+		"timePicker": {
+			"dialogTitle": "Saat seç",
+			"cancel": "İptal",
+			"ok": "OK",
+			"open": "Saat seçiciyi aç",
+			"selectHours": "Saatleri seç",
+			"selectMinutes": "Dakikaları seç",
+			"hour": "Saat",
+			"minute": "Dakika",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Metin girişine geç",
+			"switchToDial": "Kadrana geç"
+		},
+		"select": {
+			"search": "Ara"
+		}
 	}
 }

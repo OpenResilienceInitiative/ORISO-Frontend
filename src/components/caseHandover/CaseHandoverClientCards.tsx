@@ -190,10 +190,7 @@ export const CaseHandoverSystemMessageCard = ({
 							<button
 								type="button"
 								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label={translate(
-									'message.menu.open',
-									'More options'
-								)}
+								aria-label={translate('message.menu.open')}
 								onClick={onOpenMenu}
 							>
 								<StackVerticalIcon className="messageItem__kebabIconDefault" />
@@ -238,8 +235,7 @@ export const CaseHandoverSystemMessageCard = ({
 										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
 										role="img"
 										aria-label={translate(
-											'message.deliveryStatus.sent',
-											'sent'
+											'message.deliveryStatus.sent'
 										)}
 									>
 										<DeliverySentIcon
@@ -285,23 +281,11 @@ export const CaseHandoverConsentCard = ({
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
 	const messageTitle = isOptOut
-		? translate(
-				'caseHandover.consent.optOut.title',
-				'Privacy notice for case handover'
-			)
-		: translate(
-				'caseHandover.consent.title',
-				'A counsellor requested access to this conversation'
-			);
+		? translate('caseHandover.consent.optOut.title')
+		: translate('caseHandover.consent.title');
 	const messageCopy = isOptOut
-		? translate(
-				'caseHandover.consent.optOut.prompt',
-				'Please read the information and then make your decision.'
-			)
-		: translate(
-				'caseHandover.consent.copy',
-				'Please approve or decline the request to continue the handover.'
-			);
+		? translate('caseHandover.consent.optOut.prompt')
+		: translate('caseHandover.consent.copy');
 
 	return (
 		<div
@@ -312,11 +296,8 @@ export const CaseHandoverConsentCard = ({
 			data-testid="case-handover-inline-consent"
 		>
 			<CaseHandoverSystemMessageCard
-				title={translate('caseHandover.consent.sender', 'Carimat')}
-				subtitle={translate(
-					'caseHandover.consent.senderRole',
-					'Quick Guide'
-				)}
+				title={translate('caseHandover.consent.sender')}
+				subtitle={translate('caseHandover.consent.senderRole')}
 				timestamp={timestamp}
 			>
 				<div className="caseHandoverMessage__intro">
@@ -330,30 +311,24 @@ export const CaseHandoverConsentCard = ({
 				{isOptOut ? (
 					<>
 						<p className="caseHandoverMessage__optOutCopy">
-							{translate(
-								'caseHandover.consent.optOut.copy',
-								'For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.'
-							)}
+							{translate('caseHandover.consent.optOut.copy')}
 						</p>
 						<p className="caseHandoverMessage__optOutCopy">
 							{translate(
-								'caseHandover.consent.optOut.revocationCopy',
-								'By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.'
+								'caseHandover.consent.optOut.revocationCopy'
 							)}
 						</p>
 						<div className="caseHandoverMessage__optOutSwitch">
 							<span>
 								{translate(
-									'caseHandover.consent.optOut.switchLabel',
-									'I consent to data processing for this case handover'
+									'caseHandover.consent.optOut.switchLabel'
 								)}
 							</span>
 							<Switch
 								checked
 								disabled={isSubmitting}
 								aria-label={translate(
-									'caseHandover.consent.optOut.switchLabel',
-									'I consent to data processing for this case handover'
+									'caseHandover.consent.optOut.switchLabel'
 								)}
 								onChange={(checked) =>
 									checked ? onApprove() : onDecline()
@@ -382,8 +357,7 @@ export const CaseHandoverConsentCard = ({
 								{
 									id: 'caseHandoverConsentApprove',
 									label: translate(
-										'caseHandover.consent.approve',
-										'Approve access'
+										'caseHandover.consent.approve'
 									),
 									variant: 'primary',
 									icon: <CheckIcon />,
@@ -395,8 +369,7 @@ export const CaseHandoverConsentCard = ({
 								{
 									id: 'caseHandoverConsentDecline',
 									label: translate(
-										'caseHandover.consent.decline',
-										'Decline access'
+										'caseHandover.consent.decline'
 									),
 									variant: 'tonal',
 									icon: <CloseIcon />,

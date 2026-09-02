@@ -134,7 +134,7 @@ const DraftMetadataListItem = ({
 }: {
 	draft: IUserDraftItem;
 	onOpen: (draft: IUserDraftItem) => void;
-	translate: (key: string, fallback?: string) => string;
+	translate: (key: string) => string;
 }) => (
 	<button
 		type="button"
@@ -144,19 +144,16 @@ const DraftMetadataListItem = ({
 		disabled={!draft.actionPath}
 	>
 		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts', 'Drafts')}
+			{translate('sessionList.toolbar.chips.drafts')}
 		</span>
 		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat', 'Chat')}
+			{draft.title || translate('drafts.center.untitledChat')}
 		</span>
 		<span className="sessionsListDraftItem__meta">
 			{formatDraftTime(draft.updatedAt)}
 		</span>
 		<span className="sessionsListDraftItem__hint">
-			{translate(
-				'sessionList.toolbar.draftMetadataOnly',
-				'Unsent message saved'
-			)}
+			{translate('sessionList.toolbar.draftMetadataOnly')}
 		</span>
 	</button>
 );
@@ -1134,11 +1131,9 @@ export const SessionsList = ({
 		},
 		[navigate]
 	);
-	const translateWithFallback = useCallback(
-		(key: string, fallback?: string) => {
-			const translated = fallback
-				? translate(key, { defaultValue: fallback })
-				: translate(key);
+	const translateKey = useCallback(
+		(key: string) => {
+			const translated = translate(key);
 			return typeof translated === 'string'
 				? translated
 				: String(translated);
@@ -1883,7 +1878,7 @@ export const SessionsList = ({
 								key={draft.scopeKey}
 								draft={draft}
 								onOpen={handleOpenDraft}
-								translate={translateWithFallback}
+								translate={translateKey}
 							/>
 						))}
 

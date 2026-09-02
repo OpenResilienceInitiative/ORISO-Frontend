@@ -165,10 +165,7 @@ export const AgencyDetailsPanel = ({
 	// Beratungsstelle with structured hours would show raw JSON here. Legacy free
 	// text passes through unchanged.
 	const openingHours = useMemo(
-		() =>
-			formatOpeningHours(details.hours, (key, fallback) =>
-				t(key, fallback ?? key)
-			),
+		() => formatOpeningHours(details.hours, (key) => t(key)),
 		[details.hours, t]
 	);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);
@@ -197,10 +194,7 @@ export const AgencyDetailsPanel = ({
 				{(details.address || details.floorLocation) && (
 					<InfoRow
 						icon={<PlaceRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.addressLabel',
-							'Adresse'
-						)}
+						label={t('registration.agency.details.addressLabel')}
 					>
 						{details.address && <Box>{details.address}</Box>}
 						{details.floorLocation && (
@@ -361,10 +355,7 @@ export const AgencyDetailsPanel = ({
 				{hasDepartmentLegal && (
 					<InfoRow
 						icon={<PrivacyTipOutlinedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.legal.label',
-							'Rechtliches'
-						)}
+						label={t('registration.agency.legal.label')}
 					>
 						<DepartmentLegalSection
 							agency={agency}

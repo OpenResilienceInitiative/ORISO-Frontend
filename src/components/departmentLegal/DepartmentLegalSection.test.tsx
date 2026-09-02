@@ -18,7 +18,16 @@ import {
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) =>
+			({
+				'registration.agency.legal.headline':
+					'Datenschutzhinweise der Beratungsstelle',
+				'registration.agency.legal.department': 'Fachbereich',
+				'registration.agency.legal.unavailable':
+					'Die Datenschutzhinweise können derzeit nicht geladen werden.',
+				'registration.agency.legal.imprintHeadline':
+					'Impressum der Beratungsstelle'
+			})[key] ?? key,
 		i18n: { language: 'de' }
 	})
 }));

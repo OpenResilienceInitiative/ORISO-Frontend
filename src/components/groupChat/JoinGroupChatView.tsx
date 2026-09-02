@@ -39,8 +39,6 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
-import { translateWithFallback } from '../../utils/translationFallback';
-
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
 	bannedUsers?: string[];
@@ -54,11 +52,6 @@ export const JoinGroupChatView = ({
 		'common',
 		'consultingTypes'
 	]);
-	const tr = useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(translate, key, fallback, options),
-		[translate]
-	);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -368,9 +361,8 @@ export const JoinGroupChatView = ({
 				{showRules && (
 					<WaitingAreaRules
 						rules={groupChatRules}
-						ariaLabel={tr(
-							'groupChat.join.waitingArea.rulesLabel',
-							'Chat rules'
+						ariaLabel={translate(
+							'groupChat.join.waitingArea.rulesLabel'
 						)}
 					/>
 				)}
