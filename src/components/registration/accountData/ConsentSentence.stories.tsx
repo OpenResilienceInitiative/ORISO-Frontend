@@ -81,7 +81,6 @@ export const FallbackUnchanged: Story = {
 	name: 'Fallback — today’s sentence, unchanged',
 	args: { consentText: null },
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
 		// Exactly two links, both registration-relevant, and no second cookie
 		// sentence: the fallback carries the notice inside its own suffix, so
 		// the fixed addendum must not be stacked on top of it.
@@ -149,7 +148,6 @@ export const TraegerSentenceSanitized: Story = {
 		}
 	},
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
 		await expect(canvasElement.querySelector('script')).toBeNull();
 		await expect(canvasElement.innerHTML).not.toContain('onerror');
 		// …while the links the sentence consents to still work.
@@ -176,7 +174,6 @@ export const MissingMandatoryToken: Story = {
 		}
 	},
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
 		await expect(
 			canvasElement.querySelectorAll('[data-cy-link]')
 		).toHaveLength(2);
