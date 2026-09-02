@@ -4242,6 +4242,9 @@
 			"title": "Le Live-Chat est malheureusement fermé pour le moment"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Demander conseil"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {

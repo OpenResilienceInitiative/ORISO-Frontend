@@ -51,6 +51,7 @@ import { ReactComponent as StopGroupChatIcon } from '../../resources/img/icons/x
 import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/gear.svg';
 import { ReactComponent as MenuVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
+import { ReactComponent as AdviceRequestIcon } from '../../resources/img/icons/persons-two.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as NotificationSettingsIcon } from '../../resources/img/icons/notification_settings.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
@@ -94,6 +95,9 @@ export interface SessionMenuProps {
 	mobileEndAnonymousChatDisabled?: boolean;
 }
 
+// #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
+const ADVICE_REQUEST_ENABLED = false;
+
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -131,6 +135,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+
+	const isSessionOwner =
+		Boolean(activeSession.consultant?.id) &&
+		String(activeSession.consultant.id) === String(userData.userId);
+	const showRequestAdvice =
+		isSessionOwner &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		type !== SESSION_LIST_TYPES.ENQUIRY &&
+		Boolean(activeSession.isSession) &&
+		!activeSession.isGroup &&
+		!props.isSupervisor;
 
 	const handleClick = useCallback(
 		(e) => {
@@ -736,6 +751,31 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										props.mobileDeleteAnonymousAccountDisabled
 									}
 									shortcut="Shift+D"
+								/>
+							</div>
+						)}
+
+						{showRequestAdvice && (
+							<div
+								className={`sessionMenu__item chatMenuDropdown__item ${
+									!ADVICE_REQUEST_ENABLED
+										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+										: ''
+								}`}
+								onClick={() => {
+									if (!ADVICE_REQUEST_ENABLED) {
+										return;
+									}
+									setFlyoutOpen(false);
+								}}
+								data-cy="session-menu-request-advice"
+							>
+								<SessionMenuItemContent
+									icon={<AdviceRequestIcon />}
+									title={translate(
+										'sessionMenu.requestAdvice'
+									)}
+									disabled={!ADVICE_REQUEST_ENABLED}
 								/>
 							</div>
 						)}

@@ -4244,6 +4244,9 @@
 			"title": "Живой чат сейчас, к сожалению, закрыт"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Попросить совета"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {

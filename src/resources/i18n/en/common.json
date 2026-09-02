@@ -4174,6 +4174,9 @@
 			"changeName": "Change name"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Ask for advice"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {

@@ -4264,6 +4264,9 @@
 			"title": "Live-Chat ist zurzeit leider geschlossen"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Rat einholen"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
