@@ -1,0 +1,31 @@
+.orbitalTrails {
+	--orbital-trails-background: var(--m3-background, #fcf9f9);
+	--orbital-trails-color-1: var(--m3-primary, #b3261e);
+	--orbital-trails-color-2: var(--m3-primary, #b3261e);
+	--orbital-trails-color-3: var(--m3-primary, #b3261e);
+	--orbital-trails-color-4: var(--m3-primary, #b3261e);
+
+	width: min(100%, 520px);
+	background: var(--orbital-trails-background);
+	aspect-ratio: 1;
+
+	&--mixed {
+		--orbital-trails-color-1: var(--m3-primary, #b3261e);
+		--orbital-trails-color-2: var(--m3-secondary, #77565a);
+		--orbital-trails-color-3: var(--m3-tertiary, #755a2f);
+		--orbital-trails-color-4: var(--m3-primary, #b3261e);
+	}
+
+	&--neutral {
+		--orbital-trails-color-1: var(--m3-on-surface, #1d1b20);
+		--orbital-trails-color-2: var(--m3-on-surface-variant, #49454f);
+		--orbital-trails-color-3: var(--m3-on-surface, #1d1b20);
+		--orbital-trails-color-4: var(--m3-on-surface-variant, #49454f);
+	}
+
+	&__canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+}
