@@ -68,14 +68,17 @@ export const DpaSign = () => {
 	);
 	useEffect(() => {
 		let active = true;
-		void i18n
-			.loadLanguages(formState.language)
-			.catch(() => undefined)
+		// The `.then` runs only on a resolved load, so a rejected
+		// `loadLanguages` leaves `chromeLanguage` exactly where it was —
+		// applying the new language here regardless of the outcome would
+		// point the page chrome at a locale i18next never finished loading.
+		i18n.loadLanguages(formState.language)
 			.then(() => {
 				if (active) {
 					setChromeLanguage(formState.language);
 				}
-			});
+			})
+			.catch(() => undefined);
 		return () => {
 			active = false;
 		};
@@ -88,6 +91,15 @@ export const DpaSign = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [preview, setPreview] = useState<DpaSignPreviewResponse | null>(null);
 	const [previewLoading, setPreviewLoading] = useState(true);
+	// The preview fetch is keyed to the token in the URL, not to the
+	// currently selected chrome language — storing only the *kind* of
+	// failure here (never a translated string) lets the effect below skip
+	// `t` in its dependency list, so switching the "Sprache" select can no
+	// longer re-trigger a network refetch of a contract that already
+	// loaded. The kind is translated into the visible message separately,
+	// further down, so it still tracks a later language change.
+	const [previewErrorKind, setPreviewErrorKind] =
+		useState<PreviewErrorKind | null>(null);
 
 	const decodedToken = useMemo(
 		() => (token ? decodeURIComponent(token) : ''),
@@ -98,16 +110,11 @@ export const DpaSign = () => {
 		let active = true;
 		setPreview(null);
 		setPreviewLoading(true);
-		setErrorMessage(null);
+		setPreviewErrorKind(null);
 
 		if (!decodedToken) {
 			setPreviewLoading(false);
-			setErrorMessage(
-				t(
-					'dpaSign.error.missingToken',
-					'Der Signaturlink ist unvollständig.'
-				)
-			);
+			setPreviewErrorKind('missingToken');
 			return () => {
 				active = false;
 			};
@@ -121,7 +128,7 @@ export const DpaSign = () => {
 			})
 			.catch((error) => {
 				if (active) {
-					setErrorMessage(resolveErrorMessage(error, t));
+					setPreviewErrorKind(resolveErrorKind(error));
 				}
 			})
 			.finally(() => {
@@ -133,7 +140,12 @@ export const DpaSign = () => {
 		return () => {
 			active = false;
 		};
-	}, [decodedToken, t]);
+	}, [decodedToken]);
+	const previewErrorMessage = useMemo(
+		() =>
+			previewErrorKind ? translateErrorKind(previewErrorKind, t) : null,
+		[previewErrorKind, t]
+	);
 
 	const updateField = <K extends keyof FormState>(
 		field: K,
@@ -249,7 +261,7 @@ export const DpaSign = () => {
 					</Box>
 				) : !preview ? (
 					<Alert severity="error">
-						{errorMessage ??
+						{previewErrorMessage ??
 							t(
 								'dpaSign.error.generic',
 								'Die Vertragsunterlagen konnten gerade nicht geladen werden.'
@@ -517,29 +529,59 @@ const formatDpaDate = (value: string, language: string) => {
 	return formatter.format(date);
 };
 
-const resolveErrorMessage = (error: unknown, t: TFunction) => {
+// A `PreviewErrorKind` names *why* the preview failed without committing to
+// any language — translating it is a pure function of the kind and the
+// current `t`, so it can be re-run whenever `t` changes (a language switch)
+// without needing to repeat whatever produced the kind in the first place
+// (a network fetch).
+type PreviewErrorKind =
+	| 'missingToken'
+	| typeof DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN
+	| typeof DPA_SIGN_ERRORS.INVALID_REQUEST
+	| 'generic';
+
+const resolveErrorKind = (error: unknown): PreviewErrorKind => {
 	if (
 		error instanceof Error &&
 		error.message === DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN
 	) {
-		return t(
-			'dpaSign.error.invalidToken',
-			'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.'
-		);
+		return DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN;
 	}
 
 	if (
 		error instanceof Error &&
 		error.message === DPA_SIGN_ERRORS.INVALID_REQUEST
 	) {
-		return t(
-			'dpaSign.error.invalidRequest',
-			'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
-		);
+		return DPA_SIGN_ERRORS.INVALID_REQUEST;
 	}
 
-	return t(
-		'dpaSign.error.generic',
-		'Die Signatur konnte gerade nicht gespeichert werden.'
-	);
+	return 'generic';
 };
+
+const translateErrorKind = (kind: PreviewErrorKind, t: TFunction) => {
+	switch (kind) {
+		case 'missingToken':
+			return t(
+				'dpaSign.error.missingToken',
+				'Der Signaturlink ist unvollständig.'
+			);
+		case DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN:
+			return t(
+				'dpaSign.error.invalidToken',
+				'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.'
+			);
+		case DPA_SIGN_ERRORS.INVALID_REQUEST:
+			return t(
+				'dpaSign.error.invalidRequest',
+				'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
+			);
+		default:
+			return t(
+				'dpaSign.error.generic',
+				'Die Signatur konnte gerade nicht gespeichert werden.'
+			);
+	}
+};
+
+const resolveErrorMessage = (error: unknown, t: TFunction) =>
+	translateErrorKind(resolveErrorKind(error), t);

@@ -25,11 +25,14 @@ const getFixedT = vi.fn(
 		lng === 'de' ? (fallback ?? key) : `${lng}:${key}`
 );
 
-// Stable like the real i18next singleton — a fresh object per render would
-// re-trigger every effect that lists `t`/`i18n` in its dependencies.
+// A vi.fn() so individual tests can override the resolution per call (e.g.
+// mockRejectedValueOnce) while the object identity stays stable like the
+// real i18next singleton — a fresh object per render would re-trigger every
+// effect that lists `t`/`i18n` in its dependencies.
+const loadLanguages = vi.fn(() => Promise.resolve());
 const i18nMock = {
 	language: 'ru',
-	loadLanguages: () => Promise.resolve(),
+	loadLanguages,
 	getFixedT
 };
 
@@ -247,5 +250,49 @@ describe('DpaSign', () => {
 		).toBeDefined();
 		expect(screen.queryByLabelText('Name *')).toBeNull();
 		expect(confirmMock).not.toHaveBeenCalled();
+	});
+
+	it('does not refetch the contract preview when only the language selector changes', async () => {
+		// Regression: the preview effect used to depend on `t`, which gets a
+		// new identity every time `chromeLanguage` changes. Switching
+		// "Sprache" then re-fetched and reloaded the whole contract preview
+		// for no reason — the preview itself carries every language already.
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+		expect(previewMock).toHaveBeenCalledTimes(1);
+
+		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
+		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+		await screen.findByRole('heading', { name: 'en:dpaSign.title' });
+
+		expect(previewMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the current chrome language when loading the new one is rejected', async () => {
+		// Regression: a rejected `loadLanguages` was swallowed and
+		// `chromeLanguage` still got set to the new, unloaded language,
+		// leaving the page chrome inconsistent (some strings rendered in a
+		// language i18next never actually finished loading).
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+		getFixedT.mockClear();
+
+		loadLanguages.mockRejectedValueOnce(new Error('network down'));
+		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
+		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+
+		await waitFor(() => expect(loadLanguages).toHaveBeenCalledWith('en'));
+		// The chrome must stay on the language it already had — it must
+		// never re-derive `t` for the language that failed to load.
+		expect(getFixedT).not.toHaveBeenCalledWith('en');
+		expect(
+			screen.getByRole('heading', {
+				name: 'Vertragsunterlagen unterzeichnen'
+			})
+		).toBeDefined();
 	});
 });

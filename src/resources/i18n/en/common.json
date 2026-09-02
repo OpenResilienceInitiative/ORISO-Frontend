@@ -4492,7 +4492,7 @@
 		"signerHeading": "Confirmation by authorised signatory",
 		"signingFor": "You are signing on behalf of:",
 		"accept": "I have read the contract documents shown above and confirm them as binding.",
-		"submit": "Confirm bindingly",
+		"submit": "Confirm and sign",
 		"submitting": "Saving…",
 		"success": "The confirmation of the contract documents has been saved.",
 		"error": {
