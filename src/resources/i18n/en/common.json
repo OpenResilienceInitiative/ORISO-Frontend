@@ -1305,6 +1305,7 @@
 			},
 			"back": "Back",
 			"confirm": "Got it",
+			"loading": "Loading the legal text …",
 			"missing": {
 				"text": "No legal text has been provided here for this service.",
 				"link": "Open the configured address"

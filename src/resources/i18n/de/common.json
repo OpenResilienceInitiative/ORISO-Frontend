@@ -1319,6 +1319,7 @@
 			},
 			"back": "Zurück",
 			"confirm": "Verstanden",
+			"loading": "Der Rechtstext wird geladen …",
 			"missing": {
 				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
 				"link": "Zur hinterlegten Adresse"

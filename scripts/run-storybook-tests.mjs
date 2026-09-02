@@ -33,11 +33,10 @@ const hasTestFailure = (output) =>
 export const shouldRetryStorybookRun = (
 	code,
 	capturedOutput,
-	{ failureDetected = false, outputTruncated = false } = {}
+	{ failureDetected = false } = {}
 ) =>
 	code !== 0 &&
 	!failureDetected &&
-	!outputTruncated &&
 	capturedOutput.includes(BROWSER_DISCONNECT_SIGNATURE) &&
 	!hasTestFailure(capturedOutput);
 
