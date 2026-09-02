@@ -7,7 +7,7 @@ const PREVIEW = {
 	tenantName: 'Caritasverband Musterstadt e. V.',
 	dpaVersion: '2026-07-20T12:30:00',
 	content: JSON.stringify({
-		de: '<h2>Auftragsverarbeitungsvertrag</h2><p>Platzhalter — der veröffentlichte AVV-Text des Betreibers wird hier unverändert angezeigt.</p><h3>1. Gegenstand</h3><p>Der Auftragnehmer verarbeitet personenbezogene Daten ausschließlich weisungsgebunden.</p>',
+		de: '<h2>Vertragsunterlagen</h2><p>Platzhalter — der veröffentlichte Vertragstext des Betreibers wird hier unverändert angezeigt.</p><h3>1. Gegenstand</h3><p>Der Auftragnehmer verarbeitet personenbezogene Daten ausschließlich weisungsgebunden.</p>',
 		en: '<h2>Data processing agreement</h2><p>Placeholder — the operator’s published DPA text is rendered here unchanged.</p>'
 	}),
 	expiresAt: '2026-08-03T12:30:00'
