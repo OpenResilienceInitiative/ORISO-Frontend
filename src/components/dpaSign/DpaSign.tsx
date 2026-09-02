@@ -22,7 +22,7 @@ import {
 	DpaSignPreviewResponse,
 	DPA_SIGN_ERRORS
 } from '../../api/apiDpaSignature';
-import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { LegalTextReader } from '../legalContent/LegalTextReader';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -267,6 +267,10 @@ export const DpaSign = () => {
 								)}
 							</Typography>
 							<Divider sx={{ my: 2 }} />
+							{/* The reader does not own its scrollport (except in
+							    fullscreen) — this Box stays exactly that:
+							    the host that scrolls, so the sticky chapter
+							    chip row has something to stick to. */}
 							<Box
 								sx={{
 									maxHeight: { xs: 300, md: 520 },
@@ -274,8 +278,12 @@ export const DpaSign = () => {
 									pr: 1
 								}}
 							>
-								<LegalContentRenderer
+								<LegalTextReader
 									content={preview.content}
+									label={t(
+										'dpaSign.contractHeading',
+										'Auftragsverarbeitungsvereinbarung'
+									)}
 									language={formState.language}
 								/>
 							</Box>
