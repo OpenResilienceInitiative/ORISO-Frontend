@@ -244,14 +244,11 @@ export const Registration = () => {
 				mergedRegistrationData.topicGroupId
 			)
 		: undefined;
-	const selectedPrefix = t('registration.selectedLabel', 'Ausgewählt');
-	const noneSelectedLabel = t(
-		'registration.noneSelected',
-		'Bitte wählen Sie ein Thema, um fortzufahren.'
-	);
+	const selectedPrefix = t('registration.selectedLabel');
+	const noneSelectedLabel = t('registration.noneSelected');
 	const footerEmptyLabel =
 		step === 'topic-selection'
-			? t('registration.topicInstruction', 'Wählen Sie ein Thema aus.')
+			? t('registration.topicInstruction')
 			: noneSelectedLabel;
 
 	/* Navigating between steps must never discard what was entered: merge the
