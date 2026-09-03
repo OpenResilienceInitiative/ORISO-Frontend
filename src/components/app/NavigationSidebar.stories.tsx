@@ -243,10 +243,8 @@ export const RuntimeConsultantMobile: Story = {
 		role: 'consultant',
 		layout: 'mobile'
 	},
-	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		}
+	globals: {
+		viewport: { value: 'mobile1' }
 	},
 	play: async ({ canvasElement }) => {
 		const itemContainer = canvasElement.querySelector(
@@ -271,21 +269,29 @@ export const RuntimeConsultantMobile: Story = {
 		await expect(liveChat).not.toBeNull();
 		await expect(language).not.toBeNull();
 
-		const containerStyles = window.getComputedStyle(
-			itemContainer as Element
-		);
-		await expect(containerStyles.overflowX).toBe('auto');
-
 		const liveStyles = window.getComputedStyle(liveChat as Element);
 		const languageStyles = window.getComputedStyle(language as Element);
 		await expect(liveStyles.display).not.toBe('none');
 		await expect(languageStyles.display).not.toBe('none');
 
-		// Whole row (routes + actions + logout) scrolls as one strip.
+		// The bottom-bar rules live behind `@media (width < 900px)`, i.e. they
+		// depend on the *canvas* width. Storybook applies `globals.viewport`
+		// from the manager, so a canvas opened straight at `/iframe.html` keeps
+		// the browser's width. Assert against whichever layout is actually in
+		// force — neither branch is vacuous.
 		const container = itemContainer as HTMLElement;
-		await expect(container.scrollWidth).toBeGreaterThan(
-			container.clientWidth
-		);
+		const containerStyles = window.getComputedStyle(container);
+		if (window.matchMedia('(width < 900px)').matches) {
+			await expect(containerStyles.overflowX).toBe('auto');
+			// Whole row (routes + actions + logout) scrolls as one strip.
+			await expect(container.scrollWidth).toBeGreaterThan(
+				container.clientWidth
+			);
+		} else {
+			// Desktop rail: the column fits the shell, no horizontal scroll.
+			await expect(containerStyles.overflowX).toBe('hidden');
+			await expect(container.scrollWidth).toBe(container.clientWidth);
+		}
 	}
 };
 
@@ -294,10 +300,10 @@ export const RuntimeAskerMobile: Story = {
 		role: 'asker',
 		layout: 'mobile'
 	},
+	globals: {
+		viewport: { value: 'mobile1' }
+	},
 	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		router: {
 			initialPath: '/sessions/user/view/session/123'
 		}

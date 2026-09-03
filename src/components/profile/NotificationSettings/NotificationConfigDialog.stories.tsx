@@ -56,7 +56,7 @@ export const Dialog: DialogStory = { render: () => <InteractiveDialog /> };
 
 export const DialogMobile: DialogStory = {
 	render: () => <InteractiveDialog />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: { viewport: { value: 'mobile1' } }
 };
 
 /**

@@ -128,7 +128,11 @@ const makeMembers = (count: number): MockMember[] =>
 	}));
 
 // Minimal stand-in for MatrixClientService exposing just enough of the
-// getClient()/getRoom()/getJoinedMembers() surface GroupChatHeader touches.
+// getClient()/getRoom()/getJoinedMembers() surface GroupChatHeader touches,
+// plus the account-data surface NotificationSettingsStore.attachClient uses
+// behind the notification bell (read/write + the 'accountData' subscription).
+// Without those every header story logged "client.getAccountData is not a
+// function" and then "client.on is not a function".
 const makeMatrixClientService = (members: MockMember[]) => {
 	const room = {
 		getJoinedMembers: () => members,
@@ -136,7 +140,12 @@ const makeMatrixClientService = (members: MockMember[]) => {
 	};
 	const client = {
 		getRoom: () => room,
-		getRooms: () => [room]
+		getRooms: () => [room],
+		getAccountData: () => undefined,
+		setAccountData: async () => ({}),
+		on: () => client,
+		off: () => client,
+		removeListener: () => client
 	};
 	return {
 		getClient: () => client

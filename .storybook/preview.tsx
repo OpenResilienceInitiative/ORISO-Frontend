@@ -36,6 +36,7 @@ import {
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
+import { INITIAL_VIEWPORTS, MINIMAL_VIEWPORTS } from 'storybook/viewport';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -805,6 +806,11 @@ const preview: Preview = {
 			theme: themes.light,
 			toc: true
 		},
+		// Storybook 9 dropped `parameters.viewport.defaultViewport` in favour of
+		// `parameters.viewport.options` + the `viewport` global. Registering the
+		// catalogue here is what makes a story's `globals.viewport.value` resolve;
+		// without it a "mobile" story silently rendered at the browser's width.
+		viewport: { options: { ...MINIMAL_VIEWPORTS, ...INITIAL_VIEWPORTS } },
 		backgrounds: {
 			default: 'light',
 			values: [

@@ -179,13 +179,13 @@ export const ClientIn1on1Outgoing: Story = {
  */
 export const AndroidCompactKebabTouchZone: Story = {
 	name: 'Android Compact — kebab 32×32 touch zone',
+	globals: {
+		viewport: { value: 'mobile1' }
+	},
 	parameters: {
 		activeSession: mockActiveSession1on1(),
 		userData: mockUserData(),
 		compactShell: true,
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		docs: {
 			description: {
 				story: 'Incoming + outgoing rows on a compact viewport. Each `.messageItem__kebabButton` must measure **32×32px** (min-width/height + box-sizing from production SCSS).'

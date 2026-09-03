@@ -1046,10 +1046,8 @@ export const PostcodeOnly: Story = {
 };
 
 export const InteractiveMenuAndLongContent: Story = {
-	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		}
+	globals: {
+		viewport: { value: 'mobile1' }
 	},
 	render: () => <InteractiveMenuPlayground />
 };

@@ -289,6 +289,10 @@ const colourStyles = (
 		},
 		...(menu?.(styles, state) ?? {})
 	}),
+	menuPortal: (styles) => ({
+		...styles,
+		zIndex: 1000
+	}),
 	multiValue: (styles, state) => {
 		const common = {
 			margin: '4px'

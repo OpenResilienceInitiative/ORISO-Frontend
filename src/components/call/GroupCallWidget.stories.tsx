@@ -90,8 +90,11 @@ export const ActiveCall: Story = {
 					'.element-call-iframe'
 				) as HTMLIFrameElement | null;
 				expect(iframe).toBeTruthy();
+				// useElementCallWidget builds `new URL('/room', base)` and puts the
+				// widget parameters in the hash — so `/room#?widgetId=…`, with no
+				// trailing slash before the fragment.
 				expect(iframe?.getAttribute('src') || '').toMatch(
-					/^https:\/\/call\.storybook\.test\/room\/#/
+					/^https:\/\/call\.storybook\.test\/room#\?/
 				);
 				expect(
 					canvasElement.querySelector(

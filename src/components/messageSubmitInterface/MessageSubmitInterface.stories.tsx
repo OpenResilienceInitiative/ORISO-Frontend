@@ -249,8 +249,8 @@ export const Supervisor: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
+	globals: {
+		viewport: { value: 'mobile1' }
 	},
 	render: () => <ComposerShell />
 };
