@@ -1305,10 +1305,16 @@
 			},
 			"back": "Back",
 			"confirm": "Got it",
+			"loading": "Loading the legal text …",
 			"missing": {
 				"text": "No legal text has been provided here for this service.",
 				"link": "Open the configured address"
 			}
+		},
+		"reader": {
+			"chapters": "Chapters of this document",
+			"fullscreen": "Read in full screen",
+			"exitFullscreen": "Leave full screen"
 		}
 	},
 	"login": {
@@ -1333,8 +1339,8 @@
 				"impressum": "Imprint"
 			},
 			"platform": {
-				"impressum": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nWho operates the platform and how to reach them is in the full legal notice. The counselling itself is done by independent centres with their own details, which you see once you have chosen one.",
-				"dataprotection": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nSigning in processes only what signing in needs. Your messages are end-to-end encrypted: they become readable only on your device and at your counselling centre. What is processed beyond that depends on the centre you choose later.",
+				"impressum": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nPlaceholder: this is not the published legal notice yet. It stands here until the platform operator has entered their details.\n\nPlatform operator: [name and legal form]. Registered office: [address]. Represented by: [authorised representatives]. Register entry: [register court and number]. VAT identification number: [VAT ID]. Contact: [email address], [phone number].\n\nThe platform operator does not provide the counselling. The platform carries several counselling services and specialist areas; they are run by independent carriers and their counselling centres. Those are responsible for the counselling itself and have their own legal notice. The platform operator provides and runs the technology and passes your enquiry on to the counselling centre in charge.\n\nYou see your counselling centre's legal notice once you have chosen one.",
+				"dataprotection": "You are not signed in with a counselling centre yet — this note is about the platform itself.\n\nPlaceholder: this is not the published privacy policy yet. It stands here until the platform operator has entered their details.\n\nController for the platform: [name, legal form, address]. Data protection officer: [name, contact]. Supervisory authority: [name and address].\n\nOnly the data that signing in requires is processed: the name you choose, a password, and an email address if you provide one for recovery. Your messages are end-to-end encrypted: they become readable only on your device and at your counselling centre. The platform operator cannot technically read counselling content.\n\nThe platform carries several counselling services and specialist areas. The counselling is provided by independent carriers and their counselling centres; they process the data of your counselling largely themselves and on their own responsibility. The platform operator provides and runs the technology and forwards your enquiry to the counselling centre in charge. Where both decide on purposes and means together, they do so as joint controllers; which duty is met by whom is set out in the agreement between platform operator and carrier.\n\nWhat your counselling centre processes beyond that is set out in its own privacy policy. You see it before you write your first message.\n\nYour rights: access, rectification, erasure, restriction of processing, data portability, objection, and complaint to the supervisory authority. Please use [contact route for data subject requests].",
 				"fullText": "Open the full text"
 			}
 		},
@@ -2753,7 +2759,97 @@
 			"loadErrorRetry": "Try again",
 			"oneResult": "We advise you on the topic",
 			"subline": "Choose a topic from our counseling services.",
-			"summary": "Your topic:"
+			"summary": "Your topic:",
+			"category": {
+				"alter": "Ageing, Older Adults",
+				"krisen": "Challenging Life Situations & Crises",
+				"gesundheit": "Health and Addiction",
+				"familie": "Children, Young People and Families",
+				"migration": "Migration & Integration",
+				"teilhabe": "Disability Inclusion"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Parent and Family Support",
+					"description": "Support for parenting questions, conflict, and family pressure."
+				},
+				"children-youth-counselling": {
+					"title": "Children and Young People",
+					"description": "Support and a listening ear when everyday life becomes too much."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Pediatric Rehabilitation",
+					"description": "Rehabilitation guidance for children and young people."
+				},
+				"cures-mothers-fathers": {
+					"title": "Parent Health Rehabilitation",
+					"description": "Guidance on recovery programs for exhausted parents."
+				},
+				"pregnancy": {
+					"title": "Pregnancy",
+					"description": "Support for pregnancy-related questions and difficult circumstances."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Suicide Prevention",
+					"description": "Anonymous support for young people in crisis or with suicidal thoughts."
+				},
+				"school-to-work-transition": {
+					"title": "School-to-Work Transition",
+					"description": "Support for the step from school into training, study, and work."
+				},
+				"counselling-men-boys": {
+					"title": "Boys and Men's Support",
+					"description": "A safe space for men and boys to talk openly about worries."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospice and Palliative Care Support",
+					"description": "Counselling around serious illness, dying, farewell, and care."
+				},
+				"life-in-old-age": {
+					"title": "Later Life Support",
+					"description": "Support for questions around ageing, care, and everyday life."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Supported Decision-Making and Advance Planning",
+					"description": "Guidance on guardianship, powers of attorney, and advance care."
+				},
+				"initial-return-further-migration": {
+					"title": "Relocation and Return Support",
+					"description": "Counselling on migration, return, and onward movement."
+				},
+				"migration": {
+					"title": "Migration Support",
+					"description": "Support with arrival, integration, and orientation."
+				},
+				"disability-psychological-impairment": {
+					"title": "Disability and Mental Health Support",
+					"description": "Support for participation, everyday life, and psychological strain."
+				},
+				"hiv-aids": {
+					"title": "HIV and AIDS",
+					"description": "Confidential counselling about HIV, AIDS, health, and everyday life."
+				},
+				"sucht": {
+					"title": "Addiction",
+					"description": "Counselling for addiction questions, dependency, and harmful habits."
+				},
+				"trauerberatung": {
+					"title": "Bereavement Support",
+					"description": "Support with loss, farewell, and grief."
+				},
+				"general-social-counselling": {
+					"title": "Social Support",
+					"description": "Help with social, financial, and personal questions."
+				},
+				"debt": {
+					"title": "Debt",
+					"description": "Counselling for financial worries, reminders, and over-indebtedness."
+				},
+				"offending": {
+					"title": "Offender Support",
+					"description": "Support for questions around offending, restart, and daily life."
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "Suggest data automatically",
@@ -4078,6 +4174,9 @@
 			"changeName": "Change name"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Ask for advice"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
@@ -4396,19 +4495,19 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Sign DPA",
-		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
-		"loadingContract": "Loading agreement…",
+		"title": "Sign contract documents",
+		"subtitle": "Please read the contract documents in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading contract documents…",
 		"signerHeading": "Confirmation by authorised signatory",
 		"signingFor": "You are signing on behalf of:",
-		"accept": "I have read the agreement shown above and confirm it as binding.",
-		"submit": "Confirm bindingly",
+		"accept": "I have read the contract documents shown above and confirm them as binding.",
+		"submit": "Confirm and sign",
 		"submitting": "Saving…",
-		"success": "The DPA confirmation has been saved.",
+		"success": "The confirmation of the contract documents has been saved.",
 		"error": {
 			"missingToken": "The signature link is incomplete.",
-			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
-			"acceptRequired": "Please confirm the agreement.",
+			"previewRequired": "The contract documents must be fully loaded before you can confirm them.",
+			"acceptRequired": "Please confirm the contract documents.",
 			"generic": "The signature could not be saved just now.",
 			"invalidToken": "This signature link is invalid, expired, or has already been used.",
 			"invalidRequest": "The details could not be saved. Please check the form."
@@ -4492,5 +4591,11 @@
 		"friday": "Friday",
 		"saturday": "Saturday",
 		"sunday": "Sunday"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Show previous chapters",
+			"next": "Show more chapters"
+		}
 	}
 }

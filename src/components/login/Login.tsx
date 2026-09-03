@@ -166,10 +166,10 @@ export const Login = () => {
 		// If we're authenticated and have a gcid, redirect to app
 		if (gcid && getValueFromCookie('keycloak')) {
 			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
-				.then(() => redirectToApp(gcid))
+				.then(() => redirectToApp(gcid, { navigate }))
 				.catch(() => null); // do nothing
 		}
-	}, [consultant, gcid, reloadUserData, userData]);
+	}, [consultant, gcid, navigate, reloadUserData, userData]);
 
 	useEffect(() => {
 		setShowLoginError('');
@@ -269,7 +269,7 @@ export const Login = () => {
 					!consultant ||
 					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 				) {
-					return redirectToApp(gcid);
+					return redirectToApp(gcid, { navigate });
 				}
 			}),
 		[
@@ -278,6 +278,7 @@ export const Login = () => {
 			initLocale,
 			consultant,
 			gcid,
+			navigate,
 			showConsultantLoginBlockedError
 		]
 	);

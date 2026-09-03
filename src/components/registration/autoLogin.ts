@@ -162,10 +162,56 @@ export const getPostRegistrationGroupChatId = (search: string) => {
 	return value || undefined;
 };
 
-export const redirectToApp = (gcid?: string) => {
+export const getPostRegistrationSessionId = (
+	sessionsPayload:
+		| { sessions?: Array<{ session?: { id?: string | number } }> }
+		| null
+		| undefined
+): string | undefined => {
+	const id = sessionsPayload?.sessions?.[0]?.session?.id;
+	if (id == null || String(id).trim() === '') {
+		return undefined;
+	}
+	return String(id);
+};
+
+type RedirectToAppOptions = {
+	navigate?: (to: string) => void;
+	sessionId?: string | number;
+};
+
+const toRouterPath = (configured: string): string => {
+	try {
+		return new URL(configured, window.location.origin).pathname || '/app';
+	} catch {
+		return configured.startsWith('/') ? configured : `/${configured}`;
+	}
+};
+
+export const buildAppRedirectPath = (
+	gcid?: string,
+	sessionId?: string | number
+): string => {
 	const value = gcid?.trim();
-	const params = value
+	const search = value
 		? `?${new URLSearchParams({ gcid: value }).toString()}`
 		: '';
-	window.location.href = appConfig.urls.redirectToApp + params;
+
+	if (sessionId != null && String(sessionId).trim() !== '') {
+		return `/sessions/user/view/session/${sessionId}${search}`;
+	}
+
+	return `${toRouterPath(appConfig.urls.redirectToApp)}${search}`;
+};
+
+export const redirectToApp = (
+	gcid?: string,
+	options?: RedirectToAppOptions
+) => {
+	const path = buildAppRedirectPath(gcid, options?.sessionId);
+	if (options?.navigate) {
+		options.navigate(path);
+		return;
+	}
+	window.location.assign(path);
 };

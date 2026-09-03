@@ -12,7 +12,10 @@ import {
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -93,9 +96,58 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Assert the public composer-to-session bottom spacing contract in CSS pixels. */
+async function expectComposerBottomInset(
+	canvasElement: HTMLElement,
+	expectedInset: number
+) {
+	await waitFor(() => {
+		const session = canvasElement.querySelector<HTMLElement>('.session');
+		const composerCard = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!session || !composerCard) {
+			throw new Error('composer layout not mounted yet');
+		}
+
+		const sessionInnerBottom =
+			session.getBoundingClientRect().bottom -
+			Number.parseFloat(
+				getComputedStyle(session).borderBottomWidth || '0'
+			);
+		const composerBottom = composerCard.getBoundingClientRect().bottom;
+
+		expect(Math.round(sessionInnerBottom - composerBottom)).toBe(
+			expectedInset
+		);
+	});
+}
+
 export const Default: Story = {
 	name: 'Default (empty)',
 	render: () => <ComposerShell />
+};
+
+/** Desktop chat card contract: the composer card rests on the session's inner edge. */
+export const DesktopBottomAnchored: Story = {
+	name: 'Desktop — composer anchored to session bottom',
+	parameters: {
+		viewport: {
+			options: {
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' }
+				}
+			}
+		}
+	},
+	globals: {
+		viewport: { value: 'desktop1440' }
+	},
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 0);
+	}
 };
 
 /** #597: focus the editor so `--selected` applies (2px primary-container + send styles). */
@@ -516,5 +568,16 @@ export const Mobile: Story = {
 	// removed the built-in presets — the story called itself Mobile and
 	// rendered at desktop width.
 	globals: phone390Globals,
-	render: () => <ComposerShell />
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 16);
+	}
+};
+
+export const Tablet: Story = {
+	globals: tablet834Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await expectComposerBottomInset(canvasElement, 16);
+	}
 };

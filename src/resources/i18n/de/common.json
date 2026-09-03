@@ -1319,10 +1319,16 @@
 			},
 			"back": "Zurück",
 			"confirm": "Verstanden",
+			"loading": "Der Rechtstext wird geladen …",
 			"missing": {
 				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
 				"link": "Zur hinterlegten Adresse"
 			}
+		},
+		"reader": {
+			"chapters": "Kapitel dieses Dokuments",
+			"fullscreen": "Im Vollbild lesen",
+			"exitFullscreen": "Vollbild verlassen"
 		}
 	},
 	"login": {
@@ -1348,8 +1354,8 @@
 				"impressum": "Impressum"
 			},
 			"platform": {
-				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nWer die Plattform betreibt und wie Sie den Betreiber erreichen, steht im vollständigen Impressum. Die Beratung leisten eigenständige Beratungsstellen mit eigenen Angaben; die sehen Sie, sobald Sie eine gewählt haben.",
-				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Welche Daten darüber hinaus verarbeitet werden, hängt an der Beratungsstelle, die Sie später wählen.",
+				"impressum": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht das veröffentlichte Impressum. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nBetreiber der Plattform: [Name und Rechtsform]. Sitz: [Anschrift]. Vertreten durch: [vertretungsberechtigte Personen]. Registereintrag: [Registergericht und Registernummer]. Umsatzsteuer-Identifikationsnummer: [USt-IdNr.]. Kontakt: [E-Mail-Adresse], [Telefonnummer].\n\nDie Beratung leistet der Plattformbetreiber nicht. Auf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche; getragen werden sie von eigenständigen Trägern und deren Beratungsstellen. Diese sind für die Beratung selbst verantwortlich und haben ein eigenes Impressum. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und vermittelt Ihre Anfrage an die zuständige Beratungsstelle.\n\nDas Impressum Ihrer Beratungsstelle sehen Sie, sobald Sie eine gewählt haben.",
+				"dataprotection": "Sie sind hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht die veröffentlichte Datenschutzerklärung. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nVerantwortlich für die Plattform: [Name, Rechtsform, Anschrift]. Datenschutzbeauftragte Stelle: [Name, Kontakt]. Zuständige Aufsicht: [Name und Anschrift der Aufsichtsbehörde].\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Ihre Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf Ihrem Gerät und bei Ihrer Beratungsstelle. Beratungsinhalte kann der Plattformbetreiber technisch nicht einsehen.\n\nAuf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche. Die Beratung leisten eigenständige Träger und deren Beratungsstellen; die Daten Ihrer Beratung verarbeiten sie überwiegend selbst und in eigener Verantwortung. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und übernimmt die Weiterleitung beziehungsweise Vermittlung Ihrer Anfrage. Wo beide gemeinsam über Zwecke und Mittel entscheiden, geschieht das in gemeinsamer Verantwortlichkeit; wer welche Pflicht erfüllt, regelt die Vereinbarung zwischen Plattformbetreiber und Träger.\n\nWelche Daten Ihre Beratungsstelle darüber hinaus verarbeitet, steht in ihrer eigenen Datenschutzerklärung. Die sehen Sie, bevor Sie Ihre erste Nachricht schreiben.\n\nIhre Rechte: Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerspruch und Beschwerde bei der Aufsichtsbehörde. Wenden Sie sich dafür an [Kontaktweg für Betroffenenanfragen].",
 				"fullText": "Vollständigen Text öffnen"
 			}
 		},
@@ -2906,7 +2912,97 @@
 			"loadErrorRetry": "Erneut versuchen",
 			"oneResult": "Wir beraten Sie zum Thema",
 			"subline": "Wählen Sie ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Ihr Thema:"
+			"summary": "Ihr Thema:",
+			"category": {
+				"alter": "Alter",
+				"krisen": "Besondere Lebenssituationen & Krisen",
+				"gesundheit": "Gesundheit & Sucht",
+				"familie": "Kinder, Jugend, Erwachsene, Schwangerschaft und Familie",
+				"migration": "Migration",
+				"teilhabe": "Teilhabe für Menschen mit Beeinträchtigungen"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Eltern und Familie",
+					"description": "Ob Erziehungsfragen, Konflikte oder familiäre Krisen - hier finden Sie verständnisvolle Begleitung."
+				},
+				"children-youth-counselling": {
+					"title": "Kinder und Jugendliche",
+					"description": "Wenn der Alltag zu viel wird - hier gibt es Hilfe und ein offenes Ohr."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Kinder- und Jugend-Reha",
+					"description": "Für junge Menschen, die nach Krankheit oder Belastung neue Kraft schöpfen möchten."
+				},
+				"cures-mothers-fathers": {
+					"title": "Kuren für Mütter und Väter",
+					"description": "Kurmaßnahmen helfen erschöpften Eltern, wieder zu sich zu finden."
+				},
+				"pregnancy": {
+					"title": "Schwangerschaft",
+					"description": "Bei Fragen, Unsicherheit oder schwierigen Umständen sind wir da."
+				},
+				"u25-suicide-prevention": {
+					"title": "[U25] Suizidprävention",
+					"description": "Anonyme Begleitung für junge Menschen in Krisen und Suizidgedanken."
+				},
+				"school-to-work-transition": {
+					"title": "Übergang von Schule zu Beruf",
+					"description": "Begleitung beim Schritt von der Schule in Ausbildung, Studium und Beruf."
+				},
+				"counselling-men-boys": {
+					"title": "Jungen- und Männerberatung",
+					"description": "Ein sicherer Raum für Männer und Jungen, um offen über Sorgen zu sprechen."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospiz- und Palliativberatung",
+					"description": "Beratung bei schwerer Krankheit, Sterben, Abschied und Begleitung."
+				},
+				"life-in-old-age": {
+					"title": "Leben im Alter",
+					"description": "Unterstuetzung bei Fragen rund um Alter, Pflege und Alltag."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Rechtliche Betreuung und Vorsorge",
+					"description": "Orientierung zu Betreuung, Vollmacht und persönlicher Vorsorge."
+				},
+				"initial-return-further-migration": {
+					"title": "Aus-/Rück- und Weiterwanderung",
+					"description": "Beratung zu Migration, Rückkehr und nächsten Schritten."
+				},
+				"migration": {
+					"title": "Migration",
+					"description": "Unterstützung bei Ankommen, Integration und Orientierung."
+				},
+				"disability-psychological-impairment": {
+					"title": "Behinderung und psychische Beeinträchtigung",
+					"description": "Unterstuetzung bei Fragen zu Teilhabe, Alltag und Belastungen."
+				},
+				"hiv-aids": {
+					"title": "HIV und Aids",
+					"description": "Vertrauliche Beratung zu HIV, Aids, Gesundheit und Alltag."
+				},
+				"sucht": {
+					"title": "Sucht",
+					"description": "Beratung bei Suchtfragen, Abhängigkeit und belastenden Gewohnheiten."
+				},
+				"trauerberatung": {
+					"title": "Trauerberatung",
+					"description": "Begleitung bei Verlust, Abschied und schwerer Trauer."
+				},
+				"general-social-counselling": {
+					"title": "Allgemeine Sozialberatung",
+					"description": "Hilfe bei sozialen, finanziellen und persönlichen Fragen."
+				},
+				"debt": {
+					"title": "Schulden",
+					"description": "Beratung bei finanziellen Sorgen, Mahnungen und Überschuldung."
+				},
+				"offending": {
+					"title": "Straffälligkeit",
+					"description": "Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag."
+				}
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Ihren Wohnort kennen",
@@ -4168,6 +4264,9 @@
 			"title": "Live-Chat ist zurzeit leider geschlossen"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Rat einholen"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
@@ -4486,19 +4585,19 @@
 		}
 	},
 	"dpaSign": {
-		"title": "AVV unterzeichnen",
-		"subtitle": "Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
-		"loadingContract": "Vereinbarung wird geladen...",
+		"title": "Vertragsunterlagen unterzeichnen",
+		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
+		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
 		"signingFor": "Sie unterzeichnen im Namen von:",
-		"accept": "Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.",
+		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
 		"submit": "Verbindlich bestätigen",
 		"submitting": "Speichern...",
-		"success": "Die AVV-Bestätigung wurde gespeichert.",
+		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
 			"missingToken": "Der Signaturlink ist unvollständig.",
-			"previewRequired": "Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.",
-			"acceptRequired": "Bitte bestätigen Sie die Vereinbarung.",
+			"previewRequired": "Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.",
+			"acceptRequired": "Bitte bestätigen Sie die Vertragsunterlagen.",
 			"generic": "Die Signatur konnte gerade nicht gespeichert werden.",
 			"invalidToken": "Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.",
 			"invalidRequest": "Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular."
@@ -4582,5 +4681,11 @@
 		"friday": "Freitag",
 		"saturday": "Samstag",
 		"sunday": "Sonntag"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Vorherige Kapitel anzeigen",
+			"next": "Weitere Kapitel anzeigen"
+		}
 	}
 }

@@ -36,6 +36,12 @@ FROM node:$NODE_VERSION
 
 ARG PORT=80
 
+# CVE-2026-14456: OpenSSL DoS via unbounded memory growth in the QUIC server.
+# Alpine 3.24 ships the fix in 3.5.8-r0, but the pinned node:22-alpine still
+# carries 3.5.7-r0 and upstream has not rebuilt, so bumping the base digest
+# does not help. Take the patched packages straight from the Alpine repo.
+RUN apk upgrade --no-cache libssl3 libcrypto3
+
 # The node base image bundles an npm whose vendored dependencies (tar,
 # sigstore, picomatch, brace-expansion) carry fixable HIGH/CRITICAL CVEs
 # flagged by the Trivy publish gate. Upgrade npm to a release that ships

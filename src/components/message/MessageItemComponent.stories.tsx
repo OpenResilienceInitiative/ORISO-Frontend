@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
@@ -33,7 +33,12 @@ import {
 	mockVisibilityMessage,
 	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
-import { phone390Globals } from './messageStoryShell';
+import {
+	desktop1440Globals,
+	mobileParameters,
+	phone390Globals,
+	tablet834Globals
+} from './messageStoryShell';
 import './message.styles.scss';
 
 type MessageItemStoryParameters = {
@@ -93,6 +98,74 @@ const baseHandlers = {
 	handleDecryptionErrors: () => {},
 	handleDecryptionSuccess: () => {},
 	e2eeParams: mockE2eeParams()
+};
+
+const longMessageArgs = {
+	...mockMessageItemComponentProps({
+		isMyMessage: false,
+		userId: MOCK_ASKER_MATRIX_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		message: mockLongGermanMessage
+	}),
+	...baseHandlers
+};
+
+/** `.messageItem` enters at scale(0.98). Measuring mid-animation is why
+ *  "Long message — expanded — tablet 834" failed in CI: the 700–770 band
+ *  accepts 0.98×width, then expand settles at scale(1) and the delta is ~14px.
+ *  Desktop's 769–771 band happens to wait this out. Same pin as
+ *  CaseHandoverClientCards "Pending client consent". */
+const waitForMessageEnterAnimation = async (canvasElement: HTMLElement) => {
+	const messageItem =
+		canvasElement.querySelector<HTMLElement>('.messageItem');
+	expect(messageItem).not.toBeNull();
+	await waitFor(() => {
+		const style = getComputedStyle(messageItem!);
+		expect(style.opacity).toBe('1');
+		expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(style.transform);
+	});
+};
+
+const verifyLongMessageState = async ({
+	canvasElement,
+	expanded,
+	minWidth,
+	maxWidth
+}: {
+	canvasElement: HTMLElement;
+	expanded: boolean;
+	minWidth: number;
+	maxWidth: number;
+}) => {
+	const canvas = within(canvasElement);
+	const showMore = await canvas.findByRole('button', {
+		name: /^(Mehr anzeigen|Show more)$/
+	});
+	const bubble = canvasElement.querySelector<HTMLElement>(
+		'.messageItem__message--wide'
+	);
+	expect(bubble).not.toBeNull();
+
+	await waitForMessageEnterAnimation(canvasElement);
+
+	await waitFor(() => {
+		const width = bubble!.getBoundingClientRect().width;
+		expect(width).toBeGreaterThanOrEqual(minWidth);
+		expect(width).toBeLessThanOrEqual(maxWidth);
+	});
+
+	if (!expanded) return;
+
+	const collapsedWidth = bubble!.getBoundingClientRect().width;
+	await userEvent.click(showMore);
+	await canvas.findByRole('button', {
+		name: /^(Weniger anzeigen|Show less)$/
+	});
+	await waitFor(() => {
+		expect(
+			Math.abs(bubble!.getBoundingClientRect().width - collapsedWidth)
+		).toBeLessThanOrEqual(1);
+	});
 };
 
 const meta = {
@@ -390,6 +463,110 @@ export const LongMessage: Story = {
 		}),
 		...baseHandlers
 	}
+};
+
+export const LongMessageCollapsedMobile390: Story = {
+	name: 'Long message — collapsed — mobile 390',
+	globals: phone390Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		...mobileParameters
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: false,
+			minWidth: 280,
+			maxWidth: 350
+		})
+};
+
+export const LongMessageExpandedMobile390: Story = {
+	name: 'Long message — expanded — mobile 390',
+	globals: phone390Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		...mobileParameters
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: true,
+			minWidth: 280,
+			maxWidth: 350
+		})
+};
+
+export const LongMessageCollapsedTablet834: Story = {
+	name: 'Long message — collapsed — tablet 834',
+	globals: tablet834Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: false,
+			minWidth: 700,
+			maxWidth: 770
+		})
+};
+
+export const LongMessageExpandedTablet834: Story = {
+	name: 'Long message — expanded — tablet 834',
+	globals: tablet834Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: true,
+			minWidth: 700,
+			maxWidth: 770
+		})
+};
+
+export const LongMessageCollapsedDesktop1440: Story = {
+	name: 'Long message — collapsed — desktop 1440',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: false,
+			minWidth: 769,
+			maxWidth: 771
+		})
+};
+
+export const LongMessageExpandedDesktop1440: Story = {
+	name: 'Long message — expanded — desktop 1440',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: longMessageArgs,
+	play: ({ canvasElement }) =>
+		verifyLongMessageState({
+			canvasElement,
+			expanded: true,
+			minWidth: 769,
+			maxWidth: 771
+		})
 };
 
 export const IncomingWithReactions: Story = {

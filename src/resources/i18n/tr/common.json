@@ -1333,8 +1333,8 @@
 				"impressum": "Künye"
 			},
 			"platform": {
-				"impressum": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nPlatformu kimin işlettiği ve işletmeciye nasıl ulaşabileceğiniz, tam künyede yer alır. Danışmanlığı, kendi bilgileri olan bağımsız danışma merkezleri verir; bu bilgileri bir merkez seçtiğinizde görürsünüz.",
-				"dataprotection": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nOturum açmak için yalnızca bunun için gerekli olan verileri işleriz. Mesajlarınız uçtan uca şifrelenmiştir: yalnızca sizin cihazınızda ve danışma merkezinizde okunabilir hale gelir. Bunun ötesinde hangi verilerin işleneceği, daha sonra seçeceğiniz danışma merkezine bağlıdır.",
+				"impressum": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nYer tutucu: bu henüz yayımlanmış künye değildir. Platform işletmecisi bilgilerini girene kadar bu metin burada durur.\n\nPlatform işletmecisi: [ad ve hukuki biçim]. Merkez: [adres]. Temsilciler: [temsile yetkili kişiler]. Sicil kaydı: [sicil mahkemesi ve numarası]. KDV kimlik numarası: [KDV no]. İletişim: [e-posta adresi], [telefon numarası].\n\nDanışmanlığı platform işletmecisi vermez. Platformda farklı danışmanlık hizmetleri ve uzmanlık alanları bulunur; bunları bağımsız kuruluşlar ve onların danışma merkezleri yürütür. Danışmanlığın kendisinden bu merkezler sorumludur ve kendi künyeleri vardır. Platform işletmecisi tekniği sağlar, işletir ve talebinizi yetkili danışma merkezine iletir.\n\nDanışma merkezinizin künyesini, bir merkez seçtiğinizde görürsünüz.",
+				"dataprotection": "Henüz herhangi bir danışma merkezinde oturum açmadınız — bu bilgi platformun kendisi için geçerlidir.\n\nYer tutucu: bu henüz yayımlanmış gizlilik politikası değildir. Platform işletmecisi bilgilerini girene kadar bu metin burada durur.\n\nPlatformdan sorumlu veri sorumlusu: [ad, hukuki biçim, adres]. Veri koruma görevlisi: [ad, iletişim]. Yetkili denetim makamı: [ad ve adres].\n\nOturum açmak için yalnızca bunun için gerekli olan verileri işleriz. Mesajlarınız uçtan uca şifrelenmiştir: yalnızca sizin cihazınızda ve danışma merkezinizde okunabilir hale gelir. Danışmanlık içeriklerini platform işletmecisi teknik olarak göremez.\n\nPlatformda farklı danışmanlık hizmetleri ve uzmanlık alanları bulunur. Danışmanlığı bağımsız kuruluşlar ve onların danışma merkezleri verir; danışmanlığınıza ilişkin verileri büyük ölçüde kendileri ve kendi sorumlulukları altında işlerler. Platform işletmecisi tekniği sağlar, işletir ve talebinizin iletilmesini, yani aracılığını üstlenir. İkisinin amaç ve araçlara birlikte karar verdiği yerlerde bu, ortak sorumluluk çerçevesinde olur; hangi yükümlülüğü kimin yerine getireceğini platform işletmecisi ile kuruluş arasındaki sözleşme düzenler.\n\nDanışma merkezinizin bunun ötesinde hangi verileri işlediği, kendi gizlilik politikasında yer alır. Bunu, ilk mesajınızı yazmadan önce görürsünüz.\n\nHaklarınız: bilgi edinme, düzeltme, silme, işlemenin kısıtlanması, veri taşınabilirliği, itiraz ve denetim makamına şikâyet. Bunun için [ilgili kişi başvuruları için iletişim yolu] adresine başvurun.",
 				"fullText": "Tam metni aç"
 			}
 		},
@@ -2786,7 +2786,97 @@
 			"loadErrorRetry": "Tekrar dene",
 			"oneResult": "Size şu konularda tavsiyelerde bulunuyoruz",
 			"subline": "Danışmanlık hizmetlerimizden bir konu seçin.",
-			"summary": "Senin konun:"
+			"summary": "Senin konun:",
+			"category": {
+				"alter": "Yaşlılık ve yaşlı yetişkinler",
+				"krisen": "Zorlu yaşam durumları ve krizler",
+				"gesundheit": "Sağlık ve bağımlılık",
+				"familie": "Çocuklar, gençler ve aileler",
+				"migration": "Göç ve entegrasyon",
+				"teilhabe": "Engelli bireylerin katılımı"
+			},
+			"catalog": {
+				"parents-and-family": {
+					"title": "Ebeveynler ve aile",
+					"description": "Ebeveynlik soruları, çatışmalar veya aile içi krizlerde anlayışlı destek bulabilirsiniz."
+				},
+				"children-youth-counselling": {
+					"title": "Çocuklar ve gençler",
+					"description": "Günlük yaşam fazla geldiğinde burada yardım ve sizi dinleyen biri var."
+				},
+				"child-youth-rehabilitation": {
+					"title": "Çocuk ve gençlik rehabilitasyonu",
+					"description": "Hastalık veya zorlanmadan sonra yeniden güç kazanmak isteyen gençler için."
+				},
+				"cures-mothers-fathers": {
+					"title": "Anneler ve babalar için kürler",
+					"description": "Yorgun ebeveynlerin yeniden güç toplamasına yardımcı olan kür programları hakkında danışmanlık."
+				},
+				"pregnancy": {
+					"title": "Hamilelik",
+					"description": "Sorularınız, belirsizlikleriniz veya zor durumlarınız olduğunda yanınızdayız."
+				},
+				"u25-suicide-prevention": {
+					"title": "U25 intiharı önleme",
+					"description": "Kriz yaşayan veya intihar düşünceleri olan gençler için anonim destek."
+				},
+				"school-to-work-transition": {
+					"title": "Okuldan mesleğe geçiş",
+					"description": "Okuldan mesleki eğitime, üniversiteye ve iş hayatına geçişte destek."
+				},
+				"counselling-men-boys": {
+					"title": "Erkek çocuklar ve erkekler için danışmanlık",
+					"description": "Erkeklerin ve erkek çocukların endişelerini açıkça konuşabileceği güvenli bir alan."
+				},
+				"hospice-palliative-care-counselling": {
+					"title": "Hospis ve palyatif danışmanlık",
+					"description": "Ağır hastalık, ölüm, veda ve bakım süreçlerinde danışmanlık."
+				},
+				"life-in-old-age": {
+					"title": "Yaşlılıkta yaşam",
+					"description": "Yaşlanma, bakım ve günlük yaşamla ilgili sorularda destek."
+				},
+				"legal-guardianship-advance-care": {
+					"title": "Yasal temsil ve önlem danışmanlığı",
+					"description": "Vesayet, vekaletname ve kişisel önlemler konusunda yönlendirme."
+				},
+				"initial-return-further-migration": {
+					"title": "Göç ve geri dönüş",
+					"description": "Göç, geri dönüş ve sonraki adımlar hakkında danışmanlık."
+				},
+				"migration": {
+					"title": "Göç",
+					"description": "Varış, entegrasyon ve yön bulma konusunda destek."
+				},
+				"disability-psychological-impairment": {
+					"title": "Engellilik ve psikolojik zorlanma",
+					"description": "Katılım, günlük yaşam ve psikolojik yüklerle ilgili sorularda destek."
+				},
+				"hiv-aids": {
+					"title": "HIV ve AIDS",
+					"description": "HIV, AIDS, sağlık ve günlük yaşam hakkında gizli danışmanlık."
+				},
+				"sucht": {
+					"title": "Bağımlılık",
+					"description": "Bağımlılık soruları, bağımlılık durumu ve zorlayıcı alışkanlıklar için danışmanlık."
+				},
+				"trauerberatung": {
+					"title": "Yas danışmanlığı",
+					"description": "Kayıp, veda ve derin yas dönemlerinde destek."
+				},
+				"general-social-counselling": {
+					"title": "Genel sosyal danışmanlık",
+					"description": "Sosyal, maddi ve kişisel sorularda yardım."
+				},
+				"debt": {
+					"title": "Borç",
+					"description": "Maddi kaygılar, ihtarlar ve aşırı borçlanma konusunda danışmanlık."
+				},
+				"offending": {
+					"title": "Suç ve yeniden başlangıç",
+					"description": "Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek."
+				}
+			}
 		},
 		"account": {
 			"autoSuggest": "Bilgileri otomatik öner",
@@ -4152,6 +4242,9 @@
 			"title": "Canlı sohbet şu anda maalesef kapalı"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Tavsiye iste"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
@@ -4487,10 +4580,16 @@
 			},
 			"back": "Geri",
 			"confirm": "Anladım",
+			"loading": "Yasal metin yükleniyor…",
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"
 			}
+		},
+		"reader": {
+			"chapters": "Bu belgenin bölümleri",
+			"fullscreen": "Tam ekranda oku",
+			"exitFullscreen": "Tam ekrandan çık"
 		}
 	},
 	"dpaSign": {
@@ -4590,5 +4689,11 @@
 		"friday": "Cuma",
 		"saturday": "Cumartesi",
 		"sunday": "Pazar"
+	},
+	"editor": {
+		"anchor": {
+			"previous": "Önceki bölümleri göster",
+			"next": "Daha fazla bölüm göster"
+		}
 	}
 }
