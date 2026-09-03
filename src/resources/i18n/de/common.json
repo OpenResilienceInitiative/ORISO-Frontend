@@ -3476,7 +3476,8 @@
 			"audio": "Audionachricht",
 			"image": "Bild",
 			"video": "Video",
-			"file": "Datei"
+			"file": "Datei",
+			"first_response": "Erstantwort"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"
