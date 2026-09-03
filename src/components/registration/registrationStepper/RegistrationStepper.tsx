@@ -19,49 +19,41 @@ import {
 const CANONICAL_STEPS: {
 	name: string;
 	labelKey: string;
-	fallback: string;
 	Icon: SvgIconComponent;
 }[] = [
 	{
 		name: 'topic-selection',
 		labelKey: 'registration.md3.stepNames.focus',
-		fallback: 'Fokus wählen',
 		Icon: CenterFocusStrongRoundedIcon
 	},
 	{
 		name: 'zipcode',
 		labelKey: 'registration.md3.stepNames.postcode',
-		fallback: 'Postleitzahl',
 		Icon: PlaceRoundedIcon
 	},
 	{
 		name: 'agency-selection',
 		labelKey: 'registration.md3.stepNames.agency',
-		fallback: 'Beratungsstelle',
 		Icon: ApartmentRoundedIcon
 	},
 	{
 		name: 'age',
 		labelKey: 'registration.age.headline',
-		fallback: 'Alter',
 		Icon: CakeRoundedIcon
 	},
 	{
 		name: 'state',
 		labelKey: 'registration.state.headline',
-		fallback: 'Bundesland',
 		Icon: PublicRoundedIcon
 	},
 	{
 		name: 'account-data',
 		labelKey: 'registration.md3.stepNames.register',
-		fallback: 'Registrieren',
 		Icon: HowToRegRoundedIcon
 	},
 	{
 		name: 'request',
 		labelKey: 'registration.md3.stepNames.request',
-		fallback: 'Anfrage stellen',
 		Icon: ChatBubbleRoundedIcon
 	}
 ];
@@ -171,12 +163,12 @@ export const RegistrationStepper = ({
 					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>
-				{visibleSteps.map(({ name, labelKey, fallback, Icon }, i) => {
+				{visibleSteps.map(({ name, labelKey, Icon }, i) => {
 					const done = i < currentIndex;
 					const active = i === currentIndex;
 					const clickable =
 						Boolean(onStepClick) && clickableStepNameSet.has(name);
-					const label = t(labelKey, fallback);
+					const label = t(labelKey);
 
 					return (
 						<Box key={name} sx={{ display: 'contents' }}>

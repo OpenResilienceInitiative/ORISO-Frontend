@@ -11,7 +11,14 @@ vi.mock('react-i18next', () => ({
 		   interpolates the wrong value, or none, is indistinguishable from one
 		   that gets it right. */
 		t: (key: string, options?: Record<string, unknown>) => {
-			const template = options?.defaultValue;
+			const catalogue: Record<string, string> = {
+				'registration.dataProtection.machineTranslated':
+					'Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).'
+			};
+			const template =
+				(typeof options?.defaultValue === 'string' &&
+					options.defaultValue) ||
+				catalogue[key];
 			if (typeof template !== 'string') {
 				return key;
 			}

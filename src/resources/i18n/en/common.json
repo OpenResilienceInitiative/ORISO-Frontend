@@ -4174,6 +4174,9 @@
 			"changeName": "Change name"
 		}
 	},
+	"sessionMenu": {
+		"requestAdvice": "Ask for advice"
+	},
 	"sessionHeader": {
 		"anonymous": {
 			"deleteAccount": {
@@ -4492,19 +4495,19 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Sign DPA",
-		"subtitle": "Please read the agreement in full and then confirm the details of the person signing.",
-		"loadingContract": "Loading agreement…",
+		"title": "Sign contract documents",
+		"subtitle": "Please read the contract documents in full and then confirm the details of the person signing.",
+		"loadingContract": "Loading contract documents…",
 		"signerHeading": "Confirmation by authorised signatory",
 		"signingFor": "You are signing on behalf of:",
-		"accept": "I have read the agreement shown above and confirm it as binding.",
-		"submit": "Confirm bindingly",
+		"accept": "I have read the contract documents shown above and confirm them as binding.",
+		"submit": "Confirm and sign",
 		"submitting": "Saving…",
-		"success": "The DPA confirmation has been saved.",
+		"success": "The confirmation of the contract documents has been saved.",
 		"error": {
 			"missingToken": "The signature link is incomplete.",
-			"previewRequired": "The agreement must be fully loaded before you can confirm it.",
-			"acceptRequired": "Please confirm the agreement.",
+			"previewRequired": "The contract documents must be fully loaded before you can confirm them.",
+			"acceptRequired": "Please confirm the contract documents.",
 			"generic": "The signature could not be saved just now.",
 			"invalidToken": "This signature link is invalid, expired, or has already been used.",
 			"invalidRequest": "The details could not be saved. Please check the form."
