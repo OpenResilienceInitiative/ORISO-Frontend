@@ -13,14 +13,15 @@ import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import { useTranslation } from 'react-i18next';
 import { RegistrationContext } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
+import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { AgencyLanguages } from './AgencyLanguages';
 import { AgencyDetails, getAgencyDetails } from './agencyDetails';
 import { formatOpeningHours } from '../../../utils/openingHours';
-import {
-	DepartmentLegalSection,
-	getDepartmentForTopic
-} from '../../departmentLegal/DepartmentLegalSection';
+import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
+import LegalLinks from '../../legalLinks/LegalLinks';
+import { LegalLinkButton } from '../../legalLinks/LegalLinkButton';
+import { getLegalLinkKind } from '../../legalLinks/useLegalLinkContent';
 
 interface AgencyDetailsPanelProps {
 	agency: AgencyDataInterface;
@@ -151,6 +152,7 @@ export const AgencyDetailsPanel = ({
 }: AgencyDetailsPanelProps) => {
 	const { t } = useTranslation();
 	const { registrationData } = useContext(RegistrationContext);
+	const legalLinks = useContext(LegalLinksContext);
 	const selectedTopic = registrationData?.mainTopic;
 	const department = getDepartmentForTopic(agency, selectedTopic);
 	const hasDepartmentLegal =
@@ -384,10 +386,46 @@ export const AgencyDetailsPanel = ({
 							'Rechtliches'
 						)}
 					>
-						<DepartmentLegalSection
-							agency={agency}
-							topic={selectedTopic}
-						/>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'flex-start',
+								gap: 0.75
+							}}
+						>
+							<LegalLinks
+								legalLinks={legalLinks}
+								params={{ aid: agency.id }}
+								filter={(legalLink) => {
+									const kind = getLegalLinkKind(
+										'',
+										'',
+										legalLink.label
+									);
+									if (kind === 'privacy') {
+										return (
+											department?.hasPublishedDpp === true
+										);
+									}
+									return (
+										department?.hasPublishedImprint === true
+									);
+								}}
+							>
+								{(label, url, rawLabel) => (
+									<LegalLinkButton
+										variant="inline"
+										label={label}
+										rawLabel={rawLabel}
+										url={url}
+										scope="agency"
+										agencyId={agency.id}
+										topicId={selectedTopic?.id}
+									/>
+								)}
+							</LegalLinks>
+						</Box>
 					</InfoRow>
 				)}
 			</Box>
