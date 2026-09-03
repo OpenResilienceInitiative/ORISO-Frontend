@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
+import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { UserAvatar } from '../message/UserAvatar';
@@ -62,7 +63,7 @@ import '../chatMenuDropdown/chatMenuDropdown.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 
 const APP_ORISO_CHAT_FIGMA_URL =
-	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38278&m=dev';
 const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
@@ -88,7 +89,7 @@ const labelFallbacks: Record<string, string> = {
 	'sessionList.toolbar.search.removeSelectedPerson': 'Person entfernen',
 	'sessionList.toolbar.chips.unread': 'Ungelesen',
 	'sessionList.toolbar.chips.drafts': 'Entwürfe',
-	'sessionList.toolbar.chips.nearby': 'Nearby',
+	'sessionList.toolbar.chips.nearby': 'Mail',
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
@@ -961,10 +962,17 @@ function RealSessionListItem({
 	);
 }
 
-function SessionListPanel() {
+function SessionListPanel({
+	width,
+	onResize
+}: {
+	width: number;
+	onResize: (width: number) => void;
+}) {
 	const [search, setSearch] = useState('');
 	const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 	const [chip, setChip] = useState<SessionToolbarChipFilter | null>('drafts');
+	const listScrollRef = useRef<HTMLDivElement | null>(null);
 
 	return (
 		<aside style={styles.listPanel}>
@@ -1001,6 +1009,7 @@ function SessionListPanel() {
 					/>
 					<div className="sessionsList__scrollArea">
 						<div
+							ref={listScrollRef}
 							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
 							style={styles.listScroll}
 						>
@@ -1030,6 +1039,12 @@ function SessionListPanel() {
 						</div>
 					</div>
 				</div>
+				<ResizableHandle
+					currentWidth={width}
+					onResize={onResize}
+					scrollTargetRef={listScrollRef}
+					maxWidth={500}
+				/>
 			</AppOrisoRuntimeProviders>
 		</aside>
 	);
@@ -1273,10 +1288,18 @@ function ChatPanel() {
 }
 
 function AppOrisoConsultantChatSurface() {
+	const [listWidth, setListWidth] = useState(400);
+
 	return (
-		<div style={styles.viewport}>
+		<div
+			style={{
+				...styles.viewport,
+				gridTemplateColumns: `85px ${listWidth}px 24px minmax(0, 1fr)`
+			}}
+		>
 			<RuntimeSidebar />
-			<SessionListPanel />
+			<SessionListPanel width={listWidth} onResize={setListWidth} />
+			<div aria-hidden="true" />
 			<ChatPanel />
 		</div>
 	);
@@ -1348,7 +1371,6 @@ export const RuntimeRoutingShell: Story = {
 const styles = {
 	viewport: {
 		display: 'grid',
-		gridTemplateColumns: '85px 397px minmax(0, 1fr)',
 		height: 860,
 		minHeight: 720,
 		background: '#EAE7E8',
@@ -1419,8 +1441,11 @@ const styles = {
 		color: '#A5000A'
 	} satisfies React.CSSProperties,
 	listPanel: {
+		position: 'relative',
 		background: '#EAE7E8',
-		overflow: 'hidden',
+		// `visible` (not `hidden`) so the resize handle can sit in the
+		// 24px gutter column to the right of the panel.
+		overflow: 'visible',
 		minHeight: 0,
 		display: 'flex',
 		flexDirection: 'column'
@@ -1450,7 +1475,7 @@ const styles = {
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'space-between',
-		padding: '8px 12px',
+		padding: '14px 16px',
 		background: '#FFFFFF'
 	} satisfies React.CSSProperties,
 	chatTitleCluster: {
@@ -1522,7 +1547,9 @@ const styles = {
 	topicDivider: {
 		borderTop: '1px solid #FFE2DE',
 		paddingLeft: 36,
-		height: 18,
+		height: 0,
+		position: 'relative',
+		zIndex: 2,
 		background: '#FFFFFF'
 	} satisfies React.CSSProperties,
 	topicPill: {
@@ -1552,7 +1579,7 @@ const styles = {
 		animation: 'none'
 	} satisfies React.CSSProperties,
 	composerDock: {
-		padding: '0 12px 10px',
+		padding: 0,
 		background: '#FFFFFF'
 	} satisfies React.CSSProperties,
 	composerSessionShell: {

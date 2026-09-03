@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import clsx from 'clsx';
-import Lottie from 'lottie-react';
+import Lottie, { LottieRefCurrentProps } from 'lottie-react';
 import {
 	readCssColor,
 	recolorLottieAccent
@@ -13,8 +13,17 @@ import checkAnimation from '../../resources/animations/success/check.json';
 import emailSentAnimation from '../../resources/animations/success/email-sent.json';
 import './animatedIllustration.styles.scss';
 
-const ACCENT_VAR = '--oriso-lottie-success-accent-color';
-const BASE_VAR = '--oriso-lottie-success-base-color';
+/**
+ * The product-wide playback policy. Every animation in the app runs at this
+ * speed and plays exactly once — nothing loops, nothing spins in the
+ * background. Deliberately not a prop: a per-caller speed is how the two
+ * previous players drifted apart.
+ */
+export const ANIMATION_SPEED = 0.5;
+export const ANIMATION_LOOPS = false;
+
+const SUCCESS_ACCENT_VAR = '--oriso-lottie-success-accent-color';
+const SUCCESS_BASE_VAR = '--oriso-lottie-success-base-color';
 const DEFAULT_ACCENT_COLOR = '#a5000a';
 const DEFAULT_BASE_COLOR = '#444748';
 
@@ -26,51 +35,81 @@ type IllustrationProps = React.SVGProps<SVGSVGElement> & { title?: string };
 
 interface AnimatedIllustrationProps extends IllustrationProps {
 	animationData: Record<string, any>;
-	/** Shown verbatim when the user asked for reduced motion. */
-	fallback: React.FunctionComponent<IllustrationProps>;
+	/**
+	 * Shown verbatim when the user asked for reduced motion. Optional only
+	 * because the empty-state animations have no static twin yet (#933); once
+	 * they do, every animation carries one.
+	 */
+	fallback?: React.FunctionComponent<IllustrationProps>;
 	variant: string;
+	/** Role pair to recolour onto. Defaults to the full brand role. */
+	accentColorVar?: string;
+	baseColorVar?: string;
+	/** Extra attributes the presets below use to keep their own selectors. */
+	hostProps?: Record<string, string>;
 }
 
 export const AnimatedIllustration = ({
+	accentColorVar = SUCCESS_ACCENT_VAR,
 	animationData,
+	baseColorVar = SUCCESS_BASE_VAR,
 	className,
 	fallback: Fallback,
+	hostProps,
 	variant,
 	...svgProps
 }: AnimatedIllustrationProps) => {
 	// Matches the reduced-motion treatment the registration flow already uses:
-	// the confirmation still reads, it just does not move.
+	// the illustration still reads, it just does not move.
 	const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-	const accentColor = readCssColor(ACCENT_VAR, DEFAULT_ACCENT_COLOR);
-	const baseColor = readCssColor(BASE_VAR, DEFAULT_BASE_COLOR);
+	const lottieRef = useRef<LottieRefCurrentProps | null>(null);
+	const [isComplete, setIsComplete] = useState(false);
+	const accentColor = readCssColor(accentColorVar, DEFAULT_ACCENT_COLOR);
+	const baseColor = readCssColor(baseColorVar, DEFAULT_BASE_COLOR);
 	const themedAnimationData = useMemo(
 		() => recolorLottieAccent(animationData, accentColor, baseColor),
 		[accentColor, animationData, baseColor]
 	);
 
+	useEffect(() => {
+		setIsComplete(false);
+		lottieRef.current?.setSpeed(ANIMATION_SPEED);
+	}, [animationData, variant]);
+
+	const hostAttributes = {
+		'aria-hidden': true,
+		'data-animated-illustration': variant,
+		...hostProps
+	};
+
 	if (reduceMotion) {
-		return (
-			<Fallback
-				aria-hidden="true"
-				className={className}
-				data-animated-illustration={variant}
-				{...svgProps}
-			/>
+		// Without a static twin there is nothing to show, but the box still has
+		// to hold its space so the layout does not jump.
+		return Fallback ? (
+			<Fallback className={className} {...hostAttributes} {...svgProps} />
+		) : (
+			<div className={className} {...hostAttributes} />
 		);
 	}
 
 	return (
 		<div
-			aria-hidden="true"
 			className={clsx('animatedIllustration', className)}
 			data-accent-color={accentColor.toLowerCase()}
-			data-animated-illustration={variant}
 			data-base-color={baseColor.toLowerCase()}
+			data-complete={isComplete ? 'true' : 'false'}
+			data-loop={String(ANIMATION_LOOPS)}
+			data-secondary-color={baseColor.toLowerCase()}
+			data-speed={String(ANIMATION_SPEED)}
+			{...hostAttributes}
 		>
 			<Lottie
 				animationData={themedAnimationData}
 				autoplay
-				loop={false}
+				loop={ANIMATION_LOOPS}
+				lottieRef={lottieRef}
+				onComplete={() => setIsComplete(true)}
+				onDOMLoaded={() => lottieRef.current?.setSpeed(ANIMATION_SPEED)}
 				rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
 			/>
 		</div>

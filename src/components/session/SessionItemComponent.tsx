@@ -10,6 +10,10 @@ import {
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import {
+	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
+	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
+} from './anonymousConsentInvariant';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
@@ -37,11 +41,13 @@ import {
 } from '../../utils/messageRelations';
 import { chatTransportService } from '../../services/chatTransportService';
 import { computeThreadSummaries } from '../../utils/threadSummaries';
+import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
 	getThreadLastReadTs,
 	markThreadRead,
 	isThreadUnread
 } from '../../utils/threadUnread';
+import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import {
@@ -79,9 +85,15 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
+import {
+	buildEditContext,
+	buildReplyQuoteContext,
+	buildReplyQuotePreview
+} from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -98,6 +110,8 @@ import { PseudonymCard } from '../pseudonym/PseudonymCard';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
+import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
 import {
@@ -533,6 +547,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		null
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	const [isLeaveQueueDialogOpen, setIsLeaveQueueDialogOpen] = useState(false);
+	const [isLeavingQueue, setIsLeavingQueue] = useState(false);
+	const [leaveQueueFailed, setLeaveQueueFailed] = useState(false);
 	/**
 	 * The anonymous enquiry was finished server-side (asker logout, backend
 	 * expiry workflow, admin cleanup) while this tab was still on the
@@ -654,10 +671,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isAnonymousEnquiryPhaseSession =
 		sessionStatusNum === STATUS_EMPTY ||
 		sessionStatusNum === STATUS_ENQUIRY;
-	const requiresAnonymousInquiryConsent =
-		isAnonymousAskerExperience &&
-		isAnonymousEnquiryPhaseSession &&
-		!privacyAcceptanceRecorded;
+	/* ORISO-UserService#927: the Eingabesperre lives in one pure predicate now,
+	   pinned by `anonymousConsentInvariant.test.ts`. It used to be assembled
+	   inline here, which meant the consent guarantee for §11 KDG special-category
+	   data was emergent from three booleans and asserted nowhere. */
+	const requiresAnonymousInquiryConsent = requiresAnonymousInquiryConsentFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
+	});
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
 		[activeSession.item.id]
@@ -889,8 +911,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
-	const shouldBlockAnonymousInquiryChat =
-		shouldShowConsentGate || shouldShowPseudonymGate;
+	/* The runtime lock goes through the same predicate the invariant test pins.
+	   Recomposing it locally left `anonymousConsentInvariant.test.ts` asserting a
+	   copy of the rule while the composer obeyed a different one — the test would
+	   have stayed green through exactly the regression it exists to catch. */
+	const shouldBlockAnonymousInquiryChat = shouldBlockAnonymousInquiryChatFor({
+		isAnonymousAskerExperience,
+		sessionStatus: activeSession.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation,
+		consentAcceptedInSession: anonymousInquiryConsentAccepted,
+		requiresPseudonymConfirmation,
+		isInAnonymousWaitingQueuePhase
+	});
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
@@ -2156,6 +2188,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setConsultantAccepted(false);
 	}, []);
 
+	/**
+	 * Leaving the waiting queue (#893). See `performLeaveQueueDelete` for why
+	 * this goes through `finishConversation` and why signing out only happens
+	 * once the conversation was really finished.
+	 */
+	const handleLeaveQueueDelete = useCallback(() => {
+		if (isLeavingQueue) {
+			return;
+		}
+		setIsLeavingQueue(true);
+		void performLeaveQueueDelete(activeSession.item?.id, {
+			onFailure: () => {
+				setIsLeavingQueue(false);
+				setLeaveQueueFailed(true);
+			}
+		});
+	}, [activeSession.item?.id, isLeavingQueue]);
+
 	const handleStartAcceptedChat = useCallback(() => {
 		/* Safety net: if the accepted session still lacks its Matrix room
 		   id (reload raced the room provisioning), fetch it again now so
@@ -3230,14 +3280,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo({
-			eventId: message._id,
-			author: message.displayName || message.username,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setReplyTo(buildReplyQuoteContext(message));
 	}, []);
 
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
@@ -3249,14 +3292,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	} | null>(null);
 
 	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage({
-			eventId: message._id,
-			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
-				/<[^>]*>/g,
-				''
-			)
-		});
+		setEditingMessage(buildEditContext(message));
 	}, []);
+
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) => {
+			if (!resolvedMatrixRoomId || !message?._id) {
+				return;
+			}
+			chatTransportService
+				.redactMessage({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: message._id
+				})
+				.catch(() => undefined);
+		},
+		[resolvedMatrixRoomId]
+	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
 
@@ -3280,12 +3332,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return {
-				author: target.displayName || target.username,
-				text: parseMessagePrefixes(target.message)
-					.cleanedMessage.replace(/<[^>]*>/g, '')
-					.slice(0, 200)
-			};
+			return buildReplyQuotePreview(target);
 		},
 		[messages]
 	);
@@ -3314,6 +3361,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
 		}
+		if (
+			!isNotificationActiveViewRoute(location.pathname, location.search)
+		) {
+			return;
+		}
 		const roomId =
 			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
@@ -3324,21 +3376,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		apiPatchNotificationActiveView({
-			roomId,
-			threadRootId: activeThreadRootId,
-			active: true
-		}).catch(() => undefined);
-
-		const heartbeat = window.setInterval(() => {
+		let disposed = false;
+		const markActive = () => {
+			// clearInterval cannot cancel a callback that is already queued. The
+			// guard prevents that stale heartbeat from racing after cleanup and
+			// re-enabling suppression while the user is on Notifications.
+			if (disposed) {
+				return;
+			}
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: activeThreadRootId,
 				active: true
 			}).catch(() => undefined);
+		};
+
+		markActive();
+
+		const heartbeat = window.setInterval(() => {
+			markActive();
 		}, 10000);
 
 		return () => {
+			disposed = true;
 			window.clearInterval(heartbeat);
 			apiPatchNotificationActiveView({
 				roomId,
@@ -3351,7 +3411,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item?.matrixRoomId,
 		activeThreadRootId,
 		isAskerUser,
-		isConsultantUser
+		isConsultantUser,
+		location.pathname,
+		location.search
 	]);
 
 	// Track the decryption success because we have a short timing issue when
@@ -3471,59 +3533,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 						</button>
 						{isThreadListOpen && (
-							<div
-								className="session__threadListPanel"
-								role="menu"
-							>
-								{Array.from(threadSummariesRaw.values())
-									.sort(
-										(a, b) => b.lastReplyTs - a.lastReplyTs
+							<ThreadListPanel
+								summaries={Array.from(
+									threadSummariesRaw.values()
+								).sort((a, b) => b.lastReplyTs - a.lastReplyTs)}
+								unreadRootIds={
+									new Set(
+										Array.from(threadUnreadByRoot.entries())
+											.filter(([, unread]) => unread)
+											.map(([rootId]) => rootId)
 									)
-									.map((summary) => (
-										<button
-											key={summary.rootId}
-											type="button"
-											role="menuitem"
-											className="session__threadListEntry"
-											onClick={() => {
-												const rootMessage =
-													getMessageById(
-														summary.rootId
-													);
-												if (rootMessage) {
-													handleOpenThread(
-														rootMessage
-													);
-												}
-											}}
-										>
-											{threadUnreadByRoot.get(
-												summary.rootId
-											) && (
-												<span
-													className="session__threadListUnreadDot"
-													aria-hidden
-												/>
-											)}
-											<span className="session__threadListEntryPreview">
-												{summary.rootPreview ||
-													translate(
-														'message.thread.unknownRoot',
-														'Frühere Nachricht'
-													)}
-											</span>
-											<span className="session__threadListEntryMeta">
-												{translate(
-													'message.thread.replies',
-													'{{count}} replies',
-													{
-														count: summary.replyCount
-													}
-												)}
-											</span>
-										</button>
-									))}
-							</div>
+								}
+								unknownRootLabel={translate(
+									'message.thread.unknownRoot',
+									'Frühere Nachricht'
+								)}
+								repliesLabel={(count) =>
+									translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count }
+									)
+								}
+								onSelectRoot={(rootId) => {
+									const rootMessage = getMessageById(rootId);
+									if (rootMessage) {
+										handleOpenThread(rootMessage);
+									}
+								}}
+							/>
 						)}
 					</div>
 				)}
@@ -4919,6 +4957,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														)
 												: undefined
 										}
+										onDeleteDirect={
+											isMyMessageMatrix(message.userId)
+												? () =>
+														handleDeleteDirect(
+															message
+														)
+												: undefined
+										}
 										reactions={getReactionsFor(message._id)}
 										onReact={(key: string) =>
 											handleReact(message._id, key)
@@ -5266,9 +5312,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
-									? parseMessagePrefixes(
+									? toMessagePreviewText(
 											activeThreadRootMessage.message
-										).cleanedMessage
+										)
 									: null
 							}
 							mobileUnreadCount={newMessages}
@@ -5326,8 +5372,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<WaitingQueueActionBar
 							queuePosition={queuePeopleAhead}
 							onOpenCalmCompanion={handleOpenCalmCompanion}
+							onLeaveQueue={() => {
+								setLeaveQueueFailed(false);
+								setIsLeaveQueueDialogOpen(true);
+							}}
 						/>
 					</div>
+				)}
+
+			{/*
+			 * The exit from the waiting queue (#893). Mounted for the whole
+			 * queue phase rather than inside the action bar, so it survives the
+			 * bar swapping to `ConsultantAcceptedActionBar` the moment somebody
+			 * accepts — an overlay that unmounts under the user is exactly the
+			 * trap that bit us before.
+			 */}
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				!enquiryClosed && (
+					<LeaveQueueDialog
+						open={isLeaveQueueDialogOpen}
+						canStartChat={consultantAccepted}
+						busy={isLeavingQueue}
+						onStay={() => setIsLeaveQueueDialogOpen(false)}
+						onStartChat={() => {
+							setIsLeaveQueueDialogOpen(false);
+							handleStartAcceptedChat();
+						}}
+						onDeleteAccess={handleLeaveQueueDelete}
+						errorMessage={
+							leaveQueueFailed
+								? translate(
+										'anonymousChat.leaveQueue.error',
+										'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+									)
+								: undefined
+						}
+					/>
 				)}
 
 			{shouldShowPseudonymGate &&

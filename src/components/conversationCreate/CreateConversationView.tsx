@@ -25,7 +25,6 @@ import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import { ReactComponent as MoreIcon } from '../../resources/img/icons/stack-vertical.svg';
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import {
@@ -437,16 +436,6 @@ const CreateConversationFlow = () => {
 					topic={pickerTopic}
 					alt={translate('groupChat.circle.title')}
 				/>
-			}
-			headerAction={
-				<button
-					type="button"
-					className="formatCard__menuButton"
-					aria-label={translate('groupChat.format.cardMenu')}
-					disabled
-				>
-					<MoreIcon aria-hidden />
-				</button>
 			}
 		>
 			<p className="conversationCreate__cardText">

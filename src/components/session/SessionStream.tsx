@@ -21,6 +21,7 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
+	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
 	CaseHandoverStatus,
 	FETCH_ERRORS
@@ -64,6 +65,22 @@ import {
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
 } from '../../services/matrixRoomHistoryKeyTransfer';
+import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
+import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
+
+const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
+	if (!actionPath?.includes('?')) {
+		return null;
+	}
+	const value = new URLSearchParams(actionPath.split('?')[1]).get(
+		'caseHandoverRequestId'
+	);
+	if (!value || !/^\d+$/.test(value)) {
+		return null;
+	}
+	const requestId = Number(value);
+	return Number.isSafeInteger(requestId) ? requestId : null;
+};
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -121,10 +138,55 @@ export const SessionStream = ({
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
+	const notificationsContext = useContext(NotificationsContext);
 	const [caseHandoverStatus, setCaseHandoverStatus] =
 		useState<CaseHandoverStatus | null>(null);
 	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
 		useState(false);
+	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
+		useState(false);
+	const [caseHandoverConsentError, setCaseHandoverConsentError] =
+		useState('');
+	const [
+		resolvedCaseHandoverNotificationId,
+		setResolvedCaseHandoverNotificationId
+	] = useState<string | null>(null);
+	const pendingCaseHandoverConsent = useMemo(() => {
+		if (
+			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+			activeSession.isGroup
+		) {
+			return null;
+		}
+		const sessionId = activeSession.item?.id;
+		return (
+			notificationsContext?.notificationFeed.find((item) => {
+				if (
+					item.id === resolvedCaseHandoverNotificationId ||
+					item.eventType !== 'case.handover.consent.requested' ||
+					// already answered elsewhere — a read notification must
+					// not resurface the consent card on remount
+					!!item.readAt
+				) {
+					return false;
+				}
+				return String(item.sourceSessionId) === String(sessionId);
+			}) || null
+		);
+	}, [
+		activeSession.isGroup,
+		activeSession.item?.id,
+		notificationsContext?.notificationFeed,
+		resolvedCaseHandoverNotificationId,
+		userData
+	]);
+	const pendingCaseHandoverRequestId = useMemo(
+		() =>
+			caseHandoverRequestIdFromPath(
+				pendingCaseHandoverConsent?.actionPath
+			),
+		[pendingCaseHandoverConsent?.actionPath]
+	);
 
 	const { setConsultantList } = useContext(ConsultantListContext);
 
@@ -1054,6 +1116,38 @@ export const SessionStream = ({
 		}
 	};
 
+	const handleCaseHandoverConsentDecision = (approved: boolean) => {
+		if (
+			!pendingCaseHandoverConsent ||
+			pendingCaseHandoverRequestId === null
+		) {
+			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
+			return;
+		}
+		setCaseHandoverConsentSubmitting(true);
+		setCaseHandoverConsentError('');
+		apiDecideCaseHandoverClientConsent(
+			activeSession.item.id,
+			pendingCaseHandoverRequestId,
+			approved
+		)
+			.then(() => {
+				notificationsContext?.markNotificationAsRead(
+					pendingCaseHandoverConsent.id
+				);
+				setResolvedCaseHandoverNotificationId(
+					pendingCaseHandoverConsent.id
+				);
+				notificationsContext?.refreshNotificationFeed();
+			})
+			.catch(() => {
+				setCaseHandoverConsentError(
+					translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setCaseHandoverConsentSubmitting(false));
+	};
+
 	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
@@ -1080,6 +1174,19 @@ export const SessionStream = ({
 
 	return (
 		<div className="session__wrapper">
+			{pendingCaseHandoverConsent &&
+				pendingCaseHandoverRequestId !== null && (
+					<CaseHandoverConsentCard
+						isSubmitting={caseHandoverConsentSubmitting}
+						error={caseHandoverConsentError}
+						onApprove={() =>
+							handleCaseHandoverConsentDecision(true)
+						}
+						onDecline={() =>
+							handleCaseHandoverConsentDecision(false)
+						}
+					/>
+				)}
 			{showTeamDiscussion && (
 				<TeamDiscussionPanel
 					key={activeSession.item.id}

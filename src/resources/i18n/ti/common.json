@@ -843,8 +843,7 @@
 		"format": {
 			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
 			"panelMenu": "ተወሳኺ ኣማራጺታት",
-			"back": "ተመለስ",
-			"cardMenu": "ኣማራጺታት ናይዚ ዓይነት ዝርርብ"
+			"back": "ተመለስ"
 		},
 		"circle": {
 			"rows": {
@@ -1255,7 +1254,6 @@
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኣፕኩም ኣእትዉ።"
 					}
 				},
-				"deletedAccount": "ኣካውንትካ ብሓደ ኣማኻሪ ተዓጽዩ እዩ።",
 				"email": {
 					"otp": {
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኢመይልኩም ኣእትዉ።"
@@ -2379,6 +2377,11 @@
 		},
 		"preview": {
 			"headline": "ናይ መጀመርታ ሕቶታት",
+			"voice": "Voice message",
+			"audio": "Audio message",
+			"image": "Image",
+			"video": "Video",
+			"file": "File",
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}

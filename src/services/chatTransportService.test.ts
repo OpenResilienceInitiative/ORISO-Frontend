@@ -746,6 +746,32 @@ describe('chatTransportService editing + reactions (#435)', () => {
 		expect(redactEvent).toHaveBeenCalledWith(ROOM_ID, '$reaction:hs');
 		expect(result).toEqual({ success: true, event_id: '$redaction:hs' });
 	});
+
+	it('redactMessage redacts the message event via the Matrix client', async () => {
+		const redactEvent = vi.fn(async () => ({ event_id: '$redaction:hs' }));
+		const override = { getClient: () => ({}), redactEvent } as any;
+
+		const result = await chatTransportService.redactMessage({
+			matrixRoomId: ROOM_ID,
+			targetEventId: '$msg:hs',
+			matrixClientServiceOverride: override
+		});
+
+		expect(redactEvent).toHaveBeenCalledWith(ROOM_ID, '$msg:hs');
+		expect(result).toEqual({ success: true, event_id: '$redaction:hs' });
+	});
+
+	it('redactMessage rejects when the Matrix client is not initialized', async () => {
+		const override = { getClient: () => null } as any;
+
+		await expect(
+			chatTransportService.redactMessage({
+				matrixRoomId: ROOM_ID,
+				targetEventId: '$msg:hs',
+				matrixClientServiceOverride: override
+			})
+		).rejects.toThrow('Matrix client not initialized');
+	});
 });
 
 describe('chatTransportService sendTextMessage mentions (#435)', () => {
