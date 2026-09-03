@@ -20,6 +20,13 @@ vi.mock('../../../api/apiGetIsUsernameAvailable', () => ({
 	apiGetIsUsernameAvailable: vi.fn().mockResolvedValue(true)
 }));
 
+vi.mock('../../../api/apiGetConsentText', () => ({
+	apiGetConsentText: vi.fn().mockResolvedValue({
+		status: 'ok',
+		consentText: null
+	})
+}));
+
 // RegistrationProvider.tsx also imports the other registration steps
 // (AgencySelection etc.), which transitively pull in lottie-web — unrelated
 // to this component. Only the context itself is needed here.
@@ -158,5 +165,30 @@ describe('AccountData — optional 2FA toggle', () => {
 		);
 
 		expect(emailField.getAttribute('aria-required')).toBe('true');
+	});
+});
+
+const agencyWithPublishedDpp = {
+	agency: {
+		id: 42,
+		name: 'Beratungsstelle',
+		departments: [{ topicId: 7, hasPublishedDpp: true }]
+	},
+	mainTopic: { id: 7, name: 'Suchtberatung' }
+};
+
+describe('AccountData — department legal accordion', () => {
+	it('does not render the Datenschutzhinweise accordion', () => {
+		renderAccountData(tenantWith({}), agencyWithPublishedDpp);
+
+		expect(
+			document.querySelector('[data-cy="department-legal-consent"]')
+		).toBeNull();
+		expect(
+			screen.queryByText('Datenschutzhinweise der Beratungsstelle')
+		).toBeNull();
+		expect(
+			screen.queryByText('registration.agency.legal.headline')
+		).toBeNull();
 	});
 });
