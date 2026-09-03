@@ -24,11 +24,8 @@ FROM nginx:1.31.3-alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3a
 
 ARG PORT=80
 
-# CVE-2026-14456, same as in the frontend image: the pinned nginx alpine base
-# also carries libssl3/libcrypto3 3.5.7-r0 while Alpine 3.24 ships the fixed
-# 3.5.8-r0. The Storybook image has its own Trivy gate, so it needs the same
-# upgrade rather than inheriting the frontend one.
-RUN apk upgrade --no-cache libssl3 libcrypto3
+# Patch fixable Alpine packages flagged by the release vulnerability gate.
+RUN apk upgrade --no-cache libssl3 libcrypto3 libexpat
 
 # Copy Storybook build output to nginx html directory
 COPY --from=storybookbuild /app/storybook-static /usr/share/nginx/html
