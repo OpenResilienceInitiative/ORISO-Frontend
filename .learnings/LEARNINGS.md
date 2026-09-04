@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-09-04 — do not run Frontend `test:unit` and `build` together
+
+- Context: #1194 enquiry phase (`docs/agent-tasks/2026-09-04_1194-enquiry-phase/`)
+- Lesson: `test:unit` (6GB) plus `build` (8GB) in parallel can stall the last Vitest worker (TipTap `emojiInsert.test.tsx` GC thrash). Isolated, that file is 47ms. Run the two gates sequentially. Use `./node_modules/.bin/vitest`, not `npx vitest` (npx may fetch Vitest 5).
+
 ## 2026-08-30 — Storybook retry must drain pipes before `close`
 
 - Context: PR #1229 Storybook CI (`scripts/run-storybook-tests.mjs`)

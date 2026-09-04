@@ -6,7 +6,6 @@ import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
-import { M3Checkbox } from '../../M3Checkbox';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -32,6 +31,7 @@ import {
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
+import { RecoveryKeySaveStep } from './RecoveryKeySaveStep';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -77,10 +77,8 @@ export const EncryptionSettingsPanel = ({
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
 	);
-	const [keyStoredConfirmed, setKeyStoredConfirmed] = useState(false);
 	const [recoveryInput, setRecoveryInput] = useState('');
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
-	const [copied, setCopied] = useState(false);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
 
@@ -119,8 +117,6 @@ export const EncryptionSettingsPanel = ({
 			// panel is where the user finally gets to see and save it.
 			if (pendingKey && !nextStatus.keyStorageOutOfSync) {
 				setRecoveryKeyToShow(pendingKey);
-				setKeyStoredConfirmed(false);
-				setCopied(false);
 				setKeyFromSilentSetup(true);
 				setPhase('showKey');
 				return;
@@ -172,8 +168,6 @@ export const EncryptionSettingsPanel = ({
 				savePendingRecoveryKey(userId, encodedKey);
 			}
 			setRecoveryKeyToShow(encodedKey);
-			setKeyStoredConfirmed(false);
-			setCopied(false);
 			setKeyFromSilentSetup(false);
 			setPhase('showKey');
 		} catch (setupError) {
@@ -211,22 +205,9 @@ export const EncryptionSettingsPanel = ({
 			clearPendingRecoveryKey(userId);
 		}
 		setRecoveryKeyToShow(null);
-		setKeyStoredConfirmed(false);
 		setKeyFromSilentSetup(false);
 		void refreshStatus();
 	}, [refreshStatus, userId]);
-
-	const onCopyKey = useCallback(async () => {
-		if (!recoveryKeyToShow) {
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(recoveryKeyToShow);
-			setCopied(true);
-		} catch {
-			// Clipboard may be unavailable (permissions); manual copy remains.
-		}
-	}, [recoveryKeyToShow]);
 
 	const onRecover = useCallback(async () => {
 		if (!recoveryInput.trim()) {
@@ -384,67 +365,11 @@ export const EncryptionSettingsPanel = ({
 			)}
 
 			{phase === 'showKey' && recoveryKeyToShow && (
-				<>
-					<Text
-						text={
-							keyFromSilentSetup
-								? t(
-										'profile.encryption.showKey.silentExplainer',
-										'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.'
-									)
-								: t(
-										'profile.encryption.showKey.explainer',
-										'Das ist Ihr Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.'
-									)
-						}
-						type="standard"
-					/>
-					<div
-						className="encryptionSettings__key"
-						data-cy="recovery-key-display"
-					>
-						<code>{recoveryKeyToShow}</code>
-					</div>
-					<div className="encryptionSettings__keyActions">
-						<Button
-							item={{
-								label: copied
-									? t(
-											'profile.encryption.showKey.copied',
-											'Kopiert ✓'
-										)
-									: t(
-											'profile.encryption.showKey.copy',
-											'Schlüssel kopieren'
-										),
-								type: BUTTON_TYPES.SECONDARY
-							}}
-							buttonHandle={onCopyKey}
-							className="encryptionSettings__fullWidthAction"
-						/>
-					</div>
-					<M3Checkbox
-						checked={keyStoredConfirmed}
-						onChange={setKeyStoredConfirmed}
-						label={t(
-							'profile.encryption.showKey.confirmLabel',
-							'Ich habe den Schlüssel sicher gespeichert.'
-						)}
-						dataCy="encryption-key-stored-confirmation"
-					/>
-					<Button
-						item={{
-							label: t(
-								'profile.encryption.showKey.done',
-								'Fertig'
-							),
-							type: BUTTON_TYPES.PRIMARY,
-							disabled: !keyStoredConfirmed
-						}}
-						buttonHandle={onConfirmKeyStored}
-						className="encryptionSettings__fullWidthAction"
-					/>
-				</>
+				<RecoveryKeySaveStep
+					fromSilentSetup={keyFromSilentSetup}
+					recoveryKey={recoveryKeyToShow}
+					onConfirm={onConfirmKeyStored}
+				/>
 			)}
 
 			{phase === 'healthy' && (

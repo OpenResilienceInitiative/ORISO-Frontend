@@ -1,5 +1,8 @@
 ## Verified facts
 
+- #1194 Jobs 1–3: InputField start icon must stay in document flow (MUI `InputAdornment` owns inset). `de@informal` must not repeat overlay strings that match `de` (`i18n.test.ts`). `profile.encryption.showKey.headline` is a required catalogue key once used without a fallback-only path in tests.
+- Use `./node_modules/.bin/vitest` in this repo; `npx vitest` can download Vitest 5 and break the unit project.
+- Running `npm run test:unit` (6GB heap) and `npm run build` (8GB) in parallel can hang the last Vitest worker; sequential full `test:unit` is ~90s and 3991 passing (2026-09-04).
 - Consultant Live Chat in `NavigationBar` was gated with `fromL` (900px+) and CSS `display: none` below `$fromLarge`, which hid it on mobile/tablet.
 - Language switcher used the same desktop-only CSS hide under `.app__wrapper` figma nav rules.
 - Outgoing `CallManager.startCall` always sets `usesElementCall: true`. SessionMenu 1:1 used to keep `window.__preRequestedMediaStream` for FloatingCallWidget, which skips Element Call — tracks stayed `live` until explicitly stopped.
@@ -33,6 +36,7 @@
 
 ## Last session
 
+- 2026-09-04: #1194 Jobs 1–3 (email icon, 2FA backup-key step, in-chat display-name re-roll). Job 4 deferred (#928/#1140); email save stays on #1255. Branch `cursor/1194/enquiry-email-backup-display`. Gate: `test:unit` 3991 PASS, `lint:scripts` PASS, `build` PASS with `REACT_APP_KEYCLOAK_REALM=oriso` so postbuild does not see local `.env` `online-beratung`, `lint:style` FAIL on pre-existing SCSS only. Next: PR against `origin/dev`, issue proof comment, no merge.
 - 2026-08-30: #1154 remaining signup mix after #1164/#1170/#1227. Root cause is not missing JSON — Weblate overlay overwrote the bundle, PreselectedTopic used API German titles, and signup chrome passed German `defaultValue`s. Three stacked PRs: `cursor/1154/weblate-bundle-wins`, `cursor/1154/preselected-topic-locale`, `cursor/1154/registration-german-fallbacks`. Gate: `test:unit` 3635 PASS, `lint:scripts` PASS, local only. Follow-ups: API age labels, Ukrainian UI locale. Scan on issue comment 5468992934.
 - 2026-08-27: #1189 follow-up — first Job 2 commit was a no-op (menu in the main return; group rows early-return). Fixed by extracting `SessionListItemMenu`, wiring it into both branches, and adding render-level tests. Red proven by emptying the group cell: tests 1–2 fail, 3–4 stay green. Verifier's remaining robustness nit recorded in code: Overlay/LegalLinkModal/DeleteSession live only in the main return, so widening group-row flags without moving those would be a silent no-op. PR #1205 ready for review against `pre-dev` (local only). Gate: `test:unit` 3462 PASS, `lint:scripts` PASS, `build` PASS, `lint:style` FAIL on pre-existing SCSS only.
 - 2026-08-26: #1189 — Job 1 (Create Chat hidden on dev) confirmed as a tenant-seed config issue outside this repo (ORISO-Helm#326), no frontend change; evidence commented on the issue. Job 2 implemented: `showChatSettings` in `chatroomSettingsMenu.ts` plus the list-row menu entry mirroring `SessionMenu`. Gate: `test:unit` 3449 PASS, `lint:scripts` PASS, `build` PASS, `lint:style` FAIL on pre-existing SCSS only. Next step: reviewer verification on an environment where the tenant flag is enabled.

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { apiDeleteTwoFactorAuth } from '../../api';
@@ -12,6 +12,7 @@ import { PenIcon } from '../../resources/img/icons';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';
 import { TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
+import { BackupKeyAfterTwoFactorDialog } from '../profile/EncryptionSettings/BackupKeyAfterTwoFactorDialog';
 import './twoFactorAuth.styles';
 
 export { OTP_LENGTH, TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
@@ -23,10 +24,13 @@ export const TwoFactorAuth = () => {
 	// known shape so these reads stay type-checked.
 	const locationState = (location.state ?? {}) as {
 		openTwoFactor?: boolean;
+		showBackupKey?: boolean;
 	};
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const settings = useAppConfig();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isBackupKeyStepOpen, setIsBackupKeyStepOpen] = useState(false);
+	const setupCompletedRef = useRef(false);
 	const [isSwitchChecked, setIsSwitchChecked] = useState<boolean>(
 		userData.twoFactorAuth.isActive
 	);
@@ -48,16 +52,25 @@ export const TwoFactorAuth = () => {
 	const closeDialog = useCallback(() => {
 		setIsDialogOpen(false);
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);
-	}, [userData.twoFactorAuth.isActive]);
+		if (locationState.showBackupKey && setupCompletedRef.current) {
+			setIsBackupKeyStepOpen(true);
+		}
+	}, [locationState.showBackupKey, userData.twoFactorAuth.isActive]);
 
 	const completeSetup = useCallback(async () => {
 		await reloadUserData();
 		setIsSwitchChecked(true);
+		setupCompletedRef.current = true;
 	}, [reloadUserData]);
 
 	const abortSetup = useCallback(() => {
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);
 	}, [userData.twoFactorAuth.isActive]);
+
+	const closeBackupKeyStep = useCallback(
+		() => setIsBackupKeyStepOpen(false),
+		[]
+	);
 
 	const disableTwoFactorAuth = useCallback(async () => {
 		await apiDeleteTwoFactorAuth();
@@ -164,6 +177,10 @@ export const TwoFactorAuth = () => {
 				open={isDialogOpen}
 				qrCode={userData.twoFactorAuth.qrCode}
 				secret={userData.twoFactorAuth.secret}
+			/>
+			<BackupKeyAfterTwoFactorDialog
+				open={isBackupKeyStepOpen}
+				onClose={closeBackupKeyStep}
 			/>
 		</div>
 	);

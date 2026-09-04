@@ -2488,6 +2488,7 @@
 				"cta": "Configurer la clé de récupération"
 			},
 			"showKey": {
+				"headline": "Enregistrez votre clé de secours",
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
@@ -4552,7 +4553,14 @@
 		"displayName": {
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
-			"action": "Changer de nom"
+			"action": "Changer de nom",
+			"overlay": {
+				"headline": "Votre nom affiché",
+				"copy": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+				"reroll": "Tirer un nouveau nom",
+				"save": "Utiliser ce nom",
+				"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+			}
 		},
 		"notificationChoice": {
 			"both": "Les deux, et je définis un mot de passe maintenant",

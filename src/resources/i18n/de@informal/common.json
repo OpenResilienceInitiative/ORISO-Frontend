@@ -2156,7 +2156,12 @@
 		"displayName": {
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Dein angezeigter Name",
+				"copy": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuch es erneut."
+			}
 		}
 	},
 	"caseHandover": {
