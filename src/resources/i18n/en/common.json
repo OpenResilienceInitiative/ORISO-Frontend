@@ -4395,6 +4395,44 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervisor",
+				"consultant": "Counsellor"
+			},
+			"privacyHint": "This channel is never visible to the person seeking advice.",
+			"close": "Close supervision",
+			"collapse": "Minimise supervision",
+			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
+			"unread": "{{count}} unread messages",
+			"unread_one": "1 unread message",
+			"empty": {
+				"title": "No messages yet",
+				"hint": "Talk confidentially with {{name}} about this counselling here."
+			},
+			"composer": {
+				"placeholder": "Message to {{name}} …",
+				"send": "Send"
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "Open {{kind}}",
+				"newMessage": "New message",
+				"dragHandle": "Move miniature – arrow keys"
+			},
+			"stage": {
+				"divider": "Divider – arrow keys change the supervision width, Home and End set minimum and maximum",
+				"mainPane": "Counselling chat",
+				"secondaryPane": "Side room"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team discussion",
 		"startHint": "Start discussion",

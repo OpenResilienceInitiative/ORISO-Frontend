@@ -2028,6 +2028,13 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"empty": {
+				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",

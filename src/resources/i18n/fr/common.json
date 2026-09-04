@@ -4463,6 +4463,44 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Superviseur·e",
+				"consultant": "Conseiller·ère"
+			},
+			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
+			"close": "Fermer la supervision",
+			"collapse": "Réduire la supervision",
+			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
+			"unread": "{{count}} messages non lus",
+			"unread_one": "1 message non lu",
+			"empty": {
+				"title": "Pas encore de messages",
+				"hint": "Échangez ici en toute confidentialité avec {{name}} au sujet de cet accompagnement."
+			},
+			"composer": {
+				"placeholder": "Message à {{name}} …",
+				"send": "Envoyer"
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil de discussion"
+			},
+			"mini": {
+				"expand": "Ouvrir {{kind}}",
+				"newMessage": "Nouveau message",
+				"dragHandle": "Déplacer la miniature – touches fléchées"
+			},
+			"stage": {
+				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
+				"mainPane": "Chat de conseil",
+				"secondaryPane": "Salle annexe"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Réunion d'équipe",
 		"startHint": "Démarrer la réunion",

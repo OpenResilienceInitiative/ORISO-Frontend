@@ -4463,6 +4463,44 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Süpervizyon",
+			"headerLabel": "Süpervizyon · {{name}}",
+			"role": {
+				"supervisor": "Süpervizör",
+				"consultant": "Danışman"
+			},
+			"privacyHint": "Bu kanal danışan tarafından hiçbir zaman görülemez.",
+			"close": "Süpervizyonu kapat",
+			"collapse": "Süpervizyonu küçült",
+			"dragHandle": "Süpervizyon penceresini taşı – ok tuşları taşır, Shift + ok tuşları boyutu değiştirir",
+			"unread": "{{count}} okunmamış mesaj",
+			"unread_one": "1 okunmamış mesaj",
+			"empty": {
+				"title": "Henüz mesaj yok",
+				"hint": "Burada {{name}} ile bu danışmanlık hakkında gizli olarak konuşabilirsiniz."
+			},
+			"composer": {
+				"placeholder": "{{name}} kişisine mesaj …",
+				"send": "Gönder"
+			},
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Konu"
+			},
+			"mini": {
+				"expand": "{{kind}} aç",
+				"newMessage": "Yeni mesaj",
+				"dragHandle": "Küçük pencereyi taşı – ok tuşları"
+			},
+			"stage": {
+				"divider": "Ayırıcı – ok tuşları süpervizyon genişliğini değiştirir, Home ve End en küçük ve en büyük değeri ayarlar",
+				"mainPane": "Danışmanlık sohbeti",
+				"secondaryPane": "Yan oda"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Ekip görüşmesi",
 		"startHint": "Görüşmeyi başlat",

@@ -4463,6 +4463,44 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "ሱፐርቪዥን",
+			"headerLabel": "ሱፐርቪዥን · {{name}}",
+			"role": {
+				"supervisor": "ሱፐርቫይዘር",
+				"consultant": "ኣማኻሪ"
+			},
+			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
+			"close": "ሱፐርቪዥን ዕጸው",
+			"collapse": "ሱፐርቪዥን ኣንኣእስ",
+			"dragHandle": "መስኮት ሱፐርቪዥን ኣንቀሳቕስ – መልክዕ ፍላጻ የንቀሳቕስ፣ Shift + ፍላጻ ዓቐን ይቕይር",
+			"unread": "{{count}} ዘይተነብቡ መልእኽትታት",
+			"unread_one": "1 ዘይተነበበ መልእኽቲ",
+			"empty": {
+				"title": "ገና መልእኽቲ የለን",
+				"hint": "ኣብዚ ምስ {{name}} ብዛዕባ እዚ ምኽሪ ብምስጢር ትዘራረቡ።"
+			},
+			"composer": {
+				"placeholder": "መልእኽቲ ናብ {{name}} …",
+				"send": "ስደድ"
+			},
+			"kind": {
+				"supervision": "ሱፐርቪዥን",
+				"thread": "ክርክር"
+			},
+			"mini": {
+				"expand": "{{kind}} ክፈት",
+				"newMessage": "ሓድሽ መልእኽቲ",
+				"dragHandle": "ንእሽቶ ስእሊ ኣንቀሳቕስ – መልክዕ ፍላጻ"
+			},
+			"stage": {
+				"divider": "መፈላለዪ – ፍላጻ ስፍሓት ሱፐርቪዥን ይቕይር፣ Home ን End ን ዝተሓተን ዝለዓለን የቐምጡ",
+				"mainPane": "ቻት ምኽሪ",
+				"secondaryPane": "ጎድናዊ ክፍሊ"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "ናይ ጋንታ ምይይጥ",
 		"startHint": "ምይይጥ ጀምር",

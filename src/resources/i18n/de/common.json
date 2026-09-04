@@ -4485,6 +4485,44 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervisor:in",
+				"consultant": "Berater:in"
+			},
+			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
+			"close": "Supervision schließen",
+			"collapse": "Supervision minimieren",
+			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
+			"unread": "{{count}} ungelesene Nachrichten",
+			"unread_one": "1 ungelesene Nachricht",
+			"empty": {
+				"title": "Noch keine Nachrichten",
+				"hint": "Hier sprechen Sie vertraulich mit {{name}} über diese Beratung."
+			},
+			"composer": {
+				"placeholder": "Nachricht an {{name}} …",
+				"send": "Senden"
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "{{kind}} öffnen",
+				"newMessage": "Neue Nachricht",
+				"dragHandle": "Miniatur verschieben – Pfeiltasten"
+			},
+			"stage": {
+				"divider": "Trennlinie – Pfeiltasten ändern die Breite der Supervision, Pos1 und Ende setzen Minimum und Maximum",
+				"mainPane": "Beratungschat",
+				"secondaryPane": "Nebenraum"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",
