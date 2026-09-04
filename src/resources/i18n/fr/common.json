@@ -3529,6 +3529,10 @@
 				"selfHelp": "Cercle de parole",
 				"internal": "Échange interne"
 			}
+		},
+		"supervision": {
+			"badge": "Supervision – vous suivez cette conversation",
+			"supervisedBy": "Supervision : {{name}}"
 		}
 	},
 	"statusOverlay": {
@@ -4598,7 +4602,8 @@
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
 			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
-		}
+		},
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
 	},
 	"legal": {
 		"notice": {

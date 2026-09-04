@@ -3489,6 +3489,10 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – you read along in this chat",
+			"supervisedBy": "Supervision: {{name}}"
 		}
 	},
 	"statusOverlay": {
@@ -4530,7 +4534,8 @@
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
-		}
+		},
+		"unavailableInRoom": "First response – not available in this room."
 	},
 	"dpaSign": {
 		"title": "Sign contract documents",

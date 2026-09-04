@@ -3529,6 +3529,10 @@
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili"
 			}
+		},
+		"supervision": {
+			"badge": "Süpervizyon – bu sohbeti takip ediyorsunuz",
+			"supervisedBy": "Süpervizyon: {{name}}"
 		}
 	},
 	"statusOverlay": {
@@ -4598,7 +4602,8 @@
 			"browserHint": "Adres gerekmez — ancak yalnızca bu cihazda çalışır.",
 			"email": "Bana bir e-posta yazın",
 			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz."
-		}
+		},
+		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor."
 	},
 	"legal": {
 		"notice": {
