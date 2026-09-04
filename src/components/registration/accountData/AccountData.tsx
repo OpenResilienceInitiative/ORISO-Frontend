@@ -121,7 +121,29 @@ const suggestButtonSx = (filled: boolean) =>
 
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
-}> = ({ onChange }) => {
+	/**
+	 * Where the person came from. `registration` is the four-step flow and stays
+	 * exactly as it was. `link` is the entry composition of ORISO-Frontend#1052:
+	 * an invitation already carries topic and agency, so the screen asks only
+	 * what is still missing.
+	 *
+	 * Nothing here decides *which* fields a conversation type needs — that
+	 * belongs to the modality (ADR-006). This prop only says "a link brought
+	 * them", so the shape can be judged in Storybook before it is wired.
+	 */
+	entry?: 'registration' | 'link';
+	/**
+	 * Link entry only: join without ever choosing — or seeing — a password.
+	 *
+	 * Frank, 2026-09-03: the password is generated for the person, as if the
+	 * suggest button had been pressed once, unseen. The consequence is real and
+	 * must be said out loud on screen: without a password there is no way back
+	 * into this conversation from another device or after closing the browser.
+	 * The live-chat invite path does this today by accident and says nothing —
+	 * that is exactly the defect this variant must not repeat.
+	 */
+	temporary?: boolean;
+}> = ({ onChange, entry = 'registration', temporary = false }) => {
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -441,6 +463,26 @@ export const AccountData: FC<{
 		applyGeneratedUsername(regeneratePseudonym(identity, locale));
 		suggestPassword();
 	};
+
+	/* Temporary join: mint the password once, keep it out of sight, and never
+	   re-mint it on a re-render — a second password would silently invalidate
+	   the account the person is already holding. `suggestPassword` is not
+	   reused here because it also reveals both fields, which is the one thing
+	   this path must not do. */
+	useEffect(() => {
+		if (!temporary || password) {
+			return;
+		}
+		const generated = generatePassword();
+		setPassword(generated);
+		setRepeatPassword(generated);
+		setIsPasswordVisible(false);
+		setIsRepeatPasswordVisible(false);
+	}, [temporary, password]);
+
+	/* The password block is the only thing a temporary join hides. The identity
+	   fields stay: the person still picks how they are called. */
+	const showPasswordFields = !temporary;
 	const suggestButton = (
 		icon: string,
 		label: ReactNode,
@@ -539,45 +581,51 @@ export const AccountData: FC<{
 					t('registration.account.suggest.username'),
 					suggestUsername
 				)}
-				{suggestButton(
-					genKeyIcon,
-					t('registration.account.suggest.password'),
-					suggestPassword
-				)}
+				{/* A "suggest password" button next to no password field is an
+				    offer that leads nowhere. Same for "all three" — it would
+				    silently re-mint the hidden password the person already
+				    holds. Only identity stays adjustable on a temporary join. */}
+				{showPasswordFields &&
+					suggestButton(
+						genKeyIcon,
+						t('registration.account.suggest.password'),
+						suggestPassword
+					)}
 				{suggestButton(
 					genAvatarIcon,
 					t('registration.account.suggest.avatar'),
 					suggestAvatar
 				)}
-				{suggestButton(
-					genDiceIcon,
-					<>
-						<Box
-							component="span"
-							sx={{
-								'display': 'none',
-								'@container (min-width: 520px)': {
-									display: 'inline'
-								}
-							}}
-						>
-							{t('registration.account.suggest.all')}
-						</Box>
-						<Box
-							component="span"
-							sx={{
-								'display': 'inline',
-								'@container (min-width: 520px)': {
-									display: 'none'
-								}
-							}}
-						>
-							{t('registration.account.suggest.allShort')}
-						</Box>
-					</>,
-					suggestAll,
-					true
-				)}
+				{showPasswordFields &&
+					suggestButton(
+						genDiceIcon,
+						<>
+							<Box
+								component="span"
+								sx={{
+									'display': 'none',
+									'@container (min-width: 520px)': {
+										display: 'inline'
+									}
+								}}
+							>
+								{t('registration.account.suggest.all')}
+							</Box>
+							<Box
+								component="span"
+								sx={{
+									'display': 'inline',
+									'@container (min-width: 520px)': {
+										display: 'none'
+									}
+								}}
+							>
+								{t('registration.account.suggest.allShort')}
+							</Box>
+						</>,
+						suggestAll,
+						true
+					)}
 			</Box>
 
 			<OrisoTextField
@@ -666,118 +714,161 @@ export const AccountData: FC<{
 					/>
 				</FormGroup>
 			)}
-			<OrisoTextField
-				value={password}
-				onChange={(event) => setPassword(event.target.value)}
-				placeholder={t('registration.account.password.label')}
-				type={isPasswordVisible ? 'text' : 'password'}
-				fullWidth
-				autoComplete="new-password"
-				inputProps={{
-					'aria-label': t('registration.account.password.label')
-				}}
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					),
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								onClick={() =>
-									setIsPasswordVisible(!isPasswordVisible)
-								}
-								edge="end"
-								aria-label={t(
-									isPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								title={t(
-									isPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								sx={visibilityButtonSx}
-							>
-								{isPasswordVisible ? (
-									<VisibilityOffIcon />
-								) : (
-									<VisibilityIcon />
-								)}
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-				sx={{ mt: '24px' }}
-			/>
-			<PasswordRuleChips password={password} />
-			<OrisoTextField
-				value={repeatPassword}
-				onChange={(event) => setRepeatPassword(event.target.value)}
-				placeholder={t('registration.account.repeatPassword.label')}
-				type={isRepeatPasswordVisible ? 'text' : 'password'}
-				error={repeatPasswordMismatch}
-				helperText={
-					repeatPasswordMismatch
-						? t('registration.account.repeatPassword.error')
-						: repeatPasswordMatches
-							? t('registration.account.repeatPassword.success')
-							: undefined
-				}
-				FormHelperTextProps={{
-					sx: repeatPasswordMatches
-						? { color: `${registrationMd3.primary} !important` }
-						: undefined
-				}}
-				fullWidth
-				autoComplete="new-password"
-				inputProps={{
-					'aria-label': t('registration.account.repeatPassword.label')
-				}}
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					),
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								onClick={() =>
-									setIsRepeatPasswordVisible(
-										!isRepeatPasswordVisible
-									)
-								}
-								edge="end"
-								aria-label={t(
-									isRepeatPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								title={t(
-									isRepeatPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								sx={visibilityButtonSx}
-							>
-								{isRepeatPasswordVisible ? (
-									<VisibilityOffIcon />
-								) : (
-									<VisibilityIcon />
-								)}
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-				sx={{ mt: '20px' }}
-			/>
+			{showPasswordFields ? (
+				<>
+					<OrisoTextField
+						value={password}
+						onChange={(event) => setPassword(event.target.value)}
+						placeholder={t('registration.account.password.label')}
+						type={isPasswordVisible ? 'text' : 'password'}
+						fullWidth
+						autoComplete="new-password"
+						inputProps={{
+							'aria-label': t(
+								'registration.account.password.label'
+							)
+						}}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<VpnKeyOutlinedIcon
+										sx={{
+											color: registrationMd3.onSurfaceVariant
+										}}
+									/>
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										onClick={() =>
+											setIsPasswordVisible(
+												!isPasswordVisible
+											)
+										}
+										edge="end"
+										aria-label={t(
+											isPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										title={t(
+											isPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										sx={visibilityButtonSx}
+									>
+										{isPasswordVisible ? (
+											<VisibilityOffIcon />
+										) : (
+											<VisibilityIcon />
+										)}
+									</IconButton>
+								</InputAdornment>
+							)
+						}}
+						sx={{ mt: '24px' }}
+					/>
+					<PasswordRuleChips password={password} />
+					<OrisoTextField
+						value={repeatPassword}
+						onChange={(event) =>
+							setRepeatPassword(event.target.value)
+						}
+						placeholder={t(
+							'registration.account.repeatPassword.label'
+						)}
+						type={isRepeatPasswordVisible ? 'text' : 'password'}
+						error={repeatPasswordMismatch}
+						helperText={
+							repeatPasswordMismatch
+								? t('registration.account.repeatPassword.error')
+								: repeatPasswordMatches
+									? t(
+											'registration.account.repeatPassword.success'
+										)
+									: undefined
+						}
+						FormHelperTextProps={{
+							sx: repeatPasswordMatches
+								? {
+										color: `${registrationMd3.primary} !important`
+									}
+								: undefined
+						}}
+						fullWidth
+						autoComplete="new-password"
+						inputProps={{
+							'aria-label': t(
+								'registration.account.repeatPassword.label'
+							)
+						}}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<VpnKeyOutlinedIcon
+										sx={{
+											color: registrationMd3.onSurfaceVariant
+										}}
+									/>
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										onClick={() =>
+											setIsRepeatPasswordVisible(
+												!isRepeatPasswordVisible
+											)
+										}
+										edge="end"
+										aria-label={t(
+											isRepeatPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										title={t(
+											isRepeatPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										sx={visibilityButtonSx}
+									>
+										{isRepeatPasswordVisible ? (
+											<VisibilityOffIcon />
+										) : (
+											<VisibilityIcon />
+										)}
+									</IconButton>
+								</InputAdornment>
+							)
+						}}
+						sx={{ mt: '20px' }}
+					/>
+				</>
+			) : (
+				/* Temporary join: no password block at all. Hiding the fields is not
+				   enough — the person must be told, in plain words, that this
+				   conversation ends with the window. */
+				<Box
+					sx={{
+						mt: '20px',
+						p: '14px 16px',
+						borderRadius: '12px',
+						bgcolor: registrationMd3.surfaceContainerLow,
+						color: registrationMd3.onSurfaceVariant,
+						border: `1px solid ${registrationMd3.outlineVariant}`
+					}}
+				>
+					<Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
+						{t(
+							'registration.account.temporary.note',
+							'Sie treten ohne Passwort bei. Dieses Gespräch ist nur in diesem Fenster erreichbar — wenn Sie es schließen, können Sie nicht zurückkehren.'
+						)}
+					</Typography>
+				</Box>
+			)}
 			<FormGroup sx={{ mt: '20px' }}>
 				<FormControlLabel
 					sx={{ alignItems: 'flex-start' }}
