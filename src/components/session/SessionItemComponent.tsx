@@ -68,6 +68,12 @@ import {
 	writeSecondaryWidth
 } from '../supervisionPanel';
 import { getSupervisorDisplayNames } from '../sessionsListItem/supervisionListState';
+import {
+	pickDisplayOrUsername,
+	pickSupervisionCounterpartName,
+	CounterpartNameSource
+} from '../supervisionPanel/supervisionCounterpart';
+import { apiGetConsultant } from '../../api/apiGetConsultant';
 import { computeThreadSummaries } from '../../utils/threadSummaries';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
@@ -484,6 +490,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [supervisorUsernames, setSupervisorUsernames] = useState<string[]>(
 		[]
 	);
+	// WP-B2 (#996): the supervisor's counterpart is the responsible
+	// consultant, but the consultant session-list DTO carries only
+	// `{ id, firstName, lastName }` — no display name, no username. Resolved
+	// by id via the public consultant endpoint; keyed so a stale response
+	// for a previous session can never name the current one.
+	const [resolvedCounterpartConsultant, setResolvedCounterpartConsultant] =
+		useState<{ id: string; name: CounterpartNameSource } | null>(null);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
@@ -1929,6 +1942,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setSupervisorUsernames([]);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
+
+	// WP-B2 (#996): resolve the responsible consultant's display name for the
+	// supervisor view when the list DTO does not carry one.
+	const counterpartConsultantId = activeSession.consultant?.id;
+	const listDtoHasCounterpartName = Boolean(
+		pickDisplayOrUsername(activeSession.consultant)
+	);
+	useEffect(() => {
+		if (
+			!isSupervisor ||
+			!counterpartConsultantId ||
+			listDtoHasCounterpartName
+		) {
+			return;
+		}
+		let cancelled = false;
+		apiGetConsultant(counterpartConsultantId, false, true)
+			.then((consultant) => {
+				if (cancelled || !consultant) {
+					return;
+				}
+				setResolvedCounterpartConsultant({
+					id: counterpartConsultantId,
+					name: {
+						displayName: consultant.displayName,
+						username: (consultant as CounterpartNameSource).username,
+						userName: consultant.userName
+					}
+				});
+			})
+			.catch(() => {
+				// Fallback label stays; the panel is still usable.
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [isSupervisor, counterpartConsultantId, listDtoHasCounterpartName]);
 
 	useEffect(() => {
 		const canWrite =
@@ -3456,18 +3506,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// consultant for the supervisor.
 	const supervisionCounterpartName = useMemo(() => {
 		if (isSupervisor) {
-			return (
-				activeSession.consultant?.displayName ||
-				activeSession.consultant?.username ||
-				translate('sessionList.user.consultantUnknown')
-			);
+			const resolved =
+				resolvedCounterpartConsultant?.id === counterpartConsultantId
+					? resolvedCounterpartConsultant.name
+					: null;
+			return pickSupervisionCounterpartName({
+				role: 'supervisor',
+				consultant: listDtoHasCounterpartName
+					? activeSession.consultant
+					: resolved,
+				fallback: translate('sessionList.user.consultantUnknown')
+			});
 		}
-		return (
-			getSupervisorDisplayNames(activeSession)[0] ||
-			supervisorUsernames[0] ||
-			translate('supervision.panel.title')
-		);
-	}, [activeSession, isSupervisor, supervisorUsernames, translate]);
+		return pickSupervisionCounterpartName({
+			role: 'consultant',
+			supervisorDisplayNames: getSupervisorDisplayNames(activeSession),
+			supervisorUsernames,
+			fallback: translate('supervision.panel.title')
+		});
+	}, [
+		activeSession,
+		isSupervisor,
+		supervisorUsernames,
+		resolvedCounterpartConsultant,
+		counterpartConsultantId,
+		listDtoHasCounterpartName,
+		translate
+	]);
 
 	// Desktop: docked split by default, width remembered per user.
 	const [supervisionWidth, setSupervisionWidth] = useState(() =>

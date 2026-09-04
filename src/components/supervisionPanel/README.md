@@ -160,8 +160,13 @@ matrixRoomId: supervisionRoomId, supervisorMessage: isSupervisor, … })`
 a stage, a context entry, or a panel, whatever the props contain. `viewerRole`
 is `isSupervisor ? 'supervisor' : 'consultant'`. Counterpart name: consultant
 → `getSupervisorDisplayNames(activeSession)[0]` (WP-A list DTO) or the
-`supervisorUsername` from `apiGetSessionSupervisors`; supervisor →
-`activeSession.consultant.displayName || username`.
+`supervisorUsername` from `apiGetSessionSupervisors`; supervisor → the
+responsible consultant's display name, then username
+(`pickSupervisionCounterpartName` in `supervisionCounterpart.ts`, unit-tested).
+The consultant session-list DTO carries only `{ id, firstName, lastName }` for
+the consultant, so the supervisor view resolves the name by id via
+`apiGetConsultant` (public endpoint). Real names are never shown (#996);
+until the lookup answers the fallback is `sessionList.user.consultantUnknown`.
 
 ### 4. State machine (`supervisionPanelState.ts`)
 
