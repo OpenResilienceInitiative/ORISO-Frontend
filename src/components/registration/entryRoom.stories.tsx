@@ -5,7 +5,6 @@ import { Box, Button, SvgIcon } from '@mui/material';
 import { AccountData } from './accountData/AccountData';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { ReactComponent as DoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
-import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
@@ -150,21 +149,35 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
  * merely sticks inside the content column, as the first draft did, lands on top
  * of them.
  *
- * The hairline is `outlineVariant`, the same token the real footer uses. The
- * darker rule in the first draft was not a design choice, it was a mistake.
+ * **Why `RegistrationStepNav` is not used here**, although it is the footer of
+ * the four registration steps: it is built for exactly one action. Its primary
+ * is a stretched bar with the arrow in its own disc, sized to fill the footer
+ * alone. Put a second button next to it and the two read as different species —
+ * Frank, 2026-09-04: "der Button links und der Button rechts, sie sind einfach
+ * unterschiedlich, das sieht nicht gut aus."
  *
- * Two open points this story deliberately makes visible rather than fakes away,
- * both belonging to #1289:
+ * A link entry has two equal choices, so it gets two buttons of one geometry:
+ * same height, same radius, same padding, same elevation — only the role
+ * differs. Secondary is the way out, primary is the way on.
  *
- * 1. `RegistrationStepNav` always renders a back circle — the house rule says
- *    disable, never hide, which is right for step 1 of 4. A link entry has no
- *    previous step at all, so the circle is not "disabled", it is meaningless.
- *    Frank, 2026-09-04, marked it for removal. It is suppressed here with a
- *    single CSS rule so the target state can be judged; the component needs a
- *    way to express "there is no back" instead.
- * 2. The component has no slot for a second action. The temporary-join choice
- *    needs one, so it sits beside the component here.
+ * That leaves a real gap for #1289: either `RegistrationStepNav` learns a
+ * two-action shape, or a link entry keeps its own footer. This story is the
+ * argument for deciding it rather than a decision made in passing.
  */
+const footerButtonSx = {
+	flex: '1 1 0',
+	textTransform: 'none',
+	borderRadius: '28px',
+	minHeight: 56,
+	px: 3,
+	fontSize: 16,
+	fontWeight: 600,
+	whiteSpace: 'nowrap',
+	/* Frank, 2026-09-04: "Button also needs footer shadow then." Both carry the
+	   same elevation, so they sit on one plane. */
+	boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)'
+} as const;
+
 const EntryFooter = ({
 	temporary,
 	onToggleTemporary
@@ -174,51 +187,34 @@ const EntryFooter = ({
 }) => (
 	<Box
 		sx={{
-			'position': 'fixed',
-			'bottom': 0,
-			'right': 0,
-			'width': { xs: '100vw', lg: '60vw' },
-			'minHeight': { sm: '96px' },
-			'backgroundColor': 'rgba(255, 255, 255, 0.94)',
-			'backdropFilter': 'blur(8px)',
-			'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
-			'display': 'flex',
-			'alignItems': 'center',
-			'gap': 2,
-			'pt': { xs: 1.5, sm: 0 },
-			'pb': {
+			position: 'fixed',
+			bottom: 0,
+			right: 0,
+			width: { xs: '100vw', lg: '60vw' },
+			minHeight: { sm: '96px' },
+			backgroundColor: 'rgba(255, 255, 255, 0.94)',
+			backdropFilter: 'blur(8px)',
+			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
+			display: 'flex',
+			alignItems: 'center',
+			gap: 2,
+			pt: { xs: 1.5, sm: 0 },
+			pb: {
 				xs: 'calc(12px + env(safe-area-inset-bottom))',
 				sm: 0
 			},
-			'px': { xs: 2, sm: 3, lg: 4 },
-			'zIndex': 65,
-			/* See point 1 above: the back circle is the first child of
-			   `RegistrationStepNav` and has nowhere to lead on a link entry. */
-			'& .registration-entry-nav > * > *:first-of-type': {
-				display: 'none'
-			}
+			px: { xs: 2, sm: 3, lg: 4 },
+			zIndex: 65
 		}}
 	>
 		<Button
 			variant="outlined"
 			onClick={onToggleTemporary}
 			sx={{
-				'flex': '0 1 auto',
-				'textTransform': 'none',
-				'borderRadius': '28px',
-				'minHeight': 56,
-				'px': 3,
-				'fontSize': 16,
-				'fontWeight': 600,
-				'whiteSpace': 'nowrap',
+				...footerButtonSx,
 				'color': registrationMd3.onSurface,
 				'borderColor': registrationMd3.outline,
 				'backgroundColor': registrationMd3.surfaceContainerLow,
-				/* Frank, 2026-09-04: "Button also needs footer shadow then."
-				   The primary pill carries the footer's elevation; a flat
-				   secondary next to it reads as a different layer. Same
-				   shadow, so the two sit on one plane. */
-				'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.12)',
 				'&:hover': {
 					borderColor: registrationMd3.onSurface,
 					backgroundColor: registrationMd3.surfaceContainer,
@@ -228,21 +224,20 @@ const EntryFooter = ({
 		>
 			{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
 		</Button>
-		<Box
-			className="registration-entry-nav"
-			sx={{ flex: '1 1 240px', minWidth: 0 }}
-		>
-			<RegistrationStepNav
-				prevStepUrl={null}
-				backLabel="Zurück"
-				nextStepUrl={null}
-				nextLabel={temporary ? 'Beitreten' : 'Registrieren'}
-				registerLabel={temporary ? 'Beitreten' : 'Registrieren'}
-				registeringLabel={
-					temporary ? 'Wird beigetreten …' : 'Wird registriert …'
+		<Button
+			variant="contained"
+			sx={{
+				...footerButtonSx,
+				'backgroundColor': registrationMd3.primary,
+				'color': registrationMd3.onPrimary,
+				'&:hover': {
+					backgroundColor: registrationMd3.primaryDark,
+					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
 				}
-			/>
-		</Box>
+			}}
+		>
+			{temporary ? 'Beitreten' : 'Registrieren'}
+		</Button>
 	</Box>
 );
 
