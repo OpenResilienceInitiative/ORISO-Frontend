@@ -135,4 +135,52 @@ describe('BackupKeyAfterTwoFactorDialog', () => {
 		expect(setUpRecovery).toHaveBeenCalledTimes(1);
 		expect(getPendingRecoveryKey(USER_ID)).toBe('fresh-recovery-key');
 	});
+
+	it('lets the person retry when setup fails', async () => {
+		getEncryptionStatus.mockResolvedValue(notSetUp);
+		setUpRecovery.mockRejectedValueOnce(new Error('setup failed'));
+
+		render(
+			<BackupKeyAfterTwoFactorDialog
+				clientOverride={clientWithUser}
+				onClose={vi.fn()}
+				open
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
+			)
+		).toBeTruthy();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Erneut versuchen' })
+		);
+		expect(await screen.findByText('fresh-recovery-key')).toBeTruthy();
+		expect(setUpRecovery).toHaveBeenCalledTimes(2);
+	});
+
+	it('lets the person close the recovery-key step after a setup error', async () => {
+		getEncryptionStatus.mockResolvedValue(notSetUp);
+		setUpRecovery.mockRejectedValueOnce(new Error('setup failed'));
+		const onClose = vi.fn();
+
+		render(
+			<BackupKeyAfterTwoFactorDialog
+				clientOverride={clientWithUser}
+				onClose={onClose}
+				open
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
+			)
+		).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
 });

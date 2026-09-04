@@ -74,8 +74,46 @@ describe('ErstantwortDisplayNameOverlay', () => {
 			screen.getByRole('button', { name: 'Namen neu würfeln' }).click();
 		});
 
-		expect(regeneratePseudonym).toHaveBeenCalled();
+		expect(regeneratePseudonym).toHaveBeenCalledWith(
+			expect.objectContaining({ displayName: 'Sanftes Alpaka Kala' }),
+			'de'
+		);
 		expect(screen.getByText('Ruhiges Yak Kim')).toBeTruthy();
+	});
+
+	it('disables re-roll while the save request is in flight', async () => {
+		let finishSave: (value?: unknown) => void = () => undefined;
+		apiPatchUserData.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finishSave = resolve;
+				})
+		);
+
+		render(
+			<ErstantwortDisplayNameOverlay
+				currentName="Sanftes Alpaka Kala"
+				locale="de"
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+			/>
+		);
+
+		act(() => {
+			screen.getByRole('button', { name: 'Übernehmen' }).click();
+		});
+
+		expect(
+			(
+				screen.getByRole('button', {
+					name: 'Namen neu würfeln'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+
+		await act(async () => {
+			finishSave();
+		});
 	});
 
 	it('saves the rolled name via apiPatchUserData', async () => {

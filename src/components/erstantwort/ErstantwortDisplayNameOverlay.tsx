@@ -29,15 +29,22 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 	const displayedName = pseudonym?.displayName ?? currentName;
 
 	const reroll = () => {
+		if (isSaving) return;
 		setErrorText(null);
-		setPseudonym(regeneratePseudonym(pseudonym ?? undefined, locale));
+		setPseudonym(
+			regeneratePseudonym(
+				pseudonym ?? ({ displayName: currentName } as Pseudonym),
+				locale
+			)
+		);
 	};
 
 	const save = () => {
 		if (isSaving) return;
+		const nameToSave = displayedName;
 		setIsSaving(true);
 		setErrorText(null);
-		apiPatchUserData({ displayName: displayedName })
+		apiPatchUserData({ displayName: nameToSave })
 			.then(() => {
 				setIsSaving(false);
 				onSaved();
@@ -82,7 +89,7 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 				<p>
 					<strong>{displayedName}</strong>
 				</p>
-				<button type="button" onClick={reroll}>
+				<button type="button" disabled={isSaving} onClick={reroll}>
 					{t(
 						'erstantwort.displayName.overlay.reroll',
 						'Namen neu würfeln'

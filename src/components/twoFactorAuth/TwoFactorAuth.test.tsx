@@ -126,6 +126,56 @@ describe('TwoFactorAuth', () => {
 		);
 	});
 
+	it('does not reopen the backup-key step after a later 2FA dialog close', async () => {
+		locationState.current = { openTwoFactor: true, showBackupKey: true };
+		const reloadUserData = vi.fn().mockResolvedValue(undefined);
+		const contextValue = {
+			userData: {
+				email: 'asker@example.org',
+				twoFactorAuth: {
+					isActive: false,
+					type: 'APP'
+				}
+			},
+			reloadUserData
+		} as React.ContextType<typeof UserDataContext>;
+
+		render(
+			<UserDataContext.Provider value={contextValue}>
+				<TwoFactorAuth />
+			</UserDataContext.Provider>
+		);
+
+		const firstSetup = setupDialogMock.mock.calls.at(-1)?.[0] as {
+			onSetupComplete: () => Promise<void>;
+			onClose: () => void;
+		};
+		await act(async () => {
+			await firstSetup.onSetupComplete();
+			firstSetup.onClose();
+		});
+
+		const backupProps = backupDialogMock.mock.calls.at(-1)?.[0] as {
+			open: boolean;
+			onClose: () => void;
+		};
+		expect(backupProps.open).toBe(true);
+		act(() => {
+			backupProps.onClose();
+		});
+
+		const laterSetup = setupDialogMock.mock.calls.at(-1)?.[0] as {
+			onClose: () => void;
+		};
+		act(() => {
+			laterSetup.onClose();
+		});
+
+		expect(backupDialogMock).toHaveBeenLastCalledWith(
+			expect.objectContaining({ open: false })
+		);
+	});
+
 	it('does not open the backup-key step after ordinary profile 2FA', async () => {
 		const reloadUserData = vi.fn().mockResolvedValue(undefined);
 		const contextValue = {

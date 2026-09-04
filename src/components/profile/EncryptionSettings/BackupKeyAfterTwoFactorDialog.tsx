@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
+import { Button, BUTTON_TYPES } from '../../button/Button';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	getEncryptionStatus,
@@ -56,8 +57,32 @@ export const BackupKeyAfterTwoFactorDialog: React.FC<
 	const [fromSilentSetup, setFromSilentSetup] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
+	const [loadAttempt, setLoadAttempt] = useState(0);
+	const dialogRef = useRef<HTMLDialogElement>(null);
 	const onCloseRef = useRef(onClose);
 	onCloseRef.current = onClose;
+
+	useEffect(() => {
+		const dialog = dialogRef.current;
+		if (!open || !dialog) {
+			return;
+		}
+		if (dialog.open) {
+			return;
+		}
+		if (typeof dialog.showModal === 'function') {
+			dialog.showModal();
+			return;
+		}
+		dialog.setAttribute('open', '');
+	}, [open]);
+
+	const retryLoad = useCallback(() => {
+		setError(null);
+		setRecoveryKey(null);
+		setFromSilentSetup(false);
+		setLoadAttempt((attempt) => attempt + 1);
+	}, []);
 
 	useEffect(() => {
 		if (!open) {
@@ -178,7 +203,7 @@ export const BackupKeyAfterTwoFactorDialog: React.FC<
 		return () => {
 			cancelled = true;
 		};
-	}, [clientOverride, open, t]);
+	}, [clientOverride, loadAttempt, open, t]);
 
 	const onConfirm = useCallback(() => {
 		if (userId) {
@@ -193,12 +218,17 @@ export const BackupKeyAfterTwoFactorDialog: React.FC<
 
 	return (
 		<dialog
+			ref={dialogRef}
 			aria-label={t(
 				'profile.encryption.showKey.headline',
 				'Ersatzschlüssel speichern'
 			)}
+			aria-modal="true"
 			className="encryptionSettings backupKeyAfterTwoFactor"
-			open
+			onCancel={(event) => {
+				event.preventDefault();
+				onClose();
+			}}
 		>
 			<Headline
 				semanticLevel="3"
@@ -207,8 +237,36 @@ export const BackupKeyAfterTwoFactorDialog: React.FC<
 					'Ersatzschlüssel speichern'
 				)}
 			/>
-			{error && <Text text={error} type="standard" />}
-			{recoveryKey && (
+			{error && (
+				<>
+					<Text text={error} type="standard" />
+					<div className="encryptionSettings__keyActions">
+						<Button
+							item={{
+								label: t(
+									'registration.topic.loadErrorRetry',
+									'Erneut versuchen'
+								),
+								type: BUTTON_TYPES.SECONDARY
+							}}
+							buttonHandle={retryLoad}
+							className="encryptionSettings__fullWidthAction"
+						/>
+						<Button
+							item={{
+								label: t(
+									'furtherSteps.email.overlay.button2.label',
+									'Close'
+								),
+								type: BUTTON_TYPES.PRIMARY
+							}}
+							buttonHandle={onClose}
+							className="encryptionSettings__fullWidthAction"
+						/>
+					</div>
+				</>
+			)}
+			{recoveryKey && !error && (
 				<RecoveryKeySaveStep
 					fromSilentSetup={fromSilentSetup}
 					recoveryKey={recoveryKey}

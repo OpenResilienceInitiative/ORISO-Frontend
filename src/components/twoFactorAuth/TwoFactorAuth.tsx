@@ -53,6 +53,7 @@ export const TwoFactorAuth = () => {
 		setIsDialogOpen(false);
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);
 		if (locationState.showBackupKey && setupCompletedRef.current) {
+			setupCompletedRef.current = false;
 			setIsBackupKeyStepOpen(true);
 		}
 	}, [locationState.showBackupKey, userData.twoFactorAuth.isActive]);
