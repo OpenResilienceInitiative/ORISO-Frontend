@@ -1,0 +1,25 @@
+---
+description: Superpowers is required for tickets, bugs, PR review, and ticket updates
+alwaysApply: true
+---
+
+# Superpowers workflow
+
+Required for ticket implementation, bug fixes, PR review, and ticket updates.
+
+**Install (other developers):** in Cursor run `/add-plugin superpowers`, or Settings → Plugins → Superpowers → Install, then reload. This repo cannot install the plugin for you.
+
+If any of these skills are missing, STOP. Tell the human to install Superpowers. Do not pretend a missing skill exists: `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`, `receiving-code-review`, `verification-before-completion`, `finishing-a-development-branch`.
+
+Use this order (do not skip TDD or verification):
+
+1. `brainstorming` — expected behavior; get approval before coding
+2. `writing-plans` — small steps, each with a test cycle
+3. `systematic-debugging` — bugs and unexpected failures only; root cause first
+4. `test-driven-development` — RED → GREEN → REFACTOR
+5. `requesting-code-review` — independent review of the artifact
+6. `receiving-code-review` — evaluate feedback; do not rubber-stamp
+7. `verification-before-completion` — fresh command evidence before “done”
+8. `finishing-a-development-branch` — PR options; never merge unless the human names that PR
+
+ORISO overlays (win on conflict): branch from `origin/dev`; compare PRs to `origin/dev`; use `AGENTS.md` test commands; `problem-intake` / `goal-loop` / `pr-prep` still write the task folder. Never copy Superpowers plugin files into git.
