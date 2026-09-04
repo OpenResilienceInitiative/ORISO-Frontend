@@ -290,7 +290,6 @@ export const WaitingAreaCountdown = ({
 	};
 
 	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
-	const flipHint = tr('flipHint', 'klicken zum Umdrehen');
 
 	const backCard = (key: string, isRule: boolean) => {
 		const ruleIndex = backRule[key] ?? 0;
@@ -303,6 +302,11 @@ export const WaitingAreaCountdown = ({
 		// The card is as big as the digits it replaces, so its type grows with
 		// the clock: 14 px on a phone, up to 20 px on a desktop block.
 		const textFont = Math.round(Math.min(20, Math.max(14, size * 0.42)));
+		// Frank, 2026-09-04: the greeting "wirkt so gleich wie die
+		// Netiquetten". Rules are the house speaking — dark, factual. The
+		// greeting is a person speaking — it gets the brand red and a
+		// larger, warmer line, so the two are never mistaken for each other.
+		const isGreeting = !isRule;
 		return (
 			<div
 				style={{
@@ -314,7 +318,7 @@ export const WaitingAreaCountdown = ({
 					width: '100%',
 					height: '100%',
 					borderRadius: 20,
-					background: DARK,
+					background: isGreeting ? RED : DARK,
 					boxSizing: 'border-box',
 					padding: `${Math.round(size * 0.5)}px ${Math.round(size * 0.6)}px`,
 					textAlign: 'center'
@@ -326,15 +330,15 @@ export const WaitingAreaCountdown = ({
 						fontWeight: 700,
 						letterSpacing: '.14em',
 						textTransform: 'uppercase',
-						color: PINK
+						color: isGreeting ? 'rgba(255,255,255,.72)' : PINK
 					}}
 				>
 					{label}
 				</div>
 				<div
 					style={{
-						fontSize: textFont,
-						fontWeight: 500,
+						fontSize: isGreeting ? textFont + 2 : textFont,
+						fontWeight: isGreeting ? 600 : 500,
 						color: '#fff',
 						lineHeight: 1.45,
 						maxWidth: '32ch',
@@ -396,10 +400,10 @@ export const WaitingAreaCountdown = ({
 					textTransform: 'uppercase',
 					color: isHover ? RED : MUTED,
 					transition: 'color .25s',
-					// Above: the label sits on the outer edge of the block and is
-					// aligned with it, not centred over two digits.
-					alignSelf: labelAbove ? 'flex-start' : 'center',
-					paddingLeft: labelAbove ? 2 : 0
+					// Centred over its two digits, above and below alike —
+					// Frank's Figma has TAGE centred too, and a left-aligned
+					// top row against a centred bottom row read as two rules.
+					alignSelf: 'center'
 				}}
 			>
 				{unit.label}
@@ -472,35 +476,18 @@ export const WaitingAreaCountdown = ({
 					borderRadius: 16
 				}}
 			>
-				<div
-					aria-hidden="true"
-					style={{
-						position: 'absolute',
-						top: labelAbove ? -34 : -30,
-						left: '50%',
-						transform: `translateX(-50%) translateY(${isHover && !flipped ? 0 : 5}px)`,
-						opacity: isHover && !flipped ? 1 : 0,
-						transition: 'all .25s ease',
-						background: DARK,
-						color: '#fff',
-						fontSize: 11,
-						fontWeight: 600,
-						padding: '5px 11px',
-						borderRadius: 8,
-						pointerEvents: 'none',
-						whiteSpace: 'nowrap',
-						zIndex: 3
-					}}
-				>
-					{unit.label} · {flipHint}
-				</div>
+				{/* No tooltip. It repeated the label that already stands under
+				    the digits and it stayed up over the flipped card. The one
+				    hint lives in the subtitle; the hover itself is the cue:
+				    the card tilts a few degrees towards the reader, and the
+				    label turns red. */}
 				<div
 					style={{
 						position: 'absolute',
 						inset: 0,
 						transformStyle: 'preserve-3d',
 						transition: 'transform .6s cubic-bezier(.4,0,.2,1)',
-						transform: `rotateY(${flipped ? 180 : 0}deg)`
+						transform: `rotateY(${flipped ? 180 : isHover ? -10 : 0}deg)`
 					}}
 				>
 					{face(!flipped, 0, front)}

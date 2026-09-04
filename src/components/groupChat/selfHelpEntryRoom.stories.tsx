@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, useMediaQuery } from '@mui/material';
+import { Switch } from '../Switch';
 import { AccountData } from '../registration/accountData/AccountData';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
@@ -612,6 +613,7 @@ const BlockRoom = ({
 }) => {
 	const [motionOff, setMotionOff] = React.useState(false);
 	const clockHeight = useClockHeight();
+	const narrow = useMediaQuery('(max-width:1199px)');
 	return (
 		<Box sx={{ minHeight: '100vh' }}>
 			<AgencySpecificContext.Provider
@@ -667,72 +669,76 @@ const BlockRoom = ({
 							reducedMotion={motionOff}
 							hideMotionToggle
 						/>
-						{/* "more infos" in Frank's Figma, bottom right: the way to
-						    the entry point that explains in three pictures what
-						    to do in this session. Not wired. */}
+						{/* The row under the clock: the animation switch — the
+						    design system's own M3 `Switch`, the same one the
+						    profile uses, not a text button (Frank, 2026-09-04:
+						    "richtig faule Lösung … nicht unser Designsystem
+						    genug angeguckt") — and "Mehr erfahren", the way to
+						    the entry point with the three pictures. Not wired. */}
 						<Box
 							sx={{
 								display: 'flex',
 								justifyContent: 'space-between',
 								alignItems: 'center',
+								gap: 2,
 								mt: 1
 							}}
 						>
-							{/* On a phone three buttons do not fit in the bar
-							    — "Zum Kalender" and "Beitreten" shrank to one
-							    letter each. The animation switch moves up into
-							    this row there; on the desktop it stays in the
-							    bar, where Frank drew it. */}
-							<Button
-								variant="text"
-								size="small"
-								onClick={() => setMotionOff((v) => !v)}
+							<Box
+								component="label"
 								sx={{
-									display: { xs: 'inline-flex', lg: 'none' },
-									textTransform: 'none'
+									display: 'flex',
+									alignItems: 'center',
+									gap: 1.5,
+									cursor: 'pointer'
 								}}
 							>
-								{motionOff
-									? 'Animation einschalten'
-									: 'Animation abschalten'}
-							</Button>
+								<Switch
+									checked={motionOff}
+									onChange={(next) => setMotionOff(next)}
+									aria-label="Animation abschalten"
+								/>
+								<Typography
+									sx={{
+										fontSize: 13,
+										whiteSpace: 'nowrap',
+										color: registrationMd3.onSurfaceVariant
+									}}
+								>
+									Animation abschalten
+								</Typography>
+							</Box>
 							<Button
 								variant="text"
 								size="small"
-								sx={{ ml: 'auto', textTransform: 'none' }}
+								sx={{
+									textTransform: 'none',
+									whiteSpace: 'nowrap'
+								}}
 							>
 								Mehr erfahren →
 							</Button>
 						</Box>
+						{/* Desktop, as drawn: calendar beside a visible but shut
+						    "Beitreten". On a phone two buttons is one too many
+						    for the bar, so there the calendar has it alone and
+						    "Beitreten" moves in once the time has passed —
+						    Frank's own suggestion ("das Beitreten später
+						    reinfahren"). */}
 						<RegistrationFooter
-							secondary={{
-								label: 'Zum Kalender hinzufügen'
-							}}
-							/* House rule: never hide, only disable. Before the
-							   start the door is visible and shut; once the time
-							   has passed it opens. Same bar, same place. */
-							primary={{
-								label: 'Beitreten',
-								disabled: !overdue
-							}}
-						>
-							<Button
-								variant="text"
-								onClick={() => setMotionOff((v) => !v)}
-								/* The theme sets sentence case on contained and
-								   outlined only; the text variant would shout. */
-								sx={{
-									display: { xs: 'none', lg: 'inline-flex' },
-									flex: '0 0 auto',
-									whiteSpace: 'nowrap',
-									textTransform: 'none'
-								}}
-							>
-								{motionOff
-									? 'Animation einschalten'
-									: 'Animation abschalten'}
-							</Button>
-						</RegistrationFooter>
+							secondary={
+								narrow
+									? undefined
+									: { label: 'Zum Kalender hinzufügen' }
+							}
+							primary={
+								narrow
+									? overdue
+										? { label: 'Beitreten' }
+										: { label: 'Zum Kalender hinzufügen' }
+									: { label: 'Beitreten', disabled: !overdue }
+							}
+						/>
 					</Box>
 				</StageLayout>
 			</AgencySpecificContext.Provider>
