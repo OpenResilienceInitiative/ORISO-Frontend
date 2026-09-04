@@ -212,11 +212,17 @@
 	line-height: 20px;
 	align-self: flex-start;
 
+	// The fixed family keeps its light tone in every scheme, so its text
+	// role must be the fixed "on" token — on-surface flips in dark and vanishes.
 	&--own {
 		align-self: flex-end;
 		border-radius: 12px 12px 0 12px;
 		background: var(--m3-primary-fixed, #ffdad5);
-		color: var(--m3-on-surface, #1a1c1e);
+		color: var(--m3-on-primary-fixed, #410002);
+
+		.supervisionBubble__meta {
+			color: var(--m3-on-primary-fixed-variant, #93000a);
+		}
 	}
 
 	&__meta {

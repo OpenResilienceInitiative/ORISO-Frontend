@@ -8,7 +8,7 @@
  * `frame` / `onFrameChange`. See README.md for the B2 wiring.
  */
 import * as React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon, CollapseIcon, GripIcon } from './icons';
 import { DragDelta, useDragHandle } from './useDragHandle';
@@ -121,6 +121,16 @@ export const SupervisionPanel = ({
 		},
 		[onFrameChange, onDragResize, emitFrame, minWidth, minHeight]
 	);
+
+	// Newest message in view on open and whenever the timeline grows.
+	const timelineRef = useRef<HTMLDivElement | null>(null);
+	const childCount = React.Children.toArray(children).length;
+	useEffect(() => {
+		const node = timelineRef.current;
+		if (node) {
+			node.scrollTop = node.scrollHeight;
+		}
+	}, [childCount, isCollapsed]);
 
 	const canMove = !!(onDragMove || (frame && onFrameChange));
 	const canResize = !!(onDragResize || (frame && onFrameChange));
@@ -247,6 +257,7 @@ export const SupervisionPanel = ({
 			</header>
 
 			<div
+				ref={timelineRef}
 				className="supervisionPanel__timeline"
 				role="log"
 				aria-live="polite"
