@@ -3546,6 +3546,10 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – Sie lesen in diesem Chat mit",
+			"supervisedBy": "Supervision: {{name}}"
 		}
 	},
 	"statusOverlay": {
@@ -4582,7 +4586,8 @@
 			"headline": "Ihr angezeigter Name",
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
-		}
+		},
+		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen unterzeichnen",

@@ -675,6 +675,51 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
+	// ADR-008 supervision marker (replaces the silent-member eye for the
+	// assigned supervisor).
+	&__supervisionBadge {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		img {
+			width: 18px;
+			height: 18px;
+		}
+	}
+
+	// Owner-side hint: "Supervision: <name>" on the preview row.
+	&__supervisionIndicator {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 40%;
+		margin-left: 8px;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+		overflow: hidden;
+
+		img {
+			width: 14px;
+			height: 14px;
+			flex: 0 0 auto;
+		}
+	}
+
+	&__supervisionIndicatorName {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	&__stackedAvatars {
 		position: relative;
 		width: 48px; // Wider to accommodate 3 overlapping 32px circles

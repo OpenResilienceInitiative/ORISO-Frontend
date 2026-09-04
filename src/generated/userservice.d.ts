@@ -1747,6 +1747,32 @@ declare namespace UserService {
 			attachment?: SessionAttachmentDTO;
 			videoCallMessageDTO?: VideoCallMessageDTO;
 			topic?: SessionTopicDTO;
+			/**
+			 * ADR-008 supervision marker (UserService WP-A, 2026-09-04). Absent on
+			 * backends that predate the field — callers must treat `undefined` as
+			 * "unknown", not as "not supervised".
+			 */
+			supervision?: SessionSupervisionDTO;
+		}
+		/**
+		 * Supervision state of a session as seen by the requesting consultant.
+		 * Hand-added ahead of the regenerated client (UserService WP-A).
+		 */
+		export interface SessionSupervisionDTO {
+			/**
+			 * true when the requesting consultant is an active supervisor of this session
+			 * example:
+			 * true
+			 */
+			supervisedByMe: boolean;
+			/**
+			 * Consultant ids of all active supervisors of this session
+			 */
+			supervisorConsultantIds: string[];
+			/**
+			 * Display names of all active supervisors, index-aligned with supervisorConsultantIds
+			 */
+			supervisorDisplayNames: string[];
 		}
 		export interface SessionDataDTO {
 			/**
