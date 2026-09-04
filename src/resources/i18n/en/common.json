@@ -288,6 +288,28 @@
 			"ready": "Text snippet added to your reply"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Show side channels",
+			"closeMenu": "Hide side channels",
+			"openChannel": "Open {{label}}",
+			"backToMain": "Back to the counselling chat",
+			"mainChat": "Counselling chat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			}
+		},
+		"panel": {
+			"close": "Close side panel",
+			"back": "Back to the counselling chat",
+			"region": "Side panel: {{title}}",
+			"thread": {
+				"title": "Thread",
+				"subtitle": "Replies to a message from the counselling chat"
+			}
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archive",
 		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",

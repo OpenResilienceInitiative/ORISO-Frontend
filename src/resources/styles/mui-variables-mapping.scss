@@ -39,6 +39,13 @@
 	--m3-on-secondary: #{$white};
 	--m3-secondary-container: #646d78;
 	--m3-on-secondary-container: #e7effc;
+	// Tertiary family — bound by the Figma "FAB menu" (9748:60084): FAB =
+	// tertiary / on-tertiary, thread segments = tertiary-container /
+	// on-tertiary-container. Values from the canonical M3 Light table.
+	--m3-tertiary: #565f6a;
+	--m3-on-tertiary: #{$white};
+	--m3-tertiary-container: #9ba4b0;
+	--m3-on-tertiary-container: #313a44;
 	--m3-surface: #fcf9f9;
 	--m3-on-surface: #1a1c1e;
 	--m3-surface-variant: #e0e3e3;
@@ -56,6 +63,7 @@
 	/* M3 scrim role — used at an opacity, e.g. the unchecked-media overlay. */
 	--m3-scrim: #000;
 	--m3-error: #{$form-error};
+	--m3-on-error: #{$white};
 	--m3-success: #{$form-success};
 	--oriso-app-action: #a5000a;
 	--oriso-lottie-accent-color: var(--oriso-primary-fixed-dim, #ffb4aa);

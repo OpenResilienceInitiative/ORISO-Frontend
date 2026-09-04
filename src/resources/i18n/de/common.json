@@ -300,6 +300,28 @@
 			"ready": "Textausschnitt zur Antwort hinzugefügt"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Nebenkanäle anzeigen",
+			"closeMenu": "Nebenkanäle ausblenden",
+			"openChannel": "{{label}} öffnen",
+			"backToMain": "Zurück zum Beratungschat",
+			"mainChat": "Beratungschat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			}
+		},
+		"panel": {
+			"close": "Nebenraum schließen",
+			"back": "Zurück zum Beratungschat",
+			"region": "Nebenraum: {{title}}",
+			"thread": {
+				"title": "Thread",
+				"subtitle": "Antworten auf eine Nachricht aus dem Beratungschat"
+			}
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archivieren",
 		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",

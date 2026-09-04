@@ -1,0 +1,170 @@
+// Channel switcher FAB + speed dial — Figma "FAB menu" 9748:60084.
+// Bound tokens there: tertiary / on-tertiary (FAB), tertiary-container /
+// on-tertiary-container (thread segments), secondary-container / on-secondary
+// (supervision segment), Corner/Extra-large 28, M3/title/medium, Elevation 3.
+// Attention state = the unread role every other unread indicator uses.
+
+$switcher-corner: 28px; // Corner/Extra-large
+$switcher-size: 56px;
+$switcher-elevation:
+	0 4px 8px 3px rgba(0, 0, 0, 0.15),
+	0 1px 3px 0 rgba(0, 0, 0, 0.3); // M3/Elevation Light/3
+
+.channelSwitcher {
+	position: absolute;
+	right: 16px;
+	bottom: 16px;
+	z-index: 1001; // above the absolute composer (1000) inside .session
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+	pointer-events: none;
+
+	& > * {
+		pointer-events: auto;
+	}
+
+	&--fixed {
+		position: fixed;
+	}
+
+	&__menu {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__item {
+		display: inline-flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 8px;
+		height: $switcher-size;
+		padding: 16px 24px;
+		border: 0;
+		border-radius: $switcher-corner;
+		font-family: var(--m3-body-font-family, inherit);
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		letter-spacing: 0.15px;
+		white-space: nowrap;
+		cursor: pointer;
+		box-shadow: $switcher-elevation;
+
+		&--thread {
+			background: var(--m3-tertiary-container, #9ba4b0);
+			color: var(--m3-on-tertiary-container, #313a44);
+		}
+
+		&--supervision,
+		&--main {
+			background: var(--m3-secondary-container, #646d78);
+			color: var(--m3-on-secondary, #fff);
+		}
+
+		&:hover {
+			filter: brightness(0.96);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__itemIcon {
+		flex: 0 0 auto;
+		width: 24px;
+		height: 24px;
+		fill: currentcolor;
+	}
+
+	&__fab {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: $switcher-size;
+		height: $switcher-size;
+		padding: 0;
+		border: 0;
+		border-radius: $switcher-corner;
+		background: var(--m3-tertiary, #565f6a);
+		color: var(--m3-on-tertiary, #fff);
+		box-shadow: $switcher-elevation;
+		cursor: pointer;
+		transition:
+			background-color 160ms ease,
+			transform 160ms ease;
+
+		&:hover {
+			filter: brightness(1.08);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&--attention {
+			background: var(
+				--oriso-unread-indicator-color,
+				var(--m3-error, #cc0000)
+			);
+			color: var(--m3-on-error, #fff);
+		}
+	}
+
+	&__fabIcon {
+		width: 24px;
+		height: 24px;
+		fill: currentcolor;
+
+		// The close glyph is exported at 20 px in Figma; the others at 24.
+		&[viewBox='0 0 20 20'] {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	// Same shape as `.session__threadListUnreadBadge` (18 px pill). On the
+	// FAB it is inverted so it stays readable on the attention colour.
+	&__badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
+	}
+
+	&__fab &__badge {
+		position: absolute;
+		top: -4px;
+		right: -4px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--oriso-unread-indicator-color, var(--m3-error, #cc0000));
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__fab {
+			transition: none;
+		}
+	}
+}
