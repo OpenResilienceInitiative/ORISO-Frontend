@@ -500,15 +500,17 @@ export const AccountData: FC<{
 	   fields stay: the person still picks how they are called. */
 	const showPasswordFields = !temporary;
 
-	/* Compact lives inside a container with its own surface — the M3 dialog is
-	   grey. A hardcoded white field fill turns every input into a white box on
-	   that grey (Frank, 2026-09-04: "this must be background color"). Letting it
-	   be transparent makes the field take whatever surface it stands on. */
-	const surfaceSx = compact
-		? {
-				'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
-			}
-		: undefined;
+	/* Fields take the surface they stand on instead of painting their own.
+	   `orisoInputDesign` fills every input with `surfaceContainerLowest`, which
+	   is white — right on a white page, a white box everywhere else: on the grey
+	   M3 dialog and on the cream registration surface alike. Frank asked for it
+	   in the dialog first and then explicitly for the empty password field too
+	   (2026-09-04: "ändere es auch bitte in einem leeren Passwortfeld, weil da
+	   hast du es nämlich nicht geändert"), so it applies to every field of this
+	   screen, not only the compact one. */
+	const surfaceSx = {
+		'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
+	};
 	const suggestButton = (
 		icon: string,
 		label: ReactNode,

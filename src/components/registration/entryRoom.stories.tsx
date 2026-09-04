@@ -172,36 +172,23 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
  * two-action shape, or a link entry keeps its own footer. This story is the
  * argument for deciding it rather than a decision made in passing.
  */
+/* Layout only. Every colour, radius, padding and hover state comes from the
+   theme's own `MuiButton` definition (`theme.jsx:139-203`) — `contained` is red
+   with white type, `outlined` fills red with white type on hover. The first
+   draft overrode background and border back to grey but left the theme's white
+   text, which is why the secondary label vanished on hover (Frank, 2026-09-04:
+   "wir hatten doch schon ein Design"). Nothing here paints. */
 const footerButtonSx = {
-	'flex': '1 1 0',
-	'minWidth': 0,
-	'textTransform': 'none',
-	'borderRadius': '28px',
-	'minHeight': 56,
-	/* Padding and type shrink before the label does, so the text never touches
-	   the rounded edge on a phone (Frank, 2026-09-04). */
-	'px': { xs: 1.75, sm: 3 },
-	'fontSize': { xs: 15, sm: 16 },
-	'fontWeight': 600,
-	/* Frank, 2026-09-04: "Button also needs footer shadow then." Both carry the
-	   same elevation, so they sit on one plane. */
-	'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.12)',
-	/* Seven languages share these two buttons and German is not the longest of
-	   them. A label that no longer fits is cut with an ellipsis instead of
-	   pushing the button out of the footer — "es braucht auch ein Truncating,
-	   falls das noch schlimmer wird". The whole label stays reachable through
-	   `title`, so nothing is lost, only shortened. */
-	'& .MuiButton-label, & > *': {
-		minWidth: 0,
-		overflow: 'hidden',
-		textOverflow: 'ellipsis',
-		whiteSpace: 'nowrap'
-	},
-	'overflow': 'hidden',
-	'textOverflow': 'ellipsis',
-	'whiteSpace': 'nowrap',
-	'display': 'block',
-	'lineHeight': '56px'
+	flex: '1 1 0',
+	minWidth: 0,
+	minHeight: 56,
+	/* Seven languages share these two buttons and German is not the longest.
+	   A label that no longer fits is cut with an ellipsis instead of pushing the
+	   button out of the footer; the whole text stays reachable through `title`. */
+	overflow: 'hidden',
+	textOverflow: 'ellipsis',
+	whiteSpace: 'nowrap',
+	display: 'block'
 } as const;
 
 const EntryFooter = ({
@@ -236,32 +223,14 @@ const EntryFooter = ({
 		<Button
 			variant="outlined"
 			onClick={onToggleTemporary}
-			sx={{
-				...footerButtonSx,
-				'color': registrationMd3.onSurface,
-				'borderColor': registrationMd3.outline,
-				'backgroundColor': registrationMd3.surfaceContainerLow,
-				'&:hover': {
-					borderColor: registrationMd3.onSurface,
-					backgroundColor: registrationMd3.surfaceContainer,
-					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
-				}
-			}}
+			sx={footerButtonSx}
 			title={temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
 		>
 			{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
 		</Button>
 		<Button
 			variant="contained"
-			sx={{
-				...footerButtonSx,
-				'backgroundColor': registrationMd3.primary,
-				'color': registrationMd3.onPrimary,
-				'&:hover': {
-					backgroundColor: registrationMd3.primaryDark,
-					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
-				}
-			}}
+			sx={footerButtonSx}
 			title={temporary ? 'Beitreten' : 'Registrieren'}
 		>
 			{temporary ? 'Beitreten' : 'Registrieren'}
