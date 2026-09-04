@@ -26,6 +26,8 @@ export interface SupervisionMarker {
 	supervisedByMe?: boolean;
 	supervisorConsultantIds?: ReadonlyArray<string | number>;
 	supervisorDisplayNames?: ReadonlyArray<string>;
+	/** Internal display name of the responsible consultant (#996), if assigned. */
+	counsellorDisplayName?: string | null;
 }
 
 export interface SupervisionListSessionInput {

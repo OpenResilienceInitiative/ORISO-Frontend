@@ -6,6 +6,47 @@ import {
 
 describe('pickSupervisionCounterpartName', () => {
 	describe('supervisor view (counterpart = responsible consultant)', () => {
+		it('prefers the marker counsellorDisplayName over the by-id lookup', () => {
+			expect(
+				pickSupervisionCounterpartName({
+					role: 'supervisor',
+					counsellorDisplayName: 'Mona (intern)',
+					consultant: {
+						displayName: 'Mona M.',
+						username: 'mona.moench'
+					},
+					fallback: 'Anfragephase'
+				})
+			).toBe('Mona (intern)');
+		});
+
+		it('falls back to the resolved consultant when the marker name is blank', () => {
+			expect(
+				pickSupervisionCounterpartName({
+					role: 'supervisor',
+					counsellorDisplayName: '  ',
+					consultant: { displayName: 'Mona M.' },
+					fallback: 'Anfragephase'
+				})
+			).toBe('Mona M.');
+		});
+
+		it('uses the marker name alone when nothing else is resolved (list DTO has no name)', () => {
+			const listDtoConsultant = {
+				id: 'c-1',
+				firstName: 'Mona',
+				lastName: 'Mönch'
+			} as Record<string, string>;
+			expect(
+				pickSupervisionCounterpartName({
+					role: 'supervisor',
+					counsellorDisplayName: 'Mona (intern)',
+					consultant: listDtoConsultant,
+					fallback: 'Anfragephase'
+				})
+			).toBe('Mona (intern)');
+		});
+
 		it('uses the consultant display name first', () => {
 			expect(
 				pickSupervisionCounterpartName({
@@ -72,6 +113,7 @@ describe('pickSupervisionCounterpartName', () => {
 			expect(
 				pickSupervisionCounterpartName({
 					role: 'consultant',
+					counsellorDisplayName: 'Mona (intern)',
 					consultant: { displayName: 'Mona M.' },
 					supervisorDisplayNames: ['Bettina B.'],
 					supervisorUsernames: ['bettina'],

@@ -1773,6 +1773,14 @@ declare namespace UserService {
 			 * Display names of all active supervisors, index-aligned with supervisorConsultantIds
 			 */
 			supervisorDisplayNames: string[];
+			/**
+			 * Internal display name of the session's assigned consultant (#996 rule:
+			 * internal, else public, else username — never a real name). Absent when
+			 * the session has no consultant yet.
+			 * example:
+			 * Counsellor Chris
+			 */
+			counsellorDisplayName?: string;
 		}
 		export interface SessionDataDTO {
 			/**

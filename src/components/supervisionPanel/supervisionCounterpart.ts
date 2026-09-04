@@ -5,8 +5,10 @@
  * responsible consultant. Both sides are named by a display name, never by a
  * real name: `firstName`/`lastName` are deliberately not read, even when
  * they are the only fields present (the consultant session-list DTO carries
- * only `{ id, firstName, lastName }` for the consultant — the caller has to
- * resolve `displayName`/`username` by id first).
+ * only `{ id, firstName, lastName }` for the consultant). The supervision
+ * marker therefore carries `counsellorDisplayName` (backend #996 rule) — that
+ * is the first choice in the supervisor view; the by-id lookup of the
+ * consultant stays as the fallback for older backends.
  *
  * Rule per candidate: display name → username → next candidate → fallback.
  */
@@ -21,6 +23,8 @@ export interface CounterpartNameSource {
 
 export interface SupervisionCounterpartInput {
 	role: SupervisionViewerRole;
+	/** Supervisor view: `supervision.counsellorDisplayName` from the marker. */
+	counsellorDisplayName?: string | null;
 	/** Supervisor view: the responsible consultant, possibly resolved by id. */
 	consultant?: CounterpartNameSource | null;
 	/** Consultant view: list-DTO display names of the supervisors. */
@@ -44,13 +48,18 @@ export const pickDisplayOrUsername = (
 
 export const pickSupervisionCounterpartName = ({
 	role,
+	counsellorDisplayName,
 	consultant,
 	supervisorDisplayNames = [],
 	supervisorUsernames = [],
 	fallback
 }: SupervisionCounterpartInput): string => {
 	if (role === 'supervisor') {
-		return pickDisplayOrUsername(consultant) || fallback;
+		return (
+			clean(counsellorDisplayName) ||
+			pickDisplayOrUsername(consultant) ||
+			fallback
+		);
 	}
 	const firstUsable = (list: ReadonlyArray<string | null | undefined>) =>
 		list.map(clean).find(Boolean) ?? '';

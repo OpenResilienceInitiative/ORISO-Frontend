@@ -1944,10 +1944,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
-	// supervisor view when the list DTO does not carry one.
+	// supervisor view. First choice is the marker's `counsellorDisplayName`
+	// (backend-resolved, never a real name); the by-id lookup stays as the
+	// fallback for backends that do not send it yet.
 	const counterpartConsultantId = activeSession.consultant?.id;
+	const markerCounsellorDisplayName = (
+		activeSession.item?.supervision?.counsellorDisplayName ?? ''
+	).trim();
 	const listDtoHasCounterpartName = Boolean(
-		pickDisplayOrUsername(activeSession.consultant)
+		markerCounsellorDisplayName ||
+			pickDisplayOrUsername(activeSession.consultant)
 	);
 	useEffect(() => {
 		if (
@@ -1967,7 +1973,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					id: counterpartConsultantId,
 					name: {
 						displayName: consultant.displayName,
-						username: (consultant as CounterpartNameSource).username,
+						username: (consultant as CounterpartNameSource)
+							.username,
 						userName: consultant.userName
 					}
 				});
@@ -3503,7 +3510,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Counterpart: the supervisor for the consultant (list DTO display name,
 	// else the username from the supervisors call); the responsible
-	// consultant for the supervisor.
+	// consultant for the supervisor (marker counsellorDisplayName, else the
+	// list DTO name, else the by-id lookup).
 	const supervisionCounterpartName = useMemo(() => {
 		if (isSupervisor) {
 			const resolved =
@@ -3512,7 +3520,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null;
 			return pickSupervisionCounterpartName({
 				role: 'supervisor',
-				consultant: listDtoHasCounterpartName
+				counsellorDisplayName: markerCounsellorDisplayName,
+				consultant: pickDisplayOrUsername(activeSession.consultant)
 					? activeSession.consultant
 					: resolved,
 				fallback: translate('sessionList.user.consultantUnknown')
@@ -3530,7 +3539,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		supervisorUsernames,
 		resolvedCounterpartConsultant,
 		counterpartConsultantId,
-		listDtoHasCounterpartName,
+		markerCounsellorDisplayName,
 		translate
 	]);
 
