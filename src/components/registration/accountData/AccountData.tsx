@@ -144,7 +144,22 @@ export const AccountData: FC<{
 	 * that is exactly the defect this variant must not repeat.
 	 */
 	temporary?: boolean;
-}> = ({ onChange, entry = 'registration', temporary = false }) => {
+	/**
+	 * Tighten the screen for a container that already has its own chrome.
+	 *
+	 * Frank, 2026-09-04: inside the dialog the headline is said twice and the
+	 * page rhythm scrolls far too much — "das ist so viel gescrollt, dass es
+	 * peinlich ist, dass man für ein Anmelden so viel braucht". Compact drops
+	 * the duplicated headline, keeps the avatar (the anonymity signal is the
+	 * point of this screen) and halves the vertical rhythm.
+	 */
+	compact?: boolean;
+}> = ({
+	onChange,
+	entry = 'registration',
+	temporary = false,
+	compact = false
+}) => {
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -517,6 +532,9 @@ export const AccountData: FC<{
 		</Button>
 	);
 
+	const gap = (full: string) =>
+		compact ? `${parseInt(full, 10) / 2}px` : full;
+
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto' }}>
 			<Box
@@ -528,16 +546,18 @@ export const AccountData: FC<{
 				}}
 			>
 				<Box sx={{ flex: 1, minWidth: 0 }}>
-					<Typography
-						component="h1"
-						variant="h3"
-						sx={registrationScreenTitleSx}
-					>
-						{t('registration.account.headline')}
-					</Typography>
+					{!compact && (
+						<Typography
+							component="h1"
+							variant="h3"
+							sx={registrationScreenTitleSx}
+						>
+							{t('registration.account.headline')}
+						</Typography>
+					)}
 					<Typography
 						sx={{
-							mt: '12px',
+							mt: compact ? 0 : '12px',
 							...registrationScreenIntroSx
 						}}
 					>
@@ -560,7 +580,7 @@ export const AccountData: FC<{
 
 			<Typography
 				sx={{
-					mt: '24px',
+					mt: gap('24px'),
 					mb: '8px',
 					...registrationScreenKickerSx
 				}}
@@ -572,7 +592,7 @@ export const AccountData: FC<{
 					display: 'flex',
 					flexWrap: 'nowrap',
 					gap: 0.75,
-					mb: '24px',
+					mb: gap('24px'),
 					overflow: 'hidden',
 					containerType: 'inline-size'
 				}}
@@ -684,7 +704,7 @@ export const AccountData: FC<{
 							</InputAdornment>
 						)
 					}}
-					sx={{ mt: '20px' }}
+					sx={{ mt: gap('20px') }}
 				/>
 			)}
 			{emailVisible && (
@@ -769,7 +789,7 @@ export const AccountData: FC<{
 								</InputAdornment>
 							)
 						}}
-						sx={{ mt: '24px' }}
+						sx={{ mt: gap('24px') }}
 					/>
 					<PasswordRuleChips password={password} />
 					<OrisoTextField
@@ -845,7 +865,7 @@ export const AccountData: FC<{
 								</InputAdornment>
 							)
 						}}
-						sx={{ mt: '20px' }}
+						sx={{ mt: gap('20px') }}
 					/>
 				</>
 			) : (
@@ -863,7 +883,7 @@ export const AccountData: FC<{
 				<Box
 					role="note"
 					sx={{
-						mt: '20px',
+						mt: gap('20px'),
 						p: '14px 16px',
 						borderRadius: '12px',
 						display: 'flex',
@@ -906,7 +926,7 @@ export const AccountData: FC<{
 					</Box>
 				</Box>
 			)}
-			<FormGroup sx={{ mt: '20px' }}>
+			<FormGroup sx={{ mt: gap('20px') }}>
 				<FormControlLabel
 					sx={{ alignItems: 'flex-start' }}
 					control={

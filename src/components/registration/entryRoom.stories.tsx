@@ -349,7 +349,7 @@ const EntryDialog = ({
 						/>
 					}
 					title="Termin buchen"
-					description="Sagen Sie uns nur, wie Sie heißen möchten. Alles Weitere bringt der Link schon mit."
+					description="Nur ein Name — alles Weitere bringt der Link mit."
 					onClose={() => undefined}
 					closeLabel="Schließen"
 					actions={[
@@ -370,6 +370,7 @@ const EntryDialog = ({
 						onChange={() => undefined}
 						entry="link"
 						temporary={temporary}
+						compact
 					/>
 				</M3Dialog>
 			</Box>
