@@ -21,6 +21,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -848,25 +849,61 @@ export const AccountData: FC<{
 					/>
 				</>
 			) : (
-				/* Temporary join: no password block at all. Hiding the fields is not
-				   enough — the person must be told, in plain words, that this
-				   conversation ends with the window. */
+				/* Temporary join: no password block, and one thing said clearly.
+
+				   Frank corrected the first wording, 2026-09-04: a temporary
+				   guest is not crippled. A password IS minted in the background,
+				   the chat session is real, they write normally and their
+				   messages stay for everyone else. The single consequence is
+				   that the session is dropped when the browser closes.
+
+				   That is worth an attention treatment rather than a quiet grey
+				   note — it is the one fact the person cannot discover later,
+				   and today's live-chat invite path never states it at all. */
 				<Box
+					role="note"
 					sx={{
 						mt: '20px',
 						p: '14px 16px',
 						borderRadius: '12px',
+						display: 'flex',
+						gap: 1.5,
+						alignItems: 'flex-start',
 						bgcolor: registrationMd3.surfaceContainerLow,
-						color: registrationMd3.onSurfaceVariant,
-						border: `1px solid ${registrationMd3.outlineVariant}`
+						color: registrationMd3.onSurface,
+						border: `1px solid ${registrationMd3.error}`,
+						borderLeftWidth: 4
 					}}
 				>
-					<Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
-						{t(
-							'registration.account.temporary.note',
-							'Sie treten ohne Passwort bei. Dieses Gespräch ist nur in diesem Fenster erreichbar — wenn Sie es schließen, können Sie nicht zurückkehren.'
-						)}
-					</Typography>
+					<ErrorOutlineIcon
+						sx={{
+							color: registrationMd3.error,
+							fontSize: 22,
+							flexShrink: 0,
+							mt: '1px'
+						}}
+					/>
+					<Box>
+						<Typography
+							sx={{
+								fontSize: 14,
+								lineHeight: 1.45,
+								fontWeight: 700,
+								mb: '2px'
+							}}
+						>
+							{t(
+								'registration.account.temporary.title',
+								'Diese Sitzung endet, wenn Sie den Browser schließen.'
+							)}
+						</Typography>
+						<Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
+							{t(
+								'registration.account.temporary.note',
+								'Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück.'
+							)}
+						</Typography>
+					</Box>
 				</Box>
 			)}
 			<FormGroup sx={{ mt: '20px' }}>

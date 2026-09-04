@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Button, Dialog, Typography } from '@mui/material';
+import { Box, Button, SvgIcon } from '@mui/material';
 import { AccountData } from './accountData/AccountData';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { ReactComponent as DoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
@@ -212,9 +214,15 @@ const EntryFooter = ({
 				'color': registrationMd3.onSurface,
 				'borderColor': registrationMd3.outline,
 				'backgroundColor': registrationMd3.surfaceContainerLow,
+				/* Frank, 2026-09-04: "Button also needs footer shadow then."
+				   The primary pill carries the footer's elevation; a flat
+				   secondary next to it reads as a different layer. Same
+				   shadow, so the two sit on one plane. */
+				'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.12)',
 				'&:hover': {
 					borderColor: registrationMd3.onSurface,
-					backgroundColor: registrationMd3.surfaceContainer
+					backgroundColor: registrationMd3.surfaceContainer,
+					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
 				}
 			}}
 		>
@@ -331,66 +339,39 @@ const EntryDialog = ({
 	return (
 		<WithRegistrationContext>
 			<Box sx={{ minHeight: '100vh', bgcolor: registrationMd3.surface }}>
-				<Dialog open fullWidth maxWidth="sm" onClose={() => undefined}>
-					<Box sx={{ p: 3 }}>
-						<Typography
-							sx={{
-								fontSize: 13,
-								letterSpacing: '.08em',
-								textTransform: 'uppercase',
-								color: registrationMd3.onSurfaceVariant,
-								mb: 1
-							}}
-						>
-							Termin buchen
-						</Typography>
-						<AccountData
-							onChange={() => undefined}
-							entry="link"
-							temporary={temporary}
+				<M3Dialog
+					open
+					icon={
+						<SvgIcon
+							component={DoorOpenIcon}
+							inheritViewBox
+							sx={{ fontSize: 32 }}
 						/>
-						<Box
-							sx={{
-								mt: 3,
-								display: 'flex',
-								gap: 1.5,
-								flexWrap: 'wrap',
-								justifyContent: 'flex-end'
-							}}
-						>
-							<Button
-								variant="outlined"
-								onClick={() => setTemporary((v) => !v)}
-								sx={{
-									textTransform: 'none',
-									borderRadius: '28px',
-									minHeight: 48,
-									px: 3,
-									color: registrationMd3.onSurface,
-									borderColor: registrationMd3.outline,
-									backgroundColor:
-										registrationMd3.surfaceContainerLow
-								}}
-							>
-								{temporary
-									? 'Konto anlegen'
-									: 'Ohne Konto beitreten'}
-							</Button>
-							<Button
-								variant="contained"
-								sx={{
-									textTransform: 'none',
-									borderRadius: '28px',
-									minHeight: 48,
-									px: 3,
-									bgcolor: registrationMd3.primary
-								}}
-							>
-								{temporary ? 'Beitreten' : 'Registrieren'}
-							</Button>
-						</Box>
-					</Box>
-				</Dialog>
+					}
+					title="Termin buchen"
+					description="Sagen Sie uns nur, wie Sie heißen möchten. Alles Weitere bringt der Link schon mit."
+					onClose={() => undefined}
+					closeLabel="Schließen"
+					actions={[
+						{
+							label: temporary
+								? 'Konto anlegen'
+								: 'Ohne Konto beitreten',
+							onClick: () => setTemporary((v) => !v)
+						},
+						{
+							label: temporary ? 'Beitreten' : 'Registrieren',
+							onClick: () => undefined,
+							primary: true
+						}
+					]}
+				>
+					<AccountData
+						onChange={() => undefined}
+						entry="link"
+						temporary={temporary}
+					/>
+				</M3Dialog>
 			</Box>
 		</WithRegistrationContext>
 	);
