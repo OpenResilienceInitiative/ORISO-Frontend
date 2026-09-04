@@ -2582,6 +2582,7 @@
 				"addressLabel": "Adresse",
 				"hoursLabel": "Horaires d'ouverture",
 				"languagesLabel": "Langues",
+				"languagesTooltip": "Ce service de consultation vous conseille sur :",
 				"less": "Moins",
 				"more": "Plus",
 				"navigate": "Démarrer la navigation",
