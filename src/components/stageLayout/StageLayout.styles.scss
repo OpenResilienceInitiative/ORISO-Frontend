@@ -370,6 +370,17 @@
 		min-height: 100%;
 
 		/*
+		 * From the stage breakpoint up, the content column is only 60vw wide
+		 * but this wrapper still spans the whole width — so it lies on top of
+		 * the red stage and swallows every pointer event over it. Measured:
+		 * `elementFromPoint` over the stage returned the wrapper, never the
+		 * stage. Letting the wrapper pass clicks through, and switching them
+		 * back on for the column itself, gives the stage its hover and its
+		 * links back without moving a single box.
+		 */
+		pointer-events: none;
+
+		/*
 		 * The white sheet of design 2e: overlaps the hero by 28px and takes
 		 * the remaining height. From $fromXLarge the desktop stage takes over
 		 * and the wrapper goes back to being a plain column.
@@ -411,6 +422,10 @@
 	}
 
 	&__content {
+		/* See the note on `__contentWrapper`: the wrapper passes pointers
+		   through, so the column that actually holds the form takes them. */
+		pointer-events: auto;
+
 		display: flex;
 		justify-content: center;
 		align-items: center;

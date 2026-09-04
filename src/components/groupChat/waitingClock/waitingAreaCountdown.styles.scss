@@ -40,15 +40,25 @@
 		transform-origin: 0% 50%;
 	}
 
-	// Future state: single column on small screens, the 2×2 quad from medium up.
+	// Future state: the 2×2 quad at every width.
+	//
+	// It used to be a single column below $fromMedium, which stacked all four
+	// groups vertically — on a 375 pt phone that is four screens of scrolling
+	// for one clock (Frank, 2026-09-04: "das war mobil auch schon alles
+	// komplett anders gebaut … der Fehler mit dem nach oben und runter
+	// ziehen"). The quad holds on a phone as long as the mini-clocks shrink
+	// with it, which is what `clockSize` is for.
+	//
+	// The gaps are deliberately tight: the four groups should read as one
+	// block, not as four charts side by side.
 	&__timer {
 		display: grid;
-		grid-template-columns: auto;
-		gap: 30px 36px;
+		grid-template-columns: repeat(2, auto);
+		gap: 12px 16px;
 		justify-content: center;
 
 		@include breakpoint($fromMedium) {
-			grid-template-columns: repeat(2, auto);
+			gap: 16px 24px;
 		}
 	}
 

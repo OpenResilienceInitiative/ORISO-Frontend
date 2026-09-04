@@ -567,3 +567,128 @@ export const EntryScreenWithAccount: StoryObj = {
 		}
 	}
 };
+
+/* ---------------------------------------------------------------------------
+   12 — The block layout Frank asked for, with the footer carrying the controls.
+   --------------------------------------------------------------------------- */
+
+const BlockRoom = ({
+	overdue = false,
+	clockSize = 44
+}: {
+	overdue?: boolean;
+	/* The quad holds at every width as long as the mini-clocks shrink with the
+	   screen: 44 fills the white column on a desktop, 15 keeps all four groups
+	   on one phone screen instead of four. */
+	clockSize?: number;
+}) => {
+	const [motionOff, setMotionOff] = React.useState(false);
+	return (
+		<Box sx={{ minHeight: '100vh' }}>
+			<AgencySpecificContext.Provider
+				value={{
+					specificAgency: null,
+					setSpecificAgency: () => undefined
+				}}
+			>
+				<StageLayout
+					className="stageLayout--registration"
+					showLegalLinks={true}
+					showLoginLink={false}
+					showRegistrationLink={false}
+					stage={<Stage hasAnimation={false} />}
+					mobileHero="bar"
+				>
+					{/* Vertically centred, as Frank marked on the entry screen:
+					    the column fills the viewport and the block sits in the
+					    middle of it rather than clinging to the top. */}
+					<Box
+						sx={{
+							width: '100%',
+							minWidth: 0,
+							maxWidth: '100%',
+							minHeight: '100vh',
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							px: { xs: 2, sm: 4 },
+							pt: { xs: 3, sm: 5 },
+							pb: { xs: '128px', sm: '136px' }
+						}}
+					>
+						<WaitingAreaCountdown
+							plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
+							welcomeText={WELCOME}
+							rules={RULES}
+							nowMs={NOW}
+							headlineBelow
+							clockSize={clockSize}
+							reducedMotion={motionOff}
+							hideMotionToggle
+						/>
+						{/* The bar lives inside the content column, not beside
+						    it: as a direct child of `StageLayout` it lost the
+						    `lg` breakpoint and ran the full 1440 px across the
+						    red panel. Measured both ways — same class, same
+						    viewport, 864 px here and 1440 px there. That the
+						    placement decides it is a real weakness of the
+						    component and belongs in #1289. */}
+						<RegistrationFooter
+							secondary={{
+								label: motionOff
+									? 'Animation einschalten'
+									: 'Animation abschalten',
+								onClick: () => setMotionOff((v) => !v)
+							}}
+							primary={
+								overdue
+									? { label: 'Jetzt dazukommen' }
+									: { label: 'Zum Kalender hinzufügen' }
+							}
+						/>
+					</Box>
+				</StageLayout>
+			</AgencySpecificContext.Provider>
+		</Box>
+	);
+};
+
+export const BlockLayout: StoryObj = {
+	name: '12 — Blockbild, Fuß trägt die Bedienung',
+	render: () => <BlockRoom />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Franks Blockbild: die vier Zifferngruppen oben, der Satz darunter — dadurch liest sich das Ganze als ein Bild statt als Bildunterschrift. Die Uhr ist von 30 auf 36 px je Miniatur gewachsen. „Animation abschalten" und „Zum Kalender hinzufügen" sind aus der Fläche in den Fuß gewandert und benutzen dort dieselbe Leiste wie überall. Die Karten lassen sich weiterhin umdrehen — dahinter stehen Begrüßung und Netiquette, das steckte schon im Bauteil.'
+			}
+		}
+	}
+};
+
+export const BlockLayoutOverdue: StoryObj = {
+	name: '13 — Blockbild, läuft schon',
+	render: () => <BlockRoom overdue />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Sobald es losgeht, wird aus „Zum Kalender hinzufügen" der Weg hinein. Das ist die Stelle, an der noch offen ist, ob ein Modal fragen soll, statt jemanden stumm in ein laufendes Gespräch zu schieben.'
+			}
+		}
+	}
+};
+
+export const BlockLayoutMobile: StoryObj = {
+	name: '14 — Blockbild, mobil',
+	globals: phone375Globals,
+	render: () => <BlockRoom clockSize={15} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Derselbe Block auf 375 pt. Vorher war die Uhr unterhalb der Umbruchstelle eine einzige Spalte — vier Gruppen untereinander, also vier Bildschirme Scrollen für eine Uhr. Jetzt bleibt das Quadrat und die Miniaturuhren schrumpfen mit. Das ist der Unterschied zwischen „passt auf ein Telefon" und „zieht sich nach oben und unten".'
+			}
+		}
+	}
+};

@@ -31,6 +31,29 @@ export interface WaitingAreaCountdownProps {
 	nowMs?: number;
 	/** Add-to-calendar control rendered under the headline (future state only). */
 	calendarSlot?: React.ReactNode;
+	/**
+	 * Put the headline under the clock instead of above it.
+	 *
+	 * Frank, 2026-09-04: with the four digit groups on top and the sentence
+	 * below, the whole thing reads as one block rather than a caption with a
+	 * picture under it. Layout only — the reading order in the DOM is unchanged,
+	 * so screen readers still hear the headline first.
+	 */
+	headlineBelow?: boolean;
+	/**
+	 * Diameter of one mini-clock in px. The clock is built from these, so this
+	 * scales the whole thing. Default 30.
+	 */
+	clockSize?: number;
+	/**
+	 * Hide the built-in "Animation abschalten" switch.
+	 *
+	 * Frank, 2026-09-04: the control belongs in the footer with the other
+	 * actions, not floating in the surface. Set this when the surrounding screen
+	 * offers it — the component keeps the behaviour, it just stops drawing its
+	 * own switch. Leaving both visible would be two controls for one setting.
+	 */
+	hideMotionToggle?: boolean;
 }
 
 interface Unit {
@@ -53,6 +76,9 @@ export const WaitingAreaCountdown = ({
 	welcomeText,
 	rules,
 	reducedMotion = false,
+	headlineBelow = false,
+	clockSize = CLOCK_SIZE,
+	hideMotionToggle = false,
 	nowMs,
 	calendarSlot
 }: WaitingAreaCountdownProps) => {
@@ -208,11 +234,13 @@ export const WaitingAreaCountdown = ({
 		const flipped = !!flips[unit.key];
 		const isHover = hover === unit.key;
 		// Box must fit two clock-made-of-clocks digits (each 4×6 cells) plus label.
-		const size = CLOCK_SIZE;
+		const size = clockSize;
 		const cellGap = Math.max(2, Math.round(size * 0.1));
 		const digitW = size * 4 + cellGap * 3;
 		const groupW = 2 * digitW + Math.round(size * 0.35);
-		const groupH = size * 6 + cellGap * 5 + 36;
+		/* Label allowance. Tight against the digits — a floating caption
+		   breaks the block Frank is after. */
+		const groupH = size * 6 + cellGap * 5 + 22;
 		const face = (
 			visible: boolean,
 			rot: number,
@@ -234,7 +262,7 @@ export const WaitingAreaCountdown = ({
 					flexDirection: 'column',
 					alignItems: 'center',
 					justifyContent: 'center',
-					gap: 8
+					gap: 2
 				}}
 			>
 				{content}
@@ -558,7 +586,11 @@ export const WaitingAreaCountdown = ({
 					textAlign: 'center',
 					display: 'flex',
 					flexDirection: 'column',
-					gap: 6
+					gap: 6,
+					/* Visual order only. The DOM order stays headline-first so
+					   assistive technology reads the sentence before the
+					   digits. */
+					order: headlineBelow ? 2 : 0
 				}}
 			>
 				<div
@@ -704,7 +736,7 @@ export const WaitingAreaCountdown = ({
 			)}
 
 			<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-				{toggle}
+				{!hideMotionToggle && toggle}
 			</div>
 		</div>
 	);
