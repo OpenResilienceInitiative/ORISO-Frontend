@@ -50,11 +50,11 @@ import { resolveRegistrationConsultingType } from './resolveRegistrationConsulti
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
+import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
-	registrationMd3,
-	registrationMotion
+	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -723,52 +723,23 @@ export const Registration = () => {
 										})()}
 									</Box>
 								</Box>
-								<Box
-									sx={{
-										'minHeight': {
-											xs: 'auto',
-											sm: '96px'
-										},
-										'position': 'fixed',
-										'bottom': '0',
-										'right': '0',
-										'width': { xs: '100vw', lg: '60vw' },
-										'backgroundColor':
-											'rgba(255, 255, 255, 0.94)',
-										'backdropFilter': 'blur(8px)',
-										'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
-										'display': 'flex',
-										'justifyContent': 'center',
-										'alignItems': 'center',
-										'pt': { xs: 1.5, sm: 0 },
-										'pb': {
-											xs: 'calc(12px + env(safe-area-inset-bottom))',
-											sm: 0
-										},
-										'px': { xs: 2, sm: 3, lg: 4 },
-										'zIndex': 65,
-										'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
-										'@keyframes registrationFooterEnter': {
-											'0%': {
-												opacity: 0,
-												transform: 'translateY(18px)'
-											},
-											'100%': {
-												opacity: 1,
-												transform: 'translateY(0)'
-											}
-										},
-										'@media (prefers-reduced-motion: reduce)':
-											{
-												animation: 'none'
-											}
-									}}
-								>
+								{/* The bar itself — fixed, translucent, hairline,
+								    safe-area — is `RegistrationFooter`. This
+								    screen hands in its whole navigation as
+								    children and takes no `primary`: the wide
+								    layout's next button and the compact step
+								    nav below already are the way on. */}
+								<RegistrationFooter animateIn>
 									<Box
 										sx={{
 											width: '100%',
 											maxWidth: '780px',
-											minWidth: 0
+											minWidth: 0,
+											// The bar spans the content column;
+											// auto margins keep this centred in
+											// it, as the bar's own
+											// `justifyContent` used to.
+											mx: 'auto'
 										}}
 									>
 										<Box
@@ -851,7 +822,7 @@ export const Registration = () => {
 											/>
 										</Box>
 									</Box>
-								</Box>
+								</RegistrationFooter>
 							</form>
 						</>
 					) : (
