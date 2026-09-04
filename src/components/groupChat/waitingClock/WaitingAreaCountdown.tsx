@@ -12,6 +12,15 @@ const MUTED = 'var(--m3-on-surface-variant, #444748)';
 const INK = 'var(--m3-on-surface, #1a1c1e)';
 const PINK = 'var(--m3-primary-fixed-dim, #ffb4aa)';
 
+/** Small caps label on the still-view cards. */
+const stillLabelStyle: React.CSSProperties = {
+	fontSize: 9.5,
+	fontWeight: 700,
+	letterSpacing: '.14em',
+	textTransform: 'uppercase',
+	color: MUTED
+};
+
 /** Discomfort grows one emoji per waiting minute (design: emojiStepSec 60). */
 const OVERDUE_EMOJIS = ['😬', '😅', '🙄', '😳', '🫣', '😔', '😵‍💫', '🤯', '🫠'];
 const EMOJI_STEP_SEC = 60;
@@ -573,10 +582,21 @@ export const WaitingAreaCountdown = ({
 				'overdueSubtitle',
 				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
 			)
-		: tr(
-				'subtitle',
-				'Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.'
-			);
+		: motionless
+			? tr(
+					'subtitleStill',
+					'Begrüßung und Netiquette stehen unter den Zahlen.'
+				)
+			: tr(
+					'subtitle',
+					'Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.'
+				);
+	// The still view keeps the clock's footprint, so the row under it and the
+	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
+	// sollte auf jeden Fall nicht springen").
+	const clockFootprint = isOverdue
+		? geo.groupH
+		: 2 * geo.groupH + geo.groupGap;
 
 	const units: Array<{ unit: Unit; rule: boolean; tint?: boolean }> =
 		isOverdue
@@ -742,62 +762,144 @@ export const WaitingAreaCountdown = ({
 
 			{motionless ? (
 				<div
-					role="timer"
-					aria-label={timerAria}
 					style={{
+						minHeight: clockFootprint,
 						display: 'flex',
-						flexWrap: 'wrap',
-						gap: 24,
+						flexDirection: 'column',
 						justifyContent: 'center',
-						alignItems: 'baseline',
-						fontVariantNumeric: 'tabular-nums'
+						alignItems: 'stretch',
+						gap: 24
 					}}
 				>
-					{isOverdue && (
-						<div
-							aria-hidden="true"
-							style={{
-								fontSize: 44,
-								fontWeight: 300,
-								color: RED,
-								lineHeight: 1
-							}}
-						>
-							+
-						</div>
-					)}
-					{units.map(({ unit }) => (
-						<div
-							key={unit.key}
-							style={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								gap: 4
-							}}
-						>
+					<div
+						role="timer"
+						aria-label={timerAria}
+						style={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: 24,
+							justifyContent: 'center',
+							alignItems: 'baseline',
+							fontVariantNumeric: 'tabular-nums'
+						}}
+					>
+						{isOverdue && (
 							<div
+								aria-hidden="true"
 								style={{
-									fontSize: 54,
-									fontWeight: 700,
+									fontSize: 44,
+									fontWeight: 300,
+									color: RED,
 									lineHeight: 1
 								}}
 							>
-								{String(unit.value).padStart(2, '0')}
+								+
 							</div>
+						)}
+						{units.map(({ unit }) => (
 							<div
+								key={unit.key}
 								style={{
-									fontSize: 10,
-									fontWeight: 600,
-									letterSpacing: '.16em',
-									textTransform: 'uppercase',
-									color: MUTED
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									gap: 4
 								}}
 							>
-								{unit.label}
+								<div
+									style={{
+										fontSize: 54,
+										fontWeight: 700,
+										lineHeight: 1
+									}}
+								>
+									{String(unit.value).padStart(2, '0')}
+								</div>
+								<div
+									style={{
+										fontSize: 10,
+										fontWeight: 600,
+										letterSpacing: '.16em',
+										textTransform: 'uppercase',
+										color: MUTED
+									}}
+								>
+									{unit.label}
+								</div>
 							</div>
+						))}
+					</div>
+					{/* Without the flip there is nothing behind the numbers, so
+				    the greeting and the rules stand here in the open — the
+				    still view must not lose what the moving one has. */}
+					{(hasWelcome || rules.length > 0) && (
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: 12,
+								width: '100%',
+								maxWidth: 560,
+								alignSelf: 'center'
+							}}
+						>
+							{hasWelcome && (
+								<div
+									style={{
+										background: isOverdue
+											? '#fdeded'
+											: '#f9fafb',
+										border: '1px solid var(--m3-outline-variant, #c4c7c8)',
+										borderRadius: 16,
+										padding: '16px 18px'
+									}}
+								>
+									<div style={stillLabelStyle}>
+										{greetingLabel}
+									</div>
+									<div
+										style={{
+											fontWeight: 600,
+											color: RED,
+											lineHeight: 1.35,
+											marginTop: 6
+										}}
+									>
+										{welcomeText}
+									</div>
+								</div>
+							)}
+							{rules.length > 0 && (
+								<div
+									style={{
+										background: '#f9fafb',
+										border: '1px solid var(--m3-outline-variant, #c4c7c8)',
+										borderRadius: 16,
+										padding: '16px 18px'
+									}}
+								>
+									<div style={stillLabelStyle}>
+										{tr('netiquetteTitle', 'Netiquette')}
+									</div>
+									<ol
+										style={{
+											margin: '6px 0 0',
+											paddingLeft: 20,
+											display: 'flex',
+											flexDirection: 'column',
+											gap: 4,
+											fontSize: 14,
+											lineHeight: 1.45
+										}}
+									>
+										{rules.map((rule) => (
+											<li key={rule}>{rule}</li>
+										))}
+									</ol>
+								</div>
+							)}
 						</div>
-					))}
+					)}
 				</div>
 			) : isOverdue ? (
 				<div
@@ -829,49 +931,6 @@ export const WaitingAreaCountdown = ({
 			)}
 
 			{overdueCaption}
-
-			{motionless && hasWelcome && (
-				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: 12,
-						maxWidth: 560,
-						alignSelf: 'center'
-					}}
-				>
-					<div
-						style={{
-							background: isOverdue ? '#fdeded' : '#f9fafb',
-							border: '1px solid var(--m3-outline-variant, #c4c7c8)',
-							borderRadius: 16,
-							padding: '16px 18px'
-						}}
-					>
-						<div
-							style={{
-								fontSize: 9.5,
-								fontWeight: 700,
-								letterSpacing: '.14em',
-								textTransform: 'uppercase',
-								color: MUTED
-							}}
-						>
-							{greetingLabel}
-						</div>
-						<div
-							style={{
-								fontWeight: 600,
-								color: RED,
-								lineHeight: 1.35,
-								marginTop: 6
-							}}
-						>
-							{welcomeText}
-						</div>
-					</div>
-				</div>
-			)}
 
 			{/* Rendered only when it has content: an empty row still costs the
 			    column gap (26 px measured), and every one of those pixels is
