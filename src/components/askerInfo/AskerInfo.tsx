@@ -17,6 +17,8 @@ import {
 } from '../app/navigationHandler';
 import { useTranslation } from 'react-i18next';
 import { AskerInfoContent } from './AskerInfoContent';
+import { AskerInfoFooter } from './AskerInfoFooter';
+import { AskerInfoActionProvider } from './askerInfoActionContext';
 
 export const AskerInfo = () => {
 	const { t: translate } = useTranslation();
@@ -55,19 +57,19 @@ export const AskerInfo = () => {
 		return <Loading />;
 	}
 
+	// Header back link and footer back button lead to the same place, so the
+	// path is built once rather than twice with a chance of drifting apart.
+	const sessionPath = `${listPath}/${activeSession.item.matrixRoomId}/${
+		activeSession.item.id
+	}${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
 			<div className="askerInfo__wrapper">
 				<div className="askerInfo__header">
 					<div className="askerInfo__header__wrapper">
 						<Link
-							to={`${listPath}/${
-								activeSession.item.matrixRoomId
-							}/${activeSession.item.id}${
-								sessionListTab
-									? `?sessionListTab=${sessionListTab}`
-									: ''
-							}`}
+							to={sessionPath}
 							className="askerInfo__header__backButton"
 						>
 							<BackIcon
@@ -76,7 +78,7 @@ export const AskerInfo = () => {
 							/>
 						</Link>
 						<h3 className="askerInfo__header__title">
-							{translate('profile.header.title')}
+							{translate('userProfile.header.title')}
 						</h3>
 					</div>
 					<div className="askerInfo__header__metaInfo">
@@ -85,23 +87,30 @@ export const AskerInfo = () => {
 						</p>
 					</div>
 				</div>
-				<div className="askerInfo__innerWrapper">
-					<div className="askerInfo__user">
-						<div className="askerInfo__icon">
-							<PersonIcon
-								className="askerInfo__icon--user"
-								title={translate('profile.data.profileIcon')}
-								aria-label={translate(
-									'profile.data.profileIcon'
-								)}
-							/>
+				<AskerInfoActionProvider>
+					<div className="askerInfo__innerWrapper">
+						<div className="askerInfo__user">
+							<div className="askerInfo__icon">
+								<PersonIcon
+									className="askerInfo__icon--user"
+									title={translate(
+										'profile.data.profileIcon'
+									)}
+									aria-label={translate(
+										'profile.data.profileIcon'
+									)}
+								/>
+							</div>
+							<h2>{activeSession.user.username}</h2>
 						</div>
-						<h2>{activeSession.user.username}</h2>
+						<div className="askerInfo__content">
+							<AskerInfoContent />
+						</div>
 					</div>
-					<div className="askerInfo__content">
-						<AskerInfoContent />
-					</div>
-				</div>
+					<AskerInfoFooter
+						onBack={() => navigate(sessionPath)}
+					/>
+				</AskerInfoActionProvider>
 			</div>
 		</ActiveSessionProvider>
 	);

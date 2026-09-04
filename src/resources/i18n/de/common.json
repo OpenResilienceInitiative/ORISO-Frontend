@@ -3996,7 +3996,7 @@
 			"age": "Alter",
 			"gender": "Geschlecht",
 			"postcode": "Postleitzahl",
-			"relation": "Hintergrund",
+			"relation": "Art der Ratsuchenden",
 			"resort": "Beratungsfeld",
 			"state": "Bundesland",
 			"title": "Angaben des Ratsuchenden"
@@ -4024,6 +4024,9 @@
 				"title": "Sehen Sie hier, welche Inhalte mit Ihnen geteilt wurden."
 			},
 			"title": "Tools"
+		},
+		"header": {
+			"title": "Zusätzliche Angaben zu Ratsuchenden"
 		}
 	},
 	"videoCall": {

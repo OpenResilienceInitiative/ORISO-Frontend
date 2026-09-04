@@ -28,6 +28,7 @@ import {
 } from '../../api/apiSendAliasMessage';
 import { prepareConsultantDataForSelect } from './sessionAssignHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 
 export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
 
@@ -48,6 +49,9 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		useState<ConsultantReassignment | null>(null);
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { confirmNonce, setHasPendingChange } = useContext(
+		AskerInfoActionContext
+	);
 
 	const { addNewUsersToEncryptedRoom } = useE2EE(
 		activeSession.item.matrixRoomId
@@ -133,9 +137,18 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		}
 	};
 
+	/*
+	 * Picking a consultant used to open the confirmation overlay straight away.
+	 * The client profile now carries a footer whose next button is the "continue
+	 * with the action" step (ORISO-Frontend#1192), so selection only records the
+	 * choice and reports it as pending — the overlay is raised when the user
+	 * presses next, via `confirmNonce` below.
+	 */
 	const handleDatalistSelect = (selectedOption) => {
 		setSelectedOption(selectedOption);
-		initOverlays(selectedOption, userData);
+		setHasPendingChange(
+			selectedOption?.value !== activeSession?.consultant?.id
+		);
 	};
 
 	const handleConsultantSelect = (event: SelectChangeEvent<string>) => {
@@ -147,6 +160,15 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 			handleDatalistSelect(selectedConsultant);
 		}
 	};
+
+	// The footer's next button bumps the nonce; 0 is the initial render, which
+	// must not raise an overlay for a selection the user has not made yet.
+	useEffect(() => {
+		if (confirmNonce === 0 || !selectedOption) {
+			return;
+		}
+		initOverlays(selectedOption, userData);
+	}, [confirmNonce]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
@@ -208,7 +230,12 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					value: consultant.value,
 					label: consultant.label
 				}))}
-				value={props.value || selectedOption?.value || ''}
+				/* The user's own choice wins over the session's current
+				   consultant. `props.value ||` short-circuited it away, so the
+				   select kept showing the old consultant after picking a new
+				   one — the design shows the picked name, and the footer's next
+				   button is meaningless without that feedback. */
+				value={selectedOption?.value ?? props.value ?? ''}
 				onChange={handleConsultantSelect}
 			/>
 			{overlayActive && (

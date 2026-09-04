@@ -2,6 +2,11 @@ $doubleNavHeight: 192px;
 $doubleNavHeightSmall: 168px;
 $imprintHeight: 40px;
 $iconSize: 24px;
+
+// Footer actions are the primary touch targets on mobile, so they clear the
+// 48px minimum with room to spare (ORISO-Frontend#1192, job 2).
+$footerButtonSize: 56px;
+$footerButtonIconSize: 24px;
 $profileIconSize: 40px;
 $groupChatIconSize: 40px;
 $maxFormElementWidth: 320px;
@@ -50,16 +55,24 @@ $profile-footer-justify-content: center !default;
 			);
 		}
 
+		/* Small screens lay the row out in flow instead of absolutely: at 320px
+		   an absolutely positioned back button sat underneath a centred title
+		   long enough to overlap it (ORISO-Frontend#1192, job 3). */
 		&__wrapper {
 			display: flex;
 			flex-direction: row;
+			align-items: center;
+			gap: $grid-base;
 			position: relative;
 			width: 100%;
-			flex-wrap: wrap;
+			min-width: 0;
 		}
 
 		&__title {
-			margin: 0 auto;
+			margin: 0;
+			min-width: 0;
+			flex: 1 1 auto;
+			overflow-wrap: anywhere;
 
 			@include breakpoint($fromLarge) {
 				margin: 0 0 0 $grid-base;
@@ -71,6 +84,7 @@ $profile-footer-justify-content: center !default;
 			line-height: $line-height-secondary;
 			color: var(--m3-on-surface-variant, $tertiary);
 			margin: 0;
+			overflow-wrap: anywhere;
 
 			&--withBackButton {
 				@include breakpoint($fromLarge) {
@@ -79,16 +93,17 @@ $profile-footer-justify-content: center !default;
 			}
 		}
 
+		&__metaInfo {
+			width: 100%;
+			min-width: 0;
+		}
+
 		&__backButton {
-			display: block;
-			position: absolute;
-			left: 0;
+			display: flex;
+			align-items: center;
+			flex: 0 0 auto;
 			line-height: 32px;
 			cursor: pointer;
-
-			@include breakpoint($fromLarge) {
-				position: static;
-			}
 
 			svg {
 				width: $iconSize;
@@ -111,7 +126,11 @@ $profile-footer-justify-content: center !default;
 	}
 
 	&__innerWrapper {
-		height: 100%;
+		/* Takes the space the header and footer leave, rather than a flat
+		   100% — with a footer sibling that overflowed the column and pushed
+		   the actions off-screen. `min-height: 0` keeps it scrollable. */
+		flex: 1 1 auto;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		overflow-x: hidden;
@@ -216,6 +235,76 @@ $profile-footer-justify-content: center !default;
 
 			&--empty {
 				color: var(--m3-on-surface-variant, $tertiary);
+			}
+		}
+	}
+
+	/* Footer actions (ORISO-Frontend#1192, job 2). Sits outside the scrolling
+	   inner wrapper so both buttons stay reachable on a short mobile viewport
+	   instead of being pushed below the fold with the last field. */
+	&__footer {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: $grid-base-two;
+		padding: $grid-base-two;
+		background-color: var(--m3-surface-container-low, $background-light);
+
+		@include breakpoint($fromMedium) {
+			padding: $grid-base-two $grid-base-three;
+		}
+
+		&__button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: $footerButtonSize;
+			height: $footerButtonSize;
+			padding: 0;
+			border: none;
+			border-radius: 50%;
+			cursor: pointer;
+			background-color: var(
+				--m3-surface-container-highest,
+				$background-light
+			);
+
+			svg {
+				width: $footerButtonIconSize;
+				height: $footerButtonIconSize;
+				fill: var(--m3-on-surface-variant, $tertiary);
+
+				path {
+					fill: var(--m3-on-surface-variant, $tertiary);
+				}
+			}
+
+			&:focus-visible {
+				outline: 2px solid var(--m3-primary, $primary);
+				outline-offset: 2px;
+			}
+
+			/* Next stays visible while inert rather than disappearing: the
+			   design keeps it on the page as a muted affordance so the user can
+			   see there is a step to reach. `not-allowed` and the muted fill —
+			   not colour alone — carry the disabled state. */
+			&:disabled {
+				cursor: not-allowed;
+				opacity: 0.45;
+			}
+
+			&--primary {
+				background-color: var(--m3-primary, $primary);
+
+				svg {
+					fill: var(--m3-on-primary, $white);
+
+					path {
+						fill: var(--m3-on-primary, $white);
+					}
+				}
 			}
 		}
 	}
