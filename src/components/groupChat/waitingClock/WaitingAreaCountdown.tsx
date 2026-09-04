@@ -17,6 +17,66 @@ const OVERDUE_EMOJIS = ['😬', '😅', '🙄', '😳', '🫣', '😔', '😵‍
 const EMOJI_STEP_SEC = 60;
 const POP_INTERVAL_MS = 3000;
 const CLOCK_SIZE = 30;
+const FIT_MIN_SIZE = 12;
+const FIT_MAX_SIZE = 80;
+
+/**
+ * Everything that follows from one mini-clock diameter. Kept in one place so the
+ * flip cards, the fit calculation and the grid all agree on the same numbers.
+ *
+ * `tight` is Frank's "alle ganz nah beieinander": every gap — between cells,
+ * between the two digits, between the four groups — is the cell gap, so the
+ * whole clock is one continuous lattice. Otherwise the digits and groups get a
+ * little air (35 % / 55 % of a cell), which is the "ein ganz bisschen Spacing"
+ * variant he also wanted to see.
+ */
+const clockGeometry = (size: number, tight: boolean) => {
+	const cellGap = Math.max(2, Math.round(size * 0.1));
+	const digitGap = tight ? cellGap : Math.round(size * 0.35);
+	const groupGap = tight ? cellGap : Math.round(size * 0.55);
+	// Labels grow with the clock, within reason: 10 px on a phone, 13 px on
+	// a desktop-sized block.
+	const labelFont = Math.max(10, Math.min(13, Math.round(size * 0.27)));
+	const labelH = labelFont + 12;
+	const digitW = size * 4 + cellGap * 3;
+	const groupW = 2 * digitW + digitGap;
+	const groupH = size * 6 + cellGap * 5 + labelH;
+	return {
+		cellGap,
+		digitGap,
+		groupGap,
+		labelFont,
+		labelH,
+		digitW,
+		groupW,
+		groupH
+	};
+};
+
+/**
+ * The largest mini-clock that still lets the whole clock fit the given box.
+ * Walks down from the maximum; the first size that fits wins. Width alone
+ * decides when no height is given.
+ */
+const fitClockSize = (
+	width: number,
+	height: number | undefined,
+	overdue: boolean,
+	tight: boolean
+) => {
+	for (let size = FIT_MAX_SIZE; size >= FIT_MIN_SIZE; size--) {
+		const g = clockGeometry(size, tight);
+		// Overdue: "+", two groups, and the flex gaps around the sign.
+		const w = overdue
+			? 2 * g.groupW + 2 * 28 + 56
+			: 2 * g.groupW + g.groupGap;
+		const h = overdue ? g.groupH : 2 * g.groupH + g.groupGap;
+		if (w <= width && (height === undefined || h <= height)) {
+			return size;
+		}
+	}
+	return FIT_MIN_SIZE;
+};
 
 export interface WaitingAreaCountdownProps {
 	/** When the group chat is scheduled to start. */
@@ -43,8 +103,33 @@ export interface WaitingAreaCountdownProps {
 	/**
 	 * Diameter of one mini-clock in px. The clock is built from these, so this
 	 * scales the whole thing. Default 30.
+	 *
+	 * `'fit'` measures the component's own width and picks the largest
+	 * diameter at which the whole clock still fits — see `fitHeight` for the
+	 * other axis. Frank, 2026-09-04, looking at the 44 px block on a phone
+	 * where it overflowed: "bei dir ist einfach alles überschnitten". A fixed
+	 * number can only be right for one screen; the clock has to size itself.
 	 */
-	clockSize?: number;
+	clockSize?: number | 'fit';
+	/**
+	 * With `clockSize="fit"`: the height in px the clock may take. Without it,
+	 * only the width decides. The surrounding screen knows what else has to
+	 * fit on the page; the component does not.
+	 */
+	fitHeight?: number;
+	/**
+	 * `tight`: every gap is the cell gap, the clock is one lattice.
+	 * `airy` (default): digits and groups get a little air. Both are Frank's
+	 * 2026-09-04 variants; he wanted to see them side by side.
+	 */
+	spacing?: 'tight' | 'airy';
+	/**
+	 * Put the labels of the top row above their digits and those of the bottom
+	 * row below, so nothing sits between the two rows. Frank, 2026-09-04: "mach
+	 * die Pfeile mit den Tagen nach oben, dass wir eben dieses Gefühl haben,
+	 * dass es wirklich ein Block ist."
+	 */
+	labelsOutside?: boolean;
 	/**
 	 * Hide the built-in "Animation abschalten" switch.
 	 *
@@ -78,6 +163,9 @@ export const WaitingAreaCountdown = ({
 	reducedMotion = false,
 	headlineBelow = false,
 	clockSize = CLOCK_SIZE,
+	fitHeight,
+	spacing = 'airy',
+	labelsOutside = false,
 	hideMotionToggle = false,
 	nowMs,
 	calendarSlot
@@ -112,10 +200,41 @@ export const WaitingAreaCountdown = ({
 		return () => window.clearInterval(t);
 	}, [nowMs]);
 
+	const rootRef = React.useRef<HTMLDivElement>(null);
+	const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
+		null
+	);
+	React.useEffect(() => {
+		if (clockSize !== 'fit' || !rootRef.current) {
+			return undefined;
+		}
+		const el = rootRef.current;
+		setMeasuredWidth(el.clientWidth);
+		if (typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (entry) {
+				setMeasuredWidth(entry.contentRect.width);
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [clockSize]);
+
 	const forcedMotionless = reducedMotion || prefersReducedMotion;
 	const motionless = animOff || forcedMotionless;
 	const remaining = (plannedStart.getTime() - tick) / 1000;
 	const isOverdue = remaining <= 0;
+	const tight = spacing === 'tight';
+	const size =
+		clockSize === 'fit'
+			? measuredWidth === null
+				? CLOCK_SIZE
+				: fitClockSize(measuredWidth, fitHeight, isOverdue, tight)
+			: clockSize;
+	const geo = clockGeometry(size, tight);
 	const rem = Math.max(0, remaining);
 	const d = Math.floor(rem / 86400);
 	const h = Math.floor(rem / 3600) % 24;
@@ -181,6 +300,9 @@ export const WaitingAreaCountdown = ({
 				})
 			: greetingLabel;
 		const text = isRule ? (rules[ruleIndex] ?? '') : welcomeText;
+		// The card is as big as the digits it replaces, so its type grows with
+		// the clock: 14 px on a phone, up to 20 px on a desktop block.
+		const textFont = Math.round(Math.min(20, Math.max(14, size * 0.42)));
 		return (
 			<div
 				style={{
@@ -188,21 +310,21 @@ export const WaitingAreaCountdown = ({
 					flexDirection: 'column',
 					alignItems: 'center',
 					justifyContent: 'center',
-					gap: 8,
+					gap: Math.round(size * 0.25),
 					width: '100%',
 					height: '100%',
-					borderRadius: 16,
+					borderRadius: 20,
 					background: DARK,
 					boxSizing: 'border-box',
-					padding: '0 20px',
+					padding: `${Math.round(size * 0.5)}px ${Math.round(size * 0.6)}px`,
 					textAlign: 'center'
 				}}
 			>
 				<div
 					style={{
-						fontSize: 9.5,
+						fontSize: geo.labelFont,
 						fontWeight: 700,
-						letterSpacing: '.13em',
+						letterSpacing: '.14em',
 						textTransform: 'uppercase',
 						color: PINK
 					}}
@@ -211,10 +333,12 @@ export const WaitingAreaCountdown = ({
 				</div>
 				<div
 					style={{
-						fontSize: 14,
-						fontWeight: 600,
+						fontSize: textFont,
+						fontWeight: 500,
 						color: '#fff',
-						lineHeight: 1.5
+						lineHeight: 1.45,
+						maxWidth: '32ch',
+						textWrap: 'pretty'
 					}}
 				>
 					{text}
@@ -225,7 +349,7 @@ export const WaitingAreaCountdown = ({
 
 	const flipGroup = (
 		unit: Unit,
-		options: { rule?: boolean; tint?: boolean }
+		options: { rule?: boolean; tint?: boolean; labelAbove?: boolean }
 	) => {
 		const isRule = options.rule ?? true;
 		// A card only flips when its own back has content — rule cards need
@@ -234,13 +358,8 @@ export const WaitingAreaCountdown = ({
 		const flipped = !!flips[unit.key];
 		const isHover = hover === unit.key;
 		// Box must fit two clock-made-of-clocks digits (each 4×6 cells) plus label.
-		const size = clockSize;
-		const cellGap = Math.max(2, Math.round(size * 0.1));
-		const digitW = size * 4 + cellGap * 3;
-		const groupW = 2 * digitW + Math.round(size * 0.35);
-		/* Label allowance. Tight against the digits — a floating caption
-		   breaks the block Frank is after. */
-		const groupH = size * 6 + cellGap * 5 + 22;
+		const { groupW, groupH } = geo;
+		const labelAbove = !!options.labelAbove;
 		const face = (
 			visible: boolean,
 			rot: number,
@@ -268,11 +387,31 @@ export const WaitingAreaCountdown = ({
 				{content}
 			</div>
 		);
+		const label = (
+			<div
+				style={{
+					fontSize: geo.labelFont,
+					fontWeight: 600,
+					letterSpacing: '.16em',
+					textTransform: 'uppercase',
+					color: isHover ? RED : MUTED,
+					transition: 'color .25s',
+					// Above: the label sits on the outer edge of the block and is
+					// aligned with it, not centred over two digits.
+					alignSelf: labelAbove ? 'flex-start' : 'center',
+					paddingLeft: labelAbove ? 2 : 0
+				}}
+			>
+				{unit.label}
+			</div>
+		);
 		const front = (
 			<>
+				{labelAbove && label}
 				<ClockDigits
 					value={unit.value}
 					size={size}
+					digitGap={geo.digitGap}
 					magnet
 					tint={options.tint}
 					pop={
@@ -285,18 +424,7 @@ export const WaitingAreaCountdown = ({
 							: null
 					}
 				/>
-				<div
-					style={{
-						fontSize: 10,
-						fontWeight: 600,
-						letterSpacing: '.16em',
-						textTransform: 'uppercase',
-						color: isHover ? RED : MUTED,
-						transition: 'color .25s'
-					}}
-				>
-					{unit.label}
-				</div>
+				{!labelAbove && label}
 			</>
 		);
 		if (!canFlip) {
@@ -348,7 +476,7 @@ export const WaitingAreaCountdown = ({
 					aria-hidden="true"
 					style={{
 						position: 'absolute',
-						top: -30,
+						top: labelAbove ? -34 : -30,
 						left: '50%',
 						transform: `translateX(-50%) translateY(${isHover && !flipped ? 0 : 5}px)`,
 						opacity: isHover && !flipped ? 1 : 0,
@@ -573,10 +701,13 @@ export const WaitingAreaCountdown = ({
 
 	return (
 		<div
+			ref={rootRef}
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
 				gap: 26,
+				width: '100%',
+				minWidth: 0,
 				fontFamily: 'inherit',
 				color: INK
 			}}
@@ -595,14 +726,26 @@ export const WaitingAreaCountdown = ({
 			>
 				<div
 					style={{
-						fontSize: 24,
+						// Frank, 2026-09-04: "mit der Schriftgröße ein bisschen
+						// arbeiten … beim Titel". Grows with the column, never
+						// past 30 px, never below the old 24 on a phone.
+						fontSize: 'clamp(24px, 2.4vw, 30px)',
+						lineHeight: 1.2,
 						fontWeight: 700,
-						letterSpacing: '-0.01em'
+						letterSpacing: '-0.01em',
+						textWrap: 'balance'
 					}}
 				>
 					{headline}
 				</div>
-				<div style={{ fontSize: 13, color: MUTED }}>{subtitle}</div>
+				<div
+					style={{
+						fontSize: 'clamp(13px, 1.1vw, 15px)',
+						color: MUTED
+					}}
+				>
+					{subtitle}
+				</div>
 				{calendarSlot && !isOverdue && (
 					<div style={{ alignSelf: 'center', marginTop: 10 }}>
 						{calendarSlot}
@@ -677,7 +820,7 @@ export const WaitingAreaCountdown = ({
 				>
 					{plusSign}
 					{units.map(({ unit, rule, tint }) =>
-						flipGroup(unit, { rule, tint })
+						flipGroup(unit, { rule, tint, labelAbove: false })
 					)}
 				</div>
 			) : (
@@ -685,8 +828,16 @@ export const WaitingAreaCountdown = ({
 					role="timer"
 					aria-label={timerAria}
 					className="waitingClock__timer"
+					// The stylesheet's gap is the default; the geometry decides
+					// here so the four groups keep the same rhythm as the cells.
+					style={{ gap: geo.groupGap }}
 				>
-					{units.map(({ unit, rule }) => flipGroup(unit, { rule }))}
+					{units.map(({ unit, rule }, index) =>
+						flipGroup(unit, {
+							rule,
+							labelAbove: labelsOutside && index < 2
+						})
+					)}
 				</div>
 			)}
 
@@ -735,9 +886,14 @@ export const WaitingAreaCountdown = ({
 				</div>
 			)}
 
-			<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-				{!hideMotionToggle && toggle}
-			</div>
+			{/* Rendered only when it has content: an empty row still costs the
+			    column gap (26 px measured), and every one of those pixels is
+			    one the clock cannot have. */}
+			{!hideMotionToggle && (
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+					{toggle}
+				</div>
+			)}
 		</div>
 	);
 };

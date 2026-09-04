@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { AccountData } from '../registration/accountData/AccountData';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
@@ -569,20 +569,49 @@ export const EntryScreenWithAccount: StoryObj = {
 };
 
 /* ---------------------------------------------------------------------------
-   12 — The block layout Frank asked for, with the footer carrying the controls.
+   12–14 — The block Frank drew (Figma, 2026-09-04): the clock fills the white
+   column as one lattice, labels on the outer edges, the footer carries the
+   three actions and the header carries the login.
    --------------------------------------------------------------------------- */
+
+/**
+ * Height the clock may take: the viewport minus what else has to fit — column
+ * padding, the headline block under the clock, the footer bar, and on a phone
+ * the red hero bar. The component only knows its width; the screen knows
+ * this.
+ */
+const useClockHeight = () => {
+	const measure = () => {
+		const mobile = window.innerWidth < 1200;
+		// Measured on the 1440 × 950 story: the stage header takes 96 px
+		// (64 on a phone), the footer bar 96, the column 24 above and 16 below
+		// the bar, then the gap and headline block under the clock (26 + 66)
+		// and the row with "Mehr erfahren" (8 + 36), plus 24 px so a rounding
+		// error never shows as a scrollbar.
+		// The stage keeps another 32 px under the column (measured: the
+		// column ended at 1046 and the page at 1078).
+		const reserved =
+			(mobile ? 64 : 96) + 32 + 96 + 24 + 16 + 26 + 66 + 8 + 36 + 24;
+		return Math.max(160, window.innerHeight - reserved);
+	};
+	const [height, setHeight] = React.useState(measure);
+	React.useEffect(() => {
+		const onResize = () => setHeight(measure());
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	}, []);
+	return height;
+};
 
 const BlockRoom = ({
 	overdue = false,
-	clockSize = 44
+	spacing = 'tight'
 }: {
 	overdue?: boolean;
-	/* The quad holds at every width as long as the mini-clocks shrink with the
-	   screen: 44 fills the white column on a desktop, 15 keeps all four groups
-	   on one phone screen instead of four. */
-	clockSize?: number;
+	spacing?: 'tight' | 'airy';
 }) => {
 	const [motionOff, setMotionOff] = React.useState(false);
+	const clockHeight = useClockHeight();
 	return (
 		<Box sx={{ minHeight: '100vh' }}>
 			<AgencySpecificContext.Provider
@@ -594,26 +623,35 @@ const BlockRoom = ({
 				<StageLayout
 					className="stageLayout--registration"
 					showLegalLinks={true}
-					showLoginLink={false}
+					/* Frank's Figma forgot the login and he said so: someone
+					   with an account logs in here and lands in the room. The
+					   header link is where the registration already puts it. */
+					showLoginLink={true}
 					showRegistrationLink={false}
 					stage={<Stage hasAnimation={false} />}
 					mobileHero="bar"
 				>
-					{/* Vertically centred, as Frank marked on the entry screen:
-					    the column fills the viewport and the block sits in the
-					    middle of it rather than clinging to the top. */}
 					<Box
 						sx={{
 							width: '100%',
 							minWidth: 0,
 							maxWidth: '100%',
-							minHeight: '100vh',
+							/* The stage header sits above this column and the
+							   stage keeps 32 px under it, so a full 100vh here
+							   always overflowed by exactly that (measured:
+							   1078 px of page for a 950 px window). */
+							minHeight: {
+								xs: 'calc(100vh - 96px)',
+								lg: 'calc(100vh - 128px)'
+							},
 							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'center',
 							px: { xs: 2, sm: 4 },
-							pt: { xs: 3, sm: 5 },
-							pb: { xs: '128px', sm: '136px' }
+							pt: 3,
+							/* Footer bar plus 16 px — every pixel here is one
+							   the clock cannot have. */
+							pb: { xs: '112px', sm: '112px' }
 						}}
 					>
 						<WaitingAreaCountdown
@@ -622,30 +660,79 @@ const BlockRoom = ({
 							rules={RULES}
 							nowMs={NOW}
 							headlineBelow
-							clockSize={clockSize}
+							clockSize="fit"
+							fitHeight={clockHeight}
+							spacing={spacing}
+							labelsOutside
 							reducedMotion={motionOff}
 							hideMotionToggle
 						/>
-						{/* The bar lives inside the content column, not beside
-						    it: as a direct child of `StageLayout` it lost the
-						    `lg` breakpoint and ran the full 1440 px across the
-						    red panel. Measured both ways — same class, same
-						    viewport, 864 px here and 1440 px there. That the
-						    placement decides it is a real weakness of the
-						    component and belongs in #1289. */}
+						{/* "more infos" in Frank's Figma, bottom right: the way to
+						    the entry point that explains in three pictures what
+						    to do in this session. Not wired. */}
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								mt: 1
+							}}
+						>
+							{/* On a phone three buttons do not fit in the bar
+							    — "Zum Kalender" and "Beitreten" shrank to one
+							    letter each. The animation switch moves up into
+							    this row there; on the desktop it stays in the
+							    bar, where Frank drew it. */}
+							<Button
+								variant="text"
+								size="small"
+								onClick={() => setMotionOff((v) => !v)}
+								sx={{
+									display: { xs: 'inline-flex', lg: 'none' },
+									textTransform: 'none'
+								}}
+							>
+								{motionOff
+									? 'Animation einschalten'
+									: 'Animation abschalten'}
+							</Button>
+							<Button
+								variant="text"
+								size="small"
+								sx={{ ml: 'auto', textTransform: 'none' }}
+							>
+								Mehr erfahren →
+							</Button>
+						</Box>
 						<RegistrationFooter
 							secondary={{
-								label: motionOff
-									? 'Animation einschalten'
-									: 'Animation abschalten',
-								onClick: () => setMotionOff((v) => !v)
+								label: 'Zum Kalender hinzufügen'
 							}}
-							primary={
-								overdue
-									? { label: 'Jetzt dazukommen' }
-									: { label: 'Zum Kalender hinzufügen' }
-							}
-						/>
+							/* House rule: never hide, only disable. Before the
+							   start the door is visible and shut; once the time
+							   has passed it opens. Same bar, same place. */
+							primary={{
+								label: 'Beitreten',
+								disabled: !overdue
+							}}
+						>
+							<Button
+								variant="text"
+								onClick={() => setMotionOff((v) => !v)}
+								/* The theme sets sentence case on contained and
+								   outlined only; the text variant would shout. */
+								sx={{
+									display: { xs: 'none', lg: 'inline-flex' },
+									flex: '0 0 auto',
+									whiteSpace: 'nowrap',
+									textTransform: 'none'
+								}}
+							>
+								{motionOff
+									? 'Animation einschalten'
+									: 'Animation abschalten'}
+							</Button>
+						</RegistrationFooter>
 					</Box>
 				</StageLayout>
 			</AgencySpecificContext.Provider>
@@ -654,13 +741,26 @@ const BlockRoom = ({
 };
 
 export const BlockLayout: StoryObj = {
-	name: '12 — Blockbild, Fuß trägt die Bedienung',
-	render: () => <BlockRoom />,
+	name: '12 — Blockbild, eng verzahnt',
+	render: () => <BlockRoom spacing="tight" />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Franks Blockbild: die vier Zifferngruppen oben, der Satz darunter — dadurch liest sich das Ganze als ein Bild statt als Bildunterschrift. Die Uhr ist von 30 auf 36 px je Miniatur gewachsen. „Animation abschalten" und „Zum Kalender hinzufügen" sind aus der Fläche in den Fuß gewandert und benutzen dort dieselbe Leiste wie überall. Die Karten lassen sich weiterhin umdrehen — dahinter stehen Begrüßung und Netiquette, das steckte schon im Bauteil.'
+				story: 'Franks Figma vom 4.9.: die Uhr als ein Gitter. Jeder Abstand — zwischen Zellen, zwischen den zwei Ziffern, zwischen den vier Gruppen — ist derselbe, deshalb liest sich das Ganze als ein Block und nicht als vier Bilder. Die Uhr misst ihre Spalte selbst und wird so groß, wie die weiße Fläche hergibt (vorher stand eine feste Zahl drin, die nur auf einer Bildschirmbreite stimmte). Die Beschriftungen der oberen Reihe stehen oben, die der unteren unten — zwischen den Reihen steht nichts. Der Titel wächst mit der Spalte bis 30 px. Im Fuß: Animation, Kalender, Beitreten — wie gezeichnet; „Beitreten" ist vor dem Termin sichtbar, aber gesperrt. Oben rechts „Einloggen" für die, die schon ein Konto haben.'
+			}
+		}
+	}
+};
+
+export const BlockLayoutAiry: StoryObj = {
+	name: '12b — Blockbild, mit etwas Luft',
+	render: () => <BlockRoom spacing="airy" />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Dieselbe Uhr, die zweite Variante aus Franks Nachricht: Ziffern und Gruppen bekommen ein wenig Abstand (35 % bzw. 55 % einer Zelle). Nur zum Vergleich neben 12 — die Entscheidung ist seine.'
 			}
 		}
 	}
@@ -673,7 +773,7 @@ export const BlockLayoutOverdue: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Sobald es losgeht, wird aus „Zum Kalender hinzufügen" der Weg hinein. Das ist die Stelle, an der noch offen ist, ob ein Modal fragen soll, statt jemanden stumm in ein laufendes Gespräch zu schieben.'
+				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts. Ob vor dem Eintritt noch ein Dialog fragt, ist weiter offen.'
 			}
 		}
 	}
@@ -682,12 +782,12 @@ export const BlockLayoutOverdue: StoryObj = {
 export const BlockLayoutMobile: StoryObj = {
 	name: '14 — Blockbild, mobil',
 	globals: phone375Globals,
-	render: () => <BlockRoom clockSize={15} />,
+	render: () => <BlockRoom />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Derselbe Block auf 375 pt. Vorher war die Uhr unterhalb der Umbruchstelle eine einzige Spalte — vier Gruppen untereinander, also vier Bildschirme Scrollen für eine Uhr. Jetzt bleibt das Quadrat und die Miniaturuhren schrumpfen mit. Das ist der Unterschied zwischen „passt auf ein Telefon" und „zieht sich nach oben und unten".'
+				story: 'Derselbe Block auf 375 pt — ohne eigene Zahl. Die Uhr misst die Breite und schrumpft die Miniaturen, bis das Quadrat hineinpasst; nichts wird abgeschnitten, nichts wird zur Spalte. Das ist der Fehler, den Frank im Screenshot gesehen hat: eine Uhr mit fester Größe auf einem Bildschirm, für den sie nicht gerechnet war.'
 			}
 		}
 	}
