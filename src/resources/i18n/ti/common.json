@@ -3529,6 +3529,10 @@
 				"selfHelp": "ክቢ ዝርርብ",
 				"internal": "ውሽጣዊ"
 			}
+		},
+		"supervision": {
+			"badge": "ምክትታል – ኣብዚ ቻት ተኸታተል ኢኻ",
+			"supervisedBy": "ምክትታል: {{name}}"
 		}
 	},
 	"statusOverlay": {
@@ -4560,7 +4564,8 @@
 			"browserHint": "ኣድራሻ ኣየድልን — ግን ኣብዚ መሳርሒ እዚ ጥራይ ይሰርሕ።",
 			"email": "ኢመይል ጻሓፉለይ",
 			"emailHint": "እቲ ኣብዚ እትዘራረብዎ ኣብቲ ኢመይል ፈጺሙ ኣይርአን።"
-		}
+		},
+		"unavailableInRoom": "ናይ መጀመርታ መልሲ – ኣብዚ ክፍሊ ኣይርከብን።"
 	},
 	"legal": {
 		"notice": {

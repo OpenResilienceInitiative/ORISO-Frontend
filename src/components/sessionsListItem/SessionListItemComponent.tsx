@@ -100,6 +100,10 @@ import {
 	isCaseHandoverPending
 } from '../session/caseHandoverHelpers';
 import {
+	getSupervisionListState,
+	getSupervisorDisplayNames
+} from './supervisionListState';
+import {
 	CaseHandoverActionButton,
 	CaseHandoverActionState
 } from './CaseHandoverActionButton';
@@ -394,10 +398,27 @@ export const SessionListItemComponent = ({
 	}, [activeSession?.item?.id, caseHandoverAccessControlled]);
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	// Non-owner consultant view: drives the read-only menu (no archive/delete).
+	// Both a silent member and an assigned supervisor are non-owners here.
 	const isSupervisorView =
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
+	// ADR-008 list marker: only the backend knows who actually supervises.
+	// Without the marker (older backend) this is 'none' and the row keeps the
+	// silent-member eye for every non-owner, as before.
+	const supervisionState = getSupervisionListState(
+		activeSession,
+		userData?.userId
+	);
+	const isSupervisedByMe = supervisionState === 'supervisedByMe';
+	const showSilentMemberEye = isSupervisorView && !isSupervisedByMe;
+	const supervisorNames =
+		!isAsker &&
+		!isSupervisorView &&
+		supervisionState === 'supervisedByOthers'
+			? getSupervisorDisplayNames(activeSession)
+			: [];
 
 	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
 	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
@@ -1203,7 +1224,23 @@ export const SessionListItemComponent = ({
 				</div>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__icon">
-						{isSupervisorView ? (
+						{isSupervisedByMe ? (
+							<div
+								className="sessionsListItem__supervisionBadge"
+								data-testid="supervision-badge"
+								role="img"
+								title={translate(
+									'sessionList.supervision.badge',
+									'Supervision'
+								)}
+								aria-label={translate(
+									'sessionList.supervision.badge',
+									'Supervision'
+								)}
+							>
+								<img src={selfHelpIcon} alt="" />
+							</div>
+						) : showSilentMemberEye ? (
 							<div
 								style={{
 									width: '32px',
@@ -1379,6 +1416,25 @@ export const SessionListItemComponent = ({
 							onConfirmSelection={onCaseHandoverBatchConfirm}
 							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
+					)}
+					{/* ADR-008: the owning consultant sees who supervises the
+					    session (supervisor sits read-only in the room). */}
+					{supervisorNames.length > 0 && (
+						<span
+							className="sessionsListItem__supervisionIndicator"
+							data-testid="supervision-indicator"
+							title={translate(
+								'sessionList.supervision.supervisedBy',
+								{
+									name: supervisorNames.join(', ')
+								}
+							)}
+						>
+							<img src={selfHelpIcon} alt="" />
+							<span className="sessionsListItem__supervisionIndicatorName">
+								{supervisorNames.join(', ')}
+							</span>
+						</span>
 					)}
 					{/* Consulting-type modality icon (Mail / Live Chat / Interna
 					    / Gesprächskreis) — always shown, including alongside the

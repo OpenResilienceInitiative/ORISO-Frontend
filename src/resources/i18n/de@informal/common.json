@@ -1435,6 +1435,9 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – Du liest in diesem Chat mit"
 		}
 	},
 	"statusOverlay": {
