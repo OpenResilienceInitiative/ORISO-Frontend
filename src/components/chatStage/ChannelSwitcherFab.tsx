@@ -43,6 +43,8 @@ export interface ChannelSwitcherFabProps {
 	'positionMode'?: 'absolute' | 'fixed';
 	/** Distance from the bottom edge, e.g. above the phone's bottom nav. */
 	'bottomOffset'?: number;
+	/** Start with the speed dial open (stories / comparisons). */
+	'defaultOpen'?: boolean;
 	'className'?: string;
 	'data-cy'?: string;
 }
@@ -64,11 +66,12 @@ export const ChannelSwitcherFab = ({
 	onBack,
 	positionMode = 'absolute',
 	bottomOffset = 16,
+	defaultOpen = false,
 	className,
 	'data-cy': dataCy = 'channel-switcher'
 }: ChannelSwitcherFabProps) => {
 	const { t: translate } = useTranslation();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(defaultOpen);
 	const rootRef = useRef<HTMLDivElement | null>(null);
 	const fabRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
