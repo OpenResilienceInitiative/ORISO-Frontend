@@ -3,7 +3,6 @@
 // (secondary, primary-fixed hairline, label/medium tag). No bubble or
 // composer styles live here — the real components bring their own.
 
-
 .sidePanel {
 	position: relative;
 	display: flex;
@@ -20,17 +19,8 @@
 		border-left: 1px solid var(--m3-primary-fixed, #ffdad5);
 	}
 
-	// A second card next to the chat card (same chrome as `.session`).
-	&--card {
-		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
-		border-radius: 28px;
-		overflow: hidden;
-	}
-
-	// Phone: fills the stage, no chrome.
-	&--fullscreen {
-		border: 0;
-	}
+	// `--card` and `--fullscreen` also carry `.session`: the card chrome
+	// (border, radius, margin, focus ring) is the chat card's own.
 
 	&__banner {
 		flex: 0 0 auto;
@@ -45,6 +35,11 @@
 		overflow: hidden auto;
 		padding: 16px 16px 240px;
 		overscroll-behavior: contain;
+
+		@media screen and (width <= 1366px) {
+			// Tablet/laptop composer is taller (same rule as `.session__content`).
+			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
+		}
 
 		@media screen and (width <= 899px) {
 			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
@@ -154,8 +149,10 @@
 	}
 
 	&__tag {
+		display: inline-block;
 		border-radius: 0 0 4px 4px;
 		max-width: 100%;
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}

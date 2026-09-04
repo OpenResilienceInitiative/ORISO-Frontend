@@ -1,0 +1,174 @@
+// Consultant session stage — `list | main | secondary` on stage level
+// (inventory §3.4). Only layout: the chat card keeps `.session`, the list
+// column keeps `.sessionsList__wrapper`, the side panel keeps `.sidePanel`.
+// Tokens: stage shell = the app's `.contentWrapper` surface.
+
+.chatStage {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	height: 100vh;
+	min-height: 0;
+	overflow: hidden;
+	background-color: var(--m3-surface-container-high, #eae7e8);
+
+	&__list {
+		flex: 0 0 auto;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		transition: width 200ms ease;
+	}
+
+	&__detail {
+		flex: 1 1 auto;
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+	}
+
+	// Frank's choice: the side room lives INSIDE the chat card. The card
+	// becomes a row of two panes; each pane is its own positioning context
+	// so the real composer docks to its own pane, not to the whole card.
+	&__card--split {
+		flex-direction: row;
+	}
+
+	&__mainPane {
+		position: relative;
+		flex: 1 1 auto;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+
+		> :first-child {
+			flex: 0 0 auto;
+		}
+	}
+
+	// `.session > div:first-child` pins the header; on stage that first
+	// child is the whole main pane, which must flex and shrink instead.
+	.session > .chatStage__mainPane {
+		flex: 1 1 0;
+		min-width: 0;
+		min-height: 0;
+	}
+
+	// In the real card `.session > .session__content` puts the timeline in
+	// normal flow; mirror that for the pane so the header stays on top.
+	.chatStage__mainPane > .session__content {
+		position: relative;
+		inset: auto;
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
+	&__panel {
+		flex: 0 0 auto;
+
+		// Second-card variant: the panel is a `.session` card of its own;
+		// keep the stage inset but close the gap to the chat card.
+		&--card {
+			display: flex;
+
+			> .session {
+				margin: 24px 24px 24px 0;
+			}
+		}
+	}
+
+	// Phone: one pane fills the stage, a bottom bar below (placeholder for
+	// the app's bottom navigation, 72 px like `$grid-base-nine`).
+	&--single {
+		flex-direction: column;
+
+		.chatStage__detail {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.session,
+		.sidePanel {
+			flex: 1 1 auto;
+			width: 100%;
+			margin: 0;
+			border: 0;
+			border-radius: 0;
+		}
+	}
+
+	&__bottomNav {
+		flex: 0 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-around;
+		height: 72px;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background: var(--m3-surface-container, #f0edee);
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 11px;
+		font-weight: 500;
+	}
+
+	&__bottomNavItem {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+
+		&::before {
+			content: '';
+			width: 24px;
+			height: 24px;
+			border-radius: 12px;
+			background: var(--m3-surface-container-highest, #e4e2e2);
+		}
+
+		&--active {
+			color: var(--m3-primary, #a5000a);
+
+			&::before {
+				background: var(--m3-primary-fixed, #ffdad5);
+			}
+		}
+	}
+}
+
+// Side-by-side comparison frame for the label question (story f).
+.chatStageCompare {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	padding: 24px;
+	background-color: var(--m3-surface-container-high, #eae7e8);
+
+	&__item {
+		flex: 1 1 420px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+	}
+
+	&__caption {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__frame {
+		position: relative;
+		height: 400px;
+		overflow: hidden;
+		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
+		border-radius: 28px;
+		background: var(--m3-surface-container-lowest, #fff);
+	}
+}

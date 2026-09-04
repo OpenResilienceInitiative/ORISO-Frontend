@@ -71,7 +71,9 @@ const message = (
 	return {
 		_id: id,
 		message: body,
-		messageDate: { str: 'Heute', date: null } as MessageItem['messageDate'],
+		// The timeline draws the date pill for every message that carries a
+		// date; the stream only stamps the first message of a day.
+		messageDate: { str: '', date: null } as MessageItem['messageDate'],
 		messageTime: at(time),
 		askerMatrixUserId: CLIENT_MATRIX_ID,
 		isNotRead: false,
@@ -82,83 +84,98 @@ const message = (
 	};
 };
 
+const withDayPill = (messages: MessageItem[]): MessageItem[] =>
+	messages.map((item, index) =>
+		index === 0
+			? {
+					...item,
+					messageDate: {
+						str: 'Heute',
+						date: null
+					} as MessageItem['messageDate']
+				}
+			: item
+	);
+
 /** The client chat — the only timeline where the client name appears. */
-export const mainChatMessages = (): MessageItem[] => [
-	message(
-		'$m1',
-		'client',
-		'Hallo, ich weiß nicht so recht, wo ich anfangen soll. Es ist gerade alles ein bisschen viel.',
-		'08:58',
-		CLIENT_ROOM_ID
-	),
-	message(
-		'$m2',
-		'counsellor',
-		'Schön, dass Sie sich gemeldet haben. Fangen Sie einfach dort an, wo es Ihnen gerade am meisten auf der Seele liegt.',
-		'09:02',
-		CLIENT_ROOM_ID
-	),
-	message(
-		'$m3',
-		'client',
-		'Es sind ein paar Briefe gekommen, die ich nicht aufgemacht habe. Mahnbescheide, glaube ich. Aber eigentlich geht es mir eher um meinen Job.',
-		'09:07',
-		CLIENT_ROOM_ID
-	),
-	message(
-		'$m4',
-		'counsellor',
-		'Beides darf hier Platz haben. Wenn Sie mögen, erzählen Sie mir zuerst, was bei der Arbeit gerade passiert.',
-		'09:09',
-		CLIENT_ROOM_ID
-	),
-	message(
-		'$m5',
-		'client',
-		'Mein Vertrag läuft im Oktober aus und niemand sagt mir, ob er verlängert wird. Ich schlafe kaum noch.',
-		'09:14',
-		CLIENT_ROOM_ID
-	),
-	message(
-		'$m6',
-		'counsellor',
-		'Das klingt nach einer sehr belastenden Ungewissheit. Lassen Sie uns gemeinsam sortieren, was Sie jetzt beeinflussen können und was nicht.',
-		'09:18',
-		CLIENT_ROOM_ID
-	)
-];
+export const mainChatMessages = (): MessageItem[] =>
+	withDayPill([
+		message(
+			'$m1',
+			'client',
+			'Hallo, ich weiß nicht so recht, wo ich anfangen soll. Es ist gerade alles ein bisschen viel.',
+			'08:58',
+			CLIENT_ROOM_ID
+		),
+		message(
+			'$m2',
+			'counsellor',
+			'Schön, dass Sie sich gemeldet haben. Fangen Sie einfach dort an, wo es Ihnen gerade am meisten auf der Seele liegt.',
+			'09:02',
+			CLIENT_ROOM_ID
+		),
+		message(
+			'$m3',
+			'client',
+			'Es sind ein paar Briefe gekommen, die ich nicht aufgemacht habe. Mahnbescheide, glaube ich. Aber eigentlich geht es mir eher um meinen Job.',
+			'09:07',
+			CLIENT_ROOM_ID
+		),
+		message(
+			'$m4',
+			'counsellor',
+			'Beides darf hier Platz haben. Wenn Sie mögen, erzählen Sie mir zuerst, was bei der Arbeit gerade passiert.',
+			'09:09',
+			CLIENT_ROOM_ID
+		),
+		message(
+			'$m5',
+			'client',
+			'Mein Vertrag läuft im Oktober aus und niemand sagt mir, ob er verlängert wird. Ich schlafe kaum noch.',
+			'09:14',
+			CLIENT_ROOM_ID
+		),
+		message(
+			'$m6',
+			'counsellor',
+			'Das klingt nach einer sehr belastenden Ungewissheit. Lassen Sie uns gemeinsam sortieren, was Sie jetzt beeinflussen können und was nicht.',
+			'09:18',
+			CLIENT_ROOM_ID
+		)
+	]);
 
 /** The supervision side room: counsellor ↔ supervisor, never the client. */
-export const supervisionMessages = (): MessageItem[] => [
-	message(
-		'$s1',
-		'counsellor',
-		'Die Ratsuchende hat heute zum zweiten Mal Mahnbescheide erwähnt, geht aber jedes Mal sofort auf ein anderes Thema. Wie würdest du das ansprechen?',
-		'09:12',
-		SUPERVISION_ROOM_ID
-	),
-	message(
-		'$s2',
-		'supervisor',
-		'Ich würde es nicht forcieren. Benenne kurz, dass du das Thema wahrgenommen hast, und lass die Entscheidung bei ihr – Vermeidung ist hier oft Scham.',
-		'09:15',
-		SUPERVISION_ROOM_ID
-	),
-	message(
-		'$s3',
-		'supervisor',
-		'Wenn es beim dritten Mal wieder kommt: Angebot für einen konkreten Termin zur Schuldenaufstellung machen, ohne Zahlen im Chat.',
-		'09:16',
-		SUPERVISION_ROOM_ID
-	),
-	message(
-		'$s4',
-		'counsellor',
-		'Danke, das hilft. Ich formuliere es so und melde mich nach dem nächsten Kontakt.',
-		'09:20',
-		SUPERVISION_ROOM_ID
-	)
-];
+export const supervisionMessages = (): MessageItem[] =>
+	withDayPill([
+		message(
+			'$s1',
+			'counsellor',
+			'Die Ratsuchende hat heute zum zweiten Mal Mahnbescheide erwähnt, geht aber jedes Mal sofort auf ein anderes Thema. Wie würdest du das ansprechen?',
+			'09:12',
+			SUPERVISION_ROOM_ID
+		),
+		message(
+			'$s2',
+			'supervisor',
+			'Ich würde es nicht forcieren. Benenne kurz, dass du das Thema wahrgenommen hast, und lass die Entscheidung bei ihr – Vermeidung ist hier oft Scham.',
+			'09:15',
+			SUPERVISION_ROOM_ID
+		),
+		message(
+			'$s3',
+			'supervisor',
+			'Wenn es beim dritten Mal wieder kommt: Angebot für einen konkreten Termin zur Schuldenaufstellung machen, ohne Zahlen im Chat.',
+			'09:16',
+			SUPERVISION_ROOM_ID
+		),
+		message(
+			'$s4',
+			'counsellor',
+			'Danke, das hilft. Ich formuliere es so und melde mich nach dem nächsten Kontakt.',
+			'09:20',
+			SUPERVISION_ROOM_ID
+		)
+	]);
 
 /** A thread on the client's message `$m3`: root first, then replies. */
 export const THREAD_ROOT_ID = '$m3';
@@ -315,7 +332,7 @@ export const stageListItem = (): ListItemInterface =>
 		CLIENT_ROOM_ID,
 		55116,
 		'Mein Vertrag läuft im Oktober aus und niemand sagt mir, ob er verlängert wird.',
-		1788850680,
+		1788506280,
 		{
 			supervision: {
 				supervisedByMe: false,
@@ -339,7 +356,7 @@ export const stageListItems = (): ListItemInterface[] => [
 		'!yak-4708:oriso.invalid',
 		55118,
 		'Danke, bis nächste Woche dann.',
-		1788847080
+		1788502800
 	),
 	stageListItem(),
 	listItem(
@@ -349,7 +366,7 @@ export const stageListItems = (): ListItemInterface[] => [
 		'!fuchs-4702:oriso.invalid',
 		55122,
 		'Ich habe die Unterlagen jetzt zusammen.',
-		1788764280
+		1788450000
 	)
 ];
 

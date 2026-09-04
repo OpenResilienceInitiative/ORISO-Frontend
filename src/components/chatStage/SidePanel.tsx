@@ -12,6 +12,7 @@
  */
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
+import { useDockedComposerOffset } from './useDockedComposerOffset';
 import './sidePanel.styles.scss';
 
 export type SidePanelVariant = 'inside' | 'card' | 'fullscreen';
@@ -45,23 +46,47 @@ export const SidePanel = ({
 	className,
 	'data-cy': dataCy = 'side-panel'
 }: SidePanelProps) => {
+	const rootRef = useRef<HTMLElement | null>(null);
 	const timelineRef = useRef<HTMLDivElement | null>(null);
 	const hasTimeline = React.Children.toArray(timeline).length > 0;
+	const switcherOffset = useDockedComposerOffset(rootRef);
 
-	// Newest message in view on open and whenever the timeline grows.
+	// Newest message in view on open and whenever the timeline grows. The
+	// rows animate in (`.messageItem` enters at scale 0.98) and the editor
+	// mounts late, so scroll once more after they have settled.
 	useEffect(() => {
-		const node = timelineRef.current;
-		if (node) {
-			node.scrollTop = node.scrollHeight;
-		}
+		const toBottom = () => {
+			const node = timelineRef.current;
+			if (node) {
+				node.scrollTop = node.scrollHeight;
+			}
+		};
+		toBottom();
+		const timer = window.setTimeout(toBottom, 400);
+		return () => window.clearTimeout(timer);
 	});
 
-	const classes = ['sidePanel', `sidePanel--${variant}`, className]
+	// `card` and `fullscreen` are chat cards of their own: the `.session`
+	// class brings the card chrome AND scopes the composer stylesheet
+	// (`.session .textarea …`), so nothing is restyled here. `inside` sits
+	// within the open chat card and inherits both from it.
+	const classes = [
+		'sidePanel',
+		`sidePanel--${variant}`,
+		variant !== 'inside' && 'session',
+		className
+	]
 		.filter(Boolean)
 		.join(' ');
 
 	return (
-		<aside className={classes} aria-label={label} data-cy={dataCy}>
+		<aside
+			ref={rootRef}
+			className={classes}
+			aria-label={label}
+			data-cy={dataCy}
+			tabIndex={-1}
+		>
 			{header}
 			{banner && (
 				<div className="sidePanel__banner" data-cy="side-panel-banner">
@@ -85,7 +110,11 @@ export const SidePanel = ({
 					{composer}
 				</div>
 			)}
-			{switcher}
+			{React.isValidElement(switcher)
+				? React.cloneElement(switcher as React.ReactElement<any>, {
+						bottomOffset: switcherOffset
+					})
+				: switcher}
 		</aside>
 	);
 };

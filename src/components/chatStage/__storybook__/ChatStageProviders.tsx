@@ -19,6 +19,7 @@ import {
 	type ExtendedSessionInterface
 } from '../../../globalState';
 import { ServerSettingsContext } from '../../../globalState/provider/ServerSettingsProvider';
+import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import type { ListItemInterface } from '../../../globalState/interfaces';
 import { setMatrixClientServiceRef } from '../../../services/matrixClientRegistry';
@@ -44,14 +45,44 @@ export const stageRoomMembers = [
 	{ userId: SUPERVISOR_MATRIX_ID, name: SUPERVISOR_NAME }
 ];
 
+/**
+ * One Matrix client stand-in for everything on stage. The composer decorator
+ * only mocks `getRoom().getMembers()`; the session header (SessionMenu),
+ * the list rows (`useUnreadVersion`, unread counts) and the timeline also
+ * subscribe to client events and read account data, so give them no-ops.
+ */
+export const buildStageMatrixClientService = (
+	unreadByRoom: Record<string, number> = {}
+) => {
+	const room = (roomId: string) => ({
+		roomId,
+		name: roomId,
+		getMembers: () => stageRoomMembers,
+		getJoinedMembers: () => stageRoomMembers,
+		getMember: () => ({ powerLevel: 0 }),
+		getUnreadNotificationCount: () => unreadByRoom[roomId] ?? 0
+	});
+	const client = {
+		getUserId: () => COUNSELLOR_MATRIX_ID,
+		getRoom: (roomId: string) => room(roomId),
+		getRooms: () => [],
+		getAccountData: () => null,
+		setAccountData: async () => ({}),
+		on: () => client,
+		off: () => client,
+		addListener: () => client,
+		removeListener: () => client,
+		sendMessage: async () => ({ event_id: '$storybook' })
+	};
+	return {
+		getClient: () => client,
+		getRoom: (roomId: string) => room(roomId)
+	} as any;
+};
+
 /** Unread axis of the list rows comes from the Matrix registry (#1147). */
 export const seedStageMatrixRegistry = (unreadByRoom: Record<string, number>) =>
-	setMatrixClientServiceRef({
-		getClient: () => null,
-		getRoom: (roomId: string) => ({
-			getUnreadNotificationCount: () => unreadByRoom[roomId] ?? 0
-		})
-	} as any);
+	setMatrixClientServiceRef(buildStageMatrixClientService(unreadByRoom));
 
 export function ChatStageProviders({
 	activeSession = stageSession(),
@@ -62,6 +93,13 @@ export function ChatStageProviders({
 	sessions?: ListItemInterface[];
 	children: React.ReactNode;
 }) {
+	const matrixValue = React.useMemo(
+		() => ({
+			matrixClientService: buildStageMatrixClientService(),
+			setMatrixClientService: () => {}
+		}),
+		[]
+	);
 	const userDataValue = React.useMemo(
 		() => ({
 			userData: counsellorUserData,
@@ -115,11 +153,15 @@ export function ChatStageProviders({
 											activeSession={activeSession}
 											roomMembers={stageRoomMembers}
 										>
-											<UserDataContext.Provider
-												value={userDataValue}
+											<MatrixClientContext.Provider
+												value={matrixValue}
 											>
-												{children}
-											</UserDataContext.Provider>
+												<UserDataContext.Provider
+													value={userDataValue}
+												>
+													{children}
+												</UserDataContext.Provider>
+											</MatrixClientContext.Provider>
 										</ComposerStoryDecorator>
 									</LegalLinksContext.Provider>
 								</ServerSettingsContext.Provider>
