@@ -28,6 +28,7 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
+import { getErstantwortRenderMode } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -1096,10 +1097,13 @@ export const MessageItemComponent = ({
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
 	   resolves anything unknown to Agency Counselling, so it would render the
-	   wrong sequence rather than none. Excluded explicitly. */
-	const isErstantwortModality =
-		erstantwortModality !== undefined &&
-		erstantwortModality !== Modality.INTERNAL_GROUP;
+	   wrong sequence rather than none. Such an event renders one neutral line
+	   instead of falling through to the generic chrome (raw JSON payload).
+	   Decision lives in erstantwortRoomGate.ts. */
+	const erstantwortRenderMode = getErstantwortRenderMode(
+		isErstantwortEvent,
+		erstantwortModality
+	);
 	/* Only a freshly arrived event plays the stagger. The message list mounts and
 	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
 	   `revealed` to 0 on every mount — so without this an event received days ago
@@ -2456,7 +2460,7 @@ export const MessageItemComponent = ({
 	   as its own staged Carimat sequence, and the surrounding message frame
 	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
 	   sequence already draws. */
-	if (isErstantwortEvent && isErstantwortModality) {
+	if (erstantwortRenderMode === 'sequence') {
 		return (
 			<div className="messageItem messageItem--erstantwort">
 				{getMessageDate()}
@@ -2465,6 +2469,23 @@ export const MessageItemComponent = ({
 					conversationType={erstantwortModality}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
+			</div>
+		);
+	}
+
+	if (erstantwortRenderMode === 'unavailable') {
+		return (
+			<div className="messageItem messageItem--chatEvent messageItem--erstantwortUnavailable">
+				{getMessageDate()}
+				<div
+					className="messageItem__chatEvent"
+					data-testid="erstantwort-unavailable"
+				>
+					{translate(
+						'erstantwort.unavailableInRoom',
+						'First response – not available in this room.'
+					)}
+				</div>
 			</div>
 		);
 	}
