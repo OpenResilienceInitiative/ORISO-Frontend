@@ -3,10 +3,20 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Button, Dialog, Typography } from '@mui/material';
 import { AccountData } from './accountData/AccountData';
+import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
+import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
+import {
+	LegalLinksContext,
+	TProvidedLegalLink
+} from '../../globalState/provider/LegalLinksProvider';
+import {
+	AgencyDataInterface,
+	TopicsDataInterface
+} from '../../globalState/interfaces';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
@@ -15,11 +25,10 @@ import { phone375Globals } from '../message/messageStoryShell';
  * Nothing here is wired into the live flow. This is the shape that
  * ORISO-Frontend#1288 asks to be judged before #1289 implements it.
  *
- * What a link entry is, and why this screen differs from registration step 4:
- * an invitation already carries topic and agency, so the four-step stepper and
- * the selection chips would both describe steps the person never walked. What
- * is still missing is only who they are — and, if they want to come back, a
- * password.
+ * Why this screen differs from registration step 4: an invitation already
+ * carries topic and agency, so the four-step progress rail and the selection
+ * chips would both describe steps the person never walked. What is still
+ * missing is only who they are — and, if they want to come back, a password.
  */
 const meta: Meta = {
 	title: 'Registration/Entry room — link variant',
@@ -35,14 +44,72 @@ const meta: Meta = {
 
 export default meta;
 
+/* The consent sentence is not decoration and not optional. It is resolved from
+   the Fachbereich (Beratungsstelle x Thema) — a Träger with its own published
+   policy replaces the platform wording, everything else falls back to the
+   static sentence (ADR-021). `AccountData` reads both out of
+   `RegistrationContext`; without them the checkbox renders bare, which is
+   exactly what the first draft of this story got wrong.
+
+   A link entry has no selection steps, but it does have a Fachbereich — the
+   invitation carries it. So the context is provided here the same way the real
+   registration provides it, and nothing about the consent path changes. */
+const agency = {
+	id: 1,
+	name: 'Caritas Berlin — Hospiz- und Palliativberatung',
+	postcode: '10117',
+	city: 'Berlin',
+	description: '',
+	teamAgency: false,
+	consultingType: 1,
+	external: false
+} as unknown as AgencyDataInterface;
+
+const mainTopic = {
+	id: 5,
+	name: 'Hospiz- und Palliativberatung',
+	description: '',
+	status: 'ACTIVE'
+} as unknown as TopicsDataInterface;
+
+const legalLinks: TProvidedLegalLink[] = [
+	{
+		label: 'login.legal.infoText.dataprotection',
+		registration: true,
+		getUrl: () => 'https://oriso.example/datenschutz'
+	} as TProvidedLegalLink,
+	{
+		label: 'login.legal.infoText.impressum',
+		registration: true,
+		getUrl: () => 'https://oriso.example/impressum'
+	} as TProvidedLegalLink
+];
+
+const WithRegistrationContext = ({
+	children
+}: {
+	children: React.ReactNode;
+}) => (
+	<LegalLinksContext.Provider value={legalLinks}>
+		<RegistrationContext.Provider
+			value={{
+				registrationData: { agency, mainTopic } as never,
+				setDisabledNextButton: () => undefined
+			}}
+		>
+			{children}
+		</RegistrationContext.Provider>
+	</LegalLinksContext.Provider>
+);
+
 /**
  * The stage the link variant stands on.
  *
- * `showLoginLink` is **on** here, and that is deliberate: someone arriving by
- * link may well already have an account, and offering them the login on this
- * screen is point (d) of the entry composition. That is the opposite of the
- * handover screen after registration, where the same button is wrong because
- * the person is already signed in (ORISO-Frontend#1291).
+ * `showLoginLink` is **on** here, deliberately: someone arriving by link may
+ * already have an account, and offering them the login on this screen is point
+ * (d) of the entry composition. That is the opposite of the post-registration
+ * handover, where the same button is wrong because the person is already
+ * signed in (ORISO-Frontend#1291).
  */
 const EntryStage = ({ children }: { children: React.ReactNode }) => (
 	<Box sx={{ minHeight: '100vh' }}>
@@ -66,15 +133,15 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
 );
 
 /**
- * The footer of the link variant.
+ * The footer is the project's own `RegistrationStepNav` (design F3) — the same
+ * component the four registration steps use, not a rebuild.
  *
- * Two things are gone against registration step 4: the selection chips
- * ("Hospiz- und Palliativb… ✕", "77777 ✕"), because nothing was selected here,
- * and the four-step progress rail above the form.
- *
- * One thing is new: the temporary-join control. Frank put it in the footer, so
- * it sits next to the decision it changes — the primary button relabels from
- * "Registrieren" to "Beitreten" the moment it is on.
+ * One thing it cannot do yet: carry a second action next to the primary pill.
+ * The temporary-join choice needs exactly that — Frank, 2026-09-04: "das sollte
+ * eher einfach zwei Button sein, der eine kann ja grau sein und der andere halt
+ * rot". It is rendered beside the component here so the shape can be judged;
+ * giving `RegistrationStepNav` a secondary-action slot is part of #1289 rather
+ * than something a story should fake permanently.
  */
 const EntryFooter = ({
 	temporary,
@@ -91,30 +158,52 @@ const EntryFooter = ({
 			bgcolor: '#fff',
 			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
 			px: { xs: 2, sm: 5 },
-			py: 2,
-			display: 'flex',
-			flexWrap: 'wrap',
-			gap: 1.5,
-			alignItems: 'center',
-			justifyContent: 'space-between'
+			py: 2
 		}}
 	>
-		<Button
-			onClick={onToggleTemporary}
-			sx={{ textTransform: 'none', color: registrationMd3.onSurface }}
-		>
-			{temporary ? 'Doch ein Konto anlegen' : 'Ohne Konto beitreten'}
-		</Button>
-		<Button
-			variant="contained"
+		<Box
 			sx={{
-				textTransform: 'none',
-				bgcolor: registrationMd3.primary,
-				px: 3
+				display: 'flex',
+				alignItems: 'center',
+				gap: 2,
+				flexWrap: 'wrap'
 			}}
 		>
-			{temporary ? 'Beitreten' : 'Registrieren'}
-		</Button>
+			<Button
+				variant="outlined"
+				onClick={onToggleTemporary}
+				sx={{
+					'flex': '0 1 auto',
+					'textTransform': 'none',
+					'borderRadius': '28px',
+					'minHeight': 56,
+					'px': 3,
+					'fontSize': 16,
+					'fontWeight': 600,
+					'color': registrationMd3.onSurface,
+					'borderColor': registrationMd3.outline,
+					'backgroundColor': registrationMd3.surfaceContainerLow,
+					'&:hover': {
+						borderColor: registrationMd3.onSurface,
+						backgroundColor: registrationMd3.surfaceContainer
+					}
+				}}
+			>
+				{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
+			</Button>
+			<Box sx={{ flex: '1 1 240px', minWidth: 0 }}>
+				<RegistrationStepNav
+					prevStepUrl={null}
+					backLabel="Zurück"
+					nextStepUrl={null}
+					nextLabel={temporary ? 'Beitreten' : 'Registrieren'}
+					registerLabel={temporary ? 'Beitreten' : 'Registrieren'}
+					registeringLabel={
+						temporary ? 'Wird beigetreten …' : 'Wird registriert …'
+					}
+				/>
+			</Box>
+		</Box>
 	</Box>
 );
 
@@ -125,17 +214,19 @@ const EntryScreen = ({
 }) => {
 	const [temporary, setTemporary] = useState(startTemporary);
 	return (
-		<EntryStage>
-			<AccountData
-				onChange={() => undefined}
-				entry="link"
-				temporary={temporary}
-			/>
-			<EntryFooter
-				temporary={temporary}
-				onToggleTemporary={() => setTemporary((v) => !v)}
-			/>
-		</EntryStage>
+		<WithRegistrationContext>
+			<EntryStage>
+				<AccountData
+					onChange={() => undefined}
+					entry="link"
+					temporary={temporary}
+				/>
+				<EntryFooter
+					temporary={temporary}
+					onToggleTemporary={() => setTemporary((v) => !v)}
+				/>
+			</EntryStage>
+		</WithRegistrationContext>
 	);
 };
 
@@ -146,7 +237,7 @@ export const FreshlyLoaded: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Ein Name steht schon da, das Passwort ist leer. Kein Fortschrittsbalken, keine Auswahl-Chips — beides beschriebe Schritte, die es hier nie gab. Oben rechts bleibt „Einloggen", weil jemand mit Konto genau hier abbiegen können muss.'
+				story: 'Ein Name steht schon da, das Passwort ist leer. Kein Fortschrittsbalken, keine Auswahl-Chips — beides beschriebe Schritte, die es hier nie gab. Oben rechts bleibt „Einloggen", weil jemand mit Konto genau hier abbiegen können muss. Die Datenschutz-Zustimmung lädt wie in der Registrierung aus dem Fachbereich.'
 			}
 		}
 	}
@@ -159,7 +250,7 @@ export const TemporaryJoin: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Das Passwort wird erzeugt und nicht gezeigt — als wäre der Vorschlagsknopf einmal unsichtbar gedrückt worden. Aus „Registrieren" wird „Beitreten". Statt der Passwortfelder steht dort der Satz, der heute im Live-Chat fehlt: dass dieses Gespräch mit dem Fenster endet. Die Datenschutz-Zustimmung bleibt Pflicht.'
+				story: 'Das Passwort wird erzeugt und nicht gezeigt. Aus „Registrieren" wird „Beitreten". Statt der Passwortfelder steht der Satz, der heute im Live-Chat fehlt: dass dieses Gespräch mit dem Fenster endet. Die Zustimmung bleibt Pflicht — sie hängt am Fachbereich, nicht daran, ob ein Konto entsteht.'
 			}
 		}
 	}
@@ -193,65 +284,108 @@ export const Mobile: StoryObj = {
 };
 
 /**
- * The same content as a dialog.
+ * The same content as a dialog — with the same two choices.
  *
  * Frank, 2026-09-04: booking an appointment from inside a chat should not throw
- * the person out of the conversation. Same fields, same rules, different
- * container — put side by side so it can be decided whether one component can
- * serve both, or whether the dialog needs its own.
+ * the person out of the conversation. The first draft of this story showed only
+ * the temporary state, which read as a decision it never was: the dialog needs
+ * both ways too, and the consent sentence just the same.
  */
-export const AsDialog: StoryObj = {
-	name: '5 — Als Dialog statt Bildschirm',
-	render: () => (
-		<Box sx={{ minHeight: '100vh', bgcolor: registrationMd3.surface }}>
-			<Dialog open fullWidth maxWidth="sm" onClose={() => undefined}>
-				<Box sx={{ p: 3 }}>
-					<Typography
-						sx={{
-							fontSize: 13,
-							letterSpacing: '.08em',
-							textTransform: 'uppercase',
-							color: registrationMd3.onSurfaceVariant,
-							mb: 1
-						}}
-					>
-						Termin buchen
-					</Typography>
-					<AccountData
-						onChange={() => undefined}
-						entry="link"
-						temporary
-					/>
-					<Box
-						sx={{
-							mt: 3,
-							display: 'flex',
-							justifyContent: 'flex-end',
-							gap: 1
-						}}
-					>
-						<Button sx={{ textTransform: 'none' }}>
-							Abbrechen
-						</Button>
-						<Button
-							variant="contained"
+const EntryDialog = ({
+	startTemporary = false
+}: {
+	startTemporary?: boolean;
+}) => {
+	const [temporary, setTemporary] = useState(startTemporary);
+	return (
+		<WithRegistrationContext>
+			<Box sx={{ minHeight: '100vh', bgcolor: registrationMd3.surface }}>
+				<Dialog open fullWidth maxWidth="sm" onClose={() => undefined}>
+					<Box sx={{ p: 3 }}>
+						<Typography
 							sx={{
-								textTransform: 'none',
-								bgcolor: registrationMd3.primary
+								fontSize: 13,
+								letterSpacing: '.08em',
+								textTransform: 'uppercase',
+								color: registrationMd3.onSurfaceVariant,
+								mb: 1
 							}}
 						>
-							Beitreten
-						</Button>
+							Termin buchen
+						</Typography>
+						<AccountData
+							onChange={() => undefined}
+							entry="link"
+							temporary={temporary}
+						/>
+						<Box
+							sx={{
+								mt: 3,
+								display: 'flex',
+								gap: 1.5,
+								flexWrap: 'wrap',
+								justifyContent: 'flex-end'
+							}}
+						>
+							<Button
+								variant="outlined"
+								onClick={() => setTemporary((v) => !v)}
+								sx={{
+									textTransform: 'none',
+									borderRadius: '28px',
+									minHeight: 48,
+									px: 3,
+									color: registrationMd3.onSurface,
+									borderColor: registrationMd3.outline,
+									backgroundColor:
+										registrationMd3.surfaceContainerLow
+								}}
+							>
+								{temporary
+									? 'Konto anlegen'
+									: 'Ohne Konto beitreten'}
+							</Button>
+							<Button
+								variant="contained"
+								sx={{
+									textTransform: 'none',
+									borderRadius: '28px',
+									minHeight: 48,
+									px: 3,
+									bgcolor: registrationMd3.primary
+								}}
+							>
+								{temporary ? 'Beitreten' : 'Registrieren'}
+							</Button>
+						</Box>
 					</Box>
-				</Box>
-			</Dialog>
-		</Box>
-	),
+				</Dialog>
+			</Box>
+		</WithRegistrationContext>
+	);
+};
+
+export const AsDialog: StoryObj = {
+	name: '5 — Als Dialog (mit Konto)',
+	render: () => <EntryDialog />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Gleicher Inhalt, anderer Behälter. Für „aus dem Chat heraus einen Termin buchen" ist der Dialog die bessere Form — der Mensch verliert das Gespräch nicht aus dem Blick.'
+				story: 'Gleicher Inhalt, anderer Behälter — und dieselben zwei Wege. Für „aus dem Chat heraus einen Termin buchen" ist der Dialog die bessere Form: der Mensch verliert das Gespräch nicht aus dem Blick.'
+			}
+		}
+	}
+};
+
+export const AsDialogTemporary: StoryObj = {
+	name: '6 — Als Dialog (temporär)',
+	render: () => <EntryDialog startTemporary />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der Dialog im temporären Zustand. Auch hier gilt die Zustimmung, auch hier steht der Hinweis, dass es keinen Weg zurück gibt.'
 			}
 		}
 	}
