@@ -127,8 +127,16 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
 			>
 				{/* The footer is fixed, so the column has to reserve its height
 				    or the consent checkbox disappears behind it. */}
+				{/* `minWidth: 0` is load-bearing: `.stageLayout__content` is a flex
+				    container, and a flex item defaults to `min-width: auto`, so
+				    without it this box refuses to shrink below the 540 px form
+				    plus padding — 580 px inside a 375 px phone, clipped on both
+				    sides (Frank, 2026-09-04). */}
 				<Box
 					sx={{
+						width: '100%',
+						minWidth: 0,
+						maxWidth: '100%',
 						px: { xs: 2.5, sm: 5 },
 						pt: { xs: 3, sm: 4 },
 						pb: { xs: '128px', sm: '136px' }
@@ -165,17 +173,35 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
  * argument for deciding it rather than a decision made in passing.
  */
 const footerButtonSx = {
-	flex: '1 1 0',
-	textTransform: 'none',
-	borderRadius: '28px',
-	minHeight: 56,
-	px: 3,
-	fontSize: 16,
-	fontWeight: 600,
-	whiteSpace: 'nowrap',
+	'flex': '1 1 0',
+	'minWidth': 0,
+	'textTransform': 'none',
+	'borderRadius': '28px',
+	'minHeight': 56,
+	/* Padding and type shrink before the label does, so the text never touches
+	   the rounded edge on a phone (Frank, 2026-09-04). */
+	'px': { xs: 1.75, sm: 3 },
+	'fontSize': { xs: 15, sm: 16 },
+	'fontWeight': 600,
 	/* Frank, 2026-09-04: "Button also needs footer shadow then." Both carry the
 	   same elevation, so they sit on one plane. */
-	boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)'
+	'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.12)',
+	/* Seven languages share these two buttons and German is not the longest of
+	   them. A label that no longer fits is cut with an ellipsis instead of
+	   pushing the button out of the footer — "es braucht auch ein Truncating,
+	   falls das noch schlimmer wird". The whole label stays reachable through
+	   `title`, so nothing is lost, only shortened. */
+	'& .MuiButton-label, & > *': {
+		minWidth: 0,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
+	},
+	'overflow': 'hidden',
+	'textOverflow': 'ellipsis',
+	'whiteSpace': 'nowrap',
+	'display': 'block',
+	'lineHeight': '56px'
 } as const;
 
 const EntryFooter = ({
@@ -221,6 +247,7 @@ const EntryFooter = ({
 					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
 				}
 			}}
+			title={temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
 		>
 			{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
 		</Button>
@@ -235,6 +262,7 @@ const EntryFooter = ({
 					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)'
 				}
 			}}
+			title={temporary ? 'Beitreten' : 'Registrieren'}
 		>
 			{temporary ? 'Beitreten' : 'Registrieren'}
 		</Button>

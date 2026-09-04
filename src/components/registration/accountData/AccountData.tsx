@@ -499,6 +499,16 @@ export const AccountData: FC<{
 	/* The password block is the only thing a temporary join hides. The identity
 	   fields stay: the person still picks how they are called. */
 	const showPasswordFields = !temporary;
+
+	/* Compact lives inside a container with its own surface — the M3 dialog is
+	   grey. A hardcoded white field fill turns every input into a white box on
+	   that grey (Frank, 2026-09-04: "this must be background color"). Letting it
+	   be transparent makes the field take whatever surface it stands on. */
+	const surfaceSx = compact
+		? {
+				'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
+			}
+		: undefined;
 	const suggestButton = (
 		icon: string,
 		label: ReactNode,
@@ -536,7 +546,7 @@ export const AccountData: FC<{
 		compact ? `${parseInt(full, 10) / 2}px` : full;
 
 	return (
-		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto' }}>
+		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
 			<Box
 				sx={{
 					display: 'flex',
@@ -555,14 +565,19 @@ export const AccountData: FC<{
 							{t('registration.account.headline')}
 						</Typography>
 					)}
-					<Typography
-						sx={{
-							mt: compact ? 0 : '12px',
-							...registrationScreenIntroSx
-						}}
-					>
-						{t('registration.account.subline')}
-					</Typography>
+					{/* Compact: the container's own description already says why
+					    the person is here, and the two sentences collided
+					    (Frank, 2026-09-04: "cut off looks bad"). */}
+					{!compact && (
+						<Typography
+							sx={{
+								mt: '12px',
+								...registrationScreenIntroSx
+							}}
+						>
+							{t('registration.account.subline')}
+						</Typography>
+					)}
 				</Box>
 				<Box
 					sx={{
