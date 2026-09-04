@@ -32,6 +32,7 @@ ROUTER_V7_MIGRATION_PLAN.md
 .idea
 storybook-static
 .storage
+.tmp-review/
 
 # cypress
 browserstack.json

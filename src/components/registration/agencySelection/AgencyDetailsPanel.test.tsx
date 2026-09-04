@@ -1,9 +1,22 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AgencyDataInterface } from '../../../globalState/interfaces';
+
+const TRANSLATIONS: Record<string, string> = {
+	'login.legal.infoText.dataprotection': 'Datenschutzerklärung',
+	'login.legal.infoText.impressum': 'Impressum'
+};
+
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string, fallback?: string) =>
+			TRANSLATIONS[key] ?? fallback ?? key,
+		i18n: { language: 'de' }
+	}),
+	Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>
+}));
 
 vi.mock('../../../api/apiAgencyLanguages', () => ({
 	apiAgencyLanguages: vi.fn(async () => ({ languages: ['de', 'en'] }))
@@ -15,17 +28,33 @@ vi.mock('../../emptyState/SearchEmptyStateAnimation', () => ({
 	SearchEmptyStateAnimation: () => null
 }));
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
-		i18n: { language: 'de' }
-	})
+// AgencyDetailsPanel imports RegistrationContext from the globalState barrel,
+// which re-exports RegistrationProvider → AgencySelection → lottie-web.
+vi.mock('../../../globalState', async () => {
+	const ReactModule = await import('react');
+	return {
+		RegistrationContext: ReactModule.createContext({})
+	};
+});
+
+vi.mock('../../../globalState/provider/LegalLinksProvider', async () => {
+	const ReactModule = await import('react');
+	return { LegalLinksContext: ReactModule.createContext([]) };
+});
+
+vi.mock('../../../globalState/provider/TenantProvider', () => ({
+	useTenant: () => ({ content: {} })
 }));
 
 /* eslint-disable import/first -- mocks above */
 import { AgencyDetailsPanel } from './AgencyDetailsPanel';
 import { AgencySelectionResults } from './AgencySelectionResults';
+import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { RegistrationContext } from '../../../globalState';
+import {
+	AgencyDataInterface,
+	TopicsDataInterface
+} from '../../../globalState/interfaces';
 /* eslint-enable import/first */
 
 const LANGUAGES_INTRO = 'Diese Beratungsstelle berät Sie auf:';
@@ -69,12 +98,57 @@ const renderCard = () =>
 		</RegistrationContext.Provider>
 	);
 
-describe('AgencyDetailsPanel (#1274)', () => {
-	afterEach(() => {
-		cleanup();
-		vi.clearAllMocks();
-	});
+const topic = { id: 7, name: 'Suchtberatung' } as TopicsDataInterface;
 
+const legalLinks = [
+	{
+		label: 'login.legal.infoText.dataprotection',
+		registration: true,
+		getUrl: () => 'https://oriso.test/datenschutz'
+	},
+	{
+		label: 'login.legal.infoText.impressum',
+		registration: true,
+		getUrl: () => 'https://oriso.test/impressum'
+	}
+] as unknown as React.ContextType<typeof LegalLinksContext>;
+
+const agencyWith = (flags: {
+	hasPublishedDpp?: boolean;
+	hasPublishedImprint?: boolean;
+}) =>
+	({
+		id: 42,
+		name: 'Beratungsstelle Musterstadt',
+		city: '',
+		postcode: '',
+		description: '',
+		consultingType: 0,
+		offline: false,
+		departments: [{ topicId: 7, ...flags }]
+	}) as AgencyDataInterface;
+
+const renderPanel = (agency: AgencyDataInterface) =>
+	render(
+		<LegalLinksContext.Provider value={legalLinks}>
+			<RegistrationContext.Provider
+				value={
+					{
+						registrationData: { mainTopic: topic }
+					} as React.ContextType<typeof RegistrationContext>
+				}
+			>
+				<AgencyDetailsPanel agency={agency} open />
+			</RegistrationContext.Provider>
+		</LegalLinksContext.Provider>
+	);
+
+afterEach(() => {
+	cleanup();
+	vi.clearAllMocks();
+});
+
+describe('AgencyDetailsPanel (#1274)', () => {
 	it('orders the rows About, Sprachen, Adresse', () => {
 		const { container } = render(
 			<AgencyDetailsPanel agency={agency} open />
@@ -126,5 +200,51 @@ describe('AgencyDetailsPanel (#1274)', () => {
 
 		const tooltip = await screen.findByRole('tooltip');
 		expect(tooltip.textContent).toContain(LANGUAGES_INTRO);
+	});
+});
+
+describe('AgencyDetailsPanel — Rechtliches row', () => {
+	it('renders a Datenschutzerklärung button instead of the accordion when DPP is published', () => {
+		renderPanel(agencyWith({ hasPublishedDpp: true }));
+
+		expect(
+			screen.getByRole('button', { name: 'Datenschutzerklärung' })
+		).toBeTruthy();
+		expect(screen.queryByRole('button', { name: 'Impressum' })).toBeNull();
+		expect(
+			screen.queryByText('Datenschutzhinweise der Beratungsstelle')
+		).toBeNull();
+		expect(screen.queryByText('Rechtliches')).toBeTruthy();
+	});
+
+	it('hides the Rechtliches row when neither document is published', () => {
+		renderPanel(agencyWith({}));
+
+		expect(screen.queryByText('Rechtliches')).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'Datenschutzerklärung' })
+		).toBeNull();
+		expect(screen.queryByRole('button', { name: 'Impressum' })).toBeNull();
+	});
+
+	it('opens the shared modal on click, not a new tab', () => {
+		const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+		renderPanel(agencyWith({ hasPublishedDpp: true }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Datenschutzerklärung' })
+		);
+
+		expect(open).not.toHaveBeenCalled();
+		expect(screen.getByTestId('legal-modal-privacy')).toBeTruthy();
+	});
+
+	it('renders only the Impressum button when only imprint is published', () => {
+		renderPanel(agencyWith({ hasPublishedImprint: true }));
+
+		expect(screen.getByRole('button', { name: 'Impressum' })).toBeTruthy();
+		expect(
+			screen.queryByRole('button', { name: 'Datenschutzerklärung' })
+		).toBeNull();
 	});
 });
