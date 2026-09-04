@@ -124,7 +124,15 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
 				stage={<Stage hasAnimation={false} />}
 				mobileHero="bar"
 			>
-				<Box sx={{ px: { xs: 2.5, sm: 5 }, pt: { xs: 3, sm: 4 } }}>
+				{/* The footer is fixed, so the column has to reserve its height
+				    or the consent checkbox disappears behind it. */}
+				<Box
+					sx={{
+						px: { xs: 2.5, sm: 5 },
+						pt: { xs: 3, sm: 4 },
+						pb: { xs: '128px', sm: '136px' }
+					}}
+				>
 					{children}
 				</Box>
 			</StageLayout>
@@ -133,15 +141,27 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
 );
 
 /**
- * The footer is the project's own `RegistrationStepNav` (design F3) — the same
- * component the four registration steps use, not a rebuild.
+ * The footer, positioned exactly like the real registration footer
+ * (`Registration.tsx:730-750`): fixed to the bottom right, full width on mobile
+ * and `60vw` from `lg` up so it spans the content column and stops at the red
+ * panel. That is also why the stage's legal links stay readable — a footer that
+ * merely sticks inside the content column, as the first draft did, lands on top
+ * of them.
  *
- * One thing it cannot do yet: carry a second action next to the primary pill.
- * The temporary-join choice needs exactly that — Frank, 2026-09-04: "das sollte
- * eher einfach zwei Button sein, der eine kann ja grau sein und der andere halt
- * rot". It is rendered beside the component here so the shape can be judged;
- * giving `RegistrationStepNav` a secondary-action slot is part of #1289 rather
- * than something a story should fake permanently.
+ * The hairline is `outlineVariant`, the same token the real footer uses. The
+ * darker rule in the first draft was not a design choice, it was a mistake.
+ *
+ * Two open points this story deliberately makes visible rather than fakes away,
+ * both belonging to #1289:
+ *
+ * 1. `RegistrationStepNav` always renders a back circle — the house rule says
+ *    disable, never hide, which is right for step 1 of 4. A link entry has no
+ *    previous step at all, so the circle is not "disabled", it is meaningless.
+ *    Frank, 2026-09-04, marked it for removal. It is suppressed here with a
+ *    single CSS rule so the target state can be judged; the component needs a
+ *    way to express "there is no back" instead.
+ * 2. The component has no slot for a second action. The temporary-join choice
+ *    needs one, so it sits beside the component here.
  */
 const EntryFooter = ({
 	temporary,
@@ -152,57 +172,68 @@ const EntryFooter = ({
 }) => (
 	<Box
 		sx={{
-			position: 'sticky',
-			bottom: 0,
-			mt: 3,
-			bgcolor: '#fff',
-			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-			px: { xs: 2, sm: 5 },
-			py: 2
+			'position': 'fixed',
+			'bottom': 0,
+			'right': 0,
+			'width': { xs: '100vw', lg: '60vw' },
+			'minHeight': { sm: '96px' },
+			'backgroundColor': 'rgba(255, 255, 255, 0.94)',
+			'backdropFilter': 'blur(8px)',
+			'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
+			'display': 'flex',
+			'alignItems': 'center',
+			'gap': 2,
+			'pt': { xs: 1.5, sm: 0 },
+			'pb': {
+				xs: 'calc(12px + env(safe-area-inset-bottom))',
+				sm: 0
+			},
+			'px': { xs: 2, sm: 3, lg: 4 },
+			'zIndex': 65,
+			/* See point 1 above: the back circle is the first child of
+			   `RegistrationStepNav` and has nowhere to lead on a link entry. */
+			'& .registration-entry-nav > * > *:first-of-type': {
+				display: 'none'
+			}
 		}}
 	>
-		<Box
+		<Button
+			variant="outlined"
+			onClick={onToggleTemporary}
 			sx={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: 2,
-				flexWrap: 'wrap'
+				'flex': '0 1 auto',
+				'textTransform': 'none',
+				'borderRadius': '28px',
+				'minHeight': 56,
+				'px': 3,
+				'fontSize': 16,
+				'fontWeight': 600,
+				'whiteSpace': 'nowrap',
+				'color': registrationMd3.onSurface,
+				'borderColor': registrationMd3.outline,
+				'backgroundColor': registrationMd3.surfaceContainerLow,
+				'&:hover': {
+					borderColor: registrationMd3.onSurface,
+					backgroundColor: registrationMd3.surfaceContainer
+				}
 			}}
 		>
-			<Button
-				variant="outlined"
-				onClick={onToggleTemporary}
-				sx={{
-					'flex': '0 1 auto',
-					'textTransform': 'none',
-					'borderRadius': '28px',
-					'minHeight': 56,
-					'px': 3,
-					'fontSize': 16,
-					'fontWeight': 600,
-					'color': registrationMd3.onSurface,
-					'borderColor': registrationMd3.outline,
-					'backgroundColor': registrationMd3.surfaceContainerLow,
-					'&:hover': {
-						borderColor: registrationMd3.onSurface,
-						backgroundColor: registrationMd3.surfaceContainer
-					}
-				}}
-			>
-				{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
-			</Button>
-			<Box sx={{ flex: '1 1 240px', minWidth: 0 }}>
-				<RegistrationStepNav
-					prevStepUrl={null}
-					backLabel="Zurück"
-					nextStepUrl={null}
-					nextLabel={temporary ? 'Beitreten' : 'Registrieren'}
-					registerLabel={temporary ? 'Beitreten' : 'Registrieren'}
-					registeringLabel={
-						temporary ? 'Wird beigetreten …' : 'Wird registriert …'
-					}
-				/>
-			</Box>
+			{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
+		</Button>
+		<Box
+			className="registration-entry-nav"
+			sx={{ flex: '1 1 240px', minWidth: 0 }}
+		>
+			<RegistrationStepNav
+				prevStepUrl={null}
+				backLabel="Zurück"
+				nextStepUrl={null}
+				nextLabel={temporary ? 'Beitreten' : 'Registrieren'}
+				registerLabel={temporary ? 'Beitreten' : 'Registrieren'}
+				registeringLabel={
+					temporary ? 'Wird beigetreten …' : 'Wird registriert …'
+				}
+			/>
 		</Box>
 	</Box>
 );
