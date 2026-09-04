@@ -3417,6 +3417,7 @@
 			"image": "Image",
 			"video": "Video",
 			"file": "File",
+			"first_response": "First response",
 			"registered": {
 				"tab": "Initial inquiries"
 			}

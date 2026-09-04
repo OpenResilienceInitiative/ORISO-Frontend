@@ -3450,6 +3450,7 @@
 			"image": "Image jointe",
 			"video": "Vidéo",
 			"file": "Fichier",
+			"first_response": "Première réponse",
 			"registered": {
 				"tab": "Premières demandes"
 			}

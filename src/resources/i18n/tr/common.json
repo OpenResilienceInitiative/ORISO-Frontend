@@ -3450,6 +3450,7 @@
 			"image": "Görsel",
 			"video": "Video",
 			"file": "Dosya",
+			"first_response": "İlk yanıt",
 			"registered": {
 				"tab": "İlk sorgulamalar"
 			}
