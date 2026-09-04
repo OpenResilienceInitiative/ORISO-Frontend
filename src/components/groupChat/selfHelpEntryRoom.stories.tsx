@@ -1,6 +1,17 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
+import { AccountData } from '../registration/accountData/AccountData';
+import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
+import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
+import {
+	LegalLinksContext,
+	TProvidedLegalLink
+} from '../../globalState/provider/LegalLinksProvider';
+import {
+	AgencyDataInterface,
+	TopicsDataInterface
+} from '../../globalState/interfaces';
 import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from './WaitingAreaRules';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
@@ -419,6 +430,139 @@ export const StagedPlainGuest: StoryObj = {
 		docs: {
 			description: {
 				story: 'Die schlichte Ansicht auf der Bühne. Offene Produktentscheidung dahinter (Frank, 2026-09-04): wer die Gruppe anlegt, soll bestimmen können, ob nur temporäre Gäste hinein dürfen, ob beides erlaubt ist, oder ob ein Konto Pflicht ist. Diese Ansicht ist der Fall „temporär erlaubt".'
+			}
+		}
+	}
+};
+
+/* ---------------------------------------------------------------------------
+   Step 0 — the screen before the clock.
+   The waiting views above are what someone sees once they are in. This is how
+   they get there: the same entry composition as every other link, with the
+   self-help group's own wording. Shown last in the file, first in the flow.
+   --------------------------------------------------------------------------- */
+
+const agency = {
+	id: 88,
+	name: 'Caritas Berlin — Selbsthilfegruppe Trauer',
+	postcode: '10117',
+	city: 'Berlin',
+	description: '',
+	teamAgency: false,
+	consultingType: 1,
+	external: false
+} as unknown as AgencyDataInterface;
+
+const groupTopic = {
+	id: 9,
+	name: 'Trauerbegleitung',
+	description: '',
+	status: 'ACTIVE'
+} as unknown as TopicsDataInterface;
+
+const legalLinks: TProvidedLegalLink[] = [
+	{
+		label: 'login.legal.infoText.dataprotection',
+		registration: true,
+		getUrl: () => 'https://oriso.example/datenschutz'
+	} as TProvidedLegalLink,
+	{
+		label: 'login.legal.infoText.impressum',
+		registration: true,
+		getUrl: () => 'https://oriso.example/impressum'
+	} as TProvidedLegalLink
+];
+
+const GroupEntry = ({
+	temporaryStart = true
+}: {
+	temporaryStart?: boolean;
+}) => {
+	const [temporary, setTemporary] = React.useState(temporaryStart);
+	return (
+		<LegalLinksContext.Provider value={legalLinks}>
+			<RegistrationContext.Provider
+				value={{
+					registrationData: {
+						agency,
+						mainTopic: groupTopic
+					} as never,
+					setDisabledNextButton: () => undefined
+				}}
+			>
+				<Box sx={{ minHeight: '100vh' }}>
+					<AgencySpecificContext.Provider
+						value={{
+							specificAgency: null,
+							setSpecificAgency: () => undefined
+						}}
+					>
+						<StageLayout
+							className="stageLayout--registration"
+							showLegalLinks={true}
+							showLoginLink={true}
+							showRegistrationLink={false}
+							stage={<Stage hasAnimation={false} />}
+							mobileHero="bar"
+						>
+							<Box
+								sx={{
+									width: '100%',
+									minWidth: 0,
+									maxWidth: '100%',
+									px: { xs: 2.5, sm: 5 },
+									pt: { xs: 3, sm: 4 },
+									pb: { xs: '128px', sm: '136px' }
+								}}
+							>
+								<AccountData
+									onChange={() => undefined}
+									entry="link"
+									temporary={temporary}
+								/>
+								<RegistrationFooter
+									secondary={{
+										label: temporary
+											? 'Konto anlegen'
+											: 'Ohne Konto beitreten',
+										onClick: () => setTemporary((v) => !v)
+									}}
+									primary={{
+										label: temporary
+											? 'Der Gruppe beitreten'
+											: 'Registrieren'
+									}}
+								/>
+							</Box>
+						</StageLayout>
+					</AgencySpecificContext.Provider>
+				</Box>
+			</RegistrationContext.Provider>
+		</LegalLinksContext.Provider>
+	);
+};
+
+export const EntryScreenTemporary: StoryObj = {
+	name: '0a — Eintritt: ohne Konto',
+	render: () => <GroupEntry />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der Schritt vor der Uhr. Heute führt der Gruppen-Link auf die Anmeldeseite, und wer kein Konto hat, muss Thema, Postleitzahl und Beratungsstelle angeben — alles drei bringt der Link längst mit. Hier fehlt nur noch der Name. Die Hauptaktion heißt „Der Gruppe beitreten", nicht „Registrieren": das ist, was der Mensch vorhat.'
+			}
+		}
+	}
+};
+
+export const EntryScreenWithAccount: StoryObj = {
+	name: '0b — Eintritt: mit Konto',
+	render: () => <GroupEntry temporaryStart={false} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Für jemanden, der wiederkommen will — bei einer Gruppe, die sich wöchentlich trifft, ist das der Normalfall und nicht die Ausnahme. Oben rechts steht „Einloggen" für die, die schon ein Konto haben; der Link muss die Anmeldung überleben, sonst landen sie in ihrer Sitzungsliste statt in der Gruppe.'
 			}
 		}
 	}
