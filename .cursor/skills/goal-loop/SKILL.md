@@ -11,7 +11,7 @@ Run the whole loop in one turn. Do not stop between iterations to ask "shall I c
 
 1. Normalize the goal with the `problem-intake` skill → `00-problem-brief.md`. The acceptance criteria in that brief are the loop's exit test. If the goal is one sentence, write criteria yourself from context; ask the user only for genuinely blocking unknowns.
 2. If non-trivial (more than one file, new behavior, UI, security, or unclear requirements): run the `planner` subagent → `01-spike.md` and `02-implementation-plan.md` (see `spike-doc` and `task-implementation-doc` skills).
-3. Git: check `git status`; confirm with user if the tree is dirty. Branch from `pre-dev` as `cursor/<ticket-or-feature>/<short-slug>`. Never implement on `pre-dev`.
+3. Git: check `git status`; confirm with user if the tree is dirty. Branch from `dev` as `cursor/<ticket-or-feature>/<short-slug>`. Never implement on `dev`.
 4. Create `03-progress-log.md` with the iteration table (template below).
 
 ## Iteration protocol
