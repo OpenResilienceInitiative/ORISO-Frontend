@@ -29,6 +29,7 @@ import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import { MessageTimeline } from './MessageTimeline';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
@@ -5242,105 +5243,63 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</div>
 						)}
 						{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
-						{messages &&
-							(ready || !activeSession.rid) &&
-							messages.map((message: MessageItem, index) => (
-								<React.Fragment key={`${message._id}-${index}`}>
-									<MessageItemComponent
-										clientName={
-											getContact(activeSession)
-												?.username ||
-											translate(
-												'sessionList.user.consultantUnknown'
-											)
-										}
-										askerMatrixUserId={
-											!activeSession.rid &&
-											message.userId &&
-											!message.userId.includes(
-												activeSession.consultant
-													?.username || ''
-											)
-												? message.userId
-												: activeSession.item
-														.askerMatrixUserId
-										}
-										isOnlyEnquiry={isOnlyEnquiry}
-										isMyMessage={isMyMessageMatrix(
-											message.userId
-										)}
-										isUserBanned={props.bannedUsers.includes(
-											message.username
-										)}
-										handleDecryptionErrors={
-											handleDecryptionErrors
-										}
-										handleDecryptionSuccess={
-											handleDecryptionSuccess
-										}
-										e2eeParams={{
-											key,
-											keyID,
-											encrypted,
-											subscriptionKeyLost
-										}}
-										renderMode="main"
-										threadsEnabled={isThreadsEnabled}
-										threadSummary={threadSummaries.get(
-											message._id
-										)}
-										onOpenThread={
-											isThreadsEnabled
-												? () =>
-														handleOpenThread(
-															message
-														)
-												: undefined
-										}
-										replyQuote={resolveReplyQuote(
-											message.replyToEventId
-										)}
-										onReplyDirect={() =>
-											handleReplyDirect(message)
-										}
-										onEditDirect={
-											isMyMessageMatrix(message.userId)
-												? () =>
-														handleEditDirect(
-															message
-														)
-												: undefined
-										}
-										onDeleteDirect={
-											isMyMessageMatrix(message.userId)
-												? () =>
-														handleDeleteDirect(
-															message
-														)
-												: undefined
-										}
-										reactions={getReactionsFor(message._id)}
-										onReact={(key: string) =>
-											handleReact(message._id, key)
-										}
-										onUnreact={handleUnreact}
-										{...message}
-										encryptionBroke={decryptionFailures.has(
-											message._id
-										)}
-									/>
-									{decryptionFailures.has(message._id) &&
-										(!isThreadsEnabled ||
-											!message.threadRootEventId) && (
-											<MessageSendFailed
-												messageTime={
-													message.messageTime
-												}
-												isDecryptionFailure
-											/>
-										)}
-								</React.Fragment>
-							))}
+						{messages && (ready || !activeSession.rid) && (
+							<MessageTimeline
+								messages={messages}
+								renderMode="main"
+								clientName={
+									getContact(activeSession)?.username ||
+									translate(
+										'sessionList.user.consultantUnknown'
+									)
+								}
+								askerMatrixUserIdFor={(message) =>
+									!activeSession.rid &&
+									message.userId &&
+									!message.userId.includes(
+										activeSession.consultant?.username || ''
+									)
+										? message.userId
+										: activeSession.item.askerMatrixUserId
+								}
+								isOnlyEnquiry={isOnlyEnquiry}
+								isMyMessage={isMyMessageMatrix}
+								isUserBanned={(username) =>
+									props.bannedUsers.includes(username)
+								}
+								handleDecryptionErrors={handleDecryptionErrors}
+								handleDecryptionSuccess={
+									handleDecryptionSuccess
+								}
+								e2eeParams={{
+									key,
+									keyID,
+									encrypted,
+									subscriptionKeyLost
+								}}
+								decryptionFailures={decryptionFailures}
+								showDecryptionCardFor={(message) =>
+									!isThreadsEnabled ||
+									!message.threadRootEventId
+								}
+								threadsEnabled={isThreadsEnabled}
+								threadSummaryFor={(id) =>
+									threadSummaries.get(id)
+								}
+								onOpenThread={
+									isThreadsEnabled
+										? handleOpenThread
+										: undefined
+								}
+								resolveReplyQuote={resolveReplyQuote}
+								onReplyDirect={handleReplyDirect}
+								onEditDirect={handleEditDirect}
+								onDeleteDirect={handleDeleteDirect}
+								reactionsFor={getReactionsFor}
+								onReact={handleReact}
+								onUnreact={handleUnreact}
+							/>
+						)}
 						{/* "Sending message failed" cards for sends that never
 						    reached the server (Figma 7086-57415). */}
 						{failedSends
