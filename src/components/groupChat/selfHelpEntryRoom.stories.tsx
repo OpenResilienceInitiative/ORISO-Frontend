@@ -585,14 +585,11 @@ const useClockHeight = () => {
 	const measure = () => {
 		const mobile = window.innerWidth < 1200;
 		// Measured on the 1440 × 950 story: the stage header takes 96 px
-		// (64 on a phone), the footer bar 96, the column 24 above and 16 below
-		// the bar, then the gap and headline block under the clock (26 + 66)
-		// and the row with "Mehr erfahren" (8 + 36), plus 24 px so a rounding
-		// error never shows as a scrollbar.
-		// The stage keeps another 32 px under the column (measured: the
-		// column ended at 1046 and the page at 1078).
-		const reserved =
-			(mobile ? 64 : 96) + 32 + 96 + 24 + 16 + 26 + 66 + 8 + 36 + 24;
+		// (64 on a phone) and keeps 32 px under the column; the bar with its
+		// aside row measures 105, plus 16 below it; the column 24 above; the
+		// headline block and its gap (66 + 26); 24 px so a rounding error
+		// never shows as a scrollbar.
+		const reserved = (mobile ? 64 : 96) + 32 + 105 + 16 + 24 + 66 + 26 + 24;
 		return Math.max(160, window.innerHeight - reserved);
 	};
 	const [height, setHeight] = React.useState(measure);
@@ -651,9 +648,10 @@ const BlockRoom = ({
 							justifyContent: 'center',
 							px: { xs: 2, sm: 4 },
 							pt: 3,
-							/* Footer bar plus 16 px — every pixel here is one
-							   the clock cannot have. */
-							pb: { xs: '112px', sm: '112px' }
+							/* Footer bar with its aside row (measured 105) plus
+							   16 px — every pixel here is one the clock cannot
+							   have. */
+							pb: '121px'
 						}}
 					>
 						<WaitingAreaCountdown
@@ -661,7 +659,9 @@ const BlockRoom = ({
 							welcomeText={WELCOME}
 							rules={RULES}
 							nowMs={NOW}
-							headlineBelow
+							/* Headline back on top: Frank, 2026-09-04, "das war
+							   eigentlich gar nicht so schlecht, weil es da oben
+							   war". The block below it runs down to the bar. */
 							clockSize="fit"
 							fitHeight={clockHeight}
 							spacing={spacing}
@@ -669,56 +669,12 @@ const BlockRoom = ({
 							reducedMotion={motionOff}
 							hideMotionToggle
 						/>
-						{/* The row under the clock: the animation switch — the
-						    design system's own M3 `Switch`, the same one the
-						    profile uses, not a text button (Frank, 2026-09-04:
-						    "richtig faule Lösung … nicht unser Designsystem
-						    genug angeguckt") — and "Mehr erfahren", the way to
-						    the entry point with the three pictures. Not wired. */}
-						<Box
-							sx={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-								gap: 2,
-								mt: 1
-							}}
-						>
-							<Box
-								component="label"
-								sx={{
-									display: 'flex',
-									alignItems: 'center',
-									gap: 1.5,
-									cursor: 'pointer'
-								}}
-							>
-								<Switch
-									checked={motionOff}
-									onChange={(next) => setMotionOff(next)}
-									aria-label="Animation abschalten"
-								/>
-								<Typography
-									sx={{
-										fontSize: 13,
-										whiteSpace: 'nowrap',
-										color: registrationMd3.onSurfaceVariant
-									}}
-								>
-									Animation abschalten
-								</Typography>
-							</Box>
-							<Button
-								variant="text"
-								size="small"
-								sx={{
-									textTransform: 'none',
-									whiteSpace: 'nowrap'
-								}}
-							>
-								Mehr erfahren →
-							</Button>
-						</Box>
+						{/* The animation switch — the design system's own M3
+						    `Switch`, the one the profile uses — and "Mehr
+						    erfahren" ride on the bar, not in the page (Frank,
+						    2026-09-04: "nicht frei schweben … am Footer
+						    angeheftet"). That also hands the clock the rows
+						    they used to take. */}
 						{/* Desktop, as drawn: calendar beside a visible but shut
 						    "Beitreten". On a phone two buttons is one too many
 						    for the bar, so there the calendar has it alone and
@@ -726,6 +682,46 @@ const BlockRoom = ({
 						    Frank's own suggestion ("das Beitreten später
 						    reinfahren"). */}
 						<RegistrationFooter
+							aside={
+								<>
+									<Box
+										component="label"
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											gap: 1.5,
+											cursor: 'pointer'
+										}}
+									>
+										<Switch
+											checked={motionOff}
+											onChange={(next) =>
+												setMotionOff(next)
+											}
+											aria-label="Animation abschalten"
+										/>
+										<Typography
+											sx={{
+												fontSize: 13,
+												whiteSpace: 'nowrap',
+												color: registrationMd3.onSurfaceVariant
+											}}
+										>
+											Animation abschalten
+										</Typography>
+									</Box>
+									<Button
+										variant="text"
+										size="small"
+										sx={{
+											textTransform: 'none',
+											whiteSpace: 'nowrap'
+										}}
+									>
+										Mehr erfahren →
+									</Button>
+								</>
+							}
 							secondary={
 								narrow
 									? undefined

@@ -41,6 +41,13 @@ export interface RegistrationFooterProps {
 	 * A reader who asked for reduced motion gets no movement either way.
 	 */
 	animateIn?: boolean;
+	/**
+	 * A quiet row that rides on the bar, above the actions — a setting, a
+	 * "learn more" link. Frank, 2026-09-04: such things must not float in the
+	 * page; they belong "am Footer angeheftet". The bar grows by that row and
+	 * keeps everything else where it is.
+	 */
+	aside?: React.ReactNode;
 }
 
 /**
@@ -75,7 +82,8 @@ export const RegistrationFooter = ({
 	primary,
 	secondary,
 	children,
-	animateIn = false
+	animateIn = false,
+	aside
 }: RegistrationFooterProps) => (
 	<Box
 		data-cy="registration-footer"
@@ -93,8 +101,8 @@ export const RegistrationFooter = ({
 			backdropFilter: 'blur(8px)',
 			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
 			display: 'flex',
-			alignItems: 'center',
-			gap: 2,
+			flexDirection: 'column',
+			justifyContent: 'center',
 			pt: { xs: 1.5, sm: 0 },
 			pb: {
 				xs: 'calc(12px + env(safe-area-inset-bottom))',
@@ -104,33 +112,59 @@ export const RegistrationFooter = ({
 			zIndex: 65
 		}}
 	>
-		{children}
-		{primary && secondary && (
-			<Button
-				variant="outlined"
-				onClick={secondary.onClick}
-				disabled={secondary.disabled}
-				title={secondary.title ?? secondary.label}
-				data-testid={
-					secondary.testId ?? 'registration-footer-secondary'
-				}
-				sx={footerActionSx}
+		{aside && (
+			<Box
+				data-cy="registration-footer-aside"
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: 2,
+					pt: { xs: 0, sm: 1 },
+					pb: 1
+				}}
 			>
-				{secondary.label}
-			</Button>
+				{aside}
+			</Box>
 		)}
-		{primary && (
-			<Button
-				variant="contained"
-				onClick={primary.onClick}
-				disabled={primary.disabled}
-				title={primary.title ?? primary.label}
-				data-testid={primary.testId ?? 'registration-footer-primary'}
-				sx={footerActionSx}
-			>
-				{primary.label}
-			</Button>
-		)}
+		<Box
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 2,
+				width: '100%'
+			}}
+		>
+			{children}
+			{primary && secondary && (
+				<Button
+					variant="outlined"
+					onClick={secondary.onClick}
+					disabled={secondary.disabled}
+					title={secondary.title ?? secondary.label}
+					data-testid={
+						secondary.testId ?? 'registration-footer-secondary'
+					}
+					sx={footerActionSx}
+				>
+					{secondary.label}
+				</Button>
+			)}
+			{primary && (
+				<Button
+					variant="contained"
+					onClick={primary.onClick}
+					disabled={primary.disabled}
+					title={primary.title ?? primary.label}
+					data-testid={
+						primary.testId ?? 'registration-footer-primary'
+					}
+					sx={footerActionSx}
+				>
+					{primary.label}
+				</Button>
+			)}
+		</Box>
 	</Box>
 );
 
