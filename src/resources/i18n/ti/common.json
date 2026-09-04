@@ -4472,8 +4472,8 @@
 			"title": "ሱፐርቪዥን",
 			"headerLabel": "ሱፐርቪዥን · {{name}}",
 			"role": {
-				"supervisor": "ሱፐርቫይዘር",
-				"consultant": "ኣማኻሪ"
+				"supervisor": "ሱፐርቪዥን",
+				"consultant": "ምኽሪ"
 			},
 			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
 			"close": "ሱፐርቪዥን ዕጸው",
@@ -4487,7 +4487,8 @@
 			},
 			"composer": {
 				"placeholder": "መልእኽቲ ናብ {{name}} …",
-				"send": "ስደድ"
+				"send": "ስደድ",
+				"failed": "ምልኣኽ ኣይተሳኽዐን – በጃኻ ደጊምካ ፈትን።"
 			},
 			"kind": {
 				"supervision": "ሱፐርቪዥን",

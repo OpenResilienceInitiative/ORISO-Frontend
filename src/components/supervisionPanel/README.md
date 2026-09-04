@@ -1,12 +1,16 @@
 # Supervision parallel panel (WP-B1)
 
-Presentational layer for showing supervision as a **parallel chat next to the
-client chat** — not a merged stream, not a thread. Plan:
-`0 - Docs/PLAN-supervision-parallel-panel-2026-09-04.md`. Nothing in this
-directory talks to Matrix or the session state; B2 wires it.
+Supervision as a **parallel chat next to the client chat** — not a merged
+stream, not a thread. Plan:
+`0 - Docs/PLAN-supervision-parallel-panel-2026-09-04.md`. B1 (this
+directory's components) is presentational; B2 (below) wires it into
+`SessionStream` / `SessionItemComponent`. The only Matrix-aware code in this
+directory is the `onSend` prop the owner passes to `SupervisionComposer`.
 
 Storybook: `Components/Session/SupervisionPanel`, `…/SupervisionPanelMini`,
-`…/SplitStage`. Run `npm run test:storybook -- src/components/supervisionPanel`.
+`…/SplitStage`, `…/SupervisionComposer`. Run
+`npx vitest run --project storybook src/components/supervisionPanel`; the pure
+helpers run with `npm run test:unit -- src/components/supervisionPanel`.
 
 ## Components
 
@@ -17,7 +21,7 @@ The expanded side room.
 | Prop                         | Meaning                                                                                                                                     |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `counterpartName`            | Person on the other side: the supervisor for a consultant, the responsible consultant for a supervisor. Rendered as "Supervision · {name}". |
-| `viewerRole`                 | `'consultant' \| 'supervisor'` — picks the role chip (`Supervisor:in` / `Berater:in`).                                                      |
+| `viewerRole`                 | `'consultant' \| 'supervisor'` — picks the role chip, worded gender-neutrally (`Supervision` / `Beratung`).                                 |
 | `unreadCount`                | Badge in the header (unread indicator colour = error role, magenta in this scheme).                                                         |
 | `isCollapsed`                | `true` renders nothing; the owner shows `SupervisionPanelMini` instead.                                                                     |
 | `onCollapse`, `onClose`      | Header buttons. Without a handler the button stays visible but **disabled** (disable, never hide).                                          |
@@ -81,34 +85,147 @@ Keys under `supervision.panel.*` in every `src/resources/i18n/*/common.json`
 (de, en, fr, ru, ti, tr; `de@informal` only overrides `empty.hint`). Wording
 lives in the catalogue, stories assert behaviour, not copy.
 
-## B2 wiring (port 1:1)
+## B2 wiring (as shipped on `feat/supervision-parallel-panel`)
 
-1. **Timeline.** `SessionStream.tsx` already loads the side room
-   (`supervisionRoomId`, `loadRoomEvents(supervisionRoomId)`) and merges it
-   into the main stream via `mergeMatrixMessages(...)`. Stop merging: keep
-   `formatRoomMessages(supervisionEvents, supervisionRoomId)` as its own
-   list and render those messages (existing `MessageItemComponent`) as the
-   `children` of `SupervisionPanel`. Reactions from the side room go with it.
-2. **Composer.** `renderComposer` gets the existing composer bound to the
-   side room: `matrixClientService.sendMessage(supervisionRoomId, text,
-options)`. The audience selector for supervision (`asideRouting.ts`)
-   becomes unnecessary once the composer has one target per pane.
-3. **Layout.** Wrap the chat card in `SplitStage` (`main` = today's session
-   content, `secondary` = `SupervisionPanel`). Persist `secondaryWidth` and
-   the mini `position` per user (local storage is fine).
-4. **Open / close state.** `secondaryOpen` = "side room exists AND not closed
-   by the user". Auto-open when `supervisionRoomId` resolves; `onClose` sets
-   a closed flag; a new side-room event (`m.room.message` in
-   `supervisionRoomId` from someone else) clears the flag → re-open, or, if
-   the user collapsed, set `hasNewMessage` on the mini.
-5. **Menu.** Session header menu entry "Supervision" (`supervision.panel.title`)
-   toggles `secondaryOpen`; disabled — not hidden — when no side room exists.
-6. **Roles.** `viewerRole` from `isSupervisor` in `SessionItemComponent`;
-   `counterpartName` from the supervision DTO (WP-A:
-   `supervision.supervisorDisplayNames`) or, for the supervisor, the
-   session's consultant display name.
-7. **Mobile.** Below 768 px `SplitStage` is single-pane; put
-   `<SupervisionPanelMini variant="fab">` in `switcher` while
-   `activePane === 'main'`, and route `onClose`/`onCollapse` of the panel back
-   to `activePane = 'main'`. Mind the bottom navigation: raise the default
-   `bottom` offset by its height.
+Everything below is meant to be ported 1:1 to `dev`. Line numbers are from
+the branch at the time of writing; search for the `WP-B2` comment markers
+when they drift.
+
+### Files added in this directory
+
+| File                          | Role                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supervisionPanelState.ts`    | Pure state machine (`reduceSupervisionPanel`), unread count, the message-split safety net (`excludeSideRoomMessages`), new-message detection (`findUnseenMessages`), mini snippet, and the storage helpers (collapsed flag per session, width + mini position per user). Unit-tested. |
+| `SupervisionComposer.tsx`     | Side-room composer: textarea + send, Enter sends, Shift+Enter breaks the line, failure keeps the text. Transport is the `onSend` prop.                                                                                                                                                |
+| `SupervisionPanelContext.tsx` | `{ visible, available, isExpanded, unreadCount, expand }` provided by `SessionItemComponent`, consumed by `SessionMenu` (three components deep — no prop threading through the header).                                                                                               |
+| `useBottomNavOffset.ts`       | Phone: measures `.navigation__wrapper` when it is the bottom bar; fallback 72 px (`$grid-base-nine`) + 16 px gap. The FAB's `bottom`.                                                                                                                                                 |
+| `SplitStage.tsx`              | Unchanged except `useSplitStageMode` is now exported so the owner knows whether it is on a phone (`single`) or desktop (`split`).                                                                                                                                                     |
+
+### 1. Timeline split — `src/components/session/SessionStream.tsx`
+
+- New state `supervisionMessages` (line ~129). The side room is loaded as
+  before (`loadRoomEvents(supervisionRoomId)`), but **no longer merged**:
+  `mergeMatrixMessages` is gone from the stream; the client-room list is
+  `prepareMessages(applyMessageEdits(formatRoomMessages(clientEvents)))`
+  only (line ~430), and the side room becomes its own list (line ~448) with
+  `rid = supervisionRoomId` stamped on each item (`formatRoomMessages(…,
+stampRoomId = true)`, line ~387). Side-room reactions are not collected at
+  all — the panel renders its bubbles without reactions/threads.
+- Reset points: curtain (~360), no-Matrix-room fallback (~468), session
+  switch cleanup (~1069).
+- Passed down as `supervisionMessages={supervisionMessages}` (line ~1250);
+  `SessionItemProps.supervisionMessages` in `SessionItemComponent`.
+- Timeline listener / history-key requests for both rooms are unchanged
+  (the side room still refreshes live).
+
+### 2. Layout + state — `src/components/session/SessionItemComponent.tsx`
+
+- Safety net (line ~1697): `messages` = `excludeSideRoomMessages(props.messages,
+supervisionRoomId)` — a side-room item can never reach the client timeline
+  even if a caller merges again.
+- Supervisor lookup effect (line ~1883) now clears `supervisionRoomId` on
+  entry (no lingering room while a new session resolves) and keeps
+  `supervisorUsernames` for the counterpart name.
+- The whole panel block sits right after `handleCloseThread` (line ~3326):
+  eligibility, `useReducer(reduceSupervisionPanel)`, `useSplitStageMode(768)`
+  → `supervisionLayout`, the three effects (room resolved/lost, thread
+  coexistence, incoming detection), `expand`/`collapse` handlers that also
+  persist the per-session flag, unread count, counterpart name, width + mini
+  position (localStorage per user), FAB offset, `sendSupervisionMessage`,
+  and the context value.
+- Render: the former root `<div className="session">` is now `const
+sessionCard` (line ~3755). The component returns
+  `SupervisionPanelContext.Provider` wrapping either the bare card or, while
+  a side room exists, `<SplitStage main={sessionCard} secondary={<SupervisionPanel/>} … />`
+  (line ~6059 onwards). CSS hook: `.session__supervisionStage` in
+  `session.styles.scss` (line ~208) makes the stage the flex child of
+  `.session__wrapper` and aligns the secondary pane with the card's 24 px
+  margin on large screens.
+- Bubbles: `MessageItemComponent` with `renderMode="main"`,
+  `threadsEnabled={false}`, no reply/edit/delete/reaction handlers, the
+  session's `e2eeParams` and decryption callbacks reused.
+- Composer: `SupervisionComposer` → `chatTransportService.sendTextMessage({
+matrixRoomId: supervisionRoomId, supervisorMessage: isSupervisor, … })`
+  — the same path the main composer takes (`apiSendMessage` →
+  `chatTransportService` → `matrixClientService.sendMessage`), so the SDK
+  Megolm-encrypts the send; nothing is bypassed. Plain text, no
+  `SUPERVISOR_FEEDBACK_PREFIX`. After a successful send
+  `props.refreshMessages()` re-hydrates both rooms.
+- Both main-pane composers (thread + main) get `hideSupervisorAudience={hasSupervisionSideRoom}`.
+
+### 3. Who sees it
+
+`isSupervisionPanelViewer = isConsultantUser && !isAskerUser &&
+!activeSession.isGroup && !isEmbeddedNotificationsView`. An asker never gets
+a stage, a context entry, or a panel, whatever the props contain. `viewerRole`
+is `isSupervisor ? 'supervisor' : 'consultant'`. Counterpart name: consultant
+→ `getSupervisorDisplayNames(activeSession)[0]` (WP-A list DTO) or the
+`supervisorUsername` from `apiGetSessionSupervisors`; supervisor →
+`activeSession.consultant.displayName || username`.
+
+### 4. State machine (`supervisionPanelState.ts`)
+
+```
+hidden ──ROOM_RESOLVED──▶ expanded            (default on entering a session)
+                        ▶ collapsed           (sessionStorage remembers a collapse per session)
+expanded ──COLLAPSE (panel X or ⌄)──▶ collapsed      → mini card (desktop) / FAB (phone)
+collapsed ──EXPAND (mini, FAB, menu "Supervision")──▶ expanded
+collapsed ──INCOMING foreign msg, desktop──▶ expanded  (auto re-open)
+collapsed ──INCOMING foreign msg, phone──▶ collapsed + hasNewMessage (FAB pulses, badge)
+expanded ──THREAD_OPENED──▶ collapsed (yieldedToThread)
+collapsed(yieldedToThread) ──THREAD_CLOSED──▶ expanded
+any ──ROOM_LOST──▶ hidden
+```
+
+- Close and collapse are one transition: the mini stays as long as the side
+  room exists.
+- Unread = foreign side-room messages with `messageTime > lastExpandedAt`;
+  0 while expanded. Shown on the panel header, the mini card, the FAB and
+  as the menu entry's trailing number.
+- Incoming detection ignores hydration: the first `supervisionMessages`
+  array seeds the known-id set; only later, foreign, newer-than-last-expand
+  items dispatch `INCOMING`.
+- Thread coexistence rule (simple, documented here): **one side panel at a
+  time, the thread wins.** The native thread panel keeps its own position
+  (absolute inside the chat card, 520 px); the supervision panel collapses to
+  the mini while a thread is open and comes back when the thread closes —
+  unless the user collapsed it themselves meanwhile, or a message arrived
+  while the thread held the slot (then only the mini pulses).
+
+### 5. Menu — `src/components/sessionMenu/SessionMenu.tsx`
+
+`useSupervisionPanel()` (line ~121). Entry rendered when `visible` (line
+~682), **disabled — not hidden — when no side room exists**, title
+`supervision.panel.title`, icon `SupervisionIcon`, unread count in the
+shortcut slot. Click → `expand()`.
+
+### 6. Main composer — `messageSubmitInterfaceComponent.tsx`
+
+New prop `hideSupervisorAudience` (line ~210). When set and the session is
+not a group, options with `kind === 'supervisor'` are filtered out of the
+audience selector (line ~2503). Group-chat audiences are untouched;
+`asideRouting.ts` stays as the safety net. The supervisor's own main-pane
+composer is unchanged (it still routes as an aside to the side room and
+shows the "visible only to consultants" note).
+
+### 7. Persistence keys
+
+| Key                                      | Store          | Meaning                               |
+| ---------------------------------------- | -------------- | ------------------------------------- |
+| `supervisionPanel.collapsed.<sessionId>` | sessionStorage | user collapsed the panel this session |
+| `supervisionPanel.width.<userId>`        | localStorage   | secondary pane width (desktop)        |
+| `supervisionPanel.mini.<userId>`         | localStorage   | mini card `{right, bottom}`           |
+
+### 8. Phone
+
+`SplitStage` goes `single` below 768 px. `activePane` is `'secondary'`
+while expanded (panel full-screen) and `'main'` otherwise; the FAB
+(`SupervisionPanelMini variant="fab" positionMode="fixed"`) sits at
+`right: 16, bottom: useBottomNavOffset()`. The floating `frame` mode of the
+panel is still available but not used by the owner.
+
+### Not done here
+
+- No SessionItemComponent story harness exists, so the wired stage has no
+  story; the presentational parts are covered (34 story tests) and the state
+  in unit tests. Visual proof happens on pre-dev (WP D).

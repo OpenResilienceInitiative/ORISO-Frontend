@@ -39,7 +39,7 @@ export interface SplitStageProps {
 	'data-cy'?: string;
 }
 
-const useViewportMode = (
+export const useSplitStageMode = (
 	breakpoint: number,
 	forced?: SplitStageMode
 ): SplitStageMode => {
@@ -79,7 +79,7 @@ export const SplitStage = ({
 	'data-cy': dataCy = 'split-stage'
 }: SplitStageProps) => {
 	const { t: translate } = useTranslation();
-	const mode = useViewportMode(breakpoint, forcedMode);
+	const mode = useSplitStageMode(breakpoint, forcedMode);
 	const stageRef = useRef<HTMLDivElement | null>(null);
 	const dividerRef = useRef<HTMLDivElement | null>(null);
 	const [internalWidth, setInternalWidth] = useState(defaultSecondaryWidth);

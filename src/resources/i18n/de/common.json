@@ -4494,8 +4494,8 @@
 			"title": "Supervision",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
-				"supervisor": "Supervisor:in",
-				"consultant": "Berater:in"
+				"supervisor": "Supervision",
+				"consultant": "Beratung"
 			},
 			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
 			"close": "Supervision schließen",
@@ -4509,7 +4509,8 @@
 			},
 			"composer": {
 				"placeholder": "Nachricht an {{name}} …",
-				"send": "Senden"
+				"send": "Senden",
+				"failed": "Senden fehlgeschlagen – bitte erneut versuchen."
 			},
 			"kind": {
 				"supervision": "Supervision",

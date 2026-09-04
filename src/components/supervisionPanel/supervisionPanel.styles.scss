@@ -245,6 +245,7 @@
 
 .supervisionComposer {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	align-items: flex-end;
 
@@ -264,6 +265,13 @@
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 1px;
 		}
+	}
+
+	&__error {
+		flex: 1 0 100%;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-error, #b1005e);
 	}
 
 	&__send {

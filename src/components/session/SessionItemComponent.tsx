@@ -4,6 +4,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useReducer,
 	useRef,
 	useState,
 	lazy,
@@ -40,6 +41,33 @@ import {
 	aggregateReactions
 } from '../../utils/messageRelations';
 import { chatTransportService } from '../../services/chatTransportService';
+import {
+	DEFAULT_MINI_POSITION,
+	INITIAL_SUPERVISION_PANEL_STATE,
+	SplitStage,
+	SupervisionComposer,
+	SupervisionLayout,
+	SupervisionPanel,
+	SupervisionPanelContext,
+	SupervisionPanelContextValue,
+	SupervisionPanelMini,
+	countUnreadSideRoomMessages,
+	excludeSideRoomMessages,
+	findUnseenMessages,
+	lastSideRoomSnippet,
+	readCollapsedPreference,
+	readMiniPosition,
+	readSecondaryWidth,
+	reduceSupervisionPanel,
+	safeLocalStorage,
+	safeSessionStorage,
+	useBottomNavOffset,
+	useSplitStageMode,
+	writeCollapsedPreference,
+	writeMiniPosition,
+	writeSecondaryWidth
+} from '../supervisionPanel';
+import { getSupervisorDisplayNames } from '../sessionsListItem/supervisionListState';
 import { computeThreadSummaries } from '../../utils/threadSummaries';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
@@ -152,6 +180,11 @@ interface SessionItemProps {
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/**
+	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
+	 * of `messages`; rendered in the SupervisionPanel next to the chat.
+	 */
+	supervisionMessages?: MessageItem[];
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -446,6 +479,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
+	// WP-B2: supervisor usernames from the same call — the counterpart name
+	// for the consultant when the list DTO has no display names.
+	const [supervisorUsernames, setSupervisorUsernames] = useState<string[]>(
+		[]
+	);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
@@ -1656,7 +1694,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
-	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
+	// WP-B2 safety net: the client-facing timeline never carries side-room
+	// items, whatever SessionStream handed over.
+	const messages = useMemo(
+		() =>
+			props.messages
+				? excludeSideRoomMessages(props.messages, supervisionRoomId)
+				: props.messages,
+		[props.messages, supervisionRoomId]
+	);
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
 		: activeSession.item?.matrixRoomId || activeSession.rid;
@@ -1834,10 +1880,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Check if current user is a supervisor
 	useEffect(() => {
+		// WP-B2: never let a previous session's side room linger while the
+		// new one resolves — the panel composer targets this id.
+		setSupervisionRoomId(undefined);
+		setSupervisorUsernames([]);
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			setSupervisionRoomId(undefined);
 			return;
 		}
 		if (
@@ -1860,17 +1909,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						(s) => s.matrixRoomId
 					)?.matrixRoomId;
 					setSupervisionRoomId(sideRoomId || undefined);
+					setSupervisorUsernames(
+						supervisors
+							.map((s) => s.supervisorUsername)
+							.filter(Boolean)
+					);
 				})
 				.catch((error) => {
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
 					setSupervisionRoomId(undefined);
+					setSupervisorUsernames([]);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
 			setSupervisionRoomId(undefined);
+			setSupervisorUsernames([]);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
@@ -3266,6 +3322,230 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setActiveThreadRootMessage(null);
 	}, []);
 
+	// ------------------------------------------------------------------
+	// WP-B2: supervision parallel panel (supervisionPanel/README.md).
+	// The side room renders next to the chat, never inside it.
+	// ------------------------------------------------------------------
+	const supervisionMessages = props.supervisionMessages;
+	const sessionIdForSupervisionPanel = activeSession.item?.id;
+	// Consultants and supervisors only — an asker is never a member of the
+	// side room and never gets a panel, whatever the props say.
+	const isSupervisionPanelViewer =
+		isConsultantUser &&
+		!isAskerUser &&
+		!activeSession.isGroup &&
+		!isEmbeddedNotificationsView;
+	const hasSupervisionSideRoom =
+		isSupervisionPanelViewer && !!supervisionRoomId;
+	const [supervisionPanelState, dispatchSupervisionPanel] = useReducer(
+		reduceSupervisionPanel,
+		INITIAL_SUPERVISION_PANEL_STATE
+	);
+	const supervisionStageMode = useSplitStageMode(768);
+	const supervisionLayout: SupervisionLayout =
+		supervisionStageMode === 'single' ? 'phone' : 'desktop';
+	const isSupervisionPanelExpanded =
+		supervisionPanelState.status === 'expanded';
+
+	// Auto-open on entering a session with a side room; a remembered
+	// "collapsed" per session (sessionStorage) wins. Room gone → hidden.
+	useEffect(() => {
+		if (!hasSupervisionSideRoom) {
+			dispatchSupervisionPanel({ type: 'ROOM_LOST' });
+			return;
+		}
+		dispatchSupervisionPanel({
+			type: 'ROOM_RESOLVED',
+			rememberedCollapsed: readCollapsedPreference(
+				safeSessionStorage(),
+				sessionIdForSupervisionPanel
+			),
+			now: Date.now()
+		});
+	}, [hasSupervisionSideRoom, sessionIdForSupervisionPanel]);
+
+	// Thread coexistence: one side panel at a time, the thread wins. The
+	// supervision panel yields to the mini card and comes back when the
+	// thread closes (unless the user collapsed it themselves meanwhile).
+	useEffect(() => {
+		if (activeThreadRootId) {
+			dispatchSupervisionPanel({ type: 'THREAD_OPENED' });
+		} else {
+			dispatchSupervisionPanel({
+				type: 'THREAD_CLOSED',
+				now: Date.now()
+			});
+		}
+	}, [activeThreadRootId]);
+
+	// New side-room event while collapsed: re-expand (desktop) or pulse the
+	// FAB (phone). History arriving on hydration is not "new" — only items
+	// newer than the last expansion count, and only from someone else.
+	const knownSideRoomIdsRef = useRef<Set<string> | null>(null);
+	useEffect(() => {
+		if (!hasSupervisionSideRoom) {
+			knownSideRoomIdsRef.current = null;
+			return;
+		}
+		const list = supervisionMessages || [];
+		if (knownSideRoomIdsRef.current === null) {
+			knownSideRoomIdsRef.current = new Set(list.map((m) => m._id));
+			return;
+		}
+		const unseen = findUnseenMessages(list, knownSideRoomIdsRef.current);
+		if (unseen.length === 0) {
+			return;
+		}
+		unseen.forEach((m) => knownSideRoomIdsRef.current?.add(m._id));
+		const fresh = unseen.filter(
+			(m) =>
+				Number(m.messageTime) > supervisionPanelState.lastExpandedAt &&
+				!isMyMessageMatrix(m.userId)
+		);
+		if (fresh.length === 0) {
+			return;
+		}
+		dispatchSupervisionPanel({
+			type: 'INCOMING',
+			layout: supervisionLayout,
+			isOwn: false,
+			now: Date.now()
+		});
+		// lastExpandedAt is read, not reacted to: a change of it must not
+		// re-run the new-message detection.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		supervisionMessages,
+		hasSupervisionSideRoom,
+		isMyMessageMatrix,
+		supervisionLayout
+	]);
+
+	const expandSupervisionPanel = useCallback(() => {
+		dispatchSupervisionPanel({ type: 'EXPAND', now: Date.now() });
+		writeCollapsedPreference(
+			safeSessionStorage(),
+			sessionIdForSupervisionPanel,
+			false
+		);
+	}, [sessionIdForSupervisionPanel]);
+
+	// Close (X) and collapse are the same thing: the mini card / FAB stays
+	// while a side room exists, so the channel is always one click away.
+	const collapseSupervisionPanel = useCallback(() => {
+		dispatchSupervisionPanel({ type: 'COLLAPSE' });
+		writeCollapsedPreference(
+			safeSessionStorage(),
+			sessionIdForSupervisionPanel,
+			true
+		);
+	}, [sessionIdForSupervisionPanel]);
+
+	const supervisionUnreadCount = useMemo(
+		() =>
+			countUnreadSideRoomMessages(
+				supervisionMessages,
+				supervisionPanelState,
+				isMyMessageMatrix
+			),
+		[supervisionMessages, supervisionPanelState, isMyMessageMatrix]
+	);
+
+	// Counterpart: the supervisor for the consultant (list DTO display name,
+	// else the username from the supervisors call); the responsible
+	// consultant for the supervisor.
+	const supervisionCounterpartName = useMemo(() => {
+		if (isSupervisor) {
+			return (
+				activeSession.consultant?.displayName ||
+				activeSession.consultant?.username ||
+				translate('sessionList.user.consultantUnknown')
+			);
+		}
+		return (
+			getSupervisorDisplayNames(activeSession)[0] ||
+			supervisorUsernames[0] ||
+			translate('supervision.panel.title')
+		);
+	}, [activeSession, isSupervisor, supervisorUsernames, translate]);
+
+	// Desktop: docked split by default, width remembered per user.
+	const [supervisionWidth, setSupervisionWidth] = useState(() =>
+		readSecondaryWidth(safeLocalStorage(), userData?.userId, 420)
+	);
+	const handleSupervisionWidthChange = useCallback(
+		(width: number) => {
+			setSupervisionWidth(width);
+			writeSecondaryWidth(safeLocalStorage(), userData?.userId, width);
+		},
+		[userData?.userId]
+	);
+	const [supervisionMiniPosition, setSupervisionMiniPosition] = useState(
+		() =>
+			readMiniPosition(safeLocalStorage(), userData?.userId) ||
+			DEFAULT_MINI_POSITION
+	);
+	const handleSupervisionMiniPositionChange = useCallback(
+		(position: { right: number; bottom: number }) => {
+			setSupervisionMiniPosition(position);
+			writeMiniPosition(safeLocalStorage(), userData?.userId, position);
+		},
+		[userData?.userId]
+	);
+	// Phone: the FAB floats above the bottom navigation.
+	const supervisionFabBottom = useBottomNavOffset(
+		hasSupervisionSideRoom && supervisionLayout === 'phone'
+	);
+
+	// Plain message into the side room, through the same transport path as
+	// the main composer (chatTransportService → matrixClientService.sendMessage)
+	// so the SDK Megolm-encrypts it like every other send.
+	const refreshMessagesProp = props.refreshMessages;
+	const sendSupervisionMessage = useCallback(
+		async (text: string) => {
+			if (!supervisionRoomId) {
+				throw new Error('Supervision side room is not available');
+			}
+			await chatTransportService.sendTextMessage({
+				roomIdOrSessionId: supervisionRoomId,
+				message: text,
+				sendMailNotification: false,
+				isEncrypted: false,
+				matrixRoomId: supervisionRoomId,
+				supervisorMessage: !!isSupervisor,
+				senderDisplayName:
+					userData?.displayName || userData?.userName || null,
+				matrixClientServiceOverride: matrixClientService
+			});
+			refreshMessagesProp?.();
+		},
+		[
+			supervisionRoomId,
+			isSupervisor,
+			userData?.displayName,
+			userData?.userName,
+			matrixClientService,
+			refreshMessagesProp
+		]
+	);
+
+	const supervisionPanelContextValue = useMemo<SupervisionPanelContextValue>(
+		() => ({
+			visible: isSupervisionPanelViewer,
+			available: hasSupervisionSideRoom,
+			isExpanded: isSupervisionPanelExpanded,
+			unreadCount: supervisionUnreadCount,
+			expand: expandSupervisionPanel
+		}),
+		[
+			isSupervisionPanelViewer,
+			hasSupervisionSideRoom,
+			isSupervisionPanelExpanded,
+			supervisionUnreadCount,
+			expandSupervisionPanel
+		]
+	);
+
 	const getMessageById = useCallback(
 		(id: string): MessageItem | null =>
 			(messages || []).find((candidate) => candidate._id === id) || null,
@@ -3475,7 +3755,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		true
 	);
 
-	return (
+	const sessionCard = (
 		<div
 			className={clsx(
 				'session',
@@ -5309,6 +5589,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onRetrySettled={handleComposerRetrySettled}
 							isSupervisor={isSupervisor}
 							supervisionRoomId={supervisionRoomId}
+							hideSupervisorAudience={hasSupervisionSideRoom}
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
@@ -5491,6 +5772,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									onRetrySettled={handleComposerRetrySettled}
 									isSupervisor={isSupervisor}
 									supervisionRoomId={supervisionRoomId}
+									hideSupervisorAudience={
+										hasSupervisionSideRoom
+									}
 									replyTo={replyTo}
 									onCancelReply={handleCancelReply}
 									editingMessage={editingMessage}
@@ -5771,5 +6055,94 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</MuiBox>
 			</Dialog>
 		</div>
+	);
+
+	// WP-B2: the side room next to the chat. `sessionCard` is today's session
+	// content unchanged; the SplitStage only exists while a side room does.
+	const supervisionPanelNode = hasSupervisionSideRoom ? (
+		<SupervisionPanel
+			counterpartName={supervisionCounterpartName}
+			viewerRole={isSupervisor ? 'supervisor' : 'consultant'}
+			onCollapse={collapseSupervisionPanel}
+			onClose={collapseSupervisionPanel}
+			renderComposer={() => (
+				<SupervisionComposer
+					counterpartName={supervisionCounterpartName}
+					onSend={sendSupervisionMessage}
+					autoFocus={supervisionLayout === 'desktop'}
+				/>
+			)}
+		>
+			{(supervisionMessages || []).map((message: MessageItem) => (
+				<MessageItemComponent
+					key={message._id}
+					clientName={supervisionCounterpartName}
+					askerMatrixUserId={activeSession.item?.askerMatrixUserId}
+					isOnlyEnquiry={isOnlyEnquiry}
+					isMyMessage={isMyMessageMatrix(message.userId)}
+					isUserBanned={false}
+					handleDecryptionErrors={handleDecryptionErrors}
+					handleDecryptionSuccess={handleDecryptionSuccess}
+					e2eeParams={{
+						key,
+						keyID,
+						encrypted,
+						subscriptionKeyLost
+					}}
+					renderMode="main"
+					threadsEnabled={false}
+					{...message}
+				/>
+			))}
+		</SupervisionPanel>
+	) : null;
+
+	const supervisionSwitcher =
+		hasSupervisionSideRoom &&
+		supervisionPanelState.status === 'collapsed' ? (
+			supervisionLayout === 'phone' ? (
+				<SupervisionPanelMini
+					variant="fab"
+					name={supervisionCounterpartName}
+					unreadCount={supervisionUnreadCount}
+					hasNewMessage={supervisionPanelState.hasNewMessage}
+					onExpand={expandSupervisionPanel}
+					positionMode="fixed"
+					position={{ right: 16, bottom: supervisionFabBottom }}
+				/>
+			) : (
+				<SupervisionPanelMini
+					variant="card"
+					name={supervisionCounterpartName}
+					unreadCount={supervisionUnreadCount}
+					lastMessage={lastSideRoomSnippet(supervisionMessages)}
+					hasNewMessage={supervisionPanelState.hasNewMessage}
+					onExpand={expandSupervisionPanel}
+					position={supervisionMiniPosition}
+					onPositionChange={handleSupervisionMiniPositionChange}
+				/>
+			)
+		) : null;
+
+	return (
+		<SupervisionPanelContext.Provider value={supervisionPanelContextValue}>
+			{hasSupervisionSideRoom ? (
+				<SplitStage
+					className="session__supervisionStage"
+					data-cy="session-supervision-stage"
+					main={sessionCard}
+					secondary={supervisionPanelNode}
+					secondaryOpen={isSupervisionPanelExpanded}
+					activePane={
+						isSupervisionPanelExpanded ? 'secondary' : 'main'
+					}
+					secondaryWidth={supervisionWidth}
+					onSecondaryWidthChange={handleSupervisionWidthChange}
+					switcher={supervisionSwitcher}
+				/>
+			) : (
+				sessionCard
+			)}
+		</SupervisionPanelContext.Provider>
 	);
 };

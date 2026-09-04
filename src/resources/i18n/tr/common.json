@@ -4472,8 +4472,8 @@
 			"title": "Süpervizyon",
 			"headerLabel": "Süpervizyon · {{name}}",
 			"role": {
-				"supervisor": "Süpervizör",
-				"consultant": "Danışman"
+				"supervisor": "Süpervizyon",
+				"consultant": "Danışmanlık"
 			},
 			"privacyHint": "Bu kanal danışan tarafından hiçbir zaman görülemez.",
 			"close": "Süpervizyonu kapat",
@@ -4487,7 +4487,8 @@
 			},
 			"composer": {
 				"placeholder": "{{name}} kişisine mesaj …",
-				"send": "Gönder"
+				"send": "Gönder",
+				"failed": "Gönderilemedi – lütfen tekrar deneyin."
 			},
 			"kind": {
 				"supervision": "Süpervizyon",

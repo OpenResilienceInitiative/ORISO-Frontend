@@ -201,6 +201,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	isSupervisor?: boolean;
 	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
 	supervisionRoomId?: string;
+	/**
+	 * WP-B2: the supervision parallel panel owns the side room, so the main
+	 * composer no longer offers the supervisor as an audience in 1:1
+	 * sessions. Group-chat audiences are untouched. `asideRouting` stays as
+	 * the safety net for anything that still carries an aside.
+	 */
+	hideSupervisorAudience?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -398,6 +405,7 @@ export const MessageSubmitInterfaceComponent = ({
 	isAnonymousLiveChat = false,
 	isSupervisor,
 	supervisionRoomId,
+	hideSupervisorAudience = false,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -2486,7 +2494,17 @@ export const MessageSubmitInterfaceComponent = ({
 						: classifyAudienceKind(value, roster)
 				};
 			})
-			.sort((a, b) => a.label.localeCompare(b.label));
+			.sort((a, b) => a.label.localeCompare(b.label))
+			// WP-B2: with the parallel panel the supervisor is reached through
+			// the side room, not through a "send to" choice in the client chat.
+			.filter(
+				(option) =>
+					!(
+						hideSupervisorAudience &&
+						!activeSession?.isGroup &&
+						option.kind === 'supervisor'
+					)
+			);
 		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
 		// group/supervision conversations with more than one human counterpart.
 		// A 1:1 conversation has no real targets here (the asker is filtered out
@@ -2518,6 +2536,7 @@ export const MessageSubmitInterfaceComponent = ({
 		agencyConsultantDirectory,
 		currentChatType,
 		activeSession?.isGroup,
+		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
 		userData?.userName,

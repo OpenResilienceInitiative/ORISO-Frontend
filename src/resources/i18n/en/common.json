@@ -4404,8 +4404,8 @@
 			"title": "Supervision",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
-				"supervisor": "Supervisor",
-				"consultant": "Counsellor"
+				"supervisor": "Supervision",
+				"consultant": "Counselling"
 			},
 			"privacyHint": "This channel is never visible to the person seeking advice.",
 			"close": "Close supervision",
@@ -4419,7 +4419,8 @@
 			},
 			"composer": {
 				"placeholder": "Message to {{name}} …",
-				"send": "Send"
+				"send": "Send",
+				"failed": "Sending failed – please try again."
 			},
 			"kind": {
 				"supervision": "Supervision",

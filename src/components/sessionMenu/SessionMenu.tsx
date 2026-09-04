@@ -78,6 +78,8 @@ import {
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
+import { SupervisionIcon } from '../supervisionPanel/icons';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -115,6 +117,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
+	// WP-B2: the supervision parallel panel; null outside a session view.
+	const supervisionPanel = useSupervisionPanel();
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -674,6 +678,35 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								)}
 							/>
 						</div>
+
+						{supervisionPanel?.visible && (
+							<div
+								className={`sessionMenu__item chatMenuDropdown__item ${
+									!supervisionPanel.available
+										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+										: ''
+								}`}
+								onClick={() => {
+									if (!supervisionPanel.available) {
+										return;
+									}
+									setFlyoutOpen(false);
+									supervisionPanel.expand();
+								}}
+								data-cy="session-menu-supervision-panel"
+							>
+								<SessionMenuItemContent
+									icon={<SupervisionIcon />}
+									title={translate('supervision.panel.title')}
+									disabled={!supervisionPanel.available}
+									shortcut={
+										supervisionPanel.unreadCount > 0
+											? supervisionPanel.unreadCount
+											: undefined
+									}
+								/>
+							</div>
+						)}
 
 						{props.showMobileSupervisionAction && (
 							<div
