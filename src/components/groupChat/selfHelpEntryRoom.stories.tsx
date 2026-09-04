@@ -4,6 +4,9 @@ import { Box, Typography } from '@mui/material';
 import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from './WaitingAreaRules';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
+import { StageLayout } from '../stageLayout/StageLayout';
+import { Stage } from '../stage/stage';
+import { AgencySpecificContext } from '../../globalState';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
@@ -54,6 +57,50 @@ const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 const IN_THREE_DAYS = new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3 + 12 * 60e3);
 const IN_TWELVE_MINUTES = new Date(NOW + 12 * 60e3);
 const OVERDUE = new Date(NOW - 7 * 60e3);
+
+/**
+ * The waiting views on the split stage — Frank, 2026-09-04: "diese musst du jetzt
+ * quasi in diesen halbierten Wartebildschirm einbauen auf Desktop".
+ *
+ * The same stage the entry screen stands on, so the person who just gave a name
+ * does not land on a different-looking page one step later. Below the stage
+ * breakpoint it collapses to the red brand bar, which is the mobile variant —
+ * the one someone sees right after logging in, temporarily or permanently.
+ *
+ * `showLoginLink` is off here, unlike on the entry screen: at this point the
+ * person is already in.
+ */
+const StagedRoom = ({ children }: { children: React.ReactNode }) => (
+	<Box sx={{ minHeight: '100vh' }}>
+		<AgencySpecificContext.Provider
+			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
+		>
+			<StageLayout
+				className="stageLayout--registration"
+				showLegalLinks={true}
+				showLoginLink={false}
+				showRegistrationLink={false}
+				stage={<Stage hasAnimation={false} />}
+				mobileHero="bar"
+			>
+				{/* Same flex trap as the entry screen: without `minWidth: 0` the
+				    clock's four digit groups refuse to shrink and the column
+				    overflows the phone. */}
+				<Box
+					sx={{
+						width: '100%',
+						minWidth: 0,
+						maxWidth: '100%',
+						px: { xs: 2, sm: 4 },
+						py: { xs: 3, sm: 5 }
+					}}
+				>
+					{children}
+				</Box>
+			</StageLayout>
+		</AgencySpecificContext.Provider>
+	</Box>
+);
 
 const Room = ({ children }: { children: React.ReactNode }) => (
 	<Box
@@ -260,6 +307,118 @@ export const ReducedMotion: StoryObj = {
 		docs: {
 			description: {
 				story: 'Dieselbe Uhr für Menschen, die Bewegung nicht vertragen. Gehört in jede Abnahme: eine Warteansicht, die sich ständig bewegt, ist für manche unbenutzbar.'
+			}
+		}
+	}
+};
+
+/* ---------------------------------------------------------------------------
+   On the stage — the shape Frank asked to see: the halved desktop screen, and
+   the same thing on a phone.
+   --------------------------------------------------------------------------- */
+
+export const StagedFarFuture: StoryObj = {
+	name: '8 — Auf der Bühne, in drei Tagen',
+	render: () => (
+		<StagedRoom>
+			<WaitingAreaCountdown
+				plannedStart={IN_THREE_DAYS}
+				welcomeText={WELCOME}
+				rules={RULES}
+				nowMs={NOW}
+			/>
+		</StagedRoom>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Die Warteansicht auf derselben geteilten Bühne wie der Eintritts-Bildschirm: rote Markenseite links, Inhalt rechts. Wer gerade seinen Namen gegeben hat, landet einen Schritt später nicht auf einer fremd wirkenden Seite. Der „Einloggen"-Knopf fehlt hier absichtlich — an dieser Stelle ist der Mensch schon drin.'
+			}
+		}
+	}
+};
+
+export const StagedMinutesAway: StoryObj = {
+	name: '9 — Auf der Bühne, gleich geht es los',
+	render: () => (
+		<StagedRoom>
+			<WaitingAreaCountdown
+				plannedStart={IN_TWELVE_MINUTES}
+				welcomeText={WELCOME}
+				rules={RULES}
+				nowMs={NOW}
+			/>
+		</StagedRoom>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Kurz vor dem Start, auf der Bühne. Hier lohnt der Vergleich mit Ansicht 8: dieselbe Uhr, aber die Zahlen sind klein und die Fläche ist groß — auf Desktop wirkt das ruhiger als in der schmalen Spalte.'
+			}
+		}
+	}
+};
+
+export const StagedMobile: StoryObj = {
+	name: '10 — Auf der Bühne, mobil',
+	globals: phone375Globals,
+	render: () => (
+		<StagedRoom>
+			<WaitingAreaCountdown
+				plannedStart={IN_THREE_DAYS}
+				welcomeText={WELCOME}
+				rules={RULES}
+				nowMs={NOW}
+			/>
+		</StagedRoom>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Dieselbe Bühne auf dem Telefon: aus der roten Fläche wird die schmale Markenleiste oben. Das ist die Ansicht direkt nach dem Anmelden — temporär oder mit Konto, der Bildschirm unterscheidet die beiden hier nicht.'
+			}
+		}
+	}
+};
+
+export const StagedPlainGuest: StoryObj = {
+	name: '11 — Auf der Bühne, ohne Konto',
+	render: () => (
+		<StagedRoom>
+			<Box
+				sx={{
+					p: 3,
+					borderRadius: '20px',
+					border: `1px solid ${registrationMd3.outlineVariant}`,
+					bgcolor: registrationMd3.surfaceContainerLowest,
+					maxWidth: 560
+				}}
+			>
+				<Typography sx={{ fontSize: 22, fontWeight: 700, mb: '6px' }}>
+					Sie sind angemeldet
+				</Typography>
+				<Typography
+					sx={{
+						fontSize: 15,
+						color: registrationMd3.onSurfaceVariant,
+						mb: '20px'
+					}}
+				>
+					Die Gruppe beginnt in 12 Minuten. Noch ist niemand da — das
+					ist normal.
+				</Typography>
+				<WaitingAreaRules rules={RULES} />
+			</Box>
+		</StagedRoom>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Die schlichte Ansicht auf der Bühne. Offene Produktentscheidung dahinter (Frank, 2026-09-04): wer die Gruppe anlegt, soll bestimmen können, ob nur temporäre Gäste hinein dürfen, ob beides erlaubt ist, oder ob ein Konto Pflicht ist. Diese Ansicht ist der Fall „temporär erlaubt".'
 			}
 		}
 	}
