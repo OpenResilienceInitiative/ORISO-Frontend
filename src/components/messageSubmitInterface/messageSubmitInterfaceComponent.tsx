@@ -42,7 +42,7 @@ import {
 	resolveAskerMessageTransport,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
-import { resolveAsideTargetRoomId } from './asideRouting';
+import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
@@ -208,6 +208,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * the safety net for anything that still carries an aside.
 	 */
 	hideSupervisorAudience?: boolean;
+	/**
+	 * Side panel (supervision room, Figma "second Chat Room Desktop"): the
+	 * room every send of THIS composer goes to. Overrides the active
+	 * session's client room; aside routing (`asideRouting`) still applies on
+	 * top. Unset = today's behaviour.
+	 */
+	targetRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -406,6 +413,7 @@ export const MessageSubmitInterfaceComponent = ({
 	isSupervisor,
 	supervisionRoomId,
 	hideSupervisorAudience = false,
+	targetRoomId,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -1356,7 +1364,10 @@ export const MessageSubmitInterfaceComponent = ({
 				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
-				? resolvedChatSession.matrixRoomId
+				? resolvePrimaryRoomId({
+						targetRoomId,
+						clientRoomId: resolvedChatSession.matrixRoomId
+					})
 				: undefined;
 			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
 			// go to the supervision side room, never the client-facing room.
@@ -1570,6 +1581,7 @@ export const MessageSubmitInterfaceComponent = ({
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
+			targetRoomId,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
