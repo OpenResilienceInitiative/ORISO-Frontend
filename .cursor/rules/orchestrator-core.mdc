@@ -10,7 +10,7 @@ alwaysApply: true
 Before coding, classify the task:
 
 - **Trivial** (one file, no new behavior, no UI/security impact): just do it, no docs required.
-- **Non-trivial** (anything else): Superpowers is required (see `superpowers-workflow.mdc`). If the plugin is missing, stop and ask for `/add-plugin superpowers`. Then follow the goal-loop trail — `problem-intake` → `spike-doc` → `task-implementation-doc` → iterate think/implement/verify → `regression-check` → `pr-prep`. Artifacts go in `docs/agent-tasks/YYYY-MM-DD_short-feature-name/` (legacy `docs/cursor-orchestrator/` is historical only).
+- **Non-trivial** (anything else): follow the goal-loop trail — `problem-intake` → `spike-doc` → `task-implementation-doc` → iterate think/implement/verify → `regression-check` → `pr-prep`. If Superpowers is installed, use it as well (see `superpowers-workflow.mdc`); if it is not, continue with these repo skills. Artifacts go in `docs/agent-tasks/YYYY-MM-DD_short-feature-name/` (legacy `docs/cursor-orchestrator/` is historical only). Demo prompts and issue-update steps: `.cursor/README.md`.
 
 When the user says "loop" or asks to iterate until done, use the `goal-loop` skill.
 

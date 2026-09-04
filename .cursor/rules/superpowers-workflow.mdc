@@ -1,17 +1,15 @@
 ---
-description: Superpowers is required for tickets, bugs, PR review, and ticket updates
+description: Prefer Superpowers when installed; continue with ORISO skills if not
 alwaysApply: true
 ---
 
 # Superpowers workflow
 
-Required for ticket implementation, bug fixes, PR review, and ticket updates.
+**Not mandatory.** If Superpowers is installed, use it — it is the better method for tickets, bugs, PR review, and issue updates. If it is missing, **keep going** with this repo’s `problem-intake` / `goal-loop` / `pr-prep` skills. Do not block the human or fake missing plugin skills.
 
-**Install (other developers):** in Cursor run `/add-plugin superpowers`, or Settings → Plugins → Superpowers → Install, then reload. This repo cannot install the plugin for you.
+**Optional install:** `/add-plugin superpowers`, or Settings → Plugins → Superpowers → Install, then reload.
 
-If any of these skills are missing, STOP. Tell the human to install Superpowers. Do not pretend a missing skill exists: `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`, `receiving-code-review`, `verification-before-completion`, `finishing-a-development-branch`.
-
-Use this order (do not skip TDD or verification):
+When Superpowers **is** available, prefer this order:
 
 1. `brainstorming` — expected behavior; get approval before coding
 2. `writing-plans` — small steps, each with a test cycle
@@ -22,4 +20,4 @@ Use this order (do not skip TDD or verification):
 7. `verification-before-completion` — fresh command evidence before “done”
 8. `finishing-a-development-branch` — PR options; never merge unless the human names that PR
 
-ORISO overlays (win on conflict): branch from `origin/dev`; compare PRs to `origin/dev`; use `AGENTS.md` test commands; `problem-intake` / `goal-loop` / `pr-prep` still write the task folder. Never copy Superpowers plugin files into git.
+ORISO overlays (always): branch from `origin/dev`; PRs target `dev`; use `AGENTS.md` test commands. After the PR, update the GitHub issue with proof (see `.cursor/README.md`). Never copy Superpowers plugin files into git.
