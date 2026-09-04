@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Button, SvgIcon } from '@mui/material';
+import { Box, SvgIcon } from '@mui/material';
 import { AccountData } from './accountData/AccountData';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { ReactComponent as DoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
@@ -172,25 +173,6 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
  * two-action shape, or a link entry keeps its own footer. This story is the
  * argument for deciding it rather than a decision made in passing.
  */
-/* Layout only. Every colour, radius, padding and hover state comes from the
-   theme's own `MuiButton` definition (`theme.jsx:139-203`) — `contained` is red
-   with white type, `outlined` fills red with white type on hover. The first
-   draft overrode background and border back to grey but left the theme's white
-   text, which is why the secondary label vanished on hover (Frank, 2026-09-04:
-   "wir hatten doch schon ein Design"). Nothing here paints. */
-const footerButtonSx = {
-	flex: '1 1 0',
-	minWidth: 0,
-	minHeight: 56,
-	/* Seven languages share these two buttons and German is not the longest.
-	   A label that no longer fits is cut with an ellipsis instead of pushing the
-	   button out of the footer; the whole text stays reachable through `title`. */
-	overflow: 'hidden',
-	textOverflow: 'ellipsis',
-	whiteSpace: 'nowrap',
-	display: 'block'
-} as const;
-
 const EntryFooter = ({
 	temporary,
 	onToggleTemporary
@@ -198,44 +180,13 @@ const EntryFooter = ({
 	temporary: boolean;
 	onToggleTemporary: () => void;
 }) => (
-	<Box
-		sx={{
-			position: 'fixed',
-			bottom: 0,
-			right: 0,
-			width: { xs: '100vw', lg: '60vw' },
-			minHeight: { sm: '96px' },
-			backgroundColor: 'rgba(255, 255, 255, 0.94)',
-			backdropFilter: 'blur(8px)',
-			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-			display: 'flex',
-			alignItems: 'center',
-			gap: 2,
-			pt: { xs: 1.5, sm: 0 },
-			pb: {
-				xs: 'calc(12px + env(safe-area-inset-bottom))',
-				sm: 0
-			},
-			px: { xs: 2, sm: 3, lg: 4 },
-			zIndex: 65
+	<RegistrationFooter
+		secondary={{
+			label: temporary ? 'Konto anlegen' : 'Ohne Konto beitreten',
+			onClick: onToggleTemporary
 		}}
-	>
-		<Button
-			variant="outlined"
-			onClick={onToggleTemporary}
-			sx={footerButtonSx}
-			title={temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
-		>
-			{temporary ? 'Konto anlegen' : 'Ohne Konto beitreten'}
-		</Button>
-		<Button
-			variant="contained"
-			sx={footerButtonSx}
-			title={temporary ? 'Beitreten' : 'Registrieren'}
-		>
-			{temporary ? 'Beitreten' : 'Registrieren'}
-		</Button>
-	</Box>
+		primary={{ label: temporary ? 'Beitreten' : 'Registrieren' }}
+	/>
 );
 
 const EntryScreen = ({
