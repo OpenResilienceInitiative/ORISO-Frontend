@@ -3980,7 +3980,7 @@
 			"age": "Vieux",
 			"gender": "Sexe",
 			"postcode": "Code postal",
-			"relation": "Contexte",
+			"relation": "Type de personne",
 			"resort": "Champ de consultation",
 			"state": "État fédéral",
 			"title": "Données de la personne qui demande conseil"
@@ -4008,6 +4008,9 @@
 				"title": "Consultez ici les contenus qui ont été partagés avec vous."
 			},
 			"title": "Outils"
+		},
+		"header": {
+			"title": "Informations complémentaires sur la personne"
 		}
 	},
 	"videoCall": {

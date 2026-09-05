@@ -3980,7 +3980,7 @@
 			"age": "Yaş",
 			"gender": "Cinsiyet",
 			"postcode": "Posta kodu",
-			"relation": "Arka plan",
+			"relation": "Danışan türü",
 			"resort": "Danışmanlık alanı",
 			"state": "Federal devlet",
 			"title": "Tavsiye isteyen kişinin detayları"
@@ -4008,6 +4008,9 @@
 				"title": "Sizinle hangi içeriklerin paylaşıldığını buradan görebilirsiniz."
 			},
 			"title": "Araçlar"
+		},
+		"header": {
+			"title": "Danışan hakkında ek bilgiler"
 		}
 	},
 	"videoCall": {
