@@ -21,6 +21,18 @@ $userNameLineHeight: 40px;
 $userNameFontSizeSmall: 24px;
 $userNameLineHeightSmall: 32px;
 $profileContentMaxWidth: 675px;
+
+// Figma "Chatroom Frame" card chrome and "Room Header All" row.
+$profileCardRadius: 32px;
+$profileCardPadding: 16px;
+$profileCardGap: 24px;
+$profileCardBorderColor: #ffe2de;
+$profileHeaderHeight: 56px;
+$profileHeaderIconWidth: 58px;
+$profileHeaderIconHeight: 40px;
+$profileHeaderIconRadius: 20px;
+$profileHeaderColor: #4c555f;
+$profileHeaderTitleSize: 18px;
 $profileIconSize: 40px;
 $groupChatIconSize: 40px;
 $maxFormElementWidth: 320px;
@@ -39,104 +51,82 @@ $profile-footer-justify-content: center !default;
 		height: 100%;
 		width: 100vw;
 
+		/* Figma "Chatroom Frame": white card, 32px radius, 1px #FFE2DE border,
+		   16px padding, 24px gap. Desktop only - below $fromLarge the profile
+		   is a full-screen route, where a bordered floating card reads as a
+		   mistake (ORISO-Frontend#1192). */
 		@include breakpoint($fromLarge) {
 			width: auto;
+			background-color: $white;
+			border: 1px solid $profileCardBorderColor;
+			border-radius: $profileCardRadius;
+			padding: $profileCardPadding;
+			gap: $profileCardGap;
+			overflow: hidden;
 		}
 	}
 
+	/* Figma "Room Header All": a 56px row holding the icon pill and the panel
+	   title, closed by a divider. No back control - the footer carries it,
+	   which is why the design has one there. */
 	&__header {
-		flex: 0;
+		flex: 0 0 auto;
 		width: 100%;
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		position: relative;
-		padding: $grid-base-three $grid-base-two;
+		justify-content: center;
+		min-height: $profileHeaderHeight;
+		padding: $grid-base 0;
+		border-bottom: 1px solid $profileCardBorderColor;
 		background-color: var(
 			--m3-surface-container-lowest,
 			$background-lighter
 		);
 
-		@include breakpoint($fromMedium) {
-			padding: $grid-base-three;
-		}
-
 		@include breakpoint($fromLarge) {
-			align-items: flex-start;
-			background-color: var(
-				--m3-surface-container-low,
-				$background-light
-			);
+			background-color: transparent;
 		}
 
 		&__wrapper {
 			display: flex;
 			flex-direction: row;
-			position: relative;
+			align-items: center;
+			gap: $grid-base-two;
 			width: 100%;
-			flex-wrap: wrap;
-
-			/* The back button is positioned absolutely at the left edge while
-			   the title is centred in the same row. With the longer title this
-			   panel now carries, the two collided at 320px, so the row reserves
-			   the button's width on both sides — keeping the title centred
-			   (ORISO-Frontend#1192, job 3). */
-			padding: 0 $grid-base-four;
-
-			@include breakpoint($fromLarge) {
-				padding: 0;
-			}
+			min-width: 0;
+			padding: 0 $grid-base;
 		}
 
-		&__title {
-			margin: 0 auto;
-
-			@include breakpoint($fromLarge) {
-				margin: 0 0 0 $grid-base;
-			}
-		}
-
-		&__username {
-			font-size: $font-size-secondary;
-			line-height: $line-height-secondary;
-			color: var(--m3-on-surface-variant, $tertiary);
-			margin: 0;
-
-			&--withBackButton {
-				@include breakpoint($fromLarge) {
-					margin-left: $grid-base-four;
-				}
-			}
-		}
-
-		&__backButton {
-			display: block;
-			position: absolute;
-			left: 0;
-			line-height: 32px;
-			cursor: pointer;
-
-			@include breakpoint($fromLarge) {
-				position: static;
-			}
+		&__icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: 0 0 auto;
+			width: $profileHeaderIconWidth;
+			height: $profileHeaderIconHeight;
+			border-radius: $profileHeaderIconRadius;
+			background-color: $profileHeaderColor;
 
 			svg {
 				width: $iconSize;
 				height: $iconSize;
-				fill: var(--m3-secondary, $secondary);
+				fill: $white;
 
-				svg path {
-					fill: var(--m3-secondary, $secondary);
-				}
-
-				&:hover {
-					fill: var(--m3-primary, $primary);
-
-					svg path {
-						fill: var(--m3-primary, $primary);
-					}
+				path {
+					fill: $white;
 				}
 			}
+		}
+
+		&__title {
+			margin: 0;
+			min-width: 0;
+			flex: 1 1 auto;
+			font-size: $profileHeaderTitleSize;
+			font-weight: 500;
+			line-height: 1;
+			color: $profileHeaderColor;
+			overflow-wrap: anywhere;
 		}
 	}
 
@@ -152,6 +142,12 @@ $profile-footer-justify-content: center !default;
 		overflow-y: auto;
 		background-color: var(--m3-surface-container-low, $background-light);
 		margin-top: 0;
+
+		/* The card itself is white; an inner surface here would read as a
+		   second box stacked inside it. */
+		@include breakpoint($fromLarge) {
+			background-color: transparent;
+		}
 	}
 
 	/* Avatar and username sit side by side, 16px apart: Figma "Frame 970" is
@@ -187,27 +183,14 @@ $profile-footer-justify-content: center !default;
 		}
 	}
 
+	/* AnimalAvatar draws its own circle and border, so this is just the slot
+	   that stops it shrinking beside a long username. */
 	&__icon {
-		background-color: $white;
-		border-radius: 50%;
-		width: $profileAvatarSizeSmall;
-		height: $profileAvatarSizeSmall;
-		margin: 0;
-		flex: 0 0 auto;
-		position: relative;
 		display: flex;
-
-		@include breakpoint($fromMedium) {
-			width: $profileAvatarSize;
-			height: $profileAvatarSize;
-		}
-
-		&--user {
-			width: 100%;
-			height: 100%;
-			align-self: center;
-			margin: 0;
-		}
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		line-height: 0;
 	}
 
 	&__content {
@@ -298,6 +281,10 @@ $profile-footer-justify-content: center !default;
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-two $grid-base-three;
+		}
+
+		@include breakpoint($fromLarge) {
+			background-color: transparent;
 		}
 
 		&__button {
