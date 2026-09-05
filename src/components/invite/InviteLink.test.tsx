@@ -11,6 +11,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { redirectToApp } from '../registration/autoLogin';
 import {
 	applyRedeemSessionCredentials,
+	assignInviteSessionDisplayName,
 	redirectToInviteSession
 } from './inviteLinkHelpers';
 
@@ -34,6 +35,9 @@ vi.mock('../registration/autoLogin', () => ({
 
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
+	assignInviteSessionDisplayName: vi
+		.fn()
+		.mockResolvedValue('freundliche Katze Mika'),
 	redirectToInviteSession: vi.fn()
 }));
 
@@ -163,6 +167,15 @@ describe('InviteLink legacy identity', () => {
 			expect(applyRedeemSessionCredentials).toHaveBeenCalled()
 		);
 		expect(redirectToInviteSession).toHaveBeenCalled();
+		// Ordering is the point: redirecting is a full page load, so the name
+		// has to be stored before we leave, or the guest stays anon_N.
+		expect(assignInviteSessionDisplayName).toHaveBeenCalled();
+		expect(
+			vi.mocked(assignInviteSessionDisplayName).mock
+				.invocationCallOrder[0]
+		).toBeLessThan(
+			vi.mocked(redirectToInviteSession).mock.invocationCallOrder[0]
+		);
 		expect(apiPostRegistration).not.toHaveBeenCalled();
 		expect(screen.queryByLabelText('User-ID')).toBeNull();
 	});

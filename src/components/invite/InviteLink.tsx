@@ -26,6 +26,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { redirectToApp } from '../registration/autoLogin';
 import {
 	applyRedeemSessionCredentials,
+	assignInviteSessionDisplayName,
 	redirectToInviteSession
 } from './inviteLinkHelpers';
 import {
@@ -87,6 +88,10 @@ export const InviteLink = () => {
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
 					applyRedeemSessionCredentials(data);
+					// Awaited, not fired and forgotten: redirecting is a full
+					// page load, which would cancel the request in flight and
+					// leave the guest as anon_N. It resolves either way.
+					await assignInviteSessionDisplayName(data, locale);
 					redirectToInviteSession(data);
 					return;
 				}
