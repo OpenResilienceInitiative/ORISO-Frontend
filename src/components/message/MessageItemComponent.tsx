@@ -76,6 +76,7 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
+import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
@@ -2729,6 +2730,63 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
+					{/* T21: the thread entry under a root message — reply count
+					    and "Author: last reply…" on one line, opens the thread. */}
+					{renderMode === 'main' &&
+						threadsEnabled &&
+						!alias?.messageType &&
+						threadSummary &&
+						threadSummary.replyCount > 0 && (
+							<button
+								type="button"
+								className={clsx(
+									'messageItem__threadButton',
+									isMyMessage &&
+										'messageItem__threadButton--right'
+								)}
+								data-cy="thread-entry"
+								aria-label={[
+									translate(
+										'message.thread.open',
+										'Open thread'
+									),
+									translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									),
+									threadSummary.lastReplyText
+								]
+									.filter(Boolean)
+									.join(' – ')}
+								title={threadSummary.lastReplyText}
+								onClick={(event) => {
+									event.preventDefault();
+									event.stopPropagation();
+									onOpenThread?.();
+								}}
+							>
+								<ThreadEntryIcon
+									className="messageItem__threadButtonIcon"
+									aria-hidden="true"
+								/>
+								<span className="messageItem__threadButtonMain">
+									{translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									)}
+								</span>
+								{threadSummary.lastReplyText && (
+									<span
+										className="messageItem__threadButtonMeta"
+										data-cy="thread-entry-preview"
+									>
+										{threadSummary.lastReplyText}
+									</span>
+								)}
+							</button>
+						)}
 				</div>
 			</div>
 			{isActionMenuOpen

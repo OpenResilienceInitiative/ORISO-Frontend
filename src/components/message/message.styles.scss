@@ -1258,26 +1258,35 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// T21: thread entry under a root message — "N Antworten" and, on one
+	// line, "Autor: letzte Nachricht…". Opens the thread. Chip tokens from
+	// the room header (primary-fixed hairline, secondary text).
 	&__threadButton {
-		margin-top: 6px;
-		background: none;
-		border: 1px solid transparent;
-		color: $text-low-emphasis;
-		font-size: 12px;
-		cursor: pointer;
-		padding: 6px 10px;
-		border-radius: 8px;
-		align-self: flex-start;
 		display: inline-flex;
-		flex-direction: row;
 		align-items: center;
-		justify-content: space-between;
-		gap: 10px;
-		min-width: 180px;
+		gap: 8px;
+		max-width: 100%;
+		margin-top: 6px;
+		padding: 6px 12px;
+		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-radius: 12px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-secondary, #4c555f);
+		font-family: inherit;
+		font-size: 12px;
+		line-height: 16px;
+		text-align: left;
+		cursor: pointer;
+		align-self: flex-start;
 
 		&:hover {
-			border-color: #e6e6e6;
-			background: #fafafa;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--m3-primary, #a5000a);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
 		}
 	}
 
@@ -1285,32 +1294,27 @@ $message-avatar-overlap: -19px;
 		align-self: flex-end;
 	}
 
+	&__threadButtonIcon {
+		flex: 0 0 auto;
+		width: 16px;
+		height: 16px;
+		fill: currentcolor;
+	}
+
 	&__threadButtonMain {
+		flex: 0 0 auto;
 		font-weight: 600;
-		color: $text-low-emphasis;
+		white-space: nowrap;
 	}
 
 	&__threadButtonMeta {
-		font-size: 11px;
-		color: $text-low-emphasis;
-	}
-
-	&__threadButtonHover {
-		display: none;
-		font-size: 11px;
-		color: $text-low-emphasis;
-	}
-
-	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--m3-primary, $primary);
-	}
-
-	&__threadButton:hover .messageItem__threadButtonHover {
-		display: inline;
-	}
-
-	&__threadButton:hover .messageItem__threadButtonMeta {
-		display: none;
+		flex: 0 1 auto;
+		min-width: 0;
+		max-width: 320px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__action {

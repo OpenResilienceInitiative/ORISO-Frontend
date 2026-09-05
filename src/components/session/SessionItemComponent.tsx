@@ -18,7 +18,6 @@ import {
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
-import { formatToHHMM } from '../../utils/dateHelpers';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
@@ -75,7 +74,10 @@ import {
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
 import { apiGetConsultant } from '../../api/apiGetConsultant';
-import { computeThreadSummaries } from '../../utils/threadSummaries';
+import {
+	computeThreadSummaries,
+	formatThreadEntryPreview
+} from '../../utils/threadSummaries';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
 	getThreadLastReadTs,
@@ -1801,9 +1803,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		threadSummariesRaw.forEach((summary, rootId) => {
 			map.set(rootId, {
 				replyCount: summary.replyCount,
-				lastReplyText:
-					'Last reply at ' +
-					formatToHHMM(new Date(summary.lastReplyTs).toString())
+				// T21: "Autor: letzte Nachricht" on the thread entry.
+				lastReplyText: formatThreadEntryPreview(summary)
 			});
 		});
 		return map;

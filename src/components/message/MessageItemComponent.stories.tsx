@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
@@ -1136,5 +1136,58 @@ export const KebabMenuFollowsScroll: Story = {
 		const rect = menu.getBoundingClientRect();
 		expect(rect.left).toBeGreaterThanOrEqual(0);
 		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
+	}
+};
+
+/**
+ * T21: the thread entry under a root message — reply count and
+ * "Author: last reply…" on one line — opens the thread.
+ */
+export const ThreadEntryWithLastReply: Story = {
+	name: 'Thread entry — replies + "Author: last reply…" (T21)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message:
+				'Es sind ein paar Briefe gekommen, die ich nicht aufgemacht habe. Mahnbescheide, glaube ich.'
+		}),
+		...baseHandlers,
+		renderMode: 'main',
+		threadsEnabled: true,
+		threadSummary: {
+			replyCount: 2,
+			lastReplyText:
+				'Sanftes Alpaka Kala: Okay. Vielleicht nächste Woche, wenn ich weiß, wie es mit dem Vertrag weitergeht.'
+		},
+		onOpenThread: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const entry = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="thread-entry"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expect(entry.textContent).toContain('2 Antworten');
+		const preview = entry.querySelector<HTMLElement>(
+			'[data-cy="thread-entry-preview"]'
+		)!;
+		await expect(preview.textContent).toContain('Sanftes Alpaka Kala:');
+		// One line, ellipsis — never a second line.
+		await expect(
+			preview.getBoundingClientRect().height
+		).toBeLessThanOrEqual(18);
+		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
+		await userEvent.click(entry);
+		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
 	}
 };
