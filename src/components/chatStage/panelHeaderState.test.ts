@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	derivePanelChannelMenu,
 	PANEL_KIND_LABEL_MIN_WIDTH,
+	resolveActiveThreadNumber,
 	resolvePanelKindLabel
 } from './panelHeaderState';
 import type { SecondaryChannel } from './channelSwitcherState';
@@ -110,5 +111,26 @@ describe('resolvePanelKindLabel (T15: participant count instead of the label whe
 				participantCount: 0
 			}).mode
 		).toBe('label');
+	});
+});
+
+describe('resolveActiveThreadNumber (T26: the channel word names the shown thread)', () => {
+	it('gives the shown thread its stable number by root order, not by list position', () => {
+		const older = { ...thread1, createdTs: 100 };
+		const newer = { ...thread2, createdTs: 200 };
+		expect(
+			resolveActiveThreadNumber([newer, supervision, older], older.id)
+		).toBe(1);
+		expect(
+			resolveActiveThreadNumber([newer, supervision, older], newer.id)
+		).toBe(2);
+	});
+
+	it('is null for the supervision chat and for an unknown channel', () => {
+		expect(
+			resolveActiveThreadNumber([thread1, supervision], 'supervision')
+		).toBeNull();
+		expect(resolveActiveThreadNumber([thread1], '$nope')).toBeNull();
+		expect(resolveActiveThreadNumber([thread1], undefined)).toBeNull();
 	});
 });

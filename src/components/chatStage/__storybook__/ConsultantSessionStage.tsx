@@ -440,7 +440,6 @@ function ThreadRoom({
 					title={t('chatStage.panel.thread.title')}
 					name={CLIENT_NAME}
 					participants={[clientParticipant, counsellorParticipant]}
-					tag={t('chatStage.panel.thread.subtitle')}
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}

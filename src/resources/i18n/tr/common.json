@@ -320,7 +320,6 @@
 			"close": "Yan paneli kapat",
 			"region": "Yan panel: {{title}}",
 			"thread": {
-				"subtitle": "Danışma sohbetindeki bir mesaja yanıtlar",
 				"title": "Konu"
 			}
 		},

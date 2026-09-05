@@ -1,20 +1,21 @@
 /**
  * Header molecule for a side panel — the Figma "Room Header All"
  * (1320:38281 → Chat Room Desktop) in the panel: the participant avatar
- * stack of the room (same `MessageAvatar` atom as the chat, T1/T4), a
- * two-line title — the channel word "Thread"/"Supervision" with its icon
- * as a small subsection label above the counterpart name (T7) — the
- * actions on the right, the `primary-fixed` hairline and the tag slot
- * under it. Same paddings as the session header so both hairlines end on
- * the same y (T3).
+ * stack of the room (same `MessageAvatar` atom as the chat, T1/T4), the
+ * counterpart name as the title, the actions on the right and the
+ * `primary-fixed` hairline. Same paddings as the session header so both
+ * hairlines end on the same y (T3).
  *
- * The channel word is a menu button and looks like one (T19): icon, word,
- * a small chevron that turns while the menu is open. It opens the channel
- * card (`ChannelMenu`, T20) with *every* secondary channel of the session
- * — supervision first, threads by recency — anchored BELOW the header so
- * the panel title stays readable (review v5). The FAB hides while a panel
- * is open (T1, T15). When the title column is tight the channel word gives
- * way to the participant count (`panelHeaderState.ts`).
+ * T26: the line under the hairline — where the main chat shows its topic
+ * tag — says what this room is and nothing more: "Supervision" or the
+ * thread's name ("Thread #2", the same stable number as in the channel
+ * card). That line IS the menu button (T19): icon, word, a chevron right
+ * after it that turns while the menu is open. It opens the channel card
+ * (`ChannelMenu`, T20) with *every* secondary channel of the session —
+ * supervision first, threads by recency — anchored below the line. The
+ * explanatory sentence ("Antworten auf eine Nachricht …") is gone. The
+ * FAB hides while a panel is open (T1, T15). When the line is tight the
+ * channel word gives way to the participant count (`panelHeaderState.ts`).
  */
 import * as React from 'react';
 import {
@@ -44,6 +45,7 @@ import type {
 } from './channelSwitcherState';
 import {
 	derivePanelChannelMenu,
+	resolveActiveThreadNumber,
 	resolvePanelKindLabel
 } from './panelHeaderState';
 import './sidePanel.styles.scss';
@@ -51,7 +53,10 @@ import './sidePanel.styles.scss';
 export interface PanelHeaderProps {
 	/** Which kind of side room — picks the icon next to the section word. */
 	'kind': SecondaryChannelKind;
-	/** Section word: "Supervision" / "Thread". */
+	/**
+	 * Channel word: "Supervision" / "Thread". A shown thread is named with
+	 * its stable number ("Thread #2", T26) when `channels` lists it.
+	 */
 	'title': string;
 	/** Counterpart shown as the main line: "Bettina B.". */
 	'name'?: string;
@@ -60,8 +65,6 @@ export interface PanelHeaderProps {
 	/** Role chip text ("Supervision" / "Beratung"). */
 	'chip'?: string;
 	'unreadCount'?: number;
-	/** Tag under the hairline — topic or a subtitle. */
-	'tag'?: string;
 	/**
 	 * All secondary channels of the conversation (T15/T20). The channel
 	 * button lists them in the channel card, the shown one
@@ -98,7 +101,6 @@ export const PanelHeader = ({
 	participants = [],
 	chip,
 	unreadCount = 0,
-	tag,
 	channels = [],
 	activeChannelId,
 	onSelectChannel,
@@ -119,7 +121,17 @@ export const PanelHeader = ({
 	const menu = derivePanelChannelMenu(channels, activeChannelId);
 	const hasOptions = menu.switchable;
 
-	// T15: measure the title column; below the minimum the label becomes
+	// T26: the channel word names the shown thread with its card number.
+	const threadNumber =
+		kind === 'thread'
+			? resolveActiveThreadNumber(channels, activeChannelId)
+			: null;
+	const channelWord =
+		threadNumber !== null
+			? translate('chatStage.menu.thread', { n: threadNumber })
+			: title;
+
+	// T15: measure the channel line; below the minimum the label becomes
 	// the participant count (like the room header's "+N").
 	const titleRef = useRef<HTMLDivElement | null>(null);
 	const [titleWidth, setTitleWidth] = useState<number | null>(null);
@@ -137,7 +149,7 @@ export const PanelHeader = ({
 	}, []);
 	const kindLabel = resolvePanelKindLabel({
 		titleWidth,
-		label: title,
+		label: channelWord,
 		participantCount: participants.length
 	});
 	const participantCountLabel = translate(
@@ -245,76 +257,14 @@ export const PanelHeader = ({
 				<div
 					className="panelHeader__title"
 					data-cy="panel-header-title"
-					data-kind-label={kindLabel.mode}
-					ref={titleRef}
 				>
-					<div
-						className="panelHeader__kind"
-						ref={optionsRef}
-						data-cy="panel-header-kind"
-					>
-						<button
-							ref={optionsButtonRef}
-							type="button"
-							className={[
-								'panelHeader__kindButton',
-								optionsOpen && 'panelHeader__kindButton--open'
-							]
-								.filter(Boolean)
-								.join(' ')}
-							data-cy="panel-header-channel-options"
-							aria-label={[
-								title,
-								kindLabel.mode === 'count'
-									? participantCountLabel
-									: '',
-								optionsLabel
-							]
-								.filter(Boolean)
-								.join(' – ')}
-							title={
-								kindLabel.mode === 'count'
-									? `${title} · ${participantCountLabel}`
-									: optionsLabel
-							}
-							aria-haspopup="menu"
-							aria-expanded={optionsOpen}
-							aria-controls={optionsOpen ? menuId : undefined}
-							disabled={!hasOptions}
-							onClick={() => setOptionsOpen((value) => !value)}
-						>
-							<Glyph
-								className="panelHeader__kindIcon"
-								aria-hidden="true"
-							/>
-							<span
-								className={`panelHeader__titleLabel panelHeader__titleLabel--${kindLabel.mode}`}
-								data-cy="panel-header-kind-label"
-								data-mode={kindLabel.mode}
-							>
-								{kindLabel.text}
-							</span>
-							{/* T19: the word opens a menu — say so with a chevron. */}
-							<ChevronIcon
-								className="panelHeader__kindChevron"
-								data-cy="panel-header-kind-chevron"
-								aria-hidden="true"
-							/>
-						</button>
-					</div>
 					<h2 className="panelHeader__name">
-						{name ? (
-							<span
-								className="panelHeader__titleName"
-								data-cy="panel-header-name"
-							>
-								{name}
-							</span>
-						) : (
-							<span className="panelHeader__titleName">
-								{title}
-							</span>
-						)}
+						<span
+							className="panelHeader__titleName"
+							data-cy="panel-header-name"
+						>
+							{name || title}
+						</span>
 					</h2>
 				</div>
 				{chip && (
@@ -351,19 +301,72 @@ export const PanelHeader = ({
 					)}
 				</div>
 			</div>
-			<div className="panelHeader__divider">
-				{tag && (
-					<span
-						className="panelHeader__tag"
-						data-cy="panel-header-tag"
+			{/* T26: the line under the hairline — the room's own name and
+			    the menu button in one; no explanatory sentence any more. */}
+			<div
+				className="panelHeader__divider"
+				data-kind-label={kindLabel.mode}
+				ref={titleRef}
+			>
+				<div
+					className="panelHeader__kind"
+					ref={optionsRef}
+					data-cy="panel-header-kind"
+				>
+					<button
+						ref={optionsButtonRef}
+						type="button"
+						className={[
+							'panelHeader__kindButton',
+							optionsOpen && 'panelHeader__kindButton--open'
+						]
+							.filter(Boolean)
+							.join(' ')}
+						data-cy="panel-header-channel-options"
+						aria-label={[
+							channelWord,
+							kindLabel.mode === 'count'
+								? participantCountLabel
+								: '',
+							optionsLabel
+						]
+							.filter(Boolean)
+							.join(' – ')}
+						title={
+							kindLabel.mode === 'count'
+								? `${channelWord} · ${participantCountLabel}`
+								: optionsLabel
+						}
+						aria-haspopup="menu"
+						aria-expanded={optionsOpen}
+						aria-controls={optionsOpen ? menuId : undefined}
+						disabled={!hasOptions}
+						onClick={() => setOptionsOpen((value) => !value)}
 					>
-						{tag}
-					</span>
-				)}
+						<Glyph
+							className="panelHeader__kindIcon"
+							aria-hidden="true"
+						/>
+						<span
+							className={`panelHeader__titleLabel panelHeader__titleLabel--${kindLabel.mode}`}
+							data-cy="panel-header-kind-label"
+							data-mode={kindLabel.mode}
+						>
+							{kindLabel.text}
+						</span>
+						{/* T19/T26: the word opens a menu — the chevron right
+						    after it says so. */}
+						<ChevronIcon
+							className="panelHeader__kindChevron"
+							data-cy="panel-header-kind-chevron"
+							aria-hidden="true"
+						/>
+					</button>
+				</div>
 			</div>
 			{optionsOpen && hasOptions && (
 				// T20: the channel card hangs below the whole header (hairline
-				// included), never over the title.
+				// and channel line included), never over the title.
 				<div
 					className="panelHeader__menu"
 					ref={menuRef}

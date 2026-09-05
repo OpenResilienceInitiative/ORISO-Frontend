@@ -320,7 +320,6 @@
 			"close": "Fermer le panneau latéral",
 			"region": "Panneau latéral : {{title}}",
 			"thread": {
-				"subtitle": "Réponses à un message du chat de conseil",
 				"title": "Fil"
 			}
 		},

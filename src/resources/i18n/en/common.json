@@ -314,8 +314,7 @@
 			"back": "Back to the counselling chat",
 			"region": "Side panel: {{title}}",
 			"thread": {
-				"title": "Thread",
-				"subtitle": "Replies to a message from the counselling chat"
+				"title": "Thread"
 			}
 		},
 		"menu": {

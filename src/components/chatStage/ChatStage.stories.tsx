@@ -573,7 +573,8 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 			composers: 2,
 			bubblesAtLeast: 9
 		});
-		await expect(panelTitle(canvasElement).kind).toBe('Thread');
+		// T26: the channel line names the shown thread with its card number.
+		await expect(panelTitle(canvasElement).kind).toBe('Thread #1');
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 		// The menu lists all three channels; the shown thread is current.
 		await userEvent.click(
@@ -603,7 +604,7 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		// → back to the thread
 		await pickChannelFromHeader(canvasElement, THREAD_ROOT_ID);
 		await waitFor(() =>
-			expect(panelTitle(canvasElement).kind).toBe('Thread')
+			expect(panelTitle(canvasElement).kind).toBe('Thread #1')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 		// The FAB stays hidden throughout — the header is the switcher.
@@ -675,7 +676,7 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 		await canvas.findByRole('menu');
 		await userEvent.keyboard('{Shift>}1{/Shift}');
 		await waitFor(() =>
-			expect(panelTitle(canvasElement).kind).toBe('Thread')
+			expect(panelTitle(canvasElement).kind).toBe('Thread #1')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 	}
@@ -864,7 +865,7 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 		// … and switches on selection.
 		await userEvent.click(headerItems[2]);
 		await waitFor(() =>
-			expect(panelTitle(canvasElement).kind).toBe('Thread')
+			expect(panelTitle(canvasElement).kind).toBe('Thread #1')
 		);
 		await expect(
 			canvasElement.querySelector('[data-cy="panel-header-back"]')

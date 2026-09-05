@@ -241,8 +241,8 @@ function ThreadSideRoom({ onBack }: { onBack?: () => void }) {
 					title={t('chatStage.panel.thread.title')}
 					name={CLIENT_NAME}
 					participants={[clientParticipant, counsellorParticipant]}
-					tag={t('chatStage.panel.thread.subtitle')}
-					channels={[SUPERVISION_CHANNEL]}
+					channels={[SUPERVISION_CHANNEL, THREAD_CHANNEL]}
+					activeChannelId={THREAD_ROOT_ID}
 					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
@@ -331,15 +331,39 @@ export const Supervision: Story = {
 		await expect(
 			panel.querySelector('[data-cy="panel-header-unread"]')?.textContent
 		).toBe('2');
-		// T7: the section word sits above the name; the privacy banner is
-		// gone; the timeline opens with the system notice bubble.
+		// T26: the name is the title; the channel word "Supervision" sits
+		// UNDER the hairline (the main chat's topic-tag slot), is the menu
+		// button, and the chevron follows the word directly. No explanatory
+		// sentence anywhere in the header. The privacy banner is gone; the
+		// timeline opens with the system notice bubble (T7).
+		const kindLabelEl = panel.querySelector<HTMLElement>(
+			'[data-cy="panel-header-kind-label"]'
+		)!;
+		await expect(kindLabelEl.textContent).toBe('Supervision');
+		const hairline = panel.querySelector<HTMLElement>(
+			'.panelHeader__divider'
+		)!;
 		await expect(
-			panel.querySelector('[data-cy="panel-header-kind-label"]')
-				?.textContent
-		).toBe('Supervision');
+			kindLabelEl.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(hairline.getBoundingClientRect().top);
+		await expect(
+			panel
+				.querySelector('[data-cy="panel-header-name"]')!
+				.getBoundingClientRect().bottom
+		).toBeLessThanOrEqual(hairline.getBoundingClientRect().top + 1);
+		const chevronEl = panel.querySelector<HTMLElement>(
+			'[data-cy="panel-header-kind-chevron"]'
+		)!;
+		await expect(
+			chevronEl.getBoundingClientRect().left -
+				kindLabelEl.getBoundingClientRect().right
+		).toBeLessThanOrEqual(6);
 		await expect(
 			panel.querySelector('[data-cy="panel-header-tag"]')
 		).toBeNull();
+		await expect(
+			panel.querySelector('.panelHeader')!.textContent
+		).not.toMatch(/Antworten auf|Replies to/);
 		await expect(
 			panel.querySelector(
 				'.messageItem .messageItem__message--systemNotification'
@@ -363,15 +387,10 @@ export const Supervision: Story = {
 		const stackBox = panel
 			.querySelector('[data-cy="panel-header-participants"]')!
 			.getBoundingClientRect();
-		const kindLabel = panel
-			.querySelector('[data-cy="panel-header-kind-label"]')!
+		const nameBox = panel
+			.querySelector('[data-cy="panel-header-name"]')!
 			.getBoundingClientRect();
-		const kindIcon = panel
-			.querySelector('.panelHeader__kindIcon')!
-			.getBoundingClientRect();
-		await expect(
-			Math.round(Math.min(kindIcon.left, kindLabel.left) - stackBox.right)
-		).toBe(6);
+		await expect(Math.round(nameBox.left - stackBox.right)).toBe(6);
 		await userEvent.hover(avatars[1]);
 		await waitFor(() =>
 			expect(
@@ -433,14 +452,16 @@ export const Supervision: Story = {
 };
 
 /**
- * T15: with little room in the title column the channel word gives way to
- * the participant count — the same rule as the room header's "+N".
+ * T15: with little room in the channel line the word gives way to the
+ * participant count — the same rule as the room header's "+N". Since T26
+ * the line spans the panel, so only a very narrow panel (here 152 px)
+ * reaches the threshold.
  */
 export const NarrowHeaderShowsParticipantCount: Story = {
 	name: 'Narrow panel — participant count instead of the channel word (T15)',
 	args: { header: null, label: 'Supervision' },
 	render: () => (
-		<Host width={300}>
+		<Host width={200}>
 			<SupervisionSideRoom />
 		</Host>
 	),
@@ -474,6 +495,21 @@ export const Thread: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		await expectRealChatParts(canvasElement, 3);
+		// T26: the thread is named with its card number, under the hairline,
+		// and the old explanatory sentence is gone.
+		const panel = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="thread-side-panel"]'
+		)!;
+		await expect(
+			panel.querySelector('[data-cy="panel-header-kind-label"]')
+				?.textContent
+		).toBe('Thread #1');
+		await expect(
+			panel.querySelector('[data-cy="panel-header-name"]')?.textContent
+		).toBe(CLIENT_NAME);
+		await expect(
+			panel.querySelector('.panelHeader')!.textContent
+		).not.toMatch(/Antworten auf|Replies to/);
 	}
 };
 

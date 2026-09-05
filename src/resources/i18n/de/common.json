@@ -326,8 +326,7 @@
 			"back": "Zurück zum Beratungschat",
 			"region": "Nebenraum: {{title}}",
 			"thread": {
-				"title": "Thread",
-				"subtitle": "Antworten auf eine Nachricht aus dem Beratungschat"
+				"title": "Thread"
 			}
 		},
 		"menu": {

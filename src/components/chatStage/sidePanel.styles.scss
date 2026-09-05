@@ -113,7 +113,7 @@ $room-actions-gap: 12px;
 		flex: 0 0 auto;
 	}
 
-	// Two lines in the 40 px row: label/medium section word + title/small name.
+	// The 40 px row carries the counterpart name (title/small), centred.
 	&__title {
 		position: relative;
 		flex: 1 1 auto;
@@ -131,19 +131,25 @@ $room-actions-gap: 12px;
 		display: flex;
 		align-items: center;
 		min-width: 0;
+		max-width: 100%;
 	}
 
-	// Figma: Topic Tag typography — label/medium 12/500/16, `secondary`.
+	// T26: the channel word sits where the main chat shows its topic tag —
+	// same Topic Tag shape (label/medium 12/500/16, `secondary` on
+	// `primary-fixed`, bottom corners 4 px) — and IS the menu button:
+	// icon · word · chevron. Hover/open turn the word `primary` (T19).
 	&__kindButton {
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-		height: 16px;
+		max-width: 100%;
+		min-width: 0;
+		height: 20px;
 		margin: 0;
-		padding: 0 4px 0 2px;
-		margin-left: -2px;
+		padding: 2px 6px 2px 8px;
 		border: 0;
-		background: transparent;
+		border-radius: 0 0 4px 4px;
+		background: var(--m3-primary-fixed, #ffdad5);
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
 		font-size: 12px;
@@ -152,17 +158,14 @@ $room-actions-gap: 12px;
 		letter-spacing: 0.5px;
 		white-space: nowrap;
 		cursor: pointer;
-		border-radius: 4px;
 
 		&:disabled {
 			cursor: default;
 		}
 
-		// T19: hover/open show the pill the button really is.
 		&:not(:disabled):hover,
 		&--open {
 			color: var(--m3-primary, #a5000a);
-			background: var(--m3-primary-fixed, #ffdad5);
 		}
 
 		&:focus-visible {
@@ -178,9 +181,8 @@ $room-actions-gap: 12px;
 		fill: currentcolor;
 	}
 
-	// T19: the word is a menu button and says so — a small chevron after
-	// the label that turns while the card is open. Disabled (nothing to
-	// switch to): the chevron stays, dimmed, so the row keeps its shape.
+	// T19/T26: the chevron right after the word says "menu"; it turns while
+	// the card is open. Disabled (nothing to switch to): dimmed, in place.
 	&__kindChevron {
 		flex: 0 0 auto;
 		width: 14px;
@@ -198,8 +200,9 @@ $room-actions-gap: 12px;
 		opacity: 0.4;
 	}
 
-	// T20: the channel card hangs below the whole header (hairline
-	// included) — never over the title. On the phone it spans the width.
+	// T20: the channel card hangs below the whole header (hairline and
+	// channel line included) — never over the title. On the phone it spans
+	// the width.
 	&__menu {
 		position: absolute;
 		top: 100%;
@@ -218,7 +221,10 @@ $room-actions-gap: 12px;
 	}
 
 	&__titleLabel {
-		flex: 0 0 auto;
+		flex: 0 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 
 		// T15: participant count instead of the word when the column is
 		// tight — same pill as the room header's "+N".
@@ -254,11 +260,13 @@ $room-actions-gap: 12px;
 	}
 
 	// Figma: Topic Tag — label/medium 12/500/16, `secondary` on `primary-fixed`.
-	&__chip,
-	&__tag {
+	&__chip {
+		flex: 0 0 auto;
 		display: inline-flex;
 		align-items: center;
+		margin-left: 8px;
 		padding: 2px 8px;
+		border-radius: 999px;
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 16px;
@@ -266,21 +274,6 @@ $room-actions-gap: 12px;
 		color: var(--m3-secondary, #4c555f);
 		background: var(--m3-primary-fixed, #ffdad5);
 		white-space: nowrap;
-	}
-
-	&__chip {
-		flex: 0 0 auto;
-		margin-left: 8px;
-		border-radius: 999px;
-	}
-
-	&__tag {
-		display: inline-block;
-		border-radius: 0 0 4px 4px;
-		max-width: 100%;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 
 	// Same shape as `.session__threadListUnreadBadge`, unread role.
@@ -370,7 +363,8 @@ $room-actions-gap: 12px;
 		}
 	}
 
-	// Figma: Room Divider — primary-fixed hairline, tag hangs below it.
+	// Figma: Room Divider — primary-fixed hairline; the channel word hangs
+	// below it like the main chat's topic tag (T26).
 	&__divider {
 		display: flex;
 		align-items: flex-start;

@@ -16,6 +16,7 @@ import {
 	type ChannelSwitcherItem,
 	type SecondaryChannel
 } from './channelSwitcherState';
+import { numberThreads } from './channelMenuModel';
 
 export interface PanelChannelMenuItem extends ChannelSwitcherItem {
 	/** The channel currently shown in the panel. */
@@ -42,6 +43,22 @@ export const derivePanelChannelMenu = (
 		activeId: activeChannelId,
 		switchable: items.some((item) => !item.active)
 	};
+};
+
+/**
+ * T26: the channel word under the hairline names the shown thread with
+ * the SAME stable number the channel card uses ("Thread #2" here means
+ * "Thread #2" in the card and ⇧2 on the keyboard). `null` for the
+ * supervision chat or when the shown channel is not a listed thread.
+ */
+export const resolveActiveThreadNumber = (
+	channels: SecondaryChannel[],
+	activeChannelId?: string
+): number | null => {
+	if (!activeChannelId) {
+		return null;
+	}
+	return numberThreads(channels).get(activeChannelId) ?? null;
 };
 
 /**
