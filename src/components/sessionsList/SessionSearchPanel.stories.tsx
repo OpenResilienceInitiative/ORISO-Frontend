@@ -5,6 +5,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import {
 	SessionSearchPanel,
 	SessionSearchPanelLabels,
+	SessionSearchAgencyOption,
 	SessionSearchPersonOption,
 	SessionSearchTab,
 	SessionSearchTopicOption,
@@ -98,6 +99,8 @@ type PlaygroundProps = {
 	people?: SessionSearchPersonOption[];
 	topics?: SessionSearchTopicOption[];
 	types?: SessionSearchTypeOption[];
+	agencies?: SessionSearchAgencyOption[];
+	initialSelectedAgencyIds?: string[];
 };
 
 function SessionSearchPanelPlayground({
@@ -108,7 +111,9 @@ function SessionSearchPanelPlayground({
 	initialArchiveOnly = false,
 	people: peopleOptions = people,
 	topics: topicOptions = topics,
-	types: typeOptions = types
+	types: typeOptions = types,
+	agencies: agencyOptions = agencies,
+	initialSelectedAgencyIds = []
 }: PlaygroundProps) {
 	const [tab, setTab] = useState<SessionSearchTab>(initialTab);
 	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
@@ -119,6 +124,9 @@ function SessionSearchPanelPlayground({
 	);
 	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
 	const [archiveOnly, setArchiveOnly] = useState(initialArchiveOnly);
+	const [selectedAgencyIds, setSelectedAgencyIds] = useState<string[]>(
+		initialSelectedAgencyIds
+	);
 
 	return (
 		<div style={shell} className="sessionsListToolbar">
@@ -144,11 +152,38 @@ function SessionSearchPanelPlayground({
 					topics={topicOptions}
 					selectedTopicId={selectedTopicId}
 					onTopicSelect={setSelectedTopicId}
+					agencies={agencyOptions}
+					selectedAgencyIds={selectedAgencyIds}
+					onAgencyToggle={(id) =>
+						setSelectedAgencyIds((prev) =>
+							prev.includes(id)
+								? prev.filter((entry) => entry !== id)
+								: [...prev, id]
+						)
+					}
 				/>
 			</div>
 		</div>
 	);
 }
+
+/** #1195 JOB1 — a counsellor who belongs to two agencies. */
+const agencies: SessionSearchAgencyOption[] = [
+	{ id: '77', label: 'Beratungsstelle Mainz', subtitle: 'Mainz 30232' },
+	{ id: '42', label: 'Beratungsstelle Berlin', subtitle: 'Berlin 10117' }
+];
+
+/** #1195 JOB3 — enough people to force auto-pagination (page size 10). */
+const manyPeople: SessionSearchPersonOption[] = Array.from(
+	{ length: 24 },
+	(_, index) => ({
+		id: `person-${index}:asker`,
+		name: `ratsuchend_${1000 + index}`,
+		subtitle: 'Ratsuchende:r | Mainz 30232',
+		role: 'asker' as const,
+		avatarSeed: `person-${index}`
+	})
+);
 
 const meta: Meta = {
 	title: 'Organisms/CaseHandoverSearch/SessionSearchPanel',
@@ -203,6 +238,27 @@ export const CounselingCenterTab: Story = {
 			initialSelectedTopicId="schulden"
 		/>
 	)
+};
+
+/**
+ * #1195 JOB1 — both agencies of a two-agency counsellor are selectable at once,
+ * above the single-select topic list.
+ */
+export const TwoAgencyFilter: Story = {
+	render: () => (
+		<SessionSearchPanelPlayground
+			initialTab="centre"
+			initialSelectedAgencyIds={['77', '42']}
+		/>
+	)
+};
+
+/**
+ * #1195 JOB3 — 24 people, of which only the first 10 render until the sentinel
+ * scrolls into view inside the menu's own scroll container.
+ */
+export const AutoPagination: Story = {
+	render: () => <SessionSearchPanelPlayground people={manyPeople} />
 };
 
 export const ByTypeTab: Story = {
