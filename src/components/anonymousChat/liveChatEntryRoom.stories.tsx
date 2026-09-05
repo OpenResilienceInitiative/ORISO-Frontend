@@ -24,6 +24,12 @@ import {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { formatOpeningHours } from '../../utils/openingHours';
+import type { Pseudonym } from '../../utils/pseudonymGenerator';
+import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
@@ -108,6 +114,13 @@ const OPENING_HOURS = JSON.stringify({
 			}
 		])
 });
+const PSEUDONYM: Pseudonym = {
+	displayName: 'geschmeidiges Kätzchen Lou',
+	animalLabel: 'Katze',
+	name: 'Lou',
+	avatar: { file: 'cat.svg', bg: '#FFD8E4', iconColor: '#1D1B20' }
+};
+
 const ABSENCE_MESSAGE =
 	'Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.';
 
@@ -246,15 +259,45 @@ const Staged = ({
 );
 
 /* ---------------------------------------------------------------------------
-   1 — The door: a name, and the choice between quick and lasting.
+   1 — The door: Carimat hands over a name (Figma CAR02 2183-14985).
    --------------------------------------------------------------------------- */
 
-const EntryScreen = ({
-	temporaryStart = true
-}: {
-	temporaryStart?: boolean;
-}) => {
-	const [temporary, setTemporary] = useState(temporaryStart);
+const EntryScreen = () => (
+	<WithContext>
+		<Staged showLogin>
+			<Box sx={{ maxWidth: 560, width: '100%' }}>
+				<PseudonymCard pseudonym={PSEUDONYM} skipTyping />
+			</Box>
+			{/* Figma 2183-14985 has Sprache · Bestätigen · Name ändern in
+			    the bar. Language already sits in the stage header, so the
+			    bar carries the two decisions — as the theme's own buttons,
+			    the same bar every other entry uses. `PseudonymActionBar`
+			    (the chat-composer variant with the dice) does not fit a
+			    375 pt bar beside a second label; it stays where it is, in
+			    the chat. */}
+			<RegistrationFooter
+				secondary={{ label: 'Name ändern' }}
+				primary={{ label: 'Bestätigen' }}
+			/>
+		</Staged>
+	</WithContext>
+);
+
+export const Step1Entry: StoryObj = {
+	name: '1 — Link geöffnet, Name bekommen',
+	render: () => <EntryScreen />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Franks Figma-Screen 1: Carimat spricht, das Tier-Pseudonym steht im Bild, unten Sprache · Bestätigen · Name ändern. Das sind die vorhandenen Bauteile `PseudonymCard` und `PseudonymActionBar` — nur auf der Bühne statt im App-Rahmen. Kein Passwortfeld: der Name ist der Zugang; wer wiederkommen will, wählt 1b.'
+			}
+		}
+	}
+};
+
+const AccountEntry = () => {
+	const [temporary, setTemporary] = useState(false);
 	return (
 		<WithContext>
 			<Staged showLogin>
@@ -279,22 +322,9 @@ const EntryScreen = ({
 	);
 };
 
-export const Step1Entry: StoryObj = {
-	name: '1 — Link geöffnet, Name bekommen',
-	render: () => <EntryScreen />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Was der Gast heute sieht, ist weniger als das: der Link registriert ihn stumm und wirft ihn in die App. Hier bekommt er einen Namen, kann ihn ändern, und entscheidet selbst zwischen „schnell rein" und „Konto anlegen". Oben rechts „Einloggen" für die, die schon eins haben. Die Hauptaktion heißt „Chat starten" — es gibt keinen Raum, dem man beitritt, sondern ein Gespräch, das beginnt.'
-			}
-		}
-	}
-};
-
 export const Step1WithAccount: StoryObj = {
 	name: '1b — Doch mit Konto',
-	render: () => <EntryScreen temporaryStart={false} />,
+	render: () => <AccountEntry />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -383,48 +413,173 @@ export const Step2Mobile: StoryObj = {
 };
 
 /* ---------------------------------------------------------------------------
-   3 — The queue.
+   3 — The waiting room (Figma CAR02 2183-16506), and the moment a counsellor
+   accepts (2183-14761).
    --------------------------------------------------------------------------- */
 
-export const Step3Queue: StoryObj = {
-	name: '3 — In der Warteschlange',
-	render: () => (
-		<WithContext>
-			<Staged>
-				<Box sx={{ maxWidth: 560 }}>
-					<Typography
-						sx={{ fontSize: 22, fontWeight: 700, mb: '6px' }}
-					>
-						Sie sind angemeldet
-					</Typography>
-					<Typography
+const WaitingRoom = ({ accepted = false }: { accepted?: boolean }) => (
+	<WithContext>
+		<Staged>
+			<Box
+				sx={{
+					maxWidth: 560,
+					width: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: 3
+				}}
+			>
+				<PrivacyMessageCard skipTyping />
+				{accepted ? (
+					/* Only now does the person learn who will counsel them and
+					   whose privacy terms they are agreeing to — unlike every
+					   other way in, where the agency is known before the door.
+					   So the agency arrives as a success element, and the
+					   button below changes its job (Frank, 2026-09-05). */
+					<Box
+						data-cy="live-chat-accepted"
 						sx={{
-							fontSize: 15,
-							color: registrationMd3.onSurfaceVariant,
-							mb: '24px'
+							display: 'flex',
+							gap: 2,
+							p: 2.5,
+							borderRadius: '20px',
+							bgcolor: registrationMd3.surfaceContainer,
+							border: `1px solid ${registrationMd3.outlineVariant}`
 						}}
 					>
-						Wir suchen eine freie Beraterin für Sie. Das dauert
-						meist wenige Minuten.
-					</Typography>
+						<Box
+							aria-hidden
+							sx={{
+								'width': 40,
+								'height': 40,
+								'flexShrink': 0,
+								'borderRadius': '50%',
+								'bgcolor': registrationMd3.primary,
+								'color': registrationMd3.onPrimary,
+								'display': 'flex',
+								'alignItems': 'center',
+								'justifyContent': 'center',
+								'& svg': { fontSize: 22 }
+							}}
+						>
+							<CheckRoundedIcon />
+						</Box>
+						<Box sx={{ minWidth: 0 }}>
+							<Typography
+								sx={{
+									fontSize: 11,
+									fontWeight: 600,
+									letterSpacing: '.12em',
+									textTransform: 'uppercase',
+									color: registrationMd3.primary
+								}}
+							>
+								Eine Beraterin ist da
+							</Typography>
+							<Typography
+								sx={{ fontSize: 18, fontWeight: 700, mt: 0.25 }}
+							>
+								{agency.name}
+							</Typography>
+							<Typography
+								sx={{
+									fontSize: 14,
+									color: registrationMd3.onSurfaceVariant,
+									mt: 1
+								}}
+							>
+								Bitte bestätigen Sie die Datenschutzbestimmungen
+								dieser Beratungsstelle. Erst danach darf Ihre
+								Beraterin den Chat mit Ihnen starten.
+							</Typography>
+							<Typography
+								sx={{
+									fontSize: 13,
+									color: registrationMd3.onSurfaceVariant,
+									mt: 1
+								}}
+							>
+								Ich habe die{' '}
+								<Box
+									component="a"
+									href="https://oriso.example/datenschutz"
+									sx={{ color: 'inherit', fontWeight: 600 }}
+								>
+									Datenschutzbestimmung
+								</Box>{' '}
+								zur Kenntnis genommen. Für Authentifizierung und
+								Navigation verwendet diese Website Cookies.
+							</Typography>
+						</Box>
+					</Box>
+				) : null}
+			</Box>
+			{!accepted && (
+				/* The queue bar's desktop layout is a fixed-pixel Figma copy
+				   (227 + 114 + 400 px) and folds letter by letter in a 560 px
+				   box — it needs the whole column. */
+				<Box sx={{ width: '100%', mt: 3 }}>
+					<WaitingQueueActionBar
+						queuePosition={23}
+						onOpenCalmCompanion={() => undefined}
+						onRequestLocalCounselor={() => undefined}
+						onLeaveQueue={() => undefined}
+					/>
 				</Box>
-				<WaitingQueueActionBar
-					queuePosition={2}
-					onOpenCalmCompanion={() => undefined}
-					onRequestLocalCounselor={() => undefined}
-					onLeaveQueue={() => undefined}
-				/>
-			</Staged>
-		</WithContext>
-	),
+			)}
+			{/* The bar's button is the waiting animation (Frank, 2026-09-05:
+			    "eine coole Warteraum-Animation … könnte ja unten der
+			    Footer-Button sein"): the same gate as after the registration,
+			    filling while the queue moves, open the moment a counsellor
+			    accepts — and then it says what the click now means. */}
+			<RegistrationFooter>
+				<Box sx={{ width: '100%' }}>
+					<HandoverGateButton
+						state={accepted ? 'ready' : 'queued'}
+						onEnter={() => undefined}
+						label={
+							accepted
+								? 'Datenschutz zustimmen und Live-Chat beitreten'
+								: 'Warteraum'
+						}
+					/>
+				</Box>
+			</RegistrationFooter>
+		</Staged>
+	</WithContext>
+);
+
+export const Step3Queue: StoryObj = {
+	name: '3 — Warteraum',
+	render: () => <WaitingRoom />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Kein Countdown, sondern eine Position — der Unterschied zur Selbsthilfegruppe: dort steht ein Termin fest, hier wartet man auf einen Menschen. Auf dev misst dieselbe Anzeige heute im Desktop 114 px Breite und bricht in fünf Zeilen um; auf der Bühne hat sie den Platz, den sie braucht.'
+				story: 'Franks Figma-Warteraum: Carimat erklärt die Verschlüsselung, die Pille zählt, wer noch vor einem ist, daneben die ruhige Begleitung und „Statt zu warten" der Weg zur Mail-Beratung — alles vorhandene Bauteile. Neu ist der Fuß: das Tor der Registrierung als Warteanimation, gefüllt im Takt der Schlange, mit „Gleich sind Sie an der Reihe …" als Statuszeile.'
 			}
 		}
 	}
+};
+
+export const Step3Accepted: StoryObj = {
+	name: '3b — Beraterin nimmt an',
+	render: () => <WaitingRoom accepted />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der Kern von Franks Anmerkung: Erst jetzt weiß der Mensch, wer ihn berät und wessen Datenschutz er zustimmt. Die Beratungsstelle fährt als Erfolgs-Element in den Warteraum, mit dem Willkommen-Text aus Figma 2183-14761, und der Knopf unten wechselt von „Warteraum" zu „Datenschutz zustimmen und Live-Chat beitreten". Ein Klick, zwei Dinge — und beide stehen drauf.'
+			}
+		}
+	}
+};
+
+export const Step3Mobile: StoryObj = {
+	name: '3c — Beraterin nimmt an, mobil',
+	globals: phone375Globals,
+	render: () => <WaitingRoom accepted />,
+	parameters: { layout: 'fullscreen' }
 };
 
 /* ---------------------------------------------------------------------------
@@ -433,64 +588,128 @@ export const Step3Queue: StoryObj = {
 
 const Closed = () => {
 	const { t } = useTranslation();
+	const [hoursOpen, setHoursOpen] = useState(false);
 	return (
 		<WithContext>
 			<Staged showLogin>
 				<Box sx={{ maxWidth: 560 }}>
-					<Typography
-						sx={{ fontSize: 22, fontWeight: 700, mb: '6px' }}
+					<Box
+						sx={{
+							display: 'flex',
+							gap: 2,
+							alignItems: 'center',
+							mb: 2
+						}}
 					>
-						Der Live-Chat ist gerade geschlossen
-					</Typography>
+						<Box
+							aria-hidden
+							sx={{
+								'width': 56,
+								'height': 56,
+								'flexShrink': 0,
+								'borderRadius': '50%',
+								'bgcolor': registrationMd3.surfaceContainer,
+								'display': 'flex',
+								'alignItems': 'center',
+								'justifyContent': 'center',
+								'& svg': { fontSize: 30 }
+							}}
+						>
+							<ScheduleOutlinedIcon />
+						</Box>
+						<Typography sx={{ fontSize: 22, fontWeight: 700 }}>
+							{t(
+								'anonymousChat.noAvailability.title',
+								'Live-Chat ist zurzeit leider geschlossen'
+							)}
+						</Typography>
+					</Box>
+					{/* The agency's own absence text from the admin panel. */}
 					<Typography
 						sx={{
 							fontSize: 15,
 							color: registrationMd3.onSurfaceVariant,
-							mb: 3
+							mb: 2
 						}}
 					>
 						{ABSENCE_MESSAGE}
 					</Typography>
 					<Box
+						component="button"
+						type="button"
+						onClick={() => setHoursOpen((v) => !v)}
+						aria-expanded={hoursOpen}
 						sx={{
+							width: '100%',
+							textAlign: 'left',
+							font: 'inherit',
+							fontSize: 14,
+							color: registrationMd3.onSurfaceVariant,
+							bgcolor: 'transparent',
 							border: `1px solid ${registrationMd3.outlineVariant}`,
-							borderRadius: '16px',
-							p: 2,
-							mb: 2
+							borderRadius: '12px',
+							p: '12px 16px',
+							mb: 2,
+							cursor: 'pointer'
 						}}
 					>
-						<Typography
-							sx={{
-								fontSize: 11,
-								fontWeight: 600,
-								letterSpacing: '.12em',
-								textTransform: 'uppercase',
-								color: registrationMd3.onSurfaceVariant,
-								mb: 0.5
-							}}
-						>
-							Live-Chat geöffnet
-						</Typography>
-						<Typography sx={{ fontSize: 15 }}>
-							{formatOpeningHours(OPENING_HOURS, t)}
-						</Typography>
+						{t(
+							'anonymousChat.noAvailability.openingHours',
+							'Reguläre Öffnungszeiten anzeigen'
+						)}
+						{hoursOpen && (
+							<Typography
+								sx={{
+									fontSize: 15,
+									color: registrationMd3.onSurface,
+									mt: 1
+								}}
+							>
+								{formatOpeningHours(OPENING_HOURS, t)}
+							</Typography>
+						)}
 					</Box>
+					<Typography sx={{ fontSize: 15, mb: 2 }}>
+						{t(
+							'anonymousChat.noAvailability.mailHint',
+							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage.'
+						)}
+					</Typography>
 					<Typography
 						sx={{
 							fontSize: 13,
+							color: registrationMd3.onSurfaceVariant,
+							mb: 2
+						}}
+					>
+						{t(
+							'anonymousChat.noAvailability.tip',
+							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
+						)}
+					</Typography>
+					<Typography
+						sx={{
+							fontSize: 13,
+							fontWeight: 600,
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						Zur Mail-Beratung nehmen wir Beratungsstelle und Thema
-						mit — nur die Postleitzahl fragen wir noch.
+						{t(
+							'anonymousChat.noAvailability.responseTime',
+							'Antwort innerhalb von 2 Werktagen'
+						)}
 					</Typography>
 				</Box>
 				<RegistrationFooter
-					/* Figma CAR02 2183-15874: "anonyme Mail-Beratung starten" is the
-					   way, "Später wiederkommen" the quiet exit. Short enough
-					   for a 375 pt bar without an ellipsis. */
-					secondary={{ label: 'Später' }}
-					primary={{ label: 'Mail-Beratung starten' }}
+					secondary={{
+						label: t('anonymousChat.noAvailability.later', 'Später')
+					}}
+					primary={{
+						label: t(
+							'anonymousChat.noAvailability.startMailCounseling',
+							'Mail-Beratung starten'
+						)
+					}}
 				/>
 			</Staged>
 		</WithContext>
@@ -504,7 +723,7 @@ export const Step4Closed: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Auf dev erfährt der Gast erst NACH Einwilligung und 30 bis 40 Sekunden Pseudonym-Animation, dass geschlossen ist. Diese Ansicht gehört vor den Eintritt. Öffnungszeiten und Abwesenheitstext kommen aus den Live-Chat-Einstellungen im Admin (`formatOpeningHours`, `absenceMessage`). Der Ausweg ist ein echter Wechsel: „Zur Mail-Beratung" führt in die Registrierung mit Beratungsstelle und Thema vorbelegt — die Postleitzahl bleibt Pflicht und wird nur vorbelegt, nie übersprungen. Kein „Nachricht schreiben" im Live-Chat, der gerade niemand liest.'
+				story: 'Figma CAR02 2183-15874, mit den Texten, die es unter `anonymousChat.noAvailability.*` schon in sieben Sprachen gibt — nichts neu geschrieben. Auf dev erfährt der Gast erst NACH Einwilligung und 30 bis 40 Sekunden Pseudonym-Animation, dass geschlossen ist. Diese Ansicht gehört vor den Eintritt. Öffnungszeiten und Abwesenheitstext kommen aus den Live-Chat-Einstellungen im Admin (`formatOpeningHours`, `absenceMessage`). Der Ausweg ist ein echter Wechsel: „Zur Mail-Beratung" führt in die Registrierung mit Beratungsstelle und Thema vorbelegt — die Postleitzahl bleibt Pflicht und wird nur vorbelegt, nie übersprungen. Kein „Nachricht schreiben" im Live-Chat, der gerade niemand liest.'
 			}
 		}
 	}
