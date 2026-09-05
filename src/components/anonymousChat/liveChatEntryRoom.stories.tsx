@@ -92,13 +92,21 @@ const legalLinks: TProvidedLegalLink[] = [
 /** What the admin panel stores for this agency's live chat. */
 const OPENING_HOURS = JSON.stringify({
 	version: 1,
-	openingHours: [
-		{ day: 1, from: '10:00', to: '17:00' },
-		{ day: 2, from: '10:00', to: '17:00' },
-		{ day: 3, from: '10:00', to: '17:00' },
-		{ day: 4, from: '10:00', to: '17:00' },
-		{ day: 5, from: '10:00', to: '13:00' }
-	]
+	openingHours: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY']
+		.map((day) => ({
+			fromDay: day,
+			from: '10:00',
+			untilDay: day,
+			until: '17:00'
+		}))
+		.concat([
+			{
+				fromDay: 'FRIDAY',
+				from: '10:00',
+				untilDay: 'FRIDAY',
+				until: '13:00'
+			}
+		])
 });
 const ABSENCE_MESSAGE =
 	'Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.';
@@ -478,8 +486,11 @@ const Closed = () => {
 					</Typography>
 				</Box>
 				<RegistrationFooter
-					secondary={{ label: 'Später wiederkommen' }}
-					primary={{ label: 'Zur Mail-Beratung' }}
+					/* Figma CAR02 2183-15874: "anonyme Mail-Beratung starten" is the
+					   way, "Später wiederkommen" the quiet exit. Short enough
+					   for a 375 pt bar without an ellipsis. */
+					secondary={{ label: 'Später' }}
+					primary={{ label: 'Mail-Beratung starten' }}
 				/>
 			</Staged>
 		</WithContext>
