@@ -14,6 +14,9 @@ import {
 export interface ChannelMenuBounds {
 	top: number;
 	bottom: number;
+	/** T33: horizontal bounds — only hosts with an `alignRef` need them. */
+	left?: number;
+	right?: number;
 	/** Elements whose size moves the bounds (the docked composer) — watched. */
 	watch?: Element[];
 }
@@ -23,6 +26,11 @@ export interface UseChannelMenuPlacementOptions {
 	anchorRef: RefObject<HTMLElement | null>;
 	/** Wrapper around the rendered `ChannelMenu`. */
 	menuRef: RefObject<HTMLElement | null>;
+	/**
+	 * T33: the trigger the card's left edge aligns with. The returned
+	 * `left` is relative to `anchorRef` (the card's positioned ancestor).
+	 */
+	alignRef?: RefObject<HTMLElement | null>;
 	/** Viewport coordinates of the space the card may use. */
 	resolveBounds: () => ChannelMenuBounds | null;
 	prefer: ChannelMenuSide;
@@ -41,6 +49,7 @@ export const useChannelMenuPlacement = ({
 	open,
 	anchorRef,
 	menuRef,
+	alignRef,
 	resolveBounds,
 	prefer,
 	flip = true
@@ -62,16 +71,32 @@ export const useChannelMenuPlacement = ({
 				return;
 			}
 			const rect = anchor.getBoundingClientRect();
+			const align = alignRef?.current?.getBoundingClientRect();
+			const card =
+				menu.querySelector<HTMLElement>('.channelMenu') ?? menu;
+			const placed = placeChannelMenu({
+				anchorTop: rect.top,
+				anchorBottom: rect.bottom,
+				boundsTop: bounds.top,
+				boundsBottom: bounds.bottom,
+				needed: naturalMenuHeight(menu),
+				prefer,
+				flip,
+				...(align &&
+				bounds.left !== undefined &&
+				bounds.right !== undefined
+					? {
+							anchorLeft: align.left,
+							boundsLeft: bounds.left,
+							boundsRight: bounds.right,
+							neededWidth: card.offsetWidth
+						}
+					: {})
+			});
 			setPlacement(
-				placeChannelMenu({
-					anchorTop: rect.top,
-					anchorBottom: rect.bottom,
-					boundsTop: bounds.top,
-					boundsBottom: bounds.bottom,
-					needed: naturalMenuHeight(menu),
-					prefer,
-					flip
-				})
+				placed.left === undefined
+					? placed
+					: { ...placed, left: placed.left - rect.left }
 			);
 		};
 		measure();
@@ -91,7 +116,7 @@ export const useChannelMenuPlacement = ({
 			window.removeEventListener('resize', measure);
 			observer?.disconnect();
 		};
-	}, [open, anchorRef, menuRef, resolveBounds, prefer, flip]);
+	}, [open, anchorRef, menuRef, alignRef, resolveBounds, prefer, flip]);
 
 	return placement;
 };
@@ -110,6 +135,8 @@ export const boundsAboveComposer = (
 	return {
 		top: rect.top,
 		bottom: composer ? composer.getBoundingClientRect().top : rect.bottom,
+		left: rect.left,
+		right: rect.right,
 		watch: composer ? [container, composer] : [container]
 	};
 };

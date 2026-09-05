@@ -12,8 +12,9 @@
  * card). That line IS the menu button (T19): icon, word, a chevron right
  * after it that turns while the menu is open. It opens the channel card
  * (`ChannelMenu`, T20) with *every* secondary channel of the session —
- * supervision first, threads by recency — anchored below the line. The
- * explanatory sentence ("Antworten auf eine Nachricht …") is gone. The
+ * supervision first, threads by recency — anchored below the line and
+ * left-aligned with it (T33: card left edge = tag left edge, clamped into
+ * the panel by `channelMenuPlacement`). The explanatory sentence ("Antworten auf eine Nachricht …") is gone. The
  * FAB hides while a panel is open (T1, T15). When the line is tight the
  * channel word gives way to the participant count (`panelHeaderState.ts`).
  */
@@ -169,9 +170,11 @@ export const PanelHeader = ({
 	);
 	const placement = useChannelMenuPlacement({
 		open: optionsOpen && hasOptions,
-		// The card hangs from the whole header (hairline included).
+		// The card hangs from the whole header (hairline included) …
 		anchorRef: headerRef,
 		menuRef,
+		// … and its left edge sits on the channel tag (T33).
+		alignRef: optionsButtonRef,
 		resolveBounds,
 		prefer: 'down',
 		flip: false
@@ -371,6 +374,11 @@ export const PanelHeader = ({
 					className="panelHeader__menu"
 					ref={menuRef}
 					data-cy="panel-header-channel-menu"
+					style={
+						placement?.left !== undefined
+							? { left: `${Math.round(placement.left)}px` }
+							: undefined
+					}
 				>
 					<ChannelMenu
 						id={menuId}

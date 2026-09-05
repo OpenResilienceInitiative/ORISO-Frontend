@@ -201,16 +201,19 @@ $room-actions-gap: 12px;
 	}
 
 	// T20: the channel card hangs below the whole header (hairline and
-	// channel line included) — never over the title. On the phone it spans
-	// the width.
+	// channel line included) — never over the title. T33: its left edge is
+	// the channel tag's (inset + the divider's 37 px) — the measured value
+	// comes inline from `useChannelMenuPlacement`, this is the fallback
+	// before the first measurement. On the phone it spans the width.
 	&__menu {
 		position: absolute;
 		top: 100%;
-		left: $room-header-inset;
+		left: calc(#{$room-header-inset} + 37px);
 		z-index: 1200;
 		margin-top: 4px;
 
 		@media screen and (width <= 899px) {
+			left: $room-header-inset;
 			right: $room-header-inset;
 
 			.channelMenu {

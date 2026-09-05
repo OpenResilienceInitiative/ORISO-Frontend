@@ -10,6 +10,12 @@
  * row list scrolls inside instead of the card being cut or sliding
  * behind the composer. Pure numbers in one coordinate space; the hook
  * `useChannelMenuPlacement` measures the DOM and feeds it.
+ *
+ * T33: horizontally the card opens left-aligned with its trigger (the
+ * "Supervision ⌄" tag under the hairline) and slides left only as far as
+ * needed to end inside the bounds; wider than the bounds it starts at
+ * their left edge. Hosts without a horizontal anchor (the FAB) get no
+ * `left` and keep their CSS position.
  */
 export type ChannelMenuSide = 'up' | 'down';
 
@@ -25,11 +31,19 @@ export interface ChannelMenuSpace {
 	prefer: ChannelMenuSide;
 	/** May the card change side? Default true. */
 	flip?: boolean;
+	/** T33: left edge of the trigger the card aligns with. */
+	anchorLeft?: number;
+	boundsLeft?: number;
+	boundsRight?: number;
+	/** Natural width of the card. */
+	neededWidth?: number;
 }
 
 export interface ChannelMenuPlacement {
 	side: ChannelMenuSide;
 	maxHeight: number;
+	/** T33: the card's left edge (same space as the input); unset = CSS. */
+	left?: number;
 }
 
 /** Header + separator + one and a half rows — below that the card is useless. */
@@ -45,7 +59,11 @@ export const placeChannelMenu = ({
 	needed,
 	gap = CHANNEL_MENU_GAP,
 	prefer,
-	flip = true
+	flip = true,
+	anchorLeft,
+	boundsLeft,
+	boundsRight,
+	neededWidth
 }: ChannelMenuSpace): ChannelMenuPlacement => {
 	const room: Record<ChannelMenuSide, number> = {
 		up: Math.floor(anchorTop - boundsTop - gap),
@@ -56,8 +74,20 @@ export const placeChannelMenu = ({
 		flip && room[prefer] < needed && room[other] > room[prefer]
 			? other
 			: prefer;
-	return {
+	const placement: ChannelMenuPlacement = {
 		side,
 		maxHeight: Math.max(CHANNEL_MENU_MIN_HEIGHT, room[side])
 	};
+	if (
+		anchorLeft !== undefined &&
+		boundsLeft !== undefined &&
+		boundsRight !== undefined &&
+		neededWidth !== undefined
+	) {
+		placement.left = Math.max(
+			boundsLeft,
+			Math.min(anchorLeft, boundsRight - neededWidth)
+		);
+	}
+	return placement;
 };

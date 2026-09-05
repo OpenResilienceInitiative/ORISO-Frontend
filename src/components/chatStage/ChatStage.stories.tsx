@@ -203,7 +203,11 @@ const expectAvatarsAtCardInset = async (pane: HTMLElement) => {
 	});
 };
 
-/** The channel card must hang below the header — never over the title. */
+/**
+ * The channel card must hang below the header — never over the title —
+ * and (T33) open left-aligned with its trigger, the channel tag: card left
+ * edge = trigger left edge ± 1 px.
+ */
 const expectMenuBelowHeader = async (canvasElement: HTMLElement) => {
 	const menu = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="panel-header-channel-menu"]'
@@ -213,6 +217,18 @@ const expectMenuBelowHeader = async (canvasElement: HTMLElement) => {
 	)!;
 	await expect(menu.getBoundingClientRect().top).toBeGreaterThanOrEqual(
 		hairline.getBoundingClientRect().bottom - 1
+	);
+	const trigger = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel"] [data-cy="panel-header-channel-options"]'
+	)!;
+	const card = menu.querySelector<HTMLElement>('.channelMenu')!;
+	await waitFor(() =>
+		expect(
+			Math.abs(
+				card.getBoundingClientRect().left -
+					trigger.getBoundingClientRect().left
+			)
+		).toBeLessThanOrEqual(1)
 	);
 };
 

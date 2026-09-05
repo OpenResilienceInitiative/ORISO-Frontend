@@ -89,3 +89,60 @@ describe('placeChannelMenu', () => {
 		).toBe(384);
 	});
 });
+
+/**
+ * T33: the header card opens left-aligned with its trigger (the
+ * "Supervision ⌄" tag under the hairline) and is clamped into the host's
+ * horizontal bounds — it never sticks out of the panel.
+ */
+describe('placeChannelMenu — horizontal (T33)', () => {
+	const vertical = {
+		anchorTop: 100,
+		anchorBottom: 148,
+		boundsTop: 0,
+		boundsBottom: 600,
+		needed: 300,
+		prefer: 'down' as const,
+		flip: false
+	};
+
+	it('puts the card left edge on the trigger left edge when it fits', () => {
+		expect(
+			placeChannelMenu({
+				...vertical,
+				anchorLeft: 903,
+				boundsLeft: 850,
+				boundsRight: 1250,
+				neededWidth: 301
+			}).left
+		).toBe(903);
+	});
+
+	it('shifts the card left so it ends inside the bounds', () => {
+		expect(
+			placeChannelMenu({
+				...vertical,
+				anchorLeft: 1100,
+				boundsLeft: 850,
+				boundsRight: 1250,
+				neededWidth: 301
+			}).left
+		).toBe(949);
+	});
+
+	it('never starts before the bounds when the card is wider than them', () => {
+		expect(
+			placeChannelMenu({
+				...vertical,
+				anchorLeft: 20,
+				boundsLeft: 0,
+				boundsRight: 200,
+				neededWidth: 301
+			}).left
+		).toBe(0);
+	});
+
+	it('reports no left without horizontal input (the FAB host)', () => {
+		expect(placeChannelMenu(vertical).left).toBeUndefined();
+	});
+});
