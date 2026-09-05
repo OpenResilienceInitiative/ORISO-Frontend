@@ -1,8 +1,8 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v5/<story>-<viewport>.png
- *        SHOT_DIR=stage-v4 node _shots/shoot.mjs  (older set)
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v6/<story>-<viewport>.png
+ *        SHOT_DIR=stage-v5 node _shots/shoot.mjs  (older set)
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v5'
+	process.env.SHOT_DIR ?? 'stage-v6'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -67,6 +67,28 @@ const shots = [
 		`${stage}thread-and-supervision-open-at-once`,
 		['1280x820'],
 		'open-panel-options'
+	],
+	[
+		'd3-panel-channel-card-keyboard',
+		`${stage}panel-channel-card-keyboard-and-shortcuts`,
+		['1280x820', '1440x900'],
+		'open-panel-options'
+	],
+	[
+		'a3-panel-composer-bar-scrolled',
+		`${stage}supervision-inside-the-card`,
+		['1280x820'],
+		'scroll-panel-bar'
+	],
+	[
+		'thread-entry-last-reply',
+		'components-chat-messageitem--thread-entry-with-last-reply',
+		['1280x820', '390x844']
+	],
+	[
+		'toolbar-arrows-phone',
+		'components-composer-toolbar--with-navigation-arrows',
+		['390x844']
 	],
 	[
 		'd2-panel-channel-menu-switch',
@@ -200,6 +222,15 @@ for (const [name, id, sizes, action] of shots) {
 				.locator('[data-cy="panel-header-channel-options"]')
 				.first()
 				.click();
+			await page.waitForTimeout(300);
+		}
+		if (action === 'scroll-panel-bar') {
+			await page
+				.locator('[data-cy="stage-panel"] .composerToolbar--default')
+				.first()
+				.evaluate((bar) => {
+					bar.scrollLeft = bar.scrollWidth;
+				});
 			await page.waitForTimeout(300);
 		}
 		if (action === 'hover-first-avatar') {
