@@ -46,58 +46,6 @@
 		}
 	}
 
-	// Frank's choice: the side room lives INSIDE the chat card. The card
-	// becomes a row of two panes; each pane is its own positioning context
-	// so the real composer docks to its own pane, not to the whole card.
-	&__card--split {
-		flex-direction: row;
-	}
-
-	&__mainPane {
-		position: relative;
-		flex: 1 1 auto;
-		display: flex;
-		flex-direction: column;
-		min-width: 0;
-		min-height: 0;
-
-		> :first-child {
-			flex: 0 0 auto;
-		}
-	}
-
-	// `.session > div:first-child` pins the header; on stage that first
-	// child is the whole main pane, which must flex and shrink instead.
-	.session > .chatStage__mainPane {
-		flex: 1 1 0;
-		min-width: 0;
-		min-height: 0;
-	}
-
-	// In the real card `.session > .session__content` puts the timeline in
-	// normal flow; mirror that for the pane so the header stays on top.
-	.chatStage__mainPane > .session__content {
-		position: relative;
-		inset: auto;
-		flex: 1 1 auto;
-		min-height: 0;
-	}
-
-	&__panel {
-		position: relative;
-		flex: 0 0 auto;
-
-		// Second-card variant: the panel is a `.session` card of its own;
-		// keep the stage inset but close the gap to the chat card.
-		&--card {
-			display: flex;
-
-			> .session {
-				margin: 24px 24px 24px 0;
-			}
-		}
-	}
-
 	// Phone: one pane fills the stage, a bottom bar below (placeholder for
 	// the app's bottom navigation, 72 px like `$grid-base-nine`).
 	&--single {
@@ -141,21 +89,6 @@
 	}
 }
 
-// T37/D1: compact (14/20, preview 12/16, name/thread entry 12/16, composer
-// 14) is the default everywhere (`mui-variables-mapping.scss`). This is the
-// old 16/21 kept ONLY for the comparison story (h1) "legacy 16/21".
-.chatStage--legacyText {
-	--message-font-size: 16px;
-	--message-line-height: 21px;
-	--session-preview-font-size: 14px;
-	--session-preview-line-height: 20px;
-	--message-name-font-size: 12px;
-	--message-name-line-height: 13px;
-	--thread-entry-font-size: 12px;
-	--thread-entry-line-height: 16px;
-	--composer-font-size: 16px;
-}
-
 // Side-by-side comparison frame for the label question (story f).
 .chatStageCompare {
 	display: flex;
@@ -187,5 +120,58 @@
 		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 		border-radius: 28px;
 		background: var(--m3-surface-container-lowest, #fff);
+	}
+}
+
+// Shared by the stage AND the app (B2): the chat card hosting a side
+// room. `SessionItemComponent` renders the same DOM/classes the stage does:
+//   .session.chatStage__card(--split)
+//     > .chatStage__mainPane   (header · timeline · composer · FAB)
+//     > .chatStage__panel      (ResizableHandle · SidePanel)
+// Frank's choice: the side room lives INSIDE the chat card. The card
+// becomes a row of two panes; each pane is its own positioning context so
+// the real composer docks to its own pane, not to the whole card.
+.session.chatStage__card {
+	&--split {
+		flex-direction: row;
+	}
+
+	// `.session > div:first-child` pins the header; here that first child
+	// is the whole main pane, which must flex and shrink instead.
+	> .chatStage__mainPane {
+		position: relative;
+		flex: 1 1 0;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+
+		> :first-child {
+			flex: 0 0 auto;
+		}
+
+		// In the real card `.session > .session__content` puts the timeline
+		// in normal flow; mirror that for the pane so the header stays on top.
+		> .session__content {
+			position: relative;
+			inset: auto;
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+	}
+}
+
+.chatStage__panel {
+	position: relative;
+	flex: 0 0 auto;
+
+	// Second-card variant: the panel is a `.session` card of its own;
+	// keep the stage inset but close the gap to the chat card.
+	&--card {
+		display: flex;
+
+		> .session {
+			margin: 24px 24px 24px 0;
+		}
 	}
 }

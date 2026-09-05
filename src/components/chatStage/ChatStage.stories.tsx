@@ -1864,11 +1864,12 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 
 /**
  * (h) T37 → D1: chat text size. Compact is the DEFAULT now (Frank, 05.09.
- * evening): message body 14/20 (M3 body/medium), list preview 12
- * (label/medium), sender name line 14/20 and thread entry 14/20
- * (label/large), composer text + placeholder 14. One switch: the custom
- * properties in `mui-variables-mapping.scss`; the stage's
- * `.chatStage--legacyText` keeps the old 16/21 for the comparison (h1).
+ * evening): message body 14/20 (M3 body/medium), list preview 12/16,
+ * sender name line 12/16 and thread entry 12/16 (label/medium), composer
+ * text + placeholder 14. One switch: the custom properties in
+ * `mui-variables-mapping.scss`. The legacy 16/21 comparison story and its
+ * `.chatStage--legacyText` modifier were removed after Frank's acceptance
+ * (review v11, checklist 12).
  */
 const expectChatTextSize = async (
 	canvasElement: HTMLElement,
@@ -1919,7 +1920,7 @@ const expectChatTextSize = async (
 		// hard 20 px)
 		expect(getComputedStyle(line).lineHeight).toBe(previewLineHeight);
 	}
-	// Sender name line ("Mona S.") — review v10 D1: M3 label/small 12/16,
+	// Sender name line ("Mona S.") — review v10 D1: M3 label/medium 12/16,
 	// visibly smaller than the 14 px body.
 	const names = Array.from(
 		canvasElement.querySelectorAll<HTMLElement>('.messageItem__username')
@@ -1953,34 +1954,6 @@ const expectChatTextSize = async (
 	}
 };
 
-export const ChatTextSizeLegacy: Story = {
-	name: '(h1) Chat text size — legacy 16/21 (preview 14, name 12, composer 16) for comparison',
-	globals: desktop1280Globals,
-	args: {
-		panel: 'supervision',
-		panelVariant: 'inside',
-		supervisionUnread: 0,
-		openThreads: 1,
-		textSize: 'legacy'
-	},
-	play: async ({ canvasElement }) => {
-		await expectChatTextSize(canvasElement, {
-			fontSize: '16px',
-			lineHeight: '21px',
-			preview: '14px',
-			previewLineHeight: '20px',
-			name: '12px',
-			nameLineHeight: '13px',
-			threadEntry: '12px',
-			threadEntryLineHeight: '16px',
-			composer: '16px'
-		});
-		await expect(
-			canvasElement.querySelector('.chatStage--legacyText')
-		).not.toBeNull();
-	}
-};
-
 export const ChatTextSizeCompact: Story = {
 	name: '(h2) Chat text size — compact 14/20 (preview 12/16, name 12/16, thread entry 12/16, composer 14) = DEFAULT',
 	globals: desktop1280Globals,
@@ -2004,10 +1977,7 @@ export const ChatTextSizeCompact: Story = {
 		});
 		// The default needs no modifier class — nothing on the stage root.
 		await expect(
-			canvasElement.querySelector('.chatStage--legacyText')
-		).toBeNull();
-		await expect(
-			canvasElement.querySelector('.chatStage--compactText')
+			canvasElement.querySelector('[class*="chatStage--"][class*="Text"]')
 		).toBeNull();
 		// D1 lives in the global token file, not in a component stylesheet.
 		const root = getComputedStyle(document.documentElement);

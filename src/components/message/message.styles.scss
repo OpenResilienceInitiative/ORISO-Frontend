@@ -109,7 +109,7 @@ $message-avatar-overlap: -19px;
 		align-items: center;
 		padding-left: 20px;
 
-		// D1: the name line follows the chat text scale (M3 label/small
+		// D1: the name line follows the chat text scale (M3 label/medium
 		// 12/16 — review v10: smaller than the 14 px body, as before D1).
 		font-size: var(--message-name-font-size, 12px);
 		line-height: var(--message-name-line-height, 16px);
@@ -1295,7 +1295,7 @@ $message-avatar-overlap: -19px;
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
 
-		// D1: the thread entry line follows the chat text scale (label/small 12/16).
+		// D1: the thread entry line follows the chat text scale (label/medium 12/16).
 		font-size: var(--thread-entry-font-size, 12px);
 		line-height: var(--thread-entry-line-height, 16px);
 		text-align: left;
