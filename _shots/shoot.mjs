@@ -31,7 +31,7 @@ const shots = [
 	],
 	[
 		'a2-supervision-system-notice',
-		`${stage}supervision-system-notice-at-the-top-of-the-side-room`,
+		`${stage}supervision-system-notice-at-the-top`,
 		['1280x820', '1440x900']
 	],
 	[
