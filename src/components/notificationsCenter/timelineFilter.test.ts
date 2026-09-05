@@ -7,7 +7,6 @@ import { describe, it, expect } from 'vitest';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	hasUnreadTimelineItems,
 	TIMELINE_FAMILY_ORDER
 } from './timelineFilter';
 
@@ -238,29 +237,5 @@ describe('WP-06 timeline filter', () => {
 				)
 			).to.have.length(0);
 		});
-	});
-});
-
-describe('hasUnreadTimelineItems (#1200: "Mark all as read" is only offered when it does something)', () => {
-	it('is true when at least one item has no readAt', () => {
-		expect(
-			hasUnreadTimelineItems([
-				{ eventType: 'message.new', readAt: '2026-09-05T08:00:00Z' },
-				{ eventType: 'request.new', readAt: null }
-			])
-		).toBe(true);
-	});
-
-	it('is false when every item is read', () => {
-		expect(
-			hasUnreadTimelineItems([
-				{ eventType: 'message.new', readAt: '2026-09-05T08:00:00Z' },
-				{ eventType: 'request.new', readAt: '2026-09-05T08:01:00Z' }
-			])
-		).toBe(false);
-	});
-
-	it('is false for an empty feed', () => {
-		expect(hasUnreadTimelineItems([])).toBe(false);
 	});
 });

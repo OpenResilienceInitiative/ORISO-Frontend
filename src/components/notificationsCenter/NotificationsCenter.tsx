@@ -30,7 +30,6 @@ import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	hasUnreadTimelineItems,
 	TimelineFamilyFilter
 } from './timelineFilter';
 import {
@@ -234,6 +233,7 @@ export const NotificationsCenter = () => {
 	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
+		unreadNotificationCount,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
@@ -368,10 +368,9 @@ export const NotificationsCenter = () => {
 		[notificationFeed]
 	);
 	// #1200: "Mark all as read" is only actionable while something is unread.
-	const hasUnreadActivity = useMemo(
-		() => hasUnreadTimelineItems(notificationFeed),
-		[notificationFeed]
-	);
+	// The provider's counter is the server-backed total, so unread activity on
+	// pages that are not loaded yet still enables the action.
+	const hasUnreadActivity = unreadNotificationCount > 0;
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image', 'Image'),

@@ -2,7 +2,10 @@ import * as React from 'react';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 
 interface MarkAllReadButtonProps {
-	/** True when at least one activity event is unread. */
+	/**
+	 * True when the server-side unread total is > 0 (the provider's
+	 * `unreadNotificationCount`), not just the loaded page.
+	 */
 	hasUnread: boolean;
 	onClick: () => void;
 	/** Localised "Mark all as read"; used as tooltip and accessible name. */
@@ -13,8 +16,8 @@ interface MarkAllReadButtonProps {
  * The Activity Timeline's bulk-read action (#1200 JOB1). It marks every
  * activity event of the signed-in user as read (UserService
  * `PATCH event-notifications/read-all`); it never touches Matrix read
- * receipts. Disabled when nothing is unread so pressing it is never a silent
- * no-op.
+ * receipts. Stays visible but disabled when nothing is unread so pressing it
+ * is never a silent no-op.
  */
 export const MarkAllReadButton: React.FC<MarkAllReadButtonProps> = ({
 	hasUnread,
