@@ -314,6 +314,8 @@
 		"panel": {
 			"channelOptions": "ቻነል ቀይር",
 			"channelOptionsEmpty": "ካልእ ቻነል የለን",
+			"participantCount": "{{count}} ተሳተፍቲ",
+			"participantCount_one": "1 ተሳታፊ",
 			"back": "ናብ ምኽሪ ቻት ተመለስ",
 			"close": "ጎድናዊ ፓነል ዕጸው",
 			"region": "ጎድናዊ ፓነል፦ {{title}}",

@@ -76,6 +76,15 @@ $switcher-elevation:
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 2px;
 		}
+
+		// T15: the channel on screen — the primary ring of the active list
+		// row and a bold label; `aria-current` carries it to assistive tech.
+		&--active {
+			box-shadow:
+				0 0 0 2px var(--m3-primary, #a5000a),
+				$switcher-elevation;
+			font-weight: 700;
+		}
 	}
 
 	&__itemIcon {

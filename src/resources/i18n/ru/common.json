@@ -314,6 +314,8 @@
 		"panel": {
 			"channelOptions": "Сменить канал",
 			"channelOptionsEmpty": "Других каналов нет",
+			"participantCount": "Участников: {{count}}",
+			"participantCount_one": "1 участник",
 			"back": "Назад к чату консультации",
 			"close": "Закрыть боковую панель",
 			"region": "Боковая панель: {{title}}",

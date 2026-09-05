@@ -137,7 +137,8 @@ function SupervisionSideRoom({
 						supervisorParticipant
 					]}
 					unreadCount={unread}
-					channels={[THREAD_CHANNEL]}
+					channels={[THREAD_CHANNEL, SUPERVISION_CHANNEL]}
+					activeChannelId={SUPERVISION_CHANNEL.id}
 					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
@@ -377,15 +378,53 @@ export const Supervision: Story = {
 		await userEvent.click(options);
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
-		await expect(items).toHaveLength(1);
+		// T15: every secondary channel of the session, the shown one marked.
+		await expect(items).toHaveLength(2);
 		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
 			THREAD_ROOT_ID
 		);
+		await expect(items[0]).not.toHaveAttribute('aria-current');
+		await expect(items[1]).toHaveAttribute('data-channel-id', 'supervision');
+		await expect(items[1]).toHaveAttribute('aria-current', 'true');
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>
 			expect(canvasElement.querySelector('[role="menu"]')).toBeNull()
 		);
+		// Room to spare: the channel word, not the count.
+		await expect(
+			panel.querySelector('[data-cy="panel-header-kind-label"]')
+		).toHaveAttribute('data-mode', 'label');
+	}
+};
+
+/**
+ * T15: with little room in the title column the channel word gives way to
+ * the participant count — the same rule as the room header's "+N".
+ */
+export const NarrowHeaderShowsParticipantCount: Story = {
+	name: 'Narrow panel — participant count instead of the channel word (T15)',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host width={300}>
+			<SupervisionSideRoom />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 4);
+		const label = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="panel-header-kind-label"]'
+		)!;
+		await waitFor(() => expect(label).toHaveAttribute('data-mode', 'count'));
+		await expect(label.textContent).toBe('2');
+		const options = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!;
+		// The word and the count stay available to assistive tech.
+		await expect(options.getAttribute('aria-label')).toContain(
+			'Supervision'
+		);
+		await expect(options.getAttribute('aria-label')).toContain('2');
 	}
 };
 

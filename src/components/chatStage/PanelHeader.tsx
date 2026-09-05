@@ -8,12 +8,21 @@
  * under it. Same paddings as the session header so both hairlines end on
  * the same y (T3).
  *
- * The channel icon is a button: it opens the same channel options as the
- * FAB speed dial (`ChannelSwitcherMenu`), so the FAB can hide while a panel
- * is open (T1).
+ * The channel icon is a button: it opens the same channel list as the FAB
+ * speed dial (`ChannelSwitcherMenu`) with *every* secondary channel of the
+ * session — threads and supervision — the shown one marked, so the FAB can
+ * hide while a panel is open (T1, T15). When the title column is tight the
+ * channel word gives way to the participant count (`panelHeaderState.ts`).
  */
 import * as React from 'react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useId,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -22,11 +31,11 @@ import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/su
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
 import { ChannelSwitcherMenu } from './ChannelSwitcherFab';
-import {
-	deriveChannelSwitcherState,
-	type SecondaryChannel,
-	type SecondaryChannelKind
+import type {
+	SecondaryChannel,
+	SecondaryChannelKind
 } from './channelSwitcherState';
+import { derivePanelChannelMenu, resolvePanelKindLabel } from './panelHeaderState';
 import './sidePanel.styles.scss';
 
 export interface PanelHeaderProps {
@@ -44,11 +53,14 @@ export interface PanelHeaderProps {
 	/** Tag under the hairline — topic or a subtitle. */
 	'tag'?: string;
 	/**
-	 * Other secondary channels of the conversation. The channel icon opens
-	 * them as the FAB menu would; without any the icon is a disabled button
+	 * All secondary channels of the conversation (T15). The channel icon
+	 * lists them as the FAB menu would, the shown one (`activeChannelId`)
+	 * marked; with nothing else to switch to the icon is a disabled button
 	 * (house rule: disable, never hide).
 	 */
 	'channels'?: SecondaryChannel[];
+	/** Id of the channel this panel shows. */
+	'activeChannelId'?: string;
 	'onSelectChannel'?: (channelId: string) => void;
 	/** Phone: back to the main chat. Rendered before the title. */
 	'onBack'?: () => void;
@@ -71,6 +83,7 @@ export const PanelHeader = ({
 	unreadCount = 0,
 	tag,
 	channels = [],
+	activeChannelId,
 	onSelectChannel,
 	onBack,
 	onClose,
@@ -83,8 +96,33 @@ export const PanelHeader = ({
 	const optionsButtonRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
 	const Glyph = kindGlyph(kind);
-	const options = deriveChannelSwitcherState(channels);
-	const hasOptions = options.items.length > 0;
+	const menu = derivePanelChannelMenu(channels, activeChannelId);
+	const hasOptions = menu.switchable;
+
+	// T15: measure the title column; below the minimum the label becomes
+	// the participant count (like the room header's "+N").
+	const titleRef = useRef<HTMLDivElement | null>(null);
+	const [titleWidth, setTitleWidth] = useState<number | null>(null);
+	useLayoutEffect(() => {
+		const element = titleRef.current;
+		if (!element || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		const measure = () => setTitleWidth(element.getBoundingClientRect().width);
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(element);
+		return () => observer.disconnect();
+	}, []);
+	const kindLabel = resolvePanelKindLabel({
+		titleWidth,
+		label: title,
+		participantCount: participants.length
+	});
+	const participantCountLabel = translate(
+		'chatStage.panel.participantCount',
+		{ count: participants.length }
+	);
 
 	const closeOptions = useCallback(() => setOptionsOpen(false), []);
 
@@ -146,6 +184,8 @@ export const PanelHeader = ({
 				<div
 					className="panelHeader__title"
 					data-cy="panel-header-title"
+					data-kind-label={kindLabel.mode}
+					ref={titleRef}
 				>
 					<div
 						className="panelHeader__kind"
@@ -157,8 +197,20 @@ export const PanelHeader = ({
 							type="button"
 							className="panelHeader__kindButton"
 							data-cy="panel-header-channel-options"
-							aria-label={`${title} – ${optionsLabel}`}
-							title={optionsLabel}
+							aria-label={[
+								title,
+								kindLabel.mode === 'count'
+									? participantCountLabel
+									: '',
+								optionsLabel
+							]
+								.filter(Boolean)
+								.join(' – ')}
+							title={
+								kindLabel.mode === 'count'
+									? `${title} · ${participantCountLabel}`
+									: optionsLabel
+							}
 							aria-haspopup="menu"
 							aria-expanded={optionsOpen}
 							aria-controls={optionsOpen ? menuId : undefined}
@@ -170,10 +222,11 @@ export const PanelHeader = ({
 								aria-hidden="true"
 							/>
 							<span
-								className="panelHeader__titleLabel"
+								className={`panelHeader__titleLabel panelHeader__titleLabel--${kindLabel.mode}`}
 								data-cy="panel-header-kind-label"
+								data-mode={kindLabel.mode}
 							>
-								{title}
+								{kindLabel.text}
 							</span>
 						</button>
 						{optionsOpen && hasOptions && (
@@ -183,10 +236,13 @@ export const PanelHeader = ({
 							>
 								<ChannelSwitcherMenu
 									id={menuId}
-									items={options.items}
+									items={menu.items}
+									activeId={menu.activeId}
 									onSelect={(item) => {
 										closeOptions();
-										onSelectChannel?.(item.id);
+										if (item.id !== menu.activeId) {
+											onSelectChannel?.(item.id);
+										}
 									}}
 								/>
 							</div>

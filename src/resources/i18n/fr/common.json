@@ -314,6 +314,8 @@
 		"panel": {
 			"channelOptions": "Changer de canal",
 			"channelOptionsEmpty": "Aucun autre canal",
+			"participantCount": "{{count}} participants",
+			"participantCount_one": "1 participant",
 			"back": "Retour au chat de conseil",
 			"close": "Fermer le panneau latéral",
 			"region": "Panneau latéral : {{title}}",

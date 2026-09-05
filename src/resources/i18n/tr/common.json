@@ -314,6 +314,8 @@
 		"panel": {
 			"channelOptions": "Kanal değiştir",
 			"channelOptionsEmpty": "Başka kanal yok",
+			"participantCount": "{{count}} katılımcı",
+			"participantCount_one": "1 katılımcı",
 			"back": "Danışma sohbetine geri dön",
 			"close": "Yan paneli kapat",
 			"region": "Yan panel: {{title}}",

@@ -80,6 +80,11 @@ export interface ChannelSwitcherMenuProps {
 	onSelect: (item: ChannelSwitcherItem) => void;
 	/** Phone: an extra bottom entry that leads back to the main chat. */
 	onBack?: () => void;
+	/**
+	 * T15: the channel currently on screen — listed (the panel header shows
+	 * every channel of the session) and marked with `aria-current`.
+	 */
+	activeId?: string;
 	className?: string;
 }
 
@@ -92,6 +97,7 @@ export const ChannelSwitcherMenu = ({
 	items,
 	onSelect,
 	onBack,
+	activeId,
 	className
 }: ChannelSwitcherMenuProps) => {
 	const { t: translate } = useTranslation();
@@ -113,14 +119,23 @@ export const ChannelSwitcherMenu = ({
 					item.kind,
 					item.unread > 0 ? 'attention' : 'idle'
 				);
+				const active = activeId !== undefined && item.id === activeId;
 				return (
 					<li key={item.id} role="none">
 						<button
 							type="button"
 							role="menuitem"
-							className={`channelSwitcher__item channelSwitcher__item--${item.kind}`}
+							className={[
+								'channelSwitcher__item',
+								`channelSwitcher__item--${item.kind}`,
+								active && 'channelSwitcher__item--active'
+							]
+								.filter(Boolean)
+								.join(' ')}
 							data-cy={`channel-switcher-item-${item.kind}`}
 							data-channel-id={item.id}
+							data-active={active ? 'true' : 'false'}
+							aria-current={active ? 'true' : undefined}
 							aria-label={[
 								translate('chatStage.switcher.openChannel', {
 									label: `${kindLabel(item.kind)} ${item.label}`

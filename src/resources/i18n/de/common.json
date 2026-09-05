@@ -320,6 +320,8 @@
 		"panel": {
 			"channelOptions": "Kanal wechseln",
 			"channelOptionsEmpty": "Keine weiteren Kanäle",
+			"participantCount": "{{count}} Beteiligte",
+			"participantCount_one": "1 Person",
 			"close": "Nebenraum schließen",
 			"back": "Zurück zum Beratungschat",
 			"region": "Nebenraum: {{title}}",

@@ -308,6 +308,8 @@
 		"panel": {
 			"channelOptions": "Switch channel",
 			"channelOptionsEmpty": "No other channels",
+			"participantCount": "{{count}} participants",
+			"participantCount_one": "1 participant",
 			"close": "Close side panel",
 			"back": "Back to the counselling chat",
 			"region": "Side panel: {{title}}",

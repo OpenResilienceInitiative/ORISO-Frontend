@@ -290,9 +290,12 @@ function MainChat({
 interface RoomProps {
 	variant: 'inside' | 'card' | 'fullscreen';
 	onBack?: () => void;
+	onClose?: () => void;
 	switcher?: React.ReactNode;
-	/** Other channels, offered under the header's channel icon (T1). */
+	/** All secondary channels, listed under the header's channel icon (T1/T15). */
 	channels: SecondaryChannel[];
+	activeChannelId: string;
+	onSelectChannel: (channelId: string) => void;
 }
 
 function SupervisionRoom({
@@ -300,8 +303,11 @@ function SupervisionRoom({
 	unread,
 	withReason,
 	onBack,
+	onClose,
 	switcher,
-	channels
+	channels,
+	activeChannelId,
+	onSelectChannel
 }: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
 	// T7: the system notice opens the side room (frontend-rendered for now).
@@ -334,9 +340,10 @@ function SupervisionRoom({
 					]}
 					unreadCount={unread}
 					channels={channels}
-					onSelectChannel={noop}
+					activeChannelId={activeChannelId}
+					onSelectChannel={onSelectChannel}
 					onBack={onBack}
-					onClose={onBack ? undefined : noop}
+					onClose={onBack ? undefined : onClose}
 				/>
 			}
 			banner={
@@ -375,7 +382,15 @@ function SupervisionRoom({
 	);
 }
 
-function ThreadRoom({ variant, onBack, switcher, channels }: RoomProps) {
+function ThreadRoom({
+	variant,
+	onBack,
+	onClose,
+	switcher,
+	channels,
+	activeChannelId,
+	onSelectChannel
+}: RoomProps) {
 	const { t } = useTranslation();
 	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
 	return (
@@ -394,9 +409,10 @@ function ThreadRoom({ variant, onBack, switcher, channels }: RoomProps) {
 					participants={[clientParticipant, counsellorParticipant]}
 					tag={t('chatStage.panel.thread.subtitle')}
 					channels={channels}
-					onSelectChannel={noop}
+					activeChannelId={activeChannelId}
+					onSelectChannel={onSelectChannel}
 					onBack={onBack}
-					onClose={onBack ? undefined : noop}
+					onClose={onBack ? undefined : onClose}
 				/>
 			}
 			timeline={
@@ -498,8 +514,12 @@ function DesktopPanelSlot({
 	);
 }
 
+/** T15: a channel id from the menu → the panel that shows it. */
+export const panelForChannel = (channelId: string): StagePanel =>
+	channelId === 'supervision' ? 'supervision' : 'thread';
+
 export function ConsultantSessionStage({
-	panel = 'supervision',
+	panel: initialPanel = 'supervision',
 	panelVariant = 'inside',
 	snapList = false,
 	listWidth = 420,
@@ -508,13 +528,31 @@ export function ConsultantSessionStage({
 	supervisionUnread = 0,
 	threadUnread = 0,
 	labelMode = 'person',
-	phone,
+	phone: initialPhone,
 	withReason = false,
 	fabDefaultOpen = false,
 	fabHidden = true
 }: ConsultantSessionStageProps) {
 	const { t } = useTranslation();
 	const viewportWidth = useViewportWidth();
+	// T15: the stage switches its side room when a channel is picked — from
+	// the panel header's menu, the FAB or the phone's back switcher.
+	const [panel, setPanel] = useState<StagePanel>(initialPanel);
+	const [phone, setPhone] = useState(initialPhone);
+	useEffect(() => setPanel(initialPanel), [initialPanel]);
+	useEffect(() => setPhone(initialPhone), [initialPhone]);
+	const selectChannel = useCallback(
+		(channelId: string) => {
+			setPanel(panelForChannel(channelId));
+			setPhone((view) => (view === undefined ? view : 'secondary'));
+		},
+		[]
+	);
+	const backToMain = useCallback(
+		() => setPhone((view) => (view === undefined ? view : 'main')),
+		[]
+	);
+	const closePanel = useCallback(() => setPanel(null), []);
 	useState(() =>
 		seedStageMatrixRegistry({
 			[CLIENT_ROOM_ID]: 0,
@@ -587,18 +625,19 @@ export function ConsultantSessionStage({
 				: undefined;
 
 	// Channels not on screen — the FAB (desktop, while no panel is open)
-	// and the panel header's channel icon (T1) offer these.
+	// offers these; the panel header's menu lists all of them (T15).
 	const otherChannels = channels.filter(
 		(channel) => channel.id !== shownChannelId
 	);
+	const activeChannelId = shownChannelId ?? '';
 
 	// Phone, inside a side room: the FAB switches back (and offers the rest).
 	const backFab = (
 		<ChannelSwitcherFab
 			channels={channels}
 			activeChannelId={shownChannelId}
-			onSelect={noop}
-			onBack={noop}
+			onSelect={selectChannel}
+			onBack={backToMain}
 			defaultOpen={fabDefaultOpen}
 		/>
 	);
@@ -607,7 +646,7 @@ export function ConsultantSessionStage({
 		otherChannels.length > 0 ? (
 			<ChannelSwitcherFab
 				channels={otherChannels}
-				onSelect={noop}
+				onSelect={selectChannel}
 				defaultOpen={fabDefaultOpen}
 				fabHidden={fabHidden && panel !== null}
 			/>
@@ -627,18 +666,22 @@ export function ConsultantSessionStage({
 							panel === 'thread' ? (
 								<ThreadRoom
 									variant="fullscreen"
-									onBack={noop}
+									onBack={backToMain}
 									switcher={backFab}
-									channels={otherChannels}
+									channels={channels}
+									activeChannelId={activeChannelId}
+									onSelectChannel={selectChannel}
 								/>
 							) : (
 								<SupervisionRoom
 									variant="fullscreen"
 									unread={supervisionUnread}
 									withReason={withReason}
-									onBack={noop}
+									onBack={backToMain}
 									switcher={backFab}
-									channels={otherChannels}
+									channels={channels}
+									activeChannelId={activeChannelId}
+									onSelectChannel={selectChannel}
 								/>
 							)
 						) : (
@@ -652,7 +695,7 @@ export function ConsultantSessionStage({
 									fab={
 										<ChannelSwitcherFab
 											channels={channels}
-											onSelect={noop}
+											onSelect={selectChannel}
 											defaultOpen={fabDefaultOpen}
 										/>
 									}
@@ -673,13 +716,22 @@ export function ConsultantSessionStage({
 
 	const secondary =
 		panel === 'thread' ? (
-			<ThreadRoom variant={panelVariant} channels={otherChannels} />
+			<ThreadRoom
+				variant={panelVariant}
+				channels={channels}
+				activeChannelId={activeChannelId}
+				onSelectChannel={selectChannel}
+				onClose={closePanel}
+			/>
 		) : panel === 'supervision' ? (
 			<SupervisionRoom
 				variant={panelVariant}
 				unread={supervisionUnread}
 				withReason={withReason}
-				channels={otherChannels}
+				channels={channels}
+				activeChannelId={activeChannelId}
+				onSelectChannel={selectChannel}
+				onClose={closePanel}
 			/>
 		) : null;
 

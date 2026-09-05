@@ -174,6 +174,18 @@ $room-actions-gap: 12px;
 
 	&__titleLabel {
 		flex: 0 0 auto;
+
+		// T15: participant count instead of the word when the column is
+		// tight — same pill as the room header's "+N".
+		&--count {
+			display: inline-flex;
+			align-items: center;
+			height: 16px;
+			padding: 0 6px;
+			border-radius: 999px;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--m3-primary, #a5000a);
+		}
 	}
 
 	// Figma: Chatroom Title — title/small 14/500/20, ellipsis.

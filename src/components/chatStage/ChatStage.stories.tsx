@@ -16,7 +16,8 @@ import { STAGE_LAYOUT } from './stageLayout';
 import {
 	CLIENT_NAME,
 	stageRoute,
-	SUPERVISOR_NAME
+	SUPERVISOR_NAME,
+	THREAD_ROOT_ID
 } from './__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
 import './chatStage.styles.scss';
@@ -344,9 +345,15 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		const items = within(await canvas.findByRole('menu')).getAllByRole(
 			'menuitem'
 		);
-		await expect(items).toHaveLength(2);
+		// T15: all three channels, the shown thread marked as current.
+		await expect(items).toHaveLength(3);
 		await expect(items[0]).toHaveAttribute('data-channel-id', '$thread-2');
 		await expect(items[1]).toHaveAttribute(
+			'data-channel-id',
+			THREAD_ROOT_ID
+		);
+		await expect(items[1]).toHaveAttribute('aria-current', 'true');
+		await expect(items[2]).toHaveAttribute(
 			'data-channel-id',
 			'supervision'
 		);
@@ -355,6 +362,166 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
 		).not.toBeNull();
+	}
+};
+
+/** The panel's channel word / counterpart name as the stage shows them. */
+const panelTitle = (canvasElement: HTMLElement) => ({
+	kind:
+		canvasElement.querySelector('[data-cy="panel-header-kind-label"]')
+			?.textContent ?? '',
+	name:
+		canvasElement.querySelector('[data-cy="panel-header-name"]')
+			?.textContent ?? ''
+});
+
+/** Open the panel header's channel menu and pick a channel by id. */
+const pickChannelFromHeader = async (
+	canvasElement: HTMLElement,
+	channelId: string
+) => {
+	const canvas = within(canvasElement);
+	await userEvent.click(
+		canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!
+	);
+	const menu = await canvas.findByRole('menu');
+	await userEvent.click(
+		within(menu)
+			.getAllByRole('menuitem')
+			.find((item) => item.getAttribute('data-channel-id') === channelId)!
+	);
+	await waitFor(() =>
+		expect(canvasElement.querySelector('[role="menu"]')).toBeNull()
+	);
+};
+
+/**
+ * (d2) T15: jump between channels while a panel is open — the header menu
+ * lists every thread and the supervision, the shown one marked, and swaps
+ * the panel content: thread → supervision → thread.
+ */
+export const PanelChannelMenuSwitchesChannels: Story = {
+	name: '(d2) Panel header menu — thread → supervision → thread (T15)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'thread',
+		panelVariant: 'inside',
+		openThreads: 2,
+		supervisionUnread: 2
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 9
+		});
+		await expect(panelTitle(canvasElement).kind).toBe('Thread');
+		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
+		// The menu lists all three channels; the shown thread is current.
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!
+		);
+		const items = within(await canvas.findByRole('menu')).getAllByRole(
+			'menuitem'
+		);
+		await expect(items.map((i) => i.getAttribute('data-channel-id'))).toEqual(
+			['$thread-2', THREAD_ROOT_ID, 'supervision']
+		);
+		await expect(items[1]).toHaveAttribute('aria-current', 'true');
+		await expect(items[2].textContent).toContain('2');
+		await userEvent.keyboard('{Escape}');
+		// → supervision
+		await pickChannelFromHeader(canvasElement, 'supervision');
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Supervision')
+		);
+		await expect(panelTitle(canvasElement).name).toBe(SUPERVISOR_NAME);
+		await expect(
+			canvasElement.querySelector('[data-cy="stage-panel"]')
+				?.textContent ?? ''
+		).not.toContain(CLIENT_NAME);
+		// → back to the thread
+		await pickChannelFromHeader(canvasElement, THREAD_ROOT_ID);
+		await waitFor(() => expect(panelTitle(canvasElement).kind).toBe('Thread'));
+		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
+		// The FAB stays hidden throughout — the header is the switcher.
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull();
+	}
+};
+
+/**
+ * (e3) T15 on the phone: the FAB in the main chat opens the same channel
+ * list and switches to the secondary view; inside it, the header menu
+ * jumps on to the next channel.
+ */
+export const PhoneChannelMenuFromFabAndHeader: Story = {
+	name: '(e3) Phone — channel menu from the FAB and from the panel header (T15)',
+	globals: phone390Globals,
+	args: {
+		panel: 'supervision',
+		phone: 'main',
+		openThreads: 2,
+		supervisionUnread: 1
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 1,
+			bubblesAtLeast: 6
+		});
+		// Collapsed phone state: the FAB offers every channel.
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="channel-switcher-fab"]'
+			)!
+		);
+		const fabItems = within(await canvas.findByRole('menu')).getAllByRole(
+			'menuitem'
+		);
+		await expect(fabItems).toHaveLength(3);
+		await userEvent.click(
+			fabItems.find(
+				(item) => item.getAttribute('data-channel-id') === 'supervision'
+			)!
+		);
+		// → the secondary view with the supervision room.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="panel-header-back"]')
+			).not.toBeNull()
+		);
+		await expect(panelTitle(canvasElement).kind).toBe('Supervision');
+		// Inside the secondary view the header menu lists all channels …
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!
+		);
+		const headerItems = within(
+			await canvas.findByRole('menu')
+		).getAllByRole('menuitem');
+		await expect(
+			headerItems.map((i) => i.getAttribute('data-channel-id'))
+		).toEqual(['$thread-2', THREAD_ROOT_ID, 'supervision']);
+		await expect(headerItems[2]).toHaveAttribute('aria-current', 'true');
+		// … and switches on selection.
+		await userEvent.click(headerItems[1]);
+		await waitFor(() => expect(panelTitle(canvasElement).kind).toBe('Thread'));
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-header-back"]')
+		).not.toBeNull();
+		// The phone FAB still leads back to the main chat.
+		await expect(
+			canvasElement
+				.querySelector('[data-cy="channel-switcher-fab"]')
+				?.getAttribute('aria-label')
+		).toMatch(/Beratungschat|counselling|Nebenkanäle|side channels/i);
 	}
 };
 
