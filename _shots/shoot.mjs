@@ -52,6 +52,17 @@ const shots = [
 		'open-fab'
 	],
 	['e1-phone-main-fab', `${stage}phone-main-chat-with-fab`, ['390x844']],
+	// T37: same fixture, two text sizes — side by side in the folder.
+	[
+		'text-size-current',
+		`${stage}chat-text-size-current`,
+		['1280x820', '390x844']
+	],
+	[
+		'text-size-compact',
+		`${stage}chat-text-size-compact`,
+		['1280x820', '390x844']
+	],
 	[
 		'g-phone-composer-one-line',
 		`${stage}phone-composer-grows-while-typing`,

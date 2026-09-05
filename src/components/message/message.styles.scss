@@ -1,6 +1,15 @@
 $icon-size: 24px;
 $icon-size-small: 24px;
 $message-lineheight: 21px;
+
+// T37: the chat text size is ONE switch. Message body and the session
+// list's preview line read these; a host (the stage's compact variant,
+// later a user setting) redefines them in one place. Defaults = today.
+:root {
+	--message-font-size: 16px;
+	--message-line-height: #{$message-lineheight};
+	--session-preview-font-size: 14px;
+}
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 
@@ -865,7 +874,8 @@ $message-avatar-overlap: -19px;
 
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
-		line-height: $message-lineheight;
+		font-size: var(--message-font-size, 16px);
+		line-height: var(--message-line-height, #{$message-lineheight});
 		background-color: $message-incoming-bg;
 		border: 1px solid $message-incoming-bg;
 
@@ -935,7 +945,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		li {
-			line-height: $message-lineheight;
+			line-height: var(--message-line-height, #{$message-lineheight});
 			margin-top: 12px;
 
 			&:first-of-type {

@@ -1375,3 +1375,80 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		);
 	}
 };
+
+/**
+ * (h) T37: chat text size — the same fixture twice, "current" (message
+ * body 16/21, list preview 14) against "compact" (14/20, preview 13). One
+ * switch: the custom properties `--message-font-size`,
+ * `--message-line-height`, `--session-preview-font-size`
+ * (`message.styles.scss`), set by `.chatStage--compactText`.
+ */
+const expectChatTextSize = async (
+	canvasElement: HTMLElement,
+	{
+		fontSize,
+		lineHeight,
+		preview
+	}: { fontSize: string; lineHeight: string; preview: string }
+) => {
+	await expectStageParts(canvasElement, {
+		composers: 2,
+		bubblesAtLeast: 10
+	});
+	for (const bubble of Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('.messageItem__message')
+	)) {
+		const style = getComputedStyle(bubble);
+		expect(style.fontSize).toBe(fontSize);
+		expect(style.lineHeight).toBe(lineHeight);
+	}
+	for (const line of Array.from(
+		canvasElement.querySelectorAll<HTMLElement>(
+			'.sessionsListItem__subject'
+		)
+	)) {
+		expect(getComputedStyle(line).fontSize).toBe(preview);
+	}
+};
+
+export const ChatTextSizeCurrent: Story = {
+	name: '(h1) Chat text size — current (16/21, preview 14)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 0,
+		textSize: 'current'
+	},
+	play: async ({ canvasElement }) => {
+		await expectChatTextSize(canvasElement, {
+			fontSize: '16px',
+			lineHeight: '21px',
+			preview: '14px'
+		});
+		await expect(
+			canvasElement.querySelector('.chatStage--compactText')
+		).toBeNull();
+	}
+};
+
+export const ChatTextSizeCompact: Story = {
+	name: '(h2) Chat text size — compact (14/20, preview 13)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 0,
+		textSize: 'compact'
+	},
+	play: async ({ canvasElement }) => {
+		await expectChatTextSize(canvasElement, {
+			fontSize: '14px',
+			lineHeight: '20px',
+			preview: '13px'
+		});
+		await expect(
+			canvasElement.querySelector('.chatStage--compactText')
+		).not.toBeNull();
+	}
+};

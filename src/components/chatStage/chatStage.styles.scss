@@ -141,6 +141,15 @@
 	}
 }
 
+// T37: the compact text variant for Frank's comparison — message body
+// 16/21 → 14/20, list preview 14 → 13. Only the three switches from
+// `message.styles.scss`, nothing else.
+.chatStage--compactText {
+	--message-font-size: 14px;
+	--message-line-height: 20px;
+	--session-preview-font-size: 13px;
+}
+
 // Side-by-side comparison frame for the label question (story f).
 .chatStageCompare {
 	display: flex;
