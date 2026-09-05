@@ -48,6 +48,25 @@ export const Touched: Story = {
 	args: { ariaLabel: 'Drag to resize composer', touched: true }
 };
 
+/** T31: the phone placement — the pill centred on the card's top edge. */
+export const OnTheEdge: Story = {
+	name: 'On the edge (phone placement, T31)',
+	args: { ariaLabel: 'Drag to resize composer', position: 'edge' },
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector<HTMLElement>('.dragHandle')!;
+		const card = handle.parentElement!;
+		const pill = handle
+			.querySelector('.dragHandle__pill')!
+			.getBoundingClientRect();
+		await expect(handle).toHaveAttribute('data-position', 'edge');
+		await expect(
+			Math.abs(
+				(pill.top + pill.bottom) / 2 - card.getBoundingClientRect().top
+			)
+		).toBeLessThanOrEqual(1);
+	}
+};
+
 function KeyboardResizeDemo() {
 	const bounds = getComposerHeightBounds({
 		viewportWidth: 1280,

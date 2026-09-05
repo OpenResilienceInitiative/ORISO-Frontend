@@ -1180,9 +1180,35 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		await expectActionBarScrolls(
 			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
 		);
+		const dragHandle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .dragHandle'
+		)!;
+		await expect(dragHandle).not.toBeNull();
+		// T31: the phone composer card — 4 px bottom corners, the first icon
+		// close to the left edge, the drag pill centred ON the card's top
+		// edge (`position="edge"`, the stage-v4 placement; assumption noted).
+		const card = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .textarea__input'
+		)!;
+		await expect(getComputedStyle(card).borderRadius).toBe(
+			'0px 0px 4px 4px'
+		);
 		await expect(
-			canvasElement.querySelector('[data-cy="stage-main"] .dragHandle')
-		).not.toBeNull();
+			barButtons[0].getBoundingClientRect().left -
+				card.getBoundingClientRect().left
+		).toBeLessThanOrEqual(8);
+		await expect(dragHandle.classList.contains('dragHandle--edge')).toBe(
+			true
+		);
+		const pillBox = dragHandle
+			.querySelector('.dragHandle__pill')!
+			.getBoundingClientRect();
+		await expect(
+			Math.abs(
+				(pillBox.top + pillBox.bottom) / 2 -
+					card.getBoundingClientRect().top
+			)
+		).toBeLessThanOrEqual(1);
 		// The down arrow scrolls the timeline to its newest message.
 		const timeline = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .session__content'

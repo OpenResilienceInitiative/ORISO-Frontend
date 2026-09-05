@@ -3755,6 +3755,8 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
+								// T31: phone — pill on the card's top edge.
+								position={isMobileViewport ? 'edge' : 'inside'}
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand',
 									'Drag to resize composer'
