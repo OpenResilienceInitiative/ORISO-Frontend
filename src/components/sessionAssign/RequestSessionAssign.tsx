@@ -28,6 +28,7 @@ import {
 } from '../../api/apiSendAliasMessage';
 import { prepareConsultantDataForSelect } from './sessionAssignHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 
 export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
 
@@ -48,6 +49,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		useState<ConsultantReassignment | null>(null);
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { setHasPendingChange } = useContext(AskerInfoActionContext);
 
 	const { addNewUsersToEncryptedRoom } = useE2EE(
 		activeSession.item.matrixRoomId
@@ -135,6 +137,12 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 
 	const handleDatalistSelect = (selectedOption) => {
 		setSelectedOption(selectedOption);
+		// Report to the profile footer so its next button can turn primary
+		// (ORISO-Frontend#1192). The overlay below still owns confirming the
+		// reassignment — the assign flow itself is unchanged.
+		setHasPendingChange(
+			selectedOption?.value !== activeSession?.consultant?.id
+		);
 		initOverlays(selectedOption, userData);
 	};
 

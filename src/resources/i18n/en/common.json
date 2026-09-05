@@ -3939,7 +3939,7 @@
 			"age": "Age",
 			"gender": "Gender",
 			"postcode": "Postal code",
-			"relation": "Background",
+			"relation": "Type of user",
 			"resort": "Department",
 			"state": "State",
 			"title": "Information of the person seeking advice"
@@ -3967,6 +3967,9 @@
 				"title": "See what content has been shared with you here."
 			},
 			"title": "Tools"
+		},
+		"header": {
+			"title": "Additional client information"
 		}
 	},
 	"videoCall": {
