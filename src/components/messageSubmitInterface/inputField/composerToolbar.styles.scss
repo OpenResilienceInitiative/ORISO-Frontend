@@ -144,8 +144,11 @@
 		}
 	}
 
-	// T16: the scroll-to-newest arrow carries the unread badge — the same
-	// pill as `.session__unreadCount` (primary, 18 px, 10 px label).
+	// T16: the scroll-to-newest arrow carries the unread badge — an 18 px
+	// pill with a 10 px label. Review v6: ONE unread role everywhere — the
+	// same indicator colour as the channel card, the FAB and the panel
+	// header (`--oriso-unread-indicator-color`, error role), no longer
+	// `primary`.
 	&__button--scrollToNewest {
 		position: relative;
 	}
@@ -162,8 +165,11 @@
 		padding: 0 4px;
 		box-sizing: border-box;
 		border-radius: 999px;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #fff);
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
 		font-size: 10px;
 		font-weight: 500;
 		line-height: 1;
