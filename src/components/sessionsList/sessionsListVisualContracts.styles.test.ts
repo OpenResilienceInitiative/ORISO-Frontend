@@ -54,7 +54,9 @@ describe('session list visual contracts', () => {
 			/\.sessionsList__resizeHandle[^{}]*\{[^}]*cursor:\s*col-resize;[^}]*touch-action:\s*none;/s
 		);
 		expect(css).toMatch(
-			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*-12px;/s
+			// T13: half the handle plus half the host's pane gap — centred in
+			// the gap between list and chat card.
+			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*calc\(-12px - var\(--pane-gap, 0px\) \/ 2\);/s
 		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle--start[^{}]*\{[^}]*left:\s*-12px;/s

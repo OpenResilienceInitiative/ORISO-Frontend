@@ -384,6 +384,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	// list and the chat card; the host sets `--pane-gap` (the card's
 	// margin, 24 px on desktop). With no gap the handle straddles the edge.
 	$handle-width: 24px;
+	$handle-half: 12px; // = $handle-width / 2, keeps the compiled calc readable
 
 	&__resizeHandle {
 		position: absolute;
@@ -399,11 +400,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 0;
 
 		&--end {
-			right: calc(-1 * #{$handle-width} / 2 - var(--pane-gap, 0px) / 2);
+			right: calc(-#{$handle-half} - var(--pane-gap, 0px) / 2);
 		}
 
 		&--start {
-			left: calc(-1 * #{$handle-width} / 2);
+			left: -$handle-half;
 		}
 	}
 
