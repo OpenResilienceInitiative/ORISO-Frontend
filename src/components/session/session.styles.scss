@@ -183,8 +183,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 
 		@media screen and (width <= 899px) {
-			// Leave extra scrollable space so the latest message "Reply" stays above composer.
-			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
+			// Leave scrollable space so the latest message "Reply" stays above
+			// the composer: one-line composer 120 + navigator 48 + dock 16 (T10).
+			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
 		}
 	}
 

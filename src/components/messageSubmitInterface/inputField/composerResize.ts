@@ -7,7 +7,11 @@
 export const COMPOSER_MAX_VIEWPORT_FRACTION = 2 / 3;
 export const COMPOSER_MOBILE_BREAKPOINT = 899;
 
-const MIN_HEIGHT_MOBILE = 180;
+// T10 (05.09.): on the phone the composer opens as ONE line and grows while
+// typing (auto-grow below). 66 px toolbar strip to the editor top + one
+// 20 px line + 18 px bottom inset + the card's 16 px dock = 120 px. Desktop
+// keeps its Figma baseline.
+const MIN_HEIGHT_MOBILE = 120;
 const MIN_HEIGHT_DESKTOP = 196;
 
 const STEP_SMALL = 24;

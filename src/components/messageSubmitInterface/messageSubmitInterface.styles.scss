@@ -204,6 +204,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						border: 0 !important;
 						border-radius: 0 !important;
 						box-shadow: none !important;
+
+						// T10: one line by default (`composerResize.ts`
+						// MIN_HEIGHT_MOBILE); `--composer-height` grows it.
+						min-height: var(--composer-height, 120px);
+						height: var(--composer-height, 120px);
 					}
 
 					&::before {
@@ -215,8 +220,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 180px);
-						height: var(--composer-height, 180px);
+						min-height: var(--composer-height, 120px);
+						height: var(--composer-height, 120px);
 					}
 				}
 			}
