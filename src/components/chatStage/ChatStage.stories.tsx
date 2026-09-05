@@ -245,6 +245,22 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
 		});
 		await expect(shell.querySelector('.dragHandle')).not.toBeNull();
 	}
+	// Checklist 14 (review v11 / B2): both composers rest at the SAME
+	// height — the panel's field must not sit 2 px taller than the main
+	// chat's (108 vs 106 was the flush-vs-compact drift).
+	await waitFor(() => {
+		const [first, second] = shells.map(
+			(shell) => shell.getBoundingClientRect().height
+		);
+		expect(Math.abs(first - second)).toBeLessThanOrEqual(1);
+		const [firstField, secondField] = shells.map(
+			(shell) =>
+				shell
+					.querySelector<HTMLElement>('.textarea__input')!
+					.getBoundingClientRect().height
+		);
+		expect(Math.abs(firstField - secondField)).toBeLessThanOrEqual(1);
+	});
 	// Typing three lines into the panel's composer grows it by two lines
 	// (D1: 20 px lines — measured from the editor, minus 2 px rounding).
 	const panelShell = canvasElement.querySelector<HTMLElement>(
