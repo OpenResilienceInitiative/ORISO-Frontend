@@ -237,17 +237,18 @@ $profile-footer-justify-content: center !default;
 	}
 
 	&__data {
+		/* Full width of the content column, so the underline lines up with the
+		   allocation select beneath it. It used to cap at $inputMaxWidth on
+		   desktop, which left the field rows visibly short of the select
+		   (ORISO-Frontend#1192). */
 		&__item {
 			display: flex;
 			flex-direction: column;
 			justify-content: flex-end;
+			width: 100%;
 			min-height: 42px;
 			margin-top: 12px;
 			border-bottom: 1px solid $line-grey;
-
-			@include breakpoint($fromLarge) {
-				max-width: $inputMaxWidth;
-			}
 		}
 
 		&__label {
