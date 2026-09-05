@@ -52,6 +52,13 @@ const shots = [
 		'open-fab'
 	],
 	['e1-phone-main-fab', `${stage}phone-main-chat-with-fab`, ['390x844']],
+	// D8: the phone's kebab menu carries the call rows.
+	[
+		'd8-phone-kebab-calls',
+		`${stage}phone-main-chat-with-fab`,
+		['390x844'],
+		'open-kebab'
+	],
 	// T37: same fixture, two text sizes — side by side in the folder.
 	[
 		'text-size-legacy',
@@ -282,6 +289,10 @@ for (const [name, id, sizes, action] of selected) {
 				await fab.click();
 				await page.waitForTimeout(300);
 			}
+		}
+		if (action === 'open-kebab') {
+			await page.locator('.sessionMenu__icon--mobile').first().click();
+			await page.waitForTimeout(400);
 		}
 		if (action === 'open-panel-options') {
 			await page
