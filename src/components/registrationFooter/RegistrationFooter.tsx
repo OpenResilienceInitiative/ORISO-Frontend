@@ -17,6 +17,12 @@ export interface RegistrationFooterAction {
 	title?: string;
 	/** Overrides the generated `data-testid`. */
 	testId?: string;
+	/**
+	 * Take only the room the label needs and leave the rest to the other
+	 * action. For a quiet exit beside a long, important way on (Frank,
+	 * 2026-09-05: "der andere muss ja nicht gleich groß sein").
+	 */
+	compact?: boolean;
 }
 
 export interface RegistrationFooterProps {
@@ -114,7 +120,10 @@ export const RegistrationFooter = ({
 				data-testid={
 					secondary.testId ?? 'registration-footer-secondary'
 				}
-				sx={footerActionSx}
+				sx={{
+					...footerActionSx,
+					...(secondary.compact ? { flex: '0 0 auto', px: 3 } : {})
+				}}
 			>
 				{secondary.label}
 			</Button>

@@ -2,13 +2,11 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, ButtonBase, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import PersonSearchOutlinedIcon from '@mui/icons-material/PersonSearchOutlined';
-import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -26,7 +24,6 @@ import {
 	LegalLinksContext,
 	TProvidedLegalLink
 } from '../../globalState/provider/LegalLinksProvider';
-import { formatOpeningHours } from '../../utils/openingHours';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
@@ -85,55 +82,33 @@ const legalLinks: TProvidedLegalLink[] = [
 	} as TProvidedLegalLink
 ];
 
-const OPENING_HOURS = JSON.stringify({
-	version: 1,
-	openingHours: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY']
-		.map((day) => ({
-			fromDay: day,
-			from: '10:00',
-			untilDay: day,
-			until: '17:00'
-		}))
-		.concat([
-			{
-				fromDay: 'FRIDAY',
-				from: '10:00',
-				untilDay: 'FRIDAY',
-				until: '13:00'
-			}
-		])
-});
 const ABSENCE_MESSAGE =
 	'Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.';
 
 /**
- * The three cards of the waiting room. Language-free pictograms, so the same
- * three pictures serve all seven languages; the copy is what gets translated.
+ * The three cards of the waiting room (Frank, 2026-09-05).
  *
- * Picture briefs for the artwork (style: the registration's process motifs —
- * warm red-tinted line drawings, no text in the picture):
- *  1. Three counsellors at three screens, each already in a conversation; one
- *     chair in the foreground empty and waiting. "Sie sind bei anderen."
- *  2. One counsellor turning towards the viewer, a speech bubble with the
- *     agency's house/roof pictogram lighting up. "Jetzt wissen wir, wer."
- *  3. A hand tapping a shield-with-check, behind it the open chat. "Kurz
- *     zustimmen, dann reden."
+ * 1 and 2 carry his two pictures — waiting while the counsellors are with
+ * others; consenting once we know who — as `process/live-wait.webp` and
+ * `process/live-consent.webp` (528 × 528, like the registration's three).
+ * Until the files are in the repo the slots show a pictogram. Card 3 is text
+ * only: what the chat is like once assigned, and what happens afterwards.
  */
 const CARDS = [
 	{
 		icon: <GroupsOutlinedIcon />,
-		title: 'Die Beraterinnen sind gerade bei anderen',
-		text: 'Sie kommen dran, sobald jemand frei ist. Sie müssen nichts tun.'
+		title: 'Sie warten, bis jemand frei ist',
+		text: 'Die Beraterinnen sind gerade in anderen Gesprächen. Sie müssen nichts tun — wir holen Sie.'
 	},
 	{
-		icon: <PersonSearchOutlinedIcon />,
-		title: 'Sobald eine annimmt, wissen wir, wer Sie berät',
-		text: 'Erst dann steht fest, welche Beratungsstelle das Gespräch führt.'
+		icon: <VerifiedUserOutlinedIcon />,
+		title: 'Dann stimmen Sie einmal zu',
+		text: 'Sobald eine Beratungsstelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz — ein Klick, und der Chat beginnt.'
 	},
 	{
-		icon: <HandshakeOutlinedIcon />,
-		title: 'Kurz zustimmen — dann chatten Sie',
-		text: 'Ein Klick auf den Datenschutz der Stelle, und der Chat beginnt.'
+		icon: null,
+		title: 'Anonym, und danach weg',
+		text: 'Im Chat sehen Sie und Ihre Beraterin sich nur unter Ihrem Pseudonym. Nach dem Gespräch wird alles gelöscht — spätestens nach 48 Stunden, auch Ihr Zugang.'
 	}
 ];
 
@@ -464,12 +439,28 @@ const WaitingRoom = ({
 								'opacity': accepted && !active ? 0.55 : 1,
 								'transition': 'all 400ms ease',
 								'& svg': {
-									fontSize: 32,
+									fontSize: 48,
 									color: registrationMd3.primary
 								}
 							}}
 						>
-							{card.icon}
+							{card.icon && (
+								<Box
+									aria-hidden
+									sx={{
+										aspectRatio: '1 / 1',
+										borderRadius: '14px',
+										bgcolor:
+											registrationMd3.surfaceContainerHigh,
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										mb: 0.5
+									}}
+								>
+									{card.icon}
+								</Box>
+							)}
 							<Typography
 								sx={{ fontSize: 16, fontWeight: 700, mt: 1.5 }}
 							>
@@ -605,23 +596,23 @@ const WaitingRoom = ({
 								}}
 							/>
 							<Box sx={{ minWidth: 0 }}>
+								{/* The headline is the call to action — the person is
+								    up, a counsellor is waiting — not a greeting. Anonymity
+								    and deletion stand in card 3 above, not repeated here. */}
 								<Typography
-									sx={{ fontSize: 20, fontWeight: 700 }}
+									sx={{ fontSize: 22, fontWeight: 700 }}
 								>
-									Herzlich willkommen bei {AGENCY}
+									Sie sind dran.
 								</Typography>
 								<Typography
 									sx={{
-										mt: 0.75,
-										fontSize: 14,
-										lineHeight: '20px',
+										mt: 0.5,
+										fontSize: 15,
 										color: registrationMd3.onSurfaceVariant
 									}}
 								>
-									Ein Klick, zwei Dinge: Sie bestätigen den
-									Datenschutz dieser Beratungsstelle, und der
-									Chat beginnt. Alles bleibt anonym und wird
-									nach 48 Stunden gelöscht.
+									{AGENCY} hat Ihr Gespräch angenommen und
+									wartet auf Sie.
 								</Typography>
 								<Typography
 									component="div"
@@ -731,111 +722,116 @@ export const StepWaitingMobile: StoryObj = {
    C — Geschlossen
    --------------------------------------------------------------------------- */
 
-const Closed = () => {
-	const { t } = useTranslation();
-	return (
-		<Staged statusLine="Gerade geschlossen">
+/** The week as a strip: open days carry their hours, closed days stay quiet. */
+const WEEK: Array<{ short: string; hours?: string }> = [
+	{ short: 'Mo', hours: '10–17' },
+	{ short: 'Di', hours: '10–17' },
+	{ short: 'Mi', hours: '10–17' },
+	{ short: 'Do', hours: '10–17' },
+	{ short: 'Fr', hours: '10–13' },
+	{ short: 'Sa' },
+	{ short: 'So' }
+];
+
+const Closed = () => (
+	<Staged statusLine="Gerade geschlossen">
+		<Box
+			sx={{
+				flex: 1,
+				display: 'flex',
+				flexDirection: 'column',
+				justifyContent: 'center',
+				alignItems: 'center',
+				textAlign: 'center',
+				maxWidth: 560,
+				mx: 'auto'
+			}}
+		>
 			<Box
+				aria-hidden
 				sx={{
-					flex: 1,
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					textAlign: 'center',
-					maxWidth: 520,
-					mx: 'auto'
+					'width': 72,
+					'height': 72,
+					'borderRadius': '50%',
+					'bgcolor': registrationMd3.surfaceContainer,
+					'color': registrationMd3.primary,
+					'display': 'flex',
+					'alignItems': 'center',
+					'justifyContent': 'center',
+					'mb': 2.5,
+					'& svg': { fontSize: 36 }
 				}}
 			>
-				<Box
-					aria-hidden
-					sx={{
-						'width': 72,
-						'height': 72,
-						'borderRadius': '50%',
-						'bgcolor': registrationMd3.surfaceContainer,
-						'color': registrationMd3.primary,
-						'display': 'flex',
-						'alignItems': 'center',
-						'justifyContent': 'center',
-						'mb': 2.5,
-						'& svg': { fontSize: 36 }
-					}}
-				>
-					<ScheduleOutlinedIcon />
-				</Box>
-				<Typography
-					component="h1"
-					sx={{
-						fontSize: { xs: 28, sm: 32 },
-						lineHeight: 1.15,
-						fontWeight: 700
-					}}
-				>
-					{t(
-						'anonymousChat.noAvailability.title',
-						'Live-Chat ist zurzeit leider geschlossen'
-					)}
-				</Typography>
-				<Typography
-					sx={{
-						mt: 2,
-						fontSize: 15,
-						fontWeight: 600,
-						color: registrationMd3.onSurface
-					}}
-				>
-					{formatOpeningHours(OPENING_HOURS, t)}
-				</Typography>
-				<Typography
-					sx={{
-						mt: 2,
-						fontSize: 15,
-						color: registrationMd3.onSurfaceVariant
-					}}
-				>
-					{ABSENCE_MESSAGE}
-				</Typography>
-				<Typography
-					sx={{
-						mt: 3,
-						fontSize: 14,
-						color: registrationMd3.onSurfaceVariant
-					}}
-				>
-					{t(
-						'anonymousChat.noAvailability.mailHint',
-						'Oder starten Sie jederzeit die anonyme Mail-Beratung.'
-					)}
-				</Typography>
-				<Typography
-					sx={{
-						mt: 1,
-						fontSize: 13,
-						fontWeight: 600,
-						color: registrationMd3.onSurfaceVariant
-					}}
-				>
-					{t(
-						'anonymousChat.noAvailability.responseTime',
-						'Antwort innerhalb von 2 Werktagen'
-					)}
-				</Typography>
+				<ScheduleOutlinedIcon />
 			</Box>
-			<RegistrationFooter
-				secondary={{
-					label: t('anonymousChat.noAvailability.later', 'Später')
+			<Typography
+				component="h1"
+				sx={{
+					fontSize: { xs: 28, sm: 32 },
+					lineHeight: 1.15,
+					fontWeight: 700
 				}}
-				primary={{
-					label: t(
-						'anonymousChat.noAvailability.startMailCounseling',
-						'Zur Mail-Beratung'
-					)
+			>
+				Der Live-Chat ist gerade geschlossen.
+			</Typography>
+			{/* The week as a strip instead of a sentence of weekdays: open
+			    days stand out with their hours, closed days stay grey. Read at
+			    a glance, nothing to parse. */}
+			<Box
+				role="list"
+				aria-label="Öffnungszeiten"
+				sx={{
+					display: 'flex',
+					gap: 1,
+					mt: 3,
+					flexWrap: 'wrap',
+					justifyContent: 'center'
 				}}
-			/>
-		</Staged>
-	);
-};
+			>
+				{WEEK.map((day) => (
+					<Box
+						key={day.short}
+						role="listitem"
+						sx={{
+							width: 60,
+							py: 1.25,
+							borderRadius: '14px',
+							bgcolor: day.hours
+								? registrationMd3.primaryFixed
+								: registrationMd3.surfaceContainer,
+							color: day.hours
+								? registrationMd3.onPrimaryFixedVariant
+								: registrationMd3.onSurfaceVariant
+						}}
+					>
+						<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+							{day.short}
+						</Typography>
+						<Typography sx={{ fontSize: 12, mt: 0.25 }}>
+							{day.hours ?? '—'}
+						</Typography>
+					</Box>
+				))}
+			</Box>
+			<Typography
+				sx={{
+					mt: 3,
+					fontSize: 15,
+					color: registrationMd3.onSurfaceVariant
+				}}
+			>
+				{ABSENCE_MESSAGE}
+			</Typography>
+		</Box>
+		{/* One long way on, one short way out — they need not be the same
+		    size. "Anfrage", not "Beratung": what starts here is a written
+		    request a counsellor answers within two working days. */}
+		<RegistrationFooter
+			secondary={{ label: 'Später', compact: true }}
+			primary={{ label: 'Anfrage an eine Beratungsstelle schreiben' }}
+		/>
+	</Staged>
+);
 
 export const StepClosed: StoryObj = {
 	name: 'C — Geschlossen',
