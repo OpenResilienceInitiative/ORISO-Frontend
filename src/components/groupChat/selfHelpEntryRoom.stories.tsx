@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import { Switch } from '../Switch';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { AccountData } from '../registration/accountData/AccountData';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
@@ -585,11 +586,12 @@ const useClockHeight = () => {
 	const measure = () => {
 		const mobile = window.innerWidth < 1200;
 		// Measured on the 1440 × 950 story: the stage header takes 96 px
-		// (64 on a phone) and keeps 32 px under the column; the bar with its
-		// aside row measures 105, plus 16 below it; the column 24 above; the
-		// headline block and its gap (66 + 26); 24 px so a rounding error
-		// never shows as a scrollbar.
-		const reserved = (mobile ? 64 : 96) + 32 + 105 + 16 + 24 + 66 + 26 + 24;
+		// (64 on a phone) and keeps 32 px under the column; the bar 96 plus
+		// 16 below it; the column 24 above; the headline block and its gap
+		// (66 + 26); the switch row at the foot (16 + 40); 24 px so a
+		// rounding error never shows as a scrollbar.
+		const reserved =
+			(mobile ? 64 : 96) + 32 + 96 + 16 + 24 + 66 + 26 + 16 + 40 + 24;
 		return Math.max(160, window.innerHeight - reserved);
 	};
 	const [height, setHeight] = React.useState(measure);
@@ -648,10 +650,9 @@ const BlockRoom = ({
 							justifyContent: 'center',
 							px: { xs: 2, sm: 4 },
 							pt: 3,
-							/* Footer bar with its aside row (measured 105) plus
-							   16 px — every pixel here is one the clock cannot
-							   have. */
-							pb: '121px'
+							/* Footer bar plus 16 px — every pixel here is one
+							   the clock cannot have. */
+							pb: '112px'
 						}}
 					>
 						<WaitingAreaCountdown
@@ -671,10 +672,57 @@ const BlockRoom = ({
 						/>
 						{/* The animation switch — the design system's own M3
 						    `Switch`, the one the profile uses — and "Mehr
-						    erfahren" ride on the bar, not in the page (Frank,
-						    2026-09-04: "nicht frei schweben … am Footer
-						    angeheftet"). That also hands the clock the rows
-						    they used to take. */}
+						    erfahren" sit at the foot of the column, directly
+						    above the bar but not on it (Frank, 2026-09-05:
+						    "unten, aber nicht Teil des Footers"). `mt: auto`
+						    pushes the row down; whatever the clock does above,
+						    the row stays put. "Mehr erfahren" is the theme's
+						    outlined button with the arrow_forward icon from the
+						    icon set, the same pair the registration's step
+						    button uses. */}
+						<Box
+							sx={{
+								mt: 'auto',
+								pt: 2,
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								gap: 2
+							}}
+						>
+							<Box
+								component="label"
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: 1.5,
+									cursor: 'pointer'
+								}}
+							>
+								<Switch
+									checked={motionOff}
+									onChange={(next) => setMotionOff(next)}
+									aria-label="Animation abschalten"
+								/>
+								<Typography
+									sx={{
+										fontSize: 13,
+										whiteSpace: 'nowrap',
+										color: registrationMd3.onSurfaceVariant
+									}}
+								>
+									Animation abschalten
+								</Typography>
+							</Box>
+							<Button
+								variant="outlined"
+								size="small"
+								endIcon={<ArrowForwardRoundedIcon />}
+								sx={{ whiteSpace: 'nowrap' }}
+							>
+								Mehr erfahren
+							</Button>
+						</Box>
 						{/* Desktop, as drawn: calendar beside a visible but shut
 						    "Beitreten". On a phone two buttons is one too many
 						    for the bar, so there the calendar has it alone and
@@ -682,46 +730,6 @@ const BlockRoom = ({
 						    Frank's own suggestion ("das Beitreten später
 						    reinfahren"). */}
 						<RegistrationFooter
-							aside={
-								<>
-									<Box
-										component="label"
-										sx={{
-											display: 'flex',
-											alignItems: 'center',
-											gap: 1.5,
-											cursor: 'pointer'
-										}}
-									>
-										<Switch
-											checked={motionOff}
-											onChange={(next) =>
-												setMotionOff(next)
-											}
-											aria-label="Animation abschalten"
-										/>
-										<Typography
-											sx={{
-												fontSize: 13,
-												whiteSpace: 'nowrap',
-												color: registrationMd3.onSurfaceVariant
-											}}
-										>
-											Animation abschalten
-										</Typography>
-									</Box>
-									<Button
-										variant="text"
-										size="small"
-										sx={{
-											textTransform: 'none',
-											whiteSpace: 'nowrap'
-										}}
-									>
-										Mehr erfahren →
-									</Button>
-								</>
-							}
 							secondary={
 								narrow
 									? undefined
