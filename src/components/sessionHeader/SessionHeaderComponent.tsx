@@ -63,7 +63,11 @@ import {
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
-import type { StackParticipant } from '../message/participantStack';
+import {
+	STACK_MAX_VISIBLE,
+	STACK_MAX_VISIBLE_PHONE,
+	type StackParticipant
+} from '../message/participantStack';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
@@ -119,7 +123,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(activeSession.item.topic as TopicSessionInterface).id
 	);
 	const settings = useAppConfig();
-	const { untilL } = useResponsive();
+	const { untilL, untilM } = useResponsive();
 	const {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
@@ -1140,6 +1144,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								) : (
 									<ParticipantAvatarStack
 										participants={headerParticipants}
+										/* Phone (< 900 px): one avatar + a
+										   compact "+N" — the title keeps the
+										   width it shares with the stack. */
+										maxVisible={
+											untilM
+												? STACK_MAX_VISIBLE_PHONE
+												: STACK_MAX_VISIBLE
+										}
 										className="sessionInfo__participants"
 										data-cy="session-header-participants"
 									/>

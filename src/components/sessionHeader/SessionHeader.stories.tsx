@@ -33,6 +33,7 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
+import { phone390Globals } from '../message/messageStoryShell';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -460,6 +461,26 @@ const expectAddButtonLeftOfType = async (canvasElement: HTMLElement) => {
 	});
 };
 
+/**
+ * The title ends in an ellipsis before the action group — it is never
+ * painted over by the call buttons (stage v3 review, 05.09.).
+ */
+const expectTitleClearOfActions = async (canvasElement: HTMLElement) => {
+	const title = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__username h3'
+	)!;
+	const actions = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__headerWrapper > .sessionMenu__wrapper'
+	)!;
+	await expect(title).not.toBeNull();
+	await expect(actions).not.toBeNull();
+	const titleRect = title.getBoundingClientRect();
+	const actionsRect = actions.getBoundingClientRect();
+	await expect(titleRect.right).toBeLessThanOrEqual(actionsRect.left + 0.5);
+	await expect(getComputedStyle(title).textOverflow).toBe('ellipsis');
+	return { titleRect, actionsRect };
+};
+
 /* ------------------------------------------------------------------ *
  * Meta + stories
  * ------------------------------------------------------------------ */
@@ -625,6 +646,7 @@ export const ActiveConversationParticipants: Story = {
 					header.getBoundingClientRect().top
 			)
 		).toBe(69);
+		await expectTitleClearOfActions(canvasElement);
 	}
 };
 
@@ -642,6 +664,46 @@ export const ActiveConversationManyParticipants: Story = {
 					?.textContent
 			).toBe('+2');
 		});
+		// The "+2" chip sits in the flow, before the title — never over it.
+		const chip = canvasElement
+			.querySelector('[data-cy="participant-overflow"]')!
+			.getBoundingClientRect();
+		const title = canvasElement
+			.querySelector('.sessionInfo__username h3')!
+			.getBoundingClientRect();
+		await expect(chip.right).toBeLessThanOrEqual(title.left + 0.5);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/**
+ * Phone (390 px): back button, type pill and the inline call buttons take
+ * 236 of the 358 px row before any avatar, so the stack is capped at one
+ * avatar + a compact "+N" and the title keeps ≥ 40 % of the width it shares
+ * with the stack — and still ends before the actions. Whether the call
+ * buttons move into the kebab on the phone is Frank's call (stage v3 review).
+ */
+export const ActiveConversationManyParticipantsPhone: Story = {
+	name: 'Active conversation — six participants on the phone (1 + "+5")',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockActiveConversationManyParticipants()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(1);
+			expect(
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
+					?.textContent
+			).toBe('+5');
+		});
+		const { titleRect } = await expectTitleClearOfActions(canvasElement);
+		const stack = canvasElement
+			.querySelector('[data-cy="session-header-participants"]')!
+			.getBoundingClientRect();
+		await expect(
+			titleRect.width / (titleRect.width + stack.width)
+		).toBeGreaterThanOrEqual(0.4);
 	}
 };
 

@@ -60,7 +60,11 @@ export const ParticipantAvatarStack = ({
 
 	return (
 		<ul
-			className={['participantStack', className]
+			className={[
+				'participantStack',
+				overflow > 0 && 'participantStack--overflow',
+				className
+			]
 				.filter(Boolean)
 				.join(' ')}
 			style={
@@ -129,7 +133,10 @@ export const ParticipantAvatarStack = ({
 				);
 			})}
 			{overflow > 0 && (
-				<li className="participantStack__item" style={{ zIndex: 0 }}>
+				<li
+					className="participantStack__item participantStack__item--overflow"
+					style={{ zIndex: 0 }}
+				>
 					<span
 						className="participantStack__overflow"
 						title={overflowLabel}

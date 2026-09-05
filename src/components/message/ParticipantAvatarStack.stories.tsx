@@ -108,13 +108,25 @@ export const OverflowPlusN: Story = {
 		]
 	},
 	play: async ({ canvasElement }) => {
-		await expect(
-			canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(4);
-		await expect(
-			canvasElement.querySelector('[data-cy="participant-overflow"]')
-				?.textContent
-		).toBe('+2');
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		await expect(avatars).toHaveLength(4);
+		const chip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip.textContent).toBe('+2');
+		// The chip is part of the flow: one 22 px step after the last avatar
+		// and fully inside the stack's own box (nothing after the stack can
+		// be painted over).
+		const last = avatars[3].getBoundingClientRect();
+		const chipRect = chip.getBoundingClientRect();
+		const stack = canvasElement
+			.querySelector('[data-cy="participant-stack"]')!
+			.getBoundingClientRect();
+		await expect(Math.round(chipRect.left - last.left)).toBe(22);
+		await expect(chipRect.right).toBeLessThanOrEqual(stack.right + 0.5);
+		await expect(getComputedStyle(chip).position).not.toBe('absolute');
 	}
 };
 

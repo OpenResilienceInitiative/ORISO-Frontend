@@ -36,6 +36,11 @@ $room-header-gap: 6px;
 		margin-left: 0;
 		padding: $room-header-gap 0;
 		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+
+		// The action group (calls, menu) never shrinks; the title does.
+		> .sessionMenu__wrapper {
+			flex: 0 0 auto;
+		}
 	}
 
 	&__endChatButton {
@@ -172,6 +177,17 @@ $room-header-gap: 6px;
 
 		&--deactivate {
 			cursor: unset;
+		}
+
+		// The consultant's title is wrapped in a profile link. A flex child
+		// defaults to `min-width: auto`, so the link kept the h3 at its full
+		// text width and the call buttons painted over it. Let the link (and
+		// the h3) shrink so the title ends in an ellipsis before the actions.
+		> a {
+			display: flex;
+			flex: 1 1 auto;
+			min-width: 0;
+			overflow: hidden;
 		}
 
 		h3 {

@@ -80,6 +80,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		box-sizing: border-box;
 		height: var(--participant-size, 32px);
 		min-width: var(--participant-size, 32px);
 		padding: 0 10px;
@@ -93,9 +94,24 @@
 		white-space: nowrap;
 	}
 
-	&__item:last-child &__overflow {
-		position: absolute;
-		left: 0;
+	// The chip stays in the flow: its item is as wide as the chip, so it
+	// starts one 22 px step after the last avatar and reserves its own
+	// width (no overlap with the title that follows the stack).
+	&__item--overflow {
+		width: auto;
+	}
+
+	&--overflow {
+		padding-right: 0;
+	}
+
+	// Phone: the compact chip (label/small) keeps the row's width for the title.
+	@media screen and (width < 900px) {
+		&__overflow {
+			min-width: 24px;
+			padding: 0 6px;
+			font-size: 12px;
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
