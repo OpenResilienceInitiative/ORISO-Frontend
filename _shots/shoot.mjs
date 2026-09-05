@@ -1,8 +1,8 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v7/<story>-<viewport>.png
- *        SHOT_DIR=stage-v6 node _shots/shoot.mjs  (older set)
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v8/<story>-<viewport>.png
+ *        SHOT_DIR=stage-v7 node _shots/shoot.mjs  (older set)
  *        ONLY=d5-,fab-six node _shots/shoot.mjs   (name prefixes, comma-separated)
  */
 import { chromium } from 'playwright';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v7'
+	process.env.SHOT_DIR ?? 'stage-v8'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -74,6 +74,35 @@ const shots = [
 		`${stage}panel-channel-card-keyboard-and-shortcuts`,
 		['1280x820', '1440x900'],
 		'open-panel-options'
+	],
+	[
+		'd6-channel-card-organism',
+		`${stage}panel-channel-card-organism-hover-and-supervision-switch`,
+		['1280x820', '1440x900'],
+		'open-panel-options'
+	],
+	[
+		'd6-channel-card-hover',
+		`${stage}panel-channel-card-organism-hover-and-supervision-switch`,
+		['1280x820', '1440x900'],
+		'hover-menu-row'
+	],
+	[
+		'd6-channel-card-supervision-off',
+		`${stage}panel-channel-card-organism-hover-and-supervision-switch`,
+		['1280x820', '1440x900'],
+		'toggle-supervision-off'
+	],
+	[
+		'e3-phone-channel-menu-supervision-off',
+		`${stage}phone-channel-menu-from-fab-and-header`,
+		['390x844'],
+		'toggle-supervision-off'
+	],
+	[
+		'drag-handle-edge',
+		'components-composer-draghandle--on-the-edge',
+		['390x844']
 	],
 	[
 		'd4-fab-pick-focus-on-header',
@@ -261,6 +290,34 @@ for (const [name, id, sizes, action] of selected) {
 				.first()
 				.click();
 			await page.waitForTimeout(300);
+		}
+		if (
+			action === 'hover-menu-row' ||
+			action === 'toggle-supervision-off'
+		) {
+			// (d6)/(e3): the play may leave the card closed — open it from
+			// the panel header, then hover the second row / flip the switch.
+			if (!(await page.locator('.channelMenu').count())) {
+				await page
+					.locator('[data-cy="panel-header-channel-options"]')
+					.first()
+					.click();
+			}
+			await page.waitForSelector('.channelMenu');
+			await page.waitForTimeout(300);
+			if (action === 'hover-menu-row') {
+				await page.locator('[role="menuitem"]').nth(1).hover();
+			} else {
+				const toggle = page
+					.locator(
+						'[data-cy="channel-menu-supervision-switch"] input'
+					)
+					.first();
+				if (await toggle.isChecked()) {
+					await toggle.click({ force: true });
+				}
+			}
+			await page.waitForTimeout(400);
 		}
 		if (action === 'wait-for-play') {
 			// (d4)/(d5): the story's play leaves the card open (and, for d4,

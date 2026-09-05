@@ -1050,7 +1050,8 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 		panel: 'supervision',
 		phone: 'main',
 		openThreads: 2,
-		supervisionUnread: 1
+		supervisionUnread: 1,
+		supervisionToggle: true
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
