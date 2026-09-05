@@ -283,7 +283,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		transportMessage?: string,
 		isAside?: boolean,
 		replyToEventId?: string | null,
-		mentionedUserIds?: string[]
+		mentionedUserIds?: string[],
+		targetRoomId?: string | null
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -295,6 +296,7 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside: boolean;
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
+		targetRoomId?: string | null;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -1564,7 +1566,8 @@ export const MessageSubmitInterfaceComponent = ({
 							retryOfId
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
-							mentionedUserIds
+							mentionedUserIds,
+							targetRoomId ?? null
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',

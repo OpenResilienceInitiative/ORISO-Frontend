@@ -30,6 +30,7 @@ import {
 	FailedSend,
 	FailedSendTimelineEntry
 } from '../message/FailedSendTimelineEntry';
+import { failedSendBelongsTo } from '../message/failedSendTarget';
 import {
 	ReactionEvent,
 	AggregatedReaction,
@@ -3212,6 +3213,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAside: boolean;
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
+		targetRoomId?: string | null;
 	} | null>(null);
 	// Read the live retry request inside the (non-memoised) success handler,
 	// which the composer may invoke from a closure captured a render earlier.
@@ -3227,7 +3229,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			transportMessage = message,
 			isAside = false,
 			replyToEventId?: string | null,
-			mentionedUserIds: string[] = []
+			mentionedUserIds: string[] = [],
+			targetRoomId: string | null = null
 		) => {
 			if (
 				sessionIdentity &&
@@ -3252,7 +3255,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										transportMessage,
 										isAside,
 										replyToEventId,
-										mentionedUserIds
+										mentionedUserIds,
+										targetRoomId
 									}
 								: failed
 						);
@@ -3268,7 +3272,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						transportMessage,
 						isAside,
 						replyToEventId: replyToEventId || null,
-						mentionedUserIds
+						mentionedUserIds,
+						targetRoomId: targetRoomId || null
 					}
 				];
 			});
@@ -3294,7 +3299,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							transportMessage: failed.transportMessage,
 							isAside: failed.isAside,
 							replyToEventId: failed.replyToEventId || null,
-							mentionedUserIds: failed.mentionedUserIds
+							mentionedUserIds: failed.mentionedUserIds,
+							targetRoomId: failed.targetRoomId || null
 						}
 					: null;
 			});
@@ -3321,7 +3327,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			transportMessage?: string,
 			isAside?: boolean,
 			replyToEventId?: string | null,
-			mentionedUserIds?: string[]
+			mentionedUserIds?: string[],
+			targetRoomId?: string | null
 		) =>
 			handleSendError(
 				message,
@@ -3332,7 +3339,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				transportMessage,
 				isAside,
 				replyToEventId,
-				mentionedUserIds
+				mentionedUserIds,
+				targetRoomId ?? null
 			),
 		[activeSessionIdentity, handleSendError]
 	);
@@ -5682,7 +5690,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{/* "Sending message failed" cards for sends that never
 						    reached the server (Figma 7086-57415). */}
 							{failedSends
-								.filter((failed) => !failed.threadRootId)
+								.filter((failed) =>
+									failedSendBelongsTo(failed, {
+										kind: 'main'
+									})
+								)
 								.map((failed) => (
 									<FailedSendTimelineEntry
 										key={failed.id}
@@ -5917,9 +5929,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onSendError={handleComposerSendError}
 										retryRequest={
-											retryRequest?.threadRootId
-												? null
-												: retryRequest
+											retryRequest &&
+											failedSendBelongsTo(retryRequest, {
+												kind: 'main'
+											})
+												? retryRequest
+												: null
 										}
 										onRetrySettled={
 											handleComposerRetrySettled
@@ -6314,9 +6329,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onUnreact={handleUnreact}
 						/>
 						{failedSends
-							.filter(
-								(failed) =>
-									failed.threadRootId === activeThreadRootId
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'thread',
+									rootId: activeThreadRootId
+								})
 							)
 							.map((failed) => (
 								<FailedSendTimelineEntry
@@ -6370,7 +6387,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						handleMessageSendSuccess={handleMessageSendSuccess}
 						onSendError={handleComposerSendError}
 						retryRequest={
-							retryRequest?.threadRootId === activeThreadRootId
+							retryRequest &&
+							failedSendBelongsTo(retryRequest, {
+								kind: 'thread',
+								rootId: activeThreadRootId
+							})
 								? retryRequest
 								: null
 						}
@@ -6439,22 +6460,71 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					) : undefined
 				}
 				timeline={
-					<MessageTimeline
-						keyPrefix="supervision-"
-						messages={supervisionTimelineMessages}
-						renderMode="main"
-						threadsEnabled={false}
-						clientName={supervisionCounterpartName}
-						askerMatrixUserIdFor={() =>
-							activeSession.item?.askerMatrixUserId
-						}
-						isOnlyEnquiry={isOnlyEnquiry}
-						isMyMessage={isMyMessageMatrix}
-						handleDecryptionErrors={handleDecryptionErrors}
-						handleDecryptionSuccess={handleDecryptionSuccess}
-						e2eeParams={e2eeParams}
-						decryptionFailures={decryptionFailures}
-					/>
+					<>
+						<MessageTimeline
+							keyPrefix="supervision-"
+							messages={supervisionTimelineMessages}
+							renderMode="main"
+							threadsEnabled={false}
+							clientName={supervisionCounterpartName}
+							askerMatrixUserIdFor={() =>
+								activeSession.item?.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							isMyMessage={isMyMessageMatrix}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							decryptionFailures={decryptionFailures}
+						/>
+						{/* Side-room sends that never reached the server: same
+						    card + retry as the client chat (review B2 D-2). */}
+						{failedSends
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'room',
+									roomId: supervisionRoomId
+								})
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName: supervisionCounterpartName,
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams,
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: supervisionRoomId
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
+					</>
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
@@ -6464,6 +6534,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{ name: supervisionCounterpartName }
 						)}
 						handleMessageSendSuccess={handleMessageSendSuccess}
+						onSendError={handleComposerSendError}
+						retryRequest={
+							retryRequest &&
+							failedSendBelongsTo(retryRequest, {
+								kind: 'room',
+								roomId: supervisionRoomId
+							})
+								? retryRequest
+								: null
+						}
+						onRetrySettled={handleComposerRetrySettled}
 						targetRoomId={supervisionRoomId}
 						isSupervisor={isSupervisor}
 						supervisionRoomId={supervisionRoomId}
