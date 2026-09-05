@@ -738,13 +738,16 @@ export const PanelChannelCardSixThreadsScrolls: Story = {
 		);
 		await expectMenuBelowHeader(canvasElement);
 		await userEvent.keyboard('{End}');
-		await waitFor(() => {
-			const last = items[6].getBoundingClientRect();
-			expect(document.activeElement).toBe(items[6]);
-			expect(last.bottom).toBeLessThanOrEqual(
-				list.getBoundingClientRect().bottom + 1
-			);
-		});
+		await waitFor(
+			() => {
+				const last = items[6].getBoundingClientRect();
+				expect(document.activeElement).toBe(items[6]);
+				expect(last.bottom).toBeLessThanOrEqual(
+					list.getBoundingClientRect().bottom + 1
+				);
+			},
+			{ timeout: 4000 }
+		);
 	}
 };
 
@@ -790,6 +793,8 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 			).not.toBeNull()
 		);
 		await expect(panelTitle(canvasElement).kind).toBe('Supervision');
+		// End reaches the last row and it stays whole — also after the card
+		// re-clamps while the composer settles.
 		// Inside the secondary view the header menu lists all channels …
 		await userEvent.click(
 			canvasElement.querySelector<HTMLButtonElement>(

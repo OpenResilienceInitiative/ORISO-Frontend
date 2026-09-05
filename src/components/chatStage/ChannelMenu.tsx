@@ -104,6 +104,15 @@ export const ChannelMenu = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	// Review v6: the host may re-clamp the card after it opened (the docked
+	// composer settles late) — a focused row near the edge would be cut.
+	// Keep it in view whenever the ceiling changes.
+	useEffect(() => {
+		buttonRefs.current[focusedRef.current]?.scrollIntoView?.({
+			block: 'nearest'
+		});
+	}, [maxHeight]);
+
 	const focusIndex = useCallback((index: number) => {
 		setFocused(index);
 		buttonRefs.current[index]?.focus();
