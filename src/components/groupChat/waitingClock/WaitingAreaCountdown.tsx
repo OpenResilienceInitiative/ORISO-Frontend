@@ -46,7 +46,7 @@ const clockGeometry = (size: number, tight: boolean) => {
 	// Labels grow with the clock, within reason: 10 px on a phone, 13 px on
 	// a desktop-sized block.
 	const labelFont = Math.max(10, Math.min(13, Math.round(size * 0.27)));
-	const labelH = labelFont + 12;
+	const labelH = labelFont + 8;
 	const digitW = size * 4 + cellGap * 3;
 	const groupW = 2 * digitW + digitGap;
 	const groupH = size * 6 + cellGap * 5 + labelH;
@@ -148,6 +148,13 @@ export interface WaitingAreaCountdownProps {
 	 * own switch. Leaving both visible would be two controls for one setting.
 	 */
 	hideMotionToggle?: boolean;
+	/**
+	 * Vertical gap between headline, clock and the rest, in px. Default 26.
+	 * The entry room passes less: every pixel of chrome is one the clock
+	 * cannot have (Frank, 2026-09-05: "maximal groß innerhalb des weißen
+	 * Bereichs").
+	 */
+	gap?: number;
 }
 
 interface Unit {
@@ -176,6 +183,7 @@ export const WaitingAreaCountdown = ({
 	spacing = 'airy',
 	labelsOutside = false,
 	hideMotionToggle = false,
+	gap = 26,
 	nowMs,
 	calendarSlot
 }: WaitingAreaCountdownProps) => {
@@ -712,7 +720,7 @@ export const WaitingAreaCountdown = ({
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
-				gap: 26,
+				gap,
 				width: '100%',
 				minWidth: 0,
 				fontFamily: 'inherit',
@@ -736,7 +744,7 @@ export const WaitingAreaCountdown = ({
 						// Frank, 2026-09-04: "mit der Schriftgröße ein bisschen
 						// arbeiten … beim Titel". Grows with the column, never
 						// past 30 px, never below the old 24 on a phone.
-						fontSize: 'clamp(24px, 2.4vw, 30px)',
+						fontSize: 'clamp(22px, 2vw, 28px)',
 						lineHeight: 1.2,
 						fontWeight: 700,
 						letterSpacing: '-0.01em',

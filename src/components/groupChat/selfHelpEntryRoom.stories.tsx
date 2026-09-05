@@ -590,20 +590,11 @@ const useClockHeight = () => {
 		// 16 below it; the column 24 above; the headline block and its gap
 		// (66 + 26); the switch row at the foot (16 + 40); 24 px so a
 		// rounding error never shows as a scrollbar.
-		// Plus the group name block above the headline (44 + 24).
+		// Column: 8 above, bar 96 + 4 below; the group block (34 + 8) only on
+		// a phone, on the desktop it is in the header; headline block 60 +
+		// 12; switch row 8 + 40; 28 slack.
 		const reserved =
-			(mobile ? 64 : 96) +
-			32 +
-			96 +
-			8 +
-			24 +
-			66 +
-			26 +
-			16 +
-			40 +
-			44 +
-			24 +
-			24;
+			(mobile ? 64 + 42 : 96) + 32 + 8 + 100 + 60 + 12 + 8 + 40 + 28;
 		return Math.max(160, window.innerHeight - reserved);
 	};
 	const [height, setHeight] = React.useState(measure);
@@ -625,6 +616,36 @@ const BlockRoom = ({
 	const [motionOff, setMotionOff] = React.useState(false);
 	const clockHeight = useClockHeight();
 	const narrow = useMediaQuery('(max-width:1199px)');
+	/* Which group this is. Frank, 2026-09-05: "mir fehlt im Header das
+	   Thema der Gruppe, sowie … einen Namen." Topic and name from the same
+	   fixtures the entry screen uses — someone who followed a link should
+	   see at once that they are in the right room. On the desktop it lives
+	   in the stage header, opposite language and login, so the clock keeps
+	   the column. */
+	const groupHeading = (
+		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
+			<Typography
+				sx={{
+					fontSize: 11,
+					fontWeight: 600,
+					letterSpacing: '.12em',
+					textTransform: 'uppercase',
+					color: registrationMd3.onSurfaceVariant
+				}}
+			>
+				{groupTopic.name}
+			</Typography>
+			<Typography
+				sx={{
+					fontSize: 14,
+					fontWeight: 600,
+					color: registrationMd3.onSurface
+				}}
+			>
+				{agency.name}
+			</Typography>
+		</Box>
+	);
 	return (
 		<Box sx={{ minHeight: '100vh' }}>
 			<AgencySpecificContext.Provider
@@ -643,6 +664,7 @@ const BlockRoom = ({
 					showRegistrationLink={false}
 					stage={<Stage hasAnimation={false} />}
 					mobileHero="bar"
+					headerStart={groupHeading}
 				>
 					<Box
 						sx={{
@@ -660,11 +682,11 @@ const BlockRoom = ({
 							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'center',
-							px: { xs: 2, sm: 4 },
-							pt: 3,
-							/* Footer bar plus 8 px — the switch row sits close
-							   above the bar ("noch etwas tiefer"). */
-							pb: '104px'
+							/* Tight on every side: the clock is the point of
+							   this screen and takes what the chrome leaves. */
+							px: 2,
+							pt: 1,
+							pb: '100px'
 						}}
 					>
 						{/* Everything above the switch row is one block that
@@ -677,35 +699,13 @@ const BlockRoom = ({
 								display: 'flex',
 								flexDirection: 'column',
 								justifyContent: 'center',
-								gap: 3
+								gap: 1
 							}}
 						>
-							{/* Which group this is. Frank, 2026-09-05: "mir fehlt
-						    im Header das Thema der Gruppe, sowie … einen
-						    Namen." Group name and topic from the same fixtures
-						    the entry screen uses — someone who followed a link
-						    should see at once that they are in the right room. */}
-							<Box sx={{ textAlign: 'center' }}>
-								<Typography
-									sx={{
-										fontSize: 12,
-										fontWeight: 600,
-										letterSpacing: '.12em',
-										textTransform: 'uppercase',
-										color: registrationMd3.onSurfaceVariant
-									}}
-								>
-									{groupTopic.name}
-								</Typography>
-								<Typography
-									sx={{
-										fontSize: 16,
-										fontWeight: 600,
-										color: registrationMd3.onSurface
-									}}
-								>
-									{agency.name}
-								</Typography>
+							{/* On a phone the header row does not exist, so the
+							    group block stands in the column. */}
+							<Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+								{groupHeading}
 							</Box>
 							<WaitingAreaCountdown
 								plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
@@ -721,6 +721,7 @@ const BlockRoom = ({
 								labelsOutside
 								reducedMotion={motionOff}
 								hideMotionToggle
+								gap={12}
 							/>
 						</Box>
 						{/* The animation switch — the design system's own M3
@@ -736,7 +737,7 @@ const BlockRoom = ({
 						<Box
 							sx={{
 								mt: 'auto',
-								pt: 2,
+								pt: 1,
 								display: 'flex',
 								justifyContent: 'space-between',
 								alignItems: 'center',
