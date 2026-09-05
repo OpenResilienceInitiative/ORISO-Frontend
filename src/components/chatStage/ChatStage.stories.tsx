@@ -204,6 +204,64 @@ const expectAvatarsAtCardInset = async (pane: HTMLElement) => {
 };
 
 /**
+ * T35: with a side panel open every desktop composer rests at one line —
+ * card height ≤ 84 px (border + dock + toolbar strip) + one line + 36 px
+ * (editor inset + dock + border) — and grows with the typed content.
+ */
+const expectCompactComposers = async (canvasElement: HTMLElement) => {
+	const shells = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)
+	);
+	await expect(shells.length).toBe(2);
+	for (const shell of shells) {
+		await expect(
+			shell.classList.contains('textarea__wrapper-send-message--compact')
+		).toBe(true);
+		const editor = shell.querySelector<HTMLElement>('.ProseMirror')!;
+		const lineHeight = Number.parseFloat(
+			getComputedStyle(editor.firstElementChild || editor).lineHeight
+		);
+		await waitFor(() => {
+			// One line plus rounding — a second line would add a whole
+			// line-height (the browsers round the 21–22.4 px line and the
+			// two 1 px borders differently, hence the quarter line).
+			expect(shell.getBoundingClientRect().height).toBeLessThanOrEqual(
+				84 + 36 + lineHeight * 1.25
+			);
+			expect(editor.getBoundingClientRect().height).toBeLessThanOrEqual(
+				lineHeight * 1.5
+			);
+		});
+		await expect(shell.querySelector('.dragHandle')).not.toBeNull();
+	}
+	// Typing three lines into the panel's composer grows it.
+	const panelShell = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+	)!;
+	const panelEditor = panelShell.querySelector<HTMLElement>('.ProseMirror')!;
+	const oneLine = panelShell.getBoundingClientRect().height;
+	await userEvent.click(panelEditor);
+	await userEvent.keyboard(
+		'Zeile eins{Shift>}{Enter}{/Shift}Zeile zwei{Shift>}{Enter}{/Shift}Zeile drei'
+	);
+	await waitFor(() =>
+		expect(
+			panelShell.getBoundingClientRect().height
+		).toBeGreaterThanOrEqual(oneLine + 40)
+	);
+	// Cleared → back to one line (+8 px rounding slack, as in (g)).
+	(panelEditor as any).editor?.commands.clearContent(true);
+	await waitFor(() =>
+		expect(panelShell.getBoundingClientRect().height).toBeLessThanOrEqual(
+			oneLine + 8
+		)
+	);
+	(document.activeElement as HTMLElement | null)?.blur();
+};
+
+/**
  * The channel card must hang below the header — never over the title —
  * and (T33) open left-aligned with its trigger, the channel tag: card left
  * edge = trigger left edge ± 1 px.
@@ -345,6 +403,10 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
 		).not.toBeNull();
+		// T35: dual mode — both composers rest at ONE line (toolbar strip +
+		// one line + insets, no spare space under the placeholder) and grow
+		// while typing; the drag pill stays.
+		await expectCompactComposers(canvasElement);
 		// T16: desktop — the scroll-to-newest arrow leads every action bar,
 		// the phone-only back arrow is absent.
 		await expect(

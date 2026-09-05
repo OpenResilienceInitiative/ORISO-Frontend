@@ -11,9 +11,14 @@ export const COMPOSER_MOBILE_BREAKPOINT = 899;
 // typing (auto-grow below). 66 px toolbar strip to the editor top + one
 // 22 px line + 10 px bottom inset + 2 × 2 px card border = 102 px — no dock
 // under the card, no spare line under the placeholder (stage v3 review).
-// Desktop keeps its Figma baseline.
+// Desktop keeps its Figma baseline …
 const MIN_HEIGHT_MOBILE = 102;
 const MIN_HEIGHT_DESKTOP = 196;
+// … except in dual mode (T35, side panel open): both composers rest at ONE
+// line and grow while typing, like the phone. 1 px border + 16 px dock +
+// 66 px toolbar strip = 84 px to the editor, one 22 px line, then 18 px
+// editor inset + 16 px dock + 1 px border (+ rounding) = 36 px → 142 px.
+const MIN_HEIGHT_COMPACT_DESKTOP = 142;
 
 const STEP_SMALL = 24;
 const STEP_LARGE = 48;
@@ -62,15 +67,20 @@ export const getEffectiveComposerHeight = (
 
 export const getComposerHeightBounds = ({
 	viewportWidth,
-	viewportHeight
+	viewportHeight,
+	compact = false
 }: {
 	viewportWidth: number;
 	viewportHeight: number;
+	/** T35: one line at rest on the desktop too (dual mode). */
+	compact?: boolean;
 }): ComposerHeightBounds => {
 	const minHeight =
 		viewportWidth <= COMPOSER_MOBILE_BREAKPOINT
 			? MIN_HEIGHT_MOBILE
-			: MIN_HEIGHT_DESKTOP;
+			: compact
+				? MIN_HEIGHT_COMPACT_DESKTOP
+				: MIN_HEIGHT_DESKTOP;
 	const maxHeight = Math.max(
 		minHeight,
 		Math.round(viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION)

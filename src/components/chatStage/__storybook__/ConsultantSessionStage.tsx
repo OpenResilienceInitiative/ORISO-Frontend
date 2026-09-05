@@ -241,10 +241,13 @@ function MainChat({
 	fab,
 	threadReplies,
 	hideFabWhileComposing = false,
+	compactComposer = false,
 	onBack
 }: {
 	fab?: React.ReactNode;
 	threadReplies: number;
+	/** T35: dual mode — the composer rests at one line. */
+	compactComposer?: boolean;
 	/** Phone: the FAB steps back while the composer has focus (T10). */
 	hideFabWhileComposing?: boolean;
 	/** Phone: the composer's back arrow leaves the chat (T16). */
@@ -295,6 +298,7 @@ function MainChat({
 			<MessageSubmitInterfaceComponent
 				placeholder={t('enquiry.write.input.placeholder.consultant')}
 				hideSupervisorAudience
+				compactHeight={compactComposer}
 				onSendButton={noop}
 				isTyping={noop}
 				language="de"
@@ -325,6 +329,8 @@ interface RoomProps {
 	onSelectChannel: (channelId: string) => void;
 	/** Review v6: the channel was picked from the FAB — the header takes focus. */
 	focusChannelButton?: boolean;
+	/** T35: desktop dual mode — the room's composer rests at one line. */
+	compactComposer?: boolean;
 }
 
 function SupervisionRoom({
@@ -337,7 +343,8 @@ function SupervisionRoom({
 	channels,
 	activeChannelId,
 	onSelectChannel,
-	focusChannelButton
+	focusChannelButton,
+	compactComposer = false
 }: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
 	// T7: the system notice opens the side room (frontend-rendered for now).
@@ -403,6 +410,7 @@ function SupervisionRoom({
 					})}
 					targetRoomId={SUPERVISION_ROOM_ID}
 					hideSupervisorAudience
+					compactHeight={compactComposer}
 					onSendButton={noop}
 					isTyping={noop}
 					language="de"
@@ -422,7 +430,8 @@ function ThreadRoom({
 	channels,
 	activeChannelId,
 	onSelectChannel,
-	focusChannelButton
+	focusChannelButton,
+	compactComposer = false
 }: RoomProps) {
 	const { t } = useTranslation();
 	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
@@ -464,6 +473,7 @@ function ThreadRoom({
 				<MessageSubmitInterfaceComponent
 					placeholder={t('message.thread.placeholder')}
 					threadRootId={THREAD_ROOT_ID}
+					compactHeight={compactComposer}
 					onSendButton={noop}
 					isTyping={noop}
 					language="de"
@@ -784,6 +794,7 @@ export function ConsultantSessionStage({
 		);
 	}
 
+	// T35: with a side room open both desktop composers rest at one line.
 	const secondary =
 		panel === 'thread' ? (
 			<ThreadRoom
@@ -792,6 +803,7 @@ export function ConsultantSessionStage({
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}
 				focusChannelButton={focusHeader}
+				compactComposer
 				onClose={closePanel}
 			/>
 		) : panel === 'supervision' ? (
@@ -803,9 +815,11 @@ export function ConsultantSessionStage({
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}
 				focusChannelButton={focusHeader}
+				compactComposer
 				onClose={closePanel}
 			/>
 		) : null;
+	const dual = secondary !== null;
 
 	return (
 		<ChatStageProviders>
@@ -827,6 +841,7 @@ export function ConsultantSessionStage({
 						>
 							<MainChat
 								fab={desktopFab}
+								compactComposer={dual}
 								threadReplies={
 									openThreads > 0
 										? threadMessages().length
@@ -852,6 +867,7 @@ export function ConsultantSessionStage({
 							>
 								<MainChat
 									fab={desktopFab}
+									compactComposer={dual}
 									threadReplies={
 										openThreads > 0
 											? threadMessages().length

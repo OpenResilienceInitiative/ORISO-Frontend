@@ -77,6 +77,36 @@ describe('getComposerHeightBounds', () => {
 		).toBe(196);
 	});
 
+	it('T35: compact (dual mode) desktop composers rest at one line', () => {
+		// 84 px from the card top to the editor (1 px border + 16 px dock +
+		// 66 px toolbar strip) + one 22 px line + 36 px below (18 px editor
+		// inset + 16 px dock + 1 px border + rounding) = 142 px — the same
+		// one-line rule as the phone, with the desktop's insets.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				compact: true
+			}).minHeight
+		).toBe(142);
+		// The phone already rests at one line; compact changes nothing there.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 375,
+				viewportHeight: 812,
+				compact: true
+			}).minHeight
+		).toBe(102);
+		// Off by default.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				compact: false
+			}).minHeight
+		).toBe(196);
+	});
+
 	it('never returns a max below the min (tiny viewports)', () => {
 		const bounds = getComposerHeightBounds({
 			viewportWidth: 1280,

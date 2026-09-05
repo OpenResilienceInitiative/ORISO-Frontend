@@ -217,6 +217,12 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * top. Unset = today's behaviour.
 	 */
 	targetRoomId?: string;
+	/**
+	 * T35: dual mode (a side panel is open) — the composer rests at ONE
+	 * line on the desktop as well and grows while typing (`composerResize`
+	 * compact bounds). The phone rests at one line regardless.
+	 */
+	compactHeight?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -390,6 +396,7 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	hideSupervisorAudience = false,
 	targetRoomId,
+	compactHeight = false,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -3466,9 +3473,10 @@ export const MessageSubmitInterfaceComponent = ({
 		() =>
 			getComposerHeightBoundsPure({
 				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight
+				viewportHeight: window.innerHeight,
+				compact: compactHeight
 			}),
-		[]
+		[compactHeight]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3737,7 +3745,9 @@ export const MessageSubmitInterfaceComponent = ({
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
-								'textarea__wrapper-send-message--resizing'
+								'textarea__wrapper-send-message--resizing',
+							compactHeight &&
+								'textarea__wrapper-send-message--compact'
 						)}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
