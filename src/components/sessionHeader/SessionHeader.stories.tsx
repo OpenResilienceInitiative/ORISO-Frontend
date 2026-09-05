@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -32,10 +32,13 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1131-44172&t=7scG0mpt60RDLUqB-4';
+const ROOM_HEADER_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38281';
 
 /* ------------------------------------------------------------------ *
  * Shared fixtures
@@ -127,21 +130,14 @@ const makeMembers = (count: number): MockMember[] =>
 		name: `Mitglied ${index + 1}`
 	}));
 
-// Minimal stand-in for MatrixClientService exposing just enough of the
-// getClient()/getRoom()/getJoinedMembers() surface GroupChatHeader touches.
-const makeMatrixClientService = (members: MockMember[]) => {
-	const room = {
-		getJoinedMembers: () => members,
-		getMember: () => ({ powerLevel: 0 })
-	};
-	const client = {
-		getRoom: () => room,
-		getRooms: () => [room]
-	};
-	return {
-		getClient: () => client
-	} as any;
-};
+// The chat-stage stand-in implements the client surface the header and
+// SessionMenu touch (`on`/`removeListener`/`getAccountData`/`setAccountData`,
+// room members, live timeline) — the earlier minimal mock threw in the
+// browser and kept three stories on `!test`.
+const makeMatrixClientService = (
+	members: MockMember[],
+	lastActivity: Record<string, number> = {}
+) => buildStageMatrixClientService({}, members, lastActivity);
 
 /* ------------------------------------------------------------------ *
  * Session presets (one factory per Figma condition)
@@ -279,15 +275,17 @@ const headerShell: React.CSSProperties = {
 const StoryProviders = ({
 	session,
 	members = [],
+	lastActivity,
 	children
 }: {
 	session: ExtendedSessionInterface;
 	members?: MockMember[];
+	lastActivity?: Record<string, number>;
 	children: React.ReactNode;
 }) => {
 	const matrixClientService = React.useMemo(
-		() => makeMatrixClientService(members),
-		[members]
+		() => makeMatrixClientService(members, lastActivity),
+		[members, lastActivity]
 	);
 
 	return (
@@ -394,16 +392,53 @@ const renderGroupHeader = (preset: {
 const renderSessionHeader = (
 	preset: {
 		session: ExtendedSessionInterface;
+		members?: MockMember[];
+		lastActivity?: Record<string, number>;
 	},
 	showAddButton?: boolean
 ) => (
-	<StoryProviders session={preset.session}>
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		lastActivity={preset.lastActivity}
+	>
 		<SessionHeaderComponent
 			bannedUsers={[]}
 			showAddButton={showAddButton}
 		/>
 	</StoryProviders>
 );
+
+// T4: the 1-on-1 room's participants (client · counsellor · supervisor).
+const ASKER_MATRIX_ID = 'asker-4401';
+const roomParticipants: MockMember[] = [
+	{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' },
+	{ userId: '@beraterin:matrix.storybook.test', name: 'Beraterin ORISO' },
+	{ userId: '@bettina.b:matrix.storybook.test', name: 'Bettina B.' }
+];
+
+// 8. Active 1-on-1 with the room's participants in the header avatar row.
+export const mockActiveConversationWithParticipants = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	// The supervisor wrote last → first in the stack (FE#1193 Job 1).
+	lastActivity: {
+		[ASKER_MATRIX_ID]: 100,
+		'@beraterin:matrix.storybook.test': 200,
+		'@bettina.b:matrix.storybook.test': 300
+	}
+});
+
+// 9. Six participants → four avatars + "+2" (FE#1193 Job 2).
+export const mockActiveConversationManyParticipants = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: [
+		...roomParticipants,
+		{ userId: '@kim:matrix.storybook.test', name: 'Kim G.' },
+		{ userId: '@ali:matrix.storybook.test', name: 'Ali R.' },
+		{ userId: '@jo:matrix.storybook.test', name: 'Jo L.' }
+	]
+});
 
 // Asserts the "+" add pill is present and rendered to the LEFT of the type
 // glyph (Figma #430 layout order).
@@ -440,10 +475,18 @@ const meta = {
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
 		},
-		design: {
-			type: 'figma',
-			url: APP_ORISO_CHAT_HEADER_FIGMA_URL
-		},
+		design: [
+			{
+				type: 'figma',
+				name: 'Chatroom header conditions',
+				url: APP_ORISO_CHAT_HEADER_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Room Header All (1320:38281)',
+				url: ROOM_HEADER_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:
@@ -471,14 +514,6 @@ export const GroupChatSmall: Story = {
  * Expected (Figma #430): no avatars, a single "+N people" count badge instead.
  */
 export const GroupChatLarge: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderGroupHeader(mockGroupSessionLarge()),
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
@@ -501,10 +536,93 @@ export const GroupChatLarge: Story = {
 
 /**
  * Active 1-on-1 conversation (nearby / vicinity, AGENCY_COUNSELLING).
- * Expected (Figma): house icon + add button + single contact avatar. Matches.
+ * Expected (Figma): house icon + add button + the contact's avatar (animal,
+ * FE#1193 Job 4) — no Matrix members yet, so the stack falls back to the contact.
  */
 export const ActiveConversation: Story = {
-	render: () => renderSessionHeader(mockActiveConversation())
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(1);
+			// T8: no "•••" next to the topic tag.
+			expect(
+				canvasElement.querySelector('.sessionInfo__topicDots')
+			).toBeNull();
+			expect(canvasElement.textContent).not.toContain('•••');
+		});
+	}
+};
+
+/**
+ * T4 / Figma 1320:38281: the room's participants as the avatar row —
+ * animal for the advice seeker, monograms for the counsellors, 22 px step,
+ * latest activity first, hover / focus shows the display name (#1209: the
+ * asker's anonymous id, identical to the title).
+ */
+export const ActiveConversationParticipants: Story = {
+	name: 'Active conversation — participant avatar row (T4)',
+	render: () => renderSessionHeader(mockActiveConversationWithParticipants()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		let avatars: NodeListOf<HTMLElement>;
+		await waitFor(() => {
+			avatars = canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="participant-avatar"]'
+			);
+			expect(avatars).toHaveLength(3);
+		});
+		// Latest activity first: the supervisor wrote last.
+		await expect(avatars![0].getAttribute('data-user-id')).toBe(
+			'@bettina.b:matrix.storybook.test'
+		);
+		// 22 px step between avatars.
+		const first = avatars![0].getBoundingClientRect();
+		const second = avatars![1].getBoundingClientRect();
+		await expect(Math.round(second.left - first.left)).toBe(22);
+		// Hover shows the name; the asker's tooltip is exactly what the
+		// header title shows (#1209: one identity, list = header = tooltip).
+		const headerTitle =
+			canvasElement.querySelector('h3')?.textContent ?? '';
+		await expect(headerTitle.length).toBeGreaterThan(0);
+		const askerAvatar = canvasElement.querySelector<HTMLElement>(
+			`[data-user-id="${ASKER_MATRIX_ID}"]`
+		)!;
+		await userEvent.hover(askerAvatar);
+		await waitFor(() =>
+			expect(
+				canvas.getByText(headerTitle, { selector: '[role="tooltip"]' })
+			).toBeVisible()
+		);
+		// T3: the hairline sits at 16 + 6 + 40 + 6 = 68 px from the header
+		// top; the row's box (incl. the 1 px hairline) ends at 69.
+		const header = canvasElement.querySelector('.sessionInfo')!;
+		const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
+		await expect(
+			Math.round(
+				row.getBoundingClientRect().bottom -
+					header.getBoundingClientRect().top
+			)
+		).toBe(69);
+	}
+};
+
+/** FE#1193 Job 2: beyond four participants the tail folds into "+N". */
+export const ActiveConversationManyParticipants: Story = {
+	name: 'Active conversation — six participants, "+2"',
+	render: () => renderSessionHeader(mockActiveConversationManyParticipants()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4);
+			expect(
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
+					?.textContent
+			).toBe('+2');
+		});
+	}
 };
 
 /**
@@ -513,14 +631,6 @@ export const ActiveConversation: Story = {
  * `showAddButton` opts this enquiry state into showing the "+".
  */
 export const WaitingRoomWithAdd: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderSessionHeader(mockWaitingRoomWithAdd(), true),
 	play: async ({ canvasElement }) => {
 		await expectAddButtonLeftOfType(canvasElement);
@@ -536,14 +646,6 @@ export const WaitingRoomWithAdd: Story = {
  * `showAddButton` opts this enquiry state into showing the "+".
  */
 export const InquiryWithAdd: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderSessionHeader(mockInquiryWithAdd(), true),
 	play: async ({ canvasElement }) => {
 		await expectAddButtonLeftOfType(canvasElement);

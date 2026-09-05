@@ -52,15 +52,25 @@ export const stageRoomMembers = [
  * subscribe to client events and read account data, so give them no-ops.
  */
 export const buildStageMatrixClientService = (
-	unreadByRoom: Record<string, number> = {}
+	unreadByRoom: Record<string, number> = {},
+	members: { userId: string; name: string }[] = stageRoomMembers,
+	/** Last message timestamp per Matrix id (feeds the header's order). */
+	lastActivity: Record<string, number> = {}
 ) => {
 	const room = (roomId: string) => ({
 		roomId,
 		name: roomId,
-		getMembers: () => stageRoomMembers,
-		getJoinedMembers: () => stageRoomMembers,
+		getMembers: () => members,
+		getJoinedMembers: () => members,
 		getMember: () => ({ powerLevel: 0 }),
-		getUnreadNotificationCount: () => unreadByRoom[roomId] ?? 0
+		getUnreadNotificationCount: () => unreadByRoom[roomId] ?? 0,
+		getLiveTimeline: () => ({
+			getEvents: () =>
+				Object.entries(lastActivity).map(([sender, ts]) => ({
+					getSender: () => sender,
+					getTs: () => ts
+				}))
+		})
 	});
 	const client = {
 		getUserId: () => COUNSELLOR_MATRIX_ID,

@@ -1,0 +1,101 @@
+// Participant avatar stack — Figma "Avatar Group" (Room Header All,
+// 1320:38281): overlapping circles, first participant on top. Tokens are
+// the room header's (`surface-container-lowest` ring, `primary-fixed` chip).
+
+.participantStack {
+	display: inline-flex;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	// The tail of the stack overhangs by (size − step); reserve it.
+	padding-right: calc(
+		var(--participant-size, 32px) - var(--participant-step, 22px)
+	);
+
+	&__item {
+		position: relative;
+		flex: 0 0 auto;
+		width: var(--participant-step, 22px);
+		height: var(--participant-size, 32px);
+	}
+
+	&__avatar {
+		display: inline-flex;
+		width: var(--participant-size, 32px);
+		height: var(--participant-size, 32px);
+		border-radius: 50%;
+
+		// Separates overlapping avatars like Figma's white gap.
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		background: var(--m3-surface-container-lowest, #fff);
+		cursor: default;
+		outline: none;
+
+		&:focus-visible {
+			box-shadow:
+				0 0 0 2px var(--m3-surface-container-lowest, #fff),
+				0 0 0 4px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Name tooltip — hover and keyboard focus (WCAG 1.4.13: persistent while
+	// hovered, dismissible by moving away).
+	&__tip {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 40;
+		padding: 4px 8px;
+		border-radius: 4px;
+		background: var(--m3-inverse-surface, #313030);
+		color: var(--m3-inverse-on-surface, #f4f0ef);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		white-space: nowrap;
+		pointer-events: none;
+		visibility: hidden;
+		opacity: 0;
+		transition: opacity 120ms ease;
+	}
+
+	&__item:hover &__tip,
+	&__item:focus-within &__tip,
+	&__item[data-open='true'] &__tip {
+		visibility: visible;
+		opacity: 1;
+	}
+
+	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).
+	&__overflow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: var(--participant-size, 32px);
+		min-width: var(--participant-size, 32px);
+		padding: 0 10px;
+		border-radius: 20px;
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-primary, #a5000a);
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	&__item:last-child &__overflow {
+		position: absolute;
+		left: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__tip {
+			transition: none;
+		}
+	}
+}

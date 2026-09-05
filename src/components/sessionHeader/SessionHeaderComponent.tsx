@@ -62,7 +62,9 @@ import {
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { UserAvatar } from '../message/UserAvatar';
+import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import type { StackParticipant } from '../message/participantStack';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -758,6 +760,109 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(!isAnonymousMatrixUsername(contact?.username)
 			? contact?.username
 			: undefined);
+	/* T4 / FE#1193: the room's participants, latest activity first, live.
+	   Members and their last message come from the Matrix room; the
+	   subscription keeps the order current without a reload. Everything is
+	   optional-chained because the Storybook stand-in only implements part
+	   of the client. */
+	const [roomParticipants, setRoomParticipants] = useState<
+		StackParticipant[]
+	>([]);
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	useEffect(() => {
+		const client = matrixClientService?.getClient?.();
+		const roomId = activeSession.rid;
+		if (!client || !roomId) {
+			setRoomParticipants([]);
+			return undefined;
+		}
+		const readRoom = () => {
+			const room = client.getRoom?.(roomId);
+			const members: any[] = room?.getJoinedMembers?.() ?? [];
+			const lastActivity = new Map<string, number>();
+			const events: any[] =
+				room?.getLiveTimeline?.()?.getEvents?.() ?? [];
+			events.forEach((event) => {
+				const sender = event?.getSender?.() ?? event?.sender?.userId;
+				const ts = event?.getTs?.() ?? event?.localTimestamp;
+				if (sender && Number.isFinite(ts)) {
+					lastActivity.set(
+						sender,
+						Math.max(lastActivity.get(sender) ?? 0, ts)
+					);
+				}
+			});
+			setRoomParticipants(
+				members
+					.filter((member) => !isSystemMatrixUser(member?.userId))
+					.map((member) => ({
+						userId: member.userId,
+						username: member.userId,
+						displayName:
+							member.userId === askerMatrixUserId
+								? headerContactName ||
+									member.name ||
+									member.userId
+								: member.name || member.userId,
+						isAsker: member.userId === askerMatrixUserId,
+						lastActivity: lastActivity.get(member.userId)
+					}))
+			);
+		};
+		readRoom();
+		const onRoomEvent = (_event: any, room?: any) => {
+			if (!room || room.roomId === roomId) {
+				readRoom();
+			}
+		};
+		// The stand-in in Storybook is a plain object; the real client's
+		// event names are typed enums that the string form matches at runtime.
+		const emitter = client as any;
+		const subscribe = (name: string) =>
+			typeof emitter.on === 'function' && emitter.on(name, onRoomEvent);
+		const unsubscribe = (name: string) => {
+			if (typeof emitter.removeListener === 'function') {
+				emitter.removeListener(name, onRoomEvent);
+			} else if (typeof emitter.off === 'function') {
+				emitter.off(name, onRoomEvent);
+			}
+		};
+		subscribe('Room.timeline');
+		subscribe('RoomState.members');
+		return () => {
+			unsubscribe('Room.timeline');
+			unsubscribe('RoomState.members');
+		};
+	}, [
+		matrixClientService,
+		activeSession.rid,
+		askerMatrixUserId,
+		headerContactName
+	]);
+
+	// Without Matrix members (enquiry, offline) the header still shows the
+	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	const headerParticipants: StackParticipant[] =
+		roomParticipants.length > 0
+			? roomParticipants
+			: contact
+				? [
+						{
+							userId:
+								askerMatrixUserId ||
+								contact.username ||
+								'unknown',
+							username: contact.username || 'User',
+							displayName:
+								headerAvatarDisplayName || headerFallbackLabel,
+							isAsker: !hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							)
+						}
+					]
+				: [];
+
 	const sessionHeaderConversationIconType: ChatroomConversationIconType =
 		activeSession.isEmptyEnquiry
 			? 'waiting'
@@ -1025,27 +1130,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								<div className="sessionInfo__memberBubble">
-									{hasUserAuthority(
-										AUTHORITIES.ASKER_DEFAULT,
-										userData
-									) && !activeSession.consultant ? (
+								{hasUserAuthority(
+									AUTHORITIES.ASKER_DEFAULT,
+									userData
+								) && !activeSession.consultant ? (
+									<div className="sessionInfo__memberBubble">
 										<ConsultantSearchLoader size="32px" />
-									) : (
-										<UserAvatar
-											username={
-												contact?.username || 'User'
-											}
-											displayName={
-												headerAvatarDisplayName
-											}
-											userId={
-												contact?.username || 'unknown'
-											}
-											size="32px"
-										/>
-									)}
-								</div>
+									</div>
+								) : (
+									<ParticipantAvatarStack
+										participants={headerParticipants}
+										className="sessionInfo__participants"
+										data-cy="session-header-participants"
+									/>
+								)}
 							</div>
 						);
 					})()}
@@ -1183,7 +1281,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					{topic?.name && (
 						<div className="sessionInfo__metaInfo__content">
 							{topic.name}
-							<span className="sessionInfo__topicDots">•••</span>
 						</div>
 					)}
 				</div>

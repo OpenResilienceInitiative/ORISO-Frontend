@@ -300,7 +300,14 @@
 				"thread": "Thread"
 			}
 		},
+		"participants": {
+			"label": "Participants: {{names}}",
+			"more": "{{count}} more participants",
+			"more_one": "1 more participant"
+		},
 		"panel": {
+			"channelOptions": "Switch channel",
+			"channelOptionsEmpty": "No other channels",
 			"close": "Close side panel",
 			"back": "Back to the counselling chat",
 			"region": "Side panel: {{title}}",
@@ -4425,6 +4432,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Supervision",
+			"systemNotice": "Supervision by {{name}}. You can request a different supervisor via the plus next to the mail icon.",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
 				"supervisor": "Supervision",

@@ -312,7 +312,14 @@
 				"thread": "Thread"
 			}
 		},
+		"participants": {
+			"label": "Beteiligte: {{names}}",
+			"more": "{{count}} weitere Beteiligte",
+			"more_one": "1 weitere Person"
+		},
 		"panel": {
+			"channelOptions": "Kanal wechseln",
+			"channelOptionsEmpty": "Keine weiteren Kanäle",
 			"close": "Nebenraum schließen",
 			"back": "Zurück zum Beratungschat",
 			"region": "Nebenraum: {{title}}",
@@ -4515,6 +4522,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Supervision",
+			"systemNotice": "Supervision durch {{name}}. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
 				"supervisor": "Supervision",

@@ -2,20 +2,22 @@ $backBtnSize: 24px;
 $feedbackBtnSize: 20px;
 $iconSize: 24px;
 
+// Room header geometry (Figma 1320:38281, "Room Header All"): 16 px inset
+// from the card edge, a 40 px content row with 6 px above and below, then
+// the `primary-fixed` hairline. `sidePanel.styles.scss` (PanelHeader) uses
+// the same numbers so the hairlines of chat and side panel end on the same
+// y (T3).
+$room-header-inset: 16px;
+$room-header-row: 40px;
+$room-header-gap: 6px;
+
 .sessionInfo {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-
-	// Figma 8641-34699: 16px inset from the chat card edges (matches composer).
-	padding: 16px 16px 6px;
-	min-height: 75px;
-	background-color: #fff;
+	padding: $room-header-inset $room-header-inset 0;
+	background-color: var(--m3-surface-container-lowest, #fff);
 	box-sizing: border-box;
-
-	@include breakpoint($fromMedium) {
-		padding: 16px 16px 6px;
-	}
 
 	@include breakpoint($fromLarge) {
 		align-items: stretch;
@@ -28,12 +30,12 @@ $iconSize: 24px;
 		flex-direction: row;
 		justify-content: space-between;
 		width: 100%;
+		height: $room-header-row;
 		align-items: center;
-		box-sizing: border-box;
+		box-sizing: content-box;
 		margin-left: 0;
-		padding-bottom: 10px;
-		padding-top: 10px;
-		border-bottom: 1px solid #ffd1d1;
+		padding: $room-header-gap 0;
+		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
 	}
 
 	&__endChatButton {
@@ -488,15 +490,6 @@ $iconSize: 24px;
 		}
 	}
 
-	&__topicDots {
-		display: inline-flex;
-		align-items: center;
-		padding-left: 6px;
-		color: var(--m3-secondary-container, #646d78);
-		font-size: 14px;
-		line-height: 1;
-	}
-
 	&__supervisionButton {
 		border: 1px solid #ffd1d1;
 		background: rgba(255, 209, 209, 0.3);
@@ -545,7 +538,8 @@ $iconSize: 24px;
 
 	// FE#513: a 1:1 conversation must not borrow the group facepile look —
 	// the single avatar stands free of the type pill instead of overlapping it.
-	&__memberStack--single &__memberBubble {
+	&__memberStack--single &__memberBubble,
+	&__memberStack--single &__participants {
 		margin-left: 6px;
 	}
 
