@@ -118,6 +118,18 @@ describe('DefaultActionBar', () => {
 		expect(onScrollToNewest).toHaveBeenCalledTimes(1);
 	});
 
+	// T23: "scroll to newest" is a real arrow, not a chevron.
+	it('draws the scroll-to-newest control as an arrow-down icon, not a chevron', () => {
+		render(<DefaultActionBar {...baseProps} showMic />);
+		const arrow = screen.getByRole('button', { name: 'Scroll to bottom' });
+		expect(
+			arrow.querySelector('[data-testid="ArrowDownwardIcon"]')
+		).toBeTruthy();
+		expect(
+			arrow.querySelector('[data-testid="KeyboardArrowDownIcon"]')
+		).toBeNull();
+	});
+
 	it('caps the badge at 99+', () => {
 		render(<DefaultActionBar {...baseProps} showMic unreadCount={120} />);
 		expect(

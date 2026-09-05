@@ -4341,6 +4341,21 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											) : (
 												<ComposerToolbar
+													showBack={
+														isMobileViewport &&
+														Boolean(
+															onMobileNavigateBack
+														)
+													}
+													onBack={
+														handleMobileBackNavigation
+													}
+													onScrollToNewest={
+														handleMobileBottomNavigation
+													}
+													unreadCount={
+														unreadMobileBadgeCount
+													}
 													direction={
 														composerMenuDirection
 													}

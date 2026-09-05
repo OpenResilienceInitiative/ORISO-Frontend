@@ -10,10 +10,13 @@ const TOOLBAR_FIGMA_URL =
 
 function ToolbarHarness({
 	isMobile = false,
-	isExpanded = false
+	isExpanded = false,
+	arrows = false
 }: {
 	isMobile?: boolean;
 	isExpanded?: boolean;
+	/** T23: back (phone) + scroll-to-newest arrows in front of the tools. */
+	arrows?: boolean;
 }) {
 	const { t } = useTranslation();
 	const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -33,6 +36,10 @@ function ToolbarHarness({
 			}}
 		>
 			<ComposerToolbar
+				showBack={arrows && isMobile}
+				onBack={arrows ? () => {} : undefined}
+				onScrollToNewest={arrows ? () => {} : undefined}
+				unreadCount={arrows ? 3 : 0}
 				direction={direction}
 				isMobile={isMobile}
 				isExpanded={isExpanded}
@@ -78,6 +85,51 @@ export const DesktopFullscreen: Story = {
 
 export const MobileCompact: Story = {
 	render: () => <ToolbarHarness isMobile />
+};
+
+/**
+ * T23 (review v5): the expanded tools carry the same two navigation arrows
+ * as the compact bar — back (phone only) and a real arrow-down for
+ * "scroll to newest" with the unread badge — so the phone never loses its
+ * way back while formatting.
+ */
+export const WithNavigationArrows: Story = {
+	name: 'With navigation arrows — phone (T23)',
+	render: () => <ToolbarHarness isMobile arrows />,
+	play: async ({ canvasElement }) => {
+		const buttons = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.composerToolbar > button'
+			)
+		);
+		await expect(buttons[0].getAttribute('data-cy')).toBe('composer-back');
+		await expect(buttons[1].getAttribute('data-cy')).toBe(
+			'composer-scroll-to-newest'
+		);
+		await expect(
+			buttons[1].querySelector('[data-testid="ArrowDownwardIcon"]')
+		).not.toBeNull();
+		await expect(
+			buttons[1].querySelector('.composerToolbar__badge')?.textContent
+		).toBe('3');
+	}
+};
+
+/** Desktop: only the scroll arrow — nothing reserved for the back arrow. */
+export const WithScrollArrowDesktop: Story = {
+	name: 'With scroll arrow — desktop, no back slot (T23)',
+	render: () => <ToolbarHarness arrows />,
+	play: async ({ canvasElement }) => {
+		const first = canvasElement.querySelector<HTMLButtonElement>(
+			'.composerToolbar > button'
+		)!;
+		await expect(first.getAttribute('data-cy')).toBe(
+			'composer-scroll-to-newest'
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="composer-back"]')
+		).toBeNull();
+	}
 };
 
 export const TextStyleMenuOpensUp: Story = {

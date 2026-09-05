@@ -5,7 +5,7 @@ import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { ToolbarButton } from './ToolbarButton';
@@ -62,7 +62,9 @@ export interface DefaultActionBarProps {
  * [back (phone)] [scroll to newest] text-format toggle, mic*, emoji,
  * mention, add, maximize. The mic icon disappears automatically when audio
  * messages are disabled (Figma note on node 7104:34790). T16: the two
- * navigation arrows replaced the phone's separate navigator row.
+ * navigation arrows replaced the phone's separate navigator row; T23: the
+ * scroll arrow is a real arrow-down glyph (Material `arrow_downward`), not
+ * the chevron.
  */
 export const DefaultActionBar = ({
 	showBack = false,
@@ -105,7 +107,7 @@ export const DefaultActionBar = ({
 				className="composerToolbar__button--scrollToNewest"
 				data-cy="composer-scroll-to-newest"
 			>
-				<KeyboardArrowDownIcon fontSize="inherit" />
+				<ArrowDownwardIcon fontSize="inherit" />
 				{unread > 0 && (
 					<span className="composerToolbar__badge" aria-hidden="true">
 						{unread > 99 ? '99+' : unread}
