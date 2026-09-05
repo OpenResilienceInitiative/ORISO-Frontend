@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	buildSupervisionTimeline,
 	CHAT_TYPE_GROUP_CHAT,
 	CHAT_TYPE_SINGLE_CHAT,
 	getChatItemForSession,
@@ -170,5 +171,74 @@ describe('sessionHelpers', () => {
 
 		expect(prepared[0].isEdited).toBe(true);
 		expect(prepared[1].isEdited).toBeFalsy();
+	});
+
+	describe('buildSupervisionTimeline (T7 system notice)', () => {
+		const notice = {
+			roomId: '!supervision:oriso.invalid',
+			title: 'Supervision',
+			description: 'Supervision durch Bettina B. ist aktiv.',
+			askerMatrixUserId: '@asker:oriso.invalid'
+		};
+		const sideRoomMessage = (id: string, dateStr: string) => ({
+			_id: id,
+			message: 'Hallo',
+			messageDate: { str: dateStr, date: null },
+			messageTime: '1757100000000',
+			displayName: 'Mona S.',
+			username: 'mona.s@oriso.invalid',
+			userId: '@mona:oriso.invalid',
+			isNotRead: true,
+			t: null,
+			rid: notice.roomId
+		});
+
+		it('N-2: an empty side room still yields one fully shaped notice (no messageDate crash)', () => {
+			const timeline = buildSupervisionTimeline([], notice);
+
+			expect(timeline).toHaveLength(1);
+			const [item] = timeline;
+			expect(item._id).toBe('$supervision-system-notice');
+			// `MessageItemComponent` reads `messageDate.str` unguarded —
+			// an undefined date sent both roles to the error page (N-2).
+			expect(item.messageDate).toEqual({ str: '', date: null });
+			expect(item.rid).toBe(notice.roomId);
+			expect(item.userId).toBe('@system:oriso');
+			expect(item.isNotRead).toBe(false);
+			expect(item.askerMatrixUserId).toBe(notice.askerMatrixUserId);
+			expect(item.message).toBe(
+				`[SYSTEM_NOTIFICATION]${JSON.stringify({
+					title: notice.title,
+					description: notice.description
+				})}`
+			);
+		});
+
+		it('treats a missing list like an empty one', () => {
+			expect(buildSupervisionTimeline(undefined, notice)).toHaveLength(1);
+			expect(buildSupervisionTimeline(null, notice)).toHaveLength(1);
+		});
+
+		it('moves the day pill onto the notice instead of drawing it twice', () => {
+			const first = sideRoomMessage('$s1', 'message.today');
+			const second = sideRoomMessage('$s2', '');
+			const timeline = buildSupervisionTimeline([first, second], notice);
+
+			expect(timeline.map((m) => m._id)).toEqual([
+				'$supervision-system-notice',
+				'$s1',
+				'$s2'
+			]);
+			expect(timeline[0].messageDate).toEqual({
+				str: 'message.today',
+				date: null
+			});
+			expect(timeline[0].messageTime).toBe(first.messageTime);
+			expect(timeline[1].messageDate).toEqual({ str: '', date: null });
+			expect(timeline[1].message).toBe('Hallo');
+			expect(timeline[2]).toBe(second);
+			// The notice never inherits the first message's unread flag.
+			expect(timeline[0].isNotRead).toBe(false);
+		});
 	});
 });

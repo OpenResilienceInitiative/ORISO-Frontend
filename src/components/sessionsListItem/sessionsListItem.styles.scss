@@ -36,8 +36,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	display: flex;
 	color: $body-font-color;
 
-	// Every card is a standalone tile: 6px gap + full 24px radius always.
-	margin: 0 0 6px;
+	// Every card is a standalone tile with the full 24px radius; T5 (Frank's
+	// spacing example, 05.09.): 24px between cards, 16px inside.
+	margin: 0 0 24px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -269,7 +270,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		&:first-child {
 			justify-content: space-between;
-			padding: 18px 16px 0;
+			padding: 16px 16px 0;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
@@ -283,7 +284,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			padding: 0 16px 14px 24px;
+			padding: 0 16px 16px;
 
 			// Figma 8609-31260: 48px-high bottom action row.
 			min-height: 48px;
@@ -482,7 +483,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin: 0;
 
 		&:hover:not(:disabled) {
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
@@ -499,7 +500,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			outline: 2px solid
 				color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent);
 			outline-offset: -2px;
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
@@ -675,6 +676,56 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
+	// ADR-008 supervision marker (replaces the silent-member eye for the
+	// assigned supervisor).
+	&__supervisionBadge {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		// T9: `supervision_circ` (currentColor) — same glyph as panel header
+		// and FAB.
+		svg {
+			width: 18px;
+			height: 18px;
+			fill: currentcolor;
+		}
+	}
+
+	// Owner-side hint: "Supervision: <name>" on the preview row.
+	&__supervisionIndicator {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 40%;
+		margin-left: 8px;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+		overflow: hidden;
+
+		svg {
+			width: 14px;
+			height: 14px;
+			flex: 0 0 auto;
+			fill: currentcolor;
+		}
+	}
+
+	&__supervisionIndicatorName {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	&__stackedAvatars {
 		position: relative;
 		width: 48px; // Wider to accommodate 3 overlapping 32px circles
@@ -768,8 +819,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__subject {
 		// padding: 8px 16px;
-		font-size: 14px;
-		line-height: 20px;
+		// T37/D1: one switch with the message body (`mui-variables-mapping.scss`).
+		font-size: var(--session-preview-font-size, 12px);
+		line-height: var(--session-preview-line-height, 16px);
 		letter-spacing: 0.25px;
 		white-space: nowrap;
 		overflow: hidden;

@@ -1,6 +1,12 @@
 $icon-size: 24px;
 $icon-size-small: 24px;
 $message-lineheight: 21px;
+
+// T37/D1: the chat text size is ONE switch — the custom properties live in
+// `resources/styles/mui-variables-mapping.scss` (`--message-font-size`,
+// `--message-line-height`, `--message-name-font-size`,
+// `--thread-entry-font-size`, `--session-preview-font-size`); the fallbacks
+// here repeat the defaults (14/20, name 14/20, thread entry 14/20).
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 
@@ -87,7 +93,6 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	&__username,
 	&__divider,
 	&__infotext,
 	&__consultant {
@@ -98,10 +103,16 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__username {
+		color: $text-low-emphasis;
 		text-align: left;
 		display: flex;
 		align-items: center;
 		padding-left: 20px;
+
+		// D1: the name line follows the chat text scale (M3 label/medium
+		// 12/16 — review v10: smaller than the 14 px body, as before D1).
+		font-size: var(--message-name-font-size, 12px);
+		line-height: var(--message-name-line-height, 16px);
 
 		&--self {
 			color: $message-name-self;
@@ -273,6 +284,12 @@ $message-avatar-overlap: -19px;
 
 	&__sideColumn--left {
 		z-index: 5;
+
+		// T30: the 60 px frame carries a 6 px white ring that is invisible on
+		// the white card — pull the column out by it so the VISIBLE 48 px
+		// avatar sits at the card's 16 px inset (Figma 1320:38278 "Chat
+		// Container"), on both sides, in the main chat and in the panel.
+		margin-left: -6px;
 	}
 
 	// Figma 8498-32645: own-message column sits in flow right of the bubble
@@ -282,6 +299,9 @@ $message-avatar-overlap: -19px;
 		justify-content: flex-end;
 		align-self: flex-end;
 		z-index: 5;
+
+		// T30: same ring compensation as `--left`.
+		margin-right: -6px;
 	}
 
 	&__sideColumnGroup {
@@ -856,7 +876,8 @@ $message-avatar-overlap: -19px;
 
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
-		line-height: $message-lineheight;
+		font-size: var(--message-font-size, 14px);
+		line-height: var(--message-line-height, 20px);
 		background-color: $message-incoming-bg;
 		border: 1px solid $message-incoming-bg;
 
@@ -926,7 +947,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		li {
-			line-height: $message-lineheight;
+			line-height: var(--message-line-height, 20px);
 			margin-top: 12px;
 
 			&:first-of-type {
@@ -1258,26 +1279,37 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// T21: thread entry under a root message — "N Antworten" and, on one
+	// line, "Autor: letzte Nachricht…". Opens the thread. Chip tokens from
+	// the room header (primary-fixed hairline, secondary text).
 	&__threadButton {
-		margin-top: 6px;
-		background: none;
-		border: 1px solid transparent;
-		color: $text-low-emphasis;
-		font-size: 12px;
-		cursor: pointer;
-		padding: 6px 10px;
-		border-radius: 8px;
-		align-self: flex-start;
 		display: inline-flex;
-		flex-direction: row;
 		align-items: center;
-		justify-content: space-between;
-		gap: 10px;
-		min-width: 180px;
+		gap: 8px;
+		max-width: 100%;
+		margin-top: 6px;
+		padding: 6px 12px;
+		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-radius: 12px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-secondary, #4c555f);
+		font-family: inherit;
+
+		// D1: the thread entry line follows the chat text scale (label/medium 12/16).
+		font-size: var(--thread-entry-font-size, 12px);
+		line-height: var(--thread-entry-line-height, 16px);
+		text-align: left;
+		cursor: pointer;
+		align-self: flex-start;
 
 		&:hover {
-			border-color: #e6e6e6;
-			background: #fafafa;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--m3-primary, #a5000a);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
 		}
 	}
 
@@ -1285,32 +1317,27 @@ $message-avatar-overlap: -19px;
 		align-self: flex-end;
 	}
 
+	&__threadButtonIcon {
+		flex: 0 0 auto;
+		width: 16px;
+		height: 16px;
+		fill: currentcolor;
+	}
+
 	&__threadButtonMain {
+		flex: 0 0 auto;
 		font-weight: 600;
-		color: $text-low-emphasis;
+		white-space: nowrap;
 	}
 
 	&__threadButtonMeta {
-		font-size: 11px;
-		color: $text-low-emphasis;
-	}
-
-	&__threadButtonHover {
-		display: none;
-		font-size: 11px;
-		color: $text-low-emphasis;
-	}
-
-	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--m3-primary, $primary);
-	}
-
-	&__threadButton:hover .messageItem__threadButtonHover {
-		display: inline;
-	}
-
-	&__threadButton:hover .messageItem__threadButtonMeta {
-		display: none;
+		flex: 0 1 auto;
+		min-width: 0;
+		max-width: 320px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__action {

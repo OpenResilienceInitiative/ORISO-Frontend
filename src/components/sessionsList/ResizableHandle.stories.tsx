@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { ResizableHandle } from './ResizableHandle';
 import './sessionsList.styles.scss';
 
@@ -12,7 +13,9 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Drag the **right edge** of the gray panel to resize (used on `SessionsListWrapper`). Snaps around icon-only width. Class: `sessionsList__resizeHandle`.'
+					'Drag the **right edge** of the gray panel to resize (used on `SessionsListWrapper`). Snaps around icon-only width. Class: `sessionsList__resizeHandle`. ' +
+					'T2/T5: the same handle sits on the **left edge** of the chat side panel (`anchor="start"`, no snapping); the pill is centred on the full height, never on the list scrollbar, and the chevron toggle is gone. ' +
+					'Press and hold (450 ms) or double-click collapses / expands; Up/Down scroll the list. The former drag-to-scroll, wheel toggle and hover focus went with the scrollbar coupling.'
 			}
 		}
 	},
@@ -101,7 +104,49 @@ export const Default: Story = {
 			}
 		}
 	},
-	render: (args) => <ResizeDemo {...args} />
+	render: (args) => <ResizeDemo {...args} />,
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'.sessionsList__resizeHandle'
+		)!;
+		const width = () =>
+			canvasElement.querySelector('code')?.textContent ?? '';
+		await expect(width()).toBe('320px');
+		await expect(handle.getAttribute('aria-label')).toMatch(
+			/hold|gedrückt/i
+		);
+		await expect(handle.getAttribute('aria-label')).not.toMatch(
+			/vertically/i
+		);
+		// T5: press and hold still → collapses to the icon rail.
+		const rect = handle.getBoundingClientRect();
+		const at = {
+			pointerId: 1,
+			button: 0,
+			clientX: rect.left + 12,
+			clientY: rect.top + 100
+		};
+		await fireEvent.pointerDown(handle, at);
+		await waitFor(() => expect(width()).toBe('80px'), { timeout: 1500 });
+		await fireEvent.pointerUp(document, at);
+		// Hold again → expands to the full band.
+		await fireEvent.pointerDown(handle, at);
+		await waitFor(() => expect(width()).toBe('397px'), { timeout: 1500 });
+		await fireEvent.pointerUp(document, at);
+		// A press that moves is a drag, not a hold: 30 px right → wider.
+		await fireEvent.pointerDown(handle, at);
+		await fireEvent.pointerMove(document, {
+			...at,
+			clientX: at.clientX + 30
+		});
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		await fireEvent.pointerUp(document, at);
+		await expect(width()).not.toBe('80px');
+		// Keyboard still resizes.
+		handle.focus();
+		await userEvent.keyboard('{Home}');
+		await expect(width()).toBe('80px');
+	}
 };
 
 export const ChatActivePillHidden: Story = {
@@ -134,4 +179,92 @@ export const NarrowMin: Story = {
 		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
+};
+
+function PanelResizeDemo() {
+	const [width, setWidth] = useState(420);
+	return (
+		<div
+			style={{
+				display: 'flex',
+				height: 220,
+				fontFamily: 'system-ui, sans-serif',
+				fontSize: 13
+			}}
+		>
+			<div
+				style={{
+					flex: 1,
+					background: '#fff',
+					border: '1px solid #eee',
+					padding: 12
+				}}
+			>
+				Main chat
+			</div>
+			<div
+				style={{
+					width,
+					position: 'relative',
+					flexShrink: 0,
+					background: '#eae7e8',
+					border: '1px solid #e0e0e0',
+					padding: 12,
+					boxSizing: 'border-box'
+				}}
+				data-cy="panel-demo"
+			>
+				<ResizableHandle
+					anchor="start"
+					snapping={false}
+					currentWidth={width}
+					onResize={setWidth}
+					minWidth={320}
+					maxWidth={600}
+					ariaLabel="Breite des Nebenraums"
+				/>
+				<strong>Side panel</strong>
+				<p style={{ margin: '8px 0 0', color: '#666' }}>
+					Width: <code data-cy="panel-width">{width}px</code>
+				</p>
+				<p style={{ margin: '8px 0 0', color: '#666', fontSize: 12 }}>
+					← Drag the left edge
+				</p>
+			</div>
+		</div>
+	);
+}
+
+/** T2: the panel edge — handle on the start side, keyboard left = wider. */
+export const PanelStartAnchor: Story = {
+	name: 'Side panel — handle on the start edge (T2)',
+	args: { currentWidth: 420, onResize: () => {} },
+	render: () => <PanelResizeDemo />,
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'.sessionsList__resizeHandle--start'
+		)!;
+		await expect(handle).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('.sessionsList__resizeToggle')
+		).toBeNull();
+		// Pill centred on the handle height.
+		const pill = handle.querySelector<HTMLElement>(
+			'.sessionsList__resizeHandlePill'
+		)!;
+		const h = handle.getBoundingClientRect();
+		const p = pill.getBoundingClientRect();
+		await expect(
+			Math.abs(p.top + p.height / 2 - (h.top + h.height / 2))
+		).toBeLessThanOrEqual(1);
+		handle.focus();
+		await userEvent.keyboard('{ArrowLeft}');
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-width"]')?.textContent
+		).toBe('440px');
+		await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-width"]')?.textContent
+		).toBe('400px');
+	}
 };

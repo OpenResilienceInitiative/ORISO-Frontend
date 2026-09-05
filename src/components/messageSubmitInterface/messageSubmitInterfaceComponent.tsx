@@ -17,8 +17,11 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
+import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
+import { isFocusProtected } from './focusGuards';
+import { buildSessionChannelPath } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -42,7 +45,7 @@ import {
 	resolveAskerMessageTransport,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
-import { resolveAsideTargetRoomId } from './asideRouting';
+import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
@@ -201,6 +204,42 @@ export interface MessageSubmitInterfaceComponentProps {
 	isSupervisor?: boolean;
 	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
 	supervisionRoomId?: string;
+	/**
+	 * WP-B2: the supervision parallel panel owns the side room, so the main
+	 * composer no longer offers the supervisor as an audience in 1:1
+	 * sessions. Group-chat audiences are untouched. `asideRouting` stays as
+	 * the safety net for anything that still carries an aside.
+	 */
+	hideSupervisorAudience?: boolean;
+	/**
+	 * Side panel (supervision room, Figma "second Chat Room Desktop"): the
+	 * room every send of THIS composer goes to. Overrides the active
+	 * session's client room; aside routing (`asideRouting`) still applies on
+	 * top. Unset = today's behaviour.
+	 */
+	targetRoomId?: string;
+	/**
+	 * T35: dual mode (a side panel is open) — the composer rests at ONE
+	 * line on the desktop as well and grows while typing (`composerResize`
+	 * compact bounds). The phone rests at one line regardless.
+	 */
+	compactHeight?: boolean;
+	/**
+	 * T40 (Frank, round 6): dual mode — the composer loses its outer
+	 * frame (border + 24 px radius) and its 16 px inner inset; the field
+	 * sits directly in the dock with 4 px corners, and only the card's
+	 * OUTER bottom corner stays rounded: `bottom-left` for the main
+	 * column, `bottom-right` for the side panel. Implies the one-line
+	 * rule (`composerResize.ts` MIN_HEIGHT_FLUSH_DESKTOP = 106). Desktop
+	 * only — the phone already runs edge to edge (T10/T31).
+	 */
+	flushCorner?: 'bottom-left' | 'bottom-right';
+	/**
+	 * T41: the supervision room's composer wears the supervision accent —
+	 * `primary-fixed-dim` field border — so the channel is unmistakable
+	 * while writing. Default: the neutral `primary-fixed` hairline.
+	 */
+	accent?: 'default' | 'supervision';
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -244,7 +283,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		transportMessage?: string,
 		isAside?: boolean,
 		replyToEventId?: string | null,
-		mentionedUserIds?: string[]
+		mentionedUserIds?: string[],
+		targetRoomId?: string | null
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -256,6 +296,7 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside: boolean;
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
+		targetRoomId?: string | null;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -272,32 +313,6 @@ export interface MessageSubmitInterfaceComponentProps {
  * None of them closes over anything from the component; the chevron takes the
  * only prop. Keep them here.
  */
-const ComposerMobileBackIcon = () => (
-	<svg
-		width="5"
-		height="10"
-		viewBox="0 0 5 10"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
-	</svg>
-);
-
-const ComposerMobileDownIcon = () => (
-	<svg
-		width="10"
-		height="5"
-		viewBox="0 0 10 5"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
-	</svg>
-);
-
 const AudienceAllMultiIcon = () => (
 	<svg
 		width="19"
@@ -398,6 +413,11 @@ export const MessageSubmitInterfaceComponent = ({
 	isAnonymousLiveChat = false,
 	isSupervisor,
 	supervisionRoomId,
+	hideSupervisorAudience = false,
+	targetRoomId,
+	compactHeight = false,
+	flushCorner,
+	accent = 'default',
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -513,6 +533,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null
 	);
+	// Review B2 N-1: the framed→flush re-frame (side panel opening AFTER
+	// mount) animates the shell height over 240 ms. Measuring during that
+	// transition reads the old chrome and locks a mid-flight height into
+	// `--composer-height`; every ended height transition re-measures.
+	const [composerSettleTick, setComposerSettleTick] = useState(0);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -597,6 +622,11 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const activeElement = document.activeElement as HTMLElement | null;
+		// Review v6: an open menu (the channel card) and regions marked
+		// `data-keeps-focus` (the side-panel header) keep their focus.
+		if (isFocusProtected(activeElement)) {
+			return;
+		}
 		const activeTagName = activeElement?.tagName?.toLowerCase();
 		const isTypingInAnotherInput =
 			!!activeElement &&
@@ -654,14 +684,20 @@ export const MessageSubmitInterfaceComponent = ({
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
-		if (threadRootId) {
-			params.set('threadRootId', threadRootId);
-		} else {
-			params.delete('threadRootId');
-		}
 		const query = params.toString();
-		return `${location.pathname}${query ? `?${query}` : ''}`;
-	}, [location.pathname, location.search, threadRootId]);
+		// B2 / T24: a draft resumes INSIDE its channel via the one channel
+		// parameter — `?channel=thread:<root>` for a thread reply,
+		// `?channel=supervision` for the side room's composer
+		// (`targetRoomId`) — never the legacy pair.
+		return buildSessionChannelPath(
+			`${location.pathname}${query ? `?${query}` : ''}`,
+			threadRootId
+				? { kind: 'thread', rootId: threadRootId }
+				: targetRoomId
+					? { kind: 'supervision' }
+					: null
+		);
+	}, [location.pathname, location.search, threadRootId, targetRoomId]);
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
@@ -677,10 +713,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const forcedDraftScopeKey = useMemo(() => {
 		const params = new URLSearchParams(location.search);
 		const allScopeKeys = params.getAll('draftScopeKey');
-		return allScopeKeys.length
-			? allScopeKeys[allScopeKeys.length - 1]
+		if (allScopeKeys.length) {
+			return allScopeKeys[allScopeKeys.length - 1];
+		}
+		// B2: the side room's composer keeps its own draft — scoped to the
+		// side room, never to the client room the main composer writes to.
+		return targetRoomId && !threadRootId
+			? `scope:${targetRoomId}|thread:main`
 			: null;
-	}, [location.search]);
+	}, [location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -1143,15 +1184,6 @@ export const MessageSubmitInterfaceComponent = ({
 			: textInputStyles;
 		textInput?.setAttribute('style', textInputStyles);
 
-		const textareaContainer = textInput?.closest('.textarea');
-		const textareaContainerHeight = textareaContainer?.offsetHeight;
-		const scrollButton = textareaContainer
-			?.closest('.session')
-			?.getElementsByClassName('session__scrollToBottom')[0];
-		if (scrollButton) {
-			scrollButton.style.bottom = textareaContainerHeight + 24 + 'px';
-		}
-
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();
 	}, [attachmentSelected, editorState, scrollEditorToBottom]);
@@ -1171,6 +1203,13 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const timeoutId = window.setTimeout(() => {
+			// Review v6: never pull focus off an open menu or a
+			// `data-keeps-focus` region (the side-panel header) — the
+			// alignLeft chain below focuses the editor on its own, so the
+			// check has to come first.
+			if (isFocusProtected(document.activeElement)) {
+				return;
+			}
 			composerRef.current?.runAction('alignLeft');
 			focusEditorInput();
 		}, 0);
@@ -1348,7 +1387,10 @@ export const MessageSubmitInterfaceComponent = ({
 				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
-				? resolvedChatSession.matrixRoomId
+				? resolvePrimaryRoomId({
+						targetRoomId,
+						clientRoomId: resolvedChatSession.matrixRoomId
+					})
 				: undefined;
 			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
 			// go to the supervision side room, never the client-facing room.
@@ -1529,7 +1571,8 @@ export const MessageSubmitInterfaceComponent = ({
 							retryOfId
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
-							mentionedUserIds
+							mentionedUserIds,
+							targetRoomId ?? null
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1562,6 +1605,7 @@ export const MessageSubmitInterfaceComponent = ({
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
+			targetRoomId,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
@@ -2486,7 +2530,17 @@ export const MessageSubmitInterfaceComponent = ({
 						: classifyAudienceKind(value, roster)
 				};
 			})
-			.sort((a, b) => a.label.localeCompare(b.label));
+			.sort((a, b) => a.label.localeCompare(b.label))
+			// WP-B2: with the parallel panel the supervisor is reached through
+			// the side room, not through a "send to" choice in the client chat.
+			.filter(
+				(option) =>
+					!(
+						hideSupervisorAudience &&
+						!activeSession?.isGroup &&
+						option.kind === 'supervisor'
+					)
+			);
 		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
 		// group/supervision conversations with more than one human counterpart.
 		// A 1:1 conversation has no real targets here (the asker is filtered out
@@ -2518,6 +2572,7 @@ export const MessageSubmitInterfaceComponent = ({
 		agencyConsultantDirectory,
 		currentChatType,
 		activeSession?.isGroup,
+		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
 		userData?.userName,
@@ -3432,17 +3487,26 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
+	// T16: the scroll-to-newest arrow in the action bar (every width). The
+	// app passes its own handler; without one the composer scrolls the
+	// timeline of the card / side panel it is docked to.
 	const handleMobileBottomNavigation = useCallback(() => {
-		onMobileNavigateBottom?.();
+		if (onMobileNavigateBottom) {
+			onMobileNavigateBottom();
+			return;
+		}
+		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
 	const getComposerHeightBounds = useCallback(
 		() =>
 			getComposerHeightBoundsPure({
 				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight
+				viewportHeight: window.innerHeight,
+				compact: compactHeight,
+				flush: flushCorner !== undefined
 			}),
-		[]
+		[compactHeight, flushCorner]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3503,11 +3567,22 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 	}, [
 		attachmentSelected,
+		composerSettleTick,
 		composerText,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
 	]);
+
+	const handleComposerShellTransitionEnd = useCallback(
+		(e: React.TransitionEvent<HTMLDivElement>) => {
+			if (e.target !== e.currentTarget || e.propertyName !== 'height') {
+				return;
+			}
+			setComposerSettleTick((tick) => tick + 1);
+		},
+		[]
+	);
 
 	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
@@ -3711,8 +3786,19 @@ export const MessageSubmitInterfaceComponent = ({
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
-								'textarea__wrapper-send-message--resizing'
+								'textarea__wrapper-send-message--resizing',
+							compactHeight &&
+								'textarea__wrapper-send-message--compact',
+							flushCorner &&
+								'textarea__wrapper-send-message--flush',
+							flushCorner &&
+								`textarea__wrapper-send-message--flush-${flushCorner}`,
+							accent === 'supervision' &&
+								'textarea__wrapper-send-message--supervision'
 						)}
+						data-flush-corner={flushCorner}
+						data-accent={accent}
+						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
 								? ({
@@ -3721,70 +3807,28 @@ export const MessageSubmitInterfaceComponent = ({
 								: undefined
 						}
 					>
-						{!isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<DragHandle
-									onPointerDown={
-										handleComposerResizePointerDown
-									}
-									onKeyDown={handleComposerResizeKeyDown}
-									touched={isComposerResizing}
-									ariaLabel={translate(
-										'message.mobileNav.dragToExpand',
-										'Drag to resize composer'
-									)}
-								/>
-							)}
-						{isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<div className="textarea__mobileNavigator">
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
-										onClick={handleMobileBackNavigation}
-										aria-label={translate(
-											'message.mobileNav.back',
-											'Navigate up'
-										)}
-									>
-										<ComposerMobileBackIcon />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorCenter"
-										onPointerDown={
-											handleComposerResizePointerDown
-										}
-										onKeyDown={handleComposerResizeKeyDown}
-										aria-label={translate(
-											'message.mobileNav.dragToExpand',
-											'Drag to resize composer'
-										)}
-									>
-										<span className="textarea__mobileNavigatorHandle" />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
-										onClick={handleMobileBottomNavigation}
-										aria-label={translate(
-											'message.mobileNav.scrollToBottom',
-											'Scroll to bottom'
-										)}
-									>
-										<ComposerMobileDownIcon />
-										{unreadMobileBadgeCount > 0 && (
-											<span className="textarea__mobileNavigatorBadge">
-												{unreadMobileBadgeCount > 99
-													? '99+'
-													: unreadMobileBadgeCount}
-											</span>
-										)}
-									</button>
-								</div>
-							)}
+						{/* T6/T16: the drag pill belongs to every docked composer —
+						    main chat, supervision room and thread panel, on the
+						    phone too (the navigator row that carried it is gone). */}
+						{!isExpandedComposer && (
+							<DragHandle
+								onPointerDown={handleComposerResizePointerDown}
+								onKeyDown={handleComposerResizeKeyDown}
+								touched={isComposerResizing}
+								// T31: phone — pill on the card's top edge; T40:
+								// the flush desktop field has no frame above the
+								// field either, so the pill sits on its edge too.
+								position={
+									isMobileViewport || flushCorner
+										? 'edge'
+										: 'inside'
+								}
+								ariaLabel={translate(
+									'message.mobileNav.dragToExpand',
+									'Drag to resize composer'
+								)}
+							/>
+						)}
 						{showAudienceSelector && (
 							<div
 								className="textarea__audienceSelector"
@@ -4304,6 +4348,21 @@ export const MessageSubmitInterfaceComponent = ({
 											{isCompactActionStripOpen ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
+														showBack={
+															isMobileViewport &&
+															Boolean(
+																onMobileNavigateBack
+															)
+														}
+														onBack={
+															handleMobileBackNavigation
+														}
+														onScrollToNewest={
+															handleMobileBottomNavigation
+														}
+														unreadCount={
+															unreadMobileBadgeCount
+														}
 														onOpenTools={
 															closeCompactActionStrip
 														}
@@ -4363,6 +4422,21 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											) : (
 												<ComposerToolbar
+													showBack={
+														isMobileViewport &&
+														Boolean(
+															onMobileNavigateBack
+														)
+													}
+													onBack={
+														handleMobileBackNavigation
+													}
+													onScrollToNewest={
+														handleMobileBottomNavigation
+													}
+													unreadCount={
+														unreadMobileBadgeCount
+													}
 													direction={
 														composerMenuDirection
 													}

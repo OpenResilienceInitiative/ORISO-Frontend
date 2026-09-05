@@ -21,6 +21,12 @@
 	touch-action: none;
 	z-index: 5;
 
+	// T31: `edge` centres the 16 px touch zone — and so the pill — on the
+	// card's top edge; `inside` (default) keeps it 4 px under the edge.
+	&--edge {
+		top: -8px;
+	}
+
 	&__pill {
 		width: 57px;
 		height: 4px;

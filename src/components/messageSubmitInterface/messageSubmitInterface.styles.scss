@@ -88,8 +88,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		// Desktop composer card rests on the chat card's inner bottom edge.
 		// Tablet and mobile keep their existing 16px / safe-area inset.
+		// T44/T46 (review v11 B-1): a FLUSH composer (dual mode, no outer
+		// frame) keeps the 16 px dock at every width — the field carries the
+		// card's corner (28 − 16 = 12 px) and must not sit on the card edge.
 		@include breakpoint($fromDesktopWide) {
-			padding-bottom: 0;
+			&:not(:has(.textarea__wrapper-send-message--flush)) {
+				padding-bottom: 0;
+			}
 		}
 
 		// On mobile, ensure no extra spacing and proper positioning
@@ -176,6 +181,100 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					transition: none;
 				}
 
+				// T35: dual mode — one line at rest (`composerResize.ts`
+				// MIN_HEIGHT_COMPACT_DESKTOP = 138); `--composer-height`
+				// grows it while typing. Same rule as the phone's 102.
+				&--compact {
+					min-height: var(--composer-height, 138px);
+					height: var(--composer-height, 138px);
+				}
+
+				// T40 (Frank, round 6): dual mode — NO outer frame. The
+				// card (border, 24 px radius) disappears; only the chat
+				// card's own outer bottom corner is kept on this box so it
+				// hugs the card edge: bottom-left in the main column,
+				// bottom-right in the side panel; the inner corners are 0.
+				// The field (`.textarea__input`) becomes the one bordered
+				// box, 4 px corners, and takes the freed 16 px inset.
+				// One line at rest (`composerResize.ts`
+				// MIN_HEIGHT_FLUSH_DESKTOP = 106). Desktop only.
+				@media screen and (width >= 900px) {
+					&--flush:not(.textarea__wrapper-send-message--expanded) {
+						border: 0 !important;
+						border-radius: 0 !important;
+						min-height: var(--composer-height, 106px);
+						height: var(--composer-height, 106px);
+
+						&.textarea__wrapper-send-message--flush-bottom-left {
+							border-bottom-left-radius: var(
+								--session-card-radius,
+								28px
+							) !important;
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-right {
+							border-bottom-right-radius: var(
+								--session-card-radius,
+								28px
+							) !important;
+						}
+
+						// Handle touched: the field's border darkens instead
+						// of the (absent) frame.
+						&.textarea__wrapper-send-message--resizing {
+							border: 0 !important;
+
+							.textarea__input {
+								border: 2px solid
+									var(--m3-on-primary-fixed-variant, #930008);
+							}
+						}
+
+						.textarea__inputWrapper {
+							inset: 0;
+						}
+
+						// T44/T46 (Frank, round 7): the field keeps the
+						// 16 px to the card edge (the pane's dock, like the
+						// bubbles) and its OUTER bottom corner is rounded
+						// concentrically inside the card's corner: field
+						// radius = card radius − inset (28 − 16 = 12); the
+						// inner corners stay 4 px.
+						.textarea__input {
+							border-radius: 4px;
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-left
+							.textarea__input {
+							border-bottom-left-radius: calc(
+								var(--session-card-radius, 28px) - 16px
+							);
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-right
+							.textarea__input {
+							border-bottom-right-radius: calc(
+								var(--session-card-radius, 28px) - 16px
+							);
+						}
+
+						// T45: the send button sticks to the field's top-right
+						// corner again — the field fills the shell here, so
+						// the button's 16 px offset (the old inset) goes.
+						.textarea__buttons {
+							top: 0;
+							right: 0;
+						}
+					}
+				}
+
+				// T41: the supervision room's composer — `primary-fixed-dim`
+				// field border (the resting/selected states keep theirs).
+				&--supervision:not(.textarea__wrapper-send-message--selected)
+					.textarea__input {
+					border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+				}
+
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;
@@ -204,6 +303,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						border: 0 !important;
 						border-radius: 0 !important;
 						box-shadow: none !important;
+
+						// T10: one line by default (`composerResize.ts`
+						// MIN_HEIGHT_MOBILE = 100); `--composer-height` grows it.
+						min-height: var(--composer-height, 100px);
+						height: var(--composer-height, 100px);
 					}
 
 					&::before {
@@ -215,8 +319,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 180px);
-						height: var(--composer-height, 180px);
+						min-height: var(--composer-height, 100px);
+						height: var(--composer-height, 100px);
 					}
 				}
 			}
@@ -279,149 +383,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid #ffe3a0;
 		}
 
-		&__mobileNavigator {
-			display: none;
-		}
-
-		@media screen and (width <= 899px) {
-			&__mobileNavigator {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				gap: 6px;
-				height: 48px;
-				padding: 0 0px;
-				border: 2px solid #ffd1d1;
-				border-bottom: 0;
-				border-top-left-radius: 20px;
-				border-top-right-radius: 20px;
-				background: #fff;
-				position: absolute;
-				top: -48px;
-				left: 0px;
-				right: 0px;
-				z-index: 34;
-				width: 100%;
-			}
-
-			&__mobileNavigator > button {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-
-			&__mobileNavigatorButton {
-				border: 0;
-				background: transparent;
-				width: 62px;
-				height: 48px;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				border-top-left-radius: 0;
-				border-top-right-radius: 0;
-				cursor: pointer;
-				position: relative;
-				flex: 1;
-
-				&:active {
-					background: #ffe2de;
-				}
-			}
-
-			&__mobileNavigatorButton--left {
-				border-top-left-radius: 20px;
-			}
-
-			&__mobileNavigatorButton--right {
-				border-top-right-radius: 20px;
-			}
-
-			&__mobileNavigatorCenter {
-				border: 0;
-				background: transparent;
-				flex: 0;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				height: 36px;
-				border-radius: 8px;
-				cursor: ns-resize;
-				touch-action: none;
-
-				&:active {
-					background: #ffe2de;
-
-					.textarea__mobileNavigatorHandle {
-						background: var(--m3-primary-container, #cc1e1c);
-					}
-				}
-			}
-
-			&__mobileNavigator > .textarea__mobileNavigatorButton {
-				flex: 1 1 0;
-			}
-
-			&__mobileNavigator > .textarea__mobileNavigatorCenter {
-				flex: 0 0 112px;
-				width: 112px;
-			}
-
-			&__mobileNavigatorHandle {
-				width: 66px;
-				height: 5px;
-				border-radius: 2px;
-				background: #d9d9d9;
-				transition:
-					background 160ms ease,
-					height 160ms ease;
-			}
-
-			&__mobileNavigatorHandle--atBottom {
-				background: var(--m3-primary-container, #cc1e1c);
-				height: 7px;
-				border-radius: 3px;
-			}
-
-			&__mobileNavigatorBadge {
-				position: absolute;
-				right: 8px;
-				top: 8px;
-				width: 20px;
-				height: 20px;
-				padding: 0;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				border-top-left-radius: 3px;
-				border-bottom-right-radius: 3px;
-				border-top-right-radius: 8px;
-				border-bottom-left-radius: 8px;
-				background: #b1005e;
-				color: #fff;
-				font-size: 11px;
-				font-weight: 600;
-				line-height: 1;
-				letter-spacing: 0;
-				overflow: hidden;
-			}
-
-			&__mobileNavigatorButton--right:active {
-				background: #ffd1d1;
-			}
-
-			&__wrapper-send-message:not(
-					.textarea__wrapper-send-message--expanded
-				) {
-				border-top-left-radius: 0 !important;
-				border-top-right-radius: 0 !important;
-			}
-
-			&__input {
-				border-radius: 0 0 30px 30px;
-			}
-		}
-
 		&__inputWrapper {
 			position: absolute;
 			left: 16px;
@@ -438,6 +399,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				left: 0;
 				right: 0;
 				top: 0;
+
+				// T10: no 16 px dock inside the card on the phone — the outer
+				// 16 px padding is the only space to the bottom navigation.
+				bottom: 0;
 				border-top-left-radius: 0 !important;
 				border-top-right-radius: 0 !important;
 			}
@@ -469,14 +434,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			box-sizing: border-box;
 			position: relative;
 
+			// T31: 4 px bottom corners on the phone (Frank's red boxes).
 			@media screen and (width <= 899px) {
-				border-radius: 0px 0 30px 30px;
+				border-radius: 0 0 4px 4px;
 			}
 
 			// Expanded state on mobile restores the desktop rounded top-left
 			.textarea__wrapper-send-message--expanded & {
 				@media screen and (width <= 899px) {
-					border-radius: 30px 0 30px 30px;
+					border-radius: 16px 0 4px 4px;
 				}
 			}
 
@@ -562,6 +528,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			position: absolute;
 			top: 4px;
 			left: 8px;
+
+			// T31: phone — the first icon starts right at the card's edge
+			// (the bar keeps its own 4 px inset).
+			@media screen and (width <= 899px) {
+				left: 0;
+			}
 
 			// keep clear of the 48px send button flush at right:16
 			right: 72px;
@@ -2161,11 +2133,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 	}
 
-	// `.textarea__mobileNavigator` is `position: absolute; top: -48px`, so it
-	// is out of flow and paints its white background over the 48px directly
-	// above the composer — exactly where this bar would otherwise sit. Reserve
-	// that band so the banner clears it instead of disappearing behind it.
-	@media screen and (width <= 899px) {
-		margin-bottom: 54px;
-	}
+	// T16: the phone navigator row above the composer is gone, so the bar
+	// sits directly above the composer on every width.
 }

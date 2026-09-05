@@ -1,0 +1,414 @@
+// Side panel = a second "Chat Room Desktop" (Figma 1320:38278) in narrow.
+// Chrome tokens are the chat card's; header tokens are the room header's
+// (secondary, primary-fixed hairline, label/medium tag). No bubble or
+// composer styles live here — the real components bring their own.
+
+.sidePanel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	height: 100%;
+	box-sizing: border-box;
+	background-color: var(--m3-surface-container-lowest, #fff);
+
+	// Joined to the open chat card: the same surface, a hairline between.
+	&--inside {
+		border-left: 1px solid var(--m3-primary-fixed, #ffdad5);
+	}
+
+	// `--card` and `--fullscreen` also carry `.session`: the card chrome
+	// (border, radius, margin, focus ring) is the chat card's own.
+
+	&__banner {
+		flex: 0 0 auto;
+		padding: 8px 16px 0;
+	}
+
+	// Same inset as `.session__content` (Figma 8641-34699: 16 px, large
+	// bottom padding keeps the last message above the absolute composer).
+	&__timeline {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: hidden auto;
+		padding: 16px 16px 240px;
+		overscroll-behavior: contain;
+
+		@media screen and (width <= 1366px) {
+			// Tablet/laptop composer is taller (same rule as `.session__content`).
+			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
+		}
+
+		@media screen and (width <= 899px) {
+			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
+		}
+	}
+
+	// The real composer docks to the bottom of its positioned ancestor —
+	// inside `.session` that is the card; here it is the panel.
+	.messageSubmit__wrapper {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 1000;
+	}
+}
+
+.infoBanner {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 8px 12px;
+	border-radius: 12px;
+	background: var(--m3-primary-fixed, #ffdad5);
+	color: var(--m3-on-primary-fixed, #410001);
+	font-size: 12px;
+	line-height: 16px;
+
+	&__title {
+		font-weight: 600;
+	}
+
+	&__text {
+		overflow-wrap: anywhere;
+	}
+}
+
+// Room header geometry (Figma 1320:38281, "Room Header All"): 16 px inset
+// from the card edge, a 40 px content row with 6 px above and below, then
+// the hairline. The session header uses the same numbers
+// (`sessionHeader.styles.scss`) so both hairlines end on the same y (T3).
+$room-header-inset: 16px;
+$room-header-row: 40px;
+$room-header-gap: 6px;
+
+// T43: row padding-top 2 px (Frank's 4 px deviation from Figma), see
+// `sessionHeader.styles.scss`.
+$room-header-gap-top: 2px;
+
+// Measured in the same Figma node (T17): title text 6 px after the avatar
+// group, 12 px between the 32 px action buttons of the call menu.
+$room-title-inset: 6px;
+$room-actions-gap: 12px;
+
+.panelHeader {
+	position: relative;
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	padding: $room-header-inset $room-header-inset 0;
+	box-sizing: border-box;
+	background-color: var(--m3-surface-container-lowest, #fff);
+
+	// T41 (Frank, round 6): the supervision header is unmistakable — the
+	// header surface takes a hint of `primary-fixed` (the channel card's
+	// recipe, T27), its hairline and its channel tag the stronger
+	// `primary-fixed-dim`. A thread header stays neutral: white surface,
+	// `primary-fixed` hairline, a grey `surface-container-high` tag.
+	&--supervision {
+		background-color: color-mix(
+			in srgb,
+			var(--m3-primary-fixed, #ffdad5) 25%,
+			var(--m3-surface-container-lowest, #fff)
+		);
+
+		.panelHeader__divider {
+			border-top-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		}
+
+		.panelHeader__kindButton {
+			background: var(--m3-primary-fixed-dim, #ffb4aa);
+			color: var(--m3-on-primary-fixed, #410001);
+		}
+	}
+
+	&--thread {
+		.panelHeader__kindButton {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+	}
+
+	&__row {
+		display: flex;
+		align-items: center;
+		gap: 0;
+		height: $room-header-row;
+		padding: $room-header-gap-top 0 $room-header-gap;
+		box-sizing: content-box;
+		min-width: 0;
+	}
+
+	&__participants {
+		flex: 0 0 auto;
+	}
+
+	// The 40 px row carries the counterpart name (title/small), centred.
+	&__title {
+		position: relative;
+		flex: 1 1 auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0;
+		min-width: 0;
+		margin: 0;
+		padding: 0 $room-title-inset;
+	}
+
+	&__kind {
+		position: relative;
+		display: flex;
+		align-items: center;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	// T26: the channel word sits where the main chat shows its topic tag —
+	// same Topic Tag shape (label/medium 12/500/16, `secondary` on
+	// `primary-fixed`, bottom corners 4 px) — and IS the menu button:
+	// icon · word · chevron. Hover/open turn the word `primary` (T19).
+	&__kindButton {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 100%;
+		min-width: 0;
+		height: 20px;
+		margin: 0;
+		padding: 2px 6px 2px 8px;
+		border: 0;
+		border-radius: 0 0 4px 4px;
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-secondary, #4c555f);
+		font-family: inherit;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		white-space: nowrap;
+		cursor: pointer;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:not(:disabled):hover,
+		&--open {
+			color: var(--m3-primary, #a5000a);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__kindIcon {
+		flex: 0 0 auto;
+		width: 16px;
+		height: 16px;
+		fill: currentcolor;
+	}
+
+	// T19/T26: the chevron right after the word says "menu"; it turns while
+	// the card is open. Disabled (nothing to switch to): dimmed, in place.
+	&__kindChevron {
+		flex: 0 0 auto;
+		width: 14px;
+		height: 14px;
+		margin-left: -2px;
+		fill: currentcolor;
+		transition: transform 160ms ease;
+	}
+
+	&__kindButton--open &__kindChevron {
+		transform: rotate(180deg);
+	}
+
+	&__kindButton:disabled &__kindChevron {
+		opacity: 0.4;
+	}
+
+	// T20: the channel card hangs below the whole header (hairline and
+	// channel line included) — never over the title. T33: its left edge is
+	// the channel tag's (inset + the divider's 37 px) — the measured value
+	// comes inline from `useChannelMenuPlacement`, this is the fallback
+	// before the first measurement. On the phone it spans the width.
+	&__menu {
+		position: absolute;
+		top: 100%;
+		left: calc(#{$room-header-inset} + 37px);
+		z-index: 1200;
+		margin-top: 4px;
+
+		@media screen and (width <= 899px) {
+			left: $room-header-inset;
+			right: $room-header-inset;
+
+			.channelMenu {
+				width: 100%;
+				max-width: none;
+			}
+		}
+	}
+
+	&__titleLabel {
+		flex: 0 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		// T15: participant count instead of the word when the column is
+		// tight — same pill as the room header's "+N".
+		&--count {
+			display: inline-flex;
+			align-items: center;
+			height: 16px;
+			padding: 0 6px;
+			border-radius: 999px;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Figma: Chatroom Title — title/small 14/500/20, ellipsis.
+	&__name {
+		display: flex;
+		min-width: 0;
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.1px;
+		white-space: nowrap;
+	}
+
+	&__titleName {
+		flex: 0 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		color: var(--m3-primary, #a5000a);
+	}
+
+	// Figma: Topic Tag — label/medium 12/500/16, `secondary` on `primary-fixed`.
+	&__chip {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		margin-left: 8px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		color: var(--m3-secondary, #4c555f);
+		background: var(--m3-primary-fixed, #ffdad5);
+		white-space: nowrap;
+	}
+
+	// Same shape as `.session__threadListUnreadBadge`, unread role.
+	&__unread {
+		flex: 0 0 auto;
+		display: inline-flex;
+		margin-left: 8px;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
+	}
+
+	&__actions {
+		flex: 0 0 auto;
+		display: flex;
+		align-items: center;
+		gap: $room-actions-gap;
+		margin-left: $room-actions-gap;
+	}
+
+	// Figma: room header "Menu" button — 32 px, white, primary-fixed border.
+	&__iconButton {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-radius: 32px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+
+		svg {
+			width: 20px;
+			height: 20px;
+			fill: currentcolor;
+		}
+
+		&:hover {
+			background: var(--m3-hover-layer, #f9eff0);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	// `.sessionInfo__backButton` — 28 px circle on primary-fixed.
+	&__backButton {
+		flex: 0 0 auto;
+		display: inline-flex;
+		margin-right: 8px;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-on-primary-fixed-variant, #930008);
+		cursor: pointer;
+
+		svg {
+			width: 18px;
+			height: 18px;
+			fill: currentcolor;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	// Figma: Room Divider — primary-fixed hairline; the channel word hangs
+	// below it like the main chat's topic tag (T26).
+	&__divider {
+		display: flex;
+		align-items: flex-start;
+		min-height: 1px;
+		padding: 0 0 0 37px;
+		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
+
+		@media screen and (width <= 899px) {
+			padding-left: 0;
+		}
+	}
+}

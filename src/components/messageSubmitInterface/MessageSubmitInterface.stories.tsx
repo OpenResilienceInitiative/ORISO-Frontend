@@ -279,12 +279,15 @@ export const LongMessageAutoGrow: Story = {
 			)
 		);
 
+		// D1 (05.09.2026): 14 lines × 19.6 px (14 px × 1.4) + 122 px of
+		// chrome (dock, toolbar strip, insets, borders) = 396 px — was 436
+		// with the 16 px / 22.4 px line.
 		await waitFor(() => {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'
 			);
 			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
-				436
+				396
 			);
 		});
 	}

@@ -6,6 +6,8 @@ export interface SessionSupervisor {
 	sessionId: number;
 	supervisorConsultantId: string;
 	supervisorUsername: string;
+	/** Matrix id of the supervisor (`@localpart:server`); optional, newer backends. */
+	supervisorMatrixUserId?: string;
 	addedByConsultantId: string;
 	addedDate: string;
 	matrixRoomId?: string;
@@ -23,4 +25,3 @@ export const apiGetSessionSupervisors = async (
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
 	});
 };
-

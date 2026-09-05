@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
+import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
 import { formatAgencyLineWithI18n } from '../message/messageNameUtils';
@@ -62,7 +63,25 @@ import {
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { UserAvatar } from '../message/UserAvatar';
+import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	STACK_MAX_VISIBLE,
+	STACK_MAX_VISIBLE_PHONE,
+	type StackParticipant
+} from '../message/participantStack';
+import {
+	bumpLastActivity,
+	isEventForRoom,
+	seedLastActivity,
+	toStackParticipants
+} from './headerParticipants';
+import {
+	filterVisibleParticipants,
+	buildVisibleParticipantRules,
+	type VisibleParticipantRules
+} from '../message/visibleParticipants';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -96,6 +115,17 @@ export interface SessionHeaderProps {
 	 * value to force the button on/off per state (Figma #430).
 	 */
 	showAddButton?: boolean;
+	/**
+	 * D7 (Frank, 05.09.2026): on the phone the composer's action bar leads
+	 * with the back arrow (T16). A host whose composer carries that arrow
+	 * sets this so the header renders NO second back control.
+	 */
+	hideBackButton?: boolean;
+	/**
+	 * D8 (Frank, 05.09.2026): on the phone the call buttons leave the
+	 * header row (the title needs the width) and live in the kebab menu.
+	 */
+	callsInMenu?: boolean;
 }
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
@@ -117,7 +147,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(activeSession.item.topic as TopicSessionInterface).id
 	);
 	const settings = useAppConfig();
-	const { untilL } = useResponsive();
+	const { untilL, untilM } = useResponsive();
 	const {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
@@ -274,11 +304,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// view — strip ephemeral query params from the saved action path.
 	const getCanonicalConversationActionPath = () => {
 		const params = new URLSearchParams(location.search);
-		params.delete('threadRootId');
-		params.delete('threadMessageId');
 		params.delete('embeddedNotifications');
 		const query = params.toString();
-		return `${location.pathname}${query ? `?${query}` : ''}`;
+		// B2 / T24: the open side channel (`channel` / `at`, and the legacy
+		// pair) is transient — strip it too.
+		return `${location.pathname}${stripChannelParams(query ? `?${query}` : '')}`;
 	};
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
@@ -758,6 +788,152 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(!isAnonymousMatrixUsername(contact?.username)
 			? contact?.username
 			: undefined);
+	/* T4 / FE#1193: the room's participants, latest activity first, live.
+	   Members and their last message come from the Matrix room. The
+	   subscription is scoped to the active room and "last activity" is kept
+	   incrementally (seed once, bump per event) — no timeline rescan per
+	   event, no re-render for other rooms (stage v3 review). Everything is
+	   optional-chained because the Storybook stand-in only implements part
+	   of the client. */
+	const [roomParticipants, setRoomParticipants] = useState<
+		StackParticipant[]
+	>([]);
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	useEffect(() => {
+		const client = matrixClientService?.getClient?.();
+		const roomId = activeSession.rid;
+		if (!client || !roomId) {
+			setRoomParticipants([]);
+			return undefined;
+		}
+		const lastActivity = seedLastActivity(
+			client.getRoom?.(roomId)?.getLiveTimeline?.()?.getEvents?.() ?? []
+		);
+		const publish = () => {
+			const members: any[] =
+				client.getRoom?.(roomId)?.getJoinedMembers?.() ?? [];
+			setRoomParticipants(
+				toStackParticipants(members, lastActivity, {
+					askerMatrixUserId,
+					askerDisplayName: headerContactName,
+					isSystemUser: isSystemMatrixUser
+				})
+			);
+		};
+		publish();
+		const onTimeline = (event: any, room?: any) => {
+			if (!isEventForRoom(roomId, room)) {
+				return;
+			}
+			if (bumpLastActivity(lastActivity, event)) {
+				publish();
+			}
+		};
+		const onMembers = (_event: any, state?: any) => {
+			if (isEventForRoom(roomId, state)) {
+				publish();
+			}
+		};
+		// The stand-in in Storybook is a plain object; the real client's
+		// event names are typed enums that the string form matches at runtime.
+		const emitter = client as any;
+		const subscribe = (name: string, handler: (...args: any[]) => void) =>
+			typeof emitter.on === 'function' && emitter.on(name, handler);
+		const unsubscribe = (
+			name: string,
+			handler: (...args: any[]) => void
+		) => {
+			if (typeof emitter.removeListener === 'function') {
+				emitter.removeListener(name, handler);
+			} else if (typeof emitter.off === 'function') {
+				emitter.off(name, handler);
+			}
+		};
+		subscribe('Room.timeline', onTimeline);
+		subscribe('RoomState.members', onMembers);
+		return () => {
+			unsubscribe('Room.timeline', onTimeline);
+			unsubscribe('RoomState.members', onMembers);
+		};
+	}, [
+		matrixClientService,
+		activeSession.rid,
+		askerMatrixUserId,
+		headerContactName
+	]);
+
+	// ADR-002 silent membership: the room lists every counsellor of the
+	// agency, the header shows only the asker, the assigned consultant and
+	// the active supervisors (`visibleParticipants.ts`) — silent members are
+	// never revealed, "+N" counts only visible people. Supervisors come from
+	// the supervisors call (usernames) plus the list marker (#996 names);
+	// a supervising viewer is visible to themselves before that call lands.
+	const supervisionMarker = activeSession.item?.supervision;
+	const visibleParticipantRules = React.useMemo<VisibleParticipantRules>(
+		() =>
+			buildVisibleParticipantRules({
+				mode: 'session',
+				isGroup: activeSession.isGroup,
+				marker: supervisionMarker,
+				supervisors,
+				askerIds: [askerMatrixUserId, contact?.username],
+				consultant: activeSession.consultant,
+				consultantMatrixUserId:
+					activeSession.item?.consultantMatrixUserId,
+				self: {
+					ids: [
+						userData?.userName,
+						userData?.userId,
+						matrixClientService?.getClient?.()?.getUserId?.(),
+						getCurrentMatrixUserId()
+					],
+					displayName: userData?.displayName || undefined
+				}
+			}),
+		[
+			activeSession.isGroup,
+			activeSession.consultant,
+			activeSession.item?.consultantMatrixUserId,
+			supervisionMarker,
+			supervisors,
+			askerMatrixUserId,
+			contact?.username,
+			userData,
+			matrixClientService
+		]
+	);
+	const visibleRoomParticipants = React.useMemo(
+		() =>
+			filterVisibleParticipants(
+				roomParticipants,
+				visibleParticipantRules
+			),
+		[roomParticipants, visibleParticipantRules]
+	);
+
+	// Without Matrix members (enquiry, offline) the header still shows the
+	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	const headerParticipants: StackParticipant[] =
+		visibleRoomParticipants.length > 0
+			? visibleRoomParticipants
+			: contact
+				? [
+						{
+							userId:
+								askerMatrixUserId ||
+								contact.username ||
+								'unknown',
+							username: contact.username || 'User',
+							displayName:
+								headerAvatarDisplayName || headerFallbackLabel,
+							isAsker: !hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							)
+						}
+					]
+				: [];
+
 	const sessionHeaderConversationIconType: ChatroomConversationIconType =
 		activeSession.isEmptyEnquiry
 			? 'waiting'
@@ -967,13 +1143,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
-				<Link
-					to={listPath + getSessionListTab()}
-					onClick={handleBackButton}
-					className="sessionInfo__backButton"
-				>
-					<BackIcon />
-				</Link>
+				{!props.hideBackButton && (
+					<Link
+						to={listPath + getSessionListTab()}
+						onClick={handleBackButton}
+						className="sessionInfo__backButton"
+					>
+						<BackIcon />
+					</Link>
+				)}
 				<div
 					className={clsx('sessionInfo__username', {
 						'sessionInfo__username--deactivate':
@@ -1025,27 +1203,28 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								<div className="sessionInfo__memberBubble">
-									{hasUserAuthority(
-										AUTHORITIES.ASKER_DEFAULT,
-										userData
-									) && !activeSession.consultant ? (
+								{hasUserAuthority(
+									AUTHORITIES.ASKER_DEFAULT,
+									userData
+								) && !activeSession.consultant ? (
+									<div className="sessionInfo__memberBubble">
 										<ConsultantSearchLoader size="32px" />
-									) : (
-										<UserAvatar
-											username={
-												contact?.username || 'User'
-											}
-											displayName={
-												headerAvatarDisplayName
-											}
-											userId={
-												contact?.username || 'unknown'
-											}
-											size="32px"
-										/>
-									)}
-								</div>
+									</div>
+								) : (
+									<ParticipantAvatarStack
+										participants={headerParticipants}
+										/* Phone (< 900 px): one avatar + a
+										   compact "+N" — the title keeps the
+										   width it shares with the stack. */
+										maxVisible={
+											untilM
+												? STACK_MAX_VISIBLE_PHONE
+												: STACK_MAX_VISIBLE
+										}
+										className="sessionInfo__participants"
+										data-cy="session-header-participants"
+									/>
+								)}
 							</div>
 						);
 					})()}
@@ -1117,6 +1296,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					hasUserInitiatedStopOrLeaveRequest={
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
+					callsInMenu={props.callsInMenu}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
@@ -1183,7 +1363,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					{topic?.name && (
 						<div className="sessionInfo__metaInfo__content">
 							{topic.name}
-							<span className="sessionInfo__topicDots">•••</span>
 						</div>
 					)}
 				</div>

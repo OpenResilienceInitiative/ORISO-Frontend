@@ -10,7 +10,8 @@ import {
 import { MessageItem } from '../message/MessageItemComponent';
 import {
 	formatToDDMMYYYY,
-	getChatMessageDateDivider
+	getChatMessageDateDivider,
+	type PrettyDate
 } from '../../utils/dateHelpers';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -225,6 +226,61 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 			}
 			return true;
 		});
+};
+
+/** Timeline id of the frontend-rendered T7 supervision notice. */
+export const SUPERVISION_SYSTEM_NOTICE_ID = '$supervision-system-notice';
+
+export interface SupervisionNoticeInput {
+	/** Matrix id of the supervision side room. */
+	roomId: string;
+	/** Localized notice title ("Supervision"). */
+	title: string;
+	/** Localized notice body ("Supervision durch … ist aktiv …"). */
+	description: string;
+	askerMatrixUserId?: string;
+}
+
+/**
+ * T7: the supervision side room opens with the system notice "Supervision
+ * durch {name} ist aktiv …" as its first item — frontend-rendered, never
+ * counted as unread. Pure so the empty-room case (a freshly assigned
+ * standing supervisor, nobody has written yet) is testable without the
+ * whole `SessionItemComponent`.
+ */
+export const buildSupervisionTimeline = (
+	messages: MessageItem[] | null | undefined,
+	notice: SupervisionNoticeInput
+): MessageItem[] => {
+	const list = messages || [];
+	const [first, ...rest] = list;
+	const emptyDate: PrettyDate = { str: '', date: null };
+	// Every field is set explicitly (no cast): the notice used to clone
+	// `list[0]`, which left `messageDate` undefined on an empty room and
+	// crashed the timeline for counsellor and supervisor alike.
+	const item: MessageItem = {
+		_id: SUPERVISION_SYSTEM_NOTICE_ID,
+		rid: notice.roomId,
+		userId: '@system:oriso',
+		username: 'system',
+		displayName: 'system',
+		askerMatrixUserId: notice.askerMatrixUserId,
+		// The day pill moves onto the notice; the first real message gives
+		// it up so the same day is not drawn twice in a row.
+		messageDate: first?.messageDate ?? emptyDate,
+		messageTime: first?.messageTime || String(Date.now()),
+		isNotRead: false,
+		t: null,
+		message: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+			title: notice.title,
+			description: notice.description
+		})}`,
+		threadRootEventId: null,
+		replyToEventId: null
+	};
+	return first
+		? [item, { ...first, messageDate: emptyDate }, ...rest]
+		: [item];
 };
 
 export const selectDisplayName = (userObject) => {

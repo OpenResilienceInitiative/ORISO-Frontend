@@ -1,0 +1,125 @@
+// Participant avatar stack — Figma "Avatar Group" (Room Header All,
+// 1320:38281): 40 px circles, 28 px step (12 px overlap, measured with
+// get_metadata), first participant on top. Tokens are the room header's
+// (`surface-container-lowest` ring, `primary-fixed` chip). The component
+// sets `--participant-size` / `--participant-step`; the defaults here are
+// the Figma header values.
+
+.participantStack {
+	position: relative;
+
+	// Above the room header's tag row so an open tooltip is never covered.
+	z-index: 40;
+	display: inline-flex;
+	overflow: visible; // hosts (session header) clip children by default
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	// The tail of the stack overhangs by (size − step); reserve it.
+	padding-right: calc(
+		var(--participant-size, 40px) - var(--participant-step, 28px)
+	);
+
+	&__item {
+		position: relative;
+		flex: 0 0 auto;
+		width: var(--participant-step, 28px);
+		height: var(--participant-size, 40px);
+	}
+
+	&__avatar {
+		display: inline-flex;
+		width: var(--participant-size, 40px);
+		height: var(--participant-size, 40px);
+		border-radius: 50%;
+
+		// Separates overlapping avatars like Figma's white gap.
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		background: var(--m3-surface-container-lowest, #fff);
+		cursor: default;
+		outline: none;
+
+		&:focus-visible {
+			box-shadow:
+				0 0 0 2px var(--m3-surface-container-lowest, #fff),
+				0 0 0 4px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Name tooltip — hover and keyboard focus (WCAG 1.4.13: persistent while
+	// hovered, dismissible by moving away).
+	&__tip {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 40;
+		padding: 4px 8px;
+		border-radius: 4px;
+		background: var(--m3-inverse-surface, #313030);
+		color: var(--m3-inverse-on-surface, #f4f0ef);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		white-space: nowrap;
+		pointer-events: none;
+		visibility: hidden;
+		opacity: 0;
+		transition: opacity 120ms ease;
+	}
+
+	&__item:hover &__tip,
+	&__item:focus-within &__tip,
+	&__item[data-open='true'] &__tip {
+		visibility: visible;
+		opacity: 1;
+	}
+
+	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).
+	&__overflow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		height: var(--participant-size, 40px);
+		min-width: var(--participant-size, 40px);
+		padding: 0 10px;
+		border-radius: 20px;
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-primary, #a5000a);
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	// The chip stays in the flow: its item is as wide as the chip, so it
+	// starts one step (28 px) after the last avatar and reserves its own
+	// width (no overlap with the title that follows the stack).
+	&__item--overflow {
+		width: auto;
+	}
+
+	&--overflow {
+		padding-right: 0;
+	}
+
+	// Phone: the compact chip (label/small) keeps the row's width for the title.
+	@media screen and (width < 900px) {
+		&__overflow {
+			min-width: 24px;
+			padding: 0 6px;
+			font-size: 12px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__tip {
+			transition: none;
+		}
+	}
+}

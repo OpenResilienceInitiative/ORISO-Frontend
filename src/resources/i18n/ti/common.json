@@ -305,6 +305,42 @@
 			"ready": "ቁራጽ ጽሑፍ ናብ መልስኹም ተወሲኹ"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "ተሳተፍቲ፡ {{names}}",
+			"more": "{{count}} ተወሰኽቲ ተሳተፍቲ",
+			"more_one": "1 ተወሳኺ ሰብ"
+		},
+		"panel": {
+			"channelOptions": "ቻነል ቀይር",
+			"channelOptionsEmpty": "ካልእ ቻነል የለን",
+			"participantCount": "{{count}} ተሳተፍቲ",
+			"participantCount_one": "1 ተሳታፊ",
+			"back": "ናብ ምኽሪ ቻት ተመለስ",
+			"close": "ጎድናዊ ፓነል ዕጸው",
+			"region": "ጎድናዊ ፓነል፦ {{title}}",
+			"thread": {
+				"title": "ትሬድ"
+			}
+		},
+		"switcher": {
+			"backToMain": "ናብ ምኽሪ ቻት ተመለስ",
+			"closeMenu": "ጎድናዊ ቻናላት ሕባእ",
+			"kind": {
+				"supervision": "ሱፐርቪዥን",
+				"thread": "ትሬድ"
+			},
+			"mainChat": "ምኽሪ ቻት",
+			"openChannel": "{{label}} ክፈት",
+			"openMenu": "ጎድናዊ ቻናላት ኣርኢ"
+		},
+		"menu": {
+			"eyebrow": "ተወሳኺ ዝርርባት",
+			"title": "ትሬዳትን ሱፐርቪዥንን",
+			"supervisionChat": "ናይ ሱፐርቪዥን ቻት",
+			"thread": "ትሬድ #{{n}}"
+		}
+	},
 	"chatFlyout": {
 		"archive": "መዝገበ",
 		"archiveDescription": "የተኣረከቡ ቻት ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
@@ -1680,7 +1716,8 @@
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
 			"title": "ትሬድ",
-			"placeholder": "ኣብ ትሬድ መልስ"
+			"placeholder": "ኣብ ትሬድ መልስ",
+			"open": "ትሬድ ክፈት"
 		},
 		"deliveryStatus": {
 			"sent": "ተላኢኹ"
@@ -3450,6 +3487,11 @@
 			"image": "ስእሊ",
 			"video": "Video",
 			"file": "ፋይል",
+			"first_response": "ናይ መጀመርታ መልሲ",
+			"channel": {
+				"thread": "ትሬድ:",
+				"supervision": "ሱፐርቪዥን:"
+			},
 			"registered": {
 				"tab": "ናይ መጀመርታ ሕቶታት"
 			}
@@ -3529,6 +3571,13 @@
 				"selfHelp": "ክቢ ዝርርብ",
 				"internal": "ውሽጣዊ"
 			}
+		},
+		"supervision": {
+			"badge": "ምክትታል – ኣብዚ ቻት ተኸታተል ኢኻ",
+			"supervisedBy": "ምክትታል: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "ስፍሓት ዝርዝር ዝርርባት ቀይር፡ ንምቕያር ስሓብ፡ ንምዕጻው ወይ ንምኽፋት ተጻዒንካ ሓዝ ወይ ክልተ ግዜ ጠውቕ፡ ናይ ላዕሊ/ታሕቲ መልክዕ ንዝርዝር የንቀሳቕስ።"
 		}
 	},
 	"statusOverlay": {
@@ -4463,6 +4512,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "ሱፐርቪዥን",
+			"systemNotice": "ሱፐርቪዥን ብ {{name}}። ካልእ ሱፐርቫይዘር ብቲ ኣብ ጥቓ ምልክት መልእኽቲ ዘሎ ፕላስ ክትሓቱ ትኽእሉ ኢኹም።",
+			"headerLabel": "ሱፐርቪዥን · {{name}}",
+			"role": {
+				"supervisor": "ሱፐርቪዥን",
+				"consultant": "ምኽሪ"
+			},
+			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
+			"close": "ሱፐርቪዥን ዕጸው",
+			"collapse": "ሱፐርቪዥን ኣንኣእስ",
+			"dragHandle": "መስኮት ሱፐርቪዥን ኣንቀሳቕስ – መልክዕ ፍላጻ የንቀሳቕስ፣ Shift + ፍላጻ ዓቐን ይቕይር",
+			"unread": "{{count}} ዘይተነብቡ መልእኽትታት",
+			"unread_one": "1 ዘይተነበበ መልእኽቲ",
+			"empty": {
+				"title": "ገና መልእኽቲ የለን",
+				"hint": "ኣብዚ ምስ {{name}} ብዛዕባ እዚ ምኽሪ ብምስጢር ትዘራረቡ።"
+			},
+			"composer": {
+				"placeholder": "መልእኽቲ ናብ {{name}} …",
+				"send": "ስደድ",
+				"failed": "ምልኣኽ ኣይተሳኽዐን – በጃኻ ደጊምካ ፈትን።"
+			},
+			"kind": {
+				"supervision": "ሱፐርቪዥን",
+				"thread": "ክርክር"
+			},
+			"mini": {
+				"expand": "{{kind}} ክፈት",
+				"newMessage": "ሓድሽ መልእኽቲ",
+				"dragHandle": "ንእሽቶ ስእሊ ኣንቀሳቕስ – መልክዕ ፍላጻ"
+			},
+			"stage": {
+				"divider": "መፈላለዪ – ፍላጻ ስፍሓት ሱፐርቪዥን ይቕይር፣ Home ን End ን ዝተሓተን ዝለዓለን የቐምጡ",
+				"mainPane": "ቻት ምኽሪ",
+				"secondaryPane": "ጎድናዊ ክፍሊ"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "ናይ ጋንታ ምይይጥ",
 		"startHint": "ምይይጥ ጀምር",
@@ -4560,7 +4649,8 @@
 			"browserHint": "ኣድራሻ ኣየድልን — ግን ኣብዚ መሳርሒ እዚ ጥራይ ይሰርሕ።",
 			"email": "ኢመይል ጻሓፉለይ",
 			"emailHint": "እቲ ኣብዚ እትዘራረብዎ ኣብቲ ኢመይል ፈጺሙ ኣይርአን።"
-		}
+		},
+		"unavailableInRoom": "ናይ መጀመርታ መልሲ – ኣብዚ ክፍሊ ኣይርከብን።"
 	},
 	"legal": {
 		"notice": {

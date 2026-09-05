@@ -329,6 +329,12 @@ export const computeOrisoPalette = (
 		'--m3-on-secondary': secondary.onRole,
 		'--m3-secondary-container': secondary.container,
 		'--m3-on-secondary-container': secondary.onContainer,
+		// Fixed roles keep the same tones in every scheme (M3 spec) — the
+		// secondary pair is the menu organism's hover/selected surface (T27).
+		'--m3-secondary-fixed': hex(secondaryPalette.tone(90)),
+		'--m3-secondary-fixed-dim': hex(secondaryPalette.tone(80)),
+		'--m3-on-secondary-fixed': hex(secondaryPalette.tone(10)),
+		'--m3-on-secondary-fixed-variant': hex(secondaryPalette.tone(30)),
 
 		'--m3-tertiary': tertiary.role,
 		'--m3-on-tertiary': tertiary.onRole,

@@ -1,0 +1,88 @@
+// Channel menu card = the chat menu organism (`chatMenuDropdown.styles.scss`)
+// with a channel list inside. Only what the organism does not know lives
+// here: the very light `primary-fixed` accent on the card (T27), the
+// scrolling row list under a host-measured ceiling (review v6), the
+// unread pill and the two-line preview (T28). Row typography, hover and
+// selection are the organism's. (T36: the supervision on/off switch is
+// gone — every row is a plain `menuitem`, nothing else sits in the menu.)
+
+.channelMenu {
+	// T27: a hint of the brand tint on the card — the organism's white
+	// mixed with a quarter of `primary-fixed`.
+	background: color-mix(
+		in srgb,
+		var(--m3-primary-fixed, #ffdad5) 25%,
+		var(--m3-surface-container-lowest, #fff)
+	);
+	overflow: hidden;
+	max-height: min(520px, var(--channel-menu-max-height, 100vh));
+	text-align: left;
+
+	&__list {
+		flex: 1 1 auto;
+		min-height: 0;
+		margin: 0;
+		padding: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		list-style: none;
+	}
+
+	&__row {
+		position: relative;
+		display: flex;
+		align-items: flex-start;
+
+		.channelMenu__item {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+	}
+
+	// The organism's `svg *` fill rule also covers the channel glyphs.
+	&__item {
+		color: inherit;
+	}
+
+	&__label {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		max-width: 100%;
+		min-width: 0;
+		white-space: nowrap;
+	}
+
+	// T28: "Author: text …" — two lines, then the ellipsis.
+	&__preview {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+		overflow-wrap: anywhere;
+	}
+
+	&__author {
+		font-weight: 600;
+	}
+
+	// Same 18 px pill as every other unread indicator.
+	&__badge {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
+	}
+}

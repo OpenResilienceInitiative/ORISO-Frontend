@@ -1,5 +1,6 @@
 import { stripReplyFallback } from '../../utils/messageRelations';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
+import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -8,11 +9,24 @@ export type MatrixRoomPreviewKind =
 	| 'image'
 	| 'video'
 	| 'file'
-	| 'encrypted';
+	| 'encrypted'
+	| 'first_response';
+
+/**
+ * B2 / T24 (Frank: preview prefix): the secondary channel the newest message
+ * came from, when the frontend can tell. A thread reply carries the
+ * `m.thread` relation. The supervision side room is a different Matrix room
+ * the list DTO does not name yet — TODO(B3, UserService): add
+ * `SessionDTO.supervision.sideRoomId`, then compare the side room's newest
+ * event against the client room's and emit `'supervision'` here.
+ */
+export type MatrixRoomPreviewChannel = 'thread' | 'supervision';
 
 export interface MatrixRoomPreview {
 	kind: MatrixRoomPreviewKind;
 	text: string | null;
+	/** Absent for the main chat. */
+	channel?: MatrixRoomPreviewChannel;
 }
 
 export const getPreviewLastMessageType = (
@@ -44,12 +58,24 @@ const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 	if (content?.['m.relates_to']?.rel_type === 'm.replace') {
 		return null;
 	}
+	const preview = toKindPreview(content);
+	if (preview && content?.['m.relates_to']?.rel_type === 'm.thread') {
+		return { ...preview, channel: 'thread' };
+	}
+	return preview;
+};
 
+const toKindPreview = (
+	content: Record<string, any>
+): MatrixRoomPreview | null => {
 	const body = `${content.body || ''}`.trim();
 	switch (content.msgtype) {
 		case 'm.text':
 		case 'm.notice':
 		case 'm.emote': {
+			if (isErstantwortMessage(body)) {
+				return { kind: 'first_response', text: null };
+			}
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;
 		}

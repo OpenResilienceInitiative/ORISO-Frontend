@@ -288,6 +288,42 @@
 			"ready": "Text snippet added to your reply"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Show side channels",
+			"closeMenu": "Hide side channels",
+			"openChannel": "Open {{label}}",
+			"backToMain": "Back to the counselling chat",
+			"mainChat": "Counselling chat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			}
+		},
+		"participants": {
+			"label": "Participants: {{names}}",
+			"more": "{{count}} more participants",
+			"more_one": "1 more participant"
+		},
+		"panel": {
+			"channelOptions": "Switch channel",
+			"channelOptionsEmpty": "No other channels",
+			"participantCount": "{{count}} participants",
+			"participantCount_one": "1 participant",
+			"close": "Close side panel",
+			"back": "Back to the counselling chat",
+			"region": "Side panel: {{title}}",
+			"thread": {
+				"title": "Thread"
+			}
+		},
+		"menu": {
+			"eyebrow": "Further conversations",
+			"title": "Threads and supervision",
+			"supervisionChat": "Supervision chat",
+			"thread": "Thread #{{n}}"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archive",
 		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",
@@ -1679,7 +1715,8 @@
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
 			"title": "Thread",
-			"placeholder": "Reply in thread"
+			"placeholder": "Reply in thread",
+			"open": "Open thread"
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
@@ -3417,6 +3454,11 @@
 			"image": "Image",
 			"video": "Video",
 			"file": "File",
+			"first_response": "First response",
+			"channel": {
+				"thread": "Thread:",
+				"supervision": "Supervision:"
+			},
 			"registered": {
 				"tab": "Initial inquiries"
 			}
@@ -3489,6 +3531,13 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – you read along in this chat",
+			"supervisedBy": "Supervision: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list."
 		}
 	},
 	"statusOverlay": {
@@ -4395,6 +4444,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Counselling"
+			},
+			"privacyHint": "This channel is never visible to the person seeking advice.",
+			"close": "Close supervision",
+			"collapse": "Minimise supervision",
+			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
+			"unread": "{{count}} unread messages",
+			"unread_one": "1 unread message",
+			"empty": {
+				"title": "No messages yet",
+				"hint": "Talk confidentially with {{name}} about this counselling here."
+			},
+			"composer": {
+				"placeholder": "Message to {{name}} …",
+				"send": "Send",
+				"failed": "Sending failed – please try again."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "Open {{kind}}",
+				"newMessage": "New message",
+				"dragHandle": "Move miniature – arrow keys"
+			},
+			"stage": {
+				"divider": "Divider – arrow keys change the supervision width, Home and End set minimum and maximum",
+				"mainPane": "Counselling chat",
+				"secondaryPane": "Side room"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team discussion",
 		"startHint": "Start discussion",
@@ -4492,7 +4581,8 @@
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
-		}
+		},
+		"unavailableInRoom": "First response – not available in this room."
 	},
 	"dpaSign": {
 		"title": "Sign contract documents",
