@@ -111,3 +111,64 @@ export const resolveStageLayout = ({
 		panelWidth: rail.panel
 	};
 };
+
+/**
+ * T2: the side panel's drag handle asks for a width; the answer keeps both
+ * panes at `MIN_PANE_WIDTH` and never lets the panel outgrow the main chat.
+ * When the card cannot host two minimum panes the panel takes half.
+ */
+export const clampPanelWidth = (
+	requested: number,
+	cardWidth: number
+): number => {
+	const { MIN_PANE_WIDTH } = STAGE_LAYOUT;
+	const safeRequested = Number.isFinite(requested) ? requested : 0;
+	if (cardWidth < 2 * MIN_PANE_WIDTH) {
+		return Math.max(0, Math.floor(cardWidth / 2));
+	}
+	return Math.round(
+		Math.min(
+			Math.max(safeRequested, MIN_PANE_WIDTH),
+			cardWidth - MIN_PANE_WIDTH
+		)
+	);
+};
+
+export const PANEL_WIDTH_STORAGE_KEY = 'chatStage_panelWidth';
+
+export interface WidthStorage {
+	getItem: (key: string) => string | null;
+	setItem: (key: string, value: string) => void;
+}
+
+const storageOrNull = (): WidthStorage | null => {
+	try {
+		return typeof window !== 'undefined' ? window.localStorage : null;
+	} catch {
+		return null;
+	}
+};
+
+/** Persisted panel width (like the list column's `sessionsList_width`). */
+export const readPanelWidth = (
+	fallback: number,
+	storage: WidthStorage | null = storageOrNull()
+): number => {
+	const raw = storage?.getItem(PANEL_WIDTH_STORAGE_KEY);
+	const parsed = raw === null || raw === undefined ? NaN : Number(raw);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+export const writePanelWidth = (
+	width: number,
+	storage: WidthStorage | null = storageOrNull()
+): void => {
+	if (!Number.isFinite(width) || width <= 0) {
+		return;
+	}
+	try {
+		storage?.setItem(PANEL_WIDTH_STORAGE_KEY, String(Math.round(width)));
+	} catch {
+		/* private mode: keep the in-memory width */
+	}
+};

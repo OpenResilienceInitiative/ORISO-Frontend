@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { resolveStageLayout, STAGE_LAYOUT } from './stageLayout';
+import {
+	clampPanelWidth,
+	PANEL_WIDTH_STORAGE_KEY,
+	readPanelWidth,
+	resolveStageLayout,
+	STAGE_LAYOUT,
+	writePanelWidth
+} from './stageLayout';
 
 // 1280 wide, list expanded at 420, side panel 380: the chat card would be
 // 1280 - 420 - 48 (card margins) = 812 wide, leaving 432 px for the main
@@ -70,5 +77,65 @@ describe('resolveStageLayout (list column snaps to the icon rail)', () => {
 			1280 - STAGE_LAYOUT.RAIL_WIDTH - 2 * STAGE_LAYOUT.CARD_MARGIN
 		);
 		expect(layout.mainWidth + layout.panelWidth).toBe(layout.cardWidth);
+	});
+});
+
+describe('clampPanelWidth (T2: drag between main pane and side panel)', () => {
+	// 1280 with the list on the rail: 1280 - 80 - 48 = 1152 px card.
+	const card = 1152;
+
+	it('keeps the panel at the 520 px floor', () => {
+		expect(clampPanelWidth(300, card)).toBe(STAGE_LAYOUT.MIN_PANE_WIDTH);
+	});
+
+	it('leaves the main pane its 520 px', () => {
+		expect(clampPanelWidth(900, card)).toBe(
+			card - STAGE_LAYOUT.MIN_PANE_WIDTH
+		);
+	});
+
+	it('passes a width inside the band through, rounded', () => {
+		expect(clampPanelWidth(600.4, card)).toBe(600);
+	});
+
+	it('splits a card too narrow for two minimum panes in half', () => {
+		expect(clampPanelWidth(700, 900)).toBe(450);
+	});
+
+	it('treats a non-finite request as the floor', () => {
+		expect(clampPanelWidth(NaN, card)).toBe(STAGE_LAYOUT.MIN_PANE_WIDTH);
+	});
+});
+
+describe('panel width persistence', () => {
+	const memory = () => {
+		const store = new Map<string, string>();
+		return {
+			getItem: (key: string) => store.get(key) ?? null,
+			setItem: (key: string, value: string) => {
+				store.set(key, value);
+			}
+		};
+	};
+
+	it('falls back when nothing is stored or the value is garbage', () => {
+		const storage = memory();
+		expect(readPanelWidth(400, storage)).toBe(400);
+		storage.setItem(PANEL_WIDTH_STORAGE_KEY, 'wide');
+		expect(readPanelWidth(400, storage)).toBe(400);
+		expect(readPanelWidth(400, null)).toBe(400);
+	});
+
+	it('round-trips a dragged width as whole pixels', () => {
+		const storage = memory();
+		writePanelWidth(533.6, storage);
+		expect(readPanelWidth(400, storage)).toBe(534);
+	});
+
+	it('ignores widths that cannot be a pane', () => {
+		const storage = memory();
+		writePanelWidth(0, storage);
+		writePanelWidth(NaN, storage);
+		expect(readPanelWidth(400, storage)).toBe(400);
 	});
 });
