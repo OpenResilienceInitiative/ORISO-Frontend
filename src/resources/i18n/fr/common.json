@@ -3496,7 +3496,11 @@
 					"centre": "Service de consultation",
 					"archiveOnly": "Archives uniquement"
 				},
-				"toggle": "Ouvrir ou fermer les résultats de recherche"
+				"toggle": "Ouvrir ou fermer les résultats de recherche",
+				"role": {
+					"asker": "Personne en quête de conseil",
+					"consultant": "Conseiller·ère"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"

@@ -3463,7 +3463,11 @@
 					"centre": "Counseling center",
 					"archiveOnly": "Archive only"
 				},
-				"toggle": "Open or close search results"
+				"toggle": "Open or close search results",
+				"role": {
+					"asker": "Advice seeker",
+					"consultant": "Counsellor"
+				}
 			},
 			"menu": {
 				"ariaLabel": "List options"
