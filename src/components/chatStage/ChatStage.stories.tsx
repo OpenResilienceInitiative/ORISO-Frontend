@@ -236,11 +236,16 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
 		});
 		await expect(shell.querySelector('.dragHandle')).not.toBeNull();
 	}
-	// Typing three lines into the panel's composer grows it.
+	// Typing three lines into the panel's composer grows it by two lines
+	// (D1: 20 px lines — measured from the editor, minus 2 px rounding).
 	const panelShell = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel"] .textarea__wrapper-send-message'
 	)!;
 	const panelEditor = panelShell.querySelector<HTMLElement>('.ProseMirror')!;
+	const panelLine = Number.parseFloat(
+		getComputedStyle(panelEditor.firstElementChild || panelEditor)
+			.lineHeight
+	);
 	const oneLine = panelShell.getBoundingClientRect().height;
 	await userEvent.click(panelEditor);
 	await userEvent.keyboard(
@@ -249,7 +254,7 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
 	await waitFor(() =>
 		expect(
 			panelShell.getBoundingClientRect().height
-		).toBeGreaterThanOrEqual(oneLine + 40)
+		).toBeGreaterThanOrEqual(oneLine + 2 * panelLine - 2)
 	);
 	// Cleared → back to one line (+8 px rounding slack, as in (g)).
 	(panelEditor as any).editor?.commands.clearContent(true);
@@ -433,6 +438,12 @@ export const SupervisionInsideTheCard: Story = {
 				bar.querySelector('button')?.getAttribute('data-cy')
 			).toBe('composer-scroll-to-newest');
 		}
+		// D6: the composer toolbar's arrow is THE scroll-to-newest control —
+		// the old desktop FAB (`session__scrollToBottom`) never renders next
+		// to it (B2 drops it in SessionItemComponent, `hideLegacyScrollFab`).
+		await expect(
+			canvasElement.querySelector('.session__scrollToBottom')
+		).toBeNull();
 		// The panel's arrow scrolls the panel timeline, not the main chat.
 		const panelTimeline = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="side-panel-timeline"]'
@@ -616,7 +627,7 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 			canvasElement.querySelector(
 				'.channelMenu .chatMenuDropdown__subtitle'
 			)?.textContent
-		).toBe('Weitere Gespräche zu dieser Beratung');
+		).toBe('Weitere Gespräche');
 		await expect(
 			canvasElement.querySelector('.channelMenu .chatMenuDropdown__title')
 				?.textContent
@@ -834,12 +845,11 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 
 /**
  * (d6) T27: the channel card IS the app's menu organism ("Chatraum
- * Einstellungen"): the same rows, the same hover — the pale
- * `secondary-fixed` surface with the label and icon in `primary`, never
- * the pink — on a card with a hint of `primary-fixed`. The supervision
- * row carries an on/off switch (presentational until B2): off greys the
- * row out and blocks the pick. T29: eyebrow and title say what the card
- * does.
+ * Einstellungen"): the same rows, the same hover — the pale blue
+ * surface (D3: Figma "Hellblau" #e7effc via `--oriso-menu-hover-surface`)
+ * with the label and icon in `primary`, never the pink — on a card with
+ * a hint of `primary-fixed`. T29/D4: eyebrow "Weitere Gespräche" and
+ * title say what the card does. T36: no switch on the supervision row.
  */
 export const PanelChannelCardOrganismHover: Story = {
 	name: '(d6) Panel channel card — organism rows, hover tint (T27/T29; T36: no switch)',
@@ -867,7 +877,7 @@ export const PanelChannelCardOrganismHover: Story = {
 		await expect(card.classList.contains('chatMenuDropdown')).toBe(true);
 		await expect(
 			card.querySelector('.chatMenuDropdown__subtitle')?.textContent
-		).toBe('Weitere Gespräche zu dieser Beratung');
+		).toBe('Weitere Gespräche');
 		await expect(
 			card.querySelector('.chatMenuDropdown__title')?.textContent
 		).toBe('Threads und Supervision');
@@ -892,11 +902,13 @@ export const PanelChannelCardOrganismHover: Story = {
 				item.querySelector('.chatMenuDropdown__itemDescription')
 			).not.toBeNull();
 		});
-		// Hover / selected = secondary-fixed surface, primary label + icon.
+		// Hover / selected = D3 "Hellblau" surface (#e7effc, the alias
+		// `--oriso-menu-hover-surface`), primary label + icon.
 		const root = getComputedStyle(document.documentElement);
 		const secondaryFixed = root
-			.getPropertyValue('--m3-secondary-fixed')
+			.getPropertyValue('--oriso-menu-hover-surface')
 			.trim();
+		await expect(secondaryFixed.toLowerCase()).toBe('#e7effc');
 		const primary = root.getPropertyValue('--m3-primary').trim();
 		const primaryFixed = root.getPropertyValue('--m3-primary-fixed').trim();
 		const toRgb = (hex: string) => {
@@ -961,7 +973,7 @@ export const PanelChannelCardOrganismHover: Story = {
 					) && rule.style?.backgroundColor
 			);
 		await expect(hoverRule?.style.backgroundColor).toContain(
-			'--m3-secondary-fixed'
+			'--oriso-menu-hover-surface'
 		);
 		await userEvent.keyboard('{ArrowDown}');
 		// T36: the supervision row is a plain menu row — no switch, nothing

@@ -335,7 +335,7 @@
 			"openMenu": "Afficher les canaux secondaires"
 		},
 		"menu": {
-			"eyebrow": "Autres conversations sur ce conseil",
+			"eyebrow": "Autres conversations",
 			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
 			"thread": "Fil #{{n}}"

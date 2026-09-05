@@ -5384,6 +5384,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								</div>
 							</div>
 						)}
+						{/* TODO(B2, D6 05.09.2026): this desktop scroll-to-bottom
+						    FAB duplicates the composer toolbar's scroll-to-newest
+						    arrow (`composer-scroll-to-newest`, T16/T23). Frank:
+						    the FAB goes; B2 removes this block when the stage's
+						    composer wiring lands (the stage story (a) already
+						    asserts that no `.session__scrollToBottom` renders
+						    beside the toolbar arrow). */}
 						<div
 							className={`session__scrollToBottom ${
 								isScrolledToBottom

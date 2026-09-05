@@ -40,8 +40,15 @@
 	--m3-secondary-container: #646d78;
 	--m3-on-secondary-container: #e7effc;
 
-	// Secondary fixed family (M3 Light table = engine output, T27): the
-	// menu organism's hover/selected surface and its text.
+	// D3 (Frank, 05.09.2026): the menu organism's hover/selected surface is
+	// the Figma table's "Hellblau" #e7effc — the value the table files under
+	// `on-secondary-container`. The m3Sweep guard forbids an `on-*` role as
+	// a background, so the surface gets its own alias with that value; the
+	// label on it stays `primary`. (`--m3-secondary-fixed` keeps the engine
+	// value and is no longer the menu hover.)
+	--oriso-menu-hover-surface: #e7effc;
+
+	// Secondary fixed family (M3 Light table = engine output, T27).
 	--m3-secondary-fixed: #dae3f0;
 	--m3-secondary-fixed-dim: #bec7d4;
 	--m3-on-secondary-fixed: #141c25;

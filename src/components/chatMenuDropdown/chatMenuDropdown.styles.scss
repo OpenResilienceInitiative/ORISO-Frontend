@@ -86,11 +86,13 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		font: inherit;
 
 		// T27 (Figma): hover, keyboard focus and the selected row share ONE
-		// treatment — the pale `secondary-fixed` surface, `primary` label.
+		// treatment — the pale blue surface (D3: Figma "Hellblau" #e7effc,
+		// `--oriso-menu-hover-surface` in mui-variables-mapping.scss),
+		// `primary` label.
 		&:hover:not(:disabled, &--disabled),
 		&:focus-visible:not(:disabled, &--disabled),
 		&--active:not(:disabled, &--disabled) {
-			background-color: var(--m3-secondary-fixed, #dae3f0);
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 			outline: none;
 
 			.chatMenuDropdown__itemTitle,

@@ -335,7 +335,7 @@
 			"openMenu": "Yan kanalları göster"
 		},
 		"menu": {
-			"eyebrow": "Bu danışmayla ilgili diğer görüşmeler",
+			"eyebrow": "Diğer görüşmeler",
 			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
 			"thread": "Konu #{{n}}"

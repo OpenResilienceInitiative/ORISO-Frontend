@@ -330,7 +330,7 @@
 			}
 		},
 		"menu": {
-			"eyebrow": "Weitere Gespräche zu dieser Beratung",
+			"eyebrow": "Weitere Gespräche",
 			"title": "Threads und Supervision",
 			"supervisionChat": "Supervisionschat",
 			"thread": "Thread #{{n}}"

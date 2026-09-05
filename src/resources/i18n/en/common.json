@@ -318,7 +318,7 @@
 			}
 		},
 		"menu": {
-			"eyebrow": "Further conversations about this counselling",
+			"eyebrow": "Further conversations",
 			"title": "Threads and supervision",
 			"supervisionChat": "Supervision chat",
 			"thread": "Thread #{{n}}"

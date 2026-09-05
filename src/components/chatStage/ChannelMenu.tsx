@@ -4,7 +4,7 @@
  * secondary channels (T20, Figma "Menu" 9763:62964; T27: same rows, same
  * hover as the real menu):
  *
- *   Weitere Gespräche zu dieser Beratung   ← eyebrow (Body Small, grey)
+ *   Weitere Gespräche                       ← eyebrow (Body Small, grey; D4)
  *   Threads und Supervision                ← title (Body Strong)
  *   ──────────────────────────────────     ← hairline
  *   [icon] Supervisionschat   ⇧S           ← always first (T36: a plain

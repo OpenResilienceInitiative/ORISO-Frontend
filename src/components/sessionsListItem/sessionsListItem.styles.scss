@@ -483,7 +483,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin: 0;
 
 		&:hover:not(:disabled) {
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
@@ -500,7 +500,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			outline: 2px solid
 				color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent);
 			outline-offset: -2px;
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
