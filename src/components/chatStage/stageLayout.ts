@@ -14,8 +14,16 @@ export const STAGE_LAYOUT = {
 	DESKTOP_MIN_WIDTH: 900,
 	/** Icon-only session list (`sessionsList__wrapper--iconOnly` min-width). */
 	RAIL_WIDTH: 80,
-	/** `.session` desktop margin on each side (`--session-card-margin`). */
+	/** `.session` desktop margin (`--session-card-margin`) — the right side. */
 	CARD_MARGIN: 24,
+	/**
+	 * T34: visible gap between the list cards and the chat card, measured
+	 * in Figma 1320:38278 (list items end at x 485, "Frame 951" of the room
+	 * starts 24 px later). The handle centres in it.
+	 */
+	LIST_CARD_GAP: 24,
+	/** `.sessionsList__scrollContainer` desktop margin — cards end early. */
+	LIST_INNER_GUTTER: 12,
 	/** Both chat panes keep at least this much. */
 	MIN_PANE_WIDTH: 520
 } as const;
@@ -44,7 +52,13 @@ export interface StageLayout {
 }
 
 const cardWidthFor = (viewportWidth: number, listWidth: number) =>
-	Math.max(0, viewportWidth - listWidth - 2 * STAGE_LAYOUT.CARD_MARGIN);
+	Math.max(
+		0,
+		viewportWidth -
+			listWidth -
+			(STAGE_LAYOUT.LIST_CARD_GAP - STAGE_LAYOUT.LIST_INNER_GUTTER) -
+			STAGE_LAYOUT.CARD_MARGIN
+	);
 
 const fitPanel = (cardWidth: number, requested: number) => {
 	const { MIN_PANE_WIDTH } = STAGE_LAYOUT;

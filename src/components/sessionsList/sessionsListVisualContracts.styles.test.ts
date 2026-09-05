@@ -55,8 +55,10 @@ describe('session list visual contracts', () => {
 		);
 		expect(css).toMatch(
 			// T13: half the handle plus half the host's pane gap — centred in
-			// the gap between list and chat card.
-			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*calc\(-12px - var\(--pane-gap, 0px\) \/ 2\);/s
+			// the gap between list and chat card. T34: the host may declare
+			// how far its list cards end before the column edge
+			// (`--pane-inner-gutter`); the gap is measured from the cards.
+			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*calc\(-12px - var\(--pane-gap, 0px\) \/ 2 \+ var\(--pane-inner-gutter, 0px\)\);/s
 		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle--start[^{}]*\{[^}]*left:\s*-12px;/s

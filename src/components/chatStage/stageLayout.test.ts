@@ -71,11 +71,19 @@ describe('resolveStageLayout (list column snaps to the icon rail)', () => {
 		expect(layout.listMode).toBe('hidden');
 	});
 
-	it('reports the card width it computed with (list + 2 × 24 px margin)', () => {
+	it('reports the card width it computed with (list + 12 px left + 24 px right margin, T34)', () => {
 		const layout = resolveStageLayout({ ...desktop1280, panelOpen: true });
+		// T34: the card starts LIST_CARD_GAP after the list cards, which end
+		// LIST_INNER_GUTTER before the column edge — so the left margin is
+		// the difference; the right margin stays CARD_MARGIN.
 		expect(layout.cardWidth).toBe(
-			1280 - STAGE_LAYOUT.RAIL_WIDTH - 2 * STAGE_LAYOUT.CARD_MARGIN
+			1280 -
+				STAGE_LAYOUT.RAIL_WIDTH -
+				(STAGE_LAYOUT.LIST_CARD_GAP - STAGE_LAYOUT.LIST_INNER_GUTTER) -
+				STAGE_LAYOUT.CARD_MARGIN
 		);
+		expect(STAGE_LAYOUT.LIST_CARD_GAP).toBe(24);
+		expect(STAGE_LAYOUT.LIST_INNER_GUTTER).toBe(12);
 		expect(layout.mainWidth + layout.panelWidth).toBe(layout.cardWidth);
 	});
 });

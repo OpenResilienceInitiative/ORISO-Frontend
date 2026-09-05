@@ -312,22 +312,28 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			Math.abs(p.top + p.height / 2 - (h.top + h.height / 2))
 		).toBeLessThanOrEqual(1);
-		// T13: the list handle is centred in the gap between the list and
-		// the chat card (its centre = the midpoint of list.right … card.left).
+		// T13/T34: the list handle is centred in the VISIBLE gap between the
+		// list cards and the chat card (centre = midpoint of the rightmost
+		// list card edge … card.left), and that gap is the Figma 24 px
+		// (1320:38278) — no wider, equal on both sides of the handle.
 		const listHandle = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-list-handle"]'
 		)!;
-		const listBox = canvasElement
-			.querySelector('[data-cy="stage-list"]')!
-			.getBoundingClientRect();
+		const listCardsRight = Math.max(
+			...Array.from(
+				canvasElement.querySelectorAll('.sessionsListItem')
+			).map((item) => item.getBoundingClientRect().right)
+		);
 		const cardBox = canvasElement
 			.querySelector('.chatStage__card')!
 			.getBoundingClientRect();
 		const listPill = listHandle
 			.querySelector('.sessionsList__resizeHandlePill')!
 			.getBoundingClientRect();
-		await expect(cardBox.left - listBox.right).toBeGreaterThan(0);
-		const gapMid = (listBox.right + cardBox.left) / 2;
+		await expect(
+			Math.abs(cardBox.left - listCardsRight - STAGE_LAYOUT.LIST_CARD_GAP)
+		).toBeLessThanOrEqual(1);
+		const gapMid = (listCardsRight + cardBox.left) / 2;
 		await expect(
 			Math.abs(listPill.left + listPill.width / 2 - gapMid)
 		).toBeLessThanOrEqual(1);

@@ -13,13 +13,19 @@
 	overflow: hidden;
 	background-color: var(--m3-surface-container-high, #eae7e8);
 
+	// T13/T34: the list handle centres in the VISIBLE gap between the list
+	// cards and the chat card. The gap is the card's own margin token
+	// (`session.styles.scss`, Figma 1320:38278: 24 px), but the list cards
+	// end 12 px before the column edge (`.sessionsList__scrollContainer`
+	// desktop margin) — so the card's left margin is the difference and the
+	// handle formula (`sessionsList.styles.scss`) takes the gutter back.
+	// `STAGE_LAYOUT.LIST_CARD_GAP` / `LIST_INNER_GUTTER` mirror both in TS.
+	--pane-gap: var(--session-card-margin, 24px);
+	--pane-inner-gutter: 12px;
+
 	&__list {
 		flex: 0 0 auto;
 		position: relative;
-
-		// T13: the list handle centres in the gap to the chat card — the
-		// card's own margin token (`session.styles.scss`), not a copy.
-		--pane-gap: var(--session-card-margin, 24px);
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
@@ -33,6 +39,11 @@
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;
+
+		// T34: the chat card starts `--pane-gap` after the list CARDS.
+		> .session:first-child {
+			margin-left: calc(var(--pane-gap) - var(--pane-inner-gutter));
+		}
 	}
 
 	// Frank's choice: the side room lives INSIDE the chat card. The card
