@@ -3580,6 +3580,9 @@
 		"supervision": {
 			"badge": "Supervision – Sie lesen in diesem Chat mit",
 			"supervisedBy": "Supervision: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste."
 		}
 	},
 	"statusOverlay": {

@@ -48,6 +48,11 @@ describe('session list visual contracts', () => {
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle[^{}]*\{[^}]*width:\s*24px;/s
 		);
+		// T5: press-and-hold / drag need the browser's touch scrolling off
+		// on the hit zone and the resize cursor.
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandle[^{}]*\{[^}]*cursor:\s*col-resize;[^}]*touch-action:\s*none;/s
+		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*-12px;/s
 		);

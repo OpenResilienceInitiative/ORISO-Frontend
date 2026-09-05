@@ -3545,6 +3545,9 @@
 		"supervision": {
 			"badge": "Süpervizyon – bu sohbeti takip ediyorsunuz",
 			"supervisedBy": "Süpervizyon: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır."
 		}
 	},
 	"statusOverlay": {

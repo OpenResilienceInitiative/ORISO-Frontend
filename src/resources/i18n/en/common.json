@@ -3523,6 +3523,9 @@
 		"supervision": {
 			"badge": "Supervision – you read along in this chat",
 			"supervisedBy": "Supervision: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list."
 		}
 	},
 	"statusOverlay": {

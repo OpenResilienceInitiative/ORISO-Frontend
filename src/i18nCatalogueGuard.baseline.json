@@ -632,7 +632,6 @@
 		"profile.encryption.showKey.copied",
 		"profile.encryption.showKey.done",
 		"registration.state.options",
-		"registration.zipcode.remaining",
-		"sessionList.resizeHandle.ariaLabel"
+		"registration.zipcode.remaining"
 	]
 }

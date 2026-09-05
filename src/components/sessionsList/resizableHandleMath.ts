@@ -63,3 +63,14 @@ export const getToggledSidebarWidth = (
 	minWidth: number,
 	expandedMinWidth: number
 ) => (currentWidth <= minWidth + 1 ? expandedMinWidth : minWidth);
+
+/**
+ * T5 / Frank (*****): "drag/halten macht das Einklappen". Pressing the handle
+ * and holding still for this long toggles the pane (collapse ↔ expand);
+ * moving the pointer beyond the tolerance first turns the press into a drag.
+ */
+export const HOLD_TO_COLLAPSE_MS = 450;
+export const HOLD_TOLERANCE_PX = 4;
+
+export const isHoldGesture = ({ movedPx }: { movedPx: number }): boolean =>
+	movedPx < HOLD_TOLERANCE_PX;

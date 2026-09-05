@@ -3545,6 +3545,9 @@
 		"supervision": {
 			"badge": "Supervision – vous suivez cette conversation",
 			"supervisedBy": "Supervision : {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste."
 		}
 	},
 	"statusOverlay": {

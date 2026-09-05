@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { ResizableHandle } from './ResizableHandle';
 import './sessionsList.styles.scss';
 
@@ -14,7 +14,8 @@ const meta = {
 			description: {
 				component:
 					'Drag the **right edge** of the gray panel to resize (used on `SessionsListWrapper`). Snaps around icon-only width. Class: `sessionsList__resizeHandle`. ' +
-					'T2/T5: the same handle sits on the **left edge** of the chat side panel (`anchor="start"`, no snapping); the pill is centred on the full height, never on the list scrollbar, and the chevron toggle is gone.'
+					'T2/T5: the same handle sits on the **left edge** of the chat side panel (`anchor="start"`, no snapping); the pill is centred on the full height, never on the list scrollbar, and the chevron toggle is gone. ' +
+					'Press and hold (450 ms) or double-click collapses / expands; Up/Down scroll the list. The former drag-to-scroll, wheel toggle and hover focus went with the scrollbar coupling.'
 			}
 		}
 	},
@@ -103,7 +104,49 @@ export const Default: Story = {
 			}
 		}
 	},
-	render: (args) => <ResizeDemo {...args} />
+	render: (args) => <ResizeDemo {...args} />,
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'.sessionsList__resizeHandle'
+		)!;
+		const width = () =>
+			canvasElement.querySelector('code')?.textContent ?? '';
+		await expect(width()).toBe('320px');
+		await expect(handle.getAttribute('aria-label')).toMatch(
+			/hold|gedrückt/i
+		);
+		await expect(handle.getAttribute('aria-label')).not.toMatch(
+			/vertically/i
+		);
+		// T5: press and hold still → collapses to the icon rail.
+		const rect = handle.getBoundingClientRect();
+		const at = {
+			pointerId: 1,
+			button: 0,
+			clientX: rect.left + 12,
+			clientY: rect.top + 100
+		};
+		await fireEvent.pointerDown(handle, at);
+		await waitFor(() => expect(width()).toBe('80px'), { timeout: 1500 });
+		await fireEvent.pointerUp(document, at);
+		// Hold again → expands to the full band.
+		await fireEvent.pointerDown(handle, at);
+		await waitFor(() => expect(width()).toBe('397px'), { timeout: 1500 });
+		await fireEvent.pointerUp(document, at);
+		// A press that moves is a drag, not a hold: 30 px right → wider.
+		await fireEvent.pointerDown(handle, at);
+		await fireEvent.pointerMove(document, {
+			...at,
+			clientX: at.clientX + 30
+		});
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		await fireEvent.pointerUp(document, at);
+		await expect(width()).not.toBe('80px');
+		// Keyboard still resizes.
+		handle.focus();
+		await userEvent.keyboard('{Home}');
+		await expect(width()).toBe('80px');
+	}
 };
 
 export const ChatActivePillHidden: Story = {
