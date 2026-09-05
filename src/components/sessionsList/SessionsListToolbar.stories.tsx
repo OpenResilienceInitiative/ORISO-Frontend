@@ -33,22 +33,30 @@ const searchPeopleResults: SessionSearchPersonResult[] = [
 	{
 		id: 'sanftes-alpaka-kala',
 		name: 'Sanftes Alpaka Kala',
-		subtitle: 'Suchtprobleme'
+		subtitle: 'Suchtprobleme',
+		role: 'asker',
+		avatarSeed: 'sanftes-alpaka-kala'
 	},
 	{
 		id: 'ratsuchender-r3',
 		name: 'Ratsuchender R3',
-		subtitle: '1-1 Beratung'
+		subtitle: '1-1 Beratung',
+		role: 'asker',
+		avatarSeed: 'ratsuchender-r3'
 	},
 	{
 		id: 'ruhiges-yak-kim',
 		name: 'ruhiges Yak Kim',
-		subtitle: 'Familienberatung'
+		subtitle: 'Familienberatung',
+		role: 'asker',
+		avatarSeed: 'ruhiges-yak-kim'
 	},
 	{
 		id: 'traeger-admins-caritas',
 		name: 'Träger Admins Caritas',
-		subtitle: 'Team Intern'
+		subtitle: 'Team Intern',
+		role: 'consultant',
+		avatarSeed: 'traeger-admins-caritas'
 	}
 ];
 
