@@ -81,6 +81,10 @@ import {
 	toStackParticipants
 } from '../sessionHeader/headerParticipants';
 import type { StackParticipant } from '../message/participantStack';
+import {
+	filterVisibleParticipants,
+	type ParticipantIdentity
+} from '../message/visibleParticipants';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import '../chatStage/chatStage.styles.scss';
 import { getSupervisorDisplayNames } from '../sessionsListItem/supervisionListState';
@@ -3725,8 +3729,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Room participants for the panel headers (the same avatar stack the
 	// session header renders, `headerParticipants.ts`).
+	// ADR-002 silent membership: the rooms list every counsellor of the
+	// agency; the panels show only the asker, the assigned consultant and
+	// the active supervisors (thread = main room) or the counterpart and me
+	// (supervision room). Silent members never appear, "+N" counts only
+	// visible people (`visibleParticipants.ts`).
+	const supervisionMarker = activeSession.item?.supervision;
 	const stackParticipantsOf = useCallback(
-		(roomId: string | null | undefined): StackParticipant[] => {
+		(
+			roomId: string | null | undefined,
+			mode: 'session' | 'supervision'
+		): StackParticipant[] => {
 			const client = matrixClientService?.getClient?.();
 			const room = roomId ? client?.getRoom?.(roomId) : null;
 			if (!room) {
@@ -3735,7 +3748,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			const lastActivity = seedLastActivity(
 				room.getLiveTimeline?.()?.getEvents?.() ?? []
 			);
-			return toStackParticipants(
+			const members = toStackParticipants(
 				room.getJoinedMembers?.() ?? [],
 				lastActivity,
 				{
@@ -3744,21 +3757,86 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					isSystemUser: isSystemMatrixUser
 				}
 			);
+			const markerNames = new Map<string, string>();
+			(supervisionMarker?.supervisorConsultantIds ?? []).forEach(
+				(id, index) => {
+					const name =
+						supervisionMarker?.supervisorDisplayNames?.[index];
+					if (id && name) {
+						markerNames.set(String(id), name);
+					}
+				}
+			);
+			const selfIds = [
+				userData?.userName,
+				userData?.userId,
+				client?.getUserId?.(),
+				getCurrentMatrixUserId()
+			];
+			const supervisorIdentities: ParticipantIdentity[] =
+				supervisorUsernames.map((username) => ({
+					ids: [username]
+				}));
+			if (supervisionMarker?.supervisedByMe || isSupervisor) {
+				supervisorIdentities.push({
+					ids: selfIds,
+					displayName: userData?.displayName || undefined
+				});
+			}
+			const consultant = activeSession.consultant;
+			return filterVisibleParticipants(members, {
+				mode: activeSession.isGroup ? 'group' : mode,
+				asker: {
+					ids: [
+						activeSession.item?.askerMatrixUserId,
+						activeSession.user?.username
+					]
+				},
+				consultant: consultant
+					? {
+							ids: [
+								consultant.username,
+								consultant.id,
+								consultant.consultantId
+							],
+							displayName:
+								supervisionMarker?.counsellorDisplayName ||
+								consultant.displayName ||
+								undefined
+						}
+					: null,
+				supervisors: supervisorIdentities.map((identity) => ({
+					...identity,
+					displayName:
+						identity.displayName ??
+						identity.ids
+							.map((id) => markerNames.get(String(id ?? '')))
+							.find(Boolean)
+				})),
+				self: { ids: selfIds }
+			});
 		},
 		[
 			matrixClientService,
 			activeSession.item?.askerMatrixUserId,
+			activeSession.user?.username,
+			activeSession.consultant,
+			activeSession.isGroup,
+			supervisionMarker,
+			supervisorUsernames,
+			isSupervisor,
+			userData,
 			clientDisplayName
 		]
 	);
 	const threadParticipants = useMemo(
-		() => stackParticipantsOf(resolvedMatrixRoomId),
+		() => stackParticipantsOf(resolvedMatrixRoomId, 'session'),
 		// messages: re-read the room members whenever the timeline changes.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, resolvedMatrixRoomId, messages]
 	);
 	const supervisionParticipants = useMemo(
-		() => stackParticipantsOf(supervisionRoomId),
+		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
 	);

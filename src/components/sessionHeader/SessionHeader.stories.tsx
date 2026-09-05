@@ -273,6 +273,55 @@ const headerShell: React.CSSProperties = {
 	background: '#fff'
 };
 
+/**
+ * ADR-002 silent membership: the header shows only the asker, the assigned
+ * consultant and the active supervisors — every other room member is a
+ * silent agency colleague and stays hidden. The supervisors endpoint is
+ * therefore what makes Bettina, Kim, Ali and Jo visible in the 1:1 stories;
+ * their Matrix ids are `@<username>:…` like the real homeserver.
+ */
+const storySessionSupervisors = ['bettina.b', 'kim', 'ali', 'jo'].map(
+	(username, index) => ({
+		id: index + 1,
+		sessionId: 4401,
+		supervisorConsultantId: `consultant-${username}`,
+		supervisorUsername: `${username}@example.invalid`,
+		addedByConsultantId: CONSULTANT_ID,
+		addedDate: '2026-03-18T07:00:00.000Z'
+	})
+);
+
+const jsonResponse = (body: unknown) =>
+	new Response(JSON.stringify(body), {
+		status: 200,
+		headers: { 'Content-Type': 'application/json' }
+	});
+
+// Installed during render (useState initializer): the header fires its
+// supervisor fetch from a child effect, which runs before this parent's
+// effects — an effect-installed mock would always be one render too late.
+const installHeaderFetchMocks = () => {
+	const previousFetch = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/supervisors$/.test(url.split('?')[0])) {
+			return jsonResponse(storySessionSupervisors);
+		}
+		if (url.split('?')[0].endsWith('/service/users/consultants')) {
+			return jsonResponse([]);
+		}
+		return previousFetch(input, init);
+	};
+	return () => {
+		window.fetch = previousFetch;
+	};
+};
+
 const StoryProviders = ({
 	session,
 	members = [],
@@ -284,6 +333,8 @@ const StoryProviders = ({
 	lastActivity?: Record<string, number>;
 	children: React.ReactNode;
 }) => {
+	const [restoreFetchMocks] = React.useState(() => installHeaderFetchMocks());
+	React.useEffect(() => restoreFetchMocks, [restoreFetchMocks]);
 	const matrixClientService = React.useMemo(
 		() => makeMatrixClientService(members, lastActivity),
 		[members, lastActivity]
@@ -415,7 +466,10 @@ const ASKER_MATRIX_ID = 'asker-4401';
 const roomParticipants: MockMember[] = [
 	{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' },
 	{ userId: '@beraterin:matrix.storybook.test', name: 'Beraterin ORISO' },
-	{ userId: '@bettina.b:matrix.storybook.test', name: 'Bettina B.' }
+	{ userId: '@bettina.b:matrix.storybook.test', name: 'Bettina B.' },
+	// ADR-002: silent agency colleagues are room members but never shown.
+	{ userId: '@silent.simpson:matrix.storybook.test', name: 'Silent Simpson' },
+	{ userId: '@stumm.meier:matrix.storybook.test', name: 'Stumm Meier' }
 ];
 
 // 8. Active 1-on-1 with the room's participants in the header avatar row.
@@ -430,7 +484,8 @@ export const mockActiveConversationWithParticipants = () => ({
 	}
 });
 
-// 9. Six participants → four avatars + "+2" (FE#1193 Job 2).
+// 9. Six visible participants (asker, consultant, four supervisors) → four
+// avatars + "+2" (FE#1193 Job 2); the silent members never count.
 export const mockActiveConversationManyParticipants = () => ({
 	session: buildSingleSession(STATUS_ACTIVE),
 	members: [

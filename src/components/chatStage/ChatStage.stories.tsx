@@ -480,6 +480,25 @@ const panelTint = async (canvasElement: HTMLElement) => {
 			)
 		).toBeNull()
 	);
+	// The field animates `all 240ms` out of the focus border — read it only
+	// once the 2 px `primary-container` ring has fully given way to the
+	// 1 px rest border, otherwise the value is a frame of the transition.
+	const focusRing = (() => {
+		const hex = getComputedStyle(document.documentElement)
+			.getPropertyValue('--m3-primary-container')
+			.trim();
+		const n = parseInt(hex.replace('#', ''), 16);
+		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+	})();
+	await waitFor(() => {
+		const field = getComputedStyle(
+			canvasElement.querySelector(
+				'[data-cy="stage-panel"] .textarea__input'
+			)!
+		);
+		expect(field.borderTopWidth).toBe('1px');
+		expect(field.borderTopColor).not.toBe(focusRing);
+	});
 	const header = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel"] .panelHeader'
 	)!;

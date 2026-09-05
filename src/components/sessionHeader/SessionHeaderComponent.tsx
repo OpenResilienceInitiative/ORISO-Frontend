@@ -75,6 +75,12 @@ import {
 	seedLastActivity,
 	toStackParticipants
 } from './headerParticipants';
+import {
+	filterVisibleParticipants,
+	type ParticipantIdentity,
+	type VisibleParticipantRules
+} from '../message/visibleParticipants';
+import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
@@ -856,11 +862,91 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		headerContactName
 	]);
 
+	// ADR-002 silent membership: the room lists every counsellor of the
+	// agency, the header shows only the asker, the assigned consultant and
+	// the active supervisors (`visibleParticipants.ts`) — silent members are
+	// never revealed, "+N" counts only visible people. Supervisors come from
+	// the supervisors call (usernames) plus the list marker (#996 names);
+	// a supervising viewer is visible to themselves before that call lands.
+	const supervisionMarker = activeSession.item?.supervision;
+	const visibleParticipantRules =
+		React.useMemo<VisibleParticipantRules>(() => {
+			const markerNames = new Map<string, string>();
+			(supervisionMarker?.supervisorConsultantIds ?? []).forEach(
+				(id, index) => {
+					const name =
+						supervisionMarker?.supervisorDisplayNames?.[index];
+					if (id && name) {
+						markerNames.set(String(id), name);
+					}
+				}
+			);
+			const supervisorIdentities: ParticipantIdentity[] = supervisors.map(
+				(supervisor) => ({
+					ids: [
+						supervisor.supervisorUsername,
+						supervisor.supervisorConsultantId
+					],
+					displayName: markerNames.get(
+						String(supervisor.supervisorConsultantId)
+					)
+				})
+			);
+			if (supervisionMarker?.supervisedByMe) {
+				supervisorIdentities.push({
+					ids: [
+						userData?.userName,
+						userData?.userId,
+						matrixClientService?.getClient?.()?.getUserId?.(),
+						getCurrentMatrixUserId()
+					],
+					displayName: userData?.displayName || undefined
+				});
+			}
+			return {
+				mode: activeSession.isGroup ? 'group' : 'session',
+				asker: {
+					ids: [askerMatrixUserId, contact?.username]
+				},
+				consultant: activeSession.consultant
+					? {
+							ids: [
+								activeSession.consultant.username,
+								activeSession.consultant.id,
+								activeSession.consultant.consultantId
+							],
+							displayName:
+								supervisionMarker?.counsellorDisplayName ||
+								activeSession.consultant.displayName ||
+								undefined
+						}
+					: null,
+				supervisors: supervisorIdentities
+			};
+		}, [
+			activeSession.isGroup,
+			activeSession.consultant,
+			supervisionMarker,
+			supervisors,
+			askerMatrixUserId,
+			contact?.username,
+			userData,
+			matrixClientService
+		]);
+	const visibleRoomParticipants = React.useMemo(
+		() =>
+			filterVisibleParticipants(
+				roomParticipants,
+				visibleParticipantRules
+			),
+		[roomParticipants, visibleParticipantRules]
+	);
+
 	// Without Matrix members (enquiry, offline) the header still shows the
 	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
 	const headerParticipants: StackParticipant[] =
-		roomParticipants.length > 0
-			? roomParticipants
+		visibleRoomParticipants.length > 0
+			? visibleRoomParticipants
 			: contact
 				? [
 						{
