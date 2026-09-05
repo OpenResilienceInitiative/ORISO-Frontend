@@ -683,6 +683,72 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 };
 
 /**
+ * (d5) Review v6: six open threads — the header card ends above the
+ * panel's composer (never behind it) and its list scrolls inside; End
+ * reaches the last row.
+ */
+export const PanelChannelCardSixThreadsScrolls: Story = {
+	name: '(d5) Panel channel card — six threads: ends above the composer, scrolls inside (review v6)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'thread',
+		panelVariant: 'inside',
+		openThreads: 6,
+		supervisionUnread: 1
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 9
+		});
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!
+		);
+		const menu = await canvas.findByRole('menu');
+		const items = within(menu).getAllByRole('menuitem');
+		await expect(items).toHaveLength(7);
+		// Stable numbers: the original thread is #1 wherever recency puts it.
+		await expect(
+			items.find(
+				(item) =>
+					item.getAttribute('data-channel-id') === THREAD_ROOT_ID
+			)?.textContent
+		).toContain('Thread #1');
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+		)!;
+		const list =
+			canvasElement.querySelector<HTMLElement>('.channelMenu__list')!;
+		// The panel's composer keeps settling (TipTap) for a while after the
+		// card opened; the card follows it (ResizeObserver) — give it time.
+		await waitFor(
+			() => {
+				const card = canvasElement
+					.querySelector<HTMLElement>('.channelMenu')!
+					.getBoundingClientRect();
+				expect(card.bottom).toBeLessThanOrEqual(
+					composer.getBoundingClientRect().top
+				);
+				expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+			},
+			{ timeout: 4000 }
+		);
+		await expectMenuBelowHeader(canvasElement);
+		await userEvent.keyboard('{End}');
+		await waitFor(() => {
+			const last = items[6].getBoundingClientRect();
+			expect(document.activeElement).toBe(items[6]);
+			expect(last.bottom).toBeLessThanOrEqual(
+				list.getBoundingClientRect().bottom + 1
+			);
+		});
+	}
+};
+
+/**
  * (e3) T15 on the phone: the FAB in the main chat opens the same channel
  * list and switches to the secondary view; inside it, the header menu
  * jumps on to the next channel.

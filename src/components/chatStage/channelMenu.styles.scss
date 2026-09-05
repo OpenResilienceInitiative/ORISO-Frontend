@@ -11,14 +11,29 @@
 $menu-width: 301px;
 $menu-inset: 8px;
 $menu-radius: 8px;
+
+// Review v6: the card never outgrows 5½ rows (the half row says "scroll")
+// nor the room its host measured (`--channel-menu-max-height`, see
+// `useChannelMenuPlacement`); the row list scrolls inside.
+$menu-row-height: 70px; // 12 + 22 + 4 + 20 + 12
+$menu-chrome-height: 87px; // 2 × 8 inset + 54 header + 17 separator
+$menu-visible-rows: 5.5;
 $menu-elevation:
 	0 4px 8px 3px rgba(0, 0, 0, 0.08),
 	0 1px 3px rgba(0, 0, 0, 0.2);
 
 .channelMenu {
 	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 	width: $menu-width;
 	max-width: calc(100vw - 32px);
+	max-height: min(
+		calc(
+			#{$menu-chrome-height} + #{$menu-row-height} * #{$menu-visible-rows}
+		),
+		var(--channel-menu-max-height, 100vh)
+	);
 	padding: $menu-inset;
 	border-radius: $menu-radius;
 	background: var(--m3-surface-container-lowest, #fff);
@@ -28,6 +43,7 @@ $menu-elevation:
 	text-align: left;
 
 	&__header {
+		flex: 0 0 auto;
 		padding: 8px 16px 4px;
 	}
 
@@ -49,14 +65,19 @@ $menu-elevation:
 
 	// Figma "Menu Separator": 17 px block, hairline in the middle.
 	&__separator {
+		flex: 0 0 auto;
 		margin: 8px 0;
 		border: 0;
 		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
 	}
 
 	&__list {
+		flex: 1 1 auto;
+		min-height: 0;
 		margin: 0;
 		padding: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
 		list-style: none;
 	}
 

@@ -45,6 +45,23 @@ export const THREAD_2: SecondaryChannel = {
 	}
 };
 
+/** Review v6: six threads — more rows than the card shows at once. */
+export const SIX_THREADS: SecondaryChannel[] = Array.from(
+	{ length: 6 },
+	(_, index) => ({
+		id: `$thread-${index + 1}`,
+		kind: 'thread' as const,
+		label: `Thread #${index + 1}`,
+		createdTs: at(`09:0${index}`),
+		unread: index === 3 ? 1 : 0,
+		lastMessage: {
+			author: index % 2 ? 'Susanne P.' : 'baer-mika-343',
+			text: `Antwort im Thread ${index + 1}: das nehme ich mit in die nächste Sitzung.`,
+			ts: at(`10:${String(10 + ((index * 7) % 50)).padStart(2, '0')}`)
+		}
+	})
+);
+
 /** A slice of chat card — the FAB is positioned against it. */
 function Shell({
 	children,
@@ -113,7 +130,7 @@ const meta = {
 	title: 'Components/Chat/ChannelSwitcherFab',
 	component: ChannelSwitcherFab,
 	tags: ['autodocs'],
-	excludeStories: /^(SUPERVISION_CHANNEL|THREAD_1|THREAD_2)$/,
+	excludeStories: /^(SUPERVISION_CHANNEL|THREAD_1|THREAD_2|SIX_THREADS)$/,
 	parameters: {
 		layout: 'padded',
 		design: { type: 'figma', url: FAB_MENU_FIGMA_URL },
@@ -318,5 +335,85 @@ export const Phone390InsideThreadWithMenu: Story = {
 			canvasElement.querySelector('[data-cy="switcher-last-action"]')
 				?.textContent
 		).toContain('Noch nichts');
+	}
+};
+
+/** The card's rectangle, the FAB's and the shell's — all in viewport px. */
+const menuGeometry = (canvasElement: HTMLElement) => ({
+	card: canvasElement
+		.querySelector<HTMLElement>('.channelMenu')!
+		.getBoundingClientRect(),
+	list: canvasElement.querySelector<HTMLElement>('.channelMenu__list')!,
+	fab: canvasElement
+		.querySelector<HTMLElement>('[data-cy="channel-switcher-fab"]')!
+		.getBoundingClientRect(),
+	shell: canvasElement
+		.querySelector<HTMLElement>('[data-cy="channel-switcher"]')!
+		.offsetParent!.getBoundingClientRect(),
+	root: canvasElement.querySelector<HTMLElement>(
+		'[data-cy="channel-switcher"]'
+	)!
+});
+
+/**
+ * Review v6: with six threads the card would be taller than the room
+ * above the FAB — it clamps to that room (never past 5½ rows) and the
+ * row list scrolls inside; the FAB stays where it is.
+ */
+export const MenuSixThreadsClampsAndScrolls: Story = {
+	name: 'Menu — six threads: card clamps above the FAB, list scrolls (review v6)',
+	args: {
+		channels: [SUPERVISION_CHANNEL, ...SIX_THREADS],
+		onSelect: () => {},
+		defaultOpen: true
+	},
+	render: (args) => <Playground {...args} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const menu = await canvas.findByRole('menu');
+		await expect(within(menu).getAllByRole('menuitem')).toHaveLength(7);
+		await waitFor(() => {
+			const { card, list, fab, shell, root } =
+				menuGeometry(canvasElement);
+			expect(root.getAttribute('data-menu-side')).toBe('up');
+			expect(card.bottom).toBeLessThanOrEqual(fab.top);
+			expect(card.top).toBeGreaterThanOrEqual(shell.top);
+			expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+		});
+		// End scrolls the last row into view inside the card.
+		await userEvent.keyboard('{End}');
+		await waitFor(() => {
+			const { list } = menuGeometry(canvasElement);
+			const items = within(menu).getAllByRole('menuitem');
+			const last = items[items.length - 1].getBoundingClientRect();
+			const box = list.getBoundingClientRect();
+			expect(document.activeElement).toBe(items[items.length - 1]);
+			expect(last.bottom).toBeLessThanOrEqual(box.bottom + 1);
+		});
+	}
+};
+
+/**
+ * Review v6: no room above the FAB (it sits near the top of its card, e.g.
+ * a very short chat card) — the card flips BELOW the FAB and still fits.
+ */
+export const MenuFlipsBelowTheFab: Story = {
+	name: 'Menu — flips below the FAB when there is no room above (review v6)',
+	args: {
+		channels: [SUPERVISION_CHANNEL, THREAD_1, THREAD_2],
+		onSelect: () => {},
+		defaultOpen: true,
+		bottomOffset: 280
+	},
+	render: (args) => <Playground {...args} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByRole('menu');
+		await waitFor(() => {
+			const { card, fab, shell, root } = menuGeometry(canvasElement);
+			expect(root.getAttribute('data-menu-side')).toBe('down');
+			expect(card.top).toBeGreaterThanOrEqual(fab.bottom);
+			expect(card.bottom).toBeLessThanOrEqual(shell.bottom + 1);
+		});
 	}
 };

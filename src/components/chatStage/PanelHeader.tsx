@@ -34,6 +34,10 @@ import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/su
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
 import { ChannelMenu } from './ChannelMenu';
+import {
+	boundsAboveComposer,
+	useChannelMenuPlacement
+} from './useChannelMenuPlacement';
 import type {
 	SecondaryChannel,
 	SecondaryChannelKind
@@ -101,6 +105,7 @@ export const PanelHeader = ({
 	const optionsRef = useRef<HTMLDivElement | null>(null);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const optionsButtonRef = useRef<HTMLButtonElement | null>(null);
+	const headerRef = useRef<HTMLElement | null>(null);
 	const menuId = useId();
 	const Glyph = kindGlyph(kind);
 	const menu = derivePanelChannelMenu(channels, activeChannelId);
@@ -131,6 +136,26 @@ export const PanelHeader = ({
 		'chatStage.panel.participantCount',
 		{ count: participants.length }
 	);
+
+	// Review v6: the card ends above the room's docked composer — with many
+	// threads the list scrolls inside instead of sliding behind it.
+	const resolveBounds = useCallback(
+		() =>
+			boundsAboveComposer(
+				menuRef.current?.closest<HTMLElement>('.sidePanel, .session') ??
+					null
+			),
+		[]
+	);
+	const placement = useChannelMenuPlacement({
+		open: optionsOpen && hasOptions,
+		// The card hangs from the whole header (hairline included).
+		anchorRef: headerRef,
+		menuRef,
+		resolveBounds,
+		prefer: 'down',
+		flip: false
+	});
 
 	const closeOptions = useCallback(() => setOptionsOpen(false), []);
 	const closeAndRefocus = useCallback(() => {
@@ -175,7 +200,7 @@ export const PanelHeader = ({
 	);
 
 	return (
-		<header className="panelHeader" data-cy={dataCy}>
+		<header className="panelHeader" data-cy={dataCy} ref={headerRef}>
 			<div className="panelHeader__row">
 				{onBack && (
 					<button
@@ -327,6 +352,7 @@ export const PanelHeader = ({
 						id={menuId}
 						channels={channels}
 						activeChannelId={activeChannelId}
+						maxHeight={placement?.maxHeight}
 						onSelect={(channelId) => {
 							if (channelId !== activeChannelId) {
 								onSelectChannel?.(channelId);

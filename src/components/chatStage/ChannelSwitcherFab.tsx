@@ -26,6 +26,7 @@ import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import { ChannelMenu } from './ChannelMenu';
+import { useChannelMenuPlacement } from './useChannelMenuPlacement';
 import {
 	deriveChannelSwitcherState,
 	type ChannelSwitcherItem,
@@ -95,7 +96,22 @@ export const ChannelSwitcherFab = ({
 	const [open, setOpen] = useState(defaultOpen);
 	const rootRef = useRef<HTMLDivElement | null>(null);
 	const fabRef = useRef<HTMLButtonElement | null>(null);
+	const menuRef = useRef<HTMLDivElement | null>(null);
 	const menuId = useId();
+	// Review v6: the card takes the room above the FAB (its offset parent —
+	// the chat card — or the viewport when fixed), flips below when that is
+	// larger, and clamps so the list scrolls instead of the card being cut.
+	const resolveBounds = useCallback(() => {
+		if (positionMode === 'fixed') {
+			return { top: 0, bottom: window.innerHeight };
+		}
+		const parent = rootRef.current?.offsetParent as HTMLElement | null;
+		if (!parent) {
+			return null;
+		}
+		const rect = parent.getBoundingClientRect();
+		return { top: rect.top, bottom: rect.bottom, watch: [parent] };
+	}, [positionMode]);
 
 	// The FAB's colour, glyph and "single channel" shortcut only count the
 	// channels one can switch TO; the card lists all of them.
@@ -113,6 +129,14 @@ export const ChannelSwitcherFab = ({
 		setOpen(false);
 		fabRef.current?.focus();
 	}, []);
+
+	const placement = useChannelMenuPlacement({
+		open,
+		anchorRef: fabRef,
+		menuRef,
+		resolveBounds,
+		prefer: 'up'
+	});
 
 	useEffect(() => {
 		if (!open) {
@@ -209,23 +233,26 @@ export const ChannelSwitcherFab = ({
 			data-cy={dataCy}
 			data-variant={state.variant}
 			data-mode={isMenu ? 'menu' : 'single'}
+			data-menu-side={open && placement ? placement.side : undefined}
 		>
 			{isMenu && open && (
-				<ChannelMenu
-					id={menuId}
-					className="channelSwitcher__menu"
-					channels={channels}
-					activeChannelId={activeChannelId}
-					onSelect={(channelId) => {
-						close();
-						if (channelId !== activeChannelId) {
-							onSelect(channelId);
-						}
-					}}
-					onClose={closeAndRefocus}
-					onBack={insideSecondary ? onBack : undefined}
-					data-cy="channel-switcher-menu"
-				/>
+				<div className="channelSwitcher__menu" ref={menuRef}>
+					<ChannelMenu
+						id={menuId}
+						channels={channels}
+						activeChannelId={activeChannelId}
+						maxHeight={placement?.maxHeight}
+						onSelect={(channelId) => {
+							close();
+							if (channelId !== activeChannelId) {
+								onSelect(channelId);
+							}
+						}}
+						onClose={closeAndRefocus}
+						onBack={insideSecondary ? onBack : undefined}
+						data-cy="channel-switcher-menu"
+					/>
+				</div>
 			)}
 			<button
 				ref={fabRef}

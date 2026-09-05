@@ -28,9 +28,19 @@ $switcher-elevation:
 		position: fixed;
 	}
 
-	// T20: the channel card (`ChannelMenu`) opens above the FAB, right-aligned.
+	// T20: the channel card (`ChannelMenu`) opens above the FAB, right-
+	// aligned, anchored so the FAB never moves. Review v6: when the room
+	// above is too small the host flips it below (`data-menu-side`), and
+	// the card's own max-height keeps it inside the bounds either way.
 	&__menu {
-		margin-bottom: 4px;
+		position: absolute;
+		right: 0;
+		bottom: calc(100% + 4px);
+	}
+
+	&[data-menu-side='down'] &__menu {
+		top: calc(100% + 4px);
+		bottom: auto;
 	}
 
 	&__fab {

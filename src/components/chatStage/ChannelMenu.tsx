@@ -43,6 +43,11 @@ export interface ChannelMenuProps {
 	'onBack'?: () => void;
 	/** Focus the current (else first) row on mount. Default true. */
 	'autoFocus'?: boolean;
+	/**
+	 * Host-measured ceiling in px (review v6): the card never grows past it
+	 * — the row list scrolls inside. The stylesheet also caps it at 5½ rows.
+	 */
+	'maxHeight'?: number;
 	'className'?: string;
 	'data-cy'?: string;
 }
@@ -62,6 +67,7 @@ export const ChannelMenu = ({
 	onClose,
 	onBack,
 	autoFocus = true,
+	maxHeight,
 	className,
 	'data-cy': dataCy = 'channel-menu'
 }: ChannelMenuProps) => {
@@ -177,6 +183,13 @@ export const ChannelMenu = ({
 			ref={rootRef}
 			className={['channelMenu', className].filter(Boolean).join(' ')}
 			data-cy={dataCy}
+			style={
+				maxHeight !== undefined
+					? ({
+							'--channel-menu-max-height': `${Math.round(maxHeight)}px`
+						} as React.CSSProperties)
+					: undefined
+			}
 			onBlur={onFocusOut}
 		>
 			<div className="channelMenu__header">
