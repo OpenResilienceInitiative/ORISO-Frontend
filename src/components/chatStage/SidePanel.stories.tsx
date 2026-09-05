@@ -385,7 +385,10 @@ export const Supervision: Story = {
 			THREAD_ROOT_ID
 		);
 		await expect(items[0]).not.toHaveAttribute('aria-current');
-		await expect(items[1]).toHaveAttribute('data-channel-id', 'supervision');
+		await expect(items[1]).toHaveAttribute(
+			'data-channel-id',
+			'supervision'
+		);
 		await expect(items[1]).toHaveAttribute('aria-current', 'true');
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>
@@ -415,7 +418,9 @@ export const NarrowHeaderShowsParticipantCount: Story = {
 		const label = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="panel-header-kind-label"]'
 		)!;
-		await waitFor(() => expect(label).toHaveAttribute('data-mode', 'count'));
+		await waitFor(() =>
+			expect(label).toHaveAttribute('data-mode', 'count')
+		);
 		await expect(label.textContent).toBe('2');
 		const options = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="panel-header-channel-options"]'

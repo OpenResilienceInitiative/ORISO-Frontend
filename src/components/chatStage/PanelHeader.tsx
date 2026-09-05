@@ -35,7 +35,10 @@ import type {
 	SecondaryChannel,
 	SecondaryChannelKind
 } from './channelSwitcherState';
-import { derivePanelChannelMenu, resolvePanelKindLabel } from './panelHeaderState';
+import {
+	derivePanelChannelMenu,
+	resolvePanelKindLabel
+} from './panelHeaderState';
 import './sidePanel.styles.scss';
 
 export interface PanelHeaderProps {
@@ -108,7 +111,8 @@ export const PanelHeader = ({
 		if (!element || typeof ResizeObserver === 'undefined') {
 			return undefined;
 		}
-		const measure = () => setTitleWidth(element.getBoundingClientRect().width);
+		const measure = () =>
+			setTitleWidth(element.getBoundingClientRect().width);
 		measure();
 		const observer = new ResizeObserver(measure);
 		observer.observe(element);

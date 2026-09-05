@@ -38,30 +38,39 @@ describe('derivePanelChannelMenu (T15: jump between channels from the panel head
 	});
 
 	it('marks the shown channel as active on its item', () => {
-		const menu = derivePanelChannelMenu([thread1, supervision], 'supervision');
-		expect(menu.items.find((item) => item.id === 'supervision')?.active).toBe(
-			true
+		const menu = derivePanelChannelMenu(
+			[thread1, supervision],
+			'supervision'
 		);
+		expect(
+			menu.items.find((item) => item.id === 'supervision')?.active
+		).toBe(true);
 		expect(menu.items.find((item) => item.id === '$thread-1')?.active).toBe(
 			false
 		);
 	});
 
 	it('is switchable only when another channel exists', () => {
-		expect(derivePanelChannelMenu([supervision], 'supervision').switchable).toBe(
+		expect(
+			derivePanelChannelMenu([supervision], 'supervision').switchable
+		).toBe(false);
+		expect(
+			derivePanelChannelMenu([supervision, thread1], 'supervision')
+				.switchable
+		).toBe(true);
+		expect(derivePanelChannelMenu([], 'supervision').switchable).toBe(
 			false
 		);
-		expect(
-			derivePanelChannelMenu([supervision, thread1], 'supervision').switchable
-		).toBe(true);
-		expect(derivePanelChannelMenu([], 'supervision').switchable).toBe(false);
 	});
 
 	it('keeps the unread counts so the menu can badge them', () => {
-		const menu = derivePanelChannelMenu([thread1, supervision], '$thread-1');
-		expect(menu.items.find((item) => item.id === 'supervision')?.unread).toBe(
-			1
+		const menu = derivePanelChannelMenu(
+			[thread1, supervision],
+			'$thread-1'
 		);
+		expect(
+			menu.items.find((item) => item.id === 'supervision')?.unread
+		).toBe(1);
 	});
 });
 
