@@ -313,7 +313,25 @@
 		},
 		"panel": {
 			"channelOptions": "Changer de canal",
-			"channelOptionsEmpty": "Aucun autre canal"
+			"channelOptionsEmpty": "Aucun autre canal",
+			"back": "Retour au chat de conseil",
+			"close": "Fermer le panneau latéral",
+			"region": "Panneau latéral : {{title}}",
+			"thread": {
+				"subtitle": "Réponses à un message du chat de conseil",
+				"title": "Fil"
+			}
+		},
+		"switcher": {
+			"backToMain": "Retour au chat de conseil",
+			"closeMenu": "Masquer les canaux secondaires",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil"
+			},
+			"mainChat": "Chat de conseil",
+			"openChannel": "Ouvrir {{label}}",
+			"openMenu": "Afficher les canaux secondaires"
 		}
 	},
 	"chatFlyout": {

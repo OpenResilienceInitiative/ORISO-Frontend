@@ -313,7 +313,25 @@
 		},
 		"panel": {
 			"channelOptions": "Kanal değiştir",
-			"channelOptionsEmpty": "Başka kanal yok"
+			"channelOptionsEmpty": "Başka kanal yok",
+			"back": "Danışma sohbetine geri dön",
+			"close": "Yan paneli kapat",
+			"region": "Yan panel: {{title}}",
+			"thread": {
+				"subtitle": "Danışma sohbetindeki bir mesaja yanıtlar",
+				"title": "Konu"
+			}
+		},
+		"switcher": {
+			"backToMain": "Danışma sohbetine geri dön",
+			"closeMenu": "Yan kanalları gizle",
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Konu"
+			},
+			"mainChat": "Danışma sohbeti",
+			"openChannel": "{{label}} aç",
+			"openMenu": "Yan kanalları göster"
 		}
 	},
 	"chatFlyout": {

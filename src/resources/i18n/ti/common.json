@@ -313,7 +313,25 @@
 		},
 		"panel": {
 			"channelOptions": "ቻነል ቀይር",
-			"channelOptionsEmpty": "ካልእ ቻነል የለን"
+			"channelOptionsEmpty": "ካልእ ቻነል የለን",
+			"back": "ናብ ምኽሪ ቻት ተመለስ",
+			"close": "ጎድናዊ ፓነል ዕጸው",
+			"region": "ጎድናዊ ፓነል፦ {{title}}",
+			"thread": {
+				"subtitle": "ንመልእኽቲ ካብ ምኽሪ ቻት ዝወሃብ መልስታት",
+				"title": "ትሬድ"
+			}
+		},
+		"switcher": {
+			"backToMain": "ናብ ምኽሪ ቻት ተመለስ",
+			"closeMenu": "ጎድናዊ ቻናላት ሕባእ",
+			"kind": {
+				"supervision": "ሱፐርቪዥን",
+				"thread": "ትሬድ"
+			},
+			"mainChat": "ምኽሪ ቻት",
+			"openChannel": "{{label}} ክፈት",
+			"openMenu": "ጎድናዊ ቻናላት ኣርኢ"
 		}
 	},
 	"chatFlyout": {

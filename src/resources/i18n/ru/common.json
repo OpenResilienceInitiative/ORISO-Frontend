@@ -313,7 +313,25 @@
 		},
 		"panel": {
 			"channelOptions": "Сменить канал",
-			"channelOptionsEmpty": "Других каналов нет"
+			"channelOptionsEmpty": "Других каналов нет",
+			"back": "Назад к чату консультации",
+			"close": "Закрыть боковую панель",
+			"region": "Боковая панель: {{title}}",
+			"thread": {
+				"subtitle": "Ответы на сообщение из чата консультации",
+				"title": "Ветка"
+			}
+		},
+		"switcher": {
+			"backToMain": "Назад к чату консультации",
+			"closeMenu": "Скрыть дополнительные каналы",
+			"kind": {
+				"supervision": "Супервизия",
+				"thread": "Ветка"
+			},
+			"mainChat": "Чат консультации",
+			"openChannel": "Открыть {{label}}",
+			"openMenu": "Показать дополнительные каналы"
 		}
 	},
 	"chatFlyout": {
