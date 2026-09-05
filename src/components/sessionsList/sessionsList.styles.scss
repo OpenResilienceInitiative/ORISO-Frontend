@@ -394,6 +394,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 0;
 	}
 
+	/* Scroll-only placement: the bar sits inside the surface it scrolls rather
+	   than straddling its edge, because a dropdown has no neighbour to
+	   separate from (ORISO-Frontend#1196 job 2). */
+	&__resizeHandle--inset {
+		right: 0;
+		width: 20px;
+		cursor: grab;
+	}
+
 	&__resizeHandlePill {
 		position: absolute;
 		right: 8px;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent } from 'storybook/test';
 import { ResizableHandle } from './ResizableHandle';
@@ -196,5 +196,77 @@ export const KeyboardResizeInteraction: Story = {
 
 		await userEvent.keyboard('{End}');
 		await expect(width()).toBe(600);
+	}
+};
+
+function ScrollOnlyDemo() {
+	const scrollRef = useRef<HTMLDivElement | null>(null);
+	return (
+		<div
+			style={{
+				position: 'relative',
+				width: 360,
+				border: '1px solid #e0e0e0',
+				borderRadius: 8,
+				background: '#fff',
+				fontFamily: 'system-ui, sans-serif',
+				fontSize: 13
+			}}
+		>
+			<div
+				ref={scrollRef}
+				style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 20 }}
+			>
+				{Array.from({ length: 24 }, (_, i) => (
+					<div key={i} style={{ padding: '10px 12px' }}>
+						Thread {i + 1}
+					</div>
+				))}
+			</div>
+			<ResizableHandle
+				mode="scroll"
+				scrollTargetRef={scrollRef}
+				className="sessionsList__resizeHandle--inset"
+			/>
+		</div>
+	);
+}
+
+/**
+ * Scroll-only mode, as the threads dropdown uses it (ORISO-Frontend#1196
+ * job 2). The panel has a fixed width, so the bar scrolls and never resizes.
+ */
+export const ScrollOnlyInteraction: Story = {
+	name: 'Interaction — scroll-only (threads dropdown)',
+	args: { onResize: () => {} },
+	render: () => <ScrollOnlyDemo />,
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector(
+			'.sessionsList__resizeHandle'
+		) as HTMLElement | null;
+		const scroller = canvasElement.querySelector(
+			'div[style*="overflow"]'
+		) as HTMLElement | null;
+
+		await expect(handle).not.toBeNull();
+		await expect(scroller).not.toBeNull();
+
+		// It announces as a scrollbar, not a separator: there is no width to
+		// move here, so "separator" would promise a control that does nothing.
+		await expect(handle).toHaveAttribute('role', 'scrollbar');
+		await expect(handle).toHaveAttribute('aria-valuemax', '100');
+
+		handle!.focus();
+		await expect(scroller!.scrollTop).toBe(0);
+
+		await userEvent.keyboard('{ArrowDown}');
+		await expect(scroller!.scrollTop).toBeGreaterThan(0);
+
+		await userEvent.keyboard('{Home}');
+		await expect(scroller!.scrollTop).toBe(0);
+
+		// End goes to the bottom rather than resizing anything.
+		await userEvent.keyboard('{End}');
+		await expect(scroller!.scrollTop).toBeGreaterThan(0);
 	}
 };
