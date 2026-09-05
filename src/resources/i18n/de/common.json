@@ -2509,6 +2509,7 @@
 				"cta": "Wiederherstellungsschlüssel einrichten"
 			},
 			"showKey": {
+				"headline": "Ersatzschlüssel speichern",
 				"silentExplainer": "Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Wiederherstellungsschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
 				"explainer": "Das ist Ihr Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.",
 				"copy": "Schlüssel kopieren",
@@ -4582,7 +4583,14 @@
 		"displayName": {
 			"headline": "Ihr angezeigter Name",
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Ihr angezeigter Name",
+				"copy": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
+				"reroll": "Namen neu würfeln",
+				"save": "Übernehmen",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
+			}
 		}
 	},
 	"dpaSign": {

@@ -2471,6 +2471,7 @@
 				"cta": "Set up recovery key"
 			},
 			"showKey": {
+				"headline": "Save your backup key",
 				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
@@ -4492,7 +4493,14 @@
 		"displayName": {
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
-			"action": "Change my name"
+			"action": "Change my name",
+			"overlay": {
+				"headline": "Your displayed name",
+				"copy": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+				"reroll": "Roll a new name",
+				"save": "Use this name",
+				"saveFailed": "Saving failed. Please try again."
+			}
 		}
 	},
 	"dpaSign": {

@@ -2488,6 +2488,7 @@
 				"cta": "Kurtarma anahtarı oluştur"
 			},
 			"showKey": {
+				"headline": "Yedek anahtarınızı kaydedin",
 				"silentExplainer": "Kasanız giriş yaparken otomatik olarak kuruldu. Bu, sizin kurtarma anahtarınız — anahtarı şimdi güvenli bir yere kaydedin, örneğin bir parola yöneticisine. Bundan sonra anahtarı bir daha göstermeyeceğiz.",
 				"explainer": "Bu, sizin kurtarma anahtarınız. Yalnızca bu bir kez gösterilir. Anahtarı şimdi güvenli bir yere kaydedin.",
 				"copy": "Anahtarı kopyala",
@@ -4552,7 +4553,14 @@
 		"displayName": {
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
-			"action": "Adımı değiştir"
+			"action": "Adımı değiştir",
+			"overlay": {
+				"headline": "Görünen adınız",
+				"copy": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
+				"reroll": "Yeni bir ad at",
+				"save": "Bu adı kullan",
+				"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin."
+			}
 		},
 		"notificationChoice": {
 			"both": "İkisi de, ve şimdi kendim bir şifre belirleyeyim",
