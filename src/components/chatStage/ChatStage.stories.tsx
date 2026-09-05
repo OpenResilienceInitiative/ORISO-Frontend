@@ -279,7 +279,10 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
  * 1320:38281: "Room Header All" at y = 16 inside the card, "Room Header
  * Content" (the 40 px avatar row) 6 px below it, nothing extra. Measured
  * from the card's inner edge (its 1 px border excluded): row = +16,
- * avatars = +22 — main chat and side panel alike.
+ * avatars = +22 in Figma — main chat and side panel alike.
+ * T43 (Frank, round 7): the row's top padding is 2 instead of 6 — Frank
+ * deviates from Figma by 4 px; avatars = +18, the 6 px below the row (to
+ * the hairline) stay, so both hairlines still end on the same y (T3).
  */
 const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
 	const card = canvasElement.querySelector<HTMLElement>('.chatStage__card')!;
@@ -300,15 +303,16 @@ const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
 	await expect(
 		Math.round(mainRow.getBoundingClientRect().top - cardInnerTop)
 	).toBe(16);
+	// T43 (round 7): 16 + 2 — Frank deviates from Figma (16 + 6) by 4 px.
 	await expect(
 		Math.round(mainStack.getBoundingClientRect().top - cardInnerTop)
-	).toBe(22);
+	).toBe(18);
 	await expect(
 		Math.round(panelRow.getBoundingClientRect().top - cardInnerTop)
 	).toBe(16);
 	await expect(
 		Math.round(panelStack.getBoundingClientRect().top - cardInnerTop)
-	).toBe(22);
+	).toBe(18);
 	// Nothing sits between the card edge and the header: the header is
 	// the pane's first box and starts on the card's inner edge.
 	const mainHeader = canvasElement.querySelector<HTMLElement>(
@@ -325,8 +329,11 @@ const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
 	).toBe(0);
 	await expect(getComputedStyle(mainHeader).paddingTop).toBe('16px');
 	await expect(getComputedStyle(panelHeader).paddingTop).toBe('16px');
-	await expect(getComputedStyle(mainRow).paddingTop).toBe('6px');
-	await expect(getComputedStyle(panelRow).paddingTop).toBe('6px');
+	await expect(getComputedStyle(mainRow).paddingTop).toBe('2px');
+	await expect(getComputedStyle(panelRow).paddingTop).toBe('2px');
+	// … while the 6 px to the hairline below the row stay.
+	await expect(getComputedStyle(mainRow).paddingBottom).toBe('6px');
+	await expect(getComputedStyle(panelRow).paddingBottom).toBe('6px');
 };
 
 /**
@@ -626,7 +633,7 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
 		).not.toBeNull();
-		// T39: header rows start at the card's top padding (16 + 6).
+		// T39/T43: header rows start at the card's top padding (16 + 2).
 		await expectHeaderRowsAtCardTop(canvasElement);
 		// T40: one bordered box per composer, outer corner = card radius.
 		await expectSingleBoxComposers(canvasElement);

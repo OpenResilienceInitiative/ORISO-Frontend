@@ -19,6 +19,13 @@ $room-header-inset: 16px;
 $room-header-row: 40px;
 $room-header-gap: 6px;
 
+// T43 (Frank, round 7, 05.09.2026): the header row sits 4 px tighter at the
+// top than Figma 1320:38281 (Room Header Content y 6 → 2) — Frank deviates
+// from Figma by 4 px on purpose. The bottom keeps the 6 px to the hairline.
+// `sidePanel.styles.scss` (PanelHeader) mirrors it so both hairlines still
+// end on the same y (T3).
+$room-header-gap-top: 2px;
+
 .sessionInfo {
 	display: flex;
 	flex-direction: column;
@@ -42,7 +49,7 @@ $room-header-gap: 6px;
 		align-items: center;
 		box-sizing: content-box;
 		margin-left: 0;
-		padding: $room-header-gap 0;
+		padding: $room-header-gap-top 0 $room-header-gap;
 		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
 
 		// The action group (calls, menu) never shrinks; the title does.

@@ -85,6 +85,10 @@ $room-header-inset: 16px;
 $room-header-row: 40px;
 $room-header-gap: 6px;
 
+// T43: row padding-top 2 px (Frank's 4 px deviation from Figma), see
+// `sessionHeader.styles.scss`.
+$room-header-gap-top: 2px;
+
 // Measured in the same Figma node (T17): title text 6 px after the avatar
 // group, 12 px between the 32 px action buttons of the call menu.
 $room-title-inset: 6px;
@@ -132,7 +136,7 @@ $room-actions-gap: 12px;
 		align-items: center;
 		gap: 0;
 		height: $room-header-row;
-		padding: $room-header-gap 0;
+		padding: $room-header-gap-top 0 $room-header-gap;
 		box-sizing: content-box;
 		min-width: 0;
 	}
