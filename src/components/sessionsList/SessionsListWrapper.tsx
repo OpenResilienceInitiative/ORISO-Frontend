@@ -12,14 +12,13 @@ import './sessionsList.styles';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { useResponsive } from '../../hooks/useResponsive';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
-import { useLocation } from 'react-router-dom';
-import { parseChannel } from '../../utils/channelRoute';
 import {
 	readPanelWidth,
 	resolveStageLayout,
 	STAGE_LAYOUT
 } from '../chatStage/stageLayout';
 import { useViewportWidth } from '../chatStage/useViewportWidth';
+import { useChatStageOpenPanel } from '../chatStage/ChatStagePanelContext';
 
 interface SessionsListWrapperProps {
 	sessionTypes: SESSION_TYPES;
@@ -69,14 +68,16 @@ export const SessionsListWrapper = ({
 		return width;
 	});
 
-	// D10 / B2 (review v11 checklist 7): while a side panel is open
-	// (`?channel=`, the one truth) the list column snaps to the icon rail
-	// when the chat card cannot host two 520 px panes next to it — the
-	// same `resolveStageLayout` rule the stage uses. The persisted width
-	// survives; dragging the list wider is locked meanwhile.
-	const location = useLocation();
+	// D10 / B2 (review v11 checklist 7): while a side pane is open the
+	// list column snaps to the icon rail when the chat card cannot host
+	// two 520 px panes next to it — the same `resolveStageLayout` rule the
+	// stage uses. "Open" is the pane the card actually shows
+	// (`ChatStagePanelContext`, review D-4), not the `?channel=` request:
+	// an asker's forwarded link or an unloaded thread root keeps the param
+	// without a pane. The persisted width survives; dragging the list
+	// wider is locked meanwhile.
 	const viewportWidth = useViewportWidth();
-	const panelOpen = parseChannel(location.search).channel !== null;
+	const panelOpen = useChatStageOpenPanel() !== null;
 	const stageLayout = resolveStageLayout({
 		viewportWidth,
 		listWidth: sidebarWidth,

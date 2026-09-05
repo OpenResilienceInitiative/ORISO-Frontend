@@ -31,6 +31,7 @@ import {
 	FailedSendTimelineEntry
 } from '../message/FailedSendTimelineEntry';
 import { failedSendBelongsTo } from '../message/failedSendTarget';
+import { useReportChatStagePanel } from '../chatStage/ChatStagePanelContext';
 import {
 	ReactionEvent,
 	AggregatedReaction,
@@ -3494,6 +3495,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			: openPanel === 'thread' && activeThreadRootId
 				? activeThreadRootId
 				: undefined;
+	// The list column snaps to the rail for the pane that is REALLY open
+	// (review D-4) — report the resolved pane, clear it on unmount.
+	const reportChatStagePanel = useReportChatStagePanel();
+	useEffect(() => {
+		reportChatStagePanel(openPanel);
+		return () => reportChatStagePanel(null);
+	}, [openPanel, reportChatStagePanel]);
 
 	// No param on entry: reopen the last channel of this session; a
 	// remembered close stays closed; nothing remembered → the side room
