@@ -29,6 +29,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { ToolbarButton, ToolbarDivider } from './ToolbarButton';
 import { ToolbarMenu, ToolbarMenuItem } from './ToolbarMenu';
+import { useScrollableBar } from './useScrollableBar';
 import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
@@ -121,6 +122,9 @@ export const ComposerToolbar = ({
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
 	const anchorRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+	// Review v6 (T22): same sideways scrolling as the compact bar.
+	const barRef = useRef<HTMLDivElement | null>(null);
+	useScrollableBar(barRef);
 
 	const toggleMenu = useCallback(
 		(menu: Exclude<ComposerToolbarMenu, null>) =>
@@ -314,7 +318,11 @@ export const ComposerToolbar = ({
 	const unread = Math.max(0, Math.round(unreadCount));
 
 	return (
-		<div className="composerToolbar" data-direction={direction}>
+		<div
+			className="composerToolbar"
+			data-direction={direction}
+			ref={barRef}
+		>
 			{showBack && (
 				<ToolbarButton
 					label={translate('message.mobileNav.back', 'Navigate up')}

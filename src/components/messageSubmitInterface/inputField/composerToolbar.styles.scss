@@ -21,9 +21,41 @@
 		display: none;
 	}
 
+	// Review v6 (T22): a resting position lands on whole icons — never on
+	// half a glyph — and the trailing inset keeps the last icon clear of
+	// the bar's edge.
+	scroll-snap-type: x proximity;
+	scroll-padding-inline: 4px;
+
 	// Every button keeps its width; the ROW scrolls instead (T22).
 	> * {
 		flex: 0 0 auto;
+		scroll-snap-align: start;
+	}
+
+	// Review v6 (T22): the hidden edge fades out (`useScrollableBar` sets
+	// the flags) — a scrollbar is hidden above, so this is the only hint
+	// that the row goes on.
+	&[data-overflow-end='true'] {
+		mask-image: linear-gradient(
+			to right,
+			#000 calc(100% - 24px),
+			transparent
+		);
+	}
+
+	&[data-overflow-start='true'] {
+		mask-image: linear-gradient(to right, transparent, #000 24px);
+	}
+
+	&[data-overflow-start='true'][data-overflow-end='true'] {
+		mask-image: linear-gradient(
+			to right,
+			transparent,
+			#000 24px,
+			#000 calc(100% - 24px),
+			transparent
+		);
 	}
 
 	// T22: the compact bar's anchor (emoji picker positioning) must take the

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useRef } from 'react';
 import type { TFunction } from 'i18next';
 import MicIcon from '@mui/icons-material/Mic';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
@@ -9,6 +10,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { ToolbarButton } from './ToolbarButton';
+import { useScrollableBar } from './useScrollableBar';
 import './composerToolbar.styles.scss';
 
 /** Figma "SVG - Text formatieren": T glyph with pen, opens the full tools. */
@@ -89,8 +91,16 @@ export const DefaultActionBar = ({
 		'Scroll to bottom'
 	);
 	const unread = Math.max(0, Math.round(unreadCount));
+	// Review v6 (T22): the bar scrolls sideways — fade the hidden edge and
+	// let a mouse wheel travel along it.
+	const barRef = useRef<HTMLDivElement | null>(null);
+	useScrollableBar(barRef);
 	return (
-		<div className="composerToolbar composerToolbar--default">
+		<div
+			className="composerToolbar composerToolbar--default"
+			ref={barRef}
+			data-cy="composer-action-bar"
+		>
 			{showBack && (
 				<ToolbarButton
 					label={translate('message.mobileNav.back', 'Navigate up')}
