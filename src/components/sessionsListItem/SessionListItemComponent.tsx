@@ -26,6 +26,8 @@ import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/v
 import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
+// Self-help consulting-type icon (not the supervision marker).
+import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
