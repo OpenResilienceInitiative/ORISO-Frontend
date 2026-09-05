@@ -1167,6 +1167,12 @@ export const MessageSubmitInterfaceComponent = ({
 
 		const textareaContainer = textInput?.closest('.textarea');
 		const textareaContainerHeight = textareaContainer?.offsetHeight;
+		// TODO(B2, D6 05.09.2026): second site of the desktop scroll-to-bottom
+		// FAB — this lookup positions `session__scrollToBottom` above the
+		// composer. B2 removes it together with the FAB block in
+		// `SessionItemComponent.tsx` (the composer toolbar's
+		// `composer-scroll-to-newest` arrow is the one control; the stage
+		// story (a) asserts that no FAB renders in either pane).
 		const scrollButton = textareaContainer
 			?.closest('.session')
 			?.getElementsByClassName('session__scrollToBottom')[0];

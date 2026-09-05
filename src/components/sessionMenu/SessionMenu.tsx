@@ -649,8 +649,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							hasVideoCallFeatures() &&
 							!props.isSupervisor && (
 								<>
+									{/* Review v10: real controls — native buttons
+									    (role button, keyboard by default) inside the
+									    organism's `role="dialog"` card; the visible
+									    title is the accessible name. A `menuitem`
+									    role needs the organism's container to be a
+									    `role="menu"` — that is the organism-wide
+									    keyboard ticket, not this row. */}
 									{isVideoCallsEnabled && (
-										<div
+										<button
+											type="button"
 											className="sessionMenu__item chatMenuDropdown__item"
 											onClick={() => {
 												setFlyoutOpen(false);
@@ -664,10 +672,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													'videoCall.button.startVideoCall'
 												)}
 											/>
-										</div>
+										</button>
 									)}
 									{isAudioCallsEnabled && (
-										<div
+										<button
+											type="button"
 											className="sessionMenu__item chatMenuDropdown__item"
 											onClick={() => {
 												setFlyoutOpen(false);
@@ -681,7 +690,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													'videoCall.button.startCall'
 												)}
 											/>
-										</div>
+										</button>
 									)}
 								</>
 							)}

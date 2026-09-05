@@ -691,7 +691,16 @@ export const SupervisionInsideTheCard: Story = {
 		}
 		// D6: the composer toolbar's arrow is THE scroll-to-newest control —
 		// the old desktop FAB (`session__scrollToBottom`) never renders next
-		// to it (B2 drops it in SessionItemComponent, `hideLegacyScrollFab`).
+		// to it, in NEITHER pane (B2 drops the FAB block in
+		// SessionItemComponent AND the composer's lookup of it in
+		// messageSubmitInterfaceComponent — both carry a TODO(B2) marker).
+		for (const pane of ['stage-main', 'stage-panel']) {
+			await expect(
+				canvasElement.querySelector(
+					`[data-cy="${pane}"] .session__scrollToBottom`
+				)
+			).toBeNull();
+		}
 		await expect(
 			canvasElement.querySelector('.session__scrollToBottom')
 		).toBeNull();
@@ -1235,13 +1244,22 @@ export const PanelChannelCardOrganismHover: Story = {
 				item.querySelector('.chatMenuDropdown__itemDescription')
 			).not.toBeNull();
 		});
-		// Hover / selected = D3 "Hellblau" surface (#e7effc, the alias
-		// `--oriso-menu-hover-surface`), primary label + icon.
+		// Hover / selected = D3 "Hellblau" surface (the alias
+		// `--oriso-menu-hover-surface`), primary label + icon. Review v10:
+		// the alias is bound to the engine's `--m3-on-secondary-container`
+		// (the table's #e7effc; the engine emits #e6effb — within one unit),
+		// so the assertion follows the engine, not a hard hex.
 		const root = getComputedStyle(document.documentElement);
 		const secondaryFixed = root
 			.getPropertyValue('--oriso-menu-hover-surface')
 			.trim();
-		await expect(secondaryFixed.toLowerCase()).toBe('#e7effc');
+		const engineHover = root
+			.getPropertyValue('--m3-on-secondary-container')
+			.trim();
+		await expect(engineHover).toMatch(/^#e[67]eff[bc]$/i);
+		await expect(secondaryFixed.toLowerCase()).toBe(
+			engineHover.toLowerCase()
+		);
 		const primary = root.getPropertyValue('--m3-primary').trim();
 		const primaryFixed = root.getPropertyValue('--m3-primary-fixed').trim();
 		const toRgb = (hex: string) => {
@@ -1597,12 +1615,28 @@ const expectPhoneHeaderRules = async (
 		const flyout = canvasElement.querySelector<HTMLElement>(
 			'.sessionMenu__content--open'
 		)!;
-		await expect(
-			flyout.querySelector('[data-cy="session-menu-start-video-call"]')
-		).not.toBeNull();
-		await expect(
-			flyout.querySelector('[data-cy="session-menu-start-call"]')
-		).not.toBeNull();
+		const videoRow = flyout.querySelector<HTMLElement>(
+			'[data-cy="session-menu-start-video-call"]'
+		)!;
+		const audioRow = flyout.querySelector<HTMLElement>(
+			'[data-cy="session-menu-start-call"]'
+		)!;
+		await expect(videoRow).not.toBeNull();
+		await expect(audioRow).not.toBeNull();
+		// Review v10 D8: the call rows are real controls — native buttons
+		// (role button, Tab reaches them, Enter/Space activate) with the
+		// visible title as their name; not `div onClick`.
+		for (const row of [videoRow, audioRow]) {
+			await expect(row.tagName).toBe('BUTTON');
+			await expect((row as HTMLButtonElement).type).toBe('button');
+			await expect(row.tabIndex).toBe(0);
+			// (the flyout fades in — focus lands once it is visible)
+			await waitFor(() => {
+				row.focus();
+				expect(document.activeElement).toBe(row);
+			});
+			await expect(row.textContent?.trim().length).toBeGreaterThan(0);
+		}
 		// (the organism keeps its rows mounted; "closed" = the open class gone)
 		await userEvent.click(kebab);
 		await waitFor(() =>

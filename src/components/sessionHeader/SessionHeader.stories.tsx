@@ -651,8 +651,9 @@ export const ActiveConversationParticipants: Story = {
 			}
 			ancestor = ancestor.parentElement;
 		}
-		// T3: the hairline sits at 16 + 6 + 40 + 6 = 68 px from the header
-		// top; the row's box (incl. the 1 px hairline) ends at 69.
+		// T3/T43: the hairline sits at 16 + 2 + 40 + 6 = 64 px from the
+		// header top (T43: row padding-top 2 — Frank deviates from Figma's 6
+		// by 4 px); the row's box (incl. the 1 px hairline) ends at 65.
 		const header = canvasElement.querySelector('.sessionInfo')!;
 		const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
 		await expect(
@@ -660,7 +661,7 @@ export const ActiveConversationParticipants: Story = {
 				row.getBoundingClientRect().bottom -
 					header.getBoundingClientRect().top
 			)
-		).toBe(69);
+		).toBe(65);
 		await expectTitleClearOfActions(canvasElement);
 	}
 };
