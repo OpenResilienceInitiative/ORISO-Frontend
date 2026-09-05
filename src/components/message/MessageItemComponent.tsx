@@ -1153,14 +1153,11 @@ export const MessageItemComponent = ({
 		renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;
 
 	const getMessageDate = () => {
-		if (messageDate.str || messageDate.date) {
-			return (
-				<MessageDateDivider
-					label={translate(
-						messageDate.str ? messageDate.str : messageDate.date
-					)}
-				/>
-			);
+		// Defence in depth (N-2): a message without a date must never send
+		// the whole conversation to the error page.
+		const label = messageDate?.str || messageDate?.date;
+		if (label) {
+			return <MessageDateDivider label={translate(label)} />;
 		}
 		return null;
 	};

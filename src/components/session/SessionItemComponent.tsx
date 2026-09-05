@@ -15,7 +15,12 @@ import {
 	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
 } from './anonymousConsentInvariant';
 import clsx from 'clsx';
-import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
+import {
+	buildSupervisionTimeline,
+	scrollToEnd,
+	isMyMessage,
+	SESSION_LIST_TYPES
+} from './sessionHelpers';
 import { getModality, Modality } from './getModality';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
@@ -3871,28 +3876,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!hasSupervisionSideRoom) {
 			return [];
 		}
-		const list = supervisionMessages || [];
 		const supervisorName = isSupervisor
 			? userData?.displayName || userData?.userName || ''
 			: supervisionCounterpartName;
-		const notice: MessageItem = {
-			...(list[0] || ({} as MessageItem)),
-			_id: '$supervision-system-notice',
-			rid: supervisionRoomId || '',
-			userId: '@system:oriso',
-			username: 'system',
-			displayName: 'system',
-			messageTime: list[0]?.messageTime || String(Date.now()),
-			message: `[SYSTEM_NOTIFICATION]${JSON.stringify({
-				title: translate('supervision.panel.title'),
-				description: translate('supervision.panel.systemNotice', {
-					name: supervisorName
-				})
-			})}`,
-			threadRootEventId: null,
-			replyToEventId: null
-		} as MessageItem;
-		return [notice, ...list];
+		return buildSupervisionTimeline(supervisionMessages, {
+			roomId: supervisionRoomId || '',
+			title: translate('supervision.panel.title'),
+			description: translate('supervision.panel.systemNotice', {
+				name: supervisorName
+			}),
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+		});
 	}, [
 		hasSupervisionSideRoom,
 		supervisionMessages,
@@ -3901,6 +3895,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.displayName,
 		userData?.userName,
 		supervisionCounterpartName,
+		activeSession.item?.askerMatrixUserId,
 		translate
 	]);
 

@@ -11,6 +11,7 @@ import { SidePanel, InfoBanner, type SidePanelVariant } from './SidePanel';
 import { PanelHeader } from './PanelHeader';
 import { ChannelSwitcherFab } from './ChannelSwitcherFab';
 import { MessageTimeline } from '../session/MessageTimeline';
+import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -119,6 +120,7 @@ function SupervisionSideRoom({
 	variant = 'card',
 	withBanner = false,
 	empty = false,
+	firstVisit = false,
 	unread = 0,
 	onBack,
 	switcher
@@ -126,6 +128,8 @@ function SupervisionSideRoom({
 	variant?: SidePanelVariant;
 	withBanner?: boolean;
 	empty?: boolean;
+	/** N-2: the app path — notice built over a side room with zero messages. */
+	firstVisit?: boolean;
 	unread?: number;
 	onBack?: () => void;
 	switcher?: React.ReactNode;
@@ -166,15 +170,30 @@ function SupervisionSideRoom({
 			timeline={
 				empty ? null : (
 					<MessageTimeline
-						messages={[
-							supervisionSystemNotice(
-								t('supervision.panel.title'),
-								t('supervision.panel.systemNotice', {
-									name: SUPERVISOR_NAME
-								})
-							),
-							...supervisionMessages()
-						]}
+						messages={
+							firstVisit
+								? buildSupervisionTimeline([], {
+										roomId: SUPERVISION_ROOM_ID,
+										title: t('supervision.panel.title'),
+										description: t(
+											'supervision.panel.systemNotice',
+											{ name: SUPERVISOR_NAME }
+										),
+										askerMatrixUserId: CLIENT_MATRIX_ID
+									})
+								: [
+										supervisionSystemNotice(
+											t('supervision.panel.title'),
+											t(
+												'supervision.panel.systemNotice',
+												{
+													name: SUPERVISOR_NAME
+												}
+											)
+										),
+										...supervisionMessages()
+									]
+						}
 						renderMode="main"
 						threadsEnabled={false}
 						clientName={SUPERVISOR_NAME}
@@ -530,6 +549,34 @@ export const Empty: Story = {
 		await expect(
 			canvasElement.querySelectorAll('.messageItem').length
 		).toBe(0);
+	}
+};
+
+export const EmptyWithSupervisionNotice: Story = {
+	name: 'Supervision — first visit, empty side room with notice',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom firstVisit />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		// N-2: the notice is the only item and must not throw on a missing
+		// `messageDate` — this is what a freshly assigned standing supervisor
+		// (and the counsellor) see before anyone has written.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.textarea__wrapper-send-message')
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelectorAll('.messageItem').length
+		).toBe(1);
+		await expect(canvasElement.textContent).toContain(SUPERVISOR_NAME);
+		// No date pill: the app hands the notice an empty `PrettyDate`.
+		await expect(
+			canvasElement.querySelector('.messageDateDivider')
+		).toBeNull();
 	}
 };
 
