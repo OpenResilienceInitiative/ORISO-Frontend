@@ -418,15 +418,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			transform 140ms ease;
 	}
 
-	// Once cards overflow, the same visible dragbar becomes their scrollbar
-	// thumb. No separate full-height side line is rendered beside populated
-	// fields.
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: var(--sessions-list-thumb-top);
-		height: var(--sessions-list-thumb-height);
-		transform: none;
-	}
-
 	&__resizeHandle:hover &__resizeHandlePill {
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.22),
@@ -442,14 +433,8 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: var(--m3-primary-fixed, #ffdad5);
 	}
 
-	&__resizeHandle[data-dragging='true'][data-scrollable='false']
-		&__resizeHandlePill {
+	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='true']
-		&__resizeHandlePill {
-		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {

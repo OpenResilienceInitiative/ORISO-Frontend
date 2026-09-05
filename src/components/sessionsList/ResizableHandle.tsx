@@ -63,81 +63,45 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		scrollTop: number;
 	} | null>(null);
 
-	const [thumbStyleVars, setThumbStyleVars] = useState<{
-		thumbTopPx: number;
-		thumbHeightPx: number;
-	}>({ thumbTopPx: 0, thumbHeightPx: 56 });
 	const [isScrollable, setIsScrollable] = useState(false);
 	const [scrollPercent, setScrollPercent] = useState(0);
 	const rafIdRef = useRef<number | null>(null);
 
-	const updateThumbFromScrollTarget = useCallback(() => {
+	/**
+	 * The bar is a handle, not a scrollbar thumb: it keeps its place when the
+	 * list overflows, and the scroll area behind it stays invisible
+	 * (ORISO-Frontend#1196). So only two things are tracked - whether there is
+	 * anything to scroll, and how far down we are for the scrollbar role's
+	 * aria value. No geometry is pushed into CSS any more.
+	 */
+	const updateScrollState = useCallback(() => {
 		const el = scrollTargetRef?.current;
 		if (!el) return;
 
-		// If we're actively resizing horizontally, keep the thumb stable to avoid
-		// jitter caused by layout wrapping during drag.
+		// Mid-resize the list re-wraps and re-measures; leaving the state alone
+		// keeps the bar from flickering while the pointer is down.
 		if (isDragging && dragModeRef.current === 'resize') {
 			return;
 		}
 
-		const view = el.clientHeight;
-		const content = el.scrollHeight;
-		const maxScrollTop = Math.max(0, content - view);
-
-		// Track should match the scroll container position in the sidebar so the thumb
-		// doesn't jump when header/toolbar height changes.
-		const handleRect = handleRef.current?.getBoundingClientRect();
-		const scrollRect = el.getBoundingClientRect();
-		const trackTopWithinHandle = handleRect
-			? Math.max(0, Math.round(scrollRect.top - handleRect.top))
-			: 0;
-		const trackHeightVisible = Math.round(scrollRect.height || view);
-
-		// When list scrolls, we only want thumb to travel over the scroll container area.
-		const handleHeight = trackHeightVisible;
-		// Add a small padding so the rounded pill isn't clipped at edges.
-		const TRACK_PADDING = 6;
-		const trackHeight = Math.max(0, handleHeight - TRACK_PADDING * 2);
-		// Non-scrollable: keep the pill centered (like the reference).
-		if (maxScrollTop <= 0 || trackHeight <= 0) {
+		const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+		if (maxScrollTop <= 0) {
 			setIsScrollable(false);
 			setScrollPercent(0);
-			setThumbStyleVars({ thumbTopPx: 0, thumbHeightPx: 56 });
 			return;
 		}
 
 		setIsScrollable(true);
 		setScrollPercent(Math.round((el.scrollTop / maxScrollTop) * 100));
+	}, [isDragging, scrollTargetRef]);
 
-		// Figma-like small pill: clamp thumb size so it stays compact.
-		const MIN_THUMB = SCROLL_THUMB_MIN_PX;
-		const MAX_THUMB = SCROLL_THUMB_MAX_PX;
-		const idealThumb = (view / content) * trackHeight;
-		const thumbHeightPx = Math.max(
-			MIN_THUMB,
-			Math.min(MAX_THUMB, trackHeight, Math.round(idealThumb))
-		);
-
-		const maxThumbTop = Math.max(0, trackHeight - thumbHeightPx);
-		const scrollProgress = el.scrollTop / maxScrollTop;
-
-		// Standard scrollbar mapping: top..bottom.
-		const thumbTopPx =
-			trackTopWithinHandle +
-			TRACK_PADDING +
-			Math.round(scrollProgress * maxThumbTop);
-
-		setThumbStyleVars({ thumbTopPx, thumbHeightPx });
-	}, [SCROLL_THUMB_MAX_PX, SCROLL_THUMB_MIN_PX, isDragging, scrollTargetRef]);
-
-	const scheduleThumbUpdate = useCallback(() => {
+	const scheduleScrollStateUpdate = useCallback(() => {
 		if (rafIdRef.current !== null) return;
 		rafIdRef.current = globalThis.requestAnimationFrame(() => {
 			rafIdRef.current = null;
-			updateThumbFromScrollTarget();
+			updateScrollState();
 		});
-	}, [updateThumbFromScrollTarget]);
+	}, [updateScrollState]);
 
 	const normalizeWidth = useCallback(
 		(width: number) => {
@@ -424,19 +388,19 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const el = scrollTargetRef?.current;
 		if (!el) return;
 
-		scheduleThumbUpdate();
-		const onScroll = () => scheduleThumbUpdate();
+		scheduleScrollStateUpdate();
+		const onScroll = () => scheduleScrollStateUpdate();
 		el.addEventListener('scroll', onScroll, { passive: true });
 
 		const RO = globalThis.ResizeObserver ?? PolyfillResizeObserver;
-		const ro = new RO(() => scheduleThumbUpdate());
+		const ro = new RO(() => scheduleScrollStateUpdate());
 		ro.observe(el);
 
 		return () => {
 			el.removeEventListener('scroll', onScroll);
 			ro.disconnect();
 		};
-	}, [scheduleThumbUpdate, scrollTargetRef]);
+	}, [scheduleScrollStateUpdate, scrollTargetRef]);
 
 	useEffect(() => {
 		return () => {
@@ -531,10 +495,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				handleRef.current?.focus({ preventScroll: true });
 			}}
 			onKeyDown={handleKeyDown}
-			style={{
-				['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
-				['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
-			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
 		</div>
