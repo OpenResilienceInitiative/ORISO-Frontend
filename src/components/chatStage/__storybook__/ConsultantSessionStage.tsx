@@ -45,6 +45,7 @@ import {
 	writePanelWidth
 } from '../stageLayout';
 import { useDockedComposerOffset } from '../useDockedComposerOffset';
+import { useComposerFocus } from '../useComposerFocus';
 import {
 	ChatStageProviders,
 	ListRowSession,
@@ -210,14 +211,18 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 
 function MainChat({
 	fab,
-	threadReplies
+	threadReplies,
+	hideFabWhileComposing = false
 }: {
 	fab?: React.ReactNode;
 	threadReplies: number;
+	/** Phone: the FAB steps back while the composer has focus (T10). */
+	hideFabWhileComposing?: boolean;
 }) {
 	const { t } = useTranslation();
 	const paneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(paneRef);
+	const composing = useComposerFocus(paneRef);
 	// The app opens a conversation at its newest message.
 	useEffect(() => {
 		const toBottom = () => {
@@ -270,7 +275,12 @@ function MainChat({
 			/>
 			{React.isValidElement(fab)
 				? React.cloneElement(fab as React.ReactElement<any>, {
-						bottomOffset: fabOffset
+						bottomOffset: fabOffset,
+						// Only override the element's own `fabHidden` while
+						// composing; the desktop FAB manages it itself (T1).
+						...(hideFabWhileComposing && composing
+							? { fabHidden: true }
+							: {})
 					})
 				: fab}
 		</div>
@@ -638,6 +648,7 @@ export function ConsultantSessionStage({
 								onMouseDown={focusSessionChromeOnPointerDown}
 							>
 								<MainChat
+									hideFabWhileComposing
 									fab={
 										<ChannelSwitcherFab
 											channels={channels}

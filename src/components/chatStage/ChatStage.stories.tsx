@@ -175,6 +175,17 @@ export const SupervisionInsideTheCard: Story = {
 		).toBeNull();
 		// T8: no "•••" next to the topic tag.
 		await expect(canvasElement.textContent ?? '').not.toContain('•••');
+		// Review 05.09.: with the panel open the main title must end in an
+		// ellipsis before the call buttons — never underneath them.
+		const title = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .sessionInfo__username h3'
+		)!;
+		const actions = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .sessionInfo__headerWrapper > .sessionMenu__wrapper'
+		)!;
+		await expect(title.getBoundingClientRect().right).toBeLessThanOrEqual(
+			actions.getBoundingClientRect().left + 0.5
+		);
 	}
 };
 
@@ -312,10 +323,23 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 			'.textarea__wrapper-send-message .ProseMirror'
 		)!;
 		const oneLine = shell.getBoundingClientRect().height;
-		// One line: ~120 px (composerResize MIN_HEIGHT_MOBILE + the rendered
+		// One line: ~102 px (composerResize MIN_HEIGHT_MOBILE + the rendered
 		// line's rounding), a far cry from the old 180 px block.
-		await expect(oneLine).toBeGreaterThanOrEqual(118);
-		await expect(oneLine).toBeLessThanOrEqual(128);
+		await expect(oneLine).toBeGreaterThanOrEqual(100);
+		await expect(oneLine).toBeLessThanOrEqual(110);
+		// One visual line: the card ends ≤ 12 px under the editor line.
+		await expect(
+			shell.getBoundingClientRect().bottom -
+				editor.getBoundingClientRect().bottom
+		).toBeLessThanOrEqual(12);
+		// Collapsed: no navigator row (◂ ▬ ▾) as a fixed element on the phone,
+		// and the FAB is there.
+		await expect(
+			canvasElement.querySelector('.textarea__mobileNavigator')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher"]')
+		).not.toBeNull();
 		// The app's bottom navigation, not a placeholder.
 		await expect(
 			canvasElement.querySelector(
@@ -334,6 +358,16 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		).toBeLessThanOrEqual(16);
 		// Type three lines → the composer grows with the content.
 		await userEvent.click(editor);
+		// Focused: the navigator row appears with the composer, the FAB
+		// steps back so it cannot ride over the avatar / last bubble.
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.textarea__mobileNavigator')
+			).not.toBeNull();
+			expect(
+				canvasElement.querySelector('[data-cy="channel-switcher"]')
+			).toBeNull();
+		});
 		await userEvent.keyboard(
 			'Zeile eins{Shift>}{Enter}{/Shift}Zeile zwei{Shift>}{Enter}{/Shift}Zeile drei'
 		);
@@ -342,6 +376,9 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 				oneLine + 40
 			)
 		);
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher"]')
+		).toBeNull();
 		// Clear through the TipTap handle on the DOM node (synthetic Backspace
 		// does not reach ProseMirror) → back to one line.
 		(editor as any).editor?.commands.clearContent(true);
@@ -350,6 +387,16 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 				oneLine + 8
 			)
 		);
+		// Blur → collapsed again: FAB back, navigator gone.
+		(document.activeElement as HTMLElement | null)?.blur();
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('[data-cy="channel-switcher"]')
+			).not.toBeNull();
+			expect(
+				canvasElement.querySelector('.textarea__mobileNavigator')
+			).toBeNull();
+		});
 	}
 };
 

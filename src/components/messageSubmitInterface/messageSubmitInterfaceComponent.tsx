@@ -3765,9 +3765,14 @@ export const MessageSubmitInterfaceComponent = ({
 								)}
 							/>
 						)}
+						{/* T10 (stage v3 review): the navigator row is no fixed
+						    element on the phone — it appears while the composer
+						    is focused or has grown beyond one line. */}
 						{isMobileViewport &&
 							!threadRootId &&
-							!isExpandedComposer && (
+							!isExpandedComposer &&
+							(isComposerSelected ||
+								effectiveComposerHeight !== null) && (
 								<div className="textarea__mobileNavigator">
 									<button
 										type="button"

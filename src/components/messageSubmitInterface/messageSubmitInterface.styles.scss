@@ -206,9 +206,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						box-shadow: none !important;
 
 						// T10: one line by default (`composerResize.ts`
-						// MIN_HEIGHT_MOBILE); `--composer-height` grows it.
-						min-height: var(--composer-height, 120px);
-						height: var(--composer-height, 120px);
+						// MIN_HEIGHT_MOBILE = 102); `--composer-height` grows it.
+						min-height: var(--composer-height, 102px);
+						height: var(--composer-height, 102px);
 					}
 
 					&::before {
@@ -220,8 +220,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 120px);
-						height: var(--composer-height, 120px);
+						min-height: var(--composer-height, 102px);
+						height: var(--composer-height, 102px);
 					}
 				}
 			}
@@ -443,6 +443,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				left: 0;
 				right: 0;
 				top: 0;
+
+				// T10: no 16 px dock inside the card on the phone — the outer
+				// 16 px padding is the only space to the bottom navigation.
+				bottom: 0;
 				border-top-left-radius: 0 !important;
 				border-top-right-radius: 0 !important;
 			}

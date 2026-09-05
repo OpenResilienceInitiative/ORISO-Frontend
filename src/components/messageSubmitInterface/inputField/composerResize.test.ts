@@ -62,12 +62,13 @@ describe('getComposerHeightBounds', () => {
 	});
 
 	it('uses the one-line mobile minimum below the breakpoint (T10)', () => {
-		// Toolbar strip (66 px to the editor top) + one 20 px line + 18 px
-		// bottom inset + the card's 16 px dock = 120 px.
+		// Toolbar strip (66 px to the editor top) + one 22 px line + 10 px
+		// bottom inset + 2 × 2 px card border = 102 px — no dock, no spare
+		// line under the placeholder (stage v3 review, 05.09.).
 		expect(
 			getComposerHeightBounds({ viewportWidth: 375, viewportHeight: 812 })
 				.minHeight
-		).toBe(120);
+		).toBe(102);
 		expect(
 			getComposerHeightBounds({
 				viewportWidth: 1280,
