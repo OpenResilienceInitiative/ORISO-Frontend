@@ -193,6 +193,40 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
 		).not.toBeNull();
+		// T16: desktop — the scroll-to-newest arrow leads every action bar,
+		// the phone-only back arrow is absent.
+		await expect(
+			canvasElement.querySelectorAll(
+				'[data-cy="composer-scroll-to-newest"]'
+			).length
+		).toBe(2);
+		await expect(
+			canvasElement.querySelector('[data-cy="composer-back"]')
+		).toBeNull();
+		for (const bar of Array.from(
+			canvasElement.querySelectorAll('.composerToolbar--default')
+		)) {
+			await expect(
+				bar.querySelector('button')?.getAttribute('data-cy')
+			).toBe('composer-scroll-to-newest');
+		}
+		// The panel's arrow scrolls the panel timeline, not the main chat.
+		const panelTimeline = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="side-panel-timeline"]'
+		)!;
+		panelTimeline.scrollTop = 0;
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="stage-panel"] [data-cy="composer-scroll-to-newest"]'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				panelTimeline.scrollHeight -
+					panelTimeline.clientHeight -
+					panelTimeline.scrollTop
+			).toBeLessThanOrEqual(1)
+		);
 		// T5: no chevron collapse button at the list edge.
 		await expect(
 			canvasElement.querySelector('.sessionsList__resizeToggle')
@@ -428,9 +462,9 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		const items = within(await canvas.findByRole('menu')).getAllByRole(
 			'menuitem'
 		);
-		await expect(items.map((i) => i.getAttribute('data-channel-id'))).toEqual(
-			['$thread-2', THREAD_ROOT_ID, 'supervision']
-		);
+		await expect(
+			items.map((i) => i.getAttribute('data-channel-id'))
+		).toEqual(['$thread-2', THREAD_ROOT_ID, 'supervision']);
 		await expect(items[1]).toHaveAttribute('aria-current', 'true');
 		await expect(items[2].textContent).toContain('2');
 		await userEvent.keyboard('{Escape}');
@@ -446,7 +480,9 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		).not.toContain(CLIENT_NAME);
 		// → back to the thread
 		await pickChannelFromHeader(canvasElement, THREAD_ROOT_ID);
-		await waitFor(() => expect(panelTitle(canvasElement).kind).toBe('Thread'));
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Thread')
+		);
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 		// The FAB stays hidden throughout — the header is the switcher.
 		await expect(
@@ -512,7 +548,9 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 		await expect(headerItems[2]).toHaveAttribute('aria-current', 'true');
 		// … and switches on selection.
 		await userEvent.click(headerItems[1]);
-		await waitFor(() => expect(panelTitle(canvasElement).kind).toBe('Thread'));
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Thread')
+		);
 		await expect(
 			canvasElement.querySelector('[data-cy="panel-header-back"]')
 		).not.toBeNull();
@@ -571,11 +609,43 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 			shell.getBoundingClientRect().bottom -
 				editor.getBoundingClientRect().bottom
 		).toBeLessThanOrEqual(12);
-		// Collapsed: no navigator row (◂ ▬ ▾) as a fixed element on the phone,
-		// and the FAB is there.
+		// T16: no navigator row (◂ ▬ ▾) at all any more; its arrows sit at
+		// the start of the composer's action bar — back (phone only) first,
+		// then scroll-to-newest — and the drag pill stays on the phone too.
 		await expect(
 			canvasElement.querySelector('.textarea__mobileNavigator')
 		).toBeNull();
+		const bar = canvasElement.querySelector<HTMLElement>(
+			'.composerToolbar--default'
+		)!;
+		const barButtons = Array.from(bar.querySelectorAll('button'));
+		await expect(barButtons[0].getAttribute('data-cy')).toBe(
+			'composer-back'
+		);
+		await expect(barButtons[1].getAttribute('data-cy')).toBe(
+			'composer-scroll-to-newest'
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="stage-main"] .dragHandle')
+		).not.toBeNull();
+		// The down arrow scrolls the timeline to its newest message.
+		const timeline = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .session__content'
+		)!;
+		timeline.scrollTop = 0;
+		await expect(timeline.scrollTop).toBe(0);
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="composer-scroll-to-newest"]'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				timeline.scrollHeight -
+					timeline.clientHeight -
+					timeline.scrollTop
+			).toBeLessThanOrEqual(1)
+		);
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-switcher"]')
 		).not.toBeNull();
@@ -597,16 +667,16 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		).toBeLessThanOrEqual(16);
 		// Type three lines → the composer grows with the content.
 		await userEvent.click(editor);
-		// Focused: the navigator row appears with the composer, the FAB
-		// steps back so it cannot ride over the avatar / last bubble.
+		// Focused: the FAB steps back so it cannot ride over the avatar /
+		// last bubble; still no navigator row (T16).
 		await waitFor(() => {
-			expect(
-				canvasElement.querySelector('.textarea__mobileNavigator')
-			).not.toBeNull();
 			expect(
 				canvasElement.querySelector('[data-cy="channel-switcher"]')
 			).toBeNull();
 		});
+		await expect(
+			canvasElement.querySelector('.textarea__mobileNavigator')
+		).toBeNull();
 		await userEvent.keyboard(
 			'Zeile eins{Shift>}{Enter}{/Shift}Zeile zwei{Shift>}{Enter}{/Shift}Zeile drei'
 		);
@@ -626,15 +696,12 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 				oneLine + 8
 			)
 		);
-		// Blur → collapsed again: FAB back, navigator gone.
+		// Blur → collapsed again: FAB back.
 		(document.activeElement as HTMLElement | null)?.blur();
 		await waitFor(() => {
 			expect(
 				canvasElement.querySelector('[data-cy="channel-switcher"]')
 			).not.toBeNull();
-			expect(
-				canvasElement.querySelector('.textarea__mobileNavigator')
-			).toBeNull();
 		});
 	}
 };

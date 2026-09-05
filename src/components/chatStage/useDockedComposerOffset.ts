@@ -26,7 +26,7 @@ export const useDockedComposerOffset = (
 		const composerParts = () =>
 			Array.from(
 				container.querySelectorAll<HTMLElement>(
-					'.textarea__wrapper-send-message, .textarea__mobileNavigator'
+					'.textarea__wrapper-send-message'
 				)
 			);
 		const measure = () => {

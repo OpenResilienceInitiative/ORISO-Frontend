@@ -91,6 +91,32 @@
 		}
 	}
 
+	// T16: the scroll-to-newest arrow carries the unread badge — the same
+	// pill as `.session__unreadCount` (primary, 18 px, 10 px label).
+	&__button--scrollToNewest {
+		position: relative;
+	}
+
+	&__badge {
+		position: absolute;
+		top: -3px;
+		right: -3px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 4px;
+		box-sizing: border-box;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+		font-size: 10px;
+		font-weight: 500;
+		line-height: 1;
+		pointer-events: none;
+	}
+
 	&__buttonText {
 		font-size: 14px;
 		font-weight: 500;

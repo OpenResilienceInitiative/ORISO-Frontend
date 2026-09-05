@@ -7,6 +7,7 @@ import { DefaultActionBar } from './DefaultActionBar';
 afterEach(() => cleanup());
 
 const baseProps = {
+	onScrollToNewest: vi.fn(),
 	onOpenTools: vi.fn(),
 	isRecording: false,
 	onMicClick: vi.fn(),
@@ -71,5 +72,56 @@ describe('DefaultActionBar', () => {
 		expect(
 			container.querySelector('.composerToolbar__button--voice')
 		).toBeNull();
+	});
+
+	// T16: the phone's navigator row (◂ ▬ ▾) is gone; its two arrows live
+	// at the start of the action bar — back only on the phone, scroll to
+	// newest everywhere.
+	it('puts the scroll-to-newest arrow first and never shows the back arrow without showBack', () => {
+		render(<DefaultActionBar {...baseProps} showMic />);
+		const buttons = screen.getAllByRole('button');
+		expect(buttons[0].getAttribute('aria-label')).toBe('Scroll to bottom');
+		expect(
+			screen.queryByRole('button', { name: 'Navigate up' })
+		).toBeNull();
+	});
+
+	it('shows the back arrow before the scroll arrow on the phone', () => {
+		const onBack = vi.fn();
+		render(
+			<DefaultActionBar {...baseProps} showMic showBack onBack={onBack} />
+		);
+		const buttons = screen.getAllByRole('button');
+		expect(buttons[0].getAttribute('aria-label')).toBe('Navigate up');
+		expect(buttons[1].getAttribute('aria-label')).toBe('Scroll to bottom');
+		buttons[0].click();
+		expect(onBack).toHaveBeenCalledTimes(1);
+	});
+
+	it('calls onScrollToNewest and badges the unread count on the arrow', () => {
+		const onScrollToNewest = vi.fn();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				onScrollToNewest={onScrollToNewest}
+				unreadCount={3}
+			/>
+		);
+		const arrow = screen.getByRole('button', {
+			name: 'Scroll to bottom – 3'
+		});
+		expect(
+			arrow.querySelector('.composerToolbar__badge')?.textContent
+		).toBe('3');
+		arrow.click();
+		expect(onScrollToNewest).toHaveBeenCalledTimes(1);
+	});
+
+	it('caps the badge at 99+', () => {
+		render(<DefaultActionBar {...baseProps} showMic unreadCount={120} />);
+		expect(
+			document.querySelector('.composerToolbar__badge')?.textContent
+		).toBe('99+');
 	});
 });

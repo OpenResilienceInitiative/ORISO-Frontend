@@ -17,6 +17,7 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
+import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
@@ -286,32 +287,6 @@ export interface MessageSubmitInterfaceComponentProps {
  * None of them closes over anything from the component; the chevron takes the
  * only prop. Keep them here.
  */
-const ComposerMobileBackIcon = () => (
-	<svg
-		width="5"
-		height="10"
-		viewBox="0 0 5 10"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
-	</svg>
-);
-
-const ComposerMobileDownIcon = () => (
-	<svg
-		width="10"
-		height="5"
-		viewBox="0 0 10 5"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
-	</svg>
-);
-
 const AudienceAllMultiIcon = () => (
 	<svg
 		width="19"
@@ -3463,8 +3438,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
+	// T16: the scroll-to-newest arrow in the action bar (every width). The
+	// app passes its own handler; without one the composer scrolls the
+	// timeline of the card / side panel it is docked to.
 	const handleMobileBottomNavigation = useCallback(() => {
-		onMobileNavigateBottom?.();
+		if (onMobileNavigateBottom) {
+			onMobileNavigateBottom();
+			return;
+		}
+		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
 	const getComposerHeightBounds = useCallback(
@@ -3752,9 +3734,10 @@ export const MessageSubmitInterfaceComponent = ({
 								: undefined
 						}
 					>
-						{/* T6: the drag pill belongs to every docked composer —
-						    main chat, supervision room and thread panel alike. */}
-						{!isMobileViewport && !isExpandedComposer && (
+						{/* T6/T16: the drag pill belongs to every docked composer —
+						    main chat, supervision room and thread panel, on the
+						    phone too (the navigator row that carried it is gone). */}
+						{!isExpandedComposer && (
 							<DragHandle
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
@@ -3765,60 +3748,6 @@ export const MessageSubmitInterfaceComponent = ({
 								)}
 							/>
 						)}
-						{/* T10 (stage v3 review): the navigator row is no fixed
-						    element on the phone — it appears while the composer
-						    is focused or has grown beyond one line. */}
-						{isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer &&
-							(isComposerSelected ||
-								effectiveComposerHeight !== null) && (
-								<div className="textarea__mobileNavigator">
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
-										onClick={handleMobileBackNavigation}
-										aria-label={translate(
-											'message.mobileNav.back',
-											'Navigate up'
-										)}
-									>
-										<ComposerMobileBackIcon />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorCenter"
-										onPointerDown={
-											handleComposerResizePointerDown
-										}
-										onKeyDown={handleComposerResizeKeyDown}
-										aria-label={translate(
-											'message.mobileNav.dragToExpand',
-											'Drag to resize composer'
-										)}
-									>
-										<span className="textarea__mobileNavigatorHandle" />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
-										onClick={handleMobileBottomNavigation}
-										aria-label={translate(
-											'message.mobileNav.scrollToBottom',
-											'Scroll to bottom'
-										)}
-									>
-										<ComposerMobileDownIcon />
-										{unreadMobileBadgeCount > 0 && (
-											<span className="textarea__mobileNavigatorBadge">
-												{unreadMobileBadgeCount > 99
-													? '99+'
-													: unreadMobileBadgeCount}
-											</span>
-										)}
-									</button>
-								</div>
-							)}
 						{showAudienceSelector && (
 							<div
 								className="textarea__audienceSelector"
@@ -4338,6 +4267,21 @@ export const MessageSubmitInterfaceComponent = ({
 											{isCompactActionStripOpen ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
+														showBack={
+															isMobileViewport &&
+															Boolean(
+																onMobileNavigateBack
+															)
+														}
+														onBack={
+															handleMobileBackNavigation
+														}
+														onScrollToNewest={
+															handleMobileBottomNavigation
+														}
+														unreadCount={
+															unreadMobileBadgeCount
+														}
 														onOpenTools={
 															closeCompactActionStrip
 														}

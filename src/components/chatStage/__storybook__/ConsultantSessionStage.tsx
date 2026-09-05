@@ -212,12 +212,15 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 function MainChat({
 	fab,
 	threadReplies,
-	hideFabWhileComposing = false
+	hideFabWhileComposing = false,
+	onBack
 }: {
 	fab?: React.ReactNode;
 	threadReplies: number;
 	/** Phone: the FAB steps back while the composer has focus (T10). */
 	hideFabWhileComposing?: boolean;
+	/** Phone: the composer's back arrow leaves the chat (T16). */
+	onBack?: () => void;
 }) {
 	const { t } = useTranslation();
 	const paneRef = useRef<HTMLDivElement | null>(null);
@@ -272,6 +275,7 @@ function MainChat({
 				onSendButton={noop}
 				isTyping={noop}
 				language="de"
+				onMobileNavigateBack={onBack}
 			/>
 			{React.isValidElement(fab)
 				? React.cloneElement(fab as React.ReactElement<any>, {
@@ -375,6 +379,7 @@ function SupervisionRoom({
 					onSendButton={noop}
 					isTyping={noop}
 					language="de"
+					onMobileNavigateBack={onBack}
 				/>
 			}
 			switcher={switcher}
@@ -434,6 +439,7 @@ function ThreadRoom({
 					onSendButton={noop}
 					isTyping={noop}
 					language="de"
+					onMobileNavigateBack={onBack}
 				/>
 			}
 			switcher={switcher}
@@ -541,13 +547,10 @@ export function ConsultantSessionStage({
 	const [phone, setPhone] = useState(initialPhone);
 	useEffect(() => setPanel(initialPanel), [initialPanel]);
 	useEffect(() => setPhone(initialPhone), [initialPhone]);
-	const selectChannel = useCallback(
-		(channelId: string) => {
-			setPanel(panelForChannel(channelId));
-			setPhone((view) => (view === undefined ? view : 'secondary'));
-		},
-		[]
-	);
+	const selectChannel = useCallback((channelId: string) => {
+		setPanel(panelForChannel(channelId));
+		setPhone((view) => (view === undefined ? view : 'secondary'));
+	}, []);
 	const backToMain = useCallback(
 		() => setPhone((view) => (view === undefined ? view : 'main')),
 		[]
@@ -692,6 +695,7 @@ export function ConsultantSessionStage({
 							>
 								<MainChat
 									hideFabWhileComposing
+									onBack={noop}
 									fab={
 										<ChannelSwitcherFab
 											channels={channels}
