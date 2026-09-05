@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	buildVisibleParticipantRules,
 	filterVisibleParticipants,
 	participantIdentityKeys,
 	type VisibleParticipantRules
@@ -248,5 +249,155 @@ describe('filterVisibleParticipants — group chat', () => {
 			supervisors: []
 		});
 		expect(visible).toHaveLength(roomMembers.length);
+	});
+});
+
+/**
+ * `buildVisibleParticipantRules` is the ONE rule builder for the session
+ * header and the side panels (live finding, pre-dev session 74): the panel
+ * used to build supervisor identities from usernames only, so the marker
+ * name (`supervisorDisplayNames`, keyed by `supervisorConsultantIds`) never
+ * applied and the avatar fell back to the Matrix profile name
+ * `sv_supervisor` → initial "S" next to the title "Bettina B.".
+ */
+describe('buildVisibleParticipantRules', () => {
+	const SELF_MATRIX = `@mona.simpson:${SERVER}`;
+	const marker = {
+		supervisedByMe: false,
+		supervisorConsultantIds: [BETTINA_UUID],
+		supervisorDisplayNames: ['Bettina B.'],
+		counsellorDisplayName: 'Mona S.'
+	};
+	const supervisorRow = {
+		supervisorConsultantId: BETTINA_UUID,
+		supervisorUsername: BETTINA_ENCODED,
+		supervisorMatrixUserId: BETTINA_MATRIX
+	};
+	const baseInput = {
+		mode: 'session' as const,
+		isGroup: false,
+		marker,
+		supervisors: [supervisorRow],
+		askerIds: [ASKER_MATRIX, 'enc.ONXW43TFNZRGY5LNMVPTINY.'],
+		consultant: {
+			username: MONA_ENCODED,
+			id: MONA_UUID,
+			consultantId: MONA_UUID,
+			displayName: 'Mona Simpson'
+		},
+		consultantMatrixUserId: MONA_MATRIX,
+		self: {
+			ids: [MONA_ENCODED, MONA_UUID, SELF_MATRIX],
+			displayName: 'Mona Simpson'
+		}
+	};
+
+	it('names a supervisor from the marker by consultant id, Matrix id first', () => {
+		const rules = buildVisibleParticipantRules(baseInput);
+		expect(rules.supervisors).toEqual([
+			{
+				ids: [BETTINA_MATRIX, BETTINA_ENCODED, BETTINA_UUID],
+				displayName: 'Bettina B.'
+			}
+		]);
+	});
+
+	it('names the consultant by counsellorDisplayName, consultantMatrixUserId first', () => {
+		const rules = buildVisibleParticipantRules(baseInput);
+		expect(rules.consultant).toEqual({
+			ids: [MONA_MATRIX, MONA_ENCODED, MONA_UUID, MONA_UUID],
+			displayName: 'Mona S.'
+		});
+	});
+
+	it('falls back to the consultant DTO display name without a marker name', () => {
+		const rules = buildVisibleParticipantRules({
+			...baseInput,
+			marker: { ...marker, counsellorDisplayName: undefined }
+		});
+		expect(rules.consultant?.displayName).toBe('Mona Simpson');
+	});
+
+	it('leaves a supervisor unnamed when the marker has no name for them', () => {
+		const rules = buildVisibleParticipantRules({
+			...baseInput,
+			marker: undefined
+		});
+		expect(rules.supervisors[0].displayName).toBeUndefined();
+		expect(rules.supervisors[0].ids).toEqual([
+			BETTINA_MATRIX,
+			BETTINA_ENCODED,
+			BETTINA_UUID
+		]);
+	});
+
+	it('appends me as a supervisor when the marker says supervisedByMe', () => {
+		const rules = buildVisibleParticipantRules({
+			...baseInput,
+			marker: { ...marker, supervisedByMe: true },
+			supervisors: []
+		});
+		expect(rules.supervisors).toEqual([
+			{
+				ids: [MONA_ENCODED, MONA_UUID, SELF_MATRIX],
+				displayName: 'Mona Simpson'
+			}
+		]);
+	});
+
+	it('appends me as a supervisor when the supervisors call says so (before the marker lands)', () => {
+		const rules = buildVisibleParticipantRules({
+			...baseInput,
+			marker: undefined,
+			supervisors: [],
+			selfIsSupervisor: true
+		});
+		expect(rules.supervisors.map((s) => s.ids)).toEqual([
+			[MONA_ENCODED, MONA_UUID, SELF_MATRIX]
+		]);
+	});
+
+	it('always carries self (for the supervision room) and the asker ids', () => {
+		const rules = buildVisibleParticipantRules({
+			...baseInput,
+			mode: 'supervision'
+		});
+		expect(rules.mode).toBe('supervision');
+		expect(rules.self?.ids).toEqual([MONA_ENCODED, MONA_UUID, SELF_MATRIX]);
+		expect(rules.asker?.ids).toEqual(baseInput.askerIds);
+	});
+
+	it('is a group rule for group chats whatever mode is asked for', () => {
+		expect(
+			buildVisibleParticipantRules({ ...baseInput, isGroup: true }).mode
+		).toBe('group');
+	});
+
+	it('yields no consultant identity when the session has none', () => {
+		expect(
+			buildVisibleParticipantRules({ ...baseInput, consultant: null })
+				.consultant
+		).toBeNull();
+	});
+
+	it('renders the marker name over the Matrix profile name in the side panel (session 74)', () => {
+		const supervisorFromMatrix = member(BETTINA_MATRIX, {
+			username: 'sv_supervisor',
+			displayName: 'sv_supervisor'
+		});
+		const visible = filterVisibleParticipants(
+			[consultant, supervisorFromMatrix, ...silent],
+			buildVisibleParticipantRules({
+				...baseInput,
+				mode: 'supervision',
+				supervisors: [
+					{ ...supervisorRow, supervisorMatrixUserId: undefined }
+				]
+			})
+		);
+		expect(visible.map((p) => p.displayName)).toEqual([
+			'Mona S.',
+			'Bettina B.'
+		]);
 	});
 });

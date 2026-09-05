@@ -86,8 +86,8 @@ import {
 } from '../sessionHeader/headerParticipants';
 import type { StackParticipant } from '../message/participantStack';
 import {
-	filterVisibleParticipants,
-	type ParticipantIdentity
+	buildVisibleParticipantRules,
+	filterVisibleParticipants
 } from '../message/visibleParticipants';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import '../chatStage/chatStage.styles.scss';
@@ -150,7 +150,10 @@ import {
 	buildReplyQuotePreview
 } from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
-import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
+import {
+	apiGetSessionSupervisors,
+	type SessionSupervisor
+} from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
@@ -510,10 +513,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
-	// WP-B2: supervisor usernames from the same call — the counterpart name
-	// for the consultant when the list DTO has no display names.
-	const [supervisorUsernames, setSupervisorUsernames] = useState<string[]>(
-		[]
+	// WP-B2: the supervisor rows from the same call — identities for the
+	// participant stacks (`buildVisibleParticipantRules`) and, as usernames,
+	// the counterpart name for the consultant when the list DTO has no
+	// display names.
+	const [sessionSupervisors, setSessionSupervisors] = useState<
+		SessionSupervisor[]
+	>([]);
+	const supervisorUsernames = useMemo(
+		() =>
+			sessionSupervisors.map((s) => s.supervisorUsername).filter(Boolean),
+		[sessionSupervisors]
 	);
 	// WP-B2 (#996): the supervisor's counterpart is the responsible
 	// consultant, but the consultant session-list DTO carries only
@@ -1936,7 +1946,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// WP-B2: never let a previous session's side room linger while the
 		// new one resolves — the panel composer targets this id.
 		setSupervisionRoomId(undefined);
-		setSupervisorUsernames([]);
+		setSessionSupervisors([]);
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
@@ -1962,24 +1972,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						(s) => s.matrixRoomId
 					)?.matrixRoomId;
 					setSupervisionRoomId(sideRoomId || undefined);
-					setSupervisorUsernames(
-						supervisors
-							.map((s) => s.supervisorUsername)
-							.filter(Boolean)
-					);
+					setSessionSupervisors(supervisors);
 				})
 				.catch((error) => {
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
 					setSupervisionRoomId(undefined);
-					setSupervisorUsernames([]);
+					setSessionSupervisors([]);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
 			setSupervisionRoomId(undefined);
-			setSupervisorUsernames([]);
+			setSessionSupervisors([]);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
@@ -3805,65 +3811,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					isSystemUser: isSystemMatrixUser
 				}
 			);
-			const markerNames = new Map<string, string>();
-			(supervisionMarker?.supervisorConsultantIds ?? []).forEach(
-				(id, index) => {
-					const name =
-						supervisionMarker?.supervisorDisplayNames?.[index];
-					if (id && name) {
-						markerNames.set(String(id), name);
-					}
-				}
-			);
-			const selfIds = [
-				userData?.userName,
-				userData?.userId,
-				client?.getUserId?.(),
-				getCurrentMatrixUserId()
-			];
-			const supervisorIdentities: ParticipantIdentity[] =
-				supervisorUsernames.map((username) => ({
-					ids: [username]
-				}));
-			if (supervisionMarker?.supervisedByMe || isSupervisor) {
-				supervisorIdentities.push({
-					ids: selfIds,
-					displayName: userData?.displayName || undefined
-				});
-			}
-			const consultant = activeSession.consultant;
-			return filterVisibleParticipants(members, {
-				mode: activeSession.isGroup ? 'group' : mode,
-				asker: {
-					ids: [
+			return filterVisibleParticipants(
+				members,
+				buildVisibleParticipantRules({
+					mode,
+					isGroup: activeSession.isGroup,
+					marker: supervisionMarker,
+					supervisors: sessionSupervisors,
+					selfIsSupervisor: isSupervisor,
+					askerIds: [
 						activeSession.item?.askerMatrixUserId,
 						activeSession.user?.username
-					]
-				},
-				consultant: consultant
-					? {
-							ids: [
-								activeSession.item?.consultantMatrixUserId,
-								consultant.username,
-								consultant.id,
-								consultant.consultantId
-							],
-							displayName:
-								supervisionMarker?.counsellorDisplayName ||
-								consultant.displayName ||
-								undefined
-						}
-					: null,
-				supervisors: supervisorIdentities.map((identity) => ({
-					...identity,
-					displayName:
-						identity.displayName ??
-						identity.ids
-							.map((id) => markerNames.get(String(id ?? '')))
-							.find(Boolean)
-				})),
-				self: { ids: selfIds }
-			});
+					],
+					consultant: activeSession.consultant,
+					consultantMatrixUserId:
+						activeSession.item?.consultantMatrixUserId,
+					self: {
+						ids: [
+							userData?.userName,
+							userData?.userId,
+							client?.getUserId?.(),
+							getCurrentMatrixUserId()
+						],
+						displayName: userData?.displayName || undefined
+					}
+				})
+			);
 		},
 		[
 			matrixClientService,
@@ -3873,7 +3846,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			activeSession.consultant,
 			activeSession.isGroup,
 			supervisionMarker,
-			supervisorUsernames,
+			sessionSupervisors,
 			isSupervisor,
 			userData,
 			clientDisplayName

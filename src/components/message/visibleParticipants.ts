@@ -177,3 +177,112 @@ export const filterVisibleParticipants = (
 		];
 	});
 };
+
+/** The session list marker (`SessionDTO.supervision`, #996 names). */
+export interface SupervisionMarkerLike {
+	supervisedByMe?: boolean | null;
+	supervisorConsultantIds?: ReadonlyArray<string | null | undefined> | null;
+	supervisorDisplayNames?: ReadonlyArray<string | null | undefined> | null;
+	counsellorDisplayName?: string | null;
+}
+
+/** One row of the supervisors call (`SessionSupervisor`). */
+export interface SupervisorIdentitySource {
+	supervisorConsultantId?: string | null;
+	supervisorUsername?: string | null;
+	/** Newer backends ship the Matrix id — the strongest key, so it goes first. */
+	supervisorMatrixUserId?: string | null;
+}
+
+/** The assigned consultant as the session/list DTO carries them. */
+export interface ConsultantIdentitySource {
+	username?: string | null;
+	id?: string | null;
+	consultantId?: string | null;
+	displayName?: string | null;
+}
+
+export interface VisibleParticipantRuleInput {
+	/** Room kind asked for; a group chat always yields the `group` rule. */
+	mode: 'session' | 'supervision';
+	isGroup?: boolean;
+	marker?: SupervisionMarkerLike | null;
+	supervisors: ReadonlyArray<SupervisorIdentitySource>;
+	/** True when the supervisors call lists me — before the marker lands. */
+	selfIsSupervisor?: boolean;
+	askerIds: (string | null | undefined)[];
+	consultant?: ConsultantIdentitySource | null;
+	consultantMatrixUserId?: string | null;
+	self: ParticipantIdentity;
+}
+
+/**
+ * The one rule builder shared by the session header and the side panels —
+ * they must agree on who is visible and how they are named:
+ *
+ *   - supervisors: every row of the supervisors call, keyed by Matrix id,
+ *     encoded username and consultant id, named by the marker
+ *     (`supervisorDisplayNames[index]` for `supervisorConsultantIds[index]`);
+ *     me, as a supervisor, is appended once the marker (`supervisedByMe`)
+ *     or the supervisors call (`selfIsSupervisor`) says so;
+ *   - consultant: `consultantMatrixUserId`, username and ids, named by the
+ *     marker's `counsellorDisplayName`, else the DTO display name;
+ *   - asker and self: identity only.
+ */
+export const buildVisibleParticipantRules = ({
+	mode,
+	isGroup,
+	marker,
+	supervisors,
+	selfIsSupervisor,
+	askerIds,
+	consultant,
+	consultantMatrixUserId,
+	self
+}: VisibleParticipantRuleInput): VisibleParticipantRules => {
+	const markerNames = new Map<string, string>();
+	(marker?.supervisorConsultantIds ?? []).forEach((id, index) => {
+		const name = marker?.supervisorDisplayNames?.[index];
+		if (id && name) {
+			markerNames.set(String(id), name);
+		}
+	});
+	const supervisorIdentities: ParticipantIdentity[] = supervisors.map(
+		(supervisor) => ({
+			ids: [
+				supervisor.supervisorMatrixUserId,
+				supervisor.supervisorUsername,
+				supervisor.supervisorConsultantId
+			],
+			displayName: markerNames.get(
+				String(supervisor.supervisorConsultantId ?? '')
+			)
+		})
+	);
+	if (marker?.supervisedByMe || selfIsSupervisor) {
+		supervisorIdentities.push({
+			ids: self.ids,
+			displayName: self.displayName || undefined
+		});
+	}
+	return {
+		mode: isGroup ? 'group' : mode,
+		asker: { ids: askerIds },
+		consultant: consultant
+			? {
+					ids: [
+						consultantMatrixUserId,
+						consultant.username,
+						consultant.id,
+						consultant.consultantId
+					],
+					displayName:
+						marker?.counsellorDisplayName ||
+						consultant.displayName ||
+						undefined
+				}
+			: null,
+		supervisors: supervisorIdentities,
+		self: { ids: self.ids }
+	};
+};

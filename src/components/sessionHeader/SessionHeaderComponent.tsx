@@ -77,7 +77,7 @@ import {
 } from './headerParticipants';
 import {
 	filterVisibleParticipants,
-	type ParticipantIdentity,
+	buildVisibleParticipantRules,
 	type VisibleParticipantRules
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
@@ -869,31 +869,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// the supervisors call (usernames) plus the list marker (#996 names);
 	// a supervising viewer is visible to themselves before that call lands.
 	const supervisionMarker = activeSession.item?.supervision;
-	const visibleParticipantRules =
-		React.useMemo<VisibleParticipantRules>(() => {
-			const markerNames = new Map<string, string>();
-			(supervisionMarker?.supervisorConsultantIds ?? []).forEach(
-				(id, index) => {
-					const name =
-						supervisionMarker?.supervisorDisplayNames?.[index];
-					if (id && name) {
-						markerNames.set(String(id), name);
-					}
-				}
-			);
-			const supervisorIdentities: ParticipantIdentity[] = supervisors.map(
-				(supervisor) => ({
-					ids: [
-						supervisor.supervisorUsername,
-						supervisor.supervisorConsultantId
-					],
-					displayName: markerNames.get(
-						String(supervisor.supervisorConsultantId)
-					)
-				})
-			);
-			if (supervisionMarker?.supervisedByMe) {
-				supervisorIdentities.push({
+	const visibleParticipantRules = React.useMemo<VisibleParticipantRules>(
+		() =>
+			buildVisibleParticipantRules({
+				mode: 'session',
+				isGroup: activeSession.isGroup,
+				marker: supervisionMarker,
+				supervisors,
+				askerIds: [askerMatrixUserId, contact?.username],
+				consultant: activeSession.consultant,
+				consultantMatrixUserId:
+					activeSession.item?.consultantMatrixUserId,
+				self: {
 					ids: [
 						userData?.userName,
 						userData?.userId,
@@ -901,30 +888,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						getCurrentMatrixUserId()
 					],
 					displayName: userData?.displayName || undefined
-				});
-			}
-			return {
-				mode: activeSession.isGroup ? 'group' : 'session',
-				asker: {
-					ids: [askerMatrixUserId, contact?.username]
-				},
-				consultant: activeSession.consultant
-					? {
-							ids: [
-								activeSession.item?.consultantMatrixUserId,
-								activeSession.consultant.username,
-								activeSession.consultant.id,
-								activeSession.consultant.consultantId
-							],
-							displayName:
-								supervisionMarker?.counsellorDisplayName ||
-								activeSession.consultant.displayName ||
-								undefined
-						}
-					: null,
-				supervisors: supervisorIdentities
-			};
-		}, [
+				}
+			}),
+		[
 			activeSession.isGroup,
 			activeSession.consultant,
 			activeSession.item?.consultantMatrixUserId,
@@ -934,7 +900,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			contact?.username,
 			userData,
 			matrixClientService
-		]);
+		]
+	);
 	const visibleRoomParticipants = React.useMemo(
 		() =>
 			filterVisibleParticipants(
