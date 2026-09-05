@@ -86,6 +86,7 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 			{hidden > 0 && (
 				<span
 					className="sessionInfo__memberCount"
+					role="img"
 					aria-label={countLabel?.(hidden)}
 					title={countLabel?.(hidden)}
 					data-testid="member-avatar-overflow"

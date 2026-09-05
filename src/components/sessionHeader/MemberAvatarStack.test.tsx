@@ -87,10 +87,8 @@ describe('MemberAvatarStack (#1193 Job 2)', () => {
 			expect(screen.queryAllByTestId('user-avatar')).toHaveLength(0);
 			expect(screen.getByText('+27')).toBeTruthy();
 			expect(
-				screen
-					.getByTestId('member-avatar-overflow')
-					.getAttribute('aria-label')
-			).toBe('27 more participants');
+				screen.getByRole('img', { name: '27 more participants' })
+			).toBe(screen.getByTestId('member-avatar-overflow'));
 		});
 
 		it('subtracts the reserved sibling width', () => {

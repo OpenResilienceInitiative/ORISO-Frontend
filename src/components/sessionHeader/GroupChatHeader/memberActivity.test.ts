@@ -100,6 +100,11 @@ describe('computeVisibleAvatarCount (Job 2: overlap with +N fallback)', () => {
 		expect(computeVisibleAvatarCount(0, 500)).toBe(0);
 	});
 
+	it('treats a measured zero width as no avatar capacity', () => {
+		expect(computeVisibleAvatarCount(5, 0)).toBe(0);
+		expect(computeVisibleAvatarCount(5, -10)).toBe(0);
+	});
+
 	it('shows every member when they all fit', () => {
 		expect(computeVisibleAvatarCount(3, 500)).toBe(3);
 	});

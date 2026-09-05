@@ -137,6 +137,27 @@ describe('lastOpenSession (#1193 Job 3)', () => {
 		);
 	});
 
+	it('rejects future or non-finite timestamps instead of extending the TTL', () => {
+		for (const ts of [
+			Date.now() + LAST_OPEN_SESSION_TTL_MS,
+			Date.now() + 60_000,
+			Number.NaN,
+			Number.POSITIVE_INFINITY
+		]) {
+			window.localStorage.setItem(
+				'oriso.lastOpenSession.u1',
+				JSON.stringify({
+					path: '/sessions/consultant/sessionView/session/1',
+					ts
+				})
+			);
+			expect(readLastOpenSession('u1')).toBeNull();
+			expect(
+				window.localStorage.getItem('oriso.lastOpenSession.u1')
+			).toBeNull();
+		}
+	});
+
 	it('clears', () => {
 		rememberLastOpenSession(
 			'u1',

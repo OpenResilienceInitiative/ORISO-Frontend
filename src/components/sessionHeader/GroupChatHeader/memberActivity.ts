@@ -95,7 +95,8 @@ const stackWidth = (
 
 /**
  * Number of avatars to render for `total` members given `availableWidth`
- * px. Unknown width (no ResizeObserver yet, jsdom) → the Figma cap applies.
+ * px. Unknown width (no ResizeObserver yet, jsdom) → the Figma cap applies;
+ * a measured width of 0 → no avatars (the "+N" chip carries the full count).
  * Returns 0 when only the "+N" chip fits, in which case N === total.
  */
 export const computeVisibleAvatarCount = (
@@ -107,12 +108,11 @@ export const computeVisibleAvatarCount = (
 		return 0;
 	}
 	const cap = Math.min(total, metrics.maxVisible);
-	if (
-		availableWidth == null ||
-		!Number.isFinite(availableWidth) ||
-		availableWidth <= 0
-	) {
+	if (availableWidth == null || !Number.isFinite(availableWidth)) {
 		return cap;
+	}
+	if (availableWidth <= 0) {
+		return 0; // measured, but nothing fits: chip only
 	}
 	for (let visible = cap; visible > 0; visible -= 1) {
 		if (stackWidth(visible, visible < total, metrics) <= availableWidth) {

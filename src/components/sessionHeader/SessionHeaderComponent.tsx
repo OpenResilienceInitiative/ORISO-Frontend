@@ -762,8 +762,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// chat messages. Those derive it from the Matrix user id, so prefer that for
 	// the asker; fall back to the username where no Matrix id is known.
 	const headerAvatarUserId =
-		(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-			activeSession.item?.askerMatrixUserId) ||
+		(isConsultantUser && activeSession.item?.askerMatrixUserId) ||
 		contact?.username ||
 		'unknown';
 	const sessionHeaderConversationIconType: ChatroomConversationIconType =

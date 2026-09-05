@@ -75,11 +75,23 @@ export const readLastOpenSession = (
 		return null;
 	}
 	try {
-		const entry = parseEntry(getStorage()?.getItem(storageKey(userId)));
-		if (!entry || !isRestorableSessionPath(entry.path)) {
+		const raw = getStorage()?.getItem(storageKey(userId));
+		if (raw == null) {
 			return null;
 		}
-		if (Date.now() - entry.ts > LAST_OPEN_SESSION_TTL_MS) {
+		const entry = parseEntry(raw);
+		if (!entry || !isRestorableSessionPath(entry.path)) {
+			// Corrupt or tampered: drop it rather than keep re-reading it.
+			clearLastOpenSession(userId);
+			return null;
+		}
+		const age = Date.now() - entry.ts;
+		// Non-finite or future timestamps are tampered/corrupt: never extend the TTL.
+		if (
+			!Number.isFinite(age) ||
+			age < 0 ||
+			age > LAST_OPEN_SESSION_TTL_MS
+		) {
 			clearLastOpenSession(userId);
 			return null;
 		}

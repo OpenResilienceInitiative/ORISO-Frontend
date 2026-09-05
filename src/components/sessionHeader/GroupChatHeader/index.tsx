@@ -75,6 +75,8 @@ export const GroupChatHeader = ({
 
 		let cancelled = false;
 		let subscribed = false;
+		let offMembers: (() => void) | null = null;
+		let offTimeline: (() => void) | null = null;
 		let retryTimer: number | null = null;
 		const detachers: Array<() => void> = [];
 
@@ -103,17 +105,23 @@ export const GroupChatHeader = ({
 			return true;
 		};
 
+		// Idempotent per channel: a retry only registers the channel that is
+		// not attached yet, so the header never holds duplicate listeners.
 		const subscribe = (): boolean => {
-			const offMembers = chatTransportService.onMatrixRoomMembers(
-				matrixRoomId,
-				readRoom
-			);
-			const offTimeline = chatTransportService.onMatrixTimelineRaw(
-				matrixRoomId,
-				readRoom
-			);
-			if (offMembers) detachers.push(offMembers);
-			if (offTimeline) detachers.push(offTimeline);
+			if (!offMembers) {
+				offMembers = chatTransportService.onMatrixRoomMembers(
+					matrixRoomId,
+					readRoom
+				);
+				if (offMembers) detachers.push(offMembers);
+			}
+			if (!offTimeline) {
+				offTimeline = chatTransportService.onMatrixTimelineRaw(
+					matrixRoomId,
+					readRoom
+				);
+				if (offTimeline) detachers.push(offTimeline);
+			}
 			return Boolean(offMembers && offTimeline);
 		};
 
