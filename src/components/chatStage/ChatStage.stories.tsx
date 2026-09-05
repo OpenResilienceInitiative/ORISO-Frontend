@@ -29,6 +29,7 @@ const CHANNEL_MENU_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9763-62964';
 
 const desktop1280Globals = { viewport: { value: 'desktop1280' } };
+const desktop1440Globals = { viewport: { value: 'desktop1440' } };
 
 const meta = {
 	title: 'Templates/ConsultantSessionStage',
@@ -394,7 +395,15 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
 		const fieldBorders = borderWidths(field);
 		await expect(['1px', '2px']).toContain(fieldBorders[0]);
 		await expect(new Set(fieldBorders).size).toBe(1);
-		for (const value of Object.values(radii(field))) {
+		// T44 (round 7): the field's OUTER bottom corner is the card's
+		// corner minus the 16 px inset (28 − 16 = 12) — the "double
+		// radius"; the three other corners stay ≤ 4 px.
+		const fieldRadii = radii(field);
+		const outerRadius = `${Number.parseFloat(cardRadius) - 16}px`;
+		const outerCorner = corner === 'bottom-left' ? 'bl' : 'br';
+		await expect(fieldRadii[outerCorner]).toBe(outerRadius);
+		for (const [key, value] of Object.entries(fieldRadii)) {
+			if (key === outerCorner) continue;
 			expect(Number.parseFloat(value)).toBeLessThanOrEqual(4);
 		}
 		// No other bordered box between the dock and the editor.
@@ -414,7 +423,20 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
 		await expect(Math.round(shellBox.right - fieldBox.right)).toBe(0);
 		await expect(Math.round(fieldBox.top - shellBox.top)).toBe(0);
 		await expect(Math.round(shellBox.bottom - fieldBox.bottom)).toBe(0);
-		// … and the field sits at the pane's 16 px dock, like the bubbles
+		// T45: the send button sticks to the field's top-right corner —
+		// flush, no gap (its 4 px corner meets the field's 4 px corner).
+		const sendBox = root
+			.querySelector<HTMLElement>('.textarea__buttons .sendButton')!
+			.getBoundingClientRect();
+		await expect(
+			Math.abs(sendBox.right - fieldBox.right)
+		).toBeLessThanOrEqual(1);
+		await expect(Math.abs(sendBox.top - fieldBox.top)).toBeLessThanOrEqual(
+			1
+		);
+		// T46: the field ends 16 px before the card edge on its outer side
+		// (main column: left, panel: right) — the pane's dock, like the
+		// bubbles — and 16 px before the hairline on the inner side
 		// (measured from the pane's inner edge — the joined panel carries
 		// the 1 px hairline as its left border).
 		const paneBox = root.getBoundingClientRect();
@@ -707,6 +729,24 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(title.getBoundingClientRect().right).toBeLessThanOrEqual(
 			actions.getBoundingClientRect().left + 0.5
 		);
+	}
+};
+
+/**
+ * (a-1440) The same card at Desktop 1440 — T44/T45/T46 (field's outer corner
+ * 12 px, send button flush in the field's corner, field 16 px before the
+ * card edge) and the header offsets (T43) hold at the wider toolbar
+ * viewport too. Same play as (a).
+ */
+export const SupervisionInsideTheCard1440: Story = {
+	name: '(a-1440) Supervision inside the card — Desktop 1440',
+	globals: desktop1440Globals,
+	args: SupervisionInsideTheCard.args,
+	play: async (context) => {
+		// The toolbar viewport must really be 1440 wide, otherwise this is
+		// (a) twice.
+		await expect(window.innerWidth).toBeGreaterThanOrEqual(1440);
+		await SupervisionInsideTheCard.play!(context);
 	}
 };
 

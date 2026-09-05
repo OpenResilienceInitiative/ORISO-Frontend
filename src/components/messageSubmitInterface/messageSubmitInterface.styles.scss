@@ -229,8 +229,36 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 							inset: 0;
 						}
 
+						// T44/T46 (Frank, round 7): the field keeps the
+						// 16 px to the card edge (the pane's dock, like the
+						// bubbles) and its OUTER bottom corner is rounded
+						// concentrically inside the card's corner: field
+						// radius = card radius − inset (28 − 16 = 12); the
+						// inner corners stay 4 px.
 						.textarea__input {
 							border-radius: 4px;
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-left
+							.textarea__input {
+							border-bottom-left-radius: calc(
+								var(--session-card-radius, 28px) - 16px
+							);
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-right
+							.textarea__input {
+							border-bottom-right-radius: calc(
+								var(--session-card-radius, 28px) - 16px
+							);
+						}
+
+						// T45: the send button sticks to the field's top-right
+						// corner again — the field fills the shell here, so
+						// the button's 16 px offset (the old inset) goes.
+						.textarea__buttons {
+							top: 0;
+							right: 0;
 						}
 					}
 				}
