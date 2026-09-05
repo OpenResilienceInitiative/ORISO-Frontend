@@ -3496,7 +3496,11 @@
 					"centre": "Danışma merkezi",
 					"archiveOnly": "Yalnızca arşiv"
 				},
-				"toggle": "Arama sonuçlarını aç veya kapat"
+				"toggle": "Arama sonuçlarını aç veya kapat",
+				"role": {
+					"asker": "Danışan",
+					"consultant": "Danışman"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"
