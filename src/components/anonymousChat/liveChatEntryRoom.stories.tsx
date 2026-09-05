@@ -1,54 +1,48 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Typography } from '@mui/material';
+import { Box, ButtonBase, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { AccountData } from '../registration/accountData/AccountData';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import PersonSearchOutlinedIcon from '@mui/icons-material/PersonSearchOutlined';
+import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
+import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
-import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
-import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
-import { HandoverStep } from '../app/registrationLoader/HandoverCarousel';
-import { HandoverGateState } from '../app/registrationLoader/handoverGate';
-import { processArtwork } from '../../resources/img/registration-md3/registrationArtwork';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import { sanitizeConsentHtml } from '../legalContent/legalHtmlSanitizer';
+import htmlParser from '../../resources/scripts/util/htmlParser';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
+import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
-import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
 import {
 	LegalLinksContext,
 	TProvidedLegalLink
 } from '../../globalState/provider/LegalLinksProvider';
-import {
-	AgencyDataInterface,
-	TopicsDataInterface
-} from '../../globalState/interfaces';
 import { formatOpeningHours } from '../../utils/openingHours';
-import type { Pseudonym } from '../../utils/pseudonymGenerator';
-import { PseudonymCard } from '../pseudonym/PseudonymCard';
-import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
-import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
- * The **live chat** entry room — the same module as the self-help group's,
- * with the live chat's own words.
+ * The **live chat** entry room — one room, three states, no screen change
+ * until the chat itself.
  *
- * Someone opens an external-inbound link and wants to talk now. What makes
- * this way different: there is no appointment, so no clock — the wait is a
- * queue position measured in minutes, and before anyone waits, the room
- * explains in three pictures what happens and that a short human-or-bot
- * check runs on the way in (Frank, 2026-09-05: "es gibt da halt auch
- * Infotexte, was zu tun ist beim Roboter, dass die auch ordentlich drin
- * sind").
+ * Frank, 2026-09-05: the link is global, so nobody knows the agency until a
+ * counsellor accepts; the waiting room is one page whose status line, middle
+ * and button change; the button is the loading bar; consent arrives as a
+ * card sliding in from below, carrying the button that starts the chat, with
+ * a round X beside it so nobody is left with a single choice. Carimat stays
+ * in the chat — the room does his job here.
  *
- * Every part is an existing component: `AccountData` for the entry,
- * `RegistrationHandover` for the three cards and the gate (now taking its
- * copy from the caller), `WaitingQueueActionBar` for the queue,
- * `RegistrationFooter` for the bar, `StageLayout` with its header slot for
- * the agency.
+ * Built from what exists: `HandoverGateButton` (the bar), `AnimalAvatar`,
+ * `AnonymousConsentGate`'s sentence, `LeaveQueueDialog` ("Sind Sie sicher?"),
+ * `RegistrationFooter`, `StageLayout`.
  */
 const meta: Meta = {
 	title: 'Live chat/Entry room',
@@ -56,7 +50,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Der vollständige Weg in den anonymen Live-Chat: Link öffnen, Namen bekommen, in drei Bildern lesen, was passiert (samt Prüfung Mensch oder Bot), warten, reden — oder, wenn geschlossen ist, zur Mail-Beratung. Abnahmefläche zu ORISO-Frontend#1052 und #1288. Nichts davon ist verdrahtet.'
+					'Zugang → Warteraum (wartet · Beraterin da) → Chat. Plus „Geschlossen". Abnahmefläche zu ORISO-Frontend#1052 und #1288; nichts verdrahtet. Die drei Kartenbilder sind Platzhalter — Beschreibung für die Grafik steht in der Story „Warteraum".'
 			}
 		}
 	}
@@ -64,23 +58,19 @@ const meta: Meta = {
 
 export default meta;
 
-const agency = {
-	id: 42,
-	name: 'Caritas Berlin — Schuldenberatung',
-	postcode: '00000',
-	city: 'Berlin',
-	description: '',
-	teamAgency: false,
-	consultingType: 1,
-	external: false
-} as unknown as AgencyDataInterface;
+/* ---------------------------------------------------------------------------
+   Fixtures
+   --------------------------------------------------------------------------- */
 
-const mainTopic = {
-	id: 7,
-	name: 'Schulden',
-	description: '',
-	status: 'ACTIVE'
-} as unknown as TopicsDataInterface;
+const TOPIC = 'Schulden';
+const AGENCY = 'Caritas Berlin — Schuldenberatung';
+
+const PSEUDONYM: Pseudonym = {
+	displayName: 'geschmeidiges Kätzchen Lou',
+	animalLabel: 'Katze',
+	name: 'Lou',
+	avatar: { file: 'cat.svg', bg: '#FFD8E4', iconColor: '#1D1B20' }
+};
 
 const legalLinks: TProvidedLegalLink[] = [
 	{
@@ -95,7 +85,6 @@ const legalLinks: TProvidedLegalLink[] = [
 	} as TProvidedLegalLink
 ];
 
-/** What the admin panel stores for this agency's live chat. */
 const OPENING_HOURS = JSON.stringify({
 	version: 1,
 	openingHours: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY']
@@ -114,617 +103,756 @@ const OPENING_HOURS = JSON.stringify({
 			}
 		])
 });
-const PSEUDONYM: Pseudonym = {
-	displayName: 'geschmeidiges Kätzchen Lou',
-	animalLabel: 'Katze',
-	name: 'Lou',
-	avatar: { file: 'cat.svg', bg: '#FFD8E4', iconColor: '#1D1B20' }
-};
-
 const ABSENCE_MESSAGE =
 	'Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.';
 
 /**
- * The three cards, in the live chat's words. The pictures are the
- * registration's three motifs — writing, a counsellor, a reply — because
- * that is exactly what happens here too, only faster.
+ * The three cards of the waiting room. Language-free pictograms, so the same
+ * three pictures serve all seven languages; the copy is what gets translated.
+ *
+ * Picture briefs for the artwork (style: the registration's process motifs —
+ * warm red-tinted line drawings, no text in the picture):
+ *  1. Three counsellors at three screens, each already in a conversation; one
+ *     chair in the foreground empty and waiting. "Sie sind bei anderen."
+ *  2. One counsellor turning towards the viewer, a speech bubble with the
+ *     agency's house/roof pictogram lighting up. "Jetzt wissen wir, wer."
+ *  3. A hand tapping a shield-with-check, behind it the open chat. "Kurz
+ *     zustimmen, dann reden."
  */
-const LIVE_CHAT_STEPS: HandoverStep[] = [
+const CARDS = [
 	{
-		key: 'liveWrite',
-		artwork: processArtwork.write,
-		titleKey: 'liveChat.entry.steps.write.title',
-		textKey: 'liveChat.entry.steps.write.text',
-		titleFallback: 'Sie schreiben, was los ist',
-		textFallback:
-			'Ein paar Sätze genügen. Sie bleiben anonym — wir sehen nur Ihren gewählten Namen.'
+		icon: <GroupsOutlinedIcon />,
+		title: 'Die Beraterinnen sind gerade bei anderen',
+		text: 'Sie kommen dran, sobald jemand frei ist. Sie müssen nichts tun.'
 	},
 	{
-		key: 'liveCheck',
-		artwork: processArtwork.counsellor,
-		titleKey: 'liveChat.entry.steps.check.title',
-		textKey: 'liveChat.entry.steps.check.text',
-		titleFallback: 'Kurze Prüfung, dann ein Mensch',
-		textFallback:
-			'Ein Klick bestätigt, dass Sie kein Programm sind. Dann holt sich eine Beraterin Ihr Gespräch.'
+		icon: <PersonSearchOutlinedIcon />,
+		title: 'Sobald eine annimmt, wissen wir, wer Sie berät',
+		text: 'Erst dann steht fest, welche Beratungsstelle das Gespräch führt.'
 	},
 	{
-		key: 'liveReply',
-		artwork: processArtwork.reply,
-		titleKey: 'liveChat.entry.steps.reply.title',
-		textKey: 'liveChat.entry.steps.reply.text',
-		titleFallback: 'Antwort in wenigen Minuten',
-		textFallback:
-			'Sie sehen, wie viele vor Ihnen dran sind. Sobald jemand frei ist, geht es los.'
+		icon: <HandshakeOutlinedIcon />,
+		title: 'Kurz zustimmen — dann chatten Sie',
+		text: 'Ein Klick auf den Datenschutz der Stelle, und der Chat beginnt.'
 	}
 ];
 
-const WithContext = ({ children }: { children: React.ReactNode }) => (
-	<LegalLinksContext.Provider value={legalLinks}>
-		<RegistrationContext.Provider
-			value={{
-				registrationData: { agency, mainTopic } as never,
-				setDisabledNextButton: () => undefined
-			}}
-		>
-			{children}
-		</RegistrationContext.Provider>
-	</LegalLinksContext.Provider>
-);
-
-/** Which agency this is — in the header on a desktop, in the column on a phone. */
-const AgencyHeading = () => (
-	<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
-		<Typography
-			sx={{
-				fontSize: 11,
-				fontWeight: 600,
-				letterSpacing: '.12em',
-				textTransform: 'uppercase',
-				color: registrationMd3.onSurfaceVariant
-			}}
-		>
-			Live-Chat · {mainTopic.name}
-		</Typography>
-		<Typography
-			sx={{
-				fontSize: 14,
-				fontWeight: 600,
-				color: registrationMd3.onSurface
-			}}
-		>
-			{agency.name}
-		</Typography>
-	</Box>
-);
+/* ---------------------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------------------- */
 
 const Staged = ({
 	children,
-	showLogin = false,
-	padded = true
+	statusLine
 }: {
 	children: React.ReactNode;
-	showLogin?: boolean;
-	/** Off for the handover, which owns its own column padding and bar. */
-	padded?: boolean;
-}) => (
-	<Box sx={{ minHeight: '100vh' }}>
-		<AgencySpecificContext.Provider
-			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
-		>
-			<StageLayout
-				className="stageLayout--registration"
-				showLegalLinks={true}
-				showLoginLink={showLogin}
-				showRegistrationLink={false}
-				stage={<Stage hasAnimation={false} />}
-				mobileHero="bar"
-				headerStart={<AgencyHeading />}
+	/** Line 2 of the header: what is happening. Line 1 is the global link. */
+	statusLine: string;
+}) => {
+	const heading = (
+		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
+			<Typography
+				sx={{
+					fontSize: 11,
+					fontWeight: 600,
+					letterSpacing: '.12em',
+					textTransform: 'uppercase',
+					color: registrationMd3.onSurfaceVariant
+				}}
 			>
-				<Box
-					sx={{
-						width: '100%',
-						minWidth: 0,
-						maxWidth: '100%',
-						minHeight: {
-							xs: 'calc(100vh - 96px)',
-							lg: 'calc(100vh - 128px)'
-						},
-						display: 'flex',
-						flexDirection: 'column',
-						...(padded
-							? {
-									px: { xs: 2.5, sm: 5 },
-									pt: { xs: 3, sm: 4 },
-									pb: { xs: '128px', sm: '136px' }
-								}
-							: {})
+				Live-Chat · {TOPIC}
+			</Typography>
+			<Typography
+				sx={{
+					fontSize: 14,
+					fontWeight: 600,
+					color: registrationMd3.onSurface
+				}}
+			>
+				{statusLine}
+			</Typography>
+		</Box>
+	);
+	return (
+		<Box sx={{ minHeight: '100vh' }}>
+			<LegalLinksContext.Provider value={legalLinks}>
+				<AgencySpecificContext.Provider
+					value={{
+						specificAgency: null,
+						setSpecificAgency: () => undefined
 					}}
 				>
-					<Box
-						sx={{
-							display: { xs: 'block', lg: 'none' },
-							mb: 2,
-							px: padded ? 0 : 2.5,
-							pt: padded ? 0 : 3
-						}}
+					<StageLayout
+						className="stageLayout--registration"
+						showLegalLinks={true}
+						showLoginLink={false}
+						showRegistrationLink={false}
+						stage={<Stage hasAnimation={false} />}
+						mobileHero="bar"
+						headerStart={heading}
 					>
-						<AgencyHeading />
-					</Box>
-					{children}
-				</Box>
-			</StageLayout>
-		</AgencySpecificContext.Provider>
+						<Box
+							sx={{
+								width: '100%',
+								minWidth: 0,
+								minHeight: {
+									xs: 'calc(100vh - 96px)',
+									lg: 'calc(100vh - 128px)'
+								},
+								display: 'flex',
+								flexDirection: 'column',
+								px: { xs: 2.5, sm: 5 },
+								pt: { xs: 3, sm: 4 },
+								pb: '128px'
+							}}
+						>
+							<Box
+								sx={{
+									display: { xs: 'block', lg: 'none' },
+									mb: 3
+								}}
+							>
+								{heading}
+							</Box>
+							{children}
+						</Box>
+					</StageLayout>
+				</AgencySpecificContext.Provider>
+			</LegalLinksContext.Provider>
+		</Box>
+	);
+};
+
+const Headline = ({
+	title,
+	children
+}: {
+	title: string;
+	children?: React.ReactNode;
+}) => (
+	<Box sx={{ mb: 3 }}>
+		<Typography
+			component="h1"
+			sx={{
+				fontSize: { xs: 30, sm: 34 },
+				lineHeight: { xs: '36px', sm: '41px' },
+				fontWeight: 700,
+				color: registrationMd3.onSurface
+			}}
+		>
+			{title}
+		</Typography>
+		{children}
 	</Box>
 );
 
 /* ---------------------------------------------------------------------------
-   1 — The door: Carimat hands over a name (Figma CAR02 2183-14985).
+   A — Der Zugang
    --------------------------------------------------------------------------- */
 
-const EntryScreen = () => (
-	<WithContext>
-		<Staged showLogin>
-			<Box sx={{ maxWidth: 560, width: '100%' }}>
-				<PseudonymCard pseudonym={PSEUDONYM} skipTyping />
-			</Box>
-			{/* Figma 2183-14985 has Sprache · Bestätigen · Name ändern in
-			    the bar. Language already sits in the stage header, so the
-			    bar carries the two decisions — as the theme's own buttons,
-			    the same bar every other entry uses. `PseudonymActionBar`
-			    (the chat-composer variant with the dice) does not fit a
-			    375 pt bar beside a second label; it stays where it is, in
-			    the chat. */}
-			<RegistrationFooter
-				secondary={{ label: 'Name ändern' }}
-				primary={{ label: 'Bestätigen' }}
-			/>
-		</Staged>
-	</WithContext>
-);
-
-export const Step1Entry: StoryObj = {
-	name: '1 — Link geöffnet, Name bekommen',
-	render: () => <EntryScreen />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Franks Figma-Screen 1: Carimat spricht, das Tier-Pseudonym steht im Bild, unten Sprache · Bestätigen · Name ändern. Das sind die vorhandenen Bauteile `PseudonymCard` und `PseudonymActionBar` — nur auf der Bühne statt im App-Rahmen. Kein Passwortfeld: der Name ist der Zugang; wer wiederkommen will, wählt 1b.'
-			}
-		}
-	}
-};
-
-const AccountEntry = () => {
-	const [temporary, setTemporary] = useState(false);
-	return (
-		<WithContext>
-			<Staged showLogin>
-				<AccountData
-					onChange={() => undefined}
-					entry="link"
-					temporary={temporary}
-				/>
-				<RegistrationFooter
-					secondary={{
-						label: temporary
-							? 'Konto anlegen'
-							: 'Ohne Konto beitreten',
-						onClick: () => setTemporary((v) => !v)
-					}}
-					primary={{
-						label: temporary ? 'Chat starten' : 'Registrieren'
-					}}
-				/>
-			</Staged>
-		</WithContext>
-	);
-};
-
-export const Step1WithAccount: StoryObj = {
-	name: '1b — Doch mit Konto',
-	render: () => <AccountEntry />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Derselbe Bildschirm für jemanden, der wiederkommen will. Heute im Live-Chat nicht möglich — der Weg vergibt ein Passwort, zeigt es nie, und der Mensch verliert seine Beratung, sobald er das Fenster schließt.'
-			}
-		}
-	}
-};
-
-/* ---------------------------------------------------------------------------
-   2 — Three pictures: what happens now, including the human-or-bot check.
-   --------------------------------------------------------------------------- */
-
-const Handover = ({ state }: { state?: HandoverGateState }) => {
-	const { t } = useTranslation();
-	return (
-		<WithContext>
-			<Staged padded={false}>
-				<RegistrationHandover
-					ready={state === undefined}
-					forcedState={state}
-					onEnter={() => undefined}
-					variant="inline"
-					copy={{
-						badge: t('liveChat.entry.badge', 'Angemeldet'),
-						headline: t(
-							'liveChat.entry.headline',
-							'Gleich geht es los.'
-						),
-						subline: t(
-							'liveChat.entry.subline',
-							'So läuft der Live-Chat:'
-						),
-						cta: t('liveChat.entry.cta', 'Chat starten'),
-						encryption: t(
-							'liveChat.entry.encryption',
-							'Verschlüsselt: Außer Ihnen liest nur Ihre Beraterin mit.'
-						),
-						steps: LIVE_CHAT_STEPS
-					}}
-				/>
-			</Staged>
-		</WithContext>
-	);
-};
-
-export const Step2Handover: StoryObj = {
-	name: '2 — So läuft es: drei Bilder',
-	render: () => <Handover />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Dieselben drei Karten wie nach der Registrierung — Franks „horizontale drei Bilder" —, nur mit den Worten des Live-Chats: schreiben, kurze Prüfung und dann ein Mensch, Antwort in Minuten. Die Karte in der Mitte ist der Infotext zum Roboter, den Frank vermisst hat. Der Knopf unten ist das Tor: er öffnet erst, wenn alles dahinter geladen ist. Das Bauteil ist das der Registrierung; es nimmt jetzt Worte und Bilder vom Aufrufer, statt sie fest zu haben.'
-			}
-		}
-	}
-};
-
-export const Step2Verifying: StoryObj = {
-	name: '2b — Prüfung: Mensch oder Bot',
-	render: () => <Handover state="verifying" />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Der Zustand, in dem Altcha läuft. Der Knopf selbst sagt es — „Prüfung: Mensch oder Bot …" — und bleibt zu, bis die Prüfung durch ist. Der Text war im Tor-Bauteil schon vorgesehen (`handoverGate.ts`, Zustand `verifying`); hier ist er zum ersten Mal zu sehen.'
-			}
-		}
-	}
-};
-
-export const Step2Mobile: StoryObj = {
-	name: '2c — Drei Bilder, mobil',
-	globals: phone375Globals,
-	render: () => <Handover />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Auf dem Telefon werden die drei Bilder zum Wischen; der Punkt darunter zeigt, wo man ist.'
-			}
-		}
-	}
-};
-
-/* ---------------------------------------------------------------------------
-   3 — The waiting room (Figma CAR02 2183-16506), and the moment a counsellor
-   accepts (2183-14761).
-   --------------------------------------------------------------------------- */
-
-const WaitingRoom = ({ accepted = false }: { accepted?: boolean }) => (
-	<WithContext>
-		<Staged>
-			<Box
+const Access = () => (
+	<Staged statusLine="Ihr Zugang für dieses Gespräch">
+		<Headline title="Ihr Name für heute.">
+			<Typography
 				sx={{
-					maxWidth: 560,
-					width: '100%',
-					display: 'flex',
-					flexDirection: 'column',
-					gap: 3
+					mt: 0.75,
+					fontSize: 16,
+					color: registrationMd3.onSurfaceVariant
 				}}
 			>
-				<PrivacyMessageCard skipTyping />
-				{accepted ? (
-					/* Only now does the person learn who will counsel them and
-					   whose privacy terms they are agreeing to — unlike every
-					   other way in, where the agency is known before the door.
-					   So the agency arrives as a success element, and the
-					   button below changes its job (Frank, 2026-09-05). */
-					<Box
-						data-cy="live-chat-accepted"
+				Anonym, ohne Konto. Würfeln Sie, bis er Ihnen gefällt.
+			</Typography>
+		</Headline>
+		<Box
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 2.5,
+				p: 2.5,
+				borderRadius: '20px',
+				bgcolor: registrationMd3.surfaceContainer,
+				maxWidth: 560
+			}}
+		>
+			<Box sx={{ width: 72, height: 72, flexShrink: 0 }}>
+				<AnimalAvatar avatar={PSEUDONYM.avatar} size={72} />
+			</Box>
+			<Box sx={{ minWidth: 0 }}>
+				<Typography
+					sx={{
+						fontSize: 11,
+						fontWeight: 600,
+						letterSpacing: '.12em',
+						textTransform: 'uppercase',
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					Ihr Pseudonym
+				</Typography>
+				<Typography sx={{ fontSize: 22, fontWeight: 700, mt: 0.25 }}>
+					{PSEUDONYM.displayName}
+				</Typography>
+			</Box>
+		</Box>
+		<Box
+			sx={{
+				display: 'flex',
+				gap: 1.25,
+				alignItems: 'flex-start',
+				mt: 3,
+				maxWidth: 560,
+				fontSize: 13,
+				lineHeight: '18px',
+				color: registrationMd3.onSurfaceVariant
+			}}
+		>
+			<LockOutlinedIcon
+				aria-hidden
+				sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
+			/>
+			<Typography sx={{ fontSize: 'inherit', lineHeight: 'inherit' }}>
+				Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir
+				ihn — samt aller Nachrichten, spätestens nach 48 Stunden.
+				Bleiben Sie in diesem Fenster, bis Sie dran sind.
+			</Typography>
+		</Box>
+		<RegistrationFooter
+			secondary={{ label: 'Neu würfeln' }}
+			primary={{ label: 'Zum Warteraum' }}
+		/>
+	</Staged>
+);
+
+export const StepAccess: StoryObj = {
+	name: 'A — Der Zugang',
+	render: () => <Access />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Kein Träger im Header — der Link ist global, wer berät, weiß noch niemand. Kein Passwort: ein Zugang, der sich selbst löscht, braucht keins; der Satz sagt stattdessen „bleiben Sie in diesem Fenster". Pseudonym mit Würfel als eine ruhige Zeile, nicht als Chatblase. Fuß: Neu würfeln · In den Warteraum.'
+			}
+		}
+	}
+};
+
+export const StepAccessMobile: StoryObj = {
+	name: 'A — Der Zugang, mobil',
+	globals: phone375Globals,
+	render: () => <Access />,
+	parameters: { layout: 'fullscreen' }
+};
+
+/* ---------------------------------------------------------------------------
+   B — Der Warteraum: one page, its state changes.
+   --------------------------------------------------------------------------- */
+
+/** One dot per person ahead; a filled dot is someone who has been called. */
+const QueueDots = ({ ahead, total }: { ahead: number; total: number }) => (
+	<Box
+		aria-hidden
+		sx={{
+			display: 'inline-flex',
+			gap: 0.75,
+			alignItems: 'center',
+			mr: 1.5
+		}}
+	>
+		{Array.from({ length: total }, (_, i) => (
+			<Box
+				key={i}
+				sx={{
+					width: 10,
+					height: 10,
+					borderRadius: '50%',
+					bgcolor:
+						i < total - ahead
+							? registrationMd3.primary
+							: registrationMd3.surfaceContainerHighest,
+					transition: 'background-color 400ms ease'
+				}}
+			/>
+		))}
+	</Box>
+);
+
+/** The arrow's stand-in while the queue moves. */
+const TurningClock = () => (
+	<ScheduleOutlinedIcon
+		sx={{
+			'@keyframes liveChatTurn': {
+				to: { transform: 'rotate(360deg)' }
+			},
+			'animation': 'liveChatTurn 6s linear infinite',
+			'@media (prefers-reduced-motion: reduce)': { animation: 'none' }
+		}}
+	/>
+);
+
+const CONSENT_HTML =
+	'Ich habe die <a href="https://oriso.example/datenschutz" target="_blank" rel="noreferrer">Datenschutzbestimmung</a> von Caritas Berlin zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Website Cookies.';
+
+const WaitingRoom = ({
+	accepted,
+	ahead = 5,
+	total = 5
+}: {
+	accepted: boolean;
+	ahead?: number;
+	total?: number;
+}) => {
+	const [leaving, setLeaving] = useState(false);
+	const progress = Math.round(((total - ahead) / total) * 100);
+	return (
+		<Staged
+			statusLine={
+				accepted ? AGENCY : 'Warteraum — freie Beraterin wird gesucht'
+			}
+		>
+			<Headline title="Gleich geht es los.">
+				<Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+					{!accepted && <QueueDots ahead={ahead} total={total} />}
+					<Typography
+						role="status"
+						aria-live="polite"
 						sx={{
-							display: 'flex',
-							gap: 2,
-							p: 2.5,
-							borderRadius: '20px',
-							bgcolor: registrationMd3.surfaceContainer,
-							border: `1px solid ${registrationMd3.outlineVariant}`
+							fontSize: 16,
+							fontWeight: accepted ? 700 : 400,
+							color: accepted
+								? registrationMd3.primary
+								: registrationMd3.onSurfaceVariant
 						}}
 					>
+						{accepted
+							? 'Eine Beraterin ist da.'
+							: ahead === 1
+								? 'Eine Person vor Ihnen'
+								: `${ahead} Personen vor Ihnen`}
+					</Typography>
+				</Box>
+			</Headline>
+
+			{/* What happens meanwhile — three schematic cards, language-free
+			    pictures (briefs in CARDS). The third lights up once a
+			    counsellor has accepted: that is where the person now is. */}
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: {
+						xs: '1fr',
+						sm: 'repeat(3, minmax(0, 1fr))'
+					},
+					gap: 2
+				}}
+			>
+				{CARDS.map((card, index) => {
+					const active = accepted ? index === 2 : index === 0;
+					return (
 						<Box
-							aria-hidden
+							key={card.title}
 							sx={{
-								'width': 40,
-								'height': 40,
-								'flexShrink': 0,
-								'borderRadius': '50%',
-								'bgcolor': registrationMd3.primary,
-								'color': registrationMd3.onPrimary,
-								'display': 'flex',
-								'alignItems': 'center',
-								'justifyContent': 'center',
-								'& svg': { fontSize: 22 }
+								'p': 2.5,
+								'borderRadius': '20px',
+								'border': `1px solid ${
+									active
+										? registrationMd3.primary
+										: registrationMd3.outlineVariant
+								}`,
+								'bgcolor': active
+									? registrationMd3.surfaceContainer
+									: 'transparent',
+								'opacity': accepted && !active ? 0.55 : 1,
+								'transition': 'all 400ms ease',
+								'& svg': {
+									fontSize: 32,
+									color: registrationMd3.primary
+								}
 							}}
 						>
-							<CheckRoundedIcon />
-						</Box>
-						<Box sx={{ minWidth: 0 }}>
+							{card.icon}
 							<Typography
-								sx={{
-									fontSize: 11,
-									fontWeight: 600,
-									letterSpacing: '.12em',
-									textTransform: 'uppercase',
-									color: registrationMd3.primary
-								}}
+								sx={{ fontSize: 16, fontWeight: 700, mt: 1.5 }}
 							>
-								Eine Beraterin ist da
-							</Typography>
-							<Typography
-								sx={{ fontSize: 18, fontWeight: 700, mt: 0.25 }}
-							>
-								{agency.name}
+								{card.title}
 							</Typography>
 							<Typography
 								sx={{
 									fontSize: 14,
+									lineHeight: '20px',
 									color: registrationMd3.onSurfaceVariant,
-									mt: 1
+									mt: 0.75
 								}}
 							>
-								Bitte bestätigen Sie die Datenschutzbestimmungen
-								dieser Beratungsstelle. Erst danach darf Ihre
-								Beraterin den Chat mit Ihnen starten.
-							</Typography>
-							<Typography
-								sx={{
-									fontSize: 13,
-									color: registrationMd3.onSurfaceVariant,
-									mt: 1
-								}}
-							>
-								Ich habe die{' '}
-								<Box
-									component="a"
-									href="https://oriso.example/datenschutz"
-									sx={{ color: 'inherit', fontWeight: 600 }}
-								>
-									Datenschutzbestimmung
-								</Box>{' '}
-								zur Kenntnis genommen. Für Authentifizierung und
-								Navigation verwendet diese Website Cookies.
+								{card.text}
 							</Typography>
 						</Box>
-					</Box>
-				) : null}
+					);
+				})}
 			</Box>
+
+			{/* The small row above the bar: the calm companion and the way
+			    out — one line, not a section. */}
 			{!accepted && (
-				/* The queue bar's desktop layout is a fixed-pixel Figma copy
-				   (227 + 114 + 400 px) and folds letter by letter in a 560 px
-				   box — it needs the whole column. */
-				<Box sx={{ width: '100%', mt: 3 }}>
-					<WaitingQueueActionBar
-						queuePosition={23}
-						onOpenCalmCompanion={() => undefined}
-						onRequestLocalCounselor={() => undefined}
-						onLeaveQueue={() => undefined}
-					/>
+				<Box
+					sx={{
+						mt: 'auto',
+						pt: 3,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						gap: 2,
+						flexWrap: 'wrap'
+					}}
+				>
+					<ButtonBase
+						sx={{
+							'display': 'flex',
+							'alignItems': 'center',
+							'gap': 1.5,
+							'px': 2,
+							'py': 1.25,
+							'borderRadius': '999px',
+							'bgcolor': registrationMd3.surfaceContainer,
+							'fontSize': 14,
+							'& svg': { color: registrationMd3.primary }
+						}}
+					>
+						<SentimentSatisfiedAltOutlinedIcon />
+						Ruhige Begleitung, bis es losgeht
+					</ButtonBase>
+					<Typography
+						component="a"
+						href="/registration"
+						sx={{
+							fontSize: 14,
+							color: registrationMd3.onSurfaceVariant
+						}}
+					>
+						Lieber schreiben statt warten? Zur Mail-Beratung →
+					</Typography>
 				</Box>
 			)}
-			{/* The bar's button is the waiting animation (Frank, 2026-09-05:
-			    "eine coole Warteraum-Animation … könnte ja unten der
-			    Footer-Button sein"): the same gate as after the registration,
-			    filling while the queue moves, open the moment a counsellor
-			    accepts — and then it says what the click now means. */}
-			<RegistrationFooter>
-				<Box sx={{ width: '100%' }}>
-					<HandoverGateButton
-						state={accepted ? 'ready' : 'queued'}
-						onEnter={() => undefined}
-						label={
-							accepted
-								? 'Datenschutz zustimmen und Live-Chat beitreten'
-								: 'Warteraum'
-						}
-					/>
-				</Box>
-			</RegistrationFooter>
-		</Staged>
-	</WithContext>
-);
 
-export const Step3Queue: StoryObj = {
-	name: '3 — Warteraum',
-	render: () => <WaitingRoom />,
+			{/* The bar is the loading bar: it fills as the queue moves, the
+			    arrow is a turning clock until it is open. */}
+			{!accepted && (
+				<RegistrationFooter>
+					<Box sx={{ width: '100%' }}>
+						<HandoverGateButton
+							state="queued"
+							onEnter={() => undefined}
+							label="Warteraum"
+							status={`${ahead} vor Ihnen — Sie müssen nichts tun`}
+							progress={progress}
+							icon={<TurningClock />}
+						/>
+					</Box>
+				</RegistrationFooter>
+			)}
+
+			{/* Consent slides in from below — over the content, carrying the
+			    button that starts the chat. Same movement as the footer's own
+			    entry (`animateIn`). Beside it a round X: nobody is left with
+			    a single choice. The X asks "Sind Sie sicher?" through the
+			    dialog that already exists. */}
+			{accepted && (
+				<Box
+					data-cy="live-chat-consent"
+					sx={{
+						'position': 'fixed',
+						'bottom': 0,
+						'right': 0,
+						'width': { xs: '100vw', lg: '60vw' },
+						'zIndex': 65,
+						'px': { xs: 2, sm: 5 },
+						'pb': {
+							xs: 'calc(12px + env(safe-area-inset-bottom))',
+							sm: 3
+						},
+						'pt': 3,
+						'bgcolor': 'rgba(255,255,255,0.96)',
+						'backdropFilter': 'blur(8px)',
+						'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
+						'animation':
+							'liveChatConsentIn 420ms cubic-bezier(0.4,0,0.2,1) both',
+						'@keyframes liveChatConsentIn': {
+							from: { transform: 'translateY(100%)' },
+							to: { transform: 'translateY(0)' }
+						},
+						'@media (prefers-reduced-motion: reduce)': {
+							animation: 'none'
+						}
+					}}
+				>
+					<Box sx={{ maxWidth: 720, mx: 'auto' }}>
+						{/* The consent sentence through the same sanitizer the
+						    dialog uses (ADR-022 Gate 2) — but not the dialog
+						    itself: it brings its own two buttons, and the bar
+						    below is the one that acts. */}
+						<Box
+							sx={{
+								display: 'flex',
+								gap: 2,
+								alignItems: 'flex-start'
+							}}
+						>
+							<ShieldOutlinedIcon
+								aria-hidden
+								sx={{
+									fontSize: 40,
+									color: registrationMd3.primary,
+									flexShrink: 0
+								}}
+							/>
+							<Box sx={{ minWidth: 0 }}>
+								<Typography
+									sx={{ fontSize: 20, fontWeight: 700 }}
+								>
+									Herzlich willkommen bei {AGENCY}
+								</Typography>
+								<Typography
+									sx={{
+										mt: 0.75,
+										fontSize: 14,
+										lineHeight: '20px',
+										color: registrationMd3.onSurfaceVariant
+									}}
+								>
+									Ein Klick, zwei Dinge: Sie bestätigen den
+									Datenschutz dieser Beratungsstelle, und der
+									Chat beginnt. Alles bleibt anonym und wird
+									nach 48 Stunden gelöscht.
+								</Typography>
+								<Typography
+									component="div"
+									sx={{
+										'mt': 1.25,
+										'fontSize': 14,
+										'lineHeight': '20px',
+										'fontWeight': 600,
+										'& a': {
+											color: registrationMd3.primary
+										}
+									}}
+								>
+									{htmlParser(
+										sanitizeConsentHtml(CONSENT_HTML)
+									)}
+								</Typography>
+							</Box>
+						</Box>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: 2,
+								mt: 2
+							}}
+						>
+							<ButtonBase
+								aria-label="Nicht zustimmen und Chat verlassen"
+								onClick={() => setLeaving(true)}
+								sx={{
+									width: 60,
+									height: 60,
+									flexShrink: 0,
+									borderRadius: '50%',
+									border: `1.5px solid ${registrationMd3.outline}`,
+									color: registrationMd3.onSurfaceVariant
+								}}
+							>
+								<CloseRoundedIcon />
+							</ButtonBase>
+							<Box sx={{ flex: 1, minWidth: 0 }}>
+								<HandoverGateButton
+									state="ready"
+									onEnter={() => undefined}
+									label="Zustimmen & starten"
+									status="Ihre Beraterin wartet auf Sie"
+								/>
+							</Box>
+						</Box>
+					</Box>
+				</Box>
+			)}
+
+			<LeaveQueueDialog
+				open={leaving}
+				canStartChat={accepted}
+				onStay={() => setLeaving(false)}
+				onStartChat={() => setLeaving(false)}
+				onDeleteAccess={() => setLeaving(false)}
+			/>
+		</Staged>
+	);
+};
+
+export const StepWaiting: StoryObj = {
+	name: 'B — Warteraum: wartet',
+	render: () => <WaitingRoom accepted={false} ahead={3} total={5} />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Franks Figma-Warteraum: Carimat erklärt die Verschlüsselung, die Pille zählt, wer noch vor einem ist, daneben die ruhige Begleitung und „Statt zu warten" der Weg zur Mail-Beratung — alles vorhandene Bauteile. Neu ist der Fuß: das Tor der Registrierung als Warteanimation, gefüllt im Takt der Schlange, mit „Gleich sind Sie an der Reihe …" als Statuszeile.'
+				story: 'Eine Seite, drei Stellen, die sich ändern: Zeile 2 im Header, der Satz unter dem Titel, der Knopf. Die Punkte sind die Schlange (zwei von fünf schon dran), der Knopf ist der Ladebalken mit drehender Uhr statt Pfeil. Drei schematische Karten sagen, was gerade passiert; die Bilder sind Platzhalter, die Briefs stehen im Code (`CARDS`). Kleine Zeile: ruhige Begleitung · Mail-Beratung. Kein Träger — den kennt noch niemand.'
 			}
 		}
 	}
 };
 
-export const Step3Accepted: StoryObj = {
-	name: '3b — Beraterin nimmt an',
+export const StepAccepted: StoryObj = {
+	name: 'B — Warteraum: Beraterin ist da',
 	render: () => <WaitingRoom accepted />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Kern von Franks Anmerkung: Erst jetzt weiß der Mensch, wer ihn berät und wessen Datenschutz er zustimmt. Die Beratungsstelle fährt als Erfolgs-Element in den Warteraum, mit dem Willkommen-Text aus Figma 2183-14761, und der Knopf unten wechselt von „Warteraum" zu „Datenschutz zustimmen und Live-Chat beitreten". Ein Klick, zwei Dinge — und beide stehen drauf.'
+				story: 'Derselbe Screen. Zeile 2 heißt jetzt „Caritas Berlin — Schuldenberatung", der Satz „Eine Beraterin ist da", die dritte Karte leuchtet. Von unten slidet die Datenschutz-Karte des Trägers herein — mit dem Knopf „Zustimmen und Chat starten" und dem runden X daneben. Das X fragt „Sind Sie sicher?" (der vorhandene Dialog) und schließt dann. Kommt auch über die Atemübung — hart, in dem Moment zählt nur das.'
 			}
 		}
 	}
 };
 
-export const Step3Mobile: StoryObj = {
-	name: '3c — Beraterin nimmt an, mobil',
+export const StepAcceptedMobile: StoryObj = {
+	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <WaitingRoom accepted />,
 	parameters: { layout: 'fullscreen' }
 };
 
+export const StepWaitingMobile: StoryObj = {
+	name: 'B — Warteraum, mobil',
+	globals: phone375Globals,
+	render: () => <WaitingRoom accepted={false} ahead={3} total={5} />,
+	parameters: { layout: 'fullscreen' }
+};
+
 /* ---------------------------------------------------------------------------
-   4 — Closed: the honest door with the way to mail counselling.
+   C — Geschlossen
    --------------------------------------------------------------------------- */
 
 const Closed = () => {
 	const { t } = useTranslation();
-	const [hoursOpen, setHoursOpen] = useState(false);
 	return (
-		<WithContext>
-			<Staged showLogin>
-				<Box sx={{ maxWidth: 560 }}>
-					<Box
-						sx={{
-							display: 'flex',
-							gap: 2,
-							alignItems: 'center',
-							mb: 2
-						}}
-					>
-						<Box
-							aria-hidden
-							sx={{
-								'width': 56,
-								'height': 56,
-								'flexShrink': 0,
-								'borderRadius': '50%',
-								'bgcolor': registrationMd3.surfaceContainer,
-								'display': 'flex',
-								'alignItems': 'center',
-								'justifyContent': 'center',
-								'& svg': { fontSize: 30 }
-							}}
-						>
-							<ScheduleOutlinedIcon />
-						</Box>
-						<Typography sx={{ fontSize: 22, fontWeight: 700 }}>
-							{t(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
-						</Typography>
-					</Box>
-					{/* The agency's own absence text from the admin panel. */}
-					<Typography
-						sx={{
-							fontSize: 15,
-							color: registrationMd3.onSurfaceVariant,
-							mb: 2
-						}}
-					>
-						{ABSENCE_MESSAGE}
-					</Typography>
-					<Box
-						component="button"
-						type="button"
-						onClick={() => setHoursOpen((v) => !v)}
-						aria-expanded={hoursOpen}
-						sx={{
-							width: '100%',
-							textAlign: 'left',
-							font: 'inherit',
-							fontSize: 14,
-							color: registrationMd3.onSurfaceVariant,
-							bgcolor: 'transparent',
-							border: `1px solid ${registrationMd3.outlineVariant}`,
-							borderRadius: '12px',
-							p: '12px 16px',
-							mb: 2,
-							cursor: 'pointer'
-						}}
-					>
-						{t(
-							'anonymousChat.noAvailability.openingHours',
-							'Reguläre Öffnungszeiten anzeigen'
-						)}
-						{hoursOpen && (
-							<Typography
-								sx={{
-									fontSize: 15,
-									color: registrationMd3.onSurface,
-									mt: 1
-								}}
-							>
-								{formatOpeningHours(OPENING_HOURS, t)}
-							</Typography>
-						)}
-					</Box>
-					<Typography sx={{ fontSize: 15, mb: 2 }}>
-						{t(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage.'
-						)}
-					</Typography>
-					<Typography
-						sx={{
-							fontSize: 13,
-							color: registrationMd3.onSurfaceVariant,
-							mb: 2
-						}}
-					>
-						{t(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
-					</Typography>
-					<Typography
-						sx={{
-							fontSize: 13,
-							fontWeight: 600,
-							color: registrationMd3.onSurfaceVariant
-						}}
-					>
-						{t(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
-					</Typography>
+		<Staged statusLine="Gerade geschlossen">
+			<Box
+				sx={{
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					textAlign: 'center',
+					maxWidth: 520,
+					mx: 'auto'
+				}}
+			>
+				<Box
+					aria-hidden
+					sx={{
+						'width': 72,
+						'height': 72,
+						'borderRadius': '50%',
+						'bgcolor': registrationMd3.surfaceContainer,
+						'color': registrationMd3.primary,
+						'display': 'flex',
+						'alignItems': 'center',
+						'justifyContent': 'center',
+						'mb': 2.5,
+						'& svg': { fontSize: 36 }
+					}}
+				>
+					<ScheduleOutlinedIcon />
 				</Box>
-				<RegistrationFooter
-					secondary={{
-						label: t('anonymousChat.noAvailability.later', 'Später')
+				<Typography
+					component="h1"
+					sx={{
+						fontSize: { xs: 28, sm: 32 },
+						lineHeight: 1.15,
+						fontWeight: 700
 					}}
-					primary={{
-						label: t(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'Mail-Beratung starten'
-						)
+				>
+					{t(
+						'anonymousChat.noAvailability.title',
+						'Live-Chat ist zurzeit leider geschlossen'
+					)}
+				</Typography>
+				<Typography
+					sx={{
+						mt: 2,
+						fontSize: 15,
+						fontWeight: 600,
+						color: registrationMd3.onSurface
 					}}
-				/>
-			</Staged>
-		</WithContext>
+				>
+					{formatOpeningHours(OPENING_HOURS, t)}
+				</Typography>
+				<Typography
+					sx={{
+						mt: 2,
+						fontSize: 15,
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{ABSENCE_MESSAGE}
+				</Typography>
+				<Typography
+					sx={{
+						mt: 3,
+						fontSize: 14,
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{t(
+						'anonymousChat.noAvailability.mailHint',
+						'Oder starten Sie jederzeit die anonyme Mail-Beratung.'
+					)}
+				</Typography>
+				<Typography
+					sx={{
+						mt: 1,
+						fontSize: 13,
+						fontWeight: 600,
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{t(
+						'anonymousChat.noAvailability.responseTime',
+						'Antwort innerhalb von 2 Werktagen'
+					)}
+				</Typography>
+			</Box>
+			<RegistrationFooter
+				secondary={{
+					label: t('anonymousChat.noAvailability.later', 'Später')
+				}}
+				primary={{
+					label: t(
+						'anonymousChat.noAvailability.startMailCounseling',
+						'Zur Mail-Beratung'
+					)
+				}}
+			/>
+		</Staged>
 	);
 };
 
-export const Step4Closed: StoryObj = {
-	name: '4 — Geschlossen',
+export const StepClosed: StoryObj = {
+	name: 'C — Geschlossen',
 	render: () => <Closed />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Figma CAR02 2183-15874, mit den Texten, die es unter `anonymousChat.noAvailability.*` schon in sieben Sprachen gibt — nichts neu geschrieben. Auf dev erfährt der Gast erst NACH Einwilligung und 30 bis 40 Sekunden Pseudonym-Animation, dass geschlossen ist. Diese Ansicht gehört vor den Eintritt. Öffnungszeiten und Abwesenheitstext kommen aus den Live-Chat-Einstellungen im Admin (`formatOpeningHours`, `absenceMessage`). Der Ausweg ist ein echter Wechsel: „Zur Mail-Beratung" führt in die Registrierung mit Beratungsstelle und Thema vorbelegt — die Postleitzahl bleibt Pflicht und wird nur vorbelegt, nie übersprungen. Kein „Nachricht schreiben" im Live-Chat, der gerade niemand liest.'
+				story: 'Zentriert, in der Spalte, nicht links oben: Uhr, Titel, die regulären Öffnungszeiten direkt sichtbar (kein Aufklapper — wer hier landet, will genau das wissen), Abwesenheitstext des Trägers. Texte aus `anonymousChat.noAvailability.*`. Fuß: Später · Zur Mail-Beratung.'
 			}
 		}
 	}
+};
+
+export const StepClosedMobile: StoryObj = {
+	name: 'C — Geschlossen, mobil',
+	globals: phone375Globals,
+	render: () => <Closed />,
+	parameters: { layout: 'fullscreen' }
 };

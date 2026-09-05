@@ -16,6 +16,15 @@ export interface HandoverGateButtonProps {
 	onEnter: () => void;
 	/** Already translated. Default: the registration's "Anfrage schreiben". */
 	label?: string;
+	/** Already translated status line. Default: the state's own line. */
+	status?: string;
+	/**
+	 * Fill in percent, when the caller knows better than the state — the
+	 * live-chat waiting room fills the button as the queue moves.
+	 */
+	progress?: number;
+	/** Replaces the arrow — a turning clock while the queue moves. */
+	icon?: React.ReactNode;
 }
 
 /**
@@ -29,7 +38,10 @@ export interface HandoverGateButtonProps {
 export const HandoverGateButton = ({
 	state,
 	onEnter,
-	label
+	label,
+	status,
+	progress,
+	icon
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
 	const open = GATE_IS_OPEN[state];
@@ -80,7 +92,7 @@ export const HandoverGateButton = ({
 					'left': 0,
 					'top': 0,
 					'bottom': 0,
-					'width': `${GATE_PROGRESS[state]}%`,
+					'width': `${progress ?? GATE_PROGRESS[state]}%`,
 					'bgcolor': 'rgba(255, 255, 255, 0.16)',
 					'transition': 'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
 					'@media (prefers-reduced-motion: reduce)': {
@@ -125,7 +137,8 @@ export const HandoverGateButton = ({
 						textOverflow: 'ellipsis'
 					}}
 				>
-					{t(GATE_STATUS_KEY[state], GATE_STATUS_FALLBACK[state])}
+					{status ??
+						t(GATE_STATUS_KEY[state], GATE_STATUS_FALLBACK[state])}
 				</Typography>
 			</Box>
 			<Box
@@ -150,7 +163,7 @@ export const HandoverGateButton = ({
 					}
 				}}
 			>
-				<ArrowForwardRoundedIcon />
+				{icon ?? <ArrowForwardRoundedIcon />}
 			</Box>
 		</ButtonBase>
 	);
