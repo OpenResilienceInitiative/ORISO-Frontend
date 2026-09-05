@@ -25,6 +25,19 @@ const compileStyles = (stylesheet: string) =>
 	).css;
 
 describe('session list visual contracts', () => {
+	it('D11: the app shell declares the same list-to-card gap as the stage (24 px from the list cards, 12 px inner gutter)', () => {
+		const css = compileStyles(
+			'src/components/app/authenticatedApp.styles.scss'
+		);
+		// T13/T34/D11: `--pane-gap` = the card margin token, and the list
+		// cards end 12 px before the column edge (`sessionsList__scrollContainer`
+		// desktop margin) — both declared where the list column lives, so the
+		// handle centres in the VISIBLE 24 px gap in the app as on the stage.
+		expect(css).toMatch(
+			/@media \(min-width: 900px\)\s*\{\s*\.app__wrapper \.contentWrapper__list\s*\{[^}]*--pane-gap:\s*var\(--session-card-margin, 24px\);[^}]*--pane-inner-gutter:\s*12px;/s
+		);
+	});
+
 	it('keeps every populated session card independently rounded', () => {
 		const css = compileStyles(
 			'src/components/sessionsListItem/sessionsListItem.styles.scss'

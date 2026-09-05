@@ -93,7 +93,7 @@ export interface ConsultantSessionStageProps {
 	panel?: StagePanel;
 	/** Inside the chat card (Frank's choice) or a second card. */
 	panelVariant?: 'inside' | 'card';
-	/** Apply the icon-rail snap rule when the panel opens (story c). */
+	/** D10: the list column snaps to the icon rail when a panel opens (default; story (c) shows the expanded list for comparison). */
 	snapList?: boolean;
 	listWidth?: number;
 	panelWidth?: number;
@@ -576,7 +576,7 @@ export const panelForChannel = (channelId: string): StagePanel =>
 export function ConsultantSessionStage({
 	panel: initialPanel = 'supervision',
 	panelVariant = 'inside',
-	snapList = false,
+	snapList = true,
 	listWidth = 420,
 	panelWidth = 400,
 	openThreads = 0,

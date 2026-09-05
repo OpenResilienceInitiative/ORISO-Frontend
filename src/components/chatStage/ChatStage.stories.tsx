@@ -112,15 +112,23 @@ const paneWidths = (canvasElement: HTMLElement) => ({
  * T22: the composer's action bar scrolls horizontally when the pane is
  * narrow — the expand icon (last button) stays fully reachable and never
  * slides under the send button, which keeps its place at the right.
+ * `overflow: 'expected'` (phone, narrow panel) insists that the bar
+ * actually overflows; `'either'` (D10: the snapped list gives the panel
+ * room) checks the reachability rule whether or not it overflows.
  */
-const expectActionBarScrolls = async (pane: HTMLElement) => {
+const expectActionBarScrolls = async (
+	pane: HTMLElement,
+	{ overflow = 'expected' }: { overflow?: 'expected' | 'either' } = {}
+) => {
 	const bar = pane.querySelector<HTMLElement>('.composerToolbar--default')!;
 	const buttons = Array.from(bar.querySelectorAll('button'));
 	const expand = buttons[buttons.length - 1];
 	const send = pane.querySelector<HTMLElement>('.sendButton')!;
-	await waitFor(() =>
-		expect(bar.scrollWidth).toBeGreaterThan(bar.clientWidth)
-	);
+	if (overflow === 'expected') {
+		await waitFor(() =>
+			expect(bar.scrollWidth).toBeGreaterThan(bar.clientWidth)
+		);
+	}
 	const sendBox = send.getBoundingClientRect();
 	// The bar itself ends before the send button: whatever overflows is
 	// clipped inside the bar, never painted under the button.
@@ -316,6 +324,8 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem--active')
 		).not.toBeNull();
+		// D10: the list snaps to the icon rail while the panel is open.
+		await expectListSnappedToRail(canvasElement);
 		await expect(
 			canvasElement.querySelector('.sessionInfo')
 		).not.toBeNull();
@@ -329,9 +339,13 @@ export const SupervisionInsideTheCard: Story = {
 			canvasElement.querySelector('[data-cy="stage-panel"]')
 				?.textContent ?? ''
 		).not.toContain(CLIENT_NAME);
-		// T22: the narrow panel's action bar scrolls, expand stays reachable.
+		// T22: the panel's action bar keeps expand reachable (it scrolls
+		// when narrow; with the D10 rail the panel has room at 1280).
 		await expectActionBarScrolls(
-			canvasElement.querySelector<HTMLElement>('[data-cy="stage-panel"]')!
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="stage-panel"]'
+			)!,
+			{ overflow: 'either' }
 		);
 		// T23: desktop bar starts with the arrow-down, nothing reserved.
 		await expectDesktopActionBarStart(
@@ -549,14 +563,21 @@ export const SupervisionAsSecondCard: Story = {
 	}
 };
 
-/** (c) The list column snaps to the icon rail so main + panel keep ≥ 520 px. */
-export const ListSnappedToIconRail: Story = {
-	name: '(c) List column snapped to icon-only while panel open',
+/**
+ * (c) D10: the snap to the icon rail is the DEFAULT now — (a) and (d)
+ * show it at 1280. This story is the comparison: the list column stays
+ * expanded next to an open panel (`snapList: false`), which at 1280 AND
+ * 1440 leaves the two panes below the 520 px floor (1440 − 420 − 36 =
+ * 984 < 2 × 520) — so there is no viewport in the toolbar where the
+ * expanded list "fits"; the rule snaps at both.
+ */
+export const ListExpandedNoSnap: Story = {
+	name: '(c) List column NOT snapped while panel open — comparison (D10: snap is the default)',
 	globals: desktop1280Globals,
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
-		snapList: true,
+		snapList: false,
 		listWidth: 420,
 		panelWidth: 400
 	},
@@ -569,18 +590,31 @@ export const ListSnappedToIconRail: Story = {
 			canvasElement
 				.querySelector('[data-cy="stage-list"]')
 				?.getAttribute('data-list-mode')
-		).toBe('rail');
+		).toBe('expanded');
 		const widths = paneWidths(canvasElement);
-		await expect(widths.list).toBeLessThanOrEqual(
-			STAGE_LAYOUT.RAIL_WIDTH + 1
-		);
-		await expect(widths.main).toBeGreaterThanOrEqual(
-			STAGE_LAYOUT.MIN_PANE_WIDTH
-		);
-		await expect(widths.panel).toBeGreaterThanOrEqual(
+		await expect(widths.list).toBeGreaterThan(STAGE_LAYOUT.RAIL_WIDTH);
+		// The price of the expanded list: at least one pane below the floor.
+		await expect(Math.min(widths.main, widths.panel)).toBeLessThan(
 			STAGE_LAYOUT.MIN_PANE_WIDTH
 		);
 	}
+};
+
+/** D10: with a panel open the list column sits in the icon rail by default. */
+const expectListSnappedToRail = async (canvasElement: HTMLElement) => {
+	await expect(
+		canvasElement
+			.querySelector('[data-cy="stage-list"]')
+			?.getAttribute('data-list-mode')
+	).toBe('rail');
+	const widths = paneWidths(canvasElement);
+	await expect(widths.list).toBeLessThanOrEqual(STAGE_LAYOUT.RAIL_WIDTH + 1);
+	await expect(widths.main).toBeGreaterThanOrEqual(
+		STAGE_LAYOUT.MIN_PANE_WIDTH
+	);
+	await expect(widths.panel).toBeGreaterThanOrEqual(
+		STAGE_LAYOUT.MIN_PANE_WIDTH
+	);
 };
 
 /** (d) Thread occupies the panel; the FAB menu offers Thread #2 + Supervision. */
@@ -600,6 +634,8 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 			composers: 2,
 			bubblesAtLeast: 9
 		});
+		// D10: the list snaps to the icon rail while the panel is open.
+		await expectListSnappedToRail(canvasElement);
 		// T1: with a panel open the FAB steps back; the panel header's
 		// channel icon opens the same options (Thread #2 + Supervision).
 		await expect(

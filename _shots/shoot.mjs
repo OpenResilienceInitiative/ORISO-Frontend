@@ -41,8 +41,8 @@ const shots = [
 		['1280x820', '1440x900', '390x844']
 	],
 	[
-		'c-list-snapped-icon-rail',
-		`${stage}list-snapped-to-icon-rail`,
+		'c-list-expanded-no-snap',
+		`${stage}list-expanded-no-snap`,
 		['1280x820', '1440x900', '390x844']
 	],
 	[
