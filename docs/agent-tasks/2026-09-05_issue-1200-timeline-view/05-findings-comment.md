@@ -10,6 +10,6 @@
 
 **Deliverables**
 
-- ORISO-Frontend PR: <PR-URL> — `MarkAllReadButton` (disabled when nothing unread, tests), `CONTEXT.md` alignment, task docs under `docs/agent-tasks/2026-09-05_issue-1200-timeline-view/`.
-- ORISO-Docs PR: <ADR-PR-URL> — ADR-019 "Activity Timeline — bulk read state, data-driven family filters, read-only detail preview" (Proposed).
+- ORISO-Frontend PR: https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1314 — `MarkAllReadButton` (disabled when nothing unread, tests), `CONTEXT.md` alignment, task docs under `docs/agent-tasks/2026-09-05_issue-1200-timeline-view/`.
+- ORISO-Docs PR: https://github.com/OpenResilienceInitiative/ORISO-Docs/pull/108 — ADR-019 "Activity Timeline — bulk read state, data-driven family filters, read-only detail preview" (Proposed).
 - Reviewer test plan → press ✓✓ with unread activity: all cards lose the unread state, chat badges unchanged, button turns disabled; open a card and toggle the preview: no read receipt in the room; a feed with only requests shows one family chip.
