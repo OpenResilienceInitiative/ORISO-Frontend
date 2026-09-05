@@ -680,6 +680,7 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 	}
 };
+
 /**
  * (d4) Review v6: on the desktop the FAB disappears the moment a pick
  * opens the panel — focus must not fall to <body>: the panel header's
@@ -733,7 +734,6 @@ export const FabPickHandsFocusToThePanelHeader: Story = {
 		await canvas.findByRole('menu');
 	}
 };
-
 
 /**
  * (d5) Review v6: six open threads — the header card ends above the
@@ -790,6 +790,8 @@ export const PanelChannelCardSixThreadsScrolls: Story = {
 			{ timeout: 4000 }
 		);
 		await expectMenuBelowHeader(canvasElement);
+		// End reaches the last row and it stays whole — also after the card
+		// re-clamps while the composer settles.
 		await userEvent.keyboard('{End}');
 		await waitFor(
 			() => {
@@ -846,8 +848,6 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 			).not.toBeNull()
 		);
 		await expect(panelTitle(canvasElement).kind).toBe('Supervision');
-		// End reaches the last row and it stays whole — also after the card
-		// re-clamps while the composer settles.
 		// Inside the secondary view the header menu lists all channels …
 		await userEvent.click(
 			canvasElement.querySelector<HTMLButtonElement>(
