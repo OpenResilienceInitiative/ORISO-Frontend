@@ -159,6 +159,50 @@ const expectDesktopActionBarStart = async (pane: HTMLElement) => {
 	).toBeLessThanOrEqual(16);
 };
 
+/**
+ * T30: the VISIBLE avatar (48 px inside the 60 px frame with its 6 px
+ * white ring) sits at the timeline's 16 px inset on both sides — Figma
+ * 1320:38278 "Chat Container" — so bubbles and avatars are as close to
+ * the card edge as the design draws them, in the main chat and the panel.
+ */
+const expectAvatarsAtCardInset = async (pane: HTMLElement) => {
+	const timeline = pane.querySelector<HTMLElement>(
+		'.session__content, .sidePanel__timeline'
+	)!;
+	const box = timeline.getBoundingClientRect();
+	await expect(getComputedStyle(timeline).paddingRight).toBe('16px');
+	const items = Array.from(
+		pane.querySelectorAll<HTMLElement>('.messageItem')
+	);
+	const outgoing = items.filter((item) =>
+		item.classList.contains('messageItem--right')
+	);
+	const incoming = items.filter(
+		(item) =>
+			!item.classList.contains('messageItem--right') &&
+			item.querySelector('.messageItem__avatar')
+	);
+	await expect(outgoing.length).toBeGreaterThan(0);
+	await expect(incoming.length).toBeGreaterThan(0);
+	const ring = 6;
+	// The rows animate in (`.messageItem` enters at scale 0.98) — measure
+	// once they have settled.
+	await waitFor(() => {
+		for (const item of outgoing) {
+			const avatar = item
+				.querySelector('.messageItem__avatar')!
+				.getBoundingClientRect();
+			expect(Math.round(box.right - (avatar.right - ring))).toBe(16);
+		}
+		for (const item of incoming) {
+			const avatar = item
+				.querySelector('.messageItem__avatar')!
+				.getBoundingClientRect();
+			expect(Math.round(avatar.left + ring - box.left)).toBe(16);
+		}
+	});
+};
+
 /** The channel card must hang below the header — never over the title. */
 const expectMenuBelowHeader = async (canvasElement: HTMLElement) => {
 	const menu = canvasElement.querySelector<HTMLElement>(
@@ -213,6 +257,13 @@ export const SupervisionInsideTheCard: Story = {
 		// T23: desktop bar starts with the arrow-down, nothing reserved.
 		await expectDesktopActionBarStart(
 			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
+		);
+		// T30: avatars at the 16 px inset, both panes.
+		await expectAvatarsAtCardInset(
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
+		);
+		await expectAvatarsAtCardInset(
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-panel"]')!
 		);
 		// Same card: the panel is a child of the `.session` card.
 		await expect(

@@ -273,6 +273,12 @@ $message-avatar-overlap: -19px;
 
 	&__sideColumn--left {
 		z-index: 5;
+
+		// T30: the 60 px frame carries a 6 px white ring that is invisible on
+		// the white card — pull the column out by it so the VISIBLE 48 px
+		// avatar sits at the card's 16 px inset (Figma 1320:38278 "Chat
+		// Container"), on both sides, in the main chat and in the panel.
+		margin-left: -6px;
 	}
 
 	// Figma 8498-32645: own-message column sits in flow right of the bubble
@@ -282,6 +288,9 @@ $message-avatar-overlap: -19px;
 		justify-content: flex-end;
 		align-self: flex-end;
 		z-index: 5;
+
+		// T30: same ring compensation as `--left`.
+		margin-right: -6px;
 	}
 
 	&__sideColumnGroup {
