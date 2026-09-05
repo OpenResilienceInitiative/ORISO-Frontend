@@ -191,8 +191,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		onResize(normalizeWidth(next));
 	}, [EXPANDED_MIN_WIDTH, currentWidth, minWidth, normalizeWidth, onResize]);
 
-	const isCollapsed = currentWidth <= minWidth + 1;
-
 	const handlePointerUp = useCallback(() => {
 		pointerIdRef.current = null;
 		dragModeRef.current = 'pending';
@@ -459,26 +457,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
-			<button
-				type="button"
-				className="sessionsList__resizeToggle"
-				aria-label={t(
-					isCollapsed
-						? 'sessionList.resizeHandle.expand'
-						: 'sessionList.resizeHandle.collapse',
-					isCollapsed
-						? 'Expand chat list'
-						: 'Collapse chat list to enlarge the chat room'
-				)}
-				onPointerDown={(event) => event.stopPropagation()}
-				onClick={(event) => {
-					event.preventDefault();
-					event.stopPropagation();
-					toggleCollapsed();
-				}}
-			>
-				<span aria-hidden>{isCollapsed ? '›' : '‹'}</span>
-			</button>
 		</div>
 	);
 };

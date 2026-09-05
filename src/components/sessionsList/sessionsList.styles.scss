@@ -418,39 +418,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		transform: none;
 	}
 
-	&__resizeToggle {
-		position: absolute;
-		right: -14px;
-		top: 18px;
-		z-index: 3;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 1px solid var(--m3-outline-variant, #c9c5c7);
-		border-radius: 999px;
-		background: var(--m3-surface-container-highest, #e1dddf);
-		color: var(--m3-on-surface, #1d1b1c);
-		font-size: 22px;
-		line-height: 24px;
-		cursor: pointer;
-		display: none;
-		align-items: center;
-		justify-content: center;
-
-		@include breakpoint($fromLarge) {
-			display: flex;
-		}
-
-		&:hover {
-			background: var(--m3-secondary-container, #ffdad5);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
-	}
-
 	&__resizeHandle:hover &__resizeHandlePill {
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.22),
