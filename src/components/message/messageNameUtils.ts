@@ -1,3 +1,5 @@
+import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
+
 const normalizeMatrixLikeValue = (rawValue?: string) => {
 	const value = (rawValue || '').trim();
 	if (!value) {
@@ -56,7 +58,17 @@ const resolvePreferredName = (
 		return humanizeTechnicalName(normalizedDisplayName);
 	}
 
-	return humanizeTechnicalName(normalizeMatrixLikeValue(rawUsername));
+	// An anonymous User-ID is the platform's identity anchor (#1209), not a
+	// technical name to prettify. Humanising it drops the trailing digits, so
+	// every guest in a room collapses to the same bare word — `anon_5` and
+	// `anon_12` both render as "anon" — and the bubble stops matching the
+	// header and the session list, which already show it raw.
+	const normalizedUsername = normalizeMatrixLikeValue(rawUsername);
+	if (isAnonymousMatrixUsername(normalizedUsername)) {
+		return normalizedUsername;
+	}
+
+	return humanizeTechnicalName(normalizedUsername);
 };
 
 export const formatMessagePersonName = (
