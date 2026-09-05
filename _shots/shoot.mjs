@@ -1,8 +1,9 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v6/<story>-<viewport>.png
- *        SHOT_DIR=stage-v5 node _shots/shoot.mjs  (older set)
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v7/<story>-<viewport>.png
+ *        SHOT_DIR=stage-v6 node _shots/shoot.mjs  (older set)
+ *        ONLY=d5-,fab-six node _shots/shoot.mjs   (name prefixes, comma-separated)
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -11,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v6'
+	process.env.SHOT_DIR ?? 'stage-v7'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -73,6 +74,40 @@ const shots = [
 		`${stage}panel-channel-card-keyboard-and-shortcuts`,
 		['1280x820', '1440x900'],
 		'open-panel-options'
+	],
+	[
+		'd4-fab-pick-focus-on-header',
+		`${stage}fab-pick-hands-focus-to-the-panel-header`,
+		['1280x820'],
+		'wait-for-play'
+	],
+	[
+		'd5-panel-channel-card-six-threads',
+		`${stage}panel-channel-card-six-threads-scrolls`,
+		['1280x820', '1440x900'],
+		'wait-for-play'
+	],
+	[
+		'fab-six-threads-clamped',
+		'components-chat-channelswitcherfab--menu-six-threads-clamps-and-scrolls',
+		['1280x820']
+	],
+	[
+		'fab-card-flipped-below',
+		'components-chat-channelswitcherfab--menu-flips-below-the-fab',
+		['1280x820']
+	],
+	[
+		'action-bar-phone-fade',
+		'components-composer-actionbar--phone-390-scrolls',
+		['390x844'],
+		'scroll-action-bar-start'
+	],
+	[
+		'action-bar-phone-fade-scrolled',
+		'components-composer-actionbar--phone-390-scrolls',
+		['390x844'],
+		'scroll-action-bar-end'
 	],
 	[
 		'a3-panel-composer-bar-scrolled',
@@ -184,6 +219,14 @@ const shots = [
 	]
 ];
 
+const only = (process.env.ONLY ?? '')
+	.split(',')
+	.map((prefix) => prefix.trim())
+	.filter(Boolean);
+const selected = only.length
+	? shots.filter(([name]) => only.some((prefix) => name.startsWith(prefix)))
+	: shots;
+
 const browser = await chromium.launch({ channel: 'chrome' });
 const context = await browser.newContext({
 	locale: 'de-DE',
@@ -191,7 +234,7 @@ const context = await browser.newContext({
 	deviceScaleFactor: 2
 });
 
-for (const [name, id, sizes, action] of shots) {
+for (const [name, id, sizes, action] of selected) {
 	for (const size of sizes) {
 		const page = await context.newPage();
 		await page.setViewportSize(viewports[size]);
@@ -217,6 +260,32 @@ for (const [name, id, sizes, action] of shots) {
 				.locator('[data-cy="panel-header-channel-options"]')
 				.first()
 				.click();
+			await page.waitForTimeout(300);
+		}
+		if (action === 'wait-for-play') {
+			// (d4)/(d5): the story's play leaves the card open (and, for d4,
+			// focus on the channel word) — clicking would close it again.
+			await page.waitForSelector('.channelMenu', { timeout: 15_000 });
+			await page.waitForTimeout(800);
+		}
+		if (action === 'scroll-action-bar-start') {
+			// The story's play scrolls the bar to its end; show the resting
+			// state (fade at the end) for this shot.
+			await page
+				.locator('[data-cy="composer-action-bar"]')
+				.first()
+				.evaluate((bar) => {
+					bar.scrollLeft = 0;
+				});
+			await page.waitForTimeout(300);
+		}
+		if (action === 'scroll-action-bar-end') {
+			await page
+				.locator('[data-cy="composer-action-bar"]')
+				.first()
+				.evaluate((bar) => {
+					bar.scrollLeft = bar.scrollWidth;
+				});
 			await page.waitForTimeout(300);
 		}
 		if (action === 'scroll-panel-bar') {
