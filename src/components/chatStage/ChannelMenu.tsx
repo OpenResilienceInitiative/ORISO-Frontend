@@ -77,11 +77,23 @@ export const ChannelMenu = ({
 		return active >= 0 ? active : 0;
 	});
 	const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+	const rootRef = useRef<HTMLDivElement | null>(null);
+	// Mirrors `focused` for the deferred focus check below.
+	const focusedRef = useRef(focused);
+	focusedRef.current = focused;
+	// Set the moment the host is told to close: from then on focus may
+	// leave — the host puts it on its button (or wherever it likes).
+	const closingRef = useRef(false);
+	const mountedRef = useRef(false);
 
 	useEffect(() => {
+		mountedRef.current = true;
 		if (autoFocus) {
 			buttonRefs.current[focused]?.focus();
 		}
+		return () => {
+			mountedRef.current = false;
+		};
 		// Only on mount: later focus moves are driven by the keyboard.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -91,19 +103,49 @@ export const ChannelMenu = ({
 		buttonRefs.current[index]?.focus();
 	}, []);
 
+	const close = useCallback(() => {
+		closingRef.current = true;
+		onClose();
+	}, [onClose]);
+
+	/**
+	 * Review v6: the card owns focus while it is open. The composer's
+	 * deferred autofocus (a `setTimeout(0)` after the draft loads) used to
+	 * pull focus off the card a tick after it opened, leaving ↓/↑ dead. When
+	 * focus leaves for somewhere outside the card, wait a tick — the host
+	 * may be closing us (Escape, a pick, a click elsewhere) — and, if the
+	 * card is still open, take the current row back.
+	 */
+	const onFocusOut = (event: React.FocusEvent<HTMLDivElement>) => {
+		const next = event.relatedTarget as Node | null;
+		if (next && rootRef.current?.contains(next)) {
+			return;
+		}
+		window.setTimeout(() => {
+			if (!mountedRef.current || closingRef.current) {
+				return;
+			}
+			const active = document.activeElement;
+			if (active && rootRef.current?.contains(active)) {
+				return;
+			}
+			buttonRefs.current[focusedRef.current]?.focus();
+		}, 0);
+	};
+
 	const pick = useCallback(
 		(row: ChannelMenuRow) => {
 			onSelect(row.id);
-			onClose();
+			close();
 		},
-		[onSelect, onClose]
+		[onSelect, close]
 	);
 
 	const onKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			event.stopPropagation();
-			onClose();
+			close();
 			return;
 		}
 		const shortcut = resolveMenuShortcut(event, rows);
@@ -132,8 +174,10 @@ export const ChannelMenu = ({
 
 	return (
 		<div
+			ref={rootRef}
 			className={['channelMenu', className].filter(Boolean).join(' ')}
 			data-cy={dataCy}
+			onBlur={onFocusOut}
 		>
 			<div className="channelMenu__header">
 				<p
@@ -251,7 +295,7 @@ export const ChannelMenu = ({
 							onFocus={() => setFocused(rows.length)}
 							onClick={() => {
 								onBack();
-								onClose();
+								close();
 							}}
 						>
 							<MainChatGlyph

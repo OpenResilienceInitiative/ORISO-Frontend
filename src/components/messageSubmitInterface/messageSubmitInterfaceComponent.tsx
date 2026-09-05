@@ -20,6 +20,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
+import { isFocusInsideOpenMenu } from './focusGuards';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -588,6 +589,10 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const activeElement = document.activeElement as HTMLElement | null;
+		// Review v6: an open menu (the channel card) keeps its focus.
+		if (isFocusInsideOpenMenu(activeElement)) {
+			return;
+		}
 		const activeTagName = activeElement?.tagName?.toLowerCase();
 		const isTypingInAnotherInput =
 			!!activeElement &&
