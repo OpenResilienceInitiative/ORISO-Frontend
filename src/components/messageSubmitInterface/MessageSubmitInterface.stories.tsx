@@ -130,10 +130,10 @@ async function expectComposerBottomInset(
 /**
  * The absence banner an advice seeker sees when their counsellor is away.
  *
- * It renders inside the composer wrapper, above the card. The composer card is
- * `position: absolute; bottom: 0` with an opaque background, so without the
- * wrapper reserving room for the banner the card paints straight over it and
- * the notice is invisible in the app while still present in the DOM.
+ * It renders inside the composer wrapper, above the card. The composer card used
+ * to be `position: absolute; bottom: 0` with an opaque background; that removed
+ * it from flow so the wrapper didn’t reserve room for the banner and the card
+ * painted over it, making the notice invisible while still present in the DOM.
  */
 export const ConsultantAbsent: Story = {
 	name: 'Asker — counsellor is absent',
