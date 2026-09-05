@@ -1,8 +1,8 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v3/<story>-<viewport>.png
- *        SHOT_DIR=stage-v2 node _shots/shoot.mjs  (older set)
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v4/<story>-<viewport>.png
+ *        SHOT_DIR=stage-v3 node _shots/shoot.mjs  (older set)
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v3'
+	process.env.SHOT_DIR ?? 'stage-v4'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -28,6 +28,11 @@ const shots = [
 		'a-supervision-inside-card',
 		`${stage}supervision-inside-the-card`,
 		['1280x820', '1440x900', '390x844']
+	],
+	[
+		'a2-supervision-system-notice',
+		`${stage}supervision-system-notice-at-the-top-of-the-side-room`,
+		['1280x820', '1440x900']
 	],
 	[
 		'b-supervision-second-card',

@@ -189,6 +189,55 @@ export const SupervisionInsideTheCard: Story = {
 	}
 };
 
+/**
+ * (a2) T7: the side room opens with the system notice "Supervision durch
+ * Bettina B. …" as its first item — the real `[SYSTEM_NOTIFICATION]` bubble
+ * the timeline renders, no panel-specific markup. The play scrolls the
+ * panel to the top so the screenshot shows it.
+ */
+export const SupervisionSystemNoticeAtTheTop: Story = {
+	name: '(a2) Supervision — system notice at the top of the side room',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 0
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const timeline = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .sidePanel__timeline'
+		)!;
+		await expect(timeline).not.toBeNull();
+		// The panel opens at its newest message; wait for that, then go up.
+		await waitFor(() => expect(timeline.scrollTop).toBeGreaterThan(0));
+		await new Promise((resolve) => setTimeout(resolve, 500));
+		timeline.scrollTop = 0;
+		const notice = canvas.getByText(/Supervision durch Bettina B\./);
+		await waitFor(() => expect(notice).toBeVisible());
+		const noticeRect = notice.getBoundingClientRect();
+		const timelineRect = timeline.getBoundingClientRect();
+		await expect(noticeRect.top).toBeGreaterThanOrEqual(timelineRect.top);
+		await expect(noticeRect.bottom).toBeLessThanOrEqual(
+			timelineRect.bottom
+		);
+		// First item of the supervision timeline, real system bubble style.
+		const firstItem = timeline.querySelector<HTMLElement>('.messageItem')!;
+		await expect(firstItem.contains(notice)).toBe(true);
+		await expect(
+			firstItem.querySelector('.messageItem__message--systemNotification')
+		).not.toBeNull();
+		// Wording matches the UI: the plus sits next to the mail glyph.
+		await expect(notice.textContent).toContain(
+			'über das Plus neben dem Mail-Symbol'
+		);
+	}
+};
+
 /** (b) The alternative to compare: a second chat card next to the first. */
 export const SupervisionAsSecondCard: Story = {
 	name: '(b) Supervision as second card',
