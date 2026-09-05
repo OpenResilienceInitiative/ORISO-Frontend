@@ -205,6 +205,71 @@ export function rewriteLegacyChannelPath(
 }
 
 /* ------------------------------------------------------------------ *
+ * Auto-open on entry (B2; review D-3)
+ * ------------------------------------------------------------------ */
+
+export interface AutoOpenInput {
+	/** The channel the URL asks for right now (deep link, or after Back: none). */
+	routeChannel: SessionChannel | null;
+	/** The host already settled this session (nothing more to decide). */
+	alreadySettled: boolean;
+	/** `readLastChannel`: `undefined` first visit, `null` closed by the user. */
+	remembered: SessionChannel | null | undefined;
+	/** Root ids of the loaded history; `null` while the timeline is not there yet. */
+	loadedRootIds: string[] | null;
+	hasSupervisionSideRoom: boolean;
+}
+
+export interface AutoOpenDecision {
+	/** Mark the session as handled — no later run may open anything for it. */
+	settle: boolean;
+	/** Channel to open with `replace`, or nothing. */
+	open: SessionChannel | null;
+}
+
+const KEEP_WAITING: AutoOpenDecision = { settle: false, open: null };
+
+/**
+ * What the host does with a session it has just entered. Entering WITH a
+ * channel in the URL (deep link, timeline, e-mail) settles the session
+ * right away: the URL is the truth and browser Back must land on the
+ * closed main chat, not re-run the first-visit auto-open (review D-3).
+ * Without a channel: a remembered close stays closed, a remembered thread
+ * re-opens once its root is in the loaded history, else the side room
+ * auto-opens once — never before it exists.
+ */
+export const decideAutoOpen = ({
+	routeChannel,
+	alreadySettled,
+	remembered,
+	loadedRootIds,
+	hasSupervisionSideRoom
+}: AutoOpenInput): AutoOpenDecision => {
+	if (routeChannel) {
+		return { settle: true, open: null };
+	}
+	if (alreadySettled) {
+		return KEEP_WAITING;
+	}
+	if (remembered === null) {
+		return { settle: true, open: null };
+	}
+	if (remembered?.kind === 'thread') {
+		if (!loadedRootIds || loadedRootIds.length === 0) {
+			return KEEP_WAITING;
+		}
+		return {
+			settle: true,
+			open: loadedRootIds.includes(remembered.rootId) ? remembered : null
+		};
+	}
+	if (!hasSupervisionSideRoom) {
+		return KEEP_WAITING;
+	}
+	return { settle: true, open: { kind: 'supervision' } };
+};
+
+/* ------------------------------------------------------------------ *
  * Last open channel per session (Frank, 05.09.: "letzten Kanal merken")
  * ------------------------------------------------------------------ */
 

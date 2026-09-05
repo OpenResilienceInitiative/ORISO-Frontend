@@ -11,6 +11,7 @@ import {
 	channelFromId,
 	channelId,
 	channelsEqual,
+	decideAutoOpen,
 	normalizeLegacyChannelSearch,
 	parseChannel,
 	parseChannelValue,
@@ -264,5 +265,97 @@ describe('last channel per session (sessionStorage)', () => {
 		const storage = memory();
 		storage.setItem('chatStage.lastChannel.74', 'peer:x');
 		expect(readLastChannel(storage, 74)).toBeUndefined();
+	});
+});
+
+describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open)', () => {
+	const supervision = { kind: 'supervision' as const };
+	const thread = { kind: 'thread' as const, rootId: ROOT };
+
+	it('settles the session on a deep-link entry without opening anything', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: thread,
+				alreadySettled: false,
+				remembered: undefined,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
+	});
+
+	it('does nothing once the session is settled (that is what Back relies on)', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: true,
+				remembered: undefined,
+				loadedRootIds: [ROOT],
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: false, open: null });
+	});
+
+	it('stays closed when the user closed the panel earlier', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: null,
+				loadedRootIds: [ROOT],
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
+	});
+
+	it('reopens a remembered thread once its root is loaded, waits while history is empty', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: thread,
+				loadedRootIds: [],
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: false, open: null });
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: thread,
+				loadedRootIds: [ROOT],
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: thread });
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: thread,
+				loadedRootIds: ['$other'],
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
+	});
+
+	it('auto-opens the side room once on a first visit, only when it exists', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: undefined,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: false
+			})
+		).toEqual({ settle: false, open: null });
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: supervision,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: supervision });
 	});
 });

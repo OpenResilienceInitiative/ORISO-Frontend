@@ -70,6 +70,7 @@ import {
 	channelId,
 	normalizeLegacyChannelSearch,
 	parseChannel,
+	decideAutoOpen,
 	readLastChannel,
 	safeSessionStorage,
 	stripChannelParams,
@@ -3496,36 +3497,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// No param on entry: reopen the last channel of this session; a
 	// remembered close stays closed; nothing remembered → the side room
-	// auto-opens once (today's behaviour), never for askers.
+	// auto-opens once (today's behaviour), never for askers. Entering WITH
+	// a param (deep link) settles the session at once, so browser Back
+	// lands on the closed main chat instead of re-opening (review D-3).
+	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
 	const autoOpenedForSessionRef = useRef<string | number | null>(null);
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
-		if (!sessionId || routeChannel || !isSupervisionPanelViewer) {
+		if (!sessionId || !isSupervisionPanelViewer) {
 			return;
 		}
-		if (autoOpenedForSessionRef.current === sessionId) {
-			return;
-		}
-		const remembered = readLastChannel(safeSessionStorage(), sessionId);
-		if (remembered === null) {
+		const decision = decideAutoOpen({
+			routeChannel,
+			alreadySettled: autoOpenedForSessionRef.current === sessionId,
+			remembered: readLastChannel(safeSessionStorage(), sessionId),
+			loadedRootIds: messages
+				? messages.map((message) => message._id)
+				: null,
+			hasSupervisionSideRoom
+		});
+		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
-			return;
 		}
-		if (remembered?.kind === 'thread') {
-			if (!messages || messages.length === 0) {
-				return;
-			}
-			autoOpenedForSessionRef.current = sessionId;
-			if (messages.some((message) => message._id === remembered.rootId)) {
-				setChannelRoute(remembered, 'replace');
-			}
-			return;
+		if (decision.open) {
+			setChannelRoute(decision.open, 'replace');
 		}
-		if (!hasSupervisionSideRoom) {
-			return;
-		}
-		autoOpenedForSessionRef.current = sessionId;
-		setChannelRoute({ kind: 'supervision' }, 'replace');
 	}, [
 		activeSession.item?.id,
 		routeChannel,
