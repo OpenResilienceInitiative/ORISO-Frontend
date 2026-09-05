@@ -300,6 +300,37 @@
 			"ready": "Textausschnitt zur Antwort hinzugefügt"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Nebenkanäle anzeigen",
+			"closeMenu": "Nebenkanäle ausblenden",
+			"openChannel": "{{label}} öffnen",
+			"backToMain": "Zurück zum Beratungschat",
+			"mainChat": "Beratungschat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			}
+		},
+		"participants": {
+			"label": "Beteiligte: {{names}}",
+			"more": "{{count}} weitere Beteiligte",
+			"more_one": "1 weitere Person"
+		},
+		"panel": {
+			"channelOptions": "Kanal wechseln",
+			"channelOptionsEmpty": "Keine weiteren Kanäle",
+			"participantCount": "{{count}} Beteiligte",
+			"participantCount_one": "1 Person",
+			"close": "Nebenraum schließen",
+			"back": "Zurück zum Beratungschat",
+			"region": "Nebenraum: {{title}}",
+			"thread": {
+				"title": "Thread",
+				"subtitle": "Antworten auf eine Nachricht aus dem Beratungschat"
+			}
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archivieren",
 		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
@@ -3547,6 +3578,13 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – Sie lesen in diesem Chat mit",
+			"supervisedBy": "Supervision: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste."
 		}
 	},
 	"statusOverlay": {
@@ -4486,6 +4524,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Beratung"
+			},
+			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
+			"close": "Supervision schließen",
+			"collapse": "Supervision minimieren",
+			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
+			"unread": "{{count}} ungelesene Nachrichten",
+			"unread_one": "1 ungelesene Nachricht",
+			"empty": {
+				"title": "Noch keine Nachrichten",
+				"hint": "Hier sprechen Sie vertraulich mit {{name}} über diese Beratung."
+			},
+			"composer": {
+				"placeholder": "Nachricht an {{name}} …",
+				"send": "Senden",
+				"failed": "Senden fehlgeschlagen – bitte erneut versuchen."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "{{kind}} öffnen",
+				"newMessage": "Neue Nachricht",
+				"dragHandle": "Miniatur verschieben – Pfeiltasten"
+			},
+			"stage": {
+				"divider": "Trennlinie – Pfeiltasten ändern die Breite der Supervision, Pos1 und Ende setzen Minimum und Maximum",
+				"mainPane": "Beratungschat",
+				"secondaryPane": "Nebenraum"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",
@@ -4583,7 +4661,8 @@
 			"headline": "Ihr angezeigter Name",
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
-		}
+		},
+		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen unterzeichnen",

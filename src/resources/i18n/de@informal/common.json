@@ -1435,6 +1435,9 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – Du liest in diesem Chat mit"
 		}
 	},
 	"statusOverlay": {
@@ -2026,6 +2029,13 @@
 			"option": "Option",
 			"ctrl": "Strg",
 			"cmd": "Cmd"
+		}
+	},
+	"supervision": {
+		"panel": {
+			"empty": {
+				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
+			}
 		}
 	},
 	"teamDiscussion": {

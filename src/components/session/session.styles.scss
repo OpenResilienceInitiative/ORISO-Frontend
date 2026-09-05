@@ -183,8 +183,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 
 		@media screen and (width <= 899px) {
-			// Leave extra scrollable space so the latest message "Reply" stays above composer.
-			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
+			// Leave scrollable space so the latest message "Reply" stays above
+			// the composer: one-line composer 120 + navigator 48 + dock 16 (T10).
+			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
 		}
 	}
 
@@ -199,6 +200,27 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__content--withThread {
 		@include breakpoint($fromMedium) {
 			padding-right: 520px;
+		}
+	}
+
+	// WP-B2: the supervision parallel panel wraps the chat card in a
+	// SplitStage (see supervisionPanel/README.md). The stage replaces the
+	// card as the flex child of .session__wrapper.
+	&__supervisionStage {
+		flex: 1 1 auto;
+		height: auto;
+		min-height: 0;
+		min-width: 0;
+		align-self: stretch;
+
+		@include breakpoint($fromLarge) {
+			.splitStage__secondary {
+				padding: 24px 24px 24px 0;
+			}
+
+			.splitStage__divider {
+				margin-left: -24px;
+			}
 		}
 	}
 

@@ -62,7 +62,19 @@ import {
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { UserAvatar } from '../message/UserAvatar';
+import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	STACK_MAX_VISIBLE,
+	STACK_MAX_VISIBLE_PHONE,
+	type StackParticipant
+} from '../message/participantStack';
+import {
+	bumpLastActivity,
+	isEventForRoom,
+	seedLastActivity,
+	toStackParticipants
+} from './headerParticipants';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -117,7 +129,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(activeSession.item.topic as TopicSessionInterface).id
 	);
 	const settings = useAppConfig();
-	const { untilL } = useResponsive();
+	const { untilL, untilM } = useResponsive();
 	const {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
@@ -758,6 +770,103 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(!isAnonymousMatrixUsername(contact?.username)
 			? contact?.username
 			: undefined);
+	/* T4 / FE#1193: the room's participants, latest activity first, live.
+	   Members and their last message come from the Matrix room. The
+	   subscription is scoped to the active room and "last activity" is kept
+	   incrementally (seed once, bump per event) — no timeline rescan per
+	   event, no re-render for other rooms (stage v3 review). Everything is
+	   optional-chained because the Storybook stand-in only implements part
+	   of the client. */
+	const [roomParticipants, setRoomParticipants] = useState<
+		StackParticipant[]
+	>([]);
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	useEffect(() => {
+		const client = matrixClientService?.getClient?.();
+		const roomId = activeSession.rid;
+		if (!client || !roomId) {
+			setRoomParticipants([]);
+			return undefined;
+		}
+		const lastActivity = seedLastActivity(
+			client.getRoom?.(roomId)?.getLiveTimeline?.()?.getEvents?.() ?? []
+		);
+		const publish = () => {
+			const members: any[] =
+				client.getRoom?.(roomId)?.getJoinedMembers?.() ?? [];
+			setRoomParticipants(
+				toStackParticipants(members, lastActivity, {
+					askerMatrixUserId,
+					askerDisplayName: headerContactName,
+					isSystemUser: isSystemMatrixUser
+				})
+			);
+		};
+		publish();
+		const onTimeline = (event: any, room?: any) => {
+			if (!isEventForRoom(roomId, room)) {
+				return;
+			}
+			if (bumpLastActivity(lastActivity, event)) {
+				publish();
+			}
+		};
+		const onMembers = (_event: any, state?: any) => {
+			if (isEventForRoom(roomId, state)) {
+				publish();
+			}
+		};
+		// The stand-in in Storybook is a plain object; the real client's
+		// event names are typed enums that the string form matches at runtime.
+		const emitter = client as any;
+		const subscribe = (name: string, handler: (...args: any[]) => void) =>
+			typeof emitter.on === 'function' && emitter.on(name, handler);
+		const unsubscribe = (
+			name: string,
+			handler: (...args: any[]) => void
+		) => {
+			if (typeof emitter.removeListener === 'function') {
+				emitter.removeListener(name, handler);
+			} else if (typeof emitter.off === 'function') {
+				emitter.off(name, handler);
+			}
+		};
+		subscribe('Room.timeline', onTimeline);
+		subscribe('RoomState.members', onMembers);
+		return () => {
+			unsubscribe('Room.timeline', onTimeline);
+			unsubscribe('RoomState.members', onMembers);
+		};
+	}, [
+		matrixClientService,
+		activeSession.rid,
+		askerMatrixUserId,
+		headerContactName
+	]);
+
+	// Without Matrix members (enquiry, offline) the header still shows the
+	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	const headerParticipants: StackParticipant[] =
+		roomParticipants.length > 0
+			? roomParticipants
+			: contact
+				? [
+						{
+							userId:
+								askerMatrixUserId ||
+								contact.username ||
+								'unknown',
+							username: contact.username || 'User',
+							displayName:
+								headerAvatarDisplayName || headerFallbackLabel,
+							isAsker: !hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							)
+						}
+					]
+				: [];
+
 	const sessionHeaderConversationIconType: ChatroomConversationIconType =
 		activeSession.isEmptyEnquiry
 			? 'waiting'
@@ -1025,27 +1134,28 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								<div className="sessionInfo__memberBubble">
-									{hasUserAuthority(
-										AUTHORITIES.ASKER_DEFAULT,
-										userData
-									) && !activeSession.consultant ? (
+								{hasUserAuthority(
+									AUTHORITIES.ASKER_DEFAULT,
+									userData
+								) && !activeSession.consultant ? (
+									<div className="sessionInfo__memberBubble">
 										<ConsultantSearchLoader size="32px" />
-									) : (
-										<UserAvatar
-											username={
-												contact?.username || 'User'
-											}
-											displayName={
-												headerAvatarDisplayName
-											}
-											userId={
-												contact?.username || 'unknown'
-											}
-											size="32px"
-										/>
-									)}
-								</div>
+									</div>
+								) : (
+									<ParticipantAvatarStack
+										participants={headerParticipants}
+										/* Phone (< 900 px): one avatar + a
+										   compact "+N" — the title keeps the
+										   width it shares with the stack. */
+										maxVisible={
+											untilM
+												? STACK_MAX_VISIBLE_PHONE
+												: STACK_MAX_VISIBLE
+										}
+										className="sessionInfo__participants"
+										data-cy="session-header-participants"
+									/>
+								)}
 							</div>
 						);
 					})()}
@@ -1183,7 +1293,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					{topic?.name && (
 						<div className="sessionInfo__metaInfo__content">
 							{topic.name}
-							<span className="sessionInfo__topicDots">•••</span>
 						</div>
 					)}
 				</div>

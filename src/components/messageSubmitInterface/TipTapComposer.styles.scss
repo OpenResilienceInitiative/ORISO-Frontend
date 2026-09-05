@@ -104,6 +104,12 @@
 				left: 16px;
 			}
 
+			// Phone: the one-line composer keeps 10 px under the line, so the
+			// card ends right below the placeholder (T10, stage v3 review).
+			@media screen and (width <= 899px) {
+				bottom: 10px;
+			}
+
 			p {
 				margin: 0;
 				line-height: 1.4;

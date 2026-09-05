@@ -33,7 +33,8 @@ describe('session list visual contracts', () => {
 		expect(css).toMatch(
 			/\.sessionsListItem__content\s*\{[^}]*min-height:\s*160px;[^}]*border-radius:\s*24px;/s
 		);
-		expect(css).toMatch(/\.sessionsListItem\s*\{[^}]*margin:\s*0 0 6px;/s);
+		// T5 (Frank's BSP): 24 px between cards.
+		expect(css).toMatch(/\.sessionsListItem\s*\{[^}]*margin:\s*0 0 24px;/s);
 	});
 
 	it('reserves side hairlines for the empty state and exposes the dragbar', () => {
@@ -45,13 +46,28 @@ describe('session list visual contracts', () => {
 			/\.sessionsList__emptyState[^{}]*\{[^}]*border-right:\s*1px solid #fff;/s
 		);
 		expect(css).toMatch(
-			/\.sessionsList__resizeHandle[^{}]*\{[^}]*right:\s*-12px;[^}]*width:\s*24px;/s
+			/\.sessionsList__resizeHandle[^{}]*\{[^}]*width:\s*24px;/s
+		);
+		// T5: press-and-hold / drag need the browser's touch scrolling off
+		// on the hit zone and the resize cursor.
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandle[^{}]*\{[^}]*cursor:\s*col-resize;[^}]*touch-action:\s*none;/s
 		);
 		expect(css).toMatch(
-			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
+			// T13: half the handle plus half the host's pane gap — centred in
+			// the gap between list and chat card.
+			/\.sessionsList__resizeHandle--end[^{}]*\{[^}]*right:\s*calc\(-12px - var\(--pane-gap, 0px\) \/ 2\);/s
 		);
-		expect(css).toContain('[data-scrollable=true]');
-		expect(css).toContain('top: var(--sessions-list-thumb-top);');
-		expect(css).toContain('height: var(--sessions-list-thumb-height);');
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandle--start[^{}]*\{[^}]*left:\s*-12px;/s
+		);
+		// T5: the pill is centred on the handle's full height and never
+		// follows the list's scroll thumb; the chevron toggle is gone.
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
+		);
+		expect(css).not.toContain('[data-scrollable=true]');
+		expect(css).not.toContain('--sessions-list-thumb-top');
+		expect(css).not.toContain('.sessionsList__resizeToggle');
 	});
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAsideTargetRoomId } from './asideRouting';
+import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 
 const CLIENT_ROOM = '!client:matrix.example.org';
 const SIDE_ROOM = '!supervision:matrix.example.org';
@@ -64,5 +64,43 @@ describe('resolveAsideTargetRoomId (ADR-008 aside send routing)', () => {
 
 		expect(result.abort).toBe(false);
 		expect(result.targetRoomId).toBe(CLIENT_ROOM);
+	});
+});
+
+describe('resolvePrimaryRoomId (side-room composer target)', () => {
+	it('keeps the client room when no explicit target is given', () => {
+		expect(
+			resolvePrimaryRoomId({
+				targetRoomId: undefined,
+				clientRoomId: CLIENT_ROOM
+			})
+		).toBe(CLIENT_ROOM);
+	});
+
+	it('sends to the explicit target room (the supervision side room) instead', () => {
+		expect(
+			resolvePrimaryRoomId({
+				targetRoomId: SIDE_ROOM,
+				clientRoomId: CLIENT_ROOM
+			})
+		).toBe(SIDE_ROOM);
+	});
+
+	it('ignores blank targets so a stale empty string cannot swallow sends', () => {
+		expect(
+			resolvePrimaryRoomId({
+				targetRoomId: '  ',
+				clientRoomId: CLIENT_ROOM
+			})
+		).toBe(CLIENT_ROOM);
+	});
+
+	it('yields undefined for a non-Matrix session without a target', () => {
+		expect(
+			resolvePrimaryRoomId({
+				targetRoomId: undefined,
+				clientRoomId: undefined
+			})
+		).toBeUndefined();
 	});
 });

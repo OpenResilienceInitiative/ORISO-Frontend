@@ -204,6 +204,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						border: 0 !important;
 						border-radius: 0 !important;
 						box-shadow: none !important;
+
+						// T10: one line by default (`composerResize.ts`
+						// MIN_HEIGHT_MOBILE = 102); `--composer-height` grows it.
+						min-height: var(--composer-height, 102px);
+						height: var(--composer-height, 102px);
 					}
 
 					&::before {
@@ -215,8 +220,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 180px);
-						height: var(--composer-height, 180px);
+						min-height: var(--composer-height, 102px);
+						height: var(--composer-height, 102px);
 					}
 				}
 			}
@@ -279,149 +284,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid #ffe3a0;
 		}
 
-		&__mobileNavigator {
-			display: none;
-		}
-
-		@media screen and (width <= 899px) {
-			&__mobileNavigator {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				gap: 6px;
-				height: 48px;
-				padding: 0 0px;
-				border: 2px solid #ffd1d1;
-				border-bottom: 0;
-				border-top-left-radius: 20px;
-				border-top-right-radius: 20px;
-				background: #fff;
-				position: absolute;
-				top: -48px;
-				left: 0px;
-				right: 0px;
-				z-index: 34;
-				width: 100%;
-			}
-
-			&__mobileNavigator > button {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-
-			&__mobileNavigatorButton {
-				border: 0;
-				background: transparent;
-				width: 62px;
-				height: 48px;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				border-top-left-radius: 0;
-				border-top-right-radius: 0;
-				cursor: pointer;
-				position: relative;
-				flex: 1;
-
-				&:active {
-					background: #ffe2de;
-				}
-			}
-
-			&__mobileNavigatorButton--left {
-				border-top-left-radius: 20px;
-			}
-
-			&__mobileNavigatorButton--right {
-				border-top-right-radius: 20px;
-			}
-
-			&__mobileNavigatorCenter {
-				border: 0;
-				background: transparent;
-				flex: 0;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				height: 36px;
-				border-radius: 8px;
-				cursor: ns-resize;
-				touch-action: none;
-
-				&:active {
-					background: #ffe2de;
-
-					.textarea__mobileNavigatorHandle {
-						background: var(--m3-primary-container, #cc1e1c);
-					}
-				}
-			}
-
-			&__mobileNavigator > .textarea__mobileNavigatorButton {
-				flex: 1 1 0;
-			}
-
-			&__mobileNavigator > .textarea__mobileNavigatorCenter {
-				flex: 0 0 112px;
-				width: 112px;
-			}
-
-			&__mobileNavigatorHandle {
-				width: 66px;
-				height: 5px;
-				border-radius: 2px;
-				background: #d9d9d9;
-				transition:
-					background 160ms ease,
-					height 160ms ease;
-			}
-
-			&__mobileNavigatorHandle--atBottom {
-				background: var(--m3-primary-container, #cc1e1c);
-				height: 7px;
-				border-radius: 3px;
-			}
-
-			&__mobileNavigatorBadge {
-				position: absolute;
-				right: 8px;
-				top: 8px;
-				width: 20px;
-				height: 20px;
-				padding: 0;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				border-top-left-radius: 3px;
-				border-bottom-right-radius: 3px;
-				border-top-right-radius: 8px;
-				border-bottom-left-radius: 8px;
-				background: #b1005e;
-				color: #fff;
-				font-size: 11px;
-				font-weight: 600;
-				line-height: 1;
-				letter-spacing: 0;
-				overflow: hidden;
-			}
-
-			&__mobileNavigatorButton--right:active {
-				background: #ffd1d1;
-			}
-
-			&__wrapper-send-message:not(
-					.textarea__wrapper-send-message--expanded
-				) {
-				border-top-left-radius: 0 !important;
-				border-top-right-radius: 0 !important;
-			}
-
-			&__input {
-				border-radius: 0 0 30px 30px;
-			}
-		}
-
 		&__inputWrapper {
 			position: absolute;
 			left: 16px;
@@ -438,6 +300,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				left: 0;
 				right: 0;
 				top: 0;
+
+				// T10: no 16 px dock inside the card on the phone — the outer
+				// 16 px padding is the only space to the bottom navigation.
+				bottom: 0;
 				border-top-left-radius: 0 !important;
 				border-top-right-radius: 0 !important;
 			}
@@ -2161,11 +2027,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 	}
 
-	// `.textarea__mobileNavigator` is `position: absolute; top: -48px`, so it
-	// is out of flow and paints its white background over the 48px directly
-	// above the composer — exactly where this bar would otherwise sit. Reserve
-	// that band so the banner clears it instead of disappearing behind it.
-	@media screen and (width <= 899px) {
-		margin-bottom: 54px;
-	}
+	// T16: the phone navigator row above the composer is gone, so the bar
+	// sits directly above the composer on every width.
 }

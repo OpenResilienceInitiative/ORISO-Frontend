@@ -305,6 +305,37 @@
 			"ready": "Extrait de texte ajouté à votre réponse"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Participants : {{names}}",
+			"more": "{{count}} autres participants",
+			"more_one": "1 autre personne"
+		},
+		"panel": {
+			"channelOptions": "Changer de canal",
+			"channelOptionsEmpty": "Aucun autre canal",
+			"participantCount": "{{count}} personnes",
+			"participantCount_one": "1 personne",
+			"back": "Retour au chat de conseil",
+			"close": "Fermer le panneau latéral",
+			"region": "Panneau latéral : {{title}}",
+			"thread": {
+				"subtitle": "Réponses à un message du chat de conseil",
+				"title": "Fil"
+			}
+		},
+		"switcher": {
+			"backToMain": "Retour au chat de conseil",
+			"closeMenu": "Masquer les canaux secondaires",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil"
+			},
+			"mainChat": "Chat de conseil",
+			"openChannel": "Ouvrir {{label}}",
+			"openMenu": "Afficher les canaux secondaires"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archiver",
 		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
@@ -3530,6 +3561,13 @@
 				"selfHelp": "Cercle de parole",
 				"internal": "Échange interne"
 			}
+		},
+		"supervision": {
+			"badge": "Supervision – vous suivez cette conversation",
+			"supervisedBy": "Supervision : {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste."
 		}
 	},
 	"statusOverlay": {
@@ -4464,6 +4502,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "Supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Conseil"
+			},
+			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
+			"close": "Fermer la supervision",
+			"collapse": "Réduire la supervision",
+			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
+			"unread": "{{count}} messages non lus",
+			"unread_one": "1 message non lu",
+			"empty": {
+				"title": "Pas encore de messages",
+				"hint": "Échangez ici en toute confidentialité avec {{name}} au sujet de cet accompagnement."
+			},
+			"composer": {
+				"placeholder": "Message à {{name}} …",
+				"send": "Envoyer",
+				"failed": "Échec de l’envoi – veuillez réessayer."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil de discussion"
+			},
+			"mini": {
+				"expand": "Ouvrir {{kind}}",
+				"newMessage": "Nouveau message",
+				"dragHandle": "Déplacer la miniature – touches fléchées"
+			},
+			"stage": {
+				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
+				"mainPane": "Chat de conseil",
+				"secondaryPane": "Salle annexe"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Réunion d'équipe",
 		"startHint": "Démarrer la réunion",
@@ -4561,7 +4639,8 @@
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
 			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
-		}
+		},
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
 	},
 	"legal": {
 		"notice": {

@@ -18,6 +18,7 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { STATUS_ACTIVE } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 
@@ -77,7 +78,12 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 // i18n
 // ---------------------------------------------------------------------------
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (k: string) => k })
+	useTranslation: () => ({
+		t: (k: string, opts?: any) =>
+			opts && typeof opts === 'object' && opts.name
+				? `${k}:${opts.name}`
+				: k
+	})
 }));
 
 // ---------------------------------------------------------------------------
@@ -91,7 +97,7 @@ vi.mock('lottie-web', () => ({ default: {} }));
 // ---------------------------------------------------------------------------
 vi.mock('../../resources/img/icons', () => ({
 	MenuVerticalIcon: () => <span data-testid="menu-vertical-icon" />,
-	ShowPasswordIcon: () => <span />
+	ShowPasswordIcon: () => <span data-testid="silent-member-eye" />
 }));
 vi.mock('../../resources/img/icons/inbox.svg', () => ({
 	ReactComponent: () => <span />
@@ -161,7 +167,7 @@ vi.mock('./SessionListItemVideoCall', () => ({
 	SessionListItemVideoCall: () => <span />
 }));
 vi.mock('./CaseHandoverActionButton', () => ({
-	CaseHandoverActionButton: () => <span />
+	CaseHandoverActionButton: () => <span data-testid="case-handover-action" />
 }));
 vi.mock('../session/DeleteSession', () => ({
 	default: ({
@@ -254,6 +260,47 @@ const makeGroupSession = ({
 	isArchive: false,
 	consultant: { id: consultantId },
 	user: null,
+	agency: { id: 1 }
+});
+
+/**
+ * Minimal ExtendedSessionInterface for a 1:1 agency-counselling row
+ * (`isSession = true`, `isGroup = false`), optionally carrying the ADR-008
+ * supervision marker.
+ */
+const makeSession = ({
+	consultantId = OWNER_USER_ID,
+	supervision = undefined as any,
+	matrixRoomId = '!session:matrix.example.org'
+} = {}) => ({
+	item: {
+		id: 202,
+		matrixRoomId,
+		agencyId: 1,
+		askerMatrixUserId: '@asker:matrix.example.org',
+		consultingType: 1,
+		status: STATUS_ACTIVE,
+		messageDate: 1700000000,
+		createDate: '2023-11-14T12:00:00Z',
+		messagesRead: true,
+		registrationType: 'REGISTERED',
+		postcode: 12345,
+		lastMessage: 'Hallo',
+		attachment: null,
+		videoCallMessageDTO: null,
+		topic: { id: 1, name: 'Topic', description: '' },
+		...(supervision !== undefined ? { supervision } : {})
+	},
+	rid: matrixRoomId,
+	type: 'singleChat' as const,
+	isGroup: false,
+	isSession: true,
+	isEnquiry: false,
+	isEmptyEnquiry: false,
+	isNonEmptyEnquiry: false,
+	isArchive: false,
+	consultant: { id: consultantId, username: 'owner', displayName: 'Owner' },
+	user: { username: 'asker', displayName: 'Asker', sessionData: {} },
 	agency: { id: 1 }
 });
 
@@ -392,5 +439,76 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — supervision list marker (ADR-008)', () => {
+	const ME = 'consultant-supervisor-7';
+	const nextTick = () => new Promise((r) => setTimeout(r, 0));
+
+	it('without the marker a non-owner still sees the silent-member eye and the handover action', async () => {
+		renderItem(makeSession(), makeUserData(ME));
+		await nextTick();
+		expect(screen.getByTestId('silent-member-eye')).toBeTruthy();
+		expect(await screen.findByTestId('case-handover-action')).toBeTruthy();
+		expect(screen.queryByTestId('supervision-badge')).toBeNull();
+	});
+
+	it('supervisedByMe → supervision badge, no eye, no handover action', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const badge = screen.getByTestId('supervision-badge');
+		expect(badge.getAttribute('title')).toBe(
+			'sessionList.supervision.badge'
+		);
+		expect(screen.queryByTestId('silent-member-eye')).toBeNull();
+		expect(screen.queryByTestId('case-handover-action')).toBeNull();
+	});
+
+	it('owner sees a supervisor indicator when someone else supervises', async () => {
+		renderItem(
+			makeSession({
+				consultantId: OWNER_USER_ID,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['sup-1'],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(OWNER_USER_ID)
+		);
+		await nextTick();
+		const indicator = screen.getByTestId('supervision-indicator');
+		expect(indicator.textContent).toContain('Sabine Supervisor');
+		expect(indicator.getAttribute('title')).toBe(
+			'sessionList.supervision.supervisedBy:Sabine Supervisor'
+		);
+		expect(screen.queryByTestId('supervision-badge')).toBeNull();
+		expect(screen.queryByTestId('silent-member-eye')).toBeNull();
+		expect(screen.queryByTestId('case-handover-action')).toBeNull();
+	});
+
+	it('supervisor of the session does not get an indicator for themselves', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME],
+					supervisorDisplayNames: ['Me']
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
 	});
 });

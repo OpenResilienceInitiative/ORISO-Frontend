@@ -377,26 +377,40 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// T5: one handle for list ↔ chat (anchor end) and chat ↔ side panel
+	// (anchor start). Full height of the resized element, pill centred on
+	// it — never on the list's scroll thumb, no chevron button.
+	// T13: the end handle is centred horizontally in the gap between the
+	// list and the chat card; the host sets `--pane-gap` (the card's
+	// margin, 24 px on desktop). With no gap the handle straddles the edge.
+	$handle-width: 24px;
+	$handle-half: 12px; // = $handle-width / 2, keeps the compiled calc readable
+
 	&__resizeHandle {
 		position: absolute;
-		right: -12px;
 		top: 0;
 		bottom: 0;
-		width: 24px;
-
-		/* Cursor is controlled dynamically (resize vs scroll drag mode) */
-		cursor: grab;
+		width: $handle-width;
+		cursor: col-resize;
 		z-index: 30;
 		background: transparent;
 		border: 0;
 		outline: none;
 		touch-action: none;
 		padding: 0;
+
+		&--end {
+			right: calc(-#{$handle-half} - var(--pane-gap, 0px) / 2);
+		}
+
+		&--start {
+			left: -$handle-half;
+		}
 	}
 
 	&__resizeHandlePill {
 		position: absolute;
-		right: 8px;
+		left: 8px;
 		top: 50%;
 		width: 8px;
 		height: 48px;
@@ -409,52 +423,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			transform 140ms ease;
 	}
 
-	// Once cards overflow, the same visible dragbar becomes their scrollbar
-	// thumb. No separate full-height side line is rendered beside populated
-	// fields.
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: var(--sessions-list-thumb-top);
-		height: var(--sessions-list-thumb-height);
-		transform: none;
-	}
-
-	&__resizeToggle {
-		position: absolute;
-		right: -14px;
-		top: 18px;
-		z-index: 3;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 1px solid var(--m3-outline-variant, #c9c5c7);
-		border-radius: 999px;
-		background: var(--m3-surface-container-highest, #e1dddf);
-		color: var(--m3-on-surface, #1d1b1c);
-		font-size: 22px;
-		line-height: 24px;
-		cursor: pointer;
-		display: none;
-		align-items: center;
-		justify-content: center;
-
-		@include breakpoint($fromLarge) {
-			display: flex;
-		}
-
-		&:hover {
-			background: var(--m3-secondary-container, #ffdad5);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
-	}
-
 	&__resizeHandle:hover &__resizeHandlePill {
-		box-shadow:
-			0 0 0 1px rgba(165, 0, 10, 0.22),
-			0 3px 10px rgba(0, 0, 0, 0.14);
 		box-shadow:
 			0 0 0 1px
 				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
@@ -464,16 +433,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='false']
-		&__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='true']
-		&__resizeHandlePill {
-		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {

@@ -17,6 +17,7 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
+import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
@@ -42,7 +43,7 @@ import {
 	resolveAskerMessageTransport,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
-import { resolveAsideTargetRoomId } from './asideRouting';
+import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
@@ -201,6 +202,20 @@ export interface MessageSubmitInterfaceComponentProps {
 	isSupervisor?: boolean;
 	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
 	supervisionRoomId?: string;
+	/**
+	 * WP-B2: the supervision parallel panel owns the side room, so the main
+	 * composer no longer offers the supervisor as an audience in 1:1
+	 * sessions. Group-chat audiences are untouched. `asideRouting` stays as
+	 * the safety net for anything that still carries an aside.
+	 */
+	hideSupervisorAudience?: boolean;
+	/**
+	 * Side panel (supervision room, Figma "second Chat Room Desktop"): the
+	 * room every send of THIS composer goes to. Overrides the active
+	 * session's client room; aside routing (`asideRouting`) still applies on
+	 * top. Unset = today's behaviour.
+	 */
+	targetRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -272,32 +287,6 @@ export interface MessageSubmitInterfaceComponentProps {
  * None of them closes over anything from the component; the chevron takes the
  * only prop. Keep them here.
  */
-const ComposerMobileBackIcon = () => (
-	<svg
-		width="5"
-		height="10"
-		viewBox="0 0 5 10"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
-	</svg>
-);
-
-const ComposerMobileDownIcon = () => (
-	<svg
-		width="10"
-		height="5"
-		viewBox="0 0 10 5"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
-	</svg>
-);
-
 const AudienceAllMultiIcon = () => (
 	<svg
 		width="19"
@@ -398,6 +387,8 @@ export const MessageSubmitInterfaceComponent = ({
 	isAnonymousLiveChat = false,
 	isSupervisor,
 	supervisionRoomId,
+	hideSupervisorAudience = false,
+	targetRoomId,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -1348,7 +1339,10 @@ export const MessageSubmitInterfaceComponent = ({
 				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
-				? resolvedChatSession.matrixRoomId
+				? resolvePrimaryRoomId({
+						targetRoomId,
+						clientRoomId: resolvedChatSession.matrixRoomId
+					})
 				: undefined;
 			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
 			// go to the supervision side room, never the client-facing room.
@@ -1562,6 +1556,7 @@ export const MessageSubmitInterfaceComponent = ({
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
+			targetRoomId,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
@@ -2486,7 +2481,17 @@ export const MessageSubmitInterfaceComponent = ({
 						: classifyAudienceKind(value, roster)
 				};
 			})
-			.sort((a, b) => a.label.localeCompare(b.label));
+			.sort((a, b) => a.label.localeCompare(b.label))
+			// WP-B2: with the parallel panel the supervisor is reached through
+			// the side room, not through a "send to" choice in the client chat.
+			.filter(
+				(option) =>
+					!(
+						hideSupervisorAudience &&
+						!activeSession?.isGroup &&
+						option.kind === 'supervisor'
+					)
+			);
 		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
 		// group/supervision conversations with more than one human counterpart.
 		// A 1:1 conversation has no real targets here (the asker is filtered out
@@ -2518,6 +2523,7 @@ export const MessageSubmitInterfaceComponent = ({
 		agencyConsultantDirectory,
 		currentChatType,
 		activeSession?.isGroup,
+		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
 		userData?.userName,
@@ -3432,8 +3438,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
+	// T16: the scroll-to-newest arrow in the action bar (every width). The
+	// app passes its own handler; without one the composer scrolls the
+	// timeline of the card / side panel it is docked to.
 	const handleMobileBottomNavigation = useCallback(() => {
-		onMobileNavigateBottom?.();
+		if (onMobileNavigateBottom) {
+			onMobileNavigateBottom();
+			return;
+		}
+		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
 	const getComposerHeightBounds = useCallback(
@@ -3721,70 +3734,20 @@ export const MessageSubmitInterfaceComponent = ({
 								: undefined
 						}
 					>
-						{!isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<DragHandle
-									onPointerDown={
-										handleComposerResizePointerDown
-									}
-									onKeyDown={handleComposerResizeKeyDown}
-									touched={isComposerResizing}
-									ariaLabel={translate(
-										'message.mobileNav.dragToExpand',
-										'Drag to resize composer'
-									)}
-								/>
-							)}
-						{isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<div className="textarea__mobileNavigator">
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
-										onClick={handleMobileBackNavigation}
-										aria-label={translate(
-											'message.mobileNav.back',
-											'Navigate up'
-										)}
-									>
-										<ComposerMobileBackIcon />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorCenter"
-										onPointerDown={
-											handleComposerResizePointerDown
-										}
-										onKeyDown={handleComposerResizeKeyDown}
-										aria-label={translate(
-											'message.mobileNav.dragToExpand',
-											'Drag to resize composer'
-										)}
-									>
-										<span className="textarea__mobileNavigatorHandle" />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
-										onClick={handleMobileBottomNavigation}
-										aria-label={translate(
-											'message.mobileNav.scrollToBottom',
-											'Scroll to bottom'
-										)}
-									>
-										<ComposerMobileDownIcon />
-										{unreadMobileBadgeCount > 0 && (
-											<span className="textarea__mobileNavigatorBadge">
-												{unreadMobileBadgeCount > 99
-													? '99+'
-													: unreadMobileBadgeCount}
-											</span>
-										)}
-									</button>
-								</div>
-							)}
+						{/* T6/T16: the drag pill belongs to every docked composer —
+						    main chat, supervision room and thread panel, on the
+						    phone too (the navigator row that carried it is gone). */}
+						{!isExpandedComposer && (
+							<DragHandle
+								onPointerDown={handleComposerResizePointerDown}
+								onKeyDown={handleComposerResizeKeyDown}
+								touched={isComposerResizing}
+								ariaLabel={translate(
+									'message.mobileNav.dragToExpand',
+									'Drag to resize composer'
+								)}
+							/>
+						)}
 						{showAudienceSelector && (
 							<div
 								className="textarea__audienceSelector"
@@ -4304,6 +4267,21 @@ export const MessageSubmitInterfaceComponent = ({
 											{isCompactActionStripOpen ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
+														showBack={
+															isMobileViewport &&
+															Boolean(
+																onMobileNavigateBack
+															)
+														}
+														onBack={
+															handleMobileBackNavigation
+														}
+														onScrollToNewest={
+															handleMobileBottomNavigation
+														}
+														unreadCount={
+															unreadMobileBadgeCount
+														}
 														onOpenTools={
 															closeCompactActionStrip
 														}

@@ -305,6 +305,37 @@
 			"ready": "Metin alıntısı yanıtınıza eklendi"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Katılımcılar: {{names}}",
+			"more": "{{count}} katılımcı daha",
+			"more_one": "1 kişi daha"
+		},
+		"panel": {
+			"channelOptions": "Kanal değiştir",
+			"channelOptionsEmpty": "Başka kanal yok",
+			"participantCount": "{{count}} katılımcı",
+			"participantCount_one": "1 katılımcı",
+			"back": "Danışma sohbetine geri dön",
+			"close": "Yan paneli kapat",
+			"region": "Yan panel: {{title}}",
+			"thread": {
+				"subtitle": "Danışma sohbetindeki bir mesaja yanıtlar",
+				"title": "Konu"
+			}
+		},
+		"switcher": {
+			"backToMain": "Danışma sohbetine geri dön",
+			"closeMenu": "Yan kanalları gizle",
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Konu"
+			},
+			"mainChat": "Danışma sohbeti",
+			"openChannel": "{{label}} aç",
+			"openMenu": "Yan kanalları göster"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Arşiv",
 		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
@@ -3530,6 +3561,13 @@
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili"
 			}
+		},
+		"supervision": {
+			"badge": "Süpervizyon – bu sohbeti takip ediyorsunuz",
+			"supervisedBy": "Süpervizyon: {{name}}"
+		},
+		"resizeHandle": {
+			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır."
 		}
 	},
 	"statusOverlay": {
@@ -4464,6 +4502,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Süpervizyon",
+			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
+			"headerLabel": "Süpervizyon · {{name}}",
+			"role": {
+				"supervisor": "Süpervizyon",
+				"consultant": "Danışmanlık"
+			},
+			"privacyHint": "Bu kanal danışan tarafından hiçbir zaman görülemez.",
+			"close": "Süpervizyonu kapat",
+			"collapse": "Süpervizyonu küçült",
+			"dragHandle": "Süpervizyon penceresini taşı – ok tuşları taşır, Shift + ok tuşları boyutu değiştirir",
+			"unread": "{{count}} okunmamış mesaj",
+			"unread_one": "1 okunmamış mesaj",
+			"empty": {
+				"title": "Henüz mesaj yok",
+				"hint": "Burada {{name}} ile bu danışmanlık hakkında gizli olarak konuşabilirsiniz."
+			},
+			"composer": {
+				"placeholder": "{{name}} kişisine mesaj …",
+				"send": "Gönder",
+				"failed": "Gönderilemedi – lütfen tekrar deneyin."
+			},
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Konu"
+			},
+			"mini": {
+				"expand": "{{kind}} aç",
+				"newMessage": "Yeni mesaj",
+				"dragHandle": "Küçük pencereyi taşı – ok tuşları"
+			},
+			"stage": {
+				"divider": "Ayırıcı – ok tuşları süpervizyon genişliğini değiştirir, Home ve End en küçük ve en büyük değeri ayarlar",
+				"mainPane": "Danışmanlık sohbeti",
+				"secondaryPane": "Yan oda"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Ekip görüşmesi",
 		"startHint": "Görüşmeyi başlat",
@@ -4561,7 +4639,8 @@
 			"browserHint": "Adres gerekmez — ancak yalnızca bu cihazda çalışır.",
 			"email": "Bana bir e-posta yazın",
 			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz."
-		}
+		},
+		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor."
 	},
 	"legal": {
 		"notice": {

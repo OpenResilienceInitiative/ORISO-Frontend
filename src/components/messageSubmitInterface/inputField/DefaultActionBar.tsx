@@ -4,6 +4,8 @@ import MicIcon from '@mui/icons-material/Mic';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { ToolbarButton } from './ToolbarButton';
@@ -30,6 +32,16 @@ const TextFormatIcon = () => (
 );
 
 export interface DefaultActionBarProps {
+	/**
+	 * T16: phone only — the back arrow at the very start of the row leaves
+	 * the chat (to the list) or the secondary view (to the main chat).
+	 */
+	showBack?: boolean;
+	onBack?: () => void;
+	/** T16: scroll the timeline to its newest message (every width). */
+	onScrollToNewest: () => void;
+	/** Unread messages below the fold, badged on the scroll arrow. */
+	unreadCount?: number;
 	onOpenTools: () => void;
 	/** Mic is hidden entirely when voice messages are disabled for this chat. */
 	showMic: boolean;
@@ -47,11 +59,16 @@ export interface DefaultActionBarProps {
 
 /**
  * Default (editor closed) action bar — Figma "Standard Tool…" strip:
- * text-format toggle, mic*, emoji, mention, add, maximize. The mic icon
- * disappears automatically when audio messages are disabled (Figma note on
- * node 7104:34790).
+ * [back (phone)] [scroll to newest] text-format toggle, mic*, emoji,
+ * mention, add, maximize. The mic icon disappears automatically when audio
+ * messages are disabled (Figma note on node 7104:34790). T16: the two
+ * navigation arrows replaced the phone's separate navigator row.
  */
 export const DefaultActionBar = ({
+	showBack = false,
+	onBack,
+	onScrollToNewest,
+	unreadCount = 0,
 	onOpenTools,
 	showMic,
 	isRecording,
@@ -64,73 +81,103 @@ export const DefaultActionBar = ({
 	isExpanded,
 	onExpandToggle,
 	translate
-}: DefaultActionBarProps) => (
-	<div className="composerToolbar composerToolbar--default">
-		<ToolbarButton
-			label={translate(
-				'message.submit.toolbar.openTools',
-				'Back to full editor tools'
+}: DefaultActionBarProps) => {
+	const scrollLabel = translate(
+		'message.mobileNav.scrollToBottom',
+		'Scroll to bottom'
+	);
+	const unread = Math.max(0, Math.round(unreadCount));
+	return (
+		<div className="composerToolbar composerToolbar--default">
+			{showBack && (
+				<ToolbarButton
+					label={translate('message.mobileNav.back', 'Navigate up')}
+					onClick={onBack}
+					className="composerToolbar__button--back"
+					data-cy="composer-back"
+				>
+					<ArrowBackIcon fontSize="inherit" />
+				</ToolbarButton>
 			)}
-			onClick={onOpenTools}
-		>
-			<TextFormatIcon />
-		</ToolbarButton>
-		{showMic && (
+			<ToolbarButton
+				label={unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel}
+				onClick={onScrollToNewest}
+				className="composerToolbar__button--scrollToNewest"
+				data-cy="composer-scroll-to-newest"
+			>
+				<KeyboardArrowDownIcon fontSize="inherit" />
+				{unread > 0 && (
+					<span className="composerToolbar__badge" aria-hidden="true">
+						{unread > 99 ? '99+' : unread}
+					</span>
+				)}
+			</ToolbarButton>
 			<ToolbarButton
 				label={translate(
-					'message.submit.toolbar.voiceRecording.label',
-					'Voice recording'
+					'message.submit.toolbar.openTools',
+					'Back to full editor tools'
 				)}
-				title={translate(
-					'message.submit.toolbar.voiceRecording.tooltip',
-					'Record voice message'
-				)}
-				onClick={onMicClick}
-				selected={isRecording}
+				onClick={onOpenTools}
 			>
-				<MicIcon fontSize="inherit" />
+				<TextFormatIcon />
 			</ToolbarButton>
-		)}
-		<ToolbarButton
-			label={translate('message.submit.toolbar.emoji', 'Emoji panel')}
-			onClick={onEmojiClick}
-			selected={isEmojiOpen}
-			expanded={isEmojiOpen}
-			data-emoji-picker-toggle=""
-		>
-			<AddReactionOutlinedIcon fontSize="inherit" />
-		</ToolbarButton>
-		<ToolbarButton
-			label={translate('message.submit.toolbar.mention', 'Mention')}
-			onClick={onMentionClick}
-		>
-			<AlternateEmailIcon fontSize="inherit" />
-		</ToolbarButton>
-		{showAttachment && (
+			{showMic && (
+				<ToolbarButton
+					label={translate(
+						'message.submit.toolbar.voiceRecording.label',
+						'Voice recording'
+					)}
+					title={translate(
+						'message.submit.toolbar.voiceRecording.tooltip',
+						'Record voice message'
+					)}
+					onClick={onMicClick}
+					selected={isRecording}
+				>
+					<MicIcon fontSize="inherit" />
+				</ToolbarButton>
+			)}
+			<ToolbarButton
+				label={translate('message.submit.toolbar.emoji', 'Emoji panel')}
+				onClick={onEmojiClick}
+				selected={isEmojiOpen}
+				expanded={isEmojiOpen}
+				data-emoji-picker-toggle=""
+			>
+				<AddReactionOutlinedIcon fontSize="inherit" />
+			</ToolbarButton>
+			<ToolbarButton
+				label={translate('message.submit.toolbar.mention', 'Mention')}
+				onClick={onMentionClick}
+			>
+				<AlternateEmailIcon fontSize="inherit" />
+			</ToolbarButton>
+			{showAttachment && (
+				<ToolbarButton
+					label={translate(
+						'message.submit.toolbar.attachment',
+						'Add attachment'
+					)}
+					onClick={onAttachmentClick}
+				>
+					<AddIcon fontSize="inherit" />
+				</ToolbarButton>
+			)}
 			<ToolbarButton
 				label={translate(
-					'message.submit.toolbar.attachment',
-					'Add attachment'
+					isExpanded
+						? 'message.submit.toolbar.minimize'
+						: 'message.submit.toolbar.maximize',
+					isExpanded ? 'Minimize editor' : 'Maximize editor'
 				)}
-				onClick={onAttachmentClick}
+				onClick={onExpandToggle}
 			>
-				<AddIcon fontSize="inherit" />
+				{isExpanded ? (
+					<CloseFullscreenIcon fontSize="inherit" />
+				) : (
+					<OpenInFullIcon fontSize="inherit" />
+				)}
 			</ToolbarButton>
-		)}
-		<ToolbarButton
-			label={translate(
-				isExpanded
-					? 'message.submit.toolbar.minimize'
-					: 'message.submit.toolbar.maximize',
-				isExpanded ? 'Minimize editor' : 'Maximize editor'
-			)}
-			onClick={onExpandToggle}
-		>
-			{isExpanded ? (
-				<CloseFullscreenIcon fontSize="inherit" />
-			) : (
-				<OpenInFullIcon fontSize="inherit" />
-			)}
-		</ToolbarButton>
-	</div>
-);
+		</div>
+	);
+};
