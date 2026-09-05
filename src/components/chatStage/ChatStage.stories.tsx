@@ -377,20 +377,29 @@ export const SupervisionInsideTheCard: Story = {
 		const listHandle = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-list-handle"]'
 		)!;
-		const listCardsRight = Math.max(
-			...Array.from(
-				canvasElement.querySelectorAll('.sessionsListItem')
-			).map((item) => item.getBoundingClientRect().right)
-		);
+		const listCardsRightNow = () =>
+			Math.max(
+				...Array.from(
+					canvasElement.querySelectorAll('.sessionsListItem')
+				).map((item) => item.getBoundingClientRect().right)
+			);
 		const cardBox = canvasElement
 			.querySelector('.chatStage__card')!
 			.getBoundingClientRect();
 		const listPill = listHandle
 			.querySelector('.sessionsList__resizeHandlePill')!
 			.getBoundingClientRect();
-		await expect(
-			Math.abs(cardBox.left - listCardsRight - STAGE_LAYOUT.LIST_CARD_GAP)
-		).toBeLessThanOrEqual(1);
+		// (the list rows enter at scale 0.98 — measure once they settled)
+		await waitFor(() =>
+			expect(
+				Math.abs(
+					cardBox.left -
+						listCardsRightNow() -
+						STAGE_LAYOUT.LIST_CARD_GAP
+				)
+			).toBeLessThanOrEqual(1)
+		);
+		const listCardsRight = listCardsRightNow();
 		const gapMid = (listCardsRight + cardBox.left) / 2;
 		await expect(
 			Math.abs(listPill.left + listPill.width / 2 - gapMid)
