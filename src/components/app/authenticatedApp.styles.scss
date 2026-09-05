@@ -159,6 +159,12 @@ a {
 			transition: all 0.3s ease;
 			display: flex;
 			flex-direction: column;
+
+			// T13: the list's resize handle centres in the gap to the chat
+			// card (`.session` desktop margin, 24 px).
+			@include breakpoint($fromLarge) {
+				--pane-gap: 24px;
+			}
 			flex: 1 0 100%;
 			overflow-x: hidden;
 

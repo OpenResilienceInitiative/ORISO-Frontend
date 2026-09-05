@@ -16,6 +16,10 @@
 	&__list {
 		flex: 0 0 auto;
 		position: relative;
+
+		// T13: the list handle centres in the gap to the chat card
+		// (`STAGE_LAYOUT.CARD_MARGIN` = the card's 24 px margin).
+		--pane-gap: 24px;
 		display: flex;
 		flex-direction: column;
 		min-height: 0;

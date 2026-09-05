@@ -165,6 +165,29 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			Math.abs(p.top + p.height / 2 - (h.top + h.height / 2))
 		).toBeLessThanOrEqual(1);
+		// T13: the list handle is centred in the gap between the list and
+		// the chat card (its centre = the midpoint of list.right … card.left).
+		const listHandle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-list-handle"]'
+		)!;
+		const listBox = canvasElement
+			.querySelector('[data-cy="stage-list"]')!
+			.getBoundingClientRect();
+		const cardBox = canvasElement
+			.querySelector('.chatStage__card')!
+			.getBoundingClientRect();
+		const listPill = listHandle
+			.querySelector('.sessionsList__resizeHandlePill')!
+			.getBoundingClientRect();
+		await expect(cardBox.left - listBox.right).toBeGreaterThan(0);
+		const gapMid = (listBox.right + cardBox.left) / 2;
+		await expect(
+			Math.abs(listPill.left + listPill.width / 2 - gapMid)
+		).toBeLessThanOrEqual(1);
+		const handleBox = listHandle.getBoundingClientRect();
+		await expect(
+			Math.abs(handleBox.left + handleBox.width / 2 - gapMid)
+		).toBeLessThanOrEqual(1);
 		// T6: the composer's drag pill exists in the panel too.
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
