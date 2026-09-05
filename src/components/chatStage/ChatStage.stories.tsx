@@ -681,6 +681,60 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 	}
 };
+/**
+ * (d4) Review v6: on the desktop the FAB disappears the moment a pick
+ * opens the panel — focus must not fall to <body>: the panel header's
+ * channel button takes it.
+ */
+export const FabPickHandsFocusToThePanelHeader: Story = {
+	name: '(d4) Desktop — a pick from the FAB opens the panel and hands focus to its channel button (review v6)',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		panelVariant: 'inside',
+		openThreads: 2,
+		supervisionUnread: 1
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 1,
+			bubblesAtLeast: 6
+		});
+		const fab = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="channel-switcher-fab"]'
+		)!;
+		await expect(fab).not.toBeNull();
+		await userEvent.click(fab);
+		const items = within(await canvas.findByRole('menu')).getAllByRole(
+			'menuitem'
+		);
+		await userEvent.click(
+			items.find(
+				(item) => item.getAttribute('data-channel-id') === 'supervision'
+			)!
+		);
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Supervision')
+		);
+		// The FAB is gone (the header is the switcher now) …
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull();
+		// … and focus sits on the header's channel button, not on <body>.
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				canvasElement.querySelector(
+					'[data-cy="panel-header-channel-options"]'
+				)
+			)
+		);
+		// From there the keyboard carries on: the card opens on Enter.
+		await userEvent.keyboard('{Enter}');
+		await canvas.findByRole('menu');
+	}
+};
+
 
 /**
  * (d5) Review v6: six open threads — the header card ends above the

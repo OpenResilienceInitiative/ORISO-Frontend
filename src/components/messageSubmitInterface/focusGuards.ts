@@ -8,11 +8,28 @@
  */
 export const OPEN_MENU_SELECTOR = '[role="menu"]';
 
-export const isFocusInsideOpenMenu = (
-	activeElement: Element | null | undefined
+/**
+ * Regions that keep keyboard focus against the autofocus: an open menu,
+ * and anything marked `data-keeps-focus` — the side-panel header does
+ * that, because after a pick from the FAB its channel button holds focus
+ * and the panel's freshly mounted composer must not pull it away.
+ */
+export const KEEPS_FOCUS_SELECTOR = '[role="menu"], [data-keeps-focus]';
+
+const isInside = (
+	activeElement: Element | null | undefined,
+	selector: string
 ): boolean =>
 	Boolean(
 		activeElement &&
 			activeElement !== document.body &&
-			activeElement.closest(OPEN_MENU_SELECTOR)
+			activeElement.closest(selector)
 	);
+
+export const isFocusInsideOpenMenu = (
+	activeElement: Element | null | undefined
+): boolean => isInside(activeElement, OPEN_MENU_SELECTOR);
+
+export const isFocusProtected = (
+	activeElement: Element | null | undefined
+): boolean => isInside(activeElement, KEEPS_FOCUS_SELECTOR);

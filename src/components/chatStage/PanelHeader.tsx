@@ -72,6 +72,13 @@ export interface PanelHeaderProps {
 	/** Id of the channel this panel shows. */
 	'activeChannelId'?: string;
 	'onSelectChannel'?: (channelId: string) => void;
+	/**
+	 * Review v6: the host sets it when this panel was opened from the FAB —
+	 * the FAB unmounts with the pick (the header replaces it), so focus
+	 * would otherwise drop to <body>. The channel button takes it whenever
+	 * the shown channel changes while this is on.
+	 */
+	'autoFocusChannelButton'?: boolean;
 	/** Phone: back to the main chat. Rendered before the title. */
 	'onBack'?: () => void;
 	/** Desktop: close the panel. Rendered at the end of the row. */
@@ -95,6 +102,7 @@ export const PanelHeader = ({
 	channels = [],
 	activeChannelId,
 	onSelectChannel,
+	autoFocusChannelButton = false,
 	onBack,
 	onClose,
 	actions,
@@ -157,6 +165,12 @@ export const PanelHeader = ({
 		flip: false
 	});
 
+	useEffect(() => {
+		if (autoFocusChannelButton) {
+			optionsButtonRef.current?.focus();
+		}
+	}, [autoFocusChannelButton, activeChannelId]);
+
 	const closeOptions = useCallback(() => setOptionsOpen(false), []);
 	const closeAndRefocus = useCallback(() => {
 		setOptionsOpen(false);
@@ -200,7 +214,14 @@ export const PanelHeader = ({
 	);
 
 	return (
-		<header className="panelHeader" data-cy={dataCy} ref={headerRef}>
+		// `data-keeps-focus`: the composer's autofocus must not pull focus
+		// off these buttons (review v6, `focusGuards.ts`).
+		<header
+			className="panelHeader"
+			data-cy={dataCy}
+			data-keeps-focus=""
+			ref={headerRef}
+		>
 			<div className="panelHeader__row">
 				{onBack && (
 					<button

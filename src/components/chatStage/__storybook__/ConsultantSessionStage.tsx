@@ -323,6 +323,8 @@ interface RoomProps {
 	channels: SecondaryChannel[];
 	activeChannelId: string;
 	onSelectChannel: (channelId: string) => void;
+	/** Review v6: the channel was picked from the FAB — the header takes focus. */
+	focusChannelButton?: boolean;
 }
 
 function SupervisionRoom({
@@ -334,7 +336,8 @@ function SupervisionRoom({
 	switcher,
 	channels,
 	activeChannelId,
-	onSelectChannel
+	onSelectChannel,
+	focusChannelButton
 }: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
 	// T7: the system notice opens the side room (frontend-rendered for now).
@@ -369,6 +372,7 @@ function SupervisionRoom({
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}
+					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
 					onClose={onBack ? undefined : onClose}
 				/>
@@ -417,7 +421,8 @@ function ThreadRoom({
 	switcher,
 	channels,
 	activeChannelId,
-	onSelectChannel
+	onSelectChannel,
+	focusChannelButton
 }: RoomProps) {
 	const { t } = useTranslation();
 	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
@@ -439,6 +444,7 @@ function ThreadRoom({
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}
+					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
 					onClose={onBack ? undefined : onClose}
 				/>
@@ -568,17 +574,35 @@ export function ConsultantSessionStage({
 	// the panel header's menu, the FAB or the phone's back switcher.
 	const [panel, setPanel] = useState<StagePanel>(initialPanel);
 	const [phone, setPhone] = useState(initialPhone);
+	// Review v6: a pick from the FAB hands focus to the panel header's
+	// channel button (the FAB is gone once the panel is open).
+	const [focusHeader, setFocusHeader] = useState(false);
 	useEffect(() => setPanel(initialPanel), [initialPanel]);
 	useEffect(() => setPhone(initialPhone), [initialPhone]);
-	const selectChannel = useCallback((channelId: string) => {
-		setPanel(panelForChannel(channelId));
-		setPhone((view) => (view === undefined ? view : 'secondary'));
-	}, []);
+	const selectChannel = useCallback(
+		(channelId: string, source: 'fab' | 'header' = 'header') => {
+			setFocusHeader(source === 'fab');
+			setPanel(panelForChannel(channelId));
+			setPhone((view) => (view === undefined ? view : 'secondary'));
+		},
+		[]
+	);
+	const selectFromHeader = useCallback(
+		(channelId: string) => selectChannel(channelId, 'header'),
+		[selectChannel]
+	);
+	const selectFromFab = useCallback(
+		(channelId: string) => selectChannel(channelId, 'fab'),
+		[selectChannel]
+	);
 	const backToMain = useCallback(
 		() => setPhone((view) => (view === undefined ? view : 'main')),
 		[]
 	);
-	const closePanel = useCallback(() => setPanel(null), []);
+	const closePanel = useCallback(() => {
+		setFocusHeader(false);
+		setPanel(null);
+	}, []);
 	useState(() =>
 		seedStageMatrixRegistry({
 			[CLIENT_ROOM_ID]: 0,
@@ -679,7 +703,7 @@ export function ConsultantSessionStage({
 		<ChannelSwitcherFab
 			channels={channels}
 			activeChannelId={shownChannelId}
-			onSelect={selectChannel}
+			onSelect={selectFromFab}
 			onBack={backToMain}
 			defaultOpen={fabDefaultOpen}
 		/>
@@ -690,7 +714,7 @@ export function ConsultantSessionStage({
 			<ChannelSwitcherFab
 				channels={channels}
 				activeChannelId={shownChannelId}
-				onSelect={selectChannel}
+				onSelect={selectFromFab}
 				defaultOpen={fabDefaultOpen}
 				fabHidden={fabHidden && panel !== null}
 			/>
@@ -714,7 +738,8 @@ export function ConsultantSessionStage({
 									switcher={backFab}
 									channels={channels}
 									activeChannelId={activeChannelId}
-									onSelectChannel={selectChannel}
+									onSelectChannel={selectFromHeader}
+									focusChannelButton={focusHeader}
 								/>
 							) : (
 								<SupervisionRoom
@@ -725,7 +750,8 @@ export function ConsultantSessionStage({
 									switcher={backFab}
 									channels={channels}
 									activeChannelId={activeChannelId}
-									onSelectChannel={selectChannel}
+									onSelectChannel={selectFromHeader}
+									focusChannelButton={focusHeader}
 								/>
 							)
 						) : (
@@ -740,7 +766,7 @@ export function ConsultantSessionStage({
 									fab={
 										<ChannelSwitcherFab
 											channels={channels}
-											onSelect={selectChannel}
+											onSelect={selectFromFab}
 											defaultOpen={fabDefaultOpen}
 										/>
 									}
@@ -765,7 +791,8 @@ export function ConsultantSessionStage({
 				variant={panelVariant}
 				channels={channels}
 				activeChannelId={activeChannelId}
-				onSelectChannel={selectChannel}
+				onSelectChannel={selectFromHeader}
+				focusChannelButton={focusHeader}
 				onClose={closePanel}
 			/>
 		) : panel === 'supervision' ? (
@@ -775,7 +802,8 @@ export function ConsultantSessionStage({
 				withReason={withReason}
 				channels={channels}
 				activeChannelId={activeChannelId}
-				onSelectChannel={selectChannel}
+				onSelectChannel={selectFromHeader}
+				focusChannelButton={focusHeader}
 				onClose={closePanel}
 			/>
 		) : null;

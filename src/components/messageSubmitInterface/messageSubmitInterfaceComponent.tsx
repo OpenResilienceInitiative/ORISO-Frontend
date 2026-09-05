@@ -20,7 +20,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import { isFocusInsideOpenMenu } from './focusGuards';
+import { isFocusProtected } from './focusGuards';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -589,8 +589,9 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const activeElement = document.activeElement as HTMLElement | null;
-		// Review v6: an open menu (the channel card) keeps its focus.
-		if (isFocusInsideOpenMenu(activeElement)) {
+		// Review v6: an open menu (the channel card) and regions marked
+		// `data-keeps-focus` (the side-panel header) keep their focus.
+		if (isFocusProtected(activeElement)) {
 			return;
 		}
 		const activeTagName = activeElement?.tagName?.toLowerCase();
@@ -1167,6 +1168,13 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const timeoutId = window.setTimeout(() => {
+			// Review v6: never pull focus off an open menu or a
+			// `data-keeps-focus` region (the side-panel header) — the
+			// alignLeft chain below focuses the editor on its own, so the
+			// check has to come first.
+			if (isFocusProtected(document.activeElement)) {
+				return;
+			}
 			composerRef.current?.runAction('alignLeft');
 			focusEditorInput();
 		}, 0);
