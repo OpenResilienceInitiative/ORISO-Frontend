@@ -2504,6 +2504,9 @@ export const MessageItemComponent = ({
 
 	return (
 		<div
+			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
+			// this bubble into view after the history has loaded.
+			data-message-id={_id}
 			className={`messageItem ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${

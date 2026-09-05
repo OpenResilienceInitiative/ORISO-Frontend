@@ -127,6 +127,16 @@ export const withChannel = (
 export const stripChannelParams = (search: string): string =>
 	withChannel(search, null);
 
+/** The search without `at` (consumed after the jump); the channel stays. */
+export const stripAtParam = (search: string): string => {
+	const params = toParams(search || '');
+	if (!params.has(AT_PARAM)) {
+		return search || '';
+	}
+	params.delete(AT_PARAM);
+	return fromParams(params);
+};
+
 /**
  * Hard cut for the legacy pair: when `threadRootId` (and optionally
  * `threadMessageId`) is present, returns the search with them mapped to

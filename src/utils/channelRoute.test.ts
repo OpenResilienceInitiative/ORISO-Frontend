@@ -18,6 +18,7 @@ import {
 	readLastChannel,
 	rewriteLegacyChannelPath,
 	serializeChannel,
+	stripAtParam,
 	stripChannelParams,
 	withChannel,
 	writeLastChannel,
@@ -357,5 +358,20 @@ describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open
 				hasSupervisionSideRoom: true
 			})
 		).toEqual({ settle: true, open: supervision });
+	});
+});
+
+describe('stripAtParam (review B2 D-6: at= is consumed after the jump)', () => {
+	it('drops at and keeps the channel and foreign params', () => {
+		expect(stripAtParam('?channel=supervision&at=%24evt&keep=1')).toBe(
+			'?channel=supervision&keep=1'
+		);
+	});
+
+	it('returns the search unchanged when there is no at', () => {
+		expect(stripAtParam('?channel=supervision')).toBe(
+			'?channel=supervision'
+		);
+		expect(stripAtParam('')).toBe('');
 	});
 });

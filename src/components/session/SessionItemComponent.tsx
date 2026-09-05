@@ -73,6 +73,7 @@ import {
 	parseChannel,
 	decideAutoOpen,
 	readLastChannel,
+	stripAtParam,
 	safeSessionStorage,
 	stripChannelParams,
 	withChannel,
@@ -1809,7 +1810,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`?channel=thread:<root>` / `?channel=supervision`, `channelRoute.ts`),
 	// never a `useState` beside it. Reload, timeline, e-mail and the panel
 	// header's menu all use the same parameter.
-	const { channel: routeChannel } = useMemo(
+	const { channel: routeChannel, at: routeAt } = useMemo(
 		() => parseChannel(location.search),
 		[location.search]
 	);
@@ -3502,6 +3503,41 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		reportChatStagePanel(openPanel);
 		return () => reportChatStagePanel(null);
 	}, [openPanel, reportChatStagePanel]);
+
+	// `?at=<eventId>` (review D-6): once the bubble is in the DOM — main
+	// chat or the open pane — scroll it into view and consume the param
+	// (`replace`, the channel stays). Best effort: an event that is not in
+	// the loaded history is simply left alone, no error; a later timeline
+	// change retries until the param is gone.
+	const consumedAtRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (!routeAt || consumedAtRef.current === routeAt) {
+			return;
+		}
+		const card =
+			scrollContainerRef.current?.closest<HTMLElement>('.session') ??
+			null;
+		const scope: ParentNode = card ?? document;
+		const target = Array.from(
+			scope.querySelectorAll<HTMLElement>('[data-message-id]')
+		).find((element) => element.dataset.messageId === routeAt);
+		if (!target) {
+			return;
+		}
+		consumedAtRef.current = routeAt;
+		target.scrollIntoView?.({ block: 'center' });
+		const current = locationRef.current;
+		navigate(
+			{
+				pathname: current.pathname,
+				search: stripAtParam(current.search)
+			},
+			{ replace: true }
+		);
+		// messages / supervisionMessages / openPanel are the retry triggers:
+		// they change when the bubble may have appeared.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [routeAt, messages, supervisionMessages, openPanel, navigate]);
 
 	// No param on entry: reopen the last channel of this session; a
 	// remembered close stays closed; nothing remembered → the side room
