@@ -3,7 +3,12 @@
 // the room header's (`surface-container-lowest` ring, `primary-fixed` chip).
 
 .participantStack {
+	position: relative;
+
+	// Above the room header's tag row so an open tooltip is never covered.
+	z-index: 40;
 	display: inline-flex;
+	overflow: visible; // hosts (session header) clip children by default
 	align-items: center;
 	margin: 0;
 	padding: 0;

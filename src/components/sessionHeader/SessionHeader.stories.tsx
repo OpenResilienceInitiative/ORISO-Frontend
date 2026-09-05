@@ -595,6 +595,26 @@ export const ActiveConversationParticipants: Story = {
 				canvas.getByText(headerTitle, { selector: '[role="tooltip"]' })
 			).toBeVisible()
 		);
+		// … and it is not clipped by the header row (T4 self-check).
+		const tip = canvas.getByText(headerTitle, {
+			selector: '[role="tooltip"]'
+		});
+		const tipRect = tip.getBoundingClientRect();
+		const rowRect = canvasElement
+			.querySelector('.sessionInfo__username')!
+			.getBoundingClientRect();
+		await expect(tipRect.top).toBeGreaterThan(rowRect.bottom - 1);
+		// No clipping ancestor cuts it off (the tooltip is pointer-events:
+		// none, so elementFromPoint cannot be used here).
+		let ancestor = tip.parentElement;
+		while (ancestor && ancestor !== canvasElement) {
+			if (getComputedStyle(ancestor).overflow !== 'visible') {
+				const box = ancestor.getBoundingClientRect();
+				await expect(tipRect.top).toBeGreaterThanOrEqual(box.top);
+				await expect(tipRect.bottom).toBeLessThanOrEqual(box.bottom);
+			}
+			ancestor = ancestor.parentElement;
+		}
 		// T3: the hairline sits at 16 + 6 + 40 + 6 = 68 px from the header
 		// top; the row's box (incl. the 1 px hairline) ends at 69.
 		const header = canvasElement.querySelector('.sessionInfo')!;
