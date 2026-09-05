@@ -3530,6 +3530,9 @@
 				"selfHelp": "Cercle de parole",
 				"internal": "Échange interne"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
 		}
 	},
 	"statusOverlay": {

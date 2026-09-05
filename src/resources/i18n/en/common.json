@@ -3490,6 +3490,9 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Drag to scroll the list."
 		}
 	},
 	"statusOverlay": {
