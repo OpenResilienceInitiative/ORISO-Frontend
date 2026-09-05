@@ -494,7 +494,8 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		await expect(items[2].textContent).toContain('Thread #1');
 		await expect(items[2].textContent).toContain('⇧1');
 		await expect(items[2]).toHaveAttribute('aria-current', 'true');
-		// Each row: "Author: last message…" on one line.
+		// T28: each row's "Author: last message…" runs two lines (the
+		// organism's 17 px description line), then the ellipsis.
 		const previews = items.map(
 			(item) =>
 				item.querySelector('[data-cy="channel-menu-preview"]')
@@ -502,6 +503,17 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		);
 		await expect(previews[0]).toContain(`${COUNSELLOR_NAME}:`);
 		await expect(previews[2]).toContain(`${CLIENT_NAME}:`);
+		items.forEach((item) => {
+			const preview = item.querySelector<HTMLElement>(
+				'[data-cy="channel-menu-preview"]'
+			)!;
+			const style = getComputedStyle(preview);
+			expect(style.webkitLineClamp).toBe('2');
+			expect(preview.getBoundingClientRect().height).toBeLessThanOrEqual(
+				2 * parseFloat(style.lineHeight) + 1
+			);
+			expect(preview.scrollHeight).toBeGreaterThan(preview.clientHeight);
+		});
 		await expectMenuBelowHeader(canvasElement);
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>

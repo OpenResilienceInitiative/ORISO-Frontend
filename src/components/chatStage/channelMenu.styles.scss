@@ -59,12 +59,13 @@
 		white-space: nowrap;
 	}
 
-	// "Author: text …" — one line, then the ellipsis (T20 as ordered).
+	// T28: "Author: text …" — two lines, then the ellipsis.
 	&__preview {
-		display: block;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
 		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		overflow-wrap: anywhere;
 	}
 
 	&__author {
