@@ -157,34 +157,6 @@ export const resolveOwnConsultantName = ({
 	return fallbackUsername ? { displayName: fallbackUsername } : {};
 };
 
-export const getMessagePersonInitials = (
-	rawDisplayName?: string,
-	rawUsername?: string,
-	firstName?: string,
-	lastName?: string
-) => {
-	const resolvedName = resolvePreferredName(
-		rawDisplayName,
-		rawUsername,
-		firstName,
-		lastName
-	);
-	if (!resolvedName) {
-		return 'U';
-	}
-
-	const parts = resolvedName.split(/\s+/).filter(Boolean);
-	if (parts.length >= 2) {
-		return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-	}
-
-	const alphanumericOnly = parts[0].replace(/[^a-zA-Z0-9]/g, '');
-	if (alphanumericOnly.length >= 2) {
-		return alphanumericOnly.slice(0, 2).toUpperCase();
-	}
-	return parts[0].slice(0, 2).toUpperCase();
-};
-
 /**
  * The counselling centre a message speaks for: `"54222 Caritas Mainz"`.
  *
