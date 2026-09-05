@@ -4485,7 +4485,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Supervision",
-			"systemNotice": "Supervision par {{name}}. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
+			"systemNotice": "Supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
 				"supervisor": "Supervision",

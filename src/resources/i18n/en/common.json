@@ -4435,7 +4435,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Supervision",
-			"systemNotice": "Supervision by {{name}}. You can request a different supervisor via the plus next to the mail icon.",
+			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
 				"supervisor": "Supervision",
