@@ -1433,29 +1433,27 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__personCheckbox {
-		width: 18px;
-		height: 18px;
-		border-radius: 3px;
-		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__personCheckbox--selected {
-		background: var(--m3-primary, #a5000a);
-		border-color: var(--m3-primary, #a5000a);
-		position: relative;
+		color: var(--m3-primary, #a5000a);
+	}
 
-		&::after {
-			content: '';
-			position: absolute;
-			left: 5px;
-			top: 1px;
-			width: 4px;
-			height: 8px;
-			border: solid #fff;
-			border-width: 0 2px 2px 0;
-			transform: rotate(45deg);
-		}
+	/* #1195 JOB3: the results scroll inside the menu instead of growing it. */
+	&__searchResultsScroll {
+		max-height: 320px;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	&__searchSentinel {
+		height: 1px;
+	}
+
+	&__searchAgencyGroup {
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 	}
 
 	&__personRadio {

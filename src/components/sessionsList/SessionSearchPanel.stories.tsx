@@ -50,17 +50,30 @@ const people: SessionSearchPersonOption[] = [
 	{
 		id: 'ingrid-koschmider',
 		name: 'Ingrid Koschmider',
-		subtitle: 'Berater:in | Mainz 30232'
+		subtitle: 'Berater:in | Mainz 30232',
+		role: 'consultant',
+		avatarSeed: 'ingrid-koschmider'
 	},
 	{
 		id: 'hans-p',
 		name: 'Hans P.',
-		subtitle: 'Berat. Person | Berlin 10117'
+		subtitle: 'Berat. Person | Berlin 10117',
+		role: 'consultant',
+		avatarSeed: 'hans-p'
+	},
+	{
+		id: 'iene-lou-7575',
+		name: 'iene_lou_7575',
+		subtitle: 'Ratsuchende:r | Mainz 30232',
+		role: 'asker',
+		avatarSeed: 'iene-lou-7575'
 	},
 	{
 		id: 'rango-durango',
 		name: 'Rango Durango',
-		subtitle: 'Berater:in | Mainz 30232'
+		subtitle: 'Berater:in | Mainz 30232',
+		role: 'consultant',
+		avatarSeed: 'rango-durango'
 	}
 ];
 
