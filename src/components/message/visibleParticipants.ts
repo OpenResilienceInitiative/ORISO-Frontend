@@ -13,12 +13,16 @@
  *     me — never the advice seeker;
  *   - `group`: every joined member (group chats have no silent members).
  *
- * Identities reach the client in several spellings — `@mona.s:server` from
- * the room, `mona.s@tenant` (Keycloak username) from the session payload, a
- * bare `mona.s`, the asker as `@enc.<name>:server` — so matching goes through
- * `participantIdentityKeys` (strict: local part, never fuzzy tokens; see
- * `audienceOptions.ts` for the same rule on the send-to selector). Matrix
- * localparts are the lower-cased username (UserService `MatrixSynapseService`).
+ * Identities reach the client in several spellings: the room gives the
+ * Matrix id `@mona.simpson:server` (localpart = the DECODED Keycloak
+ * username, lower-cased — `AssignEnquiryFacade` / `MatrixSynapseService`),
+ * the session and supervisor DTOs give the base32-ENCODED username
+ * `enc.NVXW…` (`UsernameTranscoder`, `UserServiceMapper`), the session DTO
+ * also carries `consultantMatrixUserId`, consultant ids are UUIDs (which
+ * never match a Matrix id — fallback only), the asker arrives as
+ * `askerMatrixUserId`. Matching goes through `participantIdentityKeys`
+ * (strict: local part, `enc.` decoded, never fuzzy tokens; see
+ * `audienceOptions.ts` for the same rule on the send-to selector).
  *
  * #996: counsellors are named by their internal display name; the rules
  * carry that name and it replaces whatever the Matrix profile says.
@@ -26,6 +30,7 @@
  * No React, no DOM.
  */
 import type { StackParticipant } from './participantStack';
+import { decodeUsername } from '../../utils/encryptionHelpers';
 
 export type VisibleParticipantMode = 'group' | 'session' | 'supervision';
 
@@ -45,10 +50,29 @@ export interface VisibleParticipantRules {
 	self?: ParticipantIdentity;
 }
 
+const ENCODED_PREFIX = 'enc.';
+
+/**
+ * The decoded form of an `enc.<base32>` username (lower-cased, so it equals
+ * the Matrix localpart), or nothing when the value is not valid base32.
+ */
+const decodedUsernameOf = (value: string): string | null => {
+	if (!value.startsWith(ENCODED_PREFIX)) {
+		return null;
+	}
+	try {
+		const decoded = decodeUsername(value).trim().toLowerCase();
+		return decoded && decoded !== value ? decoded : null;
+	} catch {
+		return null;
+	}
+};
+
 /**
  * Strict identity keys of one raw value: lower-cased, without a leading `@`,
  * the Matrix local part before `:`, the part before an e-mail `@`, and each
- * of those without the asker's `enc.` prefix.
+ * of those with the `enc.` prefix resolved — base32-decoded when it is a
+ * transcoded username, plainly stripped otherwise.
  */
 export const participantIdentityKeys = (
 	rawValue?: string | null
@@ -64,8 +88,12 @@ export const participantIdentityKeys = (
 			return;
 		}
 		keys.add(normalized);
-		if (normalized.startsWith('enc.')) {
-			keys.add(normalized.slice(4));
+		if (normalized.startsWith(ENCODED_PREFIX)) {
+			keys.add(normalized.slice(ENCODED_PREFIX.length));
+			const decoded = decodedUsernameOf(normalized);
+			if (decoded) {
+				keys.add(decoded);
+			}
 		}
 	};
 	add(compact);

@@ -911,6 +911,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				consultant: activeSession.consultant
 					? {
 							ids: [
+								activeSession.item?.consultantMatrixUserId,
 								activeSession.consultant.username,
 								activeSession.consultant.id,
 								activeSession.consultant.consultantId
@@ -926,6 +927,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}, [
 			activeSession.isGroup,
 			activeSession.consultant,
+			activeSession.item?.consultantMatrixUserId,
 			supervisionMarker,
 			supervisors,
 			askerMatrixUserId,

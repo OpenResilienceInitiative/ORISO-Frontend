@@ -68,6 +68,8 @@ export interface SessionItemInterface {
 		| 'SELF_HELP';
 	agencyId: number;
 	askerMatrixUserId: string;
+	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */
+	consultantMatrixUserId?: string;
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
 	matrixRoomId: string;

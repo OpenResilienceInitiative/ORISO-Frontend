@@ -3795,6 +3795,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				consultant: consultant
 					? {
 							ids: [
+								activeSession.item?.consultantMatrixUserId,
 								consultant.username,
 								consultant.id,
 								consultant.consultantId
@@ -3819,6 +3820,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[
 			matrixClientService,
 			activeSession.item?.askerMatrixUserId,
+			activeSession.item?.consultantMatrixUserId,
 			activeSession.user?.username,
 			activeSession.consultant,
 			activeSession.isGroup,
