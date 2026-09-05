@@ -14,6 +14,8 @@ import {
 export interface HandoverGateButtonProps {
 	state: HandoverGateState;
 	onEnter: () => void;
+	/** Already translated. Default: the registration's "Anfrage schreiben". */
+	label?: string;
 }
 
 /**
@@ -26,7 +28,8 @@ export interface HandoverGateButtonProps {
  */
 export const HandoverGateButton = ({
 	state,
-	onEnter
+	onEnter,
+	label
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
 	const open = GATE_IS_OPEN[state];
@@ -105,7 +108,8 @@ export const HandoverGateButton = ({
 						textOverflow: 'ellipsis'
 					}}
 				>
-					{t('registration.handover.cta', 'Anfrage schreiben')}
+					{label ??
+						t('registration.handover.cta', 'Anfrage schreiben')}
 				</Typography>
 				<Typography
 					component="span"

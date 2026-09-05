@@ -5,7 +5,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
-import { HandoverCarousel } from './HandoverCarousel';
+import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
 import { HandoverGateButton } from './HandoverGateButton';
 import { HandoverGateState } from './handoverGate';
 import { useDeferredFlourish } from './useDeferredFlourish';
@@ -33,6 +33,20 @@ export interface RegistrationHandoverProps {
 	 * `.stageLayout__content` at height 0 (ORISO-Frontend#1219).
 	 */
 	variant?: 'overlay' | 'inline';
+	/**
+	 * The words and cards of another way in. All already translated; every
+	 * one defaults to the registration's. The live-chat entry room passes
+	 * its own so this screen is one module for every entry, not a copy per
+	 * entry (Frank, 2026-09-05).
+	 */
+	copy?: {
+		badge?: string;
+		headline?: string;
+		subline?: string;
+		encryption?: string;
+		cta?: string;
+		steps?: HandoverStep[];
+	};
 }
 
 /**
@@ -52,7 +66,8 @@ export const RegistrationHandover = ({
 	ready,
 	onEnter,
 	forcedState,
-	variant = 'overlay'
+	variant = 'overlay',
+	copy
 }: RegistrationHandoverProps) => {
 	const { t } = useTranslation();
 	const [slow, setSlow] = useState(false);
@@ -178,7 +193,8 @@ export const RegistrationHandover = ({
 								color: registrationMd3.primary
 							}}
 						>
-							{t('registration.handover.badge', 'Registriert')}
+							{copy?.badge ??
+								t('registration.handover.badge', 'Registriert')}
 						</Typography>
 					</Box>
 					<Typography
@@ -192,7 +208,8 @@ export const RegistrationHandover = ({
 							fontWeight: 700
 						}}
 					>
-						{t('registration.handover.headline', 'Geschafft.')}
+						{copy?.headline ??
+							t('registration.handover.headline', 'Geschafft.')}
 					</Typography>
 					<Typography
 						sx={{
@@ -202,10 +219,11 @@ export const RegistrationHandover = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{t(
-							'registration.handover.subline',
-							'So geht es weiter:'
-						)}
+						{copy?.subline ??
+							t(
+								'registration.handover.subline',
+								'So geht es weiter:'
+							)}
 					</Typography>
 				</Box>
 
@@ -220,6 +238,7 @@ export const RegistrationHandover = ({
 				>
 					<HandoverCarousel
 						onArtworkSettled={() => setArtworkSettled(true)}
+						steps={copy?.steps}
 					/>
 				</Box>
 
@@ -250,10 +269,11 @@ export const RegistrationHandover = ({
 						sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
 					/>
 					<Typography component="span" sx={{ fontSize: 'inherit' }}>
-						{t(
-							'registration.handover.encryption',
-							'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
-						)}
+						{copy?.encryption ??
+							t(
+								'registration.handover.encryption',
+								'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
+							)}
 					</Typography>
 				</Box>
 			</Box>
@@ -319,7 +339,11 @@ export const RegistrationHandover = ({
 							}
 					}}
 				>
-					<HandoverGateButton state={state} onEnter={handleEnter} />
+					<HandoverGateButton
+						state={state}
+						onEnter={handleEnter}
+						label={copy?.cta}
+					/>
 				</Box>
 			</Box>
 		</Box>

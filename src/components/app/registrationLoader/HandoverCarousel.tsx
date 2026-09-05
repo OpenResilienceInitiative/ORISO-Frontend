@@ -9,11 +9,14 @@ import {
 	RegistrationArtworkEntry
 } from '../../../resources/img/registration-md3/registrationArtwork';
 
-interface HandoverStep {
+export interface HandoverStep {
 	key: string;
 	artwork: RegistrationArtworkEntry;
 	titleFallback: string;
 	textFallback: string;
+	/** i18n keys; default to the registration's `registration.handover.steps.<key>`. */
+	titleKey?: string;
+	textKey?: string;
 }
 
 const STEPS: HandoverStep[] = [
@@ -41,6 +44,13 @@ const STEPS: HandoverStep[] = [
 export interface HandoverCarouselProps {
 	/** Called once every card image has settled (loaded or failed). */
 	onArtworkSettled?: () => void;
+	/**
+	 * The three cards. Default: the registration's. The live-chat entry room
+	 * hands in its own — the same cards, other words and pictures — so the
+	 * handover screen is one module for every way in (Frank, 2026-09-05:
+	 * "unser Entry Room, den wir ja so eigentlich als Standardmodul haben").
+	 */
+	steps?: HandoverStep[];
 }
 
 /**
@@ -52,7 +62,8 @@ export interface HandoverCarouselProps {
  * the user is already reading.
  */
 export const HandoverCarousel = ({
-	onArtworkSettled
+	onArtworkSettled,
+	steps = STEPS
 }: HandoverCarouselProps) => {
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
@@ -61,10 +72,10 @@ export const HandoverCarousel = ({
 
 	const noteSettled = useCallback(() => {
 		settledCount.current += 1;
-		if (settledCount.current >= STEPS.length) {
+		if (settledCount.current >= steps.length) {
 			onArtworkSettled?.();
 		}
-	}, [onArtworkSettled]);
+	}, [onArtworkSettled, steps.length]);
 
 	useEffect(() => {
 		const track = trackRef.current;
@@ -152,7 +163,7 @@ export const HandoverCarousel = ({
 					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>
-				{STEPS.map((step, index) => (
+				{steps.map((step, index) => (
 					<Box
 						key={step.key}
 						component="li"
@@ -246,7 +257,8 @@ export const HandoverCarousel = ({
 								}}
 							>
 								{t(
-									`registration.handover.steps.${step.key}.title`,
+									step.titleKey ??
+										`registration.handover.steps.${step.key}.title`,
 									step.titleFallback
 								)}
 							</Typography>
@@ -266,7 +278,8 @@ export const HandoverCarousel = ({
 								}}
 							>
 								{t(
-									`registration.handover.steps.${step.key}.text`,
+									step.textKey ??
+										`registration.handover.steps.${step.key}.text`,
 									step.textFallback
 								)}
 							</Typography>
@@ -284,13 +297,13 @@ export const HandoverCarousel = ({
 					pt: { xs: 1.5, sm: 2 }
 				}}
 			>
-				{STEPS.map((step, index) => (
+				{steps.map((step, index) => (
 					<ButtonBase
 						key={step.key}
 						onClick={() => scrollTo(index)}
 						aria-label={t('registration.handover.goToStep', {
 							position: index + 1,
-							total: STEPS.length,
+							total: steps.length,
 							defaultValue:
 								'Zu Schritt {{position}} von {{total}}'
 						})}
