@@ -31,10 +31,27 @@ describe('session list visual contracts', () => {
 		);
 		// T13/T34/D11: `--pane-gap` = the card margin token, and the list
 		// cards end 12 px before the column edge (`sessionsList__scrollContainer`
-		// desktop margin) — both declared where the list column lives, so the
+		// desktop margin) — declared on the wrapper of BOTH columns, so the
 		// handle centres in the VISIBLE 24 px gap in the app as on the stage.
 		expect(css).toMatch(
-			/@media \(min-width: 900px\)\s*\{\s*\.app__wrapper \.contentWrapper__list\s*\{[^}]*--pane-gap:\s*var\(--session-card-margin, 24px\);[^}]*--pane-inner-gutter:\s*12px;/s
+			/@media \(min-width: 900px\)\s*\{\s*\.app__wrapper \.contentWrapper\s*\{[^}]*--pane-gap:\s*var\(--session-card-margin, 24px\);[^}]*--pane-inner-gutter:\s*12px;/s
+		);
+	});
+
+	it('D11 (review v10): the chat card in the app shell starts gap − gutter after the list column, like the stage', () => {
+		const css = compileStyles(
+			'src/components/app/authenticatedApp.styles.scss'
+		);
+		// Without this margin the handle sits 6 px off the gap's centre.
+		expect(css).toMatch(
+			/@media \(min-width: 900px\)\s*\{[^@]*\.app__wrapper \.contentWrapper__detail \.session,\s*\.app__wrapper \.contentWrapper__detail \.enquiry__wrapper\s*\{\s*margin-left:\s*calc\(var\(--pane-gap\) - var\(--pane-inner-gutter\)\);/s
+		);
+		// … and the stage carries the same formula (one rule, two hosts).
+		const stage = compileStyles(
+			'src/components/chatStage/chatStage.styles.scss'
+		);
+		expect(stage).toMatch(
+			/\.chatStage__detail > \.session:first-child\s*\{\s*margin-left:\s*calc\(var\(--pane-gap\) - var\(--pane-inner-gutter\)\);/s
 		);
 	});
 

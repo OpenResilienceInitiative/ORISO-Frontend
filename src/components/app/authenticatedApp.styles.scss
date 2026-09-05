@@ -98,6 +98,19 @@ a {
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
+
+		// T13: the list's resize handle centres in the gap to the chat
+		// card — the card's own margin token (`session.styles.scss`).
+		// D11 (Frank, 05.09.2026): the list cards end 12 px before the
+		// column edge (`sessionsList__scrollContainer` desktop margin), so
+		// the visible gap is measured from the cards — 24 px as in Figma
+		// 1320:38278 and on the stage (`chatStage.styles.scss`). Declared on
+		// the wrapper so BOTH columns read the same pair (review v10: the
+		// list column alone left the chat card's margin out of it).
+		@include breakpoint($fromLarge) {
+			--pane-gap: var(--session-card-margin, 24px);
+			--pane-inner-gutter: 12px;
+		}
 		position: relative;
 		overflow: hidden;
 
@@ -160,16 +173,6 @@ a {
 			display: flex;
 			flex-direction: column;
 
-			// T13: the list's resize handle centres in the gap to the chat
-			// card — the card's own margin token (`session.styles.scss`).
-			// D11 (Frank, 05.09.2026): the list cards end 12 px before the
-			// column edge (`sessionsList__scrollContainer` desktop margin), so
-			// the visible gap is measured from the cards — 24 px as in Figma
-			// 1320:38278 and on the stage (`chatStage.styles.scss`).
-			@include breakpoint($fromLarge) {
-				--pane-gap: var(--session-card-margin, 24px);
-				--pane-inner-gutter: 12px;
-			}
 			flex: 1 0 100%;
 			overflow-x: hidden;
 
@@ -236,6 +239,19 @@ a {
 				flex: 1; /* Expand to fill space */
 				overflow: visible;
 				transition: none;
+
+				// D11 (review v10): the chat card starts `--pane-gap` after
+				// the list CARDS — its left margin is the gap minus the list
+				// column's inner gutter, exactly as on the stage
+				// (`chatStage.styles.scss` `> .session:first-child`). With it
+				// the list handle centres in the real 24 px gap; without it
+				// the handle sat 6 px off centre.
+				.session,
+				.enquiry__wrapper {
+					margin-left: calc(
+						var(--pane-gap) - var(--pane-inner-gutter)
+					);
+				}
 			}
 
 			&--smallInactive {
