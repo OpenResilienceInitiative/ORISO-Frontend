@@ -208,7 +208,7 @@ export const SingleThread: Story = {
 };
 
 export const MenuTwoThreadsAndSupervision: Story = {
-	name: 'Menu — two threads + supervision (speed dial)',
+	name: 'Menu — two threads + supervision (channel card)',
 	args: {
 		channels: [SUPERVISION_CHANNEL, THREAD_2, { ...THREAD_1, unread: 2 }],
 		onSelect: () => {}

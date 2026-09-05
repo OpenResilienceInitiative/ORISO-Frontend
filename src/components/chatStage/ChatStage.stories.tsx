@@ -7,11 +7,9 @@
  * / Desktop 1280 / Desktop 1440) or `_shots/shoot.mjs`, which shoots each
  * story at 1280×820, 1440×900 and 390×844.
  */
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
-import { ChannelSwitcherFab } from './ChannelSwitcherFab';
 import { STAGE_LAYOUT } from './stageLayout';
 import {
 	CLIENT_NAME,
@@ -65,7 +63,8 @@ const meta = {
 			description: {
 				component:
 					'Consultant session stage composed from the real list column, session header, MessageTimeline, composer, SidePanel and ChannelSwitcherFab. ' +
-					'Stories (a)–(f) are the decisions Frank asked to see on 04.09.: supervision inside the card vs. second card, list snapped to the icon rail, thread + supervision at once, phone main/secondary with the FAB, FAB label topic vs. supervisor name.'
+					'Stories (a)–(e) are the decisions Frank asked to see on 04.09.: supervision inside the card vs. second card, list snapped to the icon rail, thread + supervision at once, phone main/secondary with the FAB. ' +
+					'The former (f) "FAB label topic vs. person" was retired after T20 fixed the card labels ("Supervisionschat", "Thread #n"); the person shows in the preview line.'
 			}
 		}
 	}
@@ -1049,78 +1048,5 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		await expect(fab.getAttribute('aria-label')).toMatch(
 			/Beratungschat|counselling/i
 		);
-	}
-};
-
-/**
- * (f) Was: does the switcher say "Supervision" or "Bettina B."? T20 settled
- * it — the card's rows are fixed ("Supervisionschat", "Thread #n"); the
- * person appears in the preview line ("Bettina B.: …"). Both variants now
- * render the same card; the channel label only feeds the closed FAB's
- * accessible name.
- */
-export const FabLabelTopicVsSupervisorName: Story = {
-	name: '(f) FAB label — topic vs. person (settled by T20: fixed card labels)',
-	args: {},
-	render: () => (
-		<div className="chatStageCompare">
-			{(['topic', 'person'] as const).map((mode) => (
-				<div className="chatStageCompare__item" key={mode}>
-					<p className="chatStageCompare__caption">
-						{mode === 'topic'
-							? 'Variante 1 — Thema (Label „Supervision"): Karte identisch'
-							: 'Variante 2 — Person (Label „Bettina B."): Karte identisch, Person in der Vorschau'}
-					</p>
-					<div
-						className="chatStageCompare__frame"
-						data-cy={`compare-${mode}`}
-					>
-						<ChannelSwitcherFab
-							defaultOpen
-							onSelect={() => {}}
-							channels={[
-								{
-									id: 'supervision',
-									kind: 'supervision',
-									label:
-										mode === 'topic'
-											? 'Supervision'
-											: SUPERVISOR_NAME,
-									unread: 1,
-									lastMessage: {
-										author: SUPERVISOR_NAME,
-										text: 'Wenn es beim dritten Mal wieder kommt: Angebot für einen konkreten Termin machen.',
-										ts: 1
-									}
-								},
-								{
-									id: '$thread-1',
-									kind: 'thread',
-									label:
-										mode === 'topic'
-											? 'Es sind ein paar Briefe gekommen…'
-											: CLIENT_NAME
-								}
-							]}
-						/>
-					</div>
-				</div>
-			))}
-		</div>
-	),
-	play: async ({ canvasElement }) => {
-		await waitFor(() =>
-			expect(canvasElement.querySelectorAll('[role="menu"]').length).toBe(
-				2
-			)
-		);
-		for (const mode of ['topic', 'person']) {
-			const text =
-				canvasElement.querySelector(`[data-cy="compare-${mode}"]`)
-					?.textContent ?? '';
-			await expect(text).toContain('Supervisionschat');
-			await expect(text).toContain('Thread #1');
-			await expect(text).toContain(`${SUPERVISOR_NAME}:`);
-		}
 	}
 };

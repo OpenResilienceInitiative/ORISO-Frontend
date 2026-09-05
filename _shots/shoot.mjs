@@ -119,11 +119,6 @@ const shots = [
 		['390x844']
 	],
 	[
-		'f-fab-label-topic-vs-person',
-		`${stage}fab-label-topic-vs-supervisor-name`,
-		['1280x820', '390x844']
-	],
-	[
 		'sidepanel-supervision',
 		'components-session-sidepanel--supervision',
 		['1280x820']
