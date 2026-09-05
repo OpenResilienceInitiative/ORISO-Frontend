@@ -164,7 +164,7 @@ describe('InviteLink legacy identity', () => {
 		// stays anon_N. Call order alone cannot show that — the call happens
 		// first with or without the await — so hold the promise open and prove
 		// the redirect waits for it.
-		let storeDisplayName: (name: string) => void;
+		let storeDisplayName!: (name: string | null) => void;
 		vi.mocked(assignInviteSessionDisplayName).mockReturnValue(
 			new Promise<string | null>((resolve) => {
 				storeDisplayName = resolve;
