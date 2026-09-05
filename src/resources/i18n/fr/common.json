@@ -305,6 +305,17 @@
 			"ready": "Extrait de texte ajouté à votre réponse"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Participants : {{names}}",
+			"more": "{{count}} autres participants",
+			"more_one": "1 autre personne"
+		},
+		"panel": {
+			"channelOptions": "Changer de canal",
+			"channelOptionsEmpty": "Aucun autre canal"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archiver",
 		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
@@ -4471,6 +4482,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Supervision",
+			"systemNotice": "Supervision par {{name}}. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
 			"headerLabel": "Supervision · {{name}}",
 			"role": {
 				"supervisor": "Supervision",

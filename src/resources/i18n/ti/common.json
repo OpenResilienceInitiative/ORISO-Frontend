@@ -305,6 +305,17 @@
 			"ready": "ቁራጽ ጽሑፍ ናብ መልስኹም ተወሲኹ"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "ተሳተፍቲ፡ {{names}}",
+			"more": "{{count}} ተወሰኽቲ ተሳተፍቲ",
+			"more_one": "1 ተወሳኺ ሰብ"
+		},
+		"panel": {
+			"channelOptions": "ቻነል ቀይር",
+			"channelOptionsEmpty": "ካልእ ቻነል የለን"
+		}
+	},
 	"chatFlyout": {
 		"archive": "መዝገበ",
 		"archiveDescription": "የተኣረከቡ ቻት ማሳሰቢያታት ኣይሰርሑን። ቻት ኣብ 12 ወርሒ ይሰርዝ።",
@@ -4471,6 +4482,7 @@
 	"supervision": {
 		"panel": {
 			"title": "ሱፐርቪዥን",
+			"systemNotice": "ሱፐርቪዥን ብ {{name}}። ካልእ ሱፐርቫይዘር ብቲ ኣብ ጥቓ ምልክት መልእኽቲ ዘሎ ፕላስ ክትሓቱ ትኽእሉ ኢኹም።",
 			"headerLabel": "ሱፐርቪዥን · {{name}}",
 			"role": {
 				"supervisor": "ሱፐርቪዥን",

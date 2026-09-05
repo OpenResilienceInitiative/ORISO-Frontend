@@ -305,6 +305,17 @@
 			"ready": "Metin alıntısı yanıtınıza eklendi"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Katılımcılar: {{names}}",
+			"more": "{{count}} katılımcı daha",
+			"more_one": "1 kişi daha"
+		},
+		"panel": {
+			"channelOptions": "Kanal değiştir",
+			"channelOptionsEmpty": "Başka kanal yok"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Arşiv",
 		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
@@ -4471,6 +4482,7 @@
 	"supervision": {
 		"panel": {
 			"title": "Süpervizyon",
+			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
 			"headerLabel": "Süpervizyon · {{name}}",
 			"role": {
 				"supervisor": "Süpervizyon",
