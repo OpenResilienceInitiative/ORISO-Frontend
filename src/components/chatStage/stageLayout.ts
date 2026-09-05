@@ -14,7 +14,7 @@ export const STAGE_LAYOUT = {
 	DESKTOP_MIN_WIDTH: 900,
 	/** Icon-only session list (`sessionsList__wrapper--iconOnly` min-width). */
 	RAIL_WIDTH: 80,
-	/** `.session` desktop margin on each side. */
+	/** `.session` desktop margin on each side (`--session-card-margin`). */
 	CARD_MARGIN: 24,
 	/** Both chat panes keep at least this much. */
 	MIN_PANE_WIDTH: 520

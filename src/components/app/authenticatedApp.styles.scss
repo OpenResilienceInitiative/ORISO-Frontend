@@ -161,9 +161,9 @@ a {
 			flex-direction: column;
 
 			// T13: the list's resize handle centres in the gap to the chat
-			// card (`.session` desktop margin, 24 px).
+			// card — the card's own margin token (`session.styles.scss`).
 			@include breakpoint($fromLarge) {
-				--pane-gap: 24px;
+				--pane-gap: var(--session-card-margin, 24px);
 			}
 			flex: 1 0 100%;
 			overflow-x: hidden;
