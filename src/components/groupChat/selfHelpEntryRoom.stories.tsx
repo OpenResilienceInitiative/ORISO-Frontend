@@ -590,8 +590,20 @@ const useClockHeight = () => {
 		// 16 below it; the column 24 above; the headline block and its gap
 		// (66 + 26); the switch row at the foot (16 + 40); 24 px so a
 		// rounding error never shows as a scrollbar.
+		// Plus the group name block above the headline (44 + 24).
 		const reserved =
-			(mobile ? 64 : 96) + 32 + 96 + 16 + 24 + 66 + 26 + 16 + 40 + 24;
+			(mobile ? 64 : 96) +
+			32 +
+			96 +
+			8 +
+			24 +
+			66 +
+			26 +
+			16 +
+			40 +
+			44 +
+			24 +
+			24;
 		return Math.max(160, window.innerHeight - reserved);
 	};
 	const [height, setHeight] = React.useState(measure);
@@ -650,26 +662,67 @@ const BlockRoom = ({
 							justifyContent: 'center',
 							px: { xs: 2, sm: 4 },
 							pt: 3,
-							/* Footer bar plus 16 px — every pixel here is one
-							   the clock cannot have. */
-							pb: '112px'
+							/* Footer bar plus 8 px — the switch row sits close
+							   above the bar ("noch etwas tiefer"). */
+							pb: '104px'
 						}}
 					>
-						<WaitingAreaCountdown
-							plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
-							welcomeText={WELCOME}
-							rules={RULES}
-							nowMs={NOW}
-							/* Headline back on top: Frank, 2026-09-04, "das war
+						{/* Everything above the switch row is one block that
+						    centres itself in the space left over (Frank,
+						    2026-09-05: "muss vertikal zentriert sein"). The
+						    row below takes none of that slack any more. */}
+						<Box
+							sx={{
+								flex: 1,
+								display: 'flex',
+								flexDirection: 'column',
+								justifyContent: 'center',
+								gap: 3
+							}}
+						>
+							{/* Which group this is. Frank, 2026-09-05: "mir fehlt
+						    im Header das Thema der Gruppe, sowie … einen
+						    Namen." Group name and topic from the same fixtures
+						    the entry screen uses — someone who followed a link
+						    should see at once that they are in the right room. */}
+							<Box sx={{ textAlign: 'center' }}>
+								<Typography
+									sx={{
+										fontSize: 12,
+										fontWeight: 600,
+										letterSpacing: '.12em',
+										textTransform: 'uppercase',
+										color: registrationMd3.onSurfaceVariant
+									}}
+								>
+									{groupTopic.name}
+								</Typography>
+								<Typography
+									sx={{
+										fontSize: 16,
+										fontWeight: 600,
+										color: registrationMd3.onSurface
+									}}
+								>
+									{agency.name}
+								</Typography>
+							</Box>
+							<WaitingAreaCountdown
+								plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
+								welcomeText={WELCOME}
+								rules={RULES}
+								nowMs={NOW}
+								/* Headline back on top: Frank, 2026-09-04, "das war
 							   eigentlich gar nicht so schlecht, weil es da oben
 							   war". The block below it runs down to the bar. */
-							clockSize="fit"
-							fitHeight={clockHeight}
-							spacing={spacing}
-							labelsOutside
-							reducedMotion={motionOff}
-							hideMotionToggle
-						/>
+								clockSize="fit"
+								fitHeight={clockHeight}
+								spacing={spacing}
+								labelsOutside
+								reducedMotion={motionOff}
+								hideMotionToggle
+							/>
+						</Box>
 						{/* The animation switch — the design system's own M3
 						    `Switch`, the one the profile uses — and "Mehr
 						    erfahren" sit at the foot of the column, directly
