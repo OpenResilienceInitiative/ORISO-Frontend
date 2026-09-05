@@ -1,75 +1,22 @@
-// Channel menu card — Figma "Menu" 9763:62964 (measured with get_metadata):
-// card 301 wide, 8 px inset; header 16 px inset with the eyebrow (Body
-// Small 14/400) over the title (Body Strong 16/600); a 17 px separator
-// block around the hairline; items 285 wide with the 20 px icon at
-// (16, 12), the body at x = 48 (label row 22 px, shortcut 27×16 right,
-// description below). Frank asked for a ONE-line preview with ellipsis
-// (Figma draws two lines). Corner: sds radius/md = 8.
-// Tokens: sds text-default-secondary → on-surface-variant, text-default →
-// on-surface, the hairline → primary-fixed (the room header's hairline).
-
-$menu-width: 301px;
-$menu-inset: 8px;
-$menu-radius: 8px;
-
-// Review v6: the card never outgrows 5½ rows (the half row says "scroll")
-// nor the room its host measured (`--channel-menu-max-height`, see
-// `useChannelMenuPlacement`); the row list scrolls inside.
-$menu-row-height: 70px; // 12 + 22 + 4 + 20 + 12
-$menu-chrome-height: 87px; // 2 × 8 inset + 54 header + 17 separator
-$menu-visible-rows: 5.5;
-$menu-elevation:
-	0 4px 8px 3px rgba(0, 0, 0, 0.08),
-	0 1px 3px rgba(0, 0, 0, 0.2);
+// Channel menu card = the chat menu organism (`chatMenuDropdown.styles.scss`)
+// with a channel list inside. Only what the organism does not know lives
+// here: the very light `primary-fixed` accent on the card (T27), the
+// scrolling row list under a host-measured ceiling (review v6), the
+// unread pill, the two-line preview (T28) and the supervision switch at
+// the end of its row (T27). Row typography, hover and selection are the
+// organism's.
 
 .channelMenu {
-	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	width: $menu-width;
-	max-width: calc(100vw - 32px);
-	max-height: min(
-		calc(
-			#{$menu-chrome-height} + #{$menu-row-height} * #{$menu-visible-rows}
-		),
-		var(--channel-menu-max-height, 100vh)
+	// T27: a hint of the brand tint on the card — the organism's white
+	// mixed with a quarter of `primary-fixed`.
+	background: color-mix(
+		in srgb,
+		var(--m3-primary-fixed, #ffdad5) 25%,
+		var(--m3-surface-container-lowest, #fff)
 	);
-	padding: $menu-inset;
-	border-radius: $menu-radius;
-	background: var(--m3-surface-container-lowest, #fff);
-	box-shadow: $menu-elevation;
-	font-family: var(--m3-body-font-family, inherit);
-	color: var(--m3-on-surface, #1b1b1c);
+	overflow: hidden;
+	max-height: min(520px, var(--channel-menu-max-height, 100vh));
 	text-align: left;
-
-	&__header {
-		flex: 0 0 auto;
-		padding: 8px 16px 4px;
-	}
-
-	&__eyebrow {
-		margin: 0;
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 20px;
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
-	&__title {
-		margin: 0;
-		font-size: 16px;
-		font-weight: 600;
-		line-height: 22px;
-		color: var(--m3-on-surface, #1b1b1c);
-	}
-
-	// Figma "Menu Separator": 17 px block, hairline in the middle.
-	&__separator {
-		flex: 0 0 auto;
-		margin: 8px 0;
-		border: 0;
-		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
-	}
 
 	&__list {
 		flex: 1 1 auto;
@@ -81,97 +28,41 @@ $menu-elevation:
 		list-style: none;
 	}
 
-	&__item {
+	&__row {
+		position: relative;
 		display: flex;
 		align-items: flex-start;
-		gap: 12px;
-		width: 100%;
-		min-height: 48px;
-		margin: 0;
-		padding: 12px 16px;
-		border: 0;
-		border-radius: $menu-radius;
-		background: transparent;
+
+		.channelMenu__item {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		// T27: the switch sits beside the preview (line 2), so the label line
+		// keeps its full width — "Supervisionschat · 2 · ⇧S" stays whole.
+		&--withSwitch .chatMenuDropdown__itemDescription {
+			padding-right: 60px;
+		}
+	}
+
+	// The organism's `svg *` fill rule also covers the channel glyphs.
+	&__item {
 		color: inherit;
-		font: inherit;
-		text-align: left;
-		cursor: pointer;
-
-		&:hover {
-			background: var(--m3-surface-container, #f0edee);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: -2px;
-		}
-
-		// The channel on screen — the same primary-fixed tint the room
-		// header's chips use; `aria-current` carries it to assistive tech.
-		&--active {
-			background: var(--m3-primary-fixed, #ffdad5);
-
-			.channelMenu__label {
-				color: var(--m3-primary, #a5000a);
-				font-weight: 600;
-			}
-		}
-	}
-
-	&__icon {
-		flex: 0 0 auto;
-		width: 20px;
-		height: 20px;
-		margin-top: 1px;
-		fill: currentcolor;
-		color: var(--m3-secondary, #4c555f);
-	}
-
-	&__body {
-		flex: 1 1 auto;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		min-width: 0;
-	}
-
-	&__row {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 22px;
 	}
 
 	&__label {
-		flex: 1 1 auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		max-width: 100%;
 		min-width: 0;
-		overflow: hidden;
-		font-size: 16px;
-		font-weight: 400;
-		line-height: 22px;
-		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	// Figma "Menu Shortcut": Body Small on the secondary text colour.
-	&__shortcut {
-		flex: 0 0 auto;
-		font-family: inherit;
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 16px;
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
-	// One line: "Author: text…" — the author in Body Strong weight.
+	// "Author: text …" — one line, then the ellipsis (T20 as ordered).
 	&__preview {
 		display: block;
-		min-width: 0;
 		overflow: hidden;
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 20px;
-		color: var(--m3-on-surface-variant, #444748);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -198,5 +89,15 @@ $menu-elevation:
 			var(--m3-error, #cc0000)
 		);
 		color: var(--m3-on-error, #fff);
+	}
+
+	// T27: the supervision switch — bottom-right of its row, level with the
+	// two preview lines (the organism row ends 12 px below the text).
+	&__switch {
+		position: absolute;
+		right: 8px;
+		bottom: 12px;
+		display: inline-flex;
+		align-items: center;
 	}
 }

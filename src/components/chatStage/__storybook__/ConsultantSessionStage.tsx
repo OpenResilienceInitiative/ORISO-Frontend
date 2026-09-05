@@ -109,6 +109,8 @@ export interface ConsultantSessionStageProps {
 	fabDefaultOpen?: boolean;
 	/** T1: hide the FAB while a panel is open (its header offers the channels). */
 	fabHidden?: boolean;
+	/** T27: show the supervision on/off switch in the channel card. */
+	supervisionToggle?: boolean;
 }
 
 const noop = () => {};
@@ -325,6 +327,9 @@ interface RoomProps {
 	onSelectChannel: (channelId: string) => void;
 	/** Review v6: the channel was picked from the FAB — the header takes focus. */
 	focusChannelButton?: boolean;
+	/** T27: supervision on/off switch in the card. */
+	supervisionActive?: boolean;
+	onToggleSupervision?: (active: boolean) => void;
 }
 
 function SupervisionRoom({
@@ -337,7 +342,9 @@ function SupervisionRoom({
 	channels,
 	activeChannelId,
 	onSelectChannel,
-	focusChannelButton
+	focusChannelButton,
+	supervisionActive,
+	onToggleSupervision
 }: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
 	// T7: the system notice opens the side room (frontend-rendered for now).
@@ -372,6 +379,8 @@ function SupervisionRoom({
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}
+					supervisionActive={supervisionActive}
+					onToggleSupervision={onToggleSupervision}
 					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
 					onClose={onBack ? undefined : onClose}
@@ -422,7 +431,9 @@ function ThreadRoom({
 	channels,
 	activeChannelId,
 	onSelectChannel,
-	focusChannelButton
+	focusChannelButton,
+	supervisionActive,
+	onToggleSupervision
 }: RoomProps) {
 	const { t } = useTranslation();
 	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
@@ -443,6 +454,8 @@ function ThreadRoom({
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}
+					supervisionActive={supervisionActive}
+					onToggleSupervision={onToggleSupervision}
 					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
 					onClose={onBack ? undefined : onClose}
@@ -565,7 +578,8 @@ export function ConsultantSessionStage({
 	phone: initialPhone,
 	withReason = false,
 	fabDefaultOpen = false,
-	fabHidden = true
+	fabHidden = true,
+	supervisionToggle = false
 }: ConsultantSessionStageProps) {
 	const { t } = useTranslation();
 	const viewportWidth = useViewportWidth();
@@ -576,6 +590,11 @@ export function ConsultantSessionStage({
 	// Review v6: a pick from the FAB hands focus to the panel header's
 	// channel button (the FAB is gone once the panel is open).
 	const [focusHeader, setFocusHeader] = useState(false);
+	// T27: the card's supervision switch (presentational; B2 wires it).
+	const [supervisionActive, setSupervisionActive] = useState(true);
+	const onToggleSupervision = supervisionToggle
+		? setSupervisionActive
+		: undefined;
 	useEffect(() => setPanel(initialPanel), [initialPanel]);
 	useEffect(() => setPhone(initialPhone), [initialPhone]);
 	const selectChannel = useCallback(
@@ -705,6 +724,8 @@ export function ConsultantSessionStage({
 			onSelect={selectFromFab}
 			onBack={backToMain}
 			defaultOpen={fabDefaultOpen}
+			supervisionActive={supervisionActive}
+			onToggleSupervision={onToggleSupervision}
 		/>
 	);
 
@@ -716,6 +737,8 @@ export function ConsultantSessionStage({
 				onSelect={selectFromFab}
 				defaultOpen={fabDefaultOpen}
 				fabHidden={fabHidden && panel !== null}
+				supervisionActive={supervisionActive}
+				onToggleSupervision={onToggleSupervision}
 			/>
 		) : undefined;
 
@@ -739,6 +762,8 @@ export function ConsultantSessionStage({
 									activeChannelId={activeChannelId}
 									onSelectChannel={selectFromHeader}
 									focusChannelButton={focusHeader}
+									supervisionActive={supervisionActive}
+									onToggleSupervision={onToggleSupervision}
 								/>
 							) : (
 								<SupervisionRoom
@@ -751,6 +776,8 @@ export function ConsultantSessionStage({
 									activeChannelId={activeChannelId}
 									onSelectChannel={selectFromHeader}
 									focusChannelButton={focusHeader}
+									supervisionActive={supervisionActive}
+									onToggleSupervision={onToggleSupervision}
 								/>
 							)
 						) : (
@@ -767,6 +794,12 @@ export function ConsultantSessionStage({
 											channels={channels}
 											onSelect={selectFromFab}
 											defaultOpen={fabDefaultOpen}
+											supervisionActive={
+												supervisionActive
+											}
+											onToggleSupervision={
+												onToggleSupervision
+											}
 										/>
 									}
 									threadReplies={
@@ -792,6 +825,8 @@ export function ConsultantSessionStage({
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}
 				focusChannelButton={focusHeader}
+				supervisionActive={supervisionActive}
+				onToggleSupervision={onToggleSupervision}
 				onClose={closePanel}
 			/>
 		) : panel === 'supervision' ? (
@@ -803,6 +838,8 @@ export function ConsultantSessionStage({
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}
 				focusChannelButton={focusHeader}
+				supervisionActive={supervisionActive}
+				onToggleSupervision={onToggleSupervision}
 				onClose={closePanel}
 			/>
 		) : null;

@@ -463,18 +463,20 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		await expect(options).toHaveAttribute('aria-expanded', 'true');
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
-		// T20: the card — eyebrow, title, supervision first (⇧S), then the
+		// T20/T27/T29: the card is the app's menu organism — eyebrow and
+		// title describe the function; supervision first (⇧S), then the
 		// threads by their latest message, the shown one current. Review v6:
 		// the NUMBER follows the root message — the newer thread ranks
 		// first but is "Thread #2"; the original stays "Thread #1" / ⇧1.
 		await expect(
-			canvasElement.querySelector('[data-cy="channel-menu-eyebrow"]')
-				?.textContent
-		).toBe('Abzweigungen zu diesem Gespräch');
+			canvasElement.querySelector(
+				'.channelMenu .chatMenuDropdown__subtitle'
+			)?.textContent
+		).toBe('Weitere Gespräche zu dieser Beratung');
 		await expect(
-			canvasElement.querySelector('[data-cy="channel-menu-title"]')
+			canvasElement.querySelector('.channelMenu .chatMenuDropdown__title')
 				?.textContent
-		).toBe('Ableitende Gespräche');
+		).toBe('Threads und Supervision');
 		await expect(items).toHaveLength(3);
 		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
@@ -500,14 +502,6 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		);
 		await expect(previews[0]).toContain(`${COUNSELLOR_NAME}:`);
 		await expect(previews[2]).toContain(`${CLIENT_NAME}:`);
-		items.forEach((item) => {
-			const preview = item.querySelector<HTMLElement>(
-				'[data-cy="channel-menu-preview"]'
-			)!;
-			expect(preview.getBoundingClientRect().height).toBeLessThanOrEqual(
-				22
-			);
-		});
 		await expectMenuBelowHeader(canvasElement);
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>
@@ -679,6 +673,180 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 			expect(panelTitle(canvasElement).kind).toBe('Thread #1')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
+	}
+};
+
+/**
+ * (d6) T27: the channel card IS the app's menu organism ("Chatraum
+ * Einstellungen"): the same rows, the same hover — the pale
+ * `secondary-fixed` surface with the label and icon in `primary`, never
+ * the pink — on a card with a hint of `primary-fixed`. The supervision
+ * row carries an on/off switch (presentational until B2): off greys the
+ * row out and blocks the pick. T29: eyebrow and title say what the card
+ * does.
+ */
+export const PanelChannelCardOrganismHoverAndSupervisionSwitch: Story = {
+	name: '(d6) Panel channel card — organism rows, hover tint, supervision switch (T27/T29)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'thread',
+		panelVariant: 'inside',
+		openThreads: 2,
+		supervisionUnread: 2,
+		supervisionToggle: true
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 9
+		});
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!
+		);
+		const menu = await canvas.findByRole('menu');
+		const card = canvasElement.querySelector<HTMLElement>('.channelMenu')!;
+		// The organism: card, header, divider, rows.
+		await expect(card.classList.contains('chatMenuDropdown')).toBe(true);
+		await expect(
+			card.querySelector('.chatMenuDropdown__subtitle')?.textContent
+		).toBe('Weitere Gespräche zu dieser Beratung');
+		await expect(
+			card.querySelector('.chatMenuDropdown__title')?.textContent
+		).toBe('Threads und Supervision');
+		await expect(
+			card.querySelector('.chatMenuDropdown__divider')
+		).not.toBeNull();
+		const items = within(menu).getAllByRole('menuitem');
+		items.forEach((item) => {
+			expect(item.classList.contains('chatMenuDropdown__item')).toBe(
+				true
+			);
+			expect(
+				item.querySelector('.chatMenuDropdown__itemIcon')
+			).not.toBeNull();
+			expect(
+				item.querySelector('.chatMenuDropdown__itemTitle')
+			).not.toBeNull();
+			expect(
+				item.querySelector('.chatMenuDropdown__itemShortcut')
+			).not.toBeNull();
+			expect(
+				item.querySelector('.chatMenuDropdown__itemDescription')
+			).not.toBeNull();
+		});
+		// Hover / selected = secondary-fixed surface, primary label + icon.
+		const root = getComputedStyle(document.documentElement);
+		const secondaryFixed = root
+			.getPropertyValue('--m3-secondary-fixed')
+			.trim();
+		const primary = root.getPropertyValue('--m3-primary').trim();
+		const primaryFixed = root.getPropertyValue('--m3-primary-fixed').trim();
+		const toRgb = (hex: string) => {
+			const n = parseInt(hex.replace('#', ''), 16);
+			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+		};
+		await expect(secondaryFixed).toMatch(/^#/);
+		const selected = items.find(
+			(item) => item.getAttribute('aria-current') === 'true'
+		)!;
+		// (the organism fades its surface in over 150 ms — wait for it)
+		await waitFor(() =>
+			expect(getComputedStyle(selected).backgroundColor).toBe(
+				toRgb(secondaryFixed)
+			)
+		);
+		await waitFor(() =>
+			expect(
+				getComputedStyle(
+					selected.querySelector('.chatMenuDropdown__itemTitle')!
+				).color
+			).toBe(toRgb(primary))
+		);
+		// Hover and keyboard focus share one rule in the organism; a
+		// synthetic hover cannot switch CSS `:hover`, so the keyboard walks
+		// onto a row (focus-visible) and the `:hover` selector is checked in
+		// the stylesheet itself.
+		const hovered = items[1];
+		await expect(getComputedStyle(hovered).backgroundColor).not.toBe(
+			toRgb(secondaryFixed)
+		);
+		await userEvent.keyboard('{ArrowUp}');
+		await waitFor(() => expect(document.activeElement).toBe(hovered));
+		await waitFor(() =>
+			expect(getComputedStyle(hovered).backgroundColor).toBe(
+				toRgb(secondaryFixed)
+			)
+		);
+		await waitFor(() =>
+			expect(
+				getComputedStyle(
+					hovered.querySelector('.chatMenuDropdown__itemIcon')!
+				).color
+			).toBe(toRgb(primary))
+		);
+		// Never the pink on a row.
+		await expect(getComputedStyle(hovered).backgroundColor).not.toBe(
+			toRgb(primaryFixed)
+		);
+		const hoverRule = Array.from(document.styleSheets)
+			.flatMap((sheet) => {
+				try {
+					return Array.from(sheet.cssRules) as CSSStyleRule[];
+				} catch {
+					return [];
+				}
+			})
+			.find(
+				(rule) =>
+					rule.selectorText?.includes(
+						'.chatMenuDropdown__item:hover'
+					) && rule.style?.backgroundColor
+			);
+		await expect(hoverRule?.style.backgroundColor).toContain(
+			'--m3-secondary-fixed'
+		);
+		await userEvent.keyboard('{ArrowDown}');
+		// T27: the supervision row's switch — on by default; off greys the
+		// row and a click no longer switches the panel.
+		const supervisionRow = items[0];
+		await expect(supervisionRow).toHaveAttribute(
+			'data-channel-id',
+			'supervision'
+		);
+		const toggle = card.querySelector<HTMLInputElement>(
+			'[data-cy="channel-menu-supervision-switch"] input[role="switch"]'
+		)!;
+		await expect(toggle.checked).toBe(true);
+		await expect(toggle.getAttribute('aria-label')).toBe(
+			'Supervision aktiv'
+		);
+		await userEvent.click(toggle);
+		await waitFor(() => expect(toggle.checked).toBe(false));
+		await expect(toggle.getAttribute('aria-label')).toBe(
+			'Supervision ausgeschaltet'
+		);
+		await expect(supervisionRow).toHaveAttribute('aria-disabled', 'true');
+		await expect(
+			supervisionRow.classList.contains(
+				'chatMenuDropdown__item--disabled'
+			)
+		).toBe(true);
+		await userEvent.click(supervisionRow);
+		await expect(
+			canvasElement.querySelector('[role="menu"]')
+		).not.toBeNull();
+		await expect(panelTitle(canvasElement).kind).toBe('Thread #1');
+		// Back on: the row is a channel again.
+		await userEvent.click(toggle);
+		await waitFor(() => expect(toggle.checked).toBe(true));
+		await expect(supervisionRow).not.toHaveAttribute('aria-disabled');
+		await userEvent.click(supervisionRow);
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Supervision')
+		);
 	}
 };
 

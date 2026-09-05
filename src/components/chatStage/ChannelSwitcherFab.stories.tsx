@@ -228,9 +228,9 @@ export const MenuTwoThreadsAndSupervision: Story = {
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
 		await expect(
-			canvasElement.querySelector('[data-cy="channel-menu-title"]')
+			canvasElement.querySelector('.channelMenu .chatMenuDropdown__title')
 				?.textContent
-		).toBe('Ableitende Gespräche');
+		).toBe('Threads und Supervision');
 		await expect(items).toHaveLength(3);
 		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',

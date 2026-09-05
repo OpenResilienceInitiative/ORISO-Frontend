@@ -318,9 +318,11 @@
 			}
 		},
 		"menu": {
-			"eyebrow": "Branches of this conversation",
-			"title": "Derived conversations",
+			"eyebrow": "Further conversations about this counselling",
+			"title": "Threads and supervision",
 			"supervisionChat": "Supervision chat",
+			"supervisionOn": "Supervision active",
+			"supervisionOff": "Supervision switched off",
 			"thread": "Thread #{{n}}"
 		}
 	},

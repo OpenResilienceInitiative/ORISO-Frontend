@@ -40,6 +40,13 @@
 	--m3-secondary-container: #646d78;
 	--m3-on-secondary-container: #e7effc;
 
+	// Secondary fixed family (M3 Light table = engine output, T27): the
+	// menu organism's hover/selected surface and its text.
+	--m3-secondary-fixed: #dae3f0;
+	--m3-secondary-fixed-dim: #bec7d4;
+	--m3-on-secondary-fixed: #141c25;
+	--m3-on-secondary-fixed-variant: #3f4852;
+
 	// Tertiary family — bound by the Figma "FAB menu" (9748:60084): FAB =
 	// tertiary / on-tertiary, thread segments = tertiary-container /
 	// on-tertiary-container. Values from the canonical M3 Light table.

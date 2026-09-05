@@ -38,6 +38,9 @@ import './channelSwitcherFab.styles.scss';
 export interface ChannelSwitcherFabProps {
 	'channels': SecondaryChannel[];
 	'onSelect': (channelId: string) => void;
+	/** T27: supervision on/off switch in the card (presentational until B2). */
+	'supervisionActive'?: boolean;
+	'onToggleSupervision'?: (active: boolean) => void;
 	/**
 	 * Phone: the channel currently filling the screen. The FAB itself (or
 	 * the card's last row) leads back to the main chat. The card still lists
@@ -85,6 +88,8 @@ export const ChannelSwitcherFab = ({
 	onSelect,
 	activeChannelId,
 	onBack,
+	supervisionActive,
+	onToggleSupervision,
 	positionMode = 'absolute',
 	bottomOffset = 16,
 	defaultOpen = false,
@@ -241,6 +246,8 @@ export const ChannelSwitcherFab = ({
 						id={menuId}
 						channels={channels}
 						activeChannelId={activeChannelId}
+						supervisionActive={supervisionActive}
+						onToggleSupervision={onToggleSupervision}
 						maxHeight={placement?.maxHeight}
 						onSelect={(channelId) => {
 							close();

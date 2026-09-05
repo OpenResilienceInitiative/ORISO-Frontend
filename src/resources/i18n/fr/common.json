@@ -335,9 +335,11 @@
 			"openMenu": "Afficher les canaux secondaires"
 		},
 		"menu": {
-			"eyebrow": "Ramifications de cette conversation",
-			"title": "Conversations dérivées",
+			"eyebrow": "Autres conversations sur ce conseil",
+			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
+			"supervisionOn": "Supervision active",
+			"supervisionOff": "Supervision désactivée",
 			"thread": "Fil #{{n}}"
 		}
 	},

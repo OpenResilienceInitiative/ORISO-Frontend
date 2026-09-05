@@ -335,9 +335,11 @@
 			"openMenu": "Yan kanalları göster"
 		},
 		"menu": {
-			"eyebrow": "Bu görüşmenin dalları",
-			"title": "Türetilmiş görüşmeler",
+			"eyebrow": "Bu danışmayla ilgili diğer görüşmeler",
+			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
+			"supervisionOn": "Süpervizyon etkin",
+			"supervisionOff": "Süpervizyon kapalı",
 			"thread": "Konu #{{n}}"
 		}
 	},

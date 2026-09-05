@@ -330,9 +330,11 @@
 			}
 		},
 		"menu": {
-			"eyebrow": "Abzweigungen zu diesem Gespräch",
-			"title": "Ableitende Gespräche",
+			"eyebrow": "Weitere Gespräche zu dieser Beratung",
+			"title": "Threads und Supervision",
 			"supervisionChat": "Supervisionschat",
+			"supervisionOn": "Supervision aktiv",
+			"supervisionOff": "Supervision ausgeschaltet",
 			"thread": "Thread #{{n}}"
 		}
 	},
