@@ -215,7 +215,14 @@ function ScrollOnlyDemo() {
 		>
 			<div
 				ref={scrollRef}
-				style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 20 }}
+				// scrollbarWidth mirrors .session__threadListScroll: the drag bar
+				// is the affordance, so the native bar beside it is just noise.
+				style={{
+					maxHeight: 200,
+					overflowY: 'auto',
+					paddingRight: 20,
+					scrollbarWidth: 'none'
+				}}
 			>
 				{Array.from({ length: 24 }, (_, i) => (
 					<div key={i} style={{ padding: '10px 12px' }}>

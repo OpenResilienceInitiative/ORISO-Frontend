@@ -2679,6 +2679,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	/* Clear of the drag bar so a long preview never runs under it. */
 	padding-right: 20px;
+
+	/* The drag bar is the scroll affordance here, same as the sessions list.
+	   Two scrollbars side by side would just be noise. */
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .session__threadListEntry {
