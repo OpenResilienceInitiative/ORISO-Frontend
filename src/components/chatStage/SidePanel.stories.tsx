@@ -5,7 +5,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import { SidePanel, InfoBanner, type SidePanelVariant } from './SidePanel';
 import { PanelHeader } from './PanelHeader';
@@ -15,13 +15,19 @@ import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messa
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import { phone390Globals } from '../message/messageStoryShell';
 import { ChatStageProviders } from './__storybook__/ChatStageProviders';
+import type { SecondaryChannel } from './channelSwitcherState';
+import type { StackParticipant } from '../message/participantStack';
 import {
 	CLIENT_NAME,
 	CLIENT_MATRIX_ID,
+	COUNSELLOR_MATRIX_ID,
+	COUNSELLOR_NAME,
 	isCounsellorMessage,
 	SUPERVISION_ROOM_ID,
+	SUPERVISOR_MATRIX_ID,
 	SUPERVISOR_NAME,
 	supervisionMessages,
+	supervisionSystemNotice,
 	THREAD_ROOT_ID,
 	threadMessages,
 	mainChatMessages,
@@ -36,6 +42,34 @@ const CHAT_ROOM_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38278';
 
 const noop = () => {};
+const clientParticipant: StackParticipant = {
+	userId: CLIENT_MATRIX_ID,
+	username: 'sonnenblume_47',
+	displayName: CLIENT_NAME,
+	isAsker: true
+};
+const counsellorParticipant: StackParticipant = {
+	userId: COUNSELLOR_MATRIX_ID,
+	username: 'mona.s@oriso.invalid',
+	displayName: COUNSELLOR_NAME
+};
+const supervisorParticipant: StackParticipant = {
+	userId: SUPERVISOR_MATRIX_ID,
+	username: 'bettina.b@oriso.invalid',
+	displayName: SUPERVISOR_NAME
+};
+/** The other channel each side room offers under its header icon (T1). */
+const THREAD_CHANNEL: SecondaryChannel = {
+	id: THREAD_ROOT_ID,
+	kind: 'thread',
+	label: 'Es sind ein paar Briefe gekommen…'
+};
+const SUPERVISION_CHANNEL: SecondaryChannel = {
+	id: 'supervision',
+	kind: 'supervision',
+	label: SUPERVISOR_NAME,
+	unread: 1
+};
 const timelineHandlers = {
 	handleDecryptionErrors: noop,
 	handleDecryptionSuccess: noop,
@@ -95,11 +129,16 @@ function SupervisionSideRoom({
 			data-cy="supervision-side-panel"
 			header={
 				<PanelHeader
+					kind="supervision"
 					title={t('supervision.panel.title')}
 					name={SUPERVISOR_NAME}
-					chip={t('supervision.panel.role.supervisor')}
+					participants={[
+						counsellorParticipant,
+						supervisorParticipant
+					]}
 					unreadCount={unread}
-					tag={t('supervision.panel.privacyHint')}
+					channels={[THREAD_CHANNEL]}
+					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
 				/>
@@ -115,7 +154,15 @@ function SupervisionSideRoom({
 			timeline={
 				empty ? null : (
 					<MessageTimeline
-						messages={supervisionMessages()}
+						messages={[
+							supervisionSystemNotice(
+								t('supervision.panel.title'),
+								t('supervision.panel.systemNotice', {
+									name: SUPERVISOR_NAME
+								})
+							),
+							...supervisionMessages()
+						]}
 						renderMode="main"
 						threadsEnabled={false}
 						clientName={SUPERVISOR_NAME}
@@ -178,9 +225,13 @@ function ThreadSideRoom({ onBack }: { onBack?: () => void }) {
 			data-cy="thread-side-panel"
 			header={
 				<PanelHeader
+					kind="thread"
 					title={t('chatStage.panel.thread.title')}
 					name={CLIENT_NAME}
+					participants={[clientParticipant, counsellorParticipant]}
 					tag={t('chatStage.panel.thread.subtitle')}
+					channels={[SUPERVISION_CHANNEL]}
+					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
 				/>
@@ -268,6 +319,55 @@ export const Supervision: Story = {
 		await expect(
 			panel.querySelector('[data-cy="panel-header-unread"]')?.textContent
 		).toBe('2');
+		// T7: the section word sits above the name; the privacy banner is
+		// gone; the timeline opens with the system notice bubble.
+		await expect(
+			panel.querySelector('[data-cy="panel-header-kind-label"]')
+				?.textContent
+		).toBe('Supervision');
+		await expect(
+			panel.querySelector('[data-cy="panel-header-tag"]')
+		).toBeNull();
+		await expect(
+			panel.querySelector(
+				'.messageItem .messageItem__message--systemNotification'
+			)
+		).not.toBeNull();
+		await expect(
+			panel.querySelector('[data-cy="side-panel-timeline"] .messageItem')
+				?.textContent
+		).toContain('Supervision durch');
+		// T1: hover on a participant avatar shows the display name …
+		const avatars = panel.querySelectorAll<HTMLElement>(
+			'[data-cy="panel-header-participants"] [data-cy="participant-avatar"]'
+		);
+		await expect(avatars).toHaveLength(2);
+		await userEvent.hover(avatars[1]);
+		await waitFor(() =>
+			expect(
+				canvas.getByText(SUPERVISOR_NAME, {
+					selector: '[role="tooltip"]'
+				})
+			).toBeVisible()
+		);
+		await userEvent.unhover(avatars[1]);
+		// … and the channel icon opens the same channel options as the FAB.
+		const options = panel.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!;
+		await expect(options).toHaveAttribute('aria-haspopup', 'menu');
+		await userEvent.click(options);
+		const menu = await canvas.findByRole('menu');
+		const items = within(menu).getAllByRole('menuitem');
+		await expect(items).toHaveLength(1);
+		await expect(items[0]).toHaveAttribute(
+			'data-channel-id',
+			THREAD_ROOT_ID
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[role="menu"]')).toBeNull()
+		);
 	}
 };
 

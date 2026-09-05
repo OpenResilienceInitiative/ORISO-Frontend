@@ -18,7 +18,8 @@ import * as React from 'react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
-import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/fab-menu-supervision.svg';
+import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
+import { ReactComponent as SupervisionAttentionGlyph } from '../../resources/img/icons/supervision_on_400_24px.svg';
 import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu-close.svg';
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
@@ -45,12 +46,26 @@ export interface ChannelSwitcherFabProps {
 	'bottomOffset'?: number;
 	/** Start with the speed dial open (stories / comparisons). */
 	'defaultOpen'?: boolean;
+	/**
+	 * T1: while a side panel is open its header icon offers the same channel
+	 * options, so the FAB steps back. Renders nothing (the stage keeps the
+	 * prop so the FAB returns the moment the panel closes).
+	 */
+	'fabHidden'?: boolean;
 	'className'?: string;
 	'data-cy'?: string;
 }
 
-const glyphFor = (kind: SecondaryChannelKind) =>
-	kind === 'thread' ? ThreadGlyph : SupervisionGlyph;
+/** T9: `supervision_on` = attention (new message), `supervision_circ` = idle. */
+export const glyphFor = (
+	kind: SecondaryChannelKind,
+	variant: 'idle' | 'attention' = 'idle'
+) =>
+	kind === 'thread'
+		? ThreadGlyph
+		: variant === 'attention'
+			? SupervisionAttentionGlyph
+			: SupervisionGlyph;
 
 const UnreadBadge = ({ count }: { count: number }) =>
 	count > 0 ? (
@@ -58,6 +73,99 @@ const UnreadBadge = ({ count }: { count: number }) =>
 			{count > 99 ? '99+' : count}
 		</span>
 	) : null;
+
+export interface ChannelSwitcherMenuProps {
+	id?: string;
+	items: ChannelSwitcherItem[];
+	onSelect: (item: ChannelSwitcherItem) => void;
+	/** Phone: an extra bottom entry that leads back to the main chat. */
+	onBack?: () => void;
+	className?: string;
+}
+
+/**
+ * The speed-dial list on its own — the FAB opens it above itself, the
+ * side-panel header (T1) opens the same list under its channel icon.
+ */
+export const ChannelSwitcherMenu = ({
+	id,
+	items,
+	onSelect,
+	onBack,
+	className
+}: ChannelSwitcherMenuProps) => {
+	const { t: translate } = useTranslation();
+	const kindLabel = (kind: SecondaryChannelKind) =>
+		translate(`chatStage.switcher.kind.${kind}`);
+	const unreadLabel = (count: number) =>
+		count > 0 ? translate('supervision.panel.unread', { count }) : '';
+	return (
+		<ul
+			className={['channelSwitcher__menu', className]
+				.filter(Boolean)
+				.join(' ')}
+			role="menu"
+			id={id}
+			aria-label={translate('chatStage.switcher.openMenu')}
+		>
+			{items.map((item) => {
+				const Glyph = glyphFor(
+					item.kind,
+					item.unread > 0 ? 'attention' : 'idle'
+				);
+				return (
+					<li key={item.id} role="none">
+						<button
+							type="button"
+							role="menuitem"
+							className={`channelSwitcher__item channelSwitcher__item--${item.kind}`}
+							data-cy={`channel-switcher-item-${item.kind}`}
+							data-channel-id={item.id}
+							aria-label={[
+								translate('chatStage.switcher.openChannel', {
+									label: `${kindLabel(item.kind)} ${item.label}`
+								}),
+								unreadLabel(item.unread)
+							]
+								.filter(Boolean)
+								.join(' – ')}
+							onClick={() => onSelect(item)}
+						>
+							<Glyph
+								className="channelSwitcher__itemIcon"
+								aria-hidden="true"
+							/>
+							<span className="channelSwitcher__itemLabel">
+								{item.label}
+							</span>
+							<UnreadBadge count={item.unread} />
+						</button>
+					</li>
+				);
+			})}
+			{onBack && (
+				<li role="none">
+					<button
+						type="button"
+						role="menuitem"
+						className="channelSwitcher__item channelSwitcher__item--main"
+						data-cy="channel-switcher-item-main"
+						aria-label={translate('chatStage.switcher.backToMain')}
+						onClick={onBack}
+					>
+						<MainChatGlyph
+							className="channelSwitcher__itemIcon"
+							aria-hidden="true"
+						/>
+						<span className="channelSwitcher__itemLabel">
+							{translate('chatStage.switcher.mainChat')}
+						</span>
+					</button>
+				</li>
+			)}
+		</ul>
+	);
+};
 
 export const ChannelSwitcherFab = ({
 	channels,
@@ -67,6 +175,7 @@ export const ChannelSwitcherFab = ({
 	positionMode = 'absolute',
 	bottomOffset = 16,
 	defaultOpen = false,
+	fabHidden = false,
 	className,
 	'data-cy': dataCy = 'channel-switcher'
 }: ChannelSwitcherFabProps) => {
@@ -109,7 +218,7 @@ export const ChannelSwitcherFab = ({
 		};
 	}, [open, close]);
 
-	if (menuRows === 0) {
+	if (menuRows === 0 || fabHidden) {
 		return null;
 	}
 
@@ -145,7 +254,7 @@ export const ChannelSwitcherFab = ({
 		FabGlyph = open
 			? CloseGlyph
 			: state.iconKind
-				? glyphFor(state.iconKind)
+				? glyphFor(state.iconKind, state.variant)
 				: MainChatGlyph;
 	} else if (state.items.length === 1) {
 		const only = state.items[0];
@@ -158,7 +267,7 @@ export const ChannelSwitcherFab = ({
 			.filter(Boolean)
 			.join(' – ');
 		onFabClick = () => pick(only);
-		FabGlyph = glyphFor(only.kind);
+		FabGlyph = glyphFor(only.kind, state.variant);
 	} else {
 		fabLabel = translate('chatStage.switcher.backToMain');
 		onFabClick = back;
@@ -184,70 +293,12 @@ export const ChannelSwitcherFab = ({
 			data-mode={isMenu ? 'menu' : 'single'}
 		>
 			{isMenu && open && (
-				<ul
-					className="channelSwitcher__menu"
-					role="menu"
+				<ChannelSwitcherMenu
 					id={menuId}
-					aria-label={translate('chatStage.switcher.openMenu')}
-				>
-					{state.items.map((item) => {
-						const Glyph = glyphFor(item.kind);
-						return (
-							<li key={item.id} role="none">
-								<button
-									type="button"
-									role="menuitem"
-									className={`channelSwitcher__item channelSwitcher__item--${item.kind}`}
-									data-cy={`channel-switcher-item-${item.kind}`}
-									data-channel-id={item.id}
-									aria-label={[
-										translate(
-											'chatStage.switcher.openChannel',
-											{
-												label: `${kindLabel(item.kind)} ${item.label}`
-											}
-										),
-										unreadLabel(item.unread)
-									]
-										.filter(Boolean)
-										.join(' – ')}
-									onClick={() => pick(item)}
-								>
-									<Glyph
-										className="channelSwitcher__itemIcon"
-										aria-hidden="true"
-									/>
-									<span className="channelSwitcher__itemLabel">
-										{item.label}
-									</span>
-									<UnreadBadge count={item.unread} />
-								</button>
-							</li>
-						);
-					})}
-					{insideSecondary && (
-						<li role="none">
-							<button
-								type="button"
-								role="menuitem"
-								className="channelSwitcher__item channelSwitcher__item--main"
-								data-cy="channel-switcher-item-main"
-								aria-label={translate(
-									'chatStage.switcher.backToMain'
-								)}
-								onClick={back}
-							>
-								<MainChatGlyph
-									className="channelSwitcher__itemIcon"
-									aria-hidden="true"
-								/>
-								<span className="channelSwitcher__itemLabel">
-									{translate('chatStage.switcher.mainChat')}
-								</span>
-							</button>
-						</li>
-					)}
-				</ul>
+					items={state.items}
+					onSelect={pick}
+					onBack={insideSecondary ? back : undefined}
+				/>
 			)}
 			<button
 				ref={fabRef}

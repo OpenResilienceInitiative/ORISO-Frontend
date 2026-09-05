@@ -42,7 +42,7 @@
 		}
 
 		@media screen and (width <= 899px) {
-			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
 		}
 	}
 
@@ -77,12 +77,19 @@
 	}
 }
 
+// Room header geometry (Figma 1320:38281, "Room Header All"): 16 px inset
+// from the card edge, a 40 px content row with 6 px above and below, then
+// the hairline. The session header uses the same numbers
+// (`sessionHeader.styles.scss`) so both hairlines end on the same y (T3).
+$room-header-inset: 16px;
+$room-header-row: 40px;
+$room-header-gap: 6px;
+
 .panelHeader {
 	flex: 0 0 auto;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
-	padding: 6px 16px 0;
+	padding: $room-header-inset $room-header-inset 0;
 	box-sizing: border-box;
 	background-color: var(--m3-surface-container-lowest, #fff);
 
@@ -90,34 +97,91 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		height: 40px;
+		height: $room-header-row;
+		padding: $room-header-gap 0;
+		box-sizing: content-box;
 		min-width: 0;
 	}
 
-	// Figma: Chatroom Title — title/small 14/500/20, `secondary`, ellipsis.
+	&__participants {
+		flex: 0 0 auto;
+	}
+
+	// Two lines in the 40 px row: label/medium section word + title/small name.
 	&__title {
+		position: relative;
 		flex: 1 1 auto;
 		display: flex;
-		align-items: center;
-		gap: 6px;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0;
 		min-width: 0;
 		margin: 0;
 		padding: 0 6px;
-		font-size: 14px;
-		font-weight: 500;
-		line-height: 20px;
-		letter-spacing: 0.1px;
+	}
+
+	&__kind {
+		position: relative;
+		display: flex;
+		align-items: center;
+		min-width: 0;
+	}
+
+	// Figma: Topic Tag typography — label/medium 12/500/16, `secondary`.
+	&__kindButton {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		height: 16px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
 		color: var(--m3-secondary, #4c555f);
+		font-family: inherit;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
 		white-space: nowrap;
+		cursor: pointer;
+		border-radius: 4px;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:not(:disabled):hover {
+			color: var(--m3-primary, #a5000a);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__kindIcon {
+		flex: 0 0 auto;
+		width: 16px;
+		height: 16px;
+		fill: currentcolor;
 	}
 
 	&__titleLabel {
 		flex: 0 0 auto;
 	}
 
-	&__titleSeparator {
-		flex: 0 0 auto;
-		color: var(--m3-secondary-container, #646d78);
+	// Figma: Chatroom Title — title/small 14/500/20, ellipsis.
+	&__name {
+		display: flex;
+		min-width: 0;
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.1px;
+		white-space: nowrap;
 	}
 
 	&__titleName {
@@ -252,5 +316,20 @@
 		@media screen and (width <= 899px) {
 			padding-left: 0;
 		}
+	}
+}
+
+// T1: the channel options under the panel header's channel icon reuse the
+// FAB speed-dial list; anchored below the button instead of above the FAB.
+.channelSwitcher--anchored {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: auto;
+	bottom: auto;
+	left: 0;
+	align-items: flex-start;
+
+	.channelSwitcher__menu {
+		align-items: flex-start;
 	}
 }

@@ -234,3 +234,18 @@ panel is still available but not used by the owner.
 - No SessionItemComponent story harness exists, so the wired stage has no
   story; the presentational parts are covered (34 story tests) and the state
   in unit tests. Visual proof happens on pre-dev (WP D).
+
+## Side room system notice (T7, 05.09.2026)
+
+The stage side room (`chatStage/`) opens the supervision timeline with a
+system notice in the chat's system-notification bubble:
+
+> Supervision durch {name}. Eine andere Supervisorin oder einen anderen
+> Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.
+
+i18n key `supervision.panel.systemNotice` (de + en), built by
+`chatStageFixtures.supervisionSystemNotice()` as a
+`[SYSTEM_NOTIFICATION]{"title","description"}` message. It is rendered by
+the frontend for now; a server-sent system message with the same payload
+(UserService, on assigning the standing supervisor) can replace it 1:1 —
+the timeline already renders that format through `MessageItemComponent`.

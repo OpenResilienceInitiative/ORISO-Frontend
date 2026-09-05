@@ -32,6 +32,7 @@ export const SUPERVISOR_MATRIX_ID = '@bettina.b:oriso.invalid';
 export const COUNSELLOR_ID = 'consultant-storybook';
 export const SUPERVISOR_ID = 'consultant-bettina';
 
+export const SYSTEM_MATRIX_ID = '@system:oriso.invalid';
 export const CLIENT_ROOM_ID = '!sonnenblume-4711:oriso.invalid';
 export const SUPERVISION_ROOM_ID = '!supervision-4711:oriso.invalid';
 export const SESSION_ID = 4711;
@@ -176,6 +177,23 @@ export const supervisionMessages = (): MessageItem[] =>
 			SUPERVISION_ROOM_ID
 		)
 	]);
+
+/**
+ * T7: the side room opens with a system notice ("Supervision durch …") in
+ * the chat's system-notification bubble. Rendered by the frontend for now;
+ * a server-sent `[SYSTEM_NOTIFICATION]` event can replace it 1:1 (see
+ * `supervisionPanel/README.md`).
+ */
+export const supervisionSystemNotice = (
+	title: string,
+	description: string
+): MessageItem => ({
+	...message('$s0', 'counsellor', '', '09:11', SUPERVISION_ROOM_ID),
+	userId: SYSTEM_MATRIX_ID,
+	username: 'system',
+	displayName: 'system',
+	message: `[SYSTEM_NOTIFICATION]${JSON.stringify({ title, description })}`
+});
 
 /** A thread on the client's message `$m3`: root first, then replies. */
 export const THREAD_ROOT_ID = '$m3';

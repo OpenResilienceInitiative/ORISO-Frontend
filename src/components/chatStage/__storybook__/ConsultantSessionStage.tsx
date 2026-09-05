@@ -3,13 +3,15 @@
  * (inventory §3.4, feedback "Storybook-first = the wired view").
  *
  * Real organisms only: `SessionsListToolbar` + `SessionListItemComponent`
- * rows + `ResizableHandle` (list column), `SessionHeaderComponent`,
- * `MessageTimeline`, `MessageSubmitInterfaceComponent` (main chat),
- * `SidePanel` (secondary) and `ChannelSwitcherFab`. Layout decisions come
- * from `resolveStageLayout`; nothing here paints bubbles or composers.
+ * rows + `ResizableHandle` (list column and, T2, the panel edge),
+ * `SessionHeaderComponent`, `MessageTimeline`, `MessageSubmitInterfaceComponent`
+ * (main chat), `SidePanel` (secondary), `ChannelSwitcherFab` and, on the
+ * phone, the app's `NavigationBar` (T10). Layout decisions come from
+ * `resolveStageLayout` / `clampPanelWidth`; nothing here paints bubbles or
+ * composers.
  */
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from '../../sessionsList/SessionsListToolbar';
 import { ResizableHandle } from '../../sessionsList/ResizableHandle';
@@ -19,6 +21,14 @@ import { MessageTimeline } from '../../session/MessageTimeline';
 import { MessageSubmitInterfaceComponent } from '../../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { focusSessionChromeOnPointerDown } from '../../session/focusSessionChrome';
 import { mockE2eeParams } from '../../message/MessageItemComponent.mocks';
+import type { StackParticipant } from '../../message/participantStack';
+import { NavigationBar } from '../../app/NavigationBar';
+import { RouterConfigConsultant } from '../../app/RouterConfig';
+import {
+	NavigationStoryProviders,
+	storybookSettings
+} from '../../app/navigationStoryHelpers';
+import { config } from '../../../resources/scripts/config';
 import { SidePanel, InfoBanner } from '../SidePanel';
 import { PanelHeader } from '../PanelHeader';
 import { ChannelSwitcherFab } from '../ChannelSwitcherFab';
@@ -27,7 +37,13 @@ import {
 	type ChannelLabelMode,
 	type SecondaryChannel
 } from '../channelSwitcherState';
-import { resolveStageLayout, STAGE_LAYOUT } from '../stageLayout';
+import {
+	clampPanelWidth,
+	readPanelWidth,
+	resolveStageLayout,
+	STAGE_LAYOUT,
+	writePanelWidth
+} from '../stageLayout';
 import { useDockedComposerOffset } from '../useDockedComposerOffset';
 import {
 	ChatStageProviders,
@@ -38,13 +54,17 @@ import {
 	CLIENT_MATRIX_ID,
 	CLIENT_NAME,
 	CLIENT_ROOM_ID,
+	COUNSELLOR_MATRIX_ID,
+	COUNSELLOR_NAME,
 	isCounsellorMessage,
 	mainChatMessages,
 	SESSION_ID,
 	stageListItems,
 	SUPERVISION_ROOM_ID,
+	SUPERVISOR_MATRIX_ID,
 	SUPERVISOR_NAME,
 	supervisionMessages,
+	supervisionSystemNotice,
 	THREAD_ROOT_ID,
 	threadMessages
 } from './chatStageFixtures';
@@ -54,6 +74,8 @@ import '../../sessionHeader/sessionHeader.styles.scss';
 import '../../message/message.styles.scss';
 import '../../messageSubmitInterface/messageSubmitInterface.styles.scss';
 import '../../session/session.styles.scss';
+import '../../app/authenticatedApp.styles.scss';
+import '../../app/navigation.styles.scss';
 import '../sidePanel.styles.scss';
 import '../channelSwitcherFab.styles.scss';
 import '../chatStage.styles.scss';
@@ -79,6 +101,8 @@ export interface ConsultantSessionStageProps {
 	/** Show the reason banner in the supervision room. */
 	withReason?: boolean;
 	fabDefaultOpen?: boolean;
+	/** T1: hide the FAB while a panel is open (its header offers the channels). */
+	fabHidden?: boolean;
 }
 
 const noop = () => {};
@@ -86,6 +110,28 @@ const handlers = {
 	handleDecryptionErrors: noop,
 	handleDecryptionSuccess: noop,
 	e2eeParams: mockE2eeParams()
+};
+
+/** The three people on stage, as the avatar stacks see them. */
+const clientParticipant: StackParticipant = {
+	userId: CLIENT_MATRIX_ID,
+	username: 'sonnenblume_47',
+	displayName: CLIENT_NAME,
+	isAsker: true
+};
+const counsellorParticipant: StackParticipant = {
+	userId: COUNSELLOR_MATRIX_ID,
+	username: 'mona.s@oriso.invalid',
+	displayName: COUNSELLOR_NAME,
+	firstName: 'Mona',
+	lastName: 'Sommer'
+};
+const supervisorParticipant: StackParticipant = {
+	userId: SUPERVISOR_MATRIX_ID,
+	username: 'bettina.b@oriso.invalid',
+	displayName: SUPERVISOR_NAME,
+	firstName: 'Bettina',
+	lastName: 'Berg'
 };
 
 const useViewportWidth = () => {
@@ -156,6 +202,7 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 				currentWidth={width}
 				onResize={noop}
 				maxWidth={500}
+				data-cy="stage-list-handle"
 			/>
 		</div>
 	);
@@ -230,20 +277,34 @@ function MainChat({
 	);
 }
 
+interface RoomProps {
+	variant: 'inside' | 'card' | 'fullscreen';
+	onBack?: () => void;
+	switcher?: React.ReactNode;
+	/** Other channels, offered under the header's channel icon (T1). */
+	channels: SecondaryChannel[];
+}
+
 function SupervisionRoom({
 	variant,
 	unread,
 	withReason,
 	onBack,
-	switcher
-}: {
-	variant: 'inside' | 'card' | 'fullscreen';
-	unread: number;
-	withReason: boolean;
-	onBack?: () => void;
-	switcher?: React.ReactNode;
-}) {
+	switcher,
+	channels
+}: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
+	// T7: the system notice opens the side room (frontend-rendered for now).
+	const messages = useMemo(
+		() => [
+			supervisionSystemNotice(
+				t('supervision.panel.title'),
+				t('supervision.panel.systemNotice', { name: SUPERVISOR_NAME })
+			),
+			...supervisionMessages()
+		],
+		[t]
+	);
 	return (
 		<SidePanel
 			variant={variant}
@@ -254,11 +315,16 @@ function SupervisionRoom({
 			data-cy="stage-panel"
 			header={
 				<PanelHeader
+					kind="supervision"
 					title={t('supervision.panel.title')}
 					name={SUPERVISOR_NAME}
-					chip={t('supervision.panel.role.supervisor')}
+					participants={[
+						counsellorParticipant,
+						supervisorParticipant
+					]}
 					unreadCount={unread}
-					tag={t('supervision.panel.privacyHint')}
+					channels={channels}
+					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
 				/>
@@ -273,7 +339,7 @@ function SupervisionRoom({
 			}
 			timeline={
 				<MessageTimeline
-					messages={supervisionMessages()}
+					messages={messages}
 					renderMode="main"
 					threadsEnabled={false}
 					clientName={SUPERVISOR_NAME}
@@ -299,15 +365,7 @@ function SupervisionRoom({
 	);
 }
 
-function ThreadRoom({
-	variant,
-	onBack,
-	switcher
-}: {
-	variant: 'inside' | 'card' | 'fullscreen';
-	onBack?: () => void;
-	switcher?: React.ReactNode;
-}) {
+function ThreadRoom({ variant, onBack, switcher, channels }: RoomProps) {
 	const { t } = useTranslation();
 	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
 	return (
@@ -320,9 +378,13 @@ function ThreadRoom({
 			data-cy="stage-panel"
 			header={
 				<PanelHeader
+					kind="thread"
 					title={t('chatStage.panel.thread.title')}
 					name={CLIENT_NAME}
+					participants={[clientParticipant, counsellorParticipant]}
 					tag={t('chatStage.panel.thread.subtitle')}
+					channels={channels}
+					onSelectChannel={noop}
 					onBack={onBack}
 					onClose={onBack ? undefined : noop}
 				/>
@@ -353,6 +415,79 @@ function ThreadRoom({
 	);
 }
 
+/** T10: the app's own bottom navigation under the phone stage. */
+function PhoneBottomNav() {
+	const routerConfig = useMemo(
+		() => RouterConfigConsultant({ ...config, ...storybookSettings }),
+		[]
+	);
+	return (
+		<NavigationStoryProviders role="consultant">
+			<div
+				className="app__wrapper chatStage__bottomNav"
+				data-cy="stage-bottom-nav"
+			>
+				<NavigationBar routerConfig={routerConfig} onLogout={noop} />
+			</div>
+		</NavigationStoryProviders>
+	);
+}
+
+/** T2: the side panel's width — dragged, clamped, persisted. */
+function usePanelWidth(initial: number, cardWidth: number) {
+	const [width, setWidth] = useState(() => readPanelWidth(initial));
+	const resize = useCallback(
+		(requested: number) => {
+			const next = clampPanelWidth(requested, cardWidth);
+			setWidth(next);
+			writePanelWidth(next);
+		},
+		[cardWidth]
+	);
+	return { width: clampPanelWidth(width, cardWidth), resize };
+}
+
+function DesktopPanelSlot({
+	width,
+	cardWidth,
+	onResize,
+	className,
+	children
+}: {
+	width: number;
+	cardWidth: number;
+	onResize: (width: number) => void;
+	className?: string;
+	children: React.ReactNode;
+}) {
+	const { t } = useTranslation();
+	return (
+		<div
+			className={['chatStage__panel', className]
+				.filter(Boolean)
+				.join(' ')}
+			style={{ width }}
+			data-cy="stage-panel-slot"
+		>
+			<ResizableHandle
+				anchor="start"
+				snapping={false}
+				currentWidth={width}
+				onResize={onResize}
+				minWidth={STAGE_LAYOUT.MIN_PANE_WIDTH}
+				maxWidth={Math.max(
+					STAGE_LAYOUT.MIN_PANE_WIDTH,
+					cardWidth - STAGE_LAYOUT.MIN_PANE_WIDTH
+				)}
+				ariaLabel={t('supervision.panel.stage.divider')}
+				className="chatStage__panelHandle"
+				data-cy="stage-panel-handle"
+			/>
+			{children}
+		</div>
+	);
+}
+
 export function ConsultantSessionStage({
 	panel = 'supervision',
 	panelVariant = 'inside',
@@ -365,7 +500,8 @@ export function ConsultantSessionStage({
 	labelMode = 'person',
 	phone,
 	withReason = false,
-	fabDefaultOpen = false
+	fabDefaultOpen = false,
+	fabHidden = true
 }: ConsultantSessionStageProps) {
 	const { t } = useTranslation();
 	const viewportWidth = useViewportWidth();
@@ -385,9 +521,14 @@ export function ConsultantSessionStage({
 	const single = phone !== undefined || layout.mode === 'single';
 	const rail = snapList ? layout.listMode === 'rail' : listWidth <= 80;
 	const effectiveListWidth = snapList ? layout.listWidth : listWidth;
-	const effectivePanelWidth = snapList
-		? layout.panelWidth
-		: Math.max(panelWidth, 0);
+	const cardWidth = Math.max(
+		0,
+		viewportWidth - effectiveListWidth - 2 * STAGE_LAYOUT.CARD_MARGIN
+	);
+	const dragged = usePanelWidth(
+		snapList ? layout.panelWidth : Math.max(panelWidth, 0),
+		cardWidth
+	);
 
 	// Secondary channels: supervision always, threads as configured.
 	const supervisionChannel: SecondaryChannel = {
@@ -435,6 +576,12 @@ export function ConsultantSessionStage({
 				? THREAD_ROOT_ID
 				: undefined;
 
+	// Channels not on screen — the FAB (desktop, while no panel is open)
+	// and the panel header's channel icon (T1) offer these.
+	const otherChannels = channels.filter(
+		(channel) => channel.id !== shownChannelId
+	);
+
 	// Phone, inside a side room: the FAB switches back (and offers the rest).
 	const backFab = (
 		<ChannelSwitcherFab
@@ -446,16 +593,13 @@ export function ConsultantSessionStage({
 		/>
 	);
 
-	// On the desktop the FAB is only useful when a channel is NOT on screen.
-	const desktopFabChannels = channels.filter(
-		(channel) => channel.id !== shownChannelId
-	);
 	const desktopFab =
-		desktopFabChannels.length > 0 ? (
+		otherChannels.length > 0 ? (
 			<ChannelSwitcherFab
-				channels={desktopFabChannels}
+				channels={otherChannels}
 				onSelect={noop}
 				defaultOpen={fabDefaultOpen}
+				fabHidden={fabHidden && panel !== null}
 			/>
 		) : undefined;
 
@@ -475,6 +619,7 @@ export function ConsultantSessionStage({
 									variant="fullscreen"
 									onBack={noop}
 									switcher={backFab}
+									channels={otherChannels}
 								/>
 							) : (
 								<SupervisionRoom
@@ -483,6 +628,7 @@ export function ConsultantSessionStage({
 									withReason={withReason}
 									onBack={noop}
 									switcher={backFab}
+									channels={otherChannels}
 								/>
 							)
 						) : (
@@ -508,18 +654,7 @@ export function ConsultantSessionStage({
 							</div>
 						)}
 					</div>
-					<nav
-						className="chatStage__bottomNav"
-						aria-label="Navigation (Platzhalter)"
-					>
-						<span className="chatStage__bottomNavItem chatStage__bottomNavItem--active">
-							Beratungen
-						</span>
-						<span className="chatStage__bottomNavItem">
-							Anfragen
-						</span>
-						<span className="chatStage__bottomNavItem">Profil</span>
-					</nav>
+					<PhoneBottomNav />
 				</div>
 			</ChatStageProviders>
 		);
@@ -527,12 +662,13 @@ export function ConsultantSessionStage({
 
 	const secondary =
 		panel === 'thread' ? (
-			<ThreadRoom variant={panelVariant} />
+			<ThreadRoom variant={panelVariant} channels={otherChannels} />
 		) : panel === 'supervision' ? (
 			<SupervisionRoom
 				variant={panelVariant}
 				unread={supervisionUnread}
 				withReason={withReason}
+				channels={otherChannels}
 			/>
 		) : null;
 
@@ -563,13 +699,13 @@ export function ConsultantSessionStage({
 								}
 							/>
 							{secondary && (
-								<div
-									className="chatStage__panel"
-									style={{ width: effectivePanelWidth }}
-									data-cy="stage-panel-slot"
+								<DesktopPanelSlot
+									width={dragged.width}
+									cardWidth={cardWidth}
+									onResize={dragged.resize}
 								>
 									{secondary}
-								</div>
+								</DesktopPanelSlot>
 							)}
 						</div>
 					) : (
@@ -589,13 +725,14 @@ export function ConsultantSessionStage({
 								/>
 							</div>
 							{secondary && (
-								<div
-									className="chatStage__panel chatStage__panel--card"
-									style={{ width: effectivePanelWidth }}
-									data-cy="stage-panel-slot"
+								<DesktopPanelSlot
+									width={dragged.width}
+									cardWidth={cardWidth}
+									onResize={dragged.resize}
+									className="chatStage__panel--card"
 								>
 									{secondary}
-								</div>
+								</DesktopPanelSlot>
 							)}
 						</>
 					)}

@@ -69,6 +69,7 @@
 	}
 
 	&__panel {
+		position: relative;
 		flex: 0 0 auto;
 
 		// Second-card variant: the panel is a `.session` card of its own;
@@ -102,39 +103,25 @@
 		}
 	}
 
+	// T10: the app's bottom navigation (`NavigationBar`, mobile layout).
+	// `.app__wrapper` scopes the production nav rules; the bar sizes itself.
 	&__bottomNav {
 		flex: 0 0 auto;
 		display: flex;
-		align-items: center;
-		justify-content: space-around;
-		height: 72px;
-		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
-		background: var(--m3-surface-container, #f0edee);
-		color: var(--m3-on-surface-variant, #444748);
-		font-size: 11px;
-		font-weight: 500;
-	}
-
-	&__bottomNavItem {
-		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 4px;
+		width: 100%;
 
-		&::before {
-			content: '';
-			width: 24px;
-			height: 24px;
-			border-radius: 12px;
-			background: var(--m3-surface-container-highest, #e4e2e2);
+		// `.app__wrapper` is the production shell (100 % high); here it only
+		// scopes the nav rules and must not claim the stage's height.
+		&.app__wrapper {
+			height: auto;
+			max-height: none;
+			overflow: visible;
 		}
 
-		&--active {
-			color: var(--m3-primary, #a5000a);
-
-			&::before {
-				background: var(--m3-primary-fixed, #ffdad5);
-			}
+		.navigation__wrapper {
+			width: 100%;
+			height: auto;
 		}
 	}
 }

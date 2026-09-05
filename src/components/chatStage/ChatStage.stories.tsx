@@ -138,6 +138,43 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('.session [data-cy="stage-panel"]')
 		).not.toBeNull();
+		// T3: both hairlines end on the same y.
+		const mainRow = canvasElement.querySelector(
+			'.sessionInfo__headerWrapper'
+		)!;
+		const panelDivider = canvasElement.querySelector(
+			'.panelHeader__divider'
+		)!;
+		await expect(
+			Math.round(
+				mainRow.getBoundingClientRect().bottom -
+					panelDivider.getBoundingClientRect().top
+			)
+		).toBe(1);
+		// T2: the real handle sits on the panel's start edge, pill centred.
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel-handle"]'
+		)!;
+		await expect(handle).not.toBeNull();
+		const pill = handle.querySelector('.sessionsList__resizeHandlePill')!;
+		const slot = canvasElement.querySelector(
+			'[data-cy="stage-panel-slot"]'
+		)!;
+		const h = slot.getBoundingClientRect();
+		const p = pill.getBoundingClientRect();
+		await expect(
+			Math.abs(p.top + p.height / 2 - (h.top + h.height / 2))
+		).toBeLessThanOrEqual(1);
+		// T6: the composer's drag pill exists in the panel too.
+		await expect(
+			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
+		).not.toBeNull();
+		// T5: no chevron collapse button at the list edge.
+		await expect(
+			canvasElement.querySelector('.sessionsList__resizeToggle')
+		).toBeNull();
+		// T8: no "•••" next to the topic tag.
+		await expect(canvasElement.textContent ?? '').not.toContain('•••');
 	}
 };
 
@@ -211,11 +248,16 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 			composers: 2,
 			bubblesAtLeast: 9
 		});
-		const fab = canvasElement.querySelector<HTMLButtonElement>(
-			'[data-cy="channel-switcher-fab"]'
+		// T1: with a panel open the FAB steps back; the panel header's
+		// channel icon opens the same options (Thread #2 + Supervision).
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull();
+		const options = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
 		)!;
-		await expect(fab).toHaveAttribute('aria-haspopup', 'menu');
-		await userEvent.click(fab);
+		await expect(options).toHaveAttribute('aria-haspopup', 'menu');
+		await userEvent.click(options);
 		const items = within(await canvas.findByRole('menu')).getAllByRole(
 			'menuitem'
 		);
@@ -226,6 +268,10 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 			'supervision'
 		);
 		await userEvent.keyboard('{Escape}');
+		// T6: the thread composer carries the drag pill as well.
+		await expect(
+			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
+		).not.toBeNull();
 	}
 };
 
@@ -246,6 +292,64 @@ export const PhoneMainChatWithFab: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem')
 		).toBeNull();
+	}
+};
+
+/** (g) Phone: the composer is one line and grows while typing (T10). */
+export const PhoneComposerGrowsWhileTyping: Story = {
+	name: '(g) Phone — composer one line, grows while typing',
+	globals: phone390Globals,
+	args: { panel: 'supervision', phone: 'main', supervisionUnread: 0 },
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 1,
+			bubblesAtLeast: 6
+		});
+		const shell = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const editor = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message .ProseMirror'
+		)!;
+		const oneLine = shell.getBoundingClientRect().height;
+		// One line: ~120 px (composerResize MIN_HEIGHT_MOBILE + the rendered
+		// line's rounding), a far cry from the old 180 px block.
+		await expect(oneLine).toBeGreaterThanOrEqual(118);
+		await expect(oneLine).toBeLessThanOrEqual(128);
+		// The app's bottom navigation, not a placeholder.
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="stage-bottom-nav"] .navigation__wrapper'
+			)
+		).not.toBeNull();
+		// Nothing but the dock (16 px) between composer and bottom nav.
+		const nav = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-bottom-nav"]'
+		)!;
+		await expect(
+			Math.round(
+				nav.getBoundingClientRect().top -
+					shell.getBoundingClientRect().bottom
+			)
+		).toBeLessThanOrEqual(16);
+		// Type three lines → the composer grows with the content.
+		await userEvent.click(editor);
+		await userEvent.keyboard(
+			'Zeile eins{Shift>}{Enter}{/Shift}Zeile zwei{Shift>}{Enter}{/Shift}Zeile drei'
+		);
+		await waitFor(() =>
+			expect(shell.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				oneLine + 40
+			)
+		);
+		// Clear through the TipTap handle on the DOM node (synthetic Backspace
+		// does not reach ProseMirror) → back to one line.
+		(editor as any).editor?.commands.clearContent(true);
+		await waitFor(() =>
+			expect(shell.getBoundingClientRect().height).toBeLessThanOrEqual(
+				oneLine + 8
+			)
+		);
 	}
 };
 
