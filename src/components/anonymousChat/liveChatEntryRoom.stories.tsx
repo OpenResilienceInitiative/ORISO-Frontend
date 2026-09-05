@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { Box, ButtonBase, Typography, useMediaQuery } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import LockPersonOutlinedIcon from '@mui/icons-material/LockPersonOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -84,6 +85,9 @@ const legalLinks: TProvidedLegalLink[] = [
 
 const ABSENCE_MESSAGE =
 	'Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.';
+/** The same promise in one line, for a phone. */
+const ABSENCE_MESSAGE_SHORT =
+	'Schreiben Sie uns — Antwort in zwei Arbeitstagen.';
 
 /**
  * The three cards of the waiting room (Frank, 2026-09-05).
@@ -106,7 +110,7 @@ const CARDS = [
 		text: 'Sobald eine Beratungsstelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz — ein Klick, und der Chat beginnt.'
 	},
 	{
-		icon: null,
+		icon: <LockPersonOutlinedIcon />,
 		title: 'Anonym, und danach weg',
 		text: 'Im Chat sehen Sie und Ihre Beraterin sich nur unter Ihrem Pseudonym. Nach dem Gespräch wird alles gelöscht — spätestens nach 48 Stunden, auch Ihr Zugang.'
 	}
@@ -178,7 +182,7 @@ const Staged = ({
 								flexDirection: 'column',
 								px: { xs: 2.5, sm: 5 },
 								pt: { xs: 3, sm: 4 },
-								pb: '128px'
+								pb: '104px'
 							}}
 						>
 							<Box
@@ -407,63 +411,64 @@ const WaitingRoom = ({
 				</Box>
 			</Headline>
 
-			{/* What happens meanwhile — three schematic cards, language-free
-			    pictures (briefs in CARDS). The third lights up once a
-			    counsellor has accepted: that is where the person now is. */}
+			{/* What happens meanwhile — three cards on a strip. They use the
+			    height between the headline and the row above the bar; on a
+			    phone they are narrower so the next card peeks in and the
+			    strip reads as scrollable. No frame around the current card:
+			    these are read, not clicked (Frank, 2026-09-05). */}
 			<Box
 				sx={{
-					display: 'grid',
-					gridTemplateColumns: {
-						xs: '1fr',
-						sm: 'repeat(3, minmax(0, 1fr))'
-					},
-					gap: 2
+					'flex': 1,
+					'minHeight': 0,
+					'display': 'flex',
+					'gap': 2,
+					'overflowX': 'auto',
+					'scrollSnapType': 'x mandatory',
+					'mx': { xs: -2.5, sm: -5 },
+					'px': { xs: 2.5, sm: 5 },
+					'pb': 1,
+					'scrollbarWidth': 'none',
+					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>
-				{CARDS.map((card, index) => {
-					const active = accepted ? index === 2 : index === 0;
-					return (
+				{CARDS.map((card) => (
+					<Box
+						key={card.title}
+						sx={{
+							'flex': { xs: '0 0 64%', sm: '1 1 0' },
+							'minWidth': 0,
+							'scrollSnapAlign': 'start',
+							'display': 'flex',
+							'flexDirection': 'column',
+							'borderRadius': '20px',
+							'border': `1px solid ${registrationMd3.outlineVariant}`,
+							'overflow': 'hidden',
+							'bgcolor': registrationMd3.surfaceContainerLowest,
+							'& svg': {
+								fontSize: 64,
+								color: registrationMd3.primary
+							}
+						}}
+					>
+						{/* Phone: a 4:3 picture so text and the row below stay in
+						    reach. Desktop: the picture takes whatever height the
+						    column leaves — the card fills its space. */}
 						<Box
-							key={card.title}
+							aria-hidden
 							sx={{
-								'p': 2.5,
-								'borderRadius': '20px',
-								'border': `1px solid ${
-									active
-										? registrationMd3.primary
-										: registrationMd3.outlineVariant
-								}`,
-								'bgcolor': active
-									? registrationMd3.surfaceContainer
-									: 'transparent',
-								'opacity': accepted && !active ? 0.55 : 1,
-								'transition': 'all 400ms ease',
-								'& svg': {
-									fontSize: 48,
-									color: registrationMd3.primary
-								}
+								aspectRatio: { xs: '4 / 3', sm: 'auto' },
+								flex: { xs: 'none', sm: 1 },
+								minHeight: { sm: 160 },
+								bgcolor: registrationMd3.surfaceContainerHigh,
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center'
 							}}
 						>
-							{card.icon && (
-								<Box
-									aria-hidden
-									sx={{
-										aspectRatio: '1 / 1',
-										borderRadius: '14px',
-										bgcolor:
-											registrationMd3.surfaceContainerHigh,
-										display: 'flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										mb: 0.5
-									}}
-								>
-									{card.icon}
-								</Box>
-							)}
-							<Typography
-								sx={{ fontSize: 16, fontWeight: 700, mt: 1.5 }}
-							>
+							{card.icon}
+						</Box>
+						<Box sx={{ p: 2.5, pt: 2 }}>
+							<Typography sx={{ fontSize: 17, fontWeight: 700 }}>
 								{card.title}
 							</Typography>
 							<Typography
@@ -477,8 +482,8 @@ const WaitingRoom = ({
 								{card.text}
 							</Typography>
 						</Box>
-					);
-				})}
+					</Box>
+				))}
 			</Box>
 
 			{/* The small row above the bar: the calm companion and the way
@@ -486,8 +491,10 @@ const WaitingRoom = ({
 			{!accepted && (
 				<Box
 					sx={{
-						mt: 'auto',
-						pt: 3,
+						/* 8 px to the bar's hairline — the bar starts at the
+						   column's padding-bottom minus 8. */
+						mt: 1.5,
+						mb: -1,
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'space-between',
@@ -733,105 +740,113 @@ const WEEK: Array<{ short: string; hours?: string }> = [
 	{ short: 'So' }
 ];
 
-const Closed = () => (
-	<Staged statusLine="Gerade geschlossen">
-		<Box
-			sx={{
-				flex: 1,
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'center',
-				alignItems: 'center',
-				textAlign: 'center',
-				maxWidth: 560,
-				mx: 'auto'
-			}}
-		>
+const Closed = () => {
+	const narrow = useMediaQuery('(max-width:599px)');
+	return (
+		<Staged statusLine="Gerade geschlossen">
 			<Box
-				aria-hidden
 				sx={{
-					'width': 72,
-					'height': 72,
-					'borderRadius': '50%',
-					'bgcolor': registrationMd3.surfaceContainer,
-					'color': registrationMd3.primary,
-					'display': 'flex',
-					'alignItems': 'center',
-					'justifyContent': 'center',
-					'mb': 2.5,
-					'& svg': { fontSize: 36 }
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					textAlign: 'center',
+					maxWidth: 560,
+					mx: 'auto'
 				}}
 			>
-				<ScheduleOutlinedIcon />
-			</Box>
-			<Typography
-				component="h1"
-				sx={{
-					fontSize: { xs: 28, sm: 32 },
-					lineHeight: 1.15,
-					fontWeight: 700
-				}}
-			>
-				Der Live-Chat ist gerade geschlossen.
-			</Typography>
-			{/* The week as a strip instead of a sentence of weekdays: open
+				<Box
+					aria-hidden
+					sx={{
+						'width': 72,
+						'height': 72,
+						'borderRadius': '50%',
+						'bgcolor': registrationMd3.surfaceContainer,
+						'color': registrationMd3.primary,
+						'display': 'flex',
+						'alignItems': 'center',
+						'justifyContent': 'center',
+						'mb': 2.5,
+						'& svg': { fontSize: 36 }
+					}}
+				>
+					<ScheduleOutlinedIcon />
+				</Box>
+				<Typography
+					component="h1"
+					sx={{
+						fontSize: { xs: 28, sm: 32 },
+						lineHeight: 1.15,
+						fontWeight: 700
+					}}
+				>
+					Der Live-Chat ist gerade geschlossen.
+				</Typography>
+				{/* The week as a strip instead of a sentence of weekdays: open
 			    days stand out with their hours, closed days stay grey. Read at
 			    a glance, nothing to parse. */}
-			<Box
-				role="list"
-				aria-label="Öffnungszeiten"
-				sx={{
-					display: 'flex',
-					gap: 1,
-					mt: 3,
-					flexWrap: 'wrap',
-					justifyContent: 'center'
-				}}
-			>
-				{WEEK.map((day) => (
-					<Box
-						key={day.short}
-						role="listitem"
-						sx={{
-							width: 60,
-							py: 1.25,
-							borderRadius: '14px',
-							bgcolor: day.hours
-								? registrationMd3.selectedLayer
-								: registrationMd3.surfaceContainer,
-							color: day.hours
-								? registrationMd3.primary
-								: registrationMd3.onSurfaceVariant
-						}}
-					>
-						<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-							{day.short}
-						</Typography>
-						<Typography sx={{ fontSize: 12, mt: 0.25 }}>
-							{day.hours ?? '—'}
-						</Typography>
-					</Box>
-				))}
+				<Box
+					role="list"
+					aria-label="Öffnungszeiten"
+					sx={{
+						display: 'flex',
+						gap: { xs: 0.5, sm: 1 },
+						mt: 3,
+						width: '100%',
+						justifyContent: 'center'
+					}}
+				>
+					{WEEK.map((day) => (
+						<Box
+							key={day.short}
+							role="listitem"
+							sx={{
+								flex: { xs: '1 1 0', sm: '0 0 60px' },
+								minWidth: 0,
+								py: 1.25,
+								borderRadius: '14px',
+								bgcolor: day.hours
+									? registrationMd3.selectedLayer
+									: registrationMd3.surfaceContainer,
+								color: day.hours
+									? registrationMd3.primary
+									: registrationMd3.onSurfaceVariant
+							}}
+						>
+							<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+								{day.short}
+							</Typography>
+							<Typography sx={{ fontSize: 12, mt: 0.25 }}>
+								{day.hours ?? '—'}
+							</Typography>
+						</Box>
+					))}
+				</Box>
+				<Typography
+					sx={{
+						mt: 3,
+						fontSize: 15,
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{narrow ? ABSENCE_MESSAGE_SHORT : ABSENCE_MESSAGE}
+				</Typography>
 			</Box>
-			<Typography
-				sx={{
-					mt: 3,
-					fontSize: 15,
-					color: registrationMd3.onSurfaceVariant
-				}}
-			>
-				{ABSENCE_MESSAGE}
-			</Typography>
-		</Box>
-		{/* One long way on, one short way out — they need not be the same
+			{/* One long way on, one short way out — they need not be the same
 		    size. "Anfrage", not "Beratung": what starts here is a written
 		    request a counsellor answers within two working days. */}
-		<RegistrationFooter
-			secondary={{ label: 'Später', compact: true }}
-			primary={{ label: 'Anfrage an eine Beratungsstelle schreiben' }}
-		/>
-	</Staged>
-);
+			<RegistrationFooter
+				secondary={{ label: 'Später', compact: true, round: narrow }}
+				primary={{
+					label: narrow
+						? 'Anfrage schreiben'
+						: 'Anfrage an eine Beratungsstelle schreiben'
+				}}
+			/>
+		</Staged>
+	);
+};
 
 export const StepClosed: StoryObj = {
 	name: 'C — Geschlossen',

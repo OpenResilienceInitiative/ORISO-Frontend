@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, IconButton } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
 	registrationMd3,
 	registrationMotion
@@ -23,6 +24,12 @@ export interface RegistrationFooterAction {
 	 * 2026-09-05: "der andere muss ja nicht gleich groß sein").
 	 */
 	compact?: boolean;
+	/**
+	 * Render the exit as a round X with the label as its accessible name —
+	 * on a phone the bar has no room for a second word beside a long way
+	 * on (Frank, 2026-09-05: "make here just a round x button").
+	 */
+	round?: boolean;
 }
 
 export interface RegistrationFooterProps {
@@ -111,7 +118,27 @@ export const RegistrationFooter = ({
 		}}
 	>
 		{children}
-		{primary && secondary && (
+		{primary && secondary && secondary.round && (
+			<IconButton
+				aria-label={secondary.label}
+				title={secondary.title ?? secondary.label}
+				onClick={secondary.onClick}
+				disabled={secondary.disabled}
+				data-testid={
+					secondary.testId ?? 'registration-footer-secondary'
+				}
+				sx={{
+					width: 56,
+					height: 56,
+					flexShrink: 0,
+					border: `1.5px solid ${registrationMd3.outline}`,
+					color: registrationMd3.onSurfaceVariant
+				}}
+			>
+				<CloseRoundedIcon />
+			</IconButton>
+		)}
+		{primary && secondary && !secondary.round && (
 			<Button
 				variant="outlined"
 				onClick={secondary.onClick}
