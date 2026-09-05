@@ -1,8 +1,8 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v4/<story>-<viewport>.png
- *        SHOT_DIR=stage-v3 node _shots/shoot.mjs  (older set)
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v5/<story>-<viewport>.png
+ *        SHOT_DIR=stage-v4 node _shots/shoot.mjs  (older set)
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v4'
+	process.env.SHOT_DIR ?? 'stage-v5'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -67,6 +67,29 @@ const shots = [
 		`${stage}thread-and-supervision-open-at-once`,
 		['1280x820'],
 		'open-panel-options'
+	],
+	[
+		'd2-panel-channel-menu-switch',
+		`${stage}panel-channel-menu-switches-channels`,
+		['1280x820', '1440x900'],
+		'open-panel-options'
+	],
+	[
+		'e3-phone-channel-menu-header',
+		`${stage}phone-channel-menu-from-fab-and-header`,
+		['390x844'],
+		'open-panel-options'
+	],
+	[
+		'e3-phone-channel-menu-fab',
+		`${stage}phone-main-chat-with-fab`,
+		['390x844'],
+		'open-fab'
+	],
+	[
+		'sidepanel-narrow-count',
+		'components-session-sidepanel--narrow-header-shows-participant-count',
+		['1280x820']
 	],
 	[
 		'e2-phone-secondary-back-fab',
@@ -126,6 +149,16 @@ const shots = [
 		'participant-stack',
 		'components-chat-participantavatarstack--three-participants',
 		['1280x820']
+	],
+	[
+		'participant-stack-32',
+		'components-chat-participantavatarstack--size-32',
+		['1280x820']
+	],
+	[
+		'header-many-participants-phone',
+		'components-session-sessionheader--active-conversation-many-participants-phone',
+		['390x844']
 	],
 	[
 		'handle-panel-start-anchor',
