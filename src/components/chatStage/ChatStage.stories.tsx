@@ -447,6 +447,13 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
 			paneBox.right - Number.parseFloat(paneStyle.borderRightWidth);
 		await expect(Math.round(fieldBox.left - paneInnerLeft)).toBe(16);
 		await expect(Math.round(paneInnerRight - fieldBox.right)).toBe(16);
+		// … and 16 px above the card's bottom edge at EVERY desktop width
+		// (review v11 B-1: `$fromDesktopWide` used to drop the dock's
+		// bottom padding at ≥ 1367 px, so the field sat on the card edge
+		// and the 12 px outer corner was cut off).
+		const paneInnerBottom =
+			paneBox.bottom - Number.parseFloat(paneStyle.borderBottomWidth);
+		await expect(Math.round(paneInnerBottom - fieldBox.bottom)).toBe(16);
 		// The drag pill sits on the field's top edge (no frame above it).
 		const pill = root
 			.querySelector('.dragHandle__pill')!

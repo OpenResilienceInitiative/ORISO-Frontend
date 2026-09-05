@@ -88,8 +88,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		// Desktop composer card rests on the chat card's inner bottom edge.
 		// Tablet and mobile keep their existing 16px / safe-area inset.
+		// T44/T46 (review v11 B-1): a FLUSH composer (dual mode, no outer
+		// frame) keeps the 16 px dock at every width — the field carries the
+		// card's corner (28 − 16 = 12 px) and must not sit on the card edge.
 		@include breakpoint($fromDesktopWide) {
-			padding-bottom: 0;
+			&:not(:has(.textarea__wrapper-send-message--flush)) {
+				padding-bottom: 0;
+			}
 		}
 
 		// On mobile, ensure no extra spacing and proper positioning
