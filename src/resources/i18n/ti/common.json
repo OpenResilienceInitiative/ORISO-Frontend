@@ -3530,6 +3530,9 @@
 				"selfHelp": "ክቢ ዝርርብ",
 				"internal": "ውሽጣዊ"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።"
 		}
 	},
 	"statusOverlay": {

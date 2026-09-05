@@ -4,10 +4,26 @@ import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 import { ResizeObserver as PolyfillResizeObserver } from '@juggle/resize-observer';
 import { useTranslation } from 'react-i18next';
 
+export type ResizableHandleMode = 'resizeAndScroll' | 'scroll';
+
 interface ResizableHandleProps {
-	onResize: (width: number) => void;
-	currentWidth: number;
+	/**
+	 * 'resizeAndScroll' (default) is the sessions-list behaviour: drag
+	 * sideways to resize the pane, vertically to scroll it.
+	 *
+	 * 'scroll' drops the resize half for surfaces that scroll but have no
+	 * width of their own to give - the threads dropdown is fixed at
+	 * min(360px, 100% - 32px), so a resize drag there would have nothing to
+	 * act on (ORISO-Frontend#1196 job 2).
+	 */
+	mode?: ResizableHandleMode;
+	/** Required in 'resizeAndScroll'; ignored in 'scroll'. */
+	onResize?: (width: number) => void;
+	/** Required in 'resizeAndScroll'; ignored in 'scroll'. */
+	currentWidth?: number;
 	scrollTargetRef?: React.RefObject<HTMLDivElement | null>;
+	/** Extra class for placement; the base class carries the behaviour styles. */
+	className?: string;
 	minWidth?: number;
 	maxWidth?: number;
 }
@@ -19,12 +35,15 @@ export const getToggledSidebarWidth = (
 ) => (currentWidth <= minWidth + 1 ? expandedMinWidth : minWidth);
 
 export const ResizableHandle: React.FC<ResizableHandleProps> = ({
+	mode = 'resizeAndScroll',
 	onResize,
-	currentWidth,
+	currentWidth = 0,
 	scrollTargetRef,
+	className,
 	minWidth = 80,
 	maxWidth = 600
 }) => {
+	const isScrollOnly = mode === 'scroll';
 	const { t } = useTranslation();
 	const {
 		ICON_ONLY_THRESHOLD,
@@ -44,78 +63,45 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		scrollTop: number;
 	} | null>(null);
 
-	const [thumbStyleVars, setThumbStyleVars] = useState<{
-		thumbTopPx: number;
-		thumbHeightPx: number;
-	}>({ thumbTopPx: 0, thumbHeightPx: 56 });
 	const [isScrollable, setIsScrollable] = useState(false);
+	const [scrollPercent, setScrollPercent] = useState(0);
 	const rafIdRef = useRef<number | null>(null);
 
-	const updateThumbFromScrollTarget = useCallback(() => {
+	/**
+	 * The bar is a handle, not a scrollbar thumb: it keeps its place when the
+	 * list overflows, and the scroll area behind it stays invisible
+	 * (ORISO-Frontend#1196). So only two things are tracked - whether there is
+	 * anything to scroll, and how far down we are for the scrollbar role's
+	 * aria value. No geometry is pushed into CSS any more.
+	 */
+	const updateScrollState = useCallback(() => {
 		const el = scrollTargetRef?.current;
 		if (!el) return;
 
-		// If we're actively resizing horizontally, keep the thumb stable to avoid
-		// jitter caused by layout wrapping during drag.
+		// Mid-resize the list re-wraps and re-measures; leaving the state alone
+		// keeps the bar from flickering while the pointer is down.
 		if (isDragging && dragModeRef.current === 'resize') {
 			return;
 		}
 
-		const view = el.clientHeight;
-		const content = el.scrollHeight;
-		const maxScrollTop = Math.max(0, content - view);
-
-		// Track should match the scroll container position in the sidebar so the thumb
-		// doesn't jump when header/toolbar height changes.
-		const handleRect = handleRef.current?.getBoundingClientRect();
-		const scrollRect = el.getBoundingClientRect();
-		const trackTopWithinHandle = handleRect
-			? Math.max(0, Math.round(scrollRect.top - handleRect.top))
-			: 0;
-		const trackHeightVisible = Math.round(scrollRect.height || view);
-
-		// When list scrolls, we only want thumb to travel over the scroll container area.
-		const handleHeight = trackHeightVisible;
-		// Add a small padding so the rounded pill isn't clipped at edges.
-		const TRACK_PADDING = 6;
-		const trackHeight = Math.max(0, handleHeight - TRACK_PADDING * 2);
-		// Non-scrollable: keep the pill centered (like the reference).
-		if (maxScrollTop <= 0 || trackHeight <= 0) {
+		const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+		if (maxScrollTop <= 0) {
 			setIsScrollable(false);
-			setThumbStyleVars({ thumbTopPx: 0, thumbHeightPx: 56 });
+			setScrollPercent(0);
 			return;
 		}
 
 		setIsScrollable(true);
+		setScrollPercent(Math.round((el.scrollTop / maxScrollTop) * 100));
+	}, [isDragging, scrollTargetRef]);
 
-		// Figma-like small pill: clamp thumb size so it stays compact.
-		const MIN_THUMB = SCROLL_THUMB_MIN_PX;
-		const MAX_THUMB = SCROLL_THUMB_MAX_PX;
-		const idealThumb = (view / content) * trackHeight;
-		const thumbHeightPx = Math.max(
-			MIN_THUMB,
-			Math.min(MAX_THUMB, trackHeight, Math.round(idealThumb))
-		);
-
-		const maxThumbTop = Math.max(0, trackHeight - thumbHeightPx);
-		const scrollProgress = el.scrollTop / maxScrollTop;
-
-		// Standard scrollbar mapping: top..bottom.
-		const thumbTopPx =
-			trackTopWithinHandle +
-			TRACK_PADDING +
-			Math.round(scrollProgress * maxThumbTop);
-
-		setThumbStyleVars({ thumbTopPx, thumbHeightPx });
-	}, [SCROLL_THUMB_MAX_PX, SCROLL_THUMB_MIN_PX, isDragging, scrollTargetRef]);
-
-	const scheduleThumbUpdate = useCallback(() => {
+	const scheduleScrollStateUpdate = useCallback(() => {
 		if (rafIdRef.current !== null) return;
 		rafIdRef.current = globalThis.requestAnimationFrame(() => {
 			rafIdRef.current = null;
-			updateThumbFromScrollTarget();
+			updateScrollState();
 		});
-	}, [updateThumbFromScrollTarget]);
+	}, [updateScrollState]);
 
 	const normalizeWidth = useCallback(
 		(width: number) => {
@@ -157,7 +143,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			const wrapperRect =
 				handleRef.current?.parentElement?.getBoundingClientRect();
 			const rawWidth = wrapperRect ? clientX - wrapperRect.left : clientX;
-			onResize(normalizeWidth(rawWidth));
+			onResize?.(normalizeWidth(rawWidth));
 		},
 		[normalizeWidth, onResize]
 	);
@@ -190,8 +176,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		);
 		onResize(normalizeWidth(next));
 	}, [EXPANDED_MIN_WIDTH, currentWidth, minWidth, normalizeWidth, onResize]);
-
-	const isCollapsed = currentWidth <= minWidth + 1;
 
 	const handlePointerUp = useCallback(() => {
 		pointerIdRef.current = null;
@@ -228,8 +212,9 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				 * - prevents accidental scrollTop jumps during left/right resizing
 				 */
 				const VERTICAL_INTENT_RATIO = 1.8;
-				dragModeRef.current =
-					absDy >= DEADZONE && absDy >= absDx * VERTICAL_INTENT_RATIO
+				dragModeRef.current = isScrollOnly
+					? 'scroll'
+					: absDy >= DEADZONE && absDy >= absDx * VERTICAL_INTENT_RATIO
 						? 'scroll'
 						: 'resize';
 				document.body.style.cursor =
@@ -285,6 +270,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			SCROLL_THUMB_MIN_PX,
 			applyClientXToWidth,
 			isDragging,
+			isScrollOnly,
 			scrollTargetRef
 		]
 	);
@@ -293,6 +279,47 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		(e: React.KeyboardEvent<HTMLDivElement>) => {
 			const resizeStep = e.shiftKey ? 40 : 20;
 			const scrollStep = e.shiftKey ? 240 : 120;
+
+			// Left/Right and the width bounds only mean something when there is
+			// a width to change.
+			if (isScrollOnly) {
+				const target = scrollTargetRef?.current;
+				if (!target) return;
+				const maxScrollTop = Math.max(
+					0,
+					target.scrollHeight - target.clientHeight
+				);
+				switch (e.key) {
+					case 'ArrowUp':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = Math.max(
+							0,
+							target.scrollTop - scrollStep
+						);
+						return;
+					case 'ArrowDown':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = Math.min(
+							maxScrollTop,
+							target.scrollTop + scrollStep
+						);
+						return;
+					case 'Home':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = 0;
+						return;
+					case 'End':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = maxScrollTop;
+						return;
+					default:
+						return;
+				}
+			}
 
 			switch (e.key) {
 				case 'ArrowLeft':
@@ -347,6 +374,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		},
 		[
 			currentWidth,
+			isScrollOnly,
 			maxWidth,
 			minWidth,
 			normalizeWidth,
@@ -360,19 +388,19 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const el = scrollTargetRef?.current;
 		if (!el) return;
 
-		scheduleThumbUpdate();
-		const onScroll = () => scheduleThumbUpdate();
+		scheduleScrollStateUpdate();
+		const onScroll = () => scheduleScrollStateUpdate();
 		el.addEventListener('scroll', onScroll, { passive: true });
 
 		const RO = globalThis.ResizeObserver ?? PolyfillResizeObserver;
-		const ro = new RO(() => scheduleThumbUpdate());
+		const ro = new RO(() => scheduleScrollStateUpdate());
 		ro.observe(el);
 
 		return () => {
 			el.removeEventListener('scroll', onScroll);
 			ro.disconnect();
 		};
-	}, [scheduleThumbUpdate, scrollTargetRef]);
+	}, [scheduleScrollStateUpdate, scrollTargetRef]);
 
 	useEffect(() => {
 		return () => {
@@ -411,21 +439,35 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	return (
 		<div
 			ref={handleRef}
-			className="sessionsList__resizeHandle"
+			className={['sessionsList__resizeHandle', className]
+				.filter(Boolean)
+				.join(' ')}
 			data-dragging={isDragging ? 'true' : 'false'}
 			data-scrollable={isScrollable ? 'true' : 'false'}
-			role="separator"
-			// sonar: role="separator" is an interactive widget when focusable + keyboard-handled
+			// A separator that can be moved, or a scrollbar - the two modes are
+			// genuinely different widgets, so they announce differently rather
+			// than sharing one label that is wrong for half the callers.
+			role={isScrollOnly ? 'scrollbar' : 'separator'}
+			// sonar: both roles are interactive widgets when focusable + keyboard-handled
 			tabIndex={0}
 			aria-orientation="vertical"
-			aria-valuemin={minWidth}
-			aria-valuemax={maxWidth}
-			aria-valuenow={currentWidth}
-			aria-label={t(
-				'sessionList.resizeHandle.ariaLabel',
-				'Resize sessions list. Drag vertically to scroll the sessions list.'
-			)}
+			aria-valuemin={isScrollOnly ? 0 : minWidth}
+			aria-valuemax={isScrollOnly ? 100 : maxWidth}
+			aria-valuenow={isScrollOnly ? scrollPercent : currentWidth}
+			aria-label={
+				isScrollOnly
+					? t(
+							'sessionList.resizeHandle.scrollAriaLabel',
+							'Drag to scroll the list.'
+						)
+					: t(
+							'sessionList.resizeHandle.ariaLabel',
+							'Resize sessions list. Drag vertically to scroll the sessions list.'
+						)
+			}
 			onDoubleClick={(e) => {
+				// Collapsing is a width change, so it belongs to the resize mode.
+				if (isScrollOnly) return;
 				e.preventDefault();
 				e.stopPropagation();
 				toggleCollapsed();
@@ -433,7 +475,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			onWheel={(e) => {
 				// UX: a small wheel gesture on the handle should toggle open/close
 				// (requested behavior). Keep it gated so it won't trigger on tiny noise.
-				if (isDragging) return;
+				if (isDragging || isScrollOnly) return;
 				const delta = Math.abs(e.deltaY) + Math.abs(e.deltaX);
 				if (delta < 4) return;
 				e.preventDefault();
@@ -453,32 +495,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				handleRef.current?.focus({ preventScroll: true });
 			}}
 			onKeyDown={handleKeyDown}
-			style={{
-				['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
-				['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
-			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
-			<button
-				type="button"
-				className="sessionsList__resizeToggle"
-				aria-label={t(
-					isCollapsed
-						? 'sessionList.resizeHandle.expand'
-						: 'sessionList.resizeHandle.collapse',
-					isCollapsed
-						? 'Expand chat list'
-						: 'Collapse chat list to enlarge the chat room'
-				)}
-				onPointerDown={(event) => event.stopPropagation()}
-				onClick={(event) => {
-					event.preventDefault();
-					event.stopPropagation();
-					toggleCollapsed();
-				}}
-			>
-				<span aria-hidden>{isCollapsed ? '›' : '‹'}</span>
-			</button>
 		</div>
 	);
 };

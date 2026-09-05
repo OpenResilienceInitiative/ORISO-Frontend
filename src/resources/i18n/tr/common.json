@@ -3530,6 +3530,9 @@
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
 		}
 	},
 	"statusOverlay": {
