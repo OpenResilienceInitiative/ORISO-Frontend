@@ -68,6 +68,12 @@ import {
 	STACK_MAX_VISIBLE_PHONE,
 	type StackParticipant
 } from '../message/participantStack';
+import {
+	bumpLastActivity,
+	isEventForRoom,
+	seedLastActivity,
+	toStackParticipants
+} from './headerParticipants';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import './sessionHeader.styles';
@@ -765,8 +771,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			? contact?.username
 			: undefined);
 	/* T4 / FE#1193: the room's participants, latest activity first, live.
-	   Members and their last message come from the Matrix room; the
-	   subscription keeps the order current without a reload. Everything is
+	   Members and their last message come from the Matrix room. The
+	   subscription is scoped to the active room and "last activity" is kept
+	   incrementally (seed once, bump per event) — no timeline rescan per
+	   event, no re-render for other rooms (stage v3 review). Everything is
 	   optional-chained because the Storybook stand-in only implements part
 	   of the client. */
 	const [roomParticipants, setRoomParticipants] = useState<
@@ -780,62 +788,54 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setRoomParticipants([]);
 			return undefined;
 		}
-		const readRoom = () => {
-			const room = client.getRoom?.(roomId);
-			const members: any[] = room?.getJoinedMembers?.() ?? [];
-			const lastActivity = new Map<string, number>();
-			const events: any[] =
-				room?.getLiveTimeline?.()?.getEvents?.() ?? [];
-			events.forEach((event) => {
-				const sender = event?.getSender?.() ?? event?.sender?.userId;
-				const ts = event?.getTs?.() ?? event?.localTimestamp;
-				if (sender && Number.isFinite(ts)) {
-					lastActivity.set(
-						sender,
-						Math.max(lastActivity.get(sender) ?? 0, ts)
-					);
-				}
-			});
+		const lastActivity = seedLastActivity(
+			client.getRoom?.(roomId)?.getLiveTimeline?.()?.getEvents?.() ?? []
+		);
+		const publish = () => {
+			const members: any[] =
+				client.getRoom?.(roomId)?.getJoinedMembers?.() ?? [];
 			setRoomParticipants(
-				members
-					.filter((member) => !isSystemMatrixUser(member?.userId))
-					.map((member) => ({
-						userId: member.userId,
-						username: member.userId,
-						displayName:
-							member.userId === askerMatrixUserId
-								? headerContactName ||
-									member.name ||
-									member.userId
-								: member.name || member.userId,
-						isAsker: member.userId === askerMatrixUserId,
-						lastActivity: lastActivity.get(member.userId)
-					}))
+				toStackParticipants(members, lastActivity, {
+					askerMatrixUserId,
+					askerDisplayName: headerContactName,
+					isSystemUser: isSystemMatrixUser
+				})
 			);
 		};
-		readRoom();
-		const onRoomEvent = (_event: any, room?: any) => {
-			if (!room || room.roomId === roomId) {
-				readRoom();
+		publish();
+		const onTimeline = (event: any, room?: any) => {
+			if (!isEventForRoom(roomId, room)) {
+				return;
+			}
+			if (bumpLastActivity(lastActivity, event)) {
+				publish();
+			}
+		};
+		const onMembers = (_event: any, state?: any) => {
+			if (isEventForRoom(roomId, state)) {
+				publish();
 			}
 		};
 		// The stand-in in Storybook is a plain object; the real client's
 		// event names are typed enums that the string form matches at runtime.
 		const emitter = client as any;
-		const subscribe = (name: string) =>
-			typeof emitter.on === 'function' && emitter.on(name, onRoomEvent);
-		const unsubscribe = (name: string) => {
+		const subscribe = (name: string, handler: (...args: any[]) => void) =>
+			typeof emitter.on === 'function' && emitter.on(name, handler);
+		const unsubscribe = (
+			name: string,
+			handler: (...args: any[]) => void
+		) => {
 			if (typeof emitter.removeListener === 'function') {
-				emitter.removeListener(name, onRoomEvent);
+				emitter.removeListener(name, handler);
 			} else if (typeof emitter.off === 'function') {
-				emitter.off(name, onRoomEvent);
+				emitter.off(name, handler);
 			}
 		};
-		subscribe('Room.timeline');
-		subscribe('RoomState.members');
+		subscribe('Room.timeline', onTimeline);
+		subscribe('RoomState.members', onMembers);
 		return () => {
-			unsubscribe('Room.timeline');
-			unsubscribe('RoomState.members');
+			unsubscribe('Room.timeline', onTimeline);
+			unsubscribe('RoomState.members', onMembers);
 		};
 	}, [
 		matrixClientService,
