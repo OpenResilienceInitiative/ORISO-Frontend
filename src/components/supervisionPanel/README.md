@@ -249,3 +249,20 @@ i18n key `supervision.panel.systemNotice` (de + en), built by
 the frontend for now; a server-sent system message with the same payload
 (UserService, on assigning the standing supervisor) can replace it 1:1 —
 the timeline already renders that format through `MessageItemComponent`.
+
+## Global scope decisions kept (stage v3 fix round, 05.09.2026)
+
+These changes were made for the stage but apply everywhere the organism is
+used. They stay on purpose; each is listed so nobody mistakes it for a leak.
+
+| Decision                                                  | Where it applies                                                                  | Value                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile composer one line by default, grows while typing   | every docked composer ≤ 899 px: main chat, thread panel, group chat               | `composerResize.ts` `MIN_HEIGHT_MOBILE = 102` (66 px toolbar strip + 22 px line + 10 px inset + 2 × 2 px border; was 180, then 120 in v3). No 16 px dock inside the card on the phone (`.textarea__inputWrapper` bottom: 0).                                |
+| Navigator row (◂ ▬ ▾) is not a fixed element on the phone | same composers                                                                    | rendered only while the composer is focused or has grown beyond one line                                                                                                                                                                                    |
+| Timeline content padding under the composer               | `session.styles.scss` (main chat) and `sidePanel.styles.scss` (side room), mobile | 200 px (was 300) — matches the one-line composer                                                                                                                                                                                                            |
+| Session list card spacing (Frank's example, T5)           | all lists: enquiries, conversations, team                                         | 24 px between cards, 16 px inside (`sessionsListItem.styles.scss`); ~1 card less per screen than before                                                                                                                                                     |
+| Resize handle gestures (T5)                               | list column and side panel                                                        | pill centred on the element height; drag = resize, press-and-hold (450 ms) or double-click = collapse/expand, Up/Down scroll the list. Drag-to-scroll, wheel toggle and hover auto-focus were removed with the scrollbar coupling.                          |
+| Header participant stack on the phone (T4)                | every 1:1 session header < 900 px                                                 | one avatar + compact "+N" (`STACK_MAX_VISIBLE_PHONE`); the title truncates with an ellipsis before the call buttons. 40 % of the row for the title is not reachable while the call buttons stay inline — open decision (calls into the kebab on the phone). |
+
+Stage-only (not global): the channel switcher FAB hides while the phone
+composer has focus (`chatStage/useComposerFocus.ts`, wired in the stage).
