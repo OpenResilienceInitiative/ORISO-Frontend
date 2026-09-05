@@ -19,6 +19,11 @@ const MIN_HEIGHT_DESKTOP = 196;
 // 66 px toolbar strip = 84 px to the editor, one 20 px line, then 18 px
 // editor inset + 16 px dock + 1 px border (+ rounding) = 36 px → 138 px.
 const MIN_HEIGHT_COMPACT_DESKTOP = 138;
+// T40 (Frank, round 6): in dual mode the composer has NO outer frame any
+// more — the field sits directly in the 16 px dock (`flushCorner`). 1 px
+// field border + 66 px toolbar strip + one 20 px line + 18 px editor inset
+// + 1 px border = 106 px. Flush implies the one-line rule.
+const MIN_HEIGHT_FLUSH_DESKTOP = 106;
 
 const STEP_SMALL = 24;
 const STEP_LARGE = 48;
@@ -68,19 +73,24 @@ export const getEffectiveComposerHeight = (
 export const getComposerHeightBounds = ({
 	viewportWidth,
 	viewportHeight,
-	compact = false
+	compact = false,
+	flush = false
 }: {
 	viewportWidth: number;
 	viewportHeight: number;
 	/** T35: one line at rest on the desktop too (dual mode). */
 	compact?: boolean;
+	/** T40: dual mode without the outer frame — one line, 32 px less inset. */
+	flush?: boolean;
 }): ComposerHeightBounds => {
 	const minHeight =
 		viewportWidth <= COMPOSER_MOBILE_BREAKPOINT
 			? MIN_HEIGHT_MOBILE
-			: compact
-				? MIN_HEIGHT_COMPACT_DESKTOP
-				: MIN_HEIGHT_DESKTOP;
+			: flush
+				? MIN_HEIGHT_FLUSH_DESKTOP
+				: compact
+					? MIN_HEIGHT_COMPACT_DESKTOP
+					: MIN_HEIGHT_DESKTOP;
 	const maxHeight = Math.max(
 		minHeight,
 		Math.round(viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION)

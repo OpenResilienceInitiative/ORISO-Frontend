@@ -223,6 +223,22 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * compact bounds). The phone rests at one line regardless.
 	 */
 	compactHeight?: boolean;
+	/**
+	 * T40 (Frank, round 6): dual mode — the composer loses its outer
+	 * frame (border + 24 px radius) and its 16 px inner inset; the field
+	 * sits directly in the dock with 4 px corners, and only the card's
+	 * OUTER bottom corner stays rounded: `bottom-left` for the main
+	 * column, `bottom-right` for the side panel. Implies the one-line
+	 * rule (`composerResize.ts` MIN_HEIGHT_FLUSH_DESKTOP = 106). Desktop
+	 * only — the phone already runs edge to edge (T10/T31).
+	 */
+	flushCorner?: 'bottom-left' | 'bottom-right';
+	/**
+	 * T41: the supervision room's composer wears the supervision accent —
+	 * `primary-fixed-dim` field border — so the channel is unmistakable
+	 * while writing. Default: the neutral `primary-fixed` hairline.
+	 */
+	accent?: 'default' | 'supervision';
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -397,6 +413,8 @@ export const MessageSubmitInterfaceComponent = ({
 	hideSupervisorAudience = false,
 	targetRoomId,
 	compactHeight = false,
+	flushCorner,
+	accent = 'default',
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -3474,9 +3492,10 @@ export const MessageSubmitInterfaceComponent = ({
 			getComposerHeightBoundsPure({
 				viewportWidth: window.innerWidth,
 				viewportHeight: window.innerHeight,
-				compact: compactHeight
+				compact: compactHeight,
+				flush: flushCorner !== undefined
 			}),
-		[compactHeight]
+		[compactHeight, flushCorner]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3747,8 +3766,16 @@ export const MessageSubmitInterfaceComponent = ({
 							isComposerResizing &&
 								'textarea__wrapper-send-message--resizing',
 							compactHeight &&
-								'textarea__wrapper-send-message--compact'
+								'textarea__wrapper-send-message--compact',
+							flushCorner &&
+								'textarea__wrapper-send-message--flush',
+							flushCorner &&
+								`textarea__wrapper-send-message--flush-${flushCorner}`,
+							accent === 'supervision' &&
+								'textarea__wrapper-send-message--supervision'
 						)}
+						data-flush-corner={flushCorner}
+						data-accent={accent}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
 								? ({
@@ -3765,8 +3792,14 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
-								// T31: phone — pill on the card's top edge.
-								position={isMobileViewport ? 'edge' : 'inside'}
+								// T31: phone — pill on the card's top edge; T40:
+								// the flush desktop field has no frame above the
+								// field either, so the pill sits on its edge too.
+								position={
+									isMobileViewport || flushCorner
+										? 'edge'
+										: 'inside'
+								}
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand',
 									'Drag to resize composer'

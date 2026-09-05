@@ -99,6 +99,34 @@ $room-actions-gap: 12px;
 	box-sizing: border-box;
 	background-color: var(--m3-surface-container-lowest, #fff);
 
+	// T41 (Frank, round 6): the supervision header is unmistakable — the
+	// header surface takes a hint of `primary-fixed` (the channel card's
+	// recipe, T27), its hairline and its channel tag the stronger
+	// `primary-fixed-dim`. A thread header stays neutral: white surface,
+	// `primary-fixed` hairline, a grey `surface-container-high` tag.
+	&--supervision {
+		background-color: color-mix(
+			in srgb,
+			var(--m3-primary-fixed, #ffdad5) 25%,
+			var(--m3-surface-container-lowest, #fff)
+		);
+
+		.panelHeader__divider {
+			border-top-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		}
+
+		.panelHeader__kindButton {
+			background: var(--m3-primary-fixed-dim, #ffb4aa);
+			color: var(--m3-on-primary-fixed, #410001);
+		}
+	}
+
+	&--thread {
+		.panelHeader__kindButton {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+	}
+
 	&__row {
 		display: flex;
 		align-items: center;

@@ -184,6 +184,64 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					height: var(--composer-height, 138px);
 				}
 
+				// T40 (Frank, round 6): dual mode — NO outer frame. The
+				// card (border, 24 px radius) disappears; only the chat
+				// card's own outer bottom corner is kept on this box so it
+				// hugs the card edge: bottom-left in the main column,
+				// bottom-right in the side panel; the inner corners are 0.
+				// The field (`.textarea__input`) becomes the one bordered
+				// box, 4 px corners, and takes the freed 16 px inset.
+				// One line at rest (`composerResize.ts`
+				// MIN_HEIGHT_FLUSH_DESKTOP = 106). Desktop only.
+				@media screen and (width >= 900px) {
+					&--flush:not(.textarea__wrapper-send-message--expanded) {
+						border: 0 !important;
+						border-radius: 0 !important;
+						min-height: var(--composer-height, 106px);
+						height: var(--composer-height, 106px);
+
+						&.textarea__wrapper-send-message--flush-bottom-left {
+							border-bottom-left-radius: var(
+								--session-card-radius,
+								28px
+							) !important;
+						}
+
+						&.textarea__wrapper-send-message--flush-bottom-right {
+							border-bottom-right-radius: var(
+								--session-card-radius,
+								28px
+							) !important;
+						}
+
+						// Handle touched: the field's border darkens instead
+						// of the (absent) frame.
+						&.textarea__wrapper-send-message--resizing {
+							border: 0 !important;
+
+							.textarea__input {
+								border: 2px solid
+									var(--m3-on-primary-fixed-variant, #930008);
+							}
+						}
+
+						.textarea__inputWrapper {
+							inset: 0;
+						}
+
+						.textarea__input {
+							border-radius: 4px;
+						}
+					}
+				}
+
+				// T41: the supervision room's composer — `primary-fixed-dim`
+				// field border (the resting/selected states keep theirs).
+				&--supervision:not(.textarea__wrapper-send-message--selected)
+					.textarea__input {
+					border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+				}
+
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;

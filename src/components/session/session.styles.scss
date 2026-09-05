@@ -11,6 +11,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 // derive from it) and `STAGE_LAYOUT.CARD_MARGIN` mirrors the value in TS.
 :root {
 	--session-card-margin: 24px;
+
+	// The chat card's desktop corner — ONE source. T40: a flush composer
+	// (`flushCorner`) rounds its outer bottom corner with the same value.
+	--session-card-radius: 28px;
 }
 
 .session,
@@ -29,7 +33,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	@include breakpoint($fromLarge) {
 		margin: var(--session-card-margin, 24px);
 		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
-		border-radius: 28px;
+		border-radius: var(--session-card-radius, 28px);
 	}
 
 	// Border is the active indicator — suppress the default focus outline.

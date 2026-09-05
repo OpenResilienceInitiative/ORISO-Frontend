@@ -275,6 +275,201 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
 };
 
 /**
+ * T39: the header row starts at the card's top padding — Figma
+ * 1320:38281: "Room Header All" at y = 16 inside the card, "Room Header
+ * Content" (the 40 px avatar row) 6 px below it, nothing extra. Measured
+ * from the card's inner edge (its 1 px border excluded): row = +16,
+ * avatars = +22 — main chat and side panel alike.
+ */
+const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
+	const card = canvasElement.querySelector<HTMLElement>('.chatStage__card')!;
+	const cardInnerTop =
+		card.getBoundingClientRect().top +
+		Number.parseFloat(getComputedStyle(card).borderTopWidth);
+	const mainRow = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__headerWrapper'
+	)!;
+	const mainStack = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__memberStack'
+	)!;
+	const panelRow =
+		canvasElement.querySelector<HTMLElement>('.panelHeader__row')!;
+	const panelStack = canvasElement.querySelector<HTMLElement>(
+		'.panelHeader__participants'
+	)!;
+	await expect(
+		Math.round(mainRow.getBoundingClientRect().top - cardInnerTop)
+	).toBe(16);
+	await expect(
+		Math.round(mainStack.getBoundingClientRect().top - cardInnerTop)
+	).toBe(22);
+	await expect(
+		Math.round(panelRow.getBoundingClientRect().top - cardInnerTop)
+	).toBe(16);
+	await expect(
+		Math.round(panelStack.getBoundingClientRect().top - cardInnerTop)
+	).toBe(22);
+	// Nothing sits between the card edge and the header: the header is
+	// the pane's first box and starts on the card's inner edge.
+	const mainHeader = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-main"] .sessionInfo'
+	)!;
+	const panelHeader = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel"] .panelHeader'
+	)!;
+	await expect(
+		Math.round(mainHeader.getBoundingClientRect().top - cardInnerTop)
+	).toBe(0);
+	await expect(
+		Math.round(panelHeader.getBoundingClientRect().top - cardInnerTop)
+	).toBe(0);
+	await expect(getComputedStyle(mainHeader).paddingTop).toBe('16px');
+	await expect(getComputedStyle(panelHeader).paddingTop).toBe('16px');
+	await expect(getComputedStyle(mainRow).paddingTop).toBe('6px');
+	await expect(getComputedStyle(panelRow).paddingTop).toBe('6px');
+};
+
+/**
+ * T40: dual mode — exactly ONE bordered box around each composer. The
+ * outer shell has no border; it keeps only the card's outer bottom corner
+ * (main column: bottom-left, side panel: bottom-right = the card's own
+ * radius) and 0 on the inner corners; the field is the bordered box with
+ * corners ≤ 4 px and takes the freed inset (it fills the shell).
+ */
+const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
+	const card = canvasElement.querySelector<HTMLElement>('.chatStage__card')!;
+	const cardRadius = getComputedStyle(card).borderTopLeftRadius;
+	await expect(cardRadius).toBe('28px');
+	const radii = (el: Element) => {
+		const cs = getComputedStyle(el);
+		return {
+			tl: cs.borderTopLeftRadius,
+			tr: cs.borderTopRightRadius,
+			br: cs.borderBottomRightRadius,
+			bl: cs.borderBottomLeftRadius
+		};
+	};
+	const borderWidths = (el: Element) => {
+		const cs = getComputedStyle(el);
+		return [
+			cs.borderTopWidth,
+			cs.borderRightWidth,
+			cs.borderBottomWidth,
+			cs.borderLeftWidth
+		];
+	};
+	for (const [pane, corner] of [
+		['stage-main', 'bottom-left'],
+		['stage-panel', 'bottom-right']
+	] as const) {
+		const root = canvasElement.querySelector<HTMLElement>(
+			`[data-cy="${pane}"]`
+		)!;
+		const shell = root.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const field = root.querySelector<HTMLElement>('.textarea__input')!;
+		await expect(shell.getAttribute('data-flush-corner')).toBe(corner);
+		// The shell: no border, no frame.
+		await expect(borderWidths(shell)).toEqual(['0px', '0px', '0px', '0px']);
+		const r = radii(shell);
+		await expect(r.tl).toBe('0px');
+		await expect(r.tr).toBe('0px');
+		if (corner === 'bottom-left') {
+			await expect(r.bl).toBe(cardRadius);
+			await expect(r.br).toBe('0px');
+		} else {
+			await expect(r.br).toBe(cardRadius);
+			await expect(r.bl).toBe('0px');
+		}
+		// The field: the one bordered box (1 px at rest, 2 px while the
+		// composer is selected — the test runner focuses it), corners ≤ 4 px.
+		const fieldBorders = borderWidths(field);
+		await expect(['1px', '2px']).toContain(fieldBorders[0]);
+		await expect(new Set(fieldBorders).size).toBe(1);
+		for (const value of Object.values(radii(field))) {
+			expect(Number.parseFloat(value)).toBeLessThanOrEqual(4);
+		}
+		// No other bordered box between the dock and the editor.
+		const bordered = Array.from(
+			root.querySelectorAll<HTMLElement>('.messageSubmit__wrapper *')
+		).filter(
+			(el) =>
+				el.contains(field) &&
+				el !== field &&
+				borderWidths(el).some((w) => Number.parseFloat(w) > 0)
+		);
+		await expect(bordered).toEqual([]);
+		// The freed inset went to the field: it fills the shell.
+		const shellBox = shell.getBoundingClientRect();
+		const fieldBox = field.getBoundingClientRect();
+		await expect(Math.round(fieldBox.left - shellBox.left)).toBe(0);
+		await expect(Math.round(shellBox.right - fieldBox.right)).toBe(0);
+		await expect(Math.round(fieldBox.top - shellBox.top)).toBe(0);
+		await expect(Math.round(shellBox.bottom - fieldBox.bottom)).toBe(0);
+		// … and the field sits at the pane's 16 px dock, like the bubbles
+		// (measured from the pane's inner edge — the joined panel carries
+		// the 1 px hairline as its left border).
+		const paneBox = root.getBoundingClientRect();
+		const paneStyle = getComputedStyle(root);
+		const paneInnerLeft =
+			paneBox.left + Number.parseFloat(paneStyle.borderLeftWidth);
+		const paneInnerRight =
+			paneBox.right - Number.parseFloat(paneStyle.borderRightWidth);
+		await expect(Math.round(fieldBox.left - paneInnerLeft)).toBe(16);
+		await expect(Math.round(paneInnerRight - fieldBox.right)).toBe(16);
+		// The drag pill sits on the field's top edge (no frame above it).
+		const pill = root
+			.querySelector('.dragHandle__pill')!
+			.getBoundingClientRect();
+		await expect(
+			Math.abs((pill.top + pill.bottom) / 2 - fieldBox.top)
+		).toBeLessThanOrEqual(1);
+	}
+};
+
+/**
+ * T41: the supervision header is unmistakable — its surface, hairline and
+ * channel tag carry the pink accent, the supervision composer's field
+ * border too; a thread header stays neutral.
+ */
+const panelTint = async (canvasElement: HTMLElement) => {
+	// The field border is measured at rest — a selected composer wears the
+	// 2 px `primary-container` focus border instead (#597).
+	(document.activeElement as HTMLElement | null)?.blur();
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__wrapper-send-message--selected'
+			)
+		).toBeNull()
+	);
+	const header = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel"] .panelHeader'
+	)!;
+	const cs = getComputedStyle(header);
+	return {
+		kind: header.getAttribute('data-kind'),
+		surface: cs.backgroundColor,
+		hairline: getComputedStyle(
+			header.querySelector('.panelHeader__divider')!
+		).borderTopColor,
+		tag: getComputedStyle(header.querySelector('.panelHeader__kindButton')!)
+			.backgroundColor,
+		composerBorder: getComputedStyle(
+			canvasElement.querySelector(
+				'[data-cy="stage-panel"] .textarea__input'
+			)!
+		).borderTopColor,
+		composerAccent: canvasElement
+			.querySelector(
+				'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+			)
+			?.getAttribute('data-accent')
+	};
+};
+
+/**
  * The channel card must hang below the header — never over the title —
  * and (T33) open left-aligned with its trigger, the channel tag: card left
  * edge = trigger left edge ± 1 px.
@@ -431,6 +626,19 @@ export const SupervisionInsideTheCard: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
 		).not.toBeNull();
+		// T39: header rows start at the card's top padding (16 + 6).
+		await expectHeaderRowsAtCardTop(canvasElement);
+		// T40: one bordered box per composer, outer corner = card radius.
+		await expectSingleBoxComposers(canvasElement);
+		// T41: the supervision header wears the accent; the main chat's
+		// own header stays white.
+		const supervisionTint = await panelTint(canvasElement);
+		await expect(supervisionTint.kind).toBe('supervision');
+		const whiteHeader = getComputedStyle(
+			canvasElement.querySelector('[data-cy="stage-main"] .sessionInfo')!
+		).backgroundColor;
+		await expect(supervisionTint.surface).not.toBe(whiteHeader);
+		await expect(supervisionTint.composerAccent).toBe('supervision');
 		// T35: dual mode — both composers rest at ONE line (toolbar strip +
 		// one line + insets, no spare space under the placeholder) and grow
 		// while typing; the drag pill stays.
@@ -636,6 +844,19 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		});
 		// D10: the list snaps to the icon rail while the panel is open.
 		await expectListSnappedToRail(canvasElement);
+		// T40: the thread panel's composer is a single box as well.
+		await expectSingleBoxComposers(canvasElement);
+		// T41: a thread header is neutral — white like the main header.
+		const threadTint = await panelTint(canvasElement);
+		await expect(threadTint.kind).toBe('thread');
+		await expect(threadTint.surface).toBe(
+			getComputedStyle(
+				canvasElement.querySelector(
+					'[data-cy="stage-main"] .sessionInfo'
+				)!
+			).backgroundColor
+		);
+		await expect(threadTint.composerAccent).toBe('default');
 		// T1: with a panel open the FAB steps back; the panel header's
 		// channel icon opens the same options (Thread #2 + Supervision).
 		await expect(
@@ -788,12 +1009,41 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		await expect(items[2]).toHaveAttribute('aria-current', 'true');
 		await expect(items[0].textContent).toContain('2');
 		await userEvent.keyboard('{Escape}');
+		const threadTint = await panelTint(canvasElement);
 		// → supervision
 		await pickChannelFromHeader(canvasElement, 'supervision');
 		await waitFor(() =>
 			expect(panelTitle(canvasElement).kind).toBe('Supervision')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(SUPERVISOR_NAME);
+		// T41: supervision header ≠ thread header — surface, hairline, tag
+		// and the composer's field border all change with the channel.
+		const supervisionTint = await panelTint(canvasElement);
+		await expect(threadTint.kind).toBe('thread');
+		await expect(supervisionTint.kind).toBe('supervision');
+		await expect(supervisionTint.surface).not.toBe(threadTint.surface);
+		await expect(supervisionTint.hairline).not.toBe(threadTint.hairline);
+		await expect(supervisionTint.tag).not.toBe(threadTint.tag);
+		await expect(supervisionTint.composerBorder).not.toBe(
+			threadTint.composerBorder
+		);
+		const root = getComputedStyle(document.documentElement);
+		const toRgb = (hex: string) => {
+			const n = parseInt(hex.replace('#', ''), 16);
+			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+		};
+		const fixedDim = toRgb(
+			root.getPropertyValue('--m3-primary-fixed-dim').trim()
+		);
+		await expect(supervisionTint.hairline).toBe(fixedDim);
+		await expect(supervisionTint.tag).toBe(fixedDim);
+		await expect(supervisionTint.composerBorder).toBe(fixedDim);
+		await expect(threadTint.hairline).toBe(
+			toRgb(root.getPropertyValue('--m3-primary-fixed').trim())
+		);
+		await expect(threadTint.tag).toBe(
+			toRgb(root.getPropertyValue('--m3-surface-container-high').trim())
+		);
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"]')
 				?.textContent ?? ''

@@ -1182,10 +1182,13 @@ export const ThreadEntryWithLastReply: Story = {
 			'[data-cy="thread-entry-preview"]'
 		)!;
 		await expect(preview.textContent).toContain('Sanftes Alpaka Kala:');
-		// One line, ellipsis — never a second line.
+		// One line, ellipsis — never a second line (D1: the entry follows
+		// the chat text scale, 14/20 — one line-height plus rounding).
 		await expect(
 			preview.getBoundingClientRect().height
-		).toBeLessThanOrEqual(18);
+		).toBeLessThanOrEqual(
+			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
+		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
 		await userEvent.click(entry);
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);

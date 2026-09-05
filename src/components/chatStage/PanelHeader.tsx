@@ -239,7 +239,10 @@ export const PanelHeader = ({
 		// `data-keeps-focus`: the composer's autofocus must not pull focus
 		// off these buttons (review v6, `focusGuards.ts`).
 		<header
-			className="panelHeader"
+			// T41: the kind tints the header — supervision wears the pink
+			// accent, a thread stays neutral (`sidePanel.styles.scss`).
+			className={`panelHeader panelHeader--${kind}`}
+			data-kind={kind}
 			data-cy={dataCy}
 			data-keeps-focus=""
 			ref={headerRef}
