@@ -797,10 +797,10 @@ const Closed = () => (
 							py: 1.25,
 							borderRadius: '14px',
 							bgcolor: day.hours
-								? registrationMd3.primaryFixed
+								? registrationMd3.selectedLayer
 								: registrationMd3.surfaceContainer,
 							color: day.hours
-								? registrationMd3.onPrimaryFixedVariant
+								? registrationMd3.primary
 								: registrationMd3.onSurfaceVariant
 						}}
 					>
