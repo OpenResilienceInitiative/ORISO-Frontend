@@ -10,6 +10,8 @@
 	gap: 2px;
 	padding: 4px 8px 0 17px;
 	min-height: 40px;
+	min-width: 0;
+	max-width: 100%;
 	flex-wrap: nowrap;
 	overflow-x: auto;
 	overflow-y: visible;
@@ -17,6 +19,20 @@
 
 	&::-webkit-scrollbar {
 		display: none;
+	}
+
+	// Every button keeps its width; the ROW scrolls instead (T22).
+	> * {
+		flex: 0 0 auto;
+	}
+
+	// T22: the compact bar's anchor (emoji picker positioning) must take the
+	// full toolbar width, otherwise the bar sizes to its content, ignores
+	// the send button and slides the last icon underneath it.
+	&__menuAnchor--bar {
+		display: flex;
+		width: 100%;
+		min-width: 0;
 	}
 
 	&__button {
@@ -68,6 +84,11 @@
 	// keeps the Figma 38×32 / 16px spec above.
 	&--default {
 		min-height: 44px;
+
+		// T23: no reserved space in front of the first arrow — the phone's
+		// back arrow renders nothing on the desktop, so the row starts at
+		// the field's inset.
+		padding-left: 4px;
 
 		.composerToolbar__button {
 			width: 40px;
