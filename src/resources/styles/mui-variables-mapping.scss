@@ -101,4 +101,20 @@
 	--line-height-tertiary: #{$line-height-tertiary};
 	--line-height-quaternary: #{$line-height-quaternary};
 	--line-size-subheadline: #{$font-size-subheadline};
+
+	// Chat text scale (T37 → D1, 05.09.2026): ONE switch for the message
+	// body, the session list's preview line, the sender name line, the
+	// thread entry and the composer text. Defaults = Frank's decision —
+	// M3 body/medium 14/20, label/medium 12 for previews, label/large 14 for
+	// the name line and the thread entry, body/medium 14 in the composer.
+	// A host may redefine them (the stage's `--legacyText` comparison keeps
+	// the old 16/21 for reference).
+	--message-font-size: 14px;
+	--message-line-height: 20px;
+	--session-preview-font-size: 12px;
+	--message-name-font-size: 14px;
+	--message-name-line-height: 20px;
+	--thread-entry-font-size: 14px;
+	--thread-entry-line-height: 20px;
+	--composer-font-size: 14px;
 }

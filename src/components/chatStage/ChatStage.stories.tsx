@@ -1386,31 +1386,46 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 };
 
 /**
- * (h) T37: chat text size — the same fixture twice, "current" (message
- * body 16/21, list preview 14) against "compact" (14/20, preview 13). One
- * switch: the custom properties `--message-font-size`,
- * `--message-line-height`, `--session-preview-font-size`
- * (`message.styles.scss`), set by `.chatStage--compactText`.
+ * (h) T37 → D1: chat text size. Compact is the DEFAULT now (Frank, 05.09.
+ * evening): message body 14/20 (M3 body/medium), list preview 12
+ * (label/medium), sender name line 14/20 and thread entry 14/20
+ * (label/large), composer text + placeholder 14. One switch: the custom
+ * properties in `mui-variables-mapping.scss`; the stage's
+ * `.chatStage--legacyText` keeps the old 16/21 for the comparison (h1).
  */
 const expectChatTextSize = async (
 	canvasElement: HTMLElement,
 	{
 		fontSize,
 		lineHeight,
-		preview
-	}: { fontSize: string; lineHeight: string; preview: string }
+		preview,
+		name,
+		threadEntry,
+		composer
+	}: {
+		fontSize: string;
+		lineHeight: string;
+		preview: string;
+		name: string;
+		threadEntry: string;
+		composer: string;
+	}
 ) => {
 	await expectStageParts(canvasElement, {
 		composers: 2,
-		bubblesAtLeast: 10
+		bubblesAtLeast: 9
 	});
-	for (const bubble of Array.from(
+	const bubbles = Array.from(
 		canvasElement.querySelectorAll<HTMLElement>('.messageItem__message')
-	)) {
+	);
+	await expect(bubbles.length).toBeGreaterThan(0);
+	for (const bubble of bubbles) {
 		const style = getComputedStyle(bubble);
 		expect(style.fontSize).toBe(fontSize);
 		expect(style.lineHeight).toBe(lineHeight);
 	}
+	// Preview line of every list row — in the icon rail the rows carry no
+	// preview, so the assertion holds for whatever is rendered.
 	for (const line of Array.from(
 		canvasElement.querySelectorAll<HTMLElement>(
 			'.sessionsListItem__subject'
@@ -1418,46 +1433,92 @@ const expectChatTextSize = async (
 	)) {
 		expect(getComputedStyle(line).fontSize).toBe(preview);
 	}
+	// Sender name line ("Mona S.").
+	const names = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('.messageItem__username')
+	);
+	await expect(names.length).toBeGreaterThan(0);
+	for (const line of names) {
+		expect(getComputedStyle(line).fontSize).toBe(name);
+	}
+	// Thread entry under the root message ("2 Antworten · …").
+	const entry = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="thread-entry"]'
+	)!;
+	await expect(entry).not.toBeNull();
+	await expect(getComputedStyle(entry).fontSize).toBe(threadEntry);
+	// Composer text and its placeholder (the placeholder is a ::before of
+	// the empty paragraph and inherits the editor's size).
+	const editors = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('.ProseMirror')
+	);
+	await expect(editors.length).toBe(2);
+	for (const editor of editors) {
+		expect(getComputedStyle(editor).fontSize).toBe(composer);
+		const empty = editor.querySelector('p.is-editor-empty');
+		if (empty) {
+			expect(getComputedStyle(empty, '::before').fontSize).toBe(composer);
+		}
+	}
 };
 
-export const ChatTextSizeCurrent: Story = {
-	name: '(h1) Chat text size — current (16/21, preview 14)',
+export const ChatTextSizeLegacy: Story = {
+	name: '(h1) Chat text size — legacy 16/21 (preview 14, name 12, composer 16) for comparison',
 	globals: desktop1280Globals,
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
 		supervisionUnread: 0,
-		textSize: 'current'
+		openThreads: 1,
+		textSize: 'legacy'
 	},
 	play: async ({ canvasElement }) => {
 		await expectChatTextSize(canvasElement, {
 			fontSize: '16px',
 			lineHeight: '21px',
-			preview: '14px'
+			preview: '14px',
+			name: '12px',
+			threadEntry: '12px',
+			composer: '16px'
 		});
 		await expect(
-			canvasElement.querySelector('.chatStage--compactText')
-		).toBeNull();
+			canvasElement.querySelector('.chatStage--legacyText')
+		).not.toBeNull();
 	}
 };
 
 export const ChatTextSizeCompact: Story = {
-	name: '(h2) Chat text size — compact (14/20, preview 13)',
+	name: '(h2) Chat text size — compact 14/20 (preview 12, name 14, thread entry 14, composer 14) = DEFAULT',
 	globals: desktop1280Globals,
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
 		supervisionUnread: 0,
-		textSize: 'compact'
+		openThreads: 1
 	},
 	play: async ({ canvasElement }) => {
 		await expectChatTextSize(canvasElement, {
 			fontSize: '14px',
 			lineHeight: '20px',
-			preview: '13px'
+			preview: '12px',
+			name: '14px',
+			threadEntry: '14px',
+			composer: '14px'
 		});
+		// The default needs no modifier class — nothing on the stage root.
+		await expect(
+			canvasElement.querySelector('.chatStage--legacyText')
+		).toBeNull();
 		await expect(
 			canvasElement.querySelector('.chatStage--compactText')
-		).not.toBeNull();
+		).toBeNull();
+		// D1 lives in the global token file, not in a component stylesheet.
+		const root = getComputedStyle(document.documentElement);
+		await expect(root.getPropertyValue('--message-font-size').trim()).toBe(
+			'14px'
+		);
+		await expect(
+			root.getPropertyValue('--session-preview-font-size').trim()
+		).toBe('12px');
 	}
 };

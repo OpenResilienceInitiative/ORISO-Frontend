@@ -102,8 +102,8 @@ export interface ConsultantSessionStageProps {
 	supervisionUnread?: number;
 	threadUnread?: number;
 	labelMode?: ChannelLabelMode;
-	/** T37: chat text size — `current` (16/21, preview 14) or `compact` (14/20, preview 13). */
-	textSize?: 'current' | 'compact';
+	/** T37/D1: chat text size — `compact` (the default: 14/20, preview 12) or `legacy` (the old 16/21, preview 14) for comparison. */
+	textSize?: 'compact' | 'legacy';
 	/** Force the phone layout; `undefined` follows the viewport. */
 	phone?: 'main' | 'secondary';
 	/** Show the reason banner in the supervision room. */
@@ -574,7 +574,7 @@ export function ConsultantSessionStage({
 	supervisionUnread = 0,
 	threadUnread = 0,
 	labelMode = 'person',
-	textSize = 'current',
+	textSize = 'compact',
 	phone: initialPhone,
 	withReason = false,
 	fabDefaultOpen = false,
@@ -738,7 +738,7 @@ export function ConsultantSessionStage({
 			<ChatStageProviders>
 				<div
 					className={`chatStage chatStage--single${
-						textSize === 'compact' ? ' chatStage--compactText' : ''
+						textSize === 'legacy' ? ' chatStage--legacyText' : ''
 					}`}
 					data-cy="chat-stage"
 					data-mode="single"
@@ -830,7 +830,7 @@ export function ConsultantSessionStage({
 		<ChatStageProviders>
 			<div
 				className={`chatStage${
-					textSize === 'compact' ? ' chatStage--compactText' : ''
+					textSize === 'legacy' ? ' chatStage--legacyText' : ''
 				}`}
 				data-cy="chat-stage"
 				data-mode="split"

@@ -141,13 +141,18 @@
 	}
 }
 
-// T37: the compact text variant for Frank's comparison — message body
-// 16/21 → 14/20, list preview 14 → 13. Only the three switches from
-// `message.styles.scss`, nothing else.
-.chatStage--compactText {
-	--message-font-size: 14px;
-	--message-line-height: 20px;
-	--session-preview-font-size: 13px;
+// T37/D1: compact (14/20, preview 12, name/thread entry 14, composer 14) is
+// the default everywhere (`mui-variables-mapping.scss`). This is the old
+// 16/21 kept ONLY for the comparison story (h1) "legacy 16/21".
+.chatStage--legacyText {
+	--message-font-size: 16px;
+	--message-line-height: 21px;
+	--session-preview-font-size: 14px;
+	--message-name-font-size: 12px;
+	--message-name-line-height: 13px;
+	--thread-entry-font-size: 12px;
+	--thread-entry-line-height: 16px;
+	--composer-font-size: 16px;
 }
 
 // Side-by-side comparison frame for the label question (story f).

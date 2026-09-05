@@ -819,8 +819,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__subject {
 		// padding: 8px 16px;
-		// T37: one switch with the message body (`message.styles.scss`).
-		font-size: var(--session-preview-font-size, 14px);
+		// T37/D1: one switch with the message body (`mui-variables-mapping.scss`).
+		font-size: var(--session-preview-font-size, 12px);
 		line-height: 20px;
 		letter-spacing: 0.25px;
 		white-space: nowrap;

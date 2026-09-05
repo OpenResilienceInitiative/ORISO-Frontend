@@ -1,7 +1,7 @@
 /**
  * Screenshot the chat-stage + session-header stories from a running
  * Storybook (port 6099).
- * Usage: node _shots/shoot.mjs            → _shots/stage-v9/<story>-<viewport>.png
+ * Usage: node _shots/shoot.mjs            → _shots/stage-v10/<story>-<viewport>.png
  *        SHOT_DIR=stage-v8 node _shots/shoot.mjs  (older set)
  *        ONLY=d5-,fab-six node _shots/shoot.mjs   (name prefixes, comma-separated)
  */
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const outDir = join(
 	dirname(fileURLToPath(import.meta.url)),
-	process.env.SHOT_DIR ?? 'stage-v9'
+	process.env.SHOT_DIR ?? 'stage-v10'
 );
 mkdirSync(outDir, { recursive: true });
 const base = process.env.SB_URL ?? 'http://localhost:6099';
@@ -54,8 +54,8 @@ const shots = [
 	['e1-phone-main-fab', `${stage}phone-main-chat-with-fab`, ['390x844']],
 	// T37: same fixture, two text sizes — side by side in the folder.
 	[
-		'text-size-current',
-		`${stage}chat-text-size-current`,
+		'text-size-legacy',
+		`${stage}chat-text-size-legacy`,
 		['1280x820', '390x844']
 	],
 	[

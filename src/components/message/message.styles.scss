@@ -2,14 +2,11 @@ $icon-size: 24px;
 $icon-size-small: 24px;
 $message-lineheight: 21px;
 
-// T37: the chat text size is ONE switch. Message body and the session
-// list's preview line read these; a host (the stage's compact variant,
-// later a user setting) redefines them in one place. Defaults = today.
-:root {
-	--message-font-size: 16px;
-	--message-line-height: #{$message-lineheight};
-	--session-preview-font-size: 14px;
-}
+// T37/D1: the chat text size is ONE switch — the custom properties live in
+// `resources/styles/mui-variables-mapping.scss` (`--message-font-size`,
+// `--message-line-height`, `--message-name-font-size`,
+// `--thread-entry-font-size`, `--session-preview-font-size`); the fallbacks
+// here repeat the defaults (14/20, name 14/20, thread entry 14/20).
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 
@@ -111,6 +108,10 @@ $message-avatar-overlap: -19px;
 		display: flex;
 		align-items: center;
 		padding-left: 20px;
+
+		// D1: the name line follows the chat text scale (M3 label/large).
+		font-size: var(--message-name-font-size, 14px);
+		line-height: var(--message-name-line-height, 20px);
 
 		&--self {
 			color: $message-name-self;
@@ -874,8 +875,8 @@ $message-avatar-overlap: -19px;
 
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
-		font-size: var(--message-font-size, 16px);
-		line-height: var(--message-line-height, #{$message-lineheight});
+		font-size: var(--message-font-size, 14px);
+		line-height: var(--message-line-height, 20px);
 		background-color: $message-incoming-bg;
 		border: 1px solid $message-incoming-bg;
 
@@ -945,7 +946,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		li {
-			line-height: var(--message-line-height, #{$message-lineheight});
+			line-height: var(--message-line-height, 20px);
 			margin-top: 12px;
 
 			&:first-of-type {
@@ -1292,8 +1293,10 @@ $message-avatar-overlap: -19px;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
-		font-size: 12px;
-		line-height: 16px;
+
+		// D1: the thread entry line follows the chat text scale (14/20).
+		font-size: var(--thread-entry-font-size, 14px);
+		line-height: var(--thread-entry-line-height, 20px);
 		text-align: left;
 		cursor: pointer;
 		align-self: flex-start;

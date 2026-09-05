@@ -58,6 +58,10 @@
 			left: 16px;
 			direction: ltr;
 			text-align: left;
+
+			// D1: composer text and placeholder follow the chat text scale
+			// (M3 body/medium 14) — `mui-variables-mapping.scss`.
+			font-size: var(--composer-font-size, 14px);
 			min-height: 0;
 			max-height: none;
 			overflow-y: auto;
