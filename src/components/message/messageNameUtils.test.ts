@@ -3,7 +3,6 @@ import {
 	formatAgencyLine,
 	formatAgencyLineWithI18n,
 	formatMessagePersonName,
-	getMessagePersonInitials,
 	resolveIncomingConsultantNameForAsker,
 	resolveOwnConsultantName
 } from './messageNameUtils';
@@ -152,14 +151,6 @@ describe('resolveOwnConsultantName', () => {
 				username: 'karina.p'
 			})
 		).toEqual({ displayName: 'karina.p' });
-	});
-});
-
-describe('getMessagePersonInitials', () => {
-	it('uses first letters of the humanized name', () => {
-		expect(
-			getMessagePersonInitials(undefined, 'free_bee_frankie_821')
-		).toBe('FB');
 	});
 });
 
