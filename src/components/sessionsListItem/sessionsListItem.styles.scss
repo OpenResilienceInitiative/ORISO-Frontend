@@ -683,13 +683,17 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		height: 32px;
 		border-radius: 50%;
 		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 
-		img {
+		// T9: `supervision_circ` (currentColor) — same glyph as panel header
+		// and FAB.
+		svg {
 			width: 18px;
 			height: 18px;
+			fill: currentcolor;
 		}
 	}
 
@@ -709,10 +713,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		white-space: nowrap;
 		overflow: hidden;
 
-		img {
+		svg {
 			width: 14px;
 			height: 14px;
 			flex: 0 0 auto;
+			fill: currentcolor;
 		}
 	}
 

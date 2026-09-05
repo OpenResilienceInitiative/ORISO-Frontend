@@ -1255,8 +1255,15 @@ export const SupervisedByMe: Story = {
 			);
 			expect(badge).not.toBeNull();
 			expect(badge!.getAttribute('title')).toContain('Supervision');
+			// T9: the list badge uses `supervision_circ` inline (currentColor),
+			// the same glyph as the panel header and the FAB.
 			expect(
-				canvasElement.querySelector('.sessionsListItem__handoverActionPrimary')
+				badge!.querySelector('svg path[fill="currentColor"]')
+			).not.toBeNull();
+			expect(
+				canvasElement.querySelector(
+					'.sessionsListItem__handoverActionPrimary'
+				)
 			).toBeNull();
 		});
 	}
@@ -1289,6 +1296,9 @@ export const SupervisedByOthers: Story = {
 			);
 			expect(indicator).not.toBeNull();
 			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			expect(
+				indicator!.querySelector('svg path[fill="currentColor"]')
+			).not.toBeNull();
 			expect(
 				canvasElement.querySelector('[data-testid="supervision-badge"]')
 			).toBeNull();

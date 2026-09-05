@@ -25,7 +25,7 @@ import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/c
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
 import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
-import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -1238,7 +1238,10 @@ export const SessionListItemComponent = ({
 									'Supervision'
 								)}
 							>
-								<img src={selfHelpIcon} alt="" />
+								<SupervisionIcon
+									aria-hidden="true"
+									focusable="false"
+								/>
 							</div>
 						) : showSilentMemberEye ? (
 							<div
@@ -1430,7 +1433,10 @@ export const SessionListItemComponent = ({
 								}
 							)}
 						>
-							<img src={selfHelpIcon} alt="" />
+							<SupervisionIcon
+								aria-hidden="true"
+								focusable="false"
+							/>
 							<span className="sessionsListItem__supervisionIndicatorName">
 								{supervisorNames.join(', ')}
 							</span>
