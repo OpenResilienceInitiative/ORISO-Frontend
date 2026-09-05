@@ -1183,7 +1183,7 @@ export const ThreadEntryWithLastReply: Story = {
 		)!;
 		await expect(preview.textContent).toContain('Sanftes Alpaka Kala:');
 		// One line, ellipsis — never a second line (D1: the entry follows
-		// the chat text scale, 14/20 — one line-height plus rounding).
+		// the chat text scale, label/small 12/16 — one line-height plus rounding).
 		await expect(
 			preview.getBoundingClientRect().height
 		).toBeLessThanOrEqual(

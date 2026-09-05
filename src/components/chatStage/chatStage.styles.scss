@@ -141,13 +141,14 @@
 	}
 }
 
-// T37/D1: compact (14/20, preview 12, name/thread entry 14, composer 14) is
-// the default everywhere (`mui-variables-mapping.scss`). This is the old
-// 16/21 kept ONLY for the comparison story (h1) "legacy 16/21".
+// T37/D1: compact (14/20, preview 12/16, name/thread entry 12/16, composer
+// 14) is the default everywhere (`mui-variables-mapping.scss`). This is the
+// old 16/21 kept ONLY for the comparison story (h1) "legacy 16/21".
 .chatStage--legacyText {
 	--message-font-size: 16px;
 	--message-line-height: 21px;
 	--session-preview-font-size: 14px;
+	--session-preview-line-height: 20px;
 	--message-name-font-size: 12px;
 	--message-name-line-height: 13px;
 	--thread-entry-font-size: 12px;

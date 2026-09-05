@@ -93,7 +93,6 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	&__username,
 	&__divider,
 	&__infotext,
 	&__consultant {
@@ -104,14 +103,16 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__username {
+		color: $text-low-emphasis;
 		text-align: left;
 		display: flex;
 		align-items: center;
 		padding-left: 20px;
 
-		// D1: the name line follows the chat text scale (M3 label/large).
-		font-size: var(--message-name-font-size, 14px);
-		line-height: var(--message-name-line-height, 20px);
+		// D1: the name line follows the chat text scale (M3 label/small
+		// 12/16 — review v10: smaller than the 14 px body, as before D1).
+		font-size: var(--message-name-font-size, 12px);
+		line-height: var(--message-name-line-height, 16px);
 
 		&--self {
 			color: $message-name-self;
@@ -1294,9 +1295,9 @@ $message-avatar-overlap: -19px;
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
 
-		// D1: the thread entry line follows the chat text scale (14/20).
-		font-size: var(--thread-entry-font-size, 14px);
-		line-height: var(--thread-entry-line-height, 20px);
+		// D1: the thread entry line follows the chat text scale (label/small 12/16).
+		font-size: var(--thread-entry-font-size, 12px);
+		line-height: var(--thread-entry-line-height, 16px);
 		text-align: left;
 		cursor: pointer;
 		align-self: flex-start;

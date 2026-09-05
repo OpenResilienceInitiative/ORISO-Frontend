@@ -1835,15 +1835,21 @@ const expectChatTextSize = async (
 		fontSize,
 		lineHeight,
 		preview,
+		previewLineHeight,
 		name,
+		nameLineHeight,
 		threadEntry,
+		threadEntryLineHeight,
 		composer
 	}: {
 		fontSize: string;
 		lineHeight: string;
 		preview: string;
+		previewLineHeight: string;
 		name: string;
+		nameLineHeight: string;
 		threadEntry: string;
+		threadEntryLineHeight: string;
 		composer: string;
 	}
 ) => {
@@ -1868,14 +1874,19 @@ const expectChatTextSize = async (
 		)
 	)) {
 		expect(getComputedStyle(line).fontSize).toBe(preview);
+		// (review v10: the preview line follows the label scale, not a
+		// hard 20 px)
+		expect(getComputedStyle(line).lineHeight).toBe(previewLineHeight);
 	}
-	// Sender name line ("Mona S.").
+	// Sender name line ("Mona S.") — review v10 D1: M3 label/small 12/16,
+	// visibly smaller than the 14 px body.
 	const names = Array.from(
 		canvasElement.querySelectorAll<HTMLElement>('.messageItem__username')
 	);
 	await expect(names.length).toBeGreaterThan(0);
 	for (const line of names) {
 		expect(getComputedStyle(line).fontSize).toBe(name);
+		expect(getComputedStyle(line).lineHeight).toBe(nameLineHeight);
 	}
 	// Thread entry under the root message ("2 Antworten · …").
 	const entry = canvasElement.querySelector<HTMLElement>(
@@ -1883,6 +1894,9 @@ const expectChatTextSize = async (
 	)!;
 	await expect(entry).not.toBeNull();
 	await expect(getComputedStyle(entry).fontSize).toBe(threadEntry);
+	await expect(getComputedStyle(entry).lineHeight).toBe(
+		threadEntryLineHeight
+	);
 	// Composer text and its placeholder (the placeholder is a ::before of
 	// the empty paragraph and inherits the editor's size).
 	const editors = Array.from(
@@ -1913,8 +1927,11 @@ export const ChatTextSizeLegacy: Story = {
 			fontSize: '16px',
 			lineHeight: '21px',
 			preview: '14px',
+			previewLineHeight: '20px',
 			name: '12px',
+			nameLineHeight: '13px',
 			threadEntry: '12px',
+			threadEntryLineHeight: '16px',
 			composer: '16px'
 		});
 		await expect(
@@ -1924,7 +1941,7 @@ export const ChatTextSizeLegacy: Story = {
 };
 
 export const ChatTextSizeCompact: Story = {
-	name: '(h2) Chat text size — compact 14/20 (preview 12, name 14, thread entry 14, composer 14) = DEFAULT',
+	name: '(h2) Chat text size — compact 14/20 (preview 12/16, name 12/16, thread entry 12/16, composer 14) = DEFAULT',
 	globals: desktop1280Globals,
 	args: {
 		panel: 'supervision',
@@ -1937,8 +1954,11 @@ export const ChatTextSizeCompact: Story = {
 			fontSize: '14px',
 			lineHeight: '20px',
 			preview: '12px',
-			name: '14px',
-			threadEntry: '14px',
+			previewLineHeight: '16px',
+			name: '12px',
+			nameLineHeight: '16px',
+			threadEntry: '12px',
+			threadEntryLineHeight: '16px',
 			composer: '14px'
 		});
 		// The default needs no modifier class — nothing on the stage root.
