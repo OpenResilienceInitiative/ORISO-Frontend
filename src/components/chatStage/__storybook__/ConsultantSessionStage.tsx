@@ -255,6 +255,9 @@ function MainChat({
 	/** Phone: the composer's back arrow leaves the chat (T16). */
 	onBack?: () => void;
 }) {
+	// D7/D8: on the phone the composer carries the back arrow, so the
+	// header renders none; the call buttons move into the kebab menu.
+	const phoneHeader = onBack !== undefined;
 	const { t } = useTranslation();
 	const paneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(paneRef);
@@ -278,7 +281,11 @@ function MainChat({
 	return (
 		<div className="chatStage__mainPane" ref={paneRef} data-cy="stage-main">
 			<div>
-				<SessionHeaderComponent bannedUsers={[]} />
+				<SessionHeaderComponent
+					bannedUsers={[]}
+					hideBackButton={phoneHeader}
+					callsInMenu={phoneHeader}
+				/>
 			</div>
 			<div className="session__content" id="session-scroll-container">
 				<MessageTimeline
@@ -383,6 +390,7 @@ function SupervisionRoom({
 					onSelectChannel={onSelectChannel}
 					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
+					hideBackButton={onBack !== undefined}
 					onClose={onBack ? undefined : onClose}
 				/>
 			}
@@ -456,6 +464,7 @@ function ThreadRoom({
 					onSelectChannel={onSelectChannel}
 					autoFocusChannelButton={focusChannelButton}
 					onBack={onBack}
+					hideBackButton={onBack !== undefined}
 					onClose={onBack ? undefined : onClose}
 				/>
 			}

@@ -62,13 +62,13 @@ describe('getComposerHeightBounds', () => {
 	});
 
 	it('uses the one-line mobile minimum below the breakpoint (T10)', () => {
-		// Toolbar strip (66 px to the editor top) + one 22 px line + 10 px
-		// bottom inset + 2 × 2 px card border = 102 px — no dock, no spare
-		// line under the placeholder (stage v3 review, 05.09.).
+		// Toolbar strip (66 px to the editor top) + one 20 px line (D1:
+		// 14 px × 1.4) + 10 px bottom inset + 2 × 2 px card border = 100 px
+		// — no dock, no spare line under the placeholder (stage v3 review).
 		expect(
 			getComposerHeightBounds({ viewportWidth: 375, viewportHeight: 812 })
 				.minHeight
-		).toBe(102);
+		).toBe(100);
 		expect(
 			getComposerHeightBounds({
 				viewportWidth: 1280,
@@ -79,16 +79,16 @@ describe('getComposerHeightBounds', () => {
 
 	it('T35: compact (dual mode) desktop composers rest at one line', () => {
 		// 84 px from the card top to the editor (1 px border + 16 px dock +
-		// 66 px toolbar strip) + one 22 px line + 36 px below (18 px editor
-		// inset + 16 px dock + 1 px border + rounding) = 142 px — the same
-		// one-line rule as the phone, with the desktop's insets.
+		// 66 px toolbar strip) + one 20 px line (D1) + 36 px below (18 px
+		// editor inset + 16 px dock + 1 px border + rounding) = 138 px — the
+		// same one-line rule as the phone, with the desktop's insets.
 		expect(
 			getComposerHeightBounds({
 				viewportWidth: 1280,
 				viewportHeight: 900,
 				compact: true
 			}).minHeight
-		).toBe(142);
+		).toBe(138);
 		// The phone already rests at one line; compact changes nothing there.
 		expect(
 			getComposerHeightBounds({
@@ -96,7 +96,7 @@ describe('getComposerHeightBounds', () => {
 				viewportHeight: 812,
 				compact: true
 			}).minHeight
-		).toBe(102);
+		).toBe(100);
 		// Off by default.
 		expect(
 			getComposerHeightBounds({

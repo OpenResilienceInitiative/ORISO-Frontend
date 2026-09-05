@@ -177,11 +177,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 
 				// T35: dual mode — one line at rest (`composerResize.ts`
-				// MIN_HEIGHT_COMPACT_DESKTOP = 142); `--composer-height`
+				// MIN_HEIGHT_COMPACT_DESKTOP = 138); `--composer-height`
 				// grows it while typing. Same rule as the phone's 102.
 				&--compact {
-					min-height: var(--composer-height, 142px);
-					height: var(--composer-height, 142px);
+					min-height: var(--composer-height, 138px);
+					height: var(--composer-height, 138px);
 				}
 
 				&--expanded {
@@ -214,9 +214,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						box-shadow: none !important;
 
 						// T10: one line by default (`composerResize.ts`
-						// MIN_HEIGHT_MOBILE = 102); `--composer-height` grows it.
-						min-height: var(--composer-height, 102px);
-						height: var(--composer-height, 102px);
+						// MIN_HEIGHT_MOBILE = 100); `--composer-height` grows it.
+						min-height: var(--composer-height, 100px);
+						height: var(--composer-height, 100px);
 					}
 
 					&::before {
@@ -228,8 +228,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 102px);
-						height: var(--composer-height, 102px);
+						min-height: var(--composer-height, 100px);
+						height: var(--composer-height, 100px);
 					}
 				}
 			}

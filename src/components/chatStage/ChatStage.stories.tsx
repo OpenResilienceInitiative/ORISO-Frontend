@@ -1161,12 +1161,16 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 				(item) => item.getAttribute('data-channel-id') === 'supervision'
 			)!
 		);
-		// → the secondary view with the supervision room.
+		// → the secondary view with the supervision room (D7: no header
+		// back arrow — the composer's arrow is the one back control).
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('[data-cy="panel-header-back"]')
+				canvasElement.querySelector('[data-cy="stage-panel"]')
 			).not.toBeNull()
 		);
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-header-back"]')
+		).toBeNull();
 		await expect(panelTitle(canvasElement).kind).toBe('Supervision');
 		// Inside the secondary view the header menu lists all channels …
 		await userEvent.click(
@@ -1187,7 +1191,7 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 			expect(panelTitle(canvasElement).kind).toBe('Thread #1')
 		);
 		await expect(
-			canvasElement.querySelector('[data-cy="panel-header-back"]')
+			canvasElement.querySelector('[data-cy="stage-panel"]')
 		).not.toBeNull();
 		// The phone FAB still leads back to the main chat.
 		await expect(
@@ -1195,6 +1199,84 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 				.querySelector('[data-cy="channel-switcher-fab"]')
 				?.getAttribute('aria-label')
 		).toMatch(/Beratungschat|counselling|Nebenkanäle|side channels/i);
+	}
+};
+
+/**
+ * D7/D8 (phone): exactly ONE back control on the screen — the composer's
+ * arrow, no header arrow — and no inline call buttons in the header row:
+ * they are rows of the kebab menu, and the title keeps ≥ 40 % of the row.
+ */
+const expectPhoneHeaderRules = async (
+	canvasElement: HTMLElement,
+	{ header }: { header: 'main' | 'panel' }
+) => {
+	await expect(
+		canvasElement.querySelectorAll('[data-cy="composer-back"]').length
+	).toBe(1);
+	await expect(
+		canvasElement.querySelector('.sessionInfo__backButton')
+	).toBeNull();
+	await expect(
+		canvasElement.querySelector('[data-cy="panel-header-back"]')
+	).toBeNull();
+	// Every "back" navigation control on screen, by accessible name —
+	// the phone FAB ("Zurück zum Beratungschat") is the channel switcher
+	// (T15), the toolbar's "Zurück zu allen Werkzeugen" a formatting
+	// sub-menu; neither is a screen back control.
+	const backControls = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('a, button')
+	).filter(
+		(el) =>
+			/^(zurück|back)$/i.test(
+				(el.getAttribute('aria-label') ?? '').trim()
+			) ||
+			el.matches(
+				'.sessionInfo__backButton, [data-cy="panel-header-back"]'
+			)
+	);
+	await expect(backControls.length).toBe(1);
+	await expect(backControls[0].getAttribute('data-cy')).toBe('composer-back');
+	if (header === 'main') {
+		await expect(
+			canvasElement.querySelector('.sessionMenu__videoCallButtons')
+		).toBeNull();
+		const row = canvasElement.querySelector<HTMLElement>(
+			'.sessionInfo__headerWrapper'
+		)!;
+		const title = canvasElement.querySelector<HTMLElement>(
+			'.sessionInfo__username'
+		)!;
+		await expect(
+			title.getBoundingClientRect().width /
+				row.getBoundingClientRect().width
+		).toBeGreaterThanOrEqual(0.4);
+		// The calls live in the kebab menu (D8) — open it and look.
+		const kebab = canvasElement.querySelector<HTMLButtonElement>(
+			'.sessionMenu__icon--mobile'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionMenu__content--open')
+			).not.toBeNull()
+		);
+		const flyout = canvasElement.querySelector<HTMLElement>(
+			'.sessionMenu__content--open'
+		)!;
+		await expect(
+			flyout.querySelector('[data-cy="session-menu-start-video-call"]')
+		).not.toBeNull();
+		await expect(
+			flyout.querySelector('[data-cy="session-menu-start-call"]')
+		).not.toBeNull();
+		// (the organism keeps its rows mounted; "closed" = the open class gone)
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionMenu__content--open')
+			).toBeNull()
+		);
 	}
 };
 
@@ -1215,6 +1297,8 @@ export const PhoneMainChatWithFab: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem')
 		).toBeNull();
+		// D7/D8: one back control (composer), calls in the kebab menu.
+		await expectPhoneHeaderRules(canvasElement, { header: 'main' });
 	}
 };
 
@@ -1235,9 +1319,9 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 			'.textarea__wrapper-send-message .ProseMirror'
 		)!;
 		const oneLine = shell.getBoundingClientRect().height;
-		// One line: ~102 px (composerResize MIN_HEIGHT_MOBILE + the rendered
+		// One line: ~100 px (composerResize MIN_HEIGHT_MOBILE + the rendered
 		// line's rounding), a far cry from the old 180 px block.
-		await expect(oneLine).toBeGreaterThanOrEqual(100);
+		await expect(oneLine).toBeGreaterThanOrEqual(98);
 		await expect(oneLine).toBeLessThanOrEqual(110);
 		// One visual line: the card ends ≤ 12 px under the editor line.
 		await expect(
@@ -1346,12 +1430,16 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		await expect(
 			canvasElement.querySelector('.textarea__mobileNavigator')
 		).toBeNull();
+		const phoneLine = Number.parseFloat(
+			getComputedStyle(editor.firstElementChild || editor).lineHeight
+		);
 		await userEvent.keyboard(
 			'Zeile eins{Shift>}{Enter}{/Shift}Zeile zwei{Shift>}{Enter}{/Shift}Zeile drei'
 		);
+		// Two more lines (D1: measured line height, 2 px rounding).
 		await waitFor(() =>
 			expect(shell.getBoundingClientRect().height).toBeGreaterThanOrEqual(
-				oneLine + 40
+				oneLine + 2 * phoneLine - 2
 			)
 		);
 		await expect(
@@ -1386,7 +1474,7 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 			bubblesAtLeast: 4
 		});
 		await expect(
-			canvasElement.querySelector('[data-cy="panel-header-back"]')
+			canvasElement.querySelector('[data-cy="stage-panel"]')
 		).not.toBeNull();
 		const fab = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="channel-switcher-fab"]'
@@ -1394,6 +1482,9 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		await expect(fab.getAttribute('aria-label')).toMatch(
 			/Beratungschat|counselling/i
 		);
+		// D7: the composer's arrow is the only back control — the panel
+		// header renders none.
+		await expectPhoneHeaderRules(canvasElement, { header: 'panel' });
 	}
 };
 

@@ -95,6 +95,12 @@ export interface SessionMenuProps {
 	showMobileEndAnonymousChatAction?: boolean;
 	onMobileEndAnonymousChatAction?: () => void;
 	mobileEndAnonymousChatDisabled?: boolean;
+	/**
+	 * D8 (Frank, 05.09.2026): the audio/video call buttons leave the header
+	 * row and become rows of this menu (phone: the title needs the width).
+	 * Off by default — B2 sets it from the viewport (`untilL`).
+	 */
+	callsInMenu?: boolean;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -543,6 +549,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				!isLoadingTenantSettings &&
 				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
+				!props.callsInMenu &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
 						className="sessionMenu__videoCallButtons"
@@ -630,25 +637,54 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						/>
 						<ChatMenuDropdownDivider />
-						{/* REMOVED: Mobile dropdown video call items - now using desktop buttons on mobile too */}
-						{false && hasVideoCallFeatures() && (
-							<>
-								<div
-									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-									onClick={() => handleStartVideoCall(true)}
-								>
-									{translate(
-										'videoCall.button.startVideoCall'
+						{/* D8 (05.09.2026): with `callsInMenu` the call buttons
+						    are rows of this menu instead of header buttons —
+						    the organism's rows (icon · title), same handlers
+						    as the buttons, same feature gates. */}
+						{props.callsInMenu &&
+							sessionMenuOwnsCallControls(
+								activeSession.isGroup
+							) &&
+							!isLoadingTenantSettings &&
+							hasVideoCallFeatures() &&
+							!props.isSupervisor && (
+								<>
+									{isVideoCallsEnabled && (
+										<div
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												setFlyoutOpen(false);
+												handleStartVideoCall(true);
+											}}
+											data-cy="session-menu-start-video-call"
+										>
+											<SessionMenuItemContent
+												icon={<VideoCallHeaderIcon />}
+												title={translate(
+													'videoCall.button.startVideoCall'
+												)}
+											/>
+										</div>
 									)}
-								</div>
-								<div
-									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-									onClick={() => handleStartVideoCall()}
-								>
-									{translate('videoCall.button.startCall')}
-								</div>
-							</>
-						)}
+									{isAudioCallsEnabled && (
+										<div
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												setFlyoutOpen(false);
+												handleStartVideoCall(false);
+											}}
+											data-cy="session-menu-start-call"
+										>
+											<SessionMenuItemContent
+												icon={<AudioCallHeaderIcon />}
+												title={translate(
+													'videoCall.button.startCall'
+												)}
+											/>
+										</div>
+									)}
+								</>
+							)}
 
 						{props.isAskerInfoAvailable && (
 							<Link

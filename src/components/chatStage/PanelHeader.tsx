@@ -85,6 +85,12 @@ export interface PanelHeaderProps {
 	'autoFocusChannelButton'?: boolean;
 	/** Phone: back to the main chat. Rendered before the title. */
 	'onBack'?: () => void;
+	/**
+	 * D7: the room's composer already leads with the back arrow (T16) —
+	 * the header renders no second back control; `onBack` still decides
+	 * that this is the phone's secondary view (no close button).
+	 */
+	'hideBackButton'?: boolean;
 	/** Desktop: close the panel. Rendered at the end of the row. */
 	'onClose'?: () => void;
 	/** Extra actions before the close button. */
@@ -107,6 +113,7 @@ export const PanelHeader = ({
 	onSelectChannel,
 	autoFocusChannelButton = false,
 	onBack,
+	hideBackButton = false,
 	onClose,
 	actions,
 	'data-cy': dataCy = 'panel-header'
@@ -238,7 +245,7 @@ export const PanelHeader = ({
 			ref={headerRef}
 		>
 			<div className="panelHeader__row">
-				{onBack && (
+				{onBack && !hideBackButton && (
 					<button
 						type="button"
 						className="panelHeader__backButton"

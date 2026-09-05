@@ -108,6 +108,17 @@ export interface SessionHeaderProps {
 	 * value to force the button on/off per state (Figma #430).
 	 */
 	showAddButton?: boolean;
+	/**
+	 * D7 (Frank, 05.09.2026): on the phone the composer's action bar leads
+	 * with the back arrow (T16). A host whose composer carries that arrow
+	 * sets this so the header renders NO second back control.
+	 */
+	hideBackButton?: boolean;
+	/**
+	 * D8 (Frank, 05.09.2026): on the phone the call buttons leave the
+	 * header row (the title needs the width) and live in the kebab menu.
+	 */
+	callsInMenu?: boolean;
 }
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
@@ -1076,13 +1087,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
-				<Link
-					to={listPath + getSessionListTab()}
-					onClick={handleBackButton}
-					className="sessionInfo__backButton"
-				>
-					<BackIcon />
-				</Link>
+				{!props.hideBackButton && (
+					<Link
+						to={listPath + getSessionListTab()}
+						onClick={handleBackButton}
+						className="sessionInfo__backButton"
+					>
+						<BackIcon />
+					</Link>
+				)}
 				<div
 					className={clsx('sessionInfo__username', {
 						'sessionInfo__username--deactivate':
@@ -1227,6 +1240,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					hasUserInitiatedStopOrLeaveRequest={
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
+					callsInMenu={props.callsInMenu}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}

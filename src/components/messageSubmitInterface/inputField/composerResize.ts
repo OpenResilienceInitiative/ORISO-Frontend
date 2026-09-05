@@ -9,16 +9,16 @@ export const COMPOSER_MOBILE_BREAKPOINT = 899;
 
 // T10 (05.09.): on the phone the composer opens as ONE line and grows while
 // typing (auto-grow below). 66 px toolbar strip to the editor top + one
-// 22 px line + 10 px bottom inset + 2 × 2 px card border = 102 px — no dock
-// under the card, no spare line under the placeholder (stage v3 review).
-// Desktop keeps its Figma baseline …
-const MIN_HEIGHT_MOBILE = 102;
+// 20 px line (D1: 14 px × 1.4) + 10 px bottom inset + 2 × 2 px card border
+// = 100 px — no dock under the card, no spare line under the placeholder
+// (stage v3 review). Desktop keeps its Figma baseline …
+const MIN_HEIGHT_MOBILE = 100;
 const MIN_HEIGHT_DESKTOP = 196;
 // … except in dual mode (T35, side panel open): both composers rest at ONE
 // line and grow while typing, like the phone. 1 px border + 16 px dock +
-// 66 px toolbar strip = 84 px to the editor, one 22 px line, then 18 px
-// editor inset + 16 px dock + 1 px border (+ rounding) = 36 px → 142 px.
-const MIN_HEIGHT_COMPACT_DESKTOP = 142;
+// 66 px toolbar strip = 84 px to the editor, one 20 px line, then 18 px
+// editor inset + 16 px dock + 1 px border (+ rounding) = 36 px → 138 px.
+const MIN_HEIGHT_COMPACT_DESKTOP = 138;
 
 const STEP_SMALL = 24;
 const STEP_LARGE = 48;
