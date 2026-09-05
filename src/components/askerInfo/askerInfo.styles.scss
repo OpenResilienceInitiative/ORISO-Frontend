@@ -11,6 +11,16 @@ $footerButtonHeight: 96px;
 $footerButtonRadius: 100px;
 $footerButtonBackColor: #646d78;
 $footerButtonNextIdleColor: #ffe2de;
+
+// Client-profile identity row, from the Figma "Frame 970" (Horizontal,
+// height 100, gap 16) and M3/headline/large for the username.
+$profileAvatarSize: 100px;
+$profileAvatarSizeSmall: 64px;
+$userNameFontSize: 32px;
+$userNameLineHeight: 40px;
+$userNameFontSizeSmall: 24px;
+$userNameLineHeightSmall: 32px;
+$profileContentMaxWidth: 675px;
 $profileIconSize: 40px;
 $groupChatIconSize: 40px;
 $maxFormElementWidth: 320px;
@@ -144,30 +154,59 @@ $profile-footer-justify-content: center !default;
 		margin-top: 0;
 	}
 
+	/* Avatar and username sit side by side, 16px apart: Figma "Frame 970" is
+	   a horizontal row, not the stacked column this used to render
+	   (ORISO-Frontend#1192). Below $fromMedium both shrink so a long name
+	   still fits a 320px phone beside the avatar. */
 	&__user {
-		text-align: center;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base-two;
 		padding: 0 $grid-base-two $grid-base;
 		margin-top: $grid-base-three;
 
 		@include breakpoint($fromMedium) {
 			padding: 0 $grid-base-three $grid-base;
 		}
+
+		h2 {
+			font-size: $userNameFontSizeSmall;
+			line-height: $userNameLineHeightSmall;
+			font-weight: 400;
+			text-align: left;
+			margin: 0;
+			min-width: 0;
+			overflow-wrap: anywhere;
+
+			@include breakpoint($fromMedium) {
+				font-size: $userNameFontSize;
+				line-height: $userNameLineHeight;
+			}
+		}
 	}
 
 	&__icon {
 		background-color: $white;
 		border-radius: 50%;
-		width: 72px;
-		height: 72px;
-		margin: 0 auto $grid-base-two;
+		width: $profileAvatarSizeSmall;
+		height: $profileAvatarSizeSmall;
+		margin: 0;
+		flex: 0 0 auto;
 		position: relative;
 		display: flex;
 
+		@include breakpoint($fromMedium) {
+			width: $profileAvatarSize;
+			height: $profileAvatarSize;
+		}
+
 		&--user {
-			width: 72px;
-			height: 72px;
-			align-self: flex-end;
-			margin: 0 auto;
+			width: 100%;
+			height: 100%;
+			align-self: center;
+			margin: 0;
 		}
 	}
 
@@ -176,7 +215,7 @@ $profile-footer-justify-content: center !default;
 		flex-direction: column;
 		padding: 0 $grid-base-two $grid-base-ten;
 		height: auto;
-		max-width: 600px;
+		max-width: $profileContentMaxWidth;
 		width: 100%;
 		margin: 0 auto;
 
