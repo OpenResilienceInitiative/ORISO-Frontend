@@ -8,11 +8,13 @@
  * under it. Same paddings as the session header so both hairlines end on
  * the same y (T3).
  *
- * The channel icon is a button: it opens the same channel list as the FAB
- * speed dial (`ChannelSwitcherMenu`) with *every* secondary channel of the
- * session — threads and supervision — the shown one marked, so the FAB can
- * hide while a panel is open (T1, T15). When the title column is tight the
- * channel word gives way to the participant count (`panelHeaderState.ts`).
+ * The channel word is a menu button and looks like one (T19): icon, word,
+ * a small chevron that turns while the menu is open. It opens the channel
+ * card (`ChannelMenu`, T20) with *every* secondary channel of the session
+ * — supervision first, threads by recency — anchored BELOW the header so
+ * the panel title stays readable (review v5). The FAB hides while a panel
+ * is open (T1, T15). When the title column is tight the channel word gives
+ * way to the participant count (`panelHeaderState.ts`).
  */
 import * as React from 'react';
 import {
@@ -26,11 +28,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
-import { ChannelSwitcherMenu } from './ChannelSwitcherFab';
+import { ChannelMenu } from './ChannelMenu';
 import type {
 	SecondaryChannel,
 	SecondaryChannelKind
@@ -56,10 +59,10 @@ export interface PanelHeaderProps {
 	/** Tag under the hairline — topic or a subtitle. */
 	'tag'?: string;
 	/**
-	 * All secondary channels of the conversation (T15). The channel icon
-	 * lists them as the FAB menu would, the shown one (`activeChannelId`)
-	 * marked; with nothing else to switch to the icon is a disabled button
-	 * (house rule: disable, never hide).
+	 * All secondary channels of the conversation (T15/T20). The channel
+	 * button lists them in the channel card, the shown one
+	 * (`activeChannelId`) marked; with nothing else to switch to the button
+	 * is disabled (house rule: disable, never hide).
 	 */
 	'channels'?: SecondaryChannel[];
 	/** Id of the channel this panel shows. */
@@ -96,6 +99,7 @@ export const PanelHeader = ({
 	const { t: translate } = useTranslation();
 	const [optionsOpen, setOptionsOpen] = useState(false);
 	const optionsRef = useRef<HTMLDivElement | null>(null);
+	const menuRef = useRef<HTMLDivElement | null>(null);
 	const optionsButtonRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
 	const Glyph = kindGlyph(kind);
@@ -129,20 +133,27 @@ export const PanelHeader = ({
 	);
 
 	const closeOptions = useCallback(() => setOptionsOpen(false), []);
+	const closeAndRefocus = useCallback(() => {
+		setOptionsOpen(false);
+		optionsButtonRef.current?.focus();
+	}, []);
 
 	useEffect(() => {
 		if (!optionsOpen) {
 			return undefined;
 		}
 		const onPointerDown = (event: PointerEvent) => {
-			if (!optionsRef.current?.contains(event.target as Node)) {
+			const target = event.target as Node;
+			if (
+				!optionsRef.current?.contains(target) &&
+				!menuRef.current?.contains(target)
+			) {
 				closeOptions();
 			}
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
-				closeOptions();
-				optionsButtonRef.current?.focus();
+				closeAndRefocus();
 			}
 		};
 		document.addEventListener('pointerdown', onPointerDown);
@@ -151,7 +162,7 @@ export const PanelHeader = ({
 			document.removeEventListener('pointerdown', onPointerDown);
 			document.removeEventListener('keydown', onKeyDown);
 		};
-	}, [optionsOpen, closeOptions]);
+	}, [optionsOpen, closeOptions, closeAndRefocus]);
 
 	const unreadLabel =
 		unreadCount > 0
@@ -199,7 +210,12 @@ export const PanelHeader = ({
 						<button
 							ref={optionsButtonRef}
 							type="button"
-							className="panelHeader__kindButton"
+							className={[
+								'panelHeader__kindButton',
+								optionsOpen && 'panelHeader__kindButton--open'
+							]
+								.filter(Boolean)
+								.join(' ')}
 							data-cy="panel-header-channel-options"
 							aria-label={[
 								title,
@@ -232,25 +248,13 @@ export const PanelHeader = ({
 							>
 								{kindLabel.text}
 							</span>
+							{/* T19: the word opens a menu — say so with a chevron. */}
+							<ChevronIcon
+								className="panelHeader__kindChevron"
+								data-cy="panel-header-kind-chevron"
+								aria-hidden="true"
+							/>
 						</button>
-						{optionsOpen && hasOptions && (
-							<div
-								className="channelSwitcher channelSwitcher--anchored"
-								data-cy="panel-header-channel-menu"
-							>
-								<ChannelSwitcherMenu
-									id={menuId}
-									items={menu.items}
-									activeId={menu.activeId}
-									onSelect={(item) => {
-										closeOptions();
-										if (item.id !== menu.activeId) {
-											onSelectChannel?.(item.id);
-										}
-									}}
-								/>
-							</div>
-						)}
 					</div>
 					<h2 className="panelHeader__name">
 						{name ? (
@@ -311,6 +315,27 @@ export const PanelHeader = ({
 					</span>
 				)}
 			</div>
+			{optionsOpen && hasOptions && (
+				// T20: the channel card hangs below the whole header (hairline
+				// included), never over the title.
+				<div
+					className="panelHeader__menu"
+					ref={menuRef}
+					data-cy="panel-header-channel-menu"
+				>
+					<ChannelMenu
+						id={menuId}
+						channels={channels}
+						activeChannelId={activeChannelId}
+						onSelect={(channelId) => {
+							if (channelId !== activeChannelId) {
+								onSelectChannel?.(channelId);
+							}
+						}}
+						onClose={closeAndRefocus}
+					/>
+				</div>
+			)}
 		</header>
 	);
 };

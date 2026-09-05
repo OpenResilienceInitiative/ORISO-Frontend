@@ -9,8 +9,19 @@
  *
  * No React, no DOM — the component only renders what this returns.
  */
+import { buildChannelMenu } from './channelMenuModel';
 
 export type SecondaryChannelKind = 'supervision' | 'thread';
+
+/** T20: the newest message of a channel — orders the threads, feeds the preview. */
+export interface SecondaryChannelLastMessage {
+	/** Display name of the author ("Elena P."). */
+	author: string;
+	/** Plain text of the message (already free of markup). */
+	text: string;
+	/** Epoch milliseconds. */
+	ts: number;
+}
 
 export interface SecondaryChannel {
 	id: string;
@@ -18,6 +29,7 @@ export interface SecondaryChannel {
 	/** Already resolved label (see `resolveChannelLabel`). */
 	label: string;
 	unread?: number;
+	lastMessage?: SecondaryChannelLastMessage;
 }
 
 export interface ChannelSwitcherItem {
@@ -35,7 +47,7 @@ export interface ChannelSwitcherState {
 	variant: ChannelSwitcherVariant;
 	/** `menu` = speed dial with one segment per channel. */
 	mode: ChannelSwitcherMode;
-	/** Top-to-bottom order of the speed dial; threads first, supervision last. */
+	/** Top-to-bottom order of the menu: supervision first, then threads by recency (T20). */
 	items: ChannelSwitcherItem[];
 	totalUnread: number;
 	/** Glyph on the closed FAB: the channel needing attention, else the first. */
@@ -57,12 +69,14 @@ export const deriveChannelSwitcherState = (
 		unread: clampUnread(channel.unread)
 	}));
 
-	// Figma stacks the segments so the supervision entry is the one right
-	// above the FAB; threads pile up on top in the order the caller gives.
-	const items = [
-		...normalised.filter((item) => item.kind === 'thread'),
-		...normalised.filter((item) => item.kind === 'supervision')
-	];
+	// T20: one order for every host — the supervision chat first, then the
+	// threads by their most recent message (`channelMenuModel`).
+	const order = new Map(
+		buildChannelMenu(channels).map((row, index) => [row.id, index])
+	);
+	const items = [...normalised].sort(
+		(a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
+	);
 
 	const totalUnread = items.reduce((sum, item) => sum + item.unread, 0);
 	const attention = items.find((item) => item.unread > 0);

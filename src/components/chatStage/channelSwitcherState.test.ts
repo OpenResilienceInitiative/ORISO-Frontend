@@ -65,25 +65,31 @@ describe('deriveChannelSwitcherState (FAB switcher, Figma 9748:60084)', () => {
 		);
 	});
 
-	it('lists threads above supervision, so supervision sits closest to the FAB', () => {
+	it('lists the supervision chat first, then the threads (T20 order, shared with the panel menu)', () => {
 		const state = deriveChannelSwitcherState([
-			supervision,
 			thread1,
+			supervision,
 			thread2
 		]);
 		expect(state.items.map((item) => item.id)).toEqual([
+			'supervision',
 			'$thread-1',
-			'$thread-2',
-			'supervision'
+			'$thread-2'
 		]);
 	});
 
-	it('keeps the caller-given thread order (newest first is the caller’s job)', () => {
-		const state = deriveChannelSwitcherState([thread2, thread1]);
-		expect(state.items.map((item) => item.id)).toEqual([
-			'$thread-2',
-			'$thread-1'
-		]);
+	it('orders threads by their most recent message, given order without one', () => {
+		expect(
+			deriveChannelSwitcherState([thread2, thread1]).items.map(
+				(item) => item.id
+			)
+		).toEqual(['$thread-2', '$thread-1']);
+		expect(
+			deriveChannelSwitcherState([
+				{ ...thread2, lastMessage: { author: 'A', text: 'x', ts: 1 } },
+				{ ...thread1, lastMessage: { author: 'B', text: 'y', ts: 2 } }
+			]).items.map((item) => item.id)
+		).toEqual(['$thread-1', '$thread-2']);
 	});
 
 	it('clamps negative or missing unread counts to zero', () => {
@@ -95,14 +101,17 @@ describe('deriveChannelSwitcherState (FAB switcher, Figma 9748:60084)', () => {
 		expect(state.variant).toBe('idle');
 	});
 
-	it('picks the icon of the first channel with attention, else the first item', () => {
+	it('picks the icon of the first channel with attention, else the first item (supervision leads)', () => {
 		expect(
 			deriveChannelSwitcherState([thread1, supervision]).iconKind
-		).toBe('thread');
-		expect(
-			deriveChannelSwitcherState([thread1, { ...supervision, unread: 1 }])
-				.iconKind
 		).toBe('supervision');
+		expect(deriveChannelSwitcherState([thread1, thread2]).iconKind).toBe(
+			'thread'
+		);
+		expect(
+			deriveChannelSwitcherState([{ ...thread1, unread: 1 }, supervision])
+				.iconKind
+		).toBe('thread');
 	});
 });
 

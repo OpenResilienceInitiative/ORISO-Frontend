@@ -329,6 +329,12 @@
 				"title": "Thread",
 				"subtitle": "Antworten auf eine Nachricht aus dem Beratungschat"
 			}
+		},
+		"menu": {
+			"eyebrow": "Abzweigungen zu diesem Gespräch",
+			"title": "Ableitende Gespräche",
+			"supervisionChat": "Supervisionschat",
+			"thread": "Thread #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1732,7 +1738,8 @@
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
 			"title": "Thread",
-			"placeholder": "Im Thread antworten"
+			"placeholder": "Im Thread antworten",
+			"open": "Thread öffnen"
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"

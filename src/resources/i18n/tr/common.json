@@ -334,6 +334,12 @@
 			"mainChat": "Danışma sohbeti",
 			"openChannel": "{{label}} aç",
 			"openMenu": "Yan kanalları göster"
+		},
+		"menu": {
+			"eyebrow": "Bu görüşmenin dalları",
+			"title": "Türetilmiş görüşmeler",
+			"supervisionChat": "Süpervizyon sohbeti",
+			"thread": "Konu #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1711,7 +1717,8 @@
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
 			"title": "Konu",
-			"placeholder": "Konuda yanıtla"
+			"placeholder": "Konuda yanıtla",
+			"open": "Konuyu aç"
 		},
 		"deliveryStatus": {
 			"sent": "Gönderildi"

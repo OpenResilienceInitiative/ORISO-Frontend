@@ -45,6 +45,11 @@ import {
 	writePanelWidth
 } from '../stageLayout';
 import { useDockedComposerOffset } from '../useDockedComposerOffset';
+import {
+	computeThreadSummaries,
+	formatThreadEntryPreview
+} from '../../../utils/threadSummaries';
+import { toMessagePreviewText } from '../../../utils/messagePreviewText';
 import { useComposerFocus } from '../useComposerFocus';
 import {
 	ChatStageProviders,
@@ -145,6 +150,29 @@ const useViewportWidth = () => {
 		return () => window.removeEventListener('resize', update);
 	}, []);
 	return width;
+};
+
+/** T21: the thread entry's "N replies" + "Author: last reply…" from the real summary code. */
+const threadEntrySummary = (threadReplies: number) => {
+	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
+	const summary = computeThreadSummaries([
+		root,
+		...threadMessages().slice(0, threadReplies)
+	]).get(THREAD_ROOT_ID)!;
+	return {
+		replyCount: summary.replyCount,
+		lastReplyText: formatThreadEntryPreview(summary)
+	};
+};
+
+/** T20: the newest message of a channel — orders the menu, feeds the preview. */
+const lastMessageOf = (messages: ReturnType<typeof threadMessages>) => {
+	const last = messages[messages.length - 1];
+	return {
+		author: last.displayName,
+		text: toMessagePreviewText(last.message),
+		ts: Number(last.messageTime)
+	};
 };
 
 const threadRootExcerpt = () => {
@@ -257,12 +285,7 @@ function MainChat({
 					threadsEnabled
 					threadSummaryFor={(id) =>
 						id === THREAD_ROOT_ID && threadReplies > 0
-							? {
-									replyCount: threadReplies,
-									lastReplyText:
-										threadMessages()[threadReplies - 1]
-											.message
-								}
+							? threadEntrySummary(threadReplies)
 							: undefined
 					}
 					onOpenThread={noop}
@@ -593,7 +616,8 @@ export function ConsultantSessionStage({
 			},
 			labelMode
 		),
-		unread: supervisionUnread
+		unread: supervisionUnread,
+		lastMessage: lastMessageOf(supervisionMessages())
 	};
 	const threadChannels: SecondaryChannel[] = Array.from(
 		{ length: openThreads },
@@ -611,7 +635,19 @@ export function ConsultantSessionStage({
 				},
 				labelMode
 			),
-			unread: index === 0 ? threadUnread : 0
+			unread: index === 0 ? threadUnread : 0,
+			// The first thread is the real one (`$t2`, 09:25); every further
+			// one is newer so it ranks above it in the menu (Thread #1 …).
+			lastMessage:
+				index === 0
+					? lastMessageOf(threadMessages())
+					: {
+							author: COUNSELLOR_NAME,
+							text: 'Ich schicke Ihnen die Checkliste für das Gespräch mit der Personalabteilung.',
+							ts:
+								lastMessageOf(threadMessages()).ts +
+								index * 5 * 60_000
+						}
 		})
 	);
 	// Newest thread on top, supervision right above the FAB (Figma order).

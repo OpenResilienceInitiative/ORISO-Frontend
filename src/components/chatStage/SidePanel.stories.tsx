@@ -62,13 +62,23 @@ const supervisorParticipant: StackParticipant = {
 const THREAD_CHANNEL: SecondaryChannel = {
 	id: THREAD_ROOT_ID,
 	kind: 'thread',
-	label: 'Es sind ein paar Briefe gekommen…'
+	label: 'Es sind ein paar Briefe gekommen…',
+	lastMessage: {
+		author: CLIENT_NAME,
+		text: 'Okay. Vielleicht nächste Woche, wenn ich weiß, wie es mit dem Vertrag weitergeht.',
+		ts: Number(threadMessages()[1].messageTime)
+	}
 };
 const SUPERVISION_CHANNEL: SecondaryChannel = {
 	id: 'supervision',
 	kind: 'supervision',
 	label: SUPERVISOR_NAME,
-	unread: 1
+	unread: 1,
+	lastMessage: {
+		author: COUNSELLOR_NAME,
+		text: 'Danke, das hilft. Ich formuliere es so und melde mich nach dem nächsten Kontakt.',
+		ts: Number(supervisionMessages()[3].messageTime)
+	}
 };
 const timelineHandlers = {
 	handleDecryptionErrors: noop,
@@ -378,18 +388,38 @@ export const Supervision: Story = {
 		await userEvent.click(options);
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
-		// T15: every secondary channel of the session, the shown one marked.
+		// T15/T20: every secondary channel of the session, supervision
+		// first, the shown one marked; the card sits below the hairline.
 		await expect(items).toHaveLength(2);
 		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
-			THREAD_ROOT_ID
-		);
-		await expect(items[0]).not.toHaveAttribute('aria-current');
-		await expect(items[1]).toHaveAttribute(
-			'data-channel-id',
 			'supervision'
 		);
-		await expect(items[1]).toHaveAttribute('aria-current', 'true');
+		await expect(items[0]).toHaveAttribute('aria-current', 'true');
+		await expect(items[0].textContent).toContain('Supervisionschat');
+		await expect(items[1]).toHaveAttribute(
+			'data-channel-id',
+			THREAD_ROOT_ID
+		);
+		await expect(items[1]).not.toHaveAttribute('aria-current');
+		await expect(items[1].textContent).toContain('Thread #1');
+		await expect(
+			items[1].querySelector('[data-cy="channel-menu-preview"]')
+				?.textContent
+		).toContain(`${CLIENT_NAME}:`);
+		await expect(
+			panel
+				.querySelector('[data-cy="panel-header-channel-menu"]')!
+				.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(
+			panel
+				.querySelector('.panelHeader__divider')!
+				.getBoundingClientRect().bottom - 1
+		);
+		// T19: the chevron marks the word as a menu button.
+		await expect(
+			options.querySelector('[data-cy="panel-header-kind-chevron"]')
+		).not.toBeNull();
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>
 			expect(canvasElement.querySelector('[role="menu"]')).toBeNull()

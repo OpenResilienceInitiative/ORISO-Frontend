@@ -1,7 +1,6 @@
-// Channel switcher FAB + speed dial — Figma "FAB menu" 9748:60084.
-// Bound tokens there: tertiary / on-tertiary (FAB), tertiary-container /
-// on-tertiary-container (thread segments), secondary-container / on-secondary
-// (supervision segment), Corner/Extra-large 28, M3/title/medium, Elevation 3.
+// Channel switcher FAB — Figma "FAB menu" 9748:60084 (button). Bound tokens
+// there: tertiary / on-tertiary (FAB), Corner/Extra-large 28, Elevation 3.
+// The list it opens is the channel card (`channelMenu.styles.scss`, T20).
 // Attention state = the unread role every other unread indicator uses.
 
 $switcher-corner: 28px; // Corner/Extra-large
@@ -29,69 +28,9 @@ $switcher-elevation:
 		position: fixed;
 	}
 
+	// T20: the channel card (`ChannelMenu`) opens above the FAB, right-aligned.
 	&__menu {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 4px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	&__item {
-		display: inline-flex;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 8px;
-		height: $switcher-size;
-		padding: 16px 24px;
-		border: 0;
-		border-radius: $switcher-corner;
-		font-family: var(--m3-body-font-family, inherit);
-		font-size: 16px;
-		font-weight: 500;
-		line-height: 24px;
-		letter-spacing: 0.15px;
-		white-space: nowrap;
-		cursor: pointer;
-		box-shadow: $switcher-elevation;
-
-		&--thread {
-			background: var(--m3-tertiary-container, #9ba4b0);
-			color: var(--m3-on-tertiary-container, #313a44);
-		}
-
-		&--supervision,
-		&--main {
-			background: var(--m3-secondary-container, #646d78);
-			color: var(--m3-on-secondary, #fff);
-		}
-
-		&:hover {
-			filter: brightness(0.96);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
-
-		// T15: the channel on screen — the primary ring of the active list
-		// row and a bold label; `aria-current` carries it to assistive tech.
-		&--active {
-			box-shadow:
-				0 0 0 2px var(--m3-primary, #a5000a),
-				$switcher-elevation;
-			font-weight: 700;
-		}
-	}
-
-	&__itemIcon {
-		flex: 0 0 auto;
-		width: 24px;
-		height: 24px;
-		fill: currentcolor;
+		margin-bottom: 4px;
 	}
 
 	&__fab {

@@ -334,6 +334,12 @@
 			"mainChat": "Chat de conseil",
 			"openChannel": "Ouvrir {{label}}",
 			"openMenu": "Afficher les canaux secondaires"
+		},
+		"menu": {
+			"eyebrow": "Ramifications de cette conversation",
+			"title": "Conversations dérivées",
+			"supervisionChat": "Chat de supervision",
+			"thread": "Fil #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1711,7 +1717,8 @@
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",
-			"placeholder": "Répondre dans le fil"
+			"placeholder": "Répondre dans le fil",
+			"open": "Ouvrir le fil"
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"

@@ -15,6 +15,7 @@ import { ChannelSwitcherFab } from './ChannelSwitcherFab';
 import { STAGE_LAYOUT } from './stageLayout';
 import {
 	CLIENT_NAME,
+	COUNSELLOR_NAME,
 	stageRoute,
 	SUPERVISOR_NAME,
 	THREAD_ROOT_ID
@@ -26,6 +27,8 @@ const CHAT_ROOM_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38278';
 const FAB_MENU_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9748-60084';
+const CHANNEL_MENU_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9763-62964';
 
 const desktop1280Globals = { viewport: { value: 'desktop1280' } };
 
@@ -42,7 +45,12 @@ const meta = {
 				name: 'Chat with threads',
 				url: CHAT_ROOM_FIGMA_URL
 			},
-			{ type: 'figma', name: 'FAB menu', url: FAB_MENU_FIGMA_URL }
+			{ type: 'figma', name: 'FAB menu', url: FAB_MENU_FIGMA_URL },
+			{
+				type: 'figma',
+				name: 'Channel menu card',
+				url: CHANNEL_MENU_FIGMA_URL
+			}
 		],
 		viewport: {
 			options: {
@@ -101,6 +109,70 @@ const paneWidths = (canvasElement: HTMLElement) => ({
 			?.getBoundingClientRect().width ?? 0
 });
 
+/**
+ * T22: the composer's action bar scrolls horizontally when the pane is
+ * narrow — the expand icon (last button) stays fully reachable and never
+ * slides under the send button, which keeps its place at the right.
+ */
+const expectActionBarScrolls = async (pane: HTMLElement) => {
+	const bar = pane.querySelector<HTMLElement>('.composerToolbar--default')!;
+	const buttons = Array.from(bar.querySelectorAll('button'));
+	const expand = buttons[buttons.length - 1];
+	const send = pane.querySelector<HTMLElement>('.sendButton')!;
+	await waitFor(() =>
+		expect(bar.scrollWidth).toBeGreaterThan(bar.clientWidth)
+	);
+	const sendBox = send.getBoundingClientRect();
+	// The bar itself ends before the send button: whatever overflows is
+	// clipped inside the bar, never painted under the button.
+	await expect(bar.getBoundingClientRect().right).toBeLessThanOrEqual(
+		sendBox.left + 1
+	);
+	await expect(getComputedStyle(bar).overflowX).toBe('auto');
+	bar.scrollLeft = bar.scrollWidth;
+	await waitFor(() => {
+		const barBox = bar.getBoundingClientRect();
+		const box = expand.getBoundingClientRect();
+		expect(box.left).toBeGreaterThanOrEqual(barBox.left - 1);
+		expect(box.right).toBeLessThanOrEqual(barBox.right + 1);
+		expect(box.right).toBeLessThanOrEqual(sendBox.left + 1);
+	});
+	bar.scrollLeft = 0;
+};
+
+/**
+ * T23 (desktop): the action bar starts with the scroll-to-newest arrow —
+ * a real arrow glyph — with no reserved space for the phone's back arrow.
+ */
+const expectDesktopActionBarStart = async (pane: HTMLElement) => {
+	const bar = pane.querySelector<HTMLElement>('.composerToolbar--default')!;
+	const first = bar.querySelector('button')!;
+	await expect(first.getAttribute('data-cy')).toBe(
+		'composer-scroll-to-newest'
+	);
+	await expect(bar.querySelector('[data-cy="composer-back"]')).toBeNull();
+	await expect(
+		first.querySelector('[data-testid="ArrowDownwardIcon"]')
+	).not.toBeNull();
+	const field = pane.querySelector<HTMLElement>('.textarea__inputWrapper')!;
+	await expect(
+		first.getBoundingClientRect().left - field.getBoundingClientRect().left
+	).toBeLessThanOrEqual(16);
+};
+
+/** The channel card must hang below the header — never over the title. */
+const expectMenuBelowHeader = async (canvasElement: HTMLElement) => {
+	const menu = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="panel-header-channel-menu"]'
+	)!;
+	const hairline = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel"] .panelHeader__divider'
+	)!;
+	await expect(menu.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+		hairline.getBoundingClientRect().bottom - 1
+	);
+};
+
 /** (a) Frank's choice: the supervision room joined inside the chat card. */
 export const SupervisionInsideTheCard: Story = {
 	name: '(a) Supervision inside the card',
@@ -135,6 +207,14 @@ export const SupervisionInsideTheCard: Story = {
 			canvasElement.querySelector('[data-cy="stage-panel"]')
 				?.textContent ?? ''
 		).not.toContain(CLIENT_NAME);
+		// T22: the narrow panel's action bar scrolls, expand stays reachable.
+		await expectActionBarScrolls(
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-panel"]')!
+		);
+		// T23: desktop bar starts with the arrow-down, nothing reserved.
+		await expectDesktopActionBarStart(
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
+		);
 		// Same card: the panel is a child of the `.session` card.
 		await expect(
 			canvasElement.querySelector('.session [data-cy="stage-panel"]')
@@ -375,23 +455,63 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 			'[data-cy="panel-header-channel-options"]'
 		)!;
 		await expect(options).toHaveAttribute('aria-haspopup', 'menu');
+		// T19: the word visibly opens a menu — chevron present, turns open.
+		const chevron = options.querySelector<HTMLElement>(
+			'[data-cy="panel-header-kind-chevron"]'
+		)!;
+		await expect(chevron).not.toBeNull();
 		await userEvent.click(options);
-		const items = within(await canvas.findByRole('menu')).getAllByRole(
-			'menuitem'
-		);
-		// T15: all three channels, the shown thread marked as current.
+		await expect(options).toHaveAttribute('aria-expanded', 'true');
+		const menu = await canvas.findByRole('menu');
+		const items = within(menu).getAllByRole('menuitem');
+		// T20: the card — eyebrow, title, supervision first (⇧S), then the
+		// threads by their latest message (⇧1, ⇧2), the shown one current.
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-menu-eyebrow"]')
+				?.textContent
+		).toBe('Abzweigungen zu diesem Gespräch');
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-menu-title"]')
+				?.textContent
+		).toBe('Ableitende Gespräche');
 		await expect(items).toHaveLength(3);
-		await expect(items[0]).toHaveAttribute('data-channel-id', '$thread-2');
-		await expect(items[1]).toHaveAttribute(
-			'data-channel-id',
-			THREAD_ROOT_ID
-		);
-		await expect(items[1]).toHaveAttribute('aria-current', 'true');
-		await expect(items[2]).toHaveAttribute(
+		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
 			'supervision'
 		);
+		await expect(items[0].textContent).toContain('Supervisionschat');
+		await expect(items[0].textContent).toContain('⇧S');
+		await expect(items[1]).toHaveAttribute('data-channel-id', '$thread-2');
+		await expect(items[1].textContent).toContain('Thread #1');
+		await expect(items[1].textContent).toContain('⇧1');
+		await expect(items[2]).toHaveAttribute(
+			'data-channel-id',
+			THREAD_ROOT_ID
+		);
+		await expect(items[2].textContent).toContain('Thread #2');
+		await expect(items[2]).toHaveAttribute('aria-current', 'true');
+		// Each row: "Author: last message…" on one line.
+		const previews = items.map(
+			(item) =>
+				item.querySelector('[data-cy="channel-menu-preview"]')
+					?.textContent ?? ''
+		);
+		await expect(previews[0]).toContain(`${COUNSELLOR_NAME}:`);
+		await expect(previews[2]).toContain(`${CLIENT_NAME}:`);
+		items.forEach((item) => {
+			const preview = item.querySelector<HTMLElement>(
+				'[data-cy="channel-menu-preview"]'
+			)!;
+			expect(preview.getBoundingClientRect().height).toBeLessThanOrEqual(
+				22
+			);
+		});
+		await expectMenuBelowHeader(canvasElement);
 		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[role="menu"]')).toBeNull()
+		);
+		await expect(options).toHaveAttribute('aria-expanded', 'false');
 		// T6: the thread composer carries the drag pill as well.
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-panel"] .dragHandle')
@@ -464,9 +584,9 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		);
 		await expect(
 			items.map((i) => i.getAttribute('data-channel-id'))
-		).toEqual(['$thread-2', THREAD_ROOT_ID, 'supervision']);
-		await expect(items[1]).toHaveAttribute('aria-current', 'true');
-		await expect(items[2].textContent).toContain('2');
+		).toEqual(['supervision', '$thread-2', THREAD_ROOT_ID]);
+		await expect(items[2]).toHaveAttribute('aria-current', 'true');
+		await expect(items[0].textContent).toContain('2');
 		await userEvent.keyboard('{Escape}');
 		// → supervision
 		await pickChannelFromHeader(canvasElement, 'supervision');
@@ -488,6 +608,73 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
 		).toBeNull();
+	}
+};
+
+/**
+ * (d3) T20 keyboard: the card opens with focus on the current row; arrows,
+ * Home and End move it; Escape closes and returns focus to the channel
+ * button; ⇧S jumps to the supervision chat, ⇧2 back to the thread.
+ */
+export const PanelChannelCardKeyboardAndShortcuts: Story = {
+	name: '(d3) Panel channel card — keyboard, shortcuts, below the header (T19/T20)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'thread',
+		panelVariant: 'inside',
+		openThreads: 2,
+		supervisionUnread: 1
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 9
+		});
+		const options = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!;
+		await userEvent.click(options);
+		const items = within(await canvas.findByRole('menu')).getAllByRole(
+			'menuitem'
+		);
+		// Focus lands on the current row (the shown thread, third row).
+		await waitFor(() => expect(document.activeElement).toBe(items[2]));
+		await userEvent.keyboard('{ArrowDown}');
+		await expect(document.activeElement).toBe(items[0]);
+		await userEvent.keyboard('{ArrowUp}');
+		await expect(document.activeElement).toBe(items[2]);
+		await userEvent.keyboard('{Home}');
+		await expect(document.activeElement).toBe(items[0]);
+		await userEvent.keyboard('{End}');
+		await expect(document.activeElement).toBe(items[2]);
+		await expectMenuBelowHeader(canvasElement);
+		// Escape: closed, focus back on the channel button.
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[role="menu"]')).toBeNull()
+		);
+		await expect(document.activeElement).toBe(options);
+		// ⇧S → supervision.
+		await userEvent.click(options);
+		await canvas.findByRole('menu');
+		await userEvent.keyboard('{Shift>}S{/Shift}');
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Supervision')
+		);
+		await expect(panelTitle(canvasElement).name).toBe(SUPERVISOR_NAME);
+		// ⇧2 → the second thread (the original one).
+		await userEvent.click(
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!
+		);
+		await canvas.findByRole('menu');
+		await userEvent.keyboard('{Shift>}2{/Shift}');
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Thread')
+		);
+		await expect(panelTitle(canvasElement).name).toBe(CLIENT_NAME);
 	}
 };
 
@@ -544,10 +731,10 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 		).getAllByRole('menuitem');
 		await expect(
 			headerItems.map((i) => i.getAttribute('data-channel-id'))
-		).toEqual(['$thread-2', THREAD_ROOT_ID, 'supervision']);
-		await expect(headerItems[2]).toHaveAttribute('aria-current', 'true');
+		).toEqual(['supervision', '$thread-2', THREAD_ROOT_ID]);
+		await expect(headerItems[0]).toHaveAttribute('aria-current', 'true');
 		// … and switches on selection.
-		await userEvent.click(headerItems[1]);
+		await userEvent.click(headerItems[2]);
 		await waitFor(() =>
 			expect(panelTitle(canvasElement).kind).toBe('Thread')
 		);
@@ -624,6 +811,14 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		);
 		await expect(barButtons[1].getAttribute('data-cy')).toBe(
 			'composer-scroll-to-newest'
+		);
+		// T23: a real arrow-down glyph, not a chevron.
+		await expect(
+			barButtons[1].querySelector('[data-testid="ArrowDownwardIcon"]')
+		).not.toBeNull();
+		// T22: at 390 the bar scrolls; expand never hides under send.
+		await expectActionBarScrolls(
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
 		);
 		await expect(
 			canvasElement.querySelector('[data-cy="stage-main"] .dragHandle')
@@ -728,9 +923,15 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 	}
 };
 
-/** (f) Open question: does the switcher say "Supervision" or "Bettina B."? */
+/**
+ * (f) Was: does the switcher say "Supervision" or "Bettina B."? T20 settled
+ * it — the card's rows are fixed ("Supervisionschat", "Thread #n"); the
+ * person appears in the preview line ("Bettina B.: …"). Both variants now
+ * render the same card; the channel label only feeds the closed FAB's
+ * accessible name.
+ */
 export const FabLabelTopicVsSupervisorName: Story = {
-	name: '(f) FAB label — topic name vs. supervisor name',
+	name: '(f) FAB label — topic vs. person (settled by T20: fixed card labels)',
 	args: {},
 	render: () => (
 		<div className="chatStageCompare">
@@ -738,8 +939,8 @@ export const FabLabelTopicVsSupervisorName: Story = {
 				<div className="chatStageCompare__item" key={mode}>
 					<p className="chatStageCompare__caption">
 						{mode === 'topic'
-							? 'Variante 1 — Thema: „Supervision" / Thread-Auszug'
-							: 'Variante 2 — Person: „Bettina B." / Klient:in'}
+							? 'Variante 1 — Thema (Label „Supervision"): Karte identisch'
+							: 'Variante 2 — Person (Label „Bettina B."): Karte identisch, Person in der Vorschau'}
 					</p>
 					<div
 						className="chatStageCompare__frame"
@@ -756,7 +957,12 @@ export const FabLabelTopicVsSupervisorName: Story = {
 										mode === 'topic'
 											? 'Supervision'
 											: SUPERVISOR_NAME,
-									unread: 1
+									unread: 1,
+									lastMessage: {
+										author: SUPERVISOR_NAME,
+										text: 'Wenn es beim dritten Mal wieder kommt: Angebot für einen konkreten Termin machen.',
+										ts: 1
+									}
 								},
 								{
 									id: '$thread-1',
@@ -779,13 +985,13 @@ export const FabLabelTopicVsSupervisorName: Story = {
 				2
 			)
 		);
-		await expect(
-			canvasElement.querySelector('[data-cy="compare-topic"]')
-				?.textContent
-		).toContain('Supervision');
-		await expect(
-			canvasElement.querySelector('[data-cy="compare-person"]')
-				?.textContent
-		).toContain(SUPERVISOR_NAME);
+		for (const mode of ['topic', 'person']) {
+			const text =
+				canvasElement.querySelector(`[data-cy="compare-${mode}"]`)
+					?.textContent ?? '';
+			await expect(text).toContain('Supervisionschat');
+			await expect(text).toContain('Thread #1');
+			await expect(text).toContain(`${SUPERVISOR_NAME}:`);
+		}
 	}
 };

@@ -334,6 +334,12 @@
 			"mainChat": "Чат консультации",
 			"openChannel": "Открыть {{label}}",
 			"openMenu": "Показать дополнительные каналы"
+		},
+		"menu": {
+			"eyebrow": "Ответвления этого разговора",
+			"title": "Производные беседы",
+			"supervisionChat": "Чат супервизии",
+			"thread": "Тема #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1711,7 +1717,8 @@
 			"listToggle": "Темы",
 			"replies": "Ответов: {{count}}",
 			"title": "Тема",
-			"placeholder": "Ответить в теме"
+			"placeholder": "Ответить в теме",
+			"open": "Открыть тему"
 		},
 		"deliveryStatus": {
 			"sent": "Отправлено"

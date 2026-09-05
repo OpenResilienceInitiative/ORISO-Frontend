@@ -1,0 +1,181 @@
+// Channel menu card — Figma "Menu" 9763:62964 (measured with get_metadata):
+// card 301 wide, 8 px inset; header 16 px inset with the eyebrow (Body
+// Small 14/400) over the title (Body Strong 16/600); a 17 px separator
+// block around the hairline; items 285 wide with the 20 px icon at
+// (16, 12), the body at x = 48 (label row 22 px, shortcut 27×16 right,
+// description below). Frank asked for a ONE-line preview with ellipsis
+// (Figma draws two lines). Corner: sds radius/md = 8.
+// Tokens: sds text-default-secondary → on-surface-variant, text-default →
+// on-surface, the hairline → primary-fixed (the room header's hairline).
+
+$menu-width: 301px;
+$menu-inset: 8px;
+$menu-radius: 8px;
+$menu-elevation:
+	0 4px 8px 3px rgba(0, 0, 0, 0.08),
+	0 1px 3px rgba(0, 0, 0, 0.2);
+
+.channelMenu {
+	box-sizing: border-box;
+	width: $menu-width;
+	max-width: calc(100vw - 32px);
+	padding: $menu-inset;
+	border-radius: $menu-radius;
+	background: var(--m3-surface-container-lowest, #fff);
+	box-shadow: $menu-elevation;
+	font-family: var(--m3-body-font-family, inherit);
+	color: var(--m3-on-surface, #1b1b1c);
+	text-align: left;
+
+	&__header {
+		padding: 8px 16px 4px;
+	}
+
+	&__eyebrow {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__title {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 22px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	// Figma "Menu Separator": 17 px block, hairline in the middle.
+	&__separator {
+		margin: 8px 0;
+		border: 0;
+		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
+	}
+
+	&__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__item {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		width: 100%;
+		min-height: 48px;
+		margin: 0;
+		padding: 12px 16px;
+		border: 0;
+		border-radius: $menu-radius;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover {
+			background: var(--m3-surface-container, #f0edee);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+
+		// The channel on screen — the same primary-fixed tint the room
+		// header's chips use; `aria-current` carries it to assistive tech.
+		&--active {
+			background: var(--m3-primary-fixed, #ffdad5);
+
+			.channelMenu__label {
+				color: var(--m3-primary, #a5000a);
+				font-weight: 600;
+			}
+		}
+	}
+
+	&__icon {
+		flex: 0 0 auto;
+		width: 20px;
+		height: 20px;
+		margin-top: 1px;
+		fill: currentcolor;
+		color: var(--m3-secondary, #4c555f);
+	}
+
+	&__body {
+		flex: 1 1 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+
+	&__row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 22px;
+	}
+
+	&__label {
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		font-size: 16px;
+		font-weight: 400;
+		line-height: 22px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	// Figma "Menu Shortcut": Body Small on the secondary text colour.
+	&__shortcut {
+		flex: 0 0 auto;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	// One line: "Author: text…" — the author in Body Strong weight.
+	&__preview {
+		display: block;
+		min-width: 0;
+		overflow: hidden;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__author {
+		font-weight: 600;
+	}
+
+	// Same 18 px pill as every other unread indicator.
+	&__badge {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
+	}
+}

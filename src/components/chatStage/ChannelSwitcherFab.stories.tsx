@@ -10,20 +10,37 @@ import './channelSwitcherFab.styles.scss';
 const FAB_MENU_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=9748-60084';
 
+const at = (hhmm: string) => new Date(`2026-09-05T${hhmm}:00+02:00`).getTime();
+
 export const SUPERVISION_CHANNEL: SecondaryChannel = {
 	id: 'supervision',
 	kind: 'supervision',
-	label: 'Bettina B.'
+	label: 'Bettina B.',
+	lastMessage: {
+		author: 'Elena P.',
+		text: 'ich kann nicht sagen das dies bisher passiert ist das wir',
+		ts: at('09:20')
+	}
 };
 export const THREAD_1: SecondaryChannel = {
 	id: '$thread-1',
 	kind: 'thread',
-	label: 'Thread #1'
+	label: 'Thread #1',
+	lastMessage: {
+		author: 'baer-mika-343',
+		text: 'wissen sie das fällt mir tatsächlich sehr schwer',
+		ts: at('09:25')
+	}
 };
 export const THREAD_2: SecondaryChannel = {
 	id: '$thread-2',
 	kind: 'thread',
-	label: 'Thread #2'
+	label: 'Thread #2',
+	lastMessage: {
+		author: 'Susanne P.',
+		text: 'das ist ein sehr gutes Argument das sie hier einbringen',
+		ts: at('09:12')
+	}
 };
 
 /** A slice of chat card — the FAB is positioned against it. */
@@ -102,7 +119,7 @@ const meta = {
 			description: {
 				component:
 					'Switcher for the secondary channels of a conversation (supervision side room, open threads). ' +
-					'Grey = all read, unread role = new message, one channel = direct FAB, several = speed dial (Figma 9748:60084).'
+					'Grey = all read, unread role = new message, one channel = direct FAB, several = the channel card (Figma 9748:60084 button, 9763:62964 card).'
 			}
 		}
 	}
@@ -186,21 +203,30 @@ export const MenuTwoThreadsAndSupervision: Story = {
 		await expect(fab).toHaveAttribute('aria-haspopup', 'menu');
 		await expect(fab).toHaveAttribute('aria-expanded', 'false');
 
-		// Open: three segments, threads on top, supervision right above the FAB.
+		// Open: the channel card (T20) — supervision first, then the threads
+		// by their latest message (thread-1 at 09:25 before thread-2 at 09:12).
 		await userEvent.click(fab);
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-menu-title"]')
+				?.textContent
+		).toBe('Ableitende Gespräche');
 		await expect(items).toHaveLength(3);
-		await expect(items[0]).toHaveAttribute('data-channel-id', '$thread-2');
-		await expect(items[1]).toHaveAttribute('data-channel-id', '$thread-1');
-		await expect(items[2]).toHaveAttribute(
+		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
 			'supervision'
 		);
+		await expect(items[0].textContent).toContain('⇧S');
+		await expect(items[1]).toHaveAttribute('data-channel-id', '$thread-1');
+		await expect(items[1].textContent).toContain('Thread #1');
+		await expect(items[2]).toHaveAttribute('data-channel-id', '$thread-2');
+		await expect(items[2].textContent).toContain('Thread #2');
+		await expect(items[1].textContent).toContain('2');
 		await expect(fab).toHaveAttribute('aria-expanded', 'true');
 
 		// Pick: selects and closes.
-		await userEvent.click(items[2]);
+		await userEvent.click(items[0]);
 		await waitFor(() =>
 			expect(
 				canvasElement.querySelector('[data-cy="switcher-last-action"]')

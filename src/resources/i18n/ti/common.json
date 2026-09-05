@@ -334,6 +334,12 @@
 			"mainChat": "ምኽሪ ቻት",
 			"openChannel": "{{label}} ክፈት",
 			"openMenu": "ጎድናዊ ቻናላት ኣርኢ"
+		},
+		"menu": {
+			"eyebrow": "ካብዚ ዝርርብ ዝወጹ ጨናፍር",
+			"title": "ተወላዲ ዝርርባት",
+			"supervisionChat": "ናይ ሱፐርቪዥን ቻት",
+			"thread": "ትሬድ #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1711,7 +1717,8 @@
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
 			"title": "ትሬድ",
-			"placeholder": "ኣብ ትሬድ መልስ"
+			"placeholder": "ኣብ ትሬድ መልስ",
+			"open": "ትሬድ ክፈት"
 		},
 		"deliveryStatus": {
 			"sent": "ተላኢኹ"

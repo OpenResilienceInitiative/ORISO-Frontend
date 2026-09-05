@@ -1,5 +1,6 @@
 /**
- * Channel switcher FAB — Figma "FAB menu" 9748:60084.
+ * Channel switcher FAB — Figma "FAB menu" 9748:60084 (button) with the
+ * channel card 9763:62964 as its menu (T20).
  *
  * Bottom-right above the composer. One FAB for every *secondary* channel of
  * the open conversation (supervision side room, open threads):
@@ -7,10 +8,11 @@
  * - grey (`tertiary`) while everything is read, unread/error role when a
  *   channel has new messages (same role as the existing unread badges);
  * - a single channel → the FAB opens it directly (thread or supervision glyph);
- * - several channels → speed dial: one segment per channel, threads on top,
- *   supervision right above the FAB, the FAB turns into the close X;
+ * - several channels → the FAB opens the channel card (`ChannelMenu`, the
+ *   same list the side-panel header shows) above itself and turns into the
+ *   close X;
  * - on the phone the same FAB sits inside the secondary chat and switches
- *   back (`activeChannelId` + `onBack`).
+ *   back (`activeChannelId` + `onBack`); the card gets a "main chat" row.
  *
  * Pure state comes from `channelSwitcherState.ts`; this file only renders.
  */
@@ -23,6 +25,7 @@ import { ReactComponent as SupervisionAttentionGlyph } from '../../resources/img
 import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu-close.svg';
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
+import { ChannelMenu } from './ChannelMenu';
 import {
 	deriveChannelSwitcherState,
 	type ChannelSwitcherItem,
@@ -36,7 +39,7 @@ export interface ChannelSwitcherFabProps {
 	'onSelect': (channelId: string) => void;
 	/**
 	 * Phone: the channel currently filling the screen. It is left out of the
-	 * menu and the FAB (or the bottom segment) leads back to the main chat.
+	 * menu and the FAB (or the card's last row) leads back to the main chat.
 	 */
 	'activeChannelId'?: string;
 	'onBack'?: () => void;
@@ -44,10 +47,10 @@ export interface ChannelSwitcherFabProps {
 	'positionMode'?: 'absolute' | 'fixed';
 	/** Distance from the bottom edge, e.g. above the phone's bottom nav. */
 	'bottomOffset'?: number;
-	/** Start with the speed dial open (stories / comparisons). */
+	/** Start with the card open (stories / comparisons). */
 	'defaultOpen'?: boolean;
 	/**
-	 * T1: while a side panel is open its header icon offers the same channel
+	 * T1: while a side panel is open its header offers the same channel
 	 * options, so the FAB steps back. Renders nothing (the stage keeps the
 	 * prop so the FAB returns the moment the panel closes).
 	 */
@@ -74,114 +77,6 @@ const UnreadBadge = ({ count }: { count: number }) =>
 		</span>
 	) : null;
 
-export interface ChannelSwitcherMenuProps {
-	id?: string;
-	items: ChannelSwitcherItem[];
-	onSelect: (item: ChannelSwitcherItem) => void;
-	/** Phone: an extra bottom entry that leads back to the main chat. */
-	onBack?: () => void;
-	/**
-	 * T15: the channel currently on screen — listed (the panel header shows
-	 * every channel of the session) and marked with `aria-current`.
-	 */
-	activeId?: string;
-	className?: string;
-}
-
-/**
- * The speed-dial list on its own — the FAB opens it above itself, the
- * side-panel header (T1) opens the same list under its channel icon.
- */
-export const ChannelSwitcherMenu = ({
-	id,
-	items,
-	onSelect,
-	onBack,
-	activeId,
-	className
-}: ChannelSwitcherMenuProps) => {
-	const { t: translate } = useTranslation();
-	const kindLabel = (kind: SecondaryChannelKind) =>
-		translate(`chatStage.switcher.kind.${kind}`);
-	const unreadLabel = (count: number) =>
-		count > 0 ? translate('supervision.panel.unread', { count }) : '';
-	return (
-		<ul
-			className={['channelSwitcher__menu', className]
-				.filter(Boolean)
-				.join(' ')}
-			role="menu"
-			id={id}
-			aria-label={translate('chatStage.switcher.openMenu')}
-		>
-			{items.map((item) => {
-				const Glyph = glyphFor(
-					item.kind,
-					item.unread > 0 ? 'attention' : 'idle'
-				);
-				const active = activeId !== undefined && item.id === activeId;
-				return (
-					<li key={item.id} role="none">
-						<button
-							type="button"
-							role="menuitem"
-							className={[
-								'channelSwitcher__item',
-								`channelSwitcher__item--${item.kind}`,
-								active && 'channelSwitcher__item--active'
-							]
-								.filter(Boolean)
-								.join(' ')}
-							data-cy={`channel-switcher-item-${item.kind}`}
-							data-channel-id={item.id}
-							data-active={active ? 'true' : 'false'}
-							aria-current={active ? 'true' : undefined}
-							aria-label={[
-								translate('chatStage.switcher.openChannel', {
-									label: `${kindLabel(item.kind)} ${item.label}`
-								}),
-								unreadLabel(item.unread)
-							]
-								.filter(Boolean)
-								.join(' – ')}
-							onClick={() => onSelect(item)}
-						>
-							<Glyph
-								className="channelSwitcher__itemIcon"
-								aria-hidden="true"
-							/>
-							<span className="channelSwitcher__itemLabel">
-								{item.label}
-							</span>
-							<UnreadBadge count={item.unread} />
-						</button>
-					</li>
-				);
-			})}
-			{onBack && (
-				<li role="none">
-					<button
-						type="button"
-						role="menuitem"
-						className="channelSwitcher__item channelSwitcher__item--main"
-						data-cy="channel-switcher-item-main"
-						aria-label={translate('chatStage.switcher.backToMain')}
-						onClick={onBack}
-					>
-						<MainChatGlyph
-							className="channelSwitcher__itemIcon"
-							aria-hidden="true"
-						/>
-						<span className="channelSwitcher__itemLabel">
-							{translate('chatStage.switcher.mainChat')}
-						</span>
-					</button>
-				</li>
-			)}
-		</ul>
-	);
-};
-
 export const ChannelSwitcherFab = ({
 	channels,
 	onSelect,
@@ -200,15 +95,20 @@ export const ChannelSwitcherFab = ({
 	const fabRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
 
-	const state = deriveChannelSwitcherState(
-		channels.filter((channel) => channel.id !== activeChannelId)
+	const otherChannels = channels.filter(
+		(channel) => channel.id !== activeChannelId
 	);
+	const state = deriveChannelSwitcherState(otherChannels);
 	const insideSecondary = Boolean(activeChannelId && onBack);
-	// With the back entry the dial has one more row than the state knows.
+	// With the back row the card has one more row than the state knows.
 	const menuRows = state.items.length + (insideSecondary ? 1 : 0);
 	const isMenu = menuRows > 1;
 
 	const close = useCallback(() => setOpen(false), []);
+	const closeAndRefocus = useCallback(() => {
+		setOpen(false);
+		fabRef.current?.focus();
+	}, []);
 
 	useEffect(() => {
 		if (!open) {
@@ -221,8 +121,7 @@ export const ChannelSwitcherFab = ({
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
-				close();
-				fabRef.current?.focus();
+				closeAndRefocus();
 			}
 		};
 		document.addEventListener('pointerdown', onPointerDown);
@@ -231,7 +130,7 @@ export const ChannelSwitcherFab = ({
 			document.removeEventListener('pointerdown', onPointerDown);
 			document.removeEventListener('keydown', onKeyDown);
 		};
-	}, [open, close]);
+	}, [open, close, closeAndRefocus]);
 
 	if (menuRows === 0 || fabHidden) {
 		return null;
@@ -308,11 +207,17 @@ export const ChannelSwitcherFab = ({
 			data-mode={isMenu ? 'menu' : 'single'}
 		>
 			{isMenu && open && (
-				<ChannelSwitcherMenu
+				<ChannelMenu
 					id={menuId}
-					items={state.items}
-					onSelect={pick}
-					onBack={insideSecondary ? back : undefined}
+					className="channelSwitcher__menu"
+					channels={otherChannels}
+					onSelect={(channelId) => {
+						close();
+						onSelect(channelId);
+					}}
+					onClose={closeAndRefocus}
+					onBack={insideSecondary ? onBack : undefined}
+					data-cy="channel-switcher-menu"
 				/>
 			)}
 			<button

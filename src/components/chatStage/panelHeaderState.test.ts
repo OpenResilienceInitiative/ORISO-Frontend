@@ -24,15 +24,15 @@ const thread2: SecondaryChannel = {
 };
 
 describe('derivePanelChannelMenu (T15: jump between channels from the panel header)', () => {
-	it('lists every secondary channel of the session, the shown one included', () => {
+	it('lists every secondary channel of the session, the shown one included, supervision first (T20)', () => {
 		const menu = derivePanelChannelMenu(
 			[thread2, thread1, supervision],
 			'$thread-1'
 		);
 		expect(menu.items.map((item) => item.id)).toEqual([
+			'supervision',
 			'$thread-2',
-			'$thread-1',
-			'supervision'
+			'$thread-1'
 		]);
 		expect(menu.activeId).toBe('$thread-1');
 	});

@@ -317,6 +317,12 @@
 				"title": "Thread",
 				"subtitle": "Replies to a message from the counselling chat"
 			}
+		},
+		"menu": {
+			"eyebrow": "Branches of this conversation",
+			"title": "Derived conversations",
+			"supervisionChat": "Supervision chat",
+			"thread": "Thread #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -1710,7 +1716,8 @@
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
 			"title": "Thread",
-			"placeholder": "Reply in thread"
+			"placeholder": "Reply in thread",
+			"open": "Open thread"
 		},
 		"deliveryStatus": {
 			"sent": "Sent"

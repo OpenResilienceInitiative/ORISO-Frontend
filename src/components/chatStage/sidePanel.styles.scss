@@ -91,6 +91,7 @@ $room-title-inset: 6px;
 $room-actions-gap: 12px;
 
 .panelHeader {
+	position: relative;
 	flex: 0 0 auto;
 	display: flex;
 	flex-direction: column;
@@ -139,7 +140,8 @@ $room-actions-gap: 12px;
 		gap: 4px;
 		height: 16px;
 		margin: 0;
-		padding: 0;
+		padding: 0 4px 0 2px;
+		margin-left: -2px;
 		border: 0;
 		background: transparent;
 		color: var(--m3-secondary, #4c555f);
@@ -156,8 +158,11 @@ $room-actions-gap: 12px;
 			cursor: default;
 		}
 
-		&:not(:disabled):hover {
+		// T19: hover/open show the pill the button really is.
+		&:not(:disabled):hover,
+		&--open {
 			color: var(--m3-primary, #a5000a);
+			background: var(--m3-primary-fixed, #ffdad5);
 		}
 
 		&:focus-visible {
@@ -171,6 +176,45 @@ $room-actions-gap: 12px;
 		width: 16px;
 		height: 16px;
 		fill: currentcolor;
+	}
+
+	// T19: the word is a menu button and says so — a small chevron after
+	// the label that turns while the card is open. Disabled (nothing to
+	// switch to): the chevron stays, dimmed, so the row keeps its shape.
+	&__kindChevron {
+		flex: 0 0 auto;
+		width: 14px;
+		height: 14px;
+		margin-left: -2px;
+		fill: currentcolor;
+		transition: transform 160ms ease;
+	}
+
+	&__kindButton--open &__kindChevron {
+		transform: rotate(180deg);
+	}
+
+	&__kindButton:disabled &__kindChevron {
+		opacity: 0.4;
+	}
+
+	// T20: the channel card hangs below the whole header (hairline
+	// included) — never over the title. On the phone it spans the width.
+	&__menu {
+		position: absolute;
+		top: 100%;
+		left: $room-header-inset;
+		z-index: 1200;
+		margin-top: 4px;
+
+		@media screen and (width <= 899px) {
+			right: $room-header-inset;
+
+			.channelMenu {
+				width: 100%;
+				max-width: none;
+			}
+		}
 	}
 
 	&__titleLabel {
@@ -337,20 +381,5 @@ $room-actions-gap: 12px;
 		@media screen and (width <= 899px) {
 			padding-left: 0;
 		}
-	}
-}
-
-// T1: the channel options under the panel header's channel icon reuse the
-// FAB speed-dial list; anchored below the button instead of above the FAB.
-.channelSwitcher--anchored {
-	position: absolute;
-	top: calc(100% + 8px);
-	right: auto;
-	bottom: auto;
-	left: 0;
-	align-items: flex-start;
-
-	.channelSwitcher__menu {
-		align-items: flex-start;
 	}
 }
