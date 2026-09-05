@@ -13,6 +13,7 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
+import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import './profile.styles';
 import profileRoutes from './profile.routes';
 import {
@@ -61,6 +62,13 @@ export const Profile = () => {
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
+	// #1193 Job 4: the profile shows the same animal other participants see in
+	// the chat, which is derived from the Matrix user id when the client is up.
+	const matrixClientContext = useContext(MatrixClientContext);
+	const ownAvatarUserId =
+		matrixClientContext?.matrixClientService
+			?.getClient?.()
+			?.getUserId?.() || userData.userId;
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 
 	const [mobileMenu, setMobileMenu] = useState<
@@ -239,7 +247,7 @@ export const Profile = () => {
 											userData.displayName ||
 											userData.userName
 										}
-										userId={userData.userId}
+										userId={ownAvatarUserId}
 										size="56px"
 									/>
 								</div>

@@ -758,6 +758,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(!isAnonymousMatrixUsername(contact?.username)
 			? contact?.username
 			: undefined);
+	// #1193 Job 4: the header shows the same animal as the session list and the
+	// chat messages. Those derive it from the Matrix user id, so prefer that for
+	// the asker; fall back to the username where no Matrix id is known.
+	const headerAvatarUserId =
+		(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+			activeSession.item?.askerMatrixUserId) ||
+		contact?.username ||
+		'unknown';
 	const sessionHeaderConversationIconType: ChatroomConversationIconType =
 		activeSession.isEmptyEnquiry
 			? 'waiting'
@@ -1039,9 +1047,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											displayName={
 												headerAvatarDisplayName
 											}
-											userId={
-												contact?.username || 'unknown'
-											}
+											userId={headerAvatarUserId}
 											size="32px"
 										/>
 									)}
