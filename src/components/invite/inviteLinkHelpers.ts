@@ -50,11 +50,20 @@ export const assignInviteSessionDisplayName = async (
 ): Promise<string | null> => {
 	try {
 		const { displayName } = generatePseudonym(locale);
-		await Promise.race([
-			apiPutSessionData(data.sessionId, { displayName }),
-			new Promise((resolve) => setTimeout(resolve, 5_000))
-		]);
-		return displayName;
+
+		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		const stored = await Promise.race([
+			apiPutSessionData(data.sessionId, { displayName }).then(() => true),
+			new Promise<boolean>((resolve) => {
+				timeoutId = setTimeout(() => resolve(false), 5_000);
+			})
+		]).finally(() => {
+			if (timeoutId !== undefined) {
+				clearTimeout(timeoutId);
+			}
+		});
+
+		return stored ? displayName : null;
 	} catch {
 		return null;
 	}
