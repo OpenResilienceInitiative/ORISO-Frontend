@@ -1046,6 +1046,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		text-decoration: none;
 		cursor: pointer;
 
+		/* #1200: an action chip with nothing to act on (e.g. "Mark all as read"
+		   with no unread activity) — M3 disabled state, no hover/press feedback */
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+			pointer-events: none;
+		}
+
 		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
 		&:link,
 		&:visited:not(&--active) {
