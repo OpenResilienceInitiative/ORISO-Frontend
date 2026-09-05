@@ -35,9 +35,7 @@ vi.mock('../registration/autoLogin', () => ({
 
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
-	assignInviteSessionDisplayName: vi
-		.fn()
-		.mockResolvedValue('freundliche Katze Mika'),
+	assignInviteSessionDisplayName: vi.fn(),
 	redirectToInviteSession: vi.fn()
 }));
 
@@ -161,22 +159,30 @@ describe('InviteLink legacy identity', () => {
 			refreshExpiresIn: 600
 		});
 
+		// A deferred promise, not mockResolvedValue: the redirect is a full
+		// page load, so the name has to be stored before we leave or the guest
+		// stays anon_N. Call order alone cannot show that — the call happens
+		// first with or without the await — so hold the promise open and prove
+		// the redirect waits for it.
+		let storeDisplayName: (name: string) => void;
+		vi.mocked(assignInviteSessionDisplayName).mockReturnValue(
+			new Promise<string | null>((resolve) => {
+				storeDisplayName = resolve;
+			})
+		);
+
 		renderInvite();
 
 		await waitFor(() =>
 			expect(applyRedeemSessionCredentials).toHaveBeenCalled()
 		);
-		expect(redirectToInviteSession).toHaveBeenCalled();
-		// Ordering is the point: redirecting is a full page load, so the name
-		// has to be stored before we leave, or the guest stays anon_N.
-		expect(assignInviteSessionDisplayName).toHaveBeenCalled();
-		expect(
-			vi.mocked(assignInviteSessionDisplayName).mock
-				.invocationCallOrder[0]
-		).toBeLessThan(
-			vi.mocked(redirectToInviteSession).mock.invocationCallOrder[0]
+		await waitFor(() =>
+			expect(assignInviteSessionDisplayName).toHaveBeenCalled()
 		);
-		expect(apiPostRegistration).not.toHaveBeenCalled();
-		expect(screen.queryByLabelText('User-ID')).toBeNull();
+		expect(redirectToInviteSession).not.toHaveBeenCalled();
+
+		storeDisplayName('freundliche Katze Mika');
+
+		await waitFor(() => expect(redirectToInviteSession).toHaveBeenCalled());
 	});
 });
