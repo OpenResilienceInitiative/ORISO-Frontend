@@ -98,3 +98,13 @@ export const filterTimelineItems = <T extends TimelineFilterableItem>(
 		return normalize(getSearchText(item) || '').includes(query);
 	});
 };
+
+/**
+ * Whether the feed still has anything to mark as read (#1200). Drives the
+ * "Mark all as read" affordance: the action is a bulk `readAt` write on the
+ * user's activity events (UserService `read-all`), so it is only offered when
+ * at least one item is unread.
+ */
+export const hasUnreadTimelineItems = (
+	items: ReadonlyArray<TimelineFilterableItem>
+): boolean => items.some((item) => !item.readAt);

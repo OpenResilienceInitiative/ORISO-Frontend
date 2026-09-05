@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
@@ -31,6 +30,7 @@ import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
+	hasUnreadTimelineItems,
 	TimelineFamilyFilter
 } from './timelineFilter';
 import {
@@ -67,6 +67,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
 	formatAbsoluteTime,
@@ -364,6 +365,11 @@ export const NotificationsCenter = () => {
 	// Families actually present in the feed, in canonical order (drives chips).
 	const familiesInFeed = useMemo(
 		() => getFamiliesInFeed(notificationFeed),
+		[notificationFeed]
+	);
+	// #1200: "Mark all as read" is only actionable while something is unread.
+	const hasUnreadActivity = useMemo(
+		() => hasUnreadTimelineItems(notificationFeed),
 		[notificationFeed]
 	);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
@@ -931,21 +937,14 @@ export const NotificationsCenter = () => {
 										)}
 									</span>
 								</button>
-								<button
-									type="button"
-									className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
+								<MarkAllReadButton
+									hasUnread={hasUnreadActivity}
 									onClick={markAllNotificationsAsRead}
-									title={translate(
+									label={translate(
 										'notifications.center.markAllRead',
 										'Mark all as read'
 									)}
-									aria-label={translate(
-										'notifications.center.markAllRead',
-										'Mark all as read'
-									)}
-								>
-									<DoneAllIcon className="sessionsListToolbar__chipIconSvg" />
-								</button>
+								/>
 							</div>
 						</div>
 					)}
