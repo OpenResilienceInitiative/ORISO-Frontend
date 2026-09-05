@@ -45,6 +45,17 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: 0;
 		z-index: 1000;
 
+		// The wrapper is what docks the composer to the bottom, and it stacks
+		// its children: the info bar (absence notice, archived notice, send
+		// and attachment errors) sits above the composer card. The card used
+		// to dock itself as well — `position: absolute; bottom: 0` with an
+		// opaque background — which took it out of flow, collapsed this
+		// wrapper to the height of the info bar alone and painted the card
+		// straight over it. The notice was in the DOM and invisible.
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+
 		// Keep composer anchored to the session container on mobile Safari.
 		@media screen and (width <= 899px) {
 			position: absolute;
