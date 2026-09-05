@@ -471,18 +471,12 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
  */
 const panelTint = async (canvasElement: HTMLElement) => {
 	// The field border is measured at rest — a selected composer wears the
-	// 2 px `primary-container` focus border instead (#597).
-	(document.activeElement as HTMLElement | null)?.blur();
-	await waitFor(() =>
-		expect(
-			canvasElement.querySelector(
-				'.textarea__wrapper-send-message--selected'
-			)
-		).toBeNull()
-	);
-	// The field animates `all 240ms` out of the focus border — read it only
-	// once the 2 px `primary-container` ring has fully given way to the
-	// 1 px rest border, otherwise the value is a frame of the transition.
+	// 2 px `primary-container` focus border instead (#597). A freshly
+	// mounted panel composer may take focus AFTER our first blur (its
+	// autofocus runs a tick later), so the blur is repeated inside the
+	// wait: every retry drops the focus again and the 240 ms `all`
+	// transition then has 3 s to settle on the 1 px rest border (review
+	// B2 D-5 — the single blur + 1 s default timeout flaked 1/2).
 	const focusRing = (() => {
 		const hex = getComputedStyle(document.documentElement)
 			.getPropertyValue('--m3-primary-container')
@@ -490,15 +484,27 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		const n = parseInt(hex.replace('#', ''), 16);
 		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 	})();
-	await waitFor(() => {
-		const field = getComputedStyle(
-			canvasElement.querySelector(
+	await waitFor(
+		() => {
+			const input = canvasElement.querySelector<HTMLElement>(
 				'[data-cy="stage-panel"] .textarea__input'
-			)!
-		);
-		expect(field.borderTopWidth).toBe('1px');
-		expect(field.borderTopColor).not.toBe(focusRing);
-	});
+			);
+			expect(input).not.toBeNull();
+			const active = document.activeElement as HTMLElement | null;
+			if (active && active !== document.body) {
+				active.blur();
+			}
+			expect(
+				canvasElement.querySelector(
+					'.textarea__wrapper-send-message--selected'
+				)
+			).toBeNull();
+			const field = getComputedStyle(input!);
+			expect(field.borderTopWidth).toBe('1px');
+			expect(field.borderTopColor).not.toBe(focusRing);
+		},
+		{ timeout: 3000, interval: 50 }
+	);
 	const header = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel"] .panelHeader'
 	)!;
