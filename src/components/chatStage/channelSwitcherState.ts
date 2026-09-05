@@ -29,6 +29,12 @@ export interface SecondaryChannel {
 	/** Already resolved label (see `resolveChannelLabel`). */
 	label: string;
 	unread?: number;
+	/**
+	 * Epoch ms of the thread's root message. Threads are NUMBERED by it
+	 * ("Thread #1" = the one started first, review v6) while the menu ORDERS
+	 * them by `lastMessage`. Without it the given order numbers them.
+	 */
+	createdTs?: number;
 	lastMessage?: SecondaryChannelLastMessage;
 }
 

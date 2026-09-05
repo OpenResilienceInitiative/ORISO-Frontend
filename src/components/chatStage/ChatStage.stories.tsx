@@ -465,7 +465,9 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		const menu = await canvas.findByRole('menu');
 		const items = within(menu).getAllByRole('menuitem');
 		// T20: the card — eyebrow, title, supervision first (⇧S), then the
-		// threads by their latest message (⇧1, ⇧2), the shown one current.
+		// threads by their latest message, the shown one current. Review v6:
+		// the NUMBER follows the root message — the newer thread ranks
+		// first but is "Thread #2"; the original stays "Thread #1" / ⇧1.
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-menu-eyebrow"]')
 				?.textContent
@@ -482,13 +484,14 @@ export const ThreadAndSupervisionOpenAtOnce: Story = {
 		await expect(items[0].textContent).toContain('Supervisionschat');
 		await expect(items[0].textContent).toContain('⇧S');
 		await expect(items[1]).toHaveAttribute('data-channel-id', '$thread-2');
-		await expect(items[1].textContent).toContain('Thread #1');
-		await expect(items[1].textContent).toContain('⇧1');
+		await expect(items[1].textContent).toContain('Thread #2');
+		await expect(items[1].textContent).toContain('⇧2');
 		await expect(items[2]).toHaveAttribute(
 			'data-channel-id',
 			THREAD_ROOT_ID
 		);
-		await expect(items[2].textContent).toContain('Thread #2');
+		await expect(items[2].textContent).toContain('Thread #1');
+		await expect(items[2].textContent).toContain('⇧1');
 		await expect(items[2]).toHaveAttribute('aria-current', 'true');
 		// Each row: "Author: last message…" on one line.
 		const previews = items.map(
@@ -614,7 +617,8 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 /**
  * (d3) T20 keyboard: the card opens with focus on the current row; arrows,
  * Home and End move it; Escape closes and returns focus to the channel
- * button; ⇧S jumps to the supervision chat, ⇧2 back to the thread.
+ * button; ⇧S jumps to the supervision chat, ⇧1 back to the original
+ * thread (its number is fixed by its root message, review v6).
  */
 export const PanelChannelCardKeyboardAndShortcuts: Story = {
 	name: '(d3) Panel channel card — keyboard, shortcuts, below the header (T19/T20)',
@@ -663,14 +667,14 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
 			expect(panelTitle(canvasElement).kind).toBe('Supervision')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(SUPERVISOR_NAME);
-		// ⇧2 → the second thread (the original one).
+		// ⇧1 → the original thread (third row, but "Thread #1").
 		await userEvent.click(
 			canvasElement.querySelector<HTMLButtonElement>(
 				'[data-cy="panel-header-channel-options"]'
 			)!
 		);
 		await canvas.findByRole('menu');
-		await userEvent.keyboard('{Shift>}2{/Shift}');
+		await userEvent.keyboard('{Shift>}1{/Shift}');
 		await waitFor(() =>
 			expect(panelTitle(canvasElement).kind).toBe('Thread')
 		);

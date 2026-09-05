@@ -175,10 +175,10 @@ const lastMessageOf = (messages: ReturnType<typeof threadMessages>) => {
 	};
 };
 
-const threadRootExcerpt = () => {
-	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
-	return `${root.message.slice(0, 28)}…`;
-};
+const threadRoot = () =>
+	mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
+
+const threadRootExcerpt = () => `${threadRoot().message.slice(0, 28)}…`;
 
 function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 	const { t } = useTranslation();
@@ -636,8 +636,12 @@ export function ConsultantSessionStage({
 				labelMode
 			),
 			unread: index === 0 ? threadUnread : 0,
-			// The first thread is the real one (`$t2`, 09:25); every further
-			// one is newer so it ranks above it in the menu (Thread #1 …).
+			// The first thread is the real one — started first, so it is
+			// "Thread #1" for good (review v6); every further one was started
+			// a minute later (#2, #3 …).
+			createdTs: Number(threadRoot().messageTime) + index * 60_000,
+			// … but each further one has a NEWER last message, so it ranks
+			// above the real one in the menu.
 			lastMessage:
 				index === 0
 					? lastMessageOf(threadMessages())
@@ -684,7 +688,8 @@ export function ConsultantSessionStage({
 	const desktopFab =
 		otherChannels.length > 0 ? (
 			<ChannelSwitcherFab
-				channels={otherChannels}
+				channels={channels}
+				activeChannelId={shownChannelId}
 				onSelect={selectChannel}
 				defaultOpen={fabDefaultOpen}
 				fabHidden={fabHidden && panel !== null}

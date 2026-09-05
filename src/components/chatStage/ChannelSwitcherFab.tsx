@@ -38,8 +38,10 @@ export interface ChannelSwitcherFabProps {
 	'channels': SecondaryChannel[];
 	'onSelect': (channelId: string) => void;
 	/**
-	 * Phone: the channel currently filling the screen. It is left out of the
-	 * menu and the FAB (or the card's last row) leads back to the main chat.
+	 * Phone: the channel currently filling the screen. The FAB itself (or
+	 * the card's last row) leads back to the main chat. The card still lists
+	 * it — marked `aria-current` — so its thread numbers match the panel
+	 * header's card (review v6); only the FAB's own state ignores it.
 	 */
 	'activeChannelId'?: string;
 	'onBack'?: () => void;
@@ -95,6 +97,8 @@ export const ChannelSwitcherFab = ({
 	const fabRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
 
+	// The FAB's colour, glyph and "single channel" shortcut only count the
+	// channels one can switch TO; the card lists all of them.
 	const otherChannels = channels.filter(
 		(channel) => channel.id !== activeChannelId
 	);
@@ -210,10 +214,13 @@ export const ChannelSwitcherFab = ({
 				<ChannelMenu
 					id={menuId}
 					className="channelSwitcher__menu"
-					channels={otherChannels}
+					channels={channels}
+					activeChannelId={activeChannelId}
 					onSelect={(channelId) => {
 						close();
-						onSelect(channelId);
+						if (channelId !== activeChannelId) {
+							onSelect(channelId);
+						}
 					}}
 					onClose={closeAndRefocus}
 					onBack={insideSecondary ? onBack : undefined}

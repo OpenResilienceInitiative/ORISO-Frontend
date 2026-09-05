@@ -21,10 +21,12 @@ const supervision: SecondaryChannel = {
 		ts: at('09:20')
 	}
 };
+// "older"/"newer" = the root message, i.e. when the thread was started.
 const olderThread: SecondaryChannel = {
 	id: '$thread-old',
 	kind: 'thread',
 	label: 'Briefe',
+	createdTs: at('09:00'),
 	lastMessage: {
 		author: 'baer-mika-343',
 		text: 'wissen sie das fällt mir tatsächlich sehr schwer',
@@ -36,6 +38,7 @@ const newerThread: SecondaryChannel = {
 	kind: 'thread',
 	label: 'Vertrag',
 	unread: 1,
+	createdTs: at('09:10'),
 	lastMessage: {
 		author: 'Susanne P.',
 		text: 'das ist ein sehr gutes Argument',
@@ -61,10 +64,43 @@ describe('buildChannelMenu (T20: "Ableitende Gespräche" card)', () => {
 		]);
 	});
 
-	it('numbers the threads in that order and maps the shortcuts ⇧S / ⇧1 / ⇧2 …', () => {
+	// Review v6: "Thread #1" must stay "Thread #1" when another thread gets
+	// a reply — the number follows the root message, only the ORDER follows
+	// the latest message.
+	it('numbers the threads by their root message (creation order) and maps ⇧S / ⇧1 / ⇧2 …', () => {
 		const rows = buildChannelMenu([olderThread, supervision, newerThread]);
+		expect(rows.map((row) => row.id)).toEqual([
+			'supervision',
+			'$thread-new',
+			'$thread-old'
+		]);
+		expect(rows.map((row) => row.threadNumber)).toEqual([null, 2, 1]);
+		expect(rows.map((row) => row.shortcut)).toEqual(['⇧S', '⇧2', '⇧1']);
+	});
+
+	it("keeps a thread's number when a fresh reply moves it to the top", () => {
+		const replied = {
+			...olderThread,
+			lastMessage: { author: 'A', text: 'neu', ts: at('10:00') }
+		};
+		const rows = buildChannelMenu([replied, supervision, newerThread]);
+		expect(rows.map((row) => row.id)).toEqual([
+			'supervision',
+			'$thread-old',
+			'$thread-new'
+		]);
 		expect(rows.map((row) => row.threadNumber)).toEqual([null, 1, 2]);
-		expect(rows.map((row) => row.shortcut)).toEqual(['⇧S', '⇧1', '⇧2']);
+	});
+
+	it('falls back to the given order for the numbers when threads carry no createdTs', () => {
+		const a = { ...olderThread, createdTs: undefined };
+		const b = { ...newerThread, createdTs: undefined };
+		const rows = buildChannelMenu([b, a]);
+		expect(rows.map((row) => row.id)).toEqual([
+			'$thread-new',
+			'$thread-old'
+		]);
+		expect(rows.map((row) => row.threadNumber)).toEqual([1, 2]);
 	});
 
 	it('keeps threads without a message at the end, in the given order', () => {
@@ -155,13 +191,13 @@ describe('resolveMenuShortcut (⇧S, ⇧1 … from a keydown)', () => {
 				{ key: '!', code: 'Digit1', shiftKey: true },
 				rows
 			)?.id
-		).toBe('$thread-new');
+		).toBe('$thread-old');
 		expect(
 			resolveMenuShortcut(
 				{ key: '"', code: 'Digit2', shiftKey: true },
 				rows
 			)?.id
-		).toBe('$thread-old');
+		).toBe('$thread-new');
 	});
 
 	it('ignores keys without shift, unknown digits and modifier combinations', () => {

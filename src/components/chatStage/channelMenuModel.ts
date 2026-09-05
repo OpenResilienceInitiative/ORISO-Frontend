@@ -3,9 +3,11 @@
  * Frank's mockup "Abzweigungen zu diesem Gespräch / Ableitende Gespräche").
  *
  * One list for both hosts — the side-panel header and the FAB: the
- * supervision chat always first (⇧S), then the threads numbered by their
- * most recent message (⇧1, ⇧2 …), each with a one-line "Author: text…"
- * preview of that message. Keyboard helpers for the roving focus and the
+ * supervision chat always first (⇧S), then the threads ORDERED by their
+ * most recent message but NUMBERED by their root message (review v6:
+ * "Thread #1" and ⇧1 keep meaning the thread that was started first, no
+ * matter which one got the latest reply), each with a one-line
+ * "Author: text…" preview. Keyboard helpers for the roving focus and the
  * shortcuts live here too, so the component only renders and dispatches.
  *
  * No React, no DOM, no i18n — labels are the component's business.
@@ -29,7 +31,10 @@ export interface ChannelMenuRow {
 	kind: SecondaryChannelKind;
 	/** Given label of the channel (fallback when the host has no i18n). */
 	label: string;
-	/** 1-based position among the threads; `null` for the supervision chat. */
+	/**
+	 * Stable 1-based number by root message (creation order); `null` for
+	 * the supervision chat. Not the row position — rows sort by recency.
+	 */
 	threadNumber: number | null;
 	/** "⇧S", "⇧1" … "⇧9"; empty when no shortcut exists. */
 	shortcut: string;
@@ -77,6 +82,30 @@ const lastMessageTs = (channel: SecondaryChannel): number =>
 		? (channel.lastMessage!.ts as number)
 		: Number.NEGATIVE_INFINITY;
 
+const createdTs = (channel: SecondaryChannel): number =>
+	Number.isFinite(channel.createdTs)
+		? (channel.createdTs as number)
+		: Number.POSITIVE_INFINITY;
+
+/**
+ * Stable numbers: threads sorted by their root message, oldest = #1;
+ * threads without `createdTs` follow in the given order.
+ */
+export const numberThreads = (
+	channels: SecondaryChannel[]
+): Map<string, number> => {
+	const ordered = channels
+		.filter((channel) => channel.kind === 'thread')
+		.map((channel, index) => ({ channel, index }))
+		.sort(
+			(a, b) =>
+				createdTs(a.channel) - createdTs(b.channel) || a.index - b.index
+		);
+	return new Map(
+		ordered.map(({ channel }, position) => [channel.id, position + 1])
+	);
+};
+
 export const buildChannelMenu = (
 	channels: SecondaryChannel[],
 	activeChannelId?: string
@@ -84,6 +113,7 @@ export const buildChannelMenu = (
 	const supervision = channels.filter(
 		(channel) => channel.kind === 'supervision'
 	);
+	const numbers = numberThreads(channels);
 	// Most recent message first; threads without one keep their given
 	// order at the end (stable sort on a decorated index).
 	const threads = channels
@@ -115,7 +145,7 @@ export const buildChannelMenu = (
 
 	return [
 		...supervision.map((channel) => row(channel, null)),
-		...threads.map((channel, index) => row(channel, index + 1))
+		...threads.map((channel) => row(channel, numbers.get(channel.id)!))
 	];
 };
 

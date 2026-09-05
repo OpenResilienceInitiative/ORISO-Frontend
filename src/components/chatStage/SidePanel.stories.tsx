@@ -63,6 +63,7 @@ const THREAD_CHANNEL: SecondaryChannel = {
 	id: THREAD_ROOT_ID,
 	kind: 'thread',
 	label: 'Es sind ein paar Briefe gekommen…',
+	createdTs: Number(threadMessages()[0].messageTime),
 	lastMessage: {
 		author: CLIENT_NAME,
 		text: 'Okay. Vielleicht nächste Woche, wenn ich weiß, wie es mit dem Vertrag weitergeht.',

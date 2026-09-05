@@ -26,6 +26,7 @@ export const THREAD_1: SecondaryChannel = {
 	id: '$thread-1',
 	kind: 'thread',
 	label: 'Thread #1',
+	createdTs: at('09:00'),
 	lastMessage: {
 		author: 'baer-mika-343',
 		text: 'wissen sie das fällt mir tatsächlich sehr schwer',
@@ -36,6 +37,7 @@ export const THREAD_2: SecondaryChannel = {
 	id: '$thread-2',
 	kind: 'thread',
 	label: 'Thread #2',
+	createdTs: at('09:05'),
 	lastMessage: {
 		author: 'Susanne P.',
 		text: 'das ist ein sehr gutes Argument das sie hier einbringen',
@@ -294,14 +296,27 @@ export const Phone390InsideThreadWithMenu: Story = {
 		const items = within(await canvas.findByRole('menu')).getAllByRole(
 			'menuitem'
 		);
-		await expect(items).toHaveLength(2);
+		// Review v6: the card lists EVERY channel — the shown thread too,
+		// marked current — so "Thread #1" means the same in both cards.
+		await expect(items).toHaveLength(3);
 		await expect(items[0]).toHaveAttribute(
 			'data-channel-id',
 			'supervision'
 		);
-		await expect(items[1]).toHaveAttribute(
+		await expect(items[0]).not.toHaveAttribute('aria-current');
+		await expect(items[1]).toHaveAttribute('data-channel-id', '$thread-1');
+		await expect(items[1]).toHaveAttribute('aria-current', 'true');
+		await expect(items[1].textContent).toContain('Thread #1');
+		await expect(items[2]).toHaveAttribute(
 			'data-cy',
 			'channel-switcher-item-main'
 		);
+		// Picking the shown thread only closes the card.
+		await userEvent.click(items[1]);
+		await waitFor(() => expect(canvas.queryByRole('menu')).toBeNull());
+		await expect(
+			canvasElement.querySelector('[data-cy="switcher-last-action"]')
+				?.textContent
+		).toContain('Noch nichts');
 	}
 };
