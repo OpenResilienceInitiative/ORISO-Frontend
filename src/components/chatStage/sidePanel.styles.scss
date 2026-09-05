@@ -84,6 +84,10 @@
 $room-header-inset: 16px;
 $room-header-row: 40px;
 $room-header-gap: 6px;
+// Measured in the same Figma node (T17): title text 6 px after the avatar
+// group, 12 px between the 32 px action buttons of the call menu.
+$room-title-inset: 6px;
+$room-actions-gap: 12px;
 
 .panelHeader {
 	flex: 0 0 auto;
@@ -96,7 +100,7 @@ $room-header-gap: 6px;
 	&__row {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 0;
 		height: $room-header-row;
 		padding: $room-header-gap 0;
 		box-sizing: content-box;
@@ -117,7 +121,7 @@ $room-header-gap: 6px;
 		gap: 0;
 		min-width: 0;
 		margin: 0;
-		padding: 0 6px;
+		padding: 0 $room-title-inset;
 	}
 
 	&__kind {
@@ -209,6 +213,7 @@ $room-header-gap: 6px;
 
 	&__chip {
 		flex: 0 0 auto;
+		margin-left: 8px;
 		border-radius: 999px;
 	}
 
@@ -225,6 +230,7 @@ $room-header-gap: 6px;
 	&__unread {
 		flex: 0 0 auto;
 		display: inline-flex;
+		margin-left: 8px;
 		align-items: center;
 		justify-content: center;
 		min-width: 18px;
@@ -245,7 +251,8 @@ $room-header-gap: 6px;
 		flex: 0 0 auto;
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: $room-actions-gap;
+		margin-left: $room-actions-gap;
 	}
 
 	// Figma: room header "Menu" button — 32 px, white, primary-fixed border.
@@ -282,6 +289,7 @@ $room-header-gap: 6px;
 	&__backButton {
 		flex: 0 0 auto;
 		display: inline-flex;
+		margin-right: 8px;
 		align-items: center;
 		justify-content: center;
 		width: 28px;

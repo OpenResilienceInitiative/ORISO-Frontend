@@ -578,7 +578,7 @@ export const ActiveConversation: Story = {
 
 /**
  * T4 / Figma 1320:38281: the room's participants as the avatar row —
- * animal for the advice seeker, monograms for the counsellors, 22 px step,
+ * animal for the advice seeker, monograms for the counsellors, 28 px step,
  * latest activity first, hover / focus shows the display name (#1209: the
  * asker's anonymous id, identical to the title).
  */
@@ -598,10 +598,25 @@ export const ActiveConversationParticipants: Story = {
 		await expect(avatars![0].getAttribute('data-user-id')).toBe(
 			'@bettina.b:matrix.storybook.test'
 		);
-		// 22 px step between avatars.
+		// T14/T17 — measured in Figma 1320:38281 (get_metadata): 40 px
+		// avatars, 28 px step, the group starts 8 px inside the type pill
+		// and the title text follows 6 px after the group.
 		const first = avatars![0].getBoundingClientRect();
 		const second = avatars![1].getBoundingClientRect();
-		await expect(Math.round(second.left - first.left)).toBe(22);
+		await expect(Math.round(first.width)).toBe(40);
+		await expect(Math.round(first.height)).toBe(40);
+		await expect(Math.round(second.left - first.left)).toBe(28);
+		const pill = canvasElement
+			.querySelector('.chatroomMainInteractionIcon')!
+			.getBoundingClientRect();
+		const stack = canvasElement
+			.querySelector('[data-cy="session-header-participants"]')!
+			.getBoundingClientRect();
+		await expect(Math.round(pill.right - stack.left)).toBe(8);
+		const title = canvasElement
+			.querySelector('.sessionInfo__username h3')!
+			.getBoundingClientRect();
+		await expect(Math.round(title.left - stack.right)).toBe(6);
 		// Hover shows the name; the asker's tooltip is exactly what the
 		// header title shows (#1209: one identity, list = header = tooltip).
 		const headerTitle =

@@ -342,6 +342,24 @@ export const Supervision: Story = {
 			'[data-cy="panel-header-participants"] [data-cy="participant-avatar"]'
 		);
 		await expect(avatars).toHaveLength(2);
+		// T14/T17: the same 40 px / 28 px stack as the room header (Figma
+		// 1320:38281), the title text 6 px after it.
+		const a0 = avatars[0].getBoundingClientRect();
+		const a1 = avatars[1].getBoundingClientRect();
+		await expect(Math.round(a0.width)).toBe(40);
+		await expect(Math.round(a1.left - a0.left)).toBe(28);
+		const stackBox = panel
+			.querySelector('[data-cy="panel-header-participants"]')!
+			.getBoundingClientRect();
+		const kindLabel = panel
+			.querySelector('[data-cy="panel-header-kind-label"]')!
+			.getBoundingClientRect();
+		const kindIcon = panel
+			.querySelector('.panelHeader__kindIcon')!
+			.getBoundingClientRect();
+		await expect(
+			Math.round(Math.min(kindIcon.left, kindLabel.left) - stackBox.right)
+		).toBe(6);
 		await userEvent.hover(avatars[1]);
 		await waitFor(() =>
 			expect(

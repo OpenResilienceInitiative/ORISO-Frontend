@@ -22,19 +22,34 @@ import './participantAvatarStack.styles.scss';
 
 export interface ParticipantAvatarStackProps {
 	'participants': StackParticipant[];
-	/** Avatar diameter; the visible step between avatars is always 22 px. */
+	/**
+	 * Avatar diameter (Figma room header: 40). The visible step is always
+	 * `size − STACK_OVERLAP`, so the 32 px library variant steps 20 px.
+	 */
 	'size'?: number;
 	'maxVisible'?: number;
 	'className'?: string;
 	'data-cy'?: string;
 }
 
-/** Frank (05.09.): 22 px visible per avatar in the stack (32 px avatars). */
-export const STACK_STEP = 22;
+/**
+ * Measured in Figma (T14/T17, `get_metadata` on 1320:38281 → Room Header
+ * All → Avatar Group): avatars 40 × 40 at x = 0/28/56/84/112 → 12 px overlap;
+ * the library master (7608:40689) draws 32 px avatars at 0/20/40/… — the
+ * same 12 px overlap. The group starts 8 px inside the type pill
+ * (`x = 65.5` in a 73.5 px pill) and the title text follows 6 px after it.
+ */
+export const STACK_AVATAR_SIZE = 40;
+export const STACK_OVERLAP = 12;
+export const STACK_PILL_OVERLAP = 8;
+export const STACK_TITLE_INSET = 6;
+/** Visible step per avatar for the room header (40 − 12). */
+export const STACK_STEP = STACK_AVATAR_SIZE - STACK_OVERLAP;
+export const stackStepFor = (size: number) => Math.max(0, size - STACK_OVERLAP);
 
 export const ParticipantAvatarStack = ({
 	participants,
-	size = 32,
+	size = STACK_AVATAR_SIZE,
 	maxVisible = STACK_MAX_VISIBLE,
 	className,
 	'data-cy': dataCy = 'participant-stack'
@@ -70,7 +85,7 @@ export const ParticipantAvatarStack = ({
 			style={
 				{
 					'--participant-size': `${size}px`,
-					'--participant-step': `${STACK_STEP}px`
+					'--participant-step': `${stackStepFor(size)}px`
 				} as React.CSSProperties
 			}
 			aria-label={translate('chatStage.participants.label', {

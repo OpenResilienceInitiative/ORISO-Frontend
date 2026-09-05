@@ -2,6 +2,14 @@ $backBtnSize: 24px;
 $feedbackBtnSize: 20px;
 $iconSize: 24px;
 
+// T14/T17 — measured in Figma 1320:38281 (Room Header All → Chatroom Left
+// Header Functionality): the Avatar Group (40 px avatars, 28 px step) starts
+// 8 px inside the type pill (x = 65.5 of a 73.5 px pill) and the title text
+// sits 6 px after the group. Same numbers as `ParticipantAvatarStack.tsx`
+// (`STACK_PILL_OVERLAP`, `STACK_TITLE_INSET`).
+$stack-pill-overlap: 8px;
+$stack-title-inset: 6px;
+
 // Room header geometry (Figma 1320:38281, "Room Header All"): 16 px inset
 // from the card edge, a 40 px content row with 6 px above and below, then
 // the `primary-fixed` hairline. `sidePanel.styles.scss` (PanelHeader) uses
@@ -158,7 +166,7 @@ $room-header-gap: 6px;
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		gap: 12px;
+		gap: $stack-title-inset; // Figma: title text 6 px after the stack
 		min-width: 0; // Allow flex item to shrink
 		flex: 1; // Take available space
 
@@ -167,9 +175,9 @@ $room-header-gap: 6px;
 			margin: 0;
 		}
 
-		// On mobile, reduce gap and ensure proper overflow handling
+		// On mobile, keep the inset and ensure proper overflow handling
 		@media screen and (width < 900px) {
-			gap: 8px;
+			gap: $stack-title-inset;
 			min-width: 0;
 			overflow: hidden;
 			margin-left: 0;
@@ -537,7 +545,7 @@ $room-header-gap: 6px;
 	&__memberStack {
 		display: inline-flex;
 		align-items: center;
-		margin-right: 4px;
+		margin-right: 0; // T17: the title inset is the row gap alone (6 px)
 		margin-left: 0;
 		min-width: 0;
 		flex: 0 0 auto;
@@ -555,11 +563,15 @@ $room-header-gap: 6px;
 		flex: 0 0 auto;
 	}
 
-	// FE#513: a 1:1 conversation must not borrow the group facepile look —
-	// the single avatar stands free of the type pill instead of overlapping it.
-	&__memberStack--single &__memberBubble,
-	&__memberStack--single &__participants {
+	// FE#513: the consultant-search loader stands free of the type pill.
+	&__memberStack--single &__memberBubble {
 		margin-left: 6px;
+	}
+
+	// T14: the participant stack overlaps the type pill by 8 px (Figma
+	// 1320:38281) and paints above it (`.participantStack` is z-indexed).
+	&__memberStack--single &__participants {
+		margin-left: -$stack-pill-overlap;
 	}
 
 	// Figma #430: collapsed "+N people" badge shown for groups with >4 members.

@@ -6,7 +6,12 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { ParticipantAvatarStack } from './ParticipantAvatarStack';
+import {
+	ParticipantAvatarStack,
+	STACK_AVATAR_SIZE,
+	STACK_STEP,
+	stackStepFor
+} from './ParticipantAvatarStack';
 import type { StackParticipant } from './participantStack';
 
 const ROOM_HEADER_FIGMA_URL =
@@ -75,6 +80,13 @@ export const ThreeParticipants: Story = {
 		await expect(avatars[0].getAttribute('data-user-id')).toBe(
 			client.userId
 		);
+		// T14/T17 — Figma 1320:38281 Avatar Group: 40 px avatars, 28 px step.
+		const first = avatars[0].getBoundingClientRect();
+		const second = avatars[1].getBoundingClientRect();
+		await expect(Math.round(first.width)).toBe(STACK_AVATAR_SIZE);
+		await expect(Math.round(first.height)).toBe(40);
+		await expect(Math.round(second.left - first.left)).toBe(STACK_STEP);
+		await expect(STACK_STEP).toBe(28);
 		// Tooltip hidden until hover …
 		const tip = canvas.getByText('Mona S.', {
 			selector: '[role="tooltip"]'
@@ -116,7 +128,7 @@ export const OverflowPlusN: Story = {
 			'[data-cy="participant-overflow"]'
 		)!;
 		await expect(chip.textContent).toBe('+2');
-		// The chip is part of the flow: one 22 px step after the last avatar
+		// The chip is part of the flow: one 28 px step after the last avatar
 		// and fully inside the stack's own box (nothing after the stack can
 		// be painted over).
 		const last = avatars[3].getBoundingClientRect();
@@ -124,13 +136,29 @@ export const OverflowPlusN: Story = {
 		const stack = canvasElement
 			.querySelector('[data-cy="participant-stack"]')!
 			.getBoundingClientRect();
-		await expect(Math.round(chipRect.left - last.left)).toBe(22);
+		await expect(Math.round(chipRect.left - last.left)).toBe(STACK_STEP);
 		await expect(chipRect.right).toBeLessThanOrEqual(stack.right + 0.5);
 		await expect(getComputedStyle(chip).position).not.toBe('absolute');
 	}
 };
 
-/** 40 px variant (Figma draws the header group at 40). */
-export const Size40: Story = {
-	args: { participants: [client, counsellor], size: 40 }
+/**
+ * 32 px library variant (Figma master 7608:40689 draws 32 px avatars at a
+ * 20 px step — the same 12 px overlap as the 40 px header group).
+ */
+export const Size32: Story = {
+	name: '32 px variant — same 12 px overlap',
+	args: { participants: [client, counsellor], size: 32 },
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const first = avatars[0].getBoundingClientRect();
+		const second = avatars[1].getBoundingClientRect();
+		await expect(Math.round(first.width)).toBe(32);
+		await expect(Math.round(second.left - first.left)).toBe(
+			stackStepFor(32)
+		);
+		await expect(stackStepFor(32)).toBe(20);
+	}
 };

@@ -1,6 +1,9 @@
 // Participant avatar stack — Figma "Avatar Group" (Room Header All,
-// 1320:38281): overlapping circles, first participant on top. Tokens are
-// the room header's (`surface-container-lowest` ring, `primary-fixed` chip).
+// 1320:38281): 40 px circles, 28 px step (12 px overlap, measured with
+// get_metadata), first participant on top. Tokens are the room header's
+// (`surface-container-lowest` ring, `primary-fixed` chip). The component
+// sets `--participant-size` / `--participant-step`; the defaults here are
+// the Figma header values.
 
 .participantStack {
 	position: relative;
@@ -16,20 +19,20 @@
 
 	// The tail of the stack overhangs by (size − step); reserve it.
 	padding-right: calc(
-		var(--participant-size, 32px) - var(--participant-step, 22px)
+		var(--participant-size, 40px) - var(--participant-step, 28px)
 	);
 
 	&__item {
 		position: relative;
 		flex: 0 0 auto;
-		width: var(--participant-step, 22px);
-		height: var(--participant-size, 32px);
+		width: var(--participant-step, 28px);
+		height: var(--participant-size, 40px);
 	}
 
 	&__avatar {
 		display: inline-flex;
-		width: var(--participant-size, 32px);
-		height: var(--participant-size, 32px);
+		width: var(--participant-size, 40px);
+		height: var(--participant-size, 40px);
 		border-radius: 50%;
 
 		// Separates overlapping avatars like Figma's white gap.
@@ -81,8 +84,8 @@
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
-		height: var(--participant-size, 32px);
-		min-width: var(--participant-size, 32px);
+		height: var(--participant-size, 40px);
+		min-width: var(--participant-size, 40px);
 		padding: 0 10px;
 		border-radius: 20px;
 		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
@@ -95,7 +98,7 @@
 	}
 
 	// The chip stays in the flow: its item is as wide as the chip, so it
-	// starts one 22 px step after the last avatar and reserves its own
+	// starts one step (28 px) after the last avatar and reserves its own
 	// width (no overlap with the title that follows the stack).
 	&__item--overflow {
 		width: auto;
