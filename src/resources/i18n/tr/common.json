@@ -2591,6 +2591,7 @@
 				"addressLabel": "Adres",
 				"hoursLabel": "Çalışma saatleri",
 				"languagesLabel": "Diller",
+				"languagesTooltip": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:",
 				"less": "Daha az",
 				"more": "Daha fazla",
 				"navigate": "Navigasyonu başlat",

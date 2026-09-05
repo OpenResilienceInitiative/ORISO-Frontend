@@ -2582,6 +2582,7 @@
 				"addressLabel": "ኣድራሻ",
 				"hoursLabel": "ሰዓታት ስራሕ",
 				"languagesLabel": "ቋንቋታት",
+				"languagesTooltip": "እዚ ማእከል ምኽሪ እዚ ብዛዕባ፤",
 				"less": "ውሑድ",
 				"more": "ተወሳኺ",
 				"navigate": "መንገዲ ጀምር",

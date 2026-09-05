@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Box, Collapse, Link, Typography } from '@mui/material';
+import { Box, Collapse, Link, Tooltip, Typography } from '@mui/material';
 import { useContext, useMemo, type ReactNode } from 'react';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
@@ -17,7 +16,6 @@ import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvi
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { AgencyLanguages } from './AgencyLanguages';
 import { AgencyDetails, getAgencyDetails } from './agencyDetails';
-import { formatOpeningHours } from '../../../utils/openingHours';
 import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTopic';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../../legalLinks/LegalLinkButton';
@@ -100,12 +98,42 @@ const mapActionSx = {
 function InfoRow({
 	icon,
 	label,
+	labelTooltip,
 	children
 }: {
 	icon: ReactNode;
 	label: string;
+	labelTooltip?: string;
 	children: ReactNode;
 }) {
+	// `tabIndex` is what keeps the tooltip off a hover-only affordance: MUI opens
+	// it on focus as well, so the hint is reachable by keyboard.
+	const labelNode = (
+		<Typography
+			variant="caption"
+			tabIndex={labelTooltip ? 0 : undefined}
+			sx={{
+				'display': labelTooltip ? 'inline-flex' : 'block',
+				'alignItems': 'center',
+				'gap': 0.5,
+				'color': registrationMd3.onSurfaceVariant,
+				'cursor': labelTooltip ? 'help' : undefined,
+				'fontWeight': 700,
+				'letterSpacing': 0.4,
+				'lineHeight': 1.4,
+				'textTransform': 'uppercase',
+				'&:focus-visible': {
+					outline: `2px solid ${registrationMd3.focus}`,
+					outlineOffset: 2,
+					borderRadius: 1
+				}
+			}}
+		>
+			{label}
+			{labelTooltip && <InfoOutlinedIcon sx={{ fontSize: 14 }} />}
+		</Typography>
+	);
+
 	return (
 		<Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
 			<Box
@@ -119,19 +147,16 @@ function InfoRow({
 				{icon}
 			</Box>
 			<Box sx={{ minWidth: 0 }}>
-				<Typography
-					variant="caption"
-					sx={{
-						display: 'block',
-						color: registrationMd3.onSurfaceVariant,
-						fontWeight: 700,
-						letterSpacing: 0.4,
-						lineHeight: 1.4,
-						textTransform: 'uppercase'
-					}}
-				>
-					{label}
-				</Typography>
+				{labelTooltip ? (
+					// `describeChild` so the sentence is announced as the row's
+					// description; without it MUI would put it in `aria-label`
+					// and screen readers would lose the "Sprachen" label itself.
+					<Tooltip title={labelTooltip} describeChild>
+						{labelNode}
+					</Tooltip>
+				) : (
+					labelNode
+				)}
 				<Box
 					sx={{
 						color: registrationMd3.onSurface,
@@ -162,17 +187,6 @@ export const AgencyDetailsPanel = ({
 		() => getAgencyDetails(agency, department),
 		[agency, department]
 	);
-	// The admin stores structured slots as JSON inside the same string that used
-	// to hold free text, so this must be formatted before display — otherwise a
-	// Beratungsstelle with structured hours would show raw JSON here. Legacy free
-	// text passes through unchanged.
-	const openingHours = useMemo(
-		() =>
-			formatOpeningHours(details.hours, (key, fallback) =>
-				t(key, fallback ?? key)
-			),
-		[details.hours, t]
-	);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);
 	const webMapHref = useMemo(() => osmLink(details), [details]);
 	const nativeMapHref = useMemo(
@@ -196,6 +210,32 @@ export const AgencyDetailsPanel = ({
 					ml: { xs: 0, sm: 'calc(48px + 14px)' }
 				}}
 			>
+				{details.about && (
+					<InfoRow
+						icon={<InfoOutlinedIcon fontSize="small" />}
+						label={t(
+							'registration.agency.details.aboutLabel',
+							'Zu dieser Beratungsstelle'
+						)}
+					>
+						{details.about}
+					</InfoRow>
+				)}
+
+				<InfoRow
+					icon={<TranslateRoundedIcon fontSize="small" />}
+					label={t(
+						'registration.agency.details.languagesLabel',
+						'Sprachen'
+					)}
+					labelTooltip={t(
+						'registration.agency.details.languagesTooltip',
+						'Diese Beratungsstelle berät Sie auf:'
+					)}
+				>
+					<AgencyLanguages agencyId={agency.id} />
+				</InfoRow>
+
 				{(details.address || details.floorLocation) && (
 					<InfoRow
 						icon={<PlaceRoundedIcon fontSize="small" />}
@@ -303,28 +343,6 @@ export const AgencyDetailsPanel = ({
 					</Box>
 				)}
 
-				<InfoRow
-					icon={<TranslateRoundedIcon fontSize="small" />}
-					label={t(
-						'registration.agency.details.languagesLabel',
-						'Sprachen'
-					)}
-				>
-					<AgencyLanguages agencyId={agency.id} />
-				</InfoRow>
-
-				{openingHours && (
-					<InfoRow
-						icon={<ScheduleRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.hoursLabel',
-							'Öffnungszeiten'
-						)}
-					>
-						{openingHours}
-					</InfoRow>
-				)}
-
 				{details.phone && (
 					<InfoRow
 						icon={<CallRoundedIcon fontSize="small" />}
@@ -363,18 +381,6 @@ export const AgencyDetailsPanel = ({
 							{safeDetailsUrl}
 							<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />
 						</Link>
-					</InfoRow>
-				)}
-
-				{details.about && (
-					<InfoRow
-						icon={<InfoOutlinedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.aboutLabel',
-							'Zu dieser Beratungsstelle'
-						)}
-					>
-						{details.about}
 					</InfoRow>
 				)}
 

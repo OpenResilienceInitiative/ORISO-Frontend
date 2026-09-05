@@ -1010,6 +1010,7 @@
 				"addressLabel": "Adresse",
 				"hoursLabel": "Öffnungszeiten",
 				"languagesLabel": "Sprachen",
+				"languagesTooltip": "Diese Beratungsstelle berät Dich auf:",
 				"less": "Weniger",
 				"more": "Mehr",
 				"navigate": "Navigation starten",
