@@ -105,8 +105,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 16px;
 			padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
 			position: relative;
-			left: 0;
-			right: 0;
 			background-color: var(--m3-surface-container-lowest, #ffffff);
 		}
 
