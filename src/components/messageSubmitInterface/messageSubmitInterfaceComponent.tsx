@@ -3752,21 +3752,19 @@ export const MessageSubmitInterfaceComponent = ({
 								: undefined
 						}
 					>
-						{!isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<DragHandle
-									onPointerDown={
-										handleComposerResizePointerDown
-									}
-									onKeyDown={handleComposerResizeKeyDown}
-									touched={isComposerResizing}
-									ariaLabel={translate(
-										'message.mobileNav.dragToExpand',
-										'Drag to resize composer'
-									)}
-								/>
-							)}
+						{/* T6: the drag pill belongs to every docked composer —
+						    main chat, supervision room and thread panel alike. */}
+						{!isMobileViewport && !isExpandedComposer && (
+							<DragHandle
+								onPointerDown={handleComposerResizePointerDown}
+								onKeyDown={handleComposerResizeKeyDown}
+								touched={isComposerResizing}
+								ariaLabel={translate(
+									'message.mobileNav.dragToExpand',
+									'Drag to resize composer'
+								)}
+							/>
+						)}
 						{isMobileViewport &&
 							!threadRootId &&
 							!isExpandedComposer && (
