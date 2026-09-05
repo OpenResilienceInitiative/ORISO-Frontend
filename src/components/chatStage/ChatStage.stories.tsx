@@ -1455,6 +1455,53 @@ export const FabPickHandsFocusToThePanelHeader: Story = {
 };
 
 /**
+ * (d4b) Review B2 N-1: the panel opens AFTER mount (FAB pick) — the main
+ * composer re-frames from framed (196) to flush (106) over a 240 ms
+ * transition. The auto-height effect must not lock the mid-transition
+ * height (138 = MIN_HEIGHT_COMPACT_DESKTOP) in `--composer-height`: once the
+ * transition settled both composers rest at ONE line and the same height.
+ */
+export const PanelOpensAfterMountComposersSettleEqual: Story = {
+	name: '(d4b) Desktop — panel opens after mount: both composers settle at one line (review B2 N-1)',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		panelVariant: 'inside',
+		openThreads: 2,
+		supervisionUnread: 1
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expectStageParts(canvasElement, {
+			composers: 1,
+			bubblesAtLeast: 6
+		});
+		const fab = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="channel-switcher-fab"]'
+		)!;
+		await userEvent.click(fab);
+		const items = within(await canvas.findByRole('menu')).getAllByRole(
+			'menuitem'
+		);
+		await userEvent.click(
+			items.find(
+				(item) => item.getAttribute('data-channel-id') === 'supervision'
+			)!
+		);
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Supervision')
+		);
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 6
+		});
+		// Let the 240 ms framed→flush transition run out before measuring.
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		await expectCompactComposers(canvasElement);
+	}
+};
+
+/**
  * (d5) Review v6: six open threads — the header card ends above the
  * panel's composer (never behind it) and its list scrolls inside; End
  * reaches the last row.

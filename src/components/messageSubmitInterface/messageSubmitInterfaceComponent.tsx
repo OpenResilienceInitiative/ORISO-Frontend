@@ -533,6 +533,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null
 	);
+	// Review B2 N-1: the framed→flush re-frame (side panel opening AFTER
+	// mount) animates the shell height over 240 ms. Measuring during that
+	// transition reads the old chrome and locks a mid-flight height into
+	// `--composer-height`; every ended height transition re-measures.
+	const [composerSettleTick, setComposerSettleTick] = useState(0);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -3562,11 +3567,22 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 	}, [
 		attachmentSelected,
+		composerSettleTick,
 		composerText,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
 	]);
+
+	const handleComposerShellTransitionEnd = useCallback(
+		(e: React.TransitionEvent<HTMLDivElement>) => {
+			if (e.target !== e.currentTarget || e.propertyName !== 'height') {
+				return;
+			}
+			setComposerSettleTick((tick) => tick + 1);
+		},
+		[]
+	);
 
 	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
@@ -3782,6 +3798,7 @@ export const MessageSubmitInterfaceComponent = ({
 						)}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
 								? ({
