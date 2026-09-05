@@ -138,19 +138,18 @@ describe('lastOpenSession (#1193 Job 3)', () => {
 	});
 
 	it('rejects future or non-finite timestamps instead of extending the TTL', () => {
-		for (const ts of [
-			Date.now() + LAST_OPEN_SESSION_TTL_MS,
-			Date.now() + 60_000,
-			Number.NaN,
-			Number.POSITIVE_INFINITY
-		]) {
-			window.localStorage.setItem(
-				'oriso.lastOpenSession.u1',
-				JSON.stringify({
-					path: '/sessions/consultant/sessionView/session/1',
-					ts
-				})
-			);
+		const path = '/sessions/consultant/sessionView/session/1';
+		const rawPayloads = [
+			// future timestamps (finite)
+			JSON.stringify({ path, ts: Date.now() + LAST_OPEN_SESSION_TTL_MS }),
+			JSON.stringify({ path, ts: Date.now() + 60_000 }),
+			// genuinely non-finite numbers: JSON.stringify would turn NaN/Infinity
+			// into null, so use raw payloads whose exponent overflows to ±Infinity
+			`{"path":"${path}","ts":1e999}`,
+			`{"path":"${path}","ts":-1e999}`
+		];
+		for (const raw of rawPayloads) {
+			window.localStorage.setItem('oriso.lastOpenSession.u1', raw);
 			expect(readLastOpenSession('u1')).toBeNull();
 			expect(
 				window.localStorage.getItem('oriso.lastOpenSession.u1')
