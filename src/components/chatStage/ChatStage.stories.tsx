@@ -748,15 +748,14 @@ export const PanelChannelCardKeyboardAndShortcuts: Story = {
  * row out and blocks the pick. T29: eyebrow and title say what the card
  * does.
  */
-export const PanelChannelCardOrganismHoverAndSupervisionSwitch: Story = {
-	name: '(d6) Panel channel card — organism rows, hover tint, supervision switch (T27/T29)',
+export const PanelChannelCardOrganismHover: Story = {
+	name: '(d6) Panel channel card — organism rows, hover tint (T27/T29; T36: no switch)',
 	globals: desktop1280Globals,
 	args: {
 		panel: 'thread',
 		panelVariant: 'inside',
 		openThreads: 2,
-		supervisionUnread: 2,
-		supervisionToggle: true
+		supervisionUnread: 2
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -872,39 +871,23 @@ export const PanelChannelCardOrganismHoverAndSupervisionSwitch: Story = {
 			'--m3-secondary-fixed'
 		);
 		await userEvent.keyboard('{ArrowDown}');
-		// T27: the supervision row's switch — on by default; off greys the
-		// row and a click no longer switches the panel.
+		// T36: the supervision row is a plain menu row — no switch, nothing
+		// but `menuitem`s inside `role="menu"` (review v8 structural finding).
 		const supervisionRow = items[0];
 		await expect(supervisionRow).toHaveAttribute(
 			'data-channel-id',
 			'supervision'
 		);
-		const toggle = card.querySelector<HTMLInputElement>(
-			'[data-cy="channel-menu-supervision-switch"] input[role="switch"]'
-		)!;
-		await expect(toggle.checked).toBe(true);
-		await expect(toggle.getAttribute('aria-label')).toBe(
-			'Supervision aktiv'
-		);
-		await userEvent.click(toggle);
-		await waitFor(() => expect(toggle.checked).toBe(false));
-		await expect(toggle.getAttribute('aria-label')).toBe(
-			'Supervision ausgeschaltet'
-		);
-		await expect(supervisionRow).toHaveAttribute('aria-disabled', 'true');
 		await expect(
-			supervisionRow.classList.contains(
-				'chatMenuDropdown__item--disabled'
-			)
-		).toBe(true);
-		await userEvent.click(supervisionRow);
-		await expect(
-			canvasElement.querySelector('[role="menu"]')
-		).not.toBeNull();
-		await expect(panelTitle(canvasElement).kind).toBe('Thread #1');
-		// Back on: the row is a channel again.
-		await userEvent.click(toggle);
-		await waitFor(() => expect(toggle.checked).toBe(true));
+			card.querySelector('[role="switch"], input[type="checkbox"]')
+		).toBeNull();
+		for (const child of Array.from(menu.children)) {
+			expect(child.getAttribute('role')).toBe('none');
+			expect(child.children.length).toBe(1);
+			expect(child.firstElementChild?.getAttribute('role')).toBe(
+				'menuitem'
+			);
+		}
 		await expect(supervisionRow).not.toHaveAttribute('aria-disabled');
 		await userEvent.click(supervisionRow);
 		await waitFor(() =>
@@ -1050,8 +1033,7 @@ export const PhoneChannelMenuFromFabAndHeader: Story = {
 		panel: 'supervision',
 		phone: 'main',
 		openThreads: 2,
-		supervisionUnread: 1,
-		supervisionToggle: true
+		supervisionUnread: 1
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);

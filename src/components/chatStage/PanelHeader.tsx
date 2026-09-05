@@ -75,9 +75,6 @@ export interface PanelHeaderProps {
 	/** Id of the channel this panel shows. */
 	'activeChannelId'?: string;
 	'onSelectChannel'?: (channelId: string) => void;
-	/** T27: supervision on/off switch in the card (presentational until B2). */
-	'supervisionActive'?: boolean;
-	'onToggleSupervision'?: (active: boolean) => void;
 	/**
 	 * Review v6: the host sets it when this panel was opened from the FAB —
 	 * the FAB unmounts with the pick (the header replaces it), so focus
@@ -107,8 +104,6 @@ export const PanelHeader = ({
 	channels = [],
 	activeChannelId,
 	onSelectChannel,
-	supervisionActive,
-	onToggleSupervision,
 	autoFocusChannelButton = false,
 	onBack,
 	onClose,
@@ -381,8 +376,6 @@ export const PanelHeader = ({
 						id={menuId}
 						channels={channels}
 						activeChannelId={activeChannelId}
-						supervisionActive={supervisionActive}
-						onToggleSupervision={onToggleSupervision}
 						maxHeight={placement?.maxHeight}
 						onSelect={(channelId) => {
 							if (channelId !== activeChannelId) {

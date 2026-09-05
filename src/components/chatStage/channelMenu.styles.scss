@@ -2,9 +2,9 @@
 // with a channel list inside. Only what the organism does not know lives
 // here: the very light `primary-fixed` accent on the card (T27), the
 // scrolling row list under a host-measured ceiling (review v6), the
-// unread pill, the two-line preview (T28) and the supervision switch at
-// the end of its row (T27). Row typography, hover and selection are the
-// organism's.
+// unread pill and the two-line preview (T28). Row typography, hover and
+// selection are the organism's. (T36: the supervision on/off switch is
+// gone — every row is a plain `menuitem`, nothing else sits in the menu.)
 
 .channelMenu {
 	// T27: a hint of the brand tint on the card — the organism's white
@@ -36,12 +36,6 @@
 		.channelMenu__item {
 			flex: 1 1 auto;
 			min-width: 0;
-		}
-
-		// T27: the switch sits beside the preview (line 2), so the label line
-		// keeps its full width — "Supervisionschat · 2 · ⇧S" stays whole.
-		&--withSwitch .chatMenuDropdown__itemDescription {
-			padding-right: 60px;
 		}
 	}
 
@@ -90,15 +84,5 @@
 			var(--m3-error, #cc0000)
 		);
 		color: var(--m3-on-error, #fff);
-	}
-
-	// T27: the supervision switch — bottom-right of its row, level with the
-	// two preview lines (the organism row ends 12 px below the text).
-	&__switch {
-		position: absolute;
-		right: 8px;
-		bottom: 12px;
-		display: inline-flex;
-		align-items: center;
 	}
 }

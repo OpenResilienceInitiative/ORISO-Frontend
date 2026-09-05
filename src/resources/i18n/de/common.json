@@ -333,8 +333,6 @@
 			"eyebrow": "Weitere Gespräche zu dieser Beratung",
 			"title": "Threads und Supervision",
 			"supervisionChat": "Supervisionschat",
-			"supervisionOn": "Supervision aktiv",
-			"supervisionOff": "Supervision ausgeschaltet",
 			"thread": "Thread #{{n}}"
 		}
 	},

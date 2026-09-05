@@ -7,8 +7,8 @@
  *   Weitere Gespräche zu dieser Beratung   ← eyebrow (Body Small, grey)
  *   Threads und Supervision                ← title (Body Strong)
  *   ──────────────────────────────────     ← hairline
- *   [icon] Supervisionschat   ⇧S  (o)      ← always first; the switch
- *          Elena P.: ich kann nicht …         turns supervision on/off (T27)
+ *   [icon] Supervisionschat   ⇧S           ← always first (T36: a plain
+ *          Elena P.: ich kann nicht …         row again — no on/off switch)
  *   [icon] Thread #1          ⇧1           ← threads by most recent message
  *          baer-mika-343: wissen sie …        preview: two lines, then … (T28)
  *
@@ -16,15 +16,13 @@
  * header) and the FAB (anchored above it). The order, numbering,
  * shortcuts and previews come from `channelMenuModel.ts`; this file only
  * renders and moves focus: arrow keys, Home/End, Escape, ⇧S / ⇧1 … and
- * `aria-current` on the channel that is on screen. The supervision switch
- * is presentational here — the real toggle is wired in B2.
+ * `aria-current` on the channel that is on screen.
  */
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as SupervisionOffGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import {
 	ChatMenuDropdown,
@@ -32,7 +30,6 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
-import { Switch } from '../Switch';
 import {
 	buildChannelMenu,
 	moveMenuFocus,
@@ -53,14 +50,6 @@ export interface ChannelMenuProps {
 	'onClose': () => void;
 	/** Phone: an extra last row that leads back to the main chat. */
 	'onBack'?: () => void;
-	/**
-	 * T27: supervision can be switched on and off from its row. `undefined`
-	 * = no switch (the row is a plain channel). `false` greys the row out
-	 * and makes it unselectable until the switch turns it on again.
-	 */
-	'supervisionActive'?: boolean;
-	/** The switch was flipped — presentational until B2 wires it. */
-	'onToggleSupervision'?: (active: boolean) => void;
 	/** Focus the current (else first) row on mount. Default true. */
 	'autoFocus'?: boolean;
 	/**
@@ -86,8 +75,6 @@ export const ChannelMenu = ({
 	onSelect,
 	onClose,
 	onBack,
-	supervisionActive,
-	onToggleSupervision,
 	autoFocus = true,
 	maxHeight,
 	className,
@@ -170,20 +157,12 @@ export const ChannelMenu = ({
 		}, 0);
 	};
 
-	// T27: a switched-off supervision row cannot be picked.
-	const rowDisabled = (row: ChannelMenuRow) =>
-		row.kind === 'supervision' && supervisionActive === false;
-
 	const pick = useCallback(
 		(row: ChannelMenuRow) => {
-			if (rowDisabled(row)) {
-				return;
-			}
 			onSelect(row.id);
 			close();
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onSelect, close, supervisionActive]
+		[onSelect, close]
 	);
 
 	const onKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
@@ -216,11 +195,6 @@ export const ChannelMenu = ({
 		row.shortcut
 			? `Shift+${row.kind === 'supervision' ? 'S' : row.threadNumber}`
 			: undefined;
-	const supervisionSwitchLabel = translate(
-		supervisionActive === false
-			? 'chatStage.menu.supervisionOff'
-			: 'chatStage.menu.supervisionOn'
-	);
 
 	return (
 		<ChatMenuDropdown
@@ -251,25 +225,13 @@ export const ChannelMenu = ({
 			>
 				{rows.map((row, index) => {
 					const Glyph =
-						row.kind === 'thread'
-							? ThreadGlyph
-							: supervisionActive === false
-								? SupervisionOffGlyph
-								: SupervisionGlyph;
+						row.kind === 'thread' ? ThreadGlyph : SupervisionGlyph;
 					const label = rowLabel(row);
-					const disabled = rowDisabled(row);
-					const withSwitch =
-						row.kind === 'supervision' && !!onToggleSupervision;
 					return (
 						<li
 							key={row.id}
 							role="none"
-							className={[
-								'channelMenu__row',
-								withSwitch && 'channelMenu__row--withSwitch'
-							]
-								.filter(Boolean)
-								.join(' ')}
+							className="channelMenu__row"
 						>
 							<button
 								ref={(element) => {
@@ -284,9 +246,7 @@ export const ChannelMenu = ({
 									`channelMenu__item--${row.kind}`,
 									row.active &&
 										'chatMenuDropdown__item--active',
-									row.active && 'channelMenu__item--active',
-									disabled &&
-										'chatMenuDropdown__item--disabled'
+									row.active && 'channelMenu__item--active'
 								]
 									.filter(Boolean)
 									.join(' ')}
@@ -295,7 +255,6 @@ export const ChannelMenu = ({
 								data-active={row.active ? 'true' : 'false'}
 								data-shortcut={row.shortcut}
 								aria-current={row.active ? 'true' : undefined}
-								aria-disabled={disabled || undefined}
 								aria-keyshortcuts={keyshortcuts(row)}
 								aria-label={[
 									translate(
@@ -304,7 +263,6 @@ export const ChannelMenu = ({
 											label
 										}
 									),
-									disabled ? supervisionSwitchLabel : '',
 									row.preview
 										? `${row.preview.author}: ${row.preview.text}`
 										: '',
@@ -317,7 +275,6 @@ export const ChannelMenu = ({
 							>
 								<ChatMenuDropdownItemContent
 									icon={<Glyph aria-hidden="true" />}
-									disabled={disabled}
 									title={
 										<span className="channelMenu__label">
 											{label}
@@ -342,23 +299,6 @@ export const ChannelMenu = ({
 									}
 								/>
 							</button>
-							{withSwitch && (
-								// T27: on/off at the row's end. A native switch
-								// beside the menuitem (never inside it).
-								<span
-									className="channelMenu__switch"
-									data-cy="channel-menu-supervision-switch"
-								>
-									<Switch
-										checked={supervisionActive !== false}
-										showIcon
-										aria-label={supervisionSwitchLabel}
-										onChange={(checked) =>
-											onToggleSupervision?.(checked)
-										}
-									/>
-								</span>
-							)}
 						</li>
 					);
 				})}

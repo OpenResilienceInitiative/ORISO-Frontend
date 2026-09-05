@@ -338,8 +338,6 @@
 			"eyebrow": "Autres conversations sur ce conseil",
 			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
-			"supervisionOn": "Supervision activée",
-			"supervisionOff": "Supervision désactivée",
 			"thread": "Fil #{{n}}"
 		}
 	},
