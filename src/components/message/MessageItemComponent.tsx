@@ -28,11 +28,15 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
-import { getErstantwortRenderMode } from '../erstantwort/erstantwortRoomGate';
+import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import { getModality, Modality } from '../session/getModality';
+import {
+	getModality,
+	getModalityIfKnown,
+	Modality
+} from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -1091,7 +1095,7 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModality(activeSession) : undefined),
+		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
 		[activeSession]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
@@ -1100,9 +1104,9 @@ export const MessageItemComponent = ({
 	   wrong sequence rather than none. Such an event renders one neutral line
 	   instead of falling through to the generic chrome (raw JSON payload).
 	   Decision lives in erstantwortRoomGate.ts. */
-	const erstantwortRenderMode = getErstantwortRenderMode(
+	const erstantwortRenderMode = getErstantwortRenderModeForSession(
 		isErstantwortEvent,
-		erstantwortModality
+		activeSession
 	);
 	/* Only a freshly arrived event plays the stagger. The message list mounts and
 	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
