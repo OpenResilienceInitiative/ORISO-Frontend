@@ -7,6 +7,7 @@ import {
 	buildMockActiveSession,
 	buildMockGroupSession,
 	ComposerStoryDecorator,
+	mockComposerAskerData,
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
@@ -41,10 +42,12 @@ const shellStyle: React.CSSProperties = {
 function ComposerShell({
 	activeSession,
 	roomMembers,
+	userData,
 	...composerProps
 }: {
 	activeSession?: any;
 	roomMembers?: Array<{ userId: string; name: string }>;
+	userData?: any;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
 		<div
@@ -56,6 +59,7 @@ function ComposerShell({
 			<ComposerStoryDecorator
 				activeSession={activeSession}
 				roomMembers={roomMembers}
+				userData={userData}
 			>
 				<MessageSubmitInterfaceComponent
 					placeholder="Nachricht an Klient:in schreiben"
@@ -122,6 +126,58 @@ async function expectComposerBottomInset(
 		);
 	});
 }
+
+/**
+ * The absence banner an advice seeker sees when their counsellor is away.
+ *
+ * It renders inside the composer wrapper, above the card. The composer card is
+ * `position: absolute; bottom: 0` with an opaque background, so without the
+ * wrapper reserving room for the banner the card paints straight over it and
+ * the notice is invisible in the app while still present in the DOM.
+ */
+export const ConsultantAbsent: Story = {
+	name: 'Asker — counsellor is absent',
+	render: () => (
+		<ComposerShell
+			userData={mockComposerAskerData}
+			activeSession={buildMockActiveSession({
+				consultant: {
+					consultantId: 'consultant-storybook',
+					username: 'shaziaknew',
+					displayName: 'shazia ka',
+					absent: true,
+					absenceMessage:
+						'I am out of office, please contact me later'
+				}
+			})}
+			placeholder="Schreiben Sie uns, was Sie bewegt."
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const banner = await canvas.findByText(
+			'I am out of office, please contact me later'
+		);
+
+		// Present in the DOM is not enough — that was true throughout the bug.
+		// Assert it is actually on screen and not painted over by the card.
+		await waitFor(() => {
+			const bannerBox = banner.getBoundingClientRect();
+			expect(bannerBox.height).toBeGreaterThan(0);
+
+			const composer = canvasElement.querySelector('form.textarea');
+			expect(composer).not.toBeNull();
+			const composerBox = (
+				composer as HTMLElement
+			).getBoundingClientRect();
+
+			// The banner sits above the composer card, not underneath it.
+			expect(Math.round(bannerBox.bottom)).toBeLessThanOrEqual(
+				Math.round(composerBox.top) + 1
+			);
+		});
+	}
+};
 
 export const Default: Story = {
 	name: 'Default (empty)',
