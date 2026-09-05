@@ -66,14 +66,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
-	.session__submit-interface--withThread {
-		right: 520px;
-
-		@media screen and (width <= 899px) {
-			right: 0;
-		}
-	}
-
 	& > div:first-child {
 		flex: 0 0 auto; /* Header stays fixed height */
 	}
@@ -208,92 +200,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding-bottom: 38px;
 	}
 
-	&__content--withThread {
-		@include breakpoint($fromMedium) {
-			padding-right: 520px;
-		}
-	}
-
-	// WP-B2: the supervision parallel panel wraps the chat card in a
-	// SplitStage (see supervisionPanel/README.md). The stage replaces the
-	// card as the flex child of .session__wrapper.
-	&__supervisionStage {
-		flex: 1 1 auto;
-		height: auto;
-		min-height: 0;
-		min-width: 0;
-		align-self: stretch;
-
-		@include breakpoint($fromLarge) {
-			.splitStage__secondary {
-				padding: 24px 24px 24px 0;
-			}
-
-			.splitStage__divider {
-				margin-left: -24px;
-			}
-		}
-	}
-
-	&__threadPanel {
-		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		width: 520px;
-		background: #fff;
-		border-left: 1px solid #eee;
-		display: flex;
-		flex-direction: column;
-		z-index: 5;
-
-		@media screen and (width <= 899px) {
-			position: fixed;
-			width: 100%;
-			z-index: 2000;
-		}
-	}
-
-	&__threadHeader {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: $grid-base-two $grid-base-three;
-		border-bottom: 1px solid #eee;
-	}
-
-	&__threadTitle {
-		font-weight: 600;
-	}
-
-	&__threadClose {
-		background: none;
-		border: none;
-		font-size: 20px;
-		cursor: pointer;
-		color: $text-low-emphasis;
-	}
-
-	&__threadBody {
-		flex: 1;
-		overflow-y: auto;
-		padding: $grid-base-two $grid-base-two 160px;
-
-		@media screen and (width <= 1366px) {
-			// iPad/tablet thread composer is taller; allow more bottom scroll room.
-			padding-bottom: calc(260px + env(safe-area-inset-bottom, 0));
-		}
-
-		@media screen and (width <= 899px) {
-			padding-bottom: calc(280px + env(safe-area-inset-bottom, 0));
-		}
-	}
-
-	&__threadInput {
-		border-top: 1px solid #eee;
-		padding: $grid-base-two;
-	}
-
 	&__supervisorInputNote {
 		margin: 0 $grid-base-three 5px;
 		font-size: $font-size-secondary;
@@ -347,27 +253,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&--gameFocus &__waitingMiniGameCenter {
 		width: 132px;
 		height: 132px;
-	}
-
-	&__supervisionReason {
-		display: flex;
-		max-width: 650px;
-		margin: 0px auto;
-		padding: $grid-base-two $grid-base-three;
-		border-radius: 8px;
-		background-color: rgba(198, 40, 40, 0.12);
-		border: 1px solid rgba(198, 40, 40, 0.2);
-		color: #3f373f;
-	}
-
-	&__supervisionReasonTitle {
-		font-weight: 600;
-		margin-bottom: 6px;
-	}
-
-	&__supervisionReasonText {
-		font-size: 14px;
-		margin-left: 16px;
 	}
 
 	&__waitingModule {
@@ -2280,46 +2165,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	// Shadow removed from submit interface for clean Element-like UI
 
-	&__scrollToBottom {
-		position: fixed;
-		right: $grid-base-three;
-		bottom: calc(#{$grid-base} * 19);
-		z-index: 3;
-		animation: appear-animation 0.3s;
-
-		@include breakpoint($fromLarge) {
-			right: 33px;
-		}
-
-		&--disabled {
-			animation: disappear-animation 0.3s;
-			animation-fill-mode: forwards;
-		}
-
-		@media screen and (width <= 899px) {
-			display: none;
-		}
-	}
-
-	&__unreadCount {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		position: absolute;
-		top: -3px;
-		right: -9px;
-		width: $unreadButtonSize;
-		height: $unreadButtonSize;
-		background-color: var(--m3-primary, $primary);
-		font-weight: $font-weight-medium;
-		font-size: 10px;
-		color: $white;
-		border-radius: 100%;
-		z-index: 1;
-		pointer-events: none;
-		animation: bounce-appear-animation 0.3s;
-	}
-
 	&--empty {
 		justify-content: center;
 		align-items: center;
@@ -2628,29 +2473,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		-webkit-overflow-scrolling: touch;
 	}
 
-	.session__content--withThread {
-		padding-right: $grid-base-three;
-	}
-
-	.session__threadPanel {
-		left: 0;
-		right: 0;
-		width: 100%;
-		border-left: none;
-	}
-
-	.session__submit-interface--withThread {
-		right: 0;
-	}
-
 	/* Header is hidden in embedded mode; ensure composer never becomes a flex filler. */
 	.messageSubmit__wrapper,
 	.session__submit-interface {
 		flex: 0 0 auto !important;
-	}
-
-	.session__threadClose {
-		display: none;
 	}
 }
 

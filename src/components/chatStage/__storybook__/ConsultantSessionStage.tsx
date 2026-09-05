@@ -45,6 +45,7 @@ import {
 	writePanelWidth
 } from '../stageLayout';
 import { useDockedComposerOffset } from '../useDockedComposerOffset';
+import { useViewportWidth } from '../useViewportWidth';
 import {
 	computeThreadSummaries,
 	formatThreadEntryPreview
@@ -138,18 +139,6 @@ const supervisorParticipant: StackParticipant = {
 	displayName: SUPERVISOR_NAME,
 	firstName: 'Bettina',
 	lastName: 'Berg'
-};
-
-const useViewportWidth = () => {
-	const [width, setWidth] = useState(() =>
-		typeof window === 'undefined' ? 1280 : window.innerWidth
-	);
-	useEffect(() => {
-		const update = () => setWidth(window.innerWidth);
-		window.addEventListener('resize', update);
-		return () => window.removeEventListener('resize', update);
-	}, []);
-	return width;
 };
 
 /** T21: the thread entry's "N replies" + "Author: last reply…" from the real summary code. */

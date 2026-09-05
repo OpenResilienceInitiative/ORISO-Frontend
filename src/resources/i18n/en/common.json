@@ -3455,6 +3455,10 @@
 			"video": "Video",
 			"file": "File",
 			"first_response": "First response",
+			"channel": {
+				"thread": "Thread:",
+				"supervision": "Supervision:"
+			},
 			"registered": {
 				"tab": "Initial inquiries"
 			}

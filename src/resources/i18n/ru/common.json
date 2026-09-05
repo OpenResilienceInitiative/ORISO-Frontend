@@ -3491,6 +3491,10 @@
 			"video": "Видео",
 			"file": "Файл",
 			"first_response": "Первый ответ",
+			"channel": {
+				"thread": "Тред:",
+				"supervision": "Супервизия:"
+			},
 			"registered": {
 				"tab": "Первые запросы"
 			}

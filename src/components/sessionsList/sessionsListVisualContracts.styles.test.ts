@@ -44,7 +44,7 @@ describe('session list visual contracts', () => {
 		);
 		// Without this margin the handle sits 6 px off the gap's centre.
 		expect(css).toMatch(
-			/@media \(min-width: 900px\)\s*\{[^@]*\.app__wrapper \.contentWrapper__detail \.session,\s*\.app__wrapper \.contentWrapper__detail \.enquiry__wrapper\s*\{\s*margin-left:\s*calc\(var\(--pane-gap\) - var\(--pane-inner-gutter\)\);/s
+			/@media \(min-width: 900px\)\s*\{[^@]*\.app__wrapper \.contentWrapper__detail \.session:not\(\.sidePanel\),\s*\.app__wrapper \.contentWrapper__detail \.enquiry__wrapper\s*\{\s*margin-left:\s*calc\(var\(--pane-gap\) - var\(--pane-inner-gutter\)\);/s
 		);
 		// … and the stage carries the same formula (one rule, two hosts).
 		const stage = compileStyles(

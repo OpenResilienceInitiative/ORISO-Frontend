@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
+import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
 import { formatAgencyLineWithI18n } from '../message/messageNameUtils';
@@ -297,11 +298,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// view — strip ephemeral query params from the saved action path.
 	const getCanonicalConversationActionPath = () => {
 		const params = new URLSearchParams(location.search);
-		params.delete('threadRootId');
-		params.delete('threadMessageId');
 		params.delete('embeddedNotifications');
 		const query = params.toString();
-		return `${location.pathname}${query ? `?${query}` : ''}`;
+		// B2 / T24: the open side channel (`channel` / `at`, and the legacy
+		// pair) is transient — strip it too.
+		return `${location.pathname}${stripChannelParams(query ? `?${query}` : '')}`;
 	};
 	const { type, path: listPath } = useContext(SessionTypeContext);
 

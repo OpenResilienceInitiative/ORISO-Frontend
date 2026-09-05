@@ -3514,7 +3514,11 @@
 			"image": "Bild",
 			"video": "Video",
 			"file": "Datei",
-			"first_response": "Erstantwort"
+			"first_response": "Erstantwort",
+			"channel": {
+				"thread": "Thread:",
+				"supervision": "Supervision:"
+			}
 		},
 		"reloadButton": {
 			"label": "Erneut laden"

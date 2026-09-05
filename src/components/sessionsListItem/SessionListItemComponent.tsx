@@ -272,13 +272,20 @@ export const SessionListItemComponent = ({
 				if (!preview || preview.kind === 'encrypted') {
 					return translate('e2ee.message.encryption.text');
 				}
-				if (preview.kind === 'text') {
-					return preview.text || '';
-				}
-				return translate(
-					`sessionList.preview.${preview.kind}`,
-					preview.kind
-				);
+				const text =
+					preview.kind === 'text'
+						? preview.text || ''
+						: translate(
+								`sessionList.preview.${preview.kind}`,
+								preview.kind
+							);
+				// B2 / T24 (Frank): "Thread: …" / "Supervision: …" when the
+				// newest message came from a secondary channel.
+				return preview.channel
+					? `${translate(
+							`sessionList.preview.channel.${preview.channel}`
+						)} ${text}`
+					: text;
 			};
 			setPlainTextLastMessage(formatPreview(matrixSessionPreview));
 		}

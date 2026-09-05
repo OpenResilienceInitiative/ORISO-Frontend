@@ -79,7 +79,7 @@ import {
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
-import { SupervisionIcon } from '../supervisionPanel/icons';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;

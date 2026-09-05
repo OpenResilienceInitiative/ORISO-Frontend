@@ -12,6 +12,14 @@ import './sessionsList.styles';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { useResponsive } from '../../hooks/useResponsive';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
+import { useLocation } from 'react-router-dom';
+import { parseChannel } from '../../utils/channelRoute';
+import {
+	readPanelWidth,
+	resolveStageLayout,
+	STAGE_LAYOUT
+} from '../chatStage/stageLayout';
+import { useViewportWidth } from '../chatStage/useViewportWidth';
 
 interface SessionsListWrapperProps {
 	sessionTypes: SESSION_TYPES;
@@ -61,20 +69,48 @@ export const SessionsListWrapper = ({
 		return width;
 	});
 
-	// Switch a bit earlier so text layout never reaches the broken/truncated range.
-	const isIconOnly = sidebarWidth < ICON_ONLY_THRESHOLD;
+	// D10 / B2 (review v11 checklist 7): while a side panel is open
+	// (`?channel=`, the one truth) the list column snaps to the icon rail
+	// when the chat card cannot host two 520 px panes next to it — the
+	// same `resolveStageLayout` rule the stage uses. The persisted width
+	// survives; dragging the list wider is locked meanwhile.
+	const location = useLocation();
+	const viewportWidth = useViewportWidth();
+	const panelOpen = parseChannel(location.search).channel !== null;
+	const stageLayout = resolveStageLayout({
+		viewportWidth,
+		listWidth: sidebarWidth,
+		panelWidth: readPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH),
+		panelOpen: fromL && panelOpen
+	});
+	const railSnapped =
+		fromL &&
+		stageLayout.mode === 'split' &&
+		stageLayout.listMode === 'rail';
+	const effectiveWidth = railSnapped
+		? Math.min(sidebarWidth, STAGE_LAYOUT.RAIL_WIDTH)
+		: sidebarWidth;
 
-	const handleResize = useCallback((width: number) => {
-		setSidebarWidth(width);
-		localStorage.setItem('sessionsList_width', width.toString());
-	}, []);
+	// Switch a bit earlier so text layout never reaches the broken/truncated range.
+	const isIconOnly = effectiveWidth < ICON_ONLY_THRESHOLD;
+
+	const handleResize = useCallback(
+		(width: number) => {
+			if (railSnapped && width > STAGE_LAYOUT.RAIL_WIDTH) {
+				return;
+			}
+			setSidebarWidth(width);
+			localStorage.setItem('sessionsList_width', width.toString());
+		},
+		[railSnapped]
+	);
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (
 			<div
 				className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 				style={{
-					width: fromL ? `${sidebarWidth}px` : undefined,
+					width: fromL ? `${effectiveWidth}px` : undefined,
 					position: 'relative'
 				}}
 			>
@@ -84,10 +120,14 @@ export const SessionsListWrapper = ({
 					scrollContainerRef={listScrollRef}
 				/>
 				<ResizableHandle
-					currentWidth={sidebarWidth}
+					currentWidth={effectiveWidth}
 					onResize={handleResize}
 					scrollTargetRef={listScrollRef}
-					maxWidth={EXPANDED_MAX_WIDTH}
+					maxWidth={
+						railSnapped
+							? STAGE_LAYOUT.RAIL_WIDTH
+							: EXPANDED_MAX_WIDTH
+					}
 				/>
 			</div>
 		);
@@ -97,7 +137,7 @@ export const SessionsListWrapper = ({
 		<div
 			className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 			style={{
-				width: fromL ? `${sidebarWidth}px` : undefined,
+				width: fromL ? `${effectiveWidth}px` : undefined,
 				position: 'relative'
 			}}
 		>
@@ -107,10 +147,12 @@ export const SessionsListWrapper = ({
 				scrollContainerRef={listScrollRef}
 			/>
 			<ResizableHandle
-				currentWidth={sidebarWidth}
+				currentWidth={effectiveWidth}
 				onResize={handleResize}
 				scrollTargetRef={listScrollRef}
-				maxWidth={EXPANDED_MAX_WIDTH}
+				maxWidth={
+					railSnapped ? STAGE_LAYOUT.RAIL_WIDTH : EXPANDED_MAX_WIDTH
+				}
 			/>
 		</div>
 	);

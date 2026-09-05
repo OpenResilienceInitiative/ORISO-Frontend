@@ -21,6 +21,7 @@ import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { isFocusProtected } from './focusGuards';
+import { buildSessionChannelPath } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -676,14 +677,20 @@ export const MessageSubmitInterfaceComponent = ({
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
-		if (threadRootId) {
-			params.set('threadRootId', threadRootId);
-		} else {
-			params.delete('threadRootId');
-		}
 		const query = params.toString();
-		return `${location.pathname}${query ? `?${query}` : ''}`;
-	}, [location.pathname, location.search, threadRootId]);
+		// B2 / T24: a draft resumes INSIDE its channel via the one channel
+		// parameter — `?channel=thread:<root>` for a thread reply,
+		// `?channel=supervision` for the side room's composer
+		// (`targetRoomId`) — never the legacy pair.
+		return buildSessionChannelPath(
+			`${location.pathname}${query ? `?${query}` : ''}`,
+			threadRootId
+				? { kind: 'thread', rootId: threadRootId }
+				: targetRoomId
+					? { kind: 'supervision' }
+					: null
+		);
+	}, [location.pathname, location.search, threadRootId, targetRoomId]);
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
@@ -699,10 +706,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const forcedDraftScopeKey = useMemo(() => {
 		const params = new URLSearchParams(location.search);
 		const allScopeKeys = params.getAll('draftScopeKey');
-		return allScopeKeys.length
-			? allScopeKeys[allScopeKeys.length - 1]
+		if (allScopeKeys.length) {
+			return allScopeKeys[allScopeKeys.length - 1];
+		}
+		// B2: the side room's composer keeps its own draft — scoped to the
+		// side room, never to the client room the main composer writes to.
+		return targetRoomId && !threadRootId
+			? `scope:${targetRoomId}|thread:main`
 			: null;
-	}, [location.search]);
+	}, [location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -1164,21 +1176,6 @@ export const MessageSubmitInterfaceComponent = ({
 				`border-bottom: none; border-bottom-right-radius: 0;`
 			: textInputStyles;
 		textInput?.setAttribute('style', textInputStyles);
-
-		const textareaContainer = textInput?.closest('.textarea');
-		const textareaContainerHeight = textareaContainer?.offsetHeight;
-		// TODO(B2, D6 05.09.2026): second site of the desktop scroll-to-bottom
-		// FAB — this lookup positions `session__scrollToBottom` above the
-		// composer. B2 removes it together with the FAB block in
-		// `SessionItemComponent.tsx` (the composer toolbar's
-		// `composer-scroll-to-newest` arrow is the one control; the stage
-		// story (a) asserts that no FAB renders in either pane).
-		const scrollButton = textareaContainer
-			?.closest('.session')
-			?.getElementsByClassName('session__scrollToBottom')[0];
-		if (scrollButton) {
-			scrollButton.style.bottom = textareaContainerHeight + 24 + 'px';
-		}
 
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();

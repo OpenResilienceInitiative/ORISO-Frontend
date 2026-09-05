@@ -129,3 +129,56 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'text', text: 'Sichtbarer Text' });
 	});
 });
+
+describe('channel of the latest preview (B2 / T24 list prefix)', () => {
+	it('marks a thread reply (m.thread relation) as the thread channel', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body: 'Root' }, 1),
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.text',
+						'body': 'Antwort im Thread',
+						'm.relates_to': {
+							rel_type: 'm.thread',
+							event_id: '$root'
+						}
+					},
+					2
+				)
+			])
+		).toEqual({
+			kind: 'text',
+			text: 'Antwort im Thread',
+			channel: 'thread'
+		});
+	});
+
+	it('leaves a plain main-chat message without a channel', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body: 'Hallo' }, 1)
+			])
+		).toEqual({ kind: 'text', text: 'Hallo' });
+	});
+
+	it('keeps the channel on non-text kinds too', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.image',
+						'body': 'foto.png',
+						'm.relates_to': {
+							rel_type: 'm.thread',
+							event_id: '$root'
+						}
+					},
+					1
+				)
+			])
+		).toEqual({ kind: 'image', text: null, channel: 'thread' });
+	});
+});

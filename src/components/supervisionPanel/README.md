@@ -1,239 +1,138 @@
-# Supervision parallel panel (WP-B1)
+# Supervision side channel (WP-B1 → B2)
 
 Supervision as a **parallel chat next to the client chat** — not a merged
 stream, not a thread. Plan:
-`0 - Docs/PLAN-supervision-parallel-panel-2026-09-04.md`. B1 (this
-directory's components) is presentational; B2 (below) wires it into
-`SessionStream` / `SessionItemComponent`. The only Matrix-aware code in this
-directory is the `onSend` prop the owner passes to `SupervisionComposer`.
+`0 - Docs/PLAN-supervision-parallel-panel-2026-09-04.md`.
 
-Storybook: `Components/Session/SupervisionPanel`, `…/SupervisionPanelMini`,
-`…/SplitStage`, `…/SupervisionComposer`. Run
-`npx vitest run --project storybook src/components/supervisionPanel`; the pure
-helpers run with `npm run test:unit -- src/components/supervisionPanel`.
+Since B2 (05.09.2026) the side room is rendered by the **chat stage
+composition** (`src/components/chatStage/`): `SidePanel(PanelHeader,
+MessageTimeline, MessageSubmitInterfaceComponent targetRoomId)`, the
+`ChannelSwitcherFab` and the `ChannelMenu`. The presentational B1 components
+(`SupervisionPanel`, `SupervisionPanelMini`, `SplitStage`,
+`SupervisionComposer`, `useDragHandle`, `useBottomNavOffset`, their stories
+and `supervisionPanel.styles.scss`) were deleted — the stage stories
+(`Templates/ConsultantSessionStage`, `ChatStage.stories.tsx`) are the spec
+and the app renders the same DOM / classes.
 
-## Components
+What is left in this directory:
 
-### `SupervisionPanel`
-
-The expanded side room.
-
-| Prop                         | Meaning                                                                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `counterpartName`            | Person on the other side: the supervisor for a consultant, the responsible consultant for a supervisor. Rendered as "Supervision · {name}". |
-| `viewerRole`                 | `'consultant' \| 'supervisor'` — picks the role chip, worded gender-neutrally (`Supervision` / `Beratung`).                                 |
-| `unreadCount`                | Badge in the header (unread indicator colour = error role, magenta in this scheme).                                                         |
-| `isCollapsed`                | `true` renders nothing; the owner shows `SupervisionPanelMini` instead.                                                                     |
-| `onCollapse`, `onClose`      | Header buttons. Without a handler the button stays visible but **disabled** (disable, never hide).                                          |
-| `children`                   | Timeline slot (message bubbles). No renderable children → built-in empty state.                                                             |
-| `renderComposer`             | Composer slot.                                                                                                                              |
-| `frame`, `onFrameChange`     | Floating geometry `{x, y, width, height}`. Set → `position:absolute` in the offset parent, grip moves/resizes. Omitted → fills its parent.  |
-| `minWidth`, `minHeight`      | Resize floor (320 × 280).                                                                                                                   |
-| `onDragMove`, `onDragResize` | Raw deltas for owners that keep geometry in another shape.                                                                                  |
-| `onDragHandleKey`            | Runs before the built-in keys; `preventDefault()` replaces them.                                                                            |
-
-Grip keyboard model: arrow keys move 16 px, Shift + arrow resizes 16 px.
-The timeline is `role="log" aria-live="polite"`. The header carries the
-"never visible to the client" line permanently.
-
-### `SupervisionPanelMini`
-
-Collapsed miniature. `variant='card'` (desktop: avatar, kind label, name,
-one-line snippet, unread badge, pulse on `hasNewMessage`) or `variant='fab'`
-(phone: 56 px round button + badge — the mobile switcher). `kind='supervision'
-| 'thread'` only swaps icon and label so a thread can reuse it later.
-
-| Prop                           | Meaning                                                                                |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `name`, `initial`, `avatarUrl` | Identity shown on the card / accessible name of the FAB.                               |
-| `unreadCount`, `lastMessage`   | Badge and snippet.                                                                     |
-| `hasNewMessage`                | Pulse ring + highlighted border (disabled under `prefers-reduced-motion`).             |
-| `onExpand`                     | Click / Enter on the card body or FAB.                                                 |
-| `position`, `onPositionChange` | `{right, bottom}` offset from the corner of the positioning parent; owner persists it. |
-| `positionMode`                 | `'absolute'` (inside a relative chat container, default) or `'fixed'`.                 |
-
-Card: the grip button is the drag surface (pointer + arrow keys). FAB: the
-button itself drags; a press that travels < 6 px counts as a click, a drag
-does **not** expand.
-
-### `SplitStage`
-
-Two-pane container. `mode` is forced or derived from `(width < breakpoint)`
-(768 px).
-
-| Prop                                            | Meaning                                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `main`, `secondary`, `secondaryOpen`            | Panes; `secondaryOpen=false` renders only `main`.                                    |
-| `mode`, `activePane`                            | `'split' \| 'single'`; in single mode `activePane` decides which pane is full-width. |
-| `secondaryWidth`, `defaultSecondaryWidth` (420) | Controlled / uncontrolled width of the right pane.                                   |
-| `onSecondaryWidthChange`                        | Persist the width.                                                                   |
-| `minMainWidth` (360), `minSecondaryWidth` (320) | Divider limits.                                                                      |
-| `switcher`                                      | Floating node above the stage (a `SupervisionPanelMini`).                            |
-
-Divider: `role="separator"` with `aria-valuenow/min/max`, pointer drag,
-arrow keys ±16 px, Home/End.
-
-### `useDragHandle`
-
-Shared hook behind all three: pointer capture drag + arrow-key deltas, a
-`consumeDragged()` flag to swallow the click after a drag. Reports deltas,
-owns no position.
+| File                          | Role                                                                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supervisionPanelState.ts`    | Pure message bookkeeping: unread count (`countUnreadSideRoomMessages`), the client-timeline safety net (`excludeSideRoomMessages`), `findUnseenMessages`. Unit-tested. |
+| `supervisionCounterpart.ts`   | Who is on the other side of the side room (supervisor ↔ responsible consultant), never a real name (#996). Unit-tested.                                               |
+| `SupervisionPanelContext.tsx` | `{ visible, available, isExpanded, unreadCount, expand }` provided by `SessionItemComponent`, consumed by `SessionMenu` (the "Supervision" entry).                     |
 
 ## i18n
 
-Keys under `supervision.panel.*` in every `src/resources/i18n/*/common.json`
-(de, en, fr, ru, ti, tr; `de@informal` only overrides `empty.hint`). Wording
-lives in the catalogue, stories assert behaviour, not copy.
+`supervision.panel.*` in all six locales (title, systemNotice, composer
+placeholder, unread, stage.divider are in use; the B1-only keys stay for
+the translators' round-trip and are harmless).
 
-## B2 wiring (as shipped on `feat/supervision-parallel-panel`)
+## B2 wiring (as shipped on `feat/supervision-parallel-panel`, 05.09.2026)
 
-Everything below is meant to be ported 1:1 to `dev`. Line numbers are from
-the branch at the time of writing; search for the `WP-B2` comment markers
-when they drift.
+Search for the `B2` comment markers in `SessionItemComponent.tsx`.
 
-### Files added in this directory
+### 1. One URL parameter is the truth (`src/utils/channelRoute.ts`)
 
-| File                          | Role                                                                                                                                                                                                                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supervisionPanelState.ts`    | Pure state machine (`reduceSupervisionPanel`), unread count, the message-split safety net (`excludeSideRoomMessages`), new-message detection (`findUnseenMessages`), mini snippet, and the storage helpers (collapsed flag per session, width + mini position per user). Unit-tested. |
-| `SupervisionComposer.tsx`     | Side-room composer: textarea + send, Enter sends, Shift+Enter breaks the line, failure keeps the text. Transport is the `onSend` prop.                                                                                                                                                |
-| `SupervisionPanelContext.tsx` | `{ visible, available, isExpanded, unreadCount, expand }` provided by `SessionItemComponent`, consumed by `SessionMenu` (three components deep — no prop threading through the header).                                                                                               |
-| `useBottomNavOffset.ts`       | Phone: measures `.navigation__wrapper` when it is the bottom bar; fallback 72 px (`$grid-base-nine`) + 16 px gap. The FAB's `bottom`.                                                                                                                                                 |
-| `SplitStage.tsx`              | Unchanged except `useSplitStageMode` is now exported so the owner knows whether it is on a phone (`single`) or desktop (`split`).                                                                                                                                                     |
+```
+/sessions/…/<roomId>/<sessionId>?channel=thread:<rootEventId>[&at=<eventId>]
+/sessions/…/<roomId>/<sessionId>?channel=supervision[&at=<eventId>]
+```
 
-### 1. Timeline split — `src/components/session/SessionStream.tsx`
+- `activeThreadRootId` and the open panel are **derived** from
+  `parseChannel(location.search)` — no `useState` beside the URL.
+- Open = `navigate(push)` (browser Back closes the panel), switch = `replace`,
+  close = `replace` without the param (`setChannelRoute`).
+- The last open channel is remembered per session in `sessionStorage`
+  (`chatStage.lastChannel.<sessionId>`; an explicit close is remembered as
+  "closed"). No param on entry → the remembered channel is reopened; nothing
+  remembered → the supervision side room auto-opens once (never for askers).
+- Legacy `threadRootId` / `threadMessageId`: **hard cut** — mapped once to
+  `channel=` / `at=` on entry (`normalizeLegacyChannelSearch`), never written.
+  Server action paths that still carry the legacy pair are rewritten at the
+  boundary (`rewriteLegacyChannelPath` in `eventDescriptors/registry.ts`,
+  `NotificationsCenter.resolveThreadRootId`); the local thread notification
+  and the composer's draft `actionPath` write the channel form.
+- The session header strips `channel` / `at` from the canonical
+  conversation path (activity events).
 
-- New state `supervisionMessages` (line ~129). The side room is loaded as
-  before (`loadRoomEvents(supervisionRoomId)`), but **no longer merged**:
-  `mergeMatrixMessages` is gone from the stream; the client-room list is
-  `prepareMessages(applyMessageEdits(formatRoomMessages(clientEvents)))`
-  only (line ~430), and the side room becomes its own list (line ~448) with
-  `rid = supervisionRoomId` stamped on each item (`formatRoomMessages(…,
-stampRoomId = true)`, line ~387). Side-room reactions are not collected at
-  all — the panel renders its bubbles without reactions/threads.
-- Reset points: curtain (~360), no-Matrix-room fallback (~468), session
-  switch cleanup (~1069).
-- Passed down as `supervisionMessages={supervisionMessages}` (line ~1250);
-  `SessionItemProps.supervisionMessages` in `SessionItemComponent`.
-- Timeline listener / history-key requests for both rooms are unchanged
-  (the side room still refreshes live).
+### 2. Timeline split — `src/components/session/SessionStream.tsx`
 
-### 2. Layout + state — `src/components/session/SessionItemComponent.tsx`
+Unchanged from B1: the side room is its own list (`supervisionMessages`,
+`rid` stamped), never merged into the client timeline;
+`excludeSideRoomMessages` stays as the safety net in `SessionItemComponent`.
 
-- Safety net (line ~1697): `messages` = `excludeSideRoomMessages(props.messages,
-supervisionRoomId)` — a side-room item can never reach the client timeline
-  even if a caller merges again.
-- Supervisor lookup effect (line ~1883) now clears `supervisionRoomId` on
-  entry (no lingering room while a new session resolves) and keeps
-  `supervisorUsernames` for the counterpart name.
-- The whole panel block sits right after `handleCloseThread` (line ~3326):
-  eligibility, `useReducer(reduceSupervisionPanel)`, `useSplitStageMode(768)`
-  → `supervisionLayout`, the three effects (room resolved/lost, thread
-  coexistence, incoming detection), `expand`/`collapse` handlers that also
-  persist the per-session flag, unread count, counterpart name, width + mini
-  position (localStorage per user), FAB offset, `sendSupervisionMessage`,
-  and the context value.
-- Render: the former root `<div className="session">` is now `const
-sessionCard` (line ~3755). The component returns
-  `SupervisionPanelContext.Provider` wrapping either the bare card or, while
-  a side room exists, `<SplitStage main={sessionCard} secondary={<SupervisionPanel/>} … />`
-  (line ~6059 onwards). CSS hook: `.session__supervisionStage` in
-  `session.styles.scss` (line ~208) makes the stage the flex child of
-  `.session__wrapper` and aligns the secondary pane with the card's 24 px
-  margin on large screens.
-- Bubbles: `MessageItemComponent` with `renderMode="main"`,
-  `threadsEnabled={false}`, no reply/edit/delete/reaction handlers, the
-  session's `e2eeParams` and decryption callbacks reused.
-- Composer: `SupervisionComposer` → `chatTransportService.sendTextMessage({
-matrixRoomId: supervisionRoomId, supervisorMessage: isSupervisor, … })`
-  — the same path the main composer takes (`apiSendMessage` →
-  `chatTransportService` → `matrixClientService.sendMessage`), so the SDK
-  Megolm-encrypts the send; nothing is bypassed. Plain text, no
-  `SUPERVISOR_FEEDBACK_PREFIX`. After a successful send
-  `props.refreshMessages()` re-hydrates both rooms.
-- Both main-pane composers (thread + main) get `hideSupervisorAudience={hasSupervisionSideRoom}`.
+### 3. Layout — `src/components/session/SessionItemComponent.tsx`
 
-### 3. Who sees it
+```
+.session.chatStage__card(--split)
+  > .chatStage__mainPane  (SessionHeaderComponent · session__content/MessageTimeline · composer · ChannelSwitcherFab)
+  > .chatStage__panel     (ResizableHandle anchor=start · SidePanel)
+```
+
+- Desktop (`fromL`, 900 px): `SidePanel variant="inside"`; both composers
+  get `flushCorner` (`bottom-left` main, `bottom-right` panel), the
+  supervision composer additionally `accent="supervision"`; `compactHeight`
+  is NOT set (checklist 1). Panel width: `clampPanelWidth` against the
+  measured card, persisted as `chatStage_panelWidth` (`stageLayout.ts`).
+- Phone (`!fromL`): the `SidePanel variant="fullscreen"` replaces the card;
+  `SessionHeaderComponent hideBackButton + callsInMenu` and
+  `PanelHeader hideBackButton` come from the same `fromL` (checklist 5). The
+  main composer's back arrow does the header Link's job: list route +
+  `mobileListView()`; the panel composer's back arrow closes the channel.
+  The FAB inside the panel is the channel switcher (`onBack` = close).
+- List snap (checklist 7): `SessionsListWrapper` derives `panelOpen` from
+  the same URL param and `resolveStageLayout` — the list column snaps to the
+  80 px rail while a panel is open and dragging it wider is locked.
+- Both `session__scrollToBottom` sites are gone (checklist 6); the composer
+  toolbar's `composer-scroll-to-newest` is the one arrow.
+- Channels (`SecondaryChannel[]`): threads from `computeThreadSummaries`
+  (root creation ts, last reply author/preview, per-thread unread from
+  `threadUnread.ts`), supervision from `supervisionRoomId` + the side-room
+  list (last message, unread). Fed to `PanelHeader`, `ChannelSwitcherFab`.
+- Focus: `PanelHeader` keeps `data-keeps-focus`; a pick from the FAB sets
+  `autoFocusChannelButton`; the composer's autofocus respects
+  `KEEPS_FOCUS_SELECTOR` (`focusGuards.ts`).
+- T7: the side room's first item is the frontend-rendered system notice
+  (`supervision.panel.systemNotice`), never counted as unread.
+- The supervisor's reason / "start chat" hint render as `InfoBanner` in the
+  panel (the old `session__supervisionReason` markup is gone).
+
+### 4. Who sees it
 
 `isSupervisionPanelViewer = isConsultantUser && !isAskerUser &&
-!activeSession.isGroup && !isEmbeddedNotificationsView`. An asker never gets
-a stage, a context entry, or a panel, whatever the props contain. `viewerRole`
-is `isSupervisor ? 'supervisor' : 'consultant'`. Counterpart name: consultant
-→ `getSupervisorDisplayNames(activeSession)[0]` (WP-A list DTO) or the
-`supervisorUsername` from `apiGetSessionSupervisors`; supervisor → the
-responsible consultant's display name, then username
-(`pickSupervisionCounterpartName` in `supervisionCounterpart.ts`, unit-tested).
-The consultant session-list DTO carries only `{ id, firstName, lastName }` for
-the consultant, so the supervisor view resolves the name by id via
-`apiGetConsultant` (public endpoint). Real names are never shown (#996);
-until the lookup answers the fallback is `sessionList.user.consultantUnknown`.
-
-### 4. State machine (`supervisionPanelState.ts`)
-
-```
-hidden ──ROOM_RESOLVED──▶ expanded            (default on entering a session)
-                        ▶ collapsed           (sessionStorage remembers a collapse per session)
-expanded ──COLLAPSE (panel X or ⌄)──▶ collapsed      → mini card (desktop) / FAB (phone)
-collapsed ──EXPAND (mini, FAB, menu "Supervision")──▶ expanded
-collapsed ──INCOMING foreign msg, desktop──▶ expanded  (auto re-open)
-collapsed ──INCOMING foreign msg, phone──▶ collapsed + hasNewMessage (FAB pulses, badge)
-expanded ──THREAD_OPENED──▶ collapsed (yieldedToThread)
-collapsed(yieldedToThread) ──THREAD_CLOSED──▶ expanded
-any ──ROOM_LOST──▶ hidden
-```
-
-- Close and collapse are one transition: the mini stays as long as the side
-  room exists.
-- Unread = foreign side-room messages with `messageTime > lastExpandedAt`;
-  0 while expanded. Shown on the panel header, the mini card, the FAB and
-  as the menu entry's trailing number.
-- Incoming detection ignores hydration: the first `supervisionMessages`
-  array seeds the known-id set; only later, foreign, newer-than-last-expand
-  items dispatch `INCOMING`.
-- Thread coexistence rule (simple, documented here): **one side panel at a
-  time, the thread wins.** The native thread panel keeps its own position
-  (absolute inside the chat card, 520 px); the supervision panel collapses to
-  the mini while a thread is open and comes back when the thread closes —
-  unless the user collapsed it themselves meanwhile, or a message arrived
-  while the thread held the slot (then only the mini pulses).
+!activeSession.isGroup && !isEmbeddedNotificationsView` — the supervision
+channel is never built for an asker (checklist 9); askers keep threads only.
 
 ### 5. Menu — `src/components/sessionMenu/SessionMenu.tsx`
 
-`useSupervisionPanel()` (line ~121). Entry rendered when `visible` (line
-~682), **disabled — not hidden — when no side room exists**, title
-`supervision.panel.title`, icon `SupervisionIcon`, unread count in the
-shortcut slot. Click → `expand()`.
+`useSupervisionPanel()`: entry when `visible`, disabled (not hidden) without
+a side room, unread count in the shortcut slot, click → opens the
+supervision channel (URL). Icon: `supervision_nocirc_400_24px.svg`.
 
-### 6. Main composer — `messageSubmitInterfaceComponent.tsx`
+### 6. Composer — `messageSubmitInterfaceComponent.tsx`
 
-New prop `hideSupervisorAudience` (line ~210). When set and the session is
-not a group, options with `kind === 'supervisor'` are filtered out of the
-audience selector (line ~2503). Group-chat audiences are untouched;
-`asideRouting.ts` stays as the safety net. The supervisor's own main-pane
-composer is unchanged (it still routes as an aside to the side room and
-shows the "visible only to consultants" note).
+`targetRoomId` (side room), `hideSupervisorAudience` on every main-pane
+composer while a side room exists, `flushCorner`, `accent`. The side room's
+draft is scoped to the side room (`scope:<sideRoomId>|thread:main`) and its
+draft `actionPath` carries `?channel=supervision`.
 
 ### 7. Persistence keys
 
-| Key                                      | Store          | Meaning                               |
-| ---------------------------------------- | -------------- | ------------------------------------- |
-| `supervisionPanel.collapsed.<sessionId>` | sessionStorage | user collapsed the panel this session |
-| `supervisionPanel.width.<userId>`        | localStorage   | secondary pane width (desktop)        |
-| `supervisionPanel.mini.<userId>`         | localStorage   | mini card `{right, bottom}`           |
-
-### 8. Phone
-
-`SplitStage` goes `single` below 768 px. `activePane` is `'secondary'`
-while expanded (panel full-screen) and `'main'` otherwise; the FAB
-(`SupervisionPanelMini variant="fab" positionMode="fixed"`) sits at
-`right: 16, bottom: useBottomNavOffset()`. The floating `frame` mode of the
-panel is still available but not used by the owner.
+| Key                                 | Store          | Meaning                                   |
+| ----------------------------------- | -------------- | ----------------------------------------- |
+| `chatStage.lastChannel.<sessionId>` | sessionStorage | last open channel per session (or closed) |
+| `chatStage_panelWidth`              | localStorage   | side panel width (desktop)                |
+| `sessionsList_width`                | localStorage   | list column width (unchanged)             |
 
 ### Not done here
 
-- No SessionItemComponent story harness exists, so the wired stage has no
-  story; the presentational parts are covered (34 story tests) and the state
-  in unit tests. Visual proof happens on pre-dev (WP D).
+- Fetching a thread root that is not in the loaded history (analysis F3):
+  the main chat stays open. `at=` is carried, not yet scrolled to.
+- List preview prefix "Supervision:" needs `SessionDTO.supervision.sideRoomId`
+  (UserService B3); "Thread:" is live (`matrixRoomPreview.ts`).
+- `supervision.message.new` events, active-view `sideRoomId`, supervisor
+  e-mail deep link: UserService B1/B4/B5.
 
 ## Side room system notice (T7, 05.09.2026)
 
@@ -320,7 +219,7 @@ composer has focus (`chatStage/useComposerFocus.ts`, wired in the stage).
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Header row 4 px tighter at the top than Figma (T43, global)                    | `sessionHeader.styles.scss` / `sidePanel.styles.scss` `$room-header-gap-top: 2px` (was the 6 px `$room-header-gap`)                                                                                                                                                            | **Frank deviates from Figma 1320:38281 by 4 px:** the 32 px call buttons centred in the 40 px row left 4 px of air, so the row's padding-top is 2 instead of 6; the 6 px below the row (to the hairline) stay, so both hairlines still end on the same y (T3). Measured: card inner top → header row 16 px → avatar row 18 px (was 22). Story (a) locks 16/18 and the 2/6 paddings in both panes.                                                                                                                                                                                                                                      |
 | Dual-mode composer: double radius, flush send button, 16 px dock (T44/T45/T46) | `messageSubmitInterface.styles.scss` flush block (`--flush-bottom-left` / `--flush-bottom-right`, desktop only)                                                                                                                                                                | T44: the field's OUTER bottom corner is rounded concentrically inside the card's corner — `calc(var(--session-card-radius) − 16px)` = 12 px; the three other corners stay 4 px. T45: `.textarea__buttons` at `top/right: 0` in flush mode, so the 48 px send button sticks to the field's top-right corner again (the 16 px offset was the old inset). T46: the field ends 16 px before the card edge on its outer side (main column left, panel right) — unchanged since T40, now locked as its own assertion. Stories (a) at 1280 and the new (a-1440) at 1440 (same play, pinned to `innerWidth ≥ 1440`) plus (d) assert all three. |
-| Small chat lines = M3 label/medium 12/16 (review v10 D1, global)                | `mui-variables-mapping.scss` `--message-name-*`, `--thread-entry-*` 12/16, new `--session-preview-line-height: 16px` (`sessionsListItem.styles.scss` reads it instead of a hard 20 px); the dead `__username` entry in the 12 px shared block of `message.styles.scss` is gone | The name line was 12/13 before D1 and had grown to 14/20 (= the body); it is now visibly smaller than the 14/20 body again, the thread entry is back to 12/16, the list preview is 12/16 (12/20 is no M3 line). Legacy (h1) keeps 12/13 name, 14/20 preview. Stories (h1)/(h2) assert font-size AND line-height of preview, name and thread entry.                                                                                                                                                                                                                                                                                     |
+| Small chat lines = M3 label/medium 12/16 (review v10 D1, global)               | `mui-variables-mapping.scss` `--message-name-*`, `--thread-entry-*` 12/16, new `--session-preview-line-height: 16px` (`sessionsListItem.styles.scss` reads it instead of a hard 20 px); the dead `__username` entry in the 12 px shared block of `message.styles.scss` is gone | The name line was 12/13 before D1 and had grown to 14/20 (= the body); it is now visibly smaller than the 14/20 body again, the thread entry is back to 12/16, the list preview is 12/16 (12/20 is no M3 line). Legacy (h1) keeps 12/13 name, 14/20 preview. Stories (h1)/(h2) assert font-size AND line-height of preview, name and thread entry.                                                                                                                                                                                                                                                                                     |
 | Menu hover alias bound to the engine (review v10 D3, global)                   | `mui-variables-mapping.scss` `--oriso-menu-hover-surface: var(--m3-on-secondary-container, #e7effc)`                                                                                                                                                                           | Same rendered value today; a seed swap or the dark scheme now moves the hover with the engine. The m3Sweep guard only inspects background-like properties, so the alias definition passes (unit run: exactly the 3 pre-existing failures).                                                                                                                                                                                                                                                                                                                                                                                             |
 | Chat card margin in the app shell (review v10 D11, global)                     | `authenticatedApp.styles.scss`: `--pane-gap` / `--pane-inner-gutter` now on `.contentWrapper` (both columns read them); `.contentWrapper__detail .session, .enquiry__wrapper { margin-left: calc(var(--pane-gap) − var(--pane-inner-gutter)) }` (fromLarge)                    | The stage's `> .session:first-child` rule, now in the app too — the list handle centres in the real 24 px gap instead of sitting 6 px off. `sessionsListVisualContracts.styles.test.ts` compiles the shell and asserts the token pair and the margin rule (and the stage's twin rule).                                                                                                                                                                                                                                                                                                                                                 |
 | Second scroll-FAB site marked for B2 (review v10 / D6)                         | `messageSubmitInterfaceComponent.tsx` (`getElementsByClassName('session__scrollToBottom')`, ~1170) carries the same `TODO(B2, D6)` as `SessionItemComponent.tsx`                                                                                                               | Story (a) asserts no `.session__scrollToBottom` renders in EITHER pane; B2 removes both sites together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |

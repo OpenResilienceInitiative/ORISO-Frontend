@@ -246,7 +246,9 @@ a {
 				// (`chatStage.styles.scss` `> .session:first-child`). With it
 				// the list handle centres in the real 24 px gap; without it
 				// the handle sat 6 px off centre.
-				.session,
+				// B2 (review v11 checklist 8): the side panel of the stage's
+				// `card` variant is a `.session` too — never indent it.
+				.session:not(.sidePanel),
 				.enquiry__wrapper {
 					margin-left: calc(
 						var(--pane-gap) - var(--pane-inner-gutter)
