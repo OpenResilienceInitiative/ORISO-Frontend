@@ -116,6 +116,15 @@ export const deleteCookieByName = (name: string, path: string = '/') => {
 export const getValueFromCookie = (targetValue: string) =>
 	readCookieValue(targetValue) ?? getAuthStorageValue(targetValue);
 
+/**
+ * Cookie-only variant: no localStorage mirror fallback. Use it where the
+ * question is "is there an auth session *right now*" — during sign-out the
+ * cookie is removed first and the mirror may lag, so `getValueFromCookie`
+ * would still answer with the stale token.
+ */
+export const hasAuthCookie = (name: string): boolean =>
+	Boolean(readCookieValue(name));
+
 export const removeAllCookies = (allowlist: string[] = []) => {
 	const retainedCookies = [
 		...allowlist,
