@@ -5,7 +5,7 @@ import { SESSION_LIST_TAB } from '../session/sessionHelpers';
 import { SessionTypeContext, ActiveSessionProvider } from '../../globalState';
 import { Loading } from '../app/Loading';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
+import { UserAvatar } from '../message/UserAvatar';
 import './askerInfo.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useSession } from '../../hooks/useSession';
@@ -87,13 +87,19 @@ export const AskerInfo = () => {
 				</div>
 				<div className="askerInfo__innerWrapper">
 					<div className="askerInfo__user">
+						{/* #1188 job 3: the profile showed a generic person
+						    glyph. Reuse the shared avatar so it is the same
+						    animal the session list and the chat derive from
+						    the asker's Matrix user id. */}
 						<div className="askerInfo__icon">
-							<PersonIcon
-								className="askerInfo__icon--user"
-								title={translate('profile.data.profileIcon')}
-								aria-label={translate(
-									'profile.data.profileIcon'
-								)}
+							<UserAvatar
+								username={activeSession.user.username}
+								displayName={activeSession.user.username}
+								userId={
+									activeSession.item.askerMatrixUserId ||
+									activeSession.user.username
+								}
+								size="72px"
 							/>
 						</div>
 						<h2>{activeSession.user.username}</h2>

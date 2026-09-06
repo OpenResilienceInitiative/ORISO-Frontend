@@ -130,21 +130,13 @@ $profile-footer-justify-content: center !default;
 		}
 	}
 
+	// #1188 job 3: holds the shared UserAvatar (72px), which brings its own
+	// white ring and shadow — the plate and the old glyph rule are gone.
 	&__icon {
-		background-color: $white;
-		border-radius: 50%;
 		width: 72px;
 		height: 72px;
 		margin: 0 auto $grid-base-two;
-		position: relative;
 		display: flex;
-
-		&--user {
-			width: 72px;
-			height: 72px;
-			align-self: flex-end;
-			margin: 0 auto;
-		}
 	}
 
 	&__content {
