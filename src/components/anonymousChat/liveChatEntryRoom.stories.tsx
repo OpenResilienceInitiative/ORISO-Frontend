@@ -5,9 +5,7 @@ import { Box, ButtonBase, Typography, useMediaQuery } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
-import LockPersonOutlinedIcon from '@mui/icons-material/LockPersonOutlined';
+import { liveChatArtwork } from '../../resources/img/registration-md3/registrationArtwork';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -100,17 +98,20 @@ const ABSENCE_MESSAGE_SHORT =
  */
 const CARDS = [
 	{
-		icon: <GroupsOutlinedIcon />,
+		image: liveChatArtwork.wait,
+		alt: 'Drei Beraterinnen, jede im Gespräch; eine Person wartet am Laptop, neben ihr eine Uhr',
 		title: 'Sie warten, bis jemand frei ist',
 		text: 'Die Beraterinnen sind gerade in anderen Gesprächen. Sie müssen nichts tun — wir holen Sie.'
 	},
 	{
-		icon: <VerifiedUserOutlinedIcon />,
+		image: liveChatArtwork.consent,
+		alt: 'Eine Person setzt ein Häkchen; gegenüber eine Beraterin, darüber ein Schild mit Schloss',
 		title: 'Dann stimmen Sie einmal zu',
 		text: 'Sobald eine Beratungsstelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz — ein Klick, und der Chat beginnt.'
 	},
 	{
-		icon: <LockPersonOutlinedIcon />,
+		image: liveChatArtwork.anonymous,
+		alt: 'Zwei Laptops, eine Seite nur als Schatten; ein Schloss, Sprechblasen, eine Uhr, die sich leert',
 		title: 'Anonym, und danach weg',
 		text: 'Im Chat sehen Sie und Ihre Beraterin sich nur unter Ihrem Pseudonym. Nach dem Gespräch wird alles gelöscht — spätestens nach 48 Stunden, auch Ihr Zugang.'
 	}
@@ -435,37 +436,40 @@ const WaitingRoom = ({
 					<Box
 						key={card.title}
 						sx={{
-							'flex': { xs: '0 0 64%', sm: '1 1 0' },
-							'minWidth': 0,
-							'scrollSnapAlign': 'start',
-							'display': 'flex',
-							'flexDirection': 'column',
-							'borderRadius': '20px',
-							'border': `1px solid ${registrationMd3.outlineVariant}`,
-							'overflow': 'hidden',
-							'bgcolor': registrationMd3.surfaceContainerLowest,
-							'& svg': {
-								fontSize: 64,
-								color: registrationMd3.primary
-							}
+							flex: { xs: '0 0 64%', sm: '1 1 0' },
+							minWidth: 0,
+							scrollSnapAlign: 'start',
+							display: 'flex',
+							flexDirection: 'column',
+							borderRadius: '20px',
+							border: `1px solid ${registrationMd3.outlineVariant}`,
+							overflow: 'hidden',
+							bgcolor: registrationMd3.surfaceContainerLowest
 						}}
 					>
 						{/* Phone: a 4:3 picture so text and the row below stay in
 						    reach. Desktop: the picture takes whatever height the
 						    column leaves — the card fills its space. */}
 						<Box
-							aria-hidden
 							sx={{
 								aspectRatio: { xs: '4 / 3', sm: 'auto' },
 								flex: { xs: 'none', sm: 1 },
 								minHeight: { sm: 160 },
-								bgcolor: registrationMd3.surfaceContainerHigh,
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center'
+								overflow: 'hidden',
+								bgcolor: registrationMd3.surfaceContainerHigh
 							}}
 						>
-							{card.icon}
+							<Box
+								component="img"
+								src={card.image.src}
+								alt={card.alt}
+								sx={{
+									width: '100%',
+									height: '100%',
+									objectFit: 'cover',
+									display: 'block'
+								}}
+							/>
 						</Box>
 						<Box sx={{ p: 2.5, pt: 2 }}>
 							<Typography sx={{ fontSize: 17, fontWeight: 700 }}>
