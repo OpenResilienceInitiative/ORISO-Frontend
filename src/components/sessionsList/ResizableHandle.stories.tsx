@@ -159,6 +159,112 @@ export const NarrowMin: Story = {
 };
 
 /**
+ * The threads dropdown: a fixed-width panel, so the bar only scrolls. No width
+ * is passed at all, which is what `mode="scroll"` is for.
+ */
+function ScrollOnlyDemo({ rows = 20 }: Readonly<{ rows?: number }>) {
+	const scrollRef = useRef<HTMLDivElement | null>(null);
+	return (
+		<div
+			style={{
+				width: 360,
+				position: 'relative',
+				background: '#fff',
+				border: '1px solid #e0e0e0',
+				fontFamily: 'system-ui, sans-serif',
+				fontSize: 13
+			}}
+		>
+			<div
+				ref={scrollRef}
+				data-testid="thread-scroll"
+				style={{
+					maxHeight: 160,
+					overflowY: 'auto',
+					scrollbarWidth: 'none'
+				}}
+			>
+				{Array.from({ length: rows }, (_, i) => (
+					<div key={i} style={{ padding: '8px 12px' }}>
+						Thread {i + 1}
+					</div>
+				))}
+			</div>
+			<ResizableHandle
+				mode="scroll"
+				scrollTargetRef={scrollRef}
+				className="sessionsList__resizeHandle--inset"
+			/>
+		</div>
+	);
+}
+
+export const ScrollOnly: Story = {
+	name: 'Scroll-only — threads dropdown',
+	args: { mode: 'scroll' },
+	parameters: {
+		docs: {
+			description: {
+				story: 'Fixed-width surfaces (the Threads dropdown) get the bar without the resize half. It announces itself as a scrollbar rather than a separator.'
+			}
+		}
+	},
+	render: () => <ScrollOnlyDemo />
+};
+
+/**
+ * Interaction test for `mode="scroll"` (ORISO-Frontend#1196 job 2).
+ *
+ * The mode ships with no width to act on, so the resize keys have to be inert
+ * rather than throwing — `onResize` is not passed at all here, which is the
+ * shape the threads dropdown actually mounts.
+ */
+export const ScrollOnlyInteraction: Story = {
+	name: 'Interaction — scroll-only keys scroll and never resize',
+	args: { mode: 'scroll' },
+	render: () => <ScrollOnlyDemo />,
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector(
+			'.sessionsList__resizeHandle'
+		) as HTMLElement | null;
+		const list = canvasElement.querySelector(
+			'[data-testid="thread-scroll"]'
+		) as HTMLElement | null;
+
+		await expect(handle).not.toBeNull();
+		await expect(list).not.toBeNull();
+
+		// A scrollbar, not a movable separator: the two modes are different
+		// widgets and announce differently.
+		await expect(handle).toHaveAttribute('role', 'scrollbar');
+		await expect(handle).toHaveAttribute('aria-valuemin', '0');
+		await expect(handle).toHaveAttribute('aria-valuemax', '100');
+
+		await expect(list!.scrollHeight).toBeGreaterThan(list!.clientHeight);
+		handle!.focus();
+
+		await userEvent.keyboard('{ArrowDown}');
+		await expect(list!.scrollTop).toBeGreaterThan(0);
+
+		await userEvent.keyboard('{Home}');
+		await expect(list!.scrollTop).toBe(0);
+
+		await userEvent.keyboard('{End}');
+		await expect(list!.scrollTop).toBe(
+			list!.scrollHeight - list!.clientHeight
+		);
+
+		// The resize keys have nothing to act on here. Before the props became
+		// a discriminated union these called an undefined `onResize`; they must
+		// stay inert instead of throwing.
+		const restingScrollTop = list!.scrollTop;
+		await userEvent.keyboard('{ArrowLeft}{ArrowRight}');
+		await expect(list!.scrollTop).toBe(restingScrollTop);
+		await expect(handle).toHaveAttribute('role', 'scrollbar');
+	}
+};
+
+/**
  * Interaction test for the handle (ORISO-Frontend#1196).
  *
  * The list here overflows, which is the case the issue is about: the bar used

@@ -6,27 +6,49 @@ import { useTranslation } from 'react-i18next';
 
 export type ResizableHandleMode = 'resizeAndScroll' | 'scroll';
 
-interface ResizableHandleProps {
-	/**
-	 * 'resizeAndScroll' (default) is the sessions-list behaviour: drag
-	 * sideways to resize the pane, vertically to scroll it.
-	 *
-	 * 'scroll' drops the resize half for surfaces that scroll but have no
-	 * width of their own to give - the threads dropdown is fixed at
-	 * min(360px, 100% - 32px), so a resize drag there would have nothing to
-	 * act on (ORISO-Frontend#1196 job 2).
-	 */
-	mode?: ResizableHandleMode;
-	/** Required in 'resizeAndScroll'; ignored in 'scroll'. */
-	onResize?: (width: number) => void;
-	/** Required in 'resizeAndScroll'; ignored in 'scroll'. */
-	currentWidth?: number;
+interface ResizableHandleCommonProps {
 	scrollTargetRef?: React.RefObject<HTMLDivElement | null>;
 	/** Extra class for placement; the base class carries the behaviour styles. */
 	className?: string;
 	minWidth?: number;
 	maxWidth?: number;
 }
+
+/**
+ * The sessions-list behaviour: drag sideways to resize the pane, vertically to
+ * scroll it. `onResize` and `currentWidth` are required, because collapsing
+ * (double-click, wheel) and the ArrowLeft/ArrowRight/Home/End keys all call
+ * `onResize` with no guard.
+ */
+interface ResizeAndScrollHandleProps extends ResizableHandleCommonProps {
+	mode?: 'resizeAndScroll';
+	onResize: (width: number) => void;
+	currentWidth: number;
+}
+
+/**
+ * Scroll only, for surfaces that scroll but have no width of their own to give
+ * — the threads dropdown is fixed at min(360px, 100% - 32px), so a resize drag
+ * there would have nothing to act on (ORISO-Frontend#1196 job 2).
+ */
+interface ScrollOnlyHandleProps extends ResizableHandleCommonProps {
+	mode: 'scroll';
+	onResize?: never;
+	currentWidth?: never;
+}
+
+/*
+ * A union rather than two optional props. `tsconfig.json` sets
+ * "strictNullChecks": false, so plain optional props let
+ * `<ResizableHandle scrollTargetRef={ref} />` type-check and then throw on the
+ * first ArrowLeft, double-click or wheel — the resize paths call `onResize`
+ * unguarded. Discriminating on `mode` restores the guarantee the required
+ * props used to give, and makes passing a resize callback to a scroll-only
+ * handle a type error rather than something silently ignored.
+ */
+export type ResizableHandleProps =
+	| ResizeAndScrollHandleProps
+	| ScrollOnlyHandleProps;
 
 export const getToggledSidebarWidth = (
 	currentWidth: number,
@@ -214,7 +236,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				const VERTICAL_INTENT_RATIO = 1.8;
 				dragModeRef.current = isScrollOnly
 					? 'scroll'
-					: absDy >= DEADZONE && absDy >= absDx * VERTICAL_INTENT_RATIO
+					: absDy >= DEADZONE &&
+						  absDy >= absDx * VERTICAL_INTENT_RATIO
 						? 'scroll'
 						: 'resize';
 				document.body.style.cursor =

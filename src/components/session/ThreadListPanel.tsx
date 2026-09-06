@@ -2,6 +2,11 @@ import * as React from 'react';
 import { useRef } from 'react';
 import type { ThreadSummary } from '../../utils/threadSummaries';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
+// The handle's own styles travel with it — same as SessionSearchPanel,
+// SessionListCreateChat and ListSearchField do. Without this the bar renders
+// unstyled wherever this panel is mounted on its own (Storybook), and in the
+// app it would only work by accident, via whatever else pulled the sheet in.
+import '../sessionsList/sessionsList.styles.scss';
 
 export type ThreadListPanelProps = {
 	summaries: ThreadSummary[];
@@ -32,7 +37,11 @@ export const ThreadListPanel = ({
 
 	return (
 		<div className="session__threadListPanel">
-			<div className="session__threadListScroll" ref={scrollRef} role="menu">
+			<div
+				className="session__threadListScroll"
+				ref={scrollRef}
+				role="menu"
+			>
 				{summaries.map((summary) => (
 					<button
 						key={summary.rootId}
