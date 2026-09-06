@@ -1008,6 +1008,17 @@
 				"button1Label": "Schließen",
 				"headline": "Ihre Änderungen wurden erfolgreich gespeichert."
 			}
+		},
+		"entry": {
+			"join": "Beitreten",
+			"more": "Mehr erfahren",
+			"moreTitle": "So läuft die Gruppe",
+			"motionOff": "Animation abschalten",
+			"openHeadline": "Die Gruppe hat begonnen.",
+			"noTimeHeadline": "Die Gruppe beginnt, sobald die Moderation sie öffnet.",
+			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ sind Sie im Gespräch.",
+			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
+			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang."
 		}
 	},
 	"help": {
@@ -2876,6 +2887,11 @@
 			},
 			"twoFactorAuth": {
 				"label": "Passwort zusätzlich durch Zwei-Faktor-Authentifizierung sichern"
+			},
+			"temporary": {
+				"join": "Beitreten",
+				"toggleOff": "Konto anlegen",
+				"toggleOn": "Ohne Konto beitreten"
 			}
 		},
 		"back": "Zurück",

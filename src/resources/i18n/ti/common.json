@@ -1013,6 +1013,17 @@
 				"repeatValue_one": "{{count}} ግዜ",
 				"repeatValue_other": "{{count}} ግዜ"
 			}
+		},
+		"entry": {
+			"join": "ተጸንበር",
+			"more": "ተወሳኺ ፍለጥ",
+			"moreTitle": "እቲ ጉጅለ ከመይ ይኸይድ",
+			"motionOff": "ምንቅስቓስ ኣጥፍእ",
+			"openHeadline": "እቲ ጉጅለ ጀሚሩ።",
+			"noTimeHeadline": "እቲ ጉጅለ ኣወሃሃዲ ምስ ከፈቶ ይጅምር።",
+			"moreOpen": "ኣወሃሃዲ ነቲ ጉጅለ ከፊቱዎ። ብ„ተጸንበር“ ኣብቲ ዝርርብ ትኣትዉ።",
+			"moreWaiting": "ኣወሃሃዲ ነቲ ጉጅለ ምስ ከፈቶ „ተጸንበር“ ኣብዚ ይፍቀድ። ዝገብርዎ የለን።",
+			"missing": "እዚ ጉጅለ የለን ወይ መእተዊ የብልኩምን።"
 		}
 	},
 	"help": {
@@ -2915,6 +2926,11 @@
 			},
 			"twoFactorAuth": {
 				"label": "መሕለፊ ቓል ብተወሳኺ ብናይ ክልተ ደረጃ መረጋገጺ ኣውሕሱ"
+			},
+			"temporary": {
+				"join": "ተጸምበር",
+				"toggleOff": "ኣካውንት ፍጠር",
+				"toggleOn": "ብዘይ ኣካውንት ተጸምበር"
 			}
 		},
 		"back": "ዝባን",

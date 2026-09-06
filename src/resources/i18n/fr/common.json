@@ -1013,6 +1013,17 @@
 				"repeatValue_one": "{{count}} fois",
 				"repeatValue_other": "{{count}} fois"
 			}
+		},
+		"entry": {
+			"join": "Rejoindre",
+			"more": "En savoir plus",
+			"moreTitle": "Comment se déroule le groupe",
+			"motionOff": "Désactiver l'animation",
+			"openHeadline": "Le groupe a commencé.",
+			"noTimeHeadline": "Le groupe commence dès que la modération l'ouvre.",
+			"moreOpen": "La modération a ouvert le groupe. « Rejoindre » vous amène dans la conversation.",
+			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
+			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès."
 		}
 	},
 	"help": {
@@ -2915,6 +2926,11 @@
 					"required": "Veuillez indiquer une adresse e-mail.",
 					"invalid": "Veuillez indiquer une adresse e-mail valide."
 				}
+			},
+			"temporary": {
+				"join": "Rejoindre",
+				"toggleOff": "Créer un compte",
+				"toggleOn": "Rejoindre sans compte"
 			}
 		},
 		"back": "Retour",

@@ -121,6 +121,37 @@ export const Registration = () => {
 	const [clearSelectionVersion, setClearSelectionVersion] =
 		useState<number>(0);
 
+	/* Temporary join (ORISO-Frontend#1289).
+
+	   A `gcid` in the URL means an invitation link brought this person to a
+	   group chat, and for that entry there is a second, equal way on: join now
+	   without ever choosing a password. The choice only exists on the account
+	   step — that is where the password lives — and only for a link entry, so
+	   nothing about the ordinary four-step registration changes.
+
+	   Kept in component state rather than in the registration session storage:
+	   it is a decision about *this* screen, not a value that is registered, and
+	   the account draft already carries the minted password across steps. */
+	const groupChatId = getPostRegistrationGroupChatId(location.search);
+	const isAccountDataStep = step === 'account-data';
+	const canJoinTemporarily = Boolean(groupChatId) && isAccountDataStep;
+	const [temporaryJoinChosen, setTemporaryJoinChosen] =
+		useState<boolean>(false);
+	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
+	const temporaryToggleLabel = temporaryJoin
+		? t('registration.account.temporary.toggleOff', 'Konto anlegen')
+		: t('registration.account.temporary.toggleOn', 'Ohne Konto beitreten');
+	/* The way on is the same action either way — only what it is called
+	   changes, because "Registrieren" would name something that is not
+	   happening. */
+	const primaryActionLabel = temporaryJoin
+		? t('registration.account.temporary.join', 'Beitreten')
+		: t('registration.register');
+	const toggleTemporaryJoin = useCallback(
+		() => setTemporaryJoinChosen((chosen) => !chosen),
+		[]
+	);
+
 	const checkForStepsWithMissingMandatoryFields =
 		useCallback((): number[] => {
 			return availableSteps.reduce<number[]>(
@@ -718,6 +749,7 @@ export const Registration = () => {
 													onChange={setStepData}
 													onNextClick={onNextClick}
 													nextStepUrl={nextStepUrl}
+													temporary={temporaryJoin}
 												/>
 											);
 										})()}
@@ -765,23 +797,45 @@ export const Registration = () => {
 												selectedPrefix={selectedPrefix}
 												emptyLabel={footerEmptyLabel}
 											/>
-											<RegistrationFooterPrimaryButton
-												nextStepUrl={nextStepUrl}
-												disabledNextButton={
-													disabledNextButton
-												}
-												isRegistering={isRegistering}
-												registerLabel={t(
-													'registration.register'
+											<Box
+												sx={{
+													display: 'flex',
+													alignItems: 'center',
+													gap: 2,
+													minWidth: 0
+												}}
+											>
+												{canJoinTemporarily && (
+													<TemporaryJoinToggle
+														label={
+															temporaryToggleLabel
+														}
+														onClick={
+															toggleTemporaryJoin
+														}
+														disabled={isRegistering}
+													/>
 												)}
-												registeringLabel={t(
-													'registration.registering',
-													'Registering...'
-												)}
-												nextLabel={t(
-													'registration.next'
-												)}
-											/>
+												<RegistrationFooterPrimaryButton
+													nextStepUrl={nextStepUrl}
+													disabledNextButton={
+														disabledNextButton
+													}
+													isRegistering={
+														isRegistering
+													}
+													registerLabel={
+														primaryActionLabel
+													}
+													registeringLabel={t(
+														'registration.registering',
+														'Registering...'
+													)}
+													nextLabel={t(
+														'registration.next'
+													)}
+												/>
+											</Box>
 										</Box>
 										<Box
 											sx={{
@@ -794,6 +848,20 @@ export const Registration = () => {
 											{/* F3: the picks live in the
 											    header chip row on mobile, so
 											    the footer is navigation only. */}
+											{canJoinTemporarily && (
+												<Box sx={{ mb: 1.25 }}>
+													<TemporaryJoinToggle
+														label={
+															temporaryToggleLabel
+														}
+														onClick={
+															toggleTemporaryJoin
+														}
+														disabled={isRegistering}
+														fullWidth
+													/>
+												</Box>
+											)}
 											<RegistrationStepNav
 												prevStepUrl={
 													currStepIndex === 0
@@ -808,9 +876,9 @@ export const Registration = () => {
 												nextLabel={t(
 													'registration.next'
 												)}
-												registerLabel={t(
-													'registration.register'
-												)}
+												registerLabel={
+													primaryActionLabel
+												}
 												registeringLabel={t(
 													'registration.registering',
 													'Registering...'
@@ -833,6 +901,47 @@ export const Registration = () => {
 		</>
 	);
 };
+
+/**
+ * The second way on for a link entry: join without a password, or go back to
+ * creating a full account. It is a toggle, not a submit — it never leaves the
+ * screen, it only changes what the screen is asking for.
+ *
+ * Painted by the theme's `outlined` MuiButton and nothing else, so it reads as
+ * the quieter sibling of the primary without a second colour system beside it.
+ */
+const TemporaryJoinToggle = ({
+	label,
+	onClick,
+	disabled,
+	fullWidth = false
+}: {
+	label: string;
+	onClick: () => void;
+	disabled?: boolean;
+	fullWidth?: boolean;
+}) => (
+	<Button
+		data-cy="button-temporary-join"
+		type="button"
+		variant="outlined"
+		disabled={disabled}
+		onClick={onClick}
+		fullWidth={fullWidth}
+		sx={{
+			borderRadius: '999px',
+			px: { xs: 2.5, sm: 3 },
+			py: 1.35,
+			fontSize: 16,
+			fontWeight: 600,
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			textOverflow: 'ellipsis'
+		}}
+	>
+		{label}
+	</Button>
+);
 
 const RegistrationFooterBackLink = ({
 	to,

@@ -335,6 +335,17 @@
 				"addRule": "Regel hinzufügen",
 				"ruleChip": "Regel Nr. {{index}}"
 			}
+		},
+		"entry": {
+			"join": "Beitreten",
+			"more": "Mehr erfahren",
+			"moreTitle": "So läuft die Gruppe",
+			"motionOff": "Animation abschalten",
+			"openHeadline": "Die Gruppe hat begonnen.",
+			"noTimeHeadline": "Die Gruppe beginnt, sobald die Moderation sie öffnet.",
+			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
+			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
 		}
 	},
 	"help": {
@@ -1132,6 +1143,11 @@
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."
+			},
+			"temporary": {
+				"join": "Beitreten",
+				"toggleOff": "Konto anlegen",
+				"toggleOn": "Ohne Konto beitreten"
 			}
 		},
 		"errors": {

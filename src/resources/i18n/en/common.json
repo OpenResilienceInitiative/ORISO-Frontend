@@ -990,6 +990,17 @@
 				"button1Label": "Close",
 				"headline": "Your changes have been saved successfully."
 			}
+		},
+		"entry": {
+			"join": "Join",
+			"more": "Learn more",
+			"moreTitle": "How the group works",
+			"motionOff": "Turn off animation",
+			"openHeadline": "The group has started.",
+			"noTimeHeadline": "The group starts as soon as the moderator opens it.",
+			"moreOpen": "The moderator has opened the group. “Join” takes you into the conversation.",
+			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
+			"missing": "This group no longer exists or you have no access to it."
 		}
 	},
 	"help": {
@@ -2897,6 +2908,11 @@
 			},
 			"twoFactorAuth": {
 				"label": "Additionally secure my password with two-factor authentication"
+			},
+			"temporary": {
+				"join": "Join",
+				"toggleOff": "Create an account",
+				"toggleOn": "Join without an account"
 			}
 		},
 		"back": "Back",

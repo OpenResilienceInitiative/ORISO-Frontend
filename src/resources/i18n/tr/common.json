@@ -1013,6 +1013,17 @@
 				"repeatValue_one": "{{count}} kez",
 				"repeatValue_other": "{{count}} kez"
 			}
+		},
+		"entry": {
+			"join": "Katıl",
+			"more": "Daha fazla bilgi",
+			"moreTitle": "Grup nasıl işler",
+			"motionOff": "Animasyonu kapat",
+			"openHeadline": "Grup başladı.",
+			"noTimeHeadline": "Grup, moderatör açar açmaz başlar.",
+			"moreOpen": "Moderatör grubu açtı. “Katıl” sizi görüşmeye götürür.",
+			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
+			"missing": "Bu grup artık yok ya da erişiminiz yok."
 		}
 	},
 	"help": {
@@ -2924,6 +2935,11 @@
 					"required": "Lütfen bir e-posta adresi girin.",
 					"invalid": "Lütfen geçerli bir e-posta adresi girin."
 				}
+			},
+			"temporary": {
+				"join": "Katıl",
+				"toggleOff": "Hesap oluştur",
+				"toggleOn": "Hesap açmadan katıl"
 			}
 		},
 		"back": "Geri",
