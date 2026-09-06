@@ -31,6 +31,17 @@ const readViewport = (): VisualViewportMetrics | null => {
 	};
 };
 
+const sameMetrics = (
+	a: VisualViewportMetrics | null,
+	b: VisualViewportMetrics | null
+): boolean =>
+	a === b ||
+	(!!a &&
+		!!b &&
+		a.height === b.height &&
+		a.offsetTop === b.offsetTop &&
+		a.bottomInset === b.bottomInset);
+
 /**
  * Tracks `window.visualViewport` — the part of the page the user can actually
  * see (ORISO-Frontend#1248).
@@ -67,7 +78,15 @@ export const useVisualViewport = (
 			return undefined;
 		}
 
-		const update = () => setMetrics(readViewport());
+		const update = () =>
+			setMetrics((previous) => {
+				const next = readViewport();
+				// iOS fires `scroll` continuously during pinch-zoom and while
+				// panning with the keyboard up. Handing back the previous
+				// object lets React bail out of the render entirely, which
+				// matters because the host component is very large.
+				return sameMetrics(previous, next) ? previous : next;
+			});
 		update();
 
 		// `scroll` matters as much as `resize`: iOS shifts the visual viewport

@@ -715,6 +715,26 @@ export const MaximisedMobileKeyboardOpen: Story = {
 		await expect(rect.height).toBeGreaterThan(0);
 
 		/*
+		 * Long text scrolls in the editor, not in the box around it (#1319
+		 * review). `.ProseMirror` is the scroll container — absolutely
+		 * positioned inside a clipped parent — so the outer input box must NOT
+		 * become one: an overflow rule there computes overflow-x to auto too
+		 * and turns the counter and editing banner into scroll content.
+		 */
+		const prose = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded .ProseMirror'
+		);
+		await expect(prose).toBeTruthy();
+		await expect(window.getComputedStyle(prose!).overflowY).toBe('auto');
+		const inputBox = document.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message--expanded .textarea__input'
+		);
+		await expect(inputBox).toBeTruthy();
+		await expect(window.getComputedStyle(inputBox!).overflowY).toBe(
+			'visible'
+		);
+
+		/*
 		 * The part that actually catches #1248.
 		 *
 		 * A Storybook iframe has no soft keyboard, so the layout/visual
@@ -725,38 +745,38 @@ export const MaximisedMobileKeyboardOpen: Story = {
 		 * The overlay has to follow the visible height, not the layout one.
 		 */
 		const viewport = window.visualViewport;
-		if (viewport) {
-			const realHeight = viewport.height;
-			const layoutHeight = window.innerHeight;
-			const keyboardHeight = Math.round(layoutHeight / 2);
-			Object.defineProperty(viewport, 'height', {
-				configurable: true,
-				get: () => keyboardHeight
-			});
-			viewport.dispatchEvent(new Event('resize'));
+		// No silent skip (#1319 review): without the API this story proves
+		// nothing, and a green run would hide that.
+		if (!viewport) {
+			throw new Error(
+				'window.visualViewport is unavailable — this story cannot verify #1248'
+			);
+		}
+		const layoutHeight = window.innerHeight;
+		const keyboardHeight = Math.round(layoutHeight / 2);
+		Object.defineProperty(viewport, 'height', {
+			configurable: true,
+			get: () => keyboardHeight
+		});
+		viewport.dispatchEvent(new Event('resize'));
 
-			try {
-				await waitFor(async () => {
-					const shrunk = overlay.getBoundingClientRect();
-					await expect(Math.round(shrunk.height)).toBe(
-						keyboardHeight
-					);
-					// …and the editor stays inside that smaller box.
-					const inside = editor.getBoundingClientRect();
-					await expect(inside.bottom).toBeLessThanOrEqual(
-						shrunk.bottom + 1
-					);
-					await expect(inside.top).toBeGreaterThanOrEqual(
-						shrunk.top - 1
-					);
-				});
-			} finally {
-				Object.defineProperty(viewport, 'height', {
-					configurable: true,
-					get: () => realHeight
-				});
-				viewport.dispatchEvent(new Event('resize'));
-			}
+		try {
+			await waitFor(async () => {
+				const shrunk = overlay.getBoundingClientRect();
+				await expect(Math.round(shrunk.height)).toBe(keyboardHeight);
+				// …and the editor stays inside that smaller box.
+				const inside = editor.getBoundingClientRect();
+				await expect(inside.bottom).toBeLessThanOrEqual(
+					shrunk.bottom + 1
+				);
+				await expect(inside.top).toBeGreaterThanOrEqual(shrunk.top - 1);
+			});
+		} finally {
+			// `delete` puts the prototype's native getter back. Redefining an own
+			// property with the captured value would freeze the height for every
+			// story that runs after this one in the same page (#1319 review).
+			delete (viewport as unknown as { height?: number }).height;
+			viewport.dispatchEvent(new Event('resize'));
 		}
 	}
 };

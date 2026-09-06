@@ -469,15 +469,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: auto;
 		}
 
+		/* No overflow rule here on purpose (#1319 review): `.ProseMirror` is
+		   absolutely positioned inside `.tipTapComposer__content`, which is
+		   `overflow: hidden` and already scrolls the text itself, so this box
+		   can never overflow. Adding `overflow-y` would also compute
+		   `overflow-x` to `auto` and turn the counter and editing banner into
+		   scroll content for no gain. */
 		&__wrapper-send-message--expanded .textarea__input {
 			height: 100%;
-
-			/* The editor scrolls inside its own box rather than growing past
-			   the container and pushing the toolbar and send button out of
-			   reach (#1248). `overscroll-behavior` keeps the page behind from
-			   taking over the scroll once the end is hit. */
-			overflow-y: auto;
-			overscroll-behavior: contain;
 		}
 
 		&__wrapper-send-message--expanded .textarea__figmaToolbar {
