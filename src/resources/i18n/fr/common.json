@@ -4695,5 +4695,104 @@
 			"previous": "Afficher les chapitres précédents",
 			"next": "Afficher plus de chapitres"
 		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Votre pause respiration",
+			"introTitle": "Un moment pour vous.",
+			"intro": {
+				"0": "Suivez le mouvement.",
+				"1": "Respirez comme cela vous fait du bien."
+			},
+			"reducedIntro": {
+				"0": "Respirez à votre rythme.",
+				"1": "Le guide vous accompagne."
+			},
+			"begin": "Commencer",
+			"close": "Fermer la pause respiration",
+			"pause": "Pause",
+			"resume": "Continuer à respirer",
+			"pausedTitle": "Un instant de pause.",
+			"pausedHint": {
+				"0": "Respirez à votre rythme.",
+				"1": "Vous pouvez reprendre quand vous voulez."
+			},
+			"automatic": "Pilote automatique",
+			"manual": "Mon rythme",
+			"switchManual": "Passer à mon rythme",
+			"switchAutomatic": "Passer au pilote automatique",
+			"finish": "Assez pour l'instant",
+			"return": "Retour à l'attente",
+			"finishTitle": "Emportez ce qui vous fait du bien.",
+			"phase": {
+				"0": "Inspirez",
+				"1": "Retenez",
+				"2": "Expirez",
+				"3": "Repos"
+			},
+			"next": {
+				"0": "Retenez maintenant",
+				"1": "Expirez maintenant",
+				"2": "Laissez le souffle se poser",
+				"3": "Inspirez à nouveau"
+			},
+			"guidance": {
+				"0": {
+					"0": "Doucement par le nez.",
+					"1": "Laissez votre ventre se soulever."
+				},
+				"1": {
+					"0": "Relâchez les épaules.",
+					"1": "Seulement tant que cela vous fait du bien."
+				},
+				"2": {
+					"0": "Doucement par la bouche.",
+					"1": "Laissez votre ventre redescendre."
+				},
+				"3": {
+					"0": "Un moment de silence.",
+					"1": "Le prochain souffle viendra."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Laissez venir le souffle.",
+					"1": "Rien à forcer."
+				},
+				"1": {
+					"0": "Sentez vos épaules.",
+					"1": "Laissez-les descendre un peu."
+				},
+				"2": {
+					"0": "Laissez le souffle s'en aller.",
+					"1": "Sans aucune hâte."
+				},
+				"3": {
+					"0": "Sentez comment vous êtes assis.",
+					"1": "Prenez votre temps."
+				}
+			},
+			"soundOn": "Son activé",
+			"soundOff": "Son coupé",
+			"soundOptions": "Son et voix",
+			"wind": "Vent du souffle · Réverbération douce",
+			"voice": "Annoncer les phases",
+			"voiceHint": "Avec la voix de votre appareil",
+			"voiceMissing": "Aucune voix n'est disponible sur cet appareil.",
+			"voiceCue": {
+				"0": "Inspirez",
+				"1": "Retenez",
+				"2": "Expirez",
+				"3": "Repos"
+			},
+			"audioError": "Le son n'est pas disponible pour le moment. Vous pouvez continuer sans.",
+			"voiceError": "La voix n'est pas disponible. Le vent du souffle vous accompagne.",
+			"words": {
+				"serenity": "sérénité",
+				"courage": "courage",
+				"wisdom": "sagesse"
+			},
+			"quote": "Mon Dieu, donne-moi la {serenity} d'accepter les choses que je ne peux changer, le {courage} de changer celles que je peux, et la {wisdom} d'en connaître la différence."
+		}
 	}
 }

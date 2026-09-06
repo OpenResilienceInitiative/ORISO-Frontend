@@ -4597,5 +4597,104 @@
 			"previous": "Show previous chapters",
 			"next": "Show more chapters"
 		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Your breathing break",
+			"introTitle": "A moment for you.",
+			"intro": {
+				"0": "Follow the movement.",
+				"1": "Breathe in whatever way feels comfortable."
+			},
+			"reducedIntro": {
+				"0": "Breathe at your own pace.",
+				"1": "The guidance stays with you."
+			},
+			"begin": "Begin",
+			"close": "Close breathing break",
+			"pause": "Pause",
+			"resume": "Keep breathing",
+			"pausedTitle": "A moment's pause.",
+			"pausedHint": {
+				"0": "Breathe in your own rhythm.",
+				"1": "You can continue whenever you like."
+			},
+			"automatic": "Autopilot",
+			"manual": "My rhythm",
+			"switchManual": "Switch to my rhythm",
+			"switchAutomatic": "Switch to autopilot",
+			"finish": "Enough for now",
+			"return": "Back to waiting",
+			"finishTitle": "Take with you what does you good.",
+			"phase": {
+				"0": "Breathe in",
+				"1": "Hold",
+				"2": "Breathe out",
+				"3": "Rest"
+			},
+			"next": {
+				"0": "Hold now",
+				"1": "Breathe out now",
+				"2": "Let the breath rest",
+				"3": "Breathe in again"
+			},
+			"guidance": {
+				"0": {
+					"0": "Gently through the nose.",
+					"1": "Let your belly rise."
+				},
+				"1": {
+					"0": "Let your shoulders loosen.",
+					"1": "Only as long as it feels good."
+				},
+				"2": {
+					"0": "Gently through the mouth.",
+					"1": "Let your belly sink again."
+				},
+				"3": {
+					"0": "A quiet moment.",
+					"1": "The next breath will come."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Let the breath come.",
+					"1": "Nothing needs forcing."
+				},
+				"1": {
+					"0": "Notice your shoulders.",
+					"1": "Let them sink a little."
+				},
+				"2": {
+					"0": "Let the breath flow out.",
+					"1": "No hurry at all."
+				},
+				"3": {
+					"0": "Feel how you are sitting.",
+					"1": "Take your time."
+				}
+			},
+			"soundOn": "Sound on",
+			"soundOff": "Sound off",
+			"soundOptions": "Sound and voice",
+			"wind": "Breath wind · Soft reverb",
+			"voice": "Announce the phases",
+			"voiceHint": "With your device's voice",
+			"voiceMissing": "No voice is available on this device.",
+			"voiceCue": {
+				"0": "Breathe in",
+				"1": "Hold",
+				"2": "Breathe out",
+				"3": "Rest"
+			},
+			"audioError": "Sound is not available right now. You can keep breathing without it.",
+			"voiceError": "The voice is not available. The breath wind stays with you.",
+			"words": {
+				"serenity": "serenity",
+				"courage": "courage",
+				"wisdom": "wisdom"
+			},
+			"quote": "God, grant me the {serenity} to accept the things I cannot change, the {courage} to change the things I can, and the {wisdom} to know the difference."
+		}
 	}
 }

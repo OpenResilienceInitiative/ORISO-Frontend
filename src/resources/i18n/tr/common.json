@@ -4695,5 +4695,104 @@
 			"previous": "Önceki bölümleri göster",
 			"next": "Daha fazla bölüm göster"
 		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Nefes molanız",
+			"introTitle": "Sizin için bir an.",
+			"intro": {
+				"0": "Hareketi takip edin.",
+				"1": "Size iyi gelen şekilde nefes alın."
+			},
+			"reducedIntro": {
+				"0": "Kendi temponuzda nefes alın.",
+				"1": "Yönlendirme sizinle kalır."
+			},
+			"begin": "Başla",
+			"close": "Nefes molasını kapat",
+			"pause": "Duraklat",
+			"resume": "Nefes almaya devam et",
+			"pausedTitle": "Kısa bir mola.",
+			"pausedHint": {
+				"0": "Kendi ritminizde nefes alın.",
+				"1": "İstediğiniz zaman devam edebilirsiniz."
+			},
+			"automatic": "Otomatik",
+			"manual": "Kendi ritmim",
+			"switchManual": "Kendi ritmime geç",
+			"switchAutomatic": "Otomatiğe geç",
+			"finish": "Şimdilik yeter",
+			"return": "Beklemeye dön",
+			"finishTitle": "Size iyi geleni yanınıza alın.",
+			"phase": {
+				"0": "Nefes al",
+				"1": "Tut",
+				"2": "Nefes ver",
+				"3": "Dinlen"
+			},
+			"next": {
+				"0": "Şimdi tut",
+				"1": "Şimdi nefes ver",
+				"2": "Nefesi dinlendir",
+				"3": "Yeniden nefes al"
+			},
+			"guidance": {
+				"0": {
+					"0": "Burnunuzdan, yavaşça.",
+					"1": "Karnınız yükselebilir."
+				},
+				"1": {
+					"0": "Omuzlarınızı gevşetin.",
+					"1": "Sadece iyi geldiği sürece."
+				},
+				"2": {
+					"0": "Ağzınızdan, yavaşça.",
+					"1": "Karnınız yeniden inebilir."
+				},
+				"3": {
+					"0": "Sessiz bir an.",
+					"1": "Sonraki nefes kendiliğinden gelir."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Nefesin gelmesine izin verin.",
+					"1": "Hiçbir şeyi zorlamayın."
+				},
+				"1": {
+					"0": "Omuzlarınızı fark edin.",
+					"1": "Biraz inmelerine izin verin."
+				},
+				"2": {
+					"0": "Nefesin gitmesine izin verin.",
+					"1": "Hiç acele etmeden."
+				},
+				"3": {
+					"0": "Nasıl oturduğunuzu hissedin.",
+					"1": "Kendinize zaman tanıyın."
+				}
+			},
+			"soundOn": "Ses açık",
+			"soundOff": "Ses kapalı",
+			"soundOptions": "Ses ve sesli yönlendirme",
+			"wind": "Nefes rüzgârı · Yumuşak yankı",
+			"voice": "Aşamaları seslendir",
+			"voiceHint": "Cihazınızın sesiyle",
+			"voiceMissing": "Bu cihazda sesli yönlendirme yok.",
+			"voiceCue": {
+				"0": "Nefes al",
+				"1": "Tut",
+				"2": "Nefes ver",
+				"3": "Dinlen"
+			},
+			"audioError": "Ses şu anda kullanılamıyor. Sessiz devam edebilirsiniz.",
+			"voiceError": "Sesli yönlendirme kullanılamıyor. Nefes rüzgârı sizinle kalır.",
+			"words": {
+				"serenity": "huzuru",
+				"courage": "cesareti",
+				"wisdom": "bilgeliği"
+			},
+			"quote": "Tanrım, değiştiremeyeceğim şeyleri kabul etme {serenity}, değiştirebileceklerimi değiştirme {courage} ve ikisini ayırt etme {wisdom} bana ver."
+		}
 	}
 }
