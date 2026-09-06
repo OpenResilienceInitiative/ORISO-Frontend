@@ -525,12 +525,25 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		'[data-cy="stage-panel"] .panelHeader'
 	)!;
 	const cs = getComputedStyle(header);
+	const divider = header.querySelector<HTMLElement>('.panelHeader__divider')!;
+	// T48: the tint is painted as a background *image* that stops at the
+	// hairline — `tintHeight` is how far down it reaches (px), `hairlineY`
+	// where the hairline actually sits under the header's top edge.
+	const tintHeight = (() => {
+		const size = cs.backgroundSize.split(',')[0].trim().split(/\s+/);
+		const vertical = size[1] ?? size[0];
+		return vertical.endsWith('px') ? Math.round(parseFloat(vertical)) : NaN;
+	})();
 	return {
 		kind: header.getAttribute('data-kind'),
 		surface: cs.backgroundColor,
-		hairline: getComputedStyle(
-			header.querySelector('.panelHeader__divider')!
-		).borderTopColor,
+		tint: cs.backgroundImage,
+		tintHeight,
+		hairlineY: Math.round(
+			divider.getBoundingClientRect().top -
+				header.getBoundingClientRect().top
+		),
+		hairline: getComputedStyle(divider).borderTopColor,
 		tag: getComputedStyle(header.querySelector('.panelHeader__kindButton')!)
 			.backgroundColor,
 		composerBorder: getComputedStyle(
@@ -708,13 +721,19 @@ export const SupervisionInsideTheCard: Story = {
 		// T40: one bordered box per composer, outer corner = card radius.
 		await expectSingleBoxComposers(canvasElement);
 		// T41: the supervision header wears the accent; the main chat's
-		// own header stays white.
+		// own header stays white. T48 (Frank, 06.09.): the tint covers ONLY
+		// the name row — it is painted down to the hairline and stops there,
+		// the channel-chip row underneath sits on the plain surface.
 		const supervisionTint = await panelTint(canvasElement);
 		await expect(supervisionTint.kind).toBe('supervision');
 		const whiteHeader = getComputedStyle(
 			canvasElement.querySelector('[data-cy="stage-main"] .sessionInfo')!
 		).backgroundColor;
-		await expect(supervisionTint.surface).not.toBe(whiteHeader);
+		await expect(supervisionTint.surface).toBe(whiteHeader);
+		await expect(supervisionTint.tint).toContain('linear-gradient');
+		await expect(supervisionTint.tintHeight).toBe(
+			supervisionTint.hairlineY
+		);
 		await expect(supervisionTint.composerAccent).toBe('supervision');
 		// T35: dual mode — both composers rest at ONE line (toolbar strip +
 		// one line + insets, no spare space under the placeholder) and grow
@@ -1125,7 +1144,14 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		const supervisionTint = await panelTint(canvasElement);
 		await expect(threadTint.kind).toBe('thread');
 		await expect(supervisionTint.kind).toBe('supervision');
-		await expect(supervisionTint.surface).not.toBe(threadTint.surface);
+		// T48: both surfaces are white; the supervision header carries the
+		// tint as an image that ends at the hairline, the thread header none.
+		await expect(supervisionTint.surface).toBe(threadTint.surface);
+		await expect(supervisionTint.tint).toContain('linear-gradient');
+		await expect(supervisionTint.tintHeight).toBe(
+			supervisionTint.hairlineY
+		);
+		await expect(threadTint.tint).toBe('none');
 		await expect(supervisionTint.hairline).not.toBe(threadTint.hairline);
 		await expect(supervisionTint.tag).not.toBe(threadTint.tag);
 		await expect(supervisionTint.composerBorder).not.toBe(

@@ -89,6 +89,11 @@ $room-header-gap: 6px;
 // `sessionHeader.styles.scss`.
 $room-header-gap-top: 2px;
 
+// T48: where the hairline sits under the header's top edge — and so how far
+// the supervision tint reaches (16 + 2 + 40 + 6 = 64).
+$room-header-tint-height: $room-header-inset + $room-header-gap-top +
+	$room-header-row + $room-header-gap;
+
 // Measured in the same Figma node (T17): title text 6 px after the avatar
 // group, 12 px between the 32 px action buttons of the call menu.
 $room-title-inset: 6px;
@@ -108,12 +113,27 @@ $room-actions-gap: 12px;
 	// recipe, T27), its hairline and its channel tag the stronger
 	// `primary-fixed-dim`. A thread header stays neutral: white surface,
 	// `primary-fixed` hairline, a grey `surface-container-high` tag.
+
+	// T48 (Frank, 06.09.): the tint belongs to the NAME ROW only. It is
+	// painted as a background image that reaches exactly down to the
+	// hairline (card inset + row paddings + row = 64 px) and stops there;
+	// the channel-chip row under the hairline sits on the plain surface.
 	&--supervision {
-		background-color: color-mix(
-			in srgb,
-			var(--m3-primary-fixed, #ffdad5) 25%,
-			var(--m3-surface-container-lowest, #fff)
+		background-color: var(--m3-surface-container-lowest, #fff);
+		background-image: linear-gradient(
+			color-mix(
+				in srgb,
+				var(--m3-primary-fixed, #ffdad5) 25%,
+				var(--m3-surface-container-lowest, #fff)
+			),
+			color-mix(
+				in srgb,
+				var(--m3-primary-fixed, #ffdad5) 25%,
+				var(--m3-surface-container-lowest, #fff)
+			)
 		);
+		background-repeat: no-repeat;
+		background-size: 100% $room-header-tint-height;
 
 		.panelHeader__divider {
 			border-top-color: var(--m3-primary-fixed-dim, #ffb4aa);
