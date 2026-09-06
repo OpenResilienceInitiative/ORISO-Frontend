@@ -65,6 +65,8 @@ docs/agent-tasks/*
 !docs/agent-tasks/2026-09-06_issue-1210-absence-banner/**
 !docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/
 !docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/**
+!docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/
+!docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/**
 !docs/cursor-orchestrator/
 docs/cursor-orchestrator/*
 !docs/cursor-orchestrator/index.md
