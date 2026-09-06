@@ -14,6 +14,7 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
+import { appConfig } from '../../utils/appConfig';
 import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
@@ -135,19 +136,19 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			// Whether the user wants this popup is `sendNotification`'s call
-			// alone (#1211) — it knows the family, the event type and which
-			// settings panel is actually routed. Repeating the check here is
-			// what broke new-message popups for the cross-device panel.
-			sendNotification(translate('notifications.message.new'), {
-				// Route the banner to its config row (#576 harmonised
-				// model): Gespräch → Standard-Benachrichtigung.
-				family: 'messages',
-				eventType: 'message.new',
-				onclick: () => {
-					navigate(`/sessions/consultant/sessionView`);
-				}
-			});
+			// Modern delivery belongs to the event provider. Retain the legacy
+			// transport only while the old settings panel is routed.
+			if (!appConfig?.releaseToggles?.enableNewNotifications) {
+				sendNotification(translate('notifications.message.new'), {
+					// Route the banner to its config row (#576 harmonised
+					// model): Gespräch → Standard-Benachrichtigung.
+					family: 'messages',
+					eventType: 'message.new',
+					onclick: () => {
+						navigate(`/sessions/consultant/sessionView`);
+					}
+				});
+			}
 		}
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 

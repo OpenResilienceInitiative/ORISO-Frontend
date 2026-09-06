@@ -1883,6 +1883,10 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Die ratssuchende Person hat den anonymen Chat beendet."
 			}
 		},
 		"error": "Fehlgeschlagen",

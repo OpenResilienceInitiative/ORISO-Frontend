@@ -146,7 +146,7 @@ describe('WebsocketHandler → new message notification', () => {
 	});
 
 	// The regression: this is the exact path that stayed silent.
-	it('fires for an opt-in made in the cross-device panel', () => {
+	it('leaves cross-device delivery to the event provider to avoid duplicate popups', () => {
 		routePanel(true);
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: true }
@@ -155,8 +155,7 @@ describe('WebsocketHandler → new message notification', () => {
 		renderHandler();
 		receiveDirectMessage();
 
-		expect(constructed).toHaveLength(1);
-		expect(constructed[0].title).toBe('notifications.message.new');
+		expect(constructed).toHaveLength(0);
 	});
 
 	it('stays silent when the cross-device panel is switched off, even with a stale legacy key', () => {

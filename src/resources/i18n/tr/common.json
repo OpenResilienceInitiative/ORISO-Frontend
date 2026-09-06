@@ -1862,6 +1862,10 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"text": "Danışan anonim sohbeti sonlandırdı."
 			}
 		},
 		"error": "Başarısız",

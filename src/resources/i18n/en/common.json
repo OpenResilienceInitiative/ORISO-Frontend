@@ -1859,6 +1859,10 @@
 			"teamDiscussionNew": {
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"text": "The person seeking advice ended the anonymous chat."
 			}
 		},
 		"error": "failed",

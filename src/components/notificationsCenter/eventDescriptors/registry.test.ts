@@ -77,6 +77,8 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'inquiry.accepted': 'conversation',
 	'message.new': 'conversation',
+	'first_response.received': 'conversation',
+	'conversation.finished': 'conversation',
 	'thread.reply.new': 'conversation',
 	'team.discussion.new': 'conversation',
 	'supervisor.added': 'conversation',
@@ -126,7 +128,7 @@ describe('WP-06 event-descriptor registry', () => {
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
 		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments = 30.
-		expect(KNOWN_EVENT_TYPES.length).toBe(31);
+		expect(KNOWN_EVENT_TYPES.length).toBe(33);
 		[
 			'request.new',
 			'request.denied',

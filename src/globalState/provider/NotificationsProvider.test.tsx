@@ -15,6 +15,13 @@ import {
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 const apiGetEventNotifications = vi.fn();
+const announceEvent = vi.hoisted(() => vi.fn());
+vi.mock('../../utils/announceNotificationEvent', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../utils/announceNotificationEvent')
+	>()),
+	announceNotificationEvent: announceEvent
+}));
 
 const feedItem = (id: number, createdAt: string) => ({
 	id,
@@ -46,6 +53,7 @@ const PaginationProbe = () => {
 				load
 			</button>
 			<button onClick={context.clearNotificationFeed}>clear</button>
+			<button onClick={context.refreshNotificationFeed}>refresh</button>
 		</>
 	);
 };
@@ -313,5 +321,52 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 			)
 		);
 		expect(screen.getByTestId('ids').textContent).toBe('');
+	});
+});
+
+describe('event channel ownership', () => {
+	afterEach(cleanup);
+	it('announces new events once while keeping initial history and read refreshes quiet', async () => {
+		announceEvent.mockClear();
+		apiGetEventNotifications.mockReset();
+		const initial = feedItem(1, '2026-09-06T10:00:00Z');
+		const incoming = {
+			...feedItem(2, '2026-09-06T10:01:00Z'),
+			eventType: 'handover.requested'
+		};
+		apiGetEventNotifications.mockResolvedValue({
+			items: [initial],
+			unreadCount: 1
+		});
+		render(
+			<NotificationsProvider>
+				<PaginationProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
+		expect(announceEvent).not.toHaveBeenCalled();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [incoming, initial],
+			unreadCount: 2
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('2,1')
+		);
+		expect(announceEvent).toHaveBeenCalledTimes(1);
+		expect(announceEvent.mock.calls[0][0].eventType).toBe(
+			'handover.requested'
+		);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [{ ...incoming, readAt: '2026-09-06T10:02:00Z' }, initial],
+			unreadCount: 1
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+		);
+		expect(announceEvent).toHaveBeenCalledTimes(1);
 	});
 });

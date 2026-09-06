@@ -1862,6 +1862,10 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"text": "La personne en quête de conseils a mis fin au chat anonyme."
 			}
 		},
 		"error": "Échec",

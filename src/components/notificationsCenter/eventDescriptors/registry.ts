@@ -135,6 +135,22 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'messageNew',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor('first_response.received', {
+		family: 'messages',
+		category: 'message',
+		icon: 'message',
+		i18nKey: 'messageNew',
+		resolveActionTarget: conversationTarget
+	}),
+	{
+		eventType: 'conversation.finished',
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		titleTemplate: 'notifications.events.conversationFinished.title',
+		textTemplate: 'notifications.events.conversationFinished.text',
+		resolveActionTarget: conversationTarget
+	},
 	descriptor('thread.reply.new', {
 		family: 'messages',
 		category: 'message',

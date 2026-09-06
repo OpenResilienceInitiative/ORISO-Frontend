@@ -66,7 +66,7 @@ afterEach(() => {
 describe('useBrowserNotification', () => {
 	// The regression: no toggle check here at all meant the cross-device
 	// panel's opt-in was never consulted.
-	it('fires for an opt-in made in the cross-device panel', () => {
+	it('leaves cross-device delivery to the event provider to avoid duplicate popups', () => {
 		routePanel(true);
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: true }
@@ -74,8 +74,7 @@ describe('useBrowserNotification', () => {
 
 		notifyFor([freshEnquiry()]);
 
-		expect(constructed).toHaveLength(1);
-		expect(constructed[0].title).toBe('notifications.initialRequest.new');
+		expect(constructed).toHaveLength(0);
 	});
 
 	it('fires for an opt-in made in the legacy panel when that is the routed one', () => {

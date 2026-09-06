@@ -1862,6 +1862,10 @@
 			"teamDiscussionNew": {
 				"title": "ናይ ጋንታ ምይይጥ",
 				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			},
+			"conversationFinished": {
+				"title": "ቻት ተወዲኡ",
+				"text": "እቲ ምኽሪ ዝደሊ ሰብ ነቲ ስሙ ዘይተፈልጠ ቻት ወዲእዎ።"
 			}
 		},
 		"error": "ወዲቑ",

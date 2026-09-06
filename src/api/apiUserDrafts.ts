@@ -1,3 +1,4 @@
+import { DRAFTS_UPDATED_EVENT } from '../services/draftStore';
 import { endpoints } from '../resources/scripts/endpoints';
 import {
 	fetchData,
@@ -73,6 +74,7 @@ export const apiUpsertUserDraft = async (
 			bodyData: JSON.stringify(payload),
 			responseHandling: [FETCH_ERRORS.CATCH_ALL]
 		});
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Drafts are non-critical: a failed/conflicting autosave must never bubble up
 		// and break the chat. The next keystroke re-saves.
@@ -86,6 +88,7 @@ export const apiDeleteUserDraft = async (scopeKey: string): Promise<void> => {
 			method: FETCH_METHODS.DELETE,
 			responseHandling: [FETCH_ERRORS.CATCH_ALL]
 		});
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Non-critical cleanup; ignore failures.
 	}
