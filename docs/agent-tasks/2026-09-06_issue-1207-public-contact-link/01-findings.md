@@ -28,8 +28,12 @@ product docs suggest. All three tiers exist:
 
 - `src/components/profile/ConsultantInformation.tsx:263` renders the _Öffentlicher Kontakt-Link_
   card; `:287` the editable name; `:298` the status line.
-- `:186–197` derive the status text from `publicSlugStatus` plus `pendingPublicSlug`, so the
-  frontend always knows whether a name is pending, active or rejected. Nothing is guessed.
+- `:186–197` derive the status text from `publicSlugStatus` plus `pendingPublicSlug`. Note the
+  fallback: "pending" is shown only when **both** fields are present, and otherwise the card falls
+  through to "active" (if `publicSlug` is set) or "empty". Both fields are optional in
+  `UserDataInterface` and in the generated contract, so a `PENDING` status arriving without
+  `pendingPublicSlug` would silently render as active or empty. A latent display bug, not a
+  blocker for this decision.
 - `:226` picks the identifier for the shared link: `userData.publicSlug || userData.userId`.
 - `:339` and `:365` build the copied link and the QR payload from the same value:
   `${settings.urls.registration}?cid=${consultantIdentifier}`.
@@ -98,11 +102,25 @@ Sub-issue status:
 | QDL-06 Admin panel: surface the centre QR + link                  | #187  | Open                  |
 | QDL-07 Backend: centre availability signal                        | #188  | Open                  |
 
-**This is the whole story of the report headline.** QDL-01 un-hid the block. Everything that makes
-the link _worth_ sharing is still open. A counsellor can copy a beautifully named link today, but
-the client who opens it still walks the ordinary registration path — the centre-selection skip, the
-topic pop-up, the direct assignment and the inactive-counsellor fallback are all unbuilt. The
-feature looks finished and is not. That is what someone is reacting to when they write "hide it".
+**Correction to the epic body.** #181 was written 2026-06-17 and is stale on this point. Verified
+against the current code, a `?cid=` link already performs most of QDL-02:
+
+- `registrationSteps.ts:117–137` — once the counsellor resolves, the **zipcode** and
+  **agency-selection** steps are dropped outright, and **topic-selection** is dropped as well when
+  a topic is preselected or the counsellor has exactly one topic.
+- `RegistrationProvider.tsx:247–258` — the counsellor's agency is injected as the direct-link
+  agency and `DIRECT_LINK_POSTCODE` stands in for the zip code.
+- `Registration.tsx:490–492` — the registration payload carries `consultantId`, but only when the
+  counsellor is not `absent`, so a rudimentary form of the QDL-04 absence guard already exists.
+
+So the counsellor **is** preselected and the centre step **is** skipped today. What genuinely
+remains open is the rest: the topic step presented as a pop-up in the ADR-014 order, landing the
+client directly in the chat, the full inactive-counsellor and closed-centre fallbacks, and the
+QDL-05 backend work that assigns the `cid` session and exposes active/inactive state.
+
+The feature is therefore further along than the epic implies, and the gap is the landing
+experience rather than the link itself. Anyone reading only #181 would conclude the link does
+nothing useful yet, which is no longer true — a plausible source of the "hide it" instinct.
 
 Note that #182's _"Ask first — confirm why the block is TEMPORARILY HIDDEN, plain restore vs.
 flag-gated restore"_ was never answered on the issue. The block was restored unflagged. #1207 is
@@ -118,7 +136,8 @@ finding that could justify restricting the feature, and no ADR covers it.
 `lastName`, `displayName`, `username`, `isSupervisor` and the full agency list (name, city,
 postcode, street, phone). Exposing that to someone holding a counsellor's link is deliberate — the
 client should see who they are contacting. The slug does not add a field; it changes
-**guessability**. A UUID cannot be enumerated. `vorname-nachname` can. With named slugs the same
+**guessability**. A randomly generated UUID is not practically enumerable, assuming the service
+issues random identifiers rather than predictable ones. `vorname-nachname` is trivially guessable. With named slugs the same
 endpoint answers "does this person counsel here, and at which centre" for any name someone cares to
 try, including the supervisor flag. Note the placeholder shipped in the admin panel is literally
 `max-mustermann` / `max-musterfrau`, so real names are the expected input.
@@ -154,15 +173,18 @@ the media scanner: `kdg-epic-media-scanner.md:146–148` says that until the fea
 cards should be "disable[d] … with an explanatory hint, or annotate[d] as 'prepared — not yet
 active' (design rule: disable, don't hide)".
 
-The reporter's instinct is still worth honouring. What is wrong is not that the block is visible —
-it is that the block **overstates what the link does today**. Fix the honesty, not the visibility.
+The reporter's instinct is still worth honouring, though the correction in section 4 changes what
+it points at. The block does not overpromise — it says nothing at all about what the link does, so
+a counsellor cannot tell whether sharing it is useful yet, and a reader who checks the epic is told
+the landing flow is unbuilt when most of it now works. **Fix the silence, not the visibility.**
 
 **Option A — keep visible, make the promise honest (recommended).**
 Leave the slug request and approval flow exactly as they are, and add one line stating what the
-link does today: it opens registration pre-filled with this counsellor. Optionally note that the
-direct-to-chat landing arrives with #181. Copy-only change, no logic, no migration. It resolves
-the reporter's complaint (the UI stops implying an unbuilt feature), keeps the shipped backend and
-admin work, and does not reopen a question #182 already settled.
+link verifiably does today: it opens registration with the zip-code and centre steps already
+resolved for this counsellor. Do **not** promise that the client lands in a chat with them — that
+is the `cid` session assignment in QDL-05 (#186) and it is still open. Copy-only change, no logic,
+no migration. It keeps the shipped backend and admin work and does not reopen a question #182
+already settled.
 
 **Option B — disable with a hint while #181 is open.**
 Grey out the name input behind a tenant flag, keep the card and its explanation visible, using the
