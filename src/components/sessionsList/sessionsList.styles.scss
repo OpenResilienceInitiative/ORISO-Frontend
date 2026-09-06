@@ -394,6 +394,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 0;
 	}
 
+	/* Scroll-only placement: the bar sits inside the surface it scrolls rather
+	   than straddling its edge, because a dropdown has no neighbour to
+	   separate from (ORISO-Frontend#1196 job 2). */
+	&__resizeHandle--inset {
+		right: 0;
+		width: 20px;
+		cursor: grab;
+	}
+
 	&__resizeHandlePill {
 		position: absolute;
 		right: 8px;
@@ -407,48 +416,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			background-color 140ms ease,
 			box-shadow 140ms ease,
 			transform 140ms ease;
-	}
-
-	// Once cards overflow, the same visible dragbar becomes their scrollbar
-	// thumb. No separate full-height side line is rendered beside populated
-	// fields.
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: var(--sessions-list-thumb-top);
-		height: var(--sessions-list-thumb-height);
-		transform: none;
-	}
-
-	&__resizeToggle {
-		position: absolute;
-		right: -14px;
-		top: 18px;
-		z-index: 3;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 1px solid var(--m3-outline-variant, #c9c5c7);
-		border-radius: 999px;
-		background: var(--m3-surface-container-highest, #e1dddf);
-		color: var(--m3-on-surface, #1d1b1c);
-		font-size: 22px;
-		line-height: 24px;
-		cursor: pointer;
-		display: none;
-		align-items: center;
-		justify-content: center;
-
-		@include breakpoint($fromLarge) {
-			display: flex;
-		}
-
-		&:hover {
-			background: var(--m3-secondary-container, #ffdad5);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
@@ -466,14 +433,8 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: var(--m3-primary-fixed, #ffdad5);
 	}
 
-	&__resizeHandle[data-dragging='true'][data-scrollable='false']
-		&__resizeHandlePill {
+	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='true']
-		&__resizeHandlePill {
-		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {

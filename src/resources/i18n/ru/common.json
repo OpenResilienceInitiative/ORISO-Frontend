@@ -3532,6 +3532,9 @@
 				"selfHelp": "Круг общения",
 				"internal": "Внутреннее"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Потяните, чтобы прокрутить список."
 		}
 	},
 	"statusOverlay": {

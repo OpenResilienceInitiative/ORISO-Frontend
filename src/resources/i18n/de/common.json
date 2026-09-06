@@ -3547,6 +3547,9 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
 		}
 	},
 	"statusOverlay": {
