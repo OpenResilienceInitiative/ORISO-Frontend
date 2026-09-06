@@ -58,26 +58,27 @@ const invalidateStaleAuthSession = () => {
 	removeTokenExpiryFromLocalStorage();
 };
 
-// Guards against repeated reloads when several requests 401 on a public auth
-// route within the same page load. At most one self-healing reload is triggered.
-let staleAuthRecoveryTriggered = false;
-
 // A 401 on a public auth route (login / registration / error pages) means any
-// token we presented is stale or expired. Clear it so the next request is
-// anonymous -- the public endpoints then answer 200 instead of 401. If a stale
-// token was actually sent, reload once to re-bootstrap the app cleanly instead
-// of leaving the user stranded on a blank, crashed page (the uncaught
-// UNAUTHORIZED rejection otherwise prevents the login screen from rendering).
+// token we presented is stale or expired. Clear it and, if we actually sent an
+// Authorization header, retry the very same request once as an anonymous
+// request -- the public endpoints then answer 200 instead of 401. Never reload
+// the page: that would throw away form state the user has already typed.
 const recoverFromStaleAuthOnPublicRoute = (
 	hadAuthorization: boolean,
+	retryWithoutAuth: () => Promise<any>,
+	resolve: (value?: any) => void,
 	reject: (reason?: Error) => void
 ) => {
 	invalidateStaleAuthSession();
-	reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
-	if (hadAuthorization && !staleAuthRecoveryTriggered) {
-		staleAuthRecoveryTriggered = true;
-		window.location.reload();
+
+	if (!hadAuthorization) {
+		reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+		return;
 	}
+
+	retryWithoutAuth().then(resolve, () =>
+		reject(new Error(FETCH_ERRORS.UNAUTHORIZED))
+	);
 };
 
 export class FetchErrorWithOptions extends Error {
@@ -125,6 +126,21 @@ export const fetchData = ({
 						Authorization: `Bearer ${accessToken}`
 					}
 				: null;
+
+		// Retried exactly once, anonymously, and with recovery disabled so a
+		// second 401 cannot loop.
+		const retryWithoutAuth = () =>
+			fetchData({
+				url,
+				method,
+				headersData,
+				bodyData,
+				skipAuth: true,
+				responseHandling,
+				timeout,
+				signal,
+				recoverOnPublicAuthRoute: false
+			});
 
 		const csrfToken = generateCsrfToken();
 
@@ -283,6 +299,8 @@ export const fetchData = ({
 						if (isPublicAuthRoute() && recoverOnPublicAuthRoute) {
 							recoverFromStaleAuthOnPublicRoute(
 								Boolean(authorization),
+								retryWithoutAuth,
+								resolve,
 								reject
 							);
 						} else {
@@ -299,6 +317,8 @@ export const fetchData = ({
 				) {
 					recoverFromStaleAuthOnPublicRoute(
 						Boolean(authorization),
+						retryWithoutAuth,
+						resolve,
 						reject
 					);
 				} else {
