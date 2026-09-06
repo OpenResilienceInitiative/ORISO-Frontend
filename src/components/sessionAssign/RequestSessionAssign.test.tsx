@@ -8,20 +8,33 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RequestSessionAssign } from './RequestSessionAssign';
+import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
+import {
+	ActiveSessionContext,
+	ConsultantListContext,
+	E2EEContext,
+	ModalProvider,
+	SessionTypeContext,
+	UserDataContext
+} from '../../globalState';
 
-const navigate = vi.fn();
+// `vi.mock` factories are hoisted above every import, so whatever they close
+// over has to be hoisted with them.
+const { navigate, TRANSLATIONS } = vi.hoisted(() => ({
+	navigate: vi.fn(),
+	TRANSLATIONS: {
+		'session.u25.assignment.placeholder': 'Zuweisung',
+		'session.assignSelf.overlay.button.cancel': 'Abbrechen',
+		'session.assignSelf.overlay.button.assign': 'Zuweisen',
+		'session.assignOther.overlay.headline.1': 'Zuweisen?',
+		'session.assignOther.overlay.subtitle.noTeam': 'Neu: {{newConsultant}}'
+	} as Record<string, string>
+}));
 
 vi.mock('react-router-dom', () => ({
 	useNavigate: () => navigate
 }));
-
-const TRANSLATIONS: Record<string, string> = {
-	'session.u25.assignment.placeholder': 'Zuweisung',
-	'session.assignSelf.overlay.button.cancel': 'Abbrechen',
-	'session.assignSelf.overlay.button.assign': 'Zuweisen',
-	'session.assignOther.overlay.headline.1': 'Zuweisen?',
-	'session.assignOther.overlay.subtitle.noTeam': 'Neu: {{newConsultant}}'
-};
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -64,17 +77,6 @@ vi.mock('lottie-react', () => ({
 vi.mock('focus-trap-react', () => ({
 	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
-
-import { RequestSessionAssign } from './RequestSessionAssign';
-import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
-import {
-	ActiveSessionContext,
-	ConsultantListContext,
-	E2EEContext,
-	ModalProvider,
-	SessionTypeContext,
-	UserDataContext
-} from '../../globalState';
 
 const CURRENT = { value: 'consultant-1', label: 'Erika Beispiel' };
 const OTHER = { value: 'consultant-2', label: 'Max Mustermann' };
