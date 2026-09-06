@@ -863,6 +863,54 @@ export const SupervisionInsideTheCard1440: Story = {
 };
 
 /**
+ * (a4) T50 (Frank, 06.09.): while a composer is focused ("selected", the
+ * 2 px `primary-container` field border) its drag pill takes that same
+ * colour — it no longer stays the pale `primary-fixed-dim` on an active
+ * field. Checked on the panel's composer and on the main chat's.
+ */
+export const FocusedComposerPillTakesTheActiveColour: Story = {
+	name: '(a4) Desktop 1440 — focused composer: drag pill in the active border colour (T50)',
+	globals: desktop1440Globals,
+	args: SupervisionInsideTheCard.args,
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const activeBorder = (() => {
+			const hex = getComputedStyle(document.documentElement)
+				.getPropertyValue('--m3-primary-container')
+				.trim();
+			const n = parseInt(hex.replace('#', ''), 16);
+			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+		})();
+		for (const pane of ['stage-panel', 'stage-main']) {
+			const shell = canvasElement.querySelector<HTMLElement>(
+				`[data-cy="${pane}"] .textarea__wrapper-send-message`
+			)!;
+			await userEvent.click(shell.querySelector('.ProseMirror')!);
+			await waitFor(() =>
+				expect(
+					shell.classList.contains(
+						'textarea__wrapper-send-message--selected'
+					)
+				).toBe(true)
+			);
+			const field = shell.querySelector<HTMLElement>('.textarea__input')!;
+			const pill = shell.querySelector<HTMLElement>('.dragHandle__pill')!;
+			await waitFor(() => {
+				expect(getComputedStyle(field).borderTopColor).toBe(
+					activeBorder
+				);
+				expect(getComputedStyle(pill).backgroundColor).toBe(
+					activeBorder
+				);
+			});
+		}
+	}
+};
+
+/**
  * (a2) T7: the side room opens with the system notice "Supervision durch
  * Bettina B. …" as its first item — the real `[SYSTEM_NOTIFICATION]` bubble
  * the timeline renders, no panel-specific markup. The play scrolls the
