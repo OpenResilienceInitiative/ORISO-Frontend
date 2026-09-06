@@ -832,3 +832,70 @@ export const MaximisedDesktop: Story = {
 		});
 	}
 };
+
+/**
+ * #1249 — repeated maximise/restore.
+ *
+ * The report is that after one or two cycles on an iPhone the composer stops
+ * responding to everything but reopening it. This pins the sequence the issue
+ * asks for: ten toggles, checking after **every** one that the editor still
+ * accepts input and that the toggle control itself is still there.
+ *
+ * It does NOT reproduce the reported lock-up — see
+ * `docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/` for what was
+ * ruled out and how. It is here as the regression guard the acceptance asks
+ * for ("covers repeated toggling — not a single toggle"), so that whatever the
+ * cause turns out to be, a regression in the toggle path itself is caught.
+ */
+export const RepeatedMaximiseToggle: Story = {
+	name: 'Mobile — ten maximise/restore cycles stay usable (#1249)',
+	globals: phone390Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(editor);
+
+		const toggle = () =>
+			within(canvasElement).getByRole('button', {
+				name: /^Editor (vergrößern|verkleinern)$/
+			});
+
+		for (let cycle = 1; cycle <= 10; cycle += 1) {
+			// The control has to still exist — if a toggle leaves the toolbar in
+			// a state without it, the user is stranded.
+			const button = await waitFor(toggle);
+			await userEvent.click(button);
+
+			// …and the editor has to still take input after every single cycle.
+			const live = await waitFor(() => {
+				const node = document.querySelector<HTMLElement>(
+					'[contenteditable="true"]'
+				);
+				if (!node) {
+					throw new Error(`editor gone after cycle ${cycle}`);
+				}
+				return node;
+			});
+			await expect(live.getAttribute('contenteditable')).toBe('true');
+
+			await userEvent.click(live);
+			await userEvent.type(live, String(cycle % 10));
+			await waitFor(async () => {
+				await expect(live.textContent ?? '').toContain(
+					String(cycle % 10)
+				);
+			});
+		}
+
+		// The toggle survives all ten cycles.
+		await expect(toggle()).toBeTruthy();
+	}
+};
