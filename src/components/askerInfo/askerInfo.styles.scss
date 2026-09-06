@@ -9,8 +9,14 @@ $footerButtonWidth: 128px;
 $footerButtonWidthSmall: 96px;
 $footerButtonHeight: 96px;
 $footerButtonRadius: 100px;
-$footerButtonBackColor: #646d78;
-$footerButtonNextIdleColor: #ffe2de;
+
+// The Figma values map exactly onto existing M3 tokens
+// (mui-variables-mapping.scss), so they follow theming rather than pinning the
+// light palette: #646d78 is --m3-secondary-container, #ffe2de is
+// --m3-on-primary-container. Both are used as plain values below, never inside
+// a colour function, so the var() indirection is safe.
+$footerButtonBackColor: var(--m3-secondary-container, #646d78);
+$footerButtonNextIdleColor: var(--m3-on-primary-container, #ffe2de);
 
 // Client-profile identity row, from the Figma "Frame 970" (Horizontal,
 // height 100, gap 16) and M3/headline/large for the username.
@@ -26,12 +32,12 @@ $profileContentMaxWidth: 675px;
 $profileCardRadius: 32px;
 $profileCardPadding: 16px;
 $profileCardGap: 24px;
-$profileCardBorderColor: #ffe2de;
+$profileCardBorderColor: var(--m3-on-primary-container, #ffe2de);
 $profileHeaderHeight: 56px;
 $profileHeaderIconWidth: 58px;
 $profileHeaderIconHeight: 40px;
 $profileHeaderIconRadius: 20px;
-$profileHeaderColor: #4c555f;
+$profileHeaderColor: var(--m3-secondary, #4c555f);
 $profileHeaderTitleSize: 18px;
 $profileIconSize: 40px;
 $groupChatIconSize: 40px;

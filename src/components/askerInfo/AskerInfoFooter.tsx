@@ -39,6 +39,11 @@ export const AskerInfoFooter = ({ onLeave }: AskerInfoFooterProps) => {
 			>
 				<ArrowIcon />
 			</button>
+			{/* `aria-disabled`, not `disabled`: the latter takes the button out
+			    of the tab order and suppresses its `title`, so a keyboard or
+			    screen-reader user gets no signal that a next action exists or
+			    why it is inert. This keeps it reachable and announced as
+			    unavailable, with the click guarded below. */}
 			<button
 				type="button"
 				className={`askerInfo__footer__button askerInfo__footer__button--next${
@@ -46,8 +51,8 @@ export const AskerInfoFooter = ({ onLeave }: AskerInfoFooterProps) => {
 						? ' askerInfo__footer__button--primary'
 						: ''
 				}`}
-				onClick={onLeave}
-				disabled={!hasPendingChange}
+				onClick={hasPendingChange ? onLeave : undefined}
+				aria-disabled={!hasPendingChange}
 				aria-label={translate('app.next')}
 				title={translate('app.next')}
 				data-cy="asker-info-footer-next"

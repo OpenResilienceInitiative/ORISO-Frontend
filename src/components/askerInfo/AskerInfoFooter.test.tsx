@@ -58,16 +58,28 @@ describe('AskerInfoFooter (#1192)', () => {
 	it('leaves next inert and non-primary while nothing changed', () => {
 		renderFooter(false);
 
-		expect(nextButton().disabled).toBe(true);
+		expect(nextButton().getAttribute('aria-disabled')).toBe('true');
 		expect(nextButton().className).not.toContain(
 			'askerInfo__footer__button--primary'
 		);
 	});
 
+	// `disabled` would drop the button out of the tab order and suppress its
+	// title, leaving a keyboard user with no signal that the step exists.
+	it('keeps inert next focusable and announced rather than removed', () => {
+		renderFooter(false);
+
+		expect(nextButton().disabled).toBe(false);
+		expect(nextButton().getAttribute('title')).toBe('Weiter');
+
+		nextButton().focus();
+		expect(document.activeElement).toBe(nextButton());
+	});
+
 	it('promotes next to primary once an allocation was picked', () => {
 		const { onLeave } = renderFooter(true);
 
-		expect(nextButton().disabled).toBe(false);
+		expect(nextButton().getAttribute('aria-disabled')).toBe('false');
 		expect(nextButton().className).toContain(
 			'askerInfo__footer__button--primary'
 		);

@@ -101,8 +101,15 @@ export const AskerInfo = () => {
 				<AskerInfoActionProvider>
 					<div className="askerInfo__innerWrapper">
 						<div className="askerInfo__user">
+							{/* `role="img"` is required, not decoration: ARIA
+							    prohibits aria-label on a role-less span
+							    (implicit role=generic) and some AT drops it.
+							    AnimalAvatar aria-hidden's its own SVG, so this
+							    span is the only naming hook the avatar has.
+							    Same treatment as UserAvatar.tsx:57. */}
 							<span
 								className="askerInfo__icon"
+								role="img"
 								title={translate('profile.data.profileIcon')}
 								aria-label={translate(
 									'profile.data.profileIcon'

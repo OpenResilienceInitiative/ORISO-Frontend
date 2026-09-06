@@ -51,6 +51,36 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { setHasPendingChange } = useContext(AskerInfoActionContext);
 
+	/*
+	 * The one value the select actually renders. Everything downstream reads
+	 * this, so the footer and the dropdown cannot disagree.
+	 *
+	 * `props.value` deliberately wins: `AskerInfoAssign` pins it to the
+	 * session's current consultant, and `OrisoSelect` wraps a fully controlled
+	 * MUI Select, so the dropdown shows the current allocation until a
+	 * reassignment is actually confirmed (which navigates away).
+	 */
+	const displayedConsultantId = props.value || selectedOption?.value || '';
+
+	/*
+	 * Derived, never set imperatively (ORISO-Frontend#1192 review).
+	 *
+	 * It used to be latched in `handleDatalistSelect` and nothing cleared it:
+	 * cancelling the confirmation dialog runs the `CLOSE` branch, which resets
+	 * the overlay and returns, so the footer's next button stayed primary and
+	 * enabled indefinitely while the select had already snapped back to the
+	 * original consultant. Reading the same value the select renders makes the
+	 * two agree by construction instead of by remembering to reset a flag.
+	 */
+	const hasPendingChange = Boolean(
+		displayedConsultantId &&
+			displayedConsultantId !== activeSession?.consultant?.id
+	);
+
+	useEffect(() => {
+		setHasPendingChange(hasPendingChange);
+	}, [hasPendingChange, setHasPendingChange]);
+
 	const { addNewUsersToEncryptedRoom } = useE2EE(
 		activeSession.item.matrixRoomId
 	);
@@ -137,12 +167,6 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 
 	const handleDatalistSelect = (selectedOption) => {
 		setSelectedOption(selectedOption);
-		// Report to the profile footer so its next button can turn primary
-		// (ORISO-Frontend#1192). The overlay below still owns confirming the
-		// reassignment — the assign flow itself is unchanged.
-		setHasPendingChange(
-			selectedOption?.value !== activeSession?.consultant?.id
-		);
 		initOverlays(selectedOption, userData);
 	};
 
@@ -216,7 +240,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					value: consultant.value,
 					label: consultant.label
 				}))}
-				value={props.value || selectedOption?.value || ''}
+				value={displayedConsultantId}
 				onChange={handleConsultantSelect}
 			/>
 			{overlayActive && (
