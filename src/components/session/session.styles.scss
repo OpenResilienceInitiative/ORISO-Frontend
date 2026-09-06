@@ -608,17 +608,19 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
-	&__waitingPopupBackdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 3200;
-		background: rgba(16, 16, 16, 0.52);
+	/* The breathing companion lives inline in the white session content
+	   column (product decision "das Game im weißen Teil, nicht mehr als
+	   Popup") — no fixed backdrop, no modal. It replaces the robot cards
+	   while it is open and fills the available height of the column.
+	   `BreathingCompanionHost` already sets `flex: 1; min-height: 0` on its
+	   own `.bc-root`, so this container only supplies the flex context. */
+	&__waitingCompanionInline {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 16px;
-		padding: 24px;
+		flex: 1;
+		min-height: min(560px, 70vh);
+		width: 100%;
+		padding: 8px 0;
 	}
 
 	/* Floating level badge — lives in the backdrop above the popup,

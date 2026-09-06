@@ -3636,9 +3636,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					isAnonymousBreathingGameAvailable &&
 					showWaitingMiniGame && (
 						<div
-							className="session__waitingPopupBackdrop"
-							role="dialog"
-							aria-modal="true"
+							className="session__waitingCompanionInline"
+							role="region"
 							aria-label={translate(
 								'liveChat.breathing.title',
 								'Ihre Atempause'
@@ -3650,19 +3649,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							    file and unreferenced from the JSX; removing them is a
 							    separate cleanup. `isAnonymousBreathingGameAvailable` turns
 							    false the moment a counsellor accepts, which unmounts this —
-							    the contract: "When counselling starts, UNMOUNT". */}
-							<div className="session__waitingModule session__waitingModule--popup session__waitingModule--companion">
-								<BreathingCompanionHost
-									onClose={() =>
-										setShowWaitingMiniGame(false)
-									}
-								/>
-							</div>
+							    the contract: "When counselling starts, UNMOUNT".
+							    It renders inline in the white session content column (no
+							    backdrop, no modal) and takes the place of the robot cards. */}
+							<BreathingCompanionHost
+								onClose={() => setShowWaitingMiniGame(false)}
+							/>
 						</div>
 					)}
 				{!shouldBlockAnonymousInquiryChat && (
 					<div className={'message-holder'}>
 						{shouldShowRobotMessages &&
+							!showWaitingMiniGame &&
 							visibleRobotCards.map((card, index) => (
 								<div className="messageItem" key={card._id}>
 									<div className="messageItem__messageWrap">
