@@ -35,22 +35,20 @@ const sessionState = vi.hoisted(() => ({
 		hintMessage: 'Willkommen.'
 	} as Record<string, unknown> | null
 }));
-vi.mock('../../../hooks/useSession', () => ({
-	useSession: () => ({
-		session: sessionState.item
-			? { item: sessionState.item, rid: '!room:oriso' }
-			: null,
-		ready: sessionState.ready,
-		reload: vi.fn(),
-		read: vi.fn()
-	})
-}));
 vi.mock('../../../api', () => ({
+	apiGetAskerSessionList: vi.fn(() =>
+		Promise.resolve({
+			sessions: sessionState.item ? [{ chat: sessionState.item }] : []
+		})
+	),
 	apiGetGroupChatInfo: vi.fn(() =>
 		Promise.resolve({ active: false, id: 15, matrixRoomId: '!room:oriso' })
 	),
 	apiPutGroupChat: vi.fn(() => Promise.resolve()),
 	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' }
+}));
+vi.mock('../../../api/apiGetChatRoomById', () => ({
+	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
 }));
 vi.mock('../useGroupChatAuthorContent', () => ({
 	useGroupChatAuthorContent: () => ({
@@ -103,9 +101,9 @@ describe('GroupEntryRoom', () => {
 		sessionState.item = { ...sessionState.item, active: false };
 	});
 
-	it('feeds the room from the chat: topic and agency come from the item', () => {
+	it('feeds the room from the chat: topic and agency come from the item', async () => {
 		renderRoom();
-		const room = screen.getByTestId('waiting-room');
+		const room = await screen.findByTestId('waiting-room');
 		expect(room.textContent).toContain('Trauerbegleitung');
 		expect(room.textContent).toContain('Caritas Berlin');
 	});
@@ -113,7 +111,7 @@ describe('GroupEntryRoom', () => {
 	it('joins on "Beitreten" and hands over to the chat route', async () => {
 		sessionState.item = { ...sessionState.item, active: true };
 		renderRoom();
-		fireEvent.click(screen.getByText('join'));
+		fireEvent.click(await screen.findByText('join'));
 		await waitFor(() =>
 			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
 		);
@@ -125,9 +123,9 @@ describe('GroupEntryRoom', () => {
 		);
 	});
 
-	it('says so when the chat is gone', () => {
+	it('says so when the chat is gone', async () => {
 		sessionState.item = null;
 		renderRoom();
-		expect(screen.getByText(/gibt es nicht mehr/)).toBeTruthy();
+		expect(await screen.findByText(/gibt es nicht mehr/)).toBeTruthy();
 	});
 });

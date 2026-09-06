@@ -3,12 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useSession } from '../../../hooks/useSession';
 import {
+	apiGetAskerSessionList,
 	apiGetGroupChatInfo,
 	apiPutGroupChat,
 	GROUP_CHAT_API
 } from '../../../api';
+import { apiGetChatRoomById } from '../../../api/apiGetChatRoomById';
+import {
+	buildExtendedSession,
+	ExtendedSessionInterface
+} from '../../../globalState';
 import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
@@ -45,11 +50,7 @@ export const GroupEntryRoom = () => {
 			translateWithFallback(t, `groupChat.entry.${key}`, fallback),
 		[t]
 	);
-	const { session, ready, reload } = useSession(
-		null,
-		undefined,
-		Number.isFinite(chatId) ? chatId : undefined
-	);
+	const { session, ready, reload } = useGroupChatSession(chatId);
 	const [joinBusy, setJoinBusy] = useState(false);
 	const [joinFailed, setJoinFailed] = useState(false);
 
@@ -195,4 +196,60 @@ export const GroupEntryRoom = () => {
 			)}
 		</>
 	);
+};
+
+/**
+ * The chat as the asker's own session list carries it. That list is what
+ * the app renders everywhere else, and it is answered for a member who
+ * was only assigned so far; `/users/chat/room/{id}` is tried second — on
+ * predev it answered 500 for exactly that member (2026-09-07).
+ */
+const useGroupChatSession = (chatId: number) => {
+	const [session, setSession] = useState<ExtendedSessionInterface | null>(
+		null
+	);
+	const [ready, setReady] = useState(false);
+	const [version, setVersion] = useState(0);
+	const reload = useCallback(() => setVersion((v) => v + 1), []);
+
+	useEffect(() => {
+		if (!Number.isFinite(chatId)) {
+			setSession(null);
+			setReady(true);
+			return;
+		}
+		let cancelled = false;
+		const pick = (list: { sessions?: Array<{ chat?: { id?: number } }> }) =>
+			(list?.sessions || []).find((entry) => entry.chat?.id === chatId);
+		apiGetAskerSessionList()
+			.then(async (list) => {
+				const found = pick(list);
+				if (found) {
+					return found;
+				}
+				return apiGetChatRoomById(chatId)
+					.then((byRoom) => pick(byRoom))
+					.catch(() => undefined);
+			})
+			.then((found) => {
+				if (cancelled) {
+					return;
+				}
+				setSession(
+					found ? buildExtendedSession(found as never, null) : null
+				);
+				setReady(true);
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setSession(null);
+					setReady(true);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [chatId, version]);
+
+	return { session, ready, reload };
 };

@@ -81,12 +81,17 @@ export const AuthenticatedApp = ({
 	// Freshly-registered askers get a welcome loading animation bridging the
 	// bootstrap below (one-shot flag set just before the post-registration redirect).
 	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const shouldShow =
+		const flagged =
 			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (shouldShow) {
+		if (flagged) {
 			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
 		}
-		return shouldShow;
+		/* Someone who registered through a group link is not about to
+		   write an enquiry — the group's entry room is their handover. */
+		const cameForAGroup = Boolean(
+			new URLSearchParams(window.location.search).get('gcid')
+		);
+		return flagged && !cameForAGroup;
 	});
 
 	useEffect(() => {
