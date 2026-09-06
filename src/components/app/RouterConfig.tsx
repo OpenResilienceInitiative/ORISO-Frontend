@@ -47,6 +47,11 @@ import { BookingReschedule } from '../../containers/bookings/components/BookingR
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 
+const GroupEntryRoom = lazy(() =>
+	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
+		default: m.GroupEntryRoom
+	}))
+);
 const SessionView = lazy(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
 );
@@ -109,6 +114,14 @@ export const RouterConfigUser = (
 	hasAssignedConsultant: boolean
 ): any => {
 	return {
+		/* Without the app shell: the group's waiting room stands on the same
+		   stage the person registered on (Frank, 2026-09-04). */
+		plainRoutes: [
+			{
+				path: '/groups/:chatId/entry',
+				component: GroupEntryRoom
+			}
+		],
 		navigation: [
 			{
 				to: '/sessions/user/view',

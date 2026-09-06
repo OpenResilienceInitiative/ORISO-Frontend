@@ -1,8 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Box, Button, Typography, useMediaQuery } from '@mui/material';
-import { Switch } from '../Switch';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import { Box } from '@mui/material';
 import { AccountData } from '../registration/accountData/AccountData';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
@@ -14,9 +12,8 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
-import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
 import { StageLayout } from '../stageLayout/StageLayout';
+import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
 import { phone375Globals } from '../message/messageStoryShell';
@@ -45,7 +42,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Alle Ansichten des Eintrittsraums für Selbsthilfegruppen, mit der vorhandenen Warteuhr. Abnahmefläche zu ORISO-Frontend#921 und #1293. Nichts davon ist verdrahtet.'
+					'Alle Ansichten des Eintrittsraums für Selbsthilfegruppen, mit der vorhandenen Warteuhr. Abnahmefläche zu ORISO-Frontend#921 und #1293. Die Wartebereiche sind die App-Ansicht (`entryRoom/GroupWaitingRoom`), der Eintritt zeigt die Registrierung mit dem Gruppen-Link.'
 			}
 		}
 	}
@@ -220,237 +217,40 @@ export const EntryScreenWithAccount: StoryObj = {
    three actions and the header carries the login.
    --------------------------------------------------------------------------- */
 
-/**
- * Height the clock may take: the viewport minus what else has to fit — column
- * padding, the headline block under the clock, the footer bar, and on a phone
- * the red hero bar. The component only knows its width; the screen knows
- * this.
- */
-const useClockHeight = () => {
-	const measure = () => {
-		const mobile = window.innerWidth < 1200;
-		// Measured on the 1440 × 950 story: the stage header takes 96 px
-		// (64 on a phone) and keeps 32 px under the column; the bar 96 plus
-		// 16 below it; the column 24 above; the headline block and its gap
-		// (66 + 26); the switch row at the foot (16 + 40); 24 px so a
-		// rounding error never shows as a scrollbar.
-		// Column: 8 above, bar 96 + 4 below; the group block (34 + 8) only on
-		// a phone, on the desktop it is in the header; headline block 60 +
-		// 12; switch row 8 + 40; 28 slack.
-		const reserved =
-			(mobile ? 64 + 42 : 96) + 32 + 8 + 100 + 60 + 12 + 8 + 40 + 28;
-		return Math.max(160, window.innerHeight - reserved);
-	};
-	const [height, setHeight] = React.useState(measure);
-	React.useEffect(() => {
-		const onResize = () => setHeight(measure());
-		window.addEventListener('resize', onResize);
-		return () => window.removeEventListener('resize', onResize);
-	}, []);
-	return height;
-};
+/* ---------------------------------------------------------------------------
+   1–3 — The waiting room as the app renders it: `GroupWaitingRoom` is the
+   view `GroupEntryRoom` mounts on `/groups/:chatId/entry` after the link's
+   assignment. Here it gets fixtures instead of the chat; nothing else differs.
+   --------------------------------------------------------------------------- */
 
-const BlockRoom = ({
-	overdue = false,
-	spacing = 'tight'
-}: {
-	overdue?: boolean;
-	spacing?: 'tight' | 'airy';
-}) => {
-	const [motionOff, setMotionOff] = React.useState(false);
-	const clockHeight = useClockHeight();
-	const narrow = useMediaQuery('(max-width:1199px)');
-	/* Which group this is. Frank, 2026-09-05: "mir fehlt im Header das
-	   Thema der Gruppe, sowie … einen Namen." Topic and name from the same
-	   fixtures the entry screen uses — someone who followed a link should
-	   see at once that they are in the right room. On the desktop it lives
-	   in the stage header, opposite language and login, so the clock keeps
-	   the column. */
-	const groupHeading = (
-		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
-			<Typography
-				sx={{
-					fontSize: 11,
-					fontWeight: 600,
-					letterSpacing: '.12em',
-					textTransform: 'uppercase',
-					color: registrationMd3.onSurfaceVariant
-				}}
-			>
-				{groupTopic.name}
-			</Typography>
-			<Typography
-				sx={{
-					fontSize: 14,
-					fontWeight: 600,
-					color: registrationMd3.onSurface
-				}}
-			>
-				{agency.name}
-			</Typography>
-		</Box>
-	);
-	return (
-		<Box sx={{ minHeight: '100vh' }}>
-			<AgencySpecificContext.Provider
-				value={{
-					specificAgency: null,
-					setSpecificAgency: () => undefined
-				}}
-			>
-				<StageLayout
-					className="stageLayout--registration"
-					showLegalLinks={true}
-					/* Frank's Figma forgot the login and he said so: someone
-					   with an account logs in here and lands in the room. The
-					   header link is where the registration already puts it. */
-					showLoginLink={true}
-					showRegistrationLink={false}
-					stage={<Stage hasAnimation={false} />}
-					mobileHero="bar"
-					headerStart={groupHeading}
-				>
-					<Box
-						sx={{
-							width: '100%',
-							minWidth: 0,
-							maxWidth: '100%',
-							/* The stage header sits above this column and the
-							   stage keeps 32 px under it, so a full 100vh here
-							   always overflowed by exactly that (measured:
-							   1078 px of page for a 950 px window). */
-							minHeight: {
-								xs: 'calc(100vh - 96px)',
-								lg: 'calc(100vh - 128px)'
-							},
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'center',
-							/* Tight on every side: the clock is the point of
-							   this screen and takes what the chrome leaves. */
-							px: 2,
-							pt: 1,
-							pb: '100px'
-						}}
-					>
-						{/* Everything above the switch row is one block that
-						    centres itself in the space left over (Frank,
-						    2026-09-05: "muss vertikal zentriert sein"). The
-						    row below takes none of that slack any more. */}
-						<Box
-							sx={{
-								flex: 1,
-								display: 'flex',
-								flexDirection: 'column',
-								justifyContent: 'center',
-								gap: 1
-							}}
-						>
-							{/* On a phone the header row does not exist, so the
-							    group block stands in the column. */}
-							<Box sx={{ display: { xs: 'block', lg: 'none' } }}>
-								{groupHeading}
-							</Box>
-							<WaitingAreaCountdown
-								plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
-								welcomeText={WELCOME}
-								rules={RULES}
-								nowMs={NOW}
-								/* Headline back on top: Frank, 2026-09-04, "das war
-							   eigentlich gar nicht so schlecht, weil es da oben
-							   war". The block below it runs down to the bar. */
-								clockSize="fit"
-								fitHeight={clockHeight}
-								spacing={spacing}
-								labelsOutside
-								reducedMotion={motionOff}
-								hideMotionToggle
-								gap={12}
-							/>
-						</Box>
-						{/* The animation switch — the design system's own M3
-						    `Switch`, the one the profile uses — and "Mehr
-						    erfahren" sit at the foot of the column, directly
-						    above the bar but not on it (Frank, 2026-09-05:
-						    "unten, aber nicht Teil des Footers"). `mt: auto`
-						    pushes the row down; whatever the clock does above,
-						    the row stays put. "Mehr erfahren" is the theme's
-						    outlined button with the arrow_forward icon from the
-						    icon set, the same pair the registration's step
-						    button uses. */}
-						<Box
-							sx={{
-								mt: 'auto',
-								pt: 1,
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-								gap: 2
-							}}
-						>
-							<Box
-								component="label"
-								sx={{
-									display: 'flex',
-									alignItems: 'center',
-									gap: 1.5,
-									cursor: 'pointer'
-								}}
-							>
-								<Switch
-									checked={motionOff}
-									onChange={(next) => setMotionOff(next)}
-									aria-label="Animation abschalten"
-								/>
-								<Typography
-									sx={{
-										fontSize: 13,
-										whiteSpace: 'nowrap',
-										color: registrationMd3.onSurfaceVariant
-									}}
-								>
-									Animation abschalten
-								</Typography>
-							</Box>
-							<Button
-								variant="outlined"
-								size="small"
-								endIcon={<ArrowForwardRoundedIcon />}
-								sx={{ whiteSpace: 'nowrap' }}
-							>
-								Mehr erfahren
-							</Button>
-						</Box>
-						{/* Desktop, as drawn: calendar beside a visible but shut
-						    "Beitreten". On a phone two buttons is one too many
-						    for the bar, so there the calendar has it alone and
-						    "Beitreten" moves in once the time has passed —
-						    Frank's own suggestion ("das Beitreten später
-						    reinfahren"). */}
-						<RegistrationFooter
-							secondary={
-								narrow
-									? undefined
-									: { label: 'Zum Kalender hinzufügen' }
-							}
-							primary={
-								narrow
-									? overdue
-										? { label: 'Beitreten' }
-										: { label: 'Zum Kalender hinzufügen' }
-									: { label: 'Beitreten', disabled: !overdue }
-							}
-						/>
-					</Box>
-				</StageLayout>
-			</AgencySpecificContext.Provider>
-		</Box>
-	);
-};
+const Room = ({ overdue = false }: { overdue?: boolean }) => (
+	<LegalLinksContext.Provider value={legalLinks}>
+		<AgencySpecificContext.Provider
+			value={{
+				specificAgency: null,
+				setSpecificAgency: () => undefined
+			}}
+		>
+			<GroupWaitingRoom
+				topicName={groupTopic.name}
+				agencyName={agency.name}
+				plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
+				durationMinutes={90}
+				eventId={15}
+				welcomeText={WELCOME}
+				rules={RULES}
+				active={overdue}
+				onJoin={() => undefined}
+				nowMs={NOW}
+				showLoginLink
+			/>
+		</AgencySpecificContext.Provider>
+	</LegalLinksContext.Provider>
+);
 
 export const WaitingArea: StoryObj = {
 	name: '1 — Wartebereich',
-	render: () => <BlockRoom spacing="tight" />,
+	render: () => <Room />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -463,7 +263,7 @@ export const WaitingArea: StoryObj = {
 
 export const WaitingAreaOverdue: StoryObj = {
 	name: '2 — Läuft schon',
-	render: () => <BlockRoom overdue />,
+	render: () => <Room overdue />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -477,7 +277,7 @@ export const WaitingAreaOverdue: StoryObj = {
 export const WaitingAreaMobile: StoryObj = {
 	name: '3 — Wartebereich, mobil',
 	globals: phone375Globals,
-	render: () => <BlockRoom />,
+	render: () => <Room />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {

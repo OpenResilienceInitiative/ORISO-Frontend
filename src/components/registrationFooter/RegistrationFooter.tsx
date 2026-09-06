@@ -9,7 +9,7 @@ import {
 export interface RegistrationFooterAction {
 	/** Already translated. This component never calls `t`. */
 	label: string;
-	onClick?: () => void;
+	onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 	disabled?: boolean;
 	/**
 	 * Full label for the tooltip when the visible one is truncated. Defaults to
