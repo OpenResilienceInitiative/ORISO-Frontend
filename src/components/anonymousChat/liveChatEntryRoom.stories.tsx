@@ -6,6 +6,10 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { liveChatArtwork } from '../../resources/img/registration-md3/registrationArtwork';
+import {
+	HandoverCarousel,
+	HandoverStep
+} from '../app/registrationLoader/HandoverCarousel';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -88,32 +92,37 @@ const ABSENCE_MESSAGE_SHORT =
 	'Schreiben Sie uns — Antwort in zwei Arbeitstagen.';
 
 /**
- * The three cards of the waiting room (Frank, 2026-09-05).
- *
- * 1 and 2 carry his two pictures — waiting while the counsellors are with
- * others; consenting once we know who — as `process/live-wait.webp` and
- * `process/live-consent.webp` (528 × 528, like the registration's three).
- * Until the files are in the repo the slots show a pictogram. Card 3 is text
- * only: what the chat is like once assigned, and what happens afterwards.
+ * The three cards of the waiting room — the registration's own card design
+ * (`HandoverCarousel`: square picture, number, title, two lines), Frank's
+ * three pictures, and as few words as the point allows (Frank, 2026-09-06:
+ * "so viel lesen tun die Leute ja auch nicht").
  */
-const CARDS = [
+const CARDS: HandoverStep[] = [
 	{
-		image: liveChatArtwork.wait,
-		alt: 'Drei Beraterinnen, jede im Gespräch; eine Person wartet am Laptop, neben ihr eine Uhr',
-		title: 'Sie warten, bis jemand frei ist',
-		text: 'Die Beraterinnen sind gerade in anderen Gesprächen. Sie müssen nichts tun — wir holen Sie.'
+		key: 'liveWait',
+		artwork: liveChatArtwork.wait,
+		titleKey: 'liveChat.entry.steps.wait.title',
+		textKey: 'liveChat.entry.steps.wait.text',
+		titleFallback: 'Sie warten, bis jemand frei ist',
+		textFallback: 'Die Beraterinnen sind gerade in anderen Gesprächen.'
 	},
 	{
-		image: liveChatArtwork.consent,
-		alt: 'Eine Person setzt ein Häkchen; gegenüber eine Beraterin, darüber ein Schild mit Schloss',
-		title: 'Dann stimmen Sie einmal zu',
-		text: 'Sobald eine Beratungsstelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz — ein Klick, und der Chat beginnt.'
+		key: 'liveConsent',
+		artwork: liveChatArtwork.consent,
+		titleKey: 'liveChat.entry.steps.consent.title',
+		textKey: 'liveChat.entry.steps.consent.text',
+		titleFallback: 'Dann stimmen Sie einmal zu',
+		textFallback:
+			'Sobald eine Stelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz.'
 	},
 	{
-		image: liveChatArtwork.anonymous,
-		alt: 'Zwei Laptops, eine Seite nur als Schatten; ein Schloss, Sprechblasen, eine Uhr, die sich leert',
-		title: 'Anonym, und danach weg',
-		text: 'Im Chat sehen Sie und Ihre Beraterin sich nur unter Ihrem Pseudonym. Nach dem Gespräch wird alles gelöscht — spätestens nach 48 Stunden, auch Ihr Zugang.'
+		key: 'liveAnonymous',
+		artwork: liveChatArtwork.anonymous,
+		titleKey: 'liveChat.entry.steps.anonymous.title',
+		textKey: 'liveChat.entry.steps.anonymous.text',
+		titleFallback: 'Anonym, und danach weg',
+		textFallback:
+			'Nur Ihr Pseudonym ist sichtbar. Nach 48 Stunden ist alles gelöscht.'
 	}
 ];
 
@@ -412,82 +421,24 @@ const WaitingRoom = ({
 				</Box>
 			</Headline>
 
-			{/* What happens meanwhile — three cards on a strip. They use the
-			    height between the headline and the row above the bar; on a
-			    phone they are narrower so the next card peeks in and the
-			    strip reads as scrollable. No frame around the current card:
-			    these are read, not clicked (Frank, 2026-09-05). */}
+			{/* What happens meanwhile: the registration's card carousel with
+			    the live chat's three pictures. Same component, same look —
+			    this is why it is one component and not a redesign per room
+			    (Frank, 2026-09-06). Wider cards than the registration's: the
+			    column is there, and so is the time. */}
 			<Box
 				sx={{
-					'flex': 1,
-					'minHeight': 0,
-					'display': 'flex',
-					'gap': 2,
-					'overflowX': 'auto',
-					'scrollSnapType': 'x mandatory',
-					'mx': { xs: -2.5, sm: -5 },
-					'px': { xs: 2.5, sm: 5 },
-					'pb': 1,
-					'scrollbarWidth': 'none',
-					'&::-webkit-scrollbar': { display: 'none' }
+					flex: 1,
+					minHeight: 0,
+					display: 'flex',
+					flexDirection: 'column',
+					mx: { xs: -2.5, sm: 0 }
 				}}
 			>
-				{CARDS.map((card) => (
-					<Box
-						key={card.title}
-						sx={{
-							flex: { xs: '0 0 64%', sm: '1 1 0' },
-							minWidth: 0,
-							scrollSnapAlign: 'start',
-							display: 'flex',
-							flexDirection: 'column',
-							borderRadius: '20px',
-							border: `1px solid ${registrationMd3.outlineVariant}`,
-							overflow: 'hidden',
-							bgcolor: registrationMd3.surfaceContainerLowest
-						}}
-					>
-						{/* Phone: a 4:3 picture so text and the row below stay in
-						    reach. Desktop: the picture takes whatever height the
-						    column leaves — the card fills its space. */}
-						<Box
-							sx={{
-								aspectRatio: { xs: '4 / 3', sm: 'auto' },
-								flex: { xs: 'none', sm: 1 },
-								minHeight: { sm: 160 },
-								overflow: 'hidden',
-								bgcolor: registrationMd3.surfaceContainerHigh
-							}}
-						>
-							<Box
-								component="img"
-								src={card.image.src}
-								alt={card.alt}
-								sx={{
-									width: '100%',
-									height: '100%',
-									objectFit: 'cover',
-									display: 'block'
-								}}
-							/>
-						</Box>
-						<Box sx={{ p: 2.5, pt: 2 }}>
-							<Typography sx={{ fontSize: 17, fontWeight: 700 }}>
-								{card.title}
-							</Typography>
-							<Typography
-								sx={{
-									fontSize: 14,
-									lineHeight: '20px',
-									color: registrationMd3.onSurfaceVariant,
-									mt: 0.75
-								}}
-							>
-								{card.text}
-							</Typography>
-						</Box>
-					</Box>
-				))}
+				<HandoverCarousel
+					steps={CARDS}
+					cardWidth={{ xs: 300, sm: 372 }}
+				/>
 			</Box>
 
 			{/* The small row above the bar: the calm companion and the way

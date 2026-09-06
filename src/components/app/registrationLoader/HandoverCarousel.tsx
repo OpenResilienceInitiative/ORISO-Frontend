@@ -51,6 +51,12 @@ export interface HandoverCarouselProps {
 	 * "unser Entry Room, den wir ja so eigentlich als Standardmodul haben").
 	 */
 	steps?: HandoverStep[];
+	/**
+	 * Card width per breakpoint. Default is the registration's 250 / 264;
+	 * the live-chat waiting room has a whole column and more time, so its
+	 * cards are wider and the picture bigger (Frank, 2026-09-06).
+	 */
+	cardWidth?: { xs: number; sm: number };
 }
 
 /**
@@ -63,7 +69,8 @@ export interface HandoverCarouselProps {
  */
 export const HandoverCarousel = ({
 	onArtworkSettled,
-	steps = STEPS
+	steps = STEPS,
+	cardWidth = { xs: 250, sm: 264 }
 }: HandoverCarouselProps) => {
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
@@ -170,7 +177,7 @@ export const HandoverCarousel = ({
 						data-cy={`handover-card-${step.key}`}
 						sx={{
 							flex: 'none',
-							width: { xs: 250, sm: 264 },
+							width: cardWidth,
 							scrollSnapAlign: { xs: 'center', sm: 'start' },
 							display: 'flex',
 							flexDirection: 'column',
