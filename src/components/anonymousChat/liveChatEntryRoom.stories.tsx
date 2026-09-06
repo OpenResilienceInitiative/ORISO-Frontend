@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { liveChatArtwork } from '../../resources/img/registration-md3/registrationArtwork';
+import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
 import {
 	HandoverCarousel,
 	HandoverStep
@@ -384,13 +385,20 @@ const CONSENT_HTML =
 const WaitingRoom = ({
 	accepted,
 	ahead = 5,
-	total = 5
+	total = 5,
+	companionStart = false
 }: {
 	accepted: boolean;
 	ahead?: number;
 	total?: number;
+	/** Open the breathing companion instead of the cards. */
+	companionStart?: boolean;
 }) => {
 	const [leaving, setLeaving] = useState(false);
+	const [companion, setCompanion] = useState(companionStart);
+	/* The contract: when counselling starts, unmount. Accepted wins over
+	   whatever the person was doing — the breathing companion included. */
+	const companionOpen = companion && !accepted;
 	const progress = Math.round(((total - ahead) / total) * 100);
 	return (
 		<Staged
@@ -426,24 +434,28 @@ const WaitingRoom = ({
 			    this is why it is one component and not a redesign per room
 			    (Frank, 2026-09-06). Wider cards than the registration's: the
 			    column is there, and so is the time. */}
-			<Box
-				sx={{
-					flex: 1,
-					minHeight: 0,
-					display: 'flex',
-					flexDirection: 'column',
-					mx: { xs: -2.5, sm: 0 }
-				}}
-			>
-				<HandoverCarousel
-					steps={CARDS}
-					cardWidth={{ xs: 300, sm: 372 }}
-				/>
-			</Box>
+			{companionOpen ? (
+				<BreathingCompanionHost onClose={() => setCompanion(false)} />
+			) : (
+				<Box
+					sx={{
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+						flexDirection: 'column',
+						mx: { xs: -2.5, sm: 0 }
+					}}
+				>
+					<HandoverCarousel
+						steps={CARDS}
+						cardWidth={{ xs: 300, sm: 372 }}
+					/>
+				</Box>
+			)}
 
 			{/* The small row above the bar: the calm companion and the way
 			    out — one line, not a section. */}
-			{!accepted && (
+			{!accepted && !companionOpen && (
 				<Box
 					sx={{
 						/* 8 px to the bar's hairline — the bar starts at the
@@ -458,6 +470,7 @@ const WaitingRoom = ({
 					}}
 				>
 					<ButtonBase
+						onClick={() => setCompanion(true)}
 						sx={{
 							'display': 'flex',
 							'alignItems': 'center',
@@ -664,6 +677,30 @@ export const StepAccepted: StoryObj = {
 			}
 		}
 	}
+};
+
+export const StepCompanion: StoryObj = {
+	name: 'B — Warteraum: ruhige Begleitung',
+	render: () => (
+		<WaitingRoom accepted={false} ahead={3} total={5} companionStart />
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Franks Atemspiel (Einzeldatei-Übergabe vom 6.9., Integrationsvertrag am Dateianfang) im weißen Quadrat, an der Stelle der Karten. Vier Phasen 5/5/5/5, Autopilot oder eigener Rhythmus, Pause, Klang per Geste, das Ende mit den drei Worten. Farben und Schrift kommen aus dem Theme, die Texte aus `liveChat.breathing.*` (Sie und Du). Der Fuß bleibt: der Ladebalken zählt weiter. Nimmt eine Beraterin an, wird das Spiel abgebaut — hart, wie vereinbart.'
+			}
+		}
+	}
+};
+
+export const StepCompanionMobile: StoryObj = {
+	name: 'B — Ruhige Begleitung, mobil',
+	globals: phone375Globals,
+	render: () => (
+		<WaitingRoom accepted={false} ahead={3} total={5} companionStart />
+	),
+	parameters: { layout: 'fullscreen' }
 };
 
 export const StepAcceptedMobile: StoryObj = {

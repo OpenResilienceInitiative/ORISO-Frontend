@@ -2238,5 +2238,104 @@
 				}
 			}
 		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Deine Atempause",
+			"introTitle": "Ein Moment für dich.",
+			"intro": {
+				"0": "Folge der Bewegung.",
+				"1": "Atme so, wie es sich angenehm anfühlt."
+			},
+			"reducedIntro": {
+				"0": "Atme in deinem Tempo.",
+				"1": "Die Anleitung begleitet dich."
+			},
+			"begin": "Beginnen",
+			"close": "Atempause schließen",
+			"pause": "Pause",
+			"resume": "Weiteratmen",
+			"pausedTitle": "Ein Moment Pause.",
+			"pausedHint": {
+				"0": "Atme in deinem Rhythmus.",
+				"1": "Du kannst gleich weitermachen."
+			},
+			"automatic": "Autopilot",
+			"manual": "Mein Rhythmus",
+			"switchManual": "Zu meinem Rhythmus wechseln",
+			"switchAutomatic": "Zum Autopilot wechseln",
+			"finish": "Für jetzt genug",
+			"return": "Zurück zum Warten",
+			"finishTitle": "Nimm mit, was dir guttut.",
+			"phase": {
+				"0": "Einatmen",
+				"1": "Atem halten",
+				"2": "Ausatmen",
+				"3": "Atempause"
+			},
+			"next": {
+				"0": "Jetzt halten",
+				"1": "Jetzt ausatmen",
+				"2": "Atem ruhen lassen",
+				"3": "Wieder einatmen"
+			},
+			"guidance": {
+				"0": {
+					"0": "Sanft durch die Nase.",
+					"1": "Dein Bauch darf sich heben."
+				},
+				"1": {
+					"0": "Lass die Schultern locker.",
+					"1": "Nur so lange es dir guttut."
+				},
+				"2": {
+					"0": "Sanft durch den Mund.",
+					"1": "Dein Bauch darf wieder sinken."
+				},
+				"3": {
+					"0": "Ein stiller Moment.",
+					"1": "Der nächste Atemzug kommt."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Lass den Atem kommen.",
+					"1": "Du musst nichts erzwingen."
+				},
+				"1": {
+					"0": "Nimm deine Schultern wahr.",
+					"1": "Lass sie ein wenig sinken."
+				},
+				"2": {
+					"0": "Lass den Atem ziehen.",
+					"1": "Ganz ohne Eile."
+				},
+				"3": {
+					"0": "Spüre, wie du gerade sitzt.",
+					"1": "Du darfst dir Zeit lassen."
+				}
+			},
+			"soundOn": "Klang an",
+			"soundOff": "Klang aus",
+			"soundOptions": "Klang und Ansage",
+			"wind": "Atemwind · Weicher Hall",
+			"voice": "Atemphasen ansagen",
+			"voiceHint": "Mit der Stimme deines Geräts",
+			"voiceMissing": "Auf diesem Gerät ist keine Ansage verfügbar.",
+			"voiceCue": {
+				"0": "Einatmen",
+				"1": "Halten",
+				"2": "Ausatmen",
+				"3": "Pause"
+			},
+			"audioError": "Klang ist gerade nicht verfügbar. Du kannst ohne Klang weiteratmen.",
+			"voiceError": "Die Ansage ist nicht verfügbar. Der Atemwind begleitet dich weiter.",
+			"words": {
+				"serenity": "Gelassenheit",
+				"courage": "Mut",
+				"wisdom": "Weisheit"
+			},
+			"quote": "Gott, gib mir die {serenity}, Dinge hinzunehmen, die ich nicht ändern kann, den {courage}, Dinge zu ändern, die ich ändern kann, und die {wisdom}, das eine vom anderen zu unterscheiden."
+		}
 	}
 }
