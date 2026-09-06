@@ -75,11 +75,7 @@ export const sendNotification = (
 	opts?: NotificationOptions & ExtraNotificationOptions
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
-	if (
-		!isSupported() ||
-		!hasPermissions(PERMISSION_GRANTED) ||
-		!browserNotificationsSettings().enabled
-	) {
+	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
 		return;
 	}
 
@@ -88,6 +84,26 @@ export const sendNotification = (
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
 	// per-family toggles and the per-device silence switch).
 	const { settings, device } = notificationSettingsStore.getState();
+
+	/*
+	 * The opt-in flag is read from the settings store, not from the legacy
+	 * `BROWSER_NOTIFICATIONS` localStorage key (#1211).
+	 *
+	 * Those are two different places, and which panel the user sees depends on
+	 * the `enableNewNotifications` release toggle: on, they get the
+	 * cross-device panel, which writes the store; off, the legacy per-browser
+	 * panel, which writes localStorage. Gating on localStorage meant that with
+	 * the toggle on — where the legacy panel is not even routed — the flag
+	 * stayed at its `{"enabled": false}` default forever, so no OS popup could
+	 * ever be delivered no matter what the user switched on.
+	 *
+	 * The store is the single source of truth for both panels now:
+	 * `saveBrowserNotificationsSettings` mirrors the legacy writes into it,
+	 * and `attach()` migrates any pre-existing localStorage choice.
+	 */
+	if (!settings.browserNotifications?.enabled) {
+		return;
+	}
 	const family = options.family || 'messages';
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
@@ -152,10 +168,18 @@ export const saveBrowserNotificationsSettings = (settings: {
 		currentSettings.newMessage = true;
 		currentSettings.initialEnquiry = true;
 	}
-	localStorage.setItem(
-		'BROWSER_NOTIFICATIONS',
-		JSON.stringify({ ...currentSettings, ...settings })
-	);
+	const next = { ...currentSettings, ...settings };
+	localStorage.setItem('BROWSER_NOTIFICATIONS', JSON.stringify(next));
+
+	// Keep the store in step (#1211). `sendNotification` reads the opt-in from
+	// there, and `attach()` only migrates localStorage for an account that has
+	// no settings event yet — so without this, a legacy-panel toggle made
+	// after that first migration would never reach the gate.
+	if (settings.enabled !== undefined) {
+		notificationSettingsStore.updateSettings({
+			browserNotifications: { enabled: next.enabled === true }
+		});
+	}
 };
 
 export const browserNotificationsSettings = (): {
