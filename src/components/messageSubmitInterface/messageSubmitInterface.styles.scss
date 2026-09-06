@@ -186,12 +186,26 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					top: auto !important;
 					right: auto !important;
 					inset: auto !important;
-					bottom: 24px !important;
+
+					/* Anchored and sized to the *visible* viewport (#1248).
+					   `--composer-visible-height` and
+					   `--composer-viewport-bottom` are set on the overlay from
+					   `window.visualViewport`; the fallbacks are what a browser
+					   without that API gets. iOS Safari does not shrink the
+					   layout viewport for the keyboard, so plain `vh` and a
+					   `bottom` measured from it put this box behind it. */
+					bottom: calc(
+						var(--composer-viewport-bottom, 0px) + 24px
+					) !important;
 					margin-top: 0;
 					max-width: none;
-					height: min(78vh, 760px);
-					max-height: calc(100vh - 96px);
-					max-height: calc(100dvh - 96px);
+					height: min(
+						calc(var(--composer-visible-height, 100dvh) * 0.78),
+						760px
+					);
+					max-height: calc(
+						var(--composer-visible-height, 100dvh) - 96px
+					);
 					z-index: 4500;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
@@ -457,6 +471,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__wrapper-send-message--expanded .textarea__input {
 			height: 100%;
+
+			/* The editor scrolls inside its own box rather than growing past
+			   the container and pushing the toolbar and send button out of
+			   reach (#1248). `overscroll-behavior` keeps the page behind from
+			   taking over the scroll once the end is hit. */
+			overflow-y: auto;
+			overscroll-behavior: contain;
 		}
 
 		&__wrapper-send-message--expanded .textarea__figmaToolbar {

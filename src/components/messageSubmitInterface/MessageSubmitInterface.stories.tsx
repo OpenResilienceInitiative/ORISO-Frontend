@@ -637,3 +637,198 @@ export const Tablet: Story = {
 		await expectComposerBottomInset(canvasElement, 16);
 	}
 };
+
+/**
+ * #1248 — mobile + maximised at a keyboard-sized viewport.
+ *
+ * The gap that let the bug ship: there was no maximised story at all, so the
+ * overlay was only ever reviewed at desktop height, where sizing to the layout
+ * viewport looks correct.
+ *
+ * A Storybook iframe has no soft keyboard, so the keyboard is modelled the only
+ * way it can be here — a viewport the height of what is left visible when it is
+ * up (390x464). The assertion is the one the issue's acceptance asks for: with
+ * the editor maximised, the whole box is inside the visible area, so the
+ * toolbar and send button are reachable without scrolling the page.
+ */
+export const MaximisedMobileKeyboardOpen: Story = {
+	name: 'Mobile — maximised, keyboard-sized viewport (#1248)',
+	parameters: {
+		viewport: {
+			options: {
+				phone390Keyboard: {
+					name: 'Phone 390 · keyboard open',
+					styles: { width: '390px', height: '464px' }
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'phone390Keyboard' } },
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		// The toolbar only mounts once the composer is focused, so click into
+		// the editor first — the same order a user follows.
+		const input = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(input);
+
+		const maximise = await waitFor(() =>
+			within(canvasElement).getByRole('button', {
+				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
+				// handle) would also match a loose pattern.
+				name: 'Editor vergrößern'
+			})
+		);
+		await userEvent.click(maximise);
+
+		// The overlay portals out of `canvasElement`, so query the document.
+		const editor = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+
+		const overlay = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded'
+		) as HTMLElement;
+		await expect(overlay).toBeTruthy();
+
+		const rect = editor.getBoundingClientRect();
+		// Fully inside the visible area — nothing above the top edge, nothing
+		// past the bottom. Before the fix the box was sized from the layout
+		// viewport and overhung both.
+		await expect(rect.top).toBeGreaterThanOrEqual(0);
+		const overlayRect = overlay.getBoundingClientRect();
+		await expect(rect.top).toBeGreaterThanOrEqual(overlayRect.top - 1);
+		await expect(rect.bottom).toBeLessThanOrEqual(overlayRect.bottom + 1);
+		await expect(rect.height).toBeGreaterThan(0);
+
+		/*
+		 * The part that actually catches #1248.
+		 *
+		 * A Storybook iframe has no soft keyboard, so the layout/visual
+		 * viewport split that causes the bug cannot occur on its own here —
+		 * without this the story passes against the unfixed code too. So the
+		 * keyboard is simulated the way iOS presents it: the visual viewport
+		 * shrinks while the layout viewport (window.innerHeight) does not.
+		 * The overlay has to follow the visible height, not the layout one.
+		 */
+		const viewport = window.visualViewport;
+		if (viewport) {
+			const realHeight = viewport.height;
+			const layoutHeight = window.innerHeight;
+			const keyboardHeight = Math.round(layoutHeight / 2);
+			Object.defineProperty(viewport, 'height', {
+				configurable: true,
+				get: () => keyboardHeight
+			});
+			viewport.dispatchEvent(new Event('resize'));
+
+			try {
+				await waitFor(async () => {
+					const shrunk = overlay.getBoundingClientRect();
+					await expect(Math.round(shrunk.height)).toBe(
+						keyboardHeight
+					);
+					// …and the editor stays inside that smaller box.
+					const inside = editor.getBoundingClientRect();
+					await expect(inside.bottom).toBeLessThanOrEqual(
+						shrunk.bottom + 1
+					);
+					await expect(inside.top).toBeGreaterThanOrEqual(
+						shrunk.top - 1
+					);
+				});
+			} finally {
+				Object.defineProperty(viewport, 'height', {
+					configurable: true,
+					get: () => realHeight
+				});
+				viewport.dispatchEvent(new Event('resize'));
+			}
+		}
+	}
+};
+
+/** The same control at desktop height, which the issue says must not regress. */
+export const MaximisedDesktop: Story = {
+	name: 'Desktop — maximised (unchanged by #1248)',
+	parameters: {
+		viewport: {
+			options: {
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' }
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'desktop1440' } },
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		// The toolbar only mounts once the composer is focused, so click into
+		// the editor first — the same order a user follows.
+		const input = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(input);
+
+		const maximise = await waitFor(() =>
+			within(canvasElement).getByRole('button', {
+				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
+				// handle) would also match a loose pattern.
+				name: 'Editor vergrößern'
+			})
+		);
+		await userEvent.click(maximise);
+
+		const editor = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+
+		const overlay = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded'
+		) as HTMLElement;
+		await expect(overlay).toBeTruthy();
+
+		const rect = editor.getBoundingClientRect();
+		// Measured against the overlay, which is what the fix sizes to the
+		// visible viewport — the runner's window metrics do not agree with its
+		// emulated viewport, so they are not a usable reference here.
+		const overlayRect = overlay.getBoundingClientRect();
+		await expect(rect.bottom).toBeLessThanOrEqual(overlayRect.bottom + 1);
+		await expect(rect.top).toBeGreaterThanOrEqual(overlayRect.top - 1);
+		// The overlay lays out over a frame or two after the click, so settle
+		// before measuring rather than catching the intermediate height.
+		await waitFor(async () => {
+			const settled = editor.getBoundingClientRect();
+			// Desktop keeps the roomy editor: well over half the overlay.
+			await expect(settled.height).toBeGreaterThan(
+				overlay.getBoundingClientRect().height * 0.5
+			);
+		});
+	}
+};
