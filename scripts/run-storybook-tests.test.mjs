@@ -134,5 +134,14 @@ test('reads the shard count from STORYBOOK_TEST_SHARDS and falls back to the def
 		resolveShardCount({ STORYBOOK_TEST_SHARDS: 'abc' }),
 		DEFAULT_STORYBOOK_SHARDS
 	);
+	// parseInt would accept these prefixes as 6 and 1
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '6workers' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '1.5' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
 	assert.equal(resolveShardCount({}), DEFAULT_STORYBOOK_SHARDS);
 });

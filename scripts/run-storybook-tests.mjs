@@ -39,7 +39,10 @@ export const storybookVitestArgs = [
 export const DEFAULT_STORYBOOK_SHARDS = 4;
 
 export const resolveShardCount = (env = process.env) => {
-	const parsed = Number.parseInt(env.STORYBOOK_TEST_SHARDS ?? '', 10);
+	// Number(), not parseInt(): '6workers' and '1.5' must fall back, not
+	// silently become 6 and 1.
+	const raw = (env.STORYBOOK_TEST_SHARDS ?? '').trim();
+	const parsed = raw === '' ? Number.NaN : Number(raw);
 	return Number.isInteger(parsed) && parsed > 0
 		? parsed
 		: DEFAULT_STORYBOOK_SHARDS;

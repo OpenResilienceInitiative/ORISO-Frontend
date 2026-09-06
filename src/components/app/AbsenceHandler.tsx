@@ -8,7 +8,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { useContext, useState, useEffect } from 'react';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { hasAuthCookie } from '../sessionCookie/accessSessionCookie';
 import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_ABSENCE } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
@@ -90,7 +90,9 @@ export const AbsenceHandler = () => {
 		if (!userId || !isAbsentConsultant || remindedUserId === userId) {
 			return;
 		}
-		if (!getValueFromCookie('keycloak')) {
+		// Cookie only: the localStorage token mirror can outlive the cookie
+		// for a moment during sign-out and must not count as a session.
+		if (!hasAuthCookie('keycloak')) {
 			return;
 		}
 		setRemindedUserId(userId);

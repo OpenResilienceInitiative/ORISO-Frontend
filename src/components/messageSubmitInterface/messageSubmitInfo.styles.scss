@@ -10,7 +10,7 @@
 	// Same 895px dock as the composer card (`--composer-max-width`), so the
 	// notice reads as part of the composer and not as a page-wide strip.
 	width: calc(100% - 2 * #{$grid-base-two});
-	max-width: 895px;
+	max-width: var(--composer-max-width, 895px);
 	margin: 0 auto $grid-base;
 	padding: 12px $grid-base-two;
 	border-radius: 12px;

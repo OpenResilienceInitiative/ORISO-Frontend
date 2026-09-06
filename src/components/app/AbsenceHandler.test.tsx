@@ -73,6 +73,7 @@ describe('AbsenceHandler (#1210 job 2: the reminder only in the counsellor conte
 	beforeEach(() => {
 		document.cookie = 'keycloak=token; path=/';
 		window.sessionStorage.clear();
+		window.localStorage.clear();
 	});
 	afterEach(() => {
 		cleanup();
@@ -105,6 +106,17 @@ describe('AbsenceHandler (#1210 job 2: the reminder only in the counsellor conte
 	it('shows nothing while the auth session is gone (sign-out in flight)', () => {
 		document.cookie =
 			'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+		renderWith(consultant());
+		expect(screen.queryByTestId('absence-overlay')).toBeNull();
+	});
+
+	it('ignores the localStorage token mirror once the auth cookie is gone', () => {
+		// getValueFromCookie falls back to localStorage (`auth.keycloak`); during
+		// sign-out the cookie goes first, so the mirror must not re-open the
+		// reminder for stale consultant data.
+		document.cookie =
+			'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+		window.localStorage.setItem('auth.keycloak', 'stale-token');
 		renderWith(consultant());
 		expect(screen.queryByTestId('absence-overlay')).toBeNull();
 	});
