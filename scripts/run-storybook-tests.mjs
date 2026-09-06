@@ -27,6 +27,32 @@ export const storybookVitestArgs = [
 	'--minWorkers=1'
 ];
 
+/**
+ * Sequential shards. ORISO-Frontend#1316 (CI run 34016457101): all five
+ * full-suite attempts lost the browser connection at ~95-107 of 175 files —
+ * the detached story iframes of one orchestrator tab pile up until the tab
+ * dies, so re-running the *whole* suite can never get past that point.
+ * `vitest --shard=i/n` gives each vitest invocation (and its browser) a
+ * fraction of the files, well below the threshold, and a disconnect only
+ * costs the affected shard a retry.
+ */
+export const DEFAULT_STORYBOOK_SHARDS = 4;
+
+export const resolveShardCount = (env = process.env) => {
+	// Number(), not parseInt(): '6workers' and '1.5' must fall back, not
+	// silently become 6 and 1.
+	const raw = (env.STORYBOOK_TEST_SHARDS ?? '').trim();
+	const parsed = raw === '' ? Number.NaN : Number(raw);
+	return Number.isInteger(parsed) && parsed > 0
+		? parsed
+		: DEFAULT_STORYBOOK_SHARDS;
+};
+
+export const storybookShardArgs = (index, count) =>
+	count > 1
+		? [...storybookVitestArgs, `--shard=${index}/${count}`]
+		: [...storybookVitestArgs];
+
 const stripAnsi = (output) => output.replace(/\u001b\[[0-9;]*m/g, '');
 
 const hasTestFailure = (output) =>
@@ -47,8 +73,7 @@ export const looksLikeBrowserDisconnect = (output) => {
 		return true;
 	}
 	const files = plain.match(/Test Files\s+(\d+)\s+passed\s+\((\d+)\)/i);
-	const abortedQueue =
-		!!files && Number(files[1]) < Number(files[2]);
+	const abortedQueue = !!files && Number(files[1]) < Number(files[2]);
 	const testsPassed = /\bTests\s+\d+\s+passed\b/i.test(plain);
 	const oneUnhandled = /\bErrors\s+1\s+error\b/i.test(plain);
 	return abortedQueue && testsPassed && oneUnhandled;
@@ -97,7 +122,7 @@ const sleep = (ms) =>
 		setTimeout(resolve, ms);
 	});
 
-const runStorybookTests = () =>
+const runStorybookTests = (args = storybookVitestArgs) =>
 	new Promise((resolve) => {
 		let capturedOutput = '';
 		let failureDetected = false;
@@ -107,7 +132,7 @@ const runStorybookTests = () =>
 		let stderrDone = false;
 		let closed = false;
 		let settled = false;
-		const child = spawn(process.execPath, storybookVitestArgs, {
+		const child = spawn(process.execPath, args, {
 			env: {
 				...process.env,
 				NODE_OPTIONS: '--max-old-space-size=6144'
@@ -162,9 +187,11 @@ const runStorybookTests = () =>
 		});
 	});
 
-const main = async () => {
+const runShardWithRetries = async (index, count) => {
+	const args = storybookShardArgs(index, count);
+	const label = count > 1 ? ` (shard ${index}/${count})` : '';
 	let attempt = 0;
-	let lastRun = await runStorybookTests();
+	let lastRun = await runStorybookTests(args);
 
 	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
 		if (
@@ -179,16 +206,32 @@ const main = async () => {
 
 		attempt += 1;
 		console.warn(
-			`Vitest lost its Storybook browser connection; retrying the suite (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).` +
+			`Vitest lost its Storybook browser connection; retrying${label} (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).` +
 				(lastRun.outputTruncated
 					? ' Captured output was truncated; failures were scanned live as the run streamed.'
 					: '')
 		);
 		await sleep(RETRY_COOLDOWN_MS);
-		lastRun = await runStorybookTests();
+		lastRun = await runStorybookTests(args);
 	}
 
 	return lastRun.code ?? 0;
+};
+
+const main = async () => {
+	const shardCount = resolveShardCount();
+	for (let index = 1; index <= shardCount; index += 1) {
+		if (shardCount > 1) {
+			console.log(
+				`Storybook component tests: shard ${index}/${shardCount}`
+			);
+		}
+		const code = await runShardWithRetries(index, shardCount);
+		if (code !== 0) {
+			return code;
+		}
+	}
+	return 0;
 };
 
 if (

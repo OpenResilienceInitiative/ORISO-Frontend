@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+	DEFAULT_STORYBOOK_SHARDS,
 	MAX_BROWSER_DISCONNECT_RETRIES,
 	looksLikeBrowserDisconnect,
+	resolveShardCount,
 	shouldRetryStorybookRun,
+	storybookShardArgs,
 	storybookVitestArgs
 } from './run-storybook-tests.mjs';
 
@@ -126,4 +129,40 @@ test('caps Storybook workers and allows several disconnect retries', () => {
 		storybookVitestArgs.filter((arg) => arg.startsWith('--maxWorkers')),
 		['--maxWorkers=2']
 	);
+});
+
+test('splits the suite into sequential shards so one browser session never drives the whole queue', () => {
+	// Every full-suite attempt in ORISO-Frontend#1316 run 34016457101 died at
+	// ~95-107 of 175 files; a shard keeps each orchestrator tab well below that.
+	assert.equal(DEFAULT_STORYBOOK_SHARDS, 4);
+	assert.deepEqual(storybookShardArgs(2, 4), [
+		...storybookVitestArgs,
+		'--shard=2/4'
+	]);
+});
+
+test('runs unsharded when a single shard is requested', () => {
+	assert.deepEqual(storybookShardArgs(1, 1), storybookVitestArgs);
+});
+
+test('reads the shard count from STORYBOOK_TEST_SHARDS and falls back to the default', () => {
+	assert.equal(resolveShardCount({ STORYBOOK_TEST_SHARDS: '6' }), 6);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '0' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: 'abc' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	// parseInt would accept these prefixes as 6 and 1
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '6workers' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '1.5' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(resolveShardCount({}), DEFAULT_STORYBOOK_SHARDS);
 });
