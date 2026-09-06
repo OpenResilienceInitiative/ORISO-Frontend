@@ -74,18 +74,19 @@ test('still retries a disconnect when captured output was truncated', () => {
 	);
 });
 
-test('still retries a disconnect-only abort when the log was truncated', () => {
+test('a failure latched off the live stream blocks the retry', () => {
 	// The Storybook run emits thousands of "Module … has been externalized"
-	// lines, so MAX_CAPTURED_OUTPUT is crossed on every CI run. Gating the
-	// retry on truncation made it unreachable and turned the disconnect flake
-	// into a hard failure. `failureDetected` is latched against the live
-	// stream, so truncation cannot hide a failure from us.
+	// lines, so MAX_CAPTURED_OUTPUT is crossed on every CI run and truncation
+	// alone must not gate the retry (the test above). `failureDetected` is a
+	// different signal: it is latched in `forwardOutput` as the run streams, so
+	// it reports a failure that truncation has since scrolled out of the buffer
+	// — and it must still stop the retry from masking it.
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
 			failureDetected: true,
 			outputTruncated: true
 		}),
-		true
+		false
 	);
 });
 
@@ -95,8 +96,28 @@ test('a real failure in a truncated log still blocks the retry', () => {
 			failureDetected: false,
 			outputTruncated: true
 		}),
-		true
+		false
 	);
+});
+
+test('retries the interleaved, ANSI-coloured abort from CI run 33968368364', () => {
+	// Two streams share one buffer, so stderr stack frames land between the
+	// stdout summary lines and the coloured disconnect phrase gets split. Only
+	// the aborted-green shape survives that, which is why the retry decision
+	// goes through looksLikeBrowserDisconnect rather than a raw substring test.
+	const interleaved = [
+		'[31mError[39m: [vitest] Browser connection [2mwas',
+		' ❯ WebSocket.emit node:events:531:35',
+		'closed while running tests[22m. Was the page closed unexpectedly?',
+		' ❯ WebSocket.emitClose node_modules/ws/lib/websocket.js:279:10',
+		' Test Files  88 passed (176)',
+		' ❯ Socket.socketOnClose node_modules/ws/lib/websocket.js:1360:15',
+		'      Tests  543 passed (543)',
+		'     Errors  1 error'
+	].join('\n');
+
+	assert.equal(interleaved.includes(disconnect), false);
+	assert.equal(shouldRetryStorybookRun(1, interleaved), true);
 });
 
 test('caps Storybook workers and allows several disconnect retries', () => {
