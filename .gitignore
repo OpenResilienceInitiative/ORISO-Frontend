@@ -74,3 +74,6 @@ storybook-static/
 .ds-sync/
 ds-bundle/
 index.d.ts
+
+# Local screenshot/evidence scratch dir (evidence lives on the PR, not in git)
+_shots/
