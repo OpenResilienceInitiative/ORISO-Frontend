@@ -87,6 +87,14 @@ jobs:
         # Address the CLI that belongs to the version the tests actually launch.
         run: node node_modules/playwright/cli.js install --with-deps chrome
 
+      # The retry wrapper below decides whether a red run was a real failure or
+      # the browser-disconnect flake. Nothing ran its tests, so the wrapper and
+      # its expectations drifted apart unnoticed and the retry stopped firing
+      # (#1307, CI run 33968368364). Sub-second, and it runs before the suite so
+      # a broken wrapper is reported as itself rather than as a flaky story.
+      - name: Test the Storybook test runner
+        run: npm run test:scripts
+
       - name: Run Storybook component tests
         run: npm run test:storybook
 

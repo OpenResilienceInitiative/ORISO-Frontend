@@ -96,6 +96,16 @@ export const looksLikeBrowserDisconnect = (output) => {
  * true. A browser-disconnect abort — 863/863 tests passed, 18 of 171 files
  * never reached — therefore failed the job outright instead of being retried
  * (ORISO-Frontend#1233 CI run 33470719328).
+ *
+ * Detection goes through `looksLikeBrowserDisconnect`, NOT a bare
+ * `capturedOutput.includes(...)`. The raw substring test looked equivalent and
+ * was not: `capturedOutput` is one buffer fed by two streams, so a stdout chunk
+ * can land in the middle of the stderr line and split the phrase, and the raw
+ * text still carries the ANSI codes Vitest colours it with. CI run 33968368364
+ * (#1307) aborted at `Test Files 88 passed (176)` / `Tests 543 passed` /
+ * `Errors 1 error` with the stack frames visibly interleaved into the summary,
+ * the substring test missed it, and the job failed instead of retrying — the
+ * exact case the aborted-green fallback above exists to catch.
  */
 export const shouldRetryStorybookRun = (
 	code,
@@ -104,7 +114,7 @@ export const shouldRetryStorybookRun = (
 ) =>
 	code !== 0 &&
 	!failureDetected &&
-	capturedOutput.includes(BROWSER_DISCONNECT_SIGNATURE) &&
+	looksLikeBrowserDisconnect(capturedOutput) &&
 	!hasTestFailure(capturedOutput);
 
 const sleep = (ms) =>
