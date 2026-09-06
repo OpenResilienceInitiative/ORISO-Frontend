@@ -232,6 +232,99 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 	});
 });
 
+/*
+ * #1211 review — an account can already carry a settings event that was
+ * written before this browser's legacy opt-in was ever migrated: seeded from
+ * another device, or by a build that predates the migration. Without a
+ * reconcile, a consultant who switched browser notifications on in the legacy
+ * panel loses them the moment the release toggle routes the new one.
+ */
+describe('legacy opt-in reconcile on attach', () => {
+	beforeEach(() => {
+		notificationSettingsStore.resetForTests();
+		localStorage.clear();
+	});
+
+	it('adopts a legacy opt-in into account data that predates the migration', () => {
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true, newMessage: true })
+		);
+		const client = makeMockClient();
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			globalMute: false
+		});
+
+		notificationSettingsStore.attachClient(client as any);
+
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(true);
+		expect(client.setAccountData).toHaveBeenCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({
+				browserNotifications: expect.objectContaining({ enabled: true })
+			})
+		);
+	});
+
+	it('runs once per browser, so a later deliberate "off" stands', () => {
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		const first = makeMockClient();
+		first.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			globalMute: false
+		});
+		notificationSettingsStore.attachClient(first as any);
+		notificationSettingsStore.detachClient();
+
+		// Next session: the user has since switched the new panel off.
+		const second = makeMockClient();
+		second.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			browserNotifications: { enabled: false }
+		});
+		notificationSettingsStore.attachClient(second as any);
+
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(false);
+	});
+
+	it('never switches an existing opt-in off', () => {
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: false })
+		);
+		const client = makeMockClient();
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			browserNotifications: { enabled: true }
+		});
+
+		notificationSettingsStore.attachClient(client as any);
+
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(true);
+	});
+
+	it('leaves account data alone when there is nothing to reconcile', () => {
+		const client = makeMockClient();
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			globalMute: true
+		});
+		client.setAccountData.mockClear();
+
+		notificationSettingsStore.attachClient(client as any);
+
+		expect(client.setAccountData).not.toHaveBeenCalled();
+	});
+});
+
 describe('global do-not-disturb', () => {
 	it('isDoNotDisturbActive is true while dndUntil is in the future', () => {
 		const now = new Date('2026-07-18T10:00:00Z');
