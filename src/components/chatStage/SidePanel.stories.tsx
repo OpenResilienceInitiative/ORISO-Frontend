@@ -208,7 +208,7 @@ function SupervisionSideRoom({
 					<p
 						style={{
 							margin: 0,
-							font: '500 14px/20px var(--m3-body-font-family, sans-serif)',
+							font: '500 14px/20px var(--font-family-sans-serif, sans-serif)',
 							color: 'var(--m3-on-surface, #1a1c1e)'
 						}}
 					>
@@ -217,7 +217,7 @@ function SupervisionSideRoom({
 					<p
 						style={{
 							margin: '4px 0 0',
-							font: '12px/16px var(--m3-body-font-family, sans-serif)',
+							font: '12px/16px var(--font-family-sans-serif, sans-serif)',
 							color: 'var(--m3-on-surface-variant, #444748)'
 						}}
 					>

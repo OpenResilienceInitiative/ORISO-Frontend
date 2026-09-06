@@ -105,7 +105,7 @@ function Playground(
 				data-cy="switcher-last-action"
 				style={{
 					margin: 16,
-					font: '14px/20px var(--m3-body-font-family, sans-serif)',
+					font: '14px/20px var(--font-family-sans-serif, sans-serif)',
 					color: 'var(--m3-on-surface-variant, #444748)'
 				}}
 			>
