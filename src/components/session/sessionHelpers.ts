@@ -16,6 +16,7 @@ import {
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import {
+	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE,
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
 } from '../message/messageConstants';
@@ -271,7 +272,11 @@ export const buildSupervisionTimeline = (
 		messageTime: first?.messageTime || String(Date.now()),
 		isNotRead: false,
 		t: null,
+		// T49: `type` picks the Carimat organism in `MessageItemComponent`
+		// (name = title, subtitle "Systembenachrichtigung", no kebab) — the
+		// generic system-notification chrome never renders this notice.
 		message: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+			type: SYSTEM_NOTIFICATION_SUPERVISION_NOTICE,
 			title: notice.title,
 			description: notice.description
 		})}`,

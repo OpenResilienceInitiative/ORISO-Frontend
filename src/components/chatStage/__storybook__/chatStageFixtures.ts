@@ -20,6 +20,7 @@ import {
 	STATUS_ACTIVE
 } from '../../../globalState/interfaces';
 import type { MessageItem } from '../../message/MessageItemComponent';
+import { buildSupervisionTimeline } from '../../session/sessionHelpers';
 
 export const CLIENT_NAME = 'Sonnenblume_47';
 export const COUNSELLOR_NAME = 'Mona S.';
@@ -179,21 +180,31 @@ export const supervisionMessages = (): MessageItem[] =>
 	]);
 
 /**
- * T7: the side room opens with a system notice ("Supervision durch …") in
- * the chat's system-notification bubble. Rendered by the frontend for now;
- * a server-sent `[SYSTEM_NOTIFICATION]` event can replace it 1:1 (see
- * `supervisionPanel/README.md`).
+ * T7: the side room opens with a system notice ("Supervision durch …").
+ * Rendered by the frontend for now; a server-sent `[SYSTEM_NOTIFICATION]`
+ * event can replace it 1:1 (see `supervisionPanel/README.md`). T49: the
+ * body comes from the app's own builder (`buildSupervisionTimeline`) so the
+ * story shows the wired notice — the `type` that picks the Carimat organism
+ * cannot drift between app and stage.
  */
 export const supervisionSystemNotice = (
 	title: string,
 	description: string
-): MessageItem => ({
-	...message('$s0', 'counsellor', '', '09:11', SUPERVISION_ROOM_ID),
-	userId: SYSTEM_MATRIX_ID,
-	username: 'system',
-	displayName: 'system',
-	message: `[SYSTEM_NOTIFICATION]${JSON.stringify({ title, description })}`
-});
+): MessageItem => {
+	const [notice] = buildSupervisionTimeline([], {
+		roomId: SUPERVISION_ROOM_ID,
+		title,
+		description,
+		askerMatrixUserId: undefined
+	});
+	return {
+		...message('$s0', 'counsellor', '', '09:11', SUPERVISION_ROOM_ID),
+		userId: SYSTEM_MATRIX_ID,
+		username: 'system',
+		displayName: 'system',
+		message: notice.message
+	};
+};
 
 /** A thread on the client's message `$m3`: root first, then replies. */
 export const THREAD_ROOT_ID = '$m3';

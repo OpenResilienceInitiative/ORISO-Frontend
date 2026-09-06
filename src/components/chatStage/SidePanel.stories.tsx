@@ -383,11 +383,21 @@ export const Supervision: Story = {
 		await expect(
 			panel.querySelector('.panelHeader')!.textContent
 		).not.toMatch(/Antworten auf|Replies to/);
+		// T49: the notice is the Carimat organism (`pseudonymCard`), not the
+		// generic system-notification chrome — no kebab next to it.
 		await expect(
 			panel.querySelector(
-				'.messageItem .messageItem__message--systemNotification'
+				'.messageItem.pseudonymCard .pseudonymCard__headerName'
+			)?.textContent
+		).toBe('Supervision');
+		await expect(
+			panel.querySelector('.messageItem__message--systemNotification')
+		).toBeNull();
+		await expect(
+			panel.querySelector(
+				'[data-cy="side-panel-timeline"] .messageItem:first-child .messageItem__kebabButton'
 			)
-		).not.toBeNull();
+		).toBeNull();
 		await expect(
 			panel.querySelector('[data-cy="side-panel-timeline"] .messageItem')
 				?.textContent
@@ -569,8 +579,11 @@ export const EmptyWithSupervisionNotice: Story = {
 				canvasElement.querySelector('.textarea__wrapper-send-message')
 			).not.toBeNull()
 		);
+		// (T49: the Carimat organism nests its own `.messageItem` row inside
+		// the timeline item — count timeline items, not organism rows.)
 		await expect(
-			canvasElement.querySelectorAll('.messageItem').length
+			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+				.length
 		).toBe(1);
 		await expect(canvasElement.textContent).toContain(SUPERVISOR_NAME);
 		// No date pill: the app hands the notice an empty `PrettyDate`.

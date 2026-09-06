@@ -3,6 +3,12 @@ export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
 export const SYSTEM_NOTIFICATION_USER_LEFT_CHAT = 'USER_LEFT_CHAT';
 export const SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED =
 	'CASE_HANDOVER_GRANTED';
+/**
+ * T49: the supervision side room's frontend-built notice
+ * (`buildSupervisionTimeline`). Routes onto the Carimat organism in
+ * `MessageItemComponent` — the same card as the main chat's Erstantwort.
+ */
+export const SYSTEM_NOTIFICATION_SUPERVISION_NOTICE = 'SUPERVISION_NOTICE';
 export const VISIBLE_TO_PREFIX = '[VISIBLE_TO:';
 const PREFIX_SUFFIX = ']';
 

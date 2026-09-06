@@ -27,6 +27,7 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderMode } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
@@ -80,7 +81,8 @@ import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
-	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
+	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
+	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
@@ -1121,6 +1123,12 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* T49: the supervision side room's notice is drawn with the SAME organism
+	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
+	   under the room's name — never with the generic chrome below. */
+	const isSupervisionNoticeEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_SUPERVISION_NOTICE;
 	const userLeftChatEventText = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -2484,6 +2492,31 @@ export const MessageItemComponent = ({
 						'First response – not available in this room.'
 					)}
 				</div>
+			</div>
+		);
+	}
+
+	if (isSupervisionNoticeEvent) {
+		return (
+			<div
+				className="messageItem messageItem--erstantwort messageItem--supervisionNotice"
+				data-message-id={_id}
+			>
+				{getMessageDate()}
+				<ErstantwortSequence
+					name={systemNotificationTitle}
+					subtitle={translate(
+						'message.systemNotification',
+						'System notification'
+					)}
+					bausteine={[
+						{
+							id: 'supervision-notice',
+							body: systemNotificationDescription
+						}
+					]}
+					skipAnimation
+				/>
 			</div>
 		);
 	}

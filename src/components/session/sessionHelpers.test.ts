@@ -206,8 +206,12 @@ describe('sessionHelpers', () => {
 			expect(item.userId).toBe('@system:oriso');
 			expect(item.isNotRead).toBe(false);
 			expect(item.askerMatrixUserId).toBe(notice.askerMatrixUserId);
+			// T49: the `type` routes the notice onto the Carimat organism in
+			// `MessageItemComponent` (same card as the main chat's
+			// Erstantwort), never onto the generic system-notification chrome.
 			expect(item.message).toBe(
 				`[SYSTEM_NOTIFICATION]${JSON.stringify({
+					type: 'SUPERVISION_NOTICE',
 					title: notice.title,
 					description: notice.description
 				})}`
