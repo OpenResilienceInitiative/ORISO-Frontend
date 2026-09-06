@@ -82,6 +82,7 @@ import { FutureTimelinePanel } from './FutureTimelinePanel';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
 import { refetchEnquiryListState } from './refetchEnquiryList';
+import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 
@@ -805,6 +806,9 @@ export const SessionsList = ({
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
 	const sessionsRef = useUpdatingRef(sessions);
 
+	// #1206: one refetch per burst of messages from rooms this list does not know.
+	const unknownRoomThrottle = useRef(createRefreshThrottle());
+
 	const touchSessionsByRids = useCallback(
 		(ridsWithTimestamp: Array<{ rid: string; timestamp: number }>) => {
 			if (!ridsWithTimestamp.length) {
@@ -891,6 +895,21 @@ export const SessionsList = ({
 			}
 
 			if (!roomId) {
+				return;
+			}
+
+			// #1206: `touchSessionsByRids` can only update a session this list
+			// already holds — it drops an unknown room. A message from a room
+			// the list has never loaded is exactly the new enquiry (or the
+			// session that just became a chat) the counsellor had to hard-
+			// refresh for, so refetch instead of touching nothing. Throttled so
+			// a burst from the same new room causes one refetch, not ten.
+			if (!isRoomInSessions(sessionsRef.current, roomId)) {
+				if (unknownRoomThrottle.current.shouldRefresh()) {
+					void (type === SESSION_LIST_TYPES.ENQUIRY
+						? refetchEnquiryList()
+						: refetchSessionList());
+				}
 				return;
 			}
 
