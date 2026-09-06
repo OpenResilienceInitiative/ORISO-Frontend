@@ -531,6 +531,15 @@ $iconSize: 24px;
 		flex: 0 0 auto;
 	}
 
+	// #1193 Job 2: the avatar run inside the stack; the chip for the members that
+	// do not fit is rendered after the visible avatars (see MemberAvatarStack).
+	&__memberAvatars {
+		display: inline-flex;
+		align-items: center;
+		min-width: 0;
+		flex: 0 0 auto;
+	}
+
 	&__memberBubble {
 		width: 32px;
 		height: 32px;
@@ -549,7 +558,7 @@ $iconSize: 24px;
 		margin-left: 6px;
 	}
 
-	// Figma #430: collapsed "+N people" badge shown for groups with >4 members.
+	// Figma #430 / #1193: "+N" chip for the participants that do not fit the stack.
 	&__memberCount {
 		display: inline-flex;
 		align-items: center;

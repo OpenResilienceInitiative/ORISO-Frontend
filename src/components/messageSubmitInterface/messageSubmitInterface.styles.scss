@@ -79,8 +79,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// Figma 8641-34699: 16px inset between chat card edge and composer.
 		padding: 16px;
 		width: 100%;
-		position: absolute;
-		bottom: 0;
+
+		// Stays in flow: `.messageSubmit__wrapper` already docks the composer
+		// to the bottom and lays its children out in a column, so docking the
+		// card here too only removed it from that column and let it paint over
+		// the info bar above it.
+		position: relative;
 
 		@include breakpoint($fromMedium) {
 			padding: 16px;
@@ -100,10 +104,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			padding: 16px;
 			padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			right: 0;
+			position: relative;
 			background-color: var(--m3-surface-container-lowest, #ffffff);
 		}
 

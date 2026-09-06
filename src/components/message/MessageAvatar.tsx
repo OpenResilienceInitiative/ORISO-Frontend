@@ -1,10 +1,8 @@
 import * as React from 'react';
-import { useMemo } from 'react';
-import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
-import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { UserAvatar } from './UserAvatar';
 
 export interface MessageAvatarProps {
+	/** Kept for API stability; since #1193 groups use the same animal avatar. */
 	isGroup: boolean;
 	isSystemNotification: boolean;
 	userId: string;
@@ -16,11 +14,11 @@ export interface MessageAvatarProps {
 }
 
 /**
- * Chat message avatar: animal pseudonym for 1-on-1 messages, initials in groups.
+ * Chat message avatar: the user's animal icon, in 1-on-1 and group chats
+ * alike (#1193 Job 4 removed the group-only initials fallback).
  * System notifications render no avatar here (handled in MessageItemComponent).
  */
 export const MessageAvatar: React.FC<MessageAvatarProps> = ({
-	isGroup,
 	isSystemNotification,
 	userId,
 	username,
@@ -29,14 +27,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	lastName,
 	size = 32
 }) => {
-	const clientAvatar = useMemo(() => generateAvatarForUser(userId), [userId]);
-
 	if (isSystemNotification) {
 		return null;
-	}
-
-	if (!isGroup) {
-		return <AnimalAvatar avatar={clientAvatar} size={size} />;
 	}
 
 	return (
