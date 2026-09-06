@@ -30,6 +30,19 @@ const consultantConfig = {
 		}
 	],
 	userProfileRoutes: [
+		// Enquiry (sessionPreview) first, mirroring RouterConfig: an enquiry
+		// that has not started yet has no group id, and SessionMenu builds its
+		// links from the ENQUIRY list path.
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
+		{
+			path: '/sessions/consultant/sessionPreview/:groupId/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId/userProfile',
 			component: stub('askerInfo'),
@@ -42,6 +55,11 @@ const consultantConfig = {
 		}
 	],
 	detailRoutes: [
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId',
+			component: stub('sessionPreview'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId',
 			component: stub('sessionView'),
@@ -244,8 +262,10 @@ describe('SessionsZone v7 routing — chatroom-settings menu targets (#1188)', (
 
 	const MATRIX_ROOM_ID = '!qOTUeQBiuXBstjnBmR:matrix.oriso.org';
 	const withRoom = '/sessions/consultant/sessionView/:groupId/:id/:subRoute?';
-	const withoutRoom =
-		'/sessions/consultant/sessionView/session/:id/:subRoute?';
+	// SessionMenu's listPath is the ENQUIRY list path for an enquiry, so a
+	// room-less enquiry links into sessionPreview, not sessionView.
+	const withoutRoomEnquiry =
+		'/sessions/consultant/sessionPreview/session/:id/:subRoute?';
 
 	it('resolves the advice-seeker profile for a session with a Matrix room', () => {
 		renderAt(
@@ -260,9 +280,26 @@ describe('SessionsZone v7 routing — chatroom-settings menu targets (#1188)', (
 
 	it('resolves the advice-seeker profile for an enquiry without a Matrix room', () => {
 		renderAt(
-			generatePath(withoutRoom, { id: '3363', subRoute: 'userProfile' })
+			generatePath(withoutRoomEnquiry, {
+				id: '3363',
+				subRoute: 'userProfile'
+			})
 		);
-		expect(screen.getByTestId('askerInfo')).toBeDefined();
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
+	});
+
+	it('resolves the advice-seeker profile for an enquiry that already has a room', () => {
+		renderAt(
+			generatePath(
+				'/sessions/consultant/sessionPreview/:groupId/:id/:subRoute?',
+				{
+					groupId: MATRIX_ROOM_ID,
+					id: '3363',
+					subRoute: 'userProfile'
+				}
+			)
+		);
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
 	});
 
 	it('resolves the session itself when the menu closes back to the chat', () => {
