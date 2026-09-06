@@ -58,6 +58,12 @@ docs/*
 docs/agent-tasks/*
 !docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/
 !docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/**
+!docs/agent-tasks/2026-09-05_issue-1200-timeline-view/
+!docs/agent-tasks/2026-09-05_issue-1200-timeline-view/**
+!docs/agent-tasks/2026-09-06_issue-1210-absence-banner/
+!docs/agent-tasks/2026-09-06_issue-1210-absence-banner/**
+!docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/
+!docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/**
 !docs/cursor-orchestrator/
 docs/cursor-orchestrator/*
 !docs/cursor-orchestrator/index.md

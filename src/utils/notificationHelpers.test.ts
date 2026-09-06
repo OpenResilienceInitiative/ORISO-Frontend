@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	requestNotificationPermissionSafe,
+	saveBrowserNotificationsSettings,
 	sendNotification
 } from './notificationHelpers';
 import { notificationSettingsStore } from './notificationSettings/store';
@@ -40,6 +41,11 @@ const stubNotification = (
 beforeEach(() => {
 	constructed.length = 0;
 	localStorage.clear();
+	// The store is a module singleton, so opt-in state would otherwise leak
+	// from one test into the next.
+	notificationSettingsStore.updateSettings({
+		browserNotifications: { enabled: false }
+	});
 });
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -65,10 +71,7 @@ describe('sendNotification permission gate', () => {
 
 	it('persistent banner mode sets requireInteraction on the OS popup', () => {
 		stubNotification('granted');
-		localStorage.setItem(
-			'BROWSER_NOTIFICATIONS',
-			JSON.stringify({ enabled: true })
-		);
+		saveBrowserNotificationsSettings({ enabled: true });
 		notificationSettingsStore.updateSettings({
 			notificationConfig: setKindField(
 				notificationSettingsStore.getState().settings
@@ -100,10 +103,9 @@ describe('sendNotification permission gate', () => {
 
 	it('banner channel off for the event row suppresses the OS popup', () => {
 		stubNotification('granted');
-		localStorage.setItem(
-			'BROWSER_NOTIFICATIONS',
-			JSON.stringify({ enabled: true })
-		);
+		// Opt in for real, so the assertion below is about the banner channel
+		// rather than about the opt-in gate stopping it first.
+		saveBrowserNotificationsSettings({ enabled: true });
 		const { settings } = notificationSettingsStore.getState();
 		notificationSettingsStore.updateSettings({
 			notificationConfig: setKindField(
@@ -135,13 +137,55 @@ describe('sendNotification permission gate', () => {
 
 	it('creates one when permission granted AND user opted in', () => {
 		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+		sendNotification('Hallo', { showAlways: true });
+		expect(constructed).toHaveLength(1);
+		expect(constructed[0].title).toBe('Hallo');
+	});
+
+	/*
+	 * #1211. The cross-device panel (release toggle `enableNewNotifications`)
+	 * writes the settings store; the legacy per-browser panel writes
+	 * localStorage and is unreachable while that toggle is on. The gate read
+	 * localStorage only, so opting in through the panel the user can actually
+	 * see never delivered anything.
+	 */
+	it('honours an opt-in that came from the settings store', () => {
+		stubNotification('granted');
+		notificationSettingsStore.updateSettings({
+			browserNotifications: { enabled: true }
+		});
+
+		sendNotification('Hallo', { showAlways: true });
+
+		expect(constructed).toHaveLength(1);
+	});
+
+	it('lets the settings store turn notifications back off', () => {
+		stubNotification('granted');
+		// A migrated user whose stale legacy key still says "enabled".
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
 			JSON.stringify({ enabled: true })
 		);
+		notificationSettingsStore.updateSettings({
+			browserNotifications: { enabled: false }
+		});
+
 		sendNotification('Hallo', { showAlways: true });
+
+		expect(constructed).toHaveLength(0);
+	});
+
+	// The legacy panel is still the only UI when the release toggle is off, so
+	// its writes have to reach the same place the gate reads.
+	it('still honours the legacy panel toggle', () => {
+		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+
+		sendNotification('Hallo', { showAlways: true });
+
 		expect(constructed).toHaveLength(1);
-		expect(constructed[0].title).toBe('Hallo');
 	});
 });
 
