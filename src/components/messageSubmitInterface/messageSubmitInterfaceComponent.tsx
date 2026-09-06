@@ -3594,9 +3594,11 @@ export const MessageSubmitInterfaceComponent = ({
 		[effectiveComposerHeight, getComposerHeightBounds, setComposerHeight]
 	);
 
+	// `isMobile` used to be passed here and was never read by
+	// getMenuDirection — the viewport is a collision question now, measured by
+	// floating-ui rather than guessed from a breakpoint (#1250).
 	const composerMenuDirection = getMenuDirection({
-		isExpanded: isExpandedComposer,
-		isMobile: isMobileViewport
+		isExpanded: isExpandedComposer
 	});
 
 	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
