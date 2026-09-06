@@ -72,6 +72,7 @@ const renderWith = (userData: any) => {
 describe('AbsenceHandler (#1210 job 2: the reminder only in the counsellor context)', () => {
 	beforeEach(() => {
 		document.cookie = 'keycloak=token; path=/';
+		window.sessionStorage.clear();
 	});
 	afterEach(() => {
 		cleanup();
@@ -122,5 +123,21 @@ describe('AbsenceHandler (#1210 job 2: the reminder only in the counsellor conte
 		// handler's own state by re-rendering with the same user again
 		rerenderWith(consultant({ absenceMessage: 'Noch im Urlaub' }));
 		expect(screen.getAllByTestId('absence-overlay')).toHaveLength(1);
+	});
+
+	it('does not re-open after a remount for the same user in the same session', () => {
+		const { unmount } = renderWith(consultant());
+		expect(screen.getByTestId('absence-overlay')).toBeTruthy();
+		unmount();
+		renderWith(consultant());
+		expect(screen.queryByTestId('absence-overlay')).toBeNull();
+	});
+
+	it('re-opens after a remount once the session storage was purged (next sign-in)', () => {
+		const { unmount } = renderWith(consultant());
+		unmount();
+		window.sessionStorage.clear();
+		renderWith(consultant());
+		expect(screen.getByTestId('absence-overlay')).toBeTruthy();
 	});
 });

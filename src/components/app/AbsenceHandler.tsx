@@ -13,6 +13,24 @@ import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_ABSENCE } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 
+const REMINDED_STORAGE_KEY = 'oriso.absenceReminderShownFor';
+
+const readRemindedUserId = (): string | null => {
+	try {
+		return window.sessionStorage.getItem(REMINDED_STORAGE_KEY);
+	} catch {
+		return null;
+	}
+};
+
+const writeRemindedUserId = (userId: string): void => {
+	try {
+		window.sessionStorage.setItem(REMINDED_STORAGE_KEY, userId);
+	} catch {
+		// storage disabled: fall back to once-per-mount
+	}
+};
+
 export const AbsenceHandler = () => {
 	const { t: translate } = useTranslation();
 	const absenceReminderOverlayItem: OverlayItem = {
@@ -50,8 +68,13 @@ export const AbsenceHandler = () => {
 	const [overlayItem, setOverlayItem] = useState(absenceReminderOverlayItem);
 	const [overlayActive, setOverlayActive] = useState(false);
 	// The user id the reminder was already shown for: once per signed-in
-	// counsellor, not once per mount (#1210 job 2).
-	const [remindedUserId, setRemindedUserId] = useState<string | null>(null);
+	// counsellor per browser session, not once per mount (#1210 job 2). Kept
+	// in sessionStorage because the shell can remount this handler (route
+	// changes right after login); sign-out purges sessionStorage, so the next
+	// sign-in shows it again.
+	const [remindedUserId, setRemindedUserId] = useState<string | null>(() =>
+		readRemindedUserId()
+	);
 
 	const userId = userData?.userId ?? null;
 	const isAbsentConsultant =
@@ -71,6 +94,7 @@ export const AbsenceHandler = () => {
 			return;
 		}
 		setRemindedUserId(userId);
+		writeRemindedUserId(userId);
 		setOverlayItem(absenceReminderOverlayItem);
 		setOverlayActive(true);
 	}, [userId, isAbsentConsultant, remindedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
