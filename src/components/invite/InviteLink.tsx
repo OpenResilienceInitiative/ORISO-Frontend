@@ -24,10 +24,8 @@ import {
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
-import {
-	applyRedeemSessionCredentials,
-	redirectToInviteSession
-} from './inviteLinkHelpers';
+import { applyRedeemSessionCredentials } from './inviteLinkHelpers';
+import { LiveChatEntryRoom } from '../anonymousChat/entryRoom/LiveChatEntryRoom';
 import {
 	mintInviteGuestCredentials,
 	rerollInviteGuestUsername
@@ -55,15 +53,19 @@ import type { Pseudonym } from '../../utils/anonName/engine';
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { token } = useParams<{ token: string; topicSlug?: string }>();
+	const { token, topicSlug } = useParams<{
+		token: string;
+		topicSlug?: string;
+	}>();
 	const tenantContext = useContext(TenantContext);
 	const localeContext = useContext(LocaleContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const tenant = tenantContext?.tenant;
 	const locale = localeContext?.locale ?? 'de';
 	const [status, setStatus] = useState<
-		'loading' | 'identity' | 'registering' | 'error'
+		'loading' | 'identity' | 'registering' | 'error' | 'room'
 	>('loading');
+	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [legacyRedeem, setLegacyRedeem] =
 		useState<RedeemInviteLinkLegacyResponse | null>(null);
@@ -86,8 +88,13 @@ export const InviteLink = () => {
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
+					/* Tokens first, then the entry room on this very page —
+					   no hard redirect into the session's gates any more.
+					   The room hands over to the session itself once a
+					   counsellor has accepted and consent is given. */
 					applyRedeemSessionCredentials(data);
-					redirectToInviteSession(data);
+					setRoomSessionId(data.sessionId);
+					setStatus('room');
 					return;
 				}
 
@@ -151,6 +158,15 @@ export const InviteLink = () => {
 	}, [legacyRedeem, username, password, locale, tenant, navigate]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
+
+	if (status === 'room' && roomSessionId !== null) {
+		return (
+			<LiveChatEntryRoom
+				sessionId={roomSessionId}
+				topicSlug={topicSlug}
+			/>
+		);
+	}
 
 	return (
 		<StageLayout

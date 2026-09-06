@@ -4695,6 +4695,64 @@
 				"wisdom": "wisdom"
 			},
 			"quote": "God, grant me the {serenity} to accept the things I cannot change, the {courage} to change the things I can, and the {wisdom} to know the difference."
+		},
+		"entry": {
+			"kicker": "Live chat",
+			"status": {
+				"access": "Your access for this conversation",
+				"waiting": "Waiting room — looking for a free counsellor",
+				"accepted": "A counsellor has taken your conversation",
+				"closed": "Closed right now"
+			},
+			"access": {
+				"headline": "Your name for today.",
+				"subline": "Anonymous, no account. Roll until you like it.",
+				"label": "Your pseudonym",
+				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
+				"reroll": "Roll again",
+				"continue": "To the waiting room"
+			},
+			"waiting": {
+				"headline": "Nearly there.",
+				"aheadUnknown": "We are looking for a free counsellor for you.",
+				"aheadNone": "You are next.",
+				"aheadOne": "One person ahead of you",
+				"aheadMany": "{{count}} people ahead of you",
+				"accepted": "A counsellor is here.",
+				"companion": "A calm companion until it starts",
+				"mail": "Rather write than wait? To mail counselling →",
+				"bar": "Waiting room",
+				"barStatusUnknown": "Nothing to do on your side",
+				"barStatus": "{{count}} ahead of you — nothing to do on your side",
+				"yourTurn": "It is your turn.",
+				"yourTurnSub": "A counsellor has taken your conversation and is waiting for you.",
+				"decline": "Do not agree and leave the chat",
+				"start": "Agree & start",
+				"startStatus": "Your counsellor is waiting for you"
+			},
+			"closed": {
+				"headline": "The live chat is closed right now.",
+				"hoursLabel": "Opening hours",
+				"text": "Nobody is in the live chat right now. Write to us — we answer within two working days.",
+				"textShort": "Write to us — an answer within two working days.",
+				"later": "Later",
+				"mail": "Write a request to a counselling centre",
+				"mailShort": "Write a request"
+			},
+			"steps": {
+				"wait": {
+					"title": "You wait until someone is free",
+					"text": "The counsellors are in other conversations right now."
+				},
+				"consent": {
+					"title": "Then you agree once",
+					"text": "As soon as a centre takes your conversation, you see its privacy policy."
+				},
+				"anonymous": {
+					"title": "Anonymous, and gone afterwards",
+					"text": "Only your pseudonym is visible. After 48 hours everything is deleted."
+				}
+			}
 		}
 	}
 }

@@ -4793,6 +4793,64 @@
 				"wisdom": "sagesse"
 			},
 			"quote": "Mon Dieu, donne-moi la {serenity} d'accepter les choses que je ne peux changer, le {courage} de changer celles que je peux, et la {wisdom} d'en connaître la différence."
+		},
+		"entry": {
+			"kicker": "Chat en direct",
+			"status": {
+				"access": "Votre accès pour cette conversation",
+				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
+				"accepted": "Une conseillère a pris votre conversation",
+				"closed": "Fermé pour le moment"
+			},
+			"access": {
+				"headline": "Votre nom pour aujourd'hui.",
+				"subline": "Anonyme, sans compte. Relancez jusqu'à ce qu'il vous plaise.",
+				"label": "Votre pseudonyme",
+				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
+				"reroll": "Relancer",
+				"continue": "Vers la salle d'attente"
+			},
+			"waiting": {
+				"headline": "C'est bientôt à vous.",
+				"aheadUnknown": "Nous cherchons une conseillère disponible pour vous.",
+				"aheadNone": "Vous êtes la prochaine personne.",
+				"aheadOne": "Une personne devant vous",
+				"aheadMany": "{{count}} personnes devant vous",
+				"accepted": "Une conseillère est là.",
+				"companion": "Un accompagnement calme en attendant",
+				"mail": "Plutôt écrire qu'attendre ? Vers le conseil par e-mail →",
+				"bar": "Salle d'attente",
+				"barStatusUnknown": "Vous n'avez rien à faire",
+				"barStatus": "{{count}} devant vous — vous n'avez rien à faire",
+				"yourTurn": "C'est à vous.",
+				"yourTurnSub": "Une conseillère a pris votre conversation et vous attend.",
+				"decline": "Refuser et quitter le chat",
+				"start": "Accepter et commencer",
+				"startStatus": "Votre conseillère vous attend"
+			},
+			"closed": {
+				"headline": "Le chat en direct est fermé pour le moment.",
+				"hoursLabel": "Horaires d'ouverture",
+				"text": "Personne n'est dans le chat en direct pour le moment. Écrivez-nous — nous répondons sous deux jours ouvrés.",
+				"textShort": "Écrivez-nous — réponse sous deux jours ouvrés.",
+				"later": "Plus tard",
+				"mail": "Écrire une demande à un centre de conseil",
+				"mailShort": "Écrire une demande"
+			},
+			"steps": {
+				"wait": {
+					"title": "Vous attendez qu'une personne soit libre",
+					"text": "Les conseillères sont actuellement dans d'autres conversations."
+				},
+				"consent": {
+					"title": "Puis vous acceptez une seule fois",
+					"text": "Dès qu'un centre prend votre conversation, vous voyez sa politique de confidentialité."
+				},
+				"anonymous": {
+					"title": "Anonyme, puis effacé",
+					"text": "Seul votre pseudonyme est visible. Après 48 heures, tout est supprimé."
+				}
+			}
 		}
 	}
 }

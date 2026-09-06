@@ -4793,6 +4793,64 @@
 				"wisdom": "bilgeliği"
 			},
 			"quote": "Tanrım, değiştiremeyeceğim şeyleri kabul etme {serenity}, değiştirebileceklerimi değiştirme {courage} ve ikisini ayırt etme {wisdom} bana ver."
+		},
+		"entry": {
+			"kicker": "Canlı sohbet",
+			"status": {
+				"access": "Bu görüşme için erişiminiz",
+				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"accepted": "Bir danışman görüşmenizi kabul etti",
+				"closed": "Şu anda kapalı"
+			},
+			"access": {
+				"headline": "Bugünkü adınız.",
+				"subline": "Anonim, hesapsız. Beğenene kadar zar atın.",
+				"label": "Takma adınız",
+				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
+				"reroll": "Yeniden at",
+				"continue": "Bekleme odasına"
+			},
+			"waiting": {
+				"headline": "Az kaldı.",
+				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"aheadNone": "Sıradaki sizsiniz.",
+				"aheadOne": "Önünüzde bir kişi",
+				"aheadMany": "Önünüzde {{count}} kişi",
+				"accepted": "Bir danışman burada.",
+				"companion": "Başlayana kadar sakin bir eşlik",
+				"mail": "Beklemek yerine yazmak mı? E-posta danışmanlığına →",
+				"bar": "Bekleme odası",
+				"barStatusUnknown": "Sizin yapmanız gereken bir şey yok",
+				"barStatus": "Önünüzde {{count}} kişi — yapmanız gereken bir şey yok",
+				"yourTurn": "Sıra sizde.",
+				"yourTurnSub": "Bir danışman görüşmenizi kabul etti ve sizi bekliyor.",
+				"decline": "Kabul etme ve sohbetten ayrıl",
+				"start": "Kabul et ve başla",
+				"startStatus": "Danışmanınız sizi bekliyor"
+			},
+			"closed": {
+				"headline": "Canlı sohbet şu anda kapalı.",
+				"hoursLabel": "Çalışma saatleri",
+				"text": "Şu anda canlı sohbette kimse yok. Bize yazın — iki iş günü içinde yanıtlıyoruz.",
+				"textShort": "Bize yazın — iki iş günü içinde yanıt.",
+				"later": "Sonra",
+				"mail": "Bir danışma merkezine talep yazın",
+				"mailShort": "Talep yaz"
+			},
+			"steps": {
+				"wait": {
+					"title": "Biri müsait olana kadar beklersiniz",
+					"text": "Danışmanlar şu anda başka görüşmelerde."
+				},
+				"consent": {
+					"title": "Sonra bir kez onaylarsınız",
+					"text": "Bir merkez görüşmenizi kabul eder etmez gizlilik politikasını görürsünüz."
+				},
+				"anonymous": {
+					"title": "Anonim ve sonra silinir",
+					"text": "Yalnızca takma adınız görünür. 48 saat sonra her şey silinir."
+				}
+			}
 		}
 	}
 }

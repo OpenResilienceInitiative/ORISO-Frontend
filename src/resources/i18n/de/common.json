@@ -4785,6 +4785,64 @@
 				"wisdom": "Weisheit"
 			},
 			"quote": "Gott, gib mir die {serenity}, Dinge hinzunehmen, die ich nicht ändern kann, den {courage}, Dinge zu ändern, die ich ändern kann, und die {wisdom}, das eine vom anderen zu unterscheiden."
+		},
+		"entry": {
+			"kicker": "Live-Chat",
+			"status": {
+				"access": "Ihr Zugang für dieses Gespräch",
+				"waiting": "Warteraum — freie Beraterin wird gesucht",
+				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
+				"closed": "Gerade geschlossen"
+			},
+			"access": {
+				"headline": "Ihr Name für heute.",
+				"subline": "Anonym, ohne Konto. Würfeln Sie, bis er Ihnen gefällt.",
+				"label": "Ihr Pseudonym",
+				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
+				"reroll": "Neu würfeln",
+				"continue": "Zum Warteraum"
+			},
+			"waiting": {
+				"headline": "Gleich geht es los.",
+				"aheadUnknown": "Wir suchen eine freie Beraterin für Sie.",
+				"aheadNone": "Sie sind die Nächste.",
+				"aheadOne": "Eine Person vor Ihnen",
+				"aheadMany": "{{count}} Personen vor Ihnen",
+				"accepted": "Eine Beraterin ist da.",
+				"companion": "Ruhige Begleitung, bis es losgeht",
+				"mail": "Lieber schreiben statt warten? Zur Mail-Beratung →",
+				"bar": "Warteraum",
+				"barStatusUnknown": "Sie müssen nichts tun",
+				"barStatus": "{{count}} vor Ihnen — Sie müssen nichts tun",
+				"yourTurn": "Sie sind dran.",
+				"yourTurnSub": "Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.",
+				"decline": "Nicht zustimmen und Chat verlassen",
+				"start": "Zustimmen & starten",
+				"startStatus": "Ihre Beraterin wartet auf Sie"
+			},
+			"closed": {
+				"headline": "Der Live-Chat ist gerade geschlossen.",
+				"hoursLabel": "Öffnungszeiten",
+				"text": "Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.",
+				"textShort": "Schreiben Sie uns — Antwort in zwei Arbeitstagen.",
+				"later": "Später",
+				"mail": "Anfrage an eine Beratungsstelle schreiben",
+				"mailShort": "Anfrage schreiben"
+			},
+			"steps": {
+				"wait": {
+					"title": "Sie warten, bis jemand frei ist",
+					"text": "Die Beraterinnen sind gerade in anderen Gesprächen."
+				},
+				"consent": {
+					"title": "Dann stimmen Sie einmal zu",
+					"text": "Sobald eine Stelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz."
+				},
+				"anonymous": {
+					"title": "Anonym, und danach weg",
+					"text": "Nur Ihr Pseudonym ist sichtbar. Nach 48 Stunden ist alles gelöscht."
+				}
+			}
 		}
 	}
 }
