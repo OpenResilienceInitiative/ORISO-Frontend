@@ -54,9 +54,9 @@ _"dispatches the first message to the enquiry endpoint exactly once even with a 
 
 `ORISO-Helm/templates/userservice/userservice-configmap-env.yaml` sets
 
-```
-MAIL_SERVICE_API_URL:       "http://mailservice.{{ .Release.Namespace }}:8080"
-MAIL_SERVICE_API_MAILS_SEND:"http://mailservice.{{ .Release.Namespace }}:8080/mails/send"
+```yaml
+MAIL_SERVICE_API_URL: 'http://mailservice.{{ .Release.Namespace }}:8080'
+MAIL_SERVICE_API_MAILS_SEND: 'http://mailservice.{{ .Release.Namespace }}:8080/mails/send'
 ```
 
 but **there is no mailservice in the chart** — no `templates/mailservice/`, no subchart. Those two
@@ -126,7 +126,7 @@ SELECT enquiry_message_date, is_consultant_directly_set FROM session WHERE id = 
 
 Log lines to grep in the userservice:
 
-```
+```text
 Could not post the Erstantwort for session 34
 CreateEnquiryMessageFacade error
 MailServiceHelper error

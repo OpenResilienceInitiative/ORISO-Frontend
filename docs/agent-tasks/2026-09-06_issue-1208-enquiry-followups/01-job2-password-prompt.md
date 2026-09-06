@@ -44,14 +44,23 @@ Two candidates were ruled out along the way:
 ## The fix, and why not the obvious one
 
 The obvious fix is `navigator.credentials.store`. **It was deliberately rejected.**
-`playwright/credential-saving.crossbrowser.spec.ts` records the decision from #825: the Credential
-Management API is Chromium-only, and adopting it _"silently stops working for Safari and Firefox
-users while continuing to look correct in a Chromium-based review — the single most likely way
-this regresses."_ Issue #1208 asks only for Chromium, but a Chromium-only patch would walk straight
-into the trap that spec exists to prevent.
+`playwright/credential-saving.crossbrowser.spec.ts` records the decision from #825, in its own
+words: the Credential Management API _"is Chromium-only"_, and adopting it _"silently stops
+working for Safari and Firefox users while continuing to look correct in a Chromium-based review —
+the single most likely way this regresses."_
 
-So the fix restores the condition every engine needs: the post-registration hop is a document
-navigation again.
+**That wording is imprecise and worth stating accurately, because the conclusion survives the
+correction.** `CredentialsContainer.store()` itself is not Chromium-only — MDN lists it as
+_Baseline: widely available_, across browsers since January 2020. What has limited reach is the
+**password** half: MDN marks the `PasswordCredential` interface _Experimental_ with _"Limited
+availability"_, explicitly _"not Baseline because it does not work in some of the most widely-used
+browsers"_. Since storing a username and password is precisely what this feature needs, #825's
+concern holds: reaching for `PasswordCredential` would satisfy a Chromium review while leaving the
+other engines exactly as broken. Issue #1208 asks only for Chromium, but that is the trap the spec
+exists to prevent.
+
+So the fix targets the mechanism every engine relies on instead: the post-registration hop is a
+document navigation again.
 
 ```ts
 redirectToApp(getPostRegistrationGroupChatId(location.search), { sessionId });
@@ -68,7 +77,7 @@ redirectToApp(getPostRegistrationGroupChatId(location.search), { sessionId });
 
 `69e5a231` removed that reload so the #1219 stage handover would flow seamlessly into the app.
 Restoring the document navigation reintroduces a brief page load at the very end of registration.
-That is the price of a save prompt that works in Safari and Firefox as well as Edge. If the
+That is the price of a mechanism that is not limited to one engine. If the
 seamless hop matters more than cross-browser credential saving, the alternative is the
 Chromium-only API — but that contradicts #825 and should be an explicit decision, not a default.
 
@@ -82,6 +91,15 @@ schedule.
 - `autoLogin.test.ts` gains a regression test asserting the document-navigation fallback, named
   and commented for #1208.
 - The native save prompt is browser chrome and cannot be asserted by any driver — the same
-  limitation `credential-saving.crossbrowser.spec.ts` documents for #825. **Manual check required:**
-  register a fresh asker in Chrome or Edge and confirm the save-password bubble appears. I did not
-  run this myself: it needs a real registration against a live backend, which creates an account.
+  limitation `credential-saving.crossbrowser.spec.ts` documents for #825.
+
+**Cross-browser support is pending, not a result.** What is established is narrow and should be
+read that way: the regression is identified, document navigation is the intended fix, and the
+`redirectToApp` fallback is pinned by a test. No manual check has run in any engine, so nothing
+here claims that Chrome, Edge, Firefox or Safari actually shows the prompt on this branch.
+
+**Manual check required before merge**, in each engine with password saving enabled: register a
+fresh asker, confirm the native save prompt appears, and confirm the welcome handover still plays
+across the document reload (`POST_REGISTRATION_LOADER_KEY`). Record the outcome per engine on the
+PR. I did not run it: it needs a real registration against a live backend, which creates an
+account.
