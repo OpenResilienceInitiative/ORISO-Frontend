@@ -113,7 +113,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail einfach. Ihr Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'termin': {
@@ -462,6 +462,10 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	}
 };

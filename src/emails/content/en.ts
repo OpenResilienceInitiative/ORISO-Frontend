@@ -97,7 +97,7 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'If you did not ask for this, simply ignore this email. Your password stays unchanged.',
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'termin': {
@@ -446,6 +446,10 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Go to profile', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This is a security notice and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	}
 };

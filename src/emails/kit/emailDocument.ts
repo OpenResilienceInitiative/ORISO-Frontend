@@ -93,7 +93,7 @@ export const emailDocument = ({
 </head>
 <body style="margin:0;padding:0;width:100%;background-color:${
 		emailColor.canvas
-	};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+	};word-wrap:break-word;overflow-wrap:anywhere;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 ${emailPreheader(preheader)}
 ${body}
 </body>

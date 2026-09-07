@@ -101,7 +101,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn du das nicht angefordert hast, ignoriere diese E-Mail einfach. Dein Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'termin': {
@@ -450,6 +450,10 @@ export const deDu: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
+		}
 	}
 };
