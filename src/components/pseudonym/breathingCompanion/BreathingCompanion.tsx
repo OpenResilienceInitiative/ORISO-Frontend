@@ -765,7 +765,7 @@ export default function BreathingCompanion({
 			audioRef.current?.duck(false);
 			voiceRef.current = false;
 			setVoice(false);
-			setAudioError(copy.voiceError);
+			setAudioError(copyRef.current.voiceError);
 		};
 		speechSynthesis.speak(utterance);
 	}
@@ -822,7 +822,7 @@ export default function BreathingCompanion({
 				voiceRef.current = false;
 				setSound(false);
 				setVoice(false);
-				setAudioError(copy.audioError);
+				setAudioError(copyRef.current.audioError);
 				stop();
 			}
 		}
