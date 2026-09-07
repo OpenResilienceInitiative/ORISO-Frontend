@@ -178,6 +178,7 @@ export const caseHandoverColleagueName = (
 	colleague.consultantId;
 
 export interface CaseHandoverOffer {
+	accessType?: CaseHandoverAccessType;
 	/** Same value the status DTO reports as `requestId`. */
 	offerId: number;
 	sessionId: number;

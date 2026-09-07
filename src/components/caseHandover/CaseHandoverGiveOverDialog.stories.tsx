@@ -8,6 +8,7 @@ import {
 } from './CaseHandoverGiveOverDialog';
 import {
 	caseHandoverColleagueName,
+	type CaseHandoverOffer,
 	type CaseHandoverColleague,
 	type CaseHandoverReason
 } from '../../api/apiCaseHandover';
@@ -147,18 +148,26 @@ const withStubbedApi = (Story: React.ComponentType) => {
 			return json(reasons);
 		}
 		if (url.includes('/case-handover/offers')) {
+			const submitted =
+				input instanceof Request
+					? await input.clone().json()
+					: JSON.parse(String(init?.body || '{}'));
+			const reason = reasons.find(
+				(entry) => entry.code === submitted.reasonCode
+			);
 			return json({
 				offerId: 1,
 				sessionId: 42,
 				status: 'PENDING_RECIPIENT_ACCEPT',
 				direction: 'PUSH',
-				reasonCode: 'PLANNED_ABSENCE',
-				reasonLabel: 'Planned absence',
-				explanation: 'Geplant abwesend',
-				clientConsentRequired: false,
+				reasonCode: submitted.reasonCode,
+				reasonLabel: reason?.label,
+				explanation: submitted.explanation,
+				accessType: reason?.accessType || 'TAKEOVER',
+				clientConsentRequired: reason?.clientConsentRequired,
 				fromConsultantId: 'c-0',
 				fromConsultantName: 'Anna Weber',
-				targetConsultantId: 'c-2',
+				targetConsultantId: submitted.targetConsultantId,
 				targetConsultantName: 'Kim Grothe',
 				createdAt: '2026-09-05T09:00:00Z',
 				offerExpiresAt: '2026-09-08T09:00:00Z'
@@ -286,13 +295,25 @@ export const ErrorState: Story = {
 /** The wired dialog against stubbed endpoints — the stage, not the atoms. */
 export const WiredDialog: Story = {
 	decorators: [withStubbedApi],
-	render: () => (
-		<CaseHandoverGiveOverDialog
-			sessionId={42}
-			open
-			onClose={() => undefined}
-		/>
-	),
+	render: function WiredDialogHarness() {
+		const [offer, setOffer] = useState<CaseHandoverOffer | null>(null);
+		return (
+			<>
+				<CaseHandoverGiveOverDialog
+					sessionId={42}
+					open
+					onClose={() => undefined}
+					onOfferCreated={setOffer}
+				/>
+				{offer && (
+					<output data-testid="wired-offer-result">
+						{offer.reasonCode}/{offer.accessType}/
+						{offer.targetConsultantId}
+					</output>
+				)}
+			</>
+		);
+	},
 	play: async ({ canvasElement }) => {
 		// The dialog is portalled to the body, so query the document.
 		const screen = within(canvasElement.ownerDocument.body);
@@ -306,16 +327,19 @@ export const WiredDialog: Story = {
 			name: /Rat erbeten/
 		});
 		await userEvent.click(reason);
-		await waitFor(async () =>
-			expect(
-				await screen.findByText(
-					/Klient:in muss der Übergabe zustimmen/i
-				)
-			).toBeVisible()
-		);
+		await expect(
+			await screen.findByText(
+				'Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird.'
+			)
+		).toBeVisible();
 
 		const submit = screen.getByTestId('case-handover-give-over-submit');
 		await expect(submit).toBeEnabled();
+		await expect(submit).toHaveTextContent('Zugriff anbieten');
+		await userEvent.click(submit);
+		await expect(
+			await screen.findByTestId('wired-offer-result')
+		).toHaveTextContent('ADVICE_REQUESTED/CO_ACCESS/c-2');
 	}
 };
 
