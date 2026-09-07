@@ -3076,6 +3076,7 @@
 		}
 	},
 	"caseHandover": {
+		"history": { "unknownConsultant": "ናይ ቀደም ኣማኻሪ" },
 		"copy": "እዚ ጉዳይ እዚ ከም ሜታዳታ ጥራይ እዩ ዝረአ። ናይ ምትሕልላፍ ምኽንያት ምረጹ እሞ ስለምንታይ ተበጻሕነት ከም ዘድልየኩም ግለጹ።",
 		"batch": {
 			"cancel": "ምረጻ ዕጸው",
@@ -3197,6 +3198,9 @@
 			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ"
 		},
 		"giveOver": {
+			"coAccessTitle": "ምኽሪ ሕተት",
+			"coAccessDescription": "ድሕሪ እቲ ሓሳብ ምቕባሉን ኣድላዪ ስምምዕ ምርካቡን፡ እቲ ብጻይ ግዜያዊ መእተዊ ይረክብ። ሓላፍነት ናይቲ ጉዳይ ኣባኻ ይቕጽል።",
+			"coAccessSubmit": "መእተዊ ኣቕርብ",
 			"title": "ጉዳይ ኣረክብ",
 			"description": "ካብ ማእከል ምኽርኻ ሓደ ብጻይን ምኽንያትን ምረጽ። እቲ ብጻይ ነቲ ምርኻብ ክቕበሎ ኣለዎ።",
 			"colleague": {

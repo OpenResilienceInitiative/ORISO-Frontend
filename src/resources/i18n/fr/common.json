@@ -3076,6 +3076,7 @@
 		}
 	},
 	"caseHandover": {
+		"history": { "unknownConsultant": "Un ancien conseiller" },
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
 		"batch": {
 			"cancel": "Fermer la sélection",
@@ -3197,6 +3198,9 @@
 			"ADVICE_REQUESTED": "Conseil demandé"
 		},
 		"giveOver": {
+			"coAccessTitle": "Demander conseil",
+			"coAccessDescription": "Après acceptation et obtention du consentement requis, votre collègue bénéficie d’un accès temporaire. Vous restez responsable du dossier.",
+			"coAccessSubmit": "Proposer un accès",
 			"title": "Transmettre le dossier",
 			"description": "Choisissez un·e collègue de votre centre de conseil et un motif. Votre collègue doit accepter la transmission.",
 			"colleague": {

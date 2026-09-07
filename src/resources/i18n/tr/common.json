@@ -3076,6 +3076,7 @@
 		}
 	},
 	"caseHandover": {
+		"history": { "unknownConsultant": "Önceki danışman" },
 		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",
 		"batch": {
 			"cancel": "Seçimi kapat",
@@ -3197,6 +3198,9 @@
 			"ADVICE_REQUESTED": "Danışma talep edildi"
 		},
 		"giveOver": {
+			"coAccessTitle": "Görüş iste",
+			"coAccessDescription": "Teklif kabul edildikten ve gerekli onay alındıktan sonra meslektaşınız geçici erişim kazanır. Vakanın sorumluluğu sizde kalır.",
+			"coAccessSubmit": "Erişim teklif et",
 			"title": "Vakayı devret",
 			"description": "Danışma merkezinizden bir meslektaş ve bir gerekçe seçin. Meslektaşınızın devri kabul etmesi gerekir.",
 			"colleague": {
