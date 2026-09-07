@@ -122,16 +122,19 @@ describe('NotificationConfigView', () => {
 		);
 	});
 
-	it('reports an email toggle', () => {
+	it('links to authoritative email preferences instead of editing Matrix email flags', () => {
 		const onChange = vi.fn();
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
-		fireEvent.click(screen.getByTestId('notif-email-requests-mention'));
-		expect(onChange).toHaveBeenCalledWith(
-			'requests',
-			'mention',
-			'email',
-			true
-		);
+		expect(screen.queryByTestId('notif-email-requests-mention')).toBeNull();
+		expect(
+			screen.queryByText('profile.notifications.config.emailNote')
+		).toBeNull();
+		expect(
+			screen
+				.getByRole('link', { name: 'profile.notifications.title' })
+				.getAttribute('href')
+		).toBe('/profile/einstellungen#email-notifications');
+		expect(onChange).not.toHaveBeenCalled();
 	});
 
 	it('switches area via a tab click', () => {

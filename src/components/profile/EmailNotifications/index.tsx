@@ -50,7 +50,10 @@ export const EmailNotification = () => {
 	const highlighted = switchForOccasion(switches, occasion);
 
 	return (
-		<div className="notifications__content notifications__content--enhanced">
+		<div
+			id="email-notifications"
+			className="notifications__content notifications__content--enhanced"
+		>
 			<div className="profile__content__title notifications__hero">
 				<Headline
 					text={t('profile.notifications.title')}

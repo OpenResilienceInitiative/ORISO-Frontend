@@ -15,7 +15,6 @@ import {
 	previewNotificationSound,
 	soundAssetFor
 } from '../../../utils/notificationSettings/soundPlayback';
-import { M3Checkbox } from '../../M3Checkbox';
 import {
 	AREA_KINDS,
 	BannerMode,
@@ -31,7 +30,7 @@ import {
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
- * A single kind row: volume arrows + sound dropdown (with play/mute) + email
+ * A single kind row: volume arrows + sound dropdown (with play/mute) + banner
  * ------------------------------------------------------------------ */
 
 const KindRow = ({
@@ -190,14 +189,6 @@ const KindRow = ({
 						</option>
 					</select>
 				</label>
-				<M3Checkbox
-					checked={value.email}
-					onChange={(checked) =>
-						onChange(area, kind, 'email', checked)
-					}
-					label={t('profile.notifications.config.sendByEmail')}
-					dataCy={`notif-email-${area}-${kind}`}
-				/>
 			</div>
 		</div>
 	);
@@ -234,7 +225,9 @@ export const NotificationConfigView = ({
 				{t('profile.notifications.config.intro')}
 			</p>
 			<p className="notifConfig__emailNote">
-				{t('profile.notifications.config.emailNote')}
+				<a href="/profile/einstellungen#email-notifications">
+					{t('profile.notifications.title')}
+				</a>
 			</p>
 
 			<div className="notifConfig__tabs" role="tablist">
