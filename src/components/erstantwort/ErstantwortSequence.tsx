@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import { useAssistantName } from '../assistant/assistantName';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
 import { ResolvedBaustein } from './erstantwortResolve';
@@ -81,6 +82,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	slots
 }) => {
 	const { t } = useTranslation();
+	const assistantName = useAssistantName();
 	const total = bausteine.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
@@ -155,7 +157,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					<div className="pseudonymCard__contentCol erstantwort__content">
 						<div className="pseudonymCard__header">
 							<span className="pseudonymCard__headerName">
-								Carimat
+								{assistantName}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
 								{subtitle ??

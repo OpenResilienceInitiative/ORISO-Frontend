@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAssistantName } from '../assistant/assistantName';
 import './PseudonymCard.styles.scss';
 import './BreathingTutorialCard.styles.scss';
 
@@ -211,6 +212,7 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 	onConfirm
 }) => {
 	const { t } = useTranslation();
+	const assistantName = useAssistantName();
 
 	const phaseContent: Record<
 		BreathingTutorialPhase,
@@ -281,7 +283,7 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 				<div className="pseudonymCard__contentCol breathingTutorialCard__contentCol">
 					<div className="pseudonymCard__header">
 						<span className="pseudonymCard__headerName">
-							Carimat
+							{assistantName}
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
 							{t(

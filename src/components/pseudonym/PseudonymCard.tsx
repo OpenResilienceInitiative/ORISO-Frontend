@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import { AnimalAvatar } from './AnimalAvatar';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
+import { useAssistantName } from '../assistant/assistantName';
 import './PseudonymCard.styles.scss';
 
 interface PseudonymCardProps {
@@ -51,6 +52,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 	onDone
 }) => {
 	const { t } = useTranslation();
+	const assistantName = useAssistantName();
 
 	const message = t(
 		'anonymousChat.pseudonym.carimatMessage',
@@ -82,7 +84,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 				<div className="pseudonymCard__contentCol">
 					<div className="pseudonymCard__header">
 						<span className="pseudonymCard__headerName">
-							Carimat
+							{assistantName}
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
 							{t(

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
+import { useAssistantName } from '../assistant/assistantName';
 import './PseudonymCard.styles.scss';
 import './PrivacyMessageCard.styles.scss';
 
@@ -44,6 +45,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 	onDone
 }) => {
 	const { t } = useTranslation();
+	const assistantName = useAssistantName();
 	/* Keep the card's trailing edge visible at all times while the
 	   typewriter is running. A ResizeObserver on the root element fires
 	   every time the bubble grows a line (newlines / wraps during typing)
@@ -101,7 +103,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 				<div className="pseudonymCard__contentCol">
 					<div className="pseudonymCard__header">
 						<span className="pseudonymCard__headerName">
-							Carimat
+							{assistantName}
 						</span>
 						<span className="pseudonymCard__headerSubtitle">
 							{t(

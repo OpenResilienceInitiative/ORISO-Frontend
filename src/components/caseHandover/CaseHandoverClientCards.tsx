@@ -7,6 +7,7 @@ import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/de
 import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import { useAssistantName } from '../assistant/assistantName';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import { Switch } from '../Switch';
 import '../message/message.styles.scss';
@@ -283,6 +284,7 @@ export const CaseHandoverConsentCard = ({
 	timestamp
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
+	const assistantName = useAssistantName();
 	const isOptOut = mode === 'OPT_OUT';
 	const messageTitle = isOptOut
 		? translate(
@@ -312,7 +314,7 @@ export const CaseHandoverConsentCard = ({
 			data-testid="case-handover-inline-consent"
 		>
 			<CaseHandoverSystemMessageCard
-				title={translate('caseHandover.consent.sender', 'Carimat')}
+				title={assistantName}
 				subtitle={translate(
 					'caseHandover.consent.senderRole',
 					'Quick Guide'
