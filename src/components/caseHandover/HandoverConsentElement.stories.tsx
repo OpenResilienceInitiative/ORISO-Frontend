@@ -8,6 +8,12 @@ import {
 	type HandoverConsentLinksStatus,
 	type HandoverConsentMode
 } from './HandoverConsentElement';
+import {
+	contrastRatio,
+	darkSchemeGlobals,
+	relativeLuminance,
+	schemeToken
+} from '../message/messageStoryShell';
 import '../erstantwort/ErstantwortSequence.styles.scss';
 import './handoverConsentElement.styles.scss';
 
@@ -478,5 +484,73 @@ export const M4Vergleich1440: Story = {
 		const lines = canvas.getAllByTestId('handover-consent-state-line');
 		await expect(lines[0]).toHaveTextContent(/müssen Sie vorher fragen/);
 		await expect(lines[1]).toHaveTextContent(/ohne Sie vorher zu fragen/);
+	}
+};
+
+/* --------------------------------------------------------------------------
+   Dunkles Schema
+   -------------------------------------------------------------------------- */
+
+/**
+ * **(m4-dunkel) Modul 4 im dunklen Schema — der Beweis, wo der Fehler liegt.**
+ *
+ * `handoverConsentElement.styles.scss` ist die **vorbildliche** Datei der vier
+ * Module: kein einziger fester Farbwert außerhalb eines
+ * `var(--m3-…, fallback)`, wie es der Sweep-Wächter verlangt (Kopf der Datei:
+ * *„All colours go through M3 roles with an explicit fallback"*).
+ *
+ * Und genau deshalb bricht es hier. Modul 4 rendert **in** derselben
+ * Carimat-Blase wie die Geschwister — `HandoverConsentElement.tsx:442` gibt
+ * seinen Inhalt an `ErstantwortSequence` weiter —, und diese Blase verdrahtet
+ * ihr Grau fest: `.pseudonymCard__bubble { background: #eeeeee }`. Die Schrift
+ * folgt der Rolle nach hell, der Untergrund folgt nicht.
+ *
+ * Gemessen auf dieser Story (390 px, Schema `dark`):
+ *
+ * | Element | Farbe | gegen die Blase `#eeeeee` |
+ * | --- | --- | --- |
+ * | Zustandszeile (`--m3-on-surface`) | `#e4e2e2` | **1,11:1** |
+ * | Fließtext der Blase (fester Wert) | `#1c1b1f` | 14,76:1 |
+ *
+ * Das ist der eigentliche Befund der vier dunklen Stories: **die Module machen
+ * es richtig, die Blase nicht.** Wer den Fehler in Modul 4 sucht, sucht an der
+ * falschen Stelle — die Reparatur ist eine Zeile in
+ * `PseudonymCard.styles.scss`, nicht vier Zeilen in vier Modulen.
+ *
+ * Die `play`-Funktion belegt beide Hälften: dass die Schrift dem Schema
+ * **gefolgt** ist (das bleibt richtig, auch nachdem die Blase repariert
+ * wurde), und dass sie damit heute unter der Lesbarkeitsschwelle landet.
+ */
+export const M4Dunkel: Story = {
+	name: '(m4-dunkel) Dunkles Schema — Telefon 390',
+	globals: darkSchemeGlobals,
+	render: () => <Live mode="OPT_IN" width={390} />,
+	play: async ({ canvasElement }) => {
+		/* 1. Das Schema ist wirklich dunkel — gemessen, nicht angesehen. */
+		expect(relativeLuminance(schemeToken('--m3-surface'))).toBeLessThan(
+			0.1
+		);
+
+		/* 2. Die Schrift ist mitgegangen: die Zustandszeile zieht ihre Farbe
+		   aus `--m3-on-surface`, also ist sie im dunklen Schema hell. Diese
+		   Zusicherung bleibt richtig, wenn die Blase repariert wird. */
+		const stateLine = within(canvasElement).getByTestId(
+			'handover-consent-state-line'
+		);
+		const colour = getComputedStyle(stateLine).color;
+		expect(relativeLuminance(colour)).toBeGreaterThan(0.5);
+
+		/* 3. Und der Befund: die Blase ist hell geblieben, also steht helle
+		   Schrift auf hellgrau. Fällt um, sobald `.pseudonymCard__bubble` eine
+		   M3-Rolle bekommt — beabsichtigt. */
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.pseudonymCard__bubble'
+		);
+		expect(bubble).not.toBeNull();
+		const bubbleBackground = getComputedStyle(
+			bubble as HTMLElement
+		).backgroundColor;
+		expect(relativeLuminance(bubbleBackground)).toBeGreaterThan(0.5);
+		expect(contrastRatio(colour, bubbleBackground)).toBeLessThan(4.5);
 	}
 };

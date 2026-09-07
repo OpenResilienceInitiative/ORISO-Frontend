@@ -12,8 +12,12 @@ import { expect, userEvent, within } from 'storybook/test';
 
 import { ErstantwortSuccessMessage } from './ErstantwortSuccessMessage';
 import {
+	contrastRatio,
+	darkSchemeGlobals,
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	relativeLuminance,
+	schemeToken
 } from '../message/messageStoryShell';
 
 /**
@@ -232,4 +236,99 @@ export const M1ErfolgDesktop1440: Story = {
 	name: '(m1-erfolg-1440) Erfolgsnachricht — Desktop',
 	globals: desktop1440Globals,
 	args: { showImage: true }
+};
+
+/* --------------------------------------------------------------------------
+   Dunkles Schema
+   -------------------------------------------------------------------------- */
+
+/**
+ * **(m1-dunkel) Modul 1 im dunklen Schema — und was dabei herauskommt.**
+ *
+ * Die erste dunkle Story im ganzen Zweig. Der Umschalter
+ * (`.storybook/withOrisoScheme.tsx`, seit ORISO-Frontend#898) hatte bis zum
+ * 07.09.2026 **null** Nutzer: `grep -rn "scheme: 'dark'" src --include="*.stories.tsx"`
+ * fand keinen Treffer.
+ *
+ * <h3>Der Mechanismus, gemessen statt vermutet</h3>
+ *
+ * Die Carimat-Blase folgt dem Schema **nicht**: `.pseudonymCard__bubble` setzt
+ * `background: #eeeeee` als **festen Hex-Wert** (`PseudonymCard.styles.scss`).
+ * Die Schrift *in* der Blase hat dagegen keine eigene Farbe und erbt sie von
+ * `document.body` — und die setzt der Umschalter auf `--m3-on-surface`. Im
+ * dunklen Schema läuft der Text also nach hell, der Untergrund bleibt hellgrau.
+ *
+ * Gemessen auf dieser Story (390 px, Schema `dark`, Seed `#a5000a`):
+ *
+ * | Element | Farbe | gegen die Blase `#eeeeee` |
+ * | --- | --- | --- |
+ * | Fragenzeile (`.erstantwortDisclosure__toggle`) | `#e4e2e2` | **1,11:1** |
+ * | Überschrift „Häufige Fragen" | `#e4e2e2` | **1,11:1** |
+ * | rote Notfallzeile (`--m3-primary` dunkel) | `#ffb4a8` | **1,46:1** |
+ * | Fließtext (`.pseudonymCard__bubbleText`) | `#1c1b1f` | 14,76:1 |
+ *
+ * WCAG 2.2 AA verlangt 4,5:1 für Fließtext. Die letzte Zeile ist der Punkt:
+ * **in derselben Blase** ist eine Zeile lesbar und die darüber nicht — weil die
+ * eine ihre Farbe fest verdrahtet hat und die andere die Rolle benutzt. Im
+ * hellen Schema heben sich die beiden Fehler gegenseitig auf; erst hier fallen
+ * sie auseinander.
+ *
+ * Dazu der Kopf über der Blase, der auf dem dunklen Grund steht:
+ * `.pseudonymCard__headerName` („Carimat") ist fest `#1f2937` → **1,26:1**, und
+ * `.pseudonymCard__headerSubtitle` benutzt mit `--m3-secondary-container` eine
+ * **Container-Rolle als Textfarbe** → **2,0:1**.
+ *
+ * Das ist **kein Fehler dieser Story**. Der Docblock des Umschalters sagt es
+ * selbst: *„Expect components to look wrong in dark. That is the finding this
+ * switcher exists to surface."*
+ *
+ * Die `play`-Funktion hält den Befund fest, statt ihn zu behaupten: sie belegt,
+ * dass das Schema wirklich dunkel gerendert hat, und misst dann, dass die Blase
+ * trotzdem hell geblieben ist. **Wenn jemand `.pseudonymCard__bubble` auf eine
+ * M3-Rolle umstellt, fällt diese Story um** — und muss dann angepasst werden.
+ * Das ist beabsichtigt: der Befund darf nicht still verschwinden.
+ *
+ * <h3>Warum das a11y-Tor es nicht gemeldet hat</h3>
+ *
+ * Es läuft nicht. `.storybook/vitest.setup.ts` ruft `setProjectAnnotations`
+ * selbst auf; seit Storybook 10.3 überspringt `@storybook/addon-vitest` dann
+ * das automatische Einhängen der Addon-Annotationen — und damit auch den
+ * axe-Lauf von `addon-a11y`. Der Lauf schreibt das als Info-Kasten selbst hin.
+ * Gegenprobe: eine Wegwerf-Story mit 1,11:1, einem Knopf ohne Namen und einem
+ * `<img>` ohne `alt` lief **grün** durch `vitest --project storybook`.
+ * `parameters.a11y.test: 'error'` in `.storybook/preview.tsx` gilt damit heute
+ * nur im Browser-Panel, nicht im Tor.
+ */
+export const M1Dunkel: Story = {
+	name: '(m1-dunkel) Dunkles Schema — Telefon 390',
+	globals: { ...phone390Globals, ...darkSchemeGlobals },
+	args: { showImage: false },
+	play: async ({ canvasElement }) => {
+		/* 1. Das Schema ist wirklich dunkel — gemessen, nicht angesehen. */
+		const surface = schemeToken('--m3-surface');
+		const onSurface = schemeToken('--m3-on-surface');
+		expect(relativeLuminance(surface)).toBeLessThan(0.1);
+		expect(relativeLuminance(onSurface)).toBeGreaterThan(0.5);
+
+		/* 2. Der Befund: die Blase ist dem Schema nicht gefolgt. */
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.pseudonymCard__bubble'
+		);
+		expect(bubble).not.toBeNull();
+		const bubbleBackground = getComputedStyle(
+			bubble as HTMLElement
+		).backgroundColor;
+		expect(relativeLuminance(bubbleBackground)).toBeGreaterThan(0.5);
+
+		/* 3. Und was das kostet: die Fragenzeilen zeichnen ihre Schrift korrekt
+		   aus `--m3-on-surface` — hell — und stehen damit auf hellgrau. Die
+		   Zahl steht hier, damit der Befund eine Größe hat und nicht nur ein
+		   Adjektiv. Unter 4,5:1 ist Fließtext nach WCAG 2.2 AA durchgefallen. */
+		const row = canvasElement.querySelector<HTMLElement>(
+			'.erstantwortDisclosure__toggle'
+		);
+		expect(row).not.toBeNull();
+		const rowColour = getComputedStyle(row as HTMLElement).color;
+		expect(contrastRatio(rowColour, bubbleBackground)).toBeLessThan(4.5);
+	}
 };

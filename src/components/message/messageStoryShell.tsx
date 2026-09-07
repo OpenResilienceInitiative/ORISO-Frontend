@@ -174,3 +174,72 @@ export const phone375Globals = { viewport: { value: 'phone375' } };
 export const tablet834Globals = { viewport: { value: 'tablet834' } };
 /** Desktop evidence viewport required by the ORISO Storybook gate. */
 export const desktop1440Globals = { viewport: { value: 'desktop1440' } };
+
+/* --------------------------------------------------------------------------
+   Farbschema
+   -------------------------------------------------------------------------- */
+
+/**
+ * **Dunkles Schema.** Der Umschalter existiert seit ORISO-Frontend#898
+ * (`.storybook/withOrisoScheme.tsx`) und wurde bis zum 07.09.2026 von **keiner
+ * einzigen Story** benutzt — `grep -rn "scheme: 'dark'" src --include="*.stories.tsx"`
+ * fand null Treffer, obwohl die gelöschte `SupervisionPanel.stories.tsx` eine
+ * solche Story einmal hatte (`INVENTAR-bausteine-chat-2026-09-07.md`, §1).
+ *
+ * Der Docblock des Umschalters sagt, was zu erwarten ist: *„Expect components
+ * to look wrong in dark. That is the finding this switcher exists to surface,
+ * not a regression it introduces."* Eine dunkle Story ist deshalb ein
+ * **Messgerät**, keine Zusicherung, dass der Baustein dunkel schön ist.
+ */
+export const darkSchemeGlobals = { scheme: 'dark' };
+
+/** Dunkles Schema auf der Telefonbreite — die Mehrheitsfläche der Ratsuchenden. */
+export const phone390DarkGlobals = {
+	viewport: { value: 'phone390' },
+	scheme: 'dark'
+};
+
+/**
+ * Liest einen lebenden M3-Token vom Canvas-Wurzelelement — also genau den Wert,
+ * den `withOrisoScheme` gerade gesetzt hat, nicht den Rückfallwert aus dem
+ * Stylesheet. `computeOrisoPalette` liefert Kleinbuchstaben-Hex.
+ */
+export const schemeToken = (name: string): string =>
+	getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/** `#rrggbb` oder `rgb(r, g, b)` → `[r, g, b]`, sonst `null`. */
+const channels = (colour: string): [number, number, number] | null => {
+	const hex = colour.trim().match(/^#([\da-f]{6})$/i);
+	if (hex) {
+		const value = parseInt(hex[1], 16);
+		return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+	}
+	const rgb = colour.match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+	return rgb ? [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])] : null;
+};
+
+/**
+ * Relative Leuchtdichte nach WCAG 2.2. Wird hier gebraucht, um zu **belegen**,
+ * dass ein dunkles Schema wirklich dunkel gerendert hat — „sieht dunkel aus" ist
+ * in einer `play`-Funktion keine Zusicherung.
+ */
+export const relativeLuminance = (colour: string): number => {
+	const rgb = channels(colour);
+	if (!rgb) return Number.NaN;
+	const [r, g, b] = rgb.map((value) => {
+		const channel = value / 255;
+		return channel <= 0.03928
+			? channel / 12.92
+			: ((channel + 0.055) / 1.055) ** 2.4;
+	});
+	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/** Kontrastverhältnis nach WCAG 2.2 zwischen zwei Farben. */
+export const contrastRatio = (a: string, b: string): number => {
+	const first = relativeLuminance(a);
+	const second = relativeLuminance(b);
+	if (Number.isNaN(first) || Number.isNaN(second)) return Number.NaN;
+	const [light, dark] = first >= second ? [first, second] : [second, first];
+	return (light + 0.05) / (dark + 0.05);
+};

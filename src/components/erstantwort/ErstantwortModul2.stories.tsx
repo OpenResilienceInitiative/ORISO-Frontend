@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect } from 'storybook/test';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
 import {
@@ -24,8 +25,12 @@ import {
 	flowText
 } from './erstantwortFlowCopy';
 import {
+	contrastRatio,
+	darkSchemeGlobals,
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	relativeLuminance,
+	schemeToken
 } from '../message/messageStoryShell';
 import './ErstantwortSequence.styles.scss';
 
@@ -439,4 +444,71 @@ export const M2HeuteGebaut: Story = {
 		}
 	},
 	globals: phone390Globals
+};
+
+/* --------------------------------------------------------------------------
+   Dunkles Schema
+   -------------------------------------------------------------------------- */
+
+/**
+ * **(m2-dunkel) Modul 2 im dunklen Schema.**
+ *
+ * Derselbe Mechanismus wie in Modul 1: `.pseudonymCard__bubble` verdrahtet
+ * `background: #eeeeee` fest, die Schrift darin erbt `--m3-on-surface` von
+ * `document.body` und läuft nach hell. Modul 2 ist der Fall mit der **höchsten
+ * Textdichte**, also fällt hier am meisten aus.
+ *
+ * Gemessen auf dieser Story (390 px, Schema `dark`):
+ *
+ * | Element | Farbe | gegen die Blase `#eeeeee` |
+ * | --- | --- | --- |
+ * | Überschrift der Nachricht | `#e4e2e2` | **1,11:1** |
+ * | Optionsbeschriftung (`.erstantwortNotify__label`) | `#e4e2e2` | **1,11:1** |
+ * | ehrlicher Hinweis (`.erstantwortNotify__hint`) | `#c4c7c8` | **1,47:1** |
+ * | Fließtext der Blase (fester Wert) | `#1c1b1f` | 14,76:1 |
+ *
+ * Praktisch heißt das: von Modul 2 bleibt im dunklen Schema **nur der eine
+ * Satz lesbar, der seine Farbe fest verdrahtet hat** — Beschriftungen und
+ * Hinweise der Optionen sind weg. Und das ist die Sorte Fehler, die im hellen
+ * Schema unsichtbar ist: dort fallen fester Wert und Rolle zufällig zusammen.
+ *
+ * Die `play`-Funktion belegt es: das Schema hat dunkel gerendert, die Blase ist
+ * hell geblieben, und die Optionsbeschriftung liegt unter der
+ * Lesbarkeitsschwelle. Wenn die Blase eine M3-Rolle bekommt, fällt die Story um
+ * — beabsichtigt, damit der Befund nicht still verschwindet.
+ */
+export const M2Dunkel: Story = {
+	name: '(m2-dunkel) Dunkles Schema — Telefon 390',
+	args: modul2Args(OPEN_STATE, 'available'),
+	globals: { ...phone390Globals, ...darkSchemeGlobals },
+	play: async ({ canvasElement }) => {
+		/* 1. Das Schema hat wirklich dunkel gerendert. */
+		expect(relativeLuminance(schemeToken('--m3-surface'))).toBeLessThan(
+			0.1
+		);
+
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.pseudonymCard__bubble'
+		);
+		const label = canvasElement.querySelector<HTMLElement>(
+			'.erstantwortNotify__label'
+		);
+		expect(bubble).not.toBeNull();
+		expect(label).not.toBeNull();
+
+		const bubbleBackground = getComputedStyle(
+			bubble as HTMLElement
+		).backgroundColor;
+
+		/* 2. Die Blase ist hell geblieben. */
+		expect(relativeLuminance(bubbleBackground)).toBeGreaterThan(0.5);
+
+		/* 3. Und die Optionsbeschriftung steht damit hell auf hellgrau. */
+		expect(
+			contrastRatio(
+				getComputedStyle(label as HTMLElement).color,
+				bubbleBackground
+			)
+		).toBeLessThan(4.5);
+	}
 };

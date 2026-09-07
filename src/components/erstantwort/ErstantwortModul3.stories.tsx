@@ -10,6 +10,11 @@ import {
 	type ErstantwortRecoveryState
 } from './erstantwortRecoveryCopy';
 import { ERSTANTWORT_SUBTITLES, flowText } from './erstantwortFlowCopy';
+import {
+	darkSchemeGlobals,
+	relativeLuminance,
+	schemeToken
+} from '../message/messageStoryShell';
 import './ErstantwortSequence.styles.scss';
 
 /**
@@ -285,4 +290,68 @@ export const M3Desktop1440: Story = {
 			<ErstantwortSequence {...args} />
 		</Frame>
 	)
+};
+
+/* --------------------------------------------------------------------------
+   Dunkles Schema
+   -------------------------------------------------------------------------- */
+
+/**
+ * **(m3-dunkel) Modul 3 im dunklen Schema — der aufschlussreichste der vier.**
+ *
+ * Modul 3 ist der einzige Fall, in dem **zwei Farbsysteme** in einer Blase
+ * aufeinandertreffen:
+ *
+ * - Die Blase kommt aus SCSS und hat ihren Grauwert **fest verdrahtet**
+ *   (`.pseudonymCard__bubble { background: #eeeeee }`).
+ * - Der Blätterer kommt aus MUI und zieht **alle** seine Farben über
+ *   `stepperColors` aus `orisoInputColors`, also aus echten
+ *   `var(--m3-*)`-Rollen (`stepperDesign.ts`).
+ *
+ * Im hellen Schema sieht man den Unterschied nicht — beide landen auf
+ * denselben Werten. Im dunklen kippt nur die eine Hälfte, und zwar sichtbar:
+ * der gestrichelte Grafikplatz nimmt `--m3-surface` an und wird **`#131314`**
+ * (Leuchtdichte 0,0065), während die Blase drumherum auf `#eeeeee`
+ * (Leuchtdichte 0,855) stehen bleibt. Ein schwarzes Rechteck in einer
+ * hellgrauen Sprechblase.
+ *
+ * Das ist der Beleg dafür, dass der Fehler **nicht in den Bausteinen** liegt,
+ * sondern in der Blase: die MUI-Seite macht es richtig, die SCSS-Seite nicht.
+ *
+ * Die `play`-Funktion misst genau diese Kluft.
+ */
+export const M3Dunkel: Story = {
+	name: '(m3-dunkel) Dunkles Schema — Telefon 390',
+	args: modul3('notSecured', { initialStep: 1 }),
+	globals: darkSchemeGlobals,
+	render: (args) => (
+		<Frame width={390}>
+			<ErstantwortSequence {...args} />
+		</Frame>
+	),
+	play: async ({ canvasElement }) => {
+		/* Das Schema ist wirklich dunkel. */
+		expect(relativeLuminance(schemeToken('--m3-surface'))).toBeLessThan(
+			0.1
+		);
+
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.pseudonymCard__bubble'
+		);
+		const slot = within(canvasElement).getByTestId(
+			'erstantwort-recovery-illustration-slot'
+		);
+		expect(bubble).not.toBeNull();
+
+		const bubbleBackground = getComputedStyle(
+			bubble as HTMLElement
+		).backgroundColor;
+		const slotBackground = getComputedStyle(slot).backgroundColor;
+
+		/* Die SCSS-Seite ist hell geblieben … */
+		expect(relativeLuminance(bubbleBackground)).toBeGreaterThan(0.5);
+		/* … die MUI-Seite ist dem Schema gefolgt. Genau diese Differenz ist der
+		   Befund; sie verschwindet, sobald die Blase eine M3-Rolle bekommt. */
+		expect(relativeLuminance(slotBackground)).toBeLessThan(0.5);
+	}
 };
