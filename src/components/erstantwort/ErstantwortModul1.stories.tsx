@@ -86,7 +86,7 @@ import './ErstantwortSequence.styles.scss';
  * unten bei `(m1)` und im Verdrahtungspapier §2).
  */
 const meta = {
-	title: 'Templates/Erstantwort-Module',
+	title: 'Templates/Erstantwort-Module/1 Erfolg + FAQ',
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },

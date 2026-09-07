@@ -54,7 +54,7 @@ import './ErstantwortSequence.styles.scss';
  * steht im Begleitpapier, Teil B.
  */
 const meta = {
-	title: 'Templates/Erstantwort-Module',
+	title: 'Templates/Erstantwort-Module/3 Ersatzschlüssel',
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },

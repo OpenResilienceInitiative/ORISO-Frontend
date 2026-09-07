@@ -27,7 +27,7 @@ import './ErstantwortSequence.styles.scss';
  *   default, which is nearly invisible on the bubble's grey.
  */
 const meta = {
-	title: 'Components/Chat/Erstantwort-Disclosure',
+	title: 'Erstantwort/Molecules/Disclosure',
 	component: ErstantwortDisclosure,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },

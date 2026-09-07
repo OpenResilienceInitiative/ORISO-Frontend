@@ -65,7 +65,7 @@ import {
  * Layouts — die Farbe ist der Preis, der dafür bezahlt wird.
  */
 const meta = {
-	title: 'Templates/Erstantwort-Module',
+	title: 'Erstantwort/Organisms/SuccessMessage',
 	component: ErstantwortSuccessMessage,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },

@@ -81,7 +81,7 @@ import './ErstantwortSequence.styles.scss';
  * Kombination; sie stehen als eigene i18n-Schlüssel im Begleitpapier.
  */
 const meta = {
-	title: 'Templates/Erstantwort-Module',
+	title: 'Templates/Erstantwort-Module/2 Benachrichtigung',
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },

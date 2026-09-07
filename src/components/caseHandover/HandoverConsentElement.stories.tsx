@@ -62,7 +62,7 @@ const AGENCY = 'Beratungsstelle Bremen-Mitte';
  * Falsch-Zweig desselben Booleans. Details im Begleitpapier.
  */
 const meta = {
-	title: 'Templates/Erstantwort-Module',
+	title: 'Erstantwort/Organisms/HandoverConsent',
 	component: HandoverConsentElement,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
