@@ -1296,17 +1296,6 @@
 				"headline": "Du hast diese Beratung bereits zugewiesen."
 			}
 		},
-		"assignOther": {
-			"overlay": {
-				"headline": {
-					"1": "Möchtest Du {{client}} an {{newConsultant}} zuweisen?",
-					"2": "Du hast die Beratung erfolgreich zugewiesen."
-				},
-				"subtitle": {
-					"noTeam": "{{newConsultant}} ist somit für die Ratsuchende oder den Ratsuchenden verantwortlich und kann den kompletten Nachrichtenverlauf lesen. Du hast keinen Zugiff mehr auf die Nachrichten."
-				}
-			}
-		},
 		"assignSelf": {
 			"inProgress": "Die Beratung wird Dir gerade zugewiesen.",
 			"overlay": {
@@ -1322,6 +1311,14 @@
 		},
 		"empty": "Bitte wähle eine Nachricht aus.",
 		"emptyAllCaughtUp": "Kurz durchatmen.\nAlles erledigt.",
+		"supervisor": {
+			"startChat": {
+				"hint": "Nutze das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die du hier sendest, sind nur für Berater:innen sichtbar."
+			}
+		},
 		"reassign": {
 			"system": {
 				"message": {
@@ -1364,14 +1361,6 @@
 						"title": "{{oldConsultant}} möchte Dich an {{newConsultant}} übergeben."
 					}
 				}
-			}
-		},
-		"supervisor": {
-			"startChat": {
-				"hint": "Nutze das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
-			},
-			"input": {
-				"note": "Nachrichten, die du hier sendest, sind nur für Berater:innen sichtbar."
 			}
 		}
 	},
@@ -1635,9 +1624,6 @@
 		}
 	},
 	"userProfile": {
-		"reassign": {
-			"description": "Du kannst die Unterhaltung einem anderen Teammitglied zuweisen. Diese Person ist dann für die Ratsuchende oder den Ratsuchenden verantwortlich."
-		},
 		"tools": {
 			"description": "Schalte Tools für die_den Ratsuchende_n frei. ",
 			"modal": {

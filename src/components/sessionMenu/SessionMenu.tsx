@@ -55,6 +55,7 @@ import { ReactComponent as AdviceRequestIcon } from '../../resources/img/icons/p
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as NotificationSettingsIcon } from '../../resources/img/icons/notification_settings.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { CaseHandoverGiveOverDialog } from '../caseHandover/CaseHandoverGiveOverDialog';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
@@ -95,9 +96,6 @@ export interface SessionMenuProps {
 	mobileEndAnonymousChatDisabled?: boolean;
 }
 
-// #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
-const ADVICE_REQUEST_ENABLED = false;
-
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -135,6 +133,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+
+	// FE#1188/#1262: "Fall abgeben" — the owner offers her case to a colleague.
+	const [giveOverDialogOpen, setGiveOverDialogOpen] = useState(false);
 
 	const isSessionOwner =
 		Boolean(activeSession.consultant?.id) &&
@@ -757,25 +758,18 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 						{showRequestAdvice && (
 							<div
-								className={`sessionMenu__item chatMenuDropdown__item ${
-									!ADVICE_REQUEST_ENABLED
-										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-										: ''
-								}`}
+								className="sessionMenu__item chatMenuDropdown__item"
 								onClick={() => {
-									if (!ADVICE_REQUEST_ENABLED) {
-										return;
-									}
 									setFlyoutOpen(false);
+									setGiveOverDialogOpen(true);
 								}}
 								data-cy="session-menu-request-advice"
 							>
 								<SessionMenuItemContent
 									icon={<AdviceRequestIcon />}
 									title={translate(
-										'sessionMenu.requestAdvice'
+										'caseHandover.menu.giveOver'
 									)}
-									disabled={!ADVICE_REQUEST_ENABLED}
 								/>
 							</div>
 						)}
@@ -931,6 +925,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				<Overlay
 					item={overlayItem}
 					handleOverlay={handleOverlayAction}
+				/>
+			)}
+			{giveOverDialogOpen && (
+				<CaseHandoverGiveOverDialog
+					sessionId={activeSession.item.id}
+					open={giveOverDialogOpen}
+					onClose={() => setGiveOverDialogOpen(false)}
+					onOfferCreated={() => reloadActiveSession()}
 				/>
 			)}
 			<NotificationConfigDialog

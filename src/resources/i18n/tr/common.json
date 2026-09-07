@@ -1866,6 +1866,22 @@
 			"conversationFinished": {
 				"title": "Sohbet sona erdi",
 				"text": "Danışan anonim sohbeti sonlandırdı."
+			},
+			"caseHandoverOffered": {
+				"title": "Size bir vaka teklif ediliyor",
+				"text": "{{fromConsultantName}} size bir vaka devretmek istiyor. Kabul edip etmemek sizin kararınız."
+			},
+			"caseHandoverAccepted": {
+				"title": "Devir kabul edildi",
+				"text": "Meslektaşınız vakayı kabul etti."
+			},
+			"caseHandoverDeclined": {
+				"title": "Devir reddedildi",
+				"text": "Meslektaşınız vakayı kabul etmedi. Vaka sizde kalıyor."
+			},
+			"caseHandoverExpired": {
+				"title": "Teklif sona erdi",
+				"text": "Devir teklifiniz sona erdi. Vaka sizde kalıyor."
 			}
 		},
 		"error": "Başarısız",
@@ -3136,7 +3152,8 @@
 			"deselect": {
 				"title": "Seçimi kaldır ve kapat",
 				"description": "Seçimi kaldırır ve çoklu seçim modunu sonlandırır."
-			}
+			},
+			"giveOver": "Vakayı devret"
 		},
 		"curtain": {
 			"intro": {
@@ -3172,6 +3189,65 @@
 			"importantTitle": "Önemli bildirim",
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
 			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planlı yokluk",
+			"UNPLANNED_ABSENCE": "Plansız yokluk",
+			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
+			"ADVICE_REQUESTED": "Danışma talep edildi"
+		},
+		"giveOver": {
+			"title": "Vakayı devret",
+			"description": "Danışma merkezinizden bir meslektaş ve bir gerekçe seçin. Meslektaşınızın devri kabul etmesi gerekir.",
+			"colleague": {
+				"label": "Meslektaş",
+				"searchPlaceholder": "İsimle ara",
+				"empty": "Meslektaş bulunamadı.",
+				"loading": "Meslektaşlar yükleniyor",
+				"absent": "Şu anda müsait değil"
+			},
+			"reason": {
+				"label": "Gerekçe",
+				"placeholder": "Bir gerekçe seçin"
+			},
+			"consentHint": "Meslektaşınız erişim almadan önce danışanın devre onay vermesi gerekir.",
+			"noConsentHint": "Bu gerekçe için danışanın onayı gerekmez.",
+			"submit": "Vakayı devret",
+			"cancel": "İptal",
+			"error": {
+				"required": "Bir meslektaş ve bir gerekçe seçin.",
+				"conflict": "Bu vaka için zaten açık bir teklif var.",
+				"forbidden": "Bu vakayı devredemezsiniz.",
+				"failed": "Vaka devredilemedi.",
+				"notFound": "Vaka veya meslektaş bulunamadı."
+			},
+			"success": "Teklif {{colleague}} kişisine gönderildi."
+		},
+		"offers": {
+			"incoming": {
+				"title": "Devir teklifleri",
+				"badge": "Açık devir teklifleri: {{count}}",
+				"empty": "Açık teklif yok.",
+				"from": "{{colleague}} tarafından",
+				"accept": "Kabul et",
+				"decline": "Reddet",
+				"expires": "{{date}} tarihinde sona erer",
+				"consentPending": "Danışanın onayı hâlâ bekleniyor.",
+				"accepted": "Vakayı devraldınız.",
+				"consentRequested": "Kabul edildi — danışandan onay istendi."
+			},
+			"outgoing": {
+				"pending": "Teklif açık — {{colleague}}",
+				"withdraw": "Geri çek",
+				"withdrawn": "Teklif geri çekildi."
+			},
+			"error": {
+				"failed": "Teklifler yüklenemedi.",
+				"actionFailed": "İşlem gerçekleştirilemedi.",
+				"conflict": "Bu teklif artık açık değil.",
+				"forbidden": "Bu teklif sizin hesabınıza ait değil.",
+				"notFound": "Bu teklif bulunamadı."
+			}
 		}
 	},
 	"session": {
@@ -3305,21 +3381,6 @@
 				}
 			}
 		},
-		"assignOther": {
-			"button": {
-				"label": "Kapat"
-			},
-			"inProgress": "Danışmanlık şu anda atanmış durumdadır.",
-			"overlay": {
-				"headline": {
-					"1": "{{client}} {{newConsultant}} Atamak ister misiniz?",
-					"2": "Konsültasyonu başarıyla atadınız."
-				},
-				"subtitle": {
-					"noTeam": "{{newConsultant}} bu nedenle tavsiye isteyen kişiden sorumludur ve tüm mesaj geçmişini okuyabilir. Artık mesajlara erişiminiz yoktur."
-				}
-			}
-		},
 		"assignSelf": {
 			"button1": {
 				"label": "Cevaplar"
@@ -3356,6 +3417,26 @@
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderatör - "
+			}
+		},
+		"u25": {
+			"assignment": {
+				"placeholder": "Danışmanlık atayın"
+			}
+		},
+		"unreadCount": {
+			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Süpervizyon nedeni"
+			},
+			"startChat": {
+				"title": "Sohbeti başlat",
+				"hint": "İlk süpervizyon mesajını göndermek için aşağıdaki mesaj alanını kullanın."
+			},
+			"input": {
+				"note": "Burada gönderdiğiniz mesajları yalnızca danışmanlar görebilir."
 			}
 		},
 		"reassign": {
@@ -3412,26 +3493,6 @@
 						"title": "{{oldConsultant}} {{newConsultant}} 'a transfer etmek istiyorum."
 					}
 				}
-			}
-		},
-		"u25": {
-			"assignment": {
-				"placeholder": "Danışmanlık atayın"
-			}
-		},
-		"unreadCount": {
-			"maxValue": "99+"
-		},
-		"supervisor": {
-			"reason": {
-				"title": "Süpervizyon nedeni"
-			},
-			"startChat": {
-				"title": "Sohbeti başlat",
-				"hint": "İlk süpervizyon mesajını göndermek için aşağıdaki mesaj alanını kullanın."
-			},
-			"input": {
-				"note": "Burada gönderdiğiniz mesajları yalnızca danışmanlar görebilir."
 			}
 		}
 	},
@@ -3987,10 +4048,6 @@
 			"resort": "Danışmanlık alanı",
 			"state": "Federal devlet",
 			"title": "Tavsiye isteyen kişinin detayları"
-		},
-		"reassign": {
-			"description": "Görüşmeyi başka bir ekip üyesine atayabilirsiniz. Bu kişi daha sonra tavsiye isteyen kişiden sorumlu olur.",
-			"title": "Tahsis"
 		},
 		"tools": {
 			"description": "Tavsiye isteyen kişi için araçları etkinleştirin. ",

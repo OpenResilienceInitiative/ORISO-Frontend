@@ -1863,6 +1863,22 @@
 			"conversationFinished": {
 				"title": "Chat ended",
 				"text": "The person seeking advice ended the anonymous chat."
+			},
+			"caseHandoverOffered": {
+				"title": "A case is being offered to you",
+				"text": "{{fromConsultantName}} wants to hand a case over to you. It is your decision whether to accept."
+			},
+			"caseHandoverAccepted": {
+				"title": "Handover accepted",
+				"text": "Your colleague accepted the case."
+			},
+			"caseHandoverDeclined": {
+				"title": "Handover declined",
+				"text": "Your colleague did not accept the case. It stays with you."
+			},
+			"caseHandoverExpired": {
+				"title": "Offer expired",
+				"text": "Your handover offer expired. The case stays with you."
 			}
 		},
 		"error": "failed",
@@ -3096,7 +3112,8 @@
 			"deselect": {
 				"title": "Deselect and close",
 				"description": "Deselects everything and closes the batch mode."
-			}
+			},
+			"giveOver": "Hand over case"
 		},
 		"curtain": {
 			"intro": {
@@ -3132,6 +3149,65 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planned absence",
+			"UNPLANNED_ABSENCE": "Unplanned absence",
+			"ASSIGNMENT_ENDED": "Assignment ended",
+			"ADVICE_REQUESTED": "Advice requested"
+		},
+		"giveOver": {
+			"title": "Hand over case",
+			"description": "Pick a colleague from your counselling centre and a reason. Your colleague has to accept the handover.",
+			"colleague": {
+				"label": "Colleague",
+				"searchPlaceholder": "Search by name",
+				"empty": "No colleague found.",
+				"loading": "Loading colleagues",
+				"absent": "Currently absent"
+			},
+			"reason": {
+				"label": "Reason",
+				"placeholder": "Select a reason"
+			},
+			"consentHint": "The client has to consent to the handover before your colleague gets access.",
+			"noConsentHint": "This reason does not require the client to consent.",
+			"submit": "Hand over case",
+			"cancel": "Cancel",
+			"error": {
+				"required": "Pick a colleague and a reason.",
+				"conflict": "An offer for this case is already open.",
+				"forbidden": "You may not hand over this case.",
+				"failed": "The case could not be handed over.",
+				"notFound": "The case or the colleague could not be found."
+			},
+			"success": "The offer was sent to {{colleague}}."
+		},
+		"offers": {
+			"incoming": {
+				"title": "Handover offers",
+				"badge": "Open handover offers: {{count}}",
+				"empty": "No open offers.",
+				"from": "From {{colleague}}",
+				"accept": "Accept",
+				"decline": "Decline",
+				"expires": "Expires on {{date}}",
+				"consentPending": "The client still has to consent.",
+				"accepted": "You have taken over the case.",
+				"consentRequested": "Accepted — the client has been asked to consent."
+			},
+			"outgoing": {
+				"pending": "Offer open — {{colleague}}",
+				"withdraw": "Withdraw",
+				"withdrawn": "The offer was withdrawn."
+			},
+			"error": {
+				"failed": "The offers could not be loaded.",
+				"actionFailed": "The action could not be carried out.",
+				"conflict": "This offer is no longer open.",
+				"forbidden": "This offer does not belong to your account.",
+				"notFound": "This offer could not be found."
+			}
 		}
 	},
 	"session": {
@@ -3265,21 +3341,6 @@
 				}
 			}
 		},
-		"assignOther": {
-			"button": {
-				"label": "Cancel"
-			},
-			"inProgress": "Counseling is being assigned.",
-			"overlay": {
-				"headline": {
-					"1": "Do you want to assign {{client}} to {{newConsultant}}?",
-					"2": "You have successfully assigned the consultation."
-				},
-				"subtitle": {
-					"noTeam": "{{newConsultant}} is thus responsible for the advice seeker and can read the complete message history. They no longer have access to the messages."
-				}
-			}
-		},
 		"assignSelf": {
 			"button1": {
 				"label": "Answers"
@@ -3316,6 +3377,26 @@
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderator - "
+			}
+		},
+		"u25": {
+			"assignment": {
+				"placeholder": "Assign consultation"
+			}
+		},
+		"unreadCount": {
+			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervision reason"
+			},
+			"startChat": {
+				"title": "Start chat",
+				"hint": "Use the message field at the bottom to send the first supervision message."
+			},
+			"input": {
+				"note": "Messages you send here are visible only to consultants."
 			}
 		},
 		"reassign": {
@@ -3372,26 +3453,6 @@
 						"title": "{{oldConsultant}} would like to pass you to {{newConsultant}}."
 					}
 				}
-			}
-		},
-		"u25": {
-			"assignment": {
-				"placeholder": "Assign consultation"
-			}
-		},
-		"unreadCount": {
-			"maxValue": "99+"
-		},
-		"supervisor": {
-			"reason": {
-				"title": "Supervision reason"
-			},
-			"startChat": {
-				"title": "Start chat",
-				"hint": "Use the message field at the bottom to send the first supervision message."
-			},
-			"input": {
-				"note": "Messages you send here are visible only to consultants."
 			}
 		}
 	},
@@ -3946,10 +4007,6 @@
 			"resort": "Department",
 			"state": "State",
 			"title": "Information of the person seeking advice"
-		},
-		"reassign": {
-			"description": "You can assign the conversation to another team member. This person is then responsible for the person seeking advice.",
-			"title": "Allocation"
 		},
 		"tools": {
 			"description": "Unlock tools for the person seeking advice. ",

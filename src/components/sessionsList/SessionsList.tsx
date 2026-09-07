@@ -46,6 +46,7 @@ import { useLiveChatAvailable } from '../../utils/liveChatToggle';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { CaseHandoverOffersInbox } from '../caseHandover/CaseHandoverOffers';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -1725,6 +1726,10 @@ export const SessionsList = ({
 					}
 				/>
 			)}
+			{showCaseHandoverBatchUi &&
+				type === SESSION_LIST_TYPES.MY_SESSION && (
+					<CaseHandoverOffersInbox />
+				)}
 			{showMySessionToolbar && futureTimelineSeries.length > 0 && (
 				<FutureTimelinePanel
 					series={futureTimelineSeries}

@@ -1,13 +1,15 @@
 import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, BUTTON_TYPES } from '../button/Button';
 import './reassignRequestMessage.styles';
 import { ConsultantListContext } from '../../globalState';
+import {
+	type ConsultantReassignment,
+	ReassignStatus
+} from '../../api/apiSendAliasMessage';
 
 export const ReassignRequestMessage: React.FC<{
 	fromConsultantName: string;
 	toConsultantName: string;
-	onClick: (accepted: boolean) => void;
 }> = (props) => {
 	const { t: translate } = useTranslation();
 
@@ -33,31 +35,6 @@ export const ReassignRequestMessage: React.FC<{
 						}
 					)}
 				</span>
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.question'
-					)}
-				</span>
-				<div className="buttons">
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.accept'
-							),
-							type: BUTTON_TYPES.PRIMARY
-						}}
-						buttonHandle={() => props.onClick(true)}
-					/>
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.decline'
-							),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={() => props.onClick(false)}
-					/>
-				</div>
 			</div>
 		</div>
 	);
@@ -269,4 +246,52 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 			</div>
 		</div>
 	);
+};
+
+/** Historical aliases remain readable but cannot invoke the retired assignment API. */
+export const HistoricalReassignMessage = ({
+	message,
+	isAsker,
+	isMySession
+}: {
+	message: string;
+	isAsker: boolean;
+	isMySession: boolean;
+}) => {
+	let params: ConsultantReassignment;
+	try {
+		params = JSON.parse(message);
+	} catch {
+		return null;
+	}
+	if (!params || typeof params !== 'object') return null;
+	switch (params.status) {
+		case ReassignStatus.REQUESTED:
+			return isAsker ? (
+				<ReassignRequestMessage {...params} />
+			) : (
+				<ReassignRequestSentMessage
+					{...params}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.CONFIRMED:
+			return (
+				<ReassignRequestAcceptedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.REJECTED:
+			return (
+				<ReassignRequestDeclinedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		default:
+			return null;
+	}
 };

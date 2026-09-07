@@ -1866,6 +1866,22 @@
 			"conversationFinished": {
 				"title": "Chat terminé",
 				"text": "La personne en quête de conseils a mis fin au chat anonyme."
+			},
+			"caseHandoverOffered": {
+				"title": "Un dossier vous est proposé",
+				"text": "{{fromConsultantName}} souhaite vous transmettre un dossier. Vous décidez de l’accepter ou non."
+			},
+			"caseHandoverAccepted": {
+				"title": "Transmission acceptée",
+				"text": "Votre collègue a accepté le dossier."
+			},
+			"caseHandoverDeclined": {
+				"title": "Transmission refusée",
+				"text": "Votre collègue n’a pas accepté le dossier. Il reste chez vous."
+			},
+			"caseHandoverExpired": {
+				"title": "Offre expirée",
+				"text": "Votre offre de transmission a expiré. Le dossier reste chez vous."
 			}
 		},
 		"error": "Échec",
@@ -3136,7 +3152,8 @@
 			"deselect": {
 				"title": "Annuler la sélection et fermer",
 				"description": "Annule la sélection et quitte le mode multiple."
-			}
+			},
+			"giveOver": "Transmettre le dossier"
 		},
 		"curtain": {
 			"intro": {
@@ -3172,6 +3189,65 @@
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Absence planifiée",
+			"UNPLANNED_ABSENCE": "Absence imprévue",
+			"ASSIGNMENT_ENDED": "Attribution terminée",
+			"ADVICE_REQUESTED": "Conseil demandé"
+		},
+		"giveOver": {
+			"title": "Transmettre le dossier",
+			"description": "Choisissez un·e collègue de votre centre de conseil et un motif. Votre collègue doit accepter la transmission.",
+			"colleague": {
+				"label": "Collègue",
+				"searchPlaceholder": "Rechercher par nom",
+				"empty": "Aucun·e collègue trouvé·e.",
+				"loading": "Chargement des collègues",
+				"absent": "Actuellement absent·e"
+			},
+			"reason": {
+				"label": "Motif",
+				"placeholder": "Choisir un motif"
+			},
+			"consentHint": "La personne accompagnée doit consentir avant que votre collègue obtienne l'accès.",
+			"noConsentHint": "Ce motif ne requiert pas le consentement de la personne accompagnée.",
+			"submit": "Transmettre le dossier",
+			"cancel": "Annuler",
+			"error": {
+				"required": "Choisissez un·e collègue et un motif.",
+				"conflict": "Une offre est déjà ouverte pour ce dossier.",
+				"forbidden": "Vous ne pouvez pas transmettre ce dossier.",
+				"failed": "Le dossier n'a pas pu être transmis.",
+				"notFound": "Le dossier ou le/la collègue est introuvable."
+			},
+			"success": "L'offre a été envoyée à {{colleague}}."
+		},
+		"offers": {
+			"incoming": {
+				"title": "Offres de transmission",
+				"badge": "Offres de transmission ouvertes : {{count}}",
+				"empty": "Aucune offre ouverte.",
+				"from": "De {{colleague}}",
+				"accept": "Accepter",
+				"decline": "Refuser",
+				"expires": "Expire le {{date}}",
+				"consentPending": "La personne accompagnée doit encore consentir.",
+				"accepted": "Vous avez repris le dossier.",
+				"consentRequested": "Acceptée — le consentement de la personne accompagnée a été demandé."
+			},
+			"outgoing": {
+				"pending": "Offre ouverte — {{colleague}}",
+				"withdraw": "Retirer",
+				"withdrawn": "L'offre a été retirée."
+			},
+			"error": {
+				"failed": "Les offres n'ont pas pu être chargées.",
+				"actionFailed": "L'action n'a pas pu être effectuée.",
+				"conflict": "Cette offre n'est plus ouverte.",
+				"forbidden": "Cette offre n'appartient pas à votre compte.",
+				"notFound": "Cette offre est introuvable."
+			}
 		}
 	},
 	"session": {
@@ -3305,21 +3381,6 @@
 				}
 			}
 		},
-		"assignOther": {
-			"button": {
-				"label": "Fermer"
-			},
-			"inProgress": "La consultation est en cours d'attribution.",
-			"overlay": {
-				"headline": {
-					"1": "Vous souhaitez attribuer {{client}} à {{newConsultant}}?",
-					"2": "Vous avez attribué la consultation avec succès."
-				},
-				"subtitle": {
-					"noTeam": "{{newConsultant}} est donc responsable de la personne qui demande un conseil et peut lire l'historique complet des messages. Vous n'avez plus accès aux messages."
-				}
-			}
-		},
 		"assignSelf": {
 			"button1": {
 				"label": "Réponses"
@@ -3356,6 +3417,26 @@
 		"groupChat": {
 			"consultant": {
 				"prefix": "Présentateur ou présentatrice - "
+			}
+		},
+		"u25": {
+			"assignment": {
+				"placeholder": "Attribuer des conseils"
+			}
+		},
+		"unreadCount": {
+			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Motif de la supervision"
+			},
+			"startChat": {
+				"title": "Démarrer le chat",
+				"hint": "Utilisez le champ de message en bas pour envoyer le premier message de supervision."
+			},
+			"input": {
+				"note": "Les messages que vous envoyez ici ne sont visibles que par les conseiller·ères."
 			}
 		},
 		"reassign": {
@@ -3412,26 +3493,6 @@
 						"title": "{{oldConsultant}} souhaite vous remettre à {{newConsultant}}"
 					}
 				}
-			}
-		},
-		"u25": {
-			"assignment": {
-				"placeholder": "Attribuer des conseils"
-			}
-		},
-		"unreadCount": {
-			"maxValue": "99+"
-		},
-		"supervisor": {
-			"reason": {
-				"title": "Motif de la supervision"
-			},
-			"startChat": {
-				"title": "Démarrer le chat",
-				"hint": "Utilisez le champ de message en bas pour envoyer le premier message de supervision."
-			},
-			"input": {
-				"note": "Les messages que vous envoyez ici ne sont visibles que par les conseiller·ères."
 			}
 		}
 	},
@@ -3987,10 +4048,6 @@
 			"resort": "Champ de consultation",
 			"state": "État fédéral",
 			"title": "Données de la personne qui demande conseil"
-		},
-		"reassign": {
-			"description": "Vous pouvez attribuer l'entretien à un autre membre de l'équipe. Cette personne sera alors responsable du conseiller ou de la conseillère.",
-			"title": "Attribution"
 		},
 		"tools": {
 			"description": "Activer des outils pour la personne qui demande conseil. ",

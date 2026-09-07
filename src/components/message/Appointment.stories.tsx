@@ -21,8 +21,8 @@ import './message.styles.scss';
  * ever render Storybook's error boundary. It is noted here because a backend
  * payload change would surface as a blank conversation, not as an error.
  *
- * Like the other alias-based messages, this path is currently not reachable —
- * see `ReassignMessage.stories.tsx` for the routing detail.
+ * Like the other alias-based messages, this path is currently not reachable:
+ * no Matrix code path produces an `alias` object any more.
  */
 const meta = {
 	title: 'Components/Chat/Appointment',
