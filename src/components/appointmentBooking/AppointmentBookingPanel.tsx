@@ -365,20 +365,23 @@ export const AppointmentBookingPanel = ({
 						)}
 					</Box>
 				</Box>
-
-				{/* The way on belongs in the bar, like every other screen
-				    of the entry room — a contained button loose in the content
-				    reads as a third kind of control (Frank, 2026-09-07: "use
-				    footer design"). */}
-				<RegistrationFooter
-					primary={{
-						label: tr('confirm', 'Termin buchen'),
-						onClick: confirm,
-						disabled: !day || !time || busy,
-						testId: 'appointment-booking-confirm'
-					}}
-				/>
 			</Box>
+
+			{/* The way on is the shared bar, unchanged — but it stands OUTSIDE
+			    the sliding box. `RegistrationFooter` is `position: fixed`, and
+			    a transformed ancestor becomes its containing block: inside the
+			    slide it sat 40 px off the stage edge and travelled with the
+			    animation. Out here it lines up with every other screen's bar
+			    (measured 2026-09-07: x 536 → 576, the same 96 px height and
+			    56 px button as the group room's). */}
+			<RegistrationFooter
+				primary={{
+					label: tr('confirm', 'Termin buchen'),
+					onClick: confirm,
+					disabled: !day || !time || busy,
+					testId: 'appointment-booking-confirm'
+				}}
+			/>
 		</Box>
 	);
 };
