@@ -50,7 +50,7 @@ export const MessageDisplayName = ({
 	const trimmedSubtitle = (subtitle || '').trim();
 
 	return (
-		<>
+		<div className="messageItem__senderIdentity">
 			<div
 				className={`messageItem__username messageItem__username--${type}`}
 			>
@@ -61,6 +61,6 @@ export const MessageDisplayName = ({
 					{trimmedSubtitle}
 				</div>
 			)}
-		</>
+		</div>
 	);
 };

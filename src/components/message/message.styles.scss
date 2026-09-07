@@ -124,6 +124,12 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	&__senderIdentity {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
 	/*
 	 * Second line of the sender header: the counselling centre a counsellor
 	 * speaks for, with its postcode (Figma "Message Recipient Header",
