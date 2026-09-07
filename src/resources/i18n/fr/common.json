@@ -3299,6 +3299,12 @@
 				"overlay": {
 					"headline": "Cette première demande a déjà été acceptée par un autre conseiller."
 				}
+			},
+			"notAccepted": {
+				"overlay": {
+					"headline": "Cette demande n'a pas pu être acceptée pour le moment.",
+					"copy": "Soit quelqu'un d'autre l'a prise, soit la personne qui cherche conseil n'a pas encore donné son accord. Réessayez dans un instant."
+				}
 			}
 		},
 		"assignOther": {

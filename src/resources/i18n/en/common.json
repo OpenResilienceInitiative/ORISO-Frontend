@@ -3259,6 +3259,12 @@
 				"overlay": {
 					"headline": "This initial request has already been accepted by another consultant."
 				}
+			},
+			"notAccepted": {
+				"overlay": {
+					"headline": "This enquiry could not be accepted just now.",
+					"copy": "Either someone else took it, or the person seeking advice has not agreed yet. Please try again in a moment."
+				}
 			}
 		},
 		"assignOther": {

@@ -3319,6 +3319,12 @@
 				"overlay": {
 					"headline": "Diese Erstanfrage wurde bereits von einem anderen Berater angenommen."
 				}
+			},
+			"notAccepted": {
+				"overlay": {
+					"headline": "Diese Anfrage konnte gerade nicht angenommen werden.",
+					"copy": "Entweder hat sie jemand anderes übernommen, oder die ratsuchende Person hat noch nicht zugestimmt. Versuchen Sie es gleich noch einmal."
+				}
 			}
 		},
 		"assignOther": {

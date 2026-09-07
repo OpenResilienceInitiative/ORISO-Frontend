@@ -3299,6 +3299,12 @@
 				"overlay": {
 					"headline": "Bu ilk talep başka bir danışman tarafından kabul edilmiştir."
 				}
+			},
+			"notAccepted": {
+				"overlay": {
+					"headline": "Bu talep şu anda kabul edilemedi.",
+					"copy": "Ya başkası aldı ya da danışan henüz onay vermedi. Birazdan tekrar deneyin."
+				}
 			}
 		},
 		"assignOther": {

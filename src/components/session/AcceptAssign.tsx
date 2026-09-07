@@ -88,6 +88,40 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 		[translate]
 	);
 
+	/**
+	 * A 409 on the accept is not proof that someone else was faster.
+	 * `AnonymousEnquiryConsentGuard` answers with the same status while the
+	 * asker has not agreed yet (ADR-018 §9), and the entry room asks for that
+	 * agreement only after a counsellor has accepted — so the old sentence
+	 * ("already taken by another counsellor") accused a colleague who had done
+	 * nothing (Frank, 2026-09-07). The `assigned` case above still says it,
+	 * because there it is the known truth.
+	 */
+	const enquiryNotAcceptedOverlayItem: OverlayItem = useMemo(
+		() => ({
+			svg: XIcon,
+			headline: translate(
+				'session.anonymous.notAccepted.overlay.headline',
+				'Diese Anfrage konnte gerade nicht angenommen werden.'
+			),
+			copy: translate(
+				'session.anonymous.notAccepted.overlay.copy',
+				'Entweder hat sie jemand anderes übernommen, oder die ratsuchende Person hat noch nicht zugestimmt. Versuchen Sie es gleich noch einmal.'
+			),
+			illustrationBackground: 'error',
+			buttonSet: [
+				{
+					label: translate(
+						'session.anonymous.takenByOtherConsultant.button.label'
+					),
+					function: OVERLAY_FUNCTIONS.CLOSE,
+					type: BUTTON_TYPES.PRIMARY
+				}
+			]
+		}),
+		[translate]
+	);
+
 	useEffect(() => {
 		setOverlayItem(
 			assigned ? enquiryTakenByOtherConsultantOverlayItem : null
@@ -195,7 +229,7 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 			.catch((error) => {
 				setIsRequestInProgress(false);
 				if (error.message === FETCH_ERRORS.CONFLICT) {
-					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
+					setOverlayItem(enquiryNotAcceptedOverlayItem);
 				} else {
 					// console.log(error);
 				}

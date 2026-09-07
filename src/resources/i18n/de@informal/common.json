@@ -1373,6 +1373,14 @@
 			"input": {
 				"note": "Nachrichten, die du hier sendest, sind nur für Berater:innen sichtbar."
 			}
+		},
+		"anonymous": {
+			"notAccepted": {
+				"overlay": {
+					"headline": "Diese Anfrage konnte gerade nicht angenommen werden.",
+					"copy": "Entweder hat sie jemand anderes übernommen, oder die ratsuchende Person hat noch nicht zugestimmt. Versuch es gleich noch einmal."
+				}
+			}
 		}
 	},
 	"sessionList": {
