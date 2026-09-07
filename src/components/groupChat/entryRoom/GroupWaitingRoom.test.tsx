@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('lottie-web', () => ({ default: {} }));
@@ -27,11 +33,13 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
-const { GroupWaitingRoom } = await import('./GroupWaitingRoom');
+const { GroupWaitingRoom, entryRoomClockHeight } = await import(
+	'./GroupWaitingRoom'
+);
 
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 const renderRoom = (active: boolean, onJoin = vi.fn()) => {
-	render(
+	const view = render(
 		<GroupWaitingRoom
 			topicName="Trauerbegleitung"
 			agencyName="Caritas Berlin"
@@ -45,7 +53,7 @@ const renderRoom = (active: boolean, onJoin = vi.fn()) => {
 			nowMs={NOW}
 		/>
 	);
-	return onJoin;
+	return Object.assign(view, { onJoin });
 };
 
 describe('GroupWaitingRoom', () => {
@@ -57,8 +65,17 @@ describe('GroupWaitingRoom', () => {
 		expect(header.textContent).toContain('Caritas Berlin');
 	});
 
+	it('keeps topic and agency on their own lines, never dash-joined', () => {
+		renderRoom(false);
+		// Both strings come from the API. A dash coded between them reads as
+		// part of the agency's name as soon as one of the two is missing.
+		const header = screen.getByTestId('header-start');
+		expect(header.textContent).not.toMatch(/[\u2013\u2014]/);
+		expect(header.textContent).toBe('TrauerbegleitungCaritas Berlin');
+	});
+
 	it('shows "Beitreten" shut until the moderator opens the group', () => {
-		const onJoin = renderRoom(false);
+		const { onJoin } = renderRoom(false);
 		const join = screen.getByTestId('group-entry-join');
 		expect((join as HTMLButtonElement).disabled).toBe(true);
 		fireEvent.click(join);
@@ -66,20 +83,60 @@ describe('GroupWaitingRoom', () => {
 	});
 
 	it('lets the person in once the group is open', () => {
-		const onJoin = renderRoom(true);
+		const { onJoin } = renderRoom(true);
 		const join = screen.getByTestId('group-entry-join');
 		expect((join as HTMLButtonElement).disabled).toBe(false);
 		fireEvent.click(join);
 		expect(onJoin).toHaveBeenCalledTimes(1);
 	});
 
-	it('opens the greeting and the rules behind "Mehr erfahren"', () => {
-		renderRoom(false);
+	it('puts the explainer in the middle and the clock back on return', async () => {
+		const { container } = renderRoom(false);
+		const gallery = () =>
+			container.querySelector('[data-cy="group-info-gallery"]');
+		expect(gallery()).toBeNull();
+
 		fireEvent.click(screen.getByTestId('group-entry-more'));
-		const dialog = screen.getByRole('dialog');
-		expect(dialog.textContent).toContain('Schön, dass Sie da sind.');
-		expect(dialog.textContent).toContain(
-			'Was hier gesagt wird, bleibt hier.'
+		/* Only the middle changes: the explainer stands where the clock
+		   stood, and the bar with "Beitreten" stays. */
+		expect(gallery()).toBeTruthy();
+		expect(screen.queryByTestId('group-entry-more')).toBeNull();
+		expect(screen.getByTestId('group-entry-join')).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId('group-info-back'));
+		await waitFor(() => expect(gallery()).toBeNull());
+		expect(screen.getByTestId('group-entry-more')).toBeTruthy();
+	});
+
+	it('parks "Mehr erfahren" as the small control of the row', () => {
+		renderRoom(false);
+		const more = screen.getByTestId('group-entry-more');
+		expect(more.className).toContain('MuiButton-sizeSmall');
+		expect(more.className).toContain('MuiButton-outlined');
+	});
+});
+
+describe('entryRoomClockHeight', () => {
+	/*
+	 * The budget the clock is handed. Every number is a band measured on the
+	 * two review viewports; if one of them moves, this is where it is written
+	 * down — and where a scrollbar starts if it is written down wrong.
+	 */
+	it('leaves the clock 600 px on the 1440 x 950 desktop story', () => {
+		expect(entryRoomClockHeight(1440, 950)).toBe(600);
+	});
+
+	it('leaves the clock 435 px on the 375 x 812 phone story', () => {
+		expect(entryRoomClockHeight(375, 812)).toBe(435);
+	});
+
+	it('reserves more below the stage split, where the group block and the taller headline stand in the column', () => {
+		expect(entryRoomClockHeight(1199, 950)).toBeLessThan(
+			entryRoomClockHeight(1200, 950)
 		);
+	});
+
+	it('never asks for a negative clock on a tiny window', () => {
+		expect(entryRoomClockHeight(320, 400)).toBe(160);
 	});
 });

@@ -826,12 +826,37 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ"
+			},
+			"gallery": {
+				"back": "ናብ መጸበዪ ክፍሊ ተመለስ",
+				"headline": "እቲ ጉጅለ ከመይ ይሰርሕ",
+				"subline": "ቅድሚ ናይ መጀመርታ ግዜ ዝሕግዙ ሰለስተ ነገራት።",
+				"appointments": "ዕለታት ናብ ዓውደ-ኣዋርሕ ወስኽ",
+				"steps": {
+					"formats": {
+						"title": "ብጽሑፍ፡ ብድምጺ ወይ ብቪድዮ",
+						"text": "እቲ ጉጅለ ብጽሑፍ፡ ብድምጺ ወይ ብቪድዮ ይራኸብ። ወትሩ ብመኸርቲ ይሰነ።"
+					},
+					"appointments": {
+						"title": "ዕለታት ኣቐዲምካ መዝግብ",
+						"text": "ዕለታት እቲ ጉጅለ ሕጂ ኣብ ዓውደ-ኣዋርሕኩም ክትምዝግቡ ትኽእሉ፡ ብግዜኡ ድማ ይዝክረኩም።"
+					},
+					"anonymous": {
+						"title": "ስም ከይተጠቐስኩም ትጸንሑ",
+						"text": "በጃኹም ናይ ሓቂ ኣስማትን ኣድራሻታትን ኣይትጥቀሱ — ናትኩም ኮነ ናይ ካልኦት።"
+					}
+				}
 			}
 		},
 		"join": {
 			"timeConversions": "መስሓቕ ናይ ግዜ መግለጺታት",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "ናብ ሰዓት ተመለስ",
+					"cardNext": "ዝቕጽል ገጽ",
+					"cardOpenAria": "ሰላምታን ሕግታት ዝርርብን ንምንባብ ነታ ሰዓት ግልብጣ",
+					"cardPage": "{{current}} ካብ {{total}}",
+					"cardPrev": "ዝሓለፈ ገጽ",
 					"etaDay": "ኣብ ሓደ መዓልቲ",
 					"etaDays": "ኣብ {{count}} መዓልታት",
 					"etaHour": "ኣብ ሓደ ሰዓት",
@@ -844,10 +869,13 @@
 					"greetingLabel": "ሰላምታ ካብ ኣማኻሪኻ",
 					"headline": "ጉጅለ ቻትካ {{eta}} ክጅምር እዩ።",
 					"netiquetteLabel": "ሕጊ ዝርርብ · ሕጊ {{no}}",
+					"netiquetteTitle": "ሕግታት ዝርርብ",
 					"overdueCaption": "እቲ ምጽባይ ቁሩብ ዘሕፍር ይኸውን ኣሎ …",
 					"overdueHeadline": "ሕጂ ንመጸካ ኢና።",
 					"overdueSubtitle": "ኣማኻሪኻ ነቲ ክፍሊ ቀረባ ግዜ ክኸፍቶ እዩ — በጃኻ ቁሩብ ተጸበ።",
 					"subtitle": "ኣብ ሓደ ቁጽሪ ጠውቕ — ብድሕሪኡ ሰላምታን ሕግታት ዝርርብን ኣለዉ።",
+					"subtitleCard": "ነታ ሰዓት ጠውቓ፣ ብድሕሪኣ ሰላምታን ሕግታት ዝርርብን።",
+					"subtitleStill": "ሰላምታን ሕግታት ዝርርብን ኣብ ትሕቲ እቶም ቁጽርታት ኣለዉ።",
 					"timerAriaFuture": "ክሳብ መጀመርታ — መዓልታት: {{days}}፣ ሰዓታት: {{hours}}፣ ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
 					"timerAriaOverdue": "ካብቲ እተመደበ መጀመርታ — ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
 					"toggleLabel": "ምንቅስቓስ ኣጥፍእ",

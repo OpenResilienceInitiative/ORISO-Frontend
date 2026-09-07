@@ -826,12 +826,37 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar"
+			},
+			"gallery": {
+				"back": "Bekleme alanına dön",
+				"headline": "Grup nasıl işler",
+				"subline": "İlk kezden önce yardımcı olacak üç şey.",
+				"appointments": "Tarihleri takvime ekle",
+				"steps": {
+					"formats": {
+						"title": "Sohbet, ses ya da görüntü olarak",
+						"text": "Grup yazılı olarak, sesle ya da görüntüyle buluşur. Her zaman danışmanlar eşlik eder."
+					},
+					"appointments": {
+						"title": "Tarihleri önceden kaydedin",
+						"text": "Grubun tarihlerini şimdiden takviminize ekleyebilir ve zamanında hatırlatma alabilirsiniz."
+					},
+					"anonymous": {
+						"title": "Anonim kalırsınız",
+						"text": "Lütfen gerçek isim ve adres vermeyin — ne kendinizinkini ne başkasınınkini."
+					}
+				}
 			}
 		},
 		"join": {
 			"timeConversions": "Eğlenceli zaman ölçüleri",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Saate geri dön",
+					"cardNext": "Sonraki sayfa",
+					"cardOpenAria": "Karşılama mesajını ve sohbet kurallarını okumak için saati çevirin",
+					"cardPage": "{{current}} / {{total}}",
+					"cardPrev": "Önceki sayfa",
 					"etaDay": "1 gün içinde",
 					"etaDays": "{{count}} gün içinde",
 					"etaHour": "1 saat içinde",
@@ -844,10 +869,13 @@
 					"greetingLabel": "Danışmanınızdan karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
+					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
 					"overdueHeadline": "Birazdan sizinleyiz.",
 					"overdueSubtitle": "Danışmanınız odayı birazdan açacak — lütfen biraz daha bekleyin.",
 					"subtitle": "Bir sayıya tıklayın — arkasında karşılama mesajı ve sohbet kuralları sizi bekliyor.",
+					"subtitleCard": "Saate dokunun, arkasında karşılama ve kurallar.",
+					"subtitleStill": "Karşılama mesajı ve sohbet kuralları sayıların altında.",
 					"timerAriaFuture": "Başlangıca kadar — gün: {{days}}, saat: {{hours}}, dakika: {{minutes}}, saniye: {{seconds}}",
 					"timerAriaOverdue": "Planlanan başlangıçtan bu yana — dakika: {{minutes}}, saniye: {{seconds}}",
 					"toggleLabel": "Animasyonu kapatın",

@@ -865,12 +865,37 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants"
+			},
+			"gallery": {
+				"back": "Back to the waiting area",
+				"headline": "How the group works",
+				"subline": "Three things that help before your first time.",
+				"appointments": "Add the dates to your calendar",
+				"steps": {
+					"formats": {
+						"title": "As chat, audio or video",
+						"text": "The group meets in writing, with sound or with video. Counsellors are always there with you."
+					},
+					"appointments": {
+						"title": "Save the dates in advance",
+						"text": "You can put the group's dates in your calendar now and be reminded in time."
+					},
+					"anonymous": {
+						"title": "You stay anonymous",
+						"text": "Please do not use real names or addresses — neither your own nor anyone else's."
+					}
+				}
 			}
 		},
 		"join": {
 			"timeConversions": "Playful time conversions",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Back to the clock",
+					"cardNext": "Next page",
+					"cardOpenAria": "Flip the clock to read the greeting and netiquette",
+					"cardPage": "{{current}} of {{total}}",
+					"cardPrev": "Previous page",
 					"etaDay": "in 1 day",
 					"etaDays": "in {{count}} days",
 					"etaHour": "in 1 hour",
@@ -883,10 +908,13 @@
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
+					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
 					"overdueHeadline": "We'll be with you in a moment.",
 					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
 					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
+					"subtitleCard": "Tap the clock, greeting and netiquette behind it.",
+					"subtitleStill": "The greeting and the netiquette are below the numbers.",
 					"timerAriaFuture": "Until the start — days: {{days}}, hours: {{hours}}, minutes: {{minutes}}, seconds: {{seconds}}",
 					"timerAriaOverdue": "Since the planned start — minutes: {{minutes}}, seconds: {{seconds}}",
 					"toggleLabel": "Turn off animation",

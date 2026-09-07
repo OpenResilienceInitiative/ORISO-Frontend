@@ -87,7 +87,11 @@ const OVERDUE = new Date(NOW - 7 * 60e3);
 
 const agency = {
 	id: 88,
-	name: 'Caritas Berlin — Selbsthilfegruppe Trauer',
+	/* No em dash inside a fixture that stands for API data: the screen shows
+	   topic and agency on their own lines and must never look as if it glued
+	   them together (Frank, 2026-09-07). A comma is what a real agency name
+	   carries. */
+	name: 'Caritas Berlin, Selbsthilfegruppe Trauer',
 	postcode: '10117',
 	city: 'Berlin',
 	description: '',

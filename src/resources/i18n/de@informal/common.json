@@ -247,11 +247,19 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Zurück zur Uhr",
+					"cardNext": "Nächste Seite",
+					"cardOpenAria": "Uhr umdrehen, Begrüßung und Netiquette lesen",
+					"cardPage": "{{current}} von {{total}}",
+					"cardPrev": "Vorherige Seite",
 					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
+					"netiquetteTitle": "Netiquette",
 					"overdueHeadline": "Wir sind gleich für dich da.",
 					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
-					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
+					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
+					"subtitleCard": "Uhr antippen, dahinter Begrüßung und Netiquette.",
+					"subtitleStill": "Begrüßung und Netiquette stehen unter den Zahlen."
 				}
 			},
 			"consultant": {
@@ -346,6 +354,28 @@
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+		},
+		"info": {
+			"gallery": {
+				"back": "Zurück zum Warteraum",
+				"headline": "So funktioniert die Gruppe",
+				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
+				"appointments": "Termine in den Kalender",
+				"steps": {
+					"formats": {
+						"title": "Als Chat, Audio oder Video",
+						"text": "Die Gruppe trifft sich schriftlich, mit Ton oder mit Bild. Begleitet wird sie immer von Beraterinnen und Beratern."
+					},
+					"appointments": {
+						"title": "Termine vorher eintragen",
+						"text": "Du kannst dir die Termine der Gruppe schon jetzt in deinen Kalender eintragen und wirst rechtzeitig erinnert."
+					},
+					"anonymous": {
+						"title": "Du bleibst anonym",
+						"text": "Bitte nenne keine echten Namen und keine Adressen — weder deine eigenen noch die anderer."
+					}
+				}
+			}
 		}
 	},
 	"help": {

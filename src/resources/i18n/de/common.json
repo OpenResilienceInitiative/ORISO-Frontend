@@ -879,12 +879,37 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende"
+			},
+			"gallery": {
+				"back": "Zurück zum Warteraum",
+				"headline": "So funktioniert die Gruppe",
+				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
+				"appointments": "Termine in den Kalender",
+				"steps": {
+					"formats": {
+						"title": "Als Chat, Audio oder Video",
+						"text": "Die Gruppe trifft sich schriftlich, mit Ton oder mit Bild. Begleitet wird sie immer von Beraterinnen und Beratern."
+					},
+					"appointments": {
+						"title": "Termine vorher eintragen",
+						"text": "Sie können sich die Termine der Gruppe schon jetzt in Ihren Kalender eintragen und werden rechtzeitig erinnert."
+					},
+					"anonymous": {
+						"title": "Sie bleiben anonym",
+						"text": "Bitte nennen Sie keine echten Namen und keine Adressen — weder Ihre eigenen noch die anderer."
+					}
+				}
 			}
 		},
 		"join": {
 			"timeConversions": "Spielerische Zeitangaben",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Zurück zur Uhr",
+					"cardNext": "Nächste Seite",
+					"cardOpenAria": "Uhr umdrehen, Begrüßung und Netiquette lesen",
+					"cardPage": "{{current}} von {{total}}",
+					"cardPrev": "Vorherige Seite",
 					"etaDay": "in einem Tag",
 					"etaDays": "in {{count}} Tagen",
 					"etaHour": "in einer Stunde",
@@ -897,10 +922,13 @@
 					"greetingLabel": "Begrüßung Ihrer Beratung",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
+					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
 					"overdueHeadline": "Wir sind gleich für Sie da.",
 					"overdueSubtitle": "Ihre Beratung öffnet den Raum gleich — bitte haben Sie noch einen Moment Geduld.",
 					"subtitle": "Klicken Sie auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
+					"subtitleCard": "Uhr antippen, dahinter Begrüßung und Netiquette.",
+					"subtitleStill": "Begrüßung und Netiquette stehen unter den Zahlen.",
 					"timerAriaFuture": "Bis zum Beginn — Tage: {{days}}, Stunden: {{hours}}, Minuten: {{minutes}}, Sekunden: {{seconds}}",
 					"timerAriaOverdue": "Seit dem geplanten Beginn — Minuten: {{minutes}}, Sekunden: {{seconds}}",
 					"toggleLabel": "Animation abschalten",
