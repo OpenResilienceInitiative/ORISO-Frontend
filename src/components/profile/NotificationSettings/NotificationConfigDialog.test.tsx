@@ -20,8 +20,10 @@ configure({ testIdAttribute: 'data-cy' });
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, opts?: Record<string, unknown>) =>
-			opts && 'number' in opts ? `${key}:${opts.number}` : key
+		t: (key: string, opts?: Record<string, unknown> | string) =>
+			opts && typeof opts === 'object' && 'number' in opts
+				? `${key}:${opts.number}`
+				: key
 	})
 }));
 

@@ -226,7 +226,10 @@ export const NotificationConfigView = ({
 			</p>
 			<p className="notifConfig__emailNote">
 				<a href="/profile/einstellungen#email-notifications">
-					{t('profile.notifications.title')}
+					{t(
+						'profile.notifications.title',
+						'E-Mail-Benachrichtigungen'
+					)}
 				</a>
 			</p>
 
