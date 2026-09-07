@@ -9,14 +9,11 @@ import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
 import { orisoDateTimeColors } from '../form/orisoDateTimeDesign';
 import { translateWithFallback } from '../../utils/translationFallback';
+import { prefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 
 /** How long the panel takes to slide in or out. Mirrored in the keyframes.
     Same number as `GroupInfoGallery`: the two slide-ins are one family. */
 const SLIDE_MS = 320;
-
-const reducedMotion = () =>
-	typeof window.matchMedia !== 'function' ||
-	window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * The times offered while no backend says otherwise.
@@ -99,7 +96,7 @@ export const AppointmentBookingPanel = ({
 		if (done.current || leaving) {
 			return;
 		}
-		if (reducedMotion()) {
+		if (prefersReducedMotion()) {
 			finish();
 			return;
 		}
@@ -129,7 +126,13 @@ export const AppointmentBookingPanel = ({
 	const finishRef = useRef(finish);
 	finishRef.current = finish;
 	useEffect(() => {
-		window.history.pushState({ appointmentBooking: true }, '');
+		/* Keep whatever React Router put in the entry (`idx`, `usr`, `key`)
+		   and only add the marker: replacing the whole state made the router
+		   lose its position when it navigated while the panel was open. */
+		window.history.pushState(
+			{ ...(window.history.state ?? {}), appointmentBooking: true },
+			''
+		);
 		const onPopState = () => finishRef.current();
 		window.addEventListener('popstate', onPopState);
 		return () => {
@@ -144,7 +147,28 @@ export const AppointmentBookingPanel = ({
 	/* One key, seven languages: the calendar wants single letters starting on
 	   Sunday, and every language spells them differently. */
 	const dayLabels = tr('weekdays', 'S,M,D,M,D,F,S').split(',');
-	const slots = day ? slotsForDay(day) : [];
+	/* Today is bookable, but the hours that have gone are not: `notBefore`
+	   compares calendar days, so without this the grid still offered 09:00 at
+	   half past four and `confirm` handed a past ISO datetime on. */
+	const slots = useMemo(() => {
+		if (!day) {
+			return [];
+		}
+		const offered = slotsForDay(day);
+		const now = dayjs();
+		if (!day.isSame(now, 'day')) {
+			return offered;
+		}
+		return offered.filter((slot) => {
+			const [hour, minute] = slot.split(':').map(Number);
+			return day
+				.hour(hour)
+				.minute(minute)
+				.second(0)
+				.millisecond(0)
+				.isAfter(now);
+		});
+	}, [day, slotsForDay]);
 
 	const selectDay = (next: Dayjs) => {
 		setDay(next);

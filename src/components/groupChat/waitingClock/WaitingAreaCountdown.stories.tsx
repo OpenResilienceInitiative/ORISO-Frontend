@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import { phone375Globals } from '../../message/messageStoryShell';
 
 const WELCOME =
 	'Hallo und herzlich willkommen! Schön, dass du da bist. Mach es dir bequem — ich öffne den Raum pünktlich für uns alle.';
@@ -124,8 +125,8 @@ export const MobileFit: Story = {
 		hideMotionToggle: true,
 		gap: 12
 	},
+	globals: phone375Globals,
 	parameters: {
-		phoneFrame: true,
-		viewport: { defaultViewport: 'mobile1' }
+		phoneFrame: true
 	}
 };

@@ -76,7 +76,7 @@ export const GroupWaitingRoom = ({
 		null
 	);
 	const clockHeight = useClockHeight();
-	const narrow = useMediaQuery('(max-width:1199px)');
+	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
 	/*
@@ -136,7 +136,13 @@ export const GroupWaitingRoom = ({
 	};
 	const calendarAction = plannedStart
 		? {
-				label: calendarLabel,
+				/* On a phone the long label would push "Beitreten" out of the
+				   bar; the full one stays in the tooltip. */
+				label: phone
+					? t('groupChat.calendar.addShort', 'Kalender')
+					: calendarLabel,
+				title: calendarLabel,
+				compact: phone,
 				onClick: openCalendar,
 				testId: 'group-entry-calendar'
 			}
@@ -419,19 +425,15 @@ export const GroupWaitingRoom = ({
 							</Box>
 						</>
 					)}
-					{/* Desktop: calendar beside a visible but shut "Beitreten".
-					    On a phone two buttons is one too many for the bar, so
-					    there the calendar has it alone and "Beitreten" moves in
-					    once the group is open. */}
+					{/* Calendar beside a visible but shut "Beitreten", at
+					    every width: the waiting room says what happens next,
+					    and hiding the way in said nothing (Frank's Figma of
+					    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
+					    gesperrt"). The phone keeps both by shortening the
+					    calendar label, not by dropping a button. */}
 					<RegistrationFooter
-						secondary={narrow ? undefined : calendarAction}
-						primary={
-							narrow
-								? active || !calendarAction
-									? joinAction
-									: calendarAction
-								: joinAction
-						}
+						secondary={calendarAction}
+						primary={joinAction}
 					/>
 					{plannedStart && (
 						<GroupChatCalendarPopover
@@ -533,13 +535,24 @@ export const entryRoomClockHeight = (width: number, height: number) => {
 };
 
 const useClockHeight = () => {
+	/* The visual viewport is the part the person can actually see: a mobile
+	   URL bar sliding in or a keyboard opening shrinks it without a `window`
+	   resize, and the clock would keep a size that pushes the switch row and
+	   "Mehr erfahren" below the fold. */
 	const measure = () =>
-		entryRoomClockHeight(window.innerWidth, window.innerHeight);
+		entryRoomClockHeight(
+			window.visualViewport?.width ?? window.innerWidth,
+			window.visualViewport?.height ?? window.innerHeight
+		);
 	const [height, setHeight] = useState(measure);
 	useEffect(() => {
 		const onResize = () => setHeight(measure());
 		window.addEventListener('resize', onResize);
-		return () => window.removeEventListener('resize', onResize);
+		window.visualViewport?.addEventListener('resize', onResize);
+		return () => {
+			window.removeEventListener('resize', onResize);
+			window.visualViewport?.removeEventListener('resize', onResize);
+		};
 	}, []);
 	return height;
 };

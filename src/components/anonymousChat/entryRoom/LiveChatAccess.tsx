@@ -13,6 +13,8 @@ export interface LiveChatAccessProps {
 	onReroll: () => void;
 	onContinue: () => void;
 	busy?: boolean;
+	/** The name could not be saved; the door stays open, with a reason. */
+	failed?: boolean;
 }
 
 /**
@@ -23,7 +25,8 @@ export const LiveChatAccess = ({
 	pseudonym,
 	onReroll,
 	onContinue,
-	busy = false
+	busy = false,
+	failed = false
 }: LiveChatAccessProps) => {
 	const { t } = useTranslation();
 	const tr = (key: string, fallback: string) =>
@@ -113,6 +116,21 @@ export const LiveChatAccess = ({
 					)}
 				</Typography>
 			</Box>
+			{failed && (
+				<Typography
+					role="alert"
+					sx={{
+						mt: 2,
+						fontSize: 14,
+						color: registrationMd3.error
+					}}
+				>
+					{tr(
+						'continueFailed',
+						'Der Name konnte gerade nicht gespeichert werden. Bitte versuchen Sie es noch einmal.'
+					)}
+				</Typography>
+			)}
 			<RegistrationFooter
 				secondary={{
 					label: tr('reroll', 'Neu würfeln'),

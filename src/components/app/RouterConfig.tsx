@@ -109,19 +109,23 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 	}
 });
 
+/* Without the app shell: the group's waiting room stands on the same stage
+   the person registered on (Frank, 2026-09-04). Every role that can follow a
+   `?gcid=` link needs the route — `AuthenticatedApp` navigates there without
+   asking who is logged in. */
+const groupEntryPlainRoutes = [
+	{
+		path: '/groups/:chatId/entry',
+		component: GroupEntryRoom
+	}
+];
+
 export const RouterConfigUser = (
 	_settings: AppConfigInterface,
 	hasAssignedConsultant: boolean
 ): any => {
 	return {
-		/* Without the app shell: the group's waiting room stands on the same
-		   stage the person registered on (Frank, 2026-09-04). */
-		plainRoutes: [
-			{
-				path: '/groups/:chatId/entry',
-				component: GroupEntryRoom
-			}
-		],
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			{
 				to: '/sessions/user/view',
@@ -258,7 +262,7 @@ export const RouterConfigUser = (
 
 export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 	return {
-		plainRoutes: [],
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			overviewRoute(settings),
 			{

@@ -17,15 +17,6 @@ const MUTED = 'var(--m3-on-surface-variant, #444748)';
 const INK = 'var(--m3-on-surface, #1a1c1e)';
 const PINK = 'var(--m3-primary-fixed-dim, #ffb4aa)';
 
-/** Small caps label on the still-view greeting/netiquette boxes. */
-const stillLabelStyle: React.CSSProperties = {
-	fontSize: 9.5,
-	fontWeight: 700,
-	letterSpacing: '.14em',
-	textTransform: 'uppercase',
-	color: MUTED
-};
-
 /** Discomfort grows one emoji per waiting minute (design: emojiStepSec 60). */
 const OVERDUE_EMOJIS = ['😬', '😅', '🙄', '😳', '🫣', '😔', '😵‍💫', '🤯', '🫠'];
 const EMOJI_STEP_SEC = 60;
@@ -374,7 +365,6 @@ export const WaitingAreaCountdown = ({
 		return () => window.clearInterval(t);
 	}, [isOverdue, motionless, overdueEmoji]);
 
-	const hasWelcome = !!welcomeText;
 	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
 
 	/**
@@ -947,33 +937,11 @@ export const WaitingAreaCountdown = ({
 						</div>
 					) : (
 						<div
-							role={canFlip ? 'button' : 'timer'}
-							tabIndex={canFlip ? 0 : undefined}
-							aria-label={
-								canFlip
-									? tr(
-											'cardOpenAria',
-											'Begrüßung und Netiquette anzeigen'
-										)
-									: timerAria
-							}
-							onClick={canFlip ? openCard : undefined}
-							onKeyDown={
-								canFlip
-									? (event) => {
-											if (
-												event.key === 'Enter' ||
-												event.key === ' '
-											) {
-												event.preventDefault();
-												openCard();
-											}
-										}
-									: undefined
-							}
+							role="timer"
+							aria-label={timerAria}
 							className={`waitingClock__still${
 								isOverdue ? ' waitingClock__still--overdue' : ''
-							}${canFlip ? ' waitingClock__still--openable' : ''}`}
+							}`}
 						>
 							{isOverdue && (
 								<div
@@ -985,6 +953,24 @@ export const WaitingAreaCountdown = ({
 							)}
 							{units.map(({ unit, tint }) =>
 								stillCell(unit, tint)
+							)}
+							{/* The way to the card is its own control. It used
+							    to be `role="button"` on this container, which
+							    made the numbers its accessible name and hid the
+							    four tiles from a screen reader — the opposite of
+							    what the still view is for. */}
+							{canFlip && (
+								<Button
+									variant="text"
+									size="small"
+									onClick={openCard}
+									className="waitingClock__stillOpen"
+								>
+									{tr(
+										'cardOpenAria',
+										'Begrüßung und Netiquette anzeigen'
+									)}
+								</Button>
 							)}
 						</div>
 					)}

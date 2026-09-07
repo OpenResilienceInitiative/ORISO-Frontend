@@ -189,6 +189,12 @@ export const AccountData: FC<{
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
+	/* The password was minted for a temporary join and never shown. The flag
+	   travels in the draft, because the step can unmount between the two
+	   modes (review on ORISO-Frontend#1333). */
+	const [passwordMinted, setPasswordMinted] = useState<boolean>(
+		restoredDraft?.passwordMinted ?? false
+	);
 	const [twoFactorAuthEnabled, setTwoFactorAuthEnabled] = useState<boolean>(
 		restoredDraft?.twoFactorAuthEnabled ?? false
 	);
@@ -332,7 +338,8 @@ export const AccountData: FC<{
 			repeatPassword,
 			acceptedConsentBinding,
 			email,
-			twoFactorAuthEnabled
+			twoFactorAuthEnabled,
+			passwordMinted
 		});
 	}, [
 		identity,
@@ -341,7 +348,8 @@ export const AccountData: FC<{
 		repeatPassword,
 		acceptedConsentBinding,
 		email,
-		twoFactorAuthEnabled
+		twoFactorAuthEnabled,
+		passwordMinted
 	]);
 
 	const isUsernameLongEnough =
@@ -486,15 +494,29 @@ export const AccountData: FC<{
 	   reused here because it also reveals both fields, which is the one thing
 	   this path must not do. */
 	useEffect(() => {
-		if (!temporary || password) {
+		if (!temporary) {
+			/* Leaving the temporary path takes the minted password with it.
+			   It used to stay in both fields, masked: the person then created
+			   a permanent account with a password they had never seen and
+			   could not recover, and the sentence warning them about that was
+			   gone with the temporary mode (review on #1333, 2026-09-07). */
+			if (passwordMinted) {
+				setPassword('');
+				setRepeatPassword('');
+				setPasswordMinted(false);
+			}
+			return;
+		}
+		if (password) {
 			return;
 		}
 		const generated = generatePassword();
+		setPasswordMinted(true);
 		setPassword(generated);
 		setRepeatPassword(generated);
 		setIsPasswordVisible(false);
 		setIsRepeatPasswordVisible(false);
-	}, [temporary, password]);
+	}, [temporary, password, passwordMinted]);
 
 	/* The password block is the only thing a temporary join hides. The identity
 	   fields stay: the person still picks how they are called. */

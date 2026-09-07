@@ -41,14 +41,12 @@
 	}
 
 	// Future state: the 2×2 quad at every width.
-	//
 	// It used to be a single column below $fromMedium, which stacked all four
 	// groups vertically — on a 375 pt phone that is four screens of scrolling
 	// for one clock (Frank, 2026-09-04: "das war mobil auch schon alles
 	// komplett anders gebaut … der Fehler mit dem nach oben und runter
 	// ziehen"). The quad holds on a phone as long as the mini-clocks shrink
 	// with it, which is what `clockSize` is for.
-	//
 	// The gaps are deliberately tight: the four groups should read as one
 	// block, not as four charts side by side. The component overrides them
 	// inline with the geometry's group gap.
@@ -120,6 +118,8 @@
 		width: 100%;
 		backface-visibility: hidden;
 		-webkit-backface-visibility: hidden;
+
+		// stylelint-disable-next-line scss/double-slash-comment-empty-line-before
 		// The face only fades once the card is halfway round, so the two sides
 		// never show through each other.
 		transition: opacity 0s linear 0.3s;
@@ -267,6 +267,7 @@
 		line-height: 1;
 		color: var(--m3-primary-container, #cc1e1c);
 	}
+
 	/* The still view shows the same one card as the moving view — it just
 	   never turns. Same footprint, so the row under it and the bar stay put
 	   when someone flips the animation switch. */
@@ -275,14 +276,12 @@
 		width: 100%;
 	}
 
-	&__still--openable {
-		cursor: pointer;
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #cc0000);
-			outline-offset: 4px;
-			border-radius: 20px;
-		}
+	// The control that opens the card sits under the four tiles and spans
+	// them, so it reads as one block with the numbers.
+	&__stillOpen {
+		grid-column: 1 / -1;
+		justify-self: center;
+		margin-top: 4px;
 	}
 }
 

@@ -45,7 +45,12 @@ export const EntryRoomShell = ({
 			>
 				{kicker}
 			</Typography>
+			{/* The line changes while the person waits — "eine Beraterin hat
+			    angenommen", "gerade geschlossen". Without a live region a
+			    screen reader never learns about it. */}
 			<Typography
+				role="status"
+				aria-live="polite"
 				sx={{
 					fontSize: 14,
 					fontWeight: 600,

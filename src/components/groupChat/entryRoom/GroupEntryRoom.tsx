@@ -1,4 +1,5 @@
 import * as React from 'react';
+import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
@@ -96,21 +97,22 @@ export const GroupEntryRoom = () => {
 		if (!start) {
 			return undefined;
 		}
-		const stepDays =
+		/* Calendar arithmetic, not fixed milliseconds: a month is not 30 days
+		   (a 31 January start would have shown 2 March), and a day is not
+		   always 24 hours — across the DST change the fixed step moved the
+		   meeting by an hour. */
+		const unit: 'week' | 'day' | 'month' | null =
 			item?.chatInterval === 'WEEKLY'
-				? 7
+				? 'week'
 				: item?.chatInterval === 'DAILY'
-					? 1
+					? 'day'
 					: item?.chatInterval === 'MONTHLY'
-						? 30
-						: 0;
-		if (!stepDays) {
+						? 'month'
+						: null;
+		if (!unit) {
 			return [start];
 		}
-		return [0, 1, 2].map(
-			(step) =>
-				new Date(start.getTime() + step * stepDays * 24 * 3600 * 1000)
-		);
+		return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
 	}, [item]);
 
 	const plannedStart = useMemo(

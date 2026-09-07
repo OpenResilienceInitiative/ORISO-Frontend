@@ -19,7 +19,7 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { phone375Globals } from '../message/messageStoryShell';
+import { phone390Globals } from '../message/messageStoryShell';
 
 /**
  * Approval surface for the **link variant** of "Anmeldedaten erfassen".
@@ -253,7 +253,7 @@ export const FullRegistration: StoryObj = {
 
 export const Mobile: StoryObj = {
 	name: '4 — Mobil (390 pt)',
-	globals: phone375Globals,
+	globals: phone390Globals,
 	render: () => <EntryScreen />,
 	parameters: {
 		layout: 'fullscreen',

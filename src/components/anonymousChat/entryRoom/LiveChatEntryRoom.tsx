@@ -79,6 +79,7 @@ export const LiveChatEntryRoom = ({
 	const [accepted, setAccepted] = useState(false);
 	const [closedDismissed, setClosedDismissed] = useState(false);
 	const [leaveFailed, setLeaveFailed] = useState(false);
+	const [continueFailed, setContinueFailed] = useState(false);
 	const cancelled = useRef(false);
 	useEffect(
 		() => () => {
@@ -133,6 +134,7 @@ export const LiveChatEntryRoom = ({
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
 		setBusy(true);
+		setContinueFailed(false);
 		try {
 			await apiPutSessionData(sessionId, {
 				displayName: pseudonym.displayName
@@ -141,6 +143,11 @@ export const LiveChatEntryRoom = ({
 			mark('pseudonym');
 			mark('pseudonym-name', pseudonym.displayName);
 			if (!cancelled.current) setStage('waiting');
+		} catch (error) {
+			/* Without this the door swallowed the failure: the stage stayed on
+			   `access` and nothing said why. */
+			console.error('live chat entry: could not store the name', error);
+			if (!cancelled.current) setContinueFailed(true);
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
@@ -233,6 +240,7 @@ export const LiveChatEntryRoom = ({
 				<LiveChatAccess
 					pseudonym={pseudonym}
 					busy={busy}
+					failed={continueFailed}
 					onReroll={() =>
 						setPseudonym((p) => regeneratePseudonym(p, locale))
 					}

@@ -122,8 +122,12 @@ export const LiveChatWaitingRoom = ({
 	   whatever the person was doing — the breathing companion included. */
 	const companionOpen = companion && !accepted;
 	const total = Math.max(5, ahead ?? 0);
+	/* Capped like `handoverGate.ts` does with `slow: 90`: being next in line
+	   is not being connected, and a full bar would say it is. */
 	const progress =
-		ahead === null ? 20 : Math.round(((total - ahead) / total) * 100);
+		ahead === null
+			? 20
+			: Math.min(90, Math.round(((total - ahead) / total) * 100));
 
 	const cards: HandoverStep[] = CARD_KEYS.map((key) => ({
 		key: `live-${key}`,
@@ -282,35 +286,11 @@ export const LiveChatWaitingRoom = ({
 			)}
 
 			{accepted && (
-				<Box
-					data-cy="live-chat-consent"
-					sx={{
-						'position': 'fixed',
-						'bottom': 0,
-						'right': 0,
-						'width': { xs: '100vw', lg: '60vw' },
-						'zIndex': 65,
-						'px': { xs: 2, sm: 5 },
-						'pb': {
-							xs: 'calc(12px + env(safe-area-inset-bottom))',
-							sm: 3
-						},
-						'pt': 3,
-						'bgcolor': 'rgba(255,255,255,0.96)',
-						'backdropFilter': 'blur(8px)',
-						'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
-						'animation':
-							'liveChatConsentIn 420ms cubic-bezier(0.4,0,0.2,1) both',
-						'@keyframes liveChatConsentIn': {
-							from: { transform: 'translateY(100%)' },
-							to: { transform: 'translateY(0)' }
-						},
-						'@media (prefers-reduced-motion: reduce)': {
-							animation: 'none'
-						}
-					}}
-				>
-					<Box sx={{ maxWidth: 720, mx: 'auto' }}>
+				<RegistrationFooter animateIn>
+					<Box
+						data-cy="live-chat-consent"
+						sx={{ flex: 1, minWidth: 0, py: { xs: 1, sm: 2 } }}
+					>
 						<Box
 							sx={{
 								display: 'flex',
@@ -379,8 +359,8 @@ export const LiveChatWaitingRoom = ({
 								onClick={() => setLeaving(true)}
 								disabled={busy}
 								sx={{
-									width: 60,
-									height: 60,
+									width: 56,
+									height: 56,
 									flexShrink: 0,
 									borderRadius: '50%',
 									border: `1.5px solid ${registrationMd3.outline}`,
@@ -402,7 +382,7 @@ export const LiveChatWaitingRoom = ({
 							</Box>
 						</Box>
 					</Box>
-				</Box>
+				</RegistrationFooter>
 			)}
 
 			<LeaveQueueDialog

@@ -103,6 +103,13 @@ interface FetchDataProps {
 	timeout?: number;
 	signal?: AbortSignal;
 	recoverOnPublicAuthRoute?: boolean;
+	/**
+	 * Set only by the anonymous retry below. A second 401 is the end of the
+	 * road: it rejects, and it does not log anyone out or leave the page.
+	 * `logout` would clear `sessionStorage` — the half-filled registration
+	 * with it — for a call that was only ever a guess.
+	 */
+	isStaleAuthRetry?: boolean;
 }
 
 export const fetchData = ({
@@ -114,7 +121,8 @@ export const fetchData = ({
 	responseHandling,
 	timeout,
 	signal,
-	recoverOnPublicAuthRoute = true
+	recoverOnPublicAuthRoute = true,
+	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
 		const reqLog = new RequestLog(url, method, timeout);
@@ -139,7 +147,8 @@ export const fetchData = ({
 				responseHandling,
 				timeout,
 				signal,
-				recoverOnPublicAuthRoute: false
+				recoverOnPublicAuthRoute: false,
+				isStaleAuthRetry: true
 			});
 
 		const csrfToken = generateCsrfToken();
@@ -303,6 +312,8 @@ export const fetchData = ({
 								resolve,
 								reject
 							);
+						} else if (isStaleAuthRetry) {
+							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 						} else {
 							logout(true, appConfig.urls.toLogin);
 							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
@@ -321,6 +332,8 @@ export const fetchData = ({
 						resolve,
 						reject
 					);
+				} else if (isStaleAuthRetry) {
+					reject(new Error(FETCH_ERRORS.CATCH_ALL));
 				} else {
 					const error = getErrorCaseForStatus(response.status);
 					redirectToErrorPage(error);

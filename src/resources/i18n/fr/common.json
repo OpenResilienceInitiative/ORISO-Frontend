@@ -654,7 +654,8 @@
 			"download": "Télécharger le fichier ICS",
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
-			"titleLabel": "Titre neutre pour le calendrier"
+			"titleLabel": "Titre neutre pour le calendrier",
+			"addShort": "Agenda"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -2974,7 +2975,9 @@
 			"temporary": {
 				"join": "Rejoindre",
 				"toggleOff": "Créer un compte",
-				"toggleOn": "Rejoindre sans compte"
+				"toggleOn": "Rejoindre sans compte",
+				"title": "Cette session se termine à la fermeture du navigateur.",
+				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
 			}
 		},
 		"back": "Retour",
@@ -3233,34 +3236,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Guide respiratoire inspirer expirer",
-			"timeLeft": "Temps restant",
-			"choosePace": "Choisissez votre rythme, puis commencez votre premier essai.",
-			"firstTryInstruction": "Premier essai : suivez inspirer, retenir et expirer.",
-			"practiceSuccessPrompt": "Excellent, vous voulez commencer maintenant ?",
-			"timingInfo": "Réglez votre rythme de respiration avant de commencer.",
-			"achievementUnlocked": "Succès débloqué : Niveau {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Niveau {{level}} : {{title}}",
-			"completionTitle": "Félicitations, vous y êtes arrivé",
-			"prizeLine1": "Votre prix principal est la vraie sagesse.",
-			"prizeLine2": "Parce que vous avez dépassé votre bruit intérieur, vaincu l'ennui, pris du recul et trouvé un peu de paix intérieure.",
-			"serenityPrayer": "Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux, et la sagesse d'en connaître la différence.",
-			"changeMind": "Je change d'avis, laissez-moi essayer votre jeu d'attente",
-			"iJustWait": "J'attends simplement",
-			"startGame": "Démarrer le jeu",
-			"startFirstTry": "Commençons le premier essai",
-			"repeatTrainingRound": "Répéter le tour d'entraînement",
-			"startRealGame": "Commençons la vraie partie",
-			"repeatGame": "Répéter le jeu",
-			"receivePrize": "Recevoir votre prix",
-			"playAgain": "Rejouer",
-			"joinRoom": "Rejoindre la salle",
-			"decreaseInhale": "Diminuer les secondes d'inspiration",
-			"increaseInhale": "Augmenter les secondes d'inspiration",
-			"decreaseHold": "Diminuer les secondes de pause",
-			"increaseHold": "Augmenter les secondes de pause",
-			"decreaseExhale": "Diminuer les secondes d'expiration",
-			"increaseExhale": "Augmenter les secondes d'expiration",
 			"robotUsernameFallback": "Demandeur_9",
 			"robotCard1Title": "Un instant s'il vous plaît",
 			"robotCard1Body": "Tous nos conseillers sont actuellement en consultation en direct. Veuillez patienter encore un court instant ici dans le salon de discussion. Vous pouvez voir ci-dessous combien de personnes sont avant vous dans la file d'attente.",
@@ -3272,7 +3247,6 @@
 			"robotCard4Title": "Vous voulez utiliser utilement le temps d'attente ?",
 			"robotCard4Body": "Alors jouez à notre court jeu d'inspiration-expiration en attendant.",
 			"robotCard4Play": "Jouer",
-			"robotCard4Info": "Infos",
 			"phase": {
 				"inhale": "Inspirer",
 				"hold": "Retenir",
@@ -3282,58 +3256,19 @@
 				"carimatSubtitle": "Passons le temps d'attente ensemble",
 				"cancel": "annuler",
 				"confirm": "Compris, c'est parti",
-				"restart": "Recommencer",
-				"pressAtRightTime": "Appuyez au bon moment",
 				"inhale": {
 					"bubble": "Vous devez faire 3 choses pour gagner.",
-					"subtitle": "par le nez",
-					"instruction": "Inspirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+					"subtitle": "par le nez"
 				},
 				"hold": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "retenez votre souffle",
-					"instruction": "Retenez votre souffle pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+					"subtitle": "retenez votre souffle"
 				},
 				"exhale": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "par la bouche",
-					"instruction": "Expirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
-				},
-				"belly": {
-					"autoPilot": "Pilote auto",
-					"timeIt": "Mesurer",
-					"inhale": "Super, inspirez encore <strong>3 secondes</strong>, mais cette fois en dilatant le ventre.",
-					"hold": "Retenez maintenant votre souffle <strong>3 secondes</strong>.",
-					"exhale": "Expirez maintenant <strong>4 secondes</strong> et détendez tout le corps."
-				},
-				"selfTimer": {
-					"instruction": "Définissez maintenant vos propres intervalles de temps pendant que vous respirez.",
-					"repeatGame": "Rejouer",
-					"backToWaiting": "Retour à l'attente"
-				},
-				"completion": {
-					"instruction": "Félicitations, vous y êtes arrivé.",
-					"receiveGift": "Recevoir un petit cadeau"
-				},
-				"serenity": {
-					"instruction": "Ce cadeau est un petit mantra qui a aidé beaucoup de personnes à traverser des périodes difficiles. On l'appelle la prière de la sérénité : “Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux changer, et la sagesse de distinguer les unes des autres.”"
+					"subtitle": "par la bouche"
 				}
-			},
-			"presets": {
-				"starter334": "première fois",
-				"standard446": "expérience modérée (recommandé)",
-				"deep556": "long (personnes expertes)"
-			},
-			"briefing": {
-				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
-				"1": "Attendre avec tous ces problèmes peut être assez éprouvant. Si vous voulez, nous avons créé un petit pont de salle d'attente.",
-				"2": "D'accord, vous devez faire trois choses dans le jeu.",
-				"3": "1. Inspirez par le nez\n\n2. Retenez votre souffle\n\n3. Expirez par la bouche",
-				"negative": "D'accord, merci de patienter. Dès qu'un conseiller est libre, nous vous faisons entrer."
-			},
-			"onboardingLine1": "Prenez simplement le temps d'arriver. Nous respirons ensemble.",
-			"onboardingLine3": "Quand vous êtes prêt, lancez votre premier essai.",
-			"volumeHint": "Pour une meilleure expérience, veuillez activer le son."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4896,7 +4831,8 @@
 				"textShort": "Écrivez-nous — réponse sous deux jours ouvrés.",
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
-				"mailShort": "Écrire une demande"
+				"mailShort": "Écrire une demande",
+				"closedDay": "fermé"
 			},
 			"steps": {
 				"wait": {

@@ -654,7 +654,8 @@
 			"download": "ICS ኣውርድ",
 			"google": "ካላንደር Google",
 			"outlook": "ካላንደር Outlook",
-			"titleLabel": "ገለልተኛ ርእሲ ካላንደር"
+			"titleLabel": "ገለልተኛ ርእሲ ካላንደር",
+			"addShort": "ዓውደ-ኣዋርሕ"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "ቆጸራ",
@@ -2974,7 +2975,9 @@
 			"temporary": {
 				"join": "ተጸምበር",
 				"toggleOff": "ኣካውንት ፍጠር",
-				"toggleOn": "ብዘይ ኣካውንት ተጸምበር"
+				"toggleOn": "ብዘይ ኣካውንት ተጸምበር",
+				"title": "እዚ ክፍለ-ግዜ ንብሮዘር ምስ ዓጸኻዮ ይውዳእ።",
+				"note": "ክሳብ ሽዑ ከም ንቡር ትጽሕፍ፡ መልእኽትታትካ ድማ ንኻልኦት ይተርፍ። ንስኻ ግን ድሕሪኡ ናብዚ ዝርርብ ክትምለስ ኣይትኽእልን።"
 			}
 		},
 		"back": "ዝባን",
@@ -3233,34 +3236,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "ናይ ትንፋስ ጸወታ፦ ትንፋስ ምእታውን ምውጻእን",
-			"timeLeft": "ዝተረፈ ግዜ",
-			"choosePace": "ቅልጣፈኹም ምረጹ እሞ ናይ መጀመርታ ፈተነኹም ጀምሩ።",
-			"firstTryInstruction": "ናይ መጀመርታ ፈተነ፦ ትንፋስ ምእታው፡ ምሓዝን ትንፋስ ምውጻእን ተኸተሉ።",
-			"practiceSuccessPrompt": "ኣዝዩ ጽቡቕ፡ ሕጂ ክትጅምሩ ትደልዩ ዲኹም?",
-			"timingInfo": "ቅድሚ ምጅማርኩም ናይ ትንፋስ ግዜኹም ኣስተኻኽሉ።",
-			"achievementUnlocked": "ዓወት ተኸፊቱ፦ ደረጃ {{level}} {{emoji}} {{title}}።",
-			"levelBadge": "Level {{level}}: {{title}}",
-			"completionTitle": "እንኳዕ ሓጎሰኩም፡ ኣዕዊትኩምዎ",
-			"prizeLine1": "ቀንዲ ሽልማትኩም ናይ ሓቂ ጥበብ እዩ።",
-			"prizeLine2": "ከመይሲ ንውሽጣዊ ጫውጫውታኹም ስዒርኩም፡ ንስልቻ ኣሸኒፍኩም፡ ርሕቀት ወሲድኩም፡ ቅሩብ ውሽጣዊ ሰላም እውን ረኺብኩም ኢኹም።",
-			"serenityPrayer": "ኦ ኣምላኽ፡ ክቕይሮ ዘይክእል ነገራት ንምቕባል ህድኣት፡ ክቕይሮ ዝኽእል ነገራት ንምቕያር ትብዓት፡ ንኽልቲኡ ንምፍላይ ድማ ጥበብ ሃበኒ።",
-			"changeMind": "ሓሳበይ ቀይረ ኣለኹ፡ ናይ ምጽባይ ጸወታኹም ክፍትን ሓድጉኒ",
-			"iJustWait": "ብቐሊሉ ክጽበ እየ",
-			"startGame": "ጸወታ ጀምር",
-			"startFirstTry": "ናይ መጀመርታ ፈተነ ንጀምር",
-			"repeatTrainingRound": "ናይ ልምምድ ዙር ደግም",
-			"startRealGame": "እቲ ናይ ሓቂ ጸወታ ንጀምር",
-			"repeatGame": "ጸወታ ደግም",
-			"receivePrize": "ሽልማት ተቐበል",
-			"playAgain": "ደጊምካ ተጻወት",
-			"joinRoom": "ናብቲ ክፍሊ ኺድ",
-			"decreaseInhale": "ናይ ትንፋስ ምእታው ካልኢታት ኣጉድል",
-			"increaseInhale": "ናይ ትንፋስ ምእታው ካልኢታት ወስኽ",
-			"decreaseHold": "ናይ ምሓዝ ካልኢታት ኣጉድል",
-			"increaseHold": "ናይ ምሓዝ ካልኢታት ወስኽ",
-			"decreaseExhale": "ናይ ትንፋስ ምውጻእ ካልኢታት ኣጉድል",
-			"increaseExhale": "ናይ ትንፋስ ምውጻእ ካልኢታት ወስኽ",
 			"robotUsernameFallback": "Ratsuchende_r 9",
 			"robotCard1Title": "ቅሩብ ጽናሕ፣ በጃኻ",
 			"robotCard1Body": "ኩሎም ኣማኸርቲ ናትና ሕጂ ኣብ ቀጥታ ዝርርብ ኣለዎም። በጃኹም ኣብዚ ናይ ዝርርብ ክፍሊ ቁሩብ ዳጓ ጽናሕ። ኣብ ታሕቲ ክትርኡ ትኽእሉ ክንደይ ሰባት ቅድሜኹም ኣብ መስርዕ ምህላዎም።",
@@ -3272,7 +3247,6 @@
 			"robotCard4Title": "ናይ ምጽባይ ግዜኹም ብጠቓሚ መገዲ ክትጥቀሙሉ ትደልዩ ዲኹም?",
 			"robotCard4Body": "እምበኣር ኣብ መንጎ ናትና ሓጺር ናይ ትንፋስ ምእታው-ምውጻእ ጸወታ ተጻወቱ።",
 			"robotCard4Play": "ጸወታ ጀምር",
-			"robotCard4Info": "Info",
 			"phase": {
 				"inhale": "ትንፋስ ኣእቱ",
 				"hold": "ሓዝ",
@@ -3282,58 +3256,19 @@
 				"carimatSubtitle": "ጊዜ ምጽባይካ ንድለዮ",
 				"cancel": "ይቋረጽ",
 				"confirm": "ተረዲአ፣ ንጀምር",
-				"restart": "እንደገና ጀምር",
-				"pressAtRightTime": "ኣብ ቅኑዕ ግዜ ጠውቕ",
 				"inhale": {
 					"bubble": "ንምዕዋት 3 ነገራት ክትገብር ኣለካ።",
-					"subtitle": "ብኣፍንጫኻ",
-					"instruction": "ን<strong>{{count}} ካልኢታት</strong> ቀስ በሉ ኣፍንጫኻ ስተንፍስ፣ ሽዑ ንመጫበጢ ጠውቕ።"
+					"subtitle": "ብኣፍንጫኻ"
 				},
 				"hold": {
 					"bubble": "3 ነገራት ክትገብር ኣለካ።",
-					"subtitle": "ትንፋስካ ሓዝ",
-					"instruction": "ንፋስካ ን<strong>{{count}} ካልኢታት</strong> ሓዝ፣ ሽዑ ንመጫበጢ ጠውቕ።"
+					"subtitle": "ትንፋስካ ሓዝ"
 				},
 				"exhale": {
 					"bubble": "3 ነገራት ክትገብር ኣለካ።",
-					"subtitle": "ብኣፍካ",
-					"instruction": "ንፋስካ ን<strong>{{count}} ካልኢታት</strong> ቀስ በሉ ኣውጽእ፣ ሽዑ ንመጫበጢ ጠውቕ።"
-				},
-				"belly": {
-					"autoPilot": "ኣውቶ ፓይሎት",
-					"timeIt": "ግዜ ሓዞ",
-					"inhale": "ጽቡቕ፣ እንደገና ን<strong>3 ካልኢታት</strong> ተንፍስ፣ ሕጂ ግን ሆድካ እናወሰኻ።",
-					"hold": "ሕጂ ን<strong>3 ካልኢታት</strong> ትንፋስካ ሓዝ።",
-					"exhale": "ሕጂ ን<strong>4 ካልኢታት</strong> ኣውጽእ ከምኡውን ሙሉእ ኣካልካ ኣዝልኣ።"
-				},
-				"selfTimer": {
-					"instruction": "ሕጂ ኣብ እዋን ምትንፋስካ ናይ ባዕልኻ ግዘ ኣቐምጥ።",
-					"repeatGame": "ጸወታ ድገም",
-					"backToWaiting": "ናብ ምጽባይ ተመለስ"
-				},
-				"completion": {
-					"instruction": "እንኳዕ ሓጎሰኩም፡ ኣዕዊትኩምዎ።",
-					"receiveGift": "ንእሽቶ ህያብ ተቐበሉ"
-				},
-				"serenity": {
-					"instruction": "እቲ ህያብ ንብዙሓት ሰባት ኣብ ጽንኩር ግዜ ዝሓገዞም ንእሽቶ ማንትራ እዩ። ጸሎት ህድኣት ይበሃል፦ “ኦ ኣምላኽ፡ ክቕይሮ ዘይክእል ነገራት ንምቕባል ህድኣት፡ ክቕይሮ ዝኽእል ነገራት ንምቕያር ትብዓት፡ ንኽልቲኡ ንምፍላይ ድማ ጥበብ ሃበኒ።”"
+					"subtitle": "ብኣፍካ"
 				}
-			},
-			"presets": {
-				"starter334": "ናይ መጀመርታ ግዜ",
-				"standard446": "ማእከላይ ተመክሮ (ዝምከር)",
-				"deep556": "ነዊሕ (ንክኢላታት)"
-			},
-			"briefing": {
-				"0": "ይቕሬታ፡ ሕጂ ክትጽበዩ ኣለኩም፡ ኣብዚ እዋን ኩሎም ኣማኸርቲ ስራሕ ሒዞም ኣለዉ።",
-				"1": "ምስዚ ኩሉ ጸገማት ምጽባይ ከቢድ ክኸውን ይኽእል እዩ። ስለዚ እንተደሊኹም፡ ንእሽቶ ናይ መጸበዪ ክፍሊ መደልደሊ ሰሪሕናልኩም ኣለና።",
-				"2": "ሕራይ፡ ኣብቲ ጸወታ ሰለስተ ነገራት ክትገብሩ ኣለኩም።",
-				"3": "1. ብኣፍንጫኹም ትንፋስ ኣእትዉ\n\n2. ትንፋስኩም ሓዙ\n\n3. ብኣፍኩም ትንፋስ ኣውጽኡ",
-				"negative": "ሕራይ፡ በጃኹም ቅሩብ ተጸበዩ። ሓደ ኣማኻሪ ናጻ ምስ ኮነ ከነእትወኩም ኢና።"
-			},
-			"onboardingLine1": "ጸጥ ኢልኩም እቶ። ብሓባር ንተንፍስ።",
-			"onboardingLine3": "ድሉዋት ምስ ኮንኩም፡ ናይ መጀመርታ ፈተነኹም ጀምሩ።",
-			"volumeHint": "ዝሓሸ ተመክሮ ንኽህልወኩም፡ በጃኹም ነቲ ድምጺ ክፈትዎ።"
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4896,7 +4831,8 @@
 				"textShort": "ጽሓፉልና — መልሲ ኣብ ክልተ ናይ ስራሕ መዓልታት።",
 				"later": "ደሓር",
 				"mail": "ናብ ማእከል ምኽሪ ሕቶ ጽሓፉ",
-				"mailShort": "ሕቶ ጽሓፉ"
+				"mailShort": "ሕቶ ጽሓፉ",
+				"closedDay": "ዕጹው"
 			},
 			"steps": {
 				"wait": {

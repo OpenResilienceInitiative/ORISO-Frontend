@@ -649,7 +649,8 @@
 			"download": "ICS herunterladen",
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
-			"titleLabel": "Neutraler Kalendertitel"
+			"titleLabel": "Neutraler Kalendertitel",
+			"addShort": "Kalender"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -2935,7 +2936,9 @@
 			"temporary": {
 				"join": "Beitreten",
 				"toggleOff": "Konto anlegen",
-				"toggleOn": "Ohne Konto beitreten"
+				"toggleOn": "Ohne Konto beitreten",
+				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
+				"note": "Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück."
 			}
 		},
 		"back": "Zurück",
@@ -3253,34 +3256,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Atemspiel Einatmen Ausatmen",
-			"timeLeft": "Verbleibende Zeit",
-			"choosePace": "Wähle dein Tempo und starte dann deinen ersten Versuch.",
-			"firstTryInstruction": "Erster Versuch: Einatmen, Halten und Ausatmen folgen.",
-			"practiceSuccessPrompt": "Sehr gut, möchtest du jetzt starten?",
-			"timingInfo": "Stelle dein Atem-Timing ein, bevor du startest.",
-			"achievementUnlocked": "Erfolg freigeschaltet: Level {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Level {{level}}: {{title}}",
-			"completionTitle": "Glückwunsch, du hast es geschafft",
-			"prizeLine1": "Dein Hauptpreis ist echte Weisheit.",
-			"prizeLine2": "Denn du hast dein inneres Rauschen überwunden, die Langeweile besiegt, Abstand gewonnen und etwas inneren Frieden gefunden.",
-			"serenityPrayer": "Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.",
-			"changeMind": "Ich ändere meine Meinung, lass mich dein Wartespiel ausprobieren",
-			"iJustWait": "Ich warte einfach",
-			"startGame": "Spiel starten",
-			"startFirstTry": "Lass uns den ersten Versuch starten",
-			"repeatTrainingRound": "Trainingsrunde wiederholen",
-			"startRealGame": "Lass uns das echte Spiel starten",
-			"repeatGame": "Spiel wiederholen",
-			"receivePrize": "Preis erhalten",
-			"playAgain": "Nochmal spielen",
-			"joinRoom": "Zum Raum wechseln",
-			"decreaseInhale": "Sekunden für Einatmen verringern",
-			"increaseInhale": "Sekunden für Einatmen erhöhen",
-			"decreaseHold": "Sekunden für Halten verringern",
-			"increaseHold": "Sekunden für Halten erhöhen",
-			"decreaseExhale": "Sekunden für Ausatmen verringern",
-			"increaseExhale": "Sekunden für Ausatmen erhöhen",
 			"robotUsernameFallback": "Ratsuchende_r 9",
 			"robotCard1Title": "Einen Moment Geduld",
 			"robotCard1Body": "Alle unsere Berater*innen sind gerade im Live-Gespräch. Bitte warten Sie noch einen kurzen Moment hier im Chatraum. Sie sehen unten, wie viele Personen noch vor Ihnen an der Reihe sind.",
@@ -3292,7 +3267,6 @@
 			"robotCard4Title": "Wollen Sie die Wartezeit sinnvoll nutzen?",
 			"robotCard4Body": "Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.",
 			"robotCard4Play": "Spiel starten",
-			"robotCard4Info": "Info",
 			"phase": {
 				"inhale": "Einatmen",
 				"hold": "Halten",
@@ -3302,58 +3276,19 @@
 				"carimatSubtitle": "Lass uns die Wartezeit überbrücken",
 				"cancel": "Abbrechen",
 				"confirm": "Verstanden, los geht's",
-				"restart": "Neu starten",
-				"pressAtRightTime": "Zum richtigen Zeitpunkt drücken",
 				"inhale": {
 					"bubble": "Du musst 3 Dinge tun, um zu gewinnen.",
-					"subtitle": "durch die Nase",
-					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam ein, dann drücke den Knopf."
+					"subtitle": "durch die Nase"
 				},
 				"hold": {
 					"bubble": "Du musst 3 Dinge tun.",
-					"subtitle": "halte den Atem an",
-					"instruction": "Halte den Atem <strong>{{count}} Sekunden</strong> lang an, dann drücke den Knopf."
+					"subtitle": "halte den Atem an"
 				},
 				"exhale": {
 					"bubble": "Du musst 3 Dinge tun.",
-					"subtitle": "durch den Mund",
-					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam aus, dann drücke den Knopf."
-				},
-				"belly": {
-					"autoPilot": "Auto-Pilot",
-					"timeIt": "Selbst takten",
-					"inhale": "Super, atme wieder <strong>3 Sekunden</strong> ein, diesmal aber indem du deinen Bauch ausdehnst.",
-					"hold": "Halte jetzt <strong>3 Sekunden</strong> den Atem an.",
-					"exhale": "Atme nun <strong>4 Sekunden</strong> aus und entspanne den ganzen Körper."
-				},
-				"selfTimer": {
-					"instruction": "Jetzt kannst du deine eigenen Zeitintervalle zum Atmen festlegen.",
-					"repeatGame": "Spiel wiederholen",
-					"backToWaiting": "Zurück zum Warten"
-				},
-				"completion": {
-					"instruction": "Herzlichen Glückwunsch, du hast es geschafft.",
-					"receiveGift": "Kleines Geschenk erhalten"
-				},
-				"serenity": {
-					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: “Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.”"
+					"subtitle": "durch den Mund"
 				}
-			},
-			"presets": {
-				"starter334": "erstes Mal",
-				"standard446": "mittlere Erfahrung (empfohlen)",
-				"deep556": "lang (Expertinnen und Experten)"
-			},
-			"briefing": {
-				"0": "Es tut uns leid, du musst gerade warten, im Moment sind alle Beraterinnen und Berater beschäftigt.",
-				"1": "Warten mit all diesen Problemen kann ziemlich belastend sein. Wenn du möchtest, haben wir eine kleine Wartezimmer-Brücke erstellt.",
-				"2": "Okay, du musst im Spiel drei Dinge tun.",
-				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
-				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			},
-			"onboardingLine1": "Kommen Sie einfach an. Wir atmen zusammen.",
-			"onboardingLine3": "Wenn Sie bereit sind, starten Sie Ihren ersten Versuch.",
-			"volumeHint": "Für ein besseres Erlebnis schalten Sie bitte den Ton ein."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4888,7 +4823,8 @@
 				"textShort": "Schreiben Sie uns — Antwort in zwei Arbeitstagen.",
 				"later": "Später",
 				"mail": "Anfrage an eine Beratungsstelle schreiben",
-				"mailShort": "Anfrage schreiben"
+				"mailShort": "Anfrage schreiben",
+				"closedDay": "geschlossen"
 			},
 			"steps": {
 				"wait": {

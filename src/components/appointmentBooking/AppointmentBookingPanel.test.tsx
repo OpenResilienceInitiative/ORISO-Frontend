@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -42,7 +42,18 @@ const nextMonthWorkday = () => {
 const confirmButton = () =>
 	screen.getByTestId('appointment-booking-confirm') as HTMLButtonElement;
 
+/** The tests derive their expected dates from `dayjs()` at assertion time while
+    the panel derived its own at render time. A midnight — or worse, a month
+    boundary — between the two makes them disagree, so the clock stands still:
+    a Tuesday in the middle of a month, far from any month end. */
+const FROZEN_NOW = new Date('2026-03-10T09:00:00.000Z');
+
 describe('AppointmentBookingPanel', () => {
+	beforeEach(() => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		vi.setSystemTime(FROZEN_NOW);
+	});
+
 	afterEach(() => {
 		cleanup();
 		vi.unstubAllGlobals();
@@ -122,6 +133,48 @@ describe('AppointmentBookingPanel', () => {
 		}
 		fireEvent.click(screen.getByLabelText('Next month'));
 		fireEvent.click(screen.getByLabelText(saturday.format('D MMMM YYYY')));
+
+		expect(screen.getByTestId('appointment-booking-empty')).toBeTruthy();
+	});
+
+	/* Today is bookable, but only what is still ahead of the clock: the panel
+	   used to offer 09:00 at half past three and hand a past ISO datetime on
+	   to `onConfirm`. */
+	it('drops the times that have already gone by today', () => {
+		stubReducedMotion(true);
+		const afternoon = dayjs(FROZEN_NOW)
+			.hour(15)
+			.minute(30)
+			.second(0)
+			.millisecond(0);
+		vi.setSystemTime(afternoon.toDate());
+		render(
+			<AppointmentBookingPanel onBack={vi.fn()} onConfirm={vi.fn()} />
+		);
+
+		fireEvent.click(screen.getByLabelText(afternoon.format('D MMMM YYYY')));
+
+		['09:00', '10:00', '11:00', '14:00', '15:00'].forEach((slot) =>
+			expect(
+				screen.queryByTestId(`appointment-booking-slot-${slot}`)
+			).toBeNull()
+		);
+		expect(
+			screen.getByTestId('appointment-booking-slot-16:00')
+		).toBeTruthy();
+	});
+
+	/* The last slot of the day gone means no times at all, not an empty grid. */
+	it('says the day is over once every time has passed', () => {
+		stubReducedMotion(true);
+		vi.setSystemTime(
+			dayjs(FROZEN_NOW).hour(23).minute(0).second(0).toDate()
+		);
+		render(
+			<AppointmentBookingPanel onBack={vi.fn()} onConfirm={vi.fn()} />
+		);
+
+		fireEvent.click(screen.getByLabelText(dayjs().format('D MMMM YYYY')));
 
 		expect(screen.getByTestId('appointment-booking-empty')).toBeTruthy();
 	});

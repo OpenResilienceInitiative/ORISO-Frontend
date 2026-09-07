@@ -704,6 +704,11 @@ export default function BreathingCompanion({
 	const spokenRef = React.useRef<SpeechSynthesisUtterance | null>(null),
 		spokenKey = React.useRef('');
 	const optionsId = React.useId();
+	/* The engine effect runs once, so `speak` inside it would keep the copy of
+	   the first render: switching the language mid-session changed every
+	   visible word and none of the spoken ones. */
+	const copyRef = React.useRef(copy);
+	copyRef.current = copy;
 	const j = journey.current,
 		active = j.stage === 'breathing' || j.stage === 'ending';
 
@@ -723,7 +728,9 @@ export default function BreathingCompanion({
 			return;
 		clearSpeech();
 		spokenKey.current = key;
-		const utterance = new SpeechSynthesisUtterance(copy.voiceCue[phase]);
+		const utterance = new SpeechSynthesisUtterance(
+			copyRef.current.voiceCue[phase]
+		);
 		utterance.lang =
 			rootRef.current?.closest('[lang]')?.getAttribute('lang') || 'de-DE';
 		utterance.rate = 0.92;

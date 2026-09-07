@@ -261,7 +261,11 @@ export const RegistrationHandover = ({
 							return (
 								<Typography
 									key={String(done)}
-									component={done ? 'h1' : 'span'}
+									/* The visible line is the heading,
+									   whichever of the two it is: with the
+									   `h1` pinned to "Geschafft." the page had
+									   no heading at all while it waited. */
+									component={shown ? 'h1' : 'span'}
 									aria-hidden={!shown}
 									sx={{
 										// Same reason as the button labels:

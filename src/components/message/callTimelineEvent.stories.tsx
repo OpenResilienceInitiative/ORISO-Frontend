@@ -81,7 +81,10 @@ const Bubble = ({
 				justifyContent: side === 'sent' ? 'flex-end' : 'flex-start'
 			}}
 		>
-			<Box sx={{ maxWidth: 520, width: '100%' }}>{children}</Box>
+			{/* The bubble has to shrink-wrap its content, otherwise it fills the
+			    row and `justifyContent` has nothing left to push around — the
+			    sent/received alignment would be invisible on a phone. */}
+			<Box sx={{ maxWidth: 520, width: 'fit-content' }}>{children}</Box>
 		</Box>
 	</Box>
 );
@@ -120,7 +123,7 @@ export const AllFourStates: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die vier Zustände nebeneinander. Sichtbar wird dabei die eigentliche Anforderung: laufend trägt der Eintrag den Beitreten-Knopf, beendet wird derselbe Eintrag zur Protokollzeile mit Dauer. Was heute fehlt, ist die Ausrichtung links/rechts — die Komponente kennt gesendet und empfangen nicht.'
+				story: 'Die vier Zustände untereinander. Sichtbar wird dabei die eigentliche Anforderung: laufend trägt der Eintrag den Beitreten-Knopf, beendet wird derselbe Eintrag zur Protokollzeile mit Dauer. Was heute fehlt, ist die Ausrichtung links/rechts — die Komponente kennt gesendet und empfangen nicht.'
 			}
 		}
 	}

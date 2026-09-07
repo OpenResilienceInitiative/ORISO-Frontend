@@ -49,7 +49,7 @@ export const LiveChatClosed = ({
 	const week = DAY_ORDER.map((dayKey) => ({
 		short: t(`weekday.${dayKey}Short`, DAY_SHORT[dayKey]),
 		hours: LIVE_CHAT_OPENING_HOURS.filter((h) => h.dayKey === dayKey)
-			.map((h) => h.time.replace(/:00/g, '').replace(/\s*-\s*/, '–'))
+			.map((h) => h.time.replace(/\s*-\s*/, '–'))
 			.join(' · ')
 	}));
 	return (
@@ -131,9 +131,16 @@ export const LiveChatClosed = ({
 									whiteSpace: 'pre-line'
 								}}
 							>
-								{day.hours
-									? day.hours.split(' · ').join('\n')
-									: '—'}
+								{day.hours ? (
+									day.hours.split(' · ').join('\n')
+								) : (
+									<>
+										<span aria-hidden="true">—</span>
+										<span className="sr-only">
+											{tr('closedDay', 'geschlossen')}
+										</span>
+									</>
+								)}
 							</Typography>
 						</Box>
 					))}

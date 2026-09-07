@@ -637,7 +637,8 @@
 			"download": "Download ICS",
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
-			"titleLabel": "Neutral calendar title"
+			"titleLabel": "Neutral calendar title",
+			"addShort": "Calendar"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -2956,7 +2957,9 @@
 			"temporary": {
 				"join": "Join",
 				"toggleOff": "Create an account",
-				"toggleOn": "Join without an account"
+				"toggleOn": "Join without an account",
+				"title": "This session ends when you close the browser.",
+				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
 			}
 		},
 		"back": "Back",
@@ -3193,34 +3196,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Inhale exhale breathing guide",
-			"timeLeft": "Time left",
-			"choosePace": "Choose your pace, then begin your first try.",
-			"firstTryInstruction": "First try: follow inhale, hold, and exhale.",
-			"practiceSuccessPrompt": "Great job, want to start now?",
-			"timingInfo": "Set your breathing timing before you start.",
-			"achievementUnlocked": "Achievement unlocked: Level {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Level {{level}}: {{title}}",
-			"completionTitle": "Congratulation you have made it",
-			"prizeLine1": "Your main prize is true wisdom.",
-			"prizeLine2": "Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.",
-			"serenityPrayer": "God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
-			"changeMind": "I change my mind let me try out your waiting game",
-			"iJustWait": "I just wait",
-			"startGame": "Start the game",
-			"startFirstTry": "Lets start the first try",
-			"repeatTrainingRound": "Repeat training round",
-			"startRealGame": "Lets start the real game",
-			"repeatGame": "Repeat game",
-			"receivePrize": "Receive your price",
-			"playAgain": "Play again",
-			"joinRoom": "Join the room",
-			"decreaseInhale": "Decrease inhale seconds",
-			"increaseInhale": "Increase inhale seconds",
-			"decreaseHold": "Decrease hold seconds",
-			"increaseHold": "Increase hold seconds",
-			"decreaseExhale": "Decrease exhale seconds",
-			"increaseExhale": "Increase exhale seconds",
 			"robotUsernameFallback": "Ratsuchende_r 9",
 			"robotCard1Title": "Just a moment, please",
 			"robotCard1Body": "All of our advisors are currently in live consultations. Please wait just a moment here in the chat room. You can see below how many people are ahead of you in line.",
@@ -3232,7 +3207,6 @@
 			"robotCard4Title": "Would you like to use the waiting time meaningfully?",
 			"robotCard4Body": "Then play our short inhale-exhale game in the meantime.",
 			"robotCard4Play": "Play game",
-			"robotCard4Info": "Info",
 			"phase": {
 				"inhale": "Inhale",
 				"hold": "Hold",
@@ -3242,58 +3216,19 @@
 				"carimatSubtitle": "Lets bridge your waiting time",
 				"cancel": "cancel",
 				"confirm": "Got it, lets start",
-				"restart": "Restart",
-				"pressAtRightTime": "Press at the right time",
 				"inhale": {
 					"bubble": "You need to 3 things, to win.",
-					"subtitle": "through your nose",
-					"instruction": "Inhale slowly for <strong>{{count}} seconds</strong>, then press the button."
+					"subtitle": "through your nose"
 				},
 				"hold": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "your breath",
-					"instruction": "Hold your breath now for <strong>{{count}} seconds</strong>, then press the button."
+					"subtitle": "your breath"
 				},
 				"exhale": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "through your mouth",
-					"instruction": "Exhale slowly for <strong>{{count}} seconds</strong>, then press the button."
-				},
-				"belly": {
-					"autoPilot": "Auto pilot",
-					"timeIt": "Time it",
-					"inhale": "Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.",
-					"hold": "Now hold for <strong>3 seconds</strong> your breath.",
-					"exhale": "Now breath out for <strong>4 seconds</strong> and relax your entire body."
-				},
-				"selfTimer": {
-					"instruction": "Set this time your own time intervals while breathing.",
-					"repeatGame": "Repeat game",
-					"backToWaiting": "Back to waiting"
-				},
-				"completion": {
-					"instruction": "Congratulation you have made it.",
-					"receiveGift": "Receive little gift"
-				},
-				"serenity": {
-					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
+					"subtitle": "through your mouth"
 				}
-			},
-			"presets": {
-				"starter334": "first time",
-				"standard446": "mild experience (recommended)",
-				"deep556": "long (experts)"
-			},
-			"briefing": {
-				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",
-				"1": "Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.",
-				"2": "Okay you need to do three things in the game.",
-				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
-				"negative": "Okay please hold on once a counsellor is free we let you in."
-			},
-			"onboardingLine1": "Just arrive. We breathe together.",
-			"onboardingLine3": "When you are ready, start your first try.",
-			"volumeHint": "For a better experience, turn on your volume."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4798,7 +4733,8 @@
 				"textShort": "Write to us — an answer within two working days.",
 				"later": "Later",
 				"mail": "Write a request to a counselling centre",
-				"mailShort": "Write a request"
+				"mailShort": "Write a request",
+				"closedDay": "closed"
 			},
 			"steps": {
 				"wait": {

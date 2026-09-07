@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Button, IconButton, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
@@ -11,13 +11,10 @@ import {
 import { selfHelpArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { prefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 
 /** How long the panel takes to slide in or out. Mirrored in the keyframes. */
 const SLIDE_MS = 320;
-
-const reducedMotion = () =>
-	typeof window.matchMedia !== 'function' ||
-	window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * The three cards.
@@ -114,17 +111,22 @@ export const GroupInfoGallery = ({
 }: GroupInfoGalleryProps) => {
 	const { t, i18n } = useTranslation();
 	/* The dates follow the language the person reads, not the browser's —
-	   `undefined` gave "Thu, 09/10, 06:00 PM" in a German interface. */
+	   `undefined` gave "Thu, 09/10, 06:00 PM" in a German interface. The
+	   informal variants are i18next tags, not BCP-47: `Intl` throws
+	   RangeError on 'de@informal'. */
+	const dateLocale = (i18n?.resolvedLanguage || i18n?.language || 'de').split(
+		'@'
+	)[0];
 	const dateFormat = React.useMemo(
 		() =>
-			new Intl.DateTimeFormat(i18n?.resolvedLanguage || i18n?.language, {
+			new Intl.DateTimeFormat(dateLocale, {
 				weekday: 'short',
 				day: '2-digit',
 				month: '2-digit',
 				hour: '2-digit',
 				minute: '2-digit'
 			}),
-		[i18n?.language, i18n?.resolvedLanguage]
+		[dateLocale]
 	);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
@@ -149,7 +151,7 @@ export const GroupInfoGallery = ({
 		if (done.current || leaving) {
 			return;
 		}
-		if (reducedMotion()) {
+		if (prefersReducedMotion()) {
 			finish();
 			return;
 		}
@@ -238,28 +240,24 @@ export const GroupInfoGallery = ({
 					sx={{
 						display: 'flex',
 						alignItems: 'center',
-						gap: 1,
 						mb: { xs: 1.5, sm: 2 }
 					}}
 				>
-					<IconButton
+					<Button
 						onClick={requestBack}
 						data-testid="group-info-back"
-						aria-label={tr('back', 'Zurück zum Countdown')}
+						startIcon={<ArrowBackRoundedIcon />}
 						size="small"
-						sx={{ color: registrationMd3.onSurfaceVariant }}
-					>
-						<ArrowBackRoundedIcon />
-					</IconButton>
-					<Typography
 						sx={{
+							px: 1,
 							fontSize: 14,
 							fontWeight: 600,
+							textTransform: 'none',
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
 						{tr('back', 'Zurück zum Countdown')}
-					</Typography>
+					</Button>
 				</Box>
 
 				<Box sx={{ mb: { xs: 2, sm: 3 } }}>

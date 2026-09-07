@@ -163,7 +163,14 @@ describe('WaitingAreaCountdown', () => {
 		   taller than the moving view and pushed it into a scroll (measured
 		   2026-09-07). Opening them here swaps without any transition. */
 		expect(screen.queryByText(WELCOME)).toBeNull();
-		fireEvent.click(still as HTMLElement);
+		/* The tiles keep `role="timer"`, so the way to the card is its own
+		   button underneath them — a button wrapped around the numbers would
+		   take their place in the accessibility tree. */
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /Begrüßung und Netiquette anzeigen/
+			})
+		);
 		expect(screen.getByText(WELCOME)).toBeTruthy();
 	});
 

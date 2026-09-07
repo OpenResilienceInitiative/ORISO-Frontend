@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+
+const logout = vi.fn();
+vi.mock('../components/logout/logout', () => ({
+	logout: (...args: unknown[]) => logout(...args)
+}));
 
 const reload = vi.fn();
 
@@ -81,5 +86,29 @@ describe('fetchData on a 401 with a stale token on a public auth route', () => {
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		expect(reload).not.toHaveBeenCalled();
+	});
+
+	/* `apiGetTopicsData` and `apiGetIsUsernameAvailable` hand in a
+	   `responseHandling`, and that path used to end in `logout`: the retry
+	   would have emptied `sessionStorage` — the half-filled registration with
+	   it — and sent the person to the login page. */
+	it('does not log out or leave the page when a handled call fails twice', async () => {
+		const fetchMock = vi.fn().mockResolvedValue({ status: 401 });
+		vi.stubGlobal('fetch', fetchMock);
+		sessionStorage.setItem('registrationData', '{"step":2}');
+
+		await expect(
+			fetchData({
+				url: 'https://api.test.local/service/topics',
+				method: FETCH_METHODS.GET,
+				responseHandling: [FETCH_ERRORS.BAD_REQUEST]
+			})
+		).rejects.toThrow(FETCH_ERRORS.UNAUTHORIZED);
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(logout).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+		expect(sessionStorage.getItem('registrationData')).toBe('{"step":2}');
+		expect(window.location.pathname).toBe('/registration');
 	});
 });
