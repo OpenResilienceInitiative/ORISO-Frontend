@@ -41,12 +41,41 @@ export const renderEventStrings = (
 	translate: TranslateFn,
 	input: EventStringInput = {}
 ): RenderedEventStrings => {
-	const interpolation = input.interpolation || {};
-	const title = translate(descriptor.titleTemplate, {
+	const interpolation = { ...input.interpolation };
+	const pushOfferEvent =
+		/^case\.handover\.(offered|accepted|declined|expired)$/.test(
+			descriptor.eventType
+		);
+	let titleTemplate = descriptor.titleTemplate;
+	let textTemplate = descriptor.textTemplate;
+	if (pushOfferEvent) {
+		for (const key of ['fromConsultantName', 'toConsultantName']) {
+			if (!interpolation[key])
+				interpolation[key] = translate(
+					'caseHandover.history.unknownConsultant'
+				);
+		}
+		// The persisted event owns these semantics. Older events without the
+		// additive field stay neutral; a reason name cannot reconstruct policy.
+		const variant =
+			interpolation.accessType === 'CO_ACCESS'
+				? 'coAccess'
+				: interpolation.accessType === 'TAKEOVER'
+					? null
+					: 'generic';
+		if (variant) {
+			titleTemplate = titleTemplate.replace(
+				/\.title$/,
+				`.${variant}.title`
+			);
+			textTemplate = textTemplate.replace(/\.text$/, `.${variant}.text`);
+		}
+	}
+	const title = translate(titleTemplate, {
 		defaultValue: input.fallbackTitle ?? '',
 		...interpolation
 	});
-	const text = translate(descriptor.textTemplate, {
+	const text = translate(textTemplate, {
 		defaultValue: input.fallbackText ?? '',
 		...interpolation
 	});

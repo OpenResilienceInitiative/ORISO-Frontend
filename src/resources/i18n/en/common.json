@@ -1866,19 +1866,51 @@
 			},
 			"caseHandoverOffered": {
 				"title": "A case is being offered to you",
-				"text": "{{fromConsultantName}} wants to hand a case over to you. It is your decision whether to accept."
+				"text": "{{fromConsultantName}} wants to hand a case over to you. It is your decision whether to accept.",
+				"coAccess": {
+					"title": "Access offered to you",
+					"text": "{{fromConsultantName}} is offering you temporary access to a case. The current counsellor remains responsible."
+				},
+				"generic": {
+					"title": "New offer",
+					"text": "{{fromConsultantName}} sent you an offer concerning a case. Review the details before deciding."
+				}
 			},
 			"caseHandoverAccepted": {
 				"title": "Handover accepted",
-				"text": "Your colleague accepted the case."
+				"text": "Your colleague accepted the case.",
+				"coAccess": {
+					"title": "Access offer accepted",
+					"text": "Your colleague accepted your access offer. You remain responsible for the case."
+				},
+				"generic": {
+					"title": "Offer accepted",
+					"text": "Your colleague accepted your offer. Open the case to see its current status."
+				}
 			},
 			"caseHandoverDeclined": {
 				"title": "Handover declined",
-				"text": "Your colleague did not accept the case. It stays with you."
+				"text": "Your colleague did not accept the case. It stays with you.",
+				"coAccess": {
+					"title": "Access offer declined",
+					"text": "Your colleague declined your access offer. Access will not be activated."
+				},
+				"generic": {
+					"title": "Offer declined",
+					"text": "Your colleague declined your offer."
+				}
 			},
 			"caseHandoverExpired": {
 				"title": "Offer expired",
-				"text": "Your handover offer expired. The case stays with you."
+				"text": "Your handover offer expired. The case stays with you.",
+				"coAccess": {
+					"title": "Access offer expired",
+					"text": "Your access offer expired. Access will not be activated."
+				},
+				"generic": {
+					"title": "Offer expired",
+					"text": "Your offer expired."
+				}
 			}
 		},
 		"error": "failed",
@@ -3036,7 +3068,9 @@
 		}
 	},
 	"caseHandover": {
-		"history": { "unknownConsultant": "A former counsellor" },
+		"history": {
+			"unknownConsultant": "A former counsellor"
+		},
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
 		"batch": {
 			"cancel": "Close selection",

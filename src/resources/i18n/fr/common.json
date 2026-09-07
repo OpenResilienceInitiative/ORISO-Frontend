@@ -1869,19 +1869,51 @@
 			},
 			"caseHandoverOffered": {
 				"title": "Un dossier vous est proposé",
-				"text": "{{fromConsultantName}} souhaite vous transmettre un dossier. Vous décidez de l’accepter ou non."
+				"text": "{{fromConsultantName}} souhaite vous transmettre un dossier. Vous décidez de l’accepter ou non.",
+				"coAccess": {
+					"title": "Un accès vous est proposé",
+					"text": "{{fromConsultantName}} vous propose un accès temporaire à un dossier. La personne qui assure actuellement le suivi en reste responsable."
+				},
+				"generic": {
+					"title": "Nouvelle proposition",
+					"text": "{{fromConsultantName}} vous a envoyé une proposition concernant un dossier. Consultez les détails avant de décider."
+				}
 			},
 			"caseHandoverAccepted": {
 				"title": "Transmission acceptée",
-				"text": "Votre collègue a accepté le dossier."
+				"text": "Votre collègue a accepté le dossier.",
+				"coAccess": {
+					"title": "Proposition d’accès acceptée",
+					"text": "Votre collègue a accepté votre proposition d’accès. Vous restez responsable du dossier."
+				},
+				"generic": {
+					"title": "Proposition acceptée",
+					"text": "Votre collègue a accepté votre proposition. Consultez le dossier pour connaître son état actuel."
+				}
 			},
 			"caseHandoverDeclined": {
 				"title": "Transmission refusée",
-				"text": "Votre collègue n’a pas accepté le dossier. Il reste chez vous."
+				"text": "Votre collègue n’a pas accepté le dossier. Il reste chez vous.",
+				"coAccess": {
+					"title": "Proposition d’accès refusée",
+					"text": "Votre collègue a refusé votre proposition d’accès. L’accès ne sera pas activé."
+				},
+				"generic": {
+					"title": "Proposition refusée",
+					"text": "Votre collègue a refusé votre proposition."
+				}
 			},
 			"caseHandoverExpired": {
 				"title": "Offre expirée",
-				"text": "Votre offre de transmission a expiré. Le dossier reste chez vous."
+				"text": "Votre offre de transmission a expiré. Le dossier reste chez vous.",
+				"coAccess": {
+					"title": "Proposition d’accès expirée",
+					"text": "Votre proposition d’accès a expiré. L’accès ne sera pas activé."
+				},
+				"generic": {
+					"title": "Proposition expirée",
+					"text": "Votre proposition a expiré."
+				}
 			}
 		},
 		"error": "Échec",
@@ -3076,7 +3108,9 @@
 		}
 	},
 	"caseHandover": {
-		"history": { "unknownConsultant": "Un ancien conseiller" },
+		"history": {
+			"unknownConsultant": "Un ancien conseiller"
+		},
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
 		"batch": {
 			"cancel": "Fermer la sélection",

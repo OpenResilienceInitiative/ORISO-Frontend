@@ -37,6 +37,9 @@ export const EVENT_PARAM_KEYS = [
 	'contentClass',
 	'recipientRole',
 	'clientConsent',
+	'accessType',
+	'fromConsultantName',
+	'toConsultantName',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -98,6 +101,11 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.senderDisplayName = asNullableString(source.senderDisplayName);
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
+	params.fromConsultantName = asNullableString(source.fromConsultantName);
+	params.toConsultantName = asNullableString(source.toConsultantName);
+	if (source.accessType === 'CO_ACCESS' || source.accessType === 'TAKEOVER') {
+		params.accessType = source.accessType;
+	}
 	const clientConsent = asNullableString(source.clientConsent);
 	if (
 		clientConsent === 'OPT_IN' ||

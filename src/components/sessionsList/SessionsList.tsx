@@ -1910,24 +1910,23 @@ export const SessionsList = ({
 						</div>
 					)}
 				</div>
+				{!isLoading &&
+					!isCreateChatActive &&
+					!isReloadButtonVisible &&
+					visibleListItemCount === 0 && (
+						<EmptyListItem
+							headlineOverride={
+								toolbarFilteredOutAll
+									? translate(
+											'sessionList.toolbar.emptyFilterResult'
+										)
+									: undefined
+							}
+							sessionListTab={sessionListTab}
+							type={type}
+						/>
+					)}
 			</div>
-
-			{!isLoading &&
-				!isCreateChatActive &&
-				!isReloadButtonVisible &&
-				visibleListItemCount === 0 && (
-					<EmptyListItem
-						headlineOverride={
-							toolbarFilteredOutAll
-								? translate(
-										'sessionList.toolbar.emptyFilterResult'
-									)
-								: undefined
-						}
-						sessionListTab={sessionListTab}
-						type={type}
-					/>
-				)}
 		</div>
 	);
 };

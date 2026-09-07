@@ -1869,19 +1869,51 @@
 			},
 			"caseHandoverOffered": {
 				"title": "Size bir vaka teklif ediliyor",
-				"text": "{{fromConsultantName}} size bir vaka devretmek istiyor. Kabul edip etmemek sizin kararınız."
+				"text": "{{fromConsultantName}} size bir vaka devretmek istiyor. Kabul edip etmemek sizin kararınız.",
+				"coAccess": {
+					"title": "Size erişim teklif edildi",
+					"text": "{{fromConsultantName}} size bir vakaya geçici erişim teklif ediyor. Mevcut danışman sorumlu olmaya devam eder."
+				},
+				"generic": {
+					"title": "Yeni teklif",
+					"text": "{{fromConsultantName}} size bir vakayla ilgili teklif gönderdi. Karar vermeden önce ayrıntıları inceleyin."
+				}
 			},
 			"caseHandoverAccepted": {
 				"title": "Devir kabul edildi",
-				"text": "Meslektaşınız vakayı kabul etti."
+				"text": "Meslektaşınız vakayı kabul etti.",
+				"coAccess": {
+					"title": "Erişim teklifi kabul edildi",
+					"text": "Meslektaşınız erişim teklifinizi kabul etti. Vakanın sorumluluğu sizde kalır."
+				},
+				"generic": {
+					"title": "Teklif kabul edildi",
+					"text": "Meslektaşınız teklifinizi kabul etti. Güncel durumu görmek için vakayı açın."
+				}
 			},
 			"caseHandoverDeclined": {
 				"title": "Devir reddedildi",
-				"text": "Meslektaşınız vakayı kabul etmedi. Vaka sizde kalıyor."
+				"text": "Meslektaşınız vakayı kabul etmedi. Vaka sizde kalıyor.",
+				"coAccess": {
+					"title": "Erişim teklifi reddedildi",
+					"text": "Meslektaşınız erişim teklifinizi reddetti. Erişim etkinleştirilmeyecek."
+				},
+				"generic": {
+					"title": "Teklif reddedildi",
+					"text": "Meslektaşınız teklifinizi reddetti."
+				}
 			},
 			"caseHandoverExpired": {
 				"title": "Teklif sona erdi",
-				"text": "Devir teklifiniz sona erdi. Vaka sizde kalıyor."
+				"text": "Devir teklifiniz sona erdi. Vaka sizde kalıyor.",
+				"coAccess": {
+					"title": "Erişim teklifinin süresi doldu",
+					"text": "Erişim teklifinizin süresi doldu. Erişim etkinleştirilmeyecek."
+				},
+				"generic": {
+					"title": "Teklifin süresi doldu",
+					"text": "Teklifinizin süresi doldu."
+				}
 			}
 		},
 		"error": "Başarısız",
@@ -3076,7 +3108,9 @@
 		}
 	},
 	"caseHandover": {
-		"history": { "unknownConsultant": "Önceki danışman" },
+		"history": {
+			"unknownConsultant": "Önceki danışman"
+		},
 		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",
 		"batch": {
 			"cancel": "Seçimi kapat",

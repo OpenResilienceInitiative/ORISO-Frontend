@@ -1890,19 +1890,51 @@
 			},
 			"caseHandoverOffered": {
 				"title": "Fall wird dir angeboten",
-				"text": "{{fromConsultantName}} möchte dir einen Fall übergeben. Du entscheidest, ob du ihn annimmst."
+				"text": "{{fromConsultantName}} möchte dir einen Fall übergeben. Du entscheidest, ob du ihn annimmst.",
+				"coAccess": {
+					"title": "Zugriff wird dir angeboten",
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf einen Fall an. Die bisherige Beratungskraft bleibt verantwortlich."
+				},
+				"generic": {
+					"title": "Neues Angebot",
+					"text": "{{fromConsultantName}} hat dir ein Angebot zu einem Fall geschickt. Prüfe die Einzelheiten, bevor du entscheidest."
+				}
 			},
 			"caseHandoverAccepted": {
 				"title": "Übergabe angenommen",
-				"text": "Die Kolleg:in hat den Fall angenommen."
+				"text": "Die Kolleg:in hat den Fall angenommen.",
+				"coAccess": {
+					"title": "Zugriffsangebot angenommen",
+					"text": "Die Kolleg:in hat dein Zugriffsangebot angenommen. Du bleibst für den Fall verantwortlich."
+				},
+				"generic": {
+					"title": "Angebot angenommen",
+					"text": "Die Kolleg:in hat dein Angebot angenommen. Den aktuellen Stand findest du im Fall."
+				}
 			},
 			"caseHandoverDeclined": {
 				"title": "Übergabe abgelehnt",
-				"text": "Die Kolleg:in hat den Fall nicht angenommen. Er bleibt bei dir."
+				"text": "Die Kolleg:in hat den Fall nicht angenommen. Er bleibt bei dir.",
+				"coAccess": {
+					"title": "Zugriffsangebot abgelehnt",
+					"text": "Die Kolleg:in hat dein Zugriffsangebot abgelehnt. Der Zugriff wird nicht aktiviert."
+				},
+				"generic": {
+					"title": "Angebot abgelehnt",
+					"text": "Die Kolleg:in hat dein Angebot abgelehnt."
+				}
 			},
 			"caseHandoverExpired": {
 				"title": "Angebot abgelaufen",
-				"text": "Dein Übergabe-Angebot ist abgelaufen. Der Fall bleibt bei dir."
+				"text": "Dein Übergabe-Angebot ist abgelaufen. Der Fall bleibt bei dir.",
+				"coAccess": {
+					"title": "Zugriffsangebot abgelaufen",
+					"text": "Dein Zugriffsangebot ist abgelaufen. Der Zugriff wird nicht aktiviert."
+				},
+				"generic": {
+					"title": "Angebot abgelaufen",
+					"text": "Dein Angebot ist abgelaufen."
+				}
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -3096,7 +3128,9 @@
 		}
 	},
 	"caseHandover": {
-		"history": { "unknownConsultant": "Eine frühere Beratungsperson" },
+		"history": {
+			"unknownConsultant": "Eine frühere Beratungsperson"
+		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
