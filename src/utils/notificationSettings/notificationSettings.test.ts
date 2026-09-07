@@ -245,6 +245,40 @@ describe('legacy opt-in reconcile on attach', () => {
 		localStorage.clear();
 	});
 
+	it.each([false, true])(
+		'retries a rejected migration without losing legacy opt-in (existing=%s)',
+		async (existing) => {
+			localStorage.setItem(
+				'BROWSER_NOTIFICATIONS',
+				JSON.stringify({ enabled: true })
+			);
+			const client = makeMockClient();
+			if (existing)
+				client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+					globalMute: false
+				});
+			client.setAccountData.mockRejectedValueOnce(new Error('offline'));
+			notificationSettingsStore.attachClient(client as any);
+			await Promise.resolve();
+			await Promise.resolve();
+			expect(
+				localStorage.getItem('ORISO_NOTIFICATION_LEGACY_MIGRATED')
+			).toBeNull();
+			notificationSettingsStore.detachClient();
+			notificationSettingsStore.attachClient(client as any);
+			await vi.waitFor(() =>
+				expect(
+					localStorage.getItem('ORISO_NOTIFICATION_LEGACY_MIGRATED')
+				).toBe('true')
+			);
+			expect(client.setAccountData).toHaveBeenCalledTimes(2);
+			expect(
+				notificationSettingsStore.getState().settings
+					.browserNotifications.enabled
+			).toBe(true);
+		}
+	);
+
 	it('adopts a legacy opt-in into account data that predates the migration', () => {
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
@@ -269,7 +303,7 @@ describe('legacy opt-in reconcile on attach', () => {
 		);
 	});
 
-	it('runs once per browser, so a later deliberate "off" stands', () => {
+	it('runs once per browser, so a later deliberate "off" stands', async () => {
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
 			JSON.stringify({ enabled: true })
@@ -279,6 +313,11 @@ describe('legacy opt-in reconcile on attach', () => {
 			globalMute: false
 		});
 		notificationSettingsStore.attachClient(first as any);
+		await vi.waitFor(() =>
+			expect(
+				localStorage.getItem('ORISO_NOTIFICATION_LEGACY_MIGRATED')
+			).toBe('true')
+		);
 		notificationSettingsStore.detachClient();
 
 		// Next session: the user has since switched the new panel off.
