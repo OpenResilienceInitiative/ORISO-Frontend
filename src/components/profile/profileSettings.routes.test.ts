@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { NotificationSettingsPanel } from './NotificationSettings';
+import { EmailNotification } from './EmailNotifications';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import type { AppConfigInterface } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
@@ -21,6 +22,7 @@ vi.mock('./EncryptionSettings', () => ({
 vi.mock('./ConsultantNotifications', () => ({
 	ConsultantNotifications: () => null
 }));
+vi.mock('./EmailNotifications', () => ({ EmailNotification: () => null }));
 vi.mock('./NotificationSettings', () => ({
 	NotificationSettingsPanel: () => null
 }));
@@ -48,9 +50,11 @@ describe('Profile settings notification access', () => {
 			const visible = group.elements.filter((entry) =>
 				solveCondition(entry.condition, {} as never, [])
 			);
-			expect(visible.map((entry) => entry.component)).toEqual([
-				enabled ? NotificationSettingsPanel : ConsultantNotifications
-			]);
+			expect(visible.map((entry) => entry.component)).toEqual(
+				enabled
+					? [EmailNotification, NotificationSettingsPanel]
+					: [ConsultantNotifications]
+			);
 		}
 	);
 });

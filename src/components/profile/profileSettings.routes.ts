@@ -11,6 +11,7 @@ import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
 import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
+import { EmailNotification } from './EmailNotifications';
 import { NotificationSettingsPanel } from './NotificationSettings';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
@@ -53,6 +54,13 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.notifications.title',
 		url: '/email',
 		elements: [
+			{
+				condition: () =>
+					!!settings?.releaseToggles?.enableNewNotifications,
+				component: EmailNotification,
+				column: COLUMN_LEFT,
+				order: 1
+			},
 			{
 				condition: () =>
 					!!settings?.releaseToggles?.enableNewNotifications,
