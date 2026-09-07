@@ -12,6 +12,10 @@ import { PanelHeader } from './PanelHeader';
 import { ChannelSwitcherFab } from './ChannelSwitcherFab';
 import { MessageTimeline } from '../session/MessageTimeline';
 import { buildSupervisionTimeline } from '../session/sessionHelpers';
+import {
+	pickSupervisionCounterpartName,
+	type SupervisionViewerRole
+} from '../supervisionPanel/supervisionCounterpart';
 import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -122,6 +126,8 @@ function SupervisionSideRoom({
 	empty = false,
 	firstVisit = false,
 	unread = 0,
+	viewerRole = 'consultant',
+	brokenMessageIds,
 	onBack,
 	switcher
 }: {
@@ -131,10 +137,34 @@ function SupervisionSideRoom({
 	/** N-2: the app path — notice built over a side room with zero messages. */
 	firstVisit?: boolean;
 	unread?: number;
+	/** Who is looking: it decides the counterpart and whose bubbles are own. */
+	viewerRole?: SupervisionViewerRole;
+	/** Message ids this client could not decrypt (UTD). */
+	brokenMessageIds?: ReadonlySet<string>;
 	onBack?: () => void;
 	switcher?: React.ReactNode;
 }) {
 	const { t } = useTranslation();
+	// #996: the counterpart is resolved by the app's own rule, never typed
+	// out — the consultant sees the supervisor, the supervisor sees the
+	// responsible consultant, and neither ever sees the client.
+	const counterpart = pickSupervisionCounterpartName(
+		viewerRole === 'supervisor'
+			? {
+					role: 'supervisor',
+					counsellorDisplayName: COUNSELLOR_NAME,
+					fallback: t('sessionList.user.consultantUnknown')
+				}
+			: {
+					role: 'consultant',
+					supervisorDisplayNames: [SUPERVISOR_NAME],
+					fallback: t('supervision.panel.title')
+				}
+	);
+	const isOwnMessage = (userId: string) =>
+		viewerRole === 'supervisor'
+			? userId === SUPERVISOR_MATRIX_ID
+			: isCounsellorMessage(userId);
 	return (
 		<SidePanel
 			variant={variant}
@@ -146,7 +176,7 @@ function SupervisionSideRoom({
 				<PanelHeader
 					kind="supervision"
 					title={t('supervision.panel.title')}
-					name={SUPERVISOR_NAME}
+					name={counterpart}
 					participants={[
 						counsellorParticipant,
 						supervisorParticipant
@@ -196,9 +226,10 @@ function SupervisionSideRoom({
 						}
 						renderMode="main"
 						threadsEnabled={false}
-						clientName={SUPERVISOR_NAME}
+						clientName={counterpart}
 						askerMatrixUserIdFor={() => CLIENT_MATRIX_ID}
-						isMyMessage={isCounsellorMessage}
+						isMyMessage={isOwnMessage}
+						decryptionFailures={brokenMessageIds}
 						{...timelineHandlers}
 					/>
 				)
@@ -222,7 +253,7 @@ function SupervisionSideRoom({
 						}}
 					>
 						{t('supervision.panel.empty.hint', {
-							name: SUPERVISOR_NAME
+							name: counterpart
 						})}
 					</p>
 				</div>
@@ -230,7 +261,7 @@ function SupervisionSideRoom({
 			composer={
 				<MessageSubmitInterfaceComponent
 					placeholder={t('supervision.panel.composer.placeholder', {
-						name: SUPERVISOR_NAME
+						name: counterpart
 					})}
 					targetRoomId={SUPERVISION_ROOM_ID}
 					hideSupervisorAudience
@@ -647,5 +678,170 @@ export const Phone390: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
 		).not.toBeNull();
+	}
+};
+
+/*
+ * ---------------------------------------------------------------------------
+ * The four states commit `d5700f31` dropped with the B1 stories.
+ *
+ * `SupervisionPanel.stories.tsx` (deleted with the B1 components) carried a
+ * dark story, a supervisor view, an unread state — and the branch has had no
+ * `scheme: 'dark'` story at all since. Rebuilt here on today's `SidePanel`
+ * instead of reviving the old files.
+ * ---------------------------------------------------------------------------
+ */
+
+/**
+ * The only dark story on this branch. The scheme switcher
+ * (`.storybook/withOrisoScheme.tsx`) has three values and, before this, not
+ * one story used the dark one — so nobody could see what the side room does
+ * there. Dark is Storybook-only (`ACTIVE_SCHEMES` keeps it off for the app):
+ * this story exists to SHOW the state, not to claim it is finished.
+ */
+export const DarkScheme: Story = {
+	name: 'Dark scheme — the side room in dark (Storybook only)',
+	globals: { scheme: 'dark' },
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom unread={1} />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 4);
+		// The switcher really applied a dark palette: the page surface is
+		// dark and the text on it is light. (Read from the tokens the
+		// decorator writes, not from a hard-coded hex.)
+		const luminance = (colour: string) => {
+			const [r, g, b] = (colour.match(/\d+/g) ?? ['255', '255', '255'])
+				.slice(0, 3)
+				.map(Number);
+			return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+		};
+		const surface = getComputedStyle(document.documentElement)
+			.getPropertyValue('--m3-surface')
+			.trim();
+		const onSurface = getComputedStyle(document.documentElement)
+			.getPropertyValue('--m3-on-surface')
+			.trim();
+		const hexLuminance = (hex: string) => {
+			const n = Number.parseInt(hex.replace('#', ''), 16);
+			return luminance(`${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`);
+		};
+		await expect(surface).toMatch(/^#[0-9a-f]{6}$/i);
+		await expect(hexLuminance(surface)).toBeLessThan(0.5);
+		await expect(hexLuminance(onSurface)).toBeGreaterThan(0.5);
+		// And the panel is painted with them, not left on a white card.
+		await expect(
+			canvasElement.querySelector('[data-cy="supervision-side-panel"]')
+		).not.toBeNull();
+	}
+};
+
+/**
+ * The supervisor's own view. #996: the counterpart is resolved by the app's
+ * rule (`pickSupervisionCounterpartName`), so the two viewers see two
+ * different names from the SAME room — and the client is named in neither.
+ * The supervisor also gets the reason banner the consultant does not.
+ */
+export const SupervisorView: Story = {
+	name: 'Supervisor view — the counterpart is the consultant',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom viewerRole="supervisor" withBanner />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 4);
+		const panel = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="supervision-side-panel"]'
+		)!;
+		// The responsible consultant is the counterpart …
+		await expect(
+			panel.querySelector('[data-cy="panel-header-name"]')?.textContent
+		).toBe(COUNSELLOR_NAME);
+		// … and it really is the other way round from the consultant view.
+		await expect(COUNSELLOR_NAME).not.toBe(SUPERVISOR_NAME);
+		// The supervisor's own messages are the right-hand bubbles now: two
+		// of the four came from the supervisor.
+		await expect(
+			panel.querySelectorAll(
+				'[data-cy="side-panel-timeline"] .messageItem--right'
+			).length
+		).toBe(2);
+		// The reason banner is the supervisor's; still no client name.
+		await expect(
+			panel.querySelector('.infoBanner__title')?.textContent
+		).toBe('Supervisionsgrund');
+		await expect(panel.textContent ?? '').not.toContain(CLIENT_NAME);
+	}
+};
+
+/** Unread in the side room: the pill in the panel header, not only on the FAB. */
+export const UnreadInThePanel: Story = {
+	name: 'Unread messages in the side room',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom unread={3} />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 4);
+		const badge = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="panel-header-unread"]'
+		)!;
+		await expect(badge).not.toBeNull();
+		await expect(badge.textContent).toBe('3');
+		// It is announced, not only drawn.
+		await expect(badge.getAttribute('aria-label')).toContain('3');
+	}
+};
+
+/**
+ * The failure state the side room never had: an incoming supervision message
+ * this client could not decrypt (UTD — an open topic on pre-dev). The panel
+ * mounts the same `MessageTimeline` as the main chat, so it gets the same
+ * cross on the bubble and the same explanation card underneath.
+ */
+export const DecryptionFailure: Story = {
+	name: 'Supervision — a message that could not be decrypted',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom
+				brokenMessageIds={new Set(['$s2'])}
+				unread={1}
+			/>
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 4);
+		const timeline = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="side-panel-timeline"]'
+		)!;
+		const cards = timeline.querySelectorAll('.messageItem--sendFailed');
+		await expect(cards).toHaveLength(1);
+		await expect(
+			cards[0].querySelector('.messageItem__sendFailedTitle')?.textContent
+		).toContain('entschlüsselt');
+		// The broken bubble itself carries the failed delivery mark …
+		const broken = timeline.querySelector<HTMLElement>(
+			'[data-message-id="$s2"]'
+		)!;
+		await expect(
+			broken.querySelector('.messageItem__deliveryStatus--failed')
+		).not.toBeNull();
+		// … and the card follows it directly.
+		await expect(broken.nextElementSibling).toBe(cards[0]);
+		// Everything else in the room is untouched — exactly one BUBBLE is
+		// marked (the explanation card carries the same glyph of its own).
+		await expect(
+			timeline.querySelectorAll(
+				'.messageItem:not(.messageItem--sendFailed) .messageItem__deliveryStatus--failed'
+			)
+		).toHaveLength(1);
 	}
 };
