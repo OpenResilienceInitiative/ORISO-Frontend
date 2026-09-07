@@ -2568,6 +2568,7 @@
 				"addressLabel": "Address",
 				"hoursLabel": "Opening hours",
 				"languagesLabel": "Languages",
+				"languagesTooltip": "This counseling center advises you in:",
 				"less": "Less",
 				"more": "More",
 				"navigate": "Start navigation",
