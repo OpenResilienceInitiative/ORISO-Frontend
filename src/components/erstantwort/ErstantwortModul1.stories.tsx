@@ -3,7 +3,7 @@
  * (tsconfig runs the automatic JSX runtime), but Storybook's Vite/esbuild
  * pipeline transpiles JSX to `React.createElement`, so a story file without it
  * renders "React is not defined" in the browser while every type gate stays
- * green. `ErstantwortLayouts.stories.tsx` carries the same import.
+ * green. Every stories file in this folder carries the same import.
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
