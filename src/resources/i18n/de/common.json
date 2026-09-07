@@ -898,16 +898,19 @@
 				"appointments": "Termine in den Kalender",
 				"steps": {
 					"formats": {
-						"title": "Als Chat, Audio oder Video",
-						"text": "Die Gruppe trifft sich schriftlich, mit Ton oder mit Bild. Begleitet wird sie immer von Beraterinnen und Beratern."
+						"title": "So findet die Gruppe statt",
+						"text": "Am Namen erkennen Sie, ob Sie schreiben, sprechen, sich sehen oder alles kombinieren. Ton und Kamera schalten Sie bei Bedarf dazu.",
+						"alt": "Neugierige Person im Gruppenraum; zentral angeordnete Symbole für Chat, Mikrofon und Kamera, verbunden durch einen dezenten Schutzschild."
 					},
-					"appointments": {
-						"title": "Termine vorher eintragen",
-						"text": "Sie können sich die Termine der Gruppe schon jetzt in Ihren Kalender eintragen und werden rechtzeitig erinnert."
+					"alias": {
+						"title": "Bitte nur mit Alias",
+						"text": "Alles ist Ende-zu-Ende verschlüsselt. Nennen Sie trotzdem keine echten Namen – das schützt alle.",
+						"alt": "Geschützte Gruppe mit abstrakten Alias-Symbolen statt Namen und Profilbildern; persönliche Namenskarte bleibt sichtbar außerhalb des geschützten Raums."
 					},
-					"anonymous": {
-						"title": "Sie bleiben anonym",
-						"text": "Bitte nennen Sie keine echten Namen und keine Adressen — weder Ihre eigenen noch die anderer."
+					"dates": {
+						"title": "Neue Termine, neue Links",
+						"text": "Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.",
+						"alt": "Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen."
 					}
 				},
 				"upcoming": "Nächste Termine"

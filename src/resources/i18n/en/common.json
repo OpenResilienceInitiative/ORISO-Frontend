@@ -884,16 +884,19 @@
 				"appointments": "Add the dates to your calendar",
 				"steps": {
 					"formats": {
-						"title": "As chat, audio or video",
-						"text": "The group meets in writing, with sound or with video. Counsellors are always there with you."
+						"title": "How the group meets",
+						"text": "The name tells you whether you write, talk, see each other, or all of it. Sound and camera are yours to switch on when you need them.",
+						"alt": "A curious person in the group room; icons for chat, microphone and camera arranged in the middle, joined by a quiet shield."
 					},
-					"appointments": {
-						"title": "Save the dates in advance",
-						"text": "You can put the group's dates in your calendar now and be reminded in time."
+					"alias": {
+						"title": "Please use an alias only",
+						"text": "Everything is end-to-end encrypted. Even so, use no real names – it protects everyone.",
+						"alt": "A protected group with abstract alias symbols instead of names and profile pictures; the personal name card stays outside the protected room."
 					},
-					"anonymous": {
-						"title": "You stay anonymous",
-						"text": "Please do not use real names or addresses — neither your own nor anyone else's."
+					"dates": {
+						"title": "New dates, new links",
+						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
+						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
 					}
 				},
 				"upcoming": "Next dates"

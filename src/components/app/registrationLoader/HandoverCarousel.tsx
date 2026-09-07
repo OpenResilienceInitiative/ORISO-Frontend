@@ -17,6 +17,14 @@ export interface HandoverStep {
 	/** i18n keys; default to the registration's `registration.handover.steps.<key>`. */
 	titleKey?: string;
 	textKey?: string;
+	/**
+	 * What the picture shows, for someone who cannot see it. The registration's
+	 * own motifs repeat the card's text and stay decorative (`alt=""`); a card
+	 * whose picture carries meaning of its own hands in a description (Frank
+	 * delivered them with the self-help motifs, 2026-09-07).
+	 */
+	altFallback?: string;
+	altKey?: string;
 }
 
 const STEPS: HandoverStep[] = [
@@ -202,7 +210,15 @@ export const HandoverCarousel = ({
 							<Box
 								component="img"
 								src={step.artwork.src}
-								alt=""
+								alt={
+									step.altKey || step.altFallback
+										? t(
+												step.altKey ??
+													`registration.handover.steps.${step.key}.alt`,
+												step.altFallback ?? ''
+											)
+										: ''
+								}
 								// Card 1 is what everyone sees; 2 and 3 are one
 								// swipe away and can wait for spare bandwidth.
 								loading={index === 0 ? 'eager' : 'lazy'}

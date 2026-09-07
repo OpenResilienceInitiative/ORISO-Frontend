@@ -8,10 +8,7 @@ import {
 	HandoverCarousel,
 	HandoverStep
 } from '../../app/registrationLoader/HandoverCarousel';
-import {
-	liveChatArtwork,
-	processArtwork
-} from '../../../resources/img/registration-md3/registrationArtwork';
+import { selfHelpArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
 
@@ -27,42 +24,50 @@ const reducedMotion = () =>
  *
  * PROVISIONAL COPY — Frank writes the final wording. What each card has to
  * say is settled (Frank, 2026-09-06), the sentences are not:
- *   1. the group runs as chat, audio or video and always has counsellors in it
- *   2. the dates can go into the calendar beforehand
- *   3. everyone stays anonymous — no real names, no addresses
+ *   1. how the group meets — chat, voice, video, or all of them
+ *   2. only an alias, never a real name
+ *   3. new dates and new links keep appearing
  *
- * The motifs are stand-ins from the registration set, picked for what they
- * show, not for this screen: `processArtwork.counsellor` (a counsellor with
- * the person), `liveChatArtwork.wait` (a clock) and `liveChatArtwork.anonymous`
- * (anonymity). Swap them the moment the group's own motifs exist.
+ * Words and motifs are Frank's, delivered 2026-09-07; the pictures carry
+ * meaning of their own, so each card hands the carousel a description for
+ * anyone who cannot see them.
  */
 const infoSteps: HandoverStep[] = [
 	{
 		key: 'formats',
-		artwork: processArtwork.counsellor,
+		artwork: selfHelpArtwork.format,
 		titleKey: 'groupChat.info.gallery.steps.formats.title',
 		textKey: 'groupChat.info.gallery.steps.formats.text',
-		titleFallback: 'Als Chat, Audio oder Video',
+		altKey: 'groupChat.info.gallery.steps.formats.alt',
+		titleFallback: 'So findet die Gruppe statt',
 		textFallback:
-			'Die Gruppe trifft sich schriftlich, mit Ton oder mit Bild. Begleitet wird sie immer von Beraterinnen und Beratern.'
+			'Am Namen erkennen Sie, ob Sie schreiben, sprechen, sich sehen oder alles kombinieren. Ton und Kamera schalten Sie bei Bedarf dazu.',
+		altFallback:
+			'Neugierige Person im Gruppenraum; zentral angeordnete Symbole für Chat, Mikrofon und Kamera, verbunden durch einen dezenten Schutzschild.'
 	},
 	{
-		key: 'appointments',
-		artwork: liveChatArtwork.wait,
-		titleKey: 'groupChat.info.gallery.steps.appointments.title',
-		textKey: 'groupChat.info.gallery.steps.appointments.text',
-		titleFallback: 'Termine vorher eintragen',
+		key: 'alias',
+		artwork: selfHelpArtwork.alias,
+		titleKey: 'groupChat.info.gallery.steps.alias.title',
+		textKey: 'groupChat.info.gallery.steps.alias.text',
+		altKey: 'groupChat.info.gallery.steps.alias.alt',
+		titleFallback: 'Bitte nur mit Alias',
 		textFallback:
-			'Sie können sich die Termine der Gruppe schon jetzt in Ihren Kalender eintragen und werden rechtzeitig erinnert.'
+			'Alles ist Ende-zu-Ende verschlüsselt. Nennen Sie trotzdem keine echten Namen – das schützt alle.',
+		altFallback:
+			'Geschützte Gruppe mit abstrakten Alias-Symbolen statt Namen und Profilbildern; persönliche Namenskarte bleibt sichtbar außerhalb des geschützten Raums.'
 	},
 	{
-		key: 'anonymous',
-		artwork: liveChatArtwork.anonymous,
-		titleKey: 'groupChat.info.gallery.steps.anonymous.title',
-		textKey: 'groupChat.info.gallery.steps.anonymous.text',
-		titleFallback: 'Sie bleiben anonym',
+		key: 'dates',
+		artwork: selfHelpArtwork.dates,
+		titleKey: 'groupChat.info.gallery.steps.dates.title',
+		textKey: 'groupChat.info.gallery.steps.dates.text',
+		altKey: 'groupChat.info.gallery.steps.dates.alt',
+		titleFallback: 'Neue Termine, neue Links',
 		textFallback:
-			'Bitte nennen Sie keine echten Namen und keine Adressen — weder Ihre eigenen noch die anderer.'
+			'Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.',
+		altFallback:
+			'Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen.'
 	}
 ];
 

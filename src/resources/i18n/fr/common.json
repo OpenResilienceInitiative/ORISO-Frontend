@@ -845,16 +845,19 @@
 				"appointments": "Ajouter les dates au calendrier",
 				"steps": {
 					"formats": {
-						"title": "En chat, en audio ou en vidéo",
-						"text": "Le groupe se réunit par écrit, avec le son ou avec l'image. Des conseillères et conseillers l'accompagnent toujours."
+						"title": "Comment le groupe se réunit",
+						"text": "Le nom vous dit si vous écrivez, parlez, vous voyez ou tout à la fois. Le son et la caméra, vous les activez au besoin.",
+						"alt": "Une personne curieuse dans la salle de groupe ; des icônes de chat, de micro et de caméra au centre, reliées par un bouclier discret."
 					},
-					"appointments": {
-						"title": "Noter les dates à l'avance",
-						"text": "Vous pouvez dès maintenant inscrire les dates du groupe dans votre calendrier et recevoir un rappel."
+					"alias": {
+						"title": "Uniquement avec un pseudonyme",
+						"text": "Tout est chiffré de bout en bout. N’utilisez malgré tout aucun vrai nom – cela protège tout le monde.",
+						"alt": "Un groupe protégé avec des symboles d’alias abstraits au lieu des noms et des photos de profil ; la carte de nom personnelle reste hors de la salle protégée."
 					},
-					"anonymous": {
-						"title": "Vous restez anonyme",
-						"text": "Merci de ne citer ni noms réels ni adresses — ni les vôtres ni ceux des autres."
+					"dates": {
+						"title": "Nouvelles dates, nouveaux liens",
+						"text": "L’espace des liens propose régulièrement de nouvelles rencontres et vous mène directement à la prochaine date.",
+						"alt": "De nouvelles cartes de rendez-vous apparaissent l’une après l’autre ; un symbole de lien clair mène la personne curieuse à la prochaine rencontre du groupe."
 					}
 				},
 				"upcoming": "Prochaines dates"

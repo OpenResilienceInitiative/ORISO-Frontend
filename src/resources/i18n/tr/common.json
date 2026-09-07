@@ -845,16 +845,19 @@
 				"appointments": "Tarihleri takvime ekle",
 				"steps": {
 					"formats": {
-						"title": "Sohbet, ses ya da görüntü olarak",
-						"text": "Grup yazılı olarak, sesle ya da görüntüyle buluşur. Her zaman danışmanlar eşlik eder."
+						"title": "Grup nasıl bir araya gelir",
+						"text": "Adından yazacağınızı, konuşacağınızı, görüşeceğinizi ya da hepsini birden yapacağınızı anlarsınız. Sesi ve kamerayı gerektiğinde siz açarsınız.",
+						"alt": "Grup odasında meraklı bir kişi; ortada sohbet, mikrofon ve kamera simgeleri, sade bir kalkanla birbirine bağlı."
 					},
-					"appointments": {
-						"title": "Tarihleri önceden kaydedin",
-						"text": "Grubun tarihlerini şimdiden takviminize ekleyebilir ve zamanında hatırlatma alabilirsiniz."
+					"alias": {
+						"title": "Lütfen yalnızca takma adla",
+						"text": "Her şey uçtan uca şifreli. Yine de gerçek isim kullanmayın – bu herkesi korur.",
+						"alt": "İsimler ve profil resimleri yerine soyut takma ad simgeleriyle korunan bir grup; kişisel isim kartı korunan odanın dışında kalır."
 					},
-					"anonymous": {
-						"title": "Anonim kalırsınız",
-						"text": "Lütfen gerçek isim ve adres vermeyin — ne kendinizinkini ne başkasınınkini."
+					"dates": {
+						"title": "Yeni randevular, yeni bağlantılar",
+						"text": "Bağlantı alanında düzenli olarak yeni buluşmalar bulur ve doğrudan bir sonraki randevuya gidersiniz.",
+						"alt": "Yeni randevu kartları arka arkaya beliriyor; net bir bağlantı simgesi meraklı kişiyi bir sonraki grup buluşmasına götürüyor."
 					}
 				},
 				"upcoming": "Sonraki randevular"
