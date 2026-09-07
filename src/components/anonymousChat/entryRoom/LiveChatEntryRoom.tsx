@@ -107,6 +107,12 @@ export const LiveChatEntryRoom = ({
 					<LegalLinks
 						legalLinks={legalLinks}
 						filter={(l) => l.registration}
+						/* Without it the two links glue into
+						   "DatenschutzerklärungImpressum" — the sanitizer
+						   drops `class`, so a CSS separator cannot survive.
+						   Same delimiter the registration's consent sentence
+						   passes. */
+						delimiter={', '}
 					/>
 				)
 			}),
