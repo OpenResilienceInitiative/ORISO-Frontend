@@ -9,6 +9,7 @@ import {
 	erstantwortRecoveryBaustein,
 	type ErstantwortRecoveryState
 } from './erstantwortRecoveryCopy';
+import { ERSTANTWORT_SUBTITLES, flowText } from './erstantwortFlowCopy';
 import './ErstantwortSequence.styles.scss';
 
 /**
@@ -66,11 +67,42 @@ type Story = StoryObj<typeof meta>;
 /** Only the layout is under review here, so the button reports and stops. */
 const noop = () => undefined;
 
+/**
+ * **Die Unterzeile ist ein Handlungsaufruf und hängt am Zustand.**
+ *
+ * Franks Ansage vom 07.09.2026 — und Modul 3 ist der Fall, der zeigt, warum die
+ * Zeile ein eigenes Feld je Nachricht sein muss und nicht ein globaler Satz:
+ * dieselbe Nachricht verlangt in drei Zuständen drei verschiedene Dinge, und in
+ * zweien davon gar nichts.
+ *
+ * | Zustand | Unterzeile |
+ * | --- | --- |
+ * | `notSecured` | Sichern Sie Ihren Ersatzschlüssel |
+ * | `secured` | Erledigt, nichts weiter zu tun |
+ * | `unsupported` | Nur zur Information |
+ *
+ * „Sichern Sie Ihren Ersatzschlüssel" ist der **Vorschlag für Modul 3**, um den
+ * Frank gebeten hat: er nennt die Handlung und das Ding beim vereinbarten Namen
+ * (Vokabel-Entscheidung 14.08.2026) — nicht „Ihre Sicherheit" und nicht
+ * „Wichtiger Hinweis", die beide nicht sagen, was jetzt dran ist.
+ */
+const subtitleFor = (state: ErstantwortRecoveryState): string => {
+	switch (state) {
+		case 'secured':
+			return flowText(ERSTANTWORT_SUBTITLES.recoveryKeySecured);
+		case 'unsupported':
+			return flowText(ERSTANTWORT_SUBTITLES.recoveryKeyUnsupported);
+		default:
+			return flowText(ERSTANTWORT_SUBTITLES.recoveryKey);
+	}
+};
+
 const modul3 = (
 	state: ErstantwortRecoveryState,
 	options: { initialStep?: number; illustrationHeight?: number } = {}
 ): Story['args'] => ({
 	bausteine: [erstantwortRecoveryBaustein(state)],
+	subtitle: subtitleFor(state),
 	skipAnimation: true,
 	// `ErstantwortSequence` renders no button without a handler, on purpose —
 	// an enabled control that does nothing is worse than an absent one.

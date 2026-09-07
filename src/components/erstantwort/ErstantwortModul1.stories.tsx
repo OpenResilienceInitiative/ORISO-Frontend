@@ -14,6 +14,11 @@ import { resolveErstantwortBausteine } from './erstantwortResolve';
 import type { ResolvedBaustein } from './erstantwortResolve';
 import { UNTOGGLEABLE_BAUSTEIN_IDS } from './erstantwortCatalogue';
 import { ERSTANTWORT_MODUL1_FAQ_ROW_IDS } from './erstantwortFaqQuestions';
+import {
+	ERSTANTWORT_SHORTENED,
+	ERSTANTWORT_SUBTITLES,
+	flowText
+} from './erstantwortFlowCopy';
 import './ErstantwortSequence.styles.scss';
 
 /**
@@ -31,10 +36,18 @@ import './ErstantwortSequence.styles.scss';
  *    Begrüßungsblase, in die v1/v2 sie versuchsweise gesetzt hatten. Die
  *    Messung aus dem Vorschlagsdokument hatte gezeigt, dass sie auf dem Telefon
  *    195 px kostet und damit die gesamte Layout-Ersparnis auffrisst.
- * 2. **Alle Fragen ins Akkordeon**, ausdrücklich auch „Soll ich meinen Namen
+ * 2. **Die Fragen ins Akkordeon**, ausdrücklich auch „Soll ich meinen Namen
  *    nennen oder nicht?" — damit durchgehend nur kurze Zeilen stehen.
+ *    **Ausgenommen: die Notfallnummern** (siehe unten, Entscheidung vom
+ *    Nachmittag).
  * 3. **Die Erfolgsmeldung so kurz wie irgend möglich.**
  * 4. Ziel ist **ein Modul, keine Textwand**.
+ * 5. **Die Unterzeile unter „Carimat" ist ein Handlungsaufruf** und kein
+ *    Dekortext. Statt „Ihre ersten Schritte" steht hier „Hervorragend, Anfrage
+ *    abgesendet" — Franks eigener Wortlaut. Sie ist ein benennbares Feld je
+ *    Nachricht (`ERSTANTWORT_SUBTITLES`, `erstantwortFlowCopy.ts`), kein
+ *    globaler Satz. Wie die Nachrichten aufeinanderfolgen, zeigt
+ *    `Templates/Erstantwort-Ablauf`.
  *
  * ## Die harte Randbedingung, und warum sie hält
  *
@@ -48,11 +61,12 @@ import './ErstantwortSequence.styles.scss';
  * - **Die Reihenfolge-Zusage hält.** Die FAQ-Blase steht über
  *   `emailNotification` und `accountProtection`; beide Sicherheitstexte kommen
  *   also weiterhin vor jeder optionalen Aktion.
- * - **Offen bleibt eine Produktfrage**, keine Regelfrage: bei einer akuten
- *   Notlage hinter einem Klick zu stehen. Deshalb liegen hier **beide** Formen
- *   nebeneinander — `(m1)` faltet die Notfallnummern mit ein, `(m1-b)` lässt
- *   sie offen. Empfehlung im Verdrahtungspapier, entschieden wird das nicht
- *   hier.
+ * - **Die Produktfrage ist am 07.09. entschieden worden: die Notfallnummern
+ *   bleiben offen.** Die frühere Fassung `(m1-b)` ist damit der Standard, und
+ *   diese Datei zeigt nur noch sie. Die Alles-zu-Fassung steht als
+ *   `(m1-vergleich)` daneben — verworfen, nicht angeboten. Der Grund: eine
+ *   zugeklappte Zeile zeigt keine Telefonnummer, und wer in einer akuten
+ *   Notlage ist, hat am wenigsten Kapazität, eine Zeile zu öffnen.
  *
  * ADR-018 §4 friert den **Wortlaut** eines persistierten Ereignisses ein, nicht
  * sein Layout. Kein Fließtext unten ist umgeschrieben — **mit einer Ausnahme,
@@ -65,7 +79,20 @@ const meta = {
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
-	args: { onAction: () => undefined, skipAnimation: true }
+	args: {
+		onAction: () => undefined,
+		skipAnimation: true,
+		/*
+		 * **Die Unterzeile ist ein Handlungsaufruf** (Frank, 07.09.2026), kein
+		 * Dekortext. Ausgeliefert steht dort in *jeder* Nachricht derselbe Satz
+		 * „Ihre ersten Schritte"; hier meldet sie den Abschluss, der diese
+		 * Nachricht auslöst. Der Wortlaut ist Franks eigenes Beispiel.
+		 *
+		 * Sie ist bewusst über `meta.args` gesetzt und nicht je Story: eine
+		 * Nachricht hat **eine** Unterzeile, so wie sie eine Überschrift hat.
+		 */
+		subtitle: flowText(ERSTANTWORT_SUBTITLES.enquirySent)
+	}
 } satisfies Meta<typeof ErstantwortSequence>;
 
 export default meta;
@@ -117,7 +144,7 @@ const pick = (...ids: readonly string[]): ResolvedBaustein[] =>
  * müssten geändert werden, und alte, bereits persistierte Ereignisse behalten
  * ihren langen Satz (ADR-018 §4).
  */
-const SHORT_GREETING = 'Ihre Nachricht ist bei uns angekommen.';
+const SHORT_GREETING = flowText(ERSTANTWORT_SHORTENED.greeting);
 
 const greetingShort = (): ResolvedBaustein[] => {
 	const greeting = byId('greeting');
@@ -190,22 +217,45 @@ const faqSlot = (rowIds: readonly string[], openFirst: boolean) => ({
 const TAIL_IDS = ['emailNotification', 'accountProtection', 'closing'];
 
 /* --------------------------------------------------------------------------
-   (m1) — Erfolg + FAQ
+   (m1) — der Standard seit 07.09.2026
    -------------------------------------------------------------------------- */
 
+/**
+ * **Die Anordnung, die Frank am 07.09. entschieden hat.**
+ *
+ * Bis dahin lagen zwei Fassungen nebeneinander: `(m1)` faltete die
+ * Notfallnummern mit ins Akkordeon, `(m1-b)` ließ sie offen. Entschieden ist
+ * **`(m1-b)`** — die Notfallnummern bleiben eine offene Blase. Diese Datei
+ * benutzt ab jetzt nur noch sie; die Alles-zu-Fassung steht weiter unten als
+ * Vergleich und ist ausdrücklich **nicht** mehr der Vorschlag.
+ *
+ * Der Grund ist kein gestalterischer: die Zeile, die man sucht, wenn man sie
+ * braucht, darf nicht die Zeile sein, die man erst öffnen muss. Sie kostet
+ * 116 px auf dem Telefon und liegt damit immer noch 354 px unter dem heutigen
+ * Stand.
+ */
 const m1Bausteine = (): ResolvedBaustein[] => [
+	...greetingShort(),
+	FAQ_BUBBLE,
+	...pick('emergencyNumbers'),
+	...pick(...TAIL_IDS)
+];
+
+/** Die Vergleichsfassung: alles zugeklappt, Notfallnummern mit im Akkordeon. */
+const m1AllesZuBausteine = (): ResolvedBaustein[] => [
 	...greetingShort(),
 	FAQ_BUBBLE,
 	...pick(...TAIL_IDS)
 ];
 
 /**
- * **(m1) Modul 1 — Erfolg + FAQ. 5 Blasen statt 10.**
+ * **(m1) Modul 1 — Standard. 6 Blasen statt 10.**
  *
- * Eine Zeile Ankunftsbestätigung → **eine** Blase „Häufige Fragen" mit sechs
- * zugeklappten Zeilen → E-Mail-Karte → 2FA-Karte → Abschluss. Kein Bild.
+ * Eine Zeile Ankunftsbestätigung → eine Blase „Häufige Fragen" mit fünf
+ * zugeklappten Zeilen → die Notfallnummern **offen** → E-Mail-Karte → 2FA-Karte
+ * → Abschluss. Kein Bild.
  *
- * Die sechs Zeilen, in dieser Reihenfolge:
+ * Die fünf zugeklappten Zeilen, in dieser Reihenfolge:
  *
  * | # | Zeile | Rumpf aus |
  * | --- | --- | --- |
@@ -214,27 +264,23 @@ const m1Bausteine = (): ResolvedBaustein[] => [
  * | 3 | Soll ich meinen Namen nennen? | `noPersonalData` |
  * | 4 | Wie läuft die Beratung ab? | `modalityNote` |
  * | 5 | Was passiert mit meinen Daten? | `dataProtection` |
- * | 6 | Was, wenn es nicht warten kann? | `emergencyNumbers` |
  *
- * Das ist **Franks Reihenfolge, nicht Katalogreihenfolge**: der Katalog führt
- * `modalityNote` vor `noPersonalData` und `dataProtection` nach
- * `emergencyNumbers`. Die Zeilen 1–3 sind, was man in den ersten Sekunden
- * fragt; die Notfallnummern sind die Zeile, die man sucht, wenn man sie
- * braucht, nicht die, die man der Reihe nach liest.
+ * Das ist **Franks Reihenfolge, nicht Katalogreihenfolge**: die Zeilen 1–3 sind,
+ * was man in den ersten Sekunden fragt.
  *
- * `freeNotice` ist als siebte Zeile vorgesehen und erscheint hier nicht: sein
- * Default-Rumpf ist leer, und `erstantwortResolve` verwirft leere Bausteine —
- * das ist das gebaute Verhalten des Freien Hinweises, bis ein Träger ihn füllt.
+ * `freeNotice` ist als sechste Zeile vorgesehen und erscheint hier nicht: sein
+ * Default-Rumpf ist leer, und `erstantwortResolve` verwirft leere Bausteine.
  *
- * **Was hier zu prüfen ist:** Erkennt man ohne Anleitung, dass die Zeilen
- * aufgehen? Und ist „Soll ich meinen Namen nennen?" als Zeile so verständlich
- * wie die heutige Überschrift „Bitte keine persönlichen Daten senden"?
+ * Die Notfall-Blase steht **unter** dem Akkordeon und nicht darüber: darüber
+ * würde die Erstantwort mit einem Notfall eröffnen. Darunter ist sie die letzte
+ * Zeile vor den freiwilligen Angeboten — immer noch vor jeder optionalen
+ * Aktion, wie ADR-018 §6 es verlangt.
  */
-export const M1ErfolgUndFaq: Story = {
-	name: '(m1) Modul 1 — Erfolg + FAQ',
+export const M1Standard: Story = {
+	name: '(m1) Modul 1 — Standard, Notfallnummern offen',
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, false)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, false)
 	}
 };
 
@@ -249,63 +295,50 @@ export const M1ErsteZeileOffen: Story = {
 	name: '(m1) Modul 1 — erste Zeile offen',
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, true)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, true)
 	}
 };
 
-/* --------------------------------------------------------------------------
-   (m1-b) — Notfallnummern bleiben offen
-   -------------------------------------------------------------------------- */
-
 /**
- * **(m1-b) Variante — Notfallnummern bleiben offen. 6 Blasen.**
+ * **(m1) Nur das Modul — drei Blasen.** Ankunftsbestätigung, Akkordeon,
+ * Notfallnummern; ohne die zwei Aktionskarten und den Abschluss.
  *
- * Identisch zu `(m1)`, nur bleibt `emergencyNumbers` eine **offene Blase unter
- * dem Akkordeon**: „Wenn es nicht warten kann" mit Telefonseelsorge und 112 im
- * Klartext, ohne Tipp.
- *
- * **Warum diese Variante überhaupt existiert.** ADR-018 §6 macht
- * `noPersonalData` und `emergencyNumbers` unabschaltbar und ordnet sie bewusst
- * vor jede optionale Aktion. Zuklappen ist kein Abschalten — Franks Wunsch ist
- * also umsetzbar, und `(m1)` setzt ihn um. Aber bei einer akuten Notlage hinter
- * einem Klick zu stehen, ist eine **Produktentscheidung**, die Frank sehen
- * soll, bevor sie fällt. Beide Formen sind gebaut, eine ist empfohlen, keine
- * ist entschieden.
- *
- * Die Blase steht **unter** dem Akkordeon und nicht darüber: darüber wäre sie
- * das Erste nach der Ankunftsbestätigung und würde die Erstantwort mit einem
- * Notfall eröffnen. Darunter ist sie die letzte Zeile vor den freiwilligen
- * Angeboten — immer noch vor jeder optionalen Aktion, wie §6 es verlangt.
+ * Das ist **kein** Vergleichswert gegen die heutigen 1479 px — es fehlen drei
+ * ausgelieferte Blasen. Es zeigt, was Frank mit „ein Modul, keine Textwand"
+ * meint, und was die Schwestermodule 2–3 umgeben würden.
  */
-export const M1bNotrufnummernOffen: Story = {
-	name: '(m1-b) Variante — Notfallnummern bleiben offen',
+export const M1NurDasModul: Story = {
+	name: '(m1) Nur das Modul — ohne Aktionskarten',
 	args: {
 		bausteine: [
 			...greetingShort(),
 			FAQ_BUBBLE,
-			...pick('emergencyNumbers'),
-			...pick(...TAIL_IDS)
+			...pick('emergencyNumbers')
 		],
 		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, false)
 	}
 };
 
 /* --------------------------------------------------------------------------
-   Das Modul für sich
+   Vergleich — die verworfene Fassung
    -------------------------------------------------------------------------- */
 
 /**
- * **Nur das Modul — zwei Blasen.** Ankunftsbestätigung plus Akkordeon, ohne die
- * zwei Aktionskarten und den Abschluss.
+ * **(m1-vergleich) Alles zugeklappt — nicht mehr der Vorschlag.**
  *
- * Das ist **kein** Vergleichswert gegen die heutigen 1479 px — es fehlen drei
- * ausgelieferte Blasen. Es zeigt, was Frank mit „ein Modul, keine Textwand"
- * meint, und was die Schwestermodule 2–4 umgeben würden.
+ * Die Fassung, die auch die Notfallnummern ins Akkordeon faltet: 5 Blasen,
+ * 1 009 px auf dem Telefon, 116 px kürzer als der Standard. Sie steht hier
+ * ausschließlich, damit der Unterschied sichtbar bleibt und niemand die
+ * Entscheidung später versehentlich zurückdreht, weil er die kürzere Zahl
+ * findet und den Grund nicht.
+ *
+ * Der Grund: eine zugeklappte Zeile zeigt keine Telefonnummer. Wer in einer
+ * akuten Notlage ist, hat am wenigsten Kapazität, eine Zeile zu öffnen.
  */
-export const M1NurDasModul: Story = {
-	name: '(m1) Nur das Modul — ohne Aktionskarten',
+export const M1VergleichAllesZu: Story = {
+	name: '(m1-vergleich) Alles zugeklappt — verworfen',
 	args: {
-		bausteine: [...greetingShort(), FAQ_BUBBLE],
+		bausteine: m1AllesZuBausteine(),
 		slots: faqSlot(ALL_ROW_IDS, false)
 	}
 };
@@ -326,13 +359,13 @@ export const M1NurDasModul: Story = {
 const phone390Globals = { viewport: { value: 'phone390' } };
 const desktop1440Globals = { viewport: { value: 'desktop1440' } };
 
-/** **(m1-390)** — Modul 1 auf einem 390-px-Telefon, alles zugeklappt. */
+/** **(m1-390)** — der Standard auf einem 390-px-Telefon. */
 export const M1Phone390: Story = {
 	name: '(m1-390) Telefon 390 px',
 	globals: phone390Globals,
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, false)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, false)
 	}
 };
 
@@ -342,17 +375,17 @@ export const M1Phone390ErsteZeileOffen: Story = {
 	globals: phone390Globals,
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, true)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, true)
 	}
 };
 
-/** **(m1-1440)** — dasselbe Modul auf dem Desktop. */
+/** **(m1-1440)** — derselbe Standard auf dem Desktop. */
 export const M1Desktop1440: Story = {
 	name: '(m1-1440) Desktop 1440 px',
 	globals: desktop1440Globals,
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, false)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, false)
 	}
 };
 
@@ -362,21 +395,16 @@ export const M1Desktop1440ErsteZeileOffen: Story = {
 	globals: desktop1440Globals,
 	args: {
 		bausteine: m1Bausteine(),
-		slots: faqSlot(ALL_ROW_IDS, true)
+		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, true)
 	}
 };
 
-/** **(m1-b) auf dem Telefon** — die Variante mit offenen Notfallnummern. */
-export const M1bPhone390: Story = {
-	name: '(m1-b-390) Notfallnummern offen, Telefon 390 px',
+/** **(m1-vergleich) auf dem Telefon** — die verworfene Alles-zu-Fassung. */
+export const M1VergleichAllesZuPhone390: Story = {
+	name: '(m1-vergleich-390) Alles zugeklappt, Telefon 390 px',
 	globals: phone390Globals,
 	args: {
-		bausteine: [
-			...greetingShort(),
-			FAQ_BUBBLE,
-			...pick('emergencyNumbers'),
-			...pick(...TAIL_IDS)
-		],
-		slots: faqSlot(ROWS_WITHOUT_EMERGENCY, false)
+		bausteine: m1AllesZuBausteine(),
+		slots: faqSlot(ALL_ROW_IDS, false)
 	}
 };

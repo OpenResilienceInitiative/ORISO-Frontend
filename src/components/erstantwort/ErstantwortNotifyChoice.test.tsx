@@ -20,8 +20,8 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 		);
 
 		expect(screen.getAllByRole('button')).toHaveLength(3);
-		expect(screen.getByText(/E-Mail-Adresse angeben/i)).toBeTruthy();
-		expect(screen.getByText(/Signal einschalten/i)).toBeTruthy();
+		expect(screen.getByText(/E-Mail-Adresse eingeben/i)).toBeTruthy();
+		expect(screen.getByText(/Benachrichtigungen erlauben/i)).toBeTruthy();
 		expect(screen.getByText(/Beides einrichten/i)).toBeTruthy();
 	});
 
@@ -35,7 +35,7 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 			/>
 		);
 
-		fireEvent.click(screen.getByText(/Signal einschalten/i));
+		fireEvent.click(screen.getByText(/Benachrichtigungen erlauben/i));
 
 		expect(onChoose).toHaveBeenCalledWith('BROWSER');
 	});
@@ -57,8 +57,8 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 			/>
 		);
 
-		expect(screen.getByText(/Per E-Mail/i)).toBeTruthy();
-		expect(screen.queryByText(/E-Mail-Adresse angeben/i)).toBeNull();
+		expect(screen.getByText(/E-Mail-Adresse hinterlegen/i)).toBeTruthy();
+		expect(screen.queryByText(/E-Mail-Adresse eingeben/i)).toBeNull();
 		expect(screen.getByText(/ist hinterlegt/i)).toBeTruthy();
 	});
 
@@ -84,8 +84,8 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 			/>
 		);
 
-		expect(screen.queryByText(/Signal einschalten/i)).toBeNull();
-		expect(screen.queryByText(/in diesem Browser/i)).toBeNull();
+		expect(screen.queryByText(/Benachrichtigungen erlauben/i)).toBeNull();
+		expect(screen.queryByText(/Benachrichtigungen des Browsers/i)).toBeNull();
 		expect(screen.getAllByRole('button')).toHaveLength(1);
 	});
 
@@ -98,7 +98,7 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 			/>
 		);
 
-		expect(screen.getByText(/nur auf diesem Gerät/i)).toBeTruthy();
+		expect(screen.getByText(/nur für dieses Gerät/i)).toBeTruthy();
 	});
 
 	it('reports a granted permission instead of asking again', () => {
@@ -110,8 +110,12 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 			/>
 		);
 
-		expect(screen.getByText(/eingeschaltet/i)).toBeTruthy();
-		expect(screen.queryByText(/Signal einschalten/i)).toBeNull();
+		expect(screen.getByText(/sind aktiviert/i)).toBeTruthy();
+		expect(
+			screen.queryByRole('button', {
+				name: /Benachrichtigungen erlauben/i
+			})
+		).toBeNull();
 	});
 
 	it('offers no button when the browser has blocked us — requestPermission would resolve to denied with no prompt', () => {
@@ -124,9 +128,38 @@ describe('ErstantwortNotifyChoice (Modul 2, Vorschlag 07.09.2026)', () => {
 		);
 
 		expect(screen.getByText(/abgelehnt/i)).toBeTruthy();
-		expect(screen.queryByText(/Signal einschalten/i)).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: /Benachrichtigungen erlauben/i
+			})
+		).toBeNull();
 		/* Only the e-mail action survives — and the blocked copy points at it. */
 		expect(screen.getAllByRole('button')).toHaveLength(1);
-		expect(screen.getByText(/E-Mail-Adresse angeben/i)).toBeTruthy();
+		expect(screen.getByText(/E-Mail-Adresse eingeben/i)).toBeTruthy();
+	});
+
+	/*
+	 * Franks Anforderung 4 vom 07.09.2026: je Auswahlfeld ein führendes Symbol
+	 * aus der vorhandenen Bibliothek. Geprüft wird die Zuordnung, nicht die
+	 * Pfaddaten — Vitest ersetzt jede `.svg` durch einen Stub (`vitest.config.mts`),
+	 * es gibt also gar keine Pfade zu prüfen. Was hier schiefgehen kann, ist
+	 * genau eins: eine Option ohne Symbol, oder ein Symbol, das der Screenreader
+	 * zusätzlich zur Beschriftung vorliest.
+	 */
+	it('gives every option a leading icon that screen readers skip', () => {
+		const { container } = render(
+			<ErstantwortNotifyChoice
+				isEmailOpen
+				browserState="available"
+				onChoose={() => undefined}
+			/>
+		);
+
+		const icons = container.querySelectorAll('.erstantwortNotify__icon');
+
+		expect(icons).toHaveLength(3);
+		icons.forEach((icon) =>
+			expect(icon.getAttribute('aria-hidden')).toBe('true')
+		);
 	});
 });

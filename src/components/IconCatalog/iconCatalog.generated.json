@@ -2063,8 +2063,10 @@
 		"fileName": "devices.svg",
 		"sourcePath": "src/resources/img/icons/devices.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/erstantwort/ErstantwortNotifyChoice.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:diversity-2:base",
@@ -2172,6 +2174,8 @@
 		"exportNames": ["ClosedEnvelopeIcon", "EnvelopeIcon"],
 		"usageFiles": [
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
+			"src/components/erstantwort/ErstantwortNotifyChoice.styles.scss",
+			"src/components/erstantwort/ErstantwortNotifyChoice.tsx",
 			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
@@ -2916,6 +2920,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/app/NavigationBar.tsx",
+			"src/components/erstantwort/ErstantwortNotifyChoice.styles.scss",
+			"src/components/erstantwort/ErstantwortNotifyChoice.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/session/SessionItemComponent.tsx"

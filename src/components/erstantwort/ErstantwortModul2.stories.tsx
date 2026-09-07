@@ -19,6 +19,11 @@ import {
 import { bausteinById } from './erstantwortCatalogue';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
+	ERSTANTWORT_SHORTENED,
+	ERSTANTWORT_SUBTITLES,
+	flowText
+} from './erstantwortFlowCopy';
+import {
 	desktop1440Globals,
 	phone390Globals
 } from '../message/messageStoryShell';
@@ -80,7 +85,16 @@ const meta = {
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
-	args: { skipAnimation: true }
+	args: {
+		skipAnimation: true,
+		/*
+		 * **Handlungsaufruf statt Dekortext** (Frank, 07.09.2026). Ausgeliefert
+		 * steht unter „Carimat" in jeder Nachricht „Ihre ersten Schritte"; in
+		 * dieser ist etwas zu tun, und die Zeile sagt was. Franks eigener
+		 * Wortlaut.
+		 */
+		subtitle: flowText(ERSTANTWORT_SUBTITLES.notificationChoice)
+	}
 } satisfies Meta<typeof ErstantwortSequence>;
 
 export default meta;
@@ -107,7 +121,19 @@ const emailNotificationEntry = bausteinById('emailNotification');
 const MODUL_2_BAUSTEIN = {
 	id: 'emailNotification',
 	headline: notificationChoiceEntry?.defaultHeadline,
-	body: notificationChoiceEntry?.defaultBody,
+	/*
+	 * **Gekürzt am 07.09.2026** (Franks Regel: jede Karte liest sich als ein
+	 * vollständiger kurzer Text). Ausgeliefert steht dort: „Sie müssen nicht
+	 * warten und immer wieder nachsehen. Sagen Sie uns, wie wir Ihnen Bescheid
+	 * geben dürfen, sobald die Antwort da ist." Der zweite Satz ist eine
+	 * Aufforderung — und die trägt jetzt die Unterzeile. Was bleibt, ist die
+	 * Zusage.
+	 *
+	 * Das ist eine echte **Wortlaut-Änderung** und wirkt deshalb nur auf neue
+	 * Erstantworten (ADR-018 §4). Sie hängt an drei Orten: FE-Katalog, sieben
+	 * Locales und `ErstantwortPayloadBuilder.java`.
+	 */
+	body: flowText(ERSTANTWORT_SHORTENED.notificationChoiceBody),
 	action: {
 		kind: 'ADD_EMAIL',
 		label: emailNotificationEntry?.action?.defaultLabel

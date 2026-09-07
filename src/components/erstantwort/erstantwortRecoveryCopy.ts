@@ -86,7 +86,12 @@ export const erstantwortRecoveryBaustein = (
 			return {
 				id: 'recoveryKey',
 				headline: 'Ihr Ersatzschlüssel ist gesichert',
-				body: 'Sie haben Ihren Ersatzschlüssel gespeichert — mehr ist hier nicht zu tun. Melden Sie sich später auf einem anderen Gerät an, fragen wir einmal danach; dann ist Ihr bisheriger Verlauf auch dort wieder da. Noch einmal anzeigen können wir ihn nicht, denn wir haben ihn nirgends gespeichert.',
+				/* Gekürzt 07.09.2026 (Franks Regel 2: jede Karte liest sich als
+				   ein vollständiger kurzer Text). Der gestrichene Satz erklärte,
+				   was auf einem anderen Gerät passiert — das steht schon in der
+				   Nachricht davor und ist hier ohnehin nichts, was jetzt zu tun
+				   wäre. */
+				body: 'Ihr Ersatzschlüssel ist gespeichert — hier ist nichts mehr zu tun. Noch einmal anzeigen können wir ihn nicht: wir haben ihn nirgends gespeichert.',
 				action: {
 					kind: 'SHOW_RECOVERY_KEY',
 					label: 'Ersatzschlüssel ändern'
@@ -96,22 +101,22 @@ export const erstantwortRecoveryBaustein = (
 			return {
 				id: 'recoveryKey',
 				headline: 'Auf diesem Gerät ohne Verschlüsselung',
-				body: 'Dieser Browser unterstützt die Verschlüsselung nicht, deshalb gibt es hier keinen Ersatzschlüssel. Ihre Beratung läuft ganz normal weiter. Wechseln Sie später auf ein Gerät, das die Verschlüsselung unterstützt, richten wir den Schlüssel dort von selbst ein.'
+				body: 'Dieser Browser unterstützt die Verschlüsselung nicht — hier gibt es keinen Ersatzschlüssel. Ihre Beratung läuft ganz normal weiter.'
 			};
 		default:
 			return {
 				id: 'recoveryKey',
 				headline: 'Auf diesem Gerät sind Sie sicher verschlüsselt',
-				/* Reassurance first, limitation second — the order the shipped
-				   `deviceLimit` Baustein already uses, and for the same reason:
-				   the limitation alone reads as "you are about to lose
-				   everything".
+				/* **Zwei Sätze, gekürzt 07.09.2026.** Vorher waren es drei; der
+				   erste („Was Sie hier schreiben, kann nur auf diesem Gerät
+				   gelesen werden") erklärte die Verschlüsselung, statt zu sagen,
+				   was jetzt zu tun ist — und die Schrittfolge direkt darunter
+				   sagt es ohnehin noch einmal.
 
-				   Three sentences, no more: the person is mid-Anfrage, and the
-				   detail ("we already made the key for you") is step 1 of the
-				   walkthrough right below. Saying it twice makes the bubble ten
-				   lines long on a 390 pt screen. */
-				body: 'Was Sie hier schreiben, kann nur auf diesem Gerät gelesen werden. Öffnen Sie das Gespräch später auf einem anderen Gerät, sehen Sie den bisherigen Verlauf dort zunächst nicht — mit Ihrem Ersatzschlüssel holen Sie ihn zurück. Sichern Sie ihn einmal, in fünf Schritten:',
+				   Was bleibt, ist die Reihenfolge Folge-vor-Aufforderung: erst
+				   wofür der Schlüssel gut ist, dann die Bitte. Die Aufforderung
+				   allein liest sich als „gleich ist alles weg". */
+				body: 'Auf einem anderen Gerät brauchen Sie Ihren Ersatzschlüssel, um den bisherigen Verlauf wieder zu sehen. Sichern Sie ihn einmal — in fünf Schritten.',
 				action: {
 					kind: 'SHOW_RECOVERY_KEY',
 					label: 'Ersatzschlüssel ansehen'

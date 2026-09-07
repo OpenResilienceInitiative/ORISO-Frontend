@@ -40,57 +40,74 @@ export const ERSTANTWORT_NOTIFY_COPY = {
 		'Wie wir Sie benachrichtigen'
 	),
 
-	emailLabel: entry('erstantwort.notify.email.label', 'Per E-Mail'),
+	/* Franks Regel vom 07.09.2026: benennen, was passiert, nicht bildhaft
+	   umschreiben. „Per E-Mail" nennt ein Medium, nicht eine Handlung — was die
+	   Person tut, ist eine Adresse hinterlegen, und das steht jetzt da. */
+	emailLabel: entry(
+		'erstantwort.notify.email.label',
+		'E-Mail-Adresse hinterlegen'
+	),
 	emailHint: entry(
 		'erstantwort.notify.email.hint',
-		'Erreicht Sie auf jedem Gerät. Was Sie hier besprechen, steht nie in dieser E-Mail.'
+		'Erreicht Sie auf jedem Gerät. Der Beratungsinhalt steht nie in der E-Mail.'
 	),
 	emailAction: entry(
 		'erstantwort.notify.email.action',
-		'E-Mail-Adresse angeben'
+		'E-Mail-Adresse eingeben'
 	),
 	emailDone: entry(
 		'erstantwort.notify.email.done',
-		'Ihre E-Mail-Adresse ist hinterlegt. Wir schreiben Ihnen, sobald die Antwort da ist.'
+		'Ihre E-Mail-Adresse ist hinterlegt.'
 	),
 
+	/* **Franks eigenes Beispiel, wörtlich.** Ausgeliefert steht im Katalog
+	   heute „Geben Sie mir hier ein Signal"
+	   (`erstantwort.notificationChoice.browser`, `de/common.json`). Das ist ein
+	   Bild: es sagt nicht, welche Funktion eingeschaltet wird, und „hier" ist
+	   für die Person nicht auflösbar. Der neue Text nennt die Sache beim Namen,
+	   den ihr Browser selbst benutzt. */
 	browserLabel: entry(
 		'erstantwort.notify.browser.label',
-		'Als Signal in diesem Browser'
+		'Benachrichtigungen des Browsers aktivieren'
 	),
-	/* The limit is stated in the offer itself, never in a footnote: a person who
-	   picks this because it needs no address must know before choosing that it
-	   does not follow them to another device. */
+	/* Die Grenze steht im Angebot selbst, nie in einer Fußnote: wer das hier
+	   wählt, weil es ohne Adresse geht, muss vor der Wahl wissen, dass es ihm
+	   nicht auf ein anderes Gerät folgt. */
 	browserHint: entry(
 		'erstantwort.notify.browser.hint',
-		'Ohne Adresse — erreicht Sie aber nur auf diesem Gerät und in diesem Browser.'
+		'Ohne Adresse. Gilt nur für dieses Gerät und diesen Browser.'
 	),
 	browserAction: entry(
 		'erstantwort.notify.browser.action',
-		'Signal einschalten'
+		'Benachrichtigungen erlauben'
 	),
 	browserDone: entry(
 		'erstantwort.notify.browser.done',
-		'Auf diesem Gerät eingeschaltet.'
+		'Benachrichtigungen sind aktiviert.'
 	),
 	browserBlocked: entry(
 		'erstantwort.notify.browser.blocked',
-		'Von diesem Browser abgelehnt.'
+		'Der Browser hat Benachrichtigungen abgelehnt.'
 	),
-	/* Split from the line above on purpose: the fact is flagged in the error
-	   role, the way out is not shouted. There is no web API that opens a
-	   browser's permission page, so the text names the place instead of
-	   promising a button that cannot exist. */
+	/* Von der Zeile darüber getrennt, mit Absicht: die Tatsache steht in der
+	   Fehlerrolle, der Ausweg wird nicht geschrien. Es gibt keine Web-API, die
+	   die Berechtigungsseite eines Browsers öffnet — der Text nennt deshalb den
+	   Ort, statt einen Knopf zu versprechen, den es nicht geben kann. */
 	browserBlockedHelp: entry(
 		'erstantwort.notify.browser.blockedHelp',
-		'Wir dürfen nicht noch einmal fragen. Sie können es selbst wieder erlauben — über das Symbol links neben der Adresse. Bis dahin ist die E-Mail der sichere Weg.'
+		'Wir dürfen nicht noch einmal fragen. Erlauben können Sie es selbst — über das Symbol links neben der Adresse.'
 	),
 
 	bothBadge: entry('erstantwort.notify.both.badge', 'Empfohlen'),
-	bothLabel: entry('erstantwort.notify.both.label', 'Beides'),
+	/* „Beides" allein benennt nicht, was beides ist. Die Zeile zählt die zwei
+	   Kanäle auf, die sie einschaltet. */
+	bothLabel: entry(
+		'erstantwort.notify.both.label',
+		'E-Mail und Browser-Benachrichtigung'
+	),
 	bothHint: entry(
 		'erstantwort.notify.both.hint',
-		'Das Signal ist sofort da, die E-Mail erreicht Sie auch später und auf einem anderen Gerät.'
+		'Das Signal kommt sofort, die E-Mail erreicht Sie auch auf einem anderen Gerät.'
 	),
 	bothAction: entry('erstantwort.notify.both.action', 'Beides einrichten')
 } as const;

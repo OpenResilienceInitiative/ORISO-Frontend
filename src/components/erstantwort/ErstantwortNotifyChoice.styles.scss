@@ -15,6 +15,12 @@
  * as a background or a border (`m3Sweep.test.ts`, Test #27).
  */
 
+/* Lokale Maße, einmal benannt: die Einrückung unter der Beschriftung muss immer
+   Symbolbreite + Abstand sein, sonst franst die Textspalte aus. */
+$icon-size: 20px;
+$icon-gap: 10px;
+$icon-indent: $icon-size + $icon-gap;
+
 .erstantwortNotify {
 	display: flex;
 	flex-direction: column;
@@ -55,6 +61,40 @@
 	text-transform: uppercase;
 }
 
+/* Symbol und Beschriftung sind eine Zeile, damit das Symbol *führt* und nicht
+   über der Beschriftung schwebt. Alles darunter rückt um Symbolbreite + Abstand
+   ein, sodass Hinweis und Knopf mit der Beschriftung fluchten. */
+.erstantwortNotify__labelRow {
+	display: flex;
+	gap: $icon-gap;
+
+	/* Nicht `center`: auf 390 px bricht „Benachrichtigungen des Browsers
+	   aktivieren" auf zwei Zeilen, und ein mittig gesetztes Symbol steht dann
+	   zwischen den Zeilen statt vor der Beschriftung. */
+	align-items: flex-start;
+}
+
+.erstantwortNotify__icon {
+	width: $icon-size;
+	height: $icon-size;
+
+	/* Optisch auf die Versalhöhe der ersten Zeile, nicht auf ihre Oberkante. */
+	margin-top: 1px;
+	flex-shrink: 0;
+	color: var(--m3-on-surface-variant, #444748);
+
+	/* Zwei Formen im Bestand: `envelope.svg` zeichnet über `<use>` ohne eigene
+	   Farbe (erbt also vom Wurzelelement), `notification_bell.svg` trägt ein
+	   hartes `fill="#D34949"` am Pfad. Eine CSS-Regel schlägt ein
+	   Präsentationsattribut, also holt die zweite Zeile auch die Glocke in die
+	   Textfarbe — ohne eine Datei zu ändern, die andere Oberflächen so nutzen. */
+	fill: currentcolor;
+
+	path {
+		fill: currentcolor;
+	}
+}
+
 .erstantwortNotify__label {
 	color: var(--m3-on-surface, #1a1c1e);
 	font-size: 15px;
@@ -63,6 +103,7 @@
 }
 
 .erstantwortNotify__hint {
+	margin-left: $icon-indent;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 	font-weight: 400;
@@ -74,7 +115,12 @@
 
 	/* The bubble is a stretching flex column, so without this every button
 	   spans the full option width and the three of them read as one block of
-	   controls rather than as one affordance per option. */
+	   controls rather than as one affordance per option.
+
+	   Bewusst **ohne** die Einrückung des Hinweises: die 30 px kosten auf einem
+	   390-px-Telefon genau die Zeile, an der „E-Mail-Adresse eingeben" umbricht.
+	   Der Hinweis gehört optisch zur Beschriftung und rückt deshalb ein, der
+	   Knopf ist die Handlung der ganzen Zeile und beginnt an ihrer Kante. */
 	align-self: flex-start;
 	margin-top: 8px;
 

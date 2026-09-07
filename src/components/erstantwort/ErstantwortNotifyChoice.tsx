@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
+import { ReactComponent as BellIcon } from '../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as DevicesIcon } from '../../resources/img/icons/devices.svg';
 import {
 	ERSTANTWORT_NOTIFY_COPY,
 	notifyText,
@@ -91,28 +94,62 @@ export interface ErstantwortNotifyChoiceProps {
 	translate?: ErstantwortNotifyTranslate;
 }
 
+/**
+ * Das führende Symbol je Option (Franks Anforderung 4 vom 07.09.2026).
+ *
+ * **Alle drei stammen aus der vorhandenen Icon-Bibliothek des Repos**
+ * (`src/resources/img/icons/`, katalogisiert unter `Design/Icon Catalog`);
+ * keines ist für diesen Vorschlag gezeichnet worden.
+ *
+ * | Option | Datei | warum diese |
+ * | --- | --- | --- |
+ * | E-Mail | `envelope.svg` | dasselbe Symbol, das `ErstantwortEmailOverlay` und die Gesprächsliste für E-Mail benutzen — zwei Symbole für eine Sache wären schlimmer als keins |
+ * | Browser | `notification_bell.svg` | die Glocke, die auch die Navigationsleiste und das Benachrichtigungszentrum tragen |
+ * | Beides | `devices.svg` | zeigt den eigentlichen Gewinn der Kombination: sie erreicht die Person auf mehr als einem Gerät |
+ *
+ * `aria-hidden`, weil jede Zeile ihre Beschriftung im Klartext daneben trägt.
+ * Ein Symbol, das eine vorhandene Beschriftung noch einmal vorliest, macht die
+ * Zeile für Screenreader länger, nicht klarer.
+ */
+const CHANNEL_ICONS = {
+	email: EnvelopeIcon,
+	browser: BellIcon,
+	both: DevicesIcon
+} as const;
+
 const Option: React.FC<{
-	channel: string;
+	channel: keyof typeof CHANNEL_ICONS;
 	label: string;
 	hint: string;
 	children: React.ReactNode;
 	recommended?: boolean;
 	badge?: string;
-}> = ({ channel, label, hint, children, recommended = false, badge }) => (
-	<div
-		className={`erstantwortNotify__option${
-			recommended ? ' erstantwortNotify__option--recommended' : ''
-		}`}
-		data-channel={channel}
-	>
-		{recommended && badge && (
-			<span className="erstantwortNotify__badge">{badge}</span>
-		)}
-		<span className="erstantwortNotify__label">{label}</span>
-		<span className="erstantwortNotify__hint">{hint}</span>
-		{children}
-	</div>
-);
+}> = ({ channel, label, hint, children, recommended = false, badge }) => {
+	const Icon = CHANNEL_ICONS[channel];
+
+	return (
+		<div
+			className={`erstantwortNotify__option${
+				recommended ? ' erstantwortNotify__option--recommended' : ''
+			}`}
+			data-channel={channel}
+		>
+			{recommended && badge && (
+				<span className="erstantwortNotify__badge">{badge}</span>
+			)}
+			<span className="erstantwortNotify__labelRow">
+				<Icon
+					className="erstantwortNotify__icon"
+					aria-hidden
+					focusable="false"
+				/>
+				<span className="erstantwortNotify__label">{label}</span>
+			</span>
+			<span className="erstantwortNotify__hint">{hint}</span>
+			{children}
+		</div>
+	);
+};
 
 export const ErstantwortNotifyChoice: React.FC<
 	ErstantwortNotifyChoiceProps
