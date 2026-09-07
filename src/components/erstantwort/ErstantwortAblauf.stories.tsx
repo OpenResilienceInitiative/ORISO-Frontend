@@ -9,10 +9,17 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
-import { ErstantwortFaqGroup } from './ErstantwortFaqGroup';
+import { ErstantwortSuccessMessage } from './ErstantwortSuccessMessage';
+import {
+	HandoverConsentElement,
+	initialHandoverConsentState,
+	type HandoverConsentMode
+} from '../caseHandover/HandoverConsentElement';
+import { MessageDateDivider } from '../message/MessageDateDivider';
+import { useAdvanceFocus } from './erstantwortAdvanceFocus';
 import {
 	ErstantwortNotifyChoice,
 	type ErstantwortNotifyBrowserState,
@@ -20,17 +27,16 @@ import {
 } from './ErstantwortNotifyChoice';
 import { ErstantwortBrowserPermission } from './ErstantwortBrowserPermission';
 import { ErstantwortRecoveryCard } from './ErstantwortRecoveryCard';
-import { resolveErstantwortBausteine } from './erstantwortResolve';
 import type { ResolvedBaustein } from './erstantwortResolve';
-import { UNTOGGLEABLE_BAUSTEIN_IDS } from './erstantwortCatalogue';
-import { ERSTANTWORT_MODUL1_FAQ_ROW_IDS } from './erstantwortFaqQuestions';
 import {
 	ERSTANTWORT_RECOVERY_STEPS,
 	erstantwortRecoveryBaustein
 } from './erstantwortRecoveryCopy';
 import {
+	ERSTANTWORT_LATER_MARKER,
 	ERSTANTWORT_SHORTENED,
 	ERSTANTWORT_SUBTITLES,
+	advanceAnnouncement,
 	erstantwortBrowserBranchBaustein,
 	erstantwortEmailBranchBaustein,
 	flowText
@@ -48,81 +54,14 @@ import './ErstantwortSequence.styles.scss';
    Anwendung nach dem Nachtragen der Schlüssel auch anzeigen würde. */
 const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
 
-/** Nichts erledigt: keine E-Mail, 2FA angeboten aber nicht eingeschaltet. */
-const OPEN_STATE = {
-	hasEmail: false,
-	isTwoFactorEnabled: true,
-	isTwoFactorActive: false
-};
-
-/**
- * Einmal aus dem **ausgelieferten** Katalog aufgelöst, wie in den
- * Modul-Stories. Kein Text unten ist nachgetippt; was hier steht, steht so im
- * Produkt — mit Ausnahme der zwei ausdrücklich gekürzten Stellen
- * (`ERSTANTWORT_SHORTENED`) und der zwei Zweig-Nachrichten, die es im Katalog
- * noch nicht gibt.
+/*
+ * Nachricht 1 löst ihre Bausteine seit dem 07.09. abends selbst aus dem
+ * ausgelieferten Katalog auf — in `ErstantwortSuccessMessage.tsx`, damit
+ * `Templates/Erstantwort-Module` und diese Kette **dieselbe** Nachricht zeigen.
+ * Deshalb steht hier kein zweiter Aufruf des Auflösers mehr; die übrigen
+ * Nachrichten der Kette bauen ihre Bausteine aus `erstantwortFlowCopy.ts` und
+ * `erstantwortRecoveryCopy.ts`.
  */
-const SHIPPED_SEQUENCE: ResolvedBaustein[] = resolveErstantwortBausteine({
-	trigger: 'AFTER_FIRST_MESSAGE',
-	context: { conversationType: 'AGENCY_COUNSELLING' },
-	translate,
-	state: OPEN_STATE
-}).bausteine;
-
-const byId = (id: string): ResolvedBaustein | undefined =>
-	SHIPPED_SEQUENCE.find((baustein) => baustein.id === id);
-
-const pick = (...ids: readonly string[]): ResolvedBaustein[] =>
-	ids
-		.map(byId)
-		.filter((baustein): baustein is ResolvedBaustein => Boolean(baustein));
-
-/* --------------------------------------------------------------------------
-   Nachricht 1 — Anfrage abgesendet  (Modul 1 in der Fassung (m1-b))
-   -------------------------------------------------------------------------- */
-
-const greetingShort = (): ResolvedBaustein[] => {
-	const greeting = byId('greeting');
-	return greeting
-		? [{ ...greeting, body: flowText(ERSTANTWORT_SHORTENED.greeting) }]
-		: [];
-};
-
-/** Die FAQ-Blase — kein Katalog-Baustein, sondern ein Layout-Container. */
-const FAQ_BUBBLE: ResolvedBaustein = {
-	id: 'faq',
-	headline: 'Häufige Fragen',
-	body: ''
-};
-
-/**
- * **Entschieden am 07.09.2026: die Notfallnummern bleiben offen.**
- *
- * Die Fassung `(m1-b)` ist damit der Standard für Modul 1, und der Ablauf
- * benutzt nur noch sie. Die Zeile, die man sucht, wenn man sie braucht, darf
- * nicht die Zeile sein, die man erst öffnen muss.
- *
- * ADR-018 §6 bleibt dabei zweifach erfüllt: `emergencyNumbers` steht als offene
- * Blase in der Nachricht **und** vor jeder optionalen Aktion — die
- * Benachrichtigungs-Auswahl ist erst die nächste Nachricht.
- */
-const FAQ_ROW_IDS = ERSTANTWORT_MODUL1_FAQ_ROW_IDS.filter(
-	(id) => id !== 'emergencyNumbers'
-);
-
-/* ADR-018 §6, mechanisch geprüft statt zugesagt: `noPersonalData` muss in der
-   FAQ stehen, `emergencyNumbers` als offene Blase daneben. Wer einen der beiden
-   still aus dem Ablauf nimmt, bekommt hier einen Fehler, statt eine Sequenz
-   auszuliefern, der ein Sicherheitstext fehlt. */
-const missingSafetyRow = UNTOGGLEABLE_BAUSTEIN_IDS.find(
-	(id) => id !== 'emergencyNumbers' && !FAQ_ROW_IDS.includes(id)
-);
-if (missingSafetyRow) {
-	throw new Error(
-		`Ablauf: safety Baustein "${missingSafetyRow}" is missing from the FAQ ` +
-			'rows (ADR-018 §6 — it may be folded, never dropped).'
-	);
-}
 
 /* --------------------------------------------------------------------------
    Die Kette
@@ -133,7 +72,8 @@ type FlowMessageId =
 	| 'auswahl'
 	| 'email'
 	| 'browser'
-	| 'schluessel';
+	| 'schluessel'
+	| 'einwilligung';
 
 interface FlowDemoProps {
 	/** Vorbelegte Auswahl — für die Zweig-Stories und die Screenshots. */
@@ -142,6 +82,24 @@ interface FlowDemoProps {
 	initialBrowserDone?: boolean;
 	/** Was der Browser gerade kann. In Storybook gesetzt, nie gelesen. */
 	browserState?: ErstantwortNotifyBrowserState;
+	/** Den quadratischen Bildplatz in Nachricht 1 reservieren. */
+	showImage?: boolean;
+	/** Das Kästchen „nicht wieder anzeigen" unter den Fragen zeigen. */
+	dismissible?: boolean;
+	/**
+	 * **Das sechste Kettenglied: die Einwilligungsnachricht (Modul 4).**
+	 *
+	 * Sie hat einen **eigenen Auslöser** und kommt deshalb nicht mit den
+	 * anderen: die vier oben entstehen in der Sekunde des Absendens, diese
+	 * erst, wenn eine Beratungsstelle die Anfrage **angenommen** hat. Deshalb
+	 * ist sie eine eigene Fahne und keine abgeleitete Bedingung der Kette —
+	 * eine Kette, die sie selbst „ausrechnen" könnte, gäbe es nicht.
+	 */
+	agencyAccepted?: boolean;
+	/** Betriebsart der Beratungsstelle für Modul 4 (`OPT_IN` ist der Ist-Zustand). */
+	consentMode?: HandoverConsentMode;
+	/** Name der annehmenden Beratungsstelle, für den Eröffnungssatz von Modul 4. */
+	agencyName?: string;
 	/**
 	 * Nur diese Nachrichten rendern. Die Kette rechnet unverändert weiter — die
 	 * Liste beschneidet ausschließlich die Anzeige, damit ein Screenshot eine
@@ -164,6 +122,11 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 	initialEmailDone = false,
 	initialBrowserDone = false,
 	browserState = 'available',
+	showImage = true,
+	dismissible = false,
+	agencyAccepted = false,
+	consentMode = 'OPT_IN',
+	agencyName = 'Beratungsstelle Bremen-Mitte',
 	only
 }) => {
 	const [choice, setChoice] = useState<ErstantwortNotifyChoiceValue | null>(
@@ -171,6 +134,9 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 	);
 	const [emailDone, setEmailDone] = useState(initialEmailDone);
 	const [browserDone, setBrowserDone] = useState(initialBrowserDone);
+	const [consent, setConsent] = useState(() =>
+		initialHandoverConsentState(consentMode)
+	);
 
 	const needsEmail = choice === 'EMAIL' || choice === 'BOTH';
 	const needsBrowser = choice === 'BROWSER' || choice === 'BOTH';
@@ -187,8 +153,46 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 	if (needsEmail) visible.push('email');
 	if (showBrowser) visible.push('browser');
 	if (branchComplete) visible.push('schluessel');
+	if (agencyAccepted) visible.push('einwilligung');
 
 	const shown = only ? visible.filter((id) => only.includes(id)) : visible;
+
+	/*
+	 * **Die Stelle, an der jetzt etwas zu tun ist.** Genau eine, immer die
+	 * unterste offene — das ist der Anker, zu dem nach jeder Antwort weich
+	 * gesprungen wird (Franks fünfte Ansage vom 07.09.).
+	 *
+	 * Sie wird aus demselben Zustand *abgeleitet*, aus dem auch die
+	 * Sichtbarkeit folgt, und nicht getrennt gesetzt: ein zweiter Zustand
+	 * „wohin springen wir" könnte auf eine Nachricht zeigen, die gar nicht
+	 * mehr da ist, und die Kette spränge ins Leere.
+	 */
+	const openStep: FlowMessageId | null = !choice
+		? 'auswahl'
+		: needsEmail && !emailDone
+			? 'email'
+			: showBrowser && !browserDone
+				? 'browser'
+				: agencyAccepted
+					? 'einwilligung'
+					: branchComplete
+						? 'schluessel'
+						: null;
+
+	const visibleOpenStep =
+		openStep && shown.includes(openStep) ? openStep : null;
+	const { register } = useAdvanceFocus(visibleOpenStep);
+
+	const subtitles: Record<FlowMessageId, string> = {
+		erfolg: flowText(ERSTANTWORT_SUBTITLES.enquirySent),
+		auswahl: flowText(ERSTANTWORT_SUBTITLES.notificationChoice),
+		email: flowText(ERSTANTWORT_SUBTITLES.emailAddress),
+		browser: flowText(ERSTANTWORT_SUBTITLES.browserNotification),
+		schluessel: flowText(ERSTANTWORT_SUBTITLES.recoveryKey),
+		/* Modul 4 setzt seine Unterzeile selbst, abhängig von der Betriebsart —
+		   hier steht nur, was die Live-Region ansagt. */
+		einwilligung: 'Bitte einmal entscheiden'
+	};
 
 	const message = (
 		id: FlowMessageId,
@@ -199,44 +203,40 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 			onAction?: () => void;
 		} = {}
 	) => (
-		<div key={id} data-testid={`flow-message-${id}`}>
-			<ErstantwortSequence
-				subtitle={subtitle}
-				bausteine={bausteine}
-				slots={options.slots}
-				onAction={options.onAction}
-				skipAnimation
-			/>
-		</div>
+		<ErstantwortSequence
+			subtitle={subtitle}
+			bausteine={bausteine}
+			slots={options.slots}
+			onAction={options.onAction}
+			skipAnimation
+		/>
 	);
 
 	const render = (id: FlowMessageId) => {
 		switch (id) {
 			case 'erfolg':
-				return message(
-					id,
-					flowText(ERSTANTWORT_SUBTITLES.enquirySent),
-					[
-						...greetingShort(),
-						FAQ_BUBBLE,
-						...pick('emergencyNumbers')
-					],
-					{
-						slots: {
-							faq: (
-								<ErstantwortFaqGroup
-									bausteine={pick(...FAQ_ROW_IDS)}
-									translate={translate}
-								/>
-							)
-						}
-					}
+				/*
+				 * **Modul 1 enthält alles** (Frank, 07.09. abends): kurzer
+				 * Gruß, quadratischer Bildplatz, und direkt dabei die häufigen
+				 * Fragen — mit der roten Notruf-Zeile als letzter.
+				 *
+				 * Die Zusammenstellung steht in
+				 * `ErstantwortSuccessMessage.tsx` und **nicht** hier, damit
+				 * `Templates/Erstantwort-Module` und diese Kette dieselbe
+				 * Nachricht zeigen und nicht zwei, die auseinanderdriften.
+				 */
+				return (
+					<ErstantwortSuccessMessage
+						showImage={showImage}
+						dismissible={dismissible}
+						translate={translate}
+					/>
 				);
 
 			case 'auswahl':
 				return message(
 					id,
-					flowText(ERSTANTWORT_SUBTITLES.notificationChoice),
+					subtitles.auswahl,
 					[
 						{
 							id: 'notificationChoice',
@@ -256,12 +256,12 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 								 * lädt eine bereits beantwortete Nachricht zum
 								 * Zurückwählen ein.
 								 *
-								 * Dafür ist kein neuer Zustand nötig — das
-								 * Molekül kann das seit Modul 2: ohne offene
-								 * E-Mail verliert die Option ihren Knopf und
-								 * behält ihren Text, `granted` meldet die
-								 * erteilte Erlaubnis, und die Kombination fällt
-								 * weg, sobald eine Hälfte erledigt ist.
+								 * Frank hat das am 07.09. abends bestätigt —
+								 * unter der Bedingung, dass danach weich zur
+								 * nächsten offenen Stelle gesprungen wird. Ohne
+								 * dieses Springen ist der Ausgang statt der
+								 * Knöpfe eine Sackgasse; mit ihm ist er der
+								 * ruhigere Weg.
 								 */
 								<ErstantwortNotifyChoice
 									isEmailOpen={!emailDone}
@@ -279,7 +279,7 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 			case 'email':
 				return message(
 					id,
-					flowText(ERSTANTWORT_SUBTITLES.emailAddress),
+					subtitles.email,
 					[erstantwortEmailBranchBaustein(emailDone)],
 					{ onAction: () => setEmailDone(true) }
 				);
@@ -287,7 +287,7 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 			case 'browser':
 				return message(
 					id,
-					flowText(ERSTANTWORT_SUBTITLES.browserNotification),
+					subtitles.browser,
 					[erstantwortBrowserBranchBaustein()],
 					{
 						slots: {
@@ -307,7 +307,7 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 			case 'schluessel':
 				return message(
 					id,
-					flowText(ERSTANTWORT_SUBTITLES.recoveryKey),
+					subtitles.schluessel,
 					[erstantwortRecoveryBaustein('notSecured')],
 					{
 						onAction: () => undefined,
@@ -322,6 +322,37 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 						}
 					}
 				);
+
+			case 'einwilligung':
+				/*
+				 * **Modul 4, und es ist kein Anhängsel.** Frank am 07.09.
+				 * abends: „wo ist denn jetzt unsere Confirmation Opt-in,
+				 * Opt-out Nachricht? Die hast du schon wieder irgendwie
+				 * geschluckt." Sie war gebaut, lag aber auf einem anderen
+				 * Zweig und damit in einem anderen Storybook — hier steht sie
+				 * jetzt in der Kette, an ihrem Platz.
+				 *
+				 * Die Zeitmarke davor ist Pflicht, nicht Schmuck: die vier
+				 * Nachrichten oben entstehen beim Absenden, diese erst bei der
+				 * Annahme durch die Beratungsstelle. Ohne die Trennung liest
+				 * sich die Kette als eine Zustellung, und die Person fragt
+				 * sich, woher plötzlich eine Beratungsstelle kommt.
+				 */
+				return (
+					<>
+						<MessageDateDivider
+							label={flowText(ERSTANTWORT_LATER_MARKER)}
+						/>
+						<HandoverConsentElement
+							mode={consentMode}
+							agencyName={agencyName}
+							checked={consent}
+							onChange={setConsent}
+							imprintUrl="https://example.org/impressum"
+							privacyUrl="https://example.org/datenschutz"
+						/>
+					</>
+				);
 		}
 	};
 
@@ -332,9 +363,54 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
 		<div
 			data-testid="erstantwort-ablauf"
 			data-choice={choice ?? 'none'}
+			data-open-step={visibleOpenStep ?? 'none'}
 			style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
 		>
-			{shown.map(render)}
+			{shown.map((id) => (
+				/*
+				 * Der Sprungpunkt. `tabIndex={-1}` macht ihn programmatisch
+				 * fokussierbar, ohne ihn in die Tab-Reihenfolge zu hängen —
+				 * ein zusätzlicher Tab-Halt je Nachricht wäre für jemanden mit
+				 * Tastatur eine Verschlechterung, keine Hilfe.
+				 */
+				<div
+					key={id}
+					ref={register(id)}
+					tabIndex={-1}
+					data-testid={`flow-message-${id}`}
+					style={{ outlineOffset: 4 }}
+				>
+					{render(id)}
+				</div>
+			))}
+
+			{/*
+			 * Die Ansage für Screenreader. Sie steht **dauerhaft** im DOM und
+			 * bekommt nur neuen Inhalt: eine frisch montierte Live-Region sagt
+			 * in den meisten Screenreadern gar nichts an, weshalb das
+			 * `aria-live` in `ErstantwortSequence` allein die neue Nachricht
+			 * nicht meldet.
+			 */}
+			<div
+				role="status"
+				aria-live="polite"
+				data-testid="flow-announcement"
+				style={{
+					position: 'absolute',
+					width: 1,
+					height: 1,
+					margin: -1,
+					padding: 0,
+					overflow: 'hidden',
+					clip: 'rect(0 0 0 0)',
+					whiteSpace: 'nowrap',
+					border: 0
+				}}
+			>
+				{visibleOpenStep
+					? advanceAnnouncement(subtitles[visibleOpenStep])
+					: ''}
+			</div>
 		</div>
 	);
 };
@@ -367,15 +443,38 @@ const FlowDemo: React.FC<FlowDemoProps> = ({
  *
  * ```
  * 1  Anfrage abgesendet  ──▶  2  Wie sollen wir Sie erreichen?
- *                                   │
- *                    ┌──────────────┼───────────────┐
- *                    ▼              ▼               ▼
- *                 E-Mail        Browser          beides
- *                    │              │            (nacheinander)
- *                    └──────────────┴───────────────┘
- *                                   ▼
- *                        4  Ersatzschlüssel sichern
+ *    (Gruß · Bildplatz ·          │
+ *     häufige Fragen)             │
+ *                    ┌────────────┼───────────────┐
+ *                    ▼            ▼               ▼
+ *                 E-Mail       Browser         beides
+ *                    │            │          (nacheinander)
+ *                    └────────────┴───────────────┘
+ *                                 ▼
+ *                      4  Ersatzschlüssel sichern
+ *
+ *      ── ── ── später: die Beratungsstelle nimmt an ── ── ──
+ *
+ *                                 ▼
+ *                      5  Wer darf mitlesen? (Modul 4)
  * ```
+ *
+ * ## Was am 07.09. abends dazugekommen ist
+ *
+ * 4. **Modul 1 enthält alles** — kurzer Gruß, ein **quadratischer** Bildplatz,
+ *    und direkt dabei die häufigen Fragen. Die letzte Frage („Was, wenn es
+ *    nicht warten kann?") bleibt **zugeklappt**, aber in der **Primärfarbe**:
+ *    Frank hat die Empfehlung, sie offen zu lassen, ausdrücklich verworfen.
+ * 5. **Die Einwilligungsnachricht gehört sichtbar in die Kette** — als
+ *    sechstes Glied, nach der Annahme durch die Beratungsstelle, mit einer
+ *    Zeitmarke davor.
+ * 6. **Sanftes Weiterspringen ist Pflicht.** Nach jeder Antwort scrollt die
+ *    Ansicht weich zur nächsten Stelle, an der etwas zu tun ist, setzt dort den
+ *    Fokus und meldet die neue Nachricht über eine Live-Region. Das ist die
+ *    Bedingung, unter der Frank akzeptiert hat, dass eine beantwortete
+ *    Nachricht ihren Ausgang statt ihrer Knöpfe zeigt — die `play`-Funktion
+ *    unten belegt es, die Einzelheiten sind in
+ *    `erstantwortAdvanceFocus.test.ts` gepinnt.
  *
  * „Beides" ist keine dritte Nachricht, sondern **beide nacheinander**: erst die
  * E-Mail-Nachricht, nach ihrer Erledigung die Browser-Nachricht, dann der
@@ -453,6 +552,26 @@ export const Ablauf: Story = {
 		expect(canvas.queryByTestId('flow-message-browser')).toBeNull();
 		expect(canvas.queryByTestId('flow-message-schluessel')).toBeNull();
 
+		/*
+		 * **Franks fünfte Ansage, hier belegt statt zugesagt.** Nach der
+		 * Antwort steht der Fokus auf der nächsten Stelle, an der etwas zu tun
+		 * ist — nicht auf dem gedrückten Knopf, der gerade verschwunden ist,
+		 * und nicht am Seitenanfang.
+		 *
+		 * Warum das der Beleg für den weichen Bildlauf ist, obwohl es Fokus
+		 * prüft: beide kommen aus demselben Aufruf (`advanceFocusTo`), und der
+		 * Bildlauf selbst ist im Test nicht beobachtbar — die Einzelheiten
+		 * (`behavior: 'smooth'`, `block: 'center'`,
+		 * `focus({ preventScroll: true })`, Rücksicht auf
+		 * `prefers-reduced-motion`) sind in
+		 * `erstantwortAdvanceFocus.test.ts` gepinnt.
+		 */
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				canvas.getByTestId('flow-message-email')
+			)
+		);
+
 		const email = within(canvas.getByTestId('flow-message-email'));
 		await userEvent.click(
 			email.getByRole('button', { name: 'E-Mail-Adresse eingeben' })
@@ -462,13 +581,32 @@ export const Ablauf: Story = {
 		expect(canvas.getByTestId('flow-message-browser')).toBeTruthy();
 		expect(canvas.queryByTestId('flow-message-schluessel')).toBeNull();
 
+		/* Und wieder: der Fokus ist mitgewandert. */
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				canvas.getByTestId('flow-message-browser')
+			)
+		);
+
 		const browser = within(canvas.getByTestId('flow-message-browser'));
 		await userEvent.click(
 			browser.getByRole('button', { name: 'Benachrichtigungen erlauben' })
 		);
 
-		/* Beide Zweige erledigt → die letzte Nachricht der Kette. */
+		/* Beide Zweige erledigt → die letzte Nachricht der Kette, und der
+		   Fokus steht auf ihr. */
 		expect(canvas.getByTestId('flow-message-schluessel')).toBeTruthy();
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				canvas.getByTestId('flow-message-schluessel')
+			)
+		);
+
+		/* Die Live-Region meldet dieselbe Stelle, damit ein Screenreader nicht
+		   raten muss, was gerade passiert ist. */
+		expect(canvas.getByTestId('flow-announcement').textContent).toContain(
+			'Sichern Sie Ihren Ersatzschlüssel'
+		);
 	}
 };
 
@@ -487,6 +625,40 @@ export const Flow1Erfolg: Story = {
 	name: '(flow-1) Nachricht 1 — Anfrage abgesendet',
 	globals: phone390Globals,
 	args: { only: ['erfolg'] }
+};
+
+/**
+ * **(flow-1-ohne-bild) Nachricht 1 ohne den Bildplatz.** Dieselbe Nachricht,
+ * nur ohne die reservierte Fläche — die Vergleichsaufnahme für die Höhe.
+ *
+ * Die Messung steht im Verdrahtungspapier; hier nur die Regel, die sie
+ * begründet: der quadratische Platz kostet auf dem Telefon so viel Höhe wie
+ * seine Breite, weil er quadratisch **ist**. Wer ihn schmaler macht, macht ihn
+ * auch niedriger — das ist der einzige Hebel, und er heißt `size`.
+ */
+export const Flow1ErfolgOhneBild: Story = {
+	name: '(flow-1-ohne-bild) Nachricht 1 — ohne Bildplatz',
+	globals: phone390Globals,
+	args: { only: ['erfolg'], showImage: false }
+};
+
+/**
+ * **(flow-1-nicht-wieder) Nachricht 1 mit „nicht wieder anzeigen".**
+ *
+ * Franks dritte Ansage vom 07.09. abends. Das Kästchen sitzt unter den Fragen;
+ * angehakt klappt der Block zusammen und hinterlässt die Zeile, die ihn
+ * zurückholt.
+ *
+ * **Was daran keine Darstellung ist:** dieser Zustand braucht einen eigenen
+ * Auslöser und einen **gespeicherten** Zustand, und ADR-018 §4 verbietet neuen
+ * Baustein-Zustand im Ereignis. Wo er stattdessen leben müsste, steht im
+ * Verdrahtungspapier §14 — es ist die einzige Position dieses Abends, die nicht
+ * allein im Frontend zu haben ist.
+ */
+export const Flow1NichtWiederAnzeigen: Story = {
+	name: '(flow-1-nicht-wieder) Nachricht 1 — „nicht wieder anzeigen"',
+	globals: phone390Globals,
+	args: { only: ['erfolg'], dismissible: true }
 };
 
 /**
@@ -551,10 +723,63 @@ export const Flow4Schluessel: Story = {
 };
 
 /**
- * **(flow) Der ganze Ablauf, Zweig „beides".** Alle fünf Nachrichten
- * untereinander, so wie die Person sie am Ende im Verlauf stehen sieht: beide
+ * **(flow-5) Nach der Annahme — die Einwilligungsnachricht (Modul 4).**
+ *
+ * Das **sechste Kettenglied**, und das einzige mit einem **eigenen Auslöser**:
+ * die fünf davor entstehen in der Sekunde, in der die Anfrage abgesendet wird,
+ * diese erst, wenn eine Beratungsstelle sie **angenommen** hat. Deshalb steht
+ * darüber die Zeitmarke, und deshalb ist `agencyAccepted` eine eigene Fahne und
+ * keine Ableitung aus dem Zustand der Kette.
+ *
+ * Gezeigt ist Betriebsart 1 (Opt-in): der Schalter startet **aus**, die Person
+ * schaltet ihn ein, wenn sie einverstanden ist, künftig nicht mehr gefragt zu
+ * werden. Das ist die einzige der drei Betriebsarten, die es im Produkt heute
+ * wirklich gibt.
+ *
+ * Der ehrliche Absatz über dem Schalter ist nicht kürzbar: nach ADR-002 haben
+ * alle Beratenden der Beratungsstelle **technisch** Zugang, und der Schalter
+ * regelt das bewusste, protokollierte Mitlesen — nicht die Möglichkeit dazu.
+ * Ohne diesen Satz liest sich der Schalter als ein Versprechen technischer
+ * Geheimhaltung, das die Plattform nicht halten kann.
+ */
+export const Flow5Einwilligung: Story = {
+	name: '(flow-5) Nach der Annahme — Einwilligung',
+	globals: phone390Globals,
+	args: {
+		agencyAccepted: true,
+		only: ['einwilligung']
+	}
+};
+
+/**
+ * **(flow-5-optout) Dieselbe Nachricht in Betriebsart 2.** Der Schalter startet
+ * **an**; die Person schaltet ihn aus, wenn sie jedes Mal gefragt werden will.
+ *
+ * Beschriftung und Satzpaar sind identisch mit Betriebsart 1 — der Modus
+ * entscheidet **ausschließlich die Vorbelegung**. Zwei verschiedene Texte wären
+ * eine erfundene Unterscheidung; die Begründung steht in
+ * `VERDRAHTUNG-modul4-handover-consent-2026-09-07.md` §N1.
+ *
+ * **Nicht verfügbar:** Betriebsart 2 existiert im Produkt nicht. Es gibt kein
+ * Feld, keinen Endpunkt und keinen Produzenten, und der Admin-Schalter ist ein
+ * deaktivierter Platzhalter (§N2b/N2e).
+ */
+export const Flow5EinwilligungOptOut: Story = {
+	name: '(flow-5-optout) Nach der Annahme — Opt-out',
+	globals: phone390Globals,
+	args: {
+		agencyAccepted: true,
+		consentMode: 'OPT_OUT',
+		only: ['einwilligung']
+	}
+};
+
+/**
+ * **(flow) Der ganze Ablauf, Zweig „beides".** Alle fünf Nachrichten des
+ * Absendens untereinander, so wie die Person sie im Verlauf stehen sieht: beide
  * Kanäle eingerichtet, beide Zweig-Nachrichten in ihrem Erledigt-Zustand
- * (Knopf weg, ein Satz da), darunter der Ersatzschlüssel.
+ * (Knopf weg, ein Satz da), darunter der Ersatzschlüssel. **Ohne** die
+ * Einwilligung — die kommt erst mit der Annahme.
  *
  * Hier ist zu prüfen, was Frank mit „nicht eine riesige Box" meint: fünf kurze
  * Nachrichten mit fünf verschiedenen Handlungsaufrufen statt einer Blasenwand
@@ -567,6 +792,30 @@ export const FlowGesamt: Story = {
 		initialChoice: 'BOTH',
 		initialEmailDone: true,
 		initialBrowserDone: true
+	}
+};
+
+/**
+ * **(flow) Die volle Strecke, inklusive Einwilligung.**
+ *
+ * Alle sechs Nachrichten untereinander: die fünf vom Absenden, dann die
+ * Zeitmarke, dann Modul 4. So sieht der Verlauf aus, nachdem eine
+ * Beratungsstelle angenommen hat.
+ *
+ * Die Zeitmarke ist die einzige Stelle, an der diese Story etwas behauptet, was
+ * die anderen nicht behaupten: dass zwischen Nachricht 5 und Nachricht 6 Zeit
+ * vergeht. Sie benutzt dafür die vorhandene Zeitleiste des Verlaufs
+ * (`MessageDateDivider`, Figma 7539-29134) und kein eigenes Trennelement — die
+ * Kette soll aussehen wie der Verlauf, in dem sie steht.
+ */
+export const FlowGesamtMitEinwilligung: Story = {
+	name: '(flow) Gesamter Ablauf — mit Einwilligung',
+	globals: phone390Globals,
+	args: {
+		initialChoice: 'BOTH',
+		initialEmailDone: true,
+		initialBrowserDone: true,
+		agencyAccepted: true
 	}
 };
 
