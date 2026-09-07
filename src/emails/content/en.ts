@@ -324,16 +324,20 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Your one-time code for signing in',
+		subject: 'Your one-time code',
 		preheader: 'The code is valid for {{expiryMinutes}} minutes.',
 		headline: 'Your one-time code',
-		paragraphs: ['Enter this code in the sign-in window.'],
+		paragraphs: ['Enter this code in {{platformName}}.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Go to sign-in', href: '{{loginUrl}}' },
+		cta: { label: 'Open {{platformName}}', href: '{{loginUrl}}' },
 		footnote:
-			'If you did not want to sign in, please change your password.',
+			'If you did not request this code, please change your password.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email contains a security code and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	},
 
 	'einladung-traeger': {
