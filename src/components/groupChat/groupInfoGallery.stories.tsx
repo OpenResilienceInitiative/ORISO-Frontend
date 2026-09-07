@@ -43,6 +43,10 @@ const meta: Meta = {
 
 export default meta;
 
+const UPCOMING = [0, 7, 14].map(
+	(days) => new Date(Date.UTC(2026, 8, 10, 16, 0) + days * 86400e3)
+);
+
 const legalLinks: TProvidedLegalLink[] = [
 	{
 		label: 'login.legal.infoText.dataprotection',
@@ -83,10 +87,15 @@ const Screen = ({
 							width: '100%',
 							minWidth: 0,
 							maxWidth: '100%',
-							minHeight: {
+							/* Fixed, not minimum: in the room this column is what
+							   is left between header and bar, and the panel
+							   scrolls inside it. A minimum let the story grow a
+							   scrollbar the real screen never has. */
+							height: {
 								xs: 'calc(100vh - 96px)',
 								lg: 'calc(100vh - 128px)'
 							},
+							minHeight: 0,
 							display: 'flex',
 							flexDirection: 'column',
 							px: { xs: 2.5, sm: 5 },
@@ -95,6 +104,7 @@ const Screen = ({
 						}}
 					>
 						<GroupInfoGallery
+							upcomingDates={UPCOMING}
 							onBack={() => undefined}
 							onOpenAppointments={
 								withAppointments ? () => undefined : undefined

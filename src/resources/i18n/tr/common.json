@@ -856,7 +856,8 @@
 						"title": "Anonim kalırsınız",
 						"text": "Lütfen gerçek isim ve adres vermeyin — ne kendinizinkini ne başkasınınkini."
 					}
-				}
+				},
+				"upcoming": "Sonraki randevular"
 			}
 		},
 		"join": {

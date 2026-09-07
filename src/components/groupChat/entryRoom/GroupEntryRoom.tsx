@@ -85,6 +85,34 @@ export const GroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
+	/**
+	 * The next dates of a repeating group, for the explainer behind "Mehr
+	 * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from
+	 * the start and the interval the chat carries; a one-off group has only
+	 * its own date, and a group without a date has none.
+	 */
+	const upcomingDates = useMemo(() => {
+		const start = item ? getGroupChatPlannedStart(item) : null;
+		if (!start) {
+			return undefined;
+		}
+		const stepDays =
+			item?.chatInterval === 'WEEKLY'
+				? 7
+				: item?.chatInterval === 'DAILY'
+					? 1
+					: item?.chatInterval === 'MONTHLY'
+						? 30
+						: 0;
+		if (!stepDays) {
+			return [start];
+		}
+		return [0, 1, 2].map(
+			(step) =>
+				new Date(start.getTime() + step * stepDays * 24 * 3600 * 1000)
+		);
+	}, [item]);
+
 	const plannedStart = useMemo(
 		() => (item ? getGroupChatPlannedStart(item) : null),
 		[item]
@@ -167,6 +195,7 @@ export const GroupEntryRoom = () => {
 				topicName={topicName}
 				agencyName={agencyName}
 				plannedStart={plannedStart}
+				upcomingDates={upcomingDates}
 				durationMinutes={item.duration}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}

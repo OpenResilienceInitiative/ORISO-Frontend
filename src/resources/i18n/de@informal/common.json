@@ -386,7 +386,8 @@
 						"title": "Du bleibst anonym",
 						"text": "Bitte nenne keine echten Namen und keine Adressen — weder deine eigenen noch die anderer."
 					}
-				}
+				},
+				"upcoming": "Nächste Termine"
 			}
 		}
 	},

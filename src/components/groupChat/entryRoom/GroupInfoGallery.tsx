@@ -75,6 +75,13 @@ export interface GroupInfoGalleryProps {
 	 * nobody does the button simply is not there.
 	 */
 	onOpenAppointments?: () => void;
+	/**
+	 * The next dates of this group, soonest first. Read only: nobody books
+	 * anything here — a self-help group has its dates, and this is where a
+	 * person looks them up (Frank, 2026-09-07: "Hier sind es nicht Termine
+	 * buchen, sondern Termine ansehen … die nächsten Daten, das reicht").
+	 */
+	upcomingDates?: Date[];
 	/** Override the three cards (stories, later wording). */
 	steps?: HandoverStep[];
 }
@@ -97,9 +104,23 @@ export interface GroupInfoGalleryProps {
 export const GroupInfoGallery = ({
 	onBack,
 	onOpenAppointments,
+	upcomingDates,
 	steps = infoSteps
 }: GroupInfoGalleryProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	/* The dates follow the language the person reads, not the browser's —
+	   `undefined` gave "Thu, 09/10, 06:00 PM" in a German interface. */
+	const dateFormat = React.useMemo(
+		() =>
+			new Intl.DateTimeFormat(i18n?.resolvedLanguage || i18n?.language, {
+				weekday: 'short',
+				day: '2-digit',
+				month: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit'
+			}),
+		[i18n?.language, i18n?.resolvedLanguage]
+	);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
 			translateWithFallback(t, `groupChat.info.gallery.${key}`, fallback),
@@ -185,6 +206,10 @@ export const GroupInfoGallery = ({
 					'flexDirection': 'column',
 					'flex': 1,
 					'minHeight': 0,
+					/* The dates under the cards can be more than the column
+					   has left; the panel scrolls inside itself rather than
+					   pushing the page, which would move the bar. */
+					'overflowY': 'auto',
 					'animation': `${
 						leaving ? 'groupInfoGalleryOut' : 'groupInfoGalleryIn'
 					} ${SLIDE_MS}ms cubic-bezier(0.4,0,0.2,1) both`,
@@ -278,6 +303,50 @@ export const GroupInfoGallery = ({
 						cardWidth={{ xs: 300, sm: 372 }}
 					/>
 				</Box>
+
+				{!!upcomingDates?.length && (
+					<Box sx={{ mt: { xs: 1.5, sm: 2 } }}>
+						<Typography
+							component="h2"
+							sx={{
+								fontSize: 14,
+								fontWeight: 600,
+								color: registrationMd3.onSurface,
+								mb: 0.75
+							}}
+						>
+							{tr('upcoming', 'Nächste Termine')}
+						</Typography>
+						<Box
+							component="ul"
+							sx={{
+								display: 'flex',
+								flexWrap: 'wrap',
+								gap: 1,
+								listStyle: 'none',
+								m: 0,
+								p: 0
+							}}
+						>
+							{upcomingDates.map((date) => (
+								<Typography
+									component="li"
+									key={date.toISOString()}
+									sx={{
+										fontSize: 13,
+										color: registrationMd3.onSurfaceVariant,
+										border: `1px solid ${registrationMd3.outlineVariant}`,
+										borderRadius: '999px',
+										px: 1.5,
+										py: 0.5
+									}}
+								>
+									{dateFormat.format(date)}
+								</Typography>
+							))}
+						</Box>
+					</Box>
+				)}
 
 				{onOpenAppointments && (
 					<Box sx={{ mt: { xs: 2, sm: 2.5 } }}>

@@ -856,7 +856,8 @@
 						"title": "Vous restez anonyme",
 						"text": "Merci de ne citer ni noms réels ni adresses — ni les vôtres ni ceux des autres."
 					}
-				}
+				},
+				"upcoming": "Prochaines dates"
 			}
 		},
 		"join": {

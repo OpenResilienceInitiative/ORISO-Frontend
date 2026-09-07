@@ -5,6 +5,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { OrisoCalendar } from '../form/OrisoCalendar';
+import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
 import { orisoDateTimeColors } from '../form/orisoDateTimeDesign';
 import { translateWithFallback } from '../../utils/translationFallback';
@@ -261,9 +262,15 @@ export const AppointmentBookingPanel = ({
 						minHeight: 0,
 						overflowY: 'auto',
 						display: 'flex',
-						flexDirection: 'column',
+						/* Side by side once there is room: the calendar keeps
+						   its own width and the times fill the space next to
+						   it, instead of leaving that half of the screen empty
+						   and pushing the times below the fold (Frank,
+						   2026-09-07, arrow on the review screenshot). */
+						flexDirection: { xs: 'column', md: 'row' },
 						alignItems: { xs: 'center', md: 'flex-start' },
-						gap: { xs: 2, sm: 2.5 }
+						gap: { xs: 2, sm: 2.5, md: 4 },
+						pb: { xs: '104px', sm: '120px' }
 					}}
 				>
 					{/* The design system's month grid, not a second calendar:
@@ -273,6 +280,7 @@ export const AppointmentBookingPanel = ({
 					<Box
 						sx={{
 							'maxWidth': '100%',
+							'flex': 'none',
 							'& > *': { maxWidth: '100%' }
 						}}
 					>
@@ -358,16 +366,18 @@ export const AppointmentBookingPanel = ({
 					</Box>
 				</Box>
 
-				<Box sx={{ mt: { xs: 2, sm: 2.5 } }}>
-					<Button
-						variant="contained"
-						onClick={confirm}
-						disabled={!day || !time || busy}
-						data-testid="appointment-booking-confirm"
-					>
-						{tr('confirm', 'Termin buchen')}
-					</Button>
-				</Box>
+				{/* The way on belongs in the bar, like every other screen
+				    of the entry room — a contained button loose in the content
+				    reads as a third kind of control (Frank, 2026-09-07: "use
+				    footer design"). */}
+				<RegistrationFooter
+					primary={{
+						label: tr('confirm', 'Termin buchen'),
+						onClick: confirm,
+						disabled: !day || !time || busy,
+						testId: 'appointment-booking-confirm'
+					}}
+				/>
 			</Box>
 		</Box>
 	);

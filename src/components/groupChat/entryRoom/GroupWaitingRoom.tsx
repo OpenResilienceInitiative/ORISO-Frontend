@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
@@ -10,7 +9,6 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
-import { AppointmentBookingPanel } from '../../appointmentBooking/AppointmentBookingPanel';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { Stage } from '../../stage/stage';
@@ -32,6 +30,8 @@ export interface GroupWaitingRoomProps {
 	active: boolean;
 	onJoin: () => void;
 	joinBusy?: boolean;
+	/** The group's next dates, soonest first — shown behind "Mehr erfahren". */
+	upcomingDates?: Date[];
 	/** A fixed "now" for stories and tests; the app leaves it unset. */
 	nowMs?: number;
 	/** Where "Einloggen" in the header goes. Off for someone already in. */
@@ -60,6 +60,7 @@ export const GroupWaitingRoom = ({
 	active,
 	onJoin,
 	joinBusy = false,
+	upcomingDates,
 	nowMs,
 	showLoginLink = false
 }: GroupWaitingRoomProps) => {
@@ -71,7 +72,6 @@ export const GroupWaitingRoom = ({
 	);
 	const [motionOff, setMotionOff] = useState(false);
 	const [moreOpen, setMoreOpen] = useState(false);
-	const [bookingOpen, setBookingOpen] = useState(false);
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -228,23 +228,11 @@ export const GroupWaitingRoom = ({
 					    stage, the header and the bar stay where they are (Frank,
 					    2026-09-07: "nur den Mittelteil bei den Selbsthilfegruppen
 					    abzuändern", "und auch ein Backbutton wieder haben"). */}
-					{bookingOpen ? (
-						/* No endpoint is invented here: the panel is a view, and
-						   the confirmed slot only closes it until the booking
-						   service is wired in. */
-						<AppointmentBookingPanel
-							onBack={() => setBookingOpen(false)}
-							onConfirm={() => setBookingOpen(false)}
-							/* Both panels leave the same room, so they name it
-							   the same way (Frank, 2026-09-07: "zurück zum
-							   Countdown"). */
-							backLabel={tr(
-								'backToCountdown',
-								'Zurück zum Countdown'
-							)}
+					{moreOpen ? (
+						<GroupInfoGallery
+							onBack={() => setMoreOpen(false)}
+							upcomingDates={upcomingDates}
 						/>
-					) : moreOpen ? (
-						<GroupInfoGallery onBack={() => setMoreOpen(false)} />
 					) : (
 						<>
 							<Box
@@ -417,19 +405,6 @@ export const GroupWaitingRoom = ({
 										}
 									}}
 								>
-									<Button
-										variant="outlined"
-										size="small"
-										startIcon={<CalendarMonthRoundedIcon />}
-										sx={moreButtonSx}
-										onClick={() => setBookingOpen(true)}
-										data-testid="group-entry-book"
-									>
-										{t(
-											'booking.appointment.open',
-											'Termin buchen'
-										)}
-									</Button>
 									<Button
 										variant="outlined"
 										size="small"

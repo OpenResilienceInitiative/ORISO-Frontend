@@ -155,8 +155,18 @@ export const RegistrationHandover = ({
 					   content, and the column pads 40 a side — 912 in all. On
 					   a 1440 screen the third card was cut off before (Frank,
 					   turn 1: "das falsche Maß bei 1440"). Below `lg` it keeps
-					   720 and the cards scroll, which is what a phone wants. */
-					maxWidth: { xs: '100%', sm: 720, lg: 912 },
+					   720 and the cards scroll, which is what a phone wants.
+
+					   Only the overlay may take those 912: it owns the whole
+					   viewport. The inline variant stands in the white column
+					   beside the red stage, which is 60vw — 864 px at 1440 —
+					   so a 912 module would run into the stage (Frank,
+					   2026-09-07: "roter Bereich, Modul darf nie so breit
+					   sein"). It keeps 720 and lets the cards scroll. */
+					maxWidth:
+						variant === 'overlay'
+							? { xs: '100%', sm: 720, lg: 912 }
+							: { xs: '100%', sm: 720 },
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },

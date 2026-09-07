@@ -909,7 +909,8 @@
 						"title": "Sie bleiben anonym",
 						"text": "Bitte nennen Sie keine echten Namen und keine Adressen — weder Ihre eigenen noch die anderer."
 					}
-				}
+				},
+				"upcoming": "Nächste Termine"
 			}
 		},
 		"join": {
