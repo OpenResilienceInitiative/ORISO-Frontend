@@ -2233,7 +2233,7 @@
 			},
 			"dnd": {
 				"title": "Rahatsız etmeyin",
-				"description": "Tüm bildirimleri (ses, açılır pencere, e-posta) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
+				"description": "Bildirimleri (ses, açılır pencere) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
 				"activeUntil": "{{time}} saatine kadar etkin",
 				"option": {
 					"off": "Kapalı",

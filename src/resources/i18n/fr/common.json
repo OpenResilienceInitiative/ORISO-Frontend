@@ -2233,7 +2233,7 @@
 			},
 			"dnd": {
 				"title": "Ne pas déranger",
-				"description": "Mettez toutes les notifications en pause (son, fenêtres contextuelles, e-mails) pour une durée choisie. Votre historique continue de se remplir.",
+				"description": "Mettez les notifications en pause (son, fenêtres contextuelles) pour une durée choisie. Votre historique continue de se remplir.",
 				"activeUntil": "Actif jusqu'à {{time}}",
 				"option": {
 					"off": "Désactivé",

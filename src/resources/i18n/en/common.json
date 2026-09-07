@@ -2247,7 +2247,7 @@
 			},
 			"dnd": {
 				"title": "Do not disturb",
-				"description": "Pause all notifications (sound, pop-ups, emails) for a chosen time. Your history keeps filling.",
+				"description": "Pause notifications (sound, pop-ups) for a chosen time. Your history keeps filling.",
 				"activeUntil": "Active until {{time}}",
 				"option": {
 					"off": "Off",

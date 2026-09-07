@@ -765,7 +765,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausiere alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Dein Verlauf füllt sich weiter.",
+				"description": "Pausiere Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Dein Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",
