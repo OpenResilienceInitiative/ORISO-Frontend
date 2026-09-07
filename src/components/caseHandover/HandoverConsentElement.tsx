@@ -35,9 +35,25 @@ import './handoverConsentElement.styles.scss';
  *
  * and the mode decides nothing but the **starting position**. The previous
  * build carried three competing "wordings" for that reason; there is only one.
- * The two sentences underneath are now recognisable opposites
- * ("dürfen … ohne Sie zu fragen" ↔ "müssen Sie vorher fragen"), which the
- * originally specified pair was not: both of those permitted look-in.
+ * The two sentences underneath are recognisable opposites — they open
+ * identically and part exactly where the meaning parts
+ * ("… dürfen mitlesen, ohne Sie zu fragen" ↔ "… dürfen erst mitlesen, wenn Sie
+ * Ja sagen"), which the originally specified pair was not: both of those
+ * permitted look-in.
+ *
+ * <h3>Plain-language pass of 2026-09-07, evening</h3>
+ *
+ * Frank kept the copy but asked for it "a tick simpler", above all in the
+ * consent fields. Nothing the text *says* changed; the sentences were cut to
+ * one thought each and the administrative nouns were dropped —
+ * "technisch Zugang" → "Zugang", "protokolliert" → "notiert",
+ * "ohne Nachfrage" → "ohne zu fragen", "Diesen Bedingungen … zugestimmt" →
+ * "Dazu … Ja gesagt". Measured German: average sentence 8.7 → 7.7 words,
+ * longest 17 → 11, words over three syllables 6 → 4 — and the remaining four
+ * are the irreducible terms (Beratende, Beratungsstelle, Datenschutzerklärung).
+ * The three honest claims of ADR-002 survive the cut untouched. The five
+ * other locales were re-translated from the *new* German, not patched from the
+ * old one.
  *
  * <h3>What the copy is not allowed to claim</h3>
  *
@@ -248,7 +264,7 @@ export const HandoverConsentControls = ({
 			>
 				{translate(
 					'caseHandover.handoverConsent.context',
-					'Alle Beratenden dieser Beratungsstelle haben technisch Zugang zu Ihrer Beratung. Sie lesen nur mit, wenn es einen Grund gibt — zum Beispiel Krankheit, Urlaub oder eine fachliche Frage. Jedes Mitlesen wird protokolliert.'
+					'Alle Beratenden dieser Beratungsstelle haben Zugang zu Ihrer Beratung. Sie lesen nur mit, wenn es einen Grund gibt. Zum Beispiel bei Krankheit, Urlaub oder einer Frage im Team. Jedes Mitlesen wird notiert.'
 				)}
 			</p>
 
@@ -271,7 +287,7 @@ export const HandoverConsentControls = ({
 					<span>
 						{translate(
 							'caseHandover.handoverConsent.muted',
-							'Bei dieser Beratungsstelle dürfen andere Beratende ohne Nachfrage mitlesen. Diesen Bedingungen haben Sie bei der Anmeldung zugestimmt. Was das genau bedeutet, steht in der Datenschutzerklärung oben.'
+							'In dieser Beratungsstelle dürfen andere Beratende mitlesen, ohne Sie zu fragen. Dazu haben Sie bei der Anmeldung Ja gesagt. Mehr dazu steht in der Datenschutzerklärung oben.'
 						)}
 					</span>
 				</p>
@@ -302,7 +318,7 @@ export const HandoverConsentControls = ({
 						>
 							{translate(
 								'caseHandover.handoverConsent.switchLabel',
-								'Mitlesen ohne Nachfrage'
+								'Mitlesen ohne zu fragen'
 							)}
 						</span>
 						<Switch
@@ -331,11 +347,11 @@ export const HandoverConsentControls = ({
 						{checked
 							? translate(
 									'caseHandover.handoverConsent.on',
-									'Andere Beratende dieser Beratungsstelle dürfen mitlesen, ohne Sie vorher zu fragen.'
+									'Andere Beratende dürfen mitlesen, ohne Sie zu fragen.'
 								)
 							: translate(
 									'caseHandover.handoverConsent.off',
-									'Andere Beratende dieser Beratungsstelle müssen Sie vorher fragen, bevor sie mitlesen.'
+									'Andere Beratende dürfen erst mitlesen, wenn Sie Ja sagen.'
 								)}
 					</p>
 
@@ -345,7 +361,7 @@ export const HandoverConsentControls = ({
 					>
 						{translate(
 							'caseHandover.handoverConsent.hint',
-							'Sie können das jederzeit ändern.'
+							'Sie können das jederzeit wieder ändern.'
 						)}
 					</p>
 				</>

@@ -3054,12 +3054,12 @@
 				"privacy": "Privacy policy of the counselling centre",
 				"unavailable": "{{document}} — currently unavailable"
 			},
-			"context": "All counsellors at this counselling centre technically have access to your consultation. They only read along when there is a reason — for example illness, holiday or a professional question. Every time somebody reads along, it is logged.",
+			"context": "All counsellors at this counselling centre have access to your consultation. They only read along when there is a reason. For example illness, holiday or a question in the team. We note every time somebody reads along.",
 			"switchLabel": "Reading along without asking",
-			"on": "Other counsellors at this counselling centre may read along without asking you first.",
-			"off": "Other counsellors at this counselling centre must ask you first before they read along.",
-			"hint": "You can change this at any time.",
-			"muted": "At this counselling centre, other counsellors may read along without asking. You agreed to these terms when you registered. The privacy policy above explains what that means.",
+			"on": "Other counsellors may read along without asking you.",
+			"off": "Other counsellors may only read along if you say yes.",
+			"hint": "You can change this again at any time.",
+			"muted": "At this counselling centre, other counsellors may read along without asking you. You said yes to this when you registered. You can read more in the privacy policy above.",
 			"saving": "Saving your setting …",
 			"retry": "Try again"
 		},

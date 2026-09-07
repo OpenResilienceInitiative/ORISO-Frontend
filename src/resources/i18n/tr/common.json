@@ -3094,12 +3094,12 @@
 				"privacy": "Danışmanlık merkezinin gizlilik politikası",
 				"unavailable": "{{document}} — şu anda erişilemiyor"
 			},
-			"context": "Bu danışmanlık merkezindeki tüm danışmanların görüşmenize teknik olarak erişimi vardır. Yalnızca bir neden varsa okurlar — örneğin hastalık, izin veya mesleki bir soru. Her okuma kayıt altına alınır.",
-			"switchLabel": "Sormadan okuma",
-			"on": "Bu danışmanlık merkezindeki diğer danışmanlar size önceden sormadan okuyabilir.",
-			"off": "Bu danışmanlık merkezindeki diğer danışmanlar okumadan önce size sormak zorundadır.",
-			"hint": "Bunu istediğiniz zaman değiştirebilirsiniz.",
-			"muted": "Bu danışmanlık merkezinde diğer danışmanlar sormadan okuyabilir. Kayıt olurken bu koşulları kabul ettiniz. Bunun ne anlama geldiği yukarıdaki gizlilik politikasında açıklanmıştır.",
+			"context": "Bu danışmanlık merkezindeki tüm danışmanlar görüşmenize erişebilir. Yalnızca bir neden varsa okurlar. Örneğin hastalık, izin veya ekipte bir soru. Her okuma kayda geçer.",
+			"switchLabel": "Size sormadan okuma",
+			"on": "Diğer danışmanlar size sormadan okuyabilir.",
+			"off": "Diğer danışmanlar ancak siz evet derseniz okuyabilir.",
+			"hint": "Bunu istediğiniz zaman yeniden değiştirebilirsiniz.",
+			"muted": "Bu danışmanlık merkezinde diğer danışmanlar size sormadan okuyabilir. Kayıt olurken buna evet dediniz. Yukarıdaki gizlilik politikasında daha fazlası yazıyor.",
 			"saving": "Ayar kaydediliyor …",
 			"retry": "Tekrar dene"
 		},

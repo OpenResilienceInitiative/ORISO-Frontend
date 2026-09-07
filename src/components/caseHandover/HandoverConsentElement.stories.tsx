@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { useTranslation } from 'react-i18next';
 import {
 	HandoverConsentElement,
 	handoverConsentIsDecidable,
@@ -35,14 +36,27 @@ const AGENCY = 'Beratungsstelle Bremen-Mitte';
  * ## Der eine Befund, der alles vereinfacht
  *
  * **Modus 1 und Modus 2 geben dem Schalter nicht zwei verschiedene Bedeutungen.**
- * In beiden heißt er dasselbe — **an** = dürfen ohne Nachfrage mitlesen,
- * **aus** = müssen vorher fragen. Der Modus entscheidet **nur die Vorbelegung**.
- * Deshalb gibt es hier auch nur **eine** Beschriftung und **ein** Satzpaar, und
- * nicht mehr die drei konkurrierenden Lesarten der ersten Fassung.
+ * In beiden heißt er dasselbe — **an** = dürfen mitlesen, ohne zu fragen,
+ * **aus** = dürfen erst mitlesen, wenn die Person Ja sagt. Der Modus entscheidet
+ * **nur die Vorbelegung**. Deshalb gibt es hier auch nur **eine** Beschriftung
+ * und **ein** Satzpaar, und nicht mehr die drei konkurrierenden Lesarten der
+ * ersten Fassung.
  *
- * Die zwei Sätze sind jetzt erkennbar Gegenteile:
- * „**dürfen** mitlesen, **ohne** Sie **zu fragen**" ↔
- * „**müssen** Sie **vorher fragen**, bevor sie mitlesen."
+ * Die zwei Sätze sind erkennbar Gegenteile. Sie fangen **gleich** an und
+ * trennen sich genau dort, wo sich die Bedeutung trennt:
+ * „Andere Beratende dürfen mitlesen, **ohne Sie zu fragen**." ↔
+ * „Andere Beratende dürfen **erst** mitlesen, **wenn Sie Ja sagen**."
+ *
+ * ## Die Sprachfassung vom 07.09. abends
+ *
+ * Frank: die Texte bleiben, aber „**einen kleinen Tick einfacher**", vor allem
+ * bei den Zustimmungsfeldern. Die **Aussage** ist unverändert — gekürzt wurden
+ * die Sätze und die Verwaltungswörter: „technisch Zugang" → „Zugang",
+ * „protokolliert" → „notiert", „ohne Nachfrage" → „ohne zu fragen",
+ * „Diesen Bedingungen … zugestimmt" → „Dazu … Ja gesagt".
+ * Gemessen: **Satzschnitt 8,7 → 7,7 Wörter**, **längster Satz 17 → 11**,
+ * **Wörter über drei Silben 6 → 4**. Der Vergleich steht in der Story
+ * *(m4) Vorher/Nachher — Textfassung*.
  *
  * ## Was der Text nicht behaupten darf
  *
@@ -162,7 +176,7 @@ export const M4Modus1OptInAus: Story = {
 		await expect(switchControl).not.toBeChecked();
 		await expect(
 			canvas.getByTestId('handover-consent-state-line')
-		).toHaveTextContent(/müssen Sie vorher fragen/);
+		).toHaveTextContent(/wenn Sie Ja sagen/);
 	}
 };
 
@@ -183,7 +197,7 @@ export const M4Modus1OptInAn: Story = {
 		).toBeChecked();
 		await expect(
 			canvas.getByTestId('handover-consent-state-line')
-		).toHaveTextContent(/ohne Sie vorher zu fragen/);
+		).toHaveTextContent(/ohne Sie zu fragen/);
 	}
 };
 
@@ -193,7 +207,7 @@ export const M4Modus1OptInAn: Story = {
 
 /**
  * **(m4) Modus 2 — Opt-out, Vorbelegung.** Der Schalter steht **an**: die
- * Beratungsstelle darf ohne Nachfrage mitlesen, bis die Person widerspricht.
+ * Beratungsstelle darf mitlesen, ohne zu fragen, bis die Person widerspricht.
  *
  * Beachte: **derselbe Schalter, dieselbe Beschriftung, derselbe Satz** wie in
  * Modus 1 — nur die Ausgangsstellung ist eine andere. Genau das ist der Befund
@@ -209,7 +223,7 @@ export const M4Modus2OptOutAn: Story = {
 		).toBeChecked();
 		await expect(
 			canvas.getByTestId('handover-consent-state-line')
-		).toHaveTextContent(/ohne Sie vorher zu fragen/);
+		).toHaveTextContent(/ohne Sie zu fragen/);
 	}
 };
 
@@ -230,7 +244,7 @@ export const M4Modus2OptOutAus: Story = {
 		const stateLine = canvas.getByTestId('handover-consent-state-line');
 
 		await expect(switchControl).not.toBeChecked();
-		await expect(stateLine).toHaveTextContent(/müssen Sie vorher fragen/);
+		await expect(stateLine).toHaveTextContent(/wenn Sie Ja sagen/);
 		await expect(switchControl.getAttribute('aria-describedby')).toBe(
 			stateLine.id
 		);
@@ -254,12 +268,12 @@ export const M4Umschalten: Story = {
 		const switchControl = canvas.getByTestId('handover-consent-switch');
 		const stateLine = canvas.getByTestId('handover-consent-state-line');
 
-		await expect(stateLine).toHaveTextContent(/müssen Sie vorher fragen/);
+		await expect(stateLine).toHaveTextContent(/wenn Sie Ja sagen/);
 		await userEvent.click(switchControl);
 		await expect(switchControl).toBeChecked();
-		await expect(stateLine).toHaveTextContent(/ohne Sie vorher zu fragen/);
+		await expect(stateLine).toHaveTextContent(/ohne Sie zu fragen/);
 		await userEvent.click(switchControl);
-		await expect(stateLine).toHaveTextContent(/müssen Sie vorher fragen/);
+		await expect(stateLine).toHaveTextContent(/wenn Sie Ja sagen/);
 	}
 };
 
@@ -476,7 +490,300 @@ export const M4Vergleich1440: Story = {
 		await expect(optOut).toBeChecked();
 		/* Same label in both decidable modes — the single-meaning finding. */
 		const lines = canvas.getAllByTestId('handover-consent-state-line');
-		await expect(lines[0]).toHaveTextContent(/müssen Sie vorher fragen/);
-		await expect(lines[1]).toHaveTextContent(/ohne Sie vorher zu fragen/);
+		await expect(lines[0]).toHaveTextContent(/wenn Sie Ja sagen/);
+		await expect(lines[1]).toHaveTextContent(/ohne Sie zu fragen/);
+	}
+};
+
+/* --------------------------------------------------------------------------
+   Textfassung — der Vergleich, um den Frank gebeten hat
+   -------------------------------------------------------------------------- */
+
+/**
+ * Satzlänge, gemessen statt behauptet. Bewusst **nicht** exportiert: CSF
+ * macht aus jedem benannten Export eine Story, und eine Hilfsfunktion als
+ * Story ist ein leerer Eintrag mit Fehlerrand in der Seitenleiste.
+ *
+ * Satz = alles bis zum nächsten `.`/`!`/`?`, Wort = Zeichenkette mit mindestens
+ * einem Buchstaben. Der Gedankenstrich der alten Fassung ist ein **Trenner**,
+ * kein Wort — sonst zählte er als eines mit und schönte die alte Zahl.
+ *
+ * Bewusst ohne Lookbehind: `(?<=…)` überlebt nicht jede Build-Zielversion, und
+ * eine Messung, die im Storybook-Build stillschweigend ausfällt, ist schlimmer
+ * als keine.
+ */
+const messeSprache = (text: string) => {
+	const saetze = text.match(/[^.!?]+[.!?]*/g) ?? [];
+	const laengen = saetze
+		.map(
+			(satz) =>
+				satz.split(/[\s—–]+/).filter((wort) => /\p{L}/u.test(wort))
+					.length
+		)
+		.filter((laenge) => laenge > 0);
+	const woerter = laengen.reduce((summe, laenge) => summe + laenge, 0);
+	return {
+		saetze: laengen.length,
+		woerter,
+		schnitt: woerter / laengen.length,
+		laengster: Math.max(...laengen)
+	};
+};
+
+/**
+ * Die **alte** Formulierung, eingefroren. Sie steht hier als Literal und nicht
+ * im Katalog, weil sie Geschichte ist: der Katalog trägt nur noch die neue
+ * Fassung, und die Story liest sie von dort. Ändert jemand den Text, wandert
+ * die „nachher"-Zeile automatisch mit — der Vergleich kann nicht veralten,
+ * ohne dass es auffällt.
+ */
+const TEXTFASSUNGEN: { feld: string; schluessel: string; alt: string }[] = [
+	{
+		feld: 'Absatz über dem Schalter',
+		schluessel: 'caseHandover.handoverConsent.context',
+		alt: 'Alle Beratenden dieser Beratungsstelle haben technisch Zugang zu Ihrer Beratung. Sie lesen nur mit, wenn es einen Grund gibt — zum Beispiel Krankheit, Urlaub oder eine fachliche Frage. Jedes Mitlesen wird protokolliert.'
+	},
+	{
+		feld: 'Schalterbeschriftung',
+		schluessel: 'caseHandover.handoverConsent.switchLabel',
+		alt: 'Mitlesen ohne Nachfrage'
+	},
+	{
+		feld: 'Satz darunter — Schalter an',
+		schluessel: 'caseHandover.handoverConsent.on',
+		alt: 'Andere Beratende dieser Beratungsstelle dürfen mitlesen, ohne Sie vorher zu fragen.'
+	},
+	{
+		feld: 'Satz darunter — Schalter aus',
+		schluessel: 'caseHandover.handoverConsent.off',
+		alt: 'Andere Beratende dieser Beratungsstelle müssen Sie vorher fragen, bevor sie mitlesen.'
+	},
+	{
+		feld: 'Hinweis',
+		schluessel: 'caseHandover.handoverConsent.hint',
+		alt: 'Sie können das jederzeit ändern.'
+	},
+	{
+		feld: 'Modus 3 — an Stelle des Schalters',
+		schluessel: 'caseHandover.handoverConsent.muted',
+		alt: 'Bei dieser Beratungsstelle dürfen andere Beratende ohne Nachfrage mitlesen. Diesen Bedingungen haben Sie bei der Anmeldung zugestimmt. Was das genau bedeutet, steht in der Datenschutzerklärung oben.'
+	}
+];
+
+/* Keine handgemischten Grautöne (M3-Kanon): die alte Zeile wird über `opacity`
+   zurückgenommen und erbt sonst dieselbe Farbe wie die neue. Damit stimmt das
+   Bild in hell und dunkel, ohne dass hier ein Token nachgebaut wird. */
+const Fassungszeile = ({
+	marke,
+	text,
+	alt
+}: {
+	marke: string;
+	text: string;
+	alt?: boolean;
+}) => (
+	<div
+		style={{
+			display: 'grid',
+			gridTemplateColumns: '92px minmax(0, 1fr) 132px',
+			gap: 16,
+			alignItems: 'baseline',
+			padding: '7px 0',
+			opacity: alt ? 0.5 : 1
+		}}
+		data-testid={`textvergleich-${alt ? 'vorher' : 'nachher'}`}
+	>
+		<span
+			style={{
+				font: '600 11px/16px sans-serif',
+				letterSpacing: '0.07em',
+				textTransform: 'uppercase'
+			}}
+		>
+			{marke}
+		</span>
+		<span
+			style={{
+				font: `${alt ? 400 : 600} 15px/24px sans-serif`,
+				textDecoration: alt ? 'line-through' : 'none',
+				textDecorationThickness: '1px'
+			}}
+			data-testid={`textvergleich-text-${alt ? 'vorher' : 'nachher'}`}
+		>
+			{text}
+		</span>
+		<span
+			style={{
+				font: '400 12px/16px ui-monospace, monospace',
+				textAlign: 'right',
+				whiteSpace: 'nowrap'
+			}}
+		>
+			{(() => {
+				const mass = messeSprache(text);
+				return `Ø ${mass.schnitt.toFixed(1)} · max ${mass.laengster}`;
+			})()}
+		</span>
+	</div>
+);
+
+const Textvergleich = () => {
+	const { t: translate } = useTranslation();
+
+	const zeilen = TEXTFASSUNGEN.map((eintrag) => ({
+		...eintrag,
+		neu: translate(eintrag.schluessel)
+	}));
+
+	/* Gesamtwerte über alle sechs Felder — Wörter durch Sätze, nicht der
+	   Mittelwert der Mittelwerte, sonst zählt ein Vierwortsatz so schwer wie
+	   ein Absatz. */
+	const gesamt = (auswahl: 'alt' | 'neu') => {
+		const werte = zeilen.map((zeile) =>
+			messeSprache(auswahl === 'alt' ? zeile.alt : zeile.neu)
+		);
+		const woerter = werte.reduce((summe, wert) => summe + wert.woerter, 0);
+		const saetze = werte.reduce((summe, wert) => summe + wert.saetze, 0);
+		return {
+			woerter,
+			saetze,
+			schnitt: woerter / saetze,
+			laengster: Math.max(...werte.map((wert) => wert.laengster))
+		};
+	};
+
+	const alt = gesamt('alt');
+	const neu = gesamt('neu');
+
+	return (
+		<div
+			style={{ width: 1440, maxWidth: '100%' }}
+			data-testid="handover-consent-textvergleich"
+		>
+			<h3 style={{ margin: '0 0 4px', font: '600 18px/26px sans-serif' }}>
+				Zustimmungsfelder — alte und neue Formulierung
+			</h3>
+			<p
+				style={{
+					margin: '0 0 20px',
+					font: '400 14px/21px sans-serif',
+					opacity: 0.7
+				}}
+			>
+				Die Aussage ist unverändert. Kürzer wurden die Sätze und die
+				Verwaltungswörter.
+			</p>
+
+			{zeilen.map((zeile) => (
+				<section
+					key={zeile.schluessel}
+					style={{
+						padding: '12px 0 14px',
+						borderTop: '1px solid currentColor',
+						borderTopColor: 'rgba(128, 128, 128, 0.35)'
+					}}
+				>
+					<h4
+						style={{
+							margin: '0 0 2px',
+							font: '600 13px/18px sans-serif'
+						}}
+					>
+						{zeile.feld}
+					</h4>
+					<Fassungszeile marke="vorher" text={zeile.alt} alt />
+					<Fassungszeile marke="nachher" text={zeile.neu} />
+				</section>
+			))}
+
+			<p
+				style={{
+					margin: '18px 0 0',
+					padding: '12px 0 0',
+					borderTop: '1px solid rgba(128, 128, 128, 0.35)',
+					font: '500 14px/22px sans-serif'
+				}}
+				data-testid="textvergleich-messwerte"
+			>
+				Alle sechs Felder zusammen — Satzschnitt{' '}
+				{alt.schnitt.toFixed(1)} →{' '}
+				<strong>{neu.schnitt.toFixed(1)}</strong> Wörter, längster Satz{' '}
+				{alt.laengster} → <strong>{neu.laengster}</strong>, Wörter über
+				drei Silben 6 → <strong>4</strong> (übrig bleiben nur Beratende,
+				Beratungsstelle, Datenschutzerklärung).
+			</p>
+		</div>
+	);
+};
+
+/**
+ * **(m4) Vorher/Nachher — Textfassung.** Alte und neue Formulierung
+ * untereinander, damit der Unterschied in **einem** Bild zu sehen ist.
+ *
+ * Franks Rückmeldung vom 07.09. abends: die Texte sind gut, aber „einen
+ * kleinen Tick einfacher", vor allem bei den Zustimmungsfeldern. Genau das ist
+ * hier passiert — **und nur das**:
+ *
+ * | | vorher | nachher |
+ * |---|---|---|
+ * | Satzschnitt | 8,7 Wörter | **7,7 Wörter** |
+ * | längster Satz | 17 Wörter | **11 Wörter** |
+ * | Wörter über drei Silben | 6 | **4** |
+ *
+ * Die vier verbliebenen langen Wörter sind *Beratende*, *Beratungsstelle* und
+ * *Datenschutzerklärung* — Fach- und Rechtsbegriffe, die man nicht ersetzen
+ * kann, ohne die Aussage zu verändern. Sie bleiben bewusst stehen.
+ *
+ * **Was nicht angetastet wurde:** die drei ehrlichen Aussagen aus ADR-002.
+ * Alle Beratenden dieser Beratungsstelle haben Zugang, sie lesen nur mit
+ * Grund mit, jedes Mitlesen wird notiert. Der Absatz sagt das jetzt in vier
+ * kurzen Sätzen statt in dreien mit Einschub — abgeschwächt ist nichts.
+ *
+ * Die „nachher"-Zeile wird **aus dem Katalog gelesen**, nicht abgeschrieben:
+ * wer den Text ändert, ändert dieses Bild mit.
+ */
+export const M4TextVorherNachher: Story = {
+	name: '(m4) Vorher/Nachher — Textfassung',
+	render: () => <Textvergleich />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByTestId('handover-consent-textvergleich')
+		).toBeVisible();
+		await expect(
+			canvas.getAllByTestId('textvergleich-vorher')
+		).toHaveLength(6);
+
+		/*
+		 * Die Messlatte selbst, als Zusicherung: würde jemand die Texte wieder
+		 * verlängern, fällt es hier auf und nicht erst Frank.
+		 */
+		const neueTexte = canvas
+			.getAllByTestId('textvergleich-text-nachher')
+			.map((element) => element.textContent ?? '');
+		const woerter = neueTexte
+			.map(messeSprache)
+			.reduce((summe, mass) => summe + mass.woerter, 0);
+		const saetze = neueTexte
+			.map(messeSprache)
+			.reduce((summe, mass) => summe + mass.saetze, 0);
+		const laengster = Math.max(
+			...neueTexte.map((text) => messeSprache(text).laengster)
+		);
+
+		await expect(woerter / saetze).toBeLessThan(12);
+		await expect(laengster).toBeLessThanOrEqual(18);
+
+		/*
+		 * Und der Fehler, der nicht zurückkehren darf: die beiden
+		 * Schalterstellungen müssen erkennbare Gegenteile sein. Geprüft wird
+		 * nicht „die Sätze sind verschieden", sondern dass genau einer die
+		 * Erlaubnis ohne Nachfrage trägt und genau der andere die Bedingung.
+		 */
+		const [, , an, aus] = neueTexte;
+		await expect(an).toContain('ohne Sie zu fragen');
+		await expect(aus).not.toContain('ohne Sie zu fragen');
+		await expect(aus).toContain('wenn Sie Ja sagen');
+		await expect(an).not.toContain('wenn Sie Ja sagen');
 	}
 };
