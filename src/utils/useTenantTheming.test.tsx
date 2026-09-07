@@ -19,9 +19,11 @@ vi.mock('../api/apiGetTenantTheming', () => ({
 
 // The public tenant endpoint is reached by host subdomain; jsdom serves
 // `localhost`, which `getLocationVariables` reports as "no subdomain".
+const location = vi.hoisted(() => ({ subdomain: 'beratung' }));
+
 vi.mock('./getLocationVariables', () => ({
 	default: () => ({
-		subdomain: 'beratung',
+		subdomain: location.subdomain,
 		host: 'beratung.oriso.test',
 		protocol: 'https:',
 		origin: 'https://beratung.oriso.test'
@@ -135,5 +137,80 @@ describe('useTenantTheming – branding favicon', () => {
 		);
 		expect(iconHrefs()).toEqual(['/favicon.ico', '/favicon-32x32.png']);
 		expect(document.title).toBe('Beratung');
+	});
+});
+
+/**
+ * Theme Builder preview (ORISO-Admin#907): the admin embeds /theme-demo in a
+ * sandboxed iframe and passes the draft seeds as query params. This has to work
+ * for a Träger that has never saved colours — that admin is precisely the one
+ * choosing them for the first time.
+ */
+describe('useTenantTheming – Theme Builder preview seeds', () => {
+	const setSearch = (search: string) => {
+		window.history.replaceState({}, '', `/theme-demo${search}`);
+	};
+
+	const appliedPrimary = () =>
+		document.documentElement.style.getPropertyValue('--m3-primary');
+
+	beforeEach(() => {
+		mocks.apiGetTenantTheming.mockReset();
+		document.documentElement.removeAttribute('style');
+		location.subdomain = 'beratung';
+		setSearch('');
+	});
+
+	// Local development and the admin's own iframe run on a host with no
+	// subdomain, where tenant resolution returns early and never reaches
+	// applyTheming. The preview does not depend on a tenant at all.
+	it('applies the URL seeds on a host without a subdomain', async () => {
+		location.subdomain = '';
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		setSearch('?themePreviewPrimary=0061ff');
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
+	});
+
+	it('applies the URL seeds when the tenant has no stored theming', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		setSearch('?themePreviewPrimary=0061ff');
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
+	});
+
+	it('lets the URL seeds win over a stored palette', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue(tenantResponse(''));
+		setSearch('?themePreviewPrimary=0061ff');
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
+		// #123456 is the stored seed; the preview seed must have replaced it.
+		expect(appliedPrimary().toLowerCase()).not.toBe('#123456');
+	});
+
+	it('leaves the palette alone without preview params', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalled()
+		);
+		expect(appliedPrimary()).toBe('');
 	});
 });

@@ -40,14 +40,12 @@ const getOrCreateHeadNode = (
 	return node;
 };
 
-const applyTheming = (tenant: TenantDataInterface) => {
+const applyTheming = (tenant: TenantDataInterface, previewApplied: boolean) => {
 	if (tenant.theming) {
 		// Seeds → OrisoScheme engine → --m3-* variables on the document
 		// root. Without a stored seed (or with an invalid one) nothing is
 		// injected and the compiled legacy palette keeps applying (UAT-E).
-		// In Theme Builder preview mode (sandboxed admin iframe) the URL
-		// seeds win over the stored tenant palette.
-		if (!applyPreviewFromLocation(window.location.search)) {
+		if (!previewApplied) {
 			applyTenantPalette(tenant.theming);
 		}
 
@@ -101,6 +99,16 @@ const useTenantTheming = () => {
 
 	const onTenantServiceResponse = useCallback(
 		(tenant: TenantDataInterface) => {
+			// Theme Builder preview (ORISO-Admin#907): the seeds arrive in the
+			// URL and are independent of tenant resolution, so they are applied
+			// before both branches below. They have to survive a host without a
+			// subdomain (the admin's iframe in local development) and a Träger
+			// that has never saved colours — that admin is precisely the one
+			// choosing them for the first time.
+			const previewApplied = applyPreviewFromLocation(
+				window.location.search
+			);
+
 			if (!subdomain && cypressTenantEnabled !== '1') {
 				tenantContext?.setTenant({ settings } as any);
 			} else {
@@ -134,7 +142,7 @@ const useTenantTheming = () => {
 					decodedTenant.name = decodeHTML(tenant.name);
 				}
 
-				applyTheming(decodedTenant);
+				applyTheming(decodedTenant, previewApplied);
 				tenantContext?.setTenant(decodedTenant);
 			}
 			return;
