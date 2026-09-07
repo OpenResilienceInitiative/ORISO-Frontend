@@ -27,3 +27,21 @@
 .erstantwort__bubble:has(.erstantwortFaqGroup) {
 	width: 100%;
 }
+
+/* Modul 1 (2026-09-07) gives the FAQ bubble a headline and **no** body line:
+ * Frank asked for a module rather than a wall of text, and "Öffnen Sie, was Sie
+ * interessiert." is an instruction the chevrons already give. `ErstantwortSequence`
+ * always renders the body paragraph, so an empty body would still cost a line box
+ * plus the bubble's 6px flex gap. Hiding it is scoped to this bubble on purpose —
+ * an empty body anywhere else in the sequence is a bug and should stay visible.
+ */
+.erstantwort__bubble:has(.erstantwortFaqGroup) .erstantwort__body:empty {
+	display: none;
+}
+
+/* With no body above it, the row stack follows the headline directly and the
+ * 10px that separated it from a paragraph reads as a gap in the bubble.
+ */
+.erstantwort__headline + .erstantwort__body:empty + .erstantwortFaqGroup {
+	margin-top: 2px;
+}
