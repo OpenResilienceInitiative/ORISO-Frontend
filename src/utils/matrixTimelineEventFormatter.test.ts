@@ -16,6 +16,64 @@ const makeEvent = (content: Record<string, unknown>) => ({
 	getTs: () => 1700000000000
 });
 
+const makeEncryptedEvent = (
+	content: Record<string, unknown>,
+	decryptionFailure = false
+) => ({
+	...makeEvent(content),
+	getType: () => 'm.room.encrypted',
+	getClearContent: () => content,
+	isDecryptionFailure: () => decryptionFailure
+});
+
+describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
+	it.each([
+		[
+			'SDK failure state',
+			makeEncryptedEvent(
+				{ msgtype: 'm.text', body: 'leaked SDK body' },
+				true
+			)
+		],
+		[
+			'm.bad.encrypted placeholder',
+			makeEncryptedEvent({
+				msgtype: 'm.bad.encrypted',
+				body: '** Unable to decrypt: DecryptionError: missing room key **'
+			})
+		],
+		[
+			'legacy SDK failure body',
+			makeEncryptedEvent({
+				msgtype: 'm.text',
+				body: '** Unable to decrypt: DecryptionError: missing room key **'
+			})
+		]
+	])('uses the localized fallback for %s', (_label, event) => {
+		const formatted = formatMatrixTimelineEvent(
+			event,
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+		expect(formatted.msg).not.toContain('Unable to decrypt');
+	});
+
+	it('preserves the body of a successfully decrypted text message', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEncryptedEvent({
+				msgtype: 'm.text',
+				body: 'Vertraulicher Text'
+			}),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Vertraulicher Text');
+	});
+});
+
 describe('formatMatrixTimelineEvent redacted events (#827)', () => {
 	it('maps isRedacted() events to t: rm', () => {
 		const formatted = formatMatrixTimelineEvent(

@@ -11,6 +11,7 @@ import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
+import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
 
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
@@ -64,18 +65,16 @@ export const formatMatrixTimelineEvent = (
 	}
 
 	const content = event?.getClearContent?.() || event?.getContent?.() || {};
-	const isUndecryptedEvent =
-		eventType === 'm.room.encrypted' && !content?.msgtype;
+	const isUndecryptedEvent = isUndecryptedRoomEvent(event);
 	// Relations foundation (#435): replies are the m.in_reply_to relation.
 	// The legacy Element quote-fallback in the body would duplicate the quote
 	// we render from the relation, so it is stripped for reply events.
 	const replyToEventId = getReplyToEventId(content);
-	const rawTextContent =
-		content?.msgtype === 'm.text'
+	const rawTextContent = isUndecryptedEvent
+		? encryptedFallbackText
+		: content?.msgtype === 'm.text'
 			? content?.formatted_body || content?.body || ''
-			: isUndecryptedEvent
-				? encryptedFallbackText
-				: content?.body || '';
+			: content?.body || '';
 	const textMessageContent = replyToEventId
 		? stripReplyFallback(rawTextContent)
 		: rawTextContent;
