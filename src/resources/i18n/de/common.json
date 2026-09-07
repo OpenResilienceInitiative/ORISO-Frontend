@@ -3102,6 +3102,32 @@
 				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
 			}
 		},
+		"handoverConsent": {
+			"intro": "Ihre Anfrage wurde von {{organisation}} angenommen. Ab jetzt gelten für diese Beratung das Impressum und die Datenschutzerklärung dieser Beratungsstelle.",
+			"agencyFallback": "dieser Beratungsstelle",
+			"links": {
+				"imprint": "Impressum der Beratungsstelle",
+				"privacy": "Datenschutzerklärung der Beratungsstelle",
+				"unavailable": "{{document}} — zurzeit nicht abrufbar"
+			},
+			"asSpecified": {
+				"switchLabel": "Einsicht durch andere Berater:innen",
+				"on": "Ich möchte immer meine Erlaubnis erteilen, wenn andere Berater der gleichen Beratungsstelle Einsicht bekommen.",
+				"off": "Ich erlaube anderen Beratern dieser Beratungsstelle ohne meine Einwilligung Einsicht zu nehmen."
+			},
+			"grantAccess": {
+				"switchLabel": "Einsicht erlauben",
+				"on": "Ich erlaube anderen Berater:innen dieser Beratungsstelle, in diese Beratung Einsicht zu nehmen.",
+				"off": "Ich erlaube keine Einsicht. Wer Einsicht nehmen möchte, muss mich vorher fragen."
+			},
+			"requireAsking": {
+				"switchLabel": "Vorher um Erlaubnis fragen",
+				"on": "Ich möchte jedes Mal vorher gefragt werden, bevor andere Berater:innen dieser Beratungsstelle Einsicht nehmen.",
+				"off": "Ich erlaube anderen Berater:innen dieser Beratungsstelle, ohne meine Einwilligung Einsicht zu nehmen."
+			},
+			"saving": "Einstellung wird gespeichert …",
+			"retry": "Erneut versuchen"
+		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
 			"title": "Zugriff abgelehnt"

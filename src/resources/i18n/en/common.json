@@ -3042,6 +3042,32 @@
 				"switchLabel": "I consent to data processing for this case handover"
 			}
 		},
+		"handoverConsent": {
+			"intro": "Your enquiry has been accepted by {{organisation}}. From now on, the imprint and the privacy policy of this counselling centre apply to this consultation.",
+			"agencyFallback": "this counselling centre",
+			"links": {
+				"imprint": "Imprint of the counselling centre",
+				"privacy": "Privacy policy of the counselling centre",
+				"unavailable": "{{document}} — currently unavailable"
+			},
+			"asSpecified": {
+				"switchLabel": "Access by other counsellors",
+				"on": "I want to always give my permission when other counsellors of the same counselling centre are given access.",
+				"off": "I allow other counsellors of this counselling centre to look in without my consent."
+			},
+			"grantAccess": {
+				"switchLabel": "Allow access",
+				"on": "I allow other counsellors of this counselling centre to look into this consultation.",
+				"off": "I do not allow access. Anyone who wants to look in must ask me first."
+			},
+			"requireAsking": {
+				"switchLabel": "Ask me first",
+				"on": "I want to be asked every time before other counsellors of this counselling centre look in.",
+				"off": "I allow other counsellors of this counselling centre to look in without my consent."
+			},
+			"saving": "Saving your setting …",
+			"retry": "Try again"
+		},
 		"denied": {
 			"copy": "The previous request did not grant content visibility.",
 			"title": "Access denied"

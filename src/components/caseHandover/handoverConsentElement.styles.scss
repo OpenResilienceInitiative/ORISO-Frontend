@@ -1,0 +1,164 @@
+/*
+ * Post-acceptance handover-consent element.
+ *
+ * It is a Carimat system message, not a card: every surface, avatar, bubble
+ * and time rail comes from `.messageItem*` in `message.styles.scss` and from
+ * `caseHandoverClientCards.styles.scss`. Only the payload — copy, the two
+ * legal links, the switch row and the state sentence — is styled here, so the
+ * element cannot drift away from the notices it sits between.
+ *
+ * All colours go through M3 roles with an explicit fallback, as the sweep
+ * guard (`src/utils/theme/m3Sweep.test.ts`, tests #25/#26) requires.
+ */
+.handoverConsent {
+	display: flex;
+	justify-content: flex-start;
+	padding: 16px 16px 0;
+}
+
+.handoverConsent .messageItem__message--systemNotification {
+	width: min(720px, 100%);
+	max-width: min(720px, 100%);
+}
+
+.handoverConsent__copy {
+	margin: 0;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 400;
+	letter-spacing: normal;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+/*
+ * Each document gets its own line rather than an inline pair. Both labels name
+ * the Beratungsstelle, so at 390px they wrap anyway — an inline separator ends
+ * up stranded at the end of the first line, and a half-wrapped link row makes
+ * the second document easy to miss. An imprint has to be findable, not merely
+ * present (ADR-021 decision 7).
+ */
+.handoverConsent__links {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	margin: 16px 0 0;
+	font-size: 15px;
+	line-height: 22px;
+	letter-spacing: normal;
+}
+
+.handoverConsent__linkButton {
+	border: 0;
+	background: none;
+	padding: 0;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.handoverConsent__link {
+	color: var(--m3-primary, #a5000a);
+	text-decoration: underline;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-secondary, #4c555f);
+		outline-offset: 2px;
+	}
+}
+
+/* Still loading: the label is shown, but never as an anchor — a link that
+   does not go anywhere yet is worse than a visibly pending one. */
+.handoverConsent__linkPlaceholder {
+	color: var(--m3-on-surface-variant, #444748);
+	text-decoration: underline dotted;
+	opacity: 0.6;
+}
+
+/* Resolution produced nothing. ADR-021 decision 7 makes reachability of the
+   imprint a duty on every level, so this states the failure instead of
+   hiding the row. */
+.handoverConsent__linkMissing {
+	color: var(--m3-error, #b1005e);
+}
+
+.handoverConsent__switchRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	margin-top: 20px;
+}
+
+.handoverConsent__switchRow--busy {
+	opacity: 0.7;
+}
+
+.handoverConsent__switchLabel {
+	flex: 1 1 auto;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 500;
+	letter-spacing: normal;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+/*
+ * The sentence carries the entire meaning of the control, so it is body copy
+ * directly under the switch — not a caption, not a tooltip, not grey-on-grey.
+ */
+.handoverConsent__stateLine {
+	margin: 8px 0 0;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 400;
+	letter-spacing: normal;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.handoverConsent__saving {
+	margin: 12px 0 0;
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: normal;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.handoverConsent__error {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	margin: 12px 0 0;
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: normal;
+	color: var(--m3-error, #b1005e);
+}
+
+.handoverConsent__retry {
+	border: 0;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: var(--m3-primary, #a5000a);
+	text-decoration: underline;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-secondary, #4c555f);
+		outline-offset: 2px;
+	}
+}
+
+/* Narrow stream: the switch keeps its size, the label wraps above it rather
+   than squeezing the track. */
+@media screen and (width <= 899px) {
+	.handoverConsent {
+		padding: 12px 12px 0;
+	}
+
+	.handoverConsent__switchRow {
+		gap: 16px;
+	}
+}
