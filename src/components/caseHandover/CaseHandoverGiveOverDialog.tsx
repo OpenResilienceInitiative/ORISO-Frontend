@@ -92,6 +92,7 @@ export const CaseHandoverGiveOverView = ({
 		[reasons, reasonCode]
 	);
 
+	const coAccess = selectedReason?.accessType === 'CO_ACCESS';
 	const canSubmit =
 		Boolean(selectedColleagueId) && Boolean(reasonCode) && !isSubmitting;
 
@@ -101,8 +102,16 @@ export const CaseHandoverGiveOverView = ({
 			onClose={onClose}
 			width={600}
 			icon={<CaseHandoverIcon />}
-			title={translate('caseHandover.giveOver.title')}
-			description={translate('caseHandover.giveOver.description')}
+			title={translate(
+				coAccess
+					? 'caseHandover.giveOver.coAccessTitle'
+					: 'caseHandover.giveOver.title'
+			)}
+			description={translate(
+				coAccess
+					? 'caseHandover.giveOver.coAccessDescription'
+					: 'caseHandover.giveOver.description'
+			)}
 			closeLabel={translate('app.close')}
 			data-testid="case-handover-give-over-dialog"
 			actions={[
@@ -112,7 +121,11 @@ export const CaseHandoverGiveOverView = ({
 					testId: 'case-handover-give-over-cancel'
 				},
 				{
-					label: translate('caseHandover.giveOver.submit'),
+					label: translate(
+						coAccess
+							? 'caseHandover.giveOver.coAccessSubmit'
+							: 'caseHandover.giveOver.submit'
+					),
 					onClick: onSubmit,
 					primary: true,
 					disabled: !canSubmit,
@@ -121,6 +134,24 @@ export const CaseHandoverGiveOverView = ({
 			]}
 		>
 			<div className="caseHandoverGiveOver">
+				{selectedReason && (
+					<p
+						className={clsx(
+							'caseHandoverGiveOver__hint',
+							selectedReason.clientConsentRequired &&
+								'caseHandoverGiveOver__hint--consent'
+						)}
+						data-cy="case-handover-give-over-consent-hint"
+					>
+						{selectedReason.clientConsentRequired
+							? translate(
+									coAccess
+										? 'caseHandover.curtain.consentPending'
+										: 'caseHandover.giveOver.consentHint'
+								)
+							: translate('caseHandover.giveOver.noConsentHint')}
+					</p>
+				)}
 				<div className="caseHandoverGiveOver__section">
 					<p
 						className="caseHandoverGiveOver__label"
@@ -248,21 +279,6 @@ export const CaseHandoverGiveOverView = ({
 						})}
 					</div>
 				</div>
-
-				{selectedReason && (
-					<p
-						className={clsx(
-							'caseHandoverGiveOver__hint',
-							selectedReason.clientConsentRequired &&
-								'caseHandoverGiveOver__hint--consent'
-						)}
-						data-cy="case-handover-give-over-consent-hint"
-					>
-						{selectedReason.clientConsentRequired
-							? translate('caseHandover.giveOver.consentHint')
-							: translate('caseHandover.giveOver.noConsentHint')}
-					</p>
-				)}
 
 				{error && (
 					<p className="caseHandoverGiveOver__error" role="alert">

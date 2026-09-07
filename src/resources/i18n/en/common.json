@@ -3036,6 +3036,7 @@
 		}
 	},
 	"caseHandover": {
+		"history": { "unknownConsultant": "A former counsellor" },
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
 		"batch": {
 			"cancel": "Close selection",
@@ -3157,6 +3158,9 @@
 			"ADVICE_REQUESTED": "Advice requested"
 		},
 		"giveOver": {
+			"coAccessTitle": "Ask for advice",
+			"coAccessDescription": "After acceptance and any required consent, the colleague receives temporary access. You remain responsible for the case.",
+			"coAccessSubmit": "Offer access",
 			"title": "Hand over case",
 			"description": "Pick a colleague from your counselling centre and a reason. Your colleague has to accept the handover.",
 			"colleague": {

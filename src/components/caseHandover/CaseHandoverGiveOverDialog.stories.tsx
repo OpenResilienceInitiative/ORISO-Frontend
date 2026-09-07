@@ -47,6 +47,7 @@ const colleagues: CaseHandoverColleague[] = [
 const reasons: CaseHandoverReason[] = [
 	{
 		code: 'ADVICE_REQUESTED',
+		accessType: 'CO_ACCESS',
 		label: 'Advice requested',
 		clientConsentRequired: true
 	},
@@ -215,6 +216,45 @@ export const ReasonWithoutConsent: Story = {
 
 /** "Rat erbeten" needs the client's consent, so the dialog says so. */
 export const ReasonRequiringClientConsent: Story = {
+	play: async () => {
+		const hint = document.querySelector(
+			'.caseHandoverGiveOver__hint'
+		) as HTMLElement;
+		await waitFor(() => {
+			const body = document
+				.querySelector('.m3Dialog__body')!
+				.getBoundingClientRect();
+			const rect = hint.getBoundingClientRect();
+			expect(rect.top).toBeGreaterThanOrEqual(body.top);
+			expect(rect.bottom).toBeLessThanOrEqual(body.bottom);
+		});
+		expect(document.body.textContent).toContain(
+			'Du bleibst für den Fall verantwortlich.'
+		);
+		const selected = document.querySelector(
+			'.caseHandoverGiveOver__option--selected'
+		)!;
+		const style = getComputedStyle(selected);
+		const luminance = (color: string) => {
+			const [r, g, b] = color
+				.match(/\d+/g)!
+				.slice(0, 3)
+				.map(Number)
+				.map((value) => {
+					const channel = value / 255;
+					return channel <= 0.04045
+						? channel / 12.92
+						: ((channel + 0.055) / 1.055) ** 2.4;
+				});
+			return r * 0.2126 + g * 0.7152 + b * 0.0722;
+		};
+		const foreground = luminance(style.color);
+		const background = luminance(style.backgroundColor);
+		expect(
+			(Math.max(foreground, background) + 0.05) /
+				(Math.min(foreground, background) + 0.05)
+		).toBeGreaterThanOrEqual(4.5);
+	},
 	render: () => (
 		<GiveOverPlayground
 			initialColleagueId="c-2"

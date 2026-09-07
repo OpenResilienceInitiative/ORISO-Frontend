@@ -104,6 +104,34 @@ const renderView = (
 afterEach(cleanup);
 
 describe('CaseHandoverGiveOverView', () => {
+	it.each(['CO_ACCESS', 'TAKEOVER'] as const)(
+		'describes the server-provided %s effect independently of the reason code',
+		(accessType) => {
+			renderView({
+				reasonCode: 'CUSTOM_REASON',
+				reasons: [
+					{
+						code: 'CUSTOM_REASON',
+						label: 'Custom',
+						accessType,
+						clientConsentRequired: true
+					}
+				]
+			});
+			expect(submitButton().textContent).toBe(
+				accessType === 'CO_ACCESS'
+					? 'caseHandover.giveOver.coAccessSubmit'
+					: 'caseHandover.giveOver.submit'
+			);
+			expect(
+				screen.getByText(
+					accessType === 'CO_ACCESS'
+						? 'caseHandover.curtain.consentPending'
+						: 'caseHandover.giveOver.consentHint'
+				)
+			).toBeTruthy();
+		}
+	);
 	it('keeps the offer button disabled until colleague and reason are set', () => {
 		renderView();
 		expect(submitButton().disabled).toBe(true);

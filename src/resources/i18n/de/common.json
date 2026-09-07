@@ -3096,6 +3096,7 @@
 		}
 	},
 	"caseHandover": {
+		"history": { "unknownConsultant": "Eine frühere Beratungsperson" },
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
@@ -3217,6 +3218,9 @@
 			"ADVICE_REQUESTED": "Rat erbeten"
 		},
 		"giveOver": {
+			"coAccessTitle": "Rat erbitten",
+			"coAccessDescription": "Die Kolleg:in erhält nach Annahme und der erforderlichen Zustimmung vorübergehend Zugriff. Du bleibst für den Fall verantwortlich.",
+			"coAccessSubmit": "Zugriff anbieten",
 			"title": "Fall abgeben",
 			"description": "Wähle eine Kolleg:in deiner Beratungsstelle und einen Grund. Die Kolleg:in muss die Übergabe annehmen.",
 			"colleague": {

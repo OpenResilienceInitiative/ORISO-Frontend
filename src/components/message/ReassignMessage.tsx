@@ -91,6 +91,7 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 	toConsultantId: string;
 	isAsker: boolean;
 	fromConsultantId: string;
+	fromConsultantName?: string;
 	isMySession: boolean;
 }> = (props) => {
 	const { t: translate } = useTranslation();
@@ -109,8 +110,17 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 			}
 		}
 
-		return '';
-	}, [consultantList, props.fromConsultantId, props.isAsker]);
+		return (
+			props.fromConsultantName ||
+			translate('caseHandover.history.unknownConsultant')
+		);
+	}, [
+		consultantList,
+		props.fromConsultantId,
+		props.fromConsultantName,
+		props.isAsker,
+		translate
+	]);
 
 	const toConsultantName = useMemo(() => {
 		if (
@@ -126,8 +136,17 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 			}
 		}
 
-		return '';
-	}, [consultantList, props.isAsker, props.toConsultantId]);
+		return (
+			props.toConsultantName ||
+			translate('caseHandover.history.unknownConsultant')
+		);
+	}, [
+		consultantList,
+		props.isAsker,
+		props.toConsultantId,
+		props.toConsultantName,
+		translate
+	]);
 
 	const forWhichConsultant = props.isMySession ? 'self' : 'other';
 

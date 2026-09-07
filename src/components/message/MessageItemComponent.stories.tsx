@@ -1166,6 +1166,7 @@ export const HistoricalReassignmentReadOnly: Story = {
 				canvasElement.querySelector('.reassignRequestMessage')
 			).not.toBeNull();
 		});
+		expect(canvasElement.textContent).toContain('Karina P');
 		expect(canvasElement.textContent).not.toContain('toConsultantId');
 		expect(
 			canvasElement.querySelectorAll('.reassignRequestMessage button')

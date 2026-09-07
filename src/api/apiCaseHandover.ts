@@ -32,6 +32,7 @@ export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 export type CaseHandoverAccessType = 'CO_ACCESS' | 'TAKEOVER';
 
 export interface CaseHandoverReason {
+	accessType?: CaseHandoverAccessType;
 	code: string;
 	label: string;
 	clientConsent?: CaseHandoverConsentValue;

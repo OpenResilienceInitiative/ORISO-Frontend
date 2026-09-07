@@ -68,7 +68,12 @@
 
 .caseHandoverGiveOver__option--selected {
 	border-color: var(--m3-primary, #a5000a);
-	background: var(--m3-secondary-container, #ffdad6);
+	background: var(--m3-secondary, #4c555f);
+	color: var(--m3-on-secondary, #ffffff);
+
+	.caseHandoverGiveOver__optionMeta {
+		color: inherit;
+	}
 }
 
 .caseHandoverGiveOver__radio {
@@ -80,12 +85,8 @@
 }
 
 .caseHandoverGiveOver__option--selected .caseHandoverGiveOver__radio {
-	border-color: var(--m3-primary, #a5000a);
-	background: radial-gradient(
-		circle,
-		var(--m3-primary, #a5000a) 0 4px,
-		transparent 5px
-	);
+	border-color: currentColor;
+	background: radial-gradient(circle, currentColor 0 4px, transparent 5px);
 }
 
 .caseHandoverGiveOver__optionText {
@@ -116,6 +117,10 @@
 }
 
 .caseHandoverGiveOver__hint {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	flex-shrink: 0;
 	margin: 0;
 	padding: 12px 14px;
 	border-radius: 8px;
@@ -126,8 +131,8 @@
 }
 
 .caseHandoverGiveOver__hint--consent {
-	background: var(--m3-secondary-container, #ffdad6);
-	color: var(--m3-on-secondary-container, #3b0908);
+	background: var(--m3-secondary, #4c555f);
+	color: var(--m3-on-secondary, #ffffff);
 }
 
 .caseHandoverGiveOver__error {
