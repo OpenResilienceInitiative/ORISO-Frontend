@@ -32,6 +32,22 @@ import './ErstantwortDisclosure.styles.scss';
  * by Tab.
  */
 
+/**
+ * Which colour role the row is drawn in.
+ *
+ * `primary` is not decoration. Frank, 2026-09-07 evening, on the emergency-
+ * numbers row: *"Ich würde sie einfach rot lassen. Und dann kann der Nutzer sie
+ * ja auch selbst ausklappen."* — the row stays **closed** like every other one,
+ * and colour alone carries that it is the different one. That is the compromise
+ * between "leave it open" (costs height, and puts a crisis at the top of a
+ * welcome message) and "hide it like the rest" (nobody finds it at 2 a.m.).
+ *
+ * Colour is never the *only* signal: the row keeps its question text
+ * ("Was, wenn es nicht warten kann?"), so a person who cannot distinguish the
+ * red still reads what the row is (WCAG 1.4.1 use of colour).
+ */
+export type ErstantwortDisclosureTone = 'default' | 'primary';
+
 export interface ErstantwortDisclosureProps {
 	/** The row's question, shown on the button. */
 	question: string;
@@ -39,6 +55,8 @@ export interface ErstantwortDisclosureProps {
 	children: React.ReactNode;
 	/** Start expanded. The FAQ bubble opens its first row, nothing else. */
 	defaultOpen?: boolean;
+	/** Colour role of the row. See `ErstantwortDisclosureTone`. */
+	tone?: ErstantwortDisclosureTone;
 	/** Stable id fragment for tests and screenshots. */
 	testId?: string;
 }
@@ -47,6 +65,7 @@ export const ErstantwortDisclosure: React.FC<ErstantwortDisclosureProps> = ({
 	question,
 	children,
 	defaultOpen = false,
+	tone = 'default',
 	testId
 }) => {
 	const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -60,7 +79,8 @@ export const ErstantwortDisclosure: React.FC<ErstantwortDisclosureProps> = ({
 		<div
 			className={`erstantwortDisclosure${
 				isOpen ? ' erstantwortDisclosure--open' : ''
-			}`}
+			}${tone === 'primary' ? ' erstantwortDisclosure--primary' : ''}`}
+			data-tone={tone}
 			data-testid={testId}
 		>
 			<button

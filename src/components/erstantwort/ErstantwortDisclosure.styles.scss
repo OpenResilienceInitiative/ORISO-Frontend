@@ -102,3 +102,38 @@
 		text-decoration: underline;
 	}
 }
+
+/* The primary-role row — Frank, 2026-09-07 evening: the emergency-numbers row
+ * stays closed but is left red, "und dann kann der Nutzer sie ja auch selbst
+ * ausklappen".
+ *
+ * The role, not a hex: `--m3-primary` is the tenant-seeded primary, so a Träger
+ * whose palette is not the Caritas red gets *its* primary here rather than a
+ * stray Caritas red in the middle of its own scheme. The literal fallback keeps
+ * today's rendering when no palette is injected (m3Sweep #26).
+ *
+ * Measured against the bubble it sits in (`.pseudonymCard__bubble`, #eeeeee):
+ * #a5000a on #eeeeee is **6.95:1**, so the row text clears WCAG 2.2 AA for
+ * normal text (4.5:1) with room to spare, and the rule and chevron clear the
+ * 3:1 non-text minimum several times over. If a tenant seed ever lowers that,
+ * it lowers it for every primary-coloured control in the product, not just
+ * here — which is the right place for that problem to be noticed.
+ */
+.erstantwortDisclosure--primary {
+	border-top-color: var(--m3-primary, #a5000a);
+
+	&:last-child {
+		border-bottom-color: var(--m3-primary, #a5000a);
+	}
+
+	.erstantwortDisclosure__toggle {
+		color: var(--m3-primary, #a5000a);
+	}
+
+	/* `currentcolor` on the chevron rather than a second declaration: the
+	   default rule points it at `--m3-on-surface-variant`, and two colours in
+	   one red row would read as a rendering bug. */
+	.erstantwortDisclosure__chevron {
+		color: currentcolor;
+	}
+}

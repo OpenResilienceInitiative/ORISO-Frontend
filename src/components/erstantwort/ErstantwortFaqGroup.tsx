@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { ErstantwortDisclosure } from './ErstantwortDisclosure';
+import {
+	ErstantwortDisclosure,
+	type ErstantwortDisclosureTone
+} from './ErstantwortDisclosure';
 import { faqQuestionFor } from './erstantwortFaqQuestions';
 import { ResolvedBaustein } from './erstantwortResolve';
 import './ErstantwortFaqGroup.styles.scss';
@@ -30,12 +33,31 @@ export interface ErstantwortFaqGroupProps {
 	 * openable at all.
 	 */
 	openFirst?: boolean;
+	/**
+	 * Rows drawn in the primary role instead of the default one. Frank,
+	 * 2026-09-07 evening: the emergency-numbers row stays folded like the rest
+	 * but is left **red**, so the row you look for in a crisis is the one row
+	 * you can pick out without reading.
+	 *
+	 * A list of ids rather than a flag on the group, because the decision is
+	 * per row and the group must not be able to paint itself red wholesale —
+	 * a red accordion is not an emphasised row, it is a warning box.
+	 */
+	primaryRowIds?: readonly string[];
+	/**
+	 * Rows that start expanded, by id. Independent of `openFirst`, which is
+	 * positional — this one names the row, and the screenshots of the red
+	 * emergency row need exactly that: "open *this* one", not "open the first".
+	 */
+	openRowIds?: readonly string[];
 	translate?: (key: string, defaultValue: string) => string;
 }
 
 export const ErstantwortFaqGroup: React.FC<ErstantwortFaqGroupProps> = ({
 	bausteine,
 	openFirst = false,
+	primaryRowIds,
+	openRowIds,
 	translate
 }) => {
 	if (!bausteine.length) return null;
@@ -52,11 +74,21 @@ export const ErstantwortFaqGroup: React.FC<ErstantwortFaqGroupProps> = ({
 						question.defaultQuestion)
 					: (baustein.headline ?? baustein.body);
 
+				const tone: ErstantwortDisclosureTone = primaryRowIds?.includes(
+					baustein.id
+				)
+					? 'primary'
+					: 'default';
+
 				return (
 					<ErstantwortDisclosure
 						key={baustein.id}
 						question={label}
-						defaultOpen={openFirst && index === 0}
+						defaultOpen={
+							(openFirst && index === 0) ||
+							Boolean(openRowIds?.includes(baustein.id))
+						}
+						tone={tone}
 						testId={`erstantwort-faq-${baustein.id}`}
 					>
 						<p>{baustein.body}</p>
