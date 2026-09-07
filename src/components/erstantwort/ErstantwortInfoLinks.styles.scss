@@ -1,0 +1,50 @@
+@import '../../resources/styles/settings';
+
+/* Inline dialog links inside a Carimat bubble — variant (v2) of
+ * VORSCHLAG-erstantwort-faq-layout-2026-09-07.md.
+ *
+ * Stacked rather than wrapped in a row: three questions side by side on a
+ * 390px phone break mid-question, and a target that reads as half a sentence
+ * is not a target. M3 text roles only; no `on-*` role as a background.
+ */
+
+.erstantwortInfoLinks {
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+	width: 100%;
+	margin: 10px 0 0;
+	padding: 0;
+}
+
+.erstantwortInfoLinks__link {
+	display: inline-flex;
+	align-items: center;
+
+	/* Same 48px minimum touch target as the FAQ rows, so the two variants are
+	   compared on their layout and not on how easy they are to hit. */
+	min-height: 48px;
+	padding: 4px 2px;
+	border: 0;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font-family: $font-family-sans-serif;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.35;
+	text-align: left;
+	text-decoration: underline;
+	cursor: pointer;
+
+	&:hover {
+		opacity: 0.8;
+	}
+
+	/* The platform's focus-ring convention (ORISO-Frontend#113). */
+	&:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+}

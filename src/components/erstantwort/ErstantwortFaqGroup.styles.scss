@@ -1,0 +1,29 @@
+/* The FAQ row stack inside one Carimat bubble — variant (v1) of
+ * VORSCHLAG-erstantwort-faq-layout-2026-09-07.md.
+ *
+ * The bubble it sits in caps at `min(100%, 34rem)` and shrinks to its content
+ * (`.erstantwort__bubble`). A stack of rows that sized to its own text would
+ * make the bubble jump width every time a row opens, so the group claims the
+ * full bubble width once and keeps it.
+ */
+
+.erstantwortFaqGroup {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+
+	/* The bubble's copy above ends with its own margin; the first row's top
+	   rule is what separates the two, so it needs air rather than a gap. */
+	margin-top: 10px;
+}
+
+/* The bubble that holds the group takes the full measure instead of shrinking
+ * to its content. `.erstantwort__bubble` is `width: fit-content`, so a closed
+ * stack (four short questions) and an open one (a full paragraph) would size
+ * the bubble differently and it would visibly jump wider on the first tap.
+ * Pinning it is also the right reading: this bubble is a list, not a spoken
+ * line, and a list may occupy the column.
+ */
+.erstantwort__bubble:has(.erstantwortFaqGroup) {
+	width: 100%;
+}

@@ -2552,6 +2552,7 @@
 		"sourcePath": "src/resources/img/icons/keyboard_arrow_down.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/erstantwort/ErstantwortDisclosure.tsx",
 			"src/components/profile/NotificationSettings/NotificationConfigDialog.tsx",
 			"src/components/splitButton/SplitButton.tsx"
 		],
@@ -3136,7 +3137,8 @@
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx"
+			"src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
