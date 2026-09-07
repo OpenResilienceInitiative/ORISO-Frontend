@@ -3042,6 +3042,27 @@
 				"switchLabel": "I consent to data processing for this case handover"
 			}
 		},
+		"handoverConsent": {
+			"intro": "{{organisation}} has accepted your enquiry. The imprint and the privacy policy of this counselling centre now apply to this consultation.",
+			"agencyFallback": "This counselling centre",
+			"subtitle": {
+				"decide": "Please decide once",
+				"read": "Please read this briefly"
+			},
+			"links": {
+				"imprint": "Imprint of the counselling centre",
+				"privacy": "Privacy policy of the counselling centre",
+				"unavailable": "{{document}} — currently unavailable"
+			},
+			"context": "All counsellors at this counselling centre technically have access to your consultation. They only read along when there is a reason — for example illness, holiday or a professional question. Every time somebody reads along, it is logged.",
+			"switchLabel": "Reading along without asking",
+			"on": "Other counsellors at this counselling centre may read along without asking you first.",
+			"off": "Other counsellors at this counselling centre must ask you first before they read along.",
+			"hint": "You can change this at any time.",
+			"muted": "At this counselling centre, other counsellors may read along without asking. You agreed to these terms when you registered. The privacy policy above explains what that means.",
+			"saving": "Saving your setting …",
+			"retry": "Try again"
+		},
 		"denied": {
 			"copy": "The previous request did not grant content visibility.",
 			"title": "Access denied"

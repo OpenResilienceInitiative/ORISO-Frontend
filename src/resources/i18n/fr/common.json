@@ -3082,6 +3082,27 @@
 			"sender": "Carimat",
 			"senderRole": "Guide rapide"
 		},
+		"handoverConsent": {
+			"intro": "{{organisation}} a accepté votre demande. Les mentions légales et la politique de confidentialité de ce centre de consultation s'appliquent désormais à cet entretien.",
+			"agencyFallback": "Ce centre de consultation",
+			"subtitle": {
+				"decide": "À vous de décider",
+				"read": "À lire rapidement"
+			},
+			"links": {
+				"imprint": "Mentions légales du centre de consultation",
+				"privacy": "Politique de confidentialité du centre de consultation",
+				"unavailable": "{{document}} — actuellement indisponible"
+			},
+			"context": "Tous les conseillers de ce centre de consultation ont techniquement accès à votre entretien. Ils ne le lisent que s'il y a une raison — par exemple une maladie, des vacances ou une question professionnelle. Chaque accès est consigné.",
+			"switchLabel": "Lecture sans demande préalable",
+			"on": "D'autres conseillers de ce centre de consultation peuvent lire votre entretien sans vous demander au préalable.",
+			"off": "D'autres conseillers de ce centre de consultation doivent vous demander au préalable avant de lire votre entretien.",
+			"hint": "Vous pouvez modifier ce réglage à tout moment.",
+			"muted": "Dans ce centre de consultation, d'autres conseillers peuvent lire votre entretien sans demande préalable. Vous avez accepté ces conditions lors de votre inscription. La politique de confidentialité ci-dessus explique ce que cela signifie.",
+			"saving": "Enregistrement du paramètre …",
+			"retry": "Réessayer"
+		},
 		"denied": {
 			"copy": "La demande précédente n'a pas donné accès au contenu.",
 			"title": "Accès refusé"

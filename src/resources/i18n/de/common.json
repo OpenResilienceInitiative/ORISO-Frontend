@@ -3102,6 +3102,27 @@
 				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
 			}
 		},
+		"handoverConsent": {
+			"intro": "{{organisation}} hat Ihre Anfrage angenommen. Für diese Beratung gelten jetzt das Impressum und die Datenschutzerklärung dieser Beratungsstelle.",
+			"agencyFallback": "Diese Beratungsstelle",
+			"subtitle": {
+				"decide": "Bitte einmal entscheiden",
+				"read": "Bitte kurz lesen"
+			},
+			"links": {
+				"imprint": "Impressum der Beratungsstelle",
+				"privacy": "Datenschutzerklärung der Beratungsstelle",
+				"unavailable": "{{document}} — zurzeit nicht abrufbar"
+			},
+			"context": "Alle Beratenden dieser Beratungsstelle haben technisch Zugang zu Ihrer Beratung. Sie lesen nur mit, wenn es einen Grund gibt — zum Beispiel Krankheit, Urlaub oder eine fachliche Frage. Jedes Mitlesen wird protokolliert.",
+			"switchLabel": "Mitlesen ohne Nachfrage",
+			"on": "Andere Beratende dieser Beratungsstelle dürfen mitlesen, ohne Sie vorher zu fragen.",
+			"off": "Andere Beratende dieser Beratungsstelle müssen Sie vorher fragen, bevor sie mitlesen.",
+			"hint": "Sie können das jederzeit ändern.",
+			"muted": "Bei dieser Beratungsstelle dürfen andere Beratende ohne Nachfrage mitlesen. Diesen Bedingungen haben Sie bei der Anmeldung zugestimmt. Was das genau bedeutet, steht in der Datenschutzerklärung oben.",
+			"saving": "Einstellung wird gespeichert …",
+			"retry": "Erneut versuchen"
+		},
 		"denied": {
 			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
 			"title": "Zugriff abgelehnt"

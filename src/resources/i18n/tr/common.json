@@ -3082,6 +3082,27 @@
 			"sender": "Carimat",
 			"senderRole": "Hızlı Kılavuz"
 		},
+		"handoverConsent": {
+			"intro": "Talebiniz {{organisation}} tarafından kabul edildi. Bu görüşme için artık bu danışmanlık merkezinin künyesi ve gizlilik politikası geçerlidir.",
+			"agencyFallback": "Bu danışmanlık merkezi",
+			"subtitle": {
+				"decide": "Lütfen bir kez karar verin",
+				"read": "Lütfen kısaca okuyun"
+			},
+			"links": {
+				"imprint": "Danışmanlık merkezinin künyesi",
+				"privacy": "Danışmanlık merkezinin gizlilik politikası",
+				"unavailable": "{{document}} — şu anda erişilemiyor"
+			},
+			"context": "Bu danışmanlık merkezindeki tüm danışmanların görüşmenize teknik olarak erişimi vardır. Yalnızca bir neden varsa okurlar — örneğin hastalık, izin veya mesleki bir soru. Her okuma kayıt altına alınır.",
+			"switchLabel": "Sormadan okuma",
+			"on": "Bu danışmanlık merkezindeki diğer danışmanlar size önceden sormadan okuyabilir.",
+			"off": "Bu danışmanlık merkezindeki diğer danışmanlar okumadan önce size sormak zorundadır.",
+			"hint": "Bunu istediğiniz zaman değiştirebilirsiniz.",
+			"muted": "Bu danışmanlık merkezinde diğer danışmanlar sormadan okuyabilir. Kayıt olurken bu koşulları kabul ettiniz. Bunun ne anlama geldiği yukarıdaki gizlilik politikasında açıklanmıştır.",
+			"saving": "Ayar kaydediliyor …",
+			"retry": "Tekrar dene"
+		},
 		"denied": {
 			"copy": "Önceki talep, içeriklerin görüntülenmesini açmadı.",
 			"title": "Erişim reddedildi"
