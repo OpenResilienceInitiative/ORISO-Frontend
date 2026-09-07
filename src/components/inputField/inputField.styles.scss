@@ -167,10 +167,7 @@
 
 	&--withIcon & {
 		&__icon {
-			margin-left: 16px;
-			position: absolute;
-			top: 50%;
-			transform: translateY(-50%);
+			margin-right: $grid-base;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -178,10 +175,6 @@
 
 		&__infoText {
 			margin-left: $grid-base-seven;
-		}
-
-		&__label {
-			left: $grid-base-six;
 		}
 	}
 }
