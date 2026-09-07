@@ -33,10 +33,20 @@ const renderCountdown = (
 		/>
 	);
 
+// A card face is "shown" when its (aria-hidden marked) face wrapper is
+// currently the visible one.
+const isShown = (el: Element) =>
+	el.closest('[aria-hidden]')?.getAttribute('aria-hidden') === 'false';
+
+const cardButton = () =>
+	screen.getByRole('button', {
+		name: 'Uhr umdrehen, Begrüßung und Netiquette lesen'
+	});
+
 describe('WaitingAreaCountdown', () => {
 	afterEach(cleanup);
 
-	it('renders the future state with all four flippable number groups', () => {
+	it('renders the future state with all four number groups on one flip card', () => {
 		renderCountdown(2 * 86400 + 3 * 3600 + 21 * 60 + 50, {
 			calendarSlot: <button type="button">Zum Kalender hinzufügen</button>
 		});
@@ -49,66 +59,111 @@ describe('WaitingAreaCountdown', () => {
 		expect(screen.getByText('Minuten')).toBeTruthy();
 		expect(screen.getByText('Sekunden')).toBeTruthy();
 		expect(screen.getByText('Zum Kalender hinzufügen')).toBeTruthy();
-		expect(screen.getAllByRole('button', { pressed: false })).toHaveLength(
-			4 // the four flip groups
-		);
+		// One big card instead of four small ones (the calendar slot button
+		// is not part of the clock).
+		expect(cardButton().getAttribute('aria-pressed')).toBe('false');
 		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
 			'Tage: 2, Stunden: 3, Minuten: 21'
 		);
 	});
 
-	// A card face is "shown" when its (aria-hidden marked) backface wrapper is
-	// currently the visible one.
-	const isShown = (el: Element) =>
-		el.closest('[aria-hidden]')?.getAttribute('aria-hidden') === 'false';
-
-	it('flips the days group to the counsellor greeting', () => {
+	it('names the single card in the subline instead of "a number"', () => {
 		renderCountdown(2 * 86400);
 
-		const days = screen.getByRole('button', { name: /Tage: 2\./ });
-		expect(isShown(screen.getByText(WELCOME))).toBe(false);
-
-		fireEvent.click(days);
-
-		expect(days.getAttribute('aria-pressed')).toBe('true');
-		expect(isShown(screen.getByText(WELCOME))).toBe(true);
-		expect(screen.getByText('Begrüßung deiner Beratung')).toBeTruthy();
+		const subline = screen.getByText(
+			'Uhr antippen, dahinter Begrüßung und Netiquette.'
+		);
+		expect(subline).toBeTruthy();
+		expect(subline.textContent).not.toContain('—');
 	});
 
-	it('flips an hours group to a netiquette rule', () => {
-		renderCountdown(2 * 86400 + 5 * 3600);
+	it('flips the whole block to the counsellor greeting', () => {
+		renderCountdown(2 * 86400);
 
-		fireEvent.click(screen.getByRole('button', { name: /Stunden: 5\./ }));
+		expect(isShown(screen.getByText(WELCOME))).toBe(false);
 
-		const shownLabels = screen
-			.getAllByText(/Netiquette · Regel \d/)
-			.filter(isShown);
-		expect(shownLabels).toHaveLength(1);
-		const shownRule = RULES.some((rule) =>
-			screen.getAllByText(rule).some(isShown)
+		fireEvent.click(cardButton());
+
+		expect(isShown(screen.getByText(WELCOME))).toBe(true);
+		expect(screen.getByText('Begrüßung deiner Beratung')).toBeTruthy();
+		// Page 1 of greeting + two rules.
+		expect(screen.getByText('1 von 3')).toBeTruthy();
+	});
+
+	it('pages from the greeting to the netiquette with the arrow buttons', () => {
+		renderCountdown(2 * 86400);
+		fireEvent.click(cardButton());
+
+		const next = screen.getByRole('button', { name: 'Nächste Seite' });
+		const prev = screen.getByRole('button', { name: 'Vorherige Seite' });
+		expect(prev.hasAttribute('disabled')).toBe(true);
+
+		fireEvent.click(next);
+
+		expect(screen.getByText('Netiquette · Regel 1')).toBeTruthy();
+		expect(isShown(screen.getByText(RULES[0]))).toBe(true);
+		expect(screen.getByText('2 von 3')).toBeTruthy();
+
+		fireEvent.click(next);
+
+		expect(screen.getByText('Netiquette · Regel 2')).toBeTruthy();
+		expect(isShown(screen.getByText(RULES[1]))).toBe(true);
+		expect(
+			screen
+				.getByRole('button', { name: 'Nächste Seite' })
+				.hasAttribute('disabled')
+		).toBe(true);
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Vorherige Seite' })
 		);
-		expect(shownRule).toBe(true);
+
+		expect(screen.getByText('2 von 3')).toBeTruthy();
+		expect(isShown(screen.getByText(RULES[0]))).toBe(true);
 	});
 
 	it('keyboard-flips via Enter', () => {
 		renderCountdown(2 * 86400);
 
-		const days = screen.getByRole('button', { name: /Tage: 2\./ });
-		fireEvent.keyDown(days, { key: 'Enter' });
+		fireEvent.keyDown(cardButton(), { key: 'Enter' });
 
-		expect(days.getAttribute('aria-pressed')).toBe('true');
+		expect(isShown(screen.getByText(WELCOME))).toBe(true);
 	});
 
-	it('switches to calm static digits via the animation toggle', () => {
-		renderCountdown(2 * 86400 + 3 * 3600 + 21 * 60 + 50);
+	it('turns back to the clock via the "Zurück zur Uhr" control', () => {
+		renderCountdown(2 * 86400);
+		fireEvent.click(cardButton());
+
+		fireEvent.click(screen.getByRole('button', { name: /Zurück zur Uhr/ }));
+
+		expect(isShown(screen.getByText(WELCOME))).toBe(false);
+		expect(cardButton().getAttribute('aria-pressed')).toBe('false');
+	});
+
+	it('switches to a static 2×2 square of tiles via the animation toggle', () => {
+		const { container } = renderCountdown(
+			2 * 86400 + 3 * 3600 + 21 * 60 + 50
+		);
 
 		fireEvent.click(screen.getByRole('switch'));
 
-		// Static fallback: plain padded digits, no flip buttons anymore.
+		// Static fallback: plain padded digits, no flip card anymore.
 		expect(screen.getByText('02')).toBeTruthy();
 		expect(screen.getByText('03')).toBeTruthy();
-		expect(screen.queryByRole('button', { name: /Tage/ })).toBeNull();
-		// The greeting card is shown inline instead of behind a flip.
+		expect(
+			screen.queryByRole('button', { name: /Uhr umdrehen/ })
+		).toBeNull();
+		const still = container.querySelector('.waitingClock__still');
+		expect(still).toBeTruthy();
+		expect(
+			still?.querySelectorAll('.waitingClock__stillCell')
+		).toHaveLength(4);
+		/* The greeting and the rules sit behind the same one card the moving
+		   view uses — stacked under the numbers they made the screen a head
+		   taller than the moving view and pushed it into a scroll (measured
+		   2026-09-07). Opening them here swaps without any transition. */
+		expect(screen.queryByText(WELCOME)).toBeNull();
+		fireEvent.click(still as HTMLElement);
 		expect(screen.getByText(WELCOME)).toBeTruthy();
 	});
 
@@ -136,29 +191,32 @@ describe('WaitingAreaCountdown', () => {
 		);
 	});
 
-	it('falls back to rules behind the days when no welcome text exists', () => {
+	it('starts the card on the netiquette when no welcome text exists', () => {
 		renderCountdown(2 * 86400, { welcomeText: undefined });
 
-		fireEvent.click(screen.getByRole('button', { name: /Tage: 2\./ }));
+		fireEvent.click(cardButton());
 
-		const shownLabels = screen
-			.getAllByText(/Netiquette · Regel \d/)
-			.filter(isShown);
-		expect(shownLabels.length).toBeGreaterThan(0);
+		expect(screen.getByText('Netiquette · Regel 1')).toBeTruthy();
+		expect(isShown(screen.getByText(RULES[0]))).toBe(true);
 		expect(screen.queryByText('Begrüßung deiner Beratung')).toBeNull();
+		expect(screen.getByText('1 von 2')).toBeTruthy();
 	});
 
-	it('only flips the greeting card when rules are missing', () => {
+	it('drops the arrows when the greeting is the only page', () => {
 		renderCountdown(2 * 86400, { rules: [] });
 
-		// Rule cards have no content to show — only the days card is a button.
-		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1);
-		fireEvent.click(buttons[0]);
+		fireEvent.click(cardButton());
+
 		expect(isShown(screen.getByText(WELCOME))).toBe(true);
+		expect(screen.queryByRole('button', { name: 'Nächste Seite' })).toBe(
+			null
+		);
+		expect(screen.queryByRole('button', { name: 'Vorherige Seite' })).toBe(
+			null
+		);
 	});
 
-	it('renders unflippable digits when neither welcome nor rules exist', () => {
+	it('renders an unflippable clock when neither welcome nor rules exist', () => {
 		renderCountdown(2 * 86400, { welcomeText: undefined, rules: [] });
 
 		expect(screen.queryByRole('button')).toBeNull();
