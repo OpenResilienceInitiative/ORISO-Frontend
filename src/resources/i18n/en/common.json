@@ -2605,6 +2605,7 @@
 				"addressLabel": "Address",
 				"hoursLabel": "Opening hours",
 				"languagesLabel": "Languages",
+				"languagesTooltip": "This counseling center advises you in:",
 				"less": "Less",
 				"more": "More",
 				"navigate": "Start navigation",
@@ -3537,7 +3538,8 @@
 			"supervisedBy": "Supervision: {{name}}"
 		},
 		"resizeHandle": {
-			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list."
+			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
+			"scrollAriaLabel": "Drag to scroll the list."
 		}
 	},
 	"statusOverlay": {
@@ -3987,7 +3989,7 @@
 			"age": "Age",
 			"gender": "Gender",
 			"postcode": "Postal code",
-			"relation": "Background",
+			"relation": "Type of user",
 			"resort": "Department",
 			"state": "State",
 			"title": "Information of the person seeking advice"
@@ -4015,6 +4017,9 @@
 				"title": "See what content has been shared with you here."
 			},
 			"title": "Tools"
+		},
+		"header": {
+			"title": "Additional client information"
 		}
 	},
 	"videoCall": {

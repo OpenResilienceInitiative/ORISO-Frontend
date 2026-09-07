@@ -16,9 +16,14 @@
  * three belonged to the "handle is the list's scrollbar" concept; the wheel
  * toggle hijacked scrolling and the hover focus stole focus from the composer.
  *
- * Used by the session list column (`anchor="end"`, list snapping) and by
- * the chat's side panel (`anchor="start"`, T2). Math in
- * `resizableHandleMath.ts`.
+ * The one surface that still drags to scroll is `mode="scroll"`
+ * (ORISO-Frontend#1196 job 2): the threads dropdown is fixed at
+ * min(360px, 100% - 32px), so it has no width to give and the handle is
+ * purely a scroll grip there. That mode never resizes and never collapses.
+ *
+ * Used by the session list column (`anchor="end"`, list snapping), by the
+ * chat's side panel (`anchor="start"`, T2) and by the threads dropdown
+ * (`mode="scroll"`). Math in `resizableHandleMath.ts`.
  */
 import * as React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -36,25 +41,62 @@ import {
 
 export { getToggledSidebarWidth } from './resizableHandleMath';
 
-interface ResizableHandleProps {
-	'onResize': (width: number) => void;
-	'currentWidth': number;
-	/** Keyboard Up/Down scroll this container (the list); optional. */
+export type ResizableHandleMode = 'resizeAndScroll' | 'scroll';
+
+interface ResizableHandleCommonProps {
+	/** Keyboard Up/Down (and, in scroll mode, the drag) move this container. */
 	'scrollTargetRef'?: React.RefObject<HTMLDivElement | null>;
 	'minWidth'?: number;
 	'maxWidth'?: number;
-	/** Which edge of the resized element the handle sits on (default: end). */
-	'anchor'?: ResizeAnchor;
-	/** Session-list snapping (icon rail ↔ expanded band). Off for panels. */
-	'snapping'?: boolean;
 	'ariaLabel'?: string;
+	/** Extra class for placement; the base class carries the behaviour styles. */
 	'className'?: string;
 	'data-cy'?: string;
 }
 
+/**
+ * The default: drag sideways to resize, press and hold to collapse.
+ * `onResize` and `currentWidth` are required, because collapsing and the
+ * ArrowLeft/ArrowRight/Home/End keys all call `onResize` with no guard.
+ */
+interface ResizeHandleProps extends ResizableHandleCommonProps {
+	'mode'?: 'resizeAndScroll';
+	'onResize': (width: number) => void;
+	'currentWidth': number;
+	/** Which edge of the resized element the handle sits on (default: end). */
+	'anchor'?: ResizeAnchor;
+	/** Session-list snapping (icon rail ↔ expanded band). Off for panels. */
+	'snapping'?: boolean;
+}
+
+/**
+ * Scroll only, for surfaces that scroll but have no width of their own to give
+ * — the threads dropdown is fixed at min(360px, 100% - 32px), so a resize drag
+ * there would have nothing to act on (ORISO-Frontend#1196 job 2).
+ */
+interface ScrollOnlyHandleProps extends ResizableHandleCommonProps {
+	'mode': 'scroll';
+	'onResize'?: never;
+	'currentWidth'?: never;
+	'anchor'?: never;
+	'snapping'?: never;
+}
+
+/*
+ * A union rather than two optional props. `tsconfig.json` sets
+ * "strictNullChecks": false, so plain optional props let
+ * `<ResizableHandle scrollTargetRef={ref} />` type-check and then throw on the
+ * first ArrowLeft or double-click — the resize paths call `onResize`
+ * unguarded. Discriminating on `mode` restores the guarantee the required
+ * props used to give, and makes passing a resize callback to a scroll-only
+ * handle a type error rather than something silently ignored.
+ */
+export type ResizableHandleProps = ResizeHandleProps | ScrollOnlyHandleProps;
+
 export const ResizableHandle: React.FC<ResizableHandleProps> = ({
+	mode = 'resizeAndScroll',
 	onResize,
-	currentWidth,
+	currentWidth = 0,
 	scrollTargetRef,
 	minWidth = 80,
 	maxWidth = 600,
@@ -64,13 +106,18 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	className,
 	'data-cy': dataCy = 'resizable-handle'
 }) => {
+	const isScrollOnly = mode === 'scroll';
 	const { t } = useTranslation();
 	const { EXPANDED_MIN_WIDTH } = SESSIONS_LIST_RESIZE;
 	const [isDragging, setIsDragging] = useState(false);
 	const handleRef = useRef<HTMLDivElement | null>(null);
 	const pointerIdRef = useRef<number | null>(null);
 	// Press-and-hold: where the press started, how far it moved, the timer.
-	const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+	const pressStartRef = useRef<{
+		x: number;
+		y: number;
+		scrollTop: number;
+	} | null>(null);
 	const movedPxRef = useRef(0);
 	const holdTimerRef = useRef<number | null>(null);
 	const clearHoldTimer = useCallback(() => {
@@ -79,6 +126,19 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			holdTimerRef.current = null;
 		}
 	}, []);
+
+	// Scroll mode announces itself as a scrollbar, so it needs a value.
+	const [scrollPercent, setScrollPercent] = useState(0);
+	const updateScrollPercent = useCallback(() => {
+		const el = scrollTargetRef?.current;
+		if (!el) return;
+		const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+		setScrollPercent(
+			maxScrollTop <= 0
+				? 0
+				: Math.round((el.scrollTop / maxScrollTop) * 100)
+		);
+	}, [scrollTargetRef]);
 
 	const normalizeWidth = useCallback(
 		(width: number) =>
@@ -95,7 +155,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			if (!rect) {
 				return;
 			}
-			onResize(
+			onResize?.(
 				normalizeWidth(
 					widthFromPointer({
 						clientX,
@@ -110,7 +170,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	const toggleCollapsed = useCallback(() => {
-		onResize(
+		onResize?.(
 			normalizeWidth(
 				getToggledSidebarWidth(
 					currentWidth,
@@ -146,7 +206,11 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			e.preventDefault();
 			e.stopPropagation();
 			pointerIdRef.current = e.pointerId;
-			pressStartRef.current = { x: e.clientX, y: e.clientY };
+			pressStartRef.current = {
+				x: e.clientX,
+				y: e.clientY,
+				scrollTop: scrollTargetRef?.current?.scrollTop ?? 0
+			};
 			movedPxRef.current = 0;
 			setIsDragging(true);
 			try {
@@ -156,6 +220,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				// listeners below still see the move/up.
 			}
 			// Hold still → collapse / expand (T5). A drag cancels the timer.
+			// Scroll-only surfaces have no collapsed state, so no timer.
+			if (isScrollOnly) return;
 			clearHoldTimer();
 			holdTimerRef.current = window.setTimeout(() => {
 				holdTimerRef.current = null;
@@ -165,7 +231,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				}
 			}, HOLD_TO_COLLAPSE_MS);
 		},
-		[clearHoldTimer, handlePointerUp]
+		[clearHoldTimer, handlePointerUp, isScrollOnly, scrollTargetRef]
 	);
 
 	const handlePointerMove = useCallback(
@@ -178,6 +244,23 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				return;
 			}
 			const start = pressStartRef.current;
+
+			// Scroll mode: the drag is the scroll gesture, nothing resizes.
+			if (isScrollOnly) {
+				const target = scrollTargetRef?.current;
+				if (!target || !start) return;
+				const maxScrollTop = Math.max(
+					0,
+					target.scrollHeight - target.clientHeight
+				);
+				target.scrollTop = Math.min(
+					maxScrollTop,
+					Math.max(0, start.scrollTop + (e.clientY - start.y))
+				);
+				updateScrollPercent();
+				return;
+			}
+
 			if (start) {
 				movedPxRef.current = Math.max(
 					movedPxRef.current,
@@ -189,7 +272,14 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}
 			applyClientXToWidth(e.clientX);
 		},
-		[applyClientXToWidth, clearHoldTimer, isDragging]
+		[
+			applyClientXToWidth,
+			clearHoldTimer,
+			isDragging,
+			isScrollOnly,
+			scrollTargetRef,
+			updateScrollPercent
+		]
 	);
 
 	const handleKeyDown = useCallback(
@@ -198,6 +288,51 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			const scrollStep = e.shiftKey ? 240 : 120;
 			// With the handle on the start edge, "left" makes the pane wider.
 			const direction = anchor === 'start' ? -1 : 1;
+
+			// Left/Right and the width bounds only mean something when there is
+			// a width to change.
+			if (isScrollOnly) {
+				const target = scrollTargetRef?.current;
+				if (!target) return;
+				const maxScrollTop = Math.max(
+					0,
+					target.scrollHeight - target.clientHeight
+				);
+				switch (e.key) {
+					case 'ArrowUp':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = Math.max(
+							0,
+							target.scrollTop - scrollStep
+						);
+						updateScrollPercent();
+						return;
+					case 'ArrowDown':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = Math.min(
+							maxScrollTop,
+							target.scrollTop + scrollStep
+						);
+						updateScrollPercent();
+						return;
+					case 'Home':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = 0;
+						updateScrollPercent();
+						return;
+					case 'End':
+						e.stopPropagation();
+						e.preventDefault();
+						target.scrollTop = maxScrollTop;
+						updateScrollPercent();
+						return;
+					default:
+						return;
+				}
+			}
 
 			switch (e.key) {
 				case 'ArrowLeft':
@@ -248,11 +383,13 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		[
 			anchor,
 			currentWidth,
+			isScrollOnly,
 			maxWidth,
 			minWidth,
 			normalizeWidth,
 			onResize,
-			scrollTargetRef
+			scrollTargetRef,
+			updateScrollPercent
 		]
 	);
 
@@ -263,7 +400,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		document.addEventListener('pointermove', handlePointerMove);
 		document.addEventListener('pointerup', handlePointerUp);
 		document.addEventListener('pointercancel', handlePointerUp);
-		document.body.style.cursor = 'col-resize';
+		document.body.style.cursor = isScrollOnly ? 'grabbing' : 'col-resize';
 		document.body.style.userSelect = 'none';
 		return () => {
 			document.removeEventListener('pointermove', handlePointerMove);
@@ -272,7 +409,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			document.body.style.cursor = '';
 			document.body.style.userSelect = '';
 		};
-	}, [isDragging, handlePointerMove, handlePointerUp]);
+	}, [isDragging, isScrollOnly, handlePointerMove, handlePointerUp]);
 
 	useEffect(
 		() => () => {
@@ -289,28 +426,38 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			ref={handleRef}
 			className={[
 				'sessionsList__resizeHandle',
-				`sessionsList__resizeHandle--${anchor}`,
+				!isScrollOnly && `sessionsList__resizeHandle--${anchor}`,
 				className
 			]
 				.filter(Boolean)
 				.join(' ')}
 			data-dragging={isDragging ? 'true' : 'false'}
 			data-cy={dataCy}
-			role="separator"
-			// sonar: role="separator" is an interactive widget when focusable + keyboard-handled
+			// A separator that can be moved, or a scrollbar - the two modes are
+			// genuinely different widgets, so they announce differently rather
+			// than sharing one label that is wrong for half the callers.
+			role={isScrollOnly ? 'scrollbar' : 'separator'}
+			// sonar: both roles are interactive widgets when focusable + keyboard-handled
 			tabIndex={0}
 			aria-orientation="vertical"
-			aria-valuemin={minWidth}
-			aria-valuemax={maxWidth}
-			aria-valuenow={currentWidth}
+			aria-valuemin={isScrollOnly ? 0 : minWidth}
+			aria-valuemax={isScrollOnly ? 100 : maxWidth}
+			aria-valuenow={isScrollOnly ? scrollPercent : currentWidth}
 			aria-label={
 				ariaLabel ??
-				t(
-					'sessionList.resizeHandle.ariaLabel',
-					'Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.'
-				)
+				(isScrollOnly
+					? t(
+							'sessionList.resizeHandle.scrollAriaLabel',
+							'Drag to scroll the list.'
+						)
+					: t(
+							'sessionList.resizeHandle.ariaLabel',
+							'Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.'
+						))
 			}
 			onDoubleClick={(e) => {
+				// Collapsing is a width change, so it belongs to the resize mode.
+				if (isScrollOnly) return;
 				e.preventDefault();
 				e.stopPropagation();
 				toggleCollapsed();

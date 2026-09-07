@@ -414,6 +414,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	/* Scroll-only placement: the bar sits inside the surface it scrolls rather
+	   than straddling its edge, because a dropdown has no neighbour to
+	   separate from (ORISO-Frontend#1196 job 2). */
+	&__resizeHandle--inset {
+		right: 0;
+		width: 20px;
+		cursor: grab;
+	}
+
 	&__resizeHandlePill {
 		position: absolute;
 		left: 8px;
@@ -1011,6 +1020,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		color: $toolbar-chip-fg;
 		text-decoration: none;
 		cursor: pointer;
+
+		/* #1200: an action chip with nothing to act on (e.g. "Mark all as read"
+		   with no unread activity) — M3 disabled state, no hover/press feedback */
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+			pointer-events: none;
+		}
 
 		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
 		&:link,

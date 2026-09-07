@@ -45,14 +45,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		pointer-events: auto;
 	}
 
+	// One source of truth for the composer's geometry, on the wrapper so
+	// every docked child (the notice card above the form, the form, the
+	// reply quote and edit banner inside it) reads the same value instead of
+	// each inventing a width, which is what left the bars hanging ~24px past
+	// the card on either side (#1210 review).
+	.messageSubmit__wrapper {
+		--composer-max-width: 895px;
+	}
+
 	.textarea {
 		z-index: 100;
-
-		// One source of truth for the composer's geometry. The white card
-		// claims the width; the docked bars (reply quote, edit banner) derive
-		// from it instead of each inventing a width, which is what left them
-		// hanging ~24px past the card on either side.
-		--composer-max-width: 895px;
 
 		// …and they align to the *editor*, not to the card: Figma 18:1990 puts
 		// the drag handle, the reply bar and the text component all at x=16 /
@@ -62,13 +65,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		// The editor's box, derived once so the docked bars never restate it.
 		--composer-inner-width: calc(
-			min(100%, var(--composer-max-width)) - 2 *
+			min(100%, var(--composer-max-width, 895px)) - 2 *
 				var(--composer-edge-inset)
 		);
 		--composer-inner-offset: max(
 			0px,
 			calc(
-				(100% - min(100%, var(--composer-max-width))) / 2 +
+				(100% - min(100%, var(--composer-max-width, 895px))) / 2 +
 					var(--composer-edge-inset)
 			)
 		);
@@ -79,8 +82,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// Figma 8641-34699: 16px inset between chat card edge and composer.
 		padding: 16px;
 		width: 100%;
-		position: absolute;
-		bottom: 0;
+
+		// Stays in flow: `.messageSubmit__wrapper` already docks the composer
+		// to the bottom and lays its children out in a column, so docking the
+		// card here too only removed it from that column and let it paint over
+		// the info bar above it.
+		position: relative;
 
 		@include breakpoint($fromMedium) {
 			padding: 16px;
@@ -105,10 +112,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			padding: 16px;
 			padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			right: 0;
+			position: relative;
 			background-color: var(--m3-surface-container-lowest, #ffffff);
 		}
 
@@ -281,12 +285,26 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					top: auto !important;
 					right: auto !important;
 					inset: auto !important;
-					bottom: 24px !important;
+
+					/* Anchored and sized to the *visible* viewport (#1248).
+					   `--composer-visible-height` and
+					   `--composer-viewport-bottom` are set on the overlay from
+					   `window.visualViewport`; the fallbacks are what a browser
+					   without that API gets. iOS Safari does not shrink the
+					   layout viewport for the keyboard, so plain `vh` and a
+					   `bottom` measured from it put this box behind it. */
+					bottom: calc(
+						var(--composer-viewport-bottom, 0px) + 24px
+					) !important;
 					margin-top: 0;
 					max-width: none;
-					height: min(78vh, 760px);
-					max-height: calc(100vh - 96px);
-					max-height: calc(100dvh - 96px);
+					height: min(
+						calc(var(--composer-visible-height, 100dvh) * 0.78),
+						760px
+					);
+					max-height: calc(
+						var(--composer-visible-height, 100dvh) - 96px
+					);
 					z-index: 4500;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
@@ -416,6 +434,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: auto;
 		}
 
+		/* No overflow rule here on purpose (#1319 review): `.ProseMirror` is
+		   absolutely positioned inside `.tipTapComposer__content`, which is
+		   `overflow: hidden` and already scrolls the text itself, so this box
+		   can never overflow. Adding `overflow-y` would also compute
+		   `overflow-x` to `auto` and turn the counter and editing banner into
+		   scroll content for no gain. */
 		&__wrapper-send-message--expanded .textarea__input {
 			height: 100%;
 		}

@@ -93,13 +93,18 @@ describe('session list visual contracts', () => {
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle--start[^{}]*\{[^}]*left:\s*-12px;/s
 		);
-		// T5: the pill is centred on the handle's full height and never
-		// follows the list's scroll thumb; the chevron toggle is gone.
+		// T5 + #1196: the pill is centred on the handle's full height and never
+		// follows the list's scroll thumb; the chevron toggle is gone. Nothing
+		// may reposition or resize it from the scroll offset.
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
 		);
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*transform:\s*translateY\(-50%\);/s
+		);
 		expect(css).not.toContain('[data-scrollable=true]');
 		expect(css).not.toContain('--sessions-list-thumb-top');
+		expect(css).not.toContain('--sessions-list-thumb-height');
 		expect(css).not.toContain('.sessionsList__resizeToggle');
 	});
 });

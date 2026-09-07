@@ -2653,6 +2653,7 @@
 				"addressLabel": "Adresse",
 				"hoursLabel": "Öffnungszeiten",
 				"languagesLabel": "Sprachen",
+				"languagesTooltip": "Diese Beratungsstelle berät Sie auf:",
 				"less": "Weniger",
 				"more": "Mehr",
 				"navigate": "Navigation starten",
@@ -3594,7 +3595,8 @@
 			"supervisedBy": "Supervision: {{name}}"
 		},
 		"resizeHandle": {
-			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste."
+			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
+			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
 		}
 	},
 	"statusOverlay": {
@@ -4045,7 +4047,7 @@
 			"age": "Alter",
 			"gender": "Geschlecht",
 			"postcode": "Postleitzahl",
-			"relation": "Hintergrund",
+			"relation": "Art der Ratsuchenden",
 			"resort": "Beratungsfeld",
 			"state": "Bundesland",
 			"title": "Angaben des Ratsuchenden"
@@ -4073,6 +4075,9 @@
 				"title": "Sehen Sie hier, welche Inhalte mit Ihnen geteilt wurden."
 			},
 			"title": "Tools"
+		},
+		"header": {
+			"title": "Zusätzliche Angaben zur ratsuchenden Person"
 		}
 	},
 	"videoCall": {

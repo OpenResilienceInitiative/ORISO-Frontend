@@ -1,4 +1,5 @@
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
+import { isRestorableSessionPath } from '../../utils/lastOpenSession';
 import { encodeUsername } from '../../utils/encryptionHelpers';
 import { setTokens } from '../auth/auth';
 import { FETCH_ERRORS } from '../../api';
@@ -178,6 +179,11 @@ export const getPostRegistrationSessionId = (
 type RedirectToAppOptions = {
 	navigate?: (to: string) => void;
 	sessionId?: string | number;
+	/**
+	 * #1193 Job 3: in-app session route to resume (see lastOpenSession.ts).
+	 * Ignored unless it is a consultant session detail route.
+	 */
+	restorePath?: string | null;
 };
 
 const toRouterPath = (configured: string): string => {
@@ -190,7 +196,8 @@ const toRouterPath = (configured: string): string => {
 
 export const buildAppRedirectPath = (
 	gcid?: string,
-	sessionId?: string | number
+	sessionId?: string | number,
+	restorePath?: string | null
 ): string => {
 	const value = gcid?.trim();
 	const search = value
@@ -201,6 +208,10 @@ export const buildAppRedirectPath = (
 		return `/sessions/user/view/session/${sessionId}${search}`;
 	}
 
+	if (isRestorableSessionPath(restorePath)) {
+		return `${restorePath}${search}`;
+	}
+
 	return `${toRouterPath(appConfig.urls.redirectToApp)}${search}`;
 };
 
@@ -208,7 +219,11 @@ export const redirectToApp = (
 	gcid?: string,
 	options?: RedirectToAppOptions
 ) => {
-	const path = buildAppRedirectPath(gcid, options?.sessionId);
+	const path = buildAppRedirectPath(
+		gcid,
+		options?.sessionId,
+		options?.restorePath
+	);
 	if (options?.navigate) {
 		options.navigate(path);
 		return;

@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	autoLogin,
+	buildAppRedirectPath,
 	getPostRegistrationGroupChatId,
 	getPostRegistrationSessionId,
 	redirectToApp
@@ -316,6 +317,65 @@ describe('redirectToApp', () => {
 			`/sessions/user/view/session/7?${new URLSearchParams({
 				gcid: '!room:matrix.localhost'
 			}).toString()}`
+		);
+	});
+});
+
+describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
+	it('lands on the remembered consultant session', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363'
+			)
+		).toBe('/sessions/consultant/sessionView/session/3363');
+	});
+
+	it('keeps the gcid query on the restored route', () => {
+		expect(
+			buildAppRedirectPath(
+				'abc',
+				undefined,
+				'/sessions/consultant/sessionView/!room:x/12/'
+			)
+		).toBe('/sessions/consultant/sessionView/!room:x/12/?gcid=abc');
+	});
+
+	it('prefers an explicit post-registration session over the remembered one', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				7,
+				'/sessions/consultant/sessionView/session/3363'
+			)
+		).toBe('/sessions/user/view/session/7');
+	});
+
+	it('ignores anything that is not a consultant session route', () => {
+		for (const bad of [
+			null,
+			undefined,
+			'',
+			'https://evil.example/',
+			'//evil.example',
+			'/sessions/consultant/sessionPreview/session/1',
+			'/sessions/consultant/sessionView/'
+		]) {
+			expect(buildAppRedirectPath(undefined, undefined, bad)).toBe(
+				'/sessions'
+			);
+		}
+	});
+
+	it('navigates via the router when a navigate function is given', () => {
+		const navigate = vi.fn();
+		redirectToApp(undefined, {
+			navigate,
+			restorePath: '/sessions/consultant/sessionView/session/42'
+		});
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/consultant/sessionView/session/42'
 		);
 	});
 });

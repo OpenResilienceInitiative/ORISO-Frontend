@@ -122,6 +122,7 @@ import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
+import { useVisualViewport } from '../../hooks/useVisualViewport';
 import { SubscriptionKeyLost } from '../session/SubscriptionKeyLost';
 import { RoomNotFound } from '../session/RoomNotFound';
 import { useDraftMessage } from './useDraftMessage';
@@ -3306,17 +3307,43 @@ export const MessageSubmitInterfaceComponent = ({
 		setIsExpandedComposer((prev) => !prev);
 	}, []);
 
+	/*
+	 * The maximised composer is sized from the *visible* viewport, not the
+	 * layout one (#1248). On iOS Safari the layout viewport does not shrink
+	 * when the soft keyboard opens, so `inset: 0` covered a rectangle about
+	 * twice the height of the screen and the centred editor landed half above
+	 * the top edge and half behind the keyboard.
+	 *
+	 * The two custom properties are inherited by the editor inside, which is
+	 * `position: fixed` and would otherwise resolve its own `vh`/`bottom`
+	 * against the same wrong rectangle.
+	 */
+	const visualViewport = useVisualViewport(isExpandedComposer);
+
 	const expandedComposerStyle = useMemo(() => {
 		if (!isExpandedComposer) {
 			return undefined;
 		}
-		return {
+		const base = {
 			position: 'fixed' as const,
-			inset: '0',
+			left: '0',
+			right: '0',
 			zIndex: 4000,
 			pointerEvents: 'none' as const
 		};
-	}, [isExpandedComposer]);
+		if (!visualViewport) {
+			// No API (older Safari, jsdom): `dvh` is the closest static
+			// approximation and is what the stylesheet falls back to.
+			return { ...base, top: '0', height: '100dvh' };
+		}
+		return {
+			...base,
+			top: `${visualViewport.offsetTop}px`,
+			height: `${visualViewport.height}px`,
+			['--composer-visible-height' as string]: `${visualViewport.height}px`,
+			['--composer-viewport-bottom' as string]: `${visualViewport.bottomInset}px`
+		};
+	}, [isExpandedComposer, visualViewport]);
 	// Blur is intentionally disabled for now.
 	// To re-enable: remove the immediate `display: 'none'` return below
 	// and uncomment the blur style block.
@@ -3669,9 +3696,11 @@ export const MessageSubmitInterfaceComponent = ({
 		[effectiveComposerHeight, getComposerHeightBounds, setComposerHeight]
 	);
 
+	// `isMobile` used to be passed here and was never read by
+	// getMenuDirection — the viewport is a collision question now, measured by
+	// floating-ui rather than guessed from a breakpoint (#1250).
 	const composerMenuDirection = getMenuDirection({
-		isExpanded: isExpandedComposer,
-		isMobile: isMobileViewport
+		isExpanded: isExpandedComposer
 	});
 
 	const matrixRoomId = resolvedChatSession.matrixRoomId || null;

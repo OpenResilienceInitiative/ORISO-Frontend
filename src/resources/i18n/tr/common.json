@@ -2628,6 +2628,7 @@
 				"addressLabel": "Adres",
 				"hoursLabel": "Çalışma saatleri",
 				"languagesLabel": "Diller",
+				"languagesTooltip": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:",
 				"less": "Daha az",
 				"more": "Daha fazla",
 				"navigate": "Navigasyonu başlat",
@@ -3577,7 +3578,8 @@
 			"supervisedBy": "Süpervizyon: {{name}}"
 		},
 		"resizeHandle": {
-			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır."
+			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
 		}
 	},
 	"statusOverlay": {
@@ -4028,7 +4030,7 @@
 			"age": "Yaş",
 			"gender": "Cinsiyet",
 			"postcode": "Posta kodu",
-			"relation": "Arka plan",
+			"relation": "Danışan türü",
 			"resort": "Danışmanlık alanı",
 			"state": "Federal devlet",
 			"title": "Tavsiye isteyen kişinin detayları"
@@ -4056,6 +4058,9 @@
 				"title": "Sizinle hangi içeriklerin paylaşıldığını buradan görebilirsiniz."
 			},
 			"title": "Araçlar"
+		},
+		"header": {
+			"title": "Danışan hakkında ek bilgiler"
 		}
 	},
 	"videoCall": {

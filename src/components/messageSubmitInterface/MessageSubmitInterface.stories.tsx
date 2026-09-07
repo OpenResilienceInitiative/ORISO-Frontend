@@ -7,6 +7,7 @@ import {
 	buildMockActiveSession,
 	buildMockGroupSession,
 	ComposerStoryDecorator,
+	mockComposerAskerData,
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
@@ -41,10 +42,12 @@ const shellStyle: React.CSSProperties = {
 function ComposerShell({
 	activeSession,
 	roomMembers,
+	userData,
 	...composerProps
 }: {
 	activeSession?: any;
 	roomMembers?: Array<{ userId: string; name: string }>;
+	userData?: any;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
 		<div
@@ -56,6 +59,7 @@ function ComposerShell({
 			<ComposerStoryDecorator
 				activeSession={activeSession}
 				roomMembers={roomMembers}
+				userData={userData}
 			>
 				<MessageSubmitInterfaceComponent
 					placeholder="Nachricht an Klient:in schreiben"
@@ -122,6 +126,58 @@ async function expectComposerBottomInset(
 		);
 	});
 }
+
+/**
+ * The absence banner an advice seeker sees when their counsellor is away.
+ *
+ * It renders inside the composer wrapper, above the card. The composer card used
+ * to be `position: absolute; bottom: 0` with an opaque background; that removed
+ * it from flow so the wrapper didn’t reserve room for the banner and the card
+ * painted over it, making the notice invisible while still present in the DOM.
+ */
+export const ConsultantAbsent: Story = {
+	name: 'Asker — counsellor is absent',
+	render: () => (
+		<ComposerShell
+			userData={mockComposerAskerData}
+			activeSession={buildMockActiveSession({
+				consultant: {
+					consultantId: 'consultant-storybook',
+					username: 'shaziaknew',
+					displayName: 'shazia ka',
+					absent: true,
+					absenceMessage:
+						'I am out of office, please contact me later'
+				}
+			})}
+			placeholder="Schreiben Sie uns, was Sie bewegt."
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const banner = await canvas.findByText(
+			'I am out of office, please contact me later'
+		);
+
+		// Present in the DOM is not enough — that was true throughout the bug.
+		// Assert it is actually on screen and not painted over by the card.
+		await waitFor(() => {
+			const bannerBox = banner.getBoundingClientRect();
+			expect(bannerBox.height).toBeGreaterThan(0);
+
+			const composer = canvasElement.querySelector('form.textarea');
+			expect(composer).not.toBeNull();
+			const composerBox = (
+				composer as HTMLElement
+			).getBoundingClientRect();
+
+			// The banner sits above the composer card, not underneath it.
+			expect(Math.round(bannerBox.bottom)).toBeLessThanOrEqual(
+				Math.round(composerBox.top) + 1
+			);
+		});
+	}
+};
 
 export const Default: Story = {
 	name: 'Default (empty)',
@@ -582,5 +638,287 @@ export const Tablet: Story = {
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
 		await expectComposerBottomInset(canvasElement, 16);
+	}
+};
+
+/**
+ * #1248 — mobile + maximised at a keyboard-sized viewport.
+ *
+ * The gap that let the bug ship: there was no maximised story at all, so the
+ * overlay was only ever reviewed at desktop height, where sizing to the layout
+ * viewport looks correct.
+ *
+ * A Storybook iframe has no soft keyboard, so the keyboard is modelled the only
+ * way it can be here — a viewport the height of what is left visible when it is
+ * up (390x464). The assertion is the one the issue's acceptance asks for: with
+ * the editor maximised, the whole box is inside the visible area, so the
+ * toolbar and send button are reachable without scrolling the page.
+ */
+export const MaximisedMobileKeyboardOpen: Story = {
+	name: 'Mobile — maximised, keyboard-sized viewport (#1248)',
+	parameters: {
+		viewport: {
+			options: {
+				phone390Keyboard: {
+					name: 'Phone 390 · keyboard open',
+					styles: { width: '390px', height: '464px' }
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'phone390Keyboard' } },
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		// The toolbar only mounts once the composer is focused, so click into
+		// the editor first — the same order a user follows.
+		const input = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(input);
+
+		const maximise = await waitFor(() =>
+			within(canvasElement).getByRole('button', {
+				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
+				// handle) would also match a loose pattern.
+				name: 'Editor vergrößern'
+			})
+		);
+		await userEvent.click(maximise);
+
+		// The overlay portals out of `canvasElement`, so query the document.
+		const editor = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+
+		const overlay = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded'
+		) as HTMLElement;
+		await expect(overlay).toBeTruthy();
+
+		const rect = editor.getBoundingClientRect();
+		// Fully inside the visible area — nothing above the top edge, nothing
+		// past the bottom. Before the fix the box was sized from the layout
+		// viewport and overhung both.
+		await expect(rect.top).toBeGreaterThanOrEqual(0);
+		const overlayRect = overlay.getBoundingClientRect();
+		await expect(rect.top).toBeGreaterThanOrEqual(overlayRect.top - 1);
+		await expect(rect.bottom).toBeLessThanOrEqual(overlayRect.bottom + 1);
+		await expect(rect.height).toBeGreaterThan(0);
+
+		/*
+		 * Long text scrolls in the editor, not in the box around it (#1319
+		 * review). `.ProseMirror` is the scroll container — absolutely
+		 * positioned inside a clipped parent — so the outer input box must NOT
+		 * become one: an overflow rule there computes overflow-x to auto too
+		 * and turns the counter and editing banner into scroll content.
+		 */
+		const prose = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded .ProseMirror'
+		);
+		await expect(prose).toBeTruthy();
+		await expect(window.getComputedStyle(prose!).overflowY).toBe('auto');
+		const inputBox = document.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message--expanded .textarea__input'
+		);
+		await expect(inputBox).toBeTruthy();
+		await expect(window.getComputedStyle(inputBox!).overflowY).toBe(
+			'visible'
+		);
+
+		/*
+		 * The part that actually catches #1248.
+		 *
+		 * A Storybook iframe has no soft keyboard, so the layout/visual
+		 * viewport split that causes the bug cannot occur on its own here —
+		 * without this the story passes against the unfixed code too. So the
+		 * keyboard is simulated the way iOS presents it: the visual viewport
+		 * shrinks while the layout viewport (window.innerHeight) does not.
+		 * The overlay has to follow the visible height, not the layout one.
+		 */
+		const viewport = window.visualViewport;
+		// No silent skip (#1319 review): without the API this story proves
+		// nothing, and a green run would hide that.
+		if (!viewport) {
+			throw new Error(
+				'window.visualViewport is unavailable — this story cannot verify #1248'
+			);
+		}
+		const layoutHeight = window.innerHeight;
+		const keyboardHeight = Math.round(layoutHeight / 2);
+		Object.defineProperty(viewport, 'height', {
+			configurable: true,
+			get: () => keyboardHeight
+		});
+		viewport.dispatchEvent(new Event('resize'));
+
+		try {
+			await waitFor(async () => {
+				const shrunk = overlay.getBoundingClientRect();
+				await expect(Math.round(shrunk.height)).toBe(keyboardHeight);
+				// …and the editor stays inside that smaller box.
+				const inside = editor.getBoundingClientRect();
+				await expect(inside.bottom).toBeLessThanOrEqual(
+					shrunk.bottom + 1
+				);
+				await expect(inside.top).toBeGreaterThanOrEqual(shrunk.top - 1);
+			});
+		} finally {
+			// `delete` puts the prototype's native getter back. Redefining an own
+			// property with the captured value would freeze the height for every
+			// story that runs after this one in the same page (#1319 review).
+			delete (viewport as unknown as { height?: number }).height;
+			viewport.dispatchEvent(new Event('resize'));
+		}
+	}
+};
+
+/** The same control at desktop height, which the issue says must not regress. */
+export const MaximisedDesktop: Story = {
+	name: 'Desktop — maximised (unchanged by #1248)',
+	parameters: {
+		viewport: {
+			options: {
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' }
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'desktop1440' } },
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		// The toolbar only mounts once the composer is focused, so click into
+		// the editor first — the same order a user follows.
+		const input = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(input);
+
+		const maximise = await waitFor(() =>
+			within(canvasElement).getByRole('button', {
+				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
+				// handle) would also match a loose pattern.
+				name: 'Editor vergrößern'
+			})
+		);
+		await userEvent.click(maximise);
+
+		const editor = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+
+		const overlay = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded'
+		) as HTMLElement;
+		await expect(overlay).toBeTruthy();
+
+		const rect = editor.getBoundingClientRect();
+		// Measured against the overlay, which is what the fix sizes to the
+		// visible viewport — the runner's window metrics do not agree with its
+		// emulated viewport, so they are not a usable reference here.
+		const overlayRect = overlay.getBoundingClientRect();
+		await expect(rect.bottom).toBeLessThanOrEqual(overlayRect.bottom + 1);
+		await expect(rect.top).toBeGreaterThanOrEqual(overlayRect.top - 1);
+		// The overlay lays out over a frame or two after the click, so settle
+		// before measuring rather than catching the intermediate height.
+		await waitFor(async () => {
+			const settled = editor.getBoundingClientRect();
+			// Desktop keeps the roomy editor: well over half the overlay.
+			await expect(settled.height).toBeGreaterThan(
+				overlay.getBoundingClientRect().height * 0.5
+			);
+		});
+	}
+};
+
+/**
+ * #1249 — repeated maximise/restore.
+ *
+ * The report is that after one or two cycles on an iPhone the composer stops
+ * responding to everything but reopening it. This pins the sequence the issue
+ * asks for: ten toggles, checking after **every** one that the editor still
+ * accepts input and that the toggle control itself is still there.
+ *
+ * It does NOT reproduce the reported lock-up — see
+ * `docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/` for what was
+ * ruled out and how. It is here as the regression guard the acceptance asks
+ * for ("covers repeated toggling — not a single toggle"), so that whatever the
+ * cause turns out to be, a regression in the toggle path itself is caught.
+ */
+export const RepeatedMaximiseToggle: Story = {
+	name: 'Mobile — ten maximise/restore cycles stay usable (#1249)',
+	globals: phone390Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+		await userEvent.click(editor);
+
+		const toggle = () =>
+			within(canvasElement).getByRole('button', {
+				name: /^Editor (vergrößern|verkleinern)$/
+			});
+
+		for (let cycle = 1; cycle <= 10; cycle += 1) {
+			// The control has to still exist — if a toggle leaves the toolbar in
+			// a state without it, the user is stranded.
+			const button = await waitFor(toggle);
+			await userEvent.click(button);
+
+			// …and the editor has to still take input after every single cycle.
+			const live = await waitFor(() => {
+				const node = document.querySelector<HTMLElement>(
+					'[contenteditable="true"]'
+				);
+				if (!node) {
+					throw new Error(`editor gone after cycle ${cycle}`);
+				}
+				return node;
+			});
+			await expect(live.getAttribute('contenteditable')).toBe('true');
+
+			await userEvent.click(live);
+			await userEvent.type(live, String(cycle % 10));
+			await waitFor(async () => {
+				await expect(live.textContent ?? '').toContain(
+					String(cycle % 10)
+				);
+			});
+		}
+
+		// The toggle survives all ten cycles.
+		await expect(toggle()).toBeTruthy();
 	}
 };
