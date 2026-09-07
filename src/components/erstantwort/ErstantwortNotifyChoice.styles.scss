@@ -1,0 +1,102 @@
+@import '../../resources/styles/settings';
+@import './ErstantwortSequence.styles.scss';
+
+/* Modul 2 — "Wie sollen wir Sie erreichen?" (Vorschlag 07.09.2026).
+ *
+ * Sits inside an Erstantwort bubble and styles only what the bubble does not
+ * provide. Geometry follows `NotificationChoiceCard.styles.scss` on purpose —
+ * two notification cards from the same sender must not drift apart in target
+ * size or radius — but the option is a *block that carries* a button here, not
+ * a button itself, so a finished option can still show its text.
+ *
+ * Colours are M3 roles only: `--m3-outline-variant` is the divider/border role,
+ * `--m3-surface-container-high` a background role, and the `--m3-on-*` /
+ * `--m3-error` roles are text. Nothing is hardcoded and no `on-*` role is used
+ * as a background or a border (`m3Sweep.test.ts`, Test #27).
+ */
+
+.erstantwortNotify {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 12px;
+	font-family: $font-family-sans-serif;
+}
+
+.erstantwortNotify__option {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	padding: 12px 16px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: $box-border-radius;
+	text-align: left;
+}
+
+.erstantwortNotify__option--recommended {
+	/* The recommendation is carried by a filled ground and a badge, not by a
+	   second brand colour: the bubble already sets the colour context, and a
+	   red "Empfohlen" inside a grey bubble reads as a warning. */
+	background: var(--m3-surface-container-high, #eae7e8);
+	border-color: var(--m3-outline, #747878);
+}
+
+.erstantwortNotify__badge {
+	align-self: flex-start;
+	margin-bottom: 2px;
+	padding: 2px 8px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 999px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.erstantwortNotify__label {
+	color: var(--m3-on-surface, #1a1c1e);
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.erstantwortNotify__hint {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.45;
+}
+
+.erstantwortNotify__button {
+	@extend %erstantwort-pill-affordance;
+
+	/* The bubble is a stretching flex column, so without this every button
+	   spans the full option width and the three of them read as one block of
+	   controls rather than as one affordance per option. */
+	align-self: flex-start;
+	margin-top: 8px;
+
+	/* Comfortably past the 44px touch minimum without hardcoding a height —
+	   the platform's own font size plus this padding already carries it. */
+	padding: 10px 18px;
+}
+
+.erstantwortNotify__status {
+	margin: 6px 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.erstantwortNotify__status--done {
+	color: var(--m3-secondary, #4c555f);
+}
+
+.erstantwortNotify__status--blocked {
+	/* The blocked state is not an error the person made, so it gets the error
+	   *text* role and no error container behind it — a filled red box for
+	   "your browser said no" would read as a failure of the counselling. */
+	color: var(--m3-error, #b1005e);
+}
