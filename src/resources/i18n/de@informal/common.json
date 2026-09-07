@@ -2320,7 +2320,8 @@
 		},
 		"entry": {
 			"status": {
-				"access": "Dein Zugang für dieses Gespräch"
+				"access": "Dein Zugang für dieses Gespräch",
+				"accepted": "Eine Beraterin hat dein Gespräch angenommen"
 			},
 			"access": {
 				"headline": "Dein Name für heute.",
@@ -2348,7 +2349,11 @@
 					"title": "Du wartest, bis jemand frei ist"
 				},
 				"consent": {
-					"title": "Dann stimmst du einmal zu"
+					"title": "Dann stimmst du einmal zu",
+					"text": "Sobald eine Stelle dein Gespräch annimmt, siehst du ihren Datenschutz."
+				},
+				"anonymous": {
+					"text": "Nur dein Pseudonym ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
 		}

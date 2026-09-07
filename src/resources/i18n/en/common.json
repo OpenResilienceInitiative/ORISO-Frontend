@@ -4167,7 +4167,16 @@
 			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
 		},
 		"pseudonym": {
-			"changeName": "Change name"
+			"carimatSubtitle": "Choose a display name",
+			"carimatPrivacySubtitle": "Your privacy",
+			"carimatMessage": "Hello, before we continue please confirm the name picked at random for this session.",
+			"privacyMessage": "Good choice. To protect your privacy every message is end-to-end encrypted and deleted automatically after 48 hours.",
+			"yourPseudonym": "Your pseudonym",
+			"nextName": "Next name",
+			"confirm": "Confirm",
+			"changeName": "Change name",
+			"continueWithSelection": "Continue with this name",
+			"actionsLabel": "Pseudonym actions"
 		}
 	},
 	"sessionMenu": {

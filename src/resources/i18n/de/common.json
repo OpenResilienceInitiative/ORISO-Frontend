@@ -4204,7 +4204,7 @@
 			"carimatPrivacySubtitle": "Ihre Privatsphäre",
 			"carimatMessage": "Hallo, bevor wir weitermachen, bestätigen Sie bitte Ihren zufällig gewählten Namen für diese Sitzung.",
 			"privacyMessage": "Gute Wahl. Zum Schutz Ihrer Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
-			"yourPseudonym": "Dein Pseudonym",
+			"yourPseudonym": "Ihr Pseudonym",
 			"nextName": "Nächster Name",
 			"confirm": "Bestätigen",
 			"changeName": "Name ändern",
@@ -4229,7 +4229,7 @@
 			"connecting": "Wird verbunden …",
 			"insteadOfWaiting": "Statt zu warten",
 			"requestLocalCounselor": "Mail Beratung starten",
-			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
+			"consultantAccepted": "Sie werden jetzt von Ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden",
 			"leave": "Chat verlassen"
