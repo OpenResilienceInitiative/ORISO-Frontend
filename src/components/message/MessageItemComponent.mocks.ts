@@ -322,3 +322,33 @@ export const mockCaseHandoverGrantedMessage = `[SYSTEM_NOTIFICATION]${JSON.strin
 			'My colleague is ill, so I decided it is better if I take care of this client.'
 	}
 )}`;
+
+/**
+ * An ADR-018 Erstantwort event carrying the `emailNotification` Baustein — the
+ * one the Träger switch `featureAskerEmailEnabled` silences. Shared by the
+ * wiring stories and `MessageItemComponent.askerEmail.test.tsx` so both assert
+ * against the same payload.
+ */
+export const MOCK_ERSTANTWORT_GREETING_BODY =
+	'Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist angekommen.';
+export const MOCK_ERSTANTWORT_EMAIL_BODY =
+	'Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.';
+
+export const mockErstantwortEventMessage = `[SYSTEM_NOTIFICATION]${JSON.stringify(
+	{
+		type: 'FIRST_RESPONSE',
+		version: 1,
+		bausteine: [
+			{ id: 'greeting', body: MOCK_ERSTANTWORT_GREETING_BODY },
+			{
+				id: 'emailNotification',
+				headline: 'Benachrichtigung per E-Mail',
+				body: MOCK_ERSTANTWORT_EMAIL_BODY,
+				action: {
+					kind: 'ADD_EMAIL',
+					label: 'E-Mail-Adresse angeben'
+				}
+			}
+		]
+	}
+)}`;

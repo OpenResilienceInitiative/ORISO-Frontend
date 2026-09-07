@@ -5,12 +5,16 @@ import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
 	E2EEContext,
+	TenantContext,
 	UserDataContext,
 	type ExtendedSessionInterface
 } from '../../globalState';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
-import type { UserDataInterface } from '../../globalState/interfaces';
+import type {
+	TenantDataInterface,
+	UserDataInterface
+} from '../../globalState/interfaces';
 import { MessageItemComponent } from './MessageItemComponent';
 import {
 	MOCK_ASKER_MATRIX_ID,
@@ -26,6 +30,7 @@ import {
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
+	mockErstantwortEventMessage,
 	mockManyReactions,
 	mockReactions,
 	mockSystemNotificationMessage,
@@ -44,53 +49,62 @@ import './message.styles.scss';
 type MessageItemStoryParameters = {
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	tenant?: TenantDataInterface | null;
 };
 
 function MessageItemContextDecorator({
 	activeSession,
 	userData,
+	tenant = null,
 	children,
 	compact = false
 }: {
 	activeSession: ExtendedSessionInterface;
 	userData: UserDataInterface;
+	/* Nested inside the global preview provider (which supplies `null`), so a
+	   story can put a real Träger configuration in front of the component. */
+	tenant?: TenantDataInterface | null;
 	children: React.ReactNode;
 	compact?: boolean;
 }) {
 	return (
-		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
-			<ConsultantListContext.Provider value={mockConsultantListContext()}>
-				<E2EEContext.Provider value={mockE2EEContext()}>
-					<UserDataContext.Provider
-						value={{
-							userData,
-							setUserData: () => {},
-							reloadUserData: async () => null as any
-						}}
-					>
-						<ActiveSessionContext.Provider
+		<TenantContext.Provider value={{ tenant, setTenant: () => {} }}>
+			<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
+				<ConsultantListContext.Provider
+					value={mockConsultantListContext()}
+				>
+					<E2EEContext.Provider value={mockE2EEContext()}>
+						<UserDataContext.Provider
 							value={{
-								activeSession,
-								reloadActiveSession: () => {},
-								readActiveSession: () => {}
+								userData,
+								setUserData: () => {},
+								reloadUserData: async () => null as any
 							}}
 						>
-							<div
-								style={{
-									maxWidth: compact ? 390 : 1000,
-									padding: compact
-										? '16px 12px'
-										: '24px 16px',
-									background: '#ffffff'
+							<ActiveSessionContext.Provider
+								value={{
+									activeSession,
+									reloadActiveSession: () => {},
+									readActiveSession: () => {}
 								}}
 							>
-								{children}
-							</div>
-						</ActiveSessionContext.Provider>
-					</UserDataContext.Provider>
-				</E2EEContext.Provider>
-			</ConsultantListContext.Provider>
-		</ServerSettingsContext.Provider>
+								<div
+									style={{
+										maxWidth: compact ? 390 : 1000,
+										padding: compact
+											? '16px 12px'
+											: '24px 16px',
+										background: '#ffffff'
+									}}
+								>
+									{children}
+								</div>
+							</ActiveSessionContext.Provider>
+						</UserDataContext.Provider>
+					</E2EEContext.Provider>
+				</ConsultantListContext.Provider>
+			</ServerSettingsContext.Provider>
+		</TenantContext.Provider>
 	);
 }
 
@@ -197,6 +211,9 @@ const meta = {
 				userData={
 					(parameters as MessageItemStoryParameters).userData ??
 					mockUserData()
+				}
+				tenant={
+					(parameters as MessageItemStoryParameters).tenant ?? null
 				}
 				compact={Boolean(
 					(parameters as { compactShell?: boolean }).compactShell
@@ -1136,5 +1153,100 @@ export const KebabMenuFollowsScroll: Story = {
 		const rect = menu.getBoundingClientRect();
 		expect(rect.left).toBeGreaterThanOrEqual(0);
 		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
+	}
+};
+
+/* ---------------------------------------------------------------------------
+ * The wired Erstantwort stage — ORISO-Admin#602 switch 2.
+ *
+ * `ErstantwortSequence.stories.tsx` shows the same two outcomes on pre-resolved
+ * Bausteine, which proves the resolver and nothing about the call site. These
+ * two stories render the real `MessageItemComponent` branch with a real
+ * `TenantContext`, so what a Träger configures in the Admin card is what the
+ * reviewer sees here. That link is exactly what was missing (inventory L5) and
+ * is why the switch had no effect in the product for two releases.
+ * ------------------------------------------------------------------------ */
+
+const erstantwortStageParameters = (
+	featureAskerEmailEnabled?: boolean
+): MessageItemStoryParameters & { compactShell: boolean } => ({
+	activeSession: mockActiveSession1on1(),
+	userData: mockUserData({
+		userId: MOCK_ASKER_MATRIX_ID,
+		userName: 'sanftes.alpaka.kala@oriso.invalid',
+		displayName: 'Sanftes Alpaka Kala',
+		email: undefined
+	} as Partial<UserDataInterface>),
+	tenant: {
+		id: 1,
+		name: 'Beispielträger',
+		settings:
+			featureAskerEmailEnabled === undefined
+				? {}
+				: { featureAskerEmailEnabled }
+	} as unknown as TenantDataInterface,
+	compactShell: true
+});
+
+const erstantwortStageArgs = {
+	...mockMessageItemComponentProps({
+		isMyMessage: false,
+		userId: MOCK_ASKER_MATRIX_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		displayName: 'Sanftes Alpaka Kala',
+		message: mockErstantwortEventMessage,
+		/* Older than ERSTANTWORT_FRESH_WINDOW_MS, so the stagger is skipped and
+		   the whole sequence is on screen for the screenshot. */
+		messageTime: '1'
+	}),
+	...baseHandlers
+};
+
+export const ErstantwortAskerEmailSwitchOn: Story = {
+	globals: phone390Globals,
+	name: 'Erstantwort — Träger e-mail invitation ON',
+	args: erstantwortStageArgs,
+	parameters: {
+		...erstantwortStageParameters(true),
+		docs: {
+			description: {
+				story: 'Tenant setting `featureAskerEmailEnabled: true`. The `emailNotification` Baustein and its "E-Mail-Adresse angeben" button are offered.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByText(/freiwillig eine E-Mail-Adresse hinterlegen/);
+		await canvas.findByRole('button', { name: 'E-Mail-Adresse angeben' });
+	}
+};
+
+export const ErstantwortAskerEmailSwitchOff: Story = {
+	globals: phone390Globals,
+	name: 'Erstantwort — Träger e-mail invitation OFF',
+	args: erstantwortStageArgs,
+	parameters: {
+		...erstantwortStageParameters(false),
+		docs: {
+			description: {
+				story: 'Tenant setting `featureAskerEmailEnabled: false`. The whole Baustein is gone — prose and button — while the rest of the sequence is untouched.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// The rest of the Erstantwort still renders …
+		await canvas.findByText(/Ihre Nachricht ist angekommen/);
+		// … and the e-mail invitation is gone, prose and button alike.
+		await waitFor(() => {
+			expect(
+				canvas.queryByText(/freiwillig eine E-Mail-Adresse hinterlegen/)
+			).toBeNull();
+			expect(
+				canvas.queryByRole('button', {
+					name: 'E-Mail-Adresse angeben'
+				})
+			).toBeNull();
+		});
 	}
 };

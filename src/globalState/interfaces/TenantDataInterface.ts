@@ -101,4 +101,12 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
 	emailVisible?: boolean;
 	emailRequired?: boolean;
+	/**
+	 * ORISO-Admin#602 switch 2 — may an advice seeker leave an e-mail
+	 * address at all? Optional on purpose: the TenantService applies
+	 * `BOOLEAN_FIELD_DEFAULTS` and an unconfigured Träger sends no key, which
+	 * `erstantwortResolve` reads as enabled. Only an explicit `false`
+	 * silences.
+	 */
+	featureAskerEmailEnabled?: boolean;
 }
