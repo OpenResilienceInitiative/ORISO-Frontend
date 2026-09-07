@@ -215,7 +215,7 @@ export const GroupInfoGallery = ({
 					<IconButton
 						onClick={requestBack}
 						data-testid="group-info-back"
-						aria-label={tr('back', 'Zurück zum Warteraum')}
+						aria-label={tr('back', 'Zurück zum Countdown')}
 						size="small"
 						sx={{ color: registrationMd3.onSurfaceVariant }}
 					>
@@ -228,7 +228,7 @@ export const GroupInfoGallery = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{tr('back', 'Zurück zum Warteraum')}
+						{tr('back', 'Zurück zum Countdown')}
 					</Typography>
 				</Box>
 

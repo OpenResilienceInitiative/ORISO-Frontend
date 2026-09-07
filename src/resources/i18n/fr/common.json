@@ -215,6 +215,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Retour à la salle d’attente",
+			"confirm": "Réserver le rendez-vous",
+			"headline": "Réserver un rendez-vous",
+			"noTimes": "Aucun horaire n’est libre ce jour-là. Veuillez choisir un autre jour.",
+			"open": "Réserver un rendez-vous",
+			"pickDay": "Veuillez d’abord choisir un jour dans le calendrier.",
+			"subline": "Choisissez un jour, puis une heure.",
+			"times": "Horaires libres",
+			"weekdays": "D,L,M,M,J,V,S"
+		},
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
 			"title": "Votre disponibilité"
@@ -828,7 +839,7 @@
 				"headline": "Personnes participantes"
 			},
 			"gallery": {
-				"back": "Retour à la salle d'attente",
+				"back": "Retour au compte à rebours",
 				"headline": "Comment fonctionne le groupe",
 				"subline": "Trois choses utiles avant la première fois.",
 				"appointments": "Ajouter les dates au calendrier",
@@ -1051,7 +1062,8 @@
 			"noTimeHeadline": "Le groupe commence dès que la modération l'ouvre.",
 			"moreOpen": "La modération a ouvert le groupe. « Rejoindre » vous amène dans la conversation.",
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
-			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès."
+			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
+			"backToCountdown": "Retour au compte à rebours"
 		}
 	},
 	"help": {
@@ -3052,7 +3064,8 @@
 				"ready": "Tout est prêt — vous pouvez écrire",
 				"slow": "Cela prend plus de temps que d'habitude",
 				"entering": "Ouverture de votre espace de consultation …"
-			}
+			},
+			"headlineAlmost": "Presque terminé."
 		},
 		"selection": {
 			"remove": "Supprimer {{label}}"

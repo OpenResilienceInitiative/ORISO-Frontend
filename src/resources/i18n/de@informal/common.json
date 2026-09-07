@@ -84,6 +84,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Zurück zum Warteraum",
+			"confirm": "Termin buchen",
+			"headline": "Termin buchen",
+			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
+			"open": "Termin buchen",
+			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
+			"subline": "Wähle einen Tag und danach eine Uhrzeit.",
+			"times": "Freie Zeiten",
+			"weekdays": "S,M,D,M,D,F,S"
+		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
 			"title": "Deine Verfügbarkeit"
@@ -353,11 +364,12 @@
 			"noTimeHeadline": "Die Gruppe beginnt, sobald die Moderation sie öffnet.",
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"backToCountdown": "Zurück zum Countdown"
 		},
 		"info": {
 			"gallery": {
-				"back": "Zurück zum Warteraum",
+				"back": "Zurück zum Countdown",
 				"headline": "So funktioniert die Gruppe",
 				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
 				"appointments": "Termine in den Kalender",
@@ -1225,7 +1237,8 @@
 				"queued": "Gleich bist du an der Reihe …",
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
-			}
+			},
+			"headlineAlmost": "Fast geschafft."
 		}
 	},
 	"session": {

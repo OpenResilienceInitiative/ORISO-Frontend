@@ -212,6 +212,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Back to the waiting room",
+			"confirm": "Book appointment",
+			"headline": "Book an appointment",
+			"noTimes": "No times are free on this day. Please choose another day.",
+			"open": "Book appointment",
+			"pickDay": "Please choose a day in the calendar first.",
+			"subline": "Choose a day and then a time.",
+			"times": "Available times",
+			"weekdays": "S,M,T,W,T,F,S"
+		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
 			"title": "Your availability"
@@ -867,7 +878,7 @@
 				"headline": "Participants"
 			},
 			"gallery": {
-				"back": "Back to the waiting area",
+				"back": "Back to the countdown",
 				"headline": "How the group works",
 				"subline": "Three things that help before your first time.",
 				"appointments": "Add the dates to your calendar",
@@ -1028,7 +1039,8 @@
 			"noTimeHeadline": "The group starts as soon as the moderator opens it.",
 			"moreOpen": "The moderator has opened the group. “Join” takes you into the conversation.",
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
-			"missing": "This group no longer exists or you have no access to it."
+			"missing": "This group no longer exists or you have no access to it.",
+			"backToCountdown": "Back to the countdown"
 		}
 	},
 	"help": {
@@ -3038,7 +3050,8 @@
 				"ready": "All set — you can start writing",
 				"slow": "This is taking longer than usual",
 				"entering": "Opening your counselling room …"
-			}
+			},
+			"headlineAlmost": "Almost there."
 		},
 		"selection": {
 			"remove": "Remove {{label}}"

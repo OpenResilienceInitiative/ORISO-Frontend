@@ -35,7 +35,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Die Info-Galerie der Selbsthilfegruppe: drei Karten zum Scrollen — Format und Begleitung, Termine, Anonymität — mit „Zurück zum Warteraum“. Abnahmefläche neben `Group chat/Self-help entry room`.'
+					'Die Info-Galerie der Selbsthilfegruppe: drei Karten zum Scrollen — Format und Begleitung, Termine, Anonymität — mit „Zurück zum Countdown“. Abnahmefläche neben `Group chat/Self-help entry room`.'
 			}
 		}
 	}
@@ -114,7 +114,7 @@ export const InfoGalleryDesktop: StoryObj = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Auf 1440 pt: die Karten stehen als Block in der weißen Spalte, das Bild quadratisch und beschnitten, der Text auf drei Zeilen begrenzt — genau wie im Live-Chat-Warteraum, weil es dasselbe Karussell ist. Oben links führt „Zurück zum Warteraum“ zurück; die Galerie schiebt sich von rechts herein und wieder hinaus.'
+				story: 'Auf 1440 pt: die Karten stehen als Block in der weißen Spalte, das Bild quadratisch und beschnitten, der Text auf drei Zeilen begrenzt — genau wie im Live-Chat-Warteraum, weil es dasselbe Karussell ist. Oben links führt „Zurück zum Countdown“ zurück; die Galerie schiebt sich von rechts herein und wieder hinaus.'
 			}
 		}
 	}

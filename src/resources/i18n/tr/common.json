@@ -215,6 +215,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Bekleme odasına dön",
+			"confirm": "Randevu al",
+			"headline": "Randevu al",
+			"noTimes": "Bu gün için boş saat yok. Lütfen başka bir gün seçin.",
+			"open": "Randevu al",
+			"pickDay": "Lütfen önce takvimden bir gün seçin.",
+			"subline": "Önce bir gün, sonra bir saat seçin.",
+			"times": "Boş saatler",
+			"weekdays": "P,P,S,Ç,P,C,C"
+		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
 			"title": "Müsaitlik durumunuz"
@@ -828,7 +839,7 @@
 				"headline": "Katılımcılar"
 			},
 			"gallery": {
-				"back": "Bekleme alanına dön",
+				"back": "Geri sayıma dön",
 				"headline": "Grup nasıl işler",
 				"subline": "İlk kezden önce yardımcı olacak üç şey.",
 				"appointments": "Tarihleri takvime ekle",
@@ -1051,7 +1062,8 @@
 			"noTimeHeadline": "Grup, moderatör açar açmaz başlar.",
 			"moreOpen": "Moderatör grubu açtı. “Katıl” sizi görüşmeye götürür.",
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
-			"missing": "Bu grup artık yok ya da erişiminiz yok."
+			"missing": "Bu grup artık yok ya da erişiminiz yok.",
+			"backToCountdown": "Geri sayıma dön"
 		}
 	},
 	"help": {
@@ -3070,7 +3082,8 @@
 				"ready": "Her şey hazır — yazmaya başlayabilirsiniz",
 				"slow": "Bu her zamankinden uzun sürüyor",
 				"entering": "Görüşme alanınız açılıyor …"
-			}
+			},
+			"headlineAlmost": "Neredeyse tamam."
 		},
 		"selection": {
 			"remove": "{{label}} kaldır"

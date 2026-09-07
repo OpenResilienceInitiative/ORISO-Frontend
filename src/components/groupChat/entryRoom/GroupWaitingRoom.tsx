@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
@@ -9,6 +10,7 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
+import { AppointmentBookingPanel } from '../../appointmentBooking/AppointmentBookingPanel';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { Stage } from '../../stage/stage';
@@ -69,6 +71,7 @@ export const GroupWaitingRoom = ({
 	);
 	const [motionOff, setMotionOff] = useState(false);
 	const [moreOpen, setMoreOpen] = useState(false);
+	const [bookingOpen, setBookingOpen] = useState(false);
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -225,7 +228,22 @@ export const GroupWaitingRoom = ({
 					    stage, the header and the bar stay where they are (Frank,
 					    2026-09-07: "nur den Mittelteil bei den Selbsthilfegruppen
 					    abzuändern", "und auch ein Backbutton wieder haben"). */}
-					{moreOpen ? (
+					{bookingOpen ? (
+						/* No endpoint is invented here: the panel is a view, and
+						   the confirmed slot only closes it until the booking
+						   service is wired in. */
+						<AppointmentBookingPanel
+							onBack={() => setBookingOpen(false)}
+							onConfirm={() => setBookingOpen(false)}
+							/* Both panels leave the same room, so they name it
+							   the same way (Frank, 2026-09-07: "zurück zum
+							   Countdown"). */
+							backLabel={tr(
+								'backToCountdown',
+								'Zurück zum Countdown'
+							)}
+						/>
+					) : moreOpen ? (
 						<GroupInfoGallery onBack={() => setMoreOpen(false)} />
 					) : (
 						<>
@@ -323,6 +341,14 @@ export const GroupWaitingRoom = ({
 									mt: 'auto',
 									minHeight: 44,
 									display: 'flex',
+									/* Three controls do not fit one 343 px line,
+									   and a switch without its sentence is a
+									   riddle. So the row wraps on a phone: the
+									   switch keeps its label, the two buttons
+									   drop underneath and stay flush with the
+									   bar's right edge. */
+									flexWrap: { xs: 'wrap', sm: 'nowrap' },
+									rowGap: 1,
 									justifyContent: 'space-between',
 									alignItems: 'center',
 									gap: 1.5
@@ -352,7 +378,10 @@ export const GroupWaitingRoom = ({
 										{/* The label is what gives when a translation
 								    is longer than the German one — the button
 								    beside it must never be pushed past the
-								    edge the bar's buttons stop at. */}
+								    edge the bar's buttons stop at. On a phone the
+								    row wraps instead of dropping this sentence —
+								    a naked switch says nothing (Frank drew the
+								    row with its label, 2026-09-05). */}
 										<Typography
 											sx={{
 												fontSize: 13,
@@ -372,16 +401,46 @@ export const GroupWaitingRoom = ({
 								) : (
 									<span />
 								)}
-								<Button
-									variant="outlined"
-									size="small"
-									endIcon={<ArrowForwardRoundedIcon />}
-									sx={moreButtonSx}
-									onClick={() => setMoreOpen(true)}
-									data-testid="group-entry-more"
+								<Box
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: 1,
+										minWidth: 0,
+										/* On the wrapped phone line the pair
+										   takes the whole width, so its outer
+										   edges sit on the bar's edges again. */
+										width: { xs: '100%', sm: 'auto' },
+										justifyContent: {
+											xs: 'space-between',
+											sm: 'flex-end'
+										}
+									}}
 								>
-									{tr('more', 'Mehr erfahren')}
-								</Button>
+									<Button
+										variant="outlined"
+										size="small"
+										startIcon={<CalendarMonthRoundedIcon />}
+										sx={moreButtonSx}
+										onClick={() => setBookingOpen(true)}
+										data-testid="group-entry-book"
+									>
+										{t(
+											'booking.appointment.open',
+											'Termin buchen'
+										)}
+									</Button>
+									<Button
+										variant="outlined"
+										size="small"
+										endIcon={<ArrowForwardRoundedIcon />}
+										sx={moreButtonSx}
+										onClick={() => setMoreOpen(true)}
+										data-testid="group-entry-more"
+									>
+										{tr('more', 'Mehr erfahren')}
+									</Button>
+								</Box>
 							</Box>
 						</>
 					)}
@@ -441,7 +500,8 @@ const moreButtonSx = {
 	'fontSize': 13,
 	'lineHeight': '18px',
 	'& .MuiButton-endIcon': { ml: 0.5 },
-	'& .MuiButton-endIcon > *': { fontSize: 16 },
+	'& .MuiButton-startIcon': { mr: 0.5 },
+	'& .MuiButton-endIcon > *, & .MuiButton-startIcon > *': { fontSize: 16 },
 	'&::after': {
 		content: '""',
 		position: 'absolute',
