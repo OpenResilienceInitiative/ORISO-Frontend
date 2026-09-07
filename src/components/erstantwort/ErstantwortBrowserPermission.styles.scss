@@ -1,0 +1,48 @@
+@import '../../resources/styles/settings';
+@import './ErstantwortSequence.styles.scss';
+
+/* Zweig „Benachrichtigungen des Browsers" (Vorschlag 07.09.2026).
+ *
+ * Sitzt im Slot einer Erstantwort-Blase und gestaltet nur, was die Blase nicht
+ * mitbringt. Farben ausschließlich über M3-Rollen: `--m3-secondary` /
+ * `--m3-error` sind Textrollen, keine `on-*`-Rolle steht als Hintergrund oder
+ * Rahmen (Hausregel, `m3Sweep.test.ts` Test #27). Der Knopf erbt die Pille aus
+ * `ErstantwortSequence.styles.scss`, damit in einer Sequenz nicht zwei
+ * Knopfformen desselben Absenders stehen.
+ */
+
+.erstantwortPermission {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 12px;
+	font-family: $font-family-sans-serif;
+}
+
+.erstantwortPermission__button {
+	@extend %erstantwort-pill-affordance;
+
+	/* Die Blase ist eine streckende Flex-Spalte — ohne das spannt der Knopf
+	   über die volle Breite und liest sich als Banner statt als Angebot. */
+	align-self: flex-start;
+	padding: 10px 18px;
+}
+
+.erstantwortPermission__status {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.erstantwortPermission__status--done {
+	color: var(--m3-secondary, #4c555f);
+}
+
+.erstantwortPermission__status--blocked {
+	/* Kein Fehler der Person, also die Fehler-*Textrolle* und kein gefüllter
+	   Fehlercontainer: ein roter Kasten für „Ihr Browser sagt nein" liest sich
+	   als Scheitern der Beratung. */
+	color: var(--m3-error, #b1005e);
+	font-weight: 400;
+}
