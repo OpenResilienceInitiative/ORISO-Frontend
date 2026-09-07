@@ -278,3 +278,90 @@ export const erstantwortBrowserBranchBaustein = (
 	headline: flowText(ERSTANTWORT_BROWSER_BRANCH.headline, translate),
 	body: flowText(ERSTANTWORT_BROWSER_BRANCH.body, translate)
 });
+
+/* --------------------------------------------------------------------------
+   Zusätze vom 07.09.2026, abends — Franks Ansagen nach dem ersten Durchgang
+   -------------------------------------------------------------------------- */
+
+/**
+ * **Der quadratische Bildplatz in der Erfolgsnachricht.**
+ *
+ * Frank: die Erfolgsnachricht ist Modul 1 und enthält alles — kurzer Gruß, ein
+ * **quadratischer** Bildplatz, und direkt dabei die häufigen Fragen. Er passt
+ * seine Illustration auf „maximal quadratisch" an, also reserviert das Layout
+ * 1:1 und erfindet keine Grafik.
+ *
+ * Der Text unten ist der **Auftrag an die Illustration**, nicht Produkttext: er
+ * steht im Platzhalter und verschwindet mit ihm, sobald die Zeichnung da ist.
+ * Deshalb hat er auch keinen i18n-Schlüssel — er wird nie ausgeliefert.
+ */
+export const ERSTANTWORT_IMAGE_BRIEF =
+	'Die Anfrage kommt an: ein Umschlag erreicht ein offenes Fenster. Ruhig, ohne Personen, ohne Text im Bild.';
+
+/**
+ * **„Diese Hinweise nicht wieder anzeigen" — Franks dritte Ansage.**
+ *
+ * Er will den Fragenblock nicht bei jeder Anmeldung sehen. Der Wortlaut sagt
+ * **was** verschwindet („diese Hinweise"), nicht „das hier": ein Kästchen, von
+ * dem man nicht weiß, was es ausblendet, wird entweder nie oder aus Versehen
+ * angehakt.
+ *
+ * **Was daran nicht Text ist**, steht im Verdrahtungspapier §14: ein solcher
+ * Zustand braucht einen eigenen Auslöser und einen gespeicherten Zustand, und
+ * ADR-018 §4 verbietet neuen Baustein-Zustand im Ereignis.
+ */
+export const ERSTANTWORT_DISMISS = {
+	label: entry(
+		'erstantwort.faq.dismiss.label',
+		'Diese Hinweise nicht wieder anzeigen'
+	),
+	/** Was danach an der Stelle des Blocks steht — die Zeile, die ihn zurückholt. */
+	dismissed: entry(
+		'erstantwort.faq.dismiss.dismissed',
+		'Die häufigen Fragen sind ausgeblendet.'
+	),
+	restore: entry('erstantwort.faq.dismiss.restore', 'Wieder anzeigen')
+} as const;
+
+/**
+ * **Die Zeitmarke vor der Einwilligungsnachricht (Modul 4).**
+ *
+ * Modul 4 kommt **nicht** mit den anderen vier: die vier oben stehen in der
+ * Sekunde, in der die Anfrage abgesendet wird, Modul 4 erst, wenn eine
+ * Beratungsstelle die Anfrage angenommen hat — Minuten oder Tage später. Ohne
+ * eine sichtbare Trennung liest sich die Kette als eine einzige Zustellung, und
+ * die Person wundert sich, warum sie fünf Nachrichten auf einmal bekommt und
+ * eine davon von einer Beratungsstelle spricht, die sie noch nie gesehen hat.
+ *
+ * Umgesetzt mit dem vorhandenen `MessageDateDivider` (Zeitleiste, Figma
+ * 7539-29134) — kein neues Trennelement, damit die Kette aussieht wie der
+ * Verlauf, in dem sie steht.
+ */
+export const ERSTANTWORT_LATER_MARKER = entry(
+	'erstantwort.handoverConsent.timeMarker',
+	'Später — die Beratungsstelle hat angenommen'
+);
+
+/**
+ * **Die Ansage der Live-Region beim Weiterspringen.**
+ *
+ * Frank verlangt, dass nach jeder Antwort „smooth und angenehm" zur nächsten
+ * Stelle weitergeleitet wird. Sichtbar leistet das der weiche Bildlauf; für
+ * jemanden mit Screenreader leistet ihn **diese** Zeile, weil eine frisch
+ * montierte Live-Region nichts ansagt. Sie steht deshalb dauerhaft im DOM und
+ * bekommt nur neuen Inhalt.
+ */
+export const ERSTANTWORT_ADVANCE_ANNOUNCEMENT = entry(
+	'erstantwort.flow.advanced',
+	'Neue Nachricht von Carimat: {{subtitle}}'
+);
+
+/** Setzt die Ansage zusammen, ohne einen Übersetzungsaufruf zu brauchen. */
+export const advanceAnnouncement = (
+	subtitle: string,
+	translate?: (key: string, defaultValue: string) => string
+): string =>
+	flowText(ERSTANTWORT_ADVANCE_ANNOUNCEMENT, translate).replace(
+		'{{subtitle}}',
+		subtitle
+	);

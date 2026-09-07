@@ -1,0 +1,61 @@
+@import '../../resources/styles/settings';
+
+/* The reserved square picture area of Modul 1 (Frank, 2026-09-07 evening).
+ *
+ * `aspect-ratio: 1 / 1` is the whole point of the file: the area is square
+ * because the artwork will be at most square, and a slot that reserves any
+ * other ratio decides the crop before the drawing exists.
+ *
+ * Colours are M3 roles with literal fallbacks (m3Sweep #26). `--m3-surface` is
+ * used as a background and `--m3-on-surface-variant` only as a text colour, so
+ * the role-misuse lint (#27) stays green.
+ */
+
+.erstantwortImageSlot {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	width: 100%;
+
+	/* The reservation itself. Height follows width, so the bubble does not
+	   need to know the number — and the square survives every viewport. */
+	aspect-ratio: 1 / 1;
+
+	box-sizing: border-box;
+	padding: 8px 14px;
+	margin-top: 4px;
+	border: 1px dashed var(--m3-outline, #747878);
+	border-radius: 12px;
+
+	/* One tone lighter than the bubble it sits in, so the reserved area reads
+	   as an empty panel rather than as a dashed line on nothing — the same
+	   idiom as the Modul 3 step slot. */
+	background: var(--m3-surface, #fcf9f9);
+	color: var(--m3-on-surface-variant, #444748);
+	text-align: center;
+}
+
+.erstantwortImageSlot__kicker {
+	font-family: $font-family-sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+}
+
+.erstantwortImageSlot__brief {
+	font-family: $font-family-sans-serif;
+	font-size: 12.5px;
+	line-height: 1.4;
+}
+
+/* A bubble that holds the slot takes the full measure instead of shrinking to
+ * its text: `.erstantwort__bubble` is `width: fit-content`, so without this the
+ * greeting line would size the bubble and the square would be clamped to the
+ * width of one sentence.
+ */
+.erstantwort__bubble:has(.erstantwortImageSlot) {
+	width: 100%;
+}

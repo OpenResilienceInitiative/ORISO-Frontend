@@ -22,7 +22,18 @@ import {
 import './ErstantwortSequence.styles.scss';
 
 /**
- * # Modul 1 — Erfolgsmeldung + ein Akkordeon
+ * # Modul 1 — Erfolgsmeldung + ein Akkordeon (Fassung 07.09. **vormittags**)
+ *
+ * > **Überholt am Abend des 07.09.2026.** Die geltende Fassung steht als
+ * > `(m1-erfolg) …` / `(m1-notruf) …` / `(m1-nicht-wieder) …` daneben
+ * > (`ErstantwortModul1Erfolg.stories.tsx`). Drei Dinge haben sich geändert:
+ * > die Nachricht bekommt einen **quadratischen Bildplatz**, die
+ * > Notfallnummern gehen **zurück ins Akkordeon** und werden dort **rot**
+ * > statt offen, und es gibt eine Variante mit „nicht wieder anzeigen".
+ * >
+ * > Diese Datei bleibt unverändert stehen, damit sichtbar bleibt, **was**
+ * > entschieden wurde und nicht nur, was jetzt gilt. Sie ist Vergleichsstand,
+ * > kein Angebot.
  *
  * **Vorschlag, nichts ist entschieden.** Begleitpapier:
  * `0 - Docs/VERDRAHTUNG-modul1-faq-2026-09-07.md`. Der ältere, breitere

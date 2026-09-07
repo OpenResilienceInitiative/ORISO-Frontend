@@ -1,0 +1,61 @@
+@import '../../resources/styles/settings';
+
+/* „Diese Hinweise nicht wieder anzeigen" — Franks dritte Ansage vom
+ * 07.09.2026, abends.
+ *
+ * Das Kästchen sitzt **unter** den Zeilen, nicht darüber: darüber wäre das
+ * erste, was jemand in der Erfolgsnachricht liest, ein Angebot, sie
+ * wegzuklicken. Colours are M3 roles with literal fallbacks (m3Sweep #26).
+ */
+
+.erstantwortDismiss {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+
+	/* Die 48px-Regel der Plattform gilt auch hier: die Bezugsperson dieser
+	   Nachricht ist älter und auf einem Telefon. */
+	min-height: 48px;
+	margin-top: 4px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-family: $font-family-sans-serif;
+	font-size: 14px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.erstantwortDismiss__box {
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: var(--m3-primary, #a5000a);
+	cursor: pointer;
+
+	/* Die Fokusring-Konvention der Plattform — nie eine Umrandung entfernen,
+	   ohne eine gleich sichtbare zurückzugeben (ORISO-Frontend#113). */
+	&:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+}
+
+.erstantwortDismiss__restore {
+	align-self: flex-start;
+	min-height: 44px;
+	margin-top: 2px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--m3-on-surface, #1a1c1e);
+	font-family: $font-family-sans-serif;
+	font-size: 15px;
+	font-weight: 600;
+	text-decoration: underline;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+}
