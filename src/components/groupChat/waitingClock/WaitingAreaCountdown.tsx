@@ -684,7 +684,12 @@ export const WaitingAreaCountdown = ({
 	const backToClock = tr('cardBack', 'Zurück zur Uhr');
 	// The back is as wide as the clock it replaces, so its type grows with the
 	// clock: 15 px on a phone, up to 19 px on a desktop block.
-	const textFont = Math.round(Math.min(19, Math.max(15, size * 0.42)));
+	/* The card is as wide as the clock it replaces, so on a 1440 desktop it is
+	   a very large surface for one sentence. The type grows with it — up to
+	   30 px — and the line stays inside a reading width, otherwise the text
+	   floats lost in the middle of the card (Frank, 2026-09-07: "kannst dir
+	   hier auch ein bisschen mehr Mühe geben im Design"). */
+	const textFont = Math.round(Math.min(30, Math.max(15, size * 0.62)));
 	const navButtonSx = {
 		'color': '#fff',
 		'&.Mui-disabled': { color: 'rgba(255,255,255,.35)' }
@@ -727,7 +732,9 @@ export const WaitingAreaCountdown = ({
 				className="waitingClock__backText"
 				style={{
 					fontSize: currentPage.greeting ? textFont + 1 : textFont,
-					fontWeight: currentPage.greeting ? 600 : 500
+					fontWeight: currentPage.greeting ? 600 : 500,
+					maxWidth: '32ch',
+					marginInline: 'auto'
 				}}
 			>
 				{currentPage.text}
