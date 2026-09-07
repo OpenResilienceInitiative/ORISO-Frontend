@@ -3083,28 +3083,23 @@
 			"senderRole": "Hızlı Kılavuz"
 		},
 		"handoverConsent": {
-			"intro": "Talebiniz {{organisation}} tarafından kabul edildi. Bundan sonra bu danışmanlık için bu danışmanlık merkezinin künyesi ve gizlilik politikası geçerlidir.",
-			"agencyFallback": "bu danışmanlık merkezinin",
+			"intro": "Talebiniz {{organisation}} tarafından kabul edildi. Bu görüşme için artık bu danışmanlık merkezinin künyesi ve gizlilik politikası geçerlidir.",
+			"agencyFallback": "Bu danışmanlık merkezi",
+			"subtitle": {
+				"decide": "Lütfen bir kez karar verin",
+				"read": "Lütfen kısaca okuyun"
+			},
 			"links": {
 				"imprint": "Danışmanlık merkezinin künyesi",
 				"privacy": "Danışmanlık merkezinin gizlilik politikası",
 				"unavailable": "{{document}} — şu anda erişilemiyor"
 			},
-			"asSpecified": {
-				"switchLabel": "Diğer danışmanların erişimi",
-				"on": "Aynı danışmanlık merkezindeki diğer danışmanlar erişim aldığında her zaman iznimi vermek istiyorum.",
-				"off": "Bu danışmanlık merkezindeki diğer danışmanların onayım olmadan görüşmeyi okumasına izin veriyorum."
-			},
-			"grantAccess": {
-				"switchLabel": "Erişime izin ver",
-				"on": "Bu danışmanlık merkezindeki diğer danışmanların bu görüşmeyi okumasına izin veriyorum.",
-				"off": "Erişime izin vermiyorum. Okumak isteyen önce bana sormalıdır."
-			},
-			"requireAsking": {
-				"switchLabel": "Önce bana sor",
-				"on": "Bu danışmanlık merkezindeki diğer danışmanlar görüşmeyi okumadan önce her seferinde bana sorulmasını istiyorum.",
-				"off": "Bu danışmanlık merkezindeki diğer danışmanların onayım olmadan görüşmeyi okumasına izin veriyorum."
-			},
+			"context": "Bu danışmanlık merkezindeki tüm danışmanların görüşmenize teknik olarak erişimi vardır. Yalnızca bir neden varsa okurlar — örneğin hastalık, izin veya mesleki bir soru. Her okuma kayıt altına alınır.",
+			"switchLabel": "Sormadan okuma",
+			"on": "Bu danışmanlık merkezindeki diğer danışmanlar size önceden sormadan okuyabilir.",
+			"off": "Bu danışmanlık merkezindeki diğer danışmanlar okumadan önce size sormak zorundadır.",
+			"hint": "Bunu istediğiniz zaman değiştirebilirsiniz.",
+			"muted": "Bu danışmanlık merkezinde diğer danışmanlar sormadan okuyabilir. Kayıt olurken bu koşulları kabul ettiniz. Bunun ne anlama geldiği yukarıdaki gizlilik politikasında açıklanmıştır.",
 			"saving": "Ayar kaydediliyor …",
 			"retry": "Tekrar dene"
 		},

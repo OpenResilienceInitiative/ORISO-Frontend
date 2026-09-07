@@ -1,33 +1,20 @@
 /*
- * Post-acceptance handover-consent element.
+ * Modul 4 — the handover-consent controls inside the Carimat bubble.
  *
- * It is a Carimat system message, not a card: every surface, avatar, bubble
- * and time rail comes from `.messageItem*` in `message.styles.scss` and from
- * `caseHandoverClientCards.styles.scss`. Only the payload — copy, the two
- * legal links, the switch row and the state sentence — is styled here, so the
- * element cannot drift away from the notices it sits between.
+ * The shell (avatar, name, sub-line, bubble, radius, rhythm) belongs to
+ * `ErstantwortSequence` and `PseudonymCard`, exactly as it does for the sibling
+ * modules — nothing of it is restated here. Only the payload is styled: the two
+ * legal rows, the paragraph that tells the truth about who already has access,
+ * the switch row and its sentence.
  *
- * All colours go through M3 roles with an explicit fallback, as the sweep
- * guard (`src/utils/theme/m3Sweep.test.ts`, tests #25/#26) requires.
+ * All colours go through M3 roles with an explicit fallback, as the sweep guard
+ * (`src/utils/theme/m3Sweep.test.ts`, tests #25/#26) requires.
  */
 .handoverConsent {
 	display: flex;
-	justify-content: flex-start;
-	padding: 16px 16px 0;
-}
-
-.handoverConsent .messageItem__message--systemNotification {
-	width: min(720px, 100%);
-	max-width: min(720px, 100%);
-}
-
-.handoverConsent__copy {
-	margin: 0;
-	font-size: 15px;
-	line-height: 22px;
-	font-weight: 400;
-	letter-spacing: normal;
-	color: var(--m3-on-surface, #1b1b1c);
+	flex-direction: column;
+	align-items: stretch;
+	margin-top: 12px;
 }
 
 /*
@@ -41,11 +28,30 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 4px;
-	margin: 16px 0 0;
+	gap: 6px;
+}
+
+.handoverConsent__linkRow {
+	display: inline-flex;
+
+	/* Not centred: at 390px the Datenschutzerklärung label wraps to two lines,
+	   and a centred icon then floats beside the gap between them instead of
+	   marking where the entry starts. */
+	align-items: flex-start;
+	gap: 8px;
 	font-size: 15px;
 	line-height: 22px;
 	letter-spacing: normal;
+	text-align: left;
+}
+
+/* Fixed box so the two labels start on the same column even when one icon is
+   optically narrower than the other; the offset centres it on the first line. */
+.handoverConsent__linkIcon {
+	flex: 0 0 20px;
+	width: 20px;
+	height: 20px;
+	margin-top: 1px;
 }
 
 .handoverConsent__linkButton {
@@ -53,13 +59,11 @@
 	background: none;
 	padding: 0;
 	font: inherit;
-	text-align: left;
 	cursor: pointer;
 }
 
 .handoverConsent__link {
 	color: var(--m3-primary, #a5000a);
-	text-decoration: underline;
 
 	&:focus-visible {
 		outline: 2px solid var(--m3-secondary, #4c555f);
@@ -67,31 +71,50 @@
 	}
 }
 
-/* Still loading: the label is shown, but never as an anchor — a link that
-   does not go anywhere yet is worse than a visibly pending one. */
+/* Still loading: the label is shown, but never as an anchor — a link that does
+   not go anywhere yet is worse than a visibly pending one. */
 .handoverConsent__linkPlaceholder {
 	color: var(--m3-on-surface-variant, #444748);
-	text-decoration: underline dotted;
 	opacity: 0.6;
 }
 
 /* Resolution produced nothing. ADR-021 decision 7 makes reachability of the
-   imprint a duty on every level, so this states the failure instead of
-   hiding the row. */
+   imprint a duty on every level, so this states the failure instead of hiding
+   the row. */
 .handoverConsent__linkMissing {
 	color: var(--m3-error, #b1005e);
+}
+
+/*
+ * The ADR-002 paragraph. Body copy, not a caption: it is the sentence that
+ * keeps the switch from reading as a promise of technical secrecy.
+ */
+.handoverConsent__context {
+	margin: 16px 0 0;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 400;
+	letter-spacing: normal;
+	color: var(--m3-on-surface-variant, #444748);
 }
 
 .handoverConsent__switchRow {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 24px;
-	margin-top: 20px;
+	gap: 12px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 }
 
 .handoverConsent__switchRow--busy {
 	opacity: 0.7;
+}
+
+.handoverConsent__switchIcon {
+	flex: 0 0 20px;
+	width: 20px;
+	height: 20px;
 }
 
 .handoverConsent__switchLabel {
@@ -106,14 +129,45 @@
 /*
  * The sentence carries the entire meaning of the control, so it is body copy
  * directly under the switch — not a caption, not a tooltip, not grey-on-grey.
+ * It is indented to the label column so it reads as belonging to the switch.
  */
 .handoverConsent__stateLine {
-	margin: 8px 0 0;
+	margin: 8px 0 0 32px;
 	font-size: 15px;
 	line-height: 22px;
 	font-weight: 400;
 	letter-spacing: normal;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.handoverConsent__hint {
+	margin: 4px 0 0 32px;
+	font-size: 13px;
+	line-height: 18px;
+	letter-spacing: normal;
 	color: var(--m3-on-surface-variant, #444748);
+}
+
+/* MUTED: the same subject keeps the same icon, so a person who sees both
+   variants recognises which sentence replaced which control. */
+.handoverConsent__mutedNotice {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 16px 0 0;
+	padding-top: 16px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	font-size: 15px;
+	line-height: 22px;
+	letter-spacing: normal;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.handoverConsent__mutedIcon {
+	flex: 0 0 20px;
+	width: 20px;
+	height: 20px;
+	margin-top: 1px;
 }
 
 .handoverConsent__saving {
@@ -151,14 +205,14 @@
 	}
 }
 
-/* Narrow stream: the switch keeps its size, the label wraps above it rather
-   than squeezing the track. */
+/* Narrow stream: the switch keeps its size, the label takes what is left. */
 @media screen and (width <= 899px) {
-	.handoverConsent {
-		padding: 12px 12px 0;
+	.handoverConsent__switchRow {
+		gap: 8px;
 	}
 
-	.handoverConsent__switchRow {
-		gap: 16px;
+	.handoverConsent__stateLine,
+	.handoverConsent__hint {
+		margin-left: 28px;
 	}
 }

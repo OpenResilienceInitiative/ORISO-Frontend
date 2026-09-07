@@ -3083,28 +3083,23 @@
 			"senderRole": "Guide rapide"
 		},
 		"handoverConsent": {
-			"intro": "Votre demande a été acceptée par {{organisation}}. À partir de maintenant, les mentions légales et la politique de confidentialité de ce centre de consultation s'appliquent à cet entretien.",
-			"agencyFallback": "ce centre de consultation",
+			"intro": "{{organisation}} a accepté votre demande. Les mentions légales et la politique de confidentialité de ce centre de consultation s'appliquent désormais à cet entretien.",
+			"agencyFallback": "Ce centre de consultation",
+			"subtitle": {
+				"decide": "À vous de décider",
+				"read": "À lire rapidement"
+			},
 			"links": {
 				"imprint": "Mentions légales du centre de consultation",
 				"privacy": "Politique de confidentialité du centre de consultation",
 				"unavailable": "{{document}} — actuellement indisponible"
 			},
-			"asSpecified": {
-				"switchLabel": "Accès par d'autres conseillers",
-				"on": "Je souhaite toujours donner mon autorisation lorsque d'autres conseillers du même centre de consultation obtiennent l'accès.",
-				"off": "J'autorise d'autres conseillers de ce centre de consultation à consulter cet entretien sans mon consentement."
-			},
-			"grantAccess": {
-				"switchLabel": "Autoriser l'accès",
-				"on": "J'autorise d'autres conseillers de ce centre de consultation à consulter cet entretien.",
-				"off": "Je n'autorise aucun accès. Toute personne souhaitant consulter cet entretien doit me le demander au préalable."
-			},
-			"requireAsking": {
-				"switchLabel": "Me demander au préalable",
-				"on": "Je souhaite être consulté(e) à chaque fois avant que d'autres conseillers de ce centre de consultation ne consultent cet entretien.",
-				"off": "J'autorise d'autres conseillers de ce centre de consultation à consulter cet entretien sans mon consentement."
-			},
+			"context": "Tous les conseillers de ce centre de consultation ont techniquement accès à votre entretien. Ils ne le lisent que s'il y a une raison — par exemple une maladie, des vacances ou une question professionnelle. Chaque accès est consigné.",
+			"switchLabel": "Lecture sans demande préalable",
+			"on": "D'autres conseillers de ce centre de consultation peuvent lire votre entretien sans vous demander au préalable.",
+			"off": "D'autres conseillers de ce centre de consultation doivent vous demander au préalable avant de lire votre entretien.",
+			"hint": "Vous pouvez modifier ce réglage à tout moment.",
+			"muted": "Dans ce centre de consultation, d'autres conseillers peuvent lire votre entretien sans demande préalable. Vous avez accepté ces conditions lors de votre inscription. La politique de confidentialité ci-dessus explique ce que cela signifie.",
 			"saving": "Enregistrement du paramètre …",
 			"retry": "Réessayer"
 		},
