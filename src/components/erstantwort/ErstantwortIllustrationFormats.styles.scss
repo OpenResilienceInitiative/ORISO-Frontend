@@ -1,0 +1,54 @@
+@import '../../resources/styles/settings';
+
+/* Illustration format comparison — story (v3) of
+ * VORSCHLAG-erstantwort-faq-layout-2026-09-07.md.
+ *
+ * Two of the three treatments are candidates for
+ * `EnquiryReceivedIllustration.styles.scss`; the third is what ships today.
+ * Nothing here changes the shipped component — the modifiers are additive.
+ */
+
+/* The shipped rule caps by width and only ever meets a 16:10 file. An `<img>`
+ * is a replaced element, so `width: 100%` on a 4:5 file yields a 1.25× tall
+ * box: 320px wide becomes 400px high. Same class, different picture, very
+ * different bubble. */
+.enquiryReceivedIllustration--today {
+	img {
+		display: block;
+		width: 100%;
+		height: auto;
+		max-width: 320px;
+		border-radius: $box-border-radius;
+	}
+}
+
+/* The proposal: cap the **height**, let the width follow. The whole picture
+ * stays visible — no `object-fit: cover`, because a three-panel illustration
+ * has three focal points and a height crop cuts off the first or the last of
+ * them. `max-width: 100%` keeps it inside the bubble on the narrowest phone. */
+.enquiryReceivedIllustration--proposed {
+	img {
+		display: block;
+		width: auto;
+		height: auto;
+		max-width: 100%;
+		max-height: 260px;
+		border-radius: $box-border-radius;
+	}
+}
+
+/* Story scaffolding for the side-by-side comparison. */
+.erstantwortFormatCompare {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+}
+
+.erstantwortFormatRow__caption {
+	margin: 0 0 8px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-family: $font-family-sans-serif;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.4;
+}
