@@ -10,6 +10,10 @@ import {
 	getSupervisionListState,
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
+import {
+	sessionKeyFromPersonId,
+	sessionSearchKeyOf
+} from './sessionSearchPeople';
 
 export type SessionToolbarChipFilter =
 	| 'unread'
@@ -262,12 +266,18 @@ export function sessionMatchesToolbar(
 		}
 	}
 
-	const toolbarPersonId =
-		String(raw.session?.id || raw.chat?.id || '') ||
-		String(raw.chat?.matrixRoomId || '') ||
-		String(extended.item?.id || '');
+	// Person rows are `<sessionId>:<role>` since #1195 (clients and counsellors
+	// are separate rows), while this axis still filters whole sessions — so the
+	// role suffix is stripped before comparing.
+	const toolbarPersonId = sessionSearchKeyOf(raw, extended);
 	if (selectedPersonIds.length > 0) {
-		if (!toolbarPersonId || !selectedPersonIds.includes(toolbarPersonId)) {
+		const selectedSessionKeys = selectedPersonIds.map(
+			sessionKeyFromPersonId
+		);
+		if (
+			!toolbarPersonId ||
+			!selectedSessionKeys.includes(toolbarPersonId)
+		) {
 			return false;
 		}
 	}
