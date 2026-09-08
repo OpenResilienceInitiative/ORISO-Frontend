@@ -4536,7 +4536,8 @@
 			"headline": "Notification par e-mail",
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
-			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",

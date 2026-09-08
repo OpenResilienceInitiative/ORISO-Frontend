@@ -4566,7 +4566,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
-			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support."
 		},
 		"accountProtection": {
 			"headline": "Ihr Zugang, zusätzlich geschützt",
