@@ -77,10 +77,46 @@ export const ErstantwortEmailOverlay: React.FC<
 				setIsSaved(true);
 				onSaved();
 			})
-			.catch((error: Response) => {
+			.catch((error: unknown) => {
 				setIsSaving(false);
-				const reason = error?.headers?.get(FETCH_ERRORS.X_REASON);
 				setLabelState('invalid');
+
+				if (error instanceof Error) {
+					if (error.message === FETCH_ERRORS.FORBIDDEN) {
+						setErrorText(
+							t(
+								'erstantwort.emailNotification.notAllowed',
+								'This account is not allowed to store an e-mail address. Please contact our support.'
+							)
+						);
+						return;
+					}
+					if (
+						error.message === FETCH_ERRORS.ABORTED ||
+						error.message === FETCH_ERRORS.GATEWAY_TIMEOUT ||
+						error.message === FETCH_ERRORS.TIMEOUT ||
+						error instanceof TypeError
+					) {
+						setErrorText(
+							t(
+								'profile.notifications.noEmail.modal.errorMessage',
+								'Unfortunately, we cannot save your e-mail address at the moment. Please try again later or contact our support.'
+							)
+						);
+						return;
+					}
+					setErrorText(
+						t(
+							'erstantwort.emailNotification.saveFailed',
+							'Saving failed. Please try again.'
+						)
+					);
+					return;
+				}
+
+				const reason = (error as Response)?.headers?.get(
+					FETCH_ERRORS.X_REASON
+				);
 				setErrorText(
 					reason === X_REASON.EMAIL_NOT_AVAILABLE
 						? t(
