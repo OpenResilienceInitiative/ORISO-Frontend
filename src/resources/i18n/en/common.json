@@ -1881,7 +1881,7 @@
 				"text": "Your colleague accepted the case.",
 				"coAccess": {
 					"title": "Access offer accepted",
-					"text": "Your colleague accepted your access offer. You remain responsible for the case."
+					"text": "{{toConsultantName}} accepted your access offer. You remain responsible for the case."
 				},
 				"generic": {
 					"title": "Offer accepted",
@@ -1893,7 +1893,7 @@
 				"text": "Your colleague did not accept the case. It stays with you.",
 				"coAccess": {
 					"title": "Access offer declined",
-					"text": "Your colleague declined your access offer. Access will not be activated."
+					"text": "{{toConsultantName}} declined your access offer. Access will not be activated."
 				},
 				"generic": {
 					"title": "Offer declined",
@@ -1905,7 +1905,7 @@
 				"text": "Your handover offer expired. The case stays with you.",
 				"coAccess": {
 					"title": "Access offer expired",
-					"text": "Your access offer expired. Access will not be activated."
+					"text": "{{toConsultantName}} did not answer your access offer in time. Access will not be activated."
 				},
 				"generic": {
 					"title": "Offer expired",

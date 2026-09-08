@@ -1884,7 +1884,7 @@
 				"text": "Meslektaşınız vakayı kabul etti.",
 				"coAccess": {
 					"title": "Erişim teklifi kabul edildi",
-					"text": "Meslektaşınız erişim teklifinizi kabul etti. Vakanın sorumluluğu sizde kalır."
+					"text": "{{toConsultantName}} erişim teklifinizi kabul etti. Vakanın sorumluluğu sizde kalır."
 				},
 				"generic": {
 					"title": "Teklif kabul edildi",
@@ -1896,7 +1896,7 @@
 				"text": "Meslektaşınız vakayı kabul etmedi. Vaka sizde kalıyor.",
 				"coAccess": {
 					"title": "Erişim teklifi reddedildi",
-					"text": "Meslektaşınız erişim teklifinizi reddetti. Erişim etkinleştirilmeyecek."
+					"text": "{{toConsultantName}} erişim teklifinizi reddetti. Erişim etkinleştirilmeyecek."
 				},
 				"generic": {
 					"title": "Teklif reddedildi",
@@ -1908,7 +1908,7 @@
 				"text": "Devir teklifiniz sona erdi. Vaka sizde kalıyor.",
 				"coAccess": {
 					"title": "Erişim teklifinin süresi doldu",
-					"text": "Erişim teklifinizin süresi doldu. Erişim etkinleştirilmeyecek."
+					"text": "{{toConsultantName}} erişim teklifinizi zamanında yanıtlamadı. Erişim etkinleştirilmeyecek."
 				},
 				"generic": {
 					"title": "Teklifin süresi doldu",

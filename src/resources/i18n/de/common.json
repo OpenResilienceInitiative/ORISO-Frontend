@@ -1905,7 +1905,7 @@
 				"text": "Die Kolleg:in hat den Fall angenommen.",
 				"coAccess": {
 					"title": "Zugriffsangebot angenommen",
-					"text": "Die Kolleg:in hat dein Zugriffsangebot angenommen. Du bleibst für den Fall verantwortlich."
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot angenommen. Du bleibst für den Fall verantwortlich."
 				},
 				"generic": {
 					"title": "Angebot angenommen",
@@ -1917,7 +1917,7 @@
 				"text": "Die Kolleg:in hat den Fall nicht angenommen. Er bleibt bei dir.",
 				"coAccess": {
 					"title": "Zugriffsangebot abgelehnt",
-					"text": "Die Kolleg:in hat dein Zugriffsangebot abgelehnt. Der Zugriff wird nicht aktiviert."
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot abgelehnt. Der Zugriff wird nicht aktiviert."
 				},
 				"generic": {
 					"title": "Angebot abgelehnt",
@@ -1929,7 +1929,7 @@
 				"text": "Dein Übergabe-Angebot ist abgelaufen. Der Fall bleibt bei dir.",
 				"coAccess": {
 					"title": "Zugriffsangebot abgelaufen",
-					"text": "Dein Zugriffsangebot ist abgelaufen. Der Zugriff wird nicht aktiviert."
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot nicht rechtzeitig beantwortet. Der Zugriff wird nicht aktiviert."
 				},
 				"generic": {
 					"title": "Angebot abgelaufen",

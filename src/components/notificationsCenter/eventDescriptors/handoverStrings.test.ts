@@ -52,9 +52,9 @@ describe('actual handover notification params → visible German strings', () =>
 	it.each(['accepted', 'declined', 'expired'])(
 		'keeps %s CO_ACCESS copy about the offer, not transferred ownership',
 		(suffix) => {
-			expect(
-				render('CO_ACCESS', `case.handover.${suffix}`).text
-			).not.toMatch(/Fall angenommen|Übergabe/);
+			const text = render('CO_ACCESS', `case.handover.${suffix}`).text;
+			expect(text).toContain('Bart Simpson');
+			expect(text).not.toMatch(/Fall angenommen|Übergabe/);
 		}
 	);
 });

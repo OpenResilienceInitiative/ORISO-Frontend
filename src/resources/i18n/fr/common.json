@@ -1884,7 +1884,7 @@
 				"text": "Votre collègue a accepté le dossier.",
 				"coAccess": {
 					"title": "Proposition d’accès acceptée",
-					"text": "Votre collègue a accepté votre proposition d’accès. Vous restez responsable du dossier."
+					"text": "{{toConsultantName}} a accepté votre proposition d’accès. Vous restez responsable du dossier."
 				},
 				"generic": {
 					"title": "Proposition acceptée",
@@ -1896,7 +1896,7 @@
 				"text": "Votre collègue n’a pas accepté le dossier. Il reste chez vous.",
 				"coAccess": {
 					"title": "Proposition d’accès refusée",
-					"text": "Votre collègue a refusé votre proposition d’accès. L’accès ne sera pas activé."
+					"text": "{{toConsultantName}} a refusé votre proposition d’accès. L’accès ne sera pas activé."
 				},
 				"generic": {
 					"title": "Proposition refusée",
@@ -1908,7 +1908,7 @@
 				"text": "Votre offre de transmission a expiré. Le dossier reste chez vous.",
 				"coAccess": {
 					"title": "Proposition d’accès expirée",
-					"text": "Votre proposition d’accès a expiré. L’accès ne sera pas activé."
+					"text": "{{toConsultantName}} n’a pas répondu à votre proposition d’accès à temps. L’accès ne sera pas activé."
 				},
 				"generic": {
 					"title": "Proposition expirée",
