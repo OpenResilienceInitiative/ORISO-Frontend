@@ -166,7 +166,7 @@ vi.mock('../../globalState/context/MatrixClientContext', () => ({
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
 		mocks.sessionItemProps = props;
-		return <div data-testid="session-item" />;
+		return <div data-testid="session-item">{props.notices}</div>;
 	}
 }));
 

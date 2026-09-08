@@ -347,7 +347,9 @@ export const WiredDialog: Story = {
 export const GiveOverWalkthrough: Story = {
 	render: () => <GiveOverPlayground />,
 	play: async ({ canvasElement }) => {
-		const screen = within(canvasElement.ownerDocument.body);
+		const documentScreen = within(canvasElement.ownerDocument.body);
+		const dialog = await documentScreen.findByRole('dialog');
+		const screen = within(dialog);
 		await userEvent.click(
 			await screen.findByRole('radio', { name: /Bettina Sommer/ })
 		);
@@ -361,7 +363,7 @@ export const GiveOverWalkthrough: Story = {
 			screen.getByTestId('case-handover-give-over-submit')
 		);
 		await expect(
-			await screen.findByTestId('give-over-submitted')
+			await documentScreen.findByTestId('give-over-submitted')
 		).toHaveTextContent('c-1/PLANNED_ABSENCE');
 	}
 };
