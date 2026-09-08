@@ -349,6 +349,7 @@ export const GiveOverWalkthrough: Story = {
 	play: async ({ canvasElement }) => {
 		const documentScreen = within(canvasElement.ownerDocument.body);
 		const dialog = await documentScreen.findByRole('dialog');
+		await waitFor(() => expect(dialog).toBeVisible());
 		const screen = within(dialog);
 		await userEvent.click(
 			await screen.findByRole('radio', { name: /Bettina Sommer/ })
@@ -356,9 +357,10 @@ export const GiveOverWalkthrough: Story = {
 		await userEvent.click(
 			await screen.findByRole('radio', { name: /Geplant abwesend/ })
 		);
-		await expect(
-			await screen.findByText(/keine Zustimmung der Klient:in nötig/i)
-		).toBeVisible();
+		const consentHint = await screen.findByText(
+			/keine Zustimmung der Klient:in nötig/i
+		);
+		await waitFor(() => expect(consentHint).toBeVisible());
 		await userEvent.click(
 			screen.getByTestId('case-handover-give-over-submit')
 		);
