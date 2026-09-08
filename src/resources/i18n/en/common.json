@@ -4480,7 +4480,8 @@
 			"headline": "Notification by e-mail",
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
-			"saveFailed": "Saving failed. Please try again."
+			"saveFailed": "Saving failed. Please try again.",
+			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support."
 		},
 		"accountProtection": {
 			"headline": "Your access, additionally protected",

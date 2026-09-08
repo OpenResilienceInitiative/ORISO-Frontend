@@ -19,7 +19,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../api', () => ({
 	apiPutEmail: (...args: unknown[]) => apiPutEmail(...args),
-	FETCH_ERRORS: { X_REASON: 'X-Reason' },
+	FETCH_ERRORS: {
+		X_REASON: 'X-Reason',
+		FORBIDDEN: 'FORBIDDEN',
+		ABORTED: 'ABORTED',
+		GATEWAY_TIMEOUT: 'GATEWAY_TIMEOUT',
+		TIMEOUT: 'TIMEOUT'
+	},
 	X_REASON: { EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE' }
 }));
 
@@ -122,11 +128,43 @@ describe('ErstantwortEmailOverlay', () => {
 		).toBeGreaterThan(0);
 	});
 
+	it('explains when the account is not allowed to store an e-mail', async () => {
+		apiPutEmail.mockRejectedValue(new Error('FORBIDDEN'));
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		type('jemand@example.test');
+		await act(async () => {
+			saveButton().click();
+		});
+
+		expect(
+			screen.getAllByText(
+				'This account is not allowed to store an e-mail address. Please contact our support.'
+			).length
+		).toBeGreaterThan(0);
+	});
+
+	it('asks the person to try again later when the server is unreachable', async () => {
+		apiPutEmail.mockRejectedValue(new Error('ABORTED'));
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		type('jemand@example.test');
+		await act(async () => {
+			saveButton().click();
+		});
+
+		expect(
+			screen.getAllByText(
+				'Unfortunately, we cannot save your e-mail address at the moment. Please try again later or contact our support.'
+			).length
+		).toBeGreaterThan(0);
+	});
+
 	it('reports an unexpected failure rather than leaving the dialog stuck', async () => {
 		/* The FurtherSteps overlay this replaces swallowed every error that was
 		   not EMAIL_NOT_AVAILABLE: `isRequestInProgress` stayed true, so the
 		   save button was dead for the rest of the session with no explanation. */
-		apiPutEmail.mockRejectedValue({ headers: { get: () => null } });
+		apiPutEmail.mockRejectedValue(new Error('CATCH_ALL'));
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
 		type('jemand@example.test');
