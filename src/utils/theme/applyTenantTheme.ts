@@ -35,21 +35,39 @@ interface TenantThemingSeedFields {
 }
 
 /**
+ * Blank (empty or whitespace) is absent — the same as a missing field.
+ * Nullish coalescing is not enough: `"" ?? undefined` is still `""`.
+ */
+const absentIfBlank = (value?: string | null): string | undefined => {
+	if (value == null) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed === '' ? undefined : trimmed;
+};
+
+/**
  * Reads the seed set from the tenant theming. Legacy records carry only
  * `primaryColor` (plus a historically mirrored `secondaryColor`, which
  * is computed-not-stored and ignored here) — that value is the primary
  * seed. Returns null when no seed is stored.
+ *
+ * Every seed field is normalised independently: empty string and
+ * whitespace are treated as absent (#1256). Invalid hex is left for
+ * `applyTenantPalette` so that field can fall back without discarding
+ * the others.
  */
 export const readTenantSeeds = (
 	theming?: TenantThemingSeedFields | null
 ): OrisoSeeds | null => {
-	if (!theming?.primaryColor) {
+	const primary = absentIfBlank(theming?.primaryColor);
+	if (!primary) {
 		return null;
 	}
 	return {
-		primary: theming.primaryColor,
-		accent: theming.accent ?? undefined,
-		signal: theming.signal ?? undefined
+		primary,
+		accent: absentIfBlank(theming?.accent),
+		signal: absentIfBlank(theming?.signal)
 	};
 };
 
@@ -62,11 +80,28 @@ export const computeOrisoSchemes = (
 	inverted: computeOrisoPalette(seeds, 'inverted').tokens
 });
 
+const tryComputePalette = (
+	seeds: OrisoSeeds,
+	onError: (error: unknown) => void
+): ReturnType<typeof computeOrisoPalette> | null => {
+	try {
+		return computeOrisoPalette(seeds, 'light');
+	} catch (error) {
+		onError(error);
+		return null;
+	}
+};
+
 /**
  * Computes the palette from the stored seeds and injects it on the
  * given root element. Returns true when a palette was applied; false
  * keeps the prior static behaviour (no seed, or an invalid stored
  * value — logged, never thrown).
+ *
+ * Each seed is validated independently (#1256). An empty or invalid
+ * accent/signal falls back for that field only; a valid sibling is
+ * still applied. Only a missing or invalid primary discards the
+ * tenant palette entirely.
  */
 export const applyTenantPalette = (
 	theming: TenantThemingSeedFields | null | undefined,
@@ -76,32 +111,76 @@ export const applyTenantPalette = (
 	if (!seeds) {
 		return false;
 	}
-	try {
-		const { tokens, tooPale } = computeOrisoPalette(seeds, 'light');
-		if (tooPale) {
-			// #143: a near-achromatic seed (chroma < TOO_PALE_CHROMA, e.g.
-			// black or grey) cannot yield distinguishable role colours —
-			// hover/container/shadow tints all collapse into one family.
-			// Keep the compiled default palette instead of injecting it.
+
+	const primaryResult = tryComputePalette(
+		{ primary: seeds.primary },
+		(error) => {
 			// eslint-disable-next-line no-console
 			console.warn(
-				`Tenant theming: seed ${seeds.primary} is too pale (chroma < 12), keeping the default palette.`
+				'Tenant theming: stored seed is invalid, keeping the default palette.',
+				error
 			);
-			return false;
 		}
-		Object.entries(tokens).forEach(([name, value]) => {
-			root.style.setProperty(name, value);
-		});
-		window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
-		return true;
-	} catch (error) {
+	);
+	if (!primaryResult) {
+		return false;
+	}
+	if (primaryResult.tooPale) {
+		// #143: a near-achromatic seed (chroma < TOO_PALE_CHROMA, e.g.
+		// black or grey) cannot yield distinguishable role colours —
+		// hover/container/shadow tints all collapse into one family.
+		// Keep the compiled default palette instead of injecting it.
 		// eslint-disable-next-line no-console
 		console.warn(
-			'Tenant theming: stored seed is invalid, keeping the default palette.',
-			error
+			`Tenant theming: seed ${seeds.primary} is too pale (chroma < 12), keeping the default palette.`
 		);
 		return false;
 	}
+
+	const resolved: OrisoSeeds = { primary: seeds.primary };
+
+	if (seeds.accent !== undefined) {
+		const accentResult = tryComputePalette(
+			{ primary: seeds.primary, accent: seeds.accent },
+			(error) => {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'Tenant theming: accent seed is invalid, falling back.',
+					error
+				);
+			}
+		);
+		if (accentResult) {
+			resolved.accent = seeds.accent;
+		}
+	}
+
+	if (seeds.signal !== undefined) {
+		const signalResult = tryComputePalette(
+			{ primary: seeds.primary, signal: seeds.signal },
+			(error) => {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'Tenant theming: signal seed is invalid, falling back.',
+					error
+				);
+			}
+		);
+		if (signalResult) {
+			resolved.signal = seeds.signal;
+		}
+	}
+
+	const { tokens } =
+		resolved.accent === undefined && resolved.signal === undefined
+			? primaryResult
+			: computeOrisoPalette(resolved, 'light');
+
+	Object.entries(tokens).forEach(([name, value]) => {
+		root.style.setProperty(name, value);
+	});
+	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
+	return true;
 };
 
 const PREVIEW_PARAMS = {
