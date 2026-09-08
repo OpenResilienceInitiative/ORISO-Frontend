@@ -2739,7 +2739,12 @@
 				"prefix": "Bende ",
 				"suffix": " not alınmıştır. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
 			},
-			"loading": "Onay metni yükleniyor …"
+			"loading": "Onay metni yükleniyor …",
+			"snackbar": {
+				"prefix": "Bu bizim ",
+				"link": "gizlilik politikamızdır",
+				"suffix": ". Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
+			}
 		},
 		"error": {
 			"required_field_missing": {

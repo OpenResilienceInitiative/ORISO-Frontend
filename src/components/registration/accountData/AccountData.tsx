@@ -68,6 +68,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
+import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -154,11 +155,32 @@ export const AccountData: FC<{
 	 * point of this screen) and halves the vertical rhythm.
 	 */
 	compact?: boolean;
+	/**
+	 * How the data-protection promise is made on this screen.
+	 *
+	 * `'checkbox'` (default) is every flow that has always been here: the
+	 * consent box, its Fachbereich-resolved sentence and the gate that will not
+	 * let the step be left until it is ticked.
+	 *
+	 * `'snackbar'` is the **live-chat link entry alone**
+	 * (ORISO-Frontend#1341, item 5): the note is stated, not agreed to, because
+	 * the real consent moved to the waiting room where an agency is finally
+	 * known (item 2). Asking here as well would take an agreement that binds to
+	 * nobody.
+	 *
+	 * It is a prop and not a reading of `entry`, deliberately. `entry="link"`
+	 * is shared with the self-help group entry, which keeps its checkbox; there
+	 * was no existing signal that separates the live chat from it, so the
+	 * caller that knows says so. Nothing here decides *which* modality this is
+	 * — that stays with the composition (ADR-006).
+	 */
+	dataProtection?: 'checkbox' | 'snackbar';
 }> = ({
 	onChange,
 	entry = 'registration',
 	temporary = false,
-	compact = false
+	compact = false,
+	dataProtection = 'checkbox'
 }) => {
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
@@ -301,6 +323,15 @@ export const AccountData: FC<{
 	const dataProtectionChecked =
 		currentConsentBinding !== null &&
 		acceptedConsentBinding === currentConsentBinding;
+	/* What this screen needs before it may be left. With the checkbox that is
+	   the acceptance, and only once the sentence it belongs to is on screen.
+	   With the snackbar there is nothing to accept here at all — the note
+	   states what applies and the consent is taken in the waiting room, so
+	   waiting for a tick nobody can give would lock the step shut forever
+	   (ORISO-Frontend#1341, items 2 and 5). */
+	const consentSatisfied =
+		dataProtection === 'snackbar' ||
+		(isConsentSentenceResolved && dataProtectionChecked);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -411,9 +442,10 @@ export const AccountData: FC<{
 			isPasswordValid &&
 			password === repeatPassword &&
 			// Not merely "the box is ticked": the box may only count once the
-			// sentence it sits next to is actually on screen.
-			isConsentSentenceResolved &&
-			dataProtectionChecked &&
+			// sentence it sits next to is actually on screen. With the
+			// snackbar there is no box and nothing to wait for — the note is
+			// stated here and the consent is taken later, in the waiting room.
+			consentSatisfied &&
 			emailFeedback.isSatisfied
 		) {
 			const trimmedEmail = email.trim();
@@ -430,8 +462,7 @@ export const AccountData: FC<{
 		username,
 		password,
 		repeatPassword,
-		dataProtectionChecked,
-		isConsentSentenceResolved,
+		consentSatisfied,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -965,36 +996,44 @@ export const AccountData: FC<{
 					</Box>
 				</Box>
 			)}
-			<FormGroup sx={{ mt: gap('20px') }}>
-				<FormControlLabel
-					sx={{ alignItems: 'flex-start' }}
-					control={
-						<Checkbox
-							checked={dataProtectionChecked}
-							disabled={!isConsentSentenceResolved}
-							onClick={() => {
-								setAcceptedConsentBinding(
-									dataProtectionChecked
-										? null
-										: currentConsentBinding
-								);
-							}}
-							sx={{ mt: '-9px' }}
-						/>
-					}
-					label={
-						/* The sentence itself is resolved in its own component:
-						   a Träger-authored consent text when the selected
-						   Fachbereich has one (ADR-021), otherwise exactly the
-						   three-fragment sentence this used to assemble inline. */
-						<DataProtectionConsentLabel
-							agency={agency}
-							topic={mainTopic}
-							onResolutionChange={setConsentResolution}
-						/>
-					}
-				/>
-			</FormGroup>
+			{dataProtection === 'snackbar' ? (
+				/* Live chat only. Same spot in the column the checkbox holds,
+				   because that is where a reader looks for it — the box is
+				   gone, the statement is not (ORISO-Frontend#1341, item 5). */
+				<DataProtectionSnackbar sx={{ mt: gap('20px') }} />
+			) : (
+				<FormGroup sx={{ mt: gap('20px') }}>
+					<FormControlLabel
+						sx={{ alignItems: 'flex-start' }}
+						control={
+							<Checkbox
+								checked={dataProtectionChecked}
+								disabled={!isConsentSentenceResolved}
+								onClick={() => {
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									);
+								}}
+								sx={{ mt: '-9px' }}
+							/>
+						}
+						label={
+							/* The sentence itself is resolved in its own
+							   component: a Träger-authored consent text when
+							   the selected Fachbereich has one (ADR-021),
+							   otherwise exactly the three-fragment sentence
+							   this used to assemble inline. */
+							<DataProtectionConsentLabel
+								agency={agency}
+								topic={mainTopic}
+								onResolutionChange={setConsentResolution}
+							/>
+						}
+					/>
+				</FormGroup>
+			)}
 		</Box>
 	);
 };

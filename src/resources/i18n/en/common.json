@@ -2708,7 +2708,12 @@
 				"prefix": "I have the ",
 				"suffix": " noted. For authentication and navigation, this website uses cookies. I agree with this."
 			},
-			"loading": "Loading the consent text …"
+			"loading": "Loading the consent text …",
+			"snackbar": {
+				"prefix": "This is our ",
+				"link": "privacy policy",
+				"suffix": ". For authentication and navigation, this website uses cookies."
+			}
 		},
 		"error": {
 			"required_field_missing": {

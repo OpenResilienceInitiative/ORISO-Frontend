@@ -2739,7 +2739,12 @@
 				"prefix": "J'ai fait le ",
 				"suffix": " a pris note. Pour l'authentification et la navigation, ce site utilise des cookies."
 			},
-			"loading": "Chargement du texte de consentement …"
+			"loading": "Chargement du texte de consentement …",
+			"snackbar": {
+				"prefix": "Voici notre ",
+				"link": "déclaration de confidentialité",
+				"suffix": ". Pour l'authentification et la navigation, ce site utilise des cookies."
+			}
 		},
 		"error": {
 			"required_field_missing": {
