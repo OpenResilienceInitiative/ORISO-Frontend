@@ -285,7 +285,7 @@ export const TemporaryJoinMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der temporäre Zustand auf dem Telefon. Ohne die beiden Passwortfelder bleibt wenig übrig — der Satz, dass dieses Gespräch mit dem Fenster endet, steht damit unübersehbar über dem Fuß statt wie am Desktop im leeren Raum daneben.'
+				story: 'Der temporäre Zustand auf dem Telefon. Ohne die Passwortfelder bleibt die Spalte kurz: der Name, der Hinweis, dass dieses Gespräch mit dem Fenster endet, und die Zustimmung. Der Fuß trägt „Konto anlegen" und „Beitreten" nebeneinander.'
 			}
 		}
 	}
@@ -313,7 +313,7 @@ export const FullRegistrationMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die volle Registrierung auf dem Telefon — die längste Fassung dieses Bildschirms. Hier ist zu sehen, ob die Spalte zwei Passwortfelder, Zustimmung und Fuß trägt, ohne dass die Zustimmung hinter dem Fuß verschwindet.'
+				story: 'Die volle Registrierung auf dem Telefon — die längste Fassung dieses Bildschirms: Name, zwei Passwortfelder mit ihren Regeln, Zustimmung, Fuß. Wer ein Konto will, sieht hier alles, was dafür nötig ist, in einer Spalte.'
 			}
 		}
 	}
@@ -327,7 +327,7 @@ export const ExistingAccountDesktop: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Für jemanden, der schon ein Konto hat: oben rechts steht „Einloggen". Ohne diese Abzweigung bliebe nur, sich ein zweites Mal anzulegen — und die Einladung trägt Thema und Beratungsstelle ohnehin mit sich, die Anmeldung verliert also nichts davon. Zu beurteilen ist, ob der Weg sichtbar genug ist, ohne den Bildschirm gegen die Registrierung auszuspielen.'
+				story: 'Für jemanden, der schon ein Konto hat: oben rechts steht „Einloggen". Ohne diese Abzweigung bliebe nur, sich ein zweites Mal anzulegen — und die Einladung trägt Thema und Beratungsstelle ohnehin mit sich, die Anmeldung verliert also nichts davon.'
 			}
 		}
 	}
@@ -341,7 +341,7 @@ export const ExistingAccountMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Dieselbe Abzweigung auf dem Telefon, aber als anderes Bedienelement: den beschrifteten Button gibt es erst ab „lg", darunter übernimmt das Türsymbol in der Kopfleiste. Zu beurteilen ist, ob „Einloggen" ohne seine Beschriftung noch gefunden wird.'
+				story: 'Dieselbe Abzweigung auf dem Telefon, nur als anderes Bedienelement: Den beschrifteten Button gibt es erst ab „lg", darunter steht das Türsymbol in der Kopfleiste — mit „Einloggen" als Beschriftung für alle, die es nicht sehen.'
 			}
 		}
 	}
@@ -425,7 +425,7 @@ export const AsDialogMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Dialog auf dem Telefon. Er soll das Gespräch dahinter überdecken und nicht ersetzen — zu beurteilen ist, wie viel Rand ihm bei 390 pt dafür bleibt und ob die zwei Aktionen nebeneinander noch Platz finden.'
+				story: 'Der Dialog auf dem Telefon. Er legt sich über das Gespräch, statt es zu ersetzen: Der Körper scrollt, die zwei Aktionen bleiben darunter stehen.'
 			}
 		}
 	}
@@ -453,7 +453,7 @@ export const AsDialogTemporaryMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der temporäre Dialog auf dem Telefon: die kürzeste Fassung überhaupt, weil die Passwortfelder fehlen. Der Hinweis, dass es keinen Weg zurück gibt, muss trotzdem vor den Aktionen stehen.'
+				story: 'Der temporäre Dialog auf dem Telefon: die kürzeste Fassung überhaupt, weil die Passwortfelder fehlen. Name, Hinweis, Zustimmung, zwei Aktionen — mehr steht hier nicht.'
 			}
 		}
 	}
