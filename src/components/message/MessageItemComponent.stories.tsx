@@ -11,7 +11,8 @@ import {
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
-import { MessageItemComponent } from './MessageItemComponent';
+import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
 	MOCK_CONSULTANT_MATRIX_ID,
@@ -23,6 +24,7 @@ import {
 	mockE2EEContext,
 	mockE2eeParams,
 	mockLongGermanMessage,
+	mockMessageItem,
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
@@ -1192,5 +1194,239 @@ export const ThreadEntryWithLastReply: Story = {
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
 		await userEvent.click(entry);
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
+	}
+};
+
+/* ---------------------------------------------------------------------------
+ * T49 — the supervision side room's system notice.
+ *
+ * The notice is not a message someone wrote: `buildSupervisionTimeline`
+ * (session/sessionHelpers.ts) builds it in the frontend and prepends it to the
+ * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
+ * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
+ * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
+ * → `pseudonymCard`) instead of the generic system-notification chrome.
+ *
+ * That was the promise in T49, and until now it could only be seen two levels
+ * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
+ * the stage story "(a2)". Here it stands at the block that actually renders it.
+ *
+ * The fixtures come from `buildSupervisionTimeline` itself rather than a
+ * hand-written payload, so a change to the builder shows up here instead of
+ * quietly passing against a copy of what it used to emit.
+ * ------------------------------------------------------------------------- */
+
+const SUPERVISION_ROOM_ID = '!storybook-supervision:oriso.org';
+const SUPERVISION_NOTICE_TITLE = 'Supervision';
+const SUPERVISION_NOTICE_TEXT =
+	'Supervision durch Angela K. ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.';
+
+const buildSupervisionNoticeTimeline = (messages: MessageItem[] = []) =>
+	buildSupervisionTimeline(messages, {
+		roomId: SUPERVISION_ROOM_ID,
+		title: SUPERVISION_NOTICE_TITLE,
+		description: SUPERVISION_NOTICE_TEXT,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+	});
+
+/** One counsellor line under the notice — the side room's first real message. */
+const supervisionFirstMessage = (): MessageItem =>
+	mockMessageItem({
+		_id: 'supervision-msg-1',
+		rid: SUPERVISION_ROOM_ID,
+		userId: MOCK_CONSULTANT_MATRIX_ID,
+		displayName: 'Beratende Person Kim G.',
+		username: 'kim.g@oriso.invalid',
+		message:
+			'Ich komme beim Thema Mahnbescheide nicht weiter und hätte gern einen zweiten Blick darauf.',
+		messageDate: { str: 'Heute', date: null }
+	});
+
+const renderSupervisionTimeline = (items: MessageItem[]) => (
+	<div style={{ display: 'flex', flexDirection: 'column' }}>
+		{items.map((item) => (
+			<MessageItemComponent
+				key={item._id}
+				{...mockMessageItemComponentProps(item)}
+				{...baseHandlers}
+			/>
+		))}
+	</div>
+);
+
+/**
+ * The whole point of T49, asserted rather than eyeballed: the notice is drawn
+ * with the Carimat organism and carries **none** of the generic system chrome.
+ *
+ * Every negative check is scoped to the notice's own subtree — in the story
+ * where a real message sits below it, a kebab and a bubble legitimately exist
+ * on that message, and an unscoped `querySelector` would pass for the wrong
+ * reason (or fail for one).
+ */
+const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
+	const notice = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.messageItem--supervisionNotice'
+		);
+		expect(element).not.toBeNull();
+		return element!;
+	});
+
+	// Carimat structure: the staged sequence and its pseudonym card.
+	expect(
+		notice.querySelector('[data-testid="erstantwort-sequence"]')
+	).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TITLE);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+			?.textContent
+	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TEXT);
+
+	// No generic system-notification chrome: no kebab, no notification bubble
+	// class, no bot avatar, no two-line notification header.
+	expect(notice.querySelector('.messageItem__kebabButton')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__message--systemNotification')
+	).toBeNull();
+	expect(notice.querySelector('.messageItem__avatar--bot')).toBeNull();
+	expect(notice.querySelector('.messageItem__botAvatarIcon')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationHeaderText')
+	).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationDescription')
+	).toBeNull();
+
+	return notice;
+};
+
+export const SupervisionNotice: Story = {
+	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		// The day pill moves onto the notice when the room already has history.
+		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeAboveMessage: Story = {
+	name: 'Supervision notice — above the first real message (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Notice plus the counsellor line beneath it. The day pill sits on the notice and the message below gives its own up, so the same day is never drawn twice — and the message keeps its ordinary chrome (kebab, bubble) while the notice keeps none of it.'
+			}
+		}
+	},
+	render: () =>
+		renderSupervisionTimeline(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])
+		),
+	play: async ({ canvasElement }) => {
+		await expectCarimatNoticeStructure(canvasElement);
+
+		const rows = canvasElement.querySelectorAll(
+			'.messageItem:not(.pseudonymCard)'
+		);
+		expect(rows.length).toBe(2);
+		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
+
+		// Exactly one day pill in the pair, and it belongs to the notice.
+		expect(
+			canvasElement.querySelectorAll('.messageDateDivider').length
+		).toBe(1);
+		expect(rows[0].querySelector('.messageDateDivider')).not.toBeNull();
+
+		// The ordinary message below is untouched — it still has its kebab,
+		// which is what makes the notice's missing one meaningful.
+		await waitFor(() =>
+			expect(
+				rows[1].querySelector('.messageItem__kebabButton')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const SupervisionNoticeEmptyRoom: Story = {
+	name: 'Supervision notice — empty side room, no day pill (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'What a freshly assigned standing supervisor sees before anyone has written. N-2: `buildSupervisionTimeline` sets an explicit empty `PrettyDate` here — the earlier version cloned `list[0]`, left `messageDate` undefined on an empty room and crashed the timeline.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(buildSupervisionNoticeTimeline()[0]),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		// No history, so no day pill — and no crash on the empty date.
+		expect(notice.querySelector('.messageDateDivider')).toBeNull();
+		expect(
+			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+				.length
+		).toBe(1);
+	}
+};
+
+export const SupervisionNoticeMobile390: Story = {
+	name: 'Supervision notice — phone 390 (T49)',
+	globals: phone390Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'The notice at 390px, where the side room is a full-width sheet. The card and its text stay inside the column — the notice is the first thing in that room, so a horizontal overflow here would be the first thing anyone sees.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const shell = notice.parentElement!;
+		await waitFor(() => {
+			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
+			expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(
+				shell.getBoundingClientRect().right + 1
+			);
+		});
 	}
 };
