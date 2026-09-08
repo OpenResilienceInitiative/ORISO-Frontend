@@ -239,3 +239,37 @@ describe('formatAgencyLineWithI18n', () => {
 		).toBe('54222 Tenant Overlay');
 	});
 });
+
+describe('anonymous User-IDs (#1209)', () => {
+	// Humanising these dropped the trailing digits, so every guest in a room
+	// rendered as the same bare "anon" and the bubble disagreed with the
+	// header and session list, which show the User-ID raw.
+	it('keeps a backend-minted anonymous User-ID intact', () => {
+		expect(formatMessagePersonName(undefined, 'anon_5')).toBe('anon_5');
+		expect(formatMessagePersonName(undefined, 'anon_12')).toBe('anon_12');
+	});
+
+	it('keeps two anonymous guests distinguishable', () => {
+		expect(formatMessagePersonName(undefined, 'anon_5')).not.toBe(
+			formatMessagePersonName(undefined, 'anon_12')
+		);
+	});
+
+	it('keeps a historical Anonymous-timestamp User-ID intact', () => {
+		expect(formatMessagePersonName(undefined, 'Anonymous-1699999999')).toBe(
+			'Anonymous-1699999999'
+		);
+	});
+
+	it('prefers the animal display name once one is set', () => {
+		expect(
+			formatMessagePersonName('freundliche Katze Mika', 'anon_5')
+		).toBe('freundliche Katze Mika');
+	});
+
+	it('still humanises technical consultant usernames', () => {
+		expect(formatMessagePersonName(undefined, 'ruhiges_Yak_Kim_234')).toBe(
+			'ruhiges Yak Kim'
+		);
+	});
+});

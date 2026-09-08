@@ -2569,6 +2569,7 @@
 				"addressLabel": "Address",
 				"hoursLabel": "Opening hours",
 				"languagesLabel": "Languages",
+				"languagesTooltip": "This counseling center advises you in:",
 				"less": "Less",
 				"more": "More",
 				"navigate": "Start navigation",
@@ -3491,6 +3492,9 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Drag to scroll the list."
 		}
 	},
 	"statusOverlay": {
@@ -3940,7 +3944,7 @@
 			"age": "Age",
 			"gender": "Gender",
 			"postcode": "Postal code",
-			"relation": "Background",
+			"relation": "Type of user",
 			"resort": "Department",
 			"state": "State",
 			"title": "Information of the person seeking advice"
@@ -3968,6 +3972,9 @@
 				"title": "See what content has been shared with you here."
 			},
 			"title": "Tools"
+		},
+		"header": {
+			"title": "Additional client information"
 		}
 	},
 	"videoCall": {

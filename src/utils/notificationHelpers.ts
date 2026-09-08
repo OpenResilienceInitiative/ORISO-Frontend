@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { appConfig } from './appConfig';
 import { isNotificationSuppressed } from './notificationSettings/model';
 import {
 	BannerMode,
@@ -70,16 +71,36 @@ export const requestPermissions = () => {
 	}
 };
 
+/**
+ * Which notification panel the user can actually reach (#1211).
+ *
+ * The `enableNewNotifications` release toggle routes exactly one of the two
+ * panels into the profile: off → the legacy per-browser panel, which writes
+ * `BROWSER_NOTIFICATIONS` in localStorage; on → the cross-device panel, which
+ * writes the settings store. Only the routed panel's storage can hold a choice
+ * the user actually made, so only it may decide. Before the config has loaded
+ * we assume the legacy panel — that is what shipped.
+ */
+const usesCrossDevicePanel = (): boolean =>
+	appConfig?.releaseToggles?.enableNewNotifications === true;
+
+/**
+ * How the legacy panel's two per-type switches map onto event families. Every
+ * other family predates neither switch, so its master opt-in is all there is.
+ */
+const LEGACY_TYPE_BY_FAMILY: Partial<
+	Record<EventFamily, 'initialEnquiry' | 'newMessage'>
+> = {
+	requests: 'initialEnquiry',
+	messages: 'newMessage'
+};
+
 export const sendNotification = (
 	title: string,
 	opts?: NotificationOptions & ExtraNotificationOptions
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
-	if (
-		!isSupported() ||
-		!hasPermissions(PERMISSION_GRANTED) ||
-		!browserNotificationsSettings().enabled
-	) {
+	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
 		return;
 	}
 
@@ -88,7 +109,38 @@ export const sendNotification = (
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
 	// per-family toggles and the per-device silence switch).
 	const { settings, device } = notificationSettingsStore.getState();
+
 	const family = options.family || 'messages';
+
+	/*
+	 * The opt-in — and the per-type choice with it — comes from the panel the
+	 * user can actually reach (#1211), and from nowhere else.
+	 *
+	 * Reading the other panel's storage silences notifications nobody switched
+	 * off: with the release toggle on, the legacy panel is not even rendered,
+	 * so its `{"enabled": false}` default stood forever no matter what the user
+	 * turned on in the panel they could see.
+	 *
+	 * This is also the ONLY place the decision is made. The call sites used to
+	 * repeat it and got it wrong (WebsocketHandler, useBrowserNotification);
+	 * they now just report what happened and leave the gating here.
+	 */
+	if (usesCrossDevicePanel()) {
+		// Master opt-in. The per-type choice is the banner channel of the
+		// event's config row, applied further down.
+		if (!settings.browserNotifications?.enabled) {
+			return;
+		}
+	} else {
+		const legacyType = LEGACY_TYPE_BY_FAMILY[family];
+		const legacyAllows = legacyType
+			? isBrowserNotificationTypeEnabled(legacyType)
+			: browserNotificationsSettings().enabled;
+		if (!legacyAllows) {
+			return;
+		}
+	}
+
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
 	}
@@ -152,10 +204,17 @@ export const saveBrowserNotificationsSettings = (settings: {
 		currentSettings.newMessage = true;
 		currentSettings.initialEnquiry = true;
 	}
-	localStorage.setItem(
-		'BROWSER_NOTIFICATIONS',
-		JSON.stringify({ ...currentSettings, ...settings })
-	);
+	const next = { ...currentSettings, ...settings };
+	localStorage.setItem('BROWSER_NOTIFICATIONS', JSON.stringify(next));
+
+	// Keep the store in step (#1211) so the choice survives the release toggle
+	// being switched on later: the cross-device panel then shows what the user
+	// already picked here instead of silently reverting to "off".
+	if (settings.enabled !== undefined) {
+		notificationSettingsStore.updateSettings({
+			browserNotifications: { enabled: next.enabled === true }
+		});
+	}
 };
 
 export const browserNotificationsSettings = (): {

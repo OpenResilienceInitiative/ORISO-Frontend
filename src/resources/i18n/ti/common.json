@@ -2583,6 +2583,7 @@
 				"addressLabel": "ኣድራሻ",
 				"hoursLabel": "ሰዓታት ስራሕ",
 				"languagesLabel": "ቋንቋታት",
+				"languagesTooltip": "እዚ ማእከል ምኽሪ እዚ ብዛዕባ፤",
 				"less": "ውሑድ",
 				"more": "ተወሳኺ",
 				"navigate": "መንገዲ ጀምር",
@@ -3531,6 +3532,9 @@
 				"selfHelp": "ክቢ ዝርርብ",
 				"internal": "ውሽጣዊ"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።"
 		}
 	},
 	"statusOverlay": {
@@ -3981,7 +3985,7 @@
 			"age": "ዓብይ",
 			"gender": "ፆታ",
 			"postcode": "ፖስታ ኮድ",
-			"relation": "ድሕረ ባይታ",
+			"relation": "ዓይነት ተማኻሪ",
 			"resort": "ናይ ምምኽኻር ዓውዲ",
 			"state": "ፌደራል ክልል ትግራይ",
 			"title": "ካብቲ ምኽሪ ዝደሊ ሰብ ዝረኸብናዮ ሓበሬታ"
@@ -4009,6 +4013,9 @@
 				"title": "እንታይ ትሕዝቶ ከም ዝተኻፈለኩም ኣብዚ ርኣዩ።"
 			},
 			"title": "መሳረሕታት"
+		},
+		"header": {
+			"title": "ተወሳኺ ሓበሬታ ብዛዕባ እቲ ተማኻሪ"
 		}
 	},
 	"videoCall": {

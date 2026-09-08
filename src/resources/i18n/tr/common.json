@@ -2592,6 +2592,7 @@
 				"addressLabel": "Adres",
 				"hoursLabel": "Çalışma saatleri",
 				"languagesLabel": "Diller",
+				"languagesTooltip": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:",
 				"less": "Daha az",
 				"more": "Daha fazla",
 				"navigate": "Navigasyonu başlat",
@@ -3531,6 +3532,9 @@
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
 		}
 	},
 	"statusOverlay": {
@@ -3981,7 +3985,7 @@
 			"age": "Yaş",
 			"gender": "Cinsiyet",
 			"postcode": "Posta kodu",
-			"relation": "Arka plan",
+			"relation": "Danışan türü",
 			"resort": "Danışmanlık alanı",
 			"state": "Federal devlet",
 			"title": "Tavsiye isteyen kişinin detayları"
@@ -4009,6 +4013,9 @@
 				"title": "Sizinle hangi içeriklerin paylaşıldığını buradan görebilirsiniz."
 			},
 			"title": "Araçlar"
+		},
+		"header": {
+			"title": "Danışan hakkında ek bilgiler"
 		}
 	},
 	"videoCall": {
