@@ -162,14 +162,31 @@ export const emailDivider = (): string =>
 	`<tr><td height="1" bgcolor="${emailColor.outline}" ` +
 	'style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>';
 
+/**
+ * The logo's table cell, on its own so the lockup can leave it out.
+ *
+ * A tenant without a logo sends `logoUrl: ''`, and an `<img src="">` renders as
+ * a broken-image icon in most clients — worse than no logo at all. So a blank
+ * URL yields no cell, and the text wordmark carries the header alone.
+ *
+ * The plain dialect replaces this exact fragment with a `{{logoCell}}` token
+ * (see `emailDialect`), because a template file cannot express the conditional:
+ * UserService's renderer makes the same present-or-absent decision at send
+ * time, against the very markup this function emits.
+ */
+export const emailLogoCell = (brand: EmailBrand): string =>
+	brand.logoUrl === ''
+		? ''
+		: `<td width="${emailLayout.logoSize}" valign="middle" style="width:${emailLayout.logoSize}px;padding-right:12px;">` +
+			`<img src="${emailEscape(brand.logoUrl)}" width="${emailLayout.logoSize}" height="${
+				emailLayout.logoSize
+			}" alt="${emailEscape(brand.platformName)}" ` +
+			`style="display:block;width:${emailLayout.logoSize}px;height:${emailLayout.logoSize}px;border:0;border-radius:${emailRadius.logo}px;"></td>`;
+
 /** Logo plus wordmark. The logo is decorative next to the name, hence `alt`. */
 export const emailLogoLockup = (brand: EmailBrand): string =>
 	'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
-	`<td width="${emailLayout.logoSize}" valign="middle" style="width:${emailLayout.logoSize}px;padding-right:12px;">` +
-	`<img src="${emailEscape(brand.logoUrl)}" width="${emailLayout.logoSize}" height="${
-		emailLayout.logoSize
-	}" alt="${emailEscape(brand.platformName)}" ` +
-	`style="display:block;width:${emailLayout.logoSize}px;height:${emailLayout.logoSize}px;border:0;border-radius:${emailRadius.logo}px;"></td>` +
+	emailLogoCell(brand) +
 	`<td valign="middle" style="${font(
 		emailType.brand.size,
 		emailType.brand.line,

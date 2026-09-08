@@ -4585,19 +4585,19 @@
 		}
 	},
 	"dpaSign": {
-		"title": "AVV unterzeichnen",
-		"subtitle": "Bitte lesen Sie die Vereinbarung vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
-		"loadingContract": "Vereinbarung wird geladen...",
+		"title": "Vertragsunterlagen unterzeichnen",
+		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
+		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
 		"signingFor": "Sie unterzeichnen im Namen von:",
-		"accept": "Ich habe die oben angezeigte Vereinbarung gelesen und bestätige sie verbindlich.",
+		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
 		"submit": "Verbindlich bestätigen",
 		"submitting": "Speichern...",
-		"success": "Die AVV-Bestätigung wurde gespeichert.",
+		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
 			"missingToken": "Der Signaturlink ist unvollständig.",
-			"previewRequired": "Die Vereinbarung muss vollständig geladen sein, bevor Sie sie bestätigen können.",
-			"acceptRequired": "Bitte bestätigen Sie die Vereinbarung.",
+			"previewRequired": "Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.",
+			"acceptRequired": "Bitte bestätigen Sie die Vertragsunterlagen.",
 			"generic": "Die Signatur konnte gerade nicht gespeichert werden.",
 			"invalidToken": "Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.",
 			"invalidRequest": "Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular."

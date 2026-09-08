@@ -110,6 +110,21 @@ describe('e-mail client compatibility', () => {
 			expect(styleBlock(html)).toMatch(/a\[x-apple-data-detectors\]/);
 		});
 
+		it('opts bordered rounded tables out of border-collapse', () => {
+			// The stylesheet resets table{border-collapse:collapse}, and
+			// border-radius has no effect on a collapsed-border table: clients
+			// round the background but draw the 1px outline square (observed
+			// in Roundcube). Every table combining a radius with a border must
+			// therefore carry border-collapse:separate inline.
+			for (const table of body(html).match(/<table[^>]*>/g) ?? []) {
+				if (/border-radius/.test(table) && /border:1px/.test(table)) {
+					expect(table, `border-collapse missing: ${table}`).toMatch(
+						/border-collapse:separate/
+					);
+				}
+			}
+		});
+
 		it('stays under the Gmail clipping threshold', () => {
 			// Gmail clips a message past ~102KB and hides the rest behind a
 			// "View entire message" link — which, on these mails, would hide

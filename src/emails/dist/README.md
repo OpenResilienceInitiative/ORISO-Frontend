@@ -46,7 +46,9 @@ dialect cannot disagree with what Storybook shows.
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,
 `logoUrl`, `orgName`, `orgAddress`, `contactLine`) appear in every mail and
-are omitted from the table.
+are omitted from the table. So is `logoCell` in the plain dialect: the
+consumer expands it to the logo image cell when a logo URL is configured, and
+to nothing when it is blank.
 
 ## How a downstream repository picks this up
 
