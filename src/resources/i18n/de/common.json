@@ -4820,8 +4820,10 @@
 				"barStatus": "{{count}} vor Ihnen — Sie müssen nichts tun",
 				"yourTurn": "Sie sind dran.",
 				"yourTurnSub": "Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.",
+				"consentRequired": "Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.",
 				"decline": "Nicht zustimmen und Chat verlassen",
-				"start": "Zustimmen & starten",
+				"declineConfirm": "Sind Sie sicher, dass Sie abbrechen wollen und schließen?",
+				"start": "Gespräch beginnen",
 				"startStatus": "Ihre Beraterin wartet auf Sie"
 			},
 			"closed": {

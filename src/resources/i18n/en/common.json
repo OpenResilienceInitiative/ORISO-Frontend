@@ -4739,8 +4739,10 @@
 				"barStatus": "{{count}} ahead of you — nothing to do on your side",
 				"yourTurn": "It is your turn.",
 				"yourTurnSub": "A counsellor has taken your conversation and is waiting for you.",
+				"consentRequired": "Please agree first — without your agreement the conversation cannot begin.",
 				"decline": "Do not agree and leave the chat",
-				"start": "Agree & start",
+				"declineConfirm": "Are you sure you want to cancel and close?",
+				"start": "Start the conversation",
 				"startStatus": "Your counsellor is waiting for you"
 			},
 			"closed": {

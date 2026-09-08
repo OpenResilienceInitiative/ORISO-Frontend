@@ -2339,7 +2339,9 @@
 				"barStatus": "{{count}} vor dir — du musst nichts tun",
 				"yourTurn": "Du bist dran.",
 				"yourTurnSub": "Eine Beraterin hat dein Gespräch angenommen und wartet auf dich.",
-				"startStatus": "Deine Beraterin wartet auf dich"
+				"consentRequired": "Bitte stimme erst zu — ohne deine Zustimmung kann das Gespräch nicht beginnen.",
+				"startStatus": "Deine Beraterin wartet auf dich",
+				"declineConfirm": "Bist du sicher, dass du abbrechen und schließen willst?"
 			},
 			"closed": {
 				"text": "Gerade ist niemand im Live-Chat. Schreib uns — wir antworten innerhalb von zwei Arbeitstagen.",

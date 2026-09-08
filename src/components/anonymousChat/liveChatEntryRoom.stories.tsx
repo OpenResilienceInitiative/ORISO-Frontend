@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../globalState';
@@ -170,7 +171,27 @@ export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
 	render: () => <Waiting accepted />,
 	parameters: full(
-		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein, „Zustimmen & starten" + rundes X (→ „Sind Sie sicher?"). In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
+		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
+	)
+};
+/**
+ * What pressing the primary action without the checkbox does: nothing happens,
+ * and the reason says so. Frank's item 2 in #1341 — the sentence used to be
+ * text and the button implied agreement to it.
+ */
+export const StepAcceptedConsentMissing: StoryObj = {
+	name: 'B — Warteraum: Zustimmung fehlt',
+	render: () => <Waiting accepted />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Gespräch beginnen/i })
+		);
+		await expect(await canvas.findByRole('alert')).toBeInTheDocument();
+		await expect(canvas.getByRole('checkbox')).not.toBeChecked();
+	},
+	parameters: full(
+		'Der Fehlerzustand der Checkbox — dieselbe Behandlung wie im Konto-Schritt der Mail-Beratung (`AccountData`). Ein Haken räumt die Meldung wieder ab.'
 	)
 };
 export const StepAcceptedMobile: StoryObj = {
