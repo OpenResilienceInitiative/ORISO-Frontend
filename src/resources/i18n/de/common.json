@@ -3521,7 +3521,11 @@
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
 				},
-				"toggle": "Suchergebnisse öffnen oder schließen"
+				"toggle": "Suchergebnisse öffnen oder schließen",
+				"role": {
+					"asker": "Ratsuchende:r",
+					"consultant": "Berater:in"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

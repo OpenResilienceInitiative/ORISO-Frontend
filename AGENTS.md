@@ -73,3 +73,18 @@ delivery rules"). Summary:
   say so in the report.
 - **State where it was verified** in every PR body — environment and image, or
   plainly "local only".
+- **Attach visual proof of what you did to the issue and the PR.** Any change a
+  reviewer could look at — UI, layout, copy, icons, states — ships with
+  screenshots, not just a prose claim. Capture them from Storybook when the
+  changed components have stories (no backend needed, and it is reproducible by
+  the reviewer); use the running app only when the change needs live data.
+  Commit the images under `docs/storybook/issue-<number>-<slug>/` following the
+  existing `NN-before-*.png` / `NN-after-*.png` convention, embed them in the PR
+  body, and post the same evidence as an issue comment. Include a **before** shot
+  whenever the change fixes something visible — an "after" alone does not show
+  that anything was wrong. Label each image with what it actually proves, and do
+  not imply a screenshot demonstrates behaviour it cannot show; say which parts
+  are covered by tests instead.
+- **Never claim a job is done on evidence you did not produce.** If a job needs a
+  live environment you cannot reach, say so plainly in the PR and the issue, and
+  leave a runnable verification script for a human instead of a completion tick.

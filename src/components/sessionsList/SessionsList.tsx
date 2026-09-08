@@ -71,6 +71,10 @@ import {
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
 } from './sessionToolbarFilters';
+import {
+	buildSearchPeopleResults,
+	sessionMatchesAgencies
+} from './sessionSearchPeople';
 import { useSessionListViewState } from './SessionListViewStateContext';
 import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
 import {
@@ -207,6 +211,8 @@ export const SessionsList = ({
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedTopic, setSessionToolbarSelectedTopic] =
 		useState<string | null>(null);
+	const [sessionToolbarSelectedAgencies, setSessionToolbarSelectedAgencies] =
+		useState<string[]>([]);
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
 	const [caseHandoverCandidateSessions, setCaseHandoverCandidateSessions] =
@@ -1431,6 +1437,10 @@ export const SessionsList = ({
 				visibleUserDrafts,
 				userData?.userId
 			) &&
+			sessionMatchesAgencies(
+				raw,
+				sessionToolbarSelectedAgencies.map(Number)
+			) &&
 			(!sessionToolbarSelectedTopic ||
 				String(
 					(extended?.item?.topic as TopicSessionInterface | null)
@@ -1549,41 +1559,35 @@ export const SessionsList = ({
 			visibleSessionCount: visibleListItemCount
 		});
 	}, [isLoading, setSessionListViewState, type, visibleListItemCount]);
+	/**
+	 * #1195 JOB2/JOB5 — clients and counsellors are separate roles, so a session
+	 * contributes one row per person instead of one row named after the client
+	 * but hard-coded to `Berater:in`.
+	 */
 	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
-		React.useMemo(() => {
-			const seen = new Set<string>();
-			return sessionToolbarPairs
-				.map(({ raw, extended }) => {
-					const id =
-						String(raw.session?.id || raw.chat?.id || '') ||
-						String(raw.chat?.matrixRoomId || '') ||
-						String(extended.item?.id || '');
-					if (!id || seen.has(id)) {
-						return null;
-					}
-					seen.add(id);
-					const name =
-						raw.user?.username ||
-						raw.consultant?.displayName ||
-						raw.consultant?.username ||
-						translate('sessionList.user.consultantUnknown');
-					const consultantLabel =
-						raw.consultant?.displayName ||
-						raw.consultant?.username ||
-						translate('sessionList.user.consultantUnknown');
-					const subtitle = `Berater:in ${consultantLabel}${
-						raw.session?.postcode ? ` ${raw.session.postcode}` : ''
-					}`.trim();
-					return {
-						id,
-						name,
-						subtitle
-					};
-				})
-				.filter((entry): entry is SessionSearchPersonResult =>
-					Boolean(entry)
-				);
-		}, [sessionToolbarPairs, translate]);
+		React.useMemo(
+			() =>
+				buildSearchPeopleResults(sessionToolbarPairs, {
+					asker: translate('sessionList.toolbar.search.role.asker'),
+					consultant: translate(
+						'sessionList.toolbar.search.role.consultant'
+					),
+					unknown: translate('sessionList.user.consultantUnknown')
+				}),
+			[sessionToolbarPairs, translate]
+		);
+	/** #1195 JOB1 — the counsellor's own agencies drive the two-agency filter. */
+	const toolbarSearchAgencyResults = React.useMemo(
+		() =>
+			(userData?.agencies ?? []).map((agency) => ({
+				id: String(agency.id),
+				label: agency.name,
+				subtitle: [agency.city, agency.postcode]
+					.filter(Boolean)
+					.join(' ')
+			})),
+		[userData]
+	);
 	const showSupervisionChip =
 		showConsultantToolbarActions &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
@@ -1675,6 +1679,11 @@ export const SessionsList = ({
 					}
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
+					searchAgencyResults={toolbarSearchAgencyResults}
+					selectedAgencyIds={sessionToolbarSelectedAgencies}
+					onSelectedAgencyIdsChange={
+						setSessionToolbarSelectedAgencies
+					}
 					searchTopicResults={toolbarSearchTopicResults}
 					selectedTopicId={sessionToolbarSelectedTopic}
 					onSelectedTopicIdChange={setSessionToolbarSelectedTopic}
