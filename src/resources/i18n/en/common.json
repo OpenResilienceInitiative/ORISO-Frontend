@@ -4719,7 +4719,7 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Roll until you like it.",
+				"subline": "Anonymous, no account. Pick a name — or roll a new set.",
 				"label": "Your pseudonym",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",

@@ -17,10 +17,7 @@ import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnqui
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
 import { performLeaveQueueDelete } from '../../pseudonym/leaveQueueDelete';
-import {
-	generatePseudonym,
-	regeneratePseudonym
-} from '../../../utils/pseudonymGenerator';
+import { generatePseudonym } from '../../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../../utils/anonName/engine';
 import { buildInviteSessionAppUrl } from '../../invite/inviteLinkHelpers';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -37,6 +34,31 @@ export interface LiveChatEntryRoomProps {
 }
 
 const POLL_MS = 4000;
+
+/** How many names the door offers at once (Frank: „drei vier varianten"). */
+const NAME_CHOICES = 4;
+
+/**
+ * A fresh set of offers. The engine draws with replacement, so the same
+ * display name can come up twice in four draws; a set with a double in it
+ * looks like a bug, hence the dedupe. The attempt cap keeps a small language
+ * pack from spinning here — a short set is better than a hung door.
+ */
+const rollPseudonyms = (locale: string): Pseudonym[] => {
+	const picked: Pseudonym[] = [];
+	const seen = new Set<string>();
+	for (
+		let attempt = 0;
+		attempt < NAME_CHOICES * 10 && picked.length < NAME_CHOICES;
+		attempt++
+	) {
+		const candidate = generatePseudonym(locale);
+		if (seen.has(candidate.displayName)) continue;
+		seen.add(candidate.displayName);
+		picked.push(candidate);
+	}
+	return picked;
+};
 
 /**
  * The live chat's entry room — the room before the chat.
@@ -70,9 +92,10 @@ export const LiveChatEntryRoom = ({
 	);
 
 	const [stage, setStage] = useState<'access' | 'waiting'>('access');
-	const [pseudonym, setPseudonym] = useState<Pseudonym>(() =>
-		generatePseudonym(locale)
+	const [pseudonyms, setPseudonyms] = useState<Pseudonym[]>(() =>
+		rollPseudonyms(locale)
 	);
+	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
@@ -133,15 +156,17 @@ export const LiveChatEntryRoom = ({
 	   card did exactly this (SessionItemComponent handleConfirmPseudonym). */
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
+		const chosen = pseudonyms[selectedIndex];
+		if (!chosen) return;
 		setBusy(true);
 		setContinueFailed(false);
 		try {
 			await apiPutSessionData(sessionId, {
-				displayName: pseudonym.displayName
+				displayName: chosen.displayName
 			});
-			await apiPatchUserData({ displayName: pseudonym.displayName });
+			await apiPatchUserData({ displayName: chosen.displayName });
 			mark('pseudonym');
-			mark('pseudonym-name', pseudonym.displayName);
+			mark('pseudonym-name', chosen.displayName);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on
@@ -151,7 +176,7 @@ export const LiveChatEntryRoom = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, pseudonym, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, pseudonyms, selectedIndex, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* B: the queue, every 4 s — same endpoint and cadence the session used. */
 	useEffect(() => {
@@ -238,12 +263,17 @@ export const LiveChatEntryRoom = ({
 		<EntryRoomShell kicker={kicker} statusLine={statusLine}>
 			{stage === 'access' && (
 				<LiveChatAccess
-					pseudonym={pseudonym}
+					pseudonyms={pseudonyms}
+					selectedIndex={selectedIndex}
 					busy={busy}
 					failed={continueFailed}
-					onReroll={() =>
-						setPseudonym((p) => regeneratePseudonym(p, locale))
-					}
+					onSelect={setSelectedIndex}
+					onReroll={() => {
+						/* A new set, and the first of it taken: the way on
+						   must never need a second click. */
+						setPseudonyms(rollPseudonyms(locale));
+						setSelectedIndex(0);
+					}}
 					onContinue={() => {
 						void handleContinue();
 					}}
