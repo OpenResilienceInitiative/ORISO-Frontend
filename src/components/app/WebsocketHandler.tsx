@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
+import { resolveStompListRefresh } from './stompListRefresh';
 import { useNavigate } from 'react-router-dom';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
@@ -35,6 +36,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const [
 		newStompAnonymousConversationFinished,
 		setNewStompAnonymousConversationFinished
+	] = useState<boolean>(false);
+	const [
+		newStompAnonymousEnquiryAccepted,
+		setNewStompAnonymousEnquiryAccepted
 	] = useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
@@ -159,6 +164,23 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
+		if (newStompAnonymousEnquiryAccepted) {
+			setNewStompAnonymousEnquiryAccepted(false);
+			const refresh = resolveStompListRefresh('anonymousEnquiryAccepted');
+			if (refresh) {
+				messageEventEmitter.emit(refresh);
+			}
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate('profile.notifications.inquiryAccepted.title'),
+				text: translate(
+					'profile.notifications.inquiryAccepted.description'
+				)
+			});
+		}
+	}, [newStompAnonymousEnquiryAccepted]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
 		if (newStompAnonymousConversationFinished) {
 			setNewStompAnonymousConversationFinished(false);
 			messageEventEmitter.emit({
@@ -212,15 +234,11 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 					stompEventType === 'anonymousEnquiryAccepted' ||
 					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
 				) {
-					addNotification({
-						notificationType: NOTIFICATION_TYPE_SUCCESS,
-						title: translate(
-							'profile.notifications.inquiryAccepted.title'
-						),
-						text: translate(
-							'profile.notifications.inquiryAccepted.description'
-						)
-					});
+					// #1206: an accepted enquiry leaves every counsellor's
+					// request list and enters the assignee's conversation
+					// list. This branch used to raise the toast only, so both
+					// lists stayed stale until a hard reload.
+					setNewStompAnonymousEnquiryAccepted(true);
 				} else if (
 					stompEventType === 'anonymousConversationFinished' ||
 					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'
