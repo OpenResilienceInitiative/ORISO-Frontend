@@ -45,6 +45,17 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: 0;
 		z-index: 1000;
 
+		// The wrapper is what docks the composer to the bottom, and it stacks
+		// its children: the info bar (absence notice, archived notice, send
+		// and attachment errors) sits above the composer card. The card used
+		// to dock itself as well — `position: absolute; bottom: 0` with an
+		// opaque background — which took it out of flow, collapsed this
+		// wrapper to the height of the info bar alone and painted the card
+		// straight over it. The notice was in the DOM and invisible.
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+
 		// Keep composer anchored to the session container on mobile Safari.
 		@media screen and (width <= 899px) {
 			position: absolute;
@@ -925,12 +936,29 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	top: calc(100% + 4px);
 	left: 16px;
 	width: min(360px, calc(100% - 32px));
-	max-height: 320px;
-	overflow-y: auto;
 	border-radius: 8px;
 	background: var(--m3-surface-container-high, #fff);
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 	z-index: 100;
+}
+
+/* The entries scroll, the panel does not: the drag bar is positioned against
+   the panel, and inside the scroll box it would scroll away with the content
+   it controls (ORISO-Frontend#1196). */
+.session__threadListScroll {
+	max-height: 320px;
+	overflow-y: auto;
+
+	/* Clear of the drag bar so a long preview never runs under it. */
+	padding-right: 20px;
+
+	/* The drag bar is the scroll affordance here, same as the sessions list.
+	   Two scrollbars side by side would just be noise. */
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .session__threadListEntry {

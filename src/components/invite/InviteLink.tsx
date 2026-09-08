@@ -24,7 +24,10 @@ import {
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
-import { applyRedeemSessionCredentials } from './inviteLinkHelpers';
+import {
+	applyRedeemSessionCredentials,
+	assignInviteSessionDisplayName
+} from './inviteLinkHelpers';
 import { LiveChatEntryRoom } from '../anonymousChat/entryRoom/LiveChatEntryRoom';
 import {
 	mintInviteGuestCredentials,
@@ -93,6 +96,13 @@ export const InviteLink = () => {
 					   The room hands over to the session itself once a
 					   counsellor has accepted and consent is given. */
 					applyRedeemSessionCredentials(data);
+					/* A courtesy name before anyone can look: without it
+					   the counsellor's queue shows `anon_N` (#1216). Not
+					   awaited — there is no page load to race any more, and
+					   the room must not wait up to five seconds on a name
+					   the guest is about to confirm or reroll at its door.
+					   That choice wins over this one. */
+					void assignInviteSessionDisplayName(data, locale);
 					setRoomSessionId(data.sessionId);
 					setStatus('room');
 					return;

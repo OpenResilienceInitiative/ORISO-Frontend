@@ -11,6 +11,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { redirectToApp } from '../registration/autoLogin';
 import {
 	applyRedeemSessionCredentials,
+	assignInviteSessionDisplayName,
 	redirectToInviteSession
 } from './inviteLinkHelpers';
 
@@ -39,6 +40,7 @@ vi.mock('../anonymousChat/entryRoom/LiveChatEntryRoom', () => ({
 }));
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
+	assignInviteSessionDisplayName: vi.fn(),
 	redirectToInviteSession: vi.fn()
 }));
 
@@ -162,16 +164,26 @@ describe('InviteLink legacy identity', () => {
 			refreshExpiresIn: 600
 		});
 
+		// A promise that never settles: the courtesy name is stored in the
+		// background, and the room has to appear without waiting for it.
+		vi.mocked(assignInviteSessionDisplayName).mockReturnValue(
+			new Promise<string | null>(() => undefined)
+		);
+
 		renderInvite();
 
 		await waitFor(() =>
 			expect(applyRedeemSessionCredentials).toHaveBeenCalled()
 		);
 		await waitFor(() =>
+			expect(assignInviteSessionDisplayName).toHaveBeenCalled()
+		);
+		await waitFor(() =>
 			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
 				'room 42'
 			)
 		);
+		/* The room replaces the redirect: the guest stays on this page. */
 		expect(redirectToInviteSession).not.toHaveBeenCalled();
 		expect(apiPostRegistration).not.toHaveBeenCalled();
 		expect(screen.queryByLabelText('User-ID')).toBeNull();

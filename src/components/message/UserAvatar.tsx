@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { Avatar } from '@vector-im/compound-web';
-import {
-	formatMessagePersonName,
-	getMessagePersonInitials
-} from './messageNameUtils';
+import { useMemo } from 'react';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
+import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import { formatMessagePersonName } from './messageNameUtils';
 
 interface UserAvatarProps {
 	username: string;
@@ -21,8 +20,10 @@ interface UserAvatarProps {
 }
 
 /**
- * UserAvatar component using REAL Compound UI
- * This is the actual Element Web avatar component
+ * User avatar: the deterministic animal icon derived from the user id
+ * (#1193 Job 4). The former letter-monogram fallback is gone — every user,
+ * client or counsellor, gets the same animal wherever they appear, so a
+ * person is recognisable across header, list, chat and profile.
  */
 export const UserAvatar: React.FC<UserAvatarProps> = ({
 	username,
@@ -39,35 +40,24 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 		firstName,
 		lastName
 	);
-	const initials = getMessagePersonInitials(
-		displayName,
-		username,
-		firstName,
-		lastName
-	);
+	const avatarKey = userId || username || 'unknown';
+	const avatar = useMemo(() => generateAvatarForUser(avatarKey), [avatarKey]);
 
 	// Keep the overall footprint equal to `size` so existing fixed-size
 	// containers don't shift; the white ring is created by shrinking the inner
 	// avatar and padding the difference with a white circular background.
 	const totalSize = parseInt(size, 10) || 32;
 	const ringWidth = Math.max(3, Math.round(totalSize * 0.125));
-	const innerSize = ring ? `${totalSize - ringWidth * 2}px` : size;
-
-	const avatar = (
-		<Avatar
-			id={userId}
-			name={resolvedName || initials}
-			size={innerSize}
-			type="round"
-		/>
-	);
-
-	if (!ring) {
-		return avatar;
-	}
+	const innerSize = ring ? totalSize - ringWidth * 2 : totalSize;
 
 	return (
 		<span
+			// Only a human-readable name may become the accessible name; technical
+			// identifiers (anonymous matrix usernames) stay hidden from AT.
+			role={resolvedName ? 'img' : undefined}
+			aria-label={resolvedName || undefined}
+			aria-hidden={resolvedName ? undefined : true}
+			data-testid="user-avatar"
 			style={{
 				display: 'inline-flex',
 				alignItems: 'center',
@@ -75,13 +65,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				width: totalSize,
 				height: totalSize,
 				borderRadius: '50%',
-				background: '#fff',
-				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
+				background: ring ? '#fff' : 'transparent',
+				boxShadow: ring ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				boxSizing: 'border-box',
 				flexShrink: 0
 			}}
 		>
-			{avatar}
+			<AnimalAvatar avatar={avatar} size={innerSize} />
 		</span>
 	);
 };
