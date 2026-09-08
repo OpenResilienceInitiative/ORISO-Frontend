@@ -213,4 +213,35 @@ describe('useTenantTheming – Theme Builder preview seeds', () => {
 		);
 		expect(appliedPrimary()).toBe('');
 	});
+
+	it('ignores preview seeds on a non-preview route', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		window.history.replaceState(
+			{},
+			'',
+			'/sessions?themePreviewPrimary=0061ff'
+		);
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalled()
+		);
+		expect(appliedPrimary()).toBe('');
+	});
+
+	it('still applies preview seeds on /theme-demo', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		setSearch('?themePreviewPrimary=0061ff');
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
+	});
 });

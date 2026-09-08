@@ -10,7 +10,8 @@ import applyBrandingFavicon from './applyBrandingFavicon';
 import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
-	applyTenantPalette
+	applyTenantPalette,
+	isThemePreviewRoute
 } from './theme/applyTenantTheme';
 
 const getOrCreateHeadNode = (
@@ -104,10 +105,11 @@ const useTenantTheming = () => {
 			// before both branches below. They have to survive a host without a
 			// subdomain (the admin's iframe in local development) and a Träger
 			// that has never saved colours — that admin is precisely the one
-			// choosing them for the first time.
-			const previewApplied = applyPreviewFromLocation(
-				window.location.search
-			);
+			// choosing them for the first time. The seeds are honoured only on
+			// the demo route, so a link cannot repaint the real app.
+			const previewApplied =
+				isThemePreviewRoute(window.location.pathname) &&
+				applyPreviewFromLocation(window.location.search);
 
 			if (!subdomain && cypressTenantEnabled !== '1') {
 				tenantContext?.setTenant({ settings } as any);
