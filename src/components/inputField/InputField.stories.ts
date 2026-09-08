@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { InputField } from './InputField';
 
@@ -8,7 +9,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'InputField component for text input with validation states, icons, and helper text.'
+				component:
+					'InputField component for text input with validation states, icons, and helper text.'
 			}
 		}
 	}
@@ -51,6 +53,20 @@ export const Email: Story = {
 			name: 'email',
 			label: 'Email Address',
 			content: ''
+		},
+		inputHandle: () => {}
+	}
+};
+
+export const WithIcon: Story = {
+	args: {
+		item: {
+			id: 'input-with-icon',
+			type: 'text',
+			name: 'email',
+			label: 'E-mail',
+			content: 'helpseeker@example.org',
+			icon: React.createElement('span', { 'aria-hidden': true }, '✉')
 		},
 		inputHandle: () => {}
 	}

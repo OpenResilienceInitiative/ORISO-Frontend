@@ -5,6 +5,7 @@ import {
 	DEFAULT_STORYBOOK_SHARDS,
 	MAX_BROWSER_DISCONNECT_RETRIES,
 	looksLikeBrowserDisconnect,
+	looksLikeImportCrash,
 	resolveShardCount,
 	shouldRetryStorybookRun,
 	storybookShardArgs,
@@ -16,6 +17,21 @@ const abortedGreenSummary = [
 	' Test Files  132 passed (171)',
 	'      Tests  808 passed (808)',
 	'     Errors  1 error'
+].join('\n');
+
+const pr1297ImportCrash = [
+	'Module "url" has been externalized for browser compatibility. Cannot access "url.pathToFileURL" in client code.',
+	' ✓  storybook (chromium)  src/components/listSearchField/ListSearchField.stories.tsx (2 tests) 78ms',
+	' ✓  storybook (chromium)  src/components/modal/Modal.stories.tsx (2 tests) 94ms',
+	'',
+	' FAIL   storybook (chromium)  src/components/card/Card.stories.tsx [ src/components/card/Card.stories.tsx ]',
+	'Error: Failed to import test file /home/runner/work/ORISO-Frontend/ORISO-Frontend/.storybook/vitest.setup.ts',
+	'Caused by: TypeError: Failed to fetch dynamically imported module: http://localhost:63315/home/runner/work/ORISO-Frontend/ORISO-Frontend/.storybook/vitest.setup.ts?import',
+	'',
+	' Test Files  1 failed | 158 passed (174)',
+	'      Tests  894 passed (894)',
+	'     Errors  1 error',
+	disconnect
 ].join('\n');
 
 test('retries when the browser disconnect is the only reported failure', () => {
@@ -36,6 +52,21 @@ test('retries an ANSI-wrapped disconnect line', () => {
 			1,
 			`\u001b[31m\u001b[1mError\u001b[22m: ${disconnect}. Was the page closed unexpectedly?\u001b[39m`
 		),
+		true
+	);
+});
+
+test('retries when Chrome dies mid-import and Vitest marks that file FAIL', () => {
+	// PR #1297: Card.stories.tsx was the victim, not the cause. Every play()
+	// that ran passed; the FAIL is "Failed to fetch vitest.setup.ts" after
+	// the orchestrator tab closed. That must retry, not fail the job.
+	assert.equal(looksLikeImportCrash(pr1297ImportCrash), true);
+	assert.equal(looksLikeBrowserDisconnect(pr1297ImportCrash), true);
+	assert.equal(shouldRetryStorybookRun(1, pr1297ImportCrash), true);
+	assert.equal(
+		shouldRetryStorybookRun(1, pr1297ImportCrash, {
+			failureDetected: false
+		}),
 		true
 	);
 });
@@ -77,7 +108,7 @@ test('still retries a disconnect when captured output was truncated', () => {
 	);
 });
 
-test('a failure latched off the live stream blocks the retry', () => {
+test('does not retry when a live assertion failure was latched', () => {
 	// The Storybook run emits thousands of "Module … has been externalized"
 	// lines, so MAX_CAPTURED_OUTPUT is crossed on every CI run and truncation
 	// alone must not gate the retry (the test above). `failureDetected` is a

@@ -9,141 +9,6 @@
 		width: 100%;
 	}
 
-	&__input {
-		appearance: none;
-		-moz-appearance: textfield;
-		height: 56px;
-		min-width: 0;
-		padding: 16px $grid-base-three;
-		flex: 1;
-		color: var(--m3-on-surface, #1b1b1c);
-		background-color: var(--m3-surface, #fcf9f9);
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 4px;
-		outline: 0;
-		font-size: 16px;
-		font-weight: 400;
-		line-height: 24px;
-		letter-spacing: 0.5px;
-
-		&--password {
-			overflow-x: auto;
-			white-space: nowrap;
-			padding-right: 50px !important; // Space for eye icon
-		}
-
-		&:hover {
-			border-color: var(--m3-outline, #747878);
-		}
-
-		&:focus {
-			border: 3px solid var(--m3-primary, #a5000a);
-			padding: 14px calc(#{$grid-base-three} - 2px);
-		}
-
-		&::-webkit-inner-spin-button {
-			appearance: none;
-		}
-
-		&:-ms-input-placeholder {
-			color: transparent;
-		}
-
-		&::-webkit-input-placeholder {
-			color: transparent;
-		}
-
-		&::-moz-placeholder {
-			color: transparent;
-		}
-
-		&:focus + label,
-		&:not(:placeholder-shown) + label {
-			font-size: 12px;
-			top: -8px;
-			transition:
-				font-size 0.5s,
-				top 0.5s;
-			color: var(--m3-on-surface-variant, #444748);
-			background: var(--m3-surface, #fcf9f9);
-			padding: 0 4px;
-			line-height: 16px;
-			letter-spacing: 0.4px;
-		}
-
-		&:focus + label {
-			color: var(--m3-primary, #a5000a);
-		}
-
-		&[disabled] {
-			background-color: var(--m3-surface-container-low, #f7f4f4);
-			border: 1px solid var(--m3-outline, #747878);
-			color: var(--m3-on-surface-variant, #444748);
-
-			+ label {
-				color: var(--m3-on-surface-variant, #444748);
-				cursor: not-allowed;
-			}
-		}
-
-		&[readonly] {
-			border: 1px solid var(--m3-outline, #747878);
-			color: var(--m3-on-surface-variant, #444748);
-
-			&:hover,
-			&:focus {
-				cursor: not-allowed;
-				border: 1px solid var(--m3-outline, #747878) !important;
-			}
-		}
-
-		&--invalid {
-			border: 3px solid var(--m3-error, #b1005e) !important;
-
-			+ label {
-				color: var(--m3-error, #b1005e);
-			}
-		}
-
-		&--valid {
-			border: 3px solid var(--m3-primary, #a5000a) !important;
-
-			+ label {
-				color: var(--m3-primary, #a5000a);
-			}
-		}
-
-		/* TODO: check if --error state still needed (class added in warningLabels.ts) */
-		&--error {
-			border-color: var(--m3-error, #b1005e) !important;
-			color: var(--m3-error, #b1005e);
-			border-width: 3px;
-
-			&.inputField__input--valid {
-				border-color: var(--m3-error, #b1005e) !important;
-				color: var(--m3-error, #b1005e) !important;
-
-				& + label {
-					color: var(--m3-error, #b1005e);
-				}
-			}
-		}
-	}
-
-	&__label {
-		position: absolute;
-		top: 16px;
-		left: 12px;
-		transition:
-			font-size 0.5s,
-			top 0.5s;
-		color: var(--m3-on-surface-variant, #444748);
-		line-height: 24px;
-		font-size: 16px;
-		letter-spacing: 0.5px;
-		pointer-events: none;
-	}
-
 	&__infoText {
 		width: 100%;
 		margin: 4px 16px 0;
@@ -167,10 +32,6 @@
 
 	&--withIcon & {
 		&__icon {
-			margin-left: 16px;
-			position: absolute;
-			top: 50%;
-			transform: translateY(-50%);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -178,10 +39,6 @@
 
 		&__infoText {
 			margin-left: $grid-base-seven;
-		}
-
-		&__label {
-			left: $grid-base-six;
 		}
 	}
 }
