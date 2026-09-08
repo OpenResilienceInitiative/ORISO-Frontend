@@ -74,13 +74,32 @@ const Shell = ({
 	</GlobalComponentContext.Provider>
 );
 
+/* Same rule as the room: four offers, no double name in the set. */
+const rollFour = () => {
+	const picked: ReturnType<typeof generatePseudonym>[] = [];
+	const seen = new Set<string>();
+	while (picked.length < 4) {
+		const candidate = generatePseudonym('de');
+		if (seen.has(candidate.displayName)) continue;
+		seen.add(candidate.displayName);
+		picked.push(candidate);
+	}
+	return picked;
+};
+
 const Access = () => {
-	const [p, setP] = React.useState(() => generatePseudonym('de'));
+	const [names, setNames] = React.useState(rollFour);
+	const [selected, setSelected] = React.useState(0);
 	return (
 		<Shell status="Ihr Zugang für dieses Gespräch">
 			<LiveChatAccess
-				pseudonym={p}
-				onReroll={() => setP(generatePseudonym('de'))}
+				pseudonyms={names}
+				selectedIndex={selected}
+				onSelect={setSelected}
+				onReroll={() => {
+					setNames(rollFour());
+					setSelected(0);
+				}}
 				onContinue={() => undefined}
 			/>
 		</Shell>
@@ -131,14 +150,16 @@ export const StepAccess: StoryObj = {
 	name: 'A — Der Zugang',
 	render: () => <Access />,
 	parameters: full(
-		'Kein Träger im Header — der Link ist global. Kein Passwort: ein Zugang, der sich selbst löscht, braucht keins. Fuß: Neu würfeln · Zum Warteraum. In der App: `apiPutSessionData` + `apiPatchUserData` mit dem Anzeigenamen, dann der Warteraum.'
+		'Vier Namen statt einem Würfel (#1341): eine Radiogruppe, zentriert im weißen Bereich, der erste Name ist schon gewählt — wer nichts anfassen will, drückt einfach „Zum Warteraum". Am Telefon zwei nebeneinander, ab `lg` alle vier. Kein Träger im Header — der Link ist global. Kein Passwort: ein Zugang, der sich selbst löscht, braucht keins. „Neu würfeln" holt vier frische Namen, ohne Doppel, und wählt wieder den ersten. In der App: `apiPutSessionData` + `apiPatchUserData` mit dem GEWÄHLTEN Anzeigenamen, dann der Warteraum.'
 	)
 };
 export const StepAccessMobile: StoryObj = {
 	name: 'A — Der Zugang, mobil',
 	globals: phone375Globals,
 	render: () => <Access />,
-	parameters: { layout: 'fullscreen' }
+	parameters: full(
+		'Dieselbe Auswahl auf 375 pt: zwei Karten nebeneinander, lange Namen brechen um. Der Bildschirm war vorher fast leer — das war Franks Beschwerde.'
+	)
 };
 export const StepWaiting: StoryObj = {
 	name: 'B — Warteraum: wartet',

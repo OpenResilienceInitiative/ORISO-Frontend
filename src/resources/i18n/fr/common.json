@@ -4808,7 +4808,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd'hui.",
-				"subline": "Anonyme, sans compte. Relancez jusqu'à ce qu'il vous plaise.",
+				"subline": "Anonyme, sans compte. Choisissez un nom — ou relancez les dés.",
 				"label": "Votre pseudonyme",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
