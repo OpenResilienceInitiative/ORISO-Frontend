@@ -215,6 +215,31 @@ export const StepAcceptedConsentMissing: StoryObj = {
 		'Der Fehlerzustand der Checkbox — dieselbe Behandlung wie im Konto-Schritt der Mail-Beratung (`AccountData`). Ein Haken räumt die Meldung wieder ab.'
 	)
 };
+/**
+ * The third of Frank's items in #1341: the round ✕ must ask before it closes.
+ * It opens the existing „Chat verlassen?" dialog, which now carries his
+ * sentence at the top — no second dialog stacked in front of it.
+ */
+export const StepAcceptedLeaving: StoryObj = {
+	name: 'B — Warteraum: Abbrechen fragt nach',
+	render: () => <Waiting accepted />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', {
+				name: /Nicht zustimmen und Chat verlassen/i
+			})
+		);
+		await expect(
+			await within(document.body).findByText(
+				/Sind Sie sicher, dass Sie abbrechen wollen und schließen\?/i
+			)
+		).toBeInTheDocument();
+	},
+	parameters: full(
+		'Das ✕ öffnet den bestehenden Verlassen-Dialog — er fragt bereits, und trägt jetzt Franks Satz oben. Bleiben, Chat starten und Zugang löschen bleiben die drei Wege daraus.'
+	)
+};
 export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
