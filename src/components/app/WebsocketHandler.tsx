@@ -15,12 +15,8 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../../utils/notificationHelpers';
+import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
@@ -33,7 +29,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
@@ -145,20 +140,19 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			if (
-				!releaseToggles.enableNewNotifications ||
-				isBrowserNotificationTypeEnabled('newMessage')
-			) {
-				sendNotification(translate('notifications.message.new'), {
-					// Route the banner to its config row (#576 harmonised
-					// model): Gespräch → Standard-Benachrichtigung.
-					family: 'messages',
-					eventType: 'message.new',
-					onclick: () => {
-						navigate(`/sessions/consultant/sessionView`);
-					}
-				});
-			}
+			// Whether the user wants this popup is `sendNotification`'s call
+			// alone (#1211) — it knows the family, the event type and which
+			// settings panel is actually routed. Repeating the check here is
+			// what broke new-message popups for the cross-device panel.
+			sendNotification(translate('notifications.message.new'), {
+				// Route the banner to its config row (#576 harmonised
+				// model): Gespräch → Standard-Benachrichtigung.
+				family: 'messages',
+				eventType: 'message.new',
+				onclick: () => {
+					navigate(`/sessions/consultant/sessionView`);
+				}
+			});
 		}
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
