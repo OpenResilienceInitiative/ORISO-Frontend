@@ -4828,8 +4828,10 @@
 				"barStatus": "Önünüzde {{count}} kişi — yapmanız gereken bir şey yok",
 				"yourTurn": "Sıra sizde.",
 				"yourTurnSub": "Bir danışman görüşmenizi kabul etti ve sizi bekliyor.",
+				"consentRequired": "Lütfen önce onaylayın — onayınız olmadan görüşme başlayamaz.",
 				"decline": "Kabul etme ve sohbetten ayrıl",
-				"start": "Kabul et ve başla",
+				"declineConfirm": "İptal edip kapatmak istediğinizden emin misiniz?",
+				"start": "Görüşmeyi başlat",
 				"startStatus": "Danışmanınız sizi bekliyor"
 			},
 			"closed": {

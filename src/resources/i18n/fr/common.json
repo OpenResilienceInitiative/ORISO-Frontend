@@ -4828,8 +4828,10 @@
 				"barStatus": "{{count}} devant vous — vous n'avez rien à faire",
 				"yourTurn": "C'est à vous.",
 				"yourTurnSub": "Une conseillère a pris votre conversation et vous attend.",
+				"consentRequired": "Veuillez d'abord accepter — sans votre accord, la conversation ne peut pas commencer.",
 				"decline": "Refuser et quitter le chat",
-				"start": "Accepter et commencer",
+				"declineConfirm": "Êtes-vous sûre de vouloir annuler et fermer ?",
+				"start": "Commencer la conversation",
 				"startStatus": "Votre conseillère vous attend"
 			},
 			"closed": {

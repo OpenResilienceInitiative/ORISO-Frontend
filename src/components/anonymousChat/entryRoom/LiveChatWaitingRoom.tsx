@@ -1,8 +1,15 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { useRef, useState } from 'react';
+import {
+	Box,
+	ButtonBase,
+	Checkbox,
+	FormControlLabel,
+	Typography
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
@@ -15,6 +22,7 @@ import {
 import { BreathingCompanionHost } from '../../pseudonym/breathingCompanion/BreathingCompanionHost';
 import { LeaveQueueDialog } from '../../pseudonym/LeaveQueueDialog';
 import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
+import { consentBindingKey } from '../../registration/accountData/consentAcceptance';
 import htmlParser from '../../../resources/scripts/util/htmlParser';
 import { liveChatArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
@@ -44,6 +52,9 @@ export interface LiveChatWaitingRoomProps {
 }
 
 const CARD_KEYS = ['wait', 'consent', 'anonymous'] as const;
+
+/** Ties the checkbox to its error message via `aria-describedby`. */
+const CONSENT_ERROR_ID = 'liveChatWaitingConsentError';
 
 /** One dot per person ahead; a filled dot is someone who has been called. */
 const QueueDots = ({ ahead, total }: { ahead: number; total: number }) => (
@@ -91,6 +102,10 @@ const TurningClock = () => (
  * from below the moment a counsellor accepts, carrying the button that
  * starts the chat, with a round X beside it so nobody is left with one
  * choice (Frank, 2026-09-05).
+ *
+ * The consent is a real checkbox with an error state, not a sentence the
+ * button implies agreement to (#1341 item 2), and the X leads into
+ * `LeaveQueueDialog` carrying an explicit „Sind Sie sicher…?" (item 3).
  */
 export const LiveChatWaitingRoom = ({
 	ahead,
@@ -118,6 +133,32 @@ export const LiveChatWaitingRoom = ({
 		);
 	const [leaving, setLeaving] = useState(false);
 	const [companion, setCompanion] = useState(companionStart);
+	const consentBoxRef = useRef<HTMLInputElement>(null);
+	/* What is on offer, not merely "something was ticked" — the registration's
+	   rule (`consentAcceptance.ts`), reused rather than re-invented. Agency and
+	   topic are unknown here, so the wording alone is the identity: switch
+	   language and the sentence changes, the binding stops matching, and the
+	   box unticks instead of carrying agreement onto words nobody read. */
+	const consentBinding = consentBindingKey(null, null, null, consentHtml);
+	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
+		string | null
+	>(null);
+	const [consentMissing, setConsentMissing] = useState(false);
+	const consentAccepted =
+		acceptedConsentBinding !== null &&
+		acceptedConsentBinding === consentBinding;
+
+	/* The gate. The button stays live rather than going disabled: a dead
+	   primary action tells nobody why, and "why" is the whole point of the
+	   error state Frank asked for (#1341 item 2). */
+	const handleStart = () => {
+		if (!consentAccepted) {
+			setConsentMissing(true);
+			consentBoxRef.current?.focus();
+			return;
+		}
+		onAccept();
+	};
 	/* The contract: when counselling starts, unmount. Accepted wins over
 	   whatever the person was doing — the breathing companion included. */
 	const companionOpen = companion && !accepted;
@@ -325,22 +366,92 @@ export const LiveChatWaitingRoom = ({
 											'Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.'
 										)}
 								</Typography>
-								<Typography
-									component="div"
+								<FormControlLabel
 									sx={{
-										'mt': 1.25,
-										'fontSize': 14,
-										'lineHeight': '20px',
-										'fontWeight': 600,
-										'& a': {
-											color: registrationMd3.primary
-										}
+										alignItems: 'flex-start',
+										mt: 1,
+										mr: 0
 									}}
-								>
-									{htmlParser(
-										sanitizeConsentHtml(consentHtml)
-									)}
-								</Typography>
+									control={
+										<Checkbox
+											inputRef={consentBoxRef}
+											checked={consentAccepted}
+											disabled={busy}
+											onChange={() => {
+												setAcceptedConsentBinding(
+													consentAccepted
+														? null
+														: consentBinding
+												);
+												setConsentMissing(false);
+											}}
+											inputProps={{
+												'aria-invalid': consentMissing,
+												'aria-describedby':
+													consentMissing
+														? CONSENT_ERROR_ID
+														: undefined
+											}}
+											sx={{
+												mt: '-9px',
+												color: consentMissing
+													? registrationMd3.error
+													: undefined
+											}}
+										/>
+									}
+									label={
+										<Typography
+											component="div"
+											sx={{
+												'fontSize': 14,
+												'lineHeight': '20px',
+												'fontWeight': 600,
+												'& a': {
+													color: registrationMd3.primary
+												}
+											}}
+										>
+											{htmlParser(
+												sanitizeConsentHtml(consentHtml)
+											)}
+										</Typography>
+									}
+								/>
+								{consentMissing && (
+									<Box
+										id={CONSENT_ERROR_ID}
+										role="alert"
+										sx={{
+											display: 'flex',
+											alignItems: 'flex-start',
+											gap: 1,
+											mt: 0.5,
+											color: registrationMd3.error
+										}}
+									>
+										<ErrorOutlineIcon
+											sx={{
+												fontSize: 20,
+												flexShrink: 0,
+												mt: '1px'
+											}}
+										/>
+										<Typography
+											sx={{
+												fontSize: 14,
+												lineHeight: '20px',
+												fontWeight: 600,
+												color: 'inherit'
+											}}
+										>
+											{tr(
+												'consentRequired',
+												'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
+											)}
+										</Typography>
+									</Box>
+								)}
 							</Box>
 						</Box>
 						<Box
@@ -370,10 +481,22 @@ export const LiveChatWaitingRoom = ({
 								<CloseRoundedIcon />
 							</ButtonBase>
 							<Box sx={{ flex: 1, minWidth: 0 }}>
+								{/* TODO(#1341 item 4): landing *in the message
+								    box* still needs the session side. The
+								    hand-over in
+								    `LiveChatEntryRoom.handleAccept` is a full
+								    reload to `buildInviteSessionAppUrl`, so no
+								    router state survives it — it would have to
+								    leave a per-session mark (the way it already
+								    marks `anonymous-inquiry-consent-*`) that
+								    `messageSubmitInterfaceComponent` reads on
+								    mount to call `composerRef.current.focus()`.
+								    Both files belong to other work in flight,
+								    so this change stops at the rename. */}
 								<HandoverGateButton
 									state={busy ? 'entering' : 'ready'}
-									onEnter={onAccept}
-									label={tr('start', 'Zustimmen & starten')}
+									onEnter={handleStart}
+									label={tr('start', 'Gespräch beginnen')}
 									status={tr(
 										'startStatus',
 										'Ihre Beraterin wartet auf Sie'
@@ -389,6 +512,14 @@ export const LiveChatWaitingRoom = ({
 				open={leaving}
 				canStartChat={accepted}
 				busy={busy}
+				/* Frank's warning (#1341 item 3). The dialog already asks
+				   „Chat verlassen?" and offers stay / start / delete, so the X
+				   gets his sentence *inside* it rather than a second dialog
+				   stacked in front of the first. */
+				confirmPrompt={tr(
+					'declineConfirm',
+					'Sind Sie sicher, dass Sie abbrechen wollen und schließen?'
+				)}
 				errorMessage={
 					leaveFailed
 						? t(
@@ -399,8 +530,11 @@ export const LiveChatWaitingRoom = ({
 				}
 				onStay={() => setLeaving(false)}
 				onStartChat={() => {
+					/* Through the same gate as the primary action. Starting
+					   from inside the dialog is still starting, and consent
+					   that can be walked around is not a consent gate. */
 					setLeaving(false);
-					onAccept();
+					handleStart();
 				}}
 				onDeleteAccess={() => {
 					void onLeave();
