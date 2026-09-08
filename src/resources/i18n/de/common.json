@@ -2616,6 +2616,7 @@
 				"addressLabel": "Adresse",
 				"hoursLabel": "Öffnungszeiten",
 				"languagesLabel": "Sprachen",
+				"languagesTooltip": "Diese Beratungsstelle berät Sie auf:",
 				"less": "Weniger",
 				"more": "Mehr",
 				"navigate": "Navigation starten",
