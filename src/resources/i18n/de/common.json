@@ -2760,7 +2760,12 @@
 				"prefix": "Ich habe die ",
 				"suffix": " zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies."
 			},
-			"loading": "Der Einwilligungstext wird geladen …"
+			"loading": "Der Einwilligungstext wird geladen …",
+			"snackbar": {
+				"prefix": "Das ist unsere ",
+				"link": "Datenschutzbestimmung",
+				"suffix": ". Für Authentifizierung und Navigation verwendet diese Websites Cookies."
+			}
 		},
 		"error": {
 			"required_field_missing": {
