@@ -19,7 +19,10 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals
+} from '../message/messageStoryShell';
 
 /**
  * Approval surface for the **link variant** of "Anmeldedaten erfassen".
@@ -212,8 +215,29 @@ const EntryScreen = ({
 	);
 };
 
-export const FreshlyLoaded: StoryObj = {
-	name: '1 — Frisch geladen',
+/*
+ * Every story pins its viewport, and every state is shown at both of them.
+ *
+ * ORISO-Frontend#1288 asks for the five states at 1440x900 and at 390x844, so
+ * `globals` is set explicitly on all of them: a story that inherits whatever
+ * width the preview pane happens to have proves nothing, and `desktop1440` is
+ * the evidence viewport the ORISO Storybook gate reads.
+ *
+ * The pairs are not duplication. State 4 is the clearest case — the login
+ * affordance is a labelled button from `lg` up and the door icon in the mobile
+ * hero below it, so one state has two controls to judge, not one.
+ *
+ * States 2 and 3 are the two positions of one toggle rather than two screens:
+ * `EntryScreen` holds `temporary` and the footer's secondary button flips it,
+ * so the fields can be walked from one state into the other inside a single
+ * story. That is the "toggleable, not two screens" requirement of #1288, and
+ * the wrapper already satisfies it — nothing in `AccountData` has to change
+ * for it, which is #1289's business anyway.
+ */
+
+export const FreshlyLoadedDesktop: StoryObj = {
+	name: '1 — Frisch geladen, Desktop',
+	globals: desktop1440Globals,
 	render: () => <EntryScreen />,
 	parameters: {
 		layout: 'fullscreen',
@@ -225,8 +249,23 @@ export const FreshlyLoaded: StoryObj = {
 	}
 };
 
-export const TemporaryJoin: StoryObj = {
-	name: '2 — Temporär beitreten',
+export const FreshlyLoadedMobile: StoryObj = {
+	name: '1 — Frisch geladen, mobil',
+	globals: phone390Globals,
+	render: () => <EntryScreen />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Dieselbe Zusammenstellung auf dem Telefon. Der Fuß bleibt klebend, damit die Entscheidung „temporär oder Konto" nicht unter der Tastatur verschwindet.'
+			}
+		}
+	}
+};
+
+export const TemporaryJoinDesktop: StoryObj = {
+	name: '2 — Temporär beitreten, Desktop',
+	globals: desktop1440Globals,
 	render: () => <EntryScreen startTemporary />,
 	parameters: {
 		layout: 'fullscreen',
@@ -238,8 +277,23 @@ export const TemporaryJoin: StoryObj = {
 	}
 };
 
-export const FullRegistration: StoryObj = {
-	name: '3 — Volle Registrierung',
+export const TemporaryJoinMobile: StoryObj = {
+	name: '2 — Temporär beitreten, mobil',
+	globals: phone390Globals,
+	render: () => <EntryScreen startTemporary />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der temporäre Zustand auf dem Telefon. Ohne die beiden Passwortfelder bleibt wenig übrig — der Satz, dass dieses Gespräch mit dem Fenster endet, steht damit unübersehbar über dem Fuß statt wie am Desktop im leeren Raum daneben.'
+			}
+		}
+	}
+};
+
+export const FullRegistrationDesktop: StoryObj = {
+	name: '3 — Volle Registrierung, Desktop',
+	globals: desktop1440Globals,
 	render: () => <EntryScreen />,
 	parameters: {
 		layout: 'fullscreen',
@@ -251,15 +305,43 @@ export const FullRegistration: StoryObj = {
 	}
 };
 
-export const Mobile: StoryObj = {
-	name: '4 — Mobil (390 pt)',
+export const FullRegistrationMobile: StoryObj = {
+	name: '3 — Volle Registrierung, mobil',
 	globals: phone390Globals,
 	render: () => <EntryScreen />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Dieselbe Zusammenstellung auf dem Telefon. Der Fuß bleibt klebend, damit die Entscheidung „temporär oder Konto" nicht unter der Tastatur verschwindet.'
+				story: 'Die volle Registrierung auf dem Telefon — die längste Fassung dieses Bildschirms. Hier ist zu sehen, ob die Spalte zwei Passwortfelder, Zustimmung und Fuß trägt, ohne dass die Zustimmung hinter dem Fuß verschwindet.'
+			}
+		}
+	}
+};
+
+export const ExistingAccountDesktop: StoryObj = {
+	name: '4 — Konto vorhanden, Desktop',
+	globals: desktop1440Globals,
+	render: () => <EntryScreen />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Für jemanden, der schon ein Konto hat: oben rechts steht „Einloggen". Ohne diese Abzweigung bliebe nur, sich ein zweites Mal anzulegen — und die Einladung trägt Thema und Beratungsstelle ohnehin mit sich, die Anmeldung verliert also nichts davon. Zu beurteilen ist, ob der Weg sichtbar genug ist, ohne den Bildschirm gegen die Registrierung auszuspielen.'
+			}
+		}
+	}
+};
+
+export const ExistingAccountMobile: StoryObj = {
+	name: '4 — Konto vorhanden, mobil',
+	globals: phone390Globals,
+	render: () => <EntryScreen />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Dieselbe Abzweigung auf dem Telefon, aber als anderes Bedienelement: den beschrifteten Button gibt es erst ab „lg", darunter übernimmt das Türsymbol in der Kopfleiste. Zu beurteilen ist, ob „Einloggen" ohne seine Beschriftung noch gefunden wird.'
 			}
 		}
 	}
@@ -321,8 +403,9 @@ const EntryDialog = ({
 	);
 };
 
-export const AsDialog: StoryObj = {
-	name: '5 — Als Dialog (mit Konto)',
+export const AsDialogDesktop: StoryObj = {
+	name: '5 — Als Dialog (mit Konto), Desktop',
+	globals: desktop1440Globals,
 	render: () => <EntryDialog />,
 	parameters: {
 		layout: 'fullscreen',
@@ -334,14 +417,43 @@ export const AsDialog: StoryObj = {
 	}
 };
 
-export const AsDialogTemporary: StoryObj = {
-	name: '6 — Als Dialog (temporär)',
+export const AsDialogMobile: StoryObj = {
+	name: '5 — Als Dialog (mit Konto), mobil',
+	globals: phone390Globals,
+	render: () => <EntryDialog />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der Dialog auf dem Telefon. Er soll das Gespräch dahinter überdecken und nicht ersetzen — zu beurteilen ist, wie viel Rand ihm bei 390 pt dafür bleibt und ob die zwei Aktionen nebeneinander noch Platz finden.'
+			}
+		}
+	}
+};
+
+export const AsDialogTemporaryDesktop: StoryObj = {
+	name: '6 — Als Dialog (temporär), Desktop',
+	globals: desktop1440Globals,
 	render: () => <EntryDialog startTemporary />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
 				story: 'Der Dialog im temporären Zustand. Auch hier gilt die Zustimmung, auch hier steht der Hinweis, dass es keinen Weg zurück gibt.'
+			}
+		}
+	}
+};
+
+export const AsDialogTemporaryMobile: StoryObj = {
+	name: '6 — Als Dialog (temporär), mobil',
+	globals: phone390Globals,
+	render: () => <EntryDialog startTemporary />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Der temporäre Dialog auf dem Telefon: die kürzeste Fassung überhaupt, weil die Passwortfelder fehlen. Der Hinweis, dass es keinen Weg zurück gibt, muss trotzdem vor den Aktionen stehen.'
 			}
 		}
 	}
