@@ -975,6 +975,19 @@ export const SessionListItemComponent = ({
 								? activeSession.item.topic
 								: activeSession.item.topic?.name || ''}
 						</div>
+						{activeSession.item.modality && (
+							<div className="sessionsListItem__groupMedium">
+								<GroupModalityIcon
+									className="sessionsListItem__groupModalityIcon"
+									aria-hidden="true"
+								/>
+								<span>
+									{translate(
+										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
+									)}
+								</span>
+							</div>
+						)}
 					</div>
 					<div className="sessionsListItem__row">
 						<SessionListItemLastMessage
@@ -1261,15 +1274,6 @@ export const SessionListItemComponent = ({
 								'sessionsListItem__username--readLabel'
 						)}
 					>
-						{activeSession.isGroup &&
-							activeSession.item.modality && (
-								<GroupModalityIcon
-									className="sessionsListItem__groupModalityIcon"
-									aria-label={translate(
-										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
-									)}
-								/>
-							)}
 						{sessionTopic}
 					</div>
 				</div>

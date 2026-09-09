@@ -17,6 +17,7 @@ import {
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { RowMenu, RowMenuOption } from '../RowMenu';
+import { groupChatModalityLabelKey } from './groupChatModalityLabel';
 
 /**
  * Schedule rows of the Gesprächskreis settings screen (Figma 8482-30552,
@@ -272,7 +273,7 @@ export const ScheduleRows = ({
 				fullWidth
 				icon={<MediumIcon />}
 				label={translate(
-					`groupChat.create.modalitySelect.${value.modality.toLowerCase()}`,
+					groupChatModalityLabelKey(value.modality),
 					translate('groupChat.circle.rows.mediumLabel')
 				)}
 				variant={variantFor('medium', Boolean(value.modality))}
@@ -288,7 +289,7 @@ export const ScheduleRows = ({
 					options={MODALITIES.map((modality) => ({
 						value: modality,
 						label: translate(
-							`groupChat.create.modalitySelect.${modality.toLowerCase()}`,
+							groupChatModalityLabelKey(modality),
 							modality
 						)
 					}))}

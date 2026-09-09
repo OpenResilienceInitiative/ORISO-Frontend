@@ -30,8 +30,19 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	&__groupModalityIcon {
 		width: $grid-base-two;
 		height: $grid-base-two;
-		margin-right: $grid-base;
-		vertical-align: text-bottom;
+		flex-shrink: 0;
+	}
+
+	&__groupMedium {
+		display: inline-flex;
+		align-items: center;
+		gap: $grid-base;
+		margin-left: auto;
+		color: var(--m3-secondary, #4b515a);
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+		white-space: nowrap;
 	}
 	display: flex;
 	color: $body-font-color;

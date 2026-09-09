@@ -106,13 +106,19 @@ vi.mock('../../resources/img/icons/gear.svg', () => ({
 	ReactComponent: () => <span />
 }));
 vi.mock('../../resources/img/icons/chat.svg', () => ({
-	ReactComponent: () => <span />
+	ReactComponent: (props: React.HTMLAttributes<HTMLSpanElement>) => (
+		<span data-testid="text-modality-icon" {...props} />
+	)
 }));
 vi.mock('../../resources/img/icons/call.svg', () => ({
-	ReactComponent: () => <span />
+	ReactComponent: (props: React.HTMLAttributes<HTMLSpanElement>) => (
+		<span data-testid="audio-modality-icon" {...props} />
+	)
 }));
 vi.mock('../../resources/img/icons/video-call.svg', () => ({
-	ReactComponent: () => <span />
+	ReactComponent: (props: React.HTMLAttributes<HTMLSpanElement>) => (
+		<span data-testid="video-modality-icon" {...props} />
+	)
 }));
 vi.mock('../../resources/img/icons/chatroom/mail_conv_type_200.svg', () => ({
 	default: ''
@@ -220,7 +226,8 @@ const makeUserData = (userId = OWNER_USER_ID) => ({
 const makeGroupSession = ({
 	consultantId = OWNER_USER_ID,
 	active = false,
-	matrixRoomId = '!abc:matrix.example.org'
+	matrixRoomId = '!abc:matrix.example.org',
+	modality = 'VIDEO'
 } = {}) => ({
 	item: {
 		id: 101,
@@ -242,7 +249,8 @@ const makeGroupSession = ({
 		hintMessage: '',
 		lastMessage: '',
 		attachment: null,
-		videoCallMessageDTO: null
+		videoCallMessageDTO: null,
+		modality
 	},
 	rid: matrixRoomId,
 	type: 'groupChat' as const,
@@ -392,5 +400,14 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+
+	it('shows the configured medium on the group-chat card', () => {
+		renderItem(makeGroupSession({ modality: 'VIDEO' }));
+
+		expect(screen.getByTestId('video-modality-icon')).toBeTruthy();
+		expect(
+			screen.getByText('groupChat.create.modality.options.video')
+		).toBeTruthy();
 	});
 });
