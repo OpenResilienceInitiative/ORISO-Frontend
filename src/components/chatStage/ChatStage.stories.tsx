@@ -549,6 +549,20 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		const n = parseInt(hex.replace('#', ''), 16);
 		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 	})();
+	// The composer wears TWO different focused borders, and the first version
+	// of this guard only knew one of them: `--m3-primary-container` (#597,
+	// the selected-composer ring) AND `$inputBorderActive` #cc1e1c from
+	// `messageSubmitInterface.styles.scss` `:focus-within`. The second one
+	// slipped straight through, which is why (d2) read rgb(204, 30, 28) and
+	// failed 2 runs in 3 once the file grew past ~70 stories.
+	//
+	// The second half of the bug was WHERE the value was read: the old code
+	// waited for a settled state and then measured afterwards, so the
+	// composer's autofocus had a whole tick to come back between the wait
+	// and the read. The border is now captured INSIDE the settled state and
+	// returned from here, so what is asserted is what was verified.
+	const inputBorderActive = 'rgb(204, 30, 28)';
+	let restingComposerBorder = '';
 	await waitFor(
 		() => {
 			const input = canvasElement.querySelector<HTMLElement>(
@@ -564,11 +578,21 @@ const panelTint = async (canvasElement: HTMLElement) => {
 					'.textarea__wrapper-send-message--selected'
 				)
 			).toBeNull();
+			// Nothing inside the panel may hold focus — `:focus-within` is
+			// what paints the active border, so this is the root condition
+			// rather than another colour to exclude.
+			expect(
+				canvasElement
+					.querySelector('[data-cy="stage-panel"]')!
+					.contains(document.activeElement)
+			).toBe(false);
 			const field = getComputedStyle(input!);
 			expect(field.borderTopWidth).toBe('1px');
 			expect(field.borderTopColor).not.toBe(focusRing);
+			expect(field.borderTopColor).not.toBe(inputBorderActive);
+			restingComposerBorder = field.borderTopColor;
 		},
-		{ timeout: 3000, interval: 50 }
+		{ timeout: 5000, interval: 50 }
 	);
 	const header = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel"] .panelHeader'
@@ -595,11 +619,8 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		hairline: getComputedStyle(divider).borderTopColor,
 		tag: getComputedStyle(header.querySelector('.panelHeader__kindButton')!)
 			.backgroundColor,
-		composerBorder: getComputedStyle(
-			canvasElement.querySelector(
-				'[data-cy="stage-panel"] .textarea__input'
-			)!
-		).borderTopColor,
+		// Captured while the composer was verified to be at rest — see above.
+		composerBorder: restingComposerBorder,
 		composerAccent: canvasElement
 			.querySelector(
 				'[data-cy="stage-panel"] .textarea__wrapper-send-message'
@@ -2223,20 +2244,33 @@ export const ChatTextSizeCompact: Story = {
  * ------------------------------------------------------------------ */
 
 /** Drive the real handle to a width — no reliance on the persisted value. */
-const dragPanelTo = async (canvasElement: HTMLElement, target: number) => {
+/**
+ * One key press on the panel's resize handle.
+ *
+ * The handle is re-queried on EVERY press. Holding one reference across
+ * presses is what made (j) fail about one run in eight with Storybook's
+ * "Not implemented. The result of this interaction is unreliable.": each
+ * width change re-renders the stage (the composer settle tick from review
+ * B2 N-1 among others), the old handle node is detached, and the key then
+ * goes to a node that is no longer in the document.
+ *
+ * The focus call stays because the composer autofocuses late — without it
+ * the arrows would land in the editor instead of on the handle.
+ */
+const pressOnPanelHandle = async (canvasElement: HTMLElement, keys: string) => {
 	const handle = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel-handle"]'
 	)!;
+	handle.focus();
+	await userEvent.keyboard(keys);
+};
+
+const dragPanelTo = async (canvasElement: HTMLElement, target: number) => {
 	const slot = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-panel-slot"]'
 	)!;
 	const width = () => Math.round(slot.getBoundingClientRect().width);
-	// The composer autofocuses late, so the handle takes focus back before
-	// every key — otherwise the arrows would land in the editor.
-	const press = async (keys: string) => {
-		handle.focus();
-		await userEvent.keyboard(keys);
-	};
+	const press = (keys: string) => pressOnPanelHandle(canvasElement, keys);
 	// Home is the panel's floor; from there the arrows step up to the target
 	// (ArrowLeft grows a start-anchored pane by 20 px, Shift by 40).
 	await press('{Home}');
@@ -2450,11 +2484,14 @@ export const PanelAtTheDragFloor320: Story = {
 		);
 		await expectNarrowPaneSurvives(canvasElement, 'panel');
 		// The wide main chat keeps its roomy header (calls stay in the row).
-		await expect(
-			canvasElement
-				.querySelector('[data-cy="stage-main"] .sessionInfo')
-				?.getAttribute('data-density')
-		).toBe('roomy');
+		// Same measured source as (j), so awaited for the same reason.
+		await waitFor(() =>
+			expect(
+				canvasElement
+					.querySelector('[data-cy="stage-main"] .sessionInfo')
+					?.getAttribute('data-density')
+			).toBe('roomy')
+		);
 		await expect(
 			canvasElement.querySelector(
 				'[data-cy="session-header-video-call-buttons"]'
@@ -2486,17 +2523,25 @@ export const MainChatAtTheDragFloor320: Story = {
 		const slot = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-panel-slot"]'
 		)!;
-		const handle = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="stage-panel-handle"]'
-		)!;
-		handle.focus();
-		await userEvent.keyboard('{End}');
+		// End sends the divider fully left in one press. Bounded retries,
+		// because a single press occasionally lands on a handle node the
+		// stage has just replaced — the same cause `pressOnPanelHandle`
+		// documents; a re-press is the honest fix, not a longer timeout.
+		const handleNow = () =>
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="stage-panel-handle"]'
+			)!;
+		const atMax = () =>
+			Math.round(slot.getBoundingClientRect().width) ===
+			Number(handleNow().getAttribute('aria-valuemax'));
+		for (let attempt = 0; attempt < 5 && !atMax(); attempt += 1) {
+			await pressOnPanelHandle(canvasElement, '{End}');
+			await waitFor(() => expect(atMax()).toBe(true), {
+				timeout: 1000
+			}).catch(() => undefined);
+		}
 		// The panel takes everything the drag floor leaves the main chat.
-		await waitFor(() =>
-			expect(Math.round(slot.getBoundingClientRect().width)).toBe(
-				Number(handle.getAttribute('aria-valuemax'))
-			)
-		);
+		await waitFor(() => expect(atMax()).toBe(true));
 		// The main chat lands on its floor (± the 8 px the stage's computed
 		// card width differs from the rendered one — see `cardWidth` in
 		// `ConsultantSessionStage`).
@@ -2511,12 +2556,21 @@ export const MainChatAtTheDragFloor320: Story = {
 			'[data-cy="stage-main"] .sessionInfo'
 		)!;
 		// D8's compact form, switched by the PANE and not by the viewport.
-		await expect(header.getAttribute('data-density')).toBe('compact');
-		await expect(
-			canvasElement.querySelector(
-				'[data-cy="session-header-video-call-buttons"]'
-			)
-		).toBeNull();
+		//
+		// Awaited, not read straight after the drag: the density comes from
+		// `react-use-measure`, so the attribute flips one ResizeObserver tick
+		// AFTER the pane has its new width. Reading it immediately caught the
+		// old value about one run in four.
+		await waitFor(() =>
+			expect(header.getAttribute('data-density')).toBe('compact')
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="session-header-video-call-buttons"]'
+				)
+			).toBeNull()
+		);
 		const kebab = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .sessionMenu__icon--desktop'
 		)!;
