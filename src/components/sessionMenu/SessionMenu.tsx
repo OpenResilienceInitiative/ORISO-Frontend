@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState
 } from 'react';
 import { generatePath, Link, Navigate, useNavigate } from 'react-router-dom';
@@ -118,6 +119,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
+	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+	const handleOpenGroupChatInfo = () => {
+		setFlyoutOpen(false);
+		// The dialog restores focus here after closing, rather than to its
+		// now-hidden menu item. Remember the actual desktop/mobile trigger.
+		menuTriggerRef.current?.focus();
+	};
 	// #576 harmonised model: quick access to the notification config from the
 	// conversation menu — same component as in the profile settings, wrapped
 	// in the dialog so the user is NOT thrown out of the current room.
@@ -578,7 +586,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<button
 						type="button"
 						id="iconH"
-						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						onClick={(event) => {
+							menuTriggerRef.current = event.currentTarget;
+							setFlyoutOpen(!flyoutOpen);
+						}}
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
@@ -592,7 +603,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<button
 						type="button"
 						id="iconV"
-						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						onClick={(event) => {
+							menuTriggerRef.current = event.currentTarget;
+							setFlyoutOpen(!flyoutOpen);
+						}}
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
@@ -865,6 +879,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									editGroupChatSettingsLink
 								}
 								groupChatInfoLink={groupChatInfoLink}
+								onOpenInfo={handleOpenGroupChatInfo}
 								handleLeaveGroupChat={handleLeaveGroupChat}
 								handleStopGroupChat={handleStopGroupChat}
 								bannedUsers={props.bannedUsers}
@@ -985,12 +1000,14 @@ const AudioCallHeaderIcon = () => (
 
 const SessionMenuFlyoutGroup = ({
 	groupChatInfoLink,
+	onOpenInfo,
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
 	bannedUsers
 }: {
 	groupChatInfoLink: string;
+	onOpenInfo: () => void;
 	editGroupChatSettingsLink: string;
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
@@ -1021,6 +1038,7 @@ const SessionMenuFlyoutGroup = ({
 			{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 				<Link
 					to={groupChatInfoLink}
+					onClick={onOpenInfo}
 					className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 				>
 					<SessionMenuItemContent

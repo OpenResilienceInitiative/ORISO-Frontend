@@ -1,6 +1,12 @@
 import * as React from 'react';
 import { useEffect, useContext, useState, useCallback } from 'react';
-import { Link, Navigate, useParams, useNavigate } from 'react-router-dom';
+import {
+	Link,
+	Navigate,
+	useParams,
+	useNavigate,
+	useLocation
+} from 'react-router-dom';
 import {
 	AUTHORITIES,
 	SessionTypeContext,
@@ -11,8 +17,11 @@ import {
 	ActiveSessionProvider
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { OVERLAY_FUNCTIONS, Overlay, OverlayItem } from '../overlay/Overlay';
+import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { BUTTON_TYPES } from '../button/Button';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { GroupChatInfoDialog } from './GroupChatInfoDialog';
+import { OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import {
 	apiGetGroupChatInfo,
 	apiPutGroupChat,
@@ -31,21 +40,10 @@ import {
 	stopGroupChatSuccessOverlayItem
 } from '../sessionMenu/sessionMenuHelpers';
 import { logout } from '../logout/logout';
-import {
-	mobileListView,
-	mobileDetailView,
-	desktopView
-} from '../app/navigationHandler';
 import { decodeUsername } from '../../utils/encryptionHelpers';
-import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as GroupChatIcon } from '../../resources/img/icons/speech-bubble.svg';
-import './groupChatInfo.styles';
-import { Text } from '../text/Text';
 import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { BanUser, BanUserOverlay } from '../banUser/BanUser';
-import { useResponsive } from '../../hooks/useResponsive';
-import { Tag } from '../tag/Tag';
+import { BanUser } from '../banUser/BanUser';
 import { useSession } from '../../hooks/useSession';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { GroupChatCopyLinks } from './GroupChatCopyLinks';
@@ -61,16 +59,11 @@ export const GroupChatInfo = () => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const tenantData = useTenant();
 	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const featureGroupChatV2Enabled =
 		tenantData?.settings?.featureGroupChatV2Enabled;
-
-	const stopChatButtonSet: ButtonItem = {
-		label: translate('groupChat.stopChat.securityOverlay.button1Label'),
-		function: OVERLAY_FUNCTIONS.CLOSE,
-		type: BUTTON_TYPES.PRIMARY
-	};
 
 	const { userData } = useContext(UserDataContext);
 	const { path: listPath } = useContext(SessionTypeContext);
@@ -86,17 +79,6 @@ export const GroupChatInfo = () => {
 
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
-
-	const { fromL } = useResponsive();
-	useEffect(() => {
-		if (!fromL) {
-			mobileDetailView();
-			return () => {
-				mobileListView();
-			};
-		}
-		desktopView();
-	}, [fromL]);
 
 	useEffect(() => {
 		if (!ready) {
@@ -157,7 +139,7 @@ export const GroupChatInfo = () => {
 				.filter(
 					(item) =>
 						parseInt(item.value) === activeSession.item.duration
-				)[0].label,
+				)[0]?.label,
 		[activeSession?.item.duration, translate]
 	);
 
@@ -196,7 +178,10 @@ export const GroupChatInfo = () => {
 	const preparedSettings: Array<{ label: string; value: string }> = [
 		{
 			label: translate('groupChat.info.settings.topic'),
-			value: activeSession.item.topic as string
+			value:
+				typeof activeSession.item.topic === 'string'
+					? activeSession.item.topic
+					: activeSession.item.topic?.name || ''
 		},
 		{
 			label: translate('groupChat.info.settings.startDate'),
@@ -245,187 +230,104 @@ export const GroupChatInfo = () => {
 		});
 	}
 
+	const sessionUrl =
+		location.pathname.replace(/\/groupChatInfo\/?$/, '') + location.search;
+	const closeInfo = () => navigate(sessionUrl, { replace: true });
+	if (showCreator)
+		preparedSettings.push({
+			label: translate('groupChat.info.settings.creator'),
+			value: activeSession.consultant.displayName
+		});
+	if (showCreateDate)
+		preparedSettings.push({
+			label: translate('groupChat.info.settings.createDate'),
+			value: getCreationDate(new Date(activeSession.item.createdAt))
+		});
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
-			<div className="groupChatInfo__wrapper">
-				<div className="groupChatInfo__header">
-					<div className="groupChatInfo__header__wrapper">
-						<Link
-							to={`${listPath}/${activeSession.item.matrixRoomId}/${
-								activeSession.item.id
-							}${getSessionListTab()}`}
-							className="groupChatInfo__header__backButton"
-						>
-							<BackIcon />
-						</Link>
-						<h3 className="groupChatInfo__header__title">
-							{translate('groupChat.info.headline')}
-						</h3>
-					</div>
-					<div className="groupChatInfo__header__metaInfo">
-						<p className="groupChatInfo__header__username">
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</p>
-					</div>
-				</div>
-				<div className="groupChatInfo__innerWrapper">
-					<div className="groupChatInfo__user">
-						<div className="groupChatInfo__icon">
-							<GroupChatIcon className="groupChatInfo__icon--chatInfo" />
-							{activeSession.item.active ? (
-								<span className="groupChatInfo__icon--active"></span>
-							) : null}
-						</div>
-						<h2>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</h2>
-					</div>
-					{canModerateGroupChat(activeSession, userData) &&
-					activeSession.item.active &&
-					activeSession.item.subscribed ? (
-						<div className="groupChatInfo__innerWrapper__stopButton">
-							<Button
-								item={stopChatButtonSet}
-								buttonHandle={handleStopGroupChatButton}
+			<GroupChatInfoDialog
+				active={activeSession.item.active}
+				title={
+					typeof activeSession.item.topic === 'string'
+						? activeSession.item.topic
+						: activeSession.item.topic?.name || ''
+				}
+				onClose={closeInfo}
+				settings={preparedSettings}
+				participants={
+					<>
+						<SubscriberList
+							isCurrentUserModerator={isCurrentUserModerator}
+						/>
+						{activeSession.item.participants?.length &&
+						userData?.userId ? (
+							<GroupChatRoleManager
+								seriesId={activeSession.item.id}
+								currentUserId={userData.userId}
+								participants={activeSession.item.participants}
 							/>
-						</div>
-					) : null}
-					{calendarStart && (
-						<div className="groupChatInfo__calendar">
+						) : null}
+					</>
+				}
+				invitation={
+					featureGroupChatV2Enabled && isV2GroupChat ? (
+						<GroupChatCopyLinks seriesId={activeSession.item.id} />
+					) : null
+				}
+				actions={
+					<>
+						{calendarStart && (
 							<GroupChatCalendarMenu
 								start={calendarStart}
 								durationMinutes={activeSession.item.duration}
 								eventId={activeSession.item.id}
 							/>
-						</div>
-					)}
-					<div className="groupChatInfo__content">
-						<div className="groupChatInfo__content__item groupChatInfo__data">
-							<Text
-								text={translate(
-									'groupChat.info.subscribers.headline'
-								)}
-								type="divider"
-							/>
-
-							{featureGroupChatV2Enabled && isV2GroupChat && (
-								<div className="groupChatInfo__groupChatContainer">
-									<GroupChatCopyLinks
-										seriesId={activeSession.item.id}
-									/>
-								</div>
-							)}
-							<SubscriberList
-								isCurrentUserModerator={isCurrentUserModerator}
-							/>
-							{activeSession.item.participants?.length &&
-							userData?.userId ? (
-								<GroupChatRoleManager
-									seriesId={activeSession.item.id}
-									currentUserId={userData.userId}
-									participants={
-										activeSession.item.participants
-									}
-								/>
-							) : null}
-						</div>
-
-						<div className="groupChatInfo__content__item groupChatInfo__data">
-							<Text
-								text={translate(
-									'groupChat.info.settings.headline'
-								)}
-								type="divider"
-							/>
-
-							{(showCreator || showCreateDate) && (
-								<div className="groupChatInfo__data__group">
-									{showCreator && (
-										<div className="groupChatInfo__data__item">
-											<p className="groupChatInfo__data__label">
-												{translate(
-													'groupChat.info.settings.creator'
-												)}
-											</p>
-											<p className="groupChatInfo__data__content">
-												{
-													activeSession.consultant
-														.displayName
-												}
-											</p>
-										</div>
-									)}
-									{showCreateDate && (
-										<div className="groupChatInfo__data__item">
-											<p className="groupChatInfo__data__label">
-												{translate(
-													'groupChat.info.settings.createDate'
-												)}
-											</p>
-											<p className="groupChatInfo__data__content">
-												{getCreationDate(
-													new Date(
-														activeSession.item.createdAt
-													)
-												)}
-											</p>
-										</div>
-									)}
-								</div>
-							)}
-							{preparedSettings.map((item, index) => (
-								<div
-									className="groupChatInfo__data__item"
-									key={index}
+						)}
+						{canModerateGroupChat(activeSession, userData) &&
+							activeSession.item.active &&
+							activeSession.item.subscribed && (
+								<Button
+									color="error"
+									variant="text"
+									onClick={handleStopGroupChatButton}
 								>
-									<p className="groupChatInfo__data__label">
-										{item.label}
-									</p>
-									<p className="groupChatInfo__data__content">
-										{item.value}
-									</p>
-								</div>
-							))}
-							{isGroupChatOwner(activeSession, userData) &&
-							!activeSession.item.active ? (
-								<Link
-									className="groupChatInfo__innerWrapper__editButton"
-									to={`${listPath}/${
-										activeSession.item.matrixRoomId
-									}/${
-										activeSession.item.id
-									}/editGroupChat${getSessionListTab()}`}
-									state={{
-										isEditMode: true,
-										prevIsInfoPage: true
-									}}
-								>
-									<Button
-										item={{
-											label: translate(
-												'groupChat.info.settings.edit'
-											),
-											type: 'LINK',
-											id: 'editGroupChat'
-										}}
-										isLink={true}
-									/>
-								</Link>
-							) : null}
-						</div>
-					</div>
-				</div>
-				{overlayActive ? (
-					<Overlay
-						item={overlayItem}
-						handleOverlay={handleOverlayAction}
-					/>
-				) : null}
-			</div>
+									{translate(
+										'groupChat.stopChat.securityOverlay.button1Label'
+									)}
+								</Button>
+							)}
+					</>
+				}
+				editAction={
+					isGroupChatOwner(activeSession, userData) &&
+					!activeSession.item.active ? (
+						<Button
+							component={Link}
+							to={`${listPath}/${encodeURIComponent(activeSession.item.matrixRoomId)}/${activeSession.item.id}/editGroupChat${getSessionListTab()}`}
+							state={{ isEditMode: true, prevIsInfoPage: true }}
+							variant="outlined"
+						>
+							{translate('groupChat.info.settings.edit')}
+						</Button>
+					) : null
+				}
+			/>
+			{overlayActive && (
+				<M3Dialog
+					title={translate(overlayItem.headline)}
+					onClose={() => {
+						if (!isRequestInProgress)
+							handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE);
+					}}
+					closeLabel={translate('app.close')}
+					actions={overlayItem.buttonSet?.map((button) => ({
+						label: translate(button.label),
+						onClick: () => handleOverlayAction(button.function),
+						primary: button.type === BUTTON_TYPES.PRIMARY,
+						disabled: isRequestInProgress
+					}))}
+				/>
+			)}
 		</ActiveSessionProvider>
 	);
 };
@@ -442,8 +344,7 @@ const SubscriberList = ({
 	const users = matrixRoomUsersContext?.users || [];
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
+	const [bannedName, setBannedName] = useState<string | null>(null);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
 
 	useEffect(() => {
@@ -461,76 +362,76 @@ const SubscriberList = ({
 	}, [activeSession.item.active, activeSession.item.id]);
 
 	return (
-		<>
-			{users ? (
-				users.map((subscriber) => (
-					<div
-						className="groupChatInfo__data__item"
-						key={`subscriber-${subscriber._id}`}
-					>
-						<div className="groupChatInfo__data__content groupChatInfo__data__content--subscriber">
-							{subscriber.displayName
-								? decodeUsername(subscriber.displayName)
-								: decodeUsername(subscriber.username)}
+		<Stack spacing={1}>
+			{users.length ? (
+				users.map((subscriber) => {
+					const name = decodeUsername(
+						subscriber.displayName || subscriber.username
+					);
+					const username = decodeUsername(subscriber.username);
+					const banned = bannedUsers.includes(username);
+					return (
+						<Box
+							key={subscriber._id}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								gap: 1,
+								minWidth: 0
+							}}
+						>
+							<Typography
+								variant="body2"
+								sx={{ overflowWrap: 'anywhere', minWidth: 0 }}
+							>
+								{name}
+							</Typography>
 							{isCurrentUserModerator &&
-								!moderators.includes(subscriber._id) && (
-									<>
-										<FlyoutMenu
-											isHidden={bannedUsers.includes(
-												subscriber.username
-											)}
-											position={
-												window.innerWidth <= 900
-													? 'left'
-													: 'right'
-											}
-										>
-											<BanUser
-												userName={decodeUsername(
-													subscriber.username
-												)}
-												matrixUserId={subscriber._id}
-												chatId={activeSession.item.id}
-												handleUserBan={(username) => {
-													setBannedUsers([
-														...bannedUsers,
-														username
-													]);
-													setIsUserBanOverlayOpen(
-														true
-													);
-												}}
-											/>
-										</FlyoutMenu>{' '}
-										<BanUserOverlay
-											overlayActive={isUserBanOverlayOpen}
-											userName={decodeUsername(
-												subscriber.username
-											)}
-											handleOverlay={() => {
-												setIsUserBanOverlayOpen(false);
+								!moderators.includes(subscriber._id) &&
+								!banned && (
+									<FlyoutMenu position="left">
+										<BanUser
+											userName={username}
+											matrixUserId={subscriber._id}
+											chatId={activeSession.item.id}
+											handleUserBan={(username) => {
+												setBannedUsers((current) => [
+													...current,
+													username
+												]);
+												setBannedName(username);
 											}}
-										></BanUserOverlay>
-									</>
+										/>
+									</FlyoutMenu>
 								)}
-							{isCurrentUserModerator &&
-								bannedUsers.includes(subscriber.username) && (
-									<Tag
-										className="bannedUserTag"
-										color="red"
-										text={translate('banUser.is.banned')}
-									/>
-								)}
-						</div>
-					</div>
-				))
+							{isCurrentUserModerator && banned && (
+								<Chip
+									size="small"
+									label={translate('banUser.is.banned')}
+								/>
+							)}
+						</Box>
+					);
+				})
 			) : (
-				<div className="groupChatInfo__data__item">
-					<p className="groupChatInfo__data__content groupChatInfo__data__content--empty">
-						{translate('groupChat.info.subscribers.empty')}
-					</p>
-				</div>
+				<Typography variant="body2" color="text.secondary">
+					{translate('groupChat.info.subscribers.empty')}
+				</Typography>
 			)}
-		</>
+			{bannedName !== null && (
+				<M3Dialog
+					title={`${translate('banUser.ban.info.1')}${bannedName}${translate('banUser.ban.info.2')}`}
+					onClose={() => setBannedName(null)}
+					closeLabel={translate('app.close')}
+					actions={[
+						{
+							label: translate('banUser.ban.overlay.close'),
+							onClick: () => setBannedName(null)
+						}
+					]}
+				/>
+			)}
+		</Stack>
 	);
 };
