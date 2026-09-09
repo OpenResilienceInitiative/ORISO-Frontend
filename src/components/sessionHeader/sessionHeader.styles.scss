@@ -349,28 +349,10 @@ $room-header-gap-top: 2px;
 
 	&__videoCallButtons {
 		margin-right: 4px;
-		display: flex;
-		align-items: center;
-		gap: 16px;
 
-		.button__item.button__smallIcon {
-			min-width: 32px;
-			width: 32px;
-			height: 32px;
-			padding: 0;
-			border: none;
-			background: transparent;
-			border-radius: 12px;
-		}
-
-		.button__item.button__smallIcon svg {
-			width: 32px;
-			height: 32px;
-		}
-
-		.button__item.button__smallIcon:hover {
-			background: transparent;
-		}
+		// Moved to `_headerCallButtons.scss` so the side room's calls read
+		// the same size. Unchanged in value — see the mixin's comment.
+		@include room-call-buttons(16px);
 	}
 
 	&__metaInfo {

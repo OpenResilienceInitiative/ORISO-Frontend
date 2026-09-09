@@ -10,7 +10,10 @@
 
 	// The panel header's action gap (`$room-actions-gap` in
 	// `sidePanel.styles.scss`) — the calls line up with the close button.
-	gap: 12px;
+	// Everything about the buttons themselves comes from the shared mixin,
+	// so the side room can never be smaller than the chat header again.
+	@include room-call-buttons(12px);
+
 	min-width: 0;
 
 	// `Button` wraps every button in a `.button__wrapper` block.

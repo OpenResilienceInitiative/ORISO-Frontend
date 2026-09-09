@@ -2639,6 +2639,34 @@ export const SideRoomCallsInThePanelHeader: Story = {
 			'Audio-Call starten'
 		);
 		await expect(controls.video!.disabled).toBe(false);
+
+		// Frank, 10.09.2026: "Die sind ultraklein. Daneben bei dem normalen
+		// Hauptchat hast Du sie richtig und ordentlich." — so the side room's
+		// calls are measured AGAINST the main chat's, in the same frame,
+		// rather than against a number typed in here. Both headers now read
+		// the same `room-call-buttons` mixin, and this is what proves it.
+		const mainCall = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] [data-cy="session-header-video-call-buttons"] .button__item'
+		)!;
+		const mainBox = mainCall.getBoundingClientRect();
+		const panelBox = controls.video!.getBoundingClientRect();
+		await expect(Math.round(panelBox.width)).toBe(
+			Math.round(mainBox.width)
+		);
+		await expect(Math.round(panelBox.height)).toBe(
+			Math.round(mainBox.height)
+		);
+		// And the glyph inside is the same size too — the button box was
+		// never the problem, the 32 px SVG rule was what the panel lacked.
+		const glyphBox = (button: HTMLElement) =>
+			button.querySelector('svg')!.getBoundingClientRect();
+		await expect(Math.round(glyphBox(controls.video!).width)).toBe(
+			Math.round(glyphBox(mainCall).width)
+		);
+		await expect(
+			Math.round(glyphBox(controls.video!).width)
+		).toBeGreaterThanOrEqual(24);
+
 		// They live in the panel header's action group, before the close
 		// button — the main chat's own order (video, then audio).
 		const actionsRow = canvasElement.querySelector<HTMLElement>(
