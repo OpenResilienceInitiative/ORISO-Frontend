@@ -909,8 +909,10 @@
 			},
 			"dialog": {
 				"circleTitle": "Support circle – information & settings",
+				"circleOwnerDescription": "As the owner, you manage your circle’s participants and team roles here. You can change group details using Edit while the group is inactive. Other participants can view the details but cannot change team roles or group settings.",
 				"circleDescription": "See who is taking part and when your circle meets. Share the invitation or add the appointment to your calendar.",
 				"teamTitle": "Internal group – information & settings",
+				"teamOwnerDescription": "As the owner, you manage your internal group’s members and team roles here. You can change group details using Edit while the group is inactive. Other members can view the details but cannot change team roles or group settings.",
 				"teamDescription": "Find the members and details of your internal group, along with the counselling team’s roles.",
 				"rolesHint": "Only the owner can change team roles, transfer ownership or remove people from the group.",
 				"detailsTitle": "Group details",

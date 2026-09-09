@@ -53,6 +53,7 @@ function Preview({
 			{open && (
 				<GroupChatInfoDialog
 					kind={kind}
+					isOwner={owner}
 					title={title}
 					active
 					onClose={() => setOpen(false)}
