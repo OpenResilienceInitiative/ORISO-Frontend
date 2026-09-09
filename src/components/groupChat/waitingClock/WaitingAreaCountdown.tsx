@@ -1,5 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
@@ -17,13 +22,119 @@ const OVERDUE_EMOJIS = ['😬', '😅', '🙄', '😳', '🫣', '😔', '😵‍
 const EMOJI_STEP_SEC = 60;
 const POP_INTERVAL_MS = 3000;
 const CLOCK_SIZE = 30;
+const FIT_MIN_SIZE = 12;
+const FIT_MAX_SIZE = 80;
+
+/**
+ * Below this width the clock is drawn in its compact form. Mirrors `$fromMedium`
+ * (600px) from settings.scss, so the SCSS breakpoints and the geometry below
+ * always flip at the same width.
+ */
+const COMPACT_QUERY = '(max-width: 599.98px)';
+
+/**
+ * True on a phone-sized viewport. Frank, 2026-09-07: "Insgesamt sehe ich bei der
+ * mobilen Version aber auch echt Platz, dass die Uhr insgesamt größer wird."
+ * The component has to know the viewport, not only its own width, because the
+ * things it drops on a phone (the gravity/magnet effect, most of the air) are
+ * about the device, not about the column it happens to sit in.
+ */
+const useCompactViewport = (): boolean => {
+	const [compact, setCompact] = React.useState(false);
+	React.useEffect(() => {
+		if (
+			typeof window === 'undefined' ||
+			typeof window.matchMedia !== 'function'
+		) {
+			return undefined;
+		}
+		const mql = window.matchMedia(COMPACT_QUERY);
+		setCompact(mql.matches);
+		const listener = (event: MediaQueryListEvent) =>
+			setCompact(event.matches);
+		mql.addEventListener('change', listener);
+		return () => mql.removeEventListener('change', listener);
+	}, []);
+	return compact;
+};
+
+/**
+ * Everything that follows from one mini-clock diameter. Kept in one place so the
+ * flip card, the fit calculation and the grid all agree on the same numbers.
+ *
+ * `tight` is Frank's "alle ganz nah beieinander": every gap — between cells,
+ * between the two digits, between the four groups — is the cell gap, so the
+ * whole clock is one continuous lattice. Otherwise the digits and groups get a
+ * little air (35 % / 55 % of a cell), which is the "ein ganz bisschen Spacing"
+ * variant he also wanted to see.
+ *
+ * `compact` (phone) forces the tight lattice and shrinks the label band from
+ * `labelFont + 8` to `labelFont + 2`: on a phone the air between a number group
+ * and its label was space the clock itself could have. The cell gap keeps its
+ * formula — `ClockDigits` derives its own grid gap from it, and the two must
+ * never drift apart.
+ */
+const clockGeometry = (size: number, tight: boolean, compact = false) => {
+	const cellGap = Math.max(2, Math.round(size * 0.1));
+	const lattice = tight || compact;
+	const digitGap = lattice ? cellGap : Math.round(size * 0.35);
+	const groupGap = lattice ? cellGap : Math.round(size * 0.55);
+	// Labels grow with the clock, within reason: 10 px on a phone, 13 px on
+	// a desktop-sized block.
+	const labelFont = compact
+		? Math.max(9, Math.min(11, Math.round(size * 0.24)))
+		: Math.max(10, Math.min(13, Math.round(size * 0.27)));
+	const labelH = labelFont + (compact ? 2 : 8);
+	const digitW = size * 4 + cellGap * 3;
+	const groupW = 2 * digitW + digitGap;
+	const groupH = size * 6 + cellGap * 5 + labelH;
+	return {
+		cellGap,
+		digitGap,
+		groupGap,
+		labelFont,
+		labelH,
+		digitW,
+		groupW,
+		groupH
+	};
+};
+
+/** Width the overdue "+" and the flex gaps around it take from the two groups. */
+const overdueSignWidth = (compact: boolean) =>
+	compact ? 20 + 2 * 10 : 28 + 2 * 28;
+
+/**
+ * The largest mini-clock that still lets the whole clock fit the given box.
+ * Walks down from the maximum; the first size that fits wins. Width alone
+ * decides when no height is given.
+ */
+const fitClockSize = (
+	width: number,
+	height: number | undefined,
+	overdue: boolean,
+	tight: boolean,
+	compact: boolean
+) => {
+	for (let size = FIT_MAX_SIZE; size >= FIT_MIN_SIZE; size--) {
+		const g = clockGeometry(size, tight, compact);
+		const w = overdue
+			? 2 * g.groupW + overdueSignWidth(compact)
+			: 2 * g.groupW + g.groupGap;
+		const h = overdue ? g.groupH : 2 * g.groupH + g.groupGap;
+		if (w <= width && (height === undefined || h <= height)) {
+			return size;
+		}
+	}
+	return FIT_MIN_SIZE;
+};
 
 export interface WaitingAreaCountdownProps {
 	/** When the group chat is scheduled to start. */
 	plannedStart: Date;
-	/** Personal greeting from the counsellor (behind the "days" number). */
+	/** Personal greeting from the counsellor (first page behind the clock). */
 	welcomeText?: string;
-	/** Netiquette rules (behind the other numbers). */
+	/** Netiquette rules (one page each behind the clock). */
 	rules: string[];
 	/** Force the calm, motion-free state (OS `prefers-reduced-motion` also applies). */
 	reducedMotion?: boolean;
@@ -31,6 +142,62 @@ export interface WaitingAreaCountdownProps {
 	nowMs?: number;
 	/** Add-to-calendar control rendered under the headline (future state only). */
 	calendarSlot?: React.ReactNode;
+	/**
+	 * Put the headline under the clock instead of above it.
+	 *
+	 * Frank, 2026-09-04: with the four digit groups on top and the sentence
+	 * below, the whole thing reads as one block rather than a caption with a
+	 * picture under it. Layout only — the reading order in the DOM is unchanged,
+	 * so screen readers still hear the headline first.
+	 */
+	headlineBelow?: boolean;
+	/**
+	 * Diameter of one mini-clock in px. The clock is built from these, so this
+	 * scales the whole thing. Default 30.
+	 *
+	 * `'fit'` measures the component's own width and picks the largest
+	 * diameter at which the whole clock still fits — see `fitHeight` for the
+	 * other axis. Frank, 2026-09-04, looking at the 44 px block on a phone
+	 * where it overflowed: "bei dir ist einfach alles überschnitten". A fixed
+	 * number can only be right for one screen; the clock has to size itself.
+	 */
+	clockSize?: number | 'fit';
+	/**
+	 * With `clockSize="fit"`: the height in px the clock may take. Without it,
+	 * only the width decides. The surrounding screen knows what else has to
+	 * fit on the page; the component does not.
+	 */
+	fitHeight?: number;
+	/**
+	 * `tight`: every gap is the cell gap, the clock is one lattice.
+	 * `airy` (default): digits and groups get a little air. Both are Frank's
+	 * 2026-09-04 variants; he wanted to see them side by side. On a phone the
+	 * clock is always tight — there `airy` costs more than it gives.
+	 */
+	spacing?: 'tight' | 'airy';
+	/**
+	 * Put the labels of the top row above their digits and those of the bottom
+	 * row below, so nothing sits between the two rows. Frank, 2026-09-04: "mach
+	 * die Pfeile mit den Tagen nach oben, dass wir eben dieses Gefühl haben,
+	 * dass es wirklich ein Block ist."
+	 */
+	labelsOutside?: boolean;
+	/**
+	 * Hide the built-in "Animation abschalten" switch.
+	 *
+	 * Frank, 2026-09-04: the control belongs in the footer with the other
+	 * actions, not floating in the surface. Set this when the surrounding screen
+	 * offers it — the component keeps the behaviour, it just stops drawing its
+	 * own switch. Leaving both visible would be two controls for one setting.
+	 */
+	hideMotionToggle?: boolean;
+	/**
+	 * Vertical gap between headline, clock and the rest, in px. Default 26.
+	 * The entry room passes less: every pixel of chrome is one the clock
+	 * cannot have (Frank, 2026-09-05: "maximal groß innerhalb des weißen
+	 * Bereichs").
+	 */
+	gap?: number;
 }
 
 interface Unit {
@@ -39,20 +206,36 @@ interface Unit {
 	value: number;
 }
 
+/** One readable page on the back of the card. */
+interface BackPage {
+	key: string;
+	greeting: boolean;
+	label: string;
+	text: string;
+}
+
 /**
  * The self-help group-chat waiting area (ORISO Design variant 4a/4b) — everything
- * inside the white box: headline, add-to-calendar, the "clock made of clocks"
- * whose number groups flip on click to reveal the counsellor's greeting (behind
- * the days) and the netiquette rules (behind hours/minutes/seconds), plus the
- * "switch off animation" toggle. Once the planned start has passed it counts up
- * (error tint, leading "+", smileys popping into single mini-clocks). Renders
- * into the real JoinGroupChatView; it does not draw the surrounding app shell.
+ * inside the white box: headline, add-to-calendar, the "clock made of clocks",
+ * and the one large flip card the whole clock sits on. A click, a tap or
+ * Enter/Space turns the block over; the back carries the counsellor's greeting
+ * and the netiquette, one page at a time, paged with arrow buttons. Once the
+ * planned start has passed it counts up (error tint, leading "+", smileys popping
+ * into single mini-clocks). Renders into the real JoinGroupChatView; it does not
+ * draw the surrounding app shell.
  */
 export const WaitingAreaCountdown = ({
 	plannedStart,
 	welcomeText,
 	rules,
 	reducedMotion = false,
+	headlineBelow = false,
+	clockSize = CLOCK_SIZE,
+	fitHeight,
+	spacing = 'airy',
+	labelsOutside = false,
+	hideMotionToggle = false,
+	gap = 26,
 	nowMs,
 	calendarSlot
 }: WaitingAreaCountdownProps) => {
@@ -68,11 +251,12 @@ export const WaitingAreaCountdown = ({
 		[translate]
 	);
 	const prefersReducedMotion = usePrefersReducedMotion();
+	const compact = useCompactViewport();
 	const [tick, setTick] = React.useState(() => nowMs ?? Date.now());
 	const [animOff, setAnimOff] = React.useState(false);
-	const [flips, setFlips] = React.useState<Record<string, boolean>>({});
-	const [backRule, setBackRule] = React.useState<Record<string, number>>({});
-	const [hover, setHover] = React.useState<string | null>(null);
+	const [cardOpen, setCardOpen] = React.useState(false);
+	const [page, setPage] = React.useState(0);
+	const [cardHover, setCardHover] = React.useState(false);
 	const [pop, setPop] = React.useState<
 		(ClockDigitsPop & { group: string }) | null
 	>(null);
@@ -86,10 +270,62 @@ export const WaitingAreaCountdown = ({
 		return () => window.clearInterval(t);
 	}, [nowMs]);
 
+	const rootRef = React.useRef<HTMLDivElement>(null);
+	const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
+		null
+	);
+	// Measured for `clockSize="fit"` — and on a phone also for a fixed
+	// `clockSize`, where it is only ever used to clamp the given number down to
+	// what the column can hold. A hard-coded 30 px mini-clock is 522 px of
+	// digits, which no 375 pt screen has.
+	React.useEffect(() => {
+		if (!rootRef.current) {
+			return undefined;
+		}
+		const el = rootRef.current;
+		setMeasuredWidth(el.clientWidth);
+		if (typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (entry) {
+				setMeasuredWidth(entry.contentRect.width);
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [clockSize]);
+
 	const forcedMotionless = reducedMotion || prefersReducedMotion;
 	const motionless = animOff || forcedMotionless;
 	const remaining = (plannedStart.getTime() - tick) / 1000;
 	const isOverdue = remaining <= 0;
+	const tight = spacing === 'tight';
+	const size =
+		clockSize === 'fit'
+			? measuredWidth === null
+				? CLOCK_SIZE
+				: fitClockSize(
+						measuredWidth,
+						fitHeight,
+						isOverdue,
+						tight,
+						compact
+					)
+			: compact && measuredWidth !== null
+				? Math.min(
+						clockSize,
+						fitClockSize(
+							measuredWidth,
+							undefined,
+							isOverdue,
+							tight,
+							compact
+						)
+					)
+				: clockSize;
+	const geo = clockGeometry(size, tight, compact);
 	const rem = Math.max(0, remaining);
 	const d = Math.floor(rem / 86400);
 	const h = Math.floor(rem / 3600) % 24;
@@ -129,230 +365,50 @@ export const WaitingAreaCountdown = ({
 		return () => window.clearInterval(t);
 	}, [isOverdue, motionless, overdueEmoji]);
 
-	const hasWelcome = !!welcomeText;
-
-	const flip = (key: string, isRule: boolean) => {
-		setFlips((prev) => {
-			const open = !prev[key];
-			if (open && isRule) {
-				setBackRule((br) => ({
-					...br,
-					[key]: Math.floor(Math.random() * rules.length)
-				}));
-			}
-			return { ...prev, [key]: open };
-		});
-	};
-
 	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
-	const flipHint = tr('flipHint', 'klicken zum Umdrehen');
 
-	const backCard = (key: string, isRule: boolean) => {
-		const ruleIndex = backRule[key] ?? 0;
-		const label = isRule
-			? tr('netiquetteLabel', `Netiquette · Regel ${ruleIndex + 1}`, {
-					no: ruleIndex + 1
-				})
-			: greetingLabel;
-		const text = isRule ? (rules[ruleIndex] ?? '') : welcomeText;
-		return (
-			<div
-				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					justifyContent: 'center',
-					gap: 8,
-					width: '100%',
-					height: '100%',
-					borderRadius: 16,
-					background: DARK,
-					boxSizing: 'border-box',
-					padding: '0 20px',
-					textAlign: 'center'
-				}}
-			>
-				<div
-					style={{
-						fontSize: 9.5,
-						fontWeight: 700,
-						letterSpacing: '.13em',
-						textTransform: 'uppercase',
-						color: PINK
-					}}
-				>
-					{label}
-				</div>
-				<div
-					style={{
-						fontSize: 14,
-						fontWeight: 600,
-						color: '#fff',
-						lineHeight: 1.5
-					}}
-				>
-					{text}
-				</div>
-			</div>
-		);
-	};
-
-	const flipGroup = (
-		unit: Unit,
-		options: { rule?: boolean; tint?: boolean }
-	) => {
-		const isRule = options.rule ?? true;
-		// A card only flips when its own back has content — rule cards need
-		// rules, the greeting card needs a welcome text.
-		const canFlip = isRule ? rules.length > 0 : hasWelcome;
-		const flipped = !!flips[unit.key];
-		const isHover = hover === unit.key;
-		// Box must fit two clock-made-of-clocks digits (each 4×6 cells) plus label.
-		const size = CLOCK_SIZE;
-		const cellGap = Math.max(2, Math.round(size * 0.1));
-		const digitW = size * 4 + cellGap * 3;
-		const groupW = 2 * digitW + Math.round(size * 0.35);
-		const groupH = size * 6 + cellGap * 5 + 36;
-		const face = (
-			visible: boolean,
-			rot: number,
-			content: React.ReactNode
-		) => (
-			<div
-				// The hidden face is only a visual backface — keep it out of the
-				// accessibility tree until the card is actually flipped.
-				aria-hidden={!visible}
-				style={{
-					position: 'absolute',
-					inset: 0,
-					opacity: visible ? 1 : 0,
-					transition: 'opacity 0s linear .3s',
-					transform: `rotateY(${rot}deg)`,
-					backfaceVisibility: 'hidden',
-					WebkitBackfaceVisibility: 'hidden',
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					justifyContent: 'center',
-					gap: 8
-				}}
-			>
-				{content}
-			</div>
-		);
-		const front = (
-			<>
-				<ClockDigits
-					value={unit.value}
-					size={size}
-					magnet
-					tint={options.tint}
-					pop={
-						pop && pop.group === unit.key
-							? {
-									digit: pop.digit,
-									cell: pop.cell,
-									emoji: pop.emoji
-								}
-							: null
-					}
-				/>
-				<div
-					style={{
-						fontSize: 10,
-						fontWeight: 600,
-						letterSpacing: '.16em',
-						textTransform: 'uppercase',
-						color: isHover ? RED : MUTED,
-						transition: 'color .25s'
-					}}
-				>
-					{unit.label}
-				</div>
-			</>
-		);
-		if (!canFlip) {
-			return (
-				<div
-					key={unit.key}
-					style={{
-						position: 'relative',
-						width: groupW,
-						height: groupH
-					}}
-				>
-					{face(true, 0, front)}
-				</div>
-			);
+	/**
+	 * The back of the card, page by page: the greeting first, then one page per
+	 * netiquette rule. Frank, 2026-09-07: "Die Karten sind zu klein … eine große
+	 * Flipkarte … die Begrüßung und die Netiquette darunter, am besten mit
+	 * klickbaren Rechts-Links-Pfeilen." One rule per page is what keeps a long
+	 * sentence whole at 375 px — the back grows to its text, it never cuts it.
+	 */
+	const pages: BackPage[] = React.useMemo(() => {
+		const list: BackPage[] = [];
+		if (welcomeText) {
+			list.push({
+				key: 'greeting',
+				greeting: true,
+				label: greetingLabel,
+				text: welcomeText
+			});
 		}
-		return (
-			<div
-				key={unit.key}
-				role="button"
-				tabIndex={0}
-				aria-label={tr(
-					'flipAria',
-					`${unit.label}: ${unit.value}. Umdrehen zum Lesen.`,
-					{ label: unit.label, value: unit.value }
-				)}
-				aria-pressed={flipped}
-				onClick={() => flip(unit.key, isRule)}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						flip(unit.key, isRule);
-					}
-				}}
-				onMouseEnter={() => setHover(unit.key)}
-				onMouseLeave={() => setHover(null)}
-				onFocus={() => setHover(unit.key)}
-				onBlur={() => setHover(null)}
-				style={{
-					position: 'relative',
-					width: groupW,
-					height: groupH,
-					perspective: 900,
-					cursor: 'pointer',
-					borderRadius: 16
-				}}
-			>
-				<div
-					aria-hidden="true"
-					style={{
-						position: 'absolute',
-						top: -30,
-						left: '50%',
-						transform: `translateX(-50%) translateY(${isHover && !flipped ? 0 : 5}px)`,
-						opacity: isHover && !flipped ? 1 : 0,
-						transition: 'all .25s ease',
-						background: DARK,
-						color: '#fff',
-						fontSize: 11,
-						fontWeight: 600,
-						padding: '5px 11px',
-						borderRadius: 8,
-						pointerEvents: 'none',
-						whiteSpace: 'nowrap',
-						zIndex: 3
-					}}
-				>
-					{unit.label} · {flipHint}
-				</div>
-				<div
-					style={{
-						position: 'absolute',
-						inset: 0,
-						transformStyle: 'preserve-3d',
-						transition: 'transform .6s cubic-bezier(.4,0,.2,1)',
-						transform: `rotateY(${flipped ? 180 : 0}deg)`
-					}}
-				>
-					{face(!flipped, 0, front)}
-					{face(flipped, 180, backCard(unit.key, isRule))}
-				</div>
-			</div>
+		rules.forEach((rule, index) =>
+			list.push({
+				key: `rule-${index}`,
+				greeting: false,
+				label: tr(
+					'netiquetteLabel',
+					`Netiquette · Regel ${index + 1}`,
+					{ no: index + 1 }
+				),
+				text: rule
+			})
 		);
+		return list;
+	}, [welcomeText, rules, greetingLabel, tr]);
+
+	const canFlip = pages.length > 0;
+	const pageCount = pages.length;
+	const currentPage = pages[Math.min(page, Math.max(0, pageCount - 1))];
+
+	const openCard = () => {
+		setPage(0);
+		setCardOpen(true);
 	};
+	const closeCard = () => setCardOpen(false);
+	const flipped = cardOpen && canFlip;
 
 	const toggleLabel = tr('toggleLabel', 'Animation abschalten');
 	const toggle = (
@@ -425,72 +481,70 @@ export const WaitingAreaCountdown = ({
 	const headline = isOverdue
 		? tr('overdueHeadline', 'Wir sind gleich für dich da.')
 		: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
+	// Frank, 2026-09-07: "statt zu sagen hey dieser Bindestrich ist quasi,
+	// kannst auch ein Komma machen" — and nobody clicks "a number" any more,
+	// there is one card now. Short enough to hold one line at 375 px.
 	const subtitle = isOverdue
 		? tr(
 				'overdueSubtitle',
 				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
 			)
-		: tr(
-				'subtitle',
-				'Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.'
-			);
+		: canFlip
+			? tr(
+					'subtitleCard',
+					'Uhr antippen, dahinter Begrüßung und Netiquette.'
+				)
+			: '';
+	// The still view keeps the clock's footprint, so the row under it and the
+	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
+	// sollte auf jeden Fall nicht springen").
+	const clockFootprint = isOverdue
+		? geo.groupH
+		: 2 * geo.groupH + geo.groupGap;
 
-	const units: Array<{ unit: Unit; rule: boolean; tint?: boolean }> =
-		isOverdue
-			? [
-					{
-						unit: {
-							key: 'om',
-							label: tr('unitMinutes', 'Minuten'),
-							value: oM
-						},
-						rule: !hasWelcome,
-						tint: true
+	const units: Array<{ unit: Unit; tint?: boolean }> = isOverdue
+		? [
+				{
+					unit: {
+						key: 'om',
+						label: tr('unitMinutes', 'Minuten'),
+						value: oM
 					},
-					{
-						unit: {
-							key: 'os',
-							label: tr('unitSeconds', 'Sekunden'),
-							value: oS
-						},
-						rule: true,
-						tint: true
+					tint: true
+				},
+				{
+					unit: {
+						key: 'os',
+						label: tr('unitSeconds', 'Sekunden'),
+						value: oS
+					},
+					tint: true
+				}
+			]
+		: [
+				{ unit: { key: 'd', label: tr('unitDays', 'Tage'), value: d } },
+				{
+					unit: {
+						key: 'h',
+						label: tr('unitHours', 'Stunden'),
+						value: h
 					}
-				]
-			: [
-					{
-						unit: {
-							key: 'd',
-							label: tr('unitDays', 'Tage'),
-							value: d
-						},
-						rule: !hasWelcome
-					},
-					{
-						unit: {
-							key: 'h',
-							label: tr('unitHours', 'Stunden'),
-							value: h
-						},
-						rule: true
-					},
-					{
-						unit: {
-							key: 'm',
-							label: tr('unitMinutes', 'Minuten'),
-							value: m
-						},
-						rule: true
-					},
-					{
-						unit: {
-							key: 's',
-							label: tr('unitSeconds', 'Sekunden'),
-							value: s
-						},
-						rule: true
+				},
+				{
+					unit: {
+						key: 'm',
+						label: tr('unitMinutes', 'Minuten'),
+						value: m
 					}
-				];
+				},
+				{
+					unit: {
+						key: 's',
+						label: tr('unitSeconds', 'Sekunden'),
+						value: s
+					}
+				}
+			];
 
 	// "unit: value" phrasing stays grammatical for every count in every locale
 	// (no plural agreement needed).
@@ -507,17 +561,7 @@ export const WaitingAreaCountdown = ({
 			);
 
 	const plusSign = (
-		<div
-			aria-hidden="true"
-			style={{
-				alignSelf: 'center',
-				fontSize: 64,
-				fontWeight: 300,
-				color: RED,
-				lineHeight: 1,
-				paddingBottom: 24
-			}}
-		>
+		<div aria-hidden="true" className="waitingClock__plus">
 			+
 		</div>
 	);
@@ -543,12 +587,275 @@ export const WaitingAreaCountdown = ({
 		</div>
 	);
 
+	/** One number group — two "clock made of clocks" digits plus their label. */
+	const numberGroup = (
+		unit: Unit,
+		options: { tint?: boolean; labelAbove?: boolean }
+	) => {
+		const label = (
+			<div
+				style={{
+					height: geo.labelH,
+					display: 'flex',
+					alignItems: 'center',
+					fontSize: geo.labelFont,
+					fontWeight: 600,
+					lineHeight: 1,
+					letterSpacing: '.16em',
+					textTransform: 'uppercase',
+					color: cardHover ? RED : MUTED,
+					transition: 'color .25s',
+					// Centred over its two digits, above and below alike —
+					// Frank's Figma has TAGE centred too, and a left-aligned
+					// top row against a centred bottom row read as two rules.
+					alignSelf: 'center'
+				}}
+			>
+				{unit.label}
+			</div>
+		);
+		return (
+			<div
+				key={unit.key}
+				style={{
+					width: geo.groupW,
+					height: geo.groupH,
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					justifyContent: 'center'
+				}}
+			>
+				{options.labelAbove && label}
+				<ClockDigits
+					value={unit.value}
+					size={size}
+					digitGap={geo.digitGap}
+					// Frank, 2026-09-07: "Der Gravity-Effekt kann auf dem
+					// Mobiltelefon abgeschaltet werden." There is no cursor to
+					// attract on a phone anyway.
+					magnet={!compact}
+					tint={options.tint}
+					pop={
+						pop && pop.group === unit.key
+							? {
+									digit: pop.digit,
+									cell: pop.cell,
+									emoji: pop.emoji
+								}
+							: null
+					}
+				/>
+				{!options.labelAbove && label}
+			</div>
+		);
+	};
+
+	const clockGrid = isOverdue ? (
+		<div className="waitingClock__timerOverdue">
+			{plusSign}
+			{units.map(({ unit, tint }) => numberGroup(unit, { tint }))}
+		</div>
+	) : (
+		<div
+			className="waitingClock__timer"
+			// The stylesheet's gap is the default; the geometry decides here so
+			// the four groups keep the same rhythm as the cells.
+			style={{ gap: geo.groupGap }}
+		>
+			{units.map(({ unit }, index) =>
+				numberGroup(unit, {
+					labelAbove: labelsOutside && index < 2
+				})
+			)}
+		</div>
+	);
+
+	const backToClock = tr('cardBack', 'Zurück zur Uhr');
+	// The back is as wide as the clock it replaces, so its type grows with the
+	// clock: 15 px on a phone, up to 19 px on a desktop block.
+	/* The card is as wide as the clock it replaces, so on a 1440 desktop it is
+	   a very large surface for one sentence. The type grows with it — up to
+	   30 px — and the line stays inside a reading width, otherwise the text
+	   floats lost in the middle of the card (Frank, 2026-09-07: "kannst dir
+	   hier auch ein bisschen mehr Mühe geben im Design"). */
+	const textFont = Math.round(Math.min(30, Math.max(15, size * 0.62)));
+	const navButtonSx = {
+		'color': '#fff',
+		'&.Mui-disabled': { color: 'rgba(255,255,255,.35)' }
+	} as const;
+
+	const backSide = currentPage && (
+		<div
+			className="waitingClock__back"
+			style={{ background: currentPage.greeting ? RED : DARK }}
+		>
+			<div className="waitingClock__backHead">
+				<span
+					className="waitingClock__backLabel"
+					style={{
+						fontSize: Math.max(10, geo.labelFont),
+						color: currentPage.greeting
+							? 'rgba(255,255,255,.78)'
+							: PINK
+					}}
+				>
+					{currentPage.label}
+				</span>
+				<Button
+					size="small"
+					startIcon={<CloseRoundedIcon />}
+					onClick={closeCard}
+					tabIndex={flipped ? 0 : -1}
+					sx={{
+						color: '#fff',
+						flexShrink: 0,
+						fontSize: 12,
+						textTransform: 'none',
+						minWidth: 0
+					}}
+				>
+					{backToClock}
+				</Button>
+			</div>
+			<div
+				className="waitingClock__backText"
+				style={{
+					fontSize: currentPage.greeting ? textFont + 1 : textFont,
+					fontWeight: currentPage.greeting ? 600 : 500,
+					maxWidth: '32ch',
+					marginInline: 'auto'
+				}}
+			>
+				{currentPage.text}
+			</div>
+			{pageCount > 1 && (
+				<div className="waitingClock__backNav">
+					<IconButton
+						size="small"
+						aria-label={tr('cardPrev', 'Vorherige Seite')}
+						disabled={page === 0}
+						tabIndex={flipped ? 0 : -1}
+						onClick={() => setPage((p) => Math.max(0, p - 1))}
+						sx={navButtonSx}
+					>
+						<ChevronLeftRoundedIcon />
+					</IconButton>
+					<span className="waitingClock__backPage">
+						{tr('cardPage', `${page + 1} von ${pageCount}`, {
+							current: page + 1,
+							total: pageCount
+						})}
+					</span>
+					<IconButton
+						size="small"
+						aria-label={tr('cardNext', 'Nächste Seite')}
+						disabled={page >= pageCount - 1}
+						tabIndex={flipped ? 0 : -1}
+						onClick={() =>
+							setPage((p) => Math.min(pageCount - 1, p + 1))
+						}
+						sx={navButtonSx}
+					>
+						<ChevronRightRoundedIcon />
+					</IconButton>
+				</div>
+			)}
+		</div>
+	);
+
+	// One big card: the whole clock is the front, one back side carries the
+	// greeting and the netiquette. The visible face is the one in normal flow,
+	// the hidden one is taken out of it — that way the card is never shorter
+	// than the text it shows and no sentence is ever cut off.
+	const flipCard = (
+		<div
+			className="waitingClock__card"
+			style={{
+				minHeight: clockFootprint,
+				height: flipped ? 'auto' : clockFootprint
+			}}
+		>
+			<div
+				className="waitingClock__cardInner"
+				style={{
+					minHeight: clockFootprint,
+					transform: `rotateY(${flipped ? 180 : cardHover ? -6 : 0}deg)`
+				}}
+			>
+				<div
+					className="waitingClock__cardFace"
+					aria-hidden={flipped}
+					style={{
+						position: flipped ? 'absolute' : 'relative',
+						inset: flipped ? 0 : undefined,
+						overflow: flipped ? 'hidden' : undefined,
+						opacity: flipped ? 0 : 1
+					}}
+				>
+					<div
+						role="button"
+						tabIndex={flipped ? -1 : 0}
+						aria-pressed={flipped}
+						aria-label={tr(
+							'cardOpenAria',
+							'Uhr umdrehen, Begrüßung und Netiquette lesen'
+						)}
+						onClick={openCard}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								openCard();
+							}
+						}}
+						onMouseEnter={() => setCardHover(true)}
+						onMouseLeave={() => setCardHover(false)}
+						onFocus={() => setCardHover(true)}
+						onBlur={() => setCardHover(false)}
+						className="waitingClock__cardFront"
+					>
+						{clockGrid}
+					</div>
+				</div>
+				<div
+					className="waitingClock__cardFace waitingClock__cardFace--back"
+					aria-hidden={!flipped}
+					style={{
+						position: flipped ? 'relative' : 'absolute',
+						inset: flipped ? undefined : 0,
+						overflow: flipped ? undefined : 'hidden',
+						opacity: flipped ? 1 : 0
+					}}
+				>
+					{backSide}
+				</div>
+			</div>
+		</div>
+	);
+
+	const stillCell = (unit: Unit, tint?: boolean) => (
+		<div
+			key={unit.key}
+			className={`waitingClock__stillCell${
+				tint ? ' waitingClock__stillCell--tint' : ''
+			}`}
+		>
+			<span className="waitingClock__stillValue">
+				{String(unit.value).padStart(2, '0')}
+			</span>
+			<span className="waitingClock__stillLabel">{unit.label}</span>
+		</div>
+	);
+
 	return (
 		<div
+			ref={rootRef}
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
-				gap: 26,
+				gap,
+				width: '100%',
+				minWidth: 0,
 				fontFamily: 'inherit',
 				color: INK
 			}}
@@ -558,19 +865,37 @@ export const WaitingAreaCountdown = ({
 					textAlign: 'center',
 					display: 'flex',
 					flexDirection: 'column',
-					gap: 6
+					gap: 6,
+					/* Visual order only. The DOM order stays headline-first so
+					   assistive technology reads the sentence before the
+					   digits. */
+					order: headlineBelow ? 2 : 0
 				}}
 			>
 				<div
 					style={{
-						fontSize: 24,
+						// Frank, 2026-09-04: "mit der Schriftgröße ein bisschen
+						// arbeiten … beim Titel". Grows with the column, never
+						// past 30 px, never below the old 24 on a phone.
+						fontSize: 'clamp(22px, 2vw, 28px)',
+						lineHeight: 1.2,
 						fontWeight: 700,
-						letterSpacing: '-0.01em'
+						letterSpacing: '-0.01em',
+						textWrap: 'balance'
 					}}
 				>
 					{headline}
 				</div>
-				<div style={{ fontSize: 13, color: MUTED }}>{subtitle}</div>
+				{subtitle && (
+					<div
+						style={{
+							fontSize: 'clamp(13px, 1.1vw, 15px)',
+							color: MUTED
+						}}
+					>
+						{subtitle}
+					</div>
+				)}
 				{calendarSlot && !isOverdue && (
 					<div style={{ alignSelf: 'center', marginTop: 10 }}>
 						{calendarSlot}
@@ -580,132 +905,96 @@ export const WaitingAreaCountdown = ({
 
 			{motionless ? (
 				<div
-					role="timer"
-					aria-label={timerAria}
 					style={{
+						minHeight: clockFootprint,
 						display: 'flex',
-						flexWrap: 'wrap',
-						gap: 24,
+						flexDirection: 'column',
 						justifyContent: 'center',
-						alignItems: 'baseline',
-						fontVariantNumeric: 'tabular-nums'
+						alignItems: 'stretch',
+						gap: 24
 					}}
 				>
-					{isOverdue && (
+					{/* Frank, 2026-09-07: "könntest du ja auch trotzdem ein
+					    bisschen grafischer anordnen als Quadrat … die kann ja
+					    auch trotzdem größer sein." A 2×2 square of tiles in the
+					    same neumorphic language as the mini-clocks — and with
+					    no transition or animation anywhere, because not moving
+					    is the entire point of this view.
+
+					    Greeting and netiquette used to stand stacked under the
+					    numbers here. That made the still view a head taller
+					    than the moving one and pushed the screen into a scroll
+					    (measured 2026-09-07: 1001 px of page in an 812 px
+					    window). They now sit behind the same one card the
+					    moving view uses — opened by tapping the numbers,
+					    swapped without any transition. */}
+					{cardOpen && canFlip ? (
 						<div
-							aria-hidden="true"
-							style={{
-								fontSize: 44,
-								fontWeight: 300,
-								color: RED,
-								lineHeight: 1
-							}}
+							className="waitingClock__stillBack"
+							style={{ minHeight: clockFootprint }}
 						>
-							+
+							{backSide}
 						</div>
-					)}
-					{units.map(({ unit }) => (
+					) : (
 						<div
-							key={unit.key}
-							style={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								gap: 4
-							}}
+							role="timer"
+							aria-label={timerAria}
+							className={`waitingClock__still${
+								isOverdue ? ' waitingClock__still--overdue' : ''
+							}`}
 						>
-							<div
-								style={{
-									fontSize: 54,
-									fontWeight: 700,
-									lineHeight: 1
-								}}
-							>
-								{String(unit.value).padStart(2, '0')}
-							</div>
-							<div
-								style={{
-									fontSize: 10,
-									fontWeight: 600,
-									letterSpacing: '.16em',
-									textTransform: 'uppercase',
-									color: MUTED
-								}}
-							>
-								{unit.label}
-							</div>
+							{isOverdue && (
+								<div
+									aria-hidden="true"
+									className="waitingClock__stillPlus"
+								>
+									+
+								</div>
+							)}
+							{units.map(({ unit, tint }) =>
+								stillCell(unit, tint)
+							)}
+							{/* The way to the card is its own control. It used
+							    to be `role="button"` on this container, which
+							    made the numbers its accessible name and hid the
+							    four tiles from a screen reader — the opposite of
+							    what the still view is for. */}
+							{canFlip && (
+								<Button
+									variant="text"
+									size="small"
+									onClick={openCard}
+									className="waitingClock__stillOpen"
+								>
+									{tr(
+										'cardOpenAria',
+										'Begrüßung und Netiquette anzeigen'
+									)}
+								</Button>
+							)}
 						</div>
-					))}
-				</div>
-			) : isOverdue ? (
-				<div
-					role="timer"
-					aria-label={timerAria}
-					className="waitingClock__timerOverdue"
-				>
-					{plusSign}
-					{units.map(({ unit, rule, tint }) =>
-						flipGroup(unit, { rule, tint })
 					)}
 				</div>
 			) : (
 				<div
 					role="timer"
 					aria-label={timerAria}
-					className="waitingClock__timer"
+					style={{ minWidth: 0 }}
 				>
-					{units.map(({ unit, rule }) => flipGroup(unit, { rule }))}
+					{canFlip ? flipCard : clockGrid}
 				</div>
 			)}
 
 			{overdueCaption}
 
-			{motionless && hasWelcome && (
-				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: 12,
-						maxWidth: 560,
-						alignSelf: 'center'
-					}}
-				>
-					<div
-						style={{
-							background: isOverdue ? '#fdeded' : '#f9fafb',
-							border: '1px solid var(--m3-outline-variant, #c4c7c8)',
-							borderRadius: 16,
-							padding: '16px 18px'
-						}}
-					>
-						<div
-							style={{
-								fontSize: 9.5,
-								fontWeight: 700,
-								letterSpacing: '.14em',
-								textTransform: 'uppercase',
-								color: MUTED
-							}}
-						>
-							{greetingLabel}
-						</div>
-						<div
-							style={{
-								fontWeight: 600,
-								color: RED,
-								lineHeight: 1.35,
-								marginTop: 6
-							}}
-						>
-							{welcomeText}
-						</div>
-					</div>
+			{/* Rendered only when it has content: an empty row still costs the
+			    column gap (26 px measured), and every one of those pixels is
+			    one the clock cannot have. */}
+			{!hideMotionToggle && (
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+					{toggle}
 				</div>
 			)}
-
-			<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-				{toggle}
-			</div>
 		</div>
 	);
 };

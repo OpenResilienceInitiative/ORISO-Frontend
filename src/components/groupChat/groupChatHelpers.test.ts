@@ -104,7 +104,11 @@ describe('getGroupChatWaitingAreaVisibility', () => {
 	it('hides the waiting area for an explicitly typed internal team chat', () => {
 		const internalTeamChat = {
 			isGroup: true,
-			item: { id: 1, conversationType: 'INTERNAL_GROUP', repetitive: true }
+			item: {
+				id: 1,
+				conversationType: 'INTERNAL_GROUP',
+				repetitive: true
+			}
 		} as any;
 
 		expect(

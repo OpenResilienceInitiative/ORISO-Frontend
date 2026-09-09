@@ -210,6 +210,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Zurück zum Warteraum",
+			"confirm": "Termin buchen",
+			"headline": "Termin buchen",
+			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wählen Sie einen anderen Tag.",
+			"open": "Termin buchen",
+			"pickDay": "Bitte wählen Sie zuerst einen Tag im Kalender.",
+			"subline": "Wählen Sie einen Tag und danach eine Uhrzeit.",
+			"times": "Freie Zeiten",
+			"weekdays": "S,M,D,M,D,F,S"
+		},
 		"availability": {
 			"description": "Geben Sie hier Ihre allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Ihnen buchen können.",
 			"title": "Ihre Verfügbarkeit"
@@ -638,7 +649,8 @@
 			"download": "ICS herunterladen",
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
-			"titleLabel": "Neutraler Kalendertitel"
+			"titleLabel": "Neutraler Kalendertitel",
+			"addShort": "Kalender"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -879,12 +891,41 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende"
+			},
+			"gallery": {
+				"back": "Zurück zum Countdown",
+				"headline": "So funktioniert die Gruppe",
+				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
+				"appointments": "Termine in den Kalender",
+				"steps": {
+					"formats": {
+						"title": "So findet die Gruppe statt",
+						"text": "Am Namen erkennen Sie, ob Sie schreiben, sprechen, sich sehen oder alles kombinieren. Ton und Kamera schalten Sie bei Bedarf dazu.",
+						"alt": "Neugierige Person im Gruppenraum; zentral angeordnete Symbole für Chat, Mikrofon und Kamera, verbunden durch einen dezenten Schutzschild."
+					},
+					"alias": {
+						"title": "Bitte nur mit Alias",
+						"text": "Alles ist Ende-zu-Ende verschlüsselt. Nennen Sie trotzdem keine echten Namen – das schützt alle.",
+						"alt": "Geschützte Gruppe mit abstrakten Alias-Symbolen statt Namen und Profilbildern; persönliche Namenskarte bleibt sichtbar außerhalb des geschützten Raums."
+					},
+					"dates": {
+						"title": "Neue Termine, neue Links",
+						"text": "Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.",
+						"alt": "Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen."
+					}
+				},
+				"upcoming": "Nächste Termine"
 			}
 		},
 		"join": {
 			"timeConversions": "Spielerische Zeitangaben",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Zurück zur Uhr",
+					"cardNext": "Nächste Seite",
+					"cardOpenAria": "Uhr umdrehen, Begrüßung und Netiquette lesen",
+					"cardPage": "{{current}} von {{total}}",
+					"cardPrev": "Vorherige Seite",
 					"etaDay": "in einem Tag",
 					"etaDays": "in {{count}} Tagen",
 					"etaHour": "in einer Stunde",
@@ -897,10 +938,13 @@
 					"greetingLabel": "Begrüßung Ihrer Beratung",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
+					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
 					"overdueHeadline": "Wir sind gleich für Sie da.",
 					"overdueSubtitle": "Ihre Beratung öffnet den Raum gleich — bitte haben Sie noch einen Moment Geduld.",
 					"subtitle": "Klicken Sie auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
+					"subtitleCard": "Uhr antippen, dahinter Begrüßung und Netiquette.",
+					"subtitleStill": "Begrüßung und Netiquette stehen unter den Zahlen.",
 					"timerAriaFuture": "Bis zum Beginn — Tage: {{days}}, Stunden: {{hours}}, Minuten: {{minutes}}, Sekunden: {{seconds}}",
 					"timerAriaOverdue": "Seit dem geplanten Beginn — Minuten: {{minutes}}, Sekunden: {{seconds}}",
 					"toggleLabel": "Animation abschalten",
@@ -1008,6 +1052,18 @@
 				"button1Label": "Schließen",
 				"headline": "Ihre Änderungen wurden erfolgreich gespeichert."
 			}
+		},
+		"entry": {
+			"join": "Beitreten",
+			"more": "Mehr erfahren",
+			"moreTitle": "So läuft die Gruppe",
+			"motionOff": "Animation abschalten",
+			"openHeadline": "Die Gruppe hat begonnen.",
+			"noTimeHeadline": "Die Gruppe beginnt, sobald die Moderation sie öffnet.",
+			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ sind Sie im Gespräch.",
+			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
+			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
+			"backToCountdown": "Zurück zum Countdown"
 		}
 	},
 	"help": {
@@ -2704,7 +2760,12 @@
 				"prefix": "Ich habe die ",
 				"suffix": " zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies."
 			},
-			"loading": "Der Einwilligungstext wird geladen …"
+			"loading": "Der Einwilligungstext wird geladen …",
+			"snackbar": {
+				"prefix": "Das ist unsere ",
+				"link": "Datenschutzbestimmung",
+				"suffix": ". Für Authentifizierung und Navigation verwendet diese Websites Cookies."
+			}
 		},
 		"error": {
 			"required_field_missing": {
@@ -2877,6 +2938,13 @@
 			},
 			"twoFactorAuth": {
 				"label": "Passwort zusätzlich durch Zwei-Faktor-Authentifizierung sichern"
+			},
+			"temporary": {
+				"join": "Beitreten",
+				"toggleOff": "Konto anlegen",
+				"toggleOn": "Ohne Konto beitreten",
+				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
+				"note": "Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück."
 			}
 		},
 		"back": "Zurück",
@@ -3055,7 +3123,8 @@
 				"ready": "Alles bereit — Sie können schreiben",
 				"slow": "Das dauert länger als gewohnt",
 				"entering": "Ihr Beratungsraum wird geöffnet …"
-			}
+			},
+			"headlineAlmost": "Fast geschafft."
 		},
 		"selection": {
 			"remove": "{{label}} entfernen"
@@ -3193,34 +3262,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Atemspiel Einatmen Ausatmen",
-			"timeLeft": "Verbleibende Zeit",
-			"choosePace": "Wähle dein Tempo und starte dann deinen ersten Versuch.",
-			"firstTryInstruction": "Erster Versuch: Einatmen, Halten und Ausatmen folgen.",
-			"practiceSuccessPrompt": "Sehr gut, möchtest du jetzt starten?",
-			"timingInfo": "Stelle dein Atem-Timing ein, bevor du startest.",
-			"achievementUnlocked": "Erfolg freigeschaltet: Level {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Level {{level}}: {{title}}",
-			"completionTitle": "Glückwunsch, du hast es geschafft",
-			"prizeLine1": "Dein Hauptpreis ist echte Weisheit.",
-			"prizeLine2": "Denn du hast dein inneres Rauschen überwunden, die Langeweile besiegt, Abstand gewonnen und etwas inneren Frieden gefunden.",
-			"serenityPrayer": "Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.",
-			"changeMind": "Ich ändere meine Meinung, lass mich dein Wartespiel ausprobieren",
-			"iJustWait": "Ich warte einfach",
-			"startGame": "Spiel starten",
-			"startFirstTry": "Lass uns den ersten Versuch starten",
-			"repeatTrainingRound": "Trainingsrunde wiederholen",
-			"startRealGame": "Lass uns das echte Spiel starten",
-			"repeatGame": "Spiel wiederholen",
-			"receivePrize": "Preis erhalten",
-			"playAgain": "Nochmal spielen",
-			"joinRoom": "Zum Raum wechseln",
-			"decreaseInhale": "Sekunden für Einatmen verringern",
-			"increaseInhale": "Sekunden für Einatmen erhöhen",
-			"decreaseHold": "Sekunden für Halten verringern",
-			"increaseHold": "Sekunden für Halten erhöhen",
-			"decreaseExhale": "Sekunden für Ausatmen verringern",
-			"increaseExhale": "Sekunden für Ausatmen erhöhen",
 			"robotUsernameFallback": "Ratsuchende_r 9",
 			"robotCard1Title": "Einen Moment Geduld",
 			"robotCard1Body": "Alle unsere Berater*innen sind gerade im Live-Gespräch. Bitte warten Sie noch einen kurzen Moment hier im Chatraum. Sie sehen unten, wie viele Personen noch vor Ihnen an der Reihe sind.",
@@ -3232,7 +3273,6 @@
 			"robotCard4Title": "Wollen Sie die Wartezeit sinnvoll nutzen?",
 			"robotCard4Body": "Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.",
 			"robotCard4Play": "Spiel starten",
-			"robotCard4Info": "Info",
 			"phase": {
 				"inhale": "Einatmen",
 				"hold": "Halten",
@@ -3242,58 +3282,19 @@
 				"carimatSubtitle": "Lass uns die Wartezeit überbrücken",
 				"cancel": "Abbrechen",
 				"confirm": "Verstanden, los geht's",
-				"restart": "Neu starten",
-				"pressAtRightTime": "Zum richtigen Zeitpunkt drücken",
 				"inhale": {
 					"bubble": "Du musst 3 Dinge tun, um zu gewinnen.",
-					"subtitle": "durch die Nase",
-					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam ein, dann drücke den Knopf."
+					"subtitle": "durch die Nase"
 				},
 				"hold": {
 					"bubble": "Du musst 3 Dinge tun.",
-					"subtitle": "halte den Atem an",
-					"instruction": "Halte den Atem <strong>{{count}} Sekunden</strong> lang an, dann drücke den Knopf."
+					"subtitle": "halte den Atem an"
 				},
 				"exhale": {
 					"bubble": "Du musst 3 Dinge tun.",
-					"subtitle": "durch den Mund",
-					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam aus, dann drücke den Knopf."
-				},
-				"belly": {
-					"autoPilot": "Auto-Pilot",
-					"timeIt": "Selbst takten",
-					"inhale": "Super, atme wieder <strong>3 Sekunden</strong> ein, diesmal aber indem du deinen Bauch ausdehnst.",
-					"hold": "Halte jetzt <strong>3 Sekunden</strong> den Atem an.",
-					"exhale": "Atme nun <strong>4 Sekunden</strong> aus und entspanne den ganzen Körper."
-				},
-				"selfTimer": {
-					"instruction": "Jetzt kannst du deine eigenen Zeitintervalle zum Atmen festlegen.",
-					"repeatGame": "Spiel wiederholen",
-					"backToWaiting": "Zurück zum Warten"
-				},
-				"completion": {
-					"instruction": "Herzlichen Glückwunsch, du hast es geschafft.",
-					"receiveGift": "Kleines Geschenk erhalten"
-				},
-				"serenity": {
-					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: “Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.”"
+					"subtitle": "durch den Mund"
 				}
-			},
-			"presets": {
-				"starter334": "erstes Mal",
-				"standard446": "mittlere Erfahrung (empfohlen)",
-				"deep556": "lang (Expertinnen und Experten)"
-			},
-			"briefing": {
-				"0": "Es tut uns leid, du musst gerade warten, im Moment sind alle Beraterinnen und Berater beschäftigt.",
-				"1": "Warten mit all diesen Problemen kann ziemlich belastend sein. Wenn du möchtest, haben wir eine kleine Wartezimmer-Brücke erstellt.",
-				"2": "Okay, du musst im Spiel drei Dinge tun.",
-				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
-				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
-			},
-			"onboardingLine1": "Kommen Sie einfach an. Wir atmen zusammen.",
-			"onboardingLine3": "Wenn Sie bereit sind, starten Sie Ihren ersten Versuch.",
-			"volumeHint": "Für ein besseres Erlebnis schalten Sie bitte den Ton ein."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4220,7 +4221,7 @@
 			"carimatPrivacySubtitle": "Ihre Privatsphäre",
 			"carimatMessage": "Hallo, bevor wir weitermachen, bestätigen Sie bitte Ihren zufällig gewählten Namen für diese Sitzung.",
 			"privacyMessage": "Gute Wahl. Zum Schutz Ihrer Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
-			"yourPseudonym": "Dein Pseudonym",
+			"yourPseudonym": "Ihr Pseudonym",
 			"nextName": "Nächster Name",
 			"confirm": "Bestätigen",
 			"changeName": "Name ändern",
@@ -4245,7 +4246,7 @@
 			"connecting": "Wird verbunden …",
 			"insteadOfWaiting": "Statt zu warten",
 			"requestLocalCounselor": "Mail Beratung starten",
-			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
+			"consultantAccepted": "Sie werden jetzt von Ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden",
 			"leave": "Chat verlassen"
@@ -4699,6 +4700,166 @@
 		"anchor": {
 			"previous": "Vorherige Kapitel anzeigen",
 			"next": "Weitere Kapitel anzeigen"
+		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Ihre Atempause",
+			"introTitle": "Ein Moment für Sie.",
+			"intro": {
+				"0": "Folgen Sie der Bewegung.",
+				"1": "Atmen Sie so, wie es sich angenehm anfühlt."
+			},
+			"reducedIntro": {
+				"0": "Atmen Sie in Ihrem Tempo.",
+				"1": "Die Anleitung begleitet Sie."
+			},
+			"begin": "Beginnen",
+			"close": "Atempause schließen",
+			"pause": "Pause",
+			"resume": "Weiteratmen",
+			"pausedTitle": "Ein Moment Pause.",
+			"pausedHint": {
+				"0": "Atmen Sie in Ihrem Rhythmus.",
+				"1": "Sie können gleich weitermachen."
+			},
+			"automatic": "Autopilot",
+			"manual": "Mein Rhythmus",
+			"switchManual": "Zu meinem Rhythmus wechseln",
+			"switchAutomatic": "Zum Autopilot wechseln",
+			"finish": "Für jetzt genug",
+			"return": "Zurück zum Warten",
+			"finishTitle": "Nehmen Sie mit, was Ihnen guttut.",
+			"phase": {
+				"0": "Einatmen",
+				"1": "Atem halten",
+				"2": "Ausatmen",
+				"3": "Atempause"
+			},
+			"next": {
+				"0": "Jetzt halten",
+				"1": "Jetzt ausatmen",
+				"2": "Atem ruhen lassen",
+				"3": "Wieder einatmen"
+			},
+			"guidance": {
+				"0": {
+					"0": "Sanft durch die Nase.",
+					"1": "Ihr Bauch darf sich heben."
+				},
+				"1": {
+					"0": "Lassen Sie die Schultern locker.",
+					"1": "Nur so lange es Ihnen guttut."
+				},
+				"2": {
+					"0": "Sanft durch den Mund.",
+					"1": "Ihr Bauch darf wieder sinken."
+				},
+				"3": {
+					"0": "Ein stiller Moment.",
+					"1": "Der nächste Atemzug kommt."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Lassen Sie den Atem kommen.",
+					"1": "Sie müssen nichts erzwingen."
+				},
+				"1": {
+					"0": "Nehmen Sie Ihre Schultern wahr.",
+					"1": "Lassen Sie sie ein wenig sinken."
+				},
+				"2": {
+					"0": "Lassen Sie den Atem ziehen.",
+					"1": "Ganz ohne Eile."
+				},
+				"3": {
+					"0": "Spüren Sie, wie Sie gerade sitzen.",
+					"1": "Sie dürfen sich Zeit lassen."
+				}
+			},
+			"soundOn": "Klang an",
+			"soundOff": "Klang aus",
+			"soundOptions": "Klang und Ansage",
+			"wind": "Atemwind · Weicher Hall",
+			"voice": "Atemphasen ansagen",
+			"voiceHint": "Mit der Stimme Ihres Geräts",
+			"voiceMissing": "Auf diesem Gerät ist keine Ansage verfügbar.",
+			"voiceCue": {
+				"0": "Einatmen",
+				"1": "Halten",
+				"2": "Ausatmen",
+				"3": "Pause"
+			},
+			"audioError": "Klang ist gerade nicht verfügbar. Sie können ohne Klang weiteratmen.",
+			"voiceError": "Die Ansage ist nicht verfügbar. Der Atemwind begleitet Sie weiter.",
+			"words": {
+				"serenity": "Gelassenheit",
+				"courage": "Mut",
+				"wisdom": "Weisheit"
+			},
+			"quote": "Gott, gib mir die {serenity}, Dinge hinzunehmen, die ich nicht ändern kann, den {courage}, Dinge zu ändern, die ich ändern kann, und die {wisdom}, das eine vom anderen zu unterscheiden."
+		},
+		"entry": {
+			"kicker": "Live-Chat",
+			"status": {
+				"access": "Ihr Zugang für dieses Gespräch",
+				"waiting": "Warteraum — freie Beraterin wird gesucht",
+				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
+				"closed": "Gerade geschlossen"
+			},
+			"access": {
+				"headline": "Ihr Name für heute.",
+				"subline": "Anonym, ohne Konto. Wählen Sie einen Namen — oder würfeln Sie neue.",
+				"label": "Ihr Pseudonym",
+				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
+				"reroll": "Neu würfeln",
+				"continue": "Zum Warteraum"
+			},
+			"waiting": {
+				"headline": "Gleich geht es los.",
+				"aheadUnknown": "Wir suchen eine freie Beraterin für Sie.",
+				"aheadNone": "Sie sind die Nächste.",
+				"aheadOne": "Eine Person vor Ihnen",
+				"aheadMany": "{{count}} Personen vor Ihnen",
+				"accepted": "Eine Beraterin ist da.",
+				"companion": "Ruhige Begleitung, bis es losgeht",
+				"mail": "Lieber schreiben statt warten? Zur Mail-Beratung →",
+				"bar": "Warteraum",
+				"barStatusUnknown": "Sie müssen nichts tun",
+				"barStatus": "{{count}} vor Ihnen — Sie müssen nichts tun",
+				"yourTurn": "Sie sind dran.",
+				"yourTurnSub": "Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.",
+				"consentRequired": "Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.",
+				"decline": "Nicht zustimmen und Chat verlassen",
+				"declineConfirm": "Sind Sie sicher, dass Sie abbrechen wollen und schließen?",
+				"start": "Gespräch beginnen",
+				"startStatus": "Ihre Beraterin wartet auf Sie"
+			},
+			"closed": {
+				"headline": "Der Live-Chat ist gerade geschlossen.",
+				"hoursLabel": "Öffnungszeiten",
+				"text": "Gerade ist niemand im Live-Chat. Schreiben Sie uns — wir antworten innerhalb von zwei Arbeitstagen.",
+				"textShort": "Schreiben Sie uns — Antwort in zwei Arbeitstagen.",
+				"later": "Später",
+				"mail": "Anfrage an eine Beratungsstelle schreiben",
+				"mailShort": "Anfrage schreiben",
+				"closedDay": "geschlossen"
+			},
+			"steps": {
+				"wait": {
+					"title": "Sie warten, bis jemand frei ist",
+					"text": "Die Beraterinnen sind gerade in anderen Gesprächen."
+				},
+				"consent": {
+					"title": "Dann stimmen Sie einmal zu",
+					"text": "Sobald eine Stelle Ihr Gespräch annimmt, sehen Sie ihren Datenschutz."
+				},
+				"anonymous": {
+					"title": "Anonym, und danach weg",
+					"text": "Nur Ihr Pseudonym ist sichtbar. Nach 48 Stunden ist alles gelöscht."
+				}
+			}
 		}
 	}
 }

@@ -33,6 +33,11 @@ vi.mock('../registration/autoLogin', () => ({
 	redirectToApp: vi.fn()
 }));
 
+vi.mock('../anonymousChat/entryRoom/LiveChatEntryRoom', () => ({
+	LiveChatEntryRoom: ({ sessionId }: { sessionId: number }) => (
+		<div data-testid="live-chat-entry-room">room {sessionId}</div>
+	)
+}));
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
 	assignInviteSessionDisplayName: vi.fn(),
@@ -149,7 +154,7 @@ describe('InviteLink legacy identity', () => {
 		expect(redirectToApp).toHaveBeenCalled();
 	});
 
-	it('still hands topic-based redeem straight to the waiting room', async () => {
+	it('opens the entry room on this page for a topic-based redeem, no redirect', async () => {
 		vi.mocked(redeemInviteLink).mockResolvedValue({
 			sessionId: 42,
 			userName: 'anon_1',
@@ -159,16 +164,10 @@ describe('InviteLink legacy identity', () => {
 			refreshExpiresIn: 600
 		});
 
-		// A deferred promise, not mockResolvedValue: the redirect is a full
-		// page load, so the name has to be stored before we leave or the guest
-		// stays anon_N. Call order alone cannot show that — the call happens
-		// first with or without the await — so hold the promise open and prove
-		// the redirect waits for it.
-		let storeDisplayName!: (name: string | null) => void;
+		// A promise that never settles: the courtesy name is stored in the
+		// background, and the room has to appear without waiting for it.
 		vi.mocked(assignInviteSessionDisplayName).mockReturnValue(
-			new Promise<string | null>((resolve) => {
-				storeDisplayName = resolve;
-			})
+			new Promise<string | null>(() => undefined)
 		);
 
 		renderInvite();
@@ -179,10 +178,14 @@ describe('InviteLink legacy identity', () => {
 		await waitFor(() =>
 			expect(assignInviteSessionDisplayName).toHaveBeenCalled()
 		);
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 42'
+			)
+		);
+		/* The room replaces the redirect: the guest stays on this page. */
 		expect(redirectToInviteSession).not.toHaveBeenCalled();
-
-		storeDisplayName('freundliche Katze Mika');
-
-		await waitFor(() => expect(redirectToInviteSession).toHaveBeenCalled());
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+		expect(screen.queryByLabelText('User-ID')).toBeNull();
 	});
 });

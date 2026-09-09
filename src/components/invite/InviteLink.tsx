@@ -26,9 +26,9 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { redirectToApp } from '../registration/autoLogin';
 import {
 	applyRedeemSessionCredentials,
-	assignInviteSessionDisplayName,
-	redirectToInviteSession
+	assignInviteSessionDisplayName
 } from './inviteLinkHelpers';
+import { LiveChatEntryRoom } from '../anonymousChat/entryRoom/LiveChatEntryRoom';
 import {
 	mintInviteGuestCredentials,
 	rerollInviteGuestUsername
@@ -56,15 +56,19 @@ import type { Pseudonym } from '../../utils/anonName/engine';
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { token } = useParams<{ token: string; topicSlug?: string }>();
+	const { token, topicSlug } = useParams<{
+		token: string;
+		topicSlug?: string;
+	}>();
 	const tenantContext = useContext(TenantContext);
 	const localeContext = useContext(LocaleContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const tenant = tenantContext?.tenant;
 	const locale = localeContext?.locale ?? 'de';
 	const [status, setStatus] = useState<
-		'loading' | 'identity' | 'registering' | 'error'
+		'loading' | 'identity' | 'registering' | 'error' | 'room'
 	>('loading');
+	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [legacyRedeem, setLegacyRedeem] =
 		useState<RedeemInviteLinkLegacyResponse | null>(null);
@@ -87,12 +91,20 @@ export const InviteLink = () => {
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
+					/* Tokens first, then the entry room on this very page —
+					   no hard redirect into the session's gates any more.
+					   The room hands over to the session itself once a
+					   counsellor has accepted and consent is given. */
 					applyRedeemSessionCredentials(data);
-					// Awaited, not fired and forgotten: redirecting is a full
-					// page load, which would cancel the request in flight and
-					// leave the guest as anon_N. It resolves either way.
-					await assignInviteSessionDisplayName(data, locale);
-					redirectToInviteSession(data);
+					/* A courtesy name before anyone can look: without it
+					   the counsellor's queue shows `anon_N` (#1216). Not
+					   awaited — there is no page load to race any more, and
+					   the room must not wait up to five seconds on a name
+					   the guest is about to confirm or reroll at its door.
+					   That choice wins over this one. */
+					void assignInviteSessionDisplayName(data, locale);
+					setRoomSessionId(data.sessionId);
+					setStatus('room');
 					return;
 				}
 
@@ -156,6 +168,15 @@ export const InviteLink = () => {
 	}, [legacyRedeem, username, password, locale, tenant, navigate]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
+
+	if (status === 'room' && roomSessionId !== null) {
+		return (
+			<LiveChatEntryRoom
+				sessionId={roomSessionId}
+				topicSlug={topicSlug}
+			/>
+		);
+	}
 
 	return (
 		<StageLayout

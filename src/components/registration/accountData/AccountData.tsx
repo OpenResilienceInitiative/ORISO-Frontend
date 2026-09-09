@@ -21,6 +21,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -67,6 +68,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
+import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
@@ -121,7 +123,65 @@ const suggestButtonSx = (filled: boolean) =>
 
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
-}> = ({ onChange }) => {
+	/**
+	 * Where the person came from. `registration` is the four-step flow and stays
+	 * exactly as it was. `link` is the entry composition of ORISO-Frontend#1052:
+	 * an invitation already carries topic and agency, so the screen asks only
+	 * what is still missing.
+	 *
+	 * Nothing here decides *which* fields a conversation type needs — that
+	 * belongs to the modality (ADR-006). This prop only says "a link brought
+	 * them", so the shape can be judged in Storybook before it is wired.
+	 */
+	entry?: 'registration' | 'link';
+	/**
+	 * Link entry only: join without ever choosing — or seeing — a password.
+	 *
+	 * Frank, 2026-09-03: the password is generated for the person, as if the
+	 * suggest button had been pressed once, unseen. The consequence is real and
+	 * must be said out loud on screen: without a password there is no way back
+	 * into this conversation from another device or after closing the browser.
+	 * The live-chat invite path does this today by accident and says nothing —
+	 * that is exactly the defect this variant must not repeat.
+	 */
+	temporary?: boolean;
+	/**
+	 * Tighten the screen for a container that already has its own chrome.
+	 *
+	 * Frank, 2026-09-04: inside the dialog the headline is said twice and the
+	 * page rhythm scrolls far too much — "das ist so viel gescrollt, dass es
+	 * peinlich ist, dass man für ein Anmelden so viel braucht". Compact drops
+	 * the duplicated headline, keeps the avatar (the anonymity signal is the
+	 * point of this screen) and halves the vertical rhythm.
+	 */
+	compact?: boolean;
+	/**
+	 * How the data-protection promise is made on this screen.
+	 *
+	 * `'checkbox'` (default) is every flow that has always been here: the
+	 * consent box, its Fachbereich-resolved sentence and the gate that will not
+	 * let the step be left until it is ticked.
+	 *
+	 * `'snackbar'` is the **live-chat link entry alone**
+	 * (ORISO-Frontend#1341, item 5): the note is stated, not agreed to, because
+	 * the real consent moved to the waiting room where an agency is finally
+	 * known (item 2). Asking here as well would take an agreement that binds to
+	 * nobody.
+	 *
+	 * It is a prop and not a reading of `entry`, deliberately. `entry="link"`
+	 * is shared with the self-help group entry, which keeps its checkbox; there
+	 * was no existing signal that separates the live chat from it, so the
+	 * caller that knows says so. Nothing here decides *which* modality this is
+	 * — that stays with the composition (ADR-006).
+	 */
+	dataProtection?: 'checkbox' | 'snackbar';
+}> = ({
+	onChange,
+	entry = 'registration',
+	temporary = false,
+	compact = false,
+	dataProtection = 'checkbox'
+}) => {
 	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
 	/* Restore the in-memory draft (if any) so navigating away and back in the
@@ -151,6 +211,12 @@ export const AccountData: FC<{
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
+	/* The password was minted for a temporary join and never shown. The flag
+	   travels in the draft, because the step can unmount between the two
+	   modes (review on ORISO-Frontend#1333). */
+	const [passwordMinted, setPasswordMinted] = useState<boolean>(
+		restoredDraft?.passwordMinted ?? false
+	);
 	const [twoFactorAuthEnabled, setTwoFactorAuthEnabled] = useState<boolean>(
 		restoredDraft?.twoFactorAuthEnabled ?? false
 	);
@@ -257,6 +323,15 @@ export const AccountData: FC<{
 	const dataProtectionChecked =
 		currentConsentBinding !== null &&
 		acceptedConsentBinding === currentConsentBinding;
+	/* What this screen needs before it may be left. With the checkbox that is
+	   the acceptance, and only once the sentence it belongs to is on screen.
+	   With the snackbar there is nothing to accept here at all — the note
+	   states what applies and the consent is taken in the waiting room, so
+	   waiting for a tick nobody can give would lock the step shut forever
+	   (ORISO-Frontend#1341, items 2 and 5). */
+	const consentSatisfied =
+		dataProtection === 'snackbar' ||
+		(isConsentSentenceResolved && dataProtectionChecked);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -294,7 +369,8 @@ export const AccountData: FC<{
 			repeatPassword,
 			acceptedConsentBinding,
 			email,
-			twoFactorAuthEnabled
+			twoFactorAuthEnabled,
+			passwordMinted
 		});
 	}, [
 		identity,
@@ -303,7 +379,8 @@ export const AccountData: FC<{
 		repeatPassword,
 		acceptedConsentBinding,
 		email,
-		twoFactorAuthEnabled
+		twoFactorAuthEnabled,
+		passwordMinted
 	]);
 
 	const isUsernameLongEnough =
@@ -365,9 +442,10 @@ export const AccountData: FC<{
 			isPasswordValid &&
 			password === repeatPassword &&
 			// Not merely "the box is ticked": the box may only count once the
-			// sentence it sits next to is actually on screen.
-			isConsentSentenceResolved &&
-			dataProtectionChecked &&
+			// sentence it sits next to is actually on screen. With the
+			// snackbar there is no box and nothing to wait for — the note is
+			// stated here and the consent is taken later, in the waiting room.
+			consentSatisfied &&
 			emailFeedback.isSatisfied
 		) {
 			const trimmedEmail = email.trim();
@@ -384,8 +462,7 @@ export const AccountData: FC<{
 		username,
 		password,
 		repeatPassword,
-		dataProtectionChecked,
-		isConsentSentenceResolved,
+		consentSatisfied,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -441,6 +518,52 @@ export const AccountData: FC<{
 		applyGeneratedUsername(regeneratePseudonym(identity, locale));
 		suggestPassword();
 	};
+
+	/* Temporary join: mint the password once, keep it out of sight, and never
+	   re-mint it on a re-render — a second password would silently invalidate
+	   the account the person is already holding. `suggestPassword` is not
+	   reused here because it also reveals both fields, which is the one thing
+	   this path must not do. */
+	useEffect(() => {
+		if (!temporary) {
+			/* Leaving the temporary path takes the minted password with it.
+			   It used to stay in both fields, masked: the person then created
+			   a permanent account with a password they had never seen and
+			   could not recover, and the sentence warning them about that was
+			   gone with the temporary mode (review on #1333, 2026-09-07). */
+			if (passwordMinted) {
+				setPassword('');
+				setRepeatPassword('');
+				setPasswordMinted(false);
+			}
+			return;
+		}
+		if (password) {
+			return;
+		}
+		const generated = generatePassword();
+		setPasswordMinted(true);
+		setPassword(generated);
+		setRepeatPassword(generated);
+		setIsPasswordVisible(false);
+		setIsRepeatPasswordVisible(false);
+	}, [temporary, password, passwordMinted]);
+
+	/* The password block is the only thing a temporary join hides. The identity
+	   fields stay: the person still picks how they are called. */
+	const showPasswordFields = !temporary;
+
+	/* Fields take the surface they stand on instead of painting their own.
+	   `orisoInputDesign` fills every input with `surfaceContainerLowest`, which
+	   is white — right on a white page, a white box everywhere else: on the grey
+	   M3 dialog and on the cream registration surface alike. Frank asked for it
+	   in the dialog first and then explicitly for the empty password field too
+	   (2026-09-04: "ändere es auch bitte in einem leeren Passwortfeld, weil da
+	   hast du es nämlich nicht geändert"), so it applies to every field of this
+	   screen, not only the compact one. */
+	const surfaceSx = {
+		'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
+	};
 	const suggestButton = (
 		icon: string,
 		label: ReactNode,
@@ -474,8 +597,11 @@ export const AccountData: FC<{
 		</Button>
 	);
 
+	const gap = (full: string) =>
+		compact ? `${parseInt(full, 10) / 2}px` : full;
+
 	return (
-		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto' }}>
+		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
 			<Box
 				sx={{
 					display: 'flex',
@@ -485,21 +611,28 @@ export const AccountData: FC<{
 				}}
 			>
 				<Box sx={{ flex: 1, minWidth: 0 }}>
-					<Typography
-						component="h1"
-						variant="h3"
-						sx={registrationScreenTitleSx}
-					>
-						{t('registration.account.headline')}
-					</Typography>
-					<Typography
-						sx={{
-							mt: '12px',
-							...registrationScreenIntroSx
-						}}
-					>
-						{t('registration.account.subline')}
-					</Typography>
+					{!compact && (
+						<Typography
+							component="h1"
+							variant="h3"
+							sx={registrationScreenTitleSx}
+						>
+							{t('registration.account.headline')}
+						</Typography>
+					)}
+					{/* Compact: the container's own description already says why
+					    the person is here, and the two sentences collided
+					    (Frank, 2026-09-04: "cut off looks bad"). */}
+					{!compact && (
+						<Typography
+							sx={{
+								mt: '12px',
+								...registrationScreenIntroSx
+							}}
+						>
+							{t('registration.account.subline')}
+						</Typography>
+					)}
 				</Box>
 				<Box
 					sx={{
@@ -517,7 +650,7 @@ export const AccountData: FC<{
 
 			<Typography
 				sx={{
-					mt: '24px',
+					mt: gap('24px'),
 					mb: '8px',
 					...registrationScreenKickerSx
 				}}
@@ -529,7 +662,7 @@ export const AccountData: FC<{
 					display: 'flex',
 					flexWrap: 'nowrap',
 					gap: 0.75,
-					mb: '24px',
+					mb: gap('24px'),
 					overflow: 'hidden',
 					containerType: 'inline-size'
 				}}
@@ -539,45 +672,51 @@ export const AccountData: FC<{
 					t('registration.account.suggest.username'),
 					suggestUsername
 				)}
-				{suggestButton(
-					genKeyIcon,
-					t('registration.account.suggest.password'),
-					suggestPassword
-				)}
+				{/* A "suggest password" button next to no password field is an
+				    offer that leads nowhere. Same for "all three" — it would
+				    silently re-mint the hidden password the person already
+				    holds. Only identity stays adjustable on a temporary join. */}
+				{showPasswordFields &&
+					suggestButton(
+						genKeyIcon,
+						t('registration.account.suggest.password'),
+						suggestPassword
+					)}
 				{suggestButton(
 					genAvatarIcon,
 					t('registration.account.suggest.avatar'),
 					suggestAvatar
 				)}
-				{suggestButton(
-					genDiceIcon,
-					<>
-						<Box
-							component="span"
-							sx={{
-								'display': 'none',
-								'@container (min-width: 520px)': {
-									display: 'inline'
-								}
-							}}
-						>
-							{t('registration.account.suggest.all')}
-						</Box>
-						<Box
-							component="span"
-							sx={{
-								'display': 'inline',
-								'@container (min-width: 520px)': {
-									display: 'none'
-								}
-							}}
-						>
-							{t('registration.account.suggest.allShort')}
-						</Box>
-					</>,
-					suggestAll,
-					true
-				)}
+				{showPasswordFields &&
+					suggestButton(
+						genDiceIcon,
+						<>
+							<Box
+								component="span"
+								sx={{
+									'display': 'none',
+									'@container (min-width: 520px)': {
+										display: 'inline'
+									}
+								}}
+							>
+								{t('registration.account.suggest.all')}
+							</Box>
+							<Box
+								component="span"
+								sx={{
+									'display': 'inline',
+									'@container (min-width: 520px)': {
+										display: 'none'
+									}
+								}}
+							>
+								{t('registration.account.suggest.allShort')}
+							</Box>
+						</>,
+						suggestAll,
+						true
+					)}
 			</Box>
 
 			<OrisoTextField
@@ -635,7 +774,7 @@ export const AccountData: FC<{
 							</InputAdornment>
 						)
 					}}
-					sx={{ mt: '20px' }}
+					sx={{ mt: gap('20px') }}
 				/>
 			)}
 			{emailVisible && (
@@ -666,148 +805,235 @@ export const AccountData: FC<{
 					/>
 				</FormGroup>
 			)}
-			<OrisoTextField
-				value={password}
-				onChange={(event) => setPassword(event.target.value)}
-				placeholder={t('registration.account.password.label')}
-				type={isPasswordVisible ? 'text' : 'password'}
-				fullWidth
-				autoComplete="new-password"
-				inputProps={{
-					'aria-label': t('registration.account.password.label')
-				}}
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					),
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								onClick={() =>
-									setIsPasswordVisible(!isPasswordVisible)
-								}
-								edge="end"
-								aria-label={t(
-									isPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								title={t(
-									isPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								sx={visibilityButtonSx}
-							>
-								{isPasswordVisible ? (
-									<VisibilityOffIcon />
-								) : (
-									<VisibilityIcon />
-								)}
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-				sx={{ mt: '24px' }}
-			/>
-			<PasswordRuleChips password={password} />
-			<OrisoTextField
-				value={repeatPassword}
-				onChange={(event) => setRepeatPassword(event.target.value)}
-				placeholder={t('registration.account.repeatPassword.label')}
-				type={isRepeatPasswordVisible ? 'text' : 'password'}
-				error={repeatPasswordMismatch}
-				helperText={
-					repeatPasswordMismatch
-						? t('registration.account.repeatPassword.error')
-						: repeatPasswordMatches
-							? t('registration.account.repeatPassword.success')
-							: undefined
-				}
-				FormHelperTextProps={{
-					sx: repeatPasswordMatches
-						? { color: `${registrationMd3.primary} !important` }
-						: undefined
-				}}
-				fullWidth
-				autoComplete="new-password"
-				inputProps={{
-					'aria-label': t('registration.account.repeatPassword.label')
-				}}
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					),
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								onClick={() =>
-									setIsRepeatPasswordVisible(
-										!isRepeatPasswordVisible
-									)
-								}
-								edge="end"
-								aria-label={t(
-									isRepeatPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								title={t(
-									isRepeatPasswordVisible
-										? 'login.password.hide'
-										: 'login.password.show'
-								)}
-								sx={visibilityButtonSx}
-							>
-								{isRepeatPasswordVisible ? (
-									<VisibilityOffIcon />
-								) : (
-									<VisibilityIcon />
-								)}
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-				sx={{ mt: '20px' }}
-			/>
-			<FormGroup sx={{ mt: '20px' }}>
-				<FormControlLabel
-					sx={{ alignItems: 'flex-start' }}
-					control={
-						<Checkbox
-							checked={dataProtectionChecked}
-							disabled={!isConsentSentenceResolved}
-							onClick={() => {
-								setAcceptedConsentBinding(
-									dataProtectionChecked
-										? null
-										: currentConsentBinding
-								);
+			{showPasswordFields ? (
+				<>
+					<OrisoTextField
+						value={password}
+						onChange={(event) => setPassword(event.target.value)}
+						placeholder={t('registration.account.password.label')}
+						type={isPasswordVisible ? 'text' : 'password'}
+						fullWidth
+						autoComplete="new-password"
+						inputProps={{
+							'aria-label': t(
+								'registration.account.password.label'
+							)
+						}}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<VpnKeyOutlinedIcon
+										sx={{
+											color: registrationMd3.onSurfaceVariant
+										}}
+									/>
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										onClick={() =>
+											setIsPasswordVisible(
+												!isPasswordVisible
+											)
+										}
+										edge="end"
+										aria-label={t(
+											isPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										title={t(
+											isPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										sx={visibilityButtonSx}
+									>
+										{isPasswordVisible ? (
+											<VisibilityOffIcon />
+										) : (
+											<VisibilityIcon />
+										)}
+									</IconButton>
+								</InputAdornment>
+							)
+						}}
+						sx={{ mt: gap('24px') }}
+					/>
+					<PasswordRuleChips password={password} />
+					<OrisoTextField
+						value={repeatPassword}
+						onChange={(event) =>
+							setRepeatPassword(event.target.value)
+						}
+						placeholder={t(
+							'registration.account.repeatPassword.label'
+						)}
+						type={isRepeatPasswordVisible ? 'text' : 'password'}
+						error={repeatPasswordMismatch}
+						helperText={
+							repeatPasswordMismatch
+								? t('registration.account.repeatPassword.error')
+								: repeatPasswordMatches
+									? t(
+											'registration.account.repeatPassword.success'
+										)
+									: undefined
+						}
+						FormHelperTextProps={{
+							sx: repeatPasswordMatches
+								? {
+										color: `${registrationMd3.primary} !important`
+									}
+								: undefined
+						}}
+						fullWidth
+						autoComplete="new-password"
+						inputProps={{
+							'aria-label': t(
+								'registration.account.repeatPassword.label'
+							)
+						}}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<VpnKeyOutlinedIcon
+										sx={{
+											color: registrationMd3.onSurfaceVariant
+										}}
+									/>
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										onClick={() =>
+											setIsRepeatPasswordVisible(
+												!isRepeatPasswordVisible
+											)
+										}
+										edge="end"
+										aria-label={t(
+											isRepeatPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										title={t(
+											isRepeatPasswordVisible
+												? 'login.password.hide'
+												: 'login.password.show'
+										)}
+										sx={visibilityButtonSx}
+									>
+										{isRepeatPasswordVisible ? (
+											<VisibilityOffIcon />
+										) : (
+											<VisibilityIcon />
+										)}
+									</IconButton>
+								</InputAdornment>
+							)
+						}}
+						sx={{ mt: gap('20px') }}
+					/>
+				</>
+			) : (
+				/* Temporary join: no password block, and one thing said clearly.
+
+				   Frank corrected the first wording, 2026-09-04: a temporary
+				   guest is not crippled. A password IS minted in the background,
+				   the chat session is real, they write normally and their
+				   messages stay for everyone else. The single consequence is
+				   that the session is dropped when the browser closes.
+
+				   That is worth an attention treatment rather than a quiet grey
+				   note — it is the one fact the person cannot discover later,
+				   and today's live-chat invite path never states it at all. */
+				<Box
+					role="note"
+					sx={{
+						mt: gap('20px'),
+						p: '14px 16px',
+						borderRadius: '12px',
+						display: 'flex',
+						gap: 1.5,
+						alignItems: 'flex-start',
+						bgcolor: registrationMd3.surfaceContainerLow,
+						color: registrationMd3.onSurface,
+						border: `1px solid ${registrationMd3.error}`,
+						borderLeftWidth: 4
+					}}
+				>
+					<ErrorOutlineIcon
+						sx={{
+							color: registrationMd3.error,
+							fontSize: 22,
+							flexShrink: 0,
+							mt: '1px'
+						}}
+					/>
+					<Box>
+						<Typography
+							sx={{
+								fontSize: 14,
+								lineHeight: 1.45,
+								fontWeight: 700,
+								mb: '2px'
 							}}
-							sx={{ mt: '-9px' }}
-						/>
-					}
-					label={
-						/* The sentence itself is resolved in its own component:
-						   a Träger-authored consent text when the selected
-						   Fachbereich has one (ADR-021), otherwise exactly the
-						   three-fragment sentence this used to assemble inline. */
-						<DataProtectionConsentLabel
-							agency={agency}
-							topic={mainTopic}
-							onResolutionChange={setConsentResolution}
-						/>
-					}
-				/>
-			</FormGroup>
+						>
+							{t(
+								'registration.account.temporary.title',
+								'Diese Sitzung endet, wenn Sie den Browser schließen.'
+							)}
+						</Typography>
+						<Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
+							{t(
+								'registration.account.temporary.note',
+								'Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück.'
+							)}
+						</Typography>
+					</Box>
+				</Box>
+			)}
+			{dataProtection === 'snackbar' ? (
+				/* Live chat only. Same spot in the column the checkbox holds,
+				   because that is where a reader looks for it — the box is
+				   gone, the statement is not (ORISO-Frontend#1341, item 5). */
+				<DataProtectionSnackbar sx={{ mt: gap('20px') }} />
+			) : (
+				<FormGroup sx={{ mt: gap('20px') }}>
+					<FormControlLabel
+						sx={{ alignItems: 'flex-start' }}
+						control={
+							<Checkbox
+								checked={dataProtectionChecked}
+								disabled={!isConsentSentenceResolved}
+								onClick={() => {
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									);
+								}}
+								sx={{ mt: '-9px' }}
+							/>
+						}
+						label={
+							/* The sentence itself is resolved in its own
+							   component: a Träger-authored consent text when
+							   the selected Fachbereich has one (ADR-021),
+							   otherwise exactly the three-fragment sentence
+							   this used to assemble inline. */
+							<DataProtectionConsentLabel
+								agency={agency}
+								topic={mainTopic}
+								onResolutionChange={setConsentResolution}
+							/>
+						}
+					/>
+				</FormGroup>
+			)}
 		</Box>
 	);
 };

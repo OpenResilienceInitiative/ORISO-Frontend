@@ -215,6 +215,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Bekleme odasına dön",
+			"confirm": "Randevu al",
+			"headline": "Randevu al",
+			"noTimes": "Bu gün için boş saat yok. Lütfen başka bir gün seçin.",
+			"open": "Randevu al",
+			"pickDay": "Lütfen önce takvimden bir gün seçin.",
+			"subline": "Önce bir gün, sonra bir saat seçin.",
+			"times": "Boş saatler",
+			"weekdays": "P,P,S,Ç,P,C,C"
+		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
 			"title": "Müsaitlik durumunuz"
@@ -643,7 +654,8 @@
 			"download": "ICS indir",
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
-			"titleLabel": "Nötr takvim başlığı"
+			"titleLabel": "Nötr takvim başlığı",
+			"addShort": "Takvim"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -826,12 +838,41 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar"
+			},
+			"gallery": {
+				"back": "Geri sayıma dön",
+				"headline": "Grup nasıl işler",
+				"subline": "İlk kezden önce yardımcı olacak üç şey.",
+				"appointments": "Tarihleri takvime ekle",
+				"steps": {
+					"formats": {
+						"title": "Grup nasıl bir araya gelir",
+						"text": "Adından yazacağınızı, konuşacağınızı, görüşeceğinizi ya da hepsini birden yapacağınızı anlarsınız. Sesi ve kamerayı gerektiğinde siz açarsınız.",
+						"alt": "Grup odasında meraklı bir kişi; ortada sohbet, mikrofon ve kamera simgeleri, sade bir kalkanla birbirine bağlı."
+					},
+					"alias": {
+						"title": "Lütfen yalnızca takma adla",
+						"text": "Her şey uçtan uca şifreli. Yine de gerçek isim kullanmayın – bu herkesi korur.",
+						"alt": "İsimler ve profil resimleri yerine soyut takma ad simgeleriyle korunan bir grup; kişisel isim kartı korunan odanın dışında kalır."
+					},
+					"dates": {
+						"title": "Yeni randevular, yeni bağlantılar",
+						"text": "Bağlantı alanında düzenli olarak yeni buluşmalar bulur ve doğrudan bir sonraki randevuya gidersiniz.",
+						"alt": "Yeni randevu kartları arka arkaya beliriyor; net bir bağlantı simgesi meraklı kişiyi bir sonraki grup buluşmasına götürüyor."
+					}
+				},
+				"upcoming": "Sonraki randevular"
 			}
 		},
 		"join": {
 			"timeConversions": "Eğlenceli zaman ölçüleri",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Saate geri dön",
+					"cardNext": "Sonraki sayfa",
+					"cardOpenAria": "Karşılama mesajını ve sohbet kurallarını okumak için saati çevirin",
+					"cardPage": "{{current}} / {{total}}",
+					"cardPrev": "Önceki sayfa",
 					"etaDay": "1 gün içinde",
 					"etaDays": "{{count}} gün içinde",
 					"etaHour": "1 saat içinde",
@@ -844,10 +885,13 @@
 					"greetingLabel": "Danışmanınızdan karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
+					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
 					"overdueHeadline": "Birazdan sizinleyiz.",
 					"overdueSubtitle": "Danışmanınız odayı birazdan açacak — lütfen biraz daha bekleyin.",
 					"subtitle": "Bir sayıya tıklayın — arkasında karşılama mesajı ve sohbet kuralları sizi bekliyor.",
+					"subtitleCard": "Saate dokunun, arkasında karşılama ve kurallar.",
+					"subtitleStill": "Karşılama mesajı ve sohbet kuralları sayıların altında.",
 					"timerAriaFuture": "Başlangıca kadar — gün: {{days}}, saat: {{hours}}, dakika: {{minutes}}, saniye: {{seconds}}",
 					"timerAriaOverdue": "Planlanan başlangıçtan bu yana — dakika: {{minutes}}, saniye: {{seconds}}",
 					"toggleLabel": "Animasyonu kapatın",
@@ -1013,6 +1057,18 @@
 				"repeatValue_one": "{{count}} kez",
 				"repeatValue_other": "{{count}} kez"
 			}
+		},
+		"entry": {
+			"join": "Katıl",
+			"more": "Daha fazla bilgi",
+			"moreTitle": "Grup nasıl işler",
+			"motionOff": "Animasyonu kapat",
+			"openHeadline": "Grup başladı.",
+			"noTimeHeadline": "Grup, moderatör açar açmaz başlar.",
+			"moreOpen": "Moderatör grubu açtı. “Katıl” sizi görüşmeye götürür.",
+			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
+			"missing": "Bu grup artık yok ya da erişiminiz yok.",
+			"backToCountdown": "Geri sayıma dön"
 		}
 	},
 	"help": {
@@ -2683,7 +2739,12 @@
 				"prefix": "Bende ",
 				"suffix": " not alınmıştır. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
 			},
-			"loading": "Onay metni yükleniyor …"
+			"loading": "Onay metni yükleniyor …",
+			"snackbar": {
+				"prefix": "Bu bizim ",
+				"link": "gizlilik politikamızdır",
+				"suffix": ". Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
+			}
 		},
 		"error": {
 			"required_field_missing": {
@@ -2925,6 +2986,13 @@
 					"required": "Lütfen bir e-posta adresi girin.",
 					"invalid": "Lütfen geçerli bir e-posta adresi girin."
 				}
+			},
+			"temporary": {
+				"join": "Katıl",
+				"toggleOff": "Hesap oluştur",
+				"toggleOn": "Hesap açmadan katıl",
+				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
+				"note": "O ana kadar normal şekilde yazarsınız ve mesajlarınız diğerleri için kalır. Siz ise sonrasında bu görüşmeye geri dönemezsiniz."
 			}
 		},
 		"back": "Geri",
@@ -3027,7 +3095,8 @@
 				"ready": "Her şey hazır — yazmaya başlayabilirsiniz",
 				"slow": "Bu her zamankinden uzun sürüyor",
 				"entering": "Görüşme alanınız açılıyor …"
-			}
+			},
+			"headlineAlmost": "Neredeyse tamam."
 		},
 		"selection": {
 			"remove": "{{label}} kaldır"
@@ -3173,34 +3242,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Nefes rehberi nefes al ver",
-			"timeLeft": "Kalan süre",
-			"choosePace": "Temponu seç, sonra ilk denemeni başlat.",
-			"firstTryInstruction": "İlk deneme: nefes al, tut ve ver adımlarını takip et.",
-			"practiceSuccessPrompt": "Harika, şimdi başlamak ister misin?",
-			"timingInfo": "Başlamadan önce nefes zamanlamanı ayarla.",
-			"achievementUnlocked": "Başarım açıldı: Seviye {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Seviye {{level}}: {{title}}",
-			"completionTitle": "Tebrikler, başardın",
-			"prizeLine1": "Asıl ödülün gerçek bilgeliktir.",
-			"prizeLine2": "Çünkü içindeki gürültüyü aştın, sıkıntıyı yendin, mesafe kazandın ve biraz iç huzuru buldun.",
-			"serenityPrayer": "Tanrım, değiştiremeyeceğim şeyleri kabullenmek için sükunet, değiştirebileceğim şeyleri değiştirmek için cesaret ve ikisi arasındaki farkı bilmek için bilgelik ver.",
-			"changeMind": "Fikrimi değiştirdim, bekleme oyununu denememe izin ver",
-			"iJustWait": "Sadece beklerim",
-			"startGame": "Oyunu başlat",
-			"startFirstTry": "İlk denemeyi başlatalım",
-			"repeatTrainingRound": "Antrenman turunu tekrarla",
-			"startRealGame": "Gerçek oyunu başlatalım",
-			"repeatGame": "Oyunu tekrarla",
-			"receivePrize": "Ödülünü al",
-			"playAgain": "Tekrar oyna",
-			"joinRoom": "Odaya katıl",
-			"decreaseInhale": "Nefes alma süresini azalt",
-			"increaseInhale": "Nefes alma süresini artır",
-			"decreaseHold": "Tutma süresini azalt",
-			"increaseHold": "Tutma süresini artır",
-			"decreaseExhale": "Nefes verme süresini azalt",
-			"increaseExhale": "Nefes verme süresini artır",
 			"robotUsernameFallback": "Danisan_9",
 			"robotCard1Title": "Bir dakika lütfen",
 			"robotCard1Body": "Tüm danışmanlarımız şu anda canlı görüşmeler yapıyor. Lütfen sohbet odasında kısa bir süre daha burada bekleyin. Aşağıda sırada önünüzde kaç kişi olduğunu görebilirsiniz.",
@@ -3212,7 +3253,6 @@
 			"robotCard4Title": "Bekleme suresini verimli kullanmak ister misiniz?",
 			"robotCard4Body": "O halde bu sirada kisa nefes al-ver oyunumuzu oynayin.",
 			"robotCard4Play": "Oyunu baslat",
-			"robotCard4Info": "Bilgi",
 			"phase": {
 				"inhale": "Nefes al",
 				"hold": "Tut",
@@ -3222,58 +3262,19 @@
 				"carimatSubtitle": "Bekleme süresini birlikte geçirelim",
 				"cancel": "iptal",
 				"confirm": "Anladım, başlayalım",
-				"restart": "Yeniden başlat",
-				"pressAtRightTime": "Doğru zamanda bas",
 				"inhale": {
 					"bubble": "Kazanmak için 3 şey yapman gerek.",
-					"subtitle": "burnundan",
-					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes al, sonra düğmeye bas."
+					"subtitle": "burnundan"
 				},
 				"hold": {
 					"bubble": "3 şey yapman gerek.",
-					"subtitle": "nefesini tut",
-					"instruction": "<strong>{{count}} saniye</strong> nefesini tut, sonra düğmeye bas."
+					"subtitle": "nefesini tut"
 				},
 				"exhale": {
 					"bubble": "3 şey yapman gerek.",
-					"subtitle": "ağzından",
-					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes ver, sonra düğmeye bas."
-				},
-				"belly": {
-					"autoPilot": "Otomatik pilot",
-					"timeIt": "Sen tut zamanı",
-					"inhale": "Harika, <strong>3 saniye</strong> tekrar nefes al, bu sefer karnını genişleterek.",
-					"hold": "Şimdi <strong>3 saniye</strong> nefesini tut.",
-					"exhale": "Şimdi <strong>4 saniye</strong> nefes ver ve tüm vücudunu gevşet."
-				},
-				"selfTimer": {
-					"instruction": "Bu sefer nefes alırken kendi zaman aralıklarını sen belirle.",
-					"repeatGame": "Oyunu tekrarla",
-					"backToWaiting": "Beklemeye dön"
-				},
-				"completion": {
-					"instruction": "Tebrikler, başardınız.",
-					"receiveGift": "Küçük bir hediye alın"
-				},
-				"serenity": {
-					"instruction": "Bu hediye, birçok insana zor zamanlarında yardımcı olmuş küçük bir mantradır. Adı Huzur Duası: “Tanrım, bana değiştiremeyeceğim şeyleri kabul etme huzurunu, değiştirebileceğim şeyleri değiştirme cesaretini ve ikisini birbirinden ayırt etme bilgeliğini ver.”"
+					"subtitle": "ağzından"
 				}
-			},
-			"presets": {
-				"starter334": "ilk kez",
-				"standard446": "orta seviye deneyim (önerilen)",
-				"deep556": "uzun (uzmanlar)"
-			},
-			"briefing": {
-				"0": "Üzgünüz, şu anda beklemeniz gerekiyor, tüm danışmanlar şu an meşgul.",
-				"1": "Bunca sorunla beklemek oldukça zor olabilir. İstersen bunun için küçük bir bekleme odası köprüsü hazırladık.",
-				"2": "Tamam, oyunda üç şey yapman gerekiyor.",
-				"3": "1. Burnundan nefes al\n\n2. Nefesini tut\n\n3. Ağzından nefes ver",
-				"negative": "Tamam, lütfen biraz daha bekle. Bir danışman müsait olur olmaz seni içeri alacağız."
-			},
-			"onboardingLine1": "Sadece gelin. Birlikte nefes alıyoruz.",
-			"onboardingLine3": "Hazır olduğunuzda ilk denemenizi başlatın.",
-			"volumeHint": "Daha iyi bir deneyim için lütfen sesi açın."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4222,7 +4223,7 @@
 			"positionCountSuffix": "Hâlâ önünüzde",
 			"connecting": "Bağlanıyor …",
 			"insteadOfWaiting": "Beklemek yerine",
-			"requestLocalCounselor": "Yerinde danışmanlık talebi gönder",
+			"requestLocalCounselor": "Anonim e-posta danışmanlığı başlat",
 			"consultantAccepted": "Danışmanınız sizi şimdi sohbette bekliyor.",
 			"startChatNow": "Sohbeti şimdi başlat",
 			"dismissAcceptedBanner": "Bildirimi gizle",
@@ -4707,6 +4708,166 @@
 		"anchor": {
 			"previous": "Önceki bölümleri göster",
 			"next": "Daha fazla bölüm göster"
+		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Nefes molanız",
+			"introTitle": "Sizin için bir an.",
+			"intro": {
+				"0": "Hareketi takip edin.",
+				"1": "Size iyi gelen şekilde nefes alın."
+			},
+			"reducedIntro": {
+				"0": "Kendi temponuzda nefes alın.",
+				"1": "Yönlendirme sizinle kalır."
+			},
+			"begin": "Başla",
+			"close": "Nefes molasını kapat",
+			"pause": "Duraklat",
+			"resume": "Nefes almaya devam et",
+			"pausedTitle": "Kısa bir mola.",
+			"pausedHint": {
+				"0": "Kendi ritminizde nefes alın.",
+				"1": "İstediğiniz zaman devam edebilirsiniz."
+			},
+			"automatic": "Otomatik",
+			"manual": "Kendi ritmim",
+			"switchManual": "Kendi ritmime geç",
+			"switchAutomatic": "Otomatiğe geç",
+			"finish": "Şimdilik yeter",
+			"return": "Beklemeye dön",
+			"finishTitle": "Size iyi geleni yanınıza alın.",
+			"phase": {
+				"0": "Nefes al",
+				"1": "Tut",
+				"2": "Nefes ver",
+				"3": "Dinlen"
+			},
+			"next": {
+				"0": "Şimdi tut",
+				"1": "Şimdi nefes ver",
+				"2": "Nefesi dinlendir",
+				"3": "Yeniden nefes al"
+			},
+			"guidance": {
+				"0": {
+					"0": "Burnunuzdan, yavaşça.",
+					"1": "Karnınız yükselebilir."
+				},
+				"1": {
+					"0": "Omuzlarınızı gevşetin.",
+					"1": "Sadece iyi geldiği sürece."
+				},
+				"2": {
+					"0": "Ağzınızdan, yavaşça.",
+					"1": "Karnınız yeniden inebilir."
+				},
+				"3": {
+					"0": "Sessiz bir an.",
+					"1": "Sonraki nefes kendiliğinden gelir."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Nefesin gelmesine izin verin.",
+					"1": "Hiçbir şeyi zorlamayın."
+				},
+				"1": {
+					"0": "Omuzlarınızı fark edin.",
+					"1": "Biraz inmelerine izin verin."
+				},
+				"2": {
+					"0": "Nefesin gitmesine izin verin.",
+					"1": "Hiç acele etmeden."
+				},
+				"3": {
+					"0": "Nasıl oturduğunuzu hissedin.",
+					"1": "Kendinize zaman tanıyın."
+				}
+			},
+			"soundOn": "Ses açık",
+			"soundOff": "Ses kapalı",
+			"soundOptions": "Ses ve sesli yönlendirme",
+			"wind": "Nefes rüzgârı · Yumuşak yankı",
+			"voice": "Aşamaları seslendir",
+			"voiceHint": "Cihazınızın sesiyle",
+			"voiceMissing": "Bu cihazda sesli yönlendirme yok.",
+			"voiceCue": {
+				"0": "Nefes al",
+				"1": "Tut",
+				"2": "Nefes ver",
+				"3": "Dinlen"
+			},
+			"audioError": "Ses şu anda kullanılamıyor. Sessiz devam edebilirsiniz.",
+			"voiceError": "Sesli yönlendirme kullanılamıyor. Nefes rüzgârı sizinle kalır.",
+			"words": {
+				"serenity": "huzuru",
+				"courage": "cesareti",
+				"wisdom": "bilgeliği"
+			},
+			"quote": "Tanrım, değiştiremeyeceğim şeyleri kabul etme {serenity}, değiştirebileceklerimi değiştirme {courage} ve ikisini ayırt etme {wisdom} bana ver."
+		},
+		"entry": {
+			"kicker": "Canlı sohbet",
+			"status": {
+				"access": "Bu görüşme için erişiminiz",
+				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"accepted": "Bir danışman görüşmenizi kabul etti",
+				"closed": "Şu anda kapalı"
+			},
+			"access": {
+				"headline": "Bugünkü adınız.",
+				"subline": "Anonim, hesapsız. Bir ad seçin — ya da yeniden zar atın.",
+				"label": "Takma adınız",
+				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
+				"reroll": "Yeniden at",
+				"continue": "Bekleme odasına"
+			},
+			"waiting": {
+				"headline": "Az kaldı.",
+				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"aheadNone": "Sıradaki sizsiniz.",
+				"aheadOne": "Önünüzde bir kişi",
+				"aheadMany": "Önünüzde {{count}} kişi",
+				"accepted": "Bir danışman burada.",
+				"companion": "Başlayana kadar sakin bir eşlik",
+				"mail": "Beklemek yerine yazmak mı? E-posta danışmanlığına →",
+				"bar": "Bekleme odası",
+				"barStatusUnknown": "Sizin yapmanız gereken bir şey yok",
+				"barStatus": "Önünüzde {{count}} kişi — yapmanız gereken bir şey yok",
+				"yourTurn": "Sıra sizde.",
+				"yourTurnSub": "Bir danışman görüşmenizi kabul etti ve sizi bekliyor.",
+				"consentRequired": "Lütfen önce onaylayın — onayınız olmadan görüşme başlayamaz.",
+				"decline": "Kabul etme ve sohbetten ayrıl",
+				"declineConfirm": "İptal edip kapatmak istediğinizden emin misiniz?",
+				"start": "Görüşmeyi başlat",
+				"startStatus": "Danışmanınız sizi bekliyor"
+			},
+			"closed": {
+				"headline": "Canlı sohbet şu anda kapalı.",
+				"hoursLabel": "Çalışma saatleri",
+				"text": "Şu anda canlı sohbette kimse yok. Bize yazın — iki iş günü içinde yanıtlıyoruz.",
+				"textShort": "Bize yazın — iki iş günü içinde yanıt.",
+				"later": "Sonra",
+				"mail": "Bir danışma merkezine talep yazın",
+				"mailShort": "Talep yaz",
+				"closedDay": "kapalı"
+			},
+			"steps": {
+				"wait": {
+					"title": "Biri müsait olana kadar beklersiniz",
+					"text": "Danışmanlar şu anda başka görüşmelerde."
+				},
+				"consent": {
+					"title": "Sonra bir kez onaylarsınız",
+					"text": "Bir merkez görüşmenizi kabul eder etmez gizlilik politikasını görürsünüz."
+				},
+				"anonymous": {
+					"title": "Anonim ve sonra silinir",
+					"text": "Yalnızca takma adınız görünür. 48 saat sonra her şey silinir."
+				}
+			}
 		}
 	}
 }
