@@ -145,6 +145,38 @@ $room-actions-gap: 12px;
 		}
 	}
 
+	// Frank, 09.09.: the Teamberatung is built "eins zu eins" like the
+	// supervision — same recipe, its own role. `secondary-fixed` is the
+	// engine's second fixed pair (`orisoScheme.ts`), the only one beside
+	// `primary-fixed` that a tenant theme actually derives, so the two side
+	// rooms stay tellable apart at a glance without inventing a token.
+	&--team {
+		background-color: var(--m3-surface-container-lowest, #fff);
+		background-image: linear-gradient(
+			color-mix(
+				in srgb,
+				var(--m3-secondary-fixed, #dae3f0) 25%,
+				var(--m3-surface-container-lowest, #fff)
+			),
+			color-mix(
+				in srgb,
+				var(--m3-secondary-fixed, #dae3f0) 25%,
+				var(--m3-surface-container-lowest, #fff)
+			)
+		);
+		background-repeat: no-repeat;
+		background-size: 100% $room-header-tint-height;
+
+		.panelHeader__divider {
+			border-top-color: var(--m3-secondary-fixed-dim, #bec7d4);
+		}
+
+		.panelHeader__kindButton {
+			background: var(--m3-secondary-fixed-dim, #bec7d4);
+			color: var(--m3-on-secondary-fixed, #141c25);
+		}
+	}
+
 	&--thread {
 		.panelHeader__kindButton {
 			background: var(--m3-surface-container-high, #eae7e8);

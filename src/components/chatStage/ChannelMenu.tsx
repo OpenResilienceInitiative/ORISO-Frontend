@@ -9,6 +9,8 @@
  *   ──────────────────────────────────     ← hairline
  *   [icon] Supervisionschat   ⇧S           ← always first (T36: a plain
  *          Elena P.: ich kann nicht …         row again — no on/off switch)
+ *   [icon] Teamberatung       ⇧T           ← the second side room (09.09.)
+ *          Jonas K.: ich würde …
  *   [icon] Thread #1          ⇧1           ← threads by most recent message
  *          baer-mika-343: wissen sie …        preview: two lines, then … (T28)
  *
@@ -23,6 +25,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+// Reused, not invented: the Notification Center already marks a
+// Team-Besprechung with this glyph (`notificationsCenter/eventDescriptors/icons.tsx`).
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import {
 	ChatMenuDropdown,
@@ -37,6 +42,7 @@ import {
 	type ChannelMenuRow
 } from './channelMenuModel';
 import type { SecondaryChannel } from './channelSwitcherState';
+import { teamCopy } from './teamChannelCopy';
 import './channelMenu.styles.scss';
 
 export interface ChannelMenuProps {
@@ -81,6 +87,7 @@ export const ChannelMenu = ({
 	'data-cy': dataCy = 'channel-menu'
 }: ChannelMenuProps) => {
 	const { t: translate } = useTranslation();
+	const copy = teamCopy(translate);
 	const rows = useMemo(
 		() => buildChannelMenu(channels, activeChannelId),
 		[channels, activeChannelId]
@@ -185,16 +192,25 @@ export const ChannelMenu = ({
 		}
 	};
 
-	const rowLabel = (row: ChannelMenuRow) =>
-		row.kind === 'supervision'
-			? translate('chatStage.menu.supervisionChat')
-			: translate('chatStage.menu.thread', { n: row.threadNumber });
+	const rowLabel = (row: ChannelMenuRow) => {
+		switch (row.kind) {
+			case 'supervision':
+				return translate('chatStage.menu.supervisionChat');
+			case 'team':
+				return copy('chatStage.menu.teamChat');
+			default:
+				return translate('chatStage.menu.thread', {
+					n: row.threadNumber
+				});
+		}
+	};
 	const unreadLabel = (count: number) =>
 		count > 0 ? translate('supervision.panel.unread', { count }) : '';
+	// The model already owns the shortcut ("⇧S" / "⇧T" / "⇧2"); the aria
+	// spelling is that same shortcut with the glyph swapped for the word, so
+	// a new side room never needs a second place to be taught its letter.
 	const keyshortcuts = (row: ChannelMenuRow) =>
-		row.shortcut
-			? `Shift+${row.kind === 'supervision' ? 'S' : row.threadNumber}`
-			: undefined;
+		row.shortcut ? `Shift+${row.shortcut.replace('⇧', '')}` : undefined;
 
 	return (
 		<ChatMenuDropdown
@@ -225,7 +241,11 @@ export const ChannelMenu = ({
 			>
 				{rows.map((row, index) => {
 					const Glyph =
-						row.kind === 'thread' ? ThreadGlyph : SupervisionGlyph;
+						row.kind === 'thread'
+							? ThreadGlyph
+							: row.kind === 'team'
+								? TeamGlyph
+								: SupervisionGlyph;
 					const label = rowLabel(row);
 					return (
 						<li
