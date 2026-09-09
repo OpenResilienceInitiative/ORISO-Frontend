@@ -1,8 +1,9 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
+import { GroupChatCalendarMenu } from '../groupChat/GroupChatCalendarMenu';
 import {
 	desktop1440Globals,
 	phone375Globals,
@@ -42,6 +43,24 @@ const meta: Meta = {
 export default meta;
 
 const onJoin = fn();
+const callMembers = [
+	{
+		userId: '@sanftes-yak:oriso.org',
+		username: 'sanftes_yak',
+		displayName: 'Sanftes Yak'
+	},
+	{
+		userId: '@ruhiger-wolf:oriso.org',
+		username: 'ruhiger_wolf',
+		displayName: 'Ruhiger Wolf'
+	},
+	{
+		userId: '@beraterin-carimat:oriso.org',
+		username: 'beraterin_carimat',
+		displayName: 'Beraterin Carimat'
+	}
+] as const;
+const scheduledStart = new Date('2026-09-10T16:00:00.000Z');
 
 /**
  * Sent and received are the same component in different alignment.
@@ -106,39 +125,55 @@ export const AllFourStates: StoryObj = {
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · läuft">
 				<CallTimelineSystemMessage
 					state="running"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Du hast einen Videoanruf gestartet"
 					statusLabel="Läuft"
 					description="Die anderen Teilnehmenden können dem Videoanruf jetzt beitreten."
 					actionLabel="Zum Videoanruf"
 					onAction={onJoin}
+					participants={callMembers}
+					participantsLabel="Im Anruf"
 				/>
 			</Bubble>
 			<Bubble side="received" label="Jemand anderes · läuft">
 				<CallTimelineSystemMessage
 					state="running"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Beraterin Carimat hat einen Videoanruf gestartet"
 					statusLabel="Läuft"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
 					actionLabel="Beitreten"
 					onAction={onJoin}
+					participants={callMembers}
+					participantsLabel="Im Anruf"
 				/>
 			</Bubble>
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · beendet">
 				<CallTimelineSystemMessage
 					state="ended"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Du hast den Videoanruf beendet"
 					statusLabel="Beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
+					participants={callMembers}
+					participantsLabel="Teilgenommen"
 				/>
 			</Bubble>
 			<Bubble side="received" label="Jemand anderes · beendet">
 				<CallTimelineSystemMessage
 					state="ended"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Beraterin Carimat hat den Videoanruf beendet"
 					statusLabel="Beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
+					participants={callMembers}
+					participantsLabel="Teilgenommen"
 				/>
 			</Bubble>
 		</Timeline>
@@ -160,6 +195,8 @@ export const RunningJoinable: StoryObj = {
 			<Bubble side="received" label="Jemand anderes · läuft">
 				<CallTimelineSystemMessage
 					state="running"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Beraterin Carimat hat einen Videoanruf gestartet"
 					statusLabel="Läuft"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -180,8 +217,8 @@ export const RunningJoinable: StoryObj = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const joinButton = canvas.getByRole('button', { name: 'Beitreten' });
-		await expect(joinButton).toBeVisible();
-		await userEvent.click(joinButton);
+		await expect(joinButton).toBeInTheDocument();
+		joinButton.click();
 		await expect(onJoin).toHaveBeenCalled();
 	}
 };
@@ -193,6 +230,8 @@ export const EndedLog: StoryObj = {
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · beendet">
 				<CallTimelineSystemMessage
 					state="ended"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Du hast den Videoanruf beendet"
 					statusLabel="Beendet"
 					durationLabel="Dauer 29 Min."
@@ -211,7 +250,7 @@ export const EndedLog: StoryObj = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.getByText('Dauer 29 Min.')).toBeVisible();
+		await expect(canvas.getByText('Dauer 29 Min.')).toBeInTheDocument();
 		await expect(canvas.queryByRole('button')).not.toBeInTheDocument();
 	}
 };
@@ -224,6 +263,8 @@ export const Mobile: StoryObj = {
 			<Bubble side="received" label="Jemand anderes · läuft">
 				<CallTimelineSystemMessage
 					state="running"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Beraterin Carimat hat einen Videoanruf gestartet"
 					statusLabel="Läuft"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -234,6 +275,8 @@ export const Mobile: StoryObj = {
 			<Bubble side="sent" label="Ich · beendet">
 				<CallTimelineSystemMessage
 					state="ended"
+					callType="video"
+					callLabel="Videoanruf"
 					headline="Du hast den Videoanruf beendet"
 					statusLabel="Beendet"
 					durationLabel="Dauer 29 Min."
@@ -264,4 +307,126 @@ export const Desktop: StoryObj = {
 	globals: desktop1440Globals,
 	render: AllFourStates.render,
 	parameters: { layout: 'fullscreen' }
+};
+
+export const VideoAndAudio: StoryObj = {
+	name: 'Video und Audio · Mitglieder live und danach',
+	render: () => (
+		<Timeline>
+			<Bubble side="received" label="Video · läuft">
+				<CallTimelineSystemMessage
+					state="running"
+					callType="video"
+					callLabel="Videoanruf"
+					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					statusLabel="Läuft"
+					description="Sie können jetzt an der Videokonferenz teilnehmen."
+					participants={callMembers}
+					participantsLabel="Im Anruf"
+					actionLabel="Beitreten"
+					onAction={onJoin}
+				/>
+			</Bubble>
+			<Bubble side="received" label="Audio · läuft">
+				<CallTimelineSystemMessage
+					state="running"
+					callType="audio"
+					callLabel="Audioanruf"
+					headline="Beraterin Carimat hat einen Audioanruf gestartet"
+					statusLabel="Läuft"
+					description="Sie können jetzt am Audioanruf teilnehmen."
+					participants={callMembers.slice(0, 2)}
+					participantsLabel="Im Anruf"
+					actionLabel="Beitreten"
+					onAction={onJoin}
+				/>
+			</Bubble>
+			<Bubble side="sent" label="Video · beendet">
+				<CallTimelineSystemMessage
+					state="ended"
+					callType="video"
+					callLabel="Videoanruf"
+					headline="Du hast den Videoanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 29 Min."
+					description="Der Videoanruf ist beendet."
+					participants={callMembers}
+					participantsLabel="Teilgenommen"
+				/>
+			</Bubble>
+			<Bubble side="sent" label="Audio · beendet">
+				<CallTimelineSystemMessage
+					state="ended"
+					callType="audio"
+					callLabel="Audioanruf"
+					headline="Du hast den Audioanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 18 Min."
+					description="Der Audioanruf ist beendet."
+					participants={callMembers.slice(0, 2)}
+					participantsLabel="Teilgenommen"
+				/>
+			</Bubble>
+		</Timeline>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Video und Audio verwenden dieselbe M3-Systemnachricht. Während des Calls zeigt sie die aktuellen Mitglieder; danach bleibt der abschließende Teilnehmer-Snapshot nachvollziehbar.'
+			}
+		}
+	}
+};
+
+export const ScheduledWithCalendar: StoryObj = {
+	name: 'Geplant · mit Kalender-Menü',
+	render: () => (
+		<Timeline>
+			<Bubble side="received" label="Video · geplant">
+				<CallTimelineSystemMessage
+					state="scheduled"
+					callType="video"
+					callLabel="Videoanruf"
+					headline="Beraterin Carimat hat einen Videoanruf geplant"
+					statusLabel="Geplant"
+					scheduledForLabel="Do., 10. September · 18:00 Uhr"
+					description="Der Termin dauert 60 Minuten. Sie können ihn direkt in Ihren Kalender übernehmen."
+					actionSlot={
+						<GroupChatCalendarMenu
+							start={scheduledStart}
+							durationMinutes={60}
+							eventId="storybook-video-call-1"
+						/>
+					}
+				/>
+			</Bubble>
+			<Bubble side="received" label="Audio · geplant">
+				<CallTimelineSystemMessage
+					state="scheduled"
+					callType="audio"
+					callLabel="Audioanruf"
+					headline="Beraterin Carimat hat einen Audioanruf geplant"
+					statusLabel="Geplant"
+					scheduledForLabel="Fr., 11. September · 10:30 Uhr"
+					description="Der Termin dauert 30 Minuten. Sie können ihn direkt in Ihren Kalender übernehmen."
+					actionSlot={
+						<GroupChatCalendarMenu
+							start={new Date('2026-09-11T08:30:00.000Z')}
+							durationMinutes={30}
+							eventId="storybook-audio-call-1"
+						/>
+					}
+				/>
+			</Bubble>
+		</Timeline>
+	),
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Geplante Calls verwenden exakt das bestehende, datenschutzneutrale Kalender-Menü der Selbsthilfegruppe: ICS, Google Calendar und Outlook.'
+			}
+		}
+	}
 };

@@ -13,6 +13,8 @@ describe('CallTimelineSystemMessage', () => {
 		render(
 			<CallTimelineSystemMessage
 				state="running"
+				callType="video"
+				callLabel="Videoanruf"
 				headline="Beraterin Carimat hat einen Videoanruf gestartet"
 				statusLabel="Läuft"
 				description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -33,6 +35,8 @@ describe('CallTimelineSystemMessage', () => {
 		render(
 			<CallTimelineSystemMessage
 				state="ended"
+				callType="video"
+				callLabel="Videoanruf"
 				headline="Du hast den Videoanruf beendet"
 				statusLabel="Beendet"
 				durationLabel="Dauer 29 Min."
@@ -43,5 +47,58 @@ describe('CallTimelineSystemMessage', () => {
 		expect(screen.getByTestId('VideocamOffRoundedIcon')).toBeTruthy();
 		expect(screen.getByText('Dauer 29 Min.')).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it('distinguishes an audio call and exposes its current members', () => {
+		render(
+			<CallTimelineSystemMessage
+				state="running"
+				callType="audio"
+				callLabel="Audioanruf"
+				headline="Ein Audioanruf läuft"
+				statusLabel="Läuft"
+				description="Sie können jetzt teilnehmen."
+				participantsLabel="Im Anruf"
+				participants={[
+					{
+						userId: '@yak:oriso.org',
+						username: 'yak',
+						displayName: 'Sanftes Yak'
+					},
+					{
+						userId: '@wolf:oriso.org',
+						username: 'wolf',
+						displayName: 'Ruhiger Wolf'
+					}
+				]}
+			/>
+		);
+
+		expect(screen.getByTestId('CallRoundedIcon')).toBeTruthy();
+		expect(screen.getByRole('group', { name: 'Im Anruf' })).toBeTruthy();
+		expect(screen.getByText('Im Anruf · 2')).toBeTruthy();
+	});
+
+	it('accepts the existing calendar control for a scheduled call', () => {
+		render(
+			<CallTimelineSystemMessage
+				state="scheduled"
+				callType="video"
+				callLabel="Videoanruf"
+				headline="Ein Videoanruf ist geplant"
+				statusLabel="Geplant"
+				scheduledForLabel="Do., 10. September · 18:00 Uhr"
+				description="Der Termin dauert 60 Minuten."
+				actionSlot={
+					<button type="button">In Kalender eintragen</button>
+				}
+			/>
+		);
+
+		expect(screen.getByTestId('EventRoundedIcon')).toBeTruthy();
+		expect(screen.getByText('Do., 10. September · 18:00 Uhr')).toBeTruthy();
+		expect(
+			screen.getByRole('button', { name: 'In Kalender eintragen' })
+		).toBeTruthy();
 	});
 });

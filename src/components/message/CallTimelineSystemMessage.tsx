@@ -1,14 +1,28 @@
 import * as React from 'react';
+import CallRoundedIcon from '@mui/icons-material/CallRounded';
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import PhoneDisabledRoundedIcon from '@mui/icons-material/PhoneDisabledRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import VideocamOffRoundedIcon from '@mui/icons-material/VideocamOffRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
+import { UserAvatar } from './UserAvatar';
 
-export type CallTimelineState = 'running' | 'ended';
+export type CallTimelineState = 'scheduled' | 'running' | 'ended';
+export type CallTimelineType = 'audio' | 'video';
+
+export interface CallTimelineParticipant {
+	userId: string;
+	username: string;
+	displayName: string;
+}
 
 export interface CallTimelineSystemMessageProps {
 	/** Determines the icon and whether an action can be rendered. */
 	state: CallTimelineState;
+	callType: CallTimelineType;
+	/** Already translated accessible name, for example "Videoanruf". */
+	callLabel: string;
 	/** Already translated. The system-message shell never invents person names. */
 	headline: string;
 	/** Already translated short state, for example "Läuft" or "Beendet". */
@@ -17,9 +31,17 @@ export interface CallTimelineSystemMessageProps {
 	description: string;
 	/** Already translated duration, only useful for an ended call. */
 	durationLabel?: string;
+	/** Already translated start date and time for a scheduled call. */
+	scheduledForLabel?: string;
+	/** Current members for a running call, final attendance for an ended call. */
+	participants?: readonly CallTimelineParticipant[];
+	/** Already translated label, for example "Im Anruf" or "Teilgenommen". */
+	participantsLabel?: string;
 	/** Already translated action label. Required together with `onAction`. */
 	actionLabel?: string;
 	onAction?: () => void;
+	/** Reuses an existing complex action, such as the calendar menu. */
+	actionSlot?: React.ReactNode;
 }
 
 const systemMessageColors = {
@@ -39,22 +61,42 @@ const systemMessageColors = {
  */
 export const CallTimelineSystemMessage = ({
 	state,
+	callType,
+	callLabel,
 	headline,
 	statusLabel,
 	description,
 	durationLabel,
+	scheduledForLabel,
+	participants = [],
+	participantsLabel,
 	actionLabel,
-	onAction
+	onAction,
+	actionSlot
 }: CallTimelineSystemMessageProps) => {
 	const running = state === 'running';
-	const CallIcon = running ? VideocamRoundedIcon : VideocamOffRoundedIcon;
+	const scheduled = state === 'scheduled';
+	const CallIcon = scheduled
+		? EventRoundedIcon
+		: callType === 'audio'
+			? running
+				? CallRoundedIcon
+				: PhoneDisabledRoundedIcon
+			: running
+				? VideocamRoundedIcon
+				: VideocamOffRoundedIcon;
+	const primaryLabel = scheduled
+		? scheduledForLabel || statusLabel
+		: running
+			? statusLabel
+			: durationLabel || statusLabel;
 
 	return (
 		<ChatSystemMessageCard title={headline} subtitle={statusLabel}>
 			<Stack
 				component="section"
 				role="status"
-				aria-label={`Videoanruf: ${statusLabel}`}
+				aria-label={`${callLabel}: ${statusLabel}`}
 				spacing={1.5}
 				sx={{ minWidth: 0 }}
 			>
@@ -87,7 +129,7 @@ export const CallTimelineSystemMessage = ({
 							color: systemMessageColors.onSurface
 						}}
 					>
-						{running ? statusLabel : durationLabel || statusLabel}
+						{primaryLabel}
 					</Typography>
 				</Stack>
 
@@ -103,7 +145,57 @@ export const CallTimelineSystemMessage = ({
 					{description}
 				</Typography>
 
-				{running && actionLabel && onAction && (
+				{participants.length > 0 && participantsLabel && (
+					<Stack
+						direction="row"
+						alignItems="center"
+						justifyContent="space-between"
+						spacing={2}
+						role="group"
+						aria-label={participantsLabel}
+					>
+						<Typography
+							variant="caption"
+							sx={{
+								fontSize: 12,
+								lineHeight: '16px',
+								fontWeight: 500,
+								letterSpacing: '0.5px',
+								color: systemMessageColors.onSurfaceVariant
+							}}
+						>
+							{participantsLabel} · {participants.length}
+						</Typography>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								pl: 1
+							}}
+						>
+							{participants.map((participant, index) => (
+								<Box
+									key={participant.userId}
+									sx={{
+										ml: index === 0 ? 0 : '-8px',
+										zIndex: 20 - index
+									}}
+								>
+									<UserAvatar
+										userId={participant.userId}
+										username={participant.username}
+										displayName={participant.displayName}
+										size="32px"
+									/>
+								</Box>
+							))}
+						</Box>
+					</Stack>
+				)}
+
+				{actionSlot}
+
+				{!actionSlot && running && actionLabel && onAction && (
 					<Button
 						variant="contained"
 						onClick={onAction}
