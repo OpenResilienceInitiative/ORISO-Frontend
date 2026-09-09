@@ -1,5 +1,6 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
+import { callTimelineMessageService } from './callTimelineMessageService';
 
 type CallManagerModule = typeof import('./CallManager');
 
@@ -84,6 +85,14 @@ export class MatrixLiveEventBridge {
 				// Ignore historical events (when scrolling back)
 				if (toStartOfTimeline) {
 					return;
+				}
+				if (
+					event.getType() === 'm.call.member' ||
+					event.getType() === 'org.matrix.msc3401.call.member'
+				) {
+					void callTimelineMessageService.refreshParticipants(
+						room.roomId
+					);
 				}
 
 				this.dispatchTimelineEvent(event, room);

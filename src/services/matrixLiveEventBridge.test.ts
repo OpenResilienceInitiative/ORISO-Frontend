@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'module';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixLiveEventBridge } from './matrixLiveEventBridge';
+import { callTimelineMessageService } from './callTimelineMessageService';
 
 // Hoisted above the imports by vitest: endpoints/runtimeConfig read these
 // REACT_APP_* vars at module load (transitively via CallManager).
@@ -166,6 +167,23 @@ describe('MatrixLiveEventBridge initialize / timeline binding', () => {
 		client.emit('Room.timeline', makeEvent(), room, true);
 
 		expect(callback).not.toHaveBeenCalled();
+	});
+
+	it('refreshes call attendance when MatrixRTC membership changes', () => {
+		const refresh = vi
+			.spyOn(callTimelineMessageService, 'refreshParticipants')
+			.mockResolvedValue();
+		bridge.initialize(client as any);
+
+		client.emit(
+			'Room.timeline',
+			makeEvent({ type: 'org.matrix.msc3401.call.member' }),
+			room,
+			false
+		);
+
+		expect(refresh).toHaveBeenCalledWith(ROOM_ID);
+		refresh.mockRestore();
 	});
 
 	it('forwards metadata-only directMessage for live m.room.message events', () => {
