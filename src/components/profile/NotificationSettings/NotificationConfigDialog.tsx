@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OrisoDialog } from '../../modal/OrisoDialog';
@@ -225,12 +226,16 @@ export const NotificationConfigView = ({
 				{t('profile.notifications.config.intro')}
 			</p>
 			<p className="notifConfig__emailNote">
-				<a href="/profile/einstellungen#email-notifications">
+				{/* profileSettings.routes.ts nests the notification tab's /email
+				    under /einstellungen, so the old href never reached
+				    EmailNotification's #email-notifications anchor. Link keeps it
+				    inside the SPA. */}
+				<Link to="/profile/einstellungen/email#email-notifications">
 					{t(
 						'profile.notifications.title',
 						'E-Mail-Benachrichtigungen'
 					)}
-				</a>
+				</Link>
 			</p>
 
 			<div className="notifConfig__tabs" role="tablist">

@@ -279,25 +279,46 @@ class NotificationSettingsStore {
 	}
 
 	/** Merge-update the account-wide settings (optimistic, then persist). */
+	/**
+	 * Optimistic, then reconciled. The switch has to move immediately, but a
+	 * rejected setAccountData used to be discarded — leaving the UI, and the
+	 * localStorage mirror, showing a value the account does not contain. On
+	 * failure the previous value is restored, which also rewrites the mirror
+	 * (see setState), so the next reload does not resurrect the failed write.
+	 */
 	updateSettings(update: NotificationSettingsUpdate): void {
-		const settings = mergeNotificationSettings(this.state.settings, update);
+		const previous = this.state.settings;
+		const settings = mergeNotificationSettings(previous, update);
 		this.setState({ settings });
 		if (this.client) {
 			void writeAccountData(
 				this.client,
 				NOTIFICATION_SETTINGS_EVENT_TYPE,
 				settings
-			);
+			).then((written) => {
+				if (!written && this.state.settings === settings) {
+					// Only roll back our own write: a newer change or an account-data
+					// sync in the meantime is the more current truth.
+					this.setState({ settings: previous });
+				}
+			});
 		}
 	}
 
 	/** Silence/unsilence THIS device only (account-wide settings untouched). */
 	setDeviceSilenced(silenced: boolean): void {
+		const previous = this.state.device;
 		const device: LocalDeviceNotificationSettings = { silenced };
 		this.setState({ device });
 		const deviceType = this.deviceEventType();
 		if (this.client && deviceType) {
-			void writeAccountData(this.client, deviceType, device);
+			void writeAccountData(this.client, deviceType, device).then(
+				(written) => {
+					if (!written && this.state.device === device) {
+						this.setState({ device: previous });
+					}
+				}
+			);
 		}
 	}
 

@@ -287,7 +287,9 @@ describe('CaseHandoverGiveOverDialog (wired)', () => {
 		).toBeTruthy();
 	});
 
-	it('sends the staff-only explanation the contract requires', async () => {
+	// The explanation is read by the recipient, who may not share the sender's
+	// locale, so it carries the code rather than the resolved label.
+	it('sends the staff-only explanation as a locale-independent code', async () => {
 		openDialog();
 		fireEvent.click(
 			await screen.findByRole('radio', { name: /Bettina Sommer/ })
@@ -304,7 +306,7 @@ describe('CaseHandoverGiveOverDialog (wired)', () => {
 				sessionId: 42,
 				targetConsultantId: 'c-1',
 				reasonCode: 'PLANNED_ABSENCE',
-				explanation: 'caseHandover.reason.PLANNED_ABSENCE'
+				explanation: 'PLANNED_ABSENCE'
 			})
 		);
 	});

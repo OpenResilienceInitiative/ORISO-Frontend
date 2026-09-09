@@ -3231,7 +3231,8 @@
 			"PLANNED_ABSENCE": "Запланированное отсутствие",
 			"UNPLANNED_ABSENCE": "Незапланированное отсутствие",
 			"ASSIGNMENT_ENDED": "Назначение завершено",
-			"ADVICE_REQUESTED": "Запрошена консультация"
+			"ADVICE_REQUESTED": "Запрошена консультация",
+			"retired": "Не указано"
 		},
 		"giveOver": {
 			"coAccessTitle": "Запросить совет",

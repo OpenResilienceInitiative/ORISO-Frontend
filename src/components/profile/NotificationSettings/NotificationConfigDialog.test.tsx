@@ -4,16 +4,24 @@
  * (Termine disabled), per-kind sound dropdown + send-by-email, tab switching.
  */
 import * as React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	cleanup,
 	configure,
 	fireEvent,
-	render,
+	render as rtlRender,
 	screen
 } from '@testing-library/react';
 import { NotificationConfigView } from './NotificationConfigDialog';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../../../utils/notificationSettings/notificationConfig';
+
+/**
+ * NotificationConfigView links into the SPA with react-router's Link, so every
+ * render needs a router in the tree - not just the test that asserts the href.
+ */
+const render = (ui: Parameters<typeof rtlRender>[0]) =>
+	rtlRender(ui, { wrapper: MemoryRouter });
 
 // The component tags nodes with data-cy (Cypress convention); make getByTestId use it.
 configure({ testIdAttribute: 'data-cy' });
@@ -135,7 +143,9 @@ describe('NotificationConfigView', () => {
 			screen
 				.getByRole('link', { name: 'profile.notifications.title' })
 				.getAttribute('href')
-		).toBe('/profile/einstellungen#email-notifications');
+		// profileSettings.routes.ts nests the notification tab's /email under
+		// /einstellungen; the old href stopped short of it.
+		).toBe('/profile/einstellungen/email#email-notifications');
 		expect(onChange).not.toHaveBeenCalled();
 	});
 

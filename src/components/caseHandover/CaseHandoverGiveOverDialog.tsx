@@ -322,6 +322,18 @@ export const CaseHandoverGiveOverDialog = ({
 		setReasonCode('');
 		setQuery('');
 		setError('');
+		// The container keeps its state while `open` is false, so without this the
+		// next session's dialog renders the PREVIOUS session's colleagues for the
+		// debounce window - clickable, and only the server rejects the choice.
+		//
+		// This is the whole fix. The review also suggested hiding the list while a
+		// request is in flight, but that unmounts it on every debounce tick while
+		// the counsellor types, which breaks selection mid-search (proved by
+		// 'sends the staff-only explanation as a locale-independent code'). Within
+		// one session the momentarily stale rows are colleagues eligible for that
+		// same session, so the ineligibility risk is the cross-session one, and
+		// clearing here closes it.
+		setColleagues([]);
 	}, [open, sessionId]);
 
 	useEffect(() => {
@@ -382,18 +394,16 @@ export const CaseHandoverGiveOverDialog = ({
 		}
 		setIsSubmitting(true);
 		setError('');
-		const selectedReason = reasons.find(
-			(reason) => reason.code === reasonCode
-		);
 		apiCreateCaseHandoverOffer({
 			sessionId,
 			targetConsultantId: selectedColleagueId,
 			reasonCode,
-			// The contract requires a staff-only explanation and this dialog
-			// has no free-text field, so the chosen reason is the note.
-			explanation: selectedReason
-				? caseHandoverReasonLabelOf(translate, selectedReason)
-				: reasonCode
+			// The contract requires a staff-only explanation and this dialog has no
+			// free-text field, so the chosen reason is the note. It must be the CODE,
+			// not the label: the label is resolved in the sender's language, and the
+			// recipient may read it in another one (see caseHandoverReasons.ts). The
+			// code already travels in reasonCode, so this stays locale-independent.
+			explanation: reasonCode
 		})
 			.then((offer) => {
 				onOfferCreated?.(offer);
@@ -410,7 +420,6 @@ export const CaseHandoverGiveOverDialog = ({
 		onClose,
 		onOfferCreated,
 		reasonCode,
-		reasons,
 		selectedColleagueId,
 		sessionId,
 		translate

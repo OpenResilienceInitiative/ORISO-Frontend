@@ -3229,7 +3229,8 @@
 			"PLANNED_ABSENCE": "Planlı yokluk",
 			"UNPLANNED_ABSENCE": "Plansız yokluk",
 			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
-			"ADVICE_REQUESTED": "Danışma talep edildi"
+			"ADVICE_REQUESTED": "Danışma talep edildi",
+			"retired": "Belirtilmemiş"
 		},
 		"giveOver": {
 			"coAccessTitle": "Görüş iste",

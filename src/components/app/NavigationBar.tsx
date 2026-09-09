@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { NOTIFICATIONS_ROUTE } from '../../resources/scripts/notificationRoutes';
 import {
 	PropsWithChildren,
 	useCallback,
@@ -75,7 +76,7 @@ const getFigmaRailLabel = (to: string, label: string) => {
 	const railBreaks: Record<string, number> = {
 		'/sessions/consultant/sessionPreview': 5,
 		'/sessions/consultant/sessionView': 6,
-		'/notifications': 4
+		[NOTIFICATIONS_ROUTE]: 4
 	};
 
 	if (to === '/profile') {

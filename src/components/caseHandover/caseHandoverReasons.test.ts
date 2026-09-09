@@ -65,4 +65,33 @@ describe('caseHandoverReasons', () => {
 			})
 		).toBe('t:caseHandover.reason.PLANNED_ABSENCE');
 	});
+
+	// PLAN E1 removed these codes because their server labels read as health
+	// statements. A tenant whose policy rows are not migrated still sends them,
+	// and the unknown-code fallback would have rendered the server's wording.
+	it.each([
+		'COUNSELLOR_IS_ILL',
+		'COUNSELLOR_ON_HOLIDAY',
+		'OTHER_EMERGENCY',
+		'COUNSELLOR_LEFT',
+		'COUNSELLOR_ASKED_FOR_ADVICE'
+	])('never renders the server label for the retired code %s', (code) => {
+		expect(
+			caseHandoverReasonLabel(
+				translate as never,
+				code,
+				'Beraterin ist krank'
+			)
+		).toBe('t:caseHandover.reason.retired');
+	});
+
+	it('still falls back to the server label for a genuinely unknown code', () => {
+		expect(
+			caseHandoverReasonLabel(
+				translate as never,
+				'TENANT_SPECIFIC_CODE',
+				'Tenant wording'
+			)
+		).toBe('Tenant wording');
+	});
 });

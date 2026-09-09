@@ -3189,7 +3189,8 @@
 			"PLANNED_ABSENCE": "Planned absence",
 			"UNPLANNED_ABSENCE": "Unplanned absence",
 			"ASSIGNMENT_ENDED": "Assignment ended",
-			"ADVICE_REQUESTED": "Advice requested"
+			"ADVICE_REQUESTED": "Advice requested",
+			"retired": "Not specified"
 		},
 		"giveOver": {
 			"coAccessTitle": "Ask for advice",

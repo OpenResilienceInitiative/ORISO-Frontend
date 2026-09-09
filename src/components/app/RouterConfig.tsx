@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { NOTIFICATIONS_ROUTE } from '../../resources/scripts/notificationRoutes';
 import { isDesktop } from 'react-device-detect';
 import { SessionsListWrapper } from '../sessionsList/SessionsListWrapper';
 import {
@@ -128,7 +129,7 @@ export const RouterConfigUser = (
 						userData
 					);
 				},
-				to: '/notifications',
+				to: NOTIFICATIONS_ROUTE,
 				icon: NavActivityIcon,
 				iconHover: NavActivityIconHover,
 				iconFilled: NavActivityIconFilled,
@@ -223,7 +224,7 @@ export const RouterConfigUser = (
 		],
 		profileRoutes: [
 			{
-				path: '/notifications',
+				path: NOTIFICATIONS_ROUTE,
 				exact: true,
 				component: NotificationsCenter
 			},
@@ -270,7 +271,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				}
 			},
 			{
-				to: '/notifications',
+				to: NOTIFICATIONS_ROUTE,
 				icon: NavActivityIcon,
 				iconHover: NavActivityIconHover,
 				iconFilled: NavActivityIconFilled,
@@ -398,7 +399,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 		],
 		profileRoutes: [
 			{
-				path: '/notifications',
+				path: NOTIFICATIONS_ROUTE,
 				exact: true,
 				component: NotificationsCenter
 			},

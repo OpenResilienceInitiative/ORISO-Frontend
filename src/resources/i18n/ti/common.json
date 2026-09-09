@@ -3229,7 +3229,8 @@
 			"PLANNED_ABSENCE": "ዝተመደበ ብኩራት",
 			"UNPLANNED_ABSENCE": "ዘይተመደበ ብኩራት",
 			"ASSIGNMENT_ENDED": "ምምዳብ ተወዲኡ",
-			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ"
+			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ",
+			"retired": "ዘይተገልጸ"
 		},
 		"giveOver": {
 			"coAccessTitle": "ምኽሪ ሕተት",

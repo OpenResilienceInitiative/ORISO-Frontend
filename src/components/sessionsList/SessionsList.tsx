@@ -1728,7 +1728,12 @@ export const SessionsList = ({
 			)}
 			{showCaseHandoverBatchUi &&
 				type === SESSION_LIST_TYPES.MY_SESSION && (
-					<CaseHandoverOffersInbox />
+					<CaseHandoverOffersInbox
+						// An accepted handover changes ownership and list
+						// membership; without this the list keeps showing the
+						// pre-handover state until an unrelated refresh.
+						onOfferResolved={() => void refetchSessionList()}
+					/>
 				)}
 			{showMySessionToolbar && futureTimelineSeries.length > 0 && (
 				<FutureTimelinePanel

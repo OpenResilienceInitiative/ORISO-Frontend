@@ -1153,9 +1153,11 @@ export const HistoricalReassignmentReadOnly: Story = {
 	args: {
 		...mockMessageItemComponentProps({
 			message: historicalReassignment,
+			// The payload lives in `message` only. Duplicating it into alias.content
+			// let the story pass while the component read the wrong source - the very
+			// mismatch that hid the empty card in E2EE rooms.
 			alias: {
-				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT,
-				content: historicalReassignment
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT
 			}
 		}),
 		...baseHandlers
