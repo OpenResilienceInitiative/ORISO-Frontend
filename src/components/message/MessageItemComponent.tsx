@@ -2521,7 +2521,7 @@ export const MessageItemComponent = ({
 										lastName={
 											resolvedIncomingNameParts.lastName
 										}
-										size={44}
+										size={48}
 									/>
 								</div>
 								<button
@@ -2685,7 +2685,7 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={44}
+										size={48}
 									/>
 								</div>
 							</div>
