@@ -203,6 +203,16 @@ describe('RouterConfigUser navigation', () => {
 });
 
 describe('RouterConfigConsultant chat info', () => {
+	it('provides a group info dialog route for participating askers', () => {
+		const config = RouterConfigUser(settings, true);
+		expect(config.dialogRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					path: '/sessions/user/view/:groupId/:sessionId/groupChatInfo'
+				})
+			])
+		);
+	});
 	it('places chat info in the dialog routes instead of replacing the session', () => {
 		const config = RouterConfigConsultant(settings);
 		const path =

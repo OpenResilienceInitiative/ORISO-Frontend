@@ -1087,7 +1087,9 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
-			{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+				(activeSession.item.subscribed &&
+					!bannedUsers?.includes(userData.userName))) && (
 				<Link
 					to={groupChatInfoLink}
 					onClick={onOpenInfo}
