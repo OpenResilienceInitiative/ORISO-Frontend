@@ -1,8 +1,14 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
-import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
-import { phone375Globals } from './messageStoryShell';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
+import {
+	desktop1440Globals,
+	phone375Globals,
+	tablet834Globals
+} from './messageStoryShell';
+import './message.styles.scss';
 
 /**
  * The call event in the room timeline — ORISO-Frontend#780.
@@ -35,15 +41,7 @@ const meta: Meta = {
 
 export default meta;
 
-const baseData: VideoChatDetailsAlias = {
-	date: '2026-09-04T14:02:00.000Z',
-	durationSeconds: 1740,
-	moderator_user: 'Beraterin Carimat',
-	note: 'a1b2c3d4-e5f6-4711-8899-aabbccddeeff',
-	title: 'Videoberatung',
-	type: 'video',
-	eventType: 'CALL_STARTED'
-};
+const onJoin = fn();
 
 /**
  * Sent and received are the same component in different alignment.
@@ -68,7 +66,7 @@ const Bubble = ({
 				fontSize: 11,
 				letterSpacing: '.08em',
 				textTransform: 'uppercase',
-				color: 'rgba(0,0,0,.5)',
+				color: 'var(--m3-on-surface-variant, #444748)',
 				mb: 0.75,
 				textAlign: side === 'sent' ? 'right' : 'left'
 			}}
@@ -84,13 +82,19 @@ const Bubble = ({
 			{/* The bubble has to shrink-wrap its content, otherwise it fills the
 			    row and `justifyContent` has nothing left to push around — the
 			    sent/received alignment would be invisible on a phone. */}
-			<Box sx={{ maxWidth: 520, width: 'fit-content' }}>{children}</Box>
+			<Box sx={{ maxWidth: 540, width: 'fit-content' }}>{children}</Box>
 		</Box>
 	</Box>
 );
 
 const Timeline = ({ children }: { children: React.ReactNode }) => (
-	<Box sx={{ p: 3, bgcolor: '#F7F4F4', minHeight: '100vh' }}>
+	<Box
+		sx={{
+			p: { xs: 2, sm: 3 },
+			bgcolor: 'var(--m3-surface-container-lowest, #ffffff)',
+			minHeight: '100vh'
+		}}
+	>
 		<Box sx={{ maxWidth: 760, mx: 'auto' }}>{children}</Box>
 	</Box>
 );
@@ -100,21 +104,41 @@ export const AllFourStates: StoryObj = {
 	render: () => (
 		<Timeline>
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · läuft">
-				<VideoChatDetails data={baseData} isVideoActive />
+				<CallTimelineSystemMessage
+					state="running"
+					headline="Du hast einen Videoanruf gestartet"
+					statusLabel="Läuft"
+					description="Die anderen Teilnehmenden können dem Videoanruf jetzt beitreten."
+					actionLabel="Zum Videoanruf"
+					onAction={onJoin}
+				/>
 			</Bubble>
 			<Bubble side="received" label="Jemand anderes · läuft">
-				<VideoChatDetails data={baseData} isVideoActive />
+				<CallTimelineSystemMessage
+					state="running"
+					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					statusLabel="Läuft"
+					description="Sie können jetzt an der Videokonferenz teilnehmen."
+					actionLabel="Beitreten"
+					onAction={onJoin}
+				/>
 			</Bubble>
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · beendet">
-				<VideoChatDetails
-					data={{ ...baseData, eventType: 'CALL_ENDED' }}
-					isVideoActive={false}
+				<CallTimelineSystemMessage
+					state="ended"
+					headline="Du hast den Videoanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 29 Min."
+					description="Der Videoanruf ist beendet."
 				/>
 			</Bubble>
 			<Bubble side="received" label="Jemand anderes · beendet">
-				<VideoChatDetails
-					data={{ ...baseData, eventType: 'CALL_ENDED' }}
-					isVideoActive={false}
+				<CallTimelineSystemMessage
+					state="ended"
+					headline="Beraterin Carimat hat den Videoanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 29 Min."
+					description="Der Videoanruf ist beendet."
 				/>
 			</Bubble>
 		</Timeline>
@@ -134,7 +158,14 @@ export const RunningJoinable: StoryObj = {
 	render: () => (
 		<Timeline>
 			<Bubble side="received" label="Jemand anderes · läuft">
-				<VideoChatDetails data={baseData} isVideoActive />
+				<CallTimelineSystemMessage
+					state="running"
+					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					statusLabel="Läuft"
+					description="Sie können jetzt an der Videokonferenz teilnehmen."
+					actionLabel="Beitreten"
+					onAction={onJoin}
+				/>
 			</Bubble>
 		</Timeline>
 	),
@@ -145,6 +176,13 @@ export const RunningJoinable: StoryObj = {
 				story: 'Der Zustand, den heute niemand je zu Gesicht bekommt. Wichtig für das Backend-Ticket: „läuft" darf nicht heißen „das ist die letzte Anruf-Nachricht" — genau das prüft `findLastVideoCallIndex` heute, ohne zu wissen, ob der Anruf noch steht. Es braucht ein echtes Lebenszyklus-Ereignis.'
 			}
 		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const joinButton = canvas.getByRole('button', { name: 'Beitreten' });
+		await expect(joinButton).toBeVisible();
+		await userEvent.click(joinButton);
+		await expect(onJoin).toHaveBeenCalled();
 	}
 };
 
@@ -153,9 +191,12 @@ export const EndedLog: StoryObj = {
 	render: () => (
 		<Timeline>
 			<Bubble side="sent" label="Ich habe den Anruf gestartet · beendet">
-				<VideoChatDetails
-					data={{ ...baseData, eventType: 'CALL_ENDED' }}
-					isVideoActive={false}
+				<CallTimelineSystemMessage
+					state="ended"
+					headline="Du hast den Videoanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 29 Min."
+					description="Der Videoanruf ist beendet."
 				/>
 			</Bubble>
 		</Timeline>
@@ -167,6 +208,11 @@ export const EndedLog: StoryObj = {
 				story: 'Derselbe Eintrag nach dem Anruf: Dauer statt Knopf. Kein zweiter Eintrag, keine zweite Nachricht — der Verlauf soll nicht doppelt erzählen, was einmal passiert ist.'
 			}
 		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByText('Dauer 29 Min.')).toBeVisible();
+		await expect(canvas.queryByRole('button')).not.toBeInTheDocument();
 	}
 };
 
@@ -176,12 +222,22 @@ export const Mobile: StoryObj = {
 	render: () => (
 		<Timeline>
 			<Bubble side="received" label="Jemand anderes · läuft">
-				<VideoChatDetails data={baseData} isVideoActive />
+				<CallTimelineSystemMessage
+					state="running"
+					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					statusLabel="Läuft"
+					description="Sie können jetzt an der Videokonferenz teilnehmen."
+					actionLabel="Beitreten"
+					onAction={onJoin}
+				/>
 			</Bubble>
 			<Bubble side="sent" label="Ich · beendet">
-				<VideoChatDetails
-					data={{ ...baseData, eventType: 'CALL_ENDED' }}
-					isVideoActive={false}
+				<CallTimelineSystemMessage
+					state="ended"
+					headline="Du hast den Videoanruf beendet"
+					statusLabel="Beendet"
+					durationLabel="Dauer 29 Min."
+					description="Der Videoanruf ist beendet."
 				/>
 			</Bubble>
 		</Timeline>
@@ -194,4 +250,18 @@ export const Mobile: StoryObj = {
 			}
 		}
 	}
+};
+
+export const Tablet: StoryObj = {
+	name: 'Tablet (834 pt)',
+	globals: tablet834Globals,
+	render: AllFourStates.render,
+	parameters: { layout: 'fullscreen' }
+};
+
+export const Desktop: StoryObj = {
+	name: 'Desktop (1440 pt)',
+	globals: desktop1440Globals,
+	render: AllFourStates.render,
+	parameters: { layout: 'fullscreen' }
 };
