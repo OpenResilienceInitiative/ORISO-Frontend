@@ -119,7 +119,7 @@ export const Default: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'No conversation selected: white `.sessionsList__resizeHandlePill` is visible (list↔chat separator).'
+				story: 'No conversation selected: the white separator runs directly behind the centered pink `.sessionsList__resizeHandlePill`.'
 			}
 		}
 	},
@@ -137,7 +137,7 @@ export const ChatActivePillHidden: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'When `SessionsZone` marks the list as `contentWrapper__list--smallInactive` (session detail route), the white separator pill is hidden (`opacity: 0`).'
+				story: 'When `SessionsZone` marks the list as `contentWrapper__list--smallInactive` (session detail route), both the separator line and its pill are hidden (`opacity: 0`).'
 			}
 		}
 	},

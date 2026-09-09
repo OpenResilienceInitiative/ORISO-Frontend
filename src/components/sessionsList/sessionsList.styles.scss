@@ -394,6 +394,19 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 0;
 	}
 
+	&__resizeHandle::before {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 0;
+		bottom: 0;
+		width: 1px;
+		background: #fff;
+		transform: translateX(-50%);
+		transition: opacity 140ms ease;
+		pointer-events: none;
+	}
+
 	/* Scroll-only placement: the bar sits inside the surface it scrolls rather
 	   than straddling its edge, because a dropdown has no neighbour to
 	   separate from (ORISO-Frontend#1196 job 2). */
@@ -401,6 +414,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		right: 0;
 		width: 20px;
 		cursor: grab;
+	}
+
+	&__resizeHandle--inset::before {
+		display: none;
 	}
 
 	&__resizeHandlePill {
@@ -412,6 +429,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		border-radius: 999px;
 		background: var(--m3-primary-fixed-dim, #ffb4aa);
 		transform: translateY(-50%);
+		z-index: 1;
 		transition:
 			background-color 140ms ease,
 			box-shadow 140ms ease,
@@ -570,19 +588,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
-	// Empty state (Figma node 7108-45494): stacked cards each carry a 1px white
-	// frame, which reads as a continuous white hairline down the left and right
-	// column edges. With no cards those hairlines disappear, so the empty state
-	// re-draws them itself and stretches to fill the column height.
+	// Empty state (Figma node 7108-45494): stretch the illustration to fill the
+	// column. The list↔detail separator belongs to the resize handle above so its
+	// line stays exactly underneath the centered dragbar.
 	&__emptyState {
 		flex: 1 1 auto;
 		align-self: stretch;
 		box-sizing: border-box;
 
-		// Align the hairlines with the card gutter: 6px on mobile, 12px on
+		// Align the illustration with the card gutter: 6px on mobile, 12px on
 		// desktop (matches the scrollContainer margins above).
 		margin: 0 6px;
-		border-right: 1px solid #fff;
 
 		@include breakpoint($fromLarge) {
 			margin: 0 12px;
@@ -601,10 +617,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
-// Issue #564: white list↔chat separator pill is only for the empty
+// Issue #564: the list↔chat separator is only for the empty
 // (no conversation) layout. SessionsZone adds --smallInactive on the list
-// column when a session detail route is active — hide the pill then.
-// Resize hit-target stays; only the decorative white pill is suppressed.
+// column when a session detail route is active — hide its line and pill then.
+// The resize hit-target stays available.
+.contentWrapper__list--smallInactive .sessionsList__resizeHandle::before,
 .contentWrapper__list--smallInactive .sessionsList__resizeHandlePill {
 	opacity: 0;
 }

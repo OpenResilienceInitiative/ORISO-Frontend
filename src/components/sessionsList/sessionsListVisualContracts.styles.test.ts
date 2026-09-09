@@ -36,16 +36,22 @@ describe('session list visual contracts', () => {
 		expect(css).toMatch(/\.sessionsListItem\s*\{[^}]*margin:\s*0 0 6px;/s);
 	});
 
-	it('reserves side hairlines for the empty state and exposes the dragbar', () => {
+	it('centers the list separator under the dragbar', () => {
 		const css = compileStyles(
 			'src/components/sessionsList/sessionsList.styles.scss'
 		);
 
 		expect(css).toMatch(
-			/\.sessionsList__emptyState[^{}]*\{[^}]*border-right:\s*1px solid #fff;/s
+			/\.sessionsList__resizeHandle[^{}]*\{[^}]*right:\s*-12px;[^}]*width:\s*24px;/s
 		);
 		expect(css).toMatch(
-			/\.sessionsList__resizeHandle[^{}]*\{[^}]*right:\s*-12px;[^}]*width:\s*24px;/s
+			/\.sessionsList__resizeHandle::before[^{}]*\{[^}]*left:\s*50%;[^}]*width:\s*1px;[^}]*background:\s*#fff;[^}]*transform:\s*translateX\(-50%\);/s
+		);
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandle--inset::before[^{}]*\{[^}]*display:\s*none;/s
+		);
+		expect(css).not.toMatch(
+			/\.sessionsList__emptyState[^{}]*\{[^}]*border-right:/s
 		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
