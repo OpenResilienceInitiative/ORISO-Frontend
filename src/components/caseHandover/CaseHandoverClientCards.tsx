@@ -2,13 +2,11 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ReactComponent as CaseAcceptedIcon } from '../../resources/img/icons/case-handover/case-accepted.svg';
-import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
-import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
 import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import { Switch } from '../Switch';
+import { ChatSystemMessageCard } from '../message/ChatSystemMessageCard';
 import '../message/message.styles.scss';
 import './caseHandoverClientCards.styles';
 
@@ -168,92 +166,21 @@ export const CaseHandoverSystemMessageCard = ({
 	timestamp,
 	onOpenMenu
 }: CaseHandoverSystemMessageCardProps) => {
-	const { t: translate } = useTranslation();
-
 	return (
-		<div
-			className="messageItem messageItem--caseHandoverNotice"
-			data-cy="case-handover-system-message"
+		<ChatSystemMessageCard
+			title={title}
+			subtitle={subtitle}
+			timestamp={timestamp}
+			onOpenMenu={onOpenMenu}
+			dataCy="case-handover-system-message"
 		>
-			<div className="messageItem__messageWrap messageItem__messageWrap--left">
-				<div className="messageItem__sideColumn messageItem__sideColumn--left">
-					<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-						<div className="messageItem__avatar messageItem__avatar--bot">
-							<span
-								className="messageItem__botAvatarIcon"
-								aria-hidden
-							>
-								<CarimatRobotIcon />
-							</span>
-						</div>
-						{onOpenMenu ? (
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label={translate(
-									'message.menu.open',
-									'More options'
-								)}
-								onClick={onOpenMenu}
-							>
-								<StackVerticalIcon className="messageItem__kebabIconDefault" />
-							</button>
-						) : (
-							<span
-								className="messageItem__kebabButton messageItem__kebabButton--left messageItem__kebabButton--static"
-								aria-hidden
-							>
-								<StackVerticalIcon className="messageItem__kebabIconDefault" />
-							</span>
-						)}
-					</div>
-				</div>
-				<div className="messageItem__content">
-					<div className="messageItem__header">
-						<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
-							<div className="messageItem__sendFailedTitle">
-								{title}
-							</div>
-							{subtitle && (
-								<div className="messageItem__sendFailedSubtitle">
-									{subtitle}
-								</div>
-							)}
-						</div>
-					</div>
-					<div className="messageItem__message messageItem__message--systemNotification">
-						<CaseHandoverSystemMessageBody
-							reasonLabel={reasonLabel}
-							explanation={explanation}
-						>
-							{children}
-						</CaseHandoverSystemMessageBody>
-						{/* No time rail without a time — a lone delivery tick in an
-						    empty rail reads as a broken message. */}
-						{timestamp && (
-							<div className="messageItem__timeRail">
-								<span className="messageItem__messageTime">
-									{timestamp}
-									<span
-										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
-										role="img"
-										aria-label={translate(
-											'message.deliveryStatus.sent',
-											'sent'
-										)}
-									>
-										<DeliverySentIcon
-											aria-hidden
-											focusable="false"
-										/>
-									</span>
-								</span>
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
-		</div>
+			<CaseHandoverSystemMessageBody
+				reasonLabel={reasonLabel}
+				explanation={explanation}
+			>
+				{children}
+			</CaseHandoverSystemMessageBody>
+		</ChatSystemMessageCard>
 	);
 };
 
