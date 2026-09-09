@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => {
 		loadMatrixRoomMembers: vi.fn<() => Promise<any[]>>(() =>
 			Promise.resolve([])
 		),
+		hasMatrixRoom: vi.fn(() => true),
 		onMatrixRoomMembers: vi.fn<
 			(roomId: string, listener: () => void) => (() => void) | null
 		>(() => () => {})
@@ -31,6 +32,7 @@ vi.mock('../services/chatTransportService', () => ({
 	chatTransportService: {
 		resolveSession: mocks.resolveSession,
 		loadMatrixRoomMembers: mocks.loadMatrixRoomMembers,
+		hasMatrixRoom: mocks.hasMatrixRoom,
 		onMatrixRoomMembers: mocks.onMatrixRoomMembers
 	}
 }));
@@ -66,6 +68,7 @@ describe('useMatrixRoomUsers', () => {
 			sessionId: 1
 		});
 		mocks.onMatrixRoomMembers.mockReturnValue(() => {});
+		mocks.hasMatrixRoom.mockReturnValue(true);
 	});
 
 	it('returns the complete member set after the lazy load resolved', async () => {
@@ -128,6 +131,22 @@ describe('useMatrixRoomUsers', () => {
 			username: 'joined',
 			displayName: 'Late Joiner'
 		});
+	});
+
+	it('retries when the client exists before the room reaches the sync store', async () => {
+		mocks.hasMatrixRoom.mockReturnValueOnce(false).mockReturnValue(true);
+		mocks.loadMatrixRoomMembers
+			.mockResolvedValueOnce([])
+			.mockResolvedValue([
+				{ userId: '@late:x', name: 'Late room member' }
+			]);
+
+		const { result } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await waitFor(() => expect(result.current.users).toHaveLength(1), {
+			timeout: 2000
+		});
+		expect(result.current.users[0].username).toBe('late');
 	});
 
 	it('detaches the membership listener on unmount', async () => {
