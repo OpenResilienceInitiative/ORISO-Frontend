@@ -148,6 +148,8 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 );
 
 interface SessionItemProps {
+	/** Inline case notices belong to the conversation scroll area, not its side-panel row. */
+	notices?: React.ReactNode;
 	isTyping?: Function;
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
@@ -3581,6 +3583,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				onScroll={(e) => handleScroll(e)}
 				onDragEnter={onDragEnter}
 			>
+				{props.notices}
 				{isSupervisor && supervisionReason && (
 					<div className="session__supervisionReason">
 						<div className="session__supervisionReasonTitle">

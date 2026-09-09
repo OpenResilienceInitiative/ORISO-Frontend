@@ -1,3 +1,4 @@
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import * as React from 'react';
 import {
 	useCallback,
@@ -232,8 +233,8 @@ export const NotificationsCenter = () => {
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
 	const {
-		notificationFeed,
-		markNotificationAsRead,
+		notificationFeed: serverFeed,
+		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
 		loadOlderNotifications,
@@ -241,6 +242,24 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	const drafts = useTimelineDrafts();
+	const notificationFeed = useMemo(
+		() =>
+			[...serverFeed, ...drafts].sort(
+				(left, right) =>
+					new Date(right.createdAt).getTime() -
+					new Date(left.createdAt).getTime()
+			),
+		[serverFeed, drafts]
+	);
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (!id.startsWith('local-draft-'))
+				markServerNotificationAsRead(id);
+		},
+		[markServerNotificationAsRead]
+	);
+
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
 	// first card would be surprising. Desktop keeps the first card selected so

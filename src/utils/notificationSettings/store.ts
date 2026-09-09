@@ -40,6 +40,12 @@ export const localDeviceSettingsEventType = (deviceId: string): string =>
 const MIRROR_STORAGE_KEY = 'ORISO_NOTIFICATION_SETTINGS';
 /** Legacy per-browser settings written by notificationHelpers. */
 const LEGACY_STORAGE_KEY = 'BROWSER_NOTIFICATIONS';
+/**
+ * Marks that this browser has already folded its legacy opt-in into the
+ * account settings. Per-browser on purpose: the legacy key is per-browser, so
+ * "have I migrated it yet?" is a per-browser question.
+ */
+const LEGACY_MIGRATED_KEY = 'ORISO_NOTIFICATION_LEGACY_MIGRATED';
 
 export interface NotificationSettingsState {
 	settings: OrisoNotificationSettings;
@@ -59,8 +65,11 @@ const writeAccountData = (
 	client: MatrixClient,
 	type: string,
 	content: object
-): Promise<unknown> =>
-	client.setAccountData(type as any, content as any).catch(() => undefined);
+): Promise<boolean> =>
+	client.setAccountData(type as any, content as any).then(
+		() => true,
+		() => false
+	);
 
 const readMirror = (): OrisoNotificationSettings | null => {
 	try {
@@ -98,6 +107,23 @@ const migrateLegacySettings = (): NotificationSettingsUpdate | null => {
 		};
 	} catch {
 		return null;
+	}
+};
+
+const legacyMigrationDone = (): boolean => {
+	try {
+		return localStorage.getItem(LEGACY_MIGRATED_KEY) === 'true';
+	} catch {
+		// No storage means no legacy key to migrate from either.
+		return true;
+	}
+};
+
+const markLegacyMigrationDone = (): void => {
+	try {
+		localStorage.setItem(LEGACY_MIGRATED_KEY, 'true');
+	} catch {
+		/* storage full/unavailable — best effort */
 	}
 };
 
@@ -165,10 +191,21 @@ class NotificationSettingsStore {
 			NOTIFICATION_SETTINGS_EVENT_TYPE
 		) as Record<string, unknown> | undefined;
 		if (existing && Object.keys(existing).length > 0) {
-			this.setState({
-				settings: parseNotificationSettings(existing),
-				source: 'account'
-			});
+			const stored = parseNotificationSettings(existing);
+			const reconciled = this.reconcileLegacyOptIn(stored);
+			this.setState({ settings: reconciled, source: 'account' });
+			if (reconciled !== stored) {
+				void writeAccountData(
+					client,
+					NOTIFICATION_SETTINGS_EVENT_TYPE,
+					reconciled
+				).then((persisted) => {
+					if (persisted) markLegacyMigrationDone();
+				});
+			} else {
+				// Existing account data already represents this browser's choice.
+				markLegacyMigrationDone();
+			}
 		} else {
 			// First device of this account to know about Slice 6a: seed from
 			// the mirror and the legacy localStorage shape, then persist.
@@ -177,11 +214,14 @@ class NotificationSettingsStore {
 				? mergeNotificationSettings(this.state.settings, legacy)
 				: this.state.settings;
 			this.setState({ settings: seeded, source: 'account' });
+			// A rejected write must leave the legacy choice eligible for retry.
 			void writeAccountData(
 				client,
 				NOTIFICATION_SETTINGS_EVENT_TYPE,
 				seeded
-			);
+			).then((persisted) => {
+				if (persisted) markLegacyMigrationDone();
+			});
 		}
 
 		const deviceType = this.deviceEventType();
@@ -195,6 +235,37 @@ class NotificationSettingsStore {
 		}
 
 		client.on('accountData' as any, this.accountDataHandler);
+	}
+
+	/**
+	 * Fold this browser's legacy `BROWSER_NOTIFICATIONS` opt-in into account
+	 * settings that were stored before the migration existed (#1211 review).
+	 *
+	 * Without this, an account seeded by another device — or by a build that
+	 * predates the migration — carries `enabled: false`, and a user who had
+	 * switched browser notifications on in the legacy panel loses them the
+	 * moment the release toggle flips to the cross-device panel.
+	 *
+	 * Deliberately one-way and once per browser: it only ever turns the flag
+	 * ON, and the marker means a later, deliberate "off" in the new panel is
+	 * never undone on the next attach.
+	 */
+	private reconcileLegacyOptIn(
+		stored: OrisoNotificationSettings
+	): OrisoNotificationSettings {
+		if (legacyMigrationDone()) {
+			return stored;
+		}
+		if (stored.browserNotifications.enabled) {
+			return stored;
+		}
+		const legacy = migrateLegacySettings();
+		if (!legacy?.browserNotifications?.enabled) {
+			return stored;
+		}
+		return mergeNotificationSettings(stored, {
+			browserNotifications: { enabled: true }
+		});
 	}
 
 	detachClient(): void {
@@ -233,6 +304,11 @@ class NotificationSettingsStore {
 	/** Test seam. */
 	resetForTests(): void {
 		this.detachClient();
+		try {
+			localStorage.removeItem(LEGACY_MIGRATED_KEY);
+		} catch {
+			/* storage unavailable */
+		}
 		this.state = {
 			settings: DEFAULT_NOTIFICATION_SETTINGS,
 			device: DEFAULT_LOCAL_DEVICE_SETTINGS,

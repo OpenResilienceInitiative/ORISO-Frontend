@@ -77,6 +77,8 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'inquiry.accepted': 'conversation',
 	'message.new': 'conversation',
+	'first_response.received': 'conversation',
+	'conversation.finished': 'conversation',
 	'thread.reply.new': 'conversation',
 	'team.discussion.new': 'conversation',
 	'supervisor.added': 'conversation',
@@ -93,6 +95,10 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.consent.requested': 'conversation',
 	'case.handover.granted': 'conversation',
 	'case.handover.consent.declined': 'conversation',
+	'case.handover.offered': 'conversation',
+	'case.handover.accepted': 'conversation',
+	'case.handover.declined': 'conversation',
+	'case.handover.expired': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
@@ -125,8 +131,8 @@ describe('WP-06 event-descriptor registry', () => {
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
-		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments = 30.
-		expect(KNOWN_EVENT_TYPES.length).toBe(31);
+		// Current mail-v2 events plus four push handover outcomes.
+		expect(KNOWN_EVENT_TYPES.length).toBe(37);
 		[
 			'request.new',
 			'request.denied',
@@ -140,6 +146,10 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.consent.requested',
 			'case.handover.granted',
 			'case.handover.consent.declined',
+			'case.handover.offered',
+			'case.handover.accepted',
+			'case.handover.declined',
+			'case.handover.expired',
 			'call.started',
 			'call.ended',
 			'call.missed',

@@ -84,6 +84,13 @@ export const endpoints = {
 		userServiceOrigin + '/service/users/case-handover/candidates',
 	caseHandoverReasons:
 		userServiceOrigin + '/service/users/case-handover/reasons',
+	// Push direction ("Fall abgeben"): the case owner offers the case to a
+	// colleague of the same agency, who accepts or declines. Contract:
+	// PLAN-case-giveover-2026-09-05.md chapter 3.
+	caseHandoverColleagues:
+		userServiceOrigin + '/service/users/case-handover/colleagues',
+	caseHandoverOffers:
+		userServiceOrigin + '/service/users/case-handover/offers',
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',

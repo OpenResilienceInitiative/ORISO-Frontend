@@ -113,7 +113,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail einfach. Ihr Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'termin': {
@@ -340,16 +340,20 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Ihr Einmalcode für die Anmeldung',
+		subject: 'Ihr Einmalcode',
 		preheader: 'Der Code gilt {{expiryMinutes}} Minuten.',
 		headline: 'Ihr Einmalcode',
-		paragraphs: ['Geben Sie diesen Code im Anmeldefenster ein.'],
+		paragraphs: ['Geben Sie diesen Code in {{platformName}} ein.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Zur Anmeldung', href: '{{loginUrl}}' },
+		cta: { label: '{{platformName}} öffnen', href: '{{loginUrl}}' },
 		footnote:
-			'Wenn Sie sich nicht anmelden wollten, ändern Sie bitte Ihr Passwort.',
+			'Wenn Sie diesen Code nicht angefordert haben, ändern Sie bitte Ihr Passwort.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail enthält einen Sicherheitscode und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	},
 
 	'einladung-traeger': {
@@ -458,6 +462,10 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	}
 };

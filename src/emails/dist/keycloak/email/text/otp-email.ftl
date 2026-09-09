@@ -2,7 +2,7 @@
 ${msg("orisoOtpHeadline")}
 ========================================
 
-${msg("orisoOtpBody1")}
+${msg("orisoOtpBody1", (properties.orisoPlatformName)!'Online-Beratung')}
 
 ${msg("orisoOtpCodeLabel")}: ${otp}
 

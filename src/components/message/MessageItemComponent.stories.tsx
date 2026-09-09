@@ -1138,3 +1138,38 @@ export const KebabMenuFollowsScroll: Story = {
 		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
 	}
 };
+
+const historicalReassignment = JSON.stringify({
+	status: 'CONFIRMED',
+	fromConsultantId: 'old-consultant',
+	fromConsultantName: 'Karina P',
+	toConsultantId: 'new-consultant',
+	toConsultantName: 'Kim Grothe',
+	toAskerName: 'Sanftes Alpaka Kala'
+});
+
+export const HistoricalReassignmentReadOnly: Story = {
+	name: 'Historical reassignment remains read only',
+	args: {
+		...mockMessageItemComponentProps({
+			message: historicalReassignment,
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT,
+				content: historicalReassignment
+			}
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.reassignRequestMessage')
+			).not.toBeNull();
+		});
+		expect(canvasElement.textContent).toContain('Karina P');
+		expect(canvasElement.textContent).not.toContain('toConsultantId');
+		expect(
+			canvasElement.querySelectorAll('.reassignRequestMessage button')
+		).toHaveLength(0);
+	}
+};

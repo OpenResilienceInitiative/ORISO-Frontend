@@ -59,6 +59,7 @@ import {
 } from '../../utils/matrixTimelineEventFormatter';
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
+import { CaseHandoverOutgoingOffer } from '../caseHandover/CaseHandoverOffers';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
@@ -1175,32 +1176,6 @@ export const SessionStream = ({
 
 	return (
 		<div className="session__wrapper">
-			{pendingCaseHandoverConsent &&
-				pendingCaseHandoverRequestId !== null && (
-					<CaseHandoverConsentCard
-						mode={
-							pendingCaseHandoverConsent.params?.clientConsent ===
-							'OPT_OUT'
-								? 'OPT_OUT'
-								: 'OPT_IN'
-						}
-						isSubmitting={caseHandoverConsentSubmitting}
-						error={caseHandoverConsentError}
-						timestamp={formatToHHMM(
-							String(
-								new Date(
-									pendingCaseHandoverConsent.createdAt
-								).getTime()
-							)
-						)}
-						onApprove={() =>
-							handleCaseHandoverConsentDecision(true)
-						}
-						onDecline={() =>
-							handleCaseHandoverConsentDecision(false)
-						}
-					/>
-				)}
 			{showTeamDiscussion && (
 				<TeamDiscussionPanel
 					key={activeSession.item.id}
@@ -1210,6 +1185,48 @@ export const SessionStream = ({
 				/>
 			)}
 			<SessionItemComponent
+				notices={
+					<>
+						{/* PLAN 2.3: on her own case, the offering counsellor sees that an
+			    offer is still open and can take it back. */}
+						{hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) &&
+							!activeSession.isGroup &&
+							!!activeSession.item?.id && (
+								<CaseHandoverOutgoingOffer
+									sessionId={activeSession.item.id}
+								/>
+							)}
+						{pendingCaseHandoverConsent &&
+							pendingCaseHandoverRequestId !== null && (
+								<CaseHandoverConsentCard
+									mode={
+										pendingCaseHandoverConsent.params
+											?.clientConsent === 'OPT_OUT'
+											? 'OPT_OUT'
+											: 'OPT_IN'
+									}
+									isSubmitting={caseHandoverConsentSubmitting}
+									error={caseHandoverConsentError}
+									timestamp={formatToHHMM(
+										String(
+											new Date(
+												pendingCaseHandoverConsent.createdAt
+											).getTime()
+										)
+									)}
+									onApprove={() =>
+										handleCaseHandoverConsentDecision(true)
+									}
+									onDecline={() =>
+										handleCaseHandoverConsentDecision(false)
+									}
+								/>
+							)}
+					</>
+				}
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}

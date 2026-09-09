@@ -1624,7 +1624,10 @@
 		"fileName": "case-handover.svg",
 		"sourcePath": "src/resources/img/icons/case-handover/case-handover.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/session/CaseHandoverCurtain.tsx"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverGiveOverDialog.tsx",
+			"src/components/session/CaseHandoverCurtain.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -3136,7 +3139,8 @@
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx"
+			"src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},

@@ -14,12 +14,9 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../../utils/notificationHelpers';
+import { appConfig } from '../../utils/appConfig';
+import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
@@ -32,7 +29,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
@@ -140,10 +136,9 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			if (
-				!releaseToggles.enableNewNotifications ||
-				isBrowserNotificationTypeEnabled('newMessage')
-			) {
+			// Modern delivery belongs to the event provider. Retain the legacy
+			// transport only while the old settings panel is routed.
+			if (!appConfig?.releaseToggles?.enableNewNotifications) {
 				sendNotification(translate('notifications.message.new'), {
 					// Route the banner to its config row (#576 harmonised
 					// model): Gespräch → Standard-Benachrichtigung.

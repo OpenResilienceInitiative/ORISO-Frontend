@@ -68,10 +68,8 @@
 			"placeholders": [
 				"{{expiryHours}}",
 				"{{resetUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
@@ -489,17 +487,17 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Ihr Einmalcode für die Anmeldung",
+					"subject": "Ihr Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Dein Einmalcode für die Anmeldung",
+					"subject": "Dein Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Your one-time code for signing in",
+					"subject": "Your one-time code",
 					"preheader": "The code is valid for {{expiryMinutes}} minutes."
 				}
 			}

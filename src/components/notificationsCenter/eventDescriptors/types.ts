@@ -106,6 +106,10 @@ export interface EventActionParams {
 	recipientRole?: string | null;
 	/** Case Handover consent variant; metadata only, never conversation content. */
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
+	/** Frozen server handover semantics; never inferred from a reason label. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | null;
+	fromConsultantName?: string | null;
+	toConsultantName?: string | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */

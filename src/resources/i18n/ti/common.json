@@ -1862,6 +1862,58 @@
 			"teamDiscussionNew": {
 				"title": "ናይ ጋንታ ምይይጥ",
 				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			},
+			"conversationFinished": {
+				"title": "ቻት ተወዲኡ",
+				"text": "እቲ ምኽሪ ዝደሊ ሰብ ነቲ ስሙ ዘይተፈልጠ ቻት ወዲእዎ።"
+			},
+			"caseHandoverOffered": {
+				"title": "ጉዳይ ይቐርበልካ ኣሎ",
+				"text": "{{fromConsultantName}} ጉዳይ ከረክበካ ይደሊ ኣሎ። ክትቅበሎ ወይ ዘይምቕባል ናትካ ውሳነ እዩ።",
+				"coAccess": {
+					"title": "ናይ ምእታው ፍቓድ ቀሪቡልካ",
+					"text": "{{fromConsultantName}} ናብ ሓደ ጉዳይ ግዝያዊ ናይ ምእታው ፍቓድ ይቕርበልካ ኣሎ። እቲ ሕጂ ዝከታተሎ ዘሎ ኣማኻሪ ሓላፍነቱ ይቕጽል።"
+				},
+				"generic": {
+					"title": "ሓድሽ ዕድመ",
+					"text": "{{fromConsultantName}} ብዛዕባ ሓደ ጉዳይ ዕድመ ሰዲዱልካ። ቅድሚ ምውሳንካ ዝርዝሩ ርአ።"
+				}
+			},
+			"caseHandoverAccepted": {
+				"title": "ምርኻብ ተቐቢሉ",
+				"text": "እቲ ብጻይ ነቲ ጉዳይ ተቐቢሉዎ።",
+				"coAccess": {
+					"title": "ናይ ምእታው ፍቓድ ዕድመ ተቐቢሉ",
+					"text": "{{toConsultantName}} ናይ ምእታው ፍቓድ ዕድመኻ ተቐቢሉ። ናይቲ ጉዳይ ሓላፍነት ኣባኻ ይቕጽል።"
+				},
+				"generic": {
+					"title": "ዕድመ ተቐቢሉ",
+					"text": "መሳርሕትኻ ዕድመኻ ተቐቢሉ። እዋናዊ ኩነታቱ ንምርኣይ እቲ ጉዳይ ክፈት።"
+				}
+			},
+			"caseHandoverDeclined": {
+				"title": "ምርኻብ ኣይተቐበሎን",
+				"text": "እቲ ብጻይ ነቲ ጉዳይ ኣይተቐበሎን። እቲ ጉዳይ ኣባኻ ይተርፍ።",
+				"coAccess": {
+					"title": "ናይ ምእታው ፍቓድ ዕድመ ተነጺጉ",
+					"text": "{{toConsultantName}} ናይ ምእታው ፍቓድ ዕድመኻ ነጺጉዎ። ናይ ምእታው ፍቓድ ኣይነጥፍን።"
+				},
+				"generic": {
+					"title": "ዕድመ ተነጺጉ",
+					"text": "መሳርሕትኻ ዕድመኻ ነጺጉዎ።"
+				}
+			},
+			"caseHandoverExpired": {
+				"title": "እቲ ሓሳብ ኣብቂዑ",
+				"text": "ናይ ምርኻብ ሓሳብካ ኣብቂዑ። እቲ ጉዳይ ኣባኻ ይተርፍ።",
+				"coAccess": {
+					"title": "ናይ ምእታው ፍቓድ ዕድመ ግዜኡ ሓሊፉ",
+					"text": "{{toConsultantName}} ናይ ምእታው ፍቓድ ዕድመኻ ኣብ ግዜኡ ኣይመለሰሉን። ናይ ምእታው ፍቓድ ኣይነጥፍን።"
+				},
+				"generic": {
+					"title": "ዕድመ ግዜኡ ሓሊፉ",
+					"text": "ዕድመኻ ግዜኡ ሓሊፉ።"
+				}
 			}
 		},
 		"error": "ወዲቑ",
@@ -2229,7 +2281,7 @@
 			},
 			"dnd": {
 				"title": "ኣይትረብሽ",
-				"description": "ንዝተመረጸ ግዜ ኩሎም መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ፡ ኢመይል) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
+				"description": "ንዝተመረጸ ግዜ መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
 				"activeUntil": "ክሳብ {{time}} ንጡፍ",
 				"option": {
 					"off": "ጠፊኡ",
@@ -3056,6 +3108,9 @@
 		}
 	},
 	"caseHandover": {
+		"history": {
+			"unknownConsultant": "ናይ ቀደም ኣማኻሪ"
+		},
 		"copy": "እዚ ጉዳይ እዚ ከም ሜታዳታ ጥራይ እዩ ዝረአ። ናይ ምትሕልላፍ ምኽንያት ምረጹ እሞ ስለምንታይ ተበጻሕነት ከም ዘድልየኩም ግለጹ።",
 		"batch": {
 			"cancel": "ምረጻ ዕጸው",
@@ -3132,7 +3187,8 @@
 			"deselect": {
 				"title": "ምረጻ ኣልግስን ዕጸውን",
 				"description": "ኩሉ ምረጻ የልግስ እሞ ነቲ ናይ ብዙሓት ኩነታት ይዓጽዎ።"
-			}
+			},
+			"giveOver": "ጉዳይ ኣረክብ"
 		},
 		"curtain": {
 			"intro": {
@@ -3168,6 +3224,68 @@
 			"importantTitle": "ኣገዳሲ መልእኽቲ",
 			"supervisionTitle": "ምክትታል ተነቓቒሑ!",
 			"supervisionBody": "{{advisor}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።"
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "ዝተመደበ ብኩራት",
+			"UNPLANNED_ABSENCE": "ዘይተመደበ ብኩራት",
+			"ASSIGNMENT_ENDED": "ምምዳብ ተወዲኡ",
+			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ"
+		},
+		"giveOver": {
+			"coAccessTitle": "ምኽሪ ሕተት",
+			"coAccessDescription": "ድሕሪ እቲ ሓሳብ ምቕባሉን ኣድላዪ ስምምዕ ምርካቡን፡ እቲ ብጻይ ግዜያዊ መእተዊ ይረክብ። ሓላፍነት ናይቲ ጉዳይ ኣባኻ ይቕጽል።",
+			"coAccessSubmit": "መእተዊ ኣቕርብ",
+			"title": "ጉዳይ ኣረክብ",
+			"description": "ካብ ማእከል ምኽርኻ ሓደ ብጻይን ምኽንያትን ምረጽ። እቲ ብጻይ ነቲ ምርኻብ ክቕበሎ ኣለዎ።",
+			"colleague": {
+				"label": "ብጻይ",
+				"searchPlaceholder": "ብስም ድለ",
+				"empty": "ብጻይ ኣይተረኽበን።",
+				"loading": "ብጾት ይጽዓኑ ኣለዉ",
+				"absent": "ሕጂ ኣይሃለወን"
+			},
+			"reason": {
+				"label": "ምኽንያት",
+				"placeholder": "ምኽንያት ምረጽ"
+			},
+			"consentHint": "እቲ ብጻይ መእተዊ ቅድሚ ምርካቡ፡ እቲ ዓሚል ንምርኻብ ክሰማማዕ ኣለዎ።",
+			"noConsentHint": "ነዚ ምኽንያት እዚ ስምምዕ ዓሚል ኣየድልን።",
+			"submit": "ጉዳይ ኣረክብ",
+			"cancel": "ሰርዝ",
+			"error": {
+				"required": "ብጻይን ምኽንያትን ምረጽ።",
+				"conflict": "ነዚ ጉዳይ እዚ ድሮ ክፉት ሓሳብ ኣሎ።",
+				"forbidden": "ነዚ ጉዳይ እዚ ከተረክብ ኣይትኽእልን።",
+				"failed": "እቲ ጉዳይ ክውሃብ ኣይተኻእለን።",
+				"notFound": "እቲ ጉዳይ ወይ እቲ ብጻይ ኣይተረኽበን።"
+			},
+			"success": "እቲ ሓሳብ ናብ {{colleague}} ተላኢኹ።"
+		},
+		"offers": {
+			"incoming": {
+				"title": "ናይ ምርኻብ ሓሳባት",
+				"badge": "ክፉታት ናይ ምርኻብ ሓሳባት፦ {{count}}",
+				"empty": "ክፉት ሓሳብ የለን።",
+				"from": "ካብ {{colleague}}",
+				"accept": "ተቐበል",
+				"decline": "ኣይትቀበል",
+				"expires": "ኣብ {{date}} የብቅዕ",
+				"consentPending": "እቲ ዓሚል ገና ክሰማማዕ ኣለዎ።",
+				"accepted": "ነቲ ጉዳይ ተቐቢልካዮ ኣለኻ።",
+				"consentRequested": "ተቐቢሉ — እቲ ዓሚል ስምምዕ ተሓቲቱ ኣሎ።"
+			},
+			"outgoing": {
+				"pending": "ክፉት ሓሳብ — {{colleague}}",
+				"withdraw": "ኣውጽእ",
+				"withdrawn": "እቲ ሓሳብ ተመሊሱ።"
+			},
+			"error": {
+				"failed": "እቶም ሓሳባት ክጽዓኑ ኣይከኣሉን።",
+				"actionFailed": "እቲ ተግባር ክፍጸም ኣይከኣለን።",
+				"conflict": "እዚ ሓሳብ እዚ መሊሱ ክፉት ኣይኰነን።",
+				"forbidden": "እዚ ሓሳብ እዚ ናይ ሕሳብካ ኣይኰነን።",
+				"notFound": "እዚ ሓሳብ እዚ ኣይተረኽበን።"
+			}
 		}
 	},
 	"session": {
@@ -3301,21 +3419,6 @@
 				}
 			}
 		},
-		"assignOther": {
-			"button": {
-				"label": "ዕፁው"
-			},
-			"inProgress": "ኣብዚ ሕዚ እዋን እቲ ምምኽኻር ይምደብ ኣሎ።",
-			"overlay": {
-				"headline": {
-					"1": "{{client}} ናብ {{newConsultant}} ክትምድብ ትደሊ ዲኻ?",
-					"2": "ነቲ ምምኽኻር ብዓወት መዲብካዮ ኣለኻ።"
-				},
-				"subtitle": {
-					"noTeam": "ስለዚ {{newConsultant}} ነቲ ምኽሪ ዝሓትት ሰብ ሓላፍነት ዝወስድ ኮይኑ ምሉእ ታሪኽ መልእኽቲ ከንብብ ይኽእል። ድሕሪ ሕጂ ነቶም መልእኽትታት ክትረኽቦም ኣይትኽእልን ኢኻ።"
-				}
-			}
-		},
 		"assignSelf": {
 			"button1": {
 				"label": "መልሲ"
@@ -3352,6 +3455,26 @@
 		"groupChat": {
 			"consultant": {
 				"prefix": "ኣካያዲ ስራሕ - "
+			}
+		},
+		"u25": {
+			"assignment": {
+				"placeholder": "ምኽሪ ምደብ"
+			}
+		},
+		"unreadCount": {
+			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "ምኽንያት ምክትታል"
+			},
+			"startChat": {
+				"title": "ቻት ጀምር",
+				"hint": "ናይ መጀመርታ መልእኽቲ ምክትታል ንምስዳድ ኣብ ታሕቲ ዘሎ ናይ መልእኽቲ ቦታ ተጠቐሙ።"
+			},
+			"input": {
+				"note": "ኣብዚ እትሰድዎም መልእኽትታት ንኣማኸርቲ ጥራይ እዮም ዝረኣዩ።"
 			}
 		},
 		"reassign": {
@@ -3408,26 +3531,6 @@
 						"title": "{{oldConsultant}} ን{{newConsultant}} ከረክቦ ይደሊ።"
 					}
 				}
-			}
-		},
-		"u25": {
-			"assignment": {
-				"placeholder": "ምኽሪ ምደብ"
-			}
-		},
-		"unreadCount": {
-			"maxValue": "99+"
-		},
-		"supervisor": {
-			"reason": {
-				"title": "ምኽንያት ምክትታል"
-			},
-			"startChat": {
-				"title": "ቻት ጀምር",
-				"hint": "ናይ መጀመርታ መልእኽቲ ምክትታል ንምስዳድ ኣብ ታሕቲ ዘሎ ናይ መልእኽቲ ቦታ ተጠቐሙ።"
-			},
-			"input": {
-				"note": "ኣብዚ እትሰድዎም መልእኽትታት ንኣማኸርቲ ጥራይ እዮም ዝረኣዩ።"
 			}
 		}
 	},
@@ -3983,10 +4086,6 @@
 			"resort": "ናይ ምምኽኻር ዓውዲ",
 			"state": "ፌደራል ክልል ትግራይ",
 			"title": "ካብቲ ምኽሪ ዝደሊ ሰብ ዝረኸብናዮ ሓበሬታ"
-		},
-		"reassign": {
-			"description": "ነቲ ዕላል ንኻልእ ኣባል ጋንታ ክትምድቦ ትኽእል ኢኻ። እዚ ሰብ እዚ ድሕሪኡ ነቲ ምኽሪ ዝሓትት ሰብ ሓላፍነት ይወስድ።",
-			"title": "ምምቕራሕ"
 		},
 		"tools": {
 			"description": "ምኽሪ ንዝደልዩ መሳርሒታት ምኽፋት። ",

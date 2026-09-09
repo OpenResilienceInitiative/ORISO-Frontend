@@ -19,9 +19,7 @@ ${contactLine!''}
 
 ${platformName!''} is a service provided by ${orgName!''}.
 
-Settings: ${settingsUrl!''}
 Privacy: ${privacyUrl!''}
 Imprint: ${imprintUrl!''}
-Unsubscribe from notifications: ${unsubscribeUrl!''}
 
 This email was sent automatically. Please do not reply to it.

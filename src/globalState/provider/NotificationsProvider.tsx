@@ -9,6 +9,11 @@ import {
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
+import { t } from 'i18next';
+import {
+	announceNotificationEvent,
+	selectUnseenEvents
+} from '../../utils/announceNotificationEvent';
 import {
 	IncomingVideoCallProps,
 	NotificationTypeCall
@@ -24,13 +29,7 @@ import { getValueFromCookie } from '../../components/sessionCookie/accessSession
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
-import {
-	installAudioUnlock,
-	playNotificationSound,
-	selectEventToAnnounce
-} from '../../utils/notificationSettings/soundPlayback';
-import { notificationSettingsStore } from '../../utils/notificationSettings/store';
-import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
+import { installAudioUnlock } from '../../utils/notificationSettings/soundPlayback';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -245,10 +244,9 @@ export function NotificationsProvider(props) {
 	const highestLoadedPageRef = useRef(0);
 	const loadingOlderRef = useRef(false);
 	const feedEpochRef = useRef(0);
-	// #576: id of the newest event slot we already reconciled, so a feed refresh
-	// only announces a genuinely newer event (not every poll, and never on the
-	// backlog surfaced when an event above it is read).
-	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	// Retain seen ids for this provider lifetime so read-state changes or a
+	// deleted top row never replay older activity as a new notification.
+	const announcedEventIdsRef = useRef<Set<string> | null>(null);
 	const resetFeedState = useCallback(() => {
 		loadingOlderRef.current = false;
 		setNotificationFeed([]);
@@ -259,30 +257,16 @@ export function NotificationsProvider(props) {
 		highestLoadedPageRef.current = 0;
 	}, []);
 
-	// #576: play the configured sound for a genuinely new, unread top event —
-	// decoupled from the OS popup, so it also sounds with the tab focused. The
-	// sound routes through the single suppression gate (DND, per-conversation
-	// level, mute, family-off) inside playNotificationSound.
-	const maybePlaySoundForNewEvent = useCallback(
+	const maybeAnnounceNewEvents = useCallback(
 		(feed: NotificationFeedItem[]) => {
-			const { announce, nextMarker } = selectEventToAnnounce(
+			const incoming = selectUnseenEvents(
 				feed,
-				lastAnnouncedEventIdRef.current
+				announcedEventIdsRef.current
 			);
-			lastAnnouncedEventIdRef.current = nextMarker;
-			if (!announce) {
-				return;
-			}
-			const { settings, device } = notificationSettingsStore.getState();
-			const family = getEventDescriptor(announce.eventType).family;
-			const isMention = announce.params?.mentioned === true;
-			playNotificationSound(
-				settings,
-				device,
-				family,
-				announce.eventType,
-				isMention
-			);
+			const seen = announcedEventIdsRef.current || new Set<string>();
+			feed.forEach((event) => seen.add(event.id));
+			announcedEventIdsRef.current = seen;
+			incoming.forEach((event) => announceNotificationEvent(event, t));
 		},
 		[]
 	);
@@ -292,6 +276,7 @@ export function NotificationsProvider(props) {
 		if (!accessToken) {
 			feedEpochRef.current += 1;
 			// Do not hit protected endpoint before auth is available.
+			announcedEventIdsRef.current = null;
 			resetFeedState();
 			return;
 		}
@@ -306,7 +291,7 @@ export function NotificationsProvider(props) {
 				response?.items || []
 			).map(normalizeEventNotification);
 			if (feedEpoch !== feedEpochRef.current) return;
-			maybePlaySoundForNewEvent(normalized);
+			maybeAnnounceNewEvents(normalized);
 			setNotificationFeed((existing) =>
 				// Page 0 is authoritative for its own window, so a row the
 				// server dropped disappears here instead of surviving until a
@@ -331,7 +316,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, [maybePlaySoundForNewEvent, resetFeedState]);
+	}, [maybeAnnounceNewEvents, resetFeedState]);
 
 	const loadOlderNotifications = useCallback(async () => {
 		if (loadingOlderRef.current || !hasOlderNotifications) return;

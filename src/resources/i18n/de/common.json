@@ -1883,6 +1883,58 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Die ratssuchende Person hat den anonymen Chat beendet."
+			},
+			"caseHandoverOffered": {
+				"title": "Fall wird dir angeboten",
+				"text": "{{fromConsultantName}} möchte dir einen Fall übergeben. Du entscheidest, ob du ihn annimmst.",
+				"coAccess": {
+					"title": "Zugriff wird dir angeboten",
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf einen Fall an. Die bisherige Beratungskraft bleibt verantwortlich."
+				},
+				"generic": {
+					"title": "Neues Angebot",
+					"text": "{{fromConsultantName}} hat dir ein Angebot zu einem Fall geschickt. Prüfe die Einzelheiten, bevor du entscheidest."
+				}
+			},
+			"caseHandoverAccepted": {
+				"title": "Übergabe angenommen",
+				"text": "Die Kolleg:in hat den Fall angenommen.",
+				"coAccess": {
+					"title": "Zugriffsangebot angenommen",
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot angenommen. Du bleibst für den Fall verantwortlich."
+				},
+				"generic": {
+					"title": "Angebot angenommen",
+					"text": "Die Kolleg:in hat dein Angebot angenommen. Den aktuellen Stand findest du im Fall."
+				}
+			},
+			"caseHandoverDeclined": {
+				"title": "Übergabe abgelehnt",
+				"text": "Die Kolleg:in hat den Fall nicht angenommen. Er bleibt bei dir.",
+				"coAccess": {
+					"title": "Zugriffsangebot abgelehnt",
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot abgelehnt. Der Zugriff wird nicht aktiviert."
+				},
+				"generic": {
+					"title": "Angebot abgelehnt",
+					"text": "Die Kolleg:in hat dein Angebot abgelehnt."
+				}
+			},
+			"caseHandoverExpired": {
+				"title": "Angebot abgelaufen",
+				"text": "Dein Übergabe-Angebot ist abgelaufen. Der Fall bleibt bei dir.",
+				"coAccess": {
+					"title": "Zugriffsangebot abgelaufen",
+					"text": "{{toConsultantName}} hat dein Zugriffsangebot nicht rechtzeitig beantwortet. Der Zugriff wird nicht aktiviert."
+				},
+				"generic": {
+					"title": "Angebot abgelaufen",
+					"text": "Dein Angebot ist abgelaufen."
+				}
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2281,7 +2333,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausieren Sie alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
+				"description": "Pausieren Sie Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",
@@ -3076,6 +3128,9 @@
 		}
 	},
 	"caseHandover": {
+		"history": {
+			"unknownConsultant": "Eine frühere Beratungsperson"
+		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
@@ -3152,7 +3207,8 @@
 			"deselect": {
 				"title": "Auswahl aufheben und schließen",
 				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
-			}
+			},
+			"giveOver": "Fall abgeben"
 		},
 		"curtain": {
 			"intro": {
@@ -3188,6 +3244,68 @@
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Geplant abwesend",
+			"UNPLANNED_ABSENCE": "Ungeplant abwesend",
+			"ASSIGNMENT_ENDED": "Zuordnung beendet",
+			"ADVICE_REQUESTED": "Rat erbeten"
+		},
+		"giveOver": {
+			"coAccessTitle": "Rat erbitten",
+			"coAccessDescription": "Die Kolleg:in erhält nach Annahme und der erforderlichen Zustimmung vorübergehend Zugriff. Du bleibst für den Fall verantwortlich.",
+			"coAccessSubmit": "Zugriff anbieten",
+			"title": "Fall abgeben",
+			"description": "Wähle eine Kolleg:in deiner Beratungsstelle und einen Grund. Die Kolleg:in muss die Übergabe annehmen.",
+			"colleague": {
+				"label": "Kolleg:in",
+				"searchPlaceholder": "Nach Namen suchen",
+				"empty": "Keine Kolleg:in gefunden.",
+				"loading": "Kolleg:innen werden geladen",
+				"absent": "Zurzeit abwesend"
+			},
+			"reason": {
+				"label": "Grund",
+				"placeholder": "Grund auswählen"
+			},
+			"consentHint": "Die Klient:in muss der Übergabe zustimmen, bevor die Kolleg:in Zugriff erhält.",
+			"noConsentHint": "Für diesen Grund ist keine Zustimmung der Klient:in nötig.",
+			"submit": "Fall abgeben",
+			"cancel": "Abbrechen",
+			"error": {
+				"required": "Wähle eine Kolleg:in und einen Grund.",
+				"conflict": "Für diesen Fall ist bereits ein Angebot offen.",
+				"forbidden": "Du darfst diesen Fall nicht abgeben.",
+				"failed": "Der Fall konnte nicht abgegeben werden.",
+				"notFound": "Der Fall oder die Kolleg:in wurde nicht gefunden."
+			},
+			"success": "Das Angebot wurde an {{colleague}} gesendet."
+		},
+		"offers": {
+			"incoming": {
+				"title": "Übergabe-Angebote",
+				"badge": "Offene Übergabe-Angebote: {{count}}",
+				"empty": "Keine offenen Angebote.",
+				"from": "Von {{colleague}}",
+				"accept": "Annehmen",
+				"decline": "Ablehnen",
+				"expires": "Läuft ab am {{date}}",
+				"consentPending": "Die Klient:in muss noch zustimmen.",
+				"accepted": "Du hast den Fall übernommen.",
+				"consentRequested": "Angenommen — die Klient:in wurde um Zustimmung gebeten."
+			},
+			"outgoing": {
+				"pending": "Angebot offen — {{colleague}}",
+				"withdraw": "Zurückziehen",
+				"withdrawn": "Das Angebot wurde zurückgezogen."
+			},
+			"error": {
+				"failed": "Die Angebote konnten nicht geladen werden.",
+				"actionFailed": "Die Aktion konnte nicht ausgeführt werden.",
+				"conflict": "Dieses Angebot ist nicht mehr offen.",
+				"forbidden": "Dieses Angebot gehört nicht zu deinem Konto.",
+				"notFound": "Dieses Angebot wurde nicht gefunden."
+			}
 		}
 	},
 	"session": {
@@ -3321,21 +3439,6 @@
 				}
 			}
 		},
-		"assignOther": {
-			"button": {
-				"label": "Schließen"
-			},
-			"inProgress": "Die Beratung wird gerade zugewiesen.",
-			"overlay": {
-				"headline": {
-					"1": "Möchten Sie {{client}} an {{newConsultant}} zuweisen?",
-					"2": "Sie haben die Beratung erfolgreich zugewiesen."
-				},
-				"subtitle": {
-					"noTeam": "{{newConsultant}} ist somit für die Ratsuchende oder den Ratsuchenden verantwortlich und kann den kompletten Nachrichtenverlauf lesen. Sie haben keinen Zugiff mehr auf die Nachrichten."
-				}
-			}
-		},
 		"assignSelf": {
 			"button1": {
 				"label": "Antworten"
@@ -3372,6 +3475,26 @@
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderatorin oder Moderator - "
+			}
+		},
+		"u25": {
+			"assignment": {
+				"placeholder": "Beratung zuweisen"
+			}
+		},
+		"unreadCount": {
+			"maxValue": "99+"
+		},
+		"supervisor": {
+			"reason": {
+				"title": "Supervisionsgrund"
+			},
+			"startChat": {
+				"title": "Chat starten",
+				"hint": "Nutzen Sie das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
+			},
+			"input": {
+				"note": "Nachrichten, die Sie hier senden, sind nur für Berater:innen sichtbar."
 			}
 		},
 		"reassign": {
@@ -3428,26 +3551,6 @@
 						"title": "{{oldConsultant}} möchte Sie an {{newConsultant}} übergeben."
 					}
 				}
-			}
-		},
-		"u25": {
-			"assignment": {
-				"placeholder": "Beratung zuweisen"
-			}
-		},
-		"unreadCount": {
-			"maxValue": "99+"
-		},
-		"supervisor": {
-			"reason": {
-				"title": "Supervisionsgrund"
-			},
-			"startChat": {
-				"title": "Chat starten",
-				"hint": "Nutzen Sie das Nachrichtenfeld unten, um die erste Supervisionsnachricht zu senden."
-			},
-			"input": {
-				"note": "Nachrichten, die Sie hier senden, sind nur für Berater:innen sichtbar."
 			}
 		}
 	},
@@ -4000,10 +4103,6 @@
 			"resort": "Beratungsfeld",
 			"state": "Bundesland",
 			"title": "Angaben des Ratsuchenden"
-		},
-		"reassign": {
-			"description": "Sie können die Unterhaltung einem anderen Teammitglied zuweisen. Diese Person ist dann für die Ratsuchende oder den Ratsuchenden verantwortlich.",
-			"title": "Zuweisung"
 		},
 		"tools": {
 			"description": "Schalten Sie Tools für die_den Ratsuchende_n frei. ",

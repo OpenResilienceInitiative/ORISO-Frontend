@@ -135,6 +135,22 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'messageNew',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor('first_response.received', {
+		family: 'messages',
+		category: 'message',
+		icon: 'message',
+		i18nKey: 'messageNew',
+		resolveActionTarget: conversationTarget
+	}),
+	{
+		eventType: 'conversation.finished',
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		titleTemplate: 'notifications.events.conversationFinished.title',
+		textTemplate: 'notifications.events.conversationFinished.text',
+		resolveActionTarget: conversationTarget
+	},
 	descriptor('thread.reply.new', {
 		family: 'messages',
 		category: 'message',
@@ -273,6 +289,37 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'handoverDenied',
 		i18nKey: 'caseHandoverConsentDeclined',
+		resolveActionTarget: conversationTarget
+	}),
+	// Push direction ("Fall abgeben", PLAN 2.7 / FE#475): the offer's own
+	// progression, before the shared grant path takes over and emits
+	// `case.handover.granted` / `.consent.*` exactly as the pull direction does.
+	descriptor('case.handover.offered', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOffered',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.accepted', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverAccepted',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.declined', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverDeclined',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.expired', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverExpired',
 		resolveActionTarget: conversationTarget
 	}),
 

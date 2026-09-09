@@ -2,10 +2,8 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ListItemInterface } from '../globalState/interfaces';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../utils/notificationHelpers';
+import { appConfig } from '../utils/appConfig';
+import { sendNotification } from '../utils/notificationHelpers';
 
 export const useBrowserNotification = () => {
 	const { t } = useTranslation();
@@ -23,9 +21,11 @@ export const useBrowserNotification = () => {
 				);
 			});
 
+			// Modern delivery belongs to the event provider; this is only the
+			// legacy transport. sendNotification still owns the opt-in gate.
 			if (
 				enquirySessions.length > 0 &&
-				isBrowserNotificationTypeEnabled('initialEnquiry')
+				!appConfig?.releaseToggles?.enableNewNotifications
 			) {
 				sendNotification(t('notifications.initialRequest.new'), {
 					// A new enquiry belongs to Anfrage → Neue Anfrage, not to
