@@ -6,6 +6,7 @@ export const ChatMenuDropdown = React.forwardRef<
 	HTMLDivElement,
 	{
 		id?: string;
+		density?: 'default' | 'compact';
 		children: React.ReactNode;
 		className?: string;
 		style?: React.CSSProperties;
@@ -17,6 +18,7 @@ export const ChatMenuDropdown = React.forwardRef<
 	(
 		{
 			id,
+			density = 'default',
 			children,
 			className,
 			style,
@@ -29,7 +31,11 @@ export const ChatMenuDropdown = React.forwardRef<
 		<div
 			id={id}
 			ref={ref}
-			className={clsx('chatMenuDropdown', className)}
+			className={clsx(
+				'chatMenuDropdown',
+				density === 'compact' && 'chatMenuDropdown--compact',
+				className
+			)}
 			style={style}
 			role={role}
 			aria-label={ariaLabel}

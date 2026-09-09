@@ -175,3 +175,19 @@
 		}
 	}
 }
+
+// Compact action menus share the same surface and states without explanatory rows.
+.chatMenuDropdown--compact {
+	width: 240px;
+	padding: 8px;
+
+	.chatMenuDropdown__item {
+		align-items: center;
+		padding: 8px;
+		min-height: 44px;
+	}
+
+	.chatMenuDropdown__itemIcon {
+		margin-top: 0;
+	}
+}

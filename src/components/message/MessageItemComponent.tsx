@@ -1,3 +1,7 @@
+import {
+	ChatMenuDropdown,
+	ChatMenuDropdownItem
+} from '../chatMenuDropdown/ChatMenuDropdown';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
@@ -15,7 +19,6 @@ import {
 	useTenant
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
-import { isUserModerator } from '../session/sessionHelpers';
 import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
@@ -61,7 +64,6 @@ import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
-import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import {
 	IBooleanSetting,
@@ -70,9 +72,6 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
-import { apiDeleteMessage } from '../../api/apiDeleteMessage';
-import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
@@ -392,7 +391,6 @@ export const MessageItemComponent = ({
 	attachments,
 	file,
 	isNotRead,
-	isUserBanned,
 	t,
 	rid,
 	handleDecryptionErrors,
@@ -2050,20 +2048,6 @@ export const MessageItemComponent = ({
 										}
 									/>
 								)}
-								{/* MATRIX MIGRATION: Temporarily hide message menu */}
-								{false && (
-									<MessageFlyoutMenu
-										_id={_id}
-										userId={userId}
-										username={username}
-										isUserBanned={isUserBanned}
-										isMyMessage={isMyMessage}
-										isArchived={
-											activeSession.item.status ===
-											STATUS_ARCHIVED
-										}
-									/>
-								)}
 							</div>
 						)}
 
@@ -2785,7 +2769,8 @@ export const MessageItemComponent = ({
 			/>
 			{isActionMenuOpen
 				? createPortal(
-						<div
+						<ChatMenuDropdown
+							density="compact"
 							className="messageItem__actionMenu"
 							ref={actionMenuRef}
 							role="menu"
@@ -2896,24 +2881,18 @@ export const MessageItemComponent = ({
 								</div>
 							)}
 							{actionMenuItems.map((item) => (
-								<button
+								<ChatMenuDropdownItem
 									key={item.key}
-									type="button"
-									role="menuitem"
 									className="messageItem__actionMenuItem"
+									role="menuitem"
+									icon={item.icon}
+									title={item.label}
 									onClick={() =>
 										handleActionMenuItemClick(item.key)
 									}
-								>
-									<span className="messageItem__actionMenuItemIcon">
-										{item.icon}
-									</span>
-									<span className="messageItem__actionMenuItemLabel">
-										{item.label}
-									</span>
-								</button>
+								/>
 							))}
-						</div>,
+						</ChatMenuDropdown>,
 						document.body
 					)
 				: null}
@@ -3117,151 +3096,5 @@ export const MessageItemComponent = ({
 				/>
 			)}
 		</div>
-	);
-};
-
-const MessageFlyoutMenu = ({
-	_id,
-	userId,
-	isUserBanned,
-	isMyMessage,
-	isArchived,
-	username
-}: {
-	_id: string;
-	userId: string;
-	username: string;
-	isUserBanned: boolean;
-	isMyMessage: boolean;
-	isArchived: boolean;
-}) => {
-	const { activeSession } = useContext(ActiveSessionContext);
-	const { getSetting } = useContext(ServerSettingsContext);
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
-
-	const currentUserIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: getCurrentMatrixUserId()
-	});
-
-	const subscriberIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: userId
-	});
-
-	return (
-		<>
-			<FlyoutMenu position={isMyMessage ? 'left-top' : 'right-top'}>
-				{currentUserIsModerator &&
-					!subscriberIsModerator &&
-					!isUserBanned && (
-						<BanUser
-							userName={username}
-							matrixUserId={userId}
-							chatId={activeSession.item.id}
-							handleUserBan={() => {
-								setIsUserBanOverlayOpen(true);
-							}}
-						/>
-					)}
-
-				{isMyMessage &&
-					!isArchived &&
-					getSetting<IBooleanSetting>(
-						SETTING_MESSAGE_ALLOWDELETING
-					) && (
-						<DeleteMessage
-							messageId={_id}
-							className="flyoutMenu__item--delete"
-						/>
-					)}
-			</FlyoutMenu>
-			<BanUserOverlay
-				overlayActive={isUserBanOverlayOpen}
-				userName={username}
-				handleOverlay={() => {
-					setIsUserBanOverlayOpen(false);
-				}}
-			></BanUserOverlay>
-		</>
-	);
-};
-
-const DeleteMessage = ({
-	messageId,
-	className
-}: {
-	messageId: string;
-	className?: string;
-}) => {
-	const { t: translate } = useTranslation();
-	const [deleteOverlay, setDeleteOverlay] = useState(false);
-	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-
-	const deleteMessage = useCallback(() => {
-		setIsRequestInProgress(true);
-		apiDeleteMessage(messageId)
-			.then(() => setDeleteOverlay(false))
-			.then(() => setIsRequestInProgress(false));
-	}, [messageId]);
-
-	const deleteOverlayItem: OverlayItem = useMemo(
-		() => ({
-			headline: translate('message.delete.overlay.headline'),
-			copy: translate('message.delete.overlay.copy'),
-			svg: XIllustration,
-			illustrationBackground: 'neutral',
-			buttonSet: [
-				{
-					label: translate('message.delete.overlay.cancel'),
-					function: OVERLAY_FUNCTIONS.CLOSE,
-					type: BUTTON_TYPES.SECONDARY,
-					disabled: isRequestInProgress
-				},
-				{
-					label: translate('message.delete.overlay.confirm'),
-					function: 'CONFIRM',
-					type: BUTTON_TYPES.PRIMARY,
-					disabled: isRequestInProgress
-				}
-			],
-			handleOverlay: (functionName) => {
-				if (functionName === 'CONFIRM') {
-					deleteMessage();
-					return;
-				}
-				setDeleteOverlay(false);
-			}
-		}),
-		[deleteMessage, isRequestInProgress, translate]
-	);
-
-	return (
-		<>
-			<button
-				onClick={() => setDeleteOverlay(true)}
-				className={`flex ${className}`}
-			>
-				<div className="mr--1">
-					<TrashIcon
-						width={24}
-						height={24}
-						style={{ display: 'block', padding: '2px 0' }}
-						aria-hidden="true"
-						focusable="false"
-					/>
-				</div>
-				<div>{translate('message.delete.delete')}</div>
-			</button>
-			{deleteOverlay && (
-				<Overlay
-					item={deleteOverlayItem}
-					handleOverlayClose={() => {
-						setDeleteOverlay(false);
-					}}
-				/>
-			)}
-		</>
 	);
 };

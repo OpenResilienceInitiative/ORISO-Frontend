@@ -32,20 +32,28 @@ interface GroupChatCalendarMenuProps {
 	eventId: string | number;
 }
 
-export const GroupChatCalendarMenu = ({
+interface GroupChatCalendarPopoverProps extends GroupChatCalendarMenuProps {
+	anchorEl: HTMLElement | null;
+	onClose: () => void;
+	triggerId?: string;
+	id?: string;
+}
+
+export const GroupChatCalendarPopover = ({
 	start,
 	durationMinutes,
-	eventId
-}: GroupChatCalendarMenuProps) => {
+	eventId,
+	anchorEl: anchor,
+	onClose: closeMenu,
+	triggerId,
+	id: menuId
+}: GroupChatCalendarPopoverProps) => {
 	const { enabled, motionEnabled } = useMenuEffects();
 	const { t: translate } = useTranslation();
-	const instanceId = useId().replace(/:/g, '');
-	const triggerId = `${instanceId}-group-chat-calendar-trigger`;
-	const menuId = `${instanceId}-group-chat-calendar-menu`;
-	const anchorRef = useRef<HTMLButtonElement>(null);
+	const anchorRef = useRef<HTMLElement | null>(anchor);
+	anchorRef.current = anchor;
 	const menuRef = useRef<HTMLDivElement>(null);
 	const titleInputRef = useRef<HTMLInputElement>(null);
-	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 	const menuStyle = useChatMenuPosition({
 		open: Boolean(anchor),
 		anchorRef,
@@ -61,6 +69,9 @@ export const GroupChatCalendarMenu = ({
 	const [copyState, setCopyState] = useState<
 		'pending' | 'success' | 'error' | null
 	>(null);
+	useEffect(() => {
+		setCopyState(null);
+	}, [anchor]);
 	const copyLink = async (url: string) => {
 		setCopyState('pending');
 		try {
@@ -78,7 +89,6 @@ export const GroupChatCalendarMenu = ({
 			setTitle(defaultTitle);
 		}
 	}, [defaultTitle]);
-	const closeMenu = () => setAnchor(null);
 	const calendar = useMemo(
 		() =>
 			buildNeutralGroupChatCalendar({
@@ -93,21 +103,6 @@ export const GroupChatCalendarMenu = ({
 
 	return (
 		<>
-			<Button
-				id={triggerId}
-				ref={anchorRef}
-				variant="outlined"
-				onClick={(event) => {
-					setCopyState(null);
-					setAnchor(event.currentTarget);
-				}}
-				sx={{ minHeight: 44, textTransform: 'none' }}
-				aria-haspopup="dialog"
-				aria-expanded={Boolean(anchor)}
-				aria-controls={anchor ? menuId : undefined}
-			>
-				{translate('groupChat.calendar.add')}
-			</Button>
 			<Popover
 				anchorReference="none"
 				TransitionComponent={Fade}
@@ -239,6 +234,39 @@ export const GroupChatCalendarMenu = ({
 					</Box>
 				)}
 			</Popover>
+		</>
+	);
+};
+
+export const GroupChatCalendarMenu = (props: GroupChatCalendarMenuProps) => {
+	const { t: translate } = useTranslation();
+	const instanceId = useId().replace(/:/g, '');
+	const triggerId = `${instanceId}-group-chat-calendar-trigger`;
+	const menuId = `${instanceId}-group-chat-calendar-menu`;
+	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+	return (
+		<>
+			<Button
+				id={triggerId}
+				variant="outlined"
+				onClick={(event) => {
+					setAnchor(event.currentTarget);
+				}}
+				sx={{ minHeight: 44, textTransform: 'none' }}
+				aria-haspopup="dialog"
+				aria-expanded={Boolean(anchor)}
+				aria-controls={anchor ? menuId : undefined}
+			>
+				{translate('groupChat.calendar.add')}
+			</Button>
+
+			<GroupChatCalendarPopover
+				{...props}
+				id={menuId}
+				triggerId={triggerId}
+				anchorEl={anchor}
+				onClose={() => setAnchor(null)}
+			/>
 		</>
 	);
 };

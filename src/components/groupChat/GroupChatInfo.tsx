@@ -42,7 +42,7 @@ import {
 } from '../sessionMenu/sessionMenuHelpers';
 import { logout } from '../logout/logout';
 import { decodeUsername } from '../../utils/encryptionHelpers';
-import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
+import { CompactActionMenu } from '../chatMenuDropdown/CompactActionMenu';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUser } from '../banUser/BanUser';
 import { useSession } from '../../hooks/useSession';
@@ -397,20 +397,27 @@ const SubscriberList = ({
 							{isCurrentUserModerator &&
 								!moderators.includes(subscriber._id) &&
 								!banned && (
-									<FlyoutMenu position="left">
-										<BanUser
-											userName={username}
-											matrixUserId={subscriber._id}
-											chatId={activeSession.item.id}
-											handleUserBan={(username) => {
-												setBannedUsers((current) => [
-													...current,
-													username
-												]);
-												setBannedName(username);
-											}}
-										/>
-									</FlyoutMenu>
+									<CompactActionMenu
+										label={`${translate('app.menu')}: ${name}`}
+									>
+										{(close) => (
+											<BanUser
+												onSelect={close}
+												userName={username}
+												matrixUserId={subscriber._id}
+												chatId={activeSession.item.id}
+												handleUserBan={(username) => {
+													setBannedUsers(
+														(current) => [
+															...current,
+															username
+														]
+													);
+													setBannedName(username);
+												}}
+											/>
+										)}
+									</CompactActionMenu>
 								)}
 							{isCurrentUserModerator && banned && (
 								<Chip

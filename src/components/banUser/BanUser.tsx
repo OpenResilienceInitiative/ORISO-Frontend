@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChatMenuDropdownItem } from '../chatMenuDropdown/ChatMenuDropdown';
 import { useTranslation } from 'react-i18next';
 import { apiPostBanUser } from '../../api/apiPostBanUser';
 import { BUTTON_TYPES } from '../button/Button';
@@ -8,6 +9,7 @@ import { ReactComponent as Check } from '../../resources/img/illustrations/check
 import './banUser.styles.scss';
 
 interface BanUserProps {
+	onSelect?: () => void;
 	matrixUserId: string;
 	userName: string;
 	chatId: number;
@@ -22,6 +24,7 @@ interface BanUserOverlayProps {
 
 export const BanUser: React.FC<BanUserProps> = ({
 	matrixUserId,
+	onSelect,
 	chatId,
 	userName,
 	handleUserBan
@@ -29,15 +32,17 @@ export const BanUser: React.FC<BanUserProps> = ({
 	const { t: translate } = useTranslation();
 
 	const banUser = () => {
+		onSelect?.();
 		apiPostBanUser({ matrixUserId, chatId }).then(() => {
 			if (handleUserBan) handleUserBan(userName);
 		});
 	};
 
 	return (
-		<button className="banUser" onClick={banUser}>
-			{translate('banUser.ban.trigger')}
-		</button>
+		<ChatMenuDropdownItem
+			onClick={banUser}
+			title={translate('banUser.ban.trigger')}
+		/>
 	);
 };
 

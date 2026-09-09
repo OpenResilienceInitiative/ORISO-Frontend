@@ -1,3 +1,5 @@
+import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
@@ -168,4 +170,63 @@ export const LegalLinksMenu: Story = {
 			</ChatMenuDropdownSection>
 		</ChatMenuDropdown>
 	)
+};
+
+const onReply = fn();
+export const CompactReply: Story = {
+	args: { density: 'compact' },
+	render: (args) => (
+		<ChatMenuDropdown {...args} role="menu" ariaLabel="Nachrichtenaktionen">
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<ReplyOutlinedIcon />}
+				title="Direkt antworten"
+				onClick={onReply}
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<PackageIcon />}
+				title="Im Thread antworten"
+			/>
+			<ChatMenuDropdownDivider />
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<TrashIcon />}
+				title="Nachricht löschen"
+			/>
+		</ChatMenuDropdown>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('menuitem', { name: 'Direkt antworten' })
+		);
+		expect(onReply).toHaveBeenCalled();
+	}
+};
+
+export const CompactDisabled: Story = {
+	args: { density: 'compact' },
+	render: (args) => (
+		<ChatMenuDropdown {...args} role="menu" ariaLabel="Nachrichtenaktionen">
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<ReplyOutlinedIcon />}
+				title="Direkt antworten"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<TrashIcon />}
+				title="Nachricht löschen"
+				disabled
+			/>
+		</ChatMenuDropdown>
+	),
+	play: async ({ canvasElement }) => {
+		expect(
+			within(canvasElement).getByRole('menuitem', {
+				name: 'Nachricht löschen'
+			})
+		).toBeDisabled();
+	}
 };
