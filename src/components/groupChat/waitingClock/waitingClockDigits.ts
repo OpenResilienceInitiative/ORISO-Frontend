@@ -294,8 +294,9 @@ export const DIGITS: HandAngles[][] = [
 /** Cells for a single digit 0–9 (falls back to 0 for out-of-range input). */
 export const digitCells = (d: number): HandAngles[] => DIGITS[d] ?? DIGITS[0];
 
-/** Two-digit, zero-padded value as its two digit indices, e.g. 7 → [0, 7]. */
+/** Two-digit, zero-padded value as its two digit indices, e.g. 7 → [0, 7].
+ *  Values above 99 clamp — the clock face has only two digit cells. */
 export const twoDigits = (value: number): [number, number] => {
-	const v = Math.max(0, Math.floor(value));
-	return [Math.floor(v / 10) % 10, v % 10];
+	const v = Math.min(99, Math.max(0, Math.floor(value)));
+	return [Math.floor(v / 10), v % 10];
 };
