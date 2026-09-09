@@ -375,6 +375,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 		expect(mockNavigate).toHaveBeenCalledWith(expectedPath, {
 			state: { isEditMode: true, prevIsInfoPage: false }
 		});
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
 
 		// The room id must be percent-encoded in the path
 		expect(expectedPath).toContain('%3A');

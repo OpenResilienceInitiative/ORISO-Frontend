@@ -77,6 +77,7 @@ export const SessionListItemMenu = ({
 						id={dropdownId}
 						ref={dropdownRef}
 						className="sessionsListItem__dropdown"
+						onClick={(event) => event.stopPropagation()}
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}
