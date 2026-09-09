@@ -443,5 +443,47 @@ export const en: Record<EmailId, EmailContent> = {
 		cta: { label: 'Go to profile', href: '{{appUrl}}' },
 		assurance: accountAssurance,
 		footer: securityFooter
+	},
+
+	'anruf-erinnerung': {
+		subject: 'A session is starting soon',
+		preheader: 'Sign in to see the details.',
+		headline: 'Your session is starting soon',
+		paragraphs: [
+			'A scheduled audio or video session is starting soon. You can see all further details securely after signing in.'
+		],
+		cta: { label: 'Open session', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'You have been invited to a session',
+		preheader: 'The invitation is waiting securely in your account.',
+		headline: 'New invitation',
+		paragraphs: [
+			'You have been invited to an audio or video session. You can see the details securely after signing in.'
+		],
+		cta: { label: 'View invitation', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'You missed a call',
+		preheader: 'Sign in to open the protected history.',
+		headline: 'Missed call',
+		paragraphs: [
+			'An audio or video call took place while you were away. You can see further details securely after signing in.'
+		],
+		cta: { label: 'Open protected history', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
 	}
 };

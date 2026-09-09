@@ -4068,6 +4068,27 @@
 				"reason": "Maalesef bu sayfayı görüntüleme yetkiniz bulunmamaktadır.",
 				"title": "Erişim yok!"
 			}
+		},
+		"notifications": {
+			"scheduledCall": {
+				"title": "Bir oturum yakında başlayacak",
+				"body": "Korunan ayrıntıları görmek için giriş yapın."
+			},
+			"invitation": {
+				"title": "Yeni davet",
+				"body": "Bir sesli veya görüntülü oturuma davet edildiniz."
+			},
+			"missedCall": {
+				"title": "Cevapsız arama",
+				"body": "Diğer ayrıntıları görmek için korunan geçmişi açın."
+			},
+			"action": {
+				"open": "Aç"
+			},
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			}
 		}
 	},
 	"voice": {

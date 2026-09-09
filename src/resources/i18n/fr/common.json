@@ -4068,6 +4068,27 @@
 				"reason": "Malheureusement, vous n'êtes pas autorisé(e) à consulter cette page.",
 				"title": "Accès interdit !"
 			}
+		},
+		"notifications": {
+			"scheduledCall": {
+				"title": "Une session va bientôt commencer",
+				"body": "Connectez-vous pour voir les détails protégés."
+			},
+			"invitation": {
+				"title": "Nouvelle invitation",
+				"body": "Vous êtes invité à une session audio ou vidéo."
+			},
+			"missedCall": {
+				"title": "Appel manqué",
+				"body": "Ouvrez l’historique protégé pour voir les autres détails."
+			},
+			"action": {
+				"open": "Ouvrir"
+			},
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			}
 		}
 	},
 	"voice": {

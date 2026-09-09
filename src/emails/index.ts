@@ -13,6 +13,10 @@ import {
 	EmailLocale
 } from './content/emailCatalogue';
 import { en } from './content/en';
+import { fr } from './content/fr';
+import { ru } from './content/ru';
+import { ti } from './content/ti';
+import { tr } from './content/tr';
 import {
 	EmailDialect,
 	toEmailDialectHtml,
@@ -26,6 +30,7 @@ import {
 import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
+export * from './content/emailTranslationSync';
 export * from './kit/emailDialect';
 export * from './kit/emailTokens';
 export type { EmailContent } from './kit/emailTemplate';
@@ -36,7 +41,11 @@ export const EMAIL_CONTENT: Record<
 > = {
 	'de-sie': deSie,
 	'de-du': deDu,
-	en
+	en,
+	fr,
+	ru,
+	ti,
+	tr
 };
 
 export const getEmailContent = (
@@ -88,6 +97,7 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	loginUrl: 'https://beratung.example.org/login',
 	resetUrl: 'https://beratung.example.org/passwort/neu?token=8f3a',
 	appointmentUrl: 'https://beratung.example.org/termine',
+	callUrl: 'https://beratung.example.org/gespraeche/anruf',
 	requestUrl: 'https://beratung.example.org/anfragen/4711',
 	statusUrl: 'https://status.example.org',
 	settingsUrl: 'https://beratung.example.org/einstellungen',

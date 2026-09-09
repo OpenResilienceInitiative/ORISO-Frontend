@@ -4027,6 +4027,27 @@
 				"reason": "Unfortunately you are not authorized to view this page.",
 				"title": "No entry!"
 			}
+		},
+		"notifications": {
+			"scheduledCall": {
+				"title": "A session is starting soon",
+				"body": "Sign in to see the protected details."
+			},
+			"invitation": {
+				"title": "New invitation",
+				"body": "You have been invited to an audio or video session."
+			},
+			"missedCall": {
+				"title": "Missed call",
+				"body": "Open the protected history to see further details."
+			},
+			"action": {
+				"open": "Open"
+			},
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			}
 		}
 	},
 	"voice": {
