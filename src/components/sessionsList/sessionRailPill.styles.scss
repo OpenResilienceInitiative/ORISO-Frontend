@@ -1,0 +1,150 @@
+// Collapsed session-list rail — one portrait pill per conversation.
+
+// Frank, 09.09.2026 (*2): the rail's avatar circles are "bisschen eiförmig"
+// and carry no information beyond the picture. This sheet is the geometric
+// answer to the first half; `SessionRailPill.tsx` carries the second.
+
+// The egg came from `sessionsList.styles.scss` painting `border-radius: 50%`
+// on a box it never made square (48 × 50 px measured on
+// `Components/Session/List/Session list column` → rail story). A percentage
+// radius follows the box, so ANY future content change turns the circle into
+// an ellipse again. Here the radius is stated in px and equals half the fixed
+// width, which is a stadium/pill for every height — it cannot go egg-shaped.
+
+// Every colour is an M3 role with its dev fallback; no `on-*` role is used as
+// a background or border (m3Sweep #27 / #3).
+
+$rail-pill-width: 48px;
+$rail-pill-height: 80px;
+
+// Half the width. Stated in px on purpose — a `%` radius follows the box and
+// is exactly how the old circle became an egg.
+$rail-pill-radius: 24px;
+
+// Frank: "Und wir sollten diesen Abstand auch halten." The expanded list's
+// card rhythm is 24 px (T5, `sessionsListItem.styles.scss`); the rail keeps
+// exactly that. The old `--iconOnly` rule flattened it to 0.
+$rail-pill-gap: 24px;
+$rail-mark-slot: 16px;
+$rail-mark-glyph: 14px;
+
+.sessionRailPill {
+	// Fixed portrait box. Both numbers are asserted in the story's `play`,
+	// so "eiförmig" cannot silently return.
+	width: $rail-pill-width;
+	height: $rail-pill-height;
+	min-width: $rail-pill-width;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 4px 8px;
+
+	// Half the width — a stadium at any height, never an ellipse.
+	border-radius: $rail-pill-radius;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		box-shadow 160ms ease;
+
+	&:hover {
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	// Same keyboard halo the expanded cards use (WP-06 Slice 0b).
+	&:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
+	// A row with new messages is legible before the marks are read.
+	// Declared BEFORE `--active` so the open conversation keeps its #597 ring
+	// when it is also unread (both classes sit on the same element).
+	&--unread {
+		border-color: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+	}
+
+	// #597: the selected row is a 2 px primary ring, same as the expanded card.
+	&--active {
+		@include list-item-selected-border;
+
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	&__avatar {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		flex: 0 0 auto;
+	}
+
+	// Up to four marks; two per row, so four fit inside 48 px minus padding.
+	&__marks {
+		flex: 1 1 auto;
+		display: flex;
+		flex-wrap: wrap;
+		align-content: center;
+		justify-content: center;
+		gap: 2px;
+		width: 100%;
+		min-height: 0;
+	}
+
+	&__mark {
+		width: $rail-mark-slot;
+		height: $rail-mark-slot;
+		flex: 0 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: $rail-mark-glyph;
+			height: $rail-mark-glyph;
+			display: block;
+			fill: currentcolor;
+		}
+	}
+
+	// The house's unread language: a filled dot in the unread role — the same
+	// token the toolbar badge, the channel card, the FAB and the panel header
+	// use (supervisionPanel/README.md, "One unread role").
+	&__mark--unread {
+		background: transparent;
+		position: relative;
+
+		&::after {
+			content: '';
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: var(
+				--oriso-unread-indicator-color,
+				var(--m3-error, #cc0000)
+			);
+		}
+	}
+}
+
+// The rail column itself: one pill per row, Frank's 24 px rhythm kept.
+.sessionRailList {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: $rail-pill-gap;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
