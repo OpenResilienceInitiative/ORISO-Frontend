@@ -53,6 +53,8 @@ export const EVENT_PARAM_KEYS = [
 	'actorUserId',
 	'participants',
 	'participantCount',
+	'eventAt',
+	'inferredFromMembership',
 	'forcedScopeKey',
 	// #924: added on the frontend first. The backend starts emitting it with
 	// ORISO-UserService#961; until then the key is simply absent, which the
@@ -110,6 +112,15 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.startedAt = asNullableString(source.startedAt);
 	params.endedAt = asNullableString(source.endedAt);
 	params.actorUserId = asNullableString(source.actorUserId);
+	params.eventAt = asNullableString(source.eventAt);
+	if (
+		typeof source.inferredFromMembership === 'boolean' ||
+		source.inferredFromMembership === null
+	) {
+		params.inferredFromMembership = source.inferredFromMembership as
+			| boolean
+			| null;
+	}
 	if (
 		typeof source.durationSeconds === 'number' &&
 		Number.isFinite(source.durationSeconds)
