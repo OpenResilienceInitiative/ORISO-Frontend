@@ -92,4 +92,25 @@ describe('CaseHandoverConsentCard', () => {
 		expect(onDecline).toHaveBeenCalledOnce();
 		expect(onApprove).not.toHaveBeenCalled();
 	});
+
+	it('flips the consent switch to off when the client withdraws consent', () => {
+		render(
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		);
+
+		const optOutSwitch = screen.getByRole('switch', {
+			name: 'I consent to data processing for this case handover'
+		}) as HTMLInputElement;
+		expect(optOutSwitch.checked).toBe(true);
+
+		fireEvent.click(optOutSwitch);
+		expect(optOutSwitch.checked).toBe(false);
+
+		fireEvent.click(optOutSwitch);
+		expect(optOutSwitch.checked).toBe(true);
+	});
 });
