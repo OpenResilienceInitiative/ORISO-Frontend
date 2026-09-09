@@ -58,9 +58,14 @@ export const FlyoutMenu: React.FC<FlyoutMenuProps> = ({
 	return (
 		<div className={`flyoutMenu flyoutMenu--${position}`}>
 			<button
+				type="button"
 				aria-label={translate('app.menu')}
 				title={translate('app.menu')}
-				onClick={handleFlyout}
+				aria-expanded={flyoutShown}
+				onClick={(event) => {
+					event.stopPropagation();
+					handleFlyout();
+				}}
 				className="flyoutMenu__trigger"
 			>
 				<MenuHorizontalIcon />

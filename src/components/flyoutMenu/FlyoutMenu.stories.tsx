@@ -1,5 +1,6 @@
 import React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from 'storybook/test';
 import { FlyoutMenu } from './FlyoutMenu';
 
 const meta = {
@@ -38,4 +39,26 @@ export const Open: Story = {
 			<button type="button">Delete</button>
 		</FlyoutMenu>
 	)
+};
+
+export const OpenedByTrigger: Story = {
+	name: 'Opened by trigger click',
+	args: { position: 'left' },
+	render: (args) => (
+		<FlyoutMenu {...args}>
+			<button type="button">Bannen</button>
+		</FlyoutMenu>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const trigger = canvas.getByRole('button', {
+			name: 'Weitere Funktionen'
+		});
+
+		await userEvent.click(trigger);
+		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		await expect(
+			canvas.getByRole('button', { name: 'Bannen' })
+		).toBeVisible();
+	}
 };
