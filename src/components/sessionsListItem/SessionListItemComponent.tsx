@@ -86,7 +86,6 @@ import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelp
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
-import { getSessionDropdownPosition } from './sessionDropdownPosition';
 import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	getLatestMatrixRoomPreview,
@@ -171,10 +170,6 @@ export const SessionListItemComponent = ({
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
 	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
-	const [dropdownPosition, setDropdownPosition] = useState({
-		top: 0,
-		left: 0
-	});
 	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
 	// therefore mounted at the component root, not inside the flyout — clicking
 	// the confirm overlay counts as an outside click and closes the flyout, so
@@ -571,28 +566,6 @@ export const SessionListItemComponent = ({
 		};
 	}, [flyoutOpen]);
 
-	// Recalculate dropdown position when it's open and window resizes/scrolls
-	useEffect(() => {
-		if (flyoutOpen && menuIconRef.current) {
-			const updatePosition = () => {
-				if (menuIconRef.current) {
-					const rect = menuIconRef.current.getBoundingClientRect();
-					setDropdownPosition(
-						getSessionDropdownPosition(rect, window.innerWidth)
-					);
-				}
-			};
-
-			window.addEventListener('scroll', updatePosition, true);
-			window.addEventListener('resize', updatePosition);
-
-			return () => {
-				window.removeEventListener('scroll', updatePosition, true);
-				window.removeEventListener('resize', updatePosition);
-			};
-		}
-	}, [flyoutOpen]);
-
 	if (!activeSession) {
 		return null;
 	}
@@ -692,13 +665,7 @@ export const SessionListItemComponent = ({
 	const handleMenuClick = (e: React.MouseEvent) => {
 		e.stopPropagation(); // Prevent card click
 		const newState = !flyoutOpen;
-		if (newState && menuIconRef.current) {
-			// Calculate position when opening - use getBoundingClientRect for viewport coordinates
-			const rect = menuIconRef.current.getBoundingClientRect();
-			setDropdownPosition(
-				getSessionDropdownPosition(rect, window.innerWidth)
-			);
-		}
+
 		setFlyoutOpen(newState);
 	};
 
@@ -911,7 +878,6 @@ export const SessionListItemComponent = ({
 							{hasChatroomSettingsActions && (
 								<SessionListItemMenu
 									flyoutOpen={flyoutOpen}
-									dropdownPosition={dropdownPosition}
 									menuIconRef={menuIconRef}
 									dropdownRef={dropdownRef}
 									dropdownId={dropdownId}
@@ -1175,7 +1141,6 @@ export const SessionListItemComponent = ({
 						{(isAsker || hasChatroomSettingsActions) && (
 							<SessionListItemMenu
 								flyoutOpen={flyoutOpen}
-								dropdownPosition={dropdownPosition}
 								menuIconRef={menuIconRef}
 								dropdownRef={dropdownRef}
 								dropdownId={dropdownId}

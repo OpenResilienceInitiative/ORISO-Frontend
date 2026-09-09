@@ -1,3 +1,4 @@
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import {
 	MouseEventHandler,
@@ -120,6 +121,24 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const menuPosition = useChatMenuPosition({
+		open: Boolean(flyoutOpen),
+		anchorRef: menuTriggerRef,
+		menuRef
+	});
+	useEffect(() => {
+		if (!flyoutOpen) return;
+		const closeIfTriggerHidden = () => {
+			// Desktop and mobile use separate triggers. A breakpoint change
+			// can hide the anchor, so close instead of positioning at its zero rect.
+			if (menuTriggerRef.current?.getClientRects().length === 0) {
+				setFlyoutOpen(false);
+			}
+		};
+		window.addEventListener('resize', closeIfTriggerHidden);
+		return () => window.removeEventListener('resize', closeIfTriggerHidden);
+	}, [flyoutOpen]);
 	const handleOpenGroupChatInfo = () => {
 		setFlyoutOpen(false);
 		// The dialog restores focus here after closing, rather than to its
@@ -620,10 +639,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 					<ChatMenuDropdown
 						id="flyout"
+						ref={menuRef}
 						className={`sessionMenu__content${
 							flyoutOpen ? ' sessionMenu__content--open' : ''
 						}`}
-						style={legalModal ? { display: 'none' } : undefined}
+						style={{
+							...menuPosition,
+							...(legalModal ? { display: 'none' } : {})
+						}}
+						onKeyDown={(event) => {
+							if (event.key === 'Escape') {
+								setFlyoutOpen(false);
+								menuTriggerRef.current?.focus();
+							}
+						}}
 						ariaLabel={translate(
 							'groupChat.info.settings.headline',
 							'Chatraum Einstellungen'
@@ -668,7 +697,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								<SessionMenuItemContent
 									icon={<GroupChatInfoIcon />}
 									title={translate('chatFlyout.askerProfil')}
-									shortcut="⇧P"
 								/>
 							</Link>
 						)}
@@ -703,7 +731,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										'sessionHeader.supervisor.modal.title',
 										'Supervisor verwalten'
 									)}
-									shortcut="⇧S"
 								/>
 							</div>
 						)}
@@ -733,7 +760,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									disabled={
 										props.mobileEndAnonymousChatDisabled
 									}
-									shortcut="⇧E"
 								/>
 							</div>
 						)}
@@ -764,7 +790,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									disabled={
 										props.mobileDeleteAnonymousAccountDisabled
 									}
-									shortcut="Shift+D"
 								/>
 							</div>
 						)}
@@ -817,7 +842,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													'chatFlyout.archiveDescription',
 													'Der Chat wird in das Archiv verschoben.'
 												)}
-												shortcut="⇧A"
 											/>
 										</div>
 									) : (
@@ -834,7 +858,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													'chatFlyout.dearchiveDescription',
 													'Der Chat wird wieder in die aktive Liste verschoben.'
 												)}
-												shortcut="⇧A"
 											/>
 										</div>
 									)}
@@ -866,7 +889,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													'chatFlyout.removeDescription',
 													'Der Chat und Nutzer werden in 48h gelöscht.'
 												)}
-												shortcut="⇧D"
 											/>
 										</div>
 									)}
@@ -1031,7 +1053,6 @@ const SessionMenuFlyoutGroup = ({
 						<SessionMenuItemContent
 							icon={<LeaveChatIcon />}
 							title={translate('chatFlyout.leaveGroupChat')}
-							shortcut="⇧L"
 						/>
 					</div>
 				)}
@@ -1044,7 +1065,6 @@ const SessionMenuFlyoutGroup = ({
 					<SessionMenuItemContent
 						icon={<GroupChatInfoIcon />}
 						title={translate('chatFlyout.groupChatInfo')}
-						shortcut="⇧I"
 					/>
 				</Link>
 			)}
@@ -1058,7 +1078,6 @@ const SessionMenuFlyoutGroup = ({
 						<SessionMenuItemContent
 							icon={<StopGroupChatIcon />}
 							title={translate('chatFlyout.stopGroupChat')}
-							shortcut="⇧E"
 						/>
 					</div>
 				)}
@@ -1075,7 +1094,6 @@ const SessionMenuFlyoutGroup = ({
 						<SessionMenuItemContent
 							icon={<EditGroupChatIcon />}
 							title={translate('chatFlyout.editGroupChat')}
-							shortcut="⇧G"
 						/>
 					</Link>
 				)}

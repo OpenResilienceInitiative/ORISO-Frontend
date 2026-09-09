@@ -4,11 +4,21 @@ import {
 	Box,
 	Button,
 	Popover,
-	MenuList,
-	MenuItem,
+	Fade,
+	IconButton,
+	Tooltip,
 	TextField,
 	Typography
 } from '@mui/material';
+import {
+	ChatMenuDropdownItem,
+	ChatMenuDropdownDivider
+} from '../chatMenuDropdown/ChatMenuDropdown';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
+import { CopyIcon } from '../../resources/img/icons';
+import googleCalendarIcon from '../../resources/img/icons/googlecalendar.svg';
+import outlookCalendarIcon from '../../resources/img/icons/outlook-calendar.svg';
+import icsIcon from '../../resources/img/icons/download.svg';
 import { useTranslation } from 'react-i18next';
 import {
 	buildNeutralGroupChatCalendar,
@@ -30,7 +40,15 @@ export const GroupChatCalendarMenu = ({
 	const instanceId = useId().replace(/:/g, '');
 	const triggerId = `${instanceId}-group-chat-calendar-trigger`;
 	const menuId = `${instanceId}-group-chat-calendar-menu`;
+	const anchorRef = useRef<HTMLButtonElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
 	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+	const menuStyle = useChatMenuPosition({
+		open: Boolean(anchor),
+		anchorRef,
+		menuRef,
+		width: 360
+	});
 	const [copyState, setCopyState] = useState<
 		'pending' | 'success' | 'error' | null
 	>(null);
@@ -68,21 +86,30 @@ export const GroupChatCalendarMenu = ({
 		<>
 			<Button
 				id={triggerId}
+				ref={anchorRef}
 				variant="outlined"
 				onClick={(event) => {
 					setCopyState(null);
 					setAnchor(event.currentTarget);
 				}}
 				sx={{ minHeight: 44, textTransform: 'none' }}
-				aria-haspopup="menu"
+				aria-haspopup="dialog"
 				aria-expanded={Boolean(anchor)}
 				aria-controls={anchor ? menuId : undefined}
 			>
 				{translate('groupChat.calendar.add')}
 			</Button>
 			<Popover
+				anchorReference="none"
+				TransitionComponent={Fade}
 				PaperProps={{
-					sx: { width: 360, maxWidth: 'calc(100vw - 32px)' }
+					'ref': menuRef,
+					'id': menuId,
+					'role': 'dialog',
+					'aria-labelledby': triggerId,
+					'className': 'chatMenuDropdown',
+					'style': menuStyle,
+					'sx': { width: 360 }
 				}}
 				anchorEl={anchor}
 				open={Boolean(anchor)}
@@ -107,61 +134,73 @@ export const GroupChatCalendarMenu = ({
 						fullWidth
 					/>
 				</Box>
-				<Box sx={{ px: 2, py: 1 }}>
+				<ChatMenuDropdownItem
+					icon={<img src={icsIcon} alt="" width={20} height={20} />}
+					title={translate('groupChat.calendar.download')}
+					onClick={() => {
+						downloadNeutralGroupChatIcs(calendar.ics);
+						closeMenu();
+					}}
+				/>
+				<ChatMenuDropdownDivider />
+				<Box sx={{ px: 1, pb: 1 }}>
 					<Typography variant="body2" color="text.secondary">
 						{translate('groupChat.calendar.shareHint')}
 					</Typography>
 				</Box>
-				<MenuList
-					id={menuId}
-					aria-labelledby={triggerId}
-					sx={{
-						'& .MuiMenuItem-root': {
-							minHeight: 44,
-							whiteSpace: 'normal'
-						}
-					}}
-				>
-					<MenuItem
-						onClick={() => {
-							downloadNeutralGroupChatIcs(calendar.ics);
-							closeMenu();
-						}}
+				{(
+					[
+						[
+							'google',
+							googleCalendarIcon,
+							calendar.googleUrl,
+							'copyGoogle'
+						],
+						[
+							'outlook',
+							outlookCalendarIcon,
+							calendar.outlookUrl,
+							'copyOutlook'
+						]
+					] as const
+				).map(([provider, icon, url, copyLabel]) => (
+					<Box
+						key={provider}
+						sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
 					>
-						{translate('groupChat.calendar.download')}
-					</MenuItem>
-					<MenuItem
-						component="a"
-						href={calendar.googleUrl}
-						target="_blank"
-						rel="noreferrer"
-						onClick={closeMenu}
-					>
-						{translate('groupChat.calendar.google')}
-					</MenuItem>
-					<MenuItem
-						component="a"
-						href={calendar.outlookUrl}
-						target="_blank"
-						rel="noreferrer"
-						onClick={closeMenu}
-					>
-						{translate('groupChat.calendar.outlook')}
-					</MenuItem>
-
-					<MenuItem
-						disabled={copyState === 'pending'}
-						onClick={() => void copyLink(calendar.googleUrl)}
-					>
-						{translate('groupChat.calendar.copyGoogle')}
-					</MenuItem>
-					<MenuItem
-						disabled={copyState === 'pending'}
-						onClick={() => void copyLink(calendar.outlookUrl)}
-					>
-						{translate('groupChat.calendar.copyOutlook')}
-					</MenuItem>
-				</MenuList>
+						<ChatMenuDropdownItem
+							as="a"
+							href={url}
+							target="_blank"
+							rel="noreferrer"
+							onClick={closeMenu}
+							icon={
+								<img src={icon} alt="" width={20} height={20} />
+							}
+							title={translate(`groupChat.calendar.${provider}`)}
+						/>
+						<Tooltip
+							title={translate(`groupChat.calendar.${copyLabel}`)}
+						>
+							<span>
+								<IconButton
+									aria-label={translate(
+										`groupChat.calendar.${copyLabel}`
+									)}
+									disabled={copyState === 'pending'}
+									onClick={() => void copyLink(url)}
+									sx={{
+										'width': 44,
+										'height': 44,
+										'& svg': { width: 20, height: 20 }
+									}}
+								>
+									<CopyIcon />
+								</IconButton>
+							</span>
+						</Tooltip>
+					</Box>
+				))}
 				{(copyState === 'success' || copyState === 'error') && (
 					<Box sx={{ px: 1, py: 1 }}>
 						<Alert

@@ -486,7 +486,7 @@ export const MessageItemComponent = ({
 	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
 		useState<Element | null>(null);
 	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
-		useState<Placement>('top-start');
+		useState<Placement>('right-start');
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -1468,6 +1468,7 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(actionMenuAnchor, menuEl, () => {
 			computePosition(actionMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: actionMenuPlacement,
 				middleware: [offset(10), flip(), shift({ padding: 12 })]
 			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
@@ -1481,6 +1482,7 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
 			computePosition(visibilityMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: visibilityMenuPlacement,
 				middleware: [offset(6), flip(), shift({ padding: 12 })]
 			}).then(({ x, y }) =>
@@ -1573,9 +1575,9 @@ export const MessageItemComponent = ({
 			setIsActionMenuOpen(false);
 			setActionMenuPosition(null);
 			setActionMenuAnchor(null);
-			// The menu rises from the +N chip, aligned to the side the chip is on.
+			// Open beside the chip, then flip if the viewport edge requires it.
 			setVisibilityMenuPlacement(
-				side === 'left' ? 'top-start' : 'top-end'
+				side === 'left' ? 'right-start' : 'left-start'
 			);
 			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
@@ -2718,6 +2720,8 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
 								// Off-screen until floating-ui has measured the
 								// rendered menu — it needs the real element, so
 								// the first paint cannot already know where it
@@ -2845,6 +2849,8 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
 								top: `${visibilityMenuPosition?.top ?? -9999}px`,
 								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000

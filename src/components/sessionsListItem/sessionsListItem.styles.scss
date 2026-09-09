@@ -161,11 +161,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			@include list-item-active-menu-border($important: true);
 		}
 
-		// Flyout open: vertical pill (height > width) + 2px primary-container
+		// Keep the trigger geometry stable when its menu opens.
 		.sessionsListItem__menuIcon {
-			width: 32px;
-			height: 48px;
-
 			@include list-item-active-menu-border;
 			color: $session-active-border;
 		}
@@ -365,8 +362,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		width: 48px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
 		padding: 0;
 		flex-shrink: 0;
 		position: relative;
@@ -378,8 +375,6 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 		transition:
-			width 160ms ease,
-			height 160ms ease,
 			border-color 160ms ease,
 			background-color 160ms ease;
 
