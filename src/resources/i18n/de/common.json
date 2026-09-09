@@ -887,8 +887,10 @@
 			},
 			"dialog": {
 				"circleTitle": "Gesprächskreis – Informationen & Einstellungen",
+				"circleOwnerDescription": "Als verantwortliche Person verwalten Sie hier Teilnehmende und Teamrollen Ihres Gesprächskreises. Gruppenangaben können Sie über „Bearbeiten“ ändern, solange die Gruppe nicht aktiv ist. Andere Teilnehmende können die Angaben ansehen, aber keine Teamrollen oder Gruppeneinstellungen ändern.",
 				"circleDescription": "Hier sehen Sie, wer teilnimmt und wann Ihr Gesprächskreis stattfindet. Teilen Sie die Einladung oder übernehmen Sie den Termin in Ihren Kalender.",
 				"teamTitle": "Interne Gruppe – Informationen & Einstellungen",
+				"teamOwnerDescription": "Als verantwortliche Person verwalten Sie hier Mitglieder und Teamrollen Ihrer internen Gruppe. Gruppenangaben können Sie über „Bearbeiten“ ändern, solange die Gruppe nicht aktiv ist. Andere Mitglieder können die Angaben ansehen, aber keine Teamrollen oder Gruppeneinstellungen ändern.",
 				"teamDescription": "Hier finden Sie die Mitglieder und Angaben zu Ihrer internen Gruppe sowie die Rollen im Beratungsteam.",
 				"rolesHint": "Nur die verantwortliche Person kann Teamrollen ändern, die Verantwortung übertragen oder Personen aus der Gruppe entfernen.",
 				"detailsTitle": "Angaben zur Gruppe",

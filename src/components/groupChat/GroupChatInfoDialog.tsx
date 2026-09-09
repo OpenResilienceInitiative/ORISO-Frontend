@@ -6,6 +6,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 export interface GroupChatInfoDialogProps {
 	title: string;
 	kind?: 'circle' | 'team';
+	isOwner?: boolean;
 	active?: boolean;
 	onClose: () => void;
 	settings: Array<{ label: string; value: React.ReactNode }>;
@@ -19,6 +20,7 @@ export interface GroupChatInfoDialogProps {
 export const GroupChatInfoDialog = ({
 	title,
 	kind = 'circle',
+	isOwner = false,
 	active = false,
 	onClose,
 	settings,
@@ -37,7 +39,9 @@ export const GroupChatInfoDialog = ({
 	return (
 		<M3Dialog
 			title={t(`groupChat.info.dialog.${kind}Title`)}
-			description={t(`groupChat.info.dialog.${kind}Description`)}
+			description={t(
+				`groupChat.info.dialog.${kind}${isOwner ? 'Owner' : ''}Description`
+			)}
 			onClose={onClose}
 			closeLabel={t('app.close')}
 			width={880}

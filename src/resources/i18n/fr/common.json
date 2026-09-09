@@ -834,8 +834,10 @@
 			},
 			"dialog": {
 				"circleTitle": "Groupe d’entraide – informations et paramètres",
+				"circleOwnerDescription": "En tant que responsable, vous gérez ici les participants et les rôles de votre groupe. Vous pouvez modifier les informations via Modifier lorsque le groupe est inactif. Les autres participants peuvent consulter les informations, mais ne peuvent pas modifier les rôles ni les paramètres du groupe.",
 				"circleDescription": "Consultez la liste des participants et la date de votre rencontre. Partagez l’invitation ou ajoutez le rendez-vous à votre calendrier.",
 				"teamTitle": "Groupe interne – informations et paramètres",
+				"teamOwnerDescription": "En tant que responsable, vous gérez ici les membres et les rôles de votre groupe interne. Vous pouvez modifier les informations via Modifier lorsque le groupe est inactif. Les autres membres peuvent consulter les informations, mais ne peuvent pas modifier les rôles ni les paramètres du groupe.",
 				"teamDescription": "Retrouvez les membres et les informations de votre groupe interne, ainsi que les rôles de l’équipe de consultation.",
 				"rolesHint": "Seule la personne responsable peut modifier les rôles, transférer la responsabilité ou retirer des personnes du groupe.",
 				"detailsTitle": "Informations sur le groupe",

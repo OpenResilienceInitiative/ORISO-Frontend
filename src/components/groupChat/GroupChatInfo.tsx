@@ -247,6 +247,7 @@ export const GroupChatInfo = () => {
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
 			<GroupChatInfoDialog
+				isOwner={isGroupChatOwner(activeSession, userData)}
 				kind={
 					getModality(activeSession) === Modality.SELF_HELP
 						? 'circle'
