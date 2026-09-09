@@ -78,6 +78,9 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 		expect(createLink.classList).not.toContain(
 			'sessionsListToolbar__chip--iconOnly'
 		);
+		expect(createLink.classList).toContain(
+			'sessionsListToolbar__chip--persistentLabel'
+		);
 		expect(
 			createLink.querySelector('.sessionsListToolbar__chipLabel')
 				?.textContent

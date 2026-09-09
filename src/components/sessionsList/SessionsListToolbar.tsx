@@ -647,10 +647,14 @@ export const SessionsListToolbar = ({
 				<div className="sessionsListToolbar__chipsRow">
 					{showCreateGroupChatAction && (
 						<Link
-							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--active':
-									createGroupChatActive
-							})}
+							className={clsx(
+								'sessionsListToolbar__chip',
+								'sessionsListToolbar__chip--persistentLabel',
+								{
+									'sessionsListToolbar__chip--active':
+										createGroupChatActive
+								}
+							)}
 							to={createGroupChatPath}
 							aria-label={translate(
 								'sessionList.createChat.buttonTitle'

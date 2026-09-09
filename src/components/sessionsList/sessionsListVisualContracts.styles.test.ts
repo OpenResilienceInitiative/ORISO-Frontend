@@ -25,6 +25,16 @@ const compileStyles = (stylesheet: string) =>
 	).css;
 
 describe('session list visual contracts', () => {
+	it('keeps the Create action label visible while the action is inactive', () => {
+		const css = compileStyles(
+			'src/components/sessionsList/sessionsList.styles.scss'
+		);
+
+		expect(css).toMatch(
+			/\.sessionsListToolbar__chip--persistentLabel \.sessionsListToolbar__chipLabel\s*\{[^}]*max-width:\s*180px;[^}]*margin-left:\s*8px;[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(0\);/s
+		);
+	});
+
 	it('keeps every populated session card independently rounded', () => {
 		const css = compileStyles(
 			'src/components/sessionsListItem/sessionsListItem.styles.scss'
