@@ -127,10 +127,7 @@ export const ScheduleRows = ({
 	const durationLabel = translate('groupChat.circle.rows.durationLabel');
 	const repeatLabel = translate('groupChat.circle.rows.repeatLabel');
 	const timeLabel = translate('groupChat.circle.rows.timeLabel');
-	const intervalLabel = translate(
-		groupChatIntervalLabelKey(value.interval),
-		value.interval
-	);
+	const intervalLabel = translate(groupChatIntervalLabelKey(value.interval));
 	const repeatCountLabel = translate('groupChat.circle.rows.repeatValue', {
 		count: value.repeatCount
 	});
@@ -286,10 +283,11 @@ export const ScheduleRows = ({
 				ref={mediumRef}
 				fullWidth
 				icon={<ModalityIcon />}
-				label={translate(
-					groupChatModalityLabelKey(value.modality),
-					translate('groupChat.circle.rows.mediumLabel')
-				)}
+				label={
+					value.modality
+						? translate(groupChatModalityLabelKey(value.modality))
+						: translate('groupChat.circle.rows.mediumLabel')
+				}
 				variant={variantFor('medium', Boolean(value.modality))}
 				open={openRow === 'medium'}
 				onClick={() => toggle('medium')}
