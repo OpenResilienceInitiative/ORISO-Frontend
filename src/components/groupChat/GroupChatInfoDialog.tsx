@@ -5,6 +5,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 
 export interface GroupChatInfoDialogProps {
 	title: string;
+	kind?: 'circle' | 'team';
 	active?: boolean;
 	onClose: () => void;
 	settings: Array<{ label: string; value: React.ReactNode }>;
@@ -17,6 +18,7 @@ export interface GroupChatInfoDialogProps {
 /** The same information hierarchy is used by the routed dialog and Storybook. */
 export const GroupChatInfoDialog = ({
 	title,
+	kind = 'circle',
 	active = false,
 	onClose,
 	settings,
@@ -34,13 +36,20 @@ export const GroupChatInfoDialog = ({
 	};
 	return (
 		<M3Dialog
-			title={t('groupChat.info.headline')}
-			description={title}
+			title={t(`groupChat.info.dialog.${kind}Title`)}
+			description={t(`groupChat.info.dialog.${kind}Description`)}
 			onClose={onClose}
 			closeLabel={t('app.close')}
 			width={880}
 		>
 			<Stack spacing={2}>
+				<Typography
+					component="h3"
+					variant="subtitle1"
+					sx={{ overflowWrap: 'anywhere' }}
+				>
+					{title}
+				</Typography>
 				{(active || actions) && (
 					<Stack
 						direction="row"
@@ -77,6 +86,13 @@ export const GroupChatInfoDialog = ({
 							>
 								{t('groupChat.info.subscribers.headline')}
 							</Typography>
+							<Typography
+								variant="body2"
+								color="text.secondary"
+								sx={{ mb: 2 }}
+							>
+								{t('groupChat.info.dialog.rolesHint')}
+							</Typography>
 							{participants}
 						</Box>
 						{invitation && (
@@ -91,7 +107,20 @@ export const GroupChatInfoDialog = ({
 							variant="subtitle1"
 							sx={{ mb: 2 }}
 						>
-							{t('groupChat.info.settings.headline')}
+							{t('groupChat.info.dialog.detailsTitle')}
+						</Typography>
+						<Typography
+							variant="body2"
+							color="text.secondary"
+							sx={{ mb: 2 }}
+						>
+							{t(
+								editAction
+									? 'groupChat.info.dialog.editableSettings'
+									: active
+										? 'groupChat.info.dialog.activeSettings'
+										: 'groupChat.info.dialog.readOnlySettings'
+							)}
 						</Typography>
 						<Stack component="dl" spacing={2} sx={{ m: 0 }}>
 							{settings.map(({ label, value }) => (

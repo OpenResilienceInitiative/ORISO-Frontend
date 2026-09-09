@@ -314,7 +314,7 @@
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
 		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
-		"groupChatInfo": "Sohbet bilgileri",
+		"groupChatInfo": "Bilgiler ve ayarlar",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
 		"mute": "Sessize al",
@@ -643,7 +643,12 @@
 			"download": "ICS indir",
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
-			"titleLabel": "Nötr takvim başlığı"
+			"titleLabel": "Nötr takvim başlığı",
+			"copyGoogle": "Google Takvim bağlantısını kopyala",
+			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
+			"linkCopied": "Takvim bağlantısı kopyalandı.",
+			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
+			"shareHint": "Bu takvim bağlantılarını web sitenizde de kullanabilirsiniz. Bağlantılar, seçilen başlıkla yalnızca bu randevuyu içerir; grup davet bağlantısını içermez. Sonraki değişiklikler otomatik olarak güncellenmez."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -826,6 +831,17 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar"
+			},
+			"dialog": {
+				"circleTitle": "Destek grubu – bilgiler ve ayarlar",
+				"circleDescription": "Kimlerin katıldığını ve grubunuzun ne zaman buluşacağını görün. Davet bağlantısını paylaşın veya randevuyu takviminize ekleyin.",
+				"teamTitle": "Dahili grup – bilgiler ve ayarlar",
+				"teamDescription": "Dahili grubunuzun üyelerini, grup bilgilerini ve danışmanlık ekibinin rollerini burada bulabilirsiniz.",
+				"rolesHint": "Yalnızca grup sahibi ekip rollerini değiştirebilir, sahipliği devredebilir veya kişileri gruptan çıkarabilir.",
+				"detailsTitle": "Grup bilgileri",
+				"editableSettings": "Bu bilgiler burada gösterilir. Ayarları açmak ve kullanılabilir alanları değiştirmek için “Düzenle”yi seçin.",
+				"activeSettings": "Grup etkinken bu bilgiler düzenlenemez. Grup sahibi ekip rollerini yönetmeye devam edebilir.",
+				"readOnlySettings": "Bu bilgiler burada salt okunurdur. Grup sahibi, grup etkin değilken bilgileri düzenleyebilir."
 			}
 		},
 		"join": {

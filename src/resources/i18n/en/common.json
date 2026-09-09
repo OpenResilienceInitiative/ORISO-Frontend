@@ -297,7 +297,7 @@
 		"dearchiveDescription": "Restore chat from archive.",
 		"editGroupChat": "Chat settings",
 		"editGroupChatDescription": "Change this chat's topic, schedule and moderation.",
-		"groupChatInfo": "Chat info",
+		"groupChatInfo": "Information & settings",
 		"imprint": "Imprint",
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
@@ -626,7 +626,12 @@
 			"download": "Download ICS",
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
-			"titleLabel": "Neutral calendar title"
+			"titleLabel": "Neutral calendar title",
+			"copyGoogle": "Copy Google Calendar link",
+			"copyOutlook": "Copy Outlook Calendar link",
+			"linkCopied": "Calendar link copied.",
+			"copyError": "The calendar link could not be copied. Please try again.",
+			"shareHint": "You can also use these calendar links on your website. They contain this single appointment with the chosen calendar title, without the group invitation link. Later changes are not updated automatically."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -865,6 +870,17 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants"
+			},
+			"dialog": {
+				"circleTitle": "Support circle – information & settings",
+				"circleDescription": "See who is taking part and when your circle meets. Share the invitation or add the appointment to your calendar.",
+				"teamTitle": "Internal group – information & settings",
+				"teamDescription": "Find the members and details of your internal group, along with the counselling team’s roles.",
+				"rolesHint": "Only the owner can change team roles, transfer ownership or remove people from the group.",
+				"detailsTitle": "Group details",
+				"editableSettings": "These details are displayed here. Select “Edit” to open the settings and change the available fields.",
+				"activeSettings": "These details cannot be edited while the group is active. The owner can still manage team roles.",
+				"readOnlySettings": "These details are read-only here. The owner can edit them while the group is not active."
 			}
 		},
 		"join": {

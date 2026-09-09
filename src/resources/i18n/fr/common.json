@@ -314,7 +314,7 @@
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
 		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
-		"groupChatInfo": "Infos sur le chat",
+		"groupChatInfo": "Informations et paramètres",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",
 		"mute": "Désactiver le son",
@@ -643,7 +643,12 @@
 			"download": "Télécharger le fichier ICS",
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
-			"titleLabel": "Titre neutre pour le calendrier"
+			"titleLabel": "Titre neutre pour le calendrier",
+			"copyGoogle": "Copier le lien Google Agenda",
+			"copyOutlook": "Copier le lien du calendrier Outlook",
+			"linkCopied": "Lien du calendrier copié.",
+			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
+			"shareHint": "Vous pouvez aussi utiliser ces liens sur votre site web. Ils contiennent ce rendez-vous unique avec le titre choisi, sans le lien d’invitation au groupe. Les modifications ultérieures ne sont pas reprises automatiquement."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -826,6 +831,17 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes"
+			},
+			"dialog": {
+				"circleTitle": "Groupe d’entraide – informations et paramètres",
+				"circleDescription": "Consultez la liste des participants et la date de votre rencontre. Partagez l’invitation ou ajoutez le rendez-vous à votre calendrier.",
+				"teamTitle": "Groupe interne – informations et paramètres",
+				"teamDescription": "Retrouvez les membres et les informations de votre groupe interne, ainsi que les rôles de l’équipe de consultation.",
+				"rolesHint": "Seule la personne responsable peut modifier les rôles, transférer la responsabilité ou retirer des personnes du groupe.",
+				"detailsTitle": "Informations sur le groupe",
+				"editableSettings": "Ces informations sont affichées ici. Sélectionnez « Modifier » pour ouvrir les paramètres et modifier les champs disponibles.",
+				"activeSettings": "Ces informations ne peuvent pas être modifiées lorsque le groupe est actif. La personne responsable peut toujours gérer les rôles.",
+				"readOnlySettings": "Ces informations sont en lecture seule ici. La personne responsable peut les modifier lorsque le groupe n’est pas actif."
 			}
 		},
 		"join": {

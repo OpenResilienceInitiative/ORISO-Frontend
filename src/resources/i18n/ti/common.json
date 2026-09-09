@@ -314,7 +314,7 @@
 		"dearchiveDescription": "ቻት ካብ ማእከል ማስታወሻ መልስ።",
 		"editGroupChat": "ቅጥዕታት ዕላል",
 		"editGroupChatDescription": "ኣርእስቲ፣ ሰዓትን ምምሕዳርን ናይዚ ዕላል ቀይር።",
-		"groupChatInfo": "ናይ ዕላል ሓበሬታ",
+		"groupChatInfo": "ሓበሬታን ቅጥዕታትን",
 		"imprint": "ኣሰር",
 		"leaveGroupChat": "ቻት ግደፍ",
 		"mute": "ስምዒት ጸጥ ኣብል",
@@ -643,7 +643,12 @@
 			"download": "ICS ኣውርድ",
 			"google": "ካላንደር Google",
 			"outlook": "ካላንደር Outlook",
-			"titleLabel": "ገለልተኛ ርእሲ ካላንደር"
+			"titleLabel": "ገለልተኛ ርእሲ ካላንደር",
+			"copyGoogle": "መላግቦ ካላንደር Google ቅዳሕ",
+			"copyOutlook": "መላግቦ ካላንደር Outlook ቅዳሕ",
+			"linkCopied": "መላግቦ ካላንደር ተቐዲሑ።",
+			"copyError": "መላግቦ ካላንደር ክቕዳሕ ኣይከኣለን። እንደገና ፈትኑ።",
+			"shareHint": "እዞም መላግቦታት ኣብ መርበብ ሓበሬታኹም እውን ክትጥቀሙሎም ትኽእሉ። ነዚ ሓደ ቆጸራ ምስ ዝመረጽኩምዎ ኣርእስቲ ጥራይ ይሕዙ፤ መላግቦ ዕድመ ጉጅለ ኣይሕዙን። ድሕሪኡ ዝግበሩ ለውጥታት ብኣውቶማቲክ ኣይሕደሱን።"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "ቆጸራ",
@@ -826,6 +831,17 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ"
+			},
+			"dialog": {
+				"circleTitle": "ናይ ሓገዝ ጉጅለ – ሓበሬታን ቅጥዕታትን",
+				"circleDescription": "መን ከም ዝሳተፍን ጉጅለኹም መዓስ ከም እትራኸብን ኣብዚ ርአዩ። ዕድመ ኣካፍሉ ወይ ቆጸራ ናብ ካላንደርኩም ወስኹ።",
+				"teamTitle": "ውሽጣዊ ጉጅለ – ሓበሬታን ቅጥዕታትን",
+				"teamDescription": "ኣብዚ ኣባላትን ሓበሬታን ናይ ውሽጣዊ ጉጅለኹም፣ ከምኡውን ግደታት ናይ ኣማኸርቲ ትረኽቡ።",
+				"rolesHint": "ግደታት ክቕይር፣ ሓላፍነት ከመሓላልፍ ወይ ሰባት ካብ ጉጅለ ከውጽእ ዝኽእል ሓላፊ ጉጅለ ጥራይ እዩ።",
+				"detailsTitle": "ሓበሬታ ጉጅለ",
+				"editableSettings": "እዚ ሓበሬታ ኣብዚ ይርአ። ቅጥዕታት ንምኽፋትን ዝፍቀዱ ክፍልታት ንምቕያርን «ኣርም» ምረጹ።",
+				"activeSettings": "ጉጅለ ንጡፍ ከሎ እዚ ሓበሬታ ክቕየር ኣይክእልን። ሓላፊ ጉጅለ ግን ግደታት ከመሓድር ይኽእል።",
+				"readOnlySettings": "እዚ ሓበሬታ ኣብዚ ንንባብ ጥራይ እዩ። ጉጅለ ንጡፍ ዘይኮነ እዋን ሓላፊ ጉጅለ ክቕይሮ ይኽእል።"
 			}
 		},
 		"join": {

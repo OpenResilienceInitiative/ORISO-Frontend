@@ -20,17 +20,22 @@ const people: UserService.Schemas.GroupChatParticipantDTO[] = [
 function Preview({
 	owner = false,
 	empty = false,
-	long = false
+	long = false,
+	kind = 'circle'
 }: {
 	owner?: boolean;
 	empty?: boolean;
 	long?: boolean;
+	kind?: 'circle' | 'team';
 }) {
 	const { t } = useTranslation();
 	const [open, setOpen] = useState(true);
-	const title = long
-		? 'Gesprächskreis für Familien und Angehörige – gemeinsam neue Perspektiven entwickeln'
-		: 'Gemeinsam den Alltag meistern';
+	const title =
+		kind === 'team'
+			? 'Abstimmung im Beratungsteam'
+			: long
+				? 'Gesprächskreis für Familien und Angehörige – gemeinsam neue Perspektiven entwickeln'
+				: 'Gemeinsam den Alltag meistern';
 	const rows = [
 		['topic', title],
 		['startDate', '09.09.2026'],
@@ -47,6 +52,7 @@ function Preview({
 			</Button>
 			{open && (
 				<GroupChatInfoDialog
+					kind={kind}
 					title={title}
 					active
 					onClose={() => setOpen(false)}
@@ -100,3 +106,5 @@ export const Owner: Story = { args: { owner: true } };
 export const Empty: Story = { args: { empty: true } };
 export const Mobile: Story = { globals: phone390Globals };
 export const LongTitle: Story = { args: { long: true } };
+
+export const InternalGroup: Story = { args: { kind: 'team' } };
