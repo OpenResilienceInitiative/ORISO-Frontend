@@ -64,4 +64,12 @@ describe('RecipientSplitButton', () => {
 		expect(getByRole('button', { name: 'Open send-to menu' })).toBeTruthy();
 		expect(getByText('Alle')).toBeTruthy();
 	});
+
+	it('uses the shared xsmall split-button atom', () => {
+		const { container } = renderButton({ variant: 'all' });
+		const root = container.firstChild as HTMLElement;
+
+		expect(root.classList).toContain('splitButton');
+		expect(root.classList).toContain('splitButton--xsmall');
+	});
 });

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { SplitButton } from '../../splitButton/SplitButton';
 import './recipientSplitButton.styles.scss';
 
 export interface RecipientSplitButtonProps {
@@ -41,50 +41,29 @@ export const RecipientSplitButton = React.forwardRef<
 		},
 		ref
 	) => (
-		<div
+		<SplitButton
 			ref={ref}
-			className={`recipientSplitButton recipientSplitButton--${variant}`}
-		>
-			<button
-				type="button"
-				className="recipientSplitButton__leading"
-				onClick={onToggle}
-				aria-haspopup="listbox"
-				aria-expanded={isOpen}
-			>
-				<span className="recipientSplitButton__icon" aria-hidden>
-					{icon}
-				</span>
+			size="xsmall"
+			variant="tonal"
+			label={
 				<span
-					className={[
-						'recipientSplitButton__label',
-						isMulti && 'recipientSplitButton__label--multi'
-					]
-						.filter(Boolean)
-						.join(' ')}
+					className={
+						isMulti
+							? 'recipientSplitButton__label--multi'
+							: undefined
+					}
 				>
 					{label}
 				</span>
-			</button>
-			<button
-				type="button"
-				className="recipientSplitButton__trailing"
-				onClick={onToggle}
-				aria-label={chevronLabel}
-				aria-haspopup="listbox"
-				aria-expanded={isOpen}
-			>
-				<KeyboardArrowUpIcon
-					className={[
-						'recipientSplitButton__chevron',
-						isOpen && 'recipientSplitButton__chevron--open'
-					]
-						.filter(Boolean)
-						.join(' ')}
-					fontSize="small"
-				/>
-			</button>
-		</div>
+			}
+			icon={icon}
+			className={`recipientSplitButton recipientSplitButton--${variant}`}
+			open={isOpen}
+			onClick={onToggle}
+			onToggleMenu={onToggle}
+			menuLabel={chevronLabel}
+			menuDirection="up"
+		/>
 	)
 );
 

@@ -71,6 +71,17 @@ export const MainDisabled: Story = {
 	args: { ...Outlined.args, mainDisabled: true }
 };
 
+export const XSmall: Story = {
+	name: 'XSmall — upward menu',
+	args: {
+		...Outlined.args,
+		label: 'Alle',
+		size: 'xsmall',
+		variant: 'tonal',
+		menuDirection: 'up'
+	}
+};
+
 export const Stepper: Story = {
 	args: {
 		label: '4 h',

@@ -12,6 +12,16 @@ $sb-surface-container-low: var(--m3-surface-container-low, #f6f3f3);
 $sb-secondary: var(--m3-secondary, #4c555f);
 
 .splitButton {
+	--split-button-height: 56px;
+	--split-button-radius: 28px;
+	--split-button-main-gap: 8px;
+	--split-button-font-size: 16px;
+	--split-button-line-height: 24px;
+	--split-button-letter-spacing: 0.15px;
+	--split-button-icon-size: 24px;
+	--split-button-trailing-width: 56px;
+	--split-button-chevron-size: 24px;
+
 	align-items: stretch;
 	display: inline-flex;
 	gap: 2px;
@@ -32,7 +42,7 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		cursor: pointer;
 		display: inline-flex;
 		font-family: inherit;
-		height: 56px;
+		height: var(--split-button-height);
 		justify-content: center;
 		padding: 0;
 		position: relative;
@@ -60,12 +70,13 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	}
 
 	&__main {
-		border-radius: 28px 4px 4px 28px;
-		font-size: 16px;
+		border-radius: var(--split-button-radius) 4px 4px
+			var(--split-button-radius);
+		font-size: var(--split-button-font-size);
 		font-weight: 500;
-		gap: 8px;
-		letter-spacing: 0.15px;
-		line-height: 24px;
+		gap: var(--split-button-main-gap);
+		letter-spacing: var(--split-button-letter-spacing);
+		line-height: var(--split-button-line-height);
 		padding: 16px 24px;
 		white-space: nowrap;
 	}
@@ -87,18 +98,20 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	}
 
 	&__trailing {
-		border-radius: 4px 28px 28px 4px;
+		border-radius: 4px var(--split-button-radius) var(--split-button-radius)
+			4px;
 		flex-shrink: 0;
-		width: 56px;
+		width: var(--split-button-trailing-width);
 	}
 
 	&__step {
 		border-radius: 4px;
 		flex-shrink: 0;
-		width: 56px;
+		width: var(--split-button-trailing-width);
 
 		&--up {
-			border-radius: 4px 28px 28px 4px;
+			border-radius: 4px var(--split-button-radius)
+				var(--split-button-radius) 4px;
 		}
 	}
 
@@ -109,8 +122,8 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		line-height: 1;
 
 		svg {
-			height: 24px;
-			width: 24px;
+			height: var(--split-button-icon-size);
+			width: var(--split-button-icon-size);
 		}
 
 		/* Legacy icon assets carry hard-coded fills; the segment colour wins. */
@@ -121,14 +134,40 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	}
 
 	&__chevron {
-		height: 24px;
+		height: var(--split-button-chevron-size);
 		transition: transform 200ms ease;
-		width: 24px;
+		width: var(--split-button-chevron-size);
 	}
 
 	&--open &__trailing &__chevron,
 	&--open &__trailing .splitButton__chevron {
 		transform: rotate(180deg);
+	}
+
+	&--menuUp &__trailing &__chevron,
+	&--menuUp &__trailing .splitButton__chevron {
+		transform: rotate(180deg);
+	}
+
+	&--menuUp.splitButton--open &__trailing &__chevron,
+	&--menuUp.splitButton--open &__trailing .splitButton__chevron {
+		transform: rotate(0deg);
+	}
+
+	&--xsmall {
+		--split-button-height: 32px;
+		--split-button-radius: 16px;
+		--split-button-main-gap: 4px;
+		--split-button-font-size: 14px;
+		--split-button-line-height: 20px;
+		--split-button-letter-spacing: 0.1px;
+		--split-button-icon-size: 20px;
+		--split-button-trailing-width: 48px;
+		--split-button-chevron-size: 22px;
+	}
+
+	&--xsmall &__main {
+		padding: 0 10px 0 12px;
 	}
 
 	/* Tonal — a value the counsellor has chosen ("Selected / chosen items use

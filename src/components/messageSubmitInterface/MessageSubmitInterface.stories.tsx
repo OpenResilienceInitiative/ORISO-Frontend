@@ -609,6 +609,36 @@ export const GroupChat: Story = {
 	)
 };
 
+export const GroupChatAudienceMenuOpen: Story = {
+	name: 'Group chat — audience menu open',
+	render: () => (
+		<ComposerShell
+			activeSession={buildMockGroupSession()}
+			roomMembers={storybookGroupRoomMembers}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const toggle = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLButtonElement>(
+				'.recipientSplitButton .splitButton__trailing'
+			);
+			if (!node) {
+				throw new Error('recipient menu toggle not mounted yet');
+			}
+			return node;
+		});
+
+		await userEvent.click(toggle);
+		await waitFor(() => {
+			const menu = canvasElement.querySelector<HTMLElement>(
+				'.textarea__audienceSelectorMenu'
+			);
+			expect(menu).toBeTruthy();
+			expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		});
+	}
+};
+
 export const Supervisor: Story = {
 	name: 'Supervisor aside',
 	render: () => (

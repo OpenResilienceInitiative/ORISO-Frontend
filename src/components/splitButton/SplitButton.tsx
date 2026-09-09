@@ -6,9 +6,10 @@ import './splitButton.styles.scss';
 /**
  * Material-3 split button — the frontend port of the Admin panel atom
  * (`ORISO-Admin/src/components/GlobalSearch/SplitButton.tsx`, Figma 1165:16407
- * and 8460:23252). Same 56px geometry, same 28/4 pill silhouette, same
- * variants and disabled semantics; the antd `Dropdown` is replaced by the
- * caller-owned anchored menu this app uses, so the atom stays presentational.
+ * and 8460:23252). It provides the 56px settings-row and 32px compact
+ * geometries, the same pill silhouettes, variants and disabled semantics; the
+ * antd `Dropdown` is replaced by the caller-owned anchored menu this app uses,
+ * so the atom stays presentational.
  *
  * Two trailing shapes, both from the create-conversation design:
  * - **menu** — one chevron segment that opens the attached listbox.
@@ -17,17 +18,20 @@ import './splitButton.styles.scss';
  */
 
 export type SplitButtonVariant = 'outlined' | 'tonal' | 'primary' | 'elevated';
+export type SplitButtonSize = 'xsmall' | 'medium';
 
 export interface SplitButtonProps {
 	/** Main segment content — the action label or the chosen value. */
 	label: React.ReactNode;
-	/** Leading icon, 24px, inherits the segment colour. */
+	/** Leading icon, sized with the control, inherits the segment colour. */
 	icon?: React.ReactNode;
 	/**
 	 * `outlined` resting, `tonal` for a chosen value, `primary` once the action
 	 * is ready to fire, `elevated` while this row owns an open menu.
 	 */
 	variant?: SplitButtonVariant;
+	/** M3 visual size. Medium preserves the original 56px geometry. */
+	size?: SplitButtonSize;
 	disabled?: boolean;
 	/** Greys out only the action segment; the trailing segments stay live. */
 	mainDisabled?: boolean;
@@ -39,6 +43,8 @@ export interface SplitButtonProps {
 	/** Whether the attached menu is open — flips the chevron, drives aria. */
 	open?: boolean;
 	menuLabel?: string;
+	/** Direction in which the attached menu opens. */
+	menuDirection?: 'down' | 'up';
 	/**
 	 * Whether the main segment opens the same menu. When it triggers something
 	 * else it must not advertise a popup it does not control (WCAG 4.1.2).
@@ -59,6 +65,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			label,
 			icon,
 			variant = 'outlined',
+			size = 'medium',
 			disabled = false,
 			mainDisabled = false,
 			fullWidth = false,
@@ -66,6 +73,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			onToggleMenu,
 			open = false,
 			menuLabel,
+			menuDirection = 'down',
 			mainOpensMenu = true,
 			onDecrement,
 			onIncrement,
@@ -81,6 +89,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 		const classes = [
 			'splitButton',
 			`splitButton--${variant}`,
+			`splitButton--${size}`,
+			menuDirection === 'up' && 'splitButton--menuUp',
 			fullWidth && 'splitButton--fullWidth',
 			disabled && 'splitButton--disabled',
 			open && !disabled && 'splitButton--open',
