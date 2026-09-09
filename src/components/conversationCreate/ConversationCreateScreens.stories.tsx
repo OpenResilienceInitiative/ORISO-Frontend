@@ -8,7 +8,6 @@ import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/
 import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
 import { getTopicCardImage } from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
-import { GroupChatAuthorContentDraft } from '../groupChat/groupChatAuthorContent';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
@@ -19,6 +18,7 @@ import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
 import { TopicMedia } from './TopicMedia';
 import { ScheduleRows } from './circle/ScheduleRows';
+import { buildInitialAuthorContent } from './circle/circleDefaults';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
@@ -303,21 +303,9 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 		interval: 'WEEKLY',
 		modality: 'VIDEO'
 	});
-	const [authorContent, setAuthorContent] =
-		useState<GroupChatAuthorContentDraft>({
-			sourceLanguage: 'de',
-			hintMessageTranslations: { de: '', en: '' },
-			groupChatRulesTranslations: {
-				de: [
-					'Sprich von dir selbst, nicht über andere.',
-					'Was hier geteilt wird, bleibt hier.'
-				],
-				en: [
-					'Speak about yourself, not about others.',
-					'What is shared here stays here.'
-				]
-			}
-		});
+	const [authorContent, setAuthorContent] = useState(() =>
+		buildInitialAuthorContent(['de', 'en'])
+	);
 
 	const rows = (
 		<ScheduleRows

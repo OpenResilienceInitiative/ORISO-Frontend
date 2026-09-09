@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus-mui.svg';
@@ -34,6 +34,7 @@ export const RuleChipsEditor = ({
 	const { t } = useTranslation();
 	const [draft, setDraft] = useState('');
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	useEffect(() => {
 		setDraft('');
@@ -58,6 +59,20 @@ export const RuleChipsEditor = ({
 		setEditingIndex(null);
 	};
 
+	const addOrCommit = () => {
+		if (editingIndex === null && !draft.trim()) {
+			if (rules.length >= maxRules) {
+				return;
+			}
+			const nextIndex = rules.length;
+			onChange([...rules, '']);
+			setEditingIndex(nextIndex);
+			inputRef.current?.focus();
+			return;
+		}
+		commit();
+	};
+
 	const remove = (index: number) => {
 		onChange(rules.filter((_, ruleIndex) => ruleIndex !== index));
 		if (editingIndex === index) {
@@ -71,6 +86,7 @@ export const RuleChipsEditor = ({
 	return (
 		<div className="ruleChipsEditor">
 			<textarea
+				ref={inputRef}
 				className="ruleChipsEditor__input"
 				aria-label={t('groupChat.create.authorContent.ruleEditorLabel')}
 				maxLength={RULE_MAX_LENGTH}
@@ -124,8 +140,10 @@ export const RuleChipsEditor = ({
 					type="button"
 					className="ruleChipsEditor__add"
 					aria-label={t('groupChat.create.authorContent.addRule')}
-					disabled={!draft.trim() || isFull}
-					onClick={commit}
+					disabled={
+						isFull || (editingIndex !== null && !draft.trim())
+					}
+					onClick={addOrCommit}
 				>
 					<PlusIcon aria-hidden />
 				</button>

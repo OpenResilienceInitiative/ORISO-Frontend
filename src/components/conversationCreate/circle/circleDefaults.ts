@@ -1,5 +1,9 @@
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
-import { GroupChatAuthorContentDraft } from '../../groupChat/groupChatAuthorContent';
+import {
+	GroupChatAuthorContentDraft,
+	normalizeGroupChatLanguages,
+	syncGroupChatAuthorContentLanguages
+} from '../../groupChat/groupChatAuthorContent';
 
 /**
  * Persistence for the Gesprächskreis settings (Figma flow 8482-30552):
@@ -42,10 +46,22 @@ const GENERAL_RULES: Record<string, [string, string]> = {
 	ti: ['ብዛዕባ ርእስኻ ተዛረብ፡ ብዛዕባ ካልኦት ኣይትዛረብ።', 'እቲ ኣብዚ ዝካፈል ኣብዚ ይተርፍ።']
 };
 
+const GENERAL_GREETINGS: Record<string, string> = {
+	de: 'Willkommen im Gesprächskreis.',
+	en: 'Welcome to the discussion circle.',
+	fr: 'Bienvenue dans le cercle de discussion.',
+	ru: 'Добро пожаловать в дискуссионный круг.',
+	tr: 'Sohbet çemberine hoş geldiniz.',
+	ti: 'ናብ ክቢ ዝርርብ እንቋዕ ብደሓን መጻእኩም።'
+};
+
 export const getGeneralRules = (language: string): string[] => {
 	const rules = GENERAL_RULES[language] || GENERAL_RULES.en;
 	return [...rules];
 };
+
+export const getGeneralGreeting = (language: string): string =>
+	GENERAL_GREETINGS[language] || GENERAL_GREETINGS.en;
 
 export const buildInitialAuthorContent = (
 	activeLanguages: string[]
@@ -54,11 +70,45 @@ export const buildInitialAuthorContent = (
 	return {
 		sourceLanguage: languages[0],
 		hintMessageTranslations: Object.fromEntries(
-			languages.map((language) => [language, ''])
+			languages.map((language) => [
+				language,
+				getGeneralGreeting(language)
+			])
 		),
 		groupChatRulesTranslations: Object.fromEntries(
 			languages.map((language) => [language, getGeneralRules(language)])
 		)
+	};
+};
+
+export const syncCircleAuthorContentLanguages = (
+	draft: GroupChatAuthorContentDraft,
+	activeLanguages: string[]
+): GroupChatAuthorContentDraft => {
+	const synced = syncGroupChatAuthorContentLanguages(draft, activeLanguages);
+	const languages = normalizeGroupChatLanguages(activeLanguages);
+	return {
+		...synced,
+		hintMessageTranslations: {
+			...synced.hintMessageTranslations,
+			...Object.fromEntries(
+				languages.map((language) => [
+					language,
+					synced.hintMessageTranslations[language] ??
+						getGeneralGreeting(language)
+				])
+			)
+		},
+		groupChatRulesTranslations: {
+			...synced.groupChatRulesTranslations,
+			...Object.fromEntries(
+				languages.map((language) => [
+					language,
+					synced.groupChatRulesTranslations[language] ??
+						getGeneralRules(language)
+				])
+			)
+		}
 	};
 };
 

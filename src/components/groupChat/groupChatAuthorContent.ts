@@ -106,20 +106,24 @@ export const buildGroupChatAuthorTranslationRequest = ({
 	activeLanguages,
 	hintMessageTranslations,
 	groupChatRulesTranslations
-}: GroupChatAuthorContentDraft & { activeLanguages: string[] }) => ({
-	sourceLang: normalizeLanguage(sourceLanguage) || sourceLanguage,
-	targetLangs: normalizeGroupChatLanguages(activeLanguages).filter(
-		(language) => language !== normalizeLanguage(sourceLanguage)
-	),
-	texts: {
-		welcome: hintMessageTranslations[sourceLanguage] || '',
-		...Object.fromEntries(
-			(groupChatRulesTranslations[sourceLanguage] || []).map(
-				(rule, index) => [`rule-${index}`, rule]
-			)
+}: GroupChatAuthorContentDraft & { activeLanguages: string[] }) => {
+	const welcome = hintMessageTranslations[sourceLanguage]?.trim();
+	const rules = groupChatRulesTranslations[sourceLanguage] || [];
+	return {
+		sourceLang: normalizeLanguage(sourceLanguage) || sourceLanguage,
+		targetLangs: normalizeGroupChatLanguages(activeLanguages).filter(
+			(language) => language !== normalizeLanguage(sourceLanguage)
+		),
+		texts: Object.fromEntries(
+			[
+				...(welcome ? [['welcome', welcome] as const] : []),
+				...rules.map(
+					(rule, index) => [`rule-${index}`, rule.trim()] as const
+				)
+			].filter(([, text]) => text.length > 0)
 		)
-	}
-});
+	};
+};
 
 export const applyGroupChatAuthorTranslations = (
 	draft: GroupChatAuthorContentDraft,
@@ -129,8 +133,10 @@ export const applyGroupChatAuthorTranslations = (
 	const nextRules = { ...draft.groupChatRulesTranslations };
 
 	Object.entries(translations).forEach(([language, fields]) => {
-		nextHints[language] = fields.welcome || '';
-		nextRules[language] = Object.entries(fields)
+		if (fields.welcome !== undefined) {
+			nextHints[language] = fields.welcome;
+		}
+		const translatedRules = Object.entries(fields)
 			.filter(([key]) => key.startsWith('rule-'))
 			.sort(
 				([left], [right]) =>
@@ -138,6 +144,9 @@ export const applyGroupChatAuthorTranslations = (
 					Number(right.slice('rule-'.length))
 			)
 			.map(([, value]) => value);
+		if (translatedRules.length > 0) {
+			nextRules[language] = translatedRules;
+		}
 	});
 
 	return {

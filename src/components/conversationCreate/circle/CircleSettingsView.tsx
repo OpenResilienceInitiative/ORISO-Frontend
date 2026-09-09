@@ -6,10 +6,7 @@ import { ReactComponent as CategorySearchIcon } from '../../../resources/img/ico
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
-import {
-	GroupChatAuthorContentDraft,
-	syncGroupChatAuthorContentLanguages
-} from '../../groupChat/groupChatAuthorContent';
+import { GroupChatAuthorContentDraft } from '../../groupChat/groupChatAuthorContent';
 import {
 	buildGroupChatSeriesRequest,
 	getValidDateFormatForSelectedDate,
@@ -29,7 +26,8 @@ import { useCreateChatSubmit } from '../useCreateChatSubmit';
 import {
 	buildInitialAuthorContent,
 	loadCircleDefaults,
-	saveCircleDefaults
+	saveCircleDefaults,
+	syncCircleAuthorContentLanguages
 } from './circleDefaults';
 import '../../groupChat/createChat.styles.scss';
 
@@ -169,7 +167,7 @@ export const CircleSettingsView = ({
 
 	useEffect(() => {
 		setAuthorContent((current) =>
-			syncGroupChatAuthorContentLanguages(current, activeLanguages)
+			syncCircleAuthorContentLanguages(current, activeLanguages)
 		);
 	}, [activeLanguages]);
 

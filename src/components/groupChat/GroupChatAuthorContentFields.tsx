@@ -165,7 +165,7 @@ export const GroupChatAuthorContentFields = ({
 				<div className="createChat__rules">
 					<span>{t('groupChat.create.authorContent.rules')}</span>
 					<RuleChipsEditor
-						rules={rules.filter((rule) => rule.trim().length > 0)}
+						rules={rules}
 						onChange={updateRules}
 						resetKey={selectedLanguage}
 					/>

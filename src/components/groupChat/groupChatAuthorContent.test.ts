@@ -132,6 +132,21 @@ describe('group-chat author translation draft', () => {
 		});
 	});
 
+	it('omits blank fields so the translation API accepts partial content', () => {
+		expect(
+			buildGroupChatAuthorTranslationRequest({
+				sourceLanguage: 'de',
+				activeLanguages: ['de', 'en'],
+				hintMessageTranslations: { de: '' },
+				groupChatRulesTranslations: {
+					de: ['Respektvoll bleiben', '   ']
+				}
+			})
+		).toMatchObject({
+			texts: { 'rule-0': 'Respektvoll bleiben' }
+		});
+	});
+
 	it('merges translated fields into editable per-language content', () => {
 		expect(
 			applyGroupChatAuthorTranslations(

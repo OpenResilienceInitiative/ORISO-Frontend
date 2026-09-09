@@ -495,11 +495,21 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__authorColumn {
+		background: $cc-surface-container-low;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 28px;
 		display: flex;
 		flex: 1;
 		flex-direction: column;
 		gap: 16px;
 		min-width: 280px;
+		padding: 12px;
+
+		.createChat__authorContent {
+			border: 0;
+			border-radius: 0;
+			padding: 0;
+		}
 	}
 
 	&__moderators {
@@ -913,12 +923,11 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	.circleSettings__authorColumn {
-		background: $cc-surface-container-low;
-		border: 1px solid $cc-outline-variant;
 		border-bottom-left-radius: 28px;
 		border-bottom-right-radius: 28px;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 		border-top-width: 0;
-		padding: 12px;
 	}
 }
 
