@@ -31,6 +31,7 @@ import {
 import { config } from '../../../resources/scripts/config';
 import { SidePanel, InfoBanner } from '../SidePanel';
 import { PanelHeader } from '../PanelHeader';
+import { PanelCallActions } from '../PanelCallActions';
 import { ChannelSwitcherFab } from '../ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -110,6 +111,13 @@ export interface ConsultantSessionStageProps {
 	fabDefaultOpen?: boolean;
 	/** T1: hide the FAB while a panel is open (its header offers the channels). */
 	fabHidden?: boolean;
+	/**
+	 * Frank 09.09.2026: which calls the tenant allows in the side room
+	 * (`feature{Audio,Video}CallsSupervisionChatsEnabled`).
+	 */
+	supervisionCalls?: 'both' | 'audio' | 'video' | 'off';
+	/** Nobody else in the side room — the call controls grey out (never hide). */
+	supervisionAlone?: boolean;
 }
 
 const noop = () => {};
@@ -333,6 +341,8 @@ interface RoomProps {
 	compactComposer?: boolean;
 	/** T40: inside the chat card — no outer frame, bottom-right corner = card. */
 	flushComposer?: boolean;
+	/** Frank 09.09.2026: the side room's own audio/video call controls. */
+	callActions?: React.ReactNode;
 }
 
 function SupervisionRoom({
@@ -347,7 +357,8 @@ function SupervisionRoom({
 	onSelectChannel,
 	focusChannelButton,
 	compactComposer = false,
-	flushComposer = false
+	flushComposer = false,
+	callActions
 }: RoomProps & { unread: number; withReason: boolean }) {
 	const { t } = useTranslation();
 	// T7: the system notice opens the side room (frontend-rendered for now).
@@ -379,6 +390,7 @@ function SupervisionRoom({
 						supervisorParticipant
 					]}
 					unreadCount={unread}
+					actions={callActions}
 					channels={channels}
 					activeChannelId={activeChannelId}
 					onSelectChannel={onSelectChannel}
@@ -584,7 +596,9 @@ export function ConsultantSessionStage({
 	phone: initialPhone,
 	withReason = false,
 	fabDefaultOpen = false,
-	fabHidden = true
+	fabHidden = true,
+	supervisionCalls = 'both',
+	supervisionAlone = false
 }: ConsultantSessionStageProps) {
 	const { t } = useTranslation();
 	const viewportWidth = useViewportWidth();
@@ -644,6 +658,32 @@ export function ConsultantSessionStage({
 	const dragged = usePanelWidth(
 		snapList ? layout.panelWidth : Math.max(panelWidth, 0),
 		cardWidth
+	);
+
+	// Frank 09.09.2026: the side room's call controls — the same component
+	// the app wires (`PanelCallActions`), fed from the stage's own widths so
+	// the story shows the row/kebab switch as the divider moves.
+	const supervisionCallActions = (
+		<PanelCallActions
+			onStartCall={noop}
+			audioEnabled={
+				supervisionCalls === 'both' || supervisionCalls === 'audio'
+			}
+			videoEnabled={
+				supervisionCalls === 'both' || supervisionCalls === 'video'
+			}
+			participantCount={supervisionAlone ? 1 : 2}
+			width={single ? null : dragged.width}
+			phone={single}
+			copy={{
+				video: t('videoCall.button.startVideoCall'),
+				audio: t('videoCall.button.startCall'),
+				menu: t('app.menu'),
+				participants: t('chatStage.panel.participantCount', {
+					count: supervisionAlone ? 1 : 2
+				})
+			}}
+		/>
 	);
 
 	// Secondary channels: supervision always, threads as configured.
@@ -764,6 +804,7 @@ export function ConsultantSessionStage({
 									variant="fullscreen"
 									unread={supervisionUnread}
 									withReason={withReason}
+									callActions={supervisionCallActions}
 									onBack={backToMain}
 									switcher={backFab}
 									channels={channels}
@@ -823,6 +864,7 @@ export function ConsultantSessionStage({
 				variant={panelVariant}
 				unread={supervisionUnread}
 				withReason={withReason}
+				callActions={supervisionCallActions}
 				channels={channels}
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}

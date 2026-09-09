@@ -10,7 +10,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
-import { STAGE_LAYOUT } from './stageLayout';
+import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
 import {
 	CLIENT_NAME,
 	COUNSELLOR_NAME,
@@ -35,6 +35,19 @@ const meta = {
 	title: 'Templates/ConsultantSessionStage',
 	component: ConsultantSessionStage,
 	tags: ['autodocs'],
+	/**
+	 * The stage persists the dragged panel width (`chatStage_panelWidth`), and
+	 * Storybook runs every story of a file in ONE iframe — so without this a
+	 * story that drags the divider silently decides the next story's layout.
+	 * Each story starts from its own args.
+	 */
+	beforeEach: () => {
+		try {
+			window.localStorage.removeItem(PANEL_WIDTH_STORAGE_KEY);
+		} catch {
+			/* private mode: nothing was persisted anyway */
+		}
+	},
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: stageRoute },
@@ -2561,5 +2574,235 @@ export const PanelAtTheOldMinimum520: Story = {
 		);
 		await expect(STAGE_LAYOUT.MIN_PANE_WIDTH - 1 - 2 * 16).toBe(487);
 		await expectNarrowPaneSurvives(canvasElement, 'panel');
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Frank, 09.09.2026: "auch braucht die supervision die möglichkeit das
+ * man einen call haben kann entweder video oder audio".
+ *
+ * Same buttons as the main chat header (`call/CallHeaderIcons` in the app's
+ * `Button` molecule), same trigger (`call/startRoomCall.ts`), same tenant
+ * gate (`call/callFeatureGates.ts` with `chatType: 'supervision'`) — the one
+ * thing that differs is the room: the call goes against the side room's own
+ * Matrix id (`supervisionRoomId`), so its Element Call room admits exactly
+ * that room's members. `PanelCallActions` decides row vs. kebab by the same
+ * width rule as the main header (`roomHeaderDensity.ts`).
+ * ------------------------------------------------------------------ */
+
+/** Both call controls, wherever the header put them, with their names. */
+const callControls = (canvasElement: HTMLElement) => {
+	const actions = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="panel-call-actions"]'
+	);
+	return {
+		actions,
+		placement: actions?.getAttribute('data-placement'),
+		// `Button` puts `testingAttribute` on the <button> itself; the kebab
+		// rows are `ChatMenuDropdownItem`s with their own `data-cy`.
+		video: canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-call-video"], [data-cy="panel-call-menu-video"]'
+		),
+		audio: canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-call-audio"], [data-cy="panel-call-menu-audio"]'
+		),
+		trigger: canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-call-menu-trigger"]'
+		)
+	};
+};
+
+/** (l) Wide side room: video and audio sit in the panel header row. */
+export const SideRoomCallsInThePanelHeader: Story = {
+	name: '(l) Side room calls — buttons in the panel header',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 0,
+		supervisionCalls: 'both'
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const controls = callControls(canvasElement);
+		await expect(controls.placement).toBe('row');
+		await expect(controls.trigger).toBeNull();
+		await expect(controls.video).not.toBeNull();
+		await expect(controls.audio).not.toBeNull();
+		await expect(controls.video!.getAttribute('aria-label')).toBe(
+			'Video-Call starten'
+		);
+		await expect(controls.audio!.getAttribute('aria-label')).toBe(
+			'Audio-Call starten'
+		);
+		await expect(controls.video!.disabled).toBe(false);
+		// They live in the panel header's action group, before the close
+		// button — the main chat's own order (video, then audio).
+		const actionsRow = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .panelHeader__actions'
+		)!;
+		await expect(actionsRow.contains(controls.actions!)).toBe(true);
+		const close = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="panel-header-close"]'
+		)!;
+		await expect(
+			controls.audio!.getBoundingClientRect().right
+		).toBeLessThanOrEqual(close.getBoundingClientRect().left + 1);
+		await expect(
+			controls.video!.getBoundingClientRect().right
+		).toBeLessThanOrEqual(controls.audio!.getBoundingClientRect().left + 1);
+		// The whole header still fits — the two extra buttons cost the title
+		// column, and it must not run out of room.
+		await expectRowControlsFit(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="stage-panel"] .panelHeader__row'
+			)!
+		);
+	}
+};
+
+/** (m) Narrow side room: the calls fold into the header's kebab. */
+export const SideRoomCallsInTheKebabAt320: Story = {
+	name: '(m) Side room calls — in the kebab at 320 px',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 3,
+		supervisionCalls: 'both'
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH);
+		const controls = callControls(canvasElement);
+		await expect(controls.placement).toBe('menu');
+		// Closed: one 32 px trigger instead of two buttons.
+		await expect(controls.video).toBeNull();
+		await expect(controls.trigger).not.toBeNull();
+		await expect(controls.trigger!.getAttribute('aria-expanded')).toBe(
+			'false'
+		);
+		await userEvent.click(controls.trigger!);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="panel-call-menu"]')
+			).not.toBeNull()
+		);
+		const open = callControls(canvasElement);
+		await expect(open.video!.tagName).toBe('BUTTON');
+		await expect(open.audio!.tagName).toBe('BUTTON');
+		await expect(open.video!.textContent).toContain('Video-Call starten');
+		await expect(open.audio!.textContent).toContain('Audio-Call starten');
+		// The card stays inside the 320 px column.
+		const card = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="panel-call-menu"]'
+		)!;
+		const slot = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel-slot"]'
+		)!;
+		await expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(
+			slot.getBoundingClientRect().right + 1
+		);
+		// Escape closes it and hands focus back to the trigger.
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="panel-call-menu"]')
+			).toBeNull()
+		);
+		await expect(document.activeElement).toBe(
+			callControls(canvasElement).trigger
+		);
+		// And the narrow panel still survives with the controls in it.
+		await expectNarrowPaneSurvives(canvasElement, 'panel');
+	}
+};
+
+/** (n) Phone: the side room fills the screen, the calls sit in the kebab. */
+export const SideRoomCallsOnThePhone: Story = {
+	name: '(n) Phone — side room calls in the kebab',
+	globals: phone390Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		phone: 'secondary',
+		supervisionCalls: 'both'
+	},
+	play: async ({ canvasElement }) => {
+		const controls = callControls(canvasElement);
+		await expect(controls.placement).toBe('menu');
+		await userEvent.click(controls.trigger!);
+		const open = callControls(canvasElement);
+		await expect(open.video).not.toBeNull();
+		await expect(open.audio).not.toBeNull();
+		const card = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="panel-call-menu"]'
+		)!;
+		const panel = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"]'
+		)!;
+		await expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(
+			panel.getBoundingClientRect().right + 1
+		);
+		await userEvent.keyboard('{Escape}');
+	}
+};
+
+/**
+ * (o) Nobody else in the side room: the controls stay and grey out — the
+ * house rule is "disable, never hide" — and say why in their tooltip.
+ */
+export const SideRoomCallsDisabledWhileAlone: Story = {
+	name: '(o) Side room calls — disabled while nobody else is in the room',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionCalls: 'both',
+		supervisionAlone: true
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const controls = callControls(canvasElement);
+		await expect(controls.placement).toBe('row');
+		await expect(controls.actions!.getAttribute('data-disabled')).toBe(
+			'true'
+		);
+		await expect(controls.video!.disabled).toBe(true);
+		await expect(controls.audio!.disabled).toBe(true);
+		// No invented copy: the reason is the room's own head count, from the
+		// existing `chatStage.panel.participantCount` key (i18n drift budget 0).
+		await expect(controls.video!.getAttribute('title')).toContain(
+			'1 Person'
+		);
+	}
+};
+
+/** (p) The tenant may allow only one kind — then only that one renders. */
+export const SideRoomCallsAudioOnly: Story = {
+	name: '(p) Side room calls — tenant allows audio only',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionCalls: 'audio'
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const controls = callControls(canvasElement);
+		await expect(controls.audio).not.toBeNull();
+		await expect(controls.video).toBeNull();
 	}
 };

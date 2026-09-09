@@ -1,0 +1,35 @@
+// Side-room call controls. Placement only: the buttons are the app's
+// `Button` molecule (SMALL_ICON / transparent, `button.styles.scss`), the
+// kebab trigger wears the panel header's own `panelHeader__iconButton` and
+// the card is the chat menu organism (`chatMenuDropdown.styles.scss`). No
+// colours of its own — nothing here to sweep.
+
+.panelCallActions {
+	display: inline-flex;
+	align-items: center;
+
+	// The panel header's action gap (`$room-actions-gap` in
+	// `sidePanel.styles.scss`) — the calls line up with the close button.
+	gap: 12px;
+	min-width: 0;
+
+	// `Button` wraps every button in a `.button__wrapper` block.
+	.button__wrapper {
+		display: inline-flex;
+		margin: 0;
+	}
+
+	&--menu {
+		position: relative;
+	}
+
+	// Hangs under the kebab, right-aligned so it never leaves the column.
+	&__menu {
+		position: absolute;
+		top: calc(100% + 4px);
+		right: 0;
+		z-index: 1200;
+		min-width: 220px;
+		text-align: left;
+	}
+}

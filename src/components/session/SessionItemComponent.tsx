@@ -115,6 +115,9 @@ import {
 } from '../../utils/threadUnread';
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
+import { PanelCallActions } from '../chatStage/PanelCallActions';
+import { resolveCallFeatureGates } from '../call/callFeatureGates';
+import { startRoomCall } from '../call/startRoomCall';
 import {
 	AUTHORITIES,
 	getContact,
@@ -125,7 +128,8 @@ import {
 	SessionTypeContext,
 	useTenant,
 	ActiveSessionContext,
-	LocaleContext
+	LocaleContext,
+	useConsultingType
 } from '../../globalState';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -3180,6 +3184,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	};
 
 	const isOnlyEnquiry = type === SESSION_LIST_TYPES.ENQUIRY;
+	const sessionConsultingType = useConsultingType(
+		activeSession.item?.consultingType
+	);
 
 	// cancels dragging automatically if user drags outside the
 	// browser window (there is no build-in mechanic for that)
@@ -3867,6 +3874,39 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
+	);
+
+	// Frank, 09.09.2026: "auch braucht die supervision die möglichkeit das man
+	// einen call haben kann entweder video oder audio". Same trigger as the
+	// main chat (`call/startRoomCall.ts`), same tenant gate
+	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
+	// the SIDE room, so its Element Call room is created from
+	// `supervisionRoomId` and admits exactly that room's members.
+	const supervisionCallGates = resolveCallFeatureGates(
+		getTenantSettings(),
+		'supervision'
+	);
+	// Same eligibility as the header's own call buttons
+	// (`SessionMenu.hasVideoCallFeatures`): a counsellor, in a real session,
+	// with an agency that does calls at all.
+	const mayCallInSideRoom =
+		isConsultantUser &&
+		!isOnlyEnquiry &&
+		!activeSession.isEnquiry &&
+		Boolean(sessionConsultingType?.isVideoCallAllowed);
+	const startSupervisionCall = useCallback(
+		(isVideo: boolean) => {
+			startRoomCall({
+				roomId: supervisionRoomId,
+				isVideo,
+				// Consultant + supervisor is a 1:1 call; a second supervisor
+				// makes it a group one. Never `undefined`: the CallManager's
+				// auto-detection filters power-level-10 members — the
+				// supervisors — out of its own head count.
+				isGroup: supervisionParticipants.length > 2
+			});
+		},
+		[supervisionRoomId, supervisionParticipants.length]
 	);
 
 	// T7: the side room opens with the system notice "Supervision durch
@@ -6440,6 +6480,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						name={supervisionCounterpartName}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
+						actions={
+							mayCallInSideRoom ? (
+								<PanelCallActions
+									onStartCall={startSupervisionCall}
+									audioEnabled={supervisionCallGates.audio}
+									videoEnabled={supervisionCallGates.video}
+									participantCount={
+										supervisionParticipants.length
+									}
+									// The panel fills the screen on the phone;
+									// on the desktop it is as wide as the drag
+									// left it.
+									width={isPhoneLayout ? null : panelWidth}
+									phone={isPhoneLayout}
+									copy={{
+										video: translate(
+											'videoCall.button.startVideoCall'
+										),
+										audio: translate(
+											'videoCall.button.startCall'
+										),
+										menu: translate('app.menu'),
+										participants: translate(
+											'chatStage.panel.participantCount',
+											{
+												count: supervisionParticipants.length
+											}
+										)
+									}}
+								/>
+							) : undefined
+						}
 						{...panelHeaderNav}
 					/>
 				}
