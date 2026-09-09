@@ -7,6 +7,7 @@ import {
 } from './visibleParticipants';
 import {
 	resolveParticipantStack,
+	STACK_MAX_VISIBLE,
 	type StackParticipant
 } from './participantStack';
 
@@ -399,5 +400,116 @@ describe('buildVisibleParticipantRules', () => {
 			'Mona S.',
 			'Bettina B.'
 		]);
+	});
+});
+
+/**
+ * Teamberatung (Frank, 09.09.; FE#514 / ADR-016). The team room is NOT the
+ * session room with a filter over it: the backend creates it for "exactly
+ * the consultants of the enquiry's agency" (`TeamDiscussionFacade`), so
+ * membership there is not silent — being in the room IS the reason to be
+ * shown. The one person who must never appear is the advice seeker, who is
+ * never invited to it in the first place.
+ */
+describe('the team room rule', () => {
+	const teamRules: VisibleParticipantRules = {
+		mode: 'team',
+		asker: { ids: [ASKER_MATRIX, 'enc.ONXW43TFNZRGY5LNMVPTINY.'] },
+		consultant: {
+			ids: [MONA_ENCODED, MONA_UUID, MONA_MATRIX],
+			displayName: 'Mona S.'
+		},
+		supervisors: []
+	};
+
+	it('shows every counsellor in the room, not just consultant + supervisors', () => {
+		// The difference to `supervision`: the five "silent" members are
+		// colleagues of the agency, and in the TEAM room they belong.
+		const visible = filterVisibleParticipants(roomMembers, teamRules);
+		expect(visible.map((p) => p.userId)).toEqual([
+			consultant.userId,
+			supervisor.userId,
+			...silent.map((p) => p.userId)
+		]);
+	});
+
+	it('never shows the advice seeker, however they are spelled', () => {
+		const visible = filterVisibleParticipants(roomMembers, teamRules);
+		expect(visible.some((p) => p.isAsker)).toBe(false);
+		expect(visible.map((p) => p.userId)).not.toContain(ASKER_MATRIX);
+	});
+
+	it('drops the asker even when the flag and the id disagree', () => {
+		// Belt and braces: an asker whose `isAsker` was never stamped is
+		// still matched by id, and one whose id we do not know is still
+		// matched by the flag.
+		const flagOnly = member(`@stranger:${SERVER}`, { isAsker: true });
+		const idOnly = member(ASKER_MATRIX, { isAsker: false });
+		const visible = filterVisibleParticipants(
+			[consultant, flagOnly, idOnly],
+			teamRules
+		);
+		expect(visible.map((p) => p.userId)).toEqual([consultant.userId]);
+	});
+
+	it('counts "+N" over the visible team only, never over the asker', () => {
+		const visible = filterVisibleParticipants(roomMembers, teamRules);
+		const stack = resolveParticipantStack(visible);
+		// 8 room members minus the asker = 7 in the team; four avatars show
+		// and the rest fold into "+3" — the asker is in neither number.
+		expect(visible).toHaveLength(roomMembers.length - 1);
+		expect(stack.visible).toHaveLength(STACK_MAX_VISIBLE);
+		expect(stack.overflow).toBe(roomMembers.length - 1 - STACK_MAX_VISIBLE);
+		expect(stack.overflow).toBe(3);
+		expect(
+			[...stack.visible].some((p) => p.userId === ASKER_MATRIX)
+		).toBe(false);
+	});
+
+	it('is not the supervision rule: supervision hides the same colleagues', () => {
+		const supervisionRules: VisibleParticipantRules = {
+			...sessionRules,
+			mode: 'supervision',
+			self: { ids: [MONA_MATRIX] }
+		};
+		const inTeam = filterVisibleParticipants(roomMembers, teamRules);
+		const inSupervision = filterVisibleParticipants(
+			roomMembers,
+			supervisionRules
+		);
+		expect(inTeam.length).toBeGreaterThan(inSupervision.length);
+		expect(inSupervision.map((p) => p.userId)).not.toContain(
+			silent[0].userId
+		);
+		expect(inTeam.map((p) => p.userId)).toContain(silent[0].userId);
+	});
+
+	it('builds the team rule through the one shared builder', () => {
+		const rules = buildVisibleParticipantRules({
+			mode: 'team',
+			supervisors: [],
+			askerIds: [ASKER_MATRIX],
+			consultant: { username: MONA_ENCODED, id: MONA_UUID },
+			self: { ids: [MONA_MATRIX] }
+		});
+		expect(rules.mode).toBe('team');
+		expect(
+			filterVisibleParticipants(roomMembers, rules).some((p) => p.isAsker)
+		).toBe(false);
+	});
+
+	it('a group chat still wins over the team mode (no silent members there)', () => {
+		const rules = buildVisibleParticipantRules({
+			mode: 'team',
+			isGroup: true,
+			supervisors: [],
+			askerIds: [ASKER_MATRIX],
+			consultant: null,
+			self: { ids: [MONA_MATRIX] }
+		});
+		expect(rules.mode).toBe('group');
+		expect(filterVisibleParticipants(roomMembers, rules)).toHaveLength(
+			roomMembers.length
+		);
 	});
 });

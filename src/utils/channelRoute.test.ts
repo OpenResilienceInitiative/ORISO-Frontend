@@ -2,6 +2,7 @@
  * T24 / B2 — the session's open side channel lives in the URL:
  *   ?channel=thread:<rootEventId>[&at=<eventId>]
  *   ?channel=supervision[&at=<eventId>]
+ *   ?channel=team[&at=<eventId>]        ← Teamberatung (Frank, 09.09.)
  * The legacy `threadRootId` / `threadMessageId` pair is a hard cut: it is
  * mapped once on entry and never written again.
  */
@@ -22,7 +23,11 @@ import {
 	stripChannelParams,
 	withChannel,
 	writeLastChannel,
-	SUPERVISION_CHANNEL_ID
+	safeChannelStorage,
+	safeLocalStorage,
+	safeSessionStorage,
+	SUPERVISION_CHANNEL_ID,
+	TEAM_CHANNEL_ID
 } from './channelRoute';
 
 const ROOT = '$abc:oriso.invalid';
@@ -35,10 +40,26 @@ describe('parseChannelValue / serializeChannel', () => {
 		expect(serializeChannel({ kind: 'supervision' })).toBe('supervision');
 	});
 
+	it('round-trips the team channel', () => {
+		expect(parseChannelValue('team')).toEqual({ kind: 'team' });
+		expect(serializeChannel({ kind: 'team' })).toBe('team');
+		expect(parseChannelValue('  team ')).toEqual({ kind: 'team' });
+	});
+
 	it('round-trips a thread channel with a Matrix event id', () => {
 		const channel = { kind: 'thread' as const, rootId: ROOT };
 		expect(serializeChannel(channel)).toBe(`thread:${ROOT}`);
 		expect(parseChannelValue(`thread:${ROOT}`)).toEqual(channel);
+	});
+
+	it('does not confuse a thread whose root merely starts with "team"', () => {
+		// The team channel is the WHOLE value; a thread always carries the
+		// `thread:` prefix, so "teamwork" is neither.
+		expect(parseChannelValue('teamwork')).toBeNull();
+		expect(parseChannelValue(`thread:${TEAM_CHANNEL_ID}`)).toEqual({
+			kind: 'thread',
+			rootId: 'team'
+		});
 	});
 
 	it('rejects garbage', () => {
@@ -60,6 +81,23 @@ describe('channelId / channelFromId (the stage ids)', () => {
 			kind: 'supervision'
 		});
 		expect(channelFromId(ROOT)).toEqual({ kind: 'thread', rootId: ROOT });
+	});
+
+	it('gives the team channel the stage id "team"', () => {
+		expect(channelId({ kind: 'team' })).toBe(TEAM_CHANNEL_ID);
+		expect(channelFromId(TEAM_CHANNEL_ID)).toEqual({ kind: 'team' });
+		// The two side rooms are distinct ids, never each other's fallback.
+		expect(TEAM_CHANNEL_ID).not.toBe(SUPERVISION_CHANNEL_ID);
+	});
+
+	it('never mistakes one side room for the other', () => {
+		expect(
+			channelsEqual({ kind: 'team' }, { kind: 'supervision' })
+		).toBe(false);
+		expect(channelsEqual({ kind: 'team' }, { kind: 'team' })).toBe(true);
+		expect(
+			channelsEqual({ kind: 'team' }, { kind: 'thread', rootId: 'team' })
+		).toBe(false);
 	});
 
 	it('compares channels by value', () => {
@@ -108,6 +146,24 @@ describe('withChannel / stripChannelParams', () => {
 		expect(
 			withChannel('?sessionListTab=archive', { kind: 'supervision' })
 		).toBe('?sessionListTab=archive&channel=supervision');
+	});
+
+	it('writes and clears the team channel like any other', () => {
+		expect(withChannel('?sessionListTab=x', { kind: 'team' })).toBe(
+			'?sessionListTab=x&channel=team'
+		);
+		// Switching side rooms replaces the value, never appends a second one.
+		expect(withChannel('?channel=supervision', { kind: 'team' })).toBe(
+			'?channel=team'
+		);
+		expect(withChannel('?channel=team', { kind: 'supervision' })).toBe(
+			'?channel=supervision'
+		);
+		expect(withChannel('?channel=team&at=$e', null)).toBe('');
+		expect(parseChannel('?channel=team&at=$e')).toEqual({
+			channel: { kind: 'team' },
+			at: '$e'
+		});
 	});
 
 	it('encodes the Matrix event id and writes at', () => {
@@ -209,7 +265,7 @@ describe('buildSessionChannelPath / rewriteLegacyChannelPath', () => {
 	});
 });
 
-describe('last channel per session (sessionStorage)', () => {
+describe('last channel per session (localStorage since 09.09.)', () => {
 	const memory = () => {
 		const map = new Map<string, string>();
 		return {
@@ -267,10 +323,103 @@ describe('last channel per session (sessionStorage)', () => {
 		storage.setItem('chatStage.lastChannel.74', 'peer:x');
 		expect(readLastChannel(storage, 74)).toBeUndefined();
 	});
+
+	it('remembers the team channel, and remembers it AS team', () => {
+		// Frank, 09.09.: "wichtig, dass für den Nutzer immer die letzte
+		// Einstellung gespeichert wird" — a remembered team must not come
+		// back as the supervision room.
+		const storage = memory();
+		writeLastChannel(storage, 74, { kind: 'team' });
+		expect(readLastChannel(storage, 74)).toEqual({ kind: 'team' });
+		writeLastChannel(storage, 74, { kind: 'supervision' });
+		expect(readLastChannel(storage, 74)).toEqual({ kind: 'supervision' });
+	});
+
+	it('survives a reload: a fresh reader over the same store finds it', () => {
+		// What `localStorage` buys over `sessionStorage` — the store outlives
+		// the page. Modelled as a second reader over the same backing map.
+		const map = new Map<string, string>();
+		const first = {
+			getItem: (key: string) => map.get(key) ?? null,
+			setItem: (key: string, value: string) => {
+				map.set(key, value);
+			}
+		};
+		writeLastChannel(first, 74, { kind: 'team' });
+		const afterReload = {
+			getItem: (key: string) => map.get(key) ?? null,
+			setItem: (key: string, value: string) => {
+				map.set(key, value);
+			}
+		};
+		expect(readLastChannel(afterReload, 74)).toEqual({ kind: 'team' });
+	});
+
+	it('keeps one key per session, so two sessions never bleed', () => {
+		const storage = memory();
+		writeLastChannel(storage, 74, { kind: 'team' });
+		writeLastChannel(storage, 75, { kind: 'supervision' });
+		expect(readLastChannel(storage, 74)).toEqual({ kind: 'team' });
+		expect(readLastChannel(storage, 75)).toEqual({ kind: 'supervision' });
+		expect(readLastChannel(storage, 76)).toBeUndefined();
+	});
+});
+
+describe('safeChannelStorage (the store the host injects)', () => {
+	// The unit project runs in node, where there is no `window` at all — so
+	// the contract is stated over the two accessors, not over globals.
+	it('is localStorage when there is one, sessionStorage otherwise', () => {
+		expect(safeChannelStorage()).toBe(
+			safeLocalStorage() ?? safeSessionStorage()
+		);
+	});
+
+	it('prefers localStorage over sessionStorage when a window exists', () => {
+		const local = { getItem: () => null, setItem: () => undefined };
+		const session = { getItem: () => null, setItem: () => undefined };
+		const previous = (globalThis as any).window;
+		(globalThis as any).window = {
+			localStorage: local,
+			sessionStorage: session
+		};
+		try {
+			expect(safeLocalStorage()).toBe(local);
+			expect(safeChannelStorage()).toBe(local);
+			expect(safeChannelStorage()).not.toBe(session);
+		} finally {
+			if (previous === undefined) {
+				delete (globalThis as any).window;
+			} else {
+				(globalThis as any).window = previous;
+			}
+		}
+	});
+
+	it('falls back to sessionStorage when localStorage throws (private mode)', () => {
+		const session = { getItem: () => null, setItem: () => undefined };
+		const previous = (globalThis as any).window;
+		(globalThis as any).window = {
+			get localStorage() {
+				throw new Error('blocked');
+			},
+			sessionStorage: session
+		};
+		try {
+			expect(safeLocalStorage()).toBeNull();
+			expect(safeChannelStorage()).toBe(session);
+		} finally {
+			if (previous === undefined) {
+				delete (globalThis as any).window;
+			} else {
+				(globalThis as any).window = previous;
+			}
+		}
+	});
 });
 
 describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open)', () => {
 	const supervision = { kind: 'supervision' as const };
+	const team = { kind: 'team' as const };
 	const thread = { kind: 'thread' as const, rootId: ROOT };
 
 	it('settles the session on a deep-link entry without opening anything', () => {
@@ -358,6 +507,90 @@ describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open
 				hasSupervisionSideRoom: true
 			})
 		).toEqual({ settle: true, open: supervision });
+	});
+
+	it('reopens a remembered TEAM channel as team, not as supervision', () => {
+		// The whole point of Frank's "letzte Einstellung": what was open
+		// comes back, even when the supervision room also exists.
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: team,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: true
+			})
+		).toEqual({ settle: true, open: team });
+	});
+
+	it('waits for the team room instead of falling back to supervision', () => {
+		// The team room resolves over its own request; until it lands the
+		// decision stays open rather than opening the wrong room.
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: team,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: false
+			})
+		).toEqual({ settle: false, open: null });
+	});
+
+	it('a remembered supervision still waits for ITS room, not the team one', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: supervision,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: false,
+				hasTeamSideRoom: true
+			})
+		).toEqual({ settle: false, open: null });
+	});
+
+	it('a first visit keeps supervision precedence, team stays one click away', () => {
+		// Unchanged behaviour on purpose: nothing remembered means nothing
+		// was chosen, and the team room does not steal the first open.
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: undefined,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: true
+			})
+		).toEqual({ settle: true, open: supervision });
+	});
+
+	it('a team deep link settles the session, so Back closes the panel', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: team,
+				alreadySettled: false,
+				remembered: undefined,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
+	});
+
+	it('an explicit close outranks a remembered team room', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: null,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
 	});
 });
 
