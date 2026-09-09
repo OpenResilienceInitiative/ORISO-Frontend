@@ -3,6 +3,7 @@ import {
 	EVENT_PARAM_KEYS,
 	parseEventActionParams,
 	resolveNotificationActionPath,
+	resolveNotificationActionTarget,
 	toInterpolationValues
 } from './notificationActionTarget';
 
@@ -101,6 +102,41 @@ describe('shared params contract (#846)', () => {
 		expect(params.consultingTypeId).toBe(1);
 	});
 
+	it('accepts the complete call lifecycle contract and joins Element Call', () => {
+		const params = parseEventActionParams(
+			JSON.stringify({
+				callId: 'call-1',
+				roomRef: '!conversation:matrix.example',
+				callRoomId: '!call:matrix.example',
+				callType: 'audio',
+				isVideo: false,
+				startedAt: '2026-09-10T10:00:00Z',
+				endedAt: '2026-09-10T10:01:12Z',
+				durationSeconds: 72,
+				actorUserId: 'user-1',
+				participants: ['user-1', 'user-2'],
+				participantCount: 2
+			})
+		);
+
+		expect(params).toMatchObject({
+			callId: 'call-1',
+			callType: 'audio',
+			durationSeconds: 72,
+			participants: ['user-1', 'user-2']
+		});
+		expect(
+			resolveNotificationActionTarget(
+				{ eventType: 'call.started', params },
+				'/sessions/consultant/sessionView'
+			)
+		).toEqual({
+			kind: 'join',
+			callRoomId: '!call:matrix.example',
+			isVideo: false
+		});
+	});
+
 	it('keeps the Case Handover opt-out variant as typed metadata', () => {
 		expect(
 			parseEventActionParams('{"clientConsent":"OPT_OUT"}')
@@ -142,6 +178,15 @@ describe('shared params contract (#846)', () => {
 				'start',
 				'callRoomId',
 				'isVideo',
+				'callId',
+				'callType',
+				'invitedAt',
+				'startedAt',
+				'endedAt',
+				'durationSeconds',
+				'actorUserId',
+				'participants',
+				'participantCount',
 				'forcedScopeKey',
 				'matrixEventId'
 			].sort()

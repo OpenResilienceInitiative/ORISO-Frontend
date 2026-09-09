@@ -73,7 +73,7 @@ const draftTarget = (params: EventActionParams): EventActionTarget => ({
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'join',
 	callRoomId: params.callRoomId ?? params.roomRef ?? null,
-	isVideo: !!params.isVideo
+	isVideo: params.callType ? params.callType === 'video' : !!params.isVideo
 });
 
 // --- Descriptor factory --------------------------------------------------
@@ -305,7 +305,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'callInvited',
 		i18nKey: 'callInvited',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: joinTarget
 	}),
 
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----

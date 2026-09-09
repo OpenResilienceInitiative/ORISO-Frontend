@@ -15,6 +15,11 @@ import {
 } from '../utils/matrixRoomEncryption';
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
+import { callTimelineMessageService } from './callTimelineMessageService';
+import type {
+	CallTimelineOutcome,
+	CallTimelineStartInput
+} from './callTimelineMessageService';
 
 export type CallState =
 	| 'idle'
@@ -58,6 +63,15 @@ class CallManager {
 	private static instance: CallManager;
 	private currentCall: CallData | null = null;
 	private listeners: Set<CallStateChangeListener> = new Set();
+
+	private timelineInput(call: CallData): CallTimelineStartInput {
+		return {
+			callId: call.callId,
+			roomRef: call.signalRoomId || call.roomId,
+			callRoomId: call.elementCallRoomId || call.roomId,
+			isVideo: call.isVideo
+		};
+	}
 
 	private constructor() {
 		// console.log("═══════════════════════════════════════════════");
@@ -252,6 +266,9 @@ class CallManager {
 				isVideo,
 				this.currentCall.roomId,
 				isGroup
+			);
+			void callTimelineMessageService.announceStarted(
+				this.timelineInput(this.currentCall)
 			);
 
 			this.notifyListeners();
@@ -665,6 +682,7 @@ class CallManager {
 			return;
 		}
 
+		const rejectedCall = this.currentCall;
 		if (this.currentCall.matrixCall) {
 			// console.log("📞 Rejecting Matrix call object...");
 			try {
@@ -673,6 +691,13 @@ class CallManager {
 				// console.error("❌ Error rejecting Matrix call:", err);
 			}
 		}
+		if (rejectedCall.usesElementCall) {
+			this.sendElementCallHangup(rejectedCall, 'rejected');
+		}
+		void callTimelineMessageService.finish(
+			this.timelineInput(rejectedCall),
+			'missed'
+		);
 
 		this.currentCall = null;
 
@@ -688,7 +713,10 @@ class CallManager {
 	/**
 	 * End the current call
 	 */
-	public endCall(notifyRemote: boolean = true): void {
+	public endCall(
+		notifyRemote: boolean = true,
+		outcome: CallTimelineOutcome = 'ended'
+	): void {
 		// Snapshot + clear first so nested hangup → state:ended → endCall()
 		// callbacks cannot read null.matrixCall.
 		const call = this.currentCall;
@@ -696,6 +724,10 @@ class CallManager {
 			return;
 		}
 		this.currentCall = null;
+		void callTimelineMessageService.finish(
+			this.timelineInput(call),
+			outcome
+		);
 
 		// A MatrixRTC group call belongs to the room, not to the participant who
 		// originally invited everyone. Leaving it must clear only this browser's
@@ -744,7 +776,10 @@ class CallManager {
 	 * the call that is still active. A delayed hangup from a previous call must
 	 * never tear down a newer call in the same conversation room.
 	 */
-	public endCallIfMatching(callId?: string): boolean {
+	public endCallIfMatching(
+		callId?: string,
+		outcome: CallTimelineOutcome = 'ended'
+	): boolean {
 		if (
 			!callId ||
 			!this.currentCall ||
@@ -753,11 +788,14 @@ class CallManager {
 			return false;
 		}
 
-		this.endCall(false);
+		this.endCall(false, outcome);
 		return true;
 	}
 
-	private sendElementCallHangup(callData: CallData): void {
+	private sendElementCallHangup(
+		callData: CallData,
+		reason: 'user_hangup' | 'rejected' = 'user_hangup'
+	): void {
 		try {
 			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient?.();
@@ -771,7 +809,7 @@ class CallManager {
 					{
 						call_id: callData.callId,
 						version: '1',
-						reason: 'user_hangup',
+						reason,
 						call_room_id:
 							callData.elementCallRoomId || callData.roomId
 					}

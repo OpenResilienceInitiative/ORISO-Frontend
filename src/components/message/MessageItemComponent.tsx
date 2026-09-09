@@ -72,7 +72,9 @@ import { apiDeleteMessage } from '../../api/apiDeleteMessage';
 import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
+import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
+import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { callManager } from '../../services/CallManager';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import {
@@ -320,13 +322,13 @@ export interface MessageItem {
 	file?: ChatFile;
 	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
 	rid: string;
-	isVideoActive?: boolean;
 	/** Relations foundation (#435): id of the replied-to event, if a reply. */
 	replyToEventId?: string | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	callLifecycle?: CallLifecycleMessage | null;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -396,7 +398,6 @@ export const MessageItemComponent = ({
 	handleDecryptionErrors,
 	handleDecryptionSuccess,
 	e2eeParams,
-	isVideoActive,
 	renderMode = 'main',
 	threadsEnabled = true,
 	threadRootId,
@@ -406,6 +407,7 @@ export const MessageItemComponent = ({
 	replyToEventId,
 	threadRootEventId,
 	isEdited,
+	callLifecycle,
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
@@ -1294,8 +1296,6 @@ export const MessageItemComponent = ({
 	   still discarded below, where it always was. */
 	const isUpdateSessionDataMessage =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.UPDATE_SESSION_DATA;
-	const isVideoCallMessage =
-		alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL;
 	const isUserMutedMessage =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.USER_MUTED;
 	const isE2EEActivatedMessage =
@@ -1306,8 +1306,6 @@ export const MessageItemComponent = ({
 		alias?.messageType === ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST;
 	const isAppointmentDefined =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.INITIAL_APPOINTMENT_DEFINED;
-	const isFullWidthMessage =
-		isVideoCallMessage && !videoCallMessage?.eventType;
 	const canDeleteMessage =
 		Boolean(onDeleteDirect) &&
 		activeSession?.item?.status !== STATUS_ARCHIVED &&
@@ -1865,6 +1863,82 @@ export const MessageItemComponent = ({
 
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
+			case Boolean(callLifecycle): {
+				const call = callLifecycle as CallLifecycleMessage;
+				const callLabel = translate(
+					`message.callLifecycle.type.${call.callType}`
+				);
+				const stateLabel = translate(
+					`message.callLifecycle.state.${call.state}`
+				);
+				const actor =
+					call.participants.find(
+						(participant) => participant.userId === call.actorUserId
+					)?.displayName || displayName;
+				const startedAt = call.startedAt || call.invitedAt;
+				const scheduledFor = call.scheduledFor || call.invitedAt;
+				const localeDate = (value?: string) =>
+					value
+						? new Intl.DateTimeFormat(undefined, {
+								dateStyle: 'medium',
+								timeStyle: 'short'
+							}).format(new Date(value))
+						: undefined;
+				const duration = call.durationSeconds
+					? `${Math.floor(call.durationSeconds / 60)}:${String(
+							call.durationSeconds % 60
+						).padStart(2, '0')}`
+					: undefined;
+				const headline = translate(
+					`message.callLifecycle.headline.${call.state}`,
+					{ call: callLabel, actor }
+				);
+				const description = translate(
+					`message.callLifecycle.description.${call.state}`,
+					{
+						call: callLabel,
+						actor,
+						start: localeDate(startedAt) || ''
+					}
+				);
+				const joinRoomId = call.callRoomId || call.roomRef || rid;
+				return (
+					<CallTimelineSystemMessage
+						state={call.state}
+						callType={call.callType}
+						callLabel={callLabel}
+						headline={headline}
+						statusLabel={stateLabel}
+						description={description}
+						durationLabel={
+							duration
+								? translate('message.callLifecycle.duration', {
+										duration
+									})
+								: undefined
+						}
+						scheduledForLabel={localeDate(scheduledFor)}
+						participants={call.participants}
+						participantCount={call.participantCount}
+						participantsLabel={translate(
+							call.state === 'running'
+								? 'message.callLifecycle.participants.current'
+								: 'message.callLifecycle.participants.attended'
+						)}
+						actionLabel={translate('message.callLifecycle.join')}
+						onAction={
+							joinRoomId
+								? () =>
+										callManager.startCall(
+											joinRoomId,
+											call.callType === 'video',
+											true
+										)
+								: undefined
+						}
+					/>
+				);
+			}
 			case isMasterKeyLostMessage:
 				return (
 					<MasterKeyLostMessage
@@ -1926,17 +2000,7 @@ export const MessageItemComponent = ({
 						messageType={alias.messageType}
 					/>
 				);
-			case isVideoCallMessage && !videoCallMessage?.eventType:
-				const parsedMessage = JSON.parse(
-					alias.content
-				) as VideoChatDetailsAlias;
-				return (
-					<VideoChatDetails
-						data={parsedMessage}
-						isVideoActive={isVideoActive}
-					/>
-				);
-			case isVideoCallMessage &&
+			case alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL &&
 				videoCallMessage?.eventType === 'IGNORED_CALL':
 				return (
 					<VideoCallMessage
@@ -2527,7 +2591,7 @@ export const MessageItemComponent = ({
 		<div
 			className={`messageItem ${
 				isMyMessage ? 'messageItem--right' : ''
-			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${
+			} ${
 				alias?.messageType &&
 				`${alias?.messageType.toLowerCase()} systemMessage`
 			} ${isSupervisorFeedback ? 'messageItem--feedback' : ''}`}

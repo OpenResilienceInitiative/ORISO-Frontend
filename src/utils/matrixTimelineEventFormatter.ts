@@ -11,6 +11,7 @@ import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
+import { parseCallLifecycleMessage } from './callLifecycleMessage';
 
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
@@ -90,6 +91,10 @@ export const formatMatrixTimelineEvent = (
 			name: senderDisplayName
 		}
 	};
+	const callLifecycle = parseCallLifecycleMessage(content);
+	if (callLifecycle) {
+		baseMessage.callLifecycle = callLifecycle;
+	}
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
 	}
@@ -104,6 +109,9 @@ export const formatMatrixTimelineEvent = (
 	if (replaceTargetId) {
 		baseMessage.replaceTargetId = replaceTargetId;
 		baseMessage.editedBody = getEditedBody(content);
+		baseMessage.editedCallLifecycle = parseCallLifecycleMessage(
+			content?.['m.new_content']
+		);
 	}
 	// Intentional mentions (#435): exposed for downstream UI (e.g. the
 	// timeline @mentions filter chip, #420) to test membership against.

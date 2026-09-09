@@ -44,6 +44,15 @@ export const EVENT_PARAM_KEYS = [
 	'start',
 	'callRoomId',
 	'isVideo',
+	'callId',
+	'callType',
+	'invitedAt',
+	'startedAt',
+	'endedAt',
+	'durationSeconds',
+	'actorUserId',
+	'participants',
+	'participantCount',
 	'forcedScopeKey',
 	// #924: added on the frontend first. The backend starts emitting it with
 	// ORISO-UserService#961; until then the key is simply absent, which the
@@ -86,8 +95,38 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
+	params.callId = asNullableString(source.callId);
 	if (typeof source.isVideo === 'boolean' || source.isVideo === null) {
 		params.isVideo = source.isVideo as boolean | null;
+	}
+	if (
+		source.callType === 'audio' ||
+		source.callType === 'video' ||
+		source.callType === null
+	) {
+		params.callType = source.callType as 'audio' | 'video' | null;
+	}
+	params.invitedAt = asNullableString(source.invitedAt);
+	params.startedAt = asNullableString(source.startedAt);
+	params.endedAt = asNullableString(source.endedAt);
+	params.actorUserId = asNullableString(source.actorUserId);
+	if (
+		typeof source.durationSeconds === 'number' &&
+		Number.isFinite(source.durationSeconds)
+	) {
+		params.durationSeconds = source.durationSeconds;
+	}
+	if (
+		typeof source.participantCount === 'number' &&
+		Number.isFinite(source.participantCount)
+	) {
+		params.participantCount = source.participantCount;
+	}
+	if (Array.isArray(source.participants)) {
+		params.participants = source.participants.filter(
+			(participant): participant is string =>
+				typeof participant === 'string' && participant.length > 0
+		);
 	}
 	if (typeof source.mentioned === 'boolean') {
 		params.mentioned = source.mentioned;
@@ -153,13 +192,11 @@ export const resolveNotificationActionPath = (
 	// the bare sessions root.
 	requestsBasePath?: string | null
 ): string | null => {
-	const target = getEventDescriptor(item.eventType).resolveActionTarget({
-		...(item.params || {}),
-		actionPath: item.actionPath,
-		sourceSessionId: item.sourceSessionId ?? item.params?.sourceSessionId,
+	const target = resolveNotificationActionTarget(
+		item,
 		sessionsBasePath,
 		requestsBasePath
-	});
+	);
 
 	return target.kind === 'conversation' ||
 		target.kind === 'groupChatJoin' ||
@@ -168,3 +205,16 @@ export const resolveNotificationActionPath = (
 		? target.path
 		: null;
 };
+
+export const resolveNotificationActionTarget = (
+	item: NotificationActionInput,
+	sessionsBasePath: string,
+	requestsBasePath?: string | null
+) =>
+	getEventDescriptor(item.eventType).resolveActionTarget({
+		...(item.params || {}),
+		actionPath: item.actionPath,
+		sourceSessionId: item.sourceSessionId ?? item.params?.sourceSessionId,
+		sessionsBasePath,
+		requestsBasePath
+	});

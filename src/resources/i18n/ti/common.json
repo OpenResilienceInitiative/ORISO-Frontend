@@ -1702,6 +1702,30 @@
 		"visibleOnlyTo": "ዝርእይዎ ጥራይ፦",
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
+		"callLifecycle": {
+			"type": { "audio": "ናይ ድምጺ ጻውዒት", "video": "ናይ ቪድዮ ጻውዒት" },
+			"state": {
+				"scheduled": "ተመዲቡ",
+				"running": "ይካየድ ኣሎ",
+				"ended": "ተወዲኡ",
+				"missed": "ዘይተመለሰ"
+			},
+			"headline": {
+				"scheduled": "{{call}} ተመዲቡ",
+				"running": "{{call}} ካብ {{actor}}",
+				"ended": "{{call}} ተወዲኡ",
+				"missed": "ዘይተመለሰ {{call}}"
+			},
+			"description": {
+				"scheduled": "እቲ ጻውዒት ን{{start}} ተመዲቡ።",
+				"running": "እቲ ጻውዒት ካብ {{start}} ይካየድ ኣሎ።",
+				"ended": "እቲ ጻውዒት ኣብ {{start}} ጀሚሩ።",
+				"missed": "እቲ ጻውዒት ኣይተመለሰን።"
+			},
+			"duration": "ንውሓት {{duration}}",
+			"participants": { "current": "ኣብ ጻውዒት", "attended": "ተሳቲፎም" },
+			"join": "ተጸንበር"
+		},
 		"systemNotification": "መፍለጢ ሲስተም",
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
 		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",

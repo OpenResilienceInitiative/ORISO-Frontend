@@ -96,7 +96,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
-	'call.invited': 'conversation',
+	'call.invited': 'join',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',

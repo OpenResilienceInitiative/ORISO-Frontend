@@ -1723,6 +1723,36 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"scheduled": "Geplant",
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"headline": {
+				"scheduled": "{{call}} geplant",
+				"running": "{{call}} von {{actor}}",
+				"ended": "{{call}} beendet",
+				"missed": "{{call}} verpasst"
+			},
+			"description": {
+				"scheduled": "Der Anruf ist für {{start}} geplant.",
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"duration": "Dauer {{duration}}",
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			},
+			"join": "Beitreten"
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",

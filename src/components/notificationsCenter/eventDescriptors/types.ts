@@ -76,6 +76,8 @@ export type EventIconId =
  * resolution degrades gracefully while the backend is incremental.
  */
 export interface EventActionParams {
+	/** Stable logical id shared by every event in one call lifecycle. */
+	callId?: string | null;
 	/** Pre-built navigation path emitted by the producer today (origin-encoded). */
 	actionPath?: string | null;
 	/** Session id the event belongs to, when known. */
@@ -96,6 +98,14 @@ export interface EventActionParams {
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
 	isVideo?: boolean | null;
+	callType?: 'audio' | 'video' | null;
+	invitedAt?: string | null;
+	startedAt?: string | null;
+	endedAt?: string | null;
+	durationSeconds?: number | null;
+	actorUserId?: string | null;
+	participants?: string[];
+	participantCount?: number | null;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */

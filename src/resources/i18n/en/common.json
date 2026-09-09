@@ -1708,6 +1708,33 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": { "audio": "Audio call", "video": "Video call" },
+			"state": {
+				"scheduled": "Scheduled",
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"headline": {
+				"scheduled": "{{call}} scheduled",
+				"running": "{{call}} by {{actor}}",
+				"ended": "{{call}} ended",
+				"missed": "Missed {{call}}"
+			},
+			"description": {
+				"scheduled": "The call is scheduled for {{start}}.",
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"duration": "Duration {{duration}}",
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			},
+			"join": "Join"
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
