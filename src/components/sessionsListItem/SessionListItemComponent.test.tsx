@@ -21,6 +21,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { STATUS_ACTIVE } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
 afterEach(cleanup);
 
@@ -306,7 +307,11 @@ const makeSession = ({
 
 const sessionsDispatch = vi.fn();
 
-const renderItem = (activeSession: any, userData = makeUserData()) => {
+const renderItem = (
+	activeSession: any,
+	userData = makeUserData(),
+	{ rail = false }: { rail?: boolean } = {}
+) => {
 	const sessionTypeValue = {
 		type: SESSION_LIST_TYPES.MY_SESSION,
 		path: '/sessions/consultant/sessionView'
@@ -339,10 +344,12 @@ const renderItem = (activeSession: any, userData = makeUserData()) => {
 						<SessionsDataContext.Provider value={sessionsDataValue}>
 							<E2EEContext.Provider value={e2eeValue}>
 								<LegalLinksContext.Provider value={[]}>
-									<SessionListItemComponent
-										defaultLanguage="de"
-										index={0}
-									/>
+									<SessionListRailProvider rail={rail}>
+										<SessionListItemComponent
+											defaultLanguage="de"
+											index={0}
+										/>
+									</SessionListRailProvider>
 								</LegalLinksContext.Provider>
 							</E2EEContext.Provider>
 						</SessionsDataContext.Provider>
@@ -510,5 +517,86 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 		await nextTick();
 		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
+	});
+});
+
+/**
+ * Rail wiring (Frank, 09.09.2026 *2). The collapsed 80 px list must render a
+ * DIFFERENT row — the portrait `SessionRailPill` — not the same card with its
+ * fields hidden by CSS. These tests fail the moment the early return is
+ * dropped, which is exactly the regression that would bring the egg back.
+ */
+describe('SessionListItemComponent — collapsed rail row', () => {
+	afterEach(() => {
+		mockNavigate.mockReset();
+	});
+
+	it('renders the card (and no pill) while the list is expanded', () => {
+		renderItem(makeSession());
+		expect(
+			document.querySelector('[data-cy="session-rail-pill"]')
+		).toBeNull();
+		expect(
+			document.querySelector('.sessionsListItem__content')
+		).not.toBeNull();
+	});
+
+	it('renders the pill instead of the card in the rail', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		const pill = document.querySelector('[data-cy="session-rail-pill"]');
+		expect(pill).not.toBeNull();
+		// Not a hidden card: the card body is gone, not display:none.
+		expect(document.querySelector('.sessionsListItem__content')).toBeNull();
+		// A named button, not a bare avatar.
+		expect(pill.tagName).toBe('BUTTON');
+		// The same display name the expanded card shows (`sessionTopic`).
+		expect(pill.textContent).toContain('Asker');
+	});
+
+	it('marks the mail modality from getModality, using the existing chip key', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		const marks = Array.from(
+			document.querySelectorAll('.sessionRailPill__mark')
+		).map((mark) => (mark as HTMLElement).dataset.mark);
+		expect(marks).toEqual(['mail']);
+		expect(
+			screen.getByRole('img', {
+				name: 'sessionList.toolbar.chips.nearby'
+			})
+		).toBeTruthy();
+	});
+
+	it('adds the supervision mark only when the DTO carries the ADR-008 marker', () => {
+		renderItem(
+			makeSession({ supervision: { supervisedByMe: true } }),
+			makeUserData(),
+			{ rail: true }
+		);
+		const marks = Array.from(
+			document.querySelectorAll('.sessionRailPill__mark')
+		).map((mark) => (mark as HTMLElement).dataset.mark);
+		expect(marks).toEqual(['supervision', 'mail']);
+		expect(
+			screen.getByRole('img', {
+				name: 'sessionList.toolbar.chips.supervision'
+			})
+		).toBeTruthy();
+	});
+
+	it('opens the conversation when the pill is clicked', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="session-rail-pill"]'
+			) as HTMLElement
+		);
+		expect(mockNavigate).toHaveBeenCalled();
+	});
+
+	it('renders a pill for group rows too', () => {
+		renderItem(makeGroupSession(), makeUserData(), { rail: true });
+		const pill = document.querySelector('[data-cy="session-rail-pill"]');
+		expect(pill).not.toBeNull();
+		expect(pill.textContent).toContain('Test group chat');
 	});
 });
