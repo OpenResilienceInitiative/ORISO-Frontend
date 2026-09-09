@@ -4805,8 +4805,8 @@
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
-				"subline": "Anonym, ohne Konto. Wählen Sie einen Namen — oder würfeln Sie neue.",
-				"label": "Ihr Pseudonym",
+				"subline": "Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.",
+				"label": "Ihre User-ID",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
 				"reroll": "Neu würfeln",
 				"continue": "Zum Warteraum"

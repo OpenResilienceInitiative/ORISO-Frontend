@@ -2326,8 +2326,7 @@
 			},
 			"access": {
 				"headline": "Dein Name für heute.",
-				"subline": "Anonym, ohne Konto. Wähl einen Namen — oder würfle neue.",
-				"label": "Dein Pseudonym",
+				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
 			},
 			"waiting": {

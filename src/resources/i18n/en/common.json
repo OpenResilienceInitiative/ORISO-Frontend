@@ -4724,8 +4724,8 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Pick a name — or roll a new set.",
-				"label": "Your pseudonym",
+				"subline": "Anonymous, no account. Pick a user ID — or roll new ones.",
+				"label": "Your user ID",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",
 				"continue": "To the waiting room"

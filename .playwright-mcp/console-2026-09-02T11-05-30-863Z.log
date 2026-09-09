@@ -1,0 +1,33 @@
+[    1338ms] [WARNING] Tenant theming: stored seed is invalid, keeping the default palette. Error: OrisoScheme: signal seed is not a valid hex colour: ""
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:513631)
+    at h (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:515103)
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:512133)
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521160
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521597 @ https://dev.oriso.org/static/js/app.9c3b4cef.js:1
+[    1529ms] [WARNING] Tenant theming: stored seed is invalid, keeping the default palette. Error: OrisoScheme: signal seed is not a valid hex colour: ""
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:513631)
+    at h (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:515103)
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:512133)
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521160
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521597 @ https://dev.oriso.org/static/js/app.9c3b4cef.js:1
+[    3017ms] [WARNING] Tenant theming: stored seed is invalid, keeping the default palette. Error: OrisoScheme: signal seed is not a valid hex colour: ""
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:513631)
+    at h (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:515103)
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:512133)
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521160
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521597 @ https://dev.oriso.org/static/js/app.9c3b4cef.js:1
+[    3194ms] [WARNING] Tenant theming: stored seed is invalid, keeping the default palette. Error: OrisoScheme: signal seed is not a valid hex colour: ""
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:513631)
+    at h (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:515103)
+    at o (https://dev.oriso.org/static/js/app.9c3b4cef.js:2:512133)
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521160
+    at https://dev.oriso.org/static/js/app.9c3b4cef.js:2:521597 @ https://dev.oriso.org/static/js/app.9c3b4cef.js:1
+[    3470ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://dev.oriso.org/service/live/info?t=1788347134295:0
+[    5831ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/_matrix/client/v3/room_keys/version:0
+[    5847ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://dev.oriso.org/service/conversations/consultants/availability:0
+[    5856ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://dev.oriso.org/service/conversations/consultants/availability:0
+[    5904ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/service/error-reports:0
+[    5904ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/service/error-reports:0
+[    7728ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/service/matrix/sync/register/57:0
+[    7867ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/_matrix/client/v3/room_keys/version:0
+[    8173ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dev.oriso.org/_matrix/client/v3/room_keys/version:0

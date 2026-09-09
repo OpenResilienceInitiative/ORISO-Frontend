@@ -11,6 +11,8 @@ import {
 import { Stage } from '../stage/stage';
 import { EntryRoomShell } from './entryRoom/EntryRoomShell';
 import { LiveChatAccess } from './entryRoom/LiveChatAccess';
+import type { GuestName } from './entryRoom/LiveChatEntryRoom';
+import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { LiveChatWaitingRoom } from './entryRoom/LiveChatWaitingRoom';
 import { LiveChatClosed } from './entryRoom/LiveChatClosed';
 import { phone375Globals } from '../message/messageStoryShell';
@@ -75,15 +77,16 @@ const Shell = ({
 	</GlobalComponentContext.Provider>
 );
 
-/* Same rule as the room: four offers, no double name in the set. */
-const rollFour = () => {
-	const picked: ReturnType<typeof generatePseudonym>[] = [];
+/* Same rule as the room: four offers, no double User-ID in the set. */
+const rollFour = (): GuestName[] => {
+	const picked: GuestName[] = [];
 	const seen = new Set<string>();
 	while (picked.length < 4) {
-		const candidate = generatePseudonym('de');
-		if (seen.has(candidate.displayName)) continue;
-		seen.add(candidate.displayName);
-		picked.push(candidate);
+		const identity = generatePseudonym('de');
+		const userId = toRegistrationUsername(identity);
+		if (seen.has(userId)) continue;
+		seen.add(userId);
+		picked.push({ identity, userId });
 	}
 	return picked;
 };
@@ -94,7 +97,7 @@ const Access = () => {
 	return (
 		<Shell status="Ihr Zugang für dieses Gespräch">
 			<LiveChatAccess
-				pseudonyms={names}
+				names={names}
 				selectedIndex={selected}
 				onSelect={setSelected}
 				onReroll={() => {
