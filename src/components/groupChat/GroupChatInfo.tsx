@@ -20,6 +20,7 @@ import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import { BUTTON_TYPES } from '../button/Button';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { getModality, Modality } from '../session/getModality';
 import { GroupChatInfoDialog } from './GroupChatInfoDialog';
 import { OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import {
@@ -246,6 +247,11 @@ export const GroupChatInfo = () => {
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
 			<GroupChatInfoDialog
+				kind={
+					getModality(activeSession) === Modality.SELF_HELP
+						? 'circle'
+						: 'team'
+				}
 				active={activeSession.item.active}
 				title={
 					typeof activeSession.item.topic === 'string'

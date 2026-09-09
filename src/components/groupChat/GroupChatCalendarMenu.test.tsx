@@ -8,6 +8,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 
 const translations: Record<string, string> = {
@@ -26,7 +27,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('GroupChatCalendarMenu', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		vi.unstubAllGlobals();
+	});
 
 	it('opens translated, confidentiality-neutral calendar actions', async () => {
 		render(
@@ -95,5 +99,112 @@ describe('GroupChatCalendarMenu', () => {
 		await waitFor(() =>
 			expect(screen.queryByText('Download ICS')).toBeNull()
 		);
+	});
+	it.each([
+		[
+			'copyGoogle',
+			'https://calendar.google.com/calendar/render?action=TEMPLATE&text=My+appointment&dates=20260804T180000Z%2F20260804T190000Z'
+		],
+		[
+			'copyOutlook',
+			'https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&subject=My+appointment&startdt=2026-08-04T18%3A00%3A00.000Z&enddt=2026-08-04T19%3A00%3A00.000Z'
+		]
+	])(
+		'copies %s with the edited title and appointment times',
+		async (action, expectedUrl) => {
+			const writeText = vi.fn().mockResolvedValue(undefined);
+			vi.stubGlobal('navigator', { clipboard: { writeText } });
+			render(
+				<GroupChatCalendarMenu
+					start={new Date('2026-08-04T18:00:00Z')}
+					durationMinutes={60}
+					eventId={42}
+				/>
+			);
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Add to calendar' })
+			);
+			fireEvent.change(
+				await screen.findByRole('textbox', {
+					name: 'Neutral calendar title'
+				}),
+				{ target: { value: 'My appointment' } }
+			);
+			expect(
+				screen.getByText('groupChat.calendar.shareHint')
+			).toBeTruthy();
+			fireEvent.click(
+				screen.getByRole('menuitem', {
+					name: `groupChat.calendar.${action}`
+				})
+			);
+			await waitFor(() =>
+				expect(writeText).toHaveBeenCalledWith(expectedUrl)
+			);
+			expect(await screen.findByRole('status')).toHaveProperty(
+				'textContent',
+				'groupChat.calendar.linkCopied'
+			);
+			expect(screen.queryByRole('alert')).toBeNull();
+		}
+	);
+
+	it('shows failure rather than success when clipboard permission is denied', async () => {
+		vi.stubGlobal('navigator', {
+			clipboard: {
+				writeText: vi.fn().mockRejectedValue(new Error('Denied'))
+			}
+		});
+		render(
+			<GroupChatCalendarMenu
+				start={new Date('2026-08-04T18:00:00Z')}
+				durationMinutes={60}
+				eventId={42}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Add to calendar' })
+		);
+		fireEvent.click(
+			await screen.findByRole('menuitem', {
+				name: 'groupChat.calendar.copyGoogle'
+			})
+		);
+		expect(await screen.findByRole('alert')).toHaveProperty(
+			'textContent',
+			'groupChat.calendar.copyError'
+		);
+		expect(screen.queryByText('groupChat.calendar.linkCopied')).toBeNull();
+	});
+	it('keeps editable and descriptive content outside the action menu and restores focus', async () => {
+		const user = userEvent.setup();
+		render(
+			<GroupChatCalendarMenu
+				start={new Date('2026-08-04T18:00:00Z')}
+				durationMinutes={60}
+				eventId={42}
+			/>
+		);
+		const trigger = screen.getByRole('button', { name: 'Add to calendar' });
+		await user.click(trigger);
+		const title = await screen.findByRole('textbox', {
+			name: 'Neutral calendar title'
+		});
+		expect(title.closest('[role="menu"]')).toBeNull();
+		expect(
+			screen
+				.getByText('groupChat.calendar.shareHint')
+				.closest('[role="menu"]')
+		).toBeNull();
+		const menu = screen.getByRole('menu');
+		expect(
+			Array.from(menu.children).every(
+				(child) => child.getAttribute('role') === 'menuitem'
+			)
+		).toBe(true);
+		await user.click(title);
+		await user.keyboard('{Escape}');
+		await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+		expect(document.activeElement).toBe(trigger);
 	});
 });
