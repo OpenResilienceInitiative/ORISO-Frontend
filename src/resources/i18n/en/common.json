@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menu appearance",
+		"label": "Backdrop and gentle menu animations",
+		"description": "Lightens the background behind open chat menus and gently animates the menu. Animations are skipped when reduced motion is enabled.",
+		"scope": "Applies to this account in this browser. Enabled by default."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"

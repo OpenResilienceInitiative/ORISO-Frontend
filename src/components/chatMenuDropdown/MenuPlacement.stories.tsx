@@ -1,3 +1,4 @@
+import { MenuBackdrop } from './MenuBackdrop';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react';
@@ -24,6 +25,13 @@ function MenuPlacementDemo({
 	const style = useChatMenuPosition({ open, anchorRef, menuRef });
 	return (
 		<div style={{ minHeight: '100vh', background: '#eae7e8' }}>
+			<MenuBackdrop
+				open={open}
+				onClose={() => {
+					setOpen(false);
+					anchorRef.current?.focus();
+				}}
+			/>
 			<button
 				ref={anchorRef}
 				type="button"

@@ -1,3 +1,4 @@
+import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import {
@@ -68,6 +69,7 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.display',
 		url: '/anzeige',
 		elements: [
+			{ component: MenuEffectsSettings, column: COLUMN_RIGHT, order: 2 },
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,

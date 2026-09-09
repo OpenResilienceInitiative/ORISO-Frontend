@@ -1,3 +1,4 @@
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -20,6 +21,7 @@ export interface SessionListItemMenuProps {
 	dropdownId: string;
 	dropdownLabel: string;
 	translate: TFunction<['common'], undefined>;
+	onClose?: () => void;
 	onMenuClick: (e: React.MouseEvent) => void;
 	onMenuKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 	onDropdownKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -44,6 +46,7 @@ export const SessionListItemMenu = ({
 	dropdownLabel,
 	translate,
 	onMenuClick,
+	onClose,
 	onMenuKeyDown,
 	onDropdownKeyDown,
 	isAsker,
@@ -64,6 +67,14 @@ export const SessionListItemMenu = ({
 	});
 	return (
 		<>
+			<MenuBackdrop
+				open={flyoutOpen}
+				onClose={() => {
+					onClose?.();
+					menuIconRef.current?.focus();
+				}}
+				zIndex={999998}
+			/>
 			<button
 				type="button"
 				ref={menuIconRef}

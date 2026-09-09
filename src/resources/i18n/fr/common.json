@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Affichage des menus",
+		"label": "Voile et animations douces",
+		"description": "Éclaircit l’arrière-plan des menus de conversation ouverts et anime doucement le menu. Aucune animation si la réduction des mouvements est activée.",
+		"scope": "S’applique à ce compte dans ce navigateur. Activé par défaut."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Informer les personnes en quête de conseils de mon absence"

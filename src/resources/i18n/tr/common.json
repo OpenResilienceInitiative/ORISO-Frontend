@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menü görünümü",
+		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
+		"description": "Açık sohbet menülerinin arka planını aydınlatır ve menüyü hafif bir hareketle açar. Hareket azaltma etkinse animasyon oynatılmaz.",
+		"scope": "Bu tarayıcıdaki bu hesap için geçerlidir. Varsayılan olarak açıktır."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"

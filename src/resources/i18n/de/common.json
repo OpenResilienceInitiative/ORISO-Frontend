@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menüdarstellung",
+		"label": "Schleier und sanfte Menüanimationen",
+		"description": "Hellt den Hintergrund geöffneter Chatmenüs auf und blendet das Menü mit einer dezenten Bewegung ein. Bei reduzierter Bewegung wird nicht animiert.",
+		"scope": "Gilt für dieses Konto in diesem Browser. Standardmäßig eingeschaltet."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Ratsuchende über meine Abwesenheit informieren"
