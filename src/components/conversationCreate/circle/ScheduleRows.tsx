@@ -5,8 +5,10 @@ import dayjs from 'dayjs';
 import { ReactComponent as CalendarIcon } from '../../../resources/img/icons/calendar.svg';
 import { ReactComponent as ClockIcon } from '../../../resources/img/icons/clock.svg';
 import { ReactComponent as RepeatIcon } from '../../../resources/img/icons/reload.svg';
-import { ReactComponent as MediumIcon } from '../../../resources/img/icons/diversity-2.svg';
 import { ReactComponent as LanguageIcon } from '../../../resources/img/icons/language_outline.svg';
+import { ReactComponent as TextMediumIcon } from '../../../resources/img/icons/chat.svg';
+import { ReactComponent as AudioMediumIcon } from '../../../resources/img/icons/call.svg';
+import { ReactComponent as VideoMediumIcon } from '../../../resources/img/icons/video-call.svg';
 import { OrisoCalendar } from '../../form/OrisoCalendar';
 import { OrisoTimePicker } from '../../form/OrisoTimePicker';
 import {
@@ -124,6 +126,12 @@ export const ScheduleRows = ({
 	const durationLabel = translate('groupChat.circle.rows.durationLabel');
 	const repeatLabel = translate('groupChat.circle.rows.repeatLabel');
 	const timeLabel = translate('groupChat.circle.rows.timeLabel');
+	const ModalityIcon =
+		value.modality === 'VIDEO'
+			? VideoMediumIcon
+			: value.modality === 'AUDIO'
+				? AudioMediumIcon
+				: TextMediumIcon;
 
 	return (
 		<div className="scheduleRows">
@@ -271,7 +279,7 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={mediumRef}
 				fullWidth
-				icon={<MediumIcon />}
+				icon={<ModalityIcon />}
 				label={translate(
 					groupChatModalityLabelKey(value.modality),
 					translate('groupChat.circle.rows.mediumLabel')
