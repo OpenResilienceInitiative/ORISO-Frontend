@@ -643,7 +643,7 @@
 			"copyOutlook": "Copy Outlook Calendar link",
 			"linkCopied": "Calendar link copied.",
 			"copyError": "The calendar link could not be copied. Please try again.",
-			"shareHint": "You can also use these calendar links on your website. They contain this single appointment with the chosen calendar title, without the group invitation link. Later changes are not updated automatically."
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",

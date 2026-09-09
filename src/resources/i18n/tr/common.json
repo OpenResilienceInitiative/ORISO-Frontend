@@ -660,7 +660,7 @@
 			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
 			"linkCopied": "Takvim bağlantısı kopyalandı.",
 			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
-			"shareHint": "Bu takvim bağlantılarını web sitenizde de kullanabilirsiniz. Bağlantılar, seçilen başlıkla yalnızca bu randevuyu içerir; grup davet bağlantısını içermez. Sonraki değişiklikler otomatik olarak güncellenmez."
+			"shareHint": "Web siteniz için takvim bağlantıları: tek randevu, davet bağlantısı veya otomatik güncelleme olmadan."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",

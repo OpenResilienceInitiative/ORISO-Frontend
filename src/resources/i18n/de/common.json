@@ -655,7 +655,7 @@
 			"copyOutlook": "Outlook-Kalenderlink kopieren",
 			"linkCopied": "Kalenderlink kopiert.",
 			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
-			"shareHint": "Die Kalenderlinks können Sie auch auf Ihrer Webseite verwenden. Sie enthalten diesen einzelnen Termin mit dem gewählten Kalendertitel, ohne Gruppen-Einladungslink. Spätere Änderungen werden nicht automatisch übernommen."
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",

@@ -1,3 +1,4 @@
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import type { TFunction } from 'i18next';
@@ -13,7 +14,7 @@ import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvide
 
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
-	dropdownPosition: { top: number; left: number };
+	dropdownPosition?: { top: number; left: number };
 	menuIconRef: React.RefObject<HTMLButtonElement>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
@@ -36,7 +37,7 @@ export interface SessionListItemMenuProps {
 
 export const SessionListItemMenu = ({
 	flyoutOpen,
-	dropdownPosition,
+
 	menuIconRef,
 	dropdownRef,
 	dropdownId,
@@ -56,6 +57,11 @@ export const SessionListItemMenu = ({
 	agencyId,
 	onLegalLinkClick
 }: SessionListItemMenuProps) => {
+	const menuPosition = useChatMenuPosition({
+		open: flyoutOpen,
+		anchorRef: menuIconRef,
+		menuRef: dropdownRef
+	});
 	return (
 		<>
 			<button
@@ -80,18 +86,7 @@ export const SessionListItemMenu = ({
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}
-						style={{
-							top:
-								dropdownPosition.top > 0
-									? `${dropdownPosition.top}px`
-									: '40px',
-							left:
-								dropdownPosition.left > 0
-									? `${dropdownPosition.left}px`
-									: 'auto',
-							right: 'auto',
-							zIndex: 999999
-						}}
+						style={{ ...menuPosition, zIndex: 999999 }}
 					>
 						<div className="sessionsListItem__dropdownHeader">
 							<p className="sessionsListItem__dropdownSubtitle">

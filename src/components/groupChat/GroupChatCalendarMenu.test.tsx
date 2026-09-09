@@ -52,7 +52,7 @@ describe('GroupChatCalendarMenu', () => {
 			'Online appointment'
 		);
 		expect(screen.getByText('Download ICS')).toBeTruthy();
-		const googleLink = screen.getByRole('menuitem', {
+		const googleLink = screen.getByRole('link', {
 			name: 'Google Calendar'
 		});
 		expect(googleLink.getAttribute('href')).toContain(
@@ -83,7 +83,7 @@ describe('GroupChatCalendarMenu', () => {
 			/>
 		);
 		const trigger = screen.getByRole('button', { name: 'Add to calendar' });
-		expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+		expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
 		expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
 		fireEvent.click(trigger);
@@ -134,7 +134,7 @@ describe('GroupChatCalendarMenu', () => {
 				screen.getByText('groupChat.calendar.shareHint')
 			).toBeTruthy();
 			fireEvent.click(
-				screen.getByRole('menuitem', {
+				screen.getByRole('button', {
 					name: `groupChat.calendar.${action}`
 				})
 			);
@@ -166,7 +166,7 @@ describe('GroupChatCalendarMenu', () => {
 			screen.getByRole('button', { name: 'Add to calendar' })
 		);
 		fireEvent.click(
-			await screen.findByRole('menuitem', {
+			await screen.findByRole('button', {
 				name: 'groupChat.calendar.copyGoogle'
 			})
 		);
@@ -196,15 +196,15 @@ describe('GroupChatCalendarMenu', () => {
 				.getByText('groupChat.calendar.shareHint')
 				.closest('[role="menu"]')
 		).toBeNull();
-		const menu = screen.getByRole('menu');
+		expect(screen.getAllByRole('link')).toHaveLength(2);
 		expect(
-			Array.from(menu.children).every(
-				(child) => child.getAttribute('role') === 'menuitem'
-			)
-		).toBe(true);
+			screen
+				.getByRole('button', { name: 'groupChat.calendar.copyGoogle' })
+				.closest('a')
+		).toBeNull();
 		await user.click(title);
 		await user.keyboard('{Escape}');
-		await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 		expect(document.activeElement).toBe(trigger);
 	});
 });

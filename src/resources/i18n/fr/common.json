@@ -660,7 +660,7 @@
 			"copyOutlook": "Copier le lien du calendrier Outlook",
 			"linkCopied": "Lien du calendrier copié.",
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
-			"shareHint": "Vous pouvez aussi utiliser ces liens sur votre site web. Ils contiennent ce rendez-vous unique avec le titre choisi, sans le lien d’invitation au groupe. Les modifications ultérieures ne sont pas reprises automatiquement."
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
