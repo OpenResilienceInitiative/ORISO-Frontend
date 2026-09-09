@@ -22,6 +22,7 @@ import type {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
+import { Modality } from '../session/getModality';
 import { JoinGroupChatView } from './JoinGroupChatView';
 import './joinChat.styles';
 
@@ -131,6 +132,7 @@ const buildWaitingSession = (
 			language: 'de',
 			chat: {
 				active: false,
+				conversationType: Modality.SELF_HELP,
 				assignedAgencies: [],
 				attachment: null,
 				consultingType: 1,

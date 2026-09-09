@@ -307,6 +307,11 @@ export const JoinGroupChatView = ({
 							plannedStart={plannedStart}
 							welcomeText={authorContent.hintMessage || undefined}
 							rules={groupChatRules}
+							clockSize="fit"
+							fitHeight={360}
+							spacing="tight"
+							labelsOutside
+							gap={8}
 							calendarSlot={
 								<GroupChatCalendarMenu
 									start={plannedStart}
@@ -319,7 +324,8 @@ export const JoinGroupChatView = ({
 						/>
 					</div>
 				)}
-				{showRules && (
+				{/* The countdown opens into the greeting and every rule itself. */}
+				{showRules && !showCountdown && (
 					<WaitingAreaRules
 						rules={groupChatRules}
 						ariaLabel={tr(

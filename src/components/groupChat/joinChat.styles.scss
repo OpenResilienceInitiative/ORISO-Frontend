@@ -47,9 +47,9 @@
 	// the surrounding room container already supplies the white surface and the
 	// #ffb4aa outline, so drawing our own card here would double the frame.
 	&__waitingBox {
-		width: min(100%, $grid-base * 96);
-		margin: $grid-base-two 0;
-		padding: $grid-base-two 0;
+		width: min(100%, $grid-base * 120);
+		margin: $grid-base 0;
+		padding: $grid-base 0;
 		box-sizing: border-box;
 	}
 
