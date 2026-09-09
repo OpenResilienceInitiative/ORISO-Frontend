@@ -389,7 +389,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
-			},
+			}
+		],
+		dialogRoutes: [
 			{
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,
