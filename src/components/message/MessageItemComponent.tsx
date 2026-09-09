@@ -1,3 +1,5 @@
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
@@ -465,6 +467,7 @@ export const MessageItemComponent = ({
 	}, [getComparableRecipientIds, userData?.displayName, userData?.userName]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
+	const { motionEnabled } = useMenuEffects();
 	const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 	const [actionMenuPosition, setActionMenuPosition] = useState<{
 		top: number;
@@ -480,6 +483,7 @@ export const MessageItemComponent = ({
 	>(null);
 	const [actionMenuPlacement, setActionMenuPlacement] =
 		useState<Placement>('right-start');
+	const [actionMenuOrigin, setActionMenuOrigin] = useState('left top');
 	// Quick-reaction row: the user's own recent picks, refreshed every time the
 	// menu opens, plus the "more" button that hands over to the full picker.
 	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
@@ -495,6 +499,8 @@ export const MessageItemComponent = ({
 		useState<Element | null>(null);
 	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
 		useState<Placement>('right-start');
+	const [visibilityMenuOrigin, setVisibilityMenuOrigin] =
+		useState('left top');
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -1506,7 +1512,12 @@ export const MessageItemComponent = ({
 				strategy: 'fixed',
 				placement: actionMenuPlacement,
 				middleware: [offset(10), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+			}).then(({ x, y, placement }) => {
+				setActionMenuPosition({ left: x, top: y });
+				setActionMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
 
@@ -1520,9 +1531,12 @@ export const MessageItemComponent = ({
 				strategy: 'fixed',
 				placement: visibilityMenuPlacement,
 				middleware: [offset(6), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) =>
-				setVisibilityMenuPosition({ left: x, top: y })
-			);
+			}).then(({ x, y, placement }) => {
+				setVisibilityMenuPosition({ left: x, top: y });
+				setVisibilityMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
@@ -2755,6 +2769,20 @@ export const MessageItemComponent = ({
 					)}
 				</div>
 			</div>
+			<MenuBackdrop
+				open={isActionMenuOpen || isVisibilityMenuOpen}
+				zIndex={8999}
+				onClose={() => {
+					const anchor = isActionMenuOpen
+						? actionMenuAnchor
+						: visibilityMenuAnchor;
+					setIsActionMenuOpen(false);
+					setIsVisibilityMenuOpen(false);
+					setActionMenuPosition(null);
+					setVisibilityMenuPosition(null);
+					if (anchor instanceof HTMLElement) anchor.focus();
+				}}
+			/>
 			{isActionMenuOpen
 				? createPortal(
 						<div
@@ -2769,6 +2797,11 @@ export const MessageItemComponent = ({
 								// rendered menu — it needs the real element, so
 								// the first paint cannot already know where it
 								// goes (same pattern as ToolbarMenu).
+								animation:
+									motionEnabled && actionMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: actionMenuOrigin,
 								top: `${actionMenuPosition?.top ?? -9999}px`,
 								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
@@ -2894,6 +2927,11 @@ export const MessageItemComponent = ({
 								position: 'fixed',
 								maxHeight: 'calc(100vh - 24px)',
 								overflowY: 'auto',
+								animation:
+									motionEnabled && visibilityMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: visibilityMenuOrigin,
 								top: `${visibilityMenuPosition?.top ?? -9999}px`,
 								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000

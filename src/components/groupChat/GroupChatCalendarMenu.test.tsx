@@ -202,7 +202,7 @@ describe('GroupChatCalendarMenu', () => {
 				.getByRole('button', { name: 'groupChat.calendar.copyGoogle' })
 				.closest('a')
 		).toBeNull();
-		await user.click(title);
+		await waitFor(() => expect(document.activeElement).toBe(title));
 		await user.keyboard('{Escape}');
 		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 		expect(document.activeElement).toBe(trigger);

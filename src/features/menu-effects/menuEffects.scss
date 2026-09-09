@@ -1,0 +1,37 @@
+.orisoMenuBackdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(2px);
+	-webkit-backdrop-filter: blur(2px);
+
+	&--animated {
+		animation: oriso-menu-veil 160ms ease-out both;
+	}
+}
+
+@keyframes oriso-menu-veil {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes oriso-menu-reveal {
+	from {
+		opacity: 0;
+		transform: scale(0.985);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.orisoMenuBackdrop--animated {
+		animation: none;
+	}
+}

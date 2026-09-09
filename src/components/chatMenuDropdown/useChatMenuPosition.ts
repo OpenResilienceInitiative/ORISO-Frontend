@@ -1,3 +1,4 @@
+import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import { CSSProperties, RefObject, useLayoutEffect, useState } from 'react';
 
 export const getChatMenuPosition = (
@@ -51,6 +52,7 @@ export const useChatMenuPosition = ({
 	menuRef: RefObject<HTMLElement>;
 	width?: number;
 }): CSSProperties => {
+	const { motionEnabled } = useMenuEffects();
 	const [position, setPosition] = useState<ReturnType<
 		typeof getChatMenuPosition
 	> | null>(null);
@@ -110,6 +112,11 @@ export const useChatMenuPosition = ({
 		};
 	}, [open, anchorRef, menuRef, width]);
 	return {
+		animation:
+			open && position && motionEnabled
+				? 'oriso-menu-reveal 160ms ease-out both'
+				: 'none',
+		transition: 'none',
 		position: 'fixed',
 		right: 'auto',
 		...position,

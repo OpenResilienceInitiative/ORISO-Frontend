@@ -1,3 +1,4 @@
+import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
 	Alert,
@@ -36,12 +37,14 @@ export const GroupChatCalendarMenu = ({
 	durationMinutes,
 	eventId
 }: GroupChatCalendarMenuProps) => {
+	const { enabled, motionEnabled } = useMenuEffects();
 	const { t: translate } = useTranslation();
 	const instanceId = useId().replace(/:/g, '');
 	const triggerId = `${instanceId}-group-chat-calendar-trigger`;
 	const menuId = `${instanceId}-group-chat-calendar-menu`;
 	const anchorRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	const titleInputRef = useRef<HTMLInputElement>(null);
 	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 	const menuStyle = useChatMenuPosition({
 		open: Boolean(anchor),
@@ -49,6 +52,12 @@ export const GroupChatCalendarMenu = ({
 		menuRef,
 		width: 360
 	});
+	useEffect(() => {
+		// The portalled paper is hidden until its anchor has been measured.
+		if (anchor && menuStyle.visibility === 'visible')
+			titleInputRef.current?.focus();
+	}, [anchor, menuStyle.visibility]);
+
 	const [copyState, setCopyState] = useState<
 		'pending' | 'success' | 'error' | null
 	>(null);
@@ -102,6 +111,17 @@ export const GroupChatCalendarMenu = ({
 			<Popover
 				anchorReference="none"
 				TransitionComponent={Fade}
+				transitionDuration={motionEnabled ? 160 : 0}
+				BackdropProps={{
+					invisible: !enabled,
+					sx: enabled
+						? {
+								backgroundColor: 'rgba(255, 255, 255, 0.8)',
+								backdropFilter: 'blur(2px)',
+								WebkitBackdropFilter: 'blur(2px)'
+							}
+						: undefined
+				}}
 				PaperProps={{
 					'ref': menuRef,
 					'id': menuId,
@@ -117,6 +137,7 @@ export const GroupChatCalendarMenu = ({
 			>
 				<Box sx={{ padding: 1 }}>
 					<TextField
+						inputRef={titleInputRef}
 						autoFocus
 						label={translate('groupChat.calendar.titleLabel')}
 						value={title}

@@ -884,6 +884,7 @@ export const SessionListItemComponent = ({
 									dropdownLabel={dropdownLabel}
 									translate={translate}
 									onMenuClick={handleMenuClick}
+									onClose={() => setFlyoutOpen(false)}
 									onMenuKeyDown={handleMenuKeyDown}
 									onDropdownKeyDown={handleDropdownKeyDown}
 									isAsker={isAsker}
@@ -1147,6 +1148,7 @@ export const SessionListItemComponent = ({
 								dropdownLabel={dropdownLabel}
 								translate={translate}
 								onMenuClick={handleMenuClick}
+								onClose={() => setFlyoutOpen(false)}
 								onMenuKeyDown={handleMenuKeyDown}
 								onDropdownKeyDown={handleDropdownKeyDown}
 								isAsker={isAsker}
