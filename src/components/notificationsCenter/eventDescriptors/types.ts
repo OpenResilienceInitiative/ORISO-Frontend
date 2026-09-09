@@ -106,6 +106,10 @@ export interface EventActionParams {
 	actorUserId?: string | null;
 	participants?: string[];
 	participantCount?: number | null;
+	/** Canonical timestamp for every backend call lifecycle event. */
+	eventAt?: string | null;
+	/** True when UserService recovered the lifecycle from MatrixRTC state. */
+	inferredFromMembership?: boolean | null;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */

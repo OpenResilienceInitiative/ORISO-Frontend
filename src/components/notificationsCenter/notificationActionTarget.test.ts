@@ -115,7 +115,9 @@ describe('shared params contract (#846)', () => {
 				durationSeconds: 72,
 				actorUserId: 'user-1',
 				participants: ['user-1', 'user-2'],
-				participantCount: 2
+				participantCount: 2,
+				eventAt: '2026-09-10T10:01:12Z',
+				inferredFromMembership: true
 			})
 		);
 
@@ -123,7 +125,9 @@ describe('shared params contract (#846)', () => {
 			callId: 'call-1',
 			callType: 'audio',
 			durationSeconds: 72,
-			participants: ['user-1', 'user-2']
+			participants: ['user-1', 'user-2'],
+			eventAt: '2026-09-10T10:01:12Z',
+			inferredFromMembership: true
 		});
 		expect(
 			resolveNotificationActionTarget(
@@ -187,6 +191,8 @@ describe('shared params contract (#846)', () => {
 				'actorUserId',
 				'participants',
 				'participantCount',
+				'eventAt',
+				'inferredFromMembership',
 				'forcedScopeKey',
 				'matrixEventId'
 			].sort()
