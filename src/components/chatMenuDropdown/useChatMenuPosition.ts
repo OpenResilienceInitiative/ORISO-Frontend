@@ -48,8 +48,8 @@ export const useChatMenuPosition = ({
 	width = 301
 }: {
 	open: boolean;
-	anchorRef: RefObject<HTMLElement>;
-	menuRef: RefObject<HTMLElement>;
+	anchorRef: RefObject<HTMLElement | null>;
+	menuRef: RefObject<HTMLElement | null>;
 	width?: number;
 }): CSSProperties => {
 	const { motionEnabled } = useMenuEffects();

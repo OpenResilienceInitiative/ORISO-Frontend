@@ -1,3 +1,4 @@
+import '../../features/menu-effects/menuEffects.scss';
 import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
@@ -109,13 +110,7 @@ export const GroupChatCalendarPopover = ({
 				transitionDuration={motionEnabled ? 160 : 0}
 				BackdropProps={{
 					invisible: !enabled,
-					sx: enabled
-						? {
-								backgroundColor: 'rgba(255, 255, 255, 0.8)',
-								backdropFilter: 'blur(2px)',
-								WebkitBackdropFilter: 'blur(2px)'
-							}
-						: undefined
+					className: enabled ? 'orisoMenuBackdrop' : undefined
 				}}
 				PaperProps={{
 					'ref': menuRef,
@@ -133,7 +128,6 @@ export const GroupChatCalendarPopover = ({
 				<Box sx={{ padding: 1 }}>
 					<TextField
 						inputRef={titleInputRef}
-						autoFocus
 						label={translate('groupChat.calendar.titleLabel')}
 						value={title}
 						onChange={(event) => {

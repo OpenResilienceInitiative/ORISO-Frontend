@@ -10,6 +10,7 @@ import './banUser.styles.scss';
 
 interface BanUserProps {
 	onSelect?: () => void;
+	onBanFailed: (username: string) => void;
 	matrixUserId: string;
 	userName: string;
 	chatId: number;
@@ -25,6 +26,7 @@ interface BanUserOverlayProps {
 export const BanUser: React.FC<BanUserProps> = ({
 	matrixUserId,
 	onSelect,
+	onBanFailed,
 	chatId,
 	userName,
 	handleUserBan
@@ -33,9 +35,11 @@ export const BanUser: React.FC<BanUserProps> = ({
 
 	const banUser = () => {
 		onSelect?.();
-		apiPostBanUser({ matrixUserId, chatId }).then(() => {
-			if (handleUserBan) handleUserBan(userName);
-		});
+		apiPostBanUser({ matrixUserId, chatId })
+			.then(() => {
+				if (handleUserBan) handleUserBan(userName);
+			})
+			.catch(() => onBanFailed(userName));
 	};
 
 	return (

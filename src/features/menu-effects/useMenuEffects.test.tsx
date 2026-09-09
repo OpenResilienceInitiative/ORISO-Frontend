@@ -35,6 +35,20 @@ describe('menu display preference', () => {
 		saveMenuEffects(true, 'anna');
 		expect(readMenuEffects('anna')).toBe(true);
 	});
+	it('keeps the setting usable when writing browser storage fails', () => {
+		const write = vi
+			.spyOn(Storage.prototype, 'setItem')
+			.mockImplementation(() => {
+				throw new Error('quota');
+			});
+		try {
+			saveMenuEffects(false, 'storage-unavailable');
+			expect(readMenuEffects('storage-unavailable')).toBe(false);
+		} finally {
+			write.mockRestore();
+			saveMenuEffects(true, 'storage-unavailable');
+		}
+	});
 	it('updates every mounted consumer immediately', () => {
 		render(
 			<>

@@ -17,7 +17,7 @@ import {
 	ActiveSessionProvider
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Stack, Typography } from '@mui/material';
 import { BUTTON_TYPES } from '../button/Button';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { getModality, Modality } from '../session/getModality';
@@ -99,7 +99,12 @@ export const GroupChatInfo = () => {
 	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
 	const handleStopGroupChatButton = () => {
-		setOverlayItem(stopGroupChatSecurityOverlayItem);
+		setOverlayItem({
+			...stopGroupChatSecurityOverlayItem,
+			copy: activeSession.item.repetitive
+				? 'groupChat.stopChat.securityOverlay.copyRepeat'
+				: 'groupChat.stopChat.securityOverlay.copySingle'
+		});
 		setOverlayActive(true);
 	};
 
@@ -322,6 +327,11 @@ export const GroupChatInfo = () => {
 			{overlayActive && (
 				<M3Dialog
 					title={translate(overlayItem.headline)}
+					description={
+						overlayItem.copy
+							? translate(overlayItem.copy)
+							: undefined
+					}
 					onClose={() => {
 						if (!isRequestInProgress)
 							handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE);
@@ -351,6 +361,7 @@ const SubscriberList = ({
 	const users = matrixRoomUsersContext?.users || [];
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	const [banFailed, setBanFailed] = useState(false);
 	const [bannedName, setBannedName] = useState<string | null>(null);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
 
@@ -370,6 +381,11 @@ const SubscriberList = ({
 
 	return (
 		<Stack spacing={1}>
+			{banFailed && (
+				<Alert severity="error" onClose={() => setBanFailed(false)}>
+					{translate('groupChat.roles.removeError')}
+				</Alert>
+			)}
 			{users.length ? (
 				users.map((subscriber) => {
 					const name = decodeUsername(
@@ -402,7 +418,13 @@ const SubscriberList = ({
 									>
 										{(close) => (
 											<BanUser
-												onSelect={close}
+												onSelect={() => {
+													setBanFailed(false);
+													close();
+												}}
+												onBanFailed={() =>
+													setBanFailed(true)
+												}
 												userName={username}
 												matrixUserId={subscriber._id}
 												chatId={activeSession.item.id}

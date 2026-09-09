@@ -119,6 +119,6 @@ export const RightSpace: Story = { play: exercise };
 export const RightBottomEdge: Story = { args: { edge: true }, play: exercise };
 export const NarrowTall: Story = {
 	args: { edge: true, tall: true },
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
+	globals: { viewport: { value: 'phone390', isRotated: false } },
 	play: exercise
 };

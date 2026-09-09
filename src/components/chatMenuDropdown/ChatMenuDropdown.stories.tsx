@@ -174,6 +174,9 @@ export const LegalLinksMenu: Story = {
 
 const onReply = fn();
 export const CompactReply: Story = {
+	beforeEach: () => {
+		onReply.mockClear();
+	},
 	args: { density: 'compact' },
 	render: (args) => (
 		<ChatMenuDropdown {...args} role="menu" ariaLabel="Nachrichtenaktionen">
@@ -201,7 +204,7 @@ export const CompactReply: Story = {
 		await userEvent.click(
 			canvas.getByRole('menuitem', { name: 'Direkt antworten' })
 		);
-		expect(onReply).toHaveBeenCalled();
+		expect(onReply).toHaveBeenCalledTimes(1);
 	}
 };
 

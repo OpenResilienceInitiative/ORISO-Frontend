@@ -15,13 +15,12 @@ import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvide
 
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
-	dropdownPosition?: { top: number; left: number };
 	menuIconRef: React.RefObject<HTMLButtonElement>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
 	dropdownLabel: string;
 	translate: TFunction<['common'], undefined>;
-	onClose?: () => void;
+	onClose: () => void;
 	onMenuClick: (e: React.MouseEvent) => void;
 	onMenuKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 	onDropdownKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -70,7 +69,7 @@ export const SessionListItemMenu = ({
 			<MenuBackdrop
 				open={flyoutOpen}
 				onClose={() => {
-					onClose?.();
+					onClose();
 					menuIconRef.current?.focus();
 				}}
 				zIndex={999998}

@@ -499,6 +499,77 @@ export const MessageItemComponent = ({
 		useState<Placement>('right-start');
 	const [visibilityMenuOrigin, setVisibilityMenuOrigin] =
 		useState('left top');
+	const closeMessageMenus = useCallback(() => {
+		const anchor = isActionMenuOpen
+			? actionMenuAnchor
+			: visibilityMenuAnchor;
+		setIsActionMenuOpen(false);
+		setIsVisibilityMenuOpen(false);
+		setActionMenuPosition(null);
+		setVisibilityMenuPosition(null);
+		if (anchor instanceof HTMLElement) anchor.focus();
+	}, [isActionMenuOpen, actionMenuAnchor, visibilityMenuAnchor]);
+	useEffect(() => {
+		if (!isActionMenuOpen && !isVisibilityMenuOpen) return;
+		const onKey = (event: KeyboardEvent) => {
+			const menu = isActionMenuOpen
+				? actionMenuRef.current
+				: visibilityMenuRef.current;
+			if (
+				menu?.contains(event.target as Node) &&
+				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+			) {
+				const items = Array.from(
+					menu.querySelectorAll<HTMLElement>(
+						'button:not(:disabled), a[href]'
+					)
+				);
+				const index = items.indexOf(
+					document.activeElement as HTMLElement
+				);
+				const next =
+					event.key === 'Home'
+						? 0
+						: event.key === 'End'
+							? items.length - 1
+							: (index +
+									(event.key === 'ArrowDown' ? 1 : -1) +
+									items.length) %
+								items.length;
+				event.preventDefault();
+				items[next]?.focus();
+			}
+
+			if (
+				event.key === 'Escape' &&
+				!event.defaultPrevented &&
+				!isQuickEmojiPickerOpen
+			) {
+				event.preventDefault();
+				closeMessageMenus();
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	}, [
+		isActionMenuOpen,
+		isVisibilityMenuOpen,
+		isQuickEmojiPickerOpen,
+		closeMessageMenus
+	]);
+	const actionMenuReady = isActionMenuOpen && Boolean(actionMenuPosition);
+	const visibilityMenuReady =
+		isVisibilityMenuOpen && Boolean(visibilityMenuPosition);
+	useEffect(() => {
+		const menu = actionMenuReady
+			? actionMenuRef.current
+			: visibilityMenuReady
+				? visibilityMenuRef.current
+				: null;
+		menu?.querySelector<HTMLElement>(
+			'button:not(:disabled), a[href]'
+		)?.focus();
+	}, [actionMenuReady, visibilityMenuReady]);
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -538,7 +609,7 @@ export const MessageItemComponent = ({
 			return;
 		}
 		setIsQuickEmojiPickerOpen(false);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	/** React with `emoji` and promote it to the front of the recent list. */
 	const applyQuickReaction = useCallback(
@@ -547,9 +618,9 @@ export const MessageItemComponent = ({
 			setQuickEmojis(getQuickEmojis());
 			onReact?.(emoji);
 			setIsQuickEmojiPickerOpen(false);
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 		},
-		[onReact]
+		[onReact, closeMessageMenus]
 	);
 
 	useEffect(() => {
@@ -571,14 +642,21 @@ export const MessageItemComponent = ({
 			) {
 				return;
 			}
-			if (!actionMenuRef.current?.contains(target)) {
-				setIsActionMenuOpen(false);
+			if (
+				!actionMenuRef.current?.contains(target) &&
+				!(
+					actionMenuAnchor instanceof HTMLElement &&
+					actionMenuAnchor.contains(target)
+				)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	useEffect(() => {
 		if (!isVisibilityMenuOpen) {
@@ -589,15 +667,19 @@ export const MessageItemComponent = ({
 			if (!target) {
 				return;
 			}
-			if (!visibilityMenuRef.current?.contains(target)) {
-				setIsVisibilityMenuOpen(false);
+			if (
+				!visibilityMenuRef.current?.contains(target) &&
+				!visibilityMenuAnchor?.contains(target)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 				setVisibilityMenuPosition(null);
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isVisibilityMenuOpen]);
+	}, [isVisibilityMenuOpen, closeMessageMenus, visibilityMenuAnchor]);
 
 	useEffect(
 		() => () => {
@@ -1382,7 +1464,7 @@ export const MessageItemComponent = ({
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 			if (actionKey === 'reply-thread' && onOpenThread) {
 				onOpenThread();
 			}
@@ -1397,7 +1479,13 @@ export const MessageItemComponent = ({
 				setDeleteOverlay(true);
 			}
 		},
-		[onOpenThread, onReplyDirect, onEditDirect, onDeleteDirect]
+		[
+			onOpenThread,
+			onReplyDirect,
+			onEditDirect,
+			onDeleteDirect,
+			closeMessageMenus
+		]
 	);
 
 	const confirmDeleteMessage = useCallback(() => {

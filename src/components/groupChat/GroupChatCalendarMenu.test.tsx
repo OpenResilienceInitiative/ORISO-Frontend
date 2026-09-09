@@ -26,10 +26,17 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
+const originalClipboard = Object.getOwnPropertyDescriptor(
+	navigator,
+	'clipboard'
+);
 describe('GroupChatCalendarMenu', () => {
 	afterEach(() => {
 		cleanup();
 		vi.unstubAllGlobals();
+		if (originalClipboard)
+			Object.defineProperty(navigator, 'clipboard', originalClipboard);
+		else Reflect.deleteProperty(navigator, 'clipboard');
 	});
 
 	it('opens translated, confidentiality-neutral calendar actions', async () => {
@@ -113,7 +120,10 @@ describe('GroupChatCalendarMenu', () => {
 		'copies %s with the edited title and appointment times',
 		async (action, expectedUrl) => {
 			const writeText = vi.fn().mockResolvedValue(undefined);
-			vi.stubGlobal('navigator', { clipboard: { writeText } });
+			Object.defineProperty(navigator, 'clipboard', {
+				configurable: true,
+				value: { writeText }
+			});
 			render(
 				<GroupChatCalendarMenu
 					start={new Date('2026-08-04T18:00:00Z')}
@@ -150,8 +160,9 @@ describe('GroupChatCalendarMenu', () => {
 	);
 
 	it('shows failure rather than success when clipboard permission is denied', async () => {
-		vi.stubGlobal('navigator', {
-			clipboard: {
+		Object.defineProperty(navigator, 'clipboard', {
+			configurable: true,
+			value: {
 				writeText: vi.fn().mockRejectedValue(new Error('Denied'))
 			}
 		});

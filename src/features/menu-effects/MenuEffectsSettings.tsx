@@ -1,5 +1,6 @@
 import React from 'react';
-import { FormControlLabel, Switch, Stack, Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
+import { Switch } from '../../components/Switch';
 import { useTranslation } from 'react-i18next';
 import { useMenuEffects } from './useMenuEffects';
 
@@ -11,14 +12,10 @@ export const MenuEffectsSettings = () => {
 			<Typography variant="h6" component="h2">
 				{t('menuEffects.title')}
 			</Typography>
-			<FormControlLabel
-				control={
-					<Switch
-						checked={enabled}
-						onChange={(_, checked) => setEnabled(checked)}
-					/>
-				}
-				label={t('menuEffects.label')}
+			<Switch
+				checked={enabled}
+				onChange={setEnabled}
+				titleKey="menuEffects.label"
 			/>
 			<Typography variant="body2" color="text.secondary">
 				{t('menuEffects.description')}

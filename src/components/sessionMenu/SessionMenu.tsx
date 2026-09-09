@@ -124,6 +124,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	const closeMenu = useCallback(() => {
+		setFlyoutOpen(false);
+		menuTriggerRef.current?.focus();
+	}, []);
 	const menuPosition = useChatMenuPosition({
 		open: Boolean(flyoutOpen),
 		anchorRef: menuTriggerRef,
@@ -135,14 +139,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// Desktop and mobile use separate triggers. A breakpoint change
 			// can hide the anchor, so close instead of positioning at its zero rect.
 			if (menuTriggerRef.current?.getClientRects().length === 0) {
-				setFlyoutOpen(false);
+				closeMenu();
 			}
 		};
 		window.addEventListener('resize', closeIfTriggerHidden);
 		return () => window.removeEventListener('resize', closeIfTriggerHidden);
-	}, [flyoutOpen]);
+	}, [flyoutOpen, closeMenu]);
 	const handleOpenGroupChatInfo = () => {
-		setFlyoutOpen(false);
+		closeMenu();
 		// The dialog restores focus here after closing, rather than to its
 		// now-hidden menu item. Remember the actual desktop/mobile trigger.
 		menuTriggerRef.current?.focus();
@@ -176,32 +180,64 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		!activeSession.isGroup &&
 		!props.isSupervisor;
 
-	const handleClick = useCallback(
-		(e) => {
-			const menuIconH = document.getElementById('iconH');
-			const menuIconV = document.getElementById('iconV');
-			const flyoutMenu = document.getElementById('flyout');
-
-			const dropdown = document.querySelector('.sessionMenu__content');
-			if (dropdown && flyoutOpen) {
-				if (
-					!menuIconH?.contains(e.target) &&
-					!menuIconV?.contains(e.target)
-				) {
-					if (flyoutMenu && !flyoutMenu.contains(e.target)) {
-						setFlyoutOpen(!flyoutOpen);
-					}
-				}
+	useEffect(() => {
+		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
+		const menu = menuRef.current;
+		menu?.querySelector<HTMLElement>(
+			'a[href], button:not(:disabled), [tabindex="0"]'
+		)?.focus();
+		const outside = (event: MouseEvent) => {
+			if (
+				!menu?.contains(event.target as Node) &&
+				!menuTriggerRef.current?.contains(event.target as Node)
+			) {
+				event.preventDefault();
+				closeMenu();
 			}
-		},
-		[flyoutOpen]
-	);
+		};
+		const keydown = (event: KeyboardEvent) => {
+			if (
+				menu?.contains(event.target as Node) &&
+				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+			) {
+				const items = Array.from(
+					menu.querySelectorAll<HTMLElement>(
+						'a[href], button:not(:disabled), [tabindex="0"]'
+					)
+				);
+				const index = items.indexOf(
+					document.activeElement as HTMLElement
+				);
+				const next =
+					event.key === 'Home'
+						? 0
+						: event.key === 'End'
+							? items.length - 1
+							: (index +
+									(event.key === 'ArrowDown' ? 1 : -1) +
+									items.length) %
+								items.length;
+				event.preventDefault();
+				items[next]?.focus();
+			}
+
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				closeMenu();
+			}
+		};
+		document.addEventListener('mousedown', outside);
+		document.addEventListener('keydown', keydown);
+		return () => {
+			document.removeEventListener('mousedown', outside);
+			document.removeEventListener('keydown', keydown);
+		};
+	}, [flyoutOpen, menuPosition.visibility, closeMenu]);
 
 	const [appointmentFeatureEnabled, setAppointmentFeatureEnabled] =
 		useState(false);
 
 	useEffect(() => {
-		document.addEventListener('mousedown', (e) => handleClick(e));
 		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 			const { appointmentFeatureEnabled } = userData;
 			setAppointmentFeatureEnabled(appointmentFeatureEnabled);
@@ -210,14 +246,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// do not get group members for a chat that has not been started and user is not subscribed
 			return;
 		}
-	}, [handleClick, activeSession, userData]);
+	}, [activeSession, userData]);
 
 	const handleBookingButton = () => {
 		navigate('/booking/');
 	};
 
 	const handleStopGroupChat = () => {
-		setFlyoutOpen(false);
+		closeMenu();
 		menuTriggerRef.current?.focus();
 		stopGroupChatSecurityOverlayItem.copy =
 			getModality(activeSession) === Modality.SELF_HELP
@@ -228,14 +264,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	};
 
 	const handleLeaveGroupChat = () => {
-		setFlyoutOpen(false);
+		closeMenu();
 		menuTriggerRef.current?.focus();
 		setOverlayItem(leaveGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
 	};
 
 	const handleArchiveSession = () => {
-		setFlyoutOpen(false);
+		closeMenu();
 		menuTriggerRef.current?.focus();
 		setOverlayItem(archiveSessionSuccessOverlayItem);
 		setOverlayActive(true);
@@ -255,7 +291,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						mobileListView();
 						navigate(listPath);
 					}
-					setFlyoutOpen(false);
+					closeMenu();
 				}, 1000);
 			})
 			.catch((error) => {
@@ -331,7 +367,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setOverlayActive(false);
 					setOverlayItem(null);
 					setIsRequestInProgress(false);
-					setFlyoutOpen(false);
+					closeMenu();
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
 			navigate('/profile/hilfe/videoCall');
@@ -573,7 +609,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			<MenuBackdrop
 				open={Boolean(flyoutOpen) && !legalModal}
 				onClose={() => {
-					setFlyoutOpen(false);
+					closeMenu();
 					menuTriggerRef.current?.focus();
 				}}
 			/>
@@ -666,7 +702,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							}}
 							onKeyDown={(event) => {
 								if (event.key === 'Escape') {
-									setFlyoutOpen(false);
+									closeMenu();
 									menuTriggerRef.current?.focus();
 								}
 							}}
@@ -690,6 +726,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							{false && hasVideoCallFeatures() && (
 								<>
 									<div
+										role="button"
+										tabIndex={0}
+										onKeyDown={(event) => {
+											if (
+												event.key === 'Enter' ||
+												event.key === ' '
+											) {
+												event.preventDefault();
+												event.currentTarget.click();
+											}
+										}}
 										className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
 										onClick={() =>
 											handleStartVideoCall(true)
@@ -700,6 +747,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										)}
 									</div>
 									<div
+										role="button"
+										tabIndex={0}
+										onKeyDown={(event) => {
+											if (
+												event.key === 'Enter' ||
+												event.key === ' '
+											) {
+												event.preventDefault();
+												event.currentTarget.click();
+											}
+										}}
 										className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
 										onClick={() => handleStartVideoCall()}
 									>
@@ -725,9 +783,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 
 							<div
+								role="button"
+								tabIndex={0}
+								onKeyDown={(event) => {
+									if (
+										event.key === 'Enter' ||
+										event.key === ' '
+									) {
+										event.preventDefault();
+										event.currentTarget.click();
+									}
+								}}
 								className="sessionMenu__item chatMenuDropdown__item"
 								onClick={() => {
-									setFlyoutOpen(false);
+									closeMenu();
 									setNotifConfigOpen(true);
 								}}
 								data-cy="session-menu-notification-config"
@@ -742,9 +811,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 							{props.showMobileSupervisionAction && (
 								<div
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
 									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
 									onClick={() => {
-										setFlyoutOpen(false);
+										closeMenu();
 										props.onMobileSupervisionAction?.();
 									}}
 								>
@@ -771,7 +851,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										) {
 											return;
 										}
-										setFlyoutOpen(false);
+										closeMenu();
 										props.onMobileEndAnonymousChatAction?.();
 									}}
 									data-cy="session-menu-end-anonymous-chat"
@@ -802,7 +882,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										) {
 											return;
 										}
-										setFlyoutOpen(false);
+										closeMenu();
 										props.onMobileDeleteAnonymousAccountAction?.();
 									}}
 								>
@@ -830,7 +910,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										if (!ADVICE_REQUEST_ENABLED) {
 											return;
 										}
-										setFlyoutOpen(false);
+										closeMenu();
 									}}
 									data-cy="session-menu-request-advice"
 								>
@@ -856,6 +936,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										SESSION_LIST_TAB_ARCHIVE ? (
 											<div
 												onClick={handleArchiveSession}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
+												}}
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
 												<SessionMenuItemContent
@@ -872,6 +963,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										) : (
 											<div
 												onClick={handleDearchiveSession}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
+												}}
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
 												<SessionMenuItemContent
@@ -903,9 +1005,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										{(onClick) => (
 											<div
 												onClick={() => {
-													setFlyoutOpen(false);
+													closeMenu();
 													menuTriggerRef.current?.focus();
 													onClick();
+												}}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
 												}}
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
@@ -953,7 +1066,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												type="button"
 												className="sessionMenu__item chatMenuDropdown__item"
 												onClick={() => {
-													setFlyoutOpen(false);
+													closeMenu();
 													setLegalModal({
 														title: label,
 														url
@@ -1079,6 +1192,14 @@ const SessionMenuFlyoutGroup = ({
 				moderators.length > 1 && (
 					<div
 						onClick={handleLeaveGroupChat}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								event.currentTarget.click();
+							}
+						}}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 					>
 						<SessionMenuItemContent
@@ -1106,6 +1227,14 @@ const SessionMenuFlyoutGroup = ({
 				canModerateGroupChat(activeSession, userData) && (
 					<div
 						onClick={handleStopGroupChat}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								event.currentTarget.click();
+							}
+						}}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 					>
 						<SessionMenuItemContent
