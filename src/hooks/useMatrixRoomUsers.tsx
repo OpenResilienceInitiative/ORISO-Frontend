@@ -52,9 +52,12 @@ export const useMatrixRoomUsers = (): {
 		let cancelled = false;
 		let retryTimer: number | null = null;
 		let detachMembersListener: (() => void) | null = null;
+		let refreshPromise: Promise<boolean> | null = null;
 
-		const refreshMembers = async () => {
-			await chatTransportService
+		const refreshMembers = () => {
+			if (refreshPromise) return refreshPromise;
+
+			refreshPromise = chatTransportService
 				.loadMatrixRoomMembers(matrixRoomId)
 				.then((members) => {
 					if (!cancelled) {
@@ -63,8 +66,13 @@ export const useMatrixRoomUsers = (): {
 				})
 				.catch(() => {
 					// keep the previous member state on transient errors
+				})
+				.then(() => chatTransportService.hasMatrixRoom(matrixRoomId))
+				.finally(() => {
+					refreshPromise = null;
 				});
-			return chatTransportService.hasMatrixRoom(matrixRoomId);
+
+			return refreshPromise;
 		};
 
 		const attachMembersListener = () => {

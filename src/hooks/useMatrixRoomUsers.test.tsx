@@ -149,6 +149,31 @@ describe('useMatrixRoomUsers', () => {
 		expect(result.current.users[0].username).toBe('late');
 	});
 
+	it('keeps one member refresh in flight across retry ticks', async () => {
+		vi.useFakeTimers();
+		let resolveMembers: (members: any[]) => void = () => {};
+		mocks.loadMatrixRoomMembers.mockReturnValue(
+			new Promise((resolve) => {
+				resolveMembers = resolve;
+			})
+		);
+
+		const { unmount } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1500);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			resolveMembers([{ userId: '@late:x', name: 'Late room member' }]);
+			await Promise.resolve();
+		});
+
+		unmount();
+		vi.useRealTimers();
+	});
+
 	it('detaches the membership listener on unmount', async () => {
 		const detach = vi.fn();
 		mocks.onMatrixRoomMembers.mockReturnValue(detach);

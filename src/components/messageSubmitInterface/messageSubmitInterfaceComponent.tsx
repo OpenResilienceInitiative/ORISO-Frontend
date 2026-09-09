@@ -2495,7 +2495,10 @@ export const MessageSubmitInterfaceComponent = ({
 						: classifyAudienceKind(
 								value,
 								roster,
-								isSelfHelpGroup ? 'asker' : 'person'
+								isSelfHelpGroup &&
+									mentionDirectoryState !== 'loading'
+									? 'asker'
+									: 'person'
 							)
 				};
 			})
@@ -2530,6 +2533,7 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceRefreshTick,
 		sessionSupervisors,
 		agencyConsultantDirectory,
+		mentionDirectoryState,
 		currentChatType,
 		isSelfHelpGroup,
 		activeSession?.isGroup,
