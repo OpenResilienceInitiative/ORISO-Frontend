@@ -241,6 +241,17 @@ describe('buildGroupChatEditDraft', () => {
 		expect(draft.seriesFields.startTime).toBe('09:05');
 	});
 
+	it('preserves a separate startTime when startDateWithTime is absent', () => {
+		const draft = buildGroupChatEditDraft({
+			...fullSeriesItem,
+			startDate: '2027-01-05',
+			startTime: '14:29:00',
+			startDateWithTime: undefined
+		});
+		expect(draft.seriesFields.startDate).toBe('2027-01-05');
+		expect(draft.seriesFields.startTime).toBe('14:29');
+	});
+
 	it('falls back to a single-language hint map when translations are absent', () => {
 		const draft = buildGroupChatEditDraft({
 			topic: 'One-off',

@@ -198,7 +198,11 @@ export const buildGroupChatEditDraft = (
 	source: GroupChatEditSource,
 	fallbackLanguage = 'de'
 ): GroupChatEditDraft => {
-	const startSource = source.startDateWithTime || source.startDate;
+	const startSource =
+		source.startDateWithTime ||
+		(source.startTime
+			? `${source.startDate}T${source.startTime}`
+			: source.startDate);
 	const start = new Date(startSource);
 	if (Number.isNaN(start.getTime())) {
 		throw new Error(
