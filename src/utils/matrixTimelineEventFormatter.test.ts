@@ -74,6 +74,41 @@ describe('formatMatrixTimelineEvent reply relation', () => {
 });
 
 describe('formatMatrixTimelineEvent edit relation (m.replace)', () => {
+	it('keeps the typed call replacement for the lifecycle fold', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				'msgtype': 'org.oriso.call.lifecycle',
+				'body': '* video call ended',
+				'org.oriso.call': {
+					call_id: 'call-1',
+					state: 'ended',
+					call_type: 'video'
+				},
+				'm.new_content': {
+					'msgtype': 'org.oriso.call.lifecycle',
+					'body': 'video call ended',
+					'org.oriso.call': {
+						call_id: 'call-1',
+						state: 'ended',
+						call_type: 'video'
+					}
+				},
+				'm.relates_to': {
+					rel_type: 'm.replace',
+					event_id: '$started'
+				}
+			}),
+			null,
+			'verschlüsselt'
+		);
+
+		expect(formatted.replaceTargetId).toBe('$started');
+		expect(formatted.editedCallLifecycle).toMatchObject({
+			callId: 'call-1',
+			state: 'ended'
+		});
+	});
+
 	it('exposes replaceTargetId and editedBody for an edit event', () => {
 		const formatted = formatMatrixTimelineEvent(
 			makeEvent({

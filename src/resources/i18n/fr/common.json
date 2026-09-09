@@ -1702,6 +1702,33 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": { "audio": "Appel audio", "video": "Appel vidéo" },
+			"state": {
+				"scheduled": "Planifié",
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"headline": {
+				"scheduled": "{{call}} planifié",
+				"running": "{{call}} par {{actor}}",
+				"ended": "{{call}} terminé",
+				"missed": "{{call}} manqué"
+			},
+			"description": {
+				"scheduled": "L’appel est planifié pour {{start}}.",
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"duration": "Durée {{duration}}",
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			},
+			"join": "Rejoindre"
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",

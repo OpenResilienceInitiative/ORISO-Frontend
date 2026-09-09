@@ -1702,6 +1702,30 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": { "audio": "Sesli arama", "video": "Görüntülü arama" },
+			"state": {
+				"scheduled": "Planlandı",
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"headline": {
+				"scheduled": "{{call}} planlandı",
+				"running": "{{actor}} tarafından {{call}}",
+				"ended": "{{call}} sona erdi",
+				"missed": "Cevapsız {{call}}"
+			},
+			"description": {
+				"scheduled": "Arama {{start}} için planlandı.",
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"duration": "Süre {{duration}}",
+			"participants": { "current": "Aramada", "attended": "Katıldı" },
+			"join": "Katıl"
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",

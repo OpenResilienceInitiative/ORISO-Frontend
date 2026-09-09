@@ -58,6 +58,7 @@ import {
 	extractReactionEvents
 } from '../../utils/matrixTimelineEventFormatter';
 import { applyMessageEdits } from '../../utils/messageRelations';
+import { collapseCallLifecycleMessages } from '../../utils/callLifecycleMessage';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 import {
@@ -426,7 +427,9 @@ export const SessionStream = ({
 
 				setMessagesItem({
 					messages: prepareMessages(
-						applyMessageEdits(formattedMessages)
+						collapseCallLifecycleMessages(
+							applyMessageEdits(formattedMessages)
+						)
 					),
 					reactionEvents
 				});

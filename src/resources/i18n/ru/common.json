@@ -1702,6 +1702,33 @@
 		"visibleOnlyTo": "видно только:",
 		"showLess": "Показать меньше",
 		"showMore": "Показать больше",
+		"callLifecycle": {
+			"type": { "audio": "Аудиозвонок", "video": "Видеозвонок" },
+			"state": {
+				"scheduled": "Запланирован",
+				"running": "Идёт",
+				"ended": "Завершён",
+				"missed": "Пропущен"
+			},
+			"headline": {
+				"scheduled": "{{call}} запланирован",
+				"running": "{{call}} от {{actor}}",
+				"ended": "{{call}} завершён",
+				"missed": "Пропущенный {{call}}"
+			},
+			"description": {
+				"scheduled": "Звонок запланирован на {{start}}.",
+				"running": "Звонок идёт с {{start}}.",
+				"ended": "Звонок начался в {{start}}.",
+				"missed": "На звонок не ответили."
+			},
+			"duration": "Длительность {{duration}}",
+			"participants": {
+				"current": "В звонке",
+				"attended": "Участвовали"
+			},
+			"join": "Присоединиться"
+		},
 		"systemNotification": "Системное уведомление",
 		"systemNotificationTitle": "Системное уведомление",
 		"userLeftChat": "Пользователь покинул чат",

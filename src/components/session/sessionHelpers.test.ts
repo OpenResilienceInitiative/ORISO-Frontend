@@ -139,7 +139,6 @@ describe('sessionHelpers', () => {
 			'message-4'
 		]);
 		expect(prepared[0].displayName).toBe('decoded:User One');
-		expect(prepared[2].isVideoActive).toBe(true);
 		// Explicit chat date only (#564), localized to the default (de) locale —
 		// relative days still use message.today etc.
 		expect(prepared[0].messageDate).toEqual({

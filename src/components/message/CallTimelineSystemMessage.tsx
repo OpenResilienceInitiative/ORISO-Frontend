@@ -8,7 +8,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
 import { UserAvatar } from './UserAvatar';
 
-export type CallTimelineState = 'scheduled' | 'running' | 'ended';
+export type CallTimelineState = 'scheduled' | 'running' | 'ended' | 'missed';
 export type CallTimelineType = 'audio' | 'video';
 
 export interface CallTimelineParticipant {
@@ -35,6 +35,8 @@ export interface CallTimelineSystemMessageProps {
 	scheduledForLabel?: string;
 	/** Current members for a running call, final attendance for an ended call. */
 	participants?: readonly CallTimelineParticipant[];
+	/** Total count when the backend cannot expose individual identities. */
+	participantCount?: number;
 	/** Already translated label, for example "Im Anruf" or "Teilgenommen". */
 	participantsLabel?: string;
 	/** Already translated action label. Required together with `onAction`. */
@@ -69,6 +71,7 @@ export const CallTimelineSystemMessage = ({
 	durationLabel,
 	scheduledForLabel,
 	participants = [],
+	participantCount,
 	participantsLabel,
 	actionLabel,
 	onAction,
@@ -145,53 +148,59 @@ export const CallTimelineSystemMessage = ({
 					{description}
 				</Typography>
 
-				{participants.length > 0 && participantsLabel && (
-					<Stack
-						direction="row"
-						alignItems="center"
-						justifyContent="space-between"
-						spacing={2}
-						role="group"
-						aria-label={participantsLabel}
-					>
-						<Typography
-							variant="caption"
-							sx={{
-								fontSize: 12,
-								lineHeight: '16px',
-								fontWeight: 500,
-								letterSpacing: '0.5px',
-								color: systemMessageColors.onSurfaceVariant
-							}}
+				{(participantCount || participants.length) > 0 &&
+					participantsLabel && (
+						<Stack
+							direction="row"
+							alignItems="center"
+							justifyContent="space-between"
+							spacing={2}
+							role="group"
+							aria-label={participantsLabel}
 						>
-							{participantsLabel} · {participants.length}
-						</Typography>
-						<Box
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								pl: 1
-							}}
-						>
-							{participants.map((participant, index) => (
+							<Typography
+								variant="caption"
+								sx={{
+									fontSize: 12,
+									lineHeight: '16px',
+									fontWeight: 500,
+									letterSpacing: '0.5px',
+									color: systemMessageColors.onSurfaceVariant
+								}}
+							>
+								{participantsLabel} ·{' '}
+								{participantCount || participants.length}
+							</Typography>
+							{participants.length > 0 && (
 								<Box
-									key={participant.userId}
 									sx={{
-										ml: index === 0 ? 0 : '-8px',
-										zIndex: 20 - index
+										display: 'flex',
+										alignItems: 'center',
+										pl: 1
 									}}
 								>
-									<UserAvatar
-										userId={participant.userId}
-										username={participant.username}
-										displayName={participant.displayName}
-										size="32px"
-									/>
+									{participants.map((participant, index) => (
+										<Box
+											key={participant.userId}
+											sx={{
+												ml: index === 0 ? 0 : '-8px',
+												zIndex: 20 - index
+											}}
+										>
+											<UserAvatar
+												userId={participant.userId}
+												username={participant.username}
+												displayName={
+													participant.displayName
+												}
+												size="32px"
+											/>
+										</Box>
+									))}
 								</Box>
-							))}
-						</Box>
-					</Stack>
-				)}
+							)}
+						</Stack>
+					)}
 
 				{actionSlot}
 

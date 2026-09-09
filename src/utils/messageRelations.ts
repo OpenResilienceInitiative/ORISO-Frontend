@@ -203,6 +203,8 @@ export interface EditableMessage {
 	msg?: string;
 	replaceTargetId?: string | null;
 	editedBody?: string | null;
+	callLifecycle?: unknown;
+	editedCallLifecycle?: unknown;
 	[key: string]: unknown;
 }
 
@@ -216,11 +218,15 @@ export interface EditableMessage {
 export const applyMessageEdits = <T extends EditableMessage>(
 	messages: T[]
 ): T[] => {
-	const editsByTarget = new Map<string, { body: string; ts: number }>();
+	const editsByTarget = new Map<
+		string,
+		{ body?: string; callLifecycle?: unknown; ts: number }
+	>();
 	for (const message of messages) {
 		if (
 			!message.replaceTargetId ||
-			typeof message.editedBody !== 'string'
+			(typeof message.editedBody !== 'string' &&
+				!message.editedCallLifecycle)
 		) {
 			continue;
 		}
@@ -228,7 +234,11 @@ export const applyMessageEdits = <T extends EditableMessage>(
 		const existing = editsByTarget.get(message.replaceTargetId);
 		if (!existing || ts >= existing.ts) {
 			editsByTarget.set(message.replaceTargetId, {
-				body: message.editedBody,
+				body:
+					typeof message.editedBody === 'string'
+						? message.editedBody
+						: undefined,
+				callLifecycle: message.editedCallLifecycle || undefined,
 				ts
 			});
 		}
@@ -241,7 +251,14 @@ export const applyMessageEdits = <T extends EditableMessage>(
 			if (!edit) {
 				return message;
 			}
-			return { ...message, msg: edit.body, isEdited: true };
+			return {
+				...message,
+				...(edit.body !== undefined ? { msg: edit.body } : {}),
+				...(edit.callLifecycle
+					? { callLifecycle: edit.callLifecycle }
+					: {}),
+				isEdited: true
+			};
 		});
 };
 

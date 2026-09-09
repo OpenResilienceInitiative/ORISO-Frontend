@@ -139,15 +139,6 @@ export const scrollToEnd = (timeout: number, animation: boolean = false) => {
 	}, timeout);
 };
 
-const findLastVideoCallIndex = (messagesData) =>
-	messagesData.findLastIndex(
-		(message) =>
-			message?.alias?.messageType === 'VIDEOCALL' &&
-			(!message?.alias?.videoCallMessageDTO ||
-				message?.alias?.videoCallMessageDTO?.eventType !==
-					'IGNORED_CALL')
-	);
-
 /**
  * ADR-008: merge the client-room timeline with the supervision side-room
  * timeline into a single ordered stream. Messages are formatted Matrix events
@@ -177,10 +168,9 @@ export const mergeMatrixMessages = (
 export const prepareMessages = (messagesData): MessageItem[] => {
 	let lastDate = '';
 	let userLeftChatShown = false;
-	const lastVideoCallIndex = findLastVideoCallIndex(messagesData);
 
 	return [...messagesData]
-		.map((message, i) => {
+		.map((message) => {
 			const date = new Date(message.ts).getTime();
 			const dateFormated = formatToDDMMYYYY(date);
 			let lastDateStr = { str: '', date: null };
@@ -205,11 +195,11 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				file: message.file,
 				t: message.t,
 				rid: message.rid,
-				isVideoActive: i === lastVideoCallIndex,
 				// Relations foundation (#435): relations survive the mapping.
 				replyToEventId: message.replyToEventId || null,
 				threadRootEventId: message.threadRootEventId || null,
-				isEdited: !!message.isEdited
+				isEdited: !!message.isEdited,
+				callLifecycle: message.callLifecycle || null
 			};
 		})
 		.filter((item) => {

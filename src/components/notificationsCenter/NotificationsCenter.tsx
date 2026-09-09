@@ -23,8 +23,10 @@ import {
 import { EventFamily } from './eventDescriptors/types';
 import {
 	resolveNotificationActionPath,
+	resolveNotificationActionTarget,
 	toInterpolationValues
 } from './notificationActionTarget';
+import { callManager } from '../../services/CallManager';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -640,6 +642,9 @@ export const NotificationsCenter = () => {
 				: 'system',
 		[selectedNotification]
 	);
+	const selectedActionIsJoin =
+		selectedNotification?.eventType === 'call.started' ||
+		selectedNotification?.eventType === 'call.invited';
 
 	// #845: on desktop the selected card is rendered in the detail pane —
 	// displayed means read (Slack semantics). This also covers the
@@ -714,6 +719,19 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
+	const executeCallAction = useCallback(
+		(item: (typeof notificationFeed)[number]): boolean => {
+			const target = resolveNotificationActionTarget(
+				item,
+				getDefaultSessionsPath(),
+				getDefaultRequestsPath()
+			);
+			if (target.kind !== 'join' || !target.callRoomId) return false;
+			callManager.startCall(target.callRoomId, target.isVideo, true);
+			return true;
+		},
+		[getDefaultRequestsPath, getDefaultSessionsPath]
+	);
 	// #847: the preview renders from the app's own Matrix client — no more
 	// embeddedNotifications iframe (a second SPA whose session view registered
 	// an active view and suppressed the timeline's own message events).
@@ -728,6 +746,7 @@ export const NotificationsCenter = () => {
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
 		if (untilL) {
+			if (executeCallAction(item)) return;
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
@@ -750,6 +769,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
+		if (executeCallAction(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);
@@ -1349,11 +1369,13 @@ export const NotificationsCenter = () => {
 									{selectedNotification.actionLabel ||
 										translate(
 											selectedNotification.eventType ===
-												'group_chat.opened'
+												'group_chat.opened' ||
+												selectedActionIsJoin
 												? 'notifications.center.join'
 												: 'notifications.center.open',
 											selectedNotification.eventType ===
-												'group_chat.opened'
+												'group_chat.opened' ||
+												selectedActionIsJoin
 												? 'Join'
 												: 'Open chat'
 										)}
