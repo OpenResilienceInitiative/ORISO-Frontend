@@ -447,5 +447,47 @@ export const deDu: Record<EmailId, EmailContent> = {
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
 		footer: securityFooter
+	},
+
+	'anruf-erinnerung': {
+		subject: 'Eine Sitzung beginnt bald',
+		preheader: 'Melde dich an, um die Details zu sehen.',
+		headline: 'Deine Sitzung beginnt bald',
+		paragraphs: [
+			'Eine geplante Audio- oder Videositzung beginnt bald. Alle weiteren Angaben siehst du geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Sitzung öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Du wurdest zu einer Sitzung eingeladen',
+		preheader: 'Die Einladung liegt geschützt in deinem Zugang bereit.',
+		headline: 'Neue Einladung',
+		paragraphs: [
+			'Du wurdest zu einer Audio- oder Videositzung eingeladen. Die Einzelheiten siehst du geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Einladung ansehen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Du hast einen Anruf verpasst',
+		preheader: 'Melde dich an, um den geschützten Verlauf zu öffnen.',
+		headline: 'Verpasster Anruf',
+		paragraphs: [
+			'Während deiner Abwesenheit hat ein Audio- oder Videoanruf stattgefunden. Weitere Angaben siehst du geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Geschützten Verlauf öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
 	}
 };

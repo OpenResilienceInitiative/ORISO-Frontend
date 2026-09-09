@@ -26,7 +26,13 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EmailId,
+	EmailLocale
+} from '../index';
 import {
 	EmailContent,
 	renderEmailHtml,
@@ -300,10 +306,20 @@ const propertiesValue = (value: string): string =>
 		.replace(/:/g, '\\:')
 		.replace(/=/g, '\\=');
 
-const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] = [
-	{ locale: 'de-sie', lang: 'de' },
-	{ locale: 'en', lang: 'en' }
-];
+/**
+ * One bundle per language, taken from the catalogue rather than listed here.
+ *
+ * Keycloak names its bundles `messages_<lang>.properties`, so it can carry one
+ * tone per language and nothing that is still waiting for a human — both of
+ * which `EMAIL_LANGUAGE_LOCALES` already decides. A language signed off in
+ * `translationReview.json` therefore reaches the theme without this file being
+ * touched.
+ */
+const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		lang: EMAIL_LOCALE_LANG[locale]
+	}));
 
 const run = async () => {
 	await rm(outDir, { recursive: true, force: true });

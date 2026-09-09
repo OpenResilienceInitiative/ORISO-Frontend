@@ -4115,6 +4115,27 @@
 				"reason": "Leider sind Sie nicht berechtigt diese Seite einzusehen.",
 				"title": "Kein Zutritt!"
 			}
+		},
+		"notifications": {
+			"scheduledCall": {
+				"title": "Eine Sitzung beginnt bald",
+				"body": "Melden Sie sich an, um die geschützten Details zu sehen."
+			},
+			"invitation": {
+				"title": "Neue Einladung",
+				"body": "Sie wurden zu einer Audio- oder Videositzung eingeladen."
+			},
+			"missedCall": {
+				"title": "Verpasster Anruf",
+				"body": "Öffnen Sie den geschützten Verlauf, um weitere Angaben zu sehen."
+			},
+			"action": {
+				"open": "Öffnen"
+			},
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			}
 		}
 	},
 	"voice": {

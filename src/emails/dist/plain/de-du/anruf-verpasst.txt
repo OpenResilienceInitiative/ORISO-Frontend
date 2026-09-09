@@ -1,0 +1,25 @@
+Verpasster Anruf
+================
+
+Während deiner Abwesenheit hat ein Audio- oder Videoanruf stattgefunden. Weitere Angaben siehst du geschützt nach der Anmeldung.
+
+Geschützten Verlauf öffnen:
+{{callUrl}}
+
+Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.
+
+----------------------------------------------------------------
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.

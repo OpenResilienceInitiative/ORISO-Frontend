@@ -1707,6 +1707,17 @@
 				"action": "Bitte schließe diesen Tab, um zu Beratung & Hilfe zurückzukehren.",
 				"reason": "Leider bist Du nicht berechtigt diese Seite einzusehen."
 			}
+		},
+		"notifications": {
+			"scheduledCall": {
+				"body": "Melde dich an, um die geschützten Details zu sehen."
+			},
+			"invitation": {
+				"body": "Du wurdest zu einer Audio- oder Videositzung eingeladen."
+			},
+			"missedCall": {
+				"body": "Öffne den geschützten Verlauf, um weitere Angaben zu sehen."
+			}
 		}
 	},
 	"voice": {

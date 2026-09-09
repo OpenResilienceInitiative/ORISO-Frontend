@@ -22,7 +22,14 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EMAIL_SOURCE_LOCALE,
+	EmailId,
+	EmailLocale
+} from '../index';
 import { EmailDataRow } from '../kit/emailAtoms';
 import { toEmailDialectHtml } from '../kit/emailDialect';
 import {
@@ -63,7 +70,7 @@ interface MailServiceTemplate {
 	 * other side of the handover, and upstream sends no such name — so rather
 	 * than a blank in the middle of a sentence, the sentence changes.
 	 */
-	paragraphs?: { de: string[]; en: string[] };
+	paragraphs?: Partial<Record<EmailLocale, string[]>>;
 	/** Placeholders this template resolves itself, before the brand mapping. */
 	values?: Record<string, string>;
 }
@@ -119,11 +126,11 @@ const TEMPLATES: MailServiceTemplate[] = [
 		// reference, no requesting counsellor. So this one carries no panel.
 		model: ['name_recipient', 'url'],
 		paragraphs: {
-			de: [
+			'de-sie': [
 				'Eine laufende Beratung soll an Sie übergeben werden.',
 				'Bitte prüfen Sie im Beratungsbereich, ob Sie die Beratung übernehmen können.'
 			],
-			en: [
+			'en': [
 				'An ongoing counselling case is to be handed over to you.',
 				'Please check in the counselling area whether you can take it on.'
 			]
@@ -135,11 +142,11 @@ const TEMPLATES: MailServiceTemplate[] = [
 		id: 'uebergabe-bestaetigt',
 		model: ['name_recipient', 'name_from_consultant', 'url'],
 		paragraphs: {
-			de: [
+			'de-sie': [
 				'Die Übergabe ist bestätigt. Ab sofort sind Sie für diese Beratung zuständig.',
 				'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
 			],
-			en: [
+			'en': [
 				'The handover is confirmed. You are responsible for this counselling from now on.',
 				'The person seeking advice has been informed in the application.'
 			]
@@ -169,10 +176,24 @@ const TEMPLATES: MailServiceTemplate[] = [
 	}
 ];
 
-const LOCALES: { locale: EmailLocale; suffix: string }[] = [
-	{ locale: 'de-sie', suffix: '' },
-	{ locale: 'en', suffix: '.en' }
-];
+/**
+ * One file per language, taken from the catalogue rather than listed here.
+ *
+ * Upstream names its templates `<file>.html` for the default language and
+ * `<file>.<lang>.html` for the rest, so this set can carry one tone per
+ * language and nothing that is still waiting for a human —
+ * `EMAIL_LANGUAGE_LOCALES` decides both. A language signed off in
+ * `translationReview.json` reaches MailService without this file being touched;
+ * `adapt` below fails the build if its copy overrides have not caught up.
+ */
+const LOCALES: { locale: EmailLocale; suffix: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		suffix:
+			locale === EMAIL_SOURCE_LOCALE
+				? ''
+				: `.${EMAIL_LOCALE_LANG[locale]}`
+	}));
 
 /**
  * Rebuilds the content against what upstream actually sends.
@@ -186,19 +207,32 @@ const adapt = (
 	content: EmailContent,
 	template: MailServiceTemplate,
 	locale: EmailLocale
-): EmailContent => ({
-	...content,
-	headline: template.headline ?? content.headline,
-	paragraphs: template.body
-		? [template.body]
-		: (template.paragraphs?.[locale === 'en' ? 'en' : 'de'] ??
-			content.paragraphs),
-	panel: template.panel,
-	code: undefined,
-	cta: template.cta
-		? { label: content.cta?.label ?? 'Öffnen', href: template.cta }
-		: undefined
-});
+): EmailContent => {
+	// A template that rewrites its copy has to rewrite it in every language it
+	// is emitted in. Falling back to the designed paragraphs would put a
+	// counsellor's name back into a sentence upstream cannot fill, and falling
+	// back to German would put German into a Turkish mail — so neither.
+	if (template.paragraphs && !template.paragraphs[locale]) {
+		throw new Error(
+			`${template.file}: no ${locale} copy override. This template rewrites ` +
+				'its paragraphs for the values upstream actually sends, and ' +
+				`${locale} is now released, so it needs its own wording.`
+		);
+	}
+
+	return {
+		...content,
+		headline: template.headline ?? content.headline,
+		paragraphs: template.body
+			? [template.body]
+			: (template.paragraphs?.[locale] ?? content.paragraphs),
+		panel: template.panel,
+		code: undefined,
+		cta: template.cta
+			? { label: content.cta?.label ?? 'Öffnen', href: template.cta }
+			: undefined
+	};
+};
 
 /** Brand values upstream can supply, and what to fall back to when it cannot. */
 const BRAND: Record<string, string> = {
@@ -248,7 +282,7 @@ const run = async () => {
 			);
 			let html = renderEmailHtml(content, {
 				brand: emailDefaultBrand,
-				lang: locale === 'en' ? 'en' : 'de'
+				lang: EMAIL_LOCALE_LANG[locale]
 			});
 
 			for (const [placeholder, value] of Object.entries({
