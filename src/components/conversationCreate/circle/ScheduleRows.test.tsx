@@ -8,11 +8,14 @@ afterEach(cleanup);
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) =>
+		t: (key: string, options?: { count?: number }) =>
 			({
+				'groupChat.create.interval.options.weekly': 'Wöchentlich',
+				'groupChat.create.interval.options.monthly': 'Monatlich',
 				'groupChat.create.modality.options.text': 'Text',
 				'groupChat.create.modality.options.audio': 'Audio',
-				'groupChat.create.modality.options.video': 'Video'
+				'groupChat.create.modality.options.video': 'Video',
+				'groupChat.circle.rows.repeatValue': `${options?.count} mal`
 			})[key] ?? key
 	})
 }));
@@ -89,5 +92,19 @@ describe('ScheduleRows medium selection', () => {
 		expect(screen.getByText(label)).toBeTruthy();
 		expect(screen.getByTestId(icon)).toBeTruthy();
 		expect(screen.queryByTestId('neutral-medium-icon')).toBeNull();
+	});
+
+	it('shows the selected interval together with the repeat count', () => {
+		render(
+			<ScheduleRows
+				value={{ ...baseValue, interval: 'MONTHLY', repeatCount: 8 }}
+				onChange={vi.fn()}
+				language="de"
+				onLanguageChange={vi.fn()}
+				languageOptions={[{ value: 'de', label: 'Deutsch' }]}
+			/>
+		);
+
+		expect(screen.getByText('Monatlich · 8 mal')).toBeTruthy();
 	});
 });

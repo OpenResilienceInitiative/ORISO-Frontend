@@ -19,6 +19,7 @@ import {
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { RowMenu, RowMenuOption } from '../RowMenu';
+import { groupChatIntervalLabelKey } from './groupChatIntervalLabel';
 import { groupChatModalityLabelKey } from './groupChatModalityLabel';
 
 /**
@@ -126,6 +127,13 @@ export const ScheduleRows = ({
 	const durationLabel = translate('groupChat.circle.rows.durationLabel');
 	const repeatLabel = translate('groupChat.circle.rows.repeatLabel');
 	const timeLabel = translate('groupChat.circle.rows.timeLabel');
+	const intervalLabel = translate(
+		groupChatIntervalLabelKey(value.interval),
+		value.interval
+	);
+	const repeatCountLabel = translate('groupChat.circle.rows.repeatValue', {
+		count: value.repeatCount
+	});
 	const ModalityIcon =
 		value.modality === 'VIDEO'
 			? VideoMediumIcon
@@ -242,9 +250,7 @@ export const ScheduleRows = ({
 				ref={repeatRef}
 				fullWidth
 				icon={<RepeatIcon />}
-				label={translate('groupChat.circle.rows.repeatValue', {
-					count: value.repeatCount
-				})}
+				label={`${intervalLabel} · ${repeatCountLabel}`}
 				variant={variantFor('repeat', value.repeatCount > 1)}
 				open={openRow === 'repeat'}
 				onClick={() => toggle('repeat')}
@@ -262,7 +268,7 @@ export const ScheduleRows = ({
 					options={INTERVALS.map((interval) => ({
 						value: interval,
 						label: translate(
-							`groupChat.create.intervalSelect.${interval.toLowerCase()}`,
+							groupChatIntervalLabelKey(interval),
 							interval
 						)
 					}))}
