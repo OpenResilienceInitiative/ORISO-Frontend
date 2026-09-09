@@ -92,6 +92,12 @@ export const ChannelMenu = ({
 		() => buildChannelMenu(channels, activeChannelId),
 		[channels, activeChannelId]
 	);
+	// The card names what is in it. With a team room listed the catalogue's
+	// "Threads und Supervision" is simply wrong, so the copy map takes over
+	// for that case and leaves the two-kind card exactly as it was.
+	const title = rows.some((row) => row.kind === 'team')
+		? copy('chatStage.menu.titleWithTeam')
+		: translate('chatStage.menu.title');
 	// Rows plus the optional "main chat" row share one roving focus.
 	const focusCount = rows.length + (onBack ? 1 : 0);
 	const [focused, setFocused] = useState(() => {
@@ -229,14 +235,14 @@ export const ChannelMenu = ({
 		>
 			<ChatMenuDropdownHeader
 				subtitle={translate('chatStage.menu.eyebrow')}
-				title={translate('chatStage.menu.title')}
+				title={title}
 			/>
 			<ChatMenuDropdownDivider />
 			<ul
 				className="chatMenuDropdown__section channelMenu__list"
 				role="menu"
 				id={id}
-				aria-label={translate('chatStage.menu.title')}
+				aria-label={title}
 				onKeyDown={onKeyDown}
 			>
 				{rows.map((row, index) => {

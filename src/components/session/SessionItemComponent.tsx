@@ -6693,7 +6693,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<PanelHeader
 						kind="team"
 						title={teamChannelTitle}
+						// The case this room is about — the same pseudonym
+						// the chat beside it carries, so it is obvious WHICH
+						// enquiry the team is discussing. It is not a leak:
+						// everyone in this room may already see the enquiry.
 						name={clientDisplayName}
+						// … but the name alone would read as "you are writing
+						// to her". ADR-016 §6 asks for a permanent marker;
+						// this is it.
+						chip={teamText('chatStage.panel.team.onlyMarker')}
 						participants={teamParticipants}
 						unreadCount={teamUnreadCount}
 						{...panelHeaderNav}

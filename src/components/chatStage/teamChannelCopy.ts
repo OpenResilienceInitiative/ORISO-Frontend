@@ -19,6 +19,22 @@ export const TEAM_CHANNEL_COPY = {
 	'chatStage.switcher.kind.team': 'Teamberatung',
 	/** Row in the channel card. */
 	'chatStage.menu.teamChat': 'Teamberatung',
+	/**
+	 * ADR-016 §6: a PERMANENT "team-only" marker, "so a counsellor is never
+	 * unsure which side they are writing on". It rides in the header chip,
+	 * not in the timeline: a system notice at the top scrolls away, and a
+	 * marker that scrolls away is not permanent. Sibling of the existing
+	 * `teamDiscussion.teamOnlyMarker` in the older panel — same promise,
+	 * shorter, because a header chip has no room for a sentence.
+	 */
+	'chatStage.panel.team.onlyMarker': 'Nur fürs Team',
+	/**
+	 * The channel card's own title. The catalogue's `chatStage.menu.title`
+	 * says "Threads und Supervision" and would be a lie the moment a third
+	 * kind is in the list — so this one replaces it ONLY while a team room
+	 * is actually listed. A card with two kinds keeps the old wording.
+	 */
+	'chatStage.menu.titleWithTeam': 'Threads, Supervision und Teamberatung',
 	/** Composer placeholder inside the team room. */
 	'chatStage.panel.team.composer.placeholder': 'Nachricht an das Team …',
 	/** First item of the room, like the supervision system notice (T7). */

@@ -507,6 +507,7 @@ function TeamRoom({
 					kind="team"
 					title={title}
 					name={CLIENT_NAME}
+					chip={copy('chatStage.panel.team.onlyMarker')}
 					// ADR-002 in reverse: these colleagues are SILENT in the
 					// session room and named here. The client is absent.
 					participants={[

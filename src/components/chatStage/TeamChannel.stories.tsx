@@ -122,8 +122,11 @@ const expectClientAbsentFromTeamRoom = async (panel: HTMLElement) => {
 		.map((node) => `${node.getAttribute('title') ?? ''} ${node.textContent ?? ''}`)
 		.join(' ');
 	await expect(names).not.toContain(CLIENT_NAME);
-	// The colleagues who are SILENT in the session room are named here.
-	await expect(names).toContain(TEAM_MATE_A_NAME.slice(0, 5));
+	// The colleagues who are SILENT in the session room are named here —
+	// the avatar stack initials each of them, so match on the first name.
+	const firstName = (full: string) => full.split(' ')[0];
+	await expect(names).toContain(firstName(TEAM_MATE_A_NAME));
+	await expect(names).toContain(firstName(TEAM_MATE_B_NAME));
 	// And no bubble in the room carries the client as its author.
 	const authors = Array.from(
 		panel.querySelectorAll<HTMLElement>('.messageItem')
@@ -133,7 +136,16 @@ const expectClientAbsentFromTeamRoom = async (panel: HTMLElement) => {
 	await expect(authors).not.toContain(CLIENT_NAME);
 };
 
-/** The header says "Teamberatung" and wears the team tint, not the supervision one. */
+/**
+ * The header says "Teamberatung", wears the team tint rather than the
+ * supervision one, and carries the permanent team-only marker.
+ *
+ * That last part is not decoration. The header's main line is the client's
+ * pseudonym — the case this room is about — and without the marker beside it
+ * the panel reads as "you are writing to her". ADR-016 §6 asks for a marker
+ * that is always there; a system notice at the top of the timeline scrolls
+ * away, so the chip is where it belongs.
+ */
 const expectTeamHeader = async (panel: HTMLElement) => {
 	const header = panel.querySelector<HTMLElement>('.panelHeader')!;
 	await expect(header.dataset.kind).toBe('team');
@@ -145,6 +157,18 @@ const expectTeamHeader = async (panel: HTMLElement) => {
 		'[data-cy="panel-header-kind-label"]'
 	)!;
 	await expect(label.textContent).toContain(TEAM_WORD);
+	const chip = panel.querySelector<HTMLElement>(
+		'[data-cy="panel-header-chip"]'
+	);
+	await expect(chip).not.toBeNull();
+	await expect(chip!.textContent).toBe(
+		TEAM_CHANNEL_COPY['chatStage.panel.team.onlyMarker']
+	);
+	// The marker sits in the header, which never scrolls — unlike the
+	// timeline, where the system notice lives.
+	await expect(
+		chip!.closest('[data-cy="panel-header-title"], .sidePanel__timeline')
+	).not.toBeInstanceOf(HTMLElement);
 };
 
 /* ------------------------------------------------------------------ *
@@ -273,6 +297,11 @@ export const ChannelCardWithThree: Story = {
 		await expect(
 			rows.map((row) => row.getAttribute('data-shortcut'))
 		).toEqual(['⇧S', '⇧T', '⇧1']);
+		// The card names what is really in it. "Threads und Supervision"
+		// would be a lie with three kinds listed.
+		await expect(card.getAttribute('aria-label')).toBe(
+			TEAM_CHANNEL_COPY['chatStage.menu.titleWithTeam']
+		);
 		// The team row says the word and carries its unread count.
 		const teamRow = rows[1];
 		await expect(teamRow.textContent).toContain(TEAM_WORD);
