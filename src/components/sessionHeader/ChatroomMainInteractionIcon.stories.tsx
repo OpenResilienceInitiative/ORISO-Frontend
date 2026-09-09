@@ -10,19 +10,63 @@ import './sessionHeader.styles.scss';
 
 const meta: Meta<typeof ChatroomMainInteractionIcon> = {
 	title: 'Components/Session/ChatroomMainInteractionIcon',
-	component: ChatroomMainInteractionIcon
+	component: ChatroomMainInteractionIcon,
+	parameters: {
+		docs: {
+			description: {
+				component:
+					'Atomic room-header interaction from Figma 7608:40827. The 40 px pill combines an optional add action with exactly one 24 px conversation-state glyph.'
+			}
+		}
+	}
 };
 
 export default meta;
 type Story = StoryObj<typeof ChatroomMainInteractionIcon>;
 
-export const InteractiveDesktopConsultant: Story = {
-	name: 'Interactive (desktop consultant, supervision enabled)',
+export const ActiveConversation: Story = {
+	name: 'Active Conversation',
 	args: {
-		type: 'nearby',
+		type: 'active',
 		showAddIcon: true,
-		addLabel: 'Supervisor verwalten',
+		addLabel: 'Person hinzufügen',
 		onAddClick: () => {}
+	}
+};
+
+export const WaitingRoomWithAdd: Story = {
+	name: 'Waiting Room + Add',
+	args: {
+		type: 'waiting',
+		showAddIcon: true,
+		addLabel: 'Person hinzufügen',
+		onAddClick: () => {}
+	}
+};
+
+export const InquiryWithAdd: Story = {
+	name: 'Inquiry + Add',
+	args: {
+		type: 'inquiry',
+		showAddIcon: true,
+		addLabel: 'Person hinzufügen',
+		onAddClick: () => {}
+	}
+};
+
+export const WaitingRoom: Story = {
+	name: 'Waiting Room',
+	args: {
+		type: 'waiting',
+		showAddIcon: false
+	}
+};
+
+export const Inquiry: Story = {
+	name: 'Inquiry',
+	args: {
+		type: 'inquiry',
+		showAddIcon: false
 	}
 };
 
@@ -50,13 +94,5 @@ export const DisabledSupervisionUnavailable: Story = {
 		type: 'live',
 		showAddIcon: true,
 		addLabel: 'Supervisor hinzufügen – hier nicht verfügbar'
-	}
-};
-
-export const NoAddAffordance: Story = {
-	name: 'No add affordance (enquiry)',
-	args: {
-		type: 'nearby',
-		showAddIcon: false
 	}
 };

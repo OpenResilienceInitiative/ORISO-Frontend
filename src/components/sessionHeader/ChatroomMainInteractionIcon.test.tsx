@@ -51,4 +51,50 @@ describe('ChatroomMainInteractionIcon', () => {
 		render(<ChatroomMainInteractionIcon type="nearby" />);
 		expect(screen.queryByRole('button')).toBeNull();
 	});
+
+	it.each([
+		['active', true],
+		['waiting', true],
+		['inquiry', true],
+		['waiting', false],
+		['inquiry', false]
+	] as const)(
+		'renders exactly one state glyph for %s with add=%s',
+		(type, showAddIcon) => {
+			const { container } = render(
+				<ChatroomMainInteractionIcon
+					type={type}
+					showAddIcon={showAddIcon}
+					addLabel="Person hinzufügen"
+					onAddClick={showAddIcon ? () => {} : undefined}
+				/>
+			);
+
+			expect(
+				screen.getAllByTestId('chatroom-main-interaction-state-icon')
+			).toHaveLength(1);
+			expect(
+				container.querySelectorAll(
+					'.chatroomMainInteractionIcon__typeGenerated, .chatroomMainInteractionIcon__typeImage, .chatroomMainInteractionIcon__typeMask'
+				)
+			).toHaveLength(1);
+		}
+	);
+
+	it('renders one magnet body for an inquiry, including the add variant', () => {
+		const { container } = render(
+			<ChatroomMainInteractionIcon
+				type="inquiry"
+				showAddIcon
+				addLabel="Person hinzufügen"
+				onAddClick={() => {}}
+			/>
+		);
+
+		expect(
+			container.querySelectorAll(
+				'.chatroomMainInteractionIcon__magnetBackground'
+			)
+		).toHaveLength(1);
+	});
 });
