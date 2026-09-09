@@ -3,6 +3,17 @@
 // Frank, 09.09.2026 (*2): the rail's avatar circles are "bisschen eiförmig"
 // and carry no information beyond the picture. This sheet is the geometric
 // answer to the first half; `SessionRailPill.tsx` carries the second.
+// ---
+// Frank, 10.09.2026 — second round, on the rendered pills:
+//   "der Abstand zwischen diesen Pillen ist zu groß"
+//   "die Icons sind viel zu klein"
+//   "alles hat reingequetscht … dann muss man nicht noch mehr sortieren,
+//    sondern dann einfach das Ding länger machen"
+//   "das Eicken bitte nach oben schieben … dadrunter hast Du dann Platz"
+// So the pill stops being a fixed box that packs marks into a 2 x 2 grid.
+// The avatar is pinned to the TOP, the marks stack in ONE column beneath it,
+// and the pill GROWS DOWNWARD with however many marks a row carries. Nothing
+// is ever squeezed to fit a height again — the height follows the content.
 
 // The egg came from `sessionsList.styles.scss` painting `border-radius: 50%`
 // on a box it never made square (48 × 50 px measured on
@@ -15,31 +26,51 @@
 // a background or border (m3Sweep #27 / #3).
 
 $rail-pill-width: 48px;
-$rail-pill-height: 80px;
+
+// No fixed height any more. A pill with no marks is a 48 x 48 circle (the
+// radius is half the width, so the stadium degenerates to a circle exactly
+// there); every mark adds its slot plus the mark gap underneath. Four marks
+// make a tall pill on purpose — Frank: "gar nicht schlimm, wenn diese Pille
+// 'n bisschen länger nach unten wird".
+$rail-pill-min-height: 48px;
 
 // Half the width. Stated in px on purpose — a `%` radius follows the box and
 // is exactly how the old circle became an egg.
 $rail-pill-radius: 24px;
 
-// Frank: "Und wir sollten diesen Abstand auch halten." The expanded list's
-// card rhythm is 24 px (T5, `sessionsListItem.styles.scss`); the rail keeps
-// exactly that. The old `--iconOnly` rule flattened it to 0.
-$rail-pill-gap: 24px;
-$rail-mark-slot: 16px;
-$rail-mark-glyph: 14px;
+// Round 1 read Frank's "diesen Abstand halten" as the expanded list's 24 px
+// card rhythm (T5). Seeing it rendered he corrected that: in a 48 px strip
+// 24 px of air between pills reads as a gap, not as rhythm. 8 px keeps the
+// pills separable without letting the column fall apart.
+$rail-pill-gap: 8px;
+
+// Round 1: 16 px slot / 14 px glyph, two per row. Frank: "viel zu klein".
+// One column means the full inner width is available, so the slot grows to
+// 24 and the glyph to 18 — the same optical weight as the expanded row's
+// modality icon.
+$rail-mark-slot: 24px;
+$rail-mark-glyph: 18px;
+$rail-mark-gap: 2px;
+$rail-avatar-size: 36px;
+$rail-pill-padding: 4px;
 
 .sessionRailPill {
-	// Fixed portrait box. Both numbers are asserted in the story's `play`,
-	// so "eiförmig" cannot silently return.
+	// Fixed WIDTH, content-driven height. The width is asserted in the
+	// story's `play` (so "eiförmig" cannot silently return) and so is the
+	// growth: a pill with two marks must be taller than one with none.
 	width: $rail-pill-width;
-	height: $rail-pill-height;
 	min-width: $rail-pill-width;
+	min-height: $rail-pill-min-height;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 4px;
-	padding: 6px 4px 8px;
+
+	// Avatar pinned to the top, marks flowing underneath it. `flex-start` is
+	// what does that — with `center` the avatar drifted down as the pill grew.
+	justify-content: flex-start;
+	gap: $rail-mark-gap;
+	padding: $rail-pill-padding;
 
 	// Half the width — a stadium at any height, never an ellipse.
 	border-radius: $rail-pill-radius;
@@ -82,21 +113,44 @@ $rail-mark-glyph: 14px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 32px;
-		height: 32px;
+		width: $rail-avatar-size;
+		height: $rail-avatar-size;
 		flex: 0 0 auto;
+
+		// The caller hands in whatever avatar the list row uses. Scale it to
+		// the slot instead of trusting it to arrive at 36 px — the rail must
+		// not depend on a size decided three components away.
+		> * {
+			width: 100%;
+			height: 100%;
+		}
+
+		img,
+		svg {
+			width: 100%;
+			height: 100%;
+			display: block;
+		}
 	}
 
-	// Up to four marks; two per row, so four fit inside 48 px minus padding.
+	// ONE column, never a grid. Frank: "dann muss man nicht noch mehr
+	// sortieren, sondern dann einfach das Ding länger machen." Wrapping is
+	// explicitly off, so a fifth mark would lengthen the pill rather than
+	// silently start a second column.
 	&__marks {
-		flex: 1 1 auto;
+		flex: 0 0 auto;
 		display: flex;
-		flex-wrap: wrap;
-		align-content: center;
-		justify-content: center;
-		gap: 2px;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: $rail-mark-gap;
 		width: 100%;
-		min-height: 0;
+
+		// An empty marks span must not add the parent's gap — a row without
+		// marks stays the 48 px circle.
+		&:empty {
+			display: none;
+		}
 	}
 
 	&__mark {
@@ -127,8 +181,11 @@ $rail-mark-glyph: 14px;
 
 		&::after {
 			content: '';
-			width: 10px;
-			height: 10px;
+
+			// Scaled with the slot (was 10 in the 16 px slot) so the unread
+			// dot keeps the same optical weight as the glyph marks.
+			width: 14px;
+			height: 14px;
 			border-radius: 50%;
 			background: var(
 				--oriso-unread-indicator-color,

@@ -203,13 +203,20 @@ const meta: Meta<typeof SessionRailPill> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Measures the pill and proves it is a stadium, not an ellipse. */
+/**
+ * Measures the pill and proves it is a stadium, not an ellipse.
+ *
+ * The height is deliberately NOT pinned to a number any more (round 1 pinned
+ * 80): Frank asked the pill to grow downward with its marks instead of
+ * packing them, so a fixed height here would be the very rule that produced
+ * the squeeze. What stays fixed is the width and the px radius — the two
+ * things the egg came from.
+ */
 const expectPillGeometry = async (pill: HTMLElement) => {
 	const box = pill.getBoundingClientRect();
 	await expect(Math.round(box.width)).toBe(48);
-	await expect(Math.round(box.height)).toBe(80);
-	// Portrait, as asked for — and by a margin no rounding can flip.
-	await expect(box.height).toBeGreaterThan(box.width);
+	// Never narrower than a circle, never wider than its own width.
+	await expect(Math.round(box.height)).toBeGreaterThanOrEqual(48);
 	const radius = getComputedStyle(pill).borderTopLeftRadius;
 	// A `%` radius is what turned the old circle into an egg: it follows the
 	// box. A px radius of exactly half the width is a stadium at any height.
@@ -281,7 +288,7 @@ export const AllMarks: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const pill = canvas.getByRole('button', { name: /sonnenblume_47/ });
-		// Four marks do not stretch the box — the 48 × 80 pill is fixed.
+		// Four marks DO stretch the box now — that is the point.
 		await expectPillGeometry(pill);
 		await expectMarks(canvasElement, [
 			'thread',
@@ -289,14 +296,31 @@ export const AllMarks: Story = {
 			'mail',
 			'unread'
 		]);
-		// Four 16 px slots in a 48 px pill mean two rows, not a squeezed one.
+		// ONE column, four rows — never a 2 x 2 grid. Frank: "dann muss man
+		// nicht noch mehr sortieren, sondern dann einfach das Ding länger
+		// machen." Four distinct tops and one shared left edge prove it.
 		const marks = Array.from(
 			pill.querySelectorAll<HTMLElement>('.sessionRailPill__mark')
 		);
 		const tops = new Set(
 			marks.map((mark) => Math.round(mark.getBoundingClientRect().top))
 		);
-		await expect(tops.size).toBe(2);
+		await expect(tops.size).toBe(4);
+		const lefts = new Set(
+			marks.map((mark) => Math.round(mark.getBoundingClientRect().left))
+		);
+		await expect(lefts.size).toBe(1);
+		// The marks are readable, not decorative: 24 px slots, not 16.
+		await expect(Math.round(marks[0].getBoundingClientRect().width)).toBe(
+			24
+		);
+		// The avatar sits at the TOP, above every mark.
+		const avatarTop = pill
+			.querySelector<HTMLElement>('.sessionRailPill__avatar')!
+			.getBoundingClientRect().top;
+		await expect(avatarTop).toBeLessThan(
+			Math.min(...marks.map((mark) => mark.getBoundingClientRect().top))
+		);
 		// And every mark stays inside the pill (no overflow, no clipping).
 		const box = pill.getBoundingClientRect();
 		for (const mark of marks) {
@@ -379,15 +403,30 @@ export const RailMixed: Story = {
 			await expect(box.right).toBeLessThan(columnBox.right);
 		}
 
-		// Frank: "Und wir sollten diesen Abstand auch halten." The expanded
-		// list stacks its cards 24 px apart; the rail now does too (the old
-		// `--iconOnly` rule flattened it to 0).
+		// Round 1 read Frank's "diesen Abstand halten" as the expanded list's
+		// 24 px card rhythm. On the rendered rail he corrected it — "der
+		// Abstand zwischen diesen Pillen ist zu groß" — so 8 px it is.
 		for (let index = 1; index < pills.length; index += 1) {
 			const gap =
 				pills[index].getBoundingClientRect().top -
 				pills[index - 1].getBoundingClientRect().bottom;
-			await expect(Math.round(gap)).toBe(24);
+			await expect(Math.round(gap)).toBe(8);
 		}
+
+		// The pills are NOT all the same height any more: a row carrying more
+		// marks is taller. This is the whole point of round 2, so it is
+		// asserted rather than eyeballed.
+		const heights = pills.map((pill) =>
+			Math.round(pill.getBoundingClientRect().height)
+		);
+		await expect(new Set(heights).size).toBeGreaterThan(1);
+		// And more marks really means taller — not just "different".
+		const markCount = (pill: HTMLElement) =>
+			pill.querySelectorAll('.sessionRailPill__mark').length;
+		const byMarks = [...pills].sort((a, b) => markCount(a) - markCount(b));
+		await expect(
+			byMarks[byMarks.length - 1].getBoundingClientRect().height
+		).toBeGreaterThan(byMarks[0].getBoundingClientRect().height);
 
 		// Per-row marks: the mixed set is the assertion, not "it rendered".
 		const marksOf = (pill: HTMLElement) =>
