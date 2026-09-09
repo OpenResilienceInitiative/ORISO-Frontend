@@ -6599,10 +6599,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						snapping={false}
 						currentWidth={panelWidth}
 						onResize={handlePanelResize}
-						minWidth={STAGE_LAYOUT.MIN_PANE_WIDTH}
+						minWidth={STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH}
 						maxWidth={Math.max(
-							STAGE_LAYOUT.MIN_PANE_WIDTH,
-							cardWidth - STAGE_LAYOUT.MIN_PANE_WIDTH
+							STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH,
+							cardWidth - STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
 						)}
 						ariaLabel={translate('supervision.panel.stage.divider')}
 						className="chatStage__panelHandle"

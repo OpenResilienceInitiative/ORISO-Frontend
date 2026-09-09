@@ -2193,3 +2193,373 @@ export const ChatTextSizeCompact: Story = {
 		).toBe('12px');
 	}
 };
+
+/* ------------------------------------------------------------------ *
+ * Frank, 09.09.2026 — finding *1: "Ich kann diesen Slider nicht genug
+ * bewegen nach links und nach rechts. Ich möchte, dass wir viel enger
+ * haben können, vor allem auch auf der rechten Seite, aber auch gern auf
+ * der linken Seite. Aktuell ist das mindestens 487 px, das kann auf
+ * beiden Seiten gerne bis zu 320 px breit sein. Achte dabei darauf, dass
+ * alles korrekt wrapped, dass kein Overflow entsteht."
+ *
+ * The 487 was the number DevTools reports on `.panelHeader__row` while the
+ * pane sits on the old floor: 520 px slot (`STAGE_LAYOUT.MIN_PANE_WIDTH`)
+ * − 1 px `.sidePanel--inside` hairline − 2 × 16 px header inset.
+ * `MIN_PANE_DRAG_WIDTH` now lets the handle reach 320 px on either side;
+ * the AUTO floor stays 520 so the list still snaps to the rail (D10).
+ * ------------------------------------------------------------------ */
+
+/** Drive the real handle to a width — no reliance on the persisted value. */
+const dragPanelTo = async (canvasElement: HTMLElement, target: number) => {
+	const handle = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel-handle"]'
+	)!;
+	const slot = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-panel-slot"]'
+	)!;
+	const width = () => Math.round(slot.getBoundingClientRect().width);
+	// The composer autofocuses late, so the handle takes focus back before
+	// every key — otherwise the arrows would land in the editor.
+	const press = async (keys: string) => {
+		handle.focus();
+		await userEvent.keyboard(keys);
+	};
+	// Home is the panel's floor; from there the arrows step up to the target
+	// (ArrowLeft grows a start-anchored pane by 20 px, Shift by 40).
+	await press('{Home}');
+	await waitFor(() => expect(width()).toBe(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH));
+	// Bounded: a handle that stops responding must fail as an assertion, not
+	// as a 15 s test timeout.
+	for (let step = 0; step < 60 && width() + 20 <= target; step += 1) {
+		await press(
+			width() + 40 <= target
+				? '{Shift>}{ArrowLeft}{/Shift}'
+				: '{ArrowLeft}'
+		);
+	}
+	await expect(width()).toBe(target);
+};
+
+/**
+ * The boxes that must not overflow horizontally. Everything between them is
+ * laid out with negative margins (the bubble is wider than its content
+ * column on purpose), so measuring every descendant would report layout, not
+ * overflow — these are the containers a reader would actually see scroll.
+ */
+const OVERFLOW_CONTAINERS = [
+	':scope',
+	'.panelHeader',
+	'.panelHeader__row',
+	'.panelHeader__divider',
+	'.panelHeader__actions',
+	'.sessionInfo',
+	'.sessionInfo__headerWrapper',
+	'.sessionInfo__username',
+	'.sidePanel__timeline',
+	'.session__content',
+	'.textarea__wrapper-send-message',
+	'.textarea__inputWrapper'
+];
+
+/**
+ * "kein Overflow" measured the way Frank asked: `scrollWidth > clientWidth`
+ * on the container. A container that declares `overflow-x: auto` is allowed
+ * to overflow — that is T22's composer action bar, which scrolls. Returns
+ * the offenders so a failure names them instead of just saying `false`.
+ */
+const overflowOffenders = (pane: HTMLElement) => {
+	const offenders: string[] = [];
+	for (const selector of OVERFLOW_CONTAINERS) {
+		const el =
+			selector === ':scope'
+				? pane
+				: pane.querySelector<HTMLElement>(selector);
+		if (!el || el.clientWidth === 0) {
+			continue;
+		}
+		const over = el.scrollWidth - el.clientWidth;
+		const style = getComputedStyle(el);
+		if (
+			over > 1 &&
+			style.overflowX !== 'auto' &&
+			style.overflowX !== 'scroll'
+		) {
+			offenders.push(`${selector} +${over}px`);
+		}
+	}
+	return offenders;
+};
+
+/**
+ * Nothing in normal flow paints past the pane's edges. Absolutely positioned
+ * overlays (the avatar tooltips, the hover kebab) are deliberately outside
+ * this rule — they are drawn above the pane, not inside its column.
+ */
+const paintsOutside = (pane: HTMLElement) => {
+	const box = pane.getBoundingClientRect();
+	// An ancestor that clips (the timeline, T22's scrolling action bar)
+	// already keeps its children inside — only what nothing clips can spill.
+	const isClipped = (el: HTMLElement) => {
+		for (
+			let node = el.parentElement;
+			node && node !== pane;
+			node = node.parentElement
+		) {
+			if (getComputedStyle(node).overflowX !== 'visible') {
+				return true;
+			}
+		}
+		return false;
+	};
+	return Array.from(pane.querySelectorAll<HTMLElement>('*'))
+		.filter((el) => {
+			const style = getComputedStyle(el);
+			if (style.position === 'absolute' || style.position === 'fixed') {
+				return false;
+			}
+			const rect = el.getBoundingClientRect();
+			if (rect.width === 0 || isClipped(el)) {
+				return false;
+			}
+			return rect.right > box.right + 1 || rect.left < box.left - 1;
+		})
+		.map(
+			(el) =>
+				`${el.tagName.toLowerCase()}.${String(el.className).slice(0, 40)}`
+		);
+};
+
+/** No control leaves the row, and no two of them sit on top of each other. */
+const expectRowControlsFit = async (row: HTMLElement) => {
+	const box = row.getBoundingClientRect();
+	const kids = Array.from(row.children)
+		.map((child) => child.getBoundingClientRect())
+		.filter((rect) => rect.width > 0);
+	for (const rect of kids) {
+		await expect(Math.round(rect.left)).toBeGreaterThanOrEqual(
+			Math.round(box.left) - 1
+		);
+		await expect(Math.round(rect.right)).toBeLessThanOrEqual(
+			Math.round(box.right) + 1
+		);
+	}
+	const sorted = [...kids].sort((a, b) => a.left - b.left);
+	for (let i = 1; i < sorted.length; i += 1) {
+		await expect(Math.round(sorted[i].left)).toBeGreaterThanOrEqual(
+			Math.round(sorted[i - 1].right) - 1
+		);
+	}
+};
+
+/**
+ * Text that does not fit is ellipsised or wrapped — never simply cut. Only
+ * leaf nodes that CLIP themselves (`overflow: hidden`) can cut a glyph; the
+ * rest wrap. So every clipping leaf must carry `text-overflow: ellipsis`.
+ */
+const expectTruncationIsEllipsis = async (pane: HTMLElement) => {
+	const cut = Array.from(pane.querySelectorAll<HTMLElement>('*')).filter(
+		(el) =>
+			el.children.length === 0 &&
+			el.clientWidth > 0 &&
+			el.scrollWidth - el.clientWidth > 1 &&
+			(el.textContent ?? '').trim().length > 0 &&
+			getComputedStyle(el).overflowX === 'hidden'
+	);
+	for (const el of cut) {
+		await expect(getComputedStyle(el).textOverflow).toBe('ellipsis');
+	}
+};
+
+/** Both extremes assert the same things — only the narrow pane changes. */
+const expectNarrowPaneSurvives = async (
+	canvasElement: HTMLElement,
+	which: 'panel' | 'main'
+) => {
+	const pane = canvasElement.querySelector<HTMLElement>(
+		which === 'panel' ? '[data-cy="stage-panel"]' : '[data-cy="stage-main"]'
+	)!;
+	await expect(overflowOffenders(pane)).toEqual([]);
+	await expect(paintsOutside(pane)).toEqual([]);
+	const stage = canvasElement.querySelector<HTMLElement>('.chatStage')!;
+	await expect(stage.scrollWidth - stage.clientWidth).toBeLessThanOrEqual(1);
+	await expectTruncationIsEllipsis(pane);
+	await expectRowControlsFit(
+		pane.querySelector<HTMLElement>(
+			'.panelHeader__row, .sessionInfo__headerWrapper'
+		)!
+	);
+	// Every bubble stays inside its pane — nothing paints over the divider.
+	const paneBox = pane.getBoundingClientRect();
+	for (const item of Array.from(
+		pane.querySelectorAll<HTMLElement>('.messageItem')
+	)) {
+		const box = item.getBoundingClientRect();
+		await expect(Math.round(box.left)).toBeGreaterThanOrEqual(
+			Math.round(paneBox.left) - 1
+		);
+		await expect(Math.round(box.right)).toBeLessThanOrEqual(
+			Math.round(paneBox.right) + 1
+		);
+	}
+	// T22: the composer's action bar is the one strip that may overflow —
+	// it scrolls, and expand never slides under the send button.
+	await expectActionBarScrolls(pane, { overflow: 'either' });
+};
+
+/**
+ * (i) The divider pushed fully to the RIGHT — Frank's "vor allem auch auf
+ * der rechten Seite". The side room sits on the new 320 px floor.
+ */
+export const PanelAtTheDragFloor320: Story = {
+	name: '(i) Divider fully right — side room at 320 px',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 3,
+		openThreads: 1
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH);
+		const widths = paneWidths(canvasElement);
+		await expect(widths.panel).toBe(320);
+		// The number Frank measured is gone: the header row inside the panel
+		// was 487 px on the old floor (520 − 1 hairline − 2 × 16 inset).
+		const panelRow = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .panelHeader__row'
+		)!;
+		await expect(Math.round(panelRow.getBoundingClientRect().width)).toBe(
+			287
+		);
+		await expectNarrowPaneSurvives(canvasElement, 'panel');
+		// The wide main chat keeps its roomy header (calls stay in the row).
+		await expect(
+			canvasElement
+				.querySelector('[data-cy="stage-main"] .sessionInfo')
+				?.getAttribute('data-density')
+		).toBe('roomy');
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-video-call-buttons"]'
+			)
+		).not.toBeNull();
+	}
+};
+
+/**
+ * (j) The divider pushed fully to the LEFT — "aber auch gern auf der linken
+ * Seite". The main chat sits on the 320 px floor, so its header takes D8's
+ * compact form: the calls move into the kebab, the stack folds into "+N",
+ * and the title keeps a readable column instead of the 20 px it had.
+ */
+export const MainChatAtTheDragFloor320: Story = {
+	name: '(j) Divider fully left — main chat at 320 px',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 3,
+		openThreads: 1
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		const slot = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel-slot"]'
+		)!;
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel-handle"]'
+		)!;
+		handle.focus();
+		await userEvent.keyboard('{End}');
+		// The panel takes everything the drag floor leaves the main chat.
+		await waitFor(() =>
+			expect(Math.round(slot.getBoundingClientRect().width)).toBe(
+				Number(handle.getAttribute('aria-valuemax'))
+			)
+		);
+		// The main chat lands on its floor (± the 8 px the stage's computed
+		// card width differs from the rendered one — see `cardWidth` in
+		// `ConsultantSessionStage`).
+		const mainWidth = paneWidths(canvasElement).main;
+		await expect(mainWidth).toBeGreaterThanOrEqual(
+			STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
+		);
+		await expect(mainWidth).toBeLessThanOrEqual(
+			STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH + 16
+		);
+		const header = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .sessionInfo'
+		)!;
+		// D8's compact form, switched by the PANE and not by the viewport.
+		await expect(header.getAttribute('data-density')).toBe('compact');
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-video-call-buttons"]'
+			)
+		).toBeNull();
+		const kebab = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .sessionMenu__icon--desktop'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="session-menu-start-video-call"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="session-menu-start-call"]')
+		).not.toBeNull();
+		await userEvent.click(kebab);
+		// The title column is no longer squeezed to 20 px: it keeps enough
+		// of the row for the name to read (measured 98 px at 320).
+		const title = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .sessionInfo__username h3'
+		)!.parentElement!;
+		await expect(
+			Math.round(title.getBoundingClientRect().width)
+		).toBeGreaterThanOrEqual(90);
+		await expectNarrowPaneSurvives(canvasElement, 'main');
+	}
+};
+
+/**
+ * (k) The comparison: the panel back on the OLD minimum. Everything below
+ * 520 px was unreachable before Frank's finding *1 — this is the state he
+ * measured 487 px in, so the two stories sit side by side in the sidebar.
+ */
+export const PanelAtTheOldMinimum520: Story = {
+	name: '(k) Comparison — the old 520 px minimum (header row 487 px)',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		supervisionUnread: 3,
+		openThreads: 1
+	},
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 10
+		});
+		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_WIDTH);
+		await expect(paneWidths(canvasElement).panel).toBe(520);
+		// Where the 487 came from, measured rather than asserted from memory.
+		const panelRow = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .panelHeader__row'
+		)!;
+		await expect(Math.round(panelRow.getBoundingClientRect().width)).toBe(
+			487
+		);
+		await expect(STAGE_LAYOUT.MIN_PANE_WIDTH - 1 - 2 * 16).toBe(487);
+		await expectNarrowPaneSurvives(canvasElement, 'panel');
+	}
+};
