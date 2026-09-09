@@ -41,6 +41,7 @@ import {
 	type SessionChannel
 } from '../../utils/channelRoute';
 import { TEAM_CHANNEL_COPY } from './teamChannelCopy';
+import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { phone390Globals } from '../message/messageStoryShell';
 import './chatStage.styles.scss';
 
@@ -264,6 +265,43 @@ export const TeamAndThread: Story = {
 	}
 };
 
+/**
+ * The still picture behind `team-und-thread-1440.png`. Story (b) proves the
+ * SWITCH and therefore ends on the thread, which makes it a poor screenshot
+ * for "team and thread". This one holds the state: the team room open beside
+ * the conversation while a thread on the client's message exists and is one
+ * click away.
+ *
+ * Worth saying plainly: the stage shows ONE side panel at a time — thread,
+ * supervision or team — exactly as the supervision stage always has. "In
+ * parallel" means the team room runs alongside the CONVERSATION, not that
+ * two side rooms share the screen.
+ */
+export const TeamOpenWhileThreadExists: Story = {
+	name: '(b2) Team open while a thread exists',
+	globals: desktop1440Globals,
+	args: { panel: 'team', withTeam: true, openThreads: 1, threadUnread: 1 },
+	play: async ({ canvasElement }) => {
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 4
+		});
+		const panel = panelOf(canvasElement);
+		await expectTeamHeader(panel);
+		await expectClientAbsentFromTeamRoom(panel);
+		// The thread is present in the main chat as its reply affordance …
+		const main = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"]'
+		)!;
+		await expect(main.textContent).toMatch(/Antworten/);
+		// … and reachable from the header, which is what "parallel" buys.
+		const channelButton = panel.querySelector<HTMLElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!;
+		await expect(channelButton.hasAttribute('disabled')).toBe(false);
+	}
+};
+
 /* ------------------------------------------------------------------ *
  * (c) The channel card with three channels
  * ------------------------------------------------------------------ */
@@ -400,46 +438,101 @@ export const TeamOnPhone: Story = {
  * (f) Dark scheme
  * ------------------------------------------------------------------ */
 
+/** The ORISO default tenant seed, as `.storybook/withOrisoScheme.tsx` uses it. */
+const STORYBOOK_SEED = '#A5000A';
+
+/**
+ * The dark palette applied to THIS STORY'S SUBTREE, not to
+ * `document.documentElement`.
+ *
+ * The toolbar switcher (`withOrisoScheme`) writes the tokens on the root.
+ * That is right for a human flipping the toolbar, but wrong for an
+ * automated run: while a dark story is mounted, the root carries the dark
+ * palette, and a story in ANOTHER file that reads a root token mid-play
+ * reads the wrong one. That really happened — `ChatStage.stories` (d2)
+ * failed intermittently once this file added a second dark story, and
+ * stopped the moment the global was removed.
+ *
+ * Custom properties inherit, so setting them on a wrapper gives the whole
+ * stage the dark palette while the root stays untouched and no neighbour
+ * can be poisoned. (Portalled content would escape this — nothing here
+ * portals.)
+ */
+function DarkCanvas({ children }: { children: React.ReactNode }) {
+	const { tokens } = computeOrisoPalette(
+		{ primary: STORYBOOK_SEED },
+		'dark'
+	);
+	return (
+		<div
+			data-cy="dark-canvas"
+			data-scheme="dark"
+			style={{
+				...(tokens as React.CSSProperties),
+				backgroundColor: tokens['--m3-surface'],
+				color: tokens['--m3-on-surface'],
+				minHeight: '100vh'
+			}}
+		>
+			{children}
+		</div>
+	);
+}
+
 export const TeamDarkScheme: Story = {
 	name: '(f) Dark scheme (Storybook only)',
-	globals: { ...desktop1440Globals, scheme: 'dark' },
+	globals: desktop1440Globals,
 	args: { panel: 'team', withTeam: true },
 	parameters: {
 		docs: {
 			description: {
-				story: 'The team header in the dark scheme. Dark is Storybook-only (`ACTIVE_SCHEMES` keeps it out of the app) — this story exists to SHOW the state, not to claim it is finished. It is here because the header tint is the one new painted surface this branch adds.'
+				story: 'The team header in the dark scheme. Dark is Storybook-only — `ACTIVE_SCHEMES` has `dark: false`, so the app never renders it — and this story exists to SHOW the state, not to claim it is finished; the salmon bubbles lose their contrast here, which is a pre-existing gap in the dark palette, not something this branch introduced. The palette is applied to the story\'s own subtree rather than through the toolbar global, so it cannot leak into a story running beside it.'
 			}
 		}
 	},
+	render: (args) => (
+		<DarkCanvas>
+			<ConsultantSessionStage {...args} />
+		</DarkCanvas>
+	),
 	play: async ({ canvasElement }) => {
 		await expectStageParts(canvasElement, {
 			composers: 2,
 			bubblesAtLeast: 4
 		});
 		await expectTeamHeader(panelOf(canvasElement));
-		// The scheme really applied: the page surface is dark and the text
-		// on it is light. Read from the tokens the decorator writes, never
-		// from a hard-coded hex (same check as `SidePanel.stories`).
+		const canvas = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="dark-canvas"]'
+		)!;
+		// The dark palette really reached the stage, and it reached it from
+		// the wrapper — the document root must be untouched.
 		const hexLuminance = (hex: string) => {
 			const n = Number.parseInt(hex.replace('#', ''), 16);
 			const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 			return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 		};
 		const token = (name: string) =>
-			getComputedStyle(document.documentElement)
-				.getPropertyValue(name)
-				.trim();
+			getComputedStyle(canvas).getPropertyValue(name).trim();
 		const surface = token('--m3-surface');
 		await expect(surface).toMatch(/^#[0-9a-f]{6}$/i);
 		await expect(hexLuminance(surface)).toBeLessThan(0.5);
 		await expect(hexLuminance(token('--m3-on-surface'))).toBeGreaterThan(
 			0.5
 		);
-		// The team header's own roles come from the same engine, so the tint
+		// The team header's own role comes from the same engine, so the tint
 		// follows the scheme instead of staying a light hard-coded fallback.
 		await expect(token('--m3-secondary-fixed-dim')).toMatch(
 			/^#[0-9a-f]{6}$/i
 		);
+		// The guard that makes this story safe to run beside others: the
+		// document root still carries the LIGHT palette the toolbar applied,
+		// so a story running in another file reads light tokens while this
+		// one renders dark.
+		const rootSurface = getComputedStyle(document.documentElement)
+			.getPropertyValue('--m3-surface')
+			.trim();
+		await expect(hexLuminance(rootSurface)).toBeGreaterThan(0.5);
+		await expect(rootSurface).not.toBe(surface);
 	}
 };
 

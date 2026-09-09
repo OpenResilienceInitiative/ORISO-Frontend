@@ -18,7 +18,7 @@ const shots = [
 	},
 	{
 		file: 'team-und-thread-1440.png',
-		id: 'templates-teamcounsellingchannel--team-and-thread',
+		id: 'templates-teamcounsellingchannel--team-open-while-thread-exists',
 		width: 1440,
 		height: 900
 	},
