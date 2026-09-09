@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
@@ -378,6 +378,43 @@ export const ActiveClientOptOut: Story = {
 		expect(getComputedStyle(target).display).toBe('flex');
 		expect(getComputedStyle(handle).display).toBe('flex');
 		expect(getComputedStyle(handle).width).toBe('24px');
+	}
+};
+
+/**
+ * Regression guard for ORISO-Frontend#1329: the consent switch has to follow
+ * the click. It used to be hard-coded to `checked`, so every toggle snapped
+ * straight back and the client never saw their withdrawal register.
+ */
+export const ActiveClientOptOutToggle: Story = {
+	name: 'Active access — client opt-out — switch follows the click',
+	globals: { locale: 'en' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const control = canvas.getByRole('switch', {
+			name: 'I consent to data processing for this case handover'
+		});
+		const label = control.closest('label') as HTMLElement;
+
+		// Opt-out starts granted.
+		expect(control).toBeChecked();
+
+		// Withdrawing consent turns the switch off and keeps it off.
+		await userEvent.click(label);
+		await waitFor(() => expect(control).not.toBeChecked());
+
+		// Granting it again turns the switch back on.
+		await userEvent.click(label);
+		await waitFor(() => expect(control).toBeChecked());
 	}
 };
 
