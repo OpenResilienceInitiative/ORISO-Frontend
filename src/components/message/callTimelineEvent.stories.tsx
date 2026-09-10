@@ -14,19 +14,10 @@ import './message.styles.scss';
 /**
  * The call event in the room timeline — ORISO-Frontend#780.
  *
- * Why this exists as an approval surface rather than a screenshot of the app:
- * the renderer is finished and fully wired, but **nothing ever sends a
- * `VIDEOCALL` alias message**, so neither state has ever appeared on screen.
- * `ALIAS_MESSAGE_TYPES.VIDEOCALL` has zero producers — only the enum definition
- * and three read sites. `isVideoActive` is computed correctly in
- * `sessionHelpers.ts` and flows into every message; it simply never meets a
- * message of that type.
- *
- * Modelling the four states here makes the required data shape visible, which
- * is what `ORISO-UserService#730` ("Emit call.* event notifications") has to
- * deliver. Frank, 2026-09-03: one entry that changes state, not two entries
- * that alternate — while the call runs it carries the button, afterwards the
- * same entry becomes the line in the log.
+ * This permanent approval surface keeps sent/received and running/ended call
+ * events reviewable independently of a live room. The application renderer
+ * consumes call lifecycle events through `MessageItemComponent`; Storybook
+ * supplies deterministic members, labels and timestamps for visual checks.
  */
 const meta: Meta = {
 	title: 'Chat/Call event in the timeline',
@@ -34,7 +25,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Das Anruf-Ereignis im Chatverlauf, in vier Zuständen: gesendet und empfangen, jeweils laufend und beendet. Nichts davon erscheint heute in der App — es fehlt der Absender, nicht der Empfänger. Abnahmefläche zu ORISO-Frontend#780.'
+					'Das Anruf-Ereignis im Chatverlauf: gesendet und empfangen, jeweils laufend und beendet. Die dauerhafte Abnahmefläche zeigt zusätzlich Audio/Video, Mitglieder und geplante Calls mit Kalenderaktion.'
 			}
 		}
 	}
@@ -127,8 +118,10 @@ export const AllFourStates: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Du hast einen Videoanruf gestartet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Läuft"
+					actionSummaryLabel="Videoanruf beitreten"
 					description="Die anderen Teilnehmenden können dem Videoanruf jetzt beitreten."
 					actionLabel="Zum Videoanruf"
 					onAction={onJoin}
@@ -141,8 +134,9 @@ export const AllFourStates: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					headline="Beraterin Carimat"
 					statusLabel="Läuft"
+					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
 					actionLabel="Beitreten"
 					onAction={onJoin}
@@ -155,8 +149,10 @@ export const AllFourStates: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Du hast den Videoanruf beendet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Beendet"
+					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
 					participants={callMembers}
@@ -168,8 +164,9 @@ export const AllFourStates: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat den Videoanruf beendet"
+					headline="Beraterin Carimat"
 					statusLabel="Beendet"
+					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
 					participants={callMembers}
@@ -182,7 +179,7 @@ export const AllFourStates: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die vier Zustände untereinander. Sichtbar wird dabei die eigentliche Anforderung: laufend trägt der Eintrag den Beitreten-Knopf, beendet wird derselbe Eintrag zur Protokollzeile mit Dauer. Was heute fehlt, ist die Ausrichtung links/rechts — die Komponente kennt gesendet und empfangen nicht.'
+				story: 'Die vier Zustände untereinander. Laufend trägt der Eintrag den Beitreten-Knopf; beendet wird derselbe Eintrag zur Protokollzeile mit Dauer. Die Senderseite bestimmt Ausrichtung, Farbe, Avatar und CTA-Position.'
 			}
 		}
 	}
@@ -197,8 +194,9 @@ export const RunningJoinable: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					headline="Beraterin Carimat"
 					statusLabel="Läuft"
+					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
 					actionLabel="Beitreten"
 					onAction={onJoin}
@@ -210,7 +208,7 @@ export const RunningJoinable: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Zustand, den heute niemand je zu Gesicht bekommt. Wichtig für das Backend-Ticket: „läuft" darf nicht heißen „das ist die letzte Anruf-Nachricht" — genau das prüft `findLastVideoCallIndex` heute, ohne zu wissen, ob der Anruf noch steht. Es braucht ein echtes Lebenszyklus-Ereignis.'
+				story: 'Der laufende Zustand mit Beitreten-Aktion. Der Status stammt aus einem echten Lebenszyklus-Ereignis und darf nicht allein aus der Position der letzten Anruf-Nachricht abgeleitet werden.'
 			}
 		}
 	},
@@ -232,8 +230,10 @@ export const EndedLog: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Du hast den Videoanruf beendet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Beendet"
+					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
 				/>
@@ -265,8 +265,9 @@ export const Mobile: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					headline="Beraterin Carimat"
 					statusLabel="Läuft"
+					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
 					actionLabel="Beitreten"
 					onAction={onJoin}
@@ -277,8 +278,10 @@ export const Mobile: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Du hast den Videoanruf beendet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Beendet"
+					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
 				/>
@@ -318,8 +321,9 @@ export const VideoAndAudio: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat einen Videoanruf gestartet"
+					headline="Beraterin Carimat"
 					statusLabel="Läuft"
+					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
 					participants={callMembers}
 					participantsLabel="Im Anruf"
@@ -332,8 +336,9 @@ export const VideoAndAudio: StoryObj = {
 					state="running"
 					callType="audio"
 					callLabel="Audioanruf"
-					headline="Beraterin Carimat hat einen Audioanruf gestartet"
+					headline="Beraterin Carimat"
 					statusLabel="Läuft"
+					actionSummaryLabel="Audioanruf beitreten"
 					description="Sie können jetzt am Audioanruf teilnehmen."
 					participants={callMembers.slice(0, 2)}
 					participantsLabel="Im Anruf"
@@ -346,8 +351,10 @@ export const VideoAndAudio: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Du hast den Videoanruf beendet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Beendet"
+					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
 					description="Der Videoanruf ist beendet."
 					participants={callMembers}
@@ -359,8 +366,10 @@ export const VideoAndAudio: StoryObj = {
 					state="ended"
 					callType="audio"
 					callLabel="Audioanruf"
-					headline="Du hast den Audioanruf beendet"
+					side="sent"
+					headline="Sanftes Alpaka Kim"
 					statusLabel="Beendet"
+					actionSummaryLabel="Audioanruf beendet"
 					durationLabel="Dauer 18 Min."
 					description="Der Audioanruf ist beendet."
 					participants={callMembers.slice(0, 2)}
@@ -388,8 +397,9 @@ export const ScheduledWithCalendar: StoryObj = {
 					state="scheduled"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat hat einen Videoanruf geplant"
+					headline="Beraterin Carimat"
 					statusLabel="Geplant"
+					actionSummaryLabel="Videoanruf Termin eintragen"
 					scheduledForLabel="Do., 10. September · 18:00 Uhr"
 					description="Der Termin dauert 60 Minuten. Sie können ihn direkt in Ihren Kalender übernehmen."
 					actionSlot={
@@ -406,8 +416,9 @@ export const ScheduledWithCalendar: StoryObj = {
 					state="scheduled"
 					callType="audio"
 					callLabel="Audioanruf"
-					headline="Beraterin Carimat hat einen Audioanruf geplant"
+					headline="Beraterin Carimat"
 					statusLabel="Geplant"
+					actionSummaryLabel="Audioanruf Termin eintragen"
 					scheduledForLabel="Fr., 11. September · 10:30 Uhr"
 					description="Der Termin dauert 30 Minuten. Sie können ihn direkt in Ihren Kalender übernehmen."
 					actionSlot={

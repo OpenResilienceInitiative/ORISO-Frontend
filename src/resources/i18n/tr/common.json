@@ -1710,6 +1710,12 @@
 				"ended": "Sona erdi",
 				"missed": "Cevapsız"
 			},
+			"summary": {
+				"scheduled": "{{call}} için takvime ekle",
+				"running": "{{call}} görüşmesine katıl",
+				"ended": "{{call}} sona erdi",
+				"missed": "{{call}} cevapsız"
+			},
 			"headline": {
 				"scheduled": "{{call}} planlandı",
 				"running": "{{actor}} tarafından {{call}}",

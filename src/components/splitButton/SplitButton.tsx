@@ -44,6 +44,10 @@ export interface SplitButtonProps {
 	 * else it must not advertise a popup it does not control (WCAG 4.1.2).
 	 */
 	mainOpensMenu?: boolean;
+	/** The semantic type of popup controlled by the menu segments. */
+	popupRole?: 'listbox' | 'menu' | 'dialog';
+	/** The popup element id, exposed while it is open. */
+	controlsId?: string;
 	/** Stepper mode: providing both renders the down/up pair. */
 	onDecrement?: () => void;
 	onIncrement?: () => void;
@@ -67,6 +71,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			open = false,
 			menuLabel,
 			mainOpensMenu = true,
+			popupRole = 'listbox',
+			controlsId,
 			onDecrement,
 			onIncrement,
 			decrementLabel,
@@ -98,7 +104,12 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 					onClick={onClick}
 					aria-expanded={hasMenu && mainOpensMenu ? open : undefined}
 					aria-haspopup={
-						hasMenu && mainOpensMenu ? 'listbox' : undefined
+						hasMenu && mainOpensMenu ? popupRole : undefined
+					}
+					aria-controls={
+						hasMenu && mainOpensMenu && open
+							? controlsId
+							: undefined
 					}
 				>
 					{icon && (
@@ -144,7 +155,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 						onClick={onToggleMenu}
 						aria-label={menuLabel}
 						aria-expanded={open}
-						aria-haspopup="listbox"
+						aria-haspopup={popupRole}
+						aria-controls={open ? controlsId : undefined}
 					>
 						<ChevronDownIcon
 							className="splitButton__chevron"

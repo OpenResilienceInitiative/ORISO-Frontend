@@ -1710,6 +1710,12 @@
 				"ended": "Terminé",
 				"missed": "Manqué"
 			},
+			"summary": {
+				"scheduled": "Ajouter {{call}} au calendrier",
+				"running": "Rejoindre {{call}}",
+				"ended": "{{call}} terminé",
+				"missed": "{{call}} manqué"
+			},
 			"headline": {
 				"scheduled": "{{call}} planifié",
 				"running": "{{call}} par {{actor}}",

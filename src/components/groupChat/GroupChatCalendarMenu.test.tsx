@@ -37,9 +37,10 @@ describe('GroupChatCalendarMenu', () => {
 			/>
 		);
 
-		fireEvent.click(
-			screen.getByRole('button', { name: 'Add to calendar' })
-		);
+		const trigger = screen.getAllByRole('button', {
+			name: 'Add to calendar'
+		})[0];
+		fireEvent.click(trigger);
 
 		const titleInput = await screen.findByRole('textbox', {
 			name: 'Neutral calendar title'
@@ -48,7 +49,7 @@ describe('GroupChatCalendarMenu', () => {
 			'Online appointment'
 		);
 		expect(screen.getByText('Download ICS')).toBeTruthy();
-		const googleLink = screen.getByRole('menuitem', {
+		const googleLink = screen.getByRole('link', {
 			name: 'Google Calendar'
 		});
 		expect(googleLink.getAttribute('href')).toContain(
@@ -78,18 +79,22 @@ describe('GroupChatCalendarMenu', () => {
 				eventId={42}
 			/>
 		);
-		const trigger = screen.getByRole('button', { name: 'Add to calendar' });
-		expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+		const trigger = screen.getAllByRole('button', {
+			name: 'Add to calendar'
+		})[0];
+		expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+		expect(trigger.getAttribute('aria-controls')).toBeNull();
 		expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
 		fireEvent.click(trigger);
+		expect(trigger.getAttribute('aria-controls')).toContain(
+			'group-chat-calendar-menu'
+		);
 		const titleInput = await screen.findByRole('textbox', {
 			name: 'Neutral calendar title'
 		});
 		expect(trigger.getAttribute('aria-expanded')).toBe('true');
-		expect(trigger.getAttribute('aria-controls')).toContain(
-			'group-chat-calendar-menu'
-		);
+		expect(trigger.closest('.splitButton--elevated')).toBeTruthy();
 
 		fireEvent.keyDown(titleInput, { key: 'Escape' });
 		await waitFor(() =>

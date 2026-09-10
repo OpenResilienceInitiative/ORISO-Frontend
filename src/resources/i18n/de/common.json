@@ -1734,6 +1734,12 @@
 				"ended": "Beendet",
 				"missed": "Verpasst"
 			},
+			"summary": {
+				"scheduled": "{{call}} Termin eintragen",
+				"running": "{{call}} beitreten",
+				"ended": "{{call}} beendet",
+				"missed": "{{call}} verpasst"
+			},
 			"headline": {
 				"scheduled": "{{call}} geplant",
 				"running": "{{call}} von {{actor}}",

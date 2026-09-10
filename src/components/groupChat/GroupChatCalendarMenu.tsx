@@ -1,6 +1,15 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Box, Button, Menu, MenuItem, TextField } from '@mui/material';
+import { Box, Popover, TextField } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import {
+	ChatMenuDropdown,
+	ChatMenuDropdownItem
+} from '../chatMenuDropdown/ChatMenuDropdown';
+import { SplitButton } from '../splitButton/SplitButton';
+import { ReactComponent as ScheduledMeetingIcon } from '../../resources/img/icons/scheduled_meeting_filled_24px.svg';
+import googleCalendarIcon from '../../resources/img/icons/googlecalendar.svg';
+import outlookCalendarIcon from '../../resources/img/icons/outlook-calendar.svg';
+import icsIcon from '../../resources/img/icons/download.svg';
 import {
 	buildNeutralGroupChatCalendar,
 	downloadNeutralGroupChatIcs
@@ -16,8 +25,6 @@ interface GroupChatCalendarPopoverProps extends GroupChatCalendarInputProps {
 	/** The element the menu hangs from; `null` keeps it closed. */
 	anchorEl: HTMLElement | null;
 	onClose: () => void;
-	/** `id` of the element that opened the menu, for `aria-labelledby`. */
-	triggerId?: string;
 	id?: string;
 }
 
@@ -33,7 +40,6 @@ export const GroupChatCalendarPopover = ({
 	eventId,
 	anchorEl,
 	onClose,
-	triggerId,
 	id
 }: GroupChatCalendarPopoverProps) => {
 	const { t: translate } = useTranslation();
@@ -58,58 +64,88 @@ export const GroupChatCalendarPopover = ({
 	);
 
 	return (
-		<Menu
-			id={id}
-			MenuListProps={
-				triggerId ? { 'aria-labelledby': triggerId } : undefined
-			}
+		<Popover
 			anchorEl={anchorEl}
 			open={Boolean(anchorEl)}
 			onClose={onClose}
+			anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+			transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+			slotProps={{
+				paper: {
+					sx: {
+						backgroundColor: 'var(--m3-surface-container, #f3edf7)',
+						boxShadow:
+							'var(--m3-elevation-2, 0 2px 6px rgba(0, 0, 0, 0.2))',
+						borderRadius: '12px',
+						overflow: 'visible'
+					}
+				}
+			}}
 		>
-			<Box component="div" role="none" sx={{ padding: 1 }}>
-				<TextField
-					label={translate('groupChat.calendar.titleLabel')}
-					value={title}
-					onChange={(event) => {
-						titleEdited.current = true;
-						setTitle(event.target.value);
+			<ChatMenuDropdown
+				id={id}
+				role="dialog"
+				ariaLabel={translate('groupChat.calendar.add')}
+			>
+				<Box component="div" sx={{ padding: '8px 8px 12px' }}>
+					<TextField
+						label={translate('groupChat.calendar.titleLabel')}
+						value={title}
+						onChange={(event) => {
+							titleEdited.current = true;
+							setTitle(event.target.value);
+						}}
+						onKeyDown={(event) => {
+							if (event.key !== 'Escape') {
+								event.stopPropagation();
+							}
+						}}
+						size="small"
+						fullWidth
+					/>
+				</Box>
+				<ChatMenuDropdownItem
+					icon={<img src={icsIcon} alt="" width={20} height={20} />}
+					title={translate('groupChat.calendar.download')}
+					onClick={() => {
+						downloadNeutralGroupChatIcs(calendar.ics);
+						onClose();
 					}}
-					onKeyDown={(event) => {
-						if (event.key !== 'Escape') {
-							event.stopPropagation();
-						}
-					}}
-					size="small"
 				/>
-			</Box>
-			<MenuItem
-				onClick={() => {
-					downloadNeutralGroupChatIcs(calendar.ics);
-					onClose();
-				}}
-			>
-				{translate('groupChat.calendar.download')}
-			</MenuItem>
-			<MenuItem
-				component="a"
-				href={calendar.googleUrl}
-				target="_blank"
-				rel="noreferrer"
-				onClick={onClose}
-			>
-				{translate('groupChat.calendar.google')}
-			</MenuItem>
-			<MenuItem
-				component="a"
-				href={calendar.outlookUrl}
-				target="_blank"
-				rel="noreferrer"
-				onClick={onClose}
-			>
-				{translate('groupChat.calendar.outlook')}
-			</MenuItem>
-		</Menu>
+				<ChatMenuDropdownItem
+					as="a"
+					href={calendar.googleUrl}
+					target="_blank"
+					rel="noreferrer"
+					onClick={onClose}
+					icon={
+						<img
+							src={googleCalendarIcon}
+							alt=""
+							width={20}
+							height={20}
+						/>
+					}
+					title={translate('groupChat.calendar.google')}
+				/>
+				<ChatMenuDropdownItem
+					as="a"
+					href={calendar.outlookUrl}
+					target="_blank"
+					rel="noreferrer"
+					onClick={onClose}
+					icon={
+						<img
+							src={outlookCalendarIcon}
+							alt=""
+							width={20}
+							height={20}
+						/>
+					}
+					title={translate('groupChat.calendar.outlook')}
+				/>
+			</ChatMenuDropdown>
+		</Popover>
 	);
 };
 
@@ -123,22 +159,27 @@ export const GroupChatCalendarMenu = ({
 	const triggerId = `${instanceId}-group-chat-calendar-trigger`;
 	const menuId = `${instanceId}-group-chat-calendar-menu`;
 	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+	const triggerRef = useRef<HTMLDivElement | null>(null);
+	const toggleMenu = () =>
+		setAnchor((current) => (current ? null : triggerRef.current));
 
 	return (
 		<>
-			<Button
+			<SplitButton
+				ref={triggerRef}
 				id={triggerId}
-				variant="outlined"
-				onClick={(event) => setAnchor(event.currentTarget)}
-				aria-haspopup="menu"
-				aria-expanded={Boolean(anchor)}
-				aria-controls={anchor ? menuId : undefined}
-			>
-				{translate('groupChat.calendar.add')}
-			</Button>
+				label={translate('groupChat.calendar.add')}
+				icon={<ScheduledMeetingIcon />}
+				variant={anchor ? 'elevated' : 'outlined'}
+				onClick={toggleMenu}
+				onToggleMenu={toggleMenu}
+				open={Boolean(anchor)}
+				menuLabel={translate('groupChat.calendar.add')}
+				popupRole="dialog"
+				controlsId={menuId}
+			/>
 			<GroupChatCalendarPopover
 				id={menuId}
-				triggerId={triggerId}
 				anchorEl={anchor}
 				onClose={() => setAnchor(null)}
 				start={start}

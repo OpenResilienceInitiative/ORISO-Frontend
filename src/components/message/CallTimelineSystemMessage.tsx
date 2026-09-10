@@ -1,10 +1,10 @@
 import * as React from 'react';
-import CallRoundedIcon from '@mui/icons-material/CallRounded';
-import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import PhoneDisabledRoundedIcon from '@mui/icons-material/PhoneDisabledRounded';
-import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import VideocamOffRoundedIcon from '@mui/icons-material/VideocamOffRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
+import { ReactComponent as AudioCallIcon } from '../../resources/img/icons/audio_call_filled_24px.svg';
+import { ReactComponent as VideoCallIcon } from '../../resources/img/icons/video_call_filled_24px.svg';
+import { ReactComponent as ScheduledMeetingIcon } from '../../resources/img/icons/scheduled_meeting_filled_24px.svg';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
 import { UserAvatar } from './UserAvatar';
 
@@ -25,8 +25,12 @@ export interface CallTimelineSystemMessageProps {
 	callLabel: string;
 	/** Already translated. The system-message shell never invents person names. */
 	headline: string;
+	/** Ordinary chat orientation derived from whether the current user sent it. */
+	side?: 'received' | 'sent';
 	/** Already translated short state, for example "Läuft" or "Beendet". */
 	statusLabel: string;
+	/** Full action summary shown under the initiator, e.g. "Videoanruf Termin eintragen". */
+	actionSummaryLabel?: string;
 	/** Already translated supporting sentence. */
 	description: string;
 	/** Already translated duration, only useful for an ended call. */
@@ -66,7 +70,9 @@ export const CallTimelineSystemMessage = ({
 	callType,
 	callLabel,
 	headline,
+	side = 'received',
 	statusLabel,
+	actionSummaryLabel,
 	description,
 	durationLabel,
 	scheduledForLabel,
@@ -79,15 +85,16 @@ export const CallTimelineSystemMessage = ({
 }: CallTimelineSystemMessageProps) => {
 	const running = state === 'running';
 	const scheduled = state === 'scheduled';
-	const CallIcon = scheduled
-		? EventRoundedIcon
+	const EventIcon = scheduled
+		? ScheduledMeetingIcon
 		: callType === 'audio'
 			? running
-				? CallRoundedIcon
+				? AudioCallIcon
 				: PhoneDisabledRoundedIcon
 			: running
-				? VideocamRoundedIcon
+				? VideoCallIcon
 				: VideocamOffRoundedIcon;
+	const ActionIcon = callType === 'audio' ? AudioCallIcon : VideoCallIcon;
 	const primaryLabel = scheduled
 		? scheduledForLabel || statusLabel
 		: running
@@ -95,7 +102,14 @@ export const CallTimelineSystemMessage = ({
 			: durationLabel || statusLabel;
 
 	return (
-		<ChatSystemMessageCard title={headline} subtitle={statusLabel}>
+		<ChatSystemMessageCard
+			title={headline}
+			subtitle={
+				actionSummaryLabel || `${callLabel} ${statusLabel}`
+			}
+			side={side}
+			avatarIcon={<EventIcon data-testid="CallTimelineEventIcon" />}
+		>
 			<Stack
 				component="section"
 				role="status"
@@ -104,24 +118,6 @@ export const CallTimelineSystemMessage = ({
 				sx={{ minWidth: 0 }}
 			>
 				<Stack direction="row" spacing={1.5} alignItems="center">
-					<Box
-						sx={{
-							width: 40,
-							height: 40,
-							borderRadius: '50%',
-							display: 'grid',
-							placeItems: 'center',
-							flex: '0 0 auto',
-							backgroundColor: running
-								? systemMessageColors.primaryContainer
-								: systemMessageColors.surfaceContainer,
-							color: running
-								? systemMessageColors.onPrimaryContainer
-								: systemMessageColors.onSurfaceVariant
-						}}
-					>
-						<CallIcon fontSize="small" aria-hidden="true" />
-					</Box>
 					<Typography
 						variant="body1"
 						sx={{
@@ -202,15 +198,26 @@ export const CallTimelineSystemMessage = ({
 						</Stack>
 					)}
 
-				{actionSlot}
+				{actionSlot && (
+					<Box
+						sx={{
+						alignSelf: side === 'sent' ? 'flex-start' : 'flex-end',
+						maxWidth: '100%'
+					}}
+					>
+						{actionSlot}
+					</Box>
+				)}
 
 				{!actionSlot && running && actionLabel && onAction && (
 					<Button
 						variant="contained"
 						onClick={onAction}
+						startIcon={<ActionIcon aria-hidden="true" />}
 						disableElevation
 						sx={{
-							'alignSelf': 'flex-start',
+							'alignSelf':
+								side === 'sent' ? 'flex-start' : 'flex-end',
 							'minHeight': 40,
 							'borderRadius': 999,
 							'px': 3,
@@ -226,6 +233,10 @@ export const CallTimelineSystemMessage = ({
 							'&:focus-visible': {
 								outline: `3px solid ${systemMessageColors.primaryContainer}`,
 								outlineOffset: 2
+							},
+							'& .MuiButton-startIcon svg': {
+								width: 20,
+								height: 20
 							}
 						}}
 					>

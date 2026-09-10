@@ -1197,7 +1197,7 @@
 		"sourcePath": "src/resources/img/icons/arrow-left.svg",
 		"exportNames": ["BackIcon"],
 		"usageFiles": [
-			"src/components/askerInfo/AskerInfo.tsx",
+			"src/components/askerInfo/AskerInfoFooter.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
@@ -1219,7 +1219,10 @@
 		"fileName": "arrow-right-m3.svg",
 		"sourcePath": "src/resources/img/icons/arrow-right-m3.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
+		"usageFiles": [
+			"src/components/askerInfo/AskerInfoFooter.tsx",
+			"src/components/pseudonym/WaitingQueueActionBar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1288,6 +1291,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:audio-call:filled",
+		"family": "audio-call",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "audio_call_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/audio_call_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/message/CallTimelineSystemMessage.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:audio-off:base",
 		"family": "audio-off",
 		"state": "base",
@@ -1338,8 +1354,8 @@
 		"fileName": "breath-level-emojis.svg",
 		"sourcePath": "src/resources/img/icons/breath-level-emojis.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/session/SessionItemComponent.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:caldav:base",
@@ -1496,6 +1512,7 @@
 		"usageFiles": [
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2048,7 +2065,7 @@
 		"sourcePath": "src/resources/img/icons/delivery-sent.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/message/ChatSystemMessageCard.tsx",
 			"src/components/message/MessageItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -2126,6 +2143,7 @@
 		"exportNames": ["DownloadIcon"],
 		"usageFiles": [
 			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2176,6 +2194,51 @@
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:event-accepted:filled",
+		"family": "event-accepted",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "event_accepted_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/event_accepted_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/message/AppointmentTimelineSystemMessage.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:event-canceled:filled",
+		"family": "event-canceled",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "event_canceled_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/event_canceled_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/message/AppointmentTimelineSystemMessage.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:event-scheduling-request:filled",
+		"family": "event-scheduling-request",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "event_scheduling_request_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/event_scheduling_request_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/message/AppointmentTimelineSystemMessage.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2345,6 +2408,7 @@
 		"sourcePath": "src/resources/img/icons/googlecalendar.svg",
 		"exportNames": ["GoogleCalendar"],
 		"usageFiles": [
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2985,6 +3049,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:outlook-calendar:base",
+		"family": "outlook-calendar",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "outlook-calendar.svg",
+		"sourcePath": "src/resources/img/icons/outlook-calendar.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/groupChat/GroupChatCalendarMenu.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:overview:filled",
 		"family": "overview",
 		"state": "filled",
@@ -3136,7 +3213,8 @@
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx"
+			"src/components/sessionHeader/MemberAvatarStack.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3338,6 +3416,23 @@
 		"usageFiles": [
 			"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
 			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:scheduled-meeting:filled",
+		"family": "scheduled-meeting",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "scheduled_meeting_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/scheduled_meeting_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
+			"src/components/message/AppointmentTimelineSystemMessage.tsx",
+			"src/components/message/CallTimelineSystemMessage.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3570,8 +3665,8 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
+			"src/components/message/ChatSystemMessageCard.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
@@ -4037,6 +4132,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:video-call:filled",
+		"family": "video-call",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "video_call_filled_24px.svg",
+		"sourcePath": "src/resources/img/icons/video_call_filled_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/message/CallTimelineSystemMessage.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:video-booking:base",
 		"family": "video-booking",
 		"state": "base",
@@ -4080,10 +4188,13 @@
 		"exportNames": ["CrossMarkIcon", "RemoveIcon", "StopGroupChatIcon"],
 		"usageFiles": [
 			"src/components/editableData/EditableData.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
 			"src/components/legalContent/LegalTextReader.tsx",
 			"src/components/m3Dialog/M3Dialog.tsx",
+			"src/components/message/AppointmentTimelineSystemMessage.tsx",
+			"src/components/message/CallTimelineSystemMessage.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
 			"src/components/notice/Notice.tsx",

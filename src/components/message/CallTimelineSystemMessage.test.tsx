@@ -26,7 +26,8 @@ describe('CallTimelineSystemMessage', () => {
 		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
 			'Videoanruf: Läuft'
 		);
-		expect(screen.getByTestId('VideocamRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('CallTimelineEventIcon')).toBeTruthy();
+		expect(screen.getByText('Videoanruf Läuft')).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: 'Beitreten' }));
 		expect(onJoin).toHaveBeenCalledTimes(1);
 	});
@@ -44,7 +45,7 @@ describe('CallTimelineSystemMessage', () => {
 			/>
 		);
 
-		expect(screen.getByTestId('VideocamOffRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('CallTimelineEventIcon')).toBeTruthy();
 		expect(screen.getByText('Dauer 29 Min.')).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();
 	});
@@ -74,7 +75,7 @@ describe('CallTimelineSystemMessage', () => {
 			/>
 		);
 
-		expect(screen.getByTestId('CallRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('CallTimelineEventIcon')).toBeTruthy();
 		expect(screen.getByRole('group', { name: 'Im Anruf' })).toBeTruthy();
 		expect(screen.getByText('Im Anruf · 2')).toBeTruthy();
 	});
@@ -95,10 +96,29 @@ describe('CallTimelineSystemMessage', () => {
 			/>
 		);
 
-		expect(screen.getByTestId('EventRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('CallTimelineEventIcon')).toBeTruthy();
 		expect(screen.getByText('Do., 10. September · 18:00 Uhr')).toBeTruthy();
 		expect(
 			screen.getByRole('button', { name: 'In Kalender eintragen' })
 		).toBeTruthy();
+	});
+
+	it('uses the ordinary outgoing message orientation for the initiator', () => {
+		const { container } = render(
+			<CallTimelineSystemMessage
+				state="running"
+				callType="video"
+				callLabel="Videoanruf"
+				headline="Sanftes Alpaka Kim"
+				side="sent"
+				statusLabel="Läuft"
+				actionSummaryLabel="Videoanruf beitreten"
+				description="Andere können jetzt beitreten."
+			/>
+		);
+
+		expect(container.querySelector('.messageItem--right')).toBeTruthy();
+		expect(screen.getByText('Sanftes Alpaka Kim')).toBeTruthy();
+		expect(screen.getByText('Videoanruf beitreten')).toBeTruthy();
 	});
 });

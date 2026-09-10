@@ -1710,6 +1710,12 @@
 				"ended": "Завершён",
 				"missed": "Пропущен"
 			},
+			"summary": {
+				"scheduled": "Добавить {{call}} в календарь",
+				"running": "Присоединиться к {{call}}",
+				"ended": "{{call}} завершён",
+				"missed": "{{call}} пропущен"
+			},
 			"headline": {
 				"scheduled": "{{call}} запланирован",
 				"running": "{{call}} от {{actor}}",

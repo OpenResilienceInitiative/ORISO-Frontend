@@ -73,6 +73,7 @@ import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
+import { GroupChatCalendarMenu } from '../groupChat/GroupChatCalendarMenu';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { callManager } from '../../services/CallManager';
 import { MessageAvatar } from './MessageAvatar';
@@ -1889,9 +1890,9 @@ export const MessageItemComponent = ({
 							call.durationSeconds % 60
 						).padStart(2, '0')}`
 					: undefined;
-				const headline = translate(
-					`message.callLifecycle.headline.${call.state}`,
-					{ call: callLabel, actor }
+				const actionSummaryLabel = translate(
+					`message.callLifecycle.summary.${call.state}`,
+					{ call: callLabel }
 				);
 				const description = translate(
 					`message.callLifecycle.description.${call.state}`,
@@ -1907,8 +1908,10 @@ export const MessageItemComponent = ({
 						state={call.state}
 						callType={call.callType}
 						callLabel={callLabel}
-						headline={headline}
+						headline={actor}
+						side={isMyMessage ? 'sent' : 'received'}
 						statusLabel={stateLabel}
+						actionSummaryLabel={actionSummaryLabel}
 						description={description}
 						durationLabel={
 							duration
@@ -1926,8 +1929,22 @@ export const MessageItemComponent = ({
 								: 'message.callLifecycle.participants.attended'
 						)}
 						actionLabel={translate('message.callLifecycle.join')}
+						actionSlot={
+							call.state === 'scheduled' && scheduledFor ? (
+								<GroupChatCalendarMenu
+									start={new Date(scheduledFor)}
+									durationMinutes={Math.max(
+										1,
+										Math.round(
+											(call.durationSeconds || 3600) / 60
+										)
+									)}
+									eventId={call.callId}
+								/>
+							) : undefined
+						}
 						onAction={
-							joinRoomId
+							call.state === 'running' && joinRoomId
 								? () =>
 										callManager.startCall(
 											joinRoomId,

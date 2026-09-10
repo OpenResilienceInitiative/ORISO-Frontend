@@ -1716,6 +1716,12 @@
 				"ended": "Ended",
 				"missed": "Missed"
 			},
+			"summary": {
+				"scheduled": "Add {{call}} to calendar",
+				"running": "Join {{call}}",
+				"ended": "{{call}} ended",
+				"missed": "{{call}} missed"
+			},
 			"headline": {
 				"scheduled": "{{call}} scheduled",
 				"running": "{{call}} by {{actor}}",

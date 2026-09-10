@@ -1710,6 +1710,12 @@
 				"ended": "ተወዲኡ",
 				"missed": "ዘይተመለሰ"
 			},
+			"summary": {
+				"scheduled": "{{call}} ናብ ዓውደ ኣዋርሕ ወስኽ",
+				"running": "ናብ {{call}} ተጸንበር",
+				"ended": "{{call}} ተወዲኡ",
+				"missed": "{{call}} ዘይተመለሰ"
+			},
 			"headline": {
 				"scheduled": "{{call}} ተመዲቡ",
 				"running": "{{call}} ካብ {{actor}}",
