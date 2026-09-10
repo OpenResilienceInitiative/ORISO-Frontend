@@ -3585,6 +3585,10 @@
 		"resizeHandle": {
 			"ariaLabel": "ስፍሓት ዝርዝር ዝርርባት ቀይር፡ ንምቕያር ስሓብ፡ ንምዕጻው ወይ ንምኽፋት ተጻዒንካ ሓዝ ወይ ክልተ ግዜ ጠውቕ፡ ናይ ላዕሊ/ታሕቲ መልክዕ ንዝርዝር የንቀሳቕስ።",
 			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።"
+		},
+		"rail": {
+			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
+			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
 		}
 	},
 	"statusOverlay": {

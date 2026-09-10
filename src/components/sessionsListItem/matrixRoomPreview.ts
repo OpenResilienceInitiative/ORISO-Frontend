@@ -114,3 +114,57 @@ export const getLatestMatrixRoomPreview = (
 	}
 	return null;
 };
+
+/** A preview plus when it was sent, so a tooltip can date it. */
+export interface TimedRoomPreview extends MatrixRoomPreview {
+	/** Milliseconds since epoch, from the Matrix event. */
+	ts: number;
+}
+
+/**
+ * The newest message PER CHANNEL, from the events already in memory.
+ *
+ * Frank, 10.09.2026, sketched a tooltip per mark: the thread icon shows the
+ * last thread message, the envelope the last main-channel message. An earlier
+ * note in this session called that unreachable, because the session DTO
+ * carries one preview per conversation. That was true of the DTO and wrong of
+ * this layer: `useMatrixSessionPreview` already pulls the room's last 50
+ * decrypted events and subscribes to the timeline, and every one of them
+ * already says whether it belongs to a thread. Splitting them by channel is a
+ * second pass over an array that is in memory anyway — no fetch, no new
+ * subscription.
+ *
+ * THE ONE REAL LIMIT, and it must be said rather than hidden: the window is
+ * those 50 events. A channel whose last message is older than that has no
+ * preview here, and the caller shows the mark's own label instead of inventing
+ * one. Supervision is not covered at all — it lives in a different Matrix
+ * room, which is the same B3 gap the `channel` type above already documents.
+ */
+export const getRoomPreviewsByChannel = (
+	events: MatrixPreviewEvent[]
+): { main: TimedRoomPreview | null; thread: TimedRoomPreview | null } => {
+	const newestFirst = [...events].sort(
+		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
+	);
+	let main: TimedRoomPreview | null = null;
+	let thread: TimedRoomPreview | null = null;
+	for (const event of newestFirst) {
+		if (main && thread) {
+			break;
+		}
+		const preview = toPreview(event);
+		if (!preview) {
+			continue;
+		}
+		const timed: TimedRoomPreview = {
+			...preview,
+			ts: event.getTs?.() || 0
+		};
+		if (preview.channel === 'thread') {
+			thread = thread ?? timed;
+		} else {
+			main = main ?? timed;
+		}
+	}
+	return { main, thread };
+};

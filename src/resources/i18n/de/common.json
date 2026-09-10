@@ -3602,6 +3602,10 @@
 		"resizeHandle": {
 			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
 			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
+		},
+		"rail": {
+			"unreadCount": "{{count}} neue Nachrichten",
+			"unreadCount_one": "{{count}} neue Nachricht"
 		}
 	},
 	"statusOverlay": {

@@ -666,24 +666,49 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
-			margin-bottom: 0px;
 
+			// Frank, 09.09.2026: "Und wir sollten diesen Abstand auch halten."
+			// The expanded list stacks its cards 24 px apart (T5,
+			// `sessionsListItem.styles.scss`); the rail used to flatten that to
+			// 0, so the avatars sat directly on top of each other.
+			margin-bottom: 24px;
+
+			// Rows that carry state render `SessionRailPill` and have no
+			// `__content` at all. What is left below is the residue that still
+			// uses the card markup in the rail — the loading skeleton — so it
+			// takes the pill's box, and loading → loaded shifts nothing.
 			&__content {
 				display: flex;
+				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-				padding: 8px;
-				margin: 0 8px;
-				width: auto;
+				padding: 6px 4px 8px;
+				margin: 0;
+				width: 48px;
 				min-width: 48px;
-				min-height: 48px;
-				border-radius: 50%;
+				max-width: 48px;
+				height: 80px;
+				min-height: 80px;
+
+				// Was `border-radius: 50%`. A percentage radius follows the
+				// box, and this box measured 48 × 50 px (8 + 8 padding + the
+				// 32 px avatar row + 2 × 1 px border), so the "circle" was an
+				// ellipse with 24 × 25 px radii — Frank's "eiförmig". Stated
+				// in px it is a stadium at any height and cannot go egg-shaped
+				// again, whatever the content does.
+				border-radius: 24px;
 			}
 
 			&__row {
 				justify-content: center;
 				align-items: center;
 				width: auto;
+
+				// The 16 px side padding of the avatar row is what pushed the
+				// old box wider than the 48 px it was clamped to, so the
+				// avatar sat in a box that overflowed its own circle.
+				padding-left: 0;
+				padding-right: 0;
 				margin-bottom: 0 !important;
 
 				&:first-child {
