@@ -151,3 +151,20 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 		setItem.mockRestore();
 	});
 });
+
+it('rejects immediately when another browser tab holds the Web Lock', async () => {
+	const run = vi.fn();
+	const request = vi.fn(async (_name, options, callback) => {
+		expect(options).toEqual({ ifAvailable: true });
+		return callback(null);
+	});
+	vi.stubGlobal('navigator', { locks: { request } });
+	try {
+		await expect(
+			withRecoverySetupLock('@busy:test', run)
+		).rejects.toBeInstanceOf(RecoverySetupBusyError);
+		expect(run).not.toHaveBeenCalled();
+	} finally {
+		vi.unstubAllGlobals();
+	}
+});

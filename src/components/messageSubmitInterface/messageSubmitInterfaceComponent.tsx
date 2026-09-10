@@ -1,3 +1,4 @@
+import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
 	useCallback,
@@ -1214,8 +1215,22 @@ export const MessageSubmitInterfaceComponent = ({
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 				return Promise.resolve();
 			}
+			const submissionUserId = matrixClientService
+				.getClient()
+				?.getUserId();
 			return sendEncryptedInitialEnquiry({
 				sessionId: activeSession.item.id,
+				onFinalized: () => {
+					if (
+						submissionUserId &&
+						matrixClientService.getClient()?.getUserId() ===
+							submissionUserId
+					)
+						markEnquiryFinalized(
+							submissionUserId,
+							activeSession.item.id
+						);
+				},
 				sendEncryptedMatrixMessage: (transactionId) =>
 					matrixClientService.sendMessage(
 						matrixRoomId,

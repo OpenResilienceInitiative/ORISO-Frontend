@@ -16,6 +16,7 @@ import {
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
 import { EncryptionSettingsPanel } from './index';
+import { UserDataContext } from '../../../globalState';
 
 const setUpRecovery = vi.hoisted(() =>
 	vi.fn().mockResolvedValue('test-recovery-key')
@@ -221,4 +222,52 @@ describe('EncryptionSettingsPanel', () => {
 			expect(screen.queryByText(PARKED_KEY)).toBeNull();
 		});
 	});
+});
+
+it('preserves password and OTP autofill and mismatch blocking with shared form controls', async () => {
+	const userId = '@form:test';
+	savePendingRecoveryKey(userId, 'synthetic-form-key');
+	getEncryptionStatus.mockResolvedValue(healthy);
+	render(
+		<UserDataContext.Provider
+			value={
+				{
+					userData: {
+						chatRecoveryMode: 'LOGIN_PASSWORD',
+						chatRecoveryPolicyRevision: 1,
+						twoFactorAuth: { isActive: true }
+					}
+				} as any
+			}
+		>
+			<EncryptionSettingsPanel
+				clientOverride={{ getUserId: () => userId } as MatrixClient}
+			/>
+		</UserDataContext.Provider>
+	);
+	const password = await screen.findByLabelText(
+		'encryption.passwordRecovery.loginPassword'
+	);
+	const repeat = screen.getByLabelText(
+		'encryption.passwordRecovery.repeatPassword'
+	);
+	const otp = screen.getByLabelText('encryption.passwordRecovery.otp');
+	expect(password.getAttribute('autocomplete')).toBe('current-password');
+	expect(otp.getAttribute('autocomplete')).toBe('one-time-code');
+	expect(otp.getAttribute('inputmode')).toBe('numeric');
+	const submit = screen.getByRole('button', {
+		name: 'encryption.passwordRecovery.enroll'
+	}) as HTMLButtonElement;
+	expect(submit.disabled).toBe(true);
+	fireEvent.change(password, { target: { value: 'synthetic-password' } });
+	expect(submit.disabled).toBe(true);
+	fireEvent.change(repeat, { target: { value: 'synthetic-password' } });
+	expect(submit.disabled).toBe(false);
+	const form = password.closest('form')!;
+	const requestSubmit = vi
+		.spyOn(form, 'requestSubmit')
+		.mockImplementation(() => {});
+	fireEvent.click(submit);
+	expect(requestSubmit).toHaveBeenCalledOnce();
+	requestSubmit.mockRestore();
 });

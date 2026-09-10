@@ -4549,6 +4549,32 @@
 				"openVault": "Open vault",
 				"restoring": "Restoring…"
 			}
+		},
+		"saveReminder": {
+			"title": "Save an additional recovery key",
+			"pending": "Your enquiry was sent. Key backup is still being set up.",
+			"unavailable": "Your enquiry was sent. The additional key backup is not ready yet.",
+			"show": "Show key",
+			"later": "Later",
+			"confirm": "I have stored the key safely",
+			"retry": "Check backup in security settings"
+		},
+		"passwordRecovery": {
+			"ready": "Recovery using your login password is set up. An additional saved recovery key remains valid.",
+			"needs-password": "Password recovery has not been verified in this session. Sign in again or set it up with your existing recovery key.",
+			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
+			"retryable-failure": "Key backup could not be completed. You can still write your enquiry and check backup again in security settings.",
+			"settings": "Security settings",
+			"reauthenticate": "Sign out and sign in again",
+			"passwordChangeFailed": "The password could not be changed safely. Check the old password and, if needed, restore your history with the recovery key first. After a connection loss the password may already have changed.",
+			"enrollmentFailed": "Setup could not be completed. Check your password and one-time code if required, then try again.",
+			"enrollmentExplanation": "Protect your existing recovery key with your current login password. Your saved key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
+			"loginPassword": "Current login password",
+			"repeatPassword": "Repeat login password",
+			"otp": "One-time code",
+			"enroll": "Confirm password and set up recovery",
+			"deviceReady": "This device can use its existing keys. Password recovery will be verified at the next password login.",
+			"repairBlocked": "The existing password backups cannot be safely replaced here. Your conversation history remains accessible with the recovery key. Setup with a new password is currently unavailable."
 		}
 	},
 	"accountInvite": {

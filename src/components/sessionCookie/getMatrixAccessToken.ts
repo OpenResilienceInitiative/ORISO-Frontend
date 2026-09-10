@@ -174,7 +174,8 @@ export const createMatrixClient = (
 		// through this callback during setup/recovery flows (one-shot in-memory
 		// cache, never persisted).
 		cryptoCallbacks: {
-			getSecretStorageKey: secretStorageKeyCallback
+			getSecretStorageKey: (keys, name) =>
+				secretStorageKeyCallback(client, keys, name)
 		}
 	});
 

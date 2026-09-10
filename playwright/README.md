@@ -21,3 +21,72 @@ It verifies the standard demo registration path for postcode `88885`,
 consulting type `1`, and topics `10` (`Eltern und Familie`) and `2`
 (`Kinder und Jugendliche`). Failures distinguish API errors, empty agency
 responses, wrong UI-selected topic ids, and missing rendered agency cards.
+
+## Password recovery acceptance (deployed environment only)
+
+`playwright.recovery.config.ts` runs one worker, no retries, Chromium and WebKit.
+It does not start a local server, provision accounts, seed browser storage, disable
+2FA, or inject recovery keys. Trace, video and automatic failure screenshots are
+disabled. `PLAYWRIGHT_NO_COPY_PROMPT=1` suppresses automatic failure DOM
+snapshot generation in the installed Playwright test runtime (1.58.2,
+`lib/index.js::_takePageSnapshot`). The separately installed 1.62.1 runtime has
+the same guard. Recheck this internal switch when upgrading Playwright; do not
+add ARIA-snapshot assertions to secret-bearing flows. This prevents DOM capture,
+not every possible error report or explicit attachment. Every test-owned context uses German locale (`de-DE`) to match
+the German UI selectors. Only deliberately masked post-login screenshots are attached, at
+390×844, 820×1180 and 1440×900. Do not enable tracing, `DEBUG=pw:api`, or a reporter
+that records Playwright call parameters for these credential flows.
+
+Before execution, follow the current ORISO E2E and Test Access skills. Record the
+deployed images, approved environment and enrolled account creation policies in
+the evidence ledger. Provision dedicated Springfield accounts through the real
+supported UI and sync their stable Test Access records. Both roles must have
+mandatory OTP, `LOGIN_PASSWORD` enrolled, and access to the same accepted test
+conversation. They must not be signed in elsewhere. Actors may be reused across
+sequential engines only after every context from the previous engine is closed.
+The harness uses distinct message stamps and one worker. Separate actor pairs
+are required if engine runs overlap; another live client could assist recovery.
+
+Required non-secret environment variables:
+
+- `PLAYWRIGHT_BASE_URL`: authorized app URL.
+- `ORISO_ADMIN_BASE_URL`: authorized Admin URL ending in `/admin`.
+- `ORISO_RECOVERY_ADMIN_RECORD`, `ORISO_RECOVERY_ADMIN_USERNAME`.
+- `ORISO_RECOVERY_ALLOW_SETTINGS_ROUNDTRIP`: explicit non-empty operator opt-in.
+  The Admin test changes defaults to password/password and password/key, then
+  restores the original values in `finally`. Revisions increase legitimately.
+  Run in an exclusive test window: concurrent account creation would inherit
+  the temporarily selected modes; concurrent Admin edits are not supported.
+- For each `{ENGINE}` = `CHROMIUM`, `WEBKIT` and `{ROLE}` = `ASKER`, `CONSULTANT`:
+  `ORISO_RECOVERY_{ENGINE}_{ROLE}_RECORD`, `_USERNAME`, `_CONVERSATION_URL`,
+  `_SECURITY_URL`. URLs must be verified from the actual role's UI, not guessed.
+- Optional: `ORISO_TEST_ACCESS_BIN`, `ORISO_TEST_ACCESS_IDENTITY` (default
+  `codex-m4-oriso`), `ORISO_RECOVERY_OUTPUT_DIR` (artifact directory).
+
+The CLI retrieves raw password/OTP output directly into process memory. Never
+put these secrets in environment variables, command arguments, fixture files or
+reports. A missing fixture input fails with `NOT_RUN`; it does not become a
+skipped or passed acceptance test.
+
+```sh
+npx playwright test --config playwright.recovery.config.ts --list
+# After configuring the non-secret fixture inputs above:
+npx playwright test --config playwright.recovery.config.ts
+```
+
+The history test sends two new synthetic messages, observes encrypted Matrix
+send acknowledgements and key-backup PUT acknowledgements, and closes both
+original contexts. Only then is a fresh asker context created. It logs in with
+password plus OTP and reads both messages. That context is closed before the
+fresh consultant is created and tested. No old test peer can supply keys. A
+backup ACK alone is not proof of a drained queue; successful offline history
+recovery is the decisive assertion.
+
+These two tests cover Admin save/reload/server readback and fresh-device history.
+They do **not** claim creation-time policy snapshots, initial registration/enquiry
+finalization timing, original recovery-key fallback, wrong OTP/password,
+password change/reset, legacy accounts, all conversation types, or physical
+iPhone/iPad acceptance. Those remain explicit separate acceptance cases in the
+approved plan and evidence ledger. A green harness is not the whole delivery
+gate. Review the masked screenshots before publishing them, restore any borrowed
+runtime overrides separately, and repeat against normal Dev after review/deploy.

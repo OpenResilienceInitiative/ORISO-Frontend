@@ -373,7 +373,6 @@ class ChatTransportService {
 
 			if (
 				detached ||
-				toStartOfTimeline ||
 				event.getType() !== 'm.room.encrypted' ||
 				pendingDecryptions.has(event)
 			) {
@@ -406,6 +405,14 @@ class ChatTransportService {
 		};
 
 		(matrixClient as any).on('Room.timeline', handleTimeline);
+		// Reload hydration may precede this view subscription. Historical events
+		// still need a clear-content refresh when their asynchronous decrypt ends.
+		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
+		for (const event of cachedRoom?.timeline ?? []) {
+			if (event.getType() === 'm.room.encrypted') {
+				handleTimeline(event, cachedRoom, true);
+			}
+		}
 
 		return () => {
 			detached = true;

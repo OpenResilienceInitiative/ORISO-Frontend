@@ -1,7 +1,11 @@
+import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
+import { changePasswordWithRecovery } from '../../services/matrixPasswordRecoveryService';
+import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import { withRecoverySetupLock } from '../../services/pendingRecoveryKeyStore';
 import * as React from 'react';
 import { useState, useContext } from 'react';
 import { InputField, InputFieldItem } from '../inputField/InputField';
-import { apiUpdatePassword } from '../../api';
+import { apiUpdatePassword, FETCH_ERRORS } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
@@ -195,7 +199,29 @@ export const PasswordReset = () => {
 			setIsRequestInProgress(true);
 			setOldPasswordErrorMessage('');
 
-			apiUpdatePassword(oldPassword, newPassword)
+			(async () => {
+				const policy = getChatRecoveryPolicy(
+					userData,
+					hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData)
+				);
+				if (policy.mode === 'RECOVERY_KEY')
+					return apiUpdatePassword(oldPassword, newPassword);
+				const client = await getMatrixClientService()?.getReadyClient();
+				const id = client?.getUserId();
+				if (!client || !id)
+					throw new Error('Recovery client unavailable');
+				await withRecoverySetupLock(id, () =>
+					changePasswordWithRecovery(
+						client,
+						oldPassword,
+						newPassword,
+						() => apiUpdatePassword(oldPassword, newPassword),
+						(error) =>
+							error instanceof Error &&
+							error.message === FETCH_ERRORS.BAD_REQUEST
+					)
+				);
+			})()
 				.then(async () => {
 					// Must complete BEFORE logout clears the auth cookies —
 					// otherwise the appointments-password update races the
@@ -212,6 +238,9 @@ export const PasswordReset = () => {
 						});
 					}
 
+					setOldPassword('');
+					setNewPassword('');
+					setConfirmPassword('');
 					setOverlayActive(true);
 					setIsRequestInProgress(false);
 					logout(false, settings.urls.toLogin);
@@ -220,7 +249,9 @@ export const PasswordReset = () => {
 					// error handling for password update error
 					setOldPasswordErrorMessage(
 						translate(
-							'profile.functions.password.reset.old.incorrect'
+							userData.chatRecoveryMode === 'LOGIN_PASSWORD'
+								? 'encryption.passwordRecovery.passwordChangeFailed'
+								: 'profile.functions.password.reset.old.incorrect'
 						)
 					);
 					setIsRequestInProgress(false);

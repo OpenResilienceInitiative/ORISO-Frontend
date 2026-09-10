@@ -1,3 +1,11 @@
+import {
+	consumeLoginRecoveryPassword,
+	clearLoginRecoveryPassword
+} from '../../services/loginRecoveryHandoff';
+import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
+import { initializeChatRecovery } from '../../services/authenticatedChatRecovery';
+import { setRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
+import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -60,7 +68,50 @@ export const AuthenticatedApp = ({
 	const navigate = useNavigate();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
-	const { setMatrixClientService } = useMatrixClient();
+	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	const recoveryClients = useRef(new WeakSet<object>());
+	const recoveryMode = userData?.chatRecoveryMode;
+	const recoveryRevision = userData?.chatRecoveryPolicyRevision;
+	const recoveryAnonymous =
+		!!userData && hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData);
+	const recoveryUserLoaded = !!userData;
+	useEffect(() => {
+		if (!matrixClientService || !recoveryUserLoaded) return;
+		let cancelled = false;
+		const unsubscribe = matrixClientService.onSyncStateChange((state) => {
+			if (state !== 'PREPARED' && state !== 'SYNCING') return;
+			const client = matrixClientService.getClient();
+			const userId = client?.getUserId();
+			if (!client || !userId || recoveryClients.current.has(client))
+				return;
+			recoveryClients.current.add(client);
+			const password = consumeLoginRecoveryPassword(userId);
+			if (recoveryAnonymous) return;
+			try {
+				void initializeChatRecovery(
+					client,
+					getChatRecoveryPolicy({
+						chatRecoveryMode: recoveryMode,
+						chatRecoveryPolicyRevision: recoveryRevision
+					}),
+					password,
+					() => cancelled
+				);
+			} catch {
+				setRecoveryRuntimeStatus(userId, 'retryable-failure');
+			}
+		});
+		return () => {
+			cancelled = true;
+			unsubscribe();
+		};
+	}, [
+		matrixClientService,
+		recoveryUserLoaded,
+		recoveryAnonymous,
+		recoveryMode,
+		recoveryRevision
+	]);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
@@ -71,6 +122,7 @@ export const AuthenticatedApp = ({
 	useEffect(
 		() => () => {
 			mounted.current = false;
+			clearLoginRecoveryPassword();
 		},
 		[]
 	);
@@ -234,6 +286,7 @@ export const AuthenticatedApp = ({
 								);
 							} catch (matrixError) {
 								matrixBootstrapActive.current = false;
+								clearLoginRecoveryPassword();
 								console.error(
 									'Matrix bootstrap failed; continuing with non-chat features',
 									matrixError
@@ -317,6 +370,7 @@ export const AuthenticatedApp = ({
 			<>
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
+				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
 				{platformVersion && (
 					<div className="app__platformVersion">

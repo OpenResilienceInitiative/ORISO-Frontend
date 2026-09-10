@@ -4638,6 +4638,32 @@
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
 			}
+		},
+		"saveReminder": {
+			"title": "Enregistrer une clé de récupération supplémentaire",
+			"pending": "Votre demande a été envoyée. La sauvegarde des clés est en cours de configuration.",
+			"unavailable": "Votre demande a été envoyée. La sauvegarde supplémentaire des clés n’est pas encore prête.",
+			"show": "Afficher la clé",
+			"later": "Plus tard",
+			"confirm": "J’ai conservé la clé en lieu sûr",
+			"retry": "Vérifier la sauvegarde dans les paramètres de sécurité"
+		},
+		"passwordRecovery": {
+			"ready": "La récupération avec votre mot de passe de connexion est configurée. Une clé de récupération enregistrée reste également valide.",
+			"needs-password": "La récupération par mot de passe n’a pas encore été vérifiée dans cette session. Reconnectez-vous ou configurez-la avec votre clé de récupération existante.",
+			"needs-recovery-key": "Votre historique nécessite votre clé de récupération sur cet appareil.",
+			"retryable-failure": "La sauvegarde des clés n’a pas pu être terminée. Vous pouvez continuer à rédiger votre demande et vérifier la sauvegarde dans les paramètres de sécurité.",
+			"settings": "Paramètres de sécurité",
+			"reauthenticate": "Se déconnecter et se reconnecter",
+			"passwordChangeFailed": "Le mot de passe n’a pas pu être modifié en toute sécurité. Vérifiez l’ancien mot de passe et, si nécessaire, restaurez d’abord votre historique avec la clé de récupération. Après une perte de connexion, le mot de passe peut déjà avoir été modifié.",
+			"enrollmentFailed": "La configuration n’a pas pu être terminée. Vérifiez votre mot de passe et votre code à usage unique si nécessaire, puis réessayez.",
+			"enrollmentExplanation": "Protégez votre clé de récupération existante avec votre mot de passe de connexion actuel. Votre clé enregistrée reste valide. Une sauvegarde chiffrée volée peut être ouverte avec le mot de passe sans second facteur.",
+			"loginPassword": "Mot de passe de connexion actuel",
+			"repeatPassword": "Répéter le mot de passe de connexion",
+			"otp": "Code à usage unique",
+			"enroll": "Confirmer le mot de passe et configurer la récupération",
+			"deviceReady": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
+			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible."
 		}
 	},
 	"accountInvite": {

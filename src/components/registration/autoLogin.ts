@@ -1,3 +1,7 @@
+import {
+	clearLoginRecoveryPassword,
+	stageLoginRecoveryPassword
+} from '../../services/loginRecoveryHandoff';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import { isRestorableSessionPath } from '../../utils/lastOpenSession';
 import { encodeUsername } from '../../utils/encryptionHelpers';
@@ -65,6 +69,7 @@ export const autoLogin = async ({
 	password,
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
+	clearLoginRecoveryPassword();
 	// console.log("🔐 DEBUG: autoLogin called with:", { username: autoLoginProps.username, password: password ? "***" : "undefined" });
 
 	const tenantSettings = (autoLoginProps?.tenantData?.settings ||
@@ -142,13 +147,19 @@ export const autoLogin = async ({
 		// client (that produced a second orphan sync loop that was never torn
 		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
+		stageLoginRecoveryPassword(matrixLoginData.userId, password);
 	} catch (error) {
 		// Continue without Matrix login data - the app boots and shows the
 		// session list; chat features recover on the next successful login.
 	}
 
 	if (tenantSettings?.featureToolsEnabled) {
-		await getBudibaseAccessToken(username, password, tenantSettings);
+		try {
+			await getBudibaseAccessToken(username, password, tenantSettings);
+		} catch (error) {
+			clearLoginRecoveryPassword();
+			throw error;
+		}
 	}
 };
 

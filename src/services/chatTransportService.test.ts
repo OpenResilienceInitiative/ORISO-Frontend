@@ -141,6 +141,31 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
 	});
 
+	it('refreshes an initial-sync historical event when decryption finishes later', () => {
+		const { event } = createFakeEncryptedMatrixEvent();
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		fakeClient.emit('Room.timeline', event, { roomId: ROOM_ID }, true);
+		event.emitDecrypted();
+		expect(listener).toHaveBeenLastCalledWith(
+			event,
+			{ roomId: ROOM_ID },
+			false
+		);
+		detach?.();
+	});
+	it('watches cached encrypted events when the reload view attaches after timeline hydration', () => {
+		const { event, decryptionListeners } = createFakeEncryptedMatrixEvent();
+		const room = { roomId: ROOM_ID, timeline: [event] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		event.emitDecrypted();
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+		detach?.();
+		expect(decryptionListeners.size).toBe(0);
+	});
 	it('notifies again when a live encrypted event decrypts after first delivery', () => {
 		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
 		const room = { roomId: ROOM_ID };
