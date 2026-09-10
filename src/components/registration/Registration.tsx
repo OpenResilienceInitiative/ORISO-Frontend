@@ -556,9 +556,18 @@ export const Registration = () => {
 					} catch {
 						sessionId = undefined;
 					}
+					// #1208 job 2 — deliberately no `navigate` here. A browser
+					// only offers to save credentials when the submitted form
+					// is followed by a *document* navigation; a same-document
+					// react-router hop leaves the submission unconfirmed and
+					// the save prompt never appears. The welcome animation is
+					// unaffected: AuthenticatedApp reads
+					// POST_REGISTRATION_LOADER_KEY from sessionStorage, which
+					// survives the load. Re-adding `navigate` silently breaks
+					// the prompt again.
 					redirectToApp(
 						getPostRegistrationGroupChatId(location.search),
-						{ navigate, sessionId }
+						{ sessionId }
 					);
 				})
 				.catch((error) => {
@@ -593,8 +602,7 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search,
-		navigate
+		location.search
 	]);
 
 	const handleSubmit = useCallback(
