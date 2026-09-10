@@ -12,13 +12,16 @@ Required environment:
 
 - `PLAYWRIGHT_BASE_URL` (authorized candidate URL)
 - `ORISO_RECOVERY_OUTPUT_DIR` (evidence directory)
+- `ORISO_FAULT_EXPECTED_POLICY_REVISION` (required explicit nonnegative safe integer;14 for the recorded runs)
 - `ORISO_FAULT_{A,B,C}_{RECORD,USERNAME,EMAIL}` (fixed-pool metadata only)
 - optional `ORISO_TEST_ACCESS_BIN`, `ORISO_TEST_ACCESS_IDENTITY`
 - `ORISO_FAULT_A_EXISTING=1` resumes A through normal password login only when A
   exists but still has an unsubmitted enquiry. Never use this to re-register A.
 
 Fixture requirements are intentionally strict: tenant10, topic Eltern und
-Familie, ZIP10965, agency12, expected creation snapshot LOGIN_PASSWORD revision14.
+Familie, ZIP10965, agency12, expected creation mode LOGIN_PASSWORD and the explicit
+policy revision supplied above. Obtain the expected revision from the confirmed
+Admin settings before signup, never from the newly created account itself.
 A/B/C are distinct unused managed identities with no initial OTP. B must have no
 previous application login: backup interception attaches before public signup.
 The helpers immediately sync registration201 to Test Access, then bind the exact
@@ -54,3 +57,29 @@ later failed because it expected a newly parked key after recovery in a fresh
 context. That failed run is retained. Splitting the cases removed the invalid
 dependency; fresh Jacqueline supplies the clean standalone finalization PASS.
 No consumed registration/enquiry fixture was reset to manufacture a rerun.
+
+## WebKit parity batch
+
+`playwright.recovery-webkit-parity.config.ts` selects only the same three fault/
+identity cases plus the existing two bounded wrong-password/OTP cases. One worker,
+no retries, WebKit only. It does not run Admin mutations or broad history tests.
+
+WebKit creation identities require `ORISO_FAULT_WEBKIT_{A,B,C}_{RECORD,USERNAME,EMAIL}`;
+they never fall back to the consumed Chromium records. A is created in the first
+test and reused as the existing target after C's logout; B must still be unused.
+Only an explicitly valid interrupted A signup may use `ORISO_FAULT_WEBKIT_A_EXISTING=1`.
+The two negative gates reuse explicitly authorized existing identities from
+`ORISO_RECOVERY_NEGATIVE_{ASKER,CONSULTANT}_{RECORD,USERNAME}`; these are login-only
+and are never registered by this config. The consultant must have working OTP.
+
+```
+npx playwright test --config=playwright.recovery-webkit-parity.config.ts --list
+npx playwright test --config=playwright.recovery-webkit-parity.config.ts
+```
+
+Installed test runtime readback: Playwright1.58.2, WebKit26.0 revision2248.
+The authorized third PreDev candidate window passed all5 tests in1.3minutes:
+Laddie finalization18.6s, Princess→Laddie isolation34.7s, Pinchy backup21.5s,
+wrong password2.1s and missing/wrong OTP2.7s. All creation snapshots were LP14;
+exact pool emails were bound/read back/synced and every test context closed.
+Subsequent runs still require a coordinated candidate window and fresh records.

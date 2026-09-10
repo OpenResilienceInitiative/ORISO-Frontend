@@ -3,11 +3,18 @@ import { expect, Page, TestInfo, test } from '@playwright/test';
 import { passwordReady, required } from './recovery-fixtures';
 
 type Actor = { record: string; username: string; email: string };
-const fixture = (label: string): Actor => ({
-	record: required(`ORISO_FAULT_${label}_RECORD`),
-	username: required(`ORISO_FAULT_${label}_USERNAME`),
-	email: required(`ORISO_FAULT_${label}_EMAIL`)
-});
+const fixture = (label: string, engine: string): Actor => {
+	// WebKit creation fixtures must never fall back to already-consumed Chromium accounts.
+	const prefix =
+		engine === 'webkit'
+			? `ORISO_FAULT_WEBKIT_${label}`
+			: `ORISO_FAULT_${label}`;
+	return {
+		record: required(`${prefix}_RECORD`),
+		username: required(`${prefix}_USERNAME`),
+		email: required(`${prefix}_EMAIL`)
+	};
+};
 const pathOf = (url: string) => new URL(url).pathname;
 const finalize = (url: string) =>
 	/\/service\/users\/sessions\/\d+\/enquiry\/new$/.test(pathOf(url));
@@ -61,6 +68,16 @@ async function shot(page: Page, info: TestInfo, name: string) {
 	await info.attach(name, { path: file, contentType: 'image/png' });
 }
 async function signup(page: Page, actor: Actor, info: TestInfo) {
+	const revisionInput = required('ORISO_FAULT_EXPECTED_POLICY_REVISION');
+	const expectedRevision = Number(revisionInput);
+	if (
+		!/^\d+$/.test(revisionInput) ||
+		!Number.isSafeInteger(expectedRevision)
+	) {
+		throw new Error(
+			'ORISO_FAULT_EXPECTED_POLICY_REVISION must be a nonnegative safe integer'
+		);
+	}
 	mark(`Registering ${actor.username}`);
 	await page.goto(`${required('PLAYWRIGHT_BASE_URL')}/registration?tid=10`);
 	// Follow the actual public registration stages; no session/crypto injection.
@@ -130,7 +147,7 @@ async function signup(page: Page, actor: Actor, info: TestInfo) {
 		.click();
 	const data = await (await userDataResponse).json();
 	expect(data.chatRecoveryMode).toBe('LOGIN_PASSWORD');
-	expect(data.chatRecoveryPolicyRevision).toBe(14);
+	expect(data.chatRecoveryPolicyRevision).toBe(expectedRevision);
 	await info.attach(`policy-${actor.username}`, {
 		body: JSON.stringify({
 			mode: data.chatRecoveryMode,
@@ -214,7 +231,7 @@ async function failureEvidence(page: Page, info: TestInfo) {
 test('failed finalization does not announce success and real retry sends no duplicate', async ({
 	browser
 }, info) => {
-	const a = fixture('A');
+	const a = fixture('A', info.project.name);
 	const context = await browser.newContext({
 		locale: 'de-DE',
 		viewport: { width: 1440, height: 900 }
@@ -249,7 +266,13 @@ test('failed finalization does not announce success and real retry sends no dupl
 			sent++;
 	});
 	try {
-		if (process.env.ORISO_FAULT_A_EXISTING === '1')
+		if (
+			process.env[
+				info.project.name === 'webkit'
+					? 'ORISO_FAULT_WEBKIT_A_EXISTING'
+					: 'ORISO_FAULT_A_EXISTING'
+			] === '1'
+		)
 			await loginExisting(page, a);
 		else await signup(page, a, info);
 		const marker = `Fault finalization ${Date.now()}`;
@@ -298,8 +321,8 @@ test('failed finalization does not announce success and real retry sends no dupl
 test('same-context logout isolates pending key and reminder between identities', async ({
 	browser
 }, info) => {
-	const source = fixture('C'),
-		target = fixture('A');
+	const source = fixture('C', info.project.name),
+		target = fixture('A', info.project.name);
 	const context = await browser.newContext({
 		locale: 'de-DE',
 		viewport: { width: 1440, height: 900 }
@@ -370,7 +393,7 @@ test('same-context logout isolates pending key and reminder between identities',
 test('backup fails after successful enquiry and status stays truthful', async ({
 	browser
 }, info) => {
-	const b = fixture('B');
+	const b = fixture('B', info.project.name);
 	const context = await browser.newContext({
 		locale: 'de-DE',
 		viewport: { width: 1440, height: 900 }
