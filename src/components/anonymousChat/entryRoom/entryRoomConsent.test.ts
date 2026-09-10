@@ -66,6 +66,42 @@ describe('resolveEntryRoomConsent', () => {
 		expect(consent.versionId).toBeNull();
 	});
 
+	it('holds the hand-off while the department lookup is still in flight', () => {
+		// A poll can report the coordinate and IN_PROGRESS in the same response. Treating
+		// `idle` as "this centre has none" would state something false about the centre and
+		// let handleAccept run with versionId null, skipping a configured policy entirely.
+		const consent = resolve({ department: { status: 'idle' } });
+
+		expect(consent.readable).toBe(false);
+		expect(consent.versionId).toBeNull();
+	});
+
+	it('does not hold the hand-off when the lookup actually failed', () => {
+		// The warning-only rule: a failed lookup warns, it never blocks. Pinned separately
+		// from the idle case above because the two render the same sentence — collapse them
+		// and either the block leaks into failures or the race comes back.
+		expect(
+			resolve({ department: { status: 'unavailable' } }).readable
+		).toBe(true);
+	});
+
+	it('warns instead of printing a policy payload nobody can read', () => {
+		// `resolveLegalContent` returns null for a map that parses but carries no renderable
+		// language. Rendering the raw string would show the JSON itself as the declaration
+		// and pin the agreement to its version.
+		const consent = resolve({
+			department: {
+				status: 'ok',
+				sentence: '{"de": "", "de_meta": {"mt": true}}',
+				versionId: 42
+			}
+		});
+
+		expect(consent.html).toBe(MISSING_POLICY);
+		expect(consent.versionId).toBeNull();
+		expect(consent.readable).toBe(true);
+	});
+
 	it('does not hold anything back when no department is known at all', () => {
 		// An enquiry with no agency bound, or a backend that predates the coordinate.
 		// The platform sentence has always applied here, so the flow is unchanged.

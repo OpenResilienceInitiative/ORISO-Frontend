@@ -439,7 +439,13 @@ export const LiveChatEntryRoom = ({
 			{stage === 'waiting' && !closed && (
 				<LiveChatWaitingRoom
 					ahead={ahead}
-					accepted={accepted}
+					/* Held only while the department lookup is still in flight —
+					   a poll that reports the coordinate and IN_PROGRESS together
+					   would otherwise show "no policy" for a centre that has one,
+					   and let the hand-off record a consent pinning no version.
+					   A *failed* lookup never holds; `resolveEntryRoomConsent`
+					   owns that distinction. */
+					accepted={consent.readable && accepted}
 					consentHtml={consent.html}
 					busy={busy}
 					leaveFailed={leaveFailed}
