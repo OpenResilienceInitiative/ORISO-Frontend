@@ -56,6 +56,20 @@ export interface SessionRailPillProps {
 	'marks': readonly SessionRailMark[];
 	/** Accessible name per mark; the host maps existing i18n keys onto it. */
 	'markLabels': SessionRailMarkLabels;
+	/**
+	 * The conversation's newest message, ALREADY formatted by the host — the
+	 * very string the expanded row shows, channel prefix included ("Thread:
+	 * …"). Shown when a mark is hovered.
+	 *
+	 * HONEST SCOPE, same as the marks themselves: the list carries ONE newest
+	 * message per conversation, not one per channel. So every mark shows this
+	 * same message; the prefix inside it is what says which channel it came
+	 * from. A per-mark message would need the room timeline, which the list
+	 * does not load.
+	 */
+	'preview'?: string;
+	/** When that message arrived — already formatted, e.g. "09:18", "Gestern". */
+	'previewTime'?: string;
 	/** The open conversation. */
 	'active'?: boolean;
 	'onClick'?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -87,6 +101,8 @@ export const SessionRailPill = ({
 	avatar,
 	marks,
 	markLabels,
+	preview,
+	previewTime,
 	active = false,
 	onClick,
 	onKeyDown,
@@ -96,46 +112,123 @@ export const SessionRailPill = ({
 	buttonRef,
 	className,
 	'data-cy': dataCy = 'session-rail-pill'
-}: SessionRailPillProps) => (
-	<button
-		type="button"
-		ref={buttonRef}
-		className={clsx(
-			'sessionRailPill',
-			active && 'sessionRailPill--active',
-			marks.includes('unread') && 'sessionRailPill--unread',
-			className
-		)}
-		onClick={onClick}
-		onKeyDown={onKeyDown}
-		role={role}
-		aria-selected={ariaSelected}
-		tabIndex={tabIndex}
-		data-cy={dataCy}
-		data-marks={marks.join(' ')}
-	>
-		<span className="sessionRailPill__avatar" aria-hidden="true">
-			{avatar}
-		</span>
-		<span className="sr-only">{name}</span>
-		<span className="sessionRailPill__marks">
-			{marks.map((mark) => (
-				<span
-					key={mark}
-					className={clsx(
-						'sessionRailPill__mark',
-						`sessionRailPill__mark--${mark}`
-					)}
-					// Every mark carries its own accessible name, so the
-					// button reads "<name> Thread Ungelesen" and a test can
-					// assert one mark at a time.
-					role="img"
-					aria-label={markLabels[mark]}
-					data-mark={mark}
-				>
-					{MARK_GLYPHS[mark]}
+}: SessionRailPillProps) => {
+	// Which tooltip is showing, and for which mark. `null` = none.
+	// Frank, 10.09.2026: "einen Tooltip anhängen, quasi rechts. Wenn ich drauf
+	// hover … dass ich Nutzernamen sehe … Wenn ich über … das Mailsymbol
+	// hover, dann seh ich die letzte Nachricht … und den Zeitpunkt in der
+	// zweiten Zeile darunter."
+	const [hoveredMark, setHoveredMark] =
+		React.useState<SessionRailMark | null>(null);
+	const [showName, setShowName] = React.useState(false);
+
+	// A mark's tooltip wins over the pill's: the pointer is inside the pill
+	// either way, so without this the name would sit on top of the message.
+	const tooltip = hoveredMark
+		? {
+				kind: 'message' as const,
+				title: preview,
+				meta: previewTime
+			}
+		: showName
+			? { kind: 'name' as const, title: name, meta: undefined }
+			: null;
+
+	// Nothing to show is not the same as "show an empty box": a conversation
+	// whose newest message the host could not format (encrypted, not loaded
+	// yet) falls back to the mark's own label rather than an empty tooltip.
+	const title =
+		tooltip?.kind === 'message' && !tooltip.title
+			? markLabels[hoveredMark!]
+			: tooltip?.title;
+
+	return (
+		<span className="sessionRailPill__shell">
+			<button
+				type="button"
+				ref={buttonRef}
+				className={clsx(
+					'sessionRailPill',
+					active && 'sessionRailPill--active',
+					marks.includes('unread') && 'sessionRailPill--unread',
+					className
+				)}
+				onClick={onClick}
+				onKeyDown={onKeyDown}
+				// Focus is the keyboard's hover: a Tab to the pill names it,
+				// exactly as a pointer resting on it does.
+				onFocus={() => setShowName(true)}
+				onBlur={() => {
+					setShowName(false);
+					setHoveredMark(null);
+				}}
+				onMouseEnter={() => setShowName(true)}
+				onMouseLeave={() => {
+					setShowName(false);
+					setHoveredMark(null);
+				}}
+				role={role}
+				aria-selected={ariaSelected}
+				tabIndex={tabIndex}
+				data-cy={dataCy}
+				data-marks={marks.join(' ')}
+			>
+				<span className="sessionRailPill__avatar" aria-hidden="true">
+					{avatar}
 				</span>
-			))}
+				<span className="sr-only">{name}</span>
+				<span className="sessionRailPill__marks">
+					{marks.map((mark) => (
+						<span
+							key={mark}
+							className={clsx(
+								'sessionRailPill__mark',
+								`sessionRailPill__mark--${mark}`
+							)}
+							// Every mark carries its own accessible name, so the
+							// button reads "<name> Thread Ungelesen" and a test can
+							// assert one mark at a time.
+							role="img"
+							aria-label={markLabels[mark]}
+							data-mark={mark}
+							onMouseEnter={() => setHoveredMark(mark)}
+							onMouseLeave={() => setHoveredMark(null)}
+						>
+							{MARK_GLYPHS[mark]}
+						</span>
+					))}
+				</span>
+			</button>
+
+			{/*
+			 * Rendered as a SIBLING of the button, not inside it: the tooltip
+			 * is flow content and a `button` may only contain phrasing
+			 * content, so nesting it would be invalid markup. It also keeps
+			 * the tooltip out of the button's accessible name — the name and
+			 * the mark labels are already on the button itself, so a screen
+			 * reader would otherwise hear everything twice.
+			 */}
+			{tooltip && title && (
+				<span
+					className={clsx(
+						'sessionRailPill__tooltip',
+						`sessionRailPill__tooltip--${tooltip.kind}`
+					)}
+					role="presentation"
+					aria-hidden="true"
+					data-cy="session-rail-pill-tooltip"
+					data-tooltip-kind={tooltip.kind}
+				>
+					<span className="sessionRailPill__tooltipTitle">
+						{title}
+					</span>
+					{tooltip.meta && (
+						<span className="sessionRailPill__tooltipMeta">
+							{tooltip.meta}
+						</span>
+					)}
+				</span>
+			)}
 		</span>
-	</button>
-);
+	);
+};

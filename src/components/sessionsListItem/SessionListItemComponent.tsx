@@ -1017,6 +1017,16 @@ export const SessionListItemComponent = ({
 						mail: translate('sessionList.toolbar.chips.nearby'),
 						unread: translate('sessionList.toolbar.chips.unread')
 					}}
+					// The tooltip's first line is `displayLastMessage`, NOT the
+					// raw preview: that memo already drops a message this user
+					// may not see (`visibleToUserIds`) and already carries the
+					// case-handover lock. Passing the raw string would have
+					// shown, in a tooltip, exactly what the row hides.
+					preview={displayLastMessage || undefined}
+					previewTime={prettyPrintDate(
+						activeSession.item.messageDate,
+						activeSession.item.createDate
+					)}
 					active={isChatActive}
 					// The click bubbles to the row (which navigates); Enter and
 					// Space are handled — and default-prevented — by the row's

@@ -205,3 +205,77 @@ $rail-pill-padding: 4px;
 	margin: 0;
 	list-style: none;
 }
+
+// Tooltip — Frank, 10.09.2026: "einen Tooltip anhängen, quasi rechts."
+// ---
+// The recipe is NOT new: `participantAvatarStack.styles.scss` `&__tip` already
+// carries the house's tooltip look (inverse-surface sheet, inverse-on-surface
+// label, 12/16, 4 px corners). The numbers below are that recipe, with two
+// deliberate differences: it hangs to the RIGHT of the pill instead of below
+// it (the rail is an 80 px strip — below is the next conversation), and it
+// allows a second line, because the message tooltip is preview + time.
+// ---
+// The shell exists so the tooltip can be a SIBLING of the button. A `button`
+// may only contain phrasing content, so a positioned tooltip box inside it
+// would be invalid markup — and it would also land inside the button's
+// accessible name, which already carries the name and the mark labels.
+.sessionRailPill__shell {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
+.sessionRailPill {
+	&__tooltip {
+		position: absolute;
+		left: calc(100% + 8px);
+
+		// Anchored to the pill's TOP, not its middle: the pill grows downward
+		// with its marks, so a centred tooltip would drift down the taller the
+		// conversation's state is. Aligned with the avatar, it stays put.
+		top: 0;
+		z-index: 40;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		box-sizing: border-box;
+		padding: 6px 10px;
+
+		// Wide enough for a preview line, capped so it never covers the chat.
+		min-width: 120px;
+		max-width: 260px;
+		border-radius: 4px;
+		background: var(--m3-inverse-surface, #313030);
+		color: var(--m3-inverse-on-surface, #f4f0ef);
+		text-align: left;
+
+		// WCAG 1.4.13: hovering the tooltip itself must not be required, and
+		// it must never swallow a click meant for the pill underneath.
+		pointer-events: none;
+	}
+
+	// The name is one line and may be elided; a pseudonym is short.
+	&__tooltipTitle {
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+
+		// Two lines at most, then an ellipsis — a preview can be long, and a
+		// tooltip that grows to six lines is a panel, not a tooltip.
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	// Second line: when the message arrived.
+	&__tooltipMeta {
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 14px;
+		letter-spacing: 0.5px;
+		opacity: 0.7;
+		white-space: nowrap;
+	}
+}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { SessionRailPill } from './SessionRailPill';
 import {
 	getSessionRailMarks,
@@ -50,12 +50,16 @@ function Pill({
 	name = 'sonnenblume_47',
 	userId = 'sb-rail-1',
 	marks = [],
-	active = false
+	active = false,
+	preview,
+	previewTime
 }: {
 	name?: string;
 	userId?: string;
 	marks?: readonly SessionRailMark[];
 	active?: boolean;
+	preview?: string;
+	previewTime?: string;
 }) {
 	return (
 		<SessionRailPill
@@ -64,6 +68,8 @@ function Pill({
 			marks={marks}
 			markLabels={RAIL_MARK_COPY}
 			active={active}
+			preview={preview}
+			previewTime={previewTime}
 		/>
 	);
 }
@@ -488,5 +494,126 @@ export const RailDark: Story = {
 		// puts on the M3 roles, so the dark canvas must not leave it white.
 		const background = getComputedStyle(pills[0]).backgroundColor;
 		await expect(background).not.toBe('rgb(255, 255, 255)');
+	}
+};
+
+// ---------------------------------------------------------------------------
+// Tooltips. Frank, 10.09.2026: "Wenn ich drauf hover … dass ich Nutzernamen
+// sehe … Wenn ich über … das Mailsymbol hover, dann seh ich die letzte
+// Nachricht, die erste Zeile wie normal, und den Zeitpunkt in der zweiten
+// Zeile darunter."
+//
+// The preview string is the host's, already formatted — the SAME string the
+// expanded row shows, channel prefix included. The pill formats nothing and
+// fetches nothing.
+// ---------------------------------------------------------------------------
+
+const PREVIEW = 'Thread: Danke, das hilft mir wirklich weiter.';
+const PREVIEW_TIME = 'Gestern, 09:18';
+
+/** Hovering the pill names the conversation. */
+export const TooltipName: Story = {
+	name: 'Tooltip — Name beim Hovern',
+	render: () => (
+		<div style={{ padding: '24px 200px 24px 24px' }}>
+			<Pill
+				marks={['mail']}
+				preview={PREVIEW}
+				previewTime={PREVIEW_TIME}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const pill = canvas.getByRole('button', { name: /sonnenblume_47/ });
+		// Nothing before the pointer arrives.
+		await expect(
+			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+		).toBeNull();
+		await userEvent.hover(pill);
+		const tip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="session-rail-pill-tooltip"]'
+		)!;
+		await expect(tip).not.toBeNull();
+		await expect(tip.dataset.tooltipKind).toBe('name');
+		await expect(tip.textContent).toContain('sonnenblume_47');
+		// It hangs to the RIGHT of the pill, which is what Frank asked for.
+		await expect(tip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			pill.getBoundingClientRect().right
+		);
+		// And it leaves again.
+		await userEvent.unhover(pill);
+		await expect(
+			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+		).toBeNull();
+	}
+};
+
+/** Hovering a MARK shows the newest message and when it arrived. */
+export const TooltipMessage: Story = {
+	name: 'Tooltip — letzte Nachricht beim Hovern einer Marke',
+	render: () => (
+		<div style={{ padding: '24px 200px 24px 24px' }}>
+			<Pill
+				marks={['thread', 'mail', 'unread']}
+				preview={PREVIEW}
+				previewTime={PREVIEW_TIME}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const mark = canvasElement.querySelector<HTMLElement>(
+			'.sessionRailPill__mark--mail'
+		)!;
+		await userEvent.hover(mark);
+		const tip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="session-rail-pill-tooltip"]'
+		)!;
+		await expect(tip).not.toBeNull();
+		await expect(tip.dataset.tooltipKind).toBe('message');
+		// Two lines, in Frank's order: the message first, the time under it.
+		const title = tip.querySelector<HTMLElement>(
+			'.sessionRailPill__tooltipTitle'
+		)!;
+		const meta = tip.querySelector<HTMLElement>(
+			'.sessionRailPill__tooltipMeta'
+		)!;
+		await expect(title.textContent).toBe(PREVIEW);
+		await expect(meta.textContent).toBe(PREVIEW_TIME);
+		await expect(meta.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+			title.getBoundingClientRect().bottom - 1
+		);
+		// The mark's tooltip wins over the pill's name — the pointer is inside
+		// the pill either way, so without that rule both would want to show.
+		await expect(tip.textContent).not.toContain('sonnenblume_47');
+	}
+};
+
+/**
+ * A conversation whose newest message the host could not format (encrypted,
+ * or not loaded yet) must not open an empty box: the mark falls back to its
+ * own label.
+ */
+export const TooltipWithoutPreview: Story = {
+	name: 'Tooltip — ohne Vorschau fällt er auf das Markenwort zurück',
+	render: () => (
+		<div style={{ padding: '24px 200px 24px 24px' }}>
+			<Pill marks={['supervision']} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const mark = canvasElement.querySelector<HTMLElement>(
+			'.sessionRailPill__mark--supervision'
+		)!;
+		await userEvent.hover(mark);
+		const tip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="session-rail-pill-tooltip"]'
+		)!;
+		await expect(tip).not.toBeNull();
+		await expect(tip.textContent).toBe(RAIL_MARK_COPY.supervision);
+		// No empty second line.
+		await expect(
+			tip.querySelector('.sessionRailPill__tooltipMeta')
+		).toBeNull();
 	}
 };
