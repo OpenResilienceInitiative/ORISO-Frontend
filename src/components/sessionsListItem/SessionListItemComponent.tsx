@@ -1091,6 +1091,7 @@ export const SessionListItemComponent = ({
 						unread: translate('sessionList.toolbar.chips.unread')
 					}}
 					tooltips={railTooltips}
+					unreadCount={railUnreadCount}
 					active={isChatActive}
 					// The click bubbles to the row (which navigates); Enter and
 					// Space are handled — and default-prevented — by the row's

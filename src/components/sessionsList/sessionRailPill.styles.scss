@@ -181,15 +181,19 @@ $rail-pill-padding: 3px;
 	// The house's unread language: a filled dot in the unread role — the same
 	// token the toolbar badge, the channel card, the FAB and the panel header
 	// use (supervisionPanel/README.md, "One unread role").
+	// Frank, 10.09.2026: "Da haben wir doch eigentlich einen Kreis. Da kannst
+	// Du doch einfach dann die Zahl packen. Das ist doch irgendwie tausendmal
+	// übersichtlicher." So the circle is filled in the unread role and the
+	// count sits inside it — no hover needed to learn how many.
+	// Without a count the mark stays the plain dot it always was: a filled
+	// circle in the unread role on a transparent slot, so the rail still reads
+	// "unread" before the number is known.
 	&__mark--unread {
-		background: transparent;
 		position: relative;
+		background: transparent;
 
 		&::after {
 			content: '';
-
-			// Scaled with the slot (was 10 in the 16 px slot) so the unread
-			// dot keeps the same optical weight as the glyph marks.
 			width: 14px;
 			height: 14px;
 			border-radius: 50%;
@@ -198,6 +202,31 @@ $rail-pill-padding: 3px;
 				var(--m3-error, #cc0000)
 			);
 		}
+	}
+
+	// With a count the whole slot becomes the circle and the number sits in
+	// it. `on-error` is the LABEL colour here, never a background — m3Sweep
+	// #27/#3 rejected the first attempt, which painted the inner dot with it.
+	&__mark--counted {
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #ffffff);
+
+		&::after {
+			content: none;
+		}
+	}
+
+	// The number. Tabular figures so 8 and 11 sit equally centred, and a
+	// size that keeps "99+" inside the 24 px circle.
+	&__markCount {
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: 0;
+		font-variant-numeric: tabular-nums;
 	}
 }
 

@@ -90,6 +90,15 @@ export interface SessionRailPillProps {
 	 * what a channel whose last message is older than the loaded window does.
 	 */
 	'tooltips'?: SessionRailTooltips;
+	/**
+	 * How many new messages the conversation has. Frank, 10.09.2026: "Zeige
+	 * unten bei neue Nachrichten direkt die Zahl an. Da haben wir doch
+	 * eigentlich einen Kreis. Da kannst Du doch einfach dann die Zahl packen."
+	 * So the unread mark stops being a dot you have to hover and becomes the
+	 * number itself. Above 99 it reads "99+", because four digits do not fit
+	 * a 24 px circle in a 48 px rail.
+	 */
+	'unreadCount'?: number;
 	/** The open conversation. */
 	'active'?: boolean;
 	'onClick'?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -122,6 +131,7 @@ export const SessionRailPill = ({
 	marks,
 	markLabels,
 	tooltips,
+	unreadCount,
 	active = false,
 	onClick,
 	onKeyDown,
@@ -209,7 +219,10 @@ export const SessionRailPill = ({
 							key={mark}
 							className={clsx(
 								'sessionRailPill__mark',
-								`sessionRailPill__mark--${mark}`
+								`sessionRailPill__mark--${mark}`,
+								mark === 'unread' &&
+									unreadCount &&
+									'sessionRailPill__mark--counted'
 							)}
 							// Every mark carries its own accessible name, so the
 							// button reads "<name> Thread Ungelesen" and a test can
@@ -220,7 +233,13 @@ export const SessionRailPill = ({
 							onMouseEnter={() => setHoveredMark(mark)}
 							onMouseLeave={() => setHoveredMark(null)}
 						>
-							{MARK_GLYPHS[mark]}
+							{mark === 'unread' && unreadCount ? (
+								<span className="sessionRailPill__markCount">
+									{unreadCount > 99 ? '99+' : unreadCount}
+								</span>
+							) : (
+								MARK_GLYPHS[mark]
+							)}
 						</span>
 					))}
 				</span>

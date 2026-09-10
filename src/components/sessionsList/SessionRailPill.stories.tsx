@@ -51,13 +51,15 @@ function Pill({
 	userId = 'sb-rail-1',
 	marks = [],
 	active = false,
-	tooltips
+	tooltips,
+	unreadCount
 }: {
 	name?: string;
 	userId?: string;
 	marks?: readonly SessionRailMark[];
 	active?: boolean;
 	tooltips?: SessionRailTooltips;
+	unreadCount?: number;
 }) {
 	return (
 		<SessionRailPill
@@ -67,6 +69,7 @@ function Pill({
 			markLabels={RAIL_MARK_COPY}
 			active={active}
 			tooltips={tooltips}
+			unreadCount={unreadCount}
 		/>
 	);
 }
@@ -131,7 +134,8 @@ const MIXED_ROWS = [
 			modality: 'AGENCY_COUNSELLING',
 			previewChannel: 'thread',
 			unread: true
-		})
+		}),
+		unreadCount: 3
 	},
 	{
 		userId: 'sb-rail-3',
@@ -151,7 +155,8 @@ const MIXED_ROWS = [
 			previewChannel: 'thread',
 			supervisionState: 'supervisedByOthers',
 			unread: true
-		})
+		}),
+		unreadCount: 12
 	}
 ] as const;
 
@@ -165,6 +170,9 @@ function MixedRail() {
 					avatar={avatarFor(row.userId, row.name)}
 					marks={row.marks}
 					markLabels={RAIL_MARK_COPY}
+					unreadCount={
+						'unreadCount' in row ? row.unreadCount : undefined
+					}
 					active={index === 1}
 					data-cy={`rail-pill-${index}`}
 				/>
@@ -286,6 +294,7 @@ export const AllMarks: Story = {
 				modality: 'AGENCY_COUNSELLING',
 				unread: true
 			})}
+			unreadCount={3}
 		/>
 	),
 	play: async ({ canvasElement }) => {
@@ -337,9 +346,19 @@ export const AllMarks: Story = {
 
 export const UnreadOnly: Story = {
 	name: 'Pille — nur ungelesen',
-	render: () => <Pill marks={getSessionRailMarks({ unread: true })} />,
+	render: () => (
+		<Pill marks={getSessionRailMarks({ unread: true })} unreadCount={7} />
+	),
 	play: async ({ canvasElement }) => {
 		await expectMarks(canvasElement, ['unread']);
+		// Frank, 10.09.2026: the circle carries the NUMBER, so nobody has to
+		// hover to learn how many. Asserted as text, not as a filled shape.
+		const mark = canvasElement.querySelector<HTMLElement>(
+			'.sessionRailPill__mark--unread'
+		)!;
+		await expect(mark.textContent).toBe('7');
+		// It still fits the 24 px slot it shares with the glyph marks.
+		await expect(Math.round(mark.getBoundingClientRect().width)).toBe(24);
 		// The unread row is also readable without decoding the dot.
 		const pill =
 			canvasElement.querySelector<HTMLElement>('.sessionRailPill')!;
@@ -659,5 +678,30 @@ export const TooltipWithoutPreview: Story = {
 		await expect(
 			tip.querySelector('.sessionRailPill__tooltipMeta')
 		).toBeNull();
+	}
+};
+
+/**
+ * More than 99 new messages. Four digits do not fit a 24 px circle, so the
+ * mark reads "99+" — the cap is asserted rather than left to chance.
+ */
+export const UnreadCountCapped: Story = {
+	name: 'Pille — mehr als 99 neue Nachrichten',
+	render: () => (
+		<div style={{ padding: 24 }}>
+			<Pill
+				marks={getSessionRailMarks({ unread: true })}
+				unreadCount={128}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const mark = canvasElement.querySelector<HTMLElement>(
+			'.sessionRailPill__mark--unread'
+		)!;
+		await expect(mark.textContent).toBe('99+');
+		await expect(Math.round(mark.getBoundingClientRect().width)).toBe(24);
+		// The text stays inside its circle — no overflow at three glyphs.
+		await expect(mark.scrollWidth).toBeLessThanOrEqual(mark.clientWidth);
 	}
 };
