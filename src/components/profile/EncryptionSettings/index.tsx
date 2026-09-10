@@ -1,7 +1,8 @@
 import { reauthenticateRecovery } from '../../../services/reauthenticateRecovery';
 import {
 	enrollPasswordRecoveryAfterKeyRecovery,
-	PasswordRecoveryRepairBlockedError
+	PasswordRecoveryRepairBlockedError,
+	PasswordRecoveryWorkLimitError
 } from '../../../services/matrixPasswordRecoveryService';
 import { getChatRecoveryPolicy } from '../../../services/chatRecoveryPolicy';
 import { setRecoveryRuntimeStatus } from '../../../services/recoveryReminderState';
@@ -105,6 +106,12 @@ export const EncryptionSettingsPanel = ({
 	const [confirmLoginPassword, setConfirmLoginPassword] = useState('');
 	const [recoveryOtp, setRecoveryOtp] = useState('');
 	const passwordStatus = useRecoveryRuntimeStatus(userId ?? '');
+	const canOfferPasswordRecovery = ![
+		'idle',
+		'pending',
+		'busy',
+		'ready'
+	].includes(passwordStatus);
 
 	const getReadyClient = useCallback(
 		(): Promise<MatrixClient | null> =>
@@ -432,14 +439,13 @@ export const EncryptionSettingsPanel = ({
 				>
 					<p role="status">
 						{t(
-							passwordStatus === 'ready'
-								? 'encryption.passwordRecovery.ready'
-								: passwordStatus === 'device-ready'
-									? 'encryption.passwordRecovery.deviceReady'
-									: 'encryption.passwordRecovery.needs-password'
+							'encryption.passwordRecovery.' +
+								(passwordStatus === 'device-ready'
+									? 'deviceReady'
+									: passwordStatus)
 						)}
 					</p>
-					{passwordStatus !== 'ready' && recoveryKeyToShow && (
+					{canOfferPasswordRecovery && recoveryKeyToShow && (
 						<form
 							ref={enrollmentForm}
 							onSubmit={async (event) => {
@@ -480,9 +486,15 @@ export const EncryptionSettingsPanel = ({
 									setError(
 										t(
 											error instanceof
-												PasswordRecoveryRepairBlockedError
-												? 'encryption.passwordRecovery.repairBlocked'
-												: 'encryption.passwordRecovery.enrollmentFailed'
+												RecoverySetupBusyError
+												? 'profile.encryption.setup.busy'
+												: error instanceof
+													  PasswordRecoveryRepairBlockedError
+													? 'encryption.passwordRecovery.repairBlocked'
+													: error instanceof
+														  PasswordRecoveryWorkLimitError
+														? 'encryption.passwordRecovery.retryable-failure'
+														: 'encryption.passwordRecovery.enrollmentFailed'
 										)
 									);
 								} finally {
@@ -552,7 +564,7 @@ export const EncryptionSettingsPanel = ({
 							/>
 						</form>
 					)}
-					{passwordStatus !== 'ready' && (
+					{canOfferPasswordRecovery && (
 						<Button
 							item={{
 								type: BUTTON_TYPES.SECONDARY,

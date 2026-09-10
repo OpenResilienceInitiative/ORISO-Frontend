@@ -1,5 +1,9 @@
+import { Link } from 'react-router-dom';
 import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
-import { changePasswordWithRecovery } from '../../services/matrixPasswordRecoveryService';
+import {
+	changePasswordWithRecovery,
+	PasswordRecoveryRepairRequiredError
+} from '../../services/matrixPasswordRecoveryService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { withRecoverySetupLock } from '../../services/pendingRecoveryKeyStore';
 import * as React from 'react';
@@ -38,6 +42,7 @@ export const PasswordReset = () => {
 
 	const settings = useAppConfig();
 
+	const [repairRequired, setRepairRequired] = useState(false);
 	const [oldPassword, setOldPassword] = useState('');
 	const [newPassword, setNewPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
@@ -197,6 +202,7 @@ export const PasswordReset = () => {
 
 		if (isValid) {
 			setIsRequestInProgress(true);
+			setRepairRequired(false);
 			setOldPasswordErrorMessage('');
 
 			(async () => {
@@ -245,13 +251,18 @@ export const PasswordReset = () => {
 					setIsRequestInProgress(false);
 					logout(false, settings.urls.toLogin);
 				})
-				.catch(() => {
+				.catch((error) => {
+					setRepairRequired(
+						error instanceof PasswordRecoveryRepairRequiredError
+					);
 					// error handling for password update error
 					setOldPasswordErrorMessage(
 						translate(
-							userData.chatRecoveryMode === 'LOGIN_PASSWORD'
-								? 'encryption.passwordRecovery.passwordChangeFailed'
-								: 'profile.functions.password.reset.old.incorrect'
+							error instanceof PasswordRecoveryRepairRequiredError
+								? 'encryption.passwordRecovery.repairRequired'
+								: userData.chatRecoveryMode === 'LOGIN_PASSWORD'
+									? 'encryption.passwordRecovery.passwordChangeFailed'
+									: 'profile.functions.password.reset.old.incorrect'
 						)
 					);
 					setIsRequestInProgress(false);
@@ -279,6 +290,16 @@ export const PasswordReset = () => {
 				/>
 			</div>
 			<div className="generalInformation">
+				{repairRequired && (
+					<p role="alert">
+						{translate(
+							'encryption.passwordRecovery.repairRequired'
+						)}{' '}
+						<Link to="/profile/einstellungen/sicherheit">
+							{translate('encryption.passwordRecovery.settings')}
+						</Link>
+					</p>
+				)}
 				<div className="flex">
 					<div className="flex__col--1 flex-xl__col--50p">
 						<div className="pr-xl--1">

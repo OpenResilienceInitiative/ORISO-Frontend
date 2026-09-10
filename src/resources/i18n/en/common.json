@@ -4557,7 +4557,8 @@
 			"show": "Show key",
 			"later": "Later",
 			"confirm": "I have stored the key safely",
-			"retry": "Check backup in security settings"
+			"retry": "Check backup in security settings",
+			"busy": "Your enquiry was sent successfully. Recovery is currently being processed in another tab or in the background."
 		},
 		"passwordRecovery": {
 			"ready": "Recovery using your login password is set up. An additional saved recovery key remains valid.",
@@ -4574,7 +4575,11 @@
 			"otp": "One-time code",
 			"enroll": "Confirm password and set up recovery",
 			"deviceReady": "This device can use its existing keys. Password recovery will be verified at the next password login.",
-			"repairBlocked": "The existing password backups cannot be safely replaced here. Your conversation history remains accessible with the recovery key. Setup with a new password is currently unavailable."
+			"repairBlocked": "The existing password backups cannot be safely replaced here. Your conversation history remains accessible with the recovery key. Setup with a new password is currently unavailable.",
+			"idle": "Recovery status has not been checked yet.",
+			"pending": "Recovery is being checked. You can continue using the app.",
+			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed."
 		}
 	},
 	"accountInvite": {

@@ -4638,7 +4638,8 @@
 			"show": "Schlüssel anzeigen",
 			"later": "Später",
 			"confirm": "Ich habe den Schlüssel sicher gespeichert",
-			"retry": "Sicherung in den Sicherheitseinstellungen prüfen"
+			"retry": "Sicherung in den Sicherheitseinstellungen prüfen",
+			"busy": "Die Anfrage wurde erfolgreich gesendet. Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet."
 		},
 		"passwordRecovery": {
 			"ready": "Wiederherstellung mit dem Login-Passwort ist eingerichtet. Ein zusätzlich gespeicherter Schlüssel bleibt ebenfalls gültig.",
@@ -4655,7 +4656,11 @@
 			"otp": "Einmalcode",
 			"enroll": "Passwort bestätigen und Wiederherstellung einrichten",
 			"deviceReady": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Ihr Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Ihr Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
+			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
+			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert."
 		}
 	},
 	"accountInvite": {

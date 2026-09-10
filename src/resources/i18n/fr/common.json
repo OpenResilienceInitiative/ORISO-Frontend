@@ -4646,7 +4646,8 @@
 			"show": "Afficher la clé",
 			"later": "Plus tard",
 			"confirm": "J’ai conservé la clé en lieu sûr",
-			"retry": "Vérifier la sauvegarde dans les paramètres de sécurité"
+			"retry": "Vérifier la sauvegarde dans les paramètres de sécurité",
+			"busy": "Votre demande a été envoyée avec succès. La récupération est en cours dans un autre onglet ou en arrière-plan."
 		},
 		"passwordRecovery": {
 			"ready": "La récupération avec votre mot de passe de connexion est configurée. Une clé de récupération enregistrée reste également valide.",
@@ -4663,7 +4664,11 @@
 			"otp": "Code à usage unique",
 			"enroll": "Confirmer le mot de passe et configurer la récupération",
 			"deviceReady": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
-			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible."
+			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible.",
+			"idle": "L’état de la récupération n’a pas encore été vérifié.",
+			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
+			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié."
 		}
 	},
 	"accountInvite": {

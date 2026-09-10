@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { initializeChatRecovery } from './authenticatedChatRecovery';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	initializeChatRecovery,
+	startAuthenticatedChatRecovery
+} from './authenticatedChatRecovery';
 import { getPendingRecoveryKey } from './pendingRecoveryKeyStore';
 const status = vi.hoisted(() => vi.fn());
 const setup = vi.hoisted(() => vi.fn());
@@ -124,7 +127,6 @@ describe('authenticated setup coordination', () => {
 			initializeChatRecovery(client(), { mode: 'RECOVERY_KEY' }, null)
 		]);
 		expect(setup).toHaveBeenCalledOnce();
-		vi.unstubAllGlobals();
 	});
 	it('stops before setup after cancellation', async () => {
 		await initializeChatRecovery(
@@ -192,4 +194,46 @@ it('parks a completed root for its original user even if the view cancels during
 	expect(getPendingRecoveryKey('@synthetic:test')).toBe('late-synthetic-key');
 	expect(getPendingRecoveryKey('@other:test')).toBeNull();
 	expect(enroll).not.toHaveBeenCalled();
+});
+
+afterEach(() => vi.unstubAllGlobals());
+it('reports an occupied setup lease as busy without prompting for a key', async () => {
+	vi.stubGlobal('navigator', {
+		locks: { request: vi.fn(async (_name, _options, run) => run(null)) }
+	});
+	await initializeChatRecovery(client(), { mode: 'RECOVERY_KEY' }, null);
+	expect(runtimeStatus).toHaveBeenLastCalledWith('@synthetic:test', 'busy');
+	expect(setup).not.toHaveBeenCalled();
+});
+
+it('retries corrected immutable policy on the same client without losing its password', async () => {
+	const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+		await import('./loginRecoveryHandoff');
+	const c = client();
+	const claimed = new WeakSet<object>();
+	stageLoginRecoveryPassword('@synthetic:test', 'synthetic-password');
+	expect(() =>
+		startAuthenticatedChatRecovery(
+			c,
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: null
+			},
+			claimed
+		)
+	).toThrow('Invalid chat recovery policy');
+	expect(claimed.has(c)).toBe(false);
+	await startAuthenticatedChatRecovery(
+		c,
+		{ chatRecoveryMode: 'LOGIN_PASSWORD', chatRecoveryPolicyRevision: 2 },
+		claimed
+	);
+	expect(recover).toHaveBeenCalledWith(c, 'synthetic-password');
+	await startAuthenticatedChatRecovery(
+		c,
+		{ chatRecoveryMode: 'LOGIN_PASSWORD', chatRecoveryPolicyRevision: 2 },
+		claimed
+	);
+	expect(recover).toHaveBeenCalledOnce();
+	expect(consumeLoginRecoveryPassword('@synthetic:test')).toBeNull();
 });

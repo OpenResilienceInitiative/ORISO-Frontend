@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 import { RecoveryKeySaveReminder } from './RecoveryKeySaveReminder';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import {
@@ -20,6 +21,10 @@ import {
 	markEnquiryFinalized,
 	setRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
+vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('../../globalState', async () => ({
+	UserDataContext: (await import('react')).createContext(null)
+}));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
@@ -35,6 +40,7 @@ const view = (id = userId) => (
 			}}
 		>
 			<RecoveryKeySaveReminder />
+			<KeyBackupRecoveryPrompt />
 		</MatrixClientContext.Provider>
 	</MemoryRouter>
 );
@@ -88,11 +94,54 @@ it('never reveals another identity key just because the previous identity had op
 it('defers a pending notice without permanently dismissing the later usable key', () => {
 	markEnquiryFinalized(userId, 12);
 	setRecoveryRuntimeStatus(userId, 'pending');
-	const mounted = render(view());
+	render(view());
 	fireEvent.click(screen.getByText('encryption.saveReminder.later'));
 	expect(screen.queryByRole('complementary')).toBeNull();
-	mounted.unmount();
 	act(() => savePendingRecoveryKey(userId, 'late-synthetic-key'));
-	render(view());
+	expect(screen.queryByText('late-synthetic-key')).toBeNull();
+	expect(screen.queryByRole('dialog')).toBeNull();
 	expect(screen.getByText('encryption.saveReminder.show')).toBeTruthy();
+});
+
+it('shows one recovery action while retaining enquiry success when setup fails', () => {
+	markEnquiryFinalized(userId, 12);
+	setRecoveryRuntimeStatus(userId, 'retryable-failure');
+	render(view());
+	expect(screen.getAllByRole('complementary')).toHaveLength(1);
+	expect(
+		screen.getByText('encryption.saveReminder.unavailable')
+	).toBeTruthy();
+	expect(
+		screen.getByText('encryption.keyBackup.dialog.openVault')
+	).toBeTruthy();
+	act(() => savePendingRecoveryKey(userId, 'synthetic-key'));
+	expect(screen.getAllByRole('complementary')).toHaveLength(1);
+	expect(screen.getByText('encryption.saveReminder.show')).toBeTruthy();
+	expect(screen.queryByRole('dialog')).toBeNull();
+});
+it('keeps a dismissed ready-key invitation dismissed across remounts', () => {
+	markEnquiryFinalized(userId, 12);
+	savePendingRecoveryKey(userId, 'synthetic-key');
+	const mounted = render(view());
+	fireEvent.click(screen.getByText('encryption.saveReminder.later'));
+	mounted.unmount();
+	render(view());
+	expect(screen.queryByRole('complementary')).toBeNull();
+	expect(getPendingRecoveryKey(userId)).toBe('synthetic-key');
+});
+
+it('keeps busy recovery nonprompting and preserves enquiry success after finalization', () => {
+	setRecoveryRuntimeStatus(userId, 'busy');
+	render(view());
+	expect(screen.queryByRole('complementary')).toBeNull();
+	act(() => markEnquiryFinalized(userId, 12));
+	expect(screen.getAllByRole('complementary')).toHaveLength(1);
+	expect(screen.getByText('encryption.saveReminder.busy')).toBeTruthy();
+	expect(
+		screen.queryByText('encryption.keyBackup.dialog.openVault')
+	).toBeNull();
+	expect(
+		screen.queryByText('encryption.passwordRecovery.retryable-failure')
+	).toBeNull();
+	expect(screen.queryByRole('dialog')).toBeNull();
 });

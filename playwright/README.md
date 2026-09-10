@@ -37,6 +37,40 @@ the German UI selectors. Only deliberately masked post-login screenshots are att
 390×844, 820×1180 and 1440×900. Do not enable tracing, `DEBUG=pw:api`, or a reporter
 that records Playwright call parameters for these credential flows.
 
+### Replay the synthetic failure-artifact privacy guard
+
+Run without credentials, a server or Test Access. It launches isolated Chromium
+contexts with each installed test runtime and closes them automatically. The CLI
+and fixture test API both resolve from the same runtime package; the script fails
+if the expected installed version pair changes.
+
+```sh
+ORISO_RECOVERY_OUTPUT_DIR=/absolute/path/to/new-privacy-evidence \
+  node playwright/privacy/verify-failure-artifacts.cjs
+```
+
+The output directory must be new. A deliberate assertion failure leaves an
+explicitly masked PNG, sanitized JSON and runner output for each of 1.58.2 and
+1.62.1. The verifier rejects canary text in all text artifacts, automatic DOM/ARIA
+snapshots, traces, video and unexpected file types. It validates all 44,800 pixels
+covering the known synthetic secret rectangle as opaque magenta, plus a visible
+control outside the mask. It also checks the complete 307,200-pixel fixture image
+against its known white background/control/mask, rejecting any text overflow.
+This is pixel proof for this known fixture layout;
+it is not an arbitrary-secret scan of PNG binary data or general screenshot OCR.
+
+For each runtime, a separate guard-disabled positive control must actually leak
+the synthetic canary in an automatic DOM snapshot. Its temporary files are then
+removed. This proves the detector is exercised rather than passing an empty
+artifact directory. The guarded run must still fail its intended test; only the
+outer privacy verifier should exit 0 and write `privacy-results.json`.
+
+Playwright 1.62.1 can still write `error-context.md` containing error/source
+context even with the guard enabled. Its filename alone is not evidence of DOM
+capture: the verifier checks its contents for snapshots and the canary. Real
+credential tests must continue to sanitize thrown errors and avoid assertion
+values or attachments containing secrets. Re-run this guard when upgrading.
+
 Before execution, follow the current ORISO E2E and Test Access skills. Record the
 deployed images, approved environment and enrolled account creation policies in
 the evidence ledger. Provision dedicated Springfield accounts through the real

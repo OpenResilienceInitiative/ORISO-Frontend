@@ -10,6 +10,7 @@ import {
 } from '../../services/pendingRecoveryKeyStore';
 import {
 	dismissRecoveryReminder,
+	isActionableRecoveryStatus,
 	subscribeRecoveryState,
 	useRecoveryReminder,
 	useRecoveryRuntimeStatus
@@ -32,7 +33,8 @@ export const RecoveryKeySaveReminder = () => {
 	const showKey = shownFor === userId;
 	if (
 		!eligible ||
-		hiddenFor === userId ||
+		(!key && hiddenFor === userId) ||
+		(!key && isActionableRecoveryStatus(status)) ||
 		(!key && (status === 'ready' || status === 'device-ready'))
 	)
 		return null;
@@ -46,11 +48,21 @@ export const RecoveryKeySaveReminder = () => {
 				{t(
 					key
 						? 'encryption.saveReminder.title'
-						: status === 'pending'
-							? 'encryption.saveReminder.pending'
-							: 'encryption.saveReminder.unavailable'
+						: status === 'busy'
+							? 'encryption.saveReminder.busy'
+							: status === 'pending' || status === 'idle'
+								? 'encryption.saveReminder.pending'
+								: 'encryption.saveReminder.unavailable'
 				)}
 			</p>
+			{key && isActionableRecoveryStatus(status) && (
+				<p>
+					{t('encryption.passwordRecovery.' + status)}{' '}
+					<Link to="/profile/einstellungen/sicherheit">
+						{t('encryption.passwordRecovery.settings')}
+					</Link>
+				</p>
+			)}
 			{key ? (
 				<>
 					{showKey ? (

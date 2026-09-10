@@ -22,8 +22,10 @@ Fixture requirements are intentionally strict: tenant10, topic Eltern und
 Familie, ZIP10965, agency12, expected creation mode LOGIN_PASSWORD and the explicit
 policy revision supplied above. Obtain the expected revision from the confirmed
 Admin settings before signup, never from the newly created account itself.
-A/B/C are distinct unused managed identities with no initial OTP. B must have no
-previous application login: backup interception attaches before public signup.
+A/B/C are distinct managed identities with no initial OTP. B and C must be
+unused. A must also be unused unless `ORISO_FAULT_A_EXISTING=1` explicitly
+resumes a valid interrupted signup with an unsubmitted enquiry; this exception
+does not permit an already finalized A. B must have no previous application login: backup interception attaches before public signup.
 The helpers immediately sync registration201 to Test Access, then bind the exact
 pool email through the real profile and verify its disabled field readback.
 

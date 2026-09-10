@@ -22,7 +22,20 @@ export const subscribeRecoveryState = (listener: () => void): (() => void) => {
 const prefix = 'oriso.recoveryReminder.';
 const read = (userId: string): { dismissed?: boolean; sessionId?: number } => {
 	try {
-		return JSON.parse(sessionStorage.getItem(prefix + userId) ?? '{}');
+		const value: unknown = JSON.parse(
+			sessionStorage.getItem(prefix + userId) ?? '{}'
+		);
+		if (!value || typeof value !== 'object' || Array.isArray(value))
+			return {};
+		const state = value as { dismissed?: unknown; sessionId?: unknown };
+		if (
+			(state.dismissed !== undefined &&
+				typeof state.dismissed !== 'boolean') ||
+			(state.sessionId !== undefined &&
+				!Number.isSafeInteger(state.sessionId))
+		)
+			return {};
+		return state as { dismissed?: boolean; sessionId?: number };
 	} catch {
 		return {};
 	}
@@ -59,6 +72,7 @@ export const useRecoveryReminder = (userId: string): boolean =>
 export type RecoveryRuntimeStatus =
 	| 'idle'
 	| 'pending'
+	| 'busy'
 	| 'device-ready'
 	| 'ready'
 	| 'needs-password'
@@ -83,4 +97,11 @@ export const useRecoveryRuntimeStatus = (
 		subscribeRecoveryState,
 		() => statuses.get(userId) ?? 'idle',
 		() => 'idle'
+	);
+
+export const isActionableRecoveryStatus = (
+	status: RecoveryRuntimeStatus
+): boolean =>
+	['needs-password', 'needs-recovery-key', 'retryable-failure'].includes(
+		status
 	);

@@ -1,9 +1,5 @@
-import {
-	consumeLoginRecoveryPassword,
-	clearLoginRecoveryPassword
-} from '../../services/loginRecoveryHandoff';
-import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
-import { initializeChatRecovery } from '../../services/authenticatedChatRecovery';
+import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
+import { startAuthenticatedChatRecovery } from '../../services/authenticatedChatRecovery';
 import { setRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
@@ -84,17 +80,18 @@ export const AuthenticatedApp = ({
 			const userId = client?.getUserId();
 			if (!client || !userId || recoveryClients.current.has(client))
 				return;
-			recoveryClients.current.add(client);
-			const password = consumeLoginRecoveryPassword(userId);
-			if (recoveryAnonymous) return;
+			if (recoveryAnonymous) {
+				clearLoginRecoveryPassword();
+				return;
+			}
 			try {
-				void initializeChatRecovery(
+				void startAuthenticatedChatRecovery(
 					client,
-					getChatRecoveryPolicy({
+					{
 						chatRecoveryMode: recoveryMode,
 						chatRecoveryPolicyRevision: recoveryRevision
-					}),
-					password,
+					},
+					recoveryClients.current,
 					() => cancelled
 				);
 			} catch {

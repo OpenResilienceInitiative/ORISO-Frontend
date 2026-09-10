@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { MemoryRouter } from 'react-router-dom';
 import * as React from 'react';
 import {
 	cleanup,
@@ -16,6 +17,7 @@ const state = vi.hoisted(() => ({
 	},
 	update: vi.fn(),
 	change: vi.fn(),
+	RepairRequiredError: class extends Error {},
 	logout: vi.fn()
 }));
 vi.mock('../../globalState', async () => {
@@ -34,7 +36,8 @@ vi.mock('../../api', () => ({
 	FETCH_ERRORS: { BAD_REQUEST: 'BAD_REQUEST' }
 }));
 vi.mock('../../services/matrixPasswordRecoveryService', () => ({
-	changePasswordWithRecovery: state.change
+	changePasswordWithRecovery: state.change,
+	PasswordRecoveryRepairRequiredError: state.RepairRequiredError
 }));
 vi.mock('../../services/matrixClientRegistry', () => ({
 	getMatrixClientService: () => ({
@@ -83,7 +86,11 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 const submit = () => {
-	render(<PasswordReset />);
+	render(
+		<MemoryRouter>
+			<PasswordReset />
+		</MemoryRouter>
+	);
 	fireEvent.change(screen.getByLabelText('passwordResetOld'), {
 		target: { value: 'old-synthetic' }
 	});
@@ -125,4 +132,17 @@ it('keeps legacy password changes on the existing path', async () => {
 	submit();
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
 	expect(state.change).not.toHaveBeenCalled();
+});
+
+it('links to recovery repair without changing credentials when enrollment is absent', async () => {
+	state.change.mockRejectedValue(new state.RepairRequiredError());
+	submit();
+	expect(await screen.findByRole('alert')).toBeTruthy();
+	expect(
+		screen
+			.getByRole('link', { name: 'encryption.passwordRecovery.settings' })
+			.getAttribute('href')
+	).toBe('/profile/einstellungen/sicherheit');
+	expect(state.update).not.toHaveBeenCalled();
+	expect(state.logout).not.toHaveBeenCalled();
 });

@@ -1,6 +1,10 @@
 import { readRecoveryRoot } from './matrixRecoveryAccountData';
 import type { MatrixClient } from 'matrix-js-sdk';
-import type { ChatRecoveryPolicy } from './chatRecoveryPolicy';
+import {
+	getChatRecoveryPolicy,
+	type ChatRecoveryPolicy
+} from './chatRecoveryPolicy';
+import { consumeLoginRecoveryPassword } from './loginRecoveryHandoff';
 import {
 	canBootstrapSilently,
 	getEncryptionStatus,
@@ -12,6 +16,7 @@ import {
 	recoverWithLoginPassword
 } from './matrixPasswordRecoveryService';
 import {
+	RecoverySetupBusyError,
 	getPendingRecoveryKey,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
@@ -97,9 +102,34 @@ export const initializeChatRecovery = async (
 				);
 			}
 		});
-	} catch {
-		if (!cancelled()) setRecoveryRuntimeStatus(userId, 'retryable-failure');
+	} catch (error) {
+		if (!cancelled())
+			setRecoveryRuntimeStatus(
+				userId,
+				error instanceof RecoverySetupBusyError
+					? 'busy'
+					: 'retryable-failure'
+			);
 	} finally {
 		clearTimeout(deadline);
 	}
+};
+
+/** Validate before claiming this client or consuming its one-use credential. */
+export const startAuthenticatedChatRecovery = (
+	client: MatrixClient,
+	account: Parameters<typeof getChatRecoveryPolicy>[0],
+	claimedClients: WeakSet<object>,
+	cancelled: () => boolean = () => false
+): Promise<void> | undefined => {
+	if (claimedClients.has(client) || !client.getUserId() || cancelled())
+		return;
+	const policy = getChatRecoveryPolicy(account);
+	claimedClients.add(client);
+	return initializeChatRecovery(
+		client,
+		policy,
+		consumeLoginRecoveryPassword(client.getUserId()!),
+		cancelled
+	);
 };

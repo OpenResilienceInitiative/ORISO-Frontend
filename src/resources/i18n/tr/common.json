@@ -4646,7 +4646,8 @@
 			"show": "Anahtarı göster",
 			"later": "Daha sonra",
 			"confirm": "Anahtarı güvenli bir yerde sakladım",
-			"retry": "Güvenlik ayarlarında yedeği kontrol et"
+			"retry": "Güvenlik ayarlarında yedeği kontrol et",
+			"busy": "Talebiniz başarıyla gönderildi. Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor."
 		},
 		"passwordRecovery": {
 			"ready": "Giriş parolanızla kurtarma kuruldu. Ayrıca kaydettiğiniz kurtarma anahtarı da geçerli kalır.",
@@ -4663,7 +4664,11 @@
 			"otp": "Tek kullanımlık kod",
 			"enroll": "Parolayı doğrula ve kurtarmayı kur",
 			"deviceReady": "Bu cihaz mevcut anahtarlarını kullanabilir. Parolayla kurtarma, parolayla bir sonraki girişte doğrulanır.",
-			"repairBlocked": "Mevcut parola korumalı yedekler burada güvenli şekilde değiştirilemez. Konuşmalarınıza kurtarma anahtarıyla erişmeye devam edebilirsiniz. Yeni parolayla kurulum şu anda kullanılamıyor."
+			"repairBlocked": "Mevcut parola korumalı yedekler burada güvenli şekilde değiştirilemez. Konuşmalarınıza kurtarma anahtarıyla erişmeye devam edebilirsiniz. Yeni parolayla kurulum şu anda kullanılamıyor.",
+			"idle": "Kurtarma durumu henüz kontrol edilmedi.",
+			"pending": "Kurtarma kontrol ediliyor. Uygulamayı kullanmaya devam edebilirsiniz.",
+			"busy": "Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor. Lütfen daha sonra tekrar deneyin.",
+			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi."
 		}
 	},
 	"accountInvite": {

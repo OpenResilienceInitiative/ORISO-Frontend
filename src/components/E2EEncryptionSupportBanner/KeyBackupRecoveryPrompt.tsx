@@ -1,15 +1,21 @@
 import { UserDataContext } from '../../globalState';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	InvalidRecoveryKeyError,
 	recoverWithKey
 } from '../../services/matrixKeyBackupService';
-import { savePendingRecoveryKey } from '../../services/pendingRecoveryKeyStore';
 import {
+	getPendingRecoveryKey,
+	savePendingRecoveryKey
+} from '../../services/pendingRecoveryKeyStore';
+import {
+	useRecoveryReminder,
+	subscribeRecoveryState,
+	isActionableRecoveryStatus,
 	useRecoveryRuntimeStatus,
 	setRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
@@ -151,14 +157,15 @@ export const KeyBackupRecoveryPrompt = () => {
 		'LOGIN_PASSWORD';
 	const userId = matrixClientService?.getClient()?.getUserId() ?? '';
 	const status = useRecoveryRuntimeStatus(userId);
+	const eligible = useRecoveryReminder(userId);
+	const key = useSyncExternalStore(
+		subscribeRecoveryState,
+		() => (userId ? getPendingRecoveryKey(userId) : null),
+		() => null
+	);
 	const [openedFor, setOpenedFor] = useState<string | null>(null);
 	const showRecovery = openedFor === userId;
-	if (
-		!['needs-recovery-key', 'needs-password', 'retryable-failure'].includes(
-			status
-		)
-	)
-		return null;
+	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
 	return (
 		<>
 			<aside
@@ -166,6 +173,7 @@ export const KeyBackupRecoveryPrompt = () => {
 				aria-live="polite"
 				data-cy="key-backup-recovery-action"
 			>
+				{eligible && <p>{t('encryption.saveReminder.unavailable')}</p>}
 				<span>{t('encryption.passwordRecovery.' + status)}</span>
 				<button type="button" onClick={() => setOpenedFor(userId)}>
 					{t('encryption.keyBackup.dialog.openVault')}

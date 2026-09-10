@@ -446,14 +446,15 @@ test('backup fails after successful enquiry and status stays truthful', async ({
 		mark('Real enquiry201 acknowledged; releasing backup503');
 		release();
 		await expect.poll(() => failed).toBeGreaterThan(0);
-		await expect(reminder(page)).toContainText(
+		const recoveryNotice = page.locator('.encryption-recovery-notice');
+		await expect(recoveryNotice).toHaveCount(1);
+		await expect(recoveryNotice).toContainText(
 			'Ihre Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit.'
 		);
 		await expect(
-			reminder(page).getByRole('link', {
-				name: 'Sicherung in den Sicherheitseinstellungen prüfen',
-				exact: true
-			})
+			recoveryNotice.locator(
+				'a[href="/profile/einstellungen/sicherheit"]'
+			)
 		).toBeVisible();
 		await expect(problem(page)).toHaveCount(0);
 		await expect(
@@ -467,7 +468,8 @@ test('backup fails after successful enquiry and status stays truthful', async ({
 				backupFailureAfterFinalization: true,
 				heldBackupCreates: held,
 				failedBackupCreates: failed,
-				truthfulIncompleteStatus: true
+				truthfulIncompleteStatus: true,
+				singleRecoveryNotice: true
 			}),
 			contentType: 'application/json'
 		});

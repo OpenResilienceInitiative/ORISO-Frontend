@@ -152,6 +152,16 @@ is removed. Candidates with unknown credential outcomes remain available until
 they can be safely reconciled. A bounded inventory limit fails safely instead of
 silently discarding candidates.
 
+Password derivation uses the installed SDK's PBKDF2-SHA512 defaults (500,000
+iterations, 256 bits). Each operation shares a budget of 4,000,000 iterations
+across candidate scans, legacy fallback, generation and verification; a single
+derivation may consume at most 1,000,000. The budget is checked before SDK work,
+because an application deadline cannot cancel an active derivation. Exceeding it
+is a retryable work-limit error, not evidence of a wrong password or permission
+to discard candidates. Accounts with unusually many or expensive stale wrappers
+retain recovery-key restoration. SDK generation parameters are checked before
+persisting a new wrapper; an SDK upgrade requires reviewing these bounds.
+
 Forgotten-password recovery requires the existing recovery code. Explicit
 re-enrollment verifies the current password and required OTP online. If any
 existing candidate cannot be opened with that password, its outcome cannot be

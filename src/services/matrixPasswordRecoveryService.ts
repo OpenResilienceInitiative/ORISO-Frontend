@@ -55,6 +55,24 @@ export type PasswordRecoveryStatus = {
 class EnvelopeUnavailable extends Error {}
 class PasswordRejected extends Error {}
 export class PasswordRecoveryRepairBlockedError extends Error {}
+export class PasswordRecoveryRepairRequiredError extends Error {}
+export class PasswordRecoveryWorkLimitError extends Error {}
+
+// SDK 38.4 creates 256-bit PBKDF2-SHA512 wrappers with 500,000 iterations.
+// Bound work before invoking the SDK; a deadline cannot cancel an active KDF.
+const SDK_DERIVATION_ITERATIONS = 500000;
+const MAX_DERIVATION_ITERATIONS = 1000000;
+class DerivationBudget {
+	private remaining = 4000000;
+	consume(iterations: number) {
+		if (
+			iterations > MAX_DERIVATION_ITERATIONS ||
+			iterations > this.remaining
+		)
+			throw new PasswordRecoveryWorkLimitError();
+		this.remaining -= iterations;
+	}
+}
 
 const readMetadata = async (client: MatrixClient): Promise<Metadata | null> => {
 	const raw = (await readRecoveryAccountData(
@@ -80,10 +98,16 @@ const writeMetadata = async (client: MatrixClient, metadata: Metadata) => {
 	if (JSON.stringify(await readMetadata(client)) !== JSON.stringify(metadata))
 		throw new EnvelopeUnavailable();
 };
-const fingerprint = async (client: MatrixClient): Promise<string> => {
+const fingerprint = async (
+	client: MatrixClient,
+	repairRequired = false
+): Promise<string> => {
 	const root = await readRecoveryRoot(client);
 	const backup = await client.getCrypto()?.getKeyBackupInfo();
-	if (!root || !backup) throw new EnvelopeUnavailable();
+	if (!root || !backup) {
+		if (repairRequired) throw new PasswordRecoveryRepairRequiredError();
+		throw new EnvelopeUnavailable();
+	}
 	return JSON.stringify([root, backup.version, backup.auth_data]);
 };
 const assertUnchanged = async (client: MatrixClient, expected: string) => {
@@ -120,7 +144,8 @@ const readPayload = async (
 const unlock = async (
 	client: MatrixClient,
 	password: string,
-	metadata: Metadata
+	metadata: Metadata,
+	budget: DerivationBudget
 ) => {
 	for (const id of [
 		metadata.pendingPasswordKeyId,
@@ -138,10 +163,10 @@ const unlock = async (
 			typeof passphrase.salt !== 'string' ||
 			!Number.isSafeInteger(passphrase.iterations) ||
 			passphrase.iterations < 1 ||
-			passphrase.iterations > 10000000 ||
 			(passphrase.bits !== undefined && passphrase.bits !== 256)
 		)
 			throw new EnvelopeUnavailable();
+		budget.consume(passphrase.iterations);
 		const key = await deriveRecoveryKeyFromPassphrase(
 			password,
 			passphrase.salt,
@@ -164,11 +189,24 @@ const storePayload = (
 			...keys.keys()
 		])
 	);
-const addPasswordKey = async (client: MatrixClient, password: string) => {
+const addPasswordKey = async (
+	client: MatrixClient,
+	password: string,
+	budget: DerivationBudget
+) => {
+	budget.consume(SDK_DERIVATION_ITERATIONS);
 	const generated = await client
 		.getCrypto()
 		?.createRecoveryKeyFromPassphrase(password);
-	if (!generated) throw new EnvelopeUnavailable();
+	if (
+		!generated ||
+		generated.keyInfo?.passphrase?.iterations !==
+			SDK_DERIVATION_ITERATIONS ||
+		generated.keyInfo.passphrase.algorithm !== 'm.pbkdf2' ||
+		(generated.keyInfo.passphrase.bits !== undefined &&
+			generated.keyInfo.passphrase.bits !== 256)
+	)
+		throw new EnvelopeUnavailable();
 	const { keyId } = await client.secretStorage.addKey(
 		SECRET_STORAGE_ALGORITHM_V1_AES,
 		{ ...generated.keyInfo, key: generated.privateKey }
@@ -196,6 +234,7 @@ const writePasswordEnvelope = async (
 	encodedRecoveryKey: string,
 	policyRevision: number
 ): Promise<void> => {
+	const budget = new DerivationBudget();
 	if (
 		!password ||
 		!Number.isSafeInteger(policyRevision) ||
@@ -217,7 +256,7 @@ const writePasswordEnvelope = async (
 		matrixUserId: client.getUserId()!,
 		recoveryKey: encodedRecoveryKey
 	};
-	const wrapping = await addPasswordKey(client, password);
+	const wrapping = await addPasswordKey(client, password, budget);
 	await assertUnchanged(client, identity);
 	if (await hasPasswordRecoveryEvidence(client))
 		throw new EnvelopeUnavailable();
@@ -239,7 +278,10 @@ const writePasswordEnvelope = async (
 		policyRevision
 	});
 	// Verify via a newly derived key and the real restore path, not merely a write ACK.
-	if ((await recoverWithLoginPassword(client, password)).kind !== 'ready')
+	if (
+		(await recoverWithPasswordBudget(client, password, budget)).kind !==
+		'ready'
+	)
 		throw new EnvelopeUnavailable();
 };
 
@@ -259,6 +301,7 @@ export const enrollPasswordRecoveryAfterKeyRecovery = async (
 	encodedRecoveryKey: string,
 	policyRevision: number
 ): Promise<void> => {
+	const budget = new DerivationBudget();
 	if (
 		!password ||
 		!Number.isSafeInteger(policyRevision) ||
@@ -270,12 +313,12 @@ export const enrollPasswordRecoveryAfterKeyRecovery = async (
 	const identity = await fingerprint(client);
 	const predecessors: string[] = [];
 	for (const id of await candidateIds(client)) {
-		const existing = await unlockCandidate(client, password, id);
+		const existing = await unlockCandidate(client, password, id, budget);
 		if (!existing) throw new PasswordRecoveryRepairBlockedError();
 		if (existing)
 			predecessors.push(id, ...existing.payload.predecessorKeyIds!);
 	}
-	const next = await addPasswordKey(client, password);
+	const next = await addPasswordKey(client, password, budget);
 	const payload: Payload = {
 		schemaVersion: 1,
 		matrixUserId: client.getUserId()!,
@@ -291,7 +334,7 @@ export const enrollPasswordRecoveryAfterKeyRecovery = async (
 		new Map([[next.id, next.key]]),
 		candidateName(next.id)
 	);
-	const candidate = await unlockCandidate(client, password, next.id);
+	const candidate = await unlockCandidate(client, password, next.id, budget);
 	if (!candidate) throw new EnvelopeUnavailable();
 	await assertUnchanged(client, identity);
 	try {
@@ -353,7 +396,8 @@ const candidateIds = async (client: MatrixClient): Promise<string[]> => {
 const unlockCandidate = async (
 	client: MatrixClient,
 	password: string,
-	id: string
+	id: string,
+	budget: DerivationBudget
 ) => {
 	const evidence = await readRecoveryAccountData<{
 		encrypted?: Record<string, unknown>;
@@ -371,10 +415,10 @@ const unlockCandidate = async (
 		typeof params.salt !== 'string' ||
 		!Number.isSafeInteger(params.iterations) ||
 		params.iterations < 1 ||
-		params.iterations > 10000000 ||
 		(params.bits !== undefined && params.bits !== 256)
 	)
 		throw new EnvelopeUnavailable();
+	budget.consume(params.iterations);
 	const key = await deriveRecoveryKeyFromPassphrase(
 		password,
 		params.salt,
@@ -423,12 +467,24 @@ const retirePredecessors = async (
 export const recoverWithLoginPassword = async (
 	client: MatrixClient,
 	password: string
+): Promise<PasswordRecoveryStatus> =>
+	recoverWithPasswordBudget(client, password, new DerivationBudget());
+
+const recoverWithPasswordBudget = async (
+	client: MatrixClient,
+	password: string,
+	budget: DerivationBudget
 ): Promise<PasswordRecoveryStatus> => {
 	try {
 		const metadata = await readMetadata(client);
 		const ids = await candidateIds(client);
 		for (const id of ids) {
-			const candidate = await unlockCandidate(client, password, id);
+			const candidate = await unlockCandidate(
+				client,
+				password,
+				id,
+				budget
+			);
 			if (!candidate) continue;
 			await recoverWithKey(client, candidate.payload.recoveryKey);
 			try {
@@ -450,7 +506,7 @@ export const recoverWithLoginPassword = async (
 			PASSWORD_RECOVERY_SECRET
 		);
 		if (!legacy?.encrypted) return { kind: 'needs-recovery-key' };
-		const unlocked = await unlock(client, password, metadata);
+		const unlocked = await unlock(client, password, metadata, budget);
 		await recoverWithKey(client, unlocked.payload.recoveryKey);
 		return { kind: 'ready' };
 	} catch (error) {
@@ -471,12 +527,19 @@ export const changePasswordWithRecovery = async (
 	updatePassword: () => Promise<unknown>,
 	isDefiniteFailure: (error: unknown) => boolean = () => false
 ): Promise<void> => {
+	const budget = new DerivationBudget();
 	const metadata = await readMetadata(client);
-	const identity = await fingerprint(client);
+	const identity = await fingerprint(client, true);
 	const predecessors: string[] = [];
 	let payload: Payload | undefined;
-	for (const id of await candidateIds(client)) {
-		const candidate = await unlockCandidate(client, oldPassword, id);
+	const ids = await candidateIds(client);
+	for (const id of ids) {
+		const candidate = await unlockCandidate(
+			client,
+			oldPassword,
+			id,
+			budget
+		);
 		if (candidate) {
 			predecessors.push(id, ...candidate.payload.predecessorKeyIds!);
 			payload = candidate.payload;
@@ -487,16 +550,25 @@ export const changePasswordWithRecovery = async (
 		client,
 		PASSWORD_RECOVERY_SECRET
 	);
-	if (legacy?.encrypted && metadata) {
+	const hasLegacyEnvelope =
+		legacy?.encrypted != null &&
+		typeof legacy.encrypted === 'object' &&
+		Object.keys(legacy.encrypted).length > 0;
+	if (hasLegacyEnvelope && metadata) {
 		try {
-			payload = (await unlock(client, oldPassword, metadata)).payload;
+			payload = (await unlock(client, oldPassword, metadata, budget))
+				.payload;
 			replacesLegacyEnvelope = true;
 		} catch (error) {
 			if (!(error instanceof PasswordRejected)) throw error;
 		}
 	}
-	if (!payload) throw new PasswordRejected();
-	const next = await addPasswordKey(client, newPassword);
+	if (!payload) {
+		if (!ids.length && (!hasLegacyEnvelope || !metadata))
+			throw new PasswordRecoveryRepairRequiredError();
+		throw new PasswordRejected();
+	}
+	const next = await addPasswordKey(client, newPassword, budget);
 	const nextPayload: Payload = {
 		schemaVersion: 1,
 		matrixUserId: payload.matrixUserId,
@@ -512,7 +584,7 @@ export const changePasswordWithRecovery = async (
 		new Map([[next.id, next.key]]),
 		candidateName(next.id)
 	);
-	const staged = await unlockCandidate(client, newPassword, next.id);
+	const staged = await unlockCandidate(client, newPassword, next.id, budget);
 	if (!staged) throw new EnvelopeUnavailable();
 	await assertUnchanged(client, identity);
 	try {

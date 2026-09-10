@@ -12,6 +12,8 @@ import {
 	enrollPasswordRecovery,
 	enrollPasswordRecoveryAfterKeyRecovery,
 	PasswordRecoveryRepairBlockedError,
+	PasswordRecoveryRepairRequiredError,
+	PasswordRecoveryWorkLimitError,
 	recoverWithLoginPassword,
 	changePasswordWithRecovery,
 	PASSWORD_RECOVERY_SECRET,
@@ -157,6 +159,228 @@ const candidateEvents = () =>
 	);
 
 describe('native SDK envelope around the unchanged root (transport and backup API fixtures)', () => {
+	it.each([
+		'root',
+		'backup',
+		'enrollment',
+		'metadata',
+		'envelope',
+		'empty-envelope'
+	])(
+		'requires repair for missing %s before changing credentials',
+		async (missing) => {
+			if (missing !== 'enrollment')
+				await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+			if (missing === 'root')
+				server.data.delete('m.secret_storage.default_key');
+			if (missing === 'backup')
+				first.getCrypto().getKeyBackupInfo.mockResolvedValue(null);
+			if (missing === 'metadata')
+				server.data.delete(PASSWORD_RECOVERY_METADATA);
+			if (missing === 'envelope')
+				server.data.delete(PASSWORD_RECOVERY_SECRET);
+			if (missing === 'empty-envelope')
+				server.data.set(PASSWORD_RECOVERY_SECRET, { encrypted: {} });
+			first.getCrypto().createRecoveryKeyFromPassphrase.mockClear();
+			const update = vi.fn();
+			await expect(
+				changePasswordWithRecovery(first, 'old', 'new', update)
+			).rejects.toBeInstanceOf(PasswordRecoveryRepairRequiredError);
+			expect(update).not.toHaveBeenCalled();
+			expect(
+				first.getCrypto().createRecoveryKeyFromPassphrase
+			).not.toHaveBeenCalled();
+		}
+	);
+	it('distinguishes wrong old password from missing recovery material', async () => {
+		await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+		const update = vi.fn();
+		await expect(
+			changePasswordWithRecovery(first, 'wrong', 'new', update)
+		).rejects.not.toBeInstanceOf(PasswordRecoveryRepairRequiredError);
+		expect(update).not.toHaveBeenCalled();
+	});
+	it.each(['legacy', 'candidate'])(
+		'rejects excessive %s derivation cost before calling the SDK',
+		async (kind) => {
+			await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+			const id = server.data.get(
+				PASSWORD_RECOVERY_METADATA
+			).passwordKeyId;
+			server.data.get(
+				`m.secret_storage.key.${id}`
+			).passphrase.iterations = 1000001;
+			if (kind === 'candidate')
+				server.data.set(`${PASSWORD_RECOVERY_CANDIDATE_PREFIX}${id}`, {
+					encrypted: { [id]: {} }
+				});
+			const derive = vi.spyOn(globalThis.crypto.subtle, 'deriveBits');
+			try {
+				expect(
+					await recoverWithLoginPassword(device(server), 'correct')
+				).toEqual({ kind: 'retryable-failure' });
+				expect(derive).not.toHaveBeenCalled();
+			} finally {
+				derive.mockRestore();
+			}
+		}
+	);
+	it.each(['login', 'change'])(
+		'bounds total candidate derivations for %s',
+		async (operation) => {
+			for (let n = 0; n < 12; n++) {
+				const id = `untrusted-${n}`;
+				server.data.set(`${PASSWORD_RECOVERY_CANDIDATE_PREFIX}${id}`, {
+					encrypted: { [id]: {} }
+				});
+				server.data.set(`m.secret_storage.key.${id}`, {
+					algorithm: SECRET_STORAGE_ALGORITHM_V1_AES,
+					passphrase: {
+						algorithm: 'm.pbkdf2',
+						salt: 'synthetic',
+						iterations: 500000,
+						bits: 256
+					}
+				});
+			}
+			const derive = vi
+				.spyOn(globalThis.crypto.subtle, 'deriveBits')
+				.mockResolvedValue(new Uint8Array(32).buffer);
+			vi.spyOn(first.secretStorage, 'checkKey').mockResolvedValue(false);
+			const update = vi.fn();
+			try {
+				if (operation === 'login')
+					expect(
+						await recoverWithLoginPassword(first, 'wrong')
+					).toEqual({ kind: 'retryable-failure' });
+				else
+					await expect(
+						changePasswordWithRecovery(
+							first,
+							'wrong',
+							'new',
+							update
+						)
+					).rejects.toBeInstanceOf(PasswordRecoveryWorkLimitError);
+				expect(
+					derive.mock.calls.filter(
+						([algorithm]) =>
+							typeof algorithm !== 'string' &&
+							algorithm.name === 'PBKDF2'
+					)
+				).toHaveLength(8);
+				expect(update).not.toHaveBeenCalled();
+				expect(
+					first.getCrypto().createRecoveryKeyFromPassphrase
+				).not.toHaveBeenCalled();
+			} finally {
+				derive.mockRestore();
+			}
+		}
+	);
+	it('shares the repair budget across all authenticated predecessor candidates', async () => {
+		const generated = await generate('correct');
+		const client = first;
+		for (let n = 0; n < 9; n++) {
+			const { keyId } = await client.secretStorage.addKey(
+				SECRET_STORAGE_ALGORITHM_V1_AES,
+				{ ...generated.keyInfo, key: generated.privateKey }
+			);
+			await withSecretStorageKeys(
+				client,
+				new Map([[keyId, generated.privateKey]]),
+				() =>
+					client.secretStorage.store(
+						`${PASSWORD_RECOVERY_CANDIDATE_PREFIX}${keyId}`,
+						JSON.stringify({
+							schemaVersion: 1,
+							matrixUserId: client.getUserId(),
+							recoveryKey: rootCode,
+							predecessorKeyIds: [],
+							replacesLegacyEnvelope: false,
+							policyRevision: 2
+						}),
+						[keyId]
+					)
+			);
+		}
+		const before = structuredClone([...server.data]);
+		const derive = vi.spyOn(globalThis.crypto.subtle, 'deriveBits');
+		try {
+			await expect(
+				enrollPasswordRecoveryAfterKeyRecovery(
+					first,
+					'correct',
+					rootCode,
+					2
+				)
+			).rejects.toBeInstanceOf(PasswordRecoveryWorkLimitError);
+			expect(
+				derive.mock.calls.filter(
+					([algorithm]) =>
+						typeof algorithm !== 'string' &&
+						algorithm.name === 'PBKDF2'
+				)
+			).toHaveLength(8);
+			expect([...server.data]).toEqual(before);
+			expect(
+				first.getCrypto().createRecoveryKeyFromPassphrase
+			).not.toHaveBeenCalled();
+		} finally {
+			derive.mockRestore();
+		}
+	});
+	it.each([6, 7, 8])(
+		'shares candidate and legacy work with generation and verification (%i candidates)',
+		async (count) => {
+			await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+			first.getCrypto().createRecoveryKeyFromPassphrase.mockClear();
+			for (let n = 0; n < count; n++) {
+				const id = `untrusted-${n}`;
+				server.data.set(`${PASSWORD_RECOVERY_CANDIDATE_PREFIX}${id}`, {
+					encrypted: { [id]: {} }
+				});
+				server.data.set(`m.secret_storage.key.${id}`, {
+					algorithm: SECRET_STORAGE_ALGORITHM_V1_AES,
+					passphrase: {
+						algorithm: 'm.pbkdf2',
+						salt: 'synthetic',
+						iterations: 500000,
+						bits: 256
+					}
+				});
+			}
+			const originalCheck = first.secretStorage.checkKey.bind(
+				first.secretStorage
+			);
+			vi.spyOn(first.secretStorage, 'checkKey').mockImplementation(
+				(key, info: any) =>
+					info.passphrase?.salt === 'synthetic'
+						? Promise.resolve(false)
+						: originalCheck(key, info)
+			);
+			const derive = vi.spyOn(globalThis.crypto.subtle, 'deriveBits');
+			const update = vi.fn();
+			try {
+				await expect(
+					changePasswordWithRecovery(first, 'correct', 'new', update)
+				).rejects.toBeInstanceOf(PasswordRecoveryWorkLimitError);
+				expect(
+					derive.mock.calls.filter(
+						([algorithm]) =>
+							typeof algorithm !== 'string' &&
+							algorithm.name === 'PBKDF2'
+					)
+				).toHaveLength(8);
+				expect(
+					first.getCrypto().createRecoveryKeyFromPassphrase
+				).toHaveBeenCalledTimes(count === 6 ? 1 : 0);
+				expect(update).not.toHaveBeenCalled();
+			} finally {
+				derive.mockRestore();
+			}
+		}
+	);
 	it('restores through an independent SDK instance and preserves the saved recovery key', async () => {
 		const root = await first.secretStorage.getDefaultKeyId();
 		const backup = structuredClone(server.data.get('m.megolm_backup.v1'));

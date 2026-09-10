@@ -49,3 +49,21 @@ it('responds to another tab parking a recovery key and removes its storage liste
 	);
 	expect(listener).toHaveBeenCalledOnce();
 });
+
+it.each([
+	null,
+	[],
+	2,
+	true,
+	'text',
+	{ sessionId: '12' },
+	{ sessionId: 12, dismissed: 'false' }
+])('ignores malformed stored reminder %j', (value) => {
+	sessionStorage.setItem(
+		'oriso.recoveryReminder.@a:test',
+		JSON.stringify(value)
+	);
+	expect(isRecoveryReminderEligible('@a:test')).toBe(false);
+	markEnquiryFinalized('@a:test', 12);
+	expect(isRecoveryReminderEligible('@a:test')).toBe(true);
+});
