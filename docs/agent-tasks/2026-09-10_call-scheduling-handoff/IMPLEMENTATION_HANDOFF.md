@@ -6,7 +6,7 @@ Frontend branch: `fix/call-lifecycle-complete`
 
 Target branch for later developer integration: `dev`
 
-UI implementation commit: `61e23dd5`
+UI implementation commits: `61e23dd5`, `0a0b9b91`
 
 Related UserService branch: `fix/call-lifecycle-notifications-730` at `0d55865b`
 
@@ -30,12 +30,19 @@ The Frontend branch now provides permanent Storybook approval surfaces and appli
 
 The latest dictated alignment rule is implemented: a received event places its CTA on the right; an event sent by the current user places its CTA on the left.
 
+Identity semantics are explicit:
+
+- appointment and call events name the authenticated human initiator;
+- `requested`, `scheduled`, `accepted`, and `declined` are shown as `Terminanfrage`, `Termin geplant`, `Termin bestätigt`, and `Termin abgelehnt`;
+- `Carimat` is reserved for events actually emitted by the platform assistant;
+- the assistant's visible name belongs to global platform configuration in the Admin Panel and must never be copied into appointment fixtures or used as a human sender placeholder.
+
 Permanent Storybook stories:
 
 - `Chat/Call event in the timeline/Alle vier Zustände`
 - `Chat/Call event in the timeline/Video und Audio · Mitglieder live und danach`
 - `Chat/Call event in the timeline/Geplant · mit Kalender-Menü`
-- `Chat/Scheduling system events/Alle Zustände · beide Richtungen`
+- `Chat/Scheduling system events/Alle Zustände · Ich und andere`
 - `Chat/Scheduling system events/Mobil`
 
 ## Existing runtime boundary
@@ -160,8 +167,9 @@ Apply tenant SMTP configuration, user notification preferences, appointment pref
 
 ## Current evidence boundary
 
-- Frontend UI source: implemented and committed on the branch named above.
+- Frontend UI source: implemented, committed, and pushed at `0a0b9b91` on the branch named above.
 - UserService lifecycle and notification source: committed on its own branch named above.
+- PreDev Storybook: exact Frontend image `call-lifecycle-complete-0a0b9b91` deployed and browser-verified at desktop and mobile sizes.
 - Production application integration: pending.
 - Database-backed occurrence-to-call correlation: specified here, not implemented.
 - Merged to `dev`: no.
