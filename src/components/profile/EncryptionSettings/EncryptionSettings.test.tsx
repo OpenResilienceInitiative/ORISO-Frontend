@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { PasswordRecoveryWorkLimitError } from '../../../services/matrixPasswordRecoveryService';
 import * as React from 'react';
 import {
 	cleanup,
@@ -15,12 +16,31 @@ import {
 	getPendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
+import {
+	setRecoveryRuntimeStatus,
+	clearRecoveryRuntimeState,
+	type RecoveryRuntimeStatus
+} from '../../../services/recoveryReminderState';
 import { EncryptionSettingsPanel } from './index';
+import { UserDataContext } from '../../../globalState';
 
 const setUpRecovery = vi.hoisted(() =>
 	vi.fn().mockResolvedValue('test-recovery-key')
 );
 const getEncryptionStatus = vi.hoisted(() => vi.fn());
+const enrollAfterRecovery = vi.hoisted(() => vi.fn());
+vi.mock(
+	'../../../services/matrixPasswordRecoveryService',
+	async (importOriginal) => ({
+		...(await importOriginal<
+			typeof import('../../../services/matrixPasswordRecoveryService')
+		>()),
+		enrollPasswordRecoveryAfterKeyRecovery: enrollAfterRecovery
+	})
+);
+vi.mock('../../../services/reauthenticateRecovery', () => ({
+	reauthenticateRecovery: vi.fn(async () => undefined)
+}));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -222,3 +242,151 @@ describe('EncryptionSettingsPanel', () => {
 		});
 	});
 });
+
+it('preserves password and OTP autofill and mismatch blocking with shared form controls', async () => {
+	const userId = '@form:test';
+	setRecoveryRuntimeStatus(userId, 'needs-password');
+	savePendingRecoveryKey(userId, 'synthetic-form-key');
+	getEncryptionStatus.mockResolvedValue(healthy);
+	render(
+		<UserDataContext.Provider
+			value={
+				{
+					userData: {
+						chatRecoveryMode: 'LOGIN_PASSWORD',
+						chatRecoveryPolicyRevision: 1,
+						twoFactorAuth: { isActive: true }
+					}
+				} as any
+			}
+		>
+			<EncryptionSettingsPanel
+				clientOverride={{ getUserId: () => userId } as MatrixClient}
+			/>
+		</UserDataContext.Provider>
+	);
+	const password = await screen.findByLabelText(
+		'encryption.passwordRecovery.loginPassword'
+	);
+	const repeat = screen.getByLabelText(
+		'encryption.passwordRecovery.repeatPassword'
+	);
+	const otp = screen.getByLabelText('encryption.passwordRecovery.otp');
+	expect(password.getAttribute('autocomplete')).toBe('current-password');
+	expect(otp.getAttribute('autocomplete')).toBe('one-time-code');
+	expect(otp.getAttribute('inputmode')).toBe('numeric');
+	const submit = screen.getByRole('button', {
+		name: 'encryption.passwordRecovery.enroll'
+	}) as HTMLButtonElement;
+	expect(submit.disabled).toBe(true);
+	fireEvent.change(password, { target: { value: 'synthetic-password' } });
+	expect(submit.disabled).toBe(true);
+	fireEvent.change(repeat, { target: { value: 'synthetic-password' } });
+	expect(submit.disabled).toBe(false);
+	const form = password.closest('form')!;
+	const requestSubmit = vi
+		.spyOn(form, 'requestSubmit')
+		.mockImplementation(() => {});
+	fireEvent.click(submit);
+	expect(requestSubmit).toHaveBeenCalledOnce();
+	requestSubmit.mockRestore();
+});
+
+afterEach(() => {
+	cleanup();
+	clearRecoveryRuntimeState();
+	localStorage.clear();
+});
+it.each([
+	'idle',
+	'pending',
+	'busy',
+	'needs-recovery-key',
+	'retryable-failure'
+] as RecoveryRuntimeStatus[])(
+	'shows the actual runtime status %s without a premature logout action',
+	async (status) => {
+		const userId = '@status:test';
+		getEncryptionStatus.mockResolvedValue(healthy);
+		setRecoveryRuntimeStatus(userId, status);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							chatRecoveryMode: 'LOGIN_PASSWORD',
+							chatRecoveryPolicyRevision: 1
+						}
+					} as any
+				}
+			>
+				<EncryptionSettingsPanel
+					clientOverride={{ getUserId: () => userId } as MatrixClient}
+				/>
+			</UserDataContext.Provider>
+		);
+		expect(
+			await screen.findByText('encryption.passwordRecovery.' + status)
+		).toBeTruthy();
+		if (['idle', 'pending', 'busy'].includes(status)) {
+			expect(
+				screen.queryByText('encryption.passwordRecovery.reauthenticate')
+			).toBeNull();
+			expect(
+				screen.queryByLabelText(
+					'encryption.passwordRecovery.loginPassword'
+				)
+			).toBeNull();
+		}
+	}
+);
+
+it.each(['busy', 'work-limit'])(
+	'reports enrollment %s without blaming the password or OTP',
+	async (kind) => {
+		const userId = '@enroll-busy:test';
+		setRecoveryRuntimeStatus(userId, 'needs-password');
+		savePendingRecoveryKey(userId, 'synthetic-key');
+		getEncryptionStatus.mockResolvedValue(healthy);
+		if (kind === 'busy') beginRecoverySetup(userId);
+		else
+			enrollAfterRecovery.mockRejectedValueOnce(
+				new PasswordRecoveryWorkLimitError()
+			);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							chatRecoveryMode: 'LOGIN_PASSWORD',
+							chatRecoveryPolicyRevision: 1
+						}
+					} as any
+				}
+			>
+				<EncryptionSettingsPanel
+					clientOverride={{ getUserId: () => userId } as MatrixClient}
+				/>
+			</UserDataContext.Provider>
+		);
+		const password = await screen.findByLabelText(
+			'encryption.passwordRecovery.loginPassword'
+		);
+		fireEvent.change(password, { target: { value: 'synthetic-password' } });
+		fireEvent.change(
+			screen.getByLabelText('encryption.passwordRecovery.repeatPassword'),
+			{ target: { value: 'synthetic-password' } }
+		);
+		fireEvent.submit(password.closest('form')!);
+		expect(
+			await screen.findByText(
+				kind === 'busy'
+					? 'profile.encryption.setup.busy'
+					: 'encryption.passwordRecovery.retryable-failure'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByText('encryption.passwordRecovery.enrollmentFailed')
+		).toBeNull();
+	}
+);

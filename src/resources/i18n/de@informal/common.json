@@ -2230,6 +2230,19 @@
 				"later": "Später",
 				"openVault": "Tresor öffnen"
 			}
+		},
+		"saveReminder": {
+			"pending": "Deine Anfrage wurde gesendet. Die Schlüsselsicherung wird noch eingerichtet.",
+			"unavailable": "Deine Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit."
+		},
+		"passwordRecovery": {
+			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Wiederherstellungsschlüssel ein.",
+			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Wiederherstellungsschlüssel.",
+			"retryable-failure": "Die Schlüsselsicherung konnte nicht abgeschlossen werden. Du kannst deine Anfrage trotzdem schreiben und die Sicherung in den Sicherheitseinstellungen erneut prüfen.",
+			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Wiederherstellungsschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
+			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
+			"enrollmentExplanation": "Schütze deinen vorhandenen Wiederherstellungsschlüssel zusätzlich mit deinem aktuellen Login-Passwort. Dein gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
 		}
 	},
 	"accountInvite": {

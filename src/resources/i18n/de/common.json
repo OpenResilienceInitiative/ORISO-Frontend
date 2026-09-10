@@ -4631,6 +4631,37 @@
 				"openVault": "Tresor öffnen",
 				"restoring": "Wird wiederhergestellt …"
 			}
+		},
+		"saveReminder": {
+			"title": "Wiederherstellungsschlüssel zusätzlich sichern",
+			"pending": "Ihre Anfrage wurde gesendet. Die Schlüsselsicherung wird noch eingerichtet.",
+			"unavailable": "Ihre Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit.",
+			"show": "Schlüssel anzeigen",
+			"later": "Später",
+			"confirm": "Ich habe den Schlüssel sicher gespeichert",
+			"retry": "Sicherung in den Sicherheitseinstellungen prüfen",
+			"busy": "Die Anfrage wurde erfolgreich gesendet. Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet."
+		},
+		"passwordRecovery": {
+			"ready": "Wiederherstellung mit dem Login-Passwort ist eingerichtet. Ein zusätzlich gespeicherter Schlüssel bleibt ebenfalls gültig.",
+			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Wiederherstellungsschlüssel ein.",
+			"needs-recovery-key": "Ihr bisheriger Verlauf benötigt auf diesem Gerät Ihren Wiederherstellungsschlüssel.",
+			"retryable-failure": "Die Schlüsselsicherung konnte nicht abgeschlossen werden. Sie können Ihre Anfrage trotzdem schreiben und die Sicherung in den Sicherheitseinstellungen erneut prüfen.",
+			"settings": "Sicherheitseinstellungen",
+			"reauthenticate": "Abmelden und erneut anmelden",
+			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfen Sie das alte Passwort und stellen Sie gegebenenfalls zuerst Ihren Gesprächsverlauf mit dem Wiederherstellungsschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
+			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfen Sie Passwort und gegebenenfalls Einmalcode und versuchen Sie es erneut.",
+			"enrollmentExplanation": "Schützen Sie Ihren vorhandenen Wiederherstellungsschlüssel zusätzlich mit Ihrem aktuellen Login-Passwort. Ihr gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"loginPassword": "Aktuelles Login-Passwort",
+			"repeatPassword": "Login-Passwort wiederholen",
+			"otp": "Einmalcode",
+			"enroll": "Passwort bestätigen und Wiederherstellung einrichten",
+			"deviceReady": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Ihr Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
+			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
+			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert."
 		}
 	},
 	"accountInvite": {

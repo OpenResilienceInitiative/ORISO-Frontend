@@ -13,6 +13,10 @@ import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getDeviceSigningAuth } from '../../services/matrixInteractiveAuth';
 
+vi.mock('../../services/matrixKeyBackupService', () => ({
+	secretStorageKeyCallback: vi.fn(async () => null)
+}));
+
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
 		matrixAccessToken: 'https://api.example.test/service/matrix/me/token'
@@ -245,7 +249,7 @@ describe('getMatrixAccessToken', () => {
 		expect([...storage.values()]).not.toContain('must-stay-in-memory');
 	});
 
-	it('creates a Matrix client from stored credentials', () => {
+	it('creates a Matrix client from stored credentials', async () => {
 		const client = createMatrixClient({
 			accessToken: 'matrix-token',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
@@ -253,6 +257,16 @@ describe('getMatrixAccessToken', () => {
 			uiaPassword: 'ephemeral-uia-password',
 			userId: '@consultant:matrix.example.test'
 		});
+
+		const callback = vi.mocked(createClient).mock.calls.at(-1)![0]
+			.cryptoCallbacks!.getSecretStorageKey!;
+		const sdkKeys = { keys: {} };
+		await callback(sdkKeys, 'synthetic-secret');
+		expect(secretStorageKeyCallback).toHaveBeenCalledWith(
+			client,
+			sdkKeys,
+			'synthetic-secret'
+		);
 
 		expect(createClient).toHaveBeenCalledWith({
 			baseUrl: 'https://matrix.example.test',
@@ -262,7 +276,7 @@ describe('getMatrixAccessToken', () => {
 			fallbackICEServerAllowed: true,
 			logger: getMatrixClientLogger(),
 			cryptoCallbacks: {
-				getSecretStorageKey: secretStorageKeyCallback
+				getSecretStorageKey: expect.any(Function)
 			}
 		});
 		expect(client).toEqual({
@@ -274,7 +288,7 @@ describe('getMatrixAccessToken', () => {
 				fallbackICEServerAllowed: true,
 				logger: getMatrixClientLogger(),
 				cryptoCallbacks: {
-					getSecretStorageKey: secretStorageKeyCallback
+					getSecretStorageKey: expect.any(Function)
 				}
 			}
 		});

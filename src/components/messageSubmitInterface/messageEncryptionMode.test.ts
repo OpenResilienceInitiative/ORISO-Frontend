@@ -282,3 +282,34 @@ describe('messageEncryptionMode', () => {
 		expect(values.size).toBe(0);
 	});
 });
+
+it('signals reminder eligibility only after backend finalization, including a successful retry', async () => {
+	const values = new Map<string, string>();
+	const storage = {
+		getItem: (key: string) => values.get(key) ?? null,
+		setItem: (key: string, value: string) => {
+			values.set(key, value);
+		},
+		removeItem: (key: string) => {
+			values.delete(key);
+		}
+	};
+	const finalized = vi.fn();
+	const send = vi.fn(async () => ({ event_id: '$synthetic' }));
+	const finalize = vi
+		.fn()
+		.mockRejectedValueOnce(new Error('offline'))
+		.mockResolvedValueOnce({ sessionId: 7 });
+	const input = {
+		sessionId: 7,
+		sendEncryptedMatrixMessage: send,
+		finalizeEnquiry: finalize,
+		onFinalized: finalized,
+		storage
+	};
+	await expect(sendEncryptedInitialEnquiry(input)).rejects.toThrow('offline');
+	expect(finalized).not.toHaveBeenCalled();
+	await sendEncryptedInitialEnquiry(input);
+	expect(finalized).toHaveBeenCalledOnce();
+	expect(send).toHaveBeenCalledOnce();
+});
