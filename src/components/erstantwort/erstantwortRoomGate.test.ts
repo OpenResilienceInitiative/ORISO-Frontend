@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Modality } from '../session/getModality';
-import { getErstantwortRenderMode } from './erstantwortRoomGate';
+import {
+	getErstantwortRenderMode,
+	getErstantwortRenderModeForSession
+} from './erstantwortRoomGate';
 
 describe('getErstantwortRenderMode', () => {
 	it('is none for anything that is not an Erstantwort event', () => {
@@ -33,5 +36,15 @@ describe('getErstantwortRenderMode', () => {
 
 	it('renders a neutral line when the room modality is unknown', () => {
 		expect(getErstantwortRenderMode(true, undefined)).toBe('unavailable');
+	});
+
+	it('keeps an unrecognized active-session modality unavailable when no legacy signal exists', () => {
+		expect(
+			getErstantwortRenderModeForSession(true, {
+				item: { conversationType: 'FUTURE_MODALITY' },
+				isGroup: false,
+				isSession: true
+			})
+		).toBe('unavailable');
 	});
 });

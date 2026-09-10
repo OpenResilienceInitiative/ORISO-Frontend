@@ -1,4 +1,8 @@
-import { Modality } from '../session/getModality';
+import {
+	getModalityIfKnown,
+	Modality,
+	type ModalityInput
+} from '../session/getModality';
 
 /**
  * How a recognised Erstantwort (`FIRST_RESPONSE`) event is drawn in a room.
@@ -35,3 +39,13 @@ export const getErstantwortRenderMode = (
 	}
 	return 'sequence';
 };
+
+/** Classifies the real session and the Erstantwort event as one decision. */
+export const getErstantwortRenderModeForSession = (
+	isErstantwortEvent: boolean,
+	session: ModalityInput | undefined
+): ErstantwortRenderMode =>
+	getErstantwortRenderMode(
+		isErstantwortEvent,
+		session ? getModalityIfKnown(session) : undefined
+	);
