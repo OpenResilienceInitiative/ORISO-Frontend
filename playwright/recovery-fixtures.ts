@@ -170,6 +170,181 @@ async function maskedScreenshot(page: Page, testInfo: TestInfo, name: string) {
 	await testInfo.attach(name, { path, contentType: 'image/png' });
 }
 
+export async function readHistoryGeometry(page: Page, messages: string[]) {
+	return page.evaluate((expected) => {
+		const container = document.querySelector('#session-scroll-container');
+		if (!container) return null;
+		const box = (element: Element) => {
+			const r = element.getBoundingClientRect();
+			return {
+				top: r.top,
+				bottom: r.bottom,
+				left: r.left,
+				right: r.right,
+				width: r.width,
+				height: r.height
+			};
+		};
+		return {
+			windowScroll: { x: scrollX, y: scrollY },
+			viewport: { width: innerWidth, height: innerHeight },
+			container: {
+				...box(container),
+				scrollTop: container.scrollTop,
+				clientHeight: container.clientHeight,
+				scrollHeight: container.scrollHeight
+			},
+			paragraphs: expected.map((text) => {
+				const element = [...container.querySelectorAll('p')].find(
+					(item) => item.textContent?.trim() === text
+				);
+				if (!element) return null;
+				const r = element.getBoundingClientRect();
+				const hit = document.elementFromPoint(
+					(r.left + r.right) / 2,
+					(r.top + r.bottom) / 2
+				);
+				return {
+					...box(element),
+					opacity: getComputedStyle(element).opacity,
+					centerHit: hit?.tagName || null,
+					centerUnobscured:
+						!!hit && (element === hit || element.contains(hit))
+				};
+			})
+		};
+	}, messages);
+}
+
+export async function positionHistoryForScreenshot(
+	page: Page,
+	messages: string[]
+) {
+	if (!messages.length) return;
+	const last = conversationMessage(page, messages[messages.length - 1]);
+	await last.evaluate((element) =>
+		element.scrollIntoView({
+			block: 'center',
+			inline: 'nearest',
+			behavior: 'instant'
+		})
+	);
+	await page
+		.locator('#session-scroll-container')
+		.evaluate((container, expected) => {
+			const bounds = container.getBoundingClientRect();
+			const paragraphs = expected.map((text) =>
+				[...container.querySelectorAll('p')].find(
+					(item) => item.textContent?.trim() === text
+				)
+			);
+			if (paragraphs.some((item) => !item)) return;
+			const rects = paragraphs.map((item) =>
+				item.getBoundingClientRect()
+			);
+			const contentCenter =
+				(Math.min(...rects.map((rect) => rect.top)) +
+					Math.max(...rects.map((rect) => rect.bottom))) /
+				2;
+			const visibleCenter =
+				(Math.max(0, bounds.top) +
+					Math.min(innerHeight, bounds.bottom)) /
+				2;
+			container.scrollTop += contentCenter - visibleCenter;
+		}, messages);
+	await expect
+		.poll(
+			async () =>
+				page
+					.locator('#session-scroll-container')
+					.evaluate((container, expected) => {
+						const bounds = container.getBoundingClientRect();
+						const top = Math.max(0, bounds.top);
+						const bottom = Math.min(innerHeight, bounds.bottom);
+						const left = Math.max(0, bounds.left);
+						const right = Math.min(innerWidth, bounds.right);
+						return expected.every((text) => {
+							const element = [
+								...container.querySelectorAll('p')
+							].find((item) => item.textContent?.trim() === text);
+							if (!element) return false;
+							const rect = element.getBoundingClientRect();
+							const center = document.elementFromPoint(
+								(rect.left + rect.right) / 2,
+								(rect.top + rect.bottom) / 2
+							);
+							return (
+								rect.width > 0 &&
+								rect.height > 0 &&
+								rect.top >= top &&
+								rect.bottom <= bottom &&
+								rect.left >= left &&
+								rect.right <= right &&
+								!!center &&
+								(element === center || element.contains(center))
+							);
+						});
+					}, messages),
+			{
+				message:
+					'Every captured history paragraph must fit inside the visible conversation viewport without an overlay'
+			}
+		)
+		.toBe(true);
+}
+
+async function captureReadableHistory(
+	page: Page,
+	testInfo: TestInfo,
+	label: string,
+	messages: string[]
+) {
+	if (!messages.length) {
+		await maskedScreenshot(page, testInfo, label);
+		return;
+	}
+	const geometry = await page
+		.locator('#session-scroll-container')
+		.evaluate((container, expected) => {
+			const bounds = container.getBoundingClientRect();
+			const rects = expected.map((text) =>
+				[...container.querySelectorAll('p')]
+					.find((item) => item.textContent?.trim() === text)
+					?.getBoundingClientRect()
+			);
+			if (rects.some((rect) => !rect)) return null;
+			return {
+				visibleHeight:
+					Math.min(innerHeight, bounds.bottom) -
+					Math.max(0, bounds.top),
+				combinedHeight:
+					Math.max(...rects.map((rect) => rect.bottom)) -
+					Math.min(...rects.map((rect) => rect.top))
+			};
+		}, messages);
+	expect(geometry).not.toBeNull();
+	if (geometry.combinedHeight <= geometry.visibleHeight) {
+		await positionHistoryForScreenshot(page, messages);
+		await maskedScreenshot(page, testInfo, label);
+	} else {
+		phase(
+			`History paragraphs need separate captures: ${JSON.stringify(geometry)}`
+		);
+		for (const [index, message] of messages.entries()) {
+			await positionHistoryForScreenshot(page, [message]);
+			await maskedScreenshot(
+				page,
+				testInfo,
+				`${label}-message-${index + 1}-${index === 0 ? 'asker' : 'consultant'}`
+			);
+		}
+		await testInfo.attach(`${label}-separate-capture-geometry`, {
+			body: JSON.stringify(geometry),
+			contentType: 'application/json'
+		});
+	}
+}
+
 export async function screenshots(
 	page: Page,
 	testInfo: TestInfo,
@@ -200,6 +375,7 @@ export async function screenshots(
 		try {
 			await page.setViewportSize({ width, height });
 			// The app chooses parts of its responsive layout during initialization.
+			await page.emulateMedia({ reducedMotion: 'reduce' });
 			await page.reload();
 			for (const message of messages) {
 				await expect(conversationMessage(page, message)).toBeVisible();
@@ -214,7 +390,12 @@ export async function screenshots(
 						heading.scrollIntoView({ block: 'start' })
 					);
 			}
-			await maskedScreenshot(page, testInfo, `${label}-${name}`);
+			await captureReadableHistory(
+				page,
+				testInfo,
+				`${label}-${name}`,
+				messages
+			);
 		} catch (failure) {
 			// Capture only known state and masked pixels; never a DOM snapshot or
 			// arbitrary body text, inputs, response bodies, query strings or fragments.
@@ -238,6 +419,7 @@ export async function screenshots(
 					encryptionStatusOK: await page
 						.locator('[data-cy="encryption-status-ok"]')
 						.count(),
+					historyGeometry: await readHistoryGeometry(page, messages),
 					priorMessageCounts: await Promise.all(
 						messages.map((message) =>
 							conversationMessage(page, message).count()
@@ -323,4 +505,95 @@ export async function passwordReady(page: Page) {
 		page.locator('[data-cy="encryption-status-ok"]')
 	).toBeVisible();
 	phase('Password recovery ready assertion completed');
+}
+
+export async function assertLoginRejected(
+	page: Page,
+	testInfo: TestInfo,
+	account: Pick<RecoveryActor, 'record' | 'username'>,
+	mode: 'wrong-password' | 'missing-and-wrong-otp'
+) {
+	page.setDefaultTimeout(30_000);
+	page.setDefaultNavigationTimeout(30_000);
+	let matrixStartupRequests = 0;
+	page.on('request', (request) => {
+		const path = new URL(request.url()).pathname;
+		if (
+			path.includes('/_matrix/client/') &&
+			/\/(sync|room_keys|account_data)(?:\/|$)/.test(path)
+		)
+			matrixStartupRequests++;
+	});
+	await page.goto(required('PLAYWRIGHT_BASE_URL'));
+	const tokenResponse = () =>
+		page.waitForResponse(
+			(response) =>
+				response.request().method() === 'POST' &&
+				new URL(response.url()).pathname.endsWith(
+					'/protocol/openid-connect/token'
+				),
+			{ timeout: 30_000 }
+		);
+	try {
+		let password: string | undefined = secret('get', account.record);
+		if (mode === 'wrong-password') password += '-deliberately-incorrect';
+		await page.locator('#passwordInput').fill(password);
+		password = undefined;
+		await page.locator('#username').fill(account.username);
+		await expect(page.locator('#username')).toHaveValue(account.username);
+		const submit = page.getByRole('button', {
+			name: /^(Anmelden|Sign in)$/
+		});
+		const [firstResponse] = await Promise.all([
+			tokenResponse(),
+			submit.click()
+		]);
+		phase(
+			`Negative gate first auth response status: ${firstResponse.status()}`
+		);
+		if (mode === 'wrong-password') {
+			expect([400, 401]).toContain(firstResponse.status());
+		} else {
+			expect(firstResponse.status()).toBe(400);
+			await expect(page.locator('#otp')).toBeVisible();
+			await expect(submit).toBeDisabled();
+			await expect(
+				page.getByRole('tab', { name: 'Mein Profil', exact: true })
+			).toHaveCount(0);
+			await maskedScreenshot(page, testInfo, 'missing-otp-blocked');
+			let currentCode: string | undefined = secret('otp', account.record);
+			// A single invalid submission, never a guessing/retry loop.
+			if (!/^\d{6}$/.test(currentCode))
+				throw new Error('OTP format unavailable');
+			let incorrectCode: string | undefined = String(
+				(Number(currentCode) + 1) % 1_000_000
+			).padStart(6, '0');
+			currentCode = undefined;
+			await page.locator('#otp').fill(incorrectCode);
+			incorrectCode = undefined;
+			const [rejection] = await Promise.all([
+				tokenResponse(),
+				submit.click()
+			]);
+			phase(
+				`Negative gate incorrect OTP response status: ${rejection.status()}`
+			);
+			expect([400, 401]).toContain(rejection.status());
+		}
+		await expect(submit).toBeEnabled();
+		expect(matrixStartupRequests).toBe(0);
+		await expect(page.locator('#username')).toBeVisible();
+		await expect(
+			page.getByRole('tab', { name: 'Mein Profil', exact: true })
+		).toHaveCount(0);
+		await expect(page.locator('#session-scroll-container')).toHaveCount(0);
+		await maskedScreenshot(page, testInfo, `${mode}-rejected`);
+		phase(
+			`${mode}: server rejected; authenticated navigation and conversation absent`
+		);
+	} catch {
+		throw new Error(
+			`Negative login gate failed (${mode}); credential diagnostics suppressed`
+		);
+	}
 }

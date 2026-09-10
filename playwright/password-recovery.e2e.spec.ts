@@ -1,6 +1,7 @@
 import { expect, test, BrowserContext, Page } from '@playwright/test';
 import {
 	actor,
+	assertLoginRejected,
 	conversationMessage,
 	login,
 	passwordReady,
@@ -314,5 +315,45 @@ test('fresh asker and consultant restore encrypted history with every original p
 		});
 	} finally {
 		await Promise.all([...contexts].map((context) => context.close()));
+	}
+});
+
+test('negative gate: wrong password cannot unlock asker history', async ({
+	browser
+}, testInfo) => {
+	const context = await browser.newContext({ locale: 'de-DE' });
+	try {
+		await assertLoginRejected(
+			await context.newPage(),
+			testInfo,
+			{
+				record: required('ORISO_RECOVERY_NEGATIVE_ASKER_RECORD'),
+				username: required('ORISO_RECOVERY_NEGATIVE_ASKER_USERNAME')
+			},
+			'wrong-password'
+		);
+	} finally {
+		await context.close();
+	}
+});
+
+test('negative gate: missing and wrong OTP cannot unlock consultant history', async ({
+	browser
+}, testInfo) => {
+	const context = await browser.newContext({ locale: 'de-DE' });
+	try {
+		await assertLoginRejected(
+			await context.newPage(),
+			testInfo,
+			{
+				record: required('ORISO_RECOVERY_NEGATIVE_CONSULTANT_RECORD'),
+				username: required(
+					'ORISO_RECOVERY_NEGATIVE_CONSULTANT_USERNAME'
+				)
+			},
+			'missing-and-wrong-otp'
+		);
+	} finally {
+		await context.close();
 	}
 });

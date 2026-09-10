@@ -75,18 +75,55 @@ npx playwright test --config playwright.recovery.config.ts
 ```
 
 The history test sends two new synthetic messages, observes encrypted Matrix
-send acknowledgements and key-backup PUT acknowledgements, and closes both
+send acknowledgements and matching room/session key-backup PUT acknowledgements,
+then closes both
 original contexts. Only then is a fresh asker context created. It logs in with
 password plus OTP and reads both messages. That context is closed before the
 fresh consultant is created and tested. No old test peer can supply keys. A
 backup ACK alone is not proof of a drained queue; successful offline history
 recovery is the decisive assertion.
 
-These two tests cover Admin save/reload/server readback and fresh-device history.
+The positive tests cover Admin save/reload/server readback and fresh-device history.
 They do **not** claim creation-time policy snapshots, initial registration/enquiry
-finalization timing, original recovery-key fallback, wrong OTP/password,
-password change/reset, legacy accounts, all conversation types, or physical
+finalization timing, original recovery-key fallback, password change/reset, legacy accounts, all conversation types, or physical
 iPhone/iPad acceptance. Those remain explicit separate acceptance cases in the
 approved plan and evidence ledger. A green harness is not the whole delivery
 gate. Review the masked screenshots before publishing them, restore any borrowed
 runtime overrides separately, and repeat against normal Dev after review/deploy.
+
+### Bounded negative login gate
+
+Run this separately from positive history flows, with all other sessions for the
+selected accounts closed. It makes one deliberately wrong password attempt on
+the asker and one deliberately wrong OTP attempt on the consultant; the initial
+correct-password/missing-OTP challenge must keep submission disabled. Do not use
+retries or run both engine projects repeatedly against the same identities.
+
+Provide `ORISO_RECOVERY_NEGATIVE_ASKER_RECORD`,
+`ORISO_RECOVERY_NEGATIVE_ASKER_USERNAME`,
+`ORISO_RECOVERY_NEGATIVE_CONSULTANT_RECORD`, and
+`ORISO_RECOVERY_NEGATIVE_CONSULTANT_USERNAME`, plus `PLAYWRIGHT_BASE_URL`.
+
+```sh
+npx playwright test --config playwright.recovery.config.ts \
+  --project chromium --grep 'negative gate:'
+```
+
+The gate requires an actual token rejection (400/401), the unauthenticated form,
+no authenticated profile/conversation, and no Matrix sync/key-backup/account-data
+startup requests. It captures only masked rejection screenshots. It does not
+assert tenant-specific error wording and never resets passwords or bypasses OTP.
+
+Screenshot acceptance checks actual paragraph geometry against the visible chat
+viewport and verifies the text is not covered by another element. The combined
+message bounds are centered when they fit; if measured height exceeds available
+space, separate asker/consultant message screenshots preserve both proofs. DOM
+visibility alone is insufficient. Both messages must still decrypt before any
+capture. No application CSS is modified.
+
+Current validation boundary (2026-09-10): the bounded Chromium negative gate
+and Chromium history/visible-screenshot gate passed on PreDev. WebKit history
+previously passed DOM checks, but its stricter mobile paragraph geometry gate
+currently fails; that visual acceptance remains open. A blank/clipped image must
+not be reported as visible history proof. See the delivery evidence for the
+exact candidate version and subsequent reruns.
