@@ -48,6 +48,7 @@ import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
 import { TeamDiscussionPanel } from '../teamDiscussion/TeamDiscussionPanel';
+import { apiGetTeamDiscussion } from '../../api/apiTeamDiscussion';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	chatTransportService,
@@ -129,6 +130,10 @@ export const SessionStream = ({
 	const [supervisionMessages, setSupervisionMessages] = useState<
 		MessageItem[]
 	>([]);
+	// Teamberatung (Frank, 09.09.; FE#514 / ADR-016): the second side room,
+	// loaded exactly like the supervision one — its own timeline, never
+	// merged into `messagesItem`, and never reachable by the advice seeker.
+	const [teamMessages, setTeamMessages] = useState<MessageItem[]>([]);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -208,6 +213,14 @@ export const SessionStream = ({
 		string | undefined
 	>(undefined);
 	const [hasSupervisionAccess, setHasSupervisionAccess] = useState(false);
+	/**
+	 * FE#514 / ADR-016: the Team-Besprechung room of this session. The
+	 * backend hands the id only to consultants of the enquiry's agency
+	 * (`TeamDiscussionFacade`: "Participation right = enquiry visibility
+	 * right"), and answers 204 while no room exists — so `undefined` here
+	 * means "no team channel", exactly as it does for supervision.
+	 */
+	const [teamRoomId, setTeamRoomId] = useState<string | undefined>(undefined);
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -343,6 +356,46 @@ export const SessionStream = ({
 		};
 	}, [activeSession.item?.id, userData]);
 
+	/**
+	 * FE#514 / ADR-016: resolve the Teamberatung room id. GET never creates
+	 * anything (204 → `null`), so this is a read the moment the session is
+	 * entered; POST — which lazily creates the room and joins the caller —
+	 * stays where it belongs, on the user's own act of opening the channel.
+	 * The tenant switch and the modality gate are the same ones the existing
+	 * Team-Besprechung panel uses, so both entry points agree on visibility.
+	 */
+	useEffect(() => {
+		let cancelled = false;
+		const sessionId = activeSession.item?.id;
+		setTeamRoomId(undefined);
+		const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+		if (
+			!featureTeamDiscussionEnabled ||
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+			activeSession.isGroup ||
+			getModality(activeSession) !== Modality.AGENCY_COUNSELLING ||
+			!sessionId
+		) {
+			return () => {
+				cancelled = true;
+			};
+		}
+		apiGetTeamDiscussion(sessionId)
+			.then((discussion) => {
+				if (!cancelled) {
+					setTeamRoomId(discussion?.matrixRoomId || undefined);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setTeamRoomId(undefined);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession, userData]);
+
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
@@ -418,10 +471,15 @@ export const SessionStream = ({
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
+				// The Teamberatung room, same treatment (FE#514 / ADR-016).
+				const teamEvents = teamRoomId
+					? loadRoomEvents(teamRoomId)
+					: [];
 				if (mayRequestHistoryKeys) {
 					[
 						[resolvedMatrixRoomId, clientEvents],
-						[supervisionRoomId, supervisionEvents]
+						[supervisionRoomId, supervisionEvents],
+						[teamRoomId, teamEvents]
 					].forEach(([roomId, events]) => {
 						if (
 							roomId &&
@@ -462,6 +520,19 @@ export const SessionStream = ({
 							)
 						: []
 				);
+				setTeamMessages(
+					teamRoomId
+						? prepareMessages(
+								applyMessageEdits(
+									formatRoomMessages(
+										teamEvents,
+										teamRoomId,
+										true
+									)
+								)
+							)
+						: []
+				);
 				setLoading(false);
 				return Promise.resolve(true);
 			}
@@ -470,6 +541,7 @@ export const SessionStream = ({
 			// an empty history instead of pulling messages from a removed backend.
 			setMessagesItem({ messages: [] });
 			setSupervisionMessages([]);
+			setTeamMessages([]);
 			setLoading(false);
 			return Promise.resolve(true);
 		},
@@ -479,6 +551,7 @@ export const SessionStream = ({
 			mayRequestHistoryKeys,
 			resolvedChatSession,
 			supervisionRoomId,
+			teamRoomId,
 			translate
 		]
 	);
@@ -488,9 +561,11 @@ export const SessionStream = ({
 		const onHistoryKeysImported = (rawEvent: Event) => {
 			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
 			if (
-				[resolvedChatSession.matrixRoomId, supervisionRoomId].includes(
-					importedRoomId
-				)
+				[
+					resolvedChatSession.matrixRoomId,
+					supervisionRoomId,
+					teamRoomId
+				].includes(importedRoomId)
 			) {
 				void fetchSessionMessagesRef.current(true);
 			}
@@ -507,7 +582,8 @@ export const SessionStream = ({
 	}, [
 		fetchSessionMessagesRef,
 		resolvedChatSession.matrixRoomId,
-		supervisionRoomId
+		supervisionRoomId,
+		teamRoomId
 	]);
 
 	const setSessionRead = useCallback(() => {
@@ -612,9 +688,11 @@ export const SessionStream = ({
 
 		// ADR-008: listen on the client room AND (for members) the supervision
 		// side room, so newly-sent asides appear live for authorized viewers.
-		const watchedRoomIds = supervisionRoomId
-			? [clientRoomId, supervisionRoomId]
-			: [clientRoomId];
+		const watchedRoomIds = [
+			clientRoomId,
+			supervisionRoomId,
+			teamRoomId
+		].filter(Boolean) as string[];
 		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
@@ -740,6 +818,7 @@ export const SessionStream = ({
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
+		teamRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
 		matrixClientGeneration,
@@ -1252,6 +1331,8 @@ export const SessionStream = ({
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
 				supervisionMessages={supervisionMessages}
+				teamMessages={teamMessages}
+				teamRoomId={teamRoomId}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

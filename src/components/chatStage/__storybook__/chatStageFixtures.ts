@@ -29,6 +29,16 @@ export const SUPERVISOR_NAME = 'Bettina B.';
 export const CLIENT_MATRIX_ID = '@sonnenblume_47:oriso.invalid';
 export const COUNSELLOR_MATRIX_ID = '@mona.s:oriso.invalid';
 export const SUPERVISOR_MATRIX_ID = '@bettina.b:oriso.invalid';
+/**
+ * Two more counsellors of the same agency. They are SILENT members of the
+ * session room (ADR-002) — invisible in the chat header and the supervision
+ * panel — but real, named members of the Teamberatung room. That contrast
+ * is what the team stories exist to show.
+ */
+export const TEAM_MATE_A_NAME = 'Jonas K.';
+export const TEAM_MATE_B_NAME = 'Aylin D.';
+export const TEAM_MATE_A_MATRIX_ID = '@jonas.k:oriso.invalid';
+export const TEAM_MATE_B_MATRIX_ID = '@aylin.d:oriso.invalid';
 
 export const COUNSELLOR_ID = 'consultant-storybook';
 export const SUPERVISOR_ID = 'consultant-bettina';
@@ -36,6 +46,8 @@ export const SUPERVISOR_ID = 'consultant-bettina';
 export const SYSTEM_MATRIX_ID = '@system:oriso.invalid';
 export const CLIENT_ROOM_ID = '!sonnenblume-4711:oriso.invalid';
 export const SUPERVISION_ROOM_ID = '!supervision-4711:oriso.invalid';
+/** FE#514 / ADR-016: the Teamberatung room of this enquiry. */
+export const TEAM_ROOM_ID = '!team-4711:oriso.invalid';
 export const SESSION_ID = 4711;
 
 /** The counsellor is the viewer in every stage story. */
@@ -180,6 +192,46 @@ export const supervisionMessages = (): MessageItem[] =>
 	]);
 
 /**
+ * The Teamberatung of this enquiry: colleagues deliberating BEFORE anyone
+ * accepts the case. The client's name never appears in here, and neither
+ * does the client.
+ */
+export const teamMessages = (): MessageItem[] =>
+	withDayPill([
+		message(
+			'$t1',
+			'counsellor',
+			'Neue Anfrage: Mahnbescheide, Kündigung der Wohnung droht. Ich bin mir bei der Zuständigkeit nicht sicher — Schuldnerberatung oder erst Wohnungsnotfallhilfe?',
+			'08:40',
+			TEAM_ROOM_ID
+		),
+		{
+			...message(
+				'$t2',
+				'counsellor',
+				'Ich würde da erst mal die Wohnsituation klären. Wenn die Kündigung schon raus ist, hat die Fachstelle Wohnen Vorrang, alles andere läuft parallel.',
+				'08:47',
+				TEAM_ROOM_ID
+			),
+			userId: TEAM_MATE_A_MATRIX_ID,
+			username: 'jonas.k',
+			displayName: TEAM_MATE_A_NAME
+		},
+		{
+			...message(
+				'$t3',
+				'counsellor',
+				'Sehe ich auch so. Ich habe nächste Woche noch zwei Termine frei, falls es schnell gehen muss.',
+				'08:52',
+				TEAM_ROOM_ID
+			),
+			userId: TEAM_MATE_B_MATRIX_ID,
+			username: 'aylin.d',
+			displayName: TEAM_MATE_B_NAME
+		}
+	]);
+
+/**
  * T7: the side room opens with a system notice ("Supervision durch …").
  * Rendered by the frontend for now; a server-sent `[SYSTEM_NOTIFICATION]`
  * event can replace it 1:1 (see `supervisionPanel/README.md`). T49: the
@@ -199,6 +251,26 @@ export const supervisionSystemNotice = (
 	});
 	return {
 		...message('$s0', 'counsellor', '', '09:11', SUPERVISION_ROOM_ID),
+		userId: SYSTEM_MATRIX_ID,
+		username: 'system',
+		displayName: 'system',
+		message: notice.message
+	};
+};
+
+/** The same builder, the same organism — only the room and the words differ. */
+export const teamSystemNotice = (
+	title: string,
+	description: string
+): MessageItem => {
+	const [notice] = buildSupervisionTimeline([], {
+		roomId: TEAM_ROOM_ID,
+		title,
+		description,
+		askerMatrixUserId: undefined
+	});
+	return {
+		...message('$t0', 'counsellor', '', '08:39', TEAM_ROOM_ID),
 		userId: SYSTEM_MATRIX_ID,
 		username: 'system',
 		displayName: 'system',
