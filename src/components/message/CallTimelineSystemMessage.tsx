@@ -61,9 +61,9 @@ const systemMessageColors = {
 } as const;
 
 /**
- * A call lifecycle entry rendered inside ORISO's canonical Carimat system
- * message. The shell, avatar and bubble geometry are shared with the existing
- * handover notices; only the call-specific content is MUI.
+ * A call lifecycle entry rendered inside ORISO's canonical chat system-message
+ * shell. The headline is always the real initiator; the configurable assistant
+ * name is reserved for events actually emitted by that assistant.
  */
 export const CallTimelineSystemMessage = ({
 	state,
@@ -104,9 +104,7 @@ export const CallTimelineSystemMessage = ({
 	return (
 		<ChatSystemMessageCard
 			title={headline}
-			subtitle={
-				actionSummaryLabel || `${callLabel} ${statusLabel}`
-			}
+			subtitle={actionSummaryLabel || `${callLabel} ${statusLabel}`}
 			side={side}
 			avatarIcon={<EventIcon data-testid="CallTimelineEventIcon" />}
 		>
@@ -201,9 +199,10 @@ export const CallTimelineSystemMessage = ({
 				{actionSlot && (
 					<Box
 						sx={{
-						alignSelf: side === 'sent' ? 'flex-start' : 'flex-end',
-						maxWidth: '100%'
-					}}
+							alignSelf:
+								side === 'sent' ? 'flex-start' : 'flex-end',
+							maxWidth: '100%'
+						}}
 					>
 						{actionSlot}
 					</Box>
@@ -236,7 +235,11 @@ export const CallTimelineSystemMessage = ({
 							},
 							'& .MuiButton-startIcon svg': {
 								width: 20,
-								height: 20
+								height: 20,
+								color: 'inherit'
+							},
+							'& .MuiButton-startIcon svg path': {
+								fill: 'currentColor'
 							}
 						}}
 					>

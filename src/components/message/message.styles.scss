@@ -1875,6 +1875,14 @@ $message-avatar-overlap: -19px;
 		translate: none;
 	}
 
+	// Figma 7607:43459 / 336:12225: received event symbols begin above the
+	// first text baseline. Lift only semantic appointment/call events; the bot
+	// assistant keeps the unclipped standalone placement above.
+	&.messageItem--eventSystemMessage:not(.messageItem--right)
+		.messageItem__sideColumnGroup--left {
+		translate: 0 -12px;
+	}
+
 	.messageItem__sideColumnGroup--right {
 		translate: none;
 	}

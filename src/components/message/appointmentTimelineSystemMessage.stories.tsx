@@ -60,9 +60,9 @@ const AllExamples = () => (
 		<Example label="Jemand anderes · Terminanfrage">
 			<AppointmentTimelineSystemMessage
 				state="requested"
-				initiatorName="Carimat"
-				actionSummaryLabel="Videoanruf Terminanfrage beantworten"
-				description="Carimat schlägt Donnerstag, 10. September um 18:00 Uhr vor."
+				initiatorName="Beraterin Lea"
+				actionSummaryLabel="Videoanruf · Terminanfrage"
+				description="Beraterin Lea schlägt Donnerstag, 10. September um 18:00 Uhr vor."
 				scheduledForLabel="Do., 10. September · 18:00 Uhr"
 				actionLabel="Anfrage beantworten"
 				onAction={onAction}
@@ -73,7 +73,7 @@ const AllExamples = () => (
 				state="requested"
 				side="sent"
 				initiatorName="Sanftes Alpaka Kim"
-				actionSummaryLabel="Videoanruf Terminanfrage gesendet"
+				actionSummaryLabel="Videoanruf · Terminanfrage gesendet"
 				description="Die Anfrage wartet auf eine Antwort."
 				scheduledForLabel="Do., 10. September · 18:00 Uhr"
 				actionLabel="Anfrage ansehen"
@@ -83,8 +83,8 @@ const AllExamples = () => (
 		<Example label="Termin geplant · Kalender">
 			<AppointmentTimelineSystemMessage
 				state="scheduled"
-				initiatorName="Carimat"
-				actionSummaryLabel="Videoanruf Termin eintragen"
+				initiatorName="Beraterin Lea"
+				actionSummaryLabel="Videoanruf · Termin geplant"
 				description="Der Termin dauert 60 Minuten."
 				scheduledForLabel="Do., 10. September · 18:00 Uhr"
 				actionSlot={
@@ -96,21 +96,21 @@ const AllExamples = () => (
 				}
 			/>
 		</Example>
-		<Example label="Terminanfrage angenommen">
+		<Example label="Termin bestätigt">
 			<AppointmentTimelineSystemMessage
 				state="accepted"
 				side="sent"
 				initiatorName="Sanftes Alpaka Kim"
-				actionSummaryLabel="Videoanruf Terminanfrage angenommen"
+				actionSummaryLabel="Videoanruf · Termin bestätigt"
 				description="Der Termin wurde bestätigt."
 				scheduledForLabel="Do., 10. September · 18:00 Uhr"
 			/>
 		</Example>
-		<Example label="Terminanfrage abgelehnt">
+		<Example label="Termin abgelehnt">
 			<AppointmentTimelineSystemMessage
 				state="declined"
-				initiatorName="Carimat"
-				actionSummaryLabel="Videoanruf Terminanfrage abgelehnt"
+				initiatorName="Beraterin Lea"
+				actionSummaryLabel="Videoanruf · Termin abgelehnt"
 				description="Der vorgeschlagene Termin wurde abgelehnt."
 			/>
 		</Example>

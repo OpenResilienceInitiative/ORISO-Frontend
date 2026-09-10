@@ -99,9 +99,17 @@ export const AppointmentTimelineSystemMessage = ({
 							'textTransform': 'none',
 							'fontWeight': 600,
 							'backgroundColor': 'var(--m3-primary, #a5000a)',
+							'color': 'var(--m3-on-secondary, #ffffff)',
+							'&:hover': {
+								backgroundColor: 'var(--m3-primary, #a5000a)'
+							},
 							'& .MuiButton-startIcon svg': {
 								width: 20,
-								height: 20
+								height: 20,
+								color: 'inherit'
+							},
+							'& .MuiButton-startIcon svg path': {
+								fill: 'currentColor'
 							}
 						}}
 					>

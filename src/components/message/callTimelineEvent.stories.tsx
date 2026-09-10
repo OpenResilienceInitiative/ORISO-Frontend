@@ -46,9 +46,9 @@ const callMembers = [
 		displayName: 'Ruhiger Wolf'
 	},
 	{
-		userId: '@beraterin-carimat:oriso.org',
-		username: 'beraterin_carimat',
-		displayName: 'Beraterin Carimat'
+		userId: '@beraterin-lea:oriso.org',
+		username: 'beraterin_lea',
+		displayName: 'Beraterin Lea'
 	}
 ] as const;
 const scheduledStart = new Date('2026-09-10T16:00:00.000Z');
@@ -134,7 +134,7 @@ export const AllFourStates: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Läuft"
 					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -164,7 +164,7 @@ export const AllFourStates: StoryObj = {
 					state="ended"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Beendet"
 					actionSummaryLabel="Videoanruf beendet"
 					durationLabel="Dauer 29 Min."
@@ -194,7 +194,7 @@ export const RunningJoinable: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Läuft"
 					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -265,7 +265,7 @@ export const Mobile: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Läuft"
 					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -321,7 +321,7 @@ export const VideoAndAudio: StoryObj = {
 					state="running"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Läuft"
 					actionSummaryLabel="Videoanruf beitreten"
 					description="Sie können jetzt an der Videokonferenz teilnehmen."
@@ -336,7 +336,7 @@ export const VideoAndAudio: StoryObj = {
 					state="running"
 					callType="audio"
 					callLabel="Audioanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Läuft"
 					actionSummaryLabel="Audioanruf beitreten"
 					description="Sie können jetzt am Audioanruf teilnehmen."
@@ -397,7 +397,7 @@ export const ScheduledWithCalendar: StoryObj = {
 					state="scheduled"
 					callType="video"
 					callLabel="Videoanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Geplant"
 					actionSummaryLabel="Videoanruf Termin eintragen"
 					scheduledForLabel="Do., 10. September · 18:00 Uhr"
@@ -416,7 +416,7 @@ export const ScheduledWithCalendar: StoryObj = {
 					state="scheduled"
 					callType="audio"
 					callLabel="Audioanruf"
-					headline="Beraterin Carimat"
+					headline="Beraterin Lea"
 					statusLabel="Geplant"
 					actionSummaryLabel="Audioanruf Termin eintragen"
 					scheduledForLabel="Fr., 11. September · 10:30 Uhr"

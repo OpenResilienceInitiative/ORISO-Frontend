@@ -21,8 +21,10 @@ export interface ChatSystemMessageCardProps {
 }
 
 /**
- * Stand-alone Carimat system message for surfaces outside MessageItemComponent.
- * It deliberately reuses the ordinary incoming message anatomy and M3 roles.
+ * Stand-alone system message for surfaces outside MessageItemComponent.
+ * It reuses ordinary chat anatomy and M3 roles. The fallback robot belongs to
+ * the configured platform assistant; event callers provide a semantic icon
+ * and the real initiator name.
  */
 export const ChatSystemMessageCard = ({
 	title,
@@ -75,8 +77,8 @@ export const ChatSystemMessageCard = ({
 	return (
 		<div
 			className={`messageItem messageItem--caseHandoverNotice ${
-				isSent ? 'messageItem--right' : ''
-			}`}
+				avatarIcon ? 'messageItem--eventSystemMessage ' : ''
+			}${isSent ? 'messageItem--right' : ''}`}
 			data-cy={dataCy}
 		>
 			<div

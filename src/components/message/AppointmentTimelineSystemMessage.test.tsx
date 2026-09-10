@@ -13,12 +13,14 @@ describe('AppointmentTimelineSystemMessage', () => {
 			render(
 				<AppointmentTimelineSystemMessage
 					state={state}
-					initiatorName="Carimat"
+					initiatorName="Beraterin Lea"
 					actionSummaryLabel="Videoanruf Termin eintragen"
 					description="Terminstatus"
 				/>
 			);
-			expect(screen.getByTestId(`appointment-${state}-icon`)).toBeTruthy();
+			expect(
+				screen.getByTestId(`appointment-${state}-icon`)
+			).toBeTruthy();
 		}
 	);
 
@@ -30,13 +32,15 @@ describe('AppointmentTimelineSystemMessage', () => {
 				side="sent"
 				initiatorName="Sanftes Alpaka Kim"
 				actionSummaryLabel="Terminanfrage gesendet"
-				description="Carimat kann den Termin annehmen."
+				description="Beraterin Lea kann den Termin annehmen."
 				actionLabel="Anfrage ansehen"
 				onAction={onAction}
 			/>
 		);
 		expect(container.querySelector('.messageItem--right')).toBeTruthy();
-		fireEvent.click(screen.getByRole('button', { name: 'Anfrage ansehen' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ansehen' })
+		);
 		expect(onAction).toHaveBeenCalledTimes(1);
 	});
 });
