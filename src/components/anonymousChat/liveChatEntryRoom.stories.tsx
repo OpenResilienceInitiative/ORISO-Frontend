@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { renderToString } from 'react-dom/server';
+import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
@@ -15,6 +17,7 @@ import type { GuestName } from './entryRoom/LiveChatEntryRoom';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { LiveChatWaitingRoom } from './entryRoom/LiveChatWaitingRoom';
 import { LiveChatClosed } from './entryRoom/LiveChatClosed';
+import LegalLinks from '../legalLinks/LegalLinks';
 import { phone375Globals } from '../message/messageStoryShell';
 
 /**
@@ -48,34 +51,51 @@ const legalLinks: TProvidedLegalLink[] = [
 		getUrl: () => 'https://oriso.example/impressum'
 	} as TProvidedLegalLink
 ];
-const CONSENT_HTML =
-	'Ich habe die <a href="https://oriso.example/datenschutz" target="_blank" rel="noreferrer">Datenschutzerklärung</a> und das <a href="https://oriso.example/impressum">Impressum</a> zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies.';
+/* The same sentence the room builds, read from the catalogue instead of a
+   German literal — a story opened in English has to read English, because
+   this is the text the guest consents to. */
+const useConsentHtml = () => {
+	const { t } = useTranslation();
+	return t('anonymousConsent.label.text', {
+		interpolation: { escapeValue: false },
+		legal_links: renderToString(
+			<LegalLinks
+				legalLinks={legalLinks}
+				filter={(l) => l.registration}
+				delimiter={', '}
+			/>
+		)
+	});
+};
 
 const Shell = ({
-	status,
+	statusKey,
 	children
 }: {
-	status: string;
+	statusKey: string;
 	children: React.ReactNode;
-}) => (
-	<GlobalComponentContext.Provider value={{ Stage } as never}>
-		<LegalLinksContext.Provider value={legalLinks}>
-			<AgencySpecificContext.Provider
-				value={{
-					specificAgency: null,
-					setSpecificAgency: () => undefined
-				}}
-			>
-				<EntryRoomShell
-					kicker="Live-Chat · Schulden"
-					statusLine={status}
+}) => {
+	const { t } = useTranslation();
+	return (
+		<GlobalComponentContext.Provider value={{ Stage } as never}>
+			<LegalLinksContext.Provider value={legalLinks}>
+				<AgencySpecificContext.Provider
+					value={{
+						specificAgency: null,
+						setSpecificAgency: () => undefined
+					}}
 				>
-					{children}
-				</EntryRoomShell>
-			</AgencySpecificContext.Provider>
-		</LegalLinksContext.Provider>
-	</GlobalComponentContext.Provider>
-);
+					<EntryRoomShell
+						kicker={`${t('liveChat.entry.kicker')} · Schulden`}
+						statusLine={t(statusKey)}
+					>
+						{children}
+					</EntryRoomShell>
+				</AgencySpecificContext.Provider>
+			</LegalLinksContext.Provider>
+		</GlobalComponentContext.Provider>
+	);
+};
 
 /* Same rule as the room: four offers, no double User-ID in the set. */
 const rollFour = (): GuestName[] => {
@@ -95,7 +115,7 @@ const Access = () => {
 	const [names, setNames] = React.useState(rollFour);
 	const [selected, setSelected] = React.useState(0);
 	return (
-		<Shell status="Ihr Zugang für dieses Gespräch">
+		<Shell statusKey="liveChat.entry.status.access">
 			<LiveChatAccess
 				names={names}
 				selectedIndex={selected}
@@ -117,27 +137,30 @@ const Waiting = ({
 	accepted?: boolean;
 	companionStart?: boolean;
 	ahead?: number;
-}) => (
-	<Shell
-		status={
-			accepted
-				? 'Eine Beraterin hat Ihr Gespräch angenommen'
-				: 'Warteraum — freie Beraterin wird gesucht'
-		}
-	>
-		<LiveChatWaitingRoom
-			ahead={ahead}
-			accepted={accepted}
-			consentHtml={CONSENT_HTML}
-			companionStart={companionStart}
-			onAccept={() => undefined}
-			onLeave={() => undefined}
-			onMailCounselling={() => undefined}
-		/>
-	</Shell>
-);
+}) => {
+	const consentHtml = useConsentHtml();
+	return (
+		<Shell
+			statusKey={
+				accepted
+					? 'liveChat.entry.status.accepted'
+					: 'liveChat.entry.status.waiting'
+			}
+		>
+			<LiveChatWaitingRoom
+				ahead={ahead}
+				accepted={accepted}
+				consentHtml={consentHtml}
+				companionStart={companionStart}
+				onAccept={() => undefined}
+				onLeave={() => undefined}
+				onMailCounselling={() => undefined}
+			/>
+		</Shell>
+	);
+};
 const Closed = () => (
-	<Shell status="Gerade geschlossen">
+	<Shell statusKey="liveChat.entry.status.closed">
 		<LiveChatClosed
 			onMailCounselling={() => undefined}
 			onLater={() => undefined}
