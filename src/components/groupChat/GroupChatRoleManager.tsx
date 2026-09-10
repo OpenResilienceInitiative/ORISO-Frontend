@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Alert, Box, Button, Chip, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import {
 	apiChangeGroupChatParticipantRole,
@@ -114,8 +115,10 @@ export const GroupChatRoleManager = ({
 	}
 
 	return (
-		<div className="groupChatInfo__roles">
-			<h4>{translate('groupChat.roles.headline')}</h4>
+		<Box sx={{ display: 'grid', gap: 2 }}>
+			<Typography component="h3" variant="subtitle1">
+				{translate('groupChat.roles.headline')}
+			</Typography>
 			{items.map((participant) => {
 				const isSelf = participant.consultantId === currentUserId;
 				const canManageParticipant =
@@ -125,18 +128,43 @@ export const GroupChatRoleManager = ({
 				const canEditRole = canManageParticipant;
 				const canRemove = canManageParticipant;
 				return (
-					<div
-						className="groupChatInfo__roleRow"
+					<Box
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							alignItems: 'center',
+							gap: 1.5,
+							py: 1.5,
+							borderBottom: '1px solid',
+							borderColor: 'divider'
+						}}
 						key={participant.consultantId}
 					>
-						<span>{participant.displayName}</span>
+						<Typography
+							sx={{ flex: '1 1 120px', overflowWrap: 'anywhere' }}
+						>
+							{participant.displayName}
+						</Typography>
 						{canEditRole ? (
 							<>
-								<select
-									aria-label={translate(
-										'groupChat.roles.roleLabel',
-										{ name: participant.displayName }
-									)}
+								<TextField
+									select
+									size="small"
+									sx={{
+										'minWidth': 0,
+										'maxWidth': '100%',
+										'flex': '1 1 180px',
+										'& .MuiInputBase-root': {
+											minHeight: 44
+										}
+									}}
+									SelectProps={{ native: true }}
+									inputProps={{
+										'aria-label': translate(
+											'groupChat.roles.roleLabel',
+											{ name: participant.displayName }
+										)
+									}}
 									value={participant.role}
 									disabled={pendingId !== null}
 									onChange={(event) =>
@@ -154,17 +182,27 @@ export const GroupChatRoleManager = ({
 											)}
 										</option>
 									))}
-								</select>
+								</TextField>
 							</>
 						) : (
-							<span>
-								{translate(
+							<Chip
+								size="small"
+								label={translate(
 									`groupChat.roles.${participant.role}`
 								)}
-							</span>
+							/>
 						)}
 						{currentUserIsOwner && !isSelf && (
-							<button
+							<Button
+								variant="text"
+								sx={{
+									textTransform: 'none',
+									minHeight: 44,
+									whiteSpace: 'normal',
+									lineHeight: 1.4,
+									maxWidth: '100%'
+								}}
+								size="small"
 								type="button"
 								disabled={pendingId !== null}
 								onClick={() =>
@@ -178,10 +216,19 @@ export const GroupChatRoleManager = ({
 								)}
 							>
 								{translate('groupChat.roles.transfer')}
-							</button>
+							</Button>
 						)}
 						{canRemove && (
-							<button
+							<Button
+								variant="text"
+								sx={{
+									textTransform: 'none',
+									minHeight: 44,
+									whiteSpace: 'normal',
+									lineHeight: 1.4,
+									maxWidth: '100%'
+								}}
+								size="small"
 								type="button"
 								disabled={pendingId !== null}
 								onClick={() =>
@@ -194,14 +241,16 @@ export const GroupChatRoleManager = ({
 								)} ${participant.displayName}`}
 							>
 								{translate('groupChat.roles.remove')}
-							</button>
+							</Button>
 						)}
-					</div>
+					</Box>
 				);
 			})}
 			{error && (
-				<p role="alert">{translate(`groupChat.roles.${error}Error`)}</p>
+				<Alert severity="error">
+					{translate(`groupChat.roles.${error}Error`)}
+				</Alert>
 			)}
-		</div>
+		</Box>
 	);
 };

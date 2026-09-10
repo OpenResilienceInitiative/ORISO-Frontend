@@ -131,6 +131,12 @@ describe('classifyAudienceKind', () => {
 		);
 	});
 
+	it('can classify unknown self-help room members as askers', () => {
+		expect(classifyAudienceKind('@joined-asker:x', roster, 'asker')).toBe(
+			'asker'
+		);
+	});
+
 	it('recognises a supervisor', () => {
 		expect(classifyAudienceKind('@moderator7:oriso.org', roster)).toBe(
 			'supervisor'

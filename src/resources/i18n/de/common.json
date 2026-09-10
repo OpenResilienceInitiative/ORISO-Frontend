@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menüdarstellung",
+		"label": "Schleier und sanfte Menüanimationen",
+		"description": "Hellt den Hintergrund geöffneter Chatmenüs auf und blendet das Menü mit einer dezenten Bewegung ein. Bei reduzierter Bewegung wird nicht animiert.",
+		"scope": "Gilt für dieses Konto in diesem Browser. Standardmäßig eingeschaltet."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Ratsuchende über meine Abwesenheit informieren"
@@ -320,7 +326,7 @@
 		"dearchiveDescription": "Chat aus dem Archiv wiederherstellen.",
 		"editGroupChat": "Chat-Einstellungen",
 		"editGroupChatDescription": "Thema, Zeitplan und Moderation dieses Chats ändern.",
-		"groupChatInfo": "Chat-Info",
+		"groupChatInfo": "Informationen & Einstellungen",
 		"imprint": "Impressum",
 		"leaveGroupChat": "Chat verlassen",
 		"mute": "Stummschalten",
@@ -650,7 +656,12 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender"
+			"addShort": "Kalender",
+			"copyGoogle": "Google-Kalenderlink kopieren",
+			"copyOutlook": "Outlook-Kalenderlink kopieren",
+			"linkCopied": "Kalenderlink kopiert.",
+			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -915,6 +926,19 @@
 					}
 				},
 				"upcoming": "Nächste Termine"
+			},
+			"dialog": {
+				"circleTitle": "Gesprächskreis – Informationen & Einstellungen",
+				"circleOwnerDescription": "Als verantwortliche Person verwalten Sie hier Teilnehmende und Teamrollen Ihres Gesprächskreises. Gruppenangaben können Sie über „Bearbeiten“ ändern, solange die Gruppe nicht aktiv ist. Andere Teilnehmende können die Angaben ansehen, aber keine Teamrollen oder Gruppeneinstellungen ändern.",
+				"circleDescription": "Hier sehen Sie, wer teilnimmt und wann Ihr Gesprächskreis stattfindet. Teilen Sie die Einladung oder übernehmen Sie den Termin in Ihren Kalender.",
+				"teamTitle": "Interne Gruppe – Informationen & Einstellungen",
+				"teamOwnerDescription": "Als verantwortliche Person verwalten Sie hier Mitglieder und Teamrollen Ihrer internen Gruppe. Gruppenangaben können Sie über „Bearbeiten“ ändern, solange die Gruppe nicht aktiv ist. Andere Mitglieder können die Angaben ansehen, aber keine Teamrollen oder Gruppeneinstellungen ändern.",
+				"teamDescription": "Hier finden Sie die Mitglieder und Angaben zu Ihrer internen Gruppe sowie die Rollen im Beratungsteam.",
+				"rolesHint": "Nur die verantwortliche Person kann Teamrollen ändern, die Verantwortung übertragen oder Personen aus der Gruppe entfernen.",
+				"detailsTitle": "Angaben zur Gruppe",
+				"editableSettings": "Diese Angaben werden hier angezeigt. Über „Bearbeiten“ öffnen Sie die Einstellungen und können die verfügbaren Felder ändern.",
+				"activeSettings": "Während die Gruppe aktiv ist, können diese Angaben nicht bearbeitet werden. Die Rollenverwaltung bleibt für die verantwortliche Person verfügbar.",
+				"readOnlySettings": "Diese Angaben können hier nur gelesen werden. Die verantwortliche Person kann sie bearbeiten, solange die Gruppe nicht aktiv ist."
 			}
 		},
 		"join": {

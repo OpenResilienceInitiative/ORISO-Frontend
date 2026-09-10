@@ -52,9 +52,12 @@ export const useMatrixRoomUsers = (): {
 		let cancelled = false;
 		let retryTimer: number | null = null;
 		let detachMembersListener: (() => void) | null = null;
+		let refreshPromise: Promise<boolean> | null = null;
 
 		const refreshMembers = () => {
-			chatTransportService
+			if (refreshPromise) return refreshPromise;
+
+			refreshPromise = chatTransportService
 				.loadMatrixRoomMembers(matrixRoomId)
 				.then((members) => {
 					if (!cancelled) {
@@ -63,7 +66,13 @@ export const useMatrixRoomUsers = (): {
 				})
 				.catch(() => {
 					// keep the previous member state on transient errors
+				})
+				.then(() => chatTransportService.hasMatrixRoom(matrixRoomId))
+				.finally(() => {
+					refreshPromise = null;
 				});
+
+			return refreshPromise;
 		};
 
 		const attachMembersListener = () => {
@@ -75,20 +84,19 @@ export const useMatrixRoomUsers = (): {
 		};
 
 		refreshMembers();
+		attachMembersListener();
 
-		// The Matrix client may not be initialized yet (e.g. right after
-		// login) — retry until it is, then re-read the members once.
-		if (!attachMembersListener()) {
-			retryTimer = window.setInterval(() => {
-				if (attachMembersListener()) {
-					if (retryTimer) {
-						window.clearInterval(retryTimer);
-						retryTimer = null;
-					}
-					refreshMembers();
-				}
-			}, 500);
-		}
+		// The Matrix client can exist before this room has reached its local
+		// sync store. Keep retrying until both the listener and the room are
+		// available; otherwise the first empty read remains on screen forever.
+		retryTimer = window.setInterval(async () => {
+			if (!detachMembersListener) attachMembersListener();
+			const roomAvailable = await refreshMembers();
+			if (detachMembersListener && roomAvailable && retryTimer) {
+				window.clearInterval(retryTimer);
+				retryTimer = null;
+			}
+		}, 500);
 
 		return () => {
 			cancelled = true;

@@ -1197,10 +1197,9 @@
 		"sourcePath": "src/resources/img/icons/arrow-left.svg",
 		"exportNames": ["BackIcon"],
 		"usageFiles": [
-			"src/components/askerInfo/AskerInfo.tsx",
+			"src/components/askerInfo/AskerInfoFooter.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/groupChat/GroupChatInfo.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
@@ -1219,7 +1218,10 @@
 		"fileName": "arrow-right-m3.svg",
 		"sourcePath": "src/resources/img/icons/arrow-right-m3.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
+		"usageFiles": [
+			"src/components/askerInfo/AskerInfoFooter.tsx",
+			"src/components/pseudonym/WaitingQueueActionBar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1338,8 +1340,8 @@
 		"fileName": "breath-level-emojis.svg",
 		"sourcePath": "src/resources/img/icons/breath-level-emojis.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/session/SessionItemComponent.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:caldav:base",
@@ -1496,6 +1498,7 @@
 		"usageFiles": [
 			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2093,6 +2096,7 @@
 		"exportNames": ["CopyIcon"],
 		"usageFiles": [
 			"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/groupChat/GroupChatCopyLinks.tsx",
 			"src/components/help/HelpVideoCall.tsx",
 			"src/components/profile/ConsultantAgencies.tsx",
@@ -2126,6 +2130,7 @@
 		"exportNames": ["DownloadIcon"],
 		"usageFiles": [
 			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2345,6 +2350,7 @@
 		"sourcePath": "src/resources/img/icons/googlecalendar.svg",
 		"exportNames": ["GoogleCalendar"],
 		"usageFiles": [
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2985,6 +2991,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:outlook-calendar:base",
+		"family": "outlook-calendar",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "outlook-calendar.svg",
+		"sourcePath": "src/resources/img/icons/outlook-calendar.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/groupChat/GroupChatCalendarMenu.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:overview:filled",
 		"family": "overview",
 		"state": "filled",
@@ -3136,7 +3155,8 @@
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx"
+			"src/components/sessionHeader/MemberAvatarStack.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3520,7 +3540,6 @@
 		"sourcePath": "src/resources/img/icons/speech-bubble.svg",
 		"exportNames": ["GroupChatIcon", "SpeechBubbleIcon"],
 		"usageFiles": [
-			"src/components/groupChat/GroupChatInfo.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
@@ -3540,10 +3559,7 @@
 		"fileName": "stack-horizontal.svg",
 		"sourcePath": "src/resources/img/icons/stack-horizontal.svg",
 		"exportNames": ["MenuHorizontalIcon"],
-		"usageFiles": [
-			"src/components/flyoutMenu/FlyoutMenu.tsx",
-			"src/resources/img/icons.ts"
-		],
+		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -3571,6 +3587,7 @@
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/chatMenuDropdown/CompactActionMenu.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
@@ -3808,7 +3825,6 @@
 		"exportNames": ["TrashIcon"],
 		"usageFiles": [
 			"src/components/editableData/EditableData.tsx",
-			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
