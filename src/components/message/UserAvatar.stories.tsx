@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect } from 'storybook/test';
+import { expect, waitFor } from 'storybook/test';
 import { UserAvatar } from './UserAvatar';
 
 const meta: Meta<typeof UserAvatar> = {
@@ -229,6 +229,15 @@ export const RingComparison: Story = {
 		);
 		// Two full ladders, nothing dropped.
 		await expect(avatars.length).toBe(LADDER.length * 2);
+		// Wait for layout before measuring anything. Eighteen inline SVGs
+		// render across more than one frame, and a measurement taken too
+		// early reads 0 for every one of them — which made this story fail
+		// about one run in four while the assertions themselves were right.
+		await waitFor(() =>
+			expect(
+				avatars[avatars.length - 1].getBoundingClientRect().width
+			).toBeGreaterThan(0)
+		);
 		const withRing = avatars.slice(0, LADDER.length);
 		const withoutRing = avatars.slice(LADDER.length);
 		for (let i = 0; i < LADDER.length; i += 1) {

@@ -3544,6 +3544,10 @@
 		"resizeHandle": {
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"scrollAriaLabel": "Drag to scroll the list."
+		},
+		"rail": {
+			"unreadCount": "{{count}} new messages",
+			"unreadCount_one": "{{count}} new message"
 		}
 	},
 	"statusOverlay": {

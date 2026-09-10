@@ -51,8 +51,13 @@ $rail-pill-gap: 8px;
 $rail-mark-slot: 24px;
 $rail-mark-glyph: 18px;
 $rail-mark-gap: 2px;
-$rail-avatar-size: 36px;
-$rail-pill-padding: 4px;
+// Frank, 10.09.2026: "nutze mal nun avatar ohne ring 40px bitte für das menu."
+// 40 fits exactly: 48 pill − 2 × 3 padding − 2 × 1 border = 40. The empty pill
+// therefore stays a 48 px circle with the animal filling it edge to edge,
+// which is what the ring's 25 % had been eating (see `UserAvatar`'s ladder
+// stories). The rail already passed `ring={false}`; only the number changed.
+$rail-avatar-size: 40px;
+$rail-pill-padding: 3px;
 
 .sessionRailPill {
 	// Fixed WIDTH, content-driven height. The width is asserted in the
@@ -241,9 +246,12 @@ $rail-pill-padding: 4px;
 		box-sizing: border-box;
 		padding: 6px 10px;
 
-		// Wide enough for a preview line, capped so it never covers the chat.
-		min-width: 120px;
-		max-width: 260px;
+		// Frank, 10.09.2026: "Du hast jetzt grade mal so zweihundert oder
+		// hundert Pixel, das kann locker bis zweihundertzwanzig Pixel lang
+		// sein." So the box is allowed to run to 220 and no further — beyond
+		// that it starts covering the chat next to the rail.
+		min-width: 150px;
+		max-width: 220px;
 		border-radius: 4px;
 		background: var(--m3-inverse-surface, #313030);
 		color: var(--m3-inverse-on-surface, #f4f0ef);
@@ -254,23 +262,35 @@ $rail-pill-padding: 4px;
 		pointer-events: none;
 	}
 
-	// The name is one line and may be elided; a pseudonym is short.
+	// The heading: the conversation's name. One line, elided if a pseudonym
+	// ever gets long.
 	&__tooltipTitle {
 		font-size: 12px;
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 16px;
 		letter-spacing: 0.5px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
-		// Two lines at most, then an ellipsis — a preview can be long, and a
-		// tooltip that grows to six lines is a panel, not a tooltip.
+	// The message itself. Two lines at most, then an ellipsis — a preview can
+	// be long, and a tooltip that grows to six lines is a panel.
+	&__tooltipBody {
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 16px;
+		letter-spacing: 0.5px;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
 
-	// Second line: when the message arrived.
+	// The date. Frank: "die Datumsangabe immer rechts unten" — last child of
+	// the column, pushed to the right edge by `align-self`.
 	&__tooltipMeta {
+		align-self: flex-end;
 		font-size: 11px;
 		font-weight: 400;
 		line-height: 14px;

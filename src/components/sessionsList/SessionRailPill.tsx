@@ -43,6 +43,26 @@ import type {
 } from './sessionRailState';
 import './sessionRailPill.styles.scss';
 
+/** One tooltip: a heading, a body, and a bottom-right corner for the date. */
+export interface SessionRailTooltip {
+	/** Bold first line — the conversation's name on the pill's own tooltip. */
+	title?: string;
+	/** The message itself, or "3 new messages" on the unread dot. */
+	body?: string;
+	/**
+	 * Bottom right, per Frank: "die Datumsangabe immer rechts unten". Already
+	 * formatted by the host with the same helper the expanded row uses.
+	 */
+	meta?: string;
+}
+
+export interface SessionRailTooltips {
+	/** Shown while the pointer is on the pill but not on a mark. */
+	pill?: SessionRailTooltip;
+	/** Per mark; a missing entry falls back to `markLabels[mark]`. */
+	marks?: Partial<Record<SessionRailMark, SessionRailTooltip>>;
+}
+
 export interface SessionRailPillProps {
 	/**
 	 * The pill's accessible name — the person or group the row stands for.
@@ -57,19 +77,19 @@ export interface SessionRailPillProps {
 	/** Accessible name per mark; the host maps existing i18n keys onto it. */
 	'markLabels': SessionRailMarkLabels;
 	/**
-	 * The conversation's newest message, ALREADY formatted by the host — the
-	 * very string the expanded row shows, channel prefix included ("Thread:
-	 * …"). Shown when a mark is hovered.
+	 * What each hoverable part says. Frank's sketch of 10.09.2026:
 	 *
-	 * HONEST SCOPE, same as the marks themselves: the list carries ONE newest
-	 * message per conversation, not one per channel. So every mark shows this
-	 * same message; the prefix inside it is what says which channel it came
-	 * from. A per-mark message would need the room timeline, which the list
-	 * does not load.
+	 *   the pill / avatar  name, then the start of the newest message
+	 *   thread mark        the newest THREAD message
+	 *   mail mark          the newest MAIN-channel message
+	 *   unread dot         how many new messages there are
+	 *
+	 * Every string arrives already formatted and already translated — this
+	 * component looks nothing up and fetches nothing. A mark with no entry
+	 * falls back to its own label rather than opening an empty box, which is
+	 * what a channel whose last message is older than the loaded window does.
 	 */
-	'preview'?: string;
-	/** When that message arrived — already formatted, e.g. "09:18", "Gestern". */
-	'previewTime'?: string;
+	'tooltips'?: SessionRailTooltips;
 	/** The open conversation. */
 	'active'?: boolean;
 	'onClick'?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -101,8 +121,7 @@ export const SessionRailPill = ({
 	avatar,
 	marks,
 	markLabels,
-	preview,
-	previewTime,
+	tooltips,
 	active = false,
 	onClick,
 	onKeyDown,
@@ -124,23 +143,30 @@ export const SessionRailPill = ({
 
 	// A mark's tooltip wins over the pill's: the pointer is inside the pill
 	// either way, so without this the name would sit on top of the message.
-	const tooltip = hoveredMark
-		? {
-				kind: 'message' as const,
-				title: preview,
-				meta: previewTime
-			}
-		: showName
-			? { kind: 'name' as const, title: name, meta: undefined }
-			: null;
+	//
+	// A mark with no entry, or one whose entry has nothing to say, falls back
+	// to its own label — "show an empty box" is not the same as "nothing to
+	// show". That is the case for a channel whose last message is older than
+	// the loaded window, and for supervision, which lives in another room.
+	const markTooltip = hoveredMark
+		? (tooltips?.marks?.[hoveredMark] ?? {})
+		: null;
+	const tooltip: (SessionRailTooltip & { kind: 'mark' | 'pill' }) | null =
+		hoveredMark
+			? {
+					kind: 'mark',
+					...markTooltip,
+					body:
+						markTooltip!.body ||
+						markTooltip!.title ||
+						markLabels[hoveredMark],
+					title: markTooltip!.body ? markTooltip!.title : undefined
+				}
+			: showName
+				? { kind: 'pill', title: name, ...(tooltips?.pill ?? {}) }
+				: null;
 
-	// Nothing to show is not the same as "show an empty box": a conversation
-	// whose newest message the host could not format (encrypted, not loaded
-	// yet) falls back to the mark's own label rather than an empty tooltip.
-	const title =
-		tooltip?.kind === 'message' && !tooltip.title
-			? markLabels[hoveredMark!]
-			: tooltip?.title;
+	const hasContent = Boolean(tooltip?.title || tooltip?.body);
 
 	return (
 		<span className="sessionRailPill__shell">
@@ -208,7 +234,7 @@ export const SessionRailPill = ({
 			 * the mark labels are already on the button itself, so a screen
 			 * reader would otherwise hear everything twice.
 			 */}
-			{tooltip && title && (
+			{tooltip && hasContent && (
 				<span
 					className={clsx(
 						'sessionRailPill__tooltip',
@@ -219,9 +245,16 @@ export const SessionRailPill = ({
 					data-cy="session-rail-pill-tooltip"
 					data-tooltip-kind={tooltip.kind}
 				>
-					<span className="sessionRailPill__tooltipTitle">
-						{title}
-					</span>
+					{tooltip.title && (
+						<span className="sessionRailPill__tooltipTitle">
+							{tooltip.title}
+						</span>
+					)}
+					{tooltip.body && (
+						<span className="sessionRailPill__tooltipBody">
+							{tooltip.body}
+						</span>
+					)}
 					{tooltip.meta && (
 						<span className="sessionRailPill__tooltipMeta">
 							{tooltip.meta}

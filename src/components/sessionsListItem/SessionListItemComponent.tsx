@@ -14,7 +14,10 @@ import {
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import {
+	getRoomUnreadCount,
+	isChatItemUnread
+} from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
@@ -96,7 +99,9 @@ import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	getLatestMatrixRoomPreview,
 	getPreviewLastMessageType,
-	MatrixRoomPreview
+	getRoomPreviewsByChannel,
+	MatrixRoomPreview,
+	TimedRoomPreview
 } from './matrixRoomPreview';
 import {
 	isCaseHandoverAccessControlled,
@@ -264,6 +269,16 @@ export const SessionListItemComponent = ({
 		matrixRoomId,
 		isMatrixBackedSession && !caseHandoverContentLocked,
 		getLatestMatrixRoomPreview
+	);
+	// The SAME timeline, split by channel, for the rail's per-mark tooltips
+	// (Frank's sketch 10.09.2026). `useMatrixSessionPreview` already holds the
+	// room's last 50 decrypted events and its subscription; a second selector
+	// over that array costs no fetch. Gated on the identical case-handover
+	// lock as the row preview — a locked case must not leak through a tooltip.
+	const railChannelPreviews = useMatrixSessionPreview(
+		matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked,
+		getRoomPreviewsByChannel
 	);
 
 	useEffect(() => {
@@ -951,6 +966,64 @@ export const SessionListItemComponent = ({
 				: activeSession.item.topic?.name ||
 					translate('groupChat.noTopicSpecified')
 			: sessionTopic;
+		// The rail's tooltips. Every string is built here and handed over
+		// ready — `SessionRailPill` translates nothing and fetches nothing.
+		const previewBody = (preview: TimedRoomPreview | null) => {
+			if (!preview || preview.kind === 'encrypted') {
+				return undefined;
+			}
+			return preview.kind === 'text'
+				? preview.text || undefined
+				: translate(
+						`sessionList.preview.${preview.kind}`,
+						preview.kind
+					);
+		};
+		const previewWhen = (preview: TimedRoomPreview | null) =>
+			preview
+				? prettyPrintDate(
+						Math.round(preview.ts / MILLISECONDS_PER_SECOND),
+						activeSession.item.createDate
+					)
+				: undefined;
+		const railUnreadCount = getRoomUnreadCount(
+			activeSession.item.matrixRoomId
+		);
+		const railTooltips = {
+			pill: {
+				title: railName,
+				// `displayLastMessage`, not the raw preview: it has already
+				// dropped a message this user may not see and honours the
+				// case-handover lock.
+				body: displayLastMessage || undefined,
+				meta: prettyPrintDate(
+					activeSession.item.messageDate,
+					activeSession.item.createDate
+				)
+			},
+			marks: {
+				thread: {
+					body: previewBody(railChannelPreviews?.thread ?? null),
+					meta: previewWhen(railChannelPreviews?.thread ?? null)
+				},
+				mail: {
+					body: previewBody(railChannelPreviews?.main ?? null),
+					meta: previewWhen(railChannelPreviews?.main ?? null)
+				},
+				unread:
+					railUnreadCount > 0
+						? {
+								body: translate(
+									'sessionList.rail.unreadCount',
+									{ count: railUnreadCount }
+								)
+							}
+						: undefined
+				// supervision deliberately has no entry: it lives in another
+				// Matrix room, so this timeline cannot speak for it. The mark
+				// falls back to its own label.
+			}
+		};
 		const railAvatar = activeSession.isGroup ? (
 			<UserAvatar
 				username={activeSession.item.matrixRoomId || 'group'}
@@ -959,7 +1032,7 @@ export const SessionListItemComponent = ({
 					activeSession.item.matrixRoomId ||
 					String(activeSession.item.id ?? 'group')
 				}
-				size="32px"
+				size="40px"
 				ring={false}
 			/>
 		) : !isAsker ? (
@@ -973,14 +1046,14 @@ export const SessionListItemComponent = ({
 				}
 				username={activeSession.user?.username || ''}
 				displayName={railName}
-				size={32}
+				size={40}
 			/>
 		) : (
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
 				userId={activeSession.consultant?.id || 'unknown'}
-				size="32px"
+				size="40px"
 				ring={false}
 			/>
 		);
@@ -1017,16 +1090,7 @@ export const SessionListItemComponent = ({
 						mail: translate('sessionList.toolbar.chips.nearby'),
 						unread: translate('sessionList.toolbar.chips.unread')
 					}}
-					// The tooltip's first line is `displayLastMessage`, NOT the
-					// raw preview: that memo already drops a message this user
-					// may not see (`visibleToUserIds`) and already carries the
-					// case-handover lock. Passing the raw string would have
-					// shown, in a tooltip, exactly what the row hides.
-					preview={displayLastMessage || undefined}
-					previewTime={prettyPrintDate(
-						activeSession.item.messageDate,
-						activeSession.item.createDate
-					)}
+					tooltips={railTooltips}
 					active={isChatActive}
 					// The click bubbles to the row (which navigates); Enter and
 					// Space are handled — and default-prevented — by the row's
