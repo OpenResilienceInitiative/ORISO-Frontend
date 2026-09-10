@@ -14,6 +14,12 @@ import type {
 	MatrixFileMessageOptions
 } from './matrixClientService';
 
+// A failed decrypt has synthetic clear type m.room.message, while its wire
+// event remains encrypted. It still needs a refresh after a later key restore.
+const awaitsTimelineDecryption = (event: MatrixEvent): boolean =>
+	event.getType() === 'm.room.encrypted' ||
+	(event.isEncrypted?.() === true && event.isDecryptionFailure?.() === true);
+
 export interface ChatTransportSession {
 	rid?: string | null;
 	item?: {
@@ -373,7 +379,7 @@ class ChatTransportService {
 
 			if (
 				detached ||
-				event.getType() !== 'm.room.encrypted' ||
+				!awaitsTimelineDecryption(event) ||
 				pendingDecryptions.has(event)
 			) {
 				return;
@@ -383,7 +389,7 @@ class ChatTransportService {
 				decryptedEvent: MatrixEvent,
 				error?: Error
 			) => {
-				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+				if (error || awaitsTimelineDecryption(decryptedEvent)) {
 					return;
 				}
 				clearPendingDecryption(event);
@@ -399,7 +405,7 @@ class ChatTransportService {
 				timeout
 			});
 			event.on('Event.decrypted' as any, handleDecrypted as any);
-			if (event.getType() !== 'm.room.encrypted') {
+			if (!awaitsTimelineDecryption(event)) {
 				handleDecrypted(event);
 			}
 		};
@@ -409,7 +415,7 @@ class ChatTransportService {
 		// still need a clear-content refresh when their asynchronous decrypt ends.
 		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
 		for (const event of cachedRoom?.timeline ?? []) {
-			if (event.getType() === 'm.room.encrypted') {
+			if (awaitsTimelineDecryption(event)) {
 				handleTimeline(event, cachedRoom, true);
 			}
 		}

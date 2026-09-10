@@ -73,14 +73,21 @@ export async function login(
 	);
 	await page.goto(base);
 	try {
-		await page
-			.locator(admin ? '#basic_username' : '#username')
-			.fill(username);
+		// Complete the external secret lookup before editing the live form.
+		// An initial form remount must not erase an earlier username entry.
 		let password: string | undefined = secret('get', record);
 		await page
 			.locator(admin ? '#basic_password' : '#passwordInput')
 			.fill(password);
 		password = undefined;
+		const usernameInput = page.locator(
+			admin ? '#basic_username' : '#username'
+		);
+		await usernameInput.fill(username);
+		await expect(usernameInput).toHaveValue(username);
+		await expect(
+			page.getByRole('button', { name: /^(Anmelden|Sign in)$/ })
+		).toBeEnabled();
 		phase('Login credentials entered');
 		await page
 			.getByRole('button', { name: /^(Anmelden|Sign in)$/ })
