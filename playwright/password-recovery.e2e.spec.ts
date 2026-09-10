@@ -20,6 +20,9 @@ const settingResponse =
 
 async function readSettings(page: Page): Promise<Settings> {
 	phase('Admin settings read started');
+	// Login waits for the tenant-list content before this document navigation.
+	// A new document guarantees a fresh query client for server readback;
+	// an SPA return did not issue a GET in the observed WebKit roundtrip.
 	const [readback] = await Promise.all([
 		page.waitForResponse(settingResponse('GET'), { timeout: 30_000 }),
 		page.goto(
@@ -27,8 +30,30 @@ async function readSettings(page: Page): Promise<Settings> {
 		)
 	]);
 	expect(readback.status()).toBe(200);
+	await expect(page).toHaveURL(/\/admin\/theme-settings\/global-config\/?$/);
+	await expect(
+		page.getByRole('heading', {
+			name: 'Chat-Wiederherstellung für neue Konten',
+			exact: true
+		})
+	).toBeVisible();
+	const value = await readback.json();
+	const modes = ['LOGIN_PASSWORD', 'RECOVERY_KEY'];
+	if (
+		!value ||
+		!modes.includes(value.asker) ||
+		!modes.includes(value.consultant) ||
+		!Number.isSafeInteger(value.revision) ||
+		value.revision < 0
+	) {
+		throw new Error('Unexpected recovery settings readback shape');
+	}
 	phase('Admin settings read completed');
-	return readback.json();
+	return {
+		asker: value.asker,
+		consultant: value.consultant,
+		revision: value.revision
+	};
 }
 
 async function saveSettings(
@@ -116,7 +141,24 @@ test('platform defaults persist independently and borrowed values are restored',
 				phase('Admin original settings restoration started');
 				// Discard an unfinished inline edit before restoring confirmed values.
 				await readSettings(page);
-				await saveSettings(page, original);
+				const restored = await saveSettings(page, original);
+				expect(restored.revision).toBeGreaterThanOrEqual(
+					original.revision
+				);
+				await testInfo.attach('admin-settings-restored-readback', {
+					contentType: 'application/json',
+					body: Buffer.from(
+						JSON.stringify(
+							{
+								original,
+								restored,
+								readbackStatus: 200
+							},
+							null,
+							2
+						)
+					)
+				});
 				phase('Admin original settings restoration completed');
 			}
 		} finally {

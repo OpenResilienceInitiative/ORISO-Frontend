@@ -113,6 +113,13 @@ export async function login(
 			await expect(
 				page.getByRole('link', { name: 'Einstellungen', exact: true })
 			).toBeVisible();
+			// The shared sidebar can appear while the landing route still mounts.
+			// Require the tenant-list content before following its settings link.
+			await expect(
+				page.getByRole('columnheader', {
+					name: /Träger-ID/
+				})
+			).toBeVisible();
 		} else {
 			await page.waitForURL((url) =>
 				/^\/(sessions\/|profile(?:\/|$))/.test(url.pathname)
