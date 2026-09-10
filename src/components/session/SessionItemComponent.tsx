@@ -632,13 +632,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		threadSummariesRaw.forEach((summary, rootId) => {
 			map.set(rootId, {
 				replyCount: summary.replyCount,
-				lastReplyText:
-					'Last reply at ' +
-					formatToHHMM(new Date(summary.lastReplyTs).toString())
+				lastReplyText: translate('message.thread.lastReplyAt', {
+					time: formatToHHMM(new Date(summary.lastReplyTs).toString())
+				})
 			});
 		});
 		return map;
-	}, [threadSummariesRaw]);
+	}, [threadSummariesRaw, translate]);
 	// Per-thread unread (#435): device-local approximation, bumped whenever
 	// a thread is opened (markThreadRead) so the derived map recomputes.
 	const [threadReadVersion, setThreadReadVersion] = useState(0);
