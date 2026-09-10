@@ -23,7 +23,7 @@ describe('CallTimelineSystemMessage', () => {
 			/>
 		);
 
-		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
+		expect(screen.getByRole('group').getAttribute('aria-label')).toBe(
 			'Videoanruf: Läuft'
 		);
 		expect(screen.getByTestId('CallTimelineEventIcon')).toBeTruthy();

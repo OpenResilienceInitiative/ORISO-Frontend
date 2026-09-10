@@ -13,6 +13,11 @@ interface NotificationActionInput {
 const isIdentifier = (value: unknown): value is Identifier =>
 	value === null || typeof value === 'string' || typeof value === 'number';
 
+const asNonNegativeInteger = (value: unknown): number | undefined =>
+	typeof value === 'number' && Number.isInteger(value) && value >= 0
+		? value
+		: undefined;
+
 const asNullableString = (value: unknown): string | null | undefined =>
 	value === null || typeof value === 'string'
 		? (value as string | null)
@@ -121,17 +126,13 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 			| boolean
 			| null;
 	}
-	if (
-		typeof source.durationSeconds === 'number' &&
-		Number.isFinite(source.durationSeconds)
-	) {
-		params.durationSeconds = source.durationSeconds;
+	const durationSeconds = asNonNegativeInteger(source.durationSeconds);
+	if (durationSeconds !== undefined) {
+		params.durationSeconds = durationSeconds;
 	}
-	if (
-		typeof source.participantCount === 'number' &&
-		Number.isFinite(source.participantCount)
-	) {
-		params.participantCount = source.participantCount;
+	const participantCount = asNonNegativeInteger(source.participantCount);
+	if (participantCount !== undefined) {
+		params.participantCount = participantCount;
 	}
 	if (Array.isArray(source.participants)) {
 		params.participants = source.participants.filter(

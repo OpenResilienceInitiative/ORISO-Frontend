@@ -1735,8 +1735,8 @@
 				"missed": "Verpasst"
 			},
 			"summary": {
-				"scheduled": "{{call}} Termin eintragen",
-				"running": "{{call}} beitreten",
+				"scheduled": "{{call}} in den Kalender eintragen",
+				"running": "Dem {{call}} beitreten",
 				"ended": "{{call}} beendet",
 				"missed": "{{call}} verpasst"
 			},

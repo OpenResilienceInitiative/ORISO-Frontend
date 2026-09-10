@@ -285,7 +285,9 @@ describe('WP-06 event-descriptor registry', () => {
 			expect(target).toEqual({
 				kind: 'join',
 				callRoomId: '!room:matrix',
-				isVideo: true
+				isVideo: true,
+				callId: null,
+				signalRoomId: null
 			});
 		});
 	});

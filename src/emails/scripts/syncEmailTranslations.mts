@@ -43,12 +43,16 @@ const reviewPath = path.resolve(here, '../content/translationReview.json');
 const args = process.argv.slice(2);
 const check = args.includes('--check');
 const force = args.includes('--force');
+const bootstrap = args.includes('--bootstrap');
 
 const readJson = async <T,>(file: string, fallback: T): Promise<T> => {
 	try {
 		return JSON.parse(await readFile(file, 'utf8')) as T;
-	} catch {
-		return fallback;
+	} catch (error) {
+		if (bootstrap) {
+			return fallback;
+		}
+		throw error;
 	}
 };
 

@@ -100,4 +100,45 @@ describe('CallTimelineMessageService', () => {
 		);
 		expect(ended?.participantCount).toBe(2);
 	});
+
+	it('does not let a delayed attendance write reopen a finished call', async () => {
+		const room = { roomId: '!call:oriso.example' };
+		client.getRoom.mockReturnValue(room);
+		const memberships = vi
+			.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+			.mockReturnValue([{ sender: '@bart:oriso.example' }] as any);
+		const service = new CallTimelineMessageService();
+		const call = {
+			callId: 'call-race',
+			roomRef: '!conversation:oriso.example',
+			callRoomId: '!call:oriso.example',
+			isVideo: true
+		};
+
+		await service.announceStarted(call);
+
+		let releaseAttendance: (value: { event_id: string }) => void = () =>
+			undefined;
+		sendMessage.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					releaseAttendance = resolve;
+				})
+		);
+		memberships.mockReturnValue([
+			{ sender: '@bart:oriso.example' },
+			{ sender: '@lisa:oriso.example' }
+		] as any);
+
+		const refresh = service.refreshParticipants(call.callRoomId);
+		await Promise.resolve();
+		const finish = service.finish(call, 'ended');
+		releaseAttendance({ event_id: '$attendance' });
+		await Promise.all([refresh, finish]);
+
+		const last = sendMessage.mock.calls.at(-1)?.[1];
+		expect(
+			parseCallLifecycleMessage(last['m.new_content'] || last)?.state
+		).toBe('ended');
+	});
 });

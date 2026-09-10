@@ -59,7 +59,7 @@ export const AppointmentTimelineSystemMessage = ({
 		>
 			<Stack
 				component="section"
-				role="status"
+				role="group"
 				aria-label={actionSummaryLabel}
 				spacing={1.5}
 				sx={{ minWidth: 0 }}

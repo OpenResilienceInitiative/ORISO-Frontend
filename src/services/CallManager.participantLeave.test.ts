@@ -183,4 +183,50 @@ describe('Element Call participant leave', () => {
 			expect.objectContaining({ call_id: 'one-to-one-call' })
 		);
 	});
+
+	it('joins an existing Element Call room without creating another', () => {
+		callManager.joinExistingCall(CALL_ROOM, true, {
+			callId: 'running-call',
+			signalRoomId: SIGNAL_ROOM
+		});
+
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({
+				callId: 'running-call',
+				roomId: CALL_ROOM,
+				elementCallRoomId: CALL_ROOM,
+				signalRoomId: SIGNAL_ROOM,
+				state: 'connecting',
+				isVideo: true
+			})
+		);
+		expect(createRoom).not.toHaveBeenCalled();
+		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('answers a ringing call for the same room instead of starting a new one', () => {
+		callManager.receiveCall(
+			CALL_ROOM,
+			true,
+			'incoming-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+
+		callManager.joinExistingCall(CALL_ROOM, true, {
+			callId: 'incoming-call',
+			signalRoomId: SIGNAL_ROOM
+		});
+
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({
+				callId: 'incoming-call',
+				roomId: CALL_ROOM,
+				state: 'connecting'
+			})
+		);
+		expect(createRoom).not.toHaveBeenCalled();
+	});
 });

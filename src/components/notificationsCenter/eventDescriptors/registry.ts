@@ -66,14 +66,14 @@ const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	path: params.actionPath ?? null
 });
 
-// The consumer routes native ORISO calls through
-// `callManager.startCall(callRoomId, isVideo, true)`. This factory only
-// describes the action; provider-specific video integrations must use their
-// own adapter and must not be introduced as an implicit fallback here.
+// The consumer joins the existing Element Call room through
+// `callManager.joinExistingCall`. This factory only describes the action.
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'join',
 	callRoomId: params.callRoomId ?? params.roomRef ?? null,
-	isVideo: params.callType ? params.callType === 'video' : !!params.isVideo
+	isVideo: params.callType ? params.callType === 'video' : !!params.isVideo,
+	callId: params.callId ?? null,
+	signalRoomId: params.roomRef ?? null
 });
 
 // --- Descriptor factory --------------------------------------------------

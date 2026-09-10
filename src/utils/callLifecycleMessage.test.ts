@@ -82,4 +82,56 @@ describe('call lifecycle room messages', () => {
 			}
 		]);
 	});
+
+	it('does not parse a plain m.text payload as a call lifecycle event', () => {
+		expect(
+			parseCallLifecycleMessage({
+				msgtype: 'm.text',
+				call_id: 'call-x',
+				state: 'ended'
+			})
+		).toBeNull();
+	});
+
+	it('still parses unwrapped notification params when msgtype is absent', () => {
+		expect(
+			parseCallLifecycleMessage({
+				call_id: 'call-params',
+				state: 'ended',
+				call_type: 'audio'
+			})
+		).toMatchObject({ callId: 'call-params', state: 'ended' });
+	});
+
+	it('orders collapsed call state by lifecycle revision, not original display time', () => {
+		const original = {
+			_id: '$started',
+			ts: new Date('2026-09-10T10:00:00Z'),
+			callLifecycle: {
+				callId: 'call-4',
+				state: 'running' as const,
+				callType: 'video' as const,
+				participants: []
+			}
+		};
+		const laterEnded = {
+			_id: '$fallback',
+			ts: new Date('2026-09-10T09:59:00Z'),
+			callLifecycleRevisionTs: Date.parse('2026-09-10T10:02:00Z'),
+			callLifecycle: {
+				callId: 'call-4',
+				state: 'ended' as const,
+				callType: 'video' as const,
+				participants: []
+			}
+		};
+
+		expect(collapseCallLifecycleMessages([original, laterEnded])).toEqual([
+			{
+				...laterEnded,
+				_id: '$started',
+				ts: original.ts
+			}
+		]);
+	});
 });

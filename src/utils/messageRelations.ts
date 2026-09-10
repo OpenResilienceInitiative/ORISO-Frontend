@@ -204,6 +204,7 @@ export interface EditableMessage {
 	replaceTargetId?: string | null;
 	editedBody?: string | null;
 	callLifecycle?: unknown;
+	callLifecycleRevisionTs?: number;
 	editedCallLifecycle?: unknown;
 	[key: string]: unknown;
 }
@@ -255,7 +256,10 @@ export const applyMessageEdits = <T extends EditableMessage>(
 				...message,
 				...(edit.body !== undefined ? { msg: edit.body } : {}),
 				...(edit.callLifecycle
-					? { callLifecycle: edit.callLifecycle }
+					? {
+							callLifecycle: edit.callLifecycle,
+							callLifecycleRevisionTs: edit.ts
+						}
 					: {}),
 				isEdited: true
 			};

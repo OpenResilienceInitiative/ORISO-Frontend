@@ -29,7 +29,7 @@ export interface CallTimelineSystemMessageProps {
 	side?: 'received' | 'sent';
 	/** Already translated short state, for example "Läuft" or "Beendet". */
 	statusLabel: string;
-	/** Full action summary shown under the initiator, e.g. "Videoanruf Termin eintragen". */
+	/** Full action summary shown under the initiator, e.g. "Videoanruf in den Kalender eintragen". */
 	actionSummaryLabel?: string;
 	/** Already translated supporting sentence. */
 	description: string;
@@ -110,7 +110,7 @@ export const CallTimelineSystemMessage = ({
 		>
 			<Stack
 				component="section"
-				role="status"
+				role="group"
 				aria-label={`${callLabel}: ${statusLabel}`}
 				spacing={1.5}
 				sx={{ minWidth: 0 }}

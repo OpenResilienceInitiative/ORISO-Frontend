@@ -154,7 +154,13 @@ export type EventActionTarget =
 	| { kind: 'groupChatJoin'; path: string | null }
 	| { kind: 'request'; path: string | null }
 	| { kind: 'draft'; forcedScopeKey: string | null; path: string | null }
-	| { kind: 'join'; callRoomId: string | null; isVideo: boolean }
+	| {
+			kind: 'join';
+			callRoomId: string | null;
+			isVideo: boolean;
+			callId?: string | null;
+			signalRoomId?: string | null;
+	  }
 	| { kind: 'none' };
 
 /**

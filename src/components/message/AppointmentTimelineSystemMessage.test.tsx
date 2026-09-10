@@ -14,7 +14,7 @@ describe('AppointmentTimelineSystemMessage', () => {
 				<AppointmentTimelineSystemMessage
 					state={state}
 					initiatorName="Beraterin Lea"
-					actionSummaryLabel="Videoanruf Termin eintragen"
+					actionSummaryLabel="Videoanruf in den Kalender eintragen"
 					description="Terminstatus"
 				/>
 			);

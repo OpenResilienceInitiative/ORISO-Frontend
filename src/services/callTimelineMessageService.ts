@@ -36,9 +36,27 @@ const eventIdFromResponse = (response: unknown): string | undefined => {
  */
 export class CallTimelineMessageService {
 	private pendingCalls = new Map<string, PendingCall>();
+	private writeQueues = new Map<string, Promise<void>>();
+	private terminalCallIds = new Set<string>();
 
 	private client(): MatrixClient | null {
 		return getMatrixClientService()?.getClient?.() || null;
+	}
+
+	private enqueueWrite(
+		callId: string,
+		task: () => Promise<void>
+	): Promise<void> {
+		const previous = this.writeQueues.get(callId) ?? Promise.resolve();
+		const next = previous.then(task, task);
+		this.writeQueues.set(
+			callId,
+			next.then(
+				() => undefined,
+				() => undefined
+			)
+		);
+		return next;
 	}
 
 	async announceStarted(input: CallTimelineStartInput): Promise<void> {
@@ -64,11 +82,16 @@ export class CallTimelineMessageService {
 			participantCount: participants.length
 		};
 		try {
-			const response = await client.sendMessage(
-				input.roomRef,
-				buildCallLifecycleContent(message) as any
-			);
-			pending.eventId = eventIdFromResponse(response);
+			await this.enqueueWrite(input.callId, async () => {
+				if (this.terminalCallIds.has(input.callId)) {
+					return;
+				}
+				const response = await client.sendMessage(
+					input.roomRef,
+					buildCallLifecycleContent(message) as any
+				);
+				pending.eventId = eventIdFromResponse(response);
+			});
 			await this.refreshParticipants(input.callRoomId);
 		} catch {
 			this.pendingCalls.delete(input.callId);
@@ -88,42 +111,47 @@ export class CallTimelineMessageService {
 			(pending) => pending.callRoomId === callRoomId
 		);
 		await Promise.all(
-			matching.map(async (pending) => {
-				const merged = this.mergeParticipants(
-					pending.participants,
-					snapshot
-				);
-				if (
-					JSON.stringify(merged) ===
-					JSON.stringify(pending.participants)
-				) {
-					return;
-				}
-				pending.participants = merged;
-				if (!pending.eventId) return;
-				const message: CallLifecycleMessage = {
-					callId: pending.callId,
-					state: 'running',
-					callType: pending.isVideo ? 'video' : 'audio',
-					roomRef: pending.roomRef,
-					callRoomId: pending.callRoomId,
-					startedAt: pending.startedAt,
-					actorUserId: client.getUserId?.() || undefined,
-					participants: pending.participants,
-					participantCount: pending.participants.length
-				};
-				try {
-					await client.sendMessage(
-						pending.roomRef,
-						buildCallLifecycleContent(
-							message,
-							pending.eventId
-						) as any
+			matching.map((pending) =>
+				this.enqueueWrite(pending.callId, async () => {
+					if (this.terminalCallIds.has(pending.callId)) {
+						return;
+					}
+					const merged = this.mergeParticipants(
+						pending.participants,
+						snapshot
 					);
-				} catch {
-					// Participant telemetry must never interrupt the media call.
-				}
-			})
+					if (
+						JSON.stringify(merged) ===
+						JSON.stringify(pending.participants)
+					) {
+						return;
+					}
+					pending.participants = merged;
+					if (!pending.eventId) return;
+					const message: CallLifecycleMessage = {
+						callId: pending.callId,
+						state: 'running',
+						callType: pending.isVideo ? 'video' : 'audio',
+						roomRef: pending.roomRef,
+						callRoomId: pending.callRoomId,
+						startedAt: pending.startedAt,
+						actorUserId: client.getUserId?.() || undefined,
+						participants: pending.participants,
+						participantCount: pending.participants.length
+					};
+					try {
+						await client.sendMessage(
+							pending.roomRef,
+							buildCallLifecycleContent(
+								message,
+								pending.eventId
+							) as any
+						);
+					} catch {
+						// Participant telemetry must never interrupt the media call.
+					}
+				})
+			)
 		);
 	}
 
@@ -164,11 +192,14 @@ export class CallTimelineMessageService {
 			participants,
 			participantCount: participants.length
 		};
+		this.terminalCallIds.add(input.callId);
 		try {
-			await client.sendMessage(
-				input.roomRef,
-				buildCallLifecycleContent(message, original?.eventId) as any
-			);
+			await this.enqueueWrite(input.callId, async () => {
+				await client.sendMessage(
+					input.roomRef,
+					buildCallLifecycleContent(message, original?.eventId) as any
+				);
+			});
 		} catch {
 			// The call itself must not fail because its protocol entry could not be
 			// written. Matrix will expose the transport failure independently.

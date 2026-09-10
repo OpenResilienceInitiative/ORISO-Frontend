@@ -119,19 +119,21 @@ export const ChatSystemMessageCard = ({
 							<div className="messageItem__timeRail">
 								<span className="messageItem__messageTime">
 									{timestamp}
-									<span
-										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
-										role="img"
-										aria-label={translate(
-											'message.deliveryStatus.sent',
-											'sent'
-										)}
-									>
-										<DeliverySentIcon
-											aria-hidden
-											focusable="false"
-										/>
-									</span>
+									{isSent && (
+										<span
+											className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
+											role="img"
+											aria-label={translate(
+												'message.deliveryStatus.sent',
+												'sent'
+											)}
+										>
+											<DeliverySentIcon
+												aria-hidden
+												focusable="false"
+											/>
+										</span>
+									)}
 								</span>
 							</div>
 						)}

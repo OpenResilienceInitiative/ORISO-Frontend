@@ -727,7 +727,10 @@ export const NotificationsCenter = () => {
 				getDefaultRequestsPath()
 			);
 			if (target.kind !== 'join' || !target.callRoomId) return false;
-			callManager.startCall(target.callRoomId, target.isVideo, true);
+			callManager.joinExistingCall(target.callRoomId, target.isVideo, {
+				callId: target.callId ?? undefined,
+				signalRoomId: target.signalRoomId ?? undefined
+			});
 			return true;
 		},
 		[getDefaultRequestsPath, getDefaultSessionsPath]

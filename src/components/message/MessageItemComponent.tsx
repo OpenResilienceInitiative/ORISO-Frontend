@@ -419,7 +419,7 @@ export const MessageItemComponent = ({
 	sendFailed,
 	encryptionBroke
 }: MessageItemComponentProps) => {
-	const { t: translate } = useTranslation();
+	const { t: translate, i18n } = useTranslation();
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -1877,10 +1877,10 @@ export const MessageItemComponent = ({
 						(participant) => participant.userId === call.actorUserId
 					)?.displayName || displayName;
 				const startedAt = call.startedAt || call.invitedAt;
-				const scheduledFor = call.scheduledFor || call.invitedAt;
+				const scheduledFor = call.scheduledFor;
 				const localeDate = (value?: string) =>
 					value
-						? new Intl.DateTimeFormat(undefined, {
+						? new Intl.DateTimeFormat(i18n.language || undefined, {
 								dateStyle: 'medium',
 								timeStyle: 'short'
 							}).format(new Date(value))
@@ -1946,10 +1946,13 @@ export const MessageItemComponent = ({
 						onAction={
 							call.state === 'running' && joinRoomId
 								? () =>
-										callManager.startCall(
+										callManager.joinExistingCall(
 											joinRoomId,
 											call.callType === 'video',
-											true
+											{
+												callId: call.callId,
+												signalRoomId: call.roomRef
+											}
 										)
 								: undefined
 						}

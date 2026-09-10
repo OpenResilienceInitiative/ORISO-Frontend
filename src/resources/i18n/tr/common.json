@@ -1714,11 +1714,11 @@
 				"scheduled": "{{call}} için takvime ekle",
 				"running": "{{call}} görüşmesine katıl",
 				"ended": "{{call}} sona erdi",
-				"missed": "{{call}} cevapsız"
+				"missed": "Cevapsız {{call}}"
 			},
 			"headline": {
 				"scheduled": "{{call}} planlandı",
-				"running": "{{actor}} tarafından {{call}}",
+				"running": "{{actor}} tarafından başlatılan {{call}}",
 				"ended": "{{call}} sona erdi",
 				"missed": "Cevapsız {{call}}"
 			},

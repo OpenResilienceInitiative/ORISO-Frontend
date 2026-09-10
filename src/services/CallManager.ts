@@ -260,14 +260,14 @@ class CallManager {
 
 			// Send Matrix call invite event to the original session room so
 			// the other participant sees the incoming call notification.
-			this.sendGroupCallInvite(
+			await this.sendGroupCallInvite(
 				roomId,
 				callId,
 				isVideo,
 				this.currentCall.roomId,
 				isGroup
 			);
-			void callTimelineMessageService.announceStarted(
+			await callTimelineMessageService.announceStarted(
 				this.timelineInput(this.currentCall)
 			);
 
@@ -277,6 +277,64 @@ class CallManager {
 			alert(`Failed to start call: ${(err as Error).message}`);
 			this.endCall();
 		});
+	}
+
+	/**
+	 * Join a call that already has an Element Call room. Timeline and
+	 * notification Join actions must use this instead of startCall, which
+	 * would mint a second room and invite.
+	 */
+	public joinExistingCall(
+		callRoomId: string,
+		isVideo: boolean,
+		options?: { callId?: string; signalRoomId?: string }
+	): void {
+		if (!callRoomId) {
+			return;
+		}
+
+		const sameCall =
+			this.currentCall?.usesElementCall &&
+			(this.currentCall.elementCallRoomId === callRoomId ||
+				this.currentCall.roomId === callRoomId ||
+				(options?.callId != null &&
+					this.currentCall.callId === options.callId));
+
+		if (sameCall && this.currentCall) {
+			if (this.currentCall.state === 'ringing') {
+				this.answerCall();
+				return;
+			}
+			if (this.currentCall.state === 'left') {
+				this.currentCall = {
+					...this.currentCall,
+					isVideo,
+					isIncoming: false,
+					state: 'connecting'
+				};
+				this.notifyListeners();
+			}
+			return;
+		}
+
+		if (this.currentCall) {
+			this.endCall();
+		}
+
+		this.currentCall = {
+			callId:
+				options?.callId ||
+				`call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+			roomId: callRoomId,
+			isVideo,
+			isIncoming: false,
+			isGroup: true,
+			usesElementCall: true,
+			state: 'connecting',
+			elementCallRoomId: callRoomId,
+			signalRoomId: options?.signalRoomId || callRoomId
+		};
+		this.notifyListeners();
 	}
 
 	/**
@@ -538,48 +596,39 @@ class CallManager {
 	 * @param isVideo - Whether this is a video call
 	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
 	 */
-	private sendGroupCallInvite(
+	private async sendGroupCallInvite(
 		signallingRoomId: string,
 		callId: string,
 		isVideo: boolean,
 		elementCallRoomId?: string,
 		isGroupCall: boolean = false
-	): void {
-		try {
-			const matrixClientService = getMatrixClientService();
-			const client = matrixClientService?.getClient?.();
+	): Promise<void> {
+		const matrixClientService = getMatrixClientService();
+		const client = matrixClientService?.getClient?.();
 
-			if (!client) {
-				// console.error('❌ Matrix client not available to send call invite');
-				return;
-			}
-
-			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
-
-			// Send m.call.invite event
-			// Custom ORISO event type — not in matrix-js-sdk typings
-			client
-				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
-					call_id: callId,
-					version: '1',
-					lifetime: 60000, // 60 seconds
-					invitee: undefined, // Group call - no specific invitee
-					party_id: client.getDeviceId() || 'unknown',
-					is_group_call: isGroupCall, // Custom field to indicate group session
-					is_element_call: true, // Custom field to use Element Call/LiveKit media
-					is_video: isVideo,
-					// Custom: tell receivers which Matrix room Element Call should use.
-					call_room_id: elementCallRoomId
-				})
-				.then(() => {
-					// console.log('✅ m.call.invite sent successfully');
-				})
-				.catch((err: Error) => {
-					// console.error('❌ Failed to send m.call.invite:', err);
-				});
-		} catch (error) {
-			// console.error('❌ Error sending group call invite:', error);
+		if (!client) {
+			throw new Error('Matrix client not available to send call invite');
 		}
+
+		await client.sendEvent(
+			signallingRoomId,
+			'org.oriso.call.invite' as any,
+			{
+				call_id: callId,
+				version: '1',
+				lifetime: 60000, // 60 seconds
+				invitee: undefined, // Group call - no specific invitee
+				party_id:
+					typeof client.getDeviceId === 'function'
+						? client.getDeviceId() || 'unknown'
+						: 'unknown',
+				is_group_call: isGroupCall, // Custom field to indicate group session
+				is_element_call: true, // Custom field to use Element Call/LiveKit media
+				is_video: isVideo,
+				// Custom: tell receivers which Matrix room Element Call should use.
+				call_room_id: elementCallRoomId
+			}
+		);
 	}
 
 	/**

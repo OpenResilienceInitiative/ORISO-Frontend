@@ -137,8 +137,45 @@ describe('shared params contract (#846)', () => {
 		).toEqual({
 			kind: 'join',
 			callRoomId: '!call:matrix.example',
-			isVideo: false
+			isVideo: false,
+			callId: 'call-1',
+			signalRoomId: '!conversation:matrix.example'
 		});
+	});
+
+	it('lets callType override a conflicting isVideo flag for invited and started calls', () => {
+		const params = parseEventActionParams(
+			JSON.stringify({
+				callId: 'call-video',
+				roomRef: '!conversation:matrix.example',
+				callRoomId: '!call:matrix.example',
+				callType: 'video',
+				isVideo: false
+			})
+		);
+		expect(
+			resolveNotificationActionTarget(
+				{ eventType: 'call.started', params },
+				'/sessions/consultant/sessionView'
+			).isVideo
+		).toBe(true);
+		expect(
+			resolveNotificationActionTarget(
+				{ eventType: 'call.invited', params },
+				'/sessions/consultant/sessionView'
+			).isVideo
+		).toBe(true);
+	});
+
+	it('drops negative and fractional lifecycle counts', () => {
+		expect(
+			parseEventActionParams(
+				JSON.stringify({
+					durationSeconds: -1,
+					participantCount: 1.5
+				})
+			)
+		).toEqual({});
 	});
 
 	it('keeps the Case Handover opt-out variant as typed metadata', () => {

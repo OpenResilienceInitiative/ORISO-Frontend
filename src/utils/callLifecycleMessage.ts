@@ -83,11 +83,7 @@ export const parseCallLifecycleMessage = (
 		? content['org.oriso.call']
 		: content;
 	const msgtype = asString(content.msgtype);
-	if (
-		content !== payload &&
-		msgtype !== undefined &&
-		msgtype !== CALL_LIFECYCLE_MSGTYPE
-	) {
+	if (msgtype !== undefined && msgtype !== CALL_LIFECYCLE_MSGTYPE) {
 		return null;
 	}
 
@@ -176,6 +172,7 @@ export interface CallLifecycleTimelineItem {
 	_id: string;
 	ts: Date | string | number;
 	callLifecycle?: CallLifecycleMessage | null;
+	callLifecycleRevisionTs?: number;
 	replaceTargetId?: string | null;
 	editedCallLifecycle?: CallLifecycleMessage | null;
 	[key: string]: unknown;
@@ -208,8 +205,11 @@ export const collapseCallLifecycleMessages = <
 			output.push(item);
 			continue;
 		}
-		const existingTime = new Date(existing.item.ts).getTime();
-		const candidateTime = new Date(item.ts).getTime();
+		const existingTime =
+			existing.item.callLifecycleRevisionTs ??
+			new Date(existing.item.ts).getTime();
+		const candidateTime =
+			item.callLifecycleRevisionTs ?? new Date(item.ts).getTime();
 		if (candidateTime >= existingTime) {
 			output[existing.index] = {
 				...item,

@@ -298,16 +298,22 @@ export const EmailTranslationSheet: React.FC = () => (
 						EMAIL_LOCALE_RELEASE[locale] === 'released';
 					const unsigned =
 						EMAIL_LOCALE_PROVENANCE[locale] === 'machine'
-							? emailReviewGaps(
-									EMAIL_CONTENT[locale],
-									EMAIL_IDS,
-									(
-										emailTranslationReview.locales as Record<
-											string,
-											Record<string, never>
-										>
-									)[locale] ?? {}
-								).unsigned.length
+							? (() => {
+									const gaps = emailReviewGaps(
+										EMAIL_CONTENT[locale],
+										EMAIL_IDS,
+										(
+											emailTranslationReview.locales as Record<
+												string,
+												Record<string, never>
+											>
+										)[locale] ?? {}
+									);
+									return (
+										gaps.unsigned.length +
+										gaps.orphaned.length
+									);
+								})()
 							: 0;
 					const tight = { ...td, whiteSpace: 'nowrap' as const };
 					return (
