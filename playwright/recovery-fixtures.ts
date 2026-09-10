@@ -155,7 +155,12 @@ export async function login(
 	}
 }
 
-async function maskedScreenshot(page: Page, testInfo: TestInfo, name: string) {
+async function maskedScreenshot(
+	page: Page,
+	testInfo: TestInfo,
+	name: string,
+	messages: string[] = []
+) {
 	const path = testInfo.outputPath(`${name}.png`);
 	await page.screenshot({
 		path,
@@ -167,6 +172,25 @@ async function maskedScreenshot(page: Page, testInfo: TestInfo, name: string) {
 			)
 		]
 	});
+	if (messages.length) {
+		const geometry = await readHistoryGeometry(page, messages);
+		const top = Math.max(0, geometry?.container.top ?? 0);
+		const bottom = Math.min(
+			geometry?.viewport.height ?? 0,
+			geometry?.container.bottom ?? 0,
+			geometry?.composer?.height ? geometry.composer.top : Infinity
+		);
+		expect(
+			geometry?.paragraphs.every(
+				(rect) =>
+					rect &&
+					rect.centerUnobscured &&
+					rect.top >= top &&
+					rect.bottom <= bottom
+			),
+			'Captured message must remain in the unobscured chat viewport after screenshot'
+		).toBe(true);
+	}
 	await testInfo.attach(name, { path, contentType: 'image/png' });
 }
 
@@ -185,7 +209,11 @@ export async function readHistoryGeometry(page: Page, messages: string[]) {
 				height: r.height
 			};
 		};
+		const composer = container
+			.closest('.session')
+			?.querySelector('.messageSubmit__wrapper');
 		return {
+			composer: composer ? box(composer) : null,
 			windowScroll: { x: scrollX, y: scrollY },
 			viewport: { width: innerWidth, height: innerHeight },
 			container: {
@@ -221,46 +249,72 @@ export async function positionHistoryForScreenshot(
 	messages: string[]
 ) {
 	if (!messages.length) return;
-	const last = conversationMessage(page, messages[messages.length - 1]);
-	await last.evaluate((element) =>
-		element.scrollIntoView({
-			block: 'center',
-			inline: 'nearest',
-			behavior: 'instant'
-		})
-	);
-	await page
-		.locator('#session-scroll-container')
-		.evaluate((container, expected) => {
-			const bounds = container.getBoundingClientRect();
-			const paragraphs = expected.map((text) =>
-				[...container.querySelectorAll('p')].find(
-					(item) => item.textContent?.trim() === text
-				)
-			);
-			if (paragraphs.some((item) => !item)) return;
-			const rects = paragraphs.map((item) =>
-				item.getBoundingClientRect()
-			);
-			const contentCenter =
-				(Math.min(...rects.map((rect) => rect.top)) +
-					Math.max(...rects.map((rect) => rect.bottom))) /
-				2;
-			const visibleCenter =
-				(Math.max(0, bounds.top) +
-					Math.min(innerHeight, bounds.bottom)) /
-				2;
-			container.scrollTop += contentCenter - visibleCenter;
-		}, messages);
+	let settledPlacements = 0;
+	const position = async () =>
+		page
+			.locator('#session-scroll-container')
+			.evaluate((container, expected) => {
+				const bounds = container.getBoundingClientRect();
+				const composerRect = container
+					.closest('.session')
+					?.querySelector('.messageSubmit__wrapper')
+					?.getBoundingClientRect();
+				const visibleBottom = Math.min(
+					innerHeight,
+					bounds.bottom,
+					composerRect?.height && composerRect.width
+						? composerRect.top
+						: Infinity
+				);
+				const paragraphs = expected.map((text) =>
+					[...container.querySelectorAll('p')].find(
+						(item) => item.textContent?.trim() === text
+					)
+				);
+				if (paragraphs.some((item) => !item)) return;
+				const rects = paragraphs.map((item) =>
+					item.getBoundingClientRect()
+				);
+				const contentCenter =
+					(Math.min(...rects.map((rect) => rect.top)) +
+						Math.max(...rects.map((rect) => rect.bottom))) /
+					2;
+				const visibleCenter =
+					(Math.max(0, bounds.top) + visibleBottom) / 2;
+				const previousScrollTop = container.scrollTop;
+				container.scrollTop += contentCenter - visibleCenter;
+				return Math.abs(container.scrollTop - previousScrollTop);
+			}, messages);
 	await expect
 		.poll(
-			async () =>
-				page
+			async () => {
+				const correction = await position();
+				settledPlacements = correction < 1 ? settledPlacements + 1 : 0;
+				await page.evaluate(
+					() =>
+						new Promise<void>((resolve) =>
+							requestAnimationFrame(() =>
+								requestAnimationFrame(() => resolve())
+							)
+						)
+				);
+				const visible = await page
 					.locator('#session-scroll-container')
 					.evaluate((container, expected) => {
 						const bounds = container.getBoundingClientRect();
+						const composerRect = container
+							.closest('.session')
+							?.querySelector('.messageSubmit__wrapper')
+							?.getBoundingClientRect();
+						const visibleBottom = Math.min(
+							innerHeight,
+							bounds.bottom,
+							composerRect?.height && composerRect.width
+								? composerRect.top
+								: Infinity
+						);
 						const top = Math.max(0, bounds.top);
-						const bottom = Math.min(innerHeight, bounds.bottom);
+						const bottom = visibleBottom;
 						const left = Math.max(0, bounds.left);
 						const right = Math.min(innerWidth, bounds.right);
 						return expected.every((text) => {
@@ -284,7 +338,9 @@ export async function positionHistoryForScreenshot(
 								(element === center || element.contains(center))
 							);
 						});
-					}, messages),
+					}, messages);
+				return visible && settledPlacements >= 3;
+			},
 			{
 				message:
 					'Every captured history paragraph must fit inside the visible conversation viewport without an overlay'
@@ -307,6 +363,17 @@ async function captureReadableHistory(
 		.locator('#session-scroll-container')
 		.evaluate((container, expected) => {
 			const bounds = container.getBoundingClientRect();
+			const composerRect = container
+				.closest('.session')
+				?.querySelector('.messageSubmit__wrapper')
+				?.getBoundingClientRect();
+			const visibleBottom = Math.min(
+				innerHeight,
+				bounds.bottom,
+				composerRect?.height && composerRect.width
+					? composerRect.top
+					: Infinity
+			);
 			const rects = expected.map((text) =>
 				[...container.querySelectorAll('p')]
 					.find((item) => item.textContent?.trim() === text)
@@ -314,9 +381,7 @@ async function captureReadableHistory(
 			);
 			if (rects.some((rect) => !rect)) return null;
 			return {
-				visibleHeight:
-					Math.min(innerHeight, bounds.bottom) -
-					Math.max(0, bounds.top),
+				visibleHeight: visibleBottom - Math.max(0, bounds.top),
 				combinedHeight:
 					Math.max(...rects.map((rect) => rect.bottom)) -
 					Math.min(...rects.map((rect) => rect.top))
@@ -325,7 +390,7 @@ async function captureReadableHistory(
 	expect(geometry).not.toBeNull();
 	if (geometry.combinedHeight <= geometry.visibleHeight) {
 		await positionHistoryForScreenshot(page, messages);
-		await maskedScreenshot(page, testInfo, label);
+		await maskedScreenshot(page, testInfo, label, messages);
 	} else {
 		phase(
 			`History paragraphs need separate captures: ${JSON.stringify(geometry)}`
@@ -335,7 +400,8 @@ async function captureReadableHistory(
 			await maskedScreenshot(
 				page,
 				testInfo,
-				`${label}-message-${index + 1}-${index === 0 ? 'asker' : 'consultant'}`
+				`${label}-message-${index + 1}-${index === 0 ? 'asker' : 'consultant'}`,
+				[message]
 			);
 		}
 		await testInfo.attach(`${label}-separate-capture-geometry`, {

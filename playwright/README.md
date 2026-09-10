@@ -115,15 +115,20 @@ startup requests. It captures only masked rejection screenshots. It does not
 assert tenant-specific error wording and never resets passwords or bypasses OTP.
 
 Screenshot acceptance checks actual paragraph geometry against the visible chat
-viewport and verifies the text is not covered by another element. The combined
-message bounds are centered when they fit; if measured height exceeds available
-space, separate asker/consultant message screenshots preserve both proofs. DOM
-visibility alone is insufficient. Both messages must still decrypt before any
-capture. No application CSS is modified.
+viewport, clipped above the composer, and verifies text is not covered by another
+element. Bounded positioning waits for three stable applied scroll deltas; native
+scroll clamping is allowed only while full visibility still holds. Geometry is
+checked again after capture. The combined message bounds are centered when they
+fit; otherwise separate asker/consultant screenshots preserve both proofs. Both
+messages must still decrypt before capture. No application CSS is modified.
 
 Current validation boundary (2026-09-10): the bounded Chromium negative gate
-and Chromium history/visible-screenshot gate passed on PreDev. WebKit history
-previously passed DOM checks, but its stricter mobile paragraph geometry gate
-currently fails; that visual acceptance remains open. A blank/clipped image must
-not be reported as visible history proof. See the delivery evidence for the
-exact candidate version and subsequent reruns.
+passed on PreDev. Full peers-offline restoration and visible screenshot gates
+passed in WebKit v9 and Chromium v10 with both roles and all three viewport sizes.
+The final Chromium correction measures actual applied scroll movement at native
+scroll limits; WebKit v9 passed the stronger, unclamped centering criterion.
+Representative fresh-client PNGs were visually inspected. Chromium's consultant
+desktop capture also showed a backup-warning banner after a responsive reload,
+despite restored history; that warning remains a separate reported observation.
+These are desktop browser-engine/viewport tests, not physical-device acceptance.
+See delivery evidence for exact candidate versions, logs and screenshots.
