@@ -4577,7 +4577,8 @@
 		"headline": "Herzlich Willkommen",
 		"label": {
 			"and": "und",
-			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden."
+			"text": "Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden.",
+			"missingPolicy": "Für diese Beratungsstelle ist derzeit keine eigene Datenschutzerklärung hinterlegt. Wenn Sie fortfahren, nutzen Sie das Angebot auf eigenes Risiko. Mit dem Aktivieren des Kontrollkästchens stimmen Sie den {{legal_links}} dieser Website zu. Diese Website verwendet Cookies."
 		},
 		"subline": "Bitte bestätigen Sie unsere Datenschutzbestimmungen."
 	},
@@ -4867,8 +4868,8 @@
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
-				"subline": "Anonym, ohne Konto. Wählen Sie einen Namen — oder würfeln Sie neue.",
-				"label": "Ihr Pseudonym",
+				"subline": "Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.",
+				"label": "Ihre User-ID",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
 				"reroll": "Neu würfeln",
 				"continue": "Zum Warteraum"
@@ -4914,7 +4915,7 @@
 				},
 				"anonymous": {
 					"title": "Anonym, und danach weg",
-					"text": "Nur Ihr Pseudonym ist sichtbar. Nach 48 Stunden ist alles gelöscht."
+					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
 		}
