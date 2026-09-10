@@ -212,6 +212,17 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"back": "Back to the waiting room",
+			"confirm": "Book appointment",
+			"headline": "Book an appointment",
+			"noTimes": "No times are free on this day. Please choose another day.",
+			"open": "Book appointment",
+			"pickDay": "Please choose a day in the calendar first.",
+			"subline": "Choose a day and then a time.",
+			"times": "Available times",
+			"weekdays": "S,M,T,W,T,F,S"
+		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
 			"title": "Your availability"
@@ -662,7 +673,8 @@
 			"download": "Download ICS",
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
-			"titleLabel": "Neutral calendar title"
+			"titleLabel": "Neutral calendar title",
+			"addShort": "Calendar"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -901,12 +913,41 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants"
+			},
+			"gallery": {
+				"back": "Back to the countdown",
+				"headline": "How the group works",
+				"subline": "Three things that help before your first time.",
+				"appointments": "Add the dates to your calendar",
+				"steps": {
+					"formats": {
+						"title": "How the group meets",
+						"text": "The name tells you whether you write, talk, see each other, or all of it. Sound and camera are yours to switch on when you need them.",
+						"alt": "A curious person in the group room; icons for chat, microphone and camera arranged in the middle, joined by a quiet shield."
+					},
+					"alias": {
+						"title": "Please use an alias only",
+						"text": "Everything is end-to-end encrypted. Even so, use no real names – it protects everyone.",
+						"alt": "A protected group with abstract alias symbols instead of names and profile pictures; the personal name card stays outside the protected room."
+					},
+					"dates": {
+						"title": "New dates, new links",
+						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
+						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
+					}
+				},
+				"upcoming": "Next dates"
 			}
 		},
 		"join": {
 			"timeConversions": "Playful time conversions",
 			"waitingArea": {
 				"countdown": {
+					"cardBack": "Back to the clock",
+					"cardNext": "Next page",
+					"cardOpenAria": "Flip the clock to read the greeting and netiquette",
+					"cardPage": "{{current}} of {{total}}",
+					"cardPrev": "Previous page",
 					"etaDay": "in 1 day",
 					"etaDays": "in {{count}} days",
 					"etaHour": "in 1 hour",
@@ -919,10 +960,13 @@
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
+					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
 					"overdueHeadline": "We'll be with you in a moment.",
 					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
 					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
+					"subtitleCard": "Tap the clock, greeting and netiquette behind it.",
+					"subtitleStill": "The greeting and the netiquette are below the numbers.",
 					"timerAriaFuture": "Until the start — days: {{days}}, hours: {{hours}}, minutes: {{minutes}}, seconds: {{seconds}}",
 					"timerAriaOverdue": "Since the planned start — minutes: {{minutes}}, seconds: {{seconds}}",
 					"toggleLabel": "Turn off animation",
@@ -1026,6 +1070,18 @@
 				"button1Label": "Close",
 				"headline": "Your changes have been saved successfully."
 			}
+		},
+		"entry": {
+			"join": "Join",
+			"more": "Learn more",
+			"moreTitle": "How the group works",
+			"motionOff": "Turn off animation",
+			"openHeadline": "The group has started.",
+			"noTimeHeadline": "The group starts as soon as the moderator opens it.",
+			"moreOpen": "The moderator has opened the group. “Join” takes you into the conversation.",
+			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
+			"missing": "This group no longer exists or you have no access to it.",
+			"backToCountdown": "Back to the countdown"
 		}
 	},
 	"help": {
@@ -2689,7 +2745,12 @@
 				"prefix": "I have the ",
 				"suffix": " noted. For authentication and navigation, this website uses cookies. I agree with this."
 			},
-			"loading": "Loading the consent text …"
+			"loading": "Loading the consent text …",
+			"snackbar": {
+				"prefix": "This is our ",
+				"link": "privacy policy",
+				"suffix": ". For authentication and navigation, this website uses cookies."
+			}
 		},
 		"error": {
 			"required_field_missing": {
@@ -2935,6 +2996,13 @@
 			},
 			"twoFactorAuth": {
 				"label": "Additionally secure my password with two-factor authentication"
+			},
+			"temporary": {
+				"join": "Join",
+				"toggleOff": "Create an account",
+				"toggleOn": "Join without an account",
+				"title": "This session ends when you close the browser.",
+				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
 			}
 		},
 		"back": "Back",
@@ -3032,7 +3100,8 @@
 				"ready": "All set — you can start writing",
 				"slow": "This is taking longer than usual",
 				"entering": "Opening your counselling room …"
-			}
+			},
+			"headlineAlmost": "Almost there."
 		},
 		"selection": {
 			"remove": "Remove {{label}}"
@@ -3170,34 +3239,6 @@
 	},
 	"session": {
 		"waitingMiniGame": {
-			"inhaleExhale": "Inhale exhale breathing guide",
-			"timeLeft": "Time left",
-			"choosePace": "Choose your pace, then begin your first try.",
-			"firstTryInstruction": "First try: follow inhale, hold, and exhale.",
-			"practiceSuccessPrompt": "Great job, want to start now?",
-			"timingInfo": "Set your breathing timing before you start.",
-			"achievementUnlocked": "Achievement unlocked: Level {{level}} {{emoji}} {{title}}.",
-			"levelBadge": "Level {{level}}: {{title}}",
-			"completionTitle": "Congratulation you have made it",
-			"prizeLine1": "Your main prize is true wisdom.",
-			"prizeLine2": "Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.",
-			"serenityPrayer": "God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
-			"changeMind": "I change my mind let me try out your waiting game",
-			"iJustWait": "I just wait",
-			"startGame": "Start the game",
-			"startFirstTry": "Lets start the first try",
-			"repeatTrainingRound": "Repeat training round",
-			"startRealGame": "Lets start the real game",
-			"repeatGame": "Repeat game",
-			"receivePrize": "Receive your price",
-			"playAgain": "Play again",
-			"joinRoom": "Join the room",
-			"decreaseInhale": "Decrease inhale seconds",
-			"increaseInhale": "Increase inhale seconds",
-			"decreaseHold": "Decrease hold seconds",
-			"increaseHold": "Increase hold seconds",
-			"decreaseExhale": "Decrease exhale seconds",
-			"increaseExhale": "Increase exhale seconds",
 			"robotUsernameFallback": "Ratsuchende_r 9",
 			"robotCard1Title": "Just a moment, please",
 			"robotCard1Body": "All of our advisors are currently in live consultations. Please wait just a moment here in the chat room. You can see below how many people are ahead of you in line.",
@@ -3209,7 +3250,6 @@
 			"robotCard4Title": "Would you like to use the waiting time meaningfully?",
 			"robotCard4Body": "Then play our short inhale-exhale game in the meantime.",
 			"robotCard4Play": "Play game",
-			"robotCard4Info": "Info",
 			"phase": {
 				"inhale": "Inhale",
 				"hold": "Hold",
@@ -3219,58 +3259,19 @@
 				"carimatSubtitle": "Lets bridge your waiting time",
 				"cancel": "cancel",
 				"confirm": "Got it, lets start",
-				"restart": "Restart",
-				"pressAtRightTime": "Press at the right time",
 				"inhale": {
 					"bubble": "You need to 3 things, to win.",
-					"subtitle": "through your nose",
-					"instruction": "Inhale slowly for <strong>{{count}} seconds</strong>, then press the button."
+					"subtitle": "through your nose"
 				},
 				"hold": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "your breath",
-					"instruction": "Hold your breath now for <strong>{{count}} seconds</strong>, then press the button."
+					"subtitle": "your breath"
 				},
 				"exhale": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "through your mouth",
-					"instruction": "Exhale slowly for <strong>{{count}} seconds</strong>, then press the button."
-				},
-				"belly": {
-					"autoPilot": "Auto pilot",
-					"timeIt": "Time it",
-					"inhale": "Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.",
-					"hold": "Now hold for <strong>3 seconds</strong> your breath.",
-					"exhale": "Now breath out for <strong>4 seconds</strong> and relax your entire body."
-				},
-				"selfTimer": {
-					"instruction": "Set this time your own time intervals while breathing.",
-					"repeatGame": "Repeat game",
-					"backToWaiting": "Back to waiting"
-				},
-				"completion": {
-					"instruction": "Congratulation you have made it.",
-					"receiveGift": "Receive little gift"
-				},
-				"serenity": {
-					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
+					"subtitle": "through your mouth"
 				}
-			},
-			"presets": {
-				"starter334": "first time",
-				"standard446": "mild experience (recommended)",
-				"deep556": "long (experts)"
-			},
-			"briefing": {
-				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",
-				"1": "Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.",
-				"2": "Okay you need to do three things in the game.",
-				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
-				"negative": "Okay please hold on once a counsellor is free we let you in."
-			},
-			"onboardingLine1": "Just arrive. We breathe together.",
-			"onboardingLine3": "When you are ready, start your first try.",
-			"volumeHint": "For a better experience, turn on your volume."
+			}
 		},
 		"acceptance": {
 			"button": {
@@ -4229,7 +4230,16 @@
 			"mustAcceptToContinue": "To continue, you must agree to our privacy policy."
 		},
 		"pseudonym": {
-			"changeName": "Change name"
+			"carimatSubtitle": "Choose a display name",
+			"carimatPrivacySubtitle": "Your privacy",
+			"carimatMessage": "Hello, before we continue please confirm the name picked at random for this session.",
+			"privacyMessage": "Good choice. To protect your privacy every message is end-to-end encrypted and deleted automatically after 48 hours.",
+			"yourPseudonym": "Your pseudonym",
+			"nextName": "Next name",
+			"confirm": "Confirm",
+			"changeName": "Change name",
+			"continueWithSelection": "Continue with this name",
+			"actionsLabel": "Pseudonym actions"
 		}
 	},
 	"sessionMenu": {
@@ -4696,6 +4706,166 @@
 		"anchor": {
 			"previous": "Show previous chapters",
 			"next": "Show more chapters"
+		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Your breathing break",
+			"introTitle": "A moment for you.",
+			"intro": {
+				"0": "Follow the movement.",
+				"1": "Breathe in whatever way feels comfortable."
+			},
+			"reducedIntro": {
+				"0": "Breathe at your own pace.",
+				"1": "The guidance stays with you."
+			},
+			"begin": "Begin",
+			"close": "Close breathing break",
+			"pause": "Pause",
+			"resume": "Keep breathing",
+			"pausedTitle": "A moment's pause.",
+			"pausedHint": {
+				"0": "Breathe in your own rhythm.",
+				"1": "You can continue whenever you like."
+			},
+			"automatic": "Autopilot",
+			"manual": "My rhythm",
+			"switchManual": "Switch to my rhythm",
+			"switchAutomatic": "Switch to autopilot",
+			"finish": "Enough for now",
+			"return": "Back to waiting",
+			"finishTitle": "Take with you what does you good.",
+			"phase": {
+				"0": "Breathe in",
+				"1": "Hold",
+				"2": "Breathe out",
+				"3": "Rest"
+			},
+			"next": {
+				"0": "Hold now",
+				"1": "Breathe out now",
+				"2": "Let the breath rest",
+				"3": "Breathe in again"
+			},
+			"guidance": {
+				"0": {
+					"0": "Gently through the nose.",
+					"1": "Let your belly rise."
+				},
+				"1": {
+					"0": "Let your shoulders loosen.",
+					"1": "Only as long as it feels good."
+				},
+				"2": {
+					"0": "Gently through the mouth.",
+					"1": "Let your belly sink again."
+				},
+				"3": {
+					"0": "A quiet moment.",
+					"1": "The next breath will come."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Let the breath come.",
+					"1": "Nothing needs forcing."
+				},
+				"1": {
+					"0": "Notice your shoulders.",
+					"1": "Let them sink a little."
+				},
+				"2": {
+					"0": "Let the breath flow out.",
+					"1": "No hurry at all."
+				},
+				"3": {
+					"0": "Feel how you are sitting.",
+					"1": "Take your time."
+				}
+			},
+			"soundOn": "Sound on",
+			"soundOff": "Sound off",
+			"soundOptions": "Sound and voice",
+			"wind": "Breath wind · Soft reverb",
+			"voice": "Announce the phases",
+			"voiceHint": "With your device's voice",
+			"voiceMissing": "No voice is available on this device.",
+			"voiceCue": {
+				"0": "Breathe in",
+				"1": "Hold",
+				"2": "Breathe out",
+				"3": "Rest"
+			},
+			"audioError": "Sound is not available right now. You can keep breathing without it.",
+			"voiceError": "The voice is not available. The breath wind stays with you.",
+			"words": {
+				"serenity": "serenity",
+				"courage": "courage",
+				"wisdom": "wisdom"
+			},
+			"quote": "God, grant me the {serenity} to accept the things I cannot change, the {courage} to change the things I can, and the {wisdom} to know the difference."
+		},
+		"entry": {
+			"kicker": "Live chat",
+			"status": {
+				"access": "Your access for this conversation",
+				"waiting": "Waiting room — looking for a free counsellor",
+				"accepted": "A counsellor has taken your conversation",
+				"closed": "Closed right now"
+			},
+			"access": {
+				"headline": "Your name for today.",
+				"subline": "Anonymous, no account. Pick a name — or roll a new set.",
+				"label": "Your pseudonym",
+				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
+				"reroll": "Roll again",
+				"continue": "To the waiting room"
+			},
+			"waiting": {
+				"headline": "Nearly there.",
+				"aheadUnknown": "We are looking for a free counsellor for you.",
+				"aheadNone": "You are next.",
+				"aheadOne": "One person ahead of you",
+				"aheadMany": "{{count}} people ahead of you",
+				"accepted": "A counsellor is here.",
+				"companion": "A calm companion until it starts",
+				"mail": "Rather write than wait? To mail counselling →",
+				"bar": "Waiting room",
+				"barStatusUnknown": "Nothing to do on your side",
+				"barStatus": "{{count}} ahead of you — nothing to do on your side",
+				"yourTurn": "It is your turn.",
+				"yourTurnSub": "A counsellor has taken your conversation and is waiting for you.",
+				"consentRequired": "Please agree first — without your agreement the conversation cannot begin.",
+				"decline": "Do not agree and leave the chat",
+				"declineConfirm": "Are you sure you want to cancel and close?",
+				"start": "Start the conversation",
+				"startStatus": "Your counsellor is waiting for you"
+			},
+			"closed": {
+				"headline": "The live chat is closed right now.",
+				"hoursLabel": "Opening hours",
+				"text": "Nobody is in the live chat right now. Write to us — we answer within two working days.",
+				"textShort": "Write to us — an answer within two working days.",
+				"later": "Later",
+				"mail": "Write a request to a counselling centre",
+				"mailShort": "Write a request",
+				"closedDay": "closed"
+			},
+			"steps": {
+				"wait": {
+					"title": "You wait until someone is free",
+					"text": "The counsellors are in other conversations right now."
+				},
+				"consent": {
+					"title": "Then you agree once",
+					"text": "As soon as a centre takes your conversation, you see its privacy policy."
+				},
+				"anonymous": {
+					"title": "Anonymous, and gone afterwards",
+					"text": "Only your pseudonym is visible. After 48 hours everything is deleted."
+				}
+			}
 		}
 	}
 }

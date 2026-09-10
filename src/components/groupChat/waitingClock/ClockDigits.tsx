@@ -29,6 +29,12 @@ export interface ClockDigitsProps {
 	magnet?: boolean;
 	/** Cell currently showing a popped-in emoji instead of its clock. */
 	pop?: ClockDigitsPop | null;
+	/**
+	 * Space between the two digits in px. Defaults to 35 % of `size`; the
+	 * countdown passes the cell gap here for its tight block, so the digits sit
+	 * in one continuous lattice instead of two pictures side by side.
+	 */
+	digitGap?: number;
 }
 
 /**
@@ -47,7 +53,8 @@ export const ClockDigits = ({
 	ariaHidden = true,
 	tint = false,
 	magnet = false,
-	pop = null
+	pop = null,
+	digitGap: digitGapProp
 }: ClockDigitsProps) => {
 	const prev = React.useRef<Record<string, number>>({});
 	const rand = React.useRef<Record<string, [number, number]>>({});
@@ -78,7 +85,7 @@ export const ClockDigits = ({
 					fontVariantNumeric: 'tabular-nums'
 				}}
 			>
-				{String(Math.max(0, Math.floor(value))).padStart(2, '0')}
+				{twoDigits(value).join('')}
 			</div>
 		);
 	}
@@ -96,7 +103,7 @@ export const ClockDigits = ({
 	const length = size * 0.47;
 	const gap = Math.max(2, Math.round(size * 0.1));
 	const digitW = size * 4 + gap * 3;
-	const digitGap = Math.round(size * 0.35);
+	const digitGap = digitGapProp ?? Math.round(size * 0.35);
 
 	const renderCell = (
 		key: string,

@@ -10,6 +10,28 @@ export const getChatDate = (startDate, startTime) => {
 	);
 };
 
+/**
+ * The group's own timezone as a short label — but only when it differs from the
+ * reader's. `startTime` is the group's wall clock, so someone in another zone
+ * sees the same digits and would otherwise read them as their own time (#1293).
+ */
+export const getGroupChatTimezoneSuffix = (timezone?: string): string => {
+	if (!timezone) {
+		return '';
+	}
+	let viewerTimezone: string | undefined;
+	try {
+		viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	} catch {
+		return '';
+	}
+	if (!viewerTimezone || viewerTimezone === timezone) {
+		return '';
+	}
+	const city = timezone.split('/').pop()?.replace(/_/g, ' ');
+	return city ? ` (${city})` : '';
+};
+
 export const getGroupChatDate = (
 	listItem,
 	postFixTranslation: string,
@@ -21,6 +43,7 @@ export const getGroupChatDate = (
 	const startTime = listItem.startTime;
 	const duration = listItem.duration;
 	const chatDate = getChatDate(startDate, startTime);
+	const timezoneSuffix = getGroupChatTimezoneSuffix(listItem.timezone);
 
 	const startDateFormatOptions =
 		listItem.repetitive && !onlyStartDate
@@ -43,14 +66,14 @@ export const getGroupChatDate = (
 	);
 
 	if (isShortVersion) {
-		return `${formatedStartTime} ${postFixTranslation} - ${formatedEndTime} ${postFixTranslation}`;
+		return `${formatedStartTime} ${postFixTranslation} - ${formatedEndTime} ${postFixTranslation}${timezoneSuffix}`;
 	} else if (onlyStartDate) {
 		return formatedStartDate;
 	} else if (onlyStartTime) {
-		return `${formatedStartTime} ${postFixTranslation}`;
+		return `${formatedStartTime} ${postFixTranslation}${timezoneSuffix}`;
 	} else {
 		return `${formatedStartDate}${
 			listItem.repetitive ? '' : ','
-		} ${formatedStartTime} ${postFixTranslation} - ${formatedEndTime} ${postFixTranslation}`;
+		} ${formatedStartTime} ${postFixTranslation} - ${formatedEndTime} ${postFixTranslation}${timezoneSuffix}`;
 	}
 };

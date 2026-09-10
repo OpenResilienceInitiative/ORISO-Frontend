@@ -127,6 +127,19 @@ const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 
 const logger = getMatrixClientLogger();
 
+/**
+ * The body a message starts its very first render with.
+ *
+ * `null` means "not known yet" and is only correct while a decryption is
+ * genuinely pending. Anything that needs no decryption is resolved immediately,
+ * because the alternative — filling it from an effect — draws the bubble, the
+ * timestamp and the read receipts one tick before the text exists (#1253).
+ */
+export const initialDecryptedBody = (
+	isE2eeEnabled: boolean,
+	message?: string
+): string | null | undefined => (isE2eeEnabled && message ? null : message);
+
 const ActiveKebabIcon = () => (
 	<svg
 		className="messageItem__kebabIconActive"
@@ -455,11 +468,6 @@ export const MessageItemComponent = ({
 		return merged;
 	}, [getComparableRecipientIds, userData?.displayName, userData?.userName]);
 
-	const [renderedMessage, setRenderedMessage] = useState<string | null>(null);
-	const [decryptedMessage, setDecryptedMessage] = useState<
-		string | null | undefined
-	>(null);
-
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 	const [actionMenuPosition, setActionMenuPosition] = useState<{
@@ -509,6 +517,10 @@ export const MessageItemComponent = ({
 		});
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
+
+	const [decryptedMessage, setDecryptedMessage] = useState<
+		string | null | undefined
+	>(() => initialDecryptedBody(isE2eeEnabled, message));
 
 	// Character limit for collapsing messages
 	const MESSAGE_CHAR_LIMIT = 300;
@@ -596,32 +608,47 @@ export const MessageItemComponent = ({
 		[]
 	);
 
-	useEffect((): void => {
-		if (isE2eeEnabled && message) {
-			decryptText(
-				message,
-				e2eeParams.keyID,
-				e2eeParams.key,
-				e2eeParams.encrypted,
-				t === 'e2e'
-			)
-				.catch((e) => {
-					if (!(e instanceof MissingKeyError)) {
-						handleDecryptionErrors(_id, messageTime, {
-							name: e.name,
-							message: e.message,
-							stack: e.stack,
-							level: ERROR_LEVEL_WARN
-						});
-					}
-
-					return translate('e2ee.message.encryption.text');
-				})
-				.then(setDecryptedMessage)
-				.then(() => handleDecryptionSuccess(_id));
-		} else {
+	useEffect((): (() => void) | void => {
+		if (!isE2eeEnabled || !message) {
 			setDecryptedMessage(message);
+			return;
 		}
+
+		/* A decryption that resolves late must not overwrite the body of the
+		   message that replaced it. Without this, a slow result can land after
+		   the component has already moved on (#1253). */
+		let cancelled = false;
+
+		decryptText(
+			message,
+			e2eeParams.keyID,
+			e2eeParams.key,
+			e2eeParams.encrypted,
+			t === 'e2e'
+		)
+			.catch((e) => {
+				if (!(e instanceof MissingKeyError)) {
+					handleDecryptionErrors(_id, messageTime, {
+						name: e.name,
+						message: e.message,
+						stack: e.stack,
+						level: ERROR_LEVEL_WARN
+					});
+				}
+
+				return translate('e2ee.message.encryption.text');
+			})
+			.then((text) => {
+				if (cancelled) {
+					return;
+				}
+				setDecryptedMessage(text);
+				handleDecryptionSuccess(_id);
+			});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [
 		translate,
 		message,
@@ -957,7 +984,13 @@ export const MessageItemComponent = ({
 		visibleAudienceLabels
 	]);
 
-	useEffect((): void => {
+	/**
+	 * The rendered body is a pure function of the decrypted text, so it is
+	 * derived here rather than pushed into state by an effect. As state it
+	 * needed a second tick after decryption before the body existed, which is
+	 * the window the empty bubble was drawn in (#1253).
+	 */
+	const renderedMessage = useMemo<string | null>((): string | null => {
 		const renderImageMarkers = (content: string) =>
 			content.replace(
 				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
@@ -1041,10 +1074,7 @@ export const MessageItemComponent = ({
 				preparedMessage
 			);
 		if (hasRichHtml) {
-			setRenderedMessage(
-				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
-			);
-			return;
+			return sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions);
 		}
 
 		try {
@@ -1054,33 +1084,29 @@ export const MessageItemComponent = ({
 			);
 			const contentStateMessage = convertFromRaw(rawMessageObject);
 
-			setRenderedMessage(
-				contentStateMessage.hasText()
-					? sanitizeHtml(
-							renderHighlightTokens(
-								renderImageMarkers(
-									urlifyLinksInText(
-										stateToHTML(contentStateMessage)
-									)
+			return contentStateMessage.hasText()
+				? sanitizeHtml(
+						renderHighlightTokens(
+							renderImageMarkers(
+								urlifyLinksInText(
+									stateToHTML(contentStateMessage)
 								)
-							),
-							sanitizeHtmlDefaultOptions
-						)
-					: ''
-			);
+							)
+						),
+						sanitizeHtmlDefaultOptions
+					)
+				: '';
 		} catch (error) {
 			// Markdown parsing failed; fall back to the sanitized raw message.
 			logger.debug(
 				'Message markdown render failed, using raw text',
 				error
 			);
-			setRenderedMessage(
-				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
-			);
+			return sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions);
 		}
-		// parsedMessage is memoized on decryptedMessage, so this stays
-		// equivalent to depending on decryptedMessage alone.
-	}, [decryptedMessage, parsedMessage.cleanedMessage]);
+		// `parsedMessage` is itself memoized on `decryptedMessage`, so this one
+		// dependency already tracks every change to the decrypted body.
+	}, [parsedMessage.cleanedMessage]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
@@ -1159,6 +1185,15 @@ export const MessageItemComponent = ({
 
 	const hasRenderedMessage =
 		renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;
+
+	/**
+	 * Two different things used to look identical here (#1253): `null` means the
+	 * body is not known yet — a decryption is still in flight — while `''` means
+	 * it is known and genuinely empty. Only the first must never be dressed up
+	 * as a finished message.
+	 */
+	const isBodyResolved =
+		decryptedMessage !== null && decryptedMessage !== undefined;
 
 	const getMessageDate = () => {
 		// Defence in depth (N-2): a message without a date must never send
@@ -2532,6 +2567,14 @@ export const MessageItemComponent = ({
 		);
 	}
 
+	/* #1253: while the body is still unknown, draw nothing at all rather than a
+	   convincing bubble with a timestamp and read receipts around an empty
+	   middle. A message that carries an attachment or is a system notification
+	   has content of its own and is unaffected. */
+	if (!isBodyResolved && !isSystemNotification && !attachments) {
+		return null;
+	}
+
 	return (
 		<div
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
@@ -2576,7 +2619,7 @@ export const MessageItemComponent = ({
 										lastName={
 											resolvedIncomingNameParts.lastName
 										}
-										size={44}
+										size={48}
 									/>
 								</div>
 								<button
@@ -2740,7 +2783,7 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={44}
+										size={48}
 									/>
 								</div>
 							</div>

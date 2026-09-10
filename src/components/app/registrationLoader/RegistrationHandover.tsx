@@ -4,8 +4,11 @@ import { Box, Typography } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useTranslation } from 'react-i18next';
-import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
-import { HandoverCarousel } from './HandoverCarousel';
+import {
+	registrationMd3,
+	registrationMotion
+} from '../../registration/registrationDesign/registrationDesign';
+import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
 import { HandoverGateButton } from './HandoverGateButton';
 import { HandoverGateState } from './handoverGate';
 import { useDeferredFlourish } from './useDeferredFlourish';
@@ -33,6 +36,20 @@ export interface RegistrationHandoverProps {
 	 * `.stageLayout__content` at height 0 (ORISO-Frontend#1219).
 	 */
 	variant?: 'overlay' | 'inline';
+	/**
+	 * The words and cards of another way in. All already translated; every
+	 * one defaults to the registration's. The live-chat entry room passes
+	 * its own so this screen is one module for every entry, not a copy per
+	 * entry (Frank, 2026-09-05).
+	 */
+	copy?: {
+		badge?: string;
+		headline?: string;
+		subline?: string;
+		encryption?: string;
+		cta?: string;
+		steps?: HandoverStep[];
+	};
 }
 
 /**
@@ -52,7 +69,8 @@ export const RegistrationHandover = ({
 	ready,
 	onEnter,
 	forcedState,
-	variant = 'overlay'
+	variant = 'overlay',
+	copy
 }: RegistrationHandoverProps) => {
 	const { t } = useTranslation();
 	const [slow, setSlow] = useState(false);
@@ -72,6 +90,10 @@ export const RegistrationHandover = ({
 	// Tier 3 waits for both: the content the user came for, and the app behind
 	// the gate. Decoration must never compete with either.
 	const flourish = useDeferredFlourish(artworkSettled && ready);
+	/* "Fast" goes away exactly when the way on is free — the same moment the
+	   gate button stops waiting. `forcedState` is a test seam, so it decides
+	   here too. */
+	const handoverDone = state === 'ready' || state === 'entering';
 
 	const handleEnter = useCallback(() => {
 		if (enteredRef.current) {
@@ -128,7 +150,23 @@ export const RegistrationHandover = ({
 					display: 'flex',
 					flexDirection: 'column',
 					width: '100%',
-					maxWidth: { xs: '100%', sm: 720 },
+					/* 720 was too narrow from the first review on: three
+					   264 px cards plus their two 20 px gaps need 832 of
+					   content, and the column pads 40 a side — 912 in all. On
+					   a 1440 screen the third card was cut off before (Frank,
+					   turn 1: "das falsche Maß bei 1440"). Below `lg` it keeps
+					   720 and the cards scroll, which is what a phone wants.
+
+					   Only the overlay may take those 912: it owns the whole
+					   viewport. The inline variant stands in the white column
+					   beside the red stage, which is 60vw — 864 px at 1440 —
+					   so a 912 module would run into the stage (Frank,
+					   2026-09-07: "roter Bereich, Modul darf nie so breit
+					   sein"). It keeps 720 and lets the cards scroll. */
+					maxWidth:
+						variant === 'overlay'
+							? { xs: '100%', sm: 720, lg: 912 }
+							: { xs: '100%', sm: 720 },
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },
@@ -178,22 +216,87 @@ export const RegistrationHandover = ({
 								color: registrationMd3.primary
 							}}
 						>
-							{t('registration.handover.badge', 'Registriert')}
+							{copy?.badge ??
+								t('registration.handover.badge', 'Registriert')}
 						</Typography>
 					</Box>
-					<Typography
-						component="h1"
+					{/* Frank, 2026-09-01: "wir sollten aus dem 'Geschafft, so
+					    geht es weiter' ein 'Fast geschafft' machen, das können
+					    wir auch ein bisschen animieren und dann wenn 'Anfrage
+					    schreiben' fertig ist, dann geht das 'Fast' eben da auch
+					    weg und es ist geschafft."
+
+					    Two headlines share one grid cell so the line never
+					    jumps: while the app is still loading the "Fast" one is
+					    up, and the moment the way on is free it hands over to
+					    "Geschafft." Crossfading whole lines rather than
+					    collapsing the word keeps German capitalisation right
+					    ("Fast geschafft." → "Geschafft.", not "geschafft.").
+					    A caller that hands in its own headline (the live chat
+					    does) gets that one, unanimated. */}
+					<Box
 						sx={{
-							// Same reason as the button labels: Typography does
-							// not inherit the surface colour.
-							color: 'inherit',
-							fontSize: { xs: 30, sm: 34 },
-							lineHeight: { xs: '36px', sm: '41px' },
-							fontWeight: 700
+							display: 'grid',
+							gridTemplateAreas: '"headline"',
+							alignItems: 'start'
 						}}
 					>
-						{t('registration.handover.headline', 'Geschafft.')}
-					</Typography>
+						{[false, true].map((done) => {
+							const own = copy?.headline;
+							const text = own
+								? own
+								: done
+									? t(
+											'registration.handover.headline',
+											'Geschafft.'
+										)
+									: t(
+											'registration.handover.headlineAlmost',
+											'Fast geschafft.'
+										);
+							const shown = own ? done : done === handoverDone;
+							if (own && !done) {
+								return null;
+							}
+							return (
+								<Typography
+									key={String(done)}
+									/* The visible line is the heading,
+									   whichever of the two it is: with the
+									   `h1` pinned to "Geschafft." the page had
+									   no heading at all while it waited. */
+									component={shown ? 'h1' : 'span'}
+									aria-hidden={!shown}
+									sx={{
+										// Same reason as the button labels:
+										// Typography does not inherit the
+										// surface colour.
+										'color': 'inherit',
+										'gridArea': 'headline',
+										'fontSize': { xs: 30, sm: 34 },
+										'lineHeight': {
+											xs: '36px',
+											sm: '41px'
+										},
+										'fontWeight': 700,
+										'opacity': shown ? 1 : 0,
+										'transform': shown
+											? 'translateY(0)'
+											: 'translateY(-6px)',
+										'transition': `opacity ${registrationMotion.standard} ${registrationMotion.easeOut}, transform ${registrationMotion.standard} ${registrationMotion.easeOut}`,
+										'pointerEvents': 'none',
+										'@media (prefers-reduced-motion: reduce)':
+											{
+												transition: 'none',
+												transform: 'none'
+											}
+									}}
+								>
+									{text}
+								</Typography>
+							);
+						})}
+					</Box>
 					<Typography
 						sx={{
 							mt: 0.75,
@@ -202,10 +305,11 @@ export const RegistrationHandover = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{t(
-							'registration.handover.subline',
-							'So geht es weiter:'
-						)}
+						{copy?.subline ??
+							t(
+								'registration.handover.subline',
+								'So geht es weiter:'
+							)}
 					</Typography>
 				</Box>
 
@@ -220,6 +324,7 @@ export const RegistrationHandover = ({
 				>
 					<HandoverCarousel
 						onArtworkSettled={() => setArtworkSettled(true)}
+						steps={copy?.steps}
 					/>
 				</Box>
 
@@ -250,10 +355,11 @@ export const RegistrationHandover = ({
 						sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
 					/>
 					<Typography component="span" sx={{ fontSize: 'inherit' }}>
-						{t(
-							'registration.handover.encryption',
-							'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
-						)}
+						{copy?.encryption ??
+							t(
+								'registration.handover.encryption',
+								'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
+							)}
 					</Typography>
 				</Box>
 			</Box>
@@ -319,7 +425,11 @@ export const RegistrationHandover = ({
 							}
 					}}
 				>
-					<HandoverGateButton state={state} onEnter={handleEnter} />
+					<HandoverGateButton
+						state={state}
+						onEnter={handleEnter}
+						label={copy?.cta}
+					/>
 				</Box>
 			</Box>
 		</Box>

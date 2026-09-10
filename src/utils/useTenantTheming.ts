@@ -102,7 +102,16 @@ const useTenantTheming = () => {
 	const onTenantServiceResponse = useCallback(
 		(tenant: TenantDataInterface) => {
 			if (!subdomain && cypressTenantEnabled !== '1') {
-				tenantContext?.setTenant({ settings } as any);
+				/* A host without a tenant subdomain (localhost, a bare
+				   domain) keeps the app config as its settings — but the
+				   tenant service still answers with the feature flags the
+				   admin set, and nothing else carries them. Without this
+				   merge `featureGroupChatV2Enabled` was never true here, so a
+				   group link's assignment never fired on a single-domain
+				   stand (#974, #1216). App config wins where both speak. */
+				tenantContext?.setTenant({
+					settings: { ...(tenant?.settings ?? {}), ...settings }
+				} as any);
 			} else {
 				// ToDo: See VIC-428 + VIC-427
 				const decodedTenant = JSON.parse(JSON.stringify(tenant));
