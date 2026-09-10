@@ -2245,46 +2245,31 @@ export const ChatTextSizeCompact: Story = {
 
 /** Drive the real handle to a width — no reliance on the persisted value. */
 /**
- * One key press on the panel's resize handle.
+ * Seeds the persisted panel width so a story MOUNTS at that width.
  *
- * The handle is re-queried on EVERY press. Holding one reference across
- * presses is what made (j) fail about one run in eight with Storybook's
- * "Not implemented. The result of this interaction is unreliable.": each
- * width change re-renders the stage (the composer settle tick from review
- * B2 N-1 among others), the old handle node is detached, and the key then
- * goes to a node that is no longer in the document.
+ * This is not a shortcut around the product: `chatStage_panelWidth` is how a
+ * returning reader lands on a width they set earlier (`readPanelWidth` in
+ * `stageLayout.ts`, unclamped on read), so a story that seeds it exercises
+ * the real restore path.
  *
- * The focus call stays because the composer autofocuses late — without it
- * the arrows would land in the editor instead of on the handle.
+ * Why the layout stories use it instead of dragging: every key press on the
+ * handle re-renders the stage, and Storybook runs a file's stories in one
+ * iframe. Once this file passed ~70 stories, a press landing during a
+ * re-render started failing with "Not implemented. The result of this
+ * interaction is unreliable." — five stories at once, none of which is ABOUT
+ * dragging. The drag itself is proven in
+ * `ResizableHandle.keyboard.test.tsx` — in jsdom, outside Storybook's
+ * instrumenter, which is the only place it stopped being flaky.
+ *
+ * A value above the card width is clamped down by `clampPanelWidth`, which is
+ * how (j) puts the MAIN chat on its floor without knowing the card width.
  */
-const pressOnPanelHandle = async (canvasElement: HTMLElement, keys: string) => {
-	const handle = canvasElement.querySelector<HTMLElement>(
-		'[data-cy="stage-panel-handle"]'
-	)!;
-	handle.focus();
-	await userEvent.keyboard(keys);
-};
-
-const dragPanelTo = async (canvasElement: HTMLElement, target: number) => {
-	const slot = canvasElement.querySelector<HTMLElement>(
-		'[data-cy="stage-panel-slot"]'
-	)!;
-	const width = () => Math.round(slot.getBoundingClientRect().width);
-	const press = (keys: string) => pressOnPanelHandle(canvasElement, keys);
-	// Home is the panel's floor; from there the arrows step up to the target
-	// (ArrowLeft grows a start-anchored pane by 20 px, Shift by 40).
-	await press('{Home}');
-	await waitFor(() => expect(width()).toBe(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH));
-	// Bounded: a handle that stops responding must fail as an assertion, not
-	// as a 15 s test timeout.
-	for (let step = 0; step < 60 && width() + 20 <= target; step += 1) {
-		await press(
-			width() + 40 <= target
-				? '{Shift>}{ArrowLeft}{/Shift}'
-				: '{ArrowLeft}'
-		);
+const seedPanelWidth = (px: number) => () => {
+	try {
+		window.localStorage.setItem(PANEL_WIDTH_STORAGE_KEY, String(px));
+	} catch {
+		/* private mode: the story then renders at the default width */
 	}
-	await expect(width()).toBe(target);
 };
 
 /**
@@ -2460,6 +2445,8 @@ const expectNarrowPaneSurvives = async (
 export const PanelAtTheDragFloor320: Story = {
 	name: '(i) Divider fully right — side room at 320 px',
 	globals: desktop1280Globals,
+	// Mounts at the floor through the persisted width — see `seedPanelWidth`.
+	beforeEach: seedPanelWidth(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH),
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
@@ -2471,7 +2458,6 @@ export const PanelAtTheDragFloor320: Story = {
 			composers: 2,
 			bubblesAtLeast: 10
 		});
-		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH);
 		const widths = paneWidths(canvasElement);
 		await expect(widths.panel).toBe(320);
 		// The number Frank measured is gone: the header row inside the panel
@@ -2501,6 +2487,54 @@ export const PanelAtTheDragFloor320: Story = {
 };
 
 /**
+ * (i2) The same 320 px floor, but the side room is a THREAD. Frank asked to
+ * see "beide channels auf 320" — the two channels squeeze differently only
+ * in their chrome (thread: grey tag, `primary-fixed` hairline; supervision:
+ * tinted header, `primary-fixed-dim`), never in their geometry. Both land on
+ * the same 287 px header row, so the channel is never the reason a panel
+ * overflows.
+ */
+export const ThreadAtTheDragFloor320: Story = {
+	name: '(i2) Divider fully right — thread at 320 px',
+	globals: desktop1280Globals,
+	beforeEach: seedPanelWidth(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH),
+	args: {
+		panel: 'thread',
+		panelVariant: 'inside',
+		openThreads: 1
+	},
+	play: async ({ canvasElement }) => {
+		// 9, like every other thread story — the thread fixture is one bubble
+		// shorter than the supervision one.
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 9
+		});
+		const widths = paneWidths(canvasElement);
+		await expect(widths.panel).toBe(320);
+		// Same geometry as the supervision channel in (i): 320 − 1 hairline
+		// − 2 × 16 inset. The channel decides colour, not width.
+		const panelRow = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .panelHeader__row'
+		)!;
+		await expect(Math.round(panelRow.getBoundingClientRect().width)).toBe(
+			287
+		);
+		// It really is the thread chrome, not supervision's.
+		const header = canvasElement.querySelector(
+			'[data-cy="stage-panel"] .panelHeader'
+		)!;
+		await expect(header.classList.contains('panelHeader--thread')).toBe(
+			true
+		);
+		await expect(
+			header.classList.contains('panelHeader--supervision')
+		).toBe(false);
+		await expectNarrowPaneSurvives(canvasElement, 'panel');
+	}
+};
+
+/**
  * (j) The divider pushed fully to the LEFT — "aber auch gern auf der linken
  * Seite". The main chat sits on the 320 px floor, so its header takes D8's
  * compact form: the calls move into the kebab, the stack folds into "+N",
@@ -2509,6 +2543,9 @@ export const PanelAtTheDragFloor320: Story = {
 export const MainChatAtTheDragFloor320: Story = {
 	name: '(j) Divider fully left — main chat at 320 px',
 	globals: desktop1280Globals,
+	// Above any card width, so `clampPanelWidth` puts the MAIN chat on its
+	// floor — the same end state End reached, without the interaction.
+	beforeEach: seedPanelWidth(9999),
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
@@ -2523,25 +2560,16 @@ export const MainChatAtTheDragFloor320: Story = {
 		const slot = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-panel-slot"]'
 		)!;
-		// End sends the divider fully left in one press. Bounded retries,
-		// because a single press occasionally lands on a handle node the
-		// stage has just replaced — the same cause `pressOnPanelHandle`
-		// documents; a re-press is the honest fix, not a longer timeout.
-		const handleNow = () =>
-			canvasElement.querySelector<HTMLElement>(
-				'[data-cy="stage-panel-handle"]'
-			)!;
-		const atMax = () =>
-			Math.round(slot.getBoundingClientRect().width) ===
-			Number(handleNow().getAttribute('aria-valuemax'));
-		for (let attempt = 0; attempt < 5 && !atMax(); attempt += 1) {
-			await pressOnPanelHandle(canvasElement, '{End}');
-			await waitFor(() => expect(atMax()).toBe(true), {
-				timeout: 1000
-			}).catch(() => undefined);
-		}
 		// The panel takes everything the drag floor leaves the main chat.
-		await waitFor(() => expect(atMax()).toBe(true));
+		await waitFor(() =>
+			expect(Math.round(slot.getBoundingClientRect().width)).toBe(
+				Number(
+					canvasElement
+						.querySelector('[data-cy="stage-panel-handle"]')!
+						.getAttribute('aria-valuemax')
+				)
+			)
+		);
 		// The main chat lands on its floor (± the 8 px the stage's computed
 		// card width differs from the rendered one — see `cardWidth` in
 		// `ConsultantSessionStage`).
@@ -2606,6 +2634,7 @@ export const MainChatAtTheDragFloor320: Story = {
 export const PanelAtTheOldMinimum520: Story = {
 	name: '(k) Comparison — the old 520 px minimum (header row 487 px)',
 	globals: desktop1280Globals,
+	beforeEach: seedPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH),
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
@@ -2617,7 +2646,6 @@ export const PanelAtTheOldMinimum520: Story = {
 			composers: 2,
 			bubblesAtLeast: 10
 		});
-		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_WIDTH);
 		await expect(paneWidths(canvasElement).panel).toBe(520);
 		// Where the 487 came from, measured rather than asserted from memory.
 		const panelRow = canvasElement.querySelector<HTMLElement>(
@@ -2750,6 +2778,7 @@ export const SideRoomCallsInThePanelHeader: Story = {
 export const SideRoomCallsInTheKebabAt320: Story = {
 	name: '(m) Side room calls — in the kebab at 320 px',
 	globals: desktop1280Globals,
+	beforeEach: seedPanelWidth(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH),
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
@@ -2761,7 +2790,6 @@ export const SideRoomCallsInTheKebabAt320: Story = {
 			composers: 2,
 			bubblesAtLeast: 10
 		});
-		await dragPanelTo(canvasElement, STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH);
 		const controls = callControls(canvasElement);
 		await expect(controls.placement).toBe('menu');
 		// Closed: one 32 px trigger instead of two buttons.
