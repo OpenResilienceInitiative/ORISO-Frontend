@@ -201,10 +201,22 @@ export const LiveChatAccess = ({
 										lineHeight: '20px',
 										fontWeight: selected ? 700 : 500,
 										color: registrationMd3.onSurface,
-										overflowWrap: 'anywhere'
+										overflowWrap: 'break-word'
 									}}
 								>
-									{name.userId}
+									{name.userId
+										.split('_')
+										.map((part, partIndex) => (
+											<React.Fragment key={partIndex}>
+												{partIndex > 0 && (
+													<>
+														{'_'}
+														<wbr />
+													</>
+												)}
+												{part}
+											</React.Fragment>
+										))}
 								</Typography>
 							</Box>
 						);
