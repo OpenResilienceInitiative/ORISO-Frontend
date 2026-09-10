@@ -163,12 +163,6 @@ export const LiveChatWaitingRoom = ({
 	   whatever the person was doing — the breathing companion included. */
 	const companionOpen = companion && !accepted;
 	const total = Math.max(5, ahead ?? 0);
-	/* Capped like `handoverGate.ts` does with `slow: 90`: being next in line
-	   is not being connected, and a full bar would say it is. */
-	const progress =
-		ahead === null
-			? 20
-			: Math.min(90, Math.round(((total - ahead) / total) * 100));
 
 	const cards: HandoverStep[] = CARD_KEYS.map((key) => ({
 		key: `live-${key}`,
@@ -319,7 +313,7 @@ export const LiveChatWaitingRoom = ({
 											{ count: ahead }
 										)
 							}
-							progress={progress}
+							indeterminate
 							icon={<TurningClock />}
 						/>
 					</Box>

@@ -17,6 +17,7 @@ import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnqui
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
 import { performLeaveQueueDelete } from '../../pseudonym/leaveQueueDelete';
+import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
 import { generatePseudonym } from '../../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../../utils/anonName/engine';
 import { buildInviteSessionAppUrl } from '../../invite/inviteLinkHelpers';
@@ -39,23 +40,42 @@ const POLL_MS = 4000;
 const NAME_CHOICES = 4;
 
 /**
- * A fresh set of offers. The engine draws with replacement, so the same
- * display name can come up twice in four draws; a set with a double in it
- * looks like a bug, hence the dedupe. The attempt cap keeps a small language
- * pack from spinning here — a short set is better than a hung door.
+ * One offer: the animal picture and the User-ID that goes with it.
+ *
+ * The door shows the **User-ID**, not the three-word display name (Frank,
+ * 2026-09-10: „wichtig ist, dass wir die User IDs nutzen"). Two reasons. It is
+ * the string the guest meets everywhere else in the app, so nothing is minted
+ * behind their back; and the display name carried a grammar bug that four
+ * names at once made unmissable — the engine appends the adjective without the
+ * animal's gender („stilles Löwe"). A User-ID has no adjective and no umlaut:
+ * `loewe_shin_4211`.
  */
-const rollPseudonyms = (locale: string): Pseudonym[] => {
-	const picked: Pseudonym[] = [];
+export interface GuestName {
+	identity: Pseudonym;
+	/** `animal_name_1234`, umlauts spelled out — what the session stores. */
+	userId: string;
+}
+
+/**
+ * A fresh set of offers. The engine draws with replacement, so the same name
+ * can come up twice in four draws; a set with a double in it looks like a bug,
+ * hence the dedupe — on the User-ID, because that is what the guest compares.
+ * The attempt cap keeps a small language pack from spinning here: a short set
+ * is better than a hung door.
+ */
+const rollGuestNames = (locale: string): GuestName[] => {
+	const picked: GuestName[] = [];
 	const seen = new Set<string>();
 	for (
 		let attempt = 0;
 		attempt < NAME_CHOICES * 10 && picked.length < NAME_CHOICES;
 		attempt++
 	) {
-		const candidate = generatePseudonym(locale);
-		if (seen.has(candidate.displayName)) continue;
-		seen.add(candidate.displayName);
-		picked.push(candidate);
+		const identity = generatePseudonym(locale);
+		const userId = toRegistrationUsername(identity);
+		if (seen.has(userId)) continue;
+		seen.add(userId);
+		picked.push({ identity, userId });
 	}
 	return picked;
 };
@@ -92,8 +112,8 @@ export const LiveChatEntryRoom = ({
 	);
 
 	const [stage, setStage] = useState<'access' | 'waiting'>('access');
-	const [pseudonyms, setPseudonyms] = useState<Pseudonym[]>(() =>
-		rollPseudonyms(locale)
+	const [names, setNames] = useState<GuestName[]>(() =>
+		rollGuestNames(locale)
 	);
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [busy, setBusy] = useState(false);
@@ -156,17 +176,19 @@ export const LiveChatEntryRoom = ({
 	   card did exactly this (SessionItemComponent handleConfirmPseudonym). */
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
-		const chosen = pseudonyms[selectedIndex];
+		const chosen = names[selectedIndex];
 		if (!chosen) return;
 		setBusy(true);
 		setContinueFailed(false);
 		try {
+			/* One name, everywhere: the counsellor's queue shows the same
+			   string the guest just picked. */
 			await apiPutSessionData(sessionId, {
-				displayName: chosen.displayName
+				displayName: chosen.userId
 			});
-			await apiPatchUserData({ displayName: chosen.displayName });
+			await apiPatchUserData({ displayName: chosen.userId });
 			mark('pseudonym');
-			mark('pseudonym-name', chosen.displayName);
+			mark('pseudonym-name', chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on
@@ -176,7 +198,7 @@ export const LiveChatEntryRoom = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, pseudonyms, selectedIndex, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* B: the queue, every 4 s — same endpoint and cadence the session used. */
 	useEffect(() => {
@@ -263,7 +285,7 @@ export const LiveChatEntryRoom = ({
 		<EntryRoomShell kicker={kicker} statusLine={statusLine}>
 			{stage === 'access' && (
 				<LiveChatAccess
-					pseudonyms={pseudonyms}
+					names={names}
 					selectedIndex={selectedIndex}
 					busy={busy}
 					failed={continueFailed}
@@ -271,7 +293,7 @@ export const LiveChatEntryRoom = ({
 					onReroll={() => {
 						/* A new set, and the first of it taken: the way on
 						   must never need a second click. */
-						setPseudonyms(rollPseudonyms(locale));
+						setNames(rollGuestNames(locale));
 						setSelectedIndex(0);
 					}}
 					onContinue={() => {

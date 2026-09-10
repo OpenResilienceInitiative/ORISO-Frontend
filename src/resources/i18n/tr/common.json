@@ -4818,8 +4818,8 @@
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
-				"subline": "Anonim, hesapsız. Bir ad seçin — ya da yeniden zar atın.",
-				"label": "Takma adınız",
+				"subline": "Anonim, hesapsız. Bir kullanıcı kimliği seçin — ya da yeniden atın.",
+				"label": "Kullanıcı kimliğiniz",
 				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
 				"reroll": "Yeniden at",
 				"continue": "Bekleme odasına"
@@ -4865,7 +4865,7 @@
 				},
 				"anonymous": {
 					"title": "Anonim ve sonra silinir",
-					"text": "Yalnızca takma adınız görünür. 48 saat sonra her şey silinir."
+					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
 		}
