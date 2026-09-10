@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, generatePath } from 'react-router-dom';
 import { afterEach, describe, it, expect } from 'vitest';
 import { SessionsZone } from './SessionsZone';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -30,6 +30,19 @@ const consultantConfig = {
 		}
 	],
 	userProfileRoutes: [
+		// Enquiry (sessionPreview) first, mirroring RouterConfig: an enquiry
+		// that has not started yet has no group id, and SessionMenu builds its
+		// links from the ENQUIRY list path.
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
+		{
+			path: '/sessions/consultant/sessionPreview/:groupId/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId/userProfile',
 			component: stub('askerInfo'),
@@ -42,6 +55,11 @@ const consultantConfig = {
 		}
 	],
 	detailRoutes: [
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId',
+			component: stub('sessionPreview'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId',
 			component: stub('sessionView'),
@@ -225,5 +243,83 @@ describe('SessionsZone v7 routing — asker (user)', () => {
 	it('renders the empty session view on the bare list path', () => {
 		renderUserAt('/sessions/user/view/');
 		expect(screen.getByTestId('empty')).toBeDefined();
+	});
+});
+
+/**
+ * #1188 job 1 — "no menu entry leads to a page-not-found screen".
+ *
+ * The chatroom-settings menu builds its targets with `generatePath` on
+ * `${listPath}/:groupId/:id/:subRoute?/:extraPath?` (or the `session/:id`
+ * variant for an enquiry that has no Matrix room yet). Matrix room ids carry
+ * `!` and `:` (`!abc:matrix.oriso.org`), which `generatePath`
+ * percent-encodes — the route has to survive that, otherwise the entry is the
+ * dead end the report shows. Every sub-route the menu can produce is asserted
+ * here so a future route rename cannot silently reintroduce a 404.
+ */
+describe('SessionsZone v7 routing — chatroom-settings menu targets (#1188)', () => {
+	afterEach(() => cleanup());
+
+	const MATRIX_ROOM_ID = '!qOTUeQBiuXBstjnBmR:matrix.oriso.org';
+	const withRoom = '/sessions/consultant/sessionView/:groupId/:id/:subRoute?';
+	// SessionMenu's listPath is the ENQUIRY list path for an enquiry, so a
+	// room-less enquiry links into sessionPreview, not sessionView.
+	const withoutRoomEnquiry =
+		'/sessions/consultant/sessionPreview/session/:id/:subRoute?';
+
+	it('resolves the advice-seeker profile for a session with a Matrix room', () => {
+		renderAt(
+			generatePath(withRoom, {
+				groupId: MATRIX_ROOM_ID,
+				id: '3363',
+				subRoute: 'userProfile'
+			})
+		);
+		expect(screen.getByTestId('askerInfo')).toBeDefined();
+	});
+
+	it('resolves the advice-seeker profile for an enquiry without a Matrix room', () => {
+		renderAt(
+			generatePath(withoutRoomEnquiry, {
+				id: '3363',
+				subRoute: 'userProfile'
+			})
+		);
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
+	});
+
+	it('resolves the advice-seeker profile for an enquiry that already has a room', () => {
+		renderAt(
+			generatePath(
+				'/sessions/consultant/sessionPreview/:groupId/:id/:subRoute?',
+				{
+					groupId: MATRIX_ROOM_ID,
+					id: '3363',
+					subRoute: 'userProfile'
+				}
+			)
+		);
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
+	});
+
+	it('resolves the session itself when the menu closes back to the chat', () => {
+		renderAt(
+			generatePath(withRoom, {
+				groupId: MATRIX_ROOM_ID,
+				id: '3363',
+				subRoute: undefined
+			})
+		);
+		expect(screen.getByTestId('sessionView')).toBeDefined();
+	});
+
+	it('keeps the encoded room id addressable (no bare-colon regression)', () => {
+		const link = generatePath(withRoom, {
+			groupId: MATRIX_ROOM_ID,
+			id: '3363',
+			subRoute: 'userProfile'
+		});
+		expect(link).toContain('%3A');
+		expect(link).not.toContain(':matrix.oriso.org');
 	});
 });
