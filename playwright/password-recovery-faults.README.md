@@ -44,10 +44,13 @@ Cases:
    offers the settings retry action. This deliberately leaves an incomplete
    backup fixture; it is not a routine demonstration account.
 
-2026-09-10 evidence: isolated C→A gate passed22.7s; B ordered backup-failure gate
-passed14.5s. A's failed-finalization assertions and actual retry completed in
-faults-v3, but that earlier combined test subsequently failed because it expected
-a newly parked key after A had been recovered in a fresh context. The tests were
-split to remove that invalid dependency; the corrected standalone A test was
-not rerun against its already-finalized enquiry. Preserve this runner-versus-step
-boundary rather than reporting three complete green test executions.
+2026-09-10 evidence: three isolated Chromium gates passed with dedicated state:
+finalization rejection/retry15.0s (fresh Jacqueline), C→A isolation22.7s
+(Ling→Cyrus), and ordered backup failure14.5s (Hugo). All accounts have exact
+pool email profile readbacks and synced metadata; all test contexts closed.
+
+An earlier combined Cyrus test proved the failed-finalization assertions but
+later failed because it expected a newly parked key after recovery in a fresh
+context. That failed run is retained. Splitting the cases removed the invalid
+dependency; fresh Jacqueline supplies the clean standalone finalization PASS.
+No consumed registration/enquiry fixture was reset to manufacture a rerun.
