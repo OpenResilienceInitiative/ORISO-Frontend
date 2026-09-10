@@ -3,6 +3,9 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
+import { useSessionListRail } from '../sessionsList/SessionListRailContext';
+import { SessionRailPill } from '../sessionsList/SessionRailPill';
+import { getSessionRailMarks } from '../sessionsList/sessionRailState';
 import { getModality, Modality } from '../session/getModality';
 import {
 	convertISO8601ToMSSinceEpoch,
@@ -11,7 +14,10 @@ import {
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import {
+	getRoomUnreadCount,
+	isChatItemUnread
+} from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
@@ -93,7 +99,9 @@ import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	getLatestMatrixRoomPreview,
 	getPreviewLastMessageType,
-	MatrixRoomPreview
+	getRoomPreviewsByChannel,
+	MatrixRoomPreview,
+	TimedRoomPreview
 } from './matrixRoomPreview';
 import {
 	isCaseHandoverAccessControlled,
@@ -151,6 +159,10 @@ export const SessionListItemComponent = ({
 	const { userData } = useContext(UserDataContext);
 	const { path: listPath, type } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	// True while the list column is collapsed to `STAGE_LAYOUT.RAIL_WIDTH`
+	// (a side pane is open). The rail renders a different row, not a
+	// CSS-hidden version of this one — see the early return below.
+	const isRail = useSessionListRail();
 	const activeSessionContext = useContext(ActiveSessionContext);
 	const activeSession = activeSessionContext?.activeSession;
 	const GroupModalityIcon =
@@ -257,6 +269,16 @@ export const SessionListItemComponent = ({
 		matrixRoomId,
 		isMatrixBackedSession && !caseHandoverContentLocked,
 		getLatestMatrixRoomPreview
+	);
+	// The SAME timeline, split by channel, for the rail's per-mark tooltips
+	// (Frank's sketch 10.09.2026). `useMatrixSessionPreview` already holds the
+	// room's last 50 decrypted events and its subscription; a second selector
+	// over that array costs no fetch. Gated on the identical case-handover
+	// lock as the row preview — a locked case must not leak through a tooltip.
+	const railChannelPreviews = useMatrixSessionPreview(
+		matrixRoomId,
+		isMatrixBackedSession && !caseHandoverContentLocked,
+		getRoomPreviewsByChannel
 	);
 
 	useEffect(() => {
@@ -884,6 +906,206 @@ export const SessionListItemComponent = ({
 		return prettyDate.str ? translate(prettyDate.str) : prettyDate.date;
 	};
 
+	// Hoisted above the group branch (rail work, 09.09.2026): the collapsed
+	// 80 px rail renders ONE pill for both branches, so the row's display name
+	// has to exist before the branch does. Pure string work — no hook, no
+	// behaviour change for the card list.
+	const hasConsultantData = !!activeSession.consultant;
+	let sessionTopic = '';
+
+	// Card title:
+	// - Consultant seen by an asker: humanize the technical username via the
+	//   same name pipeline the chat messages use, so a name like
+	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
+	//   Matrix identifier.
+	// - Asker seen by a consultant: the anonymous User-ID is the platform's
+	//   read-only identity anchor (#1209). Never humanize it — dropping
+	//   underscores and the trailing digit block produces a different name
+	//   than the chat header shows for the same user, so a card title of
+	//   "hundchen zuri" would not match a header of "hundchen_zuri_3168".
+	//   Match the header exactly.
+	if (isAsker) {
+		if (hasConsultantData) {
+			sessionTopic = formatMessagePersonName(
+				activeSession.consultant.displayName,
+				activeSession.consultant.username
+			);
+		} else if (activeSession.isEmptyEnquiry) {
+			sessionTopic = translate('sessionList.user.writeEnquiry');
+		} else {
+			sessionTopic = translate('sessionList.user.consultantUnknown');
+		}
+	} else {
+		sessionTopic =
+			resolveAnonymousChatDisplayName(activeSession.user) ||
+			activeSession.user?.username ||
+			'';
+	}
+
+	// -------------------------------------------------------------------
+	// Collapsed rail — Frank, 09.09.2026 (*2)
+	// -------------------------------------------------------------------
+	// "Die Kreise … sind … bisschen eiförmig. Ich würde mir wünschen, wir
+	// hätten da mehr Infos drin … wir machen daraus hochförmige Pillen und
+	// können dann unten Icons und Details hinzufügen … Und wir sollten
+	// diesen Abstand auch halten."
+	//
+	// Until now the rail was THIS card with every field hidden by
+	// `sessionsList__wrapper--iconOnly` and the remains rounded with
+	// `border-radius: 50%` on a 48 × 50 px box — the egg. The rail row is
+	// now its own thing: a portrait pill with the state marks the list
+	// already knows. Each mark's source is documented in
+	// `sessionsList/sessionRailState.ts`; none is invented here.
+	//
+	// The labels are existing catalogue keys — the i18n guard runs at drift
+	// budget 0, so this change adds none.
+	if (isRail) {
+		const railName = activeSession.isGroup
+			? typeof activeSession.item.topic === 'string'
+				? activeSession.item.topic
+				: activeSession.item.topic?.name ||
+					translate('groupChat.noTopicSpecified')
+			: sessionTopic;
+		// The rail's tooltips. Every string is built here and handed over
+		// ready — `SessionRailPill` translates nothing and fetches nothing.
+		const previewBody = (preview: TimedRoomPreview | null) => {
+			if (!preview || preview.kind === 'encrypted') {
+				return undefined;
+			}
+			return preview.kind === 'text'
+				? preview.text || undefined
+				: translate(
+						`sessionList.preview.${preview.kind}`,
+						preview.kind
+					);
+		};
+		const previewWhen = (preview: TimedRoomPreview | null) =>
+			preview
+				? prettyPrintDate(
+						Math.round(preview.ts / MILLISECONDS_PER_SECOND),
+						activeSession.item.createDate
+					)
+				: undefined;
+		const railUnreadCount = getRoomUnreadCount(
+			activeSession.item.matrixRoomId
+		);
+		const railTooltips = {
+			pill: {
+				title: railName,
+				// `displayLastMessage`, not the raw preview: it has already
+				// dropped a message this user may not see and honours the
+				// case-handover lock.
+				body: displayLastMessage || undefined,
+				meta: prettyPrintDate(
+					activeSession.item.messageDate,
+					activeSession.item.createDate
+				)
+			},
+			marks: {
+				thread: {
+					body: previewBody(railChannelPreviews?.thread ?? null),
+					meta: previewWhen(railChannelPreviews?.thread ?? null)
+				},
+				mail: {
+					body: previewBody(railChannelPreviews?.main ?? null),
+					meta: previewWhen(railChannelPreviews?.main ?? null)
+				},
+				unread:
+					railUnreadCount > 0
+						? {
+								body: translate(
+									'sessionList.rail.unreadCount',
+									{ count: railUnreadCount }
+								)
+							}
+						: undefined
+				// supervision deliberately has no entry: it lives in another
+				// Matrix room, so this timeline cannot speak for it. The mark
+				// falls back to its own label.
+			}
+		};
+		const railAvatar = activeSession.isGroup ? (
+			<UserAvatar
+				username={activeSession.item.matrixRoomId || 'group'}
+				displayName={railName}
+				userId={
+					activeSession.item.matrixRoomId ||
+					String(activeSession.item.id ?? 'group')
+				}
+				size="40px"
+				ring={false}
+			/>
+		) : !isAsker ? (
+			<MessageAvatar
+				isGroup={false}
+				isSystemNotification={false}
+				userId={
+					activeSession.item.askerMatrixUserId ||
+					activeSession.user?.username ||
+					'unknown'
+				}
+				username={activeSession.user?.username || ''}
+				displayName={railName}
+				size={40}
+			/>
+		) : (
+			<UserAvatar
+				username={activeSession.consultant?.username || 'User'}
+				displayName={railName}
+				userId={activeSession.consultant?.id || 'unknown'}
+				size="40px"
+				ring={false}
+			/>
+		);
+		return (
+			<div
+				onClick={handleOnClick}
+				className={clsx(
+					'sessionsListItem',
+					'sessionsListItem--rail',
+					isChatActive && 'sessionsListItem--active',
+					!isChatActive && !isItemUnread && 'sessionsListItem--read'
+				)}
+				data-group-id={
+					activeSession.isGroup
+						? activeSession.rid || ''
+						: activeSession.item.matrixRoomId
+				}
+				data-cy="session-list-item"
+			>
+				<SessionRailPill
+					name={railName}
+					avatar={railAvatar}
+					marks={getSessionRailMarks({
+						previewChannel: matrixSessionPreview?.channel,
+						supervisionState,
+						modality: getModality(activeSession),
+						unread: isItemUnread
+					})}
+					markLabels={{
+						thread: translate('chatStage.switcher.kind.thread'),
+						supervision: translate(
+							'sessionList.toolbar.chips.supervision'
+						),
+						mail: translate('sessionList.toolbar.chips.nearby'),
+						unread: translate('sessionList.toolbar.chips.unread')
+					}}
+					tooltips={railTooltips}
+					unreadCount={railUnreadCount}
+					active={isChatActive}
+					// The click bubbles to the row (which navigates); Enter and
+					// Space are handled — and default-prevented — by the row's
+					// key handler, so nothing fires twice.
+					onKeyDown={handleKeyDownListItem}
+					buttonRef={itemRef}
+					role="tab"
+					aria-selected={isChatActive}
+					tabIndex={index === 0 ? 0 : -1}
+				/>
+			</div>
+		);
+	}
+
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
 			activeSession.consultant &&
@@ -1079,38 +1301,6 @@ export const SessionListItemComponent = ({
 				</div>
 			</div>
 		);
-	}
-
-	const hasConsultantData = !!activeSession.consultant;
-	let sessionTopic = '';
-
-	// Card title:
-	// - Consultant seen by an asker: humanize the technical username via the
-	//   same name pipeline the chat messages use, so a name like
-	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
-	//   Matrix identifier.
-	// - Asker seen by a consultant: the anonymous User-ID is the platform's
-	//   read-only identity anchor (#1209). Never humanize it — dropping
-	//   underscores and the trailing digit block produces a different name
-	//   than the chat header shows for the same user, so a card title of
-	//   "hundchen zuri" would not match a header of "hundchen_zuri_3168".
-	//   Match the header exactly.
-	if (isAsker) {
-		if (hasConsultantData) {
-			sessionTopic = formatMessagePersonName(
-				activeSession.consultant.displayName,
-				activeSession.consultant.username
-			);
-		} else if (activeSession.isEmptyEnquiry) {
-			sessionTopic = translate('sessionList.user.writeEnquiry');
-		} else {
-			sessionTopic = translate('sessionList.user.consultantUnknown');
-		}
-	} else {
-		sessionTopic =
-			resolveAnonymousChatDisplayName(activeSession.user) ||
-			activeSession.user?.username ||
-			'';
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);

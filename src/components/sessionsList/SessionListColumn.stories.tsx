@@ -12,11 +12,15 @@ import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
+import { UserAvatar } from '../message/UserAvatar';
+import { SessionRailPill } from './SessionRailPill';
+import { getSessionRailMarks } from './sessionRailState';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
 import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
+import './sessionRailPill.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -334,6 +338,32 @@ export const EmptyWithSideHairlines: Story = {
 const RAIL_VIEWPORT = 1280;
 const PERSISTED_LIST_WIDTH = 420;
 
+/**
+ * Rail rows for the snap stories. Labels are existing catalogue copy passed as
+ * props — the pill never looks a key up (i18n guard, drift budget 0).
+ */
+const RAIL_DEMO_COPY = {
+	thread: 'Thread',
+	supervision: 'Supervision',
+	mail: 'Mail',
+	unread: 'Ungelesen'
+};
+
+const RAIL_DEMO_ROWS = [
+	{
+		user: 'sonnenblume_47',
+		marks: getSessionRailMarks({ modality: 'AGENCY_COUNSELLING' })
+	},
+	{
+		user: 'stiller_fuchs_ali',
+		marks: getSessionRailMarks({
+			modality: 'AGENCY_COUNSELLING',
+			previewChannel: 'thread',
+			unread: true
+		})
+	}
+];
+
 function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 	const { t } = useTranslation();
 	const [dragged, setDragged] = useState<number | null>(null);
@@ -384,18 +414,47 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 					createGroupChatActive={false}
 				/>
 				<CardScroll>
-					<DemoCard
-						topic="Schuldnerberatung"
-						postcode="55116"
-						user="sonnenblume_47"
-						subject="Mein Vertrag läuft im Oktober aus."
-					/>
-					<DemoCard
-						topic="Suchtberatung"
-						postcode="80331"
-						user="stiller_fuchs_ali"
-						subject="Ich habe die Unterlagen jetzt zusammen."
-					/>
+					{/* The rail is not this column with its text hidden — it
+					    renders its own row (Frank, 09.09.2026). Same switch
+					    the wrapper uses, so the story shows what the app
+					    shows on both sides of the threshold. */}
+					{rail ? (
+						<ul className="sessionRailList">
+							{RAIL_DEMO_ROWS.map((row) => (
+								<li key={row.user}>
+									<SessionRailPill
+										name={row.user}
+										avatar={
+											<UserAvatar
+												userId={row.user}
+												username={row.user}
+												displayName={row.user}
+												size="32px"
+												ring={false}
+											/>
+										}
+										marks={row.marks}
+										markLabels={RAIL_DEMO_COPY}
+									/>
+								</li>
+							))}
+						</ul>
+					) : (
+						<>
+							<DemoCard
+								topic="Schuldnerberatung"
+								postcode="55116"
+								user="sonnenblume_47"
+								subject="Mein Vertrag läuft im Oktober aus."
+							/>
+							<DemoCard
+								topic="Suchtberatung"
+								postcode="80331"
+								user="stiller_fuchs_ali"
+								subject="Ich habe die Unterlagen jetzt zusammen."
+							/>
+						</>
+					)}
 				</CardScroll>
 				<ResizableHandle
 					currentWidth={width}

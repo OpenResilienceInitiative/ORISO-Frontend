@@ -1,0 +1,339 @@
+// Collapsed session-list rail — one portrait pill per conversation.
+
+// Frank, 09.09.2026 (*2): the rail's avatar circles are "bisschen eiförmig"
+// and carry no information beyond the picture. This sheet is the geometric
+// answer to the first half; `SessionRailPill.tsx` carries the second.
+// ---
+// Frank, 10.09.2026 — second round, on the rendered pills:
+//   "der Abstand zwischen diesen Pillen ist zu groß"
+//   "die Icons sind viel zu klein"
+//   "alles hat reingequetscht … dann muss man nicht noch mehr sortieren,
+//    sondern dann einfach das Ding länger machen"
+//   "das Eicken bitte nach oben schieben … dadrunter hast Du dann Platz"
+// So the pill stops being a fixed box that packs marks into a 2 x 2 grid.
+// The avatar is pinned to the TOP, the marks stack in ONE column beneath it,
+// and the pill GROWS DOWNWARD with however many marks a row carries. Nothing
+// is ever squeezed to fit a height again — the height follows the content.
+
+// The egg came from `sessionsList.styles.scss` painting `border-radius: 50%`
+// on a box it never made square (48 × 50 px measured on
+// `Components/Session/List/Session list column` → rail story). A percentage
+// radius follows the box, so ANY future content change turns the circle into
+// an ellipse again. Here the radius is stated in px and equals half the fixed
+// width, which is a stadium/pill for every height — it cannot go egg-shaped.
+
+// Every colour is an M3 role with its dev fallback; no `on-*` role is used as
+// a background or border (m3Sweep #27 / #3).
+
+$rail-pill-width: 48px;
+
+// No fixed height any more. A pill with no marks is a 48 x 48 circle (the
+// radius is half the width, so the stadium degenerates to a circle exactly
+// there); every mark adds its slot plus the mark gap underneath. Four marks
+// make a tall pill on purpose — Frank: "gar nicht schlimm, wenn diese Pille
+// 'n bisschen länger nach unten wird".
+$rail-pill-min-height: 48px;
+
+// Half the width. Stated in px on purpose — a `%` radius follows the box and
+// is exactly how the old circle became an egg.
+$rail-pill-radius: 24px;
+
+// Round 1 read Frank's "diesen Abstand halten" as the expanded list's 24 px
+// card rhythm (T5). Seeing it rendered he corrected that: in a 48 px strip
+// 24 px of air between pills reads as a gap, not as rhythm. 8 px keeps the
+// pills separable without letting the column fall apart.
+$rail-pill-gap: 8px;
+
+// Round 1: 16 px slot / 14 px glyph, two per row. Frank: "viel zu klein".
+// One column means the full inner width is available, so the slot grows to
+// 24 and the glyph to 18 — the same optical weight as the expanded row's
+// modality icon.
+$rail-mark-slot: 24px;
+$rail-mark-glyph: 18px;
+$rail-mark-gap: 2px;
+
+// Frank, 10.09.2026: "nutze mal nun avatar ohne ring 40px bitte für das menu."
+// 40 fits exactly: 48 pill − 2 × 3 padding − 2 × 1 border = 40. The empty pill
+// therefore stays a 48 px circle with the animal filling it edge to edge,
+// which is what the ring's 25 % had been eating (see `UserAvatar`'s ladder
+// stories). The rail already passed `ring={false}`; only the number changed.
+$rail-avatar-size: 40px;
+$rail-pill-padding: 3px;
+
+.sessionRailPill {
+	// Fixed WIDTH, content-driven height. The width is asserted in the
+	// story's `play` (so "eiförmig" cannot silently return) and so is the
+	// growth: a pill with two marks must be taller than one with none.
+	width: $rail-pill-width;
+	min-width: $rail-pill-width;
+	min-height: $rail-pill-min-height;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	// Avatar pinned to the top, marks flowing underneath it. `flex-start` is
+	// what does that — with `center` the avatar drifted down as the pill grew.
+	justify-content: flex-start;
+	gap: $rail-mark-gap;
+	padding: $rail-pill-padding;
+
+	// Half the width — a stadium at any height, never an ellipse.
+	border-radius: $rail-pill-radius;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		box-shadow 160ms ease;
+
+	&:hover {
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	// Same keyboard halo the expanded cards use (WP-06 Slice 0b).
+	&:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
+	// A row with new messages is legible before the marks are read.
+	// Declared BEFORE `--active` so the open conversation keeps its #597 ring
+	// when it is also unread (both classes sit on the same element).
+	&--unread {
+		border-color: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+	}
+
+	// #597: the selected row is a 2 px primary ring, same as the expanded card.
+	&--active {
+		@include list-item-selected-border;
+
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	&__avatar {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: $rail-avatar-size;
+		height: $rail-avatar-size;
+		flex: 0 0 auto;
+
+		// The caller hands in whatever avatar the list row uses. Scale it to
+		// the slot instead of trusting it to arrive at 36 px — the rail must
+		// not depend on a size decided three components away.
+		> * {
+			width: 100%;
+			height: 100%;
+		}
+
+		img,
+		svg {
+			width: 100%;
+			height: 100%;
+			display: block;
+		}
+	}
+
+	// ONE column, never a grid. Frank: "dann muss man nicht noch mehr
+	// sortieren, sondern dann einfach das Ding länger machen." Wrapping is
+	// explicitly off, so a fifth mark would lengthen the pill rather than
+	// silently start a second column.
+	&__marks {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: $rail-mark-gap;
+		width: 100%;
+
+		// An empty marks span must not add the parent's gap — a row without
+		// marks stays the 48 px circle.
+		&:empty {
+			display: none;
+		}
+	}
+
+	&__mark {
+		width: $rail-mark-slot;
+		height: $rail-mark-slot;
+		flex: 0 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: $rail-mark-glyph;
+			height: $rail-mark-glyph;
+			display: block;
+			fill: currentcolor;
+		}
+	}
+
+	// The house's unread language: a filled dot in the unread role — the same
+	// token the toolbar badge, the channel card, the FAB and the panel header
+	// use (supervisionPanel/README.md, "One unread role").
+	// Frank, 10.09.2026: "Da haben wir doch eigentlich einen Kreis. Da kannst
+	// Du doch einfach dann die Zahl packen. Das ist doch irgendwie tausendmal
+	// übersichtlicher." So the circle is filled in the unread role and the
+	// count sits inside it — no hover needed to learn how many.
+	// Without a count the mark stays the plain dot it always was: a filled
+	// circle in the unread role on a transparent slot, so the rail still reads
+	// "unread" before the number is known.
+	&__mark--unread {
+		position: relative;
+		background: transparent;
+
+		&::after {
+			content: '';
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			background: var(
+				--oriso-unread-indicator-color,
+				var(--m3-error, #cc0000)
+			);
+		}
+	}
+
+	// With a count the whole slot becomes the circle and the number sits in
+	// it. `on-error` is the LABEL colour here, never a background — m3Sweep
+	// #27/#3 rejected the first attempt, which painted the inner dot with it.
+	&__mark--counted {
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #ffffff);
+
+		&::after {
+			content: none;
+		}
+	}
+
+	// The number. Tabular figures so 8 and 11 sit equally centred, and a
+	// size that keeps "99+" inside the 24 px circle.
+	&__markCount {
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: 0;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+// The rail column itself: one pill per row, Frank's 24 px rhythm kept.
+.sessionRailList {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: $rail-pill-gap;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+// Tooltip — Frank, 10.09.2026: "einen Tooltip anhängen, quasi rechts."
+// ---
+// The recipe is NOT new: `participantAvatarStack.styles.scss` `&__tip` already
+// carries the house's tooltip look (inverse-surface sheet, inverse-on-surface
+// label, 12/16, 4 px corners). The numbers below are that recipe, with two
+// deliberate differences: it hangs to the RIGHT of the pill instead of below
+// it (the rail is an 80 px strip — below is the next conversation), and it
+// allows a second line, because the message tooltip is preview + time.
+// ---
+// The shell exists so the tooltip can be a SIBLING of the button. A `button`
+// may only contain phrasing content, so a positioned tooltip box inside it
+// would be invalid markup — and it would also land inside the button's
+// accessible name, which already carries the name and the mark labels.
+.sessionRailPill__shell {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
+.sessionRailPill {
+	&__tooltip {
+		position: absolute;
+		left: calc(100% + 8px);
+
+		// Anchored to the pill's TOP, not its middle: the pill grows downward
+		// with its marks, so a centred tooltip would drift down the taller the
+		// conversation's state is. Aligned with the avatar, it stays put.
+		top: 0;
+		z-index: 40;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		box-sizing: border-box;
+		padding: 6px 10px;
+
+		// Frank, 10.09.2026: "Du hast jetzt grade mal so zweihundert oder
+		// hundert Pixel, das kann locker bis zweihundertzwanzig Pixel lang
+		// sein." So the box runs to 220 and no further — beyond that it
+		// starts covering the chat next to the rail.
+		// ---
+		// `max-content` is what makes the 220 reachable at all. This box is
+		// absolutely positioned inside the 48 px pill shell, so its shrink-to-
+		// fit width is measured against `48 − left`, which is negative: the
+		// box collapsed to its `min-width` and wrapped the message at 130 px
+		// however high `max-width` was set. Measured live on pre-dev before
+		// the fix: computed max-width 220, actual width 150.
+		width: max-content;
+		min-width: 150px;
+		max-width: 220px;
+		border-radius: 4px;
+		background: var(--m3-inverse-surface, #313030);
+		color: var(--m3-inverse-on-surface, #f4f0ef);
+		text-align: left;
+
+		// WCAG 1.4.13: hovering the tooltip itself must not be required, and
+		// it must never swallow a click meant for the pill underneath.
+		pointer-events: none;
+	}
+
+	// The heading: the conversation's name. One line, elided if a pseudonym
+	// ever gets long.
+	&__tooltipTitle {
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	// The message itself. Two lines at most, then an ellipsis — a preview can
+	// be long, and a tooltip that grows to six lines is a panel.
+	&__tooltipBody {
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	// The date. Frank: "die Datumsangabe immer rechts unten" — last child of
+	// the column, pushed to the right edge by `align-self`.
+	&__tooltipMeta {
+		align-self: flex-end;
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 14px;
+		letter-spacing: 0.5px;
+		opacity: 0.7;
+		white-space: nowrap;
+	}
+}
