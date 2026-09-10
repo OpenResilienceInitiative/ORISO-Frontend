@@ -56,7 +56,7 @@ export const MessageDisplayName = ({
 			>
 				{getUsernameWithPrefix()}
 			</div>
-			{trimmedSubtitle && (
+			{type === 'consultant' && trimmedSubtitle && (
 				<div className="messageItem__usernameSubtitle">
 					{trimmedSubtitle}
 				</div>
