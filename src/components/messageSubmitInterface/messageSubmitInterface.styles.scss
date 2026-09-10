@@ -279,6 +279,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					border-color: var(--m3-primary-fixed-dim, #ffb4aa);
 				}
 
+				// The Teamberatung room's composer, same rule with the
+				// second fixed pair — it matches its panel header
+				// (`sidePanel.styles.scss`, `panelHeader--team`).
+				&--team:not(.textarea__wrapper-send-message--selected)
+					.textarea__input {
+					border-color: var(--m3-secondary-fixed-dim, #bec7d4);
+				}
+
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;

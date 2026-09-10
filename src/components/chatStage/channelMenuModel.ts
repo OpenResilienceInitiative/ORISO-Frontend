@@ -2,8 +2,9 @@
  * Pure model behind the channel menu card (T20, Figma "Menu" 9763:62964,
  * Frank's mockup "Abzweigungen zu diesem Gespräch / Ableitende Gespräche").
  *
- * One list for both hosts — the side-panel header and the FAB: the
- * supervision chat always first (⇧S), then the threads ORDERED by their
+ * One list for both hosts — the side-panel header and the FAB: the side
+ * ROOMS first in a fixed order — supervision (⇧S), then the Teamberatung
+ * (⇧T, Frank 09.09.) — then the threads ORDERED by their
  * most recent message but NUMBERED by their root message (review v6:
  * "Thread #1" and ⇧1 keep meaning the thread that was started first, no
  * matter which one got the latest reply), each with a one-line
@@ -17,6 +18,18 @@ import type {
 	SecondaryChannelKind,
 	SecondaryChannelLastMessage
 } from './channelSwitcherState';
+
+/**
+ * The side rooms in their fixed card order. A thread is not one of these:
+ * it lives in the main room and is numbered, not named.
+ */
+export const SIDE_ROOM_KINDS = ['supervision', 'team'] as const;
+export type SideRoomKind = (typeof SIDE_ROOM_KINDS)[number];
+
+export const isSideRoomKind = (
+	kind: SecondaryChannelKind
+): kind is SideRoomKind =>
+	(SIDE_ROOM_KINDS as readonly string[]).includes(kind);
 
 /** Longest preview text (characters, ellipsis included). */
 export const CHANNEL_MENU_PREVIEW_MAX = 80;
@@ -76,6 +89,18 @@ export const threadShortcut = (threadNumber: number): string =>
 		: '';
 
 export const SUPERVISION_SHORTCUT = '⇧S';
+export const TEAM_SHORTCUT = '⇧T';
+
+/** One shortcut per side room; the letter is also the key `resolveMenuShortcut` reads. */
+export const SIDE_ROOM_SHORTCUT: Record<SideRoomKind, string> = {
+	supervision: SUPERVISION_SHORTCUT,
+	team: TEAM_SHORTCUT
+};
+
+const SIDE_ROOM_SHORTCUT_KEY: Record<SideRoomKind, string> = {
+	supervision: 's',
+	team: 't'
+};
 
 const lastMessageTs = (channel: SecondaryChannel): number =>
 	Number.isFinite(channel.lastMessage?.ts)
@@ -110,8 +135,11 @@ export const buildChannelMenu = (
 	channels: SecondaryChannel[],
 	activeChannelId?: string
 ): ChannelMenuRow[] => {
-	const supervision = channels.filter(
-		(channel) => channel.kind === 'supervision'
+	// Side rooms lead the card in ONE fixed order (supervision, then the
+	// Teamberatung) — unlike the threads they never re-sort by recency, so a
+	// row never moves under the pointer while a message arrives.
+	const sideRooms = SIDE_ROOM_KINDS.flatMap((kind) =>
+		channels.filter((channel) => channel.kind === kind)
 	);
 	const numbers = numberThreads(channels);
 	// Most recent message first; threads without one keep their given
@@ -134,9 +162,10 @@ export const buildChannelMenu = (
 		kind: channel.kind,
 		label: channel.label,
 		threadNumber,
-		shortcut:
-			threadNumber === null
-				? SUPERVISION_SHORTCUT
+		shortcut: isSideRoomKind(channel.kind)
+			? SIDE_ROOM_SHORTCUT[channel.kind]
+			: threadNumber === null
+				? ''
 				: threadShortcut(threadNumber),
 		preview: formatChannelPreview(channel.lastMessage),
 		unread: clampUnread(channel.unread),
@@ -144,7 +173,7 @@ export const buildChannelMenu = (
 	});
 
 	return [
-		...supervision.map((channel) => row(channel, null)),
+		...sideRooms.map((channel) => row(channel, null)),
 		...threads.map((channel) => row(channel, numbers.get(channel.id)!))
 	];
 };
@@ -159,9 +188,9 @@ export interface MenuShortcutKey {
 }
 
 /**
- * ⇧S → supervision, ⇧1…⇧9 → the n-th thread. Digits are read from the
- * physical key (`code`) first: with shift held most layouts turn "1" into
- * "!" and the like.
+ * ⇧S → supervision, ⇧T → Teamberatung, ⇧1…⇧9 → the n-th thread. Letters and
+ * digits are read from the physical key (`code`) first: with shift held most
+ * layouts turn "1" into "!" and the like.
  */
 export const resolveMenuShortcut = (
 	event: MenuShortcutKey,
@@ -171,8 +200,15 @@ export const resolveMenuShortcut = (
 		return null;
 	}
 	const code = event.code ?? '';
-	if (code === 'KeyS' || event.key.toLowerCase() === 's') {
-		return rows.find((row) => row.kind === 'supervision') ?? null;
+	const typed = event.key.toLowerCase();
+	const sideRoom = SIDE_ROOM_KINDS.find(
+		(kind) =>
+			code === `Key${SIDE_ROOM_SHORTCUT_KEY[kind].toUpperCase()}` ||
+			(!code.startsWith('Key') &&
+				typed === SIDE_ROOM_SHORTCUT_KEY[kind])
+	);
+	if (sideRoom) {
+		return rows.find((row) => row.kind === sideRoom) ?? null;
 	}
 	const digitFromCode = /^(?:Digit|Numpad)([1-9])$/.exec(code)?.[1];
 	const digitFromKey = /^[1-9]$/.test(event.key) ? event.key : undefined;

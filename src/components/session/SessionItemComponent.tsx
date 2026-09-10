@@ -54,6 +54,7 @@ import {
 } from '../supervisionPanel/supervisionPanelState';
 // B2: the stage composition (chatStage/) wired 1:1 — same DOM, same classes.
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
+import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
@@ -79,7 +80,7 @@ import {
 	decideAutoOpen,
 	readLastChannel,
 	stripAtParam,
-	safeSessionStorage,
+	safeChannelStorage,
 	stripChannelParams,
 	withChannel,
 	writeLastChannel,
@@ -226,6 +227,14 @@ interface SessionItemProps {
 	 * of `messages`; rendered in the SupervisionPanel next to the chat.
 	 */
 	supervisionMessages?: MessageItem[];
+	/**
+	 * Teamberatung (Frank, 09.09.; FE#514 / ADR-016): the team side room's
+	 * own timeline — the third channel, built one-to-one like supervision.
+	 * Never part of `messages`; the advice seeker is never a member.
+	 */
+	teamMessages?: MessageItem[];
+	/** Matrix room id of that team room (`apiGetTeamDiscussion`). */
+	teamRoomId?: string;
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -682,9 +691,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const messages = useMemo(
 		() =>
 			props.messages
-				? excludeSideRoomMessages(props.messages, supervisionRoomId)
+				? excludeSideRoomMessages(props.messages, [
+						supervisionRoomId,
+						props.teamRoomId
+					])
 				: props.messages,
-		[props.messages, supervisionRoomId]
+		[props.messages, supervisionRoomId, props.teamRoomId]
 	);
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
@@ -1931,7 +1943,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			const current = locationRef.current;
 			const search = withChannel(current.search, channel);
 			writeLastChannel(
-				safeSessionStorage(),
+				safeChannelStorage(),
 				sessionIdForChannelMemory,
 				channel
 			);
@@ -2007,6 +2019,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!isEmbeddedNotificationsView;
 	const hasSupervisionSideRoom =
 		isSupervisionPanelViewer && !!supervisionRoomId;
+	// Teamberatung: the SAME viewer rule as supervision — consultants, never
+	// an asker, never a group, never the embedded notifications view — plus a
+	// resolved room id. `SessionStream` only resolves that id for consultants
+	// of the enquiry's agency, so this is a second lock on the same door.
+	const teamRoomId = props.teamRoomId;
+	const teamMessages = props.teamMessages;
+	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
@@ -2016,20 +2035,26 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
 	// (analysis F3 — fetching the root is a follow-up).
-	const openPanel: 'supervision' | 'thread' | null =
+	const openPanel: 'supervision' | 'team' | 'thread' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
 				? 'supervision'
 				: null
-			: activeThreadRootId && activeThreadRootMessage
-				? 'thread'
-				: null;
+			: routeChannel?.kind === 'team'
+				? hasTeamSideRoom
+					? 'team'
+					: null
+				: activeThreadRootId && activeThreadRootMessage
+					? 'thread'
+					: null;
 	const shownChannelId =
 		openPanel === 'supervision'
 			? channelId({ kind: 'supervision' })
-			: openPanel === 'thread' && activeThreadRootId
-				? activeThreadRootId
-				: undefined;
+			: openPanel === 'team'
+				? channelId({ kind: 'team' })
+				: openPanel === 'thread' && activeThreadRootId
+					? activeThreadRootId
+					: undefined;
 	// The list column snaps to the rail for the pane that is REALLY open
 	// (review D-4) — report the resolved pane, clear it on unmount.
 	const reportChatStagePanel = useReportChatStagePanel();
@@ -2088,11 +2113,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		const decision = decideAutoOpen({
 			routeChannel,
 			alreadySettled: autoOpenedForSessionRef.current === sessionId,
-			remembered: readLastChannel(safeSessionStorage(), sessionId),
+			remembered: readLastChannel(safeChannelStorage(), sessionId),
 			loadedRootIds: messages
 				? messages.map((message) => message._id)
 				: null,
-			hasSupervisionSideRoom
+			hasSupervisionSideRoom,
+			hasTeamSideRoom
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2105,6 +2131,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		routeChannel,
 		isSupervisionPanelViewer,
 		hasSupervisionSideRoom,
+		hasTeamSideRoom,
 		messages,
 		setChannelRoute
 	]);
@@ -2134,6 +2161,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				isMyMessageMatrix
 			),
 		[supervisionMessages, openPanel, supervisionSeenAt, isMyMessageMatrix]
+	);
+
+	// The same three steps for the team room — one counter each, so an
+	// unread badge on one channel never silences the other.
+	const [teamSeenAt, setTeamSeenAt] = useState(0);
+	useEffect(() => {
+		if (hasTeamSideRoom) {
+			setTeamSeenAt(Date.now());
+		}
+	}, [hasTeamSideRoom, activeSession.item?.id]);
+	useEffect(() => {
+		if (openPanel === 'team') {
+			setTeamSeenAt(Date.now());
+		}
+	}, [openPanel, teamMessages]);
+	const teamUnreadCount = useMemo(
+		() =>
+			countUnreadSideRoomMessages(
+				teamMessages,
+				{
+					status: openPanel === 'team' ? 'expanded' : 'collapsed',
+					lastExpandedAt: teamSeenAt
+				},
+				isMyMessageMatrix
+			),
+		[teamMessages, openPanel, teamSeenAt, isMyMessageMatrix]
 	);
 
 	// New side-room message from someone else while no panel is open:
@@ -2215,6 +2268,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		getContact(activeSession)?.username ||
 		translate('sessionList.user.consultantUnknown');
 
+	// Teamberatung words (Frank, 09.09.). The i18n catalogue is on a drift
+	// budget of 0, so the German originals travel with the call through the
+	// copy map and `translate(key, fallback)` — no locale file is touched.
+	const teamText = teamCopy(translate);
+	const teamChannelTitle = teamText('chatStage.panel.team.title');
+
 	// T20: the newest message of a channel — orders the menu, feeds the
 	// "Author: text…" preview.
 	const lastMessageOf = useCallback((list: MessageItem[] | undefined) => {
@@ -2267,12 +2326,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					};
 				})
 			: [];
-		if (!hasSupervisionSideRoom) {
-			return threads;
-		}
-		return [
-			...threads,
-			{
+		const sideRooms: SecondaryChannel[] = [];
+		if (hasSupervisionSideRoom) {
+			sideRooms.push({
 				id: channelId({ kind: 'supervision' }),
 				kind: 'supervision' as const,
 				label: resolveChannelLabel(
@@ -2285,8 +2341,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				),
 				unread: supervisionUnreadCount,
 				lastMessage: lastMessageOf(supervisionMessages)
-			}
-		];
+			});
+		}
+		if (hasTeamSideRoom) {
+			// The team room has no single counterpart — it is the team. So
+			// the label is the topic word, not a person (the same
+			// `resolveChannelLabel` seam, the other mode).
+			sideRooms.push({
+				id: channelId({ kind: 'team' }),
+				kind: 'team' as const,
+				label: resolveChannelLabel(
+					{ kind: 'team', topic: teamChannelTitle },
+					'topic'
+				),
+				unread: teamUnreadCount,
+				lastMessage: lastMessageOf(teamMessages)
+			});
+		}
+		return [...threads, ...sideRooms];
 	}, [
 		isThreadsEnabled,
 		threadSummariesRaw,
@@ -2296,6 +2368,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		supervisionCounterpartName,
 		supervisionUnreadCount,
 		supervisionMessages,
+		hasTeamSideRoom,
+		teamChannelTitle,
+		teamUnreadCount,
+		teamMessages,
 		lastMessageOf,
 		translate
 	]);
@@ -2320,7 +2396,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const stackParticipantsOf = useCallback(
 		(
 			roomId: string | null | undefined,
-			mode: 'session' | 'supervision'
+			mode: 'session' | 'supervision' | 'team'
 		): StackParticipant[] => {
 			const client = matrixClientService?.getClient?.();
 			const room = roomId ? client?.getRoom?.(roomId) : null;
@@ -2391,6 +2467,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
 	);
+	// Teamberatung: the room's own members ARE the team — the `team` rule
+	// shows them all and drops only the advice seeker, who is never invited
+	// (`visibleParticipants.ts`).
+	const teamParticipants = useMemo(
+		() => stackParticipantsOf(teamRoomId, 'team'),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[stackParticipantsOf, teamRoomId, teamMessages]
+	);
 
 	// Frank, 09.09.2026: "auch braucht die supervision die möglichkeit das man
 	// einen call haben kann entweder video oder audio". Same trigger as the
@@ -2446,6 +2530,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.displayName,
 		userData?.userName,
 		supervisionCounterpartName,
+		activeSession.item?.askerMatrixUserId,
+		translate
+	]);
+
+	// T7, for the team room: the same builder, the same system-notice
+	// organism — only the words differ. Nothing new was invented for it.
+	const teamTimelineMessages = useMemo<MessageItem[]>(() => {
+		if (!hasTeamSideRoom) {
+			return [];
+		}
+		return buildSupervisionTimeline(teamMessages, {
+			roomId: teamRoomId || '',
+			title: teamChannelTitle,
+			description: teamText('chatStage.panel.team.systemNotice'),
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+		});
+		// teamText is rebuilt each render from `translate` (stable per locale).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		hasTeamSideRoom,
+		teamMessages,
+		teamRoomId,
+		teamChannelTitle,
 		activeSession.item?.askerMatrixUserId,
 		translate
 	]);
@@ -3980,7 +4087,147 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
-	const sidePanel = threadPanel ?? supervisionPanel;
+	// Teamberatung (Frank, 09.09.): "eins zu eins diese Gruppen genau wie bei
+	// der Supervision … nur steht dann einfach Teamberatung". Same organism,
+	// same header nav, same composer — its own room, words and members.
+	const teamPanel =
+		openPanel === 'team' ? (
+			<SidePanel
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				label={translate('chatStage.panel.region', {
+					title: teamChannelTitle
+				})}
+				data-cy="stage-panel"
+				header={
+					<PanelHeader
+						kind="team"
+						title={teamChannelTitle}
+						// The case this room is about — the same pseudonym
+						// the chat beside it carries, so it is obvious WHICH
+						// enquiry the team is discussing. It is not a leak:
+						// everyone in this room may already see the enquiry.
+						name={clientDisplayName}
+						// … but the name alone would read as "you are writing
+						// to her". ADR-016 §6 asks for a permanent marker;
+						// this is it.
+						chip={teamText('chatStage.panel.team.onlyMarker')}
+						participants={teamParticipants}
+						unreadCount={teamUnreadCount}
+						{...panelHeaderNav}
+					/>
+				}
+				banner={
+					!teamMessages || teamMessages.length === 0 ? (
+						<InfoBanner
+							title={teamText(
+								'chatStage.panel.team.empty.title'
+							)}
+							text={teamText('chatStage.panel.team.empty.text')}
+						/>
+					) : undefined
+				}
+				timeline={
+					<>
+						<MessageTimeline
+							keyPrefix="team-"
+							messages={teamTimelineMessages}
+							renderMode="main"
+							threadsEnabled={false}
+							clientName={clientDisplayName}
+							askerMatrixUserIdFor={() =>
+								activeSession.item?.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							isMyMessage={isMyMessageMatrix}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							decryptionFailures={decryptionFailures}
+						/>
+						{failedSends
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'room',
+									roomId: teamRoomId
+								})
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName: clientDisplayName,
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams,
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: teamRoomId
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
+					</>
+				}
+				composer={
+					<MessageSubmitInterfaceComponent
+						isTyping={props.isTyping}
+						placeholder={teamText(
+							'chatStage.panel.team.composer.placeholder'
+						)}
+						handleMessageSendSuccess={handleMessageSendSuccess}
+						onSendError={handleComposerSendError}
+						retryRequest={
+							retryRequest &&
+							failedSendBelongsTo(retryRequest, {
+								kind: 'room',
+								roomId: teamRoomId
+							})
+								? retryRequest
+								: null
+						}
+						onRetrySettled={handleComposerRetrySettled}
+						targetRoomId={teamRoomId}
+						isSupervisor={isSupervisor}
+						supervisionRoomId={supervisionRoomId}
+						hideSupervisorAudience
+						flushCorner={panelComposerFlush}
+						accent="team"
+						onMobileNavigateBack={
+							isPhoneLayout ? closeChannel : undefined
+						}
+						messages={teamMessages}
+						isOwnMessage={isMyMessageMatrix}
+					/>
+				}
+				switcher={phoneBackFab}
+			/>
+		) : null;
+
+	const sidePanel = threadPanel ?? supervisionPanel ?? teamPanel;
 
 	// Desktop: the panel joins the card (`.chatStage__card--split`) behind
 	// the real `ResizableHandle` (T2). Phone: the panel fills the screen

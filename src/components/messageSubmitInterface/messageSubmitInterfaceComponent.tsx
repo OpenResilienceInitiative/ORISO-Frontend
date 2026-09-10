@@ -243,7 +243,7 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * `primary-fixed-dim` field border — so the channel is unmistakable
 	 * while writing. Default: the neutral `primary-fixed` hairline.
 	 */
-	accent?: 'default' | 'supervision';
+	accent?: 'default' | 'supervision' | 'team';
 	/**
 	 * Whether this composer should claim focus after its draft is ready.
 	 * Side panels set this to false when a channel-switch action has explicitly
@@ -3838,8 +3838,8 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--flush',
 							flushCorner &&
 								`textarea__wrapper-send-message--flush-${flushCorner}`,
-							accent === 'supervision' &&
-								'textarea__wrapper-send-message--supervision'
+							accent !== 'default' &&
+								`textarea__wrapper-send-message--${accent}`
 						)}
 						data-flush-corner={flushCorner}
 						data-accent={accent}

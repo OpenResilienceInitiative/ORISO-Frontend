@@ -21,6 +21,17 @@ const supervision: SecondaryChannel = {
 		ts: at('09:20')
 	}
 };
+const team: SecondaryChannel = {
+	id: 'team',
+	kind: 'team',
+	label: 'Teamberatung',
+	unread: 1,
+	lastMessage: {
+		author: 'Jonas K.',
+		text: 'ich würde da erst mal die Wohnsituation klären',
+		ts: at('09:05')
+	}
+};
 // "older"/"newer" = the root message, i.e. when the thread was started.
 const olderThread: SecondaryChannel = {
 	id: '$thread-old',
@@ -238,5 +249,131 @@ describe('moveMenuFocus (arrow keys, Home, End)', () => {
 		expect(moveMenuFocus(1, 'Tab', 3)).toBe(1);
 		expect(moveMenuFocus(-1, 'ArrowDown', 3)).toBe(0);
 		expect(moveMenuFocus(5, 'ArrowUp', 3)).toBe(1);
+	});
+});
+
+describe('the team channel in the card (Frank, 09.09.)', () => {
+	it('lists both side rooms first, supervision before team, then threads', () => {
+		const rows = buildChannelMenu([
+			newerThread,
+			team,
+			olderThread,
+			supervision
+		]);
+		expect(rows.map((row) => row.id)).toEqual([
+			'supervision',
+			'team',
+			'$thread-new',
+			'$thread-old'
+		]);
+	});
+
+	it('keeps the side rooms in place however the messages arrive', () => {
+		// The team room has the OLDEST message here (09:05) and still leads
+		// the threads: side rooms do not re-sort by recency, so a row never
+		// moves under the pointer.
+		const rows = buildChannelMenu([team, supervision]);
+		expect(rows.map((row) => row.id)).toEqual(['supervision', 'team']);
+		const reversed = buildChannelMenu([supervision, team]);
+		expect(reversed.map((row) => row.id)).toEqual(['supervision', 'team']);
+	});
+
+	it('gives the team room ⇧T and no thread number', () => {
+		const [, teamRow] = buildChannelMenu([supervision, team]);
+		expect(teamRow.kind).toBe('team');
+		expect(teamRow.shortcut).toBe('⇧T');
+		expect(teamRow.threadNumber).toBeNull();
+	});
+
+	it('numbers the threads regardless of how many side rooms there are', () => {
+		// Adding the team room must not renumber "Thread #1".
+		const withTeam = buildChannelMenu([
+			supervision,
+			team,
+			olderThread,
+			newerThread
+		]);
+		const withoutTeam = buildChannelMenu([
+			supervision,
+			olderThread,
+			newerThread
+		]);
+		const numbers = (rows: ReturnType<typeof buildChannelMenu>) =>
+			rows
+				.filter((row) => row.kind === 'thread')
+				.map((row) => [row.id, row.threadNumber]);
+		expect(numbers(withTeam)).toEqual(numbers(withoutTeam));
+		expect(numbers(withTeam)).toEqual([
+			['$thread-new', 2],
+			['$thread-old', 1]
+		]);
+	});
+
+	it('carries the team preview and unread count like any other row', () => {
+		const [, teamRow] = buildChannelMenu([supervision, team]);
+		expect(teamRow.preview).toEqual({
+			author: 'Jonas K.',
+			text: 'ich würde da erst mal die Wohnsituation klären'
+		});
+		expect(teamRow.unread).toBe(1);
+	});
+
+	it('marks the shown team room active and nothing else', () => {
+		const rows = buildChannelMenu([supervision, team, olderThread], 'team');
+		expect(rows.filter((row) => row.active).map((row) => row.id)).toEqual([
+			'team'
+		]);
+	});
+});
+
+describe('resolveMenuShortcut with two side rooms', () => {
+	const rows = buildChannelMenu([olderThread, team, supervision]);
+
+	it('⇧T opens the team room, ⇧S still the supervision one', () => {
+		expect(
+			resolveMenuShortcut({ key: 'T', code: 'KeyT', shiftKey: true }, rows)
+				?.id
+		).toBe('team');
+		expect(
+			resolveMenuShortcut({ key: 'S', code: 'KeyS', shiftKey: true }, rows)
+				?.id
+		).toBe('supervision');
+	});
+
+	it('reads the physical key first, so a swapped layout still hits team', () => {
+		// German/Dvorak layouts put another character on that key; `code` is
+		// the letter the user pressed.
+		expect(
+			resolveMenuShortcut({ key: 'ت', code: 'KeyT', shiftKey: true }, rows)
+				?.id
+		).toBe('team');
+	});
+
+	it('falls back to the typed letter when no code is given', () => {
+		expect(
+			resolveMenuShortcut({ key: 't', shiftKey: true }, rows)?.id
+		).toBe('team');
+	});
+
+	it('ignores ⇧T when there is no team room to open', () => {
+		const withoutTeam = buildChannelMenu([supervision, olderThread]);
+		expect(
+			resolveMenuShortcut(
+				{ key: 'T', code: 'KeyT', shiftKey: true },
+				withoutTeam
+			)
+		).toBeNull();
+	});
+
+	it('still requires shift, and refuses the other modifiers', () => {
+		expect(
+			resolveMenuShortcut({ key: 't', code: 'KeyT', shiftKey: false }, rows)
+		).toBeNull();
+		expect(
+			resolveMenuShortcut(
+				{ key: 'T', code: 'KeyT', shiftKey: true, metaKey: true },
+				rows
+			)
+		).toBeNull();
 	});
 });
