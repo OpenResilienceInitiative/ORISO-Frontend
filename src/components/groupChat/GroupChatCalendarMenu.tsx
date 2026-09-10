@@ -74,8 +74,7 @@ export const GroupChatCalendarPopover = ({
 				paper: {
 					sx: {
 						backgroundColor: 'var(--m3-surface-container, #f3edf7)',
-						boxShadow:
-							'var(--m3-elevation-2, 0 2px 6px rgba(0, 0, 0, 0.2))',
+						boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
 						borderRadius: '12px',
 						overflow: 'visible'
 					}
