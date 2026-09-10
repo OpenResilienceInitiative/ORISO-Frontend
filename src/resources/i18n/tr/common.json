@@ -3498,7 +3498,11 @@
 					"centre": "Danışma merkezi",
 					"archiveOnly": "Yalnızca arşiv"
 				},
-				"toggle": "Arama sonuçlarını aç veya kapat"
+				"toggle": "Arama sonuçlarını aç veya kapat",
+				"role": {
+					"asker": "Danışan",
+					"consultant": "Danışman"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"
@@ -4537,7 +4541,8 @@
 			"headline": "E-posta ile bildirim",
 			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
 			"action": "E-posta adresi ekle",
-			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin."
+			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
+			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin."
 		},
 		"accountProtection": {
 			"headline": "Erişiminiz, ek olarak korunur",

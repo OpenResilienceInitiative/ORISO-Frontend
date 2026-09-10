@@ -85,4 +85,15 @@ describe('WaitingAreaRules', () => {
 		expect(active?.textContent).toBe('a');
 		vi.unstubAllGlobals();
 	});
+
+	it('does not cycle when Animation abschalten is on (#1293)', () => {
+		const { container } = render(
+			<WaitingAreaRules rules={['a', 'b', 'c']} animationOff />
+		);
+		act(() => {
+			vi.advanceTimersByTime(8000);
+		});
+		const active = container.querySelector(`.${ACTIVE}`);
+		expect(active?.textContent).toBe('a');
+	});
 });

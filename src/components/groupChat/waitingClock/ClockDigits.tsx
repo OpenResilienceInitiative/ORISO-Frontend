@@ -85,7 +85,7 @@ export const ClockDigits = ({
 					fontVariantNumeric: 'tabular-nums'
 				}}
 			>
-				{String(Math.max(0, Math.floor(value))).padStart(2, '0')}
+				{twoDigits(value).join('')}
 			</div>
 		);
 	}

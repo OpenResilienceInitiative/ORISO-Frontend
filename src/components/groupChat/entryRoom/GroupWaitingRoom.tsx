@@ -317,6 +317,7 @@ export const GroupWaitingRoom = ({
 										{rules.length > 0 && (
 											<WaitingAreaRules
 												rules={rules}
+												animationOff={motionOff}
 												ariaLabel={t(
 													'groupChat.join.waitingArea.rulesLabel',
 													'Chat rules'
