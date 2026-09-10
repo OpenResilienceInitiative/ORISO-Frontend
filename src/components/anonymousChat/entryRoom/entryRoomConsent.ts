@@ -15,13 +15,11 @@ import { resolveLegalContent } from '../../../utils/legalContent';
  * - **No department known.** The enquiry carries no agency, or the backend predates
  *   ORISO-UserService#1141 and does not send the coordinate. The platform sentence is what has
  *   always applied here and still does. Nothing is held back.
- * - **Department known, answer definitive.** Its own wording governs when it has one; when it has
- *   none (`ok` with a null sentence — including a 404, where no such legal record exists) the
- *   platform sentence is genuinely the text in force.
- * - **Department known, answer unavailable.** A 5xx or a network failure: we do not know what
- *   applies. Offering the platform sentence here would collect agreement to the wrong document, so
- *   the consent is held back and the caller retries. Fail closed, and only here — the distinction
- *   between this and "has none" is the whole point of `apiGetConsentText`'s discriminated result.
+ * - **Department known, own wording available.** Its published wording is shown and its version is
+ *   pinned when the customer continues.
+ * - **Department known, wording absent or unreadable.** The flow remains available. A fixed system
+ *   warning says that no agency policy is currently available and that continuing is at the
+ *   customer's own risk. The legal links and cookie disclosure remain part of the checkbox text.
  */
 export type DepartmentConsentState =
 	| { status: 'idle' }
@@ -34,6 +32,8 @@ export interface EntryRoomConsentInput {
 	department: DepartmentConsentState;
 	/** The platform sentence, legal links already interpolated. */
 	platformHtml: string;
+	/** Fixed non-blocking warning used when the agency policy is absent or cannot be read. */
+	missingPolicyHtml: string;
 	/** Rendered `{{legal_links}}` markup; the backend cannot produce it (ADR-021 decision 5). */
 	legalLinksHtml: string;
 	/** Reader's language, for a sentence served as a language map rather than plain HTML. */
@@ -49,8 +49,8 @@ export interface EntryRoomConsent {
 	 */
 	versionId: number | null;
 	/**
-	 * Whether the sentence on screen is the one that governs this person. False only in the
-	 * unavailable case; the caller holds the consent back while it is false.
+	 * Whether presentation is ready. The warning-only product decision means this is always true:
+	 * an unavailable agency policy may never block the conversation.
 	 */
 	readable: boolean;
 }
@@ -59,13 +59,16 @@ export const resolveEntryRoomConsent = ({
 	hasDepartment,
 	department,
 	platformHtml,
+	missingPolicyHtml,
 	legalLinksHtml,
 	locale
 }: EntryRoomConsentInput): EntryRoomConsent => {
-	const readable = !hasDepartment || department.status !== 'unavailable';
+	if (!hasDepartment) {
+		return { html: platformHtml, versionId: null, readable: true };
+	}
 
 	if (department.status !== 'ok' || !department.sentence) {
-		return { html: platformHtml, versionId: null, readable };
+		return { html: missingPolicyHtml, versionId: null, readable: true };
 	}
 
 	/* The wording may be a language map rather than plain HTML; the same resolver the other legal
@@ -78,6 +81,6 @@ export const resolveEntryRoomConsent = ({
 			legalLinksHtml
 		),
 		versionId: department.versionId,
-		readable
+		readable: true
 	};
 };

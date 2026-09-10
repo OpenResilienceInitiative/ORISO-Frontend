@@ -7,12 +7,14 @@ import {
 const LINKS =
 	'<a href="/dsgvo">Datenschutz</a>, <a href="/impressum">Impressum</a>';
 const PLATFORM = `Ich stimme zu. ${LINKS}`;
+const MISSING_POLICY = `Keine Erklärung hinterlegt. Eigenes Risiko. ${LINKS}`;
 
 const resolve = (overrides: Partial<EntryRoomConsentInput> = {}) =>
 	resolveEntryRoomConsent({
 		hasDepartment: true,
 		department: { status: 'idle' },
 		platformHtml: PLATFORM,
+		missingPolicyHtml: MISSING_POLICY,
 		legalLinksHtml: LINKS,
 		locale: 'de',
 		...overrides
@@ -46,25 +48,21 @@ describe('resolveEntryRoomConsent', () => {
 		).toBe(42);
 	});
 
-	it('falls back to the platform sentence when the department has no wording of its own', () => {
-		// `ok` with a null sentence, which is also what a 404 resolves to: no such legal
-		// record exists, so the platform text genuinely is the one in force.
+	it('shows the non-blocking risk warning when the department has no wording of its own', () => {
 		const consent = resolve({
 			department: { status: 'ok', sentence: null, versionId: null }
 		});
 
-		expect(consent.html).toBe(PLATFORM);
+		expect(consent.html).toBe(MISSING_POLICY);
 		expect(consent.versionId).toBeNull();
 		expect(consent.readable).toBe(true);
 	});
 
-	it('holds the consent back when the department wording could not be read', () => {
-		// The failure this whole discriminated result exists for: a 5xx must never degrade
-		// into "the platform text applies" for a department whose own wording governs.
-		// Nothing is pinned and the caller keeps retrying.
+	it('shows the same non-blocking risk warning when the department wording cannot be read', () => {
 		const consent = resolve({ department: { status: 'unavailable' } });
 
-		expect(consent.readable).toBe(false);
+		expect(consent.html).toBe(MISSING_POLICY);
+		expect(consent.readable).toBe(true);
 		expect(consent.versionId).toBeNull();
 	});
 

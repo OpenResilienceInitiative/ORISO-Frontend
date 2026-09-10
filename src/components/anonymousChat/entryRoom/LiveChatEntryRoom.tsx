@@ -184,16 +184,26 @@ export const LiveChatEntryRoom = ({
 		[legalLinksHtml, t]
 	);
 
+	/* Product-owned fallback for an agency without a usable published policy.
+	   It is intentionally a warning rather than a gate: the customer sees the
+	   missing-policy risk, the configured legal links and the cookie disclosure,
+	   and decides whether to continue with the existing checkbox. */
+	const missingPolicyHtml = useMemo(
+		() =>
+			t('anonymousConsent.label.missingPolicy', {
+				interpolation: { escapeValue: false },
+				legal_links: legalLinksHtml
+			}),
+		[legalLinksHtml, t]
+	);
+
 	/**
 	 * The department's own consent sentence, resolved from (agencyId, topicId).
 	 *
 	 * `idle` while the coordinate is unknown — the enquiry carries no agency,
 	 * or the backend predates ORISO-UserService#1141 and does not send one.
-	 * `unavailable` is deliberately not the same as a department without
-	 * wording: a 404 answers `ok` with a null sentence and the platform text is
-	 * genuinely the one in force, while a 5xx means we do not know what applies
-	 * and offering the platform sentence would collect agreement to the wrong
-	 * document (see apiGetConsentText). So it fails closed and retries.
+	 * An absent or unavailable policy uses the fixed risk warning. An unavailable
+	 * response keeps retrying in the background, but never blocks the customer.
 	 */
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
@@ -204,6 +214,7 @@ export const LiveChatEntryRoom = ({
 				hasDepartment: department !== null,
 				department: departmentConsent,
 				platformHtml: platformConsentHtml,
+				missingPolicyHtml,
 				legalLinksHtml,
 				locale
 			}),
@@ -212,6 +223,7 @@ export const LiveChatEntryRoom = ({
 			departmentConsent,
 			legalLinksHtml,
 			locale,
+			missingPolicyHtml,
 			platformConsentHtml
 		]
 	);
@@ -291,12 +303,9 @@ export const LiveChatEntryRoom = ({
 		};
 	}, [stage, accepted, sessionId]);
 
-	/* The department's wording, fetched as soon as the coordinate is known and
-	   retried while the answer is `unavailable`. Retrying rather than settling
-	   for the platform text is the point: a transient 5xx must not turn into
-	   "the platform sentence applies" for a department whose own wording is the
-	   one in force. A definitive answer (including "this department has none")
-	   ends the retries. */
+	/* Fetch as soon as the coordinate is known. A transient failure shows the
+	   non-blocking warning immediately and keeps retrying, so published wording
+	   can replace it if the service recovers while the customer is waiting. */
 	useEffect(() => {
 		if (!department || departmentConsent.status === 'ok') return undefined;
 		let stop = false;
@@ -430,9 +439,7 @@ export const LiveChatEntryRoom = ({
 			{stage === 'waiting' && !closed && (
 				<LiveChatWaitingRoom
 					ahead={ahead}
-					/* Held back while we cannot tell which document governs
-					   this person; `resolveEntryRoomConsent` owns that rule. */
-					accepted={consent.readable && accepted}
+					accepted={accepted}
 					consentHtml={consent.html}
 					busy={busy}
 					leaveFailed={leaveFailed}
