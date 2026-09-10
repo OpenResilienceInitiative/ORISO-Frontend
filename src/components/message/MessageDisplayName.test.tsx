@@ -43,7 +43,11 @@ describe('MessageDisplayName', () => {
 
 	it('keeps an advice-seeker identity to a single name row', () => {
 		const { container } = render(
-			<MessageDisplayName {...baseProps} type="user" subtitle="" />
+			<MessageDisplayName
+				{...baseProps}
+				type="user"
+				subtitle="14055 Caritasverband Musterstadt"
+			/>
 		);
 
 		const identity = container.querySelector(
