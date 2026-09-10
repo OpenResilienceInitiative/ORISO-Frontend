@@ -51,6 +51,7 @@ $rail-pill-gap: 8px;
 $rail-mark-slot: 24px;
 $rail-mark-glyph: 18px;
 $rail-mark-gap: 2px;
+
 // Frank, 10.09.2026: "nutze mal nun avatar ohne ring 40px bitte für das menu."
 // 40 fits exactly: 48 pill − 2 × 3 padding − 2 × 1 border = 40. The empty pill
 // therefore stays a 48 px circle with the animal filling it edge to edge,
@@ -248,8 +249,16 @@ $rail-pill-padding: 3px;
 
 		// Frank, 10.09.2026: "Du hast jetzt grade mal so zweihundert oder
 		// hundert Pixel, das kann locker bis zweihundertzwanzig Pixel lang
-		// sein." So the box is allowed to run to 220 and no further — beyond
-		// that it starts covering the chat next to the rail.
+		// sein." So the box runs to 220 and no further — beyond that it
+		// starts covering the chat next to the rail.
+		// ---
+		// `max-content` is what makes the 220 reachable at all. This box is
+		// absolutely positioned inside the 48 px pill shell, so its shrink-to-
+		// fit width is measured against `48 − left`, which is negative: the
+		// box collapsed to its `min-width` and wrapped the message at 130 px
+		// however high `max-width` was set. Measured live on pre-dev before
+		// the fix: computed max-width 220, actual width 150.
+		width: max-content;
 		min-width: 150px;
 		max-width: 220px;
 		border-radius: 4px;
