@@ -64,11 +64,7 @@ import {
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
-import {
-	STACK_MAX_VISIBLE,
-	STACK_MAX_VISIBLE_PHONE,
-	type StackParticipant
-} from '../message/participantStack';
+import { type StackParticipant } from '../message/participantStack';
 import {
 	bumpLastActivity,
 	isEventForRoom,
@@ -99,11 +95,14 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import useMeasure from 'react-use-measure';
+import { ResizeObserver } from '@juggle/resize-observer';
 import {
 	ChatroomConversationIconType,
 	ChatroomMainInteractionIcon
 } from './ChatroomMainInteractionIcon';
 import { getSupervisorAddState } from './getSupervisorAddState';
+import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -148,6 +147,17 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 	const settings = useAppConfig();
 	const { untilL, untilM } = useResponsive();
+	// Frank 09.09.2026 (*1): the divider now reaches 320 px, so the header
+	// must read its PANE, not the viewport — at 1280 px the viewport says
+	// "desktop" while this pane can be 320 px wide. `roomHeaderDensity.ts`
+	// turns that width into D8's phone form (calls in the kebab, one avatar
+	// + "+N"); the phone keeps switching on the viewport as before.
+	const [paneRef, paneBounds] = useMeasure({ polyfill: ResizeObserver });
+	const density = resolveRoomHeaderDensity({
+		width: paneBounds.width,
+		phone: untilM
+	});
+	const callsInMenu = props.callsInMenu || density.callsInMenu;
 	const {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
@@ -1141,7 +1151,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 
 	return (
-		<div className="sessionInfo">
+		<div
+			className="sessionInfo"
+			ref={paneRef}
+			data-density={density.compact ? 'compact' : 'roomy'}
+		>
 			<div className="sessionInfo__headerWrapper">
 				{!props.hideBackButton && (
 					<Link
@@ -1216,11 +1230,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										/* Phone (< 900 px): one avatar + a
 										   compact "+N" — the title keeps the
 										   width it shares with the stack. */
-										maxVisible={
-											untilM
-												? STACK_MAX_VISIBLE_PHONE
-												: STACK_MAX_VISIBLE
-										}
+										maxVisible={density.stackMaxVisible}
 										className="sessionInfo__participants"
 										data-cy="session-header-participants"
 									/>
@@ -1296,7 +1306,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					hasUserInitiatedStopOrLeaveRequest={
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
-					callsInMenu={props.callsInMenu}
+					callsInMenu={callsInMenu}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
