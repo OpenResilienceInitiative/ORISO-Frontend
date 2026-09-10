@@ -4498,7 +4498,8 @@
 		"headline": "Bienvenue",
 		"label": {
 			"and": "et",
-			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
+			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela.",
+			"missingPolicy": "Ce centre de conseil ne dispose actuellement d’aucune politique de confidentialité propre enregistrée. Si vous continuez, vous utilisez le service à vos propres risques. En cochant la case, vous acceptez les {{legal_links}} de ce site. Ce site utilise des cookies."
 		},
 		"subline": "Veuillez confirmer notre politique de confidentialité."
 	},

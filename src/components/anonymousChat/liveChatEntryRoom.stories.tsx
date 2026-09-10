@@ -132,13 +132,16 @@ const Access = () => {
 const Waiting = ({
 	accepted = false,
 	companionStart = false,
-	ahead = 3
+	ahead = 3,
+	consentHtml: consentHtmlOverride
 }: {
 	accepted?: boolean;
 	companionStart?: boolean;
 	ahead?: number;
+	consentHtml?: string;
 }) => {
-	const consentHtml = useConsentHtml();
+	const defaultConsentHtml = useConsentHtml();
+	const consentHtml = consentHtmlOverride ?? defaultConsentHtml;
 	return (
 		<Shell
 			statusKey={
@@ -219,6 +222,18 @@ export const StepAccepted: StoryObj = {
 	render: () => <Waiting accepted />,
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
+	)
+};
+export const StepAcceptedMissingAgencyPolicy: StoryObj = {
+	name: 'B — Warteraum: Datenschutzerklärung fehlt',
+	render: () => (
+		<Waiting
+			accepted
+			consentHtml="Für diese Beratungsstelle ist derzeit keine eigene Datenschutzerklärung hinterlegt. Wenn Sie fortfahren, nutzen Sie das Angebot auf eigenes Risiko. Mit dem Aktivieren des Kontrollkästchens stimmen Sie den Datenschutzhinweisen und Nutzungsbedingungen dieser Website zu. Diese Website verwendet Cookies."
+		/>
+	),
+	parameters: full(
+		'Fehlt der Beratungsstelle eine nutzbare veröffentlichte Datenschutzerklärung, bleibt der Einstieg möglich. Die feste Systemwarnung nennt das Risiko; die bestehende Checkbox dokumentiert die bewusste Entscheidung der ratsuchenden Person.'
 	)
 };
 /**
