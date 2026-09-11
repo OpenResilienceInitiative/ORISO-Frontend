@@ -111,6 +111,7 @@ $content-column-overlap: 32px;
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
+
 	/* Derived, not chosen: the visible circle ends 54px from the card's left
 	   edge, and the content column already starts 32px in, so the header has
 	   to clear the remaining 22px to escape the avatar's white backdrop. */
