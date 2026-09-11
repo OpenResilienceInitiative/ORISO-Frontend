@@ -23,6 +23,13 @@ export interface HandoverGateButtonProps {
 	 * live-chat waiting room fills the button as the queue moves.
 	 */
 	progress?: number;
+	/**
+	 * A slow sweep across the whole bar instead of a fill that creeps to the
+	 * right. Waiting for a free counsellor has no measurable progress — a bar
+	 * that fills promises one (Frank, 2026-09-08: „irgendein Lebenszeichen
+	 * von Warten"). The queue position is said in words beside it.
+	 */
+	indeterminate?: boolean;
 	/** Replaces the arrow — a turning clock while the queue moves. */
 	icon?: React.ReactNode;
 }
@@ -41,6 +48,7 @@ export const HandoverGateButton = ({
 	label,
 	status,
 	progress,
+	indeterminate = false,
 	icon
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
@@ -85,21 +93,47 @@ export const HandoverGateButton = ({
 				}
 			}}
 		>
-			<Box
-				aria-hidden
-				sx={{
-					'position': 'absolute',
-					'left': 0,
-					'top': 0,
-					'bottom': 0,
-					'width': `${progress ?? GATE_PROGRESS[state]}%`,
-					'bgcolor': 'rgba(255, 255, 255, 0.16)',
-					'transition': 'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
-					'@media (prefers-reduced-motion: reduce)': {
-						transition: 'none'
-					}
-				}}
-			/>
+			{indeterminate ? (
+				<Box
+					aria-hidden
+					sx={{
+						'position': 'absolute',
+						'inset': 0,
+						'backgroundImage':
+							'linear-gradient(100deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.20) 42%, rgba(255,255,255,0.30) 50%, rgba(255,255,255,0.20) 58%, rgba(255,255,255,0) 80%)',
+						'backgroundSize': '220% 100%',
+						'backgroundRepeat': 'no-repeat',
+						'animation': 'handoverGateSweep 2.8s linear infinite',
+						'@keyframes handoverGateSweep': {
+							from: { backgroundPosition: '130% 0' },
+							to: { backgroundPosition: '-30% 0' }
+						},
+						/* Still a lit bar, just no movement. */
+						'@media (prefers-reduced-motion: reduce)': {
+							animation: 'none',
+							backgroundImage: 'none',
+							bgcolor: 'rgba(255, 255, 255, 0.12)'
+						}
+					}}
+				/>
+			) : (
+				<Box
+					aria-hidden
+					sx={{
+						'position': 'absolute',
+						'left': 0,
+						'top': 0,
+						'bottom': 0,
+						'width': `${progress ?? GATE_PROGRESS[state]}%`,
+						'bgcolor': 'rgba(255, 255, 255, 0.16)',
+						'transition':
+							'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
+						'@media (prefers-reduced-motion: reduce)': {
+							transition: 'none'
+						}
+					}}
+				/>
+			)}
 			<Box
 				sx={{
 					position: 'relative',

@@ -4439,7 +4439,8 @@
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",
-			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this."
+			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this.",
+			"missingPolicy": "This counselling centre currently has no privacy policy of its own on file. If you continue, you use the service at your own risk. By selecting the checkbox, you agree to this website's {{legal_links}}. This website uses cookies."
 		},
 		"subline": "Please confirm our privacy policy."
 	},
@@ -4729,8 +4730,8 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Pick a name — or roll a new set.",
-				"label": "Your pseudonym",
+				"subline": "Anonymous, no account. Pick a user ID — or roll new ones.",
+				"label": "Your user ID",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",
 				"continue": "To the waiting room"
@@ -4776,7 +4777,7 @@
 				},
 				"anonymous": {
 					"title": "Anonymous, and gone afterwards",
-					"text": "Only your pseudonym is visible. After 48 hours everything is deleted."
+					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
 			}
 		}

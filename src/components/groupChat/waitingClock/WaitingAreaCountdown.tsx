@@ -8,6 +8,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
+import { twoDigits } from './waitingClockDigits';
 import './waitingAreaCountdown.styles';
 
 /** ORISO design palette for the waiting box, resolved through the M3 tokens. */
@@ -192,6 +193,12 @@ export interface WaitingAreaCountdownProps {
 	 */
 	hideMotionToggle?: boolean;
 	/**
+	 * Controlled "Animation abschalten" state. When `onAnimationOffChange` is
+	 * set, the parent owns the switch so siblings (rules) can pause too (#1293).
+	 */
+	animationOff?: boolean;
+	onAnimationOffChange?: (off: boolean) => void;
+	/**
 	 * Vertical gap between headline, clock and the rest, in px. Default 26.
 	 * The entry room passes less: every pixel of chrome is one the clock
 	 * cannot have (Frank, 2026-09-05: "maximal groß innerhalb des weißen
@@ -235,6 +242,8 @@ export const WaitingAreaCountdown = ({
 	spacing = 'airy',
 	labelsOutside = false,
 	hideMotionToggle = false,
+	animationOff: animationOffProp,
+	onAnimationOffChange,
 	gap = 26,
 	nowMs,
 	calendarSlot
@@ -253,7 +262,14 @@ export const WaitingAreaCountdown = ({
 	const prefersReducedMotion = usePrefersReducedMotion();
 	const compact = useCompactViewport();
 	const [tick, setTick] = React.useState(() => nowMs ?? Date.now());
-	const [animOff, setAnimOff] = React.useState(false);
+	const [uncontrolledAnimOff, setUncontrolledAnimOff] = React.useState(false);
+	const animOffControlled = onAnimationOffChange !== undefined;
+	const animOff = animOffControlled
+		? Boolean(animationOffProp)
+		: uncontrolledAnimOff;
+	const setAnimOff = animOffControlled
+		? onAnimationOffChange
+		: setUncontrolledAnimOff;
 	const [cardOpen, setCardOpen] = React.useState(false);
 	const [page, setPage] = React.useState(0);
 	const [cardHover, setCardHover] = React.useState(false);
@@ -430,7 +446,7 @@ export const WaitingAreaCountdown = ({
 				aria-checked={motionless}
 				aria-label={toggleLabel}
 				disabled={forcedMotionless}
-				onClick={() => setAnimOff((v) => !v)}
+				onClick={() => setAnimOff(!animOff)}
 				style={{
 					width: 46,
 					height: 26,
@@ -841,7 +857,7 @@ export const WaitingAreaCountdown = ({
 			}`}
 		>
 			<span className="waitingClock__stillValue">
-				{String(unit.value).padStart(2, '0')}
+				{twoDigits(unit.value).join('')}
 			</span>
 			<span className="waitingClock__stillLabel">{unit.label}</span>
 		</div>

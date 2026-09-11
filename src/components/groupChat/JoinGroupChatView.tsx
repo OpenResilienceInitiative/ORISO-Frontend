@@ -272,6 +272,7 @@ export const JoinGroupChatView = ({
 	const plannedStart = getGroupChatPlannedStart(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
+	const [animationOff, setAnimationOff] = useState(false);
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -307,6 +308,8 @@ export const JoinGroupChatView = ({
 							plannedStart={plannedStart}
 							welcomeText={authorContent.hintMessage || undefined}
 							rules={groupChatRules}
+							animationOff={animationOff}
+							onAnimationOffChange={setAnimationOff}
 							calendarSlot={
 								<GroupChatCalendarMenu
 									start={plannedStart}
@@ -322,6 +325,7 @@ export const JoinGroupChatView = ({
 				{showRules && (
 					<WaitingAreaRules
 						rules={groupChatRules}
+						animationOff={animationOff}
 						ariaLabel={tr(
 							'groupChat.join.waitingArea.rulesLabel',
 							'Chat rules'

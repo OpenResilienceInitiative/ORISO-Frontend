@@ -4498,7 +4498,8 @@
 		"headline": "Sıcak bir karşılama",
 		"label": {
 			"and": "ve",
-			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim.",
+			"missingPolicy": "Bu danışma merkezine ait bir gizlilik politikası şu anda kayıtlı değildir. Devam ederseniz hizmeti kendi sorumluluğunuzda kullanırsınız. Onay kutusunu işaretleyerek bu web sitesinin {{legal_links}} kabul etmiş olursunuz. Bu web sitesi çerez kullanır."
 		},
 		"subline": "Lütfen gizlilik politikamızı onaylayın."
 	},
@@ -4818,8 +4819,8 @@
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
-				"subline": "Anonim, hesapsız. Bir ad seçin — ya da yeniden zar atın.",
-				"label": "Takma adınız",
+				"subline": "Anonim, hesapsız. Bir kullanıcı kimliği seçin — ya da yeniden atın.",
+				"label": "Kullanıcı kimliğiniz",
 				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
 				"reroll": "Yeniden at",
 				"continue": "Bekleme odasına"
@@ -4865,7 +4866,7 @@
 				},
 				"anonymous": {
 					"title": "Anonim ve sonra silinir",
-					"text": "Yalnızca takma adınız görünür. 48 saat sonra her şey silinir."
+					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
 		}
