@@ -1,8 +1,17 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import {
 	formatChatMessageDateDivider,
+	formatToHHMM,
 	getChatMessageDateDivider
 } from './dateHelpers';
+
+describe('formatToHHMM', () => {
+	it('keeps the chat time in HH:MM form before 10:00', () => {
+		expect(formatToHHMM(String(new Date(2026, 0, 1, 9, 5).getTime()))).toBe(
+			'09:05'
+		);
+	});
+});
 
 describe('formatChatMessageDateDivider (#564)', () => {
 	it('formats explicit dates in the active locale (de)', () => {

@@ -1092,6 +1092,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:agency:base",
+		"family": "agency",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "agency.svg",
+		"sourcePath": "src/resources/img/icons/agency.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:apple:base",
 		"family": "apple",
 		"state": "base",
@@ -1188,6 +1201,7 @@
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionHeader/SessionHeaderComponent.tsx",
@@ -1220,6 +1234,7 @@
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -1258,6 +1273,19 @@
 			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx"
 		],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:arrows-lr:base",
+		"family": "arrows-lr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "arrows-lr.svg",
+		"sourcePath": "src/resources/img/icons/arrows-lr.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:audio-off:base",
@@ -1747,6 +1775,22 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:mail-conv-type:200",
+		"family": "mail-conv-type",
+		"state": "200",
+		"role": "alternate-outline",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "mail_conv_type_200.svg",
+		"sourcePath": "src/resources/img/icons/chatroom/mail_conv_type_200.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/sessionHeader/ChatroomMainInteractionIcon.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:nearby-conv-type:200",
 		"family": "nearby-conv-type",
 		"state": "200",
@@ -1756,11 +1800,8 @@
 		"fileName": "nearby_conv_type_200.svg",
 		"sourcePath": "src/resources/img/icons/chatroom/nearby_conv_type_200.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/sessionHeader/ChatroomMainInteractionIcon.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:check:base",
@@ -1775,6 +1816,7 @@
 		"usageFiles": [
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/message/Appointment.tsx",
@@ -1905,6 +1947,7 @@
 		"sourcePath": "src/resources/img/icons/close.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/groupChat/RuleChipsEditor.tsx"
 		],
@@ -2004,8 +2047,24 @@
 		"fileName": "delivery-sent.svg",
 		"sourcePath": "src/resources/img/icons/delivery-sent.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/message/MessageItemComponent.tsx"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/message/MessageItemComponent.tsx"
+		],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:devices:base",
+		"family": "devices",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "devices.svg",
+		"sourcePath": "src/resources/img/icons/devices.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:diversity-2:base",
@@ -2187,6 +2246,7 @@
 		"exportNames": ["FileDocIcon"],
 		"usageFiles": [
 			"src/components/message/messageHelpers.ts",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2203,6 +2263,7 @@
 		"exportNames": ["FileImageIcon"],
 		"usageFiles": [
 			"src/components/message/messageHelpers.ts",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2240,6 +2301,23 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:gdpr:base",
+		"family": "gdpr",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "gdpr.svg",
+		"sourcePath": "src/resources/img/icons/gdpr.svg",
+		"exportNames": ["GdprIcon"],
+		"usageFiles": [
+			"src/components/legalLinks/LegalLinkMenuIcon.tsx",
+			"src/components/legalLinks/LegalLinkModal.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:gear:base",
 		"family": "gear",
 		"state": "base",
@@ -2251,6 +2329,7 @@
 		"exportNames": ["EditGroupChatIcon"],
 		"usageFiles": [
 			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2282,6 +2361,19 @@
 		"sourcePath": "src/resources/img/icons/group-chat-avatar.svg",
 		"exportNames": ["GroupChatAvatarIcon"],
 		"usageFiles": ["src/resources/img/icons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:hacker:base",
+		"family": "hacker",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "hacker.svg",
+		"sourcePath": "src/resources/img/icons/hacker.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/login/LoginSecurityExplainer.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -2335,7 +2427,7 @@
 			"src/components/registration/metaInfo/MetaInfo.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/containers/bookings/components/Event/LocationType/index.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
@@ -2367,10 +2459,10 @@
 		"size": null,
 		"fileName": "imprint.svg",
 		"sourcePath": "src/resources/img/icons/imprint.svg",
-		"exportNames": [],
+		"exportNames": ["ImprintIcon"],
 		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+			"src/components/legalLinks/LegalLinkModal.tsx",
+			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
 	},
@@ -2428,7 +2520,7 @@
 		"exportNames": ["InboxIcon"],
 		"usageFiles": [
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2546,6 +2638,19 @@
 		"fileName": "local-counselor-house.svg",
 		"sourcePath": "src/resources/img/icons/local-counselor-house.svg",
 		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:local-counselor-mail:base",
+		"family": "local-counselor-mail",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "local-counselor-mail.svg",
+		"sourcePath": "src/resources/img/icons/local-counselor-mail.svg",
+		"exportNames": [],
 		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
 		"usage": "app-used"
 	},
@@ -2613,6 +2718,22 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:maximize-content:base",
+		"family": "maximize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "maximize-content.svg",
+		"sourcePath": "src/resources/img/icons/maximize-content.svg",
+		"exportNames": ["MaximizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "sidebar-icon:messages:filled",
 		"family": "messages",
 		"state": "filled",
@@ -2637,6 +2758,22 @@
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:minimize-content:base",
+		"family": "minimize-content",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "minimize-content.svg",
+		"sourcePath": "src/resources/img/icons/minimize-content.svg",
+		"exportNames": ["MinimizeContentIcon"],
+		"usageFiles": [
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:counsellor-request:400",
@@ -2761,8 +2898,10 @@
 		"fileName": "notification_audio.svg",
 		"sourcePath": "src/resources/img/icons/notification_audio.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/notificationsCenter/NotificationsCenter.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:notification-bell:base",
@@ -3106,11 +3245,8 @@
 		"fileName": "privacy-policy.svg",
 		"sourcePath": "src/resources/img/icons/privacy-policy.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "sidebar-icon:profil:filled",
@@ -3122,8 +3258,11 @@
 		"fileName": "profil_filled.svg",
 		"sourcePath": "src/resources/img/icons/profil_filled.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "sidebar-icon:profil:outline",
@@ -3135,8 +3274,11 @@
 		"fileName": "profil_outline.svg",
 		"sourcePath": "src/resources/img/icons/profil_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/app/RouterConfig.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:qr-code:base",
@@ -3428,10 +3570,11 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3667,7 +3810,7 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3920,6 +4063,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/message/VideoChatDetails/index.tsx",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -3938,19 +4082,21 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/legalContent/LegalTextReader.tsx",
+			"src/components/m3Dialog/M3Dialog.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
 			"src/components/notice/Notice.tsx",
 			"src/components/notifications/Notification.tsx",
 			"src/components/overlay/Overlay.tsx",
 			"src/components/productTour/ProductTourTooltip.tsx",
-			"src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
+			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
 			"src/components/session/DeleteSession.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],
@@ -4057,6 +4203,7 @@
 		"sourcePath": "src/resources/img/registration-md3/icons/gen-dice.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/invite/InviteLink.tsx",
 			"src/components/registration/accountData/AccountData.tsx"
 		],
 		"usage": "app-used"
@@ -4250,6 +4397,21 @@
 		"size": null,
 		"fileName": "t-01-schwangerschaft.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-01-schwangerschaft.png",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/registration/registrationDesign/registrationDesign.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "topic-icon:t-01-u-bergang-von-schule-zu-beruf:base",
+		"family": "t-01-u-bergang-von-schule-zu-beruf",
+		"state": "base",
+		"role": "default",
+		"kind": "topic-icon",
+		"size": null,
+		"fileName": "t-01-u-bergang-von-schule-zu-beruf.png",
+		"sourcePath": "src/resources/img/registration-md3/icons/t-01-u-bergang-von-schule-zu-beruf.png",
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/registration/registrationDesign/registrationDesign.ts"
@@ -4461,10 +4623,8 @@
 		"fileName": "t-05-hiv-und-aids.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-hiv-und-aids.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-rechtliche-betreuung-und-vorsorge:base",
@@ -4476,10 +4636,8 @@
 		"fileName": "t-05-rechtliche-betreuung-und-vorsorge.png",
 		"sourcePath": "src/resources/img/registration-md3/icons/t-05-rechtliche-betreuung-und-vorsorge.png",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/registration/registrationDesign/registrationDesign.ts"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "topic-icon:t-05-schulden:base",

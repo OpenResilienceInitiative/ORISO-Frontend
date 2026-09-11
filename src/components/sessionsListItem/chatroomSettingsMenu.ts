@@ -26,6 +26,12 @@ export interface ChatroomSettingsMenuInput {
 	isAgencyCounselling: boolean;
 	teamDiscussionFeatureEnabled: boolean;
 	hasExistingTeamDiscussion: boolean;
+	/** Group-chat owner per `groupChatHelpers.isGroupChatOwner`. */
+	isGroupChatOwner: boolean;
+	/** The group chat is currently running (`session.item.active`). */
+	isGroupChatActive: boolean;
+	/** A materialized Matrix room exists, so the settings route is reachable. */
+	hasMatrixRoom: boolean;
 }
 
 export interface ChatroomSettingsMenuVisibility {
@@ -33,6 +39,7 @@ export interface ChatroomSettingsMenuVisibility {
 	showDearchive: boolean;
 	showDelete: boolean;
 	showRequestHelp: boolean;
+	showChatSettings: boolean;
 }
 
 export const getChatroomSettingsMenuVisibility = ({
@@ -46,7 +53,10 @@ export const getChatroomSettingsMenuVisibility = ({
 	isArchiveTab,
 	isAgencyCounselling,
 	teamDiscussionFeatureEnabled,
-	hasExistingTeamDiscussion
+	hasExistingTeamDiscussion,
+	isGroupChatOwner,
+	isGroupChatActive,
+	hasMatrixRoom
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
 	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
 	// stay in lockstep. A supervisor only observes a colleague's session, so it
@@ -76,11 +86,25 @@ export const getChatroomSettingsMenuVisibility = ({
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
+	// #1189 — the header menu's conditions for its edit entry
+	// (SessionMenu.tsx:1007-1008, inside the `isGroup` block at :822): the owner
+	// may change topic, schedule and moderators only while the room is not
+	// running. `hasMatrixRoom` is stricter on purpose — the header still renders
+	// its entry with an empty `to` when no room exists (SessionMenu.tsx:316-322),
+	// which navigates nowhere; there is no route to reach without a room id.
+	const showChatSettings =
+		!isAsker &&
+		isGroup &&
+		isGroupChatOwner &&
+		!isGroupChatActive &&
+		hasMatrixRoom;
+
 	return {
 		showArchive: isOwnEditableSession && !isArchiveTab,
 		showDearchive: isOwnEditableSession && isArchiveTab,
 		showDelete,
-		showRequestHelp
+		showRequestHelp,
+		showChatSettings
 	};
 };
 

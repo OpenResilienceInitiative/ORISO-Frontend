@@ -379,24 +379,7 @@ export const TopicSelection: FC<{
 					{t('registration.topic.oneResult')}
 				</Typography>
 			) : (
-				<>
-					<Typography
-						component="h1"
-						variant="h3"
-						sx={registrationScreenTitleSx}
-					>
-						{t('registration.topic.headline')}
-					</Typography>
-					<Typography
-						sx={{
-							mt: '16px',
-							mb: '24px',
-							...registrationScreenIntroSx
-						}}
-					>
-						{t('registration.topic.subline')}
-					</Typography>
-				</>
+				<></>
 			)}
 			{topics === undefined || topicGroups === undefined ? (
 				<Box
@@ -914,7 +897,14 @@ const TopicSelect = ({
 						variant: 'body2',
 						color: registrationMd3.onSurfaceVariant,
 						sx: {
-							lineHeight: 1.45
+							// Design 8b: one line per topic. The text is tenant
+							// content of unbounded length, so it is clamped here
+							// rather than shortened at the source.
+							lineHeight: 1.45,
+							display: '-webkit-box',
+							WebkitLineClamp: 1,
+							WebkitBoxOrient: 'vertical',
+							overflow: 'hidden'
 						}
 					}}
 					sx={{ my: 0, minWidth: 0 }}

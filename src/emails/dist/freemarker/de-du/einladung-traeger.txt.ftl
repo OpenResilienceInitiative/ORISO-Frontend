@@ -1,0 +1,28 @@
+Willkommen bei ${platformName!''}
+===============================
+
+Für ${tenantName!''} wurde ein Zugang zur Administration von ${platformName!''} eingerichtet.
+
+Über den Link legst du dein Passwort fest und schließt die Einrichtung ab.
+
+Träger: ${tenantName!''}
+Link gültig bis: ${inviteExpiresAt!''}
+
+Zugang einrichten:
+${inviteUrl!''}
+
+Wenn du diese Einladung nicht erwartet hast, meld dich bitte bei der Person, die dich eingeladen hat.
+
+----------------------------------------------------------------
+Wir fragen dich nie per E-Mail nach deinem Passwort. Gib diesen Link an niemanden weiter.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+
+Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

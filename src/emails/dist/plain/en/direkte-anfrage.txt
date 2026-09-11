@@ -1,0 +1,30 @@
+An enquiry is addressed to you directly
+=======================================
+
+While writing their enquiry, someone seeking advice chose you specifically.
+
+If you cannot take it on, please return it to the counselling service so it does not sit unanswered.
+
+Topic: {{requestTopic}}
+Received: {{requestReceivedAt}}
+
+Open enquiry:
+{{requestUrl}}
+
+Please reply within 2 working days.
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Settings: {{settingsUrl}}
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+Unsubscribe from notifications: {{unsubscribeUrl}}
+
+This email was sent automatically. Please do not reply to it.

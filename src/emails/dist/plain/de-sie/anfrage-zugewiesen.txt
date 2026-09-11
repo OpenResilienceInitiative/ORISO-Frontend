@@ -1,0 +1,29 @@
+Eine neue Anfrage wartet auf Sie
+================================
+
+Ihnen wurde eine neue Beratungsanfrage zugewiesen. Die Details sehen Sie nach der Anmeldung im Beratungsbereich.
+
+Thema: {{requestTopic}}
+Postleitzahl: {{requestPostcode}}
+Eingang: {{requestReceivedAt}}
+
+Anfrage öffnen:
+{{requestUrl}}
+
+Bitte nehmen Sie die Anfrage innerhalb von 2 Werktagen an.
+
+----------------------------------------------------------------
+Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer Ihnen und Ihrer Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.

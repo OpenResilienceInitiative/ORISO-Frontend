@@ -67,6 +67,7 @@ import {
 } from '../../services/matrixRoomHistoryKeyTransfer';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
+import { formatToHHMM } from '../../utils/dateHelpers';
 
 const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
 	if (!actionPath?.includes('?')) {
@@ -1177,8 +1178,21 @@ export const SessionStream = ({
 			{pendingCaseHandoverConsent &&
 				pendingCaseHandoverRequestId !== null && (
 					<CaseHandoverConsentCard
+						mode={
+							pendingCaseHandoverConsent.params?.clientConsent ===
+							'OPT_OUT'
+								? 'OPT_OUT'
+								: 'OPT_IN'
+						}
 						isSubmitting={caseHandoverConsentSubmitting}
 						error={caseHandoverConsentError}
+						timestamp={formatToHHMM(
+							String(
+								new Date(
+									pendingCaseHandoverConsent.createdAt
+								).getTime()
+							)
+						)}
 						onApprove={() =>
 							handleCaseHandoverConsentDecision(true)
 						}

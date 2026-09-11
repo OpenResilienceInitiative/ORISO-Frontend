@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiGetConsultantSessionList } from '../../../api';
 import { SESSION_LIST_TYPES } from '../../../components/session/sessionHelpers';
 import { ListItemsResponseInterface } from '../../../globalState/interfaces/SessionsDataInterface';
+import { isChatItemUnread } from '../../../utils/sessionUnread';
 
 interface ConsultantDataProps {
 	type: SESSION_LIST_TYPES;
@@ -30,11 +31,13 @@ export const useConsultantData = ({
 		})
 			.then((data) => {
 				if (unReadOnly) {
-					// Since the backend doesn't support this filter we need to grab more messages
-					// to filter by 9
+					// The backend doesn't support this filter (its
+					// messagesRead is a hard-coded constant), so grab a
+					// bigger page and derive unread from the Matrix
+					// client (#1147).
 					const sessions = data.sessions.filter(
 						(session) =>
-							session.session && !session.session.messagesRead
+							session.session && isChatItemUnread(session.session)
 					);
 					setData({
 						...data,

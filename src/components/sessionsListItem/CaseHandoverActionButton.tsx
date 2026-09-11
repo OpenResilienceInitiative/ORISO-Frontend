@@ -1,7 +1,12 @@
 import * as React from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import './sessionsListItem.styles';
+import {
+	getSessionDropdownPosition,
+	HANDOVER_MENU_WIDTH
+} from './sessionDropdownPosition';
 
 /**
  * Case-handover split button on a session card. Figma: "CARX — Teamberatung
@@ -146,8 +151,24 @@ export const CaseHandoverActionButton = ({
 	onDeselectAndClose
 }: CaseHandoverActionButtonProps) => {
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 	const rootRef = useRef<HTMLDivElement | null>(null);
+	const toggleRef = useRef<HTMLButtonElement | null>(null);
+	const menuRef = useRef<HTMLDivElement | null>(null);
 	const menuId = useId();
+
+	const updateMenuPosition = useCallback(() => {
+		if (!toggleRef.current) {
+			return;
+		}
+		setMenuPosition(
+			getSessionDropdownPosition(
+				toggleRef.current.getBoundingClientRect(),
+				window.innerWidth,
+				HANDOVER_MENU_WIDTH
+			)
+		);
+	}, []);
 
 	useEffect(() => {
 		if (!menuOpen) {
@@ -155,10 +176,12 @@ export const CaseHandoverActionButton = ({
 		}
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
 			const target = event.target as Node | null;
+			// The menu is portalled to the body, so it is not inside rootRef.
 			if (
 				rootRef.current &&
 				target &&
-				!rootRef.current.contains(target)
+				!rootRef.current.contains(target) &&
+				!menuRef.current?.contains(target)
 			) {
 				setMenuOpen(false);
 			}
@@ -171,12 +194,16 @@ export const CaseHandoverActionButton = ({
 		document.addEventListener('mousedown', handleOutsidePointer);
 		document.addEventListener('touchstart', handleOutsidePointer);
 		document.addEventListener('keydown', handleEscape);
+		window.addEventListener('scroll', updateMenuPosition, true);
+		window.addEventListener('resize', updateMenuPosition);
 		return () => {
 			document.removeEventListener('mousedown', handleOutsidePointer);
 			document.removeEventListener('touchstart', handleOutsidePointer);
 			document.removeEventListener('keydown', handleEscape);
+			window.removeEventListener('scroll', updateMenuPosition, true);
+			window.removeEventListener('resize', updateMenuPosition);
 		};
-	}, [menuOpen]);
+	}, [menuOpen, updateMenuPosition]);
 
 	const isStatusPill = !batchMode && state !== 'requestAccess';
 	const label = batchMode
@@ -270,10 +297,14 @@ export const CaseHandoverActionButton = ({
 			</button>
 			<button
 				type="button"
+				ref={toggleRef}
 				className="sessionsListItem__handoverActionToggle"
 				onClick={(event) => {
 					event.stopPropagation();
-					setMenuOpen((prev) => !prev);
+					if (!menuOpen) {
+						updateMenuPosition();
+					}
+					setMenuOpen(!menuOpen);
 				}}
 				onKeyDown={(event) => {
 					if (event.key === 'Enter' || event.key === ' ') {
@@ -289,43 +320,54 @@ export const CaseHandoverActionButton = ({
 			>
 				<IconChevronDown />
 			</button>
-			{menuOpen && (
-				<div
-					className="sessionsListItem__handoverActionMenu"
-					role="menu"
-					id={menuId}
-					aria-label={labels.menuLabel}
-				>
-					{menuItems.map((item) => (
-						<button
-							type="button"
-							key={item.key}
-							role="menuitem"
-							className="sessionsListItem__handoverActionMenuItem"
-							onClick={(event) => {
-								event.stopPropagation();
-								setMenuOpen(false);
-								item.onSelect?.();
-							}}
-							data-cy={`case-handover-menu-${item.key}`}
-						>
-							{item.Icon && (
-								<span className="sessionsListItem__handoverActionMenuItemIcon">
-									<item.Icon />
+			{menuOpen &&
+				createPortal(
+					<div
+						ref={menuRef}
+						className="sessionsListItem__handoverActionMenu"
+						role="menu"
+						id={menuId}
+						aria-label={labels.menuLabel}
+						style={{
+							top: `${menuPosition.top}px`,
+							left: `${menuPosition.left}px`
+						}}
+						// Portalled nodes still bubble through the React tree,
+						// so without this a click on the menu chrome would open
+						// the session card underneath.
+						onClick={(event) => event.stopPropagation()}
+					>
+						{menuItems.map((item) => (
+							<button
+								type="button"
+								key={item.key}
+								role="menuitem"
+								className="sessionsListItem__handoverActionMenuItem"
+								onClick={(event) => {
+									event.stopPropagation();
+									setMenuOpen(false);
+									item.onSelect?.();
+								}}
+								data-cy={`case-handover-menu-${item.key}`}
+							>
+								{item.Icon && (
+									<span className="sessionsListItem__handoverActionMenuItemIcon">
+										<item.Icon />
+									</span>
+								)}
+								<span className="sessionsListItem__handoverActionMenuItemText">
+									<span className="sessionsListItem__handoverActionMenuItemTitle">
+										{item.title}
+									</span>
+									<span className="sessionsListItem__handoverActionMenuItemDescription">
+										{item.description}
+									</span>
 								</span>
-							)}
-							<span className="sessionsListItem__handoverActionMenuItemText">
-								<span className="sessionsListItem__handoverActionMenuItemTitle">
-									{item.title}
-								</span>
-								<span className="sessionsListItem__handoverActionMenuItemDescription">
-									{item.description}
-								</span>
-							</span>
-						</button>
-					))}
-				</div>
-			)}
+							</button>
+						))}
+					</div>,
+					document.body
+				)}
 		</div>
 	);
 };

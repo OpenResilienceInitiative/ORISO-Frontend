@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-08-30 — Storybook retry must drain pipes before `close`
+
+- Context: PR #1229 Storybook CI (`scripts/run-storybook-tests.mjs`)
+- Lesson: The Vitest disconnect line is the last stderr chunk. Resolving the wrapper on `close` without waiting for stdout/stderr `end` drops it, so the retry never fires. Drain both streams; also treat `132 passed (171)` + `Errors 1 error` as the abort signal.
+
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 
 - Context: #834 Threads list plain preview (`docs/agent-tasks/` is covered by `docs/*` ignore)

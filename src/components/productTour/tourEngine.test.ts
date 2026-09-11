@@ -191,6 +191,65 @@ describe('reduceTourCallback', () => {
 		expect(events).not.toContain('tour_completed');
 	});
 
+	it('emits optional_step_skipped instead of target_missing for an optional step', () => {
+		const { state, events } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 1, run: true },
+			cb({ type: EVENTS.TARGET_NOT_FOUND, index: 1 }),
+			5,
+			[{}, { optional: true }, {}, {}, {}]
+		);
+
+		expect(events).toContain('optional_step_skipped');
+		expect(events).not.toContain('target_missing');
+		expect(state.stepIndex).toBe(2);
+		expect(state.run).toBe(true);
+	});
+
+	it('completes the tour when the trailing missing step is optional', () => {
+		const { state, events } = reduceTourCallback(
+			{ ...initialTourRunState, status: 'in_progress', stepIndex: 4 },
+			cb({ type: EVENTS.TARGET_NOT_FOUND, index: 4 }),
+			5,
+			[{}, {}, {}, {}, { optional: true }]
+		);
+
+		expect(state.run).toBe(false);
+		expect(state.status).toBe('completed');
+		expect(events).toContain('optional_step_skipped');
+		expect(events).toContain('tour_completed');
+	});
+
+	it('keeps closing without completion when the trailing missing step is required', () => {
+		const { state, events } = reduceTourCallback(
+			{ ...initialTourRunState, status: 'in_progress', stepIndex: 4 },
+			cb({ type: EVENTS.TARGET_NOT_FOUND, index: 4 }),
+			5,
+			[{}, {}, {}, {}, {}]
+		);
+
+		expect(state.run).toBe(false);
+		expect(state.status).toBe('in_progress');
+		expect(events).toContain('target_missing');
+		expect(events).not.toContain('tour_completed');
+	});
+
+	it('never completes backward even when the first missing step is optional', () => {
+		const { state, events } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 0, run: true },
+			cb({
+				type: EVENTS.TARGET_NOT_FOUND,
+				action: ACTIONS.PREV,
+				index: 0
+			}),
+			5,
+			[{ optional: true }, {}, {}, {}, {}]
+		);
+
+		expect(state.run).toBe(false);
+		expect(state.status).toBe('in_progress');
+		expect(events).not.toContain('tour_completed');
+	});
+
 	it('treats finishing via tour:end with finished status as completed once', () => {
 		const { state, events } = reduceTourCallback(
 			{

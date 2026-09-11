@@ -12,6 +12,7 @@ export { ReactComponent as ClipIcon } from '../../resources/img/icons/clip.svg';
 export { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 export { ReactComponent as ClosedEnvelopeIcon } from '../../resources/img/icons/envelope.svg';
 export { ReactComponent as CopyIcon } from '../../resources/img/icons/documents.svg';
+export { ReactComponent as GdprIcon } from '../../resources/img/icons/gdpr.svg';
 export { ReactComponent as CreateGroupChatIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
 export { ReactComponent as CrossMarkIcon } from '../../resources/img/icons/x.svg';
 export { ReactComponent as TrashIcon } from './icons/trash.svg';
@@ -56,6 +57,14 @@ export { ReactComponent as ValidIcon } from '../../resources/img/icons/checkmark
 export { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 export { ReactComponent as AddShieldIcon } from '../../resources/img/icons/add-shield.svg';
 export { ReactComponent as ShieldIcon } from '../../resources/img/icons/shield.svg';
+/* Imprint artboard from the same Icons Master File set as `gdpr.svg` (40px
+   grid). Both are the artboards the Admin panel's legal cards use, so the two
+   surfaces draw imprint and privacy identically. */
+export { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
+/* Fullscreen reading mode of the legal reader — the same two artboards the
+   Admin panel's rich-text card uses for its maximize/restore control. */
+export { ReactComponent as MaximizeContentIcon } from '../../resources/img/icons/maximize-content.svg';
+export { ReactComponent as MinimizeContentIcon } from '../../resources/img/icons/minimize-content.svg';
 export { ReactComponent as AppleIcon } from '../../resources/img/icons/apple.svg';
 export { ReactComponent as CalDav } from '../../resources/img/icons/caldav.svg';
 export { ReactComponent as GoogleCalendar } from '../../resources/img/icons/googlecalendar.svg';

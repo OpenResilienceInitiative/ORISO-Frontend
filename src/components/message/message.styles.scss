@@ -240,6 +240,19 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	/*
+	 * Photo avatars must be clipped to the circle. The Carimat robot must not:
+	 * `overflow: hidden` clips against the *padding* box, i.e. the 48px inner
+	 * circle, and the glyph's chin sits exactly on that edge — so it was
+	 * rendered with a flat-cut bottom and shaved sides (review screenshot on
+	 * ORISO-Frontend#491). Figma App.Oriso 9564-86125 draws the full robot on
+	 * an unclipped white disc; the 6px ring is white too, so letting the glyph
+	 * reach into it changes nothing but the missing pixels.
+	 */
+	&__avatar--bot {
+		overflow: visible;
+	}
+
 	&__sideColumn {
 		display: flex;
 		flex-direction: column;
@@ -703,6 +716,8 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// Small tinted puck, still used by the waiting-room robot cards in
+	// `SessionItemComponent`.
 	&__systemAvatar {
 		width: 32px;
 		height: 32px;
@@ -737,6 +752,28 @@ $message-avatar-overlap: -19px;
 
 		* {
 			fill: #e53952;
+		}
+	}
+
+	// Carimat glyph for a system message in the stream. Figma App.Oriso
+	// 336:12244 keeps the shared 60px white avatar frame and centres the
+	// robot at its native 32×36 ratio. Stretching it to the full 48px inner
+	// circle hid the white ring and distorted the glyph.
+	&__botAvatarIcon {
+		width: 32px;
+		height: 36px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		* {
+			fill: var(--m3-on-surface, #1b1b1c);
 		}
 	}
 
@@ -781,6 +818,42 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// #1079: a received task list keeps its checkboxes, so it needs the layout
+	// a checklist implies — no bullet next to the box, and the box on the same
+	// line as its text. The input is rendered `disabled` by the sanitizer: this
+	// is the sender's list, the reader only reads it.
+	&__message ul[data-type='taskList'] {
+		list-style: none;
+		padding-left: 0;
+		margin: 0;
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		label {
+			display: inline-flex;
+			align-items: center;
+
+			// Aligns the box with the first line of a wrapping item.
+			height: $message-lineheight;
+			flex: 0 0 auto;
+		}
+
+		input[type='checkbox'] {
+			margin: 0;
+
+			// Reads as state, not as a control the reader may operate.
+			cursor: default;
+		}
+
+		p {
+			margin: 0;
+		}
+	}
+
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
@@ -819,10 +892,16 @@ $message-avatar-overlap: -19px;
 			font-size: $font-size-tertiary;
 		}
 
+		// Figma App.Oriso 8498-32373: a system notice is an ordinary incoming
+		// message. It keeps the shared grey bubble ($message-incoming-bg =
+		// --m3-surface-container-high), the 0/12/12/12 radii and the 16px
+		// padding inherited above — the off-white fill with the
+		// --m3-primary-fixed outline read as an alert card and was rejected in
+		// review (ORISO-Frontend#491). Only the width differs: the frame's
+		// "Chat Spacing" column is 484px wide with a 40px left inset, so the
+		// bubble itself caps at 444px.
 		&--systemNotification {
-			background: #fffafa;
-			border: 1px solid var(--m3-primary-fixed, #ffdad5);
-			border-radius: 12px;
+			max-width: 444px;
 		}
 
 		&--deleted {
@@ -1138,8 +1217,16 @@ $message-avatar-overlap: -19px;
 	 * `padding-left: 20px`. The system-notice header sits in the same slot and
 	 * needs the same clearance — without it the title runs under the avatar.
 	 */
+	// Geometry, not a round number: the content column overlaps the avatar
+	// column by $message-avatar-overlap (-19px), so it starts 41px from the
+	// wrap edge while the visible 48px avatar circle ends at 54px (6px ring).
+	// 17px of indent puts the title exactly 8px past the avatar — the
+	// avatar-to-name gap measured on Figma App.Oriso 8498-32373. The 12px
+	// bottom margin plus the bubble's own 4px top margin make the 16px
+	// name-to-bubble gap from the same frame.
 	&__systemNotificationHeaderText {
-		padding-left: 20px;
+		padding-left: 17px;
+		margin-bottom: 12px;
 	}
 
 	&__systemNotificationDescription {
@@ -1662,9 +1749,14 @@ $message-avatar-overlap: -19px;
 	line-height: 1;
 }
 
+// Figma draws both lines in a box the exact height of the glyphs (14/14 and
+// 12/12), which only holds while they stay on one line. A title or qualifier
+// that wraps - "Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung"
+// on a 390px phone - then overlaps itself. Use the M3 line heights the type
+// scale defines for these roles: title-small 14/20, label-medium 12/16.
 .messageItem__sendFailedTitle {
 	font-size: 14px;
-	line-height: 14px;
+	line-height: 20px;
 	font-weight: 600;
 	color: var(--m3-on-surface, #1f2937);
 }
@@ -1672,7 +1764,7 @@ $message-avatar-overlap: -19px;
 .messageItem__sendFailedSubtitle {
 	margin-top: 4px;
 	font-size: 12px;
-	line-height: 12px;
+	line-height: 16px;
 	font-weight: 500;
 	color: var(--m3-secondary-container, #646d78);
 }
@@ -1714,6 +1806,50 @@ $message-avatar-overlap: -19px;
 	align-items: center;
 	justify-content: space-between;
 	margin-top: 8px;
+}
+
+// Stand-alone Carimat system message (case-handover consent prompt in
+// `SessionStream`, Storybook). It reuses the incoming-message markup, so only
+// the outer block needs sizing: 16px from the stream edge, bubble capped at
+// the 444px Figma App.Oriso 8498-32373 gives it (484px chat-spacing column
+// minus its 40px left inset).
+.messageItem--caseHandoverNotice {
+	width: 100%;
+
+	.messageItem__messageWrap {
+		max-width: 100%;
+	}
+
+	// Figma 9596:35524 layers the 60px avatar/header row above the bubble:
+	// the chat container begins 40px from the rail edge while the sender copy
+	// starts at 64px. The shared incoming-message overlap is 19px; this
+	// standalone composition needs 24px because its wrap has the Figma 4px
+	// avatar/content gap (60 + 4 - 24 = 40).
+	.messageItem__content {
+		margin-left: -24px;
+	}
+
+	// Header height is 44px including the bubble's 4px top margin. Removing
+	// the generic 12px inter-message gap makes the bubble start at y=44 and
+	// tuck 16px beneath the avatar, matching Figma's -48px layer overlap.
+	.messageItem__systemNotificationHeaderText {
+		padding-left: 24px;
+		margin-bottom: 0;
+	}
+
+	// In the stream the avatar column is lifted 25% so it straddles the gap to
+	// the message above. Standalone there is nothing above to straddle, so the
+	// lift pushed the avatar out of the top of its own container and clipped it.
+	.messageItem__sideColumnGroup--left {
+		translate: none;
+	}
+
+	// The kebab is a pure affordance here — there is no message action menu
+	// outside the stream, so it must not look or behave like a control.
+	.messageItem__kebabButton--static {
+		cursor: default;
+		pointer-events: none;
+	}
 }
 
 // Quick-react emoji row inside the message action menu (long-press / kebab),

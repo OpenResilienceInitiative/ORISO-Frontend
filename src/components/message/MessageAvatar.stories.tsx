@@ -51,7 +51,10 @@ export const ClientIn1on1Chat: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
-			const svg = canvasElement.querySelector('.messageItem__avatar svg');
+			// `.messageItem__avatar` is the wrapper MessageItemComponent puts
+			// around this component — it does not exist when the avatar is
+			// rendered on its own, which is what this story does.
+			const svg = canvasElement.querySelector('svg');
 			expect(svg).toBeTruthy();
 			const innerHost = svg?.parentElement;
 			expect(innerHost).toBeTruthy();
@@ -77,8 +80,9 @@ export const ConsultantIn1on1Chat: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
-			const svg = canvasElement.querySelector('.messageItem__avatar svg');
-			expect(svg).toBeTruthy();
+			// See ClientIn1on1Chat: this component renders the avatar directly,
+			// without MessageItemComponent's `.messageItem__avatar` wrapper.
+			expect(canvasElement.querySelector('svg')).toBeTruthy();
 		});
 	}
 };

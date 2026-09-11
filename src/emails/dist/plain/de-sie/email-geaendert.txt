@@ -1,0 +1,23 @@
+Ihre E-Mail-Adresse wurde geändert
+==================================
+
+Die E-Mail-Adresse für den Zugang {{username}} wurde geändert. Ab sofort gehen Benachrichtigungen an diese Adresse.
+
+Wenn Sie das nicht waren, ändern Sie bitte sofort Ihr Passwort.
+
+Zum Profil:
+{{appUrl}}
+
+----------------------------------------------------------------
+Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Änderungen an Ihrem Zugang melden wir Ihnen immer.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+
+Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.

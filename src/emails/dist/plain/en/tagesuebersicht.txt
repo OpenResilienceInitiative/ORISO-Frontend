@@ -1,0 +1,29 @@
+Your daily summary
+==================
+
+There are open enquiries waiting to be accepted at your counselling service.
+
+Open enquiries: {{openRequestCount}}
+Longest wait: {{oldestRequestAge}}
+As of: {{digestGeneratedAt}}
+
+View enquiries:
+{{requestUrl}}
+
+This summary arrives once a day. You can unsubscribe from it in your settings.
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Settings: {{settingsUrl}}
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+Unsubscribe from notifications: {{unsubscribeUrl}}
+
+This email was sent automatically. Please do not reply to it.

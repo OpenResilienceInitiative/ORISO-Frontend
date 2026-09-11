@@ -9,7 +9,9 @@ module.exports = {
 			percentage: process.env.FRONTEND_WEBLATE_MIN_PERCENT || 50
 		},
 		cache: {
-			disabled: process.env.FRONTEND_TRANSLATION_CACHE_DISABLED || true,
+			disabled: !!parseInt(
+				process.env.FRONTEND_TRANSLATION_CACHE_DISABLED || '1'
+			),
 			time: process.env.FRONTEND_TRANSLATION_CACHE_TIME || 30
 		}
 	},

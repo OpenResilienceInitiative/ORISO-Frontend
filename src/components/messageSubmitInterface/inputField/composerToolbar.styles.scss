@@ -63,6 +63,34 @@
 		}
 	}
 
+	// Compact action bar (#1141): every icon uses the larger hit area,
+	// 20px glyph, and primary-tint hover. The expanded formatting toolbar
+	// keeps the Figma 38×32 / 16px spec above.
+	&--default {
+		min-height: 44px;
+
+		.composerToolbar__button {
+			width: 40px;
+			min-width: 40px;
+			height: 36px;
+
+			> svg {
+				width: 20px;
+				height: 20px;
+			}
+
+			&:hover {
+				color: var(--m3-primary-container, #cc1e1c);
+				background: var(--m3-primary-fixed, #ffdad5);
+			}
+		}
+
+		.composerToolbar__textFormatIcon {
+			display: inline-flex;
+			transform-origin: center;
+		}
+	}
+
 	&__buttonText {
 		font-size: 14px;
 		font-weight: 500;

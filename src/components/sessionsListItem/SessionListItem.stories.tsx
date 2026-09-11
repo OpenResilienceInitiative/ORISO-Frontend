@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
+import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
@@ -681,8 +683,19 @@ function PostcodeOnlyCardMock() {
 	);
 }
 
-function RuntimeSessionListItem() {
-	const activeSession = buildExtendedSession(runtimeSession, '');
+function RuntimeSessionListItem({
+	lastMessage = runtimeSession.session.lastMessage
+}: {
+	lastMessage?: string;
+} = {}) {
+	const storySession: ListItemInterface = {
+		...runtimeSession,
+		session: {
+			...runtimeSession.session,
+			lastMessage
+		}
+	};
+	const activeSession = buildExtendedSession(storySession, '');
 
 	return (
 		<div style={listShell}>
@@ -714,7 +727,7 @@ function RuntimeSessionListItem() {
 							<SessionsDataContext.Provider
 								value={{
 									ready: true,
-									sessions: [runtimeSession],
+									sessions: [storySession],
 									dispatch: () => {}
 								}}
 							>
@@ -989,8 +1002,96 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * Unread axis (#1147): read state is derived from the Matrix room, not from
+ * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
+ * stories pin both visual states.
+ */
+const seedMatrixRoom = (unreadCount: number) => {
+	setMatrixClientServiceRef({
+		getClient: () => null,
+		getRoom: () => ({
+			getUnreadNotificationCount: () => unreadCount
+		})
+	} as any);
+};
+
 export const RuntimeComponent: Story = {
-	render: () => <RuntimeSessionListItem />
+	render: () => {
+		seedMatrixRoom(2);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const username = canvasElement.querySelector(
+				'.sessionsListItem__username'
+			);
+			expect(username).not.toBeNull();
+			expect(
+				username!.classList.contains(
+					'sessionsListItem__username--readLabel'
+				)
+			).toBe(false);
+		});
+	}
+};
+
+/**
+ * Regression for #1225 / follow-up to #834: the session-list surface must use
+ * the same transport-to-plain-text conversion as the Threads list.
+ */
+export const RuntimeRichTextPreview: Story = {
+	name: 'Rich text preview → readable text (#1225)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<RuntimeSessionListItem lastMessage="[[align:left]]<p>Wir haben die Zwei-Minuten-Runde ausprobiert.</p>[[/align]]" />
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const preview = canvasElement.querySelector(
+				'.sessionsListItem__subject'
+			);
+			expect(preview?.textContent).toBe(
+				'Wir haben die Zwei-Minuten-Runde ausprobiert.'
+			);
+			expect(preview?.textContent).not.toMatch(/\[\[align:|<p>/i);
+		});
+	}
+};
+
+/**
+ * Same runtime fixture with a fully read Matrix room and an inactive route:
+ * the row must carry the read styling. Under the removed DTO-based logic
+ * (`messagesRead` hard-coded true/false) this state was unreachable.
+ */
+export const RuntimeComponentRead: Story = {
+	parameters: {
+		router: {
+			initialPath: '/sessions/consultant/sessionView'
+		}
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const row = canvasElement.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row!.classList.contains('sessionsListItem--read')).toBe(
+				true
+			);
+			expect(
+				canvasElement
+					.querySelector('.sessionsListItem__username')
+					?.classList.contains(
+						'sessionsListItem__username--readLabel'
+					)
+			).toBe(true);
+		});
+	}
 };
 
 export const ConsultantUnselected: Story = {

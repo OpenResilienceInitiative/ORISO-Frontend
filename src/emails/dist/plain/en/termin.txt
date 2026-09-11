@@ -1,0 +1,33 @@
+Your appointment is confirmed
+=============================
+
+We have noted your appointment. There is nothing you need to prepare – just come as you are.
+
+Date: {{appointmentDate}}
+Time: {{appointmentTime}}
+Type: {{appointmentType}}
+Place: {{locationName}}, {{locationAddress}}
+
+View appointment:
+{{appointmentUrl}}
+
+Open the address on a map:
+{{mapUrl}}
+
+You will get a reminder 24 hours beforehand. You can cancel at any time.
+
+----------------------------------------------------------------
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Settings: {{settingsUrl}}
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+Unsubscribe from notifications: {{unsubscribeUrl}}
+
+This email was sent automatically. Please do not reply to it.

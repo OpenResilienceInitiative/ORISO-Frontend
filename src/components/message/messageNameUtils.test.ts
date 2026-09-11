@@ -3,7 +3,9 @@ import {
 	formatAgencyLine,
 	formatAgencyLineWithI18n,
 	formatMessagePersonName,
-	getMessagePersonInitials
+	getMessagePersonInitials,
+	resolveIncomingConsultantNameForAsker,
+	resolveOwnConsultantName
 } from './messageNameUtils';
 
 describe('formatMessagePersonName', () => {
@@ -52,6 +54,104 @@ describe('formatMessagePersonName', () => {
 		expect(
 			formatMessagePersonName(undefined, 'testuser@example.invalid')
 		).toBe('testuser');
+	});
+});
+
+describe('resolveIncomingConsultantNameForAsker', () => {
+	it('prefers the session displayName over Matrix and legal-looking names', () => {
+		expect(
+			resolveIncomingConsultantNameForAsker({
+				sessionConsultantDisplayName: 'sanftes Alpaka Kim',
+				matrixDisplayName: 'Karina P',
+				eventDisplayName: 'K. Müller',
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'sanftes Alpaka Kim' });
+	});
+
+	it('does not return firstName or lastName when displayName is set', () => {
+		const resolved = resolveIncomingConsultantNameForAsker({
+			sessionConsultantDisplayName: 'Beratende Person Kim',
+			matrixDisplayName: 'Karina P'
+		});
+		expect(resolved.firstName).toBeUndefined();
+		expect(resolved.lastName).toBeUndefined();
+		expect(
+			formatMessagePersonName(
+				resolved.displayName,
+				'karina.p',
+				resolved.firstName,
+				resolved.lastName
+			)
+		).toBe('Beratende Person Kim');
+	});
+
+	it('falls back to Matrix name, then event name, then username', () => {
+		expect(
+			resolveIncomingConsultantNameForAsker({
+				matrixDisplayName: 'Karina P',
+				eventDisplayName: 'K. Müller',
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'Karina P' });
+		expect(
+			resolveIncomingConsultantNameForAsker({
+				eventDisplayName: 'K. Müller',
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'K. Müller' });
+		expect(
+			resolveIncomingConsultantNameForAsker({
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'karina.p' });
+	});
+});
+
+describe('resolveOwnConsultantName', () => {
+	it('prefers displayName over firstName and lastName', () => {
+		expect(
+			resolveOwnConsultantName({
+				displayName: 'Beratende Person Kim',
+				firstName: 'Karina',
+				lastName: 'P',
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'Beratende Person Kim' });
+	});
+
+	it('does not pass firstName or lastName when displayName is set', () => {
+		const resolved = resolveOwnConsultantName({
+			displayName: 'Beratende Person Kim',
+			firstName: 'Karina',
+			lastName: 'P',
+			username: 'karina.p'
+		});
+		expect(resolved.firstName).toBeUndefined();
+		expect(resolved.lastName).toBeUndefined();
+		expect(
+			formatMessagePersonName(
+				resolved.displayName,
+				'karina.p',
+				resolved.firstName,
+				resolved.lastName
+			)
+		).toBe('Beratende Person Kim');
+	});
+
+	it('falls back to firstName and lastName, then username', () => {
+		expect(
+			resolveOwnConsultantName({
+				firstName: 'Karina',
+				lastName: 'P',
+				username: 'karina.p'
+			})
+		).toEqual({ firstName: 'Karina', lastName: 'P' });
+		expect(
+			resolveOwnConsultantName({
+				username: 'karina.p'
+			})
+		).toEqual({ displayName: 'karina.p' });
 	});
 });
 

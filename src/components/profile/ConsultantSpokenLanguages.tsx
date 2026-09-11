@@ -108,6 +108,7 @@ export const ConsultantSpokenLanguages: React.FC = () => {
 					label={translate('profile.spokenLanguages.title')}
 					options={languageOptions}
 					value={selectedLanguages}
+					searchable
 					onChange={selectHandler}
 					error={hasError}
 					helperText={

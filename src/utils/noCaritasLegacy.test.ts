@@ -5,12 +5,29 @@ import { describe, expect, it } from 'vitest';
 /**
  * FE-H05 (#178). Caritas is a third party. A Caritas legal URL served as this
  * platform's imprint or privacy policy is a wrong mandatory provider
- * disclosure under KDG/GDPR, and a Caritas asset or storage key in shipped
- * code is the same class of legacy leak.
+ * disclosure under KDG/GDPR, and a Caritas storage key in shipped code is the
+ * same class of legacy leak.
  *
  * This guard scans the code that actually ships. Story files, tests and the
  * translation catalogues are excluded: they carry Caritas as sample tenant
  * content, which is a separate (product-owned) clean-up.
+ *
+ * ## The logo assertion was deliberately dropped
+ *
+ * The original guard also forbade `02_caritas.svg`, because the login stage
+ * rendered seven partner marks unconditionally and every tenant got them
+ * whether they belonged to that family or not.
+ *
+ * The marks are back as the trigger for the stage lamp map, but as an
+ * **opt-out set**: `StageCarrierLogos` renders only what
+ * `theming.associationLogos` allows, so a tenant can switch off any mark that
+ * is not theirs. Blocking the asset by filename would only push the same
+ * exposure somewhere the guard cannot see.
+ *
+ * This narrows FE-H05, it does not close it. Until the admin panel ships the
+ * multi-select that writes `theming.associationLogos`, the field is absent
+ * everywhere and every tenant shows all seven marks — i.e. the original
+ * finding still stands in production. #178 must stay open until then.
  */
 
 const SRC = join(__dirname, '..');
@@ -67,8 +84,16 @@ describe('no Caritas legacy in shipped frontend code', () => {
 		expect(findMatches(/caritas[\w-]*\.(de|org|com)/i)).toEqual([]);
 	});
 
-	it('does not ship the Caritas logo asset', () => {
-		expect(findMatches(/02_caritas\.svg/i)).toEqual([]);
+	it('renders the partner marks only through the tenant-controlled list', () => {
+		// The marks may be imported in exactly one place, the component that
+		// applies `theming.associationLogos`. Anywhere else they would bypass
+		// the tenant's opt-out.
+		const importSites = findMatches(/img\/logos\/0\d_/i).map(
+			(match) => match.split(':')[0]
+		);
+		expect(Array.from(new Set(importSites))).toEqual([
+			'components/stage/StageCarrierLogos.tsx'
+		]);
 	});
 
 	it('does not namespace browser storage or events under Caritas', () => {

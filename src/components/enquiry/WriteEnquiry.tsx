@@ -241,6 +241,11 @@ export const WriteEnquiry: React.FC = () => {
 					/>
 				)}
 			</div>
+			<Text
+				text={translate('enquiry.write.infotext.deletionNotice')}
+				type="infoLargeAlternative"
+				className="enquiry__deletionNotice"
+			/>
 			<ActiveSessionProvider activeSession={activeSession}>
 				<Suspense
 					fallback={

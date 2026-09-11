@@ -3,7 +3,6 @@ name: Reusable Node validation and build steps
 inputs:
   node_version:
     required: true
-    type: string
 
 runs:
   using: 'composite'

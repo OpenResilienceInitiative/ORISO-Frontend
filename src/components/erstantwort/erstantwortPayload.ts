@@ -40,7 +40,8 @@ export const ERSTANTWORT_ACTION_KINDS = [
 	'ADD_EMAIL',
 	'ENABLE_2FA',
 	'SAVE_CREDENTIALS',
-	'SET_DISPLAY_NAME'
+	'SET_DISPLAY_NAME',
+	'SHOW_RECOVERY_KEY'
 ] as const;
 
 export type ErstantwortActionKind = (typeof ERSTANTWORT_ACTION_KINDS)[number];

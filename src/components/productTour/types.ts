@@ -39,6 +39,14 @@ export interface TourStep {
 	titleKey: string;
 	contentKey: string;
 	placement?: TourPlacement;
+	/**
+	 * An optional step is skipped silently when its target is missing
+	 * (`optional_step_skipped` instead of `target_missing`), and a tour whose
+	 * trailing optional targets are absent still completes. Use it for steps
+	 * whose anchors only exist with content (an open session, a queued
+	 * request) so tours finish on a fresh account without demo data.
+	 */
+	optional?: boolean;
 }
 
 export interface TourDefinition {
@@ -72,4 +80,5 @@ export type TourEvent =
 	| 'tour_skipped'
 	| 'tour_completed'
 	| 'tour_restarted'
-	| 'target_missing';
+	| 'target_missing'
+	| 'optional_step_skipped';

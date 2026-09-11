@@ -11,7 +11,13 @@ export interface AccountDataDraft {
 	username: string;
 	password: string;
 	repeatPassword: string;
-	dataProtectionChecked: boolean;
+	/**
+	 * Which consent was accepted — see `consentBindingKey`. `null` means no
+	 * acceptance. A bare boolean would survive a change of Beratungsstelle or
+	 * of the published wording and carry an agreement onto a text that was
+	 * never shown.
+	 */
+	acceptedConsentBinding: string | null;
 	email: string;
 	twoFactorAuthEnabled: boolean;
 }

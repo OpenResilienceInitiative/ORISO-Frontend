@@ -226,6 +226,9 @@ export const InternalChatCreateCard = ({
 							anchorRef={splitButtonRef}
 							onClose={() => setMenuOpen(false)}
 							labelledBy="internalChatPersonButton"
+							vacatedHint={translate(
+								'groupChat.internal.vacatedHint'
+							)}
 							toggleLabel={(label, selected) =>
 								translate(
 									selected

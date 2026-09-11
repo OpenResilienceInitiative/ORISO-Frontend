@@ -39,6 +39,8 @@ type ModalityInput =
 			user?: { username?: string | null };
 	  };
 
+// Historical accounts: live-chat used to mint Anonymous-<timestamp> handles;
+// topic-based invite still uses anon_N. Newer guests get animal User-IDs.
 const isAnonymousUsername = (username?: string | null): boolean =>
 	typeof username === 'string' &&
 	(username.startsWith('Anonymous-') || username.startsWith('anon_'));

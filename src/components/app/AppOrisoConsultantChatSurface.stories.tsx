@@ -709,6 +709,11 @@ function AppOrisoRoutingRuntimeProviders({
 													notificationNoop,
 												refreshNotificationFeed:
 													notificationNoop,
+												loadOlderNotifications:
+													async () => {},
+												hasOlderNotifications: false,
+												isLoadingOlderNotifications: false,
+												olderNotificationsError: false,
 												removeNotification:
 													notificationNoop,
 												markNotificationAsRead:

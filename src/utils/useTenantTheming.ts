@@ -4,6 +4,9 @@ import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
 import getLocationVariables from './getLocationVariables';
 import decodeHTML from './decodeHTML';
+import decodeTenantAsset from './decodeTenantAsset';
+import getSafeFaviconUrl from './getSafeFaviconUrl';
+import applyBrandingFavicon from './applyBrandingFavicon';
 import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
@@ -53,11 +56,14 @@ const applyTheming = (tenant: TenantDataInterface) => {
 			tenant.theming.primaryColor
 		);
 
-		if (tenant.theming.favicon) {
-			getOrCreateHeadNode('link', { rel: 'icon' }).setAttribute(
-				'href',
-				tenant.theming.favicon
-			);
+		// The uploaded favicon has to reach anonymous visitors too — the login,
+		// password-reset, invite, DPA-sign and registration routes all render
+		// under this hook's provider, so applying it here covers them. Anything
+		// getSafeFaviconUrl refuses (wrong scheme, still-encoded payload) leaves
+		// the built-in icon in place rather than replacing it with a broken one.
+		const favicon = getSafeFaviconUrl(tenant.theming.favicon);
+		if (favicon) {
+			applyBrandingFavicon(favicon);
 		}
 	}
 
@@ -101,15 +107,32 @@ const useTenantTheming = () => {
 				// ToDo: See VIC-428 + VIC-427
 				const decodedTenant = JSON.parse(JSON.stringify(tenant));
 
-				decodedTenant.theming.logo = decodeHTML(tenant.theming.logo);
-				decodedTenant.theming.associationLogo = decodeHTML(
-					tenant.theming.associationLogo
-				);
-				decodedTenant.theming.favicon = decodeHTML(
-					tenant.theming.favicon
-				);
-				decodedTenant.content.claim = decodeHTML(tenant.content.claim);
-				decodedTenant.name = decodeHTML(tenant.name);
+				// Branding assets go through decodeTenantAsset, not decodeHTML:
+				// they end up in img[src] / link[href] and must not take a
+				// detour through innerHTML. The optional chaining matters on the
+				// anonymous path — a restricted tenant payload without theming
+				// or content used to throw here, which silently dropped the
+				// whole theming (favicon, title, palette) for logged-out
+				// visitors.
+				if (decodedTenant.theming) {
+					decodedTenant.theming.logo = decodeTenantAsset(
+						tenant.theming?.logo
+					);
+					decodedTenant.theming.associationLogo = decodeTenantAsset(
+						tenant.theming?.associationLogo
+					);
+					decodedTenant.theming.favicon = decodeTenantAsset(
+						tenant.theming?.favicon
+					);
+				}
+				if (decodedTenant.content?.claim) {
+					decodedTenant.content.claim = decodeHTML(
+						tenant.content.claim
+					);
+				}
+				if (tenant.name) {
+					decodedTenant.name = decodeHTML(tenant.name);
+				}
 
 				applyTheming(decodedTenant);
 				tenantContext?.setTenant(decodedTenant);

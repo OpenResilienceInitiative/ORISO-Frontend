@@ -1,10 +1,36 @@
 import { describe, expect, it } from 'vitest';
 import deTranslations from '../../resources/i18n/de/common.json';
+import deInformalTranslations from '../../resources/i18n/de@informal/common.json';
 import enTranslations from '../../resources/i18n/en/common.json';
-import { consultantWalkthroughTour } from './tourDefinitions';
+import frTranslations from '../../resources/i18n/fr/common.json';
+import ruTranslations from '../../resources/i18n/ru/common.json';
+import tiTranslations from '../../resources/i18n/ti/common.json';
+import trTranslations from '../../resources/i18n/tr/common.json';
+import {
+	consultantMailCounsellingTour,
+	consultantWalkthroughTour,
+	frontendTours
+} from './tourDefinitions';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
+
+// Every locale ships in the bundle and falls back to `de` (src/i18n.ts
+// fallbackLng). A tour key must resolve in the locale itself or in the
+// fallback — otherwise the tooltip silently shows the raw key.
+const bundledLocales: Array<[string, object]> = [
+	['de', deTranslations],
+	['de@informal', deInformalTranslations],
+	['en', enTranslations],
+	['fr', frTranslations],
+	['ru', ruTranslations],
+	['ti', tiTranslations],
+	['tr', trTranslations]
+];
+
+const resolvesWithFallback = (bundle: object, key: string): boolean =>
+	typeof resolveKey(bundle, key) === 'string' ||
+	typeof resolveKey(deTranslations, key) === 'string';
 
 describe('consultantWalkthroughTour', () => {
 	it('migrates the five legacy walkthrough steps in order', () => {
@@ -75,6 +101,132 @@ describe('consultantWalkthroughTour', () => {
 			expect(
 				typeof resolveKey(enTranslations, key),
 				`missing EN key ${key}`
+			).toBe('string');
+		});
+	});
+});
+
+describe('consultantMailCounsellingTour', () => {
+	it('is registered for consultants with six migration-framed steps', () => {
+		expect(consultantMailCounsellingTour.id).toBe(
+			'consultant-mail-counselling'
+		);
+		expect(consultantMailCounsellingTour.version).toBe(1);
+		expect(consultantMailCounsellingTour.surface).toBe('frontend');
+		expect(consultantMailCounsellingTour.audiences).toEqual(['consultant']);
+		expect(consultantMailCounsellingTour.steps.map((s) => s.id)).toEqual([
+			'whats-new',
+			'enquiries',
+			'accepting',
+			'my-sessions',
+			'composer',
+			'archive'
+		]);
+	});
+
+	it('marks only the composer step optional so a fresh account can finish', () => {
+		const optionalIds = consultantMailCounsellingTour.steps
+			.filter((s) => s.optional)
+			.map((s) => s.id);
+		expect(optionalIds).toEqual(['composer']);
+	});
+
+	it('routes through the real consultant session views', () => {
+		const routes = consultantMailCounsellingTour.steps.map((s) => s.route);
+		expect(routes).toEqual([
+			undefined,
+			'/sessions/consultant/sessionPreview',
+			'/sessions/consultant/sessionPreview',
+			'/sessions/consultant/sessionView',
+			undefined,
+			'/sessions/consultant/sessionView?sessionListTab=archive'
+		]);
+	});
+
+	it('anchors every non-intro step on a semantic target', () => {
+		const [intro, ...anchored] = consultantMailCounsellingTour.steps;
+		expect(intro.target).toBe('');
+		anchored.forEach((step) => {
+			expect(step.target).toMatch(/^[a-z0-9-]+$/);
+		});
+	});
+});
+
+describe('frontendTours registry', () => {
+	it('lists both consultant tours with unique ids', () => {
+		const ids = frontendTours.map((t) => t.id);
+		expect(ids).toEqual([
+			'consultant-walkthrough',
+			'consultant-mail-counselling'
+		]);
+		expect(new Set(ids).size).toBe(ids.length);
+	});
+
+	it('resolves every i18n key of every tour in every bundled locale (incl. fallback)', () => {
+		frontendTours.forEach((tour) => {
+			const keys = [
+				tour.titleKey,
+				tour.summaryKey,
+				...tour.steps.flatMap((s) => [s.titleKey, s.contentKey])
+			];
+			bundledLocales.forEach(([locale, bundle]) => {
+				keys.forEach((key) => {
+					expect(
+						resolvesWithFallback(bundle, key),
+						`key ${key} unresolvable for ${locale}`
+					).toBe(true);
+				});
+			});
+		});
+	});
+
+	it('ships the mail-counselling copy natively in every full locale', () => {
+		// de@informal is a sparse overlay by contract (#1101): it carries only
+		// values that differ from `de` and falls back for the rest.
+		const keys = [
+			consultantMailCounsellingTour.titleKey,
+			consultantMailCounsellingTour.summaryKey,
+			...consultantMailCounsellingTour.steps.flatMap((s) => [
+				s.titleKey,
+				s.contentKey
+			])
+		];
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keys.forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+	});
+
+	it('keeps the informal overlay sparse: only du-form step copy, no values identical to de', () => {
+		const informalTour = resolveKey(
+			deInformalTranslations,
+			'tour.mailCounselling'
+		) as Record<string, any>;
+		const walk = (node: any, base: any, path: string) => {
+			Object.entries(node).forEach(([k, v]) => {
+				if (v && typeof v === 'object') {
+					walk(v, base?.[k], `${path}.${k}`);
+				} else {
+					expect(v, `${path}.${k} duplicates de`).not.toBe(base?.[k]);
+				}
+			});
+		};
+		walk(
+			informalTour,
+			resolveKey(deTranslations, 'tour.mailCounselling'),
+			'tour.mailCounselling'
+		);
+		// Every step's content is present in du-form.
+		consultantMailCounsellingTour.steps.forEach((s) => {
+			expect(
+				typeof resolveKey(deInformalTranslations, s.contentKey),
+				`missing informal ${s.contentKey}`
 			).toBe('string');
 		});
 	});

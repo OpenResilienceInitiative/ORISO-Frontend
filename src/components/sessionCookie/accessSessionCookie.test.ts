@@ -52,6 +52,71 @@ describe('accessSessionCookie', () => {
 		expect(window.localStorage.getItem('tenantId')).toBeNull();
 	});
 
+	// #1071 task 5 / #196: shared PCs must not keep a second, JS-readable copy
+	// of the session token around once the cookie already holds it.
+	it('stores no token copy in Web Storage while the cookie holds it', () => {
+		setValueInCookie('keycloak', 'access-token');
+		setValueInCookie('refreshToken', 'refresh-token');
+
+		expect(window.localStorage.getItem('auth.keycloak')).toBeNull();
+		expect(window.localStorage.getItem('auth.refreshToken')).toBeNull();
+		expect(getValueFromCookie('keycloak')).toBe('access-token');
+	});
+
+	it('drops a copy left by an earlier build once the cookie works', () => {
+		window.localStorage.setItem('auth.keycloak', 'stale-token');
+
+		setValueInCookie('keycloak', 'access-token');
+
+		expect(window.localStorage.getItem('auth.keycloak')).toBeNull();
+	});
+
+	// Browsers silently drop cookies over ~4KB, and a Keycloak token carrying
+	// many roles can cross that. Those users would be logged out on the spot
+	// without the fallback (cb814cb0).
+	it('falls back to Web Storage when the cookie write does not survive', () => {
+		const original = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'cookie'
+		);
+		Object.defineProperty(document, 'cookie', {
+			configurable: true,
+			get: () => '',
+			set: () => {
+				/* oversized cookie: the browser drops it */
+			}
+		});
+		try {
+			setValueInCookie('keycloak', 'very-long-access-token');
+		} finally {
+			if (original) {
+				Object.defineProperty(document, 'cookie', original);
+			}
+		}
+
+		expect(window.localStorage.getItem('auth.keycloak')).toBe(
+			'very-long-access-token'
+		);
+	});
+
+	// A single malformed cookie anywhere in the jar makes decodeURIComponent
+	// throw for all of them; writing a session cookie must not go down with it.
+	it('still writes and reads when another cookie is malformed', () => {
+		document.cookie = 'legacy=100%broken';
+
+		expect(() =>
+			setValueInCookie('keycloak', 'access-token')
+		).not.toThrow();
+		expect(getValueFromCookie('keycloak')).toBe('access-token');
+	});
+
+	it('never mirrors non-auth cookies', () => {
+		setValueInCookie('tenantId', 'tenant-1');
+
+		expect(window.localStorage.getItem('auth.tenantId')).toBeNull();
+		expect(window.localStorage.getItem('tenantId')).toBeNull();
+	});
+
 	it('falls back to localStorage for auth tokens when the cookie is missing', () => {
 		setValueInCookie('keycloak', 'access-token');
 		deleteCookieByName('keycloak');

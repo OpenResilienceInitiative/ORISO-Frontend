@@ -1,0 +1,23 @@
+Your email address has been changed
+===================================
+
+The email address for the account ${username!''} has been changed. Notifications now go to this address.
+
+If this was not you, please change your password immediately.
+
+Go to profile:
+${appUrl!''}
+
+----------------------------------------------------------------
+We will never ask for your password by email. We always tell you when your account changes.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} is a service provided by ${orgName!''}.
+
+Privacy: ${privacyUrl!''}
+Imprint: ${imprintUrl!''}
+
+This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.

@@ -9,6 +9,10 @@ import { useCallback } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
 import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
 import {
+	downloadScannedEncryptedMedia,
+	isMediaContentScannerEnabled
+} from '../../services/mediaContentScanner';
+import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_ERROR
 } from '../../globalState';
@@ -23,8 +27,14 @@ import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
  * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
  * `unchecked` keeps images unloaded until explicitly revealed, `blocked`
  * never renders or links the file, and `safe` renders normally.
+ *
+ * `error` is the fail-closed outcome added with the content scanner
+ * (ADR-019, #1072): the file was not judged at all — scanner unreachable,
+ * timed out, or answered something we cannot read. It is withheld exactly as
+ * strictly as `blocked`, and only worded differently, because telling someone
+ * their file was rejected when in truth nothing checked it is a lie.
  */
-export type MediaCheckState = 'unchecked' | 'safe' | 'blocked';
+export type MediaCheckState = 'unchecked' | 'safe' | 'blocked' | 'error';
 
 interface MessageAttachmentProps {
 	attachment: ChatAttachment;
@@ -55,6 +65,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
 		isEncryptedAttachment ? ENCRYPTED : NOT_ENCRYPTED
 	);
+	/** Verdict from the content scanner; `null` until one has been asked for. */
+	const [scanVerdict, setScanVerdict] = React.useState<
+		'blocked' | 'error' | null
+	>(null);
 	const decryptFile = useCallback(
 		async (url: string) => {
 			if (
@@ -71,6 +85,29 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			}
 
 			setAttachmentStatus(IS_DECRYPTING);
+
+			// With a content scanner deployed (ADR-019), an encrypted file is
+			// never fetched and decrypted here. The client seals the file keys
+			// to the scanner, which fetches, decrypts and scans it, and only
+			// then hands back the plaintext. That is what makes the block
+			// server-side: without a verdict there are simply no bytes.
+			if (isMatrixEncryptedAttachment && isMediaContentScannerEnabled()) {
+				const outcome =
+					await downloadScannedEncryptedMedia(matrixEncryptedFile);
+
+				if (outcome.verdict !== 'safe') {
+					setScanVerdict(outcome.verdict);
+					setAttachmentStatus(ENCRYPTED);
+					return;
+				}
+
+				const scannedBlob = new Blob([outcome.data], {
+					type: props.file.type
+				});
+				setEncryptedFile(window.URL.createObjectURL(scannedBlob));
+				setAttachmentStatus(DECRYPTION_FINISHED);
+				return;
+			}
 
 			const data = await fetchData({
 				url: url,
@@ -170,12 +207,41 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const [revealed, setRevealed] = React.useState(false);
 	const mediaCheckState = props.mediaCheckState ?? 'safe';
 	const inlineDisplayEnabled = props.inlineDisplayEnabled ?? true;
-	const effectiveMediaState: MediaCheckState =
+	const revealedMediaState: MediaCheckState =
 		mediaCheckState === 'unchecked' && revealed ? 'safe' : mediaCheckState;
+	// A scanner verdict outranks anything the event metadata claimed: it is the
+	// only judgement made on the actual bytes.
+	const effectiveMediaState: MediaCheckState =
+		scanVerdict ?? revealedMediaState;
 	const showImagePreview = isImage && inlineDisplayEnabled;
 	const isAwaitingReveal =
 		isImage && effectiveMediaState === 'unchecked' && !revealed;
 	const attachmentDimensions = props.attachment;
+
+	// An encrypted attachment cannot be shown before the scanner has judged it,
+	// so the verdict is fetched as soon as the attachment renders rather than
+	// behind a click. Not while an image is still waiting to be revealed — that
+	// gate exists precisely so nothing is fetched yet. Without a scanner
+	// deployed this does nothing and the existing unlock flow stays in place.
+	React.useEffect(() => {
+		if (
+			isMatrixEncryptedAttachment &&
+			isMediaContentScannerEnabled() &&
+			attachmentStatus === ENCRYPTED &&
+			scanVerdict === null &&
+			!isAwaitingReveal
+		) {
+			void decryptFile(buildUrl(props.attachment.downloadUrl));
+		}
+	}, [
+		attachmentStatus,
+		buildUrl,
+		decryptFile,
+		isAwaitingReveal,
+		isMatrixEncryptedAttachment,
+		props.attachment.downloadUrl,
+		scanVerdict
+	]);
 
 	const revealUncheckedImage = () => {
 		setRevealed(true);
@@ -257,18 +323,23 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		[durationFromFileName]
 	);
 
-	if (effectiveMediaState === 'blocked') {
-		// Fail-closed: blocked media is neither rendered nor linked (ADR-014).
+	if (effectiveMediaState === 'blocked' || effectiveMediaState === 'error') {
+		// Fail-closed: withheld media is neither rendered nor linked (ADR-019).
+		// `error` means nothing judged the file, so it is withheld just as
+		// strictly — only the wording differs, because claiming a file was
+		// rejected when no check ran would be untrue.
+		const metaKey =
+			effectiveMediaState === 'error'
+				? 'attachments.mediaCheck.error'
+				: 'attachments.mediaCheck.blocked';
 		return (
 			<AttachmentCard
 				action={{ kind: 'none' }}
 				blocked
 				icon={getAttachmentIcon(props.file.type)}
 				fileName={props.attachment.title}
-				meta={translate('attachments.mediaCheck.blocked')}
-				actionLabel={`${props.attachment.title} — ${translate(
-					'attachments.mediaCheck.blocked'
-				)}`}
+				meta={translate(metaKey)}
+				actionLabel={`${props.attachment.title} — ${translate(metaKey)}`}
 			/>
 		);
 	}

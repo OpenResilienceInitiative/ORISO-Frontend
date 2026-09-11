@@ -1,0 +1,293 @@
+/*
+ * M3 button group.
+ *
+ * Geometry is taken straight from Figma:
+ *  - shape / padding / gaps — Design System M3_ORISO 61592-12039 (stacked
+ *    outline), 61592-11878 (stacked tonal), 61592-12083 (stacked primary),
+ *    58424-8446 / 58424-8462 (vertical outline / tonal)
+ *  - alignment modes — App.Oriso 9564-86390
+ *  - the in-chat consent pair — App.Oriso 9564-86125
+ *
+ * Everything is a token with the Figma hex as the fallback, so a palette
+ * change lands here without a sweep.
+ */
+
+/*
+ * M3 medium button: 16px vertical / 24px horizontal padding, fully rounded,
+ * 56px tall. Figma draws the outline variant's stroke *inside* the shape, so
+ * every variant here carries a 1px border (transparent on the filled ones) and
+ * the padding is reduced by that pixel. Filled and outline items therefore
+ * measure the same, which is what keeps a mixed group aligned — and a real
+ * border, unlike an inset box-shadow, survives forced-colors mode.
+ */
+$button-group-gap: 8px;
+$button-group-padding-block: 15px;
+$button-group-padding-inline: 23px;
+
+// Stacked items centre their label, so the leading badge needs the extra 8px
+// on the start side to keep the label optically centred (Figma 61592-12039
+// uses pl-32 / pr-24).
+$button-group-padding-inline-stacked-start: 31px;
+$button-group-radius: 100px;
+$button-group-icon-size: 24px;
+
+.buttonGroup {
+	position: relative;
+	width: 100%;
+
+	&__track {
+		display: flex;
+		gap: $button-group-gap;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__item {
+		position: relative;
+		display: flex;
+		gap: $button-group-gap;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		margin: 0;
+		padding: $button-group-padding-block $button-group-padding-inline;
+		border: 1px solid transparent;
+		border-radius: $button-group-radius;
+		font-family: inherit;
+
+		// M3 title/medium — 16/24, weight 500, tracking 0.15px.
+		font-size: 16px;
+		font-weight: 500;
+		font-style: normal;
+		line-height: 24px;
+		letter-spacing: 0.15px;
+		text-align: center;
+		text-decoration: none;
+		appearance: none;
+		cursor: pointer;
+		transition:
+			background-color 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+
+		&:focus-visible {
+			outline: 3px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+
+		&[disabled] {
+			cursor: default;
+
+			// M3 disabled: 12% container, 38% label — expressed as opacity so
+			// every variant keeps its own hue instead of collapsing to grey.
+			opacity: 0.38;
+		}
+	}
+
+	/*
+	 * The three rules below are deliberately written with three classes.
+	 * Host surfaces style generic descendants — the chat bubble carries
+	 * `.messageItem__message span:not(…) { display: inline }`, which is enough
+	 * to collapse the badge to a 9px inline box and silently shrink the
+	 * measurement the auto-stacking decision depends on. A design-system
+	 * component has to be immune to that wherever it is dropped, so its inner
+	 * parts out-specify any two-class host rule.
+	 */
+	& &__item &__label {
+		position: relative;
+		z-index: 1;
+		display: block;
+
+		// The label is what may be trimmed when a caller hard-limits the width;
+		// the badge must never be the part that disappears.
+		min-width: 0;
+	}
+
+	& &__item &__icon {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		width: $button-group-icon-size;
+		height: $button-group-icon-size;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	/*
+	 * Boxed digit, Figma `looks_one` / `looks_two` (App.Oriso 9564-86125).
+	 * Drawn rather than imported because Material only ships glyphs for 1–6
+	 * while a button group may carry any number of options — see the PR note.
+	 * The 3px margin inside a 24px icon slot reproduces the glyph's own inset.
+	 */
+	& &__item &__badge {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		width: $button-group-icon-size - 6px;
+		height: $button-group-icon-size - 6px;
+		margin: 3px;
+		border: 2px solid currentcolor;
+		border-radius: 4px;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: 0;
+	}
+
+	/* --- variants ------------------------------------------------------- */
+
+	/*
+	 * Hover and press are an M3 **state layer**: the item's own on-colour at
+	 * 8% / 12% over the container, not a second hand-picked hex. That keeps
+	 * every variant consistent and stops the palette from growing a
+	 * "primary but a bit darker" role that no token owns.
+	 */
+	& &__item::after {
+		content: '';
+		position: absolute;
+		z-index: 0;
+		inset: 0;
+		border-radius: inherit;
+		background-color: currentcolor;
+		opacity: 0;
+		transition: opacity 0.2s ease;
+		pointer-events: none;
+	}
+
+	& &__item:hover:not([disabled])::after {
+		opacity: 0.08;
+	}
+
+	& &__item:active:not([disabled])::after {
+		opacity: 0.12;
+	}
+
+	&__item--primary {
+		border-color: transparent;
+		background-color: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+	}
+
+	&__item--tonal {
+		border-color: transparent;
+		background-color: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-secondary-container, #e7effc);
+	}
+
+	&__item--outline {
+		border-color: var(--m3-outline-variant, #c4c7c8);
+		background-color: transparent;
+		color: var(--m3-on-surface-variant, #444748);
+
+		&:hover:not([disabled]) {
+			border-color: var(--m3-outline, #747878);
+		}
+	}
+
+	/* --- alignment ------------------------------------------------------ */
+
+	&--stacked > .buttonGroup__track {
+		flex-direction: column;
+		align-items: stretch;
+
+		.buttonGroup__item {
+			width: 100%;
+			padding-right: $button-group-padding-inline;
+			padding-left: $button-group-padding-inline-stacked-start;
+			justify-content: flex-start;
+		}
+
+		// Full-width items centre the label in the space left of the badge,
+		// exactly like the Figma stacked variants.
+		.buttonGroup__label {
+			flex: 1 0 0;
+			text-align: center;
+		}
+	}
+
+	&--horizontal-flex > .buttonGroup__track {
+		flex-wrap: nowrap;
+
+		.buttonGroup__item {
+			flex: 0 0 auto;
+			white-space: nowrap;
+		}
+	}
+
+	/*
+	 * The scroll mode is an explicit choice, not a failure state: it keeps the
+	 * row on one line and lets the reader swipe (Figma 9564-86390
+	 * "Horizontal Scroll"). Padding on the track stops the focus ring of the
+	 * first/last item from being clipped by the scroll port.
+	 */
+	&--horizontal-scroll > .buttonGroup__track {
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+		padding: 4px;
+		margin: -4px;
+		overflow-x: auto;
+		scroll-snap-type: x proximity;
+		overscroll-behavior-x: contain;
+
+		.buttonGroup__item {
+			flex: 0 0 auto;
+			white-space: nowrap;
+			scroll-snap-align: start;
+		}
+	}
+
+	/* --- measuring twin -------------------------------------------------- */
+
+	/*
+	 * 0×0 clipper. The twin needs to take its natural single-line width to be
+	 * measurable, but must not enlarge any ancestor's scroll box while doing
+	 * it, or a chat bubble would gain a phantom horizontal scrollbar.
+	 */
+	&__mirrorClip {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+	}
+
+	// Must out-specify the alignment blocks above: the twin always stays in
+	// the one-line shape, whatever the group is currently rendering.
+	& &__track--mirror {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+		width: max-content;
+		padding: 0;
+		margin: 0;
+		overflow: visible;
+		visibility: hidden;
+		pointer-events: none;
+
+		.buttonGroup__item {
+			flex: 0 0 auto;
+			width: auto;
+			padding-right: $button-group-padding-inline;
+			padding-left: $button-group-padding-inline;
+			justify-content: center;
+			white-space: nowrap;
+		}
+
+		.buttonGroup__label {
+			flex: 0 0 auto;
+			text-align: center;
+		}
+	}
+}

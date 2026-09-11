@@ -104,7 +104,6 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	// updater to show the no-availability modal once per topic.
 	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
-
 	// Fetch all topics on mount
 	useEffect(() => {
 		setLoadingTopics(true);
@@ -344,7 +343,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				.then(() => {
 					// Registration successful, auto-login completed by apiPostRegistration
 					// Redirect to app (same as normal registration)
-					redirectToApp();
+					redirectToApp(undefined, { navigate });
 				})
 				.catch((error) => {
 					// console.error('Anonymous chat registration failed:', error);
@@ -388,7 +387,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		tenant,
 		isRegistering,
 		t,
-		addNotification
+		addNotification,
+		navigate
 	]);
 
 	const canRegister = selectedAgency && selectedTopic && !isRegistering;
@@ -474,7 +474,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									gap: '12px'
 								}}
 							>
-								<AnimalAvatar avatar={identity.avatar} size={48} />
+								<AnimalAvatar
+									avatar={identity.avatar}
+									size={48}
+								/>
 								<Box sx={{ flex: 1 }}>
 									<Typography
 										variant="body2"

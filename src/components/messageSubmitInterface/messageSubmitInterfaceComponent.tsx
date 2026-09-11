@@ -46,6 +46,7 @@ import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -76,7 +77,7 @@ import {
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
-	apiGetAgencyConsultantList,
+	fetchAgencyConsultantList,
 	apiPutDearchive,
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
@@ -548,6 +549,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
 		Map<string, { displayName: string; username: string }>
 	>(new Map());
+	/**
+	 * Why the mention directory looks the way it does (#993). Every failure
+	 * used to collapse into an empty Map, so a rejected request, a session
+	 * without an agency and an agency with no other consultants all produced
+	 * the same blank popup — indistinguishable to the user and to us.
+	 */
+	const [mentionDirectoryState, setMentionDirectoryState] = useState<
+		'loading' | 'ready' | 'error' | 'unavailable'
+	>('loading');
 	const [expandedAudienceSections, setExpandedAudienceSections] = useState({
 		clients: true,
 		counsellors: true,
@@ -2221,15 +2231,26 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
 		if (isAskerOnly || isAnonymousChat) {
+			// Mentions are a counsellor tool; askers and anonymous chats have
+			// no directory by design, not by failure.
 			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('unavailable');
 			return;
 		}
 		if (!agencyId) {
 			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('error');
+			apiPostError({
+				name: 'MentionDirectoryUnavailable',
+				message:
+					'No agencyId on the active session; the @-mention directory stays empty.',
+				level: ERROR_LEVEL_WARN
+			}).then();
 			return;
 		}
 		let cancelled = false;
-		apiGetAgencyConsultantList(agencyId)
+		setMentionDirectoryState('loading');
+		fetchAgencyConsultantList(agencyId)
 			.then((consultants) => {
 				if (cancelled) {
 					return;
@@ -2264,12 +2285,25 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				);
 				setAgencyConsultantDirectory(nextDirectory);
+				setMentionDirectoryState('ready');
 			})
-			.catch(() => {
+			.catch((error) => {
 				if (cancelled) {
 					return;
 				}
 				setAgencyConsultantDirectory(new Map());
+				setMentionDirectoryState('error');
+				// The consultant list used to be swallowed twice — once in the
+				// api helper, once here — so a 403 looked exactly like an
+				// agency with no other consultants (#993).
+				apiPostError({
+					name: error?.name || 'MentionDirectoryRequestFailed',
+					message: `Agency consultant list for the @-mention picker failed (agencyId ${agencyId}): ${
+						error?.message || 'unknown error'
+					}`,
+					stack: error?.stack,
+					level: ERROR_LEVEL_WARN
+				}).then();
 			});
 		return () => {
 			cancelled = true;
@@ -2344,8 +2378,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 			if (
-				memberId.includes('@system') ||
-				memberId.includes('@caritas.local') ||
+				isSystemMatrixUser(memberId) ||
 				// Agency provisioning/service bots (@agency-<id>-service) are not
 				// human recipients — never offer them as an audience target.
 				/^@agency-\d+-service:/.test(memberId)
@@ -3284,12 +3317,14 @@ export const MessageSubmitInterfaceComponent = ({
 	// always see the current agency directory and room membership.
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
+		directoryState: mentionDirectoryState,
 		inRoomValues: new Set<string>(),
 		matrixUserIdByComparableId: new Map<string, string>(),
 		selfId: userData?.userId as string | undefined
 	});
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
+		directoryState: mentionDirectoryState,
 		inRoomValues: new Set(
 			audienceOptions
 				.filter((option) => option.value !== AUDIENCE_ALL)
@@ -3332,6 +3367,17 @@ export const MessageSubmitInterfaceComponent = ({
 			notInChatLabel: translate(
 				'message.mention.notInChat',
 				'nicht im Chat'
+			),
+			// #993: the popup says why it is empty instead of rendering nothing.
+			getDirectoryState: () => mentionDataRef.current.directoryState,
+			emptyLabel: translate('message.mention.empty', 'Niemand gefunden'),
+			unavailableLabel: translate(
+				'message.mention.unavailable',
+				'Liste konnte nicht geladen werden'
+			),
+			loadingLabel: translate(
+				'message.mention.loading',
+				'Wird geladen …'
 			),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =

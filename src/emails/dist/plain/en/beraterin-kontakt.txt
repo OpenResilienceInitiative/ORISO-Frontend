@@ -1,0 +1,35 @@
+How to reach your counselling service
+=====================================
+
+Besides the protected chat you can also reach your counselling service by phone or book an appointment directly.
+
+Your account stays anonymous – you decide what you share.
+
+Service: {{consultantName}}
+Direct line: {{consultantPhone}}
+Phone hours: {{consultantHours}}
+Email: {{consultantEmail}}
+
+Book an appointment:
+{{bookingUrl}}
+
+Go to the protected chat:
+{{messageUrl}}
+
+Outside phone hours, writing in the chat works best. We reply within 2 working days.
+
+----------------------------------------------------------------
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Settings: {{settingsUrl}}
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+Unsubscribe from notifications: {{unsubscribeUrl}}
+
+This email was sent automatically. Please do not reply to it.

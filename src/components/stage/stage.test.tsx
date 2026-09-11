@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
@@ -42,38 +42,34 @@ const renderStage = (tenant: TenantDataInterface | undefined) =>
 		</TenantContext.Provider>
 	);
 
-const ALT = 'app.stage.associationLogoAlt';
-
-describe('Stage association branding', () => {
+/**
+ * The stage centre carries the animated composition (lamp map) and nothing
+ * else. The tenant/association mark used to render between the claim and the
+ * carrier logos; the owner removed it from the design ("nehme bitte das Logo
+ * raus, dort in der Mitte", 2026-08-19) — it doubled the branding already on
+ * the header/registration surfaces and covered the composition's area.
+ * The carrier marks at the panel's foot are a separate element and stay.
+ */
+describe('Stage centre branding', () => {
 	afterEach(cleanup);
 
-	it('shows the association logo the tenant configured', () => {
-		renderStage(
-			tenantWith({ associationLogo: 'https://cdn.test.local/assoc.svg' })
+	it('renders no tenant mark even when the tenant configured one', () => {
+		const { container } = renderStage(
+			tenantWith({
+				associationLogo: 'https://cdn.test.local/assoc.svg',
+				logo: 'https://cdn.test.local/tenant.svg'
+			})
 		);
 
-		expect(screen.getByAltText(ALT).getAttribute('src')).toBe(
-			'https://cdn.test.local/assoc.svg'
-		);
+		expect(container.querySelector('.stage__tenantLogo')).toBeNull();
+		expect(container.querySelector('img')).toBeNull();
 	});
 
-	it('falls back to the tenant logo when no association logo is set', () => {
-		renderStage(tenantWith({ logo: 'https://cdn.test.local/tenant.svg' }));
+	it('keeps the carrier marks at the foot of the panel', () => {
+		const { container } = renderStage(tenantWith({}));
 
-		expect(screen.getByAltText(ALT).getAttribute('src')).toBe(
-			'https://cdn.test.local/tenant.svg'
-		);
-	});
-
-	it('renders no third-party branding when the tenant configured none', () => {
-		renderStage(tenantWith({}));
-
-		expect(screen.queryByAltText(ALT)).toBeNull();
-	});
-
-	it('renders no branding at all before tenant data has loaded', () => {
-		renderStage(undefined);
-
-		expect(screen.queryByAltText(ALT)).toBeNull();
+		expect(
+			container.querySelector('[data-cy="stage-carrier-logos"]')
+		).toBeTruthy();
 	});
 });

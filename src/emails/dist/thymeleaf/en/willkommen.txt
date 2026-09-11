@@ -1,0 +1,29 @@
+Your account is ready
+=====================
+
+You have registered anonymously with [[${platformName}]]. We are glad you are here.
+
+Please keep your username safe. For privacy reasons we cannot recover it.
+
+Username: [[${username}]]
+
+Sign in to your counselling:
+[[${loginUrl}]]
+
+Your advisor will respond within 2 working days.
+
+----------------------------------------------------------------
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] is a service provided by [[${orgName}]].
+
+Settings: [[${settingsUrl}]]
+Privacy: [[${privacyUrl}]]
+Imprint: [[${imprintUrl}]]
+Unsubscribe from notifications: [[${unsubscribeUrl}]]
+
+This email was sent automatically. Please do not reply to it.

@@ -7,30 +7,88 @@ env:
   REGISTRY: ghcr.io
   ORG: openresilienceinitiative
 
+concurrency:
+  group: frontend-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: lint, type-check, test, build and Docker validation
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Runs lint, type-check, unit tests and the app build.
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
-          node_version: '18'
+          node_version: '22'
 
-      - name: Run unit tests
-        shell: bash
-        run: npm run test:unit
-
+      # Native amd64 only: this image is thrown away, so emulating arm64 under
+      # QEMU buys nothing but wall-clock. The publish workflow still builds both
+      # architectures for the images that actually get deployed.
       - name: Docker build validation without publishing
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: false
           image_name: oriso-frontend
+          platforms: linux/amd64
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Runs every story in a real Chromium: renders it, executes its `play`
+  # function, and fails on any axe (WCAG 2.2 AA) violation, because
+  # .storybook/preview.tsx sets `a11y.test: 'error'`. Kept separate from
+  # `validate` so it runs in parallel and a red story is attributable at a
+  # glance instead of hiding inside the build job.
+  storybook-tests:
+    name: Storybook component tests (interactions + a11y)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # This job only reads the tree and runs tests; it never pushes. Not
+          # leaving a usable token in .git/config keeps a compromised dependency
+          # in the install step from using it.
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        # Same flags as .github/actions/node-build: --ignore-scripts for
+        # supply-chain hardening, --legacy-peer-deps because @cypress/react@7
+        # still peers on @types/react 17.
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Install Chrome for Vitest browser mode
+        # --ignore-scripts above skips Playwright's own postinstall, so the
+        # browser has to be fetched explicitly. Chrome only — this suite
+        # asserts behaviour and accessibility, not cross-browser rendering.
+        #
+        # `chrome`, not `chromium`: vitest.config.mts pins the storybook project
+        # to `channel: 'chrome'` because the bundled chrome-headless-shell drops
+        # the orchestrator's WebSocket mid-run (see the comment there). This
+        # installs the channel the tests actually launch.
+        #
+        # Not `npx playwright`: this repo has two packages shipping that bin —
+        # `playwright` (which @vitest/browser drives) and the older
+        # `@playwright/test` used by the smoke specs. npx picked the latter and
+        # installed the wrong revision, so the run died with
+        # "Executable doesn't exist at …/chromium_headless_shell-1208".
+        # Address the CLI that belongs to the version the tests actually launch.
+        run: node node_modules/playwright/cli.js install --with-deps chrome
+
+      - name: Run Storybook component tests
+        run: npm run test:storybook
 
 # NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
 # NOT a CI job. The app's bootstrap requires a reachable backend to render; CI

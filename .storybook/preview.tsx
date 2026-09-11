@@ -76,8 +76,13 @@ class StoryErrorBoundary extends React.Component<
 	static getDerivedStateFromError() {
 		return { failed: true };
 	}
-	componentDidCatch() {
-		/* swallow — the panel below is the user-facing result */
+	componentDidCatch(error: unknown) {
+		// Log rather than swallow. The panel is the right user-facing result,
+		// but a silently discarded error is why several stories sat behind this
+		// placeholder unnoticed while their play functions asserted markup that
+		// was never rendered.
+		// eslint-disable-next-line no-console
+		console.warn('[storybook] story needs live data:', error);
 	}
 	render() {
 		if (this.state.failed) {
@@ -238,11 +243,10 @@ const storybookAgencies: AgencyDataInterface[] = [
 		tenantId: 1,
 		topicIds: [1, 4, 6],
 		consultingTypeRel: storybookConsultingType,
-		address: 'Domkloster 3, 50667 Köln',
+		street: 'Domkloster',
+		houseNumber: '3',
 		phone: '0221 123 45 0',
-		openingHours: 'Mo-Do 9-17 Uhr · Fr 9-13 Uhr',
-		lat: 50.9413,
-		lng: 6.9583
+		openingHours: 'Mo-Do 9-17 Uhr · Fr 9-13 Uhr'
 	} as AgencyDataInterface,
 	{
 		id: 102,
@@ -257,11 +261,10 @@ const storybookAgencies: AgencyDataInterface[] = [
 		tenantId: 1,
 		topicIds: [2, 3],
 		consultingTypeRel: storybookConsultingType,
-		address: 'Hohenstaufenring 2, 50674 Köln',
+		street: 'Hohenstaufenring',
+		houseNumber: '2',
 		phone: '0221 95 41 21 0',
-		openingHours: 'Mo-Fr 9-16 Uhr',
-		lat: 50.9352,
-		lng: 6.9378
+		openingHours: 'Mo-Fr 9-16 Uhr'
 	} as AgencyDataInterface,
 	{
 		id: 103,
@@ -276,11 +279,10 @@ const storybookAgencies: AgencyDataInterface[] = [
 		tenantId: 1,
 		topicIds: [4, 5],
 		consultingTypeRel: storybookConsultingType,
-		address: 'Neusser Straße 120, 50733 Köln',
+		street: 'Neusser Straße',
+		houseNumber: '120',
 		phone: '0221 48 90 33',
-		openingHours: 'Mo, Mi, Do 9-15 Uhr',
-		lat: 50.9636,
-		lng: 6.9542
+		openingHours: 'Mo, Mi, Do 9-15 Uhr'
 	} as AgencyDataInterface
 ];
 
@@ -440,7 +442,10 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 			: storybookJsonResponse({});
 	}
 
-	if (url.pathname.includes('/service/topic/public/')) {
+	// No trailing slash: `endpoints.topicsData` is `/service/topic/public`, so
+	// the old `/service/topic/public/` pattern never matched and the topic
+	// step fell through to the generic `{}` response, i.e. its load-error state.
+	if (url.pathname.includes('/service/topic/public')) {
 		return storybookJsonResponse(storybookTopics);
 	}
 
@@ -693,7 +698,12 @@ function MuiStoryShell({
 											markNotificationAsRead: () => {},
 											markAllNotificationsAsRead:
 												() => {},
-											clearNotificationFeed: () => {}
+											clearNotificationFeed: () => {},
+											loadOlderNotifications:
+												async () => {},
+											hasOlderNotifications: false,
+											isLoadingOlderNotifications: false,
+											olderNotificationsError: false
 										}}
 									>
 										<RegistrationContext.Provider
@@ -823,6 +833,16 @@ const preview: Preview = {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
+				},
+				tablet834: {
+					name: 'Tablet 834 (iPad Air portrait)',
+					styles: { width: '834px', height: '1194px' },
+					type: 'tablet'
+				},
+				desktop1440: {
+					name: 'Desktop 1440',
+					styles: { width: '1440px', height: '900px' },
+					type: 'desktop'
 				}
 			}
 		},

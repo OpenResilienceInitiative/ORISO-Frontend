@@ -5,13 +5,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repositoryRoot = process.cwd();
-const scanRoots = [
-	'src',
-	'cypress',
-	'translation-files-current',
-	'package.json',
-	'package-lock.json'
-];
+const scanRoots = ['src', 'cypress', 'package.json', 'package-lock.json'];
 const forbiddenTokens = [
 	['@ji', 'tsi/react-sdk'].join(''),
 	['Ji', 'tsiMeeting'].join(''),

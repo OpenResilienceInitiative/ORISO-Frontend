@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { userEvent, within } from 'storybook/test';
 import { OrisoMultiSelect, OrisoSelect } from './OrisoSelect';
 import { OrisoTextarea } from './OrisoTextarea';
 
@@ -10,6 +11,17 @@ const options = [
 	{ value: 'one-to-one', label: '1-1 Beratung' },
 	{ value: 'internal', label: 'Internal' },
 	{ value: 'supervision', label: 'Supervision' }
+];
+
+const languageOptions = [
+	{ value: 'de', label: '(DE) German', disabled: true },
+	{ value: 'en', label: '(EN) English' },
+	{ value: 'fr', label: '(FR) French' },
+	{ value: 'es', label: '(ES) Spanish' },
+	{ value: 'it', label: '(IT) Italian' },
+	{ value: 'pl', label: '(PL) Polish' },
+	{ value: 'tr', label: '(TR) Turkish' },
+	{ value: 'uk', label: '(UK) Ukrainian' }
 ];
 
 const meta = {
@@ -185,8 +197,72 @@ export const TextareaError: Story = {
 	)
 };
 
+const SearchableLanguagesStory = ({
+	initialValue,
+	disabled
+}: {
+	initialValue: string[];
+	disabled?: boolean;
+}) => {
+	const [value, setValue] = React.useState(initialValue);
+
+	const handleChange = (event: SelectChangeEvent<string[]>) => {
+		const nextValue = event.target.value;
+		const selectedValues =
+			typeof nextValue === 'string' ? nextValue.split(',') : nextValue;
+		setValue([
+			'de',
+			...selectedValues.filter((language) => language !== 'de')
+		]);
+	};
+
+	return (
+		<Box sx={{ width: 360 }}>
+			<OrisoMultiSelect
+				label="My languages"
+				value={value}
+				options={languageOptions}
+				searchable
+				disabled={disabled}
+				helperText="German stays selected"
+				onChange={handleChange}
+			/>
+		</Box>
+	);
+};
+
 export const MultiSelect: Story = {
 	render: () => <MultiSelectStory />
+};
+
+export const MultiSelectEmpty: Story = {
+	render: () => <SearchableLanguagesStory initialValue={[]} />
+};
+
+export const MultiSelectFiltered: Story = {
+	render: () => <SearchableLanguagesStory initialValue={['de']} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('combobox'));
+		const search = await within(document.body).findByRole('textbox', {
+			name: 'Search'
+		});
+		await userEvent.type(search, 'fr');
+	}
+};
+
+export const MultiSelectManySelected: Story = {
+	render: () => (
+		<SearchableLanguagesStory
+			initialValue={['de', 'en', 'fr', 'es', 'it']}
+		/>
+	)
+};
+
+export const MultiSelectDisabled: Story = {
+	render: () => (
+		<SearchableLanguagesStory initialValue={['de', 'en']} disabled />
+	)
 };
 
 export const StateMatrix: Story = {

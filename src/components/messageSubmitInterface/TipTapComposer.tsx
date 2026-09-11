@@ -779,7 +779,10 @@ export const TipTapComposer = forwardRef<
 		}
 
 		return (
-			<div className="tiptap-composer">
+			<div
+				className="tiptap-composer"
+				data-tour-target="session-composer"
+			>
 				{showToolbar && (
 					<div className="tiptap-composer__toolbar">
 						<button

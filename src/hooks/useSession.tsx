@@ -6,6 +6,7 @@ import {
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
+import { isRoomUnread } from '../utils/sessionUnread';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 import { getModality, Modality } from '../components/session/getModality';
@@ -152,16 +153,13 @@ export const useSession = (
 			return;
 		}
 
-		if (!session.item.messagesRead) {
-			// Matrix read receipt on the latest room event. Sessions without
-			// a Matrix room cannot publish a receipt and are a safe no-op.
-			const { matrixRoomId } =
-				chatTransportService.resolveSession(session);
-			if (matrixRoomId) {
-				chatTransportService
-					.markRoomAsRead(matrixRoomId)
-					.catch(() => {});
-			}
+		// Matrix read receipt on the latest room event. Read state is derived
+		// from the Matrix client (#1147) — the DTO's `messagesRead` is a
+		// hard-coded constant and must not gate the receipt. Sessions without
+		// a Matrix room cannot publish a receipt and are a safe no-op.
+		const { matrixRoomId } = chatTransportService.resolveSession(session);
+		if (matrixRoomId && isRoomUnread(matrixRoomId)) {
+			chatTransportService.markRoomAsRead(matrixRoomId).catch(() => {});
 		}
 	}, [session]);
 

@@ -36,6 +36,12 @@ FROM node:$NODE_VERSION
 
 ARG PORT=80
 
+# CVE-2026-14456: OpenSSL DoS via unbounded memory growth in the QUIC server.
+# Alpine 3.24 ships the fix in 3.5.8-r0, but the pinned node:22-alpine still
+# carries 3.5.7-r0 and upstream has not rebuilt, so bumping the base digest
+# does not help. Take the patched packages straight from the Alpine repo.
+RUN apk upgrade --no-cache libssl3 libcrypto3
+
 # The node base image bundles an npm whose vendored dependencies (tar,
 # sigstore, picomatch, brace-expansion) carry fixable HIGH/CRITICAL CVEs
 # flagged by the Trivy publish gate. Upgrade npm to a release that ships
@@ -56,6 +62,14 @@ RUN npm install -g npm@11.18.0 \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/ip-address \
 	&& mv /tmp/ip-address-patch/package /usr/local/lib/node_modules/npm/node_modules/ip-address \
 	&& rm -rf /tmp/ip-address-patch /tmp/ip-address-10.3.1.tgz \
+	# CVE-2026-73566: node-tar DoS via a crafted long path. npm@11.18.0 still
+	# bundles tar 7.5.19; patch it up to the fixed 7.5.21 the same way.
+	&& npm pack tar@7.5.21 \
+	&& mkdir -p /tmp/tar-patch \
+	&& tar -xzf tar-7.5.21.tgz -C /tmp/tar-patch \
+	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/tar \
+	&& mv /tmp/tar-patch/package /usr/local/lib/node_modules/npm/node_modules/tar \
+	&& rm -rf /tmp/tar-patch /tmp/tar-7.5.21.tgz \
 	&& npm cache clean --force
 
 USER node

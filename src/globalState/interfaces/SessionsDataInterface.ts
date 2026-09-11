@@ -80,6 +80,11 @@ export interface SessionItemInterface {
 	lastMessageType?: string;
 	messageDate: number;
 	createDate: string;
+	/**
+	 * @deprecated Hard-coded to `true` by the backend since the Matrix-native
+	 * refactor — carries no information. Derive unread state from the Matrix
+	 * room via `utils/sessionUnread` (#1147) instead of reading this field.
+	 */
 	messagesRead: boolean;
 	messageTime?: number;
 	postcode: number;
@@ -120,6 +125,11 @@ export interface GroupChatItemInterface {
 		msg: string;
 	};
 	messageDate: number;
+	/**
+	 * @deprecated Hard-coded to `true` by the backend since the Matrix-native
+	 * refactor — carries no information. Derive unread state from the Matrix
+	 * room via `utils/sessionUnread` (#1147) instead of reading this field.
+	 */
 	messagesRead: boolean;
 	moderators: string[];
 	participants?: UserService.Schemas.GroupChatParticipantDTO[];

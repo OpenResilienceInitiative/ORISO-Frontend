@@ -15,6 +15,8 @@ import { RegistrationContext } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { AgencyLanguages } from './AgencyLanguages';
+import { AgencyDetails, getAgencyDetails } from './agencyDetails';
+import { formatOpeningHours } from '../../../utils/openingHours';
 import {
 	DepartmentLegalSection,
 	getDepartmentForTopic
@@ -23,154 +25,6 @@ import {
 interface AgencyDetailsPanelProps {
 	agency: AgencyDataInterface;
 	open: boolean;
-}
-
-interface AgencyDetails {
-	address?: string;
-	lat?: number;
-	lng?: number;
-	phone?: string;
-	hours?: string;
-	about?: string;
-	url?: string;
-}
-
-type AgencyRecord = AgencyDataInterface & Record<string, unknown>;
-
-const DEMO_DETAILS: {
-	match: RegExp;
-	details: AgencyDetails;
-}[] = [
-	{
-		match: /caritasverband wismar/i,
-		details: {
-			address: 'Hinter dem Rathaus 4, 23966 Wismar',
-			lat: 53.8932,
-			lng: 11.4651,
-			phone: '03841 32 70 0',
-			hours: 'Mo-Fr 8-16 Uhr',
-			about: 'Beratung zu Familie, Finanzen und Migration. Termine nach Vereinbarung, auch telefonisch.'
-		}
-	},
-	{
-		match: /caritas agency|caritas am meer/i,
-		details: {
-			address: 'Bademutterstraße 12, 23966 Wismar',
-			lat: 53.892,
-			lng: 11.4628,
-			phone: '03841 22 55 0',
-			hours: 'Mo-Do 9-17 Uhr · Fr 9-13 Uhr',
-			about: 'Allgemeine soziale Beratung mit offener Sprechstunde ohne Termin. Der Zugang ist barrierefrei.'
-		}
-	},
-	{
-		match: /kreuzberg/i,
-		details: {
-			address: 'Skalitzer Straße 47, 10997 Berlin',
-			lat: 52.5006,
-			lng: 13.4246,
-			phone: '030 666 33 0',
-			hours: 'Mo-Do 9-17 Uhr · Fr 9-13 Uhr',
-			about: 'Lokale Beratung mit vertraulicher Online-Begleitung und optionaler Anbindung an Hilfen vor Ort.'
-		}
-	},
-	{
-		match: /u25/i,
-		details: {
-			address: 'Hohenstaufenring 2, 50674 Köln',
-			lat: 50.9352,
-			lng: 6.9378,
-			phone: '0221 95 41 21 0',
-			hours: 'Mo-Fr 9-16 Uhr',
-			about: 'Anonyme Begleitung für junge Menschen in Krisen und bei Suizidgedanken.'
-		}
-	},
-	{
-		match: /codex predev|predev e2e/i,
-		details: {
-			address: 'Teststandort, 50667 Köln',
-			lat: 50.9384,
-			lng: 6.9599,
-			phone: '0221 000 000',
-			hours: 'Mo-Fr 9-16 Uhr',
-			about: 'PreDev-Testdaten für die End-to-End-Validierung der Registrierung.'
-		}
-	}
-];
-
-const COLOGNE_CENTER = {
-	lat: 50.9384,
-	lng: 6.9599
-};
-
-function firstString(record: AgencyRecord, keys: string[]): string | undefined {
-	for (const key of keys) {
-		const value = record[key];
-		if (typeof value === 'string' && value.trim()) {
-			return value.trim();
-		}
-	}
-	return undefined;
-}
-
-function firstNumber(record: AgencyRecord, keys: string[]): number | undefined {
-	for (const key of keys) {
-		const value = record[key];
-		if (typeof value === 'number' && Number.isFinite(value)) {
-			return value;
-		}
-		if (typeof value === 'string' && value.trim()) {
-			const parsed = Number(value);
-			if (Number.isFinite(parsed)) {
-				return parsed;
-			}
-		}
-	}
-	return undefined;
-}
-
-function getDemoDetails(
-	agency: AgencyDataInterface
-): AgencyDetails | undefined {
-	return DEMO_DETAILS.find(({ match }) => match.test(agency.name || ''))
-		?.details;
-}
-
-function postcodeCity(agency: AgencyDataInterface): string | undefined {
-	const parts = [agency.postcode, agency.city].filter(Boolean);
-	return parts.length > 0 ? parts.join(' ') : undefined;
-}
-
-function getAgencyDetails(agency: AgencyDataInterface): AgencyDetails {
-	const record = agency as AgencyRecord;
-	const demoDetails = getDemoDetails(agency);
-	const realAddress = firstString(record, [
-		'address',
-		'street',
-		'streetName',
-		'location'
-	]);
-	const lat = firstNumber(record, ['lat', 'latitude']);
-	const lng = firstNumber(record, ['lng', 'lon', 'longitude']);
-	const postcodeArea: Partial<Pick<AgencyDetails, 'lat' | 'lng'>> =
-		!lat && !lng && agency.postcode === '50667' ? COLOGNE_CENTER : {};
-
-	return {
-		address: realAddress || demoDetails?.address || postcodeCity(agency),
-		lat: lat ?? demoDetails?.lat ?? postcodeArea.lat,
-		lng: lng ?? demoDetails?.lng ?? postcodeArea.lng,
-		phone:
-			firstString(record, ['phone', 'telephone', 'phoneNumber']) ||
-			demoDetails?.phone,
-		hours:
-			firstString(record, [
-				'openingHours',
-				'officeHours',
-				'consultingHours'
-			]) || demoDetails?.hours,
-		about: agency.description || demoDetails?.about,
-		url: agency.url || demoDetails?.url
-	};
 }
 
 function osmEmbedSrc(details: AgencyDetails): string | undefined {
@@ -302,7 +156,21 @@ export const AgencyDetailsPanel = ({
 	const hasDepartmentLegal =
 		department?.hasPublishedDpp === true ||
 		department?.hasPublishedImprint === true;
-	const details = useMemo(() => getAgencyDetails(agency), [agency]);
+	const details = useMemo(
+		() => getAgencyDetails(agency, department),
+		[agency, department]
+	);
+	// The admin stores structured slots as JSON inside the same string that used
+	// to hold free text, so this must be formatted before display — otherwise a
+	// Beratungsstelle with structured hours would show raw JSON here. Legacy free
+	// text passes through unchanged.
+	const openingHours = useMemo(
+		() =>
+			formatOpeningHours(details.hours, (key, fallback) =>
+				t(key, fallback ?? key)
+			),
+		[details.hours, t]
+	);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);
 	const webMapHref = useMemo(() => osmLink(details), [details]);
 	const nativeMapHref = useMemo(
@@ -326,7 +194,7 @@ export const AgencyDetailsPanel = ({
 					ml: { xs: 0, sm: 'calc(48px + 14px)' }
 				}}
 			>
-				{details.address && (
+				{(details.address || details.floorLocation) && (
 					<InfoRow
 						icon={<PlaceRoundedIcon fontSize="small" />}
 						label={t(
@@ -334,7 +202,10 @@ export const AgencyDetailsPanel = ({
 							'Adresse'
 						)}
 					>
-						<Box>{details.address}</Box>
+						{details.address && <Box>{details.address}</Box>}
+						{details.floorLocation && (
+							<Box>{details.floorLocation}</Box>
+						)}
 						{(webMapHref || nativeMapHref) && (
 							<Box
 								sx={{
@@ -440,7 +311,7 @@ export const AgencyDetailsPanel = ({
 					<AgencyLanguages agencyId={agency.id} />
 				</InfoRow>
 
-				{details.hours && (
+				{openingHours && (
 					<InfoRow
 						icon={<ScheduleRoundedIcon fontSize="small" />}
 						label={t(
@@ -448,7 +319,7 @@ export const AgencyDetailsPanel = ({
 							'Öffnungszeiten'
 						)}
 					>
-						{details.hours}
+						{openingHours}
 					</InfoRow>
 				)}
 

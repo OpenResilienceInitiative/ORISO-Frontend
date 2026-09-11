@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -34,15 +35,22 @@ import {
 } from './timelineFilter';
 import {
 	NotificationsContext,
+	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
+import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
+import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
+import {
+	requiresCaseHandoverCheck,
+	useCaseHandoverPreviewGate
+} from './caseHandoverPreviewGate';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
@@ -50,6 +58,14 @@ import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/
 import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
+import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
+import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
+import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
+import type {
+	MatrixActivityPreviewKind,
+	MatrixActivityPreviewLabels
+} from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -78,6 +94,22 @@ const FAMILY_ICONS: Record<
 	system: SystemFamilyIcon,
 	appointments: AppointmentsFamilyIcon
 };
+
+const MESSAGE_PREVIEW_ICONS: Partial<
+	Record<
+		MatrixActivityPreviewKind,
+		React.ComponentType<React.SVGProps<SVGSVGElement>>
+	>
+> = {
+	image: ImageMessageIcon,
+	file: FileMessageIcon,
+	audio: AudioMessageIcon,
+	video: VideoMessageIcon
+};
+
+// The branch's own `formatRelativeTime` is gone on purpose: #845 replaced the
+// hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
+// `timelineTime.ts`, which is imported above.
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
@@ -197,11 +229,17 @@ export const NotificationsCenter = () => {
 	const { selection: activeSelection } = useActiveListItem();
 	const { untilL, fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
+	const sessionsContext = useContext(SessionsDataContext);
+	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
-		refreshNotificationFeed
+		refreshNotificationFeed,
+		loadOlderNotifications,
+		hasOlderNotifications,
+		isLoadingOlderNotifications,
+		olderNotificationsError
 	} = useContext(NotificationsContext);
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
@@ -217,6 +255,9 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
+	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
+		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
+	>({});
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
@@ -229,6 +270,75 @@ export const NotificationsCenter = () => {
 		null
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	const listAnchorRef = useRef<{ id: string; top: number } | null>(null);
+	const anchorFrameRef = useRef<number | null>(null);
+	const captureListAnchor = useCallback(() => {
+		const list = listScrollRef.current;
+		if (!list || list.scrollTop <= 0) {
+			listAnchorRef.current = null;
+			return;
+		}
+		const listTop = list.getBoundingClientRect().top;
+		const firstVisible = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		).find((row) => row.getBoundingClientRect().bottom > listTop);
+		listAnchorRef.current = firstVisible
+			? {
+					id: firstVisible.dataset.notificationId || '',
+					top: firstVisible.getBoundingClientRect().top
+				}
+			: null;
+	}, []);
+	const scheduleCaptureListAnchor = useCallback(() => {
+		if (anchorFrameRef.current !== null) return;
+		anchorFrameRef.current = window.requestAnimationFrame(() => {
+			anchorFrameRef.current = null;
+			captureListAnchor();
+		});
+	}, [captureListAnchor]);
+
+	useEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		list.addEventListener('scroll', scheduleCaptureListAnchor, {
+			passive: true
+		});
+		captureListAnchor();
+		return () => {
+			list.removeEventListener('scroll', scheduleCaptureListAnchor);
+			if (anchorFrameRef.current !== null) {
+				window.cancelAnimationFrame(anchorFrameRef.current);
+				anchorFrameRef.current = null;
+			}
+		};
+	}, [captureListAnchor, scheduleCaptureListAnchor]);
+
+	// Preserve the first visible card when a live refresh prepends new events.
+	// Appending an older page naturally keeps the same anchor position.
+	//
+	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
+	// does: a card above the viewport growing from one line to two on
+	// decryption shifts the list by exactly as much as a prepended event would.
+	useLayoutEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		const rows = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		);
+		const previousAnchor = listAnchorRef.current;
+		if (previousAnchor) {
+			const anchoredRow = rows.find(
+				(row) => row.dataset.notificationId === previousAnchor.id
+			);
+			if (anchoredRow) {
+				list.scrollTop +=
+					anchoredRow.getBoundingClientRect().top -
+					previousAnchor.top;
+			}
+		}
+
+		captureListAnchor();
+	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -256,6 +366,171 @@ export const NotificationsCenter = () => {
 		() => getFamiliesInFeed(notificationFeed),
 		[notificationFeed]
 	);
+	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
+		() => ({
+			image: translate('notifications.center.preview.image', 'Image'),
+			file: translate('notifications.center.preview.file', 'File'),
+			audio: translate(
+				'notifications.center.preview.audio',
+				'Audio message'
+			),
+			video: translate('notifications.center.preview.video', 'Video'),
+			notice: translate('notifications.center.preview.notice', 'Notice'),
+			unsupported: translate(
+				'notifications.center.preview.unsupported',
+				'Unsupported message'
+			),
+			pending: translate(
+				'notifications.center.preview.pending',
+				'Waiting for decryption'
+			),
+			roomUnavailable: translate(
+				'notifications.center.preview.roomUnavailable',
+				'Conversation unavailable on this device'
+			),
+			eventUnavailable: translate(
+				'notifications.center.preview.eventUnavailable',
+				'Message unavailable in local history'
+			)
+		}),
+		[translate]
+	);
+	const candidatePreviewSources = useMemo(
+		() =>
+			notificationFeed.flatMap((item) => {
+				if (
+					item.eventType !== 'message.new' &&
+					item.eventType !== 'thread.reply.new'
+				) {
+					return [];
+				}
+				const matrixEventId = item.params?.matrixEventId;
+				const sessionId = resolveSessionId(item);
+				const session = getExtendedSession(
+					sessionId || undefined,
+					sessions || []
+				);
+				const roomRef = item.params?.roomRef || session?.rid;
+				if (!matrixEventId || !roomRef) {
+					return [];
+				}
+				return [
+					{
+						activityEventId: item.id,
+						roomRef,
+						matrixEventId,
+						senderName: item.params?.senderName,
+						fallbackText: describeItem(item, translate).text,
+						labels: previewLabels,
+						sessionId,
+						needsCaseHandoverCheck: requiresCaseHandoverCheck(
+							session,
+							userData?.userId
+						)
+					}
+				];
+			}),
+		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
+	);
+	// Only sessions that could be curtained cost a status request; a group
+	// chat, an enquiry or one's own case previews without one.
+	const checkedSessionIds = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					candidatePreviewSources
+						.filter(
+							(source) =>
+								source.needsCaseHandoverCheck &&
+								source.sessionId
+						)
+						.map((source) => source.sessionId as string)
+				)
+			).sort(),
+		[candidatePreviewSources]
+	);
+	const isCaseHandoverPreviewAllowed =
+		useCaseHandoverPreviewGate(checkedSessionIds);
+	const messagePreviewSources = useMemo(
+		() =>
+			candidatePreviewSources
+				.filter((source) => {
+					if (!source.needsCaseHandoverCheck) {
+						return true;
+					}
+					// A card whose session cannot even be named is one we have
+					// no way to clear, so it never hydrates.
+					return (
+						Boolean(source.sessionId) &&
+						isCaseHandoverPreviewAllowed(source.sessionId)
+					);
+				})
+				.map(
+					({
+						needsCaseHandoverCheck: _needsCheck,
+						sessionId: _sessionId,
+						...source
+					}) => source
+				),
+		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
+	);
+	// Previews are dropped again the moment their card stops being allowed —
+	// a session arriving late in SessionsDataContext can turn a hydrated card
+	// into a curtained one, and the decrypted text would otherwise survive in
+	// this map, still feeding the card body and the search index.
+	const allowedPreviewIds = useMemo(
+		() =>
+			new Set(
+				messagePreviewSources.map((source) => source.activityEventId)
+			),
+		[messagePreviewSources]
+	);
+	useEffect(() => {
+		setHydratedMessagePreviews((current) => {
+			const staleIds = Object.keys(current).filter(
+				(activityEventId) => !allowedPreviewIds.has(activityEventId)
+			);
+			if (staleIds.length === 0) {
+				return current;
+			}
+			const next = { ...current };
+			staleIds.forEach((activityEventId) => delete next[activityEventId]);
+			return next;
+		});
+	}, [allowedPreviewIds]);
+	/**
+	 * The only way a hydrated preview should ever be read.
+	 *
+	 * The purge above is state cleanup and lands one render late; in the render
+	 * where a card loses its allowance the decrypted text is still in the map.
+	 * Reading through this guard means a curtained card never shows it, not
+	 * even for a single paint.
+	 */
+	const visiblePreview = useCallback(
+		(activityEventId: string) =>
+			allowedPreviewIds.has(activityEventId)
+				? hydratedMessagePreviews[activityEventId]
+				: undefined,
+		[allowedPreviewIds, hydratedMessagePreviews]
+	);
+	const handlePreviewChange = useCallback(
+		(
+			activityEventId: string,
+			preview: string,
+			kind: MatrixActivityPreviewKind
+		) => {
+			setHydratedMessagePreviews((current) =>
+				current[activityEventId]?.text === preview &&
+				current[activityEventId]?.kind === kind
+					? current
+					: {
+							...current,
+							[activityEventId]: { text: preview, kind }
+						}
+			);
+		},
+		[]
+	);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
@@ -266,10 +541,17 @@ export const NotificationsCenter = () => {
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
-					return `${title} ${text}`;
+					return `${title} ${visiblePreview(item.id)?.text || text}`;
 				}
 			),
-		[notificationFeed, activeFamily, searchQuery, unreadOnly, translate]
+		[
+			notificationFeed,
+			activeFamily,
+			searchQuery,
+			unreadOnly,
+			translate,
+			visiblePreview
+		]
 	);
 
 	// Keep the master-detail selection inside the visible (filtered) feed.
@@ -572,6 +854,13 @@ export const NotificationsCenter = () => {
 
 	return (
 		<div className="notificationsCenter">
+			{messagePreviewSources.map((source) => (
+				<MatrixActivityPreviewHydrator
+					key={source.activityEventId}
+					{...source}
+					onPreviewChange={handlePreviewChange}
+				/>
+			))}
 			<div
 				className="notificationsCenter__listColumn"
 				style={{ width: fromL ? `${listWidth}px` : undefined }}
@@ -687,10 +976,16 @@ export const NotificationsCenter = () => {
 								item,
 								translate
 							);
-							const Icon = getEventIcon(descriptor.icon);
+							const hydratedPreview = visiblePreview(item.id);
+							const visibleText = hydratedPreview?.text || text;
+							const Icon = hydratedPreview?.kind
+								? MESSAGE_PREVIEW_ICONS[hydratedPreview.kind] ||
+									getEventIcon(descriptor.icon)
+								: getEventIcon(descriptor.icon);
 							return (
 								<div
 									key={item.id}
+									data-notification-id={item.id}
 									className={`notificationsCenter__listRow ${
 										isActive
 											? 'notificationsCenter__listRow--active'
@@ -732,7 +1027,7 @@ export const NotificationsCenter = () => {
 											</span>
 											<span className="notificationsCenter__cardBodyRow">
 												<span className="notificationsCenter__cardText">
-													{text}
+													{visibleText}
 												</span>
 												{!isActive && (
 													<span className="notificationsCenter__cardTime">
@@ -808,6 +1103,56 @@ export const NotificationsCenter = () => {
 								</div>
 							);
 						})
+					)}
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__pagination">
+							{olderNotificationsError ? (
+								<>
+									<span role="alert">
+										{translate(
+											'notifications.center.olderError',
+											'Could not load older activity.'
+										)}
+									</span>
+									<button
+										type="button"
+										disabled={isLoadingOlderNotifications}
+										onClick={() =>
+											void loadOlderNotifications()
+										}
+									>
+										{translate(
+											'notifications.center.retryOlder',
+											'Try again'
+										)}
+									</button>
+								</>
+							) : hasOlderNotifications ? (
+								<button
+									type="button"
+									disabled={isLoadingOlderNotifications}
+									onClick={() =>
+										void loadOlderNotifications()
+									}
+								>
+									{translate(
+										isLoadingOlderNotifications
+											? 'notifications.center.loadingOlder'
+											: 'notifications.center.loadOlder',
+										isLoadingOlderNotifications
+											? 'Loading older activity…'
+											: 'Load older activity'
+									)}
+								</button>
+							) : (
+								<span role="status">
+									{translate(
+										'notifications.center.endOfHistory',
+										'End of activity history'
+									)}
+								</span>
+							)}
+						</div>
 					)}
 				</div>
 				<Menu

@@ -17,8 +17,14 @@ import {
 } from './components/devToolbar/DevToolbar';
 import { TranslationConfig } from './globalState/interfaces';
 import { FETCH_METHODS, FETCH_SUCCESS, fetchData } from './api';
+import { collectCatalogueDrift } from './utils/i18nCatalogueGuard';
+import { collectSupportedLanguages } from './utils/i18nSupportedLanguages';
+import { mergeWeblateCatalogue } from './utils/mergeWeblateCatalogue';
 
 export const FALLBACK_LNG = 'de';
+
+/** Bumped when Weblate merge precedence changes so LocalStorage skips stale overlays (#1154). */
+export const WEBLATE_TRANSLATION_CACHE_VERSION = '1154-bundle-wins';
 
 const defaultResources = {
 	'de': {
@@ -48,6 +54,10 @@ export const init = async (
 	translation: TranslationConfig
 ) => {
 	let languageResources = {};
+	// Only a completed request counts as coverage data. Left false when
+	// Weblate is not configured or the request fails, so we do not gate on an
+	// answer we never got.
+	let weblateCoverageAvailable = false;
 	if (translation?.weblate.path) {
 		const languagePath = `${translation.weblate.host || ''}${
 			translation.weblate.path
@@ -81,16 +91,28 @@ export const init = async (
 					return acc;
 				}, {})
 			)
+			.then((resources) => {
+				// Reached only when the whole chain resolved. An empty result
+				// here means "nothing clears the threshold", which must still
+				// gate — unlike a rejection, which means "we cannot tell".
+				weblateCoverageAvailable = true;
+				return resources;
+			})
 			.catch(() => ({}));
 	}
 
-	const supportedLanguages = [
-		...new Set(
-			supportedLngs && supportedLngs.length > 0
-				? [...Object.keys(languageResources), ...supportedLngs]
-				: ['de', 'de@informal']
-		)
-	];
+	const supportedLanguages = collectSupportedLanguages({
+		weblateLanguages: Object.keys(languageResources),
+		weblateCoverageAvailable,
+		// A bundled catalogue is complete regardless of what Weblate holds, so
+		// Weblate's percentage must never withhold one of these.
+		bundledLanguages: [
+			...Object.keys(defaultResources),
+			...Object.keys(resources ?? {})
+		],
+		supportedLngs,
+		fallbackLng: FALLBACK_LNG
+	});
 
 	const mergeAndFlattenNamespace = (namespace) => {
 		if (Array.isArray(namespace)) {
@@ -157,16 +179,18 @@ export const init = async (
 								translation?.cache?.disabled
 							) && LocalStorageBackend,
 
-						translation?.weblate.path && FetchBackend,
-						resourcesToBackend(unflatten(baseResources) as any)
-					].filter(Boolean),
+							translation?.weblate.path && FetchBackend,
+							resourcesToBackend(unflatten(baseResources) as any)
+						].filter(Boolean),
 						backendOptions: [
 							!(
 								translationCacheDisabledLocally ??
 								translation?.cache?.disabled
 							) && {
 								expirationTime:
-									translation?.cache?.time * 60 * 1000
+									translation?.cache?.time * 60 * 1000,
+								defaultVersion:
+									WEBLATE_TRANSLATION_CACHE_VERSION
 							},
 							translation?.weblate.path && {
 								// path where resources get loaded from, or a function
@@ -187,11 +211,14 @@ export const init = async (
 										ns,
 										data: apiData
 									} = JSON.parse(data);
-									return unflatten(
-										_.merge(
-											baseResources?.[lng]?.[ns] || {},
-											flatten(apiData || {})
-										)
+									// Bundle wins on conflict so a stale Weblate
+									// file cannot undo #1170/#1227 catalogues
+									// (ORISO-Frontend#1154).
+									return mergeWeblateCatalogue(
+										unflatten(
+											baseResources?.[lng]?.[ns] || {}
+										) as object,
+										apiData || {}
 									);
 								},
 								// init option for fetch, for example
@@ -280,22 +307,28 @@ export const init = async (
 						});
 					}
 
-					const missingKeys = _.xor(deLanguageKeys, currLanguageKeys);
-					if (missingKeys.length <= 0) {
+					const { extraInLocale, missingInLocale } =
+						collectCatalogueDrift(deLanguageKeys, currLanguageKeys);
+					if (
+						extraInLocale.length <= 0 &&
+						(missingInLocale.length <= 0 ||
+							lng.indexOf('@informal') >= 0)
+					) {
 						return;
 					}
 
-					missingKeys.forEach((missingKey) => {
-						if (!deLanguageKeys.includes(missingKey)) {
-							// console.error(
-							// `[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
-							// );
-						} else if (lng.indexOf('@informal') < 0) {
-							// console.error(
-							// `[${lng}] has missing key "${missingKey}"`
-							// );
-						}
+					extraInLocale.forEach((missingKey) => {
+						console.error(
+							`[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
+						);
 					});
+					if (lng.indexOf('@informal') < 0) {
+						missingInLocale.forEach((missingKey) => {
+							console.error(
+								`[${lng}] has missing key "${missingKey}"`
+							);
+						});
+					}
 				});
 			}
 		)

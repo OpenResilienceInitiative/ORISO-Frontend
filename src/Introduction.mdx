@@ -1,0 +1,81 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# ORISO Frontend — Storybook
+
+Every component of the counselling app, rendered without a backend. Use it to
+build and review UI in isolation, and to run the component tests that guard it.
+
+## Globals that change what you see
+
+Two toolbar controls change the rendering of every story, and both matter when
+judging a deviation:
+
+- **Scheme** (`scheme`, default `light`) — the M3 colour scheme is applied as CSS
+  custom properties by the outermost decorator, before any component reads them.
+  A component that hardcodes a hex value instead of a token will look correct in
+  `light` and wrong everywhere else. Switching schemes is the fastest way to find
+  one.
+- **Locale** (`locale`, default `de`) — stories render through the real i18next
+  instance, so a missing translation key shows up here exactly as it would in the
+  app.
+
+`tags: ['autodocs']` is set globally: every component gets a generated Docs page
+with its props table. Write the prop comments in the component, not in the story.
+
+## Stories are the test suite
+
+`play` functions are not decoration. `npm run test:storybook` executes every story
+in a real Chromium (Vitest browser mode): it renders the story, runs its `play`
+function, and fails the run on any axe violation, because `.storybook/preview.tsx`
+sets `a11y.test: 'error'` for WCAG 2.2 AA.
+
+```bash
+npm run test:storybook            # all stories, headless
+npm run test:storybook:coverage   # + coverage report in ./coverage
+npm run test:unit                 # the jsdom unit tests, unchanged
+```
+
+You can also run them from the sidebar: expand the test widget at the bottom left
+and press ▶. The same run, with per-story results and a coverage summary in the UI.
+
+One caveat on the coverage variant: on a cold `node_modules/.cache/storybook` it
+can fail a few files with "Failed to import test file" or "Vitest failed to find
+the runner". That is Vite re-optimizing dependencies mid-run, not your code — run
+it again and the warm cache makes it green. The plain `test:storybook` run, which
+is what CI executes, does not have this problem.
+
+Two things the runner pins that your browser does not:
+
+- **Locale `de-DE` and timezone `Europe/Berlin`.** Headless Chromium reports
+  `en-US`, and `i18next-browser-languagedetector` follows the browser. Without
+  pinning, a `play` function asserting German copy would pass for a reviewer in
+  Germany and fail in CI. Prefer asserting behaviour over copy; where copy is
+  unavoidable, match both languages.
+- **A story can opt out** with `tags: ['!test']`. Only for stories that cannot run
+  headlessly, and always with a comment saying why.
+
+Note the difference from the unit suite: unit tests run against a stubbed `.svg`
+loader, the story project does not. Stories render the real SVGR output, which is
+why an icon regression is visible here and invisible there.
+
+## Accessibility
+
+The a11y panel runs axe against the rendered story with `wcag2a`, `wcag2aa`,
+`wcag21a`, `wcag21aa` and `wcag22aa`. A violation is an error, not a warning: it
+fails the component test. Fix the component — suppressing a rule needs a written
+reason in the story's `parameters.a11y`.
+
+## Viewports
+
+The built-in "Small mobile" (320px) is narrower than any device this product
+targets, so `preview.tsx` adds `Phone 375` and `Phone 390`. A story whose name
+claims a width must select the matching viewport, otherwise the toolbar and the
+component's media queries disagree.
+
+## Design references
+
+Stories that implement a Figma frame link it via `@storybook/addon-designs`
+(`parameters.design`). The Design tab then shows the source frame next to the
+implementation, which is the fastest way to check a deviation before filing one.

@@ -91,4 +91,71 @@ test.describe('consultant product tour', () => {
 		expect((await finishPatch).status()).toBeLessThan(300);
 		await expect(tooltip).toBeHidden({ timeout: 15_000 });
 	});
+
+	test('runs the mail-counselling tour from the profile carousel (TOUR-10)', async ({
+		page
+	}) => {
+		test.setTimeout(240_000);
+
+		await page.route('**/service/settings', async (route) => {
+			const response = await route.fetch();
+			const body = await response.json();
+			if (body.enableWalkthrough) {
+				body.enableWalkthrough.value = true;
+			}
+			await route.fulfill({ response, json: body });
+		});
+
+		const tooltip = page.locator('.productTourTooltip');
+		const title = tooltip.locator('.productTourTooltip__title');
+		const next = () =>
+			tooltip.getByRole('button', { name: /Weiter|Next/ }).click();
+
+		// Launch from the profile tutorial carousel.
+		await page.goto('/profile/allgemeines', {
+			waitUntil: 'domcontentloaded'
+		});
+		const card = page
+			.locator('.tourOverview__card', {
+				hasText: /Mail-Beratung|Mail counselling/
+			})
+			.first();
+		await card.waitFor({ timeout: 60_000 });
+		await card
+			.getByRole('button', { name: /Starten|Start|Neu starten|Restart/ })
+			.click();
+
+		// Step 1: centered migration framing.
+		await expect(title).toHaveText(/Was ist neu|What is new/, {
+			timeout: 30_000
+		});
+
+		// Steps 2 + 3: enquiries route, two steps on the same anchor.
+		await next();
+		await page.waitForURL('**/sessions/consultant/sessionPreview**');
+		await expect(title).toHaveText(/Erstanfragen|Initial enquiries/);
+		await next();
+		await expect(title).toHaveText(/Erstantwort|first response/);
+
+		// Step 4: my sessions.
+		await next();
+		await page.waitForURL('**/sessions/consultant/sessionView**');
+		await expect(title).toHaveText(/Meine Beratungen|My consultations/);
+
+		// Step 5 (composer) is optional: without an open session it is
+		// skipped silently and the tour lands on the archive step. The
+		// progress write must record the terminal state.
+		const progressWrite = page.waitForResponse(
+			(r) =>
+				r.url().includes('/tutorials/progress') &&
+				r.request().method() !== 'GET'
+		);
+		await next();
+		await expect(title).toHaveText(/Archiv|Archive/, { timeout: 30_000 });
+		await page.waitForURL('**sessionListTab=archive**');
+
+		await tooltip.getByRole('button', { name: /Fertig|Done/ }).click();
+		expect((await progressWrite).status()).toBeLessThan(300);
+		await expect(tooltip).toBeHidden({ timeout: 15_000 });
+	});
 });

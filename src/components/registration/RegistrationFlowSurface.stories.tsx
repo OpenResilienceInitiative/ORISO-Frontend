@@ -1,342 +1,241 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	Box,
-	Button,
-	Checkbox,
-	Chip,
-	FormControlLabel,
-	Radio,
-	Typography
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import { StepBar } from './stepBar/StepBar';
-import { OrisoTextField } from '../form/OrisoTextField';
+import { RegistrationProvider } from '../../globalState';
+import { TopicSelection } from './topicSelection/TopicSelection';
+import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
+import { AgencySelection } from './agencySelection/AgencySelection';
+import { AccountData } from './accountData/AccountData';
+import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
+import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
+import { RegistrationSelectionChip } from './selectionChips/RegistrationSelectionChips';
+import { registrationMd3 } from './registrationDesign/registrationDesign';
 import {
 	APP_ORISO_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
 
-const topics = [
-	{
-		id: 'family',
-		label: 'Familienberatung',
-		group: 'Familie und Beziehungen',
-		description: 'Unterstuetzung bei Konflikten, Trennung und Erziehung.'
-	},
-	{
-		id: 'addiction',
-		label: 'Suchtberatung',
-		group: 'Gesundheit',
-		description: 'Beratung fuer Betroffene und Angehoerige.'
-	},
-	{
-		id: 'u25',
-		label: 'U25 Suizidpraevention',
-		group: 'Krisenberatung',
-		description: 'Niedrigschwellige Hilfe fuer junge Menschen.'
+/**
+ * Composite review surface for the registration flow.
+ *
+ * Every panel below renders the **product component** — `TopicSelection`,
+ * `ZipcodeInput`, `AgencySelection`, `AccountData` — inside the real
+ * `RegistrationProvider` and the real chrome (`RegistrationHeader` +
+ * `RegistrationStepNav`). Nothing here is rebuilt for the story: what you see is
+ * what registration ships, including its own copy, icons, validation and
+ * disabled-state logic. Topics and agencies come from the Storybook API
+ * fixtures in `.storybook/preview.tsx`.
+ *
+ * The routed flow with real step navigation lives in
+ * `REGISTRATION/Registration runtime`; this surface exists to review all four
+ * steps at once without clicking through them.
+ */
+
+const STEPS = [
+	{ name: 'topic-selection', label: 'Thema' },
+	{ name: 'zipcode', label: 'Postleitzahl' },
+	{ name: 'agency-selection', label: 'Beratungsstelle' },
+	{ name: 'account-data', label: 'Anmeldedaten' }
+] as const;
+
+type StepName = (typeof STEPS)[number]['name'];
+
+const STEP_NAMES = STEPS.map((step) => step.name);
+
+const noop = () => undefined;
+
+/** The four real step bodies, keyed by step name. */
+const StepBody = ({ step }: { step: StepName }) => {
+	switch (step) {
+		case 'topic-selection':
+			return (
+				<TopicSelection
+					onChange={noop}
+					onNextClick={noop}
+					nextStepUrl="/registration/zipcode"
+				/>
+			);
+		case 'zipcode':
+			return <ZipcodeInput onChange={noop} />;
+		case 'agency-selection':
+			return (
+				<AgencySelection
+					onChange={noop}
+					onNextClick={noop}
+					nextStepUrl="/registration/account-data"
+				/>
+			);
+		case 'account-data':
+		default:
+			return <AccountData onChange={noop} />;
 	}
-];
-
-const agencies = [
-	{
-		id: 'caritas',
-		name: 'Caritas Berlin Mitte',
-		meta: '10115 Berlin | Online und vor Ort',
-		availability: 'Antwort meist innerhalb von 24 Stunden'
-	},
-	{
-		id: 'oriso',
-		name: 'ORISO Familienberatung',
-		meta: 'Bundesweit | Online',
-		availability: 'Freie Beratungskapazitaet'
-	}
-];
-
-const moveRadioSelection = (
-	event: React.KeyboardEvent<HTMLElement>,
-	values: string[],
-	currentValue: string,
-	onSelect: (value: string) => void
-) => {
-	const currentIndex = values.indexOf(currentValue);
-	const lastIndex = values.length - 1;
-	const nextIndexByKey: Record<string, number> = {
-		ArrowDown: currentIndex === lastIndex ? 0 : currentIndex + 1,
-		ArrowRight: currentIndex === lastIndex ? 0 : currentIndex + 1,
-		ArrowUp: currentIndex <= 0 ? lastIndex : currentIndex - 1,
-		ArrowLeft: currentIndex <= 0 ? lastIndex : currentIndex - 1,
-		Home: 0,
-		End: lastIndex
-	};
-	const nextIndex = nextIndexByKey[event.key];
-
-	if (nextIndex === undefined || !values[nextIndex]) {
-		return;
-	}
-
-	event.preventDefault();
-	const nextValue = values[nextIndex];
-	onSelect(nextValue);
-	event.currentTarget
-		.closest('[role="radiogroup"]')
-		?.querySelector<HTMLElement>(`[data-radio-value="${nextValue}"]`)
-		?.focus();
 };
 
-const selectRadioWithKeyboard = (
-	event: React.KeyboardEvent<HTMLElement>,
-	value: string,
-	values: string[],
-	currentValue: string,
-	onSelect: (value: string) => void
-) => {
-	if (event.key === ' ' || event.key === 'Enter') {
-		event.preventDefault();
-		onSelect(value);
-		return;
-	}
-
-	moveRadioSelection(event, values, currentValue, onSelect);
-};
-
-function RegistrationFlowSurface() {
-	const [selectedTopic, setSelectedTopic] = useState('family');
-	const [selectedAgency, setSelectedAgency] = useState('caritas');
-	const [zipcode, setZipcode] = useState('10115');
-	const topicIds = topics.map((topic) => topic.id);
-	const agencyIds = agencies.map((agency) => agency.id);
+/**
+ * One step in its chrome. `layout` is passed explicitly because MUI breakpoints
+ * follow the **browser viewport**, not the story frame — a panel rendered at
+ * 375 pt inside a wide window would otherwise pick the desktop header.
+ */
+const StepPanel = ({
+	step,
+	layout,
+	width,
+	chips
+}: {
+	step: StepName;
+	layout: 'compact' | 'stepper';
+	width: number;
+	chips?: RegistrationSelectionChip[];
+}) => {
+	const index = STEP_NAMES.indexOf(step);
 
 	return (
-		<Box sx={styles.viewport}>
-			<Box sx={styles.shell}>
-				<Box sx={styles.header}>
-					<Box>
-						<Typography variant="overline" sx={styles.overline}>
-							Neue Registrierung
-						</Typography>
-						<Typography variant="h3" sx={styles.title}>
-							Beratung finden und Konto anlegen
-						</Typography>
-					</Box>
-					<Box sx={styles.stepper}>
-						<StepBar currentStep={2} maxNumberOfSteps={5} />
-					</Box>
-				</Box>
-
-				<Box sx={styles.grid}>
-					<Box sx={styles.topicPanel}>
-						<Typography variant="h5" sx={styles.sectionTitle}>
-							Thema waehlen
-						</Typography>
-						<Typography sx={styles.sectionCopy}>
-							Gruppierte Themenkarte mit eindeutiger Auswahl und
-							Beschreibung.
-						</Typography>
-						<Box
-							sx={styles.topicList}
-							role="radiogroup"
-							aria-label="Thema waehlen"
-						>
-							{topics.map((topic) => {
-								const selected = selectedTopic === topic.id;
-								return (
-									<Box
-										key={topic.id}
-										role="radio"
-										aria-checked={selected}
-										tabIndex={selected ? 0 : -1}
-										data-radio-value={topic.id}
-										onClick={() =>
-											setSelectedTopic(topic.id)
-										}
-										onKeyDown={(event) =>
-											selectRadioWithKeyboard(
-												event,
-												topic.id,
-												topicIds,
-												selectedTopic,
-												setSelectedTopic
-											)
-										}
-										sx={{
-											...styles.topicButton,
-											...(selected
-												? styles.topicButtonSelected
-												: {})
-										}}
-									>
-										<Radio
-											checked={selected}
-											tabIndex={-1}
-											inputProps={{
-												'aria-hidden': true
-											}}
-											sx={styles.radio}
-										/>
-										<Box sx={{ minWidth: 0 }}>
-											<Chip
-												label={topic.group}
-												size="small"
-												sx={styles.topicChip}
-											/>
-											<Typography sx={styles.topicName}>
-												{topic.label}
-											</Typography>
-											<Typography sx={styles.topicText}>
-												{topic.description}
-											</Typography>
-										</Box>
-									</Box>
-								);
-							})}
-						</Box>
-					</Box>
-
-					<Box sx={styles.flowPanel}>
-						<Box sx={styles.zipcodeBand}>
-							<Box sx={styles.iconCircle}>
-								<PlaceRoundedIcon />
-							</Box>
-							<Box sx={{ flex: 1, minWidth: 0 }}>
-								<Typography
-									variant="h5"
-									sx={styles.sectionTitle}
-								>
-									Postleitzahl
-								</Typography>
-								<Typography sx={styles.sectionCopy}>
-									Die Auswahl grenzt passende Beratungsstellen
-									ein.
-								</Typography>
-							</Box>
-							<Box sx={styles.zipcodeField}>
-								<OrisoTextField
-									value={zipcode}
-									onChange={(event) =>
-										setZipcode(
-											event.target.value
-												.replace(/\D/g, '')
-												.slice(0, 5)
-										)
-									}
-									placeholder="10115"
-									fullWidth
-									inputProps={{
-										'aria-label': 'Postleitzahl',
-										'inputMode': 'numeric',
-										'maxLength': 5
-									}}
-								/>
-							</Box>
-						</Box>
-
-						<Box sx={styles.agencySection}>
-							<Typography variant="h5" sx={styles.sectionTitle}>
-								Beratungsstelle auswaehlen
-							</Typography>
-							<Box
-								sx={styles.agencyGrid}
-								role="radiogroup"
-								aria-label="Beratungsstelle auswaehlen"
-							>
-								{agencies.map((agency) => {
-									const selected =
-										selectedAgency === agency.id;
-									return (
-										<Box
-											key={agency.id}
-											role="radio"
-											aria-checked={selected}
-											tabIndex={selected ? 0 : -1}
-											data-radio-value={agency.id}
-											onClick={() =>
-												setSelectedAgency(agency.id)
-											}
-											onKeyDown={(event) =>
-												selectRadioWithKeyboard(
-													event,
-													agency.id,
-													agencyIds,
-													selectedAgency,
-													setSelectedAgency
-												)
-											}
-											sx={{
-												...styles.agencyCard,
-												...(selected
-													? styles.agencyCardSelected
-													: {})
-											}}
-										>
-											<Box sx={styles.agencyCardTop}>
-												<Typography
-													sx={styles.agencyName}
-												>
-													{agency.name}
-												</Typography>
-												{selected && (
-													<TaskAltRoundedIcon
-														sx={styles.checkIcon}
-													/>
-												)}
-											</Box>
-											<Typography sx={styles.agencyMeta}>
-												{agency.meta}
-											</Typography>
-											<Typography
-												sx={styles.agencyAvailability}
-											>
-												{agency.availability}
-											</Typography>
-										</Box>
-									);
-								})}
-							</Box>
-						</Box>
-
-						<Box sx={styles.accountPanel}>
-							<Box>
-								<Typography
-									variant="h5"
-									sx={styles.sectionTitle}
-								>
-									Konto vorbereiten
-								</Typography>
-								<Typography sx={styles.sectionCopy}>
-									Der Schritt nutzt dieselben ORISO TextFields
-									wie die Formular-Stories, aber im echten
-									Registrierungszusammenhang.
-								</Typography>
-							</Box>
-							<Box sx={styles.accountFields}>
-								<OrisoTextField
-									label="E-Mail"
-									defaultValue="alice@example.invalid"
-								/>
-								<OrisoTextField
-									label="Passwort"
-									type="password"
-									defaultValue="storybook"
-								/>
-								<FormControlLabel
-									control={<Checkbox defaultChecked />}
-									label="Datenschutz akzeptiert"
-									sx={styles.checkbox}
-								/>
-							</Box>
-						</Box>
-					</Box>
-				</Box>
-
-				<Box sx={styles.actions}>
-					<Button variant="outlined">Zurueck</Button>
-					<Button variant="contained">Weiter</Button>
-				</Box>
+		<Box
+			sx={{
+				width,
+				maxWidth: '100%',
+				display: 'flex',
+				flexDirection: 'column',
+				bgcolor: registrationMd3.surface,
+				border: '1px solid rgba(0,0,0,.14)',
+				borderRadius: 2,
+				overflow: 'hidden'
+			}}
+		>
+			<RegistrationHeader
+				fullBleed={false}
+				layout={layout}
+				currentStepName={step}
+				visibleStepNames={[...STEP_NAMES]}
+				clickableStepNames={STEP_NAMES.slice(0, index)}
+				onStepClick={noop}
+				chips={chips}
+			/>
+			<Box
+				sx={{
+					flex: 1,
+					minHeight: 0,
+					overflowY: 'auto',
+					px: layout === 'compact' ? 2 : 3,
+					pt: 2.5,
+					pb: 3
+				}}
+			>
+				<StepBody step={step} />
+			</Box>
+			<Box
+				sx={{
+					flex: 'none',
+					borderTop: `1px solid ${registrationMd3.outlineVariant}`,
+					p: 2
+				}}
+			>
+				<RegistrationStepNav
+					prevStepUrl={index === 0 ? null : '/back'}
+					backLabel="Zurück"
+					nextStepUrl={
+						index === STEP_NAMES.length - 1 ? null : '/next'
+					}
+					nextLabel="Weiter"
+					registerLabel="Registrieren"
+					registeringLabel="Wird registriert …"
+				/>
 			</Box>
 		</Box>
+	);
+};
+
+const Caption = ({ children }: { children: React.ReactNode }) => (
+	<Typography
+		sx={{ fontSize: 12, fontWeight: 700, mb: 1.5, color: 'text.secondary' }}
+	>
+		{children}
+	</Typography>
+);
+
+/** Chips as the flow builds them up: topic first, then the fixed postcode. */
+const useChips = (step: StepName): RegistrationSelectionChip[] => {
+	const index = STEP_NAMES.indexOf(step);
+
+	return useMemo(() => {
+		const chips: RegistrationSelectionChip[] = [];
+		if (index >= 1) {
+			chips.push({
+				key: 'topic',
+				label: 'Allgemeine Sozialberatung',
+				onDelete: noop,
+				deleteAriaLabel: 'Thema entfernen'
+			});
+		}
+		if (index >= 2) {
+			chips.push({
+				key: 'zipcode',
+				label: '50667',
+				iconNode: <PlaceRoundedIcon />,
+				fixed: true,
+				onDelete: noop,
+				deleteAriaLabel: 'Postleitzahl entfernen'
+			});
+		}
+		return chips;
+	}, [index]);
+};
+
+function RegistrationFlowSurface({
+	layout = 'stepper',
+	width = 900
+}: {
+	layout?: 'compact' | 'stepper';
+	width?: number;
+}) {
+	const [step, setStep] = useState<StepName>('topic-selection');
+	const chips = useChips(step);
+
+	return (
+		<RegistrationProvider>
+			<Box sx={{ display: 'grid', gap: 2, justifyItems: 'start' }}>
+				<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+					{STEPS.map((entry) => (
+						<Box
+							key={entry.name}
+							component="button"
+							type="button"
+							onClick={() => setStep(entry.name)}
+							sx={{
+								border: `1px solid ${registrationMd3.outline}`,
+								borderRadius: '999px',
+								px: 1.75,
+								py: 0.75,
+								fontSize: 13,
+								fontWeight: 700,
+								cursor: 'pointer',
+								bgcolor:
+									step === entry.name
+										? registrationMd3.primary
+										: 'transparent',
+								// Buttons inherit the surrounding colour, but only
+								// because this is a plain Box — Typography would
+								// resolve to text.primary and go black on red.
+								color:
+									step === entry.name
+										? registrationMd3.onPrimary
+										: registrationMd3.onSurfaceVariant
+							}}
+						>
+							{entry.label}
+						</Box>
+					))}
+				</Box>
+				<StepPanel
+					step={step}
+					layout={layout}
+					width={width}
+					chips={chips}
+				/>
+			</Box>
+		</RegistrationProvider>
 	);
 }
 
@@ -345,7 +244,7 @@ const meta = {
 	component: RegistrationFlowSurface,
 	tags: ['autodocs'],
 	parameters: {
-		layout: 'fullscreen',
+		layout: 'padded',
 		design: [
 			{
 				type: 'figma',
@@ -361,7 +260,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Composite registration Storybook MCP target: StepBar, topic choice, zipcode input, agency cards and account fields in one M3-oriented registration surface. This fills the gap between isolated registration atoms and the full routed registration flow, which still needs API/provider mocks.'
+					'All four registration steps rendered from the **product components** inside the real `RegistrationProvider` and the real header/footer chrome — no story-local rebuild, no fake topic or agency data. Use the switcher to move between steps. The routed flow with real navigation is in `REGISTRATION/Registration runtime`.'
 			}
 		}
 	}
@@ -370,200 +269,64 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-	render: () => <RegistrationFlowSurface />
+export const Desktop: Story = {
+	render: () => <RegistrationFlowSurface layout="stepper" width={900} />
 };
 
-const styles = {
-	viewport: {
-		minHeight: 860,
-		background: '#EAE7E8',
-		p: 4,
-		color: '#1D1B20'
-	},
-	shell: {
-		maxWidth: 1180,
-		mx: 'auto'
-	},
-	header: {
-		display: 'grid',
-		gridTemplateColumns: { xs: '1fr', md: '1fr 360px' },
-		gap: 4,
-		alignItems: 'start',
-		mb: 4
-	},
-	overline: {
-		color: '#A5000A',
-		fontWeight: 800,
-		letterSpacing: 0
-	},
-	title: {
-		fontWeight: 750,
-		lineHeight: 1.12,
-		maxWidth: 680
-	},
-	stepper: {
-		bgcolor: '#F6F3F3',
-		borderRadius: '24px',
-		p: 3,
-		border: '1px solid rgba(29, 27, 32, 0.08)'
-	},
-	grid: {
-		display: 'grid',
-		gridTemplateColumns: { xs: '1fr', lg: '420px minmax(0, 1fr)' },
-		gap: 3
-	},
-	topicPanel: {
-		bgcolor: '#F6F3F3',
-		borderRadius: '28px',
-		p: 3,
-		border: '1px solid rgba(29, 27, 32, 0.08)'
-	},
-	flowPanel: {
-		display: 'grid',
-		gap: 3
-	},
-	sectionTitle: {
-		fontWeight: 750,
-		mb: 0.5
-	},
-	sectionCopy: {
-		color: '#4C555F',
-		fontSize: 15,
-		lineHeight: '22px'
-	},
-	topicList: {
-		display: 'grid',
-		gap: 1.5,
-		mt: 3
-	},
-	topicButton: {
-		display: 'grid',
-		gridTemplateColumns: '44px minmax(0, 1fr)',
-		gap: 1.5,
-		width: '100%',
-		textAlign: 'left',
-		border: '1px solid #E4E2E2',
-		bgcolor: '#FFFFFF',
-		borderRadius: '24px',
-		p: 2,
-		cursor: 'pointer'
-	},
-	topicButtonSelected: {
-		borderColor: '#CC1E1C',
-		bgcolor: '#FFDAD5'
-	},
-	radio: {
-		color: '#A5000A',
-		alignSelf: 'start'
-	},
-	topicChip: {
-		bgcolor: '#646D78',
-		color: '#FFFFFF',
-		fontWeight: 700,
-		mb: 1
-	},
-	topicName: {
-		fontSize: 18,
-		lineHeight: '26px',
-		fontWeight: 750
-	},
-	topicText: {
-		color: '#4C555F',
-		fontSize: 14,
-		lineHeight: '20px',
-		mt: 0.5
-	},
-	zipcodeBand: {
-		display: 'grid',
-		gridTemplateColumns: { xs: '56px 1fr', md: '64px 1fr 220px' },
-		gap: 2,
-		alignItems: 'center',
-		bgcolor: '#F6F3F3',
-		borderRadius: '28px',
-		p: 3,
-		border: '1px solid rgba(29, 27, 32, 0.08)'
-	},
-	iconCircle: {
-		width: 56,
-		height: 56,
-		borderRadius: '50%',
-		display: 'grid',
-		placeItems: 'center',
-		bgcolor: '#FFDAD5',
-		color: '#A5000A'
-	},
-	zipcodeField: {
-		gridColumn: { xs: '1 / -1', md: 'auto' }
-	},
-	agencySection: {
-		bgcolor: '#F6F3F3',
-		borderRadius: '28px',
-		p: 3,
-		border: '1px solid rgba(29, 27, 32, 0.08)'
-	},
-	agencyGrid: {
-		display: 'grid',
-		gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-		gap: 2,
-		mt: 2
-	},
-	agencyCard: {
-		width: '100%',
-		textAlign: 'left',
-		border: '1px solid #E4E2E2',
-		bgcolor: '#FFFFFF',
-		borderRadius: '24px',
-		p: 2.25,
-		cursor: 'pointer'
-	},
-	agencyCardSelected: {
-		borderColor: '#CC1E1C',
-		boxShadow: '0 0 0 1px #CC1E1C'
-	},
-	agencyCardTop: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		gap: 2
-	},
-	agencyName: {
-		fontWeight: 750,
-		fontSize: 18,
-		lineHeight: '26px'
-	},
-	checkIcon: {
-		color: '#A5000A'
-	},
-	agencyMeta: {
-		color: '#4C555F',
-		mt: 1
-	},
-	agencyAvailability: {
-		color: '#A5000A',
-		mt: 1.5,
-		fontWeight: 700
-	},
-	accountPanel: {
-		display: 'grid',
-		gridTemplateColumns: { xs: '1fr', md: '1fr 360px' },
-		gap: 3,
-		bgcolor: '#F6F3F3',
-		borderRadius: '28px',
-		p: 3,
-		border: '1px solid rgba(29, 27, 32, 0.08)'
-	},
-	accountFields: {
-		display: 'grid',
-		gap: 1.5
-	},
-	checkbox: {
-		color: '#4C555F'
-	},
-	actions: {
-		display: 'flex',
-		justifyContent: 'flex-end',
-		gap: 2,
-		mt: 3
-	}
+export const Mobile: Story = {
+	name: 'Mobil (375)',
+	render: () => <RegistrationFlowSurface layout="compact" width={375} />
+};
+
+/** Every step side by side — the review view, no clicking required. */
+export const AllSteps: Story = {
+	name: 'Alle Schritte nebeneinander',
+	render: () => (
+		<RegistrationProvider>
+			<Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+				{STEPS.map((entry, index) => (
+					<Box key={entry.name}>
+						<Caption>
+							{index + 1}. {entry.label}
+						</Caption>
+						<Box sx={{ height: 760, display: 'flex' }}>
+							<StepPanel
+								step={entry.name}
+								layout="compact"
+								width={375}
+								chips={
+									index === 0
+										? []
+										: [
+												{
+													key: 'topic',
+													label: 'Allgemeine Sozialberatung',
+													onDelete: noop,
+													deleteAriaLabel:
+														'Thema entfernen'
+												},
+												...(index >= 2
+													? [
+															{
+																key: 'zipcode',
+																label: '50667',
+																iconNode: (
+																	<PlaceRoundedIcon />
+																),
+																fixed: true,
+																onDelete: noop,
+																deleteAriaLabel:
+																	'Postleitzahl entfernen'
+															}
+														]
+													: [])
+											]
+								}
+							/>
+						</Box>
+					</Box>
+				))}
+			</Box>
+		</RegistrationProvider>
+	)
 };

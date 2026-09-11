@@ -15,6 +15,7 @@ jobs:
   publish:
     name: lint, type-check, build and publish Storybook image
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     permissions:
       contents: read
@@ -24,10 +25,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Kept on the publish path even though "Frontend Build and Publish" runs
+      # the same checks on the same commit. The two workflows are independent,
+      # so a red frontend run cannot stop this one, and nothing here would
+      # otherwise prevent publishing a Storybook image built from code that
+      # fails lint or unit tests. On the PR path the equivalent step is dropped:
+      # there "Frontend PR Validation" reports as its own visible check on the
+      # same commit, so the reviewer sees the failure before anything merges.
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
-          node_version: '18'
+          node_version: '22'
 
       - name: Publish Storybook Docker image
         uses: ./.github/actions/docker-build-push

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, within } from 'storybook/test';
 
 import { AnonymousConsentGate } from './AnonymousConsentGate';
 import {
@@ -49,7 +50,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Consent dialog shown before an anonymous participant may write. `consentLabelHtml` is injected as HTML so the privacy-policy link resolves to the tenant’s own document.'
+					'Consent dialog shown before an anonymous participant may write. `consentLabelHtml` is HTML so the privacy-policy link resolves to the tenant’s own document — passed through the shared `sanitizeConsentHtml` (the allowlist `LegalContentRenderer` uses, minus `class`) rather than into a raw `dangerouslySetInnerHTML` sink. See the “Träger text with an XSS payload” story.'
 			}
 		}
 	},
@@ -125,6 +126,53 @@ export const Mobile375LayoutDefect: Story = {
 		docs: {
 			description: {
 				story: 'Regression pin for ORISO-Frontend#892 at the iPhone SE / iPhone 8 width. Two defects used to appear here and must not come back: the button row broke out of the card, and the headline split mid-word into "Herzlich Willkomm|en!". Root causes were a missing stacked-button rule below 575px, a global `word-break: break-word` from `sanitize.css`, and 112px of horizontal padding on a 375px screen.'
+			}
+		}
+	}
+};
+
+export const SanitizedTraegerText: Story = {
+	name: 'Träger text with an XSS payload — stripped',
+	args: {
+		consentLabelHtml: [
+			'Ich habe die ',
+			'<a href="https://beispiel-traeger.de/datenschutz" target="_blank" rel="noreferrer">',
+			'Datenschutzbestimmungen der Beratungsstelle Musterstadt',
+			'</a>',
+			' zur Kenntnis genommen.',
+			'<script>window.__consentGateXss = true;</script>',
+			'<img src="https://beispiel-traeger.de/x.png" onerror="window.__consentGateXss = true">',
+			'<a href="javascript:alert(1)"> Nicht anklickbar </a>'
+		].join('')
+	},
+	render: (args) => (
+		<div style={{ maxWidth: STORY_WIDTH_WIDE }}>
+			<AnonymousConsentGate {...args} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// The legitimate link survives — a consent sentence whose policy link
+		// was eaten by the sanitizer would not be a valid consent.
+		const policyLink = await canvas.findByRole('link', {
+			name: 'Datenschutzbestimmungen der Beratungsstelle Musterstadt'
+		});
+		await expect(policyLink).toHaveAttribute(
+			'href',
+			'https://beispiel-traeger.de/datenschutz'
+		);
+
+		// The payload does not.
+		await expect(canvasElement.querySelector('script')).toBeNull();
+		await expect(canvasElement.innerHTML).not.toContain('onerror');
+		/* eslint-disable-next-line no-script-url -- asserting the scheme is absent from the rendered DOM, not producing one. */
+		await expect(canvasElement.innerHTML).not.toContain('javascript:');
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'ADR-022 calls the unsanitised `dangerouslySetInnerHTML` here the **blocking dependency** for Gate 2: once this sentence is a Träger-authored field of the Beratungsstelle’s data-protection policy (ADR-021 decision 4), anyone who can edit a legal text in the Admin could execute script in the one dialog a help-seeker cannot get past. The label below carries a `<script>`, an `onerror` handler and a `javascript:` link — none of them reach the DOM, while the policy anchor keeps its `href`, `target` and `rel`. Two leftovers are expected and are the sanitizer working as specified rather than failing: the broken-image glyph is an `<img>` stripped of its handler (`<img>` is on the allowlist because authored legal texts embed images), and "Nicht anklickbar" is an `<a>` that lost its `javascript:` href, so it is inert.'
 			}
 		}
 	}

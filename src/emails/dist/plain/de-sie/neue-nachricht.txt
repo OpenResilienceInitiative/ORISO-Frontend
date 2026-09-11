@@ -1,0 +1,27 @@
+Sie haben eine neue Nachricht
+=============================
+
+In Ihrer Beratung bei {{platformName}} liegt eine neue Nachricht für Sie bereit.
+
+Aus Datenschutzgründen zeigen wir hier weder Inhalt noch Namen. Sie lesen die Nachricht verschlüsselt nach der Anmeldung.
+
+Zur Nachricht:
+{{messageUrl}}
+
+Sie müssen nicht sofort antworten. Die Nachricht bleibt in Ihrem Postfach, solange Sie sie brauchen.
+
+----------------------------------------------------------------
+Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer Ihnen und Ihrer Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.

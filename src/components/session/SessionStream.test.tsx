@@ -329,6 +329,15 @@ describe('SessionStream Matrix room lifecycle', () => {
 		});
 	});
 
+	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
+		renderSessionStream({ isGroup: false });
+
+		await waitFor(() => {
+			expect(mocks.sessionItemProps).not.toBeNull();
+		});
+		expect(mocks.sessionItemProps).not.toHaveProperty('systemMessages');
+	});
+
 	it('lets the asker decline the request and removes the card afterwards', async () => {
 		renderSessionStream({
 			isGroup: false,

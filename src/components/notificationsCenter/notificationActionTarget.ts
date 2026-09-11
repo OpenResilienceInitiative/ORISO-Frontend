@@ -36,6 +36,7 @@ export const EVENT_PARAM_KEYS = [
 	'senderDisplayName',
 	'contentClass',
 	'recipientRole',
+	'clientConsent',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -43,7 +44,11 @@ export const EVENT_PARAM_KEYS = [
 	'start',
 	'callRoomId',
 	'isVideo',
-	'forcedScopeKey'
+	'forcedScopeKey',
+	// #924: added on the frontend first. The backend starts emitting it with
+	// ORISO-UserService#961; until then the key is simply absent, which the
+	// preview hydration treats as "nothing to correlate".
+	'matrixEventId'
 ] as const;
 
 /** Parse only the known, non-content fields accepted by action-target resolvers. */
@@ -75,6 +80,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 		asNullableString(source.roomRef) ??
 		// #846: team-discussion events carry the room as `roomId`.
 		asNullableString(source.roomId);
+	// #924: the opaque Matrix event id, so a card can be correlated with the
+	// exact message it came from. An identifier, not content (ADR-AT-01).
+	params.matrixEventId = asNullableString(source.matrixEventId);
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
@@ -90,6 +98,14 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.senderDisplayName = asNullableString(source.senderDisplayName);
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
+	const clientConsent = asNullableString(source.clientConsent);
+	if (
+		clientConsent === 'OPT_IN' ||
+		clientConsent === 'OPT_OUT' ||
+		clientConsent === 'NONE'
+	) {
+		params.clientConsent = clientConsent;
+	}
 	if (isIdentifier(source.agencyId)) {
 		params.agencyId = source.agencyId;
 	}

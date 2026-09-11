@@ -49,23 +49,17 @@ const getCookieSecurityAttributes = () => {
 	return `SameSite=Strict${secure}`;
 };
 
-export const setValueInCookie = (
-	name: string,
-	value: string,
-	path: string = '/'
-) => {
-	document.cookie = `${name}=${value};path=${path};${getCookieSecurityAttributes()}`;
-	setAuthStorageValue(name, value);
-};
-
-export const deleteCookieByName = (name: string, path: string = '/') => {
-	document.cookie = `${name}=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-	removeAuthStorageValue(name);
-};
-
-export const getValueFromCookie = (targetValue: string) => {
+const readCookieValue = (targetValue: string): string | null => {
 	const targetName = targetValue + '=';
-	const decodedCookie = decodeURIComponent(document.cookie);
+	let decodedCookie: string;
+	try {
+		decodedCookie = decodeURIComponent(document.cookie);
+	} catch {
+		// A single cookie with a stray `%` makes decodeURIComponent throw for
+		// the whole jar. Reading raw still finds our own values, which are
+		// written unencoded, and never takes a cookie write down with it.
+		decodedCookie = document.cookie;
+	}
 
 	const ca = decodedCookie.split(';');
 
@@ -78,8 +72,49 @@ export const getValueFromCookie = (targetValue: string) => {
 			return c.substring(targetName.length, c.length);
 		}
 	}
-	return getAuthStorageValue(targetValue);
+	return null;
 };
+
+/**
+ * Tokens belong in the cookie alone (#1071 task 5, #196): on the shared PCs
+ * counselling agencies run, a mirrored copy in localStorage is a second thing
+ * the next person at the machine can read, and unlike the cookie it is not
+ * cleared by the browser's own session handling.
+ *
+ * The mirror is kept as a *fallback*, not as a default. Browsers silently drop
+ * a cookie larger than roughly 4 KB, and a Keycloak access token carrying many
+ * agency/consultant roles can cross that line — which is what the mirror was
+ * introduced for (cb814cb0, "login failed after 273 merge"). So the write is
+ * verified by reading it back: when the cookie holds the token, no copy is
+ * stored and any earlier copy is dropped; only when the cookie did not survive
+ * does the token fall back to Web Storage, keeping those users logged in.
+ */
+export const setValueInCookie = (
+	name: string,
+	value: string,
+	path: string = '/'
+) => {
+	document.cookie = `${name}=${value};path=${path};${getCookieSecurityAttributes()}`;
+
+	if (!getAuthStorageKey(name)) {
+		return;
+	}
+
+	if (readCookieValue(name) === value) {
+		removeAuthStorageValue(name);
+		return;
+	}
+
+	setAuthStorageValue(name, value);
+};
+
+export const deleteCookieByName = (name: string, path: string = '/') => {
+	document.cookie = `${name}=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+	removeAuthStorageValue(name);
+};
+
+export const getValueFromCookie = (targetValue: string) =>
+	readCookieValue(targetValue) ?? getAuthStorageValue(targetValue);
 
 export const removeAllCookies = (allowlist: string[] = []) => {
 	const retainedCookies = [

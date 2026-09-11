@@ -46,28 +46,11 @@ const createServer = async () => {
 	const { registerLivekitTokenRoutes } = require('./lib/livekitTokenRoutes');
 	registerLivekitTokenRoutes(app);
 
-	const serveStatic = await import('serve-static');
-	app.get(
-		'/config.js',
-		serveStatic.default(buildPath, {
-			maxAge: 0,
-			setHeaders: (res) => {
-				res.setHeader(
-					'Cache-Control',
-					'no-store, no-cache, must-revalidate'
-				);
-			}
-		})
-	);
-	app.get(
-		/\.(?:css|js|jpe?g|png|gif|ico|cur|heic|webp|tiff?|mp[34eg]|a(?:ac|vi)|o(?:gg|gv)|flv|wmv)$/,
-		serveStatic.default(buildPath, { maxAge: '1d' })
-	);
-	app.get(
-		/.(?:svgz?|ttf|ttc|otf|eot|woff2?)$/,
-		serveStatic.default(buildPath, { maxAge: '1d' })
-	);
-	app.use(serveStatic.default(buildPath, { index: 'beratung-hilfe.html' }));
+	const {
+		registerBuildAssetRoutes,
+		registerSpaFallback
+	} = require('./lib/staticServing');
+	await registerBuildAssetRoutes(app, buildPath);
 
 	const middlewareConfigs = require('./routes')(storagePath);
 	middlewareConfigs.forEach(
@@ -88,9 +71,7 @@ const createServer = async () => {
 		}
 	);
 
-	app.get('*', (req, res) => {
-		res.sendFile(path.join(buildPath, 'beratung-hilfe.html'));
-	});
+	registerSpaFallback(app, buildPath);
 
 	return new Promise((resolve) => {
 		app.listen(port, resolve);

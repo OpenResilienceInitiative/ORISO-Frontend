@@ -1,0 +1,410 @@
+{
+	"consultingType": {
+		"0": {},
+		"1": {
+			"description": "Vous souhaitez adopter un enfant ou accueillir un enfant en famille d’accueil ? Vous n’êtes pas sûr(e) de pouvoir bien vous occuper de votre enfant ? Vous êtes vous-même adopté(e) et vous souhaitez consulter votre dossier ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Adoption et accueil familial",
+				"short": "Adoption et accueil familial",
+				"long": "Conseil en matière d’adoption et d’accueil familial",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en matière d’adoption et d’accueil familial"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"2": {
+			"description": "Vous avez un problème personnel, vous êtes dans une situation financière difficile ou vous rencontrez des difficultés avec une administration ? Quel que soit le problème qui vous préoccupe, nous vous conseillons ici, dans le conseil en ligne, gratuitement et en toute confidentialité.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\", \"Moyens de subsistance\"]",
+			"titles": {
+				"default": "Conseil social général",
+				"short": "Conseil social général",
+				"long": "Conseil social général",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil social général"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"3": {
+			"description": "Vous avez perdu votre emploi ? Vous avez des questions sur les allocations chômage I et II ? Vous avez besoin d’aide pour chercher un emploi ou vous travaillez dans des conditions précaires ? Nous vous aidons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Moyens de subsistance\"]",
+			"titles": {
+				"default": "Sans emploi",
+				"short": "Sans emploi",
+				"long": "Conseil aux personnes sans emploi",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux personnes sans emploi"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"4": {
+			"description": "Vous devez ou vous souhaitez quitter l’Allemagne ? Vous vous demandez si vous voulez vivre en Allemagne ou dans votre pays d’origine ? Quel que soit votre titre de séjour, nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Migration, exil, asile\"]",
+			"titles": {
+				"default": "Départ et perspectives",
+				"short": "Départ et perspectives",
+				"long": "Conseil au départ et aux perspectives – conseil au retour",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil au départ et aux perspectives – conseil au retour"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"5": {
+			"description": "Vous n’avez pas de logement ou vous craignez de perdre le vôtre ? Vous vivez dans des conditions de logement inacceptables ? Vous êtes en situation de détresse ? Nous vous aidons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Moyens de subsistance\", \"Situations de vie particulières et crises\"]",
+			"titles": {
+				"default": "Urgence liée au logement",
+				"short": "Urgence liée au logement",
+				"long": "Conseil en cas d’urgence liée au logement",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en cas d’urgence liée au logement"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"6": {
+			"description": "Vous êtes travailleur ou travailleuse du sexe et vous subissez souvent la stigmatisation, la discrimination et le mépris ? Vous ne voulez plus exercer ce travail ? Nous vous soutenons pour faire valoir vos droits, nous organisons les aides nécessaires et nous vous accompagnons si vous souhaitez arrêter.",
+			"groups": "[\"Situations de vie particulières et crises\"]",
+			"titles": {
+				"default": "Prostitution",
+				"short": "Prostitution",
+				"long": "Conseil aux personnes en situation de prostitution et de traite des êtres humains",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux personnes en situation de prostitution et de traite des êtres humains"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"7": {
+			"description": "Vous avez été détenu(e) et vous avez des questions sur vos droits aux prestations sociales ? Vous avez besoin d’aide pour trouver un logement et un emploi ? Vous avez des problèmes personnels ? La détention crée des situations que l’on ne peut pas affronter seul(e). Nous vous aidons en toute confidentialité et gratuitement.",
+			"groups": "[\"Moyens de subsistance\", \"Situations de vie particulières et crises\"]",
+			"titles": {
+				"default": "Délinquance",
+				"short": "Délinquance",
+				"long": "Conseil aux personnes condamnées et à leurs proches",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux personnes condamnées et à leurs proches"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"8": {
+			"description": "Votre famille a besoin d’une pause abordable ? Nous vous conseillons volontiers sur votre séjour et sur les aides financières destinées aux familles à faibles revenus. Toutes les familles sont les bienvenues dans les centres de vacances. La confession et la composition de la famille n’ont aucune importance.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Vacances familiales",
+				"short": "Vacances familiales",
+				"long": "Conseil sur les séjours de repos en famille",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil sur les séjours de repos en famille"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"9": {
+			"description": "Un conflit vous épuise ou des soucis vous empêchent de trouver le repos ? Vous rencontrez dans votre couple des problèmes que vous n’arrivez pas à résoudre ? Nous vous aidons lorsque l’angoisse rythme votre quotidien, lorsque le deuil ou la solitude vous privent de la joie de vivre.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Couple, mariage et vie",
+				"short": "Couple, mariage et vie",
+				"long": "Conseil conjugal, de couple et de vie",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil conjugal, de couple et de vie"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"10": {
+			"description": "Votre enfant rencontre des difficultés à la crèche ou à l’école ? Vous vous sentez dépassé(e) par le quotidien familial ? Vous êtes confronté(e) à une séparation ou vous avez besoin de soutien pour vous et vos enfants après une séparation ? Nous vous aidons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Éducation et famille",
+				"short": "Éducation et famille",
+				"long": "Conseil en éducation et en famille",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en éducation et en famille"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"11": {
+			"description": "Vous avez fui votre pays et vous avez des questions sur la procédure d’asile ? Vous avez besoin d’aide pour préparer votre entretien dans le cadre de la procédure d’asile ? La procédure est terminée et vous avez besoin de soutien en Allemagne ? Nous conseillons les personnes de toutes origines, quelle que soit leur confession.",
+			"groups": "[\"Migration, exil, asile\"]",
+			"titles": {
+				"default": "Exil et asile",
+				"short": "Exil et asile",
+				"long": "Conseil aux personnes réfugiées et sur la procédure d’asile",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux personnes réfugiées et sur la procédure d’asile"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"12": {
+			"description": "Vous avez reçu un résultat de test positif et vous vous demandez ce qui vous attend ? Vous êtes proche d’une personne séropositive et vous avez des questions sans réponse ? Vous souhaitez savoir comment vous protéger du VIH ou d’autres infections sexuellement transmissibles ? Nous vous aidons en toute confidentialité et gratuitement.",
+			"groups": "[\"Problèmes de santé\"]",
+			"titles": {
+				"default": "VIH et sida",
+				"short": "VIH et sida",
+				"long": "VIH et sida",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "VIH et sida"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"13": {
+			"description": "Vous êtes gravement malade, il ne vous reste plus longtemps à vivre, ou vous êtes un proche et vous avez besoin de soutien ? Vous souhaitez atteindre la meilleure qualité de vie possible dans cette situation ? Vous avez des questions sur les directives anticipées ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Problèmes de santé\", \"Enfants, adolescents, adultes et famille\", \"Grand âge\"]",
+			"titles": {
+				"default": "Soins palliatifs",
+				"short": "Soins palliatifs",
+				"long": "Conseil en soins palliatifs et accompagnement en fin de vie",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en soins palliatifs et accompagnement en fin de vie"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"14": {
+			"description": "Êtes-vous concerné(e) par des violences sexuelles ? Avez-vous été blessé(e) par la violence physique d’une autre personne ? Quelqu’un vous menace, vous insulte ou vous crie dessus ? Connaissez-vous une personne qui subit des violences domestiques ou sexuelles ? Nous vous aidons en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Violence",
+				"short": "Violence",
+				"long": "Conseil en cas de violence domestique et sexuelle",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en cas de violence domestique et sexuelle"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"15": {
+			"description": "Tu as entre 12 et 27 ans, tu es issu(e) de l’immigration et tu as des questions sur les diplômes scolaires, la formation ou les cours de langue ? Nous te conseillons sur les offres de formation et de loisirs, gratuitement et en toute confidentialité, ici, dans le conseil en ligne.",
+			"groups": "[\"Migration, exil, asile\"]",
+			"titles": {
+				"default": "Services pour jeunes migrants",
+				"short": "Services pour jeunes migrants",
+				"long": "Services pour jeunes migrants (JMD)",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Services pour jeunes migrants (JMD)"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"16": {
+			"description": "Tu ne sais tout simplement plus quoi faire ? Tu as l’impression de ne pas être compris(e) ? Tu t’inquiètes pour un ami ou une amie ? Tu as des difficultés avec tes parents ? On te frappe ? Tu es stressé(e) à l’école, avec tes amis ou à cause de l’argent ? Nous te conseillons en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Enfance et jeunesse",
+				"short": "Enfance et jeunesse",
+				"long": "Conseil aux enfants et aux jeunes",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux enfants et aux jeunes"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"17": {
+			"description": "Vous vous sentez épuisé(e) par votre travail, votre famille ou l’accompagnement d’un proche ? Vous êtes malade et vous avez besoin d’une pause dans votre quotidien ? Une cure peut vous aider à reprendre des forces. Nous conseillons les mères, les pères et les proches aidants ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\", \"Problèmes de santé\"]",
+			"titles": {
+				"default": "Cure de repos",
+				"short": "Cure de repos",
+				"long": "Conseil en cure de repos pour les mères et les pères",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en cure de repos pour les mères et les pères"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"18": {
+			"description": "Vous avez besoin de conseils sur le logement des personnes âgées ? Vous avez des questions sur les aides à domicile ? Vous souhaitez rendre vos loisirs ou ceux d’un proche âgé plus variés ? Vous cherchez des informations sur des sujets comme la démence ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Problèmes de santé\", \"Grand âge\"]",
+			"titles": {
+				"default": "Grand âge et dépendance",
+				"short": "Grand âge et dépendance",
+				"long": "Vivre au grand âge et conseil en matière de dépendance",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Vivre au grand âge et conseil en matière de dépendance"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"19": {
+			"description": "Vous avez plus de 26 ans et vous avez besoin d’aide pour vous orienter en Allemagne ? Vous avez besoin d’aide pour trouver un emploi ou un cours de langue ? Nous conseillons les personnes nouvellement arrivées, mais aussi celles qui vivent en Allemagne depuis longtemps, les rapatriés tardifs ainsi que les citoyennes et citoyens de l’Union européenne.",
+			"groups": "[\"Migration, exil, asile\"]",
+			"titles": {
+				"default": "Conseil en migration",
+				"short": "Conseil en migration",
+				"long": "Conseil en migration pour les adultes et les familles",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en migration pour les adultes et les familles"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"20": {
+			"description": "Vous souhaitez mener une vie autonome et vous avez besoin d’aide pour cela ? Vous avez des questions sur le financement, les aides techniques et l’assistance ? Nous vous conseillons en toute confidentialité et gratuitement sur l’entraide dans les domaines du travail, du logement, de la formation et des loisirs.",
+			"groups": "[\"Problèmes de santé\"]",
+			"titles": {
+				"default": "Trouble psychique",
+				"short": "Trouble psychique",
+				"long": "Trouble psychique",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Trouble psychique"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"21": {
+			"description": "Vous avez vécu des expériences traumatisantes pendant votre exil ? Vous avez subi la torture, la violence et le racisme dans votre pays d’origine ? Vous connaissez une personne réfugiée qui est traumatisée ? Nous vous aidons par un accompagnement psychologique et socio-éducatif.",
+			"groups": "[\"Migration, exil, asile\"]",
+			"titles": {
+				"default": "Conseil psychosocial",
+				"short": "Conseil psychosocial",
+				"long": "Conseil psychosocial pour les personnes réfugiées et migrantes",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil psychosocial pour les personnes réfugiées et migrantes"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"22": {
+			"description": "Vous souhaitez être désigné(e) comme représentant(e) légal(e) et vous voulez savoir comment une mesure de protection est mise en place et quelles tâches vous attendent ? Vous souhaitez anticiper et rédiger des directives anticipées ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Participation des personnes en situation de handicap\"]",
+			"titles": {
+				"default": "Protection juridique",
+				"short": "Protection juridique",
+				"long": "Protection juridique",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Protection juridique"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"23": {
+			"description": "Vous avez des dettes, votre bail a été résilié ou l’huissier va venir ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Moyens de subsistance\"]",
+			"titles": {
+				"default": "Dettes et insolvabilité",
+				"short": "Dettes et insolvabilité",
+				"long": "Conseil en surendettement et en insolvabilité",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil en surendettement et en insolvabilité"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"24": {
+			"description": "Vous êtes enceinte et vous avez des questions ? Vous craignez pour votre couple ? Vous avez peur des difficultés financières à l’arrivée de l’enfant ? Vous souhaitez être conseillée sur les examens prénataux ? Vous envisagez d’interrompre votre grossesse ? Nous vous conseillons en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "Grossesse",
+				"short": "Grossesse",
+				"long": "Conseil aux femmes enceintes et en cas de conflit lié à la grossesse",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil aux femmes enceintes et en cas de conflit lié à la grossesse"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"25": {
+			"description": "Vous avez un problème d’addiction ou vous vous inquiétez pour des amis ou des proches concernés ? Vous avez des questions sur l’addiction et la dépendance – alcool, drogues, médicaments, jeux d’argent, écrans ? Nous vous conseillons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\", \"Situations de vie particulières et crises\", \"Problèmes de santé\"]",
+			"titles": {
+				"default": "Addiction",
+				"short": "Addiction",
+				"long": "Conseil et prévention en matière d’addiction",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Conseil et prévention en matière d’addiction"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"26": {
+			"description": "Vous souhaitez mener une vie autonome et vous avez besoin d’aide pour cela ? Vous avez des questions sur le financement, les aides techniques et l’assistance ? Nous vous conseillons en toute confidentialité et gratuitement sur l’entraide dans les domaines du travail, du logement, de la formation et des loisirs.",
+			"groups": "[\"Participation des personnes en situation de handicap\"]",
+			"titles": {
+				"default": "Participation",
+				"short": "Participation",
+				"long": "Participation des personnes en situation de handicap",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Participation des personnes en situation de handicap"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		},
+		"27": {
+			"description": "Tu as des questions sur l’école, la formation et le métier ? Comment imagines-tu ton avenir ? De quoi as-tu besoin pour cela ? Nous t’aidons ici, dans le conseil en ligne, en toute confidentialité et gratuitement.",
+			"groups": "[\"Enfants, adolescents, adultes et famille\"]",
+			"titles": {
+				"default": "De l’école au métier",
+				"short": "De l’école au métier",
+				"long": "Le passage de l’école au métier",
+				"welcome": "Bienvenue dans le conseil en ligne",
+				"registrationDropdown": "Le passage de l’école au métier"
+			},
+			"anonymous": {
+				"title": "Anonyme et gratuit",
+				"text": "Vous restez anonyme et bénéficiez d’un conseil et d’une aide gratuits"
+			}
+		}
+	}
+}

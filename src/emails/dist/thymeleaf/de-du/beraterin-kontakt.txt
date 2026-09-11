@@ -1,0 +1,35 @@
+So erreichst du deine Beratung
+==============================
+
+Neben dem geschützten Chat kannst du deine Beratung auch telefonisch erreichen oder direkt einen Termin buchen.
+
+Dein Zugang bleibt dabei anonym – du entscheidest, was du erzählst.
+
+Beratung: [[${consultantName}]]
+Durchwahl: [[${consultantPhone}]]
+Sprechzeiten: [[${consultantHours}]]
+E-Mail: [[${consultantEmail}]]
+
+Termin buchen:
+[[${bookingUrl}]]
+
+Zum geschützten Chat:
+[[${messageUrl}]]
+
+Außerhalb der Sprechzeiten schreib am besten im Chat. Wir melden uns innerhalb von 2 Werktagen.
+
+----------------------------------------------------------------
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] ist ein Angebot von [[${orgName}]].
+
+Einstellungen: [[${settingsUrl}]]
+Datenschutz: [[${privacyUrl}]]
+Impressum: [[${imprintUrl}]]
+Benachrichtigungen abbestellen: [[${unsubscribeUrl}]]
+
+Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.

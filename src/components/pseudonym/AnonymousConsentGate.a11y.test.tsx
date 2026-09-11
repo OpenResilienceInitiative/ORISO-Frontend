@@ -88,6 +88,20 @@ describe('AnonymousConsentGate — accessibility of a blocking gate', () => {
 	   behavioural proof runs in Chromium, Firefox and WebKit in
 	   `playwright/consent-gate-focus.crossbrowser.spec.ts`. */
 
+	it('keeps the reject button named although it renders as a bare ✕', () => {
+		/* The design (CAR02 2183-14718) asks for an icon-only reject button, and
+		   the labelled version was what pushed the action row out of the card at
+		   375px (#892). Dropping the visible label is only safe as long as the
+		   accessible name survives it — an unnamed button is announced as
+		   "button", which is no choice at all next to "Ich bin einverstanden". */
+		renderGate();
+		const reject = screen.getByRole('button', {
+			name: 'Ich stimme nicht zu'
+		});
+
+		expect(reject.textContent).toBe('');
+	});
+
 	it('says nothing gendered — the platform voice is neutral by reformulation', () => {
 		const { container } = renderGate();
 		const text = container.textContent ?? '';

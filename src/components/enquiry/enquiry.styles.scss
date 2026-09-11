@@ -153,6 +153,23 @@ $background-circle-size: 1800px !default;
 		margin-top: $grid-base-two;
 	}
 
+	&__deletionNotice {
+		position: relative;
+		z-index: 2;
+		max-width: 900px;
+		width: 100%;
+		margin: 0 auto;
+		box-sizing: border-box;
+		padding: $grid-base $grid-base-two $grid-base-two;
+		color: var(--m3-on-surface-variant, $tertiary);
+		line-height: $line-height-primary;
+
+		@include breakpoint($fromMedium) {
+			padding-left: $grid-base-three;
+			padding-right: $grid-base-three;
+		}
+	}
+
 	&__footer {
 		border-top: 1px solid $line-ochre;
 		background-color: $white;

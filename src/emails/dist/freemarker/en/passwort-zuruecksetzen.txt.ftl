@@ -1,0 +1,27 @@
+Set a new password
+==================
+
+You asked for a new password for your account at ${platformName!''}.
+
+The link is valid for ${expiryHours!''} hours and can only be used once.
+
+Set a new password:
+${resetUrl!''}
+
+If you did not ask for this, simply ignore this email. Your password stays unchanged.
+
+----------------------------------------------------------------
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} is a service provided by ${orgName!''}.
+
+Settings: ${settingsUrl!''}
+Privacy: ${privacyUrl!''}
+Imprint: ${imprintUrl!''}
+Unsubscribe from notifications: ${unsubscribeUrl!''}
+
+This email was sent automatically. Please do not reply to it.

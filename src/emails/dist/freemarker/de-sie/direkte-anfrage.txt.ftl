@@ -1,0 +1,30 @@
+Eine Anfrage richtet sich direkt an Sie
+=======================================
+
+Eine ratsuchende Person hat sich beim Schreiben der Anfrage ausdrücklich für Sie entschieden.
+
+Wenn Sie die Anfrage nicht übernehmen können, geben Sie sie bitte an die Beratungsstelle zurück, damit sie nicht liegen bleibt.
+
+Thema: ${requestTopic!''}
+Eingang: ${requestReceivedAt!''}
+
+Anfrage öffnen:
+${requestUrl!''}
+
+Bitte antworten Sie innerhalb von 2 Werktagen.
+
+----------------------------------------------------------------
+Inhalte aus Beratungen stehen nie in einer E-Mail. Sie sehen sie ausschließlich verschlüsselt nach der Anmeldung.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Einstellungen: ${settingsUrl!''}
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+Benachrichtigungen abbestellen: ${unsubscribeUrl!''}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.

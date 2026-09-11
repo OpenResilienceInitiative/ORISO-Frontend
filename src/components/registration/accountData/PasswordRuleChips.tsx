@@ -210,8 +210,12 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 								? registrationMd3.focus
 								: registrationMd3.onSurfaceVariant,
 							transition: 'background-color 240ms ease',
-							maskImage: `url(${rule.icon})`,
-							WebkitMaskImage: `url(${rule.icon})`,
+							// Quoted on purpose: Vite inlines small SVGs as
+							// data: URIs containing single quotes; unquoted
+							// url() is then invalid CSS, the mask drops and
+							// the box paints as a solid square (Storybook).
+							maskImage: `url("${rule.icon}")`,
+							WebkitMaskImage: `url("${rule.icon}")`,
 							maskSize: 'contain',
 							WebkitMaskSize: 'contain',
 							maskRepeat: 'no-repeat',

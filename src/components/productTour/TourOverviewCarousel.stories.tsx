@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TourOverviewCarousel } from './TourOverviewCarousel';
-import { consultantWalkthroughTour } from './tourDefinitions';
+import {
+	consultantMailCounsellingTour,
+	consultantWalkthroughTour
+} from './tourDefinitions';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import type { TourDefinition } from './types';
@@ -54,6 +57,28 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const NotStarted: Story = {};
+
+export const BothConsultantTours: Story = {
+	args: {
+		tours: [consultantWalkthroughTour, consultantMailCounsellingTour],
+		loadProgress: () =>
+			Promise.resolve([
+				{
+					tourId: consultantWalkthroughTour.id,
+					tourVersion: consultantWalkthroughTour.version,
+					status: 'completed',
+					currentStepId: undefined
+				}
+			] satisfies ProgressFixture)
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'The shipped consultant catalog: the completed legacy walkthrough offers a restart while the new Mail-Beratung tour (TOUR-10) is offered as not started.'
+			}
+		}
+	}
+};
 
 export const MixedStatuses: Story = {
 	args: {

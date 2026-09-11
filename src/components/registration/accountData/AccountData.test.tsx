@@ -3,6 +3,7 @@ import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountData } from './AccountData';
+import { clearDepartmentLegalCache } from '../../../api/apiGetDepartmentLegal';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
@@ -19,8 +20,11 @@ vi.mock('../../../api/apiGetIsUsernameAvailable', () => ({
 	apiGetIsUsernameAvailable: vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock('../../departmentLegal/DepartmentLegalSection', () => ({
-	DepartmentLegalSection: () => null
+vi.mock('../../../api/apiGetConsentText', () => ({
+	apiGetConsentText: vi.fn().mockResolvedValue({
+		status: 'ok',
+		consentText: null
+	})
 }));
 
 // RegistrationProvider.tsx also imports the other registration steps
@@ -34,7 +38,11 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 	};
 });
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	clearDepartmentLegalCache();
+	vi.clearAllMocks();
+});
 
 const tenantWith = (
 	settings: Partial<TenantDataInterface['settings']>
@@ -47,9 +55,20 @@ const tenantWith = (
 		settings
 	}) as TenantDataInterface;
 
-const renderAccountData = (tenant: TenantDataInterface) =>
+const renderAccountData = (
+	tenant: TenantDataInterface,
+	registrationData: Record<string, unknown> = {}
+) =>
 	render(
-		<LegalLinksContext.Provider value={[]}>
+		<LegalLinksContext.Provider
+			value={[
+				{
+					label: 'login.legal.infoText.dataprotection',
+					registration: true,
+					getUrl: () => 'https://example.test/privacy'
+				}
+			]}
+		>
 			<LocaleContext.Provider
 				value={{
 					locale: 'de',
@@ -62,7 +81,7 @@ const renderAccountData = (tenant: TenantDataInterface) =>
 				<RegistrationContext.Provider
 					value={{
 						setDisabledNextButton: () => {},
-						registrationData: {}
+						registrationData
 					}}
 				>
 					<TenantContext.Provider
@@ -146,5 +165,30 @@ describe('AccountData — optional 2FA toggle', () => {
 		);
 
 		expect(emailField.getAttribute('aria-required')).toBe('true');
+	});
+});
+
+const agencyWithPublishedDpp = {
+	agency: {
+		id: 42,
+		name: 'Beratungsstelle',
+		departments: [{ topicId: 7, hasPublishedDpp: true }]
+	},
+	mainTopic: { id: 7, name: 'Suchtberatung' }
+};
+
+describe('AccountData — department legal accordion', () => {
+	it('does not render the Datenschutzhinweise accordion', () => {
+		renderAccountData(tenantWith({}), agencyWithPublishedDpp);
+
+		expect(
+			document.querySelector('[data-cy="department-legal-consent"]')
+		).toBeNull();
+		expect(
+			screen.queryByText('Datenschutzhinweise der Beratungsstelle')
+		).toBeNull();
+		expect(
+			screen.queryByText('registration.agency.legal.headline')
+		).toBeNull();
 	});
 });

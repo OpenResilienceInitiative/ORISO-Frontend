@@ -1,0 +1,25 @@
+Dein Einmalcode
+===============
+
+Gib diesen Code im Anmeldefenster ein.
+
+Code: ${otpCode!''}
+
+Zur Anmeldung:
+${loginUrl!''}
+
+Wenn du dich nicht anmelden wolltest, ändere bitte dein Passwort.
+
+----------------------------------------------------------------
+Wir fragen dich nie per E-Mail nach deinem Passwort. Gib diesen Code an niemanden weiter.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+
+Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

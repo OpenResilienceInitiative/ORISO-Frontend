@@ -231,6 +231,105 @@ describe('ProductTourAdapter', () => {
 		expect(joyrideProps!.stepIndex).toBe(0);
 	});
 
+	it('completes with terminal status when trailing optional targets never appear', async () => {
+		const optionalTailTour: TourDefinition = {
+			...tour,
+			steps: [
+				{
+					id: 'intro',
+					target: '',
+					placement: 'center',
+					titleKey: 't0',
+					contentKey: 'c0'
+				},
+				{
+					id: 'composer',
+					target: 'session-composer',
+					optional: true,
+					titleKey: 't1',
+					contentKey: 'c1'
+				}
+			]
+		};
+		const { events, onTerminal } = renderAdapter({
+			tour: optionalTailTour
+		});
+		await waitFor(() => expect(joyrideProps).not.toBeNull());
+
+		act(() => {
+			joyrideProps!.onEvent({
+				action: 'next',
+				index: 0,
+				status: 'running',
+				type: 'step:after'
+			});
+		});
+
+		await waitFor(
+			() =>
+				expect(onTerminal).toHaveBeenCalledWith(
+					expect.objectContaining({
+						tourId: 'test-tour',
+						status: 'completed'
+					})
+				),
+			{ timeout: 3000 }
+		);
+		expect(
+			events.some(
+				(e) =>
+					e.event === 'optional_step_skipped' &&
+					e.stepId === 'composer'
+			)
+		).toBe(true);
+		expect(events.some((e) => e.event === 'target_missing')).toBe(false);
+		expect(joyrideProps!.run).toBe(false);
+	});
+
+	it('closes resumable when a trailing required target never appears', async () => {
+		const requiredTailTour: TourDefinition = {
+			...tour,
+			steps: [
+				{
+					id: 'intro',
+					target: '',
+					placement: 'center',
+					titleKey: 't0',
+					contentKey: 'c0'
+				},
+				{
+					id: 'strict-end',
+					target: 'strict-end-target',
+					titleKey: 't1',
+					contentKey: 'c1'
+				}
+			]
+		};
+		const { events, onTerminal } = renderAdapter({
+			tour: requiredTailTour
+		});
+		await waitFor(() => expect(joyrideProps).not.toBeNull());
+
+		act(() => {
+			joyrideProps!.onEvent({
+				action: 'next',
+				index: 0,
+				status: 'running',
+				type: 'step:after'
+			});
+		});
+
+		await waitFor(() => expect(joyrideProps!.run).toBe(false), {
+			timeout: 3000
+		});
+		expect(
+			events.some(
+				(e) => e.event === 'target_missing' && e.stepId === 'strict-end'
+			)
+		).toBe(true);
+		expect(onTerminal).not.toHaveBeenCalled();
+	});
+
 	it('persists skipped when the user closes the tour mid-way', async () => {
 		const { onTerminal } = renderAdapter();
 		await waitFor(() => expect(joyrideProps).not.toBeNull());
