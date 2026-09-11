@@ -5,7 +5,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -235,6 +236,46 @@ describe('DpaSign', () => {
 		expect(
 			await screen.findByRole('heading', { name: 'en:dpaSign.title' })
 		).toBeDefined();
+	});
+
+	/**
+	 * The signer otherwise has to scroll a multi-annex contract by hand
+	 * (#1163) — the same reading surface `LegalTextReader` already gives
+	 * every other published legal text (chapter chips, in-place scrolling,
+	 * fullscreen) belongs here too.
+	 */
+	it('offers chapter chips for a multi-chapter contract and moves focus when one is picked', async () => {
+		previewMock.mockResolvedValue({
+			tenantName: 'Träger Nord',
+			dpaVersion: '2026-07-20T12:30:00',
+			content: JSON.stringify({
+				de: '<h2>1. Gegenstand</h2><p>Absatz eins.</p><h2>2. Pflichten des Auftragnehmers</h2><p>Absatz zwei.</p>',
+				en: '<h2>1. Subject</h2><p>Paragraph one.</p><h2>2. Duties</h2><p>Paragraph two.</p>'
+			}),
+			expiresAt: '2026-08-03T12:30:00'
+		});
+		renderPage();
+		await screen.findByText('Absatz eins.');
+
+		const chips = within(screen.getByTestId('legal-anchor-chips'))
+			.getAllByRole('button')
+			.map((chip) => chip.textContent);
+		expect(chips).toEqual([
+			'1. Gegenstand',
+			'2. Pflichten des Auftragnehmers'
+		]);
+
+		fireEvent.click(
+			within(screen.getByTestId('legal-anchor-chips')).getByRole(
+				'button',
+				{ name: '2. Pflichten des Auftragnehmers' }
+			)
+		);
+
+		expect(document.activeElement?.id).toBe(
+			'2-pflichten-des-auftragnehmers'
+		);
+		expect(document.activeElement?.tagName).toBe('H2');
 	});
 
 	it('does not render a confirmation form for an invalid or expired token', async () => {
