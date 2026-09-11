@@ -617,9 +617,7 @@ $profile-footer-justify-content: center !default;
 		margin-top: 16px;
 	}
 
-	// The switch an unsubscribe link points at.
-	//
-	// An explicit tint rather than `--m3-primary-container`: in this theme that
+	// The switch an unsubscribe link points at. An explicit tint rather than `--m3-primary-container`: in this theme that
 	// token is #cc1e1c, the strong accent, which puts near-black text on a
 	// saturated red and reads as an error rather than as "this one".
 	.notifications__row--highlighted {

@@ -271,6 +271,13 @@ interface CaseHandoverConsentCardProps {
 	 * delivery tick in an empty one.
 	 */
 	timestamp?: string;
+	/**
+	 * Current state of the OPT_OUT consent switch. Pass it to let the caller own
+	 * the truth (e.g. after the server confirmed the decision); omit it and the
+	 * card tracks the client's own choice, starting from granted — the opt-out
+	 * default. Either way the switch must follow the click, never snap back.
+	 */
+	consentGranted?: boolean;
 }
 
 /** Client-side continuation for a handover request that requires explicit consent. */
@@ -280,10 +287,33 @@ export const CaseHandoverConsentCard = ({
 	error,
 	onApprove,
 	onDecline,
-	timestamp
+	timestamp,
+	consentGranted
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
+	/*
+	 * `Switch` is fully controlled — its `<input>` renders whatever `checked`
+	 * says, so a hard-coded `checked` made every toggle snap straight back and
+	 * the client could never see their withdrawal take effect (ORISO-Frontend#1329).
+	 * Standard controlled/uncontrolled pattern: the prop wins when given.
+	 */
+	const isConsentControlled = consentGranted !== undefined;
+	const [ownConsentGranted, setOwnConsentGranted] = React.useState(true);
+	const isConsentGranted = isConsentControlled
+		? consentGranted
+		: ownConsentGranted;
+
+	const handleConsentChange = (checked: boolean) => {
+		if (!isConsentControlled) {
+			setOwnConsentGranted(checked);
+		}
+		if (checked) {
+			onApprove();
+		} else {
+			onDecline();
+		}
+	};
 	const messageTitle = isOptOut
 		? translate(
 				'caseHandover.consent.optOut.title',
@@ -349,15 +379,13 @@ export const CaseHandoverConsentCard = ({
 								)}
 							</span>
 							<Switch
-								checked
+								checked={isConsentGranted}
 								disabled={isSubmitting}
 								aria-label={translate(
 									'caseHandover.consent.optOut.switchLabel',
 									'I consent to data processing for this case handover'
 								)}
-								onChange={(checked) =>
-									checked ? onApprove() : onDecline()
-								}
+								onChange={handleConsentChange}
 							/>
 						</div>
 					</>

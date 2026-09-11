@@ -20,6 +20,14 @@ export interface AccountDataDraft {
 	acceptedConsentBinding: string | null;
 	email: string;
 	twoFactorAuthEnabled: boolean;
+	/**
+	 * The password was minted for a temporary join and never shown. It must
+	 * not become the password of a permanent account: whoever leaves the
+	 * temporary path clears it. The flag lives in the draft rather than in a
+	 * ref because the step can unmount in between (review on
+	 * ORISO-Frontend#1333, 2026-09-07).
+	 */
+	passwordMinted?: boolean;
 }
 
 let draft: AccountDataDraft | null = null;

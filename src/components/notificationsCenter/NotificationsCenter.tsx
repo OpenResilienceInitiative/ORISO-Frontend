@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
@@ -67,6 +66,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
 	formatAbsoluteTime,
@@ -233,6 +233,7 @@ export const NotificationsCenter = () => {
 	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
+		unreadNotificationCount,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
@@ -366,6 +367,10 @@ export const NotificationsCenter = () => {
 		() => getFamiliesInFeed(notificationFeed),
 		[notificationFeed]
 	);
+	// #1200: "Mark all as read" is only actionable while something is unread.
+	// The provider's counter is the server-backed total, so unread activity on
+	// pages that are not loaded yet still enables the action.
+	const hasUnreadActivity = unreadNotificationCount > 0;
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image', 'Image'),
@@ -931,21 +936,14 @@ export const NotificationsCenter = () => {
 										)}
 									</span>
 								</button>
-								<button
-									type="button"
-									className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
+								<MarkAllReadButton
+									hasUnread={hasUnreadActivity}
 									onClick={markAllNotificationsAsRead}
-									title={translate(
+									label={translate(
 										'notifications.center.markAllRead',
 										'Mark all as read'
 									)}
-									aria-label={translate(
-										'notifications.center.markAllRead',
-										'Mark all as read'
-									)}
-								>
-									<DoneAllIcon className="sessionsListToolbar__chipIconSvg" />
-								</button>
+								/>
 							</div>
 						</div>
 					)}

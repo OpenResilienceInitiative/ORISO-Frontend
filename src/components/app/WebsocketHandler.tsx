@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
+import { resolveStompListRefresh } from './stompListRefresh';
 import { useNavigate } from 'react-router-dom';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
@@ -14,12 +15,8 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../../utils/notificationHelpers';
+import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
@@ -32,7 +29,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
@@ -40,6 +36,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const [
 		newStompAnonymousConversationFinished,
 		setNewStompAnonymousConversationFinished
+	] = useState<boolean>(false);
+	const [
+		newStompAnonymousEnquiryAccepted,
+		setNewStompAnonymousEnquiryAccepted
 	] = useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
@@ -140,20 +140,19 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			if (
-				!releaseToggles.enableNewNotifications ||
-				isBrowserNotificationTypeEnabled('newMessage')
-			) {
-				sendNotification(translate('notifications.message.new'), {
-					// Route the banner to its config row (#576 harmonised
-					// model): Gespräch → Standard-Benachrichtigung.
-					family: 'messages',
-					eventType: 'message.new',
-					onclick: () => {
-						navigate(`/sessions/consultant/sessionView`);
-					}
-				});
-			}
+			// Whether the user wants this popup is `sendNotification`'s call
+			// alone (#1211) — it knows the family, the event type and which
+			// settings panel is actually routed. Repeating the check here is
+			// what broke new-message popups for the cross-device panel.
+			sendNotification(translate('notifications.message.new'), {
+				// Route the banner to its config row (#576 harmonised
+				// model): Gespräch → Standard-Benachrichtigung.
+				family: 'messages',
+				eventType: 'message.new',
+				onclick: () => {
+					navigate(`/sessions/consultant/sessionView`);
+				}
+			});
 		}
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -163,6 +162,23 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			messageEventEmitter.emit({ refreshEnquiryList: true });
 		}
 	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
+		if (newStompAnonymousEnquiryAccepted) {
+			setNewStompAnonymousEnquiryAccepted(false);
+			const refresh = resolveStompListRefresh('anonymousEnquiryAccepted');
+			if (refresh) {
+				messageEventEmitter.emit(refresh);
+			}
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate('profile.notifications.inquiryAccepted.title'),
+				text: translate(
+					'profile.notifications.inquiryAccepted.description'
+				)
+			});
+		}
+	}, [newStompAnonymousEnquiryAccepted]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
 		if (newStompAnonymousConversationFinished) {
@@ -218,15 +234,11 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 					stompEventType === 'anonymousEnquiryAccepted' ||
 					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
 				) {
-					addNotification({
-						notificationType: NOTIFICATION_TYPE_SUCCESS,
-						title: translate(
-							'profile.notifications.inquiryAccepted.title'
-						),
-						text: translate(
-							'profile.notifications.inquiryAccepted.description'
-						)
-					});
+					// #1206: an accepted enquiry leaves every counsellor's
+					// request list and enters the assignee's conversation
+					// list. This branch used to raise the toast only, so both
+					// lists stayed stale until a hard reload.
+					setNewStompAnonymousEnquiryAccepted(true);
 				} else if (
 					stompEventType === 'anonymousConversationFinished' ||
 					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'

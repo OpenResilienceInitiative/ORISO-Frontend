@@ -47,6 +47,11 @@ import { BookingReschedule } from '../../containers/bookings/components/BookingR
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 
+const GroupEntryRoom = lazy(() =>
+	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
+		default: m.GroupEntryRoom
+	}))
+);
 const SessionView = lazy(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
 );
@@ -104,11 +109,23 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 	}
 });
 
+/* Without the app shell: the group's waiting room stands on the same stage
+   the person registered on (Frank, 2026-09-04). Every role that can follow a
+   `?gcid=` link needs the route — `AuthenticatedApp` navigates there without
+   asking who is logged in. */
+const groupEntryPlainRoutes = [
+	{
+		path: '/groups/:chatId/entry',
+		component: GroupEntryRoom
+	}
+];
+
 export const RouterConfigUser = (
 	_settings: AppConfigInterface,
 	hasAssignedConsultant: boolean
 ): any => {
 	return {
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			{
 				to: '/sessions/user/view',
@@ -245,7 +262,7 @@ export const RouterConfigUser = (
 
 export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 	return {
-		plainRoutes: [],
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			overviewRoute(settings),
 			{

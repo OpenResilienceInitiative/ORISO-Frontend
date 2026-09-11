@@ -1,5 +1,6 @@
 import { stripReplyFallback } from '../../utils/messageRelations';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
+import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -8,7 +9,8 @@ export type MatrixRoomPreviewKind =
 	| 'image'
 	| 'video'
 	| 'file'
-	| 'encrypted';
+	| 'encrypted'
+	| 'first_response';
 
 export interface MatrixRoomPreview {
 	kind: MatrixRoomPreviewKind;
@@ -50,6 +52,9 @@ const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 		case 'm.text':
 		case 'm.notice':
 		case 'm.emote': {
+			if (isErstantwortMessage(body)) {
+				return { kind: 'first_response', text: null };
+			}
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;
 		}

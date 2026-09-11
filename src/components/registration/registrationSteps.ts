@@ -14,6 +14,10 @@ export type RegistrationStep = {
 		onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 		onNextClick: () => void;
 		nextStepUrl: string | null;
+		/* Only the account-data step reads these, and only when an invitation
+		   link brought the person here. Every other step ignores them. */
+		entry?: 'registration' | 'link';
+		temporary?: boolean;
 	}>;
 	name: string;
 	mandatoryFields?: string[];

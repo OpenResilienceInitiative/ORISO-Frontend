@@ -1,14 +1,29 @@
 import { Pseudonym } from '../../../utils/anonName/engine';
 import { USERNAME_MAX_LENGTH } from '../registrationDataValidation';
 
-/** Slugify a display fragment: strip diacritics, lowercase, ß→ss, collapse any
- *  run of non-alphanumerics into a single underscore, trim edge underscores. */
+/* German spells its umlauts out when it cannot draw the dots: Löwe becomes
+   loewe, not lowe (Frank, 2026-09-10). Stripping the diacritic is what a
+   generic slugifier does, and it turns a familiar animal into a typo. This map
+   runs BEFORE the diacritic strip, which then only catches the rest (é, ñ, å). */
+const UMLAUTS: Record<string, string> = {
+	ä: 'ae',
+	ö: 'oe',
+	ü: 'ue',
+	Ä: 'ae',
+	Ö: 'oe',
+	Ü: 'ue',
+	ß: 'ss'
+};
+
+/** Slugify a display fragment: spell out umlauts, strip remaining diacritics,
+ *  lowercase, collapse any run of non-alphanumerics into a single underscore,
+ *  trim edge underscores. */
 const slugify = (value: string): string =>
 	value
+		.replace(/[äöüÄÖÜß]/g, (char) => UMLAUTS[char])
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
 		.toLowerCase()
-		.replace(/ß/g, 'ss')
 		.replace(/[^a-z0-9]+/g, '_')
 		.replace(/^_+|_+$/g, '')
 		.replace(/_{2,}/g, '_');
