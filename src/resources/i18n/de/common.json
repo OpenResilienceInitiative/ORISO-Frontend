@@ -3249,7 +3249,8 @@
 			"PLANNED_ABSENCE": "Geplant abwesend",
 			"UNPLANNED_ABSENCE": "Ungeplant abwesend",
 			"ASSIGNMENT_ENDED": "Zuordnung beendet",
-			"ADVICE_REQUESTED": "Rat erbeten"
+			"ADVICE_REQUESTED": "Rat erbeten",
+			"retired": "Nicht näher angegeben"
 		},
 		"giveOver": {
 			"coAccessTitle": "Rat erbitten",

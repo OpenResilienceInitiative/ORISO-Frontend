@@ -1,6 +1,7 @@
 import { getEventDescriptor } from '../components/notificationsCenter/eventDescriptors';
 import { EventActionParams } from '../components/notificationsCenter/eventDescriptors/types';
 import { TranslateFn } from '../components/notificationsCenter/eventDescriptors/renderEventStrings';
+import { NOTIFICATIONS_ROUTE } from '../resources/scripts/notificationRoutes';
 import { appConfig } from './appConfig';
 import { sendNotification } from './notificationHelpers';
 import { notificationSettingsStore } from './notificationSettings/store';
@@ -13,11 +14,15 @@ type Announcement = {
 	params?: EventActionParams;
 };
 
+/** Router navigation, so clicking a banner does not reload the document. */
+export type NotificationNavigate = (path: string) => void;
+
 /** Transient channels share an event owner; no decrypted text leaves the app. */
 export const announceNotificationEvent = (
 	event: Announcement,
 	translate: TranslateFn,
-	modern = appConfig?.releaseToggles?.enableNewNotifications === true
+	modern = appConfig?.releaseToggles?.enableNewNotifications === true,
+	navigate?: NotificationNavigate
 ): void => {
 	const descriptor = getEventDescriptor(event.eventType);
 	const sessionId = event.sourceSessionId ?? event.params?.sourceSessionId;
@@ -54,7 +59,14 @@ export const announceNotificationEvent = (
 		silent: true,
 		onclick: () => {
 			window.focus();
-			window.location.assign('/notifications');
+			// A document navigation here discards in-memory conversation state,
+			// including anything not yet persisted. The router keeps it; the
+			// global assign stays only for callers that have no router.
+			if (navigate) {
+				navigate(NOTIFICATIONS_ROUTE);
+				return;
+			}
+			window.location.assign(NOTIFICATIONS_ROUTE);
 		}
 	});
 };

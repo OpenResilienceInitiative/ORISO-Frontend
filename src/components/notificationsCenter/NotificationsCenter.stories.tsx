@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { NOTIFICATIONS_ROUTE } from '../../resources/scripts/notificationRoutes';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
@@ -216,7 +217,7 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
-		router: { initialPath: '/notifications' },
+		router: { initialPath: NOTIFICATIONS_ROUTE },
 		design: {
 			type: 'figma',
 			url: APP_ORISO_FIGMA_URL

@@ -230,6 +230,81 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 		);
 		expect(mirrored.globalMute).toBe(true);
 	});
+
+	// A rejected setAccountData used to be discarded, leaving the switch - and the
+	// localStorage mirror - showing a value the account does not contain.
+	it('rolls the settings back when the account-data write is rejected', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		client.setAccountData.mockClear();
+		const before = notificationSettingsStore.getState().settings.globalMute;
+		client.setAccountData.mockRejectedValueOnce(new Error('offline'));
+
+		notificationSettingsStore.updateSettings({ globalMute: !before });
+		expect(notificationSettingsStore.getState().settings.globalMute).toBe(
+			!before
+		);
+
+		await vi.waitFor(() =>
+			expect(
+				notificationSettingsStore.getState().settings.globalMute
+			).toBe(before)
+		);
+		// The mirror is rewritten by the rollback, so a reload cannot resurrect it.
+		expect(
+			JSON.parse(
+				localStorage.getItem('ORISO_NOTIFICATION_SETTINGS') || '{}'
+			).globalMute
+		).toBe(before);
+	});
+
+	it('rolls the device silence back when its account-data write is rejected', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		client.setAccountData.mockClear();
+		const before = notificationSettingsStore.getState().device.silenced;
+		client.setAccountData.mockRejectedValueOnce(new Error('offline'));
+
+		notificationSettingsStore.setDeviceSilenced(!before);
+		expect(notificationSettingsStore.getState().device.silenced).toBe(
+			!before
+		);
+
+		await vi.waitFor(() =>
+			expect(notificationSettingsStore.getState().device.silenced).toBe(
+				before
+			)
+		);
+	});
+
+	it('keeps a newer change when an older write fails late', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		// attachClient seeds account data itself, so clear before counting - the
+		// same reason 'device silence writes ONLY the device-scoped event type'
+		// does it.
+		client.setAccountData.mockClear();
+		client.setAccountData.mockRejectedValueOnce(new Error('offline'));
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		// The point of the test: the first write's rollback must not resurrect
+		// its value over the second, which is why the rollback is conditional on
+		// the state still being the one that failed.
+		expect(notificationSettingsStore.getState().settings.globalMute).toBe(
+			false
+		);
+		expect(
+			JSON.parse(
+				localStorage.getItem('ORISO_NOTIFICATION_SETTINGS') || '{}'
+			).globalMute
+		).toBe(false);
+	});
+
 });
 
 /*

@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import {
 	cleanup,
 	fireEvent,
-	render,
+	render as rtlRender,
 	screen,
 	waitFor
 } from '@testing-library/react';
@@ -13,6 +13,15 @@ import {
 	NotificationsProvider
 } from './NotificationsProvider';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { MemoryRouter } from 'react-router-dom';
+
+/**
+ * NotificationsProvider navigates with the router when a desktop notification is
+ * clicked, so it needs one in the tree. In the app it always has one: app.tsx
+ * mounts <Router> above <ContextProvider>.
+ */
+const render = (ui: Parameters<typeof rtlRender>[0]) =>
+	rtlRender(ui, { wrapper: MemoryRouter });
 
 const apiGetEventNotifications = vi.fn();
 const announceEvent = vi.hoisted(() => vi.fn());

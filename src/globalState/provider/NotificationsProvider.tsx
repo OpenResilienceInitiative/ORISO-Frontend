@@ -8,6 +8,7 @@ import {
 	useRef,
 	useState
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 import { t } from 'i18next';
 import {
@@ -257,6 +258,8 @@ export function NotificationsProvider(props) {
 		highestLoadedPageRef.current = 0;
 	}, []);
 
+	const navigate = useNavigate();
+
 	const maybeAnnounceNewEvents = useCallback(
 		(feed: NotificationFeedItem[]) => {
 			const incoming = selectUnseenEvents(
@@ -266,9 +269,12 @@ export function NotificationsProvider(props) {
 			const seen = announcedEventIdsRef.current || new Set<string>();
 			feed.forEach((event) => seen.add(event.id));
 			announcedEventIdsRef.current = seen;
-			incoming.forEach((event) => announceNotificationEvent(event, t));
+			incoming.forEach((event) =>
+				// `modern` keeps its release-toggle default; navigate is the 4th arg.
+				announceNotificationEvent(event, t, undefined, navigate)
+			);
 		},
-		[]
+		[navigate]
 	);
 
 	const refreshNotificationFeed = useCallback(async () => {

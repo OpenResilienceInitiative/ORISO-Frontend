@@ -1790,7 +1790,12 @@ export const MessageItemComponent = ({
 			case alias?.messageType === ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT:
 				return (
 					<HistoricalReassignMessage
-						message={message || ''}
+						// In E2EE rooms `message` is the ciphertext, and the card
+						// JSON.parses its input - an unparseable value renders an
+						// empty card. `decryptedMessage` is decryptText(message) in
+						// E2EE rooms and `message` itself in plaintext ones, so it
+						// is the correct source for both.
+						message={decryptedMessage || ''}
 						isAsker={hasUserAuthority(
 							AUTHORITIES.ASKER_DEFAULT,
 							userData

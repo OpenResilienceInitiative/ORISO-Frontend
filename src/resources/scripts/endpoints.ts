@@ -87,6 +87,11 @@ export const endpoints = {
 	// Push direction ("Fall abgeben"): the case owner offers the case to a
 	// colleague of the same agency, who accepts or declines. Contract:
 	// PLAN-case-giveover-2026-09-05.md chapter 3.
+	//
+	// Served by UserService CaseHandoverController: /colleagues, /offers,
+	// /offers/{id}/accept, /offers/{id}/decline and DELETE /offers/{id}, all
+	// CONSULTANT_DEFAULT. They landed in pre-dev with ORISO-UserService#1124, so
+	// these constants no longer point at routes that only exist on a branch.
 	caseHandoverColleagues:
 		userServiceOrigin + '/service/users/case-handover/colleagues',
 	caseHandoverOffers:
