@@ -4023,6 +4023,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",

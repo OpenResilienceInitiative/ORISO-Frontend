@@ -455,7 +455,10 @@ export class MatrixLiveEventBridge {
 		// A fresh hangup can still belong to a call that ended moments before a
 		// replacement call started. Match the Matrix call_id before mutating the
 		// singleton so delayed teardown cannot kill the new call.
-		getCallManager().endCallIfMatching(event.getContent().call_id);
+		getCallManager().endCallIfMatching(
+			event.getContent().call_id,
+			room.roomId
+		);
 	}
 
 	/**

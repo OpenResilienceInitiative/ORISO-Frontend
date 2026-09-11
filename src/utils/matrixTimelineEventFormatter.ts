@@ -6,6 +6,7 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { parseCallLifecycleMessage } from './callLifecycleMessage';
 import { getScannedMediaDownloadPath } from '../services/mediaContentScanner';
 import type {
 	ChatAttachment,
@@ -93,6 +94,11 @@ export const formatMatrixTimelineEvent = (
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
 	}
+	const callLifecycle = parseCallLifecycleMessage(content);
+	if (callLifecycle) {
+		baseMessage.callLifecycle = callLifecycle;
+		baseMessage.callLifecycleRevisionTs = event?.getTs?.();
+	}
 	const threadRootEventId = getThreadRootId(content);
 	if (threadRootEventId) {
 		baseMessage.threadRootEventId = threadRootEventId;
@@ -104,6 +110,9 @@ export const formatMatrixTimelineEvent = (
 	if (replaceTargetId) {
 		baseMessage.replaceTargetId = replaceTargetId;
 		baseMessage.editedBody = getEditedBody(content);
+		baseMessage.editedCallLifecycle = parseCallLifecycleMessage(
+			content?.['m.new_content']
+		);
 	}
 	// Intentional mentions (#435): exposed for downstream UI (e.g. the
 	// timeline @mentions filter chip, #420) to test membership against.

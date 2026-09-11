@@ -4023,6 +4023,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",

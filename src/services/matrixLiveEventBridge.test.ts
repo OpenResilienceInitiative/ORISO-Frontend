@@ -538,7 +538,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			false
 		);
 		expect(endCallIfMatching).toHaveBeenCalledTimes(1);
-		expect(endCallIfMatching).toHaveBeenCalledWith('c');
+		expect(endCallIfMatching).toHaveBeenCalledWith('c', room.roomId);
 		expect(endCall).not.toHaveBeenCalled();
 	});
 });

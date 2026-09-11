@@ -4,6 +4,10 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+	buildCallLifecycleContent,
+	type CallLifecycleMessage
+} from './callLifecycleMessage';
+import {
 	formatMatrixTimelineEvent,
 	extractReactionEvents
 } from './matrixTimelineEventFormatter';
@@ -14,6 +18,36 @@ const makeEvent = (content: Record<string, unknown>) => ({
 	getSender: () => '@anna:hs',
 	getId: () => '$msg:hs',
 	getTs: () => 1700000000000
+});
+
+describe('call lifecycle room messages', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'call-1',
+		roomRef: '!conversation:hs',
+		callRoomId: '!media:hs',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	it('exposes the call payload to the actual conversation renderer', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent(buildCallLifecycleContent(call)),
+			null,
+			'encrypted'
+		);
+		expect(formatted.callLifecycle).toEqual(call);
+	});
+	it('exposes replacement payload and revision time for a terminal call', () => {
+		const ended = { ...call, state: 'ended' as const };
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent(buildCallLifecycleContent(ended, '$initial')),
+			null,
+			'encrypted'
+		);
+		expect(formatted.editedCallLifecycle).toEqual(ended);
+		expect(formatted.callLifecycleRevisionTs).toBe(1700000000000);
+		expect(formatted.replaceTargetId).toBe('$initial');
+	});
 });
 
 describe('formatMatrixTimelineEvent redacted events (#827)', () => {

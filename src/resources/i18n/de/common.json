@@ -4040,6 +4040,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",

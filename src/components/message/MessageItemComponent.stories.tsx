@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
@@ -369,6 +369,40 @@ export const NormalMessage: Story = {
 			askerMatrixUserId: MOCK_ASKER_MATRIX_ID
 		}),
 		...baseHandlers
+	}
+};
+
+export const EndedCall: Story = {
+	name: 'Ended call with durable attendance',
+	parameters: NormalMessage.parameters,
+	args: {
+		...NormalMessage.args,
+		rid: '!conversation:example',
+		callLifecycle: {
+			callId: 'call-story',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			state: 'ended',
+			callType: 'video',
+			startedAt: '2026-09-11T09:00:00Z',
+			endedAt: '2026-09-11T09:02:05Z',
+			durationSeconds: 125,
+			participants: [
+				{ userId: '@alex:example', displayName: 'Alex Test' },
+				{ userId: '@sam:example', displayName: 'Sam Test' }
+			]
+		}
+	},
+	play: async ({ canvas, canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		await expect(
+			canvas.getByText(/Videoanruf beendet|Video call ended/)
+		).toBeVisible();
+		await expect(canvas.getByText(/Alex Test.*Sam Test/)).toBeVisible();
+		await expect(canvas.getByText(/02:05/)).toBeVisible();
+		await expect(
+			canvasElement.querySelector('.messageItem__messageWrap')
+		).toBeNull();
 	}
 };
 

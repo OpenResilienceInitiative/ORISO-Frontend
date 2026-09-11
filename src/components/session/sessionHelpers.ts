@@ -206,6 +206,7 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				t: message.t,
 				rid: message.rid,
 				isVideoActive: i === lastVideoCallIndex,
+				callLifecycle: message.callLifecycle,
 				// Relations foundation (#435): relations survive the mapping.
 				replyToEventId: message.replyToEventId || null,
 				threadRootEventId: message.threadRootEventId || null,

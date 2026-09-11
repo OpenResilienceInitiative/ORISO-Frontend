@@ -26,6 +26,10 @@ import {
 	urlifyLinksInText
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
+import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { CallTimelineMessage } from './CallTimelineMessage';
+import { apiCallState } from '../../api/apiCallState';
+import { callManager } from '../../services/CallManager';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { MessageAttachment } from './MessageAttachment';
@@ -321,6 +325,7 @@ export interface MessageItem {
 	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
 	rid: string;
 	isVideoActive?: boolean;
+	callLifecycle?: CallLifecycleMessage;
 	/** Relations foundation (#435): id of the replied-to event, if a reply. */
 	replyToEventId?: string | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
@@ -397,6 +402,7 @@ export const MessageItemComponent = ({
 	handleDecryptionSuccess,
 	e2eeParams,
 	isVideoActive,
+	callLifecycle,
 	renderMode = 'main',
 	threadsEnabled = true,
 	threadRootId,
@@ -2483,6 +2489,28 @@ export const MessageItemComponent = ({
 				return null;
 			}
 		}
+	}
+
+	if (callLifecycle && callLifecycle.roomRef === rid) {
+		return (
+			<div className="messageItem">
+				{getMessageDate()}
+				<CallTimelineMessage
+					call={callLifecycle}
+					loadState={apiCallState}
+					onJoin={
+						isUserBanned ||
+						activeSession?.item?.status === STATUS_ARCHIVED
+							? undefined
+							: () =>
+									callManager.joinExistingCall(
+										callLifecycle,
+										Boolean(activeSession?.isGroup)
+									)
+					}
+				/>
+			</div>
+		);
 	}
 
 	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event

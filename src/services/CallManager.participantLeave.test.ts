@@ -80,15 +80,15 @@ describe('Element Call participant leave', () => {
 			'REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID',
 			'@matrixrtc-auth:oriso.example'
 		);
-		setMatrixClientServiceRef({
-			getClient: () => ({
-				sendEvent,
-				createRoom,
-				invite,
-				getUserId: () => '@patty:oriso.example',
-				getRoom: () => null
-			})
-		} as never);
+		const client = {
+			sendEvent,
+			sendMessage: vi.fn().mockResolvedValue({ event_id: '$call-root' }),
+			createRoom,
+			invite,
+			getUserId: () => '@patty:oriso.example',
+			getRoom: () => null
+		};
+		setMatrixClientServiceRef({ getClient: () => client } as never);
 		callManager.receiveCall(
 			CALL_ROOM,
 			false,
@@ -162,6 +162,26 @@ describe('Element Call participant leave', () => {
 
 		expect(callManager.getCurrentCall()).toBeNull();
 		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('ignores a matching call ID received from another conversation', () => {
+		callManager.receiveCall(
+			CALL_ROOM,
+			true,
+			'same-id',
+			'@patty:oriso.example',
+			false,
+			SIGNAL_ROOM,
+			true
+		);
+		expect(
+			callManager.endCallIfMatching('same-id', '!unrelated:oriso.example')
+		).toBe(false);
+		expect(callManager.getCurrentCall()?.callId).toBe('same-id');
+		expect(callManager.endCallIfMatching('same-id', SIGNAL_ROOM)).toBe(
+			true
+		);
+		expect(callManager.getCurrentCall()).toBeNull();
 	});
 
 	it('still notifies the remote participant when a one-to-one call is left', () => {

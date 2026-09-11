@@ -3982,6 +3982,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",

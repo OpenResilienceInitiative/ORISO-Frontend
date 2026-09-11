@@ -97,6 +97,29 @@ describe('sessionHelpers', () => {
 		).toBe(true);
 	});
 
+	it('preserves the durable call identity and lifecycle for the message renderer', () => {
+		const callLifecycle = {
+			callId: 'call-one',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			state: 'ended' as const,
+			callType: 'video' as const,
+			participants: [],
+			durationSeconds: 42
+		};
+		const prepared = prepareMessages([
+			{
+				_id: '$call-root',
+				msg: 'video call ended',
+				ts: '2026-09-11T09:00:00.000Z',
+				u: { _id: '@caller:example', username: 'Caller', name: null },
+				rid: '!conversation:example',
+				callLifecycle
+			}
+		]);
+		expect(prepared[0]).toMatchObject({ _id: '$call-root', callLifecycle });
+	});
+
 	it('prepares messages and keeps only one user-left system notification', () => {
 		const messages = [
 			{

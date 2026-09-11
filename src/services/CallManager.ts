@@ -15,6 +15,8 @@ import {
 } from '../utils/matrixRoomEncryption';
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
+import { callLifecycleTracker } from './callLifecycleTracker';
+import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
 export type CallState =
 	| 'idle'
@@ -57,6 +59,13 @@ type CallStateChangeListener = (callData: CallData | null) => void;
 class CallManager {
 	private static instance: CallManager;
 	private currentCall: CallData | null = null;
+	private pendingJoin: object | null = null;
+	private pendingStart: {
+		callId: string;
+		roomId: string;
+		isVideo: boolean;
+		forceIsGroup?: boolean;
+	} | null = null;
 	private listeners: Set<CallStateChangeListener> = new Set();
 
 	private constructor() {
@@ -102,6 +111,81 @@ class CallManager {
 		});
 	}
 
+	/** Reopen the room named by a durable call, without producing another invite. */
+	public async joinExistingCall(
+		call: CallLifecycleMessage,
+		isGroup: boolean
+	): Promise<'joined' | 'busy' | 'ended' | 'unavailable'> {
+		if (call.state !== 'running') return 'ended';
+		if (this.hasActiveCall()) {
+			return this.currentCall?.callId === call.callId &&
+				this.currentCall.signalRoomId === call.roomRef &&
+				this.currentCall.roomId === call.callRoomId
+				? 'joined'
+				: 'busy';
+		}
+		if (this.pendingStart || this.pendingJoin) return 'busy';
+		const client = getMatrixClientService()?.getClient?.();
+		if (
+			!client ||
+			client.getRoom(call.roomRef)?.getMyMembership() !== 'join'
+		)
+			return 'unavailable';
+		const join = {};
+		this.pendingJoin = join;
+		try {
+			const { apiCallState } = await import('../api/apiCallState');
+			const confirmed = await apiCallState(call);
+			if (
+				this.pendingJoin !== join ||
+				getMatrixClientService()?.getClient?.() !== client ||
+				client.getRoom(call.roomRef)?.getMyMembership() !== 'join' ||
+				!confirmed ||
+				confirmed.callId !== call.callId ||
+				confirmed.roomRef !== call.roomRef ||
+				confirmed.callRoomId !== call.callRoomId ||
+				confirmed.callType !== call.callType
+			)
+				return 'unavailable';
+			if (confirmed.state !== 'running') return 'ended';
+			let room = client.getRoom(call.callRoomId);
+			if (room?.getMyMembership() !== 'join')
+				room = await client.joinRoom(call.callRoomId);
+			if (
+				this.pendingJoin !== join ||
+				getMatrixClientService()?.getClient?.() !== client
+			)
+				return 'unavailable';
+			// Membership may have changed while the server processed the room join.
+			if (client.getRoom(call.roomRef)?.getMyMembership() !== 'join')
+				return 'unavailable';
+			assertMatrixRoomEncrypted(client, call.callRoomId);
+			// A historical room message is not evidence that media is still active.
+			if (
+				!room ||
+				!client.matrixRTC?.getRoomSession(room).memberships.length
+			)
+				return 'unavailable';
+			this.currentCall = {
+				callId: call.callId,
+				roomId: call.callRoomId,
+				elementCallRoomId: call.callRoomId,
+				signalRoomId: call.roomRef,
+				isVideo: call.callType === 'video',
+				isIncoming: false,
+				isGroup,
+				usesElementCall: true,
+				state: 'connecting'
+			};
+			this.notifyListeners();
+			return 'joined';
+		} catch {
+			return 'unavailable';
+		} finally {
+			if (this.pendingJoin === join) this.pendingJoin = null;
+		}
+	}
+
 	/**
 	 * Start an outgoing call
 	 * @param roomId - Matrix room ID
@@ -113,8 +197,16 @@ class CallManager {
 		isVideo: boolean,
 		forceIsGroup?: boolean
 	): void {
+		if (
+			this.pendingStart?.roomId === roomId &&
+			this.pendingStart.isVideo === isVideo &&
+			this.pendingStart.forceIsGroup === forceIsGroup
+		) {
+			return;
+		}
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🚀 CallManager.startCall()");
+		this.pendingJoin = null;
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("   Room ID:", roomId);
 		// console.log("   Is Video:", isVideo);
@@ -206,6 +298,8 @@ class CallManager {
 		}
 
 		const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const start = { callId, roomId, isVideo, forceIsGroup };
+		this.pendingStart = start;
 
 		// Run the heavy work asynchronously so callers don't have to `await`
 		// but we can still create a dedicated Element Call room before
@@ -217,7 +311,13 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// call.oriso.site where each call lives in its own Matrix room with
 			// appropriate power levels.
-			elementCallRoomId = await this.createElementCallRoom(roomId);
+			elementCallRoomId = await this.createElementCallRoom(
+				roomId,
+				callId
+			);
+			// Room creation may finish after cancellation or a different call.
+			// Only the request that still owns startup can publish its invite.
+			if (this.pendingStart !== start) return;
 
 			this.currentCall = {
 				callId,
@@ -246,20 +346,39 @@ class CallManager {
 
 			// Send Matrix call invite event to the original session room so
 			// the other participant sees the incoming call notification.
-			this.sendGroupCallInvite(
+			const outgoingCall = this.currentCall;
+			await callLifecycleTracker.begin(outgoingCall);
+			if (this.pendingStart !== start) {
+				callLifecycleTracker.finish(outgoingCall.callId);
+				return;
+			}
+			await this.sendGroupCallInvite(
 				roomId,
 				callId,
 				isVideo,
 				this.currentCall.roomId,
 				isGroup
 			);
+			if (this.pendingStart !== start) {
+				// The invite can reach the server after local cancellation. Send
+				// its matching hangup after acknowledgement, never for a newer call.
+				if (!outgoingCall.isGroup)
+					this.sendElementCallHangup(outgoingCall);
+				return;
+			}
 
 			this.notifyListeners();
-		})().catch((err: any) => {
-			// console.error("❌ Error while starting call:", err);
-			alert(`Failed to start call: ${(err as Error).message}`);
-			this.endCall();
-		});
+		})()
+			.catch((err: any) => {
+				callLifecycleTracker.finish(start.callId);
+				if (this.pendingStart !== start) return;
+				// console.error("❌ Error while starting call:", err);
+				alert(`Failed to start call: ${(err as Error).message}`);
+				this.endCall(false);
+			})
+			.finally(() => {
+				if (this.pendingStart === start) this.pendingStart = null;
+			});
 	}
 
 	/**
@@ -267,7 +386,10 @@ class CallManager {
 	 * mirrors Element Call's own `createRoom` behaviour closely enough for our
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
-	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
+	private async createElementCallRoom(
+		sourceRoomId: string,
+		callId: string
+	): Promise<string> {
 		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient?.();
 
@@ -313,6 +435,11 @@ class CallManager {
 			name,
 			initial_state: [
 				buildMatrixRoomEncryptionInitialState(),
+				{
+					type: 'org.oriso.call.binding',
+					state_key: '',
+					content: { call_id: callId, source_room_id: sourceRoomId }
+				},
 				{
 					type: 'm.room.history_visibility',
 					state_key: '',
@@ -521,48 +648,33 @@ class CallManager {
 	 * @param isVideo - Whether this is a video call
 	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
 	 */
-	private sendGroupCallInvite(
+	private async sendGroupCallInvite(
 		signallingRoomId: string,
 		callId: string,
 		isVideo: boolean,
 		elementCallRoomId?: string,
 		isGroupCall: boolean = false
-	): void {
-		try {
-			const matrixClientService = getMatrixClientService();
-			const client = matrixClientService?.getClient?.();
-
-			if (!client) {
-				// console.error('❌ Matrix client not available to send call invite');
-				return;
-			}
-
-			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
-
-			// Send m.call.invite event
-			// Custom ORISO event type — not in matrix-js-sdk typings
-			client
-				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
-					call_id: callId,
-					version: '1',
-					lifetime: 60000, // 60 seconds
-					invitee: undefined, // Group call - no specific invitee
-					party_id: client.getDeviceId() || 'unknown',
-					is_group_call: isGroupCall, // Custom field to indicate group session
-					is_element_call: true, // Custom field to use Element Call/LiveKit media
-					is_video: isVideo,
-					// Custom: tell receivers which Matrix room Element Call should use.
-					call_room_id: elementCallRoomId
-				})
-				.then(() => {
-					// console.log('✅ m.call.invite sent successfully');
-				})
-				.catch((err: Error) => {
-					// console.error('❌ Failed to send m.call.invite:', err);
-				});
-		} catch (error) {
-			// console.error('❌ Error sending group call invite:', error);
+	): Promise<void> {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) {
+			throw new Error('Matrix client not available to send call invite');
 		}
+		await client.sendEvent(
+			signallingRoomId,
+			'org.oriso.call.invite' as any,
+			{
+				call_id: callId,
+				version: '1',
+				lifetime: 60000, // 60 seconds
+				invitee: undefined, // Group call - no specific invitee
+				party_id: client.getDeviceId?.() || 'unknown',
+				is_group_call: isGroupCall, // Custom field to indicate group session
+				is_element_call: true, // Custom field to use Element Call/LiveKit media
+				is_video: isVideo,
+				// Custom: tell receivers which Matrix room Element Call should use.
+				call_room_id: elementCallRoomId
+			}
+		);
 	}
 
 	/**
@@ -607,6 +719,8 @@ class CallManager {
 			return;
 		}
 
+		this.pendingStart = null;
+		this.pendingJoin = null;
 		this.currentCall = {
 			callId,
 			roomId: callRoomId,
@@ -665,16 +779,22 @@ class CallManager {
 			return;
 		}
 
-		if (this.currentCall.matrixCall) {
+		const rejectedCall = this.currentCall;
+		this.currentCall = null;
+		this.pendingStart = null;
+		this.pendingJoin = null;
+		if (rejectedCall.usesElementCall && !rejectedCall.isGroup) {
+			this.sendElementCallHangup(rejectedCall, 'user_rejected');
+		}
+
+		if (rejectedCall.matrixCall) {
 			// console.log("📞 Rejecting Matrix call object...");
 			try {
-				(this.currentCall.matrixCall as any).reject();
+				(rejectedCall.matrixCall as any).reject();
 			} catch (err) {
 				// console.error("❌ Error rejecting Matrix call:", err);
 			}
 		}
-
-		this.currentCall = null;
 
 		// Warm-up / orphaned capture from the session click handler
 		releaseAllCallWarmupStreams();
@@ -689,6 +809,8 @@ class CallManager {
 	 * End the current call
 	 */
 	public endCall(notifyRemote: boolean = true): void {
+		this.pendingStart = null;
+		this.pendingJoin = null;
 		// Snapshot + clear first so nested hangup → state:ended → endCall()
 		// callbacks cannot read null.matrixCall.
 		const call = this.currentCall;
@@ -702,6 +824,7 @@ class CallManager {
 		// local call surface. Broadcasting the legacy ORISO hangup event here
 		// used to make every other participant tear down the same active call.
 		// One-to-one Element Call still needs the remote hangup notification.
+		if (!call.isGroup) callLifecycleTracker.finish(call.callId);
 		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}
@@ -744,11 +867,16 @@ class CallManager {
 	 * the call that is still active. A delayed hangup from a previous call must
 	 * never tear down a newer call in the same conversation room.
 	 */
-	public endCallIfMatching(callId?: string): boolean {
+	public endCallIfMatching(
+		callId: string | undefined,
+		signalRoomId: string
+	): boolean {
 		if (
 			!callId ||
 			!this.currentCall ||
-			this.currentCall.callId !== callId
+			this.currentCall.callId !== callId ||
+			(this.currentCall.signalRoomId || this.currentCall.roomId) !==
+				signalRoomId
 		) {
 			return false;
 		}
@@ -757,7 +885,10 @@ class CallManager {
 		return true;
 	}
 
-	private sendElementCallHangup(callData: CallData): void {
+	private sendElementCallHangup(
+		callData: CallData,
+		reason: 'user_hangup' | 'user_rejected' = 'user_hangup'
+	): void {
 		try {
 			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient?.();
@@ -771,7 +902,7 @@ class CallManager {
 					{
 						call_id: callData.callId,
 						version: '1',
-						reason: 'user_hangup',
+						reason,
 						call_room_id:
 							callData.elementCallRoomId || callData.roomId
 					}
@@ -808,7 +939,10 @@ class CallManager {
 		(matrixCall as any).on('state', (newState: string) => {
 			// console.log(`📞 Matrix call state changed: ${newState}`);
 
-			if (newState === 'ended') {
+			if (
+				newState === 'ended' &&
+				this.currentCall?.matrixCall === matrixCall
+			) {
 				// console.log("📴 Matrix call ended, cleaning up...");
 				this.endCall();
 			}

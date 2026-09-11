@@ -36,9 +36,12 @@ const installClient = (client: Record<string, unknown>): void => {
 const createCallRoom = (sourceRoomId = SESSION_ROOM): Promise<string> =>
 	(
 		callManager as unknown as {
-			createElementCallRoom: (roomId: string) => Promise<string>;
+			createElementCallRoom: (
+				roomId: string,
+				callId: string
+			) => Promise<string>;
 		}
-	).createElementCallRoom(sourceRoomId);
+	).createElementCallRoom(sourceRoomId, 'test-call');
 
 describe('createElementCallRoom', () => {
 	beforeEach(() => {
