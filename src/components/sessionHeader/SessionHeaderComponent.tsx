@@ -15,7 +15,7 @@ import {
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import {
-	apiGetAgencyConsultantList,
+	fetchAgencyConsultantList,
 	Consultant
 } from '../../api/apiGetAgencyConsultantList';
 import { apiSendMessage } from '../../api/apiSendMessage';
@@ -71,11 +71,8 @@ import { GroupChatHeader } from './GroupChatHeader';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTopic } from '../../globalState';
-import { SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTextarea } from '../form/OrisoTextarea';
-import { SelectChangeEvent } from '@mui/material/Select';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -85,6 +82,14 @@ import {
 	ChatroomMainInteractionIcon
 } from './ChatroomMainInteractionIcon';
 import { getSupervisorAddState } from './getSupervisorAddState';
+import {
+	filterEligibleSupervisorConsultants,
+	resolveSupervisorDirectoryAgencyId
+} from './supervisorDirectory';
+import {
+	SupervisorConsultantPicker,
+	SupervisorDirectoryState
+} from './SupervisorConsultantPicker';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -175,77 +180,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		Consultant[]
 	>([]);
 	const [allConsultants, setAllConsultants] = useState<Consultant[]>([]); // All consultants for name lookup
-	const [isLoadingConsultants, setIsLoadingConsultants] = useState(false);
+	const [supervisorDirectoryState, setSupervisorDirectoryState] =
+		useState<SupervisorDirectoryState>('loading');
 	const [isLoadingSupervisors, setIsLoadingSupervisors] = useState(false);
 	const [selectedConsultantId, setSelectedConsultantId] =
 		useState<string>('');
 	const [supervisionReason, setSupervisionReason] = useState<string>('');
 	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
-
-	const getConsultantSelectLabel = (consultant: Consultant) =>
-		[consultant.firstName, consultant.lastName].filter(Boolean).join(' ') ||
-		consultant.displayName ||
-		consultant.username ||
-		consultant.consultantId;
-
-	const consultantSelectDropdown = React.useMemo<SelectDropdownItem>(
-		() => ({
-			id: 'supervisor-consultant-select',
-			selectedOptions: availableConsultants.map((consultant) => ({
-				value: consultant.consultantId.toString(),
-				label: getConsultantSelectLabel(consultant)
-			})),
-			defaultValue: selectedConsultantId
-				? {
-						value: selectedConsultantId,
-						label: availableConsultants.find(
-							(c) => c.consultantId === selectedConsultantId
-						)
-							? getConsultantSelectLabel(
-									availableConsultants.find(
-										(c) =>
-											c.consultantId ===
-											selectedConsultantId
-									)
-								)
-							: ''
-					}
-				: null,
-			handleDropdownSelect: (selectedOption) => {
-				setSelectedConsultantId(
-					selectedOption ? selectedOption.value : ''
-				);
-			},
-			selectInputLabel: translate(
-				'sessionHeader.supervisor.modal.selectConsultant',
-				'Berater auswählen...'
-			),
-			isSearchable: true,
-			menuPlacement: 'bottom',
-			styleOverrides: {
-				control: (styles) => ({
-					...styles,
-					width: '100%'
-				}),
-				menu: (styles) => ({
-					...styles,
-					width: '100%'
-				})
-			}
-		}),
-		[availableConsultants, selectedConsultantId, translate]
-	);
-
-	const handleSupervisorConsultantSelect = (
-		event: SelectChangeEvent<string>
-	) => {
-		const selectedOption = consultantSelectDropdown.selectedOptions.find(
-			(option) => option.value.toString() === event.target.value
-		);
-
-		consultantSelectDropdown.handleDropdownSelect(selectedOption);
-	};
 
 	// Prepare Button for add supervisor
 	const addSupervisorButton: ButtonItem = React.useMemo(
@@ -312,12 +254,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			return;
 		}
 		if (isSupervisorModalOpen) {
-			const agencyId =
-				activeSession.agency?.id || activeSession.item?.agencyId;
+			const agencyId = resolveSupervisorDirectoryAgencyId({
+				sessionAgencyId: activeSession.item?.agencyId,
+				metadataAgencyId: activeSession.agency?.id
+			});
 			if (agencyId) {
 				loadAvailableConsultants();
 			} else {
-				// console.warn('Cannot load consultants: No agency ID in session');
+				setSupervisorDirectoryState('error');
 			}
 		}
 		// loadAvailableConsultants is re-created every render; the modal-open
@@ -341,28 +285,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			const data = await apiGetSessionSupervisors(activeSession.item.id);
 			setSupervisors(data);
 			// Also load consultants to get names for supervisors
-			const agencyId =
-				activeSession.agency?.id || activeSession.item?.agencyId;
+			const agencyId = resolveSupervisorDirectoryAgencyId({
+				sessionAgencyId: activeSession.item?.agencyId,
+				metadataAgencyId: activeSession.agency?.id
+			});
 			if (agencyId) {
 				try {
-					const consultants = await apiGetAgencyConsultantList(
-						agencyId.toString()
+					setSupervisorDirectoryState('loading');
+					const consultants =
+						await fetchAgencyConsultantList(agencyId);
+					updateConsultantDirectory(
+						consultants,
+						data.map(
+							(supervisor) => supervisor.supervisorConsultantId
+						)
 					);
-					const uniqueConsultants = dedupeConsultants(consultants);
-					setAllConsultants(uniqueConsultants); // Store all consultants for name lookup
-					// Filter: only supervisors, exclude current user and already added supervisors
-					const supervisorIds = data.map(
-						(s) => s.supervisorConsultantId
-					);
-					const filtered = uniqueConsultants.filter(
-						(c) =>
-							c.isSupervisor === true &&
-							c.consultantId !== userData.userId &&
-							!supervisorIds.includes(c.consultantId)
-					);
-					setAvailableConsultants(filtered);
-				} catch (err) {
-					// console.error('Failed to load consultants for supervisor names:', err);
+					setSupervisorDirectoryState('ready');
+				} catch {
+					setSupervisorDirectoryState('error');
 				}
 			}
 		} catch (error) {
@@ -397,39 +337,44 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		return Array.from(uniqueById.values());
 	};
 
+	const updateConsultantDirectory = (
+		consultants: Consultant[],
+		currentSupervisorIds: string[]
+	) => {
+		const uniqueConsultants = dedupeConsultants(consultants);
+		setAllConsultants(uniqueConsultants);
+		setAvailableConsultants(
+			filterEligibleSupervisorConsultants({
+				consultants: uniqueConsultants,
+				currentConsultantId: userData.userId,
+				currentSupervisorIds
+			})
+		);
+	};
+
 	const loadAvailableConsultants = async () => {
-		// Try to get agency ID from session.agency.id or session.item.agencyId
-		const agencyId =
-			activeSession.agency?.id || activeSession.item?.agencyId;
+		const agencyId = resolveSupervisorDirectoryAgencyId({
+			sessionAgencyId: activeSession.item?.agencyId,
+			metadataAgencyId: activeSession.agency?.id
+		});
 		if (!agencyId) {
-			// console.error('No agency ID found in session:', activeSession);
 			setAvailableConsultants([]);
-			setIsLoadingConsultants(false);
+			setSupervisorDirectoryState('error');
 			return;
 		}
-		setIsLoadingConsultants(true);
+		setSupervisorDirectoryState('loading');
 		try {
-			const consultants = await apiGetAgencyConsultantList(
-				agencyId.toString()
+			const consultants = await fetchAgencyConsultantList(agencyId);
+			updateConsultantDirectory(
+				consultants,
+				supervisors.map(
+					(supervisor) => supervisor.supervisorConsultantId
+				)
 			);
-			const uniqueConsultants = dedupeConsultants(consultants);
-			// console.log('Loaded consultants from agency:', agencyId, uniqueConsultants);
-			// Store all consultants for name lookup
-			setAllConsultants(uniqueConsultants);
-			// Filter: only supervisors, exclude current user and already added supervisors
-			const supervisorIds = supervisors.map(
-				(s) => s.supervisorConsultantId
-			);
-			const filtered = uniqueConsultants.filter(
-				(c) =>
-					c.isSupervisor === true &&
-					c.consultantId !== userData.userId &&
-					!supervisorIds.includes(c.consultantId)
-			);
-			// console.log('Filtered consultants (after removing current user and supervisors):', filtered);
-			setAvailableConsultants(filtered);
-		} catch (error) {
-			// console.error('Failed to load consultants:', error);
+			setSupervisorDirectoryState('ready');
+		} catch {
+			setAvailableConsultants([]);
+			setSupervisorDirectoryState('error');
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate(
@@ -443,8 +388,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				closeable: true,
 				timeout: 5000
 			});
-		} finally {
-			setIsLoadingConsultants(false);
 		}
 	};
 
@@ -1427,110 +1370,108 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										'Supervisor hinzufügen'
 									)}
 								</h3>
-								{isLoadingConsultants ? (
-									<div>
-										{translate(
+								<SupervisorConsultantPicker
+									state={supervisorDirectoryState}
+									consultants={availableConsultants}
+									selectedConsultantId={selectedConsultantId}
+									onChange={setSelectedConsultantId}
+									labels={{
+										loading: translate(
 											'sessionHeader.supervisor.modal.loadingConsultants',
 											'Lädt Berater...'
-										)}
-									</div>
-								) : availableConsultants.length === 0 ? (
-									<div style={{ color: '#666' }}>
-										{translate(
+										),
+										error: translate(
+											'sessionHeader.supervisor.error.loadConsultants.text',
+											'Berater konnten nicht geladen werden.'
+										),
+										empty: translate(
 											'sessionHeader.supervisor.modal.noConsultants',
 											'Keine verfügbaren Berater'
-										)}
-									</div>
-								) : (
-									<div>
-										<div style={{ width: '100%' }}>
-											<OrisoSelect
-												id="supervisor-consultant-select"
-												label={
-													consultantSelectDropdown.selectInputLabel
-												}
-												options={
-													consultantSelectDropdown.selectedOptions
-												}
-												value={
-													selectedConsultantId || ''
-												}
-												onChange={
-													handleSupervisorConsultantSelect
-												}
-											/>
-										</div>
-										<div style={{ width: '100%' }}>
-											<span style={{ display: 'none' }}>
-												{translate(
-													'sessionHeader.supervisor.modal.reasonLabel',
-													'Grund für die Supervision'
-												)}
-											</span>
-											<OrisoTextarea
-												fullWidth
-												minRows={5}
-												value={supervisionReason}
-												onChange={(e) => {
-													setSupervisionReason(
-														e.target.value
-													);
-													if (
-														supervisionReasonError &&
-														e.target.value.trim()
-													) {
-														setSupervisionReasonError(
-															false
-														);
-													}
-												}}
-												label={translate(
-													'sessionHeader.supervisor.modal.reasonLabel',
-													'Grund für die Supervision'
-												)}
-												placeholder={translate(
-													'sessionHeader.supervisor.modal.reasonPlaceholder',
-													'Bitte geben Sie den Grund für die Supervision an...'
-												)}
-												error={supervisionReasonError}
-												sx={{ mt: 0 }}
-											/>
-											{supervisionReasonError && (
-												<div
-													style={{
-														marginTop: '6px',
-														color: '#c62828',
-														fontSize: '12px'
-													}}
+										),
+										select: translate(
+											'sessionHeader.supervisor.modal.selectConsultant',
+											'Berater auswählen...'
+										)
+									}}
+								/>
+								{supervisorDirectoryState === 'ready' &&
+									availableConsultants.length > 0 && (
+										<div>
+											<div style={{ width: '100%' }}>
+												<span
+													style={{ display: 'none' }}
 												>
 													{translate(
-														'sessionHeader.supervisor.modal.reasonError',
-														'Bitte geben Sie einen Grund an.'
+														'sessionHeader.supervisor.modal.reasonLabel',
+														'Grund für die Supervision'
 													)}
-												</div>
-											)}
+												</span>
+												<OrisoTextarea
+													fullWidth
+													minRows={5}
+													value={supervisionReason}
+													onChange={(e) => {
+														setSupervisionReason(
+															e.target.value
+														);
+														if (
+															supervisionReasonError &&
+															e.target.value.trim()
+														) {
+															setSupervisionReasonError(
+																false
+															);
+														}
+													}}
+													label={translate(
+														'sessionHeader.supervisor.modal.reasonLabel',
+														'Grund für die Supervision'
+													)}
+													placeholder={translate(
+														'sessionHeader.supervisor.modal.reasonPlaceholder',
+														'Bitte geben Sie den Grund für die Supervision an...'
+													)}
+													error={
+														supervisionReasonError
+													}
+													sx={{ mt: 0 }}
+												/>
+												{supervisionReasonError && (
+													<div
+														style={{
+															marginTop: '6px',
+															color: '#c62828',
+															fontSize: '12px'
+														}}
+													>
+														{translate(
+															'sessionHeader.supervisor.modal.reasonError',
+															'Bitte geben Sie einen Grund an.'
+														)}
+													</div>
+												)}
+											</div>
+											<div
+												style={{
+													marginTop: '12px',
+													display: 'flex',
+													justifyContent: 'center'
+												}}
+											>
+												<Button
+													item={addSupervisorButton}
+													buttonHandle={
+														handleAddSupervisor
+													}
+													disabled={
+														!selectedConsultantId ||
+														!supervisionReason.trim() ||
+														isAddingSupervisor
+													}
+												/>
+											</div>
 										</div>
-										<div
-											style={{
-												marginTop: '12px',
-												display: 'flex',
-												justifyContent: 'center'
-											}}
-										>
-											<Button
-												item={addSupervisorButton}
-												buttonHandle={
-													handleAddSupervisor
-												}
-												disabled={
-													!selectedConsultantId ||
-													!supervisionReason.trim() ||
-													isAddingSupervisor
-												}
-											/>
-										</div>
-									</div>
-								)}
+									)}
 							</div>
 						</div>
 					</div>,
