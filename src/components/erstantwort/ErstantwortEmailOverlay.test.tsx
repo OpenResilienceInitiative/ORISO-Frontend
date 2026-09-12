@@ -23,7 +23,11 @@ vi.mock('react-i18next', () => ({
 			'furtherSteps.email.success.overlay.headline':
 				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.',
 			'erstantwort.emailNotification.saveFailed':
-				'Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
+				'Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.',
+			'erstantwort.emailNotification.notAllowed':
+				'Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.',
+			'profile.notifications.noEmail.modal.errorMessage':
+				'Leider können wir Ihre E-mail-Adresse momentan nicht speichern. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie unseren Support.'
 		};
 		return {
 			t: (key: string) => catalogue[key] ?? key
@@ -155,7 +159,7 @@ describe('ErstantwortEmailOverlay', () => {
 
 		expect(
 			screen.getAllByText(
-				'This account is not allowed to store an e-mail address. Please contact our support.'
+				'Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.'
 			).length
 		).toBeGreaterThan(0);
 	});
@@ -171,7 +175,7 @@ describe('ErstantwortEmailOverlay', () => {
 
 		expect(
 			screen.getAllByText(
-				'Unfortunately, we cannot save your e-mail address at the moment. Please try again later or contact our support.'
+				'Leider können wir Ihre E-mail-Adresse momentan nicht speichern. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie unseren Support.'
 			).length
 		).toBeGreaterThan(0);
 	});

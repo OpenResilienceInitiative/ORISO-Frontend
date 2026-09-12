@@ -4767,7 +4767,7 @@
 		"version": "Version du contrat",
 		"signerName": "Nom",
 		"signerPosition": "Fonction",
-		"signerEmail": "E-mail",
+		"signerEmail": "Adresse e-mail",
 		"signerNote": "Remarque (facultatif)",
 		"language": "Langue",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
