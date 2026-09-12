@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCallFeatureGates } from './callFeatureGates';
+import {
+	resolveCallFeatureGates,
+	resolveSupervisionCallFeatureGates
+} from './callFeatureGates';
 
 describe('resolveCallFeatureGates', () => {
 	it('allows both kinds when the tenant says nothing', () => {
@@ -76,5 +79,25 @@ describe('resolveCallFeatureGates', () => {
 		expect(resolveCallFeatureGates(settings, 'supervision').video).toBe(
 			false
 		);
+	});
+});
+
+describe('resolveSupervisionCallFeatureGates', () => {
+	it('does not inherit the client-facing consulting-type call gate', () => {
+		expect(
+			resolveSupervisionCallFeatureGates({
+				featureAudioCallsSupervisionChatsEnabled: true,
+				featureVideoCallsSupervisionChatsEnabled: true
+			})
+		).toEqual({ audio: true, video: true });
+	});
+
+	it('still applies the dedicated supervision flags when the consulting type allows calls', () => {
+		expect(
+			resolveSupervisionCallFeatureGates({
+				featureAudioCallsSupervisionChatsEnabled: false,
+				featureVideoCallsSupervisionChatsEnabled: true
+			})
+		).toEqual({ audio: false, video: true });
 	});
 });

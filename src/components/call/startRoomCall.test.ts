@@ -85,6 +85,15 @@ describe('startRoomCall', () => {
 	});
 
 	it('asks for the media the call needs, and releases it again', async () => {
+		const stopAudio = vi.fn();
+		const stopVideo = vi.fn();
+		vi.stubGlobal('navigator', {
+			mediaDevices: {
+				getUserMedia: vi.fn(async () => ({
+					getTracks: () => [{ stop: stopAudio }, { stop: stopVideo }]
+				}))
+			}
+		});
 		await startRoomCall({
 			roomId: SIDE_ROOM,
 			isVideo: true,
@@ -95,6 +104,8 @@ describe('startRoomCall', () => {
 			video: true,
 			audio: true
 		});
+		expect(stopAudio).toHaveBeenCalledOnce();
+		expect(stopVideo).toHaveBeenCalledOnce();
 	});
 
 	it('says so and starts nothing when the room is unknown', async () => {

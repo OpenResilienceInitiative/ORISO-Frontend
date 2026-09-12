@@ -116,7 +116,7 @@ import {
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { PanelCallActions } from '../chatStage/PanelCallActions';
-import { resolveCallFeatureGates } from '../call/callFeatureGates';
+import { resolveSupervisionCallFeatureGates } from '../call/callFeatureGates';
 import { startRoomCall } from '../call/startRoomCall';
 import {
 	AUTHORITIES,
@@ -128,8 +128,7 @@ import {
 	SessionTypeContext,
 	useTenant,
 	ActiveSessionContext,
-	LocaleContext,
-	useConsultingType
+	LocaleContext
 } from '../../globalState';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -1705,10 +1704,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	};
 
 	const isOnlyEnquiry = type === SESSION_LIST_TYPES.ENQUIRY;
-	const sessionConsultingType = useConsultingType(
-		activeSession.item?.consultingType
-	);
-
 	// cancels dragging automatically if user drags outside the
 	// browser window (there is no build-in mechanic for that)
 	const cancelDraggingOnOutsideWindow = () => {
@@ -2403,18 +2398,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
-	const supervisionCallGates = resolveCallFeatureGates(
-		getTenantSettings(),
-		'supervision'
-	);
-	// Same eligibility as the header's own call buttons
-	// (`SessionMenu.hasVideoCallFeatures`): a counsellor, in a real session,
-	// with an agency that does calls at all.
+	const supervisionCallGates =
+		resolveSupervisionCallFeatureGates(getTenantSettings());
+	// Role/session eligibility is separate from the feature-policy helper.
+	// Supervision intentionally does not inherit the client-facing consulting-
+	// type gate; it is an internal room with dedicated tenant flags.
 	const mayCallInSideRoom =
-		isConsultantUser &&
-		!isOnlyEnquiry &&
-		!activeSession.isEnquiry &&
-		Boolean(sessionConsultingType?.isVideoCallAllowed);
+		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({

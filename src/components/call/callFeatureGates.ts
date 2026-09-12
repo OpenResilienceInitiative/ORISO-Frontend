@@ -72,3 +72,7 @@ export const resolveCallFeatureGates = (
 			})
 	};
 };
+
+export const resolveSupervisionCallFeatureGates = (
+	settings: CallFeatureSettings
+): CallFeatureGates => resolveCallFeatureGates(settings, 'supervision');
