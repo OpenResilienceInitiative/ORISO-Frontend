@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menü görünümü",
+		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
+		"description": "Açık sohbet menülerinin arka planını aydınlatır ve menüyü hafif bir hareketle açar. Hareket azaltma etkinse animasyon oynatılmaz.",
+		"scope": "Bu tarayıcıdaki bu hesap için geçerlidir. Varsayılan olarak açıktır."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
@@ -325,7 +331,7 @@
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
 		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
-		"groupChatInfo": "Sohbet bilgileri",
+		"groupChatInfo": "Bilgiler ve ayarlar",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
 		"mute": "Sessize al",
@@ -655,7 +661,12 @@
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
 			"titleLabel": "Nötr takvim başlığı",
-			"addShort": "Takvim"
+			"addShort": "Takvim",
+			"copyGoogle": "Google Takvim bağlantısını kopyala",
+			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
+			"linkCopied": "Takvim bağlantısı kopyalandı.",
+			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
+			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -862,6 +873,19 @@
 					}
 				},
 				"upcoming": "Sonraki randevular"
+			},
+			"dialog": {
+				"circleTitle": "Destek grubu – bilgiler ve ayarlar",
+				"circleOwnerDescription": "Grup sahibi olarak burada katılımcıları ve ekip rollerini yönetirsiniz. Grup etkin değilken Düzenle üzerinden grup bilgilerini değiştirebilirsiniz. Diğer katılımcılar bilgileri görebilir ancak ekip rollerini veya grup ayarlarını değiştiremez.",
+				"circleDescription": "Kimlerin katıldığını ve grubunuzun ne zaman buluşacağını görün. Davet bağlantısını paylaşın veya randevuyu takviminize ekleyin.",
+				"teamTitle": "Dahili grup – bilgiler ve ayarlar",
+				"teamOwnerDescription": "Grup sahibi olarak burada dahili grubun üyelerini ve ekip rollerini yönetirsiniz. Grup etkin değilken Düzenle üzerinden grup bilgilerini değiştirebilirsiniz. Diğer üyeler bilgileri görebilir ancak ekip rollerini veya grup ayarlarını değiştiremez.",
+				"teamDescription": "Dahili grubunuzun üyelerini, grup bilgilerini ve danışmanlık ekibinin rollerini burada bulabilirsiniz.",
+				"rolesHint": "Yalnızca grup sahibi ekip rollerini değiştirebilir, sahipliği devredebilir veya kişileri gruptan çıkarabilir.",
+				"detailsTitle": "Grup bilgileri",
+				"editableSettings": "Bu bilgiler burada gösterilir. Ayarları açmak ve kullanılabilir alanları değiştirmek için “Düzenle”yi seçin.",
+				"activeSettings": "Grup etkinken bu bilgiler düzenlenemez. Grup sahibi ekip rollerini yönetmeye devam edebilir.",
+				"readOnlySettings": "Bu bilgiler burada salt okunurdur. Grup sahibi, grup etkin değilken bilgileri düzenleyebilir."
 			}
 		},
 		"join": {

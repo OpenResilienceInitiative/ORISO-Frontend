@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, matchPath } from 'react-router-dom';
 import { SessionTypeProvider } from '../../globalState/provider/SessionTypeProvider';
 import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
 import { Loading } from './Loading';
@@ -21,7 +21,17 @@ const SESSIONS_PREFIX = '/sessions/';
  * dropped.
  */
 export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
-	const { pathname } = useLocation();
+	const location = useLocation();
+	const { pathname } = location;
+	const isDialogActive = (routerConfig.dialogRoutes ?? []).some(
+		(route: any) =>
+			toV7Paths(route).some((path) => matchPath(path, pathname))
+	);
+	// A directly opened dialog URL also needs the session underneath it.
+	// Keeping the same detail route preserves the composer and scroll position.
+	const detailLocation = isDialogActive
+		? { ...location, pathname: pathname.replace(/\/[^/]+\/?$/, '') }
+		: location;
 	const isDetailActive = !/(?:sessionView|sessionPreview|view)\/?$/.test(
 		pathname
 	);
@@ -61,7 +71,7 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 				}`}
 			>
 				<Suspense fallback={<Loading />}>
-					<Routes>
+					<Routes location={detailLocation}>
 						{(routerConfig.userProfileRoutes ?? []).flatMap(
 							(route: any) =>
 								toV7Paths(route).map((path) => (
@@ -112,6 +122,28 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 					</Routes>
 				</Suspense>
 			</div>
+			<Suspense fallback={<Loading />}>
+				<Routes>
+					{(routerConfig.dialogRoutes ?? []).flatMap((route: any) =>
+						toV7Paths(route).map((path) => (
+							<Route
+								key={`dialog-${path}`}
+								path={stripPrefix(path, SESSIONS_PREFIX)}
+								element={
+									<SessionTypeProvider
+										type={route.type || null}
+									>
+										<route.component
+											type={route.type || null}
+										/>
+									</SessionTypeProvider>
+								}
+							/>
+						))
+					)}
+					<Route path="*" element={null} />
+				</Routes>
+			</Suspense>
 		</SessionListViewStateProvider>
 	);
 };

@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Affichage des menus",
+		"label": "Voile et animations douces",
+		"description": "Éclaircit l’arrière-plan des menus de conversation ouverts et anime doucement le menu. Aucune animation si la réduction des mouvements est activée.",
+		"scope": "S’applique à ce compte dans ce navigateur. Activé par défaut."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Informer les personnes en quête de conseils de mon absence"
@@ -325,7 +331,7 @@
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
 		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
-		"groupChatInfo": "Infos sur le chat",
+		"groupChatInfo": "Informations et paramètres",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",
 		"mute": "Désactiver le son",
@@ -655,7 +661,12 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda"
+			"addShort": "Agenda",
+			"copyGoogle": "Copier le lien Google Agenda",
+			"copyOutlook": "Copier le lien du calendrier Outlook",
+			"linkCopied": "Lien du calendrier copié.",
+			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -862,6 +873,19 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"dialog": {
+				"circleTitle": "Groupe d’entraide – informations et paramètres",
+				"circleOwnerDescription": "En tant que responsable, vous gérez ici les participants et les rôles de votre groupe. Vous pouvez modifier les informations via Modifier lorsque le groupe est inactif. Les autres participants peuvent consulter les informations, mais ne peuvent pas modifier les rôles ni les paramètres du groupe.",
+				"circleDescription": "Consultez la liste des participants et la date de votre rencontre. Partagez l’invitation ou ajoutez le rendez-vous à votre calendrier.",
+				"teamTitle": "Groupe interne – informations et paramètres",
+				"teamOwnerDescription": "En tant que responsable, vous gérez ici les membres et les rôles de votre groupe interne. Vous pouvez modifier les informations via Modifier lorsque le groupe est inactif. Les autres membres peuvent consulter les informations, mais ne peuvent pas modifier les rôles ni les paramètres du groupe.",
+				"teamDescription": "Retrouvez les membres et les informations de votre groupe interne, ainsi que les rôles de l’équipe de consultation.",
+				"rolesHint": "Seule la personne responsable peut modifier les rôles, transférer la responsabilité ou retirer des personnes du groupe.",
+				"detailsTitle": "Informations sur le groupe",
+				"editableSettings": "Ces informations sont affichées ici. Sélectionnez « Modifier » pour ouvrir les paramètres et modifier les champs disponibles.",
+				"activeSettings": "Ces informations ne peuvent pas être modifiées lorsque le groupe est actif. La personne responsable peut toujours gérer les rôles.",
+				"readOnlySettings": "Ces informations sont en lecture seule ici. La personne responsable peut les modifier lorsque le groupe n’est pas actif."
 			}
 		},
 		"join": {
