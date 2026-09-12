@@ -536,6 +536,7 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		const n = parseInt(hex.replace('#', ''), 16);
 		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 	})();
+	let composerBorder = '';
 	await waitFor(
 		() => {
 			const input = canvasElement.querySelector<HTMLElement>(
@@ -554,6 +555,10 @@ const panelTint = async (canvasElement: HTMLElement) => {
 			const field = getComputedStyle(input!);
 			expect(field.borderTopWidth).toBe('1px');
 			expect(field.borderTopColor).not.toBe(focusRing);
+			// Snapshot the resting border in the same stable observation. The
+			// editor may legitimately regain focus after this wait; reading the
+			// live style again below would race that asynchronous focus handoff.
+			composerBorder = field.borderTopColor;
 		},
 		{ timeout: 3000, interval: 50 }
 	);
@@ -582,11 +587,7 @@ const panelTint = async (canvasElement: HTMLElement) => {
 		hairline: getComputedStyle(divider).borderTopColor,
 		tag: getComputedStyle(header.querySelector('.panelHeader__kindButton')!)
 			.backgroundColor,
-		composerBorder: getComputedStyle(
-			canvasElement.querySelector(
-				'[data-cy="stage-panel"] .textarea__input'
-			)!
-		).borderTopColor,
+		composerBorder,
 		composerAccent: canvasElement
 			.querySelector(
 				'[data-cy="stage-panel"] .textarea__wrapper-send-message'
