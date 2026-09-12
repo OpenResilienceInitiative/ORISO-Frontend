@@ -55,9 +55,10 @@ const EXACT_CONTRACT_TOKENS: Record<string, string> = {
  *   derives the whole secondary family from one palette instead.
  * - 'Background' (#f3eeee): inconsistent with 'Surface' in the file;
  *   the engine maps background onto the surface role.
- * - Fixed roles beyond the primary pair: not consumed anywhere in
- *   ORISO. Primary Fixed / On Primary Fixed ARE locked — the light
- *   brand tint is the chat-bubble surface of the counselling app.
+ * - Tertiary fixed roles: not consumed anywhere in ORISO. Primary Fixed /
+ *   On Primary Fixed ARE locked — the light brand tint is the chat-bubble
+ *   surface of the counselling app; Secondary Fixed since T27 — the menu
+ *   organism's hover/selected surface.
  */
 const TOLERANCE_TOKENS: Record<string, string> = {
 	'--m3-primary': 'Primary',
@@ -86,6 +87,11 @@ const TOLERANCE_TOKENS: Record<string, string> = {
 	'--m3-primary-fixed-dim': 'Primary Fixed Dim',
 	'--m3-on-primary-fixed': 'On Primary Fixed',
 	'--m3-on-primary-fixed-variant': 'On Primary Fixed Variant',
+	// T27: the menu organism's hover/selected surface (pale blue-grey).
+	'--m3-secondary-fixed': 'Secondary Fixed',
+	'--m3-secondary-fixed-dim': 'Secondary Fixed Dim',
+	'--m3-on-secondary-fixed': 'On Secondary Fixed',
+	'--m3-on-secondary-fixed-variant': 'On Secondary Fixed Variant',
 	'--m3-surface-tint': 'Surface Tint',
 	'--m3-shadow': 'Shadow',
 	'--m3-scrim': 'Scrim'

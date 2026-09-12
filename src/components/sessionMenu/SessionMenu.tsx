@@ -78,6 +78,8 @@ import {
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -93,6 +95,12 @@ export interface SessionMenuProps {
 	showMobileEndAnonymousChatAction?: boolean;
 	onMobileEndAnonymousChatAction?: () => void;
 	mobileEndAnonymousChatDisabled?: boolean;
+	/**
+	 * D8 (Frank, 05.09.2026): the audio/video call buttons leave the header
+	 * row and become rows of this menu (phone: the title needs the width).
+	 * Off by default — B2 sets it from the viewport (`untilL`).
+	 */
+	callsInMenu?: boolean;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -115,6 +123,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
+	// WP-B2: the supervision parallel panel; null outside a session view.
+	const supervisionPanel = useSupervisionPanel();
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -539,6 +549,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				!isLoadingTenantSettings &&
 				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
+				!props.callsInMenu &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
 						className="sessionMenu__videoCallButtons"
@@ -626,25 +637,63 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						/>
 						<ChatMenuDropdownDivider />
-						{/* REMOVED: Mobile dropdown video call items - now using desktop buttons on mobile too */}
-						{false && hasVideoCallFeatures() && (
-							<>
-								<div
-									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-									onClick={() => handleStartVideoCall(true)}
-								>
-									{translate(
-										'videoCall.button.startVideoCall'
+						{/* D8 (05.09.2026): with `callsInMenu` the call buttons
+						    are rows of this menu instead of header buttons —
+						    the organism's rows (icon · title), same handlers
+						    as the buttons, same feature gates. */}
+						{props.callsInMenu &&
+							sessionMenuOwnsCallControls(
+								activeSession.isGroup
+							) &&
+							!isLoadingTenantSettings &&
+							hasVideoCallFeatures() &&
+							!props.isSupervisor && (
+								<>
+									{/* Review v10: real controls — native buttons
+									    (role button, keyboard by default) inside the
+									    organism's `role="dialog"` card; the visible
+									    title is the accessible name. A `menuitem`
+									    role needs the organism's container to be a
+									    `role="menu"` — that is the organism-wide
+									    keyboard ticket, not this row. */}
+									{isVideoCallsEnabled && (
+										<button
+											type="button"
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												setFlyoutOpen(false);
+												handleStartVideoCall(true);
+											}}
+											data-cy="session-menu-start-video-call"
+										>
+											<SessionMenuItemContent
+												icon={<VideoCallHeaderIcon />}
+												title={translate(
+													'videoCall.button.startVideoCall'
+												)}
+											/>
+										</button>
 									)}
-								</div>
-								<div
-									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-									onClick={() => handleStartVideoCall()}
-								>
-									{translate('videoCall.button.startCall')}
-								</div>
-							</>
-						)}
+									{isAudioCallsEnabled && (
+										<button
+											type="button"
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												setFlyoutOpen(false);
+												handleStartVideoCall(false);
+											}}
+											data-cy="session-menu-start-call"
+										>
+											<SessionMenuItemContent
+												icon={<AudioCallHeaderIcon />}
+												title={translate(
+													'videoCall.button.startCall'
+												)}
+											/>
+										</button>
+									)}
+								</>
+							)}
 
 						{props.isAskerInfoAvailable && (
 							<Link
@@ -674,6 +723,35 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								)}
 							/>
 						</div>
+
+						{supervisionPanel?.visible && (
+							<div
+								className={`sessionMenu__item chatMenuDropdown__item ${
+									!supervisionPanel.available
+										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+										: ''
+								}`}
+								onClick={() => {
+									if (!supervisionPanel.available) {
+										return;
+									}
+									setFlyoutOpen(false);
+									supervisionPanel.expand();
+								}}
+								data-cy="session-menu-supervision-panel"
+							>
+								<SessionMenuItemContent
+									icon={<SupervisionIcon />}
+									title={translate('supervision.panel.title')}
+									disabled={!supervisionPanel.available}
+									shortcut={
+										supervisionPanel.unreadCount > 0
+											? supervisionPanel.unreadCount
+											: undefined
+									}
+								/>
+							</div>
+						)}
 
 						{props.showMobileSupervisionAction && (
 							<div

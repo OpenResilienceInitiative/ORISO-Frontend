@@ -1,0 +1,177 @@
+// Consultant session stage — `list | main | secondary` on stage level
+// (inventory §3.4). Only layout: the chat card keeps `.session`, the list
+// column keeps `.sessionsList__wrapper`, the side panel keeps `.sidePanel`.
+// Tokens: stage shell = the app's `.contentWrapper` surface.
+
+.chatStage {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	height: 100vh;
+	min-height: 0;
+	overflow: hidden;
+	background-color: var(--m3-surface-container-high, #eae7e8);
+
+	// T13/T34: the list handle centres in the VISIBLE gap between the list
+	// cards and the chat card. The gap is the card's own margin token
+	// (`session.styles.scss`, Figma 1320:38278: 24 px), but the list cards
+	// end 12 px before the column edge (`.sessionsList__scrollContainer`
+	// desktop margin) — so the card's left margin is the difference and the
+	// handle formula (`sessionsList.styles.scss`) takes the gutter back.
+	// `STAGE_LAYOUT.LIST_CARD_GAP` / `LIST_INNER_GUTTER` mirror both in TS.
+	--pane-gap: var(--session-card-margin, 24px);
+	--pane-inner-gutter: 12px;
+
+	&__list {
+		flex: 0 0 auto;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		transition: width 200ms ease;
+	}
+
+	&__detail {
+		flex: 1 1 auto;
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+
+		// T34: the chat card starts `--pane-gap` after the list CARDS.
+		> .session:first-child {
+			margin-left: calc(var(--pane-gap) - var(--pane-inner-gutter));
+		}
+	}
+
+	// Phone: one pane fills the stage, a bottom bar below (placeholder for
+	// the app's bottom navigation, 72 px like `$grid-base-nine`).
+	&--single {
+		flex-direction: column;
+
+		.chatStage__detail {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.session,
+		.sidePanel {
+			flex: 1 1 auto;
+			width: 100%;
+			margin: 0;
+			border: 0;
+			border-radius: 0;
+		}
+	}
+
+	// T10: the app's bottom navigation (`NavigationBar`, mobile layout).
+	// `.app__wrapper` scopes the production nav rules; the bar sizes itself.
+	&__bottomNav {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+
+		// `.app__wrapper` is the production shell (100 % high); here it only
+		// scopes the nav rules and must not claim the stage's height.
+		&.app__wrapper {
+			height: auto;
+			max-height: none;
+			overflow: visible;
+		}
+
+		.navigation__wrapper {
+			width: 100%;
+			height: auto;
+		}
+	}
+}
+
+// Side-by-side comparison frame for the label question (story f).
+.chatStageCompare {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	padding: 24px;
+	background-color: var(--m3-surface-container-high, #eae7e8);
+
+	&__item {
+		flex: 1 1 420px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+	}
+
+	&__caption {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__frame {
+		position: relative;
+		height: 400px;
+		overflow: hidden;
+		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
+		border-radius: 28px;
+		background: var(--m3-surface-container-lowest, #fff);
+	}
+}
+
+// Shared by the stage AND the app (B2): the chat card hosting a side
+// room. `SessionItemComponent` renders the same DOM/classes the stage does:
+//   .session.chatStage__card(--split)
+//     > .chatStage__mainPane   (header · timeline · composer · FAB)
+//     > .chatStage__panel      (ResizableHandle · SidePanel)
+// Frank's choice: the side room lives INSIDE the chat card. The card
+// becomes a row of two panes; each pane is its own positioning context so
+// the real composer docks to its own pane, not to the whole card.
+.session.chatStage__card {
+	&--split {
+		flex-direction: row;
+	}
+
+	// `.session > div:first-child` pins the header; here that first child
+	// is the whole main pane, which must flex and shrink instead.
+	> .chatStage__mainPane {
+		position: relative;
+		flex: 1 1 0;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+
+		> :first-child {
+			flex: 0 0 auto;
+		}
+
+		// In the real card `.session > .session__content` puts the timeline
+		// in normal flow; mirror that for the pane so the header stays on top.
+		> .session__content {
+			position: relative;
+			inset: auto;
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+	}
+}
+
+.chatStage__panel {
+	position: relative;
+	flex: 0 0 auto;
+
+	// Second-card variant: the panel is a `.session` card of its own;
+	// keep the stage inset but close the gap to the chat card.
+	&--card {
+		display: flex;
+
+		> .session {
+			margin: 24px 24px 24px 0;
+		}
+	}
+}

@@ -27,7 +27,9 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
+import { getErstantwortRenderMode } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -75,10 +77,12 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
+import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
-	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
+	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
+	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
@@ -1122,10 +1126,13 @@ export const MessageItemComponent = ({
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
 	   resolves anything unknown to Agency Counselling, so it would render the
-	   wrong sequence rather than none. Excluded explicitly. */
-	const isErstantwortModality =
-		erstantwortModality !== undefined &&
-		erstantwortModality !== Modality.INTERNAL_GROUP;
+	   wrong sequence rather than none. Such an event renders one neutral line
+	   instead of falling through to the generic chrome (raw JSON payload).
+	   Decision lives in erstantwortRoomGate.ts. */
+	const erstantwortRenderMode = getErstantwortRenderMode(
+		isErstantwortEvent,
+		erstantwortModality
+	);
 	/* Only a freshly arrived event plays the stagger. The message list mounts and
 	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
 	   `revealed` to 0 on every mount — so without this an event received days ago
@@ -1142,6 +1149,12 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* T49: the supervision side room's notice is drawn with the SAME organism
+	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
+	   under the room's name — never with the generic chrome below. */
+	const isSupervisionNoticeEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_SUPERVISION_NOTICE;
 	const userLeftChatEventText = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -1183,14 +1196,11 @@ export const MessageItemComponent = ({
 		decryptedMessage !== null && decryptedMessage !== undefined;
 
 	const getMessageDate = () => {
-		if (messageDate.str || messageDate.date) {
-			return (
-				<MessageDateDivider
-					label={translate(
-						messageDate.str ? messageDate.str : messageDate.date
-					)}
-				/>
-			);
+		// Defence in depth (N-2): a message without a date must never send
+		// the whole conversation to the error page.
+		const label = messageDate?.str || messageDate?.date;
+		if (label) {
+			return <MessageDateDivider label={translate(label)} />;
 		}
 		return null;
 	};
@@ -2491,7 +2501,7 @@ export const MessageItemComponent = ({
 	   as its own staged Carimat sequence, and the surrounding message frame
 	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
 	   sequence already draws. */
-	if (isErstantwortEvent && isErstantwortModality) {
+	if (erstantwortRenderMode === 'sequence') {
 		return (
 			<div className="messageItem messageItem--erstantwort">
 				{getMessageDate()}
@@ -2499,6 +2509,48 @@ export const MessageItemComponent = ({
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
 					skipAnimation={!isRecentErstantwortEvent}
+				/>
+			</div>
+		);
+	}
+
+	if (erstantwortRenderMode === 'unavailable') {
+		return (
+			<div className="messageItem messageItem--chatEvent messageItem--erstantwortUnavailable">
+				{getMessageDate()}
+				<div
+					className="messageItem__chatEvent"
+					data-testid="erstantwort-unavailable"
+				>
+					{translate(
+						'erstantwort.unavailableInRoom',
+						'First response – not available in this room.'
+					)}
+				</div>
+			</div>
+		);
+	}
+
+	if (isSupervisionNoticeEvent) {
+		return (
+			<div
+				className="messageItem messageItem--erstantwort messageItem--supervisionNotice"
+				data-message-id={_id}
+			>
+				{getMessageDate()}
+				<ErstantwortSequence
+					name={systemNotificationTitle}
+					subtitle={translate(
+						'message.systemNotification',
+						'System notification'
+					)}
+					bausteine={[
+						{
+							id: 'supervision-notice',
+							body: systemNotificationDescription
+						}
+					]}
+					skipAnimation
 				/>
 			</div>
 		);
@@ -2525,6 +2577,9 @@ export const MessageItemComponent = ({
 
 	return (
 		<div
+			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
+			// this bubble into view after the history has loaded.
+			data-message-id={_id}
 			className={`messageItem ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${
@@ -2751,6 +2806,63 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
+					{/* T21: the thread entry under a root message — reply count
+					    and "Author: last reply…" on one line, opens the thread. */}
+					{renderMode === 'main' &&
+						threadsEnabled &&
+						!alias?.messageType &&
+						threadSummary &&
+						threadSummary.replyCount > 0 && (
+							<button
+								type="button"
+								className={clsx(
+									'messageItem__threadButton',
+									isMyMessage &&
+										'messageItem__threadButton--right'
+								)}
+								data-cy="thread-entry"
+								aria-label={[
+									translate(
+										'message.thread.open',
+										'Open thread'
+									),
+									translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									),
+									threadSummary.lastReplyText
+								]
+									.filter(Boolean)
+									.join(' – ')}
+								title={threadSummary.lastReplyText}
+								onClick={(event) => {
+									event.preventDefault();
+									event.stopPropagation();
+									onOpenThread?.();
+								}}
+							>
+								<ThreadEntryIcon
+									className="messageItem__threadButtonIcon"
+									aria-hidden="true"
+								/>
+								<span className="messageItem__threadButtonMain">
+									{translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									)}
+								</span>
+								{threadSummary.lastReplyText && (
+									<span
+										className="messageItem__threadButtonMeta"
+										data-cy="thread-entry-preview"
+									>
+										{threadSummary.lastReplyText}
+									</span>
+								)}
+							</button>
+						)}
 				</div>
 			</div>
 			{isActionMenuOpen

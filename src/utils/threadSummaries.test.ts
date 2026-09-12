@@ -4,7 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computeThreadSummaries } from './threadSummaries';
+import {
+	computeThreadSummaries,
+	formatThreadEntryPreview
+} from './threadSummaries';
 
 describe('computeThreadSummaries', () => {
 	it('counts replies and tracks the last reply per thread root', () => {
@@ -34,8 +37,58 @@ describe('computeThreadSummaries', () => {
 			rootId: '$root:hs',
 			replyCount: 2,
 			lastReplyTs: new Date('2026-07-14T09:02:00.000Z').getTime(),
-			rootPreview: 'Ursprüngliche Frage'
+			rootPreview: 'Ursprüngliche Frage',
+			lastReplyAuthor: '',
+			lastReplyPreview: 'Zweite Antwort'
 		});
+	});
+
+	// T21: the thread entry in the main chat shows who replied last and what.
+	it('keeps the author and a plain-text preview of the last reply', () => {
+		const messages = [
+			{
+				_id: '$root:hs',
+				message: 'Root',
+				messageTime: '2026-07-14T09:00:00.000Z'
+			},
+			{
+				_id: '$reply1:hs',
+				message: 'Erste Antwort',
+				messageTime: '2026-07-14T09:01:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: 'Mona S.',
+				username: 'mona.s@oriso.invalid'
+			},
+			{
+				_id: '$reply2:hs',
+				message:
+					'[[align:left]]<p>Okay, <b>nächste</b> Woche</p>[[/align]]',
+				messageTime: '2026-07-14T09:02:00.000Z',
+				threadRootEventId: '$root:hs',
+				username: 'sonnenblume_47'
+			}
+		];
+
+		const summary = computeThreadSummaries(messages).get('$root:hs')!;
+
+		expect(summary.lastReplyAuthor).toBe('sonnenblume_47');
+		expect(summary.lastReplyPreview).toBe('Okay, nächste Woche');
+	});
+
+	it('prefers the display name over the username for the last reply author', () => {
+		const messages = [
+			{
+				_id: '$reply:hs',
+				message: 'Antwort',
+				messageTime: '2026-07-14T09:01:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: 'Mona S.',
+				username: 'mona.s@oriso.invalid'
+			}
+		];
+		expect(
+			computeThreadSummaries(messages).get('$root:hs')?.lastReplyAuthor
+		).toBe('Mona S.');
 	});
 
 	it('ignores a legacy [THREAD:rootId] prefix message that has no relation (ADR-017 hard cut)', () => {
@@ -84,7 +137,9 @@ describe('computeThreadSummaries', () => {
 			rootId: '$missing-root:hs',
 			replyCount: 1,
 			lastReplyTs: new Date('2026-07-14T09:01:00.000Z').getTime(),
-			rootPreview: ''
+			rootPreview: '',
+			lastReplyAuthor: '',
+			lastReplyPreview: 'Antwort ohne geladenen Root'
 		});
 	});
 
@@ -109,5 +164,40 @@ describe('computeThreadSummaries', () => {
 		expect(summaries.get('$root:hs')?.rootPreview).not.toMatch(
 			/\[\[align:|<p>/i
 		);
+	});
+});
+
+describe('formatThreadEntryPreview (T21: "Autor: letzte Nachricht" on the thread entry)', () => {
+	it('joins author and preview on one line', () => {
+		expect(
+			formatThreadEntryPreview({
+				lastReplyAuthor: 'Mona S.',
+				lastReplyPreview: 'Zu den Briefen: alles in Ordnung.'
+			})
+		).toBe('Mona S.: Zu den Briefen: alles in Ordnung.');
+	});
+
+	it('truncates a long preview with an ellipsis at the given maximum', () => {
+		const text = formatThreadEntryPreview(
+			{ lastReplyAuthor: 'A', lastReplyPreview: 'x'.repeat(200) },
+			40
+		);
+		expect(text.length).toBe(40);
+		expect(text.endsWith('…')).toBe(true);
+	});
+
+	it('falls back to the preview alone without an author, and to empty without both', () => {
+		expect(
+			formatThreadEntryPreview({
+				lastReplyAuthor: '',
+				lastReplyPreview: 'Nur Text'
+			})
+		).toBe('Nur Text');
+		expect(
+			formatThreadEntryPreview({
+				lastReplyAuthor: '',
+				lastReplyPreview: ''
+			})
+		).toBe('');
 	});
 });

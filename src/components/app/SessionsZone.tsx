@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { SessionTypeProvider } from '../../globalState/provider/SessionTypeProvider';
 import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
+import { ChatStagePanelProvider } from '../chatStage/ChatStagePanelContext';
 import { Loading } from './Loading';
 import { toV7Paths, stripPrefix } from '../../utils/routeHelpers';
 
@@ -28,51 +29,83 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 
 	return (
 		<SessionListViewStateProvider>
-			<div
-				className={`contentWrapper__list${
-					isDetailActive ? ' contentWrapper__list--smallInactive' : ''
-				}`}
-			>
-				<Routes>
-					{(routerConfig.listRoutes ?? []).flatMap((route: any) =>
-						toV7Paths(route).map((path) => (
-							<Route
-								key={`list-${path}`}
-								path={stripPrefix(path, SESSIONS_PREFIX)}
-								element={
-									<SessionTypeProvider
-										type={route.type || null}
-									>
-										<route.component
-											sessionTypes={route.sessionTypes}
-										/>
-									</SessionTypeProvider>
-								}
-							/>
-						))
-					)}
-				</Routes>
-			</div>
-			<div
-				className={`contentWrapper__detail${
-					isDetailActive
-						? ''
-						: ' contentWrapper__detail--smallInactive'
-				}`}
-			>
-				<Suspense fallback={<Loading />}>
+			<ChatStagePanelProvider>
+				<div
+					className={`contentWrapper__list${
+						isDetailActive
+							? ' contentWrapper__list--smallInactive'
+							: ''
+					}`}
+				>
 					<Routes>
-						{(routerConfig.userProfileRoutes ?? []).flatMap(
-							(route: any) =>
-								toV7Paths(route).map((path) => (
-									<Route
-										key={`userProfile-${path}`}
-										path={stripPrefix(
-											path,
-											SESSIONS_PREFIX
-										)}
-										element={
-											<div className="contentWrapper__userProfile">
+						{(routerConfig.listRoutes ?? []).flatMap((route: any) =>
+							toV7Paths(route).map((path) => (
+								<Route
+									key={`list-${path}`}
+									path={stripPrefix(path, SESSIONS_PREFIX)}
+									element={
+										<SessionTypeProvider
+											type={route.type || null}
+										>
+											<route.component
+												sessionTypes={
+													route.sessionTypes
+												}
+											/>
+										</SessionTypeProvider>
+									}
+								/>
+							))
+						)}
+					</Routes>
+				</div>
+				<div
+					className={`contentWrapper__detail${
+						isDetailActive
+							? ''
+							: ' contentWrapper__detail--smallInactive'
+					}`}
+				>
+					<Suspense fallback={<Loading />}>
+						<Routes>
+							{(routerConfig.userProfileRoutes ?? []).flatMap(
+								(route: any) =>
+									toV7Paths(route).map((path) => (
+										<Route
+											key={`userProfile-${path}`}
+											path={stripPrefix(
+												path,
+												SESSIONS_PREFIX
+											)}
+											element={
+												<div className="contentWrapper__userProfile">
+													<SessionTypeProvider
+														type={
+															route.type || null
+														}
+													>
+														<route.component
+															type={
+																route.type ||
+																null
+															}
+														/>
+													</SessionTypeProvider>
+												</div>
+											}
+										/>
+									))
+							)}
+							{(routerConfig.detailRoutes ?? []).flatMap(
+								(route: any) =>
+									toV7Paths(route).map((path) => (
+										<Route
+											key={`detail-${path}`}
+											path={stripPrefix(
+												path,
+												SESSIONS_PREFIX
+											)}
+											element={
 												<SessionTypeProvider
 													type={route.type || null}
 												>
@@ -82,36 +115,15 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 														}
 													/>
 												</SessionTypeProvider>
-											</div>
-										}
-									/>
-								))
-						)}
-						{(routerConfig.detailRoutes ?? []).flatMap(
-							(route: any) =>
-								toV7Paths(route).map((path) => (
-									<Route
-										key={`detail-${path}`}
-										path={stripPrefix(
-											path,
-											SESSIONS_PREFIX
-										)}
-										element={
-											<SessionTypeProvider
-												type={route.type || null}
-											>
-												<route.component
-													type={route.type || null}
-												/>
-											</SessionTypeProvider>
-										}
-									/>
-								))
-						)}
-						<Route path="*" element={null} />
-					</Routes>
-				</Suspense>
-			</div>
+											}
+										/>
+									))
+							)}
+							<Route path="*" element={null} />
+						</Routes>
+					</Suspense>
+				</div>
+			</ChatStagePanelProvider>
 		</SessionListViewStateProvider>
 	);
 };

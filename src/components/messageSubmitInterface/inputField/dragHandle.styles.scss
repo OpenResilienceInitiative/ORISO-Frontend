@@ -21,6 +21,12 @@
 	touch-action: none;
 	z-index: 5;
 
+	// T31: `edge` centres the 16 px touch zone — and so the pill — on the
+	// card's top edge; `inside` (default) keeps it 4 px under the edge.
+	&--edge {
+		top: -8px;
+	}
+
 	&__pill {
 		width: 57px;
 		height: 4px;
@@ -32,6 +38,14 @@
 	}
 
 	&:hover &__pill {
+		background: var(--m3-primary-container, #cc1e1c);
+	}
+
+	// T50 (Frank, 06.09.): a focused ("selected") composer wears the 2 px
+	// `primary-container` field border (#597) — the pill on its edge takes
+	// the same colour instead of staying pale on an active field. Declared
+	// before `--touched` so a drag still darkens it further.
+	.textarea__wrapper-send-message--selected &__pill {
 		background: var(--m3-primary-container, #cc1e1c);
 	}
 

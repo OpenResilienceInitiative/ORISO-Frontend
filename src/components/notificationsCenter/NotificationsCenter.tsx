@@ -1,3 +1,7 @@
+import {
+	parseChannel,
+	rewriteLegacyChannelPath
+} from '../../utils/channelRoute';
 import * as React from 'react';
 import {
 	useCallback,
@@ -113,7 +117,7 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
-	if (item?.actionPath?.includes('threadRootId=')) return 'message';
+	if (resolveThreadRootId(item)) return 'message';
 	return 'system';
 };
 
@@ -161,15 +165,15 @@ const resolveSessionId = (item: any): string | null => {
 	return match?.[1] || null;
 };
 
+// B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
+// still carries the legacy `threadRootId` is rewritten first.
 const resolveThreadRootId = (item: any): string | null => {
-	const path = item?.actionPath;
+	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
 	if (!path || !String(path).includes('?')) {
 		return null;
 	}
-	const query = String(path).split('?')[1];
-	const params = new URLSearchParams(query);
-	const threadRootId = params.get('threadRootId');
-	return threadRootId ? decodeURIComponent(threadRootId) : null;
+	const { channel } = parseChannel(`?${String(path).split('?')[1]}`);
+	return channel?.kind === 'thread' ? channel.rootId : null;
 };
 
 // #847: Matrix room for the embedded preview — params.roomRef when the

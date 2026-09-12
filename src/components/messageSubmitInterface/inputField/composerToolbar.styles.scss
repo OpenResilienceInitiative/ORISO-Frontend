@@ -10,6 +10,8 @@
 	gap: 2px;
 	padding: 4px 8px 0 17px;
 	min-height: 40px;
+	min-width: 0;
+	max-width: 100%;
 	flex-wrap: nowrap;
 	overflow-x: auto;
 	overflow-y: visible;
@@ -17,6 +19,52 @@
 
 	&::-webkit-scrollbar {
 		display: none;
+	}
+
+	// Review v6 (T22): a resting position lands on whole icons — never on
+	// half a glyph — and the trailing inset keeps the last icon clear of
+	// the bar's edge.
+	scroll-snap-type: x proximity;
+	scroll-padding-inline: 4px;
+
+	// Every button keeps its width; the ROW scrolls instead (T22).
+	> * {
+		flex: 0 0 auto;
+		scroll-snap-align: start;
+	}
+
+	// Review v6 (T22): the hidden edge fades out (`useScrollableBar` sets
+	// the flags) — a scrollbar is hidden above, so this is the only hint
+	// that the row goes on.
+	&[data-overflow-end='true'] {
+		mask-image: linear-gradient(
+			to right,
+			#000 calc(100% - 24px),
+			transparent
+		);
+	}
+
+	&[data-overflow-start='true'] {
+		mask-image: linear-gradient(to right, transparent, #000 24px);
+	}
+
+	&[data-overflow-start='true'][data-overflow-end='true'] {
+		mask-image: linear-gradient(
+			to right,
+			transparent,
+			#000 24px,
+			#000 calc(100% - 24px),
+			transparent
+		);
+	}
+
+	// T22: the compact bar's anchor (emoji picker positioning) must take the
+	// full toolbar width, otherwise the bar sizes to its content, ignores
+	// the send button and slides the last icon underneath it.
+	&__menuAnchor--bar {
+		display: flex;
+		width: 100%;
+		min-width: 0;
 	}
 
 	&__button {
@@ -69,6 +117,11 @@
 	&--default {
 		min-height: 44px;
 
+		// T23: no reserved space in front of the first arrow — the phone's
+		// back arrow renders nothing on the desktop, so the row starts at
+		// the field's inset.
+		padding-left: 4px;
+
 		.composerToolbar__button {
 			width: 40px;
 			min-width: 40px;
@@ -89,6 +142,38 @@
 			display: inline-flex;
 			transform-origin: center;
 		}
+	}
+
+	// T16: the scroll-to-newest arrow carries the unread badge — an 18 px
+	// pill with a 10 px label. Review v6: ONE unread role everywhere — the
+	// same indicator colour as the channel card, the FAB and the panel
+	// header (`--oriso-unread-indicator-color`, error role), no longer
+	// `primary`.
+	&__button--scrollToNewest {
+		position: relative;
+	}
+
+	&__badge {
+		position: absolute;
+		top: -3px;
+		right: -3px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 4px;
+		box-sizing: border-box;
+		border-radius: 999px;
+		background: var(
+			--oriso-unread-indicator-color,
+			var(--m3-error, #cc0000)
+		);
+		color: var(--m3-on-error, #fff);
+		font-size: 10px;
+		font-weight: 500;
+		line-height: 1;
+		pointer-events: none;
 	}
 
 	&__buttonText {
