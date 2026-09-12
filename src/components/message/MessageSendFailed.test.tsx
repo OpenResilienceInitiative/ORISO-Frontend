@@ -5,9 +5,22 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageSendFailed } from './MessageSendFailed';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback: string) => fallback
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'message.sendFailed.title': 'Sending message failed',
+			'message.sendFailed.subtitle': 'Resend your message again',
+			'message.sendFailed.status': 'not delivered',
+			'message.sendFailed.retry': 'Try again',
+			'message.decryptionFailed.title': 'Message decryption failed',
+			'message.decryptionFailed.subtitle': 'Incoming message unavailable',
+			'message.decryptionFailed.body':
+				'This incoming message could not be decrypted. Ask the sender to send it again, or try reloading the conversation.',
+			'message.decryptionFailed.status': 'could not be decrypted'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('../../resources/img/icons/delivery-failed.svg', () => ({

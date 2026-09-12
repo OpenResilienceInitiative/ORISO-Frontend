@@ -39,15 +39,6 @@ export const GATE_STATUS_KEY: Record<HandoverGateState, string> = {
 	entering: 'registration.handover.status.entering'
 };
 
-export const GATE_STATUS_FALLBACK: Record<HandoverGateState, string> = {
-	preparing: 'Beratungsraum wird verschlüsselt …',
-	verifying: 'Prüfung: Mensch oder Bot …',
-	queued: 'Gleich sind Sie an der Reihe …',
-	ready: 'Alles bereit — Sie können schreiben',
-	slow: 'Das dauert länger als gewohnt',
-	entering: 'Ihr Beratungsraum wird geöffnet …'
-};
-
 /**
  * How far the fill inside the button has advanced, 0–100.
  * `preparing` deliberately parks below the end: a bar that reaches 100 % and

@@ -216,8 +216,7 @@ export const RegistrationHandover = ({
 								color: registrationMd3.primary
 							}}
 						>
-							{copy?.badge ??
-								t('registration.handover.badge', 'Registriert')}
+							{copy?.badge ?? t('registration.handover.badge')}
 						</Typography>
 					</Box>
 					{/* Frank, 2026-09-01: "wir sollten aus dem 'Geschafft, so
@@ -246,14 +245,8 @@ export const RegistrationHandover = ({
 							const text = own
 								? own
 								: done
-									? t(
-											'registration.handover.headline',
-											'Geschafft.'
-										)
-									: t(
-											'registration.handover.headlineAlmost',
-											'Fast geschafft.'
-										);
+									? t('registration.handover.headline')
+									: t('registration.handover.headlineAlmost');
 							const shown = own ? done : done === handoverDone;
 							if (own && !done) {
 								return null;
@@ -305,11 +298,7 @@ export const RegistrationHandover = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{copy?.subline ??
-							t(
-								'registration.handover.subline',
-								'So geht es weiter:'
-							)}
+						{copy?.subline ?? t('registration.handover.subline')}
 					</Typography>
 				</Box>
 
@@ -356,10 +345,7 @@ export const RegistrationHandover = ({
 					/>
 					<Typography component="span" sx={{ fontSize: 'inherit' }}>
 						{copy?.encryption ??
-							t(
-								'registration.handover.encryption',
-								'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
-							)}
+							t('registration.handover.encryption')}
 					</Typography>
 				</Box>
 			</Box>
