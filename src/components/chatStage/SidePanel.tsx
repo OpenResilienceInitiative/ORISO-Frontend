@@ -64,7 +64,7 @@ export const SidePanel = ({
 		toBottom();
 		const timer = window.setTimeout(toBottom, 400);
 		return () => window.clearTimeout(timer);
-	});
+	}, [hasTimeline, label]);
 
 	// `card` and `fullscreen` are chat cards of their own: the `.session`
 	// class brings the card chrome AND scopes the composer stylesheet

@@ -394,6 +394,16 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	useEffect(() => {
+		const el = scrollTargetRef?.current;
+		if (!el || !isScrollOnly) {
+			return undefined;
+		}
+		updateScrollPercent();
+		el.addEventListener('scroll', updateScrollPercent, { passive: true });
+		return () => el.removeEventListener('scroll', updateScrollPercent);
+	}, [isScrollOnly, scrollTargetRef, updateScrollPercent]);
+
+	useEffect(() => {
 		if (!isDragging) {
 			return undefined;
 		}

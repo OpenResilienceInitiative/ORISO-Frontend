@@ -1378,7 +1378,8 @@ export const MessageSubmitInterfaceComponent = ({
 			rawMessage?: string,
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
-			retryMentionedUserIds?: string[]
+			retryMentionedUserIds?: string[],
+			retryTargetRoomId?: string | null
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1413,7 +1414,10 @@ export const MessageSubmitInterfaceComponent = ({
 				}).then();
 				return;
 			}
-			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
+			const matrixRoomId =
+				(retryOfId && retryTargetRoomId) ||
+				asideRouting.targetRoomId ||
+				undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			// Editing (m.replace, #435): replaces the target event's content;
@@ -1573,7 +1577,7 @@ export const MessageSubmitInterfaceComponent = ({
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
 							mentionedUserIds,
-							targetRoomId ?? null
+							matrixRoomId ?? targetRoomId ?? null
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1628,6 +1632,7 @@ export const MessageSubmitInterfaceComponent = ({
 				isAside: boolean;
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
+				targetRoomId?: string | null;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1758,7 +1763,8 @@ export const MessageSubmitInterfaceComponent = ({
 					currentTypedMessage,
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
-					retryContext?.mentionedUserIds || []
+					retryContext?.mentionedUserIds || [],
+					retryContext?.targetRoomId
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1884,7 +1890,8 @@ export const MessageSubmitInterfaceComponent = ({
 			transportMessage: retryRequest.transportMessage,
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
-			mentionedUserIds: retryRequest.mentionedUserIds
+			mentionedUserIds: retryRequest.mentionedUserIds,
+			targetRoomId: retryRequest.targetRoomId
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only

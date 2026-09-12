@@ -429,6 +429,11 @@ export const MenuTriggerEnabled: Story = {
 					}
 					activeChannelId={active}
 					onSelectChannel={setActive}
+					participants={
+						active === SUPERVISION_CHANNEL.id
+							? [counsellorParticipant, supervisorParticipant]
+							: [clientParticipant, counsellorParticipant]
+					}
 				/>
 			);
 		};

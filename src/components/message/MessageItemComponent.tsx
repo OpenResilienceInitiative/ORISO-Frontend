@@ -2503,7 +2503,10 @@ export const MessageItemComponent = ({
 	   sequence already draws. */
 	if (erstantwortRenderMode === 'sequence') {
 		return (
-			<div className="messageItem messageItem--erstantwort">
+			<div
+				className="messageItem messageItem--erstantwort"
+				data-message-id={_id}
+			>
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
@@ -2516,7 +2519,10 @@ export const MessageItemComponent = ({
 
 	if (erstantwortRenderMode === 'unavailable') {
 		return (
-			<div className="messageItem messageItem--chatEvent messageItem--erstantwortUnavailable">
+			<div
+				className="messageItem messageItem--chatEvent messageItem--erstantwortUnavailable"
+				data-message-id={_id}
+			>
 				{getMessageDate()}
 				<div
 					className="messageItem__chatEvent"
