@@ -1742,11 +1742,18 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// Shortcut: edit an existing message via Matrix m.replace
 			if (editingMessageId && !retryOfId) {
-				const matrixRoomId = resolvedChatSession.matrixRoomId;
-				if (matrixRoomId && matrixClientService) {
+				// The shortcut edits a message from this composer, so it must use
+				// the same explicit side-room target as a normal send. Falling back
+				// directly to the active session here would leak supervision edits
+				// into the client room.
+				const editRoomId = resolvePrimaryRoomId({
+					targetRoomId,
+					clientRoomId: resolvedChatSession.matrixRoomId
+				});
+				if (editRoomId && matrixClientService) {
 					try {
 						await matrixClientService.editMessage(
-							matrixRoomId,
+							editRoomId,
 							editingMessageId,
 							getPlainTextFromComposerValue(message) || message
 						);
@@ -1813,6 +1820,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues,
 			sendEnquiry,
 			sendMessage,
+			targetRoomId,
 			userData
 		]
 	);
