@@ -1,4 +1,11 @@
 {
+	"chatStage": {
+		"panel": {
+			"team": {
+				"empty": { "text": "Schreibe unten die erste Nachricht an dein Team." }
+			}
+		}
+	},
 	"absence": {
 		"input": {
 			"infoText": "Ratsuchende sehen diese Abwesenheitsnachricht, können Dir aber weiterhin schreiben."

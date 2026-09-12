@@ -30,6 +30,7 @@ import {
 } from '../../app/navigationStoryHelpers';
 import { config } from '../../../resources/scripts/config';
 import { SidePanel, InfoBanner } from '../SidePanel';
+import { teamCopy } from '../teamChannelCopy';
 import { PanelHeader } from '../PanelHeader';
 import { PanelCallActions } from '../PanelCallActions';
 import { ChannelSwitcherFab } from '../ChannelSwitcherFab';
@@ -73,6 +74,13 @@ import {
 	SUPERVISOR_NAME,
 	supervisionMessages,
 	supervisionSystemNotice,
+	TEAM_MATE_A_MATRIX_ID,
+	TEAM_MATE_A_NAME,
+	TEAM_MATE_B_MATRIX_ID,
+	TEAM_MATE_B_NAME,
+	TEAM_ROOM_ID,
+	teamMessages,
+	teamSystemNotice,
 	THREAD_ROOT_ID,
 	threadMessages,
 	YAK_ROOM_ID
@@ -89,7 +97,7 @@ import '../sidePanel.styles.scss';
 import '../channelSwitcherFab.styles.scss';
 import '../chatStage.styles.scss';
 
-export type StagePanel = 'supervision' | 'thread' | null;
+export type StagePanel = 'supervision' | 'team' | 'thread' | null;
 
 export interface ConsultantSessionStageProps {
 	/** Which side room occupies the panel (desktop) / the screen (phone). */
@@ -109,6 +117,14 @@ export interface ConsultantSessionStageProps {
 	phone?: 'main' | 'secondary';
 	/** Show the reason banner in the supervision room. */
 	withReason?: boolean;
+	/**
+	 * The Teamberatung room exists for this session (FE#514 / ADR-016).
+	 * Off by default so every existing story keeps its exact two channels.
+	 */
+	withTeam?: boolean;
+	teamUnread?: number;
+	/** An existing but still empty team room — the "start it" state. */
+	teamEmpty?: boolean;
 	fabDefaultOpen?: boolean;
 	/** T1: hide the FAB while a panel is open (its header offers the channels). */
 	fabHidden?: boolean;
@@ -141,6 +157,16 @@ const counsellorParticipant: StackParticipant = {
 	displayName: COUNSELLOR_NAME,
 	firstName: 'Mona',
 	lastName: 'Sommer'
+};
+const teamMateAParticipant: StackParticipant = {
+	userId: TEAM_MATE_A_MATRIX_ID,
+	username: 'jonas.k',
+	displayName: TEAM_MATE_A_NAME
+};
+const teamMateBParticipant: StackParticipant = {
+	userId: TEAM_MATE_B_MATRIX_ID,
+	username: 'aylin.d',
+	displayName: TEAM_MATE_B_NAME
 };
 const supervisorParticipant: StackParticipant = {
 	userId: SUPERVISOR_MATRIX_ID,
@@ -442,6 +468,117 @@ function SupervisionRoom({
 	);
 }
 
+/**
+ * The Teamberatung room — the SAME `SidePanel` organism as the supervision
+ * one, one to one (Frank, 09.09.). What differs: the word, the room, the
+ * avatar stack (colleagues, no client) and the accent.
+ */
+function TeamRoom({
+	variant,
+	onBack,
+	onClose,
+	switcher,
+	channels,
+	activeChannelId,
+	onSelectChannel,
+	focusChannelButton,
+	unread = 0,
+	empty = false,
+	compactComposer = false,
+	flushComposer = false
+}: RoomProps & { unread?: number; empty?: boolean }) {
+	const { t } = useTranslation();
+	const copy = teamCopy(t);
+	const title = copy('chatStage.panel.team.title');
+	const messages = useMemo(
+		() =>
+			empty
+				? [
+						teamSystemNotice(
+							title,
+							copy('chatStage.panel.team.systemNotice')
+						)
+					]
+				: [
+						teamSystemNotice(
+							title,
+							copy('chatStage.panel.team.systemNotice')
+						),
+						...teamMessages()
+					],
+		// `copy` is rebuilt each render from `t` (stable per locale).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[t, empty, title]
+	);
+	return (
+		<SidePanel
+			variant={variant}
+			className={`chatStage__panel--${variant}`}
+			label={t('chatStage.panel.region', { title })}
+			data-cy="stage-panel"
+			header={
+				<PanelHeader
+					kind="team"
+					title={title}
+					name={CLIENT_NAME}
+					chip={copy('chatStage.panel.team.onlyMarker')}
+					// ADR-002 in reverse: these colleagues are SILENT in the
+					// session room and named here. The client is absent.
+					participants={[
+						counsellorParticipant,
+						teamMateAParticipant,
+						teamMateBParticipant
+					]}
+					unreadCount={unread}
+					channels={channels}
+					activeChannelId={activeChannelId}
+					onSelectChannel={onSelectChannel}
+					autoFocusChannelButton={focusChannelButton}
+					onBack={onBack}
+					hideBackButton={onBack !== undefined}
+					onClose={onBack ? undefined : onClose}
+				/>
+			}
+			banner={
+				empty ? (
+					<InfoBanner
+						title={copy('chatStage.panel.team.empty.title')}
+						text={copy('chatStage.panel.team.empty.text')}
+					/>
+				) : undefined
+			}
+			timeline={
+				<MessageTimeline
+					messages={messages}
+					renderMode="main"
+					threadsEnabled={false}
+					clientName={CLIENT_NAME}
+					askerMatrixUserIdFor={() => CLIENT_MATRIX_ID}
+					isMyMessage={isCounsellorMessage}
+					{...handlers}
+				/>
+			}
+			composer={
+				<MessageSubmitInterfaceComponent
+					placeholder={copy(
+						'chatStage.panel.team.composer.placeholder'
+					)}
+					targetRoomId={TEAM_ROOM_ID}
+					hideSupervisorAudience
+					compactHeight={compactComposer}
+					flushCorner={flushComposer ? 'bottom-right' : undefined}
+					accent="team"
+					onSendButton={noop}
+					isTyping={noop}
+					language="de"
+					onMobileNavigateBack={onBack}
+				/>
+			}
+			switcher={switcher}
+		/>
+	);
+}
+
 function ThreadRoom({
 	variant,
 	onBack,
@@ -591,8 +728,16 @@ function DesktopPanelSlot({
 }
 
 /** T15: a channel id from the menu → the panel that shows it. */
-export const panelForChannel = (channelId: string): StagePanel =>
-	channelId === 'supervision' ? 'supervision' : 'thread';
+export const panelForChannel = (channelId: string): StagePanel => {
+	switch (channelId) {
+		case 'supervision':
+			return 'supervision';
+		case 'team':
+			return 'team';
+		default:
+			return 'thread';
+	}
+};
 
 export function ConsultantSessionStage({
 	panel: initialPanel = 'supervision',
@@ -606,6 +751,9 @@ export function ConsultantSessionStage({
 	labelMode = 'person',
 	phone: initialPhone,
 	withReason = false,
+	withTeam = false,
+	teamUnread = 0,
+	teamEmpty = false,
 	fabDefaultOpen = false,
 	fabHidden = true,
 	supervisionCalls = 'both',
@@ -753,18 +901,31 @@ export function ConsultantSessionStage({
 						}
 		})
 	);
-	// Newest thread on top, supervision right above the FAB (Figma order).
+	// The Teamberatung of this enquiry — labelled by its topic, since there
+	// is no single counterpart: the channel IS the team.
+	const teamChannel: SecondaryChannel = {
+		id: 'team',
+		kind: 'team',
+		label: teamCopy(t)('chatStage.panel.team.title'),
+		unread: teamUnread,
+		lastMessage: teamEmpty ? undefined : lastMessageOf(teamMessages())
+	};
+	// Newest thread on top, then the side rooms right above the FAB
+	// (`buildChannelMenu` puts them first in the card either way).
 	const channels: SecondaryChannel[] = [
 		...[...threadChannels].reverse(),
-		supervisionChannel
+		supervisionChannel,
+		...(withTeam ? [teamChannel] : [])
 	];
 
 	const shownChannelId =
 		panel === 'supervision'
 			? 'supervision'
-			: panel === 'thread'
-				? selectedThreadId
-				: undefined;
+			: panel === 'team'
+				? 'team'
+				: panel === 'thread'
+					? selectedThreadId
+					: undefined;
 
 	// Channels not on screen — the FAB (desktop, while no panel is open)
 	// offers these; the panel header's menu lists all of them (T15).
@@ -809,6 +970,18 @@ export function ConsultantSessionStage({
 							panel === 'thread' ? (
 								<ThreadRoom
 									variant="fullscreen"
+									onBack={backToMain}
+									switcher={backFab}
+									channels={channels}
+									activeChannelId={activeChannelId}
+									onSelectChannel={selectFromHeader}
+									focusChannelButton={focusHeader}
+								/>
+							) : panel === 'team' ? (
+								<TeamRoom
+									variant="fullscreen"
+									unread={teamUnread}
+									empty={teamEmpty}
 									onBack={backToMain}
 									switcher={backFab}
 									channels={channels}
@@ -882,6 +1055,19 @@ export function ConsultantSessionStage({
 				unread={supervisionUnread}
 				withReason={withReason}
 				callActions={supervisionCallActions}
+				channels={channels}
+				activeChannelId={activeChannelId}
+				onSelectChannel={selectFromHeader}
+				focusChannelButton={focusHeader}
+				compactComposer
+				flushComposer={flush}
+				onClose={closePanel}
+			/>
+		) : panel === 'team' ? (
+			<TeamRoom
+				variant={panelVariant}
+				unread={teamUnread}
+				empty={teamEmpty}
 				channels={channels}
 				activeChannelId={activeChannelId}
 				onSelectChannel={selectFromHeader}

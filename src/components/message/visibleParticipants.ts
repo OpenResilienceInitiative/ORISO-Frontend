@@ -11,6 +11,13 @@
  *     consultant (`activeSession.consultant`) and the active supervisors;
  *   - `supervision` (side room): the assigned consultant, the supervisors and
  *     me — never the advice seeker;
+ *   - `team` (Teamberatung side room, FE#514 / ADR-016): every joined member
+ *     EXCEPT the advice seeker. This is deliberately not the supervision
+ *     allow-list: the team room is created for "exactly the consultants of
+ *     the enquiry's agency" (`TeamDiscussionFacade`), so membership there is
+ *     not silent — being in the room IS the reason to be shown. The client
+ *     is never invited to it; filtering them is the same belt-and-braces
+ *     guard supervision keeps, not a rule that ever has work to do;
  *   - `group`: every joined member (group chats have no silent members).
  *
  * Identities reach the client in several spellings: the room gives the
@@ -32,7 +39,11 @@
 import type { StackParticipant } from './participantStack';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 
-export type VisibleParticipantMode = 'group' | 'session' | 'supervision';
+export type VisibleParticipantMode =
+	| 'group'
+	| 'session'
+	| 'supervision'
+	| 'team';
 
 export interface ParticipantIdentity {
 	/** Any spelling of the person's id: Matrix id, username, consultant id. */
@@ -151,6 +162,14 @@ export const filterVisibleParticipants = (
 	if (rules.mode === 'group') {
 		return participants;
 	}
+	// Teamberatung: the room's own membership is the visible set — minus the
+	// advice seeker, who is never a member and must never be shown as one.
+	if (rules.mode === 'team') {
+		return participants.filter(
+			(participant) =>
+				!participant.isAsker && !matches(participant, rules.asker)
+		);
+	}
 	const allowed: ParticipantIdentity[] = [];
 	if (rules.mode === 'session' && rules.asker) {
 		allowed.push(rules.asker);
@@ -204,7 +223,7 @@ export interface ConsultantIdentitySource {
 
 export interface VisibleParticipantRuleInput {
 	/** Room kind asked for; a group chat always yields the `group` rule. */
-	mode: 'session' | 'supervision';
+	mode: 'session' | 'supervision' | 'team';
 	isGroup?: boolean;
 	marker?: SupervisionMarkerLike | null;
 	supervisors: ReadonlyArray<SupervisorIdentitySource>;

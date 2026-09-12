@@ -47,6 +47,11 @@ vi.mock('../../globalState', async () => {
 			Boolean(userData?.grantedAuthorities?.includes(authority)),
 		getContact: () => ({ username: 'Beraterin' }),
 		useTenant: () => ({}),
+		// Added when the side room's call controls landed: `SessionItemComponent`
+		// asks the consulting type whether calls are allowed at all. This test
+		// and that import came from two different branches and only met in the
+		// merge, which is why it was green on either side alone.
+		useConsultingType: () => null,
 		NOTIFICATION_TYPE_INFO: 'INFO',
 		NotificationsContext: ReactModule.createContext({
 			addEventNotification: () => {}
