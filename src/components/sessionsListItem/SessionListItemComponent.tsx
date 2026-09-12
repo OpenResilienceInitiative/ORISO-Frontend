@@ -98,6 +98,7 @@ import { getSessionDropdownPosition } from './sessionDropdownPosition';
 import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
 import {
 	getLatestMatrixRoomPreview,
+	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType,
 	getRoomPreviewsByChannel,
 	MatrixRoomPreview,
@@ -279,6 +280,12 @@ export const SessionListItemComponent = ({
 		matrixRoomId,
 		isMatrixBackedSession && !caseHandoverContentLocked,
 		getRoomPreviewsByChannel
+	);
+	const supervisionSideRoomId = sessionItem?.supervision?.sideRoomId ?? null;
+	const railSupervisionPreview = useMatrixSessionPreview(
+		supervisionSideRoomId,
+		Boolean(supervisionSideRoomId) && !caseHandoverContentLocked,
+		getLatestTimedMatrixRoomPreview
 	);
 
 	useEffect(() => {
@@ -986,9 +993,13 @@ export const SessionListItemComponent = ({
 						activeSession.item.createDate
 					)
 				: undefined;
-		const railUnreadCount = getRoomUnreadCount(
+		const mainUnreadCount = getRoomUnreadCount(
 			activeSession.item.matrixRoomId
 		);
+		const supervisionUnreadCount = supervisionSideRoomId
+			? getRoomUnreadCount(supervisionSideRoomId)
+			: 0;
+		const railUnreadCount = mainUnreadCount + supervisionUnreadCount;
 		const railTooltips = {
 			pill: {
 				title: railName,
@@ -1010,6 +1021,10 @@ export const SessionListItemComponent = ({
 					body: previewBody(railChannelPreviews?.main ?? null),
 					meta: previewWhen(railChannelPreviews?.main ?? null)
 				},
+				supervision: {
+					body: previewBody(railSupervisionPreview),
+					meta: previewWhen(railSupervisionPreview)
+				},
 				unread:
 					railUnreadCount > 0
 						? {
@@ -1019,9 +1034,6 @@ export const SessionListItemComponent = ({
 								)
 							}
 						: undefined
-				// supervision deliberately has no entry: it lives in another
-				// Matrix room, so this timeline cannot speak for it. The mark
-				// falls back to its own label.
 			}
 		};
 		const railAvatar = activeSession.isGroup ? (
@@ -1080,7 +1092,7 @@ export const SessionListItemComponent = ({
 						previewChannel: matrixSessionPreview?.channel,
 						supervisionState,
 						modality: getModality(activeSession),
-						unread: isItemUnread
+						unread: isItemUnread || supervisionUnreadCount > 0
 					})}
 					markLabels={{
 						thread: translate('chatStage.switcher.kind.thread'),

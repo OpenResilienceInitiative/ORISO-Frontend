@@ -23,7 +23,17 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-afterEach(cleanup);
+const { matrixPreviewMock, roomUnreadCountMock } = vi.hoisted(() => ({
+	matrixPreviewMock: vi.fn(),
+	roomUnreadCountMock: vi.fn(() => 0)
+}));
+
+afterEach(() => {
+	cleanup();
+	matrixPreviewMock.mockReset();
+	roomUnreadCountMock.mockReset();
+	roomUnreadCountMock.mockReturnValue(0);
+});
 
 // ---------------------------------------------------------------------------
 // Global state: keep real context, only stub the hooks that need values
@@ -47,7 +57,12 @@ vi.mock('../../hooks/useE2EE', () => ({
 }));
 
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
-	useMatrixSessionPreview: () => null
+	useMatrixSessionPreview: matrixPreviewMock
+}));
+
+vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
+	...(await importOriginal<any>()),
+	getRoomUnreadCount: roomUnreadCountMock
 }));
 
 vi.mock('../../hooks/useUnreadVersion', () => ({
@@ -581,6 +596,37 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 				name: 'sessionList.toolbar.chips.supervision'
 			})
 		).toBeTruthy();
+	});
+
+	it('uses the confidential sideRoomId for supervision preview and unread count', () => {
+		const sideRoomId = '!supervision:matrix.example.org';
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === sideRoomId
+				? { kind: 'text', text: 'Interne Rückfrage', ts: 1700000000000 }
+				: null
+		);
+		roomUnreadCountMock.mockImplementation((roomId: string) =>
+			roomId === sideRoomId ? 2 : 1
+		);
+		renderItem(
+			makeSession({
+				supervision: { supervisedByMe: true, sideRoomId }
+			}),
+			makeUserData(),
+			{ rail: true }
+		);
+
+		const supervisionMark = document.querySelector(
+			'.sessionRailPill__mark--supervision'
+		) as HTMLElement;
+		fireEvent.mouseEnter(supervisionMark);
+		expect(
+			document.querySelector('[data-cy="session-rail-pill-tooltip"]')
+				?.textContent
+		).toContain('Interne Rückfrage');
+		expect(
+			document.querySelector('.sessionRailPill__mark--unread')?.textContent
+		).toBe('3');
 	});
 
 	it('opens the conversation when the pill is clicked', () => {

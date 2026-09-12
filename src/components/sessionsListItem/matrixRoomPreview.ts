@@ -15,10 +15,8 @@ export type MatrixRoomPreviewKind =
 /**
  * B2 / T24 (Frank: preview prefix): the secondary channel the newest message
  * came from, when the frontend can tell. A thread reply carries the
- * `m.thread` relation. The supervision side room is a different Matrix room
- * the list DTO does not name yet — TODO(B3, UserService): add
- * `SessionDTO.supervision.sideRoomId`, then compare the side room's newest
- * event against the client room's and emit `'supervision'` here.
+ * `m.thread` relation. Supervision is read from its separately contracted
+ * side room, so it does not need to masquerade as a main-room event here.
  */
 export type MatrixRoomPreviewChannel = 'thread' | 'supervision';
 
@@ -121,6 +119,21 @@ export interface TimedRoomPreview extends MatrixRoomPreview {
 	ts: number;
 }
 
+export const getLatestTimedMatrixRoomPreview = (
+	events: MatrixPreviewEvent[]
+): TimedRoomPreview | null => {
+	const newestFirst = [...events].sort(
+		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
+	);
+	for (const event of newestFirst) {
+		const preview = toPreview(event);
+		if (preview) {
+			return { ...preview, ts: event.getTs?.() || 0 };
+		}
+	}
+	return null;
+};
+
 /**
  * The newest message PER CHANNEL, from the events already in memory.
  *
@@ -137,8 +150,7 @@ export interface TimedRoomPreview extends MatrixRoomPreview {
  * THE ONE REAL LIMIT, and it must be said rather than hidden: the window is
  * those 50 events. A channel whose last message is older than that has no
  * preview here, and the caller shows the mark's own label instead of inventing
- * one. Supervision is not covered at all — it lives in a different Matrix
- * room, which is the same B3 gap the `channel` type above already documents.
+ * one. Supervision is selected separately from its `sideRoomId` timeline.
  */
 export const getRoomPreviewsByChannel = (
 	events: MatrixPreviewEvent[]

@@ -177,6 +177,13 @@ export const SessionRailPill = ({
 				: null;
 
 	const hasContent = Boolean(tooltip?.title || tooltip?.body);
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+		if (event.key === 'Escape') {
+			setShowName(false);
+			setHoveredMark(null);
+		}
+		onKeyDown?.(event);
+	};
 
 	return (
 		<span className="sessionRailPill__shell">
@@ -190,7 +197,7 @@ export const SessionRailPill = ({
 					className
 				)}
 				onClick={onClick}
-				onKeyDown={onKeyDown}
+				onKeyDown={handleKeyDown}
 				// Focus is the keyboard's hover: a Tab to the pill names it,
 				// exactly as a pointer resting on it does.
 				onFocus={() => setShowName(true)}

@@ -681,6 +681,29 @@ export const TooltipWithoutPreview: Story = {
 	}
 };
 
+export const TooltipDismissesWithEscape: Story = {
+	name: 'Tooltip — Escape schließt die Tastaturvorschau',
+	render: () => (
+		<div style={{ padding: '24px 260px 24px 24px' }}>
+			<Pill marks={['supervision']} tooltips={RAIL_TOOLTIPS} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const pill = within(canvasElement).getByRole('button', {
+			name: /sonnenblume_47/
+		});
+		await userEvent.tab();
+		await expect(pill).toHaveFocus();
+		await expect(
+			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+		).toBeInTheDocument();
+		await userEvent.keyboard('{Escape}');
+		await expect(
+			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+		).toBeNull();
+	}
+};
+
 /**
  * More than 99 new messages. Four digits do not fit a 24 px circle, so the
  * mark reads "99+" — the cap is asserted rather than left to chance.
