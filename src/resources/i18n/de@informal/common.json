@@ -1,4 +1,17 @@
 {
+	"chatStage": {
+		"switcher": { "kind": { "team": "Teamberatung" } },
+		"panel": {
+			"team": {
+				"title": "Teamberatung",
+				"onlyMarker": "Nur fürs Team",
+				"composer": { "placeholder": "Nachricht an das Team …" },
+				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
+				"empty": { "title": "Teamberatung starten", "text": "Schreibe unten die erste Nachricht an dein Team." }
+			}
+		},
+		"menu": { "teamChat": "Teamberatung", "titleWithTeam": "Threads, Supervision und Teamberatung" }
+	},
 	"absence": {
 		"input": {
 			"infoText": "Ratsuchende sehen diese Abwesenheitsnachricht, können Dir aber weiterhin schreiben."

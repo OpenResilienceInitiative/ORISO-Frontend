@@ -332,6 +332,12 @@
 			"region": "Panneau latéral : {{title}}",
 			"thread": {
 				"title": "Fil"
+			},
+			"team": {
+				"title": "Consultation d’équipe", "onlyMarker": "Réservé à l’équipe",
+				"composer": { "placeholder": "Message à l’équipe…" },
+				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
+				"empty": { "title": "Démarrer la consultation d’équipe", "text": "Écrivez ci-dessous le premier message à votre équipe." }
 			}
 		},
 		"switcher": {
@@ -339,7 +345,7 @@
 			"closeMenu": "Masquer les canaux secondaires",
 			"kind": {
 				"supervision": "Supervision",
-				"thread": "Fil"
+				"thread": "Fil", "team": "Consultation d’équipe"
 			},
 			"mainChat": "Chat de conseil",
 			"openChannel": "Ouvrir {{label}}",
@@ -349,7 +355,7 @@
 			"eyebrow": "Autres conversations",
 			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
-			"thread": "Fil #{{n}}"
+			"thread": "Fil #{{n}}", "teamChat": "Consultation d’équipe", "titleWithTeam": "Fils, supervision et consultation d’équipe"
 		}
 	},
 	"chatFlyout": {

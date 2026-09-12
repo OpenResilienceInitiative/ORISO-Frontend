@@ -308,7 +308,8 @@
 			"mainChat": "Counselling chat",
 			"kind": {
 				"supervision": "Supervision",
-				"thread": "Thread"
+				"thread": "Thread",
+				"team": "Team consultation"
 			}
 		},
 		"participants": {
@@ -326,13 +327,22 @@
 			"region": "Side panel: {{title}}",
 			"thread": {
 				"title": "Thread"
+			},
+			"team": {
+				"title": "Team consultation",
+				"onlyMarker": "Team only",
+				"composer": { "placeholder": "Message to the team …" },
+				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
+				"empty": { "title": "Start team consultation", "text": "Write the first message to your team below." }
 			}
 		},
 		"menu": {
 			"eyebrow": "Further conversations",
 			"title": "Threads and supervision",
 			"supervisionChat": "Supervision chat",
-			"thread": "Thread #{{n}}"
+			"thread": "Thread #{{n}}",
+			"teamChat": "Team consultation",
+			"titleWithTeam": "Threads, supervision and team consultation"
 		}
 	},
 	"chatFlyout": {

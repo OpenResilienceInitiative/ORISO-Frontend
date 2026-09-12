@@ -332,6 +332,12 @@
 			"region": "Yan panel: {{title}}",
 			"thread": {
 				"title": "Mesaj dizisi"
+			},
+			"team": {
+				"title": "Ekip danışmanlığı", "onlyMarker": "Yalnızca ekip için",
+				"composer": { "placeholder": "Ekibe mesaj…" },
+				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
+				"empty": { "title": "Ekip danışmanlığını başlat", "text": "Aşağıdan ekibinize ilk mesajı yazın." }
 			}
 		},
 		"switcher": {
@@ -339,7 +345,7 @@
 			"closeMenu": "Yan kanalları gizle",
 			"kind": {
 				"supervision": "Süpervizyon",
-				"thread": "Mesaj dizisi"
+				"thread": "Mesaj dizisi", "team": "Ekip danışmanlığı"
 			},
 			"mainChat": "Danışma sohbeti",
 			"openChannel": "{{label}} aç",
@@ -349,7 +355,7 @@
 			"eyebrow": "Diğer görüşmeler",
 			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
-			"thread": "Mesaj dizisi #{{n}}"
+			"thread": "Mesaj dizisi #{{n}}", "teamChat": "Ekip danışmanlığı", "titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
 		}
 	},
 	"chatFlyout": {

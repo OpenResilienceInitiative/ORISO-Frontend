@@ -40,7 +40,6 @@ import {
 	writeLastChannel,
 	type SessionChannel
 } from '../../utils/channelRoute';
-import { TEAM_CHANNEL_COPY } from './teamChannelCopy';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { phone390Globals } from '../message/messageStoryShell';
 import './chatStage.styles.scss';
@@ -52,7 +51,7 @@ const FAB_MENU_FIGMA_URL =
 
 const desktop1440Globals = { viewport: { value: 'desktop1440' } };
 
-const TEAM_WORD = TEAM_CHANNEL_COPY['chatStage.panel.team.title'];
+const TEAM_WORD = 'Teamberatung';
 
 const meta = {
 	title: 'Templates/TeamCounsellingChannel',
@@ -163,7 +162,7 @@ const expectTeamHeader = async (panel: HTMLElement) => {
 	);
 	await expect(chip).not.toBeNull();
 	await expect(chip!.textContent).toBe(
-		TEAM_CHANNEL_COPY['chatStage.panel.team.onlyMarker']
+		'Nur fürs Team'
 	);
 	// The marker sits in the header, which never scrolls — unlike the
 	// timeline, where the system notice lives.
@@ -338,7 +337,7 @@ export const ChannelCardWithThree: Story = {
 		// The card names what is really in it. "Threads und Supervision"
 		// would be a lie with three kinds listed.
 		await expect(card.getAttribute('aria-label')).toBe(
-			TEAM_CHANNEL_COPY['chatStage.menu.titleWithTeam']
+			'Threads, Supervision und Teamberatung'
 		);
 		// The team row says the word and carries its unread count.
 		const teamRow = rows[1];
@@ -561,7 +560,7 @@ export const TeamRoomEmpty: Story = {
 			).toBeGreaterThanOrEqual(1)
 		);
 		await expect(panel.textContent).toContain(
-			TEAM_CHANNEL_COPY['chatStage.panel.team.empty.title']
+			'Teamberatung starten'
 		);
 		// Even empty, the room never names the client as a member.
 		await expectClientAbsentFromTeamRoom(panel);
