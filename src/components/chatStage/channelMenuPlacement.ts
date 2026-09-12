@@ -76,7 +76,7 @@ export const placeChannelMenu = ({
 			: prefer;
 	const placement: ChannelMenuPlacement = {
 		side,
-		maxHeight: Math.max(CHANNEL_MENU_MIN_HEIGHT, room[side])
+		maxHeight: Math.max(0, room[side])
 	};
 	if (
 		anchorLeft !== undefined &&

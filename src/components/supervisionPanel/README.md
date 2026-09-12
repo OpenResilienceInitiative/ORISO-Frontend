@@ -34,7 +34,7 @@ Search for the `B2` comment markers in `SessionItemComponent.tsx`.
 
 ### 1. One URL parameter is the truth (`src/utils/channelRoute.ts`)
 
-```
+```text
 /sessions/…/<roomId>/<sessionId>?channel=thread:<rootEventId>[&at=<eventId>]
 /sessions/…/<roomId>/<sessionId>?channel=supervision[&at=<eventId>]
 ```
@@ -64,7 +64,7 @@ Unchanged from B1: the side room is its own list (`supervisionMessages`,
 
 ### 3. Layout — `src/components/session/SessionItemComponent.tsx`
 
-```
+```text
 .session.chatStage__card(--split)
   > .chatStage__mainPane  (SessionHeaderComponent · session__content/MessageTimeline · composer · ChannelSwitcherFab)
   > .chatStage__panel     (ResizableHandle anchor=start · SidePanel)
@@ -72,8 +72,9 @@ Unchanged from B1: the side room is its own list (`supervisionMessages`,
 
 - Desktop (`fromL`, 900 px): `SidePanel variant="inside"`; both composers
   get `flushCorner` (`bottom-left` main, `bottom-right` panel), the
-  supervision composer additionally `accent="supervision"`; `compactHeight`
-  is NOT set (checklist 1). Panel width: `clampPanelWidth` against the
+  supervision composer additionally `accent="supervision"`; both desktop
+  composers use `compactHeight` while the panel is open. Panel width:
+  `clampPanelWidth` against the
   measured card, persisted as `chatStage_panelWidth` (`stageLayout.ts`).
 - Phone (`!fromL`): the `SidePanel variant="fullscreen"` replaces the card;
   `SessionHeaderComponent hideBackButton + callsInMenu` and
@@ -82,10 +83,8 @@ Unchanged from B1: the side room is its own list (`supervisionMessages`,
   `mobileListView()`; the panel composer's back arrow closes the channel.
   The FAB inside the panel is the channel switcher (`onBack` = close).
 - List snap (checklist 7): `SessionsListWrapper` derives `panelOpen` from
-  `ChatStagePanelContext` (the pane the stage actually shows), not from
-  `?channel=` — an unresolved deep link must not collapse the list.
-  `resolveStageLayout` then snaps the list column to the 80 px rail while
-  a panel is open and dragging it wider is locked.
+  the same URL param and `resolveStageLayout` — the list column snaps to the
+  80 px rail while a panel is open and dragging it wider is locked.
 - Both `session__scrollToBottom` sites are gone (checklist 6); the composer
   toolbar's `composer-scroll-to-newest` is the one arrow.
 - Channels (`SecondaryChannel[]`): threads from `computeThreadSummaries`

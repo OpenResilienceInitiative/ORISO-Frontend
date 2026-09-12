@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionsListWrapper } from './SessionsListWrapper';
@@ -18,8 +18,12 @@ import { ChatStagePanelProvider } from '../chatStage/ChatStagePanelContext';
 vi.mock('./SessionsList', () => ({
 	SessionsList: () => <div data-testid="list" />
 }));
+let resizeList: ((width: number) => void) | undefined;
 vi.mock('./ResizableHandle', () => ({
-	ResizableHandle: () => <div data-testid="handle" />
+	ResizableHandle: ({ onResize }: { onResize: (width: number) => void }) => {
+		resizeList = onResize;
+		return <div data-testid="handle" />;
+	}
 }));
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ fromL: true })
@@ -37,9 +41,10 @@ const LIST_WIDTH = 420;
 
 const renderAt = (
 	search: string,
-	openPanel: 'supervision' | 'thread' | null
+	openPanel: 'supervision' | 'thread' | null,
+	listWidth = LIST_WIDTH
 ) => {
-	localStorage.setItem('sessionsList_width', String(LIST_WIDTH));
+	localStorage.setItem('sessionsList_width', String(listWidth));
 	const utils = render(
 		<MemoryRouter
 			initialEntries={[`/sessions/consultant/sessionView/1/2${search}`]}
@@ -59,7 +64,7 @@ const renderAt = (
 	const wrapper = utils.container.querySelector<HTMLElement>(
 		'.sessionsList__wrapper'
 	)!;
-	return wrapper.style.width;
+	return wrapper;
 };
 
 afterEach(() => {
@@ -69,22 +74,32 @@ afterEach(() => {
 
 describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 	it('keeps the expanded list while ?channel= is in the URL but no pane is open', () => {
-		expect(renderAt('?channel=supervision', null)).toBe(`${LIST_WIDTH}px`);
+		expect(renderAt('?channel=supervision', null).style.width).toBe(
+			`${LIST_WIDTH}px`
+		);
 	});
 
 	it('snaps to the rail while the supervision pane is actually open', () => {
-		expect(renderAt('?channel=supervision', 'supervision')).toBe(
+		expect(renderAt('?channel=supervision', 'supervision').style.width).toBe(
 			`${STAGE_LAYOUT.RAIL_WIDTH}px`
 		);
 	});
 
 	it('snaps to the rail for an open thread pane as well', () => {
-		expect(renderAt('?channel=thread:%24root', 'thread')).toBe(
+		expect(renderAt('?channel=thread:%24root', 'thread').style.width).toBe(
 			`${STAGE_LAYOUT.RAIL_WIDTH}px`
 		);
 	});
 
 	it('stays expanded with no channel at all', () => {
-		expect(renderAt('', null)).toBe(`${LIST_WIDTH}px`);
+		expect(renderAt('', null).style.width).toBe(`${LIST_WIDTH}px`);
+	});
+
+	it('accepts expansion from rail width when no pane is open', () => {
+		const wrapper = renderAt('', null, STAGE_LAYOUT.RAIL_WIDTH);
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+		act(() => resizeList?.(420));
+		expect(wrapper.style.width).toBe('420px');
+		expect(localStorage.getItem('sessionsList_width')).toBe('420');
 	});
 });

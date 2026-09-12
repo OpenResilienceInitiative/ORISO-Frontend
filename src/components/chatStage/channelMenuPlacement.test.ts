@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	CHANNEL_MENU_MIN_HEIGHT,
-	placeChannelMenu
-} from './channelMenuPlacement';
+import { placeChannelMenu } from './channelMenuPlacement';
 
 /**
  * Review v6 (T20): the card must never be cut by the viewport or slide
@@ -66,7 +63,7 @@ describe('placeChannelMenu', () => {
 		).toEqual({ side: 'down', maxHeight: 248 });
 	});
 
-	it('keeps a usable minimum height even in a tiny space', () => {
+	it('never exceeds the selected side in a tiny space', () => {
 		const placement = placeChannelMenu({
 			anchorTop: 60,
 			anchorBottom: 116,
@@ -75,7 +72,7 @@ describe('placeChannelMenu', () => {
 			needed: 400,
 			prefer: 'up'
 		});
-		expect(placement.maxHeight).toBe(CHANNEL_MENU_MIN_HEIGHT);
+		expect(placement.maxHeight).toBe(56);
 	});
 
 	it('honours the gap between anchor and card', () => {

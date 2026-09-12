@@ -32,7 +32,7 @@ export interface ThreadSummary {
 }
 
 const authorOf = (message: ThreadableMessage): string =>
-	(message.displayName || message.username || '').trim();
+	message.displayName?.trim() || message.username?.trim() || '';
 
 export const computeThreadSummaries = (
 	messages: ThreadableMessage[]
@@ -52,13 +52,21 @@ export const computeThreadSummaries = (
 			: '';
 
 		const existing = map.get(rootId);
+		const replyTs = new Date(message.messageTime).getTime();
+		const isNewest =
+			!existing ||
+			(Number.isFinite(replyTs) && replyTs > existing.lastReplyTs);
 		map.set(rootId, {
 			rootId,
 			replyCount: (existing?.replyCount || 0) + 1,
-			lastReplyTs: new Date(message.messageTime).getTime(),
+			lastReplyTs: isNewest ? replyTs : existing.lastReplyTs,
 			rootPreview,
-			lastReplyAuthor: authorOf(message),
-			lastReplyPreview: toMessagePreviewText(message.message)
+			lastReplyAuthor: isNewest
+				? authorOf(message)
+				: existing.lastReplyAuthor,
+			lastReplyPreview: isNewest
+				? toMessagePreviewText(message.message)
+				: existing.lastReplyPreview
 		});
 	});
 

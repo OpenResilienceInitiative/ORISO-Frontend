@@ -236,27 +236,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		animation: session-input-reveal 360ms ease;
 	}
 
-	&__supervisionReason {
-		display: flex;
-		max-width: 650px;
-		margin: 0px auto;
-		padding: $grid-base-two $grid-base-three;
-		border-radius: 8px;
-		background-color: rgba(198, 40, 40, 0.12);
-		border: 1px solid rgba(198, 40, 40, 0.2);
-		color: #3f373f;
-	}
-
-	&__supervisionReasonTitle {
-		font-weight: 600;
-		margin-bottom: 6px;
-	}
-
-	&__supervisionReasonText {
-		font-size: 14px;
-		margin-left: 16px;
-	}
-
 	/* The breathing companion lives inline in the white session content
 	   column (product decision "das Game im weißen Teil, nicht mehr als
 	   Popup") — no fixed backdrop, no modal. It replaces the robot cards

@@ -39,7 +39,11 @@ export const useScrollableBar = (ref: RefObject<HTMLElement | null>) => {
 			typeof MutationObserver === 'undefined'
 				? null
 				: new MutationObserver(update);
-		children?.observe(bar, { childList: true });
+		children?.observe(bar, {
+			childList: true,
+			subtree: true,
+			characterData: true
+		});
 		return () => {
 			bar.removeEventListener('scroll', update);
 			bar.removeEventListener('wheel', onWheel);

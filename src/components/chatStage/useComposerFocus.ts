@@ -24,6 +24,10 @@ export const useComposerFocus = (
 		const isComposerTarget = (target: EventTarget | null) =>
 			target instanceof Element &&
 			target.closest(COMPOSER_SHELL_SELECTOR) !== null;
+		setFocused(
+			container.contains(document.activeElement) &&
+				isComposerTarget(document.activeElement)
+		);
 		const onFocusIn = (event: FocusEvent) => {
 			if (isComposerTarget(event.target)) {
 				setFocused(true);

@@ -33,3 +33,26 @@ export const isFocusInsideOpenMenu = (
 export const isFocusProtected = (
 	activeElement: Element | null | undefined
 ): boolean => isInside(activeElement, KEEPS_FOCUS_SELECTOR);
+
+/**
+ * Schedule the composer's normal initial focus without making that policy an
+ * implicit side effect of mounting an editor. Side panels can disable this
+ * one automatic hand-off when navigation has explicitly assigned focus to
+ * their header; direct user focus and every later editor action are unchanged.
+ */
+export const scheduleComposerAutoFocus = (
+	focusEditor: () => void,
+	enabled = true
+): (() => void) => {
+	if (!enabled) {
+		return () => undefined;
+	}
+
+	const timeoutId = window.setTimeout(() => {
+		if (!isFocusProtected(document.activeElement)) {
+			focusEditor();
+		}
+	}, 0);
+
+	return () => window.clearTimeout(timeoutId);
+};

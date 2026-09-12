@@ -283,6 +283,6 @@ export const buildVisibleParticipantRules = ({
 				}
 			: null,
 		supervisors: supervisorIdentities,
-		self: { ids: self.ids }
+		self: { ids: self.ids, displayName: self.displayName || undefined }
 	};
 };

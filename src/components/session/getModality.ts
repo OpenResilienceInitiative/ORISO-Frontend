@@ -30,7 +30,7 @@ type ConversationItem = Partial<SessionItemInterface> &
 		teamSession?: boolean;
 	};
 
-type ModalityInput =
+export type ModalityInput =
 	| ListItemInterface
 	| {
 			item?: ConversationItem | null;
@@ -66,7 +66,9 @@ const isAnonymousPostcode = (postcode?: number | string | null): boolean => {
  * significant: a group `chat` is checked before `teamSession`, which is checked before the
  * anonymous (live-chat) signal, so an internal group is never mislabelled as agency counselling.
  */
-export const getModality = (item?: ModalityInput): Modality => {
+export const getModalityIfKnown = (
+	item?: ModalityInput
+): Modality | undefined => {
 	const activeSession = item && 'item' in item ? item : undefined;
 	const listItem =
 		item && !('item' in item) ? (item as ListItemInterface) : undefined;
@@ -110,8 +112,14 @@ export const getModality = (item?: ModalityInput): Modality => {
 		) {
 			return Modality.LIVE_CHAT;
 		}
+		if (explicit !== undefined) {
+			return undefined;
+		}
 		return Modality.AGENCY_COUNSELLING;
 	}
 
-	return Modality.AGENCY_COUNSELLING;
+	return undefined;
 };
+
+export const getModality = (item?: ModalityInput): Modality =>
+	getModalityIfKnown(item) ?? Modality.AGENCY_COUNSELLING;

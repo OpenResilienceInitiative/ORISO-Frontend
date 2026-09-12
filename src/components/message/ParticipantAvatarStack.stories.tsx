@@ -89,7 +89,7 @@ export const ThreeParticipants: Story = {
 		await expect(STACK_STEP).toBe(28);
 		// Tooltip hidden until hover …
 		const tip = canvas.getByText('Mona S.', {
-			selector: '[role="tooltip"]'
+			selector: '[data-cy="participant-tooltip"]'
 		});
 		await expect(tip).not.toBeVisible();
 		await userEvent.hover(avatars[1]);
@@ -100,8 +100,18 @@ export const ThreeParticipants: Story = {
 		avatars[2].focus();
 		await waitFor(() =>
 			expect(
-				canvas.getByText('Bettina B.', { selector: '[role="tooltip"]' })
+				canvas.getByText('Bettina B.', {
+					selector: '[data-cy="participant-tooltip"]'
+				})
 			).toBeVisible()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				canvas.getByText('Bettina B.', {
+					selector: '[data-cy="participant-tooltip"]'
+				})
+			).not.toBeVisible()
 		);
 	}
 };

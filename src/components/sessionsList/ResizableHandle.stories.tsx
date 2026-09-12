@@ -154,14 +154,21 @@ export const Default: Story = {
 		await waitFor(() => expect(width()).toBe('397px'), { timeout: 1500 });
 		await fireEvent.pointerUp(document, at);
 		// A press that moves is a drag, not a hold: 30 px right → wider.
-		await fireEvent.pointerDown(handle, at);
-		await fireEvent.pointerMove(document, {
+		const dragRect = handle.getBoundingClientRect();
+		const dragAt = {
 			...at,
-			clientX: at.clientX + 30
+			clientX: dragRect.left + 12,
+			clientY: dragRect.top + 100
+		};
+		await fireEvent.pointerDown(handle, dragAt);
+		await fireEvent.pointerMove(document, {
+			...dragAt,
+			clientX:
+				handle.parentElement!.getBoundingClientRect().left + 427
 		});
 		await new Promise((resolve) => setTimeout(resolve, 600));
-		await fireEvent.pointerUp(document, at);
-		await expect(width()).not.toBe('80px');
+		await fireEvent.pointerUp(document, dragAt);
+		await expect(width()).toBe('427px');
 		// Keyboard still resizes.
 		handle.focus();
 		await userEvent.keyboard('{Home}');

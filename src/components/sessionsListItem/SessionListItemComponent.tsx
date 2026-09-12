@@ -1435,6 +1435,12 @@ export const SessionListItemComponent = ({
 						<span
 							className="sessionsListItem__supervisionIndicator"
 							data-testid="supervision-indicator"
+							aria-label={translate(
+								'sessionList.supervision.supervisedBy',
+								{
+									name: supervisorNames.join(', ')
+								}
+							)}
 							title={translate(
 								'sessionList.supervision.supervisedBy',
 								{

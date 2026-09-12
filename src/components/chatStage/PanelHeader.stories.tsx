@@ -429,11 +429,6 @@ export const MenuTriggerEnabled: Story = {
 					}
 					activeChannelId={active}
 					onSelectChannel={setActive}
-					participants={
-						active === SUPERVISION_CHANNEL.id
-							? [counsellorParticipant, supervisorParticipant]
-							: [clientParticipant, counsellorParticipant]
-					}
 				/>
 			);
 		};
@@ -485,12 +480,20 @@ export const MenuTriggerEnabled: Story = {
  */
 export const MenuTriggerDisabled: Story = {
 	name: 'Menu trigger — disabled (no other channel)',
-	args: { channels: [SUPERVISION_CHANNEL] },
+	args: {
+		channels: [SUPERVISION_CHANNEL],
+		autoFocusChannelButton: true
+	},
 	play: async ({ canvasElement }) => {
 		const trigger = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="panel-header-channel-options"]'
 		)!;
 		await expect(trigger).toBeDisabled();
+		// A disabled trigger cannot receive the explicit navigation hand-off;
+		// the panel header itself is the focusable fallback.
+		await waitFor(() =>
+			expect(document.activeElement).toBe(headerOf(canvasElement))
+		);
 		// Still there, still labelled — just inert.
 		await expect(trigger.getAttribute('aria-label')).toContain(
 			'Keine weiteren Kanäle'

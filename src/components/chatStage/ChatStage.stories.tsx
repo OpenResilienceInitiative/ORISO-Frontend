@@ -1222,6 +1222,23 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		await expect(items[2]).toHaveAttribute('aria-current', 'true');
 		await expect(items[0].textContent).toContain('2');
 		await userEvent.keyboard('{Escape}');
+		// Selecting another thread preserves that exact channel identity.
+		await pickChannelFromHeader(canvasElement, '$thread-2');
+		await waitFor(() =>
+			expect(panelTitle(canvasElement).kind).toBe('Thread #2')
+		);
+		const secondThreadOptions = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-channel-options"]'
+		)!;
+		await userEvent.click(secondThreadOptions);
+		const secondThreadItems = within(
+			await canvas.findByRole('menu')
+		).getAllByRole('menuitem');
+		await expect(secondThreadItems[1]).toHaveAttribute(
+			'aria-current',
+			'true'
+		);
+		await userEvent.keyboard('{Escape}');
 		const threadTint = await panelTint(canvasElement);
 		// → supervision
 		await pickChannelFromHeader(canvasElement, 'supervision');
@@ -1229,6 +1246,7 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 			expect(panelTitle(canvasElement).kind).toBe('Supervision')
 		);
 		await expect(panelTitle(canvasElement).name).toBe(SUPERVISOR_NAME);
+		(document.activeElement as HTMLElement | null)?.blur();
 		// T41: supervision header ≠ thread header — surface, hairline, tag
 		// and the composer's field border all change with the channel.
 		const supervisionTint = await panelTint(canvasElement);

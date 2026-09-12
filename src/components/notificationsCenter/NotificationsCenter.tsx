@@ -165,14 +165,20 @@ const resolveSessionId = (item: any): string | null => {
 	return match?.[1] || null;
 };
 
+const searchFromPath = (path?: string | null): string => {
+	const query = String(path || '').split('?')[1];
+	return query ? `?${query}` : '';
+};
+
 // B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
 // still carries the legacy `threadRootId` is rewritten first.
 const resolveThreadRootId = (item: any): string | null => {
 	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
-	if (!path || !String(path).includes('?')) {
+	const search = searchFromPath(path);
+	if (!search) {
 		return null;
 	}
-	const { channel } = parseChannel(`?${String(path).split('?')[1]}`);
+	const { channel } = parseChannel(search);
 	return channel?.kind === 'thread' ? channel.rootId : null;
 };
 
@@ -196,11 +202,11 @@ const resolveRoomId = (item: any): string | null => {
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
 	const path = item?.actionPath;
-	if (!path || !String(path).includes('?')) {
+	const search = searchFromPath(path);
+	if (!search) {
 		return null;
 	}
-	const query = String(path).split('?')[1];
-	const params = new URLSearchParams(query);
+	const params = new URLSearchParams(search);
 	return params.get('caseHandoverRequestId');
 };
 

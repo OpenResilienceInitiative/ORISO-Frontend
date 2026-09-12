@@ -188,10 +188,15 @@ export const PanelHeader = ({
 	});
 
 	useEffect(() => {
-		if (autoFocusChannelButton) {
-			optionsButtonRef.current?.focus();
+		if (!autoFocusChannelButton) {
+			return;
 		}
-	}, [autoFocusChannelButton, activeChannelId]);
+		if (hasOptions) {
+			optionsButtonRef.current?.focus();
+			return;
+		}
+		headerRef.current?.focus();
+	}, [autoFocusChannelButton, activeChannelId, hasOptions]);
 
 	const closeOptions = useCallback(() => setOptionsOpen(false), []);
 	const closeAndRefocus = useCallback(() => {
@@ -245,6 +250,7 @@ export const PanelHeader = ({
 			data-kind={kind}
 			data-cy={dataCy}
 			data-keeps-focus=""
+			tabIndex={-1}
 			ref={headerRef}
 		>
 			<div className="panelHeader__row">

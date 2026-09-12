@@ -157,6 +157,10 @@ import {
 	apiGetSessionSupervisors,
 	type SessionSupervisor
 } from '../../api/apiGetSessionSupervisors';
+import {
+	roomIdForActiveSession,
+	type SupervisionRoomLookup
+} from './supervisionRoomLookup';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
@@ -249,9 +253,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [isSupervisor, setIsSupervisor] = useState(false);
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
-	const [supervisionRoomId, setSupervisionRoomId] = useState<
-		string | undefined
-	>(undefined);
+	const [supervisionRoomLookup, setSupervisionRoomLookup] =
+		useState<SupervisionRoomLookup | null>(null);
+	const supervisionRoomId = roomIdForActiveSession(
+		supervisionRoomLookup,
+		activeSession.item.id
+	);
 	// WP-B2: the supervisor rows from the same call — identities for the
 	// participant stacks (`buildVisibleParticipantRules`) and, as usernames,
 	// the counterpart name for the consultant when the list DTO has no
@@ -866,23 +873,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
-	// Check if current user is a supervisor
+	// Check if current user is a supervisor. The response stays tied to the
+	// session that requested it: a late lookup must never expose the previous
+	// case's side room to the new session.
 	useEffect(() => {
-		// WP-B2: never let a previous session's side room linger while the
-		// new one resolves — the panel composer targets this id.
-		setSupervisionRoomId(undefined);
-		setSessionSupervisors([]);
+		let cancelled = false;
+		const lookupSessionId = activeSession.item.id;
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			return;
+			setSupervisionRoomLookup(null);
+			setSessionSupervisors([]);
+			return () => {
+				cancelled = true;
+			};
 		}
-		if (
-			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-			activeSession.item.id
-		) {
-			apiGetSessionSupervisors(activeSession.item.id)
+		if (isConsultantUser && lookupSessionId) {
+			apiGetSessionSupervisors(lookupSessionId)
 				.then((supervisors) => {
+					if (cancelled) {
+						return;
+					}
 					const isCurrentUserSupervisor = supervisors.some(
 						(s) => s.supervisorConsultantId === userData.userId
 					);
@@ -896,23 +907,40 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					const sideRoomId = supervisors.find(
 						(s) => s.matrixRoomId
 					)?.matrixRoomId;
-					setSupervisionRoomId(sideRoomId || undefined);
+					setSupervisionRoomLookup({
+						sessionId: lookupSessionId,
+						roomId: sideRoomId || undefined
+					});
 					setSessionSupervisors(supervisors);
 				})
 				.catch((error) => {
+					if (cancelled) {
+						return;
+					}
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
-					setSupervisionRoomId(undefined);
+					setSupervisionRoomLookup({
+						sessionId: lookupSessionId,
+						roomId: undefined
+					});
 					setSessionSupervisors([]);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			setSupervisionRoomId(undefined);
+			setSupervisionRoomLookup(null);
 			setSessionSupervisors([]);
 		}
-	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		activeSession.item.id,
+		isConsultantUser,
+		isSupervisionEnabledForCurrentChat,
+		userData.userId
+	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
 	// supervisor view. First choice is the marker's `counsellorDisplayName`
@@ -2819,16 +2847,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								)}
 							>
 								{/* The breathing companion (single-file handoff, 2026-09-06)
-							    replaced the level-and-briefing mini game that used to live
-							    here; the mini game's state, effects and copy are gone.
-							    `isAnonymousBreathingGameAvailable` is derived from modality
-							    and roles alone, so it stays true after a counsellor accepts —
-							    `!consultantAccepted` is what honours the companion's host
-							    contract ("When counselling starts, UNMOUNT the component"),
-							    releasing its audio and animation frames. Same condition the
-							    live chat entry room uses: `companion && !accepted`.
-							    It renders inline in the white session content column (no
-							    backdrop, no modal) and takes the place of the robot cards. */}
+								    replaced the level-and-briefing mini game that used to live
+								    here; the mini game's state, effects and copy are gone.
+								    `isAnonymousBreathingGameAvailable` is derived from modality
+								    and roles alone, so it stays true after a counsellor accepts —
+								    `!consultantAccepted` is what honours the companion's host
+								    contract ("When counselling starts, UNMOUNT the component"),
+								    releasing its audio and animation frames. Same condition the
+								    live chat entry room uses: `companion && !accepted`.
+								    It renders inline in the white session content column (no
+								    backdrop, no modal) and takes the place of the robot cards. */}
 								<BreathingCompanionHost
 									onClose={handleCloseCalmCompanion}
 								/>
@@ -2896,7 +2924,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 																) => {
 																	event.preventDefault();
 																	event.stopPropagation();
-																	handleOpenCalmCompanion();
+																	setShowWaitingMiniGame(
+																		true
+																	);
 																}}
 															>
 																{card.playLabel}
@@ -3727,6 +3757,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						threadParentPreview={toMessagePreviewText(
 							activeThreadRootMessage.message
 						)}
+						autoFocusEditor={!focusPanelHeader}
 						flushCorner={panelComposerFlush}
 						onMobileNavigateBack={
 							isPhoneLayout ? closeChannel : undefined
@@ -3873,6 +3904,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						isSupervisor={isSupervisor}
 						supervisionRoomId={supervisionRoomId}
 						hideSupervisorAudience
+						autoFocusEditor={!focusPanelHeader}
 						flushCorner={panelComposerFlush}
 						accent="supervision"
 						onMobileNavigateBack={

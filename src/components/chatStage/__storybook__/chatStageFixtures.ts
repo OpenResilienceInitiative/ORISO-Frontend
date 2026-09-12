@@ -36,6 +36,7 @@ export const SUPERVISOR_ID = 'consultant-bettina';
 export const SYSTEM_MATRIX_ID = '@system:oriso.invalid';
 export const CLIENT_ROOM_ID = '!sonnenblume-4711:oriso.invalid';
 export const SUPERVISION_ROOM_ID = '!supervision-4711:oriso.invalid';
+export const YAK_ROOM_ID = '!yak-4708:oriso.invalid';
 export const SESSION_ID = 4711;
 
 /** The counsellor is the viewer in every stage story. */
@@ -382,7 +383,7 @@ export const stageListItems = (): ListItemInterface[] => [
 		4708,
 		'Ruhiges Yak Kim',
 		'ruhiges_yak_kim',
-		'!yak-4708:oriso.invalid',
+		YAK_ROOM_ID,
 		55118,
 		'Danke, bis nächste Woche dann.',
 		1788502800

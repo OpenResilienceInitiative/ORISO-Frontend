@@ -364,7 +364,26 @@ describe('buildVisibleParticipantRules', () => {
 		});
 		expect(rules.mode).toBe('supervision');
 		expect(rules.self?.ids).toEqual([MONA_ENCODED, MONA_UUID, SELF_MATRIX]);
+		expect(rules.self?.displayName).toBe('Mona Simpson');
 		expect(rules.asker?.ids).toEqual(baseInput.askerIds);
+	});
+
+	it('uses the internal self name while supervisor state is unresolved', () => {
+		const viewerFromMatrix = member(SELF_MATRIX, {
+			username: 'sv_supervisor',
+			displayName: 'sv_supervisor'
+		});
+		const visible = filterVisibleParticipants(
+			[viewerFromMatrix, supervisor, ...silent],
+			buildVisibleParticipantRules({
+				...baseInput,
+				mode: 'supervision',
+				marker: undefined,
+				supervisors: [],
+				consultant: null
+			})
+		);
+		expect(visible[0]?.displayName).toBe('Mona Simpson');
 	});
 
 	it('is a group rule for group chats whatever mode is asked for', () => {

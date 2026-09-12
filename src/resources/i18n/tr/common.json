@@ -331,7 +331,7 @@
 			"close": "Yan paneli kapat",
 			"region": "Yan panel: {{title}}",
 			"thread": {
-				"title": "Mesaj dizisi"
+				"title": "Konu"
 			}
 		},
 		"switcher": {
@@ -339,7 +339,7 @@
 			"closeMenu": "Yan kanalları gizle",
 			"kind": {
 				"supervision": "Süpervizyon",
-				"thread": "Mesaj dizisi"
+				"thread": "Konu"
 			},
 			"mainChat": "Danışma sohbeti",
 			"openChannel": "{{label}} aç",
@@ -349,7 +349,7 @@
 			"eyebrow": "Diğer görüşmeler",
 			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
-			"thread": "Mesaj dizisi #{{n}}"
+			"thread": "Konu #{{n}}"
 		}
 	},
 	"chatFlyout": {
@@ -3491,7 +3491,7 @@
 			"file": "Dosya",
 			"first_response": "İlk yanıt",
 			"channel": {
-				"thread": "Mesaj dizisi:",
+				"thread": "Konu:",
 				"supervision": "Süpervizyon:"
 			},
 			"registered": {
@@ -4548,7 +4548,7 @@
 			},
 			"kind": {
 				"supervision": "Süpervizyon",
-				"thread": "Mesaj dizisi"
+				"thread": "Konu"
 			},
 			"mini": {
 				"expand": "{{kind}} aç",
@@ -4744,7 +4744,7 @@
 			"empty": "Henüz taslak yok.",
 			"messageTag": "Taslak",
 			"untitledChat": "Sohbet",
-			"thread": "Mesaj dizisi",
+			"thread": "Konu",
 			"open": "Taslağı aç",
 			"next": "Sonraki taslak",
 			"delete": "Taslağı sil",

@@ -73,7 +73,8 @@ import {
 	supervisionMessages,
 	supervisionSystemNotice,
 	THREAD_ROOT_ID,
-	threadMessages
+	threadMessages,
+	YAK_ROOM_ID
 } from './chatStageFixtures';
 import '../../sessionsList/sessionsList.styles.scss';
 import '../../sessionsListItem/sessionsListItem.styles.scss';
@@ -322,7 +323,7 @@ interface RoomProps {
 	variant: 'inside' | 'card' | 'fullscreen';
 	onBack?: () => void;
 	onClose?: () => void;
-	switcher?: React.ReactNode;
+	switcher?: React.ReactElement<{ bottomOffset?: number }>;
 	/** All secondary channels, listed under the header's channel icon (T1/T15). */
 	channels: SecondaryChannel[];
 	activeChannelId: string;
@@ -415,6 +416,7 @@ function SupervisionRoom({
 					targetRoomId={SUPERVISION_ROOM_ID}
 					hideSupervisorAudience
 					compactHeight={compactComposer}
+					autoFocusEditor={!focusChannelButton}
 					flushCorner={flushComposer ? 'bottom-right' : undefined}
 					accent="supervision"
 					onSendButton={noop}
@@ -441,7 +443,15 @@ function ThreadRoom({
 	flushComposer = false
 }: RoomProps) {
 	const { t } = useTranslation();
-	const root = mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!;
+	const threadId = activeChannelId || THREAD_ROOT_ID;
+	const root = {
+		...mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!,
+		_id: threadId
+	};
+	const replies = threadMessages().map((message) => ({
+		...message,
+		threadRootEventId: threadId
+	}));
 	return (
 		<SidePanel
 			variant={variant}
@@ -467,10 +477,10 @@ function ThreadRoom({
 			}
 			timeline={
 				<MessageTimeline
-					messages={[root, ...threadMessages()]}
+					messages={[root, ...replies]}
 					renderMode="thread"
 					threadsEnabled
-					threadRootId={THREAD_ROOT_ID}
+					threadRootId={threadId}
 					forceShow
 					clientName={CLIENT_NAME}
 					isMyMessage={isCounsellorMessage}
@@ -480,8 +490,9 @@ function ThreadRoom({
 			composer={
 				<MessageSubmitInterfaceComponent
 					placeholder={t('message.thread.placeholder')}
-					threadRootId={THREAD_ROOT_ID}
+					threadRootId={threadId}
 					compactHeight={compactComposer}
+					autoFocusEditor={!focusChannelButton}
 					flushCorner={flushComposer ? 'bottom-right' : undefined}
 					onSendButton={noop}
 					isTyping={noop}
@@ -591,6 +602,7 @@ export function ConsultantSessionStage({
 	// T15: the stage switches its side room when a channel is picked — from
 	// the panel header's menu, the FAB or the phone's back switcher.
 	const [panel, setPanel] = useState<StagePanel>(initialPanel);
+	const [selectedThreadId, setSelectedThreadId] = useState(THREAD_ROOT_ID);
 	const [phone, setPhone] = useState(initialPhone);
 	// Review v6: a pick from the FAB hands focus to the panel header's
 	// channel button (the FAB is gone once the panel is open).
@@ -600,6 +612,9 @@ export function ConsultantSessionStage({
 	const selectChannel = useCallback(
 		(channelId: string, source: 'fab' | 'header' = 'header') => {
 			setFocusHeader(source === 'fab');
+			if (channelId !== 'supervision') {
+				setSelectedThreadId(channelId);
+			}
 			setPanel(panelForChannel(channelId));
 			setPhone((view) => (view === undefined ? view : 'secondary'));
 		},
@@ -621,12 +636,12 @@ export function ConsultantSessionStage({
 		setFocusHeader(false);
 		setPanel(null);
 	}, []);
-	useState(() =>
+	useEffect(() => {
 		seedStageMatrixRegistry({
 			[CLIENT_ROOM_ID]: 0,
-			'!yak-4708:oriso.invalid': 2
-		})
-	);
+			[YAK_ROOM_ID]: 2
+		});
+	}, []);
 
 	const layout = resolveStageLayout({
 		viewportWidth: phone ? 390 : viewportWidth,
@@ -635,7 +650,9 @@ export function ConsultantSessionStage({
 		panelOpen: panel !== null
 	});
 	const single = phone !== undefined || layout.mode === 'single';
-	const rail = snapList ? layout.listMode === 'rail' : listWidth <= 80;
+	const rail = snapList
+		? layout.listMode === 'rail'
+		: listWidth <= STAGE_LAYOUT.RAIL_WIDTH;
 	const effectiveListWidth = snapList ? layout.listWidth : listWidth;
 	const cardWidth = Math.max(
 		0,
@@ -706,7 +723,7 @@ export function ConsultantSessionStage({
 		panel === 'supervision'
 			? 'supervision'
 			: panel === 'thread'
-				? THREAD_ROOT_ID
+				? selectedThreadId
 				: undefined;
 
 	// Channels not on screen — the FAB (desktop, while no panel is open)

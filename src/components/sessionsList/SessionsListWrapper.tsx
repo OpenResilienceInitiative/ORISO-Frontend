@@ -86,6 +86,7 @@ export const SessionsListWrapper = ({
 	});
 	const railSnapped =
 		fromL &&
+		panelOpen &&
 		stageLayout.mode === 'split' &&
 		stageLayout.listMode === 'rail';
 	const effectiveWidth = railSnapped

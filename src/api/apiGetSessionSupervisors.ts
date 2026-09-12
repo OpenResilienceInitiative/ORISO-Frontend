@@ -1,18 +1,8 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
 
-export interface SessionSupervisor {
-	id: number;
-	sessionId: number;
-	supervisorConsultantId: string;
-	supervisorUsername: string;
-	/** Matrix id of the supervisor (`@localpart:server`); optional, newer backends. */
-	supervisorMatrixUserId?: string;
-	addedByConsultantId: string;
-	addedDate: string;
-	matrixRoomId?: string;
-	notes?: string;
-}
+export type SessionSupervisor =
+	UserService.Schemas.SessionSupervisorResponseDTO;
 
 export const apiGetSessionSupervisors = async (
 	sessionId: number

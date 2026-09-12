@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { isFocusInsideOpenMenu, isFocusProtected } from './focusGuards';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	isFocusInsideOpenMenu,
+	isFocusProtected,
+	scheduleComposerAutoFocus
+} from './focusGuards';
+
+afterEach(() => {
+	vi.useRealTimers();
+});
 
 /**
  * Review v6: the composer's deferred autofocus must never steal focus from
@@ -45,5 +53,43 @@ describe('isFocusProtected', () => {
 		expect(isFocusProtected(document.getElementById('other'))).toBe(false);
 		expect(isFocusProtected(document.body)).toBe(false);
 		expect(isFocusProtected(null)).toBe(false);
+	});
+});
+
+/**
+ * A side panel selected from the channel FAB explicitly hands focus to its
+ * header. The newly mounted ProseMirror composer used to schedule its own
+ * focus one tick later and steal that hand-off. `enabled: false` is the
+ * ownership signal from the panel host: automatic focus is skipped, while a
+ * later user-initiated `.focus()` remains completely untouched.
+ */
+describe('scheduleComposerAutoFocus', () => {
+	it('preserves the panel-header hand-off when automatic focus is disabled', () => {
+		vi.useFakeTimers();
+		document.body.innerHTML =
+			'<header data-keeps-focus><button id="channel">Supervision</button></header><div contenteditable="true" id="editor"></div>';
+		const channel = document.getElementById('channel') as HTMLButtonElement;
+		const editor = document.getElementById('editor') as HTMLDivElement;
+		channel.focus();
+
+		scheduleComposerAutoFocus(() => editor.focus(), false);
+		vi.runAllTimers();
+
+		expect(document.activeElement).toBe(channel);
+		// The ownership rule suppresses only automatic focus. The editor is
+		// still reachable normally when the person chooses it.
+		editor.focus();
+		expect(document.activeElement).toBe(editor);
+	});
+
+	it('focuses the editor when no other surface owns initial focus', () => {
+		vi.useFakeTimers();
+		document.body.innerHTML = '<div contenteditable="true" id="editor"></div>';
+		const editor = document.getElementById('editor') as HTMLDivElement;
+
+		scheduleComposerAutoFocus(() => editor.focus(), true);
+		vi.runAllTimers();
+
+		expect(document.activeElement).toBe(editor);
 	});
 });

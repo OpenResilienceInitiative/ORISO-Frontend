@@ -90,12 +90,13 @@ export const MessageTimeline = ({
 	onUnreact
 }: MessageTimelineProps) => (
 	<>
-		{messages.map((message: MessageItem, index) => {
+		{messages.map((message: MessageItem) => {
 			const own = isMyMessage(message.userId);
 			const broke = decryptionFailures?.has(message._id) ?? false;
 			return (
-				<React.Fragment key={`${keyPrefix}${message._id}-${index}`}>
+				<React.Fragment key={`${keyPrefix}${message._id}`}>
 					<MessageItemComponent
+						{...message}
 						clientName={clientName}
 						askerMatrixUserId={
 							askerMatrixUserIdFor
@@ -141,7 +142,6 @@ export const MessageTimeline = ({
 								: undefined
 						}
 						onUnreact={onUnreact}
-						{...message}
 						encryptionBroke={broke}
 					/>
 					{broke &&

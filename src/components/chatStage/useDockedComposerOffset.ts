@@ -47,12 +47,20 @@ export const useDockedComposerOffset = (
 		observer.observe(container);
 		composerParts().forEach((part) => observer.observe(part));
 		// Parts mount after the first paint (TipTap, mobile navigator).
+		let frame = 0;
 		const mutations = new MutationObserver(() => {
-			measure();
-			composerParts().forEach((part) => observer.observe(part));
+			if (frame) {
+				return;
+			}
+			frame = window.requestAnimationFrame(() => {
+				frame = 0;
+				measure();
+				composerParts().forEach((part) => observer.observe(part));
+			});
 		});
 		mutations.observe(container, { childList: true, subtree: true });
 		return () => {
+			window.cancelAnimationFrame(frame);
 			observer.disconnect();
 			mutations.disconnect();
 		};

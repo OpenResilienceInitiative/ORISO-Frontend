@@ -30,6 +30,15 @@ describe("findTimelineScrollContainer (T16: the composer's scroll-to-newest arro
 		).toBe('side');
 	});
 
+	it('finds the main timeline inside the nested chat-stage pane', () => {
+		build(
+			'<div class="session"><div class="chatStage__mainPane"><div class="session__content" id="nested"></div><div class="messageSubmit__wrapper"><button id="from"></button></div></div></div>'
+		);
+		expect(
+			findTimelineScrollContainer(document.getElementById('from'))?.id
+		).toBe('nested');
+	});
+
 	it('returns null without a chat card around the composer', () => {
 		build('<div><button id="from"></button></div>');
 		expect(

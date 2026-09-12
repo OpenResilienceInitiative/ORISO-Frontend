@@ -91,6 +91,46 @@ describe('computeThreadSummaries', () => {
 		).toBe('Mona S.');
 	});
 
+	it('selects the newest reply by timestamp when input is out of order', () => {
+		const summary = computeThreadSummaries([
+			{
+				_id: '$newer:hs',
+				message: 'Neueste Antwort',
+				messageTime: '2026-07-14T09:02:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: 'Neu'
+			},
+			{
+				_id: '$older:hs',
+				message: 'Ältere Antwort',
+				messageTime: '2026-07-14T09:01:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: 'Alt'
+			}
+		]).get('$root:hs');
+
+		expect(summary).toMatchObject({
+			replyCount: 2,
+			lastReplyTs: new Date('2026-07-14T09:02:00.000Z').getTime(),
+			lastReplyAuthor: 'Neu',
+			lastReplyPreview: 'Neueste Antwort'
+		});
+	});
+
+	it('falls back to a trimmed username when displayName is whitespace', () => {
+		const summary = computeThreadSummaries([
+			{
+				_id: '$reply:hs',
+				message: 'Antwort',
+				messageTime: '2026-07-14T09:01:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: '   ',
+				username: '  mona  '
+			}
+		]).get('$root:hs');
+		expect(summary?.lastReplyAuthor).toBe('mona');
+	});
+
 	it('ignores a legacy [THREAD:rootId] prefix message that has no relation (ADR-017 hard cut)', () => {
 		const messages = [
 			{

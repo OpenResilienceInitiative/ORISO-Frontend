@@ -722,6 +722,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__supervisionIndicatorName {
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}

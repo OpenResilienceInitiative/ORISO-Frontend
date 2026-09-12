@@ -725,7 +725,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						</div>
 
 						{supervisionPanel?.visible && (
-							<div
+							<button
+								type="button"
 								className={`sessionMenu__item chatMenuDropdown__item ${
 									!supervisionPanel.available
 										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
@@ -738,6 +739,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									setFlyoutOpen(false);
 									supervisionPanel.expand();
 								}}
+								disabled={!supervisionPanel.available}
 								data-cy="session-menu-supervision-panel"
 							>
 								<SessionMenuItemContent
@@ -750,7 +752,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											: undefined
 									}
 								/>
-							</div>
+							</button>
 						)}
 
 						{props.showMobileSupervisionAction && (

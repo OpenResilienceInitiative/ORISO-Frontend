@@ -26,7 +26,7 @@ export interface SidePanelProps {
 	'emptyState'?: React.ReactNode;
 	'composer'?: React.ReactNode;
 	/** Floating switcher (FAB) rendered above the composer. */
-	'switcher'?: React.ReactNode;
+	'switcher'?: React.ReactElement<{ bottomOffset?: number }>;
 	'variant'?: SidePanelVariant;
 	/** Accessible name of the region, e.g. "Nebenraum: Supervision". */
 	'label': string;
@@ -48,13 +48,26 @@ export const SidePanel = ({
 }: SidePanelProps) => {
 	const rootRef = useRef<HTMLElement | null>(null);
 	const timelineRef = useRef<HTMLDivElement | null>(null);
+	const didInitialScrollRef = useRef(false);
 	const hasTimeline = React.Children.toArray(timeline).length > 0;
 	const switcherOffset = useDockedComposerOffset(rootRef);
 
-	// Newest message in view on open and whenever the timeline grows. The
+	// Newest message in view on open and whenever the timeline grows, unless
+	// the user has scrolled up to read history. The
 	// rows animate in (`.messageItem` enters at scale 0.98) and the editor
 	// mounts late, so scroll once more after they have settled.
 	useEffect(() => {
+		const node = timelineRef.current;
+		if (!node) {
+			return undefined;
+		}
+		const firstScroll = !didInitialScrollRef.current;
+		didInitialScrollRef.current = true;
+		const nearBottom =
+			node.scrollHeight - node.scrollTop - node.clientHeight < 120;
+		if (!firstScroll && !nearBottom) {
+			return undefined;
+		}
 		const toBottom = () => {
 			const node = timelineRef.current;
 			if (node) {
@@ -64,7 +77,7 @@ export const SidePanel = ({
 		toBottom();
 		const timer = window.setTimeout(toBottom, 400);
 		return () => window.clearTimeout(timer);
-	}, [hasTimeline, label]);
+	}, [timeline]);
 
 	// `card` and `fullscreen` are chat cards of their own: the `.session`
 	// class brings the card chrome AND scopes the composer stylesheet
@@ -110,11 +123,8 @@ export const SidePanel = ({
 					{composer}
 				</div>
 			)}
-			{React.isValidElement(switcher)
-				? React.cloneElement(switcher as React.ReactElement<any>, {
-						bottomOffset: switcherOffset
-					})
-				: switcher}
+			{switcher &&
+				React.cloneElement(switcher, { bottomOffset: switcherOffset })}
 		</aside>
 	);
 };

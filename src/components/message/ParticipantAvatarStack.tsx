@@ -70,7 +70,8 @@ export const ParticipantAvatarStack = ({
 
 	const names = participants.map((p) => p.displayName).filter(Boolean);
 	const overflowLabel = translate('chatStage.participants.more', {
-		count: overflow
+		count: overflow,
+		defaultValue: '{{count}} weitere Teilnehmende'
 	});
 
 	return (
@@ -89,7 +90,8 @@ export const ParticipantAvatarStack = ({
 				} as React.CSSProperties
 			}
 			aria-label={translate('chatStage.participants.label', {
-				names: names.join(', ')
+				names: names.join(', '),
+				defaultValue: 'Teilnehmende: {{names}}'
 			})}
 			data-cy={dataCy}
 		>
@@ -108,6 +110,11 @@ export const ParticipantAvatarStack = ({
 							)
 						}
 						onFocus={() => setOpenIndex(index)}
+						onKeyDown={(event) => {
+							if (event.key === 'Escape') {
+								setOpenIndex(null);
+							}
+						}}
 						onBlur={() =>
 							setOpenIndex((current) =>
 								current === index ? null : current
@@ -118,7 +125,6 @@ export const ParticipantAvatarStack = ({
 							className="participantStack__avatar"
 							tabIndex={0}
 							aria-label={participant.displayName}
-							aria-describedby={tipId}
 							data-cy="participant-avatar"
 							data-user-id={participant.userId}
 						>
@@ -137,7 +143,7 @@ export const ParticipantAvatarStack = ({
 							/>
 						</span>
 						<span
-							role="tooltip"
+							aria-hidden="true"
 							id={tipId}
 							className="participantStack__tip"
 							data-cy="participant-tooltip"

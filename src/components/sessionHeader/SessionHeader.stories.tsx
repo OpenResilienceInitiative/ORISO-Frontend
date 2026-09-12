@@ -333,8 +333,7 @@ const StoryProviders = ({
 	lastActivity?: Record<string, number>;
 	children: React.ReactNode;
 }) => {
-	const [restoreFetchMocks] = React.useState(() => installHeaderFetchMocks());
-	React.useEffect(() => restoreFetchMocks, [restoreFetchMocks]);
+	React.useLayoutEffect(() => installHeaderFetchMocks(), []);
 	const matrixClientService = React.useMemo(
 		() => makeMatrixClientService(members, lastActivity),
 		[members, lastActivity]
@@ -684,12 +683,14 @@ export const ActiveConversationParticipants: Story = {
 		await userEvent.hover(askerAvatar);
 		await waitFor(() =>
 			expect(
-				canvas.getByText(headerTitle, { selector: '[role="tooltip"]' })
+				canvas.getByText(headerTitle, {
+					selector: '[data-cy="participant-tooltip"]'
+				})
 			).toBeVisible()
 		);
 		// … and it is not clipped by the header row (T4 self-check).
 		const tip = canvas.getByText(headerTitle, {
-			selector: '[role="tooltip"]'
+			selector: '[data-cy="participant-tooltip"]'
 		});
 		const tipRect = tip.getBoundingClientRect();
 		const rowRect = canvasElement

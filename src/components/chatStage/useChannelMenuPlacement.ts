@@ -63,6 +63,7 @@ export const useChannelMenuPlacement = ({
 			setPlacement(null);
 			return undefined;
 		}
+		let observer: ResizeObserver | null = null;
 		const measure = () => {
 			const anchor = anchorRef.current;
 			const menu = menuRef.current;
@@ -70,6 +71,9 @@ export const useChannelMenuPlacement = ({
 			if (!anchor || !menu || !bounds) {
 				return;
 			}
+			[anchor, menu, ...(bounds.watch ?? [])].forEach((element) =>
+				observer?.observe(element)
+			);
 			const rect = anchor.getBoundingClientRect();
 			const align = alignRef?.current?.getBoundingClientRect();
 			const card =
@@ -99,19 +103,14 @@ export const useChannelMenuPlacement = ({
 					: { ...placed, left: placed.left - rect.left }
 			);
 		};
-		measure();
-		window.addEventListener('resize', measure);
 		// The composer finishes mounting (TipTap) after the card opened and
-		// the card itself grows with its rows — follow both.
-		const observer =
+		// the card itself grows with its rows — follow the current targets.
+		observer =
 			typeof ResizeObserver === 'undefined'
 				? null
 				: new ResizeObserver(measure);
-		[
-			anchorRef.current,
-			menuRef.current,
-			...(resolveBounds()?.watch ?? [])
-		].forEach((element) => element && observer?.observe(element));
+		measure();
+		window.addEventListener('resize', measure);
 		return () => {
 			window.removeEventListener('resize', measure);
 			observer?.disconnect();

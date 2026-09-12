@@ -60,13 +60,13 @@ interface ResizableHandleCommonProps {
  * ArrowLeft/ArrowRight/Home/End keys all call `onResize` with no guard.
  */
 interface ResizeHandleProps extends ResizableHandleCommonProps {
-	mode?: 'resizeAndScroll';
-	onResize: (width: number) => void;
-	currentWidth: number;
+	'mode'?: 'resizeAndScroll';
+	'onResize': (width: number) => void;
+	'currentWidth': number;
 	/** Which edge of the resized element the handle sits on (default: end). */
-	anchor?: ResizeAnchor;
+	'anchor'?: ResizeAnchor;
 	/** Session-list snapping (icon rail ↔ expanded band). Off for panels. */
-	snapping?: boolean;
+	'snapping'?: boolean;
 }
 
 /**
@@ -75,11 +75,11 @@ interface ResizeHandleProps extends ResizableHandleCommonProps {
  * there would have nothing to act on (ORISO-Frontend#1196 job 2).
  */
 interface ScrollOnlyHandleProps extends ResizableHandleCommonProps {
-	mode: 'scroll';
-	onResize?: never;
-	currentWidth?: never;
-	anchor?: never;
-	snapping?: never;
+	'mode': 'scroll';
+	'onResize'?: never;
+	'currentWidth'?: never;
+	'anchor'?: never;
+	'snapping'?: never;
 }
 
 /*
@@ -110,6 +110,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	const { t } = useTranslation();
 	const { EXPANDED_MIN_WIDTH } = SESSIONS_LIST_RESIZE;
 	const [isDragging, setIsDragging] = useState(false);
+	const isDraggingRef = useRef(false);
 	const handleRef = useRef<HTMLDivElement | null>(null);
 	const pointerIdRef = useRef<number | null>(null);
 	// Press-and-hold: where the press started, how far it moved, the timer.
@@ -197,6 +198,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		clearHoldTimer();
 		pointerIdRef.current = null;
 		pressStartRef.current = null;
+		isDraggingRef.current = false;
 		setIsDragging(false);
 	}, [clearHoldTimer]);
 
@@ -212,6 +214,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				scrollTop: scrollTargetRef?.current?.scrollTop ?? 0
 			};
 			movedPxRef.current = 0;
+			isDraggingRef.current = true;
 			setIsDragging(true);
 			try {
 				e.currentTarget.setPointerCapture(e.pointerId);
@@ -236,7 +239,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 
 	const handlePointerMove = useCallback(
 		(e: PointerEvent) => {
-			if (!isDragging) return;
+			if (!isDraggingRef.current) return;
 			if (
 				pointerIdRef.current !== null &&
 				e.pointerId !== pointerIdRef.current
@@ -275,7 +278,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		[
 			applyClientXToWidth,
 			clearHoldTimer,
-			isDragging,
 			isScrollOnly,
 			scrollTargetRef,
 			updateScrollPercent
@@ -392,16 +394,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			updateScrollPercent
 		]
 	);
-
-	useEffect(() => {
-		const el = scrollTargetRef?.current;
-		if (!el || !isScrollOnly) {
-			return undefined;
-		}
-		updateScrollPercent();
-		el.addEventListener('scroll', updateScrollPercent, { passive: true });
-		return () => el.removeEventListener('scroll', updateScrollPercent);
-	}, [isScrollOnly, scrollTargetRef, updateScrollPercent]);
 
 	useEffect(() => {
 		if (!isDragging) {

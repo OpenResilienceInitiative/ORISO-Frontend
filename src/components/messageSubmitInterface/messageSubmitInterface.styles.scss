@@ -187,7 +187,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 				// T35: dual mode — one line at rest (`composerResize.ts`
 				// MIN_HEIGHT_COMPACT_DESKTOP = 138); `--composer-height`
-				// grows it while typing. Same rule as the phone's 102.
+				// grows it while typing. Same rule as the phone's 100.
 				&--compact {
 					min-height: var(--composer-height, 138px);
 					height: var(--composer-height, 138px);

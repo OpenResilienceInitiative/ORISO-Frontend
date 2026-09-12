@@ -142,7 +142,7 @@ function SupervisionSideRoom({
 	/** Message ids this client could not decrypt (UTD). */
 	brokenMessageIds?: ReadonlySet<string>;
 	onBack?: () => void;
-	switcher?: React.ReactNode;
+	switcher?: React.ReactElement<{ bottomOffset?: number }>;
 }) {
 	const { t } = useTranslation();
 	// #996: the counterpart is resolved by the app's own rule, never typed

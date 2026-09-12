@@ -78,6 +78,12 @@
 		opacity: 1;
 	}
 
+	// Escape dismisses a keyboard-open tooltip without moving focus.
+	&__item[data-open='false']:focus-within &__tip {
+		visibility: hidden;
+		opacity: 0;
+	}
+
 	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).
 	&__overflow {
 		display: inline-flex;

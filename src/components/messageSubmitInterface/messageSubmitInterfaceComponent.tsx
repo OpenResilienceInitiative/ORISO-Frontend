@@ -20,7 +20,10 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import { isFocusProtected } from './focusGuards';
+import {
+	isFocusProtected,
+	scheduleComposerAutoFocus
+} from './focusGuards';
 import { buildSessionChannelPath } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -241,6 +244,12 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * while writing. Default: the neutral `primary-fixed` hairline.
 	 */
 	accent?: 'default' | 'supervision';
+	/**
+	 * Whether this composer should claim focus after its draft is ready.
+	 * Side panels set this to false when a channel-switch action has explicitly
+	 * handed focus to the panel header.
+	 */
+	autoFocusEditor?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -419,6 +428,7 @@ export const MessageSubmitInterfaceComponent = ({
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
+	autoFocusEditor = true,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -1203,7 +1213,7 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
-		const timeoutId = window.setTimeout(() => {
+		return scheduleComposerAutoFocus(() => {
 			// Review v6: never pull focus off an open menu or a
 			// `data-keeps-focus` region (the side-panel header) — the
 			// alignLeft chain below focuses the editor on its own, so the
@@ -1213,12 +1223,11 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			composerRef.current?.runAction('alignLeft');
 			focusEditorInput();
-		}, 0);
-
-		return () => window.clearTimeout(timeoutId);
+		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		autoFocusEditor,
 		draftLoaded,
 		focusEditorInput,
 		threadRootId
@@ -1378,8 +1387,7 @@ export const MessageSubmitInterfaceComponent = ({
 			rawMessage?: string,
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
-			retryMentionedUserIds?: string[],
-			retryTargetRoomId?: string | null
+			retryMentionedUserIds?: string[]
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1414,10 +1422,7 @@ export const MessageSubmitInterfaceComponent = ({
 				}).then();
 				return;
 			}
-			const matrixRoomId =
-				(retryOfId && retryTargetRoomId) ||
-				asideRouting.targetRoomId ||
-				undefined;
+			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			// Editing (m.replace, #435): replaces the target event's content;
@@ -1577,7 +1582,7 @@ export const MessageSubmitInterfaceComponent = ({
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
 							mentionedUserIds,
-							matrixRoomId ?? targetRoomId ?? null
+							targetRoomId ?? null
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1632,7 +1637,6 @@ export const MessageSubmitInterfaceComponent = ({
 				isAside: boolean;
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
-				targetRoomId?: string | null;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1763,8 +1767,7 @@ export const MessageSubmitInterfaceComponent = ({
 					currentTypedMessage,
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
-					retryContext?.mentionedUserIds || [],
-					retryContext?.targetRoomId
+					retryContext?.mentionedUserIds || []
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1890,8 +1893,7 @@ export const MessageSubmitInterfaceComponent = ({
 			transportMessage: retryRequest.transportMessage,
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
-			mentionedUserIds: retryRequest.mentionedUserIds,
-			targetRoomId: retryRequest.targetRoomId
+			mentionedUserIds: retryRequest.mentionedUserIds
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only

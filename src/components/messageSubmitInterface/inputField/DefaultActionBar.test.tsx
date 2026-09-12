@@ -121,7 +121,9 @@ describe('DefaultActionBar', () => {
 	// T23: "scroll to newest" is a real arrow, not a chevron.
 	it('draws the scroll-to-newest control as an arrow-down icon, not a chevron', () => {
 		render(<DefaultActionBar {...baseProps} showMic />);
-		const arrow = screen.getByRole('button', { name: 'Scroll to bottom' });
+		const arrow = screen.getByRole('button', {
+			name: /^Scroll to bottom/
+		});
 		expect(
 			arrow.querySelector('[data-testid="ArrowDownwardIcon"]')
 		).toBeTruthy();
@@ -132,8 +134,11 @@ describe('DefaultActionBar', () => {
 
 	it('caps the badge at 99+', () => {
 		render(<DefaultActionBar {...baseProps} showMic unreadCount={120} />);
-		expect(
-			document.querySelector('.composerToolbar__badge')?.textContent
-		).toBe('99+');
+		const arrow = screen.getByRole('button', {
+			name: /^Scroll to bottom/
+		});
+		expect(arrow.querySelector('.composerToolbar__badge')?.textContent).toBe(
+			'99+'
+		);
 	});
 });
