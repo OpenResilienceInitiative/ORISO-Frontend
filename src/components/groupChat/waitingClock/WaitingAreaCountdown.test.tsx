@@ -170,9 +170,7 @@ describe('WaitingAreaCountdown', () => {
 		// Static fallback: plain padded digits, no flip card anymore.
 		expect(screen.getByText('02')).toBeTruthy();
 		expect(screen.getByText('03')).toBeTruthy();
-		expect(
-			screen.queryByRole('button', { name: /Uhr umdrehen/ })
-		).toBeNull();
+		expect(container.querySelector('[aria-pressed]')).toBeNull();
 		const still = container.querySelector('.waitingClock__still');
 		expect(still).toBeTruthy();
 		expect(
@@ -185,10 +183,11 @@ describe('WaitingAreaCountdown', () => {
 		expect(screen.queryByText(WELCOME)).toBeNull();
 		/* The tiles keep `role="timer"`, so the way to the card is its own
 		   button underneath them — a button wrapped around the numbers would
-		   take their place in the accessibility tree. */
+		   take their place in the accessibility tree. The still-view control
+		   reuses cardOpenAria ("Uhr umdrehen, Begrüßung und Netiquette lesen"). */
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: /Begrüßung und Netiquette anzeigen/
+				name: 'Uhr umdrehen, Begrüßung und Netiquette lesen'
 			})
 		);
 		expect(screen.getByText(WELCOME)).toBeTruthy();
