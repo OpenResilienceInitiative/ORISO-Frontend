@@ -92,13 +92,34 @@ describe('clampPanelWidth (T2: drag between main pane and side panel)', () => {
 	// 1280 with the list on the rail: 1280 - 80 - 48 = 1152 px card.
 	const card = 1152;
 
-	it('keeps the panel at the 520 px floor', () => {
-		expect(clampPanelWidth(300, card)).toBe(STAGE_LAYOUT.MIN_PANE_WIDTH);
+	// Frank, 09.09.2026 (finding *1): "Ich kann diesen Slider nicht genug
+	// bewegen nach links und nach rechts. … Aktuell ist das mindestens 487 px,
+	// das kann auf beiden Seiten gerne bis zu 320 px breit sein."
+	// 487 is what DevTools reports for `.panelHeader__row` when the pane sits
+	// on the old floor: 520 slot - 1 px `.sidePanel--inside` hairline - 2 x 16
+	// px header inset. The DRAG floor drops to 320; the AUTO floor
+	// (`MIN_PANE_WIDTH`, which decides the rail snap, D10) stays 520.
+	it('lets the drag reach 320 px on the panel side', () => {
+		expect(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH).toBe(320);
+		expect(clampPanelWidth(320, card)).toBe(320);
 	});
 
-	it('leaves the main pane its 520 px', () => {
-		expect(clampPanelWidth(900, card)).toBe(
-			card - STAGE_LAYOUT.MIN_PANE_WIDTH
+	it('keeps the panel at the 320 px drag floor', () => {
+		expect(clampPanelWidth(200, card)).toBe(
+			STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
+		);
+	});
+
+	it('leaves the main pane its 320 px', () => {
+		expect(clampPanelWidth(2000, card)).toBe(
+			card - STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
+		);
+	});
+
+	it('keeps the auto layout floor at 520 so the list still snaps (D10)', () => {
+		expect(STAGE_LAYOUT.MIN_PANE_WIDTH).toBe(520);
+		expect(STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH).toBeLessThan(
+			STAGE_LAYOUT.MIN_PANE_WIDTH
 		);
 	});
 
@@ -106,12 +127,14 @@ describe('clampPanelWidth (T2: drag between main pane and side panel)', () => {
 		expect(clampPanelWidth(600.4, card)).toBe(600);
 	});
 
-	it('splits a card too narrow for two minimum panes in half', () => {
-		expect(clampPanelWidth(700, 900)).toBe(450);
+	it('splits a card too narrow for two draggable panes in half', () => {
+		expect(clampPanelWidth(500, 600)).toBe(300);
 	});
 
-	it('treats a non-finite request as the floor', () => {
-		expect(clampPanelWidth(NaN, card)).toBe(STAGE_LAYOUT.MIN_PANE_WIDTH);
+	it('treats a non-finite request as the drag floor', () => {
+		expect(clampPanelWidth(NaN, card)).toBe(
+			STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
+		);
 	});
 });
 

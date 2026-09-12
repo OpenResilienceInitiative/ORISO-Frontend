@@ -17,7 +17,12 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
+import { startRoomCall } from '../call/startRoomCall';
+import { resolveCallFeatureGates } from '../call/callFeatureGates';
+import {
+	AudioCallHeaderIcon,
+	VideoCallHeaderIcon
+} from '../call/CallHeaderIcons';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -390,43 +395,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					? 'anonymous'
 					: 'oneOnOne';
 
-	const {
-		featureCallsEnabled = true, // legacy master: keep honoring it
-		featureAudioCallsEnabled = true,
-		featureAudioCallsAnonymousChatsEnabled = true,
-		featureAudioCallsOneOnOneChatsEnabled = true,
-		featureAudioCallsGroupChatsEnabled = true,
-		featureAudioCallsSupervisionChatsEnabled = true,
-		featureVideoCallsEnabled = true,
-		featureVideoCallsAnonymousChatsEnabled = true,
-		featureVideoCallsOneOnOneChatsEnabled = true,
-		featureVideoCallsGroupChatsEnabled = true,
-		featureVideoCallsSupervisionChatsEnabled = true
-	} = currentTenantSettings;
-
-	const isCallsEnabled = featureCallsEnabled !== false;
-
-	const isAudioCallsEnabled =
-		isCallsEnabled &&
-		featureAudioCallsEnabled !== false &&
-		(chatType === 'group'
-			? featureAudioCallsGroupChatsEnabled !== false
-			: chatType === 'anonymous'
-				? featureAudioCallsAnonymousChatsEnabled !== false
-				: chatType === 'supervision'
-					? featureAudioCallsSupervisionChatsEnabled !== false
-					: featureAudioCallsOneOnOneChatsEnabled !== false);
-
-	const isVideoCallsEnabled =
-		isCallsEnabled &&
-		featureVideoCallsEnabled !== false &&
-		(chatType === 'group'
-			? featureVideoCallsGroupChatsEnabled !== false
-			: chatType === 'anonymous'
-				? featureVideoCallsAnonymousChatsEnabled !== false
-				: chatType === 'supervision'
-					? featureVideoCallsSupervisionChatsEnabled !== false
-					: featureVideoCallsOneOnOneChatsEnabled !== false);
+	// One gate for every caller: the side room's controls ask the same
+	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
+	const { audio: isAudioCallsEnabled, video: isVideoCallsEnabled } =
+		resolveCallFeatureGates(currentTenantSettings, chatType);
 
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
@@ -435,112 +407,19 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		consultingType.isVideoCallAllowed;
 
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("🎬 CALL BUTTON CLICKED!");
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("Video activated?", isVideoActivated);
-		// console.log("Is group chat?", activeSession.isGroup);
-
-		try {
-			// Get Matrix room ID from active session
-			// For 1-on-1 sessions: use activeSession.rid (the actual Matrix room ID)
-			// For group chats: use activeSession.item.matrixRoomId or groupId
-			const roomId =
-				activeSession.rid ||
-				activeSession.item.matrixRoomId ||
-				activeSession.item.matrixRoomId;
-
-			// console.log("Room ID:", roomId);
-			// console.log("activeSession.rid:", activeSession.rid);
-			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
-			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
-
-			if (!roomId) {
-				// console.error('❌ No Matrix room ID found for session');
-				alert(
-					'Cannot start call: No Matrix room found for this session'
-				);
-				return;
-			}
-
-			// 🍎 SAFARI iOS FIX: Check if we're on HTTPS (required for getUserMedia on Safari)
-			if (window.location.protocol !== 'https:') {
-				// console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
-				const httpsUrl = window.location.href.replace(
-					'http://',
-					'https://'
-				);
-				if (
-					window.confirm(
-						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
-					)
-				) {
-					window.location.href = httpsUrl;
-				}
-				return;
-			}
-
-			// 🔥 CRITICAL FOR MOBILE: Request media permissions IMMEDIATELY in click handler
-			// This keeps the "user gesture" alive for mobile browsers (prevents popup blocking)
-			// console.log('🎤 Requesting media permissions (SYNC with user click)...');
-			// console.log('Requesting:', { video: isVideoActivated, audio: true });
-
-			try {
-				const stream = await navigator.mediaDevices.getUserMedia({
-					video: isVideoActivated,
-					audio: true
-				});
-				// console.log('✅ Media permissions granted!', stream);
-				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
-
-				// Outgoing calls use Element Call (iframe), which acquires its own
-				// media. Keep getUserMedia in this click handler for mobile Safari
-				// permission/user-gesture, then release immediately so the device
-				// is not left open (storing for FloatingCallWidget leaked tracks
-				// after CallManager always set usesElementCall: true).
-				stopMediaStreamTracks(stream);
-			} catch (mediaError: any) {
-				// console.error('❌ Media permission denied:', mediaError);
-				// console.error('Error name:', mediaError.name);
-				// console.error('Error message:', mediaError.message);
-
-				let errorMsg = 'Cannot access camera/microphone. ';
-				if (mediaError.name === 'NotAllowedError') {
-					errorMsg +=
-						'Please grant permissions in your browser settings.';
-				} else if (mediaError.name === 'NotFoundError') {
-					errorMsg += 'No camera/microphone found on this device.';
-				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg +=
-						'Your browser does not support this feature. Please use HTTPS.';
-				} else {
-					errorMsg += mediaError.message || 'Unknown error.';
-				}
-
-				alert(errorMsg);
-				return;
-			}
-
-			// console.log('📞 Starting call via CallManager with roomId:', roomId);
-
-			// Use CallManager directly (works for both 1-on-1 and group calls!)
-			const { callManager } = require('../../services/CallManager');
-			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are not
-			// misrouted to Element Call (which always enables video).
-			callManager.startCall(
-				roomId,
-				isVideoActivated,
-				activeSession.isGroup ? true : false
-			);
-
-			// console.log('✅ Call initiated!');
-		} catch (error) {
-			// console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(
-				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-			);
-		}
-		// console.log("═══════════════════════════════════════════════");
+		// The trigger itself lives in `call/startRoomCall.ts` since Frank's
+		// 09.09.2026 request for calls in the supervision side room — the side
+		// room needs the same steps against a different Matrix room, so there
+		// is one implementation and two callers.
+		await startRoomCall({
+			// 1:1 sessions call into `activeSession.rid`; group chats into the
+			// group's Matrix room.
+			roomId: activeSession.rid || activeSession.item.matrixRoomId,
+			isVideo: isVideoActivated,
+			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are
+			// not misrouted to Element Call (which always enables video).
+			isGroup: activeSession.isGroup ? true : false
+		});
 	};
 
 	return (
@@ -1025,43 +904,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		</div>
 	);
 };
-
-const VideoCallHeaderIcon = () => (
-	<svg
-		width="32"
-		height="32"
-		viewBox="0 0 32 32"
-		fill="none"
-		aria-hidden="true"
-	>
-		<rect width="32" height="32" rx="12" fill="#D32F2F" fillOpacity="0.6" />
-		<path
-			fillRule="evenodd"
-			clipRule="evenodd"
-			d="M18.3152 11.0601C18.9972 11.0601 19.5502 11.613 19.5502 12.295L19.55 14.7022L22.4928 11.7595C22.7822 11.4702 23.2514 11.4702 23.5407 11.7595C23.6797 11.8985 23.7578 12.087 23.7578 12.2835V19.7166C23.7578 20.1258 23.426 20.4575 23.0168 20.4575C22.8203 20.4575 22.6318 20.3795 22.4928 20.2405L19.55 17.2971L19.5502 19.705C19.5502 20.3871 18.9972 20.94 18.3152 20.94H9.47815C8.79609 20.94 8.24316 20.3871 8.24316 19.705V12.295C8.24316 11.613 8.79609 11.0601 9.47815 11.0601H18.3152Z"
-			fill="white"
-		/>
-	</svg>
-);
-
-const AudioCallHeaderIcon = () => (
-	<svg
-		width="32"
-		height="32"
-		viewBox="0 0 32 32"
-		fill="none"
-		aria-hidden="true"
-	>
-		<rect width="32" height="32" rx="16" fill="#FFD1D1" fillOpacity="0.6" />
-		<path
-			fillRule="evenodd"
-			clipRule="evenodd"
-			d="M22.7439 18.2098L19.8713 17.316C19.2285 17.1155 18.4628 17.4268 18.0513 18.0551C17.7168 18.5651 17.1871 18.9385 16.6341 19.0538C16.255 19.1326 15.8991 19.0798 15.6319 18.9054C14.4495 18.1327 13.4566 17.1427 12.6816 15.9644C12.5066 15.6977 12.4533 15.343 12.5327 14.9651C12.648 14.4139 13.0225 13.8858 13.5348 13.552C14.1643 13.1416 14.4761 12.3788 14.2756 11.7377L13.3789 8.87442C13.1807 8.23973 12.5344 7.88558 11.8423 8.03338L9.08566 8.61996C9.02712 8.63214 8.96858 8.64779 8.91062 8.66749L8.79585 8.7098C8.76107 8.7243 8.72514 8.74168 8.68804 8.76197C8.26782 8.9915 7.99771 9.43607 8.00001 9.89455C8.00351 10.4927 8.04002 11.0903 8.10842 11.6723L8.08349 11.8722L8.08407 11.8734L8.14146 11.9308C8.55357 14.9802 9.84671 17.6627 11.887 19.6972C13.9707 21.7745 16.7309 23.074 19.8707 23.4565C20.4706 23.5296 21.0879 23.5684 21.7052 23.5725C21.7075 23.5725 21.7099 23.5725 21.7127 23.5725C22.184 23.5725 22.6482 23.2874 22.8708 22.8595C22.8853 22.8306 22.8987 22.8028 22.9097 22.7761C22.9485 22.6828 22.9787 22.5859 22.9989 22.4909L23.5872 19.7412C23.7345 19.0514 23.3797 18.4075 22.7439 18.2098Z"
-			fill="#CC1E1C"
-			fillOpacity="0.6"
-		/>
-	</svg>
-);
 
 const SessionMenuFlyoutGroup = ({
 	groupChatInfoLink,

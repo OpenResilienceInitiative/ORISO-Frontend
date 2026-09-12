@@ -1,0 +1,47 @@
+// The call controls in a room header — ONE definition for both headers.
+// ---
+// Frank, 10.09.2026: "Du hast ja die Video Call Button eingefügt bei der
+// Supervision. Die sind ultraklein. Daneben bei dem normalen Hauptchat hast
+// Du sie richtig und ordentlich."
+// ---
+// He was right, and the cause was drift rather than a wrong value: the main
+// chat header carried these rules INLINE in `sessionHeader.styles.scss`
+// (`&__videoCallButtons`), so the side room's `PanelCallActions` — which uses
+// the very same `Button` molecule with `SMALL_ICON` — got the molecule's own
+// much smaller glyph instead. Two places, one look, no shared source.
+// ---
+// The numbers below are the ones the main chat header has always used; they
+// are only moved here so a second header cannot silently differ again.
+// `$room-call-button-gap` stays a parameter because the two headers really do
+// space their actions differently (16 px in the wide chat header, 12 px in
+// the narrow panel header, where it lines the calls up with the close ✕).
+
+$room-call-button-size: 32px;
+$room-call-button-radius: 12px;
+
+@mixin room-call-buttons($gap: 16px) {
+	display: flex;
+	align-items: center;
+	gap: $gap;
+
+	.button__item.button__smallIcon {
+		min-width: $room-call-button-size;
+		width: $room-call-button-size;
+		height: $room-call-button-size;
+		padding: 0;
+		border: none;
+		background: transparent;
+		border-radius: $room-call-button-radius;
+	}
+
+	// The glyph fills the button. Without this the molecule's default icon
+	// size wins and the control reads as "ultraklein".
+	.button__item.button__smallIcon svg {
+		width: $room-call-button-size;
+		height: $room-call-button-size;
+	}
+
+	.button__item.button__smallIcon:hover {
+		background: transparent;
+	}
+}
