@@ -213,10 +213,7 @@ export const AgencyDetailsPanel = ({
 				{details.about && (
 					<InfoRow
 						icon={<InfoOutlinedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.aboutLabel',
-							'Zu dieser Beratungsstelle'
-						)}
+						label={t('registration.agency.details.aboutLabel')}
 					>
 						{details.about}
 					</InfoRow>
@@ -224,13 +221,9 @@ export const AgencyDetailsPanel = ({
 
 				<InfoRow
 					icon={<TranslateRoundedIcon fontSize="small" />}
-					label={t(
-						'registration.agency.details.languagesLabel',
-						'Sprachen'
-					)}
+					label={t('registration.agency.details.languagesLabel')}
 					labelTooltip={t(
-						'registration.agency.details.languagesTooltip',
-						'Diese Beratungsstelle berät Sie auf:'
+						'registration.agency.details.languagesTooltip'
 					)}
 				>
 					<AgencyLanguages agencyId={agency.id} />
@@ -239,10 +232,7 @@ export const AgencyDetailsPanel = ({
 				{(details.address || details.floorLocation) && (
 					<InfoRow
 						icon={<PlaceRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.addressLabel',
-							'Adresse'
-						)}
+						label={t('registration.agency.details.addressLabel')}
 					>
 						{details.address && <Box>{details.address}</Box>}
 						{details.floorLocation && (
@@ -265,8 +255,7 @@ export const AgencyDetailsPanel = ({
 										sx={mapActionSx}
 									>
 										{t(
-											'registration.agency.details.openInMaps',
-											'In Karte öffnen'
+											'registration.agency.details.openInMaps'
 										)}
 										<OpenInNewRoundedIcon
 											sx={{ fontSize: 16 }}
@@ -285,8 +274,7 @@ export const AgencyDetailsPanel = ({
 										}}
 									>
 										{t(
-											'registration.agency.details.navigate',
-											'Navigation starten'
+											'registration.agency.details.navigate'
 										)}
 										<NavigationRoundedIcon
 											sx={{ fontSize: 16 }}
@@ -327,8 +315,7 @@ export const AgencyDetailsPanel = ({
 						<Box
 							component="iframe"
 							title={`${t(
-								'registration.agency.details.openInMaps',
-								'In Karte öffnen'
+								'registration.agency.details.openInMaps'
 							)} - ${agency.name}`}
 							src={mapSrc}
 							loading="lazy"
@@ -346,10 +333,7 @@ export const AgencyDetailsPanel = ({
 				{details.phone && (
 					<InfoRow
 						icon={<CallRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.phoneLabel',
-							'Telefon'
-						)}
+						label={t('registration.agency.details.phoneLabel')}
 					>
 						<Link
 							href={`tel:${details.phone.replace(/\s/g, '')}`}
@@ -367,10 +351,7 @@ export const AgencyDetailsPanel = ({
 				{safeDetailsUrl && (
 					<InfoRow
 						icon={<LanguageRoundedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.details.websiteLabel',
-							'Webseite'
-						)}
+						label={t('registration.agency.details.websiteLabel')}
 					>
 						<Link
 							href={safeDetailsUrl}
@@ -387,10 +368,7 @@ export const AgencyDetailsPanel = ({
 				{hasDepartmentLegal && (
 					<InfoRow
 						icon={<PrivacyTipOutlinedIcon fontSize="small" />}
-						label={t(
-							'registration.agency.legal.label',
-							'Rechtliches'
-						)}
+						label={t('registration.agency.legal.label')}
 					>
 						<Box
 							sx={{
