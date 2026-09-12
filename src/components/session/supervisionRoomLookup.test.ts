@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { roomIdForActiveSession } from './supervisionRoomLookup';
 
 describe('roomIdForActiveSession', () => {
+	it('returns no room when neither a lookup nor an active session exists', () => {
+		expect(roomIdForActiveSession(null, undefined)).toBeUndefined();
+	});
+
 	it('never exposes a side room resolved for a previous session', () => {
 		expect(
 			roomIdForActiveSession(

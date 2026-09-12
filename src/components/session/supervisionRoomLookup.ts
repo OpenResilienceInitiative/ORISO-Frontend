@@ -12,4 +12,4 @@ export const roomIdForActiveSession = (
 	lookup: SupervisionRoomLookup | null,
 	activeSessionId: number | undefined
 ): string | undefined =>
-	lookup?.sessionId === activeSessionId ? lookup.roomId : undefined;
+	lookup && lookup.sessionId === activeSessionId ? lookup.roomId : undefined;

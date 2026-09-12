@@ -92,6 +92,11 @@ export const getModalityIfKnown = (
 	if (isModality(explicit)) {
 		return explicit;
 	}
+	// An explicit value is authoritative even when this frontend does not know
+	// it yet. Do not disguise a future/backend modality as a legacy heuristic.
+	if (explicit !== undefined) {
+		return undefined;
+	}
 
 	// 2. Fallback heuristic (centralised here, deleted once the column is populated everywhere).
 	if (chat) {
@@ -111,9 +116,6 @@ export const getModalityIfKnown = (
 			isAnonymousUsername(user?.username)
 		) {
 			return Modality.LIVE_CHAT;
-		}
-		if (explicit !== undefined) {
-			return undefined;
 		}
 		return Modality.AGENCY_COUNSELLING;
 	}
