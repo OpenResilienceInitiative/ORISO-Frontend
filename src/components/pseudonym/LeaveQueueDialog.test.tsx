@@ -3,6 +3,32 @@ import * as React from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('react-i18next', () => ({
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'anonymousChat.leaveQueue.headline': 'Chat verlassen?',
+			'anonymousChat.leaveQueue.body':
+				'Sie sind noch im Wartebereich. Sie können weiter warten oder Ihren Zugang löschen — dann wird dieser Chat beendet.',
+			'anonymousChat.leaveQueue.bodyAccepted':
+				'Eine beratende Person wartet bereits auf Sie. Sie können den Chat jetzt starten, im Wartebereich bleiben oder Ihren Zugang löschen.',
+			'anonymousChat.leaveQueue.deleteWarning':
+				'Ihr Zugang wird deaktiviert und dieser Chat beendet.',
+			'anonymousChat.leaveQueue.cancelDelete': 'Abbrechen',
+			'anonymousChat.leaveQueue.confirmDelete': 'Ja, endgültig löschen',
+			'anonymousChat.leaveQueue.stay': 'Im Wartebereich bleiben',
+			'anonymousChat.leaveQueue.startChat': 'Chat jetzt starten',
+			'anonymousChat.leaveQueue.startChatUnavailable':
+				'Sobald eine beratende Person den Chat annimmt, können Sie hier starten.',
+			'anonymousChat.leaveQueue.delete': 'Chat beenden & Zugang löschen'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
+}));
+
+/* eslint-disable-next-line import/first -- must load after the vi.mock call
+   above, otherwise the real i18next module is pulled in first. */
 import { LeaveQueueDialog } from './LeaveQueueDialog';
 
 // `globals` is off in this project, so RTL never registers its own teardown.
