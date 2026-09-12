@@ -2503,7 +2503,7 @@ export const MessageItemComponent = ({
 	   sequence already draws. */
 	if (erstantwortRenderMode === 'sequence') {
 		return (
-			<div className="messageItem messageItem--erstantwort">
+<div className="messageItem messageItem--erstantwort" data-message-id={_id}>
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
