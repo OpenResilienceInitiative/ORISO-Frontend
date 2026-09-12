@@ -4446,7 +4446,8 @@
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",
-			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this."
+			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this.",
+			"missingPolicy": "This counselling centre currently has no privacy policy of its own on file. If you continue, you use the service at your own risk. By selecting the checkbox, you agree to this website's {{legal_links}}. This website uses cookies."
 		},
 		"subline": "Please confirm our privacy policy."
 	},

@@ -14,8 +14,14 @@ import { LocaleContext } from '../../../globalState';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
+import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
+import {
+	DepartmentConsentState,
+	resolveEntryRoomConsent
+} from './entryRoomConsent';
 import { performLeaveQueueDelete } from '../../pseudonym/leaveQueueDelete';
 import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
 import { generatePseudonym } from '../../../utils/pseudonymGenerator';
@@ -120,6 +126,10 @@ export const LiveChatEntryRoom = ({
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
 	const [accepted, setAccepted] = useState(false);
+	const [department, setDepartment] = useState<{
+		agencyId: number;
+		topicId: number;
+	} | null>(null);
 	const [closedDismissed, setClosedDismissed] = useState(false);
 	const [leaveFailed, setLeaveFailed] = useState(false);
 	const [continueFailed, setContinueFailed] = useState(false);
@@ -142,25 +152,80 @@ export const LiveChatEntryRoom = ({
 		? `${tr('kicker', 'Live-Chat')} · ${topicName}`
 		: tr('kicker', 'Live-Chat');
 
-	/* The tenant's consent sentence, exactly as the old gate built it. */
-	const consentHtml = useMemo(
+	/* The link markup the sentence's `{{legal_links}}` token is replaced with.
+	   The backend cannot render it: the targets come from this frontend's
+	   deployment configuration (ADR-021 decision 5). */
+	const legalLinksHtml = useMemo(
+		() =>
+			renderToString(
+				<LegalLinks
+					legalLinks={legalLinks}
+					filter={(l) => l.registration}
+					/* Without it the two links glue into
+					   "DatenschutzerklärungImpressum" — the sanitizer
+					   drops `class`, so a CSS separator cannot survive.
+					   Same delimiter the registration's consent sentence
+					   passes. */
+					delimiter={', '}
+				/>
+			),
+		[legalLinks]
+	);
+
+	/* The platform's consent sentence, exactly as the old gate built it. It is
+	   the right text only when the department has no wording of its own; a
+	   department that does have one governs the advice seeker instead. */
+	const platformConsentHtml = useMemo(
 		() =>
 			t('anonymousConsent.label.text', {
 				interpolation: { escapeValue: false },
-				legal_links: renderToString(
-					<LegalLinks
-						legalLinks={legalLinks}
-						filter={(l) => l.registration}
-						/* Without it the two links glue into
-						   "DatenschutzerklärungImpressum" — the sanitizer
-						   drops `class`, so a CSS separator cannot survive.
-						   Same delimiter the registration's consent sentence
-						   passes. */
-						delimiter={', '}
-					/>
-				)
+				legal_links: legalLinksHtml
 			}),
-		[legalLinks, t]
+		[legalLinksHtml, t]
+	);
+
+	/* Product-owned fallback for an agency without a usable published policy.
+	   It is intentionally a warning rather than a gate: the customer sees the
+	   missing-policy risk, the configured legal links and the cookie disclosure,
+	   and decides whether to continue with the existing checkbox. */
+	const missingPolicyHtml = useMemo(
+		() =>
+			t('anonymousConsent.label.missingPolicy', {
+				interpolation: { escapeValue: false },
+				legal_links: legalLinksHtml
+			}),
+		[legalLinksHtml, t]
+	);
+
+	/**
+	 * The department's own consent sentence, resolved from (agencyId, topicId).
+	 *
+	 * `idle` while the coordinate is unknown — the enquiry carries no agency,
+	 * or the backend predates ORISO-UserService#1141 and does not send one.
+	 * An absent or unavailable policy uses the fixed risk warning. An unavailable
+	 * response keeps retrying in the background, but never blocks the customer.
+	 */
+	const [departmentConsent, setDepartmentConsent] =
+		useState<DepartmentConsentState>({ status: 'idle' });
+
+	const consent = useMemo(
+		() =>
+			resolveEntryRoomConsent({
+				hasDepartment: department !== null,
+				department: departmentConsent,
+				platformHtml: platformConsentHtml,
+				missingPolicyHtml,
+				legalLinksHtml,
+				locale
+			}),
+		[
+			department,
+			departmentConsent,
+			legalLinksHtml,
+			locale,
+			missingPolicyHtml,
+			platformConsentHtml
+		]
 	);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
@@ -215,6 +280,18 @@ export const LiveChatEntryRoom = ({
 							? d.numAvailableConsultants
 							: null
 					);
+					/* The department coordinate is bound at registration, so it
+					   arrives on the very first poll — the sentence is fetched
+					   while the person waits and is ready long before anyone
+					   accepts. Set once; the enquiry does not move department. */
+					const agencyId = d?.agencyId;
+					const topicId = d?.mainTopicId;
+					if (
+						typeof agencyId === 'number' &&
+						typeof topicId === 'number'
+					) {
+						setDepartment((prev) => prev ?? { agencyId, topicId });
+					}
 					if (d?.status === 'IN_PROGRESS') setAccepted(true);
 				})
 				.catch(() => undefined);
@@ -225,6 +302,39 @@ export const LiveChatEntryRoom = ({
 			window.clearInterval(timer);
 		};
 	}, [stage, accepted, sessionId]);
+
+	/* Fetch as soon as the coordinate is known. A transient failure shows the
+	   non-blocking warning immediately and keeps retrying, so published wording
+	   can replace it if the service recovers while the customer is waiting. */
+	useEffect(() => {
+		if (!department || departmentConsent.status === 'ok') return undefined;
+		let stop = false;
+		const load = () =>
+			apiGetConsentText(department.agencyId, department.topicId)
+				.then((result) => {
+					if (stop) return;
+					setDepartmentConsent(
+						result.status === 'ok'
+							? {
+									status: 'ok',
+									sentence:
+										result.consentText?.sentence ?? null,
+									versionId:
+										result.consentText?.versionId ?? null
+								}
+							: { status: 'unavailable' }
+					);
+				})
+				.catch(() => {
+					if (!stop) setDepartmentConsent({ status: 'unavailable' });
+				});
+		load();
+		const timer = window.setInterval(load, POLL_MS);
+		return () => {
+			stop = true;
+			window.clearInterval(timer);
+		};
+	}, [department, departmentConsent.status]);
 
 	/* Closed steps back the moment someone is available again. */
 	useEffect(() => {
@@ -242,13 +352,32 @@ export const LiveChatEntryRoom = ({
 				dataPrivacyConfirmation: true,
 				termsAndConditionsConfirmation: true
 			});
+			/* Pin the agreement to the exact wording that was on screen
+			   (ADR-022 decision 2). The account-level flag above records only
+			   *that* somebody agreed; without this pointer a Träger publishing
+			   new wording would not invalidate the acceptance, which is what
+			   ADR-021 gave the legal texts a version history for. Only the
+			   department levels carry a version — Träger and platform wording
+			   lives in TenantService and has none, so there is nothing to pin
+			   and the account flag stands alone, exactly as before.
+
+			   Best-effort on purpose: the consent is already recorded on the
+			   account, so a failure here must not strand somebody in the entry
+			   room over a pointer the server treats as a refinement. */
+			if (typeof consent.versionId === 'number') {
+				try {
+					await apiPutSessionConsent(sessionId, consent.versionId);
+				} catch {
+					/* keep going — the account-level confirmation carries it */
+				}
+			}
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
 		} catch {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLeave = useCallback(async () => {
 		setBusy(true);
@@ -310,8 +439,14 @@ export const LiveChatEntryRoom = ({
 			{stage === 'waiting' && !closed && (
 				<LiveChatWaitingRoom
 					ahead={ahead}
-					accepted={accepted}
-					consentHtml={consentHtml}
+					/* Held only while the department lookup is still in flight —
+					   a poll that reports the coordinate and IN_PROGRESS together
+					   would otherwise show "no policy" for a centre that has one,
+					   and let the hand-off record a consent pinning no version.
+					   A *failed* lookup never holds; `resolveEntryRoomConsent`
+					   owns that distinction. */
+					accepted={consent.readable && accepted}
+					consentHtml={consent.html}
 					busy={busy}
 					leaveFailed={leaveFailed}
 					onAccept={() => {

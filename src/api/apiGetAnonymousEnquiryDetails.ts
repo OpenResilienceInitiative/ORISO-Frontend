@@ -5,6 +5,18 @@ export interface AnonymousEnquiryDetails {
 	numAvailableConsultants: number;
 	peopleAhead?: number;
 	status: 'INITIAL' | 'NEW' | 'IN_PROGRESS' | 'DONE' | 'IN_ARCHIVE';
+	/**
+	 * The department coordinate (agency x topic) the enquiry belongs to, so the entry room can
+	 * resolve the accepting counselling centre's own data-protection declaration instead of the
+	 * platform fallback.
+	 *
+	 * Optional on purpose, and in two directions: the backend serves them as nullable (no agency
+	 * bound yet, or an enquiry carrying no topic), and a frontend paired with a backend that
+	 * predates ORISO-UserService#1141 sees them absent. Both cases resolve to the same, correct
+	 * behaviour — keep today's platform wording rather than guess a department.
+	 */
+	agencyId?: number | null;
+	mainTopicId?: number | null;
 }
 
 /**

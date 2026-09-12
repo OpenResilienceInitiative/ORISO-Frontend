@@ -4505,7 +4505,8 @@
 		"headline": "Sıcak bir karşılama",
 		"label": {
 			"and": "ve",
-			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+			"text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim.",
+			"missingPolicy": "Bu danışma merkezine ait bir gizlilik politikası şu anda kayıtlı değildir. Devam ederseniz hizmeti kendi sorumluluğunuzda kullanırsınız. Onay kutusunu işaretleyerek bu web sitesinin {{legal_links}} kabul etmiş olursunuz. Bu web sitesi çerez kullanır."
 		},
 		"subline": "Lütfen gizlilik politikamızı onaylayın."
 	},
