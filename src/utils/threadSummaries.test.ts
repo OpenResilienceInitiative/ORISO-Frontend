@@ -117,6 +117,32 @@ describe('computeThreadSummaries', () => {
 		});
 	});
 
+	it('replaces an invalid first reply timestamp with a later valid reply', () => {
+		const summary = computeThreadSummaries([
+			{
+				_id: '$invalid:hs',
+				message: 'Ungültige Antwort',
+				messageTime: 'not-a-date',
+				threadRootEventId: '$root:hs',
+				displayName: 'Alt'
+			},
+			{
+				_id: '$valid:hs',
+				message: 'Gültige Antwort',
+				messageTime: '2026-07-14T09:02:00.000Z',
+				threadRootEventId: '$root:hs',
+				displayName: 'Neu'
+			}
+		]).get('$root:hs');
+
+		expect(summary).toMatchObject({
+			replyCount: 2,
+			lastReplyTs: new Date('2026-07-14T09:02:00.000Z').getTime(),
+			lastReplyAuthor: 'Neu',
+			lastReplyPreview: 'Gültige Antwort'
+		});
+	});
+
 	it('falls back to a trimmed username when displayName is whitespace', () => {
 		const summary = computeThreadSummaries([
 			{
