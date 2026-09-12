@@ -55,7 +55,9 @@ export const computeThreadSummaries = (
 		const replyTs = new Date(message.messageTime).getTime();
 		const isNewest =
 			!existing ||
-			(Number.isFinite(replyTs) && replyTs > existing.lastReplyTs);
+			(Number.isFinite(replyTs) &&
+				(!Number.isFinite(existing.lastReplyTs) ||
+					replyTs > existing.lastReplyTs));
 		map.set(rootId, {
 			rootId,
 			replyCount: (existing?.replyCount || 0) + 1,
