@@ -75,17 +75,11 @@ export const NotificationSettingsPanel = () => {
 		<div className="notifications__content">
 			<div className="profile__content__title">
 				<Headline
-					text={t(
-						'profile.notificationSettings.title',
-						'Benachrichtigungen'
-					)}
+					text={t('profile.notificationSettings.title')}
 					semanticLevel="5"
 				/>
 				<Text
-					text={t(
-						'profile.notificationSettings.description',
-						'Diese Einstellungen gelten für Ihr Konto auf allen Geräten und Browsern.'
-					)}
+					text={t('profile.notificationSettings.description')}
 					type="standard"
 					className="tertiary"
 				/>

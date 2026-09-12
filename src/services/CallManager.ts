@@ -6,6 +6,7 @@
  * clean state transitions.
  */
 
+import i18n from 'i18next';
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { getMatrixClientService } from './matrixClientRegistry';
@@ -257,7 +258,11 @@ class CallManager {
 			this.notifyListeners();
 		})().catch((err: any) => {
 			// console.error("❌ Error while starting call:", err);
-			alert(`Failed to start call: ${(err as Error).message}`);
+			alert(
+				i18n.t('calls.error.startFailed', {
+					message: (err as Error).message
+				})
+			);
 			this.endCall();
 		});
 	}

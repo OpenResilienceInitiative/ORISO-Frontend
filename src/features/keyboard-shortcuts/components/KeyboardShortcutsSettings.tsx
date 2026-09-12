@@ -48,14 +48,14 @@ const useShortcutLabels = () => {
 	const { t } = useTranslation();
 	return useMemo(
 		() => ({
-			ctrl: t('shortcuts.keys.ctrl', { defaultValue: 'Ctrl' }),
-			cmd: t('shortcuts.keys.cmd', { defaultValue: 'Cmd' }),
-			alt: t('shortcuts.keys.alt', { defaultValue: 'Alt' }),
-			option: t('shortcuts.keys.option', { defaultValue: 'Option' }),
-			shift: t('shortcuts.keys.shift', { defaultValue: 'Shift' }),
-			enter: t('shortcuts.keys.enter', { defaultValue: 'Enter' }),
-			escape: t('shortcuts.keys.escape', { defaultValue: 'Esc' }),
-			arrowUp: t('shortcuts.keys.arrowUp', { defaultValue: '↑' })
+			ctrl: t('shortcuts.keys.ctrl'),
+			cmd: t('shortcuts.keys.cmd'),
+			alt: t('shortcuts.keys.alt'),
+			option: t('shortcuts.keys.option'),
+			shift: t('shortcuts.keys.shift'),
+			enter: t('shortcuts.keys.enter'),
+			escape: t('shortcuts.keys.escape'),
+			arrowUp: t('shortcuts.keys.arrowUp')
 		}),
 		[t]
 	);

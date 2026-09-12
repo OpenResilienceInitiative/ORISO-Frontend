@@ -163,23 +163,13 @@ export const DpaSign = () => {
 
 		if (!decodedToken || !preview) {
 			setSubmitState('error');
-			setErrorMessage(
-				t(
-					'dpaSign.error.previewRequired',
-					'Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.'
-				)
-			);
+			setErrorMessage(t('dpaSign.error.previewRequired'));
 			return;
 		}
 
 		if (!formState.accepted) {
 			setSubmitState('error');
-			setErrorMessage(
-				t(
-					'dpaSign.error.acceptRequired',
-					'Bitte bestätigen Sie die Vertragsunterlagen.'
-				)
-			);
+			setErrorMessage(t('dpaSign.error.acceptRequired'));
 			return;
 		}
 
@@ -229,13 +219,10 @@ export const DpaSign = () => {
 			>
 				<Box>
 					<Typography variant="h4" component="h1" gutterBottom>
-						{t('dpaSign.title', 'Vertragsunterlagen unterzeichnen')}
+						{t('dpaSign.title')}
 					</Typography>
 					<Typography color="text.secondary">
-						{t(
-							'dpaSign.subtitle',
-							'Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.'
-						)}
+						{t('dpaSign.subtitle')}
 					</Typography>
 				</Box>
 
@@ -252,20 +239,11 @@ export const DpaSign = () => {
 						}}
 					>
 						<CircularProgress size={24} />
-						<Typography>
-							{t(
-								'dpaSign.loadingContract',
-								'Vertragsunterlagen werden geladen...'
-							)}
-						</Typography>
+						<Typography>{t('dpaSign.loadingContract')}</Typography>
 					</Box>
 				) : !preview ? (
 					<Alert severity="error">
-						{previewErrorMessage ??
-							t(
-								'dpaSign.error.generic',
-								'Die Vertragsunterlagen konnten gerade nicht geladen werden.'
-							)}
+						{previewErrorMessage ?? t('dpaSign.error.generic')}
 					</Alert>
 				) : (
 					<Box
@@ -301,13 +279,10 @@ export const DpaSign = () => {
 								variant="h5"
 								component="h2"
 							>
-								{t(
-									'dpaSign.contractHeading',
-									'Vertragsunterlagen'
-								)}
+								{t('dpaSign.contractHeading')}
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{t('dpaSign.version', 'Vertragsversion')}{' '}
+								{t('dpaSign.version')}{' '}
 								{formatDpaDate(
 									preview.dpaVersion,
 									formState.language
@@ -338,22 +313,16 @@ export const DpaSign = () => {
 								variant="h5"
 								component="h2"
 							>
-								{t(
-									'dpaSign.signerHeading',
-									'Bestätigung der vertretungsberechtigten Person'
-								)}
+								{t('dpaSign.signerHeading')}
 							</Typography>
 							{submitState === 'success' ? (
 								<Alert severity="success">
-									{t(
-										'dpaSign.success',
-										'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
-									)}
+									{t('dpaSign.success')}
 								</Alert>
 							) : (
 								<>
 									<TextField
-										label={t('dpaSign.signerName', 'Name')}
+										label={t('dpaSign.signerName')}
 										value={formState.signerName}
 										onChange={(event) =>
 											updateField(
@@ -365,10 +334,7 @@ export const DpaSign = () => {
 										fullWidth
 									/>
 									<TextField
-										label={t(
-											'dpaSign.signerPosition',
-											'Position'
-										)}
+										label={t('dpaSign.signerPosition')}
 										value={formState.signerPosition}
 										onChange={(event) =>
 											updateField(
@@ -380,10 +346,7 @@ export const DpaSign = () => {
 										fullWidth
 									/>
 									<TextField
-										label={t(
-											'dpaSign.signerEmail',
-											'E-Mail'
-										)}
+										label={t('dpaSign.signerEmail')}
 										type="email"
 										value={formState.signerEmail}
 										onChange={(event) =>
@@ -411,10 +374,7 @@ export const DpaSign = () => {
 									    field, and the write contract leaves it
 									    optional. */}
 									<TextField
-										label={t(
-											'dpaSign.signerNote',
-											'Anmerkung (optional)'
-										)}
+										label={t('dpaSign.signerNote')}
 										value={formState.signerOrganisation}
 										onChange={(event) =>
 											updateField(
@@ -425,7 +385,7 @@ export const DpaSign = () => {
 										fullWidth
 									/>
 									<TextField
-										label={t('dpaSign.language', 'Sprache')}
+										label={t('dpaSign.language')}
 										value={formState.language}
 										onChange={(event) =>
 											updateField(
@@ -448,10 +408,7 @@ export const DpaSign = () => {
 										variant="body2"
 										color="text.secondary"
 									>
-										{t(
-											'dpaSign.signingFor',
-											'Sie unterzeichnen im Namen von:'
-										)}{' '}
+										{t('dpaSign.signingFor')}{' '}
 										<Box
 											component="strong"
 											sx={{ color: 'text.primary' }}
@@ -472,10 +429,7 @@ export const DpaSign = () => {
 												required
 											/>
 										}
-										label={t(
-											'dpaSign.accept',
-											'Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.'
-										)}
+										label={t('dpaSign.accept')}
 									/>
 									{errorMessage && (
 										<Alert severity="error">
@@ -491,14 +445,8 @@ export const DpaSign = () => {
 										sx={{ justifySelf: 'start' }}
 									>
 										{submitState === 'submitting'
-											? t(
-													'dpaSign.submitting',
-													'Speichern...'
-												)
-											: t(
-													'dpaSign.submit',
-													'Verbindlich bestätigen'
-												)}
+											? t('dpaSign.submitting')
+											: t('dpaSign.submit')}
 									</Button>
 								</>
 							)}
@@ -561,25 +509,13 @@ const resolveErrorKind = (error: unknown): PreviewErrorKind => {
 const translateErrorKind = (kind: PreviewErrorKind, t: TFunction) => {
 	switch (kind) {
 		case 'missingToken':
-			return t(
-				'dpaSign.error.missingToken',
-				'Der Signaturlink ist unvollständig.'
-			);
+			return t('dpaSign.error.missingToken');
 		case DPA_SIGN_ERRORS.INVALID_OR_EXPIRED_TOKEN:
-			return t(
-				'dpaSign.error.invalidToken',
-				'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.'
-			);
+			return t('dpaSign.error.invalidToken');
 		case DPA_SIGN_ERRORS.INVALID_REQUEST:
-			return t(
-				'dpaSign.error.invalidRequest',
-				'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
-			);
+			return t('dpaSign.error.invalidRequest');
 		default:
-			return t(
-				'dpaSign.error.generic',
-				'Die Signatur konnte gerade nicht gespeichert werden.'
-			);
+			return t('dpaSign.error.generic');
 	}
 };
 

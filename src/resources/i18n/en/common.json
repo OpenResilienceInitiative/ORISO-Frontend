@@ -62,7 +62,8 @@
 			"classic": "Classic Look",
 			"new": "New Look!"
 		},
-		"wait": "Please wait"
+		"wait": "Please wait",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -225,7 +226,8 @@
 		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
-			"title": "Your availability"
+			"title": "Your availability",
+			"iframeTitle": "Availability"
 		},
 		"calender": {
 			"add": "Add calendar",
@@ -292,6 +294,18 @@
 			"button": {
 				"label": "Start video call"
 			}
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Assigned calendars"
+		},
+		"calcom": {
+			"loading": "Loading {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Reschedule appointment"
+		},
+		"cancellation": {
+			"iframeTitle": "Cancel appointment"
 		}
 	},
 	"chat": {
@@ -577,7 +591,8 @@
 				"description": "It looks like we have a server problem at the moment.<br>Try again later.",
 				"headline": "Ups!"
 			}
-		}
+		},
+		"notFound": "Not found"
 	},
 	"furtherSteps": {
 		"arrowTitle": "Next",
@@ -1602,6 +1617,8 @@
 				"overLimit": "Message is over the character limit.",
 				"warning": "Message is approaching the character limit."
 			},
+			"loadError": "The chat input could not be loaded. Please try again.",
+			"retry": "Try again",
 			"toolbar": {
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
@@ -1645,7 +1662,9 @@
 				"voiceRecording": {
 					"label": "Voice recording",
 					"tooltip": "Record voice message"
-				}
+				},
+				"imageUrlPrompt": "Image URL",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1734,8 +1753,10 @@
 			"unknownRoot": "Earlier message",
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
+			"lastReplyAt": "Last reply at {{time}}",
 			"title": "Thread",
-			"placeholder": "Reply in thread"
+			"placeholder": "Reply in thread",
+			"inlineImageAlt": "Message image"
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
@@ -1768,7 +1789,8 @@
 		"overview": "Overview",
 		"profile": "Profile",
 		"myProfile": "My profile",
-		"tools": "My tools"
+		"tools": "My tools",
+		"unreadCount": "{{count}} unread"
 	},
 	"notification": {
 		"error": "Error",
@@ -2637,7 +2659,8 @@
 				"headline": "Data privacy notes of the counseling center",
 				"imprintHeadline": "Imprint of the counseling center",
 				"label": "Legal",
-				"unavailable": "The data privacy notes cannot be loaded at the moment."
+				"unavailable": "The data privacy notes cannot be loaded at the moment.",
+				"loading": "Loading data privacy notes"
 			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"
@@ -3224,17 +3247,123 @@
 				"confirm": "Got it, lets start",
 				"inhale": {
 					"bubble": "You need to 3 things, to win.",
-					"subtitle": "through your nose"
+					"subtitle": "through your nose",
+					"instruction": "Inhale slowly for <strong>{{count}} seconds</strong>, then press the button."
 				},
 				"hold": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "your breath"
+					"subtitle": "your breath",
+					"instruction": "Hold your breath now for <strong>{{count}} seconds</strong>, then press the button."
 				},
 				"exhale": {
 					"bubble": "You need to 3 things.",
-					"subtitle": "through your mouth"
+					"subtitle": "through your mouth",
+					"instruction": "Exhale slowly for <strong>{{count}} seconds</strong>, then press the button."
+				},
+				"restart": "Restart",
+				"pressAtRightTime": "Press at the right time",
+				"belly": {
+					"autoPilot": "Auto pilot",
+					"timeIt": "Time it",
+					"inhale": "Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.",
+					"hold": "Now hold for <strong>3 seconds</strong> your breath.",
+					"exhale": "Now breath out for <strong>4 seconds</strong> and relax your entire body."
+				},
+				"selfTimer": {
+					"instruction": "Set this time your own time intervals while breathing.",
+					"repeatGame": "Repeat game",
+					"backToWaiting": "Back to waiting"
+				},
+				"completion": {
+					"instruction": "Congratulation you have made it.",
+					"receiveGift": "Receive little gift"
+				},
+				"serenity": {
+					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
 				}
-			}
+			},
+			"inhaleExhale": "Inhale exhale breathing guide",
+			"timeLeft": "Time left",
+			"choosePace": "Choose your pace, then begin your first try.",
+			"firstTryInstruction": "First try: follow inhale, hold, and exhale.",
+			"practiceSuccessPrompt": "Great job, want to start now?",
+			"timingInfo": "Set your breathing timing before you start.",
+			"achievementUnlocked": "Achievement unlocked: Level {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Level {{level}}: {{title}}",
+			"completionTitle": "Congratulation you have made it",
+			"prizeLine1": "Your main prize is true wisdom.",
+			"prizeLine2": "Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.",
+			"serenityPrayer": "God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
+			"changeMind": "I change my mind let me try out your waiting game",
+			"iJustWait": "I just wait",
+			"startGame": "Start the game",
+			"startFirstTry": "Lets start the first try",
+			"repeatTrainingRound": "Repeat training round",
+			"startRealGame": "Lets start the real game",
+			"repeatGame": "Repeat game",
+			"receivePrize": "Receive your price",
+			"playAgain": "Play again",
+			"joinRoom": "Join the room",
+			"decreaseInhale": "Decrease inhale seconds",
+			"increaseInhale": "Increase inhale seconds",
+			"decreaseHold": "Decrease hold seconds",
+			"increaseHold": "Increase hold seconds",
+			"decreaseExhale": "Decrease exhale seconds",
+			"increaseExhale": "Increase exhale seconds",
+			"robotCard4Info": "Info",
+			"presets": {
+				"starter334": "first time",
+				"standard446": "mild experience (recommended)",
+				"deep556": "long (experts)"
+			},
+			"secondsAria": "{{label}}, {{count}} seconds",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": { "title": "Chaos Tamer", "success": "Good start." },
+				"2": {
+					"title": "Breath Finder",
+					"success": "You found a rhythm."
+				},
+				"3": {
+					"title": "Breath Director",
+					"success": "Great control."
+				},
+				"4": {
+					"title": "Calm Builder",
+					"success": "Flow is improving."
+				},
+				"5": {
+					"title": "Inner Balance",
+					"success": "Breathing stays smooth."
+				},
+				"6": { "title": "Rhythm Keeper", "success": "Strong focus." },
+				"7": {
+					"title": "Peace Crafter",
+					"success": "You stay centered."
+				},
+				"8": {
+					"title": "Silent Navigator",
+					"success": "Calm under pressure."
+				},
+				"9": {
+					"title": "Stillness Master",
+					"success": "Almost complete."
+				},
+				"10": {
+					"title": "True Wisdom",
+					"success": "You mastered this round."
+				}
+			},
+			"briefing": {
+				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",
+				"1": "Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.",
+				"2": "Okay you need to do three things in the game.",
+				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
+				"negative": "Okay please hold on once a counsellor is free we let you in."
+			},
+			"onboardingLine1": "Just arrive. We breathe together.",
+			"onboardingLine3": "When you are ready, start your first try.",
+			"volumeHint": "For a better experience, turn on your volume."
 		},
 		"acceptance": {
 			"button": {
@@ -3401,8 +3530,15 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Peer support group",
-				"internal": "Internal"
+				"internal": "Internal",
+				"team": "Team counselling"
 			}
+		},
+		"resizeHandle": {
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"ariaLabel": "Resize the consultations list. Drag vertically to scroll the list.",
+			"expand": "Expand consultations list",
+			"collapse": "Collapse consultations list to enlarge the chat"
 		},
 		"createChat": {
 			"buttonTitle": "Create chat"
@@ -3456,6 +3592,7 @@
 				"confirm": "Confirm selection",
 				"close": "Close search",
 				"clear": "Clear search",
+				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
@@ -3496,9 +3633,6 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
-		},
-		"resizeHandle": {
-			"scrollAriaLabel": "Drag to scroll the list."
 		}
 	},
 	"statusOverlay": {
@@ -3841,7 +3975,8 @@
 		"twoUsers": {
 			"connector": "and",
 			"typing": "write"
-		}
+		},
+		"aria": "Typing"
 	},
 	"user": {
 		"userAddiction": {
@@ -4536,6 +4671,13 @@
 		"title": "Sign contract documents",
 		"subtitle": "Please read the contract documents in full and then confirm the details of the person signing.",
 		"loadingContract": "Loading contract documents…",
+		"contractHeading": "Contract documents",
+		"version": "Contract version",
+		"signerName": "Name",
+		"signerPosition": "Position",
+		"signerEmail": "E-mail",
+		"signerNote": "Note (optional)",
+		"language": "Language",
 		"signerHeading": "Confirmation by authorised signatory",
 		"signingFor": "You are signing on behalf of:",
 		"accept": "I have read the contract documents shown above and confirm them as binding.",
@@ -4567,6 +4709,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Create counselling account",
+		"successTitle": "Account created",
+		"email": "E-mail address",
+		"username": "Username",
+		"password": "Password",
+		"repeatPassword": "Repeat password",
+		"submit": "Create account",
 		"invalid": "This invite link is invalid or expired.",
 		"createFailed": "The counselling account could not be created. Please try again.",
 		"loading": "Loading invitation",
@@ -4586,7 +4735,8 @@
 			"open": "Open draft",
 			"next": "Next draft",
 			"delete": "Delete draft",
-			"emptyDetail": "Select a draft to continue writing."
+			"emptyDetail": "Select a draft to continue writing.",
+			"embeddedTitle": "Draft chat session"
 		}
 	},
 	"tour": {
@@ -4794,6 +4944,103 @@
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
 			}
+		}
+	},
+	"calls": {
+		"answer": "Answer",
+		"reject": "Reject",
+		"decline": "Decline",
+		"endCall": "End call",
+		"fullscreen": "Fullscreen",
+		"mute": "Mute",
+		"unmute": "Unmute",
+		"turnOnVideo": "Turn on video",
+		"turnOffVideo": "Turn off video",
+		"moreOptions": "More options",
+		"close": "Close call",
+		"title": "Call",
+		"videoCall": "Video call",
+		"audioCall": "Audio call",
+		"autoFit": "Auto-fit",
+		"autoFitAria": "Auto-fit video to window",
+		"resizeAria": "Resize video call window ({{edge}})",
+		"widget": {
+			"autoFit": "Auto-fit video",
+			"autoFitAria": "Auto-fit video to window",
+			"startFailed": "Failed to start call: {{message}}",
+			"answerFailed": "Failed to answer: {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Incoming call",
+			"incomingDescription": "Someone is calling…",
+			"close": "Close call",
+			"autoFit": "Auto-fit",
+			"autoFitAria": "Auto-fit call window",
+			"openFullView": "Open full view",
+			"switchToSmallView": "Switch to small view",
+			"exitFullScreen": "Exit full screen",
+			"enterFullScreen": "Enter full screen",
+			"fullView": "Full view",
+			"smallView": "Small view",
+			"fullScreen": "Full screen",
+			"iframeTitle": "Group video call",
+			"connecting": "Connecting…",
+			"settingUp": "Setting up call",
+			"startFailed": "Failed to start call: {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "No room ID provided",
+			"noRoomDescription": "Cannot start a call without a room ID.",
+			"goBack": "Go back"
+		},
+		"error": {
+			"noRoom": "Cannot start call: no Matrix room found for this session.",
+			"httpsRequired": "Camera and microphone access requires HTTPS. Redirect to a secure connection?",
+			"cannotAccess": "Cannot access camera or microphone. ",
+			"grantPermissions": "Please grant permissions in your browser settings.",
+			"noDevice": "No camera or microphone found on this device.",
+			"browserUnsupported": "Your browser does not support this feature. Please use HTTPS.",
+			"unknown": "Unknown error.",
+			"callFailed": "Call failed: {{message}}",
+			"startFailed": "Failed to start call: {{message}}",
+			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Back",
+			"confirm": "Understood",
+			"close": "Close"
+		},
+		"calendar": {
+			"cancel": "Cancel",
+			"ok": "OK",
+			"previousMonth": "Previous month",
+			"selectMonth": "Select month",
+			"nextMonth": "Next month",
+			"previousYear": "Previous year",
+			"selectYear": "Select year",
+			"nextYear": "Next year"
+		},
+		"datePicker": {
+			"openCalendar": "Open calendar"
+		},
+		"timePicker": {
+			"dialogTitle": "Select time",
+			"cancel": "Cancel",
+			"ok": "OK",
+			"open": "Open time picker",
+			"selectHours": "Select hours",
+			"selectMinutes": "Select minutes",
+			"hour": "Hour",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Switch to text input",
+			"switchToDial": "Switch to dial"
+		},
+		"select": {
+			"search": "Search"
 		}
 	}
 }

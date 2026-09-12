@@ -985,7 +985,7 @@ export const MessageItemComponent = ({
 			content.replace(
 				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
 				(_match, imageUrl: string) =>
-					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="Message image" loading="lazy" decoding="async" />`
+					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="${translate('message.thread.inlineImageAlt')}" loading="lazy" decoding="async" />`
 			);
 		const decodeHtmlEntities = (content: string) => {
 			if (!content || !content.includes('&')) {
@@ -1096,7 +1096,7 @@ export const MessageItemComponent = ({
 		}
 		// `parsedMessage` is itself memoized on `decryptedMessage`, so this one
 		// dependency already tracks every change to the decrypted body.
-	}, [parsedMessage.cleanedMessage]);
+	}, [parsedMessage.cleanedMessage, translate]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;

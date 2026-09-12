@@ -32,6 +32,7 @@ import {
 	Redo,
 	ChevronRight
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
 import {
 	filesFromDataTransfer,
@@ -201,6 +202,7 @@ export const TipTapComposer = forwardRef<
 		},
 		ref
 	) => {
+		const { t } = useTranslation();
 		const [isSyncingFromValue, setIsSyncingFromValue] = useState(false);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
@@ -640,7 +642,10 @@ export const TipTapComposer = forwardRef<
 						editor.chain().focus().insertContent('🙂').run();
 						return;
 					case 'insertImageMarker': {
-						const imageUrl = window.prompt('Image URL', '');
+						const imageUrl = window.prompt(
+							t('message.submit.toolbar.imageUrlPrompt'),
+							''
+						);
 						if (imageUrl === null || !imageUrl.trim()) {
 							return;
 						}
@@ -684,7 +689,10 @@ export const TipTapComposer = forwardRef<
 					case 'setLink': {
 						const previousUrl =
 							editor.getAttributes('link').href || '';
-						const url = window.prompt('URL', previousUrl);
+						const url = window.prompt(
+							t('message.submit.toolbar.urlPrompt'),
+							previousUrl
+						);
 						if (url === null) {
 							return;
 						}
@@ -789,7 +797,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().undo().run()}
 							disabled={!editor.can().undo()}
-							aria-label="Undo"
+							aria-label={t('message.submit.toolbar.undo')}
 						>
 							<Undo fontSize="small" />
 						</button>
@@ -797,7 +805,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().redo().run()}
 							disabled={!editor.can().redo()}
-							aria-label="Redo"
+							aria-label={t('message.submit.toolbar.redo')}
 						>
 							<Redo fontSize="small" />
 						</button>
@@ -809,7 +817,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bold') ? 'is-active' : ''
 							}
-							aria-label="Bold"
+							aria-label={t('message.submit.toolbar.bold')}
 						>
 							<FormatBold fontSize="small" />
 						</button>
@@ -821,7 +829,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bulletList') ? 'is-active' : ''
 							}
-							aria-label="Bullet List"
+							aria-label={t('message.submit.toolbar.bulletList')}
 						>
 							<FormatListBulleted fontSize="small" />
 						</button>
@@ -835,7 +843,7 @@ export const TipTapComposer = forwardRef<
 									? 'is-active'
 									: ''
 							}
-							aria-label="Ordered List"
+							aria-label={t('message.submit.toolbar.orderedList')}
 						>
 							<FilterList fontSize="small" />
 						</button>
@@ -851,7 +859,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('link') ? 'is-active' : ''
 							}
-							aria-label="Quick Link"
+							aria-label={t('message.submit.toolbar.link')}
 						>
 							<ChevronRight fontSize="small" />
 						</button>

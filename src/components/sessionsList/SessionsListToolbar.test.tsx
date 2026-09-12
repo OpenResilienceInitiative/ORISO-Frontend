@@ -23,6 +23,15 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 	};
 });
 
+const labels: Record<string, string> = {
+	'sessionList.createChat.buttonTitle': 'sessionList.createChat.buttonTitle',
+	'sessionList.view.archive.tab': 'sessionList.view.archive.tab',
+	'sessionList.toolbar.chips.create': 'Create',
+	'sessionList.toolbar.chips.groups': 'Conversation circle',
+	'sessionList.toolbar.chips.internalGroup': 'Internal group chat',
+	'sessionList.toolbar.chips.nearby': 'Mail'
+};
+
 const renderToolbar = (
 	showCreateGroupChatAction: boolean,
 	{
@@ -33,7 +42,7 @@ const renderToolbar = (
 	render(
 		<MemoryRouter>
 			<SessionsListToolbar
-				translate={(key) => key}
+				translate={(key) => labels[key] ?? key}
 				searchValue=""
 				onSearchChange={vi.fn()}
 				activeChip={null}
@@ -139,7 +148,7 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 });
 
 describe('agency counselling modality chip (ORISO-Frontend#985)', () => {
-	it('labels the modality filter "Mail" even without a loaded translation', () => {
+	it('labels the modality filter from the catalogue, not "Nearby"', () => {
 		renderToolbar(true);
 
 		expect(screen.getByText('Mail')).toBeDefined();
