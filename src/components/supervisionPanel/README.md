@@ -83,8 +83,10 @@ Unchanged from B1: the side room is its own list (`supervisionMessages`,
   `mobileListView()`; the panel composer's back arrow closes the channel.
   The FAB inside the panel is the channel switcher (`onBack` = close).
 - List snap (checklist 7): `SessionsListWrapper` derives `panelOpen` from
-  the same URL param and `resolveStageLayout` — the list column snaps to the
-  80 px rail while a panel is open and dragging it wider is locked.
+  `ChatStagePanelContext` (the pane the stage actually shows), not from
+  `?channel=` — an unresolved deep link must not collapse the list.
+  `resolveStageLayout` then snaps the list column to the 80 px rail while
+  a panel is open and dragging it wider is locked.
 - Both `session__scrollToBottom` sites are gone (checklist 6); the composer
   toolbar's `composer-scroll-to-newest` is the one arrow.
 - Channels (`SecondaryChannel[]`): threads from `computeThreadSummaries`
