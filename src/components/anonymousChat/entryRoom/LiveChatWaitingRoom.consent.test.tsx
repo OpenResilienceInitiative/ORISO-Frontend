@@ -126,7 +126,9 @@ describe('LiveChatWaitingRoom — cancelling asks first (#1341)', () => {
 
 		pressTheCross();
 		fireEvent.click(
-			screen.getByRole('button', { name: /Chat jetzt starten/i })
+			screen.getByRole('button', {
+				name: /Chat jetzt starten|anonymousChat\.leaveQueue\.startChat/i
+			})
 		);
 
 		expect(onAccept).not.toHaveBeenCalled();
