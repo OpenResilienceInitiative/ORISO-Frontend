@@ -19,6 +19,7 @@ import {
 } from '../chatStage/stageLayout';
 import { useViewportWidth } from '../chatStage/useViewportWidth';
 import { useChatStageOpenPanel } from '../chatStage/ChatStagePanelContext';
+import { SessionListRailProvider } from './SessionListRailContext';
 
 interface SessionsListWrapperProps {
 	sessionTypes: SESSION_TYPES;
@@ -116,11 +117,13 @@ export const SessionsListWrapper = ({
 					position: 'relative'
 				}}
 			>
-				<SessionsList
-					defaultLanguage={fixedLanguages[0]}
-					sessionTypes={sessionTypes}
-					scrollContainerRef={listScrollRef}
-				/>
+				<SessionListRailProvider rail={isIconOnly}>
+					<SessionsList
+						defaultLanguage={fixedLanguages[0]}
+						sessionTypes={sessionTypes}
+						scrollContainerRef={listScrollRef}
+					/>
+				</SessionListRailProvider>
 				<ResizableHandle
 					currentWidth={effectiveWidth}
 					onResize={handleResize}
@@ -143,11 +146,13 @@ export const SessionsListWrapper = ({
 				position: 'relative'
 			}}
 		>
-			<SessionsList
-				defaultLanguage={fixedLanguages[0]}
-				sessionTypes={sessionTypes}
-				scrollContainerRef={listScrollRef}
-			/>
+			<SessionListRailProvider rail={isIconOnly}>
+				<SessionsList
+					defaultLanguage={fixedLanguages[0]}
+					sessionTypes={sessionTypes}
+					scrollContainerRef={listScrollRef}
+				/>
+			</SessionListRailProvider>
 			<ResizableHandle
 				currentWidth={effectiveWidth}
 				onResize={handleResize}

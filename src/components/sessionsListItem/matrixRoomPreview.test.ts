@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
 	getLatestMatrixRoomPreview,
+	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType
 } from './matrixRoomPreview';
 
@@ -13,6 +14,17 @@ const event = (type: string, content: Record<string, unknown>, ts: number) => ({
 });
 
 describe('getLatestMatrixRoomPreview', () => {
+	it('keeps the timestamp for a separately contracted side-room preview', () => {
+		expect(
+			getLatestTimedMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: 'Supervisionsantwort' },
+					42
+				)
+			])
+		).toEqual({ kind: 'text', text: 'Supervisionsantwort', ts: 42 });
+	});
 	it('suppresses a stale backend alias for Matrix-derived previews', () => {
 		expect(getPreviewLastMessageType(true, 'FURTHER_STEPS')).toBeNull();
 		expect(getPreviewLastMessageType(false, 'FURTHER_STEPS')).toBe(
