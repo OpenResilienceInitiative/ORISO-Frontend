@@ -7,7 +7,8 @@ import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
+		t: (key: string) =>
+			key === 'notifications.center.empty' ? 'No notifications yet.' : key
 	})
 }));
 

@@ -393,10 +393,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				(value) => !value.toLowerCase().startsWith('anonymous-')
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
-			return translate(
-				'session.waitingMiniGame.robotUsernameFallback',
-				'Ratsuchende_r 9'
-			);
+			return translate('session.waitingMiniGame.robotUsernameFallback');
 		}
 		return resolved;
 	}, [
@@ -420,55 +417,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => [
 			{
 				_id: 'robot-system-1',
-				title: translate(
-					'session.waitingMiniGame.robotCard1Title',
-					'Bitte haben Sie etwas Geduld'
-				),
-				description: translate(
-					'session.waitingMiniGame.robotCard1Body',
-					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
-				)
+				title: translate('session.waitingMiniGame.robotCard1Title'),
+				description: translate('session.waitingMiniGame.robotCard1Body')
 			},
 			{
 				_id: 'robot-system-2',
-				title: `${translate(
-					'session.waitingMiniGame.robotCard2TitlePrefix',
-					'Ihr Benutzername lautet:'
-				)} ${robotIncomingUsername}`,
-				description: translate(
-					'session.waitingMiniGame.robotCard2Body',
-					'Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.'
-				)
+				title: `${translate('session.waitingMiniGame.robotCard2TitlePrefix')} ${robotIncomingUsername}`,
+				description: translate('session.waitingMiniGame.robotCard2Body')
 			},
 			{
 				_id: 'robot-system-3',
-				title: translate(
-					'session.waitingMiniGame.robotCard3Title',
-					'Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?'
-				),
+				title: translate('session.waitingMiniGame.robotCard3Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard3Body',
-					'Registrieren Sie sich und hinterlassen Sie uns eine Nachricht. Wir melden uns innerhalb von 2 Werktagen bei Ihnen.'
+					'session.waitingMiniGame.robotCard3Body'
 				),
-				cta: translate(
-					'session.waitingMiniGame.robotCard3Cta',
-					'Gehen Sie zur Registrierung'
-				)
+				cta: translate('session.waitingMiniGame.robotCard3Cta')
 			},
 			{
 				_id: 'robot-system-4',
-				title: translate(
-					'session.waitingMiniGame.robotCard4Title',
-					'Wollen Sie die Wartezeit sinnvoll nutzen?'
-				),
+				title: translate('session.waitingMiniGame.robotCard4Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard4Body',
-					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
+					'session.waitingMiniGame.robotCard4Body'
 				),
-				playLabel: translate(
-					'session.waitingMiniGame.robotCard4Play',
-					'Spiel starten'
-				)
+				playLabel: translate('session.waitingMiniGame.robotCard4Play')
 			}
 		],
 		[robotIncomingUsername, translate]
@@ -2954,18 +2925,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{translate(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{translate('anonymousChat.noAvailability.title')}
 						</MuiTypography>
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
-						{translate(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
 					<MuiBox
@@ -3006,8 +2971,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}}
 								>
 									{translate(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</MuiTypography>
 							</MuiBox>
@@ -3043,8 +3007,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 									>
 										{translate(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</MuiTypography>
 									<MuiTypography
@@ -3061,20 +3024,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
-						{translate(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{translate('anonymousChat.noAvailability.mailHint')}
 					</MuiTypography>
 
 					<MuiTypography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{translate(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{translate('anonymousChat.noAvailability.tip')}
 					</MuiTypography>
 
 					<MuiButton
@@ -3090,8 +3047,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						startIcon={<NorthEastIcon />}
 					>
 						{translate(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
+							'anonymousChat.noAvailability.startMailCounseling'
 						)}
 					</MuiButton>
 
@@ -3104,10 +3060,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							mb: '16px'
 						}}
 					>
-						{translate(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{translate('anonymousChat.noAvailability.responseTime')}
 					</MuiTypography>
 
 					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
@@ -3123,10 +3076,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#4C555F'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{translate('anonymousChat.noAvailability.back')}
 						</MuiButton>
 						<MuiButton
 							fullWidth
@@ -3140,10 +3090,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#A5000A'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{translate('anonymousChat.noAvailability.later')}
 						</MuiButton>
 					</MuiBox>
 				</MuiBox>
