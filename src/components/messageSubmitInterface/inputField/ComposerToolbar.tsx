@@ -2,6 +2,8 @@ import * as React from 'react';
 import type { TFunction } from 'i18next';
 import { useCallback, useRef, useState } from 'react';
 import UndoIcon from '@mui/icons-material/Undo';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import RedoIcon from '@mui/icons-material/Redo';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -27,6 +29,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { ToolbarButton, ToolbarDivider } from './ToolbarButton';
 import { ToolbarMenu, ToolbarMenuItem } from './ToolbarMenu';
+import { useScrollableBar } from './useScrollableBar';
 import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
@@ -38,6 +41,15 @@ export type ComposerToolbarMenu =
 	| null;
 
 export interface ComposerToolbarProps {
+	/**
+	 * T23: the same navigation arrows as the compact action bar — back
+	 * (phone only) and scroll to newest — so nothing is lost while the
+	 * full tools are open. Absent props render nothing (no reserved space).
+	 */
+	showBack?: boolean;
+	onBack?: () => void;
+	onScrollToNewest?: () => void;
+	unreadCount?: number;
 	direction: MenuDirection;
 	isMobile: boolean;
 	isExpanded: boolean;
@@ -95,6 +107,10 @@ const TEXT_STYLE_ENTRIES = [
  * dropdown menus follow the Figma direction rule via `direction`.
  */
 export const ComposerToolbar = ({
+	showBack = false,
+	onBack,
+	onScrollToNewest,
+	unreadCount = 0,
 	direction,
 	isMobile,
 	isExpanded,
@@ -106,6 +122,9 @@ export const ComposerToolbar = ({
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
 	const anchorRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+	// Review v6 (T22): same sideways scrolling as the compact bar.
+	const barRef = useRef<HTMLDivElement | null>(null);
+	useScrollableBar(barRef);
 
 	const toggleMenu = useCallback(
 		(menu: Exclude<ComposerToolbarMenu, null>) =>
@@ -292,8 +311,49 @@ export const ComposerToolbar = ({
 		</span>
 	);
 
+	const scrollLabel = translate(
+		'message.mobileNav.scrollToBottom',
+		'Scroll to bottom'
+	);
+	const unread = Math.max(0, Math.round(unreadCount));
+
 	return (
-		<div className="composerToolbar" data-direction={direction}>
+		<div
+			className="composerToolbar"
+			data-direction={direction}
+			ref={barRef}
+		>
+			{showBack && (
+				<ToolbarButton
+					label={translate('message.mobileNav.back', 'Navigate up')}
+					onClick={onBack}
+					className="composerToolbar__button--back"
+					data-cy="composer-back"
+				>
+					<ArrowBackIcon fontSize="inherit" />
+				</ToolbarButton>
+			)}
+			{onScrollToNewest && (
+				<ToolbarButton
+					label={
+						unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel
+					}
+					onClick={onScrollToNewest}
+					className="composerToolbar__button--scrollToNewest"
+					data-cy="composer-scroll-to-newest"
+				>
+					<ArrowDownwardIcon fontSize="inherit" />
+					{unread > 0 && (
+						<span
+							className="composerToolbar__badge"
+							aria-hidden="true"
+						>
+							{unread > 99 ? '99+' : unread}
+						</span>
+					)}
+				</ToolbarButton>
+			)}
+			{(showBack || onScrollToNewest) && <ToolbarDivider />}
 			<ToolbarButton
 				label={translate(
 					'message.submit.toolbar.closeTools',

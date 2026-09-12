@@ -61,17 +61,78 @@ describe('getComposerHeightBounds', () => {
 		expect(COMPOSER_MAX_VIEWPORT_FRACTION).toBeCloseTo(2 / 3);
 	});
 
-	it('uses the mobile minimum below the breakpoint', () => {
+	it('uses the one-line mobile minimum below the breakpoint (T10)', () => {
+		// Toolbar strip (66 px to the editor top) + one 20 px line (D1:
+		// 14 px × 1.4) + 10 px bottom inset + 2 × 2 px card border = 100 px
+		// — no dock, no spare line under the placeholder (stage v3 review).
 		expect(
 			getComposerHeightBounds({ viewportWidth: 375, viewportHeight: 812 })
 				.minHeight
-		).toBe(180);
+		).toBe(100);
 		expect(
 			getComposerHeightBounds({
 				viewportWidth: 1280,
 				viewportHeight: 900
 			}).minHeight
 		).toBe(196);
+	});
+
+	it('T35: compact (dual mode) desktop composers rest at one line', () => {
+		// 84 px from the card top to the editor (1 px border + 16 px dock +
+		// 66 px toolbar strip) + one 20 px line (D1) + 36 px below (18 px
+		// editor inset + 16 px dock + 1 px border + rounding) = 138 px — the
+		// same one-line rule as the phone, with the desktop's insets.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				compact: true
+			}).minHeight
+		).toBe(138);
+		// The phone already rests at one line; compact changes nothing there.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 375,
+				viewportHeight: 812,
+				compact: true
+			}).minHeight
+		).toBe(100);
+		// Off by default.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				compact: false
+			}).minHeight
+		).toBe(196);
+	});
+
+	it('T40: flush (dual mode, no outer frame) desktop composers rest at one line', () => {
+		// No outer card: 1 px field border + 66 px toolbar strip + one 20 px
+		// line + 18 px editor inset + 1 px border = 106 px. Flush implies
+		// the one-line rule; the phone keeps its own 100.
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				compact: true,
+				flush: true
+			}).minHeight
+		).toBe(106);
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 1280,
+				viewportHeight: 900,
+				flush: true
+			}).minHeight
+		).toBe(106);
+		expect(
+			getComposerHeightBounds({
+				viewportWidth: 375,
+				viewportHeight: 812,
+				flush: true
+			}).minHeight
+		).toBe(100);
 	});
 
 	it('never returns a max below the min (tiny viewports)', () => {

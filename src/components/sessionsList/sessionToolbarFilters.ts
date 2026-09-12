@@ -7,6 +7,10 @@ import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHe
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import { isChatItemUnread } from '../../utils/sessionUnread';
 import {
+	getSupervisionListState,
+	hasSupervisionMarker
+} from '../sessionsListItem/supervisionListState';
+import {
 	sessionKeyFromPersonId,
 	sessionSearchKeyOf
 } from './sessionSearchPeople';
@@ -240,12 +244,25 @@ export function sessionMatchesToolbar(
 			return false;
 		}
 	} else if (chip === 'supervision') {
-		if (!raw.consultant?.id) {
-			return false;
-		}
-		if (String(raw.consultant.id) === String(currentUserId || '')) {
-			// Assigned consultant chats are excluded; only supervised chats remain.
-			return false;
+		if (hasSupervisionMarker(extended)) {
+			// ADR-008 list marker: the backend says whether I supervise this row.
+			if (
+				getSupervisionListState(extended, currentUserId) !==
+				'supervisedByMe'
+			) {
+				return false;
+			}
+		} else {
+			// Older backend without the marker: fall back to the heuristic
+			// "any row owned by another consultant". Remove once every
+			// environment sends `session.supervision`.
+			if (!raw.consultant?.id) {
+				return false;
+			}
+			if (String(raw.consultant.id) === String(currentUserId || '')) {
+				// Assigned consultant chats are excluded; only supervised chats remain.
+				return false;
+			}
 		}
 	}
 

@@ -50,3 +50,29 @@ export const resolveAsideTargetRoomId = ({
 	// Aside with no side room: abort rather than leak into the client room.
 	return { targetRoomId: null, abort: true };
 };
+
+interface PrimaryRoomInput {
+	/** Explicit primary target (a side room the composer is mounted in). */
+	targetRoomId?: string | null;
+	/** The session's client-facing Matrix room id. */
+	clientRoomId?: string | null;
+}
+
+/**
+ * Which room a *normal* (non-aside) send goes to.
+ *
+ * The composer used to derive the room from the active session only. A
+ * composer mounted inside a side panel (supervision, later threads-as-rooms)
+ * passes `targetRoomId`, which wins over the session's client room. Aside
+ * routing stays untouched — `resolveAsideTargetRoomId` runs on the result.
+ */
+export const resolvePrimaryRoomId = ({
+	targetRoomId,
+	clientRoomId
+}: PrimaryRoomInput): string | undefined => {
+	const explicit = targetRoomId?.trim();
+	if (explicit) {
+		return explicit;
+	}
+	return clientRoomId || undefined;
+};

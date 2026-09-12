@@ -28,11 +28,11 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import {
-	mergeMatrixMessages,
 	prepareMessages,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
+import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -123,6 +123,12 @@ export const SessionStream = ({
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
 	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
+	// WP-B2 (ADR-008): the supervision side room is its own timeline. It is
+	// never merged into `messagesItem` — the client-facing list must not
+	// contain side-room events — and renders in the SupervisionPanel instead.
+	const [supervisionMessages, setSupervisionMessages] = useState<
+		MessageItem[]
+	>([]);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -195,8 +201,9 @@ export const SessionStream = ({
 	const hasUserInitiatedStopOrLeaveRequest = useRef<boolean>(false);
 
 	// ADR-008: per-session supervision side room id, resolved for authorized
-	// supervisors/consultants. When present we also load & merge its messages
-	// so asides render for members — the client is never a member of this room.
+	// supervisors/consultants. When present we also load its messages into a
+	// separate side-room timeline (WP-B2) — the client is never a member of
+	// this room and never sees these events in the main stream.
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
@@ -350,6 +357,7 @@ export const SessionStream = ({
 				!caseHandoverStatus?.canViewContent
 			) {
 				setMessagesItem({ messages: [] });
+				setSupervisionMessages([]);
 				setLoading(false);
 				return Promise.resolve(false);
 			}
@@ -375,26 +383,38 @@ export const SessionStream = ({
 
 				const formatRoomMessages = (
 					events: any[],
-					roomId?: string | null
+					roomId?: string | null,
+					stampRoomId = false
 				) => {
 					const matrixRoom = roomId
 						? chatTransportService.getMatrixRoom(roomId)
 						: null;
-					return events
-						.map((event: any) =>
-							formatMatrixTimelineEvent(
-								event,
-								matrixRoom,
-								encryptedFallbackText
+					return (
+						events
+							.map((event: any) =>
+								formatMatrixTimelineEvent(
+									event,
+									matrixRoom,
+									encryptedFallbackText
+								)
 							)
-						)
-						.filter(Boolean);
+							.filter(Boolean)
+							// WP-B2: side-room items carry their room id so the
+							// client timeline can reject them as a safety net
+							// (`excludeSideRoomMessages`).
+							.map((item: any) =>
+								stampRoomId && roomId
+									? { ...item, rid: roomId }
+									: item
+							)
+					);
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
-				// ADR-008: merge the supervision side room's asides so they
-				// render for members. The client is never a member of the side
-				// room, so it never loads these.
+				// ADR-008 / WP-B2: the supervision side room is loaded for
+				// members but kept as its own timeline (SupervisionPanel).
+				// The client is never a member of the side room, so it never
+				// loads these.
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
@@ -413,16 +433,15 @@ export const SessionStream = ({
 						}
 					});
 				}
-				const formattedMessages = mergeMatrixMessages(
-					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
-					formatRoomMessages(supervisionEvents, supervisionRoomId)
+				const formattedMessages = formatRoomMessages(
+					clientEvents,
+					resolvedMatrixRoomId
 				);
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
-				const reactionEvents = [
-					...extractReactionEvents(clientEvents),
-					...extractReactionEvents(supervisionEvents)
-				];
+				// Side-room reactions stay out of the client timeline; the
+				// panel renders its bubbles without reactions.
+				const reactionEvents = [...extractReactionEvents(clientEvents)];
 
 				setMessagesItem({
 					messages: prepareMessages(
@@ -430,6 +449,19 @@ export const SessionStream = ({
 					),
 					reactionEvents
 				});
+				setSupervisionMessages(
+					supervisionRoomId
+						? prepareMessages(
+								applyMessageEdits(
+									formatRoomMessages(
+										supervisionEvents,
+										supervisionRoomId,
+										true
+									)
+								)
+							)
+						: []
+				);
 				setLoading(false);
 				return Promise.resolve(true);
 			}
@@ -437,6 +469,7 @@ export const SessionStream = ({
 			// Sessions without a Matrix room (stale pre-migration data) render
 			// an empty history instead of pulling messages from a removed backend.
 			setMessagesItem({ messages: [] });
+			setSupervisionMessages([]);
 			setLoading(false);
 			return Promise.resolve(true);
 		},
@@ -1037,6 +1070,7 @@ export const SessionStream = ({
 			}
 
 			setMessagesItem(null);
+			setSupervisionMessages([]);
 
 			if (subscribed.current && activeSession) {
 				subscribed.current = false;
@@ -1217,6 +1251,7 @@ export const SessionStream = ({
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
+				supervisionMessages={supervisionMessages}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

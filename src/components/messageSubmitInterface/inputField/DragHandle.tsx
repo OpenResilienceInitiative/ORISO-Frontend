@@ -6,6 +6,12 @@ export interface DragHandleProps {
 	onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 	/** Pointer is currently resizing — darkens the pill (Figma Handle Touched). */
 	touched?: boolean;
+	/**
+	 * Where the pill sits (T31): `inside` — 4 px under the card's top edge
+	 * (desktop, the docked composer); `edge` — centred ON the top edge, the
+	 * phone's earlier placement. A prop so it can move when Frank decides.
+	 */
+	position?: 'inside' | 'edge';
 	ariaLabel: string;
 }
 
@@ -19,13 +25,19 @@ export const DragHandle = ({
 	onPointerDown,
 	onKeyDown,
 	touched = false,
+	position = 'inside',
 	ariaLabel
 }: DragHandleProps) => (
 	<button
 		type="button"
-		className={['dragHandle', touched && 'dragHandle--touched']
+		className={[
+			'dragHandle',
+			`dragHandle--${position}`,
+			touched && 'dragHandle--touched'
+		]
 			.filter(Boolean)
 			.join(' ')}
+		data-position={position}
 		onPointerDown={onPointerDown}
 		onKeyDown={onKeyDown}
 		aria-label={ariaLabel}
