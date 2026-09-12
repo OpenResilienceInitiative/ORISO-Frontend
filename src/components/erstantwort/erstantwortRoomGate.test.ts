@@ -47,4 +47,17 @@ describe('getErstantwortRenderMode', () => {
 			})
 		).toBe('unavailable');
 	});
+
+	it('keeps an unrecognized explicit modality unavailable despite legacy anonymous signals', () => {
+		expect(
+			getErstantwortRenderModeForSession(true, {
+				item: {
+					conversationType: 'FUTURE_MODALITY',
+					registrationType: 'ANONYMOUS'
+				},
+				isGroup: false,
+				isSession: true
+			})
+		).toBe('unavailable');
+	});
 });
