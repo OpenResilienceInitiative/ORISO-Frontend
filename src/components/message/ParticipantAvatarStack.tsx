@@ -125,6 +125,9 @@ export const ParticipantAvatarStack = ({
 							className="participantStack__avatar"
 							tabIndex={0}
 							aria-label={participant.displayName}
+							aria-describedby={
+								openIndex === index ? tipId : undefined
+							}
 							data-cy="participant-avatar"
 							data-user-id={participant.userId}
 						>
@@ -143,7 +146,8 @@ export const ParticipantAvatarStack = ({
 							/>
 						</span>
 						<span
-							aria-hidden="true"
+							role="tooltip"
+							aria-hidden={openIndex !== index}
 							id={tipId}
 							className="participantStack__tip"
 							data-cy="participant-tooltip"
