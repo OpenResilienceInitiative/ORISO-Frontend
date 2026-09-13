@@ -281,8 +281,18 @@ it('preserves password and OTP autofill and mismatch blocking with shared form c
 	expect(submit.disabled).toBe(true);
 	fireEvent.change(password, { target: { value: 'synthetic-password' } });
 	expect(submit.disabled).toBe(true);
+	fireEvent.change(repeat, { target: { value: 'different-password' } });
+	expect(submit.disabled).toBe(true);
+	expect(repeat.getAttribute('aria-invalid')).toBe('true');
+	expect(
+		screen.getByText('registration.account.repeatPassword.error')
+	).toBeTruthy();
 	fireEvent.change(repeat, { target: { value: 'synthetic-password' } });
 	expect(submit.disabled).toBe(false);
+	expect(repeat.getAttribute('aria-invalid')).toBe('false');
+	expect(
+		screen.queryByText('registration.account.repeatPassword.error')
+	).toBeNull();
 	const form = password.closest('form')!;
 	const requestSubmit = vi
 		.spyOn(form, 'requestSubmit')

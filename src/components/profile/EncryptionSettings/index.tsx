@@ -105,6 +105,9 @@ export const EncryptionSettingsPanel = ({
 	const [loginPassword, setLoginPassword] = useState('');
 	const [confirmLoginPassword, setConfirmLoginPassword] = useState('');
 	const [recoveryOtp, setRecoveryOtp] = useState('');
+	const passwordMismatch =
+		confirmLoginPassword.length > 0 &&
+		loginPassword !== confirmLoginPassword;
 	const passwordStatus = useRecoveryRuntimeStatus(userId ?? '');
 	const canOfferPasswordRecovery = ![
 		'idle',
@@ -528,6 +531,14 @@ export const EncryptionSettingsPanel = ({
 								)}
 								type="password"
 								autoComplete="current-password"
+								error={passwordMismatch}
+								helperText={
+									passwordMismatch
+										? t(
+												'registration.account.repeatPassword.error'
+											)
+										: undefined
+								}
 								value={confirmLoginPassword}
 								disabled={busy}
 								onChange={(event) =>
