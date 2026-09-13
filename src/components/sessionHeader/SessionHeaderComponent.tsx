@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useState, useCallback } from 'react';
+import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
@@ -14,10 +14,6 @@ import {
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
-import {
-	fetchAgencyConsultantList,
-	Consultant
-} from '../../api/apiGetAgencyConsultantList';
 import { apiSendMessage } from '../../api/apiSendMessage';
 import {
 	NotificationsContext,
@@ -82,14 +78,12 @@ import {
 	ChatroomMainInteractionIcon
 } from './ChatroomMainInteractionIcon';
 import { getSupervisorAddState } from './getSupervisorAddState';
+import { resolveSupervisorDirectoryAgencyId } from './supervisorDirectory';
 import {
-	filterEligibleSupervisorConsultants,
-	resolveSupervisorDirectoryAgencyId
-} from './supervisorDirectory';
-import {
-	SupervisorConsultantPicker,
-	SupervisorDirectoryState
+	getConsultantLabel,
+	SupervisorConsultantPicker
 } from './SupervisorConsultantPicker';
+import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -102,6 +96,12 @@ export interface SessionHeaderProps {
 	 */
 	showAddButton?: boolean;
 }
+
+type SupervisorSnapshot = {
+	sessionId: number | null;
+	state: 'loading' | 'ready' | 'error';
+	supervisors: SessionSupervisor[];
+};
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const { t: translate } = useTranslation([
@@ -174,20 +174,63 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const [isChatFinished, setIsChatFinished] = useState(false);
 
 	// State for supervisor management
-	const [supervisors, setSupervisors] = useState<SessionSupervisor[]>([]);
+	const currentSupervisorSessionId = activeSession.item.id ?? null;
+	const [supervisorSnapshot, setSupervisorSnapshot] =
+		useState<SupervisorSnapshot>({
+			sessionId: null,
+			state: 'loading',
+			supervisors: []
+		});
+	const hasCurrentSupervisorSnapshot =
+		supervisorSnapshot.sessionId === currentSupervisorSessionId;
+	const supervisors = hasCurrentSupervisorSnapshot
+		? supervisorSnapshot.supervisors
+		: [];
+	const supervisorLoadState = hasCurrentSupervisorSnapshot
+		? supervisorSnapshot.state
+		: 'loading';
+	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
-	const [availableConsultants, setAvailableConsultants] = useState<
-		Consultant[]
-	>([]);
-	const [allConsultants, setAllConsultants] = useState<Consultant[]>([]); // All consultants for name lookup
-	const [supervisorDirectoryState, setSupervisorDirectoryState] =
-		useState<SupervisorDirectoryState>('loading');
-	const [isLoadingSupervisors, setIsLoadingSupervisors] = useState(false);
-	const [selectedConsultantId, setSelectedConsultantId] =
-		useState<string>('');
 	const [supervisionReason, setSupervisionReason] = useState<string>('');
 	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
+	const supervisorRequestIdRef = useRef(0);
+	const activeSupervisorSessionIdRef = useRef(activeSession.item.id);
+	activeSupervisorSessionIdRef.current = activeSession.item.id;
+	const supervisorDirectoryAgencyId = resolveSupervisorDirectoryAgencyId({
+		sessionAgencyId: activeSession.item?.agencyId,
+		metadataAgencyId: activeSession.agency?.id
+	});
+	const {
+		state: supervisorDirectoryState,
+		consultants: availableConsultants,
+		directoryConsultants,
+		selectedConsultantId,
+		selectedConsultant,
+		setSelectedConsultantId
+	} = useSupervisorConsultantDirectory({
+		isOpen: isSupervisionEnabledForCurrentChat && isSupervisorModalOpen,
+		sessionId: activeSession.item.id,
+		agencyId: supervisorDirectoryAgencyId,
+		currentConsultantId: userData.userId,
+		supervisorState: supervisorLoadState,
+		supervisors,
+		onLoadError: () => {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: translate(
+					'sessionHeader.supervisor.error.loadConsultants.title',
+					'Fehler'
+				),
+				text: translate(
+					'sessionHeader.supervisor.error.loadConsultants.text',
+					'Berater konnten nicht geladen werden.'
+				),
+				closeable: true,
+				timeout: 5000
+			});
+		}
+	});
 
 	// Prepare Button for add supervisor
 	const addSupervisorButton: ButtonItem = React.useMemo(
@@ -203,9 +246,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					),
 			function: '',
 			type: BUTTON_TYPES.PRIMARY,
-			disabled: !selectedConsultantId || isAddingSupervisor
+			disabled: !selectedConsultant || isAddingSupervisor
 		}),
-		[selectedConsultantId, isAddingSupervisor, translate]
+		[selectedConsultant, isAddingSupervisor, translate]
 	);
 
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
@@ -234,88 +277,74 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	// Load supervisors when component mounts or session changes
 	useEffect(() => {
-		if (!isSupervisionEnabledForCurrentChat) {
-			setSupervisors([]);
+		const canLoadSupervisors =
+			isSupervisionEnabledForCurrentChat &&
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+			Boolean(activeSession.item.id);
+		if (!canLoadSupervisors) {
+			supervisorRequestIdRef.current += 1;
+			setSupervisorSnapshot({
+				sessionId: currentSupervisorSessionId,
+				state: 'ready',
+				supervisors: []
+			});
 			setIsSupervisorModalOpen(false);
 			return;
 		}
-		if (
-			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-			activeSession.item.id
-		) {
-			loadSupervisors();
-		}
+		loadSupervisors();
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Load available consultants when modal opens
-	useEffect(() => {
+	const loadSupervisors = async (): Promise<SessionSupervisor[] | null> => {
 		if (!isSupervisionEnabledForCurrentChat) {
-			setIsSupervisorModalOpen(false);
-			return;
-		}
-		if (isSupervisorModalOpen) {
-			const agencyId = resolveSupervisorDirectoryAgencyId({
-				sessionAgencyId: activeSession.item?.agencyId,
-				metadataAgencyId: activeSession.agency?.id
+			supervisorRequestIdRef.current += 1;
+			setSupervisorSnapshot({
+				sessionId: currentSupervisorSessionId,
+				state: 'ready',
+				supervisors: []
 			});
-			if (agencyId) {
-				loadAvailableConsultants();
-			} else {
-				setSupervisorDirectoryState('error');
-			}
+			return [];
 		}
-		// loadAvailableConsultants is re-created every render; the modal-open
-		// and agency deps below are the intended triggers.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		isSupervisorModalOpen,
-		activeSession.agency?.id,
-		activeSession.item?.agencyId,
-		isSupervisionEnabledForCurrentChat
-	]);
-
-	const loadSupervisors = async () => {
-		if (!isSupervisionEnabledForCurrentChat) {
-			setSupervisors([]);
-			return;
-		}
-		if (!activeSession.item.id) return;
-		setIsLoadingSupervisors(true);
+		const sessionId = activeSession.item.id;
+		if (!sessionId) return null;
+		const requestId = ++supervisorRequestIdRef.current;
+		setSupervisorSnapshot({
+			sessionId,
+			state: 'loading',
+			supervisors: []
+		});
 		try {
-			const data = await apiGetSessionSupervisors(activeSession.item.id);
-			setSupervisors(data);
-			// Also load consultants to get names for supervisors
-			const agencyId = resolveSupervisorDirectoryAgencyId({
-				sessionAgencyId: activeSession.item?.agencyId,
-				metadataAgencyId: activeSession.agency?.id
-			});
-			if (agencyId) {
-				try {
-					setSupervisorDirectoryState('loading');
-					const consultants =
-						await fetchAgencyConsultantList(agencyId);
-					updateConsultantDirectory(
-						consultants,
-						data.map(
-							(supervisor) => supervisor.supervisorConsultantId
-						)
-					);
-					setSupervisorDirectoryState('ready');
-				} catch {
-					setSupervisorDirectoryState('error');
-				}
+			const data = await apiGetSessionSupervisors(sessionId);
+			if (
+				requestId !== supervisorRequestIdRef.current ||
+				activeSupervisorSessionIdRef.current !== sessionId
+			) {
+				return null;
 			}
+			setSupervisorSnapshot({
+				sessionId,
+				state: 'ready',
+				supervisors: data
+			});
+			return data;
 		} catch (error) {
 			// console.error('Failed to load supervisors:', error);
-		} finally {
-			setIsLoadingSupervisors(false);
+			if (
+				requestId === supervisorRequestIdRef.current &&
+				activeSupervisorSessionIdRef.current === sessionId
+			) {
+				setSupervisorSnapshot({
+					sessionId,
+					state: 'error',
+					supervisors: []
+				});
+			}
+			return null;
 		}
 	};
 
 	// Helper function to get consultant name from supervisor
 	const getSupervisorName = (supervisor: SessionSupervisor): string => {
-		// Use allConsultants (unfiltered) to find the supervisor's name
-		const consultant = allConsultants.find(
+		const consultant = directoryConsultants.find(
 			(c) => c.consultantId === supervisor.supervisorConsultantId
 		);
 		if (consultant) {
@@ -325,70 +354,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		return (
 			supervisor.supervisorUsername || supervisor.supervisorConsultantId
 		);
-	};
-
-	const dedupeConsultants = (consultants: Consultant[]): Consultant[] => {
-		const uniqueById = new Map<string, Consultant>();
-		consultants.forEach((consultant) => {
-			if (!uniqueById.has(consultant.consultantId)) {
-				uniqueById.set(consultant.consultantId, consultant);
-			}
-		});
-		return Array.from(uniqueById.values());
-	};
-
-	const updateConsultantDirectory = (
-		consultants: Consultant[],
-		currentSupervisorIds: string[]
-	) => {
-		const uniqueConsultants = dedupeConsultants(consultants);
-		setAllConsultants(uniqueConsultants);
-		setAvailableConsultants(
-			filterEligibleSupervisorConsultants({
-				consultants: uniqueConsultants,
-				currentConsultantId: userData.userId,
-				currentSupervisorIds
-			})
-		);
-	};
-
-	const loadAvailableConsultants = async () => {
-		const agencyId = resolveSupervisorDirectoryAgencyId({
-			sessionAgencyId: activeSession.item?.agencyId,
-			metadataAgencyId: activeSession.agency?.id
-		});
-		if (!agencyId) {
-			setAvailableConsultants([]);
-			setSupervisorDirectoryState('error');
-			return;
-		}
-		setSupervisorDirectoryState('loading');
-		try {
-			const consultants = await fetchAgencyConsultantList(agencyId);
-			updateConsultantDirectory(
-				consultants,
-				supervisors.map(
-					(supervisor) => supervisor.supervisorConsultantId
-				)
-			);
-			setSupervisorDirectoryState('ready');
-		} catch {
-			setAvailableConsultants([]);
-			setSupervisorDirectoryState('error');
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.loadConsultants.title',
-					'Fehler'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.loadConsultants.text',
-					'Berater konnten nicht geladen werden.'
-				),
-				closeable: true,
-				timeout: 5000
-			});
-		}
 	};
 
 	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
@@ -435,7 +400,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	};
 
 	const handleAddSupervisor = async () => {
-		if (!selectedConsultantId || !activeSession.item.id) return;
+		if (!selectedConsultant || !activeSession.item.id) return;
 		if (!supervisionReason.trim()) {
 			setSupervisionReasonError(true);
 			addNotification({
@@ -454,20 +419,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			return;
 		}
 		setIsAddingSupervisor(true);
-		const selectedSupervisor = allConsultants.find(
-			(c) => c.consultantId === selectedConsultantId
-		);
-		const selectedSupervisorName = selectedSupervisor
-			? `${selectedSupervisor.firstName || ''} ${
-					selectedSupervisor.lastName || ''
-				}`.trim()
-			: selectedConsultantId;
+		const selectedConsultantIdForRequest = selectedConsultant.consultantId;
+		const selectedSupervisorName = getConsultantLabel(selectedConsultant);
 		const chatDisplayName =
 			contact?.username || `Session ${activeSession.item.id}`;
 		try {
 			await apiAddSessionSupervisor(
 				activeSession.item.id,
-				selectedConsultantId,
+				selectedConsultantIdForRequest,
 				supervisionReason
 			);
 			await postSupervisorAddedSystemMessage(selectedSupervisorName);
@@ -507,8 +466,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				sourceSessionId: activeSession.item.id,
 				category: 'system'
 			});
-			// Reload consultants list
-			await loadAvailableConsultants();
 			// Close modal after successful add
 			setIsSupervisorModalOpen(false);
 		} catch (error) {
@@ -557,7 +514,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				supervisorId
 			);
 			await loadSupervisors();
-			await loadAvailableConsultants();
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
@@ -1464,7 +1420,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														handleAddSupervisor
 													}
 													disabled={
-														!selectedConsultantId ||
+														!selectedConsultant ||
 														!supervisionReason.trim() ||
 														isAddingSupervisor
 													}

@@ -18,7 +18,7 @@ type SupervisorConsultantPickerProps = {
 	};
 };
 
-const getConsultantLabel = (consultant: Consultant): string =>
+export const getConsultantLabel = (consultant: Consultant): string =>
 	[consultant.firstName, consultant.lastName].filter(Boolean).join(' ') ||
 	consultant.displayName ||
 	consultant.username ||
