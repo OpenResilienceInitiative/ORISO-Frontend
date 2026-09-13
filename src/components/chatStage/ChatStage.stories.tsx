@@ -1261,9 +1261,10 @@ export const PanelChannelMenuSwitchesChannels: Story = {
 		await waitFor(() =>
 			expect(panelTitle(canvasElement).kind).toBe('Thread #2')
 		);
-		const secondThreadOptions = canvasElement.querySelector<HTMLButtonElement>(
-			'[data-cy="panel-header-channel-options"]'
-		)!;
+		const secondThreadOptions =
+			canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="panel-header-channel-options"]'
+			)!;
 		await userEvent.click(secondThreadOptions);
 		const secondThreadItems = within(
 			await canvas.findByRole('menu')
@@ -2247,13 +2248,6 @@ export const ChatTextSizeCompact: Story = {
 };
 
 /* ------------------------------------------------------------------ *
- * Frank, 09.09.2026 — finding *1: "Ich kann diesen Slider nicht genug
- * bewegen nach links und nach rechts. Ich möchte, dass wir viel enger
- * haben können, vor allem auch auf der rechten Seite, aber auch gern auf
- * der linken Seite. Aktuell ist das mindestens 487 px, das kann auf
- * beiden Seiten gerne bis zu 320 px breit sein. Achte dabei darauf, dass
- * alles korrekt wrapped, dass kein Overflow entsteht."
- *
  * The 487 was the number DevTools reports on `.panelHeader__row` while the
  * pane sits on the old floor: 520 px slot (`STAGE_LAYOUT.MIN_PANE_WIDTH`)
  * − 1 px `.sidePanel--inside` hairline − 2 × 16 px header inset.
@@ -2312,8 +2306,8 @@ const OVERFLOW_CONTAINERS = [
 ];
 
 /**
- * "kein Overflow" measured the way Frank asked: `scrollWidth > clientWidth`
- * on the container. A container that declares `overflow-x: auto` is allowed
+ * Horizontal overflow is measured as `scrollWidth > clientWidth` on the
+ * container. A container that declares `overflow-x: auto` is allowed
  * to overflow — that is T22's composer action bar, which scrolls. Returns
  * the offenders so a failure names them instead of just saying `false`.
  */
@@ -2456,10 +2450,7 @@ const expectNarrowPaneSurvives = async (
 	await expectActionBarScrolls(pane, { overflow: 'either' });
 };
 
-/**
- * (i) The divider pushed fully to the RIGHT — Frank's "vor allem auch auf
- * der rechten Seite". The side room sits on the new 320 px floor.
- */
+/** (i) The divider pushed fully right; the side room is at the 320 px floor. */
 export const PanelAtTheDragFloor320: Story = {
 	name: '(i) Divider fully right — side room at 320 px',
 	globals: desktop1280Globals,
@@ -2478,8 +2469,8 @@ export const PanelAtTheDragFloor320: Story = {
 		});
 		const widths = paneWidths(canvasElement);
 		await expect(widths.panel).toBe(320);
-		// The number Frank measured is gone: the header row inside the panel
-		// was 487 px on the old floor (520 − 1 hairline − 2 × 16 inset).
+		// The header row was 487 px on the old floor
+		// (520 − 1 hairline − 2 × 16 inset).
 		const panelRow = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-panel"] .panelHeader__row'
 		)!;
@@ -2505,9 +2496,9 @@ export const PanelAtTheDragFloor320: Story = {
 };
 
 /**
- * (i2) The same 320 px floor, but the side room is a THREAD. Frank asked to
- * see "beide channels auf 320" — the two channels squeeze differently only
- * in their chrome (thread: grey tag, `primary-fixed` hairline; supervision:
+ * (i2) The same 320 px floor, but the side room is a thread. The two channels
+ * squeeze differently only in their chrome (thread: grey tag,
+ * `primary-fixed` hairline; supervision:
  * tinted header, `primary-fixed-dim`), never in their geometry. Both land on
  * the same 287 px header row, so the channel is never the reason a panel
  * overflows.
@@ -2645,9 +2636,9 @@ export const MainChatAtTheDragFloor320: Story = {
 };
 
 /**
- * (k) The comparison: the panel back on the OLD minimum. Everything below
- * 520 px was unreachable before Frank's finding *1 — this is the state he
- * measured 487 px in, so the two stories sit side by side in the sidebar.
+ * (k) The comparison: the panel back on the old minimum. Everything below
+ * 520 px was previously unreachable; this is the state where the header row
+ * measures 487 px, so the two stories sit side by side in the sidebar.
  */
 export const PanelAtTheOldMinimum520: Story = {
 	name: '(k) Comparison — the old 520 px minimum (header row 487 px)',
@@ -2678,9 +2669,6 @@ export const PanelAtTheOldMinimum520: Story = {
 };
 
 /* ------------------------------------------------------------------ *
- * Frank, 09.09.2026: "auch braucht die supervision die möglichkeit das
- * man einen call haben kann entweder video oder audio".
- *
  * Same buttons as the main chat header (`call/CallHeaderIcons` in the app's
  * `Button` molecule), same trigger (`call/startRoomCall.ts`), same tenant
  * gate (`call/callFeatureGates.ts` with `chatType: 'supervision'`) — the one
@@ -2740,9 +2728,7 @@ export const SideRoomCallsInThePanelHeader: Story = {
 		);
 		await expect(controls.video!.disabled).toBe(false);
 
-		// Frank, 10.09.2026: "Die sind ultraklein. Daneben bei dem normalen
-		// Hauptchat hast Du sie richtig und ordentlich." — so the side room's
-		// calls are measured AGAINST the main chat's, in the same frame,
+		// The side room's calls are measured against the main chat's in the same frame,
 		// rather than against a number typed in here. Both headers now read
 		// the same `room-call-buttons` mixin, and this is what proves it.
 		const mainCall = canvasElement.querySelector<HTMLElement>(

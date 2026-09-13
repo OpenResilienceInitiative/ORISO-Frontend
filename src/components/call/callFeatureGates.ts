@@ -2,8 +2,8 @@
  * Which kinds of call a tenant allows in a given kind of chat.
  *
  * This is the pair of nested ternaries `SessionMenu.tsx` grew for the header
- * call buttons, lifted out so the supervision side room asks the SAME
- * question instead of a second, subtly different one (Frank, 09.09.2026).
+ * call buttons, lifted out so the supervision side room asks the same
+ * question instead of a second, subtly different one.
  *
  * The settings already carry a `…SupervisionChats…` flag per kind. In
  * `SessionMenu` the supervision branch is reached via `props.isSupervisor`,

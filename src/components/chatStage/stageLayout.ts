@@ -33,12 +33,6 @@ export const STAGE_LAYOUT = {
 	/**
 	 * DRAG floor: how narrow a reader may deliberately pull a pane.
 	 *
-	 * Frank, 09.09.2026 (finding *1): "Ich kann diesen Slider nicht genug
-	 * bewegen nach links und nach rechts. Ich möchte, dass wir viel enger
-	 * haben können, vor allem auch auf der rechten Seite, aber auch gern auf
-	 * der linken Seite. Aktuell ist das mindestens 487 px, das kann auf
-	 * beiden Seiten gerne bis zu 320 px breit sein."
-	 *
 	 * The 487 is the number DevTools shows on `.panelHeader__row` while the
 	 * pane sits on the old floor: 520 px slot − 1 px `.sidePanel--inside`
 	 * hairline − 2 × 16 px header inset (`$room-header-inset`) = 487.
@@ -149,11 +143,9 @@ export const resolveStageLayout = ({
 
 /**
  * T2: the side panel's drag handle asks for a width; the answer keeps both
- * panes at `MIN_PANE_DRAG_WIDTH` — 320 px since Frank's 09.09.2026 finding
- * *1, so either side can be pulled genuinely narrow. When the card cannot
- * host two of those the panel takes half. The panel may now outgrow the
- * main chat by dragging, which is the point: "vor allem auch auf der
- * rechten Seite, aber auch gern auf der linken Seite".
+ * panes at `MIN_PANE_DRAG_WIDTH`, so either side can be pulled genuinely
+ * narrow. When the card cannot host two minimum-width panes, the panel takes
+ * half. The panel may outgrow the main chat through dragging.
  */
 export const clampPanelWidth = (
 	requested: number,

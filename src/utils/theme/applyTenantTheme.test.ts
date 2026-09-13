@@ -12,6 +12,7 @@ import {
 	THEME_APPLIED_EVENT,
 	applyTenantPalette,
 	computeOrisoSchemes,
+	isThemePreviewRoute,
 	readTenantSeeds
 } from './applyTenantTheme';
 
@@ -22,6 +23,19 @@ const freshRoot = () => {
 
 afterEach(() => {
 	vi.restoreAllMocks();
+});
+
+describe('isThemePreviewRoute', () => {
+	it.each([
+		['/theme-demo', true],
+		['/theme-demo/', true],
+		['/', false],
+		['/sessions', false],
+		['/theme-demo-fake', false],
+		['/x/theme-demo', false]
+	] as const)('%s → %s', (pathname, expected) => {
+		expect(isThemePreviewRoute(pathname)).toBe(expected);
+	});
 });
 
 describe('seed reading (legacy compatible)', () => {

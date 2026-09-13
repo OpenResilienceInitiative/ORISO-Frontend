@@ -1,7 +1,5 @@
 /**
- * Call controls for a side room's header (Frank, 09.09.2026: "auch braucht
- * die supervision die möglichkeit das man einen call haben kann entweder
- * video oder audio").
+ * Call controls for a side room's header.
  *
  * Deliberately no second set of anything: the glyphs are the main chat's
  * (`call/CallHeaderIcons`), the button is the app's `Button` molecule in the

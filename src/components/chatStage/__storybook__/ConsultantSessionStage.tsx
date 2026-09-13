@@ -112,10 +112,7 @@ export interface ConsultantSessionStageProps {
 	fabDefaultOpen?: boolean;
 	/** T1: hide the FAB while a panel is open (its header offers the channels). */
 	fabHidden?: boolean;
-	/**
-	 * Frank 09.09.2026: which calls the tenant allows in the side room
-	 * (`feature{Audio,Video}CallsSupervisionChatsEnabled`).
-	 */
+	/** Calls the tenant allows in the supervision side room. */
 	supervisionCalls?: 'both' | 'audio' | 'video' | 'off';
 	/** Nobody else in the side room — the call controls grey out (never hide). */
 	supervisionAlone?: boolean;
@@ -342,7 +339,7 @@ interface RoomProps {
 	compactComposer?: boolean;
 	/** T40: inside the chat card — no outer frame, bottom-right corner = card. */
 	flushComposer?: boolean;
-	/** Frank 09.09.2026: the side room's own audio/video call controls. */
+	/** The side room's own audio/video call controls. */
 	callActions?: React.ReactNode;
 }
 
@@ -677,8 +674,8 @@ export function ConsultantSessionStage({
 		cardWidth
 	);
 
-	// Frank 09.09.2026: the side room's call controls — the same component
-	// the app wires (`PanelCallActions`), fed from the stage's own widths so
+	// The side room uses the same `PanelCallActions` component as the app,
+	// fed from the stage's own widths so
 	// the story shows the row/kebab switch as the divider moves.
 	const supervisionCallActions = (
 		<PanelCallActions
