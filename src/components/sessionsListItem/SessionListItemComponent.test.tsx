@@ -58,7 +58,7 @@ vi.mock('../../hooks/useE2EE', () => ({
 
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
 	useMatrixSessionPreview: matrixPreviewMock,
-	useMatrixSessionEvents: () => []
+	useMatrixSessionEvents: (roomId: string) => matrixPreviewMock(roomId) || []
 }));
 
 vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
@@ -603,8 +603,17 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 		const sideRoomId = '!supervision:matrix.example.org';
 		matrixPreviewMock.mockImplementation((roomId: string) =>
 			roomId === sideRoomId
-				? { kind: 'text', text: 'Interne Rückfrage', ts: 1700000000000 }
-				: null
+				? [
+						{
+							getType: () => 'm.room.message',
+							getClearContent: () => ({
+								msgtype: 'm.text',
+								body: 'Interne Rückfrage'
+							}),
+							getTs: () => 1700000000000
+						}
+					]
+				: []
 		);
 		roomUnreadCountMock.mockImplementation((roomId: string) =>
 			roomId === sideRoomId ? 2 : 1
