@@ -249,7 +249,8 @@ export const SessionRailPill = ({
 			const currentIndex = hoveredMark ? marks.indexOf(hoveredMark) : -1;
 			const step = ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 1;
 			const nextIndex =
-				(currentIndex + step + marks.length) % marks.length;
+			event.preventDefault();
+			event.stopPropagation();
 			setShowName(false);
 			setHoveredMark(marks[nextIndex]);
 		}
