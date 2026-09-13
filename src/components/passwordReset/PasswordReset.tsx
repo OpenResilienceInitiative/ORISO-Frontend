@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
 import {
 	changePasswordWithRecovery,
-	PasswordRecoveryRepairRequiredError
+	PasswordRecoveryRepairBlockedError,
+	PasswordRecoveryRepairRequiredError,
+	PasswordRecoveryWorkLimitError
 } from '../../services/matrixPasswordRecoveryService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { withRecoverySetupLock } from '../../services/pendingRecoveryKeyStore';
@@ -30,6 +32,21 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { apiUpdatePasswordAppointments } from '../../api/apiUpdatePasswordAppointments';
+
+const passwordChangeErrorKey = (
+	error: unknown,
+	passwordRecoveryEnabled: boolean
+): string => {
+	if (error instanceof PasswordRecoveryRepairRequiredError)
+		return 'encryption.passwordRecovery.repairRequired';
+	if (error instanceof PasswordRecoveryRepairBlockedError)
+		return 'encryption.passwordRecovery.repairBlocked';
+	if (error instanceof PasswordRecoveryWorkLimitError)
+		return 'encryption.passwordRecovery.retryable-failure';
+	return passwordRecoveryEnabled
+		? 'encryption.passwordRecovery.passwordChangeFailed'
+		: 'profile.functions.password.reset.old.incorrect';
+};
 
 export const PasswordReset = () => {
 	const { t: translate } = useTranslation();
@@ -258,11 +275,10 @@ export const PasswordReset = () => {
 					// error handling for password update error
 					setOldPasswordErrorMessage(
 						translate(
-							error instanceof PasswordRecoveryRepairRequiredError
-								? 'encryption.passwordRecovery.repairRequired'
-								: userData.chatRecoveryMode === 'LOGIN_PASSWORD'
-									? 'encryption.passwordRecovery.passwordChangeFailed'
-									: 'profile.functions.password.reset.old.incorrect'
+							passwordChangeErrorKey(
+								error,
+								userData.chatRecoveryMode === 'LOGIN_PASSWORD'
+							)
 						)
 					);
 					setIsRequestInProgress(false);

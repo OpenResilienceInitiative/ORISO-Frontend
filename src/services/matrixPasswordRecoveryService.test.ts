@@ -496,6 +496,38 @@ describe('native SDK envelope around the unchanged root (transport and backup AP
 			await recoverWithLoginPassword(device(server), 'old-synthetic')
 		).toEqual({ kind: 'ready' });
 	});
+	it('deletes its own candidate when staging verification fails before the password update', async () => {
+		await enrollPasswordRecovery(first, 'old-synthetic', rootCode, 2);
+		const stableBackup = await first.getCrypto().getKeyBackupInfo();
+		const setAccountData = server.setAccountData.bind(server);
+		vi.spyOn(server, 'setAccountData').mockImplementation(
+			async (name, content) => {
+				const result = await setAccountData(name, content);
+				if (
+					name.startsWith(PASSWORD_RECOVERY_CANDIDATE_PREFIX) &&
+					(content as { encrypted?: unknown }).encrypted
+				)
+					first.getCrypto().getKeyBackupInfo.mockResolvedValue({
+						...stableBackup,
+						version: 'changed-during-staging'
+					});
+				return result;
+			}
+		);
+		const update = vi.fn();
+
+		await expect(
+			changePasswordWithRecovery(
+				first,
+				'old-synthetic',
+				'new-synthetic',
+				update
+			)
+		).rejects.toThrow();
+
+		expect(update).not.toHaveBeenCalled();
+		expect(candidateEvents()).toHaveLength(0);
+	});
 	it('A-success/B-rejection interleaving cannot remove accepted A password recovery', async () => {
 		await enrollPasswordRecovery(first, 'original-synthetic', rootCode, 2);
 		let releaseA!: () => void;

@@ -4751,7 +4751,7 @@
 			"repeatPassword": "Répéter le mot de passe de connexion",
 			"otp": "Code à usage unique",
 			"enroll": "Confirmer le mot de passe et configurer la récupération",
-			"deviceReady": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
+			"device-ready": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
 			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible.",
 			"idle": "L’état de la récupération n’a pas encore été vérifié.",
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",

@@ -463,6 +463,14 @@ const retirePredecessors = async (
 		await client.setAccountData(PASSWORD_RECOVERY_SECRET, {});
 };
 
+const discardCandidate = async (client: MatrixClient, id: string) => {
+	try {
+		await client.setAccountData(candidateName(id), {});
+	} catch {
+		/* retain own candidate if cleanup cannot be confirmed */
+	}
+};
+
 /** Call only after successful online authentication, including required OTP. */
 export const recoverWithLoginPassword = async (
 	client: MatrixClient,
@@ -578,30 +586,31 @@ export const changePasswordWithRecovery = async (
 		policyRevision: metadata?.policyRevision ?? payload.policyRevision
 	};
 	await assertUnchanged(client, identity);
-	await storePayload(
-		client,
-		nextPayload,
-		new Map([[next.id, next.key]]),
-		candidateName(next.id)
-	);
-	const staged = await unlockCandidate(client, newPassword, next.id, budget);
-	if (!staged) throw new EnvelopeUnavailable();
-	await assertUnchanged(client, identity);
+	let staged: NonNullable<Awaited<ReturnType<typeof unlockCandidate>>>;
+	try {
+		await storePayload(
+			client,
+			nextPayload,
+			new Map([[next.id, next.key]]),
+			candidateName(next.id)
+		);
+		const candidate = await unlockCandidate(
+			client,
+			newPassword,
+			next.id,
+			budget
+		);
+		if (!candidate) throw new EnvelopeUnavailable();
+		await assertUnchanged(client, identity);
+		staged = candidate;
+	} catch (error) {
+		await discardCandidate(client, next.id);
+		throw error;
+	}
 	try {
 		await updatePassword();
 	} catch (error) {
-		if (isDefiniteFailure(error)) {
-			try {
-				await client.setAccountData(
-					candidateName(
-						next.id
-					) as `org.oriso.password_recovery_candidate.v1.${string}`,
-					{}
-				);
-			} catch {
-				/* retain own candidate if cleanup cannot be confirmed */
-			}
-		}
+		if (isDefiniteFailure(error)) await discardCandidate(client, next.id);
 		throw error;
 	}
 	try {

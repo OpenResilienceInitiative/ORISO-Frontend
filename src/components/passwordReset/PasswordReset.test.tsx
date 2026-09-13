@@ -18,6 +18,8 @@ const state = vi.hoisted(() => ({
 	update: vi.fn(),
 	change: vi.fn(),
 	RepairRequiredError: class extends Error {},
+	RepairBlockedError: class extends Error {},
+	WorkLimitError: class extends Error {},
 	logout: vi.fn()
 }));
 vi.mock('../../globalState', async () => {
@@ -37,7 +39,9 @@ vi.mock('../../api', () => ({
 }));
 vi.mock('../../services/matrixPasswordRecoveryService', () => ({
 	changePasswordWithRecovery: state.change,
-	PasswordRecoveryRepairRequiredError: state.RepairRequiredError
+	PasswordRecoveryRepairRequiredError: state.RepairRequiredError,
+	PasswordRecoveryRepairBlockedError: state.RepairBlockedError,
+	PasswordRecoveryWorkLimitError: state.WorkLimitError
 }));
 vi.mock('../../services/matrixClientRegistry', () => ({
 	getMatrixClientService: () => ({
@@ -60,11 +64,14 @@ vi.mock('../../utils/validateInputValue', () => ({
 }));
 vi.mock('../inputField/InputField', () => ({
 	InputField: ({ item, inputHandle }: any) => (
-		<input
-			aria-label={item.name}
-			value={item.content}
-			onChange={inputHandle}
-		/>
+		<>
+			<input
+				aria-label={item.name}
+				value={item.content}
+				onChange={inputHandle}
+			/>
+			{item.infoText && <span>{item.infoText}</span>}
+		</>
 	)
 }));
 vi.mock('../button/Button', () => ({
@@ -143,6 +150,18 @@ it('links to recovery repair without changing credentials when enrollment is abs
 			.getByRole('link', { name: 'encryption.passwordRecovery.settings' })
 			.getAttribute('href')
 	).toBe('/profile/einstellungen/sicherheit');
+	expect(state.update).not.toHaveBeenCalled();
+	expect(state.logout).not.toHaveBeenCalled();
+});
+
+it.each<[new () => Error, string]>([
+	[state.RepairBlockedError, 'encryption.passwordRecovery.repairBlocked'],
+	[state.WorkLimitError, 'encryption.passwordRecovery.retryable-failure']
+])('shows the specific recovery failure for %s', async (ErrorType, message) => {
+	state.change.mockRejectedValue(new ErrorType());
+	submit();
+
+	expect(await screen.findByText(message)).toBeTruthy();
 	expect(state.update).not.toHaveBeenCalled();
 	expect(state.logout).not.toHaveBeenCalled();
 });

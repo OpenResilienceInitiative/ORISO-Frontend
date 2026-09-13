@@ -4662,7 +4662,7 @@
 			"repeatPassword": "Repeat login password",
 			"otp": "One-time code",
 			"enroll": "Confirm password and set up recovery",
-			"deviceReady": "This device can use its existing keys. Password recovery will be verified at the next password login.",
+			"device-ready": "This device can use its existing keys. Password recovery will be verified at the next password login.",
 			"repairBlocked": "The existing password backups cannot be safely replaced here. Your conversation history remains accessible with the recovery key. Setup with a new password is currently unavailable.",
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",

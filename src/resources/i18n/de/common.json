@@ -4743,7 +4743,7 @@
 			"repeatPassword": "Login-Passwort wiederholen",
 			"otp": "Einmalcode",
 			"enroll": "Passwort bestätigen und Wiederherstellung einrichten",
-			"deviceReady": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
+			"device-ready": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
 			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Ihr Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
 			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
