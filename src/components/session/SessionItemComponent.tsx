@@ -2212,8 +2212,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		if (openPanel === 'team') {
 			setTeamSeenAt(Date.now());
+			if (teamRoomId) {
+				void chatTransportService.markRoomAsRead(teamRoomId);
+			}
 		}
-	}, [openPanel, teamMessages]);
+	}, [openPanel, teamMessages, teamRoomId]);
 	const teamUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
