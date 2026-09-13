@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
-import { getModality, Modality } from './getModality';
+import {
+	getModality,
+	getModalityIfKnown,
+	Modality
+} from './getModality';
 
 const asItem = (partial: unknown): ListItemInterface =>
 	partial as ListItemInterface;
@@ -83,14 +87,14 @@ describe('getModality', () => {
 		expect(getModality(activeSession)).toBe(Modality.LIVE_CHAT);
 	});
 
-	it('ignores an unknown explicit conversationType and falls back to the heuristic', () => {
+	it('does not disguise an unknown explicit conversationType as a legacy modality', () => {
 		const item = asItem({
 			session: {
 				registrationType: 'ANONYMOUS',
 				conversationType: 'NONSENSE'
 			}
 		});
-		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
+		expect(getModalityIfKnown(item)).toBeUndefined();
 	});
 
 	it('defaults to AGENCY_COUNSELLING for an empty/unknown item', () => {

@@ -2,15 +2,15 @@ import * as React from 'react';
 import { Box, Typography } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useTranslation } from 'react-i18next';
-import type { Pseudonym } from '../../../utils/anonName/engine';
+import type { GuestName } from './LiveChatEntryRoom';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
 
 export interface LiveChatAccessProps {
-	/** The names on offer — four of them, already rolled by the room. */
-	pseudonyms: Pseudonym[];
+	/** The User-IDs on offer — four of them, already rolled by the room. */
+	names: GuestName[];
 	/** Which one is taken; never -1, so „Zum Warteraum" always has a name. */
 	selectedIndex: number;
 	onSelect: (index: number) => void;
@@ -27,7 +27,7 @@ const LABEL_ID = 'live-chat-access-choice-label';
  * A — the door. A name for today, no password: an access that deletes itself
  * needs none (Frank, 2026-09-05). The sentence under the names says so.
  *
- * Four names at once, not one die. One rolled name in a left-aligned card left
+ * Four User-IDs at once, not one die. One rolled name in a left-aligned card left
  * the screen nearly empty, on a phone above all (Frank, 2026-09-08: „statt nur
  * dem würfeln … mehrere angebote sieht … dann kann man zwischen drei vier
  * varianten wählen … zentriert also im weißen bereich … und ein sofort auch
@@ -37,7 +37,7 @@ const LABEL_ID = 'live-chat-access-choice-label';
  * instead of pushing the column sideways.
  */
 export const LiveChatAccess = ({
-	pseudonyms,
+	names,
 	selectedIndex,
 	onSelect,
 	onReroll,
@@ -53,8 +53,8 @@ export const LiveChatAccess = ({
 	/* A radio group is one tab stop: the arrows walk it, and the walk moves
 	   the selection with it — that is what a screen reader announces. */
 	const step = (from: number, delta: number) => {
-		if (pseudonyms.length === 0) return;
-		const next = (from + delta + pseudonyms.length * 2) % pseudonyms.length;
+		if (names.length === 0) return;
+		const next = (from + delta + names.length * 2) % names.length;
 		onSelect(next);
 		optionRefs.current[next]?.focus();
 	};
@@ -101,7 +101,7 @@ export const LiveChatAccess = ({
 				>
 					{tr(
 						'subline',
-						'Anonym, ohne Konto. Wählen Sie einen Namen — oder würfeln Sie neue.'
+						'Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.'
 					)}
 				</Typography>
 				<Typography
@@ -115,7 +115,7 @@ export const LiveChatAccess = ({
 						color: registrationMd3.onSurfaceVariant
 					}}
 				>
-					{tr('label', 'Ihr Pseudonym')}
+					{tr('label', 'Ihre User-ID')}
 				</Typography>
 				<Box
 					role="radiogroup"
@@ -134,11 +134,11 @@ export const LiveChatAccess = ({
 						maxWidth: { xs: 420, lg: 720 }
 					}}
 				>
-					{pseudonyms.map((pseudonym, index) => {
+					{names.map((name, index) => {
 						const selected = index === selectedIndex;
 						return (
 							<Box
-								key={`${pseudonym.displayName}-${index}`}
+								key={name.userId}
 								component="button"
 								type="button"
 								role="radio"
@@ -187,20 +187,36 @@ export const LiveChatAccess = ({
 								}}
 							>
 								<AnimalAvatar
-									avatar={pseudonym.avatar}
+									avatar={name.identity.avatar}
 									size={64}
 								/>
 								<Typography
 									component="span"
 									sx={{
+										/* The User-ID is a handle, not prose:
+										   the underscores have to stay
+										   readable, and a wrap must not split
+										   it in a way that invents a new one. */
 										fontSize: 15,
 										lineHeight: '20px',
 										fontWeight: selected ? 700 : 500,
 										color: registrationMd3.onSurface,
-										overflowWrap: 'anywhere'
+										overflowWrap: 'break-word'
 									}}
 								>
-									{pseudonym.displayName}
+									{name.userId
+										.split('_')
+										.map((part, partIndex) => (
+											<React.Fragment key={partIndex}>
+												{partIndex > 0 && (
+													<>
+														{'_'}
+														<wbr />
+													</>
+												)}
+												{part}
+											</React.Fragment>
+										))}
 								</Typography>
 							</Box>
 						);

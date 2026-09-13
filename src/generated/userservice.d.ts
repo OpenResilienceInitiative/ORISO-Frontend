@@ -53,7 +53,7 @@ declare namespace UserService {
 			tenantId?: string;
 			tenantName?: string;
 			tenantSubdomain?: string;
-			agencies?: AgencyAdminResponseDTO[];
+			agencies?: /* UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently. */ AgencyAdminResponseDTO[];
 			publicName?: string;
 			roleInOrg?: string;
 			vacated?: boolean;
@@ -85,10 +85,234 @@ declare namespace UserService {
 			_links?: PaginationLinks;
 			total?: number;
 		}
+		export interface AgencyAdminAllowedPermissionToggles {
+			/**
+			 * example:
+			 * true
+			 */
+			appearance?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			anonymousChat?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			calls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			groupChat?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervision?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervisionAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervisionOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCalls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCalls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threads?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessages?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaUpload?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaUploadAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaUploadOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaUploadGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaUploadSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaInlineDisplay?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaInlineDisplayAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaInlineDisplayOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaInlineDisplayGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaInlineDisplaySupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaAiScan?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaAiScanAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaAiScanOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaAiScanGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			mediaAiScanSupervisionChats?: boolean;
+		}
+		export interface AgencyAdminControls {
+			/**
+			 * example:
+			 * true
+			 */
+			permissionsPageEnabled?: boolean;
+			allowedPermissionToggles?: AgencyAdminAllowedPermissionToggles;
+			enforcedPermissionToggles?: AgencyAdminAllowedPermissionToggles;
+		}
 		export interface AgencyAdminFullResponseDTO {
-			_embedded?: AgencyAdminResponseDTO;
+			_embedded?: /* UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently. */ AgencyAdminResponseDTO;
 			_links?: AgencyLinks;
 		}
+		/**
+		 * UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently.
+		 */
 		export interface AgencyAdminResponseDTO {
 			/**
 			 * example:
@@ -219,8 +443,63 @@ declare namespace UserService {
 			tenantId?: number; // int64
 			topicIds?: number /* int64 */[];
 		}
+		export interface AgencyDepartmentDTO {
+			/**
+			 * example:
+			 * 7
+			 */
+			topicId?: number; // int64
+			/**
+			 * true if the department has a published data privacy policy of its own
+			 * example:
+			 * true
+			 */
+			hasPublishedDpp?: boolean;
+			/**
+			 * true if the department has a published imprint of its own
+			 * example:
+			 * false
+			 */
+			hasPublishedImprint?: boolean;
+		}
+		export interface AgencyIdAvailabilityResponseDTO {
+			/**
+			 * example:
+			 * 21
+			 */
+			agencyId: number; // int64
+			/**
+			 * example:
+			 * FREE
+			 */
+			status: 'FREE' | 'RESERVED' | 'ASSIGNED';
+		}
+		export interface AgencyIdReservationRequestDTO {
+			/**
+			 * The manually picked agency ID to reserve. Omit for AUTO mode (smallest free ID).
+			 * example:
+			 * 21
+			 */
+			agencyId?: number; // int64
+			/**
+			 * Tenant the pending agency belongs to. Validated only - never reserved here.
+			 * example:
+			 * 1
+			 */
+			tenantId?: number; // int64
+		}
+		export interface AgencyIdResponseDTO {
+			/**
+			 * example:
+			 * 21
+			 */
+			agencyId: number; // int64
+		}
 		export interface AgencyLinks {
 			self: HalLink;
+			update?: HalLink;
+			delete?: HalLink;
+			postcodeRanges?: HalLink;
 		}
 		export interface AgencyPostcodeRangeResponseDTO {
 			_embedded?: PostcodeRangeResponseDTO;
@@ -272,7 +551,30 @@ declare namespace UserService {
 			 * 12
 			 */
 			tenantId?: number; // int64
+			/**
+			 * example:
+			 * specific for agency privacy text
+			 */
+			agencySpecificPrivacy?: string;
 			topicIds?: number /* int64 */[];
+			/**
+			 * example:
+			 * base64 encoded image
+			 */
+			agencyLogo?: string;
+			settings?: Settings;
+		}
+		export interface AgencyTopicsDTO {
+			/**
+			 * example:
+			 * 684
+			 */
+			id?: number; // int64
+			/**
+			 * example:
+			 * Adoption and fostering a child
+			 */
+			name?: string;
 		}
 		export interface AgencyTypeDTO {
 			agencyType: 'TEAM_AGENCY' | 'DEFAULT_AGENCY';
@@ -487,7 +789,7 @@ declare namespace UserService {
 			updateDate?: string;
 			deleteDate?: string;
 			status?: string;
-			agencies?: AgencyAdminResponseDTO[];
+			agencies?: /* UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently. */ AgencyAdminResponseDTO[];
 			isGroupchatConsultant?: /**
 			 * example:
 			 * true
@@ -507,8 +809,37 @@ declare namespace UserService {
 			AssignedSupervisorId;
 			tenantId?: number;
 			tenantName?: string;
+			/**
+			 * The PUBLIC display name — the name advice seekers see.
+			 */
 			displayName?: string;
+			/**
+			 * Alias of displayName (the public name), kept for existing clients.
+			 */
 			publicName?: string;
+			/**
+			 * Optional internal display name for internal surfaces (team lists, internal group chats, supervision). Internal contexts fall back to displayName when empty.
+			 */
+			internalDisplayName?: string;
+			/**
+			 * example:
+			 * counsellor_female
+			 */
+			salutation?: string;
+			/**
+			 * example:
+			 * Head of counselling centre north
+			 */
+			position?: string;
+			/**
+			 * example:
+			 * Dipl.-Soz.Päd.
+			 */
+			title?: string;
+			/**
+			 * Internal remarks about the consultant. Only present for tenant-level admin callers (tenant admin / platform admin).
+			 */
+			adminRemarks?: string;
 			/**
 			 * example:
 			 * nikunj-rohit
@@ -572,6 +903,9 @@ declare namespace UserService {
 			 * nikunj-rohit
 			 */
 			publicSlug?: string;
+			/**
+			 * The Keycloak username. Kept deliberately (#1107): ORISO-Frontend uses it as the third fallback for a consultant's display label, after "firstName lastName" and displayName, so dropping it would degrade that case to a raw id. It is populated only on the two authenticated list endpoints; the unauthenticated public-data endpoint leaves it unset. Removing it is a cross-repo change - retire the frontend fallback first.
+			 */
 			username?: string;
 			/**
 			 * Flag that indicates if the consultant can be added as a supervisor
@@ -579,6 +913,18 @@ declare namespace UserService {
 			 * true
 			 */
 			isSupervisor?: boolean;
+			/**
+			 * Flag that indicates if the consultant is currently absent
+			 * example:
+			 * true
+			 */
+			absent?: boolean;
+			/**
+			 * The out-of-office message; carries a value only while absent is true, otherwise null
+			 * example:
+			 * I am absent until...
+			 */
+			absenceMessage?: string | null;
 			agencies?: AgencyResponseDTO[];
 		}
 		export interface ConsultantSearchResultDTO {
@@ -675,6 +1021,7 @@ declare namespace UserService {
 			 * 12345678
 			 */
 			referer?: string; // ^[a-zA-Z0-9]{1,8}$
+			supervision?: /* ADR-008 supervision marker for consultant-facing session lists. Filled for the requesting consultant only; absent on advice-seeker responses. Additive - older clients can ignore it. */ SessionSupervisionDTO;
 		}
 		export interface ConsultantSessionListResponseDTO {
 			sessions: ConsultantSessionResponseDTO[];
@@ -857,6 +1204,34 @@ declare namespace UserService {
 			 * nikunj-rohit
 			 */
 			publicSlug?: string;
+			/**
+			 * Optional PUBLIC display name shown to advice seekers.
+			 */
+			displayName?: string;
+			/**
+			 * Optional internal display name for internal surfaces; internal contexts fall back to the public displayName when empty.
+			 */
+			internalDisplayName?: string;
+			/**
+			 * Stable salutation key chosen from the admin form option list.
+			 * example:
+			 * counsellor_female
+			 */
+			salutation?: string;
+			/**
+			 * example:
+			 * Head of counselling centre north
+			 */
+			position?: string;
+			/**
+			 * example:
+			 * Dipl.-Soz.Päd.
+			 */
+			title?: string;
+			/**
+			 * Internal remarks about the consultant. Only readable and writable for tenant-level admins (tenant admin / platform admin); ignored for other callers.
+			 */
+			adminRemarks?: string;
 		}
 		export interface CreateEnquiryMessageResponseDTO {
 			sessionId?: number; // int64
@@ -866,6 +1241,57 @@ declare namespace UserService {
 			 */
 			matrixRoomId?: string;
 			t?: string;
+		}
+		export interface CreateLegalTextDTO {
+			kind: 'DPP' | 'IMPRINT';
+			label: string;
+			/**
+			 * Language code (e.g. de, en) to HTML text (multilingual map). Keys with the __meta suffix carry JSON translation metadata instead of HTML.
+			 */
+			content: {
+				[name: string]: string;
+			};
+			/**
+			 * true = mark PUBLISHED; false/absent = keep as DRAFT
+			 */
+			publish?: boolean;
+		}
+		export interface DataProtectionContactDTO {
+			/**
+			 * example:
+			 * Max Mustermann
+			 */
+			nameAndLegalForm?: string;
+			/**
+			 * example:
+			 * Musterstraße 1
+			 */
+			street?: string;
+			/**
+			 * example:
+			 * 79106
+			 */
+			postcode?: string;
+			/**
+			 * example:
+			 * Freiburg
+			 */
+			city?: string;
+			/**
+			 * example:
+			 * 0761 123456
+			 */
+			phoneNumber?: string;
+			email?: string;
+		}
+		export interface DataProtectionDTO {
+			dataProtectionResponsibleEntity?:
+				| 'AGENCY_RESPONSIBLE'
+				| 'ALTERNATIVE_REPRESENTATIVE'
+				| 'DATA_PROTECTION_OFFICER';
+			agencyDataProtectionResponsibleContact?: DataProtectionContactDTO;
+			alternativeDataProtectionRepresentativeContact?: DataProtectionContactDTO;
+			dataProtectionOfficerContact?: DataProtectionContactDTO;
 		}
 		export interface Date {}
 		export interface DefaultLinks {
@@ -897,32 +1323,81 @@ declare namespace UserService {
 			 */
 			genders?: string[];
 		}
-		export interface DioceseAdminResultDTO {
-			_embedded?: DioceseResponseDTO[];
-			_links?: PaginationLinks;
-			total?: number;
+		export interface DepartmentDataProtectionContentDTO {
+			/**
+			 * Stored multilingual content as a JSON language->HTML map string; null if never authored
+			 */
+			content?: string | null;
+			/**
+			 * Current publication status of the department's data privacy policy
+			 */
+			publicationStatus: 'DRAFT' | 'PUBLISHED';
 		}
-		export interface DioceseResponseDTO {
+		export interface DepartmentDataProtectionDTO {
 			/**
+			 * Language code (e.g. de, en) to HTML data privacy policy text (multilingual map)
 			 * example:
-			 * 12
+			 * {
+			 *   "de": "<p>Datenschutzerklärung des Fachbereichs ...</p>",
+			 *   "en": "<p>Data privacy policy of the department ...</p>"
+			 * }
 			 */
-			id?: number; // int64
+			content: {
+				[name: string]: string;
+			};
 			/**
-			 * example:
-			 * Freiburg
+			 * true = mark PUBLISHED (final legal document); false/absent = keep as DRAFT (draft-save)
 			 */
-			name?: string;
+			publish?: boolean;
+		}
+		export interface DepartmentDataProtectionResponseDTO {
 			/**
-			 * example:
-			 * 2019-08-23T08:52:05
+			 * Resulting publication status of the department's data privacy policy
 			 */
-			createDate?: string;
+			publicationStatus: 'DRAFT' | 'PUBLISHED';
+		}
+		export interface DepartmentImprintContentDTO {
 			/**
-			 * example:
-			 * 2019-12-02T13:12:08
+			 * Stored multilingual content as a JSON language->HTML map string; null if never authored
 			 */
-			updateDate?: string;
+			content?: string | null;
+			/**
+			 * Current publication status of the department's imprint
+			 */
+			publicationStatus: 'DRAFT' | 'PUBLISHED';
+		}
+		export interface DepartmentImprintDTO {
+			/**
+			 * Language code (e.g. de, en) to HTML imprint text (multilingual map). Keys with the __meta suffix carry JSON translation metadata instead of HTML.
+			 * example:
+			 * {
+			 *   "de": "<p>Impressum des Fachbereichs ...</p>",
+			 *   "en": "<p>Imprint of the department ...</p>"
+			 * }
+			 */
+			content: {
+				[name: string]: string;
+			};
+			/**
+			 * true = mark PUBLISHED (final legal document); false/absent = keep as DRAFT (draft-save)
+			 */
+			publish?: boolean;
+		}
+		export interface DepartmentImprintResponseDTO {
+			/**
+			 * Resulting publication status of the department's imprint
+			 */
+			publicationStatus: 'DRAFT' | 'PUBLISHED';
+		}
+		export interface DepartmentLegalContentDTO {
+			/**
+			 * Published multilingual content as a JSON language->HTML map string; null when the text is a draft or was never authored (drafts are never exposed)
+			 */
+			content?: string | null;
+		}
+		export interface DepartmentLegalDTO {
+			dpp: DepartmentLegalContentDTO;
+			imprint: DepartmentLegalContentDTO;
 		}
 		export interface EmailDTO {
 			/**
@@ -954,7 +1429,9 @@ declare namespace UserService {
 			message: string;
 			language?: /* ISO 639-1 code */ LanguageCode;
 			t?: string;
-			/** ID of the browser-encrypted Matrix event to finalize as the initial enquiry */
+			/**
+			 * ID of the browser-encrypted Matrix event to finalize as the initial enquiry
+			 */
 			matrixEventId?: string;
 		}
 		export interface FullAgencyResponseDTO {
@@ -1003,7 +1480,18 @@ declare namespace UserService {
 			 * 12
 			 */
 			tenantId?: number; // int64
+			/**
+			 * example:
+			 * specific for agency privacy text
+			 */
+			agencySpecificPrivacy?: string;
 			topicIds?: number /* int64 */[];
+			/**
+			 * example:
+			 * base64 encoded image
+			 */
+			agencyLogo?: string;
+			settings?: Settings;
 			demographics?: DemographicsDTO;
 			/**
 			 * example:
@@ -1015,6 +1503,10 @@ declare namespace UserService {
 			 * false
 			 */
 			external?: boolean;
+			/**
+			 * The agency's departments (one per assigned topic) with the publication state of their own legal texts. Optional - older clients can ignore it.
+			 */
+			departments?: AgencyDepartmentDTO[];
 		}
 		export interface GroupChatParticipantDTO {
 			consultantId: string;
@@ -1277,6 +1769,33 @@ declare namespace UserService {
 			msg?: string;
 			t?: string;
 		}
+		export interface LegalTextAdminDTO {
+			id: number; // int64
+			kind: 'DPP' | 'IMPRINT';
+			/**
+			 * Admin-facing name shown in the legal-text library
+			 */
+			label: string;
+			/**
+			 * Stored multilingual content as a JSON language->HTML map string
+			 */
+			content?: string | null;
+			publicationStatus: 'DRAFT' | 'PUBLISHED';
+			/**
+			 * How many departments currently reference this text
+			 */
+			usageCount: number; // int64
+		}
+		export interface LegalTextAssignmentDTO {
+			/**
+			 * Which slot of the department to assign
+			 */
+			kind: 'DPP' | 'IMPRINT';
+			/**
+			 * Legal text to reference; null clears the slot — the department falls back to its own inline content (content_dpp/content_imprint). Tenant-level fallback is future work (ADR-014 / #136).
+			 */
+			legalTextId?: number | null; // int64
+		}
 		export interface MasterKeyDTO {
 			/**
 			 * example:
@@ -1386,16 +1905,19 @@ declare namespace UserService {
 			 */
 			appointmentNotificationEnabled?: boolean;
 			/**
+			 * Counsellor: an enquiry was assigned to me.
 			 * example:
 			 * true
 			 */
 			assignmentNotificationEnabled?: boolean;
 			/**
+			 * Counsellor: a reply arrived in the protected professional exchange.
 			 * example:
 			 * true
 			 */
 			feedbackNotificationEnabled?: boolean;
 			/**
+			 * Both roles: maintenance and platform notices. Outages are sent regardless — this switches off the planned ones only.
 			 * example:
 			 * true
 			 */
@@ -1616,6 +2138,14 @@ declare namespace UserService {
 			 */
 			fileReceived?: boolean;
 		}
+		export interface SessionConsentDTO {
+			/**
+			 * The legal-text version the help-seeker agreed to, as published by ORISO-AgencyService. A public document version - no personal data. Stored as a pointer that is overwritten on re-consent (ADR-022 decision 2); no consent log is kept.
+			 * example:
+			 * 7
+			 */
+			legalVersionId: number; // int64
+		}
 		export interface SessionConsultantForConsultantDTO {
 			/**
 			 * example:
@@ -1716,6 +2246,12 @@ declare namespace UserService {
 			 * @asker:matrix.example
 			 */
 			askerMatrixUserId?: string;
+			/**
+			 * Matrix user id of the assigned consultant (null when no consultant is assigned)
+			 * example:
+			 * @consultant:matrix.example
+			 */
+			consultantMatrixUserId?: string | null;
 			e2eLastMessage?: LastMessageDTO;
 			lastMessage?: string;
 			lastMessageType?: MessageType;
@@ -1747,6 +2283,19 @@ declare namespace UserService {
 			attachment?: SessionAttachmentDTO;
 			videoCallMessageDTO?: VideoCallMessageDTO;
 			topic?: SessionTopicDTO;
+			/**
+			 * ADR-022 decision 2 - the legal-text version (owned by ORISO-AgencyService) this room is currently cleared for; null when Gate 2 has not been passed. A pointer, overwritten on re-consent, never a consent log. Additive - older clients can ignore it.
+			 * example:
+			 * 7
+			 */
+			consentedLegalVersionId?: number; // int64
+			/**
+			 * true when Gate 2 applies to this session and no consent pointer is recorded, i.e. the client must show the consent gate instead of the composer. Internal rooms (no help-seeker) always report false. Additive - older clients can ignore it.
+			 * example:
+			 * false
+			 */
+			consentRequired?: boolean;
+			supervision?: /* ADR-008 supervision marker for consultant-facing session lists. Filled for the requesting consultant only; absent on advice-seeker responses. Additive - older clients can ignore it. */ SessionSupervisionDTO;
 		}
 		export interface SessionDataDTO {
 			/**
@@ -1773,6 +2322,68 @@ declare namespace UserService {
 			asker?: string;
 			consultant?: string;
 			consultingType?: number;
+		}
+		/**
+		 * ADR-008 supervision marker for consultant-facing session lists. Filled for the requesting consultant only; absent on advice-seeker responses. Additive - older clients can ignore it.
+		 */
+		export interface SessionSupervisionDTO {
+			/**
+			 * true when the requesting consultant is an active SessionSupervisor of this session, i.e. the entry is in their list because they supervise it, not because they counsel it.
+			 * example:
+			 * true
+			 */
+			supervisedByMe: boolean;
+			/**
+			 * Keycloak ids of all active supervisors of this session (empty when none).
+			 * example:
+			 * [
+			 *   "926b9777-4eef-443d-925a-4aa534797bd7"
+			 * ]
+			 */
+			supervisorConsultantIds: string[];
+			/**
+			 * Internal display names of the active supervisors, same order as supervisorConsultantIds (internal display name, else public display name, else username). Never a real name.
+			 * example:
+			 * [
+			 *   "Supervisor Sam"
+			 * ]
+			 */
+			supervisorDisplayNames: string[];
+			/**
+			 * Internal display name of the session's assigned (responsible) consultant, resolved by the same #996 rule as supervisorDisplayNames (internal display name, else public display name, else username). Never a real name. Absent when the session has no consultant yet (enquiry not taken). Lets a supervisor's panel title the case by its counsellor without a second lookup.
+			 * example:
+			 * Counsellor Chris
+			 */
+			counsellorDisplayName?: string | null;
+		}
+		/**
+		 * An active supervision assignment for a session.
+		 */
+		export interface SessionSupervisorResponseDTO {
+			id: number; // int64
+			sessionId: number; // int64
+			/**
+			 * Keycloak id of the supervising consultant.
+			 */
+			supervisorConsultantId: string;
+			supervisorUsername: string;
+			/**
+			 * Matrix user id of the supervisor; null when no Matrix id is available.
+			 */
+			supervisorMatrixUserId?: string | null;
+			/**
+			 * Keycloak id of the consultant who created the assignment.
+			 */
+			addedByConsultantId: string;
+			addedDate: string; // date-time
+			matrixRoomId?: string | null;
+			/**
+			 * Human-readable supervision notes decoded from the stored payload.
+			 */
+			notes?: string | null;
+			reasonCode?: string | null;
+			justification?: string | null;
+			consent?: string | null;
 		}
 		export interface SessionTopicDTO {
 			/**
@@ -1817,6 +2428,312 @@ declare namespace UserService {
 			 * LinkedHashMap<String, Object>
 			 */
 			sessionData?: string;
+		}
+		export interface Settings {
+			/**
+			 * example:
+			 * false
+			 */
+			featureStatisticsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureTopicsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			topicsInRegistrationEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureDemographicsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureAppointmentsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureGroupChatV2Enabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureToolsEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			featureAnonymousChatEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			featureCallsEnabled?: boolean;
+			/**
+			 * Master toggle for supervision functionality (adding/removing supervisors, supervision views).
+			 * example:
+			 * true
+			 */
+			featureSupervisionEnabled?: boolean;
+			/**
+			 * Enable supervision functionality in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureSupervisionAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable supervision functionality in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureSupervisionOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Master toggle for audio call button availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureAudioCallsEnabled?: boolean;
+			/**
+			 * Enable audio call button in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button in group chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for video call button availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureVideoCallsEnabled?: boolean;
+			/**
+			 * Enable video call button in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable video call button in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable video call button in group chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable video call button when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for threads availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureThreadsEnabled?: boolean;
+			/**
+			 * Enable threads in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable threads in group chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable threads in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsOneOnOneEnabled?: boolean;
+			/**
+			 * Enable threads when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureThreadsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for voice messages availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesEnabled?: boolean;
+			/**
+			 * Enable voice messages in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages in group chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesGroupChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle: may images/media be uploaded into chats at all. Replaces the retired featureAttachmentUploadDisabled (ADR-015).
+			 * example:
+			 * true
+			 */
+			featureMediaUploadEnabled?: boolean;
+			/**
+			 * Enable media upload in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureMediaUploadAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable media upload in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureMediaUploadOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable media upload in group chats.
+			 * example:
+			 * true
+			 */
+			featureMediaUploadGroupChatsEnabled?: boolean;
+			/**
+			 * Enable media upload when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureMediaUploadSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle: render media as scaled thumbnails (on) or deliver as downloadable file only (off). The virus-scan requirement is attached to this switch.
+			 * example:
+			 * true
+			 */
+			featureMediaInlineDisplayEnabled?: boolean;
+			/**
+			 * Inline media display in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureMediaInlineDisplayAnonymousChatsEnabled?: boolean;
+			/**
+			 * Inline media display in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureMediaInlineDisplayOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Inline media display in group chats.
+			 * example:
+			 * true
+			 */
+			featureMediaInlineDisplayGroupChatsEnabled?: boolean;
+			/**
+			 * Inline media display when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureMediaInlineDisplaySupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle: AI content check sets the media check state automatically; off = blurred until counsellor click-to-reveal.
+			 * example:
+			 * false
+			 */
+			featureMediaAiScanEnabled?: boolean;
+			/**
+			 * AI media scan for anonymous chats.
+			 * example:
+			 * false
+			 */
+			featureMediaAiScanAnonymousChatsEnabled?: boolean;
+			/**
+			 * AI media scan for 1-on-1 chats.
+			 * example:
+			 * false
+			 */
+			featureMediaAiScanOneOnOneChatsEnabled?: boolean;
+			/**
+			 * AI media scan for group chats.
+			 * example:
+			 * false
+			 */
+			featureMediaAiScanGroupChatsEnabled?: boolean;
+			/**
+			 * AI media scan when a user is in supervision mode.
+			 * example:
+			 * false
+			 */
+			featureMediaAiScanSupervisionChatsEnabled?: boolean;
+			/**
+			 * example:
+			 * 1234-1234-1234-1234
+			 */
+			featureToolsOICDToken?: string;
+			/**
+			 * example:
+			 * [en, de, fr]
+			 */
+			activeLanguages?: string[];
+			/**
+			 * example:
+			 * false
+			 */
+			showAskerProfile?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			isVideoCallAllowed?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureSystemNotificationEmailsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureCentralDataProtectionTemplateEnabled?: boolean;
+			agencyAdminControls?: AgencyAdminControls;
 		}
 		export interface Sort {
 			/**
@@ -1964,6 +2881,36 @@ declare namespace UserService {
 			 * false
 			 */
 			rejectPendingPublicSlug?: boolean;
+			/**
+			 * The PUBLIC display name shown to advice seekers. Null leaves the stored value untouched; an empty string clears it.
+			 */
+			displayName?: string;
+			/**
+			 * Optional internal display name for internal surfaces; internal contexts fall back to the public displayName when empty. Null leaves the stored value untouched; an empty string clears it.
+			 */
+			internalDisplayName?: string;
+			/**
+			 * Stable salutation key chosen from the admin form option list. Null leaves the stored value untouched; an empty string clears it.
+			 * example:
+			 * counsellor_female
+			 */
+			salutation?: string;
+			/**
+			 * Null leaves the stored value untouched; an empty string clears it.
+			 * example:
+			 * Head of counselling centre north
+			 */
+			position?: string;
+			/**
+			 * Null leaves the stored value untouched; an empty string clears it.
+			 * example:
+			 * Dipl.-Soz.Päd.
+			 */
+			title?: string;
+			/**
+			 * Internal remarks about the consultant. Only readable and writable for tenant-level admins (tenant admin / platform admin); ignored for other callers. Null leaves the stored value untouched; an empty string clears it.
+			 */
+			adminRemarks?: string;
 		}
 		export interface UpdateAgencyAdminDTO {
 			/**
@@ -1985,11 +2932,6 @@ declare namespace UserService {
 		export interface UpdateAgencyDTO {
 			/**
 			 * example:
-			 * 12
-			 */
-			dioceseId: number; // int64
-			/**
-			 * example:
 			 * Beratungsstelle
 			 */
 			name: string;
@@ -2000,6 +2942,11 @@ declare namespace UserService {
 			description?: string;
 			/**
 			 * example:
+			 * 1
+			 */
+			consultingType?: number;
+			/**
+			 * example:
 			 * 79106
 			 */
 			postcode?: string;
@@ -2008,6 +2955,41 @@ declare namespace UserService {
 			 * Muenchen
 			 */
 			city?: string;
+			/**
+			 * example:
+			 * Musterstraße
+			 */
+			street?: string;
+			/**
+			 * example:
+			 * 12a
+			 */
+			houseNumber?: string;
+			/**
+			 * example:
+			 * 2. OG, Haus B
+			 */
+			floorBuilding?: string;
+			/**
+			 * example:
+			 * Deutschland
+			 */
+			country?: string;
+			/**
+			 * example:
+			 * 0761 123456
+			 */
+			phone?: string;
+			/**
+			 * example:
+			 * 0761 654321
+			 */
+			phoneSecondary?: string;
+			/**
+			 * example:
+			 * kontakt@beratungsstelle.de
+			 */
+			email?: string;
 			/**
 			 * example:
 			 * false
@@ -2025,9 +3007,24 @@ declare namespace UserService {
 			external: boolean;
 			topicIds?: number /* int64 */[];
 			demographics?: DemographicsDTO;
+			counsellingRelations?: (
+				| 'RELATIVE_COUNSELLING'
+				| 'SELF_COUNSELLING'
+				| 'PARENTAL_COUNSELLING'
+			)[];
+			dataProtection?: DataProtectionDTO;
+			/**
+			 * example:
+			 * base64 encoded image
+			 */
+			agencyLogo?: string;
+			/**
+			 * Agency settings including platform-level agencyAdminControls
+			 */
+			settings?: Settings;
 		}
 		export interface UpdateAgencyResponseDTO {
-			_embedded?: AgencyAdminResponseDTO;
+			_embedded?: /* UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently. */ AgencyAdminResponseDTO;
 			_links?: DefaultLinks;
 		}
 		export interface UpdateChatResponseDTO {
@@ -2077,6 +3074,19 @@ declare namespace UserService {
 			 */
 			dataPrivacyConfirmation?: boolean;
 			emailNotifications?: EmailNotificationsDTO;
+		}
+		export interface UpdateLegalTextDTO {
+			label: string;
+			/**
+			 * Language code (e.g. de, en) to HTML text (multilingual map). Keys with the __meta suffix carry JSON translation metadata instead of HTML.
+			 */
+			content: {
+				[name: string]: string;
+			};
+			/**
+			 * true = PUBLISHED, false = DRAFT; omitted/null = keep the current publication status (a label/content-only update never unpublishes)
+			 */
+			publish?: boolean | null;
 		}
 		export interface UpdateTenantAdminDTO {
 			/**
@@ -2560,6 +3570,7 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $403 {}
+			export interface $404 {}
 			export interface $409 {}
 			export interface $500 {}
 		}
@@ -2876,6 +3887,22 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace GetSessionSupervisors {
+		namespace Parameters {
+			export type SessionId = number; // int64
+		}
+		export interface PathParameters {
+			sessionId: Parameters.SessionId /* int64 */;
+		}
+		namespace Responses {
+			export type $200 =
+				/* An active supervision assignment for a session. */ UserService.Schemas.SessionSupervisorResponseDTO[];
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $500 {}
+		}
+	}
 	namespace GetSessionsForAuthenticatedConsultant {
 		namespace Parameters {
 			export type Count = number;
@@ -3036,6 +4063,24 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace RecordSessionConsent {
+		namespace Parameters {
+			export type SessionId = number; // int64
+		}
+		export interface PathParameters {
+			sessionId: Parameters.SessionId /* int64 */;
+		}
+		export type RequestBody = UserService.Schemas.SessionConsentDTO;
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $409 {}
+			export interface $500 {}
+		}
+	}
 	namespace RegisterNewConsultingType {
 		export type RequestBody = UserService.Schemas.NewRegistrationDto;
 		namespace Responses {
@@ -3138,8 +4183,7 @@ declare namespace Paths {
 			export interface $200 {}
 			export interface $400 {}
 			export interface $403 {}
-			export interface $409 {}
-			export interface $500 {}
+			export interface $410 {}
 		}
 	}
 	namespace SendReassignmentNotification {

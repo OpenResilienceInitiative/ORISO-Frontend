@@ -83,6 +83,32 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		expect(apiPatchUserData).toHaveBeenCalledWith({ displayName: chosen });
 	});
 
+	/* Frank, 2026-09-10: „wichtig ist, dass wir die User IDs nutzen". The door
+	   shows the handle the guest meets everywhere else — animal_name_1234,
+	   umlauts spelled out — and stores exactly that, so nothing is minted
+	   behind their back. */
+	it('offers User-IDs, not display names, and stores the one that was picked', async () => {
+		render(<LiveChatEntryRoom sessionId={7} />);
+		const shown = screen
+			.getAllByRole('radio')
+			.map((radio) => radio.textContent ?? '');
+		expect(shown).toHaveLength(4);
+		shown.forEach((text) => {
+			expect(text).toMatch(/^[a-z0-9]+_[a-z0-9]+_\d{4}$/);
+			expect(text).not.toMatch(/[äöüÄÖÜß ]/);
+		});
+
+		fireEvent.click(screen.getAllByRole('radio')[1]);
+		const chosen = screen.getAllByRole('radio')[1].textContent;
+		fireEvent.click(screen.getByRole('button', { name: /Zum Warteraum/i }));
+
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(7, {
+				displayName: chosen
+			})
+		);
+	});
+
 	it('replaces the whole set on „Neu würfeln", first one taken again', () => {
 		render(<LiveChatEntryRoom sessionId={7} />);
 
