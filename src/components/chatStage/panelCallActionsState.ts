@@ -1,7 +1,5 @@
 /**
- * Pure rules behind the side room's call controls (Frank, 09.09.2026: "auch
- * braucht die supervision die möglichkeit das man einen call haben kann
- * entweder video oder audio").
+ * Pure rules behind the side room's call controls.
  *
  * Same three questions the main chat header answers, in the same order:
  *

@@ -407,10 +407,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		consultingType.isVideoCallAllowed;
 
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
-		// The trigger itself lives in `call/startRoomCall.ts` since Frank's
-		// 09.09.2026 request for calls in the supervision side room — the side
-		// room needs the same steps against a different Matrix room, so there
-		// is one implementation and two callers.
+		// The trigger lives in `call/startRoomCall.ts` because the side room needs
+		// the same steps against a different Matrix room. One implementation
+		// serves both callers.
 		await startRoomCall({
 			// 1:1 sessions call into `activeSession.rid`; group chats into the
 			// group's Matrix room.

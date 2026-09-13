@@ -3,10 +3,8 @@
  *
  * This is `SessionMenu.handleStartVideoCall` lifted out of that component,
  * unchanged, with the room it calls into as an argument instead of a closure
- * over `activeSession`. Frank, 09.09.2026: "auch braucht die supervision die
- * möglichkeit das man einen call haben kann entweder video oder audio" — the
- * supervision side room is a Matrix room of its own (`supervisionRoomId`), so
- * its call must go against THAT room, not against the client's room.
+ * over `activeSession`. A supervision side room is a Matrix room of its own,
+ * so its call must target that room rather than the client's room.
  *
  * `CallManager.startCall(roomId, …)` is fully room-parameterised: it creates
  * the dedicated Element Call room from `roomId` (with a `restricted` join

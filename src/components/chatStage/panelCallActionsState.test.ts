@@ -4,7 +4,7 @@ import { HEADER_COMPACT_WIDTH } from '../sessionHeader/roomHeaderDensity';
 
 const wide = { width: 640, participantCount: 2 };
 
-describe('resolvePanelCallActions (Frank 09.09.2026: calls in the side room)', () => {
+describe('resolvePanelCallActions (calls in the side room)', () => {
 	it('offers video and audio in the header row when the column is wide', () => {
 		const state = resolvePanelCallActions({
 			...wide,

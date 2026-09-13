@@ -1,8 +1,8 @@
 /**
  * The two call glyphs of a room header, lifted out of `SessionMenu.tsx`
- * unchanged so the supervision side room can show the SAME buttons as the
- * main chat (Frank, 09.09.2026) instead of a second set that only looks
- * similar. One definition, two callers.
+ * unchanged so the supervision side room can show the same buttons as the
+ * main chat instead of a second set that only looks similar. One definition,
+ * two callers.
  *
  * The fills are the ones the main chat has drawn since the call buttons
  * exist. They are inline SVG, so the m3Sweep guard (which reads .scss/.css)

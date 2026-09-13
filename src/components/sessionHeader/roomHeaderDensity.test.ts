@@ -10,7 +10,7 @@ import {
 	STACK_MAX_VISIBLE_PHONE
 } from '../message/participantStack';
 
-describe('resolveRoomHeaderDensity (Frank 09.09.2026, finding *1)', () => {
+describe('resolveRoomHeaderDensity', () => {
 	it('leaves a roomy pane exactly as it is today', () => {
 		const density = resolveRoomHeaderDensity({ width: 840 });
 		expect(density.compact).toBe(false);

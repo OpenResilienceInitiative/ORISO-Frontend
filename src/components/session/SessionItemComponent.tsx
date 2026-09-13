@@ -2392,9 +2392,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
 	);
 
-	// Frank, 09.09.2026: "auch braucht die supervision die möglichkeit das man
-	// einen call haben kann entweder video oder audio". Same trigger as the
-	// main chat (`call/startRoomCall.ts`), same tenant gate
+	// Use the same trigger and tenant gate as the main chat
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.

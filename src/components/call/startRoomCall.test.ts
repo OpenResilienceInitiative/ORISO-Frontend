@@ -46,10 +46,7 @@ describe('startRoomCall', () => {
 		vi.unstubAllGlobals();
 	});
 
-	/**
-	 * The load-bearing one (Frank, 09.09.2026): the supervision side room is a
-	 * Matrix room of its own, so its call must be placed against THAT id.
-	 */
+	/** The supervision call must target the side room's own Matrix room id. */
 	it('places the call against the room it was handed, not the session room', async () => {
 		await startRoomCall({
 			roomId: SIDE_ROOM,

@@ -1,11 +1,6 @@
 /**
  * How a room header behaves when its pane gets narrow.
  *
- * Frank, 09.09.2026 (finding *1): "Ich kann diesen Slider nicht genug bewegen
- * nach links und nach rechts. … Aktuell ist das mindestens 487 px, das kann
- * auf beiden Seiten gerne bis zu 320 px breit sein. Achte dabei darauf, dass
- * alles korrekt wrapped, dass kein Overflow entsteht."
- *
  * The divider now reaches 320 px on either side
  * (`STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH`), and that is far below anything the
  * header row was built for. Measured on the running stage (1280 × 820, story
@@ -17,8 +12,8 @@
  *   title  532  372  292  212  172  132   92   52   20   ← px left for the name
  *   clip     0    0    0    0    9   49   89  129  161   ← px cut off the name
  *
- * D8 (Frank, 05.09.2026) already decided the remedy for exactly this squeeze
- * on the phone: the call buttons leave the row and become rows of the kebab
+ * The existing compact header already provides the remedy for this squeeze:
+ * the call buttons leave the row and become rows of the kebab
  * menu, and the avatar stack folds into one avatar + "+N" (T4), "so the
  * title keeps ≥ 40 % of the row". That share breaks at 482 px — one pixel
  * either side of where the name starts being cut — so the same switch now

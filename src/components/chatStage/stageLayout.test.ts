@@ -92,9 +92,6 @@ describe('clampPanelWidth (T2: drag between main pane and side panel)', () => {
 	// 1280 with the list on the rail: 1280 - 80 - 48 = 1152 px card.
 	const card = 1152;
 
-	// Frank, 09.09.2026 (finding *1): "Ich kann diesen Slider nicht genug
-	// bewegen nach links und nach rechts. … Aktuell ist das mindestens 487 px,
-	// das kann auf beiden Seiten gerne bis zu 320 px breit sein."
 	// 487 is what DevTools reports for `.panelHeader__row` when the pane sits
 	// on the old floor: 520 slot - 1 px `.sidePanel--inside` hairline - 2 x 16
 	// px header inset. The DRAG floor drops to 320; the AUTO floor

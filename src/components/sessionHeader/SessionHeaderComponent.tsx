@@ -147,8 +147,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 	const settings = useAppConfig();
 	const { untilL, untilM } = useResponsive();
-	// Frank 09.09.2026 (*1): the divider now reaches 320 px, so the header
-	// must read its PANE, not the viewport — at 1280 px the viewport says
+	// The divider reaches 320 px, so the header must read its pane rather than
+	// the viewport — at 1280 px the viewport says
 	// "desktop" while this pane can be 320 px wide. `roomHeaderDensity.ts`
 	// turns that width into D8's phone form (calls in the kebab, one avatar
 	// + "+N"); the phone keeps switching on the viewport as before.
