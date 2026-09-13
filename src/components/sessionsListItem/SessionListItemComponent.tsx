@@ -1025,10 +1025,9 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-				// `displayLastMessage`, not the raw preview: it has already
-				// dropped a message this user may not see and honours the
-				// case-handover lock.
-				body: displayLastMessage || undefined,
+body: isMatrixBackedSession
+					? previewBody(railChannelPreviews?.main ?? null)
+					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
 					activeSession.item.messageDate,
 					activeSession.item.createDate
