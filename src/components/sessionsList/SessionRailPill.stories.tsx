@@ -723,7 +723,7 @@ export const TooltipDismissesWithEscape: Story = {
 				)
 			).toBeInTheDocument()
 		);
-		fireEvent.keyDown(pill, { key: 'ArrowDown' });
+		fireEvent.keyDown(pill, { key: 'ArrowRight' });
 		const markTip = await waitFor(() => {
 			const element = ownerDocument.querySelector<HTMLElement>(
 				'[data-cy="session-rail-pill-tooltip"]'

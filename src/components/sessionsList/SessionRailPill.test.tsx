@@ -24,7 +24,7 @@ describe('SessionRailPill accessibility', () => {
 		const pill = screen.getByRole('button', { name: /Case 42/ });
 
 		fireEvent.focus(pill);
-		fireEvent.keyDown(pill, { key: 'ArrowDown' });
+		fireEvent.keyDown(pill, { key: 'ArrowRight' });
 		const tooltip = screen.getByRole('tooltip');
 		expect(tooltip.textContent).toBe('Supervision');
 		expect(tooltip.parentElement).toBe(document.body);
@@ -61,9 +61,11 @@ describe('SessionRailPill accessibility', () => {
 
 		const first = screen.getByRole('button', { name: /First case/ });
 		first.focus();
-		fireEvent.keyDown(first, { key: 'ArrowDown' });
+		fireEvent.keyDown(first, { key: 'ArrowRight' });
 
 		expect(document.activeElement).toBe(first);
 		expect(screen.getByRole('tooltip').textContent).toBe('Mail');
+		fireEvent.keyDown(first, { key: 'ArrowDown' });
+		expect(document.activeElement).toBe(secondRow);
 	});
 });

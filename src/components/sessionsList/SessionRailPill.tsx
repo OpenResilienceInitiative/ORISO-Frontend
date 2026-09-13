@@ -241,15 +241,17 @@ export const SessionRailPill = ({
 			setHoveredMark(null);
 		} else if (
 			marks.length > 0 &&
-			['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(
-				event.key
-			)
+			['ArrowRight', 'ArrowLeft'].includes(event.key)
 		) {
 			event.preventDefault();
-			const currentIndex = hoveredMark ? marks.indexOf(hoveredMark) : -1;
-			const step = ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 1;
+			const currentIndex = hoveredMark
+				? marks.indexOf(hoveredMark)
+				: event.key === 'ArrowLeft'
+					? 0
+					: -1;
+			const step = event.key === 'ArrowLeft' ? -1 : 1;
 			const nextIndex =
-			event.preventDefault();
+				(currentIndex + step + marks.length) % marks.length;
 			event.stopPropagation();
 			setShowName(false);
 			setHoveredMark(marks[nextIndex]);

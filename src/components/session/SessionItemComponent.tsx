@@ -4071,14 +4071,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={
-										props.teamDiscussionStatus !== 'OPEN' ||
-										Boolean(
-											retryRequest &&
-												retryRequest.failedSendId !==
-													failed.id
-										)
-									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
 								/>
 							))}
 					</>
@@ -4214,11 +4211,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										props.teamDiscussionStatus !== 'OPEN' ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>
