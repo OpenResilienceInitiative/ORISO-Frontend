@@ -51,6 +51,13 @@ describe('filterVisibleMatrixPreviewEvents', () => {
 			)
 		).toEqual([]);
 	});
+
+	it('handles redacted or non-text bodies without breaking the list', () => {
+		const redacted = event('m.room.message', { body: {} }, 2);
+		expect(
+			filterVisibleMatrixPreviewEvents([redacted], ['@bob:example.org'])
+		).toEqual([redacted]);
+	});
 });
 
 describe('getLatestMatrixRoomPreview', () => {

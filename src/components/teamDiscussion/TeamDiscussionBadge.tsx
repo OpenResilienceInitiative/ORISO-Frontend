@@ -7,7 +7,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TeamDiscussion } from '../../api/apiTeamDiscussion';
+import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 import {
 	getCachedTeamDiscussion,
 	invalidateTeamDiscussionCache

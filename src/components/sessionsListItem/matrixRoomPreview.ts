@@ -65,7 +65,8 @@ export const filterVisibleMatrixPreviewEvents = (
 	);
 	return events.filter((event) => {
 		const content = event.getClearContent?.() || event.getContent?.() || {};
-		const { visibleToUserIds } = parseMessagePrefixes(content.body);
+		const body = typeof content.body === 'string' ? content.body : '';
+		const { visibleToUserIds } = parseMessagePrefixes(body);
 		if (!visibleToUserIds.length) return true;
 		const senderIds = normalizedIdentityVariants(event.getSender?.());
 		if (senderIds.some((id) => viewerIds.has(id))) return true;

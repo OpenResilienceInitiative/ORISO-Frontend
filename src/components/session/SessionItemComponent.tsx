@@ -2182,8 +2182,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		if (openPanel === 'supervision') {
 			setSupervisionSeenAt(Date.now());
+			if (supervisionRoomId) {
+				void chatTransportService.markRoomAsRead(supervisionRoomId);
+			}
 		}
-	}, [openPanel, supervisionMessages]);
+	}, [openPanel, supervisionMessages, supervisionRoomId]);
 	const supervisionUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
