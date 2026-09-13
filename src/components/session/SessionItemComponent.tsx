@@ -2041,8 +2041,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
 	// Creation is initiated by the list/deep-link contract, which first resolves
 	// the POST and then supplies this id. Do not expose an in-stage channel item
-	// until it can resolve to a real room.
-	const canOpenTeamSideRoom = hasTeamSideRoom;
+	// until it can resolve to a real room, except for an eligible enquiry where
+	// selecting the item is what initiates that POST.
+	const canOpenTeamSideRoom =
+		isSupervisionPanelViewer &&
+		(hasTeamSideRoom || props.teamDiscussionAvailable === true);
 	// A stale/unauthorised `?channel=team` route must not leave a panel that
 	// can fall back to another room. Consume it only after lookup settles.
 	useEffect(() => {
