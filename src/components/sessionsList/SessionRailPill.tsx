@@ -34,6 +34,7 @@
  */
 import * as React from 'react';
 import clsx from 'clsx';
+import { createPortal } from 'react-dom';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { MailFilterIcon } from './MailFilterIcon';
@@ -125,6 +126,43 @@ const MARK_GLYPHS: Record<SessionRailMark, React.ReactNode> = {
 	unread: null
 };
 
+const RailTooltip = ({
+	anchor,
+	id,
+	kind,
+	children
+}: {
+	anchor: HTMLButtonElement | null;
+	id: string;
+	kind: 'mark' | 'pill';
+	children: React.ReactNode;
+}) => {
+	const [position, setPosition] = React.useState({ top: 0, left: 0 });
+
+	React.useLayoutEffect(() => {
+		if (!anchor) return;
+		const rect = anchor.getBoundingClientRect();
+		setPosition({ top: rect.top, left: rect.right + 8 });
+	}, [anchor]);
+
+	return createPortal(
+		<span
+			id={id}
+			className={clsx(
+				'sessionRailPill__tooltip',
+				`sessionRailPill__tooltip--${kind}`
+			)}
+			role="tooltip"
+			style={position}
+			data-cy="session-rail-pill-tooltip"
+			data-tooltip-kind={kind}
+		>
+			{children}
+		</span>,
+		anchor?.ownerDocument.body ?? document.body
+	);
+};
+
 export const SessionRailPill = ({
 	name,
 	avatar,
@@ -150,6 +188,16 @@ export const SessionRailPill = ({
 	const [hoveredMark, setHoveredMark] =
 		React.useState<SessionRailMark | null>(null);
 	const [showName, setShowName] = React.useState(false);
+	const [buttonElement, setButtonElement] =
+		React.useState<HTMLButtonElement | null>(null);
+	const tooltipId = React.useId();
+	const handleButtonRef = React.useCallback(
+		(element: HTMLButtonElement | null) => {
+			setButtonElement(element);
+			buttonRef?.(element);
+		},
+		[buttonRef]
+	);
 
 	// A mark's tooltip wins over the pill's: the pointer is inside the pill
 	// either way, so without this the name would sit on top of the message.
@@ -181,6 +229,19 @@ export const SessionRailPill = ({
 		if (event.key === 'Escape') {
 			setShowName(false);
 			setHoveredMark(null);
+		} else if (
+			marks.length > 0 &&
+			['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(
+				event.key
+			)
+		) {
+			event.preventDefault();
+			const currentIndex = hoveredMark ? marks.indexOf(hoveredMark) : -1;
+			const step = ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 1;
+			const nextIndex =
+				(currentIndex + step + marks.length) % marks.length;
+			setShowName(false);
+			setHoveredMark(marks[nextIndex]);
 		}
 		onKeyDown?.(event);
 	};
@@ -189,7 +250,7 @@ export const SessionRailPill = ({
 		<span className="sessionRailPill__shell">
 			<button
 				type="button"
-				ref={buttonRef}
+				ref={handleButtonRef}
 				className={clsx(
 					'sessionRailPill',
 					active && 'sessionRailPill--active',
@@ -212,6 +273,7 @@ export const SessionRailPill = ({
 				}}
 				role={role}
 				aria-selected={ariaSelected}
+				aria-describedby={hasContent ? tooltipId : undefined}
 				tabIndex={tabIndex}
 				data-cy={dataCy}
 				data-marks={marks.join(' ')}
@@ -261,15 +323,10 @@ export const SessionRailPill = ({
 			 * reader would otherwise hear everything twice.
 			 */}
 			{tooltip && hasContent && (
-				<span
-					className={clsx(
-						'sessionRailPill__tooltip',
-						`sessionRailPill__tooltip--${tooltip.kind}`
-					)}
-					role="presentation"
-					aria-hidden="true"
-					data-cy="session-rail-pill-tooltip"
-					data-tooltip-kind={tooltip.kind}
+				<RailTooltip
+					anchor={buttonElement}
+					id={tooltipId}
+					kind={tooltip.kind}
 				>
 					{tooltip.title && (
 						<span className="sessionRailPill__tooltipTitle">
@@ -286,7 +343,7 @@ export const SessionRailPill = ({
 							{tooltip.meta}
 						</span>
 					)}
-				</span>
+				</RailTooltip>
 			)}
 		</span>
 	);

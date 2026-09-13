@@ -57,7 +57,8 @@ vi.mock('../../hooks/useE2EE', () => ({
 }));
 
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
-	useMatrixSessionPreview: matrixPreviewMock
+	useMatrixSessionPreview: matrixPreviewMock,
+	useMatrixSessionEvents: () => []
 }));
 
 vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
@@ -625,7 +626,8 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 				?.textContent
 		).toContain('Interne Rückfrage');
 		expect(
-			document.querySelector('.sessionRailPill__mark--unread')?.textContent
+			document.querySelector('.sessionRailPill__mark--unread')
+				?.textContent
 		).toBe('3');
 	});
 

@@ -558,6 +558,55 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 		expect(JSON.stringify(notificationArg)).not.toContain('hello world');
 	});
+
+	it('marks team-room text notifications without exposing message content', async () => {
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage: vi.fn(() => Promise.resolve({ event_id: '$team' }))
+		} as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'internal team text',
+			sendMailNotification: false,
+			isEncrypted: false,
+			matrixRoomId: ROOM_ID,
+			teamDiscussion: true,
+			matrixClientServiceOverride: override
+		});
+
+		expect(apiPostMessageEventNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
+		);
+		expect(
+			JSON.stringify(apiPostMessageEventNotification.mock.calls[0][0])
+		).not.toContain('internal team text');
+	});
+});
+
+describe('chatTransportService team attachment notifications', () => {
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	it('marks an attachment sent in the team room as teamDiscussion', async () => {
+		const postNotification = vi.fn(() => Promise.resolve({}));
+		setMatrixClientServiceRef({
+			getClient: () => ({}),
+			sendFileMessage: vi.fn(() => Promise.resolve({ event_id: '$file' }))
+		} as any);
+
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['x'], 'note.txt'),
+			{
+				teamDiscussion: true,
+				postMessageEventNotification: postNotification
+			}
+		);
+
+		expect(postNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
+		);
+	});
 });
 
 describe('chatTransportService markRoomAsRead', () => {

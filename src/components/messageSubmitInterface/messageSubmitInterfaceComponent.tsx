@@ -20,10 +20,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import {
-	isFocusProtected,
-	scheduleComposerAutoFocus
-} from './focusGuards';
+import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
 import { buildSessionChannelPath } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -222,6 +219,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * top. Unset = today's behaviour.
 	 */
 	targetRoomId?: string;
+	/** Marks notifications from the internal ADR-016 team room. */
+	teamDiscussion?: boolean;
 	/**
 	 * T35: dual mode (a side panel is open) — the composer rests at ONE
 	 * line on the desktop as well and grows while typing (`composerResize`
@@ -425,6 +424,7 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	hideSupervisorAudience = false,
 	targetRoomId,
+	teamDiscussion = false,
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
@@ -1492,7 +1492,8 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User'
+									'User',
+								teamDiscussion
 							}
 						);
 					} catch (error: any) {
@@ -1558,7 +1559,8 @@ export const MessageSubmitInterfaceComponent = ({
 					retryOfId
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
-					mentionedUserIds
+					mentionedUserIds,
+					teamDiscussion
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1620,6 +1622,7 @@ export const MessageSubmitInterfaceComponent = ({
 			setE2EEState,
 			supervisionRoomId,
 			targetRoomId,
+			teamDiscussion,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,

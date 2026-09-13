@@ -262,13 +262,11 @@ $rail-pill-padding: 3px;
 
 .sessionRailPill {
 	&__tooltip {
-		position: absolute;
-		left: calc(100% + 8px);
+		position: fixed;
 
 		// Anchored to the pill's TOP, not its middle: the pill grows downward
 		// with its marks, so a centred tooltip would drift down the taller the
 		// conversation's state is. Aligned with the avatar, it stays put.
-		top: 0;
 		z-index: 40;
 		display: flex;
 		flex-direction: column;

@@ -211,6 +211,8 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
+import { canRenderClientComposer } from './clientComposerPolicy';
+import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -235,6 +237,8 @@ interface SessionItemProps {
 	teamMessages?: MessageItem[];
 	/** Matrix room id of that team room (`apiGetTeamDiscussion`). */
 	teamRoomId?: string;
+	teamDiscussionStatus?: TeamDiscussionStatus;
+	teamDiscussionResolved?: boolean;
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -2026,6 +2030,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const teamRoomId = props.teamRoomId;
 	const teamMessages = props.teamMessages;
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
+	// A stale/unauthorised `?channel=team` route must not leave a panel that
+	// can fall back to another room. Consume it only after lookup settles.
+	useEffect(() => {
+		if (
+			routeChannel?.kind === 'team' &&
+			props.teamDiscussionResolved &&
+			!hasTeamSideRoom
+		) {
+			closeChannel();
+		}
+	}, [
+		closeChannel,
+		hasTeamSideRoom,
+		props.teamDiscussionResolved,
+		routeChannel?.kind
+	]);
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
@@ -3359,7 +3379,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</div>
 					)}
 
-				{canWriteMessage && !shouldBlockAnonymousInquiryChat && (
+				{canRenderClientComposer({
+					canWriteMessage,
+					isSupervisor,
+					shouldBlockAnonymousInquiryChat
+				}) && (
 					<div
 						className={clsx(
 							'session__gameInputFadeTarget',
@@ -3369,19 +3393,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								'session__gameInputFadeTarget--hidden'
 						)}
 					>
-						{isSupervisor && (
-							<div
-								className="session__supervisorInputNote"
-								style={{
-									textAlign: 'center'
-								}}
-							>
-								{translate(
-									'session.supervisor.input.note',
-									'Messages you send here are visible only to consultants.'
-								)}
-							</div>
-						)}
 						{areRobotMessagesComplete && (
 							<Suspense
 								fallback={
@@ -4118,9 +4129,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				banner={
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
-							title={teamText(
-								'chatStage.panel.team.empty.title'
-							)}
+							title={teamText('chatStage.panel.team.empty.title')}
 							text={teamText('chatStage.panel.team.empty.text')}
 						/>
 					) : undefined
@@ -4191,35 +4200,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					<MessageSubmitInterfaceComponent
-						isTyping={props.isTyping}
-						placeholder={teamText(
-							'chatStage.panel.team.composer.placeholder'
-						)}
-						handleMessageSendSuccess={handleMessageSendSuccess}
-						onSendError={handleComposerSendError}
-						retryRequest={
-							retryRequest &&
-							failedSendBelongsTo(retryRequest, {
-								kind: 'room',
-								roomId: teamRoomId
-							})
-								? retryRequest
-								: null
-						}
-						onRetrySettled={handleComposerRetrySettled}
-						targetRoomId={teamRoomId}
-						isSupervisor={isSupervisor}
-						supervisionRoomId={supervisionRoomId}
-						hideSupervisorAudience
-						flushCorner={panelComposerFlush}
-						accent="team"
-						onMobileNavigateBack={
-							isPhoneLayout ? closeChannel : undefined
-						}
-						messages={teamMessages}
-						isOwnMessage={isMyMessageMatrix}
-					/>
+					props.teamDiscussionStatus === 'OPEN' ? (
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							placeholder={teamText(
+								'chatStage.panel.team.composer.placeholder'
+							)}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest &&
+								failedSendBelongsTo(retryRequest, {
+									kind: 'room',
+									roomId: teamRoomId
+								})
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
+							targetRoomId={teamRoomId}
+							teamDiscussion
+							hideSupervisorAudience
+							flushCorner={panelComposerFlush}
+							accent="team"
+							onMobileNavigateBack={
+								isPhoneLayout ? closeChannel : undefined
+							}
+							messages={teamMessages}
+							isOwnMessage={isMyMessageMatrix}
+						/>
+					) : undefined
 				}
 				switcher={phoneBackFab}
 			/>

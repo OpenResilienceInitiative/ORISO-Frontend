@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, fireEvent, waitFor, within } from 'storybook/test';
 import { SessionRailPill, type SessionRailTooltips } from './SessionRailPill';
 import {
 	getSessionRailMarks,
@@ -554,15 +554,20 @@ export const TooltipName: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
+		const ownerDocument = canvasElement.ownerDocument;
 		const canvas = within(canvasElement);
 		const pill = canvas.getByRole('button', { name: /sonnenblume_47/ });
 		await expect(
-			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+			ownerDocument.querySelector('[data-cy="session-rail-pill-tooltip"]')
 		).toBeNull();
-		await userEvent.hover(pill);
-		const tip = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="session-rail-pill-tooltip"]'
-		)!;
+		fireEvent.mouseOver(pill);
+		const tip = await waitFor(() => {
+			const element = ownerDocument.querySelector<HTMLElement>(
+				'[data-cy="session-rail-pill-tooltip"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
 		await expect(tip.dataset.tooltipKind).toBe('pill');
 		await expect(
 			tip.querySelector('.sessionRailPill__tooltipTitle')!.textContent
@@ -592,9 +597,9 @@ export const TooltipName: Story = {
 			body.getBoundingClientRect().right,
 			0
 		);
-		await userEvent.unhover(pill);
+		fireEvent.mouseOut(pill);
 		await expect(
-			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+			ownerDocument.querySelector('[data-cy="session-rail-pill-tooltip"]')
 		).toBeNull();
 	}
 };
@@ -611,8 +616,9 @@ export const TooltipMessage: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
+		const ownerDocument = canvasElement.ownerDocument;
 		const tipNow = () =>
-			canvasElement.querySelector<HTMLElement>(
+			ownerDocument.querySelector<HTMLElement>(
 				'[data-cy="session-rail-pill-tooltip"]'
 			);
 		const bodyOf = (mark: string) => {
@@ -622,18 +628,22 @@ export const TooltipMessage: Story = {
 			return el;
 		};
 
-		await userEvent.hover(bodyOf('thread'));
-		await expect(
-			tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
-				.textContent
-		).toContain('Mahnbescheid');
+		fireEvent.mouseOver(bodyOf('thread'));
+		await waitFor(() =>
+			expect(
+				tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
+					.textContent
+			).toContain('Mahnbescheid')
+		);
 		await expect(tipNow()!.dataset.tooltipKind).toBe('mark');
 
-		await userEvent.hover(bodyOf('mail'));
-		await expect(
-			tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
-				.textContent
-		).toContain('Unterlagen');
+		fireEvent.mouseOver(bodyOf('mail'));
+		await waitFor(() =>
+			expect(
+				tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
+					.textContent
+			).toContain('Unterlagen')
+		);
 		// The two really differ — that is the whole point of per-channel
 		// previews, so it is asserted rather than assumed.
 		await expect(
@@ -641,11 +651,13 @@ export const TooltipMessage: Story = {
 				.textContent
 		).not.toContain('Mahnbescheid');
 
-		await userEvent.hover(bodyOf('unread'));
-		await expect(
-			tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
-				.textContent
-		).toBe('3 neue Nachrichten');
+		fireEvent.mouseOver(bodyOf('unread'));
+		await waitFor(() =>
+			expect(
+				tipNow()!.querySelector('.sessionRailPill__tooltipBody')!
+					.textContent
+			).toBe('3 neue Nachrichten')
+		);
 		// A count has no date under it.
 		await expect(
 			tipNow()!.querySelector('.sessionRailPill__tooltipMeta')
@@ -666,14 +678,19 @@ export const TooltipWithoutPreview: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
-		await userEvent.hover(
+		const ownerDocument = canvasElement.ownerDocument;
+		fireEvent.mouseOver(
 			canvasElement.querySelector<HTMLElement>(
 				'.sessionRailPill__mark--supervision'
 			)!
 		);
-		const tip = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="session-rail-pill-tooltip"]'
-		)!;
+		const tip = await waitFor(() => {
+			const element = ownerDocument.querySelector<HTMLElement>(
+				'[data-cy="session-rail-pill-tooltip"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
 		await expect(tip.textContent).toBe(RAIL_MARK_COPY.supervision);
 		await expect(
 			tip.querySelector('.sessionRailPill__tooltipMeta')
@@ -682,24 +699,43 @@ export const TooltipWithoutPreview: Story = {
 };
 
 export const TooltipDismissesWithEscape: Story = {
-	name: 'Tooltip — Escape schließt die Tastaturvorschau',
+	name: 'Tooltip — Tastaturmarke und Escape',
 	render: () => (
 		<div style={{ padding: '24px 260px 24px 24px' }}>
 			<Pill marks={['supervision']} tooltips={RAIL_TOOLTIPS} />
 		</div>
 	),
 	play: async ({ canvasElement }) => {
+		const ownerDocument = canvasElement.ownerDocument;
 		const pill = within(canvasElement).getByRole('button', {
 			name: /sonnenblume_47/
 		});
-		await userEvent.tab();
+		pill.focus();
 		await expect(pill).toHaveFocus();
+		await waitFor(() =>
+			expect(
+				ownerDocument.querySelector(
+					'[data-cy="session-rail-pill-tooltip"]'
+				)
+			).toBeInTheDocument()
+		);
+		fireEvent.keyDown(pill, { key: 'ArrowDown' });
+		const markTip = await waitFor(() => {
+			const element = ownerDocument.querySelector<HTMLElement>(
+				'[data-cy="session-rail-pill-tooltip"]'
+			);
+			expect(element?.dataset.tooltipKind).toBe('mark');
+			return element!;
+		});
+		await expect(markTip.dataset.tooltipKind).toBe('mark');
+		await expect(markTip.textContent).toBe(RAIL_MARK_COPY.supervision);
+		await expect(pill.getAttribute('aria-describedby')).toBe(markTip.id);
+		// Portalled + fixed means the rail scroll container cannot clip it.
+		await expect(markTip.parentElement).toBe(ownerDocument.body);
+		await expect(getComputedStyle(markTip).position).toBe('fixed');
+		fireEvent.keyDown(pill, { key: 'Escape' });
 		await expect(
-			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
-		).toBeInTheDocument();
-		await userEvent.keyboard('{Escape}');
-		await expect(
-			canvasElement.querySelector('[data-cy="session-rail-pill-tooltip"]')
+			ownerDocument.querySelector('[data-cy="session-rail-pill-tooltip"]')
 		).toBeNull();
 	}
 };

@@ -95,7 +95,10 @@ import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
-import { useMatrixSessionPreview } from '../../hooks/useMatrixSessionPreview';
+import {
+	useMatrixSessionEvents,
+	useMatrixSessionPreview
+} from '../../hooks/useMatrixSessionPreview';
 import {
 	getLatestMatrixRoomPreview,
 	getLatestTimedMatrixRoomPreview,
@@ -266,20 +269,19 @@ export const SessionListItemComponent = ({
 	});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
-	const matrixSessionPreview = useMatrixSessionPreview(
+	const matrixPreviewEvents = useMatrixSessionEvents(
 		matrixRoomId,
-		isMatrixBackedSession && !caseHandoverContentLocked,
-		getLatestMatrixRoomPreview
+		isMatrixBackedSession && !caseHandoverContentLocked
 	);
-	// The SAME timeline, split by channel, for the rail's per-mark tooltips
-	// (Frank's sketch 10.09.2026). `useMatrixSessionPreview` already holds the
-	// room's last 50 decrypted events and its subscription; a second selector
-	// over that array costs no fetch. Gated on the identical case-handover
-	// lock as the row preview — a locked case must not leak through a tooltip.
-	const railChannelPreviews = useMatrixSessionPreview(
-		matrixRoomId,
-		isMatrixBackedSession && !caseHandoverContentLocked,
-		getRoomPreviewsByChannel
+	const matrixSessionPreview = useMemo(
+		() => getLatestMatrixRoomPreview(matrixPreviewEvents),
+		[matrixPreviewEvents]
+	);
+	// Both previews are selectors over ONE loaded timeline. The rail-only
+	// split is not even computed while the expanded list is visible.
+	const railChannelPreviews = useMemo(
+		() => (isRail ? getRoomPreviewsByChannel(matrixPreviewEvents) : null),
+		[isRail, matrixPreviewEvents]
 	);
 	const supervisionSideRoomId = sessionItem?.supervision?.sideRoomId ?? null;
 	const railSupervisionPreview = useMatrixSessionPreview(
