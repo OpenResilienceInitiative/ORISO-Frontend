@@ -7,6 +7,8 @@ import {
 
 interface TeamDiscussionChannelState {
 	sessionId: number | null;
+	allowCreate: boolean;
+	teamChannelRequested: boolean;
 	discussion: TeamDiscussion | null;
 	resolved: boolean;
 }
@@ -20,6 +22,8 @@ interface UseTeamDiscussionChannelInput {
 
 const EMPTY_STATE: TeamDiscussionChannelState = {
 	sessionId: null,
+	allowCreate: false,
+	teamChannelRequested: false,
 	discussion: null,
 	resolved: true
 };
@@ -30,9 +34,9 @@ export const useTeamDiscussionChannel = ({
 	enabled,
 	allowCreate,
 	teamChannelRequested
-}: UseTeamDiscussionChannelInput): Omit<
+}: UseTeamDiscussionChannelInput): Pick<
 	TeamDiscussionChannelState,
-	'sessionId'
+	'discussion' | 'resolved'
 > => {
 	const [state, setState] = useState<TeamDiscussionChannelState>(EMPTY_STATE);
 
@@ -45,20 +49,46 @@ export const useTeamDiscussionChannel = ({
 			};
 		}
 
-		setState({ sessionId, discussion: null, resolved: false });
-		const request =
-			teamChannelRequested && allowCreate
-				? apiOpenTeamDiscussion
-				: apiGetTeamDiscussion;
-		request(sessionId)
+		setState({
+			sessionId,
+			allowCreate,
+			teamChannelRequested,
+			discussion: null,
+			resolved: false
+		});
+		const resolveDiscussion = async () => {
+			if (teamChannelRequested && allowCreate) {
+				return apiOpenTeamDiscussion(sessionId);
+			}
+
+			const existing = await apiGetTeamDiscussion(sessionId);
+			// POST is also the join contract. Accepted/archived sessions may not
+			// create a room, but must still join an existing room when opened.
+			return teamChannelRequested && existing
+				? apiOpenTeamDiscussion(sessionId)
+				: existing;
+		};
+		resolveDiscussion()
 			.then((discussion) => {
 				if (!cancelled) {
-					setState({ sessionId, discussion, resolved: true });
+					setState({
+						sessionId,
+						allowCreate,
+						teamChannelRequested,
+						discussion,
+						resolved: true
+					});
 				}
 			})
 			.catch(() => {
 				if (!cancelled) {
-					setState({ sessionId, discussion: null, resolved: true });
+					setState({
+						sessionId,
+						allowCreate,
+						teamChannelRequested,
+						discussion: null,
+						resolved: true
+					});
 				}
 			});
 
@@ -71,7 +101,9 @@ export const useTeamDiscussionChannel = ({
 		return { discussion: null, resolved: true };
 	}
 
-	return state.sessionId === sessionId
+	return state.sessionId === sessionId &&
+		state.allowCreate === allowCreate &&
+		state.teamChannelRequested === teamChannelRequested
 		? { discussion: state.discussion, resolved: state.resolved }
 		: { discussion: null, resolved: false };
 };

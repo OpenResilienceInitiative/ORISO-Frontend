@@ -286,7 +286,7 @@ export const SessionListItemComponent = ({
 	const supervisionSideRoomId = sessionItem?.supervision?.sideRoomId ?? null;
 	const railSupervisionPreview = useMatrixSessionPreview(
 		supervisionSideRoomId,
-		Boolean(supervisionSideRoomId) && !caseHandoverContentLocked,
+		isRail && Boolean(supervisionSideRoomId) && !caseHandoverContentLocked,
 		getLatestTimedMatrixRoomPreview
 	);
 

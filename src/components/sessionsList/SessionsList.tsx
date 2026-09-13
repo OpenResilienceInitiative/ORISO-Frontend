@@ -89,6 +89,7 @@ import { refetchEnquiryListState } from './refetchEnquiryList';
 import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
+import { useSessionListRail } from './SessionListRailContext';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
 	const [basePath, queryString = ''] = path.split('?');
@@ -178,6 +179,7 @@ export const SessionsList = ({
 	scrollContainerRef
 }: SessionsListProps) => {
 	const { t: translate } = useTranslation();
+	const isRail = useSessionListRail();
 
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
@@ -1840,7 +1842,8 @@ export const SessionsList = ({
 				<div
 					className={clsx('sessionsList__scrollContainer', {
 						'sessionsList__scrollContainer--hasToolbar':
-							showMySessionToolbar
+							showMySessionToolbar,
+						'sessionRailList': isRail
 					})}
 					ref={listRef}
 					onScroll={handleListScroll}

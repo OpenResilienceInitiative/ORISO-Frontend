@@ -21,7 +21,11 @@ import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
-import { buildSessionChannelPath } from '../../utils/channelRoute';
+import {
+	buildSessionChannelPath,
+	resolveComposerChannel,
+	type SideRoomChannelKind
+} from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -219,6 +223,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * top. Unset = today's behaviour.
 	 */
 	targetRoomId?: string;
+	/** URL/draft identity for targetRoomId; supervision remains the default. */
+	targetChannelKind?: SideRoomChannelKind;
 	/** Marks notifications from the internal ADR-016 team room. */
 	teamDiscussion?: boolean;
 	/**
@@ -424,6 +430,7 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	hideSupervisorAudience = false,
 	targetRoomId,
+	targetChannelKind,
 	teamDiscussion = false,
 	compactHeight = false,
 	flushCorner,
@@ -702,13 +709,19 @@ export const MessageSubmitInterfaceComponent = ({
 		// (`targetRoomId`) — never the legacy pair.
 		return buildSessionChannelPath(
 			`${location.pathname}${query ? `?${query}` : ''}`,
-			threadRootId
-				? { kind: 'thread', rootId: threadRootId }
-				: targetRoomId
-					? { kind: 'supervision' }
-					: null
+			resolveComposerChannel({
+				threadRootId,
+				targetRoomId,
+				targetChannelKind
+			})
 		);
-	}, [location.pathname, location.search, threadRootId, targetRoomId]);
+	}, [
+		location.pathname,
+		location.search,
+		targetChannelKind,
+		targetRoomId,
+		threadRootId
+	]);
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;

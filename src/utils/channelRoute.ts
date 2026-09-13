@@ -32,6 +32,22 @@ export type SessionChannel =
 /** The two side ROOMS of a session — a thread lives in the main room. */
 export type SideRoomChannelKind = 'supervision' | 'team';
 
+/** Resolve the URL channel owned by a composer without inferring room kind. */
+export const resolveComposerChannel = ({
+	threadRootId,
+	targetRoomId,
+	targetChannelKind = 'supervision'
+}: {
+	threadRootId?: string | null;
+	targetRoomId?: string | null;
+	targetChannelKind?: SideRoomChannelKind;
+}): SessionChannel | null =>
+	threadRootId
+		? { kind: 'thread', rootId: threadRootId }
+		: targetRoomId
+			? { kind: targetChannelKind }
+			: null;
+
 export const CHANNEL_PARAM = 'channel';
 export const AT_PARAM = 'at';
 export const LEGACY_THREAD_ROOT_PARAM = 'threadRootId';
@@ -435,5 +451,40 @@ export const safeLocalStorage = (): ChannelStorageLike | null => {
  * (Safari private mode throws on access) so the memory still works for the
  * length of the visit instead of silently doing nothing.
  */
-export const safeChannelStorage = (): ChannelStorageLike | null =>
-	safeLocalStorage() ?? safeSessionStorage();
+export const safeChannelStorage = (): ChannelStorageLike | null => {
+	const local = safeLocalStorage();
+	const session = safeSessionStorage();
+	if (!local) return session;
+	if (!session || session === local) return local;
+
+	return {
+		getItem: (key) => {
+			try {
+				const value = local.getItem(key);
+				return value ?? session.getItem(key);
+			} catch {
+				return session.getItem(key);
+			}
+		},
+		setItem: (key, value) => {
+			try {
+				local.setItem(key, value);
+				session.removeItem?.(key);
+			} catch {
+				session.setItem(key, value);
+			}
+		},
+		removeItem: (key) => {
+			try {
+				local.removeItem?.(key);
+			} catch {
+				/* continue clearing the fallback */
+			}
+			try {
+				session.removeItem?.(key);
+			} catch {
+				/* storage cleanup is best-effort */
+			}
+		}
+	};
+};

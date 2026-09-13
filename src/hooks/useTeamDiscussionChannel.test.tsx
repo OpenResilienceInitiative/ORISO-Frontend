@@ -56,6 +56,46 @@ describe('useTeamDiscussionChannel', () => {
 		expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 	});
 
+	it('joins an existing discussion without creating one after enquiry acceptance', async () => {
+		vi.mocked(apiGetTeamDiscussion).mockResolvedValue({
+			matrixRoomId: '!team:example.org',
+			status: 'ARCHIVED'
+		});
+		vi.mocked(apiOpenTeamDiscussion).mockResolvedValue({
+			matrixRoomId: '!team:example.org',
+			status: 'ARCHIVED'
+		});
+		const { result } = renderHook(() =>
+			useTeamDiscussionChannel({
+				sessionId: 42,
+				enabled: true,
+				allowCreate: false,
+				teamChannelRequested: true
+			})
+		);
+
+		await waitFor(() => expect(result.current.resolved).toBe(true));
+		expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
+		expect(apiOpenTeamDiscussion).toHaveBeenCalledWith(42);
+		expect(result.current.discussion?.status).toBe('ARCHIVED');
+	});
+
+	it('does not create a discussion after acceptance when none exists', async () => {
+		const { result } = renderHook(() =>
+			useTeamDiscussionChannel({
+				sessionId: 42,
+				enabled: true,
+				allowCreate: false,
+				teamChannelRequested: true
+			})
+		);
+
+		await waitFor(() => expect(result.current.resolved).toBe(true));
+		expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
+		expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+		expect(result.current.discussion).toBeNull();
+	});
+
 	it('never exposes the previous session room while the next lookup is pending', async () => {
 		let resolveSecond: (value: null) => void = () => undefined;
 		vi.mocked(apiGetTeamDiscussion)
@@ -82,6 +122,29 @@ describe('useTeamDiscussionChannel', () => {
 		expect(result.current.discussion).toBeNull();
 		expect(result.current.resolved).toBe(false);
 		resolveSecond(null);
+		await waitFor(() => expect(result.current.resolved).toBe(true));
+	});
+
+	it('becomes unresolved synchronously when the same session opens the team route', async () => {
+		let resolveOpen: (value: null) => void = () => undefined;
+		vi.mocked(apiOpenTeamDiscussion).mockImplementation(
+			() => new Promise((resolve) => (resolveOpen = resolve))
+		);
+		const { result, rerender } = renderHook(
+			({ requested }) =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: requested
+				}),
+			{ initialProps: { requested: false } }
+		);
+		await waitFor(() => expect(result.current.resolved).toBe(true));
+
+		rerender({ requested: true });
+		expect(result.current).toEqual({ discussion: null, resolved: false });
+		resolveOpen(null);
 		await waitFor(() => expect(result.current.resolved).toBe(true));
 	});
 });

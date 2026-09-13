@@ -6,7 +6,7 @@
  * The legacy `threadRootId` / `threadMessageId` pair is a hard cut: it is
  * mapped once on entry and never written again.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -17,6 +17,7 @@ import {
 	parseChannel,
 	parseChannelValue,
 	readLastChannel,
+	resolveComposerChannel,
 	rewriteLegacyChannelPath,
 	serializeChannel,
 	stripAtParam,
@@ -91,9 +92,9 @@ describe('channelId / channelFromId (the stage ids)', () => {
 	});
 
 	it('never mistakes one side room for the other', () => {
-		expect(
-			channelsEqual({ kind: 'team' }, { kind: 'supervision' })
-		).toBe(false);
+		expect(channelsEqual({ kind: 'team' }, { kind: 'supervision' })).toBe(
+			false
+		);
 		expect(channelsEqual({ kind: 'team' }, { kind: 'team' })).toBe(true);
 		expect(
 			channelsEqual({ kind: 'team' }, { kind: 'thread', rootId: 'team' })
@@ -265,6 +266,32 @@ describe('buildSessionChannelPath / rewriteLegacyChannelPath', () => {
 	});
 });
 
+describe('resolveComposerChannel', () => {
+	it('keeps the two side-room draft routes distinct', () => {
+		expect(
+			resolveComposerChannel({
+				targetRoomId: '!supervision:hs'
+			})
+		).toEqual({ kind: 'supervision' });
+		expect(
+			resolveComposerChannel({
+				targetRoomId: '!team:hs',
+				targetChannelKind: 'team'
+			})
+		).toEqual({ kind: 'team' });
+	});
+
+	it('keeps a thread route authoritative over a side-room target', () => {
+		expect(
+			resolveComposerChannel({
+				threadRootId: ROOT,
+				targetRoomId: '!team:hs',
+				targetChannelKind: 'team'
+			})
+		).toEqual({ kind: 'thread', rootId: ROOT });
+	});
+});
+
 describe('last channel per session (localStorage since 09.09.)', () => {
 	const memory = () => {
 		const map = new Map<string, string>();
@@ -366,17 +393,17 @@ describe('last channel per session (localStorage since 09.09.)', () => {
 });
 
 describe('safeChannelStorage (the store the host injects)', () => {
-	// The unit project runs in node, where there is no `window` at all — so
-	// the contract is stated over the two accessors, not over globals.
-	it('is localStorage when there is one, sessionStorage otherwise', () => {
-		expect(safeChannelStorage()).toBe(
-			safeLocalStorage() ?? safeSessionStorage()
+	it('returns a store whenever either browser store is available', () => {
+		expect(Boolean(safeChannelStorage())).toBe(
+			Boolean(safeLocalStorage() ?? safeSessionStorage())
 		);
 	});
 
-	it('prefers localStorage over sessionStorage when a window exists', () => {
-		const local = { getItem: () => null, setItem: () => undefined };
-		const session = { getItem: () => null, setItem: () => undefined };
+	it('writes to localStorage when it is available', () => {
+		const localSet = vi.fn();
+		const sessionSet = vi.fn();
+		const local = { getItem: () => null, setItem: localSet };
+		const session = { getItem: () => null, setItem: sessionSet };
 		const previous = (globalThis as any).window;
 		(globalThis as any).window = {
 			localStorage: local,
@@ -384,8 +411,39 @@ describe('safeChannelStorage (the store the host injects)', () => {
 		};
 		try {
 			expect(safeLocalStorage()).toBe(local);
-			expect(safeChannelStorage()).toBe(local);
-			expect(safeChannelStorage()).not.toBe(session);
+			safeChannelStorage()?.setItem('channel', 'team');
+			expect(localSet).toHaveBeenCalledWith('channel', 'team');
+			expect(sessionSet).not.toHaveBeenCalled();
+		} finally {
+			if (previous === undefined) {
+				delete (globalThis as any).window;
+			} else {
+				(globalThis as any).window = previous;
+			}
+		}
+	});
+
+	it('falls back when localStorage is readable but rejects writes', () => {
+		const values = new Map<string, string>();
+		const session = {
+			getItem: (key: string) => values.get(key) ?? null,
+			setItem: (key: string, value: string) => values.set(key, value),
+			removeItem: (key: string) => values.delete(key)
+		};
+		const previous = (globalThis as any).window;
+		(globalThis as any).window = {
+			localStorage: {
+				getItem: () => null,
+				setItem: () => {
+					throw new Error('quota');
+				}
+			},
+			sessionStorage: session
+		};
+		try {
+			const storage = safeChannelStorage();
+			writeLastChannel(storage, 74, { kind: 'team' });
+			expect(readLastChannel(storage, 74)).toEqual({ kind: 'team' });
 		} finally {
 			if (previous === undefined) {
 				delete (globalThis as any).window;

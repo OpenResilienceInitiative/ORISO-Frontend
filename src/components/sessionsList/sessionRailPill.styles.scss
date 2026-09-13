@@ -230,7 +230,7 @@ $rail-pill-padding: 3px;
 	}
 }
 
-// The rail column itself: one pill per row, Frank's 24 px rhythm kept.
+// The production scroll container also carries this class in rail mode.
 .sessionRailList {
 	display: flex;
 	flex-direction: column;

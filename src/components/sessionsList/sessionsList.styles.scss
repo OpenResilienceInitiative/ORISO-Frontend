@@ -667,11 +667,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			justify-content: center;
 			align-items: center;
 
-			// Frank, 09.09.2026: "Und wir sollten diesen Abstand auch halten."
-			// The expanded list stacks its cards 24 px apart (T5,
-			// `sessionsListItem.styles.scss`); the rail used to flatten that to
-			// 0, so the avatars sat directly on top of each other.
-			margin-bottom: 24px;
+			// Production applies `.sessionRailList` to the scroll container; its
+			// flex gap owns the rail rhythm, so rows must not retain card spacing.
+			margin-bottom: 0;
 
 			// Rows that carry state render `SessionRailPill` and have no
 			// `__content` at all. What is left below is the residue that still

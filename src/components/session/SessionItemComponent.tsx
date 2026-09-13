@@ -237,6 +237,8 @@ interface SessionItemProps {
 	teamMessages?: MessageItem[];
 	/** Matrix room id of that team room (`apiGetTeamDiscussion`). */
 	teamRoomId?: string;
+	/** Existing room or an eligible enquiry where opening may create it. */
+	teamDiscussionAvailable?: boolean;
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	typingUsers: string[];
@@ -2030,6 +2032,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const teamRoomId = props.teamRoomId;
 	const teamMessages = props.teamMessages;
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
+	const canOpenTeamSideRoom =
+		isSupervisionPanelViewer && !!props.teamDiscussionAvailable;
 	// A stale/unauthorised `?channel=team` route must not leave a panel that
 	// can fall back to another room. Consume it only after lookup settles.
 	useEffect(() => {
@@ -2363,7 +2367,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				lastMessage: lastMessageOf(supervisionMessages)
 			});
 		}
-		if (hasTeamSideRoom) {
+		if (canOpenTeamSideRoom) {
 			// The team room has no single counterpart — it is the team. So
 			// the label is the topic word, not a person (the same
 			// `resolveChannelLabel` seam, the other mode).
@@ -2388,7 +2392,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		supervisionCounterpartName,
 		supervisionUnreadCount,
 		supervisionMessages,
-		hasTeamSideRoom,
+		canOpenTeamSideRoom,
 		teamChannelTitle,
 		teamUnreadCount,
 		teamMessages,
@@ -4219,6 +4223,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}
 							onRetrySettled={handleComposerRetrySettled}
 							targetRoomId={teamRoomId}
+							targetChannelKind="team"
 							teamDiscussion
 							hideSupervisorAudience
 							flushCorner={panelComposerFlush}

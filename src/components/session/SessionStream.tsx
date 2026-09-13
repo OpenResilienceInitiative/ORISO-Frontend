@@ -41,13 +41,12 @@ import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/c
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
-import { TeamDiscussionPanel } from '../teamDiscussion/TeamDiscussionPanel';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import {
@@ -102,6 +101,7 @@ export const SessionStream = ({
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -111,6 +111,21 @@ export const SessionStream = ({
 	// ?teamDiscussion=1 — the panel then opens expanded instead of collapsed.
 	const teamDiscussionParam = useSearchParam<string>('teamDiscussion');
 	const channelParam = useSearchParam<string>('channel');
+	const teamChannelRequested =
+		channelParam === 'team' || teamDiscussionParam === '1';
+
+	// Migrate legacy notification links to the canonical channel route. The
+	// old standalone TeamDiscussionPanel no longer owns a second timeline.
+	useEffect(() => {
+		if (teamDiscussionParam !== '1') return;
+		const params = new URLSearchParams(location.search);
+		params.delete('teamDiscussion');
+		params.set('channel', 'team');
+		navigate(
+			{ pathname: location.pathname, search: `?${params.toString()}` },
+			{ replace: true }
+		);
+	}, [location.pathname, location.search, navigate, teamDiscussionParam]);
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -239,7 +254,7 @@ export const SessionStream = ({
 			sessionId: activeSession.item?.id,
 			enabled: teamDiscussionEnabled,
 			allowCreate: Boolean(activeSession.isEnquiry),
-			teamChannelRequested: channelParam === 'team'
+			teamChannelRequested
 		});
 	const teamRoomId = teamDiscussion?.matrixRoomId;
 	const teamMessages =
@@ -1265,11 +1280,6 @@ export const SessionStream = ({
 		);
 	}
 
-	// FE#514 / ADR-016: the Team-Besprechung exists for consultants on
-	// Agency-Counselling enquiries only (Live Chat + groups excluded). The
-	// panel itself keeps working read-only when an archived discussion exists.
-	const showTeamDiscussion = teamDiscussionEnabled;
-
 	return (
 		<div className="session__wrapper">
 			{pendingCaseHandoverConsent &&
@@ -1298,14 +1308,6 @@ export const SessionStream = ({
 						}
 					/>
 				)}
-			{showTeamDiscussion && (
-				<TeamDiscussionPanel
-					key={activeSession.item.id}
-					sessionId={activeSession.item.id}
-					allowCreate={activeSession.isEnquiry}
-					initiallyOpen={teamDiscussionParam === '1'}
-				/>
-			)}
 			<SessionItemComponent
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
@@ -1317,6 +1319,10 @@ export const SessionStream = ({
 				supervisionMessages={supervisionMessages}
 				teamMessages={teamMessages}
 				teamRoomId={teamRoomId}
+				teamDiscussionAvailable={
+					teamDiscussionEnabled &&
+					(Boolean(activeSession.isEnquiry) || !!teamDiscussion)
+				}
 				teamDiscussionStatus={teamDiscussion?.status}
 				teamDiscussionResolved={teamDiscussionResolved}
 				bannedUsers={bannedUsers}
