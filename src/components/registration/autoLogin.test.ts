@@ -1,3 +1,8 @@
+import {
+	clearLoginRecoveryPassword,
+	consumeLoginRecoveryPassword,
+	stageLoginRecoveryPassword
+} from '../../services/loginRecoveryHandoff';
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -86,6 +91,7 @@ const matrixResponse = {
 describe('autoLogin', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearLoginRecoveryPassword();
 		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
 		mockAppConfig.useTenantService = false;
 		mockAppConfig.blockConsultantAppLogin = false;
@@ -93,6 +99,34 @@ describe('autoLogin', () => {
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
 		vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+	});
+
+	it('stages a one-use password only after complete OTP authentication and Matrix login', async () => {
+		await autoLogin({
+			username: 'synthetic',
+			password: 'synthetic-password',
+			otp: '123456'
+		});
+		expect(getKeycloakAccessToken).toHaveBeenCalledWith(
+			'synthetic',
+			'synthetic-password',
+			'123456'
+		);
+		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
+			'synthetic-password'
+		);
+		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+	});
+	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
+		stageLoginRecoveryPassword(matrixResponse.userId, 'stale-synthetic');
+		vi.mocked(getKeycloakAccessToken).mockRejectedValue(
+			new Error('OTP_REQUIRED')
+		);
+		await expect(
+			autoLogin({ username: 'synthetic', password: 'synthetic-password' })
+		).rejects.toThrow();
+		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
 	});
 
 	// The consultant login block (PR #273 originally blocked EVERY counsellor
