@@ -1,16 +1,56 @@
 import { describe, expect, it } from 'vitest';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
+	filterVisibleMatrixPreviewEvents,
 	getLatestMatrixRoomPreview,
 	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType
 } from './matrixRoomPreview';
 
-const event = (type: string, content: Record<string, unknown>, ts: number) => ({
+const event = (
+	type: string,
+	content: Record<string, unknown>,
+	ts: number,
+	sender = '@someone:example.org'
+) => ({
 	getType: () => type,
 	getClearContent: () => content,
 	getContent: () => content,
+	getSender: () => sender,
 	getTs: () => ts
+});
+
+describe('filterVisibleMatrixPreviewEvents', () => {
+	const privateEvent = event(
+		'm.room.message',
+		{ msgtype: 'm.text', body: '[VISIBLE_TO:alice]Private note' },
+		1,
+		'@supervisor:example.org'
+	);
+
+	it('keeps a restricted event for a named recipient', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@alice:example.org']
+			)
+		).toEqual([privateEvent]);
+	});
+
+	it('keeps a restricted event for its sender', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents([privateEvent], ['supervisor'])
+		).toEqual([privateEvent]);
+	});
+
+	it('removes a restricted event for every other viewer', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@bob:example.org']
+			)
+		).toEqual([]);
+	});
 });
 
 describe('getLatestMatrixRoomPreview', () => {

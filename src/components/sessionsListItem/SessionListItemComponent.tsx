@@ -95,11 +95,9 @@ import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
+import { useMatrixSessionEvents } from '../../hooks/useMatrixSessionPreview';
 import {
-	useMatrixSessionEvents,
-	useMatrixSessionPreview
-} from '../../hooks/useMatrixSessionPreview';
-import {
+	filterVisibleMatrixPreviewEvents,
 	getLatestMatrixRoomPreview,
 	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType,
@@ -273,21 +271,43 @@ export const SessionListItemComponent = ({
 		matrixRoomId,
 		isMatrixBackedSession && !caseHandoverContentLocked
 	);
+	const visibleMatrixPreviewEvents = useMemo(
+		() =>
+			filterVisibleMatrixPreviewEvents(matrixPreviewEvents, [
+				getCurrentMatrixUserId(),
+				userData?.userName
+			]),
+		[matrixPreviewEvents, userData?.userName]
+	);
 	const matrixSessionPreview = useMemo(
-		() => getLatestMatrixRoomPreview(matrixPreviewEvents),
-		[matrixPreviewEvents]
+		() => getLatestMatrixRoomPreview(visibleMatrixPreviewEvents),
+		[visibleMatrixPreviewEvents]
 	);
 	// Both previews are selectors over ONE loaded timeline. The rail-only
 	// split is not even computed while the expanded list is visible.
 	const railChannelPreviews = useMemo(
-		() => (isRail ? getRoomPreviewsByChannel(matrixPreviewEvents) : null),
-		[isRail, matrixPreviewEvents]
+		() =>
+			isRail
+				? getRoomPreviewsByChannel(visibleMatrixPreviewEvents)
+				: null,
+		[isRail, visibleMatrixPreviewEvents]
 	);
 	const supervisionSideRoomId = sessionItem?.supervision?.sideRoomId ?? null;
-	const railSupervisionPreview = useMatrixSessionPreview(
+	const supervisionPreviewEvents = useMatrixSessionEvents(
 		supervisionSideRoomId,
-		isRail && Boolean(supervisionSideRoomId) && !caseHandoverContentLocked,
-		getLatestTimedMatrixRoomPreview
+		isRail && Boolean(supervisionSideRoomId) && !caseHandoverContentLocked
+	);
+	const visibleSupervisionPreviewEvents = useMemo(
+		() =>
+			filterVisibleMatrixPreviewEvents(supervisionPreviewEvents, [
+				getCurrentMatrixUserId(),
+				userData?.userName
+			]),
+		[supervisionPreviewEvents, userData?.userName]
+	);
+	const railSupervisionPreview = useMemo(
+		() => getLatestTimedMatrixRoomPreview(visibleSupervisionPreviewEvents),
+		[visibleSupervisionPreviewEvents]
 	);
 
 	useEffect(() => {
@@ -1110,7 +1130,11 @@ export const SessionListItemComponent = ({
 					// The click bubbles to the row (which navigates); Enter and
 					// Space are handled — and default-prevented — by the row's
 					// key handler, so nothing fires twice.
-					onKeyDown={handleKeyDownListItem}
+					onKeyDown={(event) => {
+						if (!event.defaultPrevented) {
+							handleKeyDownListItem(event);
+						}
+					}}
 					buttonRef={itemRef}
 					role="tab"
 					aria-selected={isChatActive}

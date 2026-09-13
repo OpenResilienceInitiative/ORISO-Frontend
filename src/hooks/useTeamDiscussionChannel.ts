@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
 	apiGetTeamDiscussion,
 	apiOpenTeamDiscussion,
 	type TeamDiscussion
 } from '../api/apiTeamDiscussion';
+import { invalidateTeamDiscussionCache } from '../services/teamDiscussionCache';
 
 interface TeamDiscussionChannelState {
 	sessionId: number | null;
 	allowCreate: boolean;
 	teamChannelRequested: boolean;
 	discussion: TeamDiscussion | null;
+	error: Error | null;
 	resolved: boolean;
 }
 
@@ -20,11 +22,19 @@ interface UseTeamDiscussionChannelInput {
 	teamChannelRequested: boolean;
 }
 
+interface TeamDiscussionChannelResult {
+	discussion: TeamDiscussion | null;
+	error: Error | null;
+	resolved: boolean;
+	retry: () => void;
+}
+
 const EMPTY_STATE: TeamDiscussionChannelState = {
 	sessionId: null,
 	allowCreate: false,
 	teamChannelRequested: false,
 	discussion: null,
+	error: null,
 	resolved: true
 };
 
@@ -34,11 +44,10 @@ export const useTeamDiscussionChannel = ({
 	enabled,
 	allowCreate,
 	teamChannelRequested
-}: UseTeamDiscussionChannelInput): Pick<
-	TeamDiscussionChannelState,
-	'discussion' | 'resolved'
-> => {
+}: UseTeamDiscussionChannelInput): TeamDiscussionChannelResult => {
 	const [state, setState] = useState<TeamDiscussionChannelState>(EMPTY_STATE);
+	const [retryToken, setRetryToken] = useState(0);
+	const retry = useCallback(() => setRetryToken((token) => token + 1), []);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -54,6 +63,7 @@ export const useTeamDiscussionChannel = ({
 			allowCreate,
 			teamChannelRequested,
 			discussion: null,
+			error: null,
 			resolved: false
 		});
 		const resolveDiscussion = async () => {
@@ -71,22 +81,30 @@ export const useTeamDiscussionChannel = ({
 		resolveDiscussion()
 			.then((discussion) => {
 				if (!cancelled) {
+					if (teamChannelRequested && discussion) {
+						invalidateTeamDiscussionCache(sessionId);
+					}
 					setState({
 						sessionId,
 						allowCreate,
 						teamChannelRequested,
 						discussion,
+						error: null,
 						resolved: true
 					});
 				}
 			})
-			.catch(() => {
+			.catch((error) => {
 				if (!cancelled) {
 					setState({
 						sessionId,
 						allowCreate,
 						teamChannelRequested,
 						discussion: null,
+						error:
+							error instanceof Error
+								? error
+								: new Error('Team discussion lookup failed'),
 						resolved: true
 					});
 				}
@@ -95,15 +113,20 @@ export const useTeamDiscussionChannel = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [allowCreate, enabled, sessionId, teamChannelRequested]);
+	}, [allowCreate, enabled, retryToken, sessionId, teamChannelRequested]);
 
 	if (!enabled || !sessionId) {
-		return { discussion: null, resolved: true };
+		return { discussion: null, error: null, resolved: true, retry };
 	}
 
 	return state.sessionId === sessionId &&
 		state.allowCreate === allowCreate &&
 		state.teamChannelRequested === teamChannelRequested
-		? { discussion: state.discussion, resolved: state.resolved }
-		: { discussion: null, resolved: false };
+		? {
+				discussion: state.discussion,
+				error: state.error,
+				resolved: state.resolved,
+				retry
+			}
+		: { discussion: null, error: null, resolved: false, retry };
 };

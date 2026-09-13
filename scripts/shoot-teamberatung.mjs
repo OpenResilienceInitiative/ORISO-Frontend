@@ -55,9 +55,7 @@ for (const shot of shots) {
 	await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
 	// The stage mounts a real timeline and composer; wait for both, then let
 	// the play function (channel card, FAB) settle.
-	await page
-		.waitForSelector('.messageItem', { timeout: 30_000 })
-		.catch(() => {});
+	await page.waitForSelector('.messageItem', { timeout: 30_000 });
 	await page.waitForTimeout(2500);
 	await page.screenshot({ path: path.join(OUT, shot.file) });
 	console.log(shot.file, '←', shot.id);

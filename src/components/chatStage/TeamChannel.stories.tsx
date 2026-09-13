@@ -119,7 +119,10 @@ const expectClientAbsentFromTeamRoom = async (panel: HTMLElement) => {
 	)!;
 	await expect(header).not.toBeNull();
 	const names = Array.from(header.querySelectorAll<HTMLElement>('*'))
-		.map((node) => `${node.getAttribute('title') ?? ''} ${node.textContent ?? ''}`)
+		.map(
+			(node) =>
+				`${node.getAttribute('title') ?? ''} ${node.textContent ?? ''}`
+		)
 		.join(' ');
 	await expect(names).not.toContain(CLIENT_NAME);
 	// The colleagues who are SILENT in the session room are named here —
@@ -161,9 +164,7 @@ const expectTeamHeader = async (panel: HTMLElement) => {
 		'[data-cy="panel-header-chip"]'
 	);
 	await expect(chip).not.toBeNull();
-	await expect(chip!.textContent).toBe(
-		'Nur fürs Team'
-	);
+	await expect(chip!.textContent).toBe('Nur fürs Team');
 	// The marker sits in the header, which never scrolls — unlike the
 	// timeline, where the system notice lives.
 	await expect(
@@ -218,7 +219,7 @@ export const TeamAndThread: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'With a thread open as well, the panel header\'s channel card is the way between them. Picking the thread swaps the panel; the team room stays in the card, marked as the one to come back to.'
+				story: "With a thread open as well, the panel header's channel card is the way between them. Picking the thread swaps the panel; the team room stays in the card, marked as the one to come back to."
 			}
 		}
 	},
@@ -256,9 +257,10 @@ export const TeamAndThread: Story = {
 
 		await userEvent.click(rows[2]);
 		await waitFor(async () => {
-			const next = panelOf(canvasElement).querySelector<HTMLElement>(
-				'.panelHeader'
-			)!;
+			const next =
+				panelOf(canvasElement).querySelector<HTMLElement>(
+					'.panelHeader'
+				)!;
 			expect(next.dataset.kind).toBe('thread');
 		});
 	}
@@ -458,10 +460,7 @@ const STORYBOOK_SEED = '#A5000A';
  * portals.)
  */
 function DarkCanvas({ children }: { children: React.ReactNode }) {
-	const { tokens } = computeOrisoPalette(
-		{ primary: STORYBOOK_SEED },
-		'dark'
-	);
+	const { tokens } = computeOrisoPalette({ primary: STORYBOOK_SEED }, 'dark');
 	return (
 		<div
 			data-cy="dark-canvas"
@@ -485,7 +484,7 @@ export const TeamDarkScheme: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'The team header in the dark scheme. Dark is Storybook-only — `ACTIVE_SCHEMES` has `dark: false`, so the app never renders it — and this story exists to SHOW the state, not to claim it is finished; the salmon bubbles lose their contrast here, which is a pre-existing gap in the dark palette, not something this branch introduced. The palette is applied to the story\'s own subtree rather than through the toolbar global, so it cannot leak into a story running beside it.'
+				story: "The team header in the dark scheme. Dark is Storybook-only — `ACTIVE_SCHEMES` has `dark: false`, so the app never renders it — and this story exists to SHOW the state, not to claim it is finished; the salmon bubbles lose their contrast here, which is a pre-existing gap in the dark palette, not something this branch introduced. The palette is applied to the story's own subtree rather than through the toolbar global, so it cannot leak into a story running beside it."
 			}
 		}
 	},
@@ -559,9 +558,7 @@ export const TeamRoomEmpty: Story = {
 				panel.querySelectorAll('.messageItem').length
 			).toBeGreaterThanOrEqual(1)
 		);
-		await expect(panel.textContent).toContain(
-			'Teamberatung starten'
-		);
+		await expect(panel.textContent).toContain('Teamberatung starten');
 		// Even empty, the room never names the client as a member.
 		await expectClientAbsentFromTeamRoom(panel);
 	}
@@ -645,77 +642,88 @@ export const RemembersTheLastChannel: Story = {
 		// Start from a clean slate — other stories share this browser.
 		store?.removeItem?.(lastChannelKey(MEMORY_SESSION_ID));
 
-		await step('opening the Teamberatung writes it down', async () => {
-			await userEvent.click(
-				canvas.getByRole('button', { name: `${TEAM_WORD} öffnen` })
-			);
-			await expect(
-				canvas.getByTestId
-					? canvasElement.querySelector(
-							'[data-cy="remembered-channel"]'
+		try {
+			await step('opening the Teamberatung writes it down', async () => {
+				await userEvent.click(
+					canvas.getByRole('button', { name: `${TEAM_WORD} öffnen` })
+				);
+				await expect(
+					canvas.getByTestId
+						? canvasElement.querySelector(
+								'[data-cy="remembered-channel"]'
+							)!.textContent
+						: ''
+				).toBe('team');
+				await expect(
+					store?.getItem(lastChannelKey(MEMORY_SESSION_ID))
+				).toBe('team');
+			});
+
+			await step('a reload brings the team channel back', async () => {
+				await userEvent.click(
+					canvas.getByRole('button', { name: 'Seite neu laden' })
+				);
+				await waitFor(() =>
+					expect(
+						canvasElement.querySelector(
+							'[data-cy="probe-generation"]'
 						)!.textContent
-					: ''
-			).toBe('team');
-			await expect(
-				store?.getItem(lastChannelKey(MEMORY_SESSION_ID))
-			).toBe('team');
-		});
-
-		await step('a reload brings the team channel back', async () => {
-			await userEvent.click(
-				canvas.getByRole('button', { name: 'Seite neu laden' })
-			);
-			await waitFor(() =>
-				expect(
-					canvasElement.querySelector(
-						'[data-cy="probe-generation"]'
-					)!.textContent
-				).toContain('1×')
-			);
-			await expect(
-				canvasElement.querySelector('[data-cy="remembered-channel"]')!
-					.textContent
-			).toBe('team');
-		});
-
-		await step('an explicit close is remembered as closed', async () => {
-			await userEvent.click(
-				canvas.getByRole('button', { name: 'Schließen' })
-			);
-			await userEvent.click(
-				canvas.getByRole('button', { name: 'Seite neu laden' })
-			);
-			await waitFor(() =>
-				expect(
+					).toContain('1×')
+				);
+				await expect(
 					canvasElement.querySelector(
 						'[data-cy="remembered-channel"]'
 					)!.textContent
-				).toBe('geschlossen')
-			);
-			// A remembered close must not reopen anything — that is what
-			// `decideAutoOpen` reads as `remembered === null`.
-			await expect(
-				store?.getItem(lastChannelKey(MEMORY_SESSION_ID))
-			).toBe('none');
-		});
+				).toBe('team');
+			});
 
-		await step('switching back to supervision overwrites it', async () => {
-			await userEvent.click(
-				canvas.getByRole('button', { name: 'Supervision öffnen' })
+			await step(
+				'an explicit close is remembered as closed',
+				async () => {
+					await userEvent.click(
+						canvas.getByRole('button', { name: 'Schließen' })
+					);
+					await userEvent.click(
+						canvas.getByRole('button', { name: 'Seite neu laden' })
+					);
+					await waitFor(() =>
+						expect(
+							canvasElement.querySelector(
+								'[data-cy="remembered-channel"]'
+							)!.textContent
+						).toBe('geschlossen')
+					);
+					// A remembered close must not reopen anything — that is what
+					// `decideAutoOpen` reads as `remembered === null`.
+					await expect(
+						store?.getItem(lastChannelKey(MEMORY_SESSION_ID))
+					).toBe('none');
+				}
 			);
-			await userEvent.click(
-				canvas.getByRole('button', { name: 'Seite neu laden' })
-			);
-			await waitFor(() =>
-				expect(
-					canvasElement.querySelector(
-						'[data-cy="remembered-channel"]'
-					)!.textContent
-				).toBe('supervision')
-			);
-		});
 
-		store?.removeItem?.(lastChannelKey(MEMORY_SESSION_ID));
+			await step(
+				'switching back to supervision overwrites it',
+				async () => {
+					await userEvent.click(
+						canvas.getByRole('button', {
+							name: 'Supervision öffnen'
+						})
+					);
+					await userEvent.click(
+						canvas.getByRole('button', { name: 'Seite neu laden' })
+					);
+					await waitFor(() =>
+						expect(
+							canvasElement.querySelector(
+								'[data-cy="remembered-channel"]'
+							)!.textContent
+						).toBe('supervision')
+					);
+				}
+			);
+		} finally {
+			store?.removeItem?.(lastChannelKey(MEMORY_SESSION_ID));
+		}
 	}
 };
 

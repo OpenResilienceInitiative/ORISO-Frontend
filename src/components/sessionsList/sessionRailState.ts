@@ -39,6 +39,8 @@
  * around between rows.
  */
 
+import { Modality } from '../session/getModality';
+
 export type SessionRailMark = 'thread' | 'supervision' | 'mail' | 'unread';
 
 /** Rendering order. Fixed, so a mark keeps its slot from row to row. */
@@ -60,8 +62,7 @@ export interface SessionRailMarkInput {
 	unread?: boolean | null;
 }
 
-/** `Modality.AGENCY_COUNSELLING` as a string, so this stays import-free. */
-const MAIL_MODALITY = 'AGENCY_COUNSELLING';
+const MAIL_MODALITY = Modality.AGENCY_COUNSELLING;
 
 /**
  * The marks for one row, already in render order. Undefined inputs mean "the

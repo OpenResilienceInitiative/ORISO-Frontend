@@ -283,6 +283,8 @@ export interface AutoOpenInput {
 	 * every existing caller and test keeps its meaning.
 	 */
 	hasTeamSideRoom?: boolean;
+	/** Whether the Teamberatung lookup definitively completed for this session. */
+	teamDiscussionResolved?: boolean;
 }
 
 export interface AutoOpenDecision {
@@ -315,7 +317,8 @@ export const decideAutoOpen = ({
 	remembered,
 	loadedRootIds,
 	hasSupervisionSideRoom,
-	hasTeamSideRoom = false
+	hasTeamSideRoom = false,
+	teamDiscussionResolved = false
 }: AutoOpenInput): AutoOpenDecision => {
 	if (routeChannel) {
 		return { settle: true, open: null };
@@ -341,6 +344,9 @@ export const decideAutoOpen = ({
 	const exists =
 		wanted.kind === 'team' ? hasTeamSideRoom : hasSupervisionSideRoom;
 	if (!exists) {
+		if (wanted.kind === 'team' && teamDiscussionResolved) {
+			return { settle: true, open: null };
+		}
 		return KEEP_WAITING;
 	}
 	return { settle: true, open: wanted };

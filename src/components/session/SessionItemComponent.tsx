@@ -97,7 +97,10 @@ import {
 } from '../message/visibleParticipants';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import '../chatStage/chatStage.styles.scss';
-import { getSupervisorDisplayNames } from '../sessionsListItem/supervisionListState';
+import {
+	getSupervisorDisplayNames,
+	isActiveSupervisorOf
+} from '../sessionsListItem/supervisionListState';
 import {
 	pickDisplayOrUsername,
 	pickSupervisionCounterpartName,
@@ -221,6 +224,7 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 
 interface SessionItemProps {
 	isTyping?: Function;
+	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
@@ -241,6 +245,7 @@ interface SessionItemProps {
 	teamDiscussionAvailable?: boolean;
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
+	teamDiscussionError?: boolean;
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -269,6 +274,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	const isSupervisorView =
+		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -2040,6 +2047,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (
 			routeChannel?.kind === 'team' &&
 			props.teamDiscussionResolved &&
+			!props.teamDiscussionError &&
 			!hasTeamSideRoom
 		) {
 			closeChannel();
@@ -2047,6 +2055,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		closeChannel,
 		hasTeamSideRoom,
+		props.teamDiscussionError,
 		props.teamDiscussionResolved,
 		routeChannel?.kind
 	]);
@@ -2142,7 +2151,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				? messages.map((message) => message._id)
 				: null,
 			hasSupervisionSideRoom,
-			hasTeamSideRoom
+			hasTeamSideRoom,
+			teamDiscussionResolved: props.teamDiscussionResolved
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2156,6 +2166,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isSupervisionPanelViewer,
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
+		props.teamDiscussionResolved,
 		messages,
 		setChannelRoute
 	]);
@@ -2191,10 +2202,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// unread badge on one channel never silences the other.
 	const [teamSeenAt, setTeamSeenAt] = useState(0);
 	useEffect(() => {
-		if (hasTeamSideRoom) {
-			setTeamSeenAt(Date.now());
-		}
-	}, [hasTeamSideRoom, activeSession.item?.id]);
+		setTeamSeenAt(0);
+	}, [activeSession.item?.id]);
 	useEffect(() => {
 		if (openPanel === 'team') {
 			setTeamSeenAt(Date.now());
@@ -3385,7 +3394,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 				{canRenderClientComposer({
 					canWriteMessage,
-					isSupervisor,
+					isSupervisor: isSupervisorView,
 					shouldBlockAnonymousInquiryChat
 				}) && (
 					<div
@@ -3871,11 +3880,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										props.teamDiscussionStatus !== 'OPEN' ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>
@@ -4206,7 +4218,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				composer={
 					props.teamDiscussionStatus === 'OPEN' ? (
 						<MessageSubmitInterfaceComponent
-							isTyping={props.isTyping}
+							isTyping={(isCleared: boolean) =>
+								props.isTypingInRoom?.(isCleared, teamRoomId)
+							}
 							placeholder={teamText(
 								'chatStage.panel.team.composer.placeholder'
 							)}

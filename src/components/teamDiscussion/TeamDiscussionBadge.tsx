@@ -7,33 +7,14 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TeamDiscussion } from '../../api/apiTeamDiscussion';
 import {
-	apiGetTeamDiscussion,
-	TeamDiscussion
-} from '../../api/apiTeamDiscussion';
+	getCachedTeamDiscussion,
+	invalidateTeamDiscussionCache
+} from '../../services/teamDiscussionCache';
 import './teamDiscussion.styles.scss';
 
-const discussionCache = new Map<number, Promise<TeamDiscussion | null>>();
-
-export const getCachedTeamDiscussion = (
-	sessionId: number
-): Promise<TeamDiscussion | null> => {
-	if (!discussionCache.has(sessionId)) {
-		discussionCache.set(
-			sessionId,
-			apiGetTeamDiscussion(sessionId).catch(() => {
-				discussionCache.delete(sessionId);
-				return null;
-			})
-		);
-	}
-	return discussionCache.get(sessionId);
-};
-
-/** Invalidate after opening/creating a discussion so the badge appears. */
-export const invalidateTeamDiscussionCache = (sessionId: number) => {
-	discussionCache.delete(sessionId);
-};
+export { getCachedTeamDiscussion, invalidateTeamDiscussionCache };
 
 interface TeamDiscussionBadgeProps {
 	sessionId: number;

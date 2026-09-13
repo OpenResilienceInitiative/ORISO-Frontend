@@ -253,8 +253,12 @@ const expectMarks = async (
 	).map((mark) => mark.dataset.mark);
 	await expect(shown).toEqual(expected);
 	for (const mark of expected) {
+		const accessibleName =
+			mark === 'unread'
+				? new RegExp(`^${RAIL_MARK_COPY[mark]}: (?:\\d+|99\\+)$`)
+				: RAIL_MARK_COPY[mark];
 		await expect(
-			canvas.getByRole('img', { name: RAIL_MARK_COPY[mark] })
+			canvas.getByRole('img', { name: accessibleName })
 		).toBeInTheDocument();
 	}
 	const absent = (

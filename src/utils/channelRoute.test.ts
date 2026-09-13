@@ -592,9 +592,24 @@ describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open
 				remembered: team,
 				loadedRootIds: null,
 				hasSupervisionSideRoom: true,
-				hasTeamSideRoom: false
+				hasTeamSideRoom: false,
+				teamDiscussionResolved: false
 			})
 		).toEqual({ settle: false, open: null });
+	});
+
+	it('settles a remembered team channel after confirmed absence', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: team,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				hasTeamSideRoom: false,
+				teamDiscussionResolved: true
+			})
+		).toEqual({ settle: true, open: null });
 	});
 
 	it('a remembered supervision still waits for ITS room, not the team one', () => {

@@ -141,8 +141,18 @@ const RailTooltip = ({
 
 	React.useLayoutEffect(() => {
 		if (!anchor) return;
-		const rect = anchor.getBoundingClientRect();
-		setPosition({ top: rect.top, left: rect.right + 8 });
+		const place = () => {
+			const rect = anchor.getBoundingClientRect();
+			setPosition({ top: rect.top, left: rect.right + 8 });
+		};
+		const view = anchor.ownerDocument.defaultView;
+		place();
+		view?.addEventListener('scroll', place, true);
+		view?.addEventListener('resize', place);
+		return () => {
+			view?.removeEventListener('scroll', place, true);
+			view?.removeEventListener('resize', place);
+		};
 	}, [anchor]);
 
 	return createPortal(
@@ -243,7 +253,9 @@ export const SessionRailPill = ({
 			setShowName(false);
 			setHoveredMark(marks[nextIndex]);
 		}
-		onKeyDown?.(event);
+		if (!event.defaultPrevented) {
+			onKeyDown?.(event);
+		}
 	};
 
 	return (
@@ -297,7 +309,15 @@ export const SessionRailPill = ({
 							// button reads "<name> Thread Ungelesen" and a test can
 							// assert one mark at a time.
 							role="img"
-							aria-label={markLabels[mark]}
+							aria-label={
+								mark === 'unread' && unreadCount
+									? `${markLabels[mark]}: ${
+											unreadCount > 99
+												? '99+'
+												: unreadCount
+										}`
+									: markLabels[mark]
+							}
 							data-mark={mark}
 							onMouseEnter={() => setHoveredMark(mark)}
 							onMouseLeave={() => setHoveredMark(null)}

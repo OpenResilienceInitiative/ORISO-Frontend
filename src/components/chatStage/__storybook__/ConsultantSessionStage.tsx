@@ -561,6 +561,8 @@ function TeamRoom({
 						'chatStage.panel.team.composer.placeholder'
 					)}
 					targetRoomId={TEAM_ROOM_ID}
+					targetChannelKind="team"
+					teamDiscussion
 					hideSupervisorAudience
 					compactHeight={compactComposer}
 					flushCorner={flushComposer ? 'bottom-right' : undefined}

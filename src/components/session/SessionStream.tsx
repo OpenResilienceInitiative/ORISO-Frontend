@@ -35,7 +35,7 @@ import {
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { BUTTON_TYPES } from '../button/Button';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import './session.styles';
@@ -249,13 +249,17 @@ export const SessionStream = ({
 		!activeSession.isGroup &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
 		!!activeSession.item?.id;
-	const { discussion: teamDiscussion, resolved: teamDiscussionResolved } =
-		useTeamDiscussionChannel({
-			sessionId: activeSession.item?.id,
-			enabled: teamDiscussionEnabled,
-			allowCreate: Boolean(activeSession.isEnquiry),
-			teamChannelRequested
-		});
+	const {
+		discussion: teamDiscussion,
+		error: teamDiscussionError,
+		resolved: teamDiscussionResolved,
+		retry: retryTeamDiscussion
+	} = useTeamDiscussionChannel({
+		sessionId: activeSession.item?.id,
+		enabled: teamDiscussionEnabled,
+		allowCreate: Boolean(activeSession.isEnquiry),
+		teamChannelRequested
+	});
 	const teamRoomId = teamDiscussion?.matrixRoomId;
 	const teamMessages =
 		teamMessageState.sessionId === activeSession.item?.id &&
@@ -279,25 +283,25 @@ export const SessionStream = ({
 		}
 	}, []);
 	const sendMatrixTyping = useCallback(
-		(typing: boolean) => {
-			if (!isMatrixSession || !matrixRoomId) {
+		(typing: boolean, targetRoomId = matrixRoomId) => {
+			if (!isMatrixSession || !targetRoomId) {
 				return;
 			}
 			chatTransportService
-				.sendTyping(matrixRoomId, typing)
+				.sendTyping(targetRoomId, typing)
 				.catch(() => {});
 		},
 		[isMatrixSession, matrixRoomId]
 	);
 	const handleSessionTyping = useCallback(
-		(isCleared) => {
-			if (!isMatrixSession || !matrixRoomId) {
+		(isCleared: boolean, targetRoomId = matrixRoomId) => {
+			if (!isMatrixSession || !targetRoomId) {
 				return;
 			}
 			clearMatrixTypingTimeout();
 
 			const cancelTyping = () => {
-				sendMatrixTyping(false);
+				sendMatrixTyping(false, targetRoomId);
 				matrixTypingTimeoutRef.current = null;
 				matrixTypingLastTriggerRef.current = 0;
 			};
@@ -309,7 +313,7 @@ export const SessionStream = ({
 						MATRIX_TYPING_TRIGGER_MS <
 					now
 				) {
-					sendMatrixTyping(true);
+					sendMatrixTyping(true, targetRoomId);
 					matrixTypingLastTriggerRef.current = now;
 				}
 				matrixTypingTimeoutRef.current = window.setTimeout(
@@ -1282,6 +1286,18 @@ export const SessionStream = ({
 
 	return (
 		<div className="session__wrapper">
+			{teamChannelRequested && teamDiscussionError && (
+				<div role="alert">
+					<p>{translate('teamDiscussion.error.open')}</p>
+					<Button
+						item={{
+							label: translate('sessionList.reloadButton.label'),
+							type: BUTTON_TYPES.SECONDARY
+						}}
+						buttonHandle={retryTeamDiscussion}
+					/>
+				</div>
+			)}
 			{pendingCaseHandoverConsent &&
 				pendingCaseHandoverRequestId !== null && (
 					<CaseHandoverConsentCard
@@ -1313,6 +1329,7 @@ export const SessionStream = ({
 					hasUserInitiatedStopOrLeaveRequest
 				}
 				isTyping={handleSessionTyping}
+				isTypingInRoom={handleSessionTyping}
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
@@ -1325,6 +1342,7 @@ export const SessionStream = ({
 				}
 				teamDiscussionStatus={teamDiscussion?.status}
 				teamDiscussionResolved={teamDiscussionResolved}
+				teamDiscussionError={!!teamDiscussionError}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

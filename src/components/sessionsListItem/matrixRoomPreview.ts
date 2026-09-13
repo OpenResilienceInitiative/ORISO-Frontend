@@ -1,6 +1,7 @@
 import { stripReplyFallback } from '../../utils/messageRelations';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
+import { parseMessagePrefixes } from '../message/messageConstants';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -33,12 +34,48 @@ export const getPreviewLastMessageType = (
 ): string | null =>
 	isMatrixBackedSession ? null : legacyLastMessageType || null;
 
-interface MatrixPreviewEvent {
+export interface MatrixPreviewEvent {
 	getType?: () => string;
 	getClearContent?: () => Record<string, any>;
 	getContent?: () => Record<string, any>;
+	getSender?: () => string;
 	getTs?: () => number;
 }
+
+const normalizedIdentityVariants = (rawValue?: string | null): string[] => {
+	const compact = (rawValue || '').trim().toLowerCase();
+	if (!compact) return [];
+	const username = compact.startsWith('@')
+		? compact.slice(1).split(':')[0]
+		: compact.split(':')[0];
+	return [...new Set([compact, username, `@${username}`].filter(Boolean))];
+};
+
+/**
+ * A Matrix timeline can contain ADR-008 asides that are only visible to their
+ * sender and named recipients. Filter them before deriving list/rail previews
+ * so a private message can never become metadata for another consultant.
+ */
+export const filterVisibleMatrixPreviewEvents = (
+	events: MatrixPreviewEvent[],
+	currentUserIds: Array<string | null | undefined>
+): MatrixPreviewEvent[] => {
+	const viewerIds = new Set(
+		currentUserIds.flatMap(normalizedIdentityVariants)
+	);
+	return events.filter((event) => {
+		const content = event.getClearContent?.() || event.getContent?.() || {};
+		const { visibleToUserIds } = parseMessagePrefixes(content.body);
+		if (!visibleToUserIds.length) return true;
+		const senderIds = normalizedIdentityVariants(event.getSender?.());
+		if (senderIds.some((id) => viewerIds.has(id))) return true;
+		return visibleToUserIds.some((recipient) =>
+			normalizedIdentityVariants(recipient).some((id) =>
+				viewerIds.has(id)
+			)
+		);
+	});
+};
 
 const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 	const eventType = event.getType?.();

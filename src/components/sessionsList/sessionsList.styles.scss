@@ -685,8 +685,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 				width: 48px;
 				min-width: 48px;
 				max-width: 48px;
-				height: 80px;
-				min-height: 80px;
+				min-height: 48px;
 
 				// Was `border-radius: 50%`. A percentage radius follows the
 				// box, and this box measured 48 × 50 px (8 + 8 padding + the

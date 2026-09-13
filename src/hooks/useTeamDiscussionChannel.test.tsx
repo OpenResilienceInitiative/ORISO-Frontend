@@ -51,7 +51,11 @@ describe('useTeamDiscussionChannel', () => {
 			})
 		);
 
-		expect(result.current).toEqual({ discussion: null, resolved: true });
+		expect(result.current).toMatchObject({
+			discussion: null,
+			error: null,
+			resolved: true
+		});
 		expect(apiGetTeamDiscussion).not.toHaveBeenCalled();
 		expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 	});
@@ -143,8 +147,40 @@ describe('useTeamDiscussionChannel', () => {
 		await waitFor(() => expect(result.current.resolved).toBe(true));
 
 		rerender({ requested: true });
-		expect(result.current).toEqual({ discussion: null, resolved: false });
+		expect(result.current).toMatchObject({
+			discussion: null,
+			error: null,
+			resolved: false
+		});
 		resolveOpen(null);
 		await waitFor(() => expect(result.current.resolved).toBe(true));
+	});
+
+	it('keeps request failures distinct and retries them', async () => {
+		vi.mocked(apiGetTeamDiscussion)
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce({
+				matrixRoomId: '!team:example.org',
+				status: 'OPEN'
+			});
+		const { result } = renderHook(() =>
+			useTeamDiscussionChannel({
+				sessionId: 42,
+				enabled: true,
+				allowCreate: false,
+				teamChannelRequested: false
+			})
+		);
+
+		await waitFor(() =>
+			expect(result.current.error?.message).toBe('offline')
+		);
+		result.current.retry();
+		await waitFor(() =>
+			expect(result.current.discussion?.matrixRoomId).toBe(
+				'!team:example.org'
+			)
+		);
+		expect(result.current.error).toBeNull();
 	});
 });
