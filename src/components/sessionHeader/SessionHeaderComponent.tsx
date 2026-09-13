@@ -103,6 +103,8 @@ type SupervisorSnapshot = {
 	supervisors: SessionSupervisor[];
 };
 
+const EMPTY_SUPERVISORS: SessionSupervisor[] = [];
+
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const { t: translate } = useTranslation([
 		'common',
@@ -185,7 +187,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		supervisorSnapshot.sessionId === currentSupervisorSessionId;
 	const supervisors = hasCurrentSupervisorSnapshot
 		? supervisorSnapshot.supervisors
-		: [];
+		: EMPTY_SUPERVISORS;
 	const supervisorLoadState = hasCurrentSupervisorSnapshot
 		? supervisorSnapshot.state
 		: 'loading';
