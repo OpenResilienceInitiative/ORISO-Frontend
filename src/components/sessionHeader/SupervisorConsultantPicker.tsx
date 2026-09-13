@@ -40,7 +40,7 @@ export const SupervisorConsultantPicker = ({
 	}
 
 	if (consultants.length === 0) {
-		return <div>{labels.empty}</div>;
+		return <div role="status">{labels.empty}</div>;
 	}
 
 	const handleChange = (event: SelectChangeEvent<string>) => {

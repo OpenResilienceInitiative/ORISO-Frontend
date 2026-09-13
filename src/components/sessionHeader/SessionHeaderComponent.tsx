@@ -198,7 +198,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 	const supervisorRequestIdRef = useRef(0);
 	const activeSupervisorSessionIdRef = useRef(activeSession.item.id);
-	activeSupervisorSessionIdRef.current = activeSession.item.id;
+	useEffect(() => {
+		activeSupervisorSessionIdRef.current = activeSession.item.id;
+	}, [activeSession.item.id]);
 	const supervisorDirectoryAgencyId = resolveSupervisorDirectoryAgencyId({
 		sessionAgencyId: activeSession.item?.agencyId,
 		metadataAgencyId: activeSession.agency?.id

@@ -43,7 +43,9 @@ export const useSupervisorConsultantDirectory = ({
 	const [snapshot, setSnapshot] = useState<DirectorySnapshot>(EMPTY_SNAPSHOT);
 	const [selectedConsultantId, setSelectedConsultantId] = useState('');
 	const onLoadErrorRef = useRef(onLoadError);
-	onLoadErrorRef.current = onLoadError;
+	useEffect(() => {
+		onLoadErrorRef.current = onLoadError;
+	}, [onLoadError]);
 
 	useEffect(() => {
 		setSelectedConsultantId('');

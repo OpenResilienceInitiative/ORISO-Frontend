@@ -133,6 +133,48 @@ describe('useSupervisorConsultantDirectory', () => {
 		expect(result.current.selectedConsultant).toBeNull();
 	});
 
+	it('fails closed without requesting a directory when the agency is missing', () => {
+		const { result } = renderHook(() =>
+			useSupervisorConsultantDirectory({
+				isOpen: true,
+				sessionId: 42,
+				agencyId: null,
+				currentConsultantId: 'self',
+				supervisorState: 'ready',
+				supervisors: [],
+				onLoadError: vi.fn()
+			})
+		);
+
+		expect(result.current.state).toBe('error');
+		expect(result.current.consultants).toEqual([]);
+		expect(result.current.selectedConsultant).toBeNull();
+		expect(fetchAgencyConsultantList).not.toHaveBeenCalled();
+	});
+
+	it('reports an active directory request failure', async () => {
+		const onLoadError = vi.fn();
+		vi.mocked(fetchAgencyConsultantList).mockRejectedValue(
+			new Error('directory unavailable')
+		);
+		const { result } = renderHook(() =>
+			useSupervisorConsultantDirectory({
+				isOpen: true,
+				sessionId: 42,
+				agencyId: '7',
+				currentConsultantId: 'self',
+				supervisorState: 'ready',
+				supervisors: [],
+				onLoadError
+			})
+		);
+
+		await waitFor(() => expect(result.current.state).toBe('error'));
+		expect(result.current.consultants).toEqual([]);
+		expect(result.current.selectedConsultant).toBeNull();
+		expect(onLoadError).toHaveBeenCalledTimes(1);
+	});
+
 	it('ignores an earlier session directory response that resolves last', async () => {
 		const first = deferred<ReturnType<typeof consultant>[]>();
 		const second = deferred<ReturnType<typeof consultant>[]>();
