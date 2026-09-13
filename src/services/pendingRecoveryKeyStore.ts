@@ -1,3 +1,4 @@
+import { notifyRecoveryState } from './recoveryReminderState';
 /**
  * Silent key-backup setup (#839 follow-up): the app bootstraps the Tresor
  * right after login without asking, so the generated recovery key has no
@@ -56,13 +57,18 @@ const removeItem = (key: string): void => {
 export const savePendingRecoveryKey = (
 	userId: string,
 	encodedRecoveryKey: string
-): void => writeItem(`${PENDING_KEY_PREFIX}${userId}`, encodedRecoveryKey);
+): void => {
+	writeItem(`${PENDING_KEY_PREFIX}${userId}`, encodedRecoveryKey);
+	notifyRecoveryState();
+};
 
 export const getPendingRecoveryKey = (userId: string): string | null =>
 	readItem(`${PENDING_KEY_PREFIX}${userId}`);
 
-export const clearPendingRecoveryKey = (userId: string): void =>
+export const clearPendingRecoveryKey = (userId: string): void => {
 	removeItem(`${PENDING_KEY_PREFIX}${userId}`);
+	notifyRecoveryState();
+};
 
 const newOwnerToken = (): string =>
 	typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -125,7 +131,7 @@ export const endRecoverySetup = (userId: string, owner: string): void => {
  * for the whole call and released only by its owner. Throws
  * `RecoverySetupBusyError` when someone else is already at it.
  */
-export const withRecoverySetupLock = async <T>(
+const withStorageRecoverySetupLock = async <T>(
 	userId: string,
 	run: () => Promise<T>
 ): Promise<T> => {
@@ -144,4 +150,22 @@ export const withRecoverySetupLock = async <T>(
 		clearInterval(heartbeat);
 		endRecoverySetup(userId, owner);
 	}
+};
+
+/** Browser Web Locks serialize the entire operation, including its server recheck. */
+export const withRecoverySetupLock = async <T>(
+	userId: string,
+	run: () => Promise<T>
+): Promise<T> => {
+	if (typeof navigator !== 'undefined' && navigator.locks) {
+		return navigator.locks.request(
+			`oriso.recovery.${userId}`,
+			{ ifAvailable: true },
+			(lock) => {
+				if (!lock) throw new RecoverySetupBusyError();
+				return withStorageRecoverySetupLock(userId, run);
+			}
+		);
+	}
+	return withStorageRecoverySetupLock(userId, run);
 };
