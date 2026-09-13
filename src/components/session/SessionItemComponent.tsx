@@ -2205,10 +2205,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The same three steps for the team room — one counter each, so an
 	// unread badge on one channel never silences the other.
-	const [teamSeenAt, setTeamSeenAt] = useState(0);
+const [teamSeenAt, setTeamSeenAt] = useState(0);
 	useEffect(() => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);
+	useEffect(() => {
+		if (hasTeamSideRoom) {
+			setTeamSeenAt(Date.now());
+		}
+	}, [hasTeamSideRoom, activeSession.item?.id]);
 	useEffect(() => {
 		if (openPanel === 'team') {
 			setTeamSeenAt(Date.now());
