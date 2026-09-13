@@ -2,8 +2,9 @@
  * Pure state behind the channel-switcher FAB (Figma "FAB menu" 9748:60084).
  *
  * The FAB sits bottom-right above the composer and represents every
- * *secondary* channel of the open conversation: the supervision side room
- * and any open threads. It is grey while everything is read, takes the
+ * *secondary* channel of the open conversation: the supervision side room,
+ * the Teamberatung side room (Frank, 09.09. — mechanically the twin of
+ * supervision) and any open threads. It is grey while everything is read, takes the
  * unread/error role as soon as one channel has new messages, and becomes a
  * speed-dial menu once there is more than one channel to switch to.
  *
@@ -11,7 +12,7 @@
  */
 import { buildChannelMenu } from './channelMenuModel';
 
-export type SecondaryChannelKind = 'supervision' | 'thread';
+export type SecondaryChannelKind = 'supervision' | 'team' | 'thread';
 
 /** T20: the newest message of a channel — orders the threads, feeds the preview. */
 export interface SecondaryChannelLastMessage {

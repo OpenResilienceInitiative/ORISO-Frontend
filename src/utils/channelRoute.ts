@@ -4,6 +4,7 @@
  *
  *   /sessions/…/<roomId>/<sessionId>?channel=thread:<rootEventId>[&at=<eventId>]
  *   /sessions/…/<roomId>/<sessionId>?channel=supervision[&at=<eventId>]
+ *   /sessions/…/<roomId>/<sessionId>?channel=team[&at=<eventId>]
  *
  * The panel state is DERIVED from the URL (never a `useState` beside it);
  * opening pushes a history entry (Back closes the panel), switching replaces
@@ -11,8 +12,13 @@
  * pair is a hard cut (Frank, 05.09.): mapped ONCE on entry by
  * `normalizeLegacyChannelSearch`, never written again.
  *
- * Channel ids match the chat stage (`chatStage/`): `'supervision'` or the
- * thread's root event id — `channelId` / `channelFromId` convert.
+ * Channel ids match the chat stage (`chatStage/`): `'supervision'`, `'team'`
+ * or the thread's root event id — `channelId` / `channelFromId` convert.
+ *
+ * `team` (Frank, 09.09.) is the THIRD channel and mechanically the twin of
+ * `supervision`: same push/replace rules, same memory, same panel — only the
+ * room, the word and the membership rule differ (`FE#514` / ADR-016: the
+ * Team-Besprechung room of the enquiry, the advice seeker never a member).
  *
  * Pure: no React, no router, no DOM. Storage is injected for the per-session
  * memory of the last open channel.
@@ -20,7 +26,11 @@
 
 export type SessionChannel =
 	| { kind: 'supervision' }
+	| { kind: 'team' }
 	| { kind: 'thread'; rootId: string };
+
+/** The two side ROOMS of a session — a thread lives in the main room. */
+export type SideRoomChannelKind = 'supervision' | 'team';
 
 export const CHANNEL_PARAM = 'channel';
 export const AT_PARAM = 'at';
@@ -28,15 +38,31 @@ export const LEGACY_THREAD_ROOT_PARAM = 'threadRootId';
 export const LEGACY_THREAD_MESSAGE_PARAM = 'threadMessageId';
 /** The stage's id for the supervision channel (`panelForChannel`). */
 export const SUPERVISION_CHANNEL_ID = 'supervision';
+/** The stage's id for the team-counselling channel (Teamberatung). */
+export const TEAM_CHANNEL_ID = 'team';
 const THREAD_PREFIX = 'thread:';
 
-export const channelId = (channel: SessionChannel): string =>
-	channel.kind === 'supervision' ? SUPERVISION_CHANNEL_ID : channel.rootId;
+export const channelId = (channel: SessionChannel): string => {
+	switch (channel.kind) {
+		case 'supervision':
+			return SUPERVISION_CHANNEL_ID;
+		case 'team':
+			return TEAM_CHANNEL_ID;
+		default:
+			return channel.rootId;
+	}
+};
 
-export const channelFromId = (id: string): SessionChannel =>
-	id === SUPERVISION_CHANNEL_ID
-		? { kind: 'supervision' }
-		: { kind: 'thread', rootId: id };
+export const channelFromId = (id: string): SessionChannel => {
+	switch (id) {
+		case SUPERVISION_CHANNEL_ID:
+			return { kind: 'supervision' };
+		case TEAM_CHANNEL_ID:
+			return { kind: 'team' };
+		default:
+			return { kind: 'thread', rootId: id };
+	}
+};
 
 export const channelsEqual = (
 	a: SessionChannel | null | undefined,
@@ -48,13 +74,17 @@ export const channelsEqual = (
 	if (a.kind !== b.kind) {
 		return false;
 	}
-	return a.kind === 'supervision' || a.rootId === (b as any).rootId;
+	// Side rooms carry no id of their own — the kind alone identifies them.
+	return (
+		a.kind !== 'thread' ||
+		a.rootId === (b as { kind: 'thread'; rootId: string }).rootId
+	);
 };
 
 export const serializeChannel = (channel: SessionChannel): string =>
-	channel.kind === 'supervision'
-		? SUPERVISION_CHANNEL_ID
-		: `${THREAD_PREFIX}${channel.rootId}`;
+	channel.kind === 'thread'
+		? `${THREAD_PREFIX}${channel.rootId}`
+		: channelId(channel);
 
 export const parseChannelValue = (
 	value: string | null | undefined
@@ -65,6 +95,9 @@ export const parseChannelValue = (
 	}
 	if (raw === SUPERVISION_CHANNEL_ID) {
 		return { kind: 'supervision' };
+	}
+	if (raw === TEAM_CHANNEL_ID) {
+		return { kind: 'team' };
 	}
 	if (raw.startsWith(THREAD_PREFIX)) {
 		const rootId = raw.slice(THREAD_PREFIX.length).trim();
@@ -228,6 +261,12 @@ export interface AutoOpenInput {
 	/** Root ids of the loaded history; `null` while the timeline is not there yet. */
 	loadedRootIds: string[] | null;
 	hasSupervisionSideRoom: boolean;
+	/**
+	 * The Teamberatung room of this session exists AND the viewer may see it
+	 * (`apiGetTeamDiscussion` answered with a `matrixRoomId`). Optional so
+	 * every existing caller and test keeps its meaning.
+	 */
+	hasTeamSideRoom?: boolean;
 }
 
 export interface AutoOpenDecision {
@@ -245,15 +284,22 @@ const KEEP_WAITING: AutoOpenDecision = { settle: false, open: null };
  * right away: the URL is the truth and browser Back must land on the
  * closed main chat, not re-run the first-visit auto-open (review D-3).
  * Without a channel: a remembered close stays closed, a remembered thread
- * re-opens once its root is in the loaded history, else the side room
- * auto-opens once — never before it exists.
+ * re-opens once its root is in the loaded history, else the remembered SIDE
+ * ROOM (supervision or team) re-opens once it exists — never before.
+ *
+ * Frank, 09.09.: "für den Nutzer [wird] immer die letzte Einstellung
+ * gespeichert" — so a remembered `team` comes back as team, not as
+ * supervision. With nothing remembered at all (first visit) the supervision
+ * room keeps today's precedence; the Teamberatung is then one click away in
+ * the channel card or the FAB.
  */
 export const decideAutoOpen = ({
 	routeChannel,
 	alreadySettled,
 	remembered,
 	loadedRootIds,
-	hasSupervisionSideRoom
+	hasSupervisionSideRoom,
+	hasTeamSideRoom = false
 }: AutoOpenInput): AutoOpenDecision => {
 	if (routeChannel) {
 		return { settle: true, open: null };
@@ -273,14 +319,43 @@ export const decideAutoOpen = ({
 			open: loadedRootIds.includes(remembered.rootId) ? remembered : null
 		};
 	}
-	if (!hasSupervisionSideRoom) {
+	// Nothing remembered → the first visit still belongs to the supervision
+	// room (unchanged behaviour); a remembered side room wins over it.
+	const wanted: SessionChannel = remembered ?? { kind: 'supervision' };
+	const exists =
+		wanted.kind === 'team' ? hasTeamSideRoom : hasSupervisionSideRoom;
+	if (!exists) {
 		return KEEP_WAITING;
 	}
-	return { settle: true, open: { kind: 'supervision' } };
+	return { settle: true, open: wanted };
 };
 
 /* ------------------------------------------------------------------ *
- * Last open channel per session (Frank, 05.09.: "letzten Kanal merken")
+ * Last open channel per session (Frank, 05.09.: "letzten Kanal merken";
+ * 09.09.: "wichtig, dass für den Nutzer immer die letzte Einstellung
+ * gespeichert wird")
+ *
+ * WHY `localStorage` and not `sessionStorage` (the decision, 09.09.):
+ * `sessionStorage` is scoped to ONE tab and dies with it — close the tab,
+ * open the app again tomorrow, and the remembered channel is gone. That is
+ * exactly the gap Frank named, so the store moves to `localStorage`, which
+ * survives tab and browser restarts on the same device.
+ *
+ * WHY NOT Matrix account data (the durable, cross-device variant used by
+ * `utils/notificationSettings/store.ts`): three reasons, in order of weight.
+ *   1. It is not the same KIND of state. Notification settings are a handful
+ *      of account-wide switches; this is one entry PER SESSION, written on
+ *      every panel open, switch and close. Account data would take a network
+ *      round trip per toggle and grow without a bound anyone ever collects.
+ *   2. Cross-device sameness is not obviously wanted here. The desktop shows
+ *      the panel BESIDE the chat, the phone shows it INSTEAD of the chat —
+ *      "the panel I last had open" is a per-device habit, not an identity.
+ *   3. It is reversible. The store is injected (`ChannelStorageLike`), so
+ *      swapping in an account-data backend later touches this one seam and
+ *      no caller.
+ * Cost accepted: one key per session id per device, ~45 bytes each — a
+ * counsellor with 2 000 sessions spends ~90 KB of a 5 MB budget. Cheaper
+ * than an index that would have to be kept correct.
  * ------------------------------------------------------------------ */
 
 export interface ChannelStorageLike {
@@ -345,3 +420,20 @@ export const safeSessionStorage = (): ChannelStorageLike | null => {
 		return null;
 	}
 };
+
+export const safeLocalStorage = (): ChannelStorageLike | null => {
+	try {
+		return typeof window !== 'undefined' ? window.localStorage : null;
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * The store the host uses: `localStorage` so the choice outlives the tab,
+ * falling back to `sessionStorage` where `localStorage` is unavailable
+ * (Safari private mode throws on access) so the memory still works for the
+ * length of the visit instead of silently doing nothing.
+ */
+export const safeChannelStorage = (): ChannelStorageLike | null =>
+	safeLocalStorage() ?? safeSessionStorage();

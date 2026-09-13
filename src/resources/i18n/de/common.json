@@ -320,7 +320,8 @@
 			"mainChat": "Beratungschat",
 			"kind": {
 				"supervision": "Supervision",
-				"thread": "Thread"
+				"thread": "Thread",
+				"team": "Teamberatung"
 			}
 		},
 		"participants": {
@@ -338,13 +339,22 @@
 			"region": "Nebenraum: {{title}}",
 			"thread": {
 				"title": "Thread"
+			},
+			"team": {
+				"title": "Teamberatung",
+				"onlyMarker": "Nur fürs Team",
+				"composer": { "placeholder": "Nachricht an das Team …" },
+				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
+				"empty": { "title": "Teamberatung starten", "text": "Schreiben Sie unten die erste Nachricht an Ihr Team." }
 			}
 		},
 		"menu": {
 			"eyebrow": "Weitere Gespräche",
 			"title": "Threads und Supervision",
 			"supervisionChat": "Supervisionschat",
-			"thread": "Thread #{{n}}"
+			"thread": "Thread #{{n}}",
+			"teamChat": "Teamberatung",
+			"titleWithTeam": "Threads, Supervision und Teamberatung"
 		}
 	},
 	"chatFlyout": {

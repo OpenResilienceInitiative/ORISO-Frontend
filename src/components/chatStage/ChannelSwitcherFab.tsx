@@ -3,7 +3,8 @@
  * channel card 9763:62964 as its menu (T20).
  *
  * Bottom-right above the composer. One FAB for every *secondary* channel of
- * the open conversation (supervision side room, open threads):
+ * the open conversation (supervision side room, Teamberatung side room, open
+ * threads):
  *
  * - grey (`tertiary`) while everything is read, unread/error role when a
  *   channel has new messages (same role as the existing unread badges);
@@ -22,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ReactComponent as SupervisionAttentionGlyph } from '../../resources/img/icons/supervision_on_400_24px.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu-close.svg';
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
@@ -62,16 +64,27 @@ export interface ChannelSwitcherFabProps {
 	'data-cy'?: string;
 }
 
-/** T9: `supervision_on` = attention (new message), `supervision_circ` = idle. */
+/**
+ * T9: `supervision_on` = attention (new message), `supervision_circ` = idle.
+ * The Teamberatung has one glyph for both states — the unread badge and the
+ * FAB's `attention` colour already carry that signal (house rule: colour is
+ * never the only signal, and a second glyph would say the same thing twice).
+ */
 export const glyphFor = (
 	kind: SecondaryChannelKind,
 	variant: 'idle' | 'attention' = 'idle'
-) =>
-	kind === 'thread'
-		? ThreadGlyph
-		: variant === 'attention'
-			? SupervisionAttentionGlyph
-			: SupervisionGlyph;
+) => {
+	switch (kind) {
+		case 'thread':
+			return ThreadGlyph;
+		case 'team':
+			return TeamGlyph;
+		default:
+			return variant === 'attention'
+				? SupervisionAttentionGlyph
+				: SupervisionGlyph;
+	}
+};
 
 const UnreadBadge = ({ count }: { count: number }) =>
 	count > 0 ? (

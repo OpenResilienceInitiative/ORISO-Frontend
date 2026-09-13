@@ -13,7 +13,8 @@
 import * as React from 'react';
 import { createContext, useContext, useMemo, useState } from 'react';
 
-export type ChatStageOpenPanel = 'supervision' | 'thread' | null;
+/** Which side pane really is on screen — the list column snaps to it. */
+export type ChatStageOpenPanel = 'supervision' | 'team' | 'thread' | null;
 
 export interface ChatStagePanelContextValue {
 	openPanel: ChatStageOpenPanel;
