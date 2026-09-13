@@ -6,12 +6,17 @@ import {
 	recoverWithKey,
 	resetCryptoIdentity,
 	secretStorageKeyCallback,
+	clearSecretStorageKeys,
 	InvalidRecoveryKeyError,
 	CryptoUnavailableError,
 	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
 import { registerDeviceSigningAuth } from './matrixInteractiveAuth';
 
+vi.mock('./matrixRecoveryAccountData', async (original) => ({
+	...(await original<any>()),
+	serverBackedSecretStorage: (client: any) => client.secretStorage
+}));
 /**
  * #437 Key backup + recovery UX — service layer over matrix-js-sdk's CryptoApi
  * (Apache-2.0: SDK used directly; only the element-web UX pattern is
@@ -38,6 +43,17 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 		.mockResolvedValue(new Uint8Array(32).fill(1)),
 	createRecoveryKeyFromPassphrase: vi.fn().mockResolvedValue(generatedKey),
 	bootstrapCrossSigning: vi.fn().mockResolvedValue(undefined),
+	importSecretsBundle: vi.fn().mockResolvedValue(undefined),
+	userHasCrossSigningKeys: vi.fn().mockResolvedValue(true),
+	getCrossSigningStatus: vi.fn().mockResolvedValue({
+		privateKeysCachedLocally: {
+			masterKey: true,
+			selfSigningKey: true,
+			userSigningKey: true
+		}
+	}),
+	crossSignDevice: vi.fn().mockResolvedValue(undefined),
+	getCrossSigningKeyId: vi.fn(async (type) => `public-${type}`),
 	bootstrapSecretStorage: vi.fn().mockResolvedValue(undefined),
 	resetKeyBackup: vi.fn().mockResolvedValue(undefined),
 	checkKeyBackupAndEnable: vi.fn().mockResolvedValue({ backupInfo: {} }),
@@ -50,19 +66,65 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const buildClient = (crypto: unknown) => {
-	const client = { getCrypto: () => crypto } as any;
+	const client = {
+		getCrypto: () => crypto,
+		getUserId: () => '@synthetic:test',
+		getDeviceId: () => 'synthetic-device',
+		downloadKeysForUsers: async () =>
+			Object.fromEntries(
+				['master', 'self_signing', 'user_signing'].map((type) => [
+					`${type}_keys`,
+					{
+						'@synthetic:test': {
+							keys: {
+								[`ed25519:public-${type}`]: `public-${type}`
+							}
+						}
+					}
+				])
+			),
+		http: {
+			authedRequest: async (_method: string, path: string) =>
+				path === '/keys/query'
+					? Object.fromEntries(
+							['master', 'self_signing', 'user_signing'].map(
+								(type) => [
+									`${type}_keys`,
+									{
+										'@synthetic:test': {
+											keys: {
+												[`ed25519:public-${type}`]: `public-${type}`
+											}
+										}
+									}
+								]
+							)
+						)
+					: path.endsWith('m.secret_storage.default_key')
+						? { key: 'key-id-1' }
+						: {
+								algorithm: 'm.secret_storage.v1.aes-hmac-sha2',
+								mac: 'test-mac'
+							}
+		},
+		secretStorage: {
+			get: vi.fn(async () => 'synthetic-cross-signing-seed'),
+			getKey: vi.fn(async () => [
+				'key-id-1',
+				{
+					mac: 'test-mac',
+					algorithm: 'm.secret_storage.v1.aes-hmac-sha2'
+				}
+			]),
+			checkKey: vi.fn(async () => true)
+		}
+	} as any;
 	registerDeviceSigningAuth(client, vi.fn());
 	return client;
 };
 
 describe('matrixKeyBackupService (#437)', () => {
-	beforeEach(async () => {
-		// Drain any pending key left over from a failed test.
-		await secretStorageKeyCallback(
-			{ keys: {} } as any,
-			'm.megolm_backup.v1'
-		);
-	});
+	beforeEach(() => clearSecretStorageKeys());
 
 	describe('getEncryptionStatus', () => {
 		it('maps the CryptoApi state into a status object', async () => {
@@ -131,22 +193,41 @@ describe('matrixKeyBackupService (#437)', () => {
 
 		it('serves the generated key through the secret-storage callback during the flow, then clears it', async () => {
 			let keyDuringFlow: [string, Uint8Array] | null = null;
+			let client: any;
 			const crypto = buildCrypto({
 				bootstrapSecretStorage: vi.fn(async () => {
 					keyDuringFlow = await secretStorageKeyCallback(
-						{ keys: { 'key-id-1': {} } } as any,
+						client,
+						{
+							keys: {
+								'key-id-1': {
+									mac: 'test-mac',
+									algorithm:
+										'm.secret_storage.v1.aes-hmac-sha2'
+								}
+							}
+						} as any,
 						'm.cross_signing.master'
 					);
 				})
 			});
 
-			await setUpRecovery(buildClient(crypto));
+			client = buildClient(crypto);
+			await setUpRecovery(client);
 
 			expect(keyDuringFlow).toEqual(['key-id-1', VALID_KEY_BYTES]);
 			// After the flow the cache is drained — callback yields null.
 			await expect(
 				secretStorageKeyCallback(
-					{ keys: { 'key-id-1': {} } } as any,
+					client,
+					{
+						keys: {
+							'key-id-1': {
+								mac: 'test-mac',
+								algorithm: 'm.secret_storage.v1.aes-hmac-sha2'
+							}
+						}
+					} as any,
 					'm.cross_signing.master'
 				)
 			).resolves.toBeNull();
@@ -159,15 +240,22 @@ describe('matrixKeyBackupService (#437)', () => {
 					.mockRejectedValue(new Error('sensitive sdk payload'))
 			});
 
-			const failure = await setUpRecovery(buildClient(crypto)).catch(
-				(error) => error
-			);
+			const client = buildClient(crypto);
+			const failure = await setUpRecovery(client).catch((error) => error);
 			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
 			expect(failure.phase).toBe('secret-storage');
 			expect(failure.message).not.toContain('sensitive sdk payload');
 			await expect(
 				secretStorageKeyCallback(
-					{ keys: { 'key-id-1': {} } } as any,
+					client,
+					{
+						keys: {
+							'key-id-1': {
+								mac: 'test-mac',
+								algorithm: 'm.secret_storage.v1.aes-hmac-sha2'
+							}
+						}
+					} as any,
 					'm.cross_signing.master'
 				)
 			).resolves.toBeNull();
@@ -178,9 +266,8 @@ describe('matrixKeyBackupService (#437)', () => {
 				isSecretStorageReady: vi.fn().mockResolvedValue(false)
 			});
 
-			const failure = await setUpRecovery(buildClient(crypto)).catch(
-				(error) => error
-			);
+			const client = buildClient(crypto);
+			const failure = await setUpRecovery(client).catch((error) => error);
 			expect(failure).toBeInstanceOf(RecoverySetupPhaseError);
 			expect(failure.phase).toBe('key-backup');
 		});
@@ -211,7 +298,9 @@ describe('matrixKeyBackupService (#437)', () => {
 				crypto.loadSessionBackupPrivateKeyFromSecretStorage
 			).toHaveBeenCalled();
 			expect(crypto.restoreKeyBackup).toHaveBeenCalled();
-			expect(crypto.bootstrapCrossSigning).toHaveBeenCalled();
+			expect(crypto.bootstrapCrossSigning).not.toHaveBeenCalled();
+			expect(crypto.importSecretsBundle).toHaveBeenCalled();
+			expect(crypto.crossSignDevice).toHaveBeenCalled();
 		});
 
 		it('clears the cached key after recovery, success or failure', async () => {
@@ -219,11 +308,13 @@ describe('matrixKeyBackupService (#437)', () => {
 				restoreKeyBackup: vi.fn().mockRejectedValue(new Error('nope'))
 			});
 
+			const client = buildClient(crypto);
 			await expect(
-				recoverWithKey(buildClient(crypto), VALID_ENCODED_KEY)
+				recoverWithKey(client, VALID_ENCODED_KEY)
 			).rejects.toThrow('nope');
 			await expect(
 				secretStorageKeyCallback(
+					client,
 					{ keys: { k: {} } } as any,
 					'm.megolm_backup.v1'
 				)
