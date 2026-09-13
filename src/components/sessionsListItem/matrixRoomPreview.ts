@@ -42,13 +42,39 @@ export interface MatrixPreviewEvent {
 	getTs?: () => number;
 }
 
-const normalizedIdentityVariants = (rawValue?: string | null): string[] => {
+interface NormalizedIdentity {
+	exact: string;
+	localpart: string;
+	qualified: boolean;
+}
+
+const normalizeIdentity = (
+	rawValue?: string | null
+): NormalizedIdentity | null => {
 	const compact = (rawValue || '').trim().toLowerCase();
-	if (!compact) return [];
+	if (!compact) return null;
 	const username = compact.startsWith('@')
 		? compact.slice(1).split(':')[0]
 		: compact.split(':')[0];
-	return [...new Set([compact, username, `@${username}`].filter(Boolean))];
+	return {
+		exact: compact,
+		localpart: username,
+		qualified: compact.startsWith('@') && compact.includes(':')
+	};
+};
+
+const identityMatches = (
+	candidate: string | null | undefined,
+	viewers: NormalizedIdentity[]
+): boolean => {
+	const normalized = normalizeIdentity(candidate);
+	if (!normalized) return false;
+	return normalized.qualified
+		? viewers.some(
+				(viewer) =>
+					viewer.qualified && viewer.exact === normalized.exact
+			)
+		: viewers.some((viewer) => viewer.localpart === normalized.localpart);
 };
 
 /**
@@ -60,20 +86,17 @@ export const filterVisibleMatrixPreviewEvents = (
 	events: MatrixPreviewEvent[],
 	currentUserIds: Array<string | null | undefined>
 ): MatrixPreviewEvent[] => {
-	const viewerIds = new Set(
-		currentUserIds.flatMap(normalizedIdentityVariants)
-	);
+	const viewers = currentUserIds
+		.map(normalizeIdentity)
+		.filter((identity): identity is NormalizedIdentity => !!identity);
 	return events.filter((event) => {
 		const content = event.getClearContent?.() || event.getContent?.() || {};
 		const body = typeof content.body === 'string' ? content.body : '';
 		const { visibleToUserIds } = parseMessagePrefixes(body);
 		if (!visibleToUserIds.length) return true;
-		const senderIds = normalizedIdentityVariants(event.getSender?.());
-		if (senderIds.some((id) => viewerIds.has(id))) return true;
+		if (identityMatches(event.getSender?.(), viewers)) return true;
 		return visibleToUserIds.some((recipient) =>
-			normalizedIdentityVariants(recipient).some((id) =>
-				viewerIds.has(id)
-			)
+			identityMatches(recipient, viewers)
 		);
 	});
 };

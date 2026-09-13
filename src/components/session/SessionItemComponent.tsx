@@ -2039,8 +2039,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const teamRoomId = props.teamRoomId;
 	const teamMessages = props.teamMessages;
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
-	const canOpenTeamSideRoom =
-		isSupervisionPanelViewer && !!props.teamDiscussionAvailable;
+	// Creation is initiated by the list/deep-link contract, which first resolves
+	// the POST and then supplies this id. Do not expose an in-stage channel item
+	// until it can resolve to a real room.
+	const canOpenTeamSideRoom = hasTeamSideRoom;
 	// A stale/unauthorised `?channel=team` route must not leave a panel that
 	// can fall back to another room. Consume it only after lookup settles.
 	useEffect(() => {
@@ -3883,14 +3885,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={
-										props.teamDiscussionStatus !== 'OPEN' ||
-										Boolean(
-											retryRequest &&
-												retryRequest.failedSendId !==
-													failed.id
-										)
-									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
 								/>
 							))}
 					</>
@@ -4069,11 +4068,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										props.teamDiscussionStatus !== 'OPEN' ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>

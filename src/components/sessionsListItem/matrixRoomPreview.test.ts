@@ -39,7 +39,10 @@ describe('filterVisibleMatrixPreviewEvents', () => {
 
 	it('keeps a restricted event for its sender', () => {
 		expect(
-			filterVisibleMatrixPreviewEvents([privateEvent], ['supervisor'])
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@supervisor:example.org']
+			)
 		).toEqual([privateEvent]);
 	});
 
@@ -48,6 +51,24 @@ describe('filterVisibleMatrixPreviewEvents', () => {
 			filterVisibleMatrixPreviewEvents(
 				[privateEvent],
 				['@bob:example.org']
+			)
+		).toEqual([]);
+	});
+
+	it('does not equate qualified Matrix IDs from different homeservers', () => {
+		const qualified = event(
+			'm.room.message',
+			{
+				msgtype: 'm.text',
+				body: '[VISIBLE_TO:@alice:one.example]Private note'
+			},
+			1,
+			'@supervisor:one.example'
+		);
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[qualified],
+				['@alice:two.example']
 			)
 		).toEqual([]);
 	});
