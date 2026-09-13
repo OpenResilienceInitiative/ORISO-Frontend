@@ -24,10 +24,20 @@ afterEach(() => {
 
 describe('agency consultant list', () => {
 	it('asks for the consultants of the given agency', async () => {
-		fetchDataMock.mockResolvedValue([]);
+		const eligibleSupervisor = {
+			consultantId: 'eligible-id',
+			firstName: 'Elli',
+			lastName: 'Eligible',
+			displayName: 'Elli Eligible',
+			username: 'elli',
+			isSupervisor: true
+		};
+		fetchDataMock.mockResolvedValue([eligibleSupervisor]);
 		const { fetchAgencyConsultantList } = await importModule();
 
-		await fetchAgencyConsultantList('42');
+		await expect(fetchAgencyConsultantList('42')).resolves.toEqual([
+			eligibleSupervisor
+		]);
 
 		expect(fetchDataMock).toHaveBeenCalledWith(
 			expect.objectContaining({

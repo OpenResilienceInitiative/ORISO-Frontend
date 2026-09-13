@@ -163,8 +163,7 @@ export const Default: Story = {
 		await fireEvent.pointerDown(handle, dragAt);
 		await fireEvent.pointerMove(document, {
 			...dragAt,
-			clientX:
-				handle.parentElement!.getBoundingClientRect().left + 427
+			clientX: handle.parentElement!.getBoundingClientRect().left + 427
 		});
 		await new Promise((resolve) => setTimeout(resolve, 600));
 		await fireEvent.pointerUp(document, dragAt);

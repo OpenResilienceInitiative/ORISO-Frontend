@@ -80,9 +80,9 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 	});
 
 	it('snaps to the rail while the supervision pane is actually open', () => {
-		expect(renderAt('?channel=supervision', 'supervision').style.width).toBe(
-			`${STAGE_LAYOUT.RAIL_WIDTH}px`
-		);
+		expect(
+			renderAt('?channel=supervision', 'supervision').style.width
+		).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
 	});
 
 	it('snaps to the rail for an open thread pane as well', () => {

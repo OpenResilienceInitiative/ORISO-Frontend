@@ -60,13 +60,13 @@ interface ResizableHandleCommonProps {
  * ArrowLeft/ArrowRight/Home/End keys all call `onResize` with no guard.
  */
 interface ResizeHandleProps extends ResizableHandleCommonProps {
-	'mode'?: 'resizeAndScroll';
-	'onResize': (width: number) => void;
-	'currentWidth': number;
+	mode?: 'resizeAndScroll';
+	onResize: (width: number) => void;
+	currentWidth: number;
 	/** Which edge of the resized element the handle sits on (default: end). */
-	'anchor'?: ResizeAnchor;
+	anchor?: ResizeAnchor;
 	/** Session-list snapping (icon rail ↔ expanded band). Off for panels. */
-	'snapping'?: boolean;
+	snapping?: boolean;
 }
 
 /**
@@ -75,11 +75,11 @@ interface ResizeHandleProps extends ResizableHandleCommonProps {
  * there would have nothing to act on (ORISO-Frontend#1196 job 2).
  */
 interface ScrollOnlyHandleProps extends ResizableHandleCommonProps {
-	'mode': 'scroll';
-	'onResize'?: never;
-	'currentWidth'?: never;
-	'anchor'?: never;
-	'snapping'?: never;
+	mode: 'scroll';
+	onResize?: never;
+	currentWidth?: never;
+	anchor?: never;
+	snapping?: never;
 }
 
 /*

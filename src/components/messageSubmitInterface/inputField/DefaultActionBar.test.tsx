@@ -137,8 +137,8 @@ describe('DefaultActionBar', () => {
 		const arrow = screen.getByRole('button', {
 			name: /^Scroll to bottom/
 		});
-		expect(arrow.querySelector('.composerToolbar__badge')?.textContent).toBe(
-			'99+'
-		);
+		expect(
+			arrow.querySelector('.composerToolbar__badge')?.textContent
+		).toBe('99+');
 	});
 });
