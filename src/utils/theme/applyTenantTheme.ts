@@ -189,6 +189,17 @@ const PREVIEW_PARAMS = {
 	signal: 'themePreviewSignal'
 } as const;
 
+export const THEME_PREVIEW_PATH = '/theme-demo';
+
+/**
+ * Preview seeds are only meaningful on the auth-free demo route the admin's
+ * Theme Builder iframe loads (ORISO-Admin#907). Reading them anywhere else
+ * lets a shared link repaint the real app — including with the pale palettes
+ * `applyTenantPalette` refuses for stored tenant seeds (#143).
+ */
+export const isThemePreviewRoute = (pathname: string): boolean =>
+	pathname.replace(/\/+$/, '') === THEME_PREVIEW_PATH;
+
 /** Bare 6-digit hex only — anything else is ignored (no injection surface). */
 const BARE_HEX = /^[0-9a-fA-F]{6}$/;
 
