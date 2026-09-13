@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageTimeline } from './MessageTimeline';
 
 vi.mock('../message/MessageItemComponent', () => ({
-	MessageItemComponent: ({ askerMatrixUserId }: { askerMatrixUserId?: string }) => (
-		<div data-testid="message" data-asker-id={askerMatrixUserId} />
-	)
+	MessageItemComponent: ({
+		askerMatrixUserId
+	}: {
+		askerMatrixUserId?: string;
+	}) => <div data-testid="message" data-asker-id={askerMatrixUserId} />
 }));
 
 vi.mock('../message/MessageSendFailed', () => ({

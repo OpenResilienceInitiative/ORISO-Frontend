@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
-import {
-	getModality,
-	getModalityIfKnown,
-	Modality
-} from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 
 const asItem = (partial: unknown): ListItemInterface =>
 	partial as ListItemInterface;

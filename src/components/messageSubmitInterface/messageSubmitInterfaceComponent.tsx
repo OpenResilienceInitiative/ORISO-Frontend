@@ -21,10 +21,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import {
-	isFocusProtected,
-	scheduleComposerAutoFocus
-} from './focusGuards';
+import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
 import { buildSessionChannelPath } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';

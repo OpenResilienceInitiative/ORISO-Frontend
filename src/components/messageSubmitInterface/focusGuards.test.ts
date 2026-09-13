@@ -84,7 +84,8 @@ describe('scheduleComposerAutoFocus', () => {
 
 	it('focuses the editor when no other surface owns initial focus', () => {
 		vi.useFakeTimers();
-		document.body.innerHTML = '<div contenteditable="true" id="editor"></div>';
+		document.body.innerHTML =
+			'<div contenteditable="true" id="editor"></div>';
 		const editor = document.getElementById('editor') as HTMLDivElement;
 
 		scheduleComposerAutoFocus(() => editor.focus(), true);
