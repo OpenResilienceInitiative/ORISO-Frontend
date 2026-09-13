@@ -24,8 +24,23 @@ export const STAGE_LAYOUT = {
 	LIST_CARD_GAP: 24,
 	/** `.sessionsList__scrollContainer` desktop margin — cards end early. */
 	LIST_INNER_GUTTER: 12,
-	/** Both chat panes keep at least this much. */
-	MIN_PANE_WIDTH: 520
+	/**
+	 * AUTO layout floor: what the stage gives a pane on its own. It decides
+	 * whether the list column may stay expanded next to an open panel or has
+	 * to snap to the icon rail (D10), and it is the width a panel opens at.
+	 */
+	MIN_PANE_WIDTH: 520,
+	/**
+	 * DRAG floor: how narrow a reader may deliberately pull a pane.
+	 *
+	 * The 487 is the number DevTools shows on `.panelHeader__row` while the
+	 * pane sits on the old floor: 520 px slot − 1 px `.sidePanel--inside`
+	 * hairline − 2 × 16 px header inset (`$room-header-inset`) = 487.
+	 * Lowering the AUTO floor instead would have switched off the rail snap
+	 * at 1280 (824 px card ÷ 2 = 412 ≥ 320), so the two floors are separate:
+	 * the stage still hands out 520, the handle now reaches 320 either way.
+	 */
+	MIN_PANE_DRAG_WIDTH: 320
 } as const;
 
 export type StageMode = 'split' | 'single';
@@ -128,22 +143,23 @@ export const resolveStageLayout = ({
 
 /**
  * T2: the side panel's drag handle asks for a width; the answer keeps both
- * panes at `MIN_PANE_WIDTH` and never lets the panel outgrow the main chat.
- * When the card cannot host two minimum panes the panel takes half.
+ * panes at `MIN_PANE_DRAG_WIDTH`, so either side can be pulled genuinely
+ * narrow. When the card cannot host two minimum-width panes, the panel takes
+ * half. The panel may outgrow the main chat through dragging.
  */
 export const clampPanelWidth = (
 	requested: number,
 	cardWidth: number
 ): number => {
-	const { MIN_PANE_WIDTH } = STAGE_LAYOUT;
+	const { MIN_PANE_DRAG_WIDTH } = STAGE_LAYOUT;
 	const safeRequested = Number.isFinite(requested) ? requested : 0;
-	if (cardWidth < 2 * MIN_PANE_WIDTH) {
+	if (cardWidth < 2 * MIN_PANE_DRAG_WIDTH) {
 		return Math.max(0, Math.floor(cardWidth / 2));
 	}
 	return Math.round(
 		Math.min(
-			Math.max(safeRequested, MIN_PANE_WIDTH),
-			cardWidth - MIN_PANE_WIDTH
+			Math.max(safeRequested, MIN_PANE_DRAG_WIDTH),
+			cardWidth - MIN_PANE_DRAG_WIDTH
 		)
 	);
 };
