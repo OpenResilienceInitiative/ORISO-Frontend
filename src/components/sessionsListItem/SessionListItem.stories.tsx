@@ -684,26 +684,42 @@ function PostcodeOnlyCardMock() {
 }
 
 function RuntimeSessionListItem({
-	lastMessage = runtimeSession.session.lastMessage
+	lastMessage = runtimeSession.session.lastMessage,
+	sessionOverrides = {},
+	consultantId = runtimeSession.consultant.id,
+	viewerId = runtimeUserData.userId
 }: {
 	lastMessage?: string;
+	/** Extra `session` DTO fields, e.g. the ADR-008 `supervision` marker. */
+	sessionOverrides?: Partial<ListItemInterface['session']>;
+	/** Owning consultant of the row (defaults to the viewer = own session). */
+	consultantId?: string;
+	/** Logged-in consultant. */
+	viewerId?: string;
 } = {}) {
 	const storySession: ListItemInterface = {
 		...runtimeSession,
+		consultant: {
+			...runtimeSession.consultant,
+			consultantId,
+			id: consultantId
+		},
 		session: {
 			...runtimeSession.session,
-			lastMessage
+			lastMessage,
+			...sessionOverrides
 		}
 	};
 	const activeSession = buildExtendedSession(storySession, '');
+	const userData = { ...runtimeUserData, userId: viewerId };
 
 	return (
 		<div style={listShell}>
 			<UserDataContext.Provider
 				value={{
-					userData: runtimeUserData,
+					userData,
 					setUserData: () => {},
-					reloadUserData: async () => runtimeUserData
+					reloadUserData: async () => userData
 				}}
 			>
 				<SessionTypeContext.Provider
@@ -1201,4 +1217,91 @@ export const GuidedSelfHelpGroup: Story = {
 			<SelfHelpCardMock />
 		</div>
 	)
+};
+
+/* ------------------------------------------------------------------
+ * ADR-008 supervision list marker (`session.supervision`, UserService WP-A)
+ * ------------------------------------------------------------------ */
+
+const SUPERVISOR_ID = 'consultant-supervisor';
+
+/**
+ * The logged-in consultant is the assigned supervisor of a colleague's
+ * session: the row shows the "Supervision" badge instead of the red
+ * silent-member eye, and no "request access" (case handover) button.
+ */
+export const SupervisedByMe: Story = {
+	name: 'Supervision — supervised by me (ADR-008)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				consultantId="consultant-owner"
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor']
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const badge = canvasElement.querySelector(
+				'[data-testid="supervision-badge"]'
+			);
+			expect(badge).not.toBeNull();
+			expect(badge!.getAttribute('title')).toContain('Supervision');
+			// T9: the list badge uses `supervision_circ` inline (currentColor),
+			// the same glyph as the panel header and the FAB.
+			expect(
+				badge!.querySelector('svg path[fill="currentColor"]')
+			).not.toBeNull();
+			expect(
+				canvasElement.querySelector(
+					'.sessionsListItem__handoverActionPrimary'
+				)
+			).toBeNull();
+		});
+	}
+};
+
+/**
+ * The owning consultant's view of the same session: their own row carries a
+ * small "Supervision: <name>" indicator so they know who reads along.
+ */
+export const SupervisedByOthers: Story = {
+	name: 'Supervision — supervised by a colleague (owner view)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: false,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor']
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const indicator = canvasElement.querySelector(
+				'[data-testid="supervision-indicator"]'
+			);
+			expect(indicator).not.toBeNull();
+			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			expect(
+				indicator!.querySelector('svg path[fill="currentColor"]')
+			).not.toBeNull();
+			expect(
+				canvasElement.querySelector('[data-testid="supervision-badge"]')
+			).toBeNull();
+		});
+	}
 };
