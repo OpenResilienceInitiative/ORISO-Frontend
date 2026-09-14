@@ -24,6 +24,7 @@ Screenshots (from the static Storybook build, `docs/storybook/issue-1377-display
 | `05-after-dialog-requests.png`         | Anfragen variant without the auto-read row                                                |
 | `06-after-chip-row-with-button.png`    | The extracted chip row molecule with the trailing slot                                    |
 | `07-after-chip-row-phone.png`          | 390px: chips scroll under the pinned button                                               |
+| `08-after-dialog-phone.png`            | 390×844: the dialog fills the viewport (`fullScreen`, Q7)                                 |
 
 No "before" shots: the component set is new; the extracted chip row renders
 with the unchanged `sessionsListToolbar__chip*` rules (compare

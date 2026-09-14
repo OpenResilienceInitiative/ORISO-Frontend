@@ -355,47 +355,54 @@ value shows **visible unread**:
   effective filter. Client-side `local-*` rows (incoming calls, toasts;
   `:164-173`) are never in the API total and never in these two. - `visibleLocalUnread` = unread local rows the filter shows.
 
-        `visibleUnreadCount = max(serverTotal − hiddenServerUnreadInLoadedPages,
+          `visibleUnreadCount = max(serverTotal − hiddenServerUnreadInLoadedPages,
 
     visibleServerUnreadInLoadedPages) + visibleLocalUnread`.
-    The `max`clamp exists because a page-0 refresh replaces`serverTotal` but
-    deliberately keeps rows below its reconciliation window (`:191-220`,
-    `:310-324`): a read performed on another device lowers the total while
-    such a retained older row stays locally unread, so the plain difference
-    could drop below what the user can see, or below zero. The clamp keeps
-    AC4's lower bound (never less than the visible unread rows on screen);
-    the retained rows converge on the next older-page load or reload. This is an
-    **upper bound**, never a promise: `apiGetEventNotifications`returns one
-    page (50 items) plus a server-wide`unreadCount`, and older pages load only
-    on demand, so hidden unread items on unloaded pages stay in the total. With
-    auto-read on the bound tightens with every loaded page (hidden items on
-    loaded pages are read server-side) but is still only exact once the user
-    has paged through all hidden unread. The badge tooltip says "up to N hidden"
-    whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
-    bound `serverTotal − hiddenServerUnreadInLoadedPages`is below
-   `serverTotal`; neither `visibleLocalUnread`nor the`max`clamp enters
-    that comparison (one hidden server row plus one visible local row would
-    otherwise make total and badge equal and mute the hint).
-    **Reconciliation rule:** both operands come from one local snapshot. The
-    auto-read pass goes through`markNotificationsReadConfirmed`(§6.1),
-    which on PATCH **success** sets the item's`readAt`**and** decrements the
-    local unread total in the same state update, so an item leaves
-   `hiddenUnreadInLoadedPages`and`serverTotal`together — never subtracted
-    twice. Until the PATCH resolves
-    the item stays unread in both operands, so a slow or failed PATCH leaves
-    the badge unchanged rather than inflated; the next feed refresh replaces
-    the local total with the server's`unreadCount`and recomputes the hidden
-    count from the fresh page, which converges both.
-    **Refresh-generation guard:**`serverTotal`carries a generation counter
-    that every page-0 response increments.`markNotificationsReadConfirmed`     records the generation at PATCH start and, on success, decrements
-    `serverTotal`**only if the generation is unchanged**; if a refresh landed
-    in between, its`unreadCount`already reflects the server-side read, so
-    the completion sets`readAt` and skips the decrement. Without the guard a
-    PATCH that commits just before a poll would be subtracted twice (once by
-    the poll's total, once by the callback) and the badge would undercount
-    visible unloaded events until the next poll. Tests: PATCH success,
-    PATCH delayed past a refresh (no double decrement), several PATCHes
-    completing around one refresh, PATCH failure.
+  The `max`clamp exists because a page-0 refresh replaces`serverTotal` but
+  deliberately keeps rows below its reconciliation window (`:191-220`,
+  `:310-324`): a read performed on another device lowers the total while
+  such a retained older row stays locally unread, so the plain difference
+  could drop below what the user can see, or below zero. The clamp keeps
+  AC4's lower bound (never less than the visible unread rows on screen);
+  the retained rows converge on the next older-page load or reload. This is an
+  **upper bound**, never a promise: `apiGetEventNotifications`returns one
+  page (50 items) plus a server-wide`unreadCount`, and older pages load only
+  on demand, so hidden unread items on unloaded pages stay in the total. With
+  auto-read on the bound tightens with every loaded page (hidden items on
+  loaded pages are read server-side) but is still only exact once the user
+  has paged through all hidden unread. The badge tooltip says "up to N hidden"
+  whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
+  bound `serverTotal − hiddenServerUnreadInLoadedPages`is below
+ `serverTotal`; neither `visibleLocalUnread`nor the`max`clamp enters
+  that comparison (one hidden server row plus one visible local row would
+  otherwise make total and badge equal and mute the hint).
+  **Reconciliation rule:** both operands come from one local snapshot. The
+  auto-read pass goes through`markNotificationsReadConfirmed`(§6.1),
+  which on PATCH **success** sets the item's`readAt`**and** decrements the
+  local unread total in the same state update, so an item leaves
+ `hiddenUnreadInLoadedPages`and`serverTotal`together — never subtracted
+  twice. Until the PATCH resolves
+  the item stays unread in both operands, so a slow or failed PATCH leaves
+  the badge unchanged rather than inflated; the next feed refresh replaces
+  the local total with the server's`unreadCount`and recomputes the hidden
+  count from the fresh page, which converges both.
+  **Pending-read serialisation:** while any confirmed-read PATCH is in
+  flight, a page-0 response updates the feed rows but does **not** replace
+  `serverTotal` (the value is parked); the total is replaced only by a
+    response that arrives with no PATCH pending, and the provider issues one
+    extra page-0 fetch as soon as the last pending PATCH settles. A PATCH
+    success therefore always decrements a total that predates its commit,
+    and every total that is applied already contains every committed read.
+    This closes both races a generation counter cannot tell apart: a poll
+    that landed **after** the commit (whose count already excludes the row;
+    a second decrement would undercount) and a poll that started **after**
+    PATCH start but returned **before** the commit (whose count still
+    includes the row; skipping the decrement would inflate the badge and
+    break AC4's equality). Cost: during an auto-read pass the total lags by
+    at most one poll. Tests: PATCH success, poll returning after the commit
+    (no double decrement), poll returning before the commit (decrement
+    applied, parked total discarded), several PATCHes around one poll, PATCH
+    failure (parked total applied unchanged).
 
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
