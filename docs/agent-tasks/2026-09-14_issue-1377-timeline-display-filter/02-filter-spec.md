@@ -64,7 +64,7 @@ places (the chip row already is: `sessionsListToolbar__chipsRow` is shared by
   "show everything".
 - Click → anchored popover (`Menu`/`Popover` from the MUI/M3 wrappers, like the
   card menu at `NotificationsCenter.tsx:1166-1235`). On `untilL` (mobile) the
-  same content opens as a bottom sheet.
+  same M3 dialog opens full-screen (Q7); there is no separate bottom sheet.
 - Position: after ✓✓ in the Timeline, after the last chip in Anfragen and
   Gespräche. It is not a chip and must not scroll away with the chips: it is
   pinned right, the chips scroll under it.
@@ -289,7 +289,12 @@ would skip it, and the badge would stay inflated for the tab's lifetime.
 The auto-read pass therefore uses a new `markNotificationsReadConfirmed(ids)`
 in `NotificationsProvider` that awaits each PATCH and updates `readAt` and
 the local total **only on success**; a failed id stays unread locally and is
-retried on the next refresh (idempotent server-side). No new backend endpoint is required for v1; a
+retried on the next refresh (idempotent server-side). **Client-only rows**
+(`local-*`, which the server does not know and the existing helper already
+skips for the PATCH) take a **local-only completion path**: no request, `readAt`
+set immediately, and they never touch the server-derived total (§6.3). Test:
+a hidden family with one server row and one `local-*` row → exactly one PATCH,
+both rows read locally, no retry on the next refresh. No new backend endpoint is required for v1; a
 `PATCH …/read?eventTypes=a,b` bulk endpoint is the obvious follow-up in
 ORISO-UserService once the volume shows up in SigNoz.
 
@@ -322,12 +327,28 @@ does not read `NotificationsContext`; commit `7f6dea17` only drove the
 ✓✓ button from the server total inside `NotificationsCenter`. This spec
 **introduces** the rail badge for `/notifications`. It must be derived in
 `NotificationsProvider` (a `visibleUnreadCount` next to the existing
-`unreadNotificationCount`, computed with the effective Timeline filter from
-`useDisplayFilter('timeline')`) and consumed by `NavigationBar` through the
+`unreadNotificationCount`) and consumed by `NavigationBar` through the
 context, so it updates while `/notifications` is unmounted; the tooltip below
-is rendered on the rail item. The value shows **visible unread**:
+is rendered on the rail item. **Provider order caveat:** `ContextProvider`
+(which holds `NotificationsProvider`) is mounted **outside**
+`MatrixClientProvider` (`app.tsx:153-156`), so a `useDisplayFilter` hook that
+reads the client from `MatrixClientContext` (the `useNotificationSettings`
+pattern, `useNotificationSettings.ts:19-28`) would see no client there and the
+store would never hydrate from account data on routes without another
+consumer. Therefore the **store is attached to the client by a bridge mounted
+inside `MatrixClientProvider`** (a `DisplayFilterStoreBridge` next to
+`TenantThemingLoader` that calls `displayFilterStore.attachClient(client)`
+once the client exists), while `NotificationsProvider` only **subscribes** to
+the store (`useSyncExternalStore` needs no client) to compute the count. The
+value shows **visible unread**:
 
-- v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`. This is an
+- v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`, where the
+  subtrahend counts **server rows only** — client-side `local-*` rows
+  (incoming calls, toasts; `NotificationsProvider.tsx:164-173`) are never in
+  the API's `unreadCount`, so subtracting a hidden local row would push the
+  badge below the visible count (AC4). Local rows are handled separately:
+  `visibleUnreadCount = (serverTotal − hiddenServerUnreadInLoadedPages) +
+visibleLocalUnread`. This is an
   **upper bound**, never a promise: `apiGetEventNotifications` returns one
   page (50 items) plus a server-wide `unreadCount`, and older pages load only
   on demand, so hidden unread items on unloaded pages stay in the total. With
