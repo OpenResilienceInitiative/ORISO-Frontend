@@ -480,10 +480,18 @@ value shows **visible unread**:
     settlement, hence at or below any floor advanced then) stays eligible
     and is applied as the preceding rule requires; advancing the floor
     there would discard it, leave the feed stale and delay the cooldown
-    reset until another poll. A response's rows are applied only if its number is above its **own
-    page's** newest-applied floor, and it replaces `serverTotal` only if its
-    number is also above the read-settled floor; anything older than its
-    page's floor is **discarded entirely, rows included**: the
+    reset until another poll. A response's rows are applied only if its number is above **both** its
+    own page's newest-applied floor **and** the read-settled floor — the
+    latter applies to rows as well, because a page-1 response parked during
+    a successful PATCH still clears its per-page floor after the
+    reconciliation page-0 response has been applied, and its rows would
+    overwrite the confirmed row with `readAt: null`. `serverTotal` is taken
+    **from page-0 responses only**: every page carries the server-wide
+    `unreadCount` (`apiEventNotifications.ts:18-23`), so an older page-1
+    snapshot returning after a newer page-0 poll would otherwise overwrite
+    the newer total even with no PATCH involved; older-page responses
+    contribute rows only. Anything below either floor is **discarded
+    entirely, rows included**: the
     page-0 merge is authoritative for its window and overwrites matching ids
     (`NotificationsProvider.tsx:220-230`), so applying a stale payload would
     drop newer events and revive `readAt: null` on a row whose PATCH has
@@ -493,7 +501,9 @@ value shows **visible unread**:
     nothing pending and re-apply its pre-read count. Tests: stale poll
     returning after the reconciliation fetch (rows and total discarded, the
     read row stays read), two polls returning out of order (newer wins),
-    page-0 poll returning before an in-flight page-1 load (both applied).
+    page-0 poll returning before an in-flight page-1 load (both row sets
+    applied, the page-1 total ignored), page-1 response parked across a
+    successful PATCH (discarded after the reconciliation response).
 
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
