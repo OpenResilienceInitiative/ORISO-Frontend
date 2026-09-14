@@ -93,3 +93,5 @@ index.d.ts
 
 # Local screenshot/evidence scratch dir (evidence lives on the PR, not in git)
 _shots/
+!docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/
+!docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/**
