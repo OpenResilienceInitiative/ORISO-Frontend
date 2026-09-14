@@ -9,6 +9,8 @@ type MessageEventData = {
 	timestamp?: number;
 	refreshEnquiryList?: boolean;
 	refreshSessionList?: boolean;
+	/** Feed reconciliation must not trigger another feed request. */
+	source?: 'notification-feed';
 };
 
 type MessageEventCallback = (data: MessageEventData) => void;

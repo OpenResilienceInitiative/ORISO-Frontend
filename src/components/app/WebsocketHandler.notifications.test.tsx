@@ -1,21 +1,12 @@
 // @vitest-environment jsdom
-/**
- * #1211 — the new-message browser notification driven through the REAL
- * WebsocketHandler path, not by calling the helper directly.
- *
- * That distinction is the point of this file. The bug was in the call site:
- * it repeated the opt-in check against the legacy localStorage key, so with
- * the cross-device panel routed (`enableNewNotifications`) an opt-in made in
- * the only panel the user can see never produced a popup. A test that calls
- * `sendNotification` itself walks straight past the gate that was wrong.
- */
+/** Matrix is the early trigger; persisted feed events own announcements. */
 import React from 'react';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebsocketHandler } from './WebsocketHandler';
 import {
 	AppConfigContext,
-	NotificationsContext,
+	NotificationsProvider,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
 import { setAppConfig } from '../../utils/appConfig';
@@ -44,8 +35,12 @@ const bridge = vi.hoisted(() => {
 vi.mock('../../services/matrixLiveEventBridge', () => ({
 	matrixLiveEventBridge: bridge
 }));
-vi.mock('../../services/messageEventEmitter', () => ({
-	messageEventEmitter: { emit: vi.fn() }
+const getFeed = vi.hoisted(() => vi.fn());
+vi.mock('../../api/apiEventNotifications', () => ({
+	apiGetEventNotifications: getFeed
+}));
+vi.mock('../sessionCookie/accessSessionCookie', () => ({
+	getValueFromCookie: () => 'test-token'
 }));
 // A stub transport: `connect` never fires its callback, so nothing subscribes
 // and the component's own Matrix listener is all that drives the test.
@@ -96,9 +91,7 @@ const routePanel = (crossDevice: boolean) => {
 const renderHandler = () =>
 	render(
 		<AppConfigContext.Provider value={appConfig}>
-			<NotificationsContext.Provider
-				value={{ addNotification: () => {} } as any}
-			>
+			<NotificationsProvider>
 				<WebsocketConnectionDeactivatedContext.Provider
 					value={
 						{ setWebsocketConnectionDeactivated: () => {} } as any
@@ -106,7 +99,7 @@ const renderHandler = () =>
 				>
 					<WebsocketHandler disconnect={false} />
 				</WebsocketConnectionDeactivatedContext.Provider>
-			</NotificationsContext.Provider>
+			</NotificationsProvider>
 		</AppConfigContext.Provider>
 	);
 
@@ -121,6 +114,8 @@ const receiveDirectMessage = () =>
 	});
 
 beforeEach(() => {
+	getFeed.mockReset();
+	getFeed.mockResolvedValue({ items: [], unreadCount: 0 });
 	constructed.length = 0;
 	localStorage.clear();
 	notificationSettingsStore.resetForTests();
@@ -146,20 +141,33 @@ describe('WebsocketHandler → new message notification', () => {
 	});
 
 	// The regression: this is the exact path that stayed silent.
-	it('fires for an opt-in made in the cross-device panel', () => {
+	it('fires once from the feed for an opt-in made in the cross-device panel', async () => {
 		routePanel(true);
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: true }
 		});
 
 		renderHandler();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(1));
+		getFeed.mockResolvedValue({
+			items: [
+				{
+					id: 1,
+					eventType: 'message.new',
+					createdAt: '2026-09-14T12:00:00Z',
+					readAt: null
+				}
+			],
+			unreadCount: 1
+		});
 		receiveDirectMessage();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(2));
 
 		expect(constructed).toHaveLength(1);
-		expect(constructed[0].title).toBe('notifications.message.new');
+		expect(constructed[0].options.eventType).toBe('message.new');
 	});
 
-	it('stays silent when the cross-device panel is switched off, even with a stale legacy key', () => {
+	it('stays silent when the cross-device panel is switched off, even with a stale legacy key', async () => {
 		routePanel(true);
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
@@ -167,27 +175,66 @@ describe('WebsocketHandler → new message notification', () => {
 		);
 
 		renderHandler();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(1));
+		getFeed.mockResolvedValue({
+			items: [
+				{
+					id: 1,
+					eventType: 'message.new',
+					createdAt: '2026-09-14T12:00:00Z',
+					readAt: null
+				}
+			],
+			unreadCount: 1
+		});
 		receiveDirectMessage();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(2));
 
 		expect(constructed).toHaveLength(0);
 	});
 
-	it('fires for an opt-in made in the legacy panel when that is the routed one', () => {
+	it('fires once from the feed for an opt-in made in the legacy panel when that is the routed one', async () => {
 		saveBrowserNotificationsSettings({ enabled: true });
 
 		renderHandler();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(1));
+		getFeed.mockResolvedValue({
+			items: [
+				{
+					id: 1,
+					eventType: 'message.new',
+					createdAt: '2026-09-14T12:00:00Z',
+					readAt: null
+				}
+			],
+			unreadCount: 1
+		});
 		receiveDirectMessage();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(2));
 
 		expect(constructed).toHaveLength(1);
 	});
 
 	// Dropping the call-site gate must not drop the legacy per-type switch.
-	it('respects the legacy per-type switch for new messages', () => {
+	it('respects the legacy per-type switch for new messages', async () => {
 		saveBrowserNotificationsSettings({ enabled: true });
 		saveBrowserNotificationsSettings({ newMessage: false });
 
 		renderHandler();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(1));
+		getFeed.mockResolvedValue({
+			items: [
+				{
+					id: 1,
+					eventType: 'message.new',
+					createdAt: '2026-09-14T12:00:00Z',
+					readAt: null
+				}
+			],
+			unreadCount: 1
+		});
 		receiveDirectMessage();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(2));
 
 		expect(constructed).toHaveLength(0);
 	});

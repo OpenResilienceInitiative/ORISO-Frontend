@@ -13,6 +13,9 @@ import {
 	NotificationsProvider
 } from './NotificationsProvider';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { setKindField } from '../../utils/notificationSettings/notificationConfig';
+import { __resetSoundThrottlesForTests } from '../../utils/notificationSettings/soundPlayback';
 
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn(() => Promise.resolve());
@@ -47,6 +50,7 @@ const PaginationProbe = () => {
 				load
 			</button>
 			<button onClick={context.clearNotificationFeed}>clear</button>
+			<button onClick={context.refreshNotificationFeed}>refresh</button>
 		</>
 	);
 };
@@ -113,6 +117,45 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 	// stale listeners don't fire on the next test's emit.
 	afterEach(() => cleanup());
 
+	it('refreshes enquiry lists for a newly submitted request below another event without a feed loop', async () => {
+		const listRefresh = vi.fn();
+		const listener = (event) => {
+			if (event.refreshEnquiryList) listRefresh();
+		};
+		messageEventEmitter.on(listener);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					feedItem(3, '2026-09-14T12:00:02Z'),
+					{
+						...feedItem(2, '2026-09-14T12:00:01Z'),
+						eventType: 'request.new'
+					}
+				],
+				unreadCount: 2
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() => expect(listRefresh).toHaveBeenCalledTimes(1));
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2);
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(listRefresh).toHaveBeenCalledTimes(1);
+		} finally {
+			messageEventEmitter.off(listener);
+		}
+	});
+
 	it('refetches the feed when a live directMessage event fires, without waiting for the 15s poll', async () => {
 		render(
 			<NotificationsProvider>
@@ -157,6 +200,185 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		// Give any un-debounced extra calls a chance to (wrongly) fire.
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		expect(apiGetEventNotifications).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('NotificationsProvider announcements', () => {
+	const banners = vi.fn();
+	const play = vi.fn(() => Promise.resolve());
+	beforeEach(() => {
+		apiGetEventNotifications.mockReset();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
+		banners.mockClear();
+		play.mockClear();
+		localStorage.clear();
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({
+				enabled: true,
+				initialEnquiry: true,
+				newMessage: true
+			})
+		);
+		notificationSettingsStore.resetForTests();
+		__resetSoundThrottlesForTests();
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				notificationSettingsStore.getState().settings
+					.notificationConfig,
+				'requests',
+				'new',
+				'sound',
+				'chime'
+			)
+		});
+		vi.stubGlobal(
+			'Notification',
+			class {
+				static permission = 'granted';
+				static requestPermission = vi.fn();
+				constructor(title: string, options: NotificationOptions) {
+					banners(title, options);
+				}
+			}
+		);
+		vi.stubGlobal(
+			'Audio',
+			class {
+				play = play;
+			}
+		);
+	});
+	afterEach(() => {
+		cleanup();
+		vi.unstubAllGlobals();
+		notificationSettingsStore.resetForTests();
+	});
+
+	it('announces each new request once, keeps private text out of banners and never replays the initial backlog', async () => {
+		const old = {
+			...feedItem(1, '2026-09-14T12:00:00Z'),
+			eventType: 'request.new'
+		};
+		apiGetEventNotifications.mockResolvedValue({
+			items: [old],
+			unreadCount: 1
+		});
+		render(
+			<NotificationsProvider>
+				<PaginationProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
+		expect(banners).not.toHaveBeenCalled();
+		expect(play).not.toHaveBeenCalled();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				{
+					...old,
+					id: 3,
+					createdAt: '2026-09-14T12:00:02Z',
+					text: 'PRIVATE ENQUIRY'
+				},
+				{ ...old, id: 2, createdAt: '2026-09-14T12:00:01Z' },
+				old
+			],
+			unreadCount: 3
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() => expect(banners).toHaveBeenCalledTimes(2));
+		expect(play).toHaveBeenCalledTimes(1);
+		expect(JSON.stringify(banners.mock.calls)).not.toContain(
+			'PRIVATE ENQUIRY'
+		);
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+		);
+		expect(banners).toHaveBeenCalledTimes(2);
+		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['banner off', false, 'off', 1],
+		['muted', true, 'temporary', 0]
+	] as const)(
+		'keeps the feed usable with %s',
+		async (_label, globalMute, banner, sounds) => {
+			notificationSettingsStore.updateSettings({
+				globalMute,
+				notificationConfig: setKindField(
+					notificationSettingsStore.getState().settings
+						.notificationConfig,
+					'requests',
+					'new',
+					'banner',
+					banner
+				)
+			});
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType: 'request.new'
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).not.toHaveBeenCalled();
+			expect(play).toHaveBeenCalledTimes(sounds);
+		}
+	);
+
+	it('still displays the new feed when the browser cannot construct a notification', async () => {
+		vi.stubGlobal(
+			'Notification',
+			class {
+				static permission = 'granted';
+				static requestPermission = vi.fn();
+				constructor() {
+					throw new Error('Notification constructor unavailable');
+				}
+			}
+		);
+		render(
+			<NotificationsProvider>
+				<PaginationProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+		);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				{
+					...feedItem(1, '2026-09-14T12:00:00Z'),
+					eventType: 'request.new'
+				}
+			],
+			unreadCount: 1
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
 	});
 });
 

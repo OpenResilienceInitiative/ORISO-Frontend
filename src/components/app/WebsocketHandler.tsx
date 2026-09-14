@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { resolveStompListRefresh } from './stompListRefresh';
-import { useNavigate } from 'react-router-dom';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -15,7 +14,6 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
-import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -28,7 +26,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const liveWebsocketDisabled =
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
-	const navigate = useNavigate();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
@@ -140,19 +137,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			// Whether the user wants this popup is `sendNotification`'s call
-			// alone (#1211) — it knows the family, the event type and which
-			// settings panel is actually routed. Repeating the check here is
-			// what broke new-message popups for the cross-device panel.
-			sendNotification(translate('notifications.message.new'), {
-				// Route the banner to its config row (#576 harmonised
-				// model): Gespräch → Standard-Benachrichtigung.
-				family: 'messages',
-				eventType: 'message.new',
-				onclick: () => {
-					navigate(`/sessions/consultant/sessionView`);
-				}
-			});
+			// NotificationsProvider announces the persisted event once the feed arrives.
 		}
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 

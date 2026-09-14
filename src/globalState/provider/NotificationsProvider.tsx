@@ -10,6 +10,8 @@ import {
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
+import { t } from 'i18next';
+import { sendNotification } from '../../utils/notificationHelpers';
 import {
 	IncomingVideoCallProps,
 	NotificationTypeCall
@@ -27,8 +29,7 @@ import { parseEventActionParams } from '../../components/notificationsCenter/not
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	installAudioUnlock,
-	playNotificationSound,
-	selectEventToAnnounce
+	playNotificationSound
 } from '../../utils/notificationSettings/soundPlayback';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
@@ -330,7 +331,9 @@ export function NotificationsProvider(props) {
 	// #576: id of the newest event slot we already reconciled, so a feed refresh
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
-	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	const observedEventIdsRef = useRef<Set<string> | null>(null);
+	const initialFeedTimeRef = useRef(Number.NEGATIVE_INFINITY);
+	const observedRequestIdsRef = useRef<Set<string> | null>(null);
 	const resetFeedState = useCallback(() => {
 		loadingOlderRef.current = false;
 		dispatchFeed({ type: 'reset' });
@@ -338,35 +341,64 @@ export function NotificationsProvider(props) {
 		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
 		highestLoadedPageRef.current = 0;
+		observedRequestIdsRef.current = null;
+		observedEventIdsRef.current = null;
+		initialFeedTimeRef.current = Number.NEGATIVE_INFINITY;
 	}, []);
 
-	// #576: play the configured sound for a genuinely new, unread top event —
-	// decoupled from the OS popup, so it also sounds with the tab focused. The
-	// sound routes through the single suppression gate (DND, per-conversation
-	// level, mute, family-off) inside playNotificationSound.
-	const maybePlaySoundForNewEvent = useCallback(
-		(feed: NotificationFeedItem[]) => {
-			const { announce, nextMarker } = selectEventToAnnounce(
-				feed,
-				lastAnnouncedEventIdRef.current
+	// One event-observation path owns sound and OS banners. Initial history is
+	// silent; repeated polls and read-state changes cannot re-announce a row.
+	const announceNewEvents = useCallback((feed: NotificationFeedItem[]) => {
+		if (observedEventIdsRef.current === null) {
+			observedEventIdsRef.current = new Set(feed.map((item) => item.id));
+			initialFeedTimeRef.current = Math.max(
+				Number.NEGATIVE_INFINITY,
+				...feed.map((item) => new Date(item.createdAt).getTime())
 			);
-			lastAnnouncedEventIdRef.current = nextMarker;
-			if (!announce) {
-				return;
+			return;
+		}
+		const observed = observedEventIdsRef.current;
+		const { settings, device } = notificationSettingsStore.getState();
+		for (const event of feed) {
+			if (observed.has(event.id)) continue;
+			observed.add(event.id);
+			if (
+				event.readAt ||
+				new Date(event.createdAt).getTime() < initialFeedTimeRef.current
+			)
+				continue;
+			const descriptor = getEventDescriptor(event.eventType);
+			const mentioned = event.params?.mentioned === true;
+			try {
+				playNotificationSound(
+					settings,
+					device,
+					descriptor.family,
+					event.eventType,
+					mentioned
+				);
+			} catch {
+				// Device audio support must not prevent feed or banner delivery.
 			}
-			const { settings, device } = notificationSettingsStore.getState();
-			const family = getEventDescriptor(announce.eventType).family;
-			const isMention = announce.params?.mentioned === true;
-			playNotificationSound(
-				settings,
-				device,
-				family,
-				announce.eventType,
-				isMention
-			);
-		},
-		[]
-	);
+			// OS surfaces contain only the generic localized event title. Never
+			// copy server text or decrypted counselling content to the lock screen.
+			try {
+				sendNotification(
+					t(descriptor.titleTemplate, { senderDisplayName: '' }),
+					{
+						family: descriptor.family,
+						eventType: event.eventType,
+						mentioned,
+						showAlways: descriptor.family === 'requests',
+						onclick: () => window.focus()
+					}
+				);
+			} catch {
+				// Some browsers expose Notification but reject its constructor.
+				// The feed remains available and polling continues normally.
+			}
+		}
+	}, []);
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
@@ -387,7 +419,24 @@ export function NotificationsProvider(props) {
 				response?.items || []
 			).map(normalizeEventNotification);
 			if (feedEpoch !== feedEpochRef.current) return;
-			maybePlaySoundForNewEvent(normalized);
+			const requests = normalized.filter(
+				(item) => item.eventType === 'request.new'
+			);
+			const observed = observedRequestIdsRef.current;
+			const hasNewRequest =
+				observed !== null &&
+				requests.some((item) => !observed.has(item.id));
+			observedRequestIdsRef.current ??= new Set();
+			requests.forEach((item) =>
+				observedRequestIdsRef.current.add(item.id)
+			);
+			if (hasNewRequest) {
+				messageEventEmitter.emit({
+					refreshEnquiryList: true,
+					source: 'notification-feed'
+				});
+			}
+			announceNewEvents(normalized);
 			// Page 0 is authoritative for its own window, so a row the server
 			// dropped disappears here instead of surviving until a reload.
 			dispatchFeed({
@@ -410,7 +459,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, [maybePlaySoundForNewEvent, resetFeedState]);
+	}, [announceNewEvents, resetFeedState]);
 
 	const loadOlderNotifications = useCallback(async () => {
 		if (loadingOlderRef.current || !hasOlderNotifications) return;
@@ -472,7 +521,8 @@ export function NotificationsProvider(props) {
 	// a burst of events collapses into a single refetch.
 	useEffect(() => {
 		let debounceTimer: number | undefined;
-		const onLiveEvent = () => {
+		const onLiveEvent = (event) => {
+			if (event.source === 'notification-feed') return;
 			window.clearTimeout(debounceTimer);
 			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
 		};
