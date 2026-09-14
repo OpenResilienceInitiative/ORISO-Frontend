@@ -355,7 +355,11 @@ visibleLocalUnread`. This is an
   auto-read on the bound tightens with every loaded page (hidden items on
   loaded pages are read server-side) but is still only exact once the user
   has paged through all hidden unread. The badge tooltip says "up to N hidden"
-  whenever `serverTotal` exceeds the visible count.
+  whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
+  bound `serverTotal − hiddenServerUnreadInLoadedPages` is below
+  `serverTotal`; `visibleLocalUnread` is added to the displayed badge only
+  and never enters that comparison (one hidden server row plus one visible
+  local row would otherwise make total and badge equal and mute the hint).
   **Reconciliation rule:** both operands come from one local snapshot. The
   auto-read pass goes through `markNotificationsReadConfirmed` (§6.1),
   which on PATCH **success** sets the item's `readAt` **and** decrements the

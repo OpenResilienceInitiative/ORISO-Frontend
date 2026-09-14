@@ -1825,6 +1825,7 @@
 	"notifications": {
 		"displayFilter": {
 			"button": "Filtre d’affichage",
+			"buttonCustomised": "Filtre personnalisé",
 			"title": "Filtre d’affichage",
 			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
 			"showColumn": "Afficher",

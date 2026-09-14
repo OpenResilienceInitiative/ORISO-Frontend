@@ -1850,6 +1850,7 @@
 	"notifications": {
 		"displayFilter": {
 			"button": "Anzeige-Filter",
+			"buttonCustomised": "Filter angepasst",
 			"title": "Anzeige-Filter",
 			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
 			"showColumn": "Anzeigen",

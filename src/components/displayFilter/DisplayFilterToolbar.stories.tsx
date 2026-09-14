@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ListSearchField } from '../listSearchField/ListSearchField';
@@ -35,9 +35,9 @@ const Toolbar = ({
 	const [value, setValue] = useState<DisplayFilterValue>(initialValue);
 	const [active, setActive] = useState<string | null>(null);
 	const [open, setOpen] = useState(false);
-	const kindIds = useMemo(() => TIMELINE_KINDS.map((kind) => kind.id), []);
 	const pills = visiblePillKinds(value, TIMELINE_KINDS, active);
-	const customised = isDisplayFilterCustomised(value, kindIds);
+	// The options (not just ids) so profile-owned partial hiding counts too.
+	const customised = isDisplayFilterCustomised(value, TIMELINE_KINDS);
 
 	return (
 		<div
@@ -56,6 +56,7 @@ const Toolbar = ({
 					<DisplayFilterButton
 						label="Anzeige-Filter"
 						customised={customised}
+						customisedLabel="Filter angepasst"
 						open={open}
 						controlsId="display-filter-dialog"
 						onClick={() => setOpen(true)}

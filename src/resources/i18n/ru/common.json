@@ -1833,6 +1833,7 @@
 	"notifications": {
 		"displayFilter": {
 			"button": "Фильтр отображения",
+			"buttonCustomised": "Фильтр настроен",
 			"title": "Фильтр отображения",
 			"description": "Какие типы показываются в этом списке и какие получают метку.",
 			"showColumn": "Показывать",

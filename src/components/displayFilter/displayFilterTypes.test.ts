@@ -51,6 +51,19 @@ describe('displayFilterTypes (#1377)', () => {
 		expect(isDisplayFilterCustomised(shownAgain, ['drafts'])).toBe(true);
 	});
 
+	it('counts profile-owned partial hiding as customised', () => {
+		expect(
+			isDisplayFilterCustomised(EMPTY_DISPLAY_FILTER, [
+				{ id: 'messages', partial: true }
+			])
+		).toBe(true);
+		expect(
+			isDisplayFilterCustomised(EMPTY_DISPLAY_FILTER, [
+				{ id: 'messages', partial: false }
+			])
+		).toBe(false);
+	});
+
 	it('marks auto-read alone as customised', () => {
 		expect(
 			isDisplayFilterCustomised(

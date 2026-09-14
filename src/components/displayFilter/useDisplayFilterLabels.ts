@@ -11,11 +11,18 @@ export type DisplayFilterSection = 'timeline' | 'sessions' | 'requests';
  */
 export const useDisplayFilterLabels = (
 	section: DisplayFilterSection
-): { buttonLabel: string; dialogLabels: DisplayFilterDialogLabels } => {
+): {
+	buttonLabel: string;
+	buttonCustomisedLabel: string;
+	dialogLabels: DisplayFilterDialogLabels;
+} => {
 	const { t } = useTranslation();
 	return useMemo(
 		() => ({
 			buttonLabel: t('notifications.displayFilter.button'),
+			buttonCustomisedLabel: t(
+				'notifications.displayFilter.buttonCustomised'
+			),
 			dialogLabels: {
 				title: `${t('notifications.displayFilter.title')} · ${t(
 					`notifications.displayFilter.sections.${section}`

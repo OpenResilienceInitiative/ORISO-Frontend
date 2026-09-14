@@ -31,10 +31,13 @@ describe('DisplayFilterButton (#1377)', () => {
 		fireEvent.click(button);
 		expect(onClick).toHaveBeenCalledTimes(1);
 
+		expect(button.getAttribute('aria-describedby')).toBeNull();
+
 		rerender(
 			<DisplayFilterButton
 				label="Anzeige-Filter"
 				customised
+				customisedLabel="Filter angepasst"
 				open
 				onClick={onClick}
 			/>
@@ -43,5 +46,12 @@ describe('DisplayFilterButton (#1377)', () => {
 		expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
+		// The dot is decorative; the state reaches screen readers as description.
+		const describedBy = button.getAttribute('aria-describedby');
+		expect(describedBy).not.toBeNull();
+		expect(
+			document.getElementById(describedBy as string)?.textContent
+		).toBe('Filter angepasst');
+		expect(button.getAttribute('aria-label')).toBe('Anzeige-Filter');
 	});
 });

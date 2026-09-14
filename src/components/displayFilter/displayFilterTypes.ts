@@ -55,15 +55,31 @@ export const resolveKindSetting = (
 	return { show, pill: show && raw.pill };
 };
 
-/** True when the value differs from "show everything with pills" (drives the button dot). */
+/**
+ * Kinds accepted by {@link isDisplayFilterCustomised}: plain ids, or the
+ * rendered options so profile-owned partial hiding (spec §5.1) counts too.
+ */
+export type DisplayFilterKindRef =
+	| string
+	| Pick<DisplayFilterKindOption, 'id' | 'partial'>;
+
+/**
+ * True when the EFFECTIVE filter differs from "show everything with pills"
+ * (drives the button dot, spec §3): a hidden kind, a pill switched off,
+ * auto-read on, or a kind whose event types are partly hidden in the profile
+ * (`partial`) — that last one filters the feed although `value` is empty.
+ */
 export const isDisplayFilterCustomised = (
 	value: DisplayFilterValue,
-	kindIds: ReadonlyArray<string>
+	kinds: ReadonlyArray<DisplayFilterKindRef>
 ): boolean =>
 	value.autoReadHidden ||
-	kindIds.some((kindId) => {
+	kinds.some((kind) => {
+		const kindId = typeof kind === 'string' ? kind : kind.id;
+		const partial =
+			typeof kind === 'string' ? false : Boolean(kind.partial);
 		const setting = resolveKindSetting(value, kindId);
-		return !setting.show || !setting.pill;
+		return partial || !setting.show || !setting.pill;
 	});
 
 /** Immutable update of one kind; hiding a kind also drops its pill. */

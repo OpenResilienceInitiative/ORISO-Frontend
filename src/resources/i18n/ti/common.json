@@ -1825,6 +1825,7 @@
 	"notifications": {
 		"displayFilter": {
 			"button": "መጻረዪ ምርኣይ",
+			"buttonCustomised": "መጻረዪ ተመዓራርዩ",
 			"title": "መጻረዪ ምርኣይ",
 			"description": "ኣብዚ ዝርዝር እዚ ኣየኖት ዓይነታት ከም ዝርኣዩን ኣየኖት ምልክት ከም ዝወስዱን።",
 			"showColumn": "ኣርኢ",

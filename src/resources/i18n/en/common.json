@@ -1826,6 +1826,7 @@
 	"notifications": {
 		"displayFilter": {
 			"button": "Display filter",
+			"buttonCustomised": "Filter customised",
 			"title": "Display filter",
 			"description": "Which kinds appear in this list and which get a pill.",
 			"showColumn": "Show",
