@@ -10,6 +10,7 @@ import { DisplayFilterDialog } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
+	hasDisplayFilterOverride,
 	isDisplayFilterCustomised,
 	reconcileActiveKind,
 	visiblePillKinds
@@ -87,7 +88,7 @@ const Toolbar = ({
 				onClose={() => setOpen(false)}
 				kinds={TIMELINE_KINDS}
 				value={value}
-				customised={customised}
+				canReset={hasDisplayFilterOverride(value)}
 				onChange={(next) => {
 					setValue(next);
 					setActive((current) => reconcileActiveKind(next, current));

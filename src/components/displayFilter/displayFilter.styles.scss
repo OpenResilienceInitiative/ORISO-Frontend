@@ -105,6 +105,19 @@
 		color: var(--m3-on-surface, #1b1b1c);
 	}
 
+	&__kindText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	&__kindHint {
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	&__kindIcon {
 		width: 20px;
 		height: 20px;

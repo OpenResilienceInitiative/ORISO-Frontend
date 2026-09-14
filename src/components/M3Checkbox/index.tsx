@@ -15,7 +15,8 @@ export const M3Checkbox = ({
 	dataCy,
 	disabled = false,
 	hideLabel = false,
-	indeterminate = false
+	indeterminate = false,
+	describedBy
 }: {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
@@ -30,6 +31,8 @@ export const M3Checkbox = ({
 	 * instead of the check, `aria-checked="mixed"` on the input.
 	 */
 	indeterminate?: boolean;
+	/** id of an element explaining the control (`aria-describedby`). */
+	describedBy?: string;
 }) => {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	useEffect(() => {
@@ -53,6 +56,7 @@ export const M3Checkbox = ({
 					disabled={disabled}
 					aria-checked={indeterminate ? 'mixed' : undefined}
 					aria-label={hideLabel ? label : undefined}
+					aria-describedby={describedBy}
 					onChange={(e) => onChange(e.target.checked)}
 					data-cy={dataCy}
 				/>

@@ -24,7 +24,7 @@ export interface DisplayFilterDialogLabels {
 	/** Accessible name of one show checkbox, e.g. "Anzeigen: Anfragen". */
 	showKind: (kindLabel: string) => string;
 	pillKind: (kindLabel: string) => string;
-	/** Tooltip on the fixed "other" show checkbox. */
+	/** Visible hint under the "other" row, linked to its fixed show checkbox. */
 	otherFixed: string;
 	autoRead: string;
 	autoReadDescription: string;
@@ -50,8 +50,12 @@ export interface DisplayFilterDialogProps {
 	readOnly?: boolean;
 	onOpenProfile?: () => void;
 	labels: DisplayFilterDialogLabels;
-	/** Whether the current value differs from the defaults (enables "reset"). */
-	customised?: boolean;
+	/**
+	 * A section override exists that reset would delete (spec §4). NOT the
+	 * button dot's "effective filter is customised": profile-only filtering
+	 * has nothing to reset, and an override equal to the defaults still does.
+	 */
+	canReset?: boolean;
 	/** M3 full-screen presentation on phones (Q7); the caller passes `useResponsive().untilL`. */
 	fullScreen?: boolean;
 	/** DOM id of the dialog surface, referenced by the button's `aria-controls`. */
@@ -76,7 +80,7 @@ export const DisplayFilterDialog = ({
 	readOnly = false,
 	onOpenProfile,
 	labels,
-	customised = false,
+	canReset = false,
 	fullScreen = false,
 	id
 }: DisplayFilterDialogProps) => {
@@ -100,7 +104,7 @@ export const DisplayFilterDialog = ({
 				{
 					label: labels.reset,
 					onClick: onReset,
-					disabled: readOnly || !customised,
+					disabled: readOnly || !canReset,
 					testId: 'display-filter-reset'
 				},
 				{
@@ -166,20 +170,30 @@ export const DisplayFilterDialog = ({
 											aria-hidden="true"
 										/>
 									)}
-									<span>{kind.label}</span>
+									<span className="displayFilterDialog__kindText">
+										<span>{kind.label}</span>
+										{isOther && (
+											<span
+												className="displayFilterDialog__kindHint"
+												id={`${dialogId}-other-fixed`}
+											>
+												{labels.otherFixed}
+											</span>
+										)}
+									</span>
 								</th>
-								<td
-									className="displayFilterDialog__cell"
-									title={
-										isOther ? labels.otherFixed : undefined
-									}
-								>
+								<td className="displayFilterDialog__cell">
 									<M3Checkbox
 										checked={setting.show}
 										indeterminate={Boolean(
 											setting.show && kind.partial
 										)}
 										disabled={readOnly || isOther}
+										describedBy={
+											isOther
+												? `${dialogId}-other-fixed`
+												: undefined
+										}
 										hideLabel
 										label={labels.showKind(kind.label)}
 										dataCy={`display-filter-show-${kind.id}`}

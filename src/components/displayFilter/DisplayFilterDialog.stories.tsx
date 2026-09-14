@@ -6,7 +6,7 @@ import { DisplayFilterDialog } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
-	isDisplayFilterCustomised,
+	hasDisplayFilterOverride,
 	setKindSetting
 } from './displayFilterTypes';
 import { STORY_LABELS, TIMELINE_KINDS } from './displayFilterStoryData';
@@ -53,12 +53,11 @@ const Controlled = (
 	const [value, setValue] = useState<DisplayFilterValue>(
 		args.initialValue ?? args.value
 	);
-	const kindIds = args.kinds.map((kind) => kind.id);
 	return (
 		<DisplayFilterDialog
 			{...args}
 			value={value}
-			customised={isDisplayFilterCustomised(value, kindIds)}
+			canReset={hasDisplayFilterOverride(value)}
 			onChange={setValue}
 			onReset={() => setValue(EMPTY_DISPLAY_FILTER)}
 			onOpenProfile={() => undefined}

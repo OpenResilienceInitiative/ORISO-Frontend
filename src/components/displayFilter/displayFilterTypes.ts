@@ -82,6 +82,15 @@ export const isDisplayFilterCustomised = (
 		return partial || !setting.show || !setting.pill;
 	});
 
+/**
+ * True when the value carries any explicit setting, i.e. a section override
+ * exists that "reset" (spec §4: delete the override) could remove. Distinct
+ * from {@link isDisplayFilterCustomised}: an override equal to the defaults
+ * still exists, and profile-only filtering is not an override.
+ */
+export const hasDisplayFilterOverride = (value: DisplayFilterValue): boolean =>
+	value.autoReadHidden || Object.keys(value.kinds).length > 0;
+
 /** Immutable update of one kind; hiding a kind also drops its pill. */
 export const setKindSetting = (
 	value: DisplayFilterValue,

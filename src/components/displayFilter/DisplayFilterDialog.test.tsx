@@ -44,7 +44,7 @@ const Harness = ({
 			onReset={rest.onReset ?? (() => undefined)}
 			kinds={KINDS}
 			value={value}
-			customised
+			canReset
 			labels={STORY_LABELS}
 			readOnly={rest.readOnly}
 			showAutoRead={rest.showAutoRead}
@@ -87,6 +87,13 @@ describe('DisplayFilterDialog (#1377)', () => {
 		}) as HTMLInputElement;
 		expect(showOther.disabled).toBe(true);
 		expect(showOther.checked).toBe(true);
+		// The "cannot be hidden" explanation is visible text, linked to the
+		// (unfocusable) disabled checkbox — not a hover-only title.
+		const hintId = showOther.getAttribute('aria-describedby');
+		expect(hintId).not.toBeNull();
+		expect(document.getElementById(hintId as string)?.textContent).toBe(
+			STORY_LABELS.otherFixed
+		);
 		fireEvent.click(screen.getByRole('switch'));
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue)
