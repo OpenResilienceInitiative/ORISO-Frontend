@@ -443,14 +443,22 @@ value shows **visible unread**:
     read state is therefore held monotonically until the reconciliation
     response: the provider issues one extra page-0 fetch as soon as the
     last pending PATCH settles **with at least one success**, and that
-    response (or a later one) is the first to be applied. If every pending
-    PATCH failed, no reconciliation fetch is issued and the parked response
-    is applied as is; the failed ids go on a **cooldown list** that the
-    auto-read pass skips until an ordinary poll (§6.1: the next refresh)
-    has been applied. Without this, a persistent 4xx/5xx would loop PATCH →
+    response (or a later one) is the first to be applied. **Every failed id goes on a
+    cooldown list first**, whatever the rest of the batch did — before
+    either reconciliation path runs — and the auto-read pass skips
+    cooled-down ids until an ordinary poll (§6.1: the next refresh) has been
+    applied. If every pending PATCH failed, no reconciliation fetch is
+    issued and the parked response is applied as is. In a **mixed** batch
+    (some succeeded, some failed) the reconciliation fetch is issued, and
+    because the failed rows are already cooling down, applying its response
+    does not re-PATCH them; without that ordering a stream of other
+    successful reads could keep retrying a persistently failing row on
+    every reconciliation. Without this, a persistent 4xx/5xx would loop PATCH →
     reconciliation GET → auto-read pass → PATCH without ever waiting for the
-    poll interval. Test: PATCH fails persistently → exactly one PATCH per
-    ordinary poll, no extra GET. A PATCH
+    poll interval. Tests: PATCH fails persistently → exactly one PATCH per
+    ordinary poll, no extra GET; mixed batch (one success, one failure) →
+    one reconciliation fetch, the failed row is not re-PATCHed until the
+    next ordinary poll. A PATCH
     success therefore always decrements a total that predates its commit,
     and every total that is applied already contains every committed read.
     This closes both races a generation counter cannot tell apart: a poll
