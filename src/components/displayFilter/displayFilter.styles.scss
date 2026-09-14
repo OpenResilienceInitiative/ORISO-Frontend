@@ -112,6 +112,13 @@
 		min-width: 0;
 	}
 
+	&__noPill {
+		display: inline-block;
+		width: 40px;
+		text-align: center;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	&__kindHint {
 		font-size: 12px;
 		line-height: 16px;

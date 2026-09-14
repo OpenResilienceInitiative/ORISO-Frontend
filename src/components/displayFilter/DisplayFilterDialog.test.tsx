@@ -129,6 +129,29 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(document.getElementById('dlg-1')).not.toBeNull();
 	});
 
+	it('renders no pill control for a show-only kind', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onChange={() => undefined}
+				kinds={[
+					...KINDS,
+					{ id: 'futureTimeline', label: 'Zukunft', showOnly: true }
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+			/>
+		);
+		expect(
+			screen.getByRole('checkbox', { name: 'Anzeigen: Zukunft' })
+		).not.toBeNull();
+		expect(
+			screen.queryByRole('checkbox', { name: 'Pille: Zukunft' })
+		).toBeNull();
+	});
+
 	it('omits auto-read for sections without it', () => {
 		render(<Harness onValue={() => undefined} showAutoRead={false} />);
 		expect(screen.queryByRole('switch')).toBeNull();

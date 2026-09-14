@@ -33,6 +33,12 @@ export interface DisplayFilterKindOption {
 	 * the show checkbox renders indeterminate ("mixed") instead of checked.
 	 */
 	partial?: boolean;
+	/**
+	 * The kind gates a panel, not rows (e.g. "Future timeline", spec §5.2):
+	 * no unread count and no chip, so the dialog renders no Pill control and
+	 * {@link visiblePillKinds} never yields it.
+	 */
+	showOnly?: boolean;
 }
 
 export const DEFAULT_KIND_SETTING: KindSetting = { show: true, pill: true };
@@ -109,6 +115,9 @@ export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 	activeKindId: string | null
 ): T[] =>
 	kinds.filter((kind) => {
+		if (kind.showOnly) {
+			return false;
+		}
 		const setting = resolveKindSetting(value, kind.id);
 		if (!setting.pill) {
 			return false;

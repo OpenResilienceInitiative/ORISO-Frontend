@@ -207,20 +207,33 @@ export const DisplayFilterDialog = ({
 									/>
 								</td>
 								<td className="displayFilterDialog__cell">
-									<M3Checkbox
-										checked={setting.pill}
-										disabled={readOnly || !setting.show}
-										hideLabel
-										label={labels.pillKind(kind.label)}
-										dataCy={`display-filter-pill-${kind.id}`}
-										onChange={(checked) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													pill: checked
-												})
-											)
-										}
-									/>
+									{kind.showOnly ? (
+										<span
+											className="displayFilterDialog__noPill"
+											aria-hidden="true"
+										>
+											–
+										</span>
+									) : (
+										<M3Checkbox
+											checked={setting.pill}
+											disabled={readOnly || !setting.show}
+											hideLabel
+											label={labels.pillKind(kind.label)}
+											dataCy={`display-filter-pill-${kind.id}`}
+											onChange={(checked) =>
+												onChange(
+													setKindSetting(
+														value,
+														kind.id,
+														{
+															pill: checked
+														}
+													)
+												)
+											}
+										/>
+									)}
 								</td>
 							</tr>
 						);

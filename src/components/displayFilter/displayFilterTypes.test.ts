@@ -64,6 +64,20 @@ describe('displayFilterTypes (#1377)', () => {
 		).toBe(false);
 	});
 
+	it('never yields a chip for a show-only kind', () => {
+		const kinds = [
+			{
+				id: 'futureTimeline',
+				label: 'Zukunft',
+				unreadCount: 3,
+				showOnly: true
+			}
+		];
+		expect(
+			visiblePillKinds(EMPTY_DISPLAY_FILTER, kinds, 'futureTimeline')
+		).toEqual([]);
+	});
+
 	it('marks auto-read alone as customised', () => {
 		expect(
 			isDisplayFilterCustomised(

@@ -261,6 +261,12 @@ Rules:
   ordinary non-group counselling session (`SessionsListToolbar.stories.tsx:
 317-339`), so it is a "Supervision room", never a "One-to-one chat"; hiding
   one-to-one chats leaves supervised cases visible.
+- "Future timeline" is a **show-only kind** (`showOnly: true` on its
+  `DisplayFilterKindOption`): the dialog renders no Pill control for it,
+  `visiblePillKinds` never yields a chip for it and `pill` is ignored. It
+  gates a panel, not rows — there is no unread count and no toolbar chip a
+  pill could stand for, so a Pill toggle would persist an override with no
+  observable effect.
 - "Future timeline" is gated **independently of the row filter**: the
   `futureTimelineSeries` input (`SessionsList.tsx:1624-1640`) is derived from
   the session set **before** the display filter is applied, and the checkbox
@@ -443,13 +449,16 @@ value shows **visible unread**:
     response already applied, and the number issued when the last pending
     PATCH settled (the reconciliation fetch gets a number above that floor).
     A response replaces `serverTotal` only if its number is above **both**
-    floors; anything older is applied to the rows but its total is
-    discarded. This covers the ordering the pending-state check alone
+    floors; anything older is **discarded entirely, rows included**: the
+    page-0 merge is authoritative for its window and overwrites matching ids
+    (`NotificationsProvider.tsx:220-230`), so applying a stale payload would
+    drop newer events and revive `readAt: null` on a row whose PATCH has
+    already succeeded, triggering another PATCH or a false unread row. This covers the ordering the pending-state check alone
     misses: a poll that **started before** a PATCH and returns **after** the
     PATCH and its reconciliation fetch have completed would arrive with
     nothing pending and re-apply its pre-read count. Tests: stale poll
-    returning after the reconciliation fetch (total discarded), two polls
-    returning out of order (newer wins).
+    returning after the reconciliation fetch (rows and total discarded, the
+    read row stays read), two polls returning out of order (newer wins).
 
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
@@ -546,7 +555,7 @@ interface DisplayFilter {
 attachClient` has the same exposure today.) 3. An update made before attach is written to the mirror only. If account
   data turns out to exist on attach, that pre-sync update is **discarded**
   (account wins, no merge) — same rule as the announcement settings, and
-  stated here so nobody expects a merge. 4. Updates after attach write account data first and mirror on success. 5. **Logout / client removal resets the store.** `AuthenticatedApp` publishes `null` as the client on logout (`AuthenticatedApp.tsx:325-331`) after the storage hygiene purged the mirror; the bridge then calls `displayFilterStore.detachClient()`, which drops the in-memory state back to defaults (re-reading the now-empty mirror). Without this, user A's hidden kinds and auto-read would survive in the singleton and, on user B's first attach with no account-data event, be **seeded into B's account** by rule 2. Test: A customises → logout → B attaches with no event → B sees defaults and nothing is written from A's state.
+  stated here so nobody expects a merge. 4. Updates after attach write account data first and mirror on success. 5. **Logout / client removal resets the store to hard defaults.** `AuthenticatedApp` publishes `null` as the client (`setMatrixClientService(null)`, `AuthenticatedApp.tsx:325-331`) **before** `logout()` runs, and the storage hygiene (`purgeAppWebStorage`, `logout.ts:69-98`) only runs later, after the Keycloak logout settles — so at detach time user A's mirror is still populated. `displayFilterStore.detachClient()` therefore resets the in-memory state to the built-in defaults **without reading the mirror**; the mirror is read again only on the next `attachClient` (rule 2), by which time the hygiene has purged it (or, if the SPA attaches a new client before the purge, rule 1 makes B's account data win and an absent event seeds only the defaults the store now holds). Without this, user A's hidden kinds and auto-read would survive in the singleton and, on user B's first attach with no account-data event, be **seeded into B's account** by rule 2. Test: A customises → logout → B attaches with no event → B sees defaults and nothing is written from A's state.
   Tests: attach with account data only, mirror only (first-attach seed), both
   (account wins, mirror overwritten), malformed account blob (defaults, mirror
   ignored), pre-sync update followed by attach with existing account data
