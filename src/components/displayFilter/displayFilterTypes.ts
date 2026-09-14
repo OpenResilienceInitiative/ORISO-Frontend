@@ -67,7 +67,7 @@ export const resolveKindSetting = (
  */
 export type DisplayFilterKindRef =
 	| string
-	| Pick<DisplayFilterKindOption, 'id' | 'partial'>;
+	| Pick<DisplayFilterKindOption, 'id' | 'partial' | 'showOnly'>;
 
 /**
  * True when the EFFECTIVE filter differs from "show everything with pills"
@@ -84,8 +84,12 @@ export const isDisplayFilterCustomised = (
 		const kindId = typeof kind === 'string' ? kind : kind.id;
 		const partial =
 			typeof kind === 'string' ? false : Boolean(kind.partial);
+		const showOnly =
+			typeof kind === 'string' ? false : Boolean(kind.showOnly);
 		const setting = resolveKindSetting(value, kindId);
-		return partial || !setting.show || !setting.pill;
+		// A show-only kind has no pill (spec §5.2), so a stale `pill: false`
+		// left behind by hide → show must not count as customised.
+		return partial || !setting.show || (!showOnly && !setting.pill);
 	});
 
 /** Immutable update of one kind; hiding a kind also drops its pill. */

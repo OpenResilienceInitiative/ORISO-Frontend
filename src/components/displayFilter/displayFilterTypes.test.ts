@@ -78,6 +78,18 @@ describe('displayFilterTypes (#1377)', () => {
 		).toEqual([]);
 	});
 
+	it('ignores the pill state of a show-only kind', () => {
+		const kind = { id: 'futureTimeline', showOnly: true };
+		const hidden = setKindSetting(EMPTY_DISPLAY_FILTER, kind.id, {
+			show: false
+		});
+		expect(isDisplayFilterCustomised(hidden, [kind])).toBe(true);
+		// hide → show leaves `pill: false` behind; it has no effect here.
+		const shownAgain = setKindSetting(hidden, kind.id, { show: true });
+		expect(isDisplayFilterCustomised(shownAgain, [kind])).toBe(false);
+		expect(isDisplayFilterCustomised(shownAgain, [kind.id])).toBe(true);
+	});
+
 	it('marks auto-read alone as customised', () => {
 		expect(
 			isDisplayFilterCustomised(
