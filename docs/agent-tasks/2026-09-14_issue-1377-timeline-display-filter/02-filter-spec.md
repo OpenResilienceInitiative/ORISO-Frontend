@@ -232,11 +232,24 @@ Rules:
   again (bounded: stop at the server total, and show the list's loading
   state meanwhile). Server-side kind filtering is the v2 alternative.
 - The kind predicates are **extracted from `sessionMatchesToolbar`** into
-  `displayFilter/model.ts` (one `classifySession(raw, extended, currentUserId)`
-  returning exactly one kind) so the chip filter and the display filter can
-  never disagree on what a row is.
-- The kinds are **disjoint** and evaluated in this order: supervision room →
-  circle → internal group → live chat → one-to-one. A supervised case is an
+  `displayFilter/model.ts` (one
+  `classifySession(raw, extended, currentUserId, canSupervise)` returning
+  exactly one kind) so the chip filter and the display filter can never
+  disagree on what a row is. `canSupervise` is the **viewer eligibility**
+  the list already computes for the supervision chip
+  (`showSupervisionChip`, `SessionsList.tsx:1613-1615`: consultant toolbar
+  actions and `CONSULTANT_DEFAULT`). The supervision kind is evaluated
+  **only when `canSupervise` is true**; for everyone else the row goes
+  straight to the circle → group → live chat → one-to-one checks. This
+  matters for the legacy fallback: without the backend's supervision
+  marker, `sessionMatchesToolbar` treats "row owned by another consultant"
+  as supervision (`sessionToolbarFilters.ts:255-265`), which is true for
+  every ordinary chat an **asker** has — those must stay one-to-one chats,
+  governed by the asker's one-to-one setting, never "Supervision rooms" the
+  asker cannot even configure.
+- The kinds are **disjoint** and evaluated in this order: supervision room
+  (only if `canSupervise`) → circle → internal group → live chat →
+  one-to-one. A supervised case is an
   ordinary non-group counselling session (`SessionsListToolbar.stories.tsx:
 317-339`), so it is a "Supervision room", never a "One-to-one chat"; hiding
   one-to-one chats leaves supervised cases visible.
