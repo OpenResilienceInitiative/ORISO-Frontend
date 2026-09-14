@@ -1305,3 +1305,92 @@ export const SupervisedByOthers: Story = {
 		});
 	}
 };
+
+/**
+ * #1306 — the supervisor's row says what it is.
+ *
+ * The badge above is icon-only: the word "Supervision" lives in
+ * `title`/`aria-label`. Measured on dev on 14.09.2026, the only VISIBLE word on
+ * a supervisor's row was "Mail", so the row read as mail counselling to the one
+ * person it is not. The consulting type is not lost — the supervisor reads the
+ * client chat one panel to the right, which says what kind of chat it is.
+ */
+export const SupervisionRowLabel: Story = {
+	name: 'Supervision — the row reads "Supervision", not "Mail" (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor']
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const modality = canvasElement.querySelector(
+				'[data-testid="supervision-modality"]'
+			);
+			expect(modality).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+			expect(modality!.querySelector('svg')).not.toBeNull();
+			// The mail label is gone for this viewer.
+			expect(
+				canvasElement.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+				)
+			).toBeNull();
+		});
+	}
+};
+
+/**
+ * The label truncates rather than pushing the row apart. "Supervision" fits
+ * German and English; a longer translation must not shove the date out of the
+ * card, and `title` keeps the full word one hover away.
+ */
+export const SupervisionRowLabelTruncates: Story = {
+	name: 'Supervision — a long translation truncates instead of pushing (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={{ width: 320 }}>
+				<RuntimeSessionListItem
+					viewerId={SUPERVISOR_ID}
+					sessionOverrides={{
+						supervision: {
+							supervisedByMe: true,
+							supervisorConsultantIds: [SUPERVISOR_ID],
+							supervisorDisplayNames: ['Sabine Supervisor']
+						}
+					}}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const label = canvasElement.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			) as HTMLElement | null;
+			expect(label).not.toBeNull();
+			// The affordance that survives the cut: the full word on `title`.
+			expect(label!.getAttribute('title')).toBeTruthy();
+			// The row must not grow wider than the card it sits in.
+			const card = canvasElement.querySelector(
+				'.sessionsListItem__content'
+			) as HTMLElement | null;
+			if (card) {
+				expect(
+					label!.getBoundingClientRect().right
+				).toBeLessThanOrEqual(card.getBoundingClientRect().right + 1);
+			}
+		});
+	}
+};

@@ -1025,7 +1025,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1686,8 +1686,56 @@ body: isMatrixBackedSession
 					)}
 					{/* Consulting-type modality icon (Mail / Live Chat / Interna
 					    / Gesprächskreis) — always shown, including alongside the
-					    case-handover action button (Figma node 115). */}
-					{
+					    case-handover action button (Figma node 115).
+
+					    #1306: for an ACTIVE SUPERVISOR of this session the slot
+					    reads "Supervision" instead of the consulting type. The
+					    supervision badge in `__icon` is icon-only — the word
+					    lives in `title`/`aria-label` — so the only visible word
+					    on the row used to be "Mail", and the row read as mail
+					    counselling to the one person it is not. Frank,
+					    14.09.2026: "Der Supervisor soll einfach nur Supervision
+					    sehen … Hauptsache, das Icon ist dabei. Da daneben ja
+					    immer der Hauptchat ist, den er mitliest, auf welchem
+					    Chattyp sich das handelt." So the consulting type is not
+					    lost — it is one panel to the right — and swapping the
+					    label costs nothing the supervisor needs.
+
+					    Only the supervisor: `isSupervisedByMe` is
+					    `getSupervisionListState(...) === 'supervisedByMe'`, so
+					    the owning consultant and every silent member keep the
+					    consulting type they had. */}
+					{isSupervisedByMe ? (
+						<div
+							className={clsx(
+								'sessionsListItem__consultingTypeIcon',
+								'sessionsListItem__consultingTypeIcon--supervision'
+							)}
+							data-testid="supervision-modality"
+						>
+							<SupervisionIcon
+								aria-hidden="true"
+								focusable="false"
+							/>
+							<span
+								className="sessionsListItem__consultingTypeIcon--supervisionLabel"
+								/* The label truncates rather than pushing the
+								   row: "Supervision" fits German and English,
+								   but a longer translation must not shove the
+								   date out of the card. `title` keeps the full
+								   word reachable on hover. */
+								title={translate(
+									'sessionList.supervision.badge',
+									'Supervision'
+								)}
+							>
+								{translate(
+									'sessionList.supervision.badge',
+									'Supervision'
+								)}
+							</span>
+						</div>
+					) : (
 						<>
 							{modality === Modality.LIVE_CHAT && (
 								<div
@@ -1797,7 +1845,7 @@ body: isMatrixBackedSession
 								</div>
 							)}
 						</>
-					}
+					)}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (
