@@ -51,7 +51,12 @@ export const useComposerDock = (
 			);
 			host.style.setProperty('--composer-dock-height', `${dock}px`);
 			host.style.setProperty('--composer-host-height', `${shared}px`);
-			setHostHeight(shared);
+			// Only on a real change: the observer fires for every frame of a
+			// composer resize, and re-rendering the composer on each of them
+			// swallowed keystrokes (the editor lost its input mid-word).
+			setHostHeight((previous) =>
+				previous === shared ? previous : shared
+			);
 		};
 		measure();
 		const observer = new ResizeObserver(measure);

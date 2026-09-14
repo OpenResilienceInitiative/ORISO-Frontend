@@ -102,4 +102,29 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 		expect(wrapper.style.width).toBe('420px');
 		expect(localStorage.getItem('sessionsList_width')).toBe('420');
 	});
+
+	// T41b (Frank, 15.09.): the snap must not lock the handle — a reader who
+	// wants the list beside an open side room gets it.
+	it('lets the reader pull the list back out while a pane is open', () => {
+		const wrapper = renderAt('?channel=supervision', 'supervision');
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+		act(() => resizeList?.(420));
+		expect(wrapper.style.width).toBe('420px');
+	});
+
+	it('hands the snap back when the list is pushed to the rail again', () => {
+		const wrapper = renderAt('?channel=supervision', 'supervision');
+		act(() => resizeList?.(420));
+		act(() => resizeList?.(STAGE_LAYOUT.RAIL_WIDTH));
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+	});
+
+	it('never lets the list squeeze both panes below their drag floor', () => {
+		// 1280: 604 is the panel-aware ceiling, the list's own maximum is 500.
+		const wrapper = renderAt('?channel=supervision', 'supervision');
+		act(() => resizeList?.(900));
+		expect(Number.parseInt(wrapper.style.width, 10)).toBeLessThanOrEqual(
+			500
+		);
+	});
 });

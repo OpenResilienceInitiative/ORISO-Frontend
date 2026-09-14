@@ -14,6 +14,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 import {
 	readPanelWidth,
+	maxListWidthBesidePanel,
 	resolveStageLayout,
 	STAGE_LAYOUT
 } from '../chatStage/stageLayout';
@@ -85,27 +86,42 @@ export const SessionsListWrapper = ({
 		panelWidth: readPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH),
 		panelOpen: fromL && panelOpen
 	});
+	// T41b (Frank, 15.09., "must be able to widen view"): the snap above is
+	// an OFFER, not a lock. Pulling the handle past the rail takes the offer
+	// back for as long as the reader keeps the list open; pushing it back to
+	// the rail hands it over again, so opening the next side room snaps as
+	// before.
+	const [widenedBesidePanel, setWidenedBesidePanel] = useState(false);
 	const railSnapped =
 		fromL &&
 		panelOpen &&
+		!widenedBesidePanel &&
 		stageLayout.mode === 'split' &&
 		stageLayout.listMode === 'rail';
 	const effectiveWidth = railSnapped
 		? Math.min(sidebarWidth, STAGE_LAYOUT.RAIL_WIDTH)
 		: sidebarWidth;
+	// Beside an open pane the list may grow until the chat card can no
+	// longer host two panes at their drag floor.
+	const maxListWidth =
+		fromL && panelOpen
+			? Math.min(
+					EXPANDED_MAX_WIDTH,
+					maxListWidthBesidePanel(viewportWidth)
+				)
+			: EXPANDED_MAX_WIDTH;
 
 	// Switch a bit earlier so text layout never reaches the broken/truncated range.
 	const isIconOnly = effectiveWidth < ICON_ONLY_THRESHOLD;
 
 	const handleResize = useCallback(
 		(width: number) => {
-			if (railSnapped && width > STAGE_LAYOUT.RAIL_WIDTH) {
-				return;
-			}
-			setSidebarWidth(width);
-			localStorage.setItem('sessionsList_width', width.toString());
+			const next = Math.min(width, maxListWidth);
+			setWidenedBesidePanel(next > STAGE_LAYOUT.RAIL_WIDTH);
+			setSidebarWidth(next);
+			localStorage.setItem('sessionsList_width', next.toString());
 		},
-		[railSnapped]
+		[maxListWidth]
 	);
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
@@ -128,11 +144,7 @@ export const SessionsListWrapper = ({
 					currentWidth={effectiveWidth}
 					onResize={handleResize}
 					scrollTargetRef={listScrollRef}
-					maxWidth={
-						railSnapped
-							? STAGE_LAYOUT.RAIL_WIDTH
-							: EXPANDED_MAX_WIDTH
-					}
+					maxWidth={maxListWidth}
 				/>
 			</div>
 		);
@@ -157,9 +169,7 @@ export const SessionsListWrapper = ({
 				currentWidth={effectiveWidth}
 				onResize={handleResize}
 				scrollTargetRef={listScrollRef}
-				maxWidth={
-					railSnapped ? STAGE_LAYOUT.RAIL_WIDTH : EXPANDED_MAX_WIDTH
-				}
+				maxWidth={maxListWidth}
 			/>
 		</div>
 	);

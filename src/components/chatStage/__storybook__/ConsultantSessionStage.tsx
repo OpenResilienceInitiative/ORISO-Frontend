@@ -143,7 +143,6 @@ export interface ConsultantSessionStageProps {
 	 * open, so the follow-vs-arrow rule can be watched instead of described.
 	 */
 	arrivals?: string[];
-	arrivalIntervalMs?: number;
 }
 
 const noop = () => {};
@@ -277,7 +276,6 @@ function MainChat({
 	compactComposer = false,
 	flushComposer = false,
 	arrivals,
-	arrivalIntervalMs = 1500,
 	onBack
 }: {
 	fab?: React.ReactNode;
@@ -290,7 +288,6 @@ function MainChat({
 	 * keeps their place and the composer's arrow lights up with the count.
 	 */
 	arrivals?: string[];
-	arrivalIntervalMs?: number;
 	/** T35: dual mode — the composer rests at one line. */
 	compactComposer?: boolean;
 	/** T40: dual mode inside the card — no outer frame, bottom-left corner = card. */
@@ -328,65 +325,59 @@ function MainChat({
 		[]
 	);
 	const [unread, setUnread] = useState(0);
-	useEffect(() => {
-		if (!arrivals || arrivals.length === 0) {
-			return undefined;
+	/**
+	 * One click = one message from the client. A timer would race the
+	 * reader's own typing (and did, in CI); the button makes both stories
+	 * deterministic and lets a human try the rule by hand.
+	 */
+	const deliverNext = useCallback(() => {
+		const index = arrived.length;
+		const body = arrivals?.[index];
+		if (body === undefined) {
+			return;
 		}
-		let index = 0;
-		const timer = window.setInterval(() => {
-			const body = arrivals[index];
-			if (body === undefined) {
-				window.clearInterval(timer);
-				return;
-			}
-			const content =
-				paneRef.current?.querySelector<HTMLElement>(
-					'.session__content'
-				);
-			// Measured BEFORE the row is appended — afterwards every timeline
-			// is "scrolled up" by the height of the new message.
-			const atBottom = content
-				? isTimelineAtBottom({
-						scrollTop: content.scrollTop,
-						scrollHeight: content.scrollHeight,
-						clientHeight: content.clientHeight
-					})
-				: true;
-			const composing = isComposerBusy(
-				paneRef.current?.querySelector(
-					'.textarea__wrapper-send-message'
-				) ?? null,
-				document.activeElement
-			);
-			const minutes = String(10 + index).padStart(2, '0');
-			setArrived((rows) => [
-				...rows,
-				arrivingClientMessage(index, body, `09:${minutes}`)
-			]);
-			index += 1;
-			if (
-				shouldFollowNewMessage({
-					isOwnMessage: false,
-					atBottom,
-					isComposing: composing
+		const content =
+			paneRef.current?.querySelector<HTMLElement>('.session__content');
+		// Measured BEFORE the row is appended — afterwards every timeline is
+		// "scrolled up" by the height of the new message.
+		const atBottom = content
+			? isTimelineAtBottom({
+					scrollTop: content.scrollTop,
+					scrollHeight: content.scrollHeight,
+					clientHeight: content.clientHeight
 				})
-			) {
-				// The row animates in, so its final height arrives after the
-				// first frame — settle, then land on the end again (the same
-				// two-step the initial scroll above uses).
-				const land = () => {
-					if (content) {
-						content.scrollTop = content.scrollHeight;
-					}
-				};
-				window.requestAnimationFrame(land);
-				window.setTimeout(land, 350);
-			} else {
-				setUnread((count) => count + 1);
-			}
-		}, arrivalIntervalMs);
-		return () => window.clearInterval(timer);
-	}, [arrivals, arrivalIntervalMs]);
+			: true;
+		const composing = isComposerBusy(
+			paneRef.current?.querySelector('.textarea__wrapper-send-message') ??
+				null,
+			document.activeElement
+		);
+		const minutes = String(10 + index).padStart(2, '0');
+		setArrived((rows) => [
+			...rows,
+			arrivingClientMessage(index, body, `09:${minutes}`)
+		]);
+		if (
+			shouldFollowNewMessage({
+				isOwnMessage: false,
+				atBottom,
+				isComposing: composing
+			})
+		) {
+			// The row animates in, so its final height arrives after the
+			// first frame — settle, then land on the end again (the same
+			// two-step the initial scroll above uses).
+			const land = () => {
+				if (content) {
+					content.scrollTop = content.scrollHeight;
+				}
+			};
+			window.requestAnimationFrame(land);
+			window.setTimeout(land, 350);
+		} else {
+			setUnread((count) => count + 1);
+		}
+	}, [arrivals, arrived.length]);
 
 	const messages = useMemo(
 		() => [...mainChatMessages(), ...arrived],
@@ -395,6 +386,28 @@ function MainChat({
 
 	return (
 		<div className="chatStage__mainPane" ref={paneRef} data-cy="stage-main">
+			{arrivals && arrivals.length > 0 && (
+				<button
+					type="button"
+					data-cy="stage-deliver-next"
+					onClick={deliverNext}
+					style={{
+						position: 'absolute',
+						top: 8,
+						right: 8,
+						zIndex: 20,
+						padding: '4px 10px',
+						borderRadius: 999,
+						border: '1px solid var(--m3-outline-variant, #c4c7c8)',
+						background: 'var(--m3-surface-container-low, #f6f3f3)',
+						font: 'inherit',
+						fontSize: 12,
+						cursor: 'pointer'
+					}}
+				>
+					Nachricht eintreffen lassen
+				</button>
+			)}
 			<div>
 				<SessionHeaderComponent
 					bannedUsers={[]}
@@ -861,8 +874,7 @@ export function ConsultantSessionStage({
 	fabHidden = true,
 	supervisionCalls = 'both',
 	supervisionAlone = false,
-	arrivals,
-	arrivalIntervalMs
+	arrivals
 }: ConsultantSessionStageProps) {
 	const { t } = useTranslation();
 	const viewportWidth = useViewportWidth();
@@ -1117,7 +1129,6 @@ export function ConsultantSessionStage({
 								<MainChat
 									hideFabWhileComposing
 									arrivals={arrivals}
-									arrivalIntervalMs={arrivalIntervalMs}
 									onBack={noop}
 									fab={
 										<ChannelSwitcherFab
@@ -1207,7 +1218,6 @@ export function ConsultantSessionStage({
 							<MainChat
 								fab={desktopFab}
 								arrivals={arrivals}
-								arrivalIntervalMs={arrivalIntervalMs}
 								compactComposer={dual}
 								flushComposer={dual && flush}
 								threadReplies={
@@ -1236,7 +1246,6 @@ export function ConsultantSessionStage({
 								<MainChat
 									fab={desktopFab}
 									arrivals={arrivals}
-									arrivalIntervalMs={arrivalIntervalMs}
 									compactComposer={dual}
 									threadReplies={
 										openThreads > 0

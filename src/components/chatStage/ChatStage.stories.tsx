@@ -2933,6 +2933,9 @@ const mainTimeline = (canvasElement: HTMLElement) =>
 		'[data-cy="stage-main"] .session__content'
 	)!;
 
+const deliverNext = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector<HTMLElement>('[data-cy="stage-deliver-next"]')!;
+
 const scrollArrow = (canvasElement: HTMLElement) =>
 	canvasElement.querySelector<HTMLElement>(
 		'[data-cy="stage-main"] [data-cy="composer-scroll-to-newest"]'
@@ -2949,12 +2952,14 @@ export const NewMessagesFollowWhileWatching: Story = {
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
-		arrivals: ARRIVALS,
-		arrivalIntervalMs: 400
+		arrivals: ARRIVALS
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await canvas.findByText(ARRIVALS[2], undefined, { timeout: 5000 });
+		for (const body of ARRIVALS) {
+			await userEvent.click(deliverNext(canvasElement));
+			await canvas.findByText(body);
+		}
 		const timeline = mainTimeline(canvasElement);
 		await waitFor(() =>
 			expect(
@@ -2980,24 +2985,35 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 	args: {
 		panel: 'supervision',
 		panelVariant: 'inside',
-		arrivals: ARRIVALS,
-		// Slow enough that the draft is standing before the first one lands.
-		arrivalIntervalMs: 2500
+		arrivals: ARRIVALS
 	},
 	play: async ({ canvasElement }) => {
+		// Let the stage settle first: both composers mounted, the panel done
+		// animating. Typing into a composer that is still being laid out
+		// loses characters to the re-render.
+		await expectStageParts(canvasElement, {
+			composers: 2,
+			bubblesAtLeast: 6
+		});
 		const editor = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .tiptap'
 		)!;
-		await userEvent.click(editor);
-		await userEvent.keyboard('Das schauen wir uns gemeinsam an');
+		// `type` keeps the element focused for every character; `keyboard`
+		// sends to whatever holds focus, which the stage can take back.
+		await userEvent.type(editor, 'Das schauen wir uns gemeinsam an');
+		// TipTap commits the keystrokes a tick later; the rule reads the
+		// draft, so the draft has to be standing before the message lands.
+		await waitFor(() =>
+			expect(editor.textContent).toContain('Das schauen wir uns')
+		);
 		const timeline = mainTimeline(canvasElement);
 		const restingTop = timeline.scrollTop;
-		await waitFor(
-			() =>
-				expect(scrollArrow(canvasElement).className).toContain(
-					'composerToolbar__button--scrollToNewest--unread'
-				),
-			{ timeout: 10000 }
+		// The draft is standing; now the client answers.
+		await userEvent.click(deliverNext(canvasElement));
+		await waitFor(() =>
+			expect(scrollArrow(canvasElement).className).toContain(
+				'composerToolbar__button--scrollToNewest--unread'
+			)
 		);
 		// The reader's place is kept — the view did not jump under their hands.
 		await expect(timeline.scrollTop).toBe(restingTop);
