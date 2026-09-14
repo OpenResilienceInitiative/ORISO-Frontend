@@ -17,8 +17,9 @@ feeling "it still doesn't work like it should": the surface is correct but
 **Without this spec:** a supervisor who only wants to see handover requests and
 messages opens the Timeline, sees 40 supervisor-assignment and appointment
 cards, clicks the "Messages" chip, opens one chat, comes back, and the chip is
-gone again. The unread badge in the nav bar keeps counting the cards they never
-wanted. They stop trusting the badge.
+gone again. The ✓✓ button and the server-side unread total keep counting the
+cards they never wanted, and the navigation rail has no Timeline badge at all.
+They stop trusting the count.
 
 **With this spec:** the same supervisor opens the filter once, unticks
 "Appointments" and "System", ticks "mark hidden as read", and from then on —
@@ -166,18 +167,18 @@ Rules:
   the reduced feed.
 - "Load older" keeps paging the server feed until enough _visible_ items exist
   (the page can be all-hidden; the button must not stop early).
-- The nav-bar unread badge counts **visible** unread only (§6.3).
+- The (new) nav-rail unread badge counts **visible** unread only (§6.3).
 
 ### 5.2 Gespräche (`sessions`)
 
-| Kind (checkbox)   | Maps to                                                         | Source                                     |
-| ----------------- | --------------------------------------------------------------- | ------------------------------------------ |
-| One-to-one chats  | not group, modality ≠ live chat, **and not a supervision room** | `getModality`, `hasSupervisionMarker`      |
-| Live chats        | `Modality.LIVE_CHAT` (only when the tenant enables live chat)   | `showLiveChatChip`                         |
-| Internal groups   | `isInternalGroupChatSession`                                    | `sessionToolbarFilters.ts:69-72`           |
-| Circles           | `isConversationCircleSession`                                   | `sessionToolbarFilters.ts:63-67`           |
-| Supervision rooms | `hasSupervisionMarker` / `getSupervisionListState`              | `sessionsListItem/supervisionListState.ts` |
-| Future timeline   | the Future Timeline panel/now-divider                           | `FutureTimelinePanel.tsx`                  |
+| Kind (checkbox)   | Maps to                                                                                                                                                                                                                                                                     | Source                                |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| One-to-one chats  | not group, modality ≠ live chat, **and not a supervision room**                                                                                                                                                                                                             | `getModality`, `hasSupervisionMarker` |
+| Live chats        | `Modality.LIVE_CHAT` (only when the tenant enables live chat)                                                                                                                                                                                                               | `showLiveChatChip`                    |
+| Internal groups   | `isInternalGroupChatSession`                                                                                                                                                                                                                                                | `sessionToolbarFilters.ts:69-72`      |
+| Circles           | `isConversationCircleSession`                                                                                                                                                                                                                                               | `sessionToolbarFilters.ts:63-67`      |
+| Supervision rooms | the `supervision` chip predicate of `sessionMatchesToolbar` (marker present **and** `getSupervisionListState(…, currentUserId) === 'supervisedByMe'`, with its legacy fallback) — never bare `hasSupervisionMarker`, which is true for an empty marker on ordinary sessions | `sessionToolbarFilters.ts:246-262`    |
+| Future timeline   | the Future Timeline panel/now-divider                                                                                                                                                                                                                                       | `FutureTimelinePanel.tsx`             |
 
 Rules:
 
@@ -188,6 +189,19 @@ Rules:
   tooltip "Hidden by your display filter". Leaving the room removes it. This
   protects the "exactly one active item" invariant (`CONTEXT.md` L45-46).
 - Hidden kinds are excluded from the toolbar chip counts (`chipCounts`).
+- **Keep paging until something is visible** (same rule as the Timeline,
+  §5.1): the sessions list loads pages only from `handleListScroll`
+  (`SessionsList.tsx:1007-1032`), so a first page made entirely of hidden
+  kinds would render an empty, non-scrollable list and never request the
+  older visible rows. After `applySessionsFilter` / `applyRequestsFilter`
+  runs, if fewer than one screen of visible rows exist and
+  `totalItems > currentOffset + SESSION_COUNT`, call `loadMoreSessions`
+  again (bounded: stop at the server total, and show the list's loading
+  state meanwhile). Server-side kind filtering is the v2 alternative.
+- The kind predicates are **extracted from `sessionMatchesToolbar`** into
+  `displayFilter/model.ts` (one `classifySession(raw, extended, currentUserId)`
+  returning exactly one kind) so the chip filter and the display filter can
+  never disagree on what a row is.
 - The kinds are **disjoint** and evaluated in this order: supervision room →
   circle → internal group → live chat → one-to-one. A supervised case is an
   ordinary non-group counselling session (`SessionsListToolbar.stories.tsx:
@@ -270,8 +284,16 @@ ADR-004/005). In Anfragen the option is not shown (§5.3).
 
 ### 6.3 Unread badge
 
-The nav badge for the Timeline is today driven by the server total
-(commit `7f6dea17`). With display filters it must show **visible unread**:
+There is **no Timeline badge in the navigation rail today**: `NavigationBar`
+maps unread indicators only for `/profile` (`NavigationBar.tsx:219-222`) and
+does not read `NotificationsContext`; commit `7f6dea17` only drove the
+✓✓ button from the server total inside `NotificationsCenter`. This spec
+**introduces** the rail badge for `/notifications`. It must be derived in
+`NotificationsProvider` (a `visibleUnreadCount` next to the existing
+`unreadNotificationCount`, computed with the effective Timeline filter from
+`useDisplayFilter('timeline')`) and consumed by `NavigationBar` through the
+context, so it updates while `/notifications` is unmounted; the tooltip below
+is rendered on the rail item. The value shows **visible unread**:
 
 - v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`. This is an
   **upper bound**, never a promise: `apiGetEventNotifications` returns one
@@ -417,7 +439,7 @@ using desk and laptop would configure twice and get two different badges.
 ## 11. Implementation slices (for the issue)
 
 1. **Model + store + hook** (`src/utils/displayFilter/*`, account-data key, mirror, tests). No UI.
-2. **Timeline**: pre-filter + auto-read pass + badge v1 + button/popover in `NotificationsCenter`. Stories.
+2. **Timeline**: pre-filter + auto-read pass + `visibleUnreadCount` in the provider + new rail badge in `NavigationBar` + button/popover in `NotificationsCenter`. Stories.
 3. **Gespräche**: pre-filter + active-row exception + "don't count" + button in `SessionsListToolbar`. Stories.
 4. **Anfragen**: pre-filter + button (no auto-read).
 5. **Profile**: wire #593's section to `hiddenEventTypes`.
