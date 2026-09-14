@@ -276,4 +276,71 @@ describe('useDraftMessage', () => {
 			)
 		).toHaveLength(0);
 	});
+
+	/**
+	 * Frank, 15.09.: "kann es sein dass das was mit dem Entwurf zu tun hatte?"
+	 * — the story's lost keystrokes were a re-render storm, but the question
+	 * points at a second, real hole: the stored draft is pushed into the
+	 * composer whenever it finally arrives, and nothing asks whether the
+	 * reader has started writing in the meantime. The wait can be long: the
+	 * fetch itself, and with E2EE the key (Frank's own screenshots carry the
+	 * "Wiederherstellungsschlüssel" banner, so the key was not there yet).
+	 */
+	it('leaves what the reader typed while the draft was still loading', async () => {
+		const loadDraft = vi.fn();
+		let releaseDraft: (payload: DraftPayload) => void = () => undefined;
+		mocks.apiGetUserDraft.mockImplementation(
+			() =>
+				new Promise<DraftPayload>((resolve) => {
+					releaseDraft = resolve;
+				})
+		);
+
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+
+		// The reader does not wait for the network: they open the chat and
+		// type. (`onChange` is dropped while `loaded` is false — the hook has
+		// no idea anything was written.)
+		act(() => {
+			result.current.onChange('<p>Ich melde mich gleich</p>');
+		});
+		expect(loadDraft).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseDraft({ text: '<p>Ein alter Entwurf von gestern</p>' });
+			await Promise.resolve();
+		});
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		// Yesterday's draft never reaches the composer: the sentence the
+		// reader is in the middle of writing stands.
+		expect(loadDraft).not.toHaveBeenCalled();
+	});
+
+	it('still restores the draft when the reader has not touched the composer', async () => {
+		const loadDraft = vi.fn();
+		let releaseDraft: (payload: DraftPayload) => void = () => undefined;
+		mocks.apiGetUserDraft.mockImplementation(
+			() =>
+				new Promise<DraftPayload>((resolve) => {
+					releaseDraft = resolve;
+				})
+		);
+
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+
+		await act(async () => {
+			releaseDraft({ text: '<p>Ein alter Entwurf von gestern</p>' });
+			await Promise.resolve();
+		});
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		expect(loadDraft.mock.calls[0][1]).toBe(
+			'<p>Ein alter Entwurf von gestern</p>'
+		);
+	});
 });

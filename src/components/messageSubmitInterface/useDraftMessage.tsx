@@ -49,6 +49,15 @@ export const useDraftMessage = (
 	const loadVersionRef = useRef(0);
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
+	/*
+	 * Frank, 15.09.: the reader does not wait for the network. Between mount
+	 * and the draft arriving — the fetch, and with E2EE the key on top, which
+	 * can be minutes while the recovery key is still missing — they type. The
+	 * arriving draft used to be written straight into the composer and their
+	 * sentence was gone. Once they have written something, the stored draft
+	 * has lost: it is older, and the autosave replaces it anyway.
+	 */
+	const typedBeforeLoadRef = useRef(false);
 	// #976: whether a remote draft row is known to exist for this scope. An
 	// emptied composer only has to issue a DELETE when there is something to
 	// delete — merely opening and leaving a conversation must stay silent.
@@ -187,6 +196,7 @@ export const useDraftMessage = (
 		 * it again below; finding none must leave it empty.
 		 */
 		latestMessageRef.current = '';
+		typedBeforeLoadRef.current = false;
 		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
@@ -244,9 +254,11 @@ export const useDraftMessage = (
 		// Plain drafts must never wait for key readiness, otherwise the input can stay locked.
 		if (!isE2eeEnabled || !encrypted) {
 			if (decryptLoadVersion === loadVersionRef.current) {
-				setEditorWithDraftString(messageRes.text);
-				latestMessageRef.current = messageRes.text || '';
-				setMessage(messageRes.text);
+				if (!typedBeforeLoadRef.current) {
+					setEditorWithDraftString(messageRes.text);
+					latestMessageRef.current = messageRes.text || '';
+					setMessage(messageRes.text);
+				}
 				setLoaded(true);
 			}
 			return;
@@ -262,9 +274,11 @@ export const useDraftMessage = (
 				if (decryptLoadVersion !== loadVersionRef.current) {
 					return;
 				}
-				setEditorWithDraftString(msg);
-				latestMessageRef.current = msg || '';
-				setMessage(msg);
+				if (!typedBeforeLoadRef.current) {
+					setEditorWithDraftString(msg);
+					latestMessageRef.current = msg || '';
+					setMessage(msg);
+				}
 				setLoaded(true);
 			});
 	}, [
@@ -365,6 +379,13 @@ export const useDraftMessage = (
 	const onChange = useCallback(
 		(markdownMessage) => {
 			if (!loaded) {
+				// Ahead of the network: keep the text so the autosave has
+				// something to save, and mark the composer as the reader's,
+				// so an arriving draft cannot take it back.
+				if (hasDraftContent(markdownMessage)) {
+					typedBeforeLoadRef.current = true;
+					latestMessageRef.current = markdownMessage || '';
+				}
 				return;
 			}
 
@@ -433,6 +454,7 @@ export const useDraftMessage = (
 			draftSaveTimeout.current = null;
 		}
 		latestMessageRef.current = '';
+		typedBeforeLoadRef.current = false;
 		skipNextCleanupSaveRef.current = true;
 		hasRemoteDraftRef.current = false;
 		if (canUseRemoteApi) {
