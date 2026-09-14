@@ -41,6 +41,10 @@ export interface LiveChatEntryRoomProps {
 }
 
 const POLL_MS = 4000;
+/* The details endpoint deliberately maps a transient availability lookup
+   failure to zero. One sample is therefore not enough to call the room
+   closed; a second consecutive poll confirms that nobody is live. */
+const CLOSED_CONFIRMATION_POLLS = 2;
 
 /** How many names the door offers at once (Frank: „drei vier varianten"). */
 const NAME_CHOICES = 4;
@@ -125,6 +129,8 @@ export const LiveChatEntryRoom = ({
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
+	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
+		useState(0);
 	const [accepted, setAccepted] = useState(false);
 	const [department, setDepartment] = useState<{
 		agencyId: number;
@@ -275,10 +281,13 @@ export const LiveChatEntryRoom = ({
 					if (stop) return;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
-					setAvailable(
+					const nextAvailable =
 						typeof d?.numAvailableConsultants === 'number'
 							? d.numAvailableConsultants
-							: null
+							: null;
+					setAvailable(nextAvailable);
+					setConsecutiveUnavailablePolls((previous) =>
+						nextAvailable === 0 ? previous + 1 : 0
 					);
 					/* The department coordinate is bound at registration, so it
 					   arrives on the very first poll — the sentence is fetched
@@ -395,7 +404,11 @@ export const LiveChatEntryRoom = ({
 	const goToMail = useCallback(() => navigate('/registration'), [navigate]);
 
 	const closed =
-		stage === 'waiting' && !accepted && available === 0 && !closedDismissed;
+		stage === 'waiting' &&
+		!accepted &&
+		available === 0 &&
+		consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS &&
+		!closedDismissed;
 	const statusLine = closed
 		? tr('status.closed', 'Gerade geschlossen')
 		: stage === 'access'

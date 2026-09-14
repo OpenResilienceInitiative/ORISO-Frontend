@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -10,6 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
 import { LiveChatEntryRoom } from './LiveChatEntryRoom';
 
 vi.mock('react-i18next', () => ({
@@ -125,5 +127,85 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		expect(
 			screen.getAllByRole('radio')[0].getAttribute('aria-checked')
 		).toBe('true');
+	});
+});
+
+describe('the live chat waiting-room availability (#1400)', () => {
+	it('stays open when a zero sample is followed by an available consultant', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetAnonymousEnquiryDetails)
+			.mockResolvedValueOnce({
+				numAvailableConsultants: 0,
+				peopleAhead: 0,
+				status: 'NEW'
+			})
+			.mockResolvedValue({
+				numAvailableConsultants: 1,
+				peopleAhead: 0,
+				status: 'NEW'
+			});
+
+		try {
+			render(<LiveChatEntryRoom sessionId={7} />);
+			fireEvent.click(screen.getByTestId('registration-footer-primary'));
+
+			await act(async () => {
+				await Promise.resolve();
+				await Promise.resolve();
+				await Promise.resolve();
+			});
+			expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledTimes(1);
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).toBeNull();
+
+			await act(async () => {
+				vi.advanceTimersByTime(4000);
+				await Promise.resolve();
+			});
+
+			expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledTimes(2);
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('shows the closed screen after two consecutive zero samples', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+			numAvailableConsultants: 0,
+			peopleAhead: 0,
+			status: 'NEW'
+		});
+
+		try {
+			render(<LiveChatEntryRoom sessionId={7} />);
+			fireEvent.click(screen.getByTestId('registration-footer-primary'));
+
+			await act(async () => {
+				await Promise.resolve();
+				await Promise.resolve();
+				await Promise.resolve();
+			});
+			expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledTimes(1);
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).toBeNull();
+
+			await act(async () => {
+				vi.advanceTimersByTime(4000);
+				await Promise.resolve();
+			});
+
+			expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledTimes(2);
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).not.toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
