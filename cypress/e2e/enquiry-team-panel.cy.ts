@@ -2,7 +2,8 @@
  * Actual enquiry screen with HTTP fixtures for UserService and Matrix.
  * Uses the existing LiveService websocket test helper. This verifies browser
  * interaction and rendering, not encryption or access with real accounts.
- * Run with --browser chrome: the bundled Electron 114 lacks Promise.withResolvers
+ * Run with npm run test:enquiry-team, also used by PR CI.
+ * The bundled Electron 114 lacks Promise.withResolvers
  * required by the Matrix SDK send scheduler.
  */
 import {
