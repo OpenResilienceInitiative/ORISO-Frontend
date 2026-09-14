@@ -72,7 +72,9 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 	after(() => closeWebSocketServer());
 	beforeEach(() => mockWebSocket());
 	it('shows the complete original enquiry beside its automatic team panel', () => {
-		cy.viewport(1440, 1000);
+		const width = Number(Cypress.env('enquiryViewportWidth') || 1440);
+		const height = Number(Cypress.env('enquiryViewportHeight') || 1000);
+		cy.viewport(width, height);
 		cy.intercept('**/service/conversations/consultants/availability*', {
 			available: false
 		});
@@ -159,10 +161,48 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.visit('/sessions/consultant/sessionPreview');
 		cy.get('[data-cy="session-list-item"]').first().click();
 		cy.wait('@openTeam');
+		if (width >= 900) {
+			cy.get('[data-cy="stage-main"]').should('contain.text', text);
+			cy.get(
+				'[data-cy="stage-panel-slot"] [data-cy="stage-panel"]'
+			).should('be.visible');
+			cy.contains(
+				'[data-cy="stage-main"] .messageItem__content',
+				'ENDE DER ORIGINALANFRAGE'
+			).scrollIntoView();
+			cy.contains(
+				'[data-cy="stage-main"] .messageItem__content',
+				'ENDE DER ORIGINALANFRAGE'
+			)
+				.should('be.visible')
+				.closest('.messageItem')
+				.should('have.css', 'opacity', '1');
+		}
+		cy.get('[data-cy="stage-panel"]').should('be.visible');
+		cy.get('[data-cy="stage-panel"]').should((nodes) => {
+			const rect = nodes[0].getBoundingClientRect();
+			expect(rect.right, 'panel right edge').to.be.at.most(
+				nodes[0].ownerDocument.defaultView.innerWidth
+			);
+		});
+		const closeControl =
+			width >= 900
+				? '[data-cy="panel-header-close"]'
+				: '[data-cy="stage-panel"] [data-cy="composer-back"]';
+		cy.get(closeControl).should((nodes) => {
+			const rect = nodes[0].getBoundingClientRect();
+			expect(rect.right, 'close control right edge').to.be.at.most(
+				nodes[0].ownerDocument.defaultView.innerWidth
+			);
+		});
+		cy.screenshot(`enquiry-team-panel-after-${width}`, {
+			capture: 'viewport',
+			scale: true,
+			disableTimersAndAnimations: false
+		});
+		cy.get(closeControl).click();
+		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
-		cy.get('[data-cy="stage-panel-slot"] [data-cy="stage-panel"]').should(
-			'be.visible'
-		);
 		cy.contains(
 			'[data-cy="stage-main"] .messageItem__content',
 			'ENDE DER ORIGINALANFRAGE'
@@ -170,29 +210,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.contains(
 			'[data-cy="stage-main"] .messageItem__content',
 			'ENDE DER ORIGINALANFRAGE'
-		)
-			.should('be.visible')
-			.closest('.messageItem')
-			.should('have.css', 'opacity', '1');
-		cy.get('[data-cy="stage-panel"]').should((nodes) => {
-			const rect = nodes[0].getBoundingClientRect();
-			expect(rect.right, 'panel right edge').to.be.at.most(
-				nodes[0].ownerDocument.defaultView.innerWidth
-			);
-		});
-		cy.get('[data-cy="panel-header-close"]').should((nodes) => {
-			const rect = nodes[0].getBoundingClientRect();
-			expect(rect.right, 'close control right edge').to.be.at.most(
-				nodes[0].ownerDocument.defaultView.innerWidth
-			);
-		});
-		cy.screenshot('enquiry-team-panel-after', {
+		).should('be.visible');
+		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',
 			scale: true,
 			disableTimersAndAnimations: false
 		});
-		cy.get('[data-cy="panel-header-close"]').click();
-		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		cy.reload();
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
