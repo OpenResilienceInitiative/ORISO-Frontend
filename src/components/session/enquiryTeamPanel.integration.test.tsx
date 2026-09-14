@@ -373,3 +373,39 @@ it('keeps the original enquiry available after an opening error and retries into
 	expect(view.container.textContent).toContain(TEXT);
 	expect(screen.queryByRole('alert')).toBeNull();
 }, 20000);
+
+it('keeps archived team history readable without a composer when the server reports acceptance', async () => {
+	const history = 'Wir haben die Anfrage gemeinsam besprochen.';
+	boundary.rooms.set(
+		TEAM,
+		room(TEAM, [
+			new MatrixEvent({
+				event_id: '$team-history',
+				room_id: TEAM,
+				sender: '@colleague:test',
+				type: 'm.room.message',
+				origin_server_ts: Date.now(),
+				content: { msgtype: 'm.text', body: history }
+			})
+		])
+	);
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	const view = openEnquiry();
+	await waitFor(
+		() => {
+			const panel = view.container.querySelector(
+				'.chatStage__panel .sidePanel'
+			);
+			expect(panel?.textContent).toContain(history);
+			expect(
+				panel?.querySelector(
+					'[contenteditable="true"], textarea, [role="textbox"]'
+				)
+			).toBeNull();
+		},
+		{ timeout: 15000 }
+	);
+	expect(
+		view.container.querySelector('.chatStage__mainPane')?.textContent
+	).toContain(TEXT);
+}, 20000);
