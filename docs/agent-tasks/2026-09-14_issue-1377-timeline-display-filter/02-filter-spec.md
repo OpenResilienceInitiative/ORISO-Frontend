@@ -248,8 +248,16 @@ Rules:
   governed by the asker's one-to-one setting, never "Supervision rooms" the
   asker cannot even configure.
 - The kinds are **disjoint** and evaluated in this order: supervision room
-  (only if `canSupervise`) → circle → internal group → live chat →
-  one-to-one. A supervised case is an
+  **by backend marker** (`hasSupervisionMarker` and `supervisedByMe`, only
+  if `canSupervise`) → circle → internal group → live chat → supervision
+  room **by legacy fallback** (no marker, row owned by another consultant,
+  only if `canSupervise`) → one-to-one. The marker keeps priority because
+  the backend states it explicitly; the legacy heuristic runs **after** the
+  structural group kinds because it cannot tell a supervised case from a
+  circle or internal group an eligible consultant merely subscribes to
+  (`SessionsList.filterSessions` keeps such subscribed non-owner groups):
+  evaluated first, hiding "Supervision rooms" would hide real groups while
+  their Circle / Internal-group setting had no effect. A supervised case is an
   ordinary non-group counselling session (`SessionsListToolbar.stories.tsx:
 317-339`), so it is a "Supervision room", never a "One-to-one chat"; hiding
   one-to-one chats leaves supervised cases visible.
@@ -429,6 +437,19 @@ value shows **visible unread**:
     (no double decrement), poll returning before the commit (decrement
     applied, parked total discarded), several PATCHes around one poll, PATCH
     failure (parked total applied unchanged).
+
+    **Request ordering:** every page-0 request carries a monotonic request
+    number, and the provider keeps two floors: the number of the newest
+    response already applied, and the number issued when the last pending
+    PATCH settled (the reconciliation fetch gets a number above that floor).
+    A response replaces `serverTotal` only if its number is above **both**
+    floors; anything older is applied to the rows but its total is
+    discarded. This covers the ordering the pending-state check alone
+    misses: a poll that **started before** a PATCH and returns **after** the
+    PATCH and its reconciliation fetch have completed would arrive with
+    nothing pending and re-apply its pre-read count. Tests: stale poll
+    returning after the reconciliation fetch (total discarded), two polls
+    returning out of order (newer wins).
 
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
