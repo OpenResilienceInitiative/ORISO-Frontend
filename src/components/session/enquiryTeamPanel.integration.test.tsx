@@ -19,6 +19,9 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';
 import { MatrixEvent } from 'matrix-js-sdk';
 import { SessionStream } from './SessionStream';
+// Preload the real lazy composer during collection; interaction timers must not
+// measure Vite's first compilation of this large module.
+import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import {
 	ActiveSessionContext,
@@ -54,6 +57,7 @@ const boundary = vi.hoisted(() => {
 	return {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
+		getTeam: vi.fn(),
 		sessionRoom: vi.fn(),
 		fetch: vi.fn(),
 		client: null as any
@@ -75,7 +79,7 @@ vi.mock('lottie-web', () => ({
 	}
 }));
 vi.mock('../../api/apiTeamDiscussion', () => ({
-	apiGetTeamDiscussion: async () => null,
+	apiGetTeamDiscussion: (...args: any[]) => boundary.getTeam(...args),
 	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args)
 }));
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
@@ -208,6 +212,7 @@ beforeEach(async () => {
 	boundary.open
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	boundary.getTeam.mockReset().mockResolvedValue(null);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
 	setTenantSettings({ featureTeamDiscussionEnabled: true } as any);
@@ -250,6 +255,26 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 			askerMatrixUserId: '@asker:test'
 		}
 	};
+	function LiveSession({ children }: { children: React.ReactNode }) {
+		const [current, setCurrent] = React.useState(activeSession);
+		return (
+			<ActiveSessionContext.Provider
+				value={{
+					activeSession: current as any,
+					reloadActiveSession: () => {
+						setCurrent({
+							...activeSession,
+							isEnquiry: false,
+							item: { ...activeSession.item, status: 2 }
+						});
+					},
+					readActiveSession: vi.fn()
+				}}
+			>
+				{children}
+			</ActiveSessionContext.Provider>
+		);
+	}
 	const providers: [React.Context<any>, any][] = [
 		[ResponsiveContext, { width: 1440 }],
 		[
@@ -314,14 +339,14 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 							{child}
 						</Context.Provider>
 					),
-					<>
+					<LiveSession>
 						<RouteProbe />
 						<SessionStream
 							readonly={false}
 							bannedUsers={[]}
 							checkMutedUserForThisSession={() => {}}
 						/>
-					</>
+					</LiveSession>
 				)}
 			</MemoryRouter>
 		</I18nextProvider>
@@ -482,4 +507,38 @@ it('keeps the consultant enquiry one-way and hides system notices while retainin
 	expect(
 		screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
 	).toBeTruthy();
+}, 20000);
+
+it('updates an already open enquiry when another colleague accepts it', async () => {
+	const view = openEnquiry();
+	await waitFor(() =>
+		expect(
+			view.container.querySelector(
+				'.chatStage__panel [contenteditable="true"]'
+			)
+		).not.toBeNull()
+	);
+	boundary.getTeam.mockResolvedValue({
+		matrixRoomId: TEAM,
+		status: 'ARCHIVED'
+	});
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	boundary.sessionRoom.mockResolvedValue({
+		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
+	});
+	await waitFor(
+		() => {
+			expect(
+				screen.queryByRole('button', {
+					name: 'enquiry.acceptButton.known'
+				})
+			).toBeNull();
+			expect(
+				view.container.querySelector(
+					'.chatStage__panel [contenteditable="true"]'
+				)
+			).toBeNull();
+		},
+		{ timeout: 10000 }
+	);
 }, 20000);

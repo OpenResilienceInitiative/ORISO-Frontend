@@ -423,7 +423,13 @@ export const SessionsList = ({
 		}
 
 		return refetchEnquiryListState({
-			fetchPage: () => fetchEnquirySessionsWithAutoPage(0),
+			fetchPage: () =>
+				fetchEnquirySessionsWithAutoPage(
+					0,
+					undefined,
+					currentOffset + SESSION_COUNT
+				),
+			pageSize: SESSION_COUNT,
 			replaceSessions: (sessions) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -434,7 +440,7 @@ export const SessionsList = ({
 			setTotalItems,
 			setCurrentOffset
 		});
-	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
+	}, [currentOffset, dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
 	const refetchSessionList = useCallback(() => {
 		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
@@ -956,17 +962,13 @@ export const SessionsList = ({
 	]);
 
 	/*
-	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
-	 * Poll while Live Chat is selected (without aborting the main list fetch).
+	 * Reconcile submissions and acceptance even without an incoming Matrix message.
+	 * Keep the existing bounded polling interval for every enquiry filter.
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
 			return;
 		}
-		if (sessionToolbarChip !== 'liveChat') {
-			return;
-		}
-
 		const intervalId = window.setInterval(() => {
 			refetchEnquiryList();
 		}, 15000);

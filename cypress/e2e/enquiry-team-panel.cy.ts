@@ -207,6 +207,10 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('PATCH', '**/service/users/drafts*', { statusCode: 204 });
 		cy.intercept('DELETE', '**/service/users/drafts*', { statusCode: 204 });
 		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').type(reply);
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').should(
+			'have.text',
+			reply
+		);
 		cy.get('[data-cy="stage-panel"] .sendButton')
 			.should('not.be.disabled')
 			.click();
@@ -336,5 +340,71 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.reload();
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
+		// A colleague can accept while this consultant only watches the queue.
+		cy.visit('/sessions/consultant/sessionPreview');
+		cy.get('[data-cy="session-list-item"]').should('have.length', 1);
+		cy.intercept(
+			'GET',
+			'**/conversations/consultants/enquiries/registered*',
+			{ statusCode: 204 }
+		);
+		cy.intercept(
+			'GET',
+			'**/conversations/consultants/enquiries/anonymous*',
+			{ statusCode: 204 }
+		);
+		cy.get('[data-cy="session-list-item"]', { timeout: 22000 }).should(
+			'not.exist'
+		);
+		const queue = Array.from({ length: 30 }, (_, index) => ({
+			...session,
+			session: {
+				...session.session,
+				id: 2000 + index,
+				matrixRoomId: `!queue-${index}:matrix.test`
+			}
+		}));
+		cy.intercept('GET', '**/service/users/sessions/room?*', (request) => {
+			const ids =
+				new URL(request.url).searchParams
+					.get('roomIds[]')
+					?.split(',') || [];
+			request.reply({
+				sessions: queue.filter((entry) =>
+					ids.includes(entry.session.matrixRoomId)
+				)
+			});
+		});
+		cy.intercept('GET', '**/sessions/*/team-discussion', {
+			statusCode: 204
+		});
+		cy.intercept('GET', '**/sessions/*/supervisors*', []);
+		const refreshCounts: number[] = [];
+		const queueRequests: string[] = [];
+		cy.intercept(
+			'GET',
+			'**/conversations/consultants/enquiries/registered*',
+			(request) => {
+				const query = new URL(request.url).searchParams;
+				const offset = Number(query.get('offset'));
+				const count = Number(query.get('count'));
+				queueRequests.push(`${offset}:${count}`);
+				if (offset === 15) request.alias = 'queueMore';
+				if (offset === 0) refreshCounts.push(count);
+				request.reply({
+					sessions: queue.slice(offset, offset + count),
+					total: queue.length
+				});
+			}
+		);
+		cy.visit('/sessions/consultant/sessionPreview');
+		cy.get('[data-cy="session-list-item"]').should('have.length', 15);
+		cy.get('.sessionsList__scrollContainer').scrollTo('bottom');
+		cy.wait('@queueMore');
+		cy.get('[data-cy="session-list-item"]').should((nodes) =>
+			expect(nodes.length, queueRequests.join(',')).to.equal(30)
+		);
+		cy.wrap(refreshCounts, { timeout: 22000 }).should('include', 30);
+		cy.get('[data-cy="session-list-item"]').should('have.length', 30);
 	});
 });

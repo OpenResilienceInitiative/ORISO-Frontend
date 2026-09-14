@@ -8,7 +8,8 @@ import {
 	useState
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ActiveSessionContext } from '../../globalState';
+import { ActiveSessionContext, buildExtendedSession } from '../../globalState';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import './session.styles';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -134,17 +135,37 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 		abortController.current = new AbortController();
 
-		return apiGetSessionRoomBySessionId(
-			activeSession.item.id,
-			abortController.current.signal
-		).catch((e) => {
-			if (e.message === FETCH_ERRORS.ABORT) {
-				return;
-			} else if (e.message === FETCH_ERRORS.FORBIDDEN) {
-				setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
-			}
-		});
-	}, [activeSession.item.id, enquiryTakenByOtherConsultantOverlayItem]);
+		const signal = abortController.current.signal;
+		return apiGetSessionRoomBySessionId(activeSession.item.id, signal)
+			.then(({ sessions }) => {
+				const refreshed = sessions.find(
+					(entry) => entry.session?.id === activeSession.item.id
+				);
+				if (
+					!signal.aborted &&
+					activeSession.isEnquiry &&
+					refreshed &&
+					!buildExtendedSession(refreshed).isEnquiry
+				) {
+					reloadActiveSession?.();
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						refreshSessionList: true
+					});
+				}
+			})
+			.catch((e) => {
+				if (e.message === FETCH_ERRORS.ABORT) return;
+				if (e.message === FETCH_ERRORS.FORBIDDEN) {
+					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
+				}
+			});
+	}, [
+		activeSession.item.id,
+		activeSession.isEnquiry,
+		reloadActiveSession,
+		enquiryTakenByOtherConsultantOverlayItem
+	]);
 
 	const [startWatcher, stopWatcher, isWatcherRunning] = useWatcher(
 		updateActiveSession,

@@ -3331,6 +3331,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
+					activeSession.isEnquiry &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
 						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
