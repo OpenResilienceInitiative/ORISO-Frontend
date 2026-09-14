@@ -30,7 +30,7 @@ describe('FilterChipRow / FilterChip (#1377)', () => {
 			</FilterChipRow>
 		);
 		expect(screen.getByRole('group', { name: 'Filter' })).toBeTruthy();
-		const active = screen.getByRole('button', { name: 'Nachrichten' });
+		const active = screen.getByRole('button', { name: 'Nachrichten (5)' });
 		expect(active.getAttribute('aria-pressed')).toBe('true');
 		expect(active.className).toContain('sessionsListToolbar__chip--active');
 		expect(active.textContent).toContain('5');
@@ -47,7 +47,7 @@ describe('FilterChipRow / FilterChip (#1377)', () => {
 	it('caps the badge at 99+', () => {
 		render(<FilterChip label="System" icon={Icon} count={250} />);
 		expect(
-			screen.getByRole('button', { name: 'System' }).textContent
+			screen.getByRole('button', { name: 'System (99+)' }).textContent
 		).toContain('99+');
 	});
 });

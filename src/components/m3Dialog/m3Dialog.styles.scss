@@ -280,17 +280,6 @@
 		}
 	}
 
-	/* M3 full-screen dialog (#1377): the sheet IS the viewport — no band above
-	   and below, no corner radius, the body takes the remaining height. */
-	&--fullScreen .m3Dialog__surface {
-		max-width: none;
-		max-height: none;
-		height: 100%;
-		margin: 0;
-		border-radius: 0;
-		box-shadow: none;
-	}
-
 	/* M3 mobile rule: two short actions stay a right-aligned row; three or more
 	   stack full-width with centred labels. */
 	@media (width <= 575px) {
@@ -311,5 +300,18 @@
 				justify-content: center;
 			}
 		}
+	}
+
+	/* M3 full-screen dialog (#1377): the sheet IS the viewport — no band above
+	   and below, no corner radius, the body takes the remaining height. Declared
+	   AFTER the phone media rule above on purpose: both selectors are (0,2,0),
+	   so source order decides, and the phone margin must not win here. */
+	&--fullScreen .m3Dialog__surface {
+		max-width: none;
+		max-height: none;
+		height: 100%;
+		margin: 0;
+		border-radius: 0;
+		box-shadow: none;
 	}
 }

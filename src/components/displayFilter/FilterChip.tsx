@@ -32,33 +32,47 @@ export const FilterChip = ({
 	onClick,
 	assetIcon = false,
 	'data-cy': dataCy
-}: FilterChipProps) => (
-	<button
-		type="button"
-		aria-pressed={active}
-		title={label}
-		aria-label={label}
-		disabled={disabled}
-		onClick={onClick}
-		data-cy={dataCy}
-		className={clsx('sessionsListToolbar__chip', {
-			'sessionsListToolbar__chip--active': active,
-			'sessionsListToolbar__chip--iconOnly': !active
-		})}
-	>
-		<Icon
-			className={clsx(
-				'sessionsListToolbar__chipIconSvg',
-				assetIcon && 'sessionsListToolbar__chipIconSvg--asset'
-			)}
-		/>
-		<span className="sessionsListToolbar__chipLabel" aria-hidden={!active}>
-			{label}
-		</span>
-		{count !== undefined && count > 0 && (
-			<span className="sessionsListToolbar__chipBadge">
-				{count > 99 ? '99+' : count}
+}: FilterChipProps) => {
+	const hasCount = count !== undefined && count > 0;
+	const badge = hasCount ? (count > 99 ? '99+' : String(count)) : null;
+	// The badge is decorative for sighted users but carries the reason the
+	// transient chip exists; fold it into the accessible name so a screen
+	// reader hears "Nachrichten (5)" rather than a bare "Nachrichten".
+	const accessibleName = badge ? `${label} (${badge})` : label;
+	return (
+		<button
+			type="button"
+			aria-pressed={active}
+			title={accessibleName}
+			aria-label={accessibleName}
+			disabled={disabled}
+			onClick={onClick}
+			data-cy={dataCy}
+			className={clsx('sessionsListToolbar__chip', {
+				'sessionsListToolbar__chip--active': active,
+				'sessionsListToolbar__chip--iconOnly': !active
+			})}
+		>
+			<Icon
+				className={clsx(
+					'sessionsListToolbar__chipIconSvg',
+					assetIcon && 'sessionsListToolbar__chipIconSvg--asset'
+				)}
+			/>
+			<span
+				className="sessionsListToolbar__chipLabel"
+				aria-hidden={!active}
+			>
+				{label}
 			</span>
-		)}
-	</button>
-);
+			{badge && (
+				<span
+					className="sessionsListToolbar__chipBadge"
+					aria-hidden="true"
+				>
+					{badge}
+				</span>
+			)}
+		</button>
+	);
+};

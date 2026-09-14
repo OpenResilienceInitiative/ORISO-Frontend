@@ -456,7 +456,7 @@ interface DisplayFilter {
 attachClient` has the same exposure today.) 3. An update made before attach is written to the mirror only. If account
   data turns out to exist on attach, that pre-sync update is **discarded**
   (account wins, no merge) — same rule as the announcement settings, and
-  stated here so nobody expects a merge. 4. Updates after attach write account data first and mirror on success.
+  stated here so nobody expects a merge. 4. Updates after attach write account data first and mirror on success. 5. **Logout / client removal resets the store.** `AuthenticatedApp` publishes `null` as the client on logout (`AuthenticatedApp.tsx:325-331`) after the storage hygiene purged the mirror; the bridge then calls `displayFilterStore.detachClient()`, which drops the in-memory state back to defaults (re-reading the now-empty mirror). Without this, user A's hidden kinds and auto-read would survive in the singleton and, on user B's first attach with no account-data event, be **seeded into B's account** by rule 2. Test: A customises → logout → B attaches with no event → B sees defaults and nothing is written from A's state.
   Tests: attach with account data only, mirror only (first-attach seed), both
   (account wins, mirror overwritten), malformed account blob (defaults, mirror
   ignored), pre-sync update followed by attach with existing account data

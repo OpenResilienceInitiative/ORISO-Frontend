@@ -99,3 +99,17 @@ export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 		}
 		return (kind.unreadCount ?? 0) > 0 || kind.id === activeKindId;
 	});
+
+/**
+ * The active chip must never outlive its pill: when the user hides a kind or
+ * switches its pill off while that kind is the active filter, the chip that
+ * would clear the selection is gone. Callers pass the active kind through
+ * this on every value change and store the result (spec §5.1).
+ */
+export const reconcileActiveKind = (
+	value: DisplayFilterValue,
+	activeKindId: string | null
+): string | null =>
+	activeKindId && resolveKindSetting(value, activeKindId).pill
+		? activeKindId
+		: null;

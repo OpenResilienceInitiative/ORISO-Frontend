@@ -83,7 +83,7 @@ export const WithActiveChip: Story = {
 	render: () => <Row initialActive="messages" />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const active = canvas.getByRole('button', { name: 'Nachrichten' });
+		const active = canvas.getByRole('button', { name: 'Nachrichten (5)' });
 		await expect(active).toHaveAttribute('aria-pressed', 'true');
 		await userEvent.click(active);
 		await expect(active).toHaveAttribute('aria-pressed', 'false');

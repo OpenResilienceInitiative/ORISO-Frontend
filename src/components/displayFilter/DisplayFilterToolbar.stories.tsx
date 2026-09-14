@@ -11,6 +11,7 @@ import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
 	isDisplayFilterCustomised,
+	reconcileActiveKind,
 	visiblePillKinds
 } from './displayFilterTypes';
 import { STORY_LABELS, TIMELINE_KINDS } from './displayFilterStoryData';
@@ -86,8 +87,13 @@ const Toolbar = ({
 				kinds={TIMELINE_KINDS}
 				value={value}
 				customised={customised}
-				onChange={setValue}
-				onReset={() => setValue(EMPTY_DISPLAY_FILTER)}
+				onChange={(next) => {
+					setValue(next);
+					setActive((current) => reconcileActiveKind(next, current));
+				}}
+				onReset={() => {
+					setValue(EMPTY_DISPLAY_FILTER);
+				}}
 				onOpenProfile={() => undefined}
 				labels={STORY_LABELS}
 			/>
@@ -121,7 +127,7 @@ export const TogglePillRemovesChip: Story = {
 		const canvas = within(canvasElement);
 		const body = within(canvasElement.ownerDocument.body);
 		await expect(
-			canvas.getByRole('button', { name: 'System' })
+			canvas.getByRole('button', { name: 'System (12)' })
 		).toBeVisible();
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Anzeige-Filter' })
@@ -140,7 +146,7 @@ export const TogglePillRemovesChip: Story = {
 			).toBeVisible()
 		);
 		await expect(
-			canvas.queryByRole('button', { name: 'System' })
+			canvas.queryByRole('button', { name: 'System (12)' })
 		).not.toBeInTheDocument();
 		await expect(
 			canvas
@@ -164,6 +170,35 @@ export const TriggerControlsDialog: Story = {
 		).not.toBeNull();
 		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+	}
+};
+
+/** Switching off the pill of the ACTIVE kind also clears the selection (no orphaned filter). */
+export const PillOffClearsActiveKind: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const messages = canvas.getByRole('button', {
+			name: 'Nachrichten (5)'
+		});
+		await userEvent.click(messages);
+		await expect(messages).toHaveAttribute('aria-pressed', 'true');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Anzeige-Filter' })
+		);
+		await userEvent.click(
+			body.getByRole('checkbox', { name: 'Pille: Nachrichten' })
+		);
+		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+		await waitFor(() =>
+			expect(body.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await expect(
+			canvas.queryByRole('button', { name: 'Nachrichten (5)' })
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', { pressed: true })
+		).not.toBeInTheDocument();
 	}
 };
 

@@ -3,6 +3,7 @@ import {
 	EMPTY_DISPLAY_FILTER,
 	OTHER_KIND_ID,
 	isDisplayFilterCustomised,
+	reconcileActiveKind,
 	resolveKindSetting,
 	setKindSetting,
 	visiblePillKinds
@@ -74,5 +75,20 @@ describe('displayFilterTypes (#1377)', () => {
 		expect(
 			visiblePillKinds(value, kinds, 'messages').map((k) => k.id)
 		).toEqual(['requests', 'messages']);
+	});
+
+	it('clears the active kind once its pill is gone', () => {
+		expect(reconcileActiveKind(EMPTY_DISPLAY_FILTER, 'messages')).toBe(
+			'messages'
+		);
+		const pillOff = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
+			pill: false
+		});
+		expect(reconcileActiveKind(pillOff, 'messages')).toBeNull();
+		const hidden = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
+			show: false
+		});
+		expect(reconcileActiveKind(hidden, 'messages')).toBeNull();
+		expect(reconcileActiveKind(hidden, null)).toBeNull();
 	});
 });
