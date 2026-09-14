@@ -139,7 +139,25 @@ export const ReadOnly: Story = {
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />
 };
 
+/** Some event types of a family hidden in the profile → mixed checkbox (spec §5.1). */
+export const PartiallyHidden: Story = {
+	args: {
+		kinds: TIMELINE_KINDS.map((kind) =>
+			kind.id === 'system' ? { ...kind, partial: true } : kind
+		)
+	},
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		await expect(
+			dialog.getByRole('checkbox', { name: 'Anzeigen: System' })
+		).toHaveAttribute('aria-checked', 'mixed');
+	}
+};
+
+/** Q7: on phones the same M3 dialog opens full-screen — no bottom sheet. */
 export const Phone: Story = {
 	globals: phone390Globals,
+	args: { fullScreen: true },
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />
 };

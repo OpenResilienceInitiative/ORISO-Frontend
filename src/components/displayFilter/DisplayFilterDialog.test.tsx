@@ -21,6 +21,7 @@ vi.mock('@mui/icons-material/MoreHoriz', () => ({
 const KINDS = [
 	{ id: 'messages', label: 'Nachrichten', unreadCount: 5 },
 	{ id: 'drafts', label: 'Entwürfe', unreadCount: 1 },
+	{ id: 'system', label: 'System', unreadCount: 0, partial: true },
 	{ id: 'other', label: 'Sonstiges', unreadCount: 0 }
 ];
 
@@ -91,6 +92,27 @@ describe('DisplayFilterDialog (#1377)', () => {
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue)
 				.autoReadHidden
 		).toBe(true);
+	});
+
+	it('renders a partially hidden family as mixed and exposes a real DOM id', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				id="dlg-1"
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+			/>
+		);
+		const showSystem = screen.getByRole('checkbox', {
+			name: 'Anzeigen: System'
+		}) as HTMLInputElement;
+		expect(showSystem.getAttribute('aria-checked')).toBe('mixed');
+		expect(showSystem.indeterminate).toBe(true);
+		expect(document.getElementById('dlg-1')).not.toBeNull();
 	});
 
 	it('omits auto-read for sections without it', () => {

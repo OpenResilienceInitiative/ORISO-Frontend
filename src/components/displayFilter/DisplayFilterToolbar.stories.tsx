@@ -23,7 +23,13 @@ import '../sessionsList/sessionsList.styles.scss';
  * chip row and the display-filter button that opens the dialog. State lives
  * in the story; in the app it comes from the slice-2 store.
  */
-const Toolbar = ({ initialValue = EMPTY_DISPLAY_FILTER }) => {
+const Toolbar = ({
+	initialValue = EMPTY_DISPLAY_FILTER,
+	fullScreen = false
+}: {
+	initialValue?: DisplayFilterValue;
+	fullScreen?: boolean;
+}) => {
 	const [query, setQuery] = useState('');
 	const [value, setValue] = useState<DisplayFilterValue>(initialValue);
 	const [active, setActive] = useState<string | null>(null);
@@ -74,6 +80,7 @@ const Toolbar = ({ initialValue = EMPTY_DISPLAY_FILTER }) => {
 			</FilterChipRow>
 			<DisplayFilterDialog
 				id="display-filter-dialog"
+				fullScreen={fullScreen}
 				open={open}
 				onClose={() => setOpen(false)}
 				kinds={TIMELINE_KINDS}
@@ -143,6 +150,24 @@ export const TogglePillRemovesChip: Story = {
 	}
 };
 
+/** Trigger and dialog are linked: `aria-controls` points at a real element. */
+export const TriggerControlsDialog: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const trigger = canvas.getByRole('button', { name: 'Anzeige-Filter' });
+		await userEvent.click(trigger);
+		const controls = trigger.getAttribute('aria-controls');
+		await expect(controls).toBe('display-filter-dialog');
+		await expect(
+			canvasElement.ownerDocument.getElementById(controls as string)
+		).not.toBeNull();
+		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+	}
+};
+
 export const Phone: Story = {
-	globals: phone390Globals
+	globals: phone390Globals,
+	args: { fullScreen: true }
 };

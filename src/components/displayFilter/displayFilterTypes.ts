@@ -28,6 +28,11 @@ export interface DisplayFilterKindOption {
 	icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 	/** Unread items of this kind in the loaded feed (drives the pill badge). */
 	unreadCount?: number;
+	/**
+	 * Some event types of this kind are hidden in the profile (spec §5.1):
+	 * the show checkbox renders indeterminate ("mixed") instead of checked.
+	 */
+	partial?: boolean;
 }
 
 export const DEFAULT_KIND_SETTING: KindSetting = { show: true, pill: true };

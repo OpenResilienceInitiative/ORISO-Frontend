@@ -52,6 +52,9 @@ export interface DisplayFilterDialogProps {
 	labels: DisplayFilterDialogLabels;
 	/** Whether the current value differs from the defaults (enables "reset"). */
 	customised?: boolean;
+	/** M3 full-screen presentation on phones (Q7); the caller passes `useResponsive().untilL`. */
+	fullScreen?: boolean;
+	/** DOM id of the dialog surface, referenced by the button's `aria-controls`. */
 	id?: string;
 }
 
@@ -74,6 +77,7 @@ export const DisplayFilterDialog = ({
 	onOpenProfile,
 	labels,
 	customised = false,
+	fullScreen = false,
 	id
 }: DisplayFilterDialogProps) => {
 	const generatedId = useId();
@@ -88,7 +92,9 @@ export const DisplayFilterDialog = ({
 			icon={<TuneIcon />}
 			closeLabel={labels.close}
 			width={480}
+			fullScreen={fullScreen}
 			className="displayFilterDialog"
+			id={dialogId}
 			data-testid={dialogId}
 			actions={[
 				{
@@ -170,6 +176,9 @@ export const DisplayFilterDialog = ({
 								>
 									<M3Checkbox
 										checked={setting.show}
+										indeterminate={Boolean(
+											setting.show && kind.partial
+										)}
 										disabled={readOnly || isOther}
 										hideLabel
 										label={labels.showKind(kind.label)}
