@@ -159,14 +159,14 @@ Rules:
 
 ### 5.2 Gespräche (`sessions`)
 
-| Kind (checkbox)   | Maps to                                                       | Source                                      |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| One-to-one chats  | not group, modality ≠ live chat                               | `getModality`, `isInternalGroupChatSession` |
-| Live chats        | `Modality.LIVE_CHAT` (only when the tenant enables live chat) | `showLiveChatChip`                          |
-| Internal groups   | `isInternalGroupChatSession`                                  | `sessionToolbarFilters.ts:69-72`            |
-| Circles           | `isConversationCircleSession`                                 | `sessionToolbarFilters.ts:63-67`            |
-| Supervision rooms | `hasSupervisionMarker` / `getSupervisionListState`            | `sessionsListItem/supervisionListState.ts`  |
-| Future timeline   | the Future Timeline panel/now-divider                         | `FutureTimelinePanel.tsx`                   |
+| Kind (checkbox)   | Maps to                                                         | Source                                     |
+| ----------------- | --------------------------------------------------------------- | ------------------------------------------ |
+| One-to-one chats  | not group, modality ≠ live chat, **and not a supervision room** | `getModality`, `hasSupervisionMarker`      |
+| Live chats        | `Modality.LIVE_CHAT` (only when the tenant enables live chat)   | `showLiveChatChip`                         |
+| Internal groups   | `isInternalGroupChatSession`                                    | `sessionToolbarFilters.ts:69-72`           |
+| Circles           | `isConversationCircleSession`                                   | `sessionToolbarFilters.ts:63-67`           |
+| Supervision rooms | `hasSupervisionMarker` / `getSupervisionListState`              | `sessionsListItem/supervisionListState.ts` |
+| Future timeline   | the Future Timeline panel/now-divider                           | `FutureTimelinePanel.tsx`                  |
 
 Rules:
 
@@ -177,6 +177,16 @@ Rules:
   tooltip "Hidden by your display filter". Leaving the room removes it. This
   protects the "exactly one active item" invariant (`CONTEXT.md` L45-46).
 - Hidden kinds are excluded from the toolbar chip counts (`chipCounts`).
+- The kinds are **disjoint** and evaluated in this order: supervision room →
+  circle → internal group → live chat → one-to-one. A supervised case is an
+  ordinary non-group counselling session (`SessionsListToolbar.stories.tsx:
+317-339`), so it is a "Supervision room", never a "One-to-one chat"; hiding
+  one-to-one chats leaves supervised cases visible.
+- "Future timeline" is gated **independently of the row filter**: the
+  `futureTimelineSeries` input (`SessionsList.tsx:1624-1640`) is derived from
+  the session set **before** the display filter is applied, and the checkbox
+  only decides whether the panel renders. Hiding "Circles" therefore does not
+  remove the future panel while "Future timeline" is still ticked.
 
 ### 5.3 Anfragen (`requests`)
 
@@ -185,12 +195,10 @@ consultant are not a kind — `SessionsList.filterSessions` drops them before an
 toolbar filtering, `SessionsList.tsx:1352-1355`, so a checkbox could never
 show them):
 
-| Kind (checkbox)      | Maps to                                          |
-| -------------------- | ------------------------------------------------ |
-| Nearby (my agencies) | `'nearby'` semantics of `sessionMatchesToolbar`  |
-| Live chats           | live-chat enquiries (tenant-gated)               |
-| Anonymous enquiries  | anonymous registration sessions                  |
-| Assigned to others   | enquiries already assigned to another consultant |
+| Kind (checkbox)      | Maps to                                                                                                                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nearby (my agencies) | `'nearby'` semantics of `sessionMatchesToolbar`                                                                                                                                                                 |
+| Live chats           | `isAnonymousAskerSession` = `Modality.LIVE_CHAT` (tenant-gated). There is no separate "anonymous" kind: on `dev` anonymous and live-chat enquiries are the same predicate (`sessionToolbarFilters.ts:109-114`). |
 
 Auto-read is **not offered** here (§6.2): an unseen enquiry is a client
 waiting, and "hidden ⇒ read" would hide that fact from the badge.
@@ -206,9 +214,10 @@ unread is marked read:
 - on every refresh/poll that brings new hidden items.
 
 Mechanics: `PATCH /service/users/event-notifications/{id}/read`
-(`apiEventNotifications.ts`), batched client-side and debounced (one pass per
-refresh, at most 50 ids per pass). Idempotent, so a lost response is retried
-on the next refresh. No new backend endpoint is required for v1; a
+(`apiEventNotifications.ts`), batched client-side and debounced: one pass per
+refresh, processed in chunks of 50 ids **until the loaded set is drained** (a
+user who has paged deep and then hides a family can have far more than 50).
+Idempotent, so a lost response is retried on the next refresh. No new backend endpoint is required for v1; a
 `PATCH …/read?eventTypes=a,b` bulk endpoint is the obvious follow-up in
 ORISO-UserService once the volume shows up in SigNoz.
 
