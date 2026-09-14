@@ -353,8 +353,21 @@ interface DisplayFilter {
 ```
 
 - Tolerant parsing exactly like `parseNotificationConfig`: unknown kinds are
-  kept (a newer client may know them), unknown keys ignored, malformed →
-  defaults. Defaults = `{ hiddenKinds: [], autoReadHidden: false }`.
+  kept (a newer client may know them), unknown keys ignored **for reading**,
+  malformed → defaults.
+- **Version rule for writing:** if the stored `version` is greater than the
+  one this client supports, the store enters **read-only mode** for that
+  account-data key — the effective filter is still computed from the known
+  fields, but `setGlobal` / `setSection` / reset refuse to write (the
+  popover shows "Update the app to change display filters"), so an older
+  client never overwrites a newer record with defaults. For the supported
+  version, writes **carry unknown top-level keys through unchanged**
+  (read → spread → modify known keys → write), never a fresh object.
+  Malformed data (unparseable, missing `version`) is treated as absent: it
+  reads as defaults and the first write replaces it. Tests: read newer
+  version then attempt each write path (no write, UI disabled), read v1 with
+  an unknown extra key then write (key preserved), malformed then write
+  (replaced). Defaults = `{ hiddenKinds: [], autoReadHidden: false }`.
 - localStorage mirror `oriso.displayFilters.v1` — **inside the `oriso.` app
   namespace on purpose**, so the logout hygiene purges it
   (`clientStorageHygiene` removes keys with the `oriso.` prefix). A key outside
@@ -390,7 +403,12 @@ setSection, setGlobal, resetSection }` and re-renders on account-data sync
 - Pure helpers in one module (`displayFilter/model.ts`): `resolveEffective`,
   `applyTimelineFilter(items)`, `applySessionsFilter(items)`,
   `applyRequestsFilter(items)`, each with tests. Integration points:
-  `timelineFilter.ts` gains one pre-step before `getFamiliesInFeed`;
+  in `NotificationsCenter` the feed is reduced **once**
+  (`visibleFeed = applyTimelineFilter(notificationFeed, effective)`) and that
+  same `visibleFeed` is passed to **both** `getFamiliesInFeed` and
+  `filterTimelineItems` (today each receives `notificationFeed` separately,
+  `NotificationsCenter.tsx:552-568`), so hidden kinds vanish from the chips
+  and the rendered list in the same render (AC2);
   `SessionsList.filterSessions` calls `applySessionsFilter` for
   `MY_SESSION` and `applyRequestsFilter` for `ENQUIRY` **after** its own
   consultant/assignment filtering and before `sessionMatchesToolbar`, so the
