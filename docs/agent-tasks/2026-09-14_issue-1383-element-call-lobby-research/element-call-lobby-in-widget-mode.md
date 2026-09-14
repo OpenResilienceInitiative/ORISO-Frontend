@@ -1,10 +1,11 @@
 # Element Call lobby in widget mode — research notes
 
-Source of truth: `/home/user/ORISO-ElementCall` (fork of element-hq/element-call) at `881fa91`, and the
-host integration in `/home/user/ORISO-Frontend/src/components/call/widget/useElementCallWidget.ts`
-(passes `skipLobby=true`, `header=none`, `confineToRoom=true`, `intent=start_call`,
-`callIntent=audio|video`, `perParticipantE2EE=true`; see `useElementCallWidget.ts:155-180`).
-All `path:line` references below are relative to `ORISO-ElementCall/` unless prefixed.
+Source of truth: [OpenResilienceInitiative/ORISO-ElementCall](https://github.com/OpenResilienceInitiative/ORISO-ElementCall)
+(fork of element-hq/element-call) at revision `881fa91`, and the host integration in this repository at
+`src/components/call/widget/useElementCallWidget.ts` (passes `skipLobby=true`, `header=none`, `confineToRoom=true`,
+`intent=start_call`, `callIntent=audio|video`, and `perParticipantE2EE=true` unless
+`appConfig.releaseToggles.enableCallMediaE2EE` is explicitly `false`; see `useElementCallWidget.ts:155-180`).
+All `path:line` references below are relative to the `ORISO-ElementCall` repository root unless prefixed with `ORISO-Frontend/`.
 
 ## 1. What renders in the lobby with `skipLobby=false` (widget mode)
 
