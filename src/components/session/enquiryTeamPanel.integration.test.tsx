@@ -201,7 +201,7 @@ afterEach(() => {
 function RouteProbe() {
 	return <output data-testid="route">{useLocation().search}</output>;
 }
-function openEnquiry() {
+function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 	const activeSession = {
 		isGroup: false,
 		isSession: true,
@@ -214,6 +214,7 @@ function openEnquiry() {
 			status: 1,
 			active: true,
 			agencyId: 1,
+			consultingType: 0,
 			conversationType: 'AGENCY_COUNSELLING',
 			askerMatrixUserId: '@asker:test'
 		}
@@ -243,7 +244,7 @@ function openEnquiry() {
 		[
 			SessionTypeContext,
 			{
-				type: SESSION_LIST_TYPES.ENQUIRY,
+				type,
 				path: '/sessions/consultant/sessionPreview'
 			}
 		],
@@ -256,7 +257,10 @@ function openEnquiry() {
 		[TopicsContext, { topics: [], setTopics: vi.fn() }],
 		[
 			ConsultingTypesContext,
-			{ consultingTypes: [], setConsultingTypes: vi.fn() }
+			{
+				consultingTypes: [{ id: 0, isVideoCallAllowed: false }],
+				setConsultingTypes: vi.fn()
+			}
 		],
 		[
 			NotificationsContext,
@@ -309,6 +313,19 @@ it('opens the enquiry with its complete original text and the shared team panel 
 	expect(
 		screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
 	).toBeTruthy();
+}, 20000);
+
+it('shows the complete enquiry text when opened outside the enquiry list', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION);
+	await waitFor(
+		() => {
+			expect(
+				view.container.querySelector('.chatStage__mainPane')
+					?.textContent
+			).toContain(TEXT);
+		},
+		{ timeout: 15000 }
+	);
 }, 20000);
 
 it('keeps an explicit close when the same enquiry is opened again', async () => {
