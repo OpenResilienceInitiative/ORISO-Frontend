@@ -106,6 +106,8 @@ export interface EventActionParams {
 	recipientRole?: string | null;
 	/** Case Handover consent variant; metadata only, never conversation content. */
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
+	/** Exact scoped Case Handover request opened by a recipient offer. */
+	caseHandoverRequestId?: string | number | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */

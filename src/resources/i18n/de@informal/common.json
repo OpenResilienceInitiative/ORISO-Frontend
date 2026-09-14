@@ -2,7 +2,9 @@
 	"chatStage": {
 		"panel": {
 			"team": {
-				"empty": { "text": "Schreibe unten die erste Nachricht an dein Team." }
+				"empty": {
+					"text": "Schreibe unten die erste Nachricht an dein Team."
+				}
 			}
 		}
 	},
@@ -2208,6 +2210,14 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
+			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
+			"declined": "Du hast diese Übergabe abgelehnt.",
+			"noContent": "Diese Anfrage erlaubt dir nicht, das Gespräch zu lesen.",
+			"forbidden": "Du darfst diese Übergabeanfrage nicht aufrufen.",
+			"loadForbidden": "Du darfst die berechtigten Kolleg:innen nicht laden."
+		},
 		"accepted": {
 			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
 			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Bei Bedarf können weitere Fachkräfte dieser Beratungsstelle hinzugezogen werden, etwa zur Vertretung oder zur fachlichen Rücksprache — alle sind zur Verschwiegenheit verpflichtet.",
@@ -2215,6 +2225,20 @@
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
 		}
+	},
+	"supervisorDialog": {
+		"description": {
+			"add": "Hol eine erfahrene Kolleg:in in diesen Fall.",
+			"change": "Ersetze die aktuelle Supervision.",
+			"handover": "Biete diese Beratung einer anderen berechtigten Kolleg:in an."
+		},
+		"reasonPlaceholder": "Beschreibe kurz den Grund.",
+		"reasonError": "Bitte wähle einen Grund aus.",
+		"explanation": {
+			"add": "Eine Supervisor:in unterstützt dich in einem getrennten Teambereich.",
+			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleibst du zuständig."
+		},
+		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in."
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen unterzeichnen",

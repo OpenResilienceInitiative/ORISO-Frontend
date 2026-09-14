@@ -279,6 +279,13 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'caseHandoverConsentDeclined',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor('case.handover.offer.received', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOfferReceived',
+		resolveActionTarget: conversationTarget
+	}),
 
 	// ----- Calls family (Slice 5) -----
 	// Live, joinable call -> Join overlay (does not navigate).

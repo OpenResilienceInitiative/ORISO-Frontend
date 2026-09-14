@@ -334,10 +334,14 @@
 				"title": "Fil"
 			},
 			"team": {
-				"title": "Consultation d’équipe", "onlyMarker": "Réservé à l’équipe",
+				"title": "Consultation d’équipe",
+				"onlyMarker": "Réservé à l’équipe",
 				"composer": { "placeholder": "Message à l’équipe…" },
 				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
-				"empty": { "title": "Démarrer la consultation d’équipe", "text": "Écrivez ci-dessous le premier message à votre équipe." }
+				"empty": {
+					"title": "Démarrer la consultation d’équipe",
+					"text": "Écrivez ci-dessous le premier message à votre équipe."
+				}
 			}
 		},
 		"switcher": {
@@ -345,7 +349,8 @@
 			"closeMenu": "Masquer les canaux secondaires",
 			"kind": {
 				"supervision": "Supervision",
-				"thread": "Fil", "team": "Consultation d’équipe"
+				"thread": "Fil",
+				"team": "Consultation d’équipe"
 			},
 			"mainChat": "Chat de conseil",
 			"openChannel": "Ouvrir {{label}}",
@@ -355,7 +360,9 @@
 			"eyebrow": "Autres conversations",
 			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
-			"thread": "Fil #{{n}}", "teamChat": "Consultation d’équipe", "titleWithTeam": "Fils, supervision et consultation d’équipe"
+			"thread": "Fil #{{n}}",
+			"teamChat": "Consultation d’équipe",
+			"titleWithTeam": "Fils, supervision et consultation d’équipe"
 		}
 	},
 	"chatFlyout": {
@@ -1906,6 +1913,10 @@
 				"title": "Transfert de dossier refusé",
 				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Proposition de transfert",
+				"text": "Un collègue souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation."
+			},
 			"callStarted": {
 				"title": "Appel en cours",
 				"text": "Un appel est en cours. Rejoignez-le pour y participer."
@@ -3169,12 +3180,39 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Transfert de dossier",
+			"pending": "Un collègue souhaite vous transférer cette consultation.",
+			"accept": "Accepter",
+			"decline": "Refuser",
+			"awaitingClientConsent": "Vous avez accepté. L’accès reste bloqué jusqu’au consentement de la personne conseillée.",
+			"declined": "Vous avez refusé ce transfert.",
+			"denied": "Ce transfert a été refusé.",
+			"clientConsentDeclined": "La personne conseillée a refusé ce transfert.",
+			"noContent": "Cette demande ne vous autorise pas à lire la conversation.",
+			"forbidden": "Vous n’êtes pas autorisé à consulter cette demande.",
+			"notFound": "Cette demande n’existe plus.",
+			"generic": "La demande n’a pas pu être chargée.",
+			"retry": "Réessayer",
+			"open": "Transférer la consultation",
+			"loadForbidden": "Vous n’êtes pas autorisé à charger les collègues éligibles.",
+			"loadError": "Le formulaire n’a pas pu être chargé.",
+			"submitError": "La demande n’a pas pu être envoyée.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "En attente du collègue sélectionné.",
+				"PENDING_CLIENT_CONSENT": "Le collègue a accepté. En attente du consentement du client.",
+				"GRANTED": "Le transfert est terminé.",
+				"RECIPIENT_DECLINED": "Le collègue sélectionné a refusé.",
+				"DENIED": "Le transfert a été refusé.",
+				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert."
+			}
+		},
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
 		"batch": {
 			"cancel": "Fermer la sélection",
 			"confirm": "Demander pour la sélection",
 			"required": "Choisissez au moins un dossier, un motif et une explication.",
-			"result": "{{successful}} demande(s) envoyée(s), {{failed}} en échec.",
+			"result": "{{granted}} transféré(s), {{pending}} en attente, {{denied}} refusé(s), {{failed}} en échec.",
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
@@ -3282,6 +3320,47 @@
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Demander une supervision",
+			"change": "Changer de superviseur",
+			"handover": "Transférer la consultation"
+		},
+		"description": {
+			"add": "Invitez un collègue expérimenté.",
+			"change": "Remplacez le superviseur actuel.",
+			"handover": "Proposez cette consultation à un collègue éligible."
+		},
+		"currentHeading": "Supervision actuelle",
+		"noneYet": "Aucun superviseur n’est affecté.",
+		"personLabel": {
+			"add": "Choisir un superviseur",
+			"change": "Choisir le nouveau superviseur",
+			"handover": "Choisir un collègue"
+		},
+		"reasonLabel": {
+			"add": "Motif de la supervision",
+			"change": "Motif du changement",
+			"handover": "Motif du transfert"
+		},
+		"reasonPlaceholder": "Décrivez brièvement le motif.",
+		"reasonError": "Choisissez un motif.",
+		"reasonEmptyOption": "Choisir un motif…",
+		"explanation": {
+			"add": "Un superviseur peut vous aider dans un espace d’équipe séparé.",
+			"change": "Le nouveau superviseur remplace le précédent.",
+			"handover": "Le collègue sélectionné décide d’abord. Si la politique l’exige, le client est ensuite consulté. Vous restez responsable jusqu’à toutes les décisions requises."
+		},
+		"handoverPending": "La demande est d’abord envoyée au collègue sélectionné.",
+		"confirm": {
+			"add": "Demander",
+			"change": "Demander le changement",
+			"handover": "Envoyer la proposition"
+		},
+		"cancel": "Annuler",
+		"close": "Fermer",
+		"emptyOption": "Veuillez choisir…"
 	},
 	"session": {
 		"waitingMiniGame": {

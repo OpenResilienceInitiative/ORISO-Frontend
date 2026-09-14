@@ -59,7 +59,10 @@ import {
 } from '../../utils/matrixTimelineEventFormatter';
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
-import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
+import {
+	isCaseHandoverAccessControlled,
+	isCaseHandoverPending
+} from './caseHandoverHelpers';
 import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
@@ -68,6 +71,7 @@ import {
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { formatToHHMM } from '../../utils/dateHelpers';
+import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 
@@ -611,6 +615,21 @@ export const SessionStream = ({
 			.catch(() => setMessagesItem({ messages: [] }))
 			.finally(() => setLoading(false));
 	}, [fetchSessionMessagesRef, setSessionRead]);
+	const handleCaseHandoverStatusChange = useCallback(
+		(nextStatus: CaseHandoverStatus) => setCaseHandoverStatus(nextStatus),
+		[]
+	);
+
+	useCaseHandoverStatusRefresh({
+		enabled:
+			caseHandoverCurtainNeeded &&
+			String(caseHandoverStatus?.sessionId) ===
+				String(activeSession.item?.id) &&
+			isCaseHandoverPending(caseHandoverStatus?.status),
+		sessionId: activeSession.item?.id,
+		notifications: notificationsContext?.notificationFeed,
+		onStatus: handleCaseHandoverStatusChange
+	});
 
 	useEffect(() => {
 		let cancelled = false;
@@ -641,6 +660,10 @@ export const SessionStream = ({
 		apiGetCaseHandoverStatus(sessionId)
 			.then((nextStatus) => {
 				if (cancelled) {
+					return;
+				}
+				if (String(nextStatus.sessionId) !== String(sessionId)) {
+					setLoading(false);
 					return;
 				}
 				setCaseHandoverStatus(nextStatus);
@@ -1232,13 +1255,6 @@ export const SessionStream = ({
 		}
 	};
 
-	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
-		setCaseHandoverStatus(nextStatus);
-		if (nextStatus.canViewContent) {
-			loadAfterCaseHandoverGranted();
-		}
-	};
-
 	const handleCaseHandoverConsentDecision = (approved: boolean) => {
 		if (
 			!pendingCaseHandoverConsent ||
@@ -1275,6 +1291,7 @@ export const SessionStream = ({
 		return (
 			<div className="session__wrapper">
 				<CaseHandoverCurtain
+					actorId={userData.userId}
 					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}

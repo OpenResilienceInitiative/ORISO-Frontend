@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import {
 	apiGetCaseHandoverReasons,
+	apiGetCaseHandoverStatus,
 	apiRequestCaseHandoverAccess,
 	CaseHandoverReason,
 	CaseHandoverStatus
@@ -16,6 +17,13 @@ import {
 import { ReactComponent as CaseHandoverIcon } from '../../resources/img/icons/case-handover/case-handover.svg';
 import { ReactComponent as TutorialIcon } from '../../resources/img/icons/case-handover/tutorial.svg';
 import './caseHandoverCurtain.styles';
+import {
+	activateCaseHandoverActor,
+	clearCaseHandoverOperation,
+	clearCaseHandoverOperationIfMatches,
+	getCaseHandoverOperation,
+	getOrCreateCaseHandoverOperation
+} from '../caseHandover/caseHandoverOperationStore';
 
 /**
  * Access-control curtain in the conversation pane (Figma "CARX — Teamberatung
@@ -354,6 +362,7 @@ export const CaseHandoverCurtainView = ({
 };
 
 interface CaseHandoverCurtainProps {
+	actorId: string;
 	sessionId: number;
 	status: CaseHandoverStatus | null;
 	onStatusChange: (status: CaseHandoverStatus) => void;
@@ -362,6 +371,7 @@ interface CaseHandoverCurtainProps {
 
 /** Container: loads reasons, drives the wizard, submits the request. */
 export const CaseHandoverCurtain = ({
+	actorId,
 	sessionId,
 	status,
 	onStatusChange,
@@ -374,14 +384,30 @@ export const CaseHandoverCurtain = ({
 	const [explanation, setExplanation] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState('');
+	const activeRequestRef = useRef<object | null>(null);
+
+	useEffect(() => activateCaseHandoverActor(actorId), [actorId]);
+
+	useLayoutEffect(() => {
+		activeRequestRef.current = null;
+
+		return () => {
+			activeRequestRef.current = null;
+		};
+	}, [actorId, sessionId]);
 
 	useEffect(() => {
-		setStep('intro');
-		setReasonCode('');
-		setExplanation('');
+		const retained = getCaseHandoverOperation({
+			actorId,
+			sessionId,
+			kind: 'PULL'
+		});
+		setStep(retained ? 'describe' : 'intro');
+		setReasonCode(retained?.reasonCode || '');
+		setExplanation(retained?.explanation || '');
 		setError('');
 		setIsSubmitting(false);
-	}, [sessionId]);
+	}, [actorId, sessionId]);
 
 	useEffect(() => {
 		apiGetCaseHandoverReasons()
@@ -415,20 +441,81 @@ export const CaseHandoverCurtain = ({
 			setError(translate('caseHandover.error.required'));
 			return;
 		}
+		if (typeof status?.ownershipRevision !== 'number') {
+			setError(translate('caseHandover.error.failed'));
+			return;
+		}
 		setIsSubmitting(true);
 		setError('');
-		apiRequestCaseHandoverAccess(sessionId, reasonCode, explanation)
+		const requestIdentity = {};
+		const requestSessionId = sessionId;
+		const operation = getOrCreateCaseHandoverOperation({
+			actorId,
+			sessionId: requestSessionId,
+			kind: 'PULL',
+			expectedOwnershipRevision: status.ownershipRevision,
+			reasonCode,
+			explanation
+		});
+		activeRequestRef.current = requestIdentity;
+		const isCurrentRequest = () =>
+			activeRequestRef.current === requestIdentity;
+
+		apiRequestCaseHandoverAccess(
+			requestSessionId,
+			reasonCode,
+			explanation,
+			operation.expectedOwnershipRevision,
+			operation.operationId
+		)
 			.then((nextStatus) => {
+				if (!isCurrentRequest()) {
+					return;
+				}
+				if (nextStatus.sessionId !== requestSessionId) {
+					setError(translate('caseHandover.error.failed'));
+					return;
+				}
 				onStatusChange(nextStatus);
+				clearCaseHandoverOperation(operation);
 			})
-			.catch((requestError) => {
+			.catch(async (requestError) => {
+				if (!isCurrentRequest()) {
+					return;
+				}
+				if (requestError?.message === FETCH_ERRORS.CONFLICT) {
+					try {
+						const refreshed =
+							await apiGetCaseHandoverStatus(requestSessionId);
+						if (isCurrentRequest()) {
+							onStatusChange(refreshed);
+						}
+					} catch {
+						// Keep the original conflict visible when refresh fails.
+					}
+					if (isCurrentRequest()) {
+						clearCaseHandoverOperationIfMatches(
+							operation,
+							operation.operationId
+						);
+					}
+				}
+				if (!isCurrentRequest()) {
+					return;
+				}
 				const message =
 					requestError?.message === FETCH_ERRORS.FORBIDDEN
 						? translate('caseHandover.error.forbidden')
 						: translate('caseHandover.error.failed');
 				setError(message);
 			})
-			.finally(() => setIsSubmitting(false));
+			.finally(() => {
+				if (!isCurrentRequest()) {
+					return;
+				}
+				activeRequestRef.current = null;
+				setIsSubmitting(false);
+			});
 	};
 
 	return (
