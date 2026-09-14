@@ -22,7 +22,11 @@ import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
-import { buildSessionChannelPath } from '../../utils/channelRoute';
+import {
+	buildSessionChannelPath,
+	resolveComposerChannel,
+	type SideRoomChannelKind
+} from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -220,6 +224,10 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * top. Unset = today's behaviour.
 	 */
 	targetRoomId?: string;
+	/** URL/draft identity for targetRoomId; supervision remains the default. */
+	targetChannelKind?: SideRoomChannelKind;
+	/** Marks notifications from the internal ADR-016 team room. */
+	teamDiscussion?: boolean;
 	/**
 	 * T35: dual mode (a side panel is open) — the composer rests at ONE
 	 * line on the desktop as well and grows while typing (`composerResize`
@@ -241,7 +249,7 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * `primary-fixed-dim` field border — so the channel is unmistakable
 	 * while writing. Default: the neutral `primary-fixed` hairline.
 	 */
-	accent?: 'default' | 'supervision';
+	accent?: 'default' | 'supervision' | 'team';
 	/**
 	 * Whether this composer should claim focus after its draft is ready.
 	 * Side panels set this to false when a channel-switch action has explicitly
@@ -423,6 +431,8 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	hideSupervisorAudience = false,
 	targetRoomId,
+	targetChannelKind,
+	teamDiscussion = false,
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
@@ -700,13 +710,19 @@ export const MessageSubmitInterfaceComponent = ({
 		// (`targetRoomId`) — never the legacy pair.
 		return buildSessionChannelPath(
 			`${location.pathname}${query ? `?${query}` : ''}`,
-			threadRootId
-				? { kind: 'thread', rootId: threadRootId }
-				: targetRoomId
-					? { kind: 'supervision' }
-					: null
+			resolveComposerChannel({
+				threadRootId,
+				targetRoomId,
+				targetChannelKind
+			})
 		);
-	}, [location.pathname, location.search, threadRootId, targetRoomId]);
+	}, [
+		location.pathname,
+		location.search,
+		targetChannelKind,
+		targetRoomId,
+		threadRootId
+	]);
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
@@ -1504,7 +1520,8 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User'
+									'User',
+								teamDiscussion
 							}
 						);
 					} catch (error: any) {
@@ -1570,7 +1587,8 @@ export const MessageSubmitInterfaceComponent = ({
 					retryOfId
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
-					mentionedUserIds
+					mentionedUserIds,
+					teamDiscussion
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1632,6 +1650,7 @@ export const MessageSubmitInterfaceComponent = ({
 			setE2EEState,
 			supervisionRoomId,
 			targetRoomId,
+			teamDiscussion,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
@@ -3858,8 +3877,8 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--flush',
 							flushCorner &&
 								`textarea__wrapper-send-message--flush-${flushCorner}`,
-							accent === 'supervision' &&
-								'textarea__wrapper-send-message--supervision'
+							accent !== 'default' &&
+								`textarea__wrapper-send-message--${accent}`
 						)}
 						data-flush-corner={flushCorner}
 						data-accent={accent}

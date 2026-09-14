@@ -86,6 +86,7 @@ export interface SendFileMessageOptions extends MatrixFileMessageOptions {
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 	postMessageEventNotification?: (
 		input: MessageEventNotificationInput
 	) => Promise<any>;
@@ -300,6 +301,7 @@ class ChatTransportService {
 			matrixRoom: true,
 			threadRootId: options.threadRootId || null,
 			supervisorMessage: !!options.supervisorMessage,
+			teamDiscussion: !!options.teamDiscussion,
 			senderDisplayName: options.senderDisplayName || null,
 			matrixEventId: response?.event_id || null
 		}).catch(() => undefined);

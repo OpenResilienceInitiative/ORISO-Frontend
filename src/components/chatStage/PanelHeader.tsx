@@ -7,9 +7,9 @@
  * hairlines end on the same y (T3).
  *
  * T26: the line under the hairline — where the main chat shows its topic
- * tag — says what this room is and nothing more: "Supervision" or the
- * thread's name ("Thread #2", the same stable number as in the channel
- * card). That line IS the menu button (T19): icon, word, a chevron right
+ * tag — says what this room is and nothing more: "Supervision",
+ * "Teamberatung" or the thread's name ("Thread #2", the same stable number
+ * as in the channel card). That line IS the menu button (T19): icon, word, a chevron right
  * after it that turns while the menu is open. It opens the channel card
  * (`ChannelMenu`, T20) with *every* secondary channel of the session —
  * supervision first, threads by recency — anchored below the line and
@@ -33,6 +33,7 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
 import { ChannelMenu } from './ChannelMenu';
@@ -55,8 +56,9 @@ export interface PanelHeaderProps {
 	/** Which kind of side room — picks the icon next to the section word. */
 	'kind': SecondaryChannelKind;
 	/**
-	 * Channel word: "Supervision" / "Thread". A shown thread is named with
-	 * its stable number ("Thread #2", T26) when `channels` lists it.
+	 * Channel word: "Supervision" / "Teamberatung" / "Thread". A shown thread
+	 * is named with its stable number ("Thread #2", T26) when `channels`
+	 * lists it. The host passes the word; this molecule never translates.
 	 */
 	'title': string;
 	/** Counterpart shown as the main line: "Bettina B.". */
@@ -98,8 +100,16 @@ export interface PanelHeaderProps {
 	'data-cy'?: string;
 }
 
-const kindGlyph = (kind: SecondaryChannelKind) =>
-	kind === 'thread' ? ThreadGlyph : SupervisionGlyph;
+const kindGlyph = (kind: SecondaryChannelKind) => {
+	switch (kind) {
+		case 'thread':
+			return ThreadGlyph;
+		case 'team':
+			return TeamGlyph;
+		default:
+			return SupervisionGlyph;
+	}
+};
 
 export const PanelHeader = ({
 	kind,

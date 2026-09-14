@@ -2355,6 +2355,12 @@ declare namespace UserService {
 			 * Counsellor Chris
 			 */
 			counsellorDisplayName?: string | null;
+			/**
+			 * Matrix room id of the private ADR-008 supervision back-channel. Returned only when the requesting consultant is the session's assigned counsellor or an active supervisor. Never contains the help-seeker room id; null for unrelated team-list viewers, legacy rows that stored the client room, missing rooms, or inconsistent active assignments.
+			 * example:
+			 * !supervision-side-room:matrix.example.org
+			 */
+			sideRoomId?: string | null;
 		}
 		/**
 		 * An active supervision assignment for a session.

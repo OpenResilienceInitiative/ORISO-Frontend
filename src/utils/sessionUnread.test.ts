@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import {
 	countUnreadSessions,
+	getRoomUnreadCount,
 	isChatItemUnread,
 	isRoomUnread
 } from './sessionUnread';
@@ -62,6 +63,33 @@ describe('isRoomUnread', () => {
 		expect(isRoomUnread(undefined)).toBe(false);
 		expect(isRoomUnread(null)).toBe(false);
 		expect(isRoomUnread('')).toBe(false);
+	});
+});
+
+describe('getRoomUnreadCount', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('returns the Matrix room notification count', () => {
+		setMatrixClientServiceRef(
+			serviceWithRoom({ getUnreadNotificationCount: () => 7 })
+		);
+
+		expect(getRoomUnreadCount('!room:hs')).toBe(7);
+	});
+
+	it('falls back to zero for missing rooms and client failures', () => {
+		setMatrixClientServiceRef(serviceWithRoom(null));
+		expect(getRoomUnreadCount('!missing:hs')).toBe(0);
+		expect(getRoomUnreadCount(undefined)).toBe(0);
+
+		setMatrixClientServiceRef({
+			getRoom: () => {
+				throw new Error('client unavailable');
+			}
+		} as any);
+		expect(getRoomUnreadCount('!room:hs')).toBe(0);
 	});
 });
 

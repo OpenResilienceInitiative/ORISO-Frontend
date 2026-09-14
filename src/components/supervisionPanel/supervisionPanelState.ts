@@ -56,20 +56,33 @@ export const countUnreadSideRoomMessages = (
 /**
  * Message split safety net: the client-facing timeline must never contain
  * side-room events. `SessionStream` keeps the rooms apart at load time and
- * stamps `rid` on side-room items; this drops anything that still carries
- * the side room id.
+ * stamps `rid` on side-room items; this drops anything that still carries a
+ * side room id.
+ *
+ * Takes ONE id or several (09.09.: a session now has two side rooms — the
+ * supervision room and the Teamberatung room — and the client must be kept
+ * out of both by the same net).
  */
 export const excludeSideRoomMessages = <T extends SideRoomMessageLike>(
 	messages: ReadonlyArray<T> | null | undefined,
-	supervisionRoomId: string | null | undefined
+	sideRoomIds:
+		| string
+		| null
+		| undefined
+		| ReadonlyArray<string | null | undefined>
 ): T[] => {
 	if (!messages) {
 		return [];
 	}
-	if (!supervisionRoomId) {
+	const excluded = new Set(
+		(Array.isArray(sideRoomIds) ? sideRoomIds : [sideRoomIds]).filter(
+			Boolean
+		) as string[]
+	);
+	if (excluded.size === 0) {
 		return [...messages];
 	}
-	return messages.filter((message) => message.rid !== supervisionRoomId);
+	return messages.filter((message) => !excluded.has(message.rid as string));
 };
 
 /**
