@@ -1860,6 +1860,8 @@
 			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
 			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
 			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
+			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",
+			"autoReadSessionsDescription": "Gilt nur für diese Liste und den Zähler. Chats werden nicht als gelesen markiert, es werden keine Lesebestätigungen gesendet.",
 			"reset": "Auf meine Standards zurücksetzen",
 			"done": "Fertig",
 			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",

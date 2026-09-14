@@ -427,10 +427,17 @@ value shows **visible unread**:
     page, which converges both.
 
     **Pending-read serialisation:** while any confirmed-read PATCH is in
-    flight, a page-0 response updates the feed rows but does **not** replace
-    `serverTotal` (the value is parked); the total is replaced only by a
-    response that arrives with no PATCH pending, and the provider issues one
-    extra page-0 fetch as soon as the last pending PATCH settles. A PATCH
+    flight, a page-0 response is **parked in full — rows and total** — and
+    only the newest parked response is kept; nothing from it reaches the
+    feed until no PATCH is pending. The rows cannot be applied early either:
+    with reads A and B in flight, a poll that started before A committed
+    and returns while B is still pending would restore A to `readAt: null`
+    (the merge overwrites matching ids), and the next auto-read pass would
+    PATCH A again and decrement the total twice. Confirmed and in-flight
+    read state is therefore held monotonically until the reconciliation
+    response: the provider issues one extra page-0 fetch as soon as the
+    last pending PATCH settles, and that response (or a later one) is the
+    first to be applied. A PATCH
     success therefore always decrements a total that predates its commit,
     and every total that is applied already contains every committed read.
     This closes both races a generation counter cannot tell apart: a poll

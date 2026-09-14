@@ -1836,6 +1836,8 @@
 			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
 			"autoRead": "Mark hidden items as read immediately",
 			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
+			"autoReadSessions": "Don't count hidden chats as unread",
+			"autoReadSessionsDescription": "Applies to this list and its counter only. Chats are not marked read and no read receipts are sent.",
 			"reset": "Reset to my defaults",
 			"done": "Done",
 			"profileLink": "Defaults and more options in Profile › Notifications",

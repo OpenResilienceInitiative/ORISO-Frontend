@@ -35,9 +35,18 @@ export const useDisplayFilterLabels = (
 				pillKind: (kind: string) =>
 					t('notifications.displayFilter.pillKind', { kind }),
 				otherFixed: t('notifications.displayFilter.otherFixed'),
-				autoRead: t('notifications.displayFilter.autoRead'),
+				// Gespräche (spec §6.2): the switch only excludes hidden chats
+				// from the local unread count; nothing is marked read and no
+				// receipt is sent, so the copy must not promise that.
+				autoRead: t(
+					section === 'sessions'
+						? 'notifications.displayFilter.autoReadSessions'
+						: 'notifications.displayFilter.autoRead'
+				),
 				autoReadDescription: t(
-					'notifications.displayFilter.autoReadDescription'
+					section === 'sessions'
+						? 'notifications.displayFilter.autoReadSessionsDescription'
+						: 'notifications.displayFilter.autoReadDescription'
 				),
 				reset: t('notifications.displayFilter.reset'),
 				done: t('notifications.displayFilter.done'),

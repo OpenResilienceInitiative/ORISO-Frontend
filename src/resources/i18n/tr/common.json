@@ -1835,6 +1835,8 @@
 			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
 			"autoRead": "Gizlenenleri hemen okundu olarak işaretle",
 			"autoReadDescription": "Yalnızca bu liste için geçerlidir. Sohbetlere okundu bilgisi gönderilmez.",
+			"autoReadSessions": "Gizlenen sohbetleri okunmamış sayma",
+			"autoReadSessionsDescription": "Yalnızca bu liste ve sayacı için geçerlidir. Sohbetler okundu olarak işaretlenmez, okundu bilgisi gönderilmez.",
 			"reset": "Varsayılanlarıma sıfırla",
 			"done": "Bitti",
 			"profileLink": "Varsayılanlar ve diğer seçenekler: Profil › Bildirimler",
