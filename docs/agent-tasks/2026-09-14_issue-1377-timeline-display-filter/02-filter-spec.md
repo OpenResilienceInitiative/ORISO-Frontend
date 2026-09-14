@@ -630,9 +630,12 @@ interface DisplayFilter {
        the next write (the latest state, not a queue of intermediates). A
        completion is applied to the mirror only if its revision is still
        the latest — so two quick toggles can never leave the server and the
-       mirror at the older value when the older request happens to
-       complete last. Test: two updates, completions in reversed order →
-       server and mirror hold the newer state.
+       mirror at the older value. Test: two updates while the first write
+       is still pending → the second request is not started until the
+       first settles, it then carries the newest coalesced state, and
+       server and mirror end at that state (with at most one request in
+       flight a "reversed completion order" cannot occur, so that is not
+       the test).
     5. **Logout / client removal resets the store to hard defaults.**
        `AuthenticatedApp` publishes `null` as the client
        (`setMatrixClientService(null)`, `AuthenticatedApp.tsx:325-331`)
