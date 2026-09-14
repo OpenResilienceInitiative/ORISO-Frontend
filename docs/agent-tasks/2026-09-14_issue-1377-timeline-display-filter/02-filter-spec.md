@@ -460,10 +460,17 @@ value shows **visible unread**:
 
     **Request ordering:** every page-0 request carries a monotonic request
     number, and the provider keeps two floors: the number of the newest
-    response already applied, and the number issued when the last pending
-    PATCH settled (the reconciliation fetch gets a number above that floor).
-    A response replaces `serverTotal` only if its number is above **both**
-    floors; anything older is **discarded entirely, rows included**: the
+    response already applied, and the **read-settled floor**, which is
+    advanced **only when a reconciliation fetch is issued** — i.e. after a
+    settlement with at least one successful PATCH — and set to the number
+    just below that fetch. A settlement in which every PATCH failed
+    advances no floor, so the newest parked response (issued before the
+    settlement, hence at or below any floor advanced then) stays eligible
+    and is applied as the preceding rule requires; advancing the floor
+    there would discard it, leave the feed stale and delay the cooldown
+    reset until another poll. A response replaces `serverTotal` only if
+    its number is above **both** floors; anything older is **discarded
+    entirely, rows included**: the
     page-0 merge is authoritative for its window and overwrites matching ids
     (`NotificationsProvider.tsx:220-230`), so applying a stale payload would
     drop newer events and revive `readAt: null` on a row whose PATCH has
