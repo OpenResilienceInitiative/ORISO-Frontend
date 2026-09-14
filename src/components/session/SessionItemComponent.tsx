@@ -2157,7 +2157,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
-			teamDiscussionResolved: props.teamDiscussionResolved
+			teamDiscussionResolved: props.teamDiscussionResolved,
+			canStartTeamDiscussion:
+				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2172,6 +2174,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		activeSession.isEnquiry,
+		canOpenTeamSideRoom,
 		messages,
 		setChannelRoute
 	]);
@@ -2208,7 +2212,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The same three steps for the team room — one counter each, so an
 	// unread badge on one channel never silences the other.
-const [teamSeenAt, setTeamSeenAt] = useState(0);
+	const [teamSeenAt, setTeamSeenAt] = useState(0);
 	useEffect(() => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);
@@ -3186,6 +3190,10 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 													.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
+									showFullContent={
+										isOnlyEnquiry ||
+										Boolean(activeSession.isEnquiry)
+									}
 									isMyMessage={isMyMessageMatrix}
 									isUserBanned={(username) =>
 										props.bannedUsers.includes(username)
