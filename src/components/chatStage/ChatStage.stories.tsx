@@ -11,6 +11,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
 import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
+import { BOTTOM_TOLERANCE_PX } from '../messageSubmitInterface/timelineFollow';
 import {
 	CLIENT_NAME,
 	COUNSELLOR_NAME,
@@ -2918,5 +2919,95 @@ export const SideRoomCallsAudioOnly: Story = {
 		const controls = callControls(canvasElement);
 		await expect(controls.audio).not.toBeNull();
 		await expect(controls.video).toBeNull();
+	}
+};
+
+const ARRIVALS = [
+	'Ich habe den Brief jetzt doch aufgemacht.',
+	'Da steht eine Frist drin, 14 Tage.',
+	'Kann ich das noch aufhalten?'
+];
+
+const mainTimeline = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-main"] .session__content'
+	)!;
+
+const scrollArrow = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-main"] [data-cy="composer-scroll-to-newest"]'
+	)!;
+
+/**
+ * (q) T41 — Frank, 14.09.: "wenn ich nichts angeklickt habe, [soll es] zur
+ * neuesten einfach hinspringen." Nobody touches the composer; three client
+ * messages arrive and the timeline carries the reader along.
+ */
+export const NewMessagesFollowWhileWatching: Story = {
+	name: '(q) New messages — watching: the timeline follows',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		arrivals: ARRIVALS,
+		arrivalIntervalMs: 400
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByText(ARRIVALS[2], undefined, { timeout: 5000 });
+		const timeline = mainTimeline(canvasElement);
+		await waitFor(() =>
+			expect(
+				timeline.scrollHeight -
+					(timeline.scrollTop + timeline.clientHeight)
+			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+		);
+		// Nothing waits below the fold, so the arrow stays the quiet one.
+		await expect(scrollArrow(canvasElement).className).not.toContain(
+			'composerToolbar__button--scrollToNewest--unread'
+		);
+	}
+};
+
+/**
+ * (r) T41 — "und wenn ich was schreibe, dann [zeig] mir das halt in dem
+ * Pfeil an." A draft stands in the composer: the view holds its place and
+ * the arrow lights up in the primary red with the count.
+ */
+export const NewMessagesLightTheArrowWhileWriting: Story = {
+	name: '(r) New messages — writing: the arrow lights up',
+	globals: desktop1280Globals,
+	args: {
+		panel: 'supervision',
+		panelVariant: 'inside',
+		arrivals: ARRIVALS,
+		// Slow enough that the draft is standing before the first one lands.
+		arrivalIntervalMs: 2500
+	},
+	play: async ({ canvasElement }) => {
+		const editor = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .tiptap'
+		)!;
+		await userEvent.click(editor);
+		await userEvent.keyboard('Das schauen wir uns gemeinsam an');
+		const timeline = mainTimeline(canvasElement);
+		const restingTop = timeline.scrollTop;
+		await waitFor(
+			() =>
+				expect(scrollArrow(canvasElement).className).toContain(
+					'composerToolbar__button--scrollToNewest--unread'
+				),
+			{ timeout: 10000 }
+		);
+		// The reader's place is kept — the view did not jump under their hands.
+		await expect(timeline.scrollTop).toBe(restingTop);
+		// The arrow takes them there when they are ready.
+		await userEvent.click(scrollArrow(canvasElement));
+		await waitFor(() =>
+			expect(
+				timeline.scrollHeight -
+					(timeline.scrollTop + timeline.clientHeight)
+			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+		);
 	}
 };

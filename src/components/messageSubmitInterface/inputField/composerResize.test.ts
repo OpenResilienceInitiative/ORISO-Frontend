@@ -5,7 +5,8 @@ import {
 	COMPOSER_MAX_VIEWPORT_FRACTION,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds,
-	stepComposerHeight
+	stepComposerHeight,
+	MIN_TIMELINE_VISIBLE
 } from './composerResize';
 
 describe('calculateAutoComposerHeight', () => {
@@ -201,5 +202,48 @@ describe('stepComposerHeight', () => {
 		expect(
 			stepComposerHeight(300, { key: 'Enter', shiftKey: false }, bounds)
 		).toBeNull();
+	});
+});
+
+describe('getComposerHeightBounds — the timeline keeps its floor (Frank, 14.09.)', () => {
+	it('never lets the composer eat the whole timeline', () => {
+		// `hostHeight` is the scrolling timeline the composer lies over, not
+		// the whole card (the card also carries the header). Dual view at
+		// 1280×720, measured: a 587 px timeline. The two-thirds rule alone
+		// would hand the composer 480 px and leave ~100 px of chat.
+		const bounds = getComposerHeightBounds({
+			viewportWidth: 1280,
+			viewportHeight: 720,
+			flush: true,
+			hostHeight: 587
+		});
+		expect(bounds.maxHeight).toBe(587 - MIN_TIMELINE_VISIBLE);
+	});
+
+	it('still obeys the two-thirds rule when the timeline is tall', () => {
+		const bounds = getComposerHeightBounds({
+			viewportWidth: 1440,
+			viewportHeight: 900,
+			hostHeight: 852
+		});
+		expect(bounds.maxHeight).toBe(600);
+	});
+
+	it('never returns a maximum below the resting height', () => {
+		const bounds = getComposerHeightBounds({
+			viewportWidth: 1280,
+			viewportHeight: 400,
+			flush: true,
+			hostHeight: 260
+		});
+		expect(bounds.maxHeight).toBeGreaterThanOrEqual(bounds.minHeight);
+	});
+
+	it('falls back to the viewport rule when no timeline height is known', () => {
+		const bounds = getComposerHeightBounds({
+			viewportWidth: 1440,
+			viewportHeight: 900
+		});
+		expect(bounds.maxHeight).toBe(600);
 	});
 });
