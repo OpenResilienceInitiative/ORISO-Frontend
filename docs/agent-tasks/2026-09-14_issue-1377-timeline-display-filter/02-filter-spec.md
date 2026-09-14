@@ -222,7 +222,13 @@ When `autoReadHidden` is on for the Timeline, every **hidden** event that is
 unread is marked read:
 
 - on load of each feed page, for the items that page contains,
-- on every refresh/poll that brings new hidden items.
+- on every refresh/poll that brings new hidden items,
+- **on every change of the effective Timeline filter** (a family unticked in
+  the popover, `autoReadHidden` switched on, a profile change synced in from
+  another device): the pass runs immediately over the already-loaded pages,
+  so items that just became hidden do not stay unread until the next poll.
+  Acceptance case: 10 unread "System" cards loaded → user unticks "System"
+  with auto-read on → all 10 are PATCHed within the debounce window.
 
 Mechanics: `PATCH /service/users/event-notifications/{id}/read`
 (`apiEventNotifications.ts`), batched client-side and debounced: one pass per
@@ -335,37 +341,38 @@ interface DisplayFilter {
   (Observation, out of scope here: the existing `ORISO_NOTIFICATION_SETTINGS`
   mirror is outside the prefix and has the same exposure.) Same precedence
   contract as `notificationSettingsStore.attachClient`
-  (`notificationSettings/store.ts:193-214`):
-    1. **Account data is authoritative** whenever it exists. On attach it
-       replaces the in-memory state and overwrites the mirror.
-    2. The mirror is read only **before** a client is attached (pre-login
-       shell, Storybook, tests) and as the **seed on first attach** when the
-       account has no `org.oriso.display_filters` event yet; the seed is then
-       persisted to account data once. **"No event yet" is decided only
-       after the client's sync state is `PREPARED`** (or after an explicit
-       `getAccountDataFromServer`), never from the pre-sync cache: the hook
-       attaches as soon as `AuthenticatedApp` publishes the client, but
-       `initializeClient` returns right after `startClient`
-       (`matrixClientService.ts:204-225`), so a fresh browser would otherwise
-       read an empty cache, "seed" defaults and overwrite the account's real
-       filters. Until `PREPARED` the store serves the mirror read-only and
-       queues nothing. (Observation, out of scope: `notificationSettingsStore.
-attachClient` has the same exposure today.)
-    3. An update made before attach is written to the mirror only. If account
-       data turns out to exist on attach, that pre-sync update is **discarded**
-       (account wins, no merge) — same rule as the announcement settings, and
-       stated here so nobody expects a merge.
-    4. Updates after attach write account data first and mirror on success.
-       Tests: attach with account data only, mirror only (first-attach seed), both
-       (account wins, mirror overwritten), malformed account blob (defaults, mirror
-       ignored), pre-sync update followed by attach with existing account data
-       (discarded).
+  (`notificationSettings/store.ts:193-214`): 1. **Account data is authoritative** whenever it exists. On attach it
+  replaces the in-memory state and overwrites the mirror. 2. The mirror is read only **before** a client is attached (pre-login
+  shell, Storybook, tests) and as the **seed on first attach** when the
+  account has no `org.oriso.display_filters` event yet; the seed is then
+  persisted to account data once. **"No event yet" is decided only
+  after the client's sync state is `PREPARED`** (or after an explicit
+  `getAccountDataFromServer`), never from the pre-sync cache: the hook
+  attaches as soon as `AuthenticatedApp` publishes the client, but
+  `initializeClient` returns right after `startClient`
+  (`matrixClientService.ts:204-225`), so a fresh browser would otherwise
+  read an empty cache, "seed" defaults and overwrite the account's real
+  filters. Until `PREPARED` the store serves the mirror read-only and
+  queues nothing. (Observation, out of scope: `notificationSettingsStore.
+attachClient` has the same exposure today.) 3. An update made before attach is written to the mirror only. If account
+  data turns out to exist on attach, that pre-sync update is **discarded**
+  (account wins, no merge) — same rule as the announcement settings, and
+  stated here so nobody expects a merge. 4. Updates after attach write account data first and mirror on success.
+  Tests: attach with account data only, mirror only (first-attach seed), both
+  (account wins, mirror overwritten), malformed account blob (defaults, mirror
+  ignored), pre-sync update followed by attach with existing account data
+  (discarded).
 - A `useDisplayFilter(section)` hook returns `{ effective, override, global,
 setSection, setGlobal, resetSection }` and re-renders on account-data sync
   (same `useSyncExternalStore` pattern as `useNotificationSettings.ts`).
 - Pure helpers in one module (`displayFilter/model.ts`): `resolveEffective`,
-  `applyTimelineFilter(items)`, `applySessionsFilter(items)`, each with tests.
-  `timelineFilter.ts` gains one pre-step and otherwise stays as is.
+  `applyTimelineFilter(items)`, `applySessionsFilter(items)`,
+  `applyRequestsFilter(items)`, each with tests. Integration points:
+  `timelineFilter.ts` gains one pre-step before `getFamiliesInFeed`;
+  `SessionsList.filterSessions` calls `applySessionsFilter` for
+  `MY_SESSION` and `applyRequestsFilter` for `ENQUIRY` **after** its own
+  consultant/assignment filtering and before `sessionMatchesToolbar`, so the
+  chip refinement composes on top (§2).
 
 **Without account data:** the filter would be per browser (like the old
 `BROWSER_NOTIFICATIONS` key that caused #1211 root cause B) and a counsellor
