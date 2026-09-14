@@ -313,5 +313,16 @@
 		margin: 0;
 		border-radius: 0;
 		box-shadow: none;
+
+		/* The short-viewport rule above (height <= 420px: landscape phone,
+		   software keyboard open) lets the whole sheet scroll and the body
+		   flow. Full screen keeps the M3 contract instead: the sheet is the
+		   viewport and never scrolls, the body is the keyboard scroll region,
+		   so title, close control and actions stay on screen. */
+		overflow: hidden;
+	}
+
+	&--fullScreen .m3Dialog__body {
+		overflow-y: auto;
 	}
 }

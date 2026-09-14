@@ -682,7 +682,7 @@ using desk and laptop would configure twice and get two different badges.
 - [ ] AC2 Unticking a kind removes those items from the list immediately, on this and (after sync) on a second device.
 - [ ] AC3 The popover changes only its own section's override; the other two sections and the profile defaults are unchanged. The profile's "Apply to all sections" touches only `autoReadHidden` and shared kind ids.
 - [ ] AC4 Timeline: with auto-read on, hidden unread items **on loaded pages** are marked read server-side within one refresh; the nav badge never shows less than the visible unread count and equals it once all pages with hidden unread are loaded (exact badge = v2 backend follow-up).
-- [ ] AC5 Timeline: with auto-read off, the badge shows `serverTotal − hidden unread on loaded pages` (an upper bound) and an "up to N hidden" tooltip when it exceeds the visible count; ✓✓ still clears everything.
+- [ ] AC5 Timeline: with auto-read off, the badge shows the §6.3 v1 value `max(serverTotal − hiddenServerUnreadInLoadedPages, visibleServerUnreadInLoadedPages) + visibleLocalUnread` (an upper bound; `serverTotal` is the API-only total, the clamp keeps it at or above the visible server-unread rows on screen) and the "up to N hidden" tooltip exactly when `hiddenServerUnreadInLoadedPages > 0`; ✓✓ still clears everything.
 - [ ] AC6 Gespräche: an open room stays visible while hidden by the filter (dimmed, tooltip), and disappears after leaving it. No Matrix read receipt is ever sent by the filter (checked with the room's receipt list).
 - [ ] AC7 Anfragen: no auto-read option is rendered.
 - [ ] AC8 Reset restores the profile default; a malformed account-data blob falls back to defaults without an error boundary.
