@@ -28,7 +28,9 @@ export const apiGetEventNotifications = async (
 ): Promise<EventNotificationFeedResponse> =>
 	fetchData({
 		url: `${endpoints.eventNotifications}?page=${page}&perPage=${perPage}`,
-		method: FETCH_METHODS.GET
+		// Keep transient poll failures local; an expired session still follows 401 handling.
+		method: FETCH_METHODS.GET,
+		responseHandling: []
 	});
 
 export const apiMarkEventNotificationRead = async (

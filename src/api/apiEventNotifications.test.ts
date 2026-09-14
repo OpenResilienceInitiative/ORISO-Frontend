@@ -40,7 +40,8 @@ describe('apiEventNotifications', () => {
 
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/users/event-notifications?page=2&perPage=25',
-			method: 'GET'
+			method: 'GET',
+			responseHandling: []
 		});
 	});
 
