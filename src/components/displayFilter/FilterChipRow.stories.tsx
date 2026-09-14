@@ -55,7 +55,7 @@ const Row = ({
 						key={kind.id}
 						label={kind.label}
 						icon={kind.icon!}
-						assetIcon={kind.id !== 'other'}
+						assetIcon
 						count={kind.unreadCount}
 						active={active === kind.id}
 						onClick={() =>

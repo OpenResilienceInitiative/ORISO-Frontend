@@ -38,6 +38,15 @@ Screenshots (from the static Storybook build, `docs/storybook/issue-1377-display
 | `09-before-dialog-landscape.png`       | 844×390, before: the whole sheet scrolled — title and close control gone, actions floating mid-list                                |
 | `09-after-dialog-landscape.png`        | 844×390, after: the sheet stays fixed, header and actions on screen, only the body scrolls (`PhoneLandscape` play test asserts it) |
 
+Icons (2026-09-14, late): the kind icons are Frank's `display-filter-*.svg`
+set from issue #1377 (GitHub strips the file names, so the mapping below is by
+shape and awaits his confirmation): `request` (bubble with "?"), `draft`
+(dashed bubble), `handover` (person with arrow), `call` (camera), `system`
+(exclamation), `appointment` (alarm clock), `other` (shapes with "+");
+"Nachrichten" keeps the rail's speech bubble. Shots 01–07 were re-taken after
+the swap; the unit and Storybook runs above were repeated and stayed green
+(4 files / 18 unit tests, 4 files / 20 stories).
+
 No "before" shots: the component set is new; the extracted chip row renders
 with the unchanged `sessionsListToolbar__chip*` rules (compare
 `SessionsListToolbar.stories.tsx`).

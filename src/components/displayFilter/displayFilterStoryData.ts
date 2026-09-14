@@ -1,12 +1,11 @@
-import * as React from 'react';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import { ReactComponent as RequestIcon } from '../../resources/img/icons/timeline-request-client.svg';
+import { ReactComponent as RequestIcon } from '../../resources/img/icons/display-filter-request.svg';
 import { ReactComponent as MessageIcon } from '../../resources/img/icons/speech-bubble.svg';
-import { ReactComponent as DraftIcon } from '../../resources/img/icons/pen-paper.svg';
-import { ReactComponent as HandoverIcon } from '../../resources/img/icons/persons-two.svg';
-import { ReactComponent as CallIcon } from '../../resources/img/icons/call.svg';
-import { ReactComponent as SystemIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as AppointmentIcon } from '../../resources/img/icons/chat-booking.svg';
+import { ReactComponent as DraftIcon } from '../../resources/img/icons/display-filter-draft.svg';
+import { ReactComponent as HandoverIcon } from '../../resources/img/icons/display-filter-handover.svg';
+import { ReactComponent as CallIcon } from '../../resources/img/icons/display-filter-call.svg';
+import { ReactComponent as SystemIcon } from '../../resources/img/icons/display-filter-system.svg';
+import { ReactComponent as AppointmentIcon } from '../../resources/img/icons/display-filter-appointment.svg';
+import { ReactComponent as OtherIcon } from '../../resources/img/icons/display-filter-other.svg';
 import { DisplayFilterKindOption, OTHER_KIND_ID } from './displayFilterTypes';
 import { DisplayFilterDialogLabels } from './DisplayFilterDialog';
 
@@ -14,6 +13,8 @@ import { DisplayFilterDialogLabels } from './DisplayFilterDialog';
  * Story fixtures (#1377 slice 1): the seven Timeline families plus the
  * catch-all, with plain German labels so the stories and unit tests need no
  * i18n. The app passes translated labels through `useDisplayFilterLabels`.
+ * Icons are Frank's `display-filter-*.svg` set (issue #1377, comment of
+ * 2026-09-14); "Nachrichten" keeps the speech bubble the rail already uses.
  */
 export const TIMELINE_KINDS: DisplayFilterKindOption[] = [
 	{ id: 'requests', label: 'Anfragen', icon: RequestIcon, unreadCount: 2 },
@@ -31,9 +32,7 @@ export const TIMELINE_KINDS: DisplayFilterKindOption[] = [
 	{
 		id: OTHER_KIND_ID,
 		label: 'Sonstiges',
-		icon: MoreHorizIcon as unknown as React.ComponentType<
-			React.SVGProps<SVGSVGElement>
-		>,
+		icon: OtherIcon,
 		unreadCount: 0
 	}
 ];
