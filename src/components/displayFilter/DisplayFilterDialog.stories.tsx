@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { DisplayFilterDialog } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
@@ -10,7 +10,10 @@ import {
 } from './displayFilterTypes';
 import { STORY_LABELS, TIMELINE_KINDS } from './displayFilterStoryData';
 import { ORISO_M3_FIGMA_URL } from '../storybookDesignLinks';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	phone390Globals,
+	phone390LandscapeGlobals
+} from '../message/messageStoryShell';
 
 /**
  * The display-filter dialog (#1377, spec §3): per kind two switches — show
@@ -161,4 +164,50 @@ export const Phone: Story = {
 	globals: phone390Globals,
 	args: { fullScreen: true },
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />
+};
+
+/**
+ * Short viewport (landscape phone, software keyboard open): the generic
+ * `height <= 420px` rule lets the whole sheet scroll, which would push the
+ * title, close control and actions off screen. Full screen keeps the M3
+ * contract — the surface never scrolls, the body is the scroll region.
+ */
+export const PhoneLandscape: Story = {
+	globals: phone390LandscapeGlobals,
+	args: { fullScreen: true },
+	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		await waitFor(() =>
+			expect(doc.querySelector('.m3Dialog--fullScreen')).not.toBeNull()
+		);
+		// The viewport must actually be short, otherwise the media rule under
+		// test never fires and the assertions below prove nothing.
+		await expect(doc.defaultView!.innerHeight).toBeLessThanOrEqual(420);
+		const surface = doc.querySelector(
+			'.m3Dialog--fullScreen .m3Dialog__surface'
+		) as HTMLElement;
+		const body = doc.querySelector(
+			'.m3Dialog--fullScreen .m3Dialog__body'
+		) as HTMLElement;
+		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
+		await expect(getComputedStyle(body).overflowY).toBe('auto');
+		// Eight kind rows do not fit in 390px: the body scrolls, the sheet not.
+		await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+		await expect(surface.scrollTop).toBe(0);
+		body.scrollTop = body.scrollHeight;
+		await expect(body.scrollTop).toBeGreaterThan(0);
+		await expect(surface.scrollTop).toBe(0);
+		// Header and actions stay inside the viewport while the body scrolls.
+		const title = doc.querySelector(
+			'.m3Dialog--fullScreen h2, .m3Dialog--fullScreen [class*="__title"]'
+		) as HTMLElement;
+		const done = within(doc.body).getByRole('button', { name: 'Fertig' });
+		await expect(title.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+			0
+		);
+		await expect(done.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			doc.defaultView!.innerHeight
+		);
+	}
 };

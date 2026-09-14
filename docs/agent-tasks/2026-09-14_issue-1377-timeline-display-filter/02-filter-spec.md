@@ -427,9 +427,15 @@ value shows **visible unread**:
     page, which converges both.
 
     **Pending-read serialisation:** while any confirmed-read PATCH is in
-    flight, a page-0 response is **parked in full — rows and total** — and
-    only the newest parked response is kept; nothing from it reaches the
-    feed until no PATCH is pending. The rows cannot be applied early either:
+    flight, **every feed response — page 0 and older pages alike** — is
+    **parked in full, rows and total** (page 0: the newest parked response
+    is kept; older pages: one parked response per page number); nothing
+    from them reaches the feed until no PATCH is pending. Older pages are
+    not exempt because `loadOlderNotifications` merges through the same
+    `mergeNotificationFeed` and overwrites matching ids
+    (`NotificationsProvider.tsx:355-357`): new events can shift an
+    already-loaded boundary row into an in-flight older-page request, whose
+    response then carries that row's pre-PATCH `readAt: null`. The rows cannot be applied early either:
     with reads A and B in flight, a poll that started before A committed
     and returns while B is still pending would restore A to `readAt: null`
     (the merge overwrites matching ids), and the next auto-read pass would
@@ -458,8 +464,9 @@ value shows **visible unread**:
     applied, parked total discarded), several PATCHes around one poll, PATCH
     failure (parked total applied unchanged).
 
-    **Request ordering:** every page-0 request carries a monotonic request
-    number, and the provider keeps two floors: the number of the newest
+    **Request ordering:** every feed request — page 0 **and older pages** —
+    carries a monotonic request number from one counter, and the provider
+    keeps two floors: the number of the newest
     response already applied, and the **read-settled floor**, which is
     advanced **only when a reconciliation fetch is issued** — i.e. after a
     settlement with at least one successful PATCH — and set to the number

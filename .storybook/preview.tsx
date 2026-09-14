@@ -834,6 +834,11 @@ const preview: Preview = {
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
 				},
+				phone390Landscape: {
+					name: 'Phone 390 landscape (844×390)',
+					styles: { width: '844px', height: '390px' },
+					type: 'mobile'
+				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },

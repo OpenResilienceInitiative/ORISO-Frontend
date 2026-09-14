@@ -15,16 +15,18 @@ Chrome (`channel: 'chrome'`), locally pointed at the bundled Chromium.
 
 Screenshots (from the static Storybook build, `docs/storybook/issue-1377-display-filter/`):
 
-| File                                   | Proves                                                                                    |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `01-after-toolbar-default.png`         | Search field + user-gated chips (badges for kinds with unread items) + pinned tune button |
-| `02-after-toolbar-system-pill-off.png` | After the play test: System pill switched off → chip gone, dot on the button              |
-| `03-after-dialog-customised.png`       | Drafts hidden (pill greyed), System without pill, Sonstiges fixed on, auto-read on        |
-| `04-after-dialog-read-only.png`        | Read-only mode: hint, every control inert, reset disabled                                 |
-| `05-after-dialog-requests.png`         | Anfragen variant without the auto-read row                                                |
-| `06-after-chip-row-with-button.png`    | The extracted chip row molecule with the trailing slot                                    |
-| `07-after-chip-row-phone.png`          | 390px: chips scroll under the pinned button                                               |
-| `08-after-dialog-phone.png`            | 390×844: the dialog fills the viewport (`fullScreen`, Q7)                                 |
+| File                                   | Proves                                                                                                                             |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `01-after-toolbar-default.png`         | Search field + user-gated chips (badges for kinds with unread items) + pinned tune button                                          |
+| `02-after-toolbar-system-pill-off.png` | After the play test: System pill switched off → chip gone, dot on the button                                                       |
+| `03-after-dialog-customised.png`       | Drafts hidden (pill greyed), System without pill, Sonstiges fixed on, auto-read on                                                 |
+| `04-after-dialog-read-only.png`        | Read-only mode: hint, every control inert, reset disabled                                                                          |
+| `05-after-dialog-requests.png`         | Anfragen variant without the auto-read row                                                                                         |
+| `06-after-chip-row-with-button.png`    | The extracted chip row molecule with the trailing slot                                                                             |
+| `07-after-chip-row-phone.png`          | 390px: chips scroll under the pinned button                                                                                        |
+| `08-after-dialog-phone.png`            | 390×844: the dialog fills the viewport (`fullScreen`, Q7)                                                                          |
+| `09-before-dialog-landscape.png`       | 844×390, before: the whole sheet scrolled — title and close control gone, actions floating mid-list                                |
+| `09-after-dialog-landscape.png`        | 844×390, after: the sheet stays fixed, header and actions on screen, only the body scrolls (`PhoneLandscape` play test asserts it) |
 
 No "before" shots: the component set is new; the extracted chip row renders
 with the unchanged `sessionsListToolbar__chip*` rules (compare
