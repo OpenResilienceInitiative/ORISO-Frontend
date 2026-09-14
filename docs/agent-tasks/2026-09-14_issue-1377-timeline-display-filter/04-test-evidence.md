@@ -13,6 +13,16 @@ Chrome (`channel: 'chrome'`), locally pointed at the bundled Chromium.
 | `vitest run --project storybook src/components/displayFilter` (Chromium, axe WCAG 2.2 AA on every story) | 4 files, 16 stories green                  |
 | `storybook build`                                                                                        | green                                      |
 
+Hard gate (AGENTS.md: `npm run test:unit`, `npm run lint:scripts`,
+`npm run lint:style`, `npm run build` must pass), run on head `b90f5bc8`:
+
+| Command                | Local result (this container)                                                                                                                                                                                   | CI on the same head                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:unit`    | 450 files / 4752 tests green, 0 failures (448 files in the full run; the run stalled at the end and the two remaining files `composerFileDropPaste.test.ts`, `emojiInsert.test.tsx` were run separately, green) | green — job "lint, type-check, test, build and Docker validation", `.github/actions/node-build` runs exactly `lint:scripts`, `test:unit`, `build`        |
+| `npm run lint:scripts` | exit 0 (eslint `src --max-warnings=0` + `tsc`)                                                                                                                                                                  | green (same job)                                                                                                                                         |
+| `npm run lint:style`   | exit 0                                                                                                                                                                                                          | n/a (not part of the CI action; local only)                                                                                                              |
+| `npm run build`        | **not completed here**: the webpack build ran 3 h at ~190 % CPU / 5.8 GB without producing output and was stopped — a resource limit of this sandbox, not a build error (no diagnostics emitted)                | green (same job, `CI=false npm run build`, 9 min) — https://github.com/OpenResilienceInitiative/ORISO-Frontend/actions/runs/34849690827/job/103994462594 |
+
 Screenshots (from the static Storybook build, `docs/storybook/issue-1377-display-filter/`):
 
 | File                                   | Proves                                                                                                                             |
