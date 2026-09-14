@@ -2,6 +2,8 @@
  * Actual enquiry screen with HTTP fixtures for UserService and Matrix.
  * Uses the existing LiveService websocket test helper. This verifies browser
  * interaction and rendering, not encryption or access with real accounts.
+ * Run with --browser chrome: the bundled Electron 114 lacks Promise.withResolvers
+ * required by the Matrix SDK send scheduler.
  */
 import {
 	startWebSocketServer,
@@ -191,6 +193,38 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 				nodes[0].ownerDocument.defaultView.innerWidth
 			);
 		});
+		cy.intercept('POST', '**/service/error-reports', { statusCode: 204 });
+		const reply = 'Wir besprechen diese Anfrage im Team.';
+		cy.intercept(
+			'PUT',
+			'https://matrix.test/_matrix/client/**/rooms/*/send/m.room.message/*',
+			{ event_id: '$team-reply' }
+		).as('sendTeam');
+		cy.intercept('POST', '**/message-events', { statusCode: 204 }).as(
+			'teamNotification'
+		);
+		cy.intercept('PATCH', '**/service/users/drafts*', { statusCode: 204 });
+		cy.intercept('DELETE', '**/service/users/drafts*', { statusCode: 204 });
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').type(reply);
+		cy.get('[data-cy="stage-panel"] .sendButton')
+			.should('not.be.disabled')
+			.click();
+		cy.wait('@sendTeam').then(({ request }) => {
+			expect(decodeURIComponent(request.url)).to.contain(
+				`/rooms/${teamRoomId}/send/`
+			);
+			expect(request.body.body).to.contain(reply);
+		});
+		cy.wait('@teamNotification').its('request.body').should('include', {
+			roomId: teamRoomId,
+			teamDiscussion: true,
+			matrixRoom: true,
+			messagePreview: ''
+		});
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').should(
+			'have.text',
+			''
+		);
 		const closeControl =
 			width >= 900
 				? '[data-cy="panel-header-close"]'
