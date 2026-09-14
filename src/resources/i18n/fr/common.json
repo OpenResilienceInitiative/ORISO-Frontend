@@ -334,10 +334,14 @@
 				"title": "Fil"
 			},
 			"team": {
-				"title": "Consultation d’équipe", "onlyMarker": "Réservé à l’équipe",
+				"title": "Consultation d’équipe",
+				"onlyMarker": "Réservé à l’équipe",
 				"composer": { "placeholder": "Message à l’équipe…" },
 				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
-				"empty": { "title": "Démarrer la consultation d’équipe", "text": "Écrivez ci-dessous le premier message à votre équipe." }
+				"empty": {
+					"title": "Démarrer la consultation d’équipe",
+					"text": "Écrivez ci-dessous le premier message à votre équipe."
+				}
 			}
 		},
 		"switcher": {
@@ -345,7 +349,8 @@
 			"closeMenu": "Masquer les canaux secondaires",
 			"kind": {
 				"supervision": "Supervision",
-				"thread": "Fil", "team": "Consultation d’équipe"
+				"thread": "Fil",
+				"team": "Consultation d’équipe"
 			},
 			"mainChat": "Chat de conseil",
 			"openChannel": "Ouvrir {{label}}",
@@ -355,7 +360,9 @@
 			"eyebrow": "Autres conversations",
 			"title": "Fils et supervision",
 			"supervisionChat": "Chat de supervision",
-			"thread": "Fil #{{n}}", "teamChat": "Consultation d’équipe", "titleWithTeam": "Fils, supervision et consultation d’équipe"
+			"thread": "Fil #{{n}}",
+			"teamChat": "Consultation d’équipe",
+			"titleWithTeam": "Fils, supervision et consultation d’équipe"
 		}
 	},
 	"chatFlyout": {
@@ -1744,6 +1751,23 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": { "audio": "Appel audio", "video": "Appel vidéo" },
+			"state": {
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"description": {
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			}
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
@@ -4079,6 +4103,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",

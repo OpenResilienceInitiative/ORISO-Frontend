@@ -334,10 +334,14 @@
 				"title": "Mesaj dizisi"
 			},
 			"team": {
-				"title": "Ekip danışmanlığı", "onlyMarker": "Yalnızca ekip için",
+				"title": "Ekip danışmanlığı",
+				"onlyMarker": "Yalnızca ekip için",
 				"composer": { "placeholder": "Ekibe mesaj…" },
 				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
-				"empty": { "title": "Ekip danışmanlığını başlat", "text": "Aşağıdan ekibinize ilk mesajı yazın." }
+				"empty": {
+					"title": "Ekip danışmanlığını başlat",
+					"text": "Aşağıdan ekibinize ilk mesajı yazın."
+				}
 			}
 		},
 		"switcher": {
@@ -345,7 +349,8 @@
 			"closeMenu": "Yan kanalları gizle",
 			"kind": {
 				"supervision": "Süpervizyon",
-				"thread": "Mesaj dizisi", "team": "Ekip danışmanlığı"
+				"thread": "Mesaj dizisi",
+				"team": "Ekip danışmanlığı"
 			},
 			"mainChat": "Danışma sohbeti",
 			"openChannel": "{{label}} aç",
@@ -355,7 +360,9 @@
 			"eyebrow": "Diğer görüşmeler",
 			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
-			"thread": "Mesaj dizisi #{{n}}", "teamChat": "Ekip danışmanlığı", "titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
+			"thread": "Mesaj dizisi #{{n}}",
+			"teamChat": "Ekip danışmanlığı",
+			"titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
 		}
 	},
 	"chatFlyout": {
@@ -1744,6 +1751,20 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": { "audio": "Sesli arama", "video": "Görüntülü arama" },
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": { "current": "Aramada", "attended": "Katıldı" }
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
@@ -4079,6 +4100,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
