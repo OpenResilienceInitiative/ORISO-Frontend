@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from './FilterChipRow';
 import { FilterChip } from './FilterChip';
@@ -123,6 +123,15 @@ export const TogglePillRemovesChip: Story = {
 			body.getByRole('checkbox', { name: 'Pille: System' })
 		);
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+		// MUI keeps the canvas `aria-hidden` until the dialog has faded out.
+		await waitFor(() =>
+			expect(body.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Anzeige-Filter' })
+			).toBeVisible()
+		);
 		await expect(
 			canvas.queryByRole('button', { name: 'System' })
 		).not.toBeInTheDocument();
