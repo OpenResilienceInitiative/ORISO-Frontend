@@ -156,6 +156,16 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 			})
 			.catch((e) => {
 				if (e.message === FETCH_ERRORS.ABORT) return;
+				if (e.message === FETCH_ERRORS.EMPTY) {
+					// An accepted case can leave this colleague's authorized lookup.
+					// Reload through the existing access-aware session boundary.
+					reloadActiveSession?.();
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						refreshSessionList: true
+					});
+					return;
+				}
 				if (e.message === FETCH_ERRORS.FORBIDDEN) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				}

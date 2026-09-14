@@ -332,6 +332,24 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 				}
 			}
 		);
+		// Layout fixture for the independent recovery notice above the real app.
+		cy.document().then((document) => {
+			const notice = document.createElement('aside');
+			notice.className = 'encryption-recovery-notice';
+			notice.textContent =
+				'Ihr bisheriger Verlauf benötigt Ihren Wiederherstellungsschlüssel.';
+			notice.style.minHeight = '81px';
+			document.querySelector('.app__wrapper').before(notice);
+		});
+		cy.get('.session__acceptance button').should((buttons) => {
+			const button = buttons[0];
+			expect(button.getBoundingClientRect().bottom).to.be.at.most(
+				button.ownerDocument.defaultView.innerHeight
+			);
+		});
+
+		cy.get('.encryption-recovery-notice').should('be.visible');
+
 		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',
 			scale: true,
@@ -339,6 +357,15 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		});
 		cy.reload();
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
+		cy.get('[data-cy="stage-panel"]').should('not.exist');
+		// The accepted case can disappear from this colleague's authorized lookup.
+		cy.intercept('GET', '**/service/users/sessions/room/1375', {
+			statusCode: 204
+		});
+		cy.intercept('GET', '**/service/users/sessions/room?*', {
+			statusCode: 204
+		});
+		cy.get('.session__acceptance', { timeout: 12000 }).should('not.exist');
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// A colleague can accept while this consultant only watches the queue.
 		cy.visit('/sessions/consultant/sessionPreview');
