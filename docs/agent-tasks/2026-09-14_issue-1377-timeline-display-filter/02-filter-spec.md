@@ -343,50 +343,62 @@ once the client exists), while `NotificationsProvider` only **subscribes** to
 the store (`useSyncExternalStore` needs no client) to compute the count. The
 value shows **visible unread**:
 
-- v1 (frontend only). Operands, all from one local snapshot: - `serverTotal` = the **last API `unreadCount`** as received
-  (`NotificationsProvider.tsx:324`). This is a **new, server-only**
-  field: today's `unreadNotificationCount` is seeded from that value but
-  also incremented by every `addEventNotification` (`:441-465`), so
-  reusing it and adding local rows again would double-count each local
-  event until the next poll (five server unread plus one incoming call
-  would read seven). Slice 4 splits the provider state into
-  `serverUnreadTotal` (API only) and the local rows' own read state. - `hiddenServerUnreadInLoadedPages` / `visibleServerUnreadInLoadedPages`
-  = unread **server** rows in the loaded feed, hidden / visible by the
-  effective filter. Client-side `local-*` rows (incoming calls, toasts;
-  `:164-173`) are never in the API total and never in these two. - `visibleLocalUnread` = unread local rows the filter shows.
+- v1 (frontend only). Operands, all from one local snapshot:
 
-                 `visibleUnreadCount = max(serverTotal − hiddenServerUnreadInLoadedPages,
+    `serverTotal` is the **last API `unreadCount`** as received
+    (`NotificationsProvider.tsx:324`). This is a **new, server-only** field:
+    today's `unreadNotificationCount` is seeded from that value but also
+    incremented by every `addEventNotification` (`:441-465`), so reusing it
+    and adding local rows again would double-count each local event until
+    the next poll (five server unread plus one incoming call would read
+    seven). Slice 4 splits the provider state into `serverUnreadTotal` (API
+    only) and the local rows' own read state.
 
-        visibleServerUnreadInLoadedPages) + visibleLocalUnread`.
+    `hiddenServerUnreadInLoadedPages` and `visibleServerUnreadInLoadedPages`
+    are the unread **server** rows in the loaded feed, hidden or visible by
+    the effective filter. Client-side `local-*` rows (incoming calls, toasts;
+    `:164-173`) are never in the API total and never in these two.
+    `visibleLocalUnread` is the number of unread local rows the filter shows.
 
-    The `max`clamp exists because a page-0 refresh replaces`serverTotal` but
-    deliberately keeps rows below its reconciliation window (`:191-220`,
+    ```text
+    visibleUnreadCount =
+        max(serverTotal − hiddenServerUnreadInLoadedPages,
+            visibleServerUnreadInLoadedPages)
+        + visibleLocalUnread
+    ```
+
+    The `max` clamp exists because a page-0 refresh replaces `serverTotal`
+    but deliberately keeps rows below its reconciliation window (`:191-220`,
     `:310-324`): a read performed on another device lowers the total while
     such a retained older row stays locally unread, so the plain difference
     could drop below what the user can see, or below zero. The clamp keeps
     AC4's lower bound (never less than the visible unread rows on screen);
-    the retained rows converge on the next older-page load or reload. This is an
-    **upper bound**, never a promise: `apiGetEventNotifications`returns one
-    page (50 items) plus a server-wide`unreadCount`, and older pages load only
-    on demand, so hidden unread items on unloaded pages stay in the total. With
-    auto-read on the bound tightens with every loaded page (hidden items on
-    loaded pages are read server-side) but is still only exact once the user
-    has paged through all hidden unread. The badge tooltip says "up to N hidden"
-    whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
-    bound `serverTotal − hiddenServerUnreadInLoadedPages`is below
-    `serverTotal`; neither `visibleLocalUnread`nor the`max`clamp enters
-    that comparison (one hidden server row plus one visible local row would
-    otherwise make total and badge equal and mute the hint).
+    the retained rows converge on the next older-page load or reload.
+
+    This is an **upper bound**, never a promise: `apiGetEventNotifications`
+    returns one page (50 items) plus a server-wide `unreadCount`, and older
+    pages load only on demand, so hidden unread items on unloaded pages stay
+    in the total. With auto-read on the bound tightens with every loaded page
+    (hidden items on loaded pages are read server-side) but is still only
+    exact once the user has paged through all hidden unread. The badge
+    tooltip says "up to N hidden" whenever
+    `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only** bound
+    `serverTotal − hiddenServerUnreadInLoadedPages` is below `serverTotal`;
+    neither `visibleLocalUnread` nor the `max` clamp enters that comparison
+    (one hidden server row plus one visible local row would otherwise make
+    total and badge equal and mute the hint).
+
     **Reconciliation rule:** both operands come from one local snapshot. The
-    auto-read pass goes through`markNotificationsReadConfirmed`(§6.1),
-    which on PATCH **success** sets the item's`readAt`**and** decrements the
-    local unread total in the same state update, so an item leaves
-    `hiddenUnreadInLoadedPages`and`serverTotal`together — never subtracted
-    twice. Until the PATCH resolves
-    the item stays unread in both operands, so a slow or failed PATCH leaves
-    the badge unchanged rather than inflated; the next feed refresh replaces
-    the local total with the server's`unreadCount`and recomputes the hidden
-    count from the fresh page, which converges both.
+    auto-read pass goes through `markNotificationsReadConfirmed` (§6.1),
+    which on PATCH **success** sets the item's `readAt` **and** decrements
+    the local unread total in the same state update, so an item leaves
+    `hiddenUnreadInLoadedPages` and `serverTotal` together — never subtracted
+    twice. Until the PATCH resolves the item stays unread in both operands,
+    so a slow or failed PATCH leaves the badge unchanged rather than
+    inflated; the next feed refresh replaces the local total with the
+    server's `unreadCount` and recomputes the hidden count from the fresh
+    page, which converges both.
+
     **Pending-read serialisation:** while any confirmed-read PATCH is in
     flight, a page-0 response updates the feed rows but does **not** replace
     `serverTotal` (the value is parked); the total is replaced only by a
