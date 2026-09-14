@@ -106,15 +106,17 @@ the popover in a list edits only that list's **override**:
 
 - `global[section]` — the default for that section on every device. Ships as
   show-everything, auto-read off.
-- `sections[section]` — an optional complete override written by the popover.
-  It is created by **cloning the effective filter** (`global[section]` at that
-  moment) and then changing only the fields the popover can edit (family-level
-  `hiddenKinds`, `autoReadHidden`). Fields the popover cannot edit — the
-  profile's `hiddenEventTypes` — are carried over unchanged, so creating an
-  override never drops a per-event-type restriction. Once written, a later
-  change to the profile default does not leak into it (test: profile hides
-  `supervisor.renamed`, popover hides "Calls" → override still hides
-  `supervisor.renamed`).
+- `sections[section]` — an optional override written by the popover. It
+  carries **only** the fields the popover can edit (family-level `hiddenKinds`
+  and `autoReadHidden`). The profile-owned `hiddenEventTypes` is **never**
+  copied into an override; it is always resolved from `global[section]`, so
+  a per-event-type change in the profile takes effect immediately even while
+  an override exists:
+  `effective = { ...global[section], ...sections[section], hiddenEventTypes: global[section].hiddenEventTypes }`.
+  Once written, a later change to the profile's family-level defaults does
+  not leak into the override (tests: profile hides `supervisor.renamed`,
+  popover hides "Calls" → both hidden; profile then also hides
+  `counselor.renamed` → hidden too, without touching the override).
 - "Reset to my defaults" deletes the override.
 - The profile page shows all three sections side by side, and its
   "Apply to all sections" action is limited to what more than one section can
@@ -226,7 +228,16 @@ Mechanics: `PATCH /service/users/event-notifications/{id}/read`
 (`apiEventNotifications.ts`), batched client-side and debounced: one pass per
 refresh, processed in chunks of 50 ids **until the loaded set is drained** (a
 user who has paged deep and then hides a family can have far more than 50).
-Idempotent, so a lost response is retried on the next refresh. No new backend endpoint is required for v1; a
+**Confirmed-success only:** the pass must **not** reuse the existing
+`markNotificationAsRead`, which is optimistic — it fires the PATCH, swallows
+the rejection and sets `readAt` and decrements the total regardless
+(`NotificationsProvider.tsx:488-503`). A failed PATCH would then leave an
+older-page row locally "read" that the server still counts, the next pass
+would skip it, and the badge would stay inflated for the tab's lifetime.
+The auto-read pass therefore uses a new `markNotificationsReadConfirmed(ids)`
+in `NotificationsProvider` that awaits each PATCH and updates `readAt` and
+the local total **only on success**; a failed id stays unread locally and is
+retried on the next refresh (idempotent server-side). No new backend endpoint is required for v1; a
 `PATCH …/read?eventTypes=a,b` bulk endpoint is the obvious follow-up in
 ORISO-UserService once the volume shows up in SigNoz.
 
@@ -265,11 +276,11 @@ The nav badge for the Timeline is today driven by the server total
   has paged through all hidden unread. The badge tooltip says "up to N hidden"
   whenever `serverTotal` exceeds the visible count.
   **Reconciliation rule:** both operands come from one local snapshot. The
-  auto-read pass goes through the existing `markNotificationAsRead`
-  (`NotificationsProvider.tsx:488-503`), which on PATCH success sets the
-  item's `readAt` **and** decrements the local unread total in the same
-  state update, so an item leaves `hiddenUnreadInLoadedPages` and
-  `serverTotal` together — never subtracted twice. Until the PATCH resolves
+  auto-read pass goes through `markNotificationsReadConfirmed` (§6.1),
+  which on PATCH **success** sets the item's `readAt` **and** decrements the
+  local unread total in the same state update, so an item leaves
+  `hiddenUnreadInLoadedPages` and `serverTotal` together — never subtracted
+  twice. Until the PATCH resolves
   the item stays unread in both operands, so a slow or failed PATCH leaves
   the badge unchanged rather than inflated; the next feed refresh replaces
   the local total with the server's `unreadCount` and recomputes the hidden
@@ -302,7 +313,11 @@ interface OrisoDisplayFilters {
 interface DisplayFilter {
 	/** Kinds the user hid; anything not listed is shown. */
 	hiddenKinds: string[]; // timeline: EventFamily[]; sessions/requests: §5 ids
-	/** Timeline only, written by the profile section (#593). */
+	/**
+	 * Timeline only, written by the profile section (#593). Lives in
+	 * `global.timeline` ONLY — an override never carries it (§4), so the
+	 * profile stays effective while an override exists.
+	 */
 	hiddenEventTypes?: string[];
 	/** §6 — timeline: mark read; sessions: don't count. Ignored for requests. */
 	autoReadHidden: boolean;
@@ -326,7 +341,16 @@ interface DisplayFilter {
     2. The mirror is read only **before** a client is attached (pre-login
        shell, Storybook, tests) and as the **seed on first attach** when the
        account has no `org.oriso.display_filters` event yet; the seed is then
-       persisted to account data once.
+       persisted to account data once. **"No event yet" is decided only
+       after the client's sync state is `PREPARED`** (or after an explicit
+       `getAccountDataFromServer`), never from the pre-sync cache: the hook
+       attaches as soon as `AuthenticatedApp` publishes the client, but
+       `initializeClient` returns right after `startClient`
+       (`matrixClientService.ts:204-225`), so a fresh browser would otherwise
+       read an empty cache, "seed" defaults and overwrite the account's real
+       filters. Until `PREPARED` the store serves the mirror read-only and
+       queues nothing. (Observation, out of scope: `notificationSettingsStore.
+attachClient` has the same exposure today.)
     3. An update made before attach is written to the mirror only. If account
        data turns out to exist on attach, that pre-sync update is **discarded**
        (account wins, no merge) — same rule as the announcement settings, and
