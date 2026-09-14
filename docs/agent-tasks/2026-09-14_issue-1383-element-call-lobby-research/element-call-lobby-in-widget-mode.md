@@ -104,12 +104,13 @@ become `UnknownCallError` in the same banner. Fatal errors go through `GroupCall
 
 ## Implications for the ORISO Entry Room device check
 
-- Flipping `skipLobby=false` (keeping `header=none`, `confineToRoom=true`, `callIntent`) gives, for free: camera preview, mic/cam
-  on-off toggles, mic/camera/speaker device selection (behind the gear icon, only when >1 device), permission prompting before join, and
-  mute/device state that carries into the call. Audio intent keeps the camera off but the user can enable it.
+- Flipping `skipLobby=false` (keeping `header=none`, `confineToRoom=true`, `callIntent`) gives, for free: mic/cam on-off toggles,
+  mic/camera/speaker device selection (behind the gear icon, only when >1 device), microphone permission prompting before join, and
+  mute/device state that carries into the call. Camera preview and the camera permission prompt appear only while video is enabled:
+  with `callIntent=audio` the camera stays off and is not requested until the user switches video on.
 - What ORISO would have to build itself: a speaker test sound, a mic level meter, any explicit "permission denied" explanation in the
   lobby (EC silently mutes there), speaker selection on Safari, inline (non-modal) device pickers, and any host-side `audioMuted`/
   `videoMuted` URL preset (only `callIntent`/`intent` exist; runtime `io.element.device_mute` action is the alternative).
 - Knock/"ask to join" is unavailable in widget mode regardless of capabilities; entry-room admission must stay a host-side feature.
-- Housekeeping in the fork: `RoomPage.tsx:90` passes 5 args to a 3-arg `MuteStates` constructor (`TS2554`); harmless at runtime but
-  should be cleaned up before relying on the lobby path.
+- Housekeeping in the fork: `RoomPage.tsx:90` passes 5 args to a 3-arg `MuteStates` constructor. The transpiled bundle runs (the
+  extra arguments are ignored), but `tsc` fails with `TS2554` until the call site is corrected; fix it before relying on the lobby path.
