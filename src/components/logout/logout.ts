@@ -1,3 +1,6 @@
+import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
+import { clearSecretStorageKeys } from '../../services/matrixKeyBackupService';
+import { clearRecoveryRuntimeState } from '../../services/recoveryReminderState';
 import { apiKeycloakLogout } from '../../api/apiLogoutKeycloak';
 import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
@@ -46,6 +49,9 @@ export const logout = async (
 	}
 
 	isRequestInProgress = true;
+	clearLoginRecoveryPassword();
+	clearSecretStorageKeys();
+	clearRecoveryRuntimeState();
 	const { featureAppointmentsEnabled, featureToolsEnabled } =
 		getTenantSettings();
 

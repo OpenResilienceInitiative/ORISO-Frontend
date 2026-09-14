@@ -2,7 +2,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatTransportService } from '../services/chatTransportService';
-import { useMatrixSessionPreview } from './useMatrixSessionPreview';
+import {
+	useMatrixSessionEvents,
+	useMatrixSessionPreview
+} from './useMatrixSessionPreview';
 
 vi.mock('../services/chatTransportService', () => ({
 	chatTransportService: {
@@ -69,5 +72,22 @@ describe('useMatrixSessionPreview', () => {
 		rerender({ enabled: false });
 		expect(detach).toHaveBeenCalledTimes(1);
 		expect(result.current).toBeNull();
+	});
+
+	it('loads one event snapshot that callers can reuse for several selectors', () => {
+		const events = [{ id: 'main' }, { id: 'thread' }] as never[];
+		vi.mocked(chatTransportService.getMatrixRoomMessages).mockReturnValue(
+			events
+		);
+
+		const { result } = renderHook(() =>
+			useMatrixSessionEvents('!room:example.org', true)
+		);
+
+		expect(result.current).toBe(events);
+		expect(
+			chatTransportService.getMatrixRoomMessages
+		).toHaveBeenCalledTimes(1);
+		expect(chatTransportService.onMatrixTimeline).toHaveBeenCalledTimes(1);
 	});
 });

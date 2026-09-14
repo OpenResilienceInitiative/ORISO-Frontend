@@ -13,7 +13,8 @@ export const apiSendMessage = (
 	senderDisplayName?: string | null,
 	matrixClientServiceOverride?: MatrixClientService | null,
 	replyToEventId?: string | null,
-	mentionedUserIds?: string[]
+	mentionedUserIds?: string[],
+	teamDiscussion?: boolean
 ): Promise<any> =>
 	chatTransportService.sendTextMessage({
 		roomIdOrSessionId: roomIdOrSessionId,
@@ -27,5 +28,6 @@ export const apiSendMessage = (
 		mentionedUserIds,
 		supervisorMessage,
 		senderDisplayName,
+		teamDiscussion,
 		matrixClientServiceOverride
 	});

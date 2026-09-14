@@ -316,6 +316,48 @@
 			"ready": "Metin alıntısı yanıtınıza eklendi"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Katılımcılar: {{names}}",
+			"more": "{{count}} katılımcı daha",
+			"more_one": "1 kişi daha"
+		},
+		"panel": {
+			"channelOptions": "Kanal değiştir",
+			"channelOptionsEmpty": "Başka kanal yok",
+			"participantCount": "{{count}} katılımcı",
+			"participantCount_one": "1 katılımcı",
+			"back": "Danışma sohbetine geri dön",
+			"close": "Yan paneli kapat",
+			"region": "Yan panel: {{title}}",
+			"thread": {
+				"title": "Mesaj dizisi"
+			},
+			"team": {
+				"title": "Ekip danışmanlığı", "onlyMarker": "Yalnızca ekip için",
+				"composer": { "placeholder": "Ekibe mesaj…" },
+				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
+				"empty": { "title": "Ekip danışmanlığını başlat", "text": "Aşağıdan ekibinize ilk mesajı yazın." }
+			}
+		},
+		"switcher": {
+			"backToMain": "Danışma sohbetine geri dön",
+			"closeMenu": "Yan kanalları gizle",
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Mesaj dizisi", "team": "Ekip danışmanlığı"
+			},
+			"mainChat": "Danışma sohbeti",
+			"openChannel": "{{label}} aç",
+			"openMenu": "Yan kanalları göster"
+		},
+		"menu": {
+			"eyebrow": "Diğer görüşmeler",
+			"title": "Konular ve süpervizyon",
+			"supervisionChat": "Süpervizyon sohbeti",
+			"thread": "Mesaj dizisi #{{n}}", "teamChat": "Ekip danışmanlığı", "titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Arşiv",
 		"archiveDescription": "Arşivlenen sohbetler için bildirimler kapalıdır. Sohbet 12 ay içinde silinecek.",
@@ -1736,7 +1778,8 @@
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
 			"title": "Konu",
-			"placeholder": "Konuda yanıtla"
+			"placeholder": "Konuda yanıtla",
+			"open": "Konuyu aç"
 		},
 		"deliveryStatus": {
 			"sent": "Gönderildi"
@@ -3453,6 +3496,10 @@
 			"video": "Video",
 			"file": "Dosya",
 			"first_response": "İlk yanıt",
+			"channel": {
+				"thread": "Mesaj dizisi:",
+				"supervision": "Süpervizyon:"
+			},
 			"registered": {
 				"tab": "İlk sorgulamalar"
 			}
@@ -3537,8 +3584,17 @@
 				"internal": "Dahili"
 			}
 		},
+		"supervision": {
+			"badge": "Süpervizyon – bu sohbeti takip ediyorsunuz",
+			"supervisedBy": "Süpervizyon: {{name}}"
+		},
 		"resizeHandle": {
+			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
 			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+		},
+		"rail": {
+			"unreadCount": "{{count}} yeni mesaj",
+			"unreadCount_one": "{{count}} yeni mesaj"
 		}
 	},
 	"statusOverlay": {
@@ -4476,6 +4532,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Süpervizyon",
+			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
+			"headerLabel": "Süpervizyon · {{name}}",
+			"role": {
+				"supervisor": "Süpervizyon",
+				"consultant": "Danışmanlık"
+			},
+			"privacyHint": "Bu kanal danışan tarafından hiçbir zaman görülemez.",
+			"close": "Süpervizyonu kapat",
+			"collapse": "Süpervizyonu küçült",
+			"dragHandle": "Süpervizyon penceresini taşı – ok tuşları taşır, Shift + ok tuşları boyutu değiştirir",
+			"unread": "{{count}} okunmamış mesaj",
+			"unread_one": "1 okunmamış mesaj",
+			"empty": {
+				"title": "Henüz mesaj yok",
+				"hint": "Burada {{name}} ile bu danışmanlık hakkında gizli olarak konuşabilirsiniz."
+			},
+			"composer": {
+				"placeholder": "{{name}} kişisine mesaj …",
+				"send": "Gönder",
+				"failed": "Gönderilemedi – lütfen tekrar deneyin."
+			},
+			"kind": {
+				"supervision": "Süpervizyon",
+				"thread": "Mesaj dizisi"
+			},
+			"mini": {
+				"expand": "{{kind}} aç",
+				"newMessage": "Yeni mesaj",
+				"dragHandle": "Küçük pencereyi taşı – ok tuşları"
+			},
+			"stage": {
+				"divider": "Ayırıcı – ok tuşları süpervizyon genişliğini değiştirir, Home ve End en küçük ve en büyük değeri ayarlar",
+				"mainPane": "Danışmanlık sohbeti",
+				"secondaryPane": "Yan oda"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Ekip görüşmesi",
 		"startHint": "Görüşmeyi başlat",
@@ -4575,7 +4671,8 @@
 			"browserHint": "Adres gerekmez — ancak yalnızca bu cihazda çalışır.",
 			"email": "Bana bir e-posta yazın",
 			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz."
-		}
+		},
+		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor."
 	},
 	"legal": {
 		"notice": {
@@ -4639,6 +4736,37 @@
 				"openVault": "Kasayı aç",
 				"restoring": "Geri getiriliyor …"
 			}
+		},
+		"saveReminder": {
+			"title": "Ek bir kurtarma anahtarı kaydet",
+			"pending": "Talebiniz gönderildi. Anahtar yedeklemesi hâlâ kuruluyor.",
+			"unavailable": "Talebiniz gönderildi. Ek anahtar yedeği henüz hazır değil.",
+			"show": "Anahtarı göster",
+			"later": "Daha sonra",
+			"confirm": "Anahtarı güvenli bir yerde sakladım",
+			"retry": "Güvenlik ayarlarında yedeği kontrol et",
+			"busy": "Talebiniz başarıyla gönderildi. Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor."
+		},
+		"passwordRecovery": {
+			"ready": "Giriş parolanızla kurtarma kuruldu. Ayrıca kaydettiğiniz kurtarma anahtarı da geçerli kalır.",
+			"needs-password": "Parolayla kurtarma bu oturumda henüz doğrulanmadı. Yeniden giriş yapın veya mevcut kurtarma anahtarınızla kurun.",
+			"needs-recovery-key": "Bu cihazda önceki konuşmalarınıza erişmek için kurtarma anahtarınız gerekiyor.",
+			"retryable-failure": "Anahtar yedeklemesi tamamlanamadı. Talebinizi yazmaya devam edebilir ve güvenlik ayarlarında yedeği kontrol edebilirsiniz.",
+			"settings": "Güvenlik ayarları",
+			"reauthenticate": "Çıkış yap ve yeniden giriş yap",
+			"passwordChangeFailed": "Parola güvenli şekilde değiştirilemedi. Eski parolayı kontrol edin ve gerekirse önce kurtarma anahtarıyla konuşmalarınızı geri yükleyin. Bağlantı kesildiyse parola zaten değiştirilmiş olabilir.",
+			"enrollmentFailed": "Kurulum tamamlanamadı. Parolanızı ve gerekirse tek kullanımlık kodunuzu kontrol edip yeniden deneyin.",
+			"enrollmentExplanation": "Mevcut kurtarma anahtarınızı geçerli giriş parolanızla koruyun. Kaydettiğiniz anahtar geçerli kalır. Çalınan şifreli bir yedek, ikinci faktör olmadan parolayla açılabilir.",
+			"loginPassword": "Geçerli giriş parolası",
+			"repeatPassword": "Giriş parolasını tekrarlayın",
+			"otp": "Tek kullanımlık kod",
+			"enroll": "Parolayı doğrula ve kurtarmayı kur",
+			"device-ready": "Bu cihaz mevcut anahtarlarını kullanabilir. Parolayla kurtarma, parolayla bir sonraki girişte doğrulanır.",
+			"repairBlocked": "Mevcut parola korumalı yedekler burada güvenli şekilde değiştirilemez. Konuşmalarınıza kurtarma anahtarıyla erişmeye devam edebilirsiniz. Yeni parolayla kurulum şu anda kullanılamıyor.",
+			"idle": "Kurtarma durumu henüz kontrol edilmedi.",
+			"pending": "Kurtarma kontrol ediliyor. Uygulamayı kullanmaya devam edebilirsiniz.",
+			"busy": "Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor. Lütfen daha sonra tekrar deneyin.",
+			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi."
 		}
 	},
 	"accountInvite": {
@@ -4657,7 +4785,7 @@
 			"empty": "Henüz taslak yok.",
 			"messageTag": "Taslak",
 			"untitledChat": "Sohbet",
-			"thread": "Konu",
+			"thread": "Mesaj dizisi",
 			"open": "Taslağı aç",
 			"next": "Sonraki taslak",
 			"delete": "Taslağı sil",

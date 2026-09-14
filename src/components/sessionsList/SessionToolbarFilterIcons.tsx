@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ReactComponent as InternalGroupFilterSvg } from '../../resources/img/icons/session-toolbar/internal_group_chat.svg';
-import { ReactComponent as SupervisionChatsFilterSvg } from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
+import { ReactComponent as SupervisionChatsFilterSvg } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 
 /** Mail modality chip icon (#1148) — preferred over NearbyFilterIcon. */
 export { MailFilterIcon } from './MailFilterIcon';

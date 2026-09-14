@@ -40,6 +40,16 @@ const driftBudgets = {
 } as const;
 
 const locales = { en, fr, ru, ti, tr } as const;
+const fullCatalogues = { de, en, fr, ru, ti, tr } as const;
+const passwordRecoveryStatuses = [
+	'pending',
+	'device-ready',
+	'ready',
+	'needs-password',
+	'needs-recovery-key',
+	'retryable-failure',
+	'busy'
+] as const;
 const deKeys = flattenCatalogueKeys(de);
 
 const consultingTypeCatalogues = {
@@ -58,6 +68,15 @@ const listKeys = (keys: string[], limit = 20): string =>
 		: keys.join(', ');
 
 describe('i18n catalogue guard (#1101)', () => {
+	it.each(Object.entries(fullCatalogues))(
+		'exposes every dynamic password-recovery status in the $0 catalogue',
+		(_lng, catalogue) => {
+			const recovery = catalogue.encryption.passwordRecovery;
+			for (const status of passwordRecoveryStatuses)
+				expect(recovery[status]).toEqual(expect.any(String));
+		}
+	);
+
 	it('reports missing and extra keys from hand-checked fixtures', () => {
 		expect(
 			collectCatalogueDrift(
