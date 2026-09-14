@@ -18,11 +18,17 @@ const makeEvent = (content: Record<string, unknown>) => ({
 
 const makeEncryptedEvent = (
 	content: Record<string, unknown>,
-	decryptionFailure = false
+	decryptionFailure = false,
+	/*
+	 * CodeRabbit on #1336: with clear content always present, the
+	 * "encrypted event that never decrypted" branch of
+	 * `isUndecryptedRoomEvent` was never reached by any test.
+	 */
+	withClearContent = true
 ) => ({
 	...makeEvent(content),
 	getType: () => 'm.room.encrypted',
-	getClearContent: () => content,
+	getClearContent: () => (withClearContent ? content : undefined),
 	isDecryptionFailure: () => decryptionFailure
 });
 
@@ -58,6 +64,42 @@ describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
 
 		expect(formatted.msg).toBe('Nachricht verschlüsselt');
 		expect(formatted.msg).not.toContain('Unable to decrypt');
+	});
+
+	it('uses the fallback for a raw encrypted event with no clear content', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEncryptedEvent(
+				{ algorithm: 'm.megolm.v1.aes-sha2', ciphertext: 'AwgAEnB...' },
+				false,
+				false
+			),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+	});
+
+	/*
+	 * The body sniff is a last resort for SDK builds that only report a
+	 * failure in the text — it must not reach a plain `m.room.message`. In a
+	 * counselling chat someone may well write the error they saw, and their
+	 * sentence must survive.
+	 */
+	it('keeps a plain text message whose body mentions the SDK error', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.text',
+				body: 'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+			}),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe(
+			'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+		);
+		expect(formatted.msg).not.toBe('Nachricht verschlüsselt');
 	});
 
 	it('preserves the body of a successfully decrypted text message', () => {
