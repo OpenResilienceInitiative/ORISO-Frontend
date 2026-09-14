@@ -3598,6 +3598,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Votre demande ne peut pas encore être envoyée",
+			"text": "Le chat chiffré de ce centre de conseil n’est pas encore configuré. Votre texte reste dans ce champ – veuillez réessayer plus tard ou contacter directement le centre de conseil."
+		},
 		"error": {
 			"headline": "Une erreur s'est produite lors de l'envoi du message.",
 			"text": "Un problème est survenu, veuillez réessayer"

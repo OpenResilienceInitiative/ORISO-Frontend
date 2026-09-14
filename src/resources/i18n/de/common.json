@@ -3619,6 +3619,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Ihre Anfrage kann noch nicht gesendet werden",
+			"text": "Der verschlüsselte Chat für diese Beratungsstelle ist noch nicht eingerichtet. Ihr Text bleibt in diesem Feld erhalten – bitte versuchen Sie es später erneut oder wenden Sie sich direkt an die Beratungsstelle."
+		},
 		"error": {
 			"headline": "Beim Senden der Nachricht ist ein Fehler aufgetreten",
 			"text": "Es ist ein Problem aufgetreten, bitte versuchen Sie es erneut"
