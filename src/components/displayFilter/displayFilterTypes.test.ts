@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	EMPTY_DISPLAY_FILTER,
 	OTHER_KIND_ID,
-	hasDisplayFilterOverride,
 	isDisplayFilterCustomised,
 	reconcileActiveKind,
 	resolveKindSetting,
@@ -63,22 +62,6 @@ describe('displayFilterTypes (#1377)', () => {
 				{ id: 'messages', partial: false }
 			])
 		).toBe(false);
-	});
-
-	it('reports an override only for explicit settings, even default-equal ones', () => {
-		expect(hasDisplayFilterOverride(EMPTY_DISPLAY_FILTER)).toBe(false);
-		const explicitDefault = setKindSetting(
-			EMPTY_DISPLAY_FILTER,
-			'messages',
-			{
-				show: true,
-				pill: true
-			}
-		);
-		expect(hasDisplayFilterOverride(explicitDefault)).toBe(true);
-		expect(isDisplayFilterCustomised(explicitDefault, ['messages'])).toBe(
-			false
-		);
 	});
 
 	it('marks auto-read alone as customised', () => {

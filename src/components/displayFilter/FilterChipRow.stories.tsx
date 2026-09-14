@@ -98,6 +98,7 @@ export const WithDisplayFilterButton: Story = {
 			trailing={
 				<DisplayFilterButton
 					label="Anzeige-Filter"
+					customisedLabel="Filter angepasst"
 					customised
 					open={false}
 					onClick={() => undefined}
@@ -117,6 +118,7 @@ export const OverflowOnPhone: Story = {
 			trailing={
 				<DisplayFilterButton
 					label="Anzeige-Filter"
+					customisedLabel="Filter angepasst"
 					customised={false}
 					open={false}
 					onClick={() => undefined}

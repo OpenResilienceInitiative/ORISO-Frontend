@@ -94,7 +94,14 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(document.getElementById(hintId as string)?.textContent).toBe(
 			STORY_LABELS.otherFixed
 		);
-		fireEvent.click(screen.getByRole('switch'));
+		const autoRead = screen.getByRole('switch');
+		// The scope/privacy qualification is programmatically attached.
+		const descId = autoRead.getAttribute('aria-describedby');
+		expect(descId).not.toBeNull();
+		expect(document.getElementById(descId as string)?.textContent).toBe(
+			STORY_LABELS.autoReadDescription
+		);
+		fireEvent.click(autoRead);
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue)
 				.autoReadHidden

@@ -237,7 +237,10 @@ export const DisplayFilterDialog = ({
 						>
 							{labels.autoRead}
 						</span>
-						<span className="displayFilterDialog__autoReadDescription">
+						<span
+							className="displayFilterDialog__autoReadDescription"
+							id={`${dialogId}-autoread-desc`}
+						>
 							{labels.autoReadDescription}
 						</span>
 					</div>
@@ -245,6 +248,7 @@ export const DisplayFilterDialog = ({
 						checked={value.autoReadHidden}
 						disabled={readOnly}
 						aria-labelledby={`${dialogId}-autoread`}
+						aria-describedby={`${dialogId}-autoread-desc`}
 						data-cy="display-filter-autoread"
 						onChange={(checked) =>
 							onChange({ ...value, autoReadHidden: checked })

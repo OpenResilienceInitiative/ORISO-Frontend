@@ -6,7 +6,6 @@ import { DisplayFilterDialog } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
-	hasDisplayFilterOverride,
 	setKindSetting
 } from './displayFilterTypes';
 import { STORY_LABELS, TIMELINE_KINDS } from './displayFilterStoryData';
@@ -50,16 +49,19 @@ const Controlled = (
 		initialValue?: DisplayFilterValue;
 	}
 ) => {
-	const [value, setValue] = useState<DisplayFilterValue>(
-		args.initialValue ?? args.value
+	// Mirrors the slice-2 store contract: the section override is a key that
+	// either exists or not (`null`); `canReset` is that presence, never
+	// inferred from the value's contents (an empty override still exists).
+	const [override, setOverride] = useState<DisplayFilterValue | null>(
+		args.initialValue ?? null
 	);
 	return (
 		<DisplayFilterDialog
 			{...args}
-			value={value}
-			canReset={hasDisplayFilterOverride(value)}
-			onChange={setValue}
-			onReset={() => setValue(EMPTY_DISPLAY_FILTER)}
+			value={override ?? args.value}
+			canReset={override !== null}
+			onChange={setOverride}
+			onReset={() => setOverride(null)}
 			onOpenProfile={() => undefined}
 		/>
 	);

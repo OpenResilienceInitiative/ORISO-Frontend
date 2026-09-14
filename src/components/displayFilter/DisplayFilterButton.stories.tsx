@@ -18,6 +18,7 @@ const meta = {
 	},
 	args: {
 		label: 'Anzeige-Filter',
+		customisedLabel: 'Filter angepasst',
 		customised: false,
 		open: false,
 		onClick: () => undefined

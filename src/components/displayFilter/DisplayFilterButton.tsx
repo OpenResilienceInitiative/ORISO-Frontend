@@ -11,10 +11,10 @@ export interface DisplayFilterButtonProps {
 	'customised': boolean;
 	/**
 	 * Already translated; announced as the accessible description while
-	 * `customised` (the dot itself is decorative). Without it screen-reader
-	 * users cannot tell the list is filtered.
+	 * `customised` (the dot itself is decorative). Required so the customised
+	 * state can never be visual-only.
 	 */
-	'customisedLabel'?: string;
+	'customisedLabel': string;
 	/** Whether the dialog it controls is open (`aria-expanded`). */
 	'open': boolean;
 	'onClick': () => void;
@@ -39,7 +39,7 @@ export const DisplayFilterButton = ({
 	'data-cy': dataCy = 'display-filter-button'
 }: DisplayFilterButtonProps) => {
 	const stateId = useId();
-	const describe = customised && Boolean(customisedLabel);
+	const describe = customised;
 	return (
 		<button
 			type="button"

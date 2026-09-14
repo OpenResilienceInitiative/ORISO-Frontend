@@ -10,7 +10,6 @@ import { DisplayFilterDialog } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
-	hasDisplayFilterOverride,
 	isDisplayFilterCustomised,
 	reconcileActiveKind,
 	visiblePillKinds
@@ -26,14 +25,19 @@ import '../sessionsList/sessionsList.styles.scss';
  * in the story; in the app it comes from the slice-2 store.
  */
 const Toolbar = ({
-	initialValue = EMPTY_DISPLAY_FILTER,
+	initialValue = null,
 	fullScreen = false
 }: {
-	initialValue?: DisplayFilterValue;
+	/** The section override; `null` = none (profile defaults apply). */
+	initialValue?: DisplayFilterValue | null;
 	fullScreen?: boolean;
 }) => {
 	const [query, setQuery] = useState('');
-	const [value, setValue] = useState<DisplayFilterValue>(initialValue);
+	// Store contract (spec §4/§7): the override is a key that exists or not.
+	const [override, setOverride] = useState<DisplayFilterValue | null>(
+		initialValue
+	);
+	const value = override ?? EMPTY_DISPLAY_FILTER;
 	const [active, setActive] = useState<string | null>(null);
 	const [open, setOpen] = useState(false);
 	const pills = visiblePillKinds(value, TIMELINE_KINDS, active);
@@ -88,13 +92,18 @@ const Toolbar = ({
 				onClose={() => setOpen(false)}
 				kinds={TIMELINE_KINDS}
 				value={value}
-				canReset={hasDisplayFilterOverride(value)}
+				canReset={override !== null}
 				onChange={(next) => {
-					setValue(next);
+					setOverride(next);
 					setActive((current) => reconcileActiveKind(next, current));
 				}}
 				onReset={() => {
-					setValue(EMPTY_DISPLAY_FILTER);
+					// Same reconciliation as onChange: the reset can drop the
+					// pill of the active kind (override on, profile default off).
+					setOverride(null);
+					setActive((current) =>
+						reconcileActiveKind(EMPTY_DISPLAY_FILTER, current)
+					);
 				}}
 				onOpenProfile={() => undefined}
 				labels={STORY_LABELS}
