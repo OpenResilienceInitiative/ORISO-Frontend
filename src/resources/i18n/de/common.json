@@ -1848,6 +1848,28 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Anzeige-Filter",
+			"title": "Anzeige-Filter",
+			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
+			"showColumn": "Anzeigen",
+			"pillColumn": "Pille",
+			"showKind": "Anzeigen: {{kind}}",
+			"pillKind": "Pille: {{kind}}",
+			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
+			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
+			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
+			"reset": "Auf meine Standards zurücksetzen",
+			"done": "Fertig",
+			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",
+			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"otherKind": "Sonstiges",
+			"sections": {
+				"timeline": "Zeitstrahl",
+				"sessions": "Gespräche",
+				"requests": "Anfragen"
+			}
+		},
 		"families": {
 			"all": "Alle",
 			"requests": "Anfragen",

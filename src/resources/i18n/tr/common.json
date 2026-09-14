@@ -1823,6 +1823,28 @@
 		"warning": "Uyarı"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Görünüm filtresi",
+			"title": "Görünüm filtresi",
+			"description": "Bu listede hangi türlerin görüneceği ve hangilerinin etiket alacağı.",
+			"showColumn": "Göster",
+			"pillColumn": "Etiket",
+			"showKind": "Göster: {{kind}}",
+			"pillKind": "Etiket: {{kind}}",
+			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
+			"autoRead": "Gizlenenleri hemen okundu olarak işaretle",
+			"autoReadDescription": "Yalnızca bu liste için geçerlidir. Sohbetlere okundu bilgisi gönderilmez.",
+			"reset": "Varsayılanlarıma sıfırla",
+			"done": "Bitti",
+			"profileLink": "Varsayılanlar ve diğer seçenekler: Profil › Bildirimler",
+			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
+			"otherKind": "Diğer",
+			"sections": {
+				"timeline": "Zaman çizelgesi",
+				"sessions": "Görüşmeler",
+				"requests": "Talepler"
+			}
+		},
 		"families": {
 			"all": "Tümü",
 			"requests": "Talepler",

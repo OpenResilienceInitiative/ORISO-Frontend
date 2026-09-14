@@ -1824,6 +1824,28 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Display filter",
+			"title": "Display filter",
+			"description": "Which kinds appear in this list and which get a pill.",
+			"showColumn": "Show",
+			"pillColumn": "Pill",
+			"showKind": "Show: {{kind}}",
+			"pillKind": "Pill: {{kind}}",
+			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
+			"autoRead": "Mark hidden items as read immediately",
+			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
+			"reset": "Reset to my defaults",
+			"done": "Done",
+			"profileLink": "Defaults and more options in Profile › Notifications",
+			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
+			"otherKind": "Other",
+			"sections": {
+				"timeline": "Timeline",
+				"sessions": "Conversations",
+				"requests": "Requests"
+			}
+		},
 		"families": {
 			"all": "All",
 			"requests": "Requests",

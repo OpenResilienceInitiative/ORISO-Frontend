@@ -1823,6 +1823,28 @@
 		"warning": "Avertissement"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Filtre d’affichage",
+			"title": "Filtre d’affichage",
+			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
+			"showColumn": "Afficher",
+			"pillColumn": "Pastille",
+			"showKind": "Afficher : {{kind}}",
+			"pillKind": "Pastille : {{kind}}",
+			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
+			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
+			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
+			"reset": "Rétablir mes valeurs par défaut",
+			"done": "Terminé",
+			"profileLink": "Valeurs par défaut et autres options dans Profil › Notifications",
+			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
+			"otherKind": "Autres",
+			"sections": {
+				"timeline": "Chronologie",
+				"sessions": "Échanges",
+				"requests": "Demandes"
+			}
+		},
 		"families": {
 			"all": "Toutes",
 			"requests": "Demandes",

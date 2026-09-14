@@ -11,19 +11,27 @@ export const M3Checkbox = ({
 	checked,
 	onChange,
 	label,
-	dataCy
+	dataCy,
+	disabled = false,
+	hideLabel = false
 }: {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
 	label: string;
 	dataCy?: string;
+	/** M3 disabled state: 38% opacity, no state layer, input inert. */
+	disabled?: boolean;
+	/** Keep the label for assistive tech only (table cells with a column header). */
+	hideLabel?: boolean;
 }) => (
-	<label className="m3Checkbox">
+	<label className={`m3Checkbox${disabled ? ' m3Checkbox--disabled' : ''}`}>
 		<span className="m3Checkbox__target">
 			<input
 				type="checkbox"
 				className="m3Checkbox__input"
 				checked={checked}
+				disabled={disabled}
+				aria-label={hideLabel ? label : undefined}
 				onChange={(e) => onChange(e.target.checked)}
 				data-cy={dataCy}
 			/>
@@ -36,6 +44,6 @@ export const M3Checkbox = ({
 				</svg>
 			</span>
 		</span>
-		<span className="m3Checkbox__label">{label}</span>
+		{!hideLabel && <span className="m3Checkbox__label">{label}</span>}
 	</label>
 );
