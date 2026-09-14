@@ -86,7 +86,7 @@ read-only preview cannot cause that. But it also means the Slack expectation
   Timeline is the surface showing them. That is a UserService rule
   (`activeViewByUserId`, see #1211 item 5), not a frontend toggle.
 
-## F3 — Preview availability depends on client sync state
+## F3 — Preview availability depends on client sync state (needs a live check)
 
 ```ts
 const room = chatTransportService.getMatrixRoom(roomId);   // ConversationPreview.tsx:66
@@ -96,16 +96,20 @@ if (!room) { setRoomAvailable(false); … }                  // → "not availab
 `getMatrixRoom` is `client.getRoom(id)` (`chatTransportService.ts:312-317`):
 it returns `null` for any room the current client has not synced yet (fresh
 login before initial sync completes, rooms outside the lazy-loaded set, a room
-the consultant was just added to). The user then sees the empty notice with
-no retry; the subscription (`onMatrixTimeline`) is only attached when
-`roomId` is set, so the pane does not recover when the room arrives later
-unless `loadMessages` re-runs. This is most visible right after login, which
-is exactly when people open the Timeline. **Fix candidate (small):** listen
-for `Room` events on the client and re-run `loadMessages` when the room
-appears; show a "loading conversation…" state instead of "not available".
+the consultant was just added to). The user then sees the "not available"
+notice.
 
-Needs a live check on Pre-Dev to quantify how often it happens; the code path
-is certain.
+**Recovery path that does exist:** the `onMatrixTimeline` subscription is
+attached whenever `roomId` is set, even while the room is still absent
+(`ConversationPreview.tsx:101-114`), and it is a client-wide `Room.timeline`
+listener filtered by room id (`chatTransportService.ts:354-380`). So when the
+initial sync delivers the room's timeline, `loadMessages` re-runs and the pane
+normally recovers on its own. The residual case is a room that arrives
+**without** a timeline event for it (empty room, or state-only lazy load), and
+how often that happens is not known from the code. **Status:** not a confirmed
+defect; verify on Pre-Dev (login, open Timeline immediately, select a message
+card) before filing. If it reproduces, the fix is a `Room` listener plus a
+"loading conversation…" state.
 
 ## F4 — The Timeline is a separate page, not a third column
 
@@ -186,7 +190,7 @@ Proposed, and let the product decisions from F1/F2 amend it.
 
 1. **F6 → spec 02** (display filter, persistence, auto-read). Pure frontend
    plus one account-data key; no backend.
-2. **F3** (recover when the room syncs later) — small, isolated.
+2. **F3** only if the live check reproduces it — small, isolated.
 3. **F4 (minimal)**: URL-mirrored Timeline state + `?from=timeline` back link.
 4. **F1** if approved: preview for every `conversation`-target event.
 5. **F2 (b)** if approved: real chat stage in the pane — needs the
@@ -196,6 +200,6 @@ Proposed, and let the product decisions from F1/F2 amend it.
 
 ## What was not verified
 
-No Pre-Dev browser session was used. F3's frequency, and whether F5's delay is
+No Pre-Dev browser session was used. Whether F3 occurs at all, and whether F5's delay is
 what Frank perceives as "not working", need a live reproduction with two
 accounts; the reviewer test plan in the PR body walks it.

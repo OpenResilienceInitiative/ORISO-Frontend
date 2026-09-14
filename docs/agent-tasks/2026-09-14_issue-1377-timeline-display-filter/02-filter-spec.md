@@ -180,7 +180,10 @@ Rules:
 
 ### 5.3 Anfragen (`requests`)
 
-The enquiry list is smaller; kinds are:
+The enquiry list is smaller; kinds are (enquiries already assigned to another
+consultant are not a kind — `SessionsList.filterSessions` drops them before any
+toolbar filtering, `SessionsList.tsx:1352-1355`, so a checkbox could never
+show them):
 
 | Kind (checkbox)      | Maps to                                          |
 | -------------------- | ------------------------------------------------ |
@@ -280,7 +283,13 @@ interface DisplayFilter {
 - Tolerant parsing exactly like `parseNotificationConfig`: unknown kinds are
   kept (a newer client may know them), unknown keys ignored, malformed →
   defaults. Defaults = `{ hiddenKinds: [], autoReadHidden: false }`.
-- localStorage mirror `ORISO_DISPLAY_FILTERS`, with the same precedence
+- localStorage mirror `oriso.displayFilters.v1` — **inside the `oriso.` app
+  namespace on purpose**, so the logout hygiene purges it
+  (`clientStorageHygiene` removes keys with the `oriso.` prefix). A key outside
+  that prefix would survive logout on a shared agency browser and the next user
+  would inherit, and on first attach persist, someone else's hidden kinds.
+  (Observation, out of scope here: the existing `ORISO_NOTIFICATION_SETTINGS`
+  mirror is outside the prefix and has the same exposure.) Same precedence
   contract as `notificationSettingsStore.attachClient`
   (`notificationSettings/store.ts:193-214`):
     1. **Account data is authoritative** whenever it exists. On attach it
