@@ -78,6 +78,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('**/service/conversations/consultants/availability*', {
 			available: false
 		});
+		cy.intercept('POST', '**/service/matrix/sync/register/*', {
+			statusCode: 204
+		});
+		cy.intercept('GET', '**/service/users/drafts/single*', {
+			statusCode: 204
+		});
 		cy.intercept('**/service/matrix/me/token*', {
 			accessToken: 'test-only',
 			userId: '@consultant:matrix.test',
@@ -200,7 +206,35 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			scale: true,
 			disableTimersAndAnimations: false
 		});
-		cy.get(closeControl).click();
+		cy.get(closeControl)
+			.should('have.prop', 'tagName', 'BUTTON')
+			.should('have.prop', 'tabIndex', 0)
+			.focus();
+		cy.get(closeControl).should('be.focused');
+		cy.then(() =>
+			Cypress.automation('remote:debugger:protocol', {
+				command: 'Input.dispatchKeyEvent',
+				params: {
+					type: 'keyDown',
+					text: '\r',
+					unmodifiedText: '\r',
+					key: 'Enter',
+					code: 'Enter',
+					windowsVirtualKeyCode: 13
+				}
+			})
+		);
+		cy.then(() =>
+			Cypress.automation('remote:debugger:protocol', {
+				command: 'Input.dispatchKeyEvent',
+				params: {
+					type: 'keyUp',
+					key: 'Enter',
+					code: 'Enter',
+					windowsVirtualKeyCode: 13
+				}
+			})
+		);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.contains(
