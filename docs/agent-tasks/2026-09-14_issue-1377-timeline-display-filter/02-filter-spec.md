@@ -107,13 +107,22 @@ the popover in a list edits only that list's **override**:
 - `global[section]` — the default for that section on every device. Ships as
   show-everything, auto-read off.
 - `sections[section]` — an optional complete override written by the popover.
-  Once written, a later change to the profile default does not leak into it.
+  It is created by **cloning the effective filter** (`global[section]` at that
+  moment) and then changing only the fields the popover can edit (family-level
+  `hiddenKinds`, `autoReadHidden`). Fields the popover cannot edit — the
+  profile's `hiddenEventTypes` — are carried over unchanged, so creating an
+  override never drops a per-event-type restriction. Once written, a later
+  change to the profile default does not leak into it (test: profile hides
+  `supervisor.renamed`, popover hides "Calls" → override still hides
+  `supervisor.renamed`).
 - "Reset to my defaults" deletes the override.
 - The profile page shows all three sections side by side, and its
-  "Apply to all sections" action is limited to the two settings that exist in
-  every vocabulary: `autoReadHidden` and the kinds whose id is shared
-  (`liveChat` in Gespräche and Anfragen). Everything else is per section by
-  construction, so nothing can be written that a section cannot interpret.
+  "Apply to all sections" action is limited to what more than one section can
+  interpret: `autoReadHidden` is written to `timeline` and `sessions` only
+  (never to `requests`, which has no auto-read, §5.3/§6.2), and the shared
+  kind id `liveChat` is written to `sessions` and `requests`. Everything else
+  is per section by construction, so nothing can be written that a section
+  cannot interpret.
 
 **Without the two levels:** a user who hides "Supervision" in Gespräche for
 one busy week has no way back to "my usual view" except remembering it.
@@ -255,6 +264,17 @@ The nav badge for the Timeline is today driven by the server total
   loaded pages are read server-side) but is still only exact once the user
   has paged through all hidden unread. The badge tooltip says "up to N hidden"
   whenever `serverTotal` exceeds the visible count.
+  **Reconciliation rule:** both operands come from one local snapshot. The
+  auto-read pass goes through the existing `markNotificationAsRead`
+  (`NotificationsProvider.tsx:488-503`), which on PATCH success sets the
+  item's `readAt` **and** decrements the local unread total in the same
+  state update, so an item leaves `hiddenUnreadInLoadedPages` and
+  `serverTotal` together — never subtracted twice. Until the PATCH resolves
+  the item stays unread in both operands, so a slow or failed PATCH leaves
+  the badge unchanged rather than inflated; the next feed refresh replaces
+  the local total with the server's `unreadCount` and recomputes the hidden
+  count from the fresh page, which converges both. Tests: PATCH success,
+  PATCH delayed past a refresh, PATCH failure.
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
   ORISO-UserService, plus `PATCH …/read?eventTypes=` so auto-read covers
@@ -350,7 +370,7 @@ using desk and laptop would configure twice and get two different badges.
 - [ ] AC6 Gespräche: an open room stays visible while hidden by the filter (dimmed, tooltip), and disappears after leaving it. No Matrix read receipt is ever sent by the filter (checked with the room's receipt list).
 - [ ] AC7 Anfragen: no auto-read option is rendered.
 - [ ] AC8 Reset restores the profile default; a malformed account-data blob falls back to defaults without an error boundary.
-- [ ] AC9 No message content is read anywhere in the filter path (metadata only); unit tests for `applyTimelineFilter`, `applySessionsFilter`, `resolveEffective`, tolerant parsing, and the five persistence cases in §7.
+- [ ] AC9 The new display-filter helpers, persistence and auto-read logic read no message content (metadata only). The existing client-side search over `getSearchText(item)` in `timelineFilter.ts` is unchanged and out of scope for this criterion. Unit tests for `applyTimelineFilter`, `applySessionsFilter`, `resolveEffective`, tolerant parsing, and the five persistence cases in §7.
 
 ## 10. Open decisions for Frank (answer inline, then the spec is final)
 
