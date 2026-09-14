@@ -4,24 +4,48 @@ import { Headline } from '../headline/Headline';
 import './appointment.styles';
 import { ReactComponent as CalendarCheckIcon } from '../../resources/img/icons/calendar-check.svg';
 import { ReactComponent as CalendarCancelIcon } from '../../resources/img/icons/calendar-cancel.svg';
-import {
-	convertUTCDateToLocalDate,
-	formatToHHMM
-} from '../../utils/dateHelpers';
+import { formatToHHMM } from '../../utils/dateHelpers';
 import { DownloadICSFile } from '../downloadICSFile/downloadICSFile';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import { parseAppointmentData } from './appointmentData';
 
-interface AppointmentData {
-	title: string;
-	user: string;
-	counselor: string;
-	date: string;
-	duration: number;
-	location: string;
-	note?: string;
+interface AppointmentPresentation {
+	headerKey: string;
+	titleKey: string;
+	icon: 'check' | 'cancel';
+	showCalendarAction: boolean;
 }
+
+const appointmentPresentations: Partial<
+	Record<ALIAS_MESSAGE_TYPES, AppointmentPresentation>
+> = {
+	[ALIAS_MESSAGE_TYPES.APPOINTMENT_SET]: {
+		headerKey: 'message.appointment.component.header.confirmation',
+		titleKey: 'message.appointmentSet.title',
+		icon: 'check',
+		showCalendarAction: true
+	},
+	[ALIAS_MESSAGE_TYPES.INITIAL_APPOINTMENT_DEFINED]: {
+		headerKey: 'message.appointment.component.header.confirmation',
+		titleKey: 'message.appointmentSet.title',
+		icon: 'check',
+		showCalendarAction: true
+	},
+	[ALIAS_MESSAGE_TYPES.APPOINTMENT_RESCHEDULED]: {
+		headerKey: 'message.appointment.component.header.change',
+		titleKey: 'message.appointmentRescheduled.title',
+		icon: 'check',
+		showCalendarAction: true
+	},
+	[ALIAS_MESSAGE_TYPES.APPOINTMENT_CANCELLED]: {
+		headerKey: 'message.appointment.component.header.cancellation',
+		titleKey: 'message.appointmentCancelled.title',
+		icon: 'cancel',
+		showCalendarAction: false
+	}
+};
 
 export const Appointment = (param: {
 	data: string;
@@ -29,15 +53,17 @@ export const Appointment = (param: {
 }) => {
 	const { t: translate } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
-	const parsedData: AppointmentData = JSON.parse(param.data);
+	const parsedData = parseAppointmentData(param.data);
+	const presentation = appointmentPresentations[param.messageType];
+
+	if (!parsedData || !presentation) {
+		return null;
+	}
+
 	const duration = parsedData.duration;
-	const startingTimeStampDate = new Date(
-		convertUTCDateToLocalDate(new Date(parsedData.date)).toLocaleString(
-			'en-ZA'
-		)
-	).getTime();
+	const startingTimeStampDate = new Date(parsedData.date).getTime();
 	const finishingHour = startingTimeStampDate + duration * 60 * 1000;
-	const appointmentDate = new Date(parsedData.date).toLocaleDateString(
+	const appointmentDate = new Date(startingTimeStampDate).toLocaleDateString(
 		'de-de',
 		{
 			weekday: 'long',
@@ -55,34 +81,14 @@ export const Appointment = (param: {
 		`${startingTimeStampDate}`
 	)} - ${formatToHHMM(`${finishingHour}`)}`;
 
-	let appointmentTitle;
-	let appointmentIcon;
-	let appointmentComponentHeader;
-	let showAddToCalendarComponent;
-	if (param.messageType === ALIAS_MESSAGE_TYPES.APPOINTMENT_SET) {
-		appointmentComponentHeader = translate(
-			'message.appointment.component.header.confirmation'
+	const appointmentTitle = translate(presentation.titleKey);
+	const appointmentIcon =
+		presentation.icon === 'check' ? (
+			<CalendarCheckIcon />
+		) : (
+			<CalendarCancelIcon />
 		);
-		appointmentTitle = translate('message.appointmentSet.title');
-		appointmentIcon = <CalendarCheckIcon />;
-		showAddToCalendarComponent = true;
-	} else if (
-		param.messageType === ALIAS_MESSAGE_TYPES.APPOINTMENT_RESCHEDULED
-	) {
-		appointmentComponentHeader = translate(
-			'message.appointment.component.header.change'
-		);
-		appointmentTitle = translate('message.appointmentRescheduled.title');
-		appointmentIcon = <CalendarCheckIcon />;
-		showAddToCalendarComponent = true;
-	} else {
-		appointmentComponentHeader = translate(
-			'message.appointment.component.header.cancellation'
-		);
-		appointmentTitle = translate('message.appointmentCancelled.title');
-		appointmentIcon = <CalendarCancelIcon />;
-		showAddToCalendarComponent = false;
-	}
+	const appointmentComponentHeader = translate(presentation.headerKey);
 
 	return (
 		<React.Fragment>
@@ -153,7 +159,7 @@ export const Appointment = (param: {
 						)}
 					</div>
 				)}
-				{showAddToCalendarComponent && (
+				{presentation.showCalendarAction && (
 					<DownloadICSFile
 						start={parsedData.date}
 						durationMinutes={duration}
