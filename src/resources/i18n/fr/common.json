@@ -1833,6 +1833,7 @@
 			"showKind": "Afficher : {{kind}}",
 			"pillKind": "Pastille : {{kind}}",
 			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
+			"pillNotApplicable": "Pas de pastille pour ce type",
 			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
 			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
 			"autoReadSessions": "Ne pas compter les discussions masquées comme non lues",

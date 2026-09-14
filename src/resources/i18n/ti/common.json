@@ -1833,6 +1833,7 @@
 			"showKind": "ኣርኢ: {{kind}}",
 			"pillKind": "ምልክት: {{kind}}",
 			"otherFixed": "“ካልእ” ዋላ ሓንቲ ከይተፈልጠት ከይትጠፍእ ኩሉ ግዜ ይርአ።",
+			"pillNotApplicable": "ነዚ ዓይነት እዚ ምልክት የለን",
 			"autoRead": "ዝተሓብአ ብኡንብኡ ከም ዝተነበበ ምልክት ግበር",
 			"autoReadDescription": "ነዚ ዝርዝር እዚ ጥራይ ይምልከት። ናብ ዕላላት ናይ ምንባብ መረጋገጺ ኣይለኣኽን።",
 			"autoReadSessions": "ዝተሓብኡ ዕላላት ከም ዘይተነበቡ ኣይትቑጸር",

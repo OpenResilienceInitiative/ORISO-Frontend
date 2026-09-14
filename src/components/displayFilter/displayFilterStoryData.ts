@@ -48,6 +48,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	pillKind: (kind) => `Pille: ${kind}`,
 	otherFixed:
 		'Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.',
+	pillNotApplicable: 'Keine Pille für diese Art',
 	autoRead: 'Ausgeblendetes sofort als gelesen markieren',
 	autoReadDescription:
 		'Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.',

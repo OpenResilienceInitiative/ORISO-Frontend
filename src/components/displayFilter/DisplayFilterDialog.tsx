@@ -26,6 +26,8 @@ export interface DisplayFilterDialogLabels {
 	pillKind: (kindLabel: string) => string;
 	/** Visible hint under the "other" row, linked to its fixed show checkbox. */
 	otherFixed: string;
+	/** Screen-reader text of the empty Pill cell of a show-only kind. */
+	pillNotApplicable: string;
 	autoRead: string;
 	autoReadDescription: string;
 	reset: string;
@@ -208,12 +210,17 @@ export const DisplayFilterDialog = ({
 								</td>
 								<td className="displayFilterDialog__cell">
 									{kind.showOnly ? (
-										<span
-											className="displayFilterDialog__noPill"
-											aria-hidden="true"
-										>
-											–
-										</span>
+										<>
+											<span
+												className="displayFilterDialog__noPill"
+												aria-hidden="true"
+											>
+												–
+											</span>
+											<span className="sr-only">
+												{labels.pillNotApplicable}
+											</span>
+										</>
 									) : (
 										<M3Checkbox
 											checked={setting.pill}

@@ -35,6 +35,9 @@ export const useDisplayFilterLabels = (
 				pillKind: (kind: string) =>
 					t('notifications.displayFilter.pillKind', { kind }),
 				otherFixed: t('notifications.displayFilter.otherFixed'),
+				pillNotApplicable: t(
+					'notifications.displayFilter.pillNotApplicable'
+				),
 				// Gespräche (spec §6.2): the switch only excludes hidden chats
 				// from the local unread count; nothing is marked read and no
 				// receipt is sent, so the copy must not promise that.

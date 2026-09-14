@@ -1858,6 +1858,7 @@
 			"showKind": "Anzeigen: {{kind}}",
 			"pillKind": "Pille: {{kind}}",
 			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
+			"pillNotApplicable": "Keine Pille für diese Art",
 			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
 			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
 			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",

@@ -150,6 +150,8 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(
 			screen.queryByRole('checkbox', { name: 'Pille: Zukunft' })
 		).toBeNull();
+		// The empty Pill cell is explained to screen readers, not left blank.
+		expect(screen.getByText(STORY_LABELS.pillNotApplicable)).not.toBeNull();
 	});
 
 	it('omits auto-read for sections without it', () => {

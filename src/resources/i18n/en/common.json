@@ -1834,6 +1834,7 @@
 			"showKind": "Show: {{kind}}",
 			"pillKind": "Pill: {{kind}}",
 			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
+			"pillNotApplicable": "No pill for this kind",
 			"autoRead": "Mark hidden items as read immediately",
 			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
 			"autoReadSessions": "Don't count hidden chats as unread",
