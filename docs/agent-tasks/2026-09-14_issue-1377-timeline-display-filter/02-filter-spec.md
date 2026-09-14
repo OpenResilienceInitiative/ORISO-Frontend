@@ -543,36 +543,105 @@ interface DisplayFilter {
   by user** and **inside the `oriso.` app namespace on purpose**. The user
   scope means another user's mirror is never even a candidate for the
   first-attach seed (rule 2), whatever a stale tab writes; the prefix means
-  the logout hygiene purges it
-  (`clientStorageHygiene` removes keys with the `oriso.` prefix). A key outside
-  that prefix would survive logout on a shared agency browser and the next user
-  would inherit, and on first attach persist, someone else's hidden kinds.
-  (Observation, out of scope here: the existing `ORISO_NOTIFICATION_SETTINGS`
-  mirror is outside the prefix and has the same exposure.) Same precedence
-  contract as `notificationSettingsStore.attachClient`
-  (`notificationSettings/store.ts:193-214`): 1. **Account data is authoritative** whenever it exists. On attach it
-  replaces the in-memory state and overwrites the mirror. 2. The mirror is read only at **attach** — its key needs the client's user id, so before a client is attached the store holds the built-in defaults (Storybook and tests pass values directly) — and serves as the **seed on first attach** when the
-  account has no `org.oriso.display_filters` event yet; the seed is then
-  persisted to account data once. **"No event yet" is decided only
-  after the client's initial sync has completed — sync state `PREPARED`
-  _or_ `SYNCING`** (the repo's own readiness test, `isPreparedSyncState`
-  at `matrixClientService.ts:29-31`, and `AuthenticatedApp.tsx:74-79`
-  accept both, because Matrix moves from `PREPARED` to `SYNCING` and a
-  bridge that attaches after that transition would wait for a state that
-  never comes again; the store keeps a monotonic `synced` flag once either
-  is seen) — (or after an explicit
-  `getAccountDataFromServer`), never from the pre-sync cache: the hook
-  attaches as soon as `AuthenticatedApp` publishes the client, but
-  `initializeClient` returns right after `startClient`
-  (`matrixClientService.ts:204-225`), so a fresh browser would otherwise
-  read an empty cache, "seed" defaults and overwrite the account's real
-  filters. Until the client is synced the store serves the mirror
-  read-only and queues nothing. (Observation, out of scope: `notificationSettingsStore.
-attachClient` has the same exposure today.) 3. **An update made before attach is rejected** (`update` returns `false` and changes nothing): without a client there is no user id, hence no mirror key, and rule 2 says the unattached store holds the built-in defaults. This costs nothing in practice — the dialog and the profile section are only mounted after login — and it removes the old "pre-sync update to the mirror, discarded if account data exists" branch entirely. An update issued after attach but before the initial sync completed is likewise rejected (the store is read-only until synced, rule 2). 4. Updates after attach write account data first and mirror on success. **Writes are serialised with a monotonic revision:** every `update` bumps an in-memory revision and the store keeps at most one request in flight; a change made while a write is pending is coalesced into the next write (the latest state, not a queue of intermediates). A completion is applied to the mirror only if its revision is still the latest — so two quick toggles can never leave the server and the mirror at the older value when the older request happens to complete last. Test: two updates, completions in reversed order → server and mirror hold the newer state. 5. **Logout / client removal resets the store to hard defaults.** `AuthenticatedApp` publishes `null` as the client (`setMatrixClientService(null)`, `AuthenticatedApp.tsx:325-331`) **before** `logout()` runs, and the storage hygiene (`purgeAppWebStorage`, `logout.ts:69-98`) only runs later, after the Keycloak logout settles — so at detach time user A's mirror is still populated. `displayFilterStore.detachClient()` therefore resets the in-memory state to the built-in defaults **and removes the mirror key synchronously** (`localStorage.removeItem(mirrorKey(detachedUserId))` — the **user-scoped** key of the client being detached, captured at attach time; an unscoped removal would remove nothing and no `storage` event would reach the other tabs`) — it does not wait for the hygiene. The next `attachClient`(rule 2) then finds no mirror and, if B's account has no event, seeds the built-in defaults; if B's account has an event, rule 1 applies it. Resetting only the in-memory value would not be enough: with the mirror still on disk, a client attached before the asynchronous purge would re-read A's settings and persist them into B's account. The later`purgeAppWebStorage`run is a no-op for this key. **In-flight writes are invalidated by detach:** every write captures the attachment generation (bumped on each`attachClient`/`detachClient`); a completion whose generation is no longer current is ignored — it must not touch the mirror or the in-memory state — otherwise A's `setAccountData`resolving after logout would recreate the cleared mirror and B's first attach would seed A's value. **Other tabs of the same user** are covered twice: the mirror key is user-scoped, so even a stale tab of A that recreates`oriso.displayFilters.v1.<A>`can never be read as B's seed; and every tab listens to the`storage` event for its own key — a removal (logout elsewhere, hygiene purge) bumps that tab's attachment generation, which invalidates its pending writes, and resets it to defaults. Tests: A customises → detach → mirror key absent → B attaches with no event → B sees defaults and nothing of A's state is written; A updates → logout while the write is pending → write resolves → mirror stays absent → B attaches with no event → B gets defaults; tab 2 of A has a pending write → tab 1 logs out (key removed) → tab 2's completion is ignored, no key recreated → B attaches in tab 1 → defaults. Without this, user A's hidden kinds and auto-read would survive in the singleton and, on user B's first attach with no account-data event, be **seeded into B's account** by rule 2. Test: A customises → logout → B attaches with no event → B sees defaults and nothing is written from A's state.
-  Tests: attach with account data only, mirror only (first-attach seed), both
-  (account wins, mirror overwritten), malformed account blob (defaults, mirror
-  ignored), update before attach rejected (no mirror key written, state unchanged), update after attach but before sync rejected, detach removes exactly`mirrorKey(userId)`
-  (discarded).
+  the logout hygiene purges it (`clientStorageHygiene` removes keys with the
+  `oriso.` prefix). A key outside that prefix would survive logout on a
+  shared agency browser and the next user would inherit, and on first attach
+  persist, someone else's hidden kinds. (Observation, out of scope here: the
+  existing `ORISO_NOTIFICATION_SETTINGS` mirror is outside the prefix and has
+  the same exposure.) Same precedence contract as
+  `notificationSettingsStore.attachClient`
+  (`notificationSettings/store.ts:193-214`):
+    1. **Account data is authoritative** whenever it exists. On attach it
+       replaces the in-memory state and overwrites the mirror.
+    2. The mirror is read only at **attach** — its key needs the client's
+       user id, so before a client is attached the store holds the built-in
+       defaults (Storybook and tests pass values directly) — and serves as
+       the **seed on first attach** when the account has no
+       `org.oriso.display_filters` event yet; the seed is then persisted to
+       account data once. **"No event yet" is decided only after the
+       client's initial sync has completed — sync state `PREPARED` _or_
+       `SYNCING`** (the repo's own readiness test, `isPreparedSyncState` at
+       `matrixClientService.ts:29-31`, and `AuthenticatedApp.tsx:74-79`
+       accept both, because Matrix moves from `PREPARED` to `SYNCING` and a
+       bridge that attaches after that transition would wait for a state
+       that never comes again; the store keeps a monotonic `synced` flag
+       once either is seen), or after an explicit
+       `getAccountDataFromServer`, never from the pre-sync cache: the hook
+       attaches as soon as `AuthenticatedApp` publishes the client, but
+       `initializeClient` returns right after `startClient`
+       (`matrixClientService.ts:204-225`), so a fresh browser would
+       otherwise read an empty cache, "seed" defaults and overwrite the
+       account's real filters. Until the client is synced the store serves
+       the mirror read-only and queues nothing. (Observation, out of scope:
+       `notificationSettingsStore.attachClient` has the same exposure
+       today.)
+    3. **An update made before attach is rejected** (`update` returns
+       `false` and changes nothing): without a client there is no user id,
+       hence no mirror key, and rule 2 says the unattached store holds the
+       built-in defaults. This costs nothing in practice — the dialog and
+       the profile section are only mounted after login — and it removes
+       the old "pre-sync update to the mirror, discarded if account data
+       exists" branch entirely. An update issued after attach but before
+       the initial sync completed is likewise rejected (the store is
+       read-only until synced, rule 2).
+    4. Updates after attach write account data first and mirror on success.
+       **Writes are serialised with a monotonic revision:** every `update`
+       bumps an in-memory revision and the store keeps at most one request
+       in flight; a change made while a write is pending is coalesced into
+       the next write (the latest state, not a queue of intermediates). A
+       completion is applied to the mirror only if its revision is still
+       the latest — so two quick toggles can never leave the server and the
+       mirror at the older value when the older request happens to
+       complete last. Test: two updates, completions in reversed order →
+       server and mirror hold the newer state.
+    5. **Logout / client removal resets the store to hard defaults.**
+       `AuthenticatedApp` publishes `null` as the client
+       (`setMatrixClientService(null)`, `AuthenticatedApp.tsx:325-331`)
+       **before** `logout()` runs, and the storage hygiene
+       (`purgeAppWebStorage`, `logout.ts:69-98`) only runs later, after the
+       Keycloak logout settles — so at detach time user A's mirror is still
+       populated. `displayFilterStore.detachClient()` therefore resets the
+       in-memory state to the built-in defaults **and removes the mirror
+       key synchronously**: `localStorage.removeItem(mirrorKey(userId))`
+       with the **user-scoped** key of the client being detached, captured
+       at attach time (an unscoped removal would remove nothing and no
+       `storage` event would reach the other tabs). It does not wait for
+       the hygiene. The next `attachClient` (rule 2) then finds no mirror
+       and, if B's account has no event, seeds the built-in defaults; if
+       B's account has an event, rule 1 applies it. Resetting only the
+       in-memory value would not be enough: with the mirror still on disk,
+       a client attached before the asynchronous purge would re-read A's
+       settings and persist them into B's account. The later
+       `purgeAppWebStorage` run is a no-op for this key.
+       **In-flight writes are invalidated by detach:** every write captures
+       the attachment generation (bumped on each `attachClient` /
+       `detachClient`); a completion whose generation is no longer current
+       is ignored — it must not touch the mirror or the in-memory state —
+       otherwise A's `setAccountData` resolving after logout would recreate
+       the cleared mirror and B's first attach would seed A's value.
+       **Other tabs of the same user** are covered twice: the mirror key is
+       user-scoped, so even a stale tab of A that recreates
+       `oriso.displayFilters.v1.<A>` can never be read as B's seed; and
+       every tab listens to the `storage` event for its own key — a removal
+       (logout elsewhere, hygiene purge) bumps that tab's attachment
+       generation, which invalidates its pending writes, and resets it to
+       defaults. Without all this, user A's hidden kinds and auto-read
+       would survive in the singleton and, on user B's first attach with no
+       account-data event, be **seeded into B's account** by rule 2.
+       Tests: A customises → detach → mirror key absent → B attaches with
+       no event → B sees defaults and nothing of A's state is written; A
+       updates → logout while the write is pending → write resolves →
+       mirror stays absent → B attaches with no event → B gets defaults;
+       tab 2 of A has a pending write → tab 1 logs out (key removed) → tab
+       2's completion is ignored, no key recreated → B attaches in tab 1 →
+       defaults.
+
+    Tests: attach with account data only, mirror only (first-attach seed),
+    both (account wins, mirror overwritten), malformed account blob
+    (defaults, mirror ignored), update before attach rejected (no mirror
+    key written, state unchanged), update after attach but before sync
+    rejected, detach removes exactly `mirrorKey(userId)` (discarded).
+
 - A `useDisplayFilter(section)` hook returns `{ effective, override, global,
 setSection, setGlobal, resetSection }` and re-renders on account-data sync
   (same `useSyncExternalStore` pattern as `useNotificationSettings.ts`).
