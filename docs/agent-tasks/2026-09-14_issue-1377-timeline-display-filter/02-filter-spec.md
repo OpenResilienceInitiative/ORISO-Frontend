@@ -36,8 +36,11 @@ only that, and the chips they left on stay on.
 | **Section**               | One of `requests` (Anfragen), `sessions` (Gespräche), `timeline` (Zeitstrahl).                                     | The three list surfaces already exist.                             |
 | **Global**                | The default display filter every section inherits until it has its own override.                                   | No (this spec).                                                    |
 
-The display filter never removes data (per #592): a dedicated chip can still
-surface a hidden kind on demand, and the server-side feed is unchanged.
+The display filter never removes data (the intent of #592): the server-side
+feed and the sessions data are unchanged, and the popover un-hides a kind with
+one tick. What #592 phrased as "the dedicated chip still shows hidden events"
+is replaced by that popover affordance — a hidden kind has **no chip** (§5.1).
+Q3 in §10 records the alternative so Frank can overrule.
 
 ## 3. Where the user finds it
 
@@ -46,7 +49,7 @@ the search field, in all three sections. It is the same primitive in all three
 places (the chip row already is: `sessionsListToolbar__chipsRow` is shared by
 `SessionsListToolbar.tsx:642-704` and `NotificationsCenter.tsx:906-960`).
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ ⋮  Search activity…                                      🔍 │
 ├─────────────────────────────────────────────────────────────┤
@@ -67,7 +70,7 @@ places (the chip row already is: `sessionsListToolbar__chipsRow` is shared by
 
 Popover content (one column, no tabs):
 
-```
+```text
 Show in Zeitstrahl                      ← section name
   ☑ Requests        ☑ Messages
   ☑ Drafts          ☑ Handover
@@ -76,40 +79,46 @@ Show in Zeitstrahl                      ← section name
 ──────────────────────────────────────
   ☑ Mark hidden items as read
 ──────────────────────────────────────
-  Applies to:  (•) this section   ( ) all sections
-  [Reset to default]        [Done]
+  [Reset to my defaults]    [Done]
 ```
 
 - Checkbox rows are the section's **kinds** (§5). Ticked = shown.
 - "Mark hidden items as read" = the auto-read rule (§6).
-- "Applies to" decides whether the change is written to the section override
-  or to the global default (§4). The radio remembers the last choice.
-- "Reset to default" clears the section override (→ inherits global) or, when
-  "all sections" is selected, resets global to show-everything.
+- The popover edits the **section override** only (§4).
+- "Reset to my defaults" clears the section override, so the section falls
+  back to the user's global defaults for that section.
 - "Done" closes. Changes apply live while the popover is open (no Save).
-- A last line links to the profile: "More options in Profile › Notifications"
-  — the per-event-type granularity from #593 lives there, the popover stays
-  family-level.
+- A last line links to the profile: "Defaults and more options in Profile ›
+  Notifications" — the **global defaults** (§4) and the per-event-type
+  granularity from #593 live there, the popover stays family-level.
 
-## 4. Scope resolution: global → section
+## 4. Scope resolution: global defaults → section override
 
+```text
+effective(section) = sections[section] ?? global[section]
 ```
-effective(section) = section.override ?? global
-```
 
-- `global` is the fallback for every section. Default: show everything,
-  auto-read off.
-- A section override, once written, is complete (all keys), so a later change
-  to `global` does not leak into it. "Reset to default" deletes the override.
-- "Applies to: all sections" writes `global` **and** deletes every section
-  override, so the user sees the same everywhere afterwards. That is the
-  explicit, destructive case and gets a one-line confirmation in the popover
-  ("This replaces the individual settings of Anfragen and Gespräche.").
+Each section has its own kind vocabulary (§5), so "global" is **not** one
+filter applied to all three lists — that would give `hiddenKinds: ['messages']`
+no meaning in Anfragen. Global is the user's **default per section**, edited in
+one place (Profile › Notifications › Display filters, the #593 section), while
+the popover in a list edits only that list's **override**:
 
-**Without the two levels:** a user who hides "System" in the Timeline would
-have to repeat it in Gespräche for supervision rooms, and a later "show
-everything" in one place would silently un-hide it in the others.
-**With them:** one global choice, overridden only where the user says so.
+- `global[section]` — the default for that section on every device. Ships as
+  show-everything, auto-read off.
+- `sections[section]` — an optional complete override written by the popover.
+  Once written, a later change to the profile default does not leak into it.
+- "Reset to my defaults" deletes the override.
+- The profile page shows all three sections side by side, and its
+  "Apply to all sections" action is limited to the two settings that exist in
+  every vocabulary: `autoReadHidden` and the kinds whose id is shared
+  (`liveChat` in Gespräche and Anfragen). Everything else is per section by
+  construction, so nothing can be written that a section cannot interpret.
+
+**Without the two levels:** a user who hides "Supervision" in Gespräche for
+one busy week has no way back to "my usual view" except remembering it.
+**With them:** the popover is the quick, per-list override; the profile holds
+the considered defaults; reset goes from one to the other.
 
 ## 5. Kinds per section
 
@@ -208,8 +217,9 @@ JOB1 answer).
 **Without auto-read:** hidden families still count in the server-side unread
 total, so the nav badge says "12" while the Timeline shows 3 unread. The user
 presses ✓✓ to make the number go away and thereby also reads the 3 they wanted.
-**With auto-read:** the badge and the list agree, and ✓✓ acts only on what is
-visible.
+**With auto-read:** hidden items on loaded pages are already read, so ✓✓ only
+has visible items left to clear on those pages (✓✓ itself is unchanged and
+still clears everything server-side).
 
 ### 6.2 Gespräche and Anfragen
 
@@ -225,11 +235,19 @@ ADR-004/005). In Anfragen the option is not shown (§5.3).
 The nav badge for the Timeline is today driven by the server total
 (commit `7f6dea17`). With display filters it must show **visible unread**:
 
-- v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`. Exact when
-  auto-read is on (hidden unread converges to 0), an upper bound when it is
-  off. The badge tooltip says "+N hidden" in the latter case.
-- v2 (backend): `GET …/event-notifications/unread-count?excludeEventTypes=`
-  in ORISO-UserService. Filed as a follow-up when v1 lands.
+- v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`. This is an
+  **upper bound**, never a promise: `apiGetEventNotifications` returns one
+  page (50 items) plus a server-wide `unreadCount`, and older pages load only
+  on demand, so hidden unread items on unloaded pages stay in the total. With
+  auto-read on the bound tightens with every loaded page (hidden items on
+  loaded pages are read server-side) but is still only exact once the user
+  has paged through all hidden unread. The badge tooltip says "up to N hidden"
+  whenever `serverTotal` exceeds the visible count.
+- v2 (backend, required for an exact badge):
+  `GET …/event-notifications/unread-count?excludeEventTypes=` in
+  ORISO-UserService, plus `PATCH …/read?eventTypes=` so auto-read covers
+  unloaded pages. Filed as a follow-up when v1 lands; AC4/AC5 below state the
+  v1 guarantee only.
 
 ## 7. Model and persistence
 
@@ -239,14 +257,14 @@ a parser bug in one cannot wipe the other:
 
 ```ts
 // account-data event type: 'org.oriso.display_filters'  (v1)
+type Section = 'timeline' | 'sessions' | 'requests';
+
 interface OrisoDisplayFilters {
 	version: 1;
-	global: DisplayFilter;
-	sections: Partial<
-		Record<'timeline' | 'sessions' | 'requests', DisplayFilter>
-	>;
-	/** Last "Applies to" choice in the popover. */
-	lastScope: 'section' | 'global';
+	/** Per-section defaults, edited in the profile. Always complete. */
+	global: Record<Section, DisplayFilter>;
+	/** Optional per-section override, edited in the list popover. */
+	sections: Partial<Record<Section, DisplayFilter>>;
 }
 
 interface DisplayFilter {
@@ -262,7 +280,24 @@ interface DisplayFilter {
 - Tolerant parsing exactly like `parseNotificationConfig`: unknown kinds are
   kept (a newer client may know them), unknown keys ignored, malformed →
   defaults. Defaults = `{ hiddenKinds: [], autoReadHidden: false }`.
-- localStorage mirror `ORISO_DISPLAY_FILTERS` for pre-sync and Storybook.
+- localStorage mirror `ORISO_DISPLAY_FILTERS`, with the same precedence
+  contract as `notificationSettingsStore.attachClient`
+  (`notificationSettings/store.ts:193-214`):
+    1. **Account data is authoritative** whenever it exists. On attach it
+       replaces the in-memory state and overwrites the mirror.
+    2. The mirror is read only **before** a client is attached (pre-login
+       shell, Storybook, tests) and as the **seed on first attach** when the
+       account has no `org.oriso.display_filters` event yet; the seed is then
+       persisted to account data once.
+    3. An update made before attach is written to the mirror only. If account
+       data turns out to exist on attach, that pre-sync update is **discarded**
+       (account wins, no merge) — same rule as the announcement settings, and
+       stated here so nobody expects a merge.
+    4. Updates after attach write account data first and mirror on success.
+       Tests: attach with account data only, mirror only (first-attach seed), both
+       (account wins, mirror overwritten), malformed account blob (defaults, mirror
+       ignored), pre-sync update followed by attach with existing account data
+       (discarded).
 - A `useDisplayFilter(section)` hook returns `{ effective, override, global,
 setSection, setGlobal, resetSection }` and re-renders on account-data sync
   (same `useSyncExternalStore` pattern as `useNotificationSettings.ts`).
@@ -277,35 +312,35 @@ using desk and laptop would configure twice and get two different badges.
 
 ## 8. Interaction with what exists
 
-| Existing behaviour                                 | With display filter                                                         |
-| -------------------------------------------------- | --------------------------------------------------------------------------- |
-| Family chips data-driven from the feed             | computed from the **visible** feed → hidden families have no chip           |
-| Unread toggle skips auto-read of the selected card | unchanged; auto-read of hidden items is a separate pass and still runs      |
-| ✓✓ Mark all as read                                | unchanged (server-side, everything). Copy stays "Mark all as read".         |
-| Announcement `families` toggles                    | independent. Hiding a family does **not** mute it; muting does not hide it. |
-| `?chip=` URL mirror in SessionsList                | unchanged; chip composes on top                                             |
-| Profile › Notifications (#593 section)             | becomes the "advanced" view of the same model (per event type)              |
-| Storybook stories for both toolbars                | get a `withDisplayFilter` story each (dot on, popover open)                 |
+| Existing behaviour                                 | With display filter                                                                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Family chips data-driven from the feed             | computed from the **visible** feed → hidden families have no chip                                                                                                               |
+| Unread toggle skips auto-read of the selected card | unchanged; auto-read of hidden items is a separate pass and still runs                                                                                                          |
+| ✓✓ Mark all as read                                | unchanged: server-side `read-all`, everything, hidden included. Copy stays "Mark all as read". With auto-read on, hidden items on loaded pages are already read before ✓✓ runs. |
+| Announcement `families` toggles                    | independent. Hiding a family does **not** mute it; muting does not hide it.                                                                                                     |
+| `?chip=` URL mirror in SessionsList                | unchanged; chip composes on top                                                                                                                                                 |
+| Profile › Notifications (#593 section)             | becomes the "advanced" view of the same model (per event type)                                                                                                                  |
+| Storybook stories for both toolbars                | get a `withDisplayFilter` story each (dot on, popover open)                                                                                                                     |
 
 ## 9. Acceptance criteria
 
 - [ ] AC1 All three sections show the filter button at the right end of the chip row; icon-only, dot when customised, keyboard reachable, `aria-expanded`.
 - [ ] AC2 Unticking a kind removes those items from the list immediately, on this and (after sync) on a second device.
-- [ ] AC3 "Applies to: this section" leaves the other two sections unchanged; "all sections" makes all three identical and shows the confirmation line.
-- [ ] AC4 Timeline: with auto-read on, hidden unread items are marked read server-side within one refresh; the nav badge equals the visible unread count.
-- [ ] AC5 Timeline: with auto-read off, the badge shows visible unread and a "+N hidden" tooltip; ✓✓ still clears everything.
+- [ ] AC3 The popover changes only its own section's override; the other two sections and the profile defaults are unchanged. The profile's "Apply to all sections" touches only `autoReadHidden` and shared kind ids.
+- [ ] AC4 Timeline: with auto-read on, hidden unread items **on loaded pages** are marked read server-side within one refresh; the nav badge never shows less than the visible unread count and equals it once all pages with hidden unread are loaded (exact badge = v2 backend follow-up).
+- [ ] AC5 Timeline: with auto-read off, the badge shows `serverTotal − hidden unread on loaded pages` (an upper bound) and an "up to N hidden" tooltip when it exceeds the visible count; ✓✓ still clears everything.
 - [ ] AC6 Gespräche: an open room stays visible while hidden by the filter (dimmed, tooltip), and disappears after leaving it. No Matrix read receipt is ever sent by the filter (checked with the room's receipt list).
 - [ ] AC7 Anfragen: no auto-read option is rendered.
-- [ ] AC8 Reset restores inheritance; a malformed account-data blob falls back to defaults without an error boundary.
-- [ ] AC9 No message content is read anywhere in the filter path (metadata only); unit tests for `applyTimelineFilter`, `applySessionsFilter`, `resolveEffective`, tolerant parsing.
+- [ ] AC8 Reset restores the profile default; a malformed account-data blob falls back to defaults without an error boundary.
+- [ ] AC9 No message content is read anywhere in the filter path (metadata only); unit tests for `applyTimelineFilter`, `applySessionsFilter`, `resolveEffective`, tolerant parsing, and the five persistence cases in §7.
 
 ## 10. Open decisions for Frank (answer inline, then the spec is final)
 
 - **Q1 Default for auto-read in the Timeline** — off (safer, badge stays honest with "+N hidden") or on (the described "sofort als gelesen markiert")? _Recommendation: off by default, one-click on in the popover._
 - **Q2 Read receipts in Gespräche** — confirm they are never sent by the filter (this spec says never). If "hidden ⇒ read" should also clear the room badge for _other_ devices, that needs a receipt and is a privacy decision.
-- **Q3 Chip of a hidden family** — disappear (this spec) or stay as a dimmed chip that temporarily un-hides on click (#592 wording)? _Recommendation: disappear; the popover is one click away and the row stays clean._
+- **Q3 Chip of a hidden family** — this spec: it disappears and the popover is the only way to un-hide (§2, §5.1, AC2). The #592 alternative (dimmed chip that temporarily un-hides on click) is not specified; choosing it reopens §5.1 and AC2. _Recommendation: keep this spec._
 - **Q4 Granularity in the popover** — families only (this spec) with per-type in the profile, or per-type right in the popover?
-- **Q5 Global vs section precedence** — section override wins (this spec). Alternative: global always applies _and_ sections can only hide more. Simpler to explain, less flexible.
+- **Q5 Global vs section precedence** — section override wins over the per-section profile default (this spec). Alternative: the default always applies _and_ the popover can only hide more. Simpler to explain, less flexible.
 - **Q6 Product owner of the profile page section** — #593 is closed as done; the spec assumes that UI is the advanced view. If it was closed without UI, it reopens as part of this work.
 - **Q7 Mobile** — bottom sheet with the same content (this spec) or defer mobile?
 - **Q8 Order of delivery** — the analysis suggests filter (F6) before widening the preview (F1/F2). Agree?

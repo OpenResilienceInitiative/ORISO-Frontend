@@ -19,4 +19,4 @@
 
 ## Method
 
-Read the code on `dev` first, then the docs (`CONTEXT.md`, `docs/agent-tasks/2026-09-05_issue-1200-timeline-view/*`, `docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/*`), then the open issues. Every claim in the analysis names the file and line it was read from. Nothing was verified on Pre-Dev in a browser — this is a code-level analysis, and it says so where a live check is still needed.
+Read the code on `dev` first, then the docs (`CONTEXT.md`, `docs/agent-tasks/2026-09-05_issue-1200-timeline-view/*`, `docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/*`), then the open issues. Every code-level claim in the analysis names the file and line it was read from; F5 and F7 rest on #1211, ORISO-UserService `dev` and ORISO-Docs PR #108 and say so. Nothing was verified on Pre-Dev in a browser — this is a code-level analysis, and it says so where a live check is still needed.
