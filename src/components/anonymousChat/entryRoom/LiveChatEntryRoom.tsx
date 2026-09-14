@@ -275,10 +275,15 @@ export const LiveChatEntryRoom = ({
 	useEffect(() => {
 		if (stage !== 'waiting' || accepted) return undefined;
 		let stop = false;
-		const refresh = () =>
-			apiGetAnonymousEnquiryDetails(sessionId)
+		let latestPoll = 0;
+		let latestAppliedPoll = 0;
+		const refresh = () => {
+			const poll = ++latestPoll;
+			return apiGetAnonymousEnquiryDetails(sessionId)
 				.then((d) => {
-					if (stop) return;
+					// A slow response must not overwrite a newer poll's room state.
+					if (stop || poll < latestAppliedPoll) return;
+					latestAppliedPoll = poll;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
 					const nextAvailable =
@@ -304,6 +309,7 @@ export const LiveChatEntryRoom = ({
 					if (d?.status === 'IN_PROGRESS') setAccepted(true);
 				})
 				.catch(() => undefined);
+		};
 		refresh();
 		const timer = window.setInterval(refresh, POLL_MS);
 		return () => {
