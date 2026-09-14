@@ -54,6 +54,8 @@ const boundary = vi.hoisted(() => {
 	return {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
+		sessionRoom: vi.fn(),
+		fetch: vi.fn(),
 		client: null as any
 	};
 });
@@ -79,6 +81,11 @@ vi.mock('../../api/apiTeamDiscussion', () => ({
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
 	apiGetSessionSupervisors: async () => []
 }));
+vi.mock('../../api/apiGetSessionRooms', () => ({
+	apiGetSessionRoomBySessionId: (...args: any[]) =>
+		boundary.sessionRoom(...args),
+	apiGetSessionRoomsByRoomIds: async () => ({ sessions: [] })
+}));
 vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetAgencyConsultantList: async () => [],
 	fetchAgencyConsultantList: async () => [],
@@ -94,6 +101,20 @@ vi.mock('../../api/apiPostError', () => ({
 	apiPostError: async () => undefined,
 	TError: {},
 	ERROR_LEVEL_WARN: 'WARN'
+}));
+vi.mock('../../api/apiGetTenantTheming', () => ({
+	apiGetTenantTheming: async () => ({
+		settings: { featureTeamDiscussionEnabled: true }
+	})
+}));
+vi.mock('../../api/apiUserDrafts', () => ({
+	apiGetUserDraft: async () => null,
+	apiUpsertUserDraft: async () => undefined,
+	apiDeleteUserDraft: async () => undefined
+}));
+vi.mock('../../utils/pseudonymGenerator', async (original) => ({
+	...(await original<any>()),
+	renderAvatarSvg: async () => '<svg xmlns="http://www.w3.org/2000/svg" />'
 }));
 
 const MAIN = '!enquiry:test';
@@ -117,6 +138,12 @@ const room = (roomId: string, timeline: MatrixEvent[]) => ({
 });
 
 beforeEach(async () => {
+	vi.stubGlobal(
+		'fetch',
+		boundary.fetch.mockRejectedValue(
+			new Error('Unexpected enquiry integration-test network request')
+		)
+	);
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
@@ -181,6 +208,8 @@ beforeEach(async () => {
 	boundary.open
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
+	boundary.fetch.mockClear();
 	setTenantSettings({ featureTeamDiscussionEnabled: true } as any);
 	service = new MatrixClientService();
 	await service.initializeClient({
@@ -195,7 +224,9 @@ afterEach(() => {
 	cleanup();
 	service?.stopAndCleanup();
 	setMatrixClientServiceRef(null);
+	expect(boundary.fetch).not.toHaveBeenCalled();
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 function RouteProbe() {
