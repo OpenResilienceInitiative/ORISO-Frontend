@@ -1,6 +1,6 @@
 # 02 — Specification: user-programmable display filter (global + per section)
 
-Status: **Draft for product sign-off** (2026-09-14). Written against
+Status: **Decided** (2026-09-14, Frank: "take the recommendations for Q1–Q8"; §10 records the answers and the additional product input that reshaped §3/§5/§11). Written against
 `CONTEXT.md`, #592/#593/#594, #420, the Proposed Activity-Timeline ADR
 (ORISO-Docs PR #108) and the code on `dev` @ `31dac29b`. Where a decision is
 still Frank's to make it is listed in §10, not silently assumed.
@@ -69,29 +69,54 @@ places (the chip row already is: `sessionsListToolbar__chipsRow` is shared by
   Gespräche. It is not a chip and must not scroll away with the chips: it is
   pinned right, the chips scroll under it.
 
-Popover content (one column, no tabs):
+Popover content — an M3 dialog (`Dialog` from the repo's MUI/M3 wrappers,
+built and reviewed in Storybook **before** any integration, §11):
 
 ```text
-Show in Zeitstrahl                      ← section name
-  ☑ Requests        ☑ Messages
-  ☑ Drafts          ☑ Handover
-  ☑ Calls           ☐ System
-  ☐ Appointments
-──────────────────────────────────────
-  ☑ Mark hidden items as read
-──────────────────────────────────────
-  [Reset to my defaults]    [Done]
+Anzeige-Filter · Zeitstrahl                   ← section name
+                         Anzeigen   Pille
+  Anfragen                  ☑         ☑
+  Nachrichten               ☑         ☑
+  Entwürfe                  ☐         ─      ← hidden ⇒ pill column disabled
+  Übergaben                 ☑         ☐
+  Anrufe                    ☑         ☑
+  System                    ☑         ☐
+  Termine                   ☐         ─
+  Sonstiges                 ☑ (fixed) ☐      ← catch-all, cannot be hidden
+──────────────────────────────────────────
+  ☑ Ausgeblendetes sofort als gelesen markieren
+──────────────────────────────────────────
+  [Auf meine Standards zurücksetzen]   [Fertig]
 ```
 
-- Checkbox rows are the section's **kinds** (§5). Ticked = shown.
-- "Mark hidden items as read" = the auto-read rule (§6).
+Two independent switches per kind (Frank, 2026-09-14):
+
+- **Anzeigen (show)** — whether items of this kind appear in the list at all.
+  Off means the kind is gone from this section: no rows, no pill, no entry
+  in the history — "as if the event class did not exist for me" (example:
+  drafts in the chat history — Slack does not show them, some counsellors
+  want them).
+- **Pille (pill)** — whether the kind gets a chip in the chip row. A pill is
+  rendered **only while the kind has unread/new items** in the loaded feed
+  (e.g. a request in a group chat → the "Gruppen" pill appears at the top
+  with a count badge); it disappears again when nothing new is left, unless
+  it is the active chip. Pill requires Show; hiding a kind greys out its
+  pill switch.
+- **Sonstiges (other)** — the catch-all for every kind/event the section does
+  not map explicitly (new backend event types, future families). It is
+  **always shown** (switch fixed on) so nothing can silently vanish, and it
+  can be given a pill. This keeps the backend contract small: the server
+  needs no knowledge of the filter, and unmapped events land in a bucket
+  the user can still see.
+
+- "Ausgeblendetes sofort als gelesen markieren" = the auto-read rule (§6).
 - The popover edits the **section override** only (§4).
-- "Reset to my defaults" clears the section override, so the section falls
-  back to the user's global defaults for that section.
-- "Done" closes. Changes apply live while the popover is open (no Save).
-- A last line links to the profile: "Defaults and more options in Profile ›
-  Notifications" — the **global defaults** (§4) and the per-event-type
-  granularity from #593 live there, the popover stays family-level.
+- "Auf meine Standards zurücksetzen" clears the section override, so the
+  section falls back to the user's global defaults for that section.
+- "Fertig" closes. Changes apply live while the dialog is open (no Save).
+- A last line links to the profile: "Standards und mehr Optionen in Profil ›
+  Benachrichtigungen" — the **global defaults** (§4) and the per-event-type
+  granularity from #593 live there, the dialog stays family-level.
 
 ## 4. Scope resolution: global defaults → section override
 
@@ -100,7 +125,7 @@ effective(section) = sections[section] ?? global[section]
 ```
 
 Each section has its own kind vocabulary (§5), so "global" is **not** one
-filter applied to all three lists — that would give `hiddenKinds: ['messages']`
+filter applied to all three lists — that would give `kinds.messages`
 no meaning in Anfragen. Global is the user's **default per section**, edited in
 one place (Profile › Notifications › Display filters, the #593 section), while
 the popover in a list edits only that list's **override**:
@@ -108,7 +133,7 @@ the popover in a list edits only that list's **override**:
 - `global[section]` — the default for that section on every device. Ships as
   show-everything, auto-read off.
 - `sections[section]` — an optional override written by the popover. It
-  carries **only** the fields the popover can edit (family-level `hiddenKinds`
+  carries **only** the fields the popover can edit (family-level `kinds`
   and `autoReadHidden`). The profile-owned `hiddenEventTypes` is **never**
   copied into an override; it is always resolved from `global[section]`, so
   a per-event-type change in the profile takes effect immediately even while
@@ -160,8 +185,15 @@ Rules:
 - Hidden families are excluded from the feed **before** `getFamiliesInFeed`
   runs, so their chip disappears from the row (no chip for what you cannot
   see). The chip row does **not** grow a "hidden" chip; the filter button's
-  dot is the only hint. _(Open question Q3 in §10 — #592 wanted the dedicated
-  chip to still work; the button popover is the replacement affordance.)_
+  dot is the only hint (Q3 decided).
+- The chip row is now **user-gated**: a family chip renders only if
+  `kinds[family].pill` is on **and** the family has unread items in the
+  loaded feed (count badge), or it is the active chip. Today's "one chip per
+  family present" rule becomes the default (`pill: true` everywhere).
+- **Sonstiges**: event types without a family mapping (today none — every
+  seeded type has a family — but the registry falls back to `system` for
+  unknown types, `registry.ts:99`) are classified as `other`, always shown,
+  and get their own chip when `kinds.other.pill` is on.
 - Search and the Unread toggle operate on the already-reduced feed.
 - The first-card auto-select (`NotificationsCenter.tsx:578-582`) picks from
   the reduced feed.
@@ -338,9 +370,20 @@ interface OrisoDisplayFilters {
 	sections: Partial<Record<Section, DisplayFilter>>;
 }
 
+type KindSetting = {
+	/** Rows of this kind appear in the list. `other` is always true. */
+	show: boolean;
+	/** A chip is rendered while the kind has unread items. Requires show. */
+	pill: boolean;
+};
+
 interface DisplayFilter {
-	/** Kinds the user hid; anything not listed is shown. */
-	hiddenKinds: string[]; // timeline: EventFamily[]; sessions/requests: §5 ids
+	/**
+	 * Per kind (timeline: EventFamily | 'other'; sessions/requests: §5 ids
+	 * | 'other'). A kind missing from the map uses the default
+	 * `{ show: true, pill: true }`; `other.show` is forced true on read.
+	 */
+	kinds: Partial<Record<string, KindSetting>>;
 	/**
 	 * Timeline only, written by the profile section (#593). Lives in
 	 * `global.timeline` ONLY — an override never carries it (§4), so the
@@ -367,7 +410,7 @@ interface DisplayFilter {
   reads as defaults and the first write replaces it. Tests: read newer
   version then attempt each write path (no write, UI disabled), read v1 with
   an unknown extra key then write (key preserved), malformed then write
-  (replaced). Defaults = `{ hiddenKinds: [], autoReadHidden: false }`.
+  (replaced). Defaults = `{ kinds: {}, autoReadHidden: false }` (every kind shown with a pill).
 - localStorage mirror `oriso.displayFilters.v1` — **inside the `oriso.` app
   namespace on purpose**, so the logout hygiene purges it
   (`clientStorageHygiene` removes keys with the `oriso.` prefix). A key outside
@@ -443,25 +486,52 @@ using desk and laptop would configure twice and get two different badges.
 - [ ] AC8 Reset restores the profile default; a malformed account-data blob falls back to defaults without an error boundary.
 - [ ] AC9 The new display-filter helpers, persistence and auto-read logic read no message content (metadata only). The existing client-side search over `getSearchText(item)` in `timelineFilter.ts` is unchanged and out of scope for this criterion. Unit tests for `applyTimelineFilter`, `applySessionsFilter`, `resolveEffective`, tolerant parsing, and the five persistence cases in §7.
 
-## 10. Open decisions for Frank (answer inline, then the spec is final)
+## 10. Decisions (Frank, 2026-09-14: "take the recommendations")
 
-- **Q1 Default for auto-read in the Timeline** — off (safer, badge stays honest with "+N hidden") or on (the described "sofort als gelesen markiert")? _Recommendation: off by default, one-click on in the popover._
-- **Q2 Read receipts in Gespräche** — confirm they are never sent by the filter (this spec says never). If "hidden ⇒ read" should also clear the room badge for _other_ devices, that needs a receipt and is a privacy decision.
-- **Q3 Chip of a hidden family** — this spec: it disappears and the popover is the only way to un-hide (§2, §5.1, AC2). The #592 alternative (dimmed chip that temporarily un-hides on click) is not specified; choosing it reopens §5.1 and AC2. _Recommendation: keep this spec._
-- **Q4 Granularity in the popover** — families only (this spec) with per-type in the profile, or per-type right in the popover?
-- **Q5 Global vs section precedence** — section override wins over the per-section profile default (this spec). Alternative: the default always applies _and_ the popover can only hide more. Simpler to explain, less flexible.
-- **Q6 Product owner of the profile page section** — #593 is closed as done; the spec assumes that UI is the advanced view. If it was closed without UI, it reopens as part of this work.
-- **Q7 Mobile** — bottom sheet with the same content (this spec) or defer mobile?
-- **Q8 Order of delivery** — the analysis suggests filter (F6) before widening the preview (F1/F2). Agree?
+| #   | Decision                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------------------------- |
+| Q1  | Auto-read off by default, one click on in the dialog.                                                           |
+| Q2  | The filter never sends Matrix read receipts. Gespräche only adjusts the local count.                            |
+| Q3  | A hidden kind has no chip; the dialog is the only un-hide affordance. Chips are additionally user-gated (pill). |
+| Q4  | Dialog = families only; per-event-type in the profile.                                                          |
+| Q5  | Section override wins over the per-section profile default.                                                     |
+| Q6  | #593's profile section becomes the advanced view; reopened as slice 6 if it shipped without UI.                 |
+| Q7  | Mobile: same dialog full-screen (M3 dialog handles it); no separate bottom sheet.                               |
+| Q8  | Filter (F6) first, then F1/F2. UX first: every UI piece is built and reviewed in Storybook before integration.  |
 
-## 11. Implementation slices (for the issue)
+Additional product input that changed the spec (same conversation):
 
-1. **Model + store + hook** (`src/utils/displayFilter/*`, account-data key, mirror, tests). No UI.
-2. **Timeline**: pre-filter + auto-read pass + `visibleUnreadCount` in the provider + new rail badge in `NavigationBar` + button/popover in `NotificationsCenter`. Stories.
-3. **Gespräche**: pre-filter + active-row exception + "don't count" + button in `SessionsListToolbar`. Stories.
-4. **Anfragen**: pre-filter + button (no auto-read).
-5. **Profile**: wire #593's section to `hiddenEventTypes`.
-6. **Backend follow-ups** (ORISO-UserService): bulk read by event type; unread-count with exclusions.
+- Per kind two switches, **Anzeigen** and **Pille** (§3, §5.1, §7).
+- **Sonstiges** catch-all, always shown, so the backend stays untouched and
+  nothing unmapped can vanish (§3, §5.1).
+- The Timeline is a **log**: every event class must be fully suppressible so
+  it does not clutter the screen; hiding drafts also removes their pill and
+  their history entry from this user's view.
+- The filter entry point opens an **M3 dialog**, designed in Storybook first
+  so the backend contract follows the finished UX.
 
-Each slice is a separate PR with a Storybook before/after under
-`docs/storybook/issue-<n>-display-filter/`.
+## 11. Implementation slices (for the issue) — UX first
+
+1. **Storybook UX (this branch, PR #1378 follow-up):** pure presentational
+   components under `src/components/displayFilter/`, no persistence, no
+   integration — `FilterChipRow` (the existing chip group extracted into a
+   reusable molecule with a story; today it is inline JSX in
+   `SessionsListToolbar.tsx` and `NotificationsCenter.tsx`),
+   `DisplayFilterButton` (icon-only pill with the "customised" dot),
+   `DisplayFilterDialog` (M3 dialog with Show/Pill rows, auto-read switch,
+   reset, profile link). Stories for every state (default, customised,
+   hidden kind with greyed pill, read-only mode, mobile viewport), unit
+   tests, i18n keys de/en. Screenshots under
+   `docs/storybook/issue-1377-display-filter/`.
+2. **Model + store + hook** (`src/utils/displayFilter/*`, account-data key,
+   mirror, `PREPARED` gate, version rule, tests). No UI wiring.
+3. **Zeitstrahl**: `visibleFeed`, user-gated chips, auto-read pass,
+   `visibleUnreadCount` + new rail badge, dialog wired in.
+4. **Gespräche**: `classifySession`, pre-filter, keep-paging, active-row
+   exception, "don't count", dialog wired in.
+5. **Anfragen**: pre-filter + keep-paging + dialog (no auto-read).
+6. **Profile**: defaults per section + #593 per-event-type view.
+7. **Backend follow-ups** (ORISO-UserService): bulk read by event type;
+   unread-count with exclusions.
+
+Each slice is a separate PR with Storybook before/after screenshots.
