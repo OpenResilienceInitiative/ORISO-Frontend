@@ -62,14 +62,15 @@ places (the chip row already is: `sessionsListToolbar__chipsRow` is shared by
   pill, same size as an inactive chip, `aria-label="Display filter"`.
 - A small dot on the icon when this section's effective filter differs from
   "show everything".
-- Click → anchored popover (`Menu`/`Popover` from the MUI/M3 wrappers, like the
-  card menu at `NotificationsCenter.tsx:1166-1235`). On `untilL` (mobile) the
-  same M3 dialog opens full-screen (Q7); there is no separate bottom sheet.
+- Click → the **M3 dialog** described below (`DisplayFilterDialog`, modal,
+  480 px wide on desktop). On `untilL` (mobile) the same dialog opens
+  full-screen (Q7); there is no separate bottom sheet and **no anchored
+  popover** — one presentation, decided in §10 (Q7) and shipped in slice 1.
 - Position: after ✓✓ in the Timeline, after the last chip in Anfragen and
   Gespräche. It is not a chip and must not scroll away with the chips: it is
   pinned right, the chips scroll under it.
 
-Popover content — an M3 dialog (`Dialog` from the repo's MUI/M3 wrappers,
+Dialog content — an M3 dialog (`Dialog` from the repo's MUI/M3 wrappers,
 built and reviewed in Storybook **before** any integration, §11):
 
 ```text
@@ -342,35 +343,50 @@ once the client exists), while `NotificationsProvider` only **subscribes** to
 the store (`useSyncExternalStore` needs no client) to compute the count. The
 value shows **visible unread**:
 
-- v1 (frontend only): `serverTotal − hiddenUnreadInLoadedPages`, where the
-  subtrahend counts **server rows only** — client-side `local-*` rows
-  (incoming calls, toasts; `NotificationsProvider.tsx:164-173`) are never in
-  the API's `unreadCount`, so subtracting a hidden local row would push the
-  badge below the visible count (AC4). Local rows are handled separately:
-  `visibleUnreadCount = (serverTotal − hiddenServerUnreadInLoadedPages) +
-visibleLocalUnread`. This is an
-  **upper bound**, never a promise: `apiGetEventNotifications` returns one
-  page (50 items) plus a server-wide `unreadCount`, and older pages load only
-  on demand, so hidden unread items on unloaded pages stay in the total. With
-  auto-read on the bound tightens with every loaded page (hidden items on
-  loaded pages are read server-side) but is still only exact once the user
-  has paged through all hidden unread. The badge tooltip says "up to N hidden"
-  whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
-  bound `serverTotal − hiddenServerUnreadInLoadedPages` is below
-  `serverTotal`; `visibleLocalUnread` is added to the displayed badge only
-  and never enters that comparison (one hidden server row plus one visible
-  local row would otherwise make total and badge equal and mute the hint).
-  **Reconciliation rule:** both operands come from one local snapshot. The
-  auto-read pass goes through `markNotificationsReadConfirmed` (§6.1),
-  which on PATCH **success** sets the item's `readAt` **and** decrements the
-  local unread total in the same state update, so an item leaves
-  `hiddenUnreadInLoadedPages` and `serverTotal` together — never subtracted
-  twice. Until the PATCH resolves
-  the item stays unread in both operands, so a slow or failed PATCH leaves
-  the badge unchanged rather than inflated; the next feed refresh replaces
-  the local total with the server's `unreadCount` and recomputes the hidden
-  count from the fresh page, which converges both. Tests: PATCH success,
-  PATCH delayed past a refresh, PATCH failure.
+- v1 (frontend only). Operands, all from one local snapshot: - `serverTotal` = the **last API `unreadCount`** as received
+  (`NotificationsProvider.tsx:324`). This is a **new, server-only**
+  field: today's `unreadNotificationCount` is seeded from that value but
+  also incremented by every `addEventNotification` (`:441-465`), so
+  reusing it and adding local rows again would double-count each local
+  event until the next poll (five server unread plus one incoming call
+  would read seven). Slice 4 splits the provider state into
+  `serverUnreadTotal` (API only) and the local rows' own read state. - `hiddenServerUnreadInLoadedPages` / `visibleServerUnreadInLoadedPages`
+  = unread **server** rows in the loaded feed, hidden / visible by the
+  effective filter. Client-side `local-*` rows (incoming calls, toasts;
+  `:164-173`) are never in the API total and never in these two. - `visibleLocalUnread` = unread local rows the filter shows.
+
+    `visibleUnreadCount = max(serverTotal − hiddenServerUnreadInLoadedPages,
+visibleServerUnreadInLoadedPages) + visibleLocalUnread`.
+    The `max` clamp exists because a page-0 refresh replaces `serverTotal` but
+    deliberately keeps rows below its reconciliation window (`:191-220`,
+    `:310-324`): a read performed on another device lowers the total while
+    such a retained older row stays locally unread, so the plain difference
+    could drop below what the user can see, or below zero. The clamp keeps
+    AC4's lower bound (never less than the visible unread rows on screen);
+    the retained rows converge on the next older-page load or reload. This is an
+    **upper bound**, never a promise: `apiGetEventNotifications` returns one
+    page (50 items) plus a server-wide `unreadCount`, and older pages load only
+    on demand, so hidden unread items on unloaded pages stay in the total. With
+    auto-read on the bound tightens with every loaded page (hidden items on
+    loaded pages are read server-side) but is still only exact once the user
+    has paged through all hidden unread. The badge tooltip says "up to N hidden"
+    whenever `hiddenServerUnreadInLoadedPages > 0`, i.e. the **server-only**
+    bound `serverTotal − hiddenServerUnreadInLoadedPages` is below
+    `serverTotal`; neither `visibleLocalUnread` nor the `max` clamp enters
+    that comparison (one hidden server row plus one visible local row would
+    otherwise make total and badge equal and mute the hint).
+    **Reconciliation rule:** both operands come from one local snapshot. The
+    auto-read pass goes through `markNotificationsReadConfirmed` (§6.1),
+    which on PATCH **success** sets the item's `readAt` **and** decrements the
+    local unread total in the same state update, so an item leaves
+    `hiddenUnreadInLoadedPages` and `serverTotal` together — never subtracted
+    twice. Until the PATCH resolves
+    the item stays unread in both operands, so a slow or failed PATCH leaves
+    the badge unchanged rather than inflated; the next feed refresh replaces
+    the local total with the server's `unreadCount` and recomputes the hidden
+    count from the fresh page, which converges both. Tests: PATCH success,
+    PATCH delayed past a refresh, PATCH failure.
+
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
   ORISO-UserService, plus `PATCH …/read?eventTypes=` so auto-read covers
@@ -449,14 +465,20 @@ interface DisplayFilter {
   shell, Storybook, tests) and as the **seed on first attach** when the
   account has no `org.oriso.display_filters` event yet; the seed is then
   persisted to account data once. **"No event yet" is decided only
-  after the client's sync state is `PREPARED`** (or after an explicit
+  after the client's initial sync has completed — sync state `PREPARED`
+  _or_ `SYNCING`** (the repo's own readiness test, `isPreparedSyncState`
+  at `matrixClientService.ts:29-31`, and `AuthenticatedApp.tsx:74-79`
+  accept both, because Matrix moves from `PREPARED` to `SYNCING` and a
+  bridge that attaches after that transition would wait for a state that
+  never comes again; the store keeps a monotonic `synced` flag once either
+  is seen) — (or after an explicit
   `getAccountDataFromServer`), never from the pre-sync cache: the hook
   attaches as soon as `AuthenticatedApp` publishes the client, but
   `initializeClient` returns right after `startClient`
   (`matrixClientService.ts:204-225`), so a fresh browser would otherwise
   read an empty cache, "seed" defaults and overwrite the account's real
-  filters. Until `PREPARED` the store serves the mirror read-only and
-  queues nothing. (Observation, out of scope: `notificationSettingsStore.
+  filters. Until the client is synced the store serves the mirror
+  read-only and queues nothing. (Observation, out of scope: `notificationSettingsStore.
 attachClient` has the same exposure today.) 3. An update made before attach is written to the mirror only. If account
   data turns out to exist on attach, that pre-sync update is **discarded**
   (account wins, no merge) — same rule as the announcement settings, and
@@ -549,7 +571,7 @@ Additional product input that changed the spec (same conversation):
    tests, i18n keys de/en. Screenshots under
    `docs/storybook/issue-1377-display-filter/`.
 2. **Model + store + hook** (`src/utils/displayFilter/*`, account-data key,
-   mirror, `PREPARED` gate, version rule, tests). No UI wiring.
+   mirror, synced gate (`PREPARED`/`SYNCING`), version rule, tests). No UI wiring.
 3. **Zeitstrahl**: `visibleFeed`, user-gated chips, auto-read pass,
    `visibleUnreadCount` + new rail badge, dialog wired in.
 4. **Gespräche**: `classifySession`, pre-filter, keep-paging, active-row
