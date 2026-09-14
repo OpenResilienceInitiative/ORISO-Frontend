@@ -211,6 +211,54 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			'[data-cy="stage-main"] .messageItem__content',
 			'ENDE DER ORIGINALANFRAGE'
 		).should('be.visible');
+		cy.get('[data-cy="stage-main"] #session-scroll-container').scrollTo(
+			'bottom',
+			{ ensureScrollable: false }
+		);
+		cy.get('[data-cy="stage-main"] #session-scroll-container').should(
+			(nodes) => {
+				const container = nodes[0];
+				const walker = container.ownerDocument.createTreeWalker(
+					container,
+					NodeFilter.SHOW_TEXT
+				);
+				let node: Node | null;
+				let markerNode: Node | null = null;
+				while ((node = walker.nextNode())) {
+					if (node.textContent?.includes('ENDE DER ORIGINALANFRAGE'))
+						markerNode = node;
+				}
+				expect(
+					markerNode,
+					'original enquiry ending exists'
+				).not.to.equal(null);
+				const range = container.ownerDocument.createRange();
+				const start = markerNode.textContent.indexOf(
+					'ENDE DER ORIGINALANFRAGE'
+				);
+				range.setStart(markerNode, start);
+				range.setEnd(
+					markerNode,
+					start + 'ENDE DER ORIGINALANFRAGE'.length
+				);
+				const bounds = container.getBoundingClientRect();
+				const rectangles = Array.from(range.getClientRects());
+				expect(
+					rectangles.length,
+					'ending has rendered text'
+				).to.be.greaterThan(0);
+				for (const rect of rectangles) {
+					expect(
+						rect.top,
+						'ending starts within visible area'
+					).to.be.at.least(bounds.top);
+					expect(
+						rect.bottom,
+						'ending finishes within visible area'
+					).to.be.at.most(bounds.bottom);
+				}
+			}
+		);
 		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',
 			scale: true,
