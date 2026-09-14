@@ -130,10 +130,7 @@ export const autoLogin = async ({
 		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
-		const matrixLoginData = await getMatrixAccessToken(
-			autoLoginProps.username,
-			password
-		);
+		const matrixLoginData = await getMatrixAccessToken();
 
 		// Only persist the Matrix login data here. The actual Matrix client is
 		// created and registered exactly once by AuthenticatedApp on the

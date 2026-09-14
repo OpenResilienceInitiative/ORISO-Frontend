@@ -303,7 +303,9 @@ export class MatrixClientService {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = getMatrixAccessToken()
+		this.refreshingToken = getMatrixAccessToken({
+			forceRefresh: true
+		})
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag

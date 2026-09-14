@@ -274,7 +274,9 @@ describe('MatrixClientService', () => {
 		});
 		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
-		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(getMatrixAccessToken).toHaveBeenCalledWith({
+			forceRefresh: true
+		});
 	});
 
 	it('recovers once with a fresh device when Rust crypto reports an OTK conflict', async () => {
@@ -572,7 +574,9 @@ describe('MatrixClientService', () => {
 		});
 		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
-		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(getMatrixAccessToken).toHaveBeenCalledWith({
+			forceRefresh: true
+		});
 	});
 
 	it('notifies client-change subscribers when a token refresh swaps the client', async () => {
@@ -987,7 +991,9 @@ describe('MatrixClientService', () => {
 		).resolves.toEqual({ event_id: '$event' });
 
 		expect(firstJoin).toHaveBeenCalledOnce();
-		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(getMatrixAccessToken).toHaveBeenCalledWith({
+			forceRefresh: true
+		});
 		expect(mockedMatrixClient.joinRoom).toHaveBeenCalledWith(
 			'!room:example.org'
 		);
