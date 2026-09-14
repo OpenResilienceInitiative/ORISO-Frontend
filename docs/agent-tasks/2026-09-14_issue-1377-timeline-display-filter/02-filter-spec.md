@@ -466,8 +466,13 @@ value shows **visible unread**:
 
     **Request ordering:** every feed request — page 0 **and older pages** —
     carries a monotonic request number from one counter, and the provider
-    keeps two floors: the number of the newest
-    response already applied, and the **read-settled floor**, which is
+    keeps two kinds of floor: a **newest-applied floor per page number**
+    (page 0 and each older page keep their own; pages are complementary
+    windows, so a page-0 poll that returns before an in-flight page-1 load
+    must not discard page 1 — the overlap regression in
+    `NotificationsProvider.test.tsx:222-277` expects both the live page-0
+    prepend and the delayed older page to be retained), and one **global
+    read-settled floor** for the total, which is
     advanced **only when a reconciliation fetch is issued** — i.e. after a
     settlement with at least one successful PATCH — and set to the number
     just below that fetch. A settlement in which every PATCH failed
@@ -475,9 +480,10 @@ value shows **visible unread**:
     settlement, hence at or below any floor advanced then) stays eligible
     and is applied as the preceding rule requires; advancing the floor
     there would discard it, leave the feed stale and delay the cooldown
-    reset until another poll. A response replaces `serverTotal` only if
-    its number is above **both** floors; anything older is **discarded
-    entirely, rows included**: the
+    reset until another poll. A response's rows are applied only if its number is above its **own
+    page's** newest-applied floor, and it replaces `serverTotal` only if its
+    number is also above the read-settled floor; anything older than its
+    page's floor is **discarded entirely, rows included**: the
     page-0 merge is authoritative for its window and overwrites matching ids
     (`NotificationsProvider.tsx:220-230`), so applying a stale payload would
     drop newer events and revive `readAt: null` on a row whose PATCH has
@@ -486,7 +492,8 @@ value shows **visible unread**:
     PATCH and its reconciliation fetch have completed would arrive with
     nothing pending and re-apply its pre-read count. Tests: stale poll
     returning after the reconciliation fetch (rows and total discarded, the
-    read row stays read), two polls returning out of order (newer wins).
+    read row stays read), two polls returning out of order (newer wins),
+    page-0 poll returning before an in-flight page-1 load (both applied).
 
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
