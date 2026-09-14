@@ -3190,6 +3190,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
+									hideSystemMessages={
+										isConsultantUser &&
+										(isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry))
+									}
 									showFullContent={
 										isOnlyEnquiry ||
 										Boolean(activeSession.isEnquiry)

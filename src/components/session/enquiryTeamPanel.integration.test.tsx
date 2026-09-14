@@ -409,3 +409,46 @@ it('keeps archived team history readable without a composer when the server repo
 		view.container.querySelector('.chatStage__mainPane')?.textContent
 	).toContain(TEXT);
 }, 20000);
+
+it('keeps the consultant enquiry one-way and hides system notices while retaining asker messages', async () => {
+	const timeline = boundary.rooms.get(MAIN).timeline;
+	for (const [id, body] of [
+		['$system-mail', '[SYSTEM_NOTIFICATION] E-Mail wurde versendet'],
+		['$system-carimat', '[SYSTEM_NOTIFICATION] Carimat Systemhinweis'],
+		[
+			'$asker-followup',
+			'Meine weitere Nachricht zur E-Mail bleibt sichtbar'
+		]
+	]) {
+		timeline.push(
+			new MatrixEvent({
+				event_id: id,
+				room_id: MAIN,
+				sender:
+					id === '$asker-followup' ? '@asker:test' : '@system:test',
+				type: 'm.room.message',
+				origin_server_ts: Date.now(),
+				content: { msgtype: 'm.text', body }
+			})
+		);
+	}
+	const view = openEnquiry();
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__mainPane')
+					?.textContent
+			).toContain(TEXT),
+		{ timeout: 15000 }
+	);
+	const main = view.container.querySelector('.chatStage__mainPane');
+	expect(main?.textContent).toContain(
+		'Meine weitere Nachricht zur E-Mail bleibt sichtbar'
+	);
+	expect(main?.textContent).not.toContain('E-Mail wurde versendet');
+	expect(main?.textContent).not.toContain('Carimat Systemhinweis');
+	expect(main?.querySelector('[contenteditable="true"]')).toBeNull();
+	expect(
+		screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+	).toBeTruthy();
+}, 20000);

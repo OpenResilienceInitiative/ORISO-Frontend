@@ -32,6 +32,7 @@ export interface MessageTimelineProps {
 	askerMatrixUserIdFor?: (message: MessageItem) => string | undefined;
 	isOnlyEnquiry?: boolean;
 	showFullContent?: boolean;
+	hideSystemMessages?: boolean;
 	isMyMessage: (userId: string) => boolean;
 	isUserBanned?: (username: string) => boolean;
 	handleDecryptionErrors: MessageItemProps['handleDecryptionErrors'];
@@ -71,6 +72,7 @@ export const MessageTimeline = ({
 	askerMatrixUserIdFor,
 	isOnlyEnquiry = false,
 	showFullContent = false,
+	hideSystemMessages = false,
 	isMyMessage,
 	isUserBanned = never,
 	handleDecryptionErrors,
@@ -107,6 +109,7 @@ export const MessageTimeline = ({
 						}
 						isOnlyEnquiry={isOnlyEnquiry}
 						showFullContent={showFullContent}
+						hideSystemMessages={hideSystemMessages}
 						isMyMessage={own}
 						isUserBanned={isUserBanned(message.username)}
 						handleDecryptionErrors={handleDecryptionErrors}
