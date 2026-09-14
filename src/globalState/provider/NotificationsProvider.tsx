@@ -5,6 +5,7 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useReducer,
 	useRef,
 	useState
 } from 'react';
@@ -231,12 +232,93 @@ const mergeNotificationFeed = (
 	return capLocalItems(sortNewestFirst(Array.from(byId.values())));
 };
 
+type NotificationFeedState = {
+	notificationFeed: NotificationFeedItem[];
+	unreadNotificationCount: number;
+};
+
+type NotificationFeedAction =
+	| { type: 'reset' }
+	| {
+			type: 'refresh';
+			incoming: NotificationFeedItem[];
+			unreadCount: number;
+			olderPagesLoaded: boolean;
+	  }
+	| { type: 'merge'; incoming: NotificationFeedItem[] }
+	| { type: 'add-local'; item: NotificationFeedItem }
+	| { type: 'mark-read'; id: string; readAt: string }
+	| { type: 'mark-all-read'; readAt: string };
+
+const notificationFeedReducer = (
+	state: NotificationFeedState,
+	action: NotificationFeedAction
+): NotificationFeedState => {
+	switch (action.type) {
+		case 'reset':
+			return { notificationFeed: [], unreadNotificationCount: 0 };
+		case 'refresh':
+			return {
+				notificationFeed: mergeNotificationFeed(
+					action.incoming,
+					state.notificationFeed,
+					{
+						reconcileWindow: true,
+						olderPagesLoaded: action.olderPagesLoaded
+					}
+				),
+				unreadNotificationCount: action.unreadCount
+			};
+		case 'merge':
+			return {
+				...state,
+				notificationFeed: mergeNotificationFeed(
+					action.incoming,
+					state.notificationFeed
+				)
+			};
+		case 'add-local':
+			return {
+				notificationFeed: mergeNotificationFeed(
+					[action.item],
+					state.notificationFeed
+				),
+				unreadNotificationCount: state.unreadNotificationCount + 1
+			};
+		case 'mark-read': {
+			const item = state.notificationFeed.find(
+				(candidate) => candidate.id === action.id
+			);
+			if (!item || item.readAt) return state;
+			return {
+				notificationFeed: state.notificationFeed.map((candidate) =>
+					candidate.id === action.id
+						? { ...candidate, readAt: action.readAt }
+						: candidate
+				),
+				unreadNotificationCount: Math.max(
+					0,
+					state.unreadNotificationCount - 1
+				)
+			};
+		}
+		case 'mark-all-read':
+			return {
+				notificationFeed: state.notificationFeed.map((item) =>
+					item.readAt ? item : { ...item, readAt: action.readAt }
+				),
+				unreadNotificationCount: 0
+			};
+	}
+};
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
-	const [notificationFeed, setNotificationFeed] = useState<
-		NotificationFeedItem[]
-	>([]);
-	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	const [{ notificationFeed, unreadNotificationCount }, dispatchFeed] =
+		useReducer(notificationFeedReducer, {
+			notificationFeed: [],
+			unreadNotificationCount: 0
+		});
 	const [hasOlderNotifications, setHasOlderNotifications] = useState(false);
 	const [isLoadingOlderNotifications, setIsLoadingOlderNotifications] =
 		useState(false);
@@ -251,8 +333,7 @@ export function NotificationsProvider(props) {
 	const lastAnnouncedEventIdRef = useRef<string | null>(null);
 	const resetFeedState = useCallback(() => {
 		loadingOlderRef.current = false;
-		setNotificationFeed([]);
-		setUnreadNotificationCount(0);
+		dispatchFeed({ type: 'reset' });
 		setHasOlderNotifications(false);
 		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
@@ -307,21 +388,19 @@ export function NotificationsProvider(props) {
 			).map(normalizeEventNotification);
 			if (feedEpoch !== feedEpochRef.current) return;
 			maybePlaySoundForNewEvent(normalized);
-			setNotificationFeed((existing) =>
-				// Page 0 is authoritative for its own window, so a row the
-				// server dropped disappears here instead of surviving until a
-				// reload.
-				mergeNotificationFeed(normalized, existing, {
-					reconcileWindow: true,
-					olderPagesLoaded: highestLoadedPageRef.current > 0
-				})
-			);
+			// Page 0 is authoritative for its own window, so a row the server
+			// dropped disappears here instead of surviving until a reload.
+			dispatchFeed({
+				type: 'refresh',
+				incoming: normalized,
+				unreadCount: Number(response?.unreadCount || 0),
+				olderPagesLoaded: highestLoadedPageRef.current > 0
+			});
 			if (highestLoadedPageRef.current === 0) {
 				setHasOlderNotifications(
 					normalized.length === NOTIFICATION_FEED_MAX_ITEMS
 				);
 			}
-			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 			// A healthy feed must not keep rendering the older-page error: it
 			// was only ever cleared inside loadOlderNotifications, so a user who
 			// never retried saw the error state on every subsequent refresh.
@@ -352,9 +431,7 @@ export function NotificationsProvider(props) {
 				normalizeEventNotification
 			);
 			if (feedEpoch !== feedEpochRef.current) return;
-			setNotificationFeed((existing) =>
-				mergeNotificationFeed(normalized, existing)
-			);
+			dispatchFeed({ type: 'merge', incoming: normalized });
 			highestLoadedPageRef.current = page;
 			setHasOlderNotifications(
 				normalized.length === NOTIFICATION_FEED_MAX_ITEMS
@@ -458,10 +535,7 @@ export function NotificationsProvider(props) {
 				params: event.params,
 				category: event.category === 'message' ? 'message' : 'system'
 			};
-			setNotificationFeed((existing) =>
-				mergeNotificationFeed([feedItem], existing)
-			);
-			setUnreadNotificationCount((value) => value + 1);
+			dispatchFeed({ type: 'add-local', item: feedItem });
 		},
 		[]
 	);
@@ -493,14 +567,11 @@ export function NotificationsProvider(props) {
 		if (!id.startsWith('local-')) {
 			apiMarkEventNotificationRead(id).catch(() => undefined);
 		}
-		setNotificationFeed((existing) =>
-			existing.map((item) =>
-				item.id === id && !item.readAt
-					? { ...item, readAt: new Date().toISOString() }
-					: item
-			)
-		);
-		setUnreadNotificationCount((value) => Math.max(0, value - 1));
+		dispatchFeed({
+			type: 'mark-read',
+			id,
+			readAt: new Date().toISOString()
+		});
 	}, []);
 
 	const markAllNotificationsAsRead = useCallback(() => {
@@ -510,12 +581,7 @@ export function NotificationsProvider(props) {
 		}
 		apiMarkAllEventNotificationsRead().catch(() => undefined);
 		const now = new Date().toISOString();
-		setNotificationFeed((existing) =>
-			existing.map((item) =>
-				item.readAt ? item : { ...item, readAt: now }
-			)
-		);
-		setUnreadNotificationCount(0);
+		dispatchFeed({ type: 'mark-all-read', readAt: now });
 	}, []);
 
 	const clearNotificationFeed = useCallback(() => {
