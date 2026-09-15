@@ -690,6 +690,7 @@ function MuiStoryShell({
 											notificationFeed: [],
 											unreadNotificationCount: 0,
 											serverUnreadTotal: 0,
+											serverUnreadTotalExcludesHidden: false,
 											timelineDisplayFilter: {
 												kinds: {},
 												autoReadHidden: false

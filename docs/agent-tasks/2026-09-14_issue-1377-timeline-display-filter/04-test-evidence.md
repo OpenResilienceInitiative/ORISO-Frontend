@@ -176,3 +176,30 @@ Screenshots (`docs/storybook/issue-1377-display-filter/`):
 | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `15-before-profile-notifications.png`  | Before: no display-filter section in the notifications profile                                   |
 | `15-after-profile-display-filters.png` | After: defaults per list, "System" mixed after hiding one event type, override hint, event types |
+
+## Slice 7 — backend for an exact badge (2026-09-15)
+
+ORISO-UserService (branch `claude/timeline-analysis-filter-il7z7b`):
+`GET /users/event-notifications?excludeEventTypes=a,b` (rows unchanged,
+`unreadCount` without those types, `excludedEventTypes` echoed),
+`GET …/unread-count?excludeEventTypes=`, `PATCH …/read?eventTypes=a,b`
+(bulk read; empty list is 400). Lists capped at 100 × 100 chars.
+
+Frontend: `hiddenTimelineEventTypes(filter)` (every seeded type of a hidden
+family plus the profile list, sorted) is sent on every feed request; a
+response that echoes exactly that list makes the total **exact**
+(`serverUnreadTotalExcludesHidden`): nothing is subtracted and the "up to
+N hidden" hint is off. An older server echoes nothing and the v1 upper
+bound stays. With auto-read on, one bulk PATCH per filter change covers
+unloaded pages; it runs through the pending-read serialisation (responses
+park, a success issues the reconciliation fetch), marks the loaded rows of
+those types read locally and lowers the total by the reported count; a
+404 marks the server as older and the per-id path stays the only one.
+
+| Check                                                                                                                                     | Result                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| UserService `./mvnw -B test -Dtest=EventNotificationControllerTest,EventNotificationServiceTest` · `spotless:apply`                       | 121 tests green (local only) |
+| `vitest run --project unit src/globalState/provider src/utils/displayFilter src/api` (exact badge, older server, bulk read, 404 fallback) | see the run below            |
+| `eslint src --max-warnings=0` · `tsc --noEmit` · `tsc --noEmit -p tsconfig.storybook.json`                                                | clean                        |
+
+No screenshots: the rail badge renders the same, only its number and hint change.

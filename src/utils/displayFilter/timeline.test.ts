@@ -8,6 +8,7 @@ import {
 	applyTimelineFilter,
 	computeTimelineBadge,
 	hiddenUnreadLocalIds,
+	hiddenTimelineEventTypes,
 	hiddenUnreadServerIds,
 	isTimelineKindPartiallyHidden,
 	timelineKindOf,
@@ -114,6 +115,30 @@ describe('computeTimelineBadge (§6.3 v1)', () => {
 			)
 		).toEqual({
 			visibleUnreadCount: 0,
+			hiddenServerUnreadInLoadedPages: 0
+		});
+	});
+});
+
+describe('slice 7 — server-side exclusions', () => {
+	it('lists every seeded type of a hidden family plus the profile list, sorted', () => {
+		const types = hiddenTimelineEventTypes({
+			...hideSystem,
+			hiddenEventTypes: ['message.new']
+		});
+		expect(types).toContain('supervisor.added');
+		expect(types).toContain('message.new');
+		expect(types).not.toContain('request.new');
+		expect(types).toEqual([...types].sort());
+		expect(hiddenTimelineEventTypes(DEFAULT_DISPLAY_FILTER)).toEqual([]);
+	});
+
+	it('an exact server total is neither reduced nor hinted', () => {
+		const badge = computeTimelineBadge(feed, hideSystem, 4, {
+			serverTotalExcludesHidden: true
+		});
+		expect(badge).toEqual({
+			visibleUnreadCount: 4 + 1,
 			hiddenServerUnreadInLoadedPages: 0
 		});
 	});

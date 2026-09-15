@@ -18,12 +18,15 @@ import { DEFAULT_DISPLAY_FILTERS } from '../../utils/displayFilter/model';
 
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn();
+const apiMarkEventNotificationsReadByTypes = vi.fn();
 
 vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: (...args: unknown[]) =>
 		apiGetEventNotifications(...args),
 	apiMarkEventNotificationRead: (...args: unknown[]) =>
 		apiMarkEventNotificationRead(...args),
+	apiMarkEventNotificationsReadByTypes: (...args: unknown[]) =>
+		apiMarkEventNotificationsReadByTypes(...args),
 	apiMarkAllEventNotificationsRead: vi.fn(),
 	apiClearEventNotifications: vi.fn(() => Promise.resolve())
 }));
@@ -70,6 +73,9 @@ const Probe = () => {
 			<div data-testid="server-total">{context.serverUnreadTotal}</div>
 			<div data-testid="badge">{context.visibleUnreadCount}</div>
 			<div data-testid="hidden">{context.hiddenUnreadInLoadedPages}</div>
+			<div data-testid="exact">
+				{context.serverUnreadTotalExcludesHidden ? 'exact' : 'bound'}
+			</div>
 			<button onClick={() => void context.loadOlderNotifications()}>
 				load
 			</button>
@@ -119,6 +125,9 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 	beforeEach(() => {
 		apiGetEventNotifications.mockReset();
 		apiMarkEventNotificationRead.mockReset();
+		apiMarkEventNotificationsReadByTypes.mockReset();
+		// Older server by default: the bulk endpoint does not exist.
+		apiMarkEventNotificationsReadByTypes.mockRejectedValue({ status: 404 });
 		displayFilterStore.resetForTests();
 		localStorage.clear();
 		attachStore();
@@ -378,5 +387,147 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		});
 		await waitFor(() => expect(rows()).toContain('51:r'));
 		expect(screen.getByTestId('server-total').textContent).toBe('60');
+	});
+
+	// ------------------------------------------------------------------
+	// Slice 7: server-side exclusions and bulk read
+	// ------------------------------------------------------------------
+
+	it('asks the server to exclude the hidden event types and trusts an echoed total as exact', async () => {
+		apiGetEventNotifications.mockImplementation(
+			(_page: number, _perPage: number, exclude?: string[]) =>
+				Promise.resolve({
+					items: [
+						item(1, 'message.new'),
+						item(2, 'supervisor.added')
+					],
+					unreadCount: exclude && exclude.length > 0 ? 3 : 9,
+					excludedEventTypes: exclude ? [...exclude].reverse() : []
+				})
+		);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		expect(screen.getByTestId('exact').textContent).toBe('bound');
+		expect(screen.getByTestId('badge').textContent).toBe('9');
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				...hideSystemAutoRead,
+				autoReadHidden: false
+			});
+		});
+		const { messageEventEmitter } = await import(
+			'../../services/messageEventEmitter'
+		);
+		messageEventEmitter.emit({});
+		await waitFor(() =>
+			expect(screen.getByTestId('exact').textContent).toBe('exact')
+		);
+		const lastCall = apiGetEventNotifications.mock.calls.at(-1)!;
+		expect(lastCall[2]).toContain('supervisor.added');
+		expect(lastCall[2]).not.toContain('message.new');
+		// Exact: no subtraction of the loaded hidden row, no hint.
+		expect(screen.getByTestId('badge').textContent).toBe('3');
+		expect(screen.getByTestId('hidden').textContent).toBe('0');
+	});
+
+	it('an older server that ignores the parameter keeps the v1 upper bound', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 9
+		});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				...hideSystemAutoRead,
+				autoReadHidden: false
+			});
+		});
+		const { messageEventEmitter } = await import(
+			'../../services/messageEventEmitter'
+		);
+		messageEventEmitter.emit({});
+		await waitFor(() =>
+			expect(apiGetEventNotifications.mock.calls.length).toBeGreaterThan(
+				1
+			)
+		);
+		expect(screen.getByTestId('exact').textContent).toBe('bound');
+		expect(screen.getByTestId('badge').textContent).toBe('8');
+		expect(screen.getByTestId('hidden').textContent).toBe('1');
+	});
+
+	it('bulk read: one PATCH per filter change covers unloaded pages, then a reconciliation fetch', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 40
+		});
+		apiMarkEventNotificationsReadByTypes.mockResolvedValue({ updated: 38 });
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		const getsBefore = apiGetEventNotifications.mock.calls.length;
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added', 'x')],
+			unreadCount: 1,
+			excludedEventTypes: []
+		});
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			)
+		);
+		expect(apiMarkEventNotificationsReadByTypes.mock.calls[0][0]).toContain(
+			'supervisor.added'
+		);
+		// The settlement issued exactly one reconciliation fetch …
+		await waitFor(() =>
+			expect(apiGetEventNotifications.mock.calls.length).toBe(
+				getsBefore + 1
+			)
+		);
+		await waitFor(() => expect(rows()).toBe('1:u,2:r'));
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		// … the same filter change does not PATCH again, and the loaded row
+		// was covered by the bulk read, not PATCHed a second time per id.
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
+	});
+
+	it('bulk read 404 marks the server as older and the per-id path still runs', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 2
+		});
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added', 'x')],
+			unreadCount: 1
+		});
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await waitFor(() =>
+			expect(apiMarkEventNotificationRead).toHaveBeenCalledWith('2')
+		);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		await waitFor(() => expect(rows()).toBe('1:u,2:r'));
+		// A second filter change: no further bulk attempt after the 404.
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				kinds: {
+					system: { show: false, pill: false },
+					calls: { show: false, pill: false }
+				},
+				autoReadHidden: true
+			});
+		});
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
 	});
 });

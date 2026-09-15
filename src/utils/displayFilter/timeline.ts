@@ -111,7 +111,15 @@ export interface TimelineBadge {
 export const computeTimelineBadge = (
 	rows: ReadonlyArray<TimelineFilterableRow>,
 	filter: DisplayFilter,
-	serverTotal: number
+	serverTotal: number,
+	options: {
+		/**
+		 * Slice 7: the server already left the hidden event types out of
+		 * `serverTotal` (v2 badge). Nothing is subtracted and the "up to N
+		 * hidden" hint is off; the clamp against visible rows still applies.
+		 */
+		serverTotalExcludesHidden?: boolean;
+	} = {}
 ): TimelineBadge => {
 	let hiddenServer = 0;
 	let visibleServer = 0;
@@ -132,11 +140,33 @@ export const computeTimelineBadge = (
 		}
 	});
 	const total = Math.max(0, serverTotal);
+	if (options.serverTotalExcludesHidden) {
+		return {
+			visibleUnreadCount: Math.max(total, visibleServer) + visibleLocal,
+			hiddenServerUnreadInLoadedPages: 0
+		};
+	}
 	return {
 		visibleUnreadCount:
 			Math.max(total - hiddenServer, visibleServer) + visibleLocal,
 		hiddenServerUnreadInLoadedPages: hiddenServer
 	};
+};
+
+/**
+ * Slice 7: the seeded event types the effective filter hides — every type
+ * of a hidden family plus the profile's per-type list — sorted so two
+ * equal filters produce the same request and the same echo. Unseeded types
+ * are "Sonstiges", which cannot be hidden, so they never appear here.
+ */
+export const hiddenTimelineEventTypes = (filter: DisplayFilter): string[] => {
+	const hidden = new Set<string>(filter.hiddenEventTypes ?? []);
+	KNOWN_EVENT_TYPES.forEach((type) => {
+		if (!resolveKindSetting(filter, getEventDescriptor(type).family).show) {
+			hidden.add(type);
+		}
+	});
+	return Array.from(hidden).sort();
 };
 
 /** Ids the auto-read pass must PATCH: hidden, unread, server-known (§6.1). */

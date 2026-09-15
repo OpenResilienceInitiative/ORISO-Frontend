@@ -171,6 +171,7 @@ const notificationsValue = (feed: NotificationFeedItem[]) => ({
 	serverUnreadTotal: feed.filter(
 		(item) => !item.readAt && !item.id.startsWith('local-')
 	).length,
+	serverUnreadTotalExcludesHidden: false,
 	timelineDisplayFilter: { kinds: {}, autoReadHidden: false },
 	visibleUnreadCount: feed.filter((item) => !item.readAt).length,
 	hiddenUnreadInLoadedPages: 0,

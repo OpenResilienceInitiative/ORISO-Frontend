@@ -20,6 +20,7 @@ import {
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
 	apiMarkEventNotificationRead,
+	apiMarkEventNotificationsReadByTypes,
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
@@ -40,6 +41,7 @@ import {
 } from '../../utils/displayFilter/model';
 import {
 	computeTimelineBadge,
+	hiddenTimelineEventTypes,
 	hiddenUnreadLocalIds,
 	hiddenUnreadServerIds
 } from '../../utils/displayFilter/timeline';
@@ -134,7 +136,17 @@ type FeedResponse = {
 	unreadCount: number;
 	/** Issued after a confirmed-read settlement, not an ordinary poll. */
 	reconciliation: boolean;
+	/** Slice 7: `unreadCount` already excludes the hidden event types. */
+	excludesHidden: boolean;
 };
+
+/** Two sorted lists are the same set. */
+const sameList = (
+	left: ReadonlyArray<string>,
+	right: ReadonlyArray<string>
+): boolean =>
+	left.length === right.length &&
+	left.every((value, index) => value === right[index]);
 
 type NotificationsContextProps = {
 	notifications: NotificationType[];
@@ -146,6 +158,11 @@ type NotificationsContextProps = {
 	unreadNotificationCount: number;
 	/** The last API `unreadCount` as received (spec §6.3, server only). */
 	serverUnreadTotal: number;
+	/**
+	 * Slice 7: true when the server left the hidden event types out of
+	 * `serverUnreadTotal` (exact badge, no "up to N hidden" hint).
+	 */
+	serverUnreadTotalExcludesHidden: boolean;
 	/** The effective Zeitstrahl display filter (spec §4). */
 	timelineDisplayFilter: DisplayFilter;
 	/** Visible unread for the rail badge (spec §6.3 v1 formula). */
@@ -281,6 +298,10 @@ export function NotificationsProvider(props) {
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 	const [serverUnreadTotal, setServerUnreadTotal] = useState(0);
+	const [
+		serverUnreadTotalExcludesHidden,
+		setServerUnreadTotalExcludesHidden
+	] = useState(false);
 	const [hasOlderNotifications, setHasOlderNotifications] = useState(false);
 	const [isLoadingOlderNotifications, setIsLoadingOlderNotifications] =
 		useState(false);
@@ -319,6 +340,7 @@ export function NotificationsProvider(props) {
 		setNotificationFeed([]);
 		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
+		setServerUnreadTotalExcludesHidden(false);
 		setHasOlderNotifications(false);
 		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
@@ -328,6 +350,7 @@ export function NotificationsProvider(props) {
 		parkedPageZeroRef.current = null;
 		parkedOlderRef.current = new Map();
 		cooldownRef.current = new Set();
+		bulkReadDoneIdsRef.current = new Set();
 	}, []);
 
 	// The Zeitstrahl display filter (#1377): the store needs no client to be
@@ -341,6 +364,21 @@ export function NotificationsProvider(props) {
 		() => resolveEffective(displayFilterState.filters, 'timeline'),
 		[displayFilterState.filters]
 	);
+	// Slice 7: what the server should leave out of the total (sorted).
+	const hiddenEventTypes = useMemo(
+		() => hiddenTimelineEventTypes(timelineDisplayFilter),
+		[timelineDisplayFilter]
+	);
+	const hiddenEventTypesRef = useRef(hiddenEventTypes);
+	hiddenEventTypesRef.current = hiddenEventTypes;
+	// A 404 from the bulk endpoint means an older server: fall back silently.
+	const bulkReadUnsupportedRef = useRef(false);
+	const bulkReadScheduledRef = useRef(false);
+	const bulkReadPendingRef = useRef(false);
+	/** Rows a successful bulk read already covered: never PATCHed per id. */
+	const bulkReadDoneIdsRef = useRef<Set<string>>(new Set());
+	// Bumped when a bulk read settles so the per-id pass re-evaluates.
+	const [bulkReadGeneration, setBulkReadGeneration] = useState(0);
 
 	// #576: play the configured sound for a genuinely new, unread top event —
 	// decoupled from the OS popup, so it also sounds with the tab focused. The
@@ -397,6 +435,7 @@ export function NotificationsProvider(props) {
 				}
 				setUnreadNotificationCount(unreadCount);
 				setServerUnreadTotal(unreadCount);
+				setServerUnreadTotalExcludesHidden(response.excludesHidden);
 				// A healthy feed must not keep rendering the older-page error:
 				// it was only ever cleared inside loadOlderNotifications, so a
 				// user who never retried saw the error state on every
@@ -452,9 +491,11 @@ export function NotificationsProvider(props) {
 			requestSeqRef.current += 1;
 			const seq = requestSeqRef.current;
 			const feedEpoch = feedEpochRef.current;
+			const excluded = hiddenEventTypesRef.current;
 			const response = await apiGetEventNotifications(
 				page,
-				NOTIFICATION_FEED_MAX_ITEMS
+				NOTIFICATION_FEED_MAX_ITEMS,
+				excluded
 			);
 			if (feedEpoch !== feedEpochRef.current) {
 				return false;
@@ -462,12 +503,19 @@ export function NotificationsProvider(props) {
 			const items: NotificationFeedItem[] = (response?.items || []).map(
 				normalizeEventNotification
 			);
+			// Exact only when the server echoes exactly what was asked (an
+			// older server ignores the parameter and echoes nothing).
+			const echoed = Array.isArray(response?.excludedEventTypes)
+				? [...response.excludedEventTypes].sort()
+				: [];
 			return handleFeedResponse({
 				page,
 				seq,
 				items,
 				unreadCount: Number(response?.unreadCount || 0),
-				reconciliation: options.reconciliation === true
+				reconciliation: options.reconciliation === true,
+				excludesHidden:
+					excluded.length > 0 && sameList(echoed, excluded)
 			});
 		},
 		[handleFeedResponse]
@@ -632,11 +680,122 @@ export function NotificationsProvider(props) {
 		[settlePendingReads]
 	);
 
+	/**
+	 * Slice 7: "hidden ⇒ read" across unloaded pages through the bulk
+	 * endpoint. Runs through the same pending-read serialisation as the
+	 * per-id path (responses park meanwhile; a success issues the
+	 * reconciliation fetch), and once per filter change. A 404 marks the
+	 * server as older and the per-id path stays the only one.
+	 */
+	const markHiddenReadOnServer = useCallback(
+		async (eventTypes: ReadonlyArray<string>) => {
+			if (
+				bulkReadUnsupportedRef.current ||
+				bulkReadPendingRef.current ||
+				eventTypes.length === 0 ||
+				!getValueFromCookie('keycloak')
+			) {
+				return;
+			}
+			const feedEpoch = feedEpochRef.current;
+			bulkReadPendingRef.current = true;
+			pendingReadCountRef.current += 1;
+			try {
+				const result =
+					await apiMarkEventNotificationsReadByTypes(eventTypes);
+				if (feedEpoch !== feedEpochRef.current) {
+					return;
+				}
+				settlementRef.current.anySuccess = true;
+				// The server has read them: reflect it on the loaded rows and
+				// the total now; the reconciliation fetch confirms both.
+				const types = new Set(eventTypes);
+				const now = new Date().toISOString();
+				setNotificationFeed((existing) =>
+					existing.map((row) => {
+						if (
+							row.readAt ||
+							row.id.startsWith('local-') ||
+							!types.has(row.eventType)
+						) {
+							return row;
+						}
+						bulkReadDoneIdsRef.current.add(row.id);
+						return { ...row, readAt: now };
+					})
+				);
+				const updated = Number(result?.updated ?? 0);
+				if (updated > 0) {
+					setServerUnreadTotal((value) =>
+						Math.max(0, value - updated)
+					);
+					setUnreadNotificationCount((value) =>
+						Math.max(0, value - updated)
+					);
+				}
+			} catch (error) {
+				if (
+					(error as { message?: string })?.message === 'notFound' ||
+					(error as { status?: number })?.status === 404
+				) {
+					bulkReadUnsupportedRef.current = true;
+				}
+			} finally {
+				bulkReadPendingRef.current = false;
+				pendingReadCountRef.current -= 1;
+				if (
+					pendingReadCountRef.current === 0 &&
+					feedEpoch === feedEpochRef.current
+				) {
+					settlePendingReads();
+				}
+				setBulkReadGeneration((value) => value + 1);
+			}
+		},
+		[settlePendingReads]
+	);
+	const lastBulkReadKeyRef = useRef('');
+	useEffect(() => {
+		if (
+			!timelineDisplayFilter.autoReadHidden ||
+			hiddenEventTypes.length === 0
+		) {
+			lastBulkReadKeyRef.current = '';
+			return undefined;
+		}
+		const key = hiddenEventTypes.join(',');
+		if (
+			key === lastBulkReadKeyRef.current ||
+			bulkReadUnsupportedRef.current
+		) {
+			return undefined;
+		}
+		// Claimed synchronously so a per-id timer created in the same commit
+		// leaves these rows to the bulk read whatever the timer order.
+		bulkReadScheduledRef.current = true;
+		const timer = window.setTimeout(() => {
+			bulkReadScheduledRef.current = false;
+			lastBulkReadKeyRef.current = key;
+			void markHiddenReadOnServer(hiddenEventTypes);
+		}, AUTO_READ_DEBOUNCE_MS);
+		return () => {
+			bulkReadScheduledRef.current = false;
+			window.clearTimeout(timer);
+		};
+	}, [
+		hiddenEventTypes,
+		markHiddenReadOnServer,
+		timelineDisplayFilter.autoReadHidden
+	]);
+
 	// Auto-read pass (spec §6.1): on every feed or filter change, every
 	// hidden unread row is marked read — server rows through the confirmed
 	// path (skipping pending and cooled-down ids), local rows locally.
 	useEffect(() => {
-		if (!timelineDisplayFilter.autoReadHidden) {
+		if (
+			!timelineDisplayFilter.autoReadHidden ||
+			bulkReadPendingRef.current
+		) {
 			return undefined;
 		}
 		const localIds = hiddenUnreadLocalIds(
@@ -649,19 +808,33 @@ export function NotificationsProvider(props) {
 		).filter(
 			(id) =>
 				!pendingReadIdsRef.current.has(id) &&
-				!cooldownRef.current.has(id)
+				!cooldownRef.current.has(id) &&
+				!bulkReadDoneIdsRef.current.has(id)
 		);
 		if (localIds.length === 0 && serverIds.length === 0) {
 			return undefined;
 		}
 		const timer = window.setTimeout(() => {
-			void markNotificationsReadConfirmed([...localIds, ...serverIds]);
+			if (bulkReadScheduledRef.current || bulkReadPendingRef.current) {
+				// The bulk read (slice 7) covers these rows; this pass runs
+				// again once it has settled (`bulkReadGeneration`).
+				return;
+			}
+			// A bulk read may have settled between scheduling and firing.
+			const remaining = serverIds.filter(
+				(id) => !bulkReadDoneIdsRef.current.has(id)
+			);
+			if (localIds.length === 0 && remaining.length === 0) {
+				return;
+			}
+			void markNotificationsReadConfirmed([...localIds, ...remaining]);
 		}, AUTO_READ_DEBOUNCE_MS);
 		return () => window.clearTimeout(timer);
 	}, [
 		notificationFeed,
 		timelineDisplayFilter,
-		markNotificationsReadConfirmed
+		markNotificationsReadConfirmed,
+		bulkReadGeneration
 	]);
 
 	const badge = useMemo(
@@ -669,9 +842,15 @@ export function NotificationsProvider(props) {
 			computeTimelineBadge(
 				notificationFeed,
 				timelineDisplayFilter,
-				serverUnreadTotal
+				serverUnreadTotal,
+				{ serverTotalExcludesHidden: serverUnreadTotalExcludesHidden }
 			),
-		[notificationFeed, timelineDisplayFilter, serverUnreadTotal]
+		[
+			notificationFeed,
+			timelineDisplayFilter,
+			serverUnreadTotal,
+			serverUnreadTotalExcludesHidden
+		]
 	);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
@@ -839,6 +1018,7 @@ export function NotificationsProvider(props) {
 				notificationFeed,
 				unreadNotificationCount,
 				serverUnreadTotal,
+				serverUnreadTotalExcludesHidden,
 				timelineDisplayFilter,
 				visibleUnreadCount: badge.visibleUnreadCount,
 				hiddenUnreadInLoadedPages:

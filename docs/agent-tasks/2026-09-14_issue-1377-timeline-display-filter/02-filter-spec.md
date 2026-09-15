@@ -524,8 +524,11 @@ value shows **visible unread**:
 - v2 (backend, required for an exact badge):
   `GET …/event-notifications/unread-count?excludeEventTypes=` in
   ORISO-UserService, plus `PATCH …/read?eventTypes=` so auto-read covers
-  unloaded pages. Filed as a follow-up when v1 lands; AC4/AC5 below state the
-  v1 guarantee only.
+  unloaded pages. Implemented (slice 7): the feed request itself carries
+  `excludeEventTypes` and the response echoes `excludedEventTypes`; the
+  client treats the total as exact only when the echo equals what it asked
+  for, so an older server silently keeps the v1 bound. AC4/AC5 below state
+  the v1 guarantee; with the echo the badge equals the visible unread.
 
 ## 7. Model and persistence
 
