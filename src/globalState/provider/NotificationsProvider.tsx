@@ -377,6 +377,9 @@ export function NotificationsProvider(props) {
 	const bulkReadPendingRef = useRef(false);
 	/** Rows a successful bulk read already covered: never PATCHed per id. */
 	const bulkReadDoneIdsRef = useRef<Set<string>>(new Set());
+	/** Latest feed for callbacks that must not wait for a re-render. */
+	const notificationFeedRef = useRef<NotificationFeedItem[]>([]);
+	notificationFeedRef.current = notificationFeed;
 	// Bumped when a bulk read settles so the per-id pass re-evaluates.
 	const [bulkReadGeneration, setBulkReadGeneration] = useState(0);
 
@@ -711,18 +714,26 @@ export function NotificationsProvider(props) {
 				// the total now; the reconciliation fetch confirms both.
 				const types = new Set(eventTypes);
 				const now = new Date().toISOString();
+				// Recorded synchronously (not inside the state updater, which
+				// runs at the next render): a per-id timer firing before that
+				// render must already see these ids as covered.
+				const covered = new Set(
+					notificationFeedRef.current
+						.filter(
+							(row) =>
+								!row.readAt &&
+								!row.id.startsWith('local-') &&
+								types.has(row.eventType)
+						)
+						.map((row) => row.id)
+				);
+				covered.forEach((id) => bulkReadDoneIdsRef.current.add(id));
 				setNotificationFeed((existing) =>
-					existing.map((row) => {
-						if (
-							row.readAt ||
-							row.id.startsWith('local-') ||
-							!types.has(row.eventType)
-						) {
-							return row;
-						}
-						bulkReadDoneIdsRef.current.add(row.id);
-						return { ...row, readAt: now };
-					})
+					existing.map((row) =>
+						covered.has(row.id) && !row.readAt
+							? { ...row, readAt: now }
+							: row
+					)
 				);
 				const updated = Number(result?.updated ?? 0);
 				if (updated > 0) {
