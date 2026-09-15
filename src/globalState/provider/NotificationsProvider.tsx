@@ -310,8 +310,12 @@ export function NotificationsProvider(props) {
 	const [notificationFeed, setNotificationFeed] = useState<
 		NotificationFeedItem[]
 	>([]);
-	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 	const [serverUnreadTotal, setServerUnreadTotal] = useState(0);
+	// Local rows survive polling and never enter the server total.
+	const unreadNotificationCount =
+		serverUnreadTotal +
+		notificationFeed.filter((item) => isLocalItem(item) && !item.readAt)
+			.length;
 	const [
 		serverUnreadTotalExcludesHidden,
 		setServerUnreadTotalExcludesHidden
@@ -327,6 +331,7 @@ export function NotificationsProvider(props) {
 	// Keep the initial backlog silent and observe every subsequently new id,
 	// including requests sorted beneath another event in the same feed page.
 	const observedEventIdsRef = useRef<Set<string> | null>(null);
+	const pendingLiveEventIdsRef = useRef(new Set<string>());
 	const initialFeedTimeRef = useRef(Number.NEGATIVE_INFINITY);
 	const observedRequestIdsRef = useRef<Set<string> | null>(null);
 
@@ -363,10 +368,10 @@ export function NotificationsProvider(props) {
 	const resetFeedState = useCallback(() => {
 		loadingOlderRef.current = false;
 		observedEventIdsRef.current = null;
+		pendingLiveEventIdsRef.current.clear();
 		observedRequestIdsRef.current = null;
 		initialFeedTimeRef.current = Number.NEGATIVE_INFINITY;
 		setNotificationFeed([]);
-		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
 		setServerUnreadTotalExcludesHidden(false);
 		setUnfilteredUnreadTotal(null);
@@ -433,21 +438,34 @@ export function NotificationsProvider(props) {
 	// silent; repeated polls and read-state changes cannot re-announce a row.
 	const announceNewEvents = useCallback((feed: NotificationFeedItem[]) => {
 		if (observedEventIdsRef.current === null) {
-			observedEventIdsRef.current = new Set(feed.map((item) => item.id));
+			observedEventIdsRef.current = new Set(
+				feed
+					.filter(
+						(item) =>
+							!pendingLiveEventIdsRef.current.has(
+								item.params?.matrixEventId
+							)
+					)
+					.map((item) => item.id)
+			);
 			initialFeedTimeRef.current = Math.max(
 				Number.NEGATIVE_INFINITY,
 				...feed.map((item) => new Date(item.createdAt).getTime())
 			);
-			return;
 		}
 		const observed = observedEventIdsRef.current;
 		const { settings, device } = notificationSettingsStore.getState();
 		for (const event of feed) {
 			if (observed.has(event.id)) continue;
 			observed.add(event.id);
+			const pendingLive = pendingLiveEventIdsRef.current.delete(
+				event.params?.matrixEventId
+			);
 			if (
 				event.readAt ||
-				new Date(event.createdAt).getTime() < initialFeedTimeRef.current
+				(!pendingLive &&
+					new Date(event.createdAt).getTime() <
+						initialFeedTimeRef.current)
 			)
 				continue;
 			const descriptor = getEventDescriptor(event.eventType);
@@ -526,7 +544,6 @@ export function NotificationsProvider(props) {
 					);
 				}
 				if (!response.staleTotal) {
-					setUnreadNotificationCount(unreadCount);
 					setServerUnreadTotal(unreadCount);
 					setServerUnreadTotalExcludesHidden(response.excludesHidden);
 					if (response.excludesHidden && unreadCount === 0) {
@@ -772,9 +789,6 @@ export function NotificationsProvider(props) {
 								setServerUnreadTotal((value) =>
 									Math.max(0, value - 1)
 								);
-								setUnreadNotificationCount((value) =>
-									Math.max(0, value - 1)
-								);
 								settlementRef.current.anySuccess = true;
 							})
 							.catch(() => {
@@ -862,9 +876,6 @@ export function NotificationsProvider(props) {
 					!serverUnreadTotalExcludesHiddenRef.current
 				) {
 					setServerUnreadTotal((value) =>
-						Math.max(0, value - updated)
-					);
-					setUnreadNotificationCount((value) =>
 						Math.max(0, value - updated)
 					);
 				}
@@ -1055,6 +1066,13 @@ export function NotificationsProvider(props) {
 		let debounceTimer: number | undefined;
 		const onLiveEvent = (event) => {
 			if (event.source === 'notification-feed') return;
+			if (
+				observedEventIdsRef.current === null &&
+				event.matrixEventId &&
+				event.isOwnMessage === false
+			) {
+				pendingLiveEventIdsRef.current.add(event.matrixEventId);
+			}
 			window.clearTimeout(debounceTimer);
 			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
 		};
@@ -1120,8 +1138,6 @@ export function NotificationsProvider(props) {
 			setNotificationFeed((existing) =>
 				mergeNotificationFeed([feedItem], existing)
 			);
-			// Local rows never enter `serverUnreadTotal` (spec §6.3).
-			setUnreadNotificationCount((value) => value + 1);
 		},
 		[]
 	);
@@ -1173,9 +1189,6 @@ export function NotificationsProvider(props) {
 					: item
 			)
 		);
-		if (wasUnread) {
-			setUnreadNotificationCount((value) => Math.max(0, value - 1));
-		}
 	}, []);
 
 	const markAllNotificationsAsRead = useCallback(() => {
@@ -1190,7 +1203,6 @@ export function NotificationsProvider(props) {
 				item.readAt ? item : { ...item, readAt: now }
 			)
 		);
-		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
 		setUnfilteredUnreadTotal(null);
 	}, []);

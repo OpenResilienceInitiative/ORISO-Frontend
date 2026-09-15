@@ -135,6 +135,39 @@ afterEach(() => {
 });
 
 describe('WebsocketHandler → new message notification', () => {
+	it('preserves a matching incoming Matrix event while the initial feed is pending', async () => {
+		saveBrowserNotificationsSettings({ enabled: true });
+		let resolveFeed!: (value: unknown) => void;
+		getFeed.mockReturnValueOnce(
+			new Promise((resolve) => {
+				resolveFeed = resolve;
+			})
+		);
+		renderHandler();
+		act(() =>
+			bridge.emit('directMessage', {
+				roomId: '!room:oriso',
+				eventId: '$live',
+				isOwnMessage: false
+			})
+		);
+		await act(async () =>
+			resolveFeed({
+				items: [
+					{
+						id: 1,
+						eventType: 'message.new',
+						createdAt: '2026-09-14T12:00:00Z',
+						readAt: null,
+						params: { matrixEventId: '$live' }
+					}
+				],
+				unreadCount: 1
+			})
+		);
+		await waitFor(() => expect(constructed).toHaveLength(1));
+	});
+
 	it('registers a Matrix directMessage listener', () => {
 		renderHandler();
 		expect(bridge.listenerCount('directMessage')).toBe(1);

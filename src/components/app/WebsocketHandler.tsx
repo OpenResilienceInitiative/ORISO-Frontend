@@ -100,6 +100,8 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('📬 Matrix directMessage event received:', event);
 			messageEventEmitter.emit({
 				roomId: event?.roomId,
+				matrixEventId: event?.eventId,
+				isOwnMessage: event?.isOwnMessage,
 				timestamp: event?.timestamp
 			});
 			if (!event?.isOwnMessage) {

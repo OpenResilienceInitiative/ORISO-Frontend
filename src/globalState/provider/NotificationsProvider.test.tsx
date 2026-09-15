@@ -70,6 +70,29 @@ const ReadAccountingProbe = () => {
 					)
 					.join(',')}
 			</div>
+			<button
+				onClick={() =>
+					context.addEventNotification({
+						eventType: 'message.new',
+						title: 'Local',
+						text: ''
+					})
+				}
+			>
+				add-local
+			</button>
+			<button onClick={context.refreshNotificationFeed}>refresh</button>
+			<button
+				onClick={() =>
+					context.markNotificationAsRead(
+						context.notificationFeed.find((item) =>
+							item.id.startsWith('local-')
+						)!.id
+					)
+				}
+			>
+				read-local
+			</button>
 			<button onClick={() => context.markNotificationAsRead('1')}>
 				read-one
 			</button>
@@ -258,6 +281,56 @@ describe('NotificationsProvider announcements', () => {
 		notificationSettingsStore.resetForTests();
 	});
 
+	it.each([false, true])(
+		'only announces the matching incoming event before initialization (own=%s)',
+		async (isOwnMessage) => {
+			notificationSettingsStore.updateSettings({
+				notificationConfig: setKindField(
+					notificationSettingsStore.getState().settings
+						.notificationConfig,
+					'conversations',
+					'standard',
+					'sound',
+					'chime'
+				)
+			});
+			let resolveFeed!: (value: unknown) => void;
+			apiGetEventNotifications.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFeed = resolve;
+				})
+			);
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			messageEventEmitter.emit({
+				roomId: '!room',
+				matrixEventId: '$live',
+				isOwnMessage
+			});
+			resolveFeed({
+				items: [
+					{
+						...feedItem(2, '2026-09-14T12:00:02Z'),
+						params: { matrixEventId: '$backlog' }
+					},
+					{
+						...feedItem(1, '2026-09-14T12:00:01Z'),
+						params: { matrixEventId: '$live' }
+					}
+				],
+				unreadCount: 2
+			});
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('2,1')
+			);
+			expect(banners).toHaveBeenCalledTimes(isOwnMessage ? 0 : 1);
+			expect(play).toHaveBeenCalledTimes(isOwnMessage ? 0 : 1);
+		}
+	);
+
 	it('announces each new request once, keeps private text out of banners and never replays the initial backlog', async () => {
 		const old = {
 			...feedItem(1, '2026-09-14T12:00:00Z'),
@@ -388,6 +461,30 @@ describe('NotificationsProvider read accounting', () => {
 		apiMarkEventNotificationRead.mockClear();
 	});
 	afterEach(() => cleanup());
+
+	it('counts unread local rows across server polls without subtracting server rows on local read', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [feedItem(1, '2026-09-12T10:00:00Z')],
+			unreadCount: 7
+		});
+		render(
+			<NotificationsProvider>
+				<ReadAccountingProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('unread-count').textContent).toBe('7')
+		);
+		fireEvent.click(screen.getByText('add-local'));
+		expect(screen.getByTestId('unread-count').textContent).toBe('8');
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+		);
+		expect(screen.getByTestId('unread-count').textContent).toBe('8');
+		fireEvent.click(screen.getByText('read-local'));
+		expect(screen.getByTestId('unread-count').textContent).toBe('7');
+	});
 
 	it('decrements once when the same unread row is marked twice in one React batch', async () => {
 		apiGetEventNotifications.mockResolvedValue({

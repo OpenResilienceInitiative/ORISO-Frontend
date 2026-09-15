@@ -5,6 +5,8 @@
 
 type MessageEventData = {
 	roomId?: string;
+	matrixEventId?: string;
+	isOwnMessage?: boolean;
 	sessionId?: number;
 	timestamp?: number;
 	refreshEnquiryList?: boolean;
