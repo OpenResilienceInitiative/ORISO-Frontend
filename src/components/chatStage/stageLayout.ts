@@ -141,6 +141,22 @@ export const resolveStageLayout = ({
 	};
 };
 
+/** Maximum list width that preserves the drag minimum for both chat panes. */
+export const maxListWidthBesidePanel = (viewportWidth: number): number => {
+	const {
+		MIN_PANE_DRAG_WIDTH,
+		LIST_CARD_GAP,
+		LIST_INNER_GUTTER,
+		CARD_MARGIN,
+		RAIL_WIDTH
+	} = STAGE_LAYOUT;
+	const chrome = LIST_CARD_GAP - LIST_INNER_GUTTER + CARD_MARGIN;
+	return Math.max(
+		RAIL_WIDTH,
+		Math.floor(viewportWidth - chrome - 2 * MIN_PANE_DRAG_WIDTH)
+	);
+};
+
 /**
  * T2: the side panel's drag handle asks for a width; the answer keeps both
  * panes at `MIN_PANE_DRAG_WIDTH`, so either side can be pulled genuinely
