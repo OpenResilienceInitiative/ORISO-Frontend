@@ -450,22 +450,46 @@ export const SessionsList = ({
 				abortController.current.abort();
 			}
 
-			abortController.current = new AbortController();
+			const controller = new AbortController();
+			abortController.current = controller;
 
 			return fetchEnquirySessionsWithAutoPage(
 				offset,
 				initialID,
 				count,
-				abortController.current.signal
-			).then(({ sessions, total }) => {
-				const pageSize = count ?? SESSION_COUNT;
-				const lastLoadedOffset =
-					offset + Math.max(0, sessions.length - pageSize);
-				setCurrentOffset(lastLoadedOffset);
-				setTotalItems(total);
-				setIsRequestInProgress(false);
-				return { sessions, total };
-			});
+				controller.signal
+			)
+				.then(({ sessions, total }) => {
+					// A superseded transport may still resolve after abort. Do not
+					// let its pagination state or rows reach the caller.
+					if (
+						controller.signal.aborted ||
+						abortController.current !== controller
+					) {
+						throw new Error(FETCH_ERRORS.ABORT);
+					}
+					const pageSize = count ?? SESSION_COUNT;
+					const lastLoadedOffset =
+						offset + Math.max(0, sessions.length - pageSize);
+					setCurrentOffset(lastLoadedOffset);
+					setTotalItems(total);
+					return { sessions, total };
+				})
+				.catch((error) => {
+					// Replaced requests no longer own the caller's error UI either.
+					if (
+						controller.signal.aborted ||
+						abortController.current !== controller
+					) {
+						throw new Error(FETCH_ERRORS.ABORT);
+					}
+					throw error;
+				})
+				.finally(() => {
+					if (abortController.current === controller) {
+						setIsRequestInProgress(false);
+					}
+				});
 		},
 		[fetchEnquirySessionsWithAutoPage]
 	);
@@ -475,6 +499,7 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		setIsRequestInProgress(true);
 		abortController.current?.abort();
 		const controller = new AbortController();
 		abortController.current = controller;
@@ -497,6 +522,13 @@ export const SessionsList = ({
 			},
 			setTotalItems,
 			setCurrentOffset
+		}).finally(() => {
+			// A live refresh takes ownership from pending pagination, including
+			// its loading indicator. Older completions cannot unlock a newer request.
+			if (abortController.current === controller) {
+				setIsRequestInProgress(false);
+				setIsLoading(false);
+			}
 		});
 	}, [currentOffset, dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
