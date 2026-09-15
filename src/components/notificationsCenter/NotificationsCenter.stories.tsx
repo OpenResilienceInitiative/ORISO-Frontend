@@ -10,12 +10,11 @@ import {
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	DEFAULT_DISPLAY_FILTERS,
-	OrisoDisplayFilters,
 	withSectionOverride
 } from '../../utils/displayFilter/model';
+import { withDisplayFilterStore } from '../displayFilter/displayFilterStoryStore';
 
 /**
  * WP-06 Activity Timeline mock feed. Covers every seeded event family
@@ -211,45 +210,6 @@ const consultantUserData = {
  * story attaches a synced fake client holding `parameters.displayFilters`
  * so the dialog is live (writes go to the fake) and reset works.
  */
-const DisplayFilterStoreBinding = ({
-	record,
-	children
-}: {
-	record: OrisoDisplayFilters;
-	children: React.ReactNode;
-}) => {
-	React.useEffect(() => {
-		let stored: OrisoDisplayFilters = record;
-		const client = {
-			getUserId: () => '@storybook:oriso',
-			getSyncState: () => 'PREPARED',
-			getAccountData: () => ({ getContent: () => stored }),
-			setAccountData: async (
-				_type: string,
-				content: OrisoDisplayFilters
-			) => {
-				stored = content;
-			},
-			on: noop,
-			removeListener: noop
-		};
-		displayFilterStore.attachClient(client as any);
-		return () => displayFilterStore.detachClient();
-	}, [record]);
-	return <>{children}</>;
-};
-
-const withDisplayFilterStore = (
-	Story: React.ComponentType,
-	context: { parameters: { displayFilters?: OrisoDisplayFilters } }
-) => (
-	<DisplayFilterStoreBinding
-		record={context.parameters.displayFilters ?? DEFAULT_DISPLAY_FILTERS}
-	>
-		<Story />
-	</DisplayFilterStoreBinding>
-);
-
 /** System without pill, drafts hidden: the dot is on, no System chip. */
 const customisedDisplayFilters = withSectionOverride(
 	DEFAULT_DISPLAY_FILTERS,

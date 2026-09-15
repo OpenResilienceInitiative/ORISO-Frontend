@@ -21,7 +21,6 @@ import {
 	getEventDescriptor,
 	getEventIcon,
 	renderEventStrings,
-	familyLabelKey,
 	isKnownEventType
 } from './eventDescriptors';
 import {
@@ -33,7 +32,6 @@ import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	OTHER_TIMELINE_KIND,
 	TIMELINE_KIND_ORDER,
 	TimelineFamilyFilter,
 	TimelineKindId
@@ -55,13 +53,10 @@ import {
 	isTimelineKindPartiallyHidden,
 	timelineUnreadByKind
 } from '../../utils/displayFilter/timeline';
-import { ReactComponent as RequestKindIcon } from '../../resources/img/icons/display-filter-request.svg';
-import { ReactComponent as DraftKindIcon } from '../../resources/img/icons/display-filter-draft.svg';
-import { ReactComponent as HandoverKindIcon } from '../../resources/img/icons/display-filter-handover.svg';
-import { ReactComponent as CallKindIcon } from '../../resources/img/icons/display-filter-call.svg';
-import { ReactComponent as SystemKindIcon } from '../../resources/img/icons/display-filter-system.svg';
-import { ReactComponent as AppointmentKindIcon } from '../../resources/img/icons/display-filter-appointment.svg';
-import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
+import {
+	TIMELINE_KIND_ICONS,
+	timelineKindLabel
+} from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
 	SessionsDataContext,
@@ -80,7 +75,6 @@ import {
 	requiresCaseHandoverCheck,
 	useCaseHandoverPreviewGate
 } from './caseHandoverPreviewGate';
-import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
@@ -105,24 +99,6 @@ const TIMELINE_WIDTH_STORAGE_KEY = 'notificationsTimeline_width';
 const TIMELINE_MIN_WIDTH = 300;
 const TIMELINE_MAX_WIDTH = 600;
 const TIMELINE_DEFAULT_WIDTH = 400;
-
-/**
- * Chip/dialog icons of the display-filter kinds (#1377, Frank's set on the
- * issue). The cards keep `FAMILY_ICONS`; "Nachrichten" shares the bubble.
- */
-const TIMELINE_KIND_ICONS: Record<
-	TimelineKindId,
-	React.ComponentType<React.SVGProps<SVGSVGElement>>
-> = {
-	requests: RequestKindIcon,
-	messages: MessagesFamilyIcon,
-	drafts: DraftKindIcon,
-	handover: HandoverKindIcon,
-	calls: CallKindIcon,
-	system: SystemKindIcon,
-	appointments: AppointmentKindIcon,
-	other: OtherKindIcon
-};
 
 /**
  * Keep paging (#1377 §5.1): a loaded page can be entirely hidden, so the
@@ -438,10 +414,7 @@ export const NotificationsCenter = () => {
 			(kind) => kind !== 'appointments' || presentKinds.has(kind)
 		).map((kind) => ({
 			id: kind,
-			label:
-				kind === OTHER_TIMELINE_KIND
-					? translate('notifications.displayFilter.otherKind')
-					: translate(familyLabelKey(kind)),
+			label: timelineKindLabel(translate, kind),
 			icon: TIMELINE_KIND_ICONS[kind],
 			unreadCount: unread[kind] ?? 0,
 			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)

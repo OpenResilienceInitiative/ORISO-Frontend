@@ -146,3 +146,33 @@ Screenshots (`docs/storybook/issue-1377-display-filter/`):
 | `13-before-sessions-toolbar.png`           | Before: every kind chip always present, no tune button                                    |
 | `13-after-sessions-toolbar.png`            | After (defaults): the row unchanged apart from the pinned button                          |
 | `14-after-sessions-toolbar-customised.png` | Circle and Supervision pills off: their chips gone, unread/drafts stay, dot on the button |
+
+## Slice 6 — Profile › Notifications › Display filters (2026-09-15)
+
+`DisplayFilterProfileSection` (mounted in `NotificationSettingsPanel`):
+the three per-section DEFAULT tables (`global[section]`, edited through
+`useDisplayFilter(section).setGlobal`), the auto-read switch for Zeitstrahl
+and Gespräche, the #593 per-event-type view for the Zeitstrahl (grouped by
+family from `KNOWN_EVENT_TYPES`, writes `global.timeline.hiddenEventTypes`,
+the family row shows "mixed"), a hint while a list runs its own override,
+and "apply to other lists" limited to what more than one section can
+interpret (§4: `autoReadHidden` → timeline + sessions, `liveChat` →
+sessions + requests). The kind table was extracted from the dialog into
+`DisplayFilterKindTable` so both edit the same rows; icons and labels moved
+to `displayFilter/kindOptions.ts` and are shared by the three lists.
+i18n keys `notifications.displayFilter.{profileTitle,profileDescription,
+overrideActive,eventTypesTitle,eventTypesDescription,eventTypeShow,
+applyToAll,applyToAllDescription}` in six locales.
+
+| Check                                                                                                                                                                             | Result          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `vitest run --project unit src/components/profile/NotificationSettings/DisplayFilterProfileSection.test.tsx` (defaults vs override, event types, apply-to-all, inert before sync) | 5 tests green   |
+| `vitest run --project storybook src/components/profile/NotificationSettings/NotificationSettings.stories.tsx` (Chromium, axe)                                                     | 4 stories green |
+| `eslint src --max-warnings=0` · `tsc --noEmit` · `tsc --noEmit -p tsconfig.storybook.json` · `stylelint`                                                                          | clean           |
+
+Screenshots (`docs/storybook/issue-1377-display-filter/`):
+
+| File                                   | Proves                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `15-before-profile-notifications.png`  | Before: no display-filter section in the notifications profile                                   |
+| `15-after-profile-display-filters.png` | After: defaults per list, "System" mixed after hiding one event type, override hint, event types |

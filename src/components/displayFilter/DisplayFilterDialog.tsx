@@ -1,17 +1,13 @@
 import * as React from 'react';
 import { useId } from 'react';
-import clsx from 'clsx';
 import TuneIcon from '@mui/icons-material/Tune';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
-import { M3Checkbox } from '../M3Checkbox';
 import { Switch } from '../Switch';
 import {
 	DisplayFilterKindOption,
-	DisplayFilterValue,
-	OTHER_KIND_ID,
-	resolveKindSetting,
-	setKindSetting
+	DisplayFilterValue
 } from './displayFilterTypes';
+import { DisplayFilterKindTable } from './DisplayFilterKindTable';
 import './displayFilter.styles.scss';
 
 /** Every string the dialog renders, already translated (the dialog never calls `t`). */
@@ -122,131 +118,14 @@ export const DisplayFilterDialog = ({
 					{labels.readOnlyHint}
 				</p>
 			)}
-			<table className="displayFilterDialog__table">
-				<thead>
-					<tr>
-						<th
-							scope="col"
-							className="displayFilterDialog__kindHead"
-						>
-							<span className="displayFilterDialog__srOnly">
-								{labels.title}
-							</span>
-						</th>
-						<th
-							scope="col"
-							className="displayFilterDialog__colHead"
-						>
-							{labels.showColumn}
-						</th>
-						<th
-							scope="col"
-							className="displayFilterDialog__colHead"
-						>
-							{labels.pillColumn}
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{kinds.map((kind) => {
-						const setting = resolveKindSetting(value, kind.id);
-						const isOther = kind.id === OTHER_KIND_ID;
-						const Icon = kind.icon;
-						return (
-							<tr
-								key={kind.id}
-								className={clsx(
-									'displayFilterDialog__row',
-									!setting.show &&
-										'displayFilterDialog__row--hidden'
-								)}
-								data-cy={`display-filter-row-${kind.id}`}
-							>
-								<th
-									scope="row"
-									className="displayFilterDialog__kind"
-								>
-									{Icon && (
-										<Icon
-											className="displayFilterDialog__kindIcon"
-											aria-hidden="true"
-										/>
-									)}
-									<span className="displayFilterDialog__kindText">
-										<span>{kind.label}</span>
-										{isOther && (
-											<span
-												className="displayFilterDialog__kindHint"
-												id={`${dialogId}-other-fixed`}
-											>
-												{labels.otherFixed}
-											</span>
-										)}
-									</span>
-								</th>
-								<td className="displayFilterDialog__cell">
-									<M3Checkbox
-										checked={setting.show}
-										indeterminate={Boolean(
-											setting.show && kind.partial
-										)}
-										disabled={readOnly || isOther}
-										describedBy={
-											isOther
-												? `${dialogId}-other-fixed`
-												: undefined
-										}
-										hideLabel
-										label={labels.showKind(kind.label)}
-										dataCy={`display-filter-show-${kind.id}`}
-										onChange={(checked) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													show: checked
-												})
-											)
-										}
-									/>
-								</td>
-								<td className="displayFilterDialog__cell">
-									{kind.showOnly ? (
-										<>
-											<span
-												className="displayFilterDialog__noPill"
-												aria-hidden="true"
-											>
-												–
-											</span>
-											<span className="sr-only">
-												{labels.pillNotApplicable}
-											</span>
-										</>
-									) : (
-										<M3Checkbox
-											checked={setting.pill}
-											disabled={readOnly || !setting.show}
-											hideLabel
-											label={labels.pillKind(kind.label)}
-											dataCy={`display-filter-pill-${kind.id}`}
-											onChange={(checked) =>
-												onChange(
-													setKindSetting(
-														value,
-														kind.id,
-														{
-															pill: checked
-														}
-													)
-												)
-											}
-										/>
-									)}
-								</td>
-							</tr>
-						);
-					})}
-				</tbody>
-			</table>
+			<DisplayFilterKindTable
+				kinds={kinds}
+				value={value}
+				onChange={onChange}
+				readOnly={readOnly}
+				labels={labels}
+				idPrefix={dialogId}
+			/>
 
 			{showAutoRead && (
 				<div className="displayFilterDialog__autoRead">

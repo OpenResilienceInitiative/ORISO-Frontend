@@ -112,27 +112,10 @@ import {
 } from '../../utils/displayFilter/sessions';
 import { isChatItemUnread } from '../../utils/sessionUnread';
 import {
-	GroupFilterIcon,
-	InternalGroupFilterIcon,
-	LiveChatFilterIcon,
-	MailFilterIcon,
-	SupervisionFilterIcon
-} from './SessionToolbarFilterIcons';
-import { ReactComponent as FutureTimelineKindIcon } from '../../resources/img/icons/calendar.svg';
-import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
+	SESSION_KIND_ICONS,
+	sessionKindLabel
+} from '../displayFilter/kindOptions';
 
-type KindIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-/** Dialog icons of the Gespräche/Anfragen kinds (#1377 §5.2/§5.3). */
-const SESSION_KIND_ICONS: Record<string, KindIcon> = {
-	oneToOne: MailFilterIcon as unknown as KindIcon,
-	nearby: MailFilterIcon as unknown as KindIcon,
-	liveChat: LiveChatFilterIcon as unknown as KindIcon,
-	internalGroup: InternalGroupFilterIcon as unknown as KindIcon,
-	circle: GroupFilterIcon as unknown as KindIcon,
-	supervision: SupervisionFilterIcon as unknown as KindIcon,
-	futureTimeline: FutureTimelineKindIcon,
-	other: OtherKindIcon
-};
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
 const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
@@ -1720,21 +1703,9 @@ export const SessionsList = ({
 					return true;
 			}
 		};
-		const label = (kind: string): string => {
-			switch (kind) {
-				case 'other':
-					return translate('notifications.displayFilter.otherKind');
-				case 'futureTimeline':
-					return translate('groupChat.futureTimeline.ariaLabel');
-				case 'circle':
-					return translate('sessionList.toolbar.chips.groups');
-				default:
-					return translate(`sessionList.toolbar.chips.${kind}`);
-			}
-		};
 		return order.filter(listed).map((kind) => ({
 			id: kind,
-			label: label(kind),
+			label: sessionKindLabel(translate, kind),
 			icon: SESSION_KIND_ICONS[kind],
 			unreadCount: unreadByKind[kind] ?? 0,
 			showOnly: kind === 'futureTimeline'

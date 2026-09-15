@@ -180,3 +180,67 @@
 		cursor: pointer;
 	}
 }
+
+/* Profile › Notifications › Display filters (#1377 slice 6): the three
+   per-section default tables and the per-event-type fine-tuning. */
+.displayFilterProfile {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	&__sections {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	&__section {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__sectionTitle {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__hint {
+		margin: 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__eventTypesSummary {
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__eventTypeGroup {
+		margin: 12px 0 0;
+		padding: 0;
+		border: 0;
+	}
+
+	&__eventTypeGroupTitle {
+		padding: 0;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__eventType {
+		min-height: 40px;
+		display: flex;
+		align-items: center;
+	}
+}
