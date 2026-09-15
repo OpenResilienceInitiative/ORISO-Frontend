@@ -1,7 +1,15 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	MemoryRouter,
+	Routes,
+	Route,
+	Link,
+	useNavigate,
+	useLocation,
+	useParams
+} from 'react-router-dom';
 import { afterEach, describe, it, expect } from 'vitest';
 import { SessionsZone } from './SessionsZone';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -60,6 +68,51 @@ const consultantConfig = {
 	]
 };
 
+const sessionPath = '/sessions/consultant/sessionView/!room%3Adev.oriso.org/42';
+const StatefulSession = () => {
+	const [draft, setDraft] = React.useState('');
+	return (
+		<div>
+			<input
+				aria-label="Draft"
+				value={draft}
+				onChange={(event) => setDraft(event.target.value)}
+			/>
+			<Link to={`${sessionPath}/groupChatInfo?sessionListTab=active`}>
+				Open info
+			</Link>
+		</div>
+	);
+};
+const InfoDialog = () => {
+	const navigate = useNavigate();
+	const location = useLocation();
+	const { groupId, sessionId } = useParams();
+	return (
+		<div role="dialog">
+			<span>
+				{groupId}:{sessionId}
+				{location.search}
+			</span>
+			<button onClick={() => navigate(-1)}>Back</button>
+		</div>
+	);
+};
+const modalConfig = {
+	...consultantConfig,
+	detailRoutes: consultantConfig.detailRoutes.map((route) => ({
+		...route,
+		component: StatefulSession
+	})),
+	dialogRoutes: [
+		{
+			path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
+			component: InfoDialog,
+			type: SESSION_LIST_TYPES.MY_SESSION
+		}
+	]
+};
+
 const userData = {
 	userId: 'c1',
 	grantedAuthorities: ['anonymous'],
@@ -68,7 +121,7 @@ const userData = {
 
 // Mount SessionsZone under a `sessions/*` parent route exactly as Routing.tsx
 // does, so its descendant <Routes> resolve relative to /sessions/.
-const renderAt = (path: string) =>
+const renderAt = (path: string, config = consultantConfig) =>
 	render(
 		<UserDataContext.Provider
 			value={{ userData, reloadUserData: async () => userData } as any}
@@ -77,9 +130,7 @@ const renderAt = (path: string) =>
 				<Routes>
 					<Route
 						path="/sessions/*"
-						element={
-							<SessionsZone routerConfig={consultantConfig} />
-						}
+						element={<SessionsZone routerConfig={config} />}
 					/>
 				</Routes>
 			</MemoryRouter>
@@ -118,9 +169,37 @@ describe('SessionsZone v7 routing — consultant', () => {
 	});
 
 	it('prefers the more specific userProfile route over the detail route', () => {
-		renderAt('/sessions/consultant/sessionView/session/42/userProfile');
+		renderAt(
+			'/sessions/consultant/sessionView/session/42/userProfile',
+			modalConfig
+		);
 		expect(screen.getByTestId('askerInfo')).toBeDefined();
 		expect(screen.queryByTestId('sessionView')).toBeNull();
+	});
+
+	it('renders the session behind a direct chat-info link with decoded params and search', () => {
+		renderAt(
+			`${sessionPath}/groupChatInfo?sessionListTab=active`,
+			modalConfig
+		);
+		expect(screen.getByLabelText('Draft')).toBeDefined();
+		expect(screen.getByRole('dialog').textContent).toContain(
+			'!room:dev.oriso.org:42?sessionListTab=active'
+		);
+	});
+
+	it('preserves the mounted session and its draft across opening and browser back', () => {
+		renderAt(sessionPath, modalConfig);
+		const draft = screen.getByLabelText('Draft') as HTMLInputElement;
+		fireEvent.change(draft, { target: { value: 'Unsent message' } });
+		fireEvent.click(screen.getByText('Open info'));
+		expect(screen.getByRole('dialog')).toBeDefined();
+		expect(screen.getByLabelText('Draft')).toBe(draft);
+		expect(draft.value).toBe('Unsent message');
+		fireEvent.click(screen.getByText('Back'));
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(screen.getByLabelText('Draft')).toBe(draft);
+		expect(draft.value).toBe('Unsent message');
 	});
 
 	it('renders the empty session view on the bare list path', () => {

@@ -267,7 +267,8 @@ export const buildAudienceRoster = ({
  */
 export const classifyAudienceKind = (
 	value: string,
-	roster: AudienceRoster
+	roster: AudienceRoster,
+	fallback: AudienceKind = 'person'
 ): AudienceKind => {
 	if (value === AUDIENCE_ALL) {
 		return 'all';
@@ -282,7 +283,7 @@ export const classifyAudienceKind = (
 	if (keys.some((key) => roster.consultant.has(key))) {
 		return 'consultant';
 	}
-	return 'person';
+	return fallback;
 };
 
 /**

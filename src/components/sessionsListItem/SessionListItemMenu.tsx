@@ -1,3 +1,5 @@
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import type { TFunction } from 'i18next';
@@ -13,12 +15,12 @@ import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvide
 
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
-	dropdownPosition: { top: number; left: number };
 	menuIconRef: React.RefObject<HTMLButtonElement>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
 	dropdownLabel: string;
 	translate: TFunction<['common'], undefined>;
+	onClose: () => void;
 	onMenuClick: (e: React.MouseEvent) => void;
 	onMenuKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 	onDropdownKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -36,13 +38,14 @@ export interface SessionListItemMenuProps {
 
 export const SessionListItemMenu = ({
 	flyoutOpen,
-	dropdownPosition,
+
 	menuIconRef,
 	dropdownRef,
 	dropdownId,
 	dropdownLabel,
 	translate,
 	onMenuClick,
+	onClose,
 	onMenuKeyDown,
 	onDropdownKeyDown,
 	isAsker,
@@ -56,8 +59,21 @@ export const SessionListItemMenu = ({
 	agencyId,
 	onLegalLinkClick
 }: SessionListItemMenuProps) => {
+	const menuPosition = useChatMenuPosition({
+		open: flyoutOpen,
+		anchorRef: menuIconRef,
+		menuRef: dropdownRef
+	});
 	return (
 		<>
+			<MenuBackdrop
+				open={flyoutOpen}
+				onClose={() => {
+					onClose();
+					menuIconRef.current?.focus();
+				}}
+				zIndex={999998}
+			/>
 			<button
 				type="button"
 				ref={menuIconRef}
@@ -80,18 +96,7 @@ export const SessionListItemMenu = ({
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}
-						style={{
-							top:
-								dropdownPosition.top > 0
-									? `${dropdownPosition.top}px`
-									: '40px',
-							left:
-								dropdownPosition.left > 0
-									? `${dropdownPosition.left}px`
-									: 'auto',
-							right: 'auto',
-							zIndex: 999999
-						}}
+						style={{ ...menuPosition, zIndex: 999999 }}
 					>
 						<div className="sessionsListItem__dropdownHeader">
 							<p className="sessionsListItem__dropdownSubtitle">

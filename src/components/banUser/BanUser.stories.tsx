@@ -23,6 +23,7 @@ export const Default: Story = {
 		matrixUserId: 'rc-user-123',
 		userName: 'Anonymous-User',
 		chatId: 1,
-		handleUserBan: () => {}
+		handleUserBan: () => {},
+		onBanFailed: () => {}
 	}
 };
