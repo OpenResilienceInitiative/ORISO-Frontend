@@ -505,12 +505,14 @@ body.conversationCreate--active .navigation__wrapper {
 	 */
 	&__authorColumn {
 		background: var(--m3-surface-container-low, #f6f3f3);
+		/* The node draws an outline around the whole card, not just the boxes. */
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
 		border-radius: 28px;
 		box-sizing: border-box;
 		display: flex;
 		flex: 1;
 		flex-direction: column;
-		gap: 16px;
+		gap: 6px;
 		min-width: 280px;
 		padding: 16px;
 	}
@@ -559,22 +561,33 @@ body.conversationCreate--active .navigation__wrapper {
 		 * than floating it at the outer edge.
 		 */
 		align-self: stretch;
+		/*
+		 * Node values: a fully rounded 100px pill on a 10% on-surface wash,
+		 * 24/16 padding, an 8px gap to the 24px glyph, title-medium label.
+		 */
 		background: rgba(27, 27, 28, 0.1);
 		border: none;
-		gap: 8px;
-		border-radius: 28px;
-		color: $cc-on-surface-variant;
+		border-radius: 100px;
+		box-sizing: border-box;
+		color: var(--m3-on-surface, #1b1b1c);
 		cursor: default;
 		display: flex;
 		font-size: 16px;
 		font-weight: 500;
-		height: 56px;
+		gap: 8px;
+		height: auto;
 		justify-content: center;
 		letter-spacing: 0.15px;
+		line-height: 24px;
 		min-width: 0;
 		opacity: 0.38;
-		padding: 16px 32px;
+		padding: 16px 24px;
 		width: 100%;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
 
 		&--primary {
 			background: $cc-primary;
@@ -959,14 +972,15 @@ body.conversationCreate--active .navigation__wrapper {
 	gap: 8px;
 
 	&__input {
-		/* Same quiet surface as the welcome box above it (Figma 8467-27977). */
+		/* Same box as the welcome field above: outline role, 4px, body-large. */
 		background: var(--m3-surface-container-low, #f6f3f3);
-		border: 1px solid $cc-outline-variant;
-		border-radius: 8px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
 		font-family: inherit;
-		font-size: 14px;
-		line-height: 20px;
-		min-height: 128px;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
+		min-height: 120px;
 		padding: 12px 16px;
 		resize: vertical;
 		width: 100%;
@@ -1003,9 +1017,15 @@ body.conversationCreate--active .navigation__wrapper {
 		height: 32px;
 		overflow: hidden;
 
+		/*
+		 * Chip 01 in the node is the one under the caret: filled
+		 * secondary-container with its light on-colour, not an outlined chip
+		 * tinted red.
+		 */
 		&--editing {
-			border-color: $cc-primary;
-			color: $cc-primary;
+			background: var(--m3-secondary-container, #646d78);
+			border-color: var(--m3-secondary-container, #646d78);
+			color: var(--m3-on-secondary-container, #e7effc);
 		}
 	}
 

@@ -98,22 +98,37 @@ $inputSpacing: 32px;
 		margin-top: $grid-base-two;
 	}
 
+	/*
+	 * The node wraps a 40x32 filled surface in a 48px hit area (M3 icon button,
+	 * square/xsmall/wide). The fill is primary #A5000A — not the brighter
+	 * primary-container.
+	 */
 	&__translateButton {
 		align-items: center;
-		background: var(--m3-primary-container, #cc1e1c);
+		background: none;
 		border: none;
-		border-radius: 12px;
-		color: var(--m3-on-primary, #ffffff);
 		cursor: pointer;
 		display: flex;
 		flex: 0 0 auto;
+		height: 48px;
 		justify-content: center;
-		min-height: 48px;
-		min-width: 48px;
+		padding: 0;
+		width: 48px;
+
+		&::before {
+			background: var(--m3-primary, #a5000a);
+			border-radius: 8px;
+			content: '';
+			height: 32px;
+			position: absolute;
+			width: 40px;
+		}
 
 		svg {
-			height: 24px;
-			width: 24px;
+			color: var(--m3-on-primary, #ffffff);
+			height: 20px;
+			position: relative;
+			width: 20px;
 		}
 
 		&:disabled {
@@ -122,38 +137,47 @@ $inputSpacing: 32px;
 		}
 
 		&:focus-visible {
-			outline: 3px solid var(--m3-primary, $primary);
-			outline-offset: 2px;
+			outline: 3px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
 		}
 	}
 
 	/*
-	 * Figma 8467-27977: the selected language is a filled secondary-container
-	 * chip carrying the globe; the others are outlined and offer a remove
-	 * control. The row scrolls rather than wraps, so the translate action stays
-	 * pinned to the right edge.
+	 * Figma 8467-27977, read from the node: input chips are 32px tall with an
+	 * 8px radius. The selected one is filled secondary-container and carries
+	 * its globe on the LEFT (8/12 padding); the others are outlined and carry
+	 * the remove glyph on the RIGHT (12/8). One 8px gap inside the chip — the
+	 * buttons are bare, so no padding stacks up between label and glyph.
 	 */
 	&__languageChip {
 		align-items: center;
 		background: none;
 		border: 1px solid var(--m3-outline-variant, #c4c7c8);
-		border-radius: 12px;
+		border-radius: 8px;
+		box-sizing: border-box;
 		display: inline-flex;
 		flex: 0 0 auto;
+		gap: 8px;
+		height: 32px;
 		overflow: hidden;
+		padding: 6px 8px 6px 12px;
 
 		button {
 			align-items: center;
 			background: none;
 			border: none;
 			border-radius: 0;
-			color: var(--m3-on-surface, #1b1b1c);
+			color: var(--m3-on-surface-variant, #444748);
 			cursor: pointer;
 			display: inline-flex;
-			gap: $grid-base;
-			min-height: 46px;
+			font-size: 14px;
+			font-weight: 500;
+			gap: 8px;
+			letter-spacing: 0.1px;
+			line-height: 20px;
+			min-height: 0;
 			min-width: 0;
-			padding: $grid-base $grid-base-two;
+			padding: 0;
 		}
 
 		svg {
@@ -164,10 +188,11 @@ $inputSpacing: 32px;
 		&--selected {
 			background: var(--m3-secondary-container, #646d78);
 			border-color: var(--m3-secondary-container, #646d78);
+			/* Globe leads, so the tighter padding moves to the left. */
+			padding: 6px 12px 6px 8px;
 
 			button {
 				color: var(--m3-on-secondary-container, #e7effc);
-				font-weight: 700;
 			}
 		}
 	}
@@ -179,25 +204,24 @@ $inputSpacing: 32px;
 		color: var(--m3-on-surface-variant, #444748);
 		cursor: pointer;
 		display: inline-flex;
+		flex: 0 0 auto;
 		justify-content: center;
-		min-height: 46px;
-		padding-inline: $grid-base;
-
-		&:hover {
-			background-color: rgba(27, 27, 28, 0.04);
-		}
+		padding: 0;
 	}
 
+	/* The node gives the text fields the outline role and a 4px radius. */
 	&__welcomeInput {
 		background: var(--m3-surface-container-low, #f6f3f3);
-		border: 1px solid var(--m3-outline-variant, #c4c7c8);
-		border-radius: 8px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
 		box-sizing: border-box;
 		color: var(--m3-on-surface, #1b1b1c);
 		display: block;
-		margin-top: $grid-base-two;
-		min-height: 128px;
-		padding: $grid-base-two;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
+		min-height: 120px;
+		padding: 8px 16px;
 		resize: vertical;
 		width: 100%;
 	}
