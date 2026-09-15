@@ -10,6 +10,7 @@ export interface SendMatrixAttachmentMessageOptions
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 }
 
 type PostMessageEventNotification = (

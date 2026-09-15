@@ -1,3 +1,7 @@
+import {
+	parseChannel,
+	rewriteLegacyChannelPath
+} from '../../utils/channelRoute';
 import * as React from 'react';
 import {
 	useCallback,
@@ -17,10 +21,8 @@ import {
 	getEventDescriptor,
 	getEventIcon,
 	renderEventStrings,
-	familyLabelKey,
 	isKnownEventType
 } from './eventDescriptors';
-import { EventFamily } from './eventDescriptors/types';
 import {
 	resolveNotificationActionPath,
 	toInterpolationValues
@@ -30,8 +32,31 @@ import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	TimelineFamilyFilter
+	TIMELINE_KIND_ORDER,
+	TimelineFamilyFilter,
+	TimelineKindId
 } from './timelineFilter';
+import { useDisplayFilter } from '../../hooks/useDisplayFilter';
+import {
+	DisplayFilterButton,
+	DisplayFilterDialog,
+	DisplayFilterKindOption,
+	FilterChip,
+	FilterChipRow,
+	isDisplayFilterCustomised,
+	reconcileActiveKind,
+	useDisplayFilterLabels,
+	visiblePillKinds
+} from '../displayFilter';
+import {
+	applyTimelineFilter,
+	isTimelineKindPartiallyHidden,
+	timelineUnreadByKind
+} from '../../utils/displayFilter/timeline';
+import {
+	TIMELINE_KIND_ICONS,
+	timelineKindLabel
+} from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
 	SessionsDataContext,
@@ -50,13 +75,6 @@ import {
 	requiresCaseHandoverCheck,
 	useCaseHandoverPreviewGate
 } from './caseHandoverPreviewGate';
-import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
-import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
-import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
-import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/persons-two.svg';
-import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
-import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
@@ -82,18 +100,14 @@ const TIMELINE_MIN_WIDTH = 300;
 const TIMELINE_MAX_WIDTH = 600;
 const TIMELINE_DEFAULT_WIDTH = 400;
 
-const FAMILY_ICONS: Record<
-	EventFamily,
-	React.ComponentType<React.SVGProps<SVGSVGElement>>
-> = {
-	requests: RequestsFamilyIcon,
-	messages: MessagesFamilyIcon,
-	drafts: DraftsFamilyIcon,
-	handover: HandoverFamilyIcon,
-	calls: CallsFamilyIcon,
-	system: SystemFamilyIcon,
-	appointments: AppointmentsFamilyIcon
-};
+/**
+ * Keep paging (#1377 §5.1): a loaded page can be entirely hidden, so the
+ * list requests older pages until this many visible rows exist or the
+ * server has no more.
+ */
+const MIN_VISIBLE_TIMELINE_ROWS = 10;
+
+const TIMELINE_DISPLAY_FILTER_DIALOG_ID = 'timeline-display-filter-dialog';
 
 const MESSAGE_PREVIEW_ICONS: Partial<
 	Record<
@@ -113,7 +127,7 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
-	if (item?.actionPath?.includes('threadRootId=')) return 'message';
+	if (resolveThreadRootId(item)) return 'message';
 	return 'system';
 };
 
@@ -161,15 +175,21 @@ const resolveSessionId = (item: any): string | null => {
 	return match?.[1] || null;
 };
 
+const searchFromPath = (path?: string | null): string => {
+	const query = String(path || '').split('?')[1];
+	return query ? `?${query}` : '';
+};
+
+// B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
+// still carries the legacy `threadRootId` is rewritten first.
 const resolveThreadRootId = (item: any): string | null => {
-	const path = item?.actionPath;
-	if (!path || !String(path).includes('?')) {
+	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
+	const search = searchFromPath(path);
+	if (!search) {
 		return null;
 	}
-	const query = String(path).split('?')[1];
-	const params = new URLSearchParams(query);
-	const threadRootId = params.get('threadRootId');
-	return threadRootId ? decodeURIComponent(threadRootId) : null;
+	const { channel } = parseChannel(search);
+	return channel?.kind === 'thread' ? channel.rootId : null;
 };
 
 // #847: Matrix room for the embedded preview — params.roomRef when the
@@ -192,11 +212,11 @@ const resolveRoomId = (item: any): string | null => {
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
 	const path = item?.actionPath;
-	if (!path || !String(path).includes('?')) {
+	const search = searchFromPath(path);
+	if (!search) {
 		return null;
 	}
-	const query = String(path).split('?')[1];
-	const params = new URLSearchParams(query);
+	const params = new URLSearchParams(search);
 	return params.get('caseHandoverRequestId');
 };
 
@@ -233,7 +253,7 @@ export const NotificationsCenter = () => {
 	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
-		unreadNotificationCount,
+		hasUnreadNotifications,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
@@ -242,6 +262,23 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
+	const {
+		effective: timelineFilter,
+		override: timelineOverride,
+		canWrite: canEditDisplayFilter,
+		readOnly: displayFilterReadOnly,
+		setSection: setTimelineOverride,
+		resetSection: resetTimelineOverride
+	} = useDisplayFilter('timeline');
+	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
+	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
+	// hidden kind leaves both in the same render (AC2).
+	const visibleFeed = useMemo(
+		() => applyTimelineFilter(notificationFeed, timelineFilter),
+		[notificationFeed, timelineFilter]
+	);
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
 	// first card would be surprising. Desktop keeps the first card selected so
@@ -362,15 +399,76 @@ export const NotificationsCenter = () => {
 		localStorage.setItem(TIMELINE_WIDTH_STORAGE_KEY, width.toString());
 	}, []);
 
-	// Families actually present in the feed, in canonical order (drives chips).
+	// Kinds actually present in the VISIBLE feed, in canonical order.
 	const familiesInFeed = useMemo(
-		() => getFamiliesInFeed(notificationFeed),
-		[notificationFeed]
+		() => getFamiliesInFeed(visibleFeed),
+		[visibleFeed]
 	);
+	// The dialog rows: every kind, "Termine" only once such an event exists
+	// (§5.1), with the visible unread count per kind for the pill badges and
+	// the profile's partial hiding for the mixed checkbox.
+	const timelineKinds = useMemo<DisplayFilterKindOption[]>(() => {
+		const unread = timelineUnreadByKind(visibleFeed);
+		const presentKinds = new Set(getFamiliesInFeed(notificationFeed));
+		return TIMELINE_KIND_ORDER.filter(
+			(kind) => kind !== 'appointments' || presentKinds.has(kind)
+		).map((kind) => ({
+			id: kind,
+			label: timelineKindLabel(translate, kind),
+			icon: TIMELINE_KIND_ICONS[kind],
+			unreadCount: unread[kind] ?? 0,
+			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)
+		}));
+	}, [notificationFeed, timelineFilter, translate, visibleFeed]);
+	const pillKinds = useMemo(
+		() => visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
+		[activeFamily, timelineFilter, timelineKinds]
+	);
+	const displayFilterCustomised = isDisplayFilterCustomised(
+		timelineFilter,
+		timelineKinds
+	);
+	// A page can be entirely hidden: keep paging until enough is visible.
+	useEffect(() => {
+		if (
+			visibleFeed.length >= MIN_VISIBLE_TIMELINE_ROWS ||
+			notificationFeed.length === 0 ||
+			!hasOlderNotifications ||
+			isLoadingOlderNotifications ||
+			olderNotificationsError
+		) {
+			return;
+		}
+		void loadOlderNotifications();
+	}, [
+		hasOlderNotifications,
+		isLoadingOlderNotifications,
+		loadOlderNotifications,
+		notificationFeed.length,
+		olderNotificationsError,
+		visibleFeed.length
+	]);
 	// #1200: "Mark all as read" is only actionable while something is unread.
 	// The provider's counter is the server-backed total, so unread activity on
-	// pages that are not loaded yet still enables the action.
-	const hasUnreadActivity = unreadNotificationCount > 0;
+	// pages that are not loaded yet still enables the action. With the display
+	// filter (#1377 slice 7) that total leaves hidden kinds out, while ✓✓
+	// still clears everything server-side (spec §6.1): unread rows the filter
+	// hides on the loaded pages keep the action enabled.
+	const hasUnreadActivity =
+		hasUnreadNotifications || notificationFeed.some((row) => !row.readAt);
+	// §5.1: an active family whose pill the effective filter took (a profile
+	// change or another device) must not keep narrowing the feed with no
+	// chip left to clear it. Same reconciliation as the sessions lists.
+	useEffect(() => {
+		setActiveFamily((current) =>
+			current && current !== 'all'
+				? (reconcileActiveKind(
+						timelineFilter,
+						current
+					) as TimelineFamilyFilter)
+				: current
+		);
+	}, [timelineFilter]);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image', 'Image'),
@@ -542,7 +640,7 @@ export const NotificationsCenter = () => {
 	const filteredFeed = useMemo(
 		() =>
 			filterTimelineItems(
-				notificationFeed,
+				visibleFeed,
 				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
@@ -550,7 +648,7 @@ export const NotificationsCenter = () => {
 				}
 			),
 		[
-			notificationFeed,
+			visibleFeed,
 			activeFamily,
 			searchQuery,
 			unreadOnly,
@@ -814,41 +912,6 @@ export const NotificationsCenter = () => {
 		: null;
 	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
 
-	// Same filter-chip contract as the conversation page toolbar: inactive
-	// chips are icon-only pills, the active chip expands with its label.
-	// Chips are toggles (aria-pressed): clicking the active chip clears the
-	// filter — no dedicated "All" chip, no selection means everything.
-	const renderFamilyChip = (
-		family: EventFamily,
-		Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
-		label: string
-	) => {
-		const isActive = activeFamily === family;
-		return (
-			<button
-				key={family}
-				type="button"
-				aria-pressed={isActive}
-				title={label}
-				aria-label={label}
-				className={`sessionsListToolbar__chip ${
-					isActive
-						? 'sessionsListToolbar__chip--active'
-						: 'sessionsListToolbar__chip--iconOnly'
-				}`}
-				onClick={() => setActiveFamily(isActive ? null : family)}
-			>
-				<Icon className="sessionsListToolbar__chipIconSvg sessionsListToolbar__chipIconSvg--asset" />
-				<span
-					className="sessionsListToolbar__chipLabel"
-					aria-hidden={!isActive}
-				>
-					{label}
-				</span>
-			</button>
-		);
-	};
-
 	if (notificationFeed.length === 0) {
 		return (
 			<div className="notificationsCenter notificationsCenter--empty">
@@ -888,66 +951,113 @@ export const NotificationsCenter = () => {
 						)}
 					/>
 					{notificationFeed.length > 0 && (
-						<div className="sessionsListToolbar__chipsScroll">
-							<div
-								className="sessionsListToolbar__chipsRow"
-								role="group"
+						<FilterChipRow
+							label={translate(
+								'notifications.center.title',
+								'Notifications'
+							)}
+							trailing={
+								<DisplayFilterButton
+									label={displayFilterLabels.buttonLabel}
+									customised={displayFilterCustomised}
+									customisedLabel={
+										displayFilterLabels.buttonCustomisedLabel
+									}
+									open={displayFilterOpen}
+									controlsId={
+										TIMELINE_DISPLAY_FILTER_DIALOG_ID
+									}
+									onClick={() => setDisplayFilterOpen(true)}
+								/>
+							}
+						>
+							{pillKinds.map((kind) => (
+								<FilterChip
+									key={kind.id}
+									label={kind.label}
+									icon={kind.icon!}
+									assetIcon
+									count={kind.unreadCount}
+									active={activeFamily === kind.id}
+									onClick={() =>
+										setActiveFamily((current) =>
+											current === kind.id
+												? null
+												: (kind.id as TimelineKindId)
+										)
+									}
+									data-cy={`timeline-chip-${kind.id}`}
+								/>
+							))}
+							<button
+								type="button"
+								aria-pressed={unreadOnly}
+								className={`sessionsListToolbar__chip ${
+									unreadOnly
+										? 'sessionsListToolbar__chip--active'
+										: 'sessionsListToolbar__chip--iconOnly'
+								}`}
+								onClick={() => setUnreadOnly((value) => !value)}
+								title={translate(
+									'notifications.center.unreadFilter',
+									'Unread'
+								)}
 								aria-label={translate(
-									'notifications.center.title',
-									'Notifications'
+									'notifications.center.unreadFilter',
+									'Unread'
 								)}
 							>
-								{familiesInFeed.map((family) =>
-									renderFamilyChip(
-										family,
-										FAMILY_ICONS[family] ||
-											SystemFamilyIcon,
-										translate(familyLabelKey(family))
-									)
-								)}
-								<button
-									type="button"
-									aria-pressed={unreadOnly}
-									className={`sessionsListToolbar__chip ${
-										unreadOnly
-											? 'sessionsListToolbar__chip--active'
-											: 'sessionsListToolbar__chip--iconOnly'
-									}`}
-									onClick={() =>
-										setUnreadOnly((value) => !value)
-									}
-									title={translate(
-										'notifications.center.unreadFilter',
-										'Unread'
-									)}
-									aria-label={translate(
-										'notifications.center.unreadFilter',
-										'Unread'
-									)}
+								<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								<span
+									className="sessionsListToolbar__chipLabel"
+									aria-hidden={!unreadOnly}
 								>
-									<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
-									<span
-										className="sessionsListToolbar__chipLabel"
-										aria-hidden={!unreadOnly}
-									>
-										{translate(
-											'notifications.center.unreadFilter',
-											'Unread'
-										)}
-									</span>
-								</button>
-								<MarkAllReadButton
-									hasUnread={hasUnreadActivity}
-									onClick={markAllNotificationsAsRead}
-									label={translate(
-										'notifications.center.markAllRead',
-										'Mark all as read'
+									{translate(
+										'notifications.center.unreadFilter',
+										'Unread'
 									)}
-								/>
-							</div>
-						</div>
+								</span>
+							</button>
+							<MarkAllReadButton
+								hasUnread={hasUnreadActivity}
+								onClick={markAllNotificationsAsRead}
+								label={translate(
+									'notifications.center.markAllRead',
+									'Mark all as read'
+								)}
+							/>
+						</FilterChipRow>
 					)}
 				</div>
+				<DisplayFilterDialog
+					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
+					open={displayFilterOpen}
+					fullScreen={untilL}
+					onClose={() => setDisplayFilterOpen(false)}
+					kinds={timelineKinds}
+					value={timelineFilter}
+					canReset={timelineOverride !== null}
+					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					onChange={(next) => {
+						setTimelineOverride(next);
+						setActiveFamily(
+							(current) =>
+								reconcileActiveKind(
+									next,
+									current
+								) as TimelineFamilyFilter
+						);
+					}}
+					onReset={() => {
+						resetTimelineOverride();
+						setActiveFamily(null);
+					}}
+					onOpenProfile={() => {
+						setDisplayFilterOpen(false);
+						navigate('/profile/notifications/browser');
+					}}
+					labels={displayFilterLabels.dialogLabels}
+				/>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
 					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">

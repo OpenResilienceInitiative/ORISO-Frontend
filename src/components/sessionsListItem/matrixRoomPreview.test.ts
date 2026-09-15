@@ -1,18 +1,98 @@
 import { describe, expect, it } from 'vitest';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
+	filterVisibleMatrixPreviewEvents,
 	getLatestMatrixRoomPreview,
+	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType
 } from './matrixRoomPreview';
 
-const event = (type: string, content: Record<string, unknown>, ts: number) => ({
+const event = (
+	type: string,
+	content: Record<string, unknown>,
+	ts: number,
+	sender = '@someone:example.org'
+) => ({
 	getType: () => type,
 	getClearContent: () => content,
 	getContent: () => content,
+	getSender: () => sender,
 	getTs: () => ts
 });
 
+describe('filterVisibleMatrixPreviewEvents', () => {
+	const privateEvent = event(
+		'm.room.message',
+		{ msgtype: 'm.text', body: '[VISIBLE_TO:alice]Private note' },
+		1,
+		'@supervisor:example.org'
+	);
+
+	it('keeps a restricted event for a named recipient', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@alice:example.org']
+			)
+		).toEqual([privateEvent]);
+	});
+
+	it('keeps a restricted event for its sender', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@supervisor:example.org']
+			)
+		).toEqual([privateEvent]);
+	});
+
+	it('removes a restricted event for every other viewer', () => {
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[privateEvent],
+				['@bob:example.org']
+			)
+		).toEqual([]);
+	});
+
+	it('does not equate qualified Matrix IDs from different homeservers', () => {
+		const qualified = event(
+			'm.room.message',
+			{
+				msgtype: 'm.text',
+				body: '[VISIBLE_TO:@alice:one.example]Private note'
+			},
+			1,
+			'@supervisor:one.example'
+		);
+		expect(
+			filterVisibleMatrixPreviewEvents(
+				[qualified],
+				['@alice:two.example']
+			)
+		).toEqual([]);
+	});
+
+	it('handles redacted or non-text bodies without breaking the list', () => {
+		const redacted = event('m.room.message', { body: {} }, 2);
+		expect(
+			filterVisibleMatrixPreviewEvents([redacted], ['@bob:example.org'])
+		).toEqual([redacted]);
+	});
+});
+
 describe('getLatestMatrixRoomPreview', () => {
+	it('keeps the timestamp for a separately contracted side-room preview', () => {
+		expect(
+			getLatestTimedMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{ msgtype: 'm.text', body: 'Supervisionsantwort' },
+					42
+				)
+			])
+		).toEqual({ kind: 'text', text: 'Supervisionsantwort', ts: 42 });
+	});
 	it('suppresses a stale backend alias for Matrix-derived previews', () => {
 		expect(getPreviewLastMessageType(true, 'FURTHER_STEPS')).toBeNull();
 		expect(getPreviewLastMessageType(false, 'FURTHER_STEPS')).toBe(
@@ -127,5 +207,58 @@ describe('getLatestMatrixRoomPreview', () => {
 				event('m.room.redaction', {}, 4)
 			])
 		).toEqual({ kind: 'text', text: 'Sichtbarer Text' });
+	});
+});
+
+describe('channel of the latest preview (B2 / T24 list prefix)', () => {
+	it('marks a thread reply (m.thread relation) as the thread channel', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body: 'Root' }, 1),
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.text',
+						'body': 'Antwort im Thread',
+						'm.relates_to': {
+							rel_type: 'm.thread',
+							event_id: '$root'
+						}
+					},
+					2
+				)
+			])
+		).toEqual({
+			kind: 'text',
+			text: 'Antwort im Thread',
+			channel: 'thread'
+		});
+	});
+
+	it('leaves a plain main-chat message without a channel', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body: 'Hallo' }, 1)
+			])
+		).toEqual({ kind: 'text', text: 'Hallo' });
+	});
+
+	it('keeps the channel on non-text kinds too', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.image',
+						'body': 'foto.png',
+						'm.relates_to': {
+							rel_type: 'm.thread',
+							event_id: '$root'
+						}
+					},
+					1
+				)
+			])
+		).toEqual({ kind: 'image', text: null, channel: 'thread' });
 	});
 });

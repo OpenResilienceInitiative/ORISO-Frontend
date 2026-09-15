@@ -2,6 +2,8 @@ import { ConsultingTypeInterface } from './ConsultingTypeInterface';
 import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
 export interface UserDataInterface {
+	chatRecoveryMode?: 'RECOVERY_KEY' | 'LOGIN_PASSWORD' | null;
+	chatRecoveryPolicyRevision?: number | null;
 	absenceMessage?: string;
 	absent?: boolean;
 	agencies: AgencyDataInterface[];
@@ -50,6 +52,8 @@ export interface AgencyDataInterface {
 	postcode: string;
 	street?: string;
 	houseNumber?: string;
+	lat?: number | null;
+	lng?: number | null;
 	phone?: string;
 	openingHours?: string;
 	url?: string;

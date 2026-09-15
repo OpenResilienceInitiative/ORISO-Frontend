@@ -33,6 +33,10 @@ import {
 	mintInviteGuestCredentials,
 	rerollInviteGuestUsername
 } from './inviteLinkIdentity';
+import {
+	rememberInviteSession,
+	resolveReusableInviteSession
+} from './inviteSessionReuse';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { OrisoTextField } from '../form/OrisoTextField';
@@ -88,6 +92,20 @@ export const InviteLink = () => {
 
 		(async () => {
 			try {
+				/* A reload must not cost a second place in the queue. Redeem
+				   mints a fresh anonymous account and a fresh queue entry
+				   every time it is called — right for a second guest, wrong
+				   for the same guest coming back, who then waits behind
+				   their own abandoned entry (#1404). If this browser already
+				   holds a live session for this link, walk back into it. */
+				const reusableSessionId =
+					await resolveReusableInviteSession(token);
+				if (reusableSessionId !== null) {
+					setRoomSessionId(reusableSessionId);
+					setStatus('room');
+					return;
+				}
+
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
@@ -96,6 +114,7 @@ export const InviteLink = () => {
 					   The room hands over to the session itself once a
 					   counsellor has accepted and consent is given. */
 					applyRedeemSessionCredentials(data);
+					rememberInviteSession(token, data.sessionId);
 					/* A courtesy name before anyone can look: without it
 					   the counsellor's queue shows `anon_N` (#1216). Not
 					   awaited — there is no page load to race any more, and

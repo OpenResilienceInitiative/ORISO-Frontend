@@ -5,7 +5,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -208,6 +209,38 @@ describe('DpaSign', () => {
 				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
 			)
 		).toBeDefined();
+	});
+
+	it('offers chapter chips for a multi-chapter contract and focuses the selected chapter', async () => {
+		previewMock.mockResolvedValue({
+			tenantName: 'Träger Nord',
+			dpaVersion: '2026-07-20T12:30:00',
+			content: JSON.stringify({
+				de: '<h2>1. Gegenstand</h2><p>Absatz eins.</p><h2>2. Pflichten des Auftragnehmers</h2><p>Absatz zwei.</p>',
+				en: '<h2>1. Subject</h2><p>Paragraph one.</p><h2>2. Duties</h2><p>Paragraph two.</p>'
+			}),
+			expiresAt: '2026-08-03T12:30:00'
+		});
+		renderPage();
+		await screen.findByText('Absatz eins.');
+
+		const chapters = await screen.findByTestId('legal-anchor-chips');
+		expect(
+			within(chapters)
+				.getAllByRole('button')
+				.map((chip) => chip.textContent)
+		).toEqual(['1. Gegenstand', '2. Pflichten des Auftragnehmers']);
+
+		fireEvent.click(
+			within(chapters).getByRole('button', {
+				name: '2. Pflichten des Auftragnehmers'
+			})
+		);
+
+		expect(document.activeElement?.id).toBe(
+			'2-pflichten-des-auftragnehmers'
+		);
+		expect(document.activeElement?.tagName).toBe('H2');
 	});
 
 	it('renders its chrome in the selected signature language, not the ambient app locale', async () => {
