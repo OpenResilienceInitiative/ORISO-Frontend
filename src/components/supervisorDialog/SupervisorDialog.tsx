@@ -3,7 +3,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as HandoverIcon } from '../../resources/img/icons/teams_outline.svg';
+import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import './supervisorDialog.styles.scss';
 
 export type SupervisorDialogMode = 'add' | 'change' | 'handover';
