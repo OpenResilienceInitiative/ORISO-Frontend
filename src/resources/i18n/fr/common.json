@@ -836,6 +836,7 @@
 				"rules": "Règles du groupe",
 				"rule": "Règle",
 				"addRule": "Ajouter une règle",
+				"removeLanguage": "Supprimer la langue {{language}}",
 				"removeRule": "Supprimer",
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",

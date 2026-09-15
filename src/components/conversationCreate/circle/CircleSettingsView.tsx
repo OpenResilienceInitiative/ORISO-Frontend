@@ -5,6 +5,7 @@ import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-
 import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
+import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
 import {
 	GroupChatAuthorContentDraft,
@@ -451,6 +452,7 @@ export const CircleSettingsView = ({
 						disabled={!isReady}
 						onClick={handleCreate}
 					>
+						<AddCircleIcon aria-hidden />
 						{translate(
 							isEditMode
 								? 'groupChat.circle.saveLabel'

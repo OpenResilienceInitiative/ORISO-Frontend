@@ -795,10 +795,11 @@
 			"authorContent": {
 				"title": "Welcome and group rules",
 				"sourceLanguage": "Source language",
-				"welcome": "Welcome message (maximum 120 characters)",
+				"welcome": "Welcome text max. 120 characters",
 				"rules": "Group rules",
-				"rule": "Rule",
+				"rule": "Rule no. 1, max. 120 characters",
 				"addRule": "Add rule",
+				"removeLanguage": "Remove language {{language}}",
 				"removeRule": "Remove",
 				"translate": "Translate into active languages",
 				"translating": "Translating…",

@@ -837,6 +837,7 @@
 				"rules": "Правила группы",
 				"rule": "Правило",
 				"addRule": "Добавить правило",
+				"removeLanguage": "Удалить язык {{language}}",
 				"removeRule": "Удалить",
 				"translate": "Перевести на активные языки",
 				"translating": "Идёт перевод…",

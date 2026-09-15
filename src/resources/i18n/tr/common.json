@@ -836,6 +836,7 @@
 				"rules": "Grup kuralları",
 				"rule": "Kural",
 				"addRule": "Kural ekle",
+				"removeLanguage": "{{language}} dilini kaldır",
 				"removeRule": "Kaldır",
 				"translate": "Etkin dillere çevir",
 				"translating": "Çevriliyor…",

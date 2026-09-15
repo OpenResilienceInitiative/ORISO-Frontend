@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as TranslateIcon } from '../../resources/img/icons/translate.svg';
+import { ReactComponent as GlobeIcon } from '../../resources/img/icons/schedule-language.svg';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { apiTranslateGroupChatAuthorContent } from '../../api/apiGroupChatAuthorTranslation';
 import {
 	applyGroupChatAuthorTranslations,
@@ -30,9 +32,18 @@ export const GroupChatAuthorContentFields = ({
 	translationAvailable = true
 }: GroupChatAuthorContentFieldsProps) => {
 	const { t } = useTranslation();
+	/*
+	 * Languages the author dropped from this circle via the chip's remove
+	 * control (Figma 8467-27977). Tenant configuration is untouched; only this
+	 * draft stops carrying the language.
+	 */
+	const [excluded, setExcluded] = useState<string[]>([]);
 	const languages = useMemo(
-		() => normalizeGroupChatLanguages(activeLanguages),
-		[activeLanguages]
+		() =>
+			normalizeGroupChatLanguages(activeLanguages).filter(
+				(language) => !excluded.includes(language)
+			),
+		[activeLanguages, excluded]
 	);
 	const [selectedLanguage, setSelectedLanguage] = useState(
 		languages.includes(value.sourceLanguage)
@@ -102,6 +113,26 @@ export const GroupChatAuthorContentFields = ({
 			}
 		});
 
+	/*
+	 * The chip's remove control drops the language from this circle: its
+	 * drafted welcome text and rules go with it, so the submit no longer
+	 * carries a language the author took off the card.
+	 */
+	const removeLanguage = (language: string) => {
+		const nextHints = { ...value.hintMessageTranslations };
+		const nextRules = { ...value.groupChatRulesTranslations };
+		delete nextHints[language];
+		delete nextRules[language];
+		setExcluded((current) =>
+			current.includes(language) ? current : [...current, language]
+		);
+		onChange({
+			...value,
+			hintMessageTranslations: nextHints,
+			groupChatRulesTranslations: nextRules
+		});
+	};
+
 	const translateContent = async () => {
 		setTranslationError(false);
 		try {
@@ -132,25 +163,61 @@ export const GroupChatAuthorContentFields = ({
 	};
 
 	return (
-		<fieldset className="createChat__authorContent">
-			<legend>{t('groupChat.create.authorContent.title')}</legend>
+		/*
+		 * Figma 8467-27977 draws this as one quiet card: a language row with the
+		 * translate action pinned right, the welcome box, the rule box, the rule
+		 * chips with a bare add glyph. No legend and no field labels — each box
+		 * states its own purpose through its placeholder.
+		 */
+		<div className="createChat__authorContent">
 			<div className="createChat__languageBar">
 				<div className="createChat__languageTabs" role="tablist">
-				{languages.map((language, index) => (
-					<button
-						type="button"
-						role="tab"
-						id={tabIdFor(language)}
-						aria-controls={panelIdFor(language)}
-						aria-selected={language === selectedLanguage}
-						tabIndex={language === selectedLanguage ? 0 : -1}
-						key={language}
-						onClick={() => setSelectedLanguage(language)}
-						onKeyDown={(event) => handleTabKeyDown(event, index)}
-					>
-						{language.toUpperCase()}
-						</button>
-					))}
+					{languages.map((language, index) => {
+						const isSelected = language === selectedLanguage;
+						return (
+							<span
+								className={`createChat__languageChip${
+									isSelected
+										? ' createChat__languageChip--selected'
+										: ''
+								}`}
+								key={language}
+							>
+								<button
+									type="button"
+									role="tab"
+									id={tabIdFor(language)}
+									aria-controls={panelIdFor(language)}
+									aria-selected={isSelected}
+									tabIndex={isSelected ? 0 : -1}
+									onClick={() =>
+										setSelectedLanguage(language)
+									}
+									onKeyDown={(event) =>
+										handleTabKeyDown(event, index)
+									}
+								>
+									{isSelected && <GlobeIcon aria-hidden />}
+									{language.toUpperCase()}
+								</button>
+								{!isSelected && languages.length > 1 && (
+									<button
+										type="button"
+										className="createChat__languageChipRemove"
+										aria-label={t(
+											'groupChat.create.authorContent.removeLanguage',
+											{ language: language.toUpperCase() }
+										)}
+										onClick={() =>
+											removeLanguage(language)
+										}
+									>
+										<CloseIcon aria-hidden />
+									</button>
+								)}
+							</span>
+						);
+					})}
 				</div>
 				{translationAvailable && (
 					<button
@@ -168,39 +235,25 @@ export const GroupChatAuthorContentFields = ({
 				)}
 			</div>
 			<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
-				<label>
-					{t('groupChat.create.authorContent.welcome')}
-					<textarea
-						maxLength={120}
-						value={
-							value.hintMessageTranslations?.[selectedLanguage] ||
-							''
-						}
-						onChange={(event) => updateHint(event.target.value)}
-					/>
-				</label>
-				<div className="createChat__rules">
-					<span>{t('groupChat.create.authorContent.rules')}</span>
-					<RuleChipsEditor
-						/*
-						 * Hand the rules over unfiltered. Dropping the empty
-						 * ones here also swallowed the blank rule the add
-						 * button appends, so a new rule vanished the moment it
-						 * was created. Empty rules are stripped when the
-						 * request is built (buildGroupChatSeriesRequest), which
-						 * is the right place for it.
-						 */
-						rules={rules}
-						onChange={updateRules}
-						resetKey={selectedLanguage}
-					/>
-				</div>
+				<textarea
+					className="createChat__welcomeInput"
+					maxLength={120}
+					aria-label={t('groupChat.create.authorContent.welcome')}
+					placeholder={t('groupChat.create.authorContent.welcome')}
+					value={value.hintMessageTranslations?.[selectedLanguage] || ''}
+					onChange={(event) => updateHint(event.target.value)}
+				/>
+				<RuleChipsEditor
+					rules={rules}
+					onChange={updateRules}
+					resetKey={selectedLanguage}
+				/>
 			</div>
 			{translationError && (
 				<p role="alert">
 					{t('groupChat.create.authorContent.translationError')}
 				</p>
 			)}
-		</fieldset>
+		</div>
 	);
 };

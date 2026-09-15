@@ -836,6 +836,7 @@
 				"rules": "ሕግታት ጉጅለ",
 				"rule": "ሕጊ",
 				"addRule": "ሕጊ ወስኽ",
+				"removeLanguage": "ቋንቋ {{language}} ኣወግድ",
 				"removeRule": "ኣወግድ",
 				"translate": "ናብ ንጡፋት ቋንቋታት ተርጉም",
 				"translating": "ይትርጎም ኣሎ…",

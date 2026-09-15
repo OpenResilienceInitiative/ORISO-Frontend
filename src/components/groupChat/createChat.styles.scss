@@ -46,12 +46,17 @@ $inputSpacing: 32px;
 		}
 	}
 
+	/*
+	 * Figma 8467-27977 draws the card as a quiet filled surface, not an
+	 * outlined fieldset: no border, no legend, the boxes inside carry the
+	 * structure.
+	 */
 	&__authorContent {
-		border: 1px solid var(--m3-outline-variant, #d8dcdf);
-		border-radius: $box-border-radius;
+		background: none;
+		border: none;
 		box-sizing: border-box;
 		margin: 0;
-		padding: $grid-base-three;
+		padding: 0;
 		width: 100%;
 
 		label,
@@ -95,9 +100,9 @@ $inputSpacing: 32px;
 
 	&__translateButton {
 		align-items: center;
-		background: var(--m3-primary, $primary);
+		background: var(--m3-primary-container, #cc1e1c);
 		border: none;
-		border-radius: $box-border-radius;
+		border-radius: 12px;
 		color: var(--m3-on-primary, #ffffff);
 		cursor: pointer;
 		display: flex;
@@ -122,37 +127,91 @@ $inputSpacing: 32px;
 		}
 	}
 
-	&__languageTabs {
-		display: flex;
-		flex-wrap: wrap;
-		gap: $grid-base;
+	/*
+	 * Figma 8467-27977: the selected language is a filled secondary-container
+	 * chip carrying the globe; the others are outlined and offer a remove
+	 * control. The row scrolls rather than wraps, so the translate action stays
+	 * pinned to the right edge.
+	 */
+	&__languageChip {
+		align-items: center;
+		background: none;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 12px;
+		display: inline-flex;
+		flex: 0 0 auto;
+		overflow: hidden;
 
 		button {
+			align-items: center;
 			background: none;
-			border: 1px solid var(--m3-outline-variant, #c8c5ca);
-			border-radius: $box-border-radius;
+			border: none;
+			border-radius: 0;
+			color: var(--m3-on-surface, #1b1b1c);
 			cursor: pointer;
-			min-height: 48px;
-			min-width: 48px;
+			display: inline-flex;
+			gap: $grid-base;
+			min-height: 46px;
+			min-width: 0;
 			padding: $grid-base $grid-base-two;
-
-			&:hover:not(:disabled) {
-				background-color: rgba(27, 27, 28, 0.04);
-			}
-
-			&:focus-visible {
-				outline: 3px solid var(--m3-primary, $primary);
-				outline-offset: 2px;
-			}
 		}
 
-		button[aria-selected='true'] {
-			/* Bold weight in addition to colour so the active language tab is
-			   distinguishable without colour perception (WCAG 1.4.1). */
-			border-color: var(--m3-primary, $primary);
-			border-width: 2px;
-			color: var(--m3-primary, $primary);
-			font-weight: 700;
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+
+		&--selected {
+			background: var(--m3-secondary-container, #646d78);
+			border-color: var(--m3-secondary-container, #646d78);
+
+			button {
+				color: var(--m3-on-secondary-container, #e7effc);
+				font-weight: 700;
+			}
+		}
+	}
+
+	&__languageChipRemove {
+		align-items: center;
+		background: none;
+		border: none;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		display: inline-flex;
+		justify-content: center;
+		min-height: 46px;
+		padding-inline: $grid-base;
+
+		&:hover {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+	}
+
+	&__welcomeInput {
+		background: var(--m3-surface-container-low, #f6f3f3);
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 8px;
+		box-sizing: border-box;
+		color: var(--m3-on-surface, #1b1b1c);
+		display: block;
+		margin-top: $grid-base-two;
+		min-height: 128px;
+		padding: $grid-base-two;
+		resize: vertical;
+		width: 100%;
+	}
+
+	&__languageTabs {
+		display: flex;
+		gap: $grid-base;
+		min-width: 0;
+		overflow-x: auto;
+
+		/* The chip owns border, fill and focus; the buttons inside stay bare. */
+		button:focus-visible {
+			outline: 3px solid var(--m3-primary, $primary);
+			outline-offset: -3px;
 		}
 	}
 }
