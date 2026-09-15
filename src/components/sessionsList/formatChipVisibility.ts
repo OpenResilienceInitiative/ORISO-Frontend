@@ -25,7 +25,9 @@ export const getFormatChipVisibility = (
 	const availability = getConversationFormatAvailability(tenant);
 
 	return {
-		createGroupChat: showConsultantToolbarActions && availability.circle,
+		createGroupChat:
+			showConsultantToolbarActions &&
+			(availability.circle || availability.internal),
 		groups: showConsultantToolbarActions && availability.circle,
 		internalGroup: showConsultantToolbarActions && availability.internal
 	};
