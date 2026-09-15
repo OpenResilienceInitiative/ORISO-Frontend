@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { expect } from 'storybook/test';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,24 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/**
+ * Both stacked cards must read as one pair: same width, same height. They
+ * drifted by two pixels once because the columns did not stretch, which is
+ * exactly the kind of thing nobody sees in a diff.
+ */
+const expectCardsMatch = async (canvasElement: HTMLElement) => {
+	const columns = canvasElement.querySelector('.circleSettings__columns');
+	await expect(columns).not.toBeNull();
+	const [left, right] = Array.from(
+		(columns as HTMLElement).children
+	) as HTMLElement[];
+	await expect(right).toBeDefined();
+	const a = left.getBoundingClientRect();
+	const b = right.getBoundingClientRect();
+	await expect(Math.round(a.height)).toBe(Math.round(b.height));
+	await expect(Math.round(a.width)).toBe(Math.round(b.width));
+};
 
 const PEOPLE = [
 	'Sabine Leutheuser-Schnarrenberger',
@@ -423,7 +442,8 @@ export const CircleSettingsDesktop: Story = {
 		<DesktopShell>
 			<CircleSettings compact={false} />
 		</DesktopShell>
-	)
+	),
+	play: async ({ canvasElement }) => expectCardsMatch(canvasElement)
 };
 
 export const CircleSettingsMobile: Story = {

@@ -487,15 +487,28 @@ body.conversationCreate--active .navigation__wrapper {
 		max-width: 640px;
 	}
 
+	/*
+	 * Figma 8467:27977 sets both stacked cards to the same 360px width, 24px
+	 * apart. Stretching keeps them the same height as well, so neither card
+	 * ends a couple of pixels short of its neighbour.
+	 */
 	&__columns {
-		align-items: flex-start;
+		align-items: stretch;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 24px;
+
+		> * {
+			flex: 1 1 0;
+			max-width: 360px;
+			min-width: 280px;
+		}
 	}
 
+	/* The column decides the width now, so the card drops its fixed 360px. */
 	&__card {
-		flex-shrink: 0;
+		flex-shrink: 1;
+		width: auto;
 	}
 
 	/*
