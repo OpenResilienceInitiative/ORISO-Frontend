@@ -361,7 +361,7 @@ export const SessionsList = ({
 	} = useDisplayFilter(displayFilterSection);
 	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
-	const { untilM } = useResponsive();
+	const { untilL } = useResponsive();
 
 	const fetchEnquirySessionsWithAutoPage = useCallback(
 		(
@@ -1829,11 +1829,15 @@ export const SessionsList = ({
 		// sessions auto-read switch does. Off (the default) → hidden chats
 		// still count in the aggregate Unread chip; Anfragen has no switch and
 		// counts the visible rows.
+		// With the switch on, the retained (dimmed) active row of a hidden
+		// kind is exactly what must not count.
 		const unreadSource =
 			type === SESSION_LIST_TYPES.MY_SESSION &&
 			!listDisplayFilter.autoReadHidden
 				? sessionToolbarPairs
-				: displayVisiblePairs;
+				: displayVisiblePairs.filter(
+						(pair) => !hiddenActiveRowIds.has(sessionPairId(pair))
+					);
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
 			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
 			drafts: visibleUserDrafts.length
@@ -1848,6 +1852,7 @@ export const SessionsList = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		displayVisiblePairs,
+		hiddenActiveRowIds,
 		listDisplayFilter.autoReadHidden,
 		sessionToolbarPairs,
 		type,
@@ -2072,7 +2077,7 @@ export const SessionsList = ({
 				<DisplayFilterDialog
 					id={SESSIONS_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
-					fullScreen={untilM}
+					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={displayFilterKinds}
 					value={listDisplayFilter}

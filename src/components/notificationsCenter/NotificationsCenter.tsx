@@ -247,7 +247,7 @@ export const NotificationsCenter = () => {
 	// (master-detail) selection, but defers to the active conversation when one
 	// is open, so it can never disagree with the conversation/request lists.
 	const { selection: activeSelection } = useActiveListItem();
-	const { untilL, untilM, fromL } = useResponsive();
+	const { untilL, fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
@@ -1020,7 +1020,7 @@ export const NotificationsCenter = () => {
 				<DisplayFilterDialog
 					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
-					fullScreen={untilM}
+					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
 					value={timelineFilter}

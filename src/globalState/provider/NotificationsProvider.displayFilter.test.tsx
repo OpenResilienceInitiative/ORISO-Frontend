@@ -730,6 +730,84 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		expect(screen.getByTestId('server-total').textContent).toBe('1');
 	});
 
+	it('a failed bulk read is not retried in a loop: once per ordinary poll', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 40,
+			excludedEventTypes: []
+		});
+		apiMarkEventNotificationsReadByTypes.mockRejectedValue(
+			new Error('CATCH_ALL')
+		);
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			)
+		);
+		// Several debounce windows later: still one attempt.
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS * 4);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		// The next ordinary poll grants exactly one retry.
+		await advanceTimers(15000);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				2
+			)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS * 4);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(2);
+	});
+
+	it('a response for a previous exclusion set never makes the new set exact', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 9,
+			excludedEventTypes: []
+		});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		const late = deferred<unknown>();
+		apiGetEventNotifications.mockReturnValueOnce(late.promise);
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				...hideSystemAutoRead,
+				autoReadHidden: false
+			});
+		});
+		const { messageEventEmitter } = await import(
+			'../../services/messageEventEmitter'
+		);
+		messageEventEmitter.emit({}); // request for set A, still in flight
+		const requestedA = apiGetEventNotifications.mock.calls.at(-1)![2];
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				kinds: {
+					system: { show: false, pill: false },
+					calls: { show: false, pill: false }
+				},
+				autoReadHidden: false
+			}); // set B
+		});
+		late.resolve({
+			items: [item(1, 'message.new')],
+			unreadCount: 3,
+			excludedEventTypes: [...requestedA]
+		});
+		await advanceTimers(0);
+		await waitFor(() =>
+			expect(screen.getByTestId('server-total').textContent).toBe('3')
+		);
+		expect(screen.getByTestId('exact').textContent).toBe('bound');
+	});
+
 	it('bulk read 404 marks the server as older and the per-id path still runs', async () => {
 		apiGetEventNotifications.mockResolvedValue({
 			items: [item(1, 'message.new'), item(2, 'supervisor.added')],

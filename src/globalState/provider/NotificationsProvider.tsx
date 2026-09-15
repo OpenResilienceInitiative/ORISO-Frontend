@@ -334,6 +334,8 @@ export function NotificationsProvider(props) {
 	const bulkReadDoneIdsRef = useRef<Set<string>>(new Set());
 	/** Filter key of the last bulk read that succeeded (or was unsupported). */
 	const lastBulkReadKeyRef = useRef('');
+	/** Filter key whose bulk read failed: retried once per ordinary poll. */
+	const bulkReadFailedKeyRef = useRef('');
 	const settlementRef = useRef<{ anySuccess: boolean; failed: string[] }>({
 		anySuccess: false,
 		failed: []
@@ -369,6 +371,7 @@ export function NotificationsProvider(props) {
 		bulkReadPendingRef.current = false;
 		bulkReadScheduledRef.current = false;
 		lastBulkReadKeyRef.current = '';
+		bulkReadFailedKeyRef.current = '';
 	}, []);
 
 	// The Zeitstrahl display filter (#1377): the store needs no client to be
@@ -462,6 +465,12 @@ export function NotificationsProvider(props) {
 				setOlderNotificationsError(false);
 				if (!reconciliation && seq > cooldownSeqRef.current) {
 					cooldownRef.current = new Set();
+					if (bulkReadFailedKeyRef.current) {
+						// One retry of a failed bulk read per ordinary poll,
+						// never a tight loop (the effect re-runs per generation).
+						bulkReadFailedKeyRef.current = '';
+						setBulkReadGeneration((value) => value + 1);
+					}
 				}
 			} else {
 				setNotificationFeed((existing) =>
@@ -522,19 +531,21 @@ export function NotificationsProvider(props) {
 			const items: NotificationFeedItem[] = (response?.items || []).map(
 				normalizeEventNotification
 			);
-			// Exact only when the server echoes exactly what was asked (an
-			// older server ignores the parameter and echoes nothing).
+			// Exact only when the server echoes exactly the set the filter
+			// hides NOW (an older server ignores the parameter and echoes
+			// nothing; a response for a set the user has since changed is a
+			// bound, not an exact total for the new set).
 			const echoed = Array.isArray(response?.excludedEventTypes)
 				? [...response.excludedEventTypes].sort()
 				: [];
+			const current = hiddenEventTypesRef.current;
 			return handleFeedResponse({
 				page,
 				seq,
 				items,
 				unreadCount: Number(response?.unreadCount || 0),
 				reconciliation: options.reconciliation === true,
-				excludesHidden:
-					excluded.length > 0 && sameList(echoed, excluded)
+				excludesHidden: current.length > 0 && sameList(echoed, current)
 			});
 		},
 		[handleFeedResponse]
@@ -709,15 +720,17 @@ export function NotificationsProvider(props) {
 	 * server as older and the per-id path stays the only one.
 	 */
 	const markHiddenReadOnServer = useCallback(
-		async (eventTypes: ReadonlyArray<string>): Promise<boolean> => {
+		async (
+			eventTypes: ReadonlyArray<string>
+		): Promise<'done' | 'pending' | 'failed'> => {
 			if (bulkReadUnsupportedRef.current || eventTypes.length === 0) {
-				return true;
+				return 'done';
 			}
 			if (bulkReadPendingRef.current || !getValueFromCookie('keycloak')) {
-				// Not done: the effect runs again once the pending request has
-				// settled (`bulkReadGeneration`) and retries with the current
-				// set, so a filter changed mid-request is not skipped.
-				return false;
+				// Not done yet: the effect runs again once the pending request
+				// has settled (`bulkReadGeneration`) and retries with the
+				// current set, so a filter changed mid-request is not skipped.
+				return 'pending';
 			}
 			const feedEpoch = feedEpochRef.current;
 			bulkReadPendingRef.current = true;
@@ -726,7 +739,7 @@ export function NotificationsProvider(props) {
 				const result =
 					await apiMarkEventNotificationsReadByTypes(eventTypes);
 				if (feedEpoch !== feedEpochRef.current) {
-					return true;
+					return 'done';
 				}
 				settlementRef.current.anySuccess = true;
 				// The server has read them: reflect it on the loaded rows and
@@ -768,7 +781,7 @@ export function NotificationsProvider(props) {
 						Math.max(0, value - updated)
 					);
 				}
-				return true;
+				return 'done';
 			} catch (error) {
 				const message = (error as { message?: string })?.message;
 				if (
@@ -777,12 +790,12 @@ export function NotificationsProvider(props) {
 					(error as { status?: number })?.status === 404
 				) {
 					bulkReadUnsupportedRef.current = true;
-					return true;
+					return 'done';
 				}
-				// Anything else (500, network): not "done" — the next filter
-				// change tries again instead of leaving unloaded pages unread.
+				// Anything else (500, network): not "done" — retried once per
+				// ordinary poll or at the next filter change, never in a loop.
 				console.warn('Bulk hidden-read failed; will retry', error);
-				return false;
+				return 'failed';
 			} finally {
 				if (feedEpoch === feedEpochRef.current) {
 					bulkReadPendingRef.current = false;
@@ -813,6 +826,7 @@ export function NotificationsProvider(props) {
 		const key = hiddenEventTypes.join(',');
 		if (
 			key === lastBulkReadKeyRef.current ||
+			key === bulkReadFailedKeyRef.current ||
 			bulkReadUnsupportedRef.current
 		) {
 			return undefined;
@@ -824,9 +838,11 @@ export function NotificationsProvider(props) {
 			bulkReadScheduledRef.current = false;
 			// Recorded only once the request succeeded or the server is known
 			// to be older; a failed request must not count as done.
-			void markHiddenReadOnServer(hiddenEventTypes).then((done) => {
-				if (done) {
+			void markHiddenReadOnServer(hiddenEventTypes).then((result) => {
+				if (result === 'done') {
 					lastBulkReadKeyRef.current = key;
+				} else if (result === 'failed') {
+					bulkReadFailedKeyRef.current = key;
 				}
 			});
 		}, AUTO_READ_DEBOUNCE_MS);
