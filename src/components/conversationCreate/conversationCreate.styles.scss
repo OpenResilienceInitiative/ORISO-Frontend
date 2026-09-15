@@ -645,6 +645,16 @@ body.conversationCreate--active .navigation__wrapper {
 
 	.circleSettings__columns {
 		flex-direction: column;
+
+		/*
+		 * Stacked, the shared `flex: 1 1 0` would size the cards by HEIGHT and
+		 * collapse them to their basis. Each card owns its height here and
+		 * spans the full width.
+		 */
+		> * {
+			flex: 0 0 auto;
+			max-width: none;
+		}
 	}
 
 	.circleSettings__card {
