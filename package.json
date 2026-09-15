@@ -265,6 +265,7 @@
 		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts",
 		"test:credentials": "playwright test --config playwright.credentials.config.ts",
 		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
+		"emails:verify-call-binding": "vite-node src/emails/scripts/verifyCallEmailBinding.mts",
 		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
 		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts"
 	},
