@@ -11,6 +11,9 @@ $cc-on-surface: var(--m3-on-surface, #1b1b1c);
 $cc-on-surface-variant: var(--m3-on-surface-variant, #444748);
 $cc-secondary: var(--m3-secondary, #4c555f);
 $cc-secondary-container: var(--m3-secondary-container, #646d78);
+$cc-surface-container-lowest: var(--m3-surface-container-lowest, #ffffff);
+/* The 10% on-surface wash M3 puts under a disabled filled control. */
+$cc-disabled-surface: rgba(27, 27, 28, 0.1);
 $cc-elevation-1:
 	0px 1px 2px 0px rgba(0, 0, 0, 0.3),
 	0px 1px 3px 1px rgba(0, 0, 0, 0.15);
@@ -27,14 +30,14 @@ $cc-motion-easing: var(
 );
 
 .conversationCreate {
-	background: var(--m3-surface-container-lowest, #ffffff);
+	background: $cc-surface-container-lowest;
 	/*
 	 * Outline role, like both cards inside it. The recovered commit reached for
 	 * on-primary-container here, which is a foreground colour: bound to the
 	 * theme it paints a text colour onto the edge, and on the fallback #ffe2de
 	 * barely separates from the white surface at all.
 	 */
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border: 1px solid $cc-outline-variant;
 	border-radius: 32px;
 	box-sizing: border-box;
 	display: flex;
@@ -412,7 +415,7 @@ body.conversationCreate--active .navigation__wrapper {
 		}
 
 		.personSelectMenu__toggle {
-			background: rgba(27, 27, 28, 0.1);
+			background: $cc-disabled-surface;
 			color: $cc-on-surface-variant;
 		}
 	}
@@ -451,7 +454,7 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__createButton {
 		align-items: center;
-		background: rgba(27, 27, 28, 0.1);
+		background: $cc-disabled-surface;
 		border: none;
 		border-radius: 50%;
 		color: $cc-on-surface-variant;
@@ -532,9 +535,9 @@ body.conversationCreate--active .navigation__wrapper {
 	 * below hand over their own frame.
 	 */
 	&__authorColumn {
-		background: var(--m3-surface-container-low, #f6f3f3);
+		background: $cc-surface-container-low;
 		/* The node draws an outline around the whole card, not just the boxes. */
-		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border: 1px solid $cc-outline-variant;
 		border-radius: 28px;
 		box-sizing: border-box;
 		display: flex;
@@ -593,7 +596,7 @@ body.conversationCreate--active .navigation__wrapper {
 		 * Node values: a fully rounded 100px pill on a 10% on-surface wash,
 		 * 24/16 padding, an 8px gap to the 24px glyph, title-medium label.
 		 */
-		background: rgba(27, 27, 28, 0.1);
+		background: $cc-disabled-surface;
 		border: none;
 		border-radius: 100px;
 		box-sizing: border-box;
@@ -1023,7 +1026,7 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__input {
 		/* Same box as the welcome field above: outline role, 4px, body-large. */
-		background: var(--m3-surface-container-low, #f6f3f3);
+		background: $cc-surface-container-low;
 		border: 1px solid var(--m3-outline, #747878);
 		border-radius: 4px;
 		font-family: inherit;
