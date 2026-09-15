@@ -49,9 +49,9 @@ describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
 			})
 		],
 		[
-			'legacy SDK failure body',
+			'SDK-normalised failure with clear content',
 			makeEncryptedEvent({
-				msgtype: 'm.text',
+				msgtype: 'm.bad.encrypted',
 				body: '** Unable to decrypt: DecryptionError: missing room key **'
 			})
 		]
@@ -80,12 +80,6 @@ describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
 		expect(formatted.msg).toBe('Nachricht verschlüsselt');
 	});
 
-	/*
-	 * The body sniff is a last resort for SDK builds that only report a
-	 * failure in the text — it must not reach a plain `m.room.message`. In a
-	 * counselling chat someone may well write the error they saw, and their
-	 * sentence must survive.
-	 */
 	it('keeps a plain text message whose body mentions the SDK error', () => {
 		const formatted = formatMatrixTimelineEvent(
 			makeEvent({
@@ -100,6 +94,25 @@ describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
 			'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
 		);
 		expect(formatted.msg).not.toBe('Nachricht verschlüsselt');
+	});
+
+	it('preserves diagnostic quotations after decrypting an encrypted wire event', () => {
+		const content = {
+			msgtype: 'm.text',
+			body: 'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+		};
+		const event = {
+			...makeEvent(content),
+			getClearContent: () => content,
+			getWireType: () => 'm.room.encrypted',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		};
+
+		expect(
+			formatMatrixTimelineEvent(event, null, 'Nachricht verschlüsselt')
+				.msg
+		).toBe(content.body);
 	});
 
 	it('preserves the body of a successfully decrypted text message', () => {
