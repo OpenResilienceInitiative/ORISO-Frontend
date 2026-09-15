@@ -22,6 +22,13 @@ import {
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
+import {
+	isComposerBusy,
+	isTimelineAtBottom,
+	shouldClearAtBottomAfterSuppressedFollow,
+	shouldFollowNewMessage,
+	unreadCountAfterArrival
+} from '../messageSubmitInterface/timelineFollow';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
@@ -1604,10 +1611,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		if (
-			initialScrollCompleted &&
-			isMyMessageMatrix(messages[messages.length - 1]?.userId)
-		) {
+		const isOwnMessage = isMyMessageMatrix(
+			messages[messages.length - 1]?.userId
+		);
+		// Frank (14.09.): a reader who is not writing gets carried to the
+		// newest message; a reader who IS writing keeps their place and the
+		// composer's arrow lights up instead.
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+
+		if (initialScrollCompleted && isOwnMessage) {
 			resetUnreadCount();
 			scrollToEnd(0, true);
 		} else {
@@ -1630,17 +1647,57 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 			}
 
-			if (isScrolledToBottom && initialScrollCompleted) {
+			const shouldFollow =
+				initialScrollCompleted &&
+				shouldFollowNewMessage({
+					isOwnMessage,
+					atBottom: isScrolledToBottom,
+					isComposing: composing
+				});
+			if (shouldFollow) {
 				resetUnreadCount();
 				scrollToEnd(0, true);
+			} else if (
+				shouldClearAtBottomAfterSuppressedFollow({
+					initialScrollCompleted,
+					followed: shouldFollow,
+					atBottom: isScrolledToBottom
+				})
+			) {
+				// Review (CodeRabbit): appending a row fires no scroll event,
+				// so the flag would still say "at the bottom" although the
+				// newest message now sits below the fold. The composer-resize
+				// observer reads that flag — a writer whose composer grows one
+				// line would be scrolled to the newest message after all,
+				// which is exactly what declining to follow avoided. Do not
+				// clear during the first paint: the first remote message on
+				// an empty timeline would then stop later arrivals following.
+				setIsScrolledToBottom(false);
 			}
 
-			setNewMessages(messages.length - initMessageCount);
+			setNewMessages(
+				unreadCountAfterArrival(
+					messages.length,
+					initMessageCount,
+					initialScrollCompleted
+				)
+			);
 		}
 	}, [messages?.length]); // eslint-disable-line
 
 	useEffect(() => {
-		if (isScrolledToBottom) {
+		if (!isScrolledToBottom) {
+			return;
+		}
+		// …unless the reader is writing: then the badge on the composer's
+		// arrow is the only signal they get (Frank, 14.09.).
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+		if (!composing) {
 			resetUnreadCount();
 		}
 	}, [isScrolledToBottom]); // eslint-disable-line
@@ -1658,17 +1715,49 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	/* eslint-disable */
 	const handleScroll = useDebouncedCallback((e) => {
-		const scrollPosition = Math.round(
-			e.target.scrollHeight - e.target.scrollTop
+		// The ±1 px window this used to require was missed by every composer
+		// resize (auto-grow while typing, the drag handle, an info bar
+		// appearing) and by fractional layout heights — after which the chat
+		// silently stopped following new messages (T41).
+		setIsScrolledToBottom(
+			isTimelineAtBottom({
+				scrollTop: e.target.scrollTop,
+				scrollHeight: e.target.scrollHeight,
+				clientHeight: e.target.clientHeight
+			})
 		);
-		const containerHeight = e.target.clientHeight;
-		const isBottom =
-			scrollPosition >= containerHeight - 1 &&
-			scrollPosition <= containerHeight + 1;
-
-		setIsScrolledToBottom(isBottom);
 	}, 100);
 	/* eslint-enable */
+
+	/**
+	 * T41: the composer is absolutely positioned over the timeline and the
+	 * timeline reserves its measured height at the bottom. When it grows —
+	 * auto-grow while typing, the drag handle, an info bar — that reservation
+	 * grows with it, which pushes the last message up and out of sight for a
+	 * reader who was resting at the end. Follow the composer instead.
+	 */
+	const isScrolledToBottomRef = useRef(isScrolledToBottom);
+	isScrolledToBottomRef.current = isScrolledToBottom;
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		const dock = container
+			?.closest('.session')
+			?.querySelector<HTMLElement>('.messageSubmit__wrapper');
+		if (!container || !dock || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		let previousHeight = dock.getBoundingClientRect().height;
+		const observer = new ResizeObserver(() => {
+			const height = dock.getBoundingClientRect().height;
+			const grew = height > previousHeight;
+			previousHeight = height;
+			if (grew && isScrolledToBottomRef.current) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+		observer.observe(dock);
+		return () => observer.disconnect();
+	}, [activeSession?.rid]); // eslint-disable-line
 
 	const handleScrollToBottomButtonClick = () => {
 		const scrollContainer = scrollContainerRef.current;
@@ -1725,6 +1814,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setInitialScrollCompleted(true);
 			// Initial open should snap only the message container, without animated jumps.
 			scrollToEnd(0, false);
+			// Review (CodeRabbit): the first remote row can land before this
+			// flag flips, and the arrival effect would leave an unread count
+			// on a view that is about to jump to that message.
+			resetUnreadCount();
 		}
 	};
 
@@ -2208,7 +2301,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The same three steps for the team room — one counter each, so an
 	// unread badge on one channel never silences the other.
-const [teamSeenAt, setTeamSeenAt] = useState(0);
+	const [teamSeenAt, setTeamSeenAt] = useState(0);
 	useEffect(() => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);

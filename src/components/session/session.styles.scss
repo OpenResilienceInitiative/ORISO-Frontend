@@ -183,23 +183,30 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-y: auto;
 
 		// Figma 8641-34699: 16px inset inside the chat card (sides + top).
-		// Large bottom padding keeps the last message above the absolute composer.
-		padding: 16px 16px 240px;
+		// The bottom keeps the last message above the absolute composer.
+		// T41: `--composer-dock-height` is the composer's MEASURED height
+		// (`useComposerDock`, republished on every resize: auto-grow, drag
+		// handle, info bar, reply preview). The literals below are only the
+		// fallback for the first paint and for a browser without
+		// `ResizeObserver` — they used to be the whole answer, which is why a
+		// grown composer covered the newest messages and a resting one left a
+		// dead gap under the last one.
+		padding: 16px 16px
+			calc(var(--composer-dock-height, 240px) + #{$grid-base-three});
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
-		@include breakpoint($fromMedium) {
-			padding: 16px 16px 240px;
-		}
-
 		@media screen and (width <= 1366px) {
-			// iPad/tablet: keep last message + Reply action above composer.
-			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(
+				var(--composer-dock-height, 320px) + #{$grid-base-three} +
+					env(safe-area-inset-bottom, 0)
+			);
 		}
 
 		@media screen and (width <= 899px) {
-			// Leave scrollable space so the latest message "Reply" stays above
-			// the composer: one-line composer 120 + navigator 48 + dock 16 (T10).
-			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(
+				var(--composer-dock-height, 200px) + #{$grid-base-three} +
+					env(safe-area-inset-bottom, 0)
+			);
 		}
 	}
 

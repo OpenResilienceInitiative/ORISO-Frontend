@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useRef } from 'react';
+import clsx from 'clsx';
 import type { TFunction } from 'i18next';
 import MicIcon from '@mui/icons-material/Mic';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
@@ -114,7 +115,11 @@ export const DefaultActionBar = ({
 			<ToolbarButton
 				label={unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel}
 				onClick={onScrollToNewest}
-				className="composerToolbar__button--scrollToNewest"
+				className={clsx(
+					'composerToolbar__button--scrollToNewest',
+					unread > 0 &&
+						'composerToolbar__button--scrollToNewest--unread'
+				)}
 				data-cy="composer-scroll-to-newest"
 			>
 				<ArrowDownwardIcon fontSize="inherit" />
