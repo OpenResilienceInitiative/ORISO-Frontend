@@ -234,7 +234,12 @@ export const GroupChatAuthorContentFields = ({
 					</button>
 				)}
 			</div>
-			<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
+			<div
+				className="createChat__authorPanel"
+				role="tabpanel"
+				id={panelId}
+				aria-labelledby={tabId}
+			>
 				<textarea
 					className="createChat__welcomeInput"
 					maxLength={120}

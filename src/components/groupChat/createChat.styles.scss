@@ -209,6 +209,16 @@ $inputSpacing: 32px;
 		padding: 0;
 	}
 
+	/*
+	 * The node stacks the welcome and rule boxes 16px apart; without it they
+	 * share an edge and read as one field with a seam.
+	 */
+	&__authorPanel {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
 	/* The node gives the text fields the outline role and a 4px radius. */
 	&__welcomeInput {
 		background: var(--m3-surface-container-low, #f6f3f3);
@@ -220,6 +230,7 @@ $inputSpacing: 32px;
 		font-size: 16px;
 		letter-spacing: 0.5px;
 		line-height: 24px;
+		margin: 0;
 		min-height: 120px;
 		padding: 8px 16px;
 		resize: vertical;
