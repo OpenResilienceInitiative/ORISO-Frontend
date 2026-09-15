@@ -938,8 +938,18 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			margin-right: 0;
 			padding-right: 12px;
 			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
+
+			/*
+			 * Frank, 15.09.: the word sat 2 px below the envelope. The base
+			 * rule aligns on `end`, so icon and label hung from a shared
+			 * bottom edge rather than being centred on each other — and the
+			 * fixed 38 px height left 14 px of dead space above them. With
+			 * the height dropped, the row's own `flex-end` keeps the group
+			 * exactly where it was and the two children centre on each
+			 * other instead.
+			 */
+			align-items: center;
 		}
 
 		// Frank, 15.09.: the Mail modality reads in the primary colour —
