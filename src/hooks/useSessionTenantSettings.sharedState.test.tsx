@@ -32,10 +32,14 @@ const RESOLVED_TENANT = {
 const Probe = () => {
 	const context = React.useContext(TenantContext);
 	const [seeded, setSeeded] = React.useState(false);
+	// `setTenant` is stable for the provider's lifetime; the context *value* is
+	// not — it is rebuilt whenever the provider renders, so depending on it
+	// would re-seed the tenant and undo the refresh under test.
+	const setTenant = context.setTenant;
 	React.useEffect(() => {
-		context.setTenant(RESOLVED_TENANT as any);
+		setTenant(RESOLVED_TENANT as any);
 		setSeeded(true);
-	}, [context]);
+	}, [setTenant]);
 
 	return seeded ? <SessionProbe /> : null;
 };
