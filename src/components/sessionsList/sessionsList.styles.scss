@@ -292,6 +292,21 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// #1377 §5.2: the route-active row stays while its kind is hidden.
+	&__hiddenActiveRow {
+		opacity: 0.55;
+	}
+
+	// The hidden-active explanation as text, not only a title tooltip
+	// (keyboard, touch and screen-reader users see it too).
+	&__hiddenActiveRowHint {
+		margin: 0;
+		padding: 4px 16px 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	&__scrollContainer {
 		padding-top: 16px;
 		overflow: auto;

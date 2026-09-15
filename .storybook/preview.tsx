@@ -690,6 +690,17 @@ function MuiStoryShell({
 											notifications: [],
 											notificationFeed: [],
 											unreadNotificationCount: 0,
+											serverUnreadTotal: 0,
+											serverUnreadTotalExcludesHidden: false,
+											hasUnreadNotifications: false,
+											timelineDisplayFilter: {
+												kinds: {},
+												autoReadHidden: false
+											},
+											visibleUnreadCount: 0,
+											hiddenUnreadInLoadedPages: 0,
+											markNotificationsReadConfirmed:
+												async () => {},
 											setNotifications: () => {},
 											hasNotification: () => false,
 											addNotification: () => {},
@@ -833,6 +844,11 @@ const preview: Preview = {
 				phone390: {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				},
+				phone390Landscape: {
+					name: 'Phone 390 landscape (844×390)',
+					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
 				},
 				tablet834: {
