@@ -52,3 +52,23 @@ with the unchanged `sessionsListToolbar__chip*` rules (compare
 `SessionsListToolbar.stories.tsx`).
 
 Not covered here (later slices): persistence, list integration, rail badge.
+
+## Slice 2 — model, store, hook (2026-09-15)
+
+Pure logic, no UI: `src/utils/displayFilter/model.ts` (record, tolerant
+parse, `resolveEffective`, immutable writers), `src/utils/displayFilter/store.ts`
+(account-data key `org.oriso.display_filters`, user-scoped mirror
+`oriso.displayFilters.v1.<userId>`, synced gate on `PREPARED`/`SYNCING`,
+version rule, serialised writes with revision + attachment generation,
+detach hygiene, `storage`-event follow), `src/hooks/useDisplayFilter.ts`
+(`useDisplayFilterStoreBinding` mounted once in `AuthenticatedApp`,
+`useDisplayFilter(section)` for readers).
+
+| Check                                                                                             | Result                  |
+| ------------------------------------------------------------------------------------------------- | ----------------------- |
+| `vitest run --project unit src/utils/displayFilter` (spec §7 rules 1–5, version rule, §4)         | 2 files, 23 tests green |
+| `vitest run --project unit src/components/displayFilter src/utils/displayFilter src/i18n.test.ts` | 7 files, 78 tests green |
+| `eslint` on the new files + `AuthenticatedApp.tsx` (`--max-warnings=0`)                           | clean                   |
+| `tsc --noEmit` (app) · `tsc --noEmit -p tsconfig.storybook.json`                                  | clean                   |
+
+No screenshots: nothing renders differently yet (slice 3 wires the lists).

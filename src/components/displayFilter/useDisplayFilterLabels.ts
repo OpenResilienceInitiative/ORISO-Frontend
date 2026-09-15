@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DisplayFilterDialogLabels } from './DisplayFilterDialog';
 
-export type DisplayFilterSection = 'timeline' | 'sessions' | 'requests';
+import type { DisplayFilterSection } from '../../utils/displayFilter/model';
+
+export type { DisplayFilterSection };
 
 /**
  * Translated strings for the display-filter button and dialog (#1377). Kept

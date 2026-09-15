@@ -38,6 +38,7 @@ import {
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
 import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
@@ -65,6 +66,9 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	// #1377: the display-filter store follows the published client (and
+	// detaches on logout, before the storage hygiene runs).
+	useDisplayFilterStoreBinding();
 	const recoveryClients = useRef(new WeakSet<object>());
 	const recoveryMode = userData?.chatRecoveryMode;
 	const recoveryRevision = userData?.chatRecoveryPolicyRevision;
