@@ -312,6 +312,16 @@ class DisplayFilterStore {
 		}
 		this.extraKeys = unknownTopLevelKeys(raw);
 		this.confirmed = stored;
+		if (this.writeInFlight || this.writeDirty) {
+			// Our own write echoing back (or another device racing it) while
+			// a newer local update is queued: the optimistic state stays, the
+			// pending write carries it. Only the version rule still applies.
+			if (isNewerDisplayFiltersVersion(stored)) {
+				this.writeDirty = false;
+				this.setState({ filters: stored, readOnly: true });
+			}
+			return;
+		}
 		this.setState({
 			filters: stored,
 			source: 'account',

@@ -222,6 +222,28 @@ describe('display-filter store — review follow-ups (#1378)', () => {
 		expect(displayFilterStore.getState().writeFailed).toBe(false);
 	});
 
+	it('an account-data echo of write A does not drop queued update B', async () => {
+		const client = makeClient('@a:hs', {
+			initial: DEFAULT_DISPLAY_FILTERS,
+			deferWrites: true
+		});
+		displayFilterStore.attachClient(client as any);
+		displayFilterStore.setSection('timeline', hideCalls); // A (in flight)
+		displayFilterStore.setSection('sessions', hideCalls); // B (queued)
+		const echoOfA = client.setAccountData.mock.calls[0][1];
+		client.emitAccountData(DISPLAY_FILTERS_EVENT_TYPE, echoOfA);
+		expect(displayFilterStore.getState().filters.sections.sessions).toEqual(
+			hideCalls
+		);
+		client.pending.shift()!();
+		await flush();
+		expect(client.setAccountData).toHaveBeenCalledTimes(2);
+		expect(client.setAccountData.mock.calls[1][1].sections).toEqual({
+			timeline: hideCalls,
+			sessions: hideCalls
+		});
+	});
+
 	it('newer mirror and no account event: stays read-only, nothing seeded', () => {
 		localStorage.setItem(
 			mirrorKey('@a:hs'),

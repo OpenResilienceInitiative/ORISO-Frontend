@@ -1806,8 +1806,17 @@ export const SessionsList = ({
 	const toolbarChipCounts = React.useMemo(() => {
 		// Unread is derived from the Matrix client (#1147); `unreadVersion`
 		// re-runs this memo when notification counts or receipts change.
+		// §6.2: "Don't count hidden chats as unread" is the only thing the
+		// sessions auto-read switch does. Off (the default) → hidden chats
+		// still count in the aggregate Unread chip; Anfragen has no switch and
+		// counts the visible rows.
+		const unreadSource =
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			!listDisplayFilter.autoReadHidden
+				? sessionToolbarPairs
+				: displayVisiblePairs;
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
-			unread: countUnreadSessions(displayVisiblePairs.map((p) => p.raw)),
+			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
 			drafts: visibleUserDrafts.length
 		};
 		Object.entries(unreadByKind).forEach(([kind, count]) => {
@@ -1820,6 +1829,9 @@ export const SessionsList = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		displayVisiblePairs,
+		listDisplayFilter.autoReadHidden,
+		sessionToolbarPairs,
+		type,
 		unreadByKind,
 		visibleUserDrafts.length,
 		unreadVersion

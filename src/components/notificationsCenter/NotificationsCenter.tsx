@@ -450,8 +450,13 @@ export const NotificationsCenter = () => {
 	]);
 	// #1200: "Mark all as read" is only actionable while something is unread.
 	// The provider's counter is the server-backed total, so unread activity on
-	// pages that are not loaded yet still enables the action.
-	const hasUnreadActivity = unreadNotificationCount > 0;
+	// pages that are not loaded yet still enables the action. With the display
+	// filter (#1377 slice 7) that total leaves hidden kinds out, while ✓✓
+	// still clears everything server-side (spec §6.1): unread rows the filter
+	// hides on the loaded pages keep the action enabled.
+	const hasUnreadActivity =
+		unreadNotificationCount > 0 ||
+		notificationFeed.some((row) => !row.readAt);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image', 'Image'),

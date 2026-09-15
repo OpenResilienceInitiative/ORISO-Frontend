@@ -79,6 +79,12 @@ const Probe = () => {
 			<button onClick={() => void context.loadOlderNotifications()}>
 				load
 			</button>
+			<button onClick={() => void context.refreshNotificationFeed()}>
+				refresh
+			</button>
+			<button onClick={() => context.clearNotificationFeed()}>
+				clear
+			</button>
 			<button
 				onClick={() =>
 					context.addEventNotification({
@@ -495,6 +501,48 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		// was covered by the bulk read, not PATCHed a second time per id.
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
 		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
+	});
+
+	it("a feed reset drops pending-read bookkeeping: the next feed is not parked behind the old user's PATCH", async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 2
+		});
+		const patch = deferred<unknown>();
+		apiMarkEventNotificationRead.mockReturnValue(patch.promise);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await waitFor(() =>
+			expect(apiMarkEventNotificationRead).toHaveBeenCalledWith('2')
+		);
+		// Logout/clear while that PATCH is still in flight …
+		act(() => {
+			screen.getByText('clear').click();
+		});
+		await waitFor(() => expect(rows()).toBe(''));
+		// … the next user's first page must apply, not park.
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				kinds: {},
+				autoReadHidden: false
+			});
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(7, 'message.new')],
+			unreadCount: 1
+		});
+		act(() => {
+			screen.getByText('refresh').click();
+		});
+		await waitFor(() => expect(rows()).toBe('7:u'));
+		// The stale completion neither settles nor corrupts the new epoch.
+		patch.resolve({});
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(rows()).toBe('7:u');
+		expect(screen.getByTestId('server-total').textContent).toBe('1');
 	});
 
 	it('bulk read 404 marks the server as older and the per-id path still runs', async () => {

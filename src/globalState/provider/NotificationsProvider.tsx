@@ -326,6 +326,14 @@ export function NotificationsProvider(props) {
 	const readSettledFloorRef = useRef(0);
 	const pendingReadCountRef = useRef(0);
 	const pendingReadIdsRef = useRef<Set<string>>(new Set());
+	// A 404 from the bulk endpoint means an older server: fall back silently.
+	const bulkReadUnsupportedRef = useRef(false);
+	const bulkReadScheduledRef = useRef(false);
+	const bulkReadPendingRef = useRef(false);
+	/** Rows a successful bulk read already covered: never PATCHed per id. */
+	const bulkReadDoneIdsRef = useRef<Set<string>>(new Set());
+	/** Filter key of the last bulk read that succeeded (or was unsupported). */
+	const lastBulkReadKeyRef = useRef('');
 	const settlementRef = useRef<{ anySuccess: boolean; failed: string[] }>({
 		anySuccess: false,
 		failed: []
@@ -352,6 +360,15 @@ export function NotificationsProvider(props) {
 		parkedOlderRef.current = new Map();
 		cooldownRef.current = new Set();
 		bulkReadDoneIdsRef.current = new Set();
+		// Pending-read bookkeeping belongs to the previous epoch: a request
+		// still in flight for the old user must neither park the new user's
+		// first page nor settle into it (its completions check the epoch).
+		pendingReadCountRef.current = 0;
+		pendingReadIdsRef.current = new Set();
+		settlementRef.current = { anySuccess: false, failed: [] };
+		bulkReadPendingRef.current = false;
+		bulkReadScheduledRef.current = false;
+		lastBulkReadKeyRef.current = '';
 	}, []);
 
 	// The Zeitstrahl display filter (#1377): the store needs no client to be
@@ -372,12 +389,6 @@ export function NotificationsProvider(props) {
 	);
 	const hiddenEventTypesRef = useRef(hiddenEventTypes);
 	hiddenEventTypesRef.current = hiddenEventTypes;
-	// A 404 from the bulk endpoint means an older server: fall back silently.
-	const bulkReadUnsupportedRef = useRef(false);
-	const bulkReadScheduledRef = useRef(false);
-	const bulkReadPendingRef = useRef(false);
-	/** Rows a successful bulk read already covered: never PATCHed per id. */
-	const bulkReadDoneIdsRef = useRef<Set<string>>(new Set());
 	/** Latest feed for callbacks that must not wait for a re-render. */
 	const notificationFeedRef = useRef<NotificationFeedItem[]>([]);
 	notificationFeedRef.current = notificationFeed;
@@ -668,12 +679,14 @@ export function NotificationsProvider(props) {
 								settlementRef.current.failed.push(id);
 							})
 							.finally(() => {
+								if (feedEpoch !== feedEpochRef.current) {
+									// The epoch reset already dropped this
+									// request's bookkeeping.
+									return;
+								}
 								pendingReadIdsRef.current.delete(id);
 								pendingReadCountRef.current -= 1;
-								if (
-									pendingReadCountRef.current === 0 &&
-									feedEpoch === feedEpochRef.current
-								) {
+								if (pendingReadCountRef.current === 0) {
 									settlePendingReads();
 								}
 							})
@@ -761,20 +774,18 @@ export function NotificationsProvider(props) {
 				console.warn('Bulk hidden-read failed; will retry', error);
 				return false;
 			} finally {
-				bulkReadPendingRef.current = false;
-				pendingReadCountRef.current -= 1;
-				if (
-					pendingReadCountRef.current === 0 &&
-					feedEpoch === feedEpochRef.current
-				) {
-					settlePendingReads();
+				if (feedEpoch === feedEpochRef.current) {
+					bulkReadPendingRef.current = false;
+					pendingReadCountRef.current -= 1;
+					if (pendingReadCountRef.current === 0) {
+						settlePendingReads();
+					}
 				}
 				setBulkReadGeneration((value) => value + 1);
 			}
 		},
 		[settlePendingReads]
 	);
-	const lastBulkReadKeyRef = useRef('');
 	useEffect(() => {
 		if (
 			!timelineDisplayFilter.autoReadHidden ||
