@@ -216,7 +216,7 @@ $inputSpacing: 32px;
 	&__authorPanel {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: $grid-base-two;
 	}
 
 	/* The node gives the text fields the outline role and a 4px radius. */

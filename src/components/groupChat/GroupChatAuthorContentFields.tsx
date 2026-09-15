@@ -200,7 +200,16 @@ export const GroupChatAuthorContentFields = ({
 									{isSelected && <GlobeIcon aria-hidden />}
 									{language.toUpperCase()}
 								</button>
-								{!isSelected && languages.length > 1 && (
+								{/*
+								 * The source language carries the text every
+								 * other language is translated from, and the
+								 * submit sends `sourceLanguage` separately.
+								 * Dropping it would leave the request naming a
+								 * language it has no content for.
+								 */}
+								{!isSelected &&
+									language !== value.sourceLanguage &&
+									languages.length > 1 && (
 									<button
 										type="button"
 										className="createChat__languageChipRemove"
@@ -223,10 +232,17 @@ export const GroupChatAuthorContentFields = ({
 					<button
 						type="button"
 						className="createChat__translateButton"
+						aria-busy={isTranslating}
 						aria-label={t(
-							'groupChat.create.authorContent.translate'
+							isTranslating
+								? 'groupChat.create.authorContent.translating'
+								: 'groupChat.create.authorContent.translate'
 						)}
-						title={t('groupChat.create.authorContent.translate')}
+						title={t(
+							isTranslating
+								? 'groupChat.create.authorContent.translating'
+								: 'groupChat.create.authorContent.translate'
+						)}
 						disabled={isTranslating}
 						onClick={translateContent}
 					>

@@ -84,6 +84,12 @@ interface ScheduleRowsProps {
 	 * author has actually settled each one (Figma 8470-29945).
 	 */
 	valuesAreChosen?: boolean;
+	/**
+	 * Editing an existing series: its stored interval is a real decision, so the
+	 * repetition row opens on the frequency rather than the count. A creation
+	 * prefill also sets `valuesAreChosen`, which is why this is its own flag.
+	 */
+	isEditMode?: boolean;
 }
 
 export const ScheduleRows = ({
@@ -92,7 +98,8 @@ export const ScheduleRows = ({
 	language,
 	onLanguageChange,
 	languageOptions,
-	valuesAreChosen = false
+	valuesAreChosen = false,
+	isEditMode = false
 }: ScheduleRowsProps) => {
 	const { t: translate } = useTranslation();
 	const [openRow, setOpenRow] = useState<OpenRow>(null);
@@ -103,7 +110,7 @@ export const ScheduleRows = ({
 	 * a stale "34 mal" on the button.
 	 */
 	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
-		'count'
+		isEditMode ? 'interval' : 'count'
 	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);

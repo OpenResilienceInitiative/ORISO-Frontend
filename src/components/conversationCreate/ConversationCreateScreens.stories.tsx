@@ -62,12 +62,19 @@ type Story = StoryObj<typeof meta>;
  * exactly the kind of thing nobody sees in a diff.
  */
 const expectCardsMatch = async (canvasElement: HTMLElement) => {
-	const columns = canvasElement.querySelector('.circleSettings__columns');
-	await expect(columns).not.toBeNull();
-	const [left, right] = Array.from(
-		(columns as HTMLElement).children
-	) as HTMLElement[];
-	await expect(right).toBeDefined();
+	/*
+	 * Both cards are named, not taken by position: the right-hand column IS the
+	 * welcome-and-rules card — it carries the surface, outline and radius, and
+	 * the create action sits inside it, as the node draws it.
+	 */
+	const left = canvasElement.querySelector(
+		'.circleSettings__card'
+	) as HTMLElement;
+	const right = canvasElement.querySelector(
+		'.circleSettings__authorColumn'
+	) as HTMLElement;
+	await expect(left).not.toBeNull();
+	await expect(right).not.toBeNull();
 	const a = left.getBoundingClientRect();
 	const b = right.getBoundingClientRect();
 	await expect(Math.round(a.height)).toBe(Math.round(b.height));

@@ -834,7 +834,7 @@
 				"sourceLanguage": "Kaynak dil",
 				"welcome": "Karşılama (en fazla 120 karakter)",
 				"rules": "Grup kuralları",
-				"rule": "Kural",
+				"rule": "1. kural (en fazla 120 karakter)",
 				"addRule": "Kural ekle",
 				"removeLanguage": "{{language}} dilini kaldır",
 				"removeRule": "Kaldır",
