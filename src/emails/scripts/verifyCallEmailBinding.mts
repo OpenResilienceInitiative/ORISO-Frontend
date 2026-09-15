@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 const CALL_IDS = [
 	'anruf-erinnerung',
@@ -41,7 +42,7 @@ for (const id of CALL_IDS) {
 	if (!frontendEntry || !userServiceEntry) {
 		throw new Error(`missing call catalogue entry: ${id}`);
 	}
-	if (JSON.stringify(frontendEntry) !== JSON.stringify(userServiceEntry)) {
+	if (!isDeepStrictEqual(frontendEntry, userServiceEntry)) {
 		throw new Error(`call catalogue entry differs between repositories: ${id}`);
 	}
 
