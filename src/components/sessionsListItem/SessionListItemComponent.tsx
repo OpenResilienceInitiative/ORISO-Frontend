@@ -1025,7 +1025,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1500,7 +1500,14 @@ body: isMatrixBackedSession
 								/>
 							</div>
 						) : isAsker && !hasConsultantData ? (
-							<ConsultantSearchLoader size="32px" />
+							/* FE#1115: the same magnet as the chat header,
+							   without the black disc. The beam stays behind
+							   — the card clips, and that clip is what gives
+							   the card its rounded corners. */
+							<ConsultantSearchLoader
+								size="32px"
+								showBeam={false}
+							/>
 						) : !isAsker ? (
 							// Restored username+icon linkage: the asker card
 							// shows the SAME animal avatar the chat derives
