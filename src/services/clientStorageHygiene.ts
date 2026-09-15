@@ -31,10 +31,17 @@ export const LEGACY_DRAFT_STORAGE_KEY = 'oriso.chatDrafts.v1';
  * restore from. Shortening its life needs a real fix (show-before-logout, or
  * move it out of Web Storage) — tracked as an open decision on #1071 — not a
  * blind wipe here.
+ *
+ * The counsellor's last-open session route (#1193 Job 3) must survive
+ * sign-out by definition — "log out, log back in → the same session is open".
+ * It is keyed per user id, holds an in-app route with session/group ids only
+ * (never message content or tokens), is re-validated on read and expires
+ * after 30 days (`src/utils/lastOpenSession.ts`).
  */
 export const RETAINED_STORAGE_PREFIXES = [
 	'oriso.pendingRecoveryKey.',
-	'oriso.recoverySetupInFlight.'
+	'oriso.recoverySetupInFlight.',
+	'oriso.lastOpenSession.'
 ] as const;
 
 /**

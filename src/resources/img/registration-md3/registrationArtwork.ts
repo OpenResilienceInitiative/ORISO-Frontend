@@ -6,6 +6,12 @@ import whyInPerson from './why/persoenlich.webp';
 import processWrite from './process/step1-schreiben.webp';
 import processCounsellor from './process/step2-beraterin.webp';
 import processReply from './process/step3-antwort.webp';
+import liveWait from './process/live-wait.webp';
+import liveConsent from './process/live-consent.webp';
+import liveAnonymous from './process/live-anonymous.webp';
+import groupFormat from './selfhelp/group-format.webp';
+import groupAlias from './selfhelp/group-alias.webp';
+import groupDates from './selfhelp/group-dates.webp';
 
 /**
  * Artwork for the reworked registration screens — the final motifs Frank
@@ -49,6 +55,28 @@ export const whyLocalArtwork = {
 	stateLaw: delivered(whyStateLaw),
 	anonymous: delivered(whyAnonymous),
 	inPerson: delivered(whyInPerson)
+} as const;
+
+/**
+ * The three cards of the live chat's waiting room (Frank, 2026-09-06):
+ * waiting while the counsellors are with others, consenting once we know
+ * who, and anonymity — two laptops, a lock, and a clock that clears.
+ */
+export const liveChatArtwork = {
+	wait: delivered(liveWait),
+	consent: delivered(liveConsent),
+	anonymous: delivered(liveAnonymous)
+} as const;
+
+/**
+ * The three cards of the self-help explainer behind "Mehr erfahren" (Frank
+ * delivered them on 2026-09-07): how the group meets, why only an alias, and
+ * where the next dates and links appear.
+ */
+export const selfHelpArtwork = {
+	format: delivered(groupFormat),
+	alias: delivered(groupAlias),
+	dates: delivered(groupDates)
 } as const;
 
 /** The three cards of the post-registration handover screen. */

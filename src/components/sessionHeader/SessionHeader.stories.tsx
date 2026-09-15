@@ -132,7 +132,9 @@ const makeMembers = (count: number): MockMember[] =>
 const makeMatrixClientService = (members: MockMember[]) => {
 	const room = {
 		getJoinedMembers: () => members,
-		getMember: () => ({ powerLevel: 0 })
+		getMember: () => ({ powerLevel: 0 }),
+		// #1193 Job 1: the header reads the live timeline for latest-activity order.
+		getLiveTimeline: () => ({ getEvents: () => [] })
 	};
 	const client = {
 		getRoom: () => room,
@@ -468,7 +470,8 @@ export const GroupChatSmall: Story = {
 
 /**
  * Group chat with >4 members (27 here).
- * Expected (Figma #430): no avatars, a single "+N people" count badge instead.
+ * Expected (#1193 Job 2, Figma #430 cap): four overlapping avatars, then a
+ * "+23" chip for the participants that do not fit.
  */
 export const GroupChatLarge: Story = {
 	// Excluded from `vitest --project storybook`: the story's mock Matrix client
@@ -489,12 +492,12 @@ export const GroupChatLarge: Story = {
 			expect(
 				canvasElement.querySelector('.sessionInfo__memberCountNumber')
 					?.textContent
-			).toContain('+27');
-			// No stacked member avatars when the badge is shown.
+			).toContain('+23');
+			// Four stacked avatars, the remaining 23 collapse into the chip.
 			expect(
 				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
 					.length
-			).toBe(0);
+			).toBe(4);
 		});
 	}
 };

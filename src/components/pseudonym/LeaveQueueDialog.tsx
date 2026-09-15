@@ -20,6 +20,17 @@ export interface LeaveQueueDialogProps {
 	/** `true` while one of the actions is in flight. */
 	busy?: boolean;
 	/**
+	 * An explicit question to put above the body, already translated.
+	 *
+	 * The live chat's round X used to drop straight into this dialog, and
+	 * „Chat verlassen?" over a list of options did not read as a question that
+	 * wanted an answer (Frank, #1341 item 3). Rather than stack a second
+	 * dialog in front of this one — two modals for one decision — the caller
+	 * hands its own wording to the dialog that is already asking. Omitted
+	 * everywhere else, which leaves those callers exactly as they were.
+	 */
+	confirmPrompt?: string;
+	/**
 	 * Set when ending the conversation failed. Surfaced as a live alert and
 	 * the confirmation stays reachable, so the asker can retry — swallowing
 	 * the failure would leave them believing they had left while the account
@@ -71,7 +82,8 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 	onStartChat,
 	onDeleteAccess,
 	busy = false,
-	errorMessage
+	errorMessage,
+	confirmPrompt
 }) => {
 	const { t } = useTranslation();
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -126,6 +138,10 @@ export const LeaveQueueDialog: React.FC<LeaveQueueDialogProps> = ({
 						)}
 					</h2>
 				</div>
+
+				{confirmPrompt && (
+					<p className="leaveQueueDialog__warning">{confirmPrompt}</p>
+				)}
 
 				<p className="leaveQueueDialog__body">
 					{canStartChat

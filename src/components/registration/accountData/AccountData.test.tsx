@@ -57,7 +57,8 @@ const tenantWith = (
 
 const renderAccountData = (
 	tenant: TenantDataInterface,
-	registrationData: Record<string, unknown> = {}
+	registrationData: Record<string, unknown> = {},
+	temporary = false
 ) =>
 	render(
 		<LegalLinksContext.Provider
@@ -87,7 +88,10 @@ const renderAccountData = (
 					<TenantContext.Provider
 						value={{ tenant, setTenant: () => {} }}
 					>
-						<AccountData onChange={() => {}} />
+						<AccountData
+							onChange={() => {}}
+							temporary={temporary}
+						/>
 					</TenantContext.Provider>
 				</RegistrationContext.Provider>
 			</LocaleContext.Provider>
@@ -190,5 +194,57 @@ describe('AccountData — department legal accordion', () => {
 		expect(
 			screen.queryByText('registration.agency.legal.headline')
 		).toBeNull();
+	});
+});
+
+/**
+ * A temporary join mints a password nobody ever sees. Switching back to
+ * "Konto anlegen" used to leave it in both fields, masked: the person then
+ * created a permanent account with a password they could not recover, and the
+ * sentence that warned them was gone with the temporary mode (review on
+ * ORISO-Frontend#1333, 2026-09-07).
+ */
+describe('AccountData — leaving the temporary join', () => {
+	it('does not hand the minted password to the permanent account', () => {
+		const view = renderAccountData(tenantWith({}), {}, true);
+
+		view.rerender(
+			<LegalLinksContext.Provider value={[]}>
+				<LocaleContext.Provider
+					value={{
+						locale: 'de',
+						initLocale: 'de',
+						setLocale: () => {},
+						locales: ['de'],
+						selectableLocales: ['de']
+					}}
+				>
+					<RegistrationContext.Provider
+						value={{
+							setDisabledNextButton: () => {},
+							registrationData: {}
+						}}
+					>
+						<TenantContext.Provider
+							value={{
+								tenant: tenantWith({}),
+								setTenant: () => {}
+							}}
+						>
+							<AccountData
+								onChange={() => {}}
+								temporary={false}
+							/>
+						</TenantContext.Provider>
+					</RegistrationContext.Provider>
+				</LocaleContext.Provider>
+			</LegalLinksContext.Provider>
+		);
+
+		const passwordFields = Array.from(
+			document.querySelectorAll('input[type="password"]')
+		) as HTMLInputElement[];
+		expect(passwordFields.length).toBeGreaterThan(0);
+		passwordFields.forEach((field) => expect(field.value).toBe(''));
 	});
 });

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import { readLastOpenSession } from '../../utils/lastOpenSession';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
@@ -269,7 +270,14 @@ export const Login = () => {
 					!consultant ||
 					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 				) {
-					return redirectToApp(gcid, { navigate });
+					// #1193 Job 3: counsellors resume the session they last had open.
+					const restorePath = hasUserAuthority(
+						AUTHORITIES.CONSULTANT_DEFAULT,
+						userData
+					)
+						? readLastOpenSession(userData.userId)
+						: null;
+					return redirectToApp(gcid, { navigate, restorePath });
 				}
 			}),
 		[

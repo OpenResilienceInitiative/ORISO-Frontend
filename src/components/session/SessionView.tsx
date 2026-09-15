@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
 	SessionTypeContext,
@@ -24,11 +24,13 @@ import { SessionStream } from './SessionStream';
 import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
+import { rememberLastOpenSession } from '../../utils/lastOpenSession';
 
 export const SessionView = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -50,6 +52,14 @@ export const SessionView = () => {
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+
+	// #1193 Job 3: remember the session the counsellor is looking at so the next
+	// sign-in resumes it. The helper only accepts consultant session routes.
+	useEffect(() => {
+		if (activeSessionReady && activeSession) {
+			rememberLastOpenSession(userData?.userId, pathname);
+		}
+	}, [activeSessionReady, activeSession, pathname, userData?.userId]);
 
 	const { fromL } = useResponsive();
 	useEffect(() => {

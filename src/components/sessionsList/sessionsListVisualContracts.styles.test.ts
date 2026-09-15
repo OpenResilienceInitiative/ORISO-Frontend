@@ -50,8 +50,14 @@ describe('session list visual contracts', () => {
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
 		);
-		expect(css).toContain('[data-scrollable=true]');
-		expect(css).toContain('top: var(--sessions-list-thumb-top);');
-		expect(css).toContain('height: var(--sessions-list-thumb-height);');
+		// #1196: the bar is a handle, not a scrollbar thumb. It keeps its place
+		// in the middle of the panel when the list overflows, so nothing may
+		// reposition or resize it from the scroll offset.
+		expect(css).toMatch(
+			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*transform:\s*translateY\(-50%\);/s
+		);
+		expect(css).not.toContain('--sessions-list-thumb-top');
+		expect(css).not.toContain('--sessions-list-thumb-height');
+		expect(css).not.toContain('[data-scrollable=true]');
 	});
 });

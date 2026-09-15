@@ -84,6 +84,11 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
+			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
+			"subline": "Wähle einen Tag und danach eine Uhrzeit."
+		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
 			"title": "Deine Verfügbarkeit"
@@ -334,6 +339,26 @@
 				"deleteRule": "Regel {{index}} löschen",
 				"addRule": "Regel hinzufügen",
 				"ruleChip": "Regel Nr. {{index}}"
+			}
+		},
+		"entry": {
+			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
+			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+		},
+		"info": {
+			"gallery": {
+				"steps": {
+					"formats": {
+						"text": "Am Namen erkennst du, ob ihr schreibt, sprecht, euch seht oder alles kombiniert. Ton und Kamera schaltest du bei Bedarf dazu."
+					},
+					"alias": {
+						"text": "Alles ist Ende-zu-Ende verschlüsselt. Nenne trotzdem keine echten Namen – das schützt alle."
+					},
+					"dates": {
+						"text": "Im Link-Bereich findest du regelmäßig frische Treffen und gelangst direkt zum nächsten Termin."
+					}
+				}
 			}
 		}
 	},
@@ -1010,6 +1035,7 @@
 				"addressLabel": "Adresse",
 				"hoursLabel": "Öffnungszeiten",
 				"languagesLabel": "Sprachen",
+				"languagesTooltip": "Diese Beratungsstelle berät Dich auf:",
 				"less": "Weniger",
 				"more": "Mehr",
 				"navigate": "Navigation starten",
@@ -1132,6 +1158,10 @@
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."
+			},
+			"temporary": {
+				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
+				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
 			}
 		},
 		"errors": {
@@ -2133,7 +2163,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
-			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal."
+			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
+			"notAllowed": "Für Dein Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktiere unseren Support."
 		},
 		"accountProtection": {
 			"headline": "Dein Zugang, zusätzlich geschützt",
@@ -2235,6 +2266,97 @@
 				},
 				"archive": {
 					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
+				}
+			}
+		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Deine Atempause",
+			"introTitle": "Ein Moment für dich.",
+			"intro": {
+				"0": "Folge der Bewegung.",
+				"1": "Atme so, wie es sich angenehm anfühlt."
+			},
+			"reducedIntro": {
+				"0": "Atme in deinem Tempo.",
+				"1": "Die Anleitung begleitet dich."
+			},
+			"pausedHint": {
+				"0": "Atme in deinem Rhythmus.",
+				"1": "Du kannst gleich weitermachen."
+			},
+			"finishTitle": "Nimm mit, was dir guttut.",
+			"guidance": {
+				"0": {
+					"1": "Dein Bauch darf sich heben."
+				},
+				"1": {
+					"0": "Lass die Schultern locker.",
+					"1": "Nur so lange es dir guttut."
+				},
+				"2": {
+					"1": "Dein Bauch darf wieder sinken."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Lass den Atem kommen.",
+					"1": "Du musst nichts erzwingen."
+				},
+				"1": {
+					"0": "Nimm deine Schultern wahr.",
+					"1": "Lass sie ein wenig sinken."
+				},
+				"2": {
+					"0": "Lass den Atem ziehen."
+				},
+				"3": {
+					"0": "Spüre, wie du gerade sitzt.",
+					"1": "Du darfst dir Zeit lassen."
+				}
+			},
+			"voiceHint": "Mit der Stimme deines Geräts",
+			"audioError": "Klang ist gerade nicht verfügbar. Du kannst ohne Klang weiteratmen.",
+			"voiceError": "Die Ansage ist nicht verfügbar. Der Atemwind begleitet dich weiter."
+		},
+		"entry": {
+			"status": {
+				"access": "Dein Zugang für dieses Gespräch",
+				"accepted": "Eine Beraterin hat dein Gespräch angenommen"
+			},
+			"access": {
+				"headline": "Dein Name für heute.",
+				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
+				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
+			},
+			"waiting": {
+				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"aheadNone": "Du bist als Nächstes dran.",
+				"aheadOne": "Eine Person vor dir",
+				"aheadMany": "{{count}} Personen vor dir",
+				"barStatusUnknown": "Du musst nichts tun",
+				"barStatus": "{{count}} vor dir — du musst nichts tun",
+				"yourTurn": "Du bist dran.",
+				"yourTurnSub": "Eine Beraterin hat dein Gespräch angenommen und wartet auf dich.",
+				"consentRequired": "Bitte stimme erst zu — ohne deine Zustimmung kann das Gespräch nicht beginnen.",
+				"startStatus": "Deine Beraterin wartet auf dich",
+				"declineConfirm": "Bist du sicher, dass du abbrechen und schließen willst?"
+			},
+			"closed": {
+				"text": "Gerade ist niemand im Live-Chat. Schreib uns — wir antworten innerhalb von zwei Arbeitstagen.",
+				"textShort": "Schreib uns — Antwort in zwei Arbeitstagen."
+			},
+			"steps": {
+				"wait": {
+					"title": "Du wartest, bis jemand frei ist"
+				},
+				"consent": {
+					"title": "Dann stimmst du einmal zu",
+					"text": "Sobald eine Stelle dein Gespräch annimmt, siehst du ihren Datenschutz."
+				},
+				"anonymous": {
+					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
 		}

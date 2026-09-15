@@ -39,6 +39,14 @@ interface StageLayoutProps {
 	showRegistrationInfoDrawer?: boolean;
 	/** Mobile head presentation — `bar` is the slim 8a brand row. */
 	mobileHero?: 'hero' | 'bar';
+	/**
+	 * Content at the start of the desktop header row, opposite the language
+	 * and login controls — the waiting area puts the group's topic and name
+	 * there (Frank, 2026-09-05: "im Header das Thema der Gruppe"). Desktop
+	 * only; below the `lg` breakpoint the header row does not exist and the
+	 * caller places it in the column.
+	 */
+	headerStart?: ReactNode;
 }
 
 export const StageLayout = ({
@@ -51,7 +59,8 @@ export const StageLayout = ({
 	loginParams,
 	registrationUrl,
 	showRegistrationInfoDrawer,
-	mobileHero = 'hero'
+	mobileHero = 'hero',
+	headerStart
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -133,6 +142,22 @@ export const StageLayout = ({
 						}
 					}}
 				>
+					{headerStart && (
+						<Box
+							className="stageLayout__headerStart"
+							/* The header row spans the whole page, the white
+							   column only its right 60vw (the same split the
+							   footer bar uses). Without the offset the slot
+							   lands over the red stage. */
+							sx={{
+								mr: 'auto',
+								ml: { lg: '40vw' },
+								minWidth: 0
+							}}
+						>
+							{headerStart}
+						</Box>
+					)}
 					{selectableLocales.length > 1 && (
 						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
 							<LocaleSwitchPill />

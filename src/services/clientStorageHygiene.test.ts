@@ -120,7 +120,8 @@ describe('clientStorageHygiene (#1071)', () => {
 		it('exposes the retained prefixes so the exception stays reviewable', () => {
 			expect(RETAINED_STORAGE_PREFIXES).toEqual([
 				'oriso.pendingRecoveryKey.',
-				'oriso.recoverySetupInFlight.'
+				'oriso.recoverySetupInFlight.',
+				'oriso.lastOpenSession.'
 			]);
 		});
 

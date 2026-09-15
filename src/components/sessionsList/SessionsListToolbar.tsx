@@ -16,26 +16,42 @@ import {
 } from './SessionToolbarFilterIcons';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import {
+	SessionSearchAgencyOption,
 	SessionSearchPanel,
+	SessionSearchPersonOption,
 	SessionSearchTab,
 	SessionSearchTopicOption,
 	SessionSearchTypeOption
 } from './SessionSearchPanel';
+import {
+	filterSearchPeople,
+	SessionSearchPersonResult
+} from './sessionSearchPeople';
 
 export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 export type {
+	SessionSearchAgencyOption,
+	SessionSearchPersonOption,
 	SessionSearchTab,
 	SessionSearchTopicOption,
 	SessionSearchTypeOption
 } from './SessionSearchPanel';
+export type { SessionSearchPersonResult } from './sessionSearchPeople';
 
 interface SessionsListToolbarProps {
 	translate: (key: string) => string;
 	searchValue: string;
 	onSearchChange: (value: string) => void;
-	searchPeopleResults?: SessionSearchPersonResult[];
+	searchPeopleResults?: SessionSearchPersonOption[];
 	selectedPersonIds?: string[];
 	onSelectedPersonIdsChange?: (ids: string[]) => void;
+	/**
+	 * Agencies the signed-in counsellor belongs to (#1195 JOB1). Multi-select,
+	 * so a counsellor in two agencies can filter along both at once.
+	 */
+	searchAgencyResults?: SessionSearchAgencyOption[];
+	selectedAgencyIds?: string[];
+	onSelectedAgencyIdsChange?: (ids: string[]) => void;
 	/** Topic options for the "Counselling centre" tab (radio single-select). */
 	searchTopicResults?: SessionSearchTopicOption[];
 	selectedTopicId?: string | null;
@@ -67,12 +83,6 @@ interface SessionsListToolbarProps {
 	/** Create-group-chat route is open. */
 	createGroupChatActive: boolean;
 	chipCounts?: Partial<Record<SessionToolbarChipFilter, number>>;
-}
-
-export interface SessionSearchPersonResult {
-	id: string;
-	name: string;
-	subtitle: string;
 }
 
 export const IconMenuDots = () => (
@@ -250,6 +260,9 @@ export const SessionsListToolbar = ({
 	searchPeopleResults = [],
 	selectedPersonIds = [],
 	onSelectedPersonIdsChange,
+	searchAgencyResults = [],
+	selectedAgencyIds = [],
+	onSelectedAgencyIdsChange,
 	searchTopicResults = [],
 	selectedTopicId = null,
 	onSelectedTopicIdChange,
@@ -293,20 +306,16 @@ export const SessionsListToolbar = ({
 		[onSelectedPersonIdsChange, selectedPersonIds]
 	);
 
-	const filteredPeople = React.useMemo(() => {
-		const needle = searchValue.trim().toLowerCase();
-		if (selectedPersonIds.length > 0 && !needle) {
-			return searchPeopleResults.filter((entry) =>
-				selectedPersonIds.includes(entry.id)
-			);
-		}
-		if (!needle) {
-			return searchPeopleResults.slice(0, 8);
-		}
-		return searchPeopleResults.filter((entry) =>
-			`${entry.name} ${entry.subtitle}`.toLowerCase().includes(needle)
-		);
-	}, [searchPeopleResults, searchValue, selectedPersonIds]);
+	/**
+	 * JOB7 — selection state must not remove rows. The list previously
+	 * collapsed to the current selection whenever the query was empty (and
+	 * toggling a person clears the query), so a second person could never be
+	 * picked. The 10-per-page cap now lives in the panel's auto-pagination.
+	 */
+	const filteredPeople = React.useMemo(
+		() => filterSearchPeople(searchPeopleResults, searchValue),
+		[searchPeopleResults, searchValue]
+	);
 	const tr = React.useCallback(
 		(key: string, fallback: string) => {
 			const translated = translate(key);
@@ -615,6 +624,17 @@ export const SessionsListToolbar = ({
 						topics={filteredTopics}
 						selectedTopicId={selectedTopicId}
 						onTopicSelect={(id) => onSelectedTopicIdChange?.(id)}
+						agencies={searchAgencyResults}
+						selectedAgencyIds={selectedAgencyIds}
+						onAgencyToggle={(agencyId) =>
+							onSelectedAgencyIdsChange?.(
+								selectedAgencyIds.includes(agencyId)
+									? selectedAgencyIds.filter(
+											(id) => id !== agencyId
+										)
+									: [...selectedAgencyIds, agencyId]
+							)
+						}
 					/>
 				)}
 			</div>

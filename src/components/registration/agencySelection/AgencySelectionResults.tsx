@@ -24,7 +24,6 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useTranslation } from 'react-i18next';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
-import { AgencyLanguages } from './AgencyLanguages';
 import { AgencyDetailsPanel } from './AgencyDetailsPanel';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
@@ -183,16 +182,6 @@ export const AgencySelectionResults = ({
 								border: `1px solid ${registrationMd3.outlineVariant}`
 							}}
 						/>
-						<Typography
-							variant="body2"
-							sx={{
-								color: registrationMd3.onSurfaceVariant,
-								mt: '8px'
-							}}
-						>
-							{t('registration.agency.result.languages')}
-						</Typography>
-						<AgencyLanguages agencyId={agency.id} />
 					</Box>
 					<Button
 						type="button"

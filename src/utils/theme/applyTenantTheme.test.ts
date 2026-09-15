@@ -55,6 +55,169 @@ describe('seed reading (legacy compatible)', () => {
 	});
 });
 
+/**
+ * #1256: an empty/invalid seed must not discard the rest of the palette.
+ * Empty string, whitespace and absent are the same (no seed). Invalid hex
+ * is dropped for that field only.
+ */
+describe('independent seed fallback (#1256)', () => {
+	const VALID_PRIMARY = '#A5000A';
+	const VALID_ACCENT = '#646d78';
+	const VALID_SIGNAL = '#b1005e';
+	const BLANK = ['', '   ', undefined] as const;
+	const INVALID_HEX = 'not-a-hex';
+
+	it('treats empty, whitespace and absent primary as no palette', () => {
+		for (const primaryColor of [...BLANK, null]) {
+			expect(readTenantSeeds({ primaryColor })).toBeNull();
+		}
+	});
+
+	it('treats empty, whitespace and absent accent as absent', () => {
+		for (const accent of BLANK) {
+			expect(
+				readTenantSeeds({ primaryColor: VALID_PRIMARY, accent })
+			).toEqual({
+				primary: VALID_PRIMARY,
+				accent: undefined,
+				signal: undefined
+			});
+		}
+	});
+
+	it('treats empty, whitespace and absent signal as absent', () => {
+		for (const signal of BLANK) {
+			expect(
+				readTenantSeeds({ primaryColor: VALID_PRIMARY, signal })
+			).toEqual({
+				primary: VALID_PRIMARY,
+				accent: undefined,
+				signal: undefined
+			});
+		}
+	});
+
+	it('applies a valid primary when accent is empty, whitespace, absent or invalid-hex', () => {
+		const { tokens } = computeOrisoPalette(
+			{ primary: VALID_PRIMARY },
+			'light'
+		);
+		for (const accent of [...BLANK, INVALID_HEX]) {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			const applied = applyTenantPalette(
+				{ primaryColor: VALID_PRIMARY, accent },
+				root
+			);
+			expect(applied, `accent=${String(accent)}`).toBe(true);
+			expect(root.style.getPropertyValue('--m3-primary')).toBe(
+				tokens['--m3-primary']
+			);
+			warn.mockRestore();
+		}
+	});
+
+	it('applies a valid primary when signal is empty, whitespace, absent or invalid-hex', () => {
+		const { tokens } = computeOrisoPalette(
+			{ primary: VALID_PRIMARY },
+			'light'
+		);
+		for (const signal of [...BLANK, INVALID_HEX]) {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			const applied = applyTenantPalette(
+				{ primaryColor: VALID_PRIMARY, signal },
+				root
+			);
+			expect(applied, `signal=${String(signal)}`).toBe(true);
+			expect(root.style.getPropertyValue('--m3-primary')).toBe(
+				tokens['--m3-primary']
+			);
+			warn.mockRestore();
+		}
+	});
+
+	it('keeps a valid accent when signal is empty or invalid-hex', () => {
+		const { tokens } = computeOrisoPalette(
+			{ primary: VALID_PRIMARY, accent: VALID_ACCENT },
+			'light'
+		);
+		for (const signal of ['', '   ', INVALID_HEX]) {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			expect(
+				applyTenantPalette(
+					{
+						primaryColor: VALID_PRIMARY,
+						accent: VALID_ACCENT,
+						signal
+					},
+					root
+				)
+			).toBe(true);
+			expect(root.style.getPropertyValue('--m3-secondary')).toBe(
+				tokens['--m3-secondary']
+			);
+			warn.mockRestore();
+		}
+	});
+
+	it('keeps a valid signal when accent is empty or invalid-hex', () => {
+		const { tokens } = computeOrisoPalette(
+			{ primary: VALID_PRIMARY, signal: VALID_SIGNAL },
+			'light'
+		);
+		for (const accent of ['', '   ', INVALID_HEX]) {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			expect(
+				applyTenantPalette(
+					{
+						primaryColor: VALID_PRIMARY,
+						accent,
+						signal: VALID_SIGNAL
+					},
+					root
+				)
+			).toBe(true);
+			expect(root.style.getPropertyValue('--m3-error')).toBe(
+				tokens['--m3-error']
+			);
+			warn.mockRestore();
+		}
+	});
+
+	it('does not apply when primary is empty, whitespace, absent or invalid-hex', () => {
+		for (const primaryColor of [...BLANK, INVALID_HEX]) {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			expect(
+				applyTenantPalette(
+					{
+						primaryColor,
+						accent: VALID_ACCENT,
+						signal: VALID_SIGNAL
+					},
+					root
+				)
+			).toBe(false);
+			expect(root.style.length).toBe(0);
+			warn.mockRestore();
+		}
+	});
+
+	it('does not warn all-or-nothing when only accent and signal are empty strings', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const root = freshRoot();
+		const applied = applyTenantPalette(
+			{ primaryColor: VALID_PRIMARY, accent: '', signal: '' },
+			root
+		);
+		expect(applied).toBe(true);
+		expect(warn).not.toHaveBeenCalled();
+	});
+});
+
 describe('palette injection at :root (Test #18, UAT-D)', () => {
 	it('sets every engine token as a custom property', () => {
 		const root = freshRoot();

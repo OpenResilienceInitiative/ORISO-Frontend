@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
 	getLatestMatrixRoomPreview,
 	getPreviewLastMessageType
@@ -68,6 +69,25 @@ describe('getLatestMatrixRoomPreview', () => {
 				)
 			])
 		).toEqual({ kind: 'text', text: 'Ältere lesbare Nachricht' });
+	});
+
+	it('shows an Erstantwort kind instead of the raw FIRST_RESPONSE JSON', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'FIRST_RESPONSE',
+			version: 1,
+			bausteine: [
+				{
+					id: 'greeting',
+					body: 'Schön, dass Sie sich gemeldet haben.'
+				}
+			]
+		})}`;
+
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({ kind: 'first_response', text: null });
 	});
 
 	it('uses an Element-style semantic preview for voice messages', () => {

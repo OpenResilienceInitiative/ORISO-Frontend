@@ -6,8 +6,7 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
-	ActiveSessionContext,
-	useTopic
+	ActiveSessionContext
 } from '../../globalState';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
@@ -32,11 +31,10 @@ import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import { FALLBACK_LNG } from '../../i18n';
 import { WaitingAreaRules } from './WaitingAreaRules';
 import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
-import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
+import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { translateWithFallback } from '../../utils/translationFallback';
@@ -50,10 +48,7 @@ export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
-	const { t: translate, i18n } = useTranslation([
-		'common',
-		'consultingTypes'
-	]);
+	const { t: translate } = useTranslation(['common', 'consultingTypes']);
 	const tr = useCallback(
 		(key: string, fallback: string, options?: Record<string, unknown>) =>
 			translateWithFallback(translate, key, fallback, options),
@@ -66,7 +61,6 @@ export const JoinGroupChatView = ({
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const topic = useTopic(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -266,58 +260,19 @@ export const JoinGroupChatView = ({
 		}
 	}, [forceBannedOverlay, bannedUserOverlay]);
 
-	const legacyGroupChatRules = useMemo(() => {
-		const transKeys = [
-			`consultingType.${topic?.id ?? 'noConsultingType'}.groupChatRules`,
-			`consultingType.fallback.groupChatRules`
-		];
-
-		// Get groupChat rules from fallback_lng to get the count and make i18n
-		// fallback chain working for non translated rules (de -> de@informal)
-		const groupChatRuleKeys = Object.keys(
-			translate(transKeys, {
-				returnObjects: true,
-				defaultValue: consultingType?.groupChat?.groupChatRules || [],
-				lng: FALLBACK_LNG,
-				ns: 'consultingTypes'
-			})
-		);
-
-		// Then translate every rule by its own translation
-		return groupChatRuleKeys.map((key) =>
-			translate(
-				transKeys.map((transKey) => `${transKey}.${key}`),
-				{ ns: 'consultingTypes' }
-			)
-		);
-	}, [consultingType?.groupChat?.groupChatRules, topic?.id, translate]);
-
-	const authorContent = useMemo(
-		() =>
-			resolveGroupChatAuthorContent({
-				language: i18n.resolvedLanguage || i18n.language,
-				sourceLanguage: activeSession.item.sourceLanguage,
-				hintMessageTranslations:
-					activeSession.item.hintMessageTranslations,
-				groupChatRulesTranslations:
-					activeSession.item.groupChatRulesTranslations,
-				legacyHintMessage: activeSession.item.hintMessage,
-				legacyRules: legacyGroupChatRules
-			}),
-		[
-			activeSession.item.groupChatRulesTranslations,
-			activeSession.item.hintMessage,
-			activeSession.item.hintMessageTranslations,
-			activeSession.item.sourceLanguage,
-			i18n.language,
-			i18n.resolvedLanguage,
-			legacyGroupChatRules
-		]
-	);
+	const authorContent = useGroupChatAuthorContent({
+		consultingType: activeSession.item.consultingType,
+		sourceLanguage: activeSession.item.sourceLanguage,
+		hintMessage: activeSession.item.hintMessage,
+		hintMessageTranslations: activeSession.item.hintMessageTranslations,
+		groupChatRulesTranslations:
+			activeSession.item.groupChatRulesTranslations
+	});
 	const groupChatRules = authorContent.rules;
 	const plannedStart = getGroupChatPlannedStart(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
+	const [animationOff, setAnimationOff] = useState(false);
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -353,6 +308,8 @@ export const JoinGroupChatView = ({
 							plannedStart={plannedStart}
 							welcomeText={authorContent.hintMessage || undefined}
 							rules={groupChatRules}
+							animationOff={animationOff}
+							onAnimationOffChange={setAnimationOff}
 							calendarSlot={
 								<GroupChatCalendarMenu
 									start={plannedStart}
@@ -368,6 +325,7 @@ export const JoinGroupChatView = ({
 				{showRules && (
 					<WaitingAreaRules
 						rules={groupChatRules}
+						animationOff={animationOff}
 						ariaLabel={tr(
 							'groupChat.join.waitingArea.rulesLabel',
 							'Chat rules'

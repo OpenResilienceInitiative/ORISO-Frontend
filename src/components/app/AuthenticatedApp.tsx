@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import {
@@ -15,6 +15,7 @@ import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
+import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
 import { handleTokenRefresh } from '../auth/auth';
 import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
@@ -55,7 +56,8 @@ export const AuthenticatedApp = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { locale, setLocale } = useContext(LocaleContext);
 	const { setInformal } = useContext(InformalContext);
-	const { joinGroupChat } = useJoinGroupChat();
+	const { joinGroupChat, tenantReady } = useJoinGroupChat();
+	const navigate = useNavigate();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { setMatrixClientService } = useMatrixClient();
@@ -79,23 +81,51 @@ export const AuthenticatedApp = ({
 	// Freshly-registered askers get a welcome loading animation bridging the
 	// bootstrap below (one-shot flag set just before the post-registration redirect).
 	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const shouldShow =
+		const flagged =
 			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (shouldShow) {
+		if (flagged) {
 			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
 		}
-		return shouldShow;
+		/* Someone who registered through a group link is not about to
+		   write an enquiry — the group's entry room is their handover. */
+		const cameForAGroup = Boolean(
+			new URLSearchParams(window.location.search).get('gcid')
+		);
+		return flagged && !cameForAGroup;
 	});
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
 		// console.log('🧹 Clearing all old notifications on app mount...');
 		setNotifications([]);
+	}, [setNotifications]);
 
-		// When the user has a group chat id that means that we need to join the user in the group chat
-		const gcid = new URLSearchParams(window.location.search).get('gcid');
-		joinGroupChat(gcid);
-	}, [joinGroupChat, setNotifications]);
+	/* The group-chat id from the link (`?gcid=`) is read once, at mount. It
+	   used to be re-read from `window.location` inside an effect that ran
+	   again when the tenant arrived — by then the router had already
+	   replaced the URL and the id was gone, so the assignment never fired
+	   (#974, #1216). Now: keep the id, wait for the tenant, assign, then
+	   open the group's entry room. */
+	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
+		() => new URLSearchParams(window.location.search).get('gcid')
+	);
+	useEffect(() => {
+		if (!pendingGroupChatId || !tenantReady) {
+			return;
+		}
+		const gcid = pendingGroupChatId;
+		setPendingGroupChatId(null);
+		joinGroupChat(gcid)
+			.then((assigned) => {
+				if (assigned) {
+					navigate(groupEntryRoomPath(gcid), { replace: true });
+				}
+			})
+			.catch(() => {
+				/* Already assigned (409) or gone — the entry room says so. */
+				navigate(groupEntryRoomPath(gcid), { replace: true });
+			});
+	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate]);
 
 	useEffect(() => {
 		if (

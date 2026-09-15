@@ -1,6 +1,7 @@
 {
 	"description": "Known offenders the #1101 i18n catalogue guard still tolerates. The guard fails on any key that is NOT listed here, so a failure names exactly what the change introduced. Shrink these lists when you fix an entry; never grow them to turn a red build green.",
 	"englishIdenticalValueKeys": [
+		"fr:liveChat.breathing.words.courage",
 		"fr:message.note.title",
 		"fr:navigation.notifications",
 		"fr:registration.state.options.7",

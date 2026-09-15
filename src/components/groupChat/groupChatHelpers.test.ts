@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getGroupChatPlannedStart } from './groupChatDate';
 import {
 	canModerateGroupChat,
 	getGroupChatWaitingAreaVisibility,
@@ -104,7 +105,11 @@ describe('getGroupChatWaitingAreaVisibility', () => {
 	it('hides the waiting area for an explicitly typed internal team chat', () => {
 		const internalTeamChat = {
 			isGroup: true,
-			item: { id: 1, conversationType: 'INTERNAL_GROUP', repetitive: true }
+			item: {
+				id: 1,
+				conversationType: 'INTERNAL_GROUP',
+				repetitive: true
+			}
 		} as any;
 
 		expect(
@@ -139,6 +144,27 @@ describe('getGroupChatWaitingAreaVisibility', () => {
 			showCountdown: false,
 			showRules: true,
 			showRulesHeadline: true
+		});
+	});
+
+	it('shows the countdown when planned start comes from startDate + startTime only (#1293)', () => {
+		const selfHelpChat = {
+			isGroup: true,
+			item: { id: 1, repetitive: true }
+		} as any;
+
+		const plannedStart = getGroupChatPlannedStart({
+			startDate: '2019-10-23T00:00:00.000Z',
+			startTime: '12:05',
+			timezone: 'Europe/Berlin'
+		});
+
+		expect(
+			getGroupChatWaitingAreaVisibility(selfHelpChat, plannedStart)
+		).toEqual({
+			showCountdown: true,
+			showRules: true,
+			showRulesHeadline: false
 		});
 	});
 });

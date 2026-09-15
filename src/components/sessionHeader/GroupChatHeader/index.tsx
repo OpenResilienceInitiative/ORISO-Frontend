@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
 import { Link, generatePath } from 'react-router-dom';
 import {
 	AUTHORITIES,
@@ -11,13 +11,18 @@ import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
 import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
-import { ReactComponent as PeopleIcon } from '../../../resources/img/icons/persons-two.svg';
 import { useTranslation } from 'react-i18next';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
 import { useMatrixClient } from '../../../globalState/context/MatrixClientContext';
 import { RoomMember } from 'matrix-js-sdk';
-import { UserAvatar } from '../../message/UserAvatar';
+import { MemberAvatarStack, StackMember } from '../MemberAvatarStack';
+import { chatTransportService } from '../../../services/chatTransportService';
+import {
+	ActivityMap,
+	getLastActivityByUserId,
+	sortMembersByActivity
+} from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
@@ -26,6 +31,10 @@ import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 import { getModality, Modality } from '../../session/getModality';
 import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
+
+// Width of the title row taken by the type pill (incl. "+" button), the flex
+// gaps and a minimum for the room title; the avatar stack gets the rest.
+const TITLE_ROW_RESERVED_WIDTH = 76 + 12 * 2 + 140;
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -43,127 +52,113 @@ export const GroupChatHeader = ({
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
 
-	// MATRIX: Get room members from Matrix client
+	// MATRIX: room members + per-member latest activity (#1193 Job 1).
+	// The header subscribes to membership and timeline events instead of
+	// polling, so the avatar order updates live without a page reload.
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
+	const [memberActivity, setMemberActivity] = useState<ActivityMap>(
+		() => new Map()
+	);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
-	const matrixRoomId =
-		activeSession.item.matrixRoomId || activeSession.item.matrixRoomId;
+	const titleRowRef = useRef<HTMLDivElement>(null);
+	const matrixRoomId = activeSession.item.matrixRoomId;
 
 	useEffect(() => {
-		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
 		setIsLoadingMembers(true);
 
 		if (!matrixRoomId) {
-			// console.log('❌ GroupChatHeader: No matrixRoomId found');
 			setMatrixMembers([]);
+			setMemberActivity(new Map());
 			setIsLoadingMembers(false);
 			return;
 		}
 
-		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
-		let retryCount = 0;
-		const maxRetries = 20;
+		let cancelled = false;
+		let subscribed = false;
+		let offMembers: (() => void) | null = null;
+		let offTimeline: (() => void) | null = null;
+		let retryTimer: number | null = null;
+		const detachers: Array<() => void> = [];
 
-		const tryLoadMembers = () => {
+		// Read joined members (minus supervisors, power level 10) and the latest
+		// timeline timestamp per sender. Returns false while the client/room is
+		// not synced yet.
+		const readRoom = (): boolean => {
 			const client = matrixClientService?.getClient?.();
-
-			if (!client) {
-				retryCount++;
-				if (retryCount < maxRetries) {
-					// console.log(`⏳ GroupChatHeader: Matrix client not ready yet, retrying... (${retryCount}/${maxRetries})`);
-					setTimeout(tryLoadMembers, 500);
-					return;
-				} else {
-					// console.log('❌ GroupChatHeader: Matrix client not available after retries');
-					setMatrixMembers([]);
-					setIsLoadingMembers(false);
-					return;
-				}
-			}
-
-			// console.log('✅ GroupChatHeader: Matrix client found, getting room...');
-			const room = client.getRoom(matrixRoomId);
-
+			const room = client?.getRoom?.(matrixRoomId);
 			if (!room) {
-				// console.log('⏳ GroupChatHeader: Room not found yet, waiting for sync...');
-				// console.log('📋 Available rooms:', client.getRooms().map((r: any) => r.roomId));
-
-				// Wait for room to appear (up to 10 seconds)
-				let roomRetryCount = 0;
-				const maxRoomRetries = 20;
-
-				const tryGetRoom = () => {
-					const updatedRoom = client.getRoom(matrixRoomId);
-					if (updatedRoom) {
-						loadMembers(updatedRoom);
-					} else {
-						roomRetryCount++;
-						if (roomRetryCount < maxRoomRetries) {
-							setTimeout(tryGetRoom, 500);
-						} else {
-							// console.log('❌ GroupChatHeader: Room not found after waiting:', matrixRoomId);
-							setMatrixMembers([]);
-							setIsLoadingMembers(false);
-						}
-					}
-				};
-
-				setTimeout(tryGetRoom, 500);
-				return;
+				return false;
 			}
-
-			loadMembers(room);
-		};
-
-		const loadMembers = (room: any) => {
-			// Get joined members
-			const allMembers = room.getJoinedMembers();
-
-			// Filter supervisors from member list (supervisors have power level 10)
-			const activeMembers = allMembers.filter((m: any) => {
+			const joined: RoomMember[] = room.getJoinedMembers?.() || [];
+			const activeMembers = joined.filter((m: RoomMember) => {
 				try {
-					const powerLevel =
-						room.getMember(m.userId)?.powerLevel || 0;
-					return powerLevel !== 10; // Exclude supervisors (power level 10)
+					return (room.getMember(m.userId)?.powerLevel || 0) !== 10;
 				} catch (err) {
 					return true; // Include if we can't determine power level
 				}
 			});
+			if (!cancelled) {
+				setMatrixMembers(activeMembers);
+				setMemberActivity(getLastActivityByUserId(room));
+				setIsLoadingMembers(false);
+			}
+			return true;
+		};
 
-			// console.log('✅ GroupChatHeader: Found', allMembers?.length || 0, 'total members,', activeMembers?.length || 0, 'active members:', activeMembers?.map((m: any) => m.userId || m.name));
-			setMatrixMembers(activeMembers || []);
-			setIsLoadingMembers(false);
+		// Idempotent per channel: a retry only registers the channel that is
+		// not attached yet, so the header never holds duplicate listeners.
+		const subscribe = (): boolean => {
+			if (!offMembers) {
+				offMembers = chatTransportService.onMatrixRoomMembers(
+					matrixRoomId,
+					readRoom
+				);
+				if (offMembers) detachers.push(offMembers);
+			}
+			if (!offTimeline) {
+				offTimeline = chatTransportService.onMatrixTimelineRaw(
+					matrixRoomId,
+					readRoom
+				);
+				if (offTimeline) detachers.push(offTimeline);
+			}
+			return Boolean(offMembers && offTimeline);
+		};
 
-			// Poll for member changes every 5 seconds
-			const intervalId = setInterval(() => {
-				const client = matrixClientService?.getClient?.();
-				if (client) {
-					const updatedRoom = client.getRoom(matrixRoomId);
-					if (updatedRoom) {
-						const updatedMembers = updatedRoom.getJoinedMembers();
-						if (updatedMembers?.length !== matrixMembers.length) {
-							// console.log('🔄 GroupChatHeader: Members updated:', updatedMembers?.length);
-							setMatrixMembers(updatedMembers || []);
-						}
+		const attempt = (): boolean => {
+			if (!subscribed) {
+				subscribed = subscribe();
+			}
+			return readRoom() && subscribed;
+		};
+
+		// The Matrix client / room may not be synced right after login: retry
+		// every 500 ms for up to 20 s, then give up gracefully (empty stack).
+		if (!attempt()) {
+			let retries = 0;
+			const maxRetries = 40;
+			retryTimer = window.setInterval(() => {
+				retries += 1;
+				if (attempt() || retries >= maxRetries) {
+					if (retryTimer) {
+						window.clearInterval(retryTimer);
+						retryTimer = null;
+					}
+					if (retries >= maxRetries && !cancelled) {
+						setIsLoadingMembers(false);
 					}
 				}
-			}, 5000);
-
-			// Store interval ID for cleanup
-			(window as any).__groupChatHeaderInterval = intervalId;
-		};
-
-		// Start trying to load members
-		tryLoadMembers();
+			}, 500);
+		}
 
 		return () => {
-			const intervalId = (window as any).__groupChatHeaderInterval;
-			if (intervalId) {
-				clearInterval(intervalId);
-				delete (window as any).__groupChatHeaderInterval;
+			cancelled = true;
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
 			}
+			detachers.forEach((detach) => detach());
 		};
-	}, [matrixRoomId, matrixMembers.length, matrixClientService]);
+	}, [matrixRoomId, matrixClientService]);
 	const { path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const isConsultant = hasUserAuthority(
@@ -311,13 +306,32 @@ export const GroupChatHeader = ({
 		id: String(activeSession.item.id),
 		subRoute: 'groupChatInfo'
 	});
-	const visibleMembers = matrixMembers.filter(
-		(member) => !isSystemMatrixUser(member.userId)
+	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
+	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
+	const visibleMembers = useMemo(
+		() =>
+			sortMembersByActivity(
+				matrixMembers.filter(
+					(member) => !isSystemMatrixUser(member.userId)
+				),
+				memberActivity
+			),
+		[matrixMembers, memberActivity]
 	);
-	// Figma #430: up to 4 members render every avatar; beyond that we collapse
-	// the stack into a single "+N people" count badge instead of avatars.
-	const showMemberCountBadge = visibleMembers.length > 4;
-	const stackedMembers = showMemberCountBadge ? [] : visibleMembers;
+	const stackMembers: StackMember[] = useMemo(
+		() =>
+			visibleMembers.map((member) => {
+				const userId = member.userId || '';
+				const parsedUsername =
+					userId.split(':')[0]?.replace('@', '') || userId;
+				return {
+					userId: member.userId || parsedUsername,
+					username: parsedUsername,
+					displayName: decodeUsername(member.name || parsedUsername)
+				};
+			}),
+		[visibleMembers]
+	);
 
 	return (
 		<div className="sessionInfo">
@@ -330,48 +344,22 @@ export const GroupChatHeader = ({
 					<BackIcon />
 				</Link>
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
-					<div className="sessionInfo__titleRow">
+					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">
 							<ChatroomMainInteractionIcon
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
 							/>
-							{showMemberCountBadge && (
-								<div className="sessionInfo__memberCount">
-									<span className="sessionInfo__memberCountNumber">
-										+{visibleMembers.length}
-									</span>
-									<PeopleIcon className="sessionInfo__memberCountIcon" />
-								</div>
-							)}
-							{stackedMembers.map((member, index) => {
-								const userId = member.userId || '';
-								const parsedUsername =
-									userId.split(':')[0]?.replace('@', '') ||
-									userId;
-								const displayName = decodeUsername(
-									member.name || parsedUsername
-								);
-								return (
-									<div
-										key={
-											member.userId ||
-											`${parsedUsername}-${index}`
-										}
-										className="sessionInfo__memberBubble"
-										style={{ zIndex: 20 - index }}
-									>
-										<UserAvatar
-											username={parsedUsername}
-											displayName={displayName}
-											userId={
-												member.userId || parsedUsername
-											}
-											size="32px"
-										/>
-									</div>
-								);
-							})}
+							<MemberAvatarStack
+								members={stackMembers}
+								measureRef={titleRowRef}
+								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
+								countLabel={(hidden) =>
+									`+${t('message.audience.multiCount', {
+										count: hidden
+									})}`
+								}
+							/>
 						</div>
 						<h3>
 							{typeof activeSession.item.topic === 'string'

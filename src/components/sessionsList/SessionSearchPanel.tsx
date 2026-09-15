@@ -1,6 +1,17 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
+import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import type { SessionSearchPersonRole } from './sessionSearchPeople';
 import './sessionsList.styles';
+
+/** JOB3: "only load max 10 latest users", then paginate automatically. */
+export const SESSION_SEARCH_PAGE_SIZE = 10;
+
+const visiblePeopleKeyOf = (people: { id: string }[]) =>
+	people.map((person) => person.id).join('|');
 
 /**
  * Search refinement panel (organism) — the dropdown attached to the session
@@ -22,6 +33,18 @@ export interface SessionSearchPersonOption {
 	name: string;
 	/** e.g. "Berater:in | Mainz 30232" */
 	subtitle: string;
+	/** Clients and counsellors are separate roles (#1195 JOB5). */
+	role?: SessionSearchPersonRole;
+	/** Stable key for the generated animal avatar; falls back to `id`. */
+	avatarSeed?: string;
+}
+
+/** A counselling centre the signed-in counsellor belongs to (#1195 JOB1). */
+export interface SessionSearchAgencyOption {
+	id: string;
+	label: string;
+	/** Optional context, e.g. "Mainz 30232". */
+	subtitle?: string;
 }
 
 export interface SessionSearchTopicOption {
@@ -63,6 +86,13 @@ interface SessionSearchPanelProps {
 	topics: SessionSearchTopicOption[];
 	selectedTopicId: string | null;
 	onTopicSelect: (id: string | null) => void;
+	/**
+	 * JOB1 — a counsellor belonging to two agencies filters along both, so this
+	 * axis is multi-select and sits above the single-select topic list.
+	 */
+	agencies?: SessionSearchAgencyOption[];
+	selectedAgencyIds?: string[];
+	onAgencyToggle?: (id: string) => void;
 }
 
 const iconFill = (active: boolean) =>
@@ -102,15 +132,25 @@ const IconCentreTab = ({ active }: { active: boolean }) => (
 	</svg>
 );
 
-const SelectionCheckbox = ({ selected }: { selected: boolean }) => (
-	<span
-		className={clsx(
-			'sessionsListToolbar__personCheckbox',
-			selected && 'sessionsListToolbar__personCheckbox--selected'
-		)}
-		aria-hidden
-	/>
-);
+/**
+ * JOB6 — the hand-rolled `<span>` box is replaced by MUI's checkbox glyphs.
+ * The icons (not `<Checkbox>` itself) are used deliberately: each row is a
+ * `<button role="checkbox">`, and nesting MUI's real `<input type="checkbox">`
+ * inside a button is invalid HTML and would break the row's keyboard semantics.
+ */
+const SelectionCheckbox = ({ selected }: { selected: boolean }) => {
+	const Icon = selected ? CheckBoxIcon : CheckBoxOutlineBlankIcon;
+	return (
+		<Icon
+			className={clsx(
+				'sessionsListToolbar__personCheckbox',
+				selected && 'sessionsListToolbar__personCheckbox--selected'
+			)}
+			fontSize="small"
+			aria-hidden
+		/>
+	);
+};
 
 const SelectionRadio = ({ selected }: { selected: boolean }) => (
 	<span
@@ -122,13 +162,18 @@ const SelectionRadio = ({ selected }: { selected: boolean }) => (
 	/>
 );
 
-const initialsOf = (name: string) =>
-	name
-		.split(' ')
-		.map((part) => part.trim().charAt(0))
-		.join('')
-		.slice(0, 2)
-		.toUpperCase() || 'U';
+/**
+ * JOB4 — result rows carry the shared generated animal avatar instead of a
+ * letter monogram, matching the green-marked reference in the report.
+ */
+const PersonAvatar = ({ seed }: { seed: string }) => (
+	<span
+		className="sessionsListToolbar__personAvatar"
+		data-testid="session-search-person-avatar"
+	>
+		<AnimalAvatar avatar={generateAvatarForUser(seed)} size={40} />
+	</span>
+);
 
 export const SessionSearchPanel = ({
 	labels,
@@ -144,8 +189,48 @@ export const SessionSearchPanel = ({
 	onTypeSelect,
 	topics,
 	selectedTopicId,
-	onTopicSelect
+	onTopicSelect,
+	agencies = [],
+	selectedAgencyIds = [],
+	onAgencyToggle
 }: SessionSearchPanelProps) => {
+	/**
+	 * JOB3 — the list shows the 10 most recent people from the visible timeline
+	 * and reveals the next 10 whenever the sentinel scrolls into view.
+	 */
+	const [visibleCount, setVisibleCount] = React.useState(
+		SESSION_SEARCH_PAGE_SIZE
+	);
+	const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+	const visiblePeople = people.slice(0, visibleCount);
+	const hasMorePeople = visibleCount < people.length;
+
+	/*
+	 * Keyed on the roster's contents, not the array identity: the session list
+	 * re-derives `people` whenever a message arrives, and resetting on identity
+	 * would snap a scrolled list back to the first page.
+	 */
+	const peopleKey = visiblePeopleKeyOf(people);
+	React.useEffect(() => {
+		setVisibleCount(SESSION_SEARCH_PAGE_SIZE);
+	}, [peopleKey, activeTab]);
+
+	React.useEffect(() => {
+		const node = sentinelRef.current;
+		if (!node || typeof IntersectionObserver === 'undefined') {
+			return undefined;
+		}
+		const observer = new IntersectionObserver((entries) => {
+			if (entries.some((entry) => entry.isIntersecting)) {
+				setVisibleCount((prev) =>
+					Math.min(prev + SESSION_SEARCH_PAGE_SIZE, people.length)
+				);
+			}
+		});
+		observer.observe(node);
+		return () => observer.disconnect();
+	}, [people.length, hasMorePeople]);
+
 	const contentTabs: {
 		id: SessionSearchTab;
 		label: string;
@@ -217,35 +302,54 @@ export const SessionSearchPanel = ({
 			<div className="sessionsListToolbar__searchModalBody">
 				{activeTab === 'people' &&
 					(people.length > 0 ? (
-						people.map((person) => {
-							const isSelected = selectedPersonIds.includes(
-								person.id
-							);
-							return (
-								<button
-									type="button"
-									key={person.id}
-									role="checkbox"
-									aria-checked={isSelected}
-									className="sessionsListToolbar__personRow"
-									onClick={() => onPersonToggle(person.id)}
-									data-cy={`session-search-person-${person.id}`}
-								>
-									<div className="sessionsListToolbar__personAvatar">
-										{initialsOf(person.name)}
-									</div>
-									<div className="sessionsListToolbar__personMeta">
-										<div className="sessionsListToolbar__personName">
-											{person.name}
+						<div
+							className="sessionsListToolbar__searchResultsScroll"
+							data-testid="session-search-results-scroll"
+						>
+							{visiblePeople.map((person) => {
+								const isSelected = selectedPersonIds.includes(
+									person.id
+								);
+								return (
+									<button
+										type="button"
+										key={person.id}
+										role="checkbox"
+										aria-checked={isSelected}
+										className="sessionsListToolbar__personRow"
+										onClick={() =>
+											onPersonToggle(person.id)
+										}
+										data-cy={`session-search-person-${person.id}`}
+									>
+										<PersonAvatar
+											seed={
+												person.avatarSeed || person.id
+											}
+										/>
+										<div className="sessionsListToolbar__personMeta">
+											<div className="sessionsListToolbar__personName">
+												{person.name}
+											</div>
+											<div className="sessionsListToolbar__personSubtitle">
+												{person.subtitle}
+											</div>
 										</div>
-										<div className="sessionsListToolbar__personSubtitle">
-											{person.subtitle}
-										</div>
-									</div>
-									<SelectionCheckbox selected={isSelected} />
-								</button>
-							);
-						})
+										<SelectionCheckbox
+											selected={isSelected}
+										/>
+									</button>
+								);
+							})}
+							{hasMorePeople && (
+								<div
+									ref={sentinelRef}
+									className="sessionsListToolbar__searchSentinel"
+									data-testid="session-search-sentinel"
+									aria-hidden
+								/>
+							)}
+						</div>
 					) : (
 						<div className="sessionsListToolbar__searchEmpty">
 							{labels.emptyPeople}
@@ -285,6 +389,43 @@ export const SessionSearchPanel = ({
 							{labels.emptyTypes}
 						</div>
 					))}
+				{activeTab === 'centre' && agencies.length > 0 && (
+					<div
+						className="sessionsListToolbar__searchAgencyGroup"
+						role="group"
+						aria-label={labels.tabCentre}
+					>
+						{agencies.map((agency) => {
+							const isSelected = selectedAgencyIds.includes(
+								agency.id
+							);
+							return (
+								<button
+									type="button"
+									key={agency.id}
+									role="checkbox"
+									aria-checked={isSelected}
+									className="sessionsListToolbar__personRow"
+									onClick={() => onAgencyToggle?.(agency.id)}
+									data-cy={`session-search-agency-${agency.id}`}
+									data-testid={`session-search-agency-${agency.id}`}
+								>
+									<div className="sessionsListToolbar__personMeta">
+										<div className="sessionsListToolbar__personName">
+											{agency.label}
+										</div>
+										{agency.subtitle && (
+											<div className="sessionsListToolbar__personSubtitle">
+												{agency.subtitle}
+											</div>
+										)}
+									</div>
+									<SelectionCheckbox selected={isSelected} />
+								</button>
+							);
+						})}
+					</div>
+				)}
 				{activeTab === 'centre' &&
 					(topics.length > 0 ? (
 						<div role="radiogroup" aria-label={labels.tabCentre}>

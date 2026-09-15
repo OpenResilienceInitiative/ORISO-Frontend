@@ -1,7 +1,14 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { autoUpdate, computePosition, offset, shift } from '@floating-ui/dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift,
+	size
+} from '@floating-ui/dom';
 import type { MenuDirection } from './menuDirection';
 
 export interface ToolbarMenuItem {
@@ -44,6 +51,9 @@ export const ToolbarMenu = ({
 		top: -9999,
 		left: -9999
 	});
+	const [maxHeight, setMaxHeight] = useState<number | null>(null);
+	const [placedDirection, setPlacedDirection] =
+		useState<MenuDirection>(direction);
 
 	useEffect(() => {
 		const menuEl = menuRef.current;
@@ -52,13 +62,41 @@ export const ToolbarMenu = ({
 		}
 		return autoUpdate(anchorEl, menuEl, () => {
 			computePosition(anchorEl, menuEl, {
-				// The Figma direction rule is authoritative: docked/mobile menus
-				// always open upward, the maximized editor opens them downward.
-				// No flip() — flipping against the rule renders the menu over
-				// the editor content instead of on top of the toolbar.
+				/*
+				 * The Figma rule (node 7086:46390) is the *preference*, not the
+				 * law: docked opens upward, the maximised editor downward.
+				 * Fitting on screen overrules it (#1250).
+				 *
+				 * The previous version deliberately had no flip(), on the
+				 * grounds that flipping "renders the menu over the editor
+				 * content instead of on top of the toolbar". Re-checked: with
+				 * offset(6) the flipped menu clears the trigger by the same 6px
+				 * it does in the preferred direction, so it never covers the
+				 * button that opened it. It does overlap editor content — which
+				 * is what a menu is supposed to do, and far better than running
+				 * the last entries off the screen edge, which is what the fixed
+				 * rule did to the ⋮ menu on a phone.
+				 *
+				 * `bestFit` picks the roomier side when neither fits, and
+				 * size() caps the height to the space actually available so the
+				 * menu scrolls internally instead of overflowing.
+				 */
 				placement: direction === 'up' ? 'top-start' : 'bottom-start',
-				middleware: [offset(6), shift({ padding: 8 })]
-			}).then(({ x, y }) => setPosition({ left: x, top: y }));
+				middleware: [
+					offset(6),
+					flip({ fallbackStrategy: 'bestFit', padding: 8 }),
+					shift({ padding: 8 }),
+					size({
+						padding: 8,
+						apply({ availableHeight }) {
+							setMaxHeight(Math.max(96, availableHeight));
+						}
+					})
+				]
+			}).then(({ x, y, placement }) => {
+				setPosition({ left: x, top: y });
+				setPlacedDirection(placement.startsWith('top') ? 'up' : 'down');
+			});
 		});
 	}, [anchorEl, direction]);
 
@@ -98,8 +136,14 @@ export const ToolbarMenu = ({
 			ref={menuRef}
 			role="menu"
 			aria-label={ariaLabel}
-			className={`composerToolbar__menu composerToolbar__menu--${direction}`}
-			style={{ top: position.top, left: position.left }}
+			// The class reflects where the menu actually landed, not where it
+			// was asked to go — flip() may have overruled the preference.
+			className={`composerToolbar__menu composerToolbar__menu--${placedDirection}`}
+			style={{
+				top: position.top,
+				left: position.left,
+				...(maxHeight === null ? {} : { maxHeight })
+			}}
 		>
 			{items.map((item) => (
 				<button

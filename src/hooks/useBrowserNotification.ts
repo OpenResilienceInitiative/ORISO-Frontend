@@ -2,10 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ListItemInterface } from '../globalState/interfaces';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../utils/notificationHelpers';
+import { sendNotification } from '../utils/notificationHelpers';
 
 export const useBrowserNotification = () => {
 	const { t } = useTranslation();
@@ -23,10 +20,9 @@ export const useBrowserNotification = () => {
 				);
 			});
 
-			if (
-				enquirySessions.length > 0 &&
-				isBrowserNotificationTypeEnabled('initialEnquiry')
-			) {
+			// No settings check here: `sendNotification` owns that decision
+			// (#1211). This hook only knows whether an enquiry just arrived.
+			if (enquirySessions.length > 0) {
 				sendNotification(t('notifications.initialRequest.new'), {
 					// A new enquiry belongs to Anfrage → Neue Anfrage, not to
 					// the conversations fallback row (#586 audit).

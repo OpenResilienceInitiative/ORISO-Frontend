@@ -83,12 +83,21 @@ export const TopicSelection: FC<{
 		number[]
 	>([]);
 	const topicGroupRefs = useRef<Record<number, HTMLDivElement | null>>({});
-	const firstGroupedPlacementId = useMemo(
-		() =>
-			topicGroups?.flatMap((topicGroup) => topicGroup.topics)[0]
-				?.placementId,
-		[topicGroups]
-	);
+	/* The roving tabindex needs a placement that is actually rendered. With
+	   every group closed on first paint and `unmountOnExit`, a fallback to
+	   the very first placement pointed into a collapsed group: the open
+	   group's radios all got `tabIndex={-1}` and nobody could Tab into the
+	   step. So the fallback follows what is open. */
+	const firstGroupedPlacementId = useMemo(() => {
+		const placements = topicGroups?.flatMap(
+			(topicGroup) => topicGroup.topics
+		);
+		return (
+			placements?.find((placement) =>
+				expandedTopicGroupIds.includes(placement.topicGroupId)
+			)?.placementId ?? placements?.[0]?.placementId
+		);
+	}, [expandedTopicGroupIds, topicGroups]);
 	const activeGroupedPlacementId = useMemo(() => {
 		if (selectedPlacementId) {
 			return selectedPlacementId;
@@ -212,7 +221,11 @@ export const TopicSelection: FC<{
 				setTopicGroupId(selectedGroupId);
 			}
 
-			return [selectedGroupId || topicGroups[0].id];
+			// Frank, 2026-09-07: every group starts closed. Only a group that
+			// already holds the visitor's choice opens, so a return to this
+			// step still shows what was picked. Opening the first group by
+			// default made the list look decided before anyone had decided.
+			return selectedGroupId ? [selectedGroupId] : [];
 		});
 
 		if (!selectedPlacementId && value != null) {
@@ -339,9 +352,8 @@ export const TopicSelection: FC<{
 						return existingIds;
 					}
 
-					return presentationGroups[0]?.id
-						? [presentationGroups[0].id]
-						: [];
+					// All closed on first paint (see the effect above).
+					return [];
 				});
 				setTopicGroups(presentationGroups);
 				setListView(nextListView);
