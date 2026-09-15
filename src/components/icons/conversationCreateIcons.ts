@@ -2,8 +2,8 @@ import { ReactComponent as Date400Icon } from '../../resources/img/icons/schedul
 import { ReactComponent as StartTime400Icon } from '../../resources/img/icons/schedule-start.svg';
 import { ReactComponent as Duration400Icon } from '../../resources/img/icons/schedule-duration.svg';
 import { ReactComponent as Repeat400Icon } from '../../resources/img/icons/schedule-repeat.svg';
-import { ReactComponent as Interval400Icon } from '../../resources/img/icons/interval-sunny-400.svg';
-import { ReactComponent as IntervalFilledIcon } from '../../resources/img/icons/interval-sunny-filled.svg';
+import { ReactComponent as Interval400Icon } from '../../resources/img/icons/interval-cycle-400.svg';
+import { ReactComponent as IntervalFilledIcon } from '../../resources/img/icons/interval-cycle-filled.svg';
 import { ReactComponent as Medium400Icon } from '../../resources/img/icons/schedule-medium.svg';
 import { ReactComponent as Video400Icon } from '../../resources/img/icons/modality-video.svg';
 import { ReactComponent as VideoFilledIcon } from '../../resources/img/icons/modality-video-filled.svg';
