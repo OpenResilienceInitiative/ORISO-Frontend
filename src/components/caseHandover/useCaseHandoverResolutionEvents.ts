@@ -1,15 +1,6 @@
 import { useContext, useEffect, useRef } from 'react';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
-
-/**
- * The events that end a handover offer one way or the other. A request whose
- * outcome arrives as one of these is worth re-reading from the server; every
- * other feed entry is not.
- */
-export const CASE_HANDOVER_RESOLUTION_EVENTS = new Set([
-	'case.handover.granted',
-	'case.handover.consent.declined'
-]);
+import { CASE_HANDOVER_RESOLUTION_EVENTS } from './caseHandoverEvents';
 
 interface UseCaseHandoverResolutionEventsProps {
 	/** Scopes the dedupe keys, so one consultant's handled events stay theirs. */

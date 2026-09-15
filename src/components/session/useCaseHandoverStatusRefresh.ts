@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiGetCaseHandoverStatus, CaseHandoverStatus } from '../../api';
-
-const CASE_HANDOVER_RESOLUTION_EVENTS = new Set([
-	'case.handover.granted',
-	'case.handover.consent.declined'
-]);
+import { CASE_HANDOVER_RESOLUTION_EVENTS } from '../caseHandover/caseHandoverEvents';
 
 type CaseHandoverNotification = {
 	id: string;
