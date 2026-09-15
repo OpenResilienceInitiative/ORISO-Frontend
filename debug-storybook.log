@@ -1,0 +1,30 @@
+[15:14:22.182] [INFO] storybook v10.4.6
+[15:14:24.674] [ERROR] [38;2;241;97;97mSB_CORE-SERVER_0007 (MainFileEvaluationError): Storybook couldn't evaluate your [33m.storybook\main.ts[39m file.
+
+Original error:
+[37mError [ERR_MODULE_NOT_FOUND]: Cannot find module '\config\webpack.config' imported from \.storybook\main.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+    at moduleResolve (node:internal/modules/esm/resolve:861:10)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)[39m[39m
+    at loadMainConfig (file:///C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/node_modules/storybook/dist/_node-chunks/chunk-6U2XPXR7.js:10125:11)
+    at async buildDevStandalone (file:///C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/node_modules/storybook/dist/core-server/index.js:11977:16)
+    at async withTelemetry (file:///C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/node_modules/storybook/dist/_node-chunks/chunk-G7NXW2C2.js:650:12)
+    at async dev (file:///C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/node_modules/storybook/dist/bin/core.js:2735:3)
+    at async _Command.<anonymous> (file:///C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/node_modules/storybook/dist/bin/core.js:2805:92)
+[15:14:24.677] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.
+[15:14:24.684] [WARN]   Failed to load preset: "C:/Users/Shanzae/Documents/oriso/ORISO-Frontend/.storybook/main.ts"
+[15:14:24.684] [ERROR] Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.\config\webpack.config' imported from .\.storybook\main.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+    at moduleResolve (node:internal/modules/esm/resolve:861:10)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
