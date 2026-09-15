@@ -27,6 +27,10 @@ $cc-motion-easing: var(
 );
 
 .conversationCreate {
+	background: var(--m3-surface-container-lowest, #ffffff);
+	border: 1px solid var(--m3-on-primary-container, #ffe2de);
+	border-radius: 32px;
+	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;

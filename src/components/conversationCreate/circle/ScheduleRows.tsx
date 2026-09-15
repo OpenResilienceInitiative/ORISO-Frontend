@@ -2,11 +2,23 @@ import * as React from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { ReactComponent as CalendarIcon } from '../../../resources/img/icons/calendar.svg';
-import { ReactComponent as ClockIcon } from '../../../resources/img/icons/clock.svg';
-import { ReactComponent as RepeatIcon } from '../../../resources/img/icons/reload.svg';
-import { ReactComponent as MediumIcon } from '../../../resources/img/icons/diversity-2.svg';
-import { ReactComponent as LanguageIcon } from '../../../resources/img/icons/language_outline.svg';
+import {
+	Audio400Icon,
+	AudioFilledIcon,
+	Chat400Icon,
+	ChatFilledIcon,
+	Date400Icon,
+	Duration400Icon,
+	Interval400Icon,
+	IntervalFilledIcon,
+	Language400Icon,
+	Medium400Icon,
+	Repeat400Icon,
+	StartTime400Icon,
+	Video400Icon,
+	VideoFilledIcon
+} from '../../icons/conversationCreateIcons';
+import { resolvePrimaryMediumIcon } from './primaryMediumIcon';
 import { OrisoCalendar } from '../../form/OrisoCalendar';
 import { OrisoTimePicker } from '../../form/OrisoTimePicker';
 import {
@@ -65,6 +77,15 @@ export const ScheduleRows = ({
 }: ScheduleRowsProps) => {
 	const { t: translate } = useTranslation();
 	const [openRow, setOpenRow] = useState<OpenRow>(null);
+	/**
+	 * The repetition row carries two independent controls: the stepper sets a
+	 * number of dates, the menu sets a fixed frequency. The control the author
+	 * touched last owns the label, so choosing "Wöchentlich" no longer leaves
+	 * a stale "34 mal" on the button.
+	 */
+	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
+		'count'
+	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);
 	const repeatRef = useRef<HTMLDivElement | null>(null);
@@ -78,6 +99,24 @@ export const ScheduleRows = ({
 
 	const toggle = (row: Exclude<OpenRow, null>) =>
 		setOpenRow((current) => (current === row ? null : row));
+
+	const MEDIUM_ICONS = {
+		'generic-outline': Medium400Icon,
+		'chat-outline': Chat400Icon,
+		'chat-filled': ChatFilledIcon,
+		'audio-outline': Audio400Icon,
+		'audio-filled': AudioFilledIcon,
+		'video-outline': Video400Icon,
+		'video-filled': VideoFilledIcon
+	} as const;
+	/**
+	 * Resting rows carry the 400 outline glyph; a chosen medium switches to its
+	 * filled partner, so the row states what the author picked at a glance.
+	 */
+	const MediumRowIcon =
+		MEDIUM_ICONS[
+			resolvePrimaryMediumIcon(value.modality, Boolean(value.modality))
+		];
 
 	const variantFor = (row: Exclude<OpenRow, null>, chosen: boolean) => {
 		if (openRow === row) {
@@ -129,7 +168,7 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={dateRef}
 				fullWidth
-				icon={<CalendarIcon />}
+				icon={<Date400Icon />}
 				label={
 					value.startDate
 						? dayjs(value.startDate).format('D. MMMM YYYY')
@@ -174,7 +213,7 @@ export const ScheduleRows = ({
 				renderTrigger={(openDialog) => (
 					<SplitButton
 						fullWidth
-						icon={<ClockIcon />}
+						icon={<StartTime400Icon />}
 						label={value.startTime || timeLabel}
 						variant={value.startTime ? 'tonal' : 'outlined'}
 						onClick={openDialog}
@@ -196,7 +235,7 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={durationRef}
 				fullWidth
-				icon={<ClockIcon />}
+				icon={<Duration400Icon />}
 				label={
 					value.duration
 						? translate('groupChat.circle.rows.durationValue', {
@@ -232,15 +271,39 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={repeatRef}
 				fullWidth
-				icon={<RepeatIcon />}
-				label={translate('groupChat.circle.rows.repeatValue', {
-					count: value.repeatCount
-				})}
-				variant={variantFor('repeat', value.repeatCount > 1)}
+				icon={
+					repeatMode === 'interval' ? (
+						<IntervalFilledIcon />
+					) : value.repeatCount > 1 ? (
+						<Repeat400Icon />
+					) : (
+						<Interval400Icon />
+					)
+				}
+				label={
+					repeatMode === 'interval'
+						? translate(
+								`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
+								value.interval
+							)
+						: translate('groupChat.circle.rows.repeatValue', {
+								count: value.repeatCount
+							})
+				}
+				variant={variantFor(
+					'repeat',
+					repeatMode === 'interval' || value.repeatCount > 1
+				)}
 				open={openRow === 'repeat'}
 				onClick={() => toggle('repeat')}
-				onDecrement={() => shiftRepeat(-1)}
-				onIncrement={() => shiftRepeat(1)}
+				onDecrement={() => {
+					setRepeatMode('count');
+					shiftRepeat(-1);
+				}}
+				onIncrement={() => {
+					setRepeatMode('count');
+					shiftRepeat(1);
+				}}
 				decrementLabel={translate('groupChat.circle.rows.decrease', {
 					field: repeatLabel
 				})}
@@ -253,13 +316,14 @@ export const ScheduleRows = ({
 					options={INTERVALS.map((interval) => ({
 						value: interval,
 						label: translate(
-							`groupChat.create.intervalSelect.${interval.toLowerCase()}`,
+							`groupChat.create.interval.options.${interval.toLowerCase()}`,
 							interval
 						)
 					}))}
 					value={value.interval}
 					onSelect={(next) => {
 						update('interval', next as GroupChatInterval);
+						setRepeatMode('interval');
 						setOpenRow(null);
 					}}
 					anchorRef={repeatRef}
@@ -270,11 +334,15 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={mediumRef}
 				fullWidth
-				icon={<MediumIcon />}
-				label={translate(
-					`groupChat.create.modalitySelect.${value.modality.toLowerCase()}`,
-					translate('groupChat.circle.rows.mediumLabel')
-				)}
+				icon={<MediumRowIcon />}
+				label={
+					value.modality
+						? translate(
+								`groupChat.create.modality.options.${value.modality.toLowerCase()}`,
+								value.modality
+							)
+						: translate('groupChat.circle.rows.mediumLabel')
+				}
 				variant={variantFor('medium', Boolean(value.modality))}
 				open={openRow === 'medium'}
 				onClick={() => toggle('medium')}
@@ -288,7 +356,7 @@ export const ScheduleRows = ({
 					options={MODALITIES.map((modality) => ({
 						value: modality,
 						label: translate(
-							`groupChat.create.modalitySelect.${modality.toLowerCase()}`,
+							`groupChat.create.modality.options.${modality.toLowerCase()}`,
 							modality
 						)
 					}))}
@@ -305,7 +373,7 @@ export const ScheduleRows = ({
 			<SplitButton
 				ref={languageRef}
 				fullWidth
-				icon={<LanguageIcon />}
+				icon={<Language400Icon />}
 				label={
 					languageOptions.find((option) => option.value === language)
 						?.label ??
