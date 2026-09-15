@@ -1,7 +1,11 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { TenantDataSettingsInterface } from '../globalState/interfaces';
 import { TenantContext } from '../globalState/provider/TenantProvider';
+import {
+	getAuthenticatedTenantId,
+	subscribeToAuthenticatedTenant
+} from '../utils/authenticatedTenant';
 import {
 	getTenantSettings,
 	setTenantSettings
@@ -31,6 +35,14 @@ export const useSessionTenantSettings = (
 	// a loop. `updateTenantSettings` is stable for the provider's lifetime.
 	const updateTenantSettings =
 		useContext(TenantContext)?.updateTenantSettings;
+	// Signing in or out swaps the Träger under this hook. The refresh is
+	// fetched for whoever was signed in when it started, so it also has to be
+	// re-run for the new one — and the in-flight answer for the old one
+	// dropped.
+	const authenticatedTenantId = useSyncExternalStore(
+		subscribeToAuthenticatedTenant,
+		getAuthenticatedTenantId
+	);
 	const [state, setState] = useState<SessionTenantSettingsState>(() => ({
 		settings: { ...getTenantSettings() },
 		isLoading: true,
@@ -39,11 +51,14 @@ export const useSessionTenantSettings = (
 
 	useEffect(() => {
 		let active = true;
+		const requestedTenantId = authenticatedTenantId;
+		const isStale = () =>
+			!active || getAuthenticatedTenantId() !== requestedTenantId;
 		setState((current) => ({ ...current, isLoading: true }));
 
 		apiGetTenantTheming()
 			.then((tenant) => {
-				if (!active) return;
+				if (isStale()) return;
 				const settings = tenant?.settings ?? getTenantSettings();
 				// Publish into the shared tenant state, so every `useTenant()`
 				// consumer sees the refreshed permissions instead of the
@@ -64,7 +79,7 @@ export const useSessionTenantSettings = (
 				});
 			})
 			.catch(() => {
-				if (!active) return;
+				if (isStale()) return;
 				setState((current) => ({
 					...current,
 					isLoading: false,
@@ -75,7 +90,7 @@ export const useSessionTenantSettings = (
 		return () => {
 			active = false;
 		};
-	}, [sessionKey, updateTenantSettings]);
+	}, [sessionKey, updateTenantSettings, authenticatedTenantId]);
 
 	return {
 		settings: state.settings,
