@@ -16,7 +16,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Sign-in without a password. Replaces the hand-written 620px Arial card in `MagicLinkLoginService` (ORISO-UserService#944). Note the footer: a security mail carries no unsubscribe link, because there is no switch behind it (ADR-019).'
+					'Sign-in without a password. Replaces the hand-written 620px Arial card in `MagicLinkLoginService` (ORISO-UserService#944). Note the footer: a security mail carries no unsubscribe link, because there is no switch behind it (ADR-024).'
 			}
 		}
 	}

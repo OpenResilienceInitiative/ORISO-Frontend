@@ -19,9 +19,7 @@ ${contactLine!''}
 
 ${platformName!''} ist ein Angebot von ${orgName!''}.
 
-Einstellungen: ${settingsUrl!''}
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}
-Benachrichtigungen abbestellen: ${unsubscribeUrl!''}
 
 Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.
