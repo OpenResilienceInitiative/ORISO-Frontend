@@ -475,12 +475,17 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		abortController.current?.abort();
+		const controller = new AbortController();
+		abortController.current = controller;
 		return refetchEnquiryListState({
+			signal: controller.signal,
 			fetchPage: () =>
 				fetchEnquirySessionsWithAutoPage(
 					0,
 					undefined,
-					currentOffset + SESSION_COUNT
+					currentOffset + SESSION_COUNT,
+					controller.signal
 				),
 			pageSize: SESSION_COUNT,
 			replaceSessions: (sessions) => {
