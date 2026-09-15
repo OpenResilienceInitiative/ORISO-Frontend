@@ -649,7 +649,8 @@ function MuiStoryShell({
 				<TenantContext.Provider
 					value={{
 						tenant: null,
-						setTenant: () => {}
+						setTenant: () => {},
+						updateTenantSettings: () => {}
 					}}
 				>
 					<UserDataContext.Provider
